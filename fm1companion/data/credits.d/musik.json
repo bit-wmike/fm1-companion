@@ -1,0 +1,3 @@
+{"entries": [
+ {"name": "Melodee-Projektformat und Testdaten", "authors": "Kerem Kiliç (Ellic Studio), Leo Kuroshita / Hügelton Instruments", "url": "https://github.com/keremimo/melodee", "license": "GPL-3.0", "kind": "Format/Testdaten", "use": "Projektformat aus den Firmware-Quellen abgeleitet; Tabellen (Parameter, Engines, Preset-Namen) und Test-Projekte von Melodees eigenem Code erzeugt; zwei Test-Fixtures aus Melodees Repo"}
+]}

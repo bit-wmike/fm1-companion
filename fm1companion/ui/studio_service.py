@@ -1,0 +1,593 @@
+# SPDX-License-Identifier: GPL-3.0-only
+"""Der Studio-Zwilling als Dienst der ganzen App (ein Zwilling je Fenster).
+
+Gehört dem Hauptfenster (``window.studio``) und lebt unabhängig von der Studio-Seite:
+
+* startet den Zwilling (studio.Studio, QtWebEngine) in der passenden Firmware-Version, lädt ihn aus einem Backup
+  oder dem zuletzt gespeicherten Studio-Stand (je Geräteprofil) und merkt sich, woher er kam
+* speichert seinen Flash automatisch (studio.Studio.save_state), sobald sich etwas geändert hat, und führt eine
+  begrenzte Zwischenstand-Liste für Rückgängig/Wiederherstellen
+* hält die Uhr des Zwillings an, wenn das Studio nicht sichtbar ist und nichts spielt
+* bietet ihn als **virtuelles Gerät** „Studio-Zwilling (Melodee …)“ in der Geräteauswahl an: Projekte,
+  Komponieren, Presets, Backups und der Editor arbeiten dann über studio.StudioTransport mit ihm. Er ist nie
+  ``ctx.ports`` (echte Geräte), nur ``ctx.vports``; ``ctx.is_virtual`` sagt es allen Seiten.
+* leitet MIDI-Keyboards (und auf Wunsch die Tasten des echten FM-1) in den Zwilling
+"""
+from __future__ import annotations
+
+import contextlib
+import datetime as dt
+import json
+import shutil
+import subprocess
+import threading
+import time
+import zlib
+from pathlib import Path
+
+from PyQt6.QtCore import QObject, QTimer, pyqtSignal
+
+from .. import config, studio as S
+from ..devices import PortInfo, Profile
+
+SETTINGS = {"last_profile": "", "inputs": [], "fm1_keys": True, "audio": True, "export_dir": "",
+            "export_fmt": "s24", "export_stems": False, "export_mode": "song", "export_seconds": 30,
+            "export_loops": 2}
+HISTORY_MAX = 30
+VIRTUAL_KEY = "studio-twin|STUDIO"
+VIRTUAL_PROFILE = Profile(id="studio-zwilling", name="Studio-Zwilling", color="#a06cd5", notes="virtuell")
+INFO_NAME = "studio-info.json"
+
+
+def music_dir() -> Path:
+    """Musik-Ordner des Nutzers (XDG), darin „FM-1 Studio“."""
+    base = None
+    try:
+        out = subprocess.run(["xdg-user-dir", "MUSIC"], capture_output=True, text=True, timeout=2).stdout.strip()
+        if out and Path(out) != Path.home():
+            base = Path(out)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    if base is None:
+        for name in ("Musik", "Music"):
+            if (Path.home() / name).is_dir():
+                base = Path.home() / name
+                break
+    return (base or Path.home() / "Musik") / "FM-1 Studio"
+
+
+def route_webengine_audio(sink: str) -> str:
+    """den Ton von QtWebEngine (Chromium) auf einen bestimmten Ausgang legen (pactl move-sink-input). -> Meldung
+    ("" = erledigt oder nichts zu tun)."""
+    if not sink:
+        return ""
+    if not shutil.which("pactl"):
+        return ("Der gewählte Ausgang lässt sich für das Studio nicht einstellen (pactl fehlt: sudo apt install "
+                "pulseaudio-utils) – der Ton kommt über den Standard-Ausgang des Systems.")
+    try:
+        out = subprocess.run(["pactl", "-f", "json", "list", "sink-inputs"], capture_output=True, text=True,
+                             timeout=3).stdout
+        items = json.loads(out or "[]")
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return "Der gewählte Ausgang ließ sich für das Studio nicht einstellen – Standard-Ausgang des Systems."
+    moved = 0
+    for it in items:
+        p = it.get("properties", {}) or {}
+        who = " ".join(str(p.get(k, "")) for k in ("application.process.binary", "application.name",
+                                                    "application.id")).lower()
+        if "qtwebengine" in who or "chromium" in who or "fm1-companion" in who:
+            with contextlib.suppress(OSError, subprocess.SubprocessError):
+                subprocess.run(["pactl", "move-sink-input", str(it.get("index")), sink], timeout=3)
+                moved += 1
+    return "" if moved else "Der Studio-Ton wurde noch nicht gefunden – er läuft über den Standard-Ausgang."
+
+
+class StudioService(QObject):
+    changed = pyqtSignal()                 # Zwilling gestartet/geladen/geschlossen, Quelle geändert
+    history_changed = pyqtSignal()         # Rückgängig/Wiederherstellen, automatisch gespeichert
+    page_changed = pyqtSignal()            # neue Web-Seite (anderer Build): Studio-Seite hängt sie neu ein
+    ui_event = pyqtSignal(str)             # Leertaste/Strg+Z aus der Bedienfläche
+    message = pyqtSignal(str)
+
+    def __init__(self, window):
+        super().__init__(window)
+        self.window = window
+        self.ctx = window.ctx
+        self.cfg = config.module("studio", SETTINGS)
+        self.st: S.Studio | None = None
+        self.page = None
+        self.source: dict = {}             # woher der Zwilling kam (siehe _set_source)
+        self.history: list[dict] = []      # {label, time, flash (zlib)}
+        self.pos = -1
+        self._sum = None
+        self.saved_at = 0.0
+        self.busy = 0                      # laufende Arbeiten (Backup, Einspielen …): nicht dazwischenfunken
+        self.page_visible = False
+        self.users = 0                     # andere Nutzer, die Ton/Uhr brauchen (Abspielen aus anderen Seiten)
+        self._clock = None
+        self._audio = False
+        self.audio_note = ""
+        self.last_error = ""
+        self._inputs = None
+        self._fm1_link = None
+        self.timer = QTimer(self, interval=4000)
+        self.timer.timeout.connect(self._tick)
+        self.timer.start()
+        self.ctx.virtual_ports = self._virtual_ports
+        self.ctx.virtual_transport = self._virtual_transport
+        self.ctx.virtual_profile = lambda port: VIRTUAL_PROFILE
+        self.ctx.changed.connect(self._dev_changed)
+
+    # ------------------------------------------------------------ Builds
+    @staticmethod
+    def available(firmware: str = "melodee") -> bool:
+        try:
+            return bool(S.builds(firmware))
+        except Exception:  # noqa: BLE001
+            return False
+
+    @staticmethod
+    def firmware_for(key: str) -> str:
+        """Firmware-Schlüssel des Geräts -> Zwilling-Firmware ("" = gibt es (noch) nicht)."""
+        key = (key or "").lower()
+        return "melodee" if key.startswith("melodee") and S.builds("melodee") else ""
+
+    @property
+    def running(self) -> bool:
+        return self.st is not None
+
+    @property
+    def version(self) -> str:
+        return self.st.build.version if self.st else ""
+
+    @property
+    def link(self):
+        """Leitung zum Zwilling: ist er das aktive Gerät, dieselbe wie die der Seiten (eine Anfrage nach der
+        anderen), sonst die eigene."""
+        if self.ctx.is_virtual and self.ctx.link is not None and not self.ctx.link.closed:
+            return self.ctx.link
+        return self.st.link if self.st else None
+
+    # ------------------------------------------------------------ Start/Stopp
+    def ensure(self, version: str = "", firmware: str = "melodee") -> S.Studio:
+        """Zwilling in dieser Version (oder der nächsten) bereitstellen – im GUI-Thread aufrufen."""
+        want = S.pick_build(firmware, version)[0]
+        if self.st is not None and self.st.build.path == want.path:
+            return self.st
+        was_virtual = self.ctx.is_virtual
+        if self.st is not None:
+            self._close_twin()
+        from PyQt6.QtWebEngineCore import QWebEnginePage
+        from . import web
+        console = []
+
+        class _Page(QWebEnginePage):
+            def javaScriptConsoleMessage(self, level, msg, line, src):
+                console.append(f"{src}:{line}: {msg}")
+                del console[:-200]
+
+        self.page = _Page(web.profile(), None)
+        self.page.console = console
+        web.track(self.page)
+        self.st = S.Studio.create(firmware, version, backend="webengine", server=self.window.server,
+                                  page=self.page, on_event=self._on_event)
+        self.history, self.pos, self._sum = [], -1, None
+        self._clock = None
+        self._audio = False
+        self.page_changed.emit()
+        self._update_clock()
+        self.ctx.scan()                    # virtuelles Gerät erscheint in der Auswahl
+        if was_virtual:
+            self.ctx.connect_port(self._virtual_ports()[0])
+        self.changed.emit()
+        return self.st
+
+    def _close_twin(self):
+        if self.ctx.is_virtual:
+            self.ctx.disconnect("Studio-Zwilling neu gestartet")
+        st, self.st = self.st, None
+        page, self.page = self.page, None
+        self.page_changed.emit()           # Studio-Seite lässt die Seite los, bevor sie verschwindet
+        if st is not None:
+            with contextlib.suppress(Exception):
+                st.close()
+        del page
+
+    def shutdown(self):
+        self.timer.stop()
+        with contextlib.suppress(Exception):
+            self.autosave(force=False)
+        with contextlib.suppress(Exception):
+            if self._inputs:
+                self._inputs.close()
+        self._unhook_fm1()
+        if self.st is not None:
+            self._close_twin()
+
+    # ------------------------------------------------------------ Quelle und Stand
+    def profile_folder(self) -> str:
+        return self.source.get("profile_folder") or self.cfg.get("last_profile") or "Studio"
+
+    def state_file(self) -> Path:
+        return S.state_path(self.profile_folder())
+
+    def _set_source(self, kind: str, **kw):
+        self.source = {"kind": kind, "time": dt.datetime.now().isoformat(timespec="seconds"), **kw}
+        if self.st is not None:
+            self.source["rejected"] = list(self.st.rejected)
+        folder = self.source.get("profile_folder")
+        if folder:
+            self.cfg["last_profile"] = folder
+            with contextlib.suppress(OSError):
+                config.save()
+
+    def _write_info(self):
+        p = self.state_file().with_name(INFO_NAME)
+        with contextlib.suppress(OSError):
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(json.dumps(self.source, ensure_ascii=False, indent=1), "utf-8")
+
+    def stored_states(self) -> list[tuple[str, Path, dict]]:
+        """alle gespeicherten Studio-Stände: (Profilordner, Datei, Herkunft)"""
+        base = config.DATA_DIR / "studio"
+        out = []
+        for f in sorted(base.glob(f"*/{S.STATE_NAME}")) if base.is_dir() else []:
+            info = {}
+            with contextlib.suppress(OSError, ValueError):
+                info = json.loads((f.parent / INFO_NAME).read_text("utf-8"))
+            out.append((f.parent.name, f, info))
+        return out
+
+    def open_state(self, folder: str | None = None) -> dict:
+        """Studio-Stand eines Geräteprofils laden (Zwilling in dessen Version). -> Metadaten"""
+        folder = folder or self.profile_folder()
+        path = S.state_path(folder)
+        meta, _flash = S.read_state(path)
+        self.ensure(meta.get("firmware_version", ""), meta.get("firmware", "melodee"))
+        self.snapshot("vor dem Laden des Studio-Stands", only_if_changed=True)
+        self.busy += 1
+        try:
+            meta = self.st.load_state(path)
+        finally:
+            self.busy -= 1
+        info = {}
+        with contextlib.suppress(OSError, ValueError):
+            info = json.loads(path.with_name(INFO_NAME).read_text("utf-8"))
+        self.source = info or {"kind": "state", "profile_folder": folder, "time": meta.get("created", "")}
+        self.source["profile_folder"] = folder
+        self.st.rejected = list(self.source.get("rejected", []))
+        self.cfg["last_profile"] = folder
+        self._sum = None
+        self.snapshot("Studio-Stand geladen")
+        self.saved_at = time.time()
+        self.changed.emit()
+        return meta
+
+    def loaded_backup(self, archive, kind: str, **kw):
+        """nach dem Einspielen eines Backups (aus einem Arbeits-Thread fertig): Herkunft merken, sichern."""
+        self._set_source(kind, backup_version=S.backup_version(archive), **kw)
+        self._sum = None
+        self.snapshot("aus " + ("dem FM-1" if kind == "device" else "dem Backup") + " geladen")
+        self.autosave(force=True)
+        self.changed.emit()
+
+    def auto_start(self) -> bool:
+        """Zwilling bereitstellen, falls er nicht läuft: Studio-Stand des aktiven Geräts (sonst des zuletzt benutzten),
+        sonst leer in der Version des Geräts. -> läuft er?"""
+        if self.st is not None:
+            return True
+        c = self.ctx
+        folders = []
+        if c.profile is not None and not c.is_virtual:
+            folders.append(c.profile.folder_name)
+        if self.cfg.get("last_profile"):
+            folders.append(self.cfg["last_profile"])
+        for f in folders:
+            if S.state_path(f).exists():
+                try:
+                    self.open_state(f)
+                    return True
+                except Exception as e:  # noqa: BLE001 – kaputter Stand: leer starten
+                    self.last_error = f"Studio-Stand „{f}“ nicht lesbar: {e}"
+        dev = c.info.version if (c.info and not c.is_virtual and self.firmware_for(c.firmware_key)) else ""
+        if c.profile is not None and not c.is_virtual and dev:
+            self.source = {"kind": "new", "time": dt.datetime.now().isoformat(timespec="seconds"),
+                           "profile_folder": c.profile.folder_name}
+        self.new_empty(S.norm_version(dev))
+        return self.st is not None
+
+    def new_empty(self, version: str = ""):
+        """frischer Zwilling (leerer Flash) – wenn es noch keinen Stand gibt."""
+        self.ensure(version)
+        if not self.source:
+            self.source = {"kind": "new", "time": dt.datetime.now().isoformat(timespec="seconds"),
+                           "profile_folder": self.profile_folder()}
+            self.snapshot("leer gestartet")
+            self.changed.emit()
+
+    # ------------------------------------------------------------ Autosave und Verlauf
+    def snapshot(self, label: str = "Zwischenstand", only_if_changed: bool = False) -> bool:
+        if self.st is None:
+            return False
+        try:
+            flash = self.st.flash()
+        except S.StudioError as e:
+            self.last_error = str(e)
+            return False
+        z = zlib.compress(flash, 6)
+        if only_if_changed and self.history and 0 <= self.pos < len(self.history) \
+                and self.history[self.pos]["flash"] == z:
+            return False
+        if self.history and 0 <= self.pos < len(self.history) and self.history[self.pos]["flash"] == z:
+            self.history[self.pos]["label"] = label
+            self.history_changed.emit()
+            return True
+        del self.history[self.pos + 1:]
+        self.history.append({"label": label, "time": time.time(), "flash": z})
+        if len(self.history) > HISTORY_MAX:
+            del self.history[:len(self.history) - HISTORY_MAX]
+        self.pos = len(self.history) - 1
+        self._sum = None
+        self.history_changed.emit()
+        return True
+
+    def can_undo(self) -> bool:
+        return self.st is not None and self.pos > 0
+
+    def can_redo(self) -> bool:
+        return self.st is not None and 0 <= self.pos < len(self.history) - 1
+
+    def _goto(self, pos: int) -> str:
+        if self.st is None or not 0 <= pos < len(self.history):
+            return ""
+        self.busy += 1
+        try:
+            self.st.set_flash(zlib.decompress(self.history[pos]["flash"]))
+        finally:
+            self.busy -= 1
+        self.pos = pos
+        self._sum = None
+        self._clock = None
+        self._update_clock()
+        self.autosave(force=True)
+        self.history_changed.emit()
+        self.changed.emit()
+        return self.history[pos]["label"]
+
+    def undo(self) -> str:
+        return self._goto(self.pos - 1) if self.can_undo() else ""
+
+    def redo(self) -> str:
+        return self._goto(self.pos + 1) if self.can_redo() else ""
+
+    def autosave(self, force: bool = False) -> Path | None:
+        """Flash des Zwillings beim Geräteprofil speichern (nur wenn sich etwas geändert hat, außer force)."""
+        if self.st is None or self.busy:
+            return None
+        try:
+            s = self.st.flash_sum()
+        except S.StudioError:
+            return None
+        if not force and s == self._sum:
+            return None
+        try:
+            path = self.st.save_state(self.state_file(), note=self.source.get("device", ""))
+        except (OSError, S.StudioError) as e:
+            self.last_error = f"Studio-Stand nicht gespeichert: {e}"
+            self.message.emit(self.last_error)
+            return None
+        if self._sum is not None and s != self._sum and not force:
+            self.snapshot("Änderung um " + time.strftime("%H:%M"))
+        self._sum = s
+        self.saved_at = time.time()
+        self._write_info()
+        self.history_changed.emit()
+        return path
+
+    def _tick(self):
+        if self.st is None or self.busy:
+            return
+        self.autosave()
+        self._update_clock()
+
+    # ------------------------------------------------------------ Uhr und Ton
+    def transport(self) -> dict:
+        if self.st is None:
+            return {}
+        try:
+            return self.st.transport_state()
+        except S.StudioError:
+            return {}
+
+    def wants_clock(self) -> bool:
+        if self.st is None:
+            return False
+        if self.page_visible or self.users > 0 or self.busy or self.ctx.is_virtual:
+            return True
+        return bool(self.transport().get("busy"))
+
+    def _update_clock(self):
+        if self.st is None:
+            return
+        want = self.wants_clock()
+        if want == self._clock:
+            return
+        try:
+            self.st.set_clock(want)
+            if not want and self._audio:
+                self.set_audio(False, remember=False)
+            elif want and self.cfg.get("audio", True) and not self._audio:
+                self.set_audio(True, remember=False)
+        except S.StudioError as e:
+            self.last_error = str(e)
+            return
+        self._clock = want
+
+    def set_visible(self, on: bool):
+        self.page_visible = on
+        self._update_clock()
+
+    def use(self, on: bool):
+        """ein Nutzer außerhalb der Studio-Seite braucht Ton und Uhr (Abspielen in Projekte/Komponieren)."""
+        self.users = max(0, self.users + (1 if on else -1))
+        self._clock = None if on else self._clock
+        self._update_clock()
+
+    @property
+    def audio_on(self) -> bool:
+        return self._audio
+
+    def set_audio(self, on: bool, remember: bool = True) -> str:
+        if remember:
+            self.cfg["audio"] = bool(on)
+            with contextlib.suppress(OSError):
+                config.save()
+        if self.st is None:
+            return ""
+        try:
+            if on:
+                self.st.start_audio()
+            else:
+                self.st.stop_audio()
+        except S.StudioError as e:
+            self.audio_note = f"Ton nicht verfügbar: {e}"
+            self._audio = False
+            return self.audio_note
+        self._audio = on
+        self.audio_note = ""
+        if on:
+            from .audio import chosen_output
+            from .. import audioout
+            chosen = chosen_output()
+
+            def work():
+                # gewählter Ausgang – oder, wenn der Standard das FM-1 ist, Lautsprecher/HDMI (nie unbemerkt ans FM-1)
+                sink = audioout.effective_output(chosen)
+                if not sink:
+                    return
+                for _ in range(20):            # Chromiums Strom erscheint mit kurzer Verzögerung: früh verschieben
+                    time.sleep(0.1)
+                    note = route_webengine_audio(sink)
+                    if not note:
+                        self.audio_note = ""
+                        return
+                self.audio_note = note
+            threading.Thread(target=work, daemon=True, name="fm1c-studio-route").start()
+        return ""
+
+    # ------------------------------------------------------------ Bedienfläche, MIDI
+    def _on_event(self, m: dict):
+        if m.get("ev") == "ui" and m.get("action"):
+            self.ui_event.emit(str(m["action"]))
+
+    def show_panel(self, on: bool, bg: str = "", fg: str = ""):
+        if self.st is None:
+            return
+        with contextlib.suppress(S.StudioError):
+            self.st.backend.call("panel", on=bool(on), bg=bg, fg=fg, timeout=10)
+
+    def set_inputs(self, names: list[str]) -> list[str]:
+        """MIDI-Eingänge des Systems (USB-Keyboard …) in den Zwilling leiten -> Fehlermeldungen"""
+        from .. import sims
+        if self._inputs is None:
+            self._inputs = sims.SystemInputs(lambda name, data: self._midi_in(data))
+        self.cfg["inputs"] = list(names)
+        with contextlib.suppress(OSError):
+            config.save()
+        return self._inputs.set(list(names))
+
+    def input_names(self) -> list[str]:
+        from .. import sims
+        exclude = ()
+        if self.ctx.port is not None and not self.ctx.is_virtual:
+            exclude = (getattr(self.ctx.port, "in_name", "") or "",)
+        return sims.SystemInputs.available(exclude)
+
+    def _midi_in(self, data):
+        st = self.st
+        if st is None or not data or data[0] >= 0xF0:     # nur Kanal-Nachrichten (keine SysEx, kein Takt)
+            return
+        with contextlib.suppress(Exception):
+            st.play_midi(data)
+
+    def set_fm1_keys(self, on: bool):
+        self.cfg["fm1_keys"] = bool(on)
+        with contextlib.suppress(OSError):
+            config.save()
+        self._dev_changed()
+
+    def _fm1_listener(self, data, direction):
+        if direction == "in":
+            self._midi_in(data)
+
+    def _unhook_fm1(self):
+        if self._fm1_link is not None:
+            with contextlib.suppress(Exception):
+                self._fm1_link.remove_listener(self._fm1_listener)
+        self._fm1_link = None
+
+    def _dev_changed(self):
+        """Tasten des echten FM-1 spielen im Zwilling mit (nie die des Zwillings selbst)."""
+        link = self.ctx.link if (self.ctx.midi_connected and not self.ctx.is_virtual) else None
+        if not self.cfg.get("fm1_keys", True) or self.st is None:
+            link = None
+        if link is self._fm1_link:
+            return
+        self._unhook_fm1()
+        if link is not None:
+            link.add_listener(self._fm1_listener)
+            self._fm1_link = link
+
+    # ------------------------------------------------------------ virtuelles Gerät
+    def _virtual_ports(self) -> list[PortInfo]:
+        if self.st is None:
+            return []
+        label = f"Studio-Zwilling (Melodee {self.st.build.version.lstrip('v')})"
+        return [PortInfo(in_name=label, out_name=label, label=label, client=None, serial="STUDIO",
+                         usb_path="studio-twin", product="Studio-Zwilling", virtual=True)]
+
+    def _virtual_transport(self, port):
+        if self.st is None:
+            raise S.StudioError("Der Studio-Zwilling läuft nicht – erst die Seite „Studio“ öffnen.")
+        self._clock = None
+        QTimer.singleShot(0, self._update_clock)
+        return S.StudioTransport(self.st.backend)
+
+    def activate_virtual(self) -> bool:
+        """den Zwilling als aktives Gerät wählen (Geräteauswahl oben)."""
+        ports = self._virtual_ports()
+        if not ports:
+            return False
+        self.ctx.scan()
+        self.window._switching = True      # bewusster Wechsel: kein „FM-1 getrennt“-Hinweis
+        QTimer.singleShot(8000, lambda: setattr(self.window, "_switching", False))
+        self.ctx.connect_port(ports[0])
+        return True
+
+    # ------------------------------------------------------------ Beschreibung
+    def source_text(self) -> str:
+        s = self.source
+        if self.st is None:
+            return "Der Zwilling läuft noch nicht."
+        when = s.get("time", "")
+        with contextlib.suppress(ValueError):
+            when = dt.datetime.fromisoformat(when).strftime("%d.%m.%Y %H:%M")
+        kind = s.get("kind")
+        if kind == "device":
+            txt = f"vom FM-1 „{s.get('device', '?')}“ geholt am {when}"
+        elif kind == "backup":
+            txt = f"aus dem Backup „{Path(s.get('backup', '')).name}“ ({s.get('device') or 'unbekanntes Gerät'}), " \
+                  f"geöffnet am {when}"
+        elif kind == "state":
+            txt = f"Studio-Stand von „{s.get('profile_folder', '?')}“ ({when})"
+        elif kind == "new":
+            txt = "leer gestartet – noch nichts geladen"
+        else:
+            txt = "unbekannte Herkunft"
+        rej = s.get("rejected") or []
+        if rej:
+            from .. import backup
+            names = ", ".join(backup.object_title(i) for i in rej[:4]) + (" …" if len(rej) > 4 else "")
+            txt += (f". Nicht übernommen ({len(rej)}): {names} – diese Teile passen nicht zu Melodee "
+                    f"{self.st.build.version} und werden beim Zurückschreiben ausgelassen")
+        return txt

@@ -1,0 +1,433 @@
+{
+ "schema": 1,
+ "source": "tools/make_known_packages.py – nachgerechnet am 31.10.2026 mit den echten Paketen",
+ "loader_sha256": "ef1f2db89b011fa53e71df363f0122de0ea896618c53fb53e8da676322004541",
+ "loader_note": "ota.bin der Original-Pakete V13, V14, V15 und V16 ist byte-gleich",
+ "heads": {
+  "d9f43191777656de01c7bed4f9e9ba2e34e94832c5d2ed02c3fc7ab7a6d9bd67": "Bootkopf ab Werk (V13, V14, V15)",
+  "8f5228c2d6ea2068838ef4916f946bea877d14b07e6cfca49e41957f4c7b234f": "Bootkopf aus V16",
+  "53144a0a192b505e30cbdba2477c9771a05564cd7b6441ca12e85f16ca88b077": "Bootkopf der Community-Pakete (Melodee, SLOOP, Skiff, JIANT)"
+ },
+ "packages": [
+  {
+   "label": "v15",
+   "name": "Original-Firmware V15",
+   "identity": "FM-1_015",
+   "version": "",
+   "file_sha256": "db1642b2b6fa5c2cccb11ffd13878068bb28601678d3644049f99dc40e7edb8a",
+   "flash_bytes": 602112,
+   "head_sha256": "d9f43191777656de01c7bed4f9e9ba2e34e94832c5d2ed02c3fc7ab7a6d9bd67",
+   "app_sha256": "6edf3c37fb5bbbc33607c89375ee024d5477c17914d72221c8c68e58a8255686",
+   "family": "v15-layout",
+   "layout": {
+    "app": [
+     "0x4000",
+     "0x93000"
+    ],
+    "VM": [
+     "0x93000",
+     "0xe9000"
+    ],
+    "BTIF": [
+     "0xe9000",
+     "0xea000"
+    ],
+    "USR": [
+     "0xea000",
+     "0xfc000"
+    ]
+   },
+   "note": "offizielles M-VAVE V15 (FM-1_firmware_15.zip = FM-1.fwsc)"
+  },
+  {
+   "label": "v16",
+   "name": "Original-Firmware V16",
+   "identity": "FM-1_016",
+   "version": "",
+   "file_sha256": "d017fb65e70aca97ee29d944470c3515a74581df5c0576bf70de917c7b2b61d5",
+   "flash_bytes": 692224,
+   "head_sha256": "8f5228c2d6ea2068838ef4916f946bea877d14b07e6cfca49e41957f4c7b234f",
+   "app_sha256": "c47d8895963c070f9334efd6a617d7aae5daf8480ffcf3438ffb634c03de8ef7",
+   "family": "v16-layout",
+   "layout": {
+    "app": [
+     "0x4000",
+     "0xa9000"
+    ],
+    "VM": [
+     "0xba000",
+     "0xda000"
+    ],
+    "SEQ64": [
+     "0xda000",
+     "0xec000"
+    ],
+    "BTIF": [
+     "0xec000",
+     "0xed000"
+    ],
+    "USER": [
+     "0xed000",
+     "0xff000"
+    ]
+   },
+   "note": "M-VAVE V16 (Oktober 2026); README von aroum nennt a21368e0… – ungeklärt",
+   "app_prefix": {
+    "0x93000": "980ff51ae2d90004cf3887602ebd11cd31796977410eb77cc7faabad4023003c"
+   },
+   "sectors": {
+    "0x93000": "9f03d7938f03e0714a6203b2a0babdc8ec3c82e8bddeace94ffc6413d9019c0e",
+    "0x94000": "3d431aa0a1bc391b712bd296e63ff83e8ad578684cb6b7a839262298792f1008",
+    "0x95000": "e57655fd15257cc32c04ba57b0d3e833c7d306456d816929e0cdb706dbbef747",
+    "0x96000": "2b2c3d87643383111703252d4f0a61131fcd671ddf78ad5c3643db7c0d1aea39",
+    "0x97000": "ef9a4964083e9f14bb0a20cbc18d50d648206f0bbb4514468e6f9556f2a3048c",
+    "0x98000": "0ac15400fb441e3718f48de4eb723b7711c7b6fb6d00d99bc1386a9e2afd3baa",
+    "0x99000": "bb116509ba811f49df662e8115ef946a6b2b9b91f6af731e1b6517c3e6d9dfc5",
+    "0x9a000": "c8d8f4128f52e96ae4ec906b1bb37704b56850e1ec95b73c1a6f1510c5120462",
+    "0x9b000": "41ded48f66779085a22f4fef333e3c9be49b2211b8b298e8d081be6adcadafb6",
+    "0x9c000": "c691398f9c2b6af77dd9d16ab910d23bd00b035464252839c2a717cfc686121e",
+    "0x9d000": "4570161e35d0eb32221f78235d07febc83d725ba43becb4b46c680c1c3ed2daa",
+    "0x9e000": "4d8ec8b2d82a2eae60121af9c20bfb74d55e9543dc2474078b0343dc6ddcf0eb",
+    "0x9f000": "158e1b531772dcf1321b051104bbebb8523f0cd2626bd47fc24133c197ac1b99",
+    "0xa0000": "5e06ac2b683b17f4ad530a4c8f47c3b5f6a4ca7f403efe0156027f9141c046fc",
+    "0xa1000": "2f7a853019fc0bfa6be1b358275237cd0e78e64b90180f9c6b143613a65038e6",
+    "0xa2000": "5f958809ebdc4418945aadc06941ef7ddd94cede244456e45e63d9e9c82d89d5",
+    "0xa3000": "7812a3a1c5e9bc5c1d4b52a59877d8bfdfe544574764780e1fcb59b52ca07155",
+    "0xa4000": "fe81219b8fa2004492f1bd257c7baf4f2d4db79e75f31535778261f470807b5d",
+    "0xa5000": "97493d4b8774865fe231858b638b14cb328849f74e04d3b1a3b976064b87e4e3",
+    "0xa6000": "f8913eaf12b6971f0e3b23e67eb7bf3ab6f6023fb64ced6a2b053c7830c36c24",
+    "0xa7000": "b19548ad046cd833f16f075a99bc940346c14279c90ecbcd079f294735510917",
+    "0xa8000": "14d2bd0dc4c6ffb8e01fb23a122a819266ec9026a9fa69690151367c8f4490a1"
+   },
+   "blocks": {
+    "0x93000": "79a2816511f434da",
+    "0x93200": "7e7aba60b26da6df",
+    "0x93400": "feaf4242356737fa",
+    "0x93600": "6e251a874d56e306",
+    "0x93800": "78952f7b766f7492",
+    "0x93a00": "a1b5611617d647fe",
+    "0x93c00": "03f678707a9d746c",
+    "0x93e00": "8fd4c7d866902248",
+    "0x94000": "167ce009949f9266",
+    "0x94200": "b4d7a4ce00bde2c6",
+    "0x94400": "f19adf3f810c115e",
+    "0x94600": "5dc29de77dcaf497",
+    "0x94800": "2be4adfeed15d4b9",
+    "0x94a00": "7ee013555ab7660c",
+    "0x94c00": "832bf9ee59923a56",
+    "0x94e00": "ac4d2f8d7f644831",
+    "0x95000": "cf06bb10462bf86a",
+    "0x95200": "3a1c0b3a9d26ae1c",
+    "0x95400": "b120a3fdf0ac5acb",
+    "0x95600": "d4aba21b0c2cbea9",
+    "0x95800": "c51b971d31cc6612",
+    "0x95a00": "ae213d1779780d74",
+    "0x95c00": "4f5f6dd20da1b3ec",
+    "0x95e00": "8bb60ab558da865c",
+    "0x96000": "cd0a088f6063be9c",
+    "0x96200": "331a55253f9bc0af",
+    "0x96400": "afece292fe85b628",
+    "0x96600": "fd1a12eb73067be6",
+    "0x96800": "dc29a26d67e4b0ca",
+    "0x96a00": "e2d733ab7ee01a98",
+    "0x96c00": "8f3b28e25b65c10b",
+    "0x96e00": "620583e36b2824b5",
+    "0x97000": "b6b6845eb4155421",
+    "0x97200": "6d7e6ad755f61c6f",
+    "0x97400": "6c018d0f73b0dd77",
+    "0x97600": "7980abf4271df93f",
+    "0x97800": "385efe0c3f50f4e4",
+    "0x97a00": "0aaa410d8640a4d2",
+    "0x97c00": "b37a2b07fd3a2255",
+    "0x97e00": "bed28d057464642d",
+    "0x98000": "a78971a04c4a45cb",
+    "0x98200": "77d03e54eb68cf6b",
+    "0x98400": "04aaae0a3f854c38",
+    "0x98600": "344a887abf395a10",
+    "0x98800": "b7437e416b80db1c",
+    "0x98a00": "c6768fda07e25fdf",
+    "0x98c00": "de1f0c6c28068918",
+    "0x98e00": "bfd91c23ce0aca71",
+    "0x99000": "048ba9ad1b33b0ab",
+    "0x99200": "901fdf4e147cc6e6",
+    "0x99400": "8c22662ef98c3b06",
+    "0x99600": "43c8d93ac5234923",
+    "0x99800": "0ea763b6ac16ad95",
+    "0x99a00": "5672b7d607d12b7a",
+    "0x99c00": "e721637b0a63beed",
+    "0x99e00": "9f9fa066440d1549",
+    "0x9a000": "00903048daf8d179",
+    "0x9a200": "c3f2bd7c6ec27f57",
+    "0x9a400": "d202ca2a498a183a",
+    "0x9a600": "f8498c433b59380a",
+    "0x9a800": "3e1d03ff8022f866",
+    "0x9aa00": "b853b7c5707cb282",
+    "0x9ac00": "b10070951faaad30",
+    "0x9ae00": "86272b417f2139f2",
+    "0x9b000": "2b7e93e32a068838",
+    "0x9b200": "4f738768748306f3",
+    "0x9b400": "c5f3ac51af89edf9",
+    "0x9b600": "981a36c25edc23c8",
+    "0x9b800": "c851ca38ff6f8c2a",
+    "0x9ba00": "bb11cfa5455efc1e",
+    "0x9bc00": "3961292a100d7608",
+    "0x9be00": "45b173c7fffabf7a",
+    "0x9c000": "d797d0b288278fbf",
+    "0x9c200": "a038792d0994a3a1",
+    "0x9c400": "b8aa70b6f6c06a45",
+    "0x9c600": "fbac5efe8ec41037",
+    "0x9c800": "109fb29230c6feaf",
+    "0x9ca00": "19dc5a4d5385a93c",
+    "0x9cc00": "a4a3f442dd13dde6",
+    "0x9ce00": "5a42a42e4980a390",
+    "0x9d000": "63bcd612d99496a6",
+    "0x9d200": "d8c2855fa23808a8",
+    "0x9d400": "1dd8dea0b8fdd96f",
+    "0x9d600": "55cc9488d62910c0",
+    "0x9d800": "b761c3a976afb95e",
+    "0x9da00": "6d56f12d5074b6eb",
+    "0x9dc00": "45972240298f15cf",
+    "0x9de00": "24052f2e827576c9",
+    "0x9e000": "a42e1922d8c0e8b4",
+    "0x9e200": "b97f6379162c0121",
+    "0x9e400": "61b4507d3039203b",
+    "0x9e600": "f675eb68d1a83247",
+    "0x9e800": "89099387b3e3d250",
+    "0x9ea00": "3b30b54536589b2c",
+    "0x9ec00": "26a4bb9e94a27e4d",
+    "0x9ee00": "548343f56a2041be",
+    "0x9f000": "89676881b1f2a86e",
+    "0x9f200": "25dc5c3716b61310",
+    "0x9f400": "7b949bb10a056e75",
+    "0x9f600": "2307d1301efce449",
+    "0x9f800": "e79049258328421f",
+    "0x9fa00": "ee3b6e89ae52d0e0",
+    "0x9fc00": "4adfd612aca0c7da",
+    "0x9fe00": "5d74bf8dc950198d",
+    "0xa0000": "b3ecc605a316e81b",
+    "0xa0200": "fcc9c6be33927ef8",
+    "0xa0400": "a7b119d8b22bc5ec",
+    "0xa0600": "dae0810f1da6b40c",
+    "0xa0800": "a7f980a868d95d19",
+    "0xa0a00": "8890505fee581774",
+    "0xa0c00": "1092c5f8b169b0b3",
+    "0xa0e00": "e1a0cc611f5b638d",
+    "0xa1000": "98d53dffd4fe1b16",
+    "0xa1200": "0c6dd9a9f2e48e84",
+    "0xa1400": "bf7cd48b7c5b1920",
+    "0xa1600": "47a896bf07a4c3b0",
+    "0xa1800": "2826293bd806a6cf",
+    "0xa1a00": "d549484c950eff94",
+    "0xa1c00": "0db8365c37637c56",
+    "0xa1e00": "ed1b13660f2274a5",
+    "0xa2000": "89a1fda63922420f",
+    "0xa2200": "c65bb9de9cf3e93e",
+    "0xa2400": "beea470a374ea4d0",
+    "0xa2600": "d1dc87a13dca0501",
+    "0xa2800": "65a2ada469c0dae9",
+    "0xa2a00": "00a5595210eee2a4",
+    "0xa2c00": "0157dee17b3db426",
+    "0xa2e00": "933b476388a7579c",
+    "0xa3000": "9f47fa309aa3b16d",
+    "0xa3200": "c33320af9af738d2",
+    "0xa3400": "2ef373ebd6cf3d97",
+    "0xa3600": "7b0b6723f8b84a12",
+    "0xa3800": "7fb5c05a3e52e968",
+    "0xa3a00": "fcd83ecb22d31d5f",
+    "0xa3c00": "62e80a0c7a8ce908",
+    "0xa3e00": "8e51d313d4219822",
+    "0xa4000": "80370076e36756aa",
+    "0xa4200": "e0ac0862f6342497",
+    "0xa4400": "fb668e790e84e84e",
+    "0xa4600": "b1ac21a1d9e2cf0a",
+    "0xa4800": "5163b3c9a7a96fea",
+    "0xa4a00": "9ed4b9433405e817",
+    "0xa4c00": "7fbbb9f4fc27d504",
+    "0xa4e00": "9e5d6f9621b77e64",
+    "0xa5000": "e360e9117e61c753",
+    "0xa5200": "86b98df86091e659",
+    "0xa5400": "e66e16b5930b88ed",
+    "0xa5600": "ed61572bc2e780fb",
+    "0xa5800": "56b7418db266703f",
+    "0xa5a00": "f8e136157c5dc63a",
+    "0xa5c00": "087497f5388e2b32",
+    "0xa5e00": "ce888580d5491885",
+    "0xa6000": "e3d431d86c8286aa",
+    "0xa6200": "9f2a6efff013a9be",
+    "0xa6400": "a8251dd512c99dfc",
+    "0xa6600": "daffaf38bf0c314b",
+    "0xa6800": "273ee7560c130ae0",
+    "0xa6a00": "49b7481a07bfd797",
+    "0xa6c00": "07262efa9f72e0f2",
+    "0xa6e00": "65f955959533dfaf",
+    "0xa7000": "7b4dc1fc30413892",
+    "0xa7200": "e2698022edde76f0",
+    "0xa7400": "2d412199d56530dc",
+    "0xa7600": "babade68f0ee8f97",
+    "0xa7800": "91c7702e9ee5e9c1",
+    "0xa7a00": "c54ad090013ad72a",
+    "0xa7c00": "a9408f9a53df2efe",
+    "0xa7e00": "64e588e22f547f79",
+    "0xa8000": "4410073b26ffe1eb",
+    "0xa8200": "9f56cda75fefeab9",
+    "0xa8400": "9f56cda75fefeab9",
+    "0xa8600": "9f56cda75fefeab9",
+    "0xa8800": "9f56cda75fefeab9",
+    "0xa8a00": "9f56cda75fefeab9",
+    "0xa8c00": "9f56cda75fefeab9",
+    "0xa8e00": "d636cb994ea3b402"
+   }
+  },
+  {
+   "label": "melodee_1.5.1",
+   "name": "Melodee 1.5.1",
+   "identity": "FM-1_91051",
+   "version": "Melodee 1.5.1",
+   "file_sha256": "172afb5b000f093bbe060922e76e11cd9334b12895a7e659bd20da515fb2d640",
+   "flash_bytes": 602112,
+   "head_sha256": "53144a0a192b505e30cbdba2477c9771a05564cd7b6441ca12e85f16ca88b077",
+   "app_sha256": "2df3cf4a9ed989438703c62e0b57a5c0a5557de589d35a2ca5c8f01d08c3d892",
+   "family": "v15-layout",
+   "layout": {
+    "app": [
+     "0x4000",
+     "0x93000"
+    ],
+    "VM": [
+     "0x93000",
+     "0xe9000"
+    ],
+    "BTIF": [
+     "0xe9000",
+     "0xea000"
+    ],
+    "USR": [
+     "0xea000",
+     "0xfc000"
+    ]
+   }
+  },
+  {
+   "label": "melodee_1.6.0-rc.7",
+   "name": "Melodee 1.6.0-rc.7",
+   "identity": "FM-1_91060",
+   "version": "Melodee 1.6.0-rc.7",
+   "file_sha256": "607f746ac7c068fd452035831d8c96368c23b4afc4246e8dbd900815acb83d6a",
+   "flash_bytes": 602112,
+   "head_sha256": "53144a0a192b505e30cbdba2477c9771a05564cd7b6441ca12e85f16ca88b077",
+   "app_sha256": "9b12f556ace27b3fa4718d3c15b96b38046d8c55f07666917b4c400d719f257a",
+   "family": "v15-layout",
+   "layout": {
+    "app": [
+     "0x4000",
+     "0x93000"
+    ],
+    "VM": [
+     "0x93000",
+     "0xe9000"
+    ],
+    "BTIF": [
+     "0xe9000",
+     "0xea000"
+    ],
+    "USR": [
+     "0xea000",
+     "0xfc000"
+    ]
+   },
+   "note": "SHA-256 laut SHA256SUMS des GitHub-Releases keremimo/melodee v1.6.0-rc.7",
+   "resources": {
+    "length": 53844,
+    "crc": 540398389,
+    "sha256": "a952ed33d3abf49d2cfe354f9f75390a8cd014fc29285668d8f756efd7f3fff6"
+   }
+  },
+  {
+   "label": "sloop_2.8.3",
+   "name": "SLOOP 2.8.3",
+   "identity": "FM-1_900",
+   "version": "SLOOP 2.8.3",
+   "file_sha256": "5444afd3c69c409352e1aed35a56205f13f11e60790de146593c4618a43f3528",
+   "flash_bytes": 602112,
+   "head_sha256": "53144a0a192b505e30cbdba2477c9771a05564cd7b6441ca12e85f16ca88b077",
+   "app_sha256": "90fefe4f2c4c69fbdd5b5990c2f0d28df3682b1eb44a48faaab927b8bf7c51cf",
+   "family": "v15-layout",
+   "layout": {
+    "app": [
+     "0x4000",
+     "0x93000"
+    ],
+    "VM": [
+     "0x93000",
+     "0xe9000"
+    ],
+    "BTIF": [
+     "0xe9000",
+     "0xea000"
+    ],
+    "USR": [
+     "0xea000",
+     "0xfc000"
+    ]
+   }
+  },
+  {
+   "label": "skiff_2.0.3",
+   "name": "Skiff 2.0.3 (standard)",
+   "identity": "FM-1_720",
+   "version": "",
+   "file_sha256": "c4cda17ca1066201c9fa1870d8135703dcf78677763804590cca217748114677",
+   "flash_bytes": 602112,
+   "head_sha256": "53144a0a192b505e30cbdba2477c9771a05564cd7b6441ca12e85f16ca88b077",
+   "app_sha256": "47861f1e7788c8b095b7bcbdb50d654eb69fd29a06552dcee5353ecfe858728e",
+   "family": "v15-layout",
+   "layout": {
+    "app": [
+     "0x4000",
+     "0x93000"
+    ],
+    "VM": [
+     "0x93000",
+     "0xe9000"
+    ],
+    "BTIF": [
+     "0xe9000",
+     "0xea000"
+    ],
+    "USR": [
+     "0xea000",
+     "0xfc000"
+    ]
+   }
+  },
+  {
+   "label": "jiant_0.9.9",
+   "name": "JIANT FM 0.9.9",
+   "identity": "FM-1_909",
+   "version": "",
+   "file_sha256": "f8aeb1bdcd77320fc2773231e348e33bdfe46e2c8a85027336155c560d88fb7c",
+   "flash_bytes": 602112,
+   "head_sha256": "53144a0a192b505e30cbdba2477c9771a05564cd7b6441ca12e85f16ca88b077",
+   "app_sha256": "df7bccbab1fc52bcc6fd9202ea350a60498d070fa3b35aefca11aa16356db304",
+   "family": "v15-layout",
+   "layout": {
+    "app": [
+     "0x4000",
+     "0x93000"
+    ],
+    "VM": [
+     "0x93000",
+     "0xe9000"
+    ],
+    "BTIF": [
+     "0xe9000",
+     "0xea000"
+    ],
+    "USR": [
+     "0xea000",
+     "0xfc000"
+    ]
+   }
+  }
+ ]
+}

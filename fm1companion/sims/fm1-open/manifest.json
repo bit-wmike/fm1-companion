@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "name": "fm1-open",
+  "title": "M-VAVE FM1 Open (aus dem offiziellen Quellcode gebaut)",
+  "version": "V14",
+  "source_repo": "https://github.com/m-vave/fm1_open",
+  "ref": "4c7496daac04a95ff10d1afdcc8f9ead2dbabc41",
+  "commit": "4c7496daac04a95ff10d1afdcc8f9ead2dbabc41",
+  "license": "GPL-3.0-only WITH GPL-3.0-linking-exception (APP); siehe THIRD_PARTY.md",
+  "build_date": "2026-10-30T11:01:24Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE.md": {
+      "sha256": "fe7344af68a6e65d0cf623e3eca1ff4a4d751ba538bffbc5248134b79d02f1fd",
+      "size": 38431
+    },
+    "NOTICE": {
+      "sha256": "12642685ddaa1fc5b24194bc7efbef542972ca794f6ac1753ecebac189053538",
+      "size": 1484
+    },
+    "THIRD_PARTY.md": {
+      "sha256": "c10451a1c0b368ec926e86b9296eb0c96c790d4d4768ad07e91b09ca9ea4bfa5",
+      "size": 142314
+    },
+    "index.html": {
+      "sha256": "af48030fb52fe8cc6592b847583cab9affcecf3bc5e4049978213979878ec97f",
+      "size": 559196
+    },
+    "simulator.wasm": {
+      "sha256": "a62ea3c162750815e8b18b5760ba24c4b5e12fdcd690ce69c038c3c76f3c9b80",
+      "size": 295723
+    }
+  },
+  "entry": "index.html",
+  "midi": "webmidi+inject",
+  "kind": "workbench"
+}

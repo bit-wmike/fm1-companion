@@ -1,0 +1,46 @@
+.TH FM1-COMPANION 1 "November 2026" "FM-1 Companion Suite 2.3.1" "Benutzerbefehle"
+.SH NAME
+fm1-companion \- Desktop-Suite für den M-VAVE FM-1
+.SH ÜBERSICHT
+.B fm1-companion
+[\fB\-\-demo\fR] [\fB\-\-check\fR] [\fB\-\-syscheck\fR] [\fB\-\-version\fR] [\fB\-\-no\-splash\fR] [\fB\-\-debug\fR]
+.SH BESCHREIBUNG
+Firmware installieren und wechseln, Backups, Projekte, Studio-Zwilling (WAV-Export), Presets, Samples, MIDI, Simulator und Aufnahme
+für den Taschen-Synthesizer M-VAVE FM-1 mit Firmwares der Felucca-Familie (Melodee, Skiff, SLOOP).
+.SH OPTIONEN
+.TP
+.B \-\-demo
+startet mit zwei simulierten FM-1 (ohne Gerät).
+.TP
+.B \-\-check
+prüft die benötigten Systempakete und zeigt den apt-Befehl für fehlende.
+.TP
+.B \-\-syscheck
+durchsucht das Kernel-Protokoll nach USB-, Strom- und Audio-Problemen und gibt einen Bericht aus.
+.TP
+.B \-\-version
+zeigt die Version.
+.TP
+.B \-\-no\-splash
+ohne Startbildschirm.
+.TP
+.B \-\-debug
+ausführliches Protokoll.
+.SH UMGEBUNG
+.TP
+.B FM1C_NO_NET=1
+keine automatischen Netzzugriffe (Update-Suche beim Anstecken, Katalog-Aktualisierung, Vorschaubilder);
+Katalog und Link-Import nutzen nur den mitgelieferten Stand.
+.SH DATEIEN
+.TP
+.I ~/FM-1/
+Backups, Projekte, Samples, Kits, Aufnahmen, Firmware (wird nie automatisch gelöscht).
+.TP
+.I ~/.config/fm1-companion/config.json
+Einstellungen (nur für den Benutzer lesbar, 0600).
+.TP
+.I ~/.local/state/fm1-companion/logs/
+Protokolle.
+.SH LIZENZ
+GPL-3.0-only. Inoffizielles Community-Projekt, nicht mit M-VAVE verbunden. Keine Gewährleistung
+(GPL-3.0, Abschnitte 15 und 16); Flashen und Rettung auf eigenes Risiko.

@@ -1,0 +1,11 @@
+[    0.000000] Machine model: Raspberry Pi 5 Model B Rev 1.0
+[    1.048313] usb 1-1: New USB device found, idVendor=1209, idProduct=0001, bcdDevice= 1.00
+[    1.048330] usb 1-1: Product: Melodee FM-1
+[  301.552002] hwmon hwmon1: Undervoltage detected!
+[  303.552151] hwmon hwmon1: Voltage normalised
+[  410.004410] hwmon hwmon1: Undervoltage detected!
+[  611.100231] usb usb1-port2: over-current condition
+[  700.204410] xhci-hcd xhci-hcd.1: xHCI host not responding to stop endpoint command
+[  700.204460] xhci-hcd xhci-hcd.1: xHCI host controller not responding, assume dead
+[  700.204478] xhci-hcd xhci-hcd.1: HC died; cleaning up
+[  700.204890] usb 1-1: USB disconnect, device number 2

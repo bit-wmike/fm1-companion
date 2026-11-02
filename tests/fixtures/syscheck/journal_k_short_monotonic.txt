@@ -1,0 +1,7 @@
+-- Journal begins at Mon 2026-10-26 08:12:01 CET, ends at Thu 2026-10-30 10:44:12 CET. --
+[    0.000000] pi kernel: Booting Linux on physical CPU 0x0000000000 [0x414fd0b1]
+[    1.048313] pi kernel: usb 1-1: New USB device found, idVendor=1209, idProduct=0001, bcdDevice= 1.00
+[    1.048330] pi kernel: usb 1-1: Product: Melodee FM-1
+[    1.048334] pi kernel: usb 1-1: Manufacturer: Ellic Studio
+[  301.552002] pi kernel: hwmon hwmon1: Undervoltage detected!
+[  845.123456] pi kernel: usb 1-1: USB disconnect, device number 2

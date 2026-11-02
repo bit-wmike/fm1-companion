@@ -1,0 +1,15 @@
+M-VAVE FM1 Open V14 – browser workbench, built from the unmodified sources at
+https://github.com/m-vave/fm1_open commit 4c7496daac04a95ff10d1afdcc8f9ead2dbabc41 (https://github.com/m-vave/fm1_open/archive/4c7496daac04a95ff10d1afdcc8f9ead2dbabc41.tar.gz).
+Licence of the APP and web sources: GPL-3.0-only WITH the FM1 SDK linking exception (LICENSE.md);
+sample_metadata.inc MIT; DX7 engine derived from msfa/Dexed (Apache-2.0); further notices in THIRD_PARTY.md.
+Changes for FM-1 Companion (tools/build_sims.py): the wasm is a separate file, the firmware update tab
+is hidden and has no firmware package, ../_host/fm1sim-host.js is loaded (recording, MIDI, latency).
+
+Corresponding Source (GNU GPL 3.0, section 6)
+The complete corresponding source of this build is https://github.com/m-vave/fm1_open at commit 4c7496daac04a95ff10d1afdcc8f9ead2dbabc41
+together with FM-1 Companion's build script tools/build_sims.py. A tarball of exactly this commit
+(fm1_open-4c7496daac04a95ff10d1afdcc8f9ead2dbabc41.tar.gz, made with tools/make_source_tarballs.py) is attached to every
+FM-1 Companion release that ships this build: https://github.com/bit-wmike/fm1-companion/releases
+Written offer: for at least three years after the last release that ships this build, the maintainers of
+FM-1 Companion will give anyone a copy of that corresponding source on request (https://github.com/bit-wmike/fm1-companion/issues),
+free of charge apart from the cost of physically performing the distribution.

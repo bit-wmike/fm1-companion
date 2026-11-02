@@ -1,0 +1,75 @@
+name: Hardware-Testbericht
+description: Du hast eine Funktion an einem echten FM-1 ausprobiert – egal ob es geklappt hat oder nicht.
+labels: ["hardware-test"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Testberichte von echter Hardware helfen am meisten (siehe docs/UNGETESTET.md). Bitte nur mit Backup und auf
+        eigenes Risiko testen. Keine Seriennummern, Tokens oder persönlichen Daten angeben.
+  - type: input
+    id: version
+    attributes:
+      label: Version der Suite
+      placeholder: "2.3.1"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Gerät
+      description: Modell/Revision, falls bekannt (z. B. Flash-Chip laut „Ist mein FM-1 sauber?“)
+      placeholder: "M-VAVE FM-1"
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware vorher → nachher
+      placeholder: "z. B. Original V15 → Melodee 1.6.0"
+    validations:
+      required: true
+  - type: input
+    id: computer
+    attributes:
+      label: Rechner und System
+      placeholder: "z. B. Raspberry Pi 5, Raspberry Pi OS Bookworm"
+  - type: dropdown
+    id: feature
+    attributes:
+      label: Getestete Funktion
+      options:
+        - Firmware installieren / wechseln
+        - Zurück zum Original (V15/V16)
+        - Unterbrochene Installation abschließen (Update-Modus)
+        - Schrift & Werkssounds nachschreiben
+        - Rettung Stufe 2 (ROM-Bootmodus)
+        - Ist mein FM-1 sauber? / Reste aufräumen
+        - Studio – aufs FM-1 zurückschreiben
+        - Backup / Wiederherstellen
+        - Presets, Samples, Projekte schreiben
+        - Etwas anderes
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Was hast du gemacht?
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Ergebnis
+      options:
+        - Hat funktioniert
+        - Hat teilweise funktioniert
+        - Hat nicht funktioniert, Gerät läuft aber
+        - Gerät startete danach nicht mehr / musste gerettet werden
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Details, Meldungen der App
+      render: text

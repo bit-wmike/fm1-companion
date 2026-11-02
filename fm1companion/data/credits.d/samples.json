@@ -1,0 +1,14 @@
+{"entries": [
+ {"name": "SEA codec (Simple Embedded Audio)", "authors": "Dani Biró; FM1-Anpassung M-VAVE", "url": "https://github.com/Daninet/sea-codec",
+  "license": "MIT", "kind": "Code", "use": "SEA5-Encoder/-Decoder und Quantisierungstabellen in fm1open.py (Python-Port aus FM1 Open V14)"},
+ {"name": "M-VAVE FM1 Open V14 – Datei-Protokoll und Sample-Bank", "authors": "M-VAVE", "url": "https://github.com/m-vave/fm1_open",
+  "license": "GPL-3.0-only WITH GPL-3.0-linking-exception", "kind": "Code", "use": "Protokoll und Bank-Format in fm1open.py und tests/fm1open_sim.py nachgebaut (transfer.c, samples.c, WebUpdate.js, Samples.js)"},
+ {"name": "VCSL – Versilian Community Sample Library", "authors": "Versilian Studios (Sam Gossner)", "url": "https://github.com/sgossner/VCSL",
+  "license": "CC0-1.0", "kind": "Samples (Download auf Wunsch)", "use": "Sample-Paket im Reiter „Sample-Pakete“"},
+ {"name": "VSCO 2 Community Edition", "authors": "Versilian Studios (Sam Gossner)", "url": "https://github.com/sgossner/VSCO-2-CE",
+  "license": "CC0-1.0", "kind": "Samples (Download auf Wunsch)", "use": "Sample-Paket im Reiter „Sample-Pakete“"},
+ {"name": "Dirt-Samples", "authors": "TidalCycles-Gemeinschaft", "url": "https://github.com/tidalcycles/Dirt-Samples",
+  "license": "unklar (keine Lizenzangabe)", "kind": "Samples (Download auf Wunsch)", "use": "Sample-Paket, als „Lizenz unklar“ gekennzeichnet"},
+ {"name": "Tidal Drum Machines", "authors": "ritchse u. a.", "url": "https://github.com/ritchse/tidal-drum-machines",
+  "license": "unklar (keine Lizenzangabe)", "kind": "Samples (Download auf Wunsch)", "use": "Sample-Paket, als „Lizenz unklar“ gekennzeichnet"}
+]}

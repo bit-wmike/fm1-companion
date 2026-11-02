@@ -1,0 +1,720 @@
+# SPDX-License-Identifier: GPL-3.0-only
+"""User-Presets von Melodee (gemeinsame Bibliothek, Befehl 80, ab Melodee 1.5) und die lokale Preset-Bibliothek.
+
+Protokoll: web/EDITOR_PROTOCOL.md "Shared user library (command 80)", nachgebaut wie der Editor
+(web/editor.html ``sharedBank``) und die Firmware (firmware/src/editor_library.c):
+
+  Anfrage  80: op slotLo slotHi args…      Antwort: op slotLo slotHi rc …   (rc 0 ok, 1 ungültig/leer, 2 abgelehnt/Flash)
+  op 0 Liste (count 1..16) · 1 Lesen · 2 Schreiben · 3 Spur speichern · 4 auf Spur laden · 5 Löschen · 6 Umbenennen
+
+Werte sind v14 mit Offset 8192 (wie Firmware ed_rv / Editor v14enc) – nicht das Zweierkomplement aus protocol.py.
+Ältere Firmware ohne Befehl 80 (Melodee < 1.5: UP_* 16–21, 64 Plätze) wird erkannt und klar abgelehnt.
+"""
+from __future__ import annotations
+
+import base64
+import datetime as dt
+import hashlib
+import io
+import json
+import re
+import zipfile
+from dataclasses import dataclass, field
+from pathlib import Path
+
+CMD_LIBRARY = 80
+CMD_DESC = 5
+CMD_FAV_GET = 37
+CMD_FAV_SET = 38
+CMD_FM6_PUT = 69
+SLOTS = 384
+FLASH_TIMEOUT = 2.5
+FORMAT = "fm1preset"
+FORMAT_VERSION = 1
+
+NATIVE_SIZE = {1: 128, 2: 144, 3: 138, 4: 54}
+NATIVE_ENGINE = {1: 12, 2: 15, 3: 19, 4: 10}
+NATIVE_NAMES = {0: "Parameter", 1: "DX7-Voice", 2: "CZ-1-Ton", 3: "Prophet-Programm", 4: "Drum-Patch"}
+# feste Engine-Nummern (EDITOR_PROTOCOL.md "engine byte"; core.h) – falls INFO keine Namen liefert
+ENGINE_NAMES = {0: "ANALOG", 1: "DIGITAL", 2: "PHASE", 3: "SID", 4: "SAMPLE", 5: "VOICE", 6: "TRIO", 7: "WHEEL",
+                8: "GRAIN", 9: "PHYS", 10: "DRUM", 11: "NOISE", 12: "FM6", 13: "SLICE", 14: "OBXF", 15: "CZ-1",
+                19: "PROPHET", 21: "MIDI Track"}
+ENGINE_ORDER = ["PROPHET", "ANALOG", "FM6", "DIGITAL", "PHASE", "CZ-1", "SID", "VOICE", "NOISE", "DRUM", "MIDI Track"]
+
+
+class PresetError(Exception):
+    pass
+
+
+def engine_display_name(e: int, engines=None) -> str:
+    """einheitlicher Anzeigename einer Engine-Nummer für alle Seiten (Presets, FM-1, Voices).
+    engines: Namensliste aus INFO (info.engines), falls vorhanden – wird nur benutzt, wenn sie einen
+    echten Namen liefert; sonst die festen Namen aus dem Protokoll (z. B. 12 -> "FM6")."""
+    try:
+        e = int(e)
+    except (TypeError, ValueError):
+        return str(e)
+    if engines and len(engines) > 12 and 0 <= e < len(engines):      # kurze Listen: Nummern anders belegt
+        n = str(engines[e] or "").strip()
+        if n and n != "-" and not n.lower().startswith("engine"):
+            return n
+    return ENGINE_NAMES.get(e, f"Engine {e}")
+
+
+# ------------------------------------------------------------- Kodierung ---
+
+def v14enc(v: int) -> list[int]:
+    u = max(-8192, min(8191, int(round(v)))) + 8192
+    return [u & 0x7F, (u >> 7) & 0x7F]
+
+
+def v14dec(lo: int, hi: int) -> int:
+    return (lo | hi << 7) - 8192
+
+
+def str_z(s: str) -> list[int]:
+    return [ord(c) & 0x7F for c in s] + [0]
+
+
+def pack7(raw) -> list[int]:
+    """Editor czBkPack: je 7 Bytes ein Maskenbyte mit den obersten Bits vorneweg."""
+    out = []
+    raw = list(raw)
+    for i in range(0, len(raw), 7):
+        g = raw[i:i + 7]
+        out.append(sum(((x >> 7) & 1) << j for j, x in enumerate(g)))
+        out += [x & 127 for x in g]
+    return out
+
+
+def unpack7(a) -> list[int]:
+    b, i = [], 0
+    a = list(a)
+    while i < len(a):
+        m = a[i]
+        i += 1
+        n = min(7, len(a) - i)
+        if m >> n:
+            raise PresetError("ungültige gepackte Bytes")
+        for j in range(n):
+            b.append(a[i] | ((m >> j) & 1) << 7)
+            i += 1
+    return b
+
+
+def clean_name(s: str, limit: int) -> str:
+    return re.sub(r"[^ -~]", " ", str(s or "")).strip()[:limit]
+
+
+# Umlaute und ß werden umgeschrieben statt verschluckt (das FM-1 nimmt nur ASCII 32–126)
+_TRANSLIT = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue", "ß": "ss",
+                           "é": "e", "è": "e", "à": "a", "–": "-", "—": "-", "„": '"', "“": '"', "”": '"', "’": "'"})
+
+
+def name_limit(engine: int) -> int:
+    """12 Zeichen für normale Presets, 20 für native Voices (FM6, CZ-1, Prophet) – wie die Firmware (op 2/6)."""
+    return 20 if engine in (NATIVE_ENGINE[1], NATIVE_ENGINE[2], NATIVE_ENGINE[3]) else 12
+
+
+def fit_name(s: str, limit: int) -> tuple[str, str]:
+    """Namen an das FM-1 anpassen -> (Name, Erklärung). Die Erklärung ist leer, wenn nichts geändert wurde;
+    sonst sagt sie in einem Satz, was warum geändert wurde (Umlaute umgeschrieben, Sonderzeichen entfernt,
+    auf limit Zeichen gekürzt)."""
+    raw = str(s or "")
+    t = raw.translate(_TRANSLIT)
+    notes = []
+    if t != raw:
+        notes.append("Umlaute/Sonderzeichen umgeschrieben")
+    t2 = re.sub(r"[^ -~]", "", t)
+    if t2 != t:
+        notes.append("Zeichen außerhalb von ASCII entfernt")
+    t2 = re.sub(r"\s+", " ", t2).strip()
+    if len(t2) > limit:
+        notes.append(f"auf {limit} Zeichen gekürzt")
+        t2 = t2[:limit].rstrip()
+    why = ""
+    if notes:
+        why = (f"Das FM-1 speichert Namen nur mit Buchstaben, Ziffern und einfachen Zeichen (höchstens {limit}). "
+               f"Daher: {', '.join(notes)} → „{t2}“.")
+    return t2, why
+
+
+class _R:
+    def __init__(self, a):
+        self.a, self.i = list(a), 0
+
+    def b(self):
+        if self.i >= len(self.a):
+            raise PresetError("Antwort zu kurz")
+        self.i += 1
+        return self.a[self.i - 1]
+
+    def v(self):
+        lo = self.b()
+        return v14dec(lo, self.b())
+
+    def s(self):
+        j = self.i
+        while j < len(self.a) and self.a[j]:
+            j += 1
+        if j >= len(self.a):
+            raise PresetError("Text ohne Ende")
+        t = bytes(self.a[self.i:j]).decode("latin-1")
+        self.i = j + 1
+        return t
+
+
+# ---------------------------------------------------------- Fähigkeiten ---
+
+@dataclass
+class Caps:
+    shared: bool = False           # INFO-Tag "U" (55 01 lo hi) oder Befehl 80 antwortet
+    total: int = SLOTS
+    legacy: bool = False           # Melodee < 1.5 (UP_* 16–21)
+    p_count: int = 0
+    p_e0: int = 0
+    ntrk: int = 4
+    engines: list = field(default_factory=list)
+    general_ns: int | None = None  # Favoriten-Kategorie der User-Plätze (FAV_GET/SET)
+    favorites: bool = False
+    version: str = ""
+
+    def engine_name(self, e: int) -> str:
+        return engine_display_name(e, self.engines)
+
+
+def parse_caps(info) -> Caps:
+    """aus protocol.Info (mit .raw) die Fähigkeiten wie der Editor (parse[CMD.INFO]) lesen."""
+    c = Caps(p_count=info.p_count, p_e0=info.p_e0, ntrk=info.ntrk or 1, engines=list(info.engines),
+             version=info.version)
+    raw = list(info.raw or [])
+    try:
+        r = _R(raw)
+        r.s()
+        ne = r.b()
+        for _ in range(4):
+            r.b()
+        for _ in range(ne):
+            r.s()
+        if r.i < len(raw):
+            r.b()                                  # NTRK
+        tr = raw[r.i:]
+    except PresetError:
+        tr = []
+    ui_caps = tr[3] & 127 if len(tr) >= 4 and tr[0] in (0, 16) and tr[1] == 0x55 and tr[2] == 1 else 0
+    for i in range(25, len(tr) - 3):
+        if tr[i] == 0x55 and tr[i + 1] == 1:
+            c.shared, c.total = True, tr[i + 2] | tr[i + 3] << 7
+            break
+    for i in range(25, len(tr) - 6):
+        if tr[i] == 0x35 and tr[i + 1] == 1 and tr[i + 2] == 19:
+            c.general_ns = tr[i + 3]
+            break
+    c.favorites = bool(ui_caps & 8)
+    if c.general_ns is None:
+        c.general_ns = info.p_count and len(info.engines)
+    return c
+
+
+def probe(link, info) -> Caps:
+    """Fähigkeiten feststellen; wenn INFO nichts sagt, mit einer harmlosen Liste (op 0, 1 Platz) fragen."""
+    c = parse_caps(info)
+    if not c.shared:
+        try:
+            a = link.request(CMD_LIBRARY, [0, 0, 0, 1], timeout=1.0, retries=0)
+            if len(a) >= 7 and a[0] == 0 and a[3] == 0:
+                c.shared, c.total = True, a[5] | a[6] << 7
+        except Exception:                                  # noqa: BLE001 – keine Antwort = kein Befehl 80
+            pass
+    if not c.shared:
+        try:
+            a = link.request(16, [0, 1], timeout=0.8, retries=0)     # UP_LIST
+            c.legacy = len(a) >= 3
+        except Exception:                                  # noqa: BLE001
+            pass
+    if c.shared and not c.favorites:
+        try:                                               # FAV_GET ist rein lesend
+            a = link.request(CMD_FAV_GET, [c.general_ns or 0, *v14enc(0), 1], timeout=0.6, retries=0)
+            c.favorites = bool(a) and a[0] == 0
+        except Exception:                                  # noqa: BLE001
+            pass
+    return c
+
+
+def refusal_text(c: Caps) -> str:
+    if c.legacy:
+        return ("Diese Melodee-Version hat noch die alte Preset-Ablage (64 Plätze, vor 1.5). Die Preset-Bibliothek "
+                "der Suite arbeitet mit der gemeinsamen Bibliothek ab Melodee 1.5 – bitte Melodee aktualisieren "
+                "(vorher ein Backup machen). Bis dahin: Presets im Editor unter „Library“ bearbeiten.")
+    return ("Diese Firmware hat keine gemeinsame Preset-Bibliothek (Befehl 80, gibt es ab Melodee 1.5). "
+            "DX7-Voices kannst du trotzdem als SysEx senden (Presets › FM-Voices).")
+
+
+# --------------------------------------------------------------- Preset ---
+
+@dataclass
+class Preset:
+    name: str = ""
+    engine: int = 0
+    engine_name: str = ""
+    params: list = field(default_factory=list)       # P_COUNT Werte in Protokoll-Reihenfolge
+    legacy: list = field(default_factory=lambda: [0] * 32)
+    native_kind: int = 0
+    native: bytes = b""
+    favorite: bool = False
+    p_count: int = 0
+    p_e0: int = 0
+    tags: list = field(default_factory=list)
+    device: str = ""
+    firmware: str = ""
+    read_date: str = ""
+    slot: int | None = None                          # Herkunftsplatz (0-basiert)
+    used: bool = True
+    path: Path | None = None
+
+    @property
+    def label(self) -> str:
+        return f"U{self.slot + 1:03d}" if self.slot is not None else ""
+
+    def content_hash(self) -> str:
+        h = hashlib.sha256()
+        h.update(json.dumps([self.engine, self.name, list(self.params), self.native_kind], separators=(",", ":")).encode())
+        h.update(bytes(self.native))
+        return h.hexdigest()[:16]
+
+    def same_sound(self, other: "Preset") -> bool:
+        return (self.engine, list(self.params), self.native_kind, bytes(self.native)) == \
+            (other.engine, list(other.params), other.native_kind, bytes(other.native))
+
+    def to_json(self) -> dict:
+        return {"format": FORMAT, "version": FORMAT_VERSION, "name": self.name, "engine": self.engine,
+                "engine_name": self.engine_name, "params": list(self.params), "p_count": self.p_count or len(self.params),
+                "p_e0": self.p_e0, "legacy": list(self.legacy), "native_kind": self.native_kind,
+                "native": base64.b64encode(bytes(self.native)).decode(), "favorite": self.favorite,
+                "tags": list(self.tags), "device": self.device, "firmware": self.firmware,
+                "read_date": self.read_date, "slot": self.slot, "hash": self.content_hash()}
+
+    @classmethod
+    def from_json(cls, d: dict) -> "Preset":
+        if d.get("format") != FORMAT:
+            raise PresetError("keine .fm1preset-Datei")
+        if int(d.get("version", 1)) > FORMAT_VERSION:
+            raise PresetError("Datei aus einer neueren Version der Suite")
+        p = cls(name=str(d.get("name", "")), engine=int(d.get("engine", 0)), engine_name=str(d.get("engine_name", "")),
+                params=[int(x) for x in d.get("params", [])], legacy=[int(x) & 127 for x in d.get("legacy", [0] * 32)][:32],
+                native_kind=int(d.get("native_kind", 0)), native=base64.b64decode(d.get("native", "") or ""),
+                favorite=bool(d.get("favorite")), p_count=int(d.get("p_count", 0)), p_e0=int(d.get("p_e0", 0)),
+                tags=[str(t) for t in d.get("tags", [])], device=str(d.get("device", "")),
+                firmware=str(d.get("firmware", "")), read_date=str(d.get("read_date", "")), slot=d.get("slot"))
+        p.validate()
+        return p
+
+    def validate(self):
+        if self.native_kind not in NATIVE_SIZE and self.native_kind != 0:
+            raise PresetError(f"unbekannte Art {self.native_kind}")
+        if self.native_kind:
+            if len(self.native) != NATIVE_SIZE[self.native_kind]:
+                raise PresetError("Native Daten haben die falsche Länge")
+            if self.engine != NATIVE_ENGINE[self.native_kind]:
+                raise PresetError("Native Daten passen nicht zur Engine")
+        if any(not -64 <= v <= 127 for v in self.params):
+            raise PresetError("Parameterwert außerhalb −64…127")
+
+    @property
+    def kind_text(self) -> str:
+        return NATIVE_NAMES.get(self.native_kind, "?")
+
+    def dx7_voice(self):
+        """bei FM6-Presets die DX7-Voice (VCED), sonst None."""
+        if self.native_kind == 1:
+            from . import dx7
+            return dx7.unpack(self.native)
+        return None
+
+
+def preset_from_voice(vced, name: str = "", p_count: int = 0) -> Preset:
+    """DX7-Voice -> FM6-Preset (native kind 1). Die Felucca-Bedienwerte setzt das Gerät (PUT Bit 6)."""
+    from . import dx7
+    vm = bytes(dx7.pack(dx7.sanitize(vced)))
+    nm = clean_name(name or dx7.name(vced), 20) or "PATCH"
+    return Preset(name=nm, engine=12, engine_name="FM6", params=[], native_kind=1, native=vm,
+                  p_count=p_count, tags=["DX7"], read_date=_now())
+
+
+def _now() -> str:
+    return dt.datetime.now().replace(microsecond=0).isoformat()
+
+
+# ------------------------------------------------------------- Gerät ---
+
+class SharedBank:
+    """Befehl 80 über einen Link (immer aus einem Hintergrund-Thread mit exklusivem Zugriff aufrufen)."""
+
+    def __init__(self, link, caps: Caps):
+        self.link, self.caps = link, caps
+
+    @staticmethod
+    def request(op: int, slot: int, *args) -> list[int]:
+        if not isinstance(slot, int) or not 0 <= slot < SLOTS:
+            raise PresetError("ungültiger Preset-Platz")
+        return [op, slot & 127, slot >> 7, *args]
+
+    @staticmethod
+    def check(a, op: int, slot: int) -> _R:
+        if len(a) < 4 or a[0] != op or (a[1] | a[2] << 7) != slot:
+            raise PresetError("unerwartete Antwort vom FM-1")
+        if a[3]:
+            raise PresetError({1: f"U{slot + 1:03d}: ungültig oder leer (rc 1)",
+                               2: f"U{slot + 1:03d}: vom FM-1 abgelehnt oder Speicherfehler (rc 2) – "
+                                  "läuft die Wiedergabe noch?"}.get(a[3], f"Fehler {a[3]}"))
+        return _R(a[4:])
+
+    def _rq(self, args, flash=False):
+        return self.link.request(CMD_LIBRARY, args, timeout=FLASH_TIMEOUT if flash else 1.5, retries=0 if flash else 1)
+
+    def list(self, start=0, count=16) -> tuple[int, list[dict]]:
+        a = self._rq(self.request(0, start, count))
+        r = self.check(a, 0, start)
+        n, total = r.b(), r.b() | r.b() << 7
+        if not n or n > count or start + n > total:
+            raise PresetError("ungültige Listen-Antwort")
+        out = []
+        for i in range(n):
+            used, eng, old = r.b(), r.b(), r.b()
+            out.append({"slot": start + i, "used": bool(used & 1), "favorite": bool(used & 2), "engine": eng,
+                        "old": old, "name": r.s()})
+        return total, out
+
+    def list_all(self, progress=None, cancel=None) -> list[dict]:
+        out, total = [], 1
+        while len(out) < total:
+            if cancel and cancel():
+                raise PresetError("abgebrochen")
+            total, chunk = self.list(len(out), 16)
+            out += chunk
+            if progress:
+                progress(len(out), total)
+        return out
+
+    def get(self, slot: int) -> Preset:
+        a = self._rq(self.request(1, slot))
+        r = self.check(a, 1, slot)
+        used, eng, nm = r.b(), r.b(), r.s()
+        params = [r.v() for _ in range(self.caps.p_count)]
+        legacy = [r.b() for _ in range(32)]
+        kind = r.b()
+        native = b""
+        if kind:
+            size = r.b() | r.b() << 7
+            raw = unpack7(r.a[r.i:])
+            if kind not in NATIVE_SIZE or eng != NATIVE_ENGINE[kind] or len(raw) != size or size != NATIVE_SIZE[kind]:
+                raise PresetError(f"U{slot + 1:03d}: ungültige native Daten")
+            native = bytes(raw)
+            if kind == 1:                                   # voller DX7-Name, wenn der Kurzname sein Anfang ist
+                from . import dx7
+                full = dx7.name(dx7.unpack(native))
+                if nm.strip() == full[:12].strip():
+                    nm = full
+        return Preset(name=nm, engine=eng, engine_name=self.caps.engine_name(eng) if used else "", params=params,
+                      legacy=legacy, native_kind=kind, native=native, p_count=self.caps.p_count,
+                      p_e0=self.caps.p_e0, firmware=self.caps.version, read_date=_now(), slot=slot, used=bool(used & 1))
+
+    def put_args(self, p: Preset, defaults: bool | None = None) -> list[int]:
+        """Argumente nach dem Kopf – byte-genau wie Editor sharedBank.put."""
+        kind = p.native_kind
+        if kind and p.engine != NATIVE_ENGINE[kind]:
+            raise PresetError("Native Daten passen nicht zur Engine")
+        if not kind and p.engine in (12, 19):
+            raise PresetError("FM6- und Prophet-Presets brauchen ihre Voice-Daten")
+        name = clean_name(p.name or "PATCH", 20 if kind else 12) or "PATCH"
+        values = map_params(p, self.caps)
+        if defaults is None:
+            defaults = not p.params
+        native_name = ""
+        if kind == 1:
+            from . import dx7
+            native_name = dx7.name(dx7.unpack(p.native))
+        preserve = bool(kind) and kind < 4 and native_name and name == clean_name(native_name, 20)
+        args = [p.engine & 127, *str_z(name), *[b for v in values for b in v14enc(v)], *[x & 127 for x in (list(p.legacy) + [0] * 32)[:32]],
+                kind | (64 if kind and defaults else 0) | (32 if preserve else 0)]
+        if kind:
+            raw = bytes(p.native)
+            args += [len(raw) & 127, len(raw) >> 7, *pack7(raw)]
+        return args
+
+    def put(self, slot: int, p: Preset, defaults: bool | None = None):
+        p.validate()
+        a = self._rq(self.request(2, slot, *self.put_args(p, defaults)), flash=True)
+        self.check(a, 2, slot)
+
+    def store(self, slot: int, track: int, name: str = ""):
+        nm = clean_name(name, 20)
+        self.check(self._rq(self.request(3, slot, track, *[ord(c) for c in nm]), flash=True), 3, slot)
+
+    def load(self, slot: int, track: int):
+        self.check(self._rq(self.request(4, slot, track)), 4, slot)
+
+    def erase(self, slot: int):
+        self.check(self._rq(self.request(5, slot), flash=True), 5, slot)
+
+    def rename(self, slot: int, name: str):
+        nm = clean_name(name, 20)
+        if not nm:
+            raise PresetError("Der Name darf nicht leer sein")
+        self.check(self._rq(self.request(6, slot, *[ord(c) for c in nm]), flash=True), 6, slot)
+
+    def set_favorite(self, slot: int, on: bool) -> int:
+        """-> rc: 0 gespeichert, 3 nur im RAM, 4 wird nach STOP gespeichert."""
+        a = self.link.request(CMD_FAV_SET, [self.caps.general_ns or 0, *v14enc(slot), 1 if on else 0], timeout=1.5, retries=0)
+        rc = a[0] if a else 1
+        if rc not in (0, 3, 4):
+            raise PresetError(f"Favorit abgelehnt (rc {rc})")
+        return rc
+
+    def voice_to_track(self, track: int, vmem: bytes):
+        """FM6_PUT Ziel 0: Voice live auf eine Spur (nicht gespeichert)."""
+        a = self.link.request(CMD_FM6_PUT, [0, track, *[x & 127 for x in vmem]], timeout=1.5, retries=0)
+        if len(a) < 3 or a[2]:
+            raise PresetError("Die Voice wurde nicht angenommen")
+
+    def write_with_undo(self, slot: int, p: Preset, defaults: bool | None = None) -> Preset:
+        """vorher lesen (für Rückgängig), dann schreiben, dann zur Kontrolle wieder lesen."""
+        old = self.get(slot)
+        self.put(slot, p, defaults)
+        return old
+
+    def restore(self, slot: int, old: Preset):
+        """Rückgängig: alten Inhalt zurückschreiben (oder Platz leeren, wenn er leer war)."""
+        if not old.used:
+            self.erase(slot)
+        else:
+            self.put(slot, old, defaults=False)
+
+
+def map_params(p: Preset, caps: Caps) -> list[int]:
+    """Werte auf den P_COUNT des Geräts abbilden (wie die Firmware: vordere Werte der Reihe nach,
+    die letzten 8 sind P_E0..P_E7; fehlende = 0) und in −64…127 halten."""
+    n, pe0 = caps.p_count, caps.p_e0 or max(0, caps.p_count - 8)
+    src = list(p.params)
+    if not src:
+        return [0] * n
+    if len(src) == n:
+        out = src
+    else:
+        out = [0] * n
+        common = max(0, len(src) - 8)
+        for i in range(min(common, pe0)):
+            out[i] = src[i]
+        for k in range(8):
+            if common + k < len(src) and pe0 + k < n:
+                out[pe0 + k] = src[common + k]
+    return [max(-64, min(127, int(v))) for v in out]
+
+
+# ---------------------------------------------------------- Bibliothek ---
+
+def safe_file(s: str) -> str:
+    return re.sub(r"[^\w .,+()-]", "_", s).strip() or "Preset"
+
+
+class Library:
+    """~/FM-1/Presets/<Gerät>/U001 Name.fm1preset (+ eigene Ordner). Duplikate nach Inhalts-Hash."""
+
+    def __init__(self, root: Path):
+        self.root = Path(root)
+        try:                                   # Ordner erst bei Bedarf; schreibgeschützt -> nur lesen
+            self.root.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass
+
+    def all(self) -> list[Preset]:
+        out = []
+        try:
+            files = sorted(self.root.rglob("*.fm1preset")) if self.root.is_dir() else []
+        except OSError:
+            files = []
+        for f in files:
+            try:
+                p = Preset.from_json(json.loads(f.read_text("utf-8")))
+                p.path = f
+                out.append(p)
+            except (OSError, ValueError, PresetError, KeyError, TypeError):
+                continue
+        return out
+
+    def hashes(self) -> dict[str, Path]:
+        return {p.content_hash(): p.path for p in self.all()}
+
+    def save(self, p: Preset, folder: str = "", known: dict | None = None) -> tuple[Path, bool]:
+        """-> (Pfad, neu?). Gleicher Inhalt wird nicht doppelt abgelegt."""
+        known = self.hashes() if known is None else known
+        h = p.content_hash()
+        if h in known and known[h] and Path(known[h]).exists():
+            return Path(known[h]), False
+        d = self.root / safe_file(folder) if folder else self.root
+        d.mkdir(parents=True, exist_ok=True)
+        stem = (f"{p.label} " if p.slot is not None else "") + safe_file(p.name or "Preset")
+        f = d / f"{stem}.fm1preset"
+        k = 2
+        while f.exists():
+            f = d / f"{stem} ({k}).fm1preset"
+            k += 1
+        self.write(p, f)
+        known[h] = f
+        return f, True
+
+    @staticmethod
+    def write(p: Preset, f: Path):
+        tmp = f.with_suffix(".tmp")
+        tmp.write_text(json.dumps(p.to_json(), indent=1, ensure_ascii=False), "utf-8")
+        tmp.replace(f)
+        p.path = f
+
+    def update(self, p: Preset):
+        if p.path:
+            self.write(p, p.path)
+
+    def delete(self, p: Preset):
+        if p.path and p.path.exists():
+            p.path.unlink()
+
+    def rename(self, p: Preset, name: str) -> Path:
+        """Preset in der Bibliothek umbenennen (Name in der Datei und Dateiname); am FM-1 ändert sich nichts."""
+        name = clean_name(name, 20)
+        if not name:
+            raise PresetError("Der Name darf nicht leer sein")
+        old = p.path
+        if not old:
+            raise PresetError("Dieses Preset liegt nicht als Datei vor")
+        stem = (f"{p.label} " if p.slot is not None else "") + safe_file(name)
+        f = old.with_name(f"{stem}.fm1preset")
+        k = 2
+        while f.exists() and f != old:
+            f = old.with_name(f"{stem} ({k}).fm1preset")
+            k += 1
+        before = p.name
+        p.name = name
+        try:
+            self.write(p, f)
+        except OSError:
+            p.name, p.path = before, old         # nichts geändert – auch nicht im Speicher
+            raise
+        if f != old and old.exists():
+            old.unlink()
+        return f
+
+    def import_file(self, f: Path, folder: str = "Importiert") -> list[Path]:
+        """.fm1preset, Satz (.zip), Editor-Bibliothek (felucca-library .json) oder DX7-SysEx (.syx)."""
+        f = Path(f)
+        data = f.read_bytes()
+        presets = read_any(data, f.name)
+        known = self.hashes()
+        return [self.save(p, folder, known)[0] for p in presets]
+
+
+def read_any(data: bytes, filename: str = "") -> list[Preset]:
+    """wie _read_any, aber jeder Lesefehler ist ein PresetError mit deutscher Erklärung."""
+    try:
+        return _read_any(data, filename)
+    except PresetError:
+        raise
+    except zipfile.BadZipFile as e:
+        raise PresetError("Die .zip-Datei ist beschädigt oder keine Zip-Datei") from e
+    except UnicodeDecodeError as e:
+        raise PresetError("Die Datei ist keine Textdatei (kein .fm1preset/.json)") from e
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        raise PresetError("Die Datei ist beschädigt oder kein bekanntes Preset-Format "
+                          "(.fm1preset, .zip-Satz, Editor-.json, DX7-.syx)") from e
+
+
+def _read_any(data: bytes, filename: str = "") -> list[Preset]:
+    low = filename.lower()
+    if low.endswith(".zip") or data[:2] == b"PK":
+        out = []
+        with zipfile.ZipFile(io.BytesIO(data)) as z:
+            for n in z.namelist():
+                if n.lower().endswith(".fm1preset"):
+                    out.append(Preset.from_json(json.loads(z.read(n).decode("utf-8"))))
+        return out
+    if low.endswith(".syx") or data[:1] == b"\xf0":
+        from . import dx7
+        return [preset_from_voice(v) for v in dx7.parse_syx(data).voices]
+    d = json.loads(data.decode("utf-8"))
+    if d.get("format") == FORMAT:
+        return [Preset.from_json(d)]
+    if d.get("format") in ("felucca-library", "felucca-patch"):
+        return from_felucca(d)
+    raise PresetError("Unbekanntes Dateiformat")
+
+
+def export_zip(presets: list[Preset], target: Path):
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as z:
+        seen = set()
+        for p in presets:
+            n = (f"{p.label} " if p.slot is not None else "") + safe_file(p.name)
+            base, k = n, 2
+            while n in seen:
+                n = f"{base} ({k})"
+                k += 1
+            seen.add(n)
+            z.writestr(n + ".fm1preset", json.dumps(p.to_json(), indent=1, ensure_ascii=False))
+
+
+def to_felucca(presets: list[Preset], caps_engines=None, firmware: str = "") -> dict:
+    """Bibliotheksdatei des Melodee-Web-Editors (felucca-library v1, kind "bank")."""
+    pats = []
+    pc = max((len(p.params) for p in presets), default=0)
+    for p in presets:
+        o = {"name": p.name, "engine": p.engine, "engineName": p.engine_name or engine_display_name(p.engine),
+             "params": list(p.params), "pattern": None, "tags": list(p.tags), "created": p.read_date or _now(),
+             "modified": p.read_date or _now()}
+        key = {1: "fm6", 2: "cz", 3: "p5", 4: "drum"}.get(p.native_kind)
+        if key:
+            o[key] = list(p.native)
+        if p.slot is not None:
+            o["slot"] = p.slot
+        pats.append(o)
+    return {"format": "felucca-library", "version": 1, "kind": "bank", "firmware": firmware, "pCount": pc,
+            "pE0": presets[0].p_e0 if presets else None, "paramLabels": [], "engines": list(caps_engines or []),
+            "exported": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "patches": pats}
+
+
+def from_felucca(d: dict) -> list[Preset]:
+    out = []
+    for c in d.get("patches") or ([d.get("patch")] if d.get("patch") else []):
+        params = [0 if v is None else int(v) for v in (c.get("params") or c.get("p") or [])]
+        p = Preset(name=str(c.get("name", "PATCH")), engine=int(c.get("engine", 0)),
+                   engine_name=str(c.get("engineName", "")), params=params, p_count=len(params),
+                   p_e0=int(d.get("pE0") or max(0, len(params) - 8)), tags=list(c.get("tags") or []),
+                   firmware=str(d.get("firmware", "")), read_date=str(c.get("modified", "")))
+        for kind, key in ((1, "fm6"), (2, "cz"), (3, "p5"), (4, "drum")):
+            if c.get(key) is not None:
+                p.native_kind, p.native = kind, bytes(int(x) & 255 for x in c[key])
+        try:
+            p.validate()
+        except PresetError:
+            continue
+        out.append(p)
+    return out
+
+
+def diff(a: Preset, b: Preset) -> list[str]:
+    """kurze deutsche Liste der Unterschiede (Gerät a / Bibliothek b)."""
+    out = []
+    if a.name != b.name:
+        out.append(f"Name: {a.name!r} ↔ {b.name!r}")
+    if a.engine != b.engine:
+        out.append(f"Engine: {a.engine_name or engine_display_name(a.engine)} ↔ {b.engine_name or engine_display_name(b.engine)}")
+    n = 0
+    for i, (x, y) in enumerate(zip(a.params, b.params)):
+        if x != y:
+            n += 1
+            if n <= 12:
+                out.append(f"Parameter {i}: {x} ↔ {y}")
+    if n > 12:
+        out.append(f"… und {n - 12} weitere Parameter")
+    if len(a.params) != len(b.params):
+        out.append(f"Anzahl Parameter: {len(a.params)} ↔ {len(b.params)}")
+    if (a.native_kind, bytes(a.native)) != (b.native_kind, bytes(b.native)):
+        out.append(f"Native Daten ({a.kind_text} ↔ {b.kind_text}) unterscheiden sich")
+    return out or ["identisch"]

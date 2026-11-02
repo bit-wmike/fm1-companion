@@ -1,0 +1,5 @@
+{"entries": [
+  {"name": "FluidSynth", "authors": "FluidSynth-Entwickler", "url": "https://www.fluidsynth.org", "license": "LGPL-2.1-or-later", "kind": "Programm (Systempaket, optional)", "use": "Klangerzeuger: spielt Melodees MIDI-Spuren 5–8 (eigener Prozess, nicht eingebunden)"},
+  {"name": "FluidR3_GM / fluid-soundfont-gm", "authors": "Frank Wen u. a.", "url": "https://packages.debian.org/fluid-soundfont-gm", "license": "MIT", "kind": "Klangbank (Systempaket, optional)", "use": "General-MIDI-Klänge des Klangerzeugers"},
+  {"name": "Melodee MIDI-Dokumentation", "authors": "Kerem Kiliç", "url": "https://github.com/keremimo/melodee", "license": "GPL-3.0", "kind": "Dokumentation", "use": "Befehlsnamen des Editor-Protokolls, CC-Belegung und Kanäle der MIDI-Spuren im MIDI-Monitor und Klangerzeuger"}
+]}

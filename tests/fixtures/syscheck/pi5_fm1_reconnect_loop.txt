@@ -1,0 +1,19 @@
+[    0.000000] Machine model: Raspberry Pi 5 Model B Rev 1.0
+[    0.892110] usb 3-1.2: new full-speed USB device number 4 using xhci-hcd
+[    1.048313] usb 3-1.2: New USB device found, idVendor=1209, idProduct=0001, bcdDevice= 1.00
+[    1.048330] usb 3-1.2: Product: Melodee FM-1
+[    1.048334] usb 3-1.2: Manufacturer: Ellic Studio
+[  845.123456] usb 3-1.2: USB disconnect, device number 4
+[  846.234567] usb 3-1.2: new full-speed USB device number 5 using xhci-hcd
+[  846.391002] usb 3-1.2: New USB device found, idVendor=1209, idProduct=0001, bcdDevice= 1.00
+[  846.391010] usb 3-1.2: Product: Melodee FM-1
+[  902.551200] usb 3-1.2: USB disconnect, device number 5
+[  903.660412] usb 3-1.2: new full-speed USB device number 6 using xhci-hcd
+[  960.100377] usb 3-1.2: USB disconnect, device number 6
+[  961.204533] usb 3-1.2: new full-speed USB device number 7 using xhci-hcd
+[  961.360100] usb 3-1.2: Product: Melodee FM-1
+[ 1020.334120] usb 3-1.2: USB disconnect, device number 7
+[ 1021.500221] usb 3-1.2: new full-speed USB device number 8 using xhci-hcd
+[ 1021.661009] usb 3-1.2: device descriptor read/64, error -71
+[ 1021.913455] usb 3-1.2: device descriptor read/64, error -71
+[ 1022.400012] usb 3-1-port2: unable to enumerate USB device

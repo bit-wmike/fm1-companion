@@ -1,0 +1,20 @@
+name: Wunsch / Idee
+description: Eine neue Funktion oder Verbesserung vorschlagen.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Worum geht es?
+      description: Welches Problem soll gelöst werden, oder was möchtest du mit dem FM-1 machen?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Deine Idee
+  - type: input
+    id: firmware
+    attributes:
+      label: Betroffene Firmware (falls bestimmte)
+      placeholder: "z. B. Melodee, SLOOP, alle"

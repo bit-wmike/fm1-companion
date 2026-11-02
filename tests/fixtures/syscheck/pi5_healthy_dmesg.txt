@@ -1,0 +1,17 @@
+[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x414fd0b1]
+[    0.000000] Linux version 6.6.51+rpt-rpi-2712 (serge@raspberrypi.com) (aarch64-linux-gnu-gcc-12 (Debian 12.2.0-14) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #1 SMP PREEMPT Debian 1:6.6.51-1+rpt3 (2024-10-08)
+[    0.000000] Machine model: Raspberry Pi 5 Model B Rev 1.0
+[    0.524116] xhci-hcd xhci-hcd.0: xHCI Host Controller
+[    0.524127] xhci-hcd xhci-hcd.0: new USB bus registered, assigned bus number 1
+[    0.524742] xhci-hcd xhci-hcd.0: hcc params 0x0240fe6d hci version 0x110 quirks 0x0000808000000010
+[    0.524964] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 6.06
+[    0.525211] hub 1-0:1.0: USB hub found
+[    0.892110] usb 1-1: new full-speed USB device number 2 using xhci-hcd
+[    1.048313] usb 1-1: New USB device found, idVendor=1209, idProduct=0001, bcdDevice= 1.00
+[    1.048325] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[    1.048330] usb 1-1: Product: Melodee FM-1
+[    1.048334] usb 1-1: Manufacturer: Ellic Studio
+[    1.048337] usb 1-1: SerialNumber: 5A3F09C2
+[    3.912455] usbcore: registered new interface driver snd-usb-audio
+[    4.120004] input: pwr_button as /devices/platform/pwr_button/input/input0
+[    5.811230] Bluetooth: hci0: BCM4345C0 'brcm/BCM4345C0.raspberrypi,5-model-b.hcd' Patch

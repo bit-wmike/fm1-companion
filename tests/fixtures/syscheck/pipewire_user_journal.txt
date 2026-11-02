@@ -1,0 +1,2 @@
+[ 1200.100000] pi pipewire[1432]: spa.alsa: hw:Melodee: (capture) xrun of 2048 frames
+[ 1201.200000] pi pipewire[1432]: spa.alsa: hw:Melodee: (capture) xrun of 1024 frames

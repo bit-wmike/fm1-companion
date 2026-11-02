@@ -1,0 +1,5 @@
+{"_provenance": "Schema-treu nachgebaut (GitHub REST v3 /repos/{owner}/{repo}); die API ist im Build-Container gesperrt. Werte: Repo-Name/URL echt, Zahlen beispielhaft.",
+ "full_name": "dspaudio/orbit", "html_url": "https://github.com/dspaudio/orbit",
+ "description": "SLOOP-based groovebox firmware for the M-VAVE FM-1", "homepage": "https://dspaudio.github.io/orbit-web-emu/",
+ "stargazers_count": 42, "topics": ["fm-1", "groovebox", "firmware"], "pushed_at": "2026-10-27T10:00:00Z",
+ "default_branch": "main", "archived": false, "license": {"spdx_id": "GPL-3.0"}}

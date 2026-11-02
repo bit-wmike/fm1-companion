@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Sicherheitslücke melden (privat)
+    url: https://github.com/bit-wmike/fm1-companion/security/advisories/new
+    about: Bitte Sicherheitslücken nicht öffentlich melden.

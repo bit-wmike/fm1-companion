@@ -1,0 +1,7 @@
+[{"_provenance": "Schema-treu nachgebaut (GitHub REST v3 /releases). Tag, Dateiname, Größe und URL echt aus dem Mooring-Katalog; Datum beispielhaft.",
+  "tag_name": "v0.7.1", "name": "ORBIT 0.7.1", "draft": false, "prerelease": false,
+  "published_at": "2026-10-25T12:00:00Z", "html_url": "https://github.com/dspaudio/orbit/releases/tag/v0.7.1", "body": "Fixes.",
+  "assets": [{"name": "orbit.fwsc", "size": 610019, "browser_download_url": "https://github.com/dspaudio/orbit/releases/download/v0.7.1/orbit.fwsc"}]},
+ {"tag_name": "v0.7.0-beta", "name": "", "draft": false, "prerelease": true, "published_at": "2026-10-20T12:00:00Z",
+  "html_url": "", "body": "", "assets": [{"name": "SHA256SUMS", "size": 90, "browser_download_url": "https://github.com/dspaudio/orbit/releases/download/v0.7.0-beta/SHA256SUMS"}]},
+ {"tag_name": "draft-x", "draft": true, "prerelease": false, "assets": []}]

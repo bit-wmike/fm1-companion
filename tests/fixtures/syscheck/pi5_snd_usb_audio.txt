@@ -1,0 +1,7 @@
+[    1.048313] usb 1-1: New USB device found, idVendor=1209, idProduct=0001, bcdDevice= 1.00
+[    1.048330] usb 1-1: Product: Melodee FM-1
+[ 1500.003311] usb 1-1: 2:1: cannot set freq 44100 to ep 0x81
+[ 1501.120044] retire_capture_urb: 15 callbacks suppressed
+[ 1502.300021] usb 1-1: 1:1: usb_set_interface failed (-71)
+[ 1503.040123] cannot submit urb (err = -18)
+[ 1504.552331] usb 1-1: Unable to change format on ep #81: already in use

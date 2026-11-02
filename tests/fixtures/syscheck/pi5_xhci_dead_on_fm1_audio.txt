@@ -1,0 +1,7 @@
+[ 3283.582578] usb 3-1: new full-speed USB device number 2 using xhci-hcd
+[ 3283.731102] usb 3-1: New USB device found, idVendor=1209, idProduct=0001, bcdDevice= 1.00
+[ 3283.731118] usb 3-1: Product: Melodee FM-1
+[ 3315.348230] xhci-hcd xhci-hcd.1: xHCI host controller not responding, assume dead
+[ 3315.348250] xhci-hcd xhci-hcd.1: HC died; cleaning up
+[ 3315.348945] usb 3-1: USB disconnect, device number 2
+[ 3315.350150] usb 3-1: 3:2: usb_set_interface failed (-62)

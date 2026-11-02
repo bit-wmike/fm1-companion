@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=FM-1 Companion
+GenericName=FM-1-Verwaltung
+Comment=Firmware, Backups, Klänge, MIDI, Simulator, Samples und Aufnahme für das M-VAVE FM-1
+Exec=@EXEC@
+Icon=fm1-companion
+Terminal=false
+Categories=AudioVideo;Audio;Midi;Music;
+Keywords=FM-1;M-VAVE;Melodee;Skiff;SLOOP;Synthesizer;MIDI;Firmware;
+StartupWMClass=fm1-companion

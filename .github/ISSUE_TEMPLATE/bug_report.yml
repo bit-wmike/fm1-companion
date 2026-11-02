@@ -1,0 +1,43 @@
+name: Fehlerbericht
+description: Etwas funktioniert nicht wie erwartet.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für deinen Bericht! **Sicherheitslücken bitte nicht hier**, sondern privat melden (siehe SECURITY.md).
+
+        **Bevor du etwas anhängst:** Der Fehlerbericht der App (Hilfe › Diagnose › „Fehlerbericht speichern“) ist ein
+        ZIP. Die App entfernt Tokens, Passwörter, Rechnernamen, Home-Pfade und volle Seriennummern – schau trotzdem
+        kurz hinein, bevor du ihn hochlädst. **Füge niemals ein GitHub-Token oder Passwort in ein Issue ein.**
+  - type: input
+    id: version
+    attributes:
+      label: Version der Suite
+      description: "`fm1-companion --version` oder Hilfe › Über"
+      placeholder: "2.3.1"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System
+      placeholder: "z. B. Raspberry Pi OS Bookworm (Pi 5), Ubuntu 24.04, KDE Plasma 6"
+  - type: input
+    id: device
+    attributes:
+      label: FM-1 und Firmware (falls beteiligt)
+      placeholder: "z. B. Melodee 1.6.0, SLOOP 2.8, Original V15 – oder: ohne Gerät / Demo-Modus"
+  - type: textarea
+    id: what
+    attributes:
+      label: Was ist passiert?
+      description: Schritte zum Nachstellen, was du erwartet hast, was stattdessen passiert ist.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Fehlermeldung / Protokoll (optional)
+      description: Nur die relevanten Zeilen. Vorher auf Tokens und persönliche Daten prüfen.
+      render: text

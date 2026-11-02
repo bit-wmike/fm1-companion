@@ -1,0 +1,5 @@
+[{"_provenance": "frei erfundenes Beispiel-Repo im Schema von GitHub REST v3 /releases (für den Link-Import-Test).",
+  "tag_name": "v2.1.0", "name": "2.1.0", "draft": false, "prerelease": false, "published_at": "2026-10-28T08:00:00Z",
+  "html_url": "https://github.com/someone/newsynth/releases/tag/v2.1.0", "body": "",
+  "assets": [{"name": "newsynth-2.1.0.fwsc", "size": 610000, "browser_download_url": "https://github.com/someone/newsynth/releases/download/v2.1.0/newsynth-2.1.0.fwsc"},
+             {"name": "SHA256SUMS", "size": 100, "browser_download_url": "https://github.com/someone/newsynth/releases/download/v2.1.0/SHA256SUMS"}]}]

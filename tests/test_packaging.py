@@ -1,0 +1,162 @@
+# SPDX-License-Identifier: GPL-3.0-only
+"""Pakete: .deb (Dateien, control, Starter), .run (entpacken, unbeaufsichtigt installieren und entfernen),
+install.sh/uninstall.sh – alles in einem falschen HOME. Der Ordner ~/FM-1 muss stehen bleiben."""
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT))
+
+
+@pytest.fixture(scope="module")
+def dist(tmp_path_factory):
+    return tmp_path_factory.mktemp("dist")
+
+
+def fake_env(home: Path) -> dict:
+    env = {k: v for k, v in os.environ.items() if not k.startswith("XDG_")}
+    env.update(HOME=str(home), PATH="/usr/bin:/bin", LANG="C.UTF-8", FM1C_NO_PKILL="1")
+    (home / "FM-1" / "Backups").mkdir(parents=True, exist_ok=True)
+    (home / "FM-1" / "Backups" / "wichtig.json").write_text("{}")
+    return env
+
+
+@pytest.mark.skipif(not shutil.which("dpkg-deb"), reason="dpkg-deb fehlt")
+def test_deb(dist):
+    import build_deb
+    deb = build_deb.build(dist)
+    assert deb.name == "fm1-companion_2.3.1_all.deb"
+    info = subprocess.run(["dpkg-deb", "-f", str(deb)], capture_output=True, text=True, check=True).stdout
+    assert "Package: fm1-companion" in info and "Architecture: all" in info
+    for dep in ("python3 (>= 3.11)", "python3-pyqt6", "python3-pyqt6.qtwebengine", "python3-mido", "python3-rtmidi",
+                "python3-numpy", "git"):
+        assert dep in info.split("Depends:")[1].split("\n")[0]
+    assert "fluid-soundfont-gm" in info and "audacity" in info.split("Recommends:")[1].split("\n")[0]
+    files = subprocess.run(["dpkg-deb", "-c", str(deb)], capture_output=True, text=True, check=True).stdout
+    for f in ("./usr/bin/fm1-companion", "./usr/lib/fm1-companion/fm1companion/__main__.py",
+              "./usr/lib/fm1-companion/fm1companion/data/deps.json", "./usr/lib/fm1-companion/fm1companion/icons/lucide/save.svg",
+              "./usr/share/applications/fm1-companion.desktop", "./usr/share/metainfo/fm1-companion.metainfo.xml",
+              "./usr/share/icons/hicolor/512x512/apps/fm1-companion.png", "./usr/share/icons/hicolor/scalable/apps/fm1-companion.svg",
+              "./usr/share/man/man1/fm1-companion.1.gz", "./usr/share/doc/fm1-companion/copyright"):
+        assert f in files, f
+    assert "__pycache__" not in files and "root/root" in files
+    # der Studio-Zwilling: gemeinsamer Host, jede mitgelieferte Version, Seite, Dienst und Hilfe
+    lib = "./usr/lib/fm1-companion/fm1companion/"
+    for f in ("twin-core.js", "twin-host.js", "studio-worker.js", "studio-worklet.js", "studio.html", "studio.js",
+              "studio-panel.js"):
+        assert lib + "sims/_studio/" + f in files, f
+    from fm1companion import studio
+    for b in studio.builds("melodee"):
+        for f in b.manifest["files"]:
+            assert f"{lib}sims/melodee-studio/{b.path.name}/{f}" in files, (b.version, f)
+        assert f"{lib}sims/melodee-studio/{b.path.name}/manifest.json" in files
+    for f in ("studio.py", "studio_web.py", "ui/studio_service.py", "ui/pages/studio.py", "data/help/13-studio.md"):
+        assert lib + f in files, f
+    x = dist / "x"
+    subprocess.run(["dpkg-deb", "-x", str(deb), str(x)], check=True)
+    launcher = (x / "usr/bin/fm1-companion").read_text()
+    assert "exec /usr/bin/python3 -m fm1companion" in launcher and "PYTHONPATH=/usr/lib/fm1-companion" in launcher
+    assert os.access(x / "usr/bin/fm1-companion", os.X_OK)
+    out = subprocess.run([sys.executable, "-m", "fm1companion", "--version"], cwd=x,
+                         env=dict(os.environ, PYTHONPATH=str(x / "usr/lib/fm1-companion")), capture_output=True, text=True)
+    assert out.stdout.strip() == "2.3.1"
+    import xml.etree.ElementTree as ET
+    meta = ET.parse(x / "usr/share/metainfo/fm1-companion.metainfo.xml").getroot()
+    assert meta.findtext("id") == "fm1-companion" and meta.find("launchable").text == "fm1-companion.desktop"
+
+
+@pytest.mark.skipif(not shutil.which("dpkg") or os.geteuid() != 0, reason="dpkg/root fehlt")
+def test_deb_dpkg_root(dist, tmp_path):
+    import build_deb
+    deb = build_deb.build(dist)
+    r = tmp_path / "root"
+    (r / "var/lib/dpkg/info").mkdir(parents=True)
+    (r / "var/lib/dpkg/updates").mkdir()
+    (r / "var/lib/dpkg/status").touch()
+    base = ["dpkg", f"--root={r}", "--force-script-chrootless", "--force-not-root"]
+    subprocess.run(base + ["--force-depends", "-i", str(deb)], check=True, capture_output=True)
+    assert list((r / "usr/lib/fm1-companion").rglob("__pycache__")), "postinst übersetzt Bytecode"
+    subprocess.run(base + ["-r", "fm1-companion"], check=True, capture_output=True)
+    assert not (r / "usr/lib/fm1-companion").exists() and not (r / "usr/bin/fm1-companion").exists()
+
+
+def test_run_installer(dist, tmp_path):
+    import build_run
+    run = build_run.build(dist)
+    assert run.read_bytes().startswith(b"#!/bin/sh")
+    home = tmp_path / "home"
+    env = fake_env(home)
+    assert subprocess.run(["sh", str(run), "--check"], env=env, capture_output=True, text=True).returncode == 0
+    ex = tmp_path / "ex"
+    subprocess.run(["sh", str(run), "--extract", str(ex)], env=env, check=True, capture_output=True)
+    assert (ex / "app/fm1companion/__init__.py").exists() and (ex / "app/packaging/installer/gui.py").exists()
+    py = "/usr/bin/python3" if Path("/usr/bin/python3").exists() else sys.executable
+    res = subprocess.run(["sh", str(run), "--unattended", "--no-deps", "--prefix", str(home / ".local"), "--desktop",
+                          "--demo-data"], env=env, capture_output=True, text=True)
+    assert res.returncode == 0, res.stdout + res.stderr
+    app = home / ".local/share/fm1-companion/app"
+    launcher = home / ".local/bin/fm1-companion"
+    assert (app / "fm1companion/__main__.py").exists() and (app / "install-info.json").exists()
+    assert (app / "fm1companion/sims/_studio/studio-panel.js").exists()               # Studio-Zwilling im .run
+    assert sorted(p.parent.name for p in (app / "fm1companion/sims/melodee-studio").glob("*/twin.wasm")) == \
+        sorted(p.parent.name for p in (ROOT / "fm1companion/sims/melodee-studio").glob("*/twin.wasm"))
+    assert "exec /usr/bin/python3 -m fm1companion" in launcher.read_text() or py in launcher.read_text()
+    assert (home / ".local/share/applications/fm1-companion.desktop").exists()
+    assert (home / ".local/share/applications/fm1-companion-uninstall.desktop").exists()
+    assert (home / ".local/share/icons/hicolor/48x48/apps/fm1-companion.png").exists()
+    assert len(list((home / "FM-1/Samples/Beispiele (Demo)").glob("*.wav"))) == 7
+    out = subprocess.run([str(launcher), "--version"], env=env, capture_output=True, text=True)
+    assert out.stdout.strip() == "2.3.1", out.stderr
+    # Update: Einstellungen bleiben
+    cfg = home / ".config/fm1-companion"
+    cfg.mkdir(parents=True)
+    (cfg / "config.json").write_text('{"theme": "dark"}')
+    subprocess.run(["sh", str(run), "--unattended", "--no-deps", "--prefix", str(home / ".local")], env=env, check=True,
+                   capture_output=True)
+    assert (cfg / "config.json").read_text() == '{"theme": "dark"}'
+    # Deinstallieren über den installierten Befehl, mit Einstellungen und Daten
+    res = subprocess.run([str(home / ".local/bin/fm1-companion-uninstall"), "--unattended", "--settings", "--data"],
+                         env=env, capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    assert not app.exists() and not launcher.exists() and not cfg.exists()
+    assert not (home / ".local/share/applications/fm1-companion.desktop").exists()
+    assert (home / "FM-1/Backups/wichtig.json").exists(), "~/FM-1 muss bleiben"
+    assert (home / "FM-1/Samples/Beispiele (Demo)").exists()
+
+
+def test_install_sh(tmp_path):
+    home = tmp_path / "home"
+    env = fake_env(home)
+    res = subprocess.run(["bash", str(ROOT / "install.sh"), "--no-apt"], env=env, capture_output=True, text=True)
+    assert (home / ".local/bin/fm1-companion").exists(), res.stdout + res.stderr
+    assert (home / ".local/share/fm1-companion/app/fm1companion/ui/theme.py").exists()
+    assert (home / ".local/share/applications/fm1-companion.desktop").exists()
+    assert "/usr/bin/python3" in (home / ".local/bin/fm1-companion").read_text() or not Path("/usr/bin/python3").exists()
+    res = subprocess.run(["bash", str(home / ".local/share/fm1-companion/app/uninstall.sh"), "--all", "--yes"],
+                         env=env, capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    assert not (home / ".local/bin/fm1-companion").exists() and not (home / ".local/share/fm1-companion").exists()
+    assert (home / "FM-1/Backups/wichtig.json").exists()
+
+
+def test_never_deletes_user_root(tmp_path, monkeypatch):
+    sys.path.insert(0, str(ROOT / "packaging/installer"))
+    import core
+    home = tmp_path / "h"
+    monkeypatch.setenv("HOME", str(home))
+    for k in ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"):
+        monkeypatch.delenv(k, raising=False)
+    data = home / ".local/share/fm1-companion"
+    (data / "meinFM1").mkdir(parents=True)
+    (home / ".config/fm1-companion").mkdir(parents=True)
+    (home / ".config/fm1-companion/config.json").write_text('{"user_root": "%s"}' % (data / "meinFM1"))
+    core.uninstall(home / ".local", settings=True, data=True, log=lambda *_: None)
+    assert (data / "meinFM1").exists(), "Hauptordner innerhalb der App-Daten bleibt"
