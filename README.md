@@ -1,4 +1,4 @@
-# FM-1 Companion Suite 2.3.1
+# FM-1 Companion Suite 2.3.2
 
 > [!WARNING]
 > **Inoffizielles Community-Projekt – nicht mit M-VAVE verbunden.**
@@ -24,7 +24,7 @@ und der offiziellen Firmware. Alles rund ums Gerät in einer App – gebaut für
 | **Editor** | der Original-Web-Editor der installierten Firmware, eingebettet und offline |
 | **Geräte** | mehrere FM-1 mit eigenen Profilen, Firmware-Verlauf, von Gerät zu Gerät kopieren |
 | **Klang** | Presets (mit Reiter FM-Voices/DX7), Samples & Kits (mit Reiter „Auf dem FM-1“) |
-| **Studio** | der digitale Zwilling deines FM-1: dieselbe Melodee-Firmware im Rechner (1.6.0, dazu 1.6.0-rc.7/rc.8), mit dem kompletten Gerätezustand aus dem Backup – am Bildschirm, mit Tastatur oder MIDI-Keyboard spielen, Projekte abspielen, als WAV (24 bit oder 32 bit float, optional Einzelspuren) für Logic/Audacity ausgeben, Zwischenstände mit Rückgängig, mit Sicherheits-Backup zurück aufs FM-1 schreiben; auch als virtuelles Gerät für Projekte, Komponieren, Presets und Backups |
+| **Studio** | der digitale Zwilling deines FM-1: dieselbe Melodee-Firmware im Rechner (1.6.1, dazu 1.6.0 und 1.6.0-rc.7/rc.8), mit dem kompletten Gerätezustand aus dem Backup – am Bildschirm, mit Tastatur oder MIDI-Keyboard spielen, Projekte abspielen, als WAV (24 bit oder 32 bit float, optional Einzelspuren) für Logic/Audacity ausgeben, Zwischenstände mit Rückgängig, mit Sicherheits-Backup zurück aufs FM-1 schreiben; auch als virtuelles Gerät für Projekte, Komponieren, Presets und Backups |
 | **Musik** | Projekte (Plätze & Bibliothek / Ansicht & Export), Komponieren (Erzeugen / Aus MIDI-Datei), Aufnahme mit Audacity |
 | **Daten & Werkzeuge** | Backups (Liste / Durchsuchen & Vergleichen), Firmware+, Rettung, MIDI (mit Klangerzeuger) |
 | **Firmware+** | alle Firmwares an einem Ort: Katalog (suchen, ansehen, im Simulator ausprobieren, Links importieren, Neuigkeiten) und Reiter „Installieren & Versionen“ (Versionen von GitHub, installieren, wechseln, mehrere Versionen herunterladen, eigene .fwsc, zurück zum Original, Rückweg von V16) |
@@ -63,13 +63,13 @@ Installer fragt per Häkchen.
 veröffentlicht. Bis dahin selbst bauen (Ergebnis in `dist/`):
 
 ```bash
-python3 tools/build_deb.py        # dist/fm1-companion_2.3.1_all.deb  → sudo apt install ./dist/fm1-companion_2.3.1_all.deb
-python3 tools/build_run.py        # dist/FM-1-Companion-Suite-2.3.1.run → sh dist/FM-1-Companion-Suite-2.3.1.run
+python3 tools/build_deb.py        # dist/fm1-companion_2.3.2_all.deb  → sudo apt install ./dist/fm1-companion_2.3.2_all.deb
+python3 tools/build_run.py        # dist/FM-1-Companion-Suite-2.3.2.run → sh dist/FM-1-Companion-Suite-2.3.2.run
 ```
 
 Der `.run`-Installer ist ein grafischer Assistent (Lizenz, Hinweis, nur für mich oder für alle, Startmenü,
 Desktop-Verknüpfung, Beispiel-Samples); ohne Fenster:
-`sh FM-1-Companion-Suite-2.3.1.run --unattended [--prefix DIR] [--no-deps]`.
+`sh FM-1-Companion-Suite-2.3.2.run --unattended [--prefix DIR] [--no-deps]`.
 
 ## Voraussetzungen
 

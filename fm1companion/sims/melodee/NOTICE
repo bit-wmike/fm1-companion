@@ -1,11 +1,11 @@
-Melodee v1.6.0 – browser emulator (web/emu), built from https://github.com/keremimo/melodee tag v1.6.0 (commit 8f0e251b85beb3bb79db9aeb377e665a45c0caec).
+Melodee v1.6.1 – browser emulator (web/emu), built from https://github.com/keremimo/melodee tag v1.6.1 (commit 165d177a425944f3d30b0b669255a6ed0050c3a5).
 GPL-3.0-only. Copyright (C) 2026 Kerem Kilic (Ellic Studio); portions Copyright (C) 2026 Leo Kuroshita, Hügelton Instruments (Felucca).
 Compiled with WASI SDK clang instead of Emscripten; include shim tools/wasm_shim/sys/wait.h (fork/pipe stubs for unused host-test helpers). Page: version filled in, installer link points to the official site, ../_host/fm1sim-host.js is loaded.
 
 Corresponding Source (GNU GPL 3.0, section 6)
-The complete corresponding source of this build is https://github.com/keremimo/melodee at commit 8f0e251b85beb3bb79db9aeb377e665a45c0caec
+The complete corresponding source of this build is https://github.com/keremimo/melodee at commit 165d177a425944f3d30b0b669255a6ed0050c3a5
 together with FM-1 Companion's build script tools/build_sims.py and the shim tools/wasm_shim. A tarball of exactly this commit
-(melodee-8f0e251b85beb3bb79db9aeb377e665a45c0caec.tar.gz, made with tools/make_source_tarballs.py) is attached to every
+(melodee-165d177a425944f3d30b0b669255a6ed0050c3a5.tar.gz, made with tools/make_source_tarballs.py) is attached to every
 FM-1 Companion release that ships this build: https://github.com/bit-wmike/fm1-companion/releases
 Written offer: for at least three years after the last release that ships this build, the maintainers of
 FM-1 Companion will give anyone a copy of that corresponding source on request (https://github.com/bit-wmike/fm1-companion/issues),

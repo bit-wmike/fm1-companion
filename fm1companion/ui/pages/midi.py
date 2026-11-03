@@ -619,7 +619,8 @@ class ClockTab(QWidget):
         lay = QVBoxLayout(self)
         c = Card("Taktgeber (Clock-Master)", icon="metronome",
                  subtitle="Die App gibt das Tempo vor: 24 Pulse pro Viertel, Start/Stop/Weiter. Melodee folgt, "
-                          "wenn am FM-1 GLO › CLK auf „USB“ steht (40–240 BPM). Der Takt läuft weiter, wenn du die "
+                          "wenn am FM-1 GLO › CLK auf „USB“ steht (40–240 BPM). Auf „INT“ führt das FM-1 selbst – "
+                          "ab Melodee 1.6.1 sendet es dann seinen eigenen Takt. Der Takt läuft weiter, wenn du die "
                           "Seite wechselst – „Stopp“ hier oder beim Beenden der App.")
         g = QGridLayout()
         g.addWidget(QLabel("Tempo:"), 0, 0)
@@ -636,7 +637,13 @@ class ClockTab(QWidget):
         g.addWidget(self.swing_l, 1, 2)
         g.addWidget(QLabel("Ziel:"), 2, 0)
         self.out = QComboBox()
+        self.out.currentIndexChanged.connect(lambda _i: self._update_hint())
         g.addWidget(self.out, 2, 1, 1, 2)
+        g.addWidget(QLabel("Start ab Takt:"), 3, 0)
+        self.bar = QSpinBox(minimum=1, maximum=1024, value=1)
+        self.bar.setToolTip("1 = von vorn (MIDI Start). Ab Takt 2: Song Position + Continue – der Follower steigt an "
+                            "dieser Stelle ein (Melodee ab 1.6.1 mit CLK USB; ältere Firmware läuft einfach weiter).")
+        g.addWidget(self.bar, 3, 1)
         c.lay.addLayout(g)
         row = QHBoxLayout()
         self.b_start = button("Start", "media-playback-start", "primary", self.start,
@@ -650,6 +657,10 @@ class ClockTab(QWidget):
         c.lay.addLayout(row)
         self.state = label("gestoppt", "muted")
         c.lay.addWidget(self.state)
+        self.hint = label("", "muted")
+        self.hint.setWordWrap(True)
+        self.hint.hide()
+        c.lay.addWidget(self.hint)
         lay.addWidget(c)
         f = Card("Eingehende Clock (Follower)", icon="activity",
                  subtitle="Misst Tempo und Gleichmäßigkeit einer Clock, die vom FM-1 oder einem mitgehörten "
@@ -672,6 +683,19 @@ class ClockTab(QWidget):
         for n in mido_names(True)[0]:
             self.out.addItem(n, n)
         self.out.setCurrentIndex(max(0, self.out.findData(cur)))
+        self._update_hint()
+
+    def _device_sends_clock(self) -> bool:
+        from ... import playback as P
+        info = getattr(self.page.ctx, "info", None)
+        return P.sends_clock(getattr(info, "version", "") or "")
+
+    def _update_hint(self):
+        """Melodee ab 1.6.1 sendet mit CLK INT selbst Clock: daran erinnern, wenn die App das FM-1 takten soll."""
+        from ... import playback as P
+        show = (self.out.currentData() or FM1) == FM1 and self._device_sends_clock()
+        self.hint.setText(P.CLOCK_CONFLICT if show else "")
+        self.hint.setVisible(show)
 
     def _send(self, data):                       # aus dem Clock-Thread
         if not self.page.send_to(self._target, data, realtime=True):
@@ -685,7 +709,13 @@ class ClockTab(QWidget):
         s = _settings()
         s.update(bpm=self.bpm.value(), swing=self.swing.value(), clock_out=self._target)
         _save()
-        self.master.start(cont)
+        bar = self.bar.value()
+        if not cont and bar > 1:
+            from ...clock import bar_position
+            self.master.start(position=bar_position(bar))
+        else:
+            self.master.start(cont)
+        self._update_hint()
         self.refresh()
 
     def stop(self):
@@ -715,6 +745,11 @@ class ClockTab(QWidget):
         else:
             self.state.setText("gestoppt")
         mt = self.page.monitor.meter
+        if m.running and mt.alive() and getattr(self, "_target", None) == FM1:
+            # zwei Takte zugleich: das FM-1 führt selbst (CLK INT, ab Melodee 1.6.1) und hört nicht auf die App
+            self.hint.setText("Es kommt gleichzeitig eine Clock herein – vermutlich sendet das FM-1 selbst (CLK INT). "
+                              "Am FM-1 GLO › GLOBAL › CLK auf USB stellen, dann folgt es der App.")
+            self.hint.show()
         if mt.alive():
             j = mt.jitter_ms
             self.follow.setText(f"{_de(mt.bpm, 1)} BPM" + (f", Schwankung ±{_de(j, 2)} ms zwischen den Pulsen" if j is not None else "")

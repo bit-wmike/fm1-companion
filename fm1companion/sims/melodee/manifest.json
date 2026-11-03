@@ -2,12 +2,12 @@
   "schema": 1,
   "name": "melodee",
   "title": "Melodee",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "source_repo": "https://github.com/keremimo/melodee",
-  "ref": "v1.6.0",
-  "commit": "8f0e251b85beb3bb79db9aeb377e665a45c0caec",
+  "ref": "v1.6.1",
+  "commit": "165d177a425944f3d30b0b669255a6ed0050c3a5",
   "license": "GPL-3.0-only",
-  "build_date": "2026-11-02T18:42:49Z",
+  "build_date": "2026-11-03T08:59:00Z",
   "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
   "builder": "tools/build_sims.py",
   "files": {
@@ -16,16 +16,16 @@
       "size": 35149
     },
     "NOTICE": {
-      "sha256": "d7e424c0b5376e6e29d108a70c6d2a9ca71eca0b626cd3960dc7121e6672d445",
+      "sha256": "e2bbff9b13ee2c28273fa9f2e7acddf5e4fd78becffc9cd12563fc3bf02ea9ec",
       "size": 1382
     },
     "index.html": {
-      "sha256": "f1fc842ca976e3a2d29f8ccef5264df8dff69784fd577346415c4f077093cc9b",
+      "sha256": "066ec7a8792ba602dc909c5e4c963d99318e8751f643f3262df5f230f93dacff",
       "size": 12977
     },
     "melodee.wasm": {
-      "sha256": "8a52ff7854070d35723e3a5a66b8a6cddacc03193e3d3d61d6c4f2e365c905e6",
-      "size": 1154676
+      "sha256": "994a2a86e122cd3d51d9eb6b26a386ba80008a29cdcc1f0aad7e4c0ed0716598",
+      "size": 1154666
     },
     "worklet.js": {
       "sha256": "e8a5c4572c5989c7c7c0c5b721865287d89222cb3e3b20a8edc2446de7f620d1",

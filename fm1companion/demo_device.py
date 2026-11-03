@@ -131,10 +131,13 @@ class FakeFM1:
             else:
                 sg["rows"], sg["row"] = [list(r) for r in rows], 0
         elif op == 2:
-            if not sg["rows"]:
+            start = a[1] if len(a) == 2 else 0            # editor.c: chain_prepare_from(a[1])
+            if not sg["rows"] or start >= len(sg["rows"]):
                 rc = 1
+            elif sg["running"]:
+                rc = 2
             else:
-                sg["running"], sg["row"] = True, 0
+                sg["running"], sg["row"] = True, start
                 self.playing = True
         elif op == 3:
             sg["running"] = False

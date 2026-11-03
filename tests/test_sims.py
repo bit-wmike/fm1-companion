@@ -48,7 +48,7 @@ def test_manifests_valid():
         html = (sims.DIR / s.key / m["entry"]).read_text("utf-8")
         assert "../_host/fm1sim-host.js" in html
     assert total < 15 * 1024 * 1024
-    assert found["melodee"].version == "1.6.0" and found["melodee"].ref == "v1.6.0"
+    assert found["melodee"].version == "1.6.1" and found["melodee"].ref == "v1.6.1"
 
 
 def test_fm1_open_has_no_firmware_and_no_update_tab():

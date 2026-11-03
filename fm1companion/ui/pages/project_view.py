@@ -184,7 +184,11 @@ class ProjectView(QWidget):
                              "gespeichert.")
         self.b_song_stop = button("FM-1 stoppen", ("media-playback-stop",), "", self.device_stop,
                                   "Den Transport des FM-1 anhalten (wie die STOP-Taste)")
-        self.song_row = flow_row(self.b_song, self.b_song_stop)
+        self.song_from = QSpinBox(minimum=1, maximum=1, value=1)
+        self.song_from.setPrefix("ab Abschnitt ")
+        self.song_from.setToolTip("Abschnitt des Songs, mit dem das FM-1 beginnt (wie PLAY am SONG-Cursor). Ab Melodee "
+                                  "1.6.1 mit CLK INT bekommen mitlaufende Geräte dann Song Position + Continue.")
+        self.song_row = flow_row(self.b_song, self.song_from, self.b_song_stop)
         self.song_row.hide()
         card.lay.addWidget(self.song_row)
         QShortcut(QKeySequence("Space"), self, activated=self._toggle_play)
@@ -217,6 +221,8 @@ class ProjectView(QWidget):
         live = bool(self.live_tag and self.live_slot == 0 and self.prj and self.prj.ok and self.prj.song and
                     getattr(self.ctx, "connected", False) and same_device(self.live_tag, device_tag(self.ctx)))
         self.song_row.setVisible(live)
+        if live:
+            self.song_from.setMaximum(max(1, len(self.prj.song)))
 
     def device_song(self):
         """laufende Musik: das FM-1 spielt seinen eigenen Song (BANK_SONG start) – kein Flash-Zugriff."""
@@ -225,14 +231,20 @@ class ProjectView(QWidget):
         from ... import playback as P
         self.player_bar.stop(quiet=True)
         name = device_name(self.ctx)
+        row = max(0, self.song_from.value() - 1)
+        version = self.ctx.info.version if getattr(self.ctx, "info", None) else ""
 
         def work(w, link):
-            return P.song_start(link)
+            rc, rows = P.song_start(link, row)
+            return rc, rows, (P.read_clock(link) if rc == 0 and P.sends_clock(version) else None)
 
         def done(res):
-            rc, rows = res
+            rc, rows, clk = res
+            where = f" ab Abschnitt {row + 1}" if row else ""
+            sync = P.song_sync_note(version, clk, row) if rc == 0 else ""
             self.player_bar.status.setText(
-                f"„{name}“ spielt seinen Song selbst ({rows} Abschnitte) – exakt sein Klang. „FM-1 stoppen“ hält an."
+                f"„{name}“ spielt seinen Song selbst{where} ({rows} Abschnitte) – exakt sein Klang. „FM-1 stoppen“ "
+                "hält an." + (" " + sync if sync else "")
                 if rc == 0 else f"„{name}“ hat den Start abgelehnt (Code {rc}) – ist ein Song angelegt? Am FM-1 SONG "
                                 "prüfen oder „Abspielen“ nutzen.")
         self.ctx.job(self, "Song starten", work, dialog=False, on_done=done,
