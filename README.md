@@ -19,6 +19,21 @@ The desktop suite for the **M-VAVE FM-1** with firmwares of the Felucca family (
 and the official firmware. Everything around the device in one app – built for the Raspberry Pi 5
 (Raspberry Pi OS Bookworm/Trixie, KDE Plasma), runs on any Debian/Ubuntu.
 
+![Studio – the digital twin of the FM-1 running Melodee's real firmware code](docs/screenshots/studio.png)
+
+## Screenshots
+
+Taken in demo mode (`fm1-companion --demo`, two simulated FM-1), English UI.
+
+| | |
+|---|---|
+| ![Projects – view patterns and songs, play them on the FM-1, export MIDI](docs/screenshots/project-view.png) | ![Compose – generate rhythms, chords, bass and melodies, preview on the FM-1](docs/screenshots/compose.png) |
+| **Projects › View & Export** – patterns, songs, MIDI export, play on the FM-1 | **Compose** – generate parts, preview with the FM-1's own sounds, undo |
+| ![Backups – look inside every backup and restore parts](docs/screenshots/backups-browse.png) | ![Firmware+ – catalog of community firmwares](docs/screenshots/firmware-catalog.png) |
+| **Backups › Browse & Compare** – projects, presets, settings; restore only parts | **Firmware+** – 250+ community firmwares, install, versions, simulator |
+| ![Presets – the 384 user slots and your own library](docs/screenshots/presets.png) | ![Recovery – step by step back to a working FM-1](docs/screenshots/recovery.png) |
+| **Presets** – all 384 user slots, library, FM voices (DX7) | **Recovery** – update mode and ROM boot mode, with safety checks |
+
 ## What's inside
 
 Section names as shown in the app's sidebar (Device, Sound, Music, Data & Tools, Help).
