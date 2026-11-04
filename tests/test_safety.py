@@ -384,6 +384,7 @@ def test_desktop_entries_identical_and_uninstall_cleans_dirs(tmp_path, monkeypat
     monkeypatch.setattr(core, "_desktop_dir", lambda: str(home / "Desktop"))
     monkeypatch.setattr(core, "refresh_menus", lambda L: None)
     monkeypatch.setattr(core.subprocess, "run", lambda *a, **k: None)
+    monkeypatch.setattr(core, "fluidsynth_service_enabled", lambda: False)   # (CI-Rechner haben systemctl)
     prefix = home / ".local"
     core.install(ROOT, prefix, log=lambda *_: None)
     run_entry = (prefix / "share/applications/fm1-companion.desktop").read_text()
