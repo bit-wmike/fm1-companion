@@ -20,7 +20,12 @@ Zwei Wege:
   exakt – die Oberfläche sagt das dazu.
 
 Zusätzlich kann das FM-1 seine **eigene laufende Musik** abspielen: BANK_SONG (74) op 2 startet den Song des
-Geräts, op 3 stoppt (EDITOR_PROTOCOL.md „Pattern banks“) – ohne Flash-Zugriff.
+Geräts (optional ab einem Abschnitt: editor.c ``chain_prepare_from(a[1])``, seit 1.6.0-rc.7), op 3 stoppt
+(EDITOR_PROTOCOL.md „Pattern banks“) – ohne Flash-Zugriff.
+
+Melodee ab 1.6.1 (midi_clock.c ``midi_sync_out_block``): steht CLK auf INT, sendet das FM-1 selbst MIDI-Clock (auch
+im Stand), Start bei PLAY und Stop bei STOP über USB und Bluetooth; startet der Song ab einem späteren Abschnitt,
+statt Start Song Position + Continue (``midi_sync_out_position``). Auf USB/TRS/BLE folgt es und sendet keine Clock.
 """
 from __future__ import annotations
 
@@ -37,6 +42,8 @@ ENGINE_DRUM = 10
 ENGINE_FM6 = 12
 CMD_GET, CMD_TRACK, CMD_FM6_GET, CMD_BANK_SONG = 2, 27, 68, 74
 G_CLOCK, G_DRUM, G_ROUTE = 2, 13, 14
+CLOCK_NAMES = {0: "INT", 1: "USB", 2: "TRS", 3: "BLE"}        # params.c N_CLOCK (BLE nur mit Bluetooth-Build)
+CLOCK_OUT_FROM = (1, 6, 1, 0, 0)    # ab Melodee 1.6.1 sendet CLK INT Clock/Start/Stop/Song Position (melodee16.version_key)
 OFFLINE_LABEL = "Vorhören im Rechner – klingt ähnlich, nicht exakt wie das FM-1"
 
 
@@ -66,7 +73,7 @@ class Routing:
     """Wie das FM-1 eingehende MIDI-Noten verteilt (GLO › SYSTEM)."""
     route: int = 0              # G_ROUTE: 0 CH1-4, 1 SEL, 2 CH5-8, 3 CH9-12, 4 CH13-16
     drum_channel: int = 10      # G_DRUM: 1..16, 0 = aus
-    clock: int = 0              # G_CLOCK: 0 INT, 1 USB, 2 TRS
+    clock: int = 0              # G_CLOCK: 0 INT, 1 USB, 2 TRS, 3 BLE
     known: bool = False         # vom Gerät gelesen (sonst Standardwerte angenommen)
     tracks: list[TrackSound] = field(default_factory=list)
     selected: int = 0
@@ -107,7 +114,7 @@ def read_routing(link, with_fm6: bool = False, timeout: float = 0.8) -> Routing:
         if G_ROUTE in vals:
             r.route = max(0, min(4, vals[G_ROUTE]))
             r.drum_channel = max(0, min(16, vals.get(G_DRUM, 10)))
-            r.clock = max(0, min(2, vals.get(G_CLOCK, 0)))
+            r.clock = max(0, min(3, vals.get(G_CLOCK, 0)))
             r.known = True
     except Exception as e:  # noqa: BLE001 – ältere Firmware/keine Antwort: Standard annehmen
         r.note = str(e)
@@ -380,9 +387,48 @@ def link_sender(link) -> Callable[[list[int], bool], bool]:
 
 
 def song_start(link, row: int = 0) -> tuple[int, int]:
-    """den Song des FM-1 selbst starten (BANK_SONG op 2). -> (rc, Zeilen). rc 0 = läuft."""
+    """den Song des FM-1 selbst starten (BANK_SONG op 2), ab Abschnitt `row` (0-basiert). -> (rc, Zeilen).
+    rc 0 = läuft, 1 = kein Song / Abschnitt gibt es nicht, 2 = läuft schon (erst stoppen), 67 = kein Klangspeicher."""
     a = link.request(CMD_BANK_SONG, [2, row] if row else [2], timeout=1.5, retries=0)
     return (a[1] if len(a) > 1 else 1), (a[2] if len(a) > 2 else 0)
+
+
+def read_clock(link, timeout: float = 0.8) -> int | None:
+    """GLO › CLK des Geräts (GET global 2): 0 INT, 1 USB, 2 TRS, 3 BLE – None, wenn nicht lesbar."""
+    try:
+        a = link.request(CMD_GET, [1, G_CLOCK], timeout=timeout, retries=0)
+    except Exception:  # noqa: BLE001
+        return None
+    if len(a) >= 4 and a[0] == 1 and a[1] == G_CLOCK:
+        return max(0, min(3, (a[2] | a[3] << 7) - 8192))
+    return None
+
+
+def sends_clock(version: str) -> bool:
+    """sendet diese Firmware mit CLK INT selbst MIDI-Clock und Transport (Melodee ab 1.6.1)?"""
+    from . import melodee16 as m16
+    k = m16.version_key(version)
+    return m16.is_melodee(version) and k is not None and k >= CLOCK_OUT_FROM
+
+
+def song_sync_note(version: str, clock: int | None, row: int = 0) -> str:
+    """was mitlaufende Geräte beim Song-Start am FM-1 bekommen (für die Statuszeile; '' = nichts zu sagen)."""
+    if not sends_clock(version):
+        return ""
+    if clock is None:
+        return "Steht am FM-1 CLK auf INT, gibt es den Takt an mitlaufende Geräte weiter (USB, Bluetooth)."
+    if clock != 0:
+        return (f"CLK steht auf {CLOCK_NAMES.get(clock, clock)}: das FM-1 folgt einer fremden Clock und sendet "
+                "selbst keine.")
+    if row:
+        return ("CLK INT: mitlaufende Geräte bekommen Song Position und Continue und steigen an derselben Stelle "
+                "ein (Song Position hat keinen Vorlauf – Geräte, die erst suchen müssen, verpassen evtl. die ersten "
+                "Pulse).")
+    return "CLK INT: mitlaufende Geräte bekommen Start und den Takt des FM-1."
+
+
+CLOCK_CONFLICT = ("Melodee ab 1.6.1 sendet mit CLK INT selbst MIDI-Clock. Soll die App den Takt vorgeben, am FM-1 "
+                  "GLO › GLOBAL › CLK auf USB stellen – auf INT hört es nicht auf die App und es laufen zwei Takte.")
 
 
 def transport_stop(link) -> bool:

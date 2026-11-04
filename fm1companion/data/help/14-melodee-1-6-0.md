@@ -50,8 +50,8 @@ das Punches und Presets. Backups behalten sie.
 
 ## Studio
 
-Für 1.6.0 gibt es einen eigenen [Studio-Zwilling](help:13-studio). Für Geräte und Backups mit 1.6.0-rc.7 oder rc.8
-bleiben deren Zwillinge dabei. Das Studio nimmt die Version deines FM-1 bzw. Backups. Weicht sie ab, sagt es dir das.
+Für 1.6.0 und 1.6.1 gibt es je einen eigenen [Studio-Zwilling](help:13-studio). Für Geräte und Backups mit
+1.6.0-rc.7 oder rc.8 bleiben deren Zwillinge dabei. Das Studio nimmt die Version deines FM-1 bzw. Backups. Weicht sie ab, sagt es dir das.
 Zwischen rc.x und 1.6.0 ist das die Lautstärke (siehe oben).
 
 ## Zurück zu einer älteren Version
@@ -67,3 +67,35 @@ Zwischen rc.x und 1.6.0 ist das die Lautstärke (siehe oben).
 Manche FM-1 haben einen Flash-Baustein von UCUN (UC25HQ80, Kennung 0xB36014). Erst ab 1.6.0 speichert Melodee
 darauf richtig. Die **USB-ROM-Rettung (Rettung Stufe 2) kennt diesen Flash noch nicht** und hält an, ohne zu
 schreiben. Die App sagt dir das dann. Normale Installationen über Firmware+ sind davon nicht betroffen.
+
+## Melodee 1.6.1: Clock und Sync
+
+Melodee 1.6.1 (3. November 2026) ist ein normales Update von 1.6.0: Projekte, Presets, Einstellungen und Backups
+bleiben gleich, 1.6.0 kann sie weiter lesen. Der Installationsplan zeigt deshalb keine Zusatz-Warnungen. Kommst du
+von einer Vorabversion oder von 1.5.1, gilt alles oben (Backup, Lautstärken). Was sich für dich ändert:
+
+* **Das FM-1 kann jetzt den Takt vorgeben.** Steht GLO › GLOBAL › CLK auf **INT**, sendet es MIDI-Clock über USB,
+  USB HOST und Bluetooth, auch im Stand, dazu Start bei PLAY und Stop bei STOP. Ein DAW oder eine Drum-Machine kann
+  folgen. Auf **USB, TRS oder BLE** folgt das FM-1 und sendet keine Clock. Über TRS geht keine Clock hinaus.
+* **Wer führt?** Soll die Suite den Takt geben ([MIDI › Takt](app://page/midi)), stell am FM-1 CLK auf **USB**. Auf
+  INT hört das FM-1 nicht auf die Clock der App und sendet seine eigene, dann laufen zwei Takte. Die Seite erinnert
+  dich daran. Soll das FM-1 führen, stell CLK auf **INT** und lass den Taktgeber der App aus. Der Reiter *Takt* zeigt
+  unter „Eingehende Clock“ dann das Tempo des FM-1.
+* **Song ab einem Abschnitt.** In der [Projekt-Ansicht](app://page/project_view) startet „Song am FM-1 selbst
+  starten“ jetzt auch ab einem gewählten Abschnitt, wie PLAY am SONG-Cursor. Mit CLK INT bekommen mitlaufende Geräte
+  dann **Song Position und Continue** und steigen an derselben Stelle ein. Song Position hat keinen Vorlauf: Geräte,
+  die erst suchen müssen, verpassen evtl. die ersten Pulse.
+* **Song Position von der App.** Mit CLK USB folgt das FM-1 einer Song Position. Der Taktgeber der Suite kann
+  deshalb „ab Takt“ starten (Song Position + Continue). Das FM-1 setzt jedes Pattern dorthin, wo es beim Spielen von
+  vorn wäre. Seine eigenen SONG-Abschnitte spielt es dabei nicht.
+* **Genauer Takt.** INT läuft jetzt auf exakten Notenwerten und driftet nicht mehr. Synchronisierte LFOs rasten am
+  Song ein.
+* **Projekt laden behält CLK.** CLK ist jetzt eine Geräte-Einstellung: Ein Projekt oder eine Vorlage zu laden (auch
+  aus der Suite, aus Projekten oder dem Studio) ändert sie nicht mehr. TUNE, SYSTEM MIDI und ROUT kommen weiter aus
+  dem Projekt. Hat ein Aufbau bisher auf den CLK eines Projekts gesetzt: CLK einmal am FM-1 einstellen.
+* **Backup zurückspielen stellt CLK wieder her**, so wie es beim Backup war. Prüf CLK danach, wenn du inzwischen
+  umgestellt hattest.
+
+Der Studio-Zwilling 1.6.1 rechnet mit demselben Takt wie das Gerät, sendet aber selbst keine Clock nach außen.
+Clock-Ausgabe und Song Position hat Melodee bisher nur mit automatischen Tests geprüft, noch nicht mit echten
+Geräten.

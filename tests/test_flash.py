@@ -156,6 +156,29 @@ def test_plan_melodee_16_upgrade_and_downgrade(env):
     assert p.ok and not any("1.6" in w for w in p.warnings)
 
 
+def test_plan_melodee_161_is_a_normal_update(env):
+    """Melodee 1.6.1 (RELEASE_1.6.1.md „Upgrading“: from 1.6.0 install as usual, 1.6.0 still reads the data):
+    1.6.0 -> 1.6.1 und zurück ohne Zusatz-Warnungen; rc.x -> 1.6.1 nennt die neuen Pegel; 1.5.1 -> 1.6.1 wie 1.6.0."""
+    from fm1companion import firmware, melodee16 as M
+    from fm1companion.flash.planner import Target, melodee_change, plan_install
+    mel = firmware.spec("melodee")
+    t161 = Target.from_spec(mel, tag="v1.6.1")
+    for dev in ("MELODEE v1.6.0", "MELODEE v1.6.1"):
+        st = melodee_state(version=dev)
+        p = plan_install(st, t161)
+        assert melodee_change(st, t161) == "within"
+        assert p.ok and not any("1.6" in w for w in p.warnings) and not p.confirmations, (dev, p.warnings)
+    back = melodee_state(version="MELODEE v1.6.1")
+    p = plan_install(back, Target.from_spec(mel, tag="v1.6.0"))
+    assert p.ok and not any("Zurück von Melodee 1.6" in w for w in p.warnings) and "melodee16_down" not in p.confirmations
+    p = plan_install(melodee_state(version="MELODEE v1.6.0-rc.8"), t161)
+    assert p.ok and M.LEVELS_160 in p.warnings and M.UPGRADE_16 not in p.warnings
+    p = plan_install(melodee_state(identity="FM-1_91051", version="MELODEE v1.5.1"), t161)
+    assert p.ok and p.warnings[0] == M.UPGRADE_16 and M.LEVELS_160 in p.warnings
+    assert not plan_install(melodee_state(identity="FM-1_91051", version="MELODEE v1.5.1"), t161, backup=False).ok
+    assert M.is_16("MELODEE v1.6.1") and not M.before_16("v1.6.1") and not M.new_levels("v1.6.0", "v1.6.1")
+
+
 def test_plan_melodee_to_sloop_builtin(env):
     from fm1companion import firmware
     from fm1companion.flash.planner import Target, plan_install

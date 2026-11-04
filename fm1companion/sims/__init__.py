@@ -43,7 +43,7 @@ DESCRIPTIONS = {
     "fm1-open": "Aus dem offiziellen Quellcode von M-VAVE gebaut (nicht von M-VAVE geprüft): FM1 Open V14 mit 8 Spuren, DX7, 808, 303, PSG, Sampler – "
                 "Spielen, Bearbeiten, Projekte, Sounds und Samples. Oberfläche englisch. Der Firmware-Update-Teil "
                 "ist entfernt (Installieren geht über „Firmware+“ in der App).",
-    "melodee": "Melodee 1.6.0 (stabil) – Oberfläche und Klang der Firmware; "
+    "melodee": "Melodee 1.6.1 (stabil) – Oberfläche und Klang der Firmware; "
                "nichts wird gespeichert. Erst „Switch on“ drücken (oder einfach eine Taste am FM-1 spielen).",
 }
 

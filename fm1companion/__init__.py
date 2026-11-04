@@ -5,7 +5,7 @@ Firmware, Editor, Backups, Projekte, Samples, Klänge, MIDI, Simulator, Aufnahme
 in einem Programm. GPL-3.0-only (nutzt Code und Werkzeuge der Firmware-Projekte
 Melodee, Felucca, Skiff und SLOOP, die ebenfalls GPL-3.0 sind).
 """
-__version__ = "2.3.1"
+__version__ = "2.3.2"
 APP_NAME = "FM-1 Companion"
 SUITE_NAME = "FM-1 Companion Suite"
 APP_ID = "fm1-companion"

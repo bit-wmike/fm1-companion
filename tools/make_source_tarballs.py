@@ -54,7 +54,7 @@ def main(argv=None) -> int:
     for r in a.repo:
         k, _, v = r.partition("=")
         repos[k] = Path(v).expanduser()
-    out = Path(a.out)
+    out = Path(a.out).resolve()          # git -C wechselt das Verzeichnis: -o braucht einen absoluten Pfad
     out.mkdir(parents=True, exist_ok=True)
     ok, sums = True, []
     for (name, commit), users in wanted().items():

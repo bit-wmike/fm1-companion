@@ -173,6 +173,8 @@ def flow():
           f"Quelle nennt das aktive FM-1 („{dev_name}“)")
     check(dev_name in pv.badge.text() and "●" in pv.badge.text(), "Ansicht zeigt das aktive FM-1 mit Farbpunkt")
     check(pv.song_row.isVisible() or not pv.prj.song, "laufende Musik mit Song: „Song am FM-1 selbst starten“ angeboten")
+    check(not pv.song_row.isVisible() or pv.song_from.maximum() == max(1, len(pv.prj.song)),
+          "Song-Start ab Abschnitt: Auswahl bis zum letzten Abschnitt")
     # Abspielen auf dem FM-1: die Noten gehen per MIDI ans Gerät, beim Stopp sind alle aus
     sent: list = []
 

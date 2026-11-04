@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "name": "melodee-studio",
+  "title": "Melodee Studio-Zwilling",
+  "version": "1.6.1",
+  "source_repo": "https://github.com/keremimo/melodee",
+  "ref": "v1.6.1",
+  "commit": "165d177a425944f3d30b0b669255a6ed0050c3a5",
+  "license": "GPL-3.0-only",
+  "build_date": "2026-11-03T08:57:44Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "NOTICE": {
+      "sha256": "61a3639b319edda84b8bcda44cf61f215abf5b1539c7cd2c2f74fdc73eee7020",
+      "size": 1851
+    },
+    "twin.wasm": {
+      "sha256": "379357e3f96be2fb7a5241ade5123ee72502dc81bdd679ef8d1e1248c48bacd2",
+      "size": 1289677
+    }
+  },
+  "kind": "studio",
+  "firmware": "melodee",
+  "firmware_version": "v1.6.1",
+  "identity": "FM-1_91061",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/melodee_studio.c",
+  "glue_sha256": "b0334fc96b916495737fe2b77e2307b8756daf648570b1fb09ac6f61a20bb2a6",
+  "source_url": "https://github.com/keremimo/melodee/archive/165d177a425944f3d30b0b669255a6ed0050c3a5.tar.gz"
+}

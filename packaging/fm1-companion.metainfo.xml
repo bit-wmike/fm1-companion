@@ -26,6 +26,9 @@
   <url type="homepage">https://github.com/bit-wmike/fm1-companion</url>
   <url type="bugtracker">https://github.com/bit-wmike/fm1-companion/issues</url>
   <releases>
+    <release version="2.3.2" date="2026-11-03">
+      <description><p>Melodee 1.6.1: Studio-Zwilling und Simulator mit 1.6.1 (1.6.0, rc.7 und rc.8 bleiben für Geräte auf diesen Versionen). Update von 1.6.0 auf 1.6.1 ohne Zusatz-Warnungen. „Song am FM-1 selbst starten“ geht jetzt ab einem Abschnitt – mitlaufende Geräte bekommen ab 1.6.1 Song Position und Continue. Der Taktgeber der MIDI-Seite kann ab einem Takt starten (Song Position) und erinnert daran, am FM-1 CLK auf USB zu stellen, weil 1.6.1 mit CLK INT selbst Clock sendet. Hilfe: was 1.6.1 an Clock, Sync und CLK ändert.</p></description>
+    </release>
     <release version="2.3.1" date="2026-11-02">
       <description><p>Sicherheit und Datenschutz vor der Veröffentlichung: Fehlerberichte, Diagnose und Systemcheck-Bericht ohne Tokens, Passwörter und Rechnernamen; Einstellungen nur für dich lesbar; einmaliger Risiko-Hinweis vor der ersten Installation oder Rettung; Online-Editoren dürfen erst nach Zustimmung je Adresse mit dem FM-1 reden; Werkzeuge aus fremden Firmware-Repos laufen erst nach Rückfrage; der lokale Server und neue Fenster aus Webseiten sind abgesichert; der Installer fragt, bevor er den FluidSynth-Dienst abschaltet.</p></description>
     </release>

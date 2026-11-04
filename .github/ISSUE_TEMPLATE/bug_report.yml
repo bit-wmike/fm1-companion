@@ -15,7 +15,7 @@ body:
     attributes:
       label: Version der Suite
       description: "`fm1-companion --version` oder Hilfe › Über"
-      placeholder: "2.3.1"
+      placeholder: "2.3.2"
     validations:
       required: true
   - type: input

@@ -187,6 +187,25 @@ def flow():
     check(b and b[0] == 0xFA and b[-1] == 0xFC and b.count(0xF8) >= 20,
           f"Clock: Start, {b.count(0xF8)} Pulse, Stop")
     check("gestoppt" in ck.state.text(), "Takt-Status")
+    # ab Takt 5: Song Position (64 16tel) + Continue statt Start (Melodee ab 1.6.1 folgt dem mit CLK USB)
+    sent.clear()
+    ck.bar.setValue(5)
+    ck.start()
+    wait(200)
+    ck.stop()
+    ck.bar.setValue(1)
+    b = [d for d, _ in sent]
+    check(b and b[0] == [0xF2, 64, 0] and b[1] == [0xFB] and b[-1] == [0xFC], f"ab Takt 5: Song Position + Continue ({b[:2]})")
+    saved_info = ctx.info.version if ctx.info else None
+    if ctx.info:
+        ctx.info.version = "MELODEE v1.6.1"
+        ck.fill_outputs()
+        check(not ck.hint.isHidden() and "CLK" in ck.hint.text(), "Melodee 1.6.1: Hinweis CLK auf USB")
+        ctx.info.version = "MELODEE v1.6.0"
+        ck.fill_outputs()
+        check(ck.hint.isHidden(), "Melodee 1.6.0: kein CLK-Hinweis")
+        ctx.info.version = saved_info
+        ck.fill_outputs()
 
     # ---- Regler (Demo-Gerät)
     page.tabs.setCurrentWidget(page.controls)

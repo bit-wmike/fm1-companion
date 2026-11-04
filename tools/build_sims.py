@@ -18,7 +18,7 @@ Simulators:
             Build-Simulator step of tools/Build-Web.ps1: same sources, same flags, same WASI SDK 27.
             The wasm is served next to the page (FM1_SIMULATOR.url) instead of base64 inside it.
             The firmware-update tab is removed: FM1_PACKAGE = null (nothing to flash) and the tab is hidden.
-  melodee   Melodee v1.6.0 browser emulator (web/emu). Upstream builds it with Emscripten; emsdk cannot
+  melodee   Melodee v1.6.1 browser emulator (web/emu). Upstream builds it with Emscripten; emsdk cannot
             download its LLVM here, so it is compiled with WASI SDK clang in reactor mode. The only change is
             an include shim (tools/wasm_shim/sys/wait.h) for the host-test harness' fork/pipe helpers, which
             the emulator never calls. Upstream files stay untouched.
@@ -54,8 +54,8 @@ SIMS = {
     "fm1-open": {"repo": "https://github.com/m-vave/fm1_open", "ref": "4c7496daac04a95ff10d1afdcc8f9ead2dbabc41",
                  "title": "M-VAVE FM1 Open (aus dem offiziellen Quellcode gebaut)", "version": "V14",
                  "license": "GPL-3.0-only WITH GPL-3.0-linking-exception (APP); see THIRD_PARTY.md"},
-    "melodee": {"repo": "https://github.com/keremimo/melodee", "ref": "v1.6.0",
-                "title": "Melodee", "version": "1.6.0", "license": "GPL-3.0-only"},
+    "melodee": {"repo": "https://github.com/keremimo/melodee", "ref": "v1.6.1",
+                "title": "Melodee", "version": "1.6.1", "license": "GPL-3.0-only"},
 }
 
 
@@ -243,7 +243,7 @@ BUILDERS = {"fm1-open": build_fm1_open, "melodee": build_melodee}
 STUDIO_ABI = 1
 STUDIOS = {
     "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
-                       "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0"], "title": "Melodee Studio-Zwilling",
+                       "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
                        "license": "GPL-3.0-only"},
 }
 

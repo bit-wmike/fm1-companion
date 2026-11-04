@@ -6,6 +6,9 @@ so summieren sich Verspätungen nicht auf. Gewartet wird grob mit sleep() und di
 Millisekunde aktiv – das hält die Abweichung auf einem Pi 5 im Bereich weniger Zehntel-ms.
 Tempowechsel setzen den Zeitbezug am letzten Puls neu, damit nichts springt.
 Swing verschiebt jeden zweiten 16tel-Block (6 Pulse) nach hinten.
+Song Position (F2, in 16teln ab Songanfang) + Continue lässt einen Follower an einer bestimmten Stelle einsteigen –
+Melodee ab 1.6.1 folgt dem auf jedem Eingang (midi_clock.c ``midi_clock_position``: nur im Stand, der Sprung
+passiert mit dem ersten Puls nach Continue).
 """
 from __future__ import annotations
 
@@ -14,12 +17,24 @@ import time
 from collections import deque
 from typing import Callable
 
-CLOCK, START, CONTINUE, STOP = 0xF8, 0xFA, 0xFB, 0xFC
+CLOCK, START, CONTINUE, STOP, SONG_POSITION = 0xF8, 0xFA, 0xFB, 0xFC, 0xF2
+SPP_MAX = 16383                                # 14 bit, in 16teln
 BPM_MIN, BPM_MAX = 30.0, 300.0
 
 
 def pulse_interval(bpm: float) -> float:
     return 60.0 / (max(BPM_MIN, min(BPM_MAX, bpm)) * 24)
+
+
+def song_position(sixteenths: int) -> list[int]:
+    """MIDI Song Position Pointer: 16tel ab Songanfang (0..16383)."""
+    v = max(0, min(SPP_MAX, int(sixteenths)))
+    return [SONG_POSITION, v & 0x7F, v >> 7]
+
+
+def bar_position(bar: int, beats_per_bar: int = 4) -> int:
+    """Takt (1-basiert, 4/4) -> Song Position in 16teln."""
+    return max(0, int(bar) - 1) * beats_per_bar * 4
 
 
 def swing_offset(pulse: int, bpm: float, swing: float) -> float:
@@ -78,11 +93,18 @@ class ClockMaster:
             self._rebase = True
 
     # ---- Transport
-    def start(self, cont: bool = False):
+    def start(self, cont: bool = False, position: int | None = None):
+        """Start (von vorn), Continue (weiter) oder – mit position (16tel) – Song Position + Continue."""
         self.stop_thread()
-        self._emit([CONTINUE if cont else START])
-        if not cont:
-            self.pulses = 0
+        if position is not None:
+            msg = song_position(position)
+            self._emit(msg)
+            self._emit([CONTINUE])
+            self.pulses = (msg[1] | msg[2] << 7) * 6
+        else:
+            self._emit([CONTINUE if cont else START])
+            if not cont:
+                self.pulses = 0
         self.errors.clear()
         self._stop.clear()
         self.running = True

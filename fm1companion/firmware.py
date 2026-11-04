@@ -416,6 +416,7 @@ KNOWN_TOOL_COMMITS: dict[str, dict[str, str]] = {
         "v1.6.0-rc.7": "022bab7294d523fe0b4f48581c8afecc39fc4446",
         "v1.6.0-rc.8": "1150ef2f722721f16af0d279931d40b9edd0a4bf",
         "v1.6.0": "8f0e251b85beb3bb79db9aeb377e665a45c0caec",
+        "v1.6.1": "165d177a425944f3d30b0b669255a6ed0050c3a5",
     },
 }
 TRUST_FILE = DATA_DIR / "tool_trust.json"

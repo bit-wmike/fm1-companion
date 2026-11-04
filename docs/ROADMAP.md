@@ -7,7 +7,7 @@ schreibbar. Die Suite ersetzt keine DAW (Logic, Audacity), kann aber alles, was 
 
 | Schritt | Firmware | Stand |
 |---|---|---|
-| 1 | **Melodee** (Priorität 1), passend zur Version auf dem Gerät (1.6.0, 1.6.0-rc.7 und rc.8 mitgeliefert) | **fertig in 2.2.0**, 1.6.0 seit 2.3.0 (Seite „Studio“, virtuelles Gerät, Wiedergabe-Ziel „Im Studio“) |
+| 1 | **Melodee** (Priorität 1), passend zur Version auf dem Gerät (1.6.1, 1.6.0, 1.6.0-rc.7 und rc.8 mitgeliefert) | **fertig in 2.2.0**, 1.6.0 seit 2.3.0, 1.6.1 seit 2.3.2 (Seite „Studio“, virtuelles Gerät, Wiedergabe-Ziel „Im Studio“) |
 | 2 | **SLOOP** (neueste stabile, zurzeit 2.8.4) | erst wenn Melodee gut läuft |
 | 3 | **Skiff** (neueste stabile, zurzeit 2.1.1) | erst wenn Melodee gut läuft |
 | 4 | **Original-Firmware:** vorerst über **FM1 Open** (M-VAVEs offener V14-Code), mit Hinweis, dass V16 abweichen kann | danach |
@@ -41,6 +41,21 @@ Sicherheit beim Wechsel auf/ab 1.6: `fm1companion/melodee16.py` (Installationspl
 
 Offen: `fixturegen16.c` speichert den Song nur als laufende Musik (Objekt 0) – `project_save_as` mit Song-Presets
 bricht im Host-Test-Aufbau die Ressourcen-Tabelle (nicht untersucht, nur Host).
+
+## Stand 2.3.2 (Melodee 1.6.1)
+
+Erledigt: Zwilling **Melodee 1.6.1** (Tag v1.6.1, Commit 165d177; Klebeschicht unverändert, Kennung FM-1_91061) neben
+1.6.0, rc.7 und rc.8; `pick_build` nimmt für 1.6.1 genau 1.6.1, für 1.6.0 weiter 1.6.0. Simulator auf 1.6.1.
+Werkzeug-Pin v1.6.1 (`KNOWN_TOOL_COMMITS`). 1.6.0 → 1.6.1 ist im Installationsplan ein normales Update.
+Clock/Sync von 1.6.1 (gegen `midi_clock.c`, `editor.c`, `project.c` geprüft): „Song am FM-1 selbst starten“ ab einem
+Abschnitt (BANK_SONG op 2 mit Zeile → `chain_prepare_from`; mit CLK INT sendet das FM-1 dann Song Position +
+Continue), der Taktgeber der MIDI-Seite kann ab einem Takt starten (Song Position + Continue, `clock.song_position`)
+und warnt, wenn das FM-1 mit CLK INT selbst Clock sendet. Hilfe „Melodee 1.6.0“ um 1.6.1 ergänzt (CLK beim
+Projekt-Laden behalten, Backup stellt CLK wieder her).
+
+Offen: Der Zwilling gibt die Clock des FM-1 (eigener Echtzeit-Ring in `usb.c`) nicht nach außen – das bräuchte eine
+neue Klebeschicht und damit neue Builds aller Versionen. Clock-Ausgabe an echter Hardware ungetestet (auch bei
+Melodee selbst nur automatisch geprüft).
 
 ## Zweiter Weg: fm1-emu (Prozessor-Emulation)
 

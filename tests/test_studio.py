@@ -29,19 +29,21 @@ from fm1companion.protocol import Cmd  # noqa: E402
 NODE = shutil.which("node") or ("/opt/node22/bin/node" if Path("/opt/node22/bin/node").exists() else None)
 need_node = pytest.mark.skipif(not NODE, reason="node fehlt")
 FIX = ROOT / "tests" / "fixtures" / "musik"
+# tools/fm1pkg_make.py release_product: 1.6.0(-rc.x) -> FM-1_91060, 1.6.1 -> FM-1_91061
+IDENTITY = {"v1.6.0-rc.7": "FM-1_91060", "v1.6.0-rc.8": "FM-1_91060", "v1.6.0": "FM-1_91060", "v1.6.1": "FM-1_91061"}
 
 
 # ------------------------------------------------------------------ Builds
 def test_builds_side_by_side():
     bs = studio.builds("melodee")
     vs = [b.version for b in bs]
-    assert {"v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0"} <= set(vs) and vs == sorted(vs, key=studio.version_key)
+    assert {"v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"} <= set(vs) and vs == sorted(vs, key=studio.version_key)
     for b in bs:
         m = b.manifest
         assert b.verify() == []
         assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "melodee"
         assert m["ref"] == b.version and len(m["commit"]) == 40 and m["license"] == "GPL-3.0-only"
-        assert m["identity"] == "FM-1_91060" and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["identity"] == IDENTITY[b.version] and m["fs"] == 44100 and m["flash_size"] == 0x100000
         assert {"LICENSE", "NOTICE", "twin.wasm"} <= set(m["files"])
         assert "unmodified" in (b.path / "NOTICE").read_text() and m["glue"] == "tools/studio/melodee_studio.c"
         assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
@@ -60,11 +62,13 @@ def test_versions_and_pick():
     assert exact and b.version == "v1.6.0-rc.7" and not warn
     b, exact, warn = studio.pick_build("melodee", "MELODEE v1.6.0")     # die fertige 1.6.0: genau die
     assert exact and b.version == "v1.6.0" and not warn
-    b, exact, warn = studio.pick_build("melodee", "v1.6.1")             # neuer als alles: die nächstältere
-    assert not exact and b.version == "v1.6.0" and "v1.6.1" in warn and "abweichen" in warn
+    b, exact, warn = studio.pick_build("melodee", "MELODEE v1.6.1")     # 1.6.1: genau die
+    assert exact and b.version == "v1.6.1" and not warn
+    b, exact, warn = studio.pick_build("melodee", "v1.6.2")             # neuer als alles: die nächstältere
+    assert not exact and b.version == "v1.6.1" and "v1.6.2" in warn and "abweichen" in warn
     b, exact, warn = studio.pick_build("melodee", "v1.5.2")             # älter als alles: die älteste
     assert not exact and b.version == "v1.6.0-rc.7"
-    assert studio.pick_build("melodee")[0].version == "v1.6.0"          # ohne Wunsch: die neueste
+    assert studio.pick_build("melodee")[0].version == "v1.6.1"          # ohne Wunsch: die neueste
     with pytest.raises(studio.StudioError):
         studio.pick_build("sloop")
     vc = studio.check_versions("v1.6.0-rc.8", device="MELODEE v1.6.0-rc.7")
@@ -91,12 +95,12 @@ def test_twin_core_headless():
                        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, r.stderr[-3000:]
     res = json.loads(r.stdout)
-    assert {x["version"] for x in res} >= {"1.6.0-rc.7", "1.6.0-rc.8", "1.6.0"}
+    assert {x["version"] for x in res} >= {"1.6.0-rc.7", "1.6.0-rc.8", "1.6.0", "1.6.1"}
     expected = json.loads((FIX / "expected.json").read_text())["live"]
     for x in res:
         v = x["firmware_version"]
         assert x["version_export"] == v and x["info"] == "MELODEE " + v and x["ping"] == [0]
-        assert bytes(x["identity_reply"]) == _identity_frame("FM-1_91060")   # ota.c, wie demo_device erwartet
+        assert bytes(x["identity_reply"]) == _identity_frame(IDENTITY[v])   # ota.c, wie demo_device erwartet
         assert x["objects"] == 57 and all(rc == 0 for rc in x["put_rc"].values())
         assert x["identical"]["2"] and x["identical"]["64"] and x["running_music_roundtrip"] and x["persisted"]
         first = expected["tracks"][0]["banks"][0]["steps"]["0"]
@@ -181,6 +185,41 @@ def test_v160_twin_song_project_and_older_backup(node_studio):
     assert new.projects() == [0]
     vc = new.check_versions(backup="MELODEE v1.6.0-rc.8")
     assert not vc.ok and "CZ-1" in vc.message
+
+
+def _clk(L):
+    a = L.request(Cmd.GET, [1, 2])
+    return (a[2] | a[3] << 7) - 8192
+
+
+def test_v161_twin_keeps_clk_on_project_load(node_studio):
+    """1.6.1-Zwilling (project.c project_restore_runtime ohne G_CLOCK, editor_backup.c ed_bk_clock): ein Projekt zu
+    laden behält den CLK des Geräts – 1.6.0 übernahm den des Projekts; ein Backup bringt CLK zurück. Daten wie 1.6.0."""
+    from fm1companion.protocol import v14
+    res = {}
+    for ver in ("v1.6.0", "v1.6.1"):
+        st = node_studio(ver)
+        assert st.build.version == ver and not st.warning
+        L = st.link
+        L.request(Cmd.SET, [1, 2, *v14(1)])                  # CLK USB
+        assert _clk(L) == 1
+        assert L.request(Cmd.PROJECT, [1, 0])[2] == 1        # Projekt 1 mit CLK USB speichern
+        L.request(Cmd.SET, [1, 2, *v14(0)])                  # CLK INT
+        L.request(Cmd.PROJECT, [0, 0])                       # Projekt 1 laden
+        res[ver] = _clk(L)
+    assert res == {"v1.6.0": 1, "v1.6.1": 0}
+    new = node_studio("v1.6.1")
+    song16 = (ROOT / "tests" / "fixtures" / "musik16" / "obj_0.bin").read_bytes()
+    backup.write_object(new.link, 0, song16, proto=backup.FELUCCA)   # das 1.6.0-Songprojekt: Format unverändert
+    new.link.request(Cmd.SET, [1, 2, *v14(1)])
+    arch = new.backup()
+    assert studio.backup_version(arch) == "v1.6.1" and len(arch.objects) == 57
+    new.link.request(Cmd.SET, [1, 2, *v14(0)])
+    new.open_from_backup(arch)
+    assert _clk(new.link) == 1                               # Backup stellt CLK wieder her
+    old = node_studio("v1.6.0")
+    old.open_from_backup(arch)                               # 1.6.0 liest Backups von 1.6.1
+    assert old.projects() == new.projects()
 
 
 def test_render_stems_and_state(node_studio, tmp_path):
