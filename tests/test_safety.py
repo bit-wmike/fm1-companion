@@ -370,7 +370,7 @@ def test_deps_list_has_webchannel():
 
 def _desktop_fields(text: str) -> dict:
     return {k: v for k, v in (ln.split("=", 1) for ln in text.splitlines() if "=" in ln)
-            if k in ("GenericName", "Comment")}
+            if k.split("[")[0] in ("GenericName", "Comment")}
 
 
 def test_desktop_entries_identical_and_uninstall_cleans_dirs(tmp_path, monkeypatch):

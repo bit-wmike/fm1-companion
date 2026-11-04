@@ -13,7 +13,7 @@ def version() -> str:
     for line in (ROOT / "fm1companion" / "__init__.py").read_text().splitlines():
         if line.startswith("__version__"):
             return line.split("=", 1)[1].strip().strip('"\'')
-    raise SystemExit("keine Version gefunden")
+    raise SystemExit("no version found")
 
 
 def app_files() -> list[Path]:

@@ -98,8 +98,20 @@ def _ignore(_d, names):
 
 
 # GenericName/Comment as in the .deb (data/fm1-companion.desktop.in) – both packages show the same in the menu
-GENERIC_NAME = "FM-1-Verwaltung"
-COMMENT = "Firmware, Backups, Klänge, MIDI, Simulator, Samples und Aufnahme für das M-VAVE FM-1"
+GENERIC_NAME = "FM-1 manager"
+COMMENT = "Firmware, backups, sounds, MIDI, simulator, samples and recording for the M-VAVE FM-1"
+L10N = ("GenericName[de]=FM-1-Verwaltung\n"
+        "Comment[de]=Firmware, Backups, Klänge, MIDI, Simulator, Samples und Aufnahme für das M-VAVE FM-1\n")
+
+
+def desktop_l10n(src: Path | None = None) -> str:
+    """translated GenericName[xx]=/Comment[xx]= lines from the shared template (fallback: German)"""
+    try:
+        lines = [ln for ln in (Path(src) / "data" / f"{APP_ID}.desktop.in").read_text("utf-8").splitlines()
+                 if ln.startswith(("GenericName[", "Comment["))]
+        return "".join(ln + "\n" for ln in lines)
+    except (OSError, TypeError):
+        return L10N
 
 
 def desktop_fields(src: Path | None = None) -> tuple[str, str]:
@@ -139,8 +151,9 @@ def exec_quote(path: str) -> str:
     return '"' + inner.replace("\\", "\\\\") + '"'
 
 
-def _desktop_entry(exe: str, name: str, comment: str, extra: str = "", generic: str = GENERIC_NAME) -> str:
-    return (f"[Desktop Entry]\nType=Application\nName={name}\nGenericName={generic}\nComment={comment}\n"
+def _desktop_entry(exe: str, name: str, comment: str, extra: str = "", generic: str = GENERIC_NAME,
+                   l10n: str = "") -> str:
+    return (f"[Desktop Entry]\nType=Application\nName={name}\nGenericName={generic}\nComment={comment}\n{l10n}"
             f"Exec={exe}\nIcon={APP_ID}\nTerminal=false\nCategories=AudioVideo;Audio;Midi;Music;\n"
             "Keywords=FM-1;M-VAVE;Melodee;Skiff;SLOOP;Synthesizer;MIDI;Firmware;\n"
             f"StartupWMClass={APP_ID}\n{extra}")
@@ -227,7 +240,7 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
     generic, comment = desktop_fields(src)
     actions = (f"Actions=demo;\n\n[Desktop Action demo]\nName=Demo mode (no device)\nName[de]=Demo-Modus (ohne Gerät)\n"
                f"Exec={exec_quote(str(launcher))} --demo\n")
-    entry = _desktop_entry(exec_quote(str(launcher)), "FM-1 Companion", comment, actions, generic)
+    entry = _desktop_entry(exec_quote(str(launcher)), "FM-1 Companion", comment, actions, generic, desktop_l10n(src))
     if menu:
         _mkdir(L["apps"], created)
         (L["apps"] / f"{APP_ID}.desktop").write_text(entry)

@@ -47,7 +47,7 @@ def sha256(p: Path) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--repo", action="append", default=[], help="name=PFAD (z. B. melodee=/tmp/melodee)")
+    ap.add_argument("--repo", action="append", default=[], help="name=PATH (e.g. melodee=/tmp/melodee)")
     ap.add_argument("--out", default=str(ROOT / "dist" / "sources"))
     a = ap.parse_args(argv)
     repos = {}
@@ -61,18 +61,18 @@ def main(argv=None) -> int:
         clone = repos.get(name, Path("/tmp") / name)
         dest = out / f"{name}-{commit}.tar.gz"
         if not (clone / ".git").exists() and not (clone / "HEAD").exists():
-            print(f"FEHLT: Klon von {name} ({clone}) – für {', '.join(users)}", file=sys.stderr)
+            print(f"MISSING: clone of {name} ({clone}) – for {', '.join(users)}", file=sys.stderr)
             ok = False
             continue
         r = subprocess.run(["git", "-C", str(clone), "cat-file", "-e", f"{commit}^{{commit}}"], capture_output=True)
         if r.returncode:
-            print(f"FEHLT: Commit {commit} in {clone} – erst 'git fetch' (für {', '.join(users)})", file=sys.stderr)
+            print(f"MISSING: commit {commit} in {clone} – run 'git fetch' first (for {', '.join(users)})", file=sys.stderr)
             ok = False
             continue
         subprocess.run(["git", "-C", str(clone), "archive", "--format=tar.gz", f"--prefix={name}-{commit}/",
                         "-o", str(dest), commit], check=True)
         sums.append(f"{sha256(dest)}  {dest.name}")
-        print(f"{dest.name}  {dest.stat().st_size} Bytes  (für {', '.join(users)})")
+        print(f"{dest.name}  {dest.stat().st_size} bytes  (for {', '.join(users)})")
     if sums:
         (out / "SHA256SUMS").write_text("\n".join(sums) + "\n", "utf-8")
     return 0 if ok else 1
