@@ -635,11 +635,20 @@ def badge(text: str, level: str = "") -> QLabel:
 
 
 def empty_state(icon_name: str, title: str, text: str = "", action_text: str = "", action=None) -> QWidget:
-    """leerer Zustand: großes Symbol, Titel, Erklärung ("so geht's …"), optional ein Knopf."""
+    """leerer Zustand: großes Symbol, Titel, Erklärung ("so geht's …"), optional ein Knopf.
+    Title and text sit in a centred column of at most 560 px without layout alignment, so that word-wrapped lines
+    get their full height (a layout with alignment sizes labels by sizeHint and cuts longer translations)."""
     w = QWidget()
-    lay = QVBoxLayout(w)
-    lay.setContentsMargins(24, 32, 24, 32)
-    lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    outer = QVBoxLayout(w)
+    outer.setContentsMargins(24, 24, 24, 24)
+    outer.addStretch(1)
+    row = QHBoxLayout()
+    row.addStretch(1)
+    col = QWidget()
+    col.setMaximumWidth(560)
+    col.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+    lay = QVBoxLayout(col)
+    lay.setContentsMargins(0, 0, 0, 0)
     ic = QLabel()
     ic.setPixmap(icon(icon_name, "dialog-information").pixmap(48, 48))
     ic.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -655,11 +664,14 @@ def empty_state(icon_name: str, title: str, text: str = "", action_text: str = "
         s.setProperty("role", "muted")
         s.setAlignment(Qt.AlignmentFlag.AlignCenter)
         s.setWordWrap(True)
-        s.setMaximumWidth(520)
-        lay.addWidget(s, 0, Qt.AlignmentFlag.AlignHCenter)
+        lay.addWidget(s)
     if action_text and action:
         b = button(action_text, variant="primary", slot=action)
         lay.addWidget(b, 0, Qt.AlignmentFlag.AlignHCenter)
+    row.addWidget(col, 20)
+    row.addStretch(1)
+    outer.addLayout(row)
+    outer.addStretch(1)
     return w
 
 

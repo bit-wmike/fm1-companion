@@ -4,7 +4,6 @@
 Teile mit echten Paketen brauchen FM1_TEST_PKGDIR (wie tests/test_flashmodel.py), sonst übersprungen.
 """
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -26,10 +25,20 @@ def _r35(n):
 # ---------------------------------------------------------------- Ressourcen: Knopfname und Bedeutung von Befehl 82
 def test_resource_hint_names_the_real_button():
     """Früher: „Ressourcen erneut schreiben“ – diesen Knopf gibt es nicht; „Zur Firmware-Seite“ erschien nie."""
+    from fm1companion import i18n
+    from fm1companion.flash import texts
     src = (ROOT / "fm1companion/ui/firmware_page.py").read_text("utf-8")
-    button = re.search(r'"(Schrift && Werkssounds nachschreiben)"', src).group(1).replace("&&", "&")
+    assert '_("Rewrite font && factory sounds")' in src
+    button = i18n.catalog("de").get(None, "Rewrite font && factory sounds").replace("&&", "&")
+    assert button == "Schrift & Werkssounds nachschreiben"
     miss = m.quick_check("FM-1_91060", "Melodee 1.6.0-rc.7", {"installed": False, "length": 1, "crc": 2})
     assert any(button in t for _, t in miss.findings)
+    old = i18n.current_language()
+    i18n.set_language("en")                          # the English UI shows the hint with the English label
+    try:
+        assert any("Rewrite font & factory sounds" in texts.tr(t) for _, t in miss.findings)
+    finally:
+        i18n.set_language(old)
     for p in ("fm1companion/flash/flashmodel.py", "fm1companion/firmware.py"):
         assert "Ressourcen erneut schreiben" not in (ROOT / p).read_text("utf-8"), p
 

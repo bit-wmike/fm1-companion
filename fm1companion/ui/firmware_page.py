@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QF
 from .. import backup, config, editor_host, firmware
 from ..i18n import _, pgettext
 from .common import JobDialog, call_in_gui, confirm, flow_row, heading, icon, init_gui_caller, run_job, show_error
-from .responsive import adaptive_splitter
+from .responsive import adaptive_splitter, fit_height, wrap_height
 
 
 def find_backup_for(ctx, key: str) -> Path | None:
@@ -774,6 +774,7 @@ class FirmwarePage(QWidget):
         self.desc = QLabel()
         self.desc.setWordWrap(True)
         self.desc.setOpenExternalLinks(True)
+        wrap_height(self.desc)
         rl.addWidget(self.desc)
         self.v16_warn = QLabel(_("<b>Caution V16:</b> {warning}").format(warning=V16_WARNING_HTML))
         self.v16_warn.setWordWrap(True)
@@ -819,10 +820,11 @@ class FirmwarePage(QWidget):
         self.chk_rc = QCheckBox(_("Show release candidates"))
         self.chk_rc.setChecked(ctx.settings.channel == "rc")
         self.chk_rc.toggled.connect(self._fill)
-        rl.addWidget(flow_row(self.b_install, self.b_dl, self.b_refresh, self.chk_rc))     # bricht bei Schmalheit um
+        rl.addWidget(fit_height(flow_row(self.b_install, self.b_dl, self.b_refresh, self.chk_rc)))     # bricht bei Schmalheit um
         self.b_local = QPushButton(icon("document-open"), _("Install own .fwsc file …"))
         self.b_local.clicked.connect(self._install_local)
-        # German label "Schrift && Werkssounds nachschreiben" – flashmodel.py (pinned, German) names this button
+        # flashmodel.py (pinned, German) names this button „Schrift & Werkssounds nachschreiben“; flash/texts.py
+        # shows that hint in the UI language with this label
         self.b_res = QPushButton(icon("run-build", "system-run"), _("Rewrite font && factory sounds"))
         self.b_res.setToolTip(_("Melodee 1.6 and later: write the resource file (font, factory sounds, Bluetooth "
                                 "program) to the FM-1 afterwards – e.g. if the display stays empty after the update"))
@@ -830,7 +832,7 @@ class FirmwarePage(QWidget):
         self.b_stock = QPushButton(icon("edit-undo", "go-previous"), _("Back to the original …"))
         self.b_stock.setToolTip(_("Install M-VAVE's original firmware V15 or V16 (the checksum is always checked)"))
         self.b_stock.clicked.connect(self.return_to_original)
-        rl.addWidget(flow_row(self.b_local, self.b_stock, self.b_res))
+        rl.addWidget(fit_height(flow_row(self.b_local, self.b_stock, self.b_res)))
         self.history = QLabel()
         self.history.setWordWrap(True)
         self.history.setTextFormat(Qt.TextFormat.RichText)

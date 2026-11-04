@@ -6,7 +6,7 @@
   "source_repo": "https://github.com/m-vave/fm1_open",
   "ref": "4c7496daac04a95ff10d1afdcc8f9ead2dbabc41",
   "commit": "4c7496daac04a95ff10d1afdcc8f9ead2dbabc41",
-  "license": "GPL-3.0-only WITH GPL-3.0-linking-exception (APP); siehe THIRD_PARTY.md",
+  "license": "GPL-3.0-only WITH GPL-3.0-linking-exception (APP); see THIRD_PARTY.md",
   "build_date": "2026-10-30T11:01:24Z",
   "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
   "builder": "tools/build_sims.py",

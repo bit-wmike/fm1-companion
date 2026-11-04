@@ -1867,37 +1867,6 @@ msgstr "{title}: löschen"
 msgid "Clean-up"
 msgstr "Aufräumen"
 
-#: fm1companion/flash/planner.py:21
-msgid "Everything you saved under V16 (patterns, settings) can no longer be used afterwards – the app cannot make a backup of V16."
-msgstr "Alles, was du unter V16 gespeichert hast (Patterns, Einstellungen), ist danach nicht mehr nutzbar – die App kann von V16 kein Backup machen."
-
-#: fm1companion/flash/planner.py:26
-msgid "V15 and community firmwares only write up to 0x92FFF: leftovers of V16 in 0x93000–0xA8FFF remain. Melodee 1.5.1 ran with them in the emulator as on a clean flash; you can check it with “Is my FM-1 clean?” (Recovery)."
-msgstr "V15 und Community-Firmwares schreiben nur bis 0x92FFF: Reste von V16 in 0x93000–0xA8FFF bleiben liegen. Melodee 1.5.1 lief damit im Emulator wie auf sauberem Flash; prüfen kannst du es mit „Ist mein FM-1 sauber?“ (Rettung)."
-
-#: fm1companion/flash/planner.py:32
-msgid "songs, presets and settings"
-msgstr "Songs, Presets und Einstellungen"
-
-#: fm1companion/flash/planner.py:33
-msgid "further song and preset areas"
-msgstr "weitere Song- und Preset-Bereiche"
-
-#: fm1companion/flash/planner.py:38
-#, python-brace-format
-msgid "When writing V16: the area 0x93000–0xA8FFF (22 sectors) – on your device: {what}. As good as certain: the update loader writes exactly as far as the package is long (recorded with V15 on real hardware)."
-msgstr "Beim Schreiben von V16: der Bereich 0x93000–0xA8FFF (22 Sektoren) – bei dir: {what}. So gut wie sicher: Der Update-Loader schreibt genau so weit, wie das Paket lang ist (bei V15 an echter Hardware aufgezeichnet)."
-
-#: fm1companion/flash/planner.py:43
-#, python-brace-format
-msgid "At the first start V16 additionally formats {ranges} – on your device: {what}. Observed in the emulator, not on real hardware. The app rewrites the resources on the way back to Melodee."
-msgstr "Beim ersten Start formatiert V16 zusätzlich {ranges} – bei dir: {what}. Beobachtet im Emulator, nicht an echter Hardware. Die Ressourcen schreibt die App beim Rückweg auf Melodee neu."
-
-#: fm1companion/flash/planner.py:47
-#, python-brace-format
-msgid "At the first start V16 additionally formats {ranges} – on your device: {what}. Observed in the emulator, not on real hardware."
-msgstr "Beim ersten Start formatiert V16 zusätzlich {ranges} – bei dir: {what}. Beobachtet im Emulator, nicht an echter Hardware."
-
 #: fm1companion/flash/planner.py:64
 msgid "When switching to the original firmware, the running Felucca firmware compares the boot area (CHECK HEAD). If it differs – e.g. after m-bootloader or M-VAVE Open V12/V14 –, the FM-1 shows “FAILED -5” (Felucca 1.6.1 copies: -15). Nothing is written, the current firmware keeps running. Ways out: a Felucca firmware with the new check (felucca-bsp afd83ede) or download mode (recovery stage 2, M-Flasher)."
 msgstr "Beim Wechsel auf die Original-Firmware vergleicht die laufende Felucca-Firmware den Bootbereich (CHECK HEAD). Weicht er ab – z. B. nach m-bootloader oder M-VAVE Open V12/V14 –, zeigt das FM-1 „FAILED -5“ (Felucca-1.6.1-Kopien: -15). Es wird nichts geschrieben, die jetzige Firmware läuft weiter. Auswege: eine Felucca-Firmware mit neuer Prüfung (felucca-bsp afd83ede) oder der Download-Modus (Rettung Stufe 2, M-Flasher)."

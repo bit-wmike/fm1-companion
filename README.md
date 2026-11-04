@@ -1,4 +1,4 @@
-# FM-1 Companion Suite 2.3.2
+# FM-1 Companion Suite 2.4.0
 
 > [!WARNING]
 > **Unofficial community project – not affiliated with M-VAVE.**
@@ -13,36 +13,50 @@
 > The exact list: [docs/UNTESTED.md](docs/UNTESTED.md). No warranty (GPL-3.0, sections 15 and 16).
 
 > [!NOTE]
-> **The UI is currently German; English is in progress** – see [docs/TRANSLATING.md](docs/TRANSLATING.md) to help
-> translate. Until then, this README gives the German labels you need to find in the app, with an English gloss.
+> **Languages: English, German** – help translate: [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
 The desktop suite for the **M-VAVE FM-1** with firmwares of the Felucca family (**Melodee**, **Skiff**, **SLOOP**)
 and the official firmware. Everything around the device in one app – built for the Raspberry Pi 5
 (Raspberry Pi OS Bookworm/Trixie, KDE Plasma), runs on any Debian/Ubuntu.
 
+![Studio – the digital twin of the FM-1 running Melodee's real firmware code](docs/screenshots/studio.png)
+
+## Screenshots
+
+Taken in demo mode (`fm1-companion --demo`, two simulated FM-1), English UI.
+
+| | |
+|---|---|
+| ![Projects – view patterns and songs, play them on the FM-1, export MIDI](docs/screenshots/project-view.png) | ![Compose – generate rhythms, chords, bass and melodies, preview on the FM-1](docs/screenshots/compose.png) |
+| **Projects › View & Export** – patterns, songs, MIDI export, play on the FM-1 | **Compose** – generate parts, preview with the FM-1's own sounds, undo |
+| ![Backups – look inside every backup and restore parts](docs/screenshots/backups-browse.png) | ![Firmware+ – catalog of community firmwares](docs/screenshots/firmware-catalog.png) |
+| **Backups › Browse & Compare** – projects, presets, settings; restore only parts | **Firmware+** – 250+ community firmwares, install, versions, simulator |
+| ![Presets – the 384 user slots and your own library](docs/screenshots/presets.png) | ![Recovery – step by step back to a working FM-1](docs/screenshots/recovery.png) |
+| **Presets** – all 384 user slots, library, FM voices (DX7) | **Recovery** – update mode and ROM boot mode, with safety checks |
+
 ## What's inside
 
-Section names are the German labels shown in the app's sidebar.
+Section names as shown in the app's sidebar (Device, Sound, Music, Data & Tools, Help).
 
 | Section | What it does |
 |---|---|
-| **Übersicht** (Overview) | active device, backup, firmware & updates, quick access – tab "Zustand" (State): live load, memory pool, projects, all 384 user presets |
+| **Overview** | active device, backup, firmware & updates, quick access – tab "Status": live load, memory pool, projects, all 384 user presets |
 | **Editor** | the original web editor of the installed firmware, embedded and offline |
-| **Geräte** (Devices) | several FM-1 with their own profiles, firmware history, copy from device to device |
-| **Klang** (Sound) | presets (with tab FM-Voices/DX7), samples & kits (with tab "Auf dem FM-1" – On the FM-1) |
+| **Devices** | several FM-1 with their own profiles, firmware history, copy from device to device |
+| **Presets**, **Samples & Kits** (Sound) | presets (with tab "FM Voices (DX7)"), samples & kits (with tab "On the FM-1") |
 | **Studio** | the digital twin of your FM-1: the same Melodee firmware on the computer (1.6.1, plus 1.6.0 and 1.6.0-rc.7/rc.8), with the complete device state from the backup – play on screen, with the computer keyboard or a MIDI keyboard, play projects, export as WAV (24 bit or 32 bit float, optionally separate tracks) for Logic/Audacity, snapshots with undo, write back to the FM-1 with a safety backup; also usable as a virtual device for projects, composing, presets and backups |
-| **Musik** (Music) | projects (slots & library / view & export), composing (generate / from MIDI file), recording with Audacity |
-| **Daten & Werkzeuge** (Data & Tools) | backups (list / browse & compare), Firmware+, Rettung (Rescue), MIDI (with sound module) |
-| **Firmware+** | all firmwares in one place: catalog (search, view, try in the simulator, import links, news) and tab "Installieren & Versionen" (Install & Versions: versions from GitHub, install, switch, download several versions, your own .fwsc, back to the original, way back from V16) |
-| **Rettung** (Rescue) | update mode, finish an interrupted installation, "Ist mein FM-1 sauber?" (Is my FM-1 clean?), rescue level 2 |
-| **Hilfe** (Help) | help center (offline), FAQ, diagnostics, system check |
+| **Projects**, **Compose**, **Recording** (Music) | projects (slots & library / view & export), composing (generate / from MIDI file), recording with Audacity |
+| **Backups**, **MIDI** (Data & Tools) | backups (list / browse & compare), MIDI (monitor, keyboard, clock, controls, connections, sound module) |
+| **Firmware+** | all firmwares in one place: catalog (search, view, try in the simulator, import links, news) and tab "Install & Versions" (versions from GitHub, install, switch, download several versions, your own .fwsc, back to the original, way back from V16) |
+| **Recovery** | update mode, finish an interrupted installation, "Is my FM-1 clean?", rescue level 2 |
+| **Help** | help center (offline), FAQ, diagnostics, system check |
 
 Plus the frame: light/dark/automatic theme with accent colour, consistent icons, command search
 (**Ctrl+K**), notifications with history, setup assistant, "What's new", crash dialog with error report and
 a slim computer indicator at the bottom right (CPU, RAM, temperature, free space). Clicking it opens the
-**system check**: it reads the kernel log and explains (currently in German) when the FM-1 keeps disconnecting,
+**system check**: it reads the kernel log and explains when the FM-1 keeps disconnecting,
 the power supply is weak, USB audio reports errors or the Pi gets too hot.
-The app itself shows which sections are included (sidebar, Hilfe › Was ist neu – Help › What's new).
+The app itself shows which sections are included (sidebar, Help › What's new).
 
 ## Install
 
@@ -65,24 +79,24 @@ login (on the Pi: HDMI). The installer then disables it and says so clearly (Flu
 starts it itself); with `--no-fluidsynth-fix` it is left unchanged. The graphical installer asks with a
 checkbox.
 
-**Packages (.deb/.run):** version 2.3.2 is available under
+**Packages (.deb/.run):** version 2.4.0 is available under
 [Releases](https://github.com/bit-wmike/fm1-companion/releases):
 
 ```bash
-sudo apt install ./fm1-companion_2.3.2_all.deb
-sh FM-1-Companion-Suite-2.3.2.run
+sudo apt install ./fm1-companion_2.4.0_all.deb
+sh FM-1-Companion-Suite-2.4.0.run
 ```
 
 You can also build them yourself (result in `dist/`):
 
 ```bash
-python3 tools/build_deb.py        # dist/fm1-companion_2.3.2_all.deb  → sudo apt install ./dist/fm1-companion_2.3.2_all.deb
-python3 tools/build_run.py        # dist/FM-1-Companion-Suite-2.3.2.run → sh dist/FM-1-Companion-Suite-2.3.2.run
+python3 tools/build_deb.py        # dist/fm1-companion_2.4.0_all.deb  → sudo apt install ./dist/fm1-companion_2.4.0_all.deb
+python3 tools/build_run.py        # dist/FM-1-Companion-Suite-2.4.0.run → sh dist/FM-1-Companion-Suite-2.4.0.run
 ```
 
 The `.run` installer is a graphical assistant (licence, notice, just for me or for all users, start menu,
 desktop shortcut, example samples); without a window:
-`sh FM-1-Companion-Suite-2.3.2.run --unattended [--prefix DIR] [--no-deps]`.
+`sh FM-1-Companion-Suite-2.4.0.run --unattended [--prefix DIR] [--no-deps]`.
 
 ## Requirements
 
@@ -103,14 +117,13 @@ No telemetry, no accounts. The app only makes two automatic requests (both can b
 plugged in, the list of versions of its firmware on GitHub, and when the catalog is opened, the awesome-fm-1
 catalog including thumbnails. Everything else happens only when you click. Error reports are only stored locally.
 
-* **Switch off:** Einstellungen (Settings) › "beim Anstecken eines FM-1 nach Firmware-Updates suchen" (check for
-  firmware updates when an FM-1 is plugged in); in the catalog (Firmware+ › "Mehr" – More) "Katalog beim Öffnen
-  automatisch aktualisieren" (update catalog automatically when opening) and "Vorschaubilder aus dem Internet
-  laden" (load thumbnails from the internet).
+* **Switch off:** Settings › "look for firmware updates when an FM-1 is plugged in (asks GitHub)"; in the
+  catalog (Firmware+ › "More") "Update the catalog automatically when opening" and "Load preview images from the
+  internet".
 * **No automatic network access:** `FM1C_NO_NET=1 fm1-companion` switches off both automatic requests;
   the catalog and the link import then only work with the bundled data. What you start yourself (firmware or
-  editor download, "Neu laden" – reload – of the version list) still goes to the network.
-* **Error reports** (ZIP, Hilfe › Diagnose – Help › Diagnostics) contain logs, versions and settings – without
+  editor download, "Reload" of the version list) still goes to the network.
+* **Error reports** (ZIP, Help › Diagnostics) contain logs, versions and settings – without
   personal paths, notes, host names, credentials (e.g. a GitHub token) and full serial numbers.
   Whether you share one is up to you; look at it first.
 * An optional **GitHub token** (catalog › "Mehr" › "GitHub-Token …") is stored in `config.json`, which is saved
@@ -167,4 +180,4 @@ Translations: [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
 GPL-3.0-only. Thanks to Melodee (Kerem Kiliç), Felucca (Leo Kuroshita / Hügelton
 Instruments), Skiff (illuminus5), SLOOP (isod89), M-VAVE FM1 Open, awesome-fm-1 (cicloid, CC0-1.0) and Lucide (ISC).
-Full list: Hilfe › Über › Mitwirkende & Lizenzen (Help › About › Credits & Licences, `fm1companion/data/credits.json`).
+Full list: Help › About › Credits & Licences (`fm1companion/data/credits.json`).

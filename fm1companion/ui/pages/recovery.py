@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (QCheckBox, QFileDialog, QHBoxLayout, QInputDialog, 
 
 from . import PageSpec
 from ... import firmware
-from ...flash import engine as fe, journal as fj, package as fpk, uboot
+from ...flash import engine as fe, journal as fj, package as fpk, texts as rescue_texts, uboot
 from ..common import Card, Disclosure, confirm, heading, icon, show_error
 from ...i18n import _, pgettext
 
@@ -670,6 +670,7 @@ def repair_done_text(verdict: dict, sim: bool = False) -> str:
     den V15-Aufbau festgestellt, und die Tore des Unbrickers lassen nur 0x93000–0xE8FFF und 0xFC000–0xFEFFF zu."""
     if sim:
         return _("Simulation finished – nothing was written on the FM-1.")
+    verdict = rescue_texts.verdict(verdict)          # rescuegate.py (pinned) writes German -> UI language
     fw = verdict.get("firmware") or _("the firmware in the flash")
     basis = verdict.get("basis") or _("V15 layout")
     return _("The settings areas 0x93000–0xE8FFF and 0xFC000–0xFEFFF are now in factory state (rewritten and read back "
@@ -688,7 +689,7 @@ def _gate_check(runner, rc: int):
         raise RuntimeError(_("Refused – nothing was written. {reason} The backup from this run is in the recovery "
                              "folder. The FM-1 usually leaves ROM boot mode after one tool run – for another attempt "
                              "switch it off and on and bring it into ROM boot mode again.").format(
-            reason=res.get("refused") or _("The check of the backup did not pass (details in the log).")))
+            reason=rescue_texts.tr(res.get("refused")) or _("The check of the backup did not pass (details in the log).")))
     if rc != 0 and getattr(runner, "hint", ""):
         raise RuntimeError(runner.hint)
     if rc == 0 and not res.get("checked"):

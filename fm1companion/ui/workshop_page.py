@@ -75,7 +75,7 @@ class WorkshopPage(QWidget):
         self.length = QSpinBox()
         self.length.setRange(1, 64)
         self.length.setValue(16)
-        self.length.setSuffix(" Steps")
+        self.length.setSuffix(_(" steps"))
         self.transpose = QSpinBox()
         self.transpose.setRange(-48, 48)
         self.transpose.setSuffix(_(" semitones"))

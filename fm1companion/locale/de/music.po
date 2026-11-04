@@ -328,10 +328,14 @@ msgstr "Rückgängig"
 msgid "To the previous intermediate state (Ctrl+Z)"
 msgstr "Zum vorigen Zwischenstand (Strg+Z)"
 
-#: fm1companion/ui/pages/studio.py:371 fm1companion/ui/pages/compose.py:667
-#: fm1companion/ui/workshop_page.py:476
+#: fm1companion/ui/pages/compose.py:667 fm1companion/ui/workshop_page.py:476
 msgctxt "undo"
 msgid "Restore"
+msgstr "Wiederherstellen"
+
+#: fm1companion/ui/pages/studio.py:371
+msgctxt "undo"
+msgid "Redo"
 msgstr "Wiederherstellen"
 
 #: fm1companion/ui/pages/studio.py:371
@@ -4461,3 +4465,8 @@ msgid "{n} drum hit"
 msgid_plural "{n} drum hits"
 msgstr[0] "{n} Drum-Schläge"
 msgstr[1] "{n} Drum-Schläge"
+
+#: fm1companion/ui/pages/compose.py:91 fm1companion/ui/pages/compose.py:207
+#: fm1companion/ui/workshop_page.py:78
+msgid " steps"
+msgstr " Steps"

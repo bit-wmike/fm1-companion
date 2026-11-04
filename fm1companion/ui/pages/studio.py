@@ -368,7 +368,7 @@ class StudioPage(QWidget):
         self.b_snap = button(_("Remember intermediate state"), ("bookmark-new", "document-save"), "", self.snap,
                              _("Add the current state to the undo list"))
         self.b_undo = button(_("Undo"), ("edit-undo",), "", self.undo, _("To the previous intermediate state (Ctrl+Z)"))
-        self.b_redo = button(pgettext("undo", "Restore"), ("edit-redo",), "", self.redo, _("Ctrl+Shift+Z"))
+        self.b_redo = button(pgettext("undo", "Redo"), ("edit-redo",), "", self.redo, _("Ctrl+Shift+Z"))
         gl.addWidget(self.b_snap)
         gl.addLayout(_row(self.b_undo, self.b_redo))
         sl.addWidget(g)

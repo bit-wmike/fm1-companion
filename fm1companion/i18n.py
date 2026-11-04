@@ -492,7 +492,12 @@ def N_(message: str) -> str:
     return message
 
 
+def NP_(singular: str, plural: str) -> tuple[str, str]:
+    """mark a plural pair for extraction without translating it (later: ngettext(*value, n))"""
+    return singular, plural
+
+
 _ = gettext
 
-__all__ = ["_", "N_", "gettext", "ngettext", "pgettext", "npgettext", "set_language", "current_language",
+__all__ = ["_", "N_", "NP_", "gettext", "ngettext", "pgettext", "npgettext", "set_language", "current_language",
            "available_languages", "language_name", "decimal", "resolve", "system_language", "reload", "parse_po"]

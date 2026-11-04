@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Extract translatable strings into fm1companion/locale/messages.pot.
 
-Finds calls of ``_()``, ``N_()``, ``gettext()``, ``ngettext()``, ``pgettext()`` and ``npgettext()`` (also as
+Finds calls of ``_()``, ``N_()``, ``NP_()``, ``gettext()``, ``ngettext()``, ``pgettext()`` and ``npgettext()`` (also as
 ``i18n._(...)``) in fm1companion/**/*.py (without vendor/ and sims/) by reading the syntax tree – the code
 is never imported or run. Only plain string literals are extracted; an f-string or a variable inside
 ``_()`` is reported as a warning (use ``_("… {name} …").format(name=…)`` instead).
@@ -27,7 +27,7 @@ POT = PKG / "locale" / "messages.pot"
 EXCLUDE = ("vendor", "sims", "__pycache__")
 
 # function name -> (index of msgctxt or None, index of msgid, index of msgid_plural or None)
-KEYWORDS = {"_": (None, 0, None), "N_": (None, 0, None), "gettext": (None, 0, None),
+KEYWORDS = {"_": (None, 0, None), "N_": (None, 0, None), "NP_": (None, 0, 1), "gettext": (None, 0, None),
             "ngettext": (None, 0, 1), "pgettext": (0, 1, None), "npgettext": (0, 1, 2)}
 
 

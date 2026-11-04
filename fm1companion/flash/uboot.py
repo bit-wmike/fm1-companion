@@ -240,12 +240,14 @@ _HELPER_LINES = [
 
 
 def helper_line(line: str) -> str:
-    """an output line of ROOT_HELPER in the UI language (other lines unchanged)"""
+    """an output line of ROOT_HELPER or of the pinned rescue scripts (restzone.py, rescuegate.py) in the UI
+    language; other lines (the English unbricker) unchanged"""
     for rx, msg in _HELPER_LINES:
         m = rx.match(line)
         if m:
             return _(msg).format(**m.groupdict())
-    return line
+    from . import texts
+    return texts.tr(line)
 
 
 def root_python() -> str:
@@ -368,7 +370,9 @@ class Runner:
         try:
             pkg = fm.Package.load(package)
         except fm.PackageError as e:
-            raise RuntimeError(_("The package cannot be read ({error}). Nothing was written.").format(error=e))
+            from . import texts
+            raise RuntimeError(_("The package cannot be read ({error}). Nothing was written.").format(
+                error=texts.tr(str(e))))
         if any(c == "TOOL_TRUNCATES" for _lv, c, _t in fm.preflight(pkg, have_backup=True, mode="from4000")):
             raise RuntimeError(_("{name} is {identity} and extends to {end}. In ROM boot mode the tool only writes "
                                  "0x04000–0x92FFF – V16 would then be truncated (end of the program and factory voices "

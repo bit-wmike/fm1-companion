@@ -395,6 +395,8 @@ class BackupBrowserPage(QWidget):
         self.content.blockSignals(False)
         for col in range(3):
             self.content.resizeColumnToContents(col)
+        # group rows carry check box + icon; measured before the style sheet is applied they would be elided
+        self.content.setColumnWidth(0, self.content.columnWidth(0) + 32)
         self._fill_presets()
         lines = [f"<h3>{c.get('device') or 'Backup'}</h3><table>"]
         kind = c.get("kind", "")

@@ -1,0 +1,53 @@
+name: Translation – I want to translate into …
+description: Offer a new language for FM-1 Companion, or improve an existing translation.
+title: "Translation: <language>"
+labels: ["translation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping! FM-1 Companion is written in English; every translation is a set of plain gettext
+        `.po` files – no programming needed. How it works: [docs/TRANSLATING.md](../blob/main/docs/TRANSLATING.md).
+
+        Quick start: `python3 tools/i18n_new_language.py <code>` creates `fm1companion/locale/<code>/` with empty
+        files, then translate the `msgstr` entries and look at the result with `FM1C_LANG=<code> fm1-companion --demo`.
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: Name and code of the language
+      placeholder: "e.g. French (fr), Portuguese – Brazil (pt_BR)"
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What do you plan?
+      options:
+        - Start a new language
+        - Continue / complete an existing translation
+        - Fix wrong or unclear texts in an existing translation
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Parts you would like to work on
+      options:
+        - label: The user interface (all `.po` files)
+        - label: Only some areas (say which below)
+        - label: The help pages (`fm1companion/data/help/<code>/*.md`)
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes (optional)
+      description: |
+        Areas you start with, questions about terms, whether someone else may help. Recovery and flash texts
+        (`rescue.po`, the firmware pages) are safety messages: they must keep exactly their meaning and strength.
+  - type: checkboxes
+    id: license
+    attributes:
+      label: License
+      options:
+        - label: I agree that my translation is published under the project's license (GPL-3.0-only).
+          required: true

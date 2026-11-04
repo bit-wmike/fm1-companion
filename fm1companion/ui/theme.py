@@ -344,7 +344,7 @@ QTabBar::tab:focus {{ color: {t.accent_fg}; }}
 QTreeView, QListView, QTableView, QTreeWidget, QListWidget, QTableWidget, QColumnView {{
     background: {t.field}; alternate-background-color: {t.alt}; color: {t.text}; border: 1px solid {t.border};
     border-radius: 8px; outline: 0; gridline-color: {t.border}; }}
-/* background nötig: ohne zeichnet Qt (6.8+, Breeze) das Häkchen doppelt – einmal per ::indicator, einmal nativ */
+/* background needed: without it Qt (6.8+, Breeze) draws the check mark twice – once via ::indicator, once natively */
 QTreeView::item, QListView::item, QTableView::item {{ padding: 3px 4px; background: transparent; }}
 QTreeView::item:hover, QListView::item:hover, QTableView::item:hover {{ background: {t.hover}; }}
 QTreeView::item:selected, QListView::item:selected, QTableView::item:selected {{ background: {t.accent_soft}; color: {t.text}; }}

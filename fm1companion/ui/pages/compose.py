@@ -88,7 +88,7 @@ class ComposePage(QWidget):
         self.scale = QComboBox()
         for k in G.SCALES:
             self.scale.addItem(G.label(k, G.SCALE_LABELS), k)
-        self.length = _spin(1, 64, 16, " Steps", _("Length of the pattern (LEN on the FM-1)"))
+        self.length = _spin(1, 64, 16, _(" steps"), _("Length of the pattern (LEN on the FM-1)"))
         self.bpm = _spin(40, 240, 110, " BPM", _("Tempo for the preview (the FM-1 keeps its own)"))
         self.seed = _spin(1, 99999, 1, "", _("Random seed: same value = same result"))
         seedrow = QHBoxLayout()
@@ -204,7 +204,7 @@ class ComposePage(QWidget):
         self.rhythm = QComboBox()
         for k in G.RHYTHMS:
             self.rhythm.addItem(G.label(k, G.RHYTHM_LABELS), k)
-        self.per_chord = _spin(1, 32, 4, " Steps", _("Duration of one chord"))
+        self.per_chord = _spin(1, 32, 4, _(" steps"), _("Duration of one chord"))
         f.addRow(_("Preset:"), self.prog_preset)
         f.addRow(_("Progression:"), self.prog)
         f.addRow(_("Voicing:"), self.voicing)

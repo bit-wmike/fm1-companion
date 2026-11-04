@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (QApplication, QCheckBox, QDialog, QDialogButtonBox,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
 from .. import config
-from ..flash import flashmodel as fm
+from ..flash import flashmodel as fm, texts as rescue_texts
 from ..i18n import _, ngettext, pgettext
 from .common import Card, Disclosure, confirm, flow_row, icon, run_job, show_error
 
@@ -41,12 +41,11 @@ DETAILS = _("<b>Quick check</b> asks for identity and version, with Melodee 1.6 
             "harmless – so leaving them is fine too.")
 
 LEVEL_COLOR = {fm.GREEN: "success", fm.YELLOW: "warning", fm.RED: "danger"}
-# fm.LEVEL_TEXT in the UI language (flashmodel.py is pinned and stays German)
-LEVEL_LABEL = {fm.GREEN: _("Clean"), fm.YELLOW: _("With notes"), fm.RED: _("Not OK")}
 
 
 def level_text(level: str) -> str:
-    return LEVEL_LABEL.get(level) or fm.LEVEL_TEXT.get(level, level)
+    """fm.LEVEL_TEXT in the UI language (flashmodel.py is pinned and stays German)"""
+    return rescue_texts.level_text(level)
 
 
 def _color(level: str) -> str:
@@ -97,7 +96,8 @@ def analyse_dump(path: Path | str):
     try:
         rep = fm.check_dump(data, refs, packages=local_packages(), factory_heads=heads)
     except fm.DumpError as e:
-        raise RuntimeError(_("{error} Please choose a full backup (e.g. full-flash-before.bin).").format(error=e))
+        raise RuntimeError(_("{error} Please choose a full backup (e.g. full-flash-before.bin).").format(
+            error=rescue_texts.tr(str(e))))
     rep.title = _("Flash dump “{name}”").format(name=path.name)
     return rep
 
@@ -107,6 +107,9 @@ class ReportDialog(QDialog):
 
     def __init__(self, parent, rep: fm.Report, source: str = "", window=None):
         super().__init__(parent)
+        original = rep
+        # the texts come from the pinned flashmodel.py / restzone.py (German) -> UI language (flash/texts.py)
+        rep = rescue_texts.report(rep)
         self.rep, self.window = rep, window
         self.setWindowTitle(_("Is my FM-1 clean?"))
         self.setMinimumWidth(520)
@@ -155,8 +158,8 @@ class ReportDialog(QDialog):
         b_copy.setToolTip(_("Put the report as text on the clipboard – e.g. for a question in the forum"))
         b_copy.clicked.connect(self.copy)
         self.b_res = None
-        # the findings come from flashmodel.py (German); "nachschreiben" = the rewrite-resources hint
-        if any("nachschreiben" in t for _lv, t in rep.findings) and window is not None and window.page("firmware"):  # i18n: ignore
+        # the original findings come from flashmodel.py (German); "nachschreiben" = the rewrite-resources hint
+        if any("nachschreiben" in t for _lv, t in original.findings) and window is not None and window.page("firmware"):  # i18n: ignore
             self.b_res = bb.addButton(_("To Firmware+ › Install"), QDialogButtonBox.ButtonRole.ActionRole)
             self.b_res.setToolTip(_("There: “Rewrite font & factory sounds”"))
             self.b_res.clicked.connect(lambda: (self.accept(), window.go("firmware")))
@@ -169,7 +172,7 @@ class ReportDialog(QDialog):
         r = self.rep
         lines = [_("Is my FM-1 clean? – {level}").format(level=level_text(r.level)) + (f" ({r.firmware})" if r.firmware else ""),
                  r.title, ""]
-        lines += [f"[{lv}] {t}" for lv, t in r.findings]
+        lines += [f"[{level_text(lv)}] {t}" for lv, t in r.findings]
         if r.not_covered:
             lines += ["", _("Not covered:")] + [f"- {t}" for t in r.not_covered]
         if r.details:
@@ -265,7 +268,8 @@ class CleanCheckCard(Card):
     def _show(self, rep: fm.Report, source: str = ""):
         self.last_report = rep
         self.status.setText(_("Last result: {level}").format(level=level_text(rep.level))
-                            + (f" – {rep.firmware}" if rep.firmware else "") + (f" ({source})" if source else ""))
+                            + (f" – {rescue_texts.tr(rep.firmware)}" if rep.firmware else "")
+                            + (f" ({source})" if source else ""))
         self.last_dialog = ReportDialog(self, rep, source, self.window)
         self.last_dialog.exec()
 
@@ -482,7 +486,7 @@ class CleanCheckCard(Card):
                                 "your firmware ({firmware}).",
                                 "<b>{n} sectors of 4 KiB each will be erased: {ranges}</b> – only V16 leftovers, nothing "
                                 "of your firmware ({firmware}).", n).format(n=n, ranges=rng,
-                                                                            firmware=res.get('firmware', '?'))
+                                                                            firmware=rescue_texts.tr(res.get('firmware', '?')))
                        + "<br><br>" +
                        _("Beforehand the tool reads the flash twice once more and backs it up; only what this fresh "
                          "backup confirms again as a V16 leftover is erased. It checks after every sector, and the "
