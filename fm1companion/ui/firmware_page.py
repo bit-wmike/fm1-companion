@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Firmware: Katalog, Versionen, Installieren, Wechseln, eigene Pakete."""
+"""Firmware: catalog, versions, install, switch, own packages."""
 from __future__ import annotations
 
 import html
@@ -21,7 +21,7 @@ from .responsive import adaptive_splitter, fit_height, wrap_height
 
 
 def find_backup_for(ctx, key: str) -> Path | None:
-    """jüngstes Backup dieses Geräts, das mit Firmware `key` gemacht wurde."""
+    """most recent backup of this device that was made with firmware `key`."""
     if not ctx.profile:
         return None
     try:
@@ -44,8 +44,8 @@ def find_backup_for(ctx, key: str) -> Path | None:
 
 
 def match_by_sha(sha: str):
-    """FirmwareSpec mit dieser Prüfsumme (eingebaut, eigene, Original, Katalog, selbst geprüfte Releases).
-    Nie über den Dateinamen – eine umbenannte fremde Datei bleibt „unbekannt“."""
+    """FirmwareSpec with this checksum (built-in, custom, original, catalog, self-verified releases).
+    Never via the file name – a renamed foreign file stays “unknown”."""
     sha = (sha or "").lower()
     for sp in firmware.catalog() + firmware.STOCK:
         if sp.sha256 and sp.sha256.lower() == sha:
@@ -63,7 +63,7 @@ def match_by_sha(sha: str):
 
 
 def file_matches(spec, info) -> bool:
-    """ist diese Datei nachweislich (Prüfsumme) die Firmware `spec`?"""
+    """is this file verifiably (checksum) the firmware `spec`?"""
     if spec.sha256 and info.sha256 == spec.sha256.lower():
         return True
     if info.official and info.official == spec.product:
@@ -73,7 +73,7 @@ def file_matches(spec, info) -> bool:
 
 
 def device_count(ctx) -> int:
-    """wie viele FM-1 (auch im Update-Modus) gerade angeschlossen sind – ein Gerät je USB-Anschluss"""
+    """how many FM-1s (also in update mode) are currently connected – one device per USB port"""
     seen = set()
     for p in ctx.ports:
         seen.add(p.usb_path or p.key)
@@ -81,12 +81,12 @@ def device_count(ctx) -> int:
 
 
 def target_pin(ctx):
-    """das aktive Gerät über USB-Anschluss (sysfs) oder eindeutige Seriennummer festhalten – None, wenn das nicht
-    geht (dann darf bei mehreren FM-1 nicht installiert werden)"""
+    """pin the active device via USB port (sysfs) or unique serial number – None if that isn't
+    possible (then installing with several FM-1s is not allowed)"""
     from ..devices import usable_serial
     from ..flash.engine import Pin
     p = ctx.port
-    if p is None or getattr(ctx, "is_virtual", False):      # Studio-Zwilling: nie ein Flash-Ziel
+    if p is None or getattr(ctx, "is_virtual", False):      # studio twin: never a flash target
         return None
     if p.usb_path:
         return Pin(usb_path=p.usb_path)
@@ -111,7 +111,7 @@ RISK_COLOR = {"keins": "#27ae60", "niedrig": "#27ae60", "mittel": "#f67400", "ho
 
 
 class WrapCheck(QWidget):
-    """Kontrollkästchen mit umbrechendem Text (QCheckBox selbst bricht nicht um und schneidet ab)"""
+    """Checkbox with wrapping text (QCheckBox itself doesn't wrap and cuts off)"""
     toggled = pyqtSignal(bool)
 
     def __init__(self, text: str, bold: bool = False, parent=None):
@@ -123,8 +123,8 @@ class WrapCheck(QWidget):
         self.label.setWordWrap(True)
         self.label.setTextFormat(Qt.TextFormat.PlainText)
         self.label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        self.label.setMinimumWidth(1)              # darf schmaler werden als der Text – dann bricht er um
-        # oben neben dem Kästchen, auch wenn das Layout mehr Höhe gibt (sonst rutscht der Text eine Zeile tiefer)
+        self.label.setMinimumWidth(1)              # may become narrower than the text – then it wraps
+        # at the top next to the box, even if the layout gives more height (otherwise the text slips one line down)
         self.label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         if bold:
             f = self.label.font()
@@ -158,7 +158,7 @@ class WrapCheck(QWidget):
 
 
 class PlanDialog(QDialog):
-    """Vorschau des Installationsplans: Schritte, Warnungen, was verloren geht, Bestätigungen, Probelauf."""
+    """Preview of the installation plan: steps, warnings, what gets lost, confirmations, dry run."""
 
     def __init__(self, parent, plan_fn, target_label: str, backup_default: bool, via_default: bool | None):
         super().__init__(parent)
@@ -174,7 +174,7 @@ class PlanDialog(QDialog):
         lay.addWidget(head)
         self.view = QTextBrowser()
         lay.addWidget(self.view, 1)
-        self.lost_label = QLabel()                 # „Was danach nicht mehr auf dem Gerät ist“ – immer sichtbar
+        self.lost_label = QLabel()                 # “What will no longer be on the device afterwards” – always visible
         self.lost_label.setWordWrap(True)
         self.lost_label.setTextFormat(Qt.TextFormat.RichText)
         self.lost_label.setObjectName("PlanLost")
@@ -228,7 +228,7 @@ class PlanDialog(QDialog):
     def _call_plan(self):
         try:
             return self.plan_fn(self._via, self.chk_backup.isChecked())
-        except TypeError:                          # ältere Aufrufer: plan_fn(via)
+        except TypeError:                          # older callers: plan_fn(via)
             return self.plan_fn(self._via)
 
     def refresh(self):
@@ -305,8 +305,8 @@ class PlanDialog(QDialog):
 
 
 class InstallDialog(JobDialog):
-    """Fortschritt mit Protokoll; Abbrechen nur, solange noch nichts gesendet wurde. Während das FM-1 im Update-Modus
-    schreibt: roter Hinweis „Jetzt nicht abstecken“, Abbrechen gesperrt."""
+    """Progress with log; cancel only as long as nothing has been sent yet. While the FM-1 writes in update mode:
+    red notice “Don't unplug now”, cancel disabled."""
 
     CANCEL_TIP = _("Cancels before the next safe point. While writing, the installation runs to the end – "
                    "cancelling there would leave the FM-1 in update mode.")
@@ -365,11 +365,11 @@ class InstallDialog(JobDialog):
         # the cancel messages (cancel_text(), engine "cancelled") all start with this word
         cancelled = pgettext("install state", "Cancelled")
         if self.cancel_event.is_set() and str(a[0] if a else "").startswith(cancelled):
-            self._state(False, cancelled, self.result_label.text())   # gewollt – kein „Fehlgeschlagen“
+            self._state(False, cancelled, self.result_label.text())   # intended – not “failed”
 
 
 def _install(*a, **kw):
-    """firmware.install mit den Zusatzangaben, die die aktuelle Fassung kennt (Tests ersetzen sie teils)"""
+    """firmware.install with the extra arguments the current version knows (tests partly replace it)"""
     import inspect
     fn = firmware.install
     try:
@@ -382,7 +382,7 @@ def _install(*a, **kw):
 
 
 def german_errors(work):
-    """Fehler im Hintergrund-Job als deutscher Satz; die technischen Details landen im Protokoll"""
+    """Error in the background job as a readable sentence; the technical details end up in the log"""
     def run(w, *a, **k):
         try:
             return work(w, *a, **k)
@@ -399,8 +399,8 @@ class PackageRefused(RuntimeError):
 
 
 def validate_package(path, spec, known: bool, label: str, expect_sha: str = "", official: str = "", log=None):
-    """ein Paket vollständig prüfen, BEVOR irgendetwas geschrieben wird: Kennung, Prüfsumme, Modell, Unversehrtheit,
-    Loader-Familie und -Regel. -> PackageInfo; PackageRefused mit deutschem Grund."""
+    """fully check a package BEFORE anything is written: identifier, checksum, model, integrity,
+    loader family and rule. -> PackageInfo; PackageRefused with a readable reason."""
     from ..flash import package as fpk, planner
     try:
         pi = fpk.analyze(path, spec.loader_family)
@@ -430,9 +430,9 @@ def validate_package(path, spec, known: bool, label: str, expect_sha: str = "", 
 
 def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release | None = None,
                  local_pkg: Path | None = None, tag: str = "", dry_run: bool | None = None) -> bool:
-    """kompletter Ablauf: Plan (Vorschau, Bestätigungen) → ALLE Pakete laden und prüfen → Backup → (V15) →
-    Installieren → Ressourcen → Identität → Profil/Verlauf aktualisieren. Geschrieben wird erst, wenn jedes
-    Paket des Plans geprüft ist; das Zielgerät wird über seinen USB-Anschluss festgehalten."""
+    """complete flow: plan (preview, confirmations) → download and check ALL packages → backup → (V15) →
+    install → resources → identity → update profile/history. Writing only starts once every
+    package of the plan has been checked; the target device is pinned via its USB port."""
     import threading
     from ..flash import package as fpk, planner, prefs
     s = ctx.settings
@@ -444,7 +444,7 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         show_error(parent, _("No device"), _("Please connect the FM-1 via USB."))
         return False
     from .risk_dialog import ensure_risk_ack
-    if not ensure_risk_ack(parent):              # einmaliger Risiko-Hinweis vor der ersten Installation
+    if not ensure_risk_ack(parent):              # one-time risk notice before the first installation
         return False
     target = rel.tag if rel else (tag or _("own file"))
     info = None
@@ -456,11 +456,11 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
             return False
     state = device_state(ctx)
     pin = target_pin(ctx)
-    planned_port = ctx.port                      # das Gerät, für das der Plan gilt
+    planned_port = ctx.port                      # the device the plan applies to
     tgt = planner.Target.from_spec(spec, tag=rel.tag if rel else tag, file=local_pkg, package=info,
                                    prerelease=bool(rel and rel.prerelease))
     if local_pkg is not None:
-        # eigene Datei: bekannt nur, wenn die Prüfsumme passt (Katalog, Release-SHA256SUMS, Original) – nie per Name
+        # own file: known only if the checksum matches (catalog, release SHA256SUMS, original) – never by name
         tgt.known = file_matches(spec, info)
     else:
         tgt.checksum = bool(spec.sha256) or bool(rel and spec.sums and spec.sums in rel.assets)
@@ -486,7 +486,7 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     if plan.v15_option in ("default_on", "default_off"):
         prefs.remember(key, plan.via_stock)
     do_dry = dlg.chk_dry.isChecked() if dry_run is None else dry_run
-    # Während der Plan offen war, lief die Geräteerkennung weiter: Ist es noch dasselbe FM-1 im selben Zustand?
+    # while the plan was open, device detection kept running: is it still the same FM-1 in the same state?
     if ctx.port is None or planned_port is None or ctx.port.key != planned_port.key:
         show_error(parent, _("Device has changed"),
                    _("While the plan was open, the FM-1 was disconnected or another device became active. Nothing was "
@@ -535,7 +535,7 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
             raise RuntimeError(cancel_text())
 
     def work(w):
-        # ---- 1. jedes Paket des Plans laden und vollständig prüfen – noch nichts am Gerät
+        # ---- 1. download and fully check every package of the plan – nothing on the device yet
         w.progress.emit(0, 0)
         w.log.emit(_("Step: load & check all packages (before any writing) …"))
         stock_spec = firmware.spec("stock-v15")
@@ -559,12 +559,12 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
                                         log=w.log.emit)
         except PackageRefused:
             raise
-        except Exception as e:  # noqa: BLE001 – Netz/Datei: vor jedem Schreiben, also sagen wir das auch
+        except Exception as e:  # noqa: BLE001 – network/file: before any writing, so we say so too
             w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
             raise RuntimeError(_("{error} Nothing has been changed on the FM-1.").format(error=firmware.friendly_error(e))) from e
         w.log.emit(_("All packages checked."))
         check_cancel()
-        # ---- 2. Backup (nur lesen). Wenn es gewünscht war und scheitert: immer abbrechen.
+        # ---- 2. Backup (read only). If it was requested and fails: always abort.
         if do_backup:
             w.log.emit(_("Step: backup of the device …"))
             if link is None or link.closed:
@@ -586,7 +586,7 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         check_cancel()
         if link and not do_dry:
             link.close()
-        # ---- 3. Probelauf
+        # ---- 3. Dry run
         if do_dry:
             from ..flash import engine as fe
             e = fe.Engine(log=w.log.emit)
@@ -594,7 +594,7 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
             w.log.emit(_("Dry run finished – nothing was written."))
             return {"dry": True}
         check_cancel()
-        # ---- 4. Schreiben
+        # ---- 4. Write
         if stock_info is not None:
             w.log.emit(_("Step: intermediate step original V15 …"))
             w.progress.emit(0, 100)
@@ -680,7 +680,7 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
                          cancel, dialog_cls=InstallDialog, on_done=done, done=summary)
     finally:
         ctx.disconnect(None)
-        ctx.reconnect_soon(2500)      # hebt auch ctx.hold wieder auf
+        ctx.reconnect_soon(2500)      # also releases ctx.hold
     return d.ok
 
 
@@ -728,7 +728,7 @@ DATE_FORMAT = pgettext("date format", "%Y-%m-%d")
 
 
 def _date_text(iso: str) -> str:
-    """Veröffentlichungsdatum fürs Auge (TT.MM.JJJJ), "–" wenn unbekannt."""
+    """Release date for display (DD.MM.YYYY), "–" if unknown."""
     if not iso:
         return "–"
     try:
@@ -739,10 +739,10 @@ def _date_text(iso: str) -> str:
 
 
 class FirmwarePage(QWidget):
-    """Installieren & Versionen – Reiter der Seite „Firmware+“ (früher eigene Seite „Firmware“; der Seiten-Schlüssel
-    "firmware" leitet weiter auf diesen Reiter)."""
+    """Install & versions – tab of the “Firmware+” page (formerly its own “Firmware” page; the page key
+    "firmware" redirects to this tab)."""
     updates_checked = pyqtSignal(dict)
-    list_changed = pyqtSignal()                # Firmware hinzugefügt/entfernt – der Katalog-Reiter zieht nach
+    list_changed = pyqtSignal()                # firmware added/removed – the catalog tab follows
 
     def __init__(self, ctx, parent=None):
         super().__init__(parent)
@@ -782,7 +782,7 @@ class FirmwarePage(QWidget):
                                     "padding: 6px; }")
         self.v16_warn.setVisible(False)
         rl.addWidget(self.v16_warn)
-        # Gerät läuft V16: geführter Rückweg (über V15, danach Zielfirmware und bei Melodee die Ressourcen)
+        # device runs V16: guided way back (via V15, then the target firmware and for Melodee the resources)
         self.v16_back = QWidget()
         self.v16_back.setObjectName("V16Back")
         vb = QVBoxLayout(self.v16_back)
@@ -820,7 +820,7 @@ class FirmwarePage(QWidget):
         self.chk_rc = QCheckBox(_("Show release candidates"))
         self.chk_rc.setChecked(ctx.settings.channel == "rc")
         self.chk_rc.toggled.connect(self._fill)
-        rl.addWidget(fit_height(flow_row(self.b_install, self.b_dl, self.b_refresh, self.chk_rc)))     # bricht bei Schmalheit um
+        rl.addWidget(fit_height(flow_row(self.b_install, self.b_dl, self.b_refresh, self.chk_rc)))     # wraps when narrow
         self.b_local = QPushButton(icon("document-open"), _("Install own .fwsc file …"))
         self.b_local.clicked.connect(self._install_local)
         # flashmodel.py (pinned, German) names this button „Schrift & Werkssounds nachschreiben“; flash/texts.py
@@ -839,7 +839,7 @@ class FirmwarePage(QWidget):
         rl.addWidget(self.history)
         split.addWidget(right)
         split.setStretchFactor(1, 3)
-        adaptive_splitter(split)                 # schmal: Firmware-Liste über den Details
+        adaptive_splitter(split)                 # narrow: firmware list above the details
 
         self._fill_catalog()
         self._last_fw_key = self.ctx.firmware_key
@@ -852,7 +852,7 @@ class FirmwarePage(QWidget):
         self._release_selected()
 
     def _follow_device(self):
-        """anderes Gerät mit anderer Firmware aktiv: dessen Katalogeintrag wählen (Versionen, Status)."""
+        """different device with different firmware active: select its catalog entry (versions, status)."""
         key = self.ctx.firmware_key
         if key == self._last_fw_key:
             return
@@ -866,7 +866,7 @@ class FirmwarePage(QWidget):
                 return
 
     def activate(self):
-        """Reiter wird sichtbar: im Katalog-Reiter hinzugefügte/entfernte Firmwares übernehmen (Auswahl bleibt)."""
+        """Tab becomes visible: take over firmwares added/removed in the catalog tab (selection stays)."""
         keys = [s.key for s in firmware.catalog() + firmware.STOCK]
         if keys == [self.cat.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.cat.count())]:
             return
@@ -907,7 +907,7 @@ class FirmwarePage(QWidget):
     def showEvent(self, e):
         super().showEvent(e)
         self._shown = True
-        if getattr(self, "_pending_load", False):         # erst jetzt (Seite sichtbar) die Versionen holen
+        if getattr(self, "_pending_load", False):         # only now (page visible) fetch the versions
             self._pending_load = False
             self.load_releases()
 
@@ -916,7 +916,7 @@ class FirmwarePage(QWidget):
         if not s:
             return
         if not force and not getattr(self, "_shown", False):
-            # Datenschutz: beim Programmstart nicht ungefragt ins Netz – erst, wenn du die Seite öffnest
+            # privacy: don't go online unasked at program start – only when you open the page
             self._pending_load = True
             self._message_row(_("Versions are loaded as soon as you open this page."))
             return
@@ -932,7 +932,7 @@ class FirmwarePage(QWidget):
                 on_fail=lambda m, tb: self._got(s.key, [], m))
 
     def _message_row(self, text: str):
-        """eine umbrechende Hinweiszeile statt der Versionsliste (lädt, offline, keine Releases)"""
+        """a wrapping notice line instead of the version list (loading, offline, no releases)"""
         self.tree.clear()
         self.notes.clear()
         it = QTreeWidgetItem([text])
@@ -991,7 +991,7 @@ class FirmwarePage(QWidget):
                 for c in range(4):
                     it.setFont(c, f)
             self.tree.addTopLevelItem(it)
-        self.tree.setColumnHidden(1, not any(r.date for r in rels))   # ohne Datumsangaben keine leere Spalte
+        self.tree.setColumnHidden(1, not any(r.date for r in rels))   # no empty column without dates
         for c in range(4):
             self.tree.resizeColumnToContents(c)
         if self.tree.topLevelItemCount():
@@ -1041,7 +1041,7 @@ class FirmwarePage(QWidget):
         rel = firmware.latest(self.releases.get(key, []), self.ctx.settings.channel)
         cur, new = self.ctx.firmware_tag, rel.tag if rel else ""
         if cur and new and new != cur:
-            try:                               # Kanal „stabil“ mit installiertem RC: kein „Update“ auf eine ältere Version
+            try:                               # “stable” channel with an installed RC: no “update” to an older version
                 if firmware.version_key(new) <= firmware.version_key(cur):
                     new = cur
             except Exception:  # noqa: BLE001
@@ -1056,7 +1056,7 @@ class FirmwarePage(QWidget):
         run_job(self, lambda w: firmware.fetch_releases(s, 600), on_done=lambda rels: self._got(key, rels),
                 on_fail=lambda m, tb: self.updates_checked.emit({"error": m}))
 
-    # ------------------------------------------------------- Aktionen
+    # ------------------------------------------------------- Actions
     def _install(self):
         s, r = self.current_spec(), self.selected_release()
         if s and r:
@@ -1081,7 +1081,7 @@ class FirmwarePage(QWidget):
                               feedback.open_folder_action(lambda pkg: pkg.fwsc.parent)])
 
     def _install_local(self, path: str = ""):
-        """eigene .fwsc: Kennung + Prüfsumme zeigen, im Katalog suchen, dann den normalen Plan"""
+        """own .fwsc: show identifier + checksum, search in the catalog, then the normal plan"""
         from ..flash import package as fpk
         if not path:
             path, _filter = QFileDialog.getOpenFileName(self, _("Choose firmware package"),
@@ -1093,7 +1093,7 @@ class FirmwarePage(QWidget):
         except fpk.PackageError as e:
             show_error(self, _("No FM-1 package"), str(e))
             return
-        match = match_by_sha(info.sha256)          # nur über die Prüfsumme – nie über den Dateinamen
+        match = match_by_sha(info.sha256)          # only via the checksum – never via the file name
         fam = {"stock": _("Original (M-VAVE)"), "felucca": _("Felucca family")}.get(info.family, _("unknown"))
         text = (f"<b>{Path(path).name}</b><br>" + _("Identity: <b>{product}</b>").format(product=info.product)
                 + f"<br>SHA-256: <tt>{info.sha256}</tt><br>" + _("Loader family: {family}").format(family=fam)
@@ -1113,7 +1113,7 @@ class FirmwarePage(QWidget):
         install_flow(self, self.ctx, sp, None, Path(path), tag)
 
     def return_to_original(self):
-        """Zurück zur Original-Firmware – V15 (empfohlen) oder V16"""
+        """Back to the original firmware – V15 (recommended) or V16"""
         dlg = QDialog(self)
         dlg.setWindowTitle(_("Back to the original"))
         lay = QVBoxLayout(dlg)
@@ -1144,7 +1144,7 @@ class FirmwarePage(QWidget):
         return install_flow(self, self.ctx, sp, firmware.fetch_releases(sp)[0])
 
     def return_from_v16(self, key: str = "melodee", tag: str = ""):
-        """geführter Rückweg V16 → V15 → Zielfirmware (der Plan erzwingt den Zwischenschritt über V15)"""
+        """guided way back V16 → V15 → target firmware (the plan enforces the intermediate step via V15)"""
         dlg = QDialog(self)
         dlg.setWindowTitle(_("Way back from V16"))
         lay = QVBoxLayout(dlg)
@@ -1228,7 +1228,7 @@ class FirmwarePage(QWidget):
         self.history.setText("<small><b>" + _("Firmware history:") + "</b> " + " · ".join(rows) + "</small>")
 
     def open_with(self, install=None, file=None, **_kw):
-        """Deep-Link: install=FirmwareSpec|key (z. B. aus dem Katalog), file=Pfad zu einer .fwsc"""
+        """Deep link: install=FirmwareSpec|key (e.g. from the catalog), file=path to a .fwsc"""
         sp = firmware.spec(install) if isinstance(install, str) else install
         if file:
             if sp is not None:
@@ -1255,7 +1255,7 @@ class FirmwarePage(QWidget):
         from .risk_dialog import ensure_risk_ack
         if not ensure_risk_ack(self):
             return
-        init_gui_caller()                      # Rückfrage zum Werkzeug kommt aus dem Hintergrund-Job
+        init_gui_caller()                      # the prompt about the tool comes from the background job
         rel = next((r for r in self.releases.get(s.key, []) if r.tag == tag), None)
         port = self.ctx.port.in_name
         link = self.ctx.link
@@ -1275,7 +1275,7 @@ class FirmwarePage(QWidget):
             repo = firmware.ensure_tools(s, tag, w.log.emit)
             try:
                 firmware.check_tool(s, repo, tag)
-            except firmware.ToolNotTrusted as e:       # erst fragen (im GUI-Thread), dann erneut starten
+            except firmware.ToolNotTrusted as e:       # ask first (in the GUI thread), then start again
                 if not ask(e):
                     raise RuntimeError(_("Cancelled: the tool from the repo was not run. Nothing was changed on "
                                          "the FM-1.")) from None
@@ -1288,7 +1288,7 @@ class FirmwarePage(QWidget):
             return call_in_gui(lambda: self.confirm_tool(e))
 
         def done(how):
-            if how == "current":     # Melodee ab 1.6.0-rc.8: der Update-Loader hat sie schon geschrieben
+            if how == "current":     # Melodee from 1.6.0-rc.8: the update loader has already written them
                 return _("The resources of {name} {tag} (fonts, factory sounds, Bluetooth program) were already "
                          "complete – the FM-1 confirmed length and checksum itself, nothing was written.").format(
                              name=s.name, tag=tag)
@@ -1303,7 +1303,7 @@ class FirmwarePage(QWidget):
             self.ctx.reconnect_soon()
 
     def confirm_tool(self, e) -> bool:
-        """Rückfrage, bevor Code aus einem Firmware-Repo läuft (fremde Firmware oder verschobener Tag)."""
+        """Prompt before code from a firmware repo runs (foreign firmware or moved tag)."""
         moved = ("<br><br>" + _("<b>Caution:</b> the tag previously pointed to {commit}. A moved tag can be a "
                                 "harmless re-release – or modified code.").format(commit=html.escape(e.moved_from[:12]))
                  if e.moved_from else "")
@@ -1315,7 +1315,7 @@ class FirmwarePage(QWidget):
                                       "commit."), _("Run"), danger=True)
 
     def _add(self):
-        try:                                   # Katalog-Werkstatt: Link-Import (Repo, Release oder .fwsc-Adresse)
+        try:                                   # catalog workshop: link import (repo, release or .fwsc address)
             from . import linkimport_dialog
             dlg_cls = getattr(linkimport_dialog, "LinkImportDialog", None)
         except ImportError:

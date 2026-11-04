@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Das aktive FM-1: Erkennung, Verbindung, Profil und gesicherte Gerätezugriffe."""
+"""The active FM-1: detection, connection, profile and safe device access."""
 from __future__ import annotations
 
 import os
@@ -18,11 +18,11 @@ from ..transport import Link, LinkError, MidoTransport, SubprocessTransport
 from .common import JobDialog, run_job, show_error
 
 DEMO = os.environ.get("FM1C_DEMO") == "1"
-UNKNOWN_CHOICE = "?"        # "don't know" – gemerkt, damit die App nur einmal fragt
+UNKNOWN_CHOICE = "?"        # "don't know" – remembered so the app only asks once
 
 
 class FolderError(OSError):
-    """Ordner lässt sich nicht anlegen/beschreiben – Text ist eine fertige (übersetzte) Meldung"""
+    """Folder can't be created/written – the text is a ready (translated) message"""
 
 
 def folder_error_text(path, e: OSError) -> str:
@@ -38,7 +38,7 @@ def folder_error_text(path, e: OSError) -> str:
 
 
 def handshake(link, tries: int = 2, timeout: float = 1.0) -> str:
-    """Update-Handshake über einen offenen Link (Hintergrund-Thread). -> Kennung oder ""."""
+    """Update handshake over an open link (background thread). -> identifier or ""."""
     import queue as _q
     from ..vendor import fm1_install as fi
     q: _q.Queue = _q.Queue()
@@ -75,7 +75,7 @@ def _probe_loader(port) -> str:
 
 
 def _demo_update_ports():
-    """Demo: Geräte, die gerade im (simulierten) Update-Modus warten, erscheinen als eigener Port"""
+    """Demo: devices currently waiting in (simulated) update mode appear as a separate port"""
     try:
         from ..flash import demo
         out = []
@@ -89,13 +89,13 @@ def _demo_update_ports():
 
 
 def firmware_candidates(identity: str) -> list[str]:
-    """Firmware-Schlüssel, die zu einer Kennung passen (eigene Erfahrung, Katalog, Raten)"""
+    """Firmware keys that match an identifier (own experience, catalog, guessing)"""
     out = []
     key, _tag = firmware.guess_firmware(identity)
     if key:
         out.append(key)
     try:
-        from .. import catalog as cat          # Katalog-Werkstatt (falls vorhanden)
+        from .. import catalog as cat          # catalog workshop (if present)
         for e in getattr(cat, "by_product", lambda _i: [])(identity):
             k = getattr(e, "key", "") or (e.get("key") if isinstance(e, dict) else "")
             if k and k not in out:
@@ -110,7 +110,7 @@ def firmware_candidates(identity: str) -> list[str]:
 
 
 def firmware_name(key: str) -> str:
-    """Anzeigename zu einem Firmware-Schlüssel (eingebaut, eigene, Katalog)"""
+    """Display name for a firmware key (built-in, custom, catalog)"""
     if not key or key == UNKNOWN_CHOICE:
         return ""
     sp = firmware.spec(key)
@@ -127,7 +127,7 @@ def firmware_name(key: str) -> str:
 
 
 class FirmwareChoiceDialog(QDialog):
-    """„Welche Firmware läuft auf diesem FM-1?“ – Kandidaten aus dem Katalog plus „weiß nicht“."""
+    """“Which firmware is running on this FM-1?” – candidates from the catalog plus “don't know”."""
 
     def __init__(self, parent, identity: str, candidates: list[str], device: str = ""):
         super().__init__(parent)
@@ -164,33 +164,33 @@ class FirmwareChoiceDialog(QDialog):
 
 
 class DeviceContext(QObject):
-    changed = pyqtSignal()                 # Gerät/Profil/Verbindung geändert
+    changed = pyqtSignal()                 # device/profile/connection changed
     ports_changed = pyqtSignal()
-    editor_pause = pyqtSignal(bool)        # True: Editor muss pausieren
+    editor_pause = pyqtSignal(bool)        # True: editor must pause
     message = pyqtSignal(str)
-    about_to_disconnect = pyqtSignal(object)  # (Link) kurz vor dem Schließen – z. B. hängende Noten beenden
+    about_to_disconnect = pyqtSignal(object)  # (link) just before closing – e.g. end hanging notes
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.settings = config.load()
         self.store = ProfileStore()
         self.ports: list[PortInfo] = []
-        self.vports: list[PortInfo] = []   # virtuelle Geräte (Studio-Zwilling) – nie in self.ports
+        self.vports: list[PortInfo] = []   # virtual devices (studio twin) – never in self.ports
         self.port: PortInfo | None = None
         self.link: Link | None = None
         self.info: Info | None = None
         self.profile: Profile | None = None
-        self.hold = False                  # während eines Updates: nicht automatisch verbinden
-        self.identity = ""                 # Handshake-Kennung (z. B. "FM-1_015", "ota-FM-1_900")
-        self.firmware_guess: list[str] = []  # mögliche Firmware-Schlüssel zur Kennung
-        self.uboot: list[str] = []         # USB-Pfade von FM-1 im ROM-Bootmodus (Rettung Stufe 2)
-        self.pending_restore_check = ""    # nach Firmware-Wechsel: altes Backup anbieten
+        self.hold = False                  # during an update: don't connect automatically
+        self.identity = ""                 # handshake identifier (e.g. "FM-1_015", "ota-FM-1_900")
+        self.firmware_guess: list[str] = []  # possible firmware keys for the identifier
+        self.uboot: list[str] = []         # USB paths of FM-1s in ROM boot mode (rescue level 2)
+        self.pending_restore_check = ""    # after a firmware change: offer the old backup
         self._asking = False
         self.window: QWidget | None = None
-        # virtuelle Geräte (Studio-Zwilling): Liste und Leitung liefert der Dienst (ui/studio_service.py)
+        # virtual devices (studio twin): list and line are provided by the service (ui/studio_service.py)
         self.virtual_ports = None          # () -> list[PortInfo]
         self.virtual_transport = None      # (PortInfo) -> Transport
-        self.virtual_profile = None        # (PortInfo) -> Profile (nicht im Geräte-Speicher)
+        self.virtual_profile = None        # (PortInfo) -> Profile (not in the device store)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.scan)
         self.timer.start(2000)
@@ -203,18 +203,18 @@ class DeviceContext(QObject):
 
     @property
     def is_virtual(self) -> bool:
-        """das aktive Gerät ist der Studio-Zwilling (kein echtes FM-1): Firmware, Rettung, Update-Modus, USB-Audio
-        und automatische Backups gelten für ihn nicht."""
+        """the active device is the studio twin (not a real FM-1): firmware, rescue, update mode, USB audio
+        and automatic backups don't apply to it."""
         return bool(self.port is not None and getattr(self.port, "virtual", False))
 
     @property
     def midi_connected(self) -> bool:
-        """MIDI-Verbindung offen – egal welche Firmware (Noten, CC, DX7-SysEx gehen)"""
+        """MIDI connection open – no matter which firmware (notes, CC, DX7 SysEx work)"""
         return self.link is not None and not self.link.closed
 
     @property
     def protocol(self) -> str:
-        """"felucca" (Editor-Protokoll), "generic" (nur MIDI + Handshake), "update" (Update-Modus) oder """""
+        """"felucca" (editor protocol), "generic" (MIDI + handshake only), "update" (update mode) or """""
         if self.port and (self.port.update_mode or self.identity.lower().startswith("ota-")):
             return "update"
         if self.connected:
@@ -225,7 +225,7 @@ class DeviceContext(QObject):
 
     @property
     def firmware_key(self) -> str:
-        """Schlüssel der laufenden Firmware – "" wenn unbekannt oder mehrdeutig (nie geraten)"""
+        """Key of the running firmware – "" if unknown or ambiguous (never guessed)"""
         if self.profile and self.profile.firmware and self.profile.firmware != UNKNOWN_CHOICE:
             return self.profile.firmware
         if self.info:
@@ -236,7 +236,7 @@ class DeviceContext(QObject):
 
     @property
     def firmware_ambiguous(self) -> bool:
-        """generisches Gerät, dessen Kennung mehrere Firmwares benutzen, und keine Wahl des Nutzers"""
+        """generic device whose identifier is used by several firmwares, and no choice by the user"""
         return not self.firmware_key and len(self.firmware_guess) > 1
 
     @property
@@ -264,7 +264,7 @@ class DeviceContext(QObject):
         return f"{name} – {fw}"
 
     def status_text(self) -> str:
-        """kurzer Zustand für Werkzeugleiste/Übersicht"""
+        """short state for toolbar/overview"""
         if self.is_virtual:
             return (_("virtual – the twin in the Studio, not a real FM-1") if self.connected
                     else _("virtual – twin is starting …"))
@@ -274,7 +274,7 @@ class DeviceContext(QObject):
                 "update": _("in update mode – finish the installation (page “Rescue”)")}.get(p, _("not connected"))
 
     def device_folder(self, base) -> "os.PathLike":
-        """Ordner dieses Geräts unter `base` (angelegt). FolderError (fertige Meldung), wenn das nicht geht."""
+        """This device's folder under `base` (created). FolderError (ready message) if that isn't possible."""
         sub = self.profile.folder_name if self.profile else "Unbekanntes Gerät"   # folder name on disk  # i18n: ignore
         d = base / sub
         try:
@@ -283,7 +283,7 @@ class DeviceContext(QObject):
             raise FolderError(folder_error_text(d, e)) from e
         return d
 
-    # ------------------------------------------------------------ Suche
+    # ------------------------------------------------------------ Search
     def scan(self):
         if self.hold:
             return
@@ -303,19 +303,19 @@ class DeviceContext(QObject):
         if self.virtual_ports is not None:
             try:
                 vports = list(self.virtual_ports())
-            except Exception:  # noqa: BLE001 – ein Fehler im Studio darf die Gerätesuche nicht stören
+            except Exception:  # noqa: BLE001 – an error in the studio must not disturb the device search
                 vports = []
         keys = [p.key for p in ports]
         vkeys = [p.key for p in vports]
         if keys != [p.key for p in self.ports] or vkeys != [p.key for p in self.vports]:
-            self.ports = ports           # nur echte Geräte (Firmware, Rettung, Zählen mehrerer FM-1 …)
-            self.vports = vports         # virtuelle Geräte stehen getrennt (nur Geräteauswahl oben)
+            self.ports = ports           # real devices only (firmware, rescue, counting several FM-1s …)
+            self.vports = vports         # virtual devices are kept separately (device selection at the top only)
             self.ports_changed.emit()
         if self.port and self.port.key not in keys + vkeys:
             self.disconnect(_("FM-1 disconnected"))
         if self.link and not self.link.t.alive:
             self.disconnect(_("Connection lost"))
-        if not self.port and ports:         # nie von selbst auf ein virtuelles Gerät verbinden
+        if not self.port and ports:         # never connect to a virtual device by itself
             last = self.settings.last_device
             def is_last(p):
                 prof = self.store.by_serial(usable_serial(p, ports)) if usable_serial(p, ports) else None
@@ -332,7 +332,7 @@ class DeviceContext(QObject):
             self.identity = ""
             self._assign_profile()
             self.changed.emit()
-            if not DEMO:      # Kennung des Loaders: Handshake ohne offenen Link (stört nichts)
+            if not DEMO:      # loader identifier: handshake without an open link (doesn't disturb anything)
                 run_job(self, lambda w: _probe_loader(port), on_done=self._loader_probed, on_fail=lambda *a: None)
             else:
                 from ..flash import demo
@@ -349,9 +349,9 @@ class DeviceContext(QObject):
                 cmd = os.environ.get("FM1C_DEMO_CMD")
                 if cmd:
                     argv = cmd.split("\x1f")
-                elif port.serial == "DEMO-2":      # zweites Demo-Gerät: SLOOP mit 4 Sample-Slots
+                elif port.serial == "DEMO-2":      # second demo device: SLOOP with 4 sample slots
                     argv = [sys.executable, "-m", "fm1companion.demo_device", "--samples", "4", "--version", "SLOOP 2.8.3"]
-                elif port.serial == "DEMO-3":      # drittes: Firmware ohne Editor-Protokoll (nur Handshake)
+                elif port.serial == "DEMO-3":      # third: firmware without editor protocol (handshake only)
                     argv = [sys.executable, "-m", "fm1companion.demo_device", "--generic", "FM-1_900"]
                 else:
                     argv = [sys.executable, "-m", "fm1companion.demo_device"]
@@ -365,27 +365,27 @@ class DeviceContext(QObject):
         self.link = Link(t)
         self.link.on_exclusive_change = lambda on: self.editor_pause.emit(on)
         self.changed.emit()
-        # Ergebnisse gehören zu GENAU diesem Link: Ein langsamer Probe-Job des vorigen Geräts (Startwartezeit bis
-        # STARTUP_GRACE) darf nach einem Gerätewechsel weder Kennung noch Firmware des neuen Geräts überschreiben
+        # results belong to EXACTLY this link: a slow probe job of the previous device (start wait up to
+        # STARTUP_GRACE) must not overwrite the new device's identifier or firmware after a device change
         link = self.link
         run_job(self, lambda w: self._probe(w, link), on_done=lambda info: self._probed(info, link),
                 on_fail=lambda m, tb: self._probe_failed(m, link))
 
-    STARTUP_GRACE = 20.0            # s: so lange darf ein Geräte-Prozess (Demo/Simulation) zum Starten brauchen
+    STARTUP_GRACE = 20.0            # s: how long a device process (demo/simulation) may take to start
 
     def _probe(self, w, link=None):
         last = None
         link = link or self.link
         wait_started = getattr(link.t, "wait_started", None)
-        for _try in range(4):       # das erste Paket nach dem Öffnen geht manchmal verloren
+        for _try in range(4):       # the first packet after opening sometimes gets lost
             try:
                 info = parse_info(link.request(Cmd.INFO, [], timeout=1.0, retries=0))
                 self._hs_identity = link.hs_identity = handshake(link, tries=1, timeout=0.6)
                 return info
             except LinkError as e:
                 last = e
-                # Ein Geräte-Prozess, der noch startet, ist kein Gerät ohne Editor-Protokoll: erst warten, bis er
-                # läuft, statt nach ~5 s aufzugeben (sonst bliebe es dauerhaft bei „nur MIDI“)
+                # a device process that is still starting is not a device without editor protocol: wait until it
+                # runs instead of giving up after ~5 s (otherwise it would stay at “MIDI only” permanently)
                 if wait_started is not None and not wait_started(self.STARTUP_GRACE):
                     break
                 time.sleep(0.3)
@@ -393,7 +393,7 @@ class DeviceContext(QObject):
 
     def _probed(self, info: Info, link=None):
         if link is not None and link is not self.link:
-            return                          # veraltet: inzwischen ein anderes Gerät (oder neu verbunden)
+            return                          # outdated: a different device by now (or reconnected)
         self.info = info
         self.identity = (getattr(link, "hs_identity", "") if link is not None else getattr(self, "_hs_identity", "")) \
             or self.identity
@@ -409,16 +409,16 @@ class DeviceContext(QObject):
             elif key and tag and not p.firmware_version:
                 p.firmware_version = tag
             p.last_seen = time.time()
-            if not self.is_virtual:          # der Zwilling ist nie „das zuletzt benutzte FM-1“
+            if not self.is_virtual:          # the twin is never “the last used FM-1”
                 self.store.save()
                 self.settings.last_device = p.id
                 config.save(self.settings)
         self.changed.emit()
 
     def _probe_failed(self, msg, link=None):
-        """kein Felucca-INFO: Handshake versuchen (stört nicht), MIDI-Verbindung offen lassen"""
+        """no Felucca INFO: try the handshake (doesn't disturb), keep the MIDI connection open"""
         if link is not None and link is not self.link:
-            return                          # veraltet: inzwischen ein anderes Gerät
+            return                          # outdated: a different device by now
         self.info = None
         link = self.link
         if link is None or link.closed:
@@ -446,7 +446,7 @@ class DeviceContext(QObject):
                 if p.firmware != guess[0]:
                     p.firmware, p.firmware_version = guess[0], firmware.guess_firmware(ident)[1] or p.firmware_version
             elif not self._installed_here(p, ident):
-                # mehrdeutig: nichts raten (eine frühere Felucca-Firmware dieses Geräts gilt nicht mehr)
+                # ambiguous: guess nothing (an earlier Felucca firmware of this device no longer applies)
                 p.firmware, p.firmware_version = "", ""
             p.identity = ident or p.identity
             p.last_seen = time.time()
@@ -463,13 +463,13 @@ class DeviceContext(QObject):
 
     @staticmethod
     def _installed_here(p, ident: str) -> bool:
-        """hat die App selbst diese Firmware mit genau dieser Kennung zuletzt installiert?"""
+        """did the app itself last install this firmware with exactly this identifier?"""
         hist = [h for h in (p.firmware_history or []) if isinstance(h, dict)]
         return bool(p.firmware and hist and hist[-1].get("firmware") == p.firmware
                     and hist[-1].get("identity") == ident)
 
     def ask_firmware(self, port=None) -> str:
-        """einmal fragen, welche Firmware hinter einer mehrdeutigen Kennung steckt (pro Gerät gemerkt)"""
+        """ask once which firmware is behind an ambiguous identifier (remembered per device)"""
         if port is not None and self.port is not port:
             return ""
         if self._asking or not self.identity or not self.firmware_ambiguous:
@@ -488,8 +488,8 @@ class DeviceContext(QObject):
         return key
 
     def choose_firmware(self, key: str):
-        """der Nutzer legt fest, welche Firmware hinter dieser Kennung steckt (pro Gerät gemerkt).
-        UNKNOWN_CHOICE ("?") = „weiß nicht“: wird gemerkt (keine weitere Frage), die Firmware bleibt unbekannt."""
+        """the user specifies which firmware is behind this identifier (remembered per device).
+        UNKNOWN_CHOICE ("?") = “don't know”: is remembered (no further question), the firmware stays unknown."""
         if self.profile and self.identity:
             self.profile.firmware_choice[self.identity] = key
             self.profile.firmware = "" if key == UNKNOWN_CHOICE else key
@@ -515,12 +515,12 @@ class DeviceContext(QObject):
             self.changed.emit()
 
     def _assign_profile(self):
-        """Profil zum Gerät finden: Seriennummer, sonst Firmware und USB-Anschluss, sonst fragen."""
+        """Find the profile for the device: serial number, otherwise firmware and USB port, otherwise ask."""
         port = self.port
         if not port:
             return
         if getattr(port, "virtual", False) and self.virtual_profile is not None:
-            self.profile = self.virtual_profile(port)      # eigenes Profil, nie im Geräte-Speicher
+            self.profile = self.virtual_profile(port)      # own profile, never in the device store
             return
         serial = usable_serial(port, self.ports or [port])
         if serial:
@@ -547,7 +547,7 @@ class DeviceContext(QObject):
         self.profile = p
 
     def profile_for_port(self, port: PortInfo) -> Profile | None:
-        """ohne Rückfrage: welches Profil gehört (vermutlich) zu diesem Anschluss?"""
+        """without asking: which profile (probably) belongs to this port?"""
         if self.port and port.key == self.port.key and self.profile:
             return self.profile
         if getattr(port, "virtual", False):
@@ -581,7 +581,7 @@ class DeviceContext(QObject):
         if self.link:
             try:
                 self.about_to_disconnect.emit(self.link)
-            except Exception:  # noqa: BLE001 – Trennen muss immer klappen
+            except Exception:  # noqa: BLE001 – disconnecting must always work
                 pass
             self.link.close()
         had = self.port is not None
@@ -600,7 +600,7 @@ class DeviceContext(QObject):
         self.hold = False
         QTimer.singleShot(ms, self.scan)
 
-    # ------------------------------------------------------- Zugriffe
+    # ------------------------------------------------------- Access
     def require(self, parent) -> bool:
         if not self.connected:
             show_error(parent, _("No device"), _("Please connect an FM-1 with Melodee, Skiff or SLOOP via USB."))
@@ -608,7 +608,7 @@ class DeviceContext(QObject):
         return True
 
     def job(self, parent, title: str, fn, *args, dialog=True, on_done=None, done=None, actions=None, **kw):
-        """fn(worker, link, …) exklusiv am Gerät ausführen. done: Ergebnis-Satz (Text oder fn(res) -> Text)."""
+        """Run fn(worker, link, …) exclusively on the device. done: result sentence (text or fn(res) -> text)."""
         link = self.link
 
         def wrapped(w, *a, **k):
@@ -627,8 +627,8 @@ class DeviceContext(QObject):
         return run_job(parent, wrapped, *args, on_done=on_done, **kw)
 
     def rename_profile(self, name: str, profile=None):
-        """Gerät umbenennen – sein Backup-Ordner wandert mit (wie auf der Geräte-Seite).
-        FolderError, wenn der Ordner nicht verschoben werden kann (dann bleibt der alte Name)."""
+        """Rename the device – its backup folder moves along (as on the devices page).
+        FolderError if the folder can't be moved (then the old name stays)."""
         from ..devices import move_profile_folder
         p = profile or self.profile
         name = (name or "").strip()
@@ -636,7 +636,7 @@ class DeviceContext(QObject):
             return
         other = self.store.name_taken(name, except_id=p.id) if hasattr(self.store, "name_taken") else None
         if other is not None:
-            # sonst landeten die Backups zweier Geräte im selben Ordner
+            # otherwise the backups of two devices would end up in the same folder
             raise FolderError(_("The name “{name}” is already taken (device “{device}”) – otherwise the backups of both "
                                 "devices would end up in the same folder. Please choose another name.").format(
                                     name=name, device=other.name))

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Abnahme Klang: Regressionen ohne Qt (Kit-Dateinamen, Wellenform aus numpy, Umbenennen ohne Teilschaden,
-FluidSynth-Stopp ohne Warten)."""
+"""Sound acceptance: regressions without Qt (kit file names, waveform from numpy, renaming without partial damage,
+stopping FluidSynth without waiting)."""
 from __future__ import annotations
 
 import json

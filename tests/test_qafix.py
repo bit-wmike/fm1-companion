@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""QA-Nachbesserungen ohne Oberfläche: Sample-Slot sichern/zurückspielen, Song-Kette lesen/zurückschreiben,
-Engine-Namen, schreibgeschützte Preset-Bibliothek.
+"""QA fixes without UI: back up/restore a sample slot, read/write back the song chain,
+engine names, read-only preset library.
   python3 -m pytest tests/test_qafix.py -q
 """
 from __future__ import annotations
@@ -48,7 +48,7 @@ def test_song_read_restore_melodee():
 
 def test_engine_names_shared():
     assert pl.engine_display_name(12) == "FM6"
-    assert pl.engine_display_name(12, ["A", "B"]) == "FM6"          # kurze INFO-Liste: feste Namen
+    assert pl.engine_display_name(12, ["A", "B"]) == "FM6"          # short INFO list: fixed names
     long = [f"E{i}" for i in range(16)]
     assert pl.engine_display_name(3, long) == "E3"
     assert pl.engine_display_name(99) == "Engine 99"
@@ -64,5 +64,5 @@ def test_library_on_readonly_root(tmp_path, monkeypatch):
             raise PermissionError(errno.EACCES, "Permission denied", str(p))
         return real(p, *a, **k)
     monkeypatch.setattr(os, "mkdir", deny)
-    lib = pl.Library(root)                       # darf nicht werfen
+    lib = pl.Library(root)                       # must not raise
     assert lib.all() == []

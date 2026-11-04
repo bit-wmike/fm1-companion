@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Audio-Ausgabe des Rechners (ohne Qt): welche Abspielprogramme es gibt, welche Ausgänge PipeWire/Pulse kennt
-und ob der Standard-Ausgang gerade das FM-1 selbst ist (USB-Audio) – dann hört man das Vorhören nur am FM-1.
-Benutzt von ui/audio.py (Player) und syscheck.py (fm1-companion --check)."""
+"""Audio output of the computer (without Qt): which playback programs exist, which outputs PipeWire/Pulse knows
+and whether the default output is currently the FM-1 itself (USB audio) – then the preview is only audible on the FM-1.
+Used by ui/audio.py (player) and syscheck.py (fm1-companion --check)."""
 from __future__ import annotations
 
 import json
@@ -24,10 +24,10 @@ def available_backends() -> list[str]:
 
 @dataclass
 class Output:
-    name: str                 # PipeWire/Pulse-Knotenname (für --target / PULSE_SINK)
+    name: str                 # PipeWire/Pulse node name (for --target / PULSE_SINK)
     description: str
     default: bool = False
-    id: int = 0               # PipeWire-Objekt-ID (für wpctl), 0 = unbekannt
+    id: int = 0               # PipeWire object ID (for wpctl), 0 = unknown
 
     @property
     def is_fm1(self) -> bool:
@@ -35,7 +35,7 @@ class Output:
 
     @property
     def is_dummy(self) -> bool:
-        """PipeWires „Dummy Output“ / „Schein-Ausgabe“ (auto_null): kein echtes Gerät, der Ton geht ins Leere"""
+        """PipeWire's "Dummy Output" (auto_null): not a real device, the sound goes nowhere"""
         return bool(DUMMY_SINK.search(self.name + " " + self.description))
 
 
@@ -51,7 +51,7 @@ def _run(args, timeout=2.0) -> str:
 
 
 def parse_pw_dump(text: str) -> list[Output]:
-    """pw-dump (JSON) -> Audio-Ausgänge (media.class Audio/Sink) mit dem Standard-Ausgang."""
+    """pw-dump (JSON) -> audio outputs (media.class Audio/Sink) with the default output."""
     try:
         objs = json.loads(text or "[]")
     except ValueError:
@@ -90,7 +90,7 @@ def parse_pactl(short: str, default: str) -> list[Output]:
 
 
 def list_outputs(max_age: float = 8.0) -> list[Output]:
-    """Audio-Ausgänge des Systems (PipeWire über pw-dump, sonst pactl). Kurz zwischengespeichert."""
+    """Audio outputs of the system (PipeWire via pw-dump, otherwise pactl). Cached briefly."""
     global _outputs_cache
     t, outs = _outputs_cache
     if time.monotonic() - t < max_age:
@@ -105,7 +105,7 @@ def list_outputs(max_age: float = 8.0) -> list[Output]:
 
 
 def output_hint(o: Output | None) -> str:
-    """deutscher Hinweis, wenn der Ton vermutlich nicht dort ankommt, wo man ihn erwartet."""
+    """German hint when the sound probably does not arrive where one expects it."""
     if o is not None and o.is_dummy:
         return _("There is no real audio output right now (“Dummy Output”) – the sound goes nowhere. "
                  "Connect speakers/a sound card (after a USB crash: restart the computer) and select it in "
@@ -120,14 +120,14 @@ def output_hint(o: Output | None) -> str:
 
 
 
-# ------------------------------------------------------------ nie unbemerkt aufs FM-1
+# ------------------------------------------------------------ never onto the FM-1 unnoticed
 _KIND_ORDER = (re.compile(r"hdmi", re.I), re.compile(r"analog|headphone|kopfh|speaker|lautspr|line", re.I),
                re.compile(r"bluez|bluetooth", re.I))
 
 
 def best_other(outs: list[Output]) -> Output | None:
-    """der beste echte Ausgang, der NICHT das FM-1 ist (HDMI, dann analog/Kopfhörer, dann Bluetooth, dann
-    irgendeiner) – None, wenn es keinen gibt."""
+    """the best real output that is NOT the FM-1 (HDMI, then analogue/headphones, then Bluetooth, then
+    any) – None if there is none."""
     real = [o for o in outs if not o.is_fm1 and not o.is_dummy]
     for rx in _KIND_ORDER:
         hit = next((o for o in real if rx.search(o.name + " " + o.description)), None)
@@ -137,9 +137,9 @@ def best_other(outs: list[Output]) -> Output | None:
 
 
 def effective_output(chosen: str = "", outs: list[Output] | None = None) -> str:
-    """wohin die App ihren eigenen Ton schickt: die ausdrückliche Wahl des Nutzers – sonst der Standard des
-    Systems, außer der ist das FM-1 (oder die Schein-Ausgabe): dann der beste andere echte Ausgang.
-    "" = Standard des Systems benutzen."""
+    """where the app sends its own sound: the user's explicit choice – otherwise the system
+    default, unless that is the FM-1 (or the dummy output): then the best other real output.
+    "" = use the system default."""
     if chosen:
         return chosen
     outs = list_outputs() if outs is None else outs
@@ -151,7 +151,7 @@ def effective_output(chosen: str = "", outs: list[Output] | None = None) -> str:
 
 
 def set_default_sink(o: Output) -> bool:
-    """Standard-Ausgang des Systems setzen (pactl, sonst wpctl)."""
+    """Set the system's default output (pactl, otherwise wpctl)."""
     if shutil.which("pactl"):
         try:
             if subprocess.run(["pactl", "set-default-sink", o.name], capture_output=True, timeout=3).returncode == 0:
@@ -167,9 +167,9 @@ def set_default_sink(o: Output) -> bool:
 
 
 def keep_default_off_fm1(outs: list[Output] | None = None, setter=set_default_sink) -> tuple[Output, Output] | None:
-    """Ist das FM-1 (ungewollt, z. B. beim Anstecken) Standard-Ausgang geworden, den Standard auf den besten
-    anderen echten Ausgang zurücksetzen. -> (FM-1, neuer Standard) oder None (nichts zu tun / nicht möglich).
-    Das FM-1 bleibt als Ausgang wählbar – es wird nur nicht von selbst benutzt."""
+    """If the FM-1 has (unintentionally, e.g. when plugged in) become the default output, reset the default to the best
+    other real output. -> (FM-1, new default) or None (nothing to do / not possible).
+    The FM-1 stays selectable as an output – it is just not used automatically."""
     global _outputs_cache
     outs = list_outputs(0) if outs is None else outs
     d = next((o for o in outs if o.default), None)

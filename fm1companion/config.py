@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Einstellungen und Ordner.
+"""Settings and folders.
 
-Alles, was der Nutzer selbst anfasst (Backups, Projekte, Samples, Aufnahmen), liegt
-in einem sichtbaren Ordner (Standard ~/FM-1). Interne Daten (Firmware-Cache,
-Werkzeug-Repos, Sample-Index) liegen nach XDG unter ~/.local/share/fm1-companion.
+Everything the user touches directly (backups, projects, samples, recordings) lives
+in a visible folder (default ~/FM-1). Internal data (firmware cache,
+tool repos, sample index) lives under ~/.local/share/fm1-companion per XDG.
 """
 from __future__ import annotations
 
@@ -50,18 +50,18 @@ BACKUP_FILE = CONFIG_DIR / "config.json.bak"
 @dataclass
 class Settings:
     # Updates
-    channel: str = "stable"                # "stable" (Standard) oder "rc" (Release Candidates)
+    channel: str = "stable"                # "stable" (default) or "rc" (release candidates)
     check_on_start: bool = True
     auto_backup_before_update: bool = True
-    keep_backups: int = 20                 # pro Gerät, 0 = alle behalten
-    # Ordner
+    keep_backups: int = 20                 # per device, 0 = keep all
+    # folders
     user_root: str = str(Path.home() / "FM-1")
-    sample_roots: list[str] = field(default_factory=list)   # Ordner, die die Sample-Bibliothek durchsucht
-    # Aussehen
+    sample_roots: list[str] = field(default_factory=list)   # folders the sample library searches
+    # appearance
     theme: str = "system"                  # "system", "light", "dark"
     # Language of the user interface: "system" (system locale if translated, else English), "de", "en", …
     language: str = "system"
-    # Aufnahme
+    # recording
     record_mode: str = "auto"              # "auto", "stereo", "tracks"
     record_open_audacity: bool = True
     audacity_cmd: str = "audacity"
@@ -70,27 +70,27 @@ class Settings:
     # Samples
     sample_default_normalize: bool = True
     sample_default_trim: bool = True
-    # Firmware-Katalog: zusätzliche, vom Nutzer eingetragene Firmwares
+    # firmware catalog: additional firmwares entered by the user
     extra_firmwares: list[dict] = field(default_factory=list)
-    # zuletzt aktives Gerät (Profil-ID)
+    # last active device (profile ID)
     last_device: str = ""
-    # Fenster
+    # window
     window_geometry: str = ""
-    # einmaliger Risiko-Hinweis vor der ersten Installation/Rettung bestätigt (Version des Textes, 0 = nie)
+    # one-time risk notice before the first installation/rescue confirmed (version of the text, 0 = never)
     risk_ack: int = 0
-    # Einstellungen einzelner Bereiche der Suite, je Bereich ein eigenes Wörterbuch
-    # (z. B. modules["catalog"]["show_beta"]). Zugriff über config.module(name).
+    # settings of individual sections of the suite, one dictionary per section
+    # (e.g. modules["catalog"]["show_beta"]). Access via config.module(name).
     modules: dict = field(default_factory=dict)
 
-    # ---- abgeleitete Ordner ----
+    # ---- derived folders ----
     @property
     def root(self) -> Path:
         return Path(os.path.expanduser(self.user_root))
 
     def folder(self, name: str, strict: bool = False) -> Path:
-        """Unterordner im Hauptordner (angelegt). strict=False (die Eigenschaften backups_dir usw.): ein
-        Schreibfehler (z. B. schreibgeschützter Hauptordner) bricht nicht ab – der Pfad kommt trotzdem zurück,
-        der Fehler steht in folder_problems; erst das eigentliche Schreiben meldet ihn dann verständlich."""
+        """Subfolder in the main folder (created). strict=False (the properties backups_dir etc.): a
+        write error (e.g. read-only main folder) does not abort – the path is still returned,
+        the error is recorded in folder_problems; only the actual write then reports it understandably."""
         p = self.root / name
         try:
             p.mkdir(parents=True, exist_ok=True)
@@ -127,12 +127,12 @@ class Settings:
 
 _lock = threading.Lock()
 _settings: Settings | None = None
-folder_problems: dict[str, str] = {}     # Ordnername -> Fehler beim Anlegen (Hauptordner schreibgeschützt …)
-# was beim Laden auffiel (für einen einmaligen Hinweis in der Oberfläche)
+folder_problems: dict[str, str] = {}     # folder name -> error when creating it (main folder read-only …)
+# what was noticed while loading (for a one-time notice in the UI)
 load_problems: list[Msg] = []
-broken_file: Path | None = None          # unlesbare config.json wurde hierhin umbenannt
-read_error: str = ""                     # Einstellungsdatei nicht lesbar (Rechte, Ordner fehlt/ist eine Datei)
-_read_exc: OSError | None = None         # (der Grund dazu, übersetzt erst in problems_text())
+broken_file: Path | None = None          # unreadable config.json was renamed to this
+read_error: str = ""                     # settings file not readable (permissions, folder missing/is a file)
+_read_exc: OSError | None = None         # (the reason for it, translated only in problems_text())
 
 
 def _expected(f) -> str:
@@ -141,7 +141,7 @@ def _expected(f) -> str:
 
 
 def _coerce(name: str, typ: str, v, default):
-    """Wert prüfen; (Wert, Problem (Msg) oder None)"""
+    """Check a value; (value, problem (Msg) or None)"""
     if typ == "bool":
         return (v, None) if isinstance(v, bool) else (default, Msg(N_("{name}: not a yes/no value"), name=name))
     if typ == "int":
@@ -168,7 +168,7 @@ def _coerce(name: str, typ: str, v, default):
 
 
 def from_dict(raw) -> tuple[Settings, list[Msg]]:
-    """Settings aus einem (evtl. kaputten) Wörterbuch – jedes Feld einzeln geprüft, sonst Standardwert."""
+    """Settings from a (possibly broken) dictionary – each field checked individually, otherwise the default."""
     s = Settings()
     problems: list[Msg] = []
     if not isinstance(raw, dict):
@@ -193,7 +193,7 @@ def from_dict(raw) -> tuple[Settings, list[Msg]]:
 
 
 def _why(e: OSError) -> str:
-    """Betriebssystem-Fehler in Alltagssprache (die strerror-Texte sind englisch). Nicht in load() benutzen."""
+    """Operating system errors in plain language (the strerror texts are English). Do not use in load()."""
     import errno as _e
     from .i18n import _
     return {_e.EACCES: _("no permission"), _e.EPERM: _("no permission"),
@@ -218,10 +218,10 @@ def load() -> Settings:
             except FileNotFoundError:
                 pass
             except (IsADirectoryError, NotADirectoryError, PermissionError) as e:
-                # nicht lesbar (Rechte, ~/.config ist eine Datei …) – NICHT „beschädigt“ und nichts umbenennen
+                # not readable (permissions, ~/.config is a file …) – NOT "damaged" and do not rename anything
                 read_error, _read_exc = f"{CONFIG_FILE}: {e.strerror or e}", e
             except (OSError, ValueError, UnicodeDecodeError) as e:
-                # unlesbar: beiseitelegen (nicht still überschreiben) und – wenn vorhanden – die Sicherung nehmen
+                # unreadable: set aside (do not silently overwrite) and – if present – use the backup
                 stamp = time.strftime("%Y-%m-%d_%H%M%S")
                 dest = CONFIG_FILE.with_name(f"{CONFIG_FILE.name}.kaputt-{stamp}")
                 try:
@@ -240,27 +240,27 @@ def load() -> Settings:
                 s, probs = from_dict(raw)
                 load_problems.extend(probs)
             demo_root = os.environ.get("FM1C_DEMO_ROOT")
-            if demo_root:                      # Demo-Modus: eigener Hauptordner, echte Daten bleiben unberührt
+            if demo_root:                      # demo mode: separate main folder, real data stays untouched
                 s.user_root = demo_root
             _settings = s
         return _settings
 
 
 _save_lock = threading.Lock()
-save_error: str = ""                     # letzter Fehler beim Speichern ("" = zuletzt gespeichert)
-save_listeners: list = []                # fn(text) – wird bei JEDEM fehlgeschlagenen Speichern gerufen (jeder Thread)
+save_error: str = ""                     # last error while saving ("" = saved last time)
+save_listeners: list = []                # fn(text) – called on EVERY failed save (any thread)
 
 
 def _write_private(path: Path, text: str) -> None:
-    """Datei nur für den Benutzer lesbar schreiben (0600) – die Einstellungen können z. B. ein GitHub-Token
-    enthalten. Die Rechte stehen schon beim Anlegen fest (kein kurzes Fenster mit 0644)."""
+    """Write a file readable only by the user (0600) – the settings may contain e.g. a GitHub token.
+    The permissions are fixed at creation time (no short window with 0644)."""
     try:
         path.unlink()
     except FileNotFoundError:
         pass
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
-        os.fchmod(fd, 0o600)                   # unabhängig von der umask
+        os.fchmod(fd, 0o600)                   # independent of the umask
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             fd = -1
             f.write(text)
@@ -270,20 +270,20 @@ def _write_private(path: Path, text: str) -> None:
 
 
 def save(s: Settings | None = None) -> bool:
-    """Einstellungen schreiben (atomar, mit Sicherung des vorherigen Stands). -> True, wenn gespeichert.
+    """Write the settings (atomically, with a backup of the previous state). -> True if saved.
 
-    Wirft nie: Ist der Ordner nicht beschreibbar (Datenträger voll, Rechte, ~/.config ist eine Datei), gelten
-    die Einstellungen bis zum Beenden weiter; der Fehler steht in ``save_error`` und geht an ``save_listeners``
-    (das Hauptfenster meldet ihn einmal). Vorher stürzte z. B. schon der erste Start mit einem Traceback ab."""
+    Never raises: if the folder is not writable (disk full, permissions, ~/.config is a file), the
+    settings remain in effect until exit; the error is in ``save_error`` and goes to ``save_listeners``
+    (the main window reports it once). Previously, e.g., even the first start crashed with a traceback."""
     global save_error
     s = s or load()
-    with _save_lock:                           # zwei Threads dürfen sich die .tmp-Datei nicht gegenseitig ersetzen
+    with _save_lock:                           # two threads must not replace each other's .tmp file
         tmp = CONFIG_FILE.with_suffix(".tmp")
         try:
             CONFIG_DIR.mkdir(parents=True, exist_ok=True)
             _write_private(tmp, json.dumps(asdict(s), indent=2, ensure_ascii=False))
             if CONFIG_FILE.exists():
-                try:                           # vorherigen Stand behalten (Rückweg bei einer kaputten Datei)
+                try:                           # keep the previous state (way back in case of a broken file)
                     _read_json(CONFIG_FILE)
                     shutil.copy2(CONFIG_FILE, BACKUP_FILE)
                     os.chmod(BACKUP_FILE, 0o600)
@@ -303,7 +303,7 @@ def save(s: Settings | None = None) -> bool:
             for fn in list(save_listeners):
                 try:
                     fn(save_error)
-                except Exception:  # noqa: BLE001 – ein Hörer darf das Speichern nicht stören
+                except Exception:  # noqa: BLE001 – a listener must not disturb saving
                     pass
             return False
         save_error = ""
@@ -311,7 +311,7 @@ def save(s: Settings | None = None) -> bool:
 
 
 def problems_text() -> str:
-    """einmaliger Hinweis für die Oberfläche ("" = alles in Ordnung)"""
+    """one-time notice for the UI ("" = all fine)"""
     from .i18n import _
     fields_ = [str(p) for p in load_problems if getattr(p, "kind", "") not in ("broken", "backup")]
     if broken_file is None and not fields_ and not read_error:
@@ -331,8 +331,8 @@ def problems_text() -> str:
 
 
 def module(name: str, defaults: dict | None = None) -> dict:
-    """Einstellungen eines Bereichs (veränderbar; danach config.save() aufrufen).
-    Fehlende Schlüssel werden mit `defaults` ergänzt, vorhandene bleiben."""
+    """Settings of a section (mutable; call config.save() afterwards).
+    Missing keys are filled in from `defaults`, existing ones stay."""
     s = load()
     if not isinstance(s.modules, dict):
         s.modules = {}
@@ -345,7 +345,7 @@ def module(name: str, defaults: dict | None = None) -> dict:
 
 
 def folder(name: str) -> Path:
-    """sichtbarer Unterordner im Hauptordner (z. B. "DX7", "MIDI-Export"), wird angelegt (OSError, wenn nicht)."""
+    """visible subfolder in the main folder (e.g. "DX7", "MIDI-Export"), gets created (OSError if not possible)."""
     return load().folder(name, strict=True)
 
 

@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Werkstatt: eine MIDI-Datei (aus einer DAW, MuseScore, LMMS …) als Pattern auf
-das FM-1 spielen.
+"""Workshop: play a MIDI file (from a DAW, MuseScore, LMMS …) as a pattern onto
+the FM-1.
 
-Eine Spur der MIDI-Datei wird auf das Step-Raster gelegt (1/16 Standard), bis
-zu 4 gleichzeitige Noten werden zum Akkord, gehaltene Noten zu TIE-Steps. Das
-Ergebnis landet über TRACK_STEP (Befehl 30) in einem Pattern einer FM-1-Spur.
+One track of the MIDI file is placed on the step grid (1/16 by default), up
+to 4 simultaneous notes become a chord, held notes become TIE steps. The
+result ends up in a pattern of an FM-1 track via TRACK_STEP (command 30).
 
-Grenzen ehrlich: maximal 64 Steps je Pattern, 4 Noten je Step, keine Automation;
-Schlagzeug (GM-Kanal 10) wird auf die Drum-Lanes gelegt (Abschnitt „Suite 2.0“ unten).
+Honest limits: at most 64 steps per pattern, 4 notes per step, no automation;
+drums (GM channel 10) are placed on the drum lanes (section "Suite 2.0" below).
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ NSTEP = 64
 
 @dataclass
 class Note:
-    start: float      # in Vierteln
+    start: float      # in quarters
     length: float
     pitch: int
     vel: int
@@ -46,9 +46,9 @@ class MidiTrackInfo:
 
 
 def read_midi(path: Path, progress=None) -> tuple[list[MidiTrackInfo], float]:
-    """-> (Spuren mit Noten, Tempo in BPM). Eine Spur, die auf mehreren Kanälen spielt (typisch bei Format-0-
-    Dateien: alles in einer Spur), wird je Kanal zu einem Eintrag – sonst landete das Schlagzeug (Kanal 10)
-    mit dem Bass in einem Pattern. progress(spur, spuren) meldet den Fortschritt bei großen Dateien."""
+    """-> (tracks with notes, tempo in BPM). A track that plays on several channels (typical for format 0
+    files: everything in one track) becomes one entry per channel – otherwise the drums (channel 10)
+    would end up in one pattern with the bass. progress(track, tracks) reports progress for large files."""
     import mido
     mf = mido.MidiFile(str(path))
     tpb = mf.ticks_per_beat or 480
@@ -69,8 +69,8 @@ def read_midi(path: Path, progress=None) -> tuple[list[MidiTrackInfo], float]:
                 k = (msg.channel, msg.note)
                 is_on = msg.type == "note_on" and msg.velocity > 0
                 if is_on and k in on and on[k][0] == t:
-                    continue                    # doppeltes Note-an im selben Tick: eine Note
-                if k in on:                     # Note aus – oder dieselbe Taste erneut an: die alte Note endet hier
+                    continue                    # double note-on in the same tick: one note
+                if k in on:                     # note off – or the same key on again: the old note ends here
                     st, v = on.pop(k)
                     info = per_ch.get(msg.channel)
                     if info is None:
@@ -78,7 +78,7 @@ def read_midi(path: Path, progress=None) -> tuple[list[MidiTrackInfo], float]:
                     info.notes.append(Note(st / tpb, max(1, t - st) / tpb, msg.note, v))
                 if is_on:
                     on[k] = (t, msg.velocity)
-        for _ch, info in sorted(per_ch.items()):          # Spur-Name bleibt; die Liste zeigt den Kanal dazu
+        for _ch, info in sorted(per_ch.items()):          # the track name stays; the list shows the channel next to it
             info.notes.sort(key=lambda n: (n.start, n.pitch))
             out.append(info)
     return out, bpm
@@ -86,13 +86,13 @@ def read_midi(path: Path, progress=None) -> tuple[list[MidiTrackInfo], float]:
 
 @dataclass
 class Options:
-    steps_per_beat: int = 4       # 4 = Sechzehntel
-    start_beat: float = 0.0       # ab welchem Viertel der MIDI-Datei
-    length: int = 16              # Anzahl Steps (1..64)
+    steps_per_beat: int = 4       # 4 = sixteenths
+    start_beat: float = 0.0       # from which quarter of the MIDI file
+    length: int = 16              # number of steps (1..64)
     transpose: int = 0
-    velocity: str = "original"    # "original", "fest"
+    velocity: str = "original"    # "original", "fest" (fixed)
     fixed_vel: int = 100
-    accent_from: int = 112        # ab dieser Anschlagstärke ein Akzent
+    accent_from: int = 112        # from this velocity on, an accent
 
 
 def to_steps(notes: list[Note], o: Options) -> list[Step]:
@@ -116,7 +116,7 @@ def to_steps(notes: list[Note], o: Options) -> list[Step]:
             st.flags |= 1
         end = i + max(1, int(round(n.length / grid)))
         held_until[i] = max(held_until[i], end)
-    # Haltedauer als TIE, solange kein neuer Step beginnt
+    # hold duration as TIE, as long as no new step begins
     for i in range(o.length):
         if steps[i].time == 0:
             for k in range(i + 1, min(held_until[i], o.length)):
@@ -142,7 +142,7 @@ def find_param(link, label_options=("LEN", "LENGTH", "STEPS")) -> int | None:
 
 def write_pattern(link, track: int, pattern: int | None, steps: list[Step], length: int,
                   progress=None) -> str:
-    """Steps in ein Pattern schreiben. pattern None = das aktuelle Pattern der Spur."""
+    """Write steps into a pattern. pattern None = the track's current pattern."""
     note = ""
     if pattern is not None:
         try:
@@ -169,21 +169,21 @@ def write_pattern(link, track: int, pattern: int | None, steps: list[Step], leng
     return note
 
 
-# =============================================================== Suite 2.0: Musik-Bereich ===
-# Steps als projectfmt.Step (mit Drum-Lanes und Chance), Lesen vor dem Schreiben (Rückgängig),
-# Nachlesen zur Kontrolle, Drum-Lanes aus MIDI, lange Dateien in mehrere Patterns.
+# =============================================================== Suite 2.0: music section ===
+# steps as projectfmt.Step (with drum lanes and chance), read before writing (undo),
+# read back for verification, drum lanes from MIDI, long files into several patterns.
 from . import projectfmt as PF   # noqa: E402
 
 P_SLEN = 29
 P_SSWING = 31
 
-# GM-Drumnoten -> Melodee-Lane (0 KICK … 7 BELL)
+# GM drum notes -> Melodee lane (0 KICK … 7 BELL)
 GM_TO_LANE = {35: 0, 36: 0, 37: 6, 38: 1, 40: 1, 39: 2, 42: 3, 44: 3, 46: 4, 41: 5, 43: 5, 45: 5, 47: 5, 48: 5,
               50: 5, 49: 7, 51: 7, 52: 7, 53: 7, 55: 7, 56: 7, 57: 7, 59: 7, 54: 7, 75: 6, 76: 6, 77: 6}
 
 
 def wire_step(s: "PF.Step") -> list[int]:
-    """12-Byte-Step (v7) für TRACK_STEP: n, 4 Noten, time, flags, vel, hit, acc, hohe Bits, chance."""
+    """12-byte step (v7) for TRACK_STEP: n, 4 notes, time, flags, vel, hit, acc, high bits, chance."""
     notes = (list(s.notes[:4]) + [0, 0, 0, 0])[:4]
     n = len(s.notes[:4]) if s.time == PF.ST_NOTE else 0
     acc = s.acc & s.hit if s.hit else 0
@@ -205,7 +205,7 @@ def same_step(a: "PF.Step", b: "PF.Step") -> bool:
 
 @dataclass
 class PatternSnapshot:
-    """was vor dem Schreiben auf dem FM-1 stand (für Rückgängig)."""
+    """what was on the FM-1 before writing (for undo)."""
     track: int
     pattern: int | None
     steps: list
@@ -262,7 +262,7 @@ def read_device_pattern(link, track: int, pattern: int | None, progress=None) ->
 
 def write_device_pattern(link, track: int, pattern: int | None, steps: list, length: int, progress=None,
                          verify: bool = True, swing: int | None = None) -> str:
-    """schreibt 64 Steps + LEN, liest zur Kontrolle nach. -> Hinweistext ("" = alles gut)."""
+    """writes 64 steps + LEN, reads back for verification. -> hint text ("" = all good)."""
     _prev, note = _select(link, track, pattern)
     steps = list(steps[:NSTEP]) + [PF.Step() for _i in range(NSTEP - len(steps))]
     for i, st in enumerate(steps):
@@ -286,7 +286,7 @@ def write_device_pattern(link, track: int, pattern: int | None, steps: list, len
         except Exception:  # noqa: BLE001
             note = (note + " " if note else "") + _("Swing could not be set.")
     if verify:
-        for i in sorted({0, max(0, min(NSTEP, length) - 1), NSTEP - 1}):    # LEN 0/>64 vom Gerät: kein Index -1/64
+        for i in sorted({0, max(0, min(NSTEP, length) - 1), NSTEP - 1}):    # LEN 0/>64 from the device: no index -1/64
             a = link.request(Cmd.TRACK_STEP, [track, i], timeout=1.0, retries=1)
             if not same_step(unwire_step(a[2:]), steps[i]):
                 raise ProtocolError(_("Verification read: step {step} does not match").format(step=i + 1))
@@ -305,20 +305,20 @@ def restore_snapshot(link, snap: PatternSnapshot, progress=None) -> str:
 
 @dataclass
 class ImportOptions(Options):
-    drums: bool = False               # Noten auf Drum-Lanes legen (GM-Belegung)
+    drums: bool = False               # place notes on drum lanes (GM mapping)
     lane_map: dict = field(default_factory=lambda: dict(GM_TO_LANE))
-    quantize: int = 100               # % Richtung Raster (100 = hart)
-    patterns: int = 1                 # in so viele aufeinanderfolgende Patterns aufteilen
+    quantize: int = 100               # % towards the grid (100 = hard)
+    patterns: int = 1                 # split into this many consecutive patterns
 
 
 @dataclass
 class LossReport:
     total: int = 0
     used: int = 0
-    outside: int = 0                  # außerhalb des gewählten Bereichs
-    chord_overflow: int = 0           # mehr als 4 Noten auf einem Step
-    no_lane: int = 0                  # Drum-Noten ohne Lane
-    merged: int = 0                   # auf denselben Step gefallen (Doppelte)
+    outside: int = 0                  # outside the selected range
+    chord_overflow: int = 0           # more than 4 notes on one step
+    no_lane: int = 0                  # drum notes without a lane
+    merged: int = 0                   # fell on the same step (duplicates)
 
     def text(self) -> str:
         if not self.total:
@@ -342,7 +342,7 @@ class LossReport:
 
 
 def to_pf_steps(notes: list[Note], o: ImportOptions, chunk: int = 0, report: LossReport | None = None) -> list:
-    """MIDI-Noten -> projectfmt.Steps für Pattern `chunk` (bei Aufteilung)."""
+    """MIDI notes -> projectfmt.Steps for pattern `chunk` (when splitting)."""
     rep = report or LossReport()
     steps = [PF.Step() for _i in range(NSTEP)]
     held_until = [-1] * NSTEP
@@ -400,9 +400,9 @@ def to_pf_steps(notes: list[Note], o: ImportOptions, chunk: int = 0, report: Los
 
 
 def import_patterns(notes: list[Note], o: ImportOptions) -> tuple[list[list], LossReport]:
-    """Teilt die Noten auf `o.patterns` Patterns auf. Pattern 0 läuft über alle Noten (zählt den Verlustbericht),
-    jedes weitere nur über sein Zeitfenster – sonst wächst der Aufwand mit Noten × Patterns (20 000 Noten × 16
-    Patterns ≈ 0,5 s auf dem Pi bei jedem Klick auf eine Option)."""
+    """Splits the notes across `o.patterns` patterns. Pattern 0 runs over all notes (counts the loss report),
+    every further one only over its time window – otherwise the effort grows with notes × patterns (20,000 notes × 16
+    patterns ≈ 0.5 s on the Pi on every click on an option)."""
     rep = LossReport()
     pats = [to_pf_steps(notes, o, 0, rep)]
     if o.patterns > 1:
@@ -411,11 +411,11 @@ def import_patterns(notes: list[Note], o: ImportOptions) -> tuple[list[list], Lo
         starts = [notes[k].start for k in order]
         grid = 1.0 / o.steps_per_beat
         for c in range(1, o.patterns):
-            # Rasterung verschiebt eine Note um höchstens einen Step – ein Step Rand je Seite reicht
+            # quantising moves a note by at most one step – a margin of one step per side is enough
             lo = o.start_beat + (c * o.length - 1) * grid
             hi = o.start_beat + ((c + 1) * o.length + 1) * grid
-            idx = sorted(order[bisect.bisect_left(starts, lo):bisect.bisect_right(starts, hi)])   # Original-Reihenfolge
-            win = [notes[k] for k in idx]                    # (entscheidet, welche 4 Noten eines Akkords bleiben)
+            idx = sorted(order[bisect.bisect_left(starts, lo):bisect.bisect_right(starts, hi)])   # original order
+            win = [notes[k] for k in idx]                    # (decides which 4 notes of a chord remain)
             pats.append(to_pf_steps(win, o, c, rep))
     if rep.total == 0:
         rep.total = len(notes)
@@ -430,7 +430,7 @@ def patterns_needed(notes: list[Note], o: Options) -> int:
 
 
 def write_song(link, rows: list[tuple[list[int], int]]) -> int:
-    """BANK_SONG op 1: Zeilen (Pattern je Spur 1..4, Wiederholung) -> rc."""
+    """BANK_SONG op 1: rows (pattern per track 1..4, repetition) -> rc."""
     args = [1, len(rows)]
     for banks, rep in rows:
         args += list(banks[:4]) + [rep]
@@ -440,13 +440,13 @@ def write_song(link, rows: list[tuple[list[int], int]]) -> int:
 
 @dataclass
 class SongSnapshot:
-    """BANK_SONG-Stand vor dem Überschreiben (für Rückgängig)."""
-    rows: list           # [([Bank je Spur 1..4], Wiederholung), …]
+    """BANK_SONG state before overwriting (for undo)."""
+    rows: list           # [([bank per track 1..4], repetition), …]
 
 
 def read_song(link) -> SongSnapshot:
-    """BANK_SONG op 0: aktuelle Song-Kette lesen. Antwort: op, rc, Anzahl, läuft, Zeile, Rest, Anzahl × 5 Bytes
-    (Version 4 hängt noch das Loop-Byte an). Wirft ProtocolError, wenn die Firmware das nicht kann."""
+    """BANK_SONG op 0: read the current song chain. Reply: op, rc, count, running, row, rest, count × 5 bytes
+    (version 4 also appends the loop byte). Raises ProtocolError if the firmware cannot do this."""
     a = link.request(Cmd.BANK_SONG, [0], timeout=2.0)
     if len(a) < 6 or a[0] != 0 or a[1] != 0:
         raise ProtocolError(_("Song chain not readable"))
@@ -458,5 +458,5 @@ def read_song(link) -> SongSnapshot:
 
 
 def restore_song(link, snap: SongSnapshot) -> int:
-    """alte Song-Kette zurückschreiben -> rc (0 = gut)."""
+    """write back the old song chain -> rc (0 = good)."""
     return write_song(link, snap.rows)

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Klare Rückmeldung nach jeder Aktion: was passiert ist – und was NICHT passiert ist.
+"""Clear feedback after every action: what happened – and what did NOT happen.
 
-Baut auf ui/common.JobDialog auf. Kennt JobDialog schon `done_text=` (Erweiterung aus dem Rahmen), wird es
-benutzt; sonst setzt dieser Helfer selbst die Überschrift („… – fertig: <Ergebnis>“), schreibt das Ergebnis
-als letzte Protokollzeile und hängt optionale Folge-Knöpfe an (z. B. „Jetzt installieren …“, „Ordner öffnen“).
+Builds on ui/common.JobDialog. If JobDialog already knows `done_text=` (extension from the frame), it is
+used; otherwise this helper sets the heading itself (“… – done: <result>”), writes the result as the last
+log line and appends optional follow-up buttons (e.g. “Install now …”, “Open folder”).
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def _supports(name: str) -> bool:
 
 
 def mark_done(d: JobDialog, text: str, actions=()):
-    """Ergebnis sichtbar machen (Überschrift, letzte Protokollzeile, Folge-Knöpfe)"""
+    """Make the result visible (heading, last log line, follow-up buttons)"""
     d.summary = text
     try:
         d.head.setText(_("{title} – done").format(title=d.windowTitle()))
@@ -36,14 +36,14 @@ def mark_done(d: JobDialog, text: str, actions=()):
         for label, fn in actions or ():
             b = d.buttons.addButton(label, QDialogButtonBox.ButtonRole.ActionRole)
             b.clicked.connect(lambda _c=False, f=fn, dd=d: (dd.accept(), f()))
-    except RuntimeError:                       # Dialog schon weg
+    except RuntimeError:                       # dialog already gone
         pass
 
 
 def run(parent, title: str, fn: Callable, *args, done: Callable[[object], str] | str = "",
         actions=(), on_done=None, dialog_cls=JobDialog, **kw) -> JobDialog:
-    """JobDialog mit Ergebnis-Satz. done: Text oder fn(Ergebnis) -> Text; actions: [(Knopf, fn(Ergebnis))]."""
-    if _supports("done_text"):                 # Rahmen-JobDialog mit Fertig/Fehlgeschlagen-Zustand
+    """JobDialog with a result sentence. done: text or fn(result) -> text; actions: [(button, fn(result))]."""
+    if _supports("done_text"):                 # frame JobDialog with done/failed state
         d = dialog_cls(parent, title, fn, *args, on_done=on_done, done_text=done or None,
                        actions=list(actions or ()), **kw)
         d.exec()
@@ -61,7 +61,7 @@ def run(parent, title: str, fn: Callable, *args, done: Callable[[object], str] |
             mark_done(d, *holder.pop("pending"))
     d = dialog_cls(parent, title, fn, *args, on_done=finished, **kw)
     holder["d"] = d
-    if holder.get("pending") and holder["pending"][0]:      # schon fertig, bevor holder gesetzt war
+    if holder.get("pending") and holder["pending"][0]:      # already done before holder was set
         mark_done(d, *holder.pop("pending"))
     d.exec()
     return d
@@ -72,5 +72,5 @@ def open_folder(path):
 
 
 def open_folder_action(path_of: Callable[[object], object], label: str | None = None):
-    """Knopf „Ordner öffnen“; path_of(Ergebnis) -> Ordner"""
+    """“Open folder” button; path_of(result) -> folder"""
     return (label or _("Open folder"), lambda res: open_folder(path_of(res)))

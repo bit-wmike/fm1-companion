@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Systemcheck: findet im Kernel-Protokoll und im System Probleme, die das FM-1 betreffen.
+"""System check: finds problems affecting the FM-1 in the kernel log and in the system.
 
-Quellen: ``dmesg`` (bzw. ``journalctl -k -b`` als Ersatz), ``vcgencmd get_throttled``, sysfs/procfs,
-Programme im PATH. Jede Regel liefert ein ``Finding`` mit Ampel (ok/info/warn/error), einer
-Erklärung in einfachem Deutsch und einem Lösungsvorschlag. Ohne Qt – testbar mit Beispiel-Logs.
+Sources: ``dmesg`` (or ``journalctl -k -b`` as a fallback), ``vcgencmd get_throttled``, sysfs/procfs,
+programs in PATH. Each rule returns a ``Finding`` with a traffic light (ok/info/warn/error), an
+explanation in simple German and a suggested fix. Without Qt – testable with sample logs.
 
-  python3 -m fm1companion.syscheck            # Bericht im Terminal
+  python3 -m fm1companion.syscheck            # report in the terminal
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from .i18n import N_, _, decimal, ngettext
 LEVELS = ("ok", "info", "warn", "error", "unknown")
 FM1_RE = re.compile(r"fm-?1|melodee|felucca|sloop|skiff|m-vave|ellic|wl82|uboot", re.I)
 FM1_IDS = {"1209:0001"}                       # Melodee/Felucca (pid.codes) – "Ellic Studio Melodee FM-1"
-UPDATE_IDS = {"4c4a:8057"}                    # JieLi-Rettungsmodus "WL82 UBOOT1.00"
+UPDATE_IDS = {"4c4a:8057"}                    # JieLi rescue mode "WL82 UBOOT1.00"
 LINE_RE = re.compile(r"^\s*(?:\[\s*(?P<ts>\d+\.\d+)\])?\s*(?:(?:\S+\s+)?kernel:\s*)?(?P<msg>.*)$")
 USBDEV_RE = re.compile(r"\busb (?P<path>\d+-[\d.]+)(?::[\d.]+)?:\s*(?P<rest>.*)")
 PORT_RE = re.compile(r"\busb (?:usb)?(?P<path>\d+-port[\d.]+|\d+-[\d.]+-port\d+):\s*(?P<rest>.*)")
@@ -33,9 +33,9 @@ class Finding:
     key: str
     level: str                 # ok | info | warn | error | unknown
     title: str
-    detail: str = ""           # was bedeutet das?
-    fix: str = ""              # was tun?
-    evidence: list[str] = field(default_factory=list)   # passende Log-Zeilen
+    detail: str = ""           # what does this mean?
+    fix: str = ""              # what to do?
+    evidence: list[str] = field(default_factory=list)   # matching log lines
 
     def text(self) -> str:
         mark = {"ok": "OK  ", "info": "INFO", "warn": "WARN", "error": _("FAIL"), "unknown": "?   "}[self.level]
@@ -57,7 +57,7 @@ class LogLine:
 
 
 def parse_log(text: str) -> list[LogLine]:
-    """dmesg- oder journalctl-Ausgabe (short-monotonic) in Zeilen mit Zeitstempel zerlegen."""
+    """Split dmesg or journalctl output (short-monotonic) into lines with timestamps."""
     out = []
     for raw in text.splitlines():
         if not raw.strip() or raw.startswith("-- "):
@@ -68,7 +68,7 @@ def parse_log(text: str) -> list[LogLine]:
     return out
 
 
-# ----------------------------------------------------------- Log lesen ---
+# ----------------------------------------------------------- read log ---
 def _run(args, timeout=6) -> tuple[int, str, str]:
     if not shutil.which(args[0]):
         return 127, "", _("{program} not found").format(program=args[0])
@@ -80,7 +80,7 @@ def _run(args, timeout=6) -> tuple[int, str, str]:
 
 
 def read_kernel_log() -> tuple[str, str, str]:
-    """(Text, Quelle, Problem). Quelle "dmesg" oder "journalctl"; Problem leer, wenn es geklappt hat."""
+    """(text, source, problem). Source "dmesg" or "journalctl"; problem empty if it worked."""
     rc, out, err = _run(["dmesg"])
     if rc == 0 and out.strip():
         return out, "dmesg", ""
@@ -93,13 +93,13 @@ def read_kernel_log() -> tuple[str, str, str]:
 
 
 def read_user_journal() -> str:
-    """Meldungen von PipeWire/WirePlumber dieser Sitzung (für XRuns)."""
+    """Messages from PipeWire/WirePlumber in this session (for XRuns)."""
     rc, out, _err = _run(["journalctl", "--user", "-b", "--no-pager", "-o", "short-monotonic",
                        "-u", "pipewire", "-u", "wireplumber", "-u", "pipewire-pulse"])
     return out if rc == 0 else ""
 
 
-# ------------------------------------------------------------ Auswerten ---
+# ------------------------------------------------------------ evaluate ---
 @dataclass
 class UsbDev:
     path: str
@@ -162,7 +162,7 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
     devs = usb_devices_from_log(lines)
     fm1 = {p: d for p, d in devs.items() if d.is_fm1 or p in (fm1_paths or set())}
 
-    # --- FM-1 verbindet sich immer wieder neu
+    # --- FM-1 keeps reconnecting
     for path, d in fm1.items():
         name = d.product or "FM-1"
         ev = [ln for ln in lines if re.search(rf"\busb {re.escape(path)}:\s*(USB disconnect|new \S+-speed)", ln.msg)]
@@ -188,7 +188,7 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
         found.append(Finding("fm1-usb", "ok", _("{name} stable on USB ({path}, {ids})").format(
             name=d.product or 'FM-1', path=d.path, ids=d.ids or 'ID ?')))
 
-    # --- Fehler beim Erkennen eines USB-Geräts (-71/-110 …)
+    # --- errors while enumerating a USB device (-71/-110 …)
     enum = _grep(lines, r"device descriptor read/\d+, error|device not accepting address|unable to enumerate USB device|"
                         r"cannot enable\. Maybe the USB cable is bad|can't set config #\d+, error")
     if enum:
@@ -204,7 +204,7 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
             _("Use a different data cable, plug it directly into the Pi, check the power supply. For the "
               "FM-1: switch it off and on once."), _ev(enum)))
 
-    # --- Überstrom
+    # --- overcurrent
     oc = _grep(lines, r"over-?current")
     if oc:
         found.append(Finding(
@@ -219,11 +219,11 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
             _("The USB port (or hub) cannot power the device."),
             _("Plug the device directly into the Pi or into a hub with its own power supply."), _ev(power)))
 
-    # --- xHCI (USB-Controller)
+    # --- xHCI (USB controller)
     xdead = _grep(lines, r"xhci.*(not responding|assume dead|HC died|host system error|Host halt failed)")
     xwarn = _grep(lines, r"xhci.*(WARN|ERROR (?!unknown event type 37)|Event TRB for slot \d+ ep \d+ with no TDs queued)")
     if xdead:
-        # Auslöser eingrenzen: Audio-Start des FM-1 (usb_set_interface an seinem Anschluss) kurz vor dem Absturz?
+        # narrow down the trigger: audio start of the FM-1 (usb_set_interface on its port) shortly before the crash?
         t_dead = next((ln.ts for ln in xdead if ln.ts is not None), None)
         trig = [ln for ln in lines if t_dead is not None and ln.ts is not None and abs(ln.ts - t_dead) <= 5
                 and re.search(r"usb_set_interface failed|cannot submit urb|Unable to change format", ln.msg)
@@ -287,7 +287,7 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
             _("Close other programs, use larger buffers (PIPEWIRE_QUANTUM=1024/48000), don't record via a "
               "USB hub."), _ev(xr)))
 
-    # --- Unterspannung / Temperatur im Log
+    # --- undervoltage / temperature in the log
     uv = _grep(lines, r"under-?voltage detected")
     if uv:
         found.append(Finding(
@@ -303,7 +303,7 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
             _("The processor was slowed down because of heat – audio may then drop out."),
             _("Check the cooler/fan (Pi 5: Active Cooler), ventilate the case."), _ev(hot)))
 
-    # --- Speicherkarte
+    # --- memory card
     io = _grep(lines, r"I/O error, dev (mmcblk|sd|nvme)|EXT4-fs error|mmc\d+: (error|timeout)|Buffer I/O error")
     if io:
         found.append(Finding(
@@ -314,7 +314,7 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
     return found
 
 
-# ------------------------------------------------------------ Systemwerte ---
+# ------------------------------------------------------------ system values ---
 THROTTLE = {0: N_("under-voltage now"), 1: N_("frequency capped now"), 2: N_("throttled now"),
             3: N_("temperature limit now"), 16: N_("under-voltage since boot"), 17: N_("frequency capped since boot"),
             18: N_("throttled since boot"), 19: N_("temperature limit since boot")}
@@ -363,7 +363,7 @@ def _dt_u32(p: Path) -> int | None:
 
 
 def pi5_power_findings(root: Path = Path("/proc/device-tree/chosen/power")) -> list[Finding]:
-    """Pi 5: hat das Netzteil 5 A angemeldet? Sonst begrenzt die Firmware USB auf 600 mA gesamt."""
+    """Pi 5: has the power supply announced 5 A? Otherwise the firmware limits USB to 600 mA in total."""
     if not root.exists():
         return []
     cur = _dt_u32(root / "max_current")
@@ -400,7 +400,7 @@ def midi_ports() -> list[str] | None:
     try:
         import mido
         return sorted(set(mido.get_input_names()) | set(mido.get_output_names()))
-    except Exception:  # noqa: BLE001 – ohne rtmidi
+    except Exception:  # noqa: BLE001 – without rtmidi
         rc, out, _err = _run(["aconnect", "-l"])
         if rc != 0:
             return None
@@ -418,7 +418,7 @@ def pipewire_running() -> bool | None:
 
 
 def blocked_findings(holders=None, service=None) -> list[Finding]:
-    """Soundkarte von einem Programm direkt belegt (an PipeWire vorbei) – z. B. Debians fluidsynth-Dienst."""
+    """Sound card held directly by a program (bypassing PipeWire) – e.g. Debian's fluidsynth service."""
     from . import audiofix as AF
     try:
         holders = AF.playback_holders() if holders is None else holders
@@ -449,7 +449,7 @@ def blocked_findings(holders=None, service=None) -> list[Finding]:
 
 
 def playback_finding(backends: list[str] | None = None, default=None) -> Finding:
-    """Vorhören im Rechner: gibt es ein Abspielprogramm, und wohin geht der Ton (Standard-Ausgang)?"""
+    """Preview on the computer: is there a playback program, and where does the sound go (default output)?"""
     from . import audioout
     if backends is None:
         backends = audioout.available_backends()
@@ -531,7 +531,7 @@ def status_findings(folder: Path | None = None) -> list[Finding]:
 
 
 def run_all(folder: Path | None = None, fm1_paths: set[str] | None = None) -> tuple[list[Finding], dict]:
-    """kompletter Check (im Hintergrund-Thread aufrufen!). Liefert (Befunde, Meta)."""
+    """complete check (call in a background thread!). Returns (findings, meta)."""
     text, source, problem = read_kernel_log()
     meta = {"source": source, "time": time.time(), "lines": text.count("\n")}
     found: list[Finding] = []
@@ -560,7 +560,7 @@ def report(found: list[Finding], meta: dict | None = None) -> str:
             _("Computer: {model}").format(model=model.read_text(errors="replace").strip(chr(0)) if model.exists()
                                           else os.uname().machine),
             _("Source: {source}").format(source=(meta or {}).get("source") or _("no kernel log")), ""]
-    from .redact import redact_text             # Rechnername, Home, Tokens nie im geteilten Bericht
+    from .redact import redact_text             # host name, home, tokens never in the shared report
     return redact_text("\n".join(head + [f.text() for f in found]) + "\n")
 
 

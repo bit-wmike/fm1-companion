@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Schmale Rechner-Anzeige in der Statusleiste (CPU, RAM, Temperatur, freier Platz) und der Systemcheck.
+"""Compact computer readout in the status bar (CPU, RAM, temperature, free space) and the system check.
 
-Bewusst klein: die App dreht sich ums FM-1. Ein Klick öffnet den Systemcheck, der im Kernel-Protokoll
-nach Problemen mit USB, Strom und Audio sucht und sie auf Deutsch erklärt.
+Deliberately small: the app revolves around the FM-1. A click opens the system check, which searches the
+kernel log for USB, power and audio problems and explains them in plain language.
 """
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ class _Sig(QObject):
 
 
 class PiStatus(QWidget):
-    """CPU · RAM · °C · frei – alle 3 s aus /proc und /sys; get_throttled alle 30 s im Hintergrund."""
+    """CPU · RAM · °C · free – every 3 s from /proc and /sys; get_throttled every 30 s in the background."""
     INTERVAL_MS = 3000
     THROTTLE_EVERY_S = 30
 
@@ -126,7 +126,7 @@ class PiStatus(QWidget):
 
 
 class SystemCheckDialog(QDialog):
-    """Ampel-Liste mit Erklärungen; läuft im Hintergrund."""
+    """Traffic-light list with explanations; runs in the background."""
     finished_check = pyqtSignal()
 
     def __init__(self, ctx=None, parent=None, runner=None):

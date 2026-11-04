@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Installer-Werkstatt: Paket, Plan, Sicherheitsregeln, Journal, simulierte Installationen, Rettung Stufe 2.
+"""Installer workshop: package, plan, safety rules, journal, simulated installations, rescue level 2.
 
   python3 -m pytest tests/test_flash.py -q
-Alles in Simulation – kein echtes FM-1.
+Everything in simulation – no real FM-1.
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 V15 = Path("/tmp/fm1_open/sdk/firmware/FM-1_015.fwsc")
-need_v15 = pytest.mark.skipif(not V15.exists(), reason="Original-V15 fehlt")
+need_v15 = pytest.mark.skipif(not V15.exists(), reason="original V15 missing")
 
 
 @pytest.fixture()
@@ -61,7 +61,7 @@ def eng(backend, **kw):
     return engine.Engine(backend=backend, port_filter=lambda n: "Through" not in n, log=logs.append, **kw), logs
 
 
-# ---------------------------------------------------------------- Paket
+# ---------------------------------------------------------------- package
 
 def test_package_analysis(env):
     from fm1companion.flash import package as pk
@@ -70,7 +70,7 @@ def test_package_analysis(env):
     assert i.product == "FM-1_91060" and i.family == "felucca" and not i.damage and i.model == "FM-1"
     u = pk.analyze(pkgfile(env, "FM-1_950", "unknown"))
     assert u.family == "unknown" and u.loader_rule is None
-    # beschädigt: ein Byte im flash.bin
+    # damaged: one byte in flash.bin
     raw = bytearray(p.read_bytes())
     raw[2000] ^= 0xFF
     bad = env / "bad.fwsc"
@@ -88,7 +88,7 @@ def test_official_v15_and_app_region(env):
     assert i.official == "FM-1_015" and i.family == "stock" and not i.damage
     fl = next(e for e in pk.ufw_check(i.image)[1] if e[0] == 0)
     region = i.image[fl[2]:fl[2] + fl[3]][0x4000:0x93000]
-    # dieselbe Prüfsumme wie in der Reddit-Anleitung / MvaveFM1Unbricker (V15_FLASH_FW_SHA256)
+    # the same checksum as in the Reddit guide / MvaveFM1Unbricker (V15_FLASH_FW_SHA256)
     assert hashlib.sha256(region).hexdigest() == "6edf3c37fb5bbbc33607c89375ee024d5477c17914d72221c8c68e58a8255686"
 
 
@@ -125,8 +125,8 @@ def test_plan_melodee_to_melodee(env):
 
 
 def test_plan_melodee_16_upgrade_and_downgrade(env):
-    """Melodee 1.6.0 (RELEASE_1.6.0.md „Upgrading“): von ≤ 1.5.1 Backup Pflicht + Warnung; von rc.x neue Pegel;
-    zurück von 1.6 auf ältere Melodee oder andere Firmware: klare Warnung + Bestätigung."""
+    """Melodee 1.6.0 (RELEASE_1.6.0.md "Upgrading"): from ≤ 1.5.1 backup required + warning; from rc.x new levels;
+    back from 1.6 to older Melodee or another firmware: clear warning + confirmation."""
     from fm1companion import firmware, melodee16 as M
     from fm1companion.flash.planner import Target, plan_install
     mel = firmware.spec("melodee")
@@ -137,11 +137,11 @@ def test_plan_melodee_16_upgrade_and_downgrade(env):
     assert "zweite Installation" in M.RESOURCES_FROM_15 and "Setup unfinished" in M.RESOURCES_FROM_15
     p = plan_install(old, Target.from_spec(mel, tag="v1.6.0"), backup=False)
     assert not p.ok and M.BACKUP_REQUIRED_16 in p.blockers
-    assert plan_install(old, Target.from_spec(mel, tag="v1.5.1"), backup=False).ok        # 1.5 -> 1.5: frei
+    assert plan_install(old, Target.from_spec(mel, tag="v1.5.1"), backup=False).ok        # 1.5 -> 1.5: free
     rc = melodee_state(version="MELODEE v1.6.0-rc.8")
     p = plan_install(rc, Target.from_spec(mel, tag="v1.6.0"))
     assert p.ok and M.LEVELS_160 in p.warnings and M.UPGRADE_16 not in p.warnings
-    assert plan_install(rc, Target.from_spec(mel, tag="v1.6.0"), backup=False).ok          # schon 1.6: kein Zwang
+    assert plan_install(rc, Target.from_spec(mel, tag="v1.6.0"), backup=False).ok          # already 1.6: no obligation
     new = melodee_state(version="MELODEE v1.6.0")
     p = plan_install(new, Target.from_spec(mel, tag="v1.6.0"))
     assert p.ok and not any("1.6" in w for w in p.warnings) and not p.confirmations
@@ -151,14 +151,14 @@ def test_plan_melodee_16_upgrade_and_downgrade(env):
     assert p.missing(["power"]) == ["melodee16_down"]
     p = plan_install(new, Target.from_spec(firmware.spec("sloop"), tag="v2.8.3"))
     assert "Zurück von Melodee 1.6" in p.warnings[0] and "SLOOP" in p.warnings[0] and "melodee16_down" in p.confirmations
-    # unbekannte Version am Gerät: keine Vermutung
+    # unknown version on the device: no guess
     p = plan_install(melodee_state(version=""), Target.from_spec(mel, tag="v1.6.0"))
     assert p.ok and not any("1.6" in w for w in p.warnings)
 
 
 def test_plan_melodee_161_is_a_normal_update(env):
-    """Melodee 1.6.1 (RELEASE_1.6.1.md „Upgrading“: from 1.6.0 install as usual, 1.6.0 still reads the data):
-    1.6.0 -> 1.6.1 und zurück ohne Zusatz-Warnungen; rc.x -> 1.6.1 nennt die neuen Pegel; 1.5.1 -> 1.6.1 wie 1.6.0."""
+    """Melodee 1.6.1 (RELEASE_1.6.1.md "Upgrading": from 1.6.0 install as usual, 1.6.0 still reads the data):
+    1.6.0 -> 1.6.1 and back without extra warnings; rc.x -> 1.6.1 names the new levels; 1.5.1 -> 1.6.1 like 1.6.0."""
     from fm1companion import firmware, melodee16 as M
     from fm1companion.flash.planner import Target, melodee_change, plan_install
     mel = firmware.spec("melodee")
@@ -183,7 +183,7 @@ def test_plan_melodee_to_sloop_builtin(env):
     from fm1companion import firmware
     from fm1companion.flash.planner import Target, plan_install
     p = plan_install(melodee_state(), Target.from_spec(firmware.spec("sloop"), tag="v2.8.3"))
-    # Firmware-Wechsel: Zwischenschritt V15 standardmäßig an, Backup davor
+    # firmware switch: intermediate step V15 on by default, backup before it
     assert p.ok and p.v15_option == "default_on" and p.via_stock and p.lost
     assert p.kinds() == ["backup", "fetch", "stock", "install", "verify"]
     assert any("sichert sie vorher" in w for w in p.warnings)
@@ -195,13 +195,13 @@ def test_v15_option_cases(env):
     from fm1companion import firmware
     from fm1companion.flash.planner import DeviceState, Target, plan_install, switch_key
     mel = Target.from_spec(firmware.spec("melodee"), tag="v1.6.0")
-    upd = plan_install(melodee_state(), mel)                                   # Update derselben Firmware
+    upd = plan_install(melodee_state(), mel)                                   # update of the same firmware
     assert upd.v15_option == "default_off" and not upd.via_stock
-    assert plan_install(melodee_state(), mel, via_v15=True).via_stock           # angebotene Option
-    unknown = plan_install(DeviceState(identity="FM-1_900"), mel)               # aktuelle Firmware unbekannt
+    assert plan_install(melodee_state(), mel, via_v15=True).via_stock           # offered option
+    unknown = plan_install(DeviceState(identity="FM-1_900"), mel)               # current firmware unknown
     assert unknown.v15_option == "default_on" and unknown.via_stock and "no_backup" in unknown.confirmations
     orbit = _spec(key="orbit", name="ORBIT", requires_stock_v15=True, loader_family="sloopG3")
-    lk = plan_install(melodee_state(), Target.from_spec(orbit), via_v15=False)  # gesperrt: Abwählen wirkt nicht
+    lk = plan_install(melodee_state(), Target.from_spec(orbit), via_v15=False)  # locked: deselecting has no effect
     assert lk.v15_option == "locked" and lk.via_stock
     st = plan_install(melodee_state(), Target.from_spec(firmware.spec("stock-v15")), via_v15=True)
     assert st.v15_option == "none" and "stock" not in st.kinds()
@@ -228,7 +228,7 @@ def test_plan_melodee_to_orbit_goes_via_v15(env):
     assert p.kinds().index("stock") < p.kinds().index("install")
     assert {"beta", "power"} <= set(p.confirmations)
     assert any("CHECK HEAD" in w for w in p.warnings)
-    # schon auf V15: kein Umweg
+    # already on V15: no detour
     from fm1companion.flash.planner import DeviceState
     p2 = plan_install(DeviceState(identity="FM-1_015"), Target.from_spec(orbit))
     assert "stock" not in p2.kinds() and "no_backup" in p2.confirmations
@@ -242,7 +242,7 @@ def test_plan_back_to_stock(env):
         assert p.ok and "install" in p.kinds() and "power" in p.confirmations
         assert any("Reset Patches" in w for w in p.warnings), p.warnings
     assert "stock" not in plan_install(melodee_state(), Target.from_spec(firmware.spec("stock-v15"))).kinds()
-    # V16 von Melodee: Melodee prüft vor dem Original-Loader den Bootkopf (ota.c) -> nur über V15, fest
+    # V16 from Melodee: Melodee checks the boot head before the original loader (ota.c) -> only via V15, fixed
     p16 = plan_install(melodee_state(), Target.from_spec(firmware.spec("stock-v16")))
     assert any("V16" in w for w in p16.warnings)
     assert p16.v15_option == "locked" and p16.kinds().index("stock") < p16.kinds().index("install")
@@ -269,17 +269,17 @@ def test_plan_refusals(env):
     from fm1companion.flash import package as pk
     from fm1companion.flash.planner import DeviceState, Target, plan_install
     unk = pk.analyze(pkgfile(env, "FM-1_950", "unknown"))
-    assert not plan_install(melodee_state(), Target.from_file(unk)).ok        # unbekannter Loader
+    assert not plan_install(melodee_state(), Target.from_file(unk)).ok        # unknown loader
     good = pk.analyze(pkgfile(env, "FM-1_91060"))
-    # Gerät wartet im Original-Loader -> Felucca-Paket wird nicht gesendet
+    # the device waits in the original loader -> the Felucca package is not sent
     p = plan_install(DeviceState(identity="ota-FM-1_015"), Target.from_file(good))
     assert not p.ok and any("nichts gesendet" in b for b in p.blockers)
-    # passender Loader -> Fortsetzen
+    # matching loader -> resume
     p = plan_install(DeviceState(identity="ota-FM-1_900"), Target.from_file(good))
     assert p.ok and p.resume and p.kinds() == ["fetch", "resume", "verify"]
-    # zweite Installation gleichzeitig
+    # a second installation at the same time
     assert not plan_install(melodee_state(busy=True), Target.from_file(good)).ok
-    # Open-Firmware, fremdes Modell
+    # open firmware, foreign model
     assert not plan_install(DeviceState(identity="FM1_OFFICIAL_OPEN"), Target.from_file(good)).ok
     assert not plan_install(DeviceState(identity="SMK-37_015"), Target.from_file(good)).ok
 
@@ -299,7 +299,7 @@ def test_plan_nonresumable_needs_power_confirmation(env):
     assert "power" in p.confirmations and any("NICHT fortsetzen" in w for w in p.warnings)
 
 
-# ---------------------------------------------------------------- Engine gegen simulierte Loader
+# ---------------------------------------------------------------- engine against simulated loaders
 
 def test_install_felucca_end_to_end(env):
     from fm1companion.flash import package as pk
@@ -308,10 +308,10 @@ def test_install_felucca_end_to_end(env):
     e, logs = eng(be)
     r = e.write(pk.analyze(f), port="Melodee FM-1")
     assert r.identity == "FM-1_91070" and dev.identity == "FM-1_91070"
-    assert dev.flash == pk.analyze(f).image          # das geschriebene Abbild ist das Paket
+    assert dev.flash == pk.analyze(f).image          # the written image is the package
     assert not dev.bricked and e.journal.active is None
     assert e.journal.history()[-1]["phase"] == "done"
-    assert be.opened_other == []                       # fremde Ports nie geöffnet
+    assert be.opened_other == []                       # foreign ports never opened
 
 
 @need_v15
@@ -321,7 +321,7 @@ def test_return_to_stock_v15_end_to_end(env):
     e, _ = eng(be)
     r = e.write(pk.analyze(V15), port="Melodee FM-1")
     assert r.identity == "FM-1_015" and dev.flash == pk.analyze(V15).image and not dev.bricked
-    assert dev.port_name == "USB Composite Device"     # wie die Original-Firmware am USB heißt
+    assert dev.port_name == "USB Composite Device"     # what the original firmware is called on USB
 
 
 @need_v15
@@ -337,7 +337,7 @@ def test_check_head_refusal(env):
 
 @need_v15
 def test_orbit_via_v15_two_installs(env):
-    """Melodee -> V15 -> ORBIT-artiges Paket (Felucca-Loader); Port wechselt dazwischen"""
+    """Melodee -> V15 -> ORBIT-like package (Felucca loader); the port changes in between"""
     from fm1companion.flash import package as pk
     orbit = pkgfile(env, "FM-1_900", seed=7)
     dev, be = sim_setup(dict(identity="FM-1_91060"), [V15.read_bytes(), orbit.read_bytes()])
@@ -349,7 +349,7 @@ def test_orbit_via_v15_two_installs(env):
 
 
 def test_wrong_loader_gets_nothing(env):
-    """ein Gerät im Original-Update-Modus bekommt kein Felucca-Paket – kein einziges Byte"""
+    """a device in the original update mode gets no Felucca package – not a single byte"""
     from fm1companion.flash import engine, package as pk
     f = pkgfile(env, "FM-1_91060")
     dev, be = sim_setup(dict(identity="FM-1_015", policy="stock"))
@@ -363,7 +363,7 @@ def test_wrong_loader_gets_nothing(env):
 
 
 def test_step1_starts_foreign_loader_refused(env):
-    """Schritt 1 startet einen anderen Loader als den des Pakets -> Schritt 2 bekommt nichts"""
+    """step 1 starts a different loader than the package's -> step 2 gets nothing"""
     from fm1companion.flash import engine, package as pk
     f = pkgfile(env, "FM-1_91060")
     dev, be = sim_setup(dict(identity="FM-1_91050", felucca_loader="ota-FM-1_777"), [f.read_bytes()])
@@ -385,7 +385,7 @@ def test_power_loss_then_resume_with_right_package(env):
     assert ei.value.state == engine.PAUSED
     act = e.journal.active
     assert act and act["sha256"] == pk.analyze(f).sha256 and Path(act["package"]).exists()
-    # nach "Neustart der App": Journal kennt das richtige Paket, das Gerät wartet im Felucca-Loader
+    # after "restarting the app": the journal knows the right package, the device waits in the Felucca loader
     import time
     t0 = time.time()
     ident = e.probe()
@@ -425,7 +425,7 @@ def test_concurrent_install_refused(env):
         assert ei.value.code == "busy" and dev.identity == "FM-1_91060"
     finally:
         j.release()
-    # Sperrdatei eines toten Prozesses blockiert nicht
+    # a lock file of a dead process does not block
     j.dir.mkdir(parents=True, exist_ok=True)
     j.lockfile.write_text("999999")
     assert e.write(pk.analyze(f)).identity == "FM-1_91070"
@@ -506,7 +506,7 @@ def test_fixed_download_hash(env, monkeypatch):
     assert not list((firmware.load_settings().firmware_dir / "stock-v16").rglob("*.fwsc"))
 
 
-# ---------------------------------------------------------------- Rettung Stufe 2 (WL82 UBOOT)
+# ---------------------------------------------------------------- rescue level 2 (WL82 UBOOT)
 
 def fake_sysfs(root: Path, vendor="WL82", model="UBOOT1.00", usb="4c4a:8057", sg="sg2"):
     usbdev = root / "devices" / "usb1" / "1-1"
@@ -525,14 +525,14 @@ def fake_sysfs(root: Path, vendor="WL82", model="UBOOT1.00", usb="4c4a:8057", sg
 
 
 def test_uboot_ucun_flash_message(tmp_path):
-    """UCUN-Flash (0xB36014): die ROM-Rettung hält an (unverändert) – die Suite sagt auf Deutsch, warum."""
+    """UCUN flash (0xB36014): the ROM rescue stops (unchanged) – the suite says why (in the UI language)."""
     from fm1companion.flash import uboot
     assert uboot.flash_hint("Flash ID    0xB36014 (expected 0x856014, 1 MiB), type 0x00") == uboot.UCUN_TEXT
     assert uboot.flash_hint("this does not look like an FM-1: flash ID 0xB36014 is not 0x856014. Stopping")
     assert uboot.flash_hint("key=980F id=b36014") and not uboot.flash_hint("key=980F id=856014")
     assert not uboot.flash_hint("Flash ID    0x856014 (expected 0x856014, 1 MiB)")
     assert "nicht" in uboot.UCUN_TEXT and "nichts geschrieben" in uboot.UCUN_TEXT
-    tool = tmp_path / "tool.py"                       # steht für den Unbricker: meldet den Flash, hält an
+    tool = tmp_path / "tool.py"                       # stands in for the Unbricker: reports the flash, stops
     tool.write_text("print('Flash ID    0xB36014 (expected 0x856014, 1 MiB), type 0x00')\n"
                     "print('ERROR: flash ID 0xB36014 is not 0x856014. Stopping; nothing was written')\n"
                     "raise SystemExit(1)\n")
@@ -550,16 +550,16 @@ def test_uboot_scan_strict(tmp_path):
     assert len(devs) == 1 and devs[0].sg == "/dev/sg2" and devs[0].block == "/dev/sdb" and devs[0].size == 1 << 20
     assert uboot.usb_present(str(ok)) == ["1-1"]
     other = tmp_path / "other"
-    fake_sysfs(other, usb="0781:5583")                   # USB-Stick, der sich WL82 nennt: nie
+    fake_sysfs(other, usb="0781:5583")                   # USB stick that calls itself WL82: never
     assert uboot.scan(str(other)) == []
     named = tmp_path / "named"
-    fake_sysfs(named, model="SanDisk")                   # richtige ID, falsches Modell: nie
+    fake_sysfs(named, model="SanDisk")                   # right ID, wrong model: never
     assert uboot.scan(str(named)) == []
 
 
 @need_v15
 def test_unbricker_dry_run_restore(env, tmp_path):
-    """MvaveFM1Unbricker gegen sein eingebautes Mock-FM-1: Doppelsicherung, Schreiben 0x4000.., Rücklesen"""
+    """MvaveFM1Unbricker against its built-in mock FM-1: double backup, writing 0x4000.., reading back"""
     from fm1companion.flash import uboot
     logs = []
     r = uboot.Runner(dry_run=True, log=logs.append, cwd=tmp_path / "r")
@@ -574,22 +574,22 @@ def test_unbricker_dry_run_restore(env, tmp_path):
 
 
 def test_vendored_unbricker_own_tests():
-    """die Tests des Originalprojekts laufen unverändert gegen die mitgelieferte Kopie"""
+    """the original project's tests run unchanged against the bundled copy"""
     d = ROOT / "fm1companion" / "vendor" / "unbricker"
     r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "tests"], cwd=d,
                        capture_output=True, text=True, timeout=600)
     assert r.returncode == 0, r.stdout[-2000:] + r.stderr[-2000:]
 
 
-# ------------------------------------------- Abnahme-Runde (p1): unerwartete Fehler, Journal, Profile
+# ------------------------------------------- acceptance round (p1): unexpected errors, journal, profiles
 
 @pytest.mark.parametrize("stage,expect_state,active_after", [
-    ("start", "safe", False),        # noch nichts gesendet
-    ("write", "paused", True),       # mitten im Schreiben: Gerät wartet im Loader, Journal bleibt aktiv
-    ("reboot", "restart", False),    # nach dem Schreiben
+    ("start", "safe", False),        # nothing sent yet
+    ("write", "paused", True),       # in the middle of writing: the device waits in the loader, the journal stays active
+    ("reboot", "restart", False),    # after writing
 ])
 def test_unexpected_exception_keeps_journal_consistent(env, monkeypatch, stage, expect_state, active_after):
-    """Ein Programm-/Treiberfehler (kein InstallError) darf das Journal nicht in der Schwebe lassen."""
+    """A program/driver error (no InstallError) must not leave the journal in limbo."""
     from fm1companion.flash import engine, package as pk
     from fm1companion.vendor import fm1_install as fi
     f = pkgfile(env, "FM-1_91070")
@@ -612,13 +612,13 @@ def test_unexpected_exception_keeps_journal_consistent(env, monkeypatch, stage, 
     assert bool(act) == active_after
     hist = e.journal.history()
     assert hist and hist[-1]["phase"] in ("failed", "safe") and "Unerwarteter" in hist[-1]["error"]
-    assert not e.journal.busy() and not e.journal.lockfile.exists()     # Sperre immer freigegeben
+    assert not e.journal.busy() and not e.journal.lockfile.exists()     # the lock is always released
     if active_after:
         assert act["sha256"] == pk.analyze(f).sha256 and act["phase"] == "failed"
 
 
 def test_recovery_refuses_swapped_package(env):
-    """Rettung: Paket aus dem Journal muss die Prüfsumme des Journals haben (Datei könnte getauscht sein)."""
+    """Rescue: the package from the journal must have the journal's checksum (the file could have been swapped)."""
     from fm1companion.flash import engine, package as pk
     f = pkgfile(env, "FM-1_91070")
     other = pkgfile(env, "FM-1_91080", seed=3)
@@ -627,7 +627,7 @@ def test_recovery_refuses_swapped_package(env):
     with pytest.raises(engine.FlashError):
         e.write(pk.analyze(f))
     act = e.journal.active
-    Path(act["package"]).write_bytes(other.read_bytes())         # getauscht
+    Path(act["package"]).write_bytes(other.read_bytes())         # swapped
     before = list(dev.sends)
     with pytest.raises(engine.FlashError) as ei:
         e.write(pk.analyze(Path(act["package"])), expect_sha=act["sha256"])
@@ -641,12 +641,12 @@ def test_profile_names_unique(tmp_path):
     assert (a.name, b.name) == ("FM-1 A", "FM-1 B")
     st.delete(a.id)
     c = st.create()
-    assert c.name == "FM-1 A"                                     # nicht noch einmal „FM-1 B“
+    assert c.name == "FM-1 A"                                     # not "FM-1 B" again
     d = st.create("FM-1 B")
     assert d.name == "FM-1 B (2)" and d.folder_name != b.folder_name
-    assert st.name_taken("fm-1 b", except_id=d.id) is b           # Groß/klein egal
-    assert st.name_taken("FM-1 B.") is b                          # derselbe Backup-Ordner „FM-1 B“
-    assert st.name_taken("FM-1/B") is None                        # anderer Ordner „FM-1_B“
+    assert st.name_taken("fm-1 b", except_id=d.id) is b           # case does not matter
+    assert st.name_taken("FM-1 B.") is b                          # the same backup folder "FM-1 B"
+    assert st.name_taken("FM-1/B") is None                        # another folder "FM-1_B"
     assert st.name_taken("Mein Gerät") is None
 
 
@@ -660,12 +660,12 @@ def test_plan_unknown_firmware_names_loss(env):
 
 V16 = Path(os.environ.get("FM1_TEST_PKGDIR", "/nonexistent")) / "v16.fwsc"
 need_v16 = pytest.mark.skipif(not (V15.exists() and V16.exists()),
-                              reason="Original-V15 (/tmp/fm1_open) oder V16 (FM1_TEST_PKGDIR/v16.fwsc) fehlt")
+                              reason="original V15 (/tmp/fm1_open) or V16 (FM1_TEST_PKGDIR/v16.fwsc) missing")
 
 
 @need_v16
 def test_v16_only_via_v15_and_back(env):
-    """Melodee -> V16 direkt: CHECK HEAD (-5, nichts geschrieben); Melodee -> V15 -> V16 -> V15 klappt in der Simulation"""
+    """Melodee -> V16 directly: CHECK HEAD (-5, nothing written); Melodee -> V15 -> V16 -> V15 works in the simulation"""
     from fm1companion.flash import engine, package as pk
     dev, be = sim_setup(dict(identity="FM-1_91060"), [V15.read_bytes(), V16.read_bytes()])
     e, _ = eng(be)

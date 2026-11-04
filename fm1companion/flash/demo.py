@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Demo-Modus (FM1C_DEMO=1): simulierte FM-1 für Installation und Rettung, im Prozess.
+"""Demo mode (FM1C_DEMO=1): simulated FM-1 for installation and rescue, in-process.
 
-Die Demo-Geräte der Oberfläche (DEMO-1 Melodee, DEMO-2 SLOOP, DEMO-3 ORBIT generisch) haben hier je ein
-SimFM1 für das Update-Protokoll. Ihre Port-Namen sind die der Demo-PortInfos (demo-in, demo2-in, demo3-in).
+The UI's demo devices (DEMO-1 Melodee, DEMO-2 SLOOP, DEMO-3 ORBIT generic) each have a
+SimFM1 here for the update protocol. Their port names are those of the demo PortInfos (demo-in, demo2-in, demo3-in).
 """
 from __future__ import annotations
 
@@ -15,17 +15,17 @@ _LOCK = threading.Lock()
 _BACKEND: sim.SimBackend | None = None
 
 DEMO_DEVICES = {
-    # Port-Name (PortInfo.in_name) -> (Kennung, Laufzeit-Politik)
+    # port name (PortInfo.in_name) -> (identity, runtime policy)
     "demo-in": ("FM-1_91060", "felucca"),
     "demo2-in": ("FM-1_900", "felucca"),
     "demo3-in": ("FM-1_900", "felucca"),
 }
-# simulierter USB-Anschluss je Demo-Gerät (wie sysfs "1-1.2"): so hält die Installation das Ziel fest
+# simulated USB connection per demo device (like sysfs "1-1.2"): this is how the installation pins its target
 DEMO_USB_PATH = {"demo-in": "demo-usb-1", "demo2-in": "demo-usb-2", "demo3-in": "demo-usb-3"}
 
 
 class DemoDevice(sim.SimFM1):
-    """ein Demo-Gerät, dessen App-Port-Name fest der Demo-Port bleibt"""
+    """a demo device whose app port name stays fixed to the demo port"""
 
     def __init__(self, port: str, identity: str, policy: str):
         super().__init__(identity=identity, policy=policy, name=port, reboot_s=0.3,

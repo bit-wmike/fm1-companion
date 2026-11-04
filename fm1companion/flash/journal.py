@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Installations-Journal: was gerade geschrieben wird – übersteht Absturz, Neustart und Stromausfall.
+"""Installation journal: what is being written right now – survives crashes, reboots and power loss.
 
 DATA_DIR/flash/journal.json  {"active": {...} | null, "history": [...]}
-DATA_DIR/flash/packages/<sha256>.fwsc  Kopie jedes Pakets, das gerade installiert wird (für die Rettung)
-DATA_DIR/flash/install.lock  PID des Prozesses, der gerade installiert (eine Installation zur Zeit)
+DATA_DIR/flash/packages/<sha256>.fwsc  copy of every package currently being installed (for the rescue)
+DATA_DIR/flash/install.lock  PID of the process currently installing (one installation at a time)
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from ..i18n import _
 
 _LOCK = threading.Lock()
 PHASES = ("prepared", "step1", "loader", "writing", "reboot", "resources", "done", "failed", "safe")
-# ab diesen Phasen kann das Gerät im Update-Modus warten
+# from these phases on, the device may be waiting in update mode
 STAGED = ("loader", "writing", "reboot")
 
 
@@ -39,7 +39,7 @@ class Journal:
         self.lockfile = self.dir / "install.lock"
         self._held = False
 
-    # ------------------------------------------------------------ Datei
+    # ------------------------------------------------------------ file
     def load(self) -> dict:
         try:
             d = json.loads(self.file.read_text("utf-8"))
@@ -65,9 +65,9 @@ class Journal:
         h = self.load()["history"]
         return [e for e in h if not device or e.get("device_id") == device]
 
-    # ------------------------------------------------------------ Sperre
+    # ------------------------------------------------------------ lock
     def acquire(self):
-        """eine Installation zur Zeit – im Prozess und zwischen Prozessen"""
+        """one installation at a time – within the process and across processes"""
         if not _LOCK.acquire(blocking=False):
             raise Busy(_("An installation is already running."))
         try:
@@ -100,7 +100,7 @@ class Journal:
     def busy() -> bool:
         return _LOCK.locked()
 
-    # ------------------------------------------------------------ Einträge
+    # ------------------------------------------------------------ entries
     def keep_package(self, path: Path, sha: str) -> Path:
         dst = self.dir / "packages" / f"{sha}.fwsc"
         if not dst.exists():
@@ -123,7 +123,7 @@ class Journal:
             self._save(d)
 
     def finish(self, phase: str, error: str = "", keep_active: bool = False):
-        """Ende: done/failed/safe. keep_active=True: Gerät wartet evtl. im Update-Modus -> Eintrag bleibt aktiv"""
+        """End: done/failed/safe. keep_active=True: device may be waiting in update mode -> entry stays active"""
         d = self.load()
         e = d["active"]
         if not e:

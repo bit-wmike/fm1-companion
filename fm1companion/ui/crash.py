@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Absturz-Behandlung: unbehandelte Ausnahmen (auch aus Threads) zeigen einen freundlichen Dialog
-mit Details, „Fehlerbericht speichern“ (ZIP) und „Weiter“. Alles landet auch im Protokoll."""
+"""Crash handling: unhandled exceptions (including from threads) show a friendly dialog
+with details, “Save error report” (ZIP) and “Continue”. Everything also ends up in the log."""
 from __future__ import annotations
 
 import io
@@ -21,10 +21,10 @@ from ..i18n import _
 log = logging.getLogger("fm1companion.crash")
 
 
-# ------------------------------------------------------------ Bericht ---
+# ------------------------------------------------------------ Report ---
 def _sanitize(obj, home: str):
-    """bereinigte Kopie: keine Zugangsdaten (token/passw…/secret/api_key, in jeder Tiefe), keine Notizen,
-    keine vollen Seriennummern, keine Fenstergeometrie, Home -> ~, Rechner- und Benutzername ersetzt."""
+    """sanitized copy: no credentials (token/passw…/secret/api_key, at any depth), no notes,
+    no full serial numbers, no window geometry, home -> ~, host and user name replaced."""
     from ..redact import HOST_PLACEHOLDER, redact, is_secret_key
     if isinstance(obj, dict):
         out = {}
@@ -55,7 +55,7 @@ def _clean(text: str, home: str) -> str:
 
 
 def build_report(path: Path, exc_text: str = "", extra: dict | None = None) -> Path:
-    """ZIP mit Protokollen, bereinigten Einstellungen, Versionen, Ladefehlern und Systeminfos."""
+    """ZIP with logs, sanitized settings, versions, load errors and system info."""
     from .. import applog, config, diag
     from .pages import load_errors
     home = str(Path.home())
@@ -93,10 +93,10 @@ def build_report(path: Path, exc_text: str = "", extra: dict | None = None) -> P
             z.writestr("system.json", json.dumps(_sanitize(sysinfo, home), indent=2, ensure_ascii=False, default=str))
         except Exception:  # noqa: BLE001
             pass
-        z.writestr("LIESMICH.txt", "Fehlerbericht der FM-1 Companion Suite.\nEnthält Protokolle, Versionen und "  # i18n: ignore
-                   "Einstellungen ohne persönliche Pfade, Notizen, Zugangsdaten (Tokens, Passwörter),\n"
-                   "Rechnernamen und vollständige Seriennummern.\n"
-                   "Keine Backups, keine Samples, keine Projekte.\n")
+        z.writestr("README.txt", "Error report of the FM-1 Companion Suite.\nContains logs, versions and "
+                   "settings without personal paths, notes, credentials (tokens, passwords),\n"
+                   "host names and full serial numbers.\n"
+                   "No backups, no samples, no projects.\n")
     return path
 
 
@@ -175,7 +175,7 @@ class _Relay(QObject):
 
 
 class CrashHandler:
-    """installiert sys.excepthook und threading.excepthook."""
+    """installs sys.excepthook and threading.excepthook."""
 
     def __init__(self, parent_fn=lambda: None):
         self.parent_fn = parent_fn
@@ -201,7 +201,7 @@ class CrashHandler:
         text = "".join(traceback.format_exception(t, v, tb))
         log.error("Unbehandelte Ausnahme:\n%s", text)
         self.count += 1
-        self.relay.crashed.emit(text)          # aus Threads: wird im GUI-Thread angezeigt
+        self.relay.crashed.emit(text)          # from threads: shown in the GUI thread
 
     def _show(self, text: str):
         if self.dialog is not None and self.dialog.isVisible():

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Firmware-Katalog, Versionen, Download mit Prüfsumme, Paket-Identität, Installer-Aufruf.
-Braucht Internet (GitHub) und den Melodee-Klon unter /tmp/melodee.
+"""Firmware catalog, versions, download with checksum, package identity, installer call.
+Needs internet (GitHub) and the Melodee clone at /tmp/melodee.
 
   python3 -m pytest tests/test_firmware.py -q
 """
@@ -57,7 +57,7 @@ def test_guess(fw):
     assert fw.guess_firmware("FM-1_720") == ("skiff", "v2.0.3")
 
 
-@pytest.mark.skipif(not MELODEE.exists(), reason="Melodee-Klon fehlt")
+@pytest.mark.skipif(not MELODEE.exists(), reason="Melodee clone missing")
 def test_download_verify_identity(fw):
     s = fw.spec("melodee")
     rels = fw.fetch_releases(s, 0)
@@ -66,12 +66,12 @@ def test_download_verify_identity(fw):
     pkg = fw.download(s, rel, log=log.append)
     assert pkg.verified and pkg.res and pkg.fwsc.stat().st_size > 500000
     assert any("Prüfsummen stimmen" in x for x in log)
-    # zweiter Download nutzt die vorhandenen Dateien
+    # a second download uses the existing files
     pkg2 = fw.download(s, rel, log=log.append)
     assert pkg2.fwsc == pkg.fwsc
-    # beschädigte Datei wird erkannt und gelöscht
+    # a damaged file is detected and deleted
     data = bytearray(pkg.fwsc.read_bytes())
-    data[len(data) // 2] ^= 0xFF                 # bleibt "vorhanden", Prüfsumme falsch
+    data[len(data) // 2] ^= 0xFF                 # stays "present", checksum wrong
     pkg.fwsc.write_bytes(bytes(data))
     with pytest.raises(RuntimeError, match="Prüfsumme"):
         fw.download(s, rel, log=log.append)
@@ -82,7 +82,7 @@ def test_download_verify_identity(fw):
     assert fw.package_identity(pkg.fwsc) == "FM-1_91060"
 
 
-@pytest.mark.skipif(not MELODEE.exists(), reason="Melodee-Klon fehlt")
+@pytest.mark.skipif(not MELODEE.exists(), reason="Melodee clone missing")
 def test_install_without_device_fails_cleanly(fw):
     s = fw.spec("melodee")
     rel = next(r for r in fw.fetch_releases(s) if r.tag == "v1.6.0-rc.7")

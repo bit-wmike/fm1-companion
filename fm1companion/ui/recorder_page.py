@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Aufnahme: FM-1 (oder jede andere Quelle) aufnehmen – auf Wunsch taktgenau zur MIDI-Clock des FM-1 –,
-Spuren trennen, kurz schneiden, exportieren, als Sample übernehmen, in Audacity öffnen."""
+"""Recording: record the FM-1 (or any other source) – optionally bar-accurate to the FM-1's MIDI clock –,
+split tracks, trim briefly, export, take over as a sample, open in Audacity."""
 from __future__ import annotations
 
 import shutil
@@ -23,7 +23,7 @@ REALTIME = (0xF8, 0xFA, 0xFB, 0xFC)
 
 
 class RecorderPage(QWidget):
-    clock_in = pyqtSignal(int, float)          # aus dem MIDI-Thread: (Statusbyte, Zeit)
+    clock_in = pyqtSignal(int, float)          # from the MIDI thread: (status byte, time)
     spp_in = pyqtSignal(int)
 
     def __init__(self, ctx, parent=None):
@@ -90,7 +90,7 @@ class RecorderPage(QWidget):
         self.name.setPlaceholderText(_("e.g. song idea 3 (optional)"))
         f.addRow(_("Name:"), self.name)
 
-        # Takt-Sync
+        # bar sync
         sy = QHBoxLayout()
         self.cb_sync = QCheckBox(_("bar-accurate to the MIDI clock"))
         self.cb_sync.setToolTip(_("The recording starts exactly at the start (or next bar) of the FM-1 and ends after "
@@ -131,7 +131,7 @@ class RecorderPage(QWidget):
         self.meters: list[QProgressBar] = []
         self.meter_box = QVBoxLayout()
         f.addRow(_("Level:"), self.meter_box)
-        self.level_hint = QLabel("")                    # Melodee: Aufnahme vor/nach MASTER (melodee16)
+        self.level_hint = QLabel("")                    # Melodee: recording before/after MASTER (melodee16)
         self.level_hint.setWordWrap(True)
         self.level_hint.setProperty("role", "muted")
         self.level_hint.hide()
@@ -193,7 +193,7 @@ class RecorderPage(QWidget):
         self.list.itemSelectionChanged.connect(self._sel_changed)
         b_open = QPushButton(icon("folder-open"), _("Folder"))
         b_open.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(safe_folder("Aufnahmen")[0]))))
-        r2 = FlowLayout()                      # bricht bei schmalem Fenster um
+        r2 = FlowLayout()                      # wraps when the window is narrow
         for b in (b_play, b_stop, b_edit, self.export_fmt, b_exp, b_sample, b_aud, b_del, b_open):
             r2.addWidget(b)
         ll.addLayout(r2)
@@ -207,7 +207,7 @@ class RecorderPage(QWidget):
         self.refresh_list()
         self._sync_ui()
 
-    # ------------------------------------------------------------ Einstellungen
+    # ------------------------------------------------------------ Settings
     def _opt(self, k, v):
         self.opts[k] = v
         config.save()
@@ -220,7 +220,7 @@ class RecorderPage(QWidget):
             self._relisten()
         self._show_sync()
 
-    # ------------------------------------------------------------ MIDI-Clock
+    # ------------------------------------------------------------ MIDI clock
     def _listener(self, data, direction):
         if direction != "in" or not data:
             return
@@ -250,7 +250,7 @@ class RecorderPage(QWidget):
 
     def shutdown(self):
         self.deactivate()
-        if self.rec and self.rec.running:          # beim Beenden: nur sauber stoppen (Datei bleibt roh erhalten)
+        if self.rec and self.rec.running:          # on exit: just stop cleanly (the raw file is kept)
             self.timer.stop()
             try:
                 self.rec.stop()
@@ -278,9 +278,9 @@ class RecorderPage(QWidget):
               "fertig": " · " + _("done")}[b.state]  # i18n: ignore – state keys
         self.sync_label.setText(f"{tempo} · {where}{st}")
 
-    # ------------------------------------------------------------ Quellen
+    # ------------------------------------------------------------ Sources
     def find(self):
-        """Quellen suchen – im Hintergrund (pw-dump kann Sekunden brauchen; der GUI-Thread wartet nicht)."""
+        """Search for sources – in the background (pw-dump can take seconds; the GUI thread doesn't wait)."""
         if self.rec and self.rec.running:
             return
         if getattr(self, "_finding", False):
@@ -356,7 +356,7 @@ class RecorderPage(QWidget):
             return 2 if 2 in ch else min(ch)
         return max(ch)
 
-    # ------------------------------------------------------------ Aufnehmen
+    # ------------------------------------------------------------ Record
     def _toggle(self):
         if self.rec and self.rec.running:
             self._finish()
@@ -386,7 +386,7 @@ class RecorderPage(QWidget):
             self.b_rec.setText(_("Start recording"))
             self.rec = None
             show_error(self, _("Recording not possible"), m)
-        run_job(self, lambda w: rec.start(), on_done=done, on_fail=fail)   # start() wartet 0,6 s je Weg
+        run_job(self, lambda w: rec.start(), on_done=done, on_fail=fail)   # start() waits 0.6 s per path
 
     def _started(self, ch: int):
         self.tail = recorder.TailReader(self.rec.path, ch)
@@ -416,8 +416,8 @@ class RecorderPage(QWidget):
         self.timer.start()
 
     def _finish(self):
-        """Aufnahme beenden; bei Takt-Sync auf den Takt-Bereich zuschneiden; Spuren trennen – die
-        Nachbearbeitung (Datei lesen/schreiben, Spuren trennen) läuft im Hintergrund mit Fortschrittsdialog."""
+        """Stop recording; with bar sync trim to the bar range; split tracks – the
+        post-processing (read/write file, split tracks) runs in the background with a progress dialog."""
         rec = self.rec
         if rec is None or getattr(self, "_finishing", False):
             return
@@ -469,7 +469,7 @@ class RecorderPage(QWidget):
                                                                 "recording folder anyway; “Open in Audacity” works any "
                                                                 "time later."))
         long = rec.elapsed > 20 or rec.channels > 2
-        if long:                                     # länger: Dialog mit Fortschritt, sonst still im Hintergrund
+        if long:                                     # longer: dialog with progress, otherwise silently in the background
             d = JobDialog(self, _("Finish recording"), work, close_on_success=True,
                           done_text=lambda files: ngettext("{n} file saved.", "{n} files saved.", len(files)).format(
                               n=len(files)))
@@ -513,7 +513,7 @@ class RecorderPage(QWidget):
                                       "playback running? The recording runs anyway; “Stop recording” keeps everything.").format(
                 seconds=int(el)))
 
-    # ------------------------------------------------------------ Liste
+    # ------------------------------------------------------------ List
     def refresh_list(self):
         self.list.clear()
         d = self.ctx.settings.recordings_dir
@@ -523,12 +523,12 @@ class RecorderPage(QWidget):
         except OSError as e:
             files = []
             self.empty.setText(fs_error_text(e, _("Recording folder not readable")))
-        later = []                                   # FLAC/MP3: Länge per ffprobe – das dauert, also im Hintergrund
+        later = []                                   # FLAC/MP3: length via ffprobe – that takes time, so in the background
         for p in files:
             try:
                 size = p.stat().st_size
                 wav = p.suffix.lower() == ".wav"
-                dur = S.probe(p).duration if wav else None      # WAV: nur den Kopf lesen, Millisekunden
+                dur = S.probe(p).duration if wav else None      # WAV: read only the header, milliseconds
             except OSError:
                 continue
             it = QTreeWidgetItem([p.name, _dur_text(dur) if dur is not None else "…", fmt_size(size)])
@@ -545,12 +545,12 @@ class RecorderPage(QWidget):
                 for _it, p in later:
                     try:
                         out.append(S.probe(p).duration)
-                    except Exception:  # noqa: BLE001 – dann bleibt „?“
+                    except Exception:  # noqa: BLE001 – then it stays “?”
                         out.append(None)
                 return out
 
             def done(durs):
-                if gen != self._list_gen:            # Liste inzwischen neu aufgebaut
+                if gen != self._list_gen:            # list has been rebuilt in the meantime
                     return
                 for (it, _p), dur in zip(later, durs):
                     it.setText(1, _dur_text(dur) if dur else "?")
@@ -655,7 +655,7 @@ def _dur_text(dur: float) -> str:
 
 
 def _stop_raw(rec: recorder.Recording) -> list[Path]:
-    """wie Recording.stop(), aber ohne automatisches Aufteilen (das macht die Seite nach dem Zuschnitt)."""
+    """like Recording.stop(), but without automatic splitting (the page does that after trimming)."""
     import signal
     import subprocess
     if rec.proc and rec.proc.poll() is None:
@@ -671,7 +671,7 @@ def _stop_raw(rec: recorder.Recording) -> list[Path]:
 
 
 class QuickEditDialog(QDialog):
-    """Schnell-Editor: Anfang/Ende ziehen, ein-/ausblenden, normalisieren -> neue Datei."""
+    """Quick editor: drag start/end, fade in/out, normalize -> new file."""
 
     def __init__(self, path: Path, parent=None, player: Player | None = None):
         super().__init__(parent)
@@ -713,7 +713,7 @@ class QuickEditDialog(QDialog):
         path = self.path
 
         def load(w):
-            # alles Rechnen hier im Hintergrund: eine 10-Minuten-Aufnahme sind ~26 Mio. Werte
+            # all computation here in the background: a 10-minute recording is ~26 million values
             sr, a = recorder.read_wav_array(path)
             mono = a.mean(axis=1)
             return sr, a, S.peaks(mono, 900), len(mono) / sr
@@ -726,7 +726,7 @@ class QuickEditDialog(QDialog):
         run_job(self, load, on_done=done, on_fail=lambda m, tb: self.wave.clear(_("File not readable: {error}").format(error=m)))
 
     def play(self):
-        """Auswahl anhören – über eine kurze WAV-Datei (numpy schreibt sie in Millisekunden, keine Python-Liste)."""
+        """Listen to the selection – via a short WAV file (numpy writes it in milliseconds, no Python list)."""
         if self.a is None:
             return
         a, b = int(self.wave.start * self.sr), int(self.wave.end * self.sr)
@@ -734,13 +734,13 @@ class QuickEditDialog(QDialog):
         import os
         import tempfile
         try:
-            fd, name = tempfile.mkstemp(prefix="fm1c-quickedit-", suffix=".wav")   # sicherer, zufälliger Name
+            fd, name = tempfile.mkstemp(prefix="fm1c-quickedit-", suffix=".wav")   # safe, random name
             os.close(fd)
             tmp = Path(name)
             prev = getattr(self, "_tmp_wav", None)
             self._tmp_wav = tmp
             recorder.write_wav_array(tmp, y, self.sr)
-            if prev is None:                           # beim Beenden wegräumen
+            if prev is None:                           # clean up on exit
                 import atexit
                 atexit.register(lambda: getattr(self, "_tmp_wav", Path("/nonexistent")).unlink(missing_ok=True))
             elif prev != tmp:
@@ -751,8 +751,8 @@ class QuickEditDialog(QDialog):
         self.player.play(tmp)
 
     def save(self) -> Path | None:
-        """Auswahl als neue Datei speichern – im Hintergrund (liest die ganze Aufnahme noch einmal); der Dialog
-        schließt sich, wenn die Datei fertig ist."""
+        """Save the selection as a new file – in the background (reads the whole recording again); the dialog
+        closes when the file is done."""
         if self.a is None or getattr(self, "_saving", False):
             return None
         dst = self.path.with_name(f"{self.path.stem} (geschnitten).wav")  # i18n: ignore – file name

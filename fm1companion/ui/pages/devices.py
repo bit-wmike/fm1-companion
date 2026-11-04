@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Geräte: alle bekannten FM-1, vergleichen und Inhalte von einem FM-1 aufs andere kopieren."""
+"""Devices: all known FM-1s, compare them and copy content from one FM-1 to another."""
 from __future__ import annotations
 
 import shutil
@@ -26,8 +26,8 @@ def profile_folder(ctx, prof) -> Path:
 
 
 def _fw_text(spec, p) -> str:
-    """eine Firmware-Angabe statt „Melodee v1.6.0-rc.7 Melodee 1.6.0-rc.7“: Name + Version, dazu die gemeldete
-    Kennung nur, wenn sie etwas Neues sagt."""
+    """one firmware label instead of “Melodee v1.6.0-rc.7 Melodee 1.6.0-rc.7”: name + version, plus the reported
+    identifier only if it says something new."""
     name = spec.name if spec else (p.firmware or _("unknown"))
     ver = (p.firmware_version or "").strip()
     reported = fw_label(p.version_string or "").strip()
@@ -42,13 +42,13 @@ def newest_report(ctx, prof) -> BI.Report | None:
     for m in AB.list_backups(profile_folder(ctx, prof)):
         try:
             return BI.inspect(m.path)
-        except Exception:                          # noqa: BLE001 – kaputte Datei überspringen
+        except Exception:                          # noqa: BLE001 – skip broken file
             continue
     return None
 
 
 def firmware_history(ctx, prof) -> list[tuple[str, str]]:
-    """(Datum, Firmware) in zeitlicher Folge – aus den Backups, jeweils beim Wechsel."""
+    """(date, firmware) in chronological order – from the backups, at each change."""
     out = []
     for m in sorted(AB.list_backups(profile_folder(ctx, prof)), key=lambda m: m.when):
         fw = m.firmware or m.fw_key
@@ -58,7 +58,7 @@ def firmware_history(ctx, prof) -> list[tuple[str, str]]:
 
 
 class PartsDialog(QDialog):
-    """Was soll kopiert werden?"""
+    """What should be copied?"""
 
     def __init__(self, parent, rep: BI.Report, allowed: set[int]):
         super().__init__(parent)
@@ -117,7 +117,7 @@ class DevicesPage(QWidget):
         self.cards = QGridLayout()
         lay.addLayout(self.cards)
 
-        # Vergleichen / Kopieren
+        # Compare / copy
         tool = Card(_("Compare and copy"))
         r = QHBoxLayout()
         self.a = QComboBox()
@@ -156,12 +156,12 @@ class DevicesPage(QWidget):
     def activate(self):
         self.refresh()
 
-    # ------------------------------------------------------------ Karten
+    # ------------------------------------------------------------ Cards
     def refresh(self):
         while self.cards.count():
             w = self.cards.takeAt(0).widget()
             if w:
-                w.hide()                       # sofort weg (deleteLater kommt erst später)
+                w.hide()                       # gone immediately (deleteLater only comes later)
                 w.setParent(None)
                 w.deleteLater()
         c = self.ctx
@@ -182,7 +182,7 @@ class DevicesPage(QWidget):
             combo.setCurrentIndex(i if i >= 0 else (1 if combo is self.b and len(profs) > 1 else 0))
             combo.blockSignals(False)
         if self.a.currentData() and self.a.currentData() == self.b.currentData() and len(profs) > 1:
-            self.b.blockSignals(True)               # nicht zweimal dasselbe Gerät vorschlagen
+            self.b.blockSignals(True)               # don't suggest the same device twice
             self.b.setCurrentIndex(next(i for i in range(self.b.count()) if self.b.itemData(i) != self.a.currentData()))
             self.b.blockSignals(False)
         if hasattr(self, "b_cmp"):
@@ -267,7 +267,7 @@ class DevicesPage(QWidget):
         card.setStyleSheet(f"Card {{ border-left: 4px solid {p.color}; }}")
         return card
 
-    # ------------------------------------------------------------ Profile
+    # ------------------------------------------------------------ Profiles
     def rename(self, pid: str, name: str | None = None):
         p = self.ctx.store.profiles.get(pid)
         if not p:
@@ -279,7 +279,7 @@ class DevicesPage(QWidget):
         name = name.strip()
         if not name or name == p.name:
             return
-        try:                                       # Backups wandern mit (gemeinsame Logik mit der Übersicht)
+        try:                                       # backups move along (shared logic with the overview)
             self.ctx.rename_profile(name, profile=p)
         except OSError as e:
             from ..common import show_error
@@ -336,7 +336,7 @@ class DevicesPage(QWidget):
             self.merge(p.id, others[names.index(item)].id)
 
     def merge(self, src_id: str, dst_id: str) -> bool:
-        """zwei Profile desselben Geräts zusammenlegen: Backups von src nach dst, src vergessen."""
+        """Merge two profiles of the same device: backups from src to dst, forget src."""
         st = self.ctx.store
         src, dst = st.profiles.get(src_id), st.profiles.get(dst_id)
         if not src or not dst or (self.ctx.profile and self.ctx.profile.id == src_id):
@@ -359,7 +359,7 @@ class DevicesPage(QWidget):
         self.refresh()
         return True
 
-    # ----------------------------------------------------------- Vergleich
+    # ----------------------------------------------------------- Comparison
     def _cmp_enable(self, *_args):
         a, b = self.a.currentData(), self.b.currentData()
         same = bool(a) and a == b
@@ -401,9 +401,9 @@ class DevicesPage(QWidget):
         self.cmp_tree.resizeColumnToContents(0)
         return res
 
-    # ------------------------------------------------------------- Kopie
+    # ------------------------------------------------------------- Copy
     def copy(self, src_id: str, ids: list[int] | None = None, source: Path | None = None) -> tuple[BI.Compat | None, bool]:
-        """Inhalte von Gerät src (neuestes Backup oder `source`) aufs verbundene Gerät spielen."""
+        """Play content from device src (newest backup or `source`) onto the connected device."""
         c = self.ctx
         if not c.require(self):
             return None, False

@@ -35,12 +35,12 @@ write back). Effort: S ≈ 1–2 days, M ≈ 1 week, L ≈ several weeks.
 
 ### Urgent safety findings (short version, details in b5)
 
-* **S1 – "Einstellungen reparieren" (repair settings) has no V16 lock.** **Status: fixed in 2.2.0** (lock for V16
+* **S1 – "Repair settings" has no V16 lock.** **Status: fixed in 2.2.0** (lock for V16
   layout, `uboot.py`/`rescuegate.py`). `ui/pages/recovery.py:498-522` → `flash/uboot.py:294` →
   Unbricker `repair-settings`. Its windows are fixed to the V15 layout: 0x93000–0xE8FFF and 0xFC000–0xFEFFF
   (`vendor/unbricker/fm1_unbrick.py:77-78`). With V16, 0x93000–0xA8FFF still contains **program code** (end of app.bin
   and DX7.bin), 0xBA000–0xDA000 the VM area. A run on a V16 device therefore overwrites the firmware, and the app's
-  sentence "Die Firmware selbst wurde nicht verändert" (the firmware itself was not changed, `recovery.py:520-521`) is
+  sentence "The firmware itself was not changed" (`recovery.py:520-521`) is
   then not true. The Unbricker only warns when Felucca markers are found (`fm1_unbrick.py:1533-1537`); it does not
   lock V16.
 * **S2 – The ROM rescue always writes the V15 app, even under a V16 boot head.** **Status: fixed in 2.2.0** (no V15
@@ -49,9 +49,9 @@ write back). Effort: S ≈ 1–2 days, M ≈ 1 week, L ≈ several weeks.
   Unbricker reports a different head only as a hint (`fm1_unbrick.py:1128-1135`) and writes V15 anyway.
   Whether a V15 app starts under the V16 head (larger bootloader, `isd_config` at 0x3938 instead of 0x38D0,
   `m-flasher/docs/development.md:74-76`) is **open [?]**. At the time of this research, the suite's rescue page offered, in this case,
-  "Original-V15 zurückschreiben" (write back original V15) without a warning.
-* **S3 – The dump check can wrongly call factory devices "beschädigt – bitte neu aufspielen" (damaged – please
-  reflash).** **Status: fixed in 2.2.0** (factory/unknown original images are no longer called "damaged").
+  "Write back original V15" without a warning.
+* **S3 – The dump check can wrongly call factory devices "damaged – please
+  reflash".** **Status: fixed in 2.2.0** (factory/unknown original images are no longer called "damaged").
   `flash/flashmodel.py:727-740`. Factory devices carry a different image in the app area than the public V15 package
   (`fm1_unbrick.py:1530-1532`; measured by maxfridbe: SHA-256 `8c1d13a5…` instead of `6edf3c37…`,
   `maxfridbe/mvave-fm1/skills/mvave-fm1-firmware/SKILL.md:172`). Nothing gets deleted by this, but the advice to
@@ -209,7 +209,7 @@ shows the V15 layout (`flashmodel._app_match`, family ≠ `v16-layout`) may anyt
 needed, in a separate script like `restzone.py` with the function `erase_repair_sector`. In addition, the final
 sentence in `recovery.py:520-521` must be corrected.
 
-**S2 (urgent; status: fixed in 2.2.0):** Before "Original-V15 zurückschreiben" (write back original V15), evaluate
+**S2 (urgent; status: fixed in 2.2.0):** Before "Write back original V15", evaluate
 the head from the mandatory backup. If it is the V16 head (`8f5228c2…`), do not write V15: either use the
 `fm1_rescue.py` logic (V16 app 0x4000–0xA8FFF) or M-Flasher `firmware FM-1_016.fwsc`, or at least a clear warning.
 

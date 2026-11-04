@@ -1,19 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-only
-# SEA5-Kodierung (encode/decode, Tabellen): nach web/synth/sea_encode.h, sea_decode.c und
-#   sample_metadata.inc aus M-VAVE FM1 Open V14 – MIT, Copyright (c) 2025 Dani Biró (SEA,
+# SEA5 coding (encode/decode, tables): after web/synth/sea_encode.h, sea_decode.c and
+#   sample_metadata.inc from M-VAVE FM1 Open V14 – MIT, Copyright (c) 2025 Dani Biró (SEA,
 #   https://github.com/Daninet/sea-codec); modifications (c) 2026 M-VAVE.
-# Protokoll und Bank-Format: nach app/transfer.c, app/samples.c, sdk/WebUpdate.js, sdk/Samples.js
-#   aus FM1 Open V14 (GPL-3.0-only WITH GPL-3.0-linking-exception, (c) 2026 M-VAVE).
-"""Sample-Slots der offiziellen M-VAVE-Firmware „FM1 Open“ (V14): 8 Slots, eine gemeinsame Bank.
+# Protocol and bank format: after app/transfer.c, app/samples.c, sdk/WebUpdate.js, sdk/Samples.js
+#   from FM1 Open V14 (GPL-3.0-only WITH GPL-3.0-linking-exception, (c) 2026 M-VAVE).
+"""Sample slots of the official M-VAVE firmware "FM1 Open" (V14): 8 slots, one shared bank.
 
-Siehe docs/fm1open-samples.md. Kurz:
-* Datei-Protokoll: F0 7D 'F' 'M' 02 cmd token-lo token-hi <8-Bit-Daten als LSB-zuerst-7-Bit-Strom>
-  Prüfsumme F7; Antwort mit cmd|64, gleichem Token, erstes Byte = Status (0 ok, 64+n = Fehler -n).
-* Samples: Befehl 11 Status, 12 Beginn (Größe), 13 Schreiben (Offset + bis 128 Byte), 14 Abschluss,
-  15 Lesen (Offset + bis 64 Byte), 16 Abbruch. Die Bank wird immer GANZ geschrieben (Flash wird
-  zuerst gelöscht) – deshalb: erst lesen und sichern, dann ändern, dann schreiben und zurücklesen.
-* Bank: 512-Byte-Kopf ("FM1S", Version 1, Größe, CRC, Commit, 32000 Hz, 16 Einträge à 28 Byte),
-  danach SEA5-Blöcke: 228 Byte für je 320 Frames (32 kHz, 10 ms).
+See docs/fm1open-samples.md. In short:
+* File protocol: F0 7D 'F' 'M' 02 cmd token-lo token-hi <8-bit data as an LSB-first 7-bit stream>
+  checksum F7; reply with cmd|64, the same token, first byte = status (0 ok, 64+n = error -n).
+* Samples: command 11 status, 12 begin (size), 13 write (offset + up to 128 bytes), 14 finish,
+  15 read (offset + up to 64 bytes), 16 abort. The bank is always written WHOLE (flash is
+  erased first) – hence: first read and back up, then modify, then write and read back.
+* Bank: 512-byte header ("FM1S", version 1, size, CRC, commit, 32000 Hz, 16 entries of 28 bytes),
+  followed by SEA5 blocks: 228 bytes for every 320 frames (32 kHz, 10 ms).
 """
 from __future__ import annotations
 
@@ -32,12 +32,12 @@ SLOTS, DISK_SLOTS = 8, 16
 HEADER, RATE = 512, 32000
 CHUNK_FRAMES, CHUNK_BYTES = 320, 228
 REGION = 466944                          # GROOVE_SAMPLE_BYTES
-CAPACITY = 446464                        # V14 (Befehl 22); ältere Firmware: 462848
+CAPACITY = 446464                        # V14 (command 22); older firmware: 462848
 CAPACITY_V13 = 462848
 MAGIC = 0x53314D46                       # "FM1S"
 BLOCK_MAGIC = b"\x01\x45\x14\x5a"
 MAX_FRAMES = (REGION - HEADER) // CHUNK_BYTES * CHUNK_FRAMES
-# Pads 1–8 spielen auf diesen MIDI-Noten (sample_metadata.inc: sample_notes)
+# pads 1–8 play on these MIDI notes (sample_metadata.inc: sample_notes)
 PAD_NOTES = [36, 38, 37, 41, 47, 48, 42, 46]
 PAD_ROLES = ["Kick", "Snare", "Rimshot", _("Tom low"), _("Tom mid"), _("Tom high"), _("Hi-hat closed"), _("Hi-hat open")]
 # texts translated where used: _(STATUS_TEXT[st]), _(ERRORS[code])
@@ -95,7 +95,7 @@ def frame(cmd: int, token: int, payload=b"") -> list[int]:
 
 
 def parse(msg) -> tuple[int, int, bytes] | None:
-    """-> (cmd, token, Daten) oder None"""
+    """-> (cmd, token, data) or None"""
     m = list(msg)
     if len(m) < 10 or m[0] != 0xF0 or m[-1] != 0xF7 or m[1:5] != [0x7D, 0x46, 0x4D, 0x02]:
         return None
@@ -166,7 +166,7 @@ QUANT = _quant()
 
 
 def sea_encode(pcm, progress: Callable[[int, int], None] | None = None) -> bytes:
-    """int16-Folge (32 kHz) -> SEA5-Blöcke, Byte für Byte wie fm1_sea_encode() der Workbench."""
+    """int16 sequence (32 kHz) -> SEA5 blocks, byte for byte like the workbench's fm1_sea_encode()."""
     pcm = [int(v) for v in pcm]
     frames = len(pcm)
     if not frames:
@@ -246,7 +246,7 @@ def sea_encode(pcm, progress: Callable[[int, int], None] | None = None) -> bytes
 
 
 def sea_decode(data: bytes) -> list[int]:
-    """SEA5-Blöcke -> int16 (wie fm1_sea_decode)."""
+    """SEA5 blocks -> int16 (like fm1_sea_decode)."""
     out = []
     for c in range(0, len(data) - CHUNK_BYTES + 1, CHUNK_BYTES):
         ch = data[c:c + CHUNK_BYTES]
@@ -293,12 +293,12 @@ class SampleEntry:
 
 
 def bank_crc(data: bytes) -> int:
-    """CRC-32 über die Bank, CRC- und Commit-Feld (Byte 12–19) als Null gezählt."""
+    """CRC-32 over the bank, with the CRC and commit fields (bytes 12–19) counted as zero."""
     return zlib.crc32(data[20:], zlib.crc32(bytes(min(8, max(0, len(data) - 12))), zlib.crc32(data[:12]))) & 0xFFFFFFFF
 
 
 def read_bank(data: bytes) -> list[SampleEntry]:
-    """prüft eine Bank wie die Workbench (Samples.js read) -> 8 Einträge."""
+    """checks a bank like the workbench does (Samples.js read) -> 8 entries."""
     data = bytes(data)
     if not HEADER <= len(data) <= REGION:
         raise FM1OpenError(_("Sample bank: length invalid"))
@@ -335,7 +335,7 @@ def clean_name(name: str) -> str:
 
 
 def build_bank(entries: list[SampleEntry], capacity: int = CAPACITY) -> bytes:
-    """8 Einträge -> Bank (wie Samples.js encodeBank)."""
+    """8 entries -> bank (like Samples.js encodeBank)."""
     if len(entries) != SLOTS:
         raise FM1OpenError(_("The bank needs exactly 8 slots"))
     size = HEADER + sum(len(e.data) for e in entries)
@@ -390,7 +390,7 @@ def make_entry(pcm, name: str, progress=None) -> SampleEntry:
 # ---------------------------------------------------------- Audio -> PCM ---
 
 def resample(x, sr: int, to: int = RATE):
-    """Tiefpass (gefenstertes Sinc) + lineare Interpolation; numpy."""
+    """Low-pass (windowed sinc) + linear interpolation; numpy."""
     import numpy as np
     a = np.asarray(x, dtype=np.float64)
     if sr == to or not len(a):
@@ -406,14 +406,14 @@ def resample(x, sr: int, to: int = RATE):
 
 
 def to_pcm(x) -> list[int]:
-    """float -> int16 wie die Workbench: round(v * 32768), begrenzt."""
+    """float -> int16 like the workbench: round(v * 32768), clamped."""
     import numpy as np
     a = np.clip(np.round(np.asarray(x, dtype=np.float64) * 32768), -32768, 32767)
     return a.astype(np.int64).tolist()
 
 
 def render_zone(zone) -> list[int]:
-    """Kit-Zone (Datei + Bearbeitung) -> int16 bei 32 kHz für einen FM1-Open-Slot."""
+    """Kit zone (file + editing) -> int16 at 32 kHz for an FM1 Open slot."""
     from pathlib import Path
     from . import samples as S
     sr, x = S.read_mono(Path(zone.path))
@@ -423,11 +423,11 @@ def render_zone(zone) -> list[int]:
     return to_pcm(resample(y, sr))
 
 
-# ================================================================= Gerät ===
+# ================================================================= device ===
 
 class Client:
-    """Datei-Protokoll über einen Link (transport.Link). Nur aus einem Hintergrund-Thread benutzen,
-    mit link.hold()/exclusive() (ctx.job macht das)."""
+    """File protocol over a link (transport.Link). Only use from a background thread,
+    with link.hold()/exclusive() (ctx.job does that)."""
 
     def __init__(self, link, timeout: float = 1.0, attempts: int = 3):
         self.link = link
@@ -463,7 +463,7 @@ class Client:
         while not self.q.empty():
             self.q.get_nowait()
         for _attempt in range(self.attempts):
-            self._send(msg)                      # Wiederholung: gleiches Token -> Gerät schickt die gespeicherte Antwort
+            self._send(msg)                      # retry: same token -> the device sends the stored reply
             end = time.monotonic() + self.timeout
             while True:
                 left = end - time.monotonic()
@@ -485,9 +485,9 @@ class Client:
                 return data[1:]
         raise FM1OpenError(_("No answer – is FM1 Open running on the FM-1?"))
 
-    # ---- Abfragen
+    # ---- queries
     def probe(self) -> dict:
-        """Befehl 0 (+21/22): erkennt FM1 Open. -> Infos"""
+        """Command 0 (+21/22): detects FM1 Open. -> info"""
         info = self.query(0)
         if len(info) != 14 or info[1] != 16 or not ((info[0] == 3 and info[3] | info[4] << 8 == 4048) or
                                                      (info[0] == 4 and info[3] | info[4] << 8 == 4064)):
@@ -513,7 +513,7 @@ class Client:
         return d[0], size
 
     def read_bytes(self, start: int, n: int) -> bytes:
-        """n Bytes ab start aus der Bank lesen (Befehl 15, Stücke zu 64 Byte)."""
+        """read n bytes from start out of the bank (command 15, chunks of 64 bytes)."""
         out = bytearray()
         for at in range(start, start + n, 64):
             k = min(64, start + n - at)
@@ -524,8 +524,8 @@ class Client:
         return bytes(out)
 
     def unchanged(self, cached: bytes) -> bool:
-        """Stimmt die Bank auf dem Gerät noch mit cached überein? Prüft nur den 512-Byte-Kopf (Größe + CRC-32
-        über die ganze Bank) – statt die ganze Bank noch einmal zu lesen."""
+        """Does the bank on the device still match cached? Only checks the 512-byte header (size + CRC-32
+        over the whole bank) – instead of reading the whole bank again."""
         st, size = self.sample_status()
         if st != 2:
             return not cached
@@ -552,7 +552,7 @@ class Client:
         return bytes(out)
 
     def write_bank(self, data: bytes, progress=None, cancel=lambda: False, verify: bool = True):
-        """ganze Bank schreiben (löscht zuerst!) und zurücklesen."""
+        """write the whole bank (erases first!) and read it back."""
         read_bank(data)
         if len(data) > self.capacity:
             raise FM1OpenError(_("Bank too large for this device"))
@@ -588,7 +588,7 @@ class Client:
 
 
 def detect(link, timeout: float = 0.8) -> dict | None:
-    """True-ish, wenn am Link FM1 Open antwortet (aus Hintergrund-Thread, Link reserviert)."""
+    """Truthy if FM1 Open answers on the link (from a background thread, link reserved)."""
     try:
         with Client(link, timeout=timeout, attempts=1) as c:
             return c.probe()

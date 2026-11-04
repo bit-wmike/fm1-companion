@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Rahmen und Verpackung: Einstellungen speichern/lesen ohne Absturz, Version überall gleich, Paketlisten,
-.desktop-Exec mit Leerzeichen, .run-Hilfe und keine Reste in /tmp."""
+"""Frame and packaging: save/load settings without crashing, the same version everywhere, package lists,
+.desktop Exec with spaces, .run help and no leftovers in /tmp."""
 from __future__ import annotations
 
 import importlib
@@ -23,7 +23,7 @@ from fm1companion import __version__, diag  # noqa: E402
 
 @pytest.fixture
 def cfg(tmp_path, monkeypatch):
-    """frisches config-Modul mit eigenen XDG-Ordnern"""
+    """fresh config module with its own XDG folders"""
     for var, sub in (("XDG_CONFIG_HOME", "c"), ("XDG_DATA_HOME", "d"), ("XDG_CACHE_HOME", "k")):
         monkeypatch.setenv(var, str(tmp_path / sub))
     monkeypatch.delenv("FM1C_DEMO_ROOT", raising=False)
@@ -34,7 +34,7 @@ def cfg(tmp_path, monkeypatch):
 
 
 def test_save_never_raises(cfg, tmp_path):
-    (tmp_path / "c").write_text("ich bin eine Datei")             # ~/.config ist eine Datei
+    (tmp_path / "c").write_text("ich bin eine Datei")             # ~/.config is a file
     got = []
     cfg.save_listeners.append(got.append)
     s = cfg.load()
@@ -71,31 +71,31 @@ def test_save_threads(cfg):
 def test_versions_match():
     assert re.fullmatch(r"\d+\.\d+\.\d+", __version__)
     meta = (ROOT / "packaging/fm1-companion.metainfo.xml").read_text("utf-8")
-    assert re.search(r'<release version="([^"]+)"', meta).group(1) == __version__, "metainfo: neueste Version"
+    assert re.search(r'<release version="([^"]+)"', meta).group(1) == __version__, "metainfo: newest version"
     man = (ROOT / "packaging/fm1-companion.1").read_text("utf-8").splitlines()[0]
     assert f"Suite {__version__}" in man
     readme = (ROOT / "README.md").read_text("utf-8")
     for v in set(re.findall(r"FM-1-Companion-Suite-(\d+\.\d+\.\d+)\.run|fm1-companion_(\d+\.\d+\.\d+)_all", readme)):
-        assert __version__ in v, f"README nennt {v}"
+        assert __version__ in v, f"README mentions {v}"
 
 
 def test_deps_lists():
     req = diag.packages("required")
     for p in ("python3", "python3-pyqt6", "python3-pyqt6.qtsvg", "python3-pyqt6.qtwebengine",
               "python3-pyqt6.qtwebchannel", "python3-mido", "python3-rtmidi", "python3-numpy", "git",
-              "qt6-translations-l10n"):                 # Pflicht: sonst heißen Kürzel „Ctrl“ statt „Strg“
+              "qt6-translations-l10n"):                 # required: otherwise shortcuts say "Ctrl" instead of "Strg"
         assert p in req
     assert "qt6-translations-l10n" not in diag.packages("recommended")
-    # alles, was die App per apt nachinstallieren lässt, steht in der einen Liste (Depends/Recommends/Suggests)
+    # everything the app lets you install via apt is in the one list (Depends/Recommends/Suggests)
     from fm1companion.flash import uboot
     allp = set(req) | set(diag.packages("recommended")) | set(diag.packages("suggested"))
     assert set(uboot.DEPS.values()) <= allp
-    # der Hinweis bei fehlendem PyQt6 kommt aus derselben Liste
+    # the hint for missing PyQt6 comes from the same list
     from fm1companion import app
     assert app.missing_apt_hint().startswith("sudo apt install")
 
 
-@pytest.mark.skipif(not shutil.which("dpkg-deb"), reason="dpkg-deb fehlt")
+@pytest.mark.skipif(not shutil.which("dpkg-deb"), reason="dpkg-deb missing")
 def test_deb_suggests(tmp_path):
     import build_deb
     deb = build_deb.build(tmp_path)
@@ -115,7 +115,7 @@ def test_exec_quote():
 
 
 def test_launcher_with_space(tmp_path):
-    """.run/install.sh-Installation in einen Pfad mit Leerzeichen: Starter und Startmenü funktionieren."""
+    """.run/install.sh installation into a path with spaces: launcher and start menu work."""
     import core
     home = tmp_path / "Max Müller"
     env_home = os.environ.get("HOME")
@@ -146,4 +146,4 @@ def test_run_help_and_no_leftovers(tmp_path):
     res = subprocess.run(["sh", str(run), "--unattended", "--no-deps", "--prefix", str(home / ".local")],
                          env=env, capture_output=True, text=True)
     assert res.returncode == 0, res.stdout + res.stderr
-    assert not list(tmpdir.iterdir()), "entpackter Installer bleibt in /tmp liegen"
+    assert not list(tmpdir.iterdir()), "extracted installer stays behind in /tmp"

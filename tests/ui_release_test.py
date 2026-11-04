@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""2.3.1 in der Oberfläche (offscreen, Demo-Modus):
+"""2.3.1 in the UI (offscreen, demo mode):
 
-* einmaliger Risiko-Hinweis „Ich habe verstanden“ vor der ersten Installation/Rettung (gespeichert, danach nie
-  wieder; ohne Zustimmung beginnt nichts),
-* neue Fenster aus Webseiten (createWindow): nur http/https/mailto gehen an den Standard-Browser,
-* Datenschutz: mit abgeschalteten automatischen Abfragen baut die App beim Start keine Verbindung ins Internet auf.
+* one-time risk notice "I understand" before the first installation/recovery (stored, never again
+  afterwards; without consent nothing starts),
+* new windows from web pages (createWindow): only http/https/mailto go to the default browser,
+* privacy: with automatic queries switched off the app makes no internet connection at start.
 
   QT_QPA_PLATFORM=offscreen python3 tests/ui_release_test.py
 """
@@ -30,7 +30,7 @@ os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu"
 errors: list[str] = []
 sys.excepthook = lambda t, v, tb: errors.append("".join(traceback.format_exception(t, v, tb)))
 
-# ---- jede Verbindung aus Python mitschreiben (vor allen App-Importen)
+# ---- record every connection from Python (before all app imports)
 connections: list[str] = []
 _orig_connect = socket.socket.connect
 
@@ -67,8 +67,8 @@ from fm1companion import config, firmware, risk  # noqa: E402
 
 s = config.load()
 s.user_root = str(home / "FM-1")
-s.check_on_start = False                       # automatische Abfrage 1 aus
-config.module("discover", {}).update({"auto_refresh": False, "thumbnails": False})   # automatische Abfrage 2 aus
+s.check_on_start = False                       # automatic query 1 off
+config.module("discover", {}).update({"auto_refresh": False, "thumbnails": False})   # automatic query 2 off
 config.save(s)
 
 boxes: list[str] = []
@@ -104,22 +104,22 @@ def until(cond, ms=10000):
 
 def flow():
     ctx = w.ctx
-    check(until(lambda: ctx.connected, 15000), "Demo-FM-1 verbunden")
-    wait(4000)                                 # Zeit für alles, was die App beim Start „von selbst“ tut
-    check(connections == [], f"Start ohne automatische Abfragen: keine Verbindung ins Internet ({connections[:5]})")
+    check(until(lambda: ctx.connected, 15000), "demo FM-1 connected")
+    wait(4000)                                 # time for everything the app does "by itself" at start
+    check(connections == [], f"start without automatic queries: no internet connection ({connections[:5]})")
 
-    # ---- Risiko-Hinweis
+    # ---- risk notice
     from fm1companion.ui import firmware_page, risk_dialog
     from fm1companion.ui.pages import recovery as recovery_mod
-    check(not risk.acknowledged() and config.load().risk_ack == 0, "frisch: Hinweis noch nicht bestätigt")
+    check(not risk.acknowledged() and config.load().risk_ack == 0, "fresh: notice not confirmed yet")
     dlg = risk_dialog.RiskDialog(w)
-    check(not dlg.ok.isEnabled() and dlg.check.text() == "Ich habe verstanden", "Weiter erst nach dem Häkchen")
+    check(not dlg.ok.isEnabled() and dlg.check.text() == "Ich habe verstanden", "Next only after the checkbox")
     dlg.check.setChecked(True)
-    check(dlg.ok.isEnabled(), "Häkchen gesetzt: Weiter aktiv")
+    check(dlg.ok.isEnabled(), "checkbox ticked: Next active")
     from PyQt6.QtWidgets import QLabel
     body = " ".join(lab.text() for lab in dlg.findChildren(QLabel))
     check("M-VAVE" in body and "eigenes Risiko" in body and "Backup" in body and "15 und 16" in body,
-          "Text: inoffiziell, Risiko, Backup, keine Gewährleistung (GPL §15/16)")
+          "text: unofficial, risk, backup, no warranty (GPL §15/16)")
     dlg.deleteLater()
 
     shown = []
@@ -138,8 +138,8 @@ def flow():
         spec = firmware.spec("melodee")
         rel = firmware.Release(tag="v1.6.0", prerelease=False)
         r = firmware_page.install_flow(w, ctx, spec, rel)
-        check(r is False and shown == ["risk"], f"abgelehnt: keine Installation, kein Plan ({shown})")
-        check(not risk.acknowledged(), "Ablehnung wird nicht gespeichert")
+        check(r is False and shown == ["risk"], f"declined: no installation, no plan ({shown})")
+        check(not risk.acknowledged(), "declining is not stored")
         rec = w.page("recovery")
         if rec is not None and hasattr(rec, "uboot_restore"):
             confirms = []
@@ -149,13 +149,13 @@ def flow():
                 rec.chk_sim.setChecked(True)
                 shown.clear()
                 check(rec.uboot_restore() is False and shown == ["risk"] and confirms == [],
-                      f"Rettung Stufe 2: erst der Hinweis, ohne Zustimmung keine weitere Frage ({shown}, {confirms})")
+                      f"recovery level 2: the notice first, without consent no further question ({shown}, {confirms})")
             finally:
                 recovery_mod.confirm = orig_confirm
         else:
-            check(False, "Rettungsseite gefunden")
+            check(False, "recovery page found")
 
-        # zustimmen: wird gespeichert, danach kommt der Hinweis nie wieder
+        # agree: it is stored, afterwards the notice never comes again
         def accept_risk(self):
             if isinstance(self, risk_dialog.RiskDialog):
                 shown.append("risk")
@@ -163,20 +163,20 @@ def flow():
                 return QDialog.DialogCode.Accepted
             if isinstance(self, firmware_page.PlanDialog):
                 shown.append("plan")
-                return QDialog.DialogCode.Rejected     # Plan abbrechen: es wird nichts installiert
+                return QDialog.DialogCode.Rejected     # cancel the plan: nothing is installed
             return orig_exec(self)
         QDialog.exec = accept_risk
         shown.clear()
         r = firmware_page.install_flow(w, ctx, spec, rel)
-        check(shown == ["risk", "plan"] and r is False, f"zugestimmt: danach der normale Plan-Dialog ({shown})")
-        check(risk.acknowledged() and config.load().risk_ack == risk.RISK_VERSION, "Zustimmung in config.json gespeichert")
+        check(shown == ["risk", "plan"] and r is False, f"agreed: then the normal plan dialog ({shown})")
+        check(risk.acknowledged() and config.load().risk_ack == risk.RISK_VERSION, "consent stored in config.json")
         shown.clear()
         firmware_page.install_flow(w, ctx, spec, rel)
-        check(shown == ["plan"], f"zweites Mal: kein Hinweis mehr, Bestätigungen bleiben ({shown})")
+        check(shown == ["plan"], f"second time: no notice any more, confirmations remain ({shown})")
     finally:
         QDialog.exec = orig_exec
 
-    # ---- N3: neue Fenster aus Webseiten
+    # ---- N3: new windows from web pages
     from fm1companion.ui import web
     opened = []
     orig_open = web.QDesktopServices.openUrl
@@ -189,10 +189,10 @@ def flow():
             tmp.urlChanged.emit(QUrl(u))
         app.processEvents()
         check(opened == ["https://example.org/x", "mailto:a@example.org", "http://example.org/"],
-              f"createWindow: nur http/https/mailto im Browser ({opened})")
+              f"createWindow: only http/https/mailto in the browser ({opened})")
     finally:
         web.QDesktopServices.openUrl = orig_open
-    check(connections == [], f"auch danach keine Verbindung ins Internet ({connections[:5]})")
+    check(connections == [], f"no internet connection afterwards either ({connections[:5]})")
     app.quit()
 
 
@@ -209,6 +209,6 @@ QTimer.singleShot(180000, app.quit)
 app.exec()
 fails = [r for r in results if not r[0]]
 for e in errors:
-    print("AUSNAHME:\n" + e)
-print(f"{len(results) - len(fails)}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+    print("EXCEPTION:\n" + e)
+print(f"{len(results) - len(fails)}/{len(results)} passed, {len(errors)} exceptions")
 sys.exit(1 if fails or errors else 0)

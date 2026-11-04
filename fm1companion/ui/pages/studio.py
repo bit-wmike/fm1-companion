@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Studio: der digitale Zwilling des FM-1 – vom Gerät holen, spielen, verfeinern, als WAV ausgeben, zurückschreiben.
+"""Studio: the digital twin of the FM-1 – fetch from the device, play, refine, render as WAV, write back.
 
-Die Arbeit macht ``window.studio`` (ui/studio_service.py) mit fm1companion/studio.py; diese Seite ist der
-Arbeitsplatz dafür: Quelle, Versionen, das spielbare FM-1 (Bildschirm, LEDs, Tasten, Regler), Projekte des
-Zwillings, WAV-Export (auch Einzelspuren), Studio-Stand mit Rückgängig, Zurückschreiben aufs FM-1.
+The work is done by ``window.studio`` (ui/studio_service.py) with fm1companion/studio.py; this page is the
+workspace for it: source, versions, the playable FM-1 (screen, LEDs, keys, knobs), projects of the
+twin, WAV export (also individual tracks), studio state with undo, writing back to the FM-1.
 """
 from __future__ import annotations
 
@@ -36,9 +36,9 @@ def _safe_name(s: str) -> str:
     return re.sub(r"[^\w\-]+", "_", s or "").strip("_") or "FM-1"
 
 
-# ============================================================================ Dialoge
+# ============================================================================ Dialogs
 class BackupPicker(QDialog):
-    """Backup aus der Backup-Liste wählen (alle Geräte), neueste zuerst; „Andere Datei …“ für alles andere."""
+    """Choose a backup from the backup list (all devices), newest first; “Other file …” for everything else."""
 
     def __init__(self, parent, root: Path):
         super().__init__(parent)
@@ -92,7 +92,7 @@ class BackupPicker(QDialog):
 
 
 class ExportDialog(QDialog):
-    """„Als WAV exportieren“: Länge, Einzelspuren, Format, Ordner."""
+    """“Export as WAV”: length, individual tracks, format, folder."""
 
     def __init__(self, parent, cfg: dict, name: str, loop_seconds: float | None):
         super().__init__(parent)
@@ -187,7 +187,7 @@ class ExportDialog(QDialog):
 
 
 class WriteBackDialog(QDialog):
-    """Bestätigung fürs Zurückschreiben – nennt das Gerät, Sicherheits-Backup, Optionen."""
+    """Confirmation for writing back – names the device, safety backup, options."""
 
     def __init__(self, parent, device: str, dev_version: str, twin_version: str, mismatch: str, rejected: list[int]):
         super().__init__(parent)
@@ -241,9 +241,9 @@ def _row(*widgets) -> QHBoxLayout:
     return h
 
 
-# ============================================================================ Seite
+# ============================================================================ Page
 class StudioPage(QWidget):
-    WIDE = 980                                   # darunter: Bedienfläche oben, Werkzeuge darunter
+    WIDE = 980                                   # below: control surface at the top, tools below it
 
     def __init__(self, ctx, window):
         super().__init__()
@@ -257,7 +257,7 @@ class StudioPage(QWidget):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.addWidget(heading(_("Studio"), _("The digital twin of your FM-1: the same firmware, the same sound – refine "
                                              "here, output as WAV and write back to the FM-1.")))
-        # ---- Quelle
+        # ---- Source
         self.b_fetch = button(_("Fetch from FM-1"), ("go-down", "document-import"), "primary", self.fetch_from_device)
         self.b_backup = button(_("Open from backup …"), ("document-open",), "", self.open_backup,
                                _("Load a saved backup into the twin (nothing changes on the FM-1)"))
@@ -275,7 +275,7 @@ class StudioPage(QWidget):
         self.banner.setProperty("role", "badge")
         lay.addWidget(self.banner)
 
-        # ---- Körper: Bedienfläche + Werkzeuge
+        # ---- Body: control surface + tools
         self.body = QBoxLayout(QBoxLayout.Direction.LeftToRight)
         self.body.setSpacing(12)
         lay.addLayout(self.body, 1)
@@ -305,7 +305,7 @@ class StudioPage(QWidget):
         side.setMinimumWidth(300)
         sl = QVBoxLayout(side)
         sl.setContentsMargins(0, 0, 0, 0)
-        # Wiedergabe + Projekte
+        # playback + projects
         g = QGroupBox(_("Playback and projects"))
         gl = QVBoxLayout(g)
         self.b_play = button(_("Play"), ("media-playback-start",), "primary", lambda: self.play("play"),
@@ -327,7 +327,7 @@ class StudioPage(QWidget):
         self.b_refresh = button("", ("view-refresh",), "flat", self.refresh_projects, _("Read the list again"))
         gl.addLayout(_row(self.b_load, self.b_refresh))
         sl.addWidget(g, 1)
-        # Ton und MIDI
+        # sound and MIDI
         g = QGroupBox(_("Sound and MIDI"))
         gl = QVBoxLayout(g)
         self.cb_audio = QCheckBox(_("Sound through the computer"))
@@ -360,7 +360,7 @@ class StudioPage(QWidget):
         gl.addWidget(self.b_export)
         gl.addWidget(self.export_state)
         sl.addWidget(g)
-        # Stand
+        # State
         g = QGroupBox(_("Studio state"))
         gl = QVBoxLayout(g)
         self.saved = label("", "muted")
@@ -372,12 +372,12 @@ class StudioPage(QWidget):
         gl.addWidget(self.b_snap)
         gl.addLayout(_row(self.b_undo, self.b_redo))
         sl.addWidget(g)
-        # Zurückschreiben
+        # write back
         self.b_write = button(_("Write back to the FM-1 …"), ("go-up", "document-export"), "danger", self.write_back)
         sl.addWidget(self.b_write)
         self.side = side
         from PyQt6.QtWidgets import QFrame, QScrollArea
-        self.side_scroll = QScrollArea()          # breit: Werkzeuge rollen neben der Bedienfläche
+        self.side_scroll = QScrollArea()          # wide: tools scroll next to the control surface
         self.side_scroll.setWidgetResizable(True)
         self.side_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.side_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -402,17 +402,17 @@ class StudioPage(QWidget):
         self.refresh_midi()
         self.refresh()
 
-    # ------------------------------------------------------------------ Aufbau/Größe
+    # ------------------------------------------------------------------ Layout/size
     def resizeEvent(self, e):
         super().resizeEvent(e)
         wide = self.width() >= self.WIDE
         d = QBoxLayout.Direction.LeftToRight if wide else QBoxLayout.Direction.TopToBottom
         if self.body.direction() != d:
             self.body.setDirection(d)
-        # schmal: Werkzeuge untereinander in voller Höhe (die ganze Seite rollt), breit: eigener Rollbereich
+        # narrow: tools stacked at full height (the whole page scrolls), wide: own scroll area
         self.side_scroll.setMinimumHeight(0 if wide else self.side.sizeHint().height())
         self.side_scroll.setMinimumWidth(self.side.minimumSizeHint().width() + (14 if wide else 0))
-        if self.view is not None:                 # ganze Bedienfläche sichtbar: Höhe aus der Breite
+        if self.view is not None:                 # whole control surface visible: height from the width
             w = self.panel_box.width() if wide else self.width()
             self.view.setMinimumHeight(max(200, min(560, int(w * 0.64) + 10)))
 
@@ -437,7 +437,7 @@ class StudioPage(QWidget):
                                 "padding:2em'><h3>" + html.escape(_("The twin is starting …")) + "</h3><p>"
                                 + html.escape(_("Or choose a source above.")) + "</p></body></html>")
 
-    # ------------------------------------------------------------------ Sichtbarkeit
+    # ------------------------------------------------------------------ Visibility
     def activate(self):
         if self.svc is None:
             return
@@ -460,15 +460,15 @@ class StudioPage(QWidget):
         self.timer.stop()
 
     def _auto_restore(self):
-        """Studio-Stand des aktiven Geräts (sonst des zuletzt benutzten) laden – sonst ein leerer Zwilling."""
+        """Load the studio state of the active device (otherwise of the last used one) – otherwise an empty twin."""
         try:
             self.svc.auto_start()
         except Exception as e:  # noqa: BLE001
             self.src.setText(_("The twin could not be started: {error}").format(error=html.escape(str(e))))
 
-    # ------------------------------------------------------------------ Anzeige
+    # ------------------------------------------------------------------ Display
     def _device_ok(self) -> tuple[bool, str]:
-        """darf vom aktiven Gerät gelesen/geschrieben werden? -> (ja, Grund wenn nein)"""
+        """may the active device be read/written? -> (yes, reason if no)"""
         c = self.ctx
         if c.is_virtual:
             return False, _("The twin itself is active right now – choose a real FM-1 in the device selection at the top.")
@@ -622,7 +622,7 @@ class StudioPage(QWidget):
         self.t_state.setText(_("Twin {state}").format(state=state))
         self._playing = bool(t.get("busy") or t.get("playing"))
 
-    # ------------------------------------------------------------------ Wiedergabe
+    # ------------------------------------------------------------------ Playback
     def play(self, how: str = "play"):
         if self.svc is None or not self.svc.running:
             return
@@ -651,7 +651,7 @@ class StudioPage(QWidget):
             self.play("play")
 
     def _key_action(self, action: str):
-        """Leertaste/Strg+Z – kommen je nach Fokus von Qt oder aus der Bedienfläche; nie doppelt ausführen."""
+        """Space/Ctrl+Z – come from Qt or from the control surface depending on focus; never execute twice."""
         last, t = self._last_key
         now = time.monotonic()
         if last == action and now - t < 0.25:
@@ -677,7 +677,7 @@ class StudioPage(QWidget):
                               2: _("Stop first, then load.")}.get(rc, _("Error {code}").format(code=rc)))
         self.refresh_projects()
 
-    # ------------------------------------------------------------------ Ton/MIDI
+    # ------------------------------------------------------------------ Sound/MIDI
     def _audio_toggled(self, on: bool):
         if self.svc is None:
             return
@@ -708,7 +708,7 @@ class StudioPage(QWidget):
         if errs:
             show_error(self, _("MIDI input"), "\n".join(errs))
 
-    # ------------------------------------------------------------------ Quellen
+    # ------------------------------------------------------------------ Sources
     def fetch_from_device(self):
         svc, c = self.svc, self.ctx
         ok, why = self._device_ok()
@@ -829,7 +829,7 @@ class StudioPage(QWidget):
             self.window.notify(_("Active device: the studio twin (virtual). Projects, compose, presets and backups now "
                                  "work with it – choose a real FM-1 at the top again to go back."), "info")
 
-    # ------------------------------------------------------------------ Stand
+    # ------------------------------------------------------------------ State
     def snap(self):
         if self.svc is not None and self.svc.snapshot(_("Intermediate state {time}").format(time=time.strftime("%H:%M:%S"))):
             self.svc.autosave(force=True)
@@ -849,7 +849,7 @@ class StudioPage(QWidget):
 
     # ------------------------------------------------------------------ Export
     def _running_music(self) -> tuple[str, float | None]:
-        """Name und Länge eines Pattern-Durchlaufs (s) der laufenden Musik des Zwillings."""
+        """Name and length of one pattern pass (s) of the twin's running music."""
         from ... import projectfmt as PF
         svc = self.svc
         name = ""
@@ -872,7 +872,7 @@ class StudioPage(QWidget):
                     p = t.patterns[t.active]
                     q = max(q, p.length * p.step_quarters)
             return name or "Studio", (q * 60.0 / max(20, prj.bpm)) if q else None
-        except Exception:  # noqa: BLE001 – nur Zugabe für Namen und Durchläufe
+        except Exception:  # noqa: BLE001 – only an extra for names and passes
             return name or "Studio", None
 
     def export_wav(self, params: dict | None = None):
@@ -941,7 +941,7 @@ class StudioPage(QWidget):
                            (_("Open folder"), lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(r.path.parent)))))
         return r
 
-    # ------------------------------------------------------------------ Zurückschreiben
+    # ------------------------------------------------------------------ Write back
     def write_back(self, confirmed: dict | None = None):
         svc, c = self.svc, self.ctx
         ok, why = self._device_ok()

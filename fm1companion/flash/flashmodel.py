@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Flash-Modell des FM-1: Pakete zerlegen, Flash-Layouts, Installationsketten nachspielen, Dumps prüfen.
+"""Flash model of the FM-1: unpack packages, flash layouts, replay installation chains, check dumps.
 
-Herkunft: Übergabe „fm1_flash_safety“ (fm1_flashmodel.py, 31.10.2026, für diese App geschrieben) – hier
-nachgeprüft, korrigiert und erweitert (Ressourcen, Bootkopf ab Werk, Dump-Prüfung in Alltagssprache).
-Paketformat nach M-VAVE fm1_open sdk/Package.cs (Apache-2.0) und MvaveFM1Unbricker (MIT), nachimplementiert –
-kein Code kopiert. Nur Standardbibliothek, liest nur Dateien und Bytes, spricht nie mit einem Gerät.
+Origin: hand-over "fm1_flash_safety" (fm1_flashmodel.py, 31.10.2026, written for this app) – re-checked,
+corrected and extended here (resources, factory boot header, dump check in plain language).
+Package format after M-VAVE fm1_open sdk/Package.cs (Apache-2.0) and MvaveFM1Unbricker (MIT), reimplemented –
+no code copied. Standard library only, only reads files and bytes, never talks to a device.
 
-Vertrauensstufen (docs/flash-protocol.md, Abschnitt „V16 und Flash-Sicherheit“):
-  [Paket]  aus Paketen/Quelltexten belegt      [Aufz.]  aus einer Aufzeichnung an echter Hardware
-  [Emu]    im Emulator beobachtet              [Annahme] nicht geprüft
+Confidence levels (docs/flash-protocol.md, section "V16 and flash safety"):
+  [Pkg]    backed by packages/sources          [Rec]    from a recording on real hardware
+  [Emu]    observed in the emulator            [Assumption] not verified
 """
 from __future__ import annotations
 
@@ -22,30 +22,30 @@ from pathlib import Path
 
 FLASH_SIZE = 0x100000
 SECTOR = 0x1000
-HEAD_END = 0x4000              # Bootkopf 0x0–0x3FFF (uboot, isd_config)
+HEAD_END = 0x4000              # boot header 0x0–0x3FFF (uboot, isd_config)
 APP_START = 0x4000
-V15_END = 0x93000              # Ende von flash.bin bei V15 und allen Community-Firmwares [Paket]
-V16_END = 0xA9000              # Ende von flash.bin bei V16 (app.bin, cfg_tool.bin, DX7.bin) [Paket; m-flasher
+V15_END = 0x93000              # End of flash.bin for V15 and all community firmwares [Pkg]
+V16_END = 0xA9000              # End of flash.bin for V16 (app.bin, cfg_tool.bin, DX7.bin) [Pkg; m-flasher
                                # docs/development.md, felucca-bsp tools/fm1_rescue.py]
 CHIP_KEY = 0x980F
 
-# Nie löschen, auch nicht beim Aufräumen (Unbricker-Regeln + fm1_open Package.cs) [Paket]
+# Never erase, not even when cleaning up (Unbricker rules + fm1_open Package.cs) [Pkg]
 NEVER_ERASE = [(0x00000, 0x04000, "Bootkopf"), (0xFF000, 0x100000, "key_mac / reservierter Rest")]
 
-# Bootkopf ab Werk: V13 (FM-1_009), V14 und V15 haben byte-gleich denselben Kopf [Paket: FM-1-RE-Pakete V13/V14, V15].
-# Melodees eigener Loader schreibt ihn nie [Paket: melodee loader/ldr_core.c]. Der Original-Loader hat ihn beim
-# aufgezeichneten V15-Update nicht angefragt [Aufz.] – dort waren Kopf im Gerät und im Paket aber gleich. Ob er bei V16
-# (anderer Kopf) den Kopf mitschreibt, ist OFFEN: Stufe 2 liest Kopf-Einträge (0x0, 0x4000) und plant danach
-# („verify_and_plan_update“), und Melodees ota.c geht davon aus, dass der Original-Loader „the whole flash.bin including
-# the head“ schreibt. Ein FM-1, das nie V16 hatte und nie im ROM-Bootmodus beschrieben wurde, trägt diesen Kopf.
+# Factory boot header: V13 (FM-1_009), V14 and V15 have the byte-identical header [Pkg: FM-1-RE packages V13/V14, V15].
+# Melodee's own loader never writes it [Pkg: melodee loader/ldr_core.c]. The stock loader did not request it during
+# the recorded V15 update [Rec] – but there the header in the device and in the package were the same. Whether it
+# also writes the header for V16 (different header) is OPEN: stage 2 reads header entries (0x0, 0x4000) and plans from them
+# ("verify_and_plan_update"), and Melodee's ota.c assumes that the stock loader writes "the whole flash.bin including
+# the head". An FM-1 that never had V16 and was never written in ROM boot mode carries this header.
 FACTORY_HEAD_SHA256 = "d9f43191777656de01c7bed4f9e9ba2e34e94832c5d2ed02c3fc7ab7a6d9bd67"
 
-# Loader-Staging der Felucca-Familie (Melodee rc.7 firmware/src/ota.c OTA_AREA, 5 × 4 KiB, Eintrag bei 0xE4F00) [Paket].
-# Wo die Original-Firmware V15/V16 ihren Loader in Stufe 1 ablegt, ist offen (FM-1-RE: „VM/loader flash area“).
+# Loader staging of the Felucca family (Melodee rc.7 firmware/src/ota.c OTA_AREA, 5 × 4 KiB, entry at 0xE4F00) [Pkg].
+# Where the stock firmware V15/V16 puts its loader in stage 1 is open (FM-1-RE: "VM/loader flash area").
 STAGING = (0xE0000, 0xE5000)
 
-# Melodee ab 1.6: Ressourcenbereich (Schrift, Werkssounds, Funk-Programm) [Paket: melodee firmware/src/res.c]
-RES_BASE, RES_END, RES_MAGIC = 0xCB000, 0xE0000, 0x3153524D      # „MRS1“
+# Melodee 1.6+: resource area (font, factory sounds, radio program) [Pkg: melodee firmware/src/res.c]
+RES_BASE, RES_END, RES_MAGIC = 0xCB000, 0xE0000, 0x3153524D      # "MRS1"
 
 
 class PackageError(Exception):
@@ -56,7 +56,7 @@ class DumpError(Exception):
     pass
 
 
-# ----------------------------------------------------------------------------- Bausteine
+# ----------------------------------------------------------------------------- building blocks
 def crc16(data, c=0):
     for b in data:
         c ^= b << 8
@@ -67,7 +67,7 @@ def crc16(data, c=0):
 
 
 def cipher(buf, state=0xFFFF):
-    """JieLi-Stromchiffre, Polynom 0x1021, ihr eigenes Inverses"""
+    """JieLi stream cipher, polynomial 0x1021, its own inverse"""
     out = bytearray(buf)
     for i in range(len(out)):
         out[i] ^= state & 0xFF
@@ -92,12 +92,12 @@ def hx(a: int) -> str:
 
 
 def ranges_text(ranges) -> str:
-    """[(start, länge)] -> „0x93000–0xA8FFF, …“"""
+    """[(start, length)] -> '0x93000–0xA8FFF, …'"""
     return ", ".join(f"{hx(a)}–{hx(a + n - 1)}" for a, n in ranges) or "–"
 
 
 def merge_sectors(addrs) -> list[tuple[int, int]]:
-    """Sektoradressen -> [(start, länge)] zusammenhängender Bereiche"""
+    """sector addresses -> [(start, length)] of contiguous ranges"""
     out: list[list[int]] = []
     for a in sorted(addrs):
         if out and out[-1][0] + out[-1][1] == a:
@@ -107,15 +107,15 @@ def merge_sectors(addrs) -> list[tuple[int, int]]:
     return [(a, n) for a, n in out]
 
 
-# ----------------------------------------------------------------------------- Paket
+# ----------------------------------------------------------------------------- package
 @dataclass
 class Package:
     path: str
     file_sha256: str
-    identity: str                 # „FM-1_015“, „FM-1_016“, „FM-1_91060“ … (aus den Marker-Bytes, nie aus dem Namen)
+    identity: str                 # "FM-1_015", "FM-1_016", "FM-1_91060" … (from the marker bytes, never from the name)
     entries: list
-    flash: bytes                  # flash.bin: Flash-Abbild ab Adresse 0
-    layout: dict = field(default_factory=dict)   # Bereich -> (start, ende) absolut, aus dem Verzeichnis des Pakets
+    flash: bytes                  # flash.bin: flash image from address 0
+    layout: dict = field(default_factory=dict)   # area -> (start, end) absolute, from the package's directory
     head_sha256: str = ""
     label: str = ""
 
@@ -191,7 +191,7 @@ def _records(buf, base, count):
 
 
 def _layout(flash):
-    """Bereiche aus dem (entschlüsselten) Verzeichnis des App-Bereichs [Paket]"""
+    """Areas from the (decrypted) directory of the app area [Pkg]"""
     lay = {"app": (APP_START, len(flash))}
     try:
         area = _decrypt_area(flash, APP_START, min(0x400, len(flash) - APP_START))
@@ -200,7 +200,7 @@ def _layout(flash):
             if r["name"] in ("VM", "BTIF", "USR", "SEQ64") and r["addr"] != 0xFFFFFFFF:
                 lay[r["name"]] = (r["addr"], r["addr"] + r["size"])
         head = next((r for r in recs if r["name"] == "app_area_hea"), None)
-        if head and head["size"] < len(flash):   # USER-Verzeichnis direkt hinter den Nutzdaten (V16: 0xED000)
+        if head and head["size"] < len(flash):   # USER directory right after the payload (V16: 0xED000)
             whole = _decrypt_area(flash, APP_START, min(head["size"] + 0x80, len(flash) - APP_START))
             for r in _records(whole, head["size"], 2):
                 if r["name"] == "USER":
@@ -211,20 +211,20 @@ def _layout(flash):
 
 
 def classify_family(pkg) -> str:
-    """„v15-layout“ (Original-V15 und alle Felucca-Community-Firmwares) oder „v16-layout“ [Paket]"""
+    """'v15-layout' (stock V15 and all Felucca community firmwares) or 'v16-layout' [Pkg]"""
     lay = getattr(pkg, "layout", {}) or {}
     if "SEQ64" in lay or pkg.write_end > V15_END:
         return "v16-layout"
     return "v15-layout"
 
 
-# ----------------------------------------------------------------------------- bekannte Pakete (ohne Paketdateien)
+# ----------------------------------------------------------------------------- known packages (without package files)
 DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "known_packages.json"
 
 
 @dataclass
 class KnownRef:
-    """ein bekanntes Paket als Steckbrief: Prüfsummen und Layout, ohne die Paketdatei selbst"""
+    """a known package as a profile: checksums and layout, without the package file itself"""
     label: str
     name: str
     identity: str
@@ -234,9 +234,9 @@ class KnownRef:
     app_sha256: str
     family: str
     layout: dict = field(default_factory=dict)
-    app_prefix: dict = field(default_factory=dict)     # {ende: sha256(flash[0x4000:ende])} – für „abgeschnitten“
-    sectors: dict = field(default_factory=dict)        # {adresse: sha256 des Sektors} – für Reste-Erkennung
-    blocks: dict = field(default_factory=dict)         # {adresse: sha256[:16] je 512-Byte-Block} – halbe Sektoren
+    app_prefix: dict = field(default_factory=dict)     # {end: sha256(flash[0x4000:end])} – for "truncated"
+    sectors: dict = field(default_factory=dict)        # {address: sha256 of the sector} – for leftover detection
+    blocks: dict = field(default_factory=dict)         # {address: sha256[:16] per 512-byte block} – half sectors
     resources: dict = field(default_factory=dict)      # Melodee: {"length": n, "crc": n, "sha256": …}
     version: str = ""
     note: str = ""
@@ -287,9 +287,9 @@ def ref_from_package(pkg: Package, label: str = "", name: str = "") -> KnownRef:
                     app_sha256=pkg.app_sha256, family=classify_family(pkg), layout=dict(pkg.layout))
 
 
-# ----------------------------------------------------------------------------- Flash-Modell
+# ----------------------------------------------------------------------------- flash model
 class Flash:
-    """1 MiB NOR-Flash mit Herkunft je 4-KiB-Sektor. Schreiben löscht vorher die berührten Sektoren."""
+    """1 MiB NOR flash with origin per 4 KiB sector. Writing first erases the affected sectors."""
 
     def __init__(self, data=None):
         self.data = bytearray(b"\xff" * FLASH_SIZE)
@@ -318,17 +318,17 @@ class Flash:
             self.prov[s] = "erased"
 
     def install(self, pkg, mode="full", stop_at=None, tag=None):
-        """Schreiber im ROM-Bootmodus: mode „full“ = flash.bin ab 0, „from4000“ = ab 0x4000 (Unbricker).
-        stop_at: Adresse, an der das Schreiben endet (Abbruch oder ein Werkzeug, das nur bis 0x93000 schreibt)."""
+        """Writer in ROM boot mode: mode "full" = flash.bin from 0, "from4000" = from 0x4000 (Unbricker).
+        stop_at: address at which writing ends (abort, or a tool that only writes up to 0x93000)."""
         lo = 0 if mode == "full" else APP_START
         hi = len(pkg.flash) if stop_at is None else min(stop_at, len(pkg.flash))
         if hi > lo:
             self.write(lo, pkg.flash[lo:hi], tag or pkg.identity)
 
 
-# Was eine Firmware beim ersten Start selbst löscht/schreibt – im Emulator beobachtet (fm1-emu, 2,5 s) [Emu].
-# Gleiches Verhalten auf leerem und auf fremd beschriebenem Flash; Flash mit gültigen Daten derselben Firmware wurde
-# nicht getestet. Melodee 1.6.0-rc.7 lag dem Emulator nicht vor (nur 1.5.1).
+# What a firmware erases/writes by itself on first boot – observed in the emulator (fm1-emu, 2.5 s) [Emu].
+# Same behaviour on blank flash and on flash written by other firmware; flash with valid data of the same firmware was
+# not tested. Melodee 1.6.0-rc.7 was not available to the emulator (only 1.5.1).
 RUNTIME = {
     "FM-1_016": {"erase": [(0xBA000, 0xCA000), (0xDA000, 0xE3000), (0xED000, 0xF0000)],
                  "program": [(0xBA000, 0xBB000), (0xDA000, 0xE3000), (0xEC000, 0xF0000)]},
@@ -339,7 +339,7 @@ RUNTIME = {
 
 
 def boot(flash, pkg):
-    """beobachtete Erststart-Formatierung von `pkg` anwenden (ohne Eintrag: nichts)"""
+    """apply the observed first-boot formatting of `pkg` (no entry: nothing)"""
     rt = RUNTIME.get(pkg.identity)
     if not rt:
         return
@@ -351,15 +351,15 @@ def boot(flash, pkg):
 
 
 def install_ota(flash, pkg, progress=1.0, staging=False):
-    """normaler Update-Weg (Gerät fragt, Rechner liefert) wie an echter Hardware aufgezeichnet [Aufz.: AL-255/FM-1-RE,
-    04.09.2026, V15-Paket]: Stufe 2 fragt genau flash.bin[0x4000:Ende) in 512-Byte-Blöcken absteigend an; der Bootkopf
-    wird nur gelesen (er war im Gerät und im Paket gleich – ob ein anderer Kopf wie bei V16 geschrieben würde, ist
-    offen; das Modell schreibt ihn nicht), alles hinter flash.bin nie angefragt. Der Loader ota.bin ist in V13–V16 byte-gleich [Paket], er
-    nimmt Anfang/Ende aus dem Paket – für V16 also 0x4000–0xA8FFF [abgeleitet].
-    [Annahme] Der Loader löscht den ganzen Zielbereich zuerst (Listing: prepare_flash_regions vor
-    write_update_regions; FM-1-RE führt die Löschwirkung als unbestätigt) und schreibt dann von oben nach unten.
-    progress: Anteil der geschriebenen Blöcke (1.0 = komplett). staging: True = Loader-Staging der laufenden
-    Felucca-Firmware bei 0xE0000–0xE4FFF mitmodellieren (Melodee-Quelle [Paket]; bei Original-Firmware offen)."""
+    """normal update path (device asks, computer delivers) as recorded on real hardware [Rec: AL-255/FM-1-RE,
+    04.09.2026, V15 package]: stage 2 requests exactly flash.bin[0x4000:end) in 512-byte blocks, descending; the boot header
+    is only read (it was the same in the device and in the package – whether a different header as with V16 would be
+    written is open; the model does not write it), nothing beyond flash.bin is ever requested. The loader ota.bin is byte-identical in V13–V16 [Pkg], it
+    takes start/end from the package – so for V16 0x4000–0xA8FFF [derived].
+    [Assumption] The loader erases the whole target area first (listing: prepare_flash_regions before
+    write_update_regions; FM-1-RE lists the erase effect as unconfirmed) and then writes from top to bottom.
+    progress: share of blocks written (1.0 = complete). staging: True = also model the loader staging of the running
+    Felucca firmware at 0xE0000–0xE4FFF (Melodee source [Pkg]; open for stock firmware)."""
     if staging:
         lo, hi = staging if isinstance(staging, tuple) else STAGING
         flash.write(lo, hashlib.sha256(b"staging").digest() * ((hi - lo) // 32), "staging")
@@ -374,10 +374,10 @@ def install_ota(flash, pkg, progress=1.0, staging=False):
 
 
 def installed_state(pkg, user_data=True, head: bytes | None = None):
-    """ein benutztes FM-1, auf dem `pkg` läuft: Pseudo-Nutzerdaten in den Datenbereichen.
-    head: Bootkopf des Geräts (Standard: der des Pakets). Echte Geräte ohne V16-Vergangenheit tragen den Werks-Kopf
-    (FACTORY_HEAD_SHA256), weil Melodees Loader ihn nie schreibt und der Original-Loader ihn bei gleichem Kopf nicht
-    anfragt – für Community-Firmware also V15s Kopf."""
+    """a used FM-1 running `pkg`: pseudo user data in the data areas.
+    head: the device's boot header (default: the package's). Real devices without a V16 history carry the factory header
+    (FACTORY_HEAD_SHA256), because Melodee's loader never writes it and the stock loader does not request it when the
+    header is the same – so for community firmware, V15's header."""
     f = Flash()
     f.write(0, pkg.flash, pkg.identity)
     if head is not None:
@@ -391,7 +391,7 @@ def installed_state(pkg, user_data=True, head: bytes | None = None):
             regions.append(lay["VM"])
         if "USR" in lay:
             regions.append(lay["USR"])
-        regions.append((0xFC000, 0xFF000))       # Globals der Felucca-Familie
+        regions.append((0xFC000, 0xFF000))       # globals of the Felucca family
         for lo, hi in regions:
             for s in range(lo // SECTOR, hi // SECTOR):
                 blk = b"".join(hashlib.sha256(b"user%d-%d" % (s, i)).digest() for i in range(SECTOR // 32))
@@ -400,9 +400,9 @@ def installed_state(pkg, user_data=True, head: bytes | None = None):
     return f
 
 
-# ----------------------------------------------------------------------------- Auswertung
+# ----------------------------------------------------------------------------- evaluation
 def data_regions(pkg):
-    """Bereiche, die die Firmware als eigene Daten (nicht Code) benutzt"""
+    """Areas the firmware uses as its own data (not code)"""
     lay, out = pkg.layout, []
     for k in ("VM", "SEQ64", "BTIF", "USR", "USER"):
         if k in lay:
@@ -412,7 +412,7 @@ def data_regions(pkg):
     return out
 
 
-BLOCK = 512                    # Anfragegröße des Update-Loaders: ein abgebrochener Update endet an einer Blockgrenze
+BLOCK = 512                    # request size of the update loader: an aborted update ends on a block boundary
 
 
 def block_hash(b) -> str:
@@ -420,8 +420,8 @@ def block_hash(b) -> str:
 
 
 def _sector_blocks_match(blk, addr, blocks) -> bool:
-    """halb geschriebener Sektor ohne Paketdatei: jeder 512-Byte-Block ist leer (0xFF) oder gleicht dem Block des
-    Pakets (Steckbrief „blocks“), mindestens einer gleicht"""
+    """half-written sector without the package file: every 512-byte block is blank (0xFF) or equals the package's
+    block (profile "blocks"), at least one is equal"""
     hit = False
     for o in range(0, SECTOR, BLOCK):
         b = blk[o:o + BLOCK]
@@ -434,14 +434,14 @@ def _sector_blocks_match(blk, addr, blocks) -> bool:
 
 
 def _sector_matches(blk, kb):
-    """True, wenn jedes Nicht-0xFF-Byte von blk dem Byte in kb gleicht (und blk nicht fast leer ist): genaue Kopien
-    und halb geschriebene Sektoren eines abgebrochenen Updates"""
+    """True if every non-0xFF byte of blk equals the byte in kb (and blk is not almost blank): exact copies
+    and half-written sectors of an aborted update"""
     nz = [i for i, b in enumerate(blk) if b != 0xFF]
     return len(nz) >= 64 and all(blk[i] == kb[i] for i in nz)
 
 
 def foreign_residue(flash, final_pkg, known):
-    """Sektoren in den Datenbereichen der Firmware, die Bytes eines anderen Pakets tragen (ganz oder teilweise)"""
+    """Sectors in the firmware's data areas that carry bytes of another package (fully or partially)"""
     res = []
     data = flash.data if isinstance(flash, Flash) else flash
     for name, lo, hi in data_regions(final_pkg):
@@ -470,7 +470,7 @@ def head_owner(flash, known):
 
 
 def replay(start, steps, final_pkg, known):
-    """Schritte: („ota“, pkg, progress[, staging]) | („boot“, pkg) | (pkg, „full“|„from4000“, stop_at)"""
+    """Steps: ("ota", pkg, progress[, staging]) | ("boot", pkg) | (pkg, "full"|"from4000", stop_at)"""
     f = start.copy()
     log = []
     for step in steps:
@@ -496,7 +496,7 @@ def replay(start, steps, final_pkg, known):
 
 
 def cleanup_plan(residue):
-    """Reste-Sektoren zu Löschbereichen zusammenfassen; wirft, wenn ein NEVER_ERASE-Bereich berührt würde"""
+    """merge leftover sectors into erase ranges; raises if a NEVER_ERASE area would be touched"""
     safe = []
     for lo, n in merge_sectors(r["sector"] for r in residue):
         hi = lo + n
@@ -507,19 +507,19 @@ def cleanup_plan(residue):
     return safe
 
 
-# ----------------------------------------------------------------------------- Vorprüfung
+# ----------------------------------------------------------------------------- pre-check
 NAME_VERSION_RE = re.compile(r"(?:^|[^a-z0-9])v(?:ersion)?[_ -]?(\d{1,3})(?![0-9])", re.I)
 
 
 def name_version(filename: str) -> int | None:
-    """welche Original-Version der Dateiname behauptet („FM-1_v15.fwsc“ -> 15), sonst None"""
+    """which stock version the file name claims ("FM-1_v15.fwsc" -> 15), otherwise None"""
     m = NAME_VERSION_RE.search(Path(filename or "").name)
     return int(m.group(1)) if m else None
 
 
 def preflight(target, current=None, filename=None, known_hashes=None, have_backup=False, mode="stock-ota"):
-    """-> [(stufe, code, text)], stufe „block“ | „warn“ | „info“. Codes wie INTEGRATION.md §5.
-    mode: „stock-ota“ (normaler Update-Weg), „from4000“ (Unbricker: schreibt nur 0x4000–0x92FFF), „full“."""
+    """-> [(level, code, text)], level "block" | "warn" | "info". Codes as in INTEGRATION.md §5.
+    mode: "stock-ota" (normal update path), "from4000" (Unbricker: only writes 0x4000–0x92FFF), "full"."""
     out = []
     if filename:
         v = name_version(filename)
@@ -548,8 +548,8 @@ def preflight(target, current=None, filename=None, known_hashes=None, have_backu
 
 
 def loss_ranges(current, target) -> list[tuple[str, int, int]]:
-    """was ein Wechsel current -> target überschreibt bzw. was die neue Firmware beim ersten Start formatiert
-    -> [(art, start, ende)]  art „install“ [Paket + Aufz.] | „erststart“ [Emu]"""
+    """what a switch current -> target overwrites, or what the new firmware formats on first boot
+    -> [(kind, start, end)]  kind "install" [Pkg + Rec] | "erststart" (first boot) [Emu]"""
     out = []
     if target.write_end > current.write_end:
         out.append(("install", current.write_end, target.write_end))
@@ -561,8 +561,8 @@ def loss_ranges(current, target) -> list[tuple[str, int, int]]:
 
 
 def verify_dump(dump, pkg, mode="stock-ota"):
-    """Dump mit dem vergleichen, was geschrieben sein sollte. Der normale Update-Weg schreibt den Bootkopf
-    (jedenfalls bei gleichem Kopf) nicht, darum zählt bei „stock-ota“ und „from4000“ erst ab 0x4000. -> (ok, erste abweichende Sektoradresse, Anzahl)"""
+    """Compare a dump with what should have been written. The normal update path does not write the boot header
+    (at least when the header is the same), so for "stock-ota" and "from4000" only from 0x4000 counts. -> (ok, first differing sector address, count)"""
     lo = 0 if mode == "full" else APP_START
     exp = pkg.flash[lo:]
     got = dump[lo:lo + len(exp)]
@@ -572,9 +572,9 @@ def verify_dump(dump, pkg, mode="stock-ota"):
     return False, lo + bad[0], len(bad)
 
 
-# ----------------------------------------------------------------------------- Melodee-Ressourcen
+# ----------------------------------------------------------------------------- Melodee resources
 def parse_resource_status(b) -> dict:
-    """Antwort auf Editor-Befehl 82 mit Argument 0 (nur lesen; melodee tools/fm1_resources.py status)"""
+    """Reply to editor command 82 with argument 0 (read only; melodee tools/fm1_resources.py status)"""
     b = list(b or [])
     if len(b) != 12:
         raise ValueError("keine Ressourcen-Antwort")
@@ -583,7 +583,7 @@ def parse_resource_status(b) -> dict:
 
 
 def resource_header(dump: bytes) -> dict | None:
-    """Ressourcen-Kopf im Dump (0xCB000) prüfen: Magic, Kopf-CRC, Nutzdaten-CRC [Paket: res.c]"""
+    """Check the resource header in the dump (0xCB000): magic, header CRC, payload CRC [Pkg: res.c]"""
     h = dump[RES_BASE:RES_BASE + 32]
     if len(h) < 32:
         return None
@@ -597,7 +597,7 @@ def resource_header(dump: bytes) -> dict | None:
     return {"present": True, "length": length, "crc": crc, "head_ok": ok_head, "payload_ok": payload_ok}
 
 
-# ----------------------------------------------------------------------------- Prüfberichte in Alltagssprache
+# ----------------------------------------------------------------------------- check reports in plain language
 GREEN, YELLOW, RED = "gruen", "gelb", "rot"
 LEVEL_TEXT = {GREEN: "Sauber", YELLOW: "Mit Hinweisen", RED: "Nicht in Ordnung"}
 
@@ -606,12 +606,12 @@ LEVEL_TEXT = {GREEN: "Sauber", YELLOW: "Mit Hinweisen", RED: "Nicht in Ordnung"}
 class Report:
     level: str = GREEN
     title: str = ""
-    findings: list = field(default_factory=list)      # [(stufe, satz)]
-    details: list = field(default_factory=list)       # technische Zeilen (Adressen, Prüfsummen)
-    not_covered: list = field(default_factory=list)   # was diese Prüfung NICHT abdeckt
-    firmware: str = ""                                # erkannte Firmware (Klartext)
-    residue: list = field(default_factory=list)       # [(start, länge)]
-    compared: list = field(default_factory=list)      # womit verglichen wurde
+    findings: list = field(default_factory=list)      # [(level, sentence)]
+    details: list = field(default_factory=list)       # technical lines (addresses, checksums)
+    not_covered: list = field(default_factory=list)   # what this check does NOT cover
+    firmware: str = ""                                # detected firmware (plain text)
+    residue: list = field(default_factory=list)       # [(start, length)]
+    compared: list = field(default_factory=list)      # what was compared against
 
     def add(self, level: str, text: str):
         self.findings.append((level, text))
@@ -621,7 +621,7 @@ class Report:
 
 
 def quick_check(identity: str, version: str, res_status: dict | None, refs=None, res_error: str = "") -> Report:
-    """„Ist mein FM-1 sauber?“ ohne Dump: nur Kennung, Version und (bei Melodee) Ressourcen-Status (Befehl 82)."""
+    """'Is my FM-1 clean?' without a dump: only identity, version and (for Melodee) resource status (command 82)."""
     refs = load_known() if refs is None else refs
     r = Report(title="Schnellprüfung (nur lesen)")
     ref = next((k for k in refs if k.identity == identity and k.version and k.version in (version or "")), None) \
@@ -639,8 +639,8 @@ def quick_check(identity: str, version: str, res_status: dict | None, refs=None,
         want = ref.resources if ref is not None else {}
         if res_status.get("installed"):
             if want and (res_status.get("length"), res_status.get("crc")) != (want.get("length"), want.get("crc")):
-                # Befehl 82 meldet Länge/CRC, die DIESER Build erwartet (res_want), nicht die gespeicherten Werte:
-                # „installiert“ heißt also immer „passt zur laufenden Firmware“ – abweichend ist die Firmware selbst
+                # Command 82 reports the length/CRC that THIS build expects (res_want), not the stored values:
+                # "installed" therefore always means "matches the running firmware" – if it differs, it is the firmware itself
                 r.add(YELLOW, "Die Ressourcen (Werkssounds, Schrift, Bluetooth-Programm) sind vollständig und passen "
                               "zur laufenden Firmware. Die Firmware selbst ist aber ein anderer Build als der, den die "
                               "App unter dieser Version kennt – die App kann sie darum nicht gegenprüfen.")
@@ -673,10 +673,10 @@ def _app_match(dump: bytes, refs) -> KnownRef | None:
     return None
 
 
-# Werks-Abbilder: App-Bereich 0x4000–0x92FFF von Geräten ab Werk, die FM-1_015 melden, aber NICHT dem veröffentlichten
-# V15-Paket (6edf3c37…) gleichen. Quelle: maxfridbe/mvave-fm1 skills/mvave-fm1-firmware/SKILL.md §10 (ein Gerät,
-# gemessen 22.10.2026); MvaveFM1Unbricker repair-settings: „factory units carry a firmware image that differs from the
-# public package“. Kein Paket dazu bekannt – darum nur als Prüfsumme des Bereichs.
+# Factory images: app area 0x4000–0x92FFF of factory devices that report FM-1_015 but do NOT match the published
+# V15 package (6edf3c37…). Source: maxfridbe/mvave-fm1 skills/mvave-fm1-firmware/SKILL.md §10 (one device,
+# measured 22.10.2026); MvaveFM1Unbricker repair-settings: "factory units carry a firmware image that differs from the
+# public package". No package known for it – hence only as a checksum of the area.
 FACTORY_APPS = {
     "8c1d13a5934eb3c70a5fec644577618a31b2a96c8748a7b692c506a86505dbb1":
         "Werks-Abbild der Original-Firmware V15 (FM-1_015, an einem Gerät gemessen)",
@@ -691,7 +691,7 @@ for _i in range(256):
 
 
 def _crc16_fast(data, c=0):
-    """wie crc16 (CCITT, MSB zuerst), mit Tabelle – für ganze Firmware-Dateien"""
+    """like crc16 (CCITT, MSB first), table-driven – for whole firmware files"""
     tab = _CRC_TAB
     for b in data:
         c = ((c << 8) & 0xFFFF) ^ tab[(c >> 8) ^ b]
@@ -699,13 +699,13 @@ def _crc16_fast(data, c=0):
 
 
 def app_directory(flash: bytes) -> dict:
-    """Dateitabelle des App-Bereichs ab 0x4000 prüfen – die Struktur, die der Bootlader selbst liest [Paket].
-    Jeder 32-Byte-Eintrag: CRC-16 des Eintrags (Bytes 2–31), CRC-16 der Datei, Adresse, Länge, Attribut, Name.
-    Erster Eintrag „app_area_head“ (Länge = Ende der Dateien relativ zu 0x4000), danach die Dateien (Attribut 0x82:
-    app.bin, cfg_tool.bin, bei V16 auch DX7.bin – ihre Daten-CRC gilt für den entschlüsselten Bereich) und die
-    Flash-Bereiche VM, PRCT (geschützter Bereich ab 0 = Ende der Firmware), BTIF, USR, SEQ64.
-    Geprüft an V13, V14, V15, SLOOP, Karma, BBL und den hd-fm1-Testpaketen: alle Kopf- und Daten-CRCs stimmen.
-    -> {"found", "ok", "errors", "files", "prct_end", "vm", "seq64", "files_end"}. Wirft nie."""
+    """Check the file table of the app area at 0x4000 – the structure the bootloader itself reads [Pkg].
+    Each 32-byte entry: CRC-16 of the entry (bytes 2–31), CRC-16 of the file, address, length, attribute, name.
+    First entry "app_area_head" (length = end of the files relative to 0x4000), then the files (attribute 0x82:
+    app.bin, cfg_tool.bin, for V16 also DX7.bin – their data CRC applies to the decrypted area) and the
+    flash areas VM, PRCT (protected area from 0 = end of the firmware), BTIF, USR, SEQ64.
+    Checked against V13, V14, V15, SLOOP, Karma, BBL and the hd-fm1 test packages: all header and data CRCs match.
+    -> {"found", "ok", "errors", "files", "prct_end", "vm", "seq64", "files_end"}. Never raises."""
     out = {"found": False, "ok": False, "errors": [], "files": [], "prct_end": None, "vm": None, "seq64": False,
            "files_end": None}
     try:
@@ -722,7 +722,7 @@ def app_directory(flash: bytes) -> dict:
                 if i == 0:
                     out["errors"].append("kein gültiger Eintrag „app_area_head“ bei 0x04000")
                     return out
-                break                                   # Ende der Tabelle (danach steht Code)
+                break                                   # end of the table (code follows)
             ents.append({"name": r[16:32].split(b"\0")[0].decode("latin1"), "dcrc": _u16(r, 2),
                          "addr": _u32(r, 4), "size": _u32(r, 8), "attr": r[12]})
         if not ents or not ents[0]["name"].startswith("app_area_hea"):
@@ -765,9 +765,9 @@ def app_directory(flash: bytes) -> dict:
 
 
 def directory_layout(d: dict) -> str:
-    """„v15-layout“ nur, wenn die geprüfte Tabelle es selbst sagt: Firmware (PRCT) endet genau bei 0x93000, die
-    Einstellungen (VM) beginnen dort, kein SEQ64 und alle Dateien davor. „v16-layout“, wenn die Firmware über 0x93000
-    hinausreicht (bis 0xA9000 oder weiter) oder SEQ64 hat. Sonst (Tabelle fehlt/beschädigt, V13/V14 mit 0x94000 …) „“ = unbekannt."""
+    """'v15-layout' only if the verified table says so itself: firmware (PRCT) ends exactly at 0x93000, the
+    settings (VM) start there, no SEQ64 and all files before it. "v16-layout" if the firmware extends beyond 0x93000
+    (to 0xA9000 or further) or has SEQ64. Otherwise (table missing/damaged, V13/V14 with 0x94000 …) "" = unknown."""
     if not d.get("ok"):
         return ""
     if d["seq64"] or (d["prct_end"] or 0) >= V16_END:
@@ -778,9 +778,9 @@ def directory_layout(d: dict) -> str:
 
 
 def check_dump(dump: bytes, refs=None, packages=(), expected: str = "", factory_heads=None) -> Report:
-    """1-MiB-Dump gegen bekannte Pakete prüfen: Bootkopf, App-Bereich, abgeschnittenes V16, Reste fremder Firmware,
-    Melodee-Ressourcen. refs: Steckbriefe (known_packages.json), packages: vorliegende Pakete (für halbe Sektoren),
-    expected: Kennung, die laufen sollte (z. B. „FM-1_91060“). factory_heads: Bootköpfe ab Werk (Demo: eigener)."""
+    """Check a 1 MiB dump against known packages: boot header, app area, truncated V16, leftovers of other firmware,
+    Melodee resources. refs: profiles (known_packages.json), packages: available packages (for half sectors),
+    expected: identity that should be running (e.g. "FM-1_91060"). factory_heads: factory boot headers (demo: its own)."""
     if len(dump) != FLASH_SIZE:
         raise DumpError(f"Die Datei ist {len(dump):,} Bytes groß – ein vollständiger FM-1-Dump hat genau 1 MiB "
                         f"({FLASH_SIZE:,} Bytes).".replace(",", "."))
@@ -794,7 +794,7 @@ def check_dump(dump: bytes, refs=None, packages=(), expected: str = "", factory_
         r.add(RED, "Der Dump ist komplett leer – so sieht kein laufendes FM-1 aus. Wahrscheinlich ist beim Lesen etwas "
                    "schiefgegangen.")
         return r
-    # Bootkopf
+    # boot header
     heads = known_heads()
     hs = sha(dump[:HEAD_END])
     head_name = heads.get(hs) or next((f"Bootkopf aus {k.name}" for k in refs if k.head_sha256 == hs), "")
@@ -811,7 +811,7 @@ def check_dump(dump: bytes, refs=None, packages=(), expected: str = "", factory_
     else:
         r.add(YELLOW, "Den Bootkopf kennt die App nicht (z. B. nach m-bootloader). Die Firmware kann trotzdem laufen; "
                       "die Rückkehr zur Original-Firmware kann dann „FAILED -5“ melden.")
-    # App-Bereich
+    # app area
     app = _app_match(dump, refs)
     dlay = ""
     pre = sha(dump[APP_START:V15_END])
@@ -834,9 +834,9 @@ def check_dump(dump: bytes, refs=None, packages=(), expected: str = "", factory_
         else:
             r.add(GREEN, f"Die Firmware im Flash ist byte-genau {app.name}.")
     else:
-        # Unbekannter Inhalt: erst die Dateitabelle der Firmware selbst prüfen (Kopf- und Daten-CRCs). Werksgeräte
-        # tragen ein anderes Abbild als das veröffentlichte V15-Paket – „beschädigt“ heißt es nur bei echten
-        # Strukturfehlern, nie nur, weil Sektoren von einem Paket abweichen.
+        # Unknown content: first check the firmware's own file table (header and data CRCs). Factory devices
+        # carry a different image than the published V15 package – "damaged" is reported only for real
+        # structural errors, never just because sectors differ from a package.
         st = app_directory(dump)
         dlay = directory_layout(st)
         factory = FACTORY_APPS.get(sha(dump[APP_START:V15_END]))
@@ -875,7 +875,7 @@ def check_dump(dump: bytes, refs=None, packages=(), expected: str = "", factory_
                 r.details.append(f"Abweichende Sektoren gegenüber {best[0].label or best[0].identity}: "
                                  f"{ranges_text(merge_sectors(best[1]))}")
         elif close:
-            # keine lesbare Dateitabelle, aber fast gleich einem Paket: typischerweise ein abgebrochenes Schreiben
+            # no readable file table, but almost equal to a package: typically an aborted write
             r.firmware = f"{best[0].label or best[0].identity} (beschädigt)"
             r.add(RED, f"Der App-Bereich gleicht {best[0].label or best[0].identity}, aber {len(best[1])} von {best[2]} "
                        "Sektoren weichen ab und die Dateitabelle der Firmware bei 0x04000 ist nicht lesbar. Die "
@@ -887,8 +887,8 @@ def check_dump(dump: bytes, refs=None, packages=(), expected: str = "", factory_
                           "Version). " + (f"Ihre Dateitabelle und Prüfsummen stimmen ({lay_txt}) – sie ist in sich "
                                           "vollständig." if st["ok"] else
                                           "Ob sie vollständig ist, lässt sich so nicht sagen."))
-    # Reste fremder Firmware (nur bei V15-Layout-Firmware möglich: V16 schreibt bis 0xA8FFF; eine unbekannte Firmware,
-    # deren eigene Tabelle den V16-Aufbau zeigt, trägt dort ihren Code – das sind keine Reste)
+    # Leftovers of other firmware (only possible with V15-layout firmware: V16 writes up to 0xA8FFF; an unknown firmware
+    # whose own table shows the V16 layout carries its code there – those are not leftovers)
     if app is not None:
         family = app.family
     else:
@@ -918,7 +918,7 @@ def check_dump(dump: bytes, refs=None, packages=(), expected: str = "", factory_
                              + ranges_text(cleanup_plan([{"sector": a} for a in hits])))
         else:
             r.add(GREEN, "Keine Reste von V16 oder anderen bekannten Paketen in den Datenbereichen.")
-    # Melodee-Ressourcen
+    # Melodee resources
     if app is not None and app.resources:
         rh = resource_header(dump)
         want = app.resources
@@ -943,7 +943,7 @@ def check_dump(dump: bytes, refs=None, packages=(), expected: str = "", factory_
     return r
 
 
-# ----------------------------------------------------------------------------- Demo (synthetische Dumps)
+# ----------------------------------------------------------------------------- demo (synthetic dumps)
 def _demo_bytes(seed: str, n: int) -> bytes:
     out, i = bytearray(), 0
     while len(out) < n:
@@ -953,7 +953,7 @@ def _demo_bytes(seed: str, n: int) -> bytes:
 
 
 def demo_refs() -> list[KnownRef]:
-    """zwei erfundene Firmwares für den Demo-Modus (klar als Demo benannt) – mit echten Layoutgrenzen"""
+    """two made-up firmwares for demo mode (clearly named as demo) – with real layout boundaries"""
     out = []
     for label, name, ident, end, fam in (("demo-melodee", "Demo-Melodee (Simulation)", "FM-1_91060", V15_END,
                                           "v15-layout"),
@@ -975,7 +975,7 @@ def demo_heads() -> set[str]:
 
 
 def demo_dumps() -> dict[str, bytes]:
-    """synthetische 1-MiB-Dumps für den Demo-Modus: sauber, mit V16-Resten, V16 abgeschnitten"""
+    """synthetic 1 MiB dumps for demo mode: clean, with V16 leftovers, V16 truncated"""
     head = _demo_bytes("werk", HEAD_END)
     mel, v16 = _demo_bytes("demo-melodee", V15_END), _demo_bytes("demo-v16", 0xA9000)
     user = _demo_bytes("nutzerdaten", FLASH_SIZE)
@@ -994,8 +994,8 @@ def demo_dumps() -> dict[str, bytes]:
             "demo-v16-abgeschnitten.bin": bytes(trunc)}
 
 
-# ----------------------------------------------------------------------------- Datenverlust in Worten
-# Melodee 1.6 (rc.7): Speicherkarte laut firmware/src/storage.c und res.c [Paket]
+# ----------------------------------------------------------------------------- data loss in words
+# Melodee 1.6 (rc.7): memory map according to firmware/src/storage.c and res.c [Pkg]
 MELODEE_MAP = [
     (0x93000, 0x9D000, "Prophet-Bänke"), (0x9D000, 0x9F000, "gemeinsame Preset-Erweiterung"),
     (0x9F000, 0xA0000, "FM6-Bank (Kopie A)"), (0xA0000, 0xC8000, "Projekte und Preset-Bänke (Pool)"),
@@ -1011,7 +1011,7 @@ def _names(lo: int, hi: int, table) -> str:
 
 
 def describe_loss(current_identity: str, current_key: str, target_identity: str) -> list[str]:
-    """Sätze für „Was danach nicht mehr auf dem Gerät ist“ bei einem Wechsel zwischen V15-Aufbau und V16"""
+    """Sentences for "What is no longer on the device afterwards" when switching between V15 layout and V16"""
     out = []
     melodee = (current_key or "").startswith("melodee") or current_identity.startswith("FM-1_910")
     if target_identity == "FM-1_016" and current_identity != "FM-1_016":

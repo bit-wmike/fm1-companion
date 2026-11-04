@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Ein simuliertes FM-1 (Melodee-artig) für Tests und den Demo-Modus ohne Gerät.
+"""A simulated FM-1 (Melodee-like) for tests and demo mode without a device.
 
-Kann: INFO, PING, BACKUP_LIST/GET/PUT (57 Objekte wie Melodee 1.6, oder mit
-Sample-Slots wie Skiff), SMP_INFO/BEGIN/WRITE/END/ERASE, AUDIO_STATS,
+Supports: INFO, PING, BACKUP_LIST/GET/PUT (57 objects like Melodee 1.6, or with
+sample slots like Skiff), SMP_INFO/BEGIN/WRITE/END/ERASE, AUDIO_STATS,
 PATTERN, TRACK_STEP, DESC, TRACK_PARAM, PROJECT.
 
-Mit einer SLOOP-Version ("SLOOP 2.8.3") verhält es sich wie SLOOP: INFO mit
-Protokoll-Byte 12 und die Backup-Befehle 34–36 (BK_LIST/GET/PUT, Regeln wie
-firmware/src/editor.c ed_backup) statt 65–67 – die beantwortet SLOOP nicht.
+With a SLOOP version ("SLOOP 2.8.3") it behaves like SLOOP: INFO with
+protocol byte 12 and the backup commands 34–36 (BK_LIST/GET/PUT, rules as in
+firmware/src/editor.c ed_backup) instead of 65–67 – SLOOP does not answer those.
 
-  python3 -m fm1companion.demo_device [--samples N]   (stdin/stdout, eine Nachricht pro Zeile als Hex)
+  python3 -m fm1companion.demo_device [--samples N]   (stdin/stdout, one message per line as hex)
 """
 from __future__ import annotations
 
@@ -23,11 +23,11 @@ import zlib
 from .protocol import frame, unframe, u32, r32, pack7, unpack7, v14
 
 NSTEP, NTRK = 64, 4
-HS_QUERY = bytes([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])   # Installer-Werkstatt
+HS_QUERY = bytes([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])   # installer workshop
 
 
 def _identity_frame(text: str) -> bytes:
-    """Antwort auf den Update-Handshake (wie felucca-bsp chip/ota.c ota_reply_identity)"""
+    """Reply to the update handshake (like felucca-bsp chip/ota.c ota_reply_identity)"""
     from .vendor.fm1_install import pack7
     t = text.encode("latin-1")[:26]
     body = t + bytes(27 - len(t))
@@ -42,7 +42,7 @@ SLOOP_ENGINES = ["ANALOG", "DIGITAL", "PHASE", "LOFI", "SAMPLE", "VOICE", "TRIO"
                  "PHYS", "NOISE"]
 SLOOP_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 32, 33, 34, 35]
 SLOOP_PROJ = 3816                  # project_t (FUN6)
-SLOOP_STAGE = 8192                 # proj_tmp: größtes Objekt, das BK_PUT annimmt (Samples gehen über SMP_*)
+SLOOP_STAGE = 8192                 # proj_tmp: largest object BK_PUT accepts (samples go via SMP_*)
 
 
 def fnv1a(b: bytes) -> int:
@@ -53,7 +53,7 @@ def fnv1a(b: bytes) -> int:
 
 
 def sloop_project(seed: int) -> bytes:
-    """ein gültiges SLOOP-Projekt (FUN6: magic, size, …, FNV-1a-Summe am Ende)"""
+    """a valid SLOOP project (FUN6: magic, size, …, FNV-1a sum at the end)"""
     body = bytearray(rnd(SLOOP_PROJ, seed))
     struct.pack_into("<II", body, 0, 0x46554E36, SLOOP_PROJ)
     struct.pack_into("<I", body, SLOOP_PROJ - 4, fnv1a(bytes(body[:SLOOP_PROJ - 4])))
@@ -61,7 +61,7 @@ def sloop_project(seed: int) -> bytes:
 
 
 def sloop_settings() -> bytes:
-    """persist_t (PER3, 88 Byte) mit Song-Reihenfolge A B C D (je 4 Takte) ab Byte 48"""
+    """persist_t (PER3, 88 bytes) with song order A B C D (4 bars each) from byte 48"""
     b = bytearray((i * 37 + 5) & 0xFF for i in range(88))
     struct.pack_into("<IIII", b, 0, 0x50455233, 0, 0, 0)
     b[48:84] = bytes([4, 0, 0, 0]) + b"".join(bytes([k, 4]) for k in range(4)) + bytes(24)
@@ -70,7 +70,7 @@ def sloop_settings() -> bytes:
 
 
 def sloop_bank(names) -> bytes:
-    """up_bank_t (UPB1): 16 Datensätze zu 192 Byte"""
+    """up_bank_t (UPB1): 16 records of 192 bytes"""
     b = bytearray(struct.pack("<IHH", 0x31425055, 192, 16)) + bytes(16 * 192)
     for k, (name, eng) in enumerate(names):
         r = 8 + k * 192
@@ -85,7 +85,7 @@ class FakeFM1:
                  generic: bool = False):
         self.sloop = "sloop" in version.lower()
         if self.sloop and not version.upper().startswith("FELUCCA"):
-            version = "FELUCCA " + version          # so meldet sich SLOOP (editor.c ED_INFO)
+            version = "FELUCCA " + version          # this is how SLOOP identifies itself (editor.c ED_INFO)
         self.version = version
         self.identity = identity or ("FM-1_91060" if "melodee" in version.lower() else "FM-1_900")
         self.generic = generic
@@ -100,7 +100,7 @@ class FakeFM1:
         if 66 in self.objs:
             self.objs[66] = rnd(2500, 4)
         self.objs[6] = rnd(3716, 5)
-        if not samples:                           # Melodee-Demo: ein echtes Projekt (Projekt-Ansicht)
+        if not samples:                           # Melodee demo: a real project (project view)
             from .projectfmt import demo_project_bytes
             if demo_project_bytes():
                 self.objs[0] = self.objs[2] = demo_project_bytes()
@@ -112,11 +112,11 @@ class FakeFM1:
         self.tracks = [{"steps": [[0, 0, 0, 0, 0, 2, 0, 100, 0, 0, 0, 100] for _ in range(NSTEP)],
                         "pattern": 0, "patterns": {}, "len": 16} for _ in range(NTRK)]
         self.playing = False
-        # Wiedergabe-Simulation: empfangene MIDI-Noten (Status, Note, Anschlag) und gerade klingende Noten
+        # playback simulation: received MIDI notes (status, note, velocity) and currently sounding notes
         self.midi_in: list[tuple[int, int, int]] = []
         self.sounding: set[tuple[int, int]] = set()
         self.globals = {2: 0, 13: 10, 14: 0}          # CLK INT, DRUM 10, ROUT CH1-4
-        self.track_sounds = [[19, 1, 0], [12, 0, 0], [15, 2, 0], [10, 0, 0]]   # Engine, Preset, scharf (REC)
+        self.track_sounds = [[19, 1, 0], [12, 0, 0], [15, 2, 0], [10, 0, 0]]   # engine, preset, armed (REC)
         if self.sloop:
             self._sloop_init()
 
@@ -127,7 +127,7 @@ class FakeFM1:
             rows = [a[2 + 5 * i: 7 + 5 * i] for i in range(max(0, n))]
             if not 0 <= n <= 16 or len(a) != 2 + 5 * n or sg["running"] or \
                     any(any(b > 7 for b in r[:4]) or not 1 <= r[4] <= 16 for r in rows):
-                rc = 1                                 # komplett geprüft, sonst bleibt alles wie es war
+                rc = 1                                 # fully checked, otherwise everything stays as it was
             else:
                 sg["rows"], sg["row"] = [list(r) for r in rows], 0
         elif op == 2:
@@ -159,14 +159,14 @@ class FakeFM1:
 
     def _sloop_obj(self, oid: int) -> bytes | None:
         if oid in (0, 1):
-            return self.bk_snap[oid] if self.bk_snap else self.objs[oid]   # (ohne Schnappschuss: GET -> rc 5)
+            return self.bk_snap[oid] if self.bk_snap else self.objs[oid]   # (without snapshot: GET -> rc 5)
         if 32 <= oid < 32 + len(self.smp):
             s = self.smp[oid - 32]
             return s[0] + b"\xff" * 32 + s[1] if s else b""
         return self.objs.get(oid) if oid in SLOOP_IDS else None
 
     def _sloop_backup(self, cmd, a):
-        if cmd == 34:                                  # BK_LIST: Schnappschuss von 0 und 1
+        if cmd == 34:                                  # BK_LIST: snapshot of 0 and 1
             self.bk_snap = {0: self.objs[0], 1: self.objs[1]}
             self.bk_put = None
             ids = [i for i in self.ids if not (i in (10, 11) and not self.objs.get(i)) and
@@ -193,7 +193,7 @@ class FakeFM1:
                 ln = r32(a, 2)
                 if (oid >= 2 or ln) and ln <= SLOOP_STAGE:
                     self.bk_put = {"id": oid, "len": ln, "crc": r32(a, 7), "buf": bytearray()}
-                    self.bk_snap = None                # (der Zwischenspeicher gehört dem Schnappschuss)
+                    self.bk_snap = None                # (the buffer belongs to the snapshot)
                     rc = 0
             elif not self.bk_put or self.bk_put["id"] != oid:
                 rc = 5
@@ -229,7 +229,7 @@ class FakeFM1:
                 return 3
             self.objs[1] = raw
             return 0
-        if self.playing:                              # alles andere nur gestoppt (Flash löschen)
+        if self.playing:                              # everything else only stopped (erase flash)
             return 3
         if oid <= 5:                                   # project_restore
             if oid >= 2 and not n:
@@ -254,7 +254,7 @@ class FakeFM1:
             if n not in (32, 36, 40):
                 return 2
             if raw[:32] == bytes(32) and raw[32:37] in (b"\x01\x02\x03\x0a\x02", b"\x01\x02\x03\x0a"):
-                raw = b""                              # Grundstellung: erscheint nicht im Inventar
+                raw = b""                              # initial state: does not appear in the inventory
         elif oid == 11:
             if n and n not in (36, 40, 48):
                 return 2
@@ -263,12 +263,12 @@ class FakeFM1:
 
     # --------------------------------------------------------------------
     def handle(self, data: list[int]) -> list[int] | None:
-        if bytes(data) == HS_QUERY:           # Update-Handshake (cmd 0x11): Paket-Kennung
+        if bytes(data) == HS_QUERY:           # update handshake (cmd 0x11): package identity
             return list(_identity_frame(self.identity))
-        if data and 0x80 <= data[0] < 0xF0:  # Kanal-Nachricht (Noten, Controller): mithören wie ein Klangerzeuger
+        if data and 0x80 <= data[0] < 0xF0:  # channel message (notes, controllers): listen along like a sound module
             self._channel_msg(data)
             return None
-        if self.generic:                     # Firmware ohne Editor-Protokoll: nur der Handshake
+        if self.generic:                     # firmware without editor protocol: only the handshake
             return None
         f = unframe(data)
         if not f:
@@ -293,16 +293,16 @@ class FakeFM1:
 
     def _handle(self, cmd, a):
         if self.sloop:
-            if cmd == 1:      # INFO wie SLOOP 2.8 (12 Engines, 71/50 Parameter, Protokoll 12)
+            if cmd == 1:      # INFO like SLOOP 2.8 (12 engines, 71/50 parameters, protocol 12)
                 return [*self._s(self.version), len(SLOOP_ENGINES), 71, 50, NSTEP, 63,
                         *[x for e in SLOOP_ENGINES for x in self._s(e)], NTRK, 12]
             if cmd in (34, 35, 36):
                 return self._sloop_backup(cmd, a)
             if cmd in (65, 66, 67):
-                return None   # Melodees Backup-Befehle kennt SLOOP nicht
+                return None   # SLOOP does not know Melodee's backup commands
             if cmd == 72:
-                return None   # bei SLOOP ist 72 DSYN_LIST, kein AUDIO_STATS – die Demo antwortet darauf nicht
-            if cmd == 9 and len(a) >= 2:     # PROJECT: op 0 laden, 1 speichern, 2 abfragen (Section A..D)
+                return None   # on SLOOP, 72 is DSYN_LIST, not AUDIO_STATS – the demo does not answer it
+            if cmd == 9 and len(a) >= 2:     # PROJECT: op 0 load, 1 save, 2 query (section A..D)
                 op, slot = a[0], a[1] & 3
                 if op == 1:
                     self.objs[2 + slot] = self.objs[0]
@@ -350,7 +350,7 @@ class FakeFM1:
                     self.log.append(f"abort {oid}")
                 self.staged = None
                 return [op, oid, 0]
-        if cmd == 82 and not self.sloop and a == [0]:   # Ressourcen-Status (nur lesen) wie Melodee 1.6.0-rc.7
+        if cmd == 82 and not self.sloop and a == [0]:   # resource status (read only) like Melodee 1.6.0-rc.7
             return [0, 1, *u32(53844), *u32(0x2035D335)]
         if cmd == 15:     # SMP_INFO
             out = [len(self.smp), 80]
@@ -374,7 +374,7 @@ class FakeFM1:
             st = self.smp_stage.get(slot)
             if st is None:
                 return [slot, a[1], a[2], a[3], 4]
-            # die Länge ergibt sich aus der Pack-Struktur (Maskenbyte + bis zu 7 Daten)
+            # the length follows from the pack structure (mask byte + up to 7 data bytes)
             n = 0
             i = 0
             rest = a[4:]
@@ -404,7 +404,7 @@ class FakeFM1:
             if slot < len(self.smp):
                 self.smp[slot] = None
             return [slot, 0]
-        if cmd == 72:     # AUDIO_STATS (Schema je nach Flags wie Melodee 1.6)
+        if cmd == 72:     # AUDIO_STATS (schema depending on flags, like Melodee 1.6)
             flags = a[0] if a else 0
             vals = [1, 1, 44100, 44100, 128, 120, 0, 0, 0, 0, 0, 12345, 12340, 0, 900, 300, 0, 44 << 14,
                     700, int(random.uniform(0.25, 0.45) * 256)]
@@ -421,16 +421,16 @@ class FakeFM1:
             if flags & 16:
                 vals += [1, 0, 2, 0, 2, 0, 3, 0]
                 schema = 6
-            if self.samples:          # ältere Firmware: nur Schema 2
+            if self.samples:          # older firmware: schema 2 only
                 vals, schema = vals[:20], 2
             out = [schema]
             for v in vals:
                 out += u32(v)
             return out
         # --- klang: LIBRARY ops 1-6 / FM6 ---
-        # Gemeinsame User-Bibliothek (Befehl 80, alle Ops 0–6) mit Zustand, Favoriten (37/38) und
-        # FM6_PUT auf eine Spur (69) – Regeln wie firmware/src/editor_library.c. Startinhalt wie die
-        # frühere reine Liste (26 belegt, Favoriten U004/U008, Namen "DEMO n").
+        # Shared user library (command 80, all ops 0–6) with state, favourites (37/38) and
+        # FM6_PUT onto a track (69) – rules as in firmware/src/editor_library.c. Initial content like the
+        # former plain list (26 used, favourites U004/U008, names "DEMO n").
         if cmd in (80, 37, 38, 69) and not self.samples:
             from . import klang_demo
             return klang_demo.handle(self, cmd, a, 91, NTRK)
@@ -452,14 +452,14 @@ class FakeFM1:
                 t["pattern"] = a[2]
                 t["steps"] = t["patterns"].get(a[2]) or [[0, 0, 0, 0, 0, 2, 0, 100, 0, 0, 0, 100] for _ in range(NSTEP)]
             return [tr, op, 0, t["pattern"], 127, 16]
-        if cmd == 2 and len(a) >= 2:      # GET (global: ROUT, DRUM, CLK der Simulation)
+        if cmd == 2 and len(a) >= 2:      # GET (global: ROUT, DRUM, CLK of the simulation)
             return [a[0], a[1], *v14(self.globals.get(a[1], 0) if a[0] == 1 else 0)]
-        if cmd == 27 and not a:           # TRACK: gewählte Spur, NTRK, je Spur Engine, Preset, Pegel, stumm, scharf
+        if cmd == 27 and not a:           # TRACK: selected track, NTRK, per track engine, preset, level, muted, armed
             body = [0, len(self.track_sounds)]
             for eng, pre, armed in self.track_sounds:
                 body += [eng, pre & 127, *v14(100), 0, armed]
             return body + [pre >> 7 for _e, pre, _a in self.track_sounds]
-        if cmd == 74 and a and not self.sloop:   # BANK_SONG (Melodee "Pattern banks", Version 1: 16 Zeilen)
+        if cmd == 74 and a and not self.sloop:   # BANK_SONG (Melodee "Pattern banks", version 1: 16 rows)
             return self._bank_song(a)
         if cmd == 30:     # TRACK_STEP
             tr, idx = a[0], a[1]
@@ -479,7 +479,7 @@ class FakeFM1:
             return [tr, pid, *v14(val)]
         if cmd == 9:
             return [a[0], a[1], 1]
-        if cmd == 10 and a:   # NAMES: Preset-Namen einer Engine
+        if cmd == 10 and a:   # NAMES: preset names of an engine
             e = a[0] & 0x7F
             names = [f"DEMO {e}-{i + 1}" for i in range(8)]
             return [e, len(names), *[b for n in names for b in self._s(n)], *self._s("A"), *self._s("B")]
@@ -487,7 +487,7 @@ class FakeFM1:
 
 
 def _pack7_len(a) -> int:
-    """Anzahl der Bytes in einem pack7-Block (Maskenbyte + bis zu 7 Daten je Gruppe)."""
+    """Number of bytes in a pack7 block (mask byte + up to 7 data bytes per group)."""
     n = i = 0
     while i < len(a):
         g = min(7, len(a) - i - 1)

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Firmware+ (früher „Entdecken“): alle bekannten FM-1-Firmwares wie in einem App-Store – suchen, filtern,
-ansehen, im Simulator ausprobieren, installieren. Dazu „Link einfügen …", Neuigkeiten und Werkzeuge & Wissen.
-Das Hauptfenster hängt die frühere Seite „Firmware“ (ui/firmware_page.py) als Reiter „Installieren & Versionen“
-ein (main_window.FLAT_COMPOSITES) – Installieren, Versionen wechseln und der Rückweg zum Original liegen dort.
+"""Firmware+ (formerly “Discover”): all known FM-1 firmwares like in an app store – search, filter,
+view, try in the simulator, install. Plus “Paste link …", news and tools & knowledge.
+The main window embeds the former “Firmware” page (ui/firmware_page.py) as the “Install & versions” tab
+(main_window.FLAT_COMPOSITES) – installing, switching versions and the way back to the original live there.
 
-Daten: catalog.py (mitgelieferter Schnappschuss → Live-Stand alle 24 h → GitHub-Cache).
+Data: catalog.py (bundled snapshot → live state every 24 h → GitHub cache).
 """
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def entry_date(e: catmod.Entry, gh: dict | None) -> str:
     return (gh or {}).get("pushed_at") or e.pushed_at or ""
 
 
-# ================================================================ Modell ===
+# ================================================================ Model ===
 
 class EntryModel(QAbstractListModel):
     thumb_wanted = pyqtSignal(str)
@@ -163,7 +163,7 @@ EN_LABEL = N_("Author's description")
 
 
 class CardDelegate(QStyledItemDelegate):
-    W, H, T = 300, 150, 84                      # W: Mindestbreite; die tatsächliche Breite füllt die Zeile
+    W, H, T = 300, 150, 84                      # W: minimum width; the actual width fills the row
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -251,7 +251,7 @@ def _two_lines(text: str, fm: QFontMetrics, width: int) -> str:
             lines.append(cur)
             cur = w
             if len(lines) == 2:
-                rest = i                        # ab hier passt nichts mehr: Rest nur noch gekürzt anhängen
+                rest = i                        # from here on nothing fits anymore: only append the rest truncated
                 break
     if len(lines) < 2:
         lines.append(cur)
@@ -306,7 +306,7 @@ class DetailView(QWidget):
         body = QWidget()
         lay = QVBoxLayout(body)
         lay.setSpacing(10)
-        # ---- Kopf
+        # ---- Header
         head = QHBoxLayout()
         self.pic = QLabel()
         self.pic.setFixedSize(160, 160)
@@ -371,12 +371,12 @@ class DetailView(QWidget):
         acts.addWidget(more)
         acts.addStretch(1)
         info.addLayout(acts)
-        reflow(acts)                                     # Knöpfe brechen bei schmalem Fenster um
+        reflow(acts)                                     # buttons wrap when the window is narrow
         info.addStretch(1)
         head.addLayout(info, 1)
         lay.addLayout(head)
 
-        # ---- Warnungen
+        # ---- Warnings
         warns = e.warnings()
         if warns:
             w = QLabel("<b>" + _("Good to know") + "</b><br>" + "<br>".join(f"⚠ {x}" for x in warns))
@@ -386,7 +386,7 @@ class DetailView(QWidget):
                             "border-radius:8px;padding:8px;")
             lay.addWidget(w)
             self.labels["warnings"] = w
-        # ---- Beschreibung
+        # ---- Description
         d = QLabel(catmod.description_text(e) + ("" if e.section == "own" or catmod.is_app_description(e) else
                                                  "<br><span style='color:gray'>"
                                                  + _("Author's description, from awesome-fm-1 – deliberately not "
@@ -397,7 +397,7 @@ class DetailView(QWidget):
         lay.addWidget(_section(_("Description"), d))
         # ---- Matrix
         lay.addWidget(_section(_("What the app can do with it"), self.matrix(e)))
-        # ---- Versionen
+        # ---- Versions
         self.versions = QTreeWidget()
         self.versions.setHeaderLabels([_("Version"), _("Date"), _("Size"), _("Notes")])
         self.versions.setRootIsDecorated(False)
@@ -557,7 +557,7 @@ def _section(title: str, w: QWidget) -> QWidget:
     return box
 
 
-# ================================================================ Seite ===
+# ================================================================ Page ===
 
 class DiscoverPage(QWidget):
     navigate = pyqtSignal(str)
@@ -597,7 +597,7 @@ class DiscoverPage(QWidget):
         m.addAction(icon("folder"), _("My firmwares …"), self.own_dialog)
         m.addAction(icon("dialog-password", "security-high"), _("GitHub token …"), self.token_dialog)
         m.addSeparator()
-        # automatische Netzzugriffe dieser Seite – beide abschaltbar (Datenschutz, siehe README)
+        # automatic network access of this page – both can be turned off (privacy, see README)
         self.a_auto = m.addAction(_("Update the catalog automatically when opening"))
         self.a_auto.setCheckable(True)
         self.a_auto.setChecked(bool(settings().get("auto_refresh", True)))
@@ -682,7 +682,7 @@ class DiscoverPage(QWidget):
         self.count = QLabel()
         frow.addWidget(self.count)
         gl.addLayout(frow)
-        reflow(frow)                                     # Filter-Chips brechen bei schmalem Fenster um
+        reflow(frow)                                     # filter chips wrap when the window is narrow
         self.model = EntryModel(self)
         self.model.wish = set(st.get("wishlist") or [])
         self.model.thumb_wanted.connect(self.want_thumb)
@@ -714,7 +714,7 @@ class DiscoverPage(QWidget):
         self.stack.addWidget(self.detail)
         sl.addWidget(self.stack)
         self.tabs.addTab(store, icon("applications-all", "view-grid"), _("All firmwares"))
-        # ---- Neuigkeiten
+        # ---- News
         news = QWidget()
         nl = QVBoxLayout(news)
         self.news_info = QLabel()
@@ -733,7 +733,7 @@ class DiscoverPage(QWidget):
         nr.addStretch(1)
         nl.addLayout(nr)
         self.tabs.addTab(news, icon("view-calendar-upcoming-events", "appointment-new"), _("News"))
-        # ---- Werkzeuge & Wissen
+        # ---- Tools & knowledge
         res = QWidget()
         rl = QVBoxLayout(res)
         self.res_search = QLineEdit()
@@ -758,7 +758,7 @@ class DiscoverPage(QWidget):
                                         self.search.setFocus()))
         self.set_catalog(self.cat)
 
-    # ------------------------------------------------------------ Katalog
+    # ------------------------------------------------------------ Catalog
     def set_catalog(self, cat: catmod.Catalog):
         self.cat = cat
         for e in cat.entries:
@@ -793,7 +793,7 @@ class DiscoverPage(QWidget):
         self.fill_resources()
 
     def _own_entries(self):
-        """eigene Einträge (settings.extra_firmwares), die nicht im Katalog stehen, als Karten zeigen."""
+        """Show custom entries (settings.extra_firmwares) that are not in the catalog as cards."""
         keys = {e.key for e in self.cat.entries}
         self.cat.entries = [e for e in self.cat.entries if e.section != "own"]
         for d in config.load().extra_firmwares:
@@ -818,7 +818,7 @@ class DiscoverPage(QWidget):
         return super().eventFilter(obj, ev)
 
     def _fit_cards(self, width: int):
-        """Kartenraster nutzt die volle Breite: so viele Spalten wie möglich, Karten gleichmäßig verbreitert."""
+        """The card grid uses the full width: as many columns as possible, cards widened evenly."""
         sp = self.view.spacing()
         n = max(1, (width - sp) // (CardDelegate.W + sp))
         w = max(CardDelegate.W, (width - sp * (n + 1)) // n - 1)
@@ -867,7 +867,7 @@ class DiscoverPage(QWidget):
             self._refreshing = False
             self.b_refresh.setEnabled(True)
             self.b_refresh.setText(_("Refresh"))
-            from ...dx7_sources import net_error_text      # Netzfehler als deutscher Satz statt „[Errno -3] …“
+            from ...dx7_sources import net_error_text      # network error as a readable sentence instead of “[Errno -3] …”
             age = catmod.cache_age()
             if age is not None:
                 text = _("Catalog not updated: {error} You still see the saved state of {date}; everything here also "
@@ -877,7 +877,7 @@ class DiscoverPage(QWidget):
                 text = _("Catalog not updated: {error} You still see the saved state; everything here also works "
                          "offline.").format(error=net_error_text(msg))
             self._note(text)
-            if force:                                   # auf Knopfdruck: sichtbar, nicht nur in der Statuszeile
+            if force:                                   # on button press: visible, not only in the status line
                 notify(text, "warning")
         run_job(self, lambda w: catmod.refresh(), on_done=done, on_fail=fail)
 
@@ -956,7 +956,7 @@ class DiscoverPage(QWidget):
                                  "right of the filters) or fewer search words.") if n else
                                _("The catalog is empty – “Refresh” loads it from the internet."))
 
-    # ------------------------------------------------------------ Vorschaubilder
+    # ------------------------------------------------------------ Thumbnails
     def want_thumb(self, key: str):
         if key in self._thumb_queue or key in self._thumb_failed or key in self.model.thumbs:
             return
@@ -1038,7 +1038,7 @@ class DiscoverPage(QWidget):
             self.detail.github_loaded(key, None, _("GitHub: {message}").format(message=msg))
         run_job(self, lambda w: catmod.enrich(e.repo), on_done=done, on_fail=fail)
 
-    # ------------------------------------------------------------ Aktionen
+    # ------------------------------------------------------------ Actions
     @property
     def current(self) -> catmod.Entry | None:
         return self.detail.entry
@@ -1111,7 +1111,7 @@ class DiscoverPage(QWidget):
         self.view.viewport().update()
         self.fill_news()
 
-    # ------------------------------------------------------------ Link-Import
+    # ------------------------------------------------------------ Link import
     def _paste(self):
         txt = QGuiApplication.clipboard().text()
         if _looks_like_link(txt) or (txt.strip() and len(txt) < 80):
@@ -1143,9 +1143,9 @@ class DiscoverPage(QWidget):
             st["github_token"] = tok.strip()
             config.save()
 
-    # ------------------------------------------------------------ Neuigkeiten
+    # ------------------------------------------------------------ News
     def followed(self) -> dict[str, str]:
-        """key -> Grund"""
+        """key -> reason"""
         out = {}
         for k in self.model.wish:
             out[k] = _("remembered")
@@ -1235,7 +1235,7 @@ class DiscoverPage(QWidget):
                                                                    self.news_info.setText(
                                                                        _("GitHub: {message}").format(message=m))))
 
-    # ------------------------------------------------------------ Werkzeuge & Wissen
+    # ------------------------------------------------------------ Tools & knowledge
     def fill_resources(self):
         self.res.clear()
         words = self.res_search.text().lower().split()

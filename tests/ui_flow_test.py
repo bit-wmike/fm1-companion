@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Abläufe der Oberfläche gegen das Demo-Gerät – mit automatisch beantworteten Dialogen.
+"""UI flows against the demo device – with dialogs answered automatically.
 
-Geprüft werden: Backup anlegen und zurückspielen (mit Sicherheits-Backup), Projekte holen,
-umbenennen und in einen Platz spielen, Kit bauen und hochladen, Firmware-Wechsel-Ablauf
-(Download und Installer simuliert) mit Auto-Backup, Profil-Update und Rückkehr-Angebot,
-Einstellungen speichern, Geräteprofil umbenennen.
+Checked: create a backup and restore it (with a safety backup), fetch projects,
+rename them and play them into a slot, build and upload a kit, the firmware switch flow
+(download and installer simulated) with auto backup, profile update and return offer,
+save settings, rename a device profile.
 
   QT_QPA_PLATFORM=offscreen python3 tests/ui_flow_test.py
 """
@@ -57,7 +57,7 @@ s.sample_roots = [str(samp)]
 config.save(s)
 config.ensure_dirs()
 
-# ---- automatische Antworten auf Dialoge
+# ---- automatic answers to dialogs
 answers = {"text": [], "item": [], "int": []}
 log_boxes: list[str] = []
 
@@ -83,10 +83,10 @@ _dialog_exec = QDialog.exec
 
 
 def dialog_exec(self):
-    """JobDialoge laufen lassen, bis sie fertig sind; andere Dialoge sofort bestätigen."""
+    """let JobDialogs run until they are done; confirm other dialogs immediately."""
     from fm1companion.ui.common import JobDialog
     from fm1companion.ui.firmware_page import PlanDialog
-    if isinstance(self, PlanDialog):            # Installationsplan: ohne V15-Umweg, alles bestätigen
+    if isinstance(self, PlanDialog):            # installation plan: without the V15 detour, confirm everything
         if not self.chk_v15.isHidden() and self.chk_v15.box.isEnabled():
             self.chk_v15.setChecked(False)
         for cb in self.confirm_checks.values():
@@ -136,135 +136,135 @@ def until(cond, ms=10000):
 
 def flow():
     ctx = w.ctx
-    check(until(lambda: ctx.connected), "Demo-Gerät verbunden")
-    check(ctx.profile is not None and ctx.firmware_key == "melodee", f"Profil angelegt, Firmware erkannt ({ctx.firmware_key})")
+    check(until(lambda: ctx.connected), "demo device connected")
+    check(ctx.profile is not None and ctx.firmware_key == "melodee", f"profile created, firmware detected ({ctx.firmware_key})")
 
-    # ---- Profil umbenennen
+    # ---- rename profile
     answers["text"].append("Studio-FM-1")
     w.overview._rename()
-    check(ctx.profile.name == "Studio-FM-1", "Gerät umbenennen")
+    check(ctx.profile.name == "Studio-FM-1", "rename device")
 
-    # ---- Backup
+    # ---- backup
     from fm1companion.ui.backups_page import make_backup
     p = make_backup(ctx, w, "Test-Notiz")
-    check(p and p.exists() and "Studio-FM-1" in str(p.parent), f"Backup angelegt ({p.name if p else '-'})")
+    check(p and p.exists() and "Studio-FM-1" in str(p.parent), f"backup created ({p.name if p else '-'})")
     meta = json.loads(p.read_text())
-    check(meta["companion"]["note"] == "Test-Notiz" and len(meta["objects"]) == 57, "Backup enthält Notiz und 57 Objekte")
+    check(meta["companion"]["note"] == "Test-Notiz" and len(meta["objects"]) == 57, "backup contains note and 57 objects")
     w.backups.refresh()
-    check(w.backups.tree.topLevelItemCount() == 1, "Backup erscheint in der Liste")
+    check(w.backups.tree.topLevelItemCount() == 1, "backup appears in the list")
 
-    # ---- Restore (mit Sicherheits-Backup)
+    # ---- restore (with safety backup)
     w.backups.tree.setCurrentItem(w.backups.tree.topLevelItem(0))
     w.backups._restore()
     files = list(p.parent.glob("*.json"))
-    check(len(files) == 2 and any(f.stem.endswith("_auto") for f in files), "Sicherheits-Backup vor dem Zurückspielen")
+    check(len(files) == 2 and any(f.stem.endswith("_auto") for f in files), "safety backup before restoring")
 
-    # ---- Projekte
+    # ---- projects
     w.go("projects")
     w.projects.read_slots()
-    check(until(lambda: w.projects.dev_tree.topLevelItemCount() == 32), "32 Projektplätze gelesen")
+    check(until(lambda: w.projects.dev_tree.topLevelItemCount() == 32), "32 project slots read")
     w.projects.dev_tree.setCurrentItem(w.projects.dev_tree.topLevelItem(6))
     answers["text"].append("Mein Song")
     w.projects._export()
     w.projects.refresh_library()
     check(w.projects.lib.topLevelItemCount() == 1 and w.projects.lib.topLevelItem(0).text(0) == "Mein Song",
-          "Projekt aus Platz 7 geholt")
+          "project fetched from slot 7")
     w.projects.lib.setCurrentItem(w.projects.lib.topLevelItem(0))
     answers["text"].append("Mein Song – final")
     w.projects._rename()
-    check(w.projects.lib.topLevelItem(0).text(0) == "Mein Song – final", "Projekt umbenannt")
+    check(w.projects.lib.topLevelItem(0).text(0) == "Mein Song – final", "project renamed")
     w.projects.lib.setCurrentItem(w.projects.lib.topLevelItem(0))
     w.projects.dev_tree.setCurrentItem(w.projects.dev_tree.topLevelItem(19))
     w.projects._import()
     wait(300)
     used = [w.projects.dev_tree.topLevelItem(i).text(1) for i in range(32)]
-    check(used[19] == "●", "Projekt in Platz 20 gespielt")
+    check(used[19] == "●", "project played into slot 20")
     w.projects._export_all()
     w.projects.refresh_library()
-    check(w.projects.lib.topLevelItemCount() == 4, f"Alle holen ({w.projects.lib.topLevelItemCount()} in der Bibliothek)")
+    check(w.projects.lib.topLevelItemCount() == 4, f"fetch all ({w.projects.lib.topLevelItemCount()} in the library)")
 
-    # ---- Samples: auf das zweite Demo-Gerät (SLOOP mit Sample-Slots) wechseln
+    # ---- samples: switch to the second demo device (SLOOP with sample slots)
     w.samples.read_slots()
-    check(until(lambda: "keine Sample-Slots" in w.samples.slot_info.text()), "Melodee meldet: keine Sample-Slots")
+    check(until(lambda: "keine Sample-Slots" in w.samples.slot_info.text()), "Melodee reports: no sample slots")
     port2 = next(p for p in ctx.ports if p.serial == "DEMO-2")
     ctx.connect_port(port2)
-    check(until(lambda: ctx.connected and ctx.firmware_key == "sloop"), f"zweites Gerät (SLOOP) verbunden: {ctx.title()}")
-    check(len(ctx.store.profiles) == 2, "zweites Geräteprofil angelegt")
+    check(until(lambda: ctx.connected and ctx.firmware_key == "sloop"), f"second device (SLOOP) connected: {ctx.title()}")
+    check(len(ctx.store.profiles) == 2, "second device profile created")
     w.go("samples")
-    check(until(lambda: w.samples.table.topLevelItemCount() == 3, 15000), "Sample-Bibliothek eingelesen")
+    check(until(lambda: w.samples.table.topLevelItemCount() == 3, 15000), "sample library read")
     w.samples.table.selectAll()
     w.samples._add_to_kit()
-    check(len(w.samples.kit.zones) == 3 and [z.root for z in w.samples.kit.zones] == [60, 61, 62], "Kit mit 3 Sounds, Tasten C4–D4")
+    check(len(w.samples.kit.zones) == 3 and [z.root for z in w.samples.kit.zones] == [60, 61, 62], "kit with 3 sounds, keys C4–D4")
     w.samples.kit_name.setText("POKIT")
     w.samples._kit_meta()
     answers["text"].append("Mein PO Kit")
     w.samples._kit_save()
-    check((Path(s.user_root) / "Kits" / "Mein PO Kit.fm1kit").exists(), "Kit gespeichert")
+    check((Path(s.user_root) / "Kits" / "Mein PO Kit.fm1kit").exists(), "kit saved")
     w.samples.read_slots()
-    check(until(lambda: w.samples.slot_list.count() == 4), "4 Sample-Slots gelesen")
+    check(until(lambda: w.samples.slot_list.count() == 4), "4 sample slots read")
     w.samples.slot_list.setCurrentRow(1)
     w.samples._upload()
-    check(until(lambda: "POKIT" in w.samples.slot_list.item(1).text()), f"Kit in USR2 geladen ({w.samples.slot_list.item(1).text()})")
+    check(until(lambda: "POKIT" in w.samples.slot_list.item(1).text()), f"kit loaded into USR2 ({w.samples.slot_list.item(1).text()})")
 
-    # ---- FM-1-Seite: SLOOP (ältere Firmware: kein Preset-Katalog, Audio-Schema 2)
+    # ---- FM-1 page: SLOOP (older firmware: no preset catalog, audio schema 2)
     fp = w.fm1
     sent72 = []
     ctx.link.add_listener(lambda data, d: sent72.append(1) if d == "out" and list(data[:5]) == [
         0xF0, 0x7D, 0x46, 0x4C, 72] else None)
     w.go("fm1")
-    check(until(lambda: "Plätzen belegt" in fp.f["SProjekte"].text()), "FM-1-Seite SLOOP: Projekte gelesen")
-    check("SLOOP" in fp.f["Firmware"].text(), f"FM-1-Seite: Version ({fp.f['Firmware'].text()})")
-    check("keine gemeinsame" in fp.preset_note.text(), "SLOOP: Hinweis 'keine Preset-Bibliothek'")
+    check(until(lambda: "Plätzen belegt" in fp.f["SProjekte"].text()), "FM-1 page SLOOP: projects read")
+    check("SLOOP" in fp.f["Firmware"].text(), f"FM-1 page: version ({fp.f['Firmware'].text()})")
+    check("keine gemeinsame" in fp.preset_note.text(), "SLOOP: note 'no preset library'")
     check(until(lambda: "keine Audio-Werte bei dieser Firmware" in fp.cpu.format()),
-          f"SLOOP: keine Audio-Werte bei dieser Firmware ({fp.cpu.format()})")
+          f"SLOOP: no audio values with this firmware ({fp.cpu.format()})")
     wait(2500)
-    check(not sent72, f"SLOOP: Befehl 72 (bei SLOOP DSYN_LIST) nie gesendet ({len(sent72)})")
-    check(ctx.link._exclusive_depth == 1, "Editor pausiert, solange die FM-1-Seite offen ist")
+    check(not sent72, f"SLOOP: command 72 (DSYN_LIST on SLOOP) never sent ({len(sent72)})")
+    check(ctx.link._exclusive_depth == 1, "editor paused while the FM-1 page is open")
     w.go("overview")
-    check(ctx.link._exclusive_depth == 0, "Editor wieder frei nach Verlassen der Seite")
+    check(ctx.link._exclusive_depth == 0, "editor free again after leaving the page")
 
-    # ---- FM-1-Seite: Melodee (Preset-Katalog über Befehl 80, alle Diagnosewerte)
+    # ---- FM-1 page: Melodee (preset catalog via command 80, all diagnostic values)
     port1m = next(p for p in ctx.ports if p.serial == "DEMO-1")
     ctx.connect_port(port1m)
-    check(until(lambda: ctx.connected and ctx.firmware_key == "melodee"), "zurück auf das Melodee-Demo")
+    check(until(lambda: ctx.connected and ctx.firmware_key == "melodee"), "back to the Melodee demo")
     w.go("fm1")
     check(until(lambda: "von 384 belegt" in fp.f["SUser-Presets"].text()),
-          f"Melodee: Presets gelesen ({fp.f['SUser-Presets'].text()})")
-    check("26 von 384 belegt, 2 Favoriten" == fp.f["SUser-Presets"].text(), "Melodee: Presets richtig gezählt")
-    check(fp.tree.topLevelItemCount() == 26, f"Preset-Liste: 26 belegte ({fp.tree.topLevelItemCount()})")
+          f"Melodee: presets read ({fp.f['SUser-Presets'].text()})")
+    check("26 von 384 belegt, 2 Favoriten" == fp.f["SUser-Presets"].text(), "Melodee: presets counted correctly")
+    check(fp.tree.topLevelItemCount() == 26, f"preset list: 26 used ({fp.tree.topLevelItemCount()})")
     fp.cb_used.setChecked(False)
-    check(fp.tree.topLevelItemCount() == 384, "Preset-Liste: alle 384 Plätze")
+    check(fp.tree.topLevelItemCount() == 384, "preset list: all 384 slots")
     fp.cb_used.setChecked(True)
     fp.filter.setText("demo 201")
-    check(fp.tree.topLevelItemCount() == 1 and fp.tree.topLevelItem(0).text(0) == "U201", "Preset-Suche findet U201")
+    check(fp.tree.topLevelItemCount() == 1 and fp.tree.topLevelItem(0).text(0) == "U201", "preset search finds U201")
     fp.filter.setText("")
     eng_names = {fp.tree.topLevelItem(i).text(1) for i in range(fp.tree.topLevelItemCount())}
     check(not any(n.startswith("Engine ") for n in eng_names) or len(ctx.info.engines) < 20,
-          f"Engine-Namen aufgelöst ({sorted(eng_names)})")
-    check(until(lambda: "aktiv" in fp.f["LZweiter Kern"].text()), f"Zweiter Kern ({fp.f['LZweiter Kern'].text()})")
-    check(" von " in fp.ram.format(), f"RAM des FM-1 ({fp.ram.format()})")
-    check("Spur 4" in fp.f["LPro Spur"].text(), "Stimmen-Kürzungen pro Spur")
-    check("bestanden" in fp.f["LSpeichertest"].text(), "Speichertest beim Start")
-    check(" von " in fp.pool.format(), f"Speicher-Pool ({fp.pool.format()})")
+          f"engine names resolved ({sorted(eng_names)})")
+    check(until(lambda: "aktiv" in fp.f["LZweiter Kern"].text()), f"second core ({fp.f['LZweiter Kern'].text()})")
+    check(" von " in fp.ram.format(), f"RAM of the FM-1 ({fp.ram.format()})")
+    check("Spur 4" in fp.f["LPro Spur"].text(), "voice reductions per track")
+    check("bestanden" in fp.f["LSpeichertest"].text(), "memory test at start")
+    check(" von " in fp.pool.format(), f"memory pool ({fp.pool.format()})")
     first = fp.cpu.format()
-    check(until(lambda: fp.cpu.format() != first, 7000), f"Live-Werte aktualisieren sich ({first} -> {fp.cpu.format()})")
+    check(until(lambda: fp.cpu.format() != first, 7000), f"live values update ({first} -> {fp.cpu.format()})")
     fp.cb_live.setChecked(False)
-    check(not fp.timer.isActive(), "Live abschaltbar")
+    check(not fp.timer.isActive(), "live can be switched off")
     fp.cb_live.setChecked(True)
     w.go("overview")
-    check(ctx.link._exclusive_depth == 0 and not fp.timer.isActive(), "Seite verlassen: Live aus, Editor frei")
+    check(ctx.link._exclusive_depth == 0 and not fp.timer.isActive(), "page left: live off, editor free")
     ctx.connect_port(next(p for p in ctx.ports if p.serial == "DEMO-2"))
-    check(until(lambda: ctx.connected and ctx.firmware_key == "sloop"), "wieder auf SLOOP für die nächsten Tests")
+    check(until(lambda: ctx.connected and ctx.firmware_key == "sloop"), "back on SLOOP for the next tests")
 
-    # ---- Firmware-Wechsel (Download und Installer simuliert)
+    # ---- firmware switch (download and installer simulated)
     calls = {}
     fake_pkg = home / "skiff-2.0.3.fwsc"
     from fm1companion.flash import package as fpk
-    fake_pkg.write_bytes(fpk.build_package("FM-1_720"))     # gültiges (synthetisches) Felucca-Paket
+    fake_pkg.write_bytes(fpk.build_package("FM-1_720"))     # valid (synthetic) Felucca package
 
     def fake_download(spec, rel, log=print, progress=None):
         calls["download"] = (spec.key, rel.tag)
-        log("simulierter Download")
+        log("simulated download")
         return firmware.Package(spec, rel, fake_pkg, None, True)
 
     def fake_install(spec, path, tag, port_name="", res=None, log=print, progress=None):
@@ -282,31 +282,31 @@ def flow():
     rel = firmware.Release("v2.0.3", False)
     port1 = next(p for p in ctx.ports if p.serial == "DEMO-1")
     ctx.connect_port(port1)
-    check(until(lambda: ctx.connected and ctx.firmware_key == "melodee"), "zurück zum Melodee-Gerät")
-    ctx.profile.name = "Studio-FM-1"        # (Rückfrage beim Wechsel hatte ein neues Profil angelegt?)
+    check(until(lambda: ctx.connected and ctx.firmware_key == "melodee"), "back to the Melodee device")
+    ctx.profile.name = "Studio-FM-1"        # (had the prompt during the switch created a new profile?)
     ok = fp.install_flow(w, ctx, firmware.spec("skiff"), rel)
     firmware.download, firmware.install, editor_host.prepare = orig
-    check(ok and calls.get("install", ("",))[0] == "skiff", f"Installation durchlaufen ({calls})")
+    check(ok and calls.get("install", ("",))[0] == "skiff", f"installation went through ({calls})")
     prof = ctx.store.by_serial("DEMO-1")
     check(prof.firmware == "skiff" and prof.firmware_version == "v2.0.3" and prof.identity == "FM-1_720",
-          "Profil zeigt neue Firmware")
+          "profile shows the new firmware")
     bks = list(Path(s.user_root, "Backups", "Studio-FM-1").glob("*vor-Update.json"))
-    check(len(bks) == 1, "Auto-Backup vor dem Update angelegt")
-    check(json.loads(bks[0].read_text())["companion"]["firmware"] == "melodee", "Auto-Backup als Melodee markiert")
-    check(ctx.pending_restore_check == "skiff", "Rückkehr-Angebot vorgemerkt")
-    check(until(lambda: ctx.connected, 8000), "nach dem Update wieder verbunden")
+    check(len(bks) == 1, "auto backup created before the update")
+    check(json.loads(bks[0].read_text())["companion"]["firmware"] == "melodee", "auto backup marked as Melodee")
+    check(ctx.pending_restore_check == "skiff", "return offer noted")
+    check(until(lambda: ctx.connected, 8000), "connected again after the update")
     from fm1companion.ui.firmware_page import find_backup_for
-    check(until(lambda: ctx.profile is not None and ctx.profile.serial == "DEMO-1", 8000), "dasselbe Profil wieder aktiv")
-    check(find_backup_for(ctx, "melodee") is not None, "Melodee-Backup wird für die Rückkehr gefunden")
-    check(until(lambda: ctx.pending_restore_check == "", 4000) is False or True, "Rückkehr-Angebot geprüft")
+    check(until(lambda: ctx.profile is not None and ctx.profile.serial == "DEMO-1", 8000), "the same profile active again")
+    check(find_backup_for(ctx, "melodee") is not None, "Melodee backup is found for the return")
+    check(until(lambda: ctx.pending_restore_check == "", 4000) is False or True, "return offer checked")
 
-    # ---- Einstellungen
+    # ---- settings
     from fm1companion.ui.settings_dialog import SettingsDialog
     d = SettingsDialog(ctx, w)
     d.channel.setCurrentIndex(d.channel.findData("rc"))
     d.keep.setValue(5)
     d._ok()
-    check(config.load().channel == "rc" and config.load().keep_backups == 5, "Einstellungen gespeichert")
+    check(config.load().channel == "rc" and config.load().keep_backups == 5, "settings saved")
     app.quit()
 
 
@@ -323,6 +323,6 @@ QTimer.singleShot(240000, app.quit)
 app.exec()
 fails = [r for r in results if not r[0]]
 for e in errors:
-    print("AUSNAHME:\n" + e)
-print(f"{len(results) - len(fails)}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+    print("EXCEPTION:\n" + e)
+print(f"{len(results) - len(fails)}/{len(results)} passed, {len(errors)} exceptions")
 sys.exit(1 if fails or errors else 0)

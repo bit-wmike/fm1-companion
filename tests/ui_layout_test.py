@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Fenstergröße: Jede Seite muss in ein 1280×720-Fenster passen (14"-Laptop, kleine Monitore).
+"""Window size: every page must fit into a 1280×720 window (14" laptop, small monitors).
 
-Erstellt das Hauptfenster im Demo-Modus, stellt 1280×720 ein, besucht jede Seite (verbunden mit DEMO-1, dann
-DEMO-2) und prüft minimumSizeHint() des Fensters. Optional: Bildschirmfotos aller Seiten in OUTDIR.
+Creates the main window in demo mode, sets 1280×720, visits every page (connected to DEMO-1, then
+DEMO-2) and checks the window's minimumSizeHint(). Optional: screenshots of all pages in OUTDIR.
 
   flock /tmp/fm1c-ui.lock timeout 600 env QT_QPA_PLATFORM=offscreen python3 tests/ui_layout_test.py [OUTDIR]
-  (FM1C_THEME=dark|light wählt das Design, Standard hell)
+  (FM1C_THEME=dark|light chooses the theme, default light)
 """
 from __future__ import annotations
 
@@ -79,7 +79,7 @@ def until(cond, ms=10000):
 
 
 def inside(wd) -> bool:
-    """liegt das Widget vollständig in allen Eltern (nicht abgeschnitten)?"""
+    """does the widget lie completely inside all its parents (not clipped)?"""
     from PyQt6.QtCore import QRect
     r = QRect(wd.mapTo(w, wd.rect().topLeft()), wd.size())
     p = wd.parentWidget()
@@ -108,18 +108,18 @@ def visit(tag: str):
 
 def flow():
     ctx = w.ctx
-    check(until(lambda: ctx.connected), "Demo-Gerät verbunden")
+    check(until(lambda: ctx.connected), "demo device connected")
     wait(300)
-    check(w.width() == W and w.height() == H, f"Fenster lässt sich auf {W}×{H} stellen ({w.width()}×{w.height()})")
+    check(w.width() == W and w.height() == H, f"window can be set to {W}×{H} ({w.width()}×{w.height()})")
     bad = visit("demo1")
-    check(not bad, "DEMO-1: jede Seite passt in 1280×720" + ("" if not bad else " – zu groß: " + "; ".join(bad)))
+    check(not bad, "DEMO-1: every page fits into 1280×720" + ("" if not bad else " – too large: " + "; ".join(bad)))
     ctx.connect_port(next(p for p in ctx.ports if p.serial == "DEMO-2"))
-    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-2", 15000), "DEMO-2 verbunden")
+    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-2", 15000), "DEMO-2 connected")
     bad = visit("demo2")
-    check(not bad, "DEMO-2: jede Seite passt in 1280×720" + ("" if not bad else " – zu groß: " + "; ".join(bad)))
+    check(not bad, "DEMO-2: every page fits into 1280×720" + ("" if not bad else " – too large: " + "; ".join(bad)))
     m = w.minimumSizeHint()
-    check(m.width() <= W and m.height() <= H, f"Fenster-Mindestgröße {m.width()}×{m.height()} ≤ {W}×{H}")
-    # Kit-Baukasten bei 1280 ganz sichtbar (rechte Spalte breit genug, keine abgeschnittenen Knöpfe)
+    check(m.width() <= W and m.height() <= H, f"window minimum size {m.width()}×{m.height()} ≤ {W}×{H}")
+    # kit builder fully visible at 1280 (right column wide enough, no clipped buttons)
     w.go("samples")
     wait(300)
     sp = w.samples
@@ -129,15 +129,15 @@ def flow():
     sc = right.parentWidget() if right is not None else None
     inner = sc.widget() if sc is not None else None
     check(inner is not None and inner.width() <= sc.viewport().width() + 1 and sc.width() >= 300,
-          f"Kit-Baukasten ganz sichtbar (Spalte {sc.width() if sc else '?'} px, ohne waagrechtes Rollen)")
+          f"kit builder fully visible (column {sc.width() if sc else '?'} px, without horizontal scrolling)")
     w.go("compose")
     wait(200)
     from PyQt6.QtWidgets import QPushButton
-    cp = w.page("compose").sub("erzeugen")          # Reiter „Erzeugen“ (der Reiter „Aus MIDI-Datei“ hat eigene Knöpfe)
+    cp = w.page("compose").sub("erzeugen")          # tab "Generate" (the tab "From MIDI File" has its own buttons)
     for text in ("Als MIDI speichern", "Rückgängig", "In Pattern schreiben"):
         b = next(x for x in cp.findChildren(QPushButton) if x.text().startswith(text))
         check(b.isVisible() and b.width() >= b.sizeHint().width() - 2 and inside(b),
-              f"Komponieren: „{text} …“ ganz sichtbar, nicht abgeschnitten")
+              f"Compose: \"{text} …\" fully visible, not clipped")
     app.quit()
 
 
@@ -156,8 +156,8 @@ QTimer.singleShot(300000, app.quit)
 app.exec()
 fails = [r for r in results if not r[0]]
 for e in errors:
-    print("AUSNAHME:\n" + e)
-print(f"{len(results) - len(fails)}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+    print("EXCEPTION:\n" + e)
+print(f"{len(results) - len(fails)}/{len(results)} passed, {len(errors)} exceptions")
 shutil.rmtree(home, ignore_errors=True)
 sys.stdout.flush()
-os._exit(1 if fails or errors else 0)    # ohne Qt-Aufräumen (WebEngine stürzt sonst beim Beenden ab)
+os._exit(1 if fails or errors else 0)    # without Qt cleanup (WebEngine crashes on exit otherwise)

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Der Original-Web-Editor der installierten Firmware, eingebettet in die App."""
+"""The original web editor of the installed firmware, embedded in the app."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -20,11 +20,11 @@ HAVE_WEBENGINE = web.HAVE_WEBENGINE
 
 
 class EditorPage(QWidget):
-    navigate = pyqtSignal(str)          # Seite der App öffnen (z. B. "firmware")
+    navigate = pyqtSignal(str)          # open a page of the app (e.g. "firmware")
 
     def __init__(self, ctx, server: editor_host.LocalServer, parent=None):
         super().__init__(parent)
-        self.current = None             # (spec, tag, demo) des geladenen Editors
+        self.current = None             # (spec, tag, demo) of the loaded editor
         self.ctx = ctx
         self.server = server
         self.loaded_for = ""
@@ -34,7 +34,7 @@ class EditorPage(QWidget):
         bar = QHBoxLayout()
         bar.setContentsMargins(8, 6, 8, 0)
         self.state = QLabel(_("Editor"))
-        self.state.setWordWrap(True)              # lange Hinweise umbrechen statt das Fenster breit zu zwingen
+        self.state.setWordWrap(True)              # wrap long notices instead of forcing the window wide
         self.state.setMinimumWidth(160)
         bar.addWidget(self.state, 1)
         self.b_reload = QPushButton(icon("view-refresh"), _("Reload"))
@@ -63,8 +63,8 @@ class EditorPage(QWidget):
             self.view = None
             return
         self.bridge = MidiBridge(self)
-        # Links des Editors so umlenken, wie sie in der App Sinn ergeben: Installer -> Firmware-Seite,
-        # Handbuch -> lokale Kopie, Editor -> Editor, Internet -> normaler Browser (web.RoutingPage)
+        # redirect the editor's links the way they make sense in the app: installer -> firmware page,
+        # manual -> local copy, editor -> editor, internet -> normal browser (web.RoutingPage)
         self.view, self.page, self.channel = web.make_view(self, bridge=self.bridge, router=self.route_local)
         self.profile = web.profile()
         web.add_download_handler(self._download, first=False)
@@ -81,7 +81,7 @@ class EditorPage(QWidget):
         return web.placeholder_html(_("Editor"), text)
 
     def _zoom(self, d):
-        """d = Schritt, None = zurück auf 100 %."""
+        """d = step, None = back to 100 %."""
         if self.view:
             z = 1.0 if d is None else max(0.5, min(2.0, round(self.view.zoomFactor() + d, 2)))
             self.view.setZoomFactor(z)
@@ -102,7 +102,7 @@ class EditorPage(QWidget):
         elif getattr(self.ctx, "protocol", "") == "generic":
             self.bridge.detach()
             if self.visible_now:
-                self.load()                    # zeigt den Leerzustand „kein Editor bei dieser Firmware“
+                self.load()                    # shows the empty state “no editor for this firmware”
         else:
             self.bridge.detach()
             self.state.setText(_("No FM-1 connected – the editor waits and connects by itself as soon as "
@@ -122,7 +122,7 @@ class EditorPage(QWidget):
         spec = firmware.spec(key)
         proto = getattr(self.ctx, "protocol", "")
         if proto == "generic" or (spec and (spec.protocol != "felucca" or not spec.editor)):
-            # Firmware ohne Editor-Protokoll (z. B. ORBIT, Original-Firmware): klarer Leerzustand statt Warten
+            # firmware without editor protocol (e.g. ORBIT, original firmware): clear empty state instead of waiting
             name = spec.name if spec else _("This firmware")
             self.loaded_for = ""
             self.state.setText(_("{name}: no built-in editor – presets via SysEx on the page “Presets”.").format(
@@ -148,7 +148,7 @@ class EditorPage(QWidget):
 
         def work(w):
             t = want_tag
-            if not t:                      # Version unbekannt: vorhandene Kopie, sonst die neueste
+            if not t:                      # version unknown: existing copy, otherwise the newest
                 avail = editor_host.available(key)
                 t = avail[-1] if avail else ""
                 if not t:
@@ -160,11 +160,11 @@ class EditorPage(QWidget):
             return t
 
         def done(t):
-            if not self.view:                  # inzwischen beendet (shutdown)
+            if not self.view:                  # finished in the meantime (shutdown)
                 return
             self.loaded_for = f"{key}/{t}"
-            # Demo-Modus: die Editoren bringen ihr eigenes simuliertes FM-1 mit (?mock=1) –
-            # das kann alles, was der Editor braucht; das Demo-Gerät der App nur die App-Funktionen
+            # demo mode: the editors bring their own simulated FM-1 (?mock=1) –
+            # it can do everything the editor needs; the app's demo device only the app functions
             demo = os.environ.get("FM1C_DEMO") == "1" and not os.environ.get("FM1C_DEMO_CMD")
             self.current = (spec, t, demo)
             self.view.load(self._editor_url())
@@ -187,13 +187,13 @@ class EditorPage(QWidget):
                                                     name=spec.name, version=want_tag, error=msg)))
         run_job(self, work, on_done=done, on_fail=fail)
 
-    # ------------------------------------------------------------ Links im Editor
+    # ------------------------------------------------------------ Links in the editor
     def _editor_url(self) -> QUrl:
         spec, tag, demo = self.current
         return QUrl(self.server.url(spec, tag) + ("?mock=1" if demo else ""))
 
     def route_local(self, url: QUrl) -> bool:
-        """Navigation innerhalb des lokalen Servers. True = Seite normal laden."""
+        """Navigation within the local server. True = load the page normally."""
         if not self.current:
             return True
         path = url.path().rstrip("/")
@@ -236,7 +236,7 @@ class EditorPage(QWidget):
             self.view.load(target)
 
     def shutdown(self):
-        """beim Beenden: Seite vor dem Profil abbauen (sonst warnt Qt WebEngine)."""
+        """on exit: tear down the page before the profile (otherwise Qt WebEngine warns)."""
         if not self.view:
             return
         from PyQt6 import sip
@@ -249,17 +249,17 @@ class EditorPage(QWidget):
     def _loaded(self, ok):
         if not ok or not self.ctx.connected:
             return
-        # automatisch verbinden, wenn der Editor einen Connect-Knopf hat
+        # connect automatically if the editor has a connect button
         self.page.runJavaScript("setTimeout(()=>{const b=document.getElementById('connect');"
                                 "if(b && !b.disabled && /connect|verbind/i.test(b.textContent)) b.click();},400)")
 
     def _download(self, item) -> bool:
-        """Downloads aus dem Editor: Backups (.json) in den Geräte-Ordner, alles andere nach Editor-Exporte.
-        Nur für die eigene Seite – Dateien aus dem Simulator gehen über dessen Handler bzw. nach ~/FM-1/Downloads."""
+        """Downloads from the editor: backups (.json) into the device folder, everything else to editor exports.
+        Only for our own page – files from the simulator go through its handler or to ~/FM-1/Downloads."""
         try:
             if item.page() is not self.page:
                 return False
-        except Exception:                                   # noqa: BLE001 – ohne page(): wie bisher behandeln
+        except Exception:                                   # noqa: BLE001 – without page(): handle as before
             pass
         name = item.downloadFileName() or "download"
         if name.endswith(".json"):
@@ -281,7 +281,7 @@ class EditorPage(QWidget):
         item.setDownloadFileName(Path(path).name)
         try:
             item.isFinishedChanged.connect(lambda p=path: self.state.setText(_("Saved: {path}").format(path=p)))
-        except Exception:                                   # noqa: BLE001 – ältere Qt ohne das Signal
+        except Exception:                                   # noqa: BLE001 – older Qt without the signal
             pass
         item.accept()
         self.state.setText(_("Saving {name} …").format(name=Path(path).name))

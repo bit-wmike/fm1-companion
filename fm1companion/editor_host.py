@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Den Original-Web-Editor der installierten Firmware lokal bereitstellen.
+"""Serve the original web editor of the installed firmware locally.
 
-Der Editor kommt aus dem Git-Repo der Firmware, genau in der Version, die auf
-dem Gerät läuft (git archive <tag> web/). Er wird über einen kleinen Server
-nur für diesen Rechner ausgeliefert (127.0.0.1, zufälliger Port) – nötig, weil
-die Editoren JS-Module nachladen, was bei file:// blockiert ist. Internet
-braucht er dabei nicht; nur das erste Bereitstellen einer neuen Version holt
-die Dateien aus dem Repo.
+The editor comes from the firmware's git repo, in exactly the version running on
+the device (git archive <tag> web/). It is served by a small server
+only for this computer (127.0.0.1, random port) – needed because
+the editors load JS modules, which is blocked under file://. It does not need
+internet for that; only the first provisioning of a new version fetches
+the files from the repo.
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ from .i18n import _
 from .firmware import REPOS_DIR, FirmwareSpec, ensure_tools
 
 SITES = DATA_DIR / "editor"
-SIMS = Path(__file__).resolve().parent / "sims"     # mitgelieferte Simulatoren (WASM), unter /sims/<name>/
+SIMS = Path(__file__).resolve().parent / "sims"     # bundled simulators (WASM), under /sims/<name>/
 SKIP = ("web/emu/", "web/learn/", "web/node_modules/", "web/test", "web/conv/")
 
 
@@ -39,7 +39,7 @@ def site_dir(key: str, tag: str) -> Path:
 
 
 def prepare(spec: FirmwareSpec, tag: str, log=print) -> Path:
-    """-> Ordner mit web/editor.html dieser Version."""
+    """-> folder with web/editor.html of this version."""
     d = site_dir(spec.key, tag)
     marker = d / ".complete"
     if marker.exists() and (d / spec.editor).exists():
@@ -51,7 +51,7 @@ def prepare(spec: FirmwareSpec, tag: str, log=print) -> Path:
     folder = str(Path(spec.editor).parent) or "web"
     r = subprocess.run(["git", "archive", "--format=tar", tag, folder], cwd=repo, capture_output=True, timeout=300)
     if r.returncode:
-        # Tag lokal unbekannt: einmal nachholen
+        # tag unknown locally: fetch once
         subprocess.run(["git", "fetch", "--tags", "--quiet"], cwd=repo, timeout=180)
         r = subprocess.run(["git", "archive", "--format=tar", tag, folder], cwd=repo, capture_output=True, timeout=300)
         if r.returncode:
@@ -65,7 +65,7 @@ def prepare(spec: FirmwareSpec, tag: str, log=print) -> Path:
                    and not m.name.startswith("/") and ".." not in Path(m.name).parts]
         try:
             tf.extractall(d, members=members, filter="data")
-        except TypeError:                      # Python < 3.11.4: ohne Filter keine Links/Gerätedateien
+        except TypeError:                      # Python < 3.11.4: without a filter, no links/device files
             tf.extractall(d, members=[m for m in members if m.isfile() or m.isdir()])
     if not (d / spec.editor).exists():
         raise RuntimeError(_("{name} {version} contains no editor under {path}").format(
@@ -75,7 +75,7 @@ def prepare(spec: FirmwareSpec, tag: str, log=print) -> Path:
 
 
 def manual_index(spec: FirmwareSpec, tag: str) -> Path | None:
-    """Handbuch dieser Version (liegt neben dem Editor unter web/manual/), falls vorhanden."""
+    """Manual of this version (lives next to the editor under web/manual/), if present."""
     p = site_dir(spec.key, tag) / Path(spec.editor).parent / "manual" / "index.html"
     return p if p.exists() else None
 
@@ -86,8 +86,8 @@ def missing_manual_images(index: Path) -> list[str]:
 
 
 def fetch_manual_images(spec: FirmwareSpec, index: Path, log=print, base: str = "") -> int:
-    """Die Bildschirmfotos des Handbuchs liegen nicht im Repo; einmal aus dem Online-Handbuch holen und
-    neben die lokale Kopie legen. Danach geht das Handbuch offline. Fehler sind kein Abbruch."""
+    """The manual's screenshots are not in the repo; fetch them once from the online manual and
+    put them next to the local copy. After that the manual works offline. Errors do not abort."""
     base = base or spec.manual_online
     if not base:
         return 0
@@ -103,9 +103,9 @@ def fetch_manual_images(spec: FirmwareSpec, index: Path, log=print, base: str = 
             tmp.write_bytes(data)
             tmp.replace(index.parent / name)
             got += 1
-        except Exception:                       # offline oder Bild online nicht vorhanden
+        except Exception:                       # offline, or image not available online
             if got == 0:
-                break                           # gleich das erste scheitert: nicht 59-mal warten
+                break                           # the very first one fails: do not wait 59 times
     return got
 
 
@@ -116,7 +116,7 @@ def available(key: str) -> list[str]:
 
 
 class MidiRelay:
-    """MIDI aus der App an Seiten außerhalb der App (Firefox): Server-Sent Events auf /_fm1/midi."""
+    """MIDI from the app to pages outside the app (Firefox): server-sent events on /_fm1/midi."""
 
     def __init__(self):
         self._clients: list[queue.Queue] = []
@@ -149,7 +149,7 @@ class MidiRelay:
                     line = ": ping\n\n"
                 handler.wfile.write(line.encode())
                 handler.wfile.flush()
-        except OSError:                         # Browser hat die Seite geschlossen
+        except OSError:                         # browser has closed the page
             pass
         finally:
             self._clients.remove(q)
@@ -176,7 +176,7 @@ class _Quiet(SimpleHTTPRequestHandler):
         return super().translate_path(path)
 
     def _host_ok(self) -> bool:
-        """Schutz gegen DNS-Rebinding: nur Anfragen an 127.0.0.1:<port> oder localhost:<port>, sonst 421."""
+        """Protection against DNS rebinding: only requests to 127.0.0.1:<port> or localhost:<port>, otherwise 421."""
         port = self.server.server_address[1]
         host = (self.headers.get("Host") or "").strip().lower()
         if host in (f"127.0.0.1:{port}", f"localhost:{port}"):
@@ -209,7 +209,7 @@ class _Quiet(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
-        """Daten einer eigenen Seite an die App (Studio: PCM beim Rendern, Flash-Abzug) – nur mit Einmal-Schlüssel."""
+        """Data from one of our own pages to the app (studio: PCM while rendering, flash dump) – only with a one-time key."""
         if not self._host_ok():
             return
         u = urlsplit(self.path)
@@ -226,7 +226,7 @@ class _Quiet(SimpleHTTPRequestHandler):
         q = dict(p.split("=", 1) for p in u.query.split("&") if "=" in p)
         try:
             sink(unquote(q.get("k", "")), body)
-        except Exception:                       # noqa: BLE001 – die Seite bekommt einen Fehler
+        except Exception:                       # noqa: BLE001 – the page gets an error
             self.send_error(500)
             return
         self.send_response(204)
@@ -234,8 +234,8 @@ class _Quiet(SimpleHTTPRequestHandler):
 
 
 class Exchange:
-    """Einmal-Adressen für Binärdaten zwischen App und eigenen Seiten: blob (App -> Seite, GET) und sink
-    (Seite -> App, POST; fn(key, bytes) im Server-Thread). Schlüssel sind zufällig (secrets.token_urlsafe)."""
+    """One-time addresses for binary data between the app and its own pages: blob (app -> page, GET) and sink
+    (page -> app, POST; fn(key, bytes) in the server thread). Keys are random (secrets.token_urlsafe)."""
 
     def __init__(self):
         self._blobs: dict[str, bytes] = {}
@@ -251,7 +251,7 @@ class Exchange:
 
     def blob(self, k: str):
         with self._lock:
-            return self._blobs.pop(k, None)          # einmal abholbar
+            return self._blobs.pop(k, None)          # can be fetched once
 
     def add_sink(self, fn) -> str:
         import secrets
@@ -271,7 +271,7 @@ class Exchange:
 
 
 class LocalServer:
-    """liefert SITES (Editoren) und unter /sims/ die mitgelieferten Simulatoren aus – nur auf 127.0.0.1."""
+    """serves SITES (editors) and, under /sims/, the bundled simulators – only on 127.0.0.1."""
 
     def __init__(self):
         SITES.mkdir(parents=True, exist_ok=True)
@@ -298,7 +298,7 @@ class LocalServer:
         return f"http://127.0.0.1:{self.port}/_fm1/blob/{self.exchange.add_blob(data)}"
 
     def sink_url(self, fn) -> tuple[str, str]:
-        """-> (URL, Schlüssel zum Entfernen)"""
+        """-> (URL, key for removal)"""
         k = self.exchange.add_sink(fn)
         return f"http://127.0.0.1:{self.port}/_fm1/sink/{k}", k
 

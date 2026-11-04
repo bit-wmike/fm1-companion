@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Abnahme V16/Flash-Sicherheit: Regressionstests für die in der Prüfung gefundenen Fehler.
+"""Acceptance V16/flash safety: regression tests for the bugs found in the review.
 
-Teile mit echten Paketen brauchen FM1_TEST_PKGDIR (wie tests/test_flashmodel.py), sonst übersprungen.
+Parts with real packages need FM1_TEST_PKGDIR (like tests/test_flashmodel.py), otherwise skipped.
 """
 import os
 import sys
@@ -15,16 +15,16 @@ from fm1companion.flash import flashmodel as m, package as pk, planner  # noqa: 
 
 PKGDIR = Path(os.environ.get("FM1_TEST_PKGDIR", "/nonexistent"))
 need_pkgs = pytest.mark.skipif(not (PKGDIR / "v16.fwsc").is_file() or not (PKGDIR / "zip_v15.fwsc").is_file(),
-                               reason="echte Pakete fehlen (FM1_TEST_PKGDIR mit v16.fwsc, zip_v15.fwsc)")
+                               reason="real packages missing (FM1_TEST_PKGDIR with v16.fwsc, zip_v15.fwsc)")
 
 
 def _r35(n):
     return [(n >> 7 * i) & 127 for i in range(5)]
 
 
-# ---------------------------------------------------------------- Ressourcen: Knopfname und Bedeutung von Befehl 82
+# ---------------------------------------------------------------- resources: button name and meaning of command 82
 def test_resource_hint_names_the_real_button():
-    """Früher: „Ressourcen erneut schreiben“ – diesen Knopf gibt es nicht; „Zur Firmware-Seite“ erschien nie."""
+    """Before: "Ressourcen erneut schreiben" – this button does not exist; "Zur Firmware-Seite" never appeared."""
     from fm1companion import i18n
     from fm1companion.flash import texts
     src = (ROOT / "fm1companion/ui/firmware_page.py").read_text("utf-8")
@@ -44,7 +44,7 @@ def test_resource_hint_names_the_real_button():
 
 
 def test_quick_check_other_build_is_about_the_firmware():
-    """Befehl 82 meldet Länge/CRC des laufenden Builds (res_want), nicht die gespeicherten: installiert = passt."""
+    """Command 82 reports length/CRC of the running build (res_want), not the stored ones: installed = matches."""
     rep = m.quick_check("FM-1_91060", "Melodee 1.6.0-rc.7", {"installed": True, "length": 5, "crc": 6})
     text = " ".join(t for _, t in rep.findings)
     assert rep.level == m.YELLOW and "passen zur laufenden Firmware" in text and "anderer Build" in text
@@ -68,7 +68,7 @@ def test_report_dialog_offers_firmware_page_for_resources(monkeypatch):
     assert dlg.b_res is not None
 
 
-# ---------------------------------------------------------------- Bootkopf: keine Überbehauptung
+# ---------------------------------------------------------------- boot head: no overclaiming
 def test_v16_head_is_not_called_rom_only():
     refs = m.demo_refs()
     for k in refs:
@@ -84,16 +84,16 @@ def test_v16_head_is_not_called_rom_only():
     assert "schreiben den Bootkopf (0x0–0x3FFF) nie" not in help_md and "**offen**" in help_md
 
 
-# ---------------------------------------------------------------- halbe Sektoren ohne Paketdatei
+# ---------------------------------------------------------------- half sectors without a package file
 def test_partial_residue_sector_found_from_profile_alone():
     refs, heads = m.load_known() + m.demo_refs(), m.demo_heads()
     v16 = m._demo_bytes("demo-v16", 0xA9000)
     d = bytearray(m.demo_dumps()["demo-sauber.bin"])
     d[0x93000:0xA9000] = b"\xff" * (0xA9000 - 0x93000)
-    d[0xA0C00:0xA9000] = v16[0xA0C00:0xA9000]          # Abbruch bei ~5 %: Sektor 0xA0000 nur zu einem Viertel
+    d[0xA0C00:0xA9000] = v16[0xA0C00:0xA9000]          # abort at ~5 %: sector 0xA0000 only a quarter
     rep = m.check_dump(bytes(d), refs, factory_heads=heads)
     assert rep.residue == [(0xA0000, 0x9000)]
-    d[0xA0C00] ^= 1                                     # fremdes Byte im halben Sektor: kein V16-Rest mehr
+    d[0xA0C00] ^= 1                                     # foreign byte in the half sector: no longer a V16 leftover
     assert m.check_dump(bytes(d), refs, factory_heads=heads).residue == [(0xA1000, 0x8000)]
 
 
@@ -105,7 +105,7 @@ def test_partial_residue_real_v16_and_known_blocks():
     assert all(ref.blocks[a] == m.block_hash(v16.flash[a:a + 512]) for a in ref.blocks)
 
 
-# ---------------------------------------------------------------- Planner: Inhalt statt Kennung
+# ---------------------------------------------------------------- planner: content instead of identity
 def _pkg_info(tmp_path, product, size, name="x.fwsc"):
     raw = pk.build_package(product, "felucca", size=size)
     f = tmp_path / name
@@ -116,7 +116,7 @@ def _pkg_info(tmp_path, product, size, name="x.fwsc"):
 
 
 def test_v16_sized_package_counts_as_layout_change(tmp_path):
-    """Felucca-Loader, Kennung wie Melodee, aber flash.bin bis 0xA8FFF: Backup-Pflicht und Verlust-Ansage"""
+    """Felucca loader, identity like Melodee, but flash.bin up to 0xA8FFF: backup required and loss notice"""
     info = _pkg_info(tmp_path, "FM-1_91060", 0xA9000)
     assert info.flash_bytes == 0xA9000
     st = planner.DeviceState(identity="FM-1_91060", felucca=True, firmware_key="melodee")
@@ -142,23 +142,23 @@ def test_v16_paths_in_the_planner(tmp_path):
     v16 = pk.analyze(PKGDIR / "v16.fwsc")
     assert v16.official == "FM-1_016" and v16.flash_bytes == 0xA9000
     mel = planner.DeviceState(identity="FM-1_91060", felucca=True, firmware_key="melodee")
-    # Melodee -> V16: fest über V15, Backup Pflicht
+    # Melodee -> V16: fixed via V15, backup required
     p = planner.plan_install(mel, planner.Target.from_file(v16), via_v15=False)
     assert p.v15_option == "locked" and p.via_stock
     assert not planner.plan_install(mel, planner.Target.from_file(v16), backup=False).ok
-    # V16 -> Melodee (Felucca-Paket): fest über V15
+    # V16 -> Melodee (Felucca package): fixed via V15
     on16 = planner.DeviceState(identity="FM-1_016", felucca=False)
     mp = _pkg_info(tmp_path, "FM-1_91060", 0x93000)
     p = planner.plan_install(on16, planner.Target.from_file(mp), via_v15=False)
     assert p.v15_option == "locked" and p.via_stock and any("Reste von V16" in x for x in p.lost)
-    # Dateiname lügt: echte V16 als „FM-1_v15.fwsc“
+    # the file name lies: real V16 as "FM-1_v15.fwsc"
     lie = tmp_path / "FM-1_v15.fwsc"
     lie.write_bytes((PKGDIR / "v16.fwsc").read_bytes())
     p = planner.plan_install(planner.DeviceState(identity="FM-1_015"), planner.Target.from_file(pk.analyze(lie)))
     assert not p.ok and any("sagt V15" in b for b in p.blockers)
 
 
-# ---------------------------------------------------------------- Abbruch mitten in V16 (Stufe 2) und Fortsetzen
+# ---------------------------------------------------------------- abort in the middle of V16 (stage 2) and resume
 @need_pkgs
 def test_v16_power_loss_resume_only_with_matching_packages(tmp_path, monkeypatch):
     import importlib
@@ -189,16 +189,16 @@ def test_v16_power_loss_resume_only_with_matching_packages(tmp_path, monkeypatch
         ident = e.probe()
     st = planner.DeviceState(identity=ident.text)
     assert st.update_mode and ident.text.startswith("ota-FM-1_0")
-    assert not planner.plan_install(st, planner.Target.from_file(mel), journal_active=act).ok   # falscher Loader
+    assert not planner.plan_install(st, planner.Target.from_file(mel), journal_active=act).ok   # wrong loader
     p15 = planner.plan_install(st, planner.Target.from_file(v15), journal_active=act)
-    assert p15.ok and any("Unterbrochen" in w for w in p15.warnings)                          # ginge, mit Hinweis
+    assert p15.ok and any("Unterbrochen" in w for w in p15.warnings)                          # would work, with a note
     kept = pk.analyze(Path(act["package"]))
     assert planner.plan_install(st, planner.Target.from_file(kept), journal_active=act).ok
     assert e.write(kept).identity == "FM-1_016" and dev.flash == v16.image and e.journal.active is None
 
 
 def test_v16_needs_a_recognised_firmware():
-    """Erkennung läuft noch (keine Kennung, Editor-Protokoll noch unbekannt): kein V16 mit „kein Backup möglich“"""
+    """detection still running (no identity, editor protocol still unknown): no V16 with "no backup possible\""""
     t = planner.Target(name="V16", product="FM-1_016", family="stock", key="stock-v16")
     p = planner.plan_install(planner.DeviceState(identity=""), t)
     assert not p.ok and any("nicht erkannt" in b for b in p.blockers)

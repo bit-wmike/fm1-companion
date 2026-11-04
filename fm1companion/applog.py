@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Protokolldatei: ~/.local/state/fm1-companion/logs/fm1-companion.log (rotierend, 5 × 1 MB)."""
+"""Log file: ~/.local/state/fm1-companion/logs/fm1-companion.log (rotating, 5 × 1 MB)."""
 from __future__ import annotations
 
 import logging
@@ -23,7 +23,7 @@ def log_file() -> Path:
 
 
 def setup(level: int = logging.INFO) -> Path | None:
-    """Python-Logging und Qt-Meldungen in die Datei leiten (einmal beim Start)."""
+    """Route Python logging and Qt messages into the log file (once at startup)."""
     global _configured
     if _configured:
         return log_file()

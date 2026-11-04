@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Rettung Stufe 2: FM-1 im ROM-Bootmodus („WL82 UBOOT1.00“, USB 4c4a:8057).
+"""Rescue stage 2: FM-1 in ROM boot mode ("WL82 UBOOT1.00", USB 4c4a:8057).
 
-Die eigentliche Arbeit macht das unverändert mitgelieferte MvaveFM1Unbricker (MIT, vendor/unbricker/),
-das über kagaimiqs jl-uboot-tool (MIT, wird erst nach Zustimmung auf einen festen Stand geholt) mit dem Chip
-spricht. Seine Sicherheitsregeln gelten unverändert: nie unter 0x4000 schreiben, kein Chip-/Block-Löschen,
-Pflicht-Doppelsicherung mit Vergleich, Chip-Key 0x980F und Flash-ID 0x856014 ohne Übersteuerung.
+The actual work is done by the bundled, unmodified MvaveFM1Unbricker (MIT, vendor/unbricker/),
+which talks to the chip via kagaimiq's jl-uboot-tool (MIT, fetched at a fixed revision only after consent).
+Its safety rules apply unchanged: never write below 0x4000, no chip/block erase,
+mandatory double backup with comparison, chip key 0x980F and flash ID 0x856014 without override.
 
-Diese Datei ergänzt nur: strenge Geräteerkennung über sysfs (VID:PID + Hersteller/Modell, Größe),
-Start mit Root-Rechten über pkexec, Abhängigkeitsprüfung, Ausgabe zeilenweise an die Oberfläche.
+This file only adds: strict device detection via sysfs (VID:PID + vendor/model, size),
+launch with root privileges via pkexec, dependency check, line-by-line output to the UI.
 """
 from __future__ import annotations
 
@@ -29,10 +29,10 @@ VENDOR = Path(__file__).resolve().parent.parent / "vendor" / "unbricker"
 SCRIPT = VENDOR / "fm1_unbrick.py"
 TRANSPORTER_SCRIPT = VENDOR / "fm1_transporter_recover.py"
 RESTZONE_SCRIPT = Path(__file__).resolve().parent / "restzone.py"
-# „Original-V15 zurückschreiben“ und „Einstellungen reparieren“ laufen über diese Sperre: sie prüft die Sicherung aus
-# demselben Lauf (V16-Aufbau, V16-Bootkopf), bevor der Unbricker schreibt (Sicherheitsbefunde S1/S2, RESEARCH-2026-11)
+# "Write back stock V15" and "Repair settings" go through this lock: it checks the backup from
+# the same run (V16 layout, V16 boot header) before the Unbricker writes (security findings S1/S2, RESEARCH-2026-11)
 GATE_SCRIPT = Path(__file__).resolve().parent / "rescuegate.py"
-# eigene Dateien, die als root mit dem Unbricker zusammen laufen (Prüfsummen in uboot_manifest.OWN)
+# own files that run as root together with the Unbricker (checksums in uboot_manifest.OWN)
 OWN_FILES = {"restzone.py": RESTZONE_SCRIPT, "flashmodel.py": RESTZONE_SCRIPT.parent / "flashmodel.py",
              "known_packages.json": RESTZONE_SCRIPT.parent.parent / "data" / "known_packages.json",
              "rescuegate.py": GATE_SCRIPT}
@@ -45,8 +45,8 @@ DEPS = {"crcmod": "python3-crcmod", "yaml": "python3-yaml", "Cryptodome": "pytho
         "tqdm": "python3-tqdm"}
 
 
-# FM-1 mit UCUN-UC25HQ80-Flash (JEDEC 0xB36014): Melodee 1.6.0 läuft darauf (#110), die ROM-Rettung prüft aber auf
-# 0x856014 (Unbricker, upstream tools/fm1_recover.py) und hält an. Nur eine verständliche Meldung, kein anderes Verhalten.
+# FM-1 with UCUN-UC25HQ80 flash (JEDEC 0xB36014): Melodee 1.6.0 runs on it (#110), but the ROM rescue checks for
+# 0x856014 (Unbricker, upstream tools/fm1_recover.py) and stops. Only an understandable message, no other behaviour.
 UCUN_FLASH_ID = 0xB36014
 UCUN_TEXT = _("This FM-1 has a flash chip from UCUN (UC25HQ80, ID 0xB36014) instead of the usual Puya "
               "(0x856014). The USB ROM recovery (stage 2) does not support this flash yet and therefore stops – "
@@ -57,16 +57,16 @@ _FLASH_ID_RE = re.compile(r"(?:flash[ _-]?id|jedec|\bid=)\D{0,12}(?:0x)?([0-9a-f
 
 
 def flash_hint(line: str) -> str:
-    """Ausgabezeile des Rettungswerkzeugs -> deutscher Hinweis (UCUN-Flash), sonst ''"""
+    """Output line of the rescue tool -> German hint (UCUN flash), otherwise ''"""
     m = _FLASH_ID_RE.search(line or "")
     return UCUN_TEXT if m and int(m.group(1), 16) == UCUN_FLASH_ID else ""
 
 
 @dataclass
 class UbootDevice:
-    sg: str                 # /dev/sgN – nur dieses Gerät wird benutzt
-    block: str              # /dev/sdX (nur zur Anzeige; nie beschrieben)
-    size: int               # Bytes laut sysfs (Anzeige / Plausibilität)
+    sg: str                 # /dev/sgN – only this device is used
+    block: str              # /dev/sdX (display only; never written)
+    size: int               # bytes according to sysfs (display / plausibility)
     usb_id: str
     vendor: str
     model: str
@@ -74,7 +74,7 @@ class UbootDevice:
 
     @property
     def size_ok(self) -> bool:
-        # das ROM meldet als Datenträger teils 0 oder kleine Werte – der Flash selbst wird über den Loader gelesen
+        # the ROM sometimes reports 0 or small values as the disk size – the flash itself is read via the loader
         return self.size in (0, EXPECTED_SIZE) or self.size < 64 * 1024 * 1024
 
     def describe(self) -> str:
@@ -102,7 +102,7 @@ def _usb_ancestor(dev: Path) -> Path | None:
 
 
 def usb_present(sysroot: str = "/sys") -> list[str]:
-    """USB-Pfade aller angeschlossenen Geräte mit 4c4a:8057 (auch ohne sg-Treiber sichtbar)"""
+    """USB paths of all connected devices with 4c4a:8057 (visible even without the sg driver)"""
     out = []
     base = Path(sysroot) / "bus" / "usb" / "devices"
     if base.is_dir():
@@ -113,7 +113,7 @@ def usb_present(sysroot: str = "/sys") -> list[str]:
 
 
 def scan(sysroot: str = "/sys", devroot: str = "/dev") -> list[UbootDevice]:
-    """ausschließlich SCSI-Generic-Geräte, deren USB-Vorfahr 4c4a:8057 ist UND die WL82 / UBOOT1.00 melden"""
+    """only SCSI generic devices whose USB ancestor is 4c4a:8057 AND that report WL82 / UBOOT1.00"""
     found = []
     base = Path(sysroot) / "class" / "scsi_generic"
     if not base.is_dir():
@@ -146,7 +146,7 @@ def scan(sysroot: str = "/sys", devroot: str = "/dev") -> list[UbootDevice]:
 
 
 def missing_deps() -> list[str]:
-    """apt-Pakete, die für jl-uboot-tool fehlen"""
+    """apt packages missing for jl-uboot-tool"""
     return [pkg for mod, pkg in DEPS.items() if importlib.util.find_spec(mod) is None]
 
 
@@ -160,17 +160,17 @@ def jl_dir() -> Path:
 
 
 def tool_ready() -> bool:
-    """liegt jl-uboot-tool (geholt über „Werkzeug holen“) vor? Die Prüfsummen prüft der Root-Helfer vor jedem Start."""
+    """is jl-uboot-tool (fetched via "Fetch tool") present? The root helper checks the checksums before every start."""
     d = jl_dir()
     return (d / "jluboottool.py").is_file() and (d / "data" / "loaderblobs" / "usb" / "wl82loader.bin").is_file()
 
 
-# Läuft als root (über pkexec): kopiert die Werkzeuge in ein root-eigenes Temp-Verzeichnis, prüft jede Datei gegen
-# die eingebaute Prüfsummenliste, führt nur die geprüfte Kopie aus und gibt Dateien, die dabei im Rettungsordner
-# als root entstanden sind, dem Benutzer zurück. Steht als Text im Befehl (nicht in einer beschreibbaren Datei).
-# Grenze (siehe SECURITY.md): Die Prüfsummen sichern die Unversehrtheit der Werkzeuge – sie sind keine
-# Sicherheitsgrenze gegen Code, der schon mit Benutzerrechten läuft. Sicherungen und Protokolle schreibt das
-# Werkzeug als root in den Rettungsordner des Benutzers; die Rückgabe folgt keinen symbolischen Links.
+# Runs as root (via pkexec): copies the tools into a root-owned temp directory, checks every file against
+# the built-in checksum list, runs only the verified copy and hands files that were created as root in the
+# rescue folder back to the user. Stored as text in the command (not in a writable file).
+# Limit (see SECURITY.md): the checksums ensure the integrity of the tools – they are not a
+# security boundary against code that already runs with user privileges. The tool writes backups and logs
+# as root into the user's rescue folder; handing them back does not follow symbolic links.
 ROOT_HELPER = r"""# i18n: ignore (German output, shown in the UI language via helper_line())
 import hashlib, json, os, pwd, shutil, subprocess, sys, tempfile
 spec = json.loads(sys.argv[1])
@@ -251,7 +251,7 @@ def helper_line(line: str) -> str:
 
 
 def root_python() -> str:
-    """System-Python für den root-Teil (dort liegen die apt-Pakete crcmod, yaml, pycryptodome)"""
+    """System Python for the root part (that is where the apt packages crcmod, yaml, pycryptodome live)"""
     return "/usr/bin/python3" if Path("/usr/bin/python3").exists() else sys.executable
 
 
@@ -264,7 +264,7 @@ def root_spec(script: Path, args: list[str], cwd: Path, log_dir: Path) -> dict:
 
 
 class Runner:
-    """führt fm1_unbrick.py / fm1_transporter_recover.py aus; dry_run = mit dessen eingebautem Mock-FM-1"""
+    """runs fm1_unbrick.py / fm1_transporter_recover.py; dry_run = with its built-in mock FM-1"""
 
     def __init__(self, dry_run: bool = False, log: Callable[[str], None] = print, cwd: Path | None = None,
                  root_cmd: list[str] | None = None):
@@ -274,7 +274,7 @@ class Runner:
         self.root_cmd = root_cmd if root_cmd is not None else (["pkexec"] if shutil.which("pkexec") else ["sudo"])
         self.proc: subprocess.Popen | None = None
         self.last_result: Path | None = None
-        self.hint = ""                  # deutscher Hinweis aus der Ausgabe (z. B. UCUN-Flash), sonst ""
+        self.hint = ""                  # German hint from the output (e.g. UCUN flash), otherwise ""
 
     def argv(self, cmd: str, *args: str, script: Path = SCRIPT, root: bool = True) -> list[str]:
         common = ["--jl-dir", str(jl_dir()), "--log-dir", str(self.cwd / "logs")]
@@ -283,7 +283,7 @@ class Runner:
         base = [sys.executable, "-I", str(script), cmd, *args, *common]
         if self.dry_run or not root:
             return base
-        # als root nie Code aus beschreibbaren Ordnern ausführen: geprüfte Kopie über ROOT_HELPER
+        # as root, never run code from writable folders: verified copy via ROOT_HELPER
         spec = root_spec(script, [cmd, *args], self.cwd, self.cwd / "logs")
         return [*self.root_cmd, root_python(), "-I", "-c", ROOT_HELPER, json.dumps(spec)]
 
@@ -315,9 +315,9 @@ class Runner:
                     self.log(_("NOTE: {text}").format(text=UCUN_TEXT))
         return self.proc.wait()
 
-    # --------------------------------------------------- die Befehle
+    # --------------------------------------------------- the commands
     def setup(self) -> int:
-        """jl-uboot-tool auf den geprüften Stand holen (ohne pip; Abhängigkeiten kommen per apt)"""
+        """fetch jl-uboot-tool at the verified revision (without pip; dependencies come via apt)"""
         return self.run("setup", "--no-pip", root=False)
 
     def find(self) -> int:
@@ -341,8 +341,8 @@ class Runner:
         return p
 
     def _sim_image(self, mock_image: str = "") -> list[str]:
-        """Simulation: Mock-Flash mit Demo-Kopf und Demo-Firmware (V15-Aufbau) – die Sperre kennt ihn über
-        --demo-refs. Ein eigenes Abbild (Tests) über mock_image."""
+        """Simulation: mock flash with demo header and demo firmware (V15 layout) – the lock knows it via
+        --demo-refs. A custom image (tests) via mock_image."""
         if not self.dry_run:
             return []
         if not mock_image:
@@ -354,18 +354,18 @@ class Runner:
         return ["--mock-image", str(mock_image), "--demo-refs"]
 
     def last_verdict(self) -> dict:
-        """Ergebnis der Sperre aus dem letzten restore/repair_settings ({} = keins)"""
+        """Verdict of the lock from the last restore/repair_settings ({} = none)"""
         try:
             return json.loads(Path(self.last_result).read_text("utf-8")) if self.last_result else {}
         except (OSError, ValueError):
             return {}
 
     def restore(self, package: str, device: str = "", verify_v15: bool = True, mock_image: str = "") -> int:
-        """Pflicht-Doppelsicherung, Schreiben nur 0x4000..0x92FFF, Rücklesen – alles im Werkzeug selbst.
-        Vorher (flashmodel.preflight, TOOL_TRUNCATES): Pakete, die über 0x92FFF hinausreichen (V16), nie – der
-        Unbricker würde sie ohne --verify-v15 abgeschnitten schreiben.
-        Im Lauf (rescuegate.py, nach der Sicherung, vor dem Schreiben): nur unter dem Bootkopf ab Werk – bei einem
-        V16- oder unbekannten Kopf wird nichts geschrieben (Rückgabe rescuegate.EXIT_REFUSED, Grund in last_verdict)."""
+        """Mandatory double backup, writing only 0x4000..0x92FFF, read-back – all inside the tool itself.
+        Before (flashmodel.preflight, TOOL_TRUNCATES): packages that extend beyond 0x92FFF (V16), never – the
+        Unbricker would write them truncated without --verify-v15.
+        During the run (rescuegate.py, after the backup, before writing): only under the factory boot header – with a
+        V16 or unknown header nothing is written (returns rescuegate.EXIT_REFUSED, reason in last_verdict)."""
         from . import flashmodel as fm
         try:
             pkg = fm.Package.load(package)
@@ -384,16 +384,16 @@ class Runner:
                         *self._sim_image(mock_image), script=GATE_SCRIPT)
 
     def repair_settings(self, factory_dump: str, device: str = "", mock_image: str = "") -> int:
-        """Einstellungsbereiche 0x93000–0xE8FFF und 0xFC000–0xFEFFF auf einen Werks-Dump (Unbricker repair-settings).
-        Im Lauf (rescuegate.py): nur, wenn die frische Sicherung den V15-Aufbau beweist – sonst nichts geschrieben."""
+        """Settings areas 0x93000–0xE8FFF and 0xFC000–0xFEFFF to a factory dump (Unbricker repair-settings).
+        During the run (rescuegate.py): only if the fresh backup proves the V15 layout – otherwise nothing is written."""
         return self.run("repair-settings", "--factory", factory_dump, "--yes",
                         *(["--device", device] if device else []), "--result", str(self._gate_file("repair-settings")),
                         *self._sim_image(mock_image), script=GATE_SCRIPT)
 
     def residue(self, command: str, folder: str, result: str, only: list[int] | None = None, device: str = "",
                 v16_packages: list[str] | None = None) -> int:
-        """„Reste aufräumen“ (flash/restzone.py): command „plan“ (sichern + planen, nichts löschen) oder „clean“
-        (sichern + nur die bestätigten V16-Rest-Sektoren löschen, die die frische Sicherung bestätigt)."""
+        """"Clean up leftovers" (flash/restzone.py): command "plan" (back up + plan, erase nothing) or "clean"
+        (back up + erase only the confirmed V16 leftover sectors that the fresh backup confirms)."""
         if command not in ("plan", "clean"):
             raise ValueError(command)
         args = [folder, "--result", result]
@@ -413,7 +413,7 @@ class Runner:
         return self.run(command, *args, *(["--device", device] if device else []), script=RESTZONE_SCRIPT)
 
     def softkey(self, port: str = "") -> int:
-        """laufendes FM-1 per Software in den ROM-Bootmodus schicken (für die Notfall-Komplettsicherung)"""
+        """send a running FM-1 into ROM boot mode via software (for the emergency full backup)"""
         return self.run("softkey", "--yes", *(["--port", port] if port else []), root=False)
 
     def cancel(self):

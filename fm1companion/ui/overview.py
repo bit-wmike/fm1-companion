@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Übersicht: das aktive Gerät, Update-Status, letzte Sicherung, Schnellaktionen."""
+"""Overview: the active device, update status, last backup, quick actions."""
 from __future__ import annotations
 
 import html
@@ -40,7 +40,7 @@ class OverviewPage(QWidget):
         grid.setVerticalSpacing(10)
         lay.addLayout(grid)
 
-        # Gerät (links, über zwei Zeilen)
+        # Device (left, spanning two rows)
         self.dev_card = Card(_("Device"), icon="audio-card")
         self.dev_form = QFormLayout()
         self.dev_form.setHorizontalSpacing(12)
@@ -67,16 +67,16 @@ class OverviewPage(QWidget):
         self.notes.setPlaceholderText(_("Notes on this device (e.g. “the one with the scratch, for live sets”)"))
         self.notes.setMaximumHeight(56)
         self._notes_pid = ""
-        self._notes_timer = QTimer(self, interval=700, singleShot=True)   # nicht bei jedem Tastendruck speichern
+        self._notes_timer = QTimer(self, interval=700, singleShot=True)   # don't save on every keystroke
         self._notes_timer.timeout.connect(self._notes)
         self.notes.textChanged.connect(self._notes_timer.start)
         self.dev_card.lay.addWidget(self.notes)
         grid.addWidget(self.dev_card, 0, 0, Qt.AlignmentFlag.AlignTop)
-        right = QVBoxLayout()                       # Sicherung und Firmware dicht untereinander
+        right = QVBoxLayout()                       # backup and firmware stacked closely
         right.setSpacing(10)
         grid.addLayout(right, 0, 1)
 
-        # Sicherung (rechts oben)
+        # Backup (top right)
         self.bk_card = Card(pgettext("overview", "Backup"), icon="backup")
         self.bk_text = QLabel("–")
         self.bk_text.setWordWrap(True)
@@ -94,7 +94,7 @@ class OverviewPage(QWidget):
         self.bk_card.lay.addLayout(r3)
         right.addWidget(self.bk_card)
 
-        # Firmware / Updates (rechts darunter)
+        # Firmware / updates (right, below)
         self.up_card = Card(_("Firmware & Updates"), icon="system-software-update")
         self.up_text = QLabel(_("Not checked yet."))
         self.up_text.setWordWrap(True)
@@ -111,7 +111,7 @@ class OverviewPage(QWidget):
         right.addWidget(self.up_card)
         right.addStretch(1)
 
-        # Schnellzugriff: vier echte Aktionen
+        # Quick access: four real actions
         q = Card(_("Quick access"), icon="zap")
         qg = QGridLayout()
         qg.setSpacing(8)
@@ -134,7 +134,7 @@ class OverviewPage(QWidget):
         q.lay.addLayout(qg)
         grid.addWidget(q, 1, 0, Qt.AlignmentFlag.AlignTop)
 
-        # Weitere Geräte
+        # Other devices
         self.others = Card(_("Known devices"), icon="computer")
         self.others_text = QLabel("–")
         self.others_text.setWordWrap(True)
@@ -149,7 +149,7 @@ class OverviewPage(QWidget):
         self.refresh()
 
     def attach(self, window):
-        """vom Hauptfenster nach dem Laden aller Seiten: Katalog-Neuigkeiten (falls vorhanden)."""
+        """from the main window after all pages have loaded: catalog news (if any)."""
         from .wizard import find_page
         self.window = window
         news = getattr(window.page(find_page(window, ("discover", "catalog")) or ""), "news_items", None)
@@ -168,7 +168,7 @@ class OverviewPage(QWidget):
                 lay.insertWidget(lay.count() - 1, nc)
 
     def _save_presets(self):
-        """Schnellzugriff „Presets sichern“: zur Presets-Seite und dort alle sichern (liest vorher ein)."""
+        """Quick access “Back up presets”: go to the presets page and back up all there (reads them first)."""
         win = getattr(self, "window", None)
         page = win.page("presets") if win is not None else None
         self.navigate.emit("presets")
@@ -180,7 +180,7 @@ class OverviewPage(QWidget):
         c = self.ctx
         p = c.profile
         port = c.port
-        if self._notes_timer.isActive():            # getippte Notiz noch dem bisherigen Gerät zuordnen
+        if self._notes_timer.isActive():            # assign the typed note to the previous device
             self._notes_timer.stop()
             self._notes()
         self._notes_pid = p.id if p else ""
@@ -235,7 +235,7 @@ class OverviewPage(QWidget):
             fw = firmware.spec(prof.firmware) if prof.firmware else None
             state = _("active") if p and prof.id == p.id else (_("plugged in") if prof.id in connected
                                                                else _("not plugged in"))
-            ver = re.sub(r"^[vV](?=\d)", "", prof.firmware_version or "")   # wie oben: „1.6.0-rc.7“, nicht „v1.6.0-rc.7“
+            ver = re.sub(r"^[vV](?=\d)", "", prof.firmware_version or "")   # as above: “1.6.0-rc.7”, not “v1.6.0-rc.7”
             what = f"{fw.name if fw else prof.firmware} {ver}".strip() or _("firmware unknown")
             lines.append(f"<b style='color:{prof.color}'>●</b> <b>{html.escape(prof.name)}</b> – "
                          f"{html.escape(what)} · {state}")
@@ -249,7 +249,7 @@ class OverviewPage(QWidget):
         try:
             folder = c.device_folder(c.settings.backups_dir)
             from .. import autobackup as AB
-            files = [m.path for m in AB.list_backups(folder, recursive=False)]   # nur lesbare, neueste zuerst
+            files = [m.path for m in AB.list_backups(folder, recursive=False)]   # readable only, newest first
         except OSError as e:
             self.bk_text.setText(_("<b>Backup folder not reachable.</b> {error}").format(error=getattr(e, 'strerror', '') or e))
             return
@@ -280,7 +280,7 @@ class OverviewPage(QWidget):
             self.up_text.setText(_("The FM-1 is waiting in update mode – finish the installation first (page “Rescue”)."))
             return
         if i and i.get("firmware") and i.get("firmware") != c.firmware_key:
-            i = {}                                   # Ergebnis eines anderen Geräts gilt hier nicht
+            i = {}                                   # a result from another device doesn't apply here
         if not c.firmware_key and not i:
             self.up_text.setText(_("Firmware unknown – please choose (note above) or “To the firmwares” (Firmware+).")
                                  if getattr(c, "firmware_ambiguous", False) else
@@ -310,7 +310,7 @@ class OverviewPage(QWidget):
         p = self.ctx.profile
         name, ok = QInputDialog.getText(self, _("Rename device"), _("Name:"), text=p.name)
         if ok and name.strip():
-            try:                                    # Backups wandern mit (wie auf der Geräte-Seite)
+            try:                                    # backups move along (as on the devices page)
                 self.ctx.rename_profile(name.strip())
             except OSError as e:
                 from .common import show_error

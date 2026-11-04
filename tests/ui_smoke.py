@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""UI-Rauchtest im Demo-Modus (ohne Bildschirm): jede Seite öffnen, Screenshots machen,
-unbehandelte Ausnahmen sammeln.
+"""UI smoke test in demo mode (without a screen): open every page, take screenshots,
+collect unhandled exceptions.
 
   QT_QPA_PLATFORM=offscreen python3 tests/ui_smoke.py OUTDIR
 """
@@ -49,7 +49,7 @@ from fm1companion import config  # noqa: E402
 s = config.load()
 s.user_root = str(home / "FM-1")
 s.check_on_start = False
-# Sample-Ordner mit ein paar erzeugten WAVs (wie PO-Samples)
+# sample folder with a few generated WAVs (like PO samples)
 samp = home / "po-samples" / "PO-33 kicks"
 samp.mkdir(parents=True, exist_ok=True)
 import math, struct, wave  # noqa: E401,E402
@@ -66,7 +66,7 @@ s.sample_roots = [str(home / "po-samples")]
 config.save(s)
 config.ensure_dirs()
 
-# Dialoge im Test nicht blockieren lassen
+# do not let dialogs block in the test
 QMessageBox.exec = lambda self: 0
 _orig_dialog_exec = QDialog.exec
 
@@ -105,11 +105,11 @@ def run_steps():
 steps.append(("00_start", lambda: None, 3000))
 for i, key in enumerate(w.specs):
     steps.append((f"{i + 1:02d}_{key}", lambda k=key: w.go(k), 6000 if key in ("editor", "samples") else 1500))
-# Reiter zusammengelegter Seiten (alte Schlüssel leiten weiter)
+# tabs of merged pages (old keys redirect)
 from fm1companion.ui.main_window import ALIASES  # noqa: E402
 for i, key in enumerate(ALIASES):
     steps.append((f"{15 + i:02d}_{key}", lambda k=key: w.go(k), 6000 if key == "simulator" else 1500))
-# Aktionen im Demo-Gerät
+# actions on the demo device
 steps.append(("30_projects_read", lambda: (w.go("projects"), w.projects.read_slots()), 2500))
 steps.append(("31_fm1_page", lambda: w.go("fm1"), 4000))
 steps.append(("32_samples_slots", lambda: (w.go("samples"), w.samples.tabs.setCurrentIndex(w.samples.dev_tab_index),
@@ -130,10 +130,10 @@ QTimer.singleShot(500, run_steps)
 QTimer.singleShot(120000, app.quit)
 app.exec()
 print(f"Screenshots: {out}")
-print(f"Testordner: {home}")
+print(f"Test folder: {home}")
 if errors:
-    print(f"{len(errors)} FEHLER:")
+    print(f"{len(errors)} ERRORS:")
     for e in errors:
         print(e)
     sys.exit(1)
-print("keine Fehler")
+print("no errors")

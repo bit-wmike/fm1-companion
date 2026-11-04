@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Über-Dialog (Suite-Branding, Mitwirkende, Lizenzen, System) und Tastenkürzel-Übersicht."""
+"""About dialog (suite branding, contributors, licenses, system) and keyboard shortcut overview."""
 from __future__ import annotations
 
 import html
@@ -93,12 +93,12 @@ class AboutDialog(QDialog):
 
 
 def _plain(text: str) -> str:
-    """Mnemonik-& entfernen, echte && als & behalten („Samples && Kits“ -> „Samples & Kits“)."""
+    """Remove mnemonic &, keep real && as & (“Samples && Kits” -> “Samples & Kits”)."""
     return text.replace("&&", "\x00").replace("&", "").replace("\x00", "&")
 
 
 def collect_shortcuts(window) -> list[tuple[str, str, str]]:
-    """(Bereich, Aktion, Kürzel) aus Menüs und Fensteraktionen."""
+    """(Area, action, shortcut) from menus and window actions."""
     out, seen = [], set()
 
     def walk(menu, path):

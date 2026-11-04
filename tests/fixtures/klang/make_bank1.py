@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Erzeugt fm1_bank1.syx: eine DX7-Bank (32 Voices) aus dem Zufallsgenerator der App (fester Startwert).
+"""Creates fm1_bank1.syx: a DX7 bank (32 voices) from the app's random generator (fixed seed).
 
-Ersetzt seit 2.3.1 die frühere Test-Bank, die aus den Werks-Presets des FM-1 stammte (Urheberrecht unklar).
-Die Namen sind schlichte Gattungsnamen; die Klänge sind generiert, nicht aus einer Firmware entnommen.
+Since 2.3.1 it replaces the former test bank, which came from the FM-1's factory presets (copyright unclear).
+The names are plain generic names; the sounds are generated, not taken from a firmware.
 
   python3 tests/fixtures/klang/make_bank1.py
 """

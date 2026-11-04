@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Zuordnung freedesktop-/Breeze-Symbolnamen -> Lucide-Symbol (ISC-Lizenz, siehe LICENSE.lucide).
+"""Mapping of freedesktop/Breeze icon names -> Lucide icon (ISC licence, see LICENSE.lucide).
 
-Seiten rufen ``common.icon("document-save", "backup")`` mit Namen aus dem Desktop-Thema auf;
-die App zeichnet daraus ein einheitliches Lucide-Symbol in der Textfarbe des aktuellen Designs.
-Ein Eintrag kann eine Tönung haben: "name:tint" mit tint = accent | danger | warning | success.
+Pages call ``common.icon("document-save", "backup")`` with names from the desktop theme;
+the app draws a uniform Lucide icon from it in the text colour of the current theme.
+An entry can have a tint: "name:tint" with tint = accent | danger | warning | success.
 """
 MAP = {
-    # Vergleich / Musik (von späteren Bereichen benutzt)
+    # comparison / music (used by later sections)
     "document-compare": "columns-3", "kompare": "columns-3", "view-split-left-right": "columns-3", "roll": "piano",
-    # Navigation / Dateien
+    # navigation / files
     "go-home": "house", "user-home": "house", "go-next": "arrow-right", "go-previous": "arrow-left",
     "go-up": "arrow-up", "go-down": "arrow-down", "go-first": "chevrons-left", "go-last": "chevrons-right",
     "go-jump": "corner-down-right", "folder": "folder", "folder-open": "folder-open", "folder-new": "folder-plus",
@@ -30,7 +30,7 @@ MAP = {
     "emblem-favorite": "star", "rating": "star", "favorite": "star", "starred": "star",
     "non-starred": "star", "emblem-ok": "circle-check:success", "emblem-important": "circle-alert:warning",
     "emblem-locked": "lock", "emblem-unlocked": "lock-open", "emblem-shared": "share-2",
-    # Ansicht / Fenster
+    # view / window
     "view-refresh": "refresh-cw", "view-list-details": "list", "view-list-tree": "list-tree",
     "view-list-icons": "layout-grid", "view-grid": "layout-grid", "view-filter": "list-filter",
     "view-sort": "arrow-up-down", "view-sort-ascending": "arrow-down-a-z", "view-preview": "eye",
@@ -40,7 +40,7 @@ MAP = {
     "window-new": "app-window", "view-calendar": "calendar", "view-media-equalizer": "sliders-vertical",
     "view-statistics": "chart-column", "office-chart-line": "chart-line", "office-chart-bar": "chart-column",
     "format-list-unordered": "list", "format-text-bold": "bold", "code-context": "code",
-    # Aktionen / System
+    # actions / system
     "configure": "settings", "preferences-system": "settings", "preferences-other": "settings-2",
     "preferences-desktop": "monitor-cog", "preferences-desktop-theme": "palette",
     "preferences-desktop-color": "palette", "color-management": "palette", "preferences-desktop-font": "type",
@@ -88,7 +88,7 @@ MAP = {
     "discover": "compass", "plasmadiscover": "compass", "shopping-cart": "shopping-cart", "rocket": "rocket",
     "favorites": "star", "games-config-options": "sliders-horizontal", "configure-shortcuts": "keyboard",
     "dashboard-show": "layout-dashboard", "kpi": "gauge", "speedometer": "gauge", "office-report": "file-chart-column",
-    # Audio / Musik
+    # audio / music
     "audio-card": "audio-lines", "audio-midi": "piano", "audio-x-midi": "music", "midi": "piano",
     "audio-x-generic": "file-audio", "audio-x-wav": "file-audio", "audio-input-microphone": "mic",
     "audio-headphones": "headphones", "audio-speakers": "speaker", "audio-volume-high": "volume-2",
@@ -107,7 +107,7 @@ MAP = {
     "compose": "pen-tool", "fm1-device": "keyboard-music",
 }
 
-# Lucide-Namen, die ohne Zuordnung direkt benutzt werden dürfen (icon("piano"))
+# Lucide names that may be used directly without a mapping (icon("piano"))
 EXTRA = ["layers", "box", "boxes", "sparkles", "wand", "bell-off", "circle-help", "circle", "circle-dot",
          "chevron-down", "chevron-up", "chevron-left", "chevron-right", "check", "x", "info", "triangle-alert",
          "circle-check", "circle-x", "octagon-x", "copy", "save", "settings", "command", "external-link",
@@ -124,7 +124,7 @@ EXTRA = ["layers", "box", "boxes", "sparkles", "wand", "bell-off", "circle-help"
 
 
 def lucide_name(name: str) -> tuple[str, str]:
-    """(lucide-name, tint) oder ("", "") wenn unbekannt."""
+    """(lucide-name, tint) or ("", "") if unknown."""
     v = MAP.get(name)
     if v is None:
         base = name[:-9] if name.endswith("-symbolic") else name

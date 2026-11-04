@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Eigene Samples als SoundFont (.sf2) – damit FluidSynth sie auf einem MIDI-Kanal spielt.
+"""Own samples as a SoundFont (.sf2) – so that FluidSynth plays them on a MIDI channel.
 
-Schreibt SoundFont 2.01 (RIFF ``sfbk``): INFO, sdta/smpl (16 Bit mono), pdta mit
-phdr/pbag/pmod/pgen/inst/ibag/imod/igen/shdr. Ein Preset = ein Instrument; jede Zone hat einen
-Tastenbereich, eine Grundtaste und spielt ihr Sample einmal (keine Schleife).
+Writes SoundFont 2.01 (RIFF ``sfbk``): INFO, sdta/smpl (16-bit mono), pdta with
+phdr/pbag/pmod/pgen/inst/ibag/imod/igen/shdr. One preset = one instrument; each zone has a
+key range, a root key and plays its sample once (no loop).
 
-* aus einem Kit der App (``samples.Kit``): genau so, wie es auf das FM-1 ginge (22 050 Hz,
-  dieselbe Bearbeitung); Drum-Kits: jede Taste ein Sound, Instrumente: über die Tastatur verteilt.
-* aus einem Ordner mit WAVs: Drum-Map ab C2 (36, General-MIDI-Bassdrum) in Dateinamen-Reihenfolge.
+* from one of the app's kits (``samples.Kit``): exactly as it would go onto the FM-1 (22,050 Hz,
+  the same editing); drum kits: each key one sound, instruments: spread across the keyboard.
+* from a folder of WAVs: drum map from C2 (36, General MIDI bass drum) in file name order.
 """
 from __future__ import annotations
 
@@ -18,9 +18,9 @@ from pathlib import Path
 
 from .i18n import _
 
-# Generator-Nummern (SoundFont 2.01, Kap. 8.1.2)
+# generator numbers (SoundFont 2.01, section 8.1.2)
 G_INSTRUMENT, G_RELEASE_VOL, G_KEYRANGE, G_ATTENUATION, G_SAMPLE_ID, G_SAMPLE_MODES, G_ROOTKEY = 41, 38, 43, 48, 53, 54, 58
-PAD = 46                                         # Pflicht-Nullsamples nach jedem Sample
+PAD = 46                                         # mandatory zero samples after each sample
 
 
 @dataclass
@@ -45,7 +45,7 @@ class SfPreset:
     zones: list[SfZone]
     program: int = 0
     bank: int = 0
-    one_shot: bool = True    # Drums: Note-aus schneidet nicht ab
+    one_shot: bool = True    # drums: note-off does not cut off
 
 
 @dataclass
@@ -87,11 +87,11 @@ def build(bank: Bank) -> bytes:
         smpl += struct.pack(f"<{len(s.data)}h", *[max(-32768, min(32767, int(v))) for v in s.data])
         end = len(smpl) // 2
         smpl += b"\0\0" * PAD
-        m = 8 if end - start > 32 else 0                # Schleifenpunkte (ungenutzt) mit Abstand zu den Rändern
+        m = 8 if end - start > 32 else 0                # loop points (unused) with a margin to the edges
         shdr += struct.pack("<20sIIIIIBbHH", _name20(s.name), start, end, start + m, end - m,
                             int(s.rate), max(0, min(127, s.root)), 0, 0, 1)   # 1 = monoSample
     shdr += struct.pack("<20sIIIIIBbHH", _name20("EOS"), 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    # ---- Instrumente (eins pro Preset)
+    # ---- instruments (one per preset)
     inst, ibag, igen = bytearray(), bytearray(), bytearray()
     phdr, pbag, pgen = bytearray(), bytearray(), bytearray()
     gi = bi = 0
@@ -105,14 +105,14 @@ def build(bank: Bank) -> bytes:
                     (G_RELEASE_VOL, (1200 if p.one_shot else -2084) & 0xFFFF),
                     (G_SAMPLE_MODES, 0),
                     (G_ROOTKEY, max(0, min(127, z.root))),
-                    (G_SAMPLE_ID, z.sample)]                     # sampleID immer zuletzt
+                    (G_SAMPLE_ID, z.sample)]                     # sampleID always last
             for op, amt in gens:
                 igen += struct.pack("<HH", op, amt)
                 gi += 1
         phdr += struct.pack("<20sHHHIII", _name20(p.name), p.program & 127, p.bank, pbi, 0, 0, 0)
         pbag += struct.pack("<HH", pgi, 0)
         pbi += 1
-        pgen += struct.pack("<HH", G_INSTRUMENT, k)              # instrument immer zuletzt
+        pgen += struct.pack("<HH", G_INSTRUMENT, k)              # instrument always last
         pgi += 1
     inst += struct.pack("<20sH", _name20("EOI"), bi)
     ibag += struct.pack("<HH", gi, 0)
@@ -140,7 +140,7 @@ def write(bank: Bank, path: Path) -> Path:
     return path
 
 
-# ------------------------------------------------------------ Quellen ---
+# ------------------------------------------------------------ sources ---
 def _key_split(roots: list[int]) -> list[tuple[int, int]]:
     n = len(roots)
     return [(0 if j == 0 else (roots[j - 1] + r) // 2 + 1, 127 if j == n - 1 else (r + roots[j + 1]) // 2)
@@ -148,7 +148,7 @@ def _key_split(roots: list[int]) -> list[tuple[int, int]]:
 
 
 def bank_from_kit(kit, program: int = 0) -> Bank:
-    """samples.Kit -> Bank (nutzt samples.render_zone: dieselbe Bearbeitung wie für das FM-1)."""
+    """samples.Kit -> bank (uses samples.render_zone: the same editing as for the FM-1)."""
     from . import samples as S
     if not kit.zones:
         raise ValueError(_("The kit is empty."))
@@ -173,7 +173,7 @@ AUDIO = {".wav", ".wave", ".aif", ".aiff", ".flac", ".mp3", ".ogg"}
 
 
 def bank_from_folder(folder: Path, base_note: int = 36, name: str = "") -> Bank:
-    """Ordner mit Sounds -> Drum-Kit ab base_note (C2 = 36), höchstens 128 − base_note Sounds."""
+    """Folder of sounds -> drum kit from base_note (C2 = 36), at most 128 − base_note sounds."""
     from . import samples as S
     folder = Path(folder)
     files = sorted((p for p in folder.iterdir() if p.suffix.lower() in AUDIO and not p.name.startswith(".")),
@@ -194,7 +194,7 @@ def bank_from_folder(folder: Path, base_note: int = 36, name: str = "") -> Bank:
 
 
 def drum_map(bank: Bank) -> list[tuple[int, str]]:
-    """(Taste, Sound) – für die Anzeige."""
+    """(key, sound) – for display."""
     out = []
     for p in bank.presets:
         for z in p.zones:

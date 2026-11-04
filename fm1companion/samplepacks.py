@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Kostenlose Sample-Pakete von GitHub: durchsehen, ganz oder ordnerweise laden, in die Bibliothek.
+"""Free sample packs from GitHub: browse, download fully or per folder, into the library.
 
-Ohne GitHub-API (deren Limit ist klein): der Inhalt kommt per „partial clone“ – git lädt nur
-die Ordnerstruktur (ein paar hundert KiB), Audiodateien erst beim Herunterladen und nur für
-die gewählten Ordner (sparse checkout). Braucht nur `git`.
+Without the GitHub API (its rate limit is small): the content comes via "partial clone" – git only fetches
+the folder structure (a few hundred KiB), audio files only when downloading and only for
+the selected folders (sparse checkout). Only needs `git`.
 
-Lizenzen: Jedes Paket trägt die Lizenz, die im Repository wirklich steht. Wo keine klare
-Lizenz zu finden ist, steht „Lizenz unklar“ – solche Pakete sind nur zum Ausprobieren gedacht,
-nicht zum Veröffentlichen.
+Licences: every pack carries the licence that is actually stated in the repository. Where no clear
+licence can be found, it says "licence unclear" – such packs are only meant for trying out,
+not for publishing.
 """
 from __future__ import annotations
 
@@ -30,10 +30,10 @@ AUDIO = {".wav", ".wave", ".aif", ".aiff", ".flac", ".mp3", ".ogg"}
 class Pack:
     id: str
     name: str
-    repo: str                       # owner/name auf GitHub
-    licence: str                    # SPDX oder "unklar"
+    repo: str                       # owner/name on GitHub
+    licence: str                    # SPDX or "unklar" (unclear)
     description: str
-    licence_note: str = ""          # wo die Lizenz steht / warum unklar
+    licence_note: str = ""          # where the licence is stated / why it is unclear
     tags: tuple[str, ...] = ()
     size_hint: str = ""
     extra: dict = field(default_factory=dict)
@@ -55,7 +55,7 @@ FREE = {"CC0-1.0": _("CC0 – public domain, free to use (also commercially, no 
         "CC-BY-4.0": _("CC BY 4.0 – free to use with attribution"),
         "CC-BY-3.0": _("CC BY 3.0 – free to use with attribution")}
 
-# Geprüft am 30.10.2026 (LICENSE-Datei bzw. README im Repository).
+# Checked on 30.10.2026 (LICENSE file or README in the repository).
 PACKS = [
     Pack("vcsl", "VCSL – Versilian Community Sample Library", "sgossner/VCSL", "CC0-1.0",
          _("About 4,000 samples of real instruments: drums (membranophones), cymbals, bells and percussion "
@@ -84,7 +84,7 @@ def pack(pid: str) -> Pack:
     return next(p for p in PACKS if p.id == pid)
 
 
-# ------------------------------------------------------------ Inhalt ---
+# ------------------------------------------------------------ contents ---
 
 @dataclass
 class Entry:
@@ -97,15 +97,15 @@ class Entry:
 
 
 def parse_tree(text: str) -> list[Entry]:
-    """Ausgabe von `git ls-tree -r HEAD` (mit oder ohne -l) -> Audiodateien.
-    (Ohne -l: die Größen fehlen, dafür muss git keine einzige Audiodatei laden.)"""
+    """Output of `git ls-tree -r HEAD` (with or without -l) -> audio files.
+    (Without -l the sizes are missing, but git does not have to fetch a single audio file.)"""
     out = []
     for line in text.splitlines():
         meta, _sep, path = line.partition("\t")
         parts = meta.split()
         if len(parts) < 3 or parts[1] != "blob" or not path:
             continue
-        if path.startswith('"'):                      # git quotet Sonderzeichen
+        if path.startswith('"'):                      # git quotes special characters
             try:
                 path = path[1:-1].encode("latin-1").decode("unicode_escape").encode("latin-1").decode("utf-8")
             except (UnicodeError, ValueError):
@@ -116,7 +116,7 @@ def parse_tree(text: str) -> list[Entry]:
 
 
 def folders(entries: list[Entry]) -> dict[str, tuple[int, int]]:
-    """Ordner -> (Anzahl Dateien, Bytes), nur Ordner, die direkt Audio enthalten."""
+    """Folder -> (number of files, bytes), only folders that directly contain audio."""
     d: dict[str, list[int]] = {}
     for e in entries:
         c = d.setdefault(e.folder, [0, 0])
@@ -130,7 +130,7 @@ def _cache(p: Pack) -> Path:
 
 
 def git_url(p: Pack) -> str:
-    base = os.environ.get("FM1C_PACKS_GITBASE")          # Tests: lokale Repositories
+    base = os.environ.get("FM1C_PACKS_GITBASE")          # tests: local repositories
     return f"{base.rstrip('/')}/{p.id}" if base else f"{p.url}.git"
 
 
@@ -139,7 +139,7 @@ class Cancelled(RuntimeError):
 
 
 def git_error_text(line: str) -> str:
-    """letzte git-Zeile -> verständlicher Satz."""
+    """last git line -> understandable sentence."""
     low = line.lower()
     if "could not resolve host" in low or "name or service not known" in low or "temporary failure" in low:
         return _("No internet connection (GitHub not reachable).")
@@ -157,7 +157,7 @@ def git_error_text(line: str) -> str:
 
 
 def _git(*args, cwd=None, timeout=600, cancel=None) -> str:
-    """git ausführen; cancel() wird alle 0,2 s geprüft und beendet den Vorgang (Cancelled)."""
+    """run git; cancel() is checked every 0.2 s and ends the operation (Cancelled)."""
     exe = shutil.which("git")
     if not exe:
         raise RuntimeError(_("Sample packs need git (sudo apt install git)"))
@@ -189,7 +189,7 @@ def _git(*args, cwd=None, timeout=600, cancel=None) -> str:
 
 
 def _repo(p: Pack) -> Path:
-    """partieller Klon (nur Struktur) im Cache, beim ersten Mal angelegt."""
+    """partial clone (structure only) in the cache, created the first time."""
     d = _cache(p) / "repo"
     if not (d / ".git").exists():
         shutil.rmtree(d, ignore_errors=True)
@@ -199,7 +199,7 @@ def _repo(p: Pack) -> Path:
 
 
 def index(p: Pack, refresh: bool = False, max_age: float = 7 * 86400) -> list[Entry]:
-    """Inhalt eines Pakets (aus dem Cache, höchstens eine Woche alt)."""
+    """Contents of a pack (from the cache, at most one week old)."""
     fx = os.environ.get("FM1C_PACKS_FIXTURES")
     if fx and (Path(fx) / f"{p.id}.tree").exists():
         return parse_tree((Path(fx) / f"{p.id}.tree").read_text("utf-8"))
@@ -221,7 +221,7 @@ def index(p: Pack, refresh: bool = False, max_age: float = 7 * 86400) -> list[En
 
 def download(p: Pack, dest_root: Path, folder_list: list[str] | None = None,
              log: Callable[[str], None] = lambda s: None, cancel: Callable[[], bool] = lambda: False) -> list[Path]:
-    """Ordner (oder alles) laden und nach dest_root/<Paketname>/… kopieren. -> neue Audiodateien."""
+    """Download folders (or everything) and copy them to dest_root/<pack name>/…. -> new audio files."""
     repo = _repo(p)
     entries = index(p)
     want = [f for f in (folder_list or [])]
@@ -233,7 +233,7 @@ def download(p: Pack, dest_root: Path, folder_list: list[str] | None = None,
         log(_("loading {n} audio files ({mb} MB) … (a few minutes depending on size)").format(n=len(sel), mb=f"{size / 1e6:.0f}"))
     else:
         log(_("loading {n} audio files … (a few minutes depending on size)").format(n=len(sel)))
-    _git("read-tree", "-mu", "HEAD", cwd=repo, timeout=3600, cancel=cancel)   # holt nur die gewählten Dateien
+    _git("read-tree", "-mu", "HEAD", cwd=repo, timeout=3600, cancel=cancel)   # fetches only the selected files
     target = Path(dest_root) / folder_name(p)
     out = []
     for i, e in enumerate(sel):

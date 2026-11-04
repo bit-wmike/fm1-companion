@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Ein FM-1-Paket (.fwsc) untersuchen: Identität, Prüfsumme, Loader-Familie, Unversehrtheit.
+"""Inspect an FM-1 package (.fwsc): identity, checksum, loader family, integrity.
 
-Alles hier liest nur Dateien – kein MIDI. Grundlagen: docs/flash-protocol.md.
+Everything here only reads files – no MIDI. Background: docs/flash-protocol.md.
 """
 from __future__ import annotations
 
@@ -24,12 +24,12 @@ LOADER_MARK = fi.LOADER_MARK
 STOCK_ID_RE = re.compile(r"^FM-1_0\d\d$")
 STOCK_LOADER_RE = re.compile(r"^ota-FM-1_0\d\d$")
 FELUCCA_LOADER_RE = re.compile(r"^ota-FM-1_9\d\d$")
-# Update-Loader der M-VAVE FM1 Open: „ota-FM1C_“ + die ersten 16 Hex-Zeichen der Build-ID (m-vave/fm1_open
-# sdk/WebUpdate.js, prepare → loaderIdentity). Nur zum Erkennen und Erklären – die App schickt diesem Loader nichts.
+# Update loader of the M-VAVE FM1 Open: "ota-FM1C_" + the first 16 hex characters of the build ID (m-vave/fm1_open
+# sdk/WebUpdate.js, prepare → loaderIdentity). Only for recognising and explaining – the app sends nothing to this loader.
 OPEN_LOADER_RE = re.compile(r"^ota-FM1C_[0-9a-f]{16}$")
 OPEN_ID_RE = re.compile(r"^FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)$")
 
-# Familien wie im Mooring-Katalog (loaders[].family) -> unsere zwei Protokoll-Familien
+# families as in the Mooring catalog (loaders[].family) -> our two protocol families
 FAMILY_OF_CATALOG = {"stock": "stock", "feluccaG1": "felucca", "feluccaG2": "felucca", "sloopG3": "felucca"}
 
 
@@ -42,7 +42,7 @@ def is_stock_identity(ident: str) -> bool:
 
 
 class LoaderRule:
-    """welche Update-Loader-Identitäten dieses Paket bekommen dürfen"""
+    """which update loader identities may receive this package"""
 
     def __init__(self, family: str, product: str):
         self.family, self.product = family, product
@@ -69,10 +69,10 @@ class PackageInfo:
     sha256: str
     product: str
     family: str                 # "stock" | "felucca" | "unknown"
-    official: str = ""          # "FM-1_015"/"FM-1_016" bei unveränderter Original-Firmware
-    damage: str = ""            # leer = Kopf, Dateiliste und CRCs in Ordnung
+    official: str = ""          # "FM-1_015"/"FM-1_016" for unmodified stock firmware
+    damage: str = ""            # empty = header, file list and CRCs OK
     entries: list[str] = field(default_factory=list)
-    image: bytes = b""          # logisches Abbild (was das Gerät liest)
+    image: bytes = b""          # logical image (what the device reads)
 
     @property
     def model(self) -> str:
@@ -84,7 +84,7 @@ class PackageInfo:
 
     @property
     def flash_bytes(self) -> int:
-        """Länge von flash.bin = wie weit der Update-Loader ab 0x4000 schreibt (0 = unbekannt)"""
+        """Length of flash.bin = how far the update loader writes from 0x4000 (0 = unknown)"""
         return next((size for typ, _n, _off, size in ufw_check(self.image)[1] if typ == 0), 0) if self.image else 0
 
     @property
@@ -101,7 +101,7 @@ def _crc16(data: bytes, crc: int = 0) -> int:
 
 
 def _jl(b: bytes, key: int = 0xFFFF) -> bytes:
-    """JieLi-ENC-Stromchiffre (ihr eigenes Inverses)"""
+    """JieLi ENC stream cipher (its own inverse)"""
     out = bytearray(b)
     for i in range(len(out)):
         out[i] ^= key & 0xFF
@@ -110,7 +110,7 @@ def _jl(b: bytes, key: int = 0xFFFF) -> bytes:
 
 
 def ufw_check(image: bytes) -> tuple[str, list[tuple[int, str, int, int]]]:
-    """(Fehler oder "", [(Typ, Name, Offset, Größe)]) – wie SLOOPs package_damage()"""
+    """(error or "", [(type, name, offset, size)]) – like SLOOP's package_damage()"""
     if len(image) < 0x40:
         return _("too short"), []
     hdr = _jl(image[0:0x40])
@@ -143,7 +143,7 @@ def ufw_check(image: bytes) -> tuple[str, list[tuple[int, str, int, int]]]:
 
 
 def analyze(path: Path | str, catalog_family: str = "") -> PackageInfo:
-    """Paket lesen und einordnen. catalog_family: Loader-Familie laut Katalog (falls bekannt)."""
+    """Read and classify a package. catalog_family: loader family according to the catalog (if known)."""
     path = Path(path)
     try:
         raw = path.read_bytes()
@@ -179,12 +179,12 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-# ------------------------------------------------- synthetische Pakete (Tests, Demo) ---
+# ------------------------------------------------- synthetic packages (tests, demo) ---
 
 def build_package(product: str, family: str = "felucca", app: bytes | None = None, size: int = 0x6000,
                   seed: int = 1) -> bytes:
-    """ein strukturell gültiges .fwsc mit UFW-Kopf, flash.bin und ota.bin – nur für Simulation/Tests.
-    family "felucca": ota.bin trägt FELUCCA-LOADER-1; "unknown": fremder Loader ohne Marker."""
+    """a structurally valid .fwsc with UFW header, flash.bin and ota.bin – only for simulation/tests.
+    family "felucca": ota.bin carries FELUCCA-LOADER-1; "unknown": foreign loader without marker."""
     if app is None:
         app = bytes(((i * 131 + seed * 17) ^ (i >> 5)) & 0xFF for i in range(size))
     ota = bytearray(b"\0" * 0x48) + (LOADER_MARK if family == "felucca" else b"OTHER-LOADER-XYZ") + bytes(0x100)
@@ -212,7 +212,7 @@ def build_package(product: str, family: str = "felucca", app: bytes | None = Non
     h[0:2] = _crc16(bytes(h[2:0x40])).to_bytes(2, "little")
     img[0:0x40] = _jl(bytes(h))
     img[0x40:head] = ents
-    # Marker-Bytes einflechten: logisch 940 Kopfbytes -> 20 Blöcke à 0x2F + Marker
+    # weave in marker bytes: logical 940 header bytes -> 20 blocks of 0x2F + marker
     if len(product) > 20:
         raise ValueError("identity too long")
     raw = bytearray()

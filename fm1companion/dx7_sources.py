@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Freie DX7-Sammlungen von GitHub laden (auf einen Commit festgelegt, über raw.githubusercontent.com –
-keine GitHub-API nötig). Ablage: ~/FM-1/DX7/Sammlungen/<Sammlung>/. Jede Sammlung nennt Quelle und Lizenz;
-bei unklarer Lizenz entscheidet der Nutzer."""
+"""Download free DX7 collections from GitHub (pinned to a commit, via raw.githubusercontent.com –
+no GitHub API needed). Stored in: ~/FM-1/DX7/Sammlungen/<collection>/. Each collection names its source and licence;
+if the licence is unclear, the user decides."""
 from __future__ import annotations
 
 import json
@@ -23,9 +23,9 @@ class Collection:
     files: list[str]
     licence: str
     description: str = ""
-    clear: bool = True        # Lizenz eindeutig frei?
+    clear: bool = True        # licence clearly free?
     tags: list = field(default_factory=list)
-    folder: str = ""           # Ordnername auf der Platte (bleibt in jeder Sprache gleich)
+    folder: str = ""           # folder name on disk (stays the same in every language)
 
     @property
     def url(self) -> str:
@@ -84,8 +84,8 @@ def installed(root: Path, c: Collection) -> bool:
 
 
 def download(c: Collection, root: Path, fetch=None, log=None, progress=None, cancel=None) -> Path:
-    """lädt alle Dateien (vorhandene werden übersprungen), prüft, ob es DX7-SysEx ist, und legt
-    eine QUELLE.txt mit URL und Lizenz daneben."""
+    """downloads all files (existing ones are skipped), checks whether they are DX7 SysEx, and puts
+    a QUELLE.txt with URL and licence next to them."""
     from . import dx7
     fetch = fetch or _fetch
     d = folder_of(root, c)
@@ -114,7 +114,7 @@ def download(c: Collection, root: Path, fetch=None, log=None, progress=None, can
 
 
 def net_error_text(msg: str) -> str:
-    """Netzfehler (urllib/OSError-Text) in einen verständlichen Satz übersetzen."""
+    """Translate a network error (urllib/OSError text) into an understandable sentence."""
     m = str(msg or "")
     low = m.lower()
     if "name or service not known" in low or "nodename nor servname" in low or "temporary failure in name" in low \

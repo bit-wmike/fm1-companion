@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Debian-Paket bauen: dist/fm1-companion_<version>_all.deb
+"""Build the Debian package: dist/fm1-companion_<version>_all.deb
 
   python3 tools/build_deb.py [--maintainer "Name <mail>"] [--out DIR]
 
-Layout: /usr/lib/fm1-companion/fm1companion, /usr/bin/fm1-companion (immer /usr/bin/python3),
-Startmenü, hicolor-Symbole, AppStream-Metadaten, Handbuchseite. Abhängigkeiten aus fm1companion/data/deps.json.
+Layout: /usr/lib/fm1-companion/fm1companion, /usr/bin/fm1-companion (always /usr/bin/python3),
+start menu entry, hicolor icons, AppStream metadata, man page. Dependencies from fm1companion/data/deps.json.
 """
 from __future__ import annotations
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Backup-Browser: in Backups hineinschauen, vergleichen, einzelne Teile zurückspielen und exportieren."""
+"""Backup browser: look inside backups, compare, restore and export individual parts."""
 from __future__ import annotations
 
 import base64
@@ -26,7 +26,7 @@ LIVE = "__live__"
 
 
 def selective_restore(ctx, parent, rep: BI.Report, ids, source_label: str) -> bool:
-    """Sicherheits-Backup lesen → genau auflisten, was überschrieben wird → bestätigen → schreiben."""
+    """Read a safety backup → list exactly what will be overwritten → confirm → write."""
     if not ctx.require(parent):
         return False
     if not rep.restorable or rep.archive is None:
@@ -136,7 +136,7 @@ class BackupBrowserPage(QWidget):
         split = QSplitter()
         lay.addWidget(split, 1)
 
-        # links: Gerät + Zeitleiste
+        # left: device + timeline
         left = QWidget()
         ll = QVBoxLayout(left)
         ll.setContentsMargins(0, 0, 0, 0)
@@ -146,7 +146,7 @@ class BackupBrowserPage(QWidget):
         ll.addWidget(self.dev)
         self.timeline = QListWidget()
         self.timeline.setMinimumHeight(64)
-        self.timeline.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)   # lange Zeilen: … statt Rollbalken
+        self.timeline.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)   # long lines: … instead of scroll bar
         self.timeline.setTextElideMode(Qt.TextElideMode.ElideRight)
         self.timeline.currentRowChanged.connect(self._pick)
         ll.addWidget(self.timeline, 1)
@@ -159,7 +159,7 @@ class BackupBrowserPage(QWidget):
             b.clicked.connect(fn)
             row.addWidget(b)
         ll.addLayout(row)
-        reflow(row)                                      # Knöpfe brechen bei schmaler Spalte um
+        reflow(row)                                      # buttons wrap when the column is narrow
         row = QHBoxLayout()
         b = QPushButton(icon("archive-insert", "package-x-generic"), _("As zip …"))
         b.setToolTip(_("Export the backups of this device (or all) as a zip with a table of contents"))
@@ -172,7 +172,7 @@ class BackupBrowserPage(QWidget):
         reflow(row)
         split.addWidget(left)
 
-        # rechts: Reiter
+        # right: tabs
         right = QWidget()
         rl = QVBoxLayout(right)
         rl.setContentsMargins(0, 0, 0, 0)
@@ -180,9 +180,9 @@ class BackupBrowserPage(QWidget):
         self.head.setWordWrap(True)
         rl.addWidget(self.head)
         self.tabs = QTabWidget()
-        self.tabs.setMinimumHeight(130)                  # schmal/übereinander: Inhaltsbaum nie zusammengedrückt
+        self.tabs.setMinimumHeight(130)                  # narrow/stacked: content tree never squeezed
         rl.addWidget(self.tabs, 1)
-        # Inhalt
+        # Content
         self.content = QTreeWidget()
         self.content.setHeaderLabels([_("Content"), _("Size"), _("Format"), _("Details")])
         self.content.itemChanged.connect(self._check_changed)
@@ -211,7 +211,7 @@ class BackupBrowserPage(QWidget):
         self.p_info = QLabel()
         pl.addWidget(self.p_info)
         self.tabs.addTab(pw, icon("audio-x-generic"), _("Presets"))
-        # Vergleich
+        # Comparison
         cw = QWidget()
         cl = QVBoxLayout(cw)
         cr = QHBoxLayout()
@@ -259,11 +259,11 @@ class BackupBrowserPage(QWidget):
         split.addWidget(right)
         split.setStretchFactor(1, 3)
         split.setSizes([300, 900])
-        adaptive_splitter(split, 640, ratios=(1, 3))     # schmal: Zeitleiste über den Reitern
+        adaptive_splitter(split, 640, ratios=(1, 3))     # narrow: timeline above the tabs
         ctx.changed.connect(self._fill_devices)
         self._fill_devices()
 
-    # ----------------------------------------------------------- Seite
+    # ----------------------------------------------------------- Page
     def activate(self):
         self._fill_devices()
         if not self.rep and self.metas:
@@ -331,7 +331,7 @@ class BackupBrowserPage(QWidget):
                     self.timeline.setCurrentRow(i)
                     self.timeline.blockSignals(False)
         elif self.metas and self.isVisible():
-            self.open_path(self.metas[0].path)          # neuestes Backup gleich zeigen
+            self.open_path(self.metas[0].path)          # show the newest backup right away
 
     def _pick(self, row):
         it = self.timeline.item(row) if row >= 0 else None
@@ -339,7 +339,7 @@ class BackupBrowserPage(QWidget):
         if p:
             self.open_path(Path(p))
 
-    # ----------------------------------------------------------- Laden
+    # ----------------------------------------------------------- Load
     def open_path(self, path: Path):
         try:
             self.rep = BI.inspect(path)
@@ -418,7 +418,7 @@ class BackupBrowserPage(QWidget):
         self._check_changed()
         self._update_view_button()
 
-    # ------------------------------------------------- Projekt ansehen
+    # ------------------------------------------------- View project
     def _cur_project(self):
         it = self.content.currentItem()
         oid = it.data(0, Qt.ItemDataRole.UserRole) if it else None
@@ -470,7 +470,7 @@ class BackupBrowserPage(QWidget):
             used=used, total=len(allp), favorites=sum(1 for p in allp if p.favorite), shown=n) if allp else
             _("No preset banks recognised (different firmware or older format)."))
 
-    # ------------------------------------------------------ Auswahl
+    # ------------------------------------------------------ Selection
     def selected_ids(self) -> list[int]:
         out = []
         for i in range(self.content.topLevelItemCount()):
@@ -498,7 +498,7 @@ class BackupBrowserPage(QWidget):
         self.sel_label.setText(ngettext("{n} part selected", "{n} parts selected", len(ids)).format(n=len(ids)) if ids
                                else _("Check parts in the tab “Content”."))
 
-    # ---------------------------------------------------- Zurückspielen
+    # ---------------------------------------------------- Restore
     def restore_selected(self) -> bool:
         if not self.rep:
             return False
@@ -512,7 +512,7 @@ class BackupBrowserPage(QWidget):
         self._fill_timeline()
         return ok
 
-    # ------------------------------------------------------- Vergleich
+    # ------------------------------------------------------- Comparison
     def compare(self):
         if not self.rep:
             return
@@ -552,7 +552,7 @@ class BackupBrowserPage(QWidget):
         if why:
             self.cmp_sum.setText(f"<b>{why}</b>")
             return
-        # Richtung: vom Backup (alt) zum Vergleich
+        # direction: from the backup (old) to the comparison
         d = BI.diff(self.rep, self.other)
         self.last_diff = d
         self.cmp_sum.setText(f"<b>{d.summary()}</b>")
@@ -619,7 +619,7 @@ class BackupBrowserPage(QWidget):
                     + ("<br><br>" + _("The projects are also in the project library (Projects › Slots & Library).")
                        if has_proj else ""), parent=self).exec()
 
-    # ------------------------------------------------------ Metadaten
+    # ------------------------------------------------------ Metadata
     def _cur_path(self) -> Path | None:
         return self.rep.path if self.rep and self.rep.path else None
 
@@ -715,8 +715,8 @@ def kind_text(kind: str) -> str:
 
 
 def export_parts(rep: BI.Report, ids, preset_labels, dest: Path, projects_dir: Path | None = None) -> tuple[int, list[str]]:
-    """Objekte roh (.bin), Projekte als .fm1proj (auch in die Bibliothek), Presets als .json.
-    -> (Anzahl, Dateinamen im Zielordner). OSError, wenn der Ordner nicht beschreibbar ist."""
+    """Objects raw (.bin), projects as .fm1proj (also into the library), presets as .json.
+    -> (count, file names in the target folder). OSError if the folder is not writable."""
     dest.mkdir(parents=True, exist_ok=True)
     dev = rep.companion.get("device", "") or "FM-1"
     names: list[str] = []

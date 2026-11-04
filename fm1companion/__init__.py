@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""FM-1 Companion Suite – Desktop-Begleiter für den M-VAVE FM-1 mit Custom-Firmware.
+"""FM-1 Companion Suite – desktop companion for the M-VAVE FM-1 with custom firmware.
 
-Firmware, Editor, Backups, Projekte, Samples, Klänge, MIDI, Simulator, Aufnahme und Hilfe
-in einem Programm. GPL-3.0-only (nutzt Code und Werkzeuge der Firmware-Projekte
-Melodee, Felucca, Skiff und SLOOP, die ebenfalls GPL-3.0 sind).
+Firmware, editor, backups, projects, samples, sounds, MIDI, simulator, recording and help
+in one program. GPL-3.0-only (uses code and tools of the firmware projects
+Melodee, Felucca, Skiff and SLOOP, which are GPL-3.0 as well).
 """
 __version__ = "2.4.0"
 APP_NAME = "FM-1 Companion"

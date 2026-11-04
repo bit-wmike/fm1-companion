@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""UI-Test MIDI-Seite und Klangerzeuger (offscreen, Demo-Gerät).
+"""UI test of the MIDI page and the sound module (offscreen, demo device).
 
   flock /tmp/fm1c-ui.lock timeout 600 env QT_QPA_PLATFORM=offscreen python3 tests/ui_midi_test.py
 """
@@ -79,27 +79,27 @@ FIXTURE = PROC.split("PROC_FIXTURE = '''")[1].split("'''")[0]
 
 def flow():
     ctx = w.ctx
-    check(until(lambda: ctx.connected), "Demo-Gerät verbunden")
+    check(until(lambda: ctx.connected), "demo device connected")
     page = w.page("midi")
-    check(page is not None and w.page("soundmodule") is not None, "Seiten MIDI und Klangerzeuger gefunden")
+    check(page is not None and w.page("soundmodule") is not None, "pages MIDI and sound module found")
     w.go("midi")
     mon = page.monitor
-    # ---- Monitor: Verkehr App <-> Demo-FM-1
+    # ---- monitor: traffic app <-> demo FM-1
     ctx.job(w, "Ping", lambda wk, link: link.request(25, []), dialog=False)
     check(until(lambda: any("PING" in mon.table.item(r, 6).text() for r in range(mon.table.rowCount()))),
-          f"Monitor zeigt PING ({mon.table.rowCount()} Zeilen)")
+          f"monitor shows PING ({mon.table.rowCount()} rows)")
     dirs = {mon.table.item(r, 1).text() for r in range(mon.table.rowCount())}
-    check(any("vom" in d for d in dirs) and any("zum" in d for d in dirs), f"beide Richtungen ({dirs})")
+    check(any("vom" in d for d in dirs) and any("zum" in d for d in dirs), f"both directions ({dirs})")
     mon.search.setText("PING")
     check(mon.table.rowCount() >= 2 and all("PING" in mon.table.item(r, 6).text() for r in range(mon.table.rowCount())),
-          "Suche filtert")
+          "search filters")
     mon.search.setText("")
     out = home / "mon.csv"
     from fm1companion import miditools as M
     out.write_text(M.export_text(mon.log.events, "csv"))
-    check("Felucca PING" in out.read_text(), "Export CSV")
+    check("Felucca PING" in out.read_text(), "export CSV")
 
-    # ---- Tastatur
+    # ---- keyboard
     sent = []
     link = ctx.link
     orig = link.send_midi
@@ -115,59 +115,59 @@ def flow():
     kb.piano.note_on.emit(60)
     kb.piano.note_off.emit(60)
     check([0x94, 60, 100] in [d for d, _ in sent] and [0x84, 60, 0] in [d for d, _ in sent],
-          f"Tastatur sendet Note an/aus auf Kanal 5 ({sent[:2]})")
+          f"keyboard sends note on/off on channel 5 ({sent[:2]})")
     from PyQt6.QtTest import QTest
     sent.clear()
     kb.piano.setFocus()
     QTest.keyClick(kb.piano, Qt.Key.Key_Q)
-    check(any(d[0] == 0x94 and d[1] == kb.piano.base + 12 for d, _ in sent), "PC-Taste Q spielt C eine Oktave höher")
+    check(any(d[0] == 0x94 and d[1] == kb.piano.base + 12 for d, _ in sent), "PC key Q plays C an octave higher")
     sent.clear()
     kb.hold.setChecked(True)
     kb.piano.note_on.emit(64)
     kb.piano.note_off.emit(64)
-    check(64 in kb.sounding, "Akkord halten: Note bleibt")
+    check(64 in kb.sounding, "chord hold: the note stays")
     kb.all_off()
-    check(not kb.sounding and [0xB4, 123, 0] in [d for d, _ in sent], "Alle Noten aus")
+    check(not kb.sounding and [0xB4, 123, 0] in [d for d, _ in sent], "all notes off")
     kb.hold.setChecked(False)
-    # Fokusverlust mit gedrückter Taste: Note-Off garantiert
+    # losing focus with a pressed key: note-off guaranteed
     sent.clear()
     kb.piano.setFocus()
     QTest.keyPress(kb.piano, Qt.Key.Key_Y)
-    check(kb.piano.base in kb.sounding, "PC-Taste Y klingt")
-    kb.channel.setFocus()                                   # Fokus weg, ohne keyRelease
-    check(not kb.sounding and [0x84, kb.piano.base, 0] in [d for d, _ in sent], "Fokusverlust: Note-Off gesendet")
+    check(kb.piano.base in kb.sounding, "PC key Y sounds")
+    kb.channel.setFocus()                                   # focus away, without keyRelease
+    check(not kb.sounding and [0x84, kb.piano.base, 0] in [d for d, _ in sent], "focus lost: note-off sent")
     QTest.keyRelease(kb.piano, Qt.Key.Key_Y)
-    # Sustain + Reiterwechsel: Pedal wird gelöst, Noten aus
+    # sustain + tab switch: the pedal is released, notes off
     sent.clear()
     kb.sustain.setChecked(True)
     kb.piano.note_on.emit(67)
     page.tabs.setCurrentWidget(page.monitor)
     check(not kb.sustain.isChecked() and [0xB4, 64, 0] in [d for d, _ in sent] and [0x84, 67, 0] in [d for d, _ in sent],
-          "Reiterwechsel löst Sustain und beendet die Note")
+          "tab switch releases sustain and ends the note")
     page.tabs.setCurrentWidget(page.keyboard)
-    # Seite verlassen mit klingender Note
+    # leaving the page with a sounding note
     sent.clear()
     kb.piano.note_on.emit(69)
     w.go("overview")
-    check([0x84, 69, 0] in [d for d, _ in sent] and not kb.sounding, "Seitenwechsel: Note-Off gesendet")
+    check([0x84, 69, 0] in [d for d, _ in sent] and not kb.sounding, "page switch: note-off sent")
     w.go("midi")
-    # Monitor-Sturzflut: 10 000 Nachrichten/s über 1 s – Oberfläche bleibt bedienbar, Speicher begrenzt
+    # monitor flood: 10 000 messages/s for 1 s – the UI stays usable, memory limited
     import threading
     t0 = time.perf_counter()
     for i in range(10000):
         mon.on_link([0x90, 60 + i % 12, 100] if i % 2 else [0xF8], "in")
-    check(time.perf_counter() - t0 < 1.0, "10 000 Nachrichten in den Listener in unter 1 s (Decoder schnell genug)")
+    check(time.perf_counter() - t0 < 1.0, "10 000 messages into the listener in under 1 s (decoder fast enough)")
     wait(400)
     check(mon.table.rowCount() <= 2000 and len(mon.log.events) <= 20000 and "Sturzflut" in mon.status.text(),
-          f"Sturzflut: Tabelle {mon.table.rowCount()} Zeilen, Hinweis „{mon.status.text()[:60]}“")
+          f"flood: table {mon.table.rowCount()} rows, note \"{mon.status.text()[:60]}\"")
     mon.clear()
-    check(mon.table.rowCount() == 0 and not mon.empty.isHidden(), "Leeren zeigt wieder den Leerzustand")
+    check(mon.table.rowCount() == 0 and not mon.empty.isHidden(), "clearing shows the empty state again")
     kb.piano.note_on.emit(60)
     kb.piano.note_off.emit(60)
     check(until(lambda: any("Note an" in mon.table.item(r, 3).text() for r in range(mon.table.rowCount())), 3000),
-          "Monitor zeigt gesendete Noten")
+          "monitor shows sent notes")
 
-    # ---- Takt
+    # ---- clock
     sent.clear()
     page.tabs.setCurrentWidget(page.clock)
     ck = page.clock
@@ -176,19 +176,19 @@ def flow():
     saved_link = ctx.link
     ctx.link = None
     ck.start()
-    check(not ck.master.running and "kein FM-1" in ck.state.text(), f"Takt ohne Gerät: {ck.state.text()[:60]}")
+    check(not ck.master.running and "kein FM-1" in ck.state.text(), f"clock without device: {ck.state.text()[:60]}")
     ctx.link = saved_link
     ck.start()
     wait(300)
-    ck.bpm.setValue(90)                                     # Tempo im Lauf ändern: kein Sprung, kein Fehler
+    ck.bpm.setValue(90)                                     # change the tempo while running: no jump, no error
     wait(300)
-    check(ck.master.running and ck.master.bpm == 90 and ck.master.send_errors == 0, "Tempowechsel im Lauf")
+    check(ck.master.running and ck.master.bpm == 90 and ck.master.send_errors == 0, "tempo change while running")
     ck.stop()
     b = [d[0] for d, _ in sent]
     check(b and b[0] == 0xFA and b[-1] == 0xFC and b.count(0xF8) >= 20,
-          f"Clock: Start, {b.count(0xF8)} Pulse, Stop")
-    check("gestoppt" in ck.state.text(), "Takt-Status")
-    # ab Takt 5: Song Position (64 16tel) + Continue statt Start (Melodee ab 1.6.1 folgt dem mit CLK USB)
+          f"clock: start, {b.count(0xF8)} pulses, stop")
+    check("gestoppt" in ck.state.text(), "clock status")
+    # from bar 5: Song Position (64 16ths) + Continue instead of Start (Melodee from 1.6.1 follows it with CLK USB)
     sent.clear()
     ck.bar.setValue(5)
     ck.start()
@@ -201,63 +201,63 @@ def flow():
     if ctx.info:
         ctx.info.version = "MELODEE v1.6.1"
         ck.fill_outputs()
-        check(not ck.hint.isHidden() and "CLK" in ck.hint.text(), "Melodee 1.6.1: Hinweis CLK auf USB")
+        check(not ck.hint.isHidden() and "CLK" in ck.hint.text(), "Melodee 1.6.1: hint CLK to USB")
         ctx.info.version = "MELODEE v1.6.0"
         ck.fill_outputs()
-        check(ck.hint.isHidden(), "Melodee 1.6.0: kein CLK-Hinweis")
+        check(ck.hint.isHidden(), "Melodee 1.6.0: no CLK hint")
         ctx.info.version = saved_info
         ck.fill_outputs()
 
-    # ---- Regler (Demo-Gerät)
+    # ---- controls (demo device)
     page.tabs.setCurrentWidget(page.controls)
     page.controls.read()
-    check(until(lambda: len(page.controls.params) > 5, 30000), f"Regler: {len(page.controls.params)} Parameter gelesen")
-    check(ctx.link._exclusive_depth == 1, "Regler hält das Gerät (Editor pausiert)")
+    check(until(lambda: len(page.controls.params) > 5, 30000), f"controls: {len(page.controls.params)} parameters read")
+    check(ctx.link._exclusive_depth == 1, "controls hold the device (editor paused)")
     if 29 in page.controls.params:
         page.controls.widgets[29].setValue(32)
         check(until(lambda: ctx.link.request and page.controls.params[29].value == 32, 5000),
-              "Regler schreibt LEN = 32 (TRACK_PARAM)")
+              "controls write LEN = 32 (TRACK_PARAM)")
     page.controls.learning = 29
     page.controls.on_cc(1, 74, 0)
-    check(any(m["cc"] == 74 and m["id"] == 29 for m in config.module("midi")["learn"]), "MIDI-Learn speichert CC 74")
+    check(any(m["cc"] == 74 and m["id"] == 29 for m in config.module("midi")["learn"]), "MIDI learn stores CC 74")
     page.controls.on_cc(1, 74, 127)
-    check(page.controls.widgets[29].value() == page.controls.params[29].d.max, "gelernter CC bewegt den Regler")
+    check(page.controls.widgets[29].value() == page.controls.params[29].d.max, "learned CC moves the control")
     page.tabs.setCurrentWidget(page.monitor)
-    check(ctx.link._exclusive_depth == 0, "Reiter verlassen: Gerät wieder frei")
-    # Gerätewechsel: keine veralteten Regler
+    check(ctx.link._exclusive_depth == 0, "tab left: device free again")
+    # device switch: no stale controls
     page.tabs.setCurrentWidget(page.controls)
-    check(len(page.controls.params) > 5, "Regler noch da vor dem Wechsel")
+    check(len(page.controls.params) > 5, "controls still there before the switch")
     port1 = ctx.port
     ctx.connect_port(next(pt for pt in ctx.ports if pt.serial == "DEMO-2"))
-    check(until(lambda: ctx.connected and ctx.firmware_key == "sloop", 20000), "auf DEMO-2 gewechselt")
+    check(until(lambda: ctx.connected and ctx.firmware_key == "sloop", 20000), "switched to DEMO-2")
     check(not page.controls.params and "Vom FM-1 lesen" in page.controls.state.text(),
-          f"Gerätewechsel leert die Regler ({page.controls.state.text()[:50]})")
+          f"device switch clears the controls ({page.controls.state.text()[:50]})")
     ctx.connect_port(port1)
-    check(until(lambda: ctx.connected and ctx.firmware_key == "melodee", 20000), "zurück auf DEMO-1")
+    check(until(lambda: ctx.connected and ctx.firmware_key == "melodee", 20000), "back to DEMO-1")
     page.tabs.setCurrentWidget(page.monitor)
 
-    # ---- Verbindungen mit nachgebildetem ALSA
+    # ---- connections with emulated ALSA
     calls = []
     alsaseq.list_ports = lambda: alsaseq.parse_proc(FIXTURE)
     alsaseq.connect = lambda a, b, d=False: (calls.append((a, b, d)), (True, ""))[1]
     page.tabs.setCurrentWidget(page.routing)
     rt = page.routing
-    check(until(lambda: rt.table.rowCount() > 0), f"Verbindungen: {rt.table.rowCount()} Sender × {rt.table.columnCount()} Empfänger")
+    check(until(lambda: rt.table.rowCount() > 0), f"connections: {rt.table.rowCount()} senders × {rt.table.columnCount()} receivers")
     labels = [rt.table.verticalHeaderItem(r).text() for r in range(rt.table.rowCount())]
-    check(any("Melodee" in x for x in labels) and not any(x.startswith("System") for x in labels), "System-Ports ausgeblendet")
+    check(any("Melodee" in x for x in labels) and not any(x.startswith("System") for x in labels), "system ports hidden")
     rt.quick_controller()
-    check(until(lambda: ("24:0", "20:0", False) in calls), "Controller → FM-1 verbindet 24:0 → 20:0")
+    check(until(lambda: ("24:0", "20:0", False) in calls), "controller → FM-1 connects 24:0 → 20:0")
     r = next(i for i, p in enumerate(rt.src) if p.addr == "20:0")
     c = next(i for i, p in enumerate(rt.dst) if p.addr == "130:0")
     rt._clicked(r, c)
-    check(until(lambda: ("20:0", "130:0", True) in calls), "Klick auf bestehende Verbindung trennt")
+    check(until(lambda: ("20:0", "130:0", True) in calls), "click on an existing connection disconnects")
 
-    # ---- Klangerzeuger
+    # ---- sound module
     w.go("soundmodule")
     sm = w.page("soundmodule")
     SM.find_binary = lambda: None
     sm.recheck()
-    check(not sm.missing.isHidden() and not sm.b_start.isEnabled(), "Hinweis: FluidSynth fehlt")
+    check(not sm.missing.isHidden() and not sm.b_start.isEnabled(), "hint: FluidSynth missing")
     SM.find_binary = lambda: "/usr/bin/fluidsynth"
     SM.audio_drivers = lambda exe=None: ["alsa", "pipewire", "pulseaudio"]
     sm.recheck()
@@ -267,8 +267,8 @@ def flow():
     sm.sf.setCurrentIndex(sm.sf.count() - 1)
     cmd = sm.command()
     check(sm.missing.isHidden() and cmd[:5] == ["/usr/bin/fluidsynth", "-a", "pipewire", "-m", "alsa_seq"]
-          and cmd[-1] == str(sf), f"Befehl: {' '.join(cmd)}")
-    # Probelauf mit nachgebildetem Prozess
+          and cmd[-1] == str(sf), f"command: {' '.join(cmd)}")
+    # dry run with an emulated process
     import io
 
     class Fake:
@@ -293,13 +293,13 @@ def flow():
     sm.auto.setChecked(False)
     sm.start()
     check(all(r.sound.currentIndex() >= 0 and r.sound.currentText() for r in sm.rows)
-          and sm.rows[1].sound.currentText().startswith("034"), f"Klänge gewählt ({sm.rows[1].sound.currentText()})")
-    check(sm.fs.running and "läuft" in sm.state_badge.text(), "Klangerzeuger läuft (nachgebildet)")
-    check(until(lambda: "router_clear" in fakes[0].stdin.getvalue(), 3000), "Kanäle + Router gesendet")
+          and sm.rows[1].sound.currentText().startswith("034"), f"sounds chosen ({sm.rows[1].sound.currentText()})")
+    check(sm.fs.running and "läuft" in sm.state_badge.text(), "sound module running (emulated)")
+    check(until(lambda: "router_clear" in fakes[0].stdin.getvalue(), 3000), "channels + router sent")
     txt = fakes[0].stdin.getvalue()
     check("select 4 1 0 0" in txt and "router_chan 7 7 1 0" in txt and "router_chan 0 0 1 0" not in txt,
-          "nur Kanäle 5–8 (Spuren 5–8) klingen")
-    # Kit -> SoundFont
+          "only channels 5–8 (tracks 5–8) sound")
+    # kit -> SoundFont
     snd = home / "PO"
     snd.mkdir()
     for i in range(3):
@@ -312,12 +312,12 @@ def flow():
     from fm1companion import sf2
     sm._make(lambda: sf2.bank_from_folder(snd), "PO")
     target = Path(s.user_root) / "SoundFonts" / "PO.sf2"
-    check(until(lambda: target.exists() and "Kanal 6" in sm.kit_msg.text(), 8000), f"Ordner → SoundFont ({sm.kit_msg.text()[:60]})")
-    check(until(lambda: f'load "{target}" 0' in fakes[0].stdin.getvalue(), 3000), "SoundFont in FluidSynth geladen")
-    check(until(lambda: "select 5 2 0 0" in fakes[0].stdin.getvalue(), 3000), "Kanal 6 spielt den eigenen SoundFont")
+    check(until(lambda: target.exists() and "Kanal 6" in sm.kit_msg.text(), 8000), f"folder → SoundFont ({sm.kit_msg.text()[:60]})")
+    check(until(lambda: f'load "{target}" 0' in fakes[0].stdin.getvalue(), 3000), "SoundFont loaded in FluidSynth")
+    check(until(lambda: "select 5 2 0 0" in fakes[0].stdin.getvalue(), 3000), "channel 6 plays its own SoundFont")
     sm.stop()
-    check(not sm.fs.running, "Klangerzeuger gestoppt")
-    # Start scheitert (Audio belegt): deutsche Erklärung statt roher Logzeile
+    check(not sm.fs.running, "sound module stopped")
+    # start fails (audio busy): an explanation instead of a raw log line
     class Dead(Fake):
         def __init__(self, argv, **kw):
             super().__init__(argv, **kw)
@@ -326,13 +326,13 @@ def flow():
     sm.fs._popen = Dead
     errs_before = len(errors)
     sm.start()
-    check(until(lambda: "Audio-Ausgang" in sm.status.text(), 3000), f"Startfehler erklärt: {sm.status.text()[:70]}")
-    check(len(errors) == errs_before and not sm.fs.running, "kein Absturz, Zustand „aus“")
-    # Klangbank-Datei weg
+    check(until(lambda: "Audio-Ausgang" in sm.status.text(), 3000), f"start error explained: {sm.status.text()[:70]}")
+    check(len(errors) == errs_before and not sm.fs.running, "no crash, state \"off\"")
+    # sound bank file gone
     sm.fs._popen = Fake
     sf.unlink()
     sm.start()
-    check(not sm.fs.running, "fehlende Klangbank: FluidSynth wird nicht blind gestartet")
+    check(not sm.fs.running, "missing sound bank: FluidSynth is not started blindly")
     w.go("midi")
     wait(200)
     app.quit()
@@ -351,7 +351,7 @@ QTimer.singleShot(240000, app.quit)
 app.exec()
 fails = [r for r in results if not r[0]]
 for e in errors:
-    print("AUSNAHME:\n" + e)
-print(f"{len(results) - len(fails)}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+    print("EXCEPTION:\n" + e)
+print(f"{len(results) - len(fails)}/{len(results)} passed, {len(errors)} exceptions")
 shutil.rmtree(home, ignore_errors=True)
 sys.exit(1 if fails or errors else 0)

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Steckbriefe bekannter FM-1-Pakete erzeugen: fm1companion/data/known_packages.json
+"""Generate profiles of known FM-1 packages: fm1companion/data/known_packages.json
 
   python3 -I tools/make_known_packages.py PKGDIR [MELODEE_RC7.fwsc MELODEE_RC7-res.bin]
 
-PKGDIR enthält zip_v15.fwsc, v16.fwsc, melodee.fwsc (1.5.1), sloop.fwsc, skiff.fwsc, jiant.fwsc (siehe
-tests/test_flashmodel.py). Die Pakete selbst kommen nicht ins Repo – nur Prüfsummen, Längen und Layouts.
+PKGDIR contains zip_v15.fwsc, v16.fwsc, melodee.fwsc (1.5.1), sloop.fwsc, skiff.fwsc, jiant.fwsc (see
+tests/test_flashmodel.py). The packages themselves are not committed – only checksums, lengths and layouts.
 """
 import json
 import struct
@@ -14,7 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fm1companion.flash import flashmodel as m  # noqa: E402
 
-LIST = [  # Datei, label, Name, Version (wie INFO sie meldet), Notiz
+LIST = [  # file, label, name, version (as INFO reports it), note
     ("zip_v15.fwsc", "v15", "Original-Firmware V15", "", "offizielles M-VAVE V15 (FM-1_firmware_15.zip = FM-1.fwsc)"),
     ("v16.fwsc", "v16", "Original-Firmware V16", "", "M-VAVE V16 (Oktober 2026); README von aroum nennt a21368e0… – "
                                                     "ungeklärt"),
@@ -31,10 +31,10 @@ def entry(p, label, name, version, note):
          "family": m.classify_family(p), "layout": {k: [hex(a), hex(b)] for k, (a, b) in p.layout.items()}}
     if note:
         e["note"] = note
-    if p.write_end > m.V15_END:   # V16: Erkennung „abgeschnitten“ und Reste in V15-Layout-Datenbereichen
+    if p.write_end > m.V15_END:   # V16: detection of "truncated" and leftovers in V15-layout data areas
         e["app_prefix"] = {hex(m.V15_END): m.sha(p.flash[m.APP_START:m.V15_END])}
         e["sectors"] = {hex(a): m.sha(p.flash[a:a + m.SECTOR]) for a in range(m.V15_END, p.write_end, m.SECTOR)}
-        # je 512-Byte-Block (Anfragegröße des Loaders): erkennt halb geschriebene Sektoren auch ohne die Paketdatei
+        # per 512-byte block (request size of the loader): detects half-written sectors even without the package file
         e["blocks"] = {hex(a): m.block_hash(p.flash[a:a + m.BLOCK]) for a in range(m.V15_END, p.write_end, m.BLOCK)}
     return e
 

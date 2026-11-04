@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Gemeinsames für build_deb.py und build_run.py: welche Dateien zur App gehören."""
+"""Shared by build_deb.py and build_run.py: which files belong to the app."""
 from __future__ import annotations
 
 import subprocess
@@ -17,7 +17,7 @@ def version() -> str:
 
 
 def app_files() -> list[Path]:
-    """alle Dateien des Pakets fm1companion ohne Bytecode (über git, sonst Dateisystem)."""
+    """all files of the fm1companion package without bytecode (via git, otherwise the file system)."""
     try:
         out = subprocess.run(["git", "ls-files", "-co", "--exclude-standard", "fm1companion"], cwd=ROOT,
                              capture_output=True, text=True, check=True).stdout.split("\n")

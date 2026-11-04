@@ -1,19 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Automatische Backups, Aufbewahrung, Schlagwörter/Anheften und Spiegel-Ordner (z. B. NAS).
+"""Automatic backups, retention, tags/pinning and mirror folders (e.g. NAS).
 
-Metadaten (Notiz, Schlagwörter, angeheftet, Art) stehen im Block "companion" der Backup-Datei
-selbst – so reisen sie mit (Zip-Export, NAS-Spiegel). Beim Ändern bleibt die Änderungszeit
-der Datei erhalten. Für schnelle Listen merkt sich ein Index (DATA_DIR/daten/index.json)
-die Kopfdaten jeder Datei (Pfad, Größe, mtime).
+Metadata (note, tags, pinned, kind) live in the "companion" block of the backup file
+itself – so they travel with it (zip export, NAS mirror). Editing keeps the file's
+modification time. For fast listings an index (DATA_DIR/daten/index.json) remembers
+the header data of every file (path, size, mtime).
 
-Aufbewahrung gilt nur für automatische Backups (Art auto / sicherheit / vor-Update):
-die letzten N bleiben, dazu das jeweils neueste jedes Monats, das neueste je Firmware
-(damit die Rückkehr zu einer alten Firmware immer ein Backup findet) und alle angehefteten.
-Manuelle Backups löscht die App nie.
+Retention only applies to automatic backups (kind auto / sicherheit / vor-Update):
+the last N are kept, plus the newest of each month, the newest per firmware
+(so that going back to an old firmware always finds a backup) and all pinned ones.
+The app never deletes manual backups.
 
-Wichtig: BACKUP_LIST stoppt am FM-1 die Wiedergabe. Automatische Backups laufen deshalb
-nur, wenn kein anderer Gerätezugriff läuft, nicht während Editor/Aufnahme offen sind, nie
-während einer Installation, und brechen ab, sobald ein anderer Zugriff beginnt.
+Important: BACKUP_LIST stops playback on the FM-1. Automatic backups therefore only run
+when no other device access is in progress, not while the editor/recorder is open, never
+during an installation, and they abort as soon as another access starts.
 """
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ def backup_filename(device: str, fw: str, kind: str = "") -> str:
 
 
 def companion_block(profile, fw_key: str, version: str, note: str = "", kind: str = "") -> dict:
-    """Kennzeichnung jedes Backups: Gerät und *die Firmware, mit der es gemacht wurde* (für die Rückkehr)."""
+    """Label of every backup: device and *the firmware it was made with* (for going back)."""
     return {"device": profile.name if profile else "", "device_id": profile.id if profile else "",
             "serial": profile.serial if profile else "",
             "firmware": fw_key, "firmware_version": profile.firmware_version if profile else "",
@@ -58,7 +58,7 @@ def companion_block(profile, fw_key: str, version: str, note: str = "", kind: st
 
 def capture_to_file(link, folder: Path, profile, fw_key: str, version: str, note: str = "", kind: str = "",
                     progress=None, abort=None) -> Path:
-    """Backup lesen und speichern. abort() -> True bricht beim nächsten Stück ab."""
+    """Read and save a backup. abort() -> True aborts at the next chunk."""
     def prog(a, b):
         if abort and abort():
             err = backup.BackupError(_("cancelled (the device is needed for something else)"))
@@ -74,13 +74,13 @@ def capture_to_file(link, folder: Path, profile, fw_key: str, version: str, note
     return path
 
 
-# -------------------------------------------------------------- Index ---
+# -------------------------------------------------------------- index ---
 
 @dataclass
 class Meta:
     path: Path
     created: str
-    firmware: str           # Versionszeichenkette aus dem Backup
+    firmware: str           # version string from the backup
     fw_key: str
     device: str
     device_id: str
@@ -93,8 +93,8 @@ class Meta:
     objects: int
     projects: int
     fmt: str = "felucca-backup"
-    presets: int = -1        # belegte Preset-Plätze (-1: unbekannt, älterer Index)
-    damaged: str = ""        # nicht leer: Datei lässt sich nicht lesen (Grund) – wird als „beschädigt“ gezeigt
+    presets: int = -1        # used preset slots (-1: unknown, older index)
+    damaged: str = ""        # not empty: file cannot be read (reason) – shown as "damaged"
 
     @property
     def automatic(self) -> bool:
@@ -110,7 +110,7 @@ class Meta:
 
 
 def content_text(projects: int, presets: int, objects: int) -> str:
-    """„2 Projekte, 5 Presets · 57 Teile“ – überall dieselbe Formel (Liste, Browser, Übersicht)."""
+    """"2 projects, 5 presets · 57 parts" – the same formula everywhere (list, browser, overview)."""
     parts = [ngettext("{n} project", "{n} projects", projects).format(n=projects)]
     if presets >= 0:
         parts.append(ngettext("{n} preset", "{n} presets", presets).format(n=presets))
@@ -172,10 +172,10 @@ def read_meta(path: Path) -> Meta | None:
             objs = f.get("objects") or []
             fw = f.get("firmware", "")
             key = c.get("firmware") or next((k for k in ("melodee", "sloop", "skiff") if k in fw.lower()), "")
-            try:                                   # belegte Presets einmal zählen (steht danach im Index)
+            try:                                   # count used presets once (stored in the index afterwards)
                 from . import backup_inspect as _BI
                 presets = len(_BI.inspect(f).used_presets)
-            except Exception:                      # noqa: BLE001 – dann eben ohne Zahl
+            except Exception:                      # noqa: BLE001 – then without a number
                 presets = -1
             e = {"presets": presets, "mtime": st.st_mtime, "size": st.st_size, "created": f.get("created") or f.get("date", ""),
                  "firmware": fw, "fw_key": key, "device": c.get("device", ""), "device_id": c.get("device_id", ""),
@@ -192,8 +192,8 @@ def read_meta(path: Path) -> Meta | None:
 
 
 def damaged_meta(path: Path) -> Meta | None:
-    """Meta für eine *.json im Backup-Ordner, die sich nicht als JSON lesen lässt (abgeschnitten, kaputt).
-    None, wenn die Datei lesbar ist (dann ist sie ein Backup oder etwas anderes)."""
+    """Meta for a *.json in the backup folder that cannot be read as JSON (truncated, broken).
+    None if the file is readable (then it is a backup or something else)."""
     path = Path(path)
     try:
         st = path.stat()
@@ -212,7 +212,7 @@ def damaged_meta(path: Path) -> Meta | None:
 
 
 def list_backups(folder: Path, recursive: bool = True, include_damaged: bool = False) -> list[Meta]:
-    """Backups im Ordner (neueste zuerst). include_damaged: unlesbare Dateien als Meta mit .damaged mitliefern."""
+    """Backups in the folder (newest first). include_damaged: also return unreadable files as Meta with .damaged."""
     folder = Path(folder)
     if not folder.exists():
         return []
@@ -229,7 +229,7 @@ def list_backups(folder: Path, recursive: bool = True, include_damaged: bool = F
 
 
 def set_meta(path: Path, **changes):
-    """note / labels / pinned / kind im companion-Block ändern; die Änderungszeit bleibt."""
+    """Change note / labels / pinned / kind in the companion block; the modification time stays."""
     path = Path(path)
     st = path.stat()
     try:
@@ -241,17 +241,17 @@ def set_meta(path: Path, **changes):
         raise backup.BackupError(_("The file is not a backup of the app or the web editor."))
     c = f.setdefault("companion", {})
     c.update(changes)
-    # (SLOOP-Backups bleiben im Format des SLOOP-Editors); Änderungszeit bleibt
+    # (SLOOP backups stay in the SLOOP editor's format); modification time stays
     backup.write_text_atomic(path, backup.dumps(f), keep_times=(st.st_atime_ns, st.st_mtime_ns))
-    with _lock:                                      # Index: der Eintrag ist jetzt veraltet (gleiche mtime möglich!)
+    with _lock:                                      # index: the entry is now stale (same mtime possible!)
         _load_index().pop(str(path), None)
         _save_index()
 
 
-# --------------------------------------------------------- Aufbewahrung ---
+# --------------------------------------------------------- retention ---
 
 def retention(metas: list[Meta], keep_last: int, keep_monthly: bool = True) -> list[Meta]:
-    """-> die automatischen Backups, die weg dürfen."""
+    """-> the automatic backups that may be removed."""
     autos = sorted([m for m in metas if m.automatic], key=lambda m: m.when, reverse=True)
     if keep_last <= 0:
         return []
@@ -259,13 +259,13 @@ def retention(metas: list[Meta], keep_last: int, keep_monthly: bool = True) -> l
     keep |= {id(m) for m in autos if m.pinned}
     newest_fw: dict[str, Meta] = {}
     months: dict[str, Meta] = {}
-    for m in autos:                              # neueste zuerst
+    for m in autos:                              # newest first
         newest_fw.setdefault(m.fw_key, m)
         months.setdefault(m.when.strftime("%Y-%m"), m)
     keep |= {id(m) for m in newest_fw.values()}
     if keep_monthly:
         keep |= {id(m) for m in months.values()}
-    # Manuelle sind nie in autos – werden nie gelöscht
+    # manual ones are never in autos – never deleted
     return [m for m in autos if id(m) not in keep]
 
 
@@ -285,7 +285,7 @@ def needs_backup(folder: Path, days: float, now: float | None = None) -> bool:
     return age > days * 86400
 
 
-# -------------------------------------------------------------- Spiegel ---
+# -------------------------------------------------------------- mirror ---
 
 def _sha(p: Path) -> str:
     h = hashlib.sha256()
@@ -296,7 +296,7 @@ def _sha(p: Path) -> str:
 
 
 def os_error_text(e: BaseException) -> str:
-    """OSError in Alltagssprache (ohne Qt, für Protokoll- und Statuszeilen)."""
+    """OSError in plain language (without Qt, for log and status lines)."""
     import errno as _e
     code = getattr(e, "errno", None)
     path = getattr(e, "filename", None)
@@ -315,8 +315,8 @@ def os_error_text(e: BaseException) -> str:
 
 
 def mirror_file(path: Path, root: Path, target: Path) -> Path:
-    """Datei in den Spiegel kopieren (relativer Pfad wie unter root) und prüfen.
-    OSError mit deutscher Meldung, wenn das Ziel fehlt (NAS nicht eingehängt) oder die Kopie nicht stimmt."""
+    """Copy a file into the mirror (relative path as under root) and verify it.
+    OSError with a German message if the target is missing (NAS not mounted) or the copy does not match."""
     path, target = Path(path), Path(target)
     if not target.is_dir():
         raise OSError(_("Mirror folder {folder} is not reachable – is the drive (NAS) mounted?").format(folder=target))
@@ -339,7 +339,7 @@ def mirror_file(path: Path, root: Path, target: Path) -> Path:
         try:
             shutil.copystat(path, dest)
         except OSError:
-            pass                                   # (manche Netzlaufwerke erlauben kein Setzen der Zeiten)
+            pass                                   # (some network drives do not allow setting the times)
     except OSError as e:
         if getattr(e, "errno", None) is None:
             raise
@@ -348,7 +348,7 @@ def mirror_file(path: Path, root: Path, target: Path) -> Path:
 
 
 def mirror_all(root: Path, target: Path) -> tuple[int, int, list[str]]:
-    """alle Backups unter root spiegeln -> (kopiert/geprüft, Fehler, Meldungen)."""
+    """mirror all backups under root -> (copied/verified, errors, messages)."""
     ok, bad, msgs = 0, 0, []
     for f in sorted(Path(root).rglob("*.json")):
         try:
@@ -362,7 +362,7 @@ def mirror_all(root: Path, target: Path) -> tuple[int, int, list[str]]:
     return ok, bad, msgs
 
 
-# ----------------------------------------------------- Status für die UI ---
+# ----------------------------------------------------- status for the UI ---
 
 @dataclass
 class Status:
@@ -381,10 +381,10 @@ class Status:
 STATUS = Status()
 
 
-# ------------------------------------------------------------ Zip-Sätze ---
+# ------------------------------------------------------------ zip sets ---
 
 def export_zip(paths, dest: Path, root: Path) -> int:
-    """Backups samt Inhaltsverzeichnis (manifest.json mit SHA-256) in eine Zip-Datei."""
+    """Backups together with a table of contents (manifest.json with SHA-256) into a zip file."""
     import zipfile
     entries = []
     with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
@@ -406,7 +406,7 @@ def export_zip(paths, dest: Path, root: Path) -> int:
 
 
 def import_zip(src: Path, root: Path) -> tuple[list[Path], list[str]]:
-    """Zip prüfen (Manifest, SHA-256, Backup-Inhalt) und unter root einsortieren. Vorhandenes bleibt."""
+    """Check a zip (manifest, SHA-256, backup content) and file it under root. Existing files stay."""
     import zipfile
     from . import backup_inspect
     got, skipped = [], []

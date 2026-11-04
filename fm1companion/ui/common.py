@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Gemeinsame Bausteine der Oberfläche: Hintergrund-Jobs, Formatierung, Icons."""
+"""Shared UI building blocks: background jobs, formatting, icons."""
 from __future__ import annotations
 
 import datetime as dt
@@ -29,7 +29,7 @@ def _svg_ok() -> bool:
         try:
             from PyQt6.QtSvg import QSvgRenderer  # noqa: F401
             _HAVE_SVG = True
-        except ImportError:                    # python3-pyqt6.qtsvg fehlt -> Desktop-Symbole
+        except ImportError:                    # python3-pyqt6.qtsvg missing -> desktop icons
             _HAVE_SVG = False
     return _HAVE_SVG
 
@@ -45,7 +45,7 @@ def _svg_text(lname: str) -> str:
 
 
 class _TintEngine(QIconEngine):
-    """zeichnet ein Lucide-SVG in der Farbe des aktuellen Designs (folgt Wechseln hell/dunkel)."""
+    """draws a Lucide SVG in the current design's color (follows light/dark switches)."""
 
     def __init__(self, lname: str, tint: str = ""):
         super().__init__()
@@ -110,16 +110,16 @@ _PIX_REGISTRY: dict[int, tuple[str, str]] = {}
 
 
 def _remember_pixmap(pm: QPixmap, lname: str, tint: str):
-    """merkt sich, welches Symbol ein Pixmap zeigt – damit Beschriftungs-Symbole (QLabel.setPixmap)
-    beim Wechsel hell/dunkel neu eingefärbt werden können."""
+    """remembers which icon a pixmap shows – so that label icons (QLabel.setPixmap)
+    can be recolored on a light/dark switch."""
     if len(_PIX_REGISTRY) > 4000:
         _PIX_REGISTRY.clear()
     _PIX_REGISTRY[pm.cacheKey()] = (lname, tint)
 
 
 def refresh_icon_labels(app=None):
-    """nach einem Design-Wechsel: alle QLabel mit eingebautem Symbol in der neuen Textfarbe zeichnen
-    (QLabel speichert nur ein fertiges Bild – ohne das blieben z. B. dunkle Symbole auf dunklem Grund)."""
+    """after a design switch: draw all QLabels with a built-in icon in the new text color
+    (QLabel only stores a finished image – without this, e.g. dark icons would stay on a dark background)."""
     from PyQt6.QtWidgets import QApplication
     app = app or QApplication.instance()
     if app is None or not _svg_ok():
@@ -145,7 +145,7 @@ def refresh_icon_labels(app=None):
 
 
 def bundled_icon(name: str) -> QIcon:
-    """Symbol aus dem eingebauten Satz (freedesktop-Name oder Lucide-Name), sonst leer."""
+    """Icon from the built-in set (freedesktop name or Lucide name), otherwise empty."""
     from ..icons.names import lucide_name
     lname, tint = lucide_name(name)
     if not lname and _svg_text(name):
@@ -156,7 +156,7 @@ def bundled_icon(name: str) -> QIcon:
 
 
 def icon_mode() -> str:
-    """'app' (eingebaute Symbole zuerst) oder 'system' (Desktop-Thema zuerst)."""
+    """'app' (built-in icons first) or 'system' (desktop theme first)."""
     try:
         from .. import config
         return config.module("rahmen", {}).get("icons", "app")
@@ -169,9 +169,9 @@ def icon_cache_clear():
 
 
 def icon(*names: str) -> QIcon:
-    """erstes vorhandene Symbol. Standard: einheitlicher eingebauter Satz (Lucide, in der Textfarbe
-    des Designs); Einstellung 'Symbole: System-Thema' bevorzugt Breeze/Papirus. Unbekannte Namen
-    fallen auf das Desktop-Thema zurück."""
+    """first available icon. Default: uniform built-in set (Lucide, in the design's text
+    color); the setting 'Icons: system theme' prefers Breeze/Papirus. Unknown names
+    fall back to the desktop theme."""
     key = (icon_mode(),) + names
     if key in _icon_cache:
         return _icon_cache[key]
@@ -240,11 +240,11 @@ class Worker(QObject):
         try:
             res = self.fn(self, *self.args, **self.kwargs)
             self.done.emit(res)
-        except Exception as e:      # noqa: BLE001 – alles anzeigen
+        except Exception as e:      # noqa: BLE001 – show everything
             msg = fs_error_text(e) if isinstance(e, OSError) else (str(e) or type(e).__name__)
             try:
                 self.failed.emit(msg, traceback.format_exc())
-            except RuntimeError:     # Dialog schon geschlossen
+            except RuntimeError:     # dialog already closed
                 pass
 
 
@@ -252,28 +252,28 @@ _running: set = set()
 
 
 def _text_of(spec, value) -> str:
-    """done_text/fail_text: str, callable(value) -> str|None oder None."""
+    """done_text/fail_text: str, callable(value) -> str|None or None."""
     if spec is None:
         return ""
     try:
         t = spec(value) if callable(spec) else str(spec)
-    except Exception:  # noqa: BLE001 – eine kaputte Zusammenfassung darf den Ablauf nicht stören
+    except Exception:  # noqa: BLE001 – a broken summary must not disturb the flow
         return ""
     return t or ""
 
 
 def run_job(parent: QWidget | None, fn: Callable, *args, on_done=None, on_fail=None, on_log=None,
             on_progress=None, done_text=None, fail_text=None, notify_fail: bool = False, **kwargs) -> Worker:
-    """fn(worker, *args) läuft in einem Hintergrund-Thread; Ergebnis/Fehler kommen im GUI-Thread an.
+    """fn(worker, *args) runs in a background thread; result/error arrive in the GUI thread.
 
-    Rückmeldung ohne Dialog: ``done_text`` (str oder callable(Ergebnis) -> str) zeigt bei Erfolg einen Toast
-    („Erledigt“); ``fail_text`` (str oder callable(Fehlertext) -> str) bzw. ``notify_fail=True`` zeigt einen
-    Fehler-Toast – zusätzlich zu on_fail, falls angegeben.
+    Feedback without a dialog: ``done_text`` (str or callable(result) -> str) shows a toast on success
+    (“Done”); ``fail_text`` (str or callable(error text) -> str) or ``notify_fail=True`` shows an
+    error toast – in addition to on_fail, if given.
 
-    Bewusst ein Python-Daemon-Thread statt QThread: hängt ein Job (z. B. Netzwerk) beim
-    Beenden der App noch, endet er einfach mit dem Prozess – ein QThread würde Qt dann
-    mit 'Destroyed while thread is still running' abbrechen lassen."""
-    w = Worker(fn, *args, **kwargs)          # lebt im GUI-Thread: Signale kommen dort an
+    Deliberately a Python daemon thread instead of QThread: if a job (e.g. network) is still hanging when
+    the app exits, it simply ends with the process – a QThread would then make Qt abort
+    with 'Destroyed while thread is still running'."""
+    w = Worker(fn, *args, **kwargs)          # lives in the GUI thread: signals arrive there
     if on_log:
         w.log.connect(on_log)
     if on_progress:
@@ -313,7 +313,7 @@ def show_error(parent, title: str, msg: str, details: str = ""):
 
 
 def show_done(parent, title: str, msg: str):
-    """kurze Erfolgsmeldung als Dialog (für Aktionen, deren Ergebnis man sehen muss)."""
+    """short success message as a dialog (for actions whose result one needs to see)."""
     box = QMessageBox(QMessageBox.Icon.Information, title, msg, QMessageBox.StandardButton.Ok, parent)
     german_buttons(box)
     box.button(QMessageBox.StandardButton.Ok).setText(_("Close"))
@@ -330,7 +330,7 @@ class _GuiCaller(QObject):
     def _run(self, box):
         try:
             box.append(box[0]())
-        except Exception as e:  # noqa: BLE001 – an den aufrufenden Thread weitergeben
+        except Exception as e:  # noqa: BLE001 – pass on to the calling thread
             box.append(e)
 
 
@@ -338,7 +338,7 @@ _gui_caller: _GuiCaller | None = None
 
 
 def call_in_gui(fn: Callable):
-    """fn() im GUI-Thread ausführen und auf das Ergebnis warten (z. B. eine Rückfrage aus einem Hintergrund-Job)."""
+    """Run fn() in the GUI thread and wait for the result (e.g. a prompt from a background job)."""
     global _gui_caller
     from PyQt6.QtCore import QThread
     from PyQt6.QtWidgets import QApplication
@@ -356,7 +356,7 @@ def call_in_gui(fn: Callable):
 
 
 def init_gui_caller():
-    """im GUI-Thread anlegen (vor dem ersten call_in_gui aus einem Hintergrund-Thread)."""
+    """create in the GUI thread (before the first call_in_gui from a background thread)."""
     global _gui_caller
     if _gui_caller is None:
         _gui_caller = _GuiCaller()
@@ -368,7 +368,7 @@ def confirm(parent, title: str, text: str, ok: str | None = None, danger: bool =
                       parent=parent)
     yes = box.addButton(ok, QMessageBox.ButtonRole.AcceptRole)
     no = box.addButton(_("Cancel"), QMessageBox.ButtonRole.RejectRole)
-    if danger:                                 # zerstörende Aktion: roter Knopf, Abbrechen ist Standard
+    if danger:                                 # destructive action: red button, cancel is the default
         yes.setProperty("variant", "danger")
         box.setDefaultButton(no)
     else:
@@ -378,20 +378,20 @@ def confirm(parent, title: str, text: str, ok: str | None = None, danger: bool =
 
 
 class JobDialog(QDialog):
-    """Fortschritt + Protokoll für längere Vorgänge – mit klarer Rückmeldung am Ende.
+    """Progress + log for longer operations – with clear feedback at the end.
 
     JobDialog(parent, title, fn, *args, on_done=None, close_on_success=False,
               done_text=None, fail_text=None, actions=(), cancellable=False, cancel_tip="", **kwargs)
 
-    * fn(worker, *args, **kwargs) läuft im Hintergrund (worker.log / worker.progress / worker.cancelled).
-    * Während des Laufs: Überschrift „<Titel> – läuft …“, Knopf „Abbrechen“ (setzt worker.cancelled; nur mit
-      cancellable=True aktiv, sonst grau mit Begründung cancel_tip).
-    * Erfolg: grünes Häkchen, „Fertig“, darunter eine Zeile Ergebnis. Quelle der Zeile (erste nicht leere):
-      done_text (str oder callable(Ergebnis) -> str), Rückgabewert von on_done(Ergebnis) falls str, letzte
-      Protokollzeile. Dazu „Schließen“ und optionale Aktionsknöpfe actions=[(Beschriftung, fn(Ergebnis)), …].
-    * Fehler: rotes Symbol, „Fehlgeschlagen“, deutsche Erklärung (fail_text: str oder callable(Meldung) -> str,
-      sonst die Meldung selbst), Protokoll unter „Details“ aufklappbar, „Schließen“.
-    * Ergebnis: .ok, .result_value, .summary (Erfolgs- bzw. Fehlerzeile), .error (Fehlermeldung)."""
+    * fn(worker, *args, **kwargs) runs in the background (worker.log / worker.progress / worker.cancelled).
+    * While running: heading “<title> – running …”, button “Cancel” (sets worker.cancelled; only active with
+      cancellable=True, otherwise grayed out with the reason cancel_tip).
+    * Success: green checkmark, “Done”, below it one line of result. Source of the line (first non-empty):
+      done_text (str or callable(result) -> str), return value of on_done(result) if str, last
+      log line. Plus “Close” and optional action buttons actions=[(label, fn(result)), …].
+    * Error: red icon, “Failed”, readable explanation (fail_text: str or callable(message) -> str,
+      otherwise the message itself), log expandable under “Details”, “Close”.
+    * Result: .ok, .result_value, .summary (success or error line), .error (error message)."""
 
     def __init__(self, parent, title: str, fn: Callable, *args, on_done=None, close_on_success=False,
                  done_text=None, fail_text=None, actions=(), cancellable: bool = False, cancel_tip: str = "",
@@ -439,7 +439,7 @@ class JobDialog(QDialog):
         self.logv.setReadOnly(True)
         self.logv.setFont(QFont("monospace"))
         lay.addWidget(self.logv, 1)
-        lay.addStretch(0)                      # nimmt den Platz, wenn das Protokoll eingeklappt ist
+        lay.addStretch(0)                      # takes up the space when the log is collapsed
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         german_buttons(self.buttons)
         self.buttons.rejected.connect(self.reject)
@@ -451,7 +451,7 @@ class JobDialog(QDialog):
                                                        "please wait until it is finished.")))
         self.cancel_button.clicked.connect(self._cancel)
         if not cancellable and type(self) is not JobDialog:
-            self.cancel_button.hide()          # Unterklassen mit eigenem Abbrechen (z. B. Installation)
+            self.cancel_button.hide()          # subclasses with their own cancel (e.g. installation)
         lay.addWidget(self.buttons)
         self._on_done = on_done
         self._close_on_success = close_on_success
@@ -539,15 +539,15 @@ class JobDialog(QDialog):
 
 
 class Card(QFrame):
-    """Kasten mit Überschrift (vom Design als abgerundete Karte gezeichnet).
-    ``Card(title)`` wie bisher; optional ``icon=`` (Symbolname) und ``subtitle=``."""
+    """Box with a heading (drawn by the design as a rounded card).
+    ``Card(title)`` as before; optionally ``icon=`` (icon name) and ``subtitle=``."""
 
     def __init__(self, title: str, parent=None, *, icon: str | None = None, subtitle: str = ""):
         super().__init__(parent)
         self.setObjectName("Card")
         self.setFrameShape(QFrame.Shape.StyledPanel)
-        # Höhe nach Breite: umbrechende Texte und Knopfreihen (responsive.reflow/flow_row) brauchen im schmalen Fenster
-        # mehr Höhe, als der sizeHint sagt – mit „Maximum“ wurden sie abgeschnitten
+        # height for width: wrapping texts and button rows (responsive.reflow/flow_row) need more height in a narrow
+        # window than the sizeHint says – with “Maximum” they were cut off
         sp = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sp.setHeightForWidth(True)
         self.setSizePolicy(sp)
@@ -575,7 +575,7 @@ class Card(QFrame):
 
 
 def heading(text: str, sub: str = "") -> QWidget:
-    """Seitenkopf: großer Titel, darunter ein Satz in Nebentext-Farbe (Links erlaubt)."""
+    """Page header: large title, below it a sentence in secondary text color (links allowed)."""
     w = QWidget()
     w.setObjectName("PageHeading")
     lay = QVBoxLayout(w)
@@ -595,7 +595,7 @@ def heading(text: str, sub: str = "") -> QWidget:
 
 
 def set_variant(widget: QWidget, variant: str) -> QWidget:
-    """Knopf-Variante: "primary" (Hauptaktion), "danger" (löschen/überschreiben), "flat", "secondary"/""."""
+    """Button variant: "primary" (main action), "danger" (delete/overwrite), "flat", "secondary"/""."""
     widget.setProperty("variant", variant)
     st = widget.style()
     st.unpolish(widget)
@@ -616,7 +616,7 @@ def button(text: str, icon_name: str | tuple = (), variant: str = "", slot=None,
 
 
 def label(text: str, role: str = "", wrap: bool = True) -> QLabel:
-    """QLabel mit Design-Rolle: "muted", "small", "section", "badge", "cardTitle" …"""
+    """QLabel with a design role: "muted", "small", "section", "badge", "cardTitle" …"""
     lab = QLabel(text)
     lab.setWordWrap(wrap)
     if role:
@@ -625,7 +625,7 @@ def label(text: str, role: str = "", wrap: bool = True) -> QLabel:
 
 
 def badge(text: str, level: str = "") -> QLabel:
-    """kleine Pille, level = "" | "success" | "warning" | "error"."""
+    """small pill, level = "" | "success" | "warning" | "error"."""
     b = QLabel(text)
     b.setProperty("role", "badge")
     if level:
@@ -635,7 +635,7 @@ def badge(text: str, level: str = "") -> QLabel:
 
 
 def empty_state(icon_name: str, title: str, text: str = "", action_text: str = "", action=None) -> QWidget:
-    """leerer Zustand: großes Symbol, Titel, Erklärung ("so geht's …"), optional ein Knopf.
+    """empty state: large icon, title, explanation ("here's how …"), optionally a button.
     Title and text sit in a centred column of at most 560 px without layout alignment, so that word-wrapped lines
     get their full height (a layout with alignment sizes labels by sizeHint and cuts longer translations)."""
     w = QWidget()
@@ -676,8 +676,8 @@ def empty_state(icon_name: str, title: str, text: str = "", action_text: str = "
 
 
 class Disclosure(QWidget):
-    """aufklappbarer Bereich: Kopfzeile mit Pfeil („Details“), darunter ein zunächst verstecktes Widget.
-    Disclosure("Details", inner_widget) oder Disclosure("Hintergrund", html_text)."""
+    """expandable section: header row with an arrow (“Details”), below it an initially hidden widget.
+    Disclosure("Details", inner_widget) or Disclosure("Background", html_text)."""
 
     def __init__(self, title: str = "Details", content=None, parent=None, *, open_: bool = False):
         super().__init__(parent)
@@ -721,8 +721,8 @@ class Disclosure(QWidget):
 
 
 def notify(text: str, level: str = "info", action=None):
-    """Hinweis anzeigen (Toast + Verlauf), aus jedem Thread: notify("Backup fertig", "success",
-    action=("Ordner öffnen", fn))."""
+    """Show a notice (toast + history), from any thread: notify("Backup done", "success",
+    action=("Open folder", fn))."""
     from .notify import notify as _n
     _n(text, level, action)
 
@@ -741,7 +741,7 @@ def hbox(*widgets, stretch_last=False) -> QHBoxLayout:
     return h
 
 
-# ====================================================================== Deutsch für Qt-Standardknöpfe
+# ====================================================================== German for Qt standard buttons
 GERMAN_BUTTONS = {
     "Ok": "OK", "Cancel": "Abbrechen", "Close": "Schließen", "Yes": "Ja", "No": "Nein", "Apply": "Übernehmen",  # i18n: ignore
     "Save": "Speichern", "Discard": "Verwerfen", "Open": "Öffnen", "Reset": "Zurücksetzen", "Help": "Hilfe",  # i18n: ignore
@@ -757,8 +757,8 @@ _ENGLISH = {"OK": "OK", "&OK": "OK", "Cancel": "Abbrechen", "&Cancel": "Abbreche
 
 
 def german_buttons(box):
-    """Standardknöpfe einer QDialogButtonBox / QMessageBox deutsch beschriften (falls Qt keine deutsche
-    Übersetzung geladen hat). Gibt box zurück.
+    """Label the standard buttons of a QDialogButtonBox / QMessageBox in German (if Qt has not loaded a German
+    translation). Returns box.
     Only for the German UI – in any other language Qt's own (or translated) labels stay."""
     from .. import i18n
     if i18n.current_language() != "de":
@@ -779,7 +779,7 @@ def german_buttons(box):
 
 
 class _ButtonGermanizer(QObject):
-    """Notlösung ohne qtbase_de.qm: beschriftet beim Anzeigen jedes Dialogs die Standardknöpfe."""
+    """Fallback without qtbase_de.qm: labels the standard buttons of every dialog when it is shown."""
 
     def eventFilter(self, obj, ev):
         if ev.type() == QEvent.Type.Show and isinstance(obj, QDialog):
@@ -840,9 +840,9 @@ def qt_locale(lang: str | None = None):
     return QLocale(lang)
 
 
-# ====================================================================== Rückgängig je Gerät
+# ====================================================================== Undo per device
 def device_tag(ctx) -> tuple[str, str, str]:
-    """(Profil-ID, Port-Schlüssel, Anzeigename) des gerade verbundenen FM-1."""
+    """(profile ID, port key, display name) of the currently connected FM-1."""
     prof = getattr(ctx, "profile", None)
     port = getattr(ctx, "port", None)
     name = prof.name if prof else (port.label if port else _("another FM-1"))
@@ -856,14 +856,14 @@ def same_device(a: tuple, b: tuple) -> bool:
 
 
 class DeviceUndo:
-    """Rückgängig-Stapel, dessen Einträge wissen, zu welchem FM-1 sie gehören. Rückgängig wird verweigert,
-    wenn gerade ein anderes Gerät verbunden ist – sonst landete der alte Inhalt von Gerät A auf Gerät B."""
+    """Undo stack whose entries know which FM-1 they belong to. Undo is refused
+    if a different device is currently connected – otherwise the old content of device A would end up on device B."""
 
     def __init__(self):
-        self.items: list[tuple[tuple, object, str]] = []   # (device_tag, data, Beschreibung)
+        self.items: list[tuple[tuple, object, str]] = []   # (device_tag, data, description)
 
     def push(self, ctx, data, what: str = "", tag: tuple | None = None):
-        """tag: device_tag(ctx) von VOR dem Auftrag (falls sich das Gerät inzwischen geändert hat)."""
+        """tag: device_tag(ctx) from BEFORE the job (in case the device has changed in the meantime)."""
         self.items.append((tag or device_tag(ctx), data, what))
 
     def __len__(self):
@@ -873,7 +873,7 @@ class DeviceUndo:
         return bool(self.items)
 
     def __getitem__(self, i):
-        """Daten des i-ten Eintrags (wie die frühere Liste: undo[-1])."""
+        """Data of the i-th entry (like the former list: undo[-1])."""
         return self.items[i][1]
 
     def peek(self):
@@ -899,7 +899,7 @@ class DeviceUndo:
                  "would end up on the wrong FM-1.)").format(device=self.owner())
 
     def check(self, ctx, parent=None) -> bool:
-        """True, wenn der oberste Eintrag zum verbundenen Gerät gehört; sonst Hinweis und False."""
+        """True if the top entry belongs to the connected device; otherwise a notice and False."""
         if not self.items:
             return False
         if self.matches(ctx):
@@ -909,9 +909,9 @@ class DeviceUndo:
         return False
 
 
-# ====================================================================== Dateisystem
+# ====================================================================== File system
 def fs_error_text(e: BaseException, what: str = "") -> str:
-    """verständliche deutsche Meldung zu OSError & Co. (statt "[Errno 13] …")."""
+    """understandable message for OSError & co. (instead of "[Errno 13] …")."""
     import errno as _e
     path = getattr(e, "filename", None) or ""
     code = getattr(e, "errno", None)
@@ -941,7 +941,7 @@ def fs_error_text(e: BaseException, what: str = "") -> str:
 
 
 def safe_folder(name: str) -> tuple[Path, str]:
-    """sichtbarer Unterordner (~/FM-1/<name>), ohne Absturz anlegen. -> (Pfad, Fehlertext oder "")."""
+    """Create a visible subfolder (~/FM-1/<name>) without crashing. -> (path, error text or "")."""
     from .. import config
     try:
         return config.folder(name), ""
@@ -953,10 +953,10 @@ def safe_folder(name: str) -> tuple[Path, str]:
         return root / name, fs_error_text(e, _("Folder “{name}” cannot be created").format(name=name))
 
 
-# ====================================================================== Layout-Helfer
+# ====================================================================== Layout helpers
 class FlowLayout(QLayout):
-    """Knopfreihe, die bei wenig Platz in die nächste Zeile umbricht. addStretch() wird ignoriert
-    (Kompatibilität mit QHBoxLayout-Code)."""
+    """Button row that wraps to the next line when space is short. addStretch() is ignored
+    (compatibility with QHBoxLayout code)."""
 
     def __init__(self, parent=None, hspacing: int = 6, vspacing: int = 6):
         super().__init__(parent)
@@ -1013,7 +1013,7 @@ class FlowLayout(QLayout):
         return QSize(s.width() + m.left() + m.right(), s.height() + m.top() + m.bottom())
 
     def _do(self, rect, test):
-        """Zeilen füllen; Elemente einer Zeile werden senkrecht mittig ausgerichtet (Häkchen neben Knöpfen)."""
+        """Fill rows; items of a row are vertically centered (checkboxes next to buttons)."""
         m = self.contentsMargins()
         r = rect.adjusted(m.left(), m.top(), -m.right(), -m.bottom())
         lines: list[list] = [[]]
@@ -1040,7 +1040,7 @@ class FlowLayout(QLayout):
 
 
 def flow_row(*widgets, hspacing: int = 6) -> QWidget:
-    """Widget mit umbrechender Knopfreihe (None-Einträge werden ignoriert)."""
+    """Widget with a wrapping button row (None entries are ignored)."""
     w = QWidget()
     fl = FlowLayout(w, hspacing)
     for x in widgets:
@@ -1053,13 +1053,13 @@ def flow_row(*widgets, hspacing: int = 6) -> QWidget:
 
 
 def make_scrollable(page: QWidget, horizontal: bool = False) -> QScrollArea:
-    """legt den bisherigen Inhalt einer Seite in einen Rollbereich (die Seite kann dann beliebig
-    klein werden). Aufruf am Ende des Konstruktors, nachdem das Layout gefüllt ist."""
+    """puts the existing content of a page into a scroll area (the page can then become
+    arbitrarily small). Call at the end of the constructor, after the layout is filled."""
     lay = page.layout()
     inner = QWidget()
     inner.setObjectName("PageScrollInner")
     if lay is not None:
-        inner.setLayout(lay)              # übernimmt Layout und Kind-Widgets
+        inner.setLayout(lay)              # takes over layout and child widgets
     sc = QScrollArea()
     sc.setObjectName("PageScroll")
     sc.setWidgetResizable(True)
@@ -1080,14 +1080,14 @@ def plural(n: int, one: str, many: str) -> str:
 
 
 def start_dir(name: str) -> Path:
-    """Startordner für Datei-Dialoge: ~/FM-1/<name>, falls anlegbar, sonst der persönliche Ordner."""
+    """Start folder for file dialogs: ~/FM-1/<name> if it can be created, otherwise the home folder."""
     p, err = safe_folder(name)
     return p if not err and p.is_dir() else Path.home()
 
 
 def fw_label(version: str) -> str:
-    """Firmware-Kennung fürs Auge: SLOOP meldet sich (wie alle Felucca-Abkömmlinge) als „FELUCCA SLOOP 2.8.3“ –
-    angezeigt wird „SLOOP 2.8.3“. Gespeicherte Daten bleiben unverändert."""
+    """Firmware identifier for display: SLOOP reports itself (like all Felucca derivatives) as “FELUCCA SLOOP 2.8.3” –
+    “SLOOP 2.8.3” is displayed. Stored data stays unchanged."""
     import re as _re
     v = (version or "").strip()
     return _re.sub(r"\bFELUCCA\s+(?=SLOOP\b)", "", v, flags=_re.IGNORECASE)

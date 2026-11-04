@@ -1,11 +1,11 @@
-// Das simulierte FM-1 des SLOOP-Web-Editors (makeMockDevice aus isod89/sloop-fm1 web/editor.html)
-// als Prozess – und Werkzeuge, mit denen tests/test_sloop_backup.py die App gegen den Editor-Code prüft.
-//   node tests/mock_sloop.mjs <editor.html>                  Mock-Gerät: eine MIDI-Nachricht pro Zeile als Hex
-//   node tests/mock_sloop.mjs <editor.html> objects <datei>  backupObjects(): Datei prüfen -> {id: len}
-//   node tests/mock_sloop.mjs <editor.html> stringify <datei> JSON.stringify(JSON.parse(datei), null, 1)
-//   node tests/mock_sloop.mjs <editor.html> capture          backupCapture() gegen einen neuen Mock (mit Inhalt)
-//   node tests/mock_sloop.mjs <editor.html> restore <datei>  backupRestore() in einen neuen Mock, dann capture
-//   node tests/mock_sloop.mjs <editor.html> reqs             die Anfragen req.bk* für feste Argumente (Hex)
+// The simulated FM-1 of the SLOOP web editor (makeMockDevice from isod89/sloop-fm1 web/editor.html)
+// as a process – and tools with which tests/test_sloop_backup.py checks the app against the editor's code.
+//   node tests/mock_sloop.mjs <editor.html>                  mock device: one MIDI message per line as hex
+//   node tests/mock_sloop.mjs <editor.html> objects <file>   backupObjects(): check a file -> {id: len}
+//   node tests/mock_sloop.mjs <editor.html> stringify <file> JSON.stringify(JSON.parse(file), null, 1)
+//   node tests/mock_sloop.mjs <editor.html> capture          backupCapture() against a new mock (with content)
+//   node tests/mock_sloop.mjs <editor.html> restore <file>   backupRestore() into a new mock, then capture
+//   node tests/mock_sloop.mjs <editor.html> reqs             the requests req.bk* for fixed arguments (hex)
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import readline from "node:readline";
@@ -22,7 +22,7 @@ function attach() {
   inp.onmidimessage = (e) => link.receive(e.data);
   return { m, rq: (r, o) => link.request(r, o), done: () => { link.close(); m.stop(); } };
 }
-/* wie test_web.mjs editorBackup(): ein User-Preset, ein Projekt in Section C, ein Sample in USR2 */
+/* like test_web.mjs editorBackup(): one user preset, one project in section C, one sample in USR2 */
 async function fill(rq) {
   await rq(E.req.upStore(3, "BACKUP ME"));
   await rq(E.req.project(1, 2), { timeout: 4000, retries: 0 });
@@ -55,7 +55,7 @@ if (mode === "objects") {
   const input = [...m.access.inputs.values()][0];
   const output = [...m.access.outputs.values()][0];
   input.onmidimessage = (e) => process.stdout.write(Buffer.from(e.data).toString("hex") + "\n");
-  console.log("# SLOOP-Editor-Mock bereit");
+  console.log("# SLOOP editor mock ready");
   const rl = readline.createInterface({ input: process.stdin });
   const queue = [];
   let busy = false;

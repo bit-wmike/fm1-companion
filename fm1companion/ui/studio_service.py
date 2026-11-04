@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Der Studio-Zwilling als Dienst der ganzen App (ein Zwilling je Fenster).
+"""The studio twin as a service of the whole app (one twin per window).
 
-Gehört dem Hauptfenster (``window.studio``) und lebt unabhängig von der Studio-Seite:
+Belongs to the main window (``window.studio``) and lives independently of the studio page:
 
-* startet den Zwilling (studio.Studio, QtWebEngine) in der passenden Firmware-Version, lädt ihn aus einem Backup
-  oder dem zuletzt gespeicherten Studio-Stand (je Geräteprofil) und merkt sich, woher er kam
-* speichert seinen Flash automatisch (studio.Studio.save_state), sobald sich etwas geändert hat, und führt eine
-  begrenzte Zwischenstand-Liste für Rückgängig/Wiederherstellen
-* hält die Uhr des Zwillings an, wenn das Studio nicht sichtbar ist und nichts spielt
-* bietet ihn als **virtuelles Gerät** „Studio-Zwilling (Melodee …)“ in der Geräteauswahl an: Projekte,
-  Komponieren, Presets, Backups und der Editor arbeiten dann über studio.StudioTransport mit ihm. Er ist nie
-  ``ctx.ports`` (echte Geräte), nur ``ctx.vports``; ``ctx.is_virtual`` sagt es allen Seiten.
-* leitet MIDI-Keyboards (und auf Wunsch die Tasten des echten FM-1) in den Zwilling
+* starts the twin (studio.Studio, QtWebEngine) in the matching firmware version, loads it from a backup
+  or the last saved studio state (per device profile) and remembers where it came from
+* saves its flash automatically (studio.Studio.save_state) as soon as something has changed, and keeps a
+  limited list of snapshots for undo/restore
+* stops the twin's clock when the studio is not visible and nothing is playing
+* offers it as a **virtual device** “Studio twin (Melodee …)” in the device selection: projects,
+  compose, presets, backups and the editor then work with it via studio.StudioTransport. It is never
+  ``ctx.ports`` (real devices), only ``ctx.vports``; ``ctx.is_virtual`` tells all pages.
+* routes MIDI keyboards (and optionally the keys of the real FM-1) into the twin
 """
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ INFO_NAME = "studio-info.json"
 
 
 def music_dir() -> Path:
-    """Musik-Ordner des Nutzers (XDG), darin „FM-1 Studio“."""
+    """The user's music folder (XDG), with “FM-1 Studio” inside."""
     base = None
     try:
         out = subprocess.run(["xdg-user-dir", "MUSIC"], capture_output=True, text=True, timeout=2).stdout.strip()
@@ -58,8 +58,8 @@ def music_dir() -> Path:
 
 
 def route_webengine_audio(sink: str) -> str:
-    """den Ton von QtWebEngine (Chromium) auf einen bestimmten Ausgang legen (pactl move-sink-input). -> Meldung
-    ("" = erledigt oder nichts zu tun)."""
+    """Route QtWebEngine's (Chromium's) sound to a specific output (pactl move-sink-input). -> message
+    ("" = done or nothing to do)."""
     if not sink:
         return ""
     if not shutil.which("pactl"):
@@ -84,10 +84,10 @@ def route_webengine_audio(sink: str) -> str:
 
 
 class StudioService(QObject):
-    changed = pyqtSignal()                 # Zwilling gestartet/geladen/geschlossen, Quelle geändert
-    history_changed = pyqtSignal()         # Rückgängig/Wiederherstellen, automatisch gespeichert
-    page_changed = pyqtSignal()            # neue Web-Seite (anderer Build): Studio-Seite hängt sie neu ein
-    ui_event = pyqtSignal(str)             # Leertaste/Strg+Z aus der Bedienfläche
+    changed = pyqtSignal()                 # twin started/loaded/closed, source changed
+    history_changed = pyqtSignal()         # undo/restore, saved automatically
+    page_changed = pyqtSignal()            # new web page (different build): studio page re-attaches it
+    ui_event = pyqtSignal(str)             # Space/Ctrl+Z from the control surface
     message = pyqtSignal(str)
 
     def __init__(self, window):
@@ -97,14 +97,14 @@ class StudioService(QObject):
         self.cfg = config.module("studio", SETTINGS)
         self.st: S.Studio | None = None
         self.page = None
-        self.source: dict = {}             # woher der Zwilling kam (siehe _set_source)
+        self.source: dict = {}             # where the twin came from (see _set_source)
         self.history: list[dict] = []      # {label, time, flash (zlib)}
         self.pos = -1
         self._sum = None
         self.saved_at = 0.0
-        self.busy = 0                      # laufende Arbeiten (Backup, Einspielen …): nicht dazwischenfunken
+        self.busy = 0                      # running work (backup, loading …): don't interfere
         self.page_visible = False
-        self.users = 0                     # andere Nutzer, die Ton/Uhr brauchen (Abspielen aus anderen Seiten)
+        self.users = 0                     # other users that need sound/clock (playback from other pages)
         self._clock = None
         self._audio = False
         self.audio_note = ""
@@ -129,7 +129,7 @@ class StudioService(QObject):
 
     @staticmethod
     def firmware_for(key: str) -> str:
-        """Firmware-Schlüssel des Geräts -> Zwilling-Firmware ("" = gibt es (noch) nicht)."""
+        """Device firmware key -> twin firmware ("" = doesn't exist (yet))."""
         key = (key or "").lower()
         return "melodee" if key.startswith("melodee") and S.builds("melodee") else ""
 
@@ -143,15 +143,15 @@ class StudioService(QObject):
 
     @property
     def link(self):
-        """Leitung zum Zwilling: ist er das aktive Gerät, dieselbe wie die der Seiten (eine Anfrage nach der
-        anderen), sonst die eigene."""
+        """Line to the twin: if it is the active device, the same one as the pages' (one request after
+        the other), otherwise its own."""
         if self.ctx.is_virtual and self.ctx.link is not None and not self.ctx.link.closed:
             return self.ctx.link
         return self.st.link if self.st else None
 
-    # ------------------------------------------------------------ Start/Stopp
+    # ------------------------------------------------------------ Start/stop
     def ensure(self, version: str = "", firmware: str = "melodee") -> S.Studio:
-        """Zwilling in dieser Version (oder der nächsten) bereitstellen – im GUI-Thread aufrufen."""
+        """Provide the twin in this version (or the next one) – call in the GUI thread."""
         want = S.pick_build(firmware, version)[0]
         if self.st is not None and self.st.build.path == want.path:
             return self.st
@@ -177,7 +177,7 @@ class StudioService(QObject):
         self._audio = False
         self.page_changed.emit()
         self._update_clock()
-        self.ctx.scan()                    # virtuelles Gerät erscheint in der Auswahl
+        self.ctx.scan()                    # virtual device appears in the selection
         if was_virtual:
             self.ctx.connect_port(self._virtual_ports()[0])
         self.changed.emit()
@@ -188,7 +188,7 @@ class StudioService(QObject):
             self.ctx.disconnect(_("Studio twin restarted"))
         st, self.st = self.st, None
         page, self.page = self.page, None
-        self.page_changed.emit()           # Studio-Seite lässt die Seite los, bevor sie verschwindet
+        self.page_changed.emit()           # studio page releases the page before it disappears
         if st is not None:
             with contextlib.suppress(Exception):
                 st.close()
@@ -205,7 +205,7 @@ class StudioService(QObject):
         if self.st is not None:
             self._close_twin()
 
-    # ------------------------------------------------------------ Quelle und Stand
+    # ------------------------------------------------------------ Source and state
     def profile_folder(self) -> str:
         return self.source.get("profile_folder") or self.cfg.get("last_profile") or "Studio"
 
@@ -229,7 +229,7 @@ class StudioService(QObject):
             p.write_text(json.dumps(self.source, ensure_ascii=False, indent=1), "utf-8")
 
     def stored_states(self) -> list[tuple[str, Path, dict]]:
-        """alle gespeicherten Studio-Stände: (Profilordner, Datei, Herkunft)"""
+        """all saved studio states: (profile folder, file, origin)"""
         base = config.DATA_DIR / "studio"
         out = []
         for f in sorted(base.glob(f"*/{S.STATE_NAME}")) if base.is_dir() else []:
@@ -240,7 +240,7 @@ class StudioService(QObject):
         return out
 
     def open_state(self, folder: str | None = None) -> dict:
-        """Studio-Stand eines Geräteprofils laden (Zwilling in dessen Version). -> Metadaten"""
+        """Load the studio state of a device profile (twin in its version). -> metadata"""
         folder = folder or self.profile_folder()
         path = S.state_path(folder)
         meta, _flash = S.read_state(path)
@@ -265,7 +265,7 @@ class StudioService(QObject):
         return meta
 
     def loaded_backup(self, archive, kind: str, **kw):
-        """nach dem Einspielen eines Backups (aus einem Arbeits-Thread fertig): Herkunft merken, sichern."""
+        """after loading a backup (finished from a worker thread): remember the origin, save."""
         self._set_source(kind, backup_version=S.backup_version(archive), **kw)
         self._sum = None
         self.snapshot(_("loaded from the FM-1") if kind == "device" else _("loaded from the backup"))
@@ -273,8 +273,8 @@ class StudioService(QObject):
         self.changed.emit()
 
     def auto_start(self) -> bool:
-        """Zwilling bereitstellen, falls er nicht läuft: Studio-Stand des aktiven Geräts (sonst des zuletzt benutzten),
-        sonst leer in der Version des Geräts. -> läuft er?"""
+        """Provide the twin if it isn't running: studio state of the active device (otherwise the last used one),
+        otherwise empty in the device's version. -> is it running?"""
         if self.st is not None:
             return True
         c = self.ctx
@@ -288,7 +288,7 @@ class StudioService(QObject):
                 try:
                     self.open_state(f)
                     return True
-                except Exception as e:  # noqa: BLE001 – kaputter Stand: leer starten
+                except Exception as e:  # noqa: BLE001 – broken state: start empty
                     self.last_error = _("Studio state “{name}” not readable: {error}").format(name=f, error=e)
         dev = c.info.version if (c.info and not c.is_virtual and self.firmware_for(c.firmware_key)) else ""
         if c.profile is not None and not c.is_virtual and dev:
@@ -298,7 +298,7 @@ class StudioService(QObject):
         return self.st is not None
 
     def new_empty(self, version: str = ""):
-        """frischer Zwilling (leerer Flash) – wenn es noch keinen Stand gibt."""
+        """fresh twin (empty flash) – when there is no state yet."""
         self.ensure(version)
         if not self.source:
             self.source = {"kind": "new", "time": dt.datetime.now().isoformat(timespec="seconds"),
@@ -306,7 +306,7 @@ class StudioService(QObject):
             self.snapshot(_("started empty"))
             self.changed.emit()
 
-    # ------------------------------------------------------------ Autosave und Verlauf
+    # ------------------------------------------------------------ Autosave and history
     def snapshot(self, label: str | None = None, only_if_changed: bool = False) -> bool:
         if label is None:
             label = _("Intermediate state")
@@ -364,7 +364,7 @@ class StudioService(QObject):
         return self._goto(self.pos + 1) if self.can_redo() else ""
 
     def autosave(self, force: bool = False) -> Path | None:
-        """Flash des Zwillings beim Geräteprofil speichern (nur wenn sich etwas geändert hat, außer force)."""
+        """Save the twin's flash with the device profile (only if something has changed, unless force)."""
         if self.st is None or self.busy:
             return None
         try:
@@ -393,7 +393,7 @@ class StudioService(QObject):
         self.autosave()
         self._update_clock()
 
-    # ------------------------------------------------------------ Uhr und Ton
+    # ------------------------------------------------------------ Clock and sound
     def transport(self) -> dict:
         if self.st is None:
             return {}
@@ -431,7 +431,7 @@ class StudioService(QObject):
         self._update_clock()
 
     def use(self, on: bool):
-        """ein Nutzer außerhalb der Studio-Seite braucht Ton und Uhr (Abspielen in Projekte/Komponieren)."""
+        """a user outside the studio page needs sound and clock (playback in projects/compose)."""
         self.users = max(0, self.users + (1 if on else -1))
         self._clock = None if on else self._clock
         self._update_clock()
@@ -464,11 +464,11 @@ class StudioService(QObject):
             chosen = chosen_output()
 
             def work():
-                # gewählter Ausgang – oder, wenn der Standard das FM-1 ist, Lautsprecher/HDMI (nie unbemerkt ans FM-1)
+                # selected output – or, if the default is the FM-1, speakers/HDMI (never unnoticed to the FM-1)
                 sink = audioout.effective_output(chosen)
                 if not sink:
                     return
-                for _i in range(20):            # Chromiums Strom erscheint mit kurzer Verzögerung: früh verschieben
+                for _i in range(20):            # Chromium's stream appears with a short delay: move it early
                     time.sleep(0.1)
                     note = route_webengine_audio(sink)
                     if not note:
@@ -478,7 +478,7 @@ class StudioService(QObject):
             threading.Thread(target=work, daemon=True, name="fm1c-studio-route").start()
         return ""
 
-    # ------------------------------------------------------------ Bedienfläche, MIDI
+    # ------------------------------------------------------------ Control surface, MIDI
     def _on_event(self, m: dict):
         if m.get("ev") == "ui" and m.get("action"):
             self.ui_event.emit(str(m["action"]))
@@ -490,7 +490,7 @@ class StudioService(QObject):
             self.st.backend.call("panel", on=bool(on), bg=bg, fg=fg, timeout=10)
 
     def set_inputs(self, names: list[str]) -> list[str]:
-        """MIDI-Eingänge des Systems (USB-Keyboard …) in den Zwilling leiten -> Fehlermeldungen"""
+        """Route the system's MIDI inputs (USB keyboard …) into the twin -> error messages"""
         from .. import sims
         if self._inputs is None:
             self._inputs = sims.SystemInputs(lambda name, data: self._midi_in(data))
@@ -508,7 +508,7 @@ class StudioService(QObject):
 
     def _midi_in(self, data):
         st = self.st
-        if st is None or not data or data[0] >= 0xF0:     # nur Kanal-Nachrichten (keine SysEx, kein Takt)
+        if st is None or not data or data[0] >= 0xF0:     # channel messages only (no SysEx, no clock)
             return
         with contextlib.suppress(Exception):
             st.play_midi(data)
@@ -530,7 +530,7 @@ class StudioService(QObject):
         self._fm1_link = None
 
     def _dev_changed(self):
-        """Tasten des echten FM-1 spielen im Zwilling mit (nie die des Zwillings selbst)."""
+        """Keys of the real FM-1 play along in the twin (never those of the twin itself)."""
         link = self.ctx.link if (self.ctx.midi_connected and not self.ctx.is_virtual) else None
         if not self.cfg.get("fm1_keys", True) or self.st is None:
             link = None
@@ -541,7 +541,7 @@ class StudioService(QObject):
             link.add_listener(self._fm1_listener)
             self._fm1_link = link
 
-    # ------------------------------------------------------------ virtuelles Gerät
+    # ------------------------------------------------------------ Virtual device
     def _virtual_ports(self) -> list[PortInfo]:
         if self.st is None:
             return []
@@ -557,17 +557,17 @@ class StudioService(QObject):
         return S.StudioTransport(self.st.backend)
 
     def activate_virtual(self) -> bool:
-        """den Zwilling als aktives Gerät wählen (Geräteauswahl oben)."""
+        """Select the twin as the active device (device selection at the top)."""
         ports = self._virtual_ports()
         if not ports:
             return False
         self.ctx.scan()
-        self.window._switching = True      # bewusster Wechsel: kein „FM-1 getrennt“-Hinweis
+        self.window._switching = True      # deliberate switch: no “FM-1 disconnected” notice
         QTimer.singleShot(8000, lambda: setattr(self.window, "_switching", False))
         self.ctx.connect_port(ports[0])
         return True
 
-    # ------------------------------------------------------------ Beschreibung
+    # ------------------------------------------------------------ Description
     def source_text(self) -> str:
         s = self.source
         if self.st is None:

@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Quell-Tarballs für die mitgelieferten WebAssembly-Builds (GPL-3.0 §6) erzeugen.
+"""Generate source tarballs for the bundled WebAssembly builds (GPL-3.0 §6).
 
-Liest die Commits aus fm1companion/sims/**/manifest.json und packt aus lokalen Git-Klonen genau diese Stände
-(``git archive``) nach dist/sources/. Die Dateien gehören als Anhang an jedes GitHub-Release, das die Builds
-enthält (siehe NOTICE der Simulatoren).
+Reads the commits from fm1companion/sims/**/manifest.json and packs exactly these revisions from local git clones
+(``git archive``) into dist/sources/. The files belong as attachments on every GitHub release that contains
+the builds (see the simulators' NOTICE).
 
-  python3 tools/make_source_tarballs.py --repo melodee=/pfad/zu/melodee --repo fm1_open=/pfad/zu/fm1_open
+  python3 tools/make_source_tarballs.py --repo melodee=/path/to/melodee --repo fm1_open=/path/to/fm1_open
                                         [--out dist/sources]
 
-Ohne --repo wird unter /tmp/<name> gesucht. Fehlt ein Klon oder ein Commit, meldet das Skript es und
-endet mit Code 1 (die übrigen Tarballs werden trotzdem geschrieben).
+Without --repo, /tmp/<name> is searched. If a clone or a commit is missing, the script reports it and
+exits with code 1 (the remaining tarballs are still written).
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ SIMS = ROOT / "fm1companion" / "sims"
 
 
 def wanted() -> dict[tuple[str, str], list[str]]:
-    """(Projektname, Commit) -> Liste der Builds, die ihn nutzen"""
+    """(project name, commit) -> list of builds that use it"""
     out: dict[tuple[str, str], list[str]] = {}
     for m in sorted(SIMS.rglob("manifest.json")):
         d = json.loads(m.read_text("utf-8"))
@@ -54,7 +54,7 @@ def main(argv=None) -> int:
     for r in a.repo:
         k, _, v = r.partition("=")
         repos[k] = Path(v).expanduser()
-    out = Path(a.out).resolve()          # git -C wechselt das Verzeichnis: -o braucht einen absoluten Pfad
+    out = Path(a.out).resolve()          # git -C changes the directory: -o needs an absolute path
     out.mkdir(parents=True, exist_ok=True)
     ok, sums = True, []
     for (name, commit), users in wanted().items():

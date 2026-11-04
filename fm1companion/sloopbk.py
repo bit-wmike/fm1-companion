@@ -1,23 +1,23 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""SLOOP-Backups (Protokoll v6, SLOOP ≥ 2.3): Befehle 34 BK_LIST, 35 BK_GET, 36 BK_PUT.
+"""SLOOP backups (protocol v6, SLOOP ≥ 2.3): commands 34 BK_LIST, 35 BK_GET, 36 BK_PUT.
 
-Python-Port von backupCapture / backupObjects / backupRestore aus dem SLOOP-Web-Editor
-(isod89/sloop-fm1, web/editor.html, GPL-3.0; Protokoll: web/EDITOR_PROTOCOL.md "v6: backup / restore").
-Die Dateien sind byte-genau die des Editors (``JSON.stringify(obj, null, 1)``):
+Python port of backupCapture / backupObjects / backupRestore from the SLOOP web editor
+(isod89/sloop-fm1, web/editor.html, GPL-3.0; protocol: web/EDITOR_PROTOCOL.md "v6: backup / restore").
+The files are byte-for-byte those of the editor (``JSON.stringify(obj, null, 1)``):
 
-    {"format": "sloop-backup", "version": 1, "firmware": <INFO-Version>, "date": <ISO, ms, Z>,
+    {"format": "sloop-backup", "version": 1, "firmware": <INFO version>, "date": <ISO, ms, Z>,
      "objects": [{"id", "len", "crc", "data" (Base64)}, ...]}
 
-Die App hängt höchstens einen Block "companion" an (Gerät, Notiz …); der Editor ignoriert ihn.
+The app appends at most a "companion" block (device, note …); the editor ignores it.
 
-Objekte: 0 laufendes Projekt, 1 Einstellungen (PER3), 2..5 Projekte/Sections A..D, 6..7 User-Preset-
-Banken, 8 FM6-Patch-Bank (v9), 9 SYN-Drum-Kits (v10), 10 MIDI LEARN (2.6, nur wenn nicht Standard),
-11 eigenes Farbschema (2.7, nur wenn vorhanden), 32..35 Sample-Slots USR1..4.
+Objects: 0 running project, 1 settings (PER3), 2..5 projects/sections A..D, 6..7 user preset
+banks, 8 FM6 patch bank (v9), 9 SYN drum kits (v10), 10 MIDI LEARN (2.6, only if not default),
+11 custom colour scheme (2.7, only if present), 32..35 sample slots USR1..4.
 
-Zurückspielen in der Reihenfolge des Editors: Banken, Projekte, laufendes Projekt, Einstellungen,
-danach die Samples (über SMP_BEGIN/WRITE/END bzw. SMP_ERASE). Jedes Objekt wird im RAM des FM-1
-gesammelt und erst beim Commit geprüft und geschrieben. Läuft der Song, antwortet der Commit mit
-rc 3 – weil die Banken (die auch rc 3 kennen) zuerst kommen, wird dann noch nichts ersetzt.
+Restore in the editor's order: banks, projects, running project, settings,
+then the samples (via SMP_BEGIN/WRITE/END or SMP_ERASE). Each object is collected in the FM-1's RAM
+and only checked and written at commit. If the song is running, the commit answers with
+rc 3 – because the banks (which also know rc 3) come first, nothing has been replaced yet at that point.
 """
 from __future__ import annotations
 
@@ -35,9 +35,9 @@ VERSION = 1
 CHUNK = 256
 SAMPLES = [32, 33, 34, 35]
 RESTORE = [6, 7, 8, 9, 10, 11, 2, 3, 4, 5, 0, 1]
-OPTIONAL = (8, 9, 10, 11)                   # ältere Firmware kennt sie nicht: übersprungen
+OPTIONAL = (8, 9, 10, 11)                   # older firmware does not know them: skipped
 SMP_DATA_OFF, SMP_HDR_LEN = 512, 32 + 16 * 28
-MAX_LEN = 0x14000                          # größtes Objekt: ein Sample-Slot (80 KiB)
+MAX_LEN = 0x14000                          # largest object: a sample slot (80 KiB)
 MIN_PROTO = 6
 
 # object names and device return codes (translated where used: title(), _rc())
@@ -74,8 +74,8 @@ def title(oid: int) -> str:
     return _("object {id}").format(id=oid)
 
 
-# ------------------------------------------------------------ Anfragen ---
-# (Befehl, Argumente) – byte-genau wie req.bkList / bkGet / bkBegin / bkData / bkCommit / bkAbort
+# ------------------------------------------------------------ requests ---
+# (command, arguments) – byte-exact like req.bkList / bkGet / bkBegin / bkData / bkCommit / bkAbort
 
 def req_list():
     return BK_LIST, []
@@ -101,7 +101,7 @@ def req_abort(oid: int):
     return BK_PUT, [3, oid & 0x7F]
 
 
-# ------------------------------------------------------------ Antworten ---
+# ------------------------------------------------------------ replies ---
 
 def parse_list(a) -> tuple[int, list[tuple[int, int, int]]]:
     """-> (rc, [(id, len, crc)])"""
@@ -141,7 +141,7 @@ def b64enc(b: bytes) -> str:
 
 
 def b64dec(s) -> bytes:
-    """wie b64dec im Editor: alles außer A–Z a–z 0–9 + / wird übergangen."""
+    """like b64dec in the editor: everything except A–Z a–z 0–9 + / is skipped."""
     s = re.sub(r"[^A-Za-z0-9+/]", "", str(s))
     out = bytearray()
     acc = bits = 0
@@ -154,10 +154,10 @@ def b64dec(s) -> bytes:
     return bytes(out[: (len(s) * 3) >> 2])
 
 
-# ------------------------------------------------------------- Datei ---
+# ------------------------------------------------------------- file ---
 
 def dumps(file: dict) -> str:
-    """genau wie JSON.stringify(obj, null, 1) im Editor (download())."""
+    """exactly like JSON.stringify(obj, null, 1) in the editor (download())."""
     return json.dumps(file, indent=1, ensure_ascii=False)
 
 
@@ -167,7 +167,7 @@ def now_iso() -> str:
 
 
 def objects(file) -> dict[int, bytes]:
-    """backupObjects(): Datei -> {id: bytes}; jedes Objekt gegen Länge und CRC geprüft."""
+    """backupObjects(): file -> {id: bytes}; every object checked against length and CRC."""
     if isinstance(file, (str, bytes)):
         try:
             file = json.loads(file)
@@ -197,12 +197,12 @@ def _num(x) -> bool:
 
 
 def proj_format(d: bytes) -> int:
-    """bkProjFormat: "FUN6" … (wie gespeichert, niedriges Byte zuerst) -> 6 …; 0 = kein Projekt"""
+    """bkProjFormat: "FUN6" … (as stored, low byte first) -> 6 …; 0 = no project"""
     return d[0] - 0x30 if d and len(d) >= 4 and d[1] == 0x4E and d[2] == 0x55 and d[3] == 0x46 else 0
 
 
 def dev_format(p_count: int) -> int:
-    """bkDevFormat: neuestes Projektformat, das das Gerät liest (aus INFO)."""
+    """bkDevFormat: newest project format the device reads (from INFO)."""
     return 6 if p_count >= 71 else 5 if p_count >= 61 else 4
 
 
@@ -218,7 +218,7 @@ def fw_at_least(v: str, want) -> bool:
 
 
 def info_proto(raw) -> int:
-    """das Protokoll-Byte am Ende von INFO (v5+), 0 wenn keins da ist."""
+    """the protocol byte at the end of INFO (v5+), 0 if there is none."""
     try:
         r = Reader(raw)
         r.s()
@@ -233,7 +233,7 @@ def info_proto(raw) -> int:
         return 0
 
 
-# ----------------------------------------------------------- Gerät ---
+# ----------------------------------------------------------- device ---
 
 def _rq(link, req, timeout, retries):
     cmd, args = req
@@ -286,7 +286,7 @@ def read_object(link, o, progress: Callable[[int], None] | None = None) -> bytes
 
 def capture(link, firmware: str = "", progress: Callable[[int, int], None] | None = None,
             companion: dict | None = None, info=None) -> dict:
-    """backupCapture(): alles lesen. firmware: Versionszeichenkette (Standard: INFO des Geräts)."""
+    """backupCapture(): read everything. firmware: version string (default: the device's INFO)."""
     if info is None:
         info = read_info(link)
     man = list_objects(link)
@@ -312,8 +312,8 @@ def capture(link, firmware: str = "", progress: Callable[[int, int], None] | Non
 
 def write_object(link, oid: int, data: bytes, progress: Callable[[int], None] | None = None,
                  written=None) -> int:
-    """begin, data, commit eines Objekts. -> 0, oder rc des begin (1/5) bei einem optionalen
-    Objekt, das die Firmware nicht kennt (dann wurde nichts geschrieben)."""
+    """begin, data, commit of one object. -> 0, or the rc of begin (1/5) for an optional
+    object the firmware does not know (then nothing was written)."""
     r = parse_put(_rq(link, req_begin(oid, len(data), crc32(data)), 1.5, 1))
     if r["rc"] in (1, 5) and oid in OPTIONAL:
         return r["rc"]
@@ -380,7 +380,7 @@ def write_sample(link, oid: int, d: bytes, progress: Callable[[int], None] | Non
 
 
 def check_restore(m: dict[int, bytes], file: dict, info) -> dict[int, bytes]:
-    """Prüfungen vor dem ersten Schreiben (wie backupRestore). -> ggf. ergänztes {id: bytes}"""
+    """Checks before the first write (like backupRestore). -> possibly extended {id: bytes}"""
     if not m.get(0) or not m.get(1):
         raise _err("bkBad", _("The running project or the settings are missing in the backup – nothing was "
                               "written."))
@@ -391,7 +391,7 @@ def check_restore(m: dict[int, bytes], file: dict, info) -> dict[int, bytes]:
                                 "written.").format(backup=file.get('firmware') or '?', device=info.version))
     m = dict(m)
     if 10 not in m and fw_at_least(file.get("firmware", ""), (2, 5, 1)):
-        d = bytearray(40)                          # MIDI LEARN in der Grundstellung (nichts gelernt, 1 2 3, 10, 2)
+        d = bytearray(40)                          # MIDI LEARN in its default state (nothing learned, 1 2 3, 10, 2)
         d[32:37] = bytes([1, 2, 3, 10, 2])
         m[10] = bytes(d)
     return m
@@ -399,8 +399,8 @@ def check_restore(m: dict[int, bytes], file: dict, info) -> dict[int, bytes]:
 
 def restore(link, file: dict, progress: Callable[[int, int], None] | None = None, ids=None,
             cancelled: Callable[[], bool] | None = None, info=None) -> list[int]:
-    """backupRestore(): alles (ids=None) oder nur die gewählten Objekte zurückspielen.
-    -> geschriebene IDs in Reihenfolge."""
+    """backupRestore(): restore everything (ids=None) or only the selected objects.
+    -> written IDs in order."""
     m = objects(file)
     if info is None:
         info = read_info(link)
@@ -425,11 +425,11 @@ def restore(link, file: dict, progress: Callable[[int, int], None] | None = None
             if oid in SAMPLES:
                 write_sample(link, oid, d, step, written)
             elif write_object(link, oid, d, step, written):
-                continue                            # (Firmware kennt das Objekt nicht)
+                continue                            # (firmware does not know the object)
             written.append(oid)
     except Exception as e:
-        # auch Zeitüberschreitungen/Verbindungsfehler (ProtocolError, LinkError …) sollen melden,
-        # was schon geschrieben wurde – sonst hieße es fälschlich „nichts verändert“
+        # timeouts/connection errors (ProtocolError, LinkError …) should also report
+        # what has already been written – otherwise it would wrongly say "nothing changed"
         from .backup import _with_written
         raise _with_written(e, written)
     return written

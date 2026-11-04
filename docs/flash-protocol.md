@@ -130,7 +130,7 @@ names on a non-FM-1 VID are never probed.
 
 | risk | mitigation |
 |---|---|
-| wrong/corrupt package | sha256 vs spec/catalog; unknown files need an explicit "Ich weiß, was ich tue" (I know what I am doing); UFW header/entry CRC check (from SLOOP `package_damage`) |
+| wrong/corrupt package | sha256 vs spec/catalog; unknown files need an explicit "I know what I am doing"; UFW header/entry CRC check (from SLOOP `package_damage`) |
 | package for another model | product must match `FM-1_…`; device model compared before step 1 |
 | package sent to a foreign loader | expected loader family per package; refuse otherwise (nothing sent) |
 | interrupted step 2 | journal + recovery wizard resumes with the same package in its own loader |
@@ -163,7 +163,7 @@ resource format belongs to that firmware version.
 
 Order: **Backup (Felucca protocol) → load package → V15 → target → resources → check identity.**
 Reason [V Unbricker flash map]: Felucca data lives at 0x97000..0xDFFFF / 0xE0000 / 0xFC000 and overlaps
-the original firmware's settings storage 0x93000..0xE8FFF – V15 can overwrite it. The dialog says (in German):
+the original firmware's settings storage 0x93000..0xE8FFF – V15 can overwrite it. The dialog says:
 "Your projects on the device can be lost during the intermediate step – the app backs them up first."
 The choice is only remembered per switch (`config.module("installer")["v15_choice"]["melodee>sloop"]`); there is
 no global switch-off. If you stay on V15 and the presets are garbled: System > Reset Patches.
@@ -187,7 +187,7 @@ no global switch-off. If you stay on V15 and the presets are garbled: System > R
   0x97000+0x8000 and 0xFC000+0x2000 (erases songs/settings). The app does not erase raw; it warns in the plan and
   offers `repair-settings` (resets these windows with a factory dump; upstream only tested with the mock).
 * `softkey` sends a running original FM-1 into ROM boot mode via MIDI – only for the voluntary
-  "Notfall-Komplettsicherung" (emergency full backup), never automatically.
+  "Emergency full backup", never automatically.
 
 ## 14. Rescue level 3 – FM-1 Transporter (hardware)
 
@@ -228,8 +228,8 @@ Melodee OCT−+OCT+ is the calibration!).
 
 ## 17. V16 and flash safety (analysis and integration, 31 Oct 2026)
 
-Confidence levels: **[Paket]** (package) evidenced by packages/source code · **[Aufz.]** (recording) recorded on
-real hardware · **[Emu]** observed in the emulator · **[Annahme]** (assumption) not checked. Module:
+Confidence levels: **[Package]** evidenced by packages/source code · **[Rec.]** recorded on
+real hardware · **[Emu]** observed in the emulator · **[Assumption]** not checked. Module:
 `fm1companion/flash/flashmodel.py`, profiles: `fm1companion/data/known_packages.json` (generated with
 `tools/make_known_packages.py`), tests: `tests/test_flashmodel.py` (real packages via `FM1_TEST_PKGDIR`, otherwise
 skipped), `tests/ui_v16_test.py`. Basis: the hand-over `fm1_flash_safety/INTEGRATION.md` (a separate analysis) –
@@ -245,73 +245,73 @@ recalculated here.
 | **Melodee 1.6.0-rc.7** (new, hash from the release's SHA256SUMS) | FM-1_91060 | 607f746a… | 0x93000 | v15 | 53144a0a… |
 | SLOOP 2.8.3 / Skiff 2.0.3 / JIANT 0.9.9 | FM-1_900 / _720 / _909 | as in the hand-over | 0x93000 | v15 | 53144a0a… |
 
-Confirmed [Paket]: all identities, hashes, lengths and layouts of the hand-over. V16 app directory: `app.bin` up to
+Confirmed [Package]: all identities, hashes, lengths and layouts of the hand-over. V16 app directory: `app.bin` up to
 0x960E8, `DX7.bin` 0x96267–0xA8071, PRCT 0x0–0xA9000. V15 additionally brings a USR entry (73 KB factory voices),
 which the recorded update never requests; V16 has none (the voices are in `DX7.bin` in the app area).
 
 **Corrections to the hand-over:**
 1. *"The boot head remains Melodee's in all cases"* is only true in the model. Real devices carry the **factory
-   boot head** (d9f43191…, byte-identical in V13 = FM-1_009, V14 and V15 [Paket: FM-1-RE packages]), because
-   Melodee's own loader (`firmware/loader/ldr_core.c`: "the flash head is never written") [Paket] never writes it
-   and the normal update does not request it when the head is the same [Aufz.] – after a V16 update this is open
+   boot head** (d9f43191…, byte-identical in V13 = FM-1_009, V14 and V15 [Package: FM-1-RE packages]), because
+   Melodee's own loader (`firmware/loader/ldr_core.c`: "the flash head is never written") [Package] never writes it
+   and the normal update does not request it when the head is the same [Rec.] – after a V16 update this is open
    (point 4). `installed_state(…, head=…)` now models this. Recalculated (acceptance): V13/V14 have `flash.bin` =
    0x94000 (VM from 0x94000), V15 and all community packages 0x93000.
-2. **Melodee → V16 directly does not work** [Paket: `melodee/firmware/src/ota.c`]: before the original loader,
+2. **Melodee → V16 directly does not work** [Package: `melodee/firmware/src/ota.c`]: before the original loader,
    Melodee compares the first 0x4000 bytes of the package with the device's boot head; V16's head ≠ factory head →
    −5. The plan therefore enforces V15 as the intermediate step (fixed, `planner.v16_switch`), the simulation refuses
-   Melodee → V16 with −5. For V16 → non-V15 also fixed via V15 [Annahme, cautious: whether V16 accepts a Felucca
+   Melodee → V16 with −5. For V16 → non-V15 also fixed via V15 [Assumption, cautious: whether V16 accepts a Felucca
    loader is unknown].
 3. **Staging depends on the running firmware, not on the package**: Melodee (and, according to the Unbricker, the
-   Felucca family) stores the package's loader at 0xE0000–0xE4FFF, the update record at 0xE4F00 [Paket]. Where
+   Felucca family) stores the package's loader at 0xE0000–0xE4FFF, the update record at 0xE4F00 [Package]. Where
    original V15/V16 store it is open (FM-1-RE: "VM/loader flash area").
 4. Conflict in the sources: Melodee's `ota.c` says the original loader "rewrites the whole flash.bin including the
    head"; the recording shows that the area 0x0–0x3FFF is not requested in step 2. **Re-check
    (acceptance):** the recording proves this only for the case "head in the device = head in the package" (V15 on
    a device with the factory head). Step 2 reads the head entries at 0x0 and 0x4000 and plans accordingly
    (`verify_and_plan_update`, SDK lineage: areas with the same CRC are skipped) – so with V16 and a **different**
-   head the loader may well request and write the head. This is **open** [Annahme in both directions]; dump A ↔ B
+   head the loader may well request and write the head. This is **open** [Assumption in both directions]; dump A ↔ B
    settles it. Consequences: the dump check no longer calls a V16 head "ROM boot mode only"; the way back via V15
    remains correct (the original loader would then also write the V15 head back). An abort during a head write
-   would be worse than one in the app area – one more reason for "Jetzt nicht abstecken" (do not unplug now).
+   would be worse than one in the app area – one more reason for "Do not unplug now".
 
 ### 17.2 Loader `ota.bin`
 
-* Byte-identical in V13, V14, V15 and V16 (SHA-256 ef1f2db8…, = FM-1-RE `ota_stock.bin`) [Paket].
+* Byte-identical in V13, V14, V15 and V16 (SHA-256 ef1f2db8…, = FM-1-RE `ota_stock.bin`) [Package].
 * Start/end from the package: the check of the file headers looks for `flash.bin`, `app_dir_head`, `uboot.boot`;
-  the recorded step 2 requests exactly `flash.bin[0x4000:end)` in descending order [Aufz.]. For V16 therefore
+  the recorded step 2 requests exactly `flash.bin[0x4000:end)` in descending order [Rec.]. For V16 therefore
   0x4000–0xA8FFF [derived].
 * Erasing: the listing calls `prepare_flash_regions` (+0x4536) **before** `write_update_regions` (+0x47C0) – this
   fits "erase the whole area first" (SDK names). FM-1-RE itself lists the erase effect as unconfirmed
-  ("Confirm the erase, write, metadata … side effects") → remains **[Annahme]**; `install_ota` models erasing
+  ("Confirm the erase, write, metadata … side effects") → remains **[Assumption]**; `install_ota` models erasing
   up front.
 
 ### 17.3 Hypothesis "truncated V16" (from a user report)
 
 * Only writers in ROM boot mode truncate at 0x93000: the Unbricker (`FW_LEN = 0x8F000`) without `--verify-v15` also
-  accepts FM-1_016 ("official-other", warning only) and writes 0x4000–0x92FFF [Paket]. The app always calls it with
+  accepts FM-1_016 ("official-other", warning only) and writes 0x4000–0x92FFF [Package]. The app always calls it with
   `--verify-v15` and only with the downloaded V15; in addition `uboot.Runner.restore` refuses packages beyond
   0x92FFF (`TOOL_TRUNCATES`).
 * Web installers cannot truncate: the device requests, the computer delivers; which areas are written is decided
-  by the loader in the device [Aufz.]. Melodee's web installer only accepts V15 as an original package
-  (`web/fm1pkg.js validateStockPackage`) [Paket]; Melodee's own loader refuses `flash.bin` ≠ 0x93000 (−3)
-  [Paket]; M-Flasher writes `flash.bin` completely [Paket]. FM-SWITCH and thefirmwarehub: source code not available.
+  by the loader in the device [Rec.]. Melodee's web installer only accepts V15 as an original package
+  (`web/fm1pkg.js validateStockPackage`) [Package]; Melodee's own loader refuses `flash.bin` ≠ 0x93000 (−3)
+  [Package]; M-Flasher writes `flash.bin` completely [Package]. FM-SWITCH and thefirmwarehub: source code not available.
 * A truncated V16 would have no complete `app.bin` (end 0x960E8) and no factory voices. Since in the reported case
   V16 was used but ROM boot mode never was, the hypothesis is **unlikely** [derived]. The "gaps in the presets" fit
   better with V16's first-start formatting or with V15/Melodee data that V16 finds in USER 0xF0000–0xFEFFF
-  [Annahme]. The model covers the case (`(v16, "from4000", 0x93000)`), the dump check detects it (app area up to
+  [Assumption]. The model covers the case (`(v16, "from4000", 0x93000)`), the dump check detects it (app area up to
   0x92FFF = V16, the rest not) and reports red.
 
 ### 17.4 Melodee rc.7: resources 0xCB000–0xDFFFF
 
 * Memory map rc.7 (`storage.c`): Prophet banks 0x93000–0x9CFFF, extension 0x9D000, FM6 bank 0x9F000, pool
   0xA0000–0xC7FFF and 0xEA000–0xF9FFF, CZ 0xC8000, resources 0xCB000–0xDFFFF, staging 0xE0000–0xE4FFF,
-  settings 0xFC000 [Paket].
+  settings 0xFC000 [Package].
 * A V16 install (up to 0xA8FFF) hits the Prophet banks, the FM6 bank and the start of the pool; V16's first start
   [Emu] hits the pool, the CZ banks, the **last six resource sectors 0xDA000–0xDFFFF** and the staging area.
 * Command 82 (`fm1_resources.py`): writing erases all 21 sectors, writes the payload and the header last →
   fully heals the resource area. Status (argument 0, read only) returns `installed` (= header + CRC-32 of the
   payload match this build's `res_want`) as well as the build's length/CRC; rc.7: 53 844 bytes, CRC 2035d335
-  [Paket]. Not healed: user data (restore a backup) and V16 leftovers in 0x93000–0xA8FFF.
+  [Package]. Not healed: user data (restore a backup) and V16 leftovers in 0x93000–0xA8FFF.
 
 ### 17.5 What the app does now
 
@@ -319,24 +319,23 @@ which the recorded update never requests; V16 has none (the voices are in `DX7.b
   different version blocks (`NAME_IDENTITY_MISMATCH`); unknown hash → confirmation "unknown file" (`HASH_UNKNOWN`);
   switching V15 layout ↔ V16 without a backup although one would be possible → blocked (`NO_BACKUP`); for firmwares
   without an editor protocol (V16 itself, original V15) it stays at the confirmation "without backup", otherwise
-  there would be no way back; `LAYOUT_CHANGE`/`OVERWRITES_DATA` → "Was danach nicht mehr auf dem Gerät ist" (what
-  will no longer be on the device afterwards) with areas and Melodee names; `TOOL_TRUNCATES` → the Unbricker route
+  there would be no way back; `LAYOUT_CHANGE`/`OVERWRITES_DATA` → "What is no longer on the device afterwards" with areas and Melodee names; `TOOL_TRUNCATES` → the Unbricker route
   never writes V16. `HEAD_NOT_WRITTEN` is irrelevant on the normal route.
-* **Installing V16**: "experimental – only with a backup", fixed via V15, while writing a red notice "Jetzt
-  nicht abstecken" (do not unplug now) and no cancelling; the completion sentence names what was checked
+* **Installing V16**: "experimental – only with a backup", fixed via V15, while writing a red notice "Do not
+  unplug now" and no cancelling; the completion sentence names what was checked
   (checksum, identity) and what was not.
-* **Way back**: banner in Firmware+ › "Installieren & Versionen" (Install & Versions) when `FM-1_016` is running;
-  dialog "Rückweg von V16" (way back from V16: target firmware, version, suggestion from the firmware history) →
+* **Way back**: banner in Firmware+ › "Install & Versions" when `FM-1_016` is running;
+  dialog "Way back from V16" (target firmware, version, suggestion from the firmware history) →
   normal plan, fixed via V15, then resources.
-* **"Ist mein FM-1 sauber?"** (Is my FM-1 clean?, Rescue): quick check (identity, version, command 82) and dump
+* **"Is my FM-1 clean?"** (Rescue): quick check (identity, version, command 82) and dump
   check (file or Unbricker `backup` in ROM boot mode) with a traffic light, sentences, "not covered" and details.
   Demo: three example dumps.
-* **Clean up leftovers** (`flash/restzone.py`, card "Ist mein FM-1 sauber?" › expert mode) – **untested on a real
+* **Clean up leftovers** (`flash/restzone.py`, card "Is my FM-1 clean?" › expert mode) – **untested on a real
   device**, only checked with the Unbricker's mock FM-1 (`tests/test_restzone.py`, `tests/ui_v16_test.py`).
   * Primitive: jl-uboot-tool `JL_LoaderV2.flash_erase_sector` (command 0xFB01, 4 KiB) via the unmodified
     Unbricker function `erase_repair_sector` (the same as `repair-settings`, upstream only tested with the mock)
     including its gates `_check_mutable`/`_check_repairable`. Nothing is ever written. That the WL82 loader erases
-    exactly 4 KiB is an **[Annahme]** (assumption); after each sector the whole 64 KiB block is compared and the
+    exactly 4 KiB is an **[Assumption]**; after each sector the whole 64 KiB block is compared and the
     process stops immediately.
   * Hard rules in the code: only whole sectors in 0x93000–0xA8FFF (`gate`), never NEVER_ERASE/Bluetooth; only with
     a byte-exactly known firmware with V15 layout in the app area (`_app_match`), never with V16/unknown; only
@@ -346,15 +345,15 @@ which the recorded update never requests; V16 has none (the voices are in `DX7.b
     empty twice; at the end the whole flash is compared with what is expected (`full-flash-after.bin`).
   * Two runs, two backups: `plan` (erase nothing) → confirmation with the sector list and a typed word → `clean
     --only …` (only the intersection of the confirmation and a fresh plan is erased).
-  * Journal `Rettung/Reste-aufräumen/reste-journal.json` (atomic, fsync) before and after each sector. Resuming: a
-    sector in state "loeschen" (erasing) only counts as a leftover if the original was V16 according to the journal
+  * Journal `Rettung/Reste-aufräumen/reste-journal.json` (real folder names: recovery/clean-up-leftovers; atomic, fsync) before and after each sector. Resuming: a
+    sector in state "loeschen" (erasing; internal value) only counts as a leftover if the original was V16 according to the journal
     backup (checksum), the app area is the same and since then exclusively bits 0→1 have changed (≥ 16 bytes left).
   * Boot head: neither read nor evaluated (whether V16 writes it via the normal update is open) and stays
     NEVER_ERASE.
   * root: like the other commands via `ROOT_HELPER`; `restzone.py`, `flashmodel.py` and `known_packages.json` are
     in `uboot_manifest.OWN` with checksums (regenerate after every change, a test checks it).
 
-### 17.6 Open – can be settled with dumps of an expendable FM-1 (help page "V16 – Hinweis", test plan A–D)
+### 17.6 Open – can be settled with dumps of an expendable FM-1 (help page "V16 – note", test plan A–D)
 
 a) Does V16 really write 0x4000–0xA8FFF, does the boot head stay the same (A ↔ B)? b) Does the loader erase up front
 (only visible with a deliberate abort – not recommended)? c) Staging of the original firmware (0xE0000–0xE4FFF

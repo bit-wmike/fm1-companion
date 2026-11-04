@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Mitgelieferte Simulatoren: Manifeste, WASM klingt (headless in Node), Sicherheitsfilter, MIDI-Brücke mit
-mehreren Ports, MIDI-Relais des lokalen Servers.
+"""Bundled simulators: manifests, WASM sounds (headless in Node), safety filter, MIDI bridge with
+several ports, MIDI relay of the local server.
 
   python3 -m pytest tests/test_sims.py -q
 """
@@ -59,7 +59,7 @@ def test_fm1_open_has_no_firmware_and_no_update_tab():
     assert not __import__("re").search(r"/\*FM1_[A-Z_]+\*/", html)
 
 
-@pytest.mark.skipif(not NODE, reason="node fehlt")
+@pytest.mark.skipif(not NODE, reason="node missing")
 def test_wasm_renders_audio_headless():
     r = subprocess.run([NODE, str(ROOT / "tests" / "sim_render.mjs"), str(sims.DIR), "2"], capture_output=True,
                        text=True, timeout=120)
@@ -69,15 +69,15 @@ def test_wasm_renders_audio_headless():
         x = res[name]
         print(f"{name}: peak {x['peak']:.3f} rms {x['rms']:.4f} realtime x{x['realtimeFactor']:.1f}")
         assert x["nonFinite"] == 0
-        assert x["peakBeforeNote"] < 1e-3            # still, bis die Note kommt
+        assert x["peakBeforeNote"] < 1e-3            # silent until the note comes
         assert 0.01 < x["peak"] <= 1.0 and x["rms"] > 1e-3
-        assert x["realtimeFactor"] > 2                 # Container (x86); Pi 5 grob 3–5x langsamer
+        assert x["realtimeFactor"] > 2                 # container (x86); Pi 5 roughly 3–5x slower
 
 
 def test_out_filter_blocks_update_sysex():
     ok = sims.sim_out_allowed
     assert ok([0x90, 60, 100]) and ok([0xB0, 7, 100]) and ok([0xF8])
-    assert ok([0xF0, 0x7D, 0x46, 0x4D, 2, 0, 0, 0, 0xF7])            # FM1-Open-Bibliothek
+    assert ok([0xF0, 0x7D, 0x46, 0x4D, 2, 0, 0, 0, 0xF7])            # FM1 Open library
     for bad in ([0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7], [0xF0, 0x22, 0x24, 0x35, 0x7D, 0xF7],
                 [0xF0, 0x7D, 0x46, 0x4C, 1, 0xF7], [0xF0, 0x43, 0, 9, 0xF7], []):
         assert not ok(bad), bad
@@ -85,31 +85,31 @@ def test_out_filter_blocks_update_sysex():
 
 
 def test_out_filter_is_gapless():
-    """Prüfauftrag: keine Lücke – weder versteckt hinter einer Note, noch in Stücken, noch über andere Köpfe."""
+    """Audit task: no gap – neither hidden behind a note, nor in pieces, nor via other headers."""
     ok = sims.sim_out_allowed
     soft = [0xF0, 0x22, 0x24, 0x35, 0x7D, 0xF7]
-    # zweite Nachricht hinter einer gültigen versteckt
+    # a second message hidden behind a valid one
     assert not ok([0x90, 60, 100] + soft)
     assert not ok([0xF8] + soft)
-    # in Stücken: Rest ohne Statusbyte / nur das Ende
+    # in pieces: rest without status byte / only the end
     assert not ok([0x22, 0x24, 0x35, 0x7F, 0xF7]) and not ok([0xF7]) and not ok([0x7F])
-    # Bibliotheks-SysEx von FM1 Open ohne Abschluss (könnte „offen“ bleiben) oder mit Statusbyte im Inhalt
+    # library SysEx of FM1 Open without termination (could stay "open") or with a status byte in the content
     assert not ok([0xF0, 0x7D, 0x46, 0x4D, 2]) and not ok([0xF0, 0x7D, 0x46, 0x4D, 2, 0xF0, 0x22, 0xF7])
-    # Handshake des Update-Protokolls, 7-Bit-Datenstrom, Universal, Yamaha, Felucca
+    # handshake of the update protocol, 7-bit data stream, Universal, Yamaha, Felucca
     for bad in ([0xF0, 0x00, 0x32, 0x45, 0, 0, 0, 0x40, 0x7F, 0xF7], [0xF0, 0x00, 0x59, 0x30, 1, 2, 0xF7],
                 [0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7], [0xF0, 0x7D, 0x46, 0x4C, 67, 1, 0xF7]):
         assert not ok(bad), bad
-    # Running Status / falsche Längen gehen nicht durch (rtmidi würde sie ohnehin ablehnen)
+    # running status / wrong lengths do not get through (rtmidi would reject them anyway)
     assert not ok([0x90, 60, 100, 62, 100]) and not ok([0xC0, 5, 0]) and ok([0xC0, 5]) and ok([0xD0, 9])
     assert ok([0xE0, 0, 64]) and ok([0xF2, 0, 0]) and ok([0xFA]) and ok([0xFC])
-    # 8-Bit-Müll aus JS wird maskiert, bleibt aber gesperrt
+    # 8-bit garbage from JS is masked, but stays blocked
     assert not ok([0x1F0, 0x22, 0x24, 0x35, 0x7F, 0xF7])
 
 
 def test_editor_filter_allows_felucca_but_never_update():
     ed = sims.editor_out_allowed
     assert ed([0xF0, 0x7D, 0x46, 0x4C, 1, 0xF7])             # Felucca INFO
-    assert ed([0xF0, 0x7D, 0x4D, 0x4C, 0, 0xF7])             # Melodee-Preset-Datei
+    assert ed([0xF0, 0x7D, 0x4D, 0x4C, 0, 0xF7])             # Melodee preset file
     assert ed([0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7])          # Identity Request
     assert ed([0x90, 60, 100]) and ed([0xF0, 0x7D, 0x46, 0x4D, 2, 0, 0xF7])
     for bad in ([0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7], [0xF0, 0x22, 0x24, 0x35, 0x7D, 0xF7],
@@ -156,7 +156,7 @@ def test_bridge_editor_sees_only_fm1():
     b.midiIn.connect(lambda pid, d: got.append((pid, d)))
     link.pt[0]([0x90, 60, 1])
     assert got == [("fm1-in", [0x90, 60, 1])]
-    b.send("fm1-out", [0xF0, 0x7D, 0x46, 0x4C, 1, 0xF7])       # Editor: alles erlaubt (kein Filter)
+    b.send("fm1-out", [0xF0, 0x7D, 0x46, 0x4C, 1, 0xF7])       # editor: everything allowed (no filter)
     assert link.sent == [[0xF0, 0x7D, 0x46, 0x4C, 1, 0xF7]]
 
 
@@ -176,7 +176,7 @@ def test_bridge_multi_port_and_filter():
     t = threading.Thread(target=lambda: b.inject("sys:Keyboard", [0x90, 61, 99]))
     t.start()
     t.join()
-    # aus fremdem Thread: kommt über die Qt-Warteschlange; ohne Ereignisschleife direkt zustellen
+    # from a foreign thread: goes through the Qt queue; without an event loop deliver directly
     from PyQt6.QtCore import QCoreApplication
     app = QCoreApplication.instance() or QCoreApplication([])
     t0 = time.time()

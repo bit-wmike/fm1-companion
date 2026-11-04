@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Backups: anlegen, ansehen, zurückspielen, aufräumen – pro Gerät. Dazu automatische Backups."""
+"""Backups: create, view, restore, clean up – per device. Plus automatic backups."""
 from __future__ import annotations
 
 import datetime as dt
@@ -23,7 +23,7 @@ SORT = Qt.ItemDataRole.UserRole + 7
 
 
 class _Row(QTreeWidgetItem):
-    """Zeile der Backup-Liste: Datum und Größe sortieren nach Wert, nicht nach Text."""
+    """Row of the backup list: date and size sort by value, not by text."""
 
     def __lt__(self, other):
         col = self.treeWidget().sortColumn() if self.treeWidget() else 0
@@ -32,14 +32,14 @@ class _Row(QTreeWidgetItem):
             return a < b
         return super().__lt__(other)
 
-backup_filename = AB.backup_filename          # (firmware_page importiert es von hier)
+backup_filename = AB.backup_filename          # (firmware_page imports it from here)
 # backup kinds (the keys are stored in the backup files) -> display text, translated where used: _(KIND_TEXT[k])
 KIND_TEXT = {"manuell": N_("manual"), "auto": N_("automatic"), "vor-Update": N_("before firmware change"),
              "sicherheit": N_("safety")}
 
 
 def no_backup_reason(ctx) -> str:
-    """warum gerade kein Backup geht ("" = es geht)"""
+    """why a backup isn't possible right now ("" = it is possible)"""
     if ctx.connected:
         return ""
     if ctx.port is None:
@@ -126,17 +126,17 @@ def _mirror_quiet(ctx, path: Path, log=None):
 
 
 def prune(folder: Path, keep: int):
-    """alte automatische Backups löschen: die letzten `keep`, eins pro Monat, das neueste je Firmware und
-    alle angehefteten bleiben; manuelle Backups löscht die App nie."""
+    """Delete old automatic backups: the last `keep`, one per month, the newest per firmware and
+    all pinned ones stay; the app never deletes manual backups."""
     if keep <= 0:
         return
     AB.prune(folder, keep)
 
 
-# ------------------------------------------------------- Automatik ---
+# ------------------------------------------------------- Automatic ---
 
 class AutoBackupService(QObject):
-    """automatische Backups beim Verbinden und (optional) regelmäßig – nie während anderer Zugriffe."""
+    """Automatic backups on connect and (optionally) periodically – never during other access."""
     updated = pyqtSignal()
 
     def __init__(self, ctx, parent=None):
@@ -157,7 +157,7 @@ class AutoBackupService(QObject):
         c = self.ctx
         key = f"{c.port.key if c.port else ''}|{c.profile.id if c.profile else ''}" if c.connected else ""
         if getattr(c, "is_virtual", False):
-            key = ""                           # der Studio-Zwilling: keine automatischen Backups (sein Stand liegt im Studio)
+            key = ""                           # the studio twin: no automatic backups (its state lives in the studio)
         if key and key != self._seen:
             self._retries = 0
             if AB.settings()["on_connect"]:
@@ -271,7 +271,7 @@ class AutoBackupService(QObject):
         return True
 
 
-# ------------------------------------------------------------ Seite ---
+# ------------------------------------------------------------ Page ---
 
 class BackupsPage(QWidget):
     navigate = pyqtSignal(str)
@@ -284,7 +284,7 @@ class BackupsPage(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)   # Reihen brechen um
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)   # rows wrap
         outer.addWidget(scroll)
         body = QWidget()
         scroll.setWidget(body)
@@ -301,7 +301,7 @@ class BackupsPage(QWidget):
         top.addWidget(self.chk_pinned)
         top.addStretch(1)
         lay.addLayout(top)
-        reflow(top)                                      # schmal: Häkchen untereinander statt abgeschnitten
+        reflow(top)                                      # narrow: checkboxes stacked instead of cut off
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels([_("Date"), _("Device"), _("Firmware"), _("Kind"), _("Content"), _("Size"),
                                      _("Note / Labels")])
@@ -330,7 +330,7 @@ class BackupsPage(QWidget):
             row.addWidget(b)
         row.addStretch(1)
         lay.addLayout(row)
-        reflow(row)                                      # Knopfreihen brechen bei halber Bildschirmbreite um
+        reflow(row)                                      # button rows wrap at half the screen width
         row2 = QHBoxLayout()
         for b in (btn(("document-edit",), pgettext("backup", "Note"), self._note),
                   btn(("tag", "bookmark-new"), _("Labels"), self._labels, _("e.g. “before firmware change”, “live set October”")),
@@ -349,12 +349,12 @@ class BackupsPage(QWidget):
         self.auto.updated.connect(self.refresh)
         self.refresh()
 
-    # ------------------------------------------------------- Automatik
+    # ------------------------------------------------------- Automatic
     def _auto_box(self) -> QWidget:
         s = AB.settings()
         g = QGroupBox(_("Automatic backups"))
         f = QFormLayout(g)
-        f.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)   # schmal: Feld unter das lange Häkchen
+        f.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)   # narrow: field below the long checkbox
         self.a_connect = QCheckBox(_("on connect, if the last backup is older than"))
         self.a_connect.setChecked(s["on_connect"])
         self.a_days = QSpinBox()
@@ -464,7 +464,7 @@ class BackupsPage(QWidget):
         self.a_status.setText("<br>".join(lines))
         self.a_status.setToolTip("\n".join(st.history) or _("nothing yet"))
 
-    # ------------------------------------------------------------ Liste
+    # ------------------------------------------------------------ List
     def _folder(self) -> Path:
         if self.chk_all.isChecked() or not self.ctx.profile:
             return self.ctx.settings.backups_dir
@@ -547,7 +547,7 @@ class BackupsPage(QWidget):
         return Path(it.data(0, Qt.ItemDataRole.UserRole)) if it else None
 
     def _sel_ok(self) -> Path | None:
-        """ausgewähltes Backup, wenn es lesbar ist (sonst Hinweis)"""
+        """selected backup if it is readable (otherwise a notice)"""
         it = self.tree.currentItem()
         if it is not None and it.data(1, Qt.ItemDataRole.UserRole) == "damaged":
             show_error(self, _("Backup damaged"), _("{name} cannot be read. Restoring and opening are not possible – deleting is.").format(
@@ -599,7 +599,7 @@ class BackupsPage(QWidget):
             show_error(self, _("Backup damaged"), str(e))
             return
         comp = a.companion
-        # dieselbe Prüfung wie auf der Geräte-Seite: nur innerhalb derselben Firmware-Familie
+        # same check as on the devices page: only within the same firmware family
         from .. import backup_inspect as BI
         try:
             rep = BI.inspect(p)

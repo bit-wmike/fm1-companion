@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Kern-Tests gegen das simulierte FM-1 (ohne Qt, ohne echtes Gerät).
+"""Core tests against the simulated FM-1 (without Qt, without a real device).
 
   python3 -m pytest tests/test_core.py -q
 """
@@ -26,7 +26,7 @@ MELODEE_WEB = Path("/tmp/melodee/web")
 
 
 class LocalTransport(Transport):
-    """ruft das simulierte Gerät direkt auf (Antwort in einem eigenen Thread, wie MIDI)."""
+    """calls the simulated device directly (answer in its own thread, like MIDI)."""
 
     def __init__(self, dev):
         self.dev = dev
@@ -63,13 +63,13 @@ def test_backup_roundtrip_and_restore_order():
     arch = backup.read(json.dumps(f))
     assert arch.known
     assert [o["id"] for o in arch.project_objects()] == [2, 66]
-    # Gerät verändern, dann zurückspielen
+    # change the device, then restore
     dev.objs[2] = b"x" * 10
     dev.objs[0] = b"y" * 10
     dev.log.clear()
     backup.restore(link, arch)
     assert dev.objs[2] == arch.objects[2]["bytes"]
-    assert dev.log[-1] == 0 and dev.log[-2] == 1          # laufende Musik zuletzt, davor Einstellungen
+    assert dev.log[-1] == 0 and dev.log[-2] == 1          # running music last, settings before it
     assert not [x for x in dev.log if str(x).startswith("abort")]
 
 
@@ -104,9 +104,9 @@ def test_single_project_object():
 
 
 @pytest.mark.skipif(not shutil.which("node") or not (MELODEE_WEB / "fm1backup.js").exists(),
-                    reason="node oder Melodee-Repo fehlt")
+                    reason="node or Melodee repo missing")
 def test_interop_with_original_js(tmp_path):
-    """Ein Backup der App muss vom Original-Editor (fm1backup.js) akzeptiert werden – und umgekehrt."""
+    """A backup of the app must be accepted by the original editor (fm1backup.js) – and vice versa."""
     _, link = make()
     f = backup.capture(link, "TEST", companion={"device": "A"})
     p = tmp_path / "b.json"

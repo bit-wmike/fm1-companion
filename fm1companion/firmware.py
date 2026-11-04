@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Firmware-Katalog, Releases, Downloads und Installation.
+"""Firmware catalog, releases, downloads and installation.
 
-Jede Firmware der Felucca-Familie bringt in ihrem Git-Repo eigene Werkzeuge mit
-(tools/fm1_install.py, bei Melodee zusätzlich tools/fm1_resources.py). Die App
-benutzt immer die Werkzeuge der *Ziel*-Firmware in genau der installierten
-Version – so passt der Installer garantiert zum Paket (das war die Falle mit den
-INIT-Sounds bei Melodee 1.6).
+Every firmware of the Felucca family ships its own tools in its git repo
+(tools/fm1_install.py, for Melodee also tools/fm1_resources.py). The app
+always uses the tools of the *target* firmware in exactly the installed
+version – that way the installer is guaranteed to match the package (that was the trap with the
+INIT sounds in Melodee 1.6).
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ from .config import CACHE_DIR, DATA_DIR, load as load_settings
 from .i18n import N_, _
 
 UA = "fm1-companion"
-LAST_ERROR: dict[str, str] = {}          # key -> warum die Release-Liste leer blieb (für die Oberfläche)
+LAST_ERROR: dict[str, str] = {}          # key -> why the release list stayed empty (for the UI)
 REPOS_DIR = DATA_DIR / "repos"
 IDENT_FILE = DATA_DIR / "identities.json"
 
@@ -37,36 +37,36 @@ IDENT_FILE = DATA_DIR / "identities.json"
 class FirmwareSpec:
     key: str
     name: str
-    repo: str                       # "owner/name" auf GitHub
-    asset: str                      # Paketname, {ver} = Version ohne "v"
-    resources: str = ""             # Ressourcen-Datei (Melodee ab 1.6), leer = keine
+    repo: str                       # "owner/name" on GitHub
+    asset: str                      # package name, {ver} = version without "v"
+    resources: str = ""             # resource file (Melodee 1.6+), empty = none
     sums: str = "SHA256SUMS"
     installer: str = "tools/fm1_install.py"
     resource_tool: str = ""
     editor: str = "web/editor.html"
     description: str = ""
-    samples: str = ""               # Hinweis zu Sample-Slots
+    samples: str = ""               # note about sample slots
     homepage: str = ""
-    manual_online: str = ""         # Online-Handbuch (Quelle für Bilder, die nicht im Repo liegen)
+    manual_online: str = ""         # online manual (source for images that are not in the repo)
     builtin: bool = True
-    # ---- Suite 2.0: Angaben aus dem Firmware-Katalog / Link-Import ----
-    protocol: str = "felucca"       # "felucca" = App kann Backup/Projekte/Editor-Brücke; "none" = nur installieren
-    family: str = ""                # Katalog-Familie (z. B. "sloop", "orbit", "stock")
-    product: str = ""               # Paket-Identität, z. B. "FM-1_900"
+    # ---- Suite 2.0: details from the firmware catalog / link import ----
+    protocol: str = "felucca"       # "felucca" = app can do backup/projects/editor bridge; "none" = install only
+    family: str = ""                # catalog family (e.g. "sloop", "orbit", "stock")
+    product: str = ""               # package identity, e.g. "FM-1_900"
     author: str = ""
     license: str = ""
-    editor_url: str = ""            # Online-Editor (Web-MIDI), falls kein Editor im Repo
-    emulator_url: str = ""          # Browser-Emulator zum Ausprobieren
-    manual_url: str = ""            # Handbuch online
-    installer_url: str = ""         # Web-Installer-Seite des Autors
-    download_url: str = ""          # feste Paket-Adresse (statt GitHub-Release), z. B. Original-Firmware
-    sha256: str = ""                # erwartete Prüfsumme des Pakets (aus dem Katalog)
-    requires_stock_v15: bool = False   # nur von Original-V15 aus installierbar (Katalog)
-    notes: list[str] = field(default_factory=list)   # Katalog-Hinweise, z. B. "beta", "powerLossNotResumable"
+    editor_url: str = ""            # online editor (Web MIDI), if there is no editor in the repo
+    emulator_url: str = ""          # browser emulator to try it out
+    manual_url: str = ""            # manual online
+    installer_url: str = ""         # the author's web installer page
+    download_url: str = ""          # fixed package address (instead of a GitHub release), e.g. stock firmware
+    sha256: str = ""                # expected checksum of the package (from the catalog)
+    requires_stock_v15: bool = False   # only installable from stock V15 (catalog)
+    notes: list[str] = field(default_factory=list)   # catalog notes, e.g. "beta", "powerLossNotResumable"
     category: str = ""              # Synth, Groovebox, Sampler …
-    catalog_id: str = ""            # Schlüssel im Firmware-Katalog
-    loader_family: str = ""         # Loader-Familie laut Katalog: stock | feluccaG1 | feluccaG2 | sloopG3
-    release_tag: str = ""           # feste Version bei download_url-Paketen (z. B. "V15")
+    catalog_id: str = ""            # key in the firmware catalog
+    loader_family: str = ""         # loader family according to the catalog: stock | feluccaG1 | feluccaG2 | sloopG3
+    release_tag: str = ""           # fixed version for download_url packages (e.g. "V15")
 
     @property
     def url(self) -> str:
@@ -93,8 +93,8 @@ BUILTIN = [
 ]
 
 
-# Original-Firmware von M-VAVE (Rückweg). V16 liegt unter einer Adresse, deren Inhalt M-VAVE austauscht:
-# die Prüfsumme wird immer verglichen, bei Abweichung wird nichts installiert.
+# Stock firmware from M-VAVE (way back). V16 lives at an address whose content M-VAVE replaces:
+# the checksum is always compared; if it differs, nothing is installed.
 STOCK = [
     FirmwareSpec("stock-v15", _("Original firmware V15"), "m-vave/fm1_open", "FM-1_015.fwsc", sums="", installer="",
                  editor="", description=_("M-VAVE's original firmware V15 – the proven way back and starting point for "
@@ -146,7 +146,7 @@ class Release:
 
 
 def version_key(tag: str):
-    """sortierbar: 1.6.0-rc.7 < 1.6.0 < 1.6.1"""
+    """sortable: 1.6.0-rc.7 < 1.6.0 < 1.6.1"""
     t = tag.lstrip("vV")
     m = re.match(r"(\d+(?:\.\d+)*)(?:-?(rc|beta|alpha|b|a)\.?(\d+))?", t)
     if not m:
@@ -180,8 +180,8 @@ def _download_url(s: FirmwareSpec, tag: str, name: str) -> str:
 
 
 def fetch_releases(s: FirmwareSpec, use_cache_secs: int = 600) -> list[Release]:
-    """über die GitHub-API; wenn die nicht geht (Limit, Proxy), über git-Tags."""
-    if s.download_url:                       # feste Adresse: genau eine Version, kein Netz nötig
+    """via the GitHub API; if that does not work (rate limit, proxy), via git tags."""
+    if s.download_url:                       # fixed address: exactly one version, no network needed
         name = s.asset.format(ver=s.release_tag.lstrip("vV")) if "{ver}" in s.asset else s.asset
         return [Release(tag=s.release_tag or "fest", prerelease="beta" in (s.notes or []),
                         notes=s.description, assets={name: s.download_url})]
@@ -201,13 +201,13 @@ def fetch_releases(s: FirmwareSpec, use_cache_secs: int = 600) -> list[Release]:
             if r.get("draft"):
                 continue
             names = {a.get("name") for a in r.get("assets", [])}
-            ver = r["tag_name"][1:] if r["tag_name"].startswith("v") else r["tag_name"]     # wie Release.version
+            ver = r["tag_name"][1:] if r["tag_name"].startswith("v") else r["tag_name"]     # like Release.version
             if names and s.asset and s.asset.format(ver=ver) not in names:
-                continue                     # Release ohne unser Paket (z. B. nur orbit-ble.fwsc statt orbit.fwsc)
+                continue                     # release without our package (e.g. only orbit-ble.fwsc instead of orbit.fwsc)
             out.append(Release(tag=r["tag_name"], prerelease=bool(r.get("prerelease")) or is_prerelease(r["tag_name"]),
                                date=(r.get("published_at") or "")[:10], notes=r.get("body") or "",
                                assets={a["name"]: a["browser_download_url"] for a in r.get("assets", [])}))
-    except Exception as e:                  # API-Limit, Proxy, offline …
+    except Exception as e:                  # API rate limit, proxy, offline …
         LAST_ERROR[s.key] = friendly_error(e)
         out = []
     if not out:
@@ -258,7 +258,7 @@ class Package:
     release: Release
     fwsc: Path
     res: Path | None
-    verified: bool              # Prüfsumme geprüft
+    verified: bool              # checksum verified
 
 
 def _fetch(url: str, dest: Path, progress: Callable[[int, int], None] | None = None):
@@ -327,7 +327,7 @@ class ChecksumError(RuntimeError):
 
 
 def _download_fixed(s: FirmwareSpec, rel: Release, log, progress) -> Package:
-    """Paket von fester Adresse; nur mit passender Prüfsumme (sonst gelöscht, nichts installiert)"""
+    """Package from a fixed address; only with a matching checksum (otherwise deleted, nothing installed)"""
     folder = load_settings().firmware_dir / s.key / rel.tag
     folder.mkdir(parents=True, exist_ok=True)
     name = next(iter(rel.assets), s.asset)
@@ -360,7 +360,7 @@ def _sha(p: Path) -> str:
 
 def fetch_stock(key: str = "stock-v15", log: Callable[[str], None] = print,
                 progress: Callable[[int, int], None] | None = None) -> Path:
-    """Original-Firmware holen (Zwischenspeicher, sonst Download) – immer hash-geprüft"""
+    """Fetch the stock firmware (cache, otherwise download) – always hash-checked"""
     s = spec(key)
     rel = fetch_releases(s)[0]
     return download(s, rel, log=log, progress=progress).fwsc
@@ -381,7 +381,7 @@ def _git(args, cwd=None, timeout=600):
 
 
 def ensure_tools(s: FirmwareSpec, tag: str, log: Callable[[str], None] = print) -> Path:
-    """Repo der Firmware klonen (nur einmal) und auf den Tag stellen."""
+    """Clone the firmware's repo (only once) and check out the tag."""
     if not shutil.which("git"):
         raise RuntimeError(_("git is missing (sudo apt install git)"))
     d = REPOS_DIR / s.key
@@ -401,12 +401,12 @@ def ensure_tools(s: FirmwareSpec, tag: str, log: Callable[[str], None] = print) 
     return d
 
 
-# ---- Werkzeug-Vertrauen: die App führt das Ressourcen-Werkzeug (Python) aus dem geklonten Firmware-Repo aus.
-# Eingebaute Firmwares: der Commit jedes Tags wird festgehalten (bekannte Stände unten, sonst beim ersten Mal);
-# zeigt ein Tag später auf einen anderen Commit („verschobener Tag“), läuft nichts ohne Rückfrage.
-# Vom Nutzer hinzugefügte Firmwares: vor dem ersten Ausführen eines Commits immer Rückfrage (Repo + Commit).
+# ---- Tool trust: the app runs the resource tool (Python) from the cloned firmware repo.
+# Built-in firmwares: the commit of each tag is recorded (known revisions below, otherwise the first time);
+# if a tag later points to a different commit ("moved tag"), nothing runs without asking.
+# Firmwares added by the user: always ask before running a commit for the first time (repo + commit).
 KNOWN_TOOL_COMMITS: dict[str, dict[str, str]] = {
-    "keremimo/melodee": {        # geprüft gegen github.com/keremimo/melodee (git rev-parse <tag>^{commit})
+    "keremimo/melodee": {        # verified against github.com/keremimo/melodee (git rev-parse <tag>^{commit})
         "v1.5.0": "29ab096a6dce1ce4ed7524ad5a67c26d9e118fe9",
         "v1.5.1": "6a608ba122ac42293908d394e26713e31ec52fb0",
         "v1.6.0-rc.1": "30ea6e4fee157bcb55e56743eea22724d8fd497a",
@@ -425,7 +425,7 @@ TRUST_FILE = DATA_DIR / "tool_trust.json"
 
 
 class ToolNotTrusted(RuntimeError):
-    """Das Werkzeug aus dem Repo darf (noch) nicht ausgeführt werden – erst nach Rückfrage."""
+    """The tool from the repo may not be run (yet) – only after asking."""
 
     def __init__(self, msg: str, repo: str, tag: str, commit: str, moved_from: str = ""):
         super().__init__(msg)
@@ -453,7 +453,7 @@ def repo_commit(d: Path) -> str:
 
 
 def tool_trust(s: FirmwareSpec, tag: str, commit: str) -> tuple[bool, str]:
-    """-> (darf laufen, Grund für eine Rückfrage). Merkt bei eingebauten Firmwares den ersten Stand eines Tags."""
+    """-> (may run, reason for asking). For built-in firmwares, remembers the first revision of a tag."""
     known = KNOWN_TOOL_COMMITS.get(s.repo, {}).get(tag) if s.builtin else None
     seen = _trust().get(s.repo, {}).get(tag, "") if isinstance(_trust().get(s.repo), dict) else ""
     if commit and commit in (_trust().get(s.repo + "#approved") or []):
@@ -465,7 +465,7 @@ def tool_trust(s: FirmwareSpec, tag: str, commit: str) -> tuple[bool, str]:
                         "was moved.").format(tag=tag, repo=s.repo, commit=commit[:12], known=known[:12])
     if s.builtin:
         if not seen:
-            approve_tool(s, tag, commit, remember_only=True)      # erster Kontakt: Stand festhalten
+            approve_tool(s, tag, commit, remember_only=True)      # first contact: record the revision
             return True, ""
         if seen == commit:
             return True, ""
@@ -477,7 +477,7 @@ def tool_trust(s: FirmwareSpec, tag: str, commit: str) -> tuple[bool, str]:
 
 
 def approve_tool(s: FirmwareSpec, tag: str, commit: str, remember_only: bool = False) -> None:
-    """Zustimmung (oder bei eingebauten Firmwares: erster Stand) speichern."""
+    """Store consent (or, for built-in firmwares: the first revision)."""
     d = _trust()
     tags = d.get(s.repo) if isinstance(d.get(s.repo), dict) else {}
     if not tags.get(tag) or not remember_only:
@@ -491,7 +491,7 @@ def approve_tool(s: FirmwareSpec, tag: str, commit: str, remember_only: bool = F
 
 
 def check_tool(s: FirmwareSpec, repo_dir: Path, tag: str) -> str:
-    """vor dem Ausführen: Commit prüfen -> Commit; wirft ToolNotTrusted, wenn erst gefragt werden muss."""
+    """before running: check the commit -> commit; raises ToolNotTrusted if the user must be asked first."""
     commit = repo_commit(repo_dir)
     tag = tag or _tag_of(repo_dir)
     ok, why = tool_trust(s, tag, commit)
@@ -524,7 +524,7 @@ def tools_tag(key: str) -> str:
 
 
 def any_installer() -> Path | None:
-    """irgendein vorhandener Felucca-Installer (für --info)."""
+    """any available Felucca installer (for --info)."""
     for key in ("melodee", "skiff", "sloop"):
         d = tools_dir(key)
         if d and (d / "tools/fm1_install.py").exists():
@@ -544,7 +544,7 @@ def _load_module(path: Path, name: str):
 
 
 def package_identity(fwsc: Path) -> str:
-    """Identität eines Pakets (z. B. 'FM-1_91060'), mit dem Installer-Code der Familie."""
+    """Identity of a package (e.g. 'FM-1_91060'), using the family's installer code."""
     inst = any_installer()
     if not inst:
         return ""
@@ -568,7 +568,7 @@ def remember_identity(identity: str, key: str, tag: str):
 
 
 def guess_firmware(identity: str, version_string: str = "", family: str = "") -> tuple[str, str]:
-    """(key, Tag) für eine Geräte-Identität – erst aus eigener Erfahrung, dann geraten."""
+    """(key, tag) for a device identity – first from own experience, then guessed."""
     try:
         table = json.loads(IDENT_FILE.read_text())
         if identity in table:
@@ -594,7 +594,7 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
 
 
 def query_identity(port_name: str = "", timeout=20) -> tuple[str, str]:
-    """-> (Identität, Zustand) über den Installer (--info). Leer, wenn kein Installer da."""
+    """-> (identity, state) via the installer (--info). Empty if there is no installer."""
     inst = any_installer()
     if not inst:
         return "", ""
@@ -620,7 +620,7 @@ class InstallError(Exception):
 
 
 def display_label(s: FirmwareSpec, tag: str) -> str:
-    """„Melodee v1.6.0“, aber „Original-Firmware V15“ (nicht „… V15 V15“)"""
+    """'Melodee v1.6.0', but 'Original firmware V15' (not '… V15 V15')"""
     tag = (tag or "").strip()
     return s.name if not tag or tag.lower() in s.name.lower() else f"{s.name} {tag}"
 
@@ -629,9 +629,9 @@ def install(s: FirmwareSpec, pkg_path: Path, tag: str, port_name: str = "", res:
             log: Callable[[str], None] = print, progress: Callable[[int], None] | None = None,
             device_id: str = "", confirmed_unknown: bool = False, cancel=None, pin=None,
             expect_sha: str = "", report: dict | None = None) -> str:
-    """Paket schreiben – mit dem eingebauten Installer (Melodees fm1_install.py als Bibliothek, Journal,
-    Loader-Regeln; flash/engine.py). Danach bei Melodee die Ressourcen mit dem Werkzeug der Firmware.
-    -> neue Identität. Fehler: InstallError (mit .state "safe" | "paused" | "restart")."""
+    """Write a package – with the built-in installer (Melodee's fm1_install.py as a library, journal,
+    loader rules; flash/engine.py). Afterwards, for Melodee, the resources with the firmware's tool.
+    -> new identity. Errors: InstallError (with .state "safe" | "paused" | "restart")."""
     from .flash import engine as fe, package as fp
     try:
         info = fp.analyze(pkg_path, s.loader_family)
@@ -666,18 +666,18 @@ def install(s: FirmwareSpec, pkg_path: Path, tag: str, port_name: str = "", res:
         log(_("writing the resources …"))
         try:
             repo = ensure_tools(s, tag, log)
-            # genau das Gerät, das gerade installiert wurde (bei mehreren FM-1 nie nach Namensanfang raten)
+            # exactly the device that was just installed (with several FM-1, never guess by name prefix)
             target = (eng.current_port(pin) if pin is not None else "") or result.port
             how = write_resources(s, repo, res, target or port_name, log, exact=bool(target), tag=tag)
             if report is not None:
                 report["resources"] = RESOURCES_DONE.get(how if isinstance(how, str) else "", RESOURCES_DONE["written"])
-        except ToolNotTrusted as e:            # fremdes/verschobenes Werkzeug: nie ungefragt mitten in der Installation
+        except ToolNotTrusted as e:            # foreign/moved tool: never without asking in the middle of the installation
             log(_("Resources not written: {error} The app asks you when you choose “Rewrite font & factory sounds” "
                   "(Firmware+ › Install & Versions).").format(error=e))
             if report is not None:
                 report["resources"] = _("Resources NOT written (the tool state must be confirmed first) – please "
                                         "catch up via “Rewrite font & factory sounds” (Firmware+ › Install & Versions)")
-        except Exception as e:  # noqa: BLE001 – die Firmware läuft trotzdem
+        except Exception as e:  # noqa: BLE001 – the firmware runs anyway
             log(_("Resources not written ({error}) – catch up later via “Rewrite font & factory sounds” "
                   "(Firmware+ › Install & Versions).").format(error=e))
             if report is not None:
@@ -687,19 +687,19 @@ def install(s: FirmwareSpec, pkg_path: Path, tag: str, port_name: str = "", res:
     return ident
 
 
-# Melodee ab 1.6.0-rc.8 schreibt der Update-Loader die Ressourcen selbst aus dem Paket (ldr_core.c ldr_res);
-# fm1_resources.py fragt zuerst den Status (Befehl 82) und meldet dann „current“, ohne etwas zu schreiben.
+# From Melodee 1.6.0-rc.8 on, the update loader writes the resources itself from the package (ldr_core.c ldr_res);
+# fm1_resources.py first asks for the status (command 82) and then reports "current" without writing anything.
 RESOURCES_DONE = {"written": _("Resources written"),
                   "current": _("Resources already complete (written along by the update loader)")}
 
 
 def write_resources(s: FirmwareSpec, repo: Path, res: Path, port_name: str = "",
                     log: Callable[[str], None] = print, tries: int = 3, exact: bool = False, tag: str = "") -> str:
-    """exact=True: port_name ist der vollständige Portname genau dieses Geräts (nicht nur der Namensanfang).
-    -> "written" (geschrieben und geprüft) | "current" (waren schon da, nichts geschrieben) | "" (kein Werkzeug)"""
+    """exact=True: port_name is the complete port name of exactly this device (not just the name prefix).
+    -> "written" (written and verified) | "current" (were already there, nothing written) | "" (no tool)"""
     if not s.resource_tool:
         return ""
-    commit = check_tool(s, repo, tag)          # fremden/verschobenen Code nie ungefragt ausführen
+    commit = check_tool(s, repo, tag)          # never run foreign/moved code without asking
     log(_("Resource tool: {repo} @ {commit}").format(repo=s.repo, commit=commit[:12]))
     last = ""
     for k in range(tries):
@@ -720,11 +720,11 @@ def write_resources(s: FirmwareSpec, repo: Path, res: Path, port_name: str = "",
                              output=last))
 
 
-# ------------------------------------------------------- Fehlertexte ---
+# ------------------------------------------------------- error texts ---
 
 def friendly_error(e: BaseException) -> str:
-    """technische Fehler (HTTP 403, Errno 13, Installer-Codes …) als verständlicher deutscher Satz.
-    Die technischen Details gehören ins Protokoll (siehe explain())."""
+    """technical errors (HTTP 403, Errno 13, installer codes …) as an understandable German sentence.
+    The technical details belong in the log (see explain())."""
     import errno as _errno
     if isinstance(e, urllib.error.HTTPError):
         return {403: _("GitHub refused the download (HTTP 403). Usually the hourly request limit has been reached "
@@ -753,7 +753,7 @@ def friendly_error(e: BaseException) -> str:
 
 
 def explain(e: BaseException) -> str:
-    """technische Kurzbeschreibung für das Protokoll"""
+    """short technical description for the log"""
     if isinstance(e, urllib.error.HTTPError):
         return f"HTTP {e.code} {e.reason} – {e.url}"
     code = getattr(e, "code", "")
@@ -762,7 +762,7 @@ def explain(e: BaseException) -> str:
 
 
 def spec_by_release_sha(sha: str) -> FirmwareSpec | None:
-    """Paket, das die App selbst aus einem Release mit SHA256SUMS geladen und geprüft hat (Firmware/<key>/<tag>)"""
+    """Package that the app itself downloaded from a release with SHA256SUMS and verified (Firmware/<key>/<tag>)"""
     import dataclasses
     sha = (sha or "").lower()
     if not sha:

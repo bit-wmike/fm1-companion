@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Einmaliger Dialog „Ich habe verstanden“ vor der ersten Installation/Rettungsaktion (siehe fm1companion.risk)."""
+"""One-time “I understand” dialog before the first install/rescue action (see fm1companion.risk)."""
 from __future__ import annotations
 
 import html
@@ -40,7 +40,7 @@ class RiskDialog(QDialog):
 
 
 def ensure_risk_ack(parent=None) -> bool:
-    """True, wenn der Hinweis schon bestätigt ist oder jetzt bestätigt wird (dann gespeichert)."""
+    """True if the notice has already been acknowledged or is acknowledged now (then saved)."""
     if risk.acknowledged():
         return True
     dlg = RiskDialog(parent)

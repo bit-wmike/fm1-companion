@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""MIDI-Verbindung zu einem FM-1 und die Anfrage/Antwort-Logik.
+"""MIDI connection to an FM-1 and the request/reply logic.
 
-Ein ``Link`` gehört genau einem Gerät. Er hat zwei Betriebsarten:
+A ``Link`` belongs to exactly one device. It has two modes:
 
-* **App**: die App stellt Anfragen (Backup, Projekte, Infos …) – nacheinander,
-  mit Zeitlimit, genau eine Antwort pro Anfrage.
-* **Editor**: der eingebettete Web-Editor spricht über die MIDI-Brücke
-  (bridge.py) direkt mit dem Gerät; der Link reicht Rohdaten nur weiter.
+* **App**: the app makes requests (backup, projects, info …) – one after another,
+  with a timeout, exactly one reply per request.
+* **Editor**: the embedded web editor talks directly to the device via the MIDI bridge
+  (bridge.py); the link only passes raw data through.
 
-Beides gleichzeitig würde sich gegenseitig die Antworten wegnehmen. Deshalb
-holt sich jede App-Operation mit ``exclusive()`` die Leitung: der Editor wird so
-lange abgemeldet (er sieht ein getrenntes Gerät) und danach wieder angemeldet.
+Both at the same time would steal each other's replies. That is why
+every app operation takes the line with ``exclusive()``: the editor is
+detached for that long (it sees a disconnected device) and attached again afterwards.
 """
 from __future__ import annotations
 
@@ -30,8 +30,8 @@ class LinkError(Exception):
 
 
 class Transport:
-    """Byte-Transport: send() schickt eine komplette MIDI-Nachricht, receiver
-    bekommt jede eingehende komplette Nachricht (Liste von Bytes)."""
+    """Byte transport: send() sends a complete MIDI message, receiver
+    gets every incoming complete message (list of bytes)."""
 
     receiver: Callable[[list[int]], None] | None = None
 
@@ -56,7 +56,7 @@ class MidoTransport(Transport):
             self.inp = mido.open_input(in_name, callback=self._cb)
         except Exception:
             with contextlib.suppress(Exception):
-                self.out.close()           # sonst bleibt der Ausgang offen (Port belegt)
+                self.out.close()           # otherwise the output stays open (port busy)
             raise
         self._closed = False
 
@@ -65,7 +65,7 @@ class MidoTransport(Transport):
         if r is not None:
             try:
                 r(list(msg.bytes()))
-            except Exception:                       # nie den MIDI-Thread abschießen
+            except Exception:                       # never kill the MIDI thread
                 pass
 
     def send(self, data):
@@ -88,18 +88,18 @@ class MidoTransport(Transport):
 
 
 class SubprocessTransport(Transport):
-    """Für Tests und die Demo: ein simuliertes FM-1 als Kindprozess, eine
-    Nachricht pro Zeile als Hex (siehe tests/fake_fm1.py, tests/mock_fm1.mjs)."""
+    """For tests and the demo: a simulated FM-1 as a child process, one
+    message per line as hex (see tests/fake_fm1.py, tests/mock_fm1.mjs)."""
 
     def __init__(self, argv: list[str]):
         self.p = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
-        self.started = threading.Event()        # erste Zeile vom Kindprozess (z. B. „# fake FM-1 bereit“)
+        self.started = threading.Event()        # first line from the child process (e.g. "# fake FM-1 bereit")
         self._t = threading.Thread(target=self._reader, daemon=True)
         self._t.start()
 
     def wait_started(self, timeout: float) -> bool:
-        """warten, bis der Kindprozess läuft (Python-Start mit Imports kann auf einem ausgelasteten Rechner mehrere
-        Sekunden dauern). False, wenn er beendet ist oder nach `timeout` noch nichts gesagt hat."""
+        """wait until the child process is running (Python start-up with imports can take several seconds on a
+        busy computer). False if it has exited or has said nothing after `timeout`."""
         end = time.monotonic() + timeout
         while time.monotonic() < end:
             if self.started.wait(0.1):
@@ -143,19 +143,19 @@ class Link:
     def __init__(self, transport: Transport):
         self.t = transport
         self.t.receiver = self._receive
-        self._req_lock = threading.RLock()        # eine App-Anfrage nach der anderen
+        self._req_lock = threading.RLock()        # one app request after another
         self._pending: tuple[int, queue.Queue] | None = None
         self._passthrough: Callable[[list[int]], None] | None = None
-        # weitere Web-Seiten (Simulator, Online-Editoren …) neben dem Editor
+        # further web pages (simulator, online editors …) next to the editor
         self._passthroughs: list[Callable[[list[int]], None]] = []
-        # Mithörer (MIDI-Monitor, Takt-Erkennung …): sehen ALLES, Richtung "in" oder "out"
+        # listeners (MIDI monitor, clock detection …): see EVERYTHING, direction "in" or "out"
         self._listeners: list[Callable[[list[int], str], None]] = []
         self._exclusive_depth = 0
         self._ex_lock = threading.Lock()
-        self.on_exclusive_change: Callable[[bool], None] | None = None   # True = Editor muss pausieren
+        self.on_exclusive_change: Callable[[bool], None] | None = None   # True = editor must pause
         self.closed = False
 
-    # -------- eingehend --------
+    # -------- incoming --------
     def _receive(self, data: list[int]):
         self._notify(data, "in")
         p = self._pending
@@ -171,7 +171,7 @@ class Link:
             for fn in list(self._passthroughs):
                 try:
                     fn(data)
-                except Exception:               # eine kaputte Seite darf den MIDI-Thread nicht stören
+                except Exception:               # a broken page must not disturb the MIDI thread
                     pass
 
     def _notify(self, data, direction: str):
@@ -181,9 +181,9 @@ class Link:
             except Exception:
                 pass
 
-    # -------- Mithörer (nur lesen) --------
+    # -------- listeners (read only) --------
     def add_listener(self, fn: Callable[[list[int], str], None]):
-        """fn(bytes, "in"|"out") für jede Nachricht – aus dem MIDI-Thread! Schnell bleiben, nichts blockieren."""
+        """fn(bytes, "in"|"out") for every message – from the MIDI thread! Keep it fast, block nothing."""
         if fn not in self._listeners:
             self._listeners.append(fn)
 
@@ -192,7 +192,7 @@ class Link:
             self._listeners.remove(fn)
 
     def add_passthrough(self, fn: Callable[[list[int]], None]):
-        """zusätzliche Weiterleitung eingehender Nachrichten (pausiert wie der Editor bei App-Operationen)."""
+        """additional forwarding of incoming messages (paused like the editor during app operations)."""
         if fn not in self._passthroughs:
             self._passthroughs.append(fn)
 
@@ -200,20 +200,20 @@ class Link:
         if fn in self._passthroughs:
             self._passthroughs.remove(fn)
 
-    # -------- Editor-Weiterleitung --------
+    # -------- editor forwarding --------
     def set_passthrough(self, fn: Callable[[list[int]], None] | None):
         self._passthrough = fn
 
     def send_raw(self, data: list[int]) -> bool:
-        """vom Editor: nur senden, wenn die App die Leitung gerade nicht braucht."""
+        """from the editor: only send when the app does not currently need the line."""
         if self._exclusive_depth or self.closed:
             return False
         self._send(data)
         return True
 
     def send_midi(self, data: list[int], force: bool = False) -> bool:
-        """normale MIDI-Nachricht der App (Noten, CC, Takt …). Während einer App-Operation
-        (Backup, Update …) wird nichts gesendet, außer force=True."""
+        """normal MIDI message from the app (notes, CC, clock …). During an app operation
+        (backup, update …) nothing is sent, unless force=True."""
         if self.closed or (self._exclusive_depth and not force):
             return False
         self._send(list(data))
@@ -225,7 +225,7 @@ class Link:
 
     @contextlib.contextmanager
     def exclusive(self):
-        """App-Operation: der Editor pausiert so lange."""
+        """App operation: the editor pauses for that long."""
         self.hold()
         try:
             yield self
@@ -233,14 +233,14 @@ class Link:
             self.release()
 
     def hold(self, settle: bool = True):
-        """Gerät für die App reservieren (Editor pausiert), bis release() – auch über längere Zeit."""
+        """Reserve the device for the app (editor paused) until release() – even for a longer time."""
         with self._ex_lock:
             self._exclusive_depth += 1
             first = self._exclusive_depth == 1
         if first and self.on_exclusive_change:
             self.on_exclusive_change(True)
             if settle:
-                time.sleep(0.15)                    # offene Editor-Anfragen auslaufen lassen
+                time.sleep(0.15)                    # let open editor requests run out
 
     def release(self):
         with self._ex_lock:
@@ -251,7 +251,7 @@ class Link:
         if last and self.on_exclusive_change:
             self.on_exclusive_change(False)
 
-    # -------- Anfragen --------
+    # -------- requests --------
     def request(self, cmd: int, args=(), timeout: float = 1.5, retries: int = 1) -> list[int]:
         if self.closed:
             raise LinkError(_("device not connected"))

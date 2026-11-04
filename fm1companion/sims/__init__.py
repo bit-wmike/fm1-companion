@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Mitgelieferte FM-1-Simulatoren (WebAssembly-Builds, siehe tools/build_sims.py) und Online-Simulatoren.
+"""Bundled FM-1 simulators (WebAssembly builds, see tools/build_sims.py) and online simulators.
 
-Jeder Ordner ``sims/<name>/`` enthält Seite, WASM, Lizenz, NOTICE und ``manifest.json``. Ausgeliefert
-werden sie vom lokalen Server der App (editor_host.LocalServer, ``/sims/<name>/``) – in der App und
-für „In Firefox öffnen“.
+Each folder ``sims/<name>/`` contains the page, WASM, licence, NOTICE and ``manifest.json``. They are
+served by the app's local server (editor_host.LocalServer, ``/sims/<name>/``) – in the app and
+for "Open in Firefox".
 """
 from __future__ import annotations
 
@@ -20,11 +20,11 @@ DIR = Path(__file__).resolve().parent
 
 @dataclass
 class Sim:
-    key: str                      # "fm1-open", "melodee" oder "url:<adresse>"
+    key: str                      # "fm1-open", "melodee" or "url:<address>"
     title: str
     version: str = ""
     kind: str = "emulator"        # "emulator" | "workbench" | "editor"
-    url: str = ""                 # nur online
+    url: str = ""                 # online only
     online: bool = False
     license: str = ""
     source_repo: str = ""
@@ -53,7 +53,7 @@ DESCRIPTIONS = {
                "“Switch on” (or simply play a key on the FM-1).",
 }
 
-# Online-Simulatoren aus der Firmware-Liste (awesome-fm-1). Laufen nur mit Internet.
+# Online simulators from the firmware list (awesome-fm-1). Only work with internet access.
 ONLINE = [
     ("fm1-emu – real firmware (slower)", "https://joakimeriksson.github.io/fm1-emu/",
      "CPU emulator by Joakim Eriksson (MIT): runs real .fwsc firmwares (Stock, Skiff, ORBIT …). Much slower than "
@@ -94,7 +94,7 @@ def online(url: str, title: str = "", kind: str = "emulator", description: str =
     return Sim(key="url:" + url, title=title or url, kind=kind, url=url, online=True, description=description)
 
 
-# nur als Verweis (läuft nicht sinnvoll eingebettet / auf dem Pi): öffnet im normalen Browser
+# link only (does not work sensibly embedded / on the Pi): opens in the regular browser
 LINKS = [
     ("RemoteFM1 (link only)", "https://github.com/Quixotic7/RemoteFM1",
      "Quixotic7, GPL-3.0: the real FM-1 as a USB control panel for an emulated firmware. Ran badly on the Pi – "
@@ -108,7 +108,7 @@ def online_list() -> list[Sim]:
 
 
 def verify(sim: Sim) -> list[str]:
-    """Dateien gegen das Manifest prüfen -> Liste der Probleme (leer = in Ordnung)."""
+    """Check files against the manifest -> list of problems (empty = OK)."""
     problems = []
     for name, info in sim.manifest.get("files", {}).items():
         p = DIR / sim.key / name
@@ -119,19 +119,19 @@ def verify(sim: Sim) -> list[str]:
     return problems
 
 
-# ---------------------------------------------------------------- MIDI-Sicherheit
-FM1_OPEN_LIBRARY = (0xF0, 0x7D, 0x46, 0x4D)     # Projekt-/Sound-Bibliothek der FM1-Open-Firmware
+# ---------------------------------------------------------------- MIDI safety
+FM1_OPEN_LIBRARY = (0xF0, 0x7D, 0x46, 0x4D)     # project/sound library of the FM1 Open firmware
 
 
-FELUCCA_FAMILY = (0xF0, 0x7D)                   # Felucca/Melodee/SLOOP-Editoren (Hersteller-ID 7D = nicht-kommerziell)
-# feste Längen der Kanal- und System-Nachrichten (Statusbyte -> Gesamtlänge)
+FELUCCA_FAMILY = (0xF0, 0x7D)                   # Felucca/Melodee/SLOOP editors (manufacturer ID 7D = non-commercial)
+# fixed lengths of channel and system messages (status byte -> total length)
 _FIXED_LEN = {0xC0: 2, 0xD0: 2, 0xF1: 2, 0xF2: 3, 0xF3: 2, 0xF6: 1, 0xF8: 1, 0xF9: 1, 0xFA: 1, 0xFB: 1, 0xFC: 1,
               0xFD: 1, 0xFE: 1, 0xFF: 1}
 
 
 def _one_message(data: list[int]) -> bool:
-    """genau EINE wohlgeformte MIDI-Nachricht – keine Datenbytes ohne Status, keine zweite Nachricht
-    (sonst ließe sich hinter einer Note ein Update-SysEx verstecken), kein Running Status."""
+    """exactly ONE well-formed MIDI message – no data bytes without status, no second message
+    (otherwise an update SysEx could be hidden behind a note), no running status."""
     st = data[0]
     if st < 0x80 or st == 0xF7:
         return False
@@ -142,10 +142,10 @@ def _one_message(data: list[int]) -> bool:
 
 
 def sim_out_allowed(data) -> bool:
-    """Was eine Simulator-/Online-Seite an echte Ports schicken darf: normale MIDI-Nachrichten und das
-    Bibliotheks-Protokoll von FM1 Open. Jede andere SysEx wird verworfen – insbesondere der Update-Schlüssel
-    ``F0 22 24 35 7F`` (Update-Modus), der Soft-Key ``F0 22 24 35 7D`` (ROM-Bootmodus), die Kennungsabfrage
-    ``F0 00 32 45`` und der 7-Bit-gepackte Datenstrom des M-VAVE-Updates (beginnt mit ``F0 00 …``)."""
+    """What a simulator/online page may send to real ports: normal MIDI messages and the
+    FM1 Open library protocol. Any other SysEx is dropped – in particular the update key
+    ``F0 22 24 35 7F`` (update mode), the soft key ``F0 22 24 35 7D`` (ROM boot mode), the identity query
+    ``F0 00 32 45`` and the 7-bit-packed data stream of the M-VAVE update (starts with ``F0 00 …``)."""
     data = [int(x) & 0xFF for x in data]
     if not data or not _one_message(data):
         return False
@@ -155,9 +155,9 @@ def sim_out_allowed(data) -> bool:
 
 
 def editor_out_allowed(data) -> bool:
-    """Online-Editoren (Katalog-Link „Online-Editor“): zusätzlich die SysEx der Felucca-Familie (``F0 7D …``:
-    Melodee/SLOOP/Skiff-Editorprotokoll und Preset-Dateien) und Universal-SysEx (``F0 7E/7F``, Identity).
-    Weiterhin gesperrt: alles, was ein Update oder den Bootmodus auslösen kann."""
+    """Online editors (catalog link "Online editor"): additionally the SysEx of the Felucca family (``F0 7D …``:
+    Melodee/SLOOP/Skiff editor protocol and preset files) and universal SysEx (``F0 7E/7F``, Identity).
+    Still blocked: anything that can trigger an update or boot mode."""
     data = [int(x) & 0xFF for x in data]
     if sim_out_allowed(data):
         return True
@@ -165,12 +165,12 @@ def editor_out_allowed(data) -> bool:
 
 
 def out_filter_for(kind: str):
-    """Sicherheitsfilter je Art der Seite: Editoren dürfen mit dem Gerät reden, Simulatoren nur Noten/Takt."""
+    """Safety filter per page type: editors may talk to the device, simulators only notes/clock."""
     return editor_out_allowed if kind == "editor" else sim_out_allowed
 
 
 def origin_of(url) -> str:
-    """'https://example.org:8443/x?y' -> 'https://example.org:8443' (Kleinbuchstaben, Standard-Port weg)."""
+    """'https://example.org:8443/x?y' -> 'https://example.org:8443' (lower case, default port removed)."""
     from urllib.parse import urlsplit
     try:
         u = urlsplit(str(url).strip())
@@ -187,7 +187,7 @@ def origin_of(url) -> str:
 
 
 SIM_CONFIG = "simulator"
-TRUST_KEY = "device_origins"            # Herkünfte, die nach Rückfrage Editor-SysEx ans FM-1 senden dürfen
+TRUST_KEY = "device_origins"            # origins that may send editor SysEx to the FM-1 after confirmation
 
 
 def origin_trusted(origin: str) -> bool:
@@ -196,7 +196,7 @@ def origin_trusted(origin: str) -> bool:
 
 
 def trust_origin(origin: str) -> None:
-    """einmalige Zustimmung des Nutzers für diese Herkunft speichern."""
+    """store the user's one-time consent for this origin."""
     from .. import config
     if not origin:
         return
@@ -215,13 +215,13 @@ def forget_origin(origin: str) -> None:
 
 
 class OutGate:
-    """Was eine geladene Seite ans echte FM-1 schicken darf – bei JEDER Nachricht neu entschieden.
+    """What a loaded page may send to the real FM-1 – decided anew for EVERY message.
 
-    * Simulatoren/Emulatoren und alle nicht bestätigten Herkünfte: nur ``sim_out_allowed`` (Noten, Controller,
-      Takt, FM1-Open-Bibliothek).
-    * Online-Editor, dessen Herkunft der Nutzer einmal bestätigt hat (``trust_origin``): ``editor_out_allowed``
-      (Felucca-/Universal-SysEx). Update- und Bootmodus-SysEx bleiben in jedem Fall gesperrt.
-    * Hat die Seite inzwischen eine andere Herkunft (Navigation, Weiterleitung), gilt wieder der sichere Filter.
+    * Simulators/emulators and all unconfirmed origins: only ``sim_out_allowed`` (notes, controllers,
+      clock, FM1 Open library).
+    * Online editor whose origin the user has confirmed once (``trust_origin``): ``editor_out_allowed``
+      (Felucca/universal SysEx). Update and boot mode SysEx stay blocked in every case.
+    * If the page has meanwhile got a different origin (navigation, redirect), the safe filter applies again.
     """
 
     def __init__(self, kind: str = "", start_url: str = "", trusted=None):
@@ -240,7 +240,7 @@ class OutGate:
 
 
 def page_midi(data) -> bool:
-    """Was aus FM-1/Keyboard in den Simulator geht: Kanal-Nachrichten und Takt/Start/Stop."""
+    """What goes from the FM-1/keyboard into the simulator: channel messages and clock/start/stop."""
     return bool(data) and (0x80 <= data[0] <= 0xEF or data[0] in (0xF8, 0xFA, 0xFB, 0xFC))
 
 
@@ -254,9 +254,9 @@ def firefox_command(url: str) -> list[str] | None:
     return [p, url] if p else None
 
 
-# ---------------------------------------------------------------- weitere MIDI-Eingänge (ALSA über mido)
+# ---------------------------------------------------------------- further MIDI inputs (ALSA via mido)
 class SystemInputs:
-    """öffnet MIDI-Eingänge des Systems (USB-Keyboard …) und ruft callback(name, bytes) aus dem MIDI-Thread."""
+    """opens the system's MIDI inputs (USB keyboard …) and calls callback(name, bytes) from the MIDI thread."""
 
     def __init__(self, callback):
         self.callback = callback
@@ -267,14 +267,14 @@ class SystemInputs:
         try:
             import mido
             names = mido.get_input_names()
-        except Exception:                      # mido/rtmidi fehlt oder kein ALSA
+        except Exception:                      # mido/rtmidi missing or no ALSA
             return []
         skip = [e.lower() for e in exclude if e]
         return [n for n in dict.fromkeys(names) if not any(s and s in n.lower() for s in skip)
                 and "midi through" not in n.lower() and "rtmidi" not in n.lower()]
 
     def set(self, names: list[str]) -> list[str]:
-        """genau diese Eingänge offen halten -> Fehlermeldungen"""
+        """keep exactly these inputs open -> error messages"""
         errors = []
         for n in list(self.open):
             if n not in names:

@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Soundkarte blockiert? – Programme, die eine Wiedergabe-Soundkarte direkt (an PipeWire vorbei) belegen.
+"""Sound card blocked? – programs that hold a playback sound card directly (bypassing PipeWire).
 
-Anlass (Pi 5, Bookworm): Debians Paket ``fluidsynth`` (von der App als Klangerzeuger empfohlen) bringt einen
-Benutzer-Dienst mit, der bei jeder Anmeldung startet und per ALSA direkt die erste Soundkarte öffnet – auf dem Pi
-die HDMI-Karte. PipeWire bekommt sie dann nicht mehr: kein HDMI-Ausgang, nur noch „Schein-Ausgabe“.
-Der Klangerzeuger der App braucht diesen Dienst nicht (er startet FluidSynth selbst, über PipeWire).
-Kein Qt hier (für Systemcheck, Installer und Oberfläche).
+Background (Pi 5, Bookworm): Debian's ``fluidsynth`` package (recommended by the app as a sound engine) ships a
+user service that starts at every login and opens the first sound card directly via ALSA – on the Pi
+that is the HDMI card. PipeWire then cannot get it any more: no HDMI output, only "Dummy Output".
+The app's sound engine does not need this service (it starts FluidSynth itself, via PipeWire).
+No Qt here (for the system check, installer and UI).
 """
 from __future__ import annotations
 
@@ -47,15 +47,15 @@ def _systemctl_user(*args: str, timeout: float = 5) -> tuple[int, str]:
 
 
 def fluidsynth_service() -> tuple[bool, bool]:
-    """-> (aktiviert, läuft) für Debians fluidsynth-Benutzerdienst."""
+    """-> (enabled, running) for Debian's fluidsynth user service."""
     _rc, en = _systemctl_user("is-enabled", SERVICE)
     _rc, act = _systemctl_user("is-active", SERVICE)
     return en.splitlines()[0] == "enabled" if en else False, act.splitlines()[0] == "active" if act else False
 
 
 def playback_holders(proc: Path = Path("/proc")) -> list[Holder]:
-    """Prozesse (des eigenen Benutzers – fremde sind nicht lesbar), die eine Wiedergabe-PCM direkt offen haben,
-    außer den Audio-Diensten selbst (PipeWire & Co. dürfen das)."""
+    """Processes (of the current user – others are not readable) that hold a playback PCM open directly,
+    except the audio services themselves (PipeWire & co. are allowed to)."""
     out: list[Holder] = []
     try:
         pids = [p for p in proc.iterdir() if p.name.isdigit()]
@@ -84,8 +84,8 @@ def playback_holders(proc: Path = Path("/proc")) -> list[Holder]:
 
 
 def disable_fluidsynth_service(restart_audio: bool = True) -> tuple[bool, str]:
-    """Benutzerdienst abschalten (FluidSynth bleibt installiert) und PipeWire die Karte neu suchen lassen.
-    -> (ok, deutsche Meldung)"""
+    """Disable the user service (FluidSynth stays installed) and let PipeWire rescan for the card.
+    -> (ok, German message)"""
     rc, _out = _systemctl_user("disable", "--now", SERVICE, timeout=15)
     if rc != 0:
         return False, _("The service could not be disabled. In a terminal: {command}").format(

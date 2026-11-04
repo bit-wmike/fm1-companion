@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Musik-Bereich: Projektformat (gegen Bytes aus Melodees eigenem Firmware-Code), MIDI-Export,
-Generatoren, Pattern schreiben/lesen/rückgängig gegen das Demo-FM-1."""
+"""Music area: project format (against bytes from Melodee's own firmware code), MIDI export,
+generators, write/read/undo a pattern against the demo FM-1."""
 from __future__ import annotations
 
 import json
@@ -29,7 +29,7 @@ def expected():
     return json.loads((FX / "expected.json").read_text())["live"]
 
 
-# ------------------------------------------------------------------------------- Format ---
+# ------------------------------------------------------------------------------- format ---
 def test_layout_constants_match_firmware():
     lay = json.loads((FX / "layout.json").read_text())
     assert lay["BANK_STORE_SIZE"] == PF.BANK_STORE_SIZE
@@ -89,8 +89,8 @@ def test_decode_matches_firmware_ram(expected):
 
 
 def test_melodee_160_song_project():
-    """Melodee v1.6.0 (tools/melodee_fixtures/fixturegen16.c, Melodees eigener Code): 16 Patterns auf Spur 1–4,
-    64 Abschnitte mit Pausen und fortgesetztem Block, Punch-Effekte, Song-Block- und Pattern-Presets."""
+    """Melodee v1.6.0 (tools/melodee_fixtures/fixturegen16.c, Melodee's own code): 16 patterns on tracks 1–4,
+    64 sections with rests and a continued block, punch effects, song block and pattern presets."""
     fx16 = ROOT / "tests" / "fixtures" / "musik16"
     exp = json.loads((fx16 / "expected.json").read_text())
     assert exp["version"] == "v1.6.0"
@@ -111,9 +111,9 @@ def test_melodee_160_song_project():
     assert [(s.name, s.engine, s.preset) for s in prj.sounds] == [(x["name"], x["engine"], x["preset"])
                                                                   for x in e["sounds"]]
     assert prj.pattern_sounds == {(k, b): v for k, row in enumerate(e["pattern_sound"]) for b, v in enumerate(row) if v}
-    # Reihenfolge wie die Firmware: Song-Block-Preset, dann Pattern-Preset, dann der Klang der Spur
+    # order as in the firmware: song block preset, then pattern preset, then the track's sound
     assert prj.resolved_sound(2, 0) == (1, "block") and prj.resolved_sound(0, 0) == (0, "")
-    assert prj.resolved_sound(7, 1) == (1, "pattern")           # Spur 2 spielt dort Pattern 12
+    assert prj.resolved_sound(7, 1) == (1, "pattern")           # track 2 plays pattern 12 there
     assert "6 Punch-Effekte" in prj.summary() and "1 Song-/Pattern-Presets" in prj.summary()
     j = json.loads(ME.to_json(prj))
     assert j["song"][0]["punches"][0]["name"] == "REVERSE" and j["presets"][0]["name"] == "BLOCK SOUND"
@@ -125,12 +125,12 @@ def test_specific_offsets_and_content():
     p = PF.decode(obj(64))
     assert p.tracks[0].patterns[0].steps[0].notes == [36]
     assert p.tracks[0].patterns[0].steps[1].time == PF.ST_TIE
-    assert p.tracks[1].patterns[0].steps[0].notes == [60, 64, 67, 71]        # 4-Noten-Akkord
+    assert p.tracks[1].patterns[0].steps[0].notes == [60, 64, 67, 71]        # 4-note chord
     assert p.tracks[2].active == 15 and p.tracks[2].patterns[15].steps[15].hit == 128
     assert p.tracks[3].patterns[7].steps[63].notes == [72]
     assert p.tracks[4].midi_only and p.tracks[4].patterns[3].steps[2].notes == [50]
     assert p.song[2].banks[2] == PF.CHAIN_HOLD and p.song[1].banks[1] == PF.CHAIN_REST
-    # Projekt 1 wurde vor der letzten Änderung gespeichert
+    # project 1 was saved before the last change
     p1 = PF.decode(obj(2))
     assert p1.name == "FIXTURE SONG" and p1.tracks[1].patterns[0].steps[6].empty
     assert p.tracks[1].patterns[0].steps[6].notes == [77]
@@ -143,13 +143,13 @@ def test_hpj1_expand_is_record_with_valid_hash():
 
 
 def test_melodee_legacy_fixtures():
-    """Fixtures aus Melodees Repo (FBKK/FUN16 und FUN18, von unveränderter Firmware geschrieben)."""
+    """fixtures from Melodee's repo (FBKK/FUN16 and FUN18, written by unchanged firmware)."""
     p = PF.decode((FX / "melodee_fbkk_fun16.bin").read_bytes())
     assert p.ok and p.format == "FBKK/FUN16" and p.hash_ok
     assert p.tracks[0].patterns[p.tracks[0].active].steps[0].notes == [60, 64, 67]   # C/E/G, vel 100
     assert p.tracks[0].patterns[p.tracks[0].active].steps[0].vel == 100
     assert any(s.notes == [72] for t in p.tracks for pat in t.patterns for s in pat.steps)
-    nt = p.tracks[1].patterns[3].recorded[0]                                   # owner 11, onset 55, Dauer 217
+    nt = p.tracks[1].patterns[3].recorded[0]                                   # owner 11, onset 55, duration 217
     assert round(nt.onset * 65536) == 55 and round(nt.duration * 65536) == 217
     p18 = PF.decode((FX / "melodee_fun18.bin").read_bytes())
     assert p18.ok and p18.format == "FUN18" and p18.tracks[0].patterns[0].steps[0].notes == [60]
@@ -182,11 +182,11 @@ def test_fuzz_never_raises():
             data = bytes(b)
         else:
             data = base[:rnd.randrange(len(base))]
-        p = PF.decode(data)               # darf nie werfen
+        p = PF.decode(data)               # must never raise
         assert isinstance(p, PF.Project)
         p.summary()
         if p.ok:
-            ME.events(p)                  # auch der Export nicht
+            ME.events(p)                  # nor must the export
 
 
 def test_backup_inspect_hook():
@@ -213,14 +213,14 @@ def test_midi_export_reads_back(tmp_path):
         chans[tr.name] = notes
     first = chans[next(n for n in chans if n.startswith("Spur 1"))]
     assert first[0] == (0, 36, 0)
-    # Song: Abschnitt 1 = 2 × 16 Sechzehntel (4 Viertel), dann Abschnitt 2 mit Pattern 3 (1/32) auf Spur 1
+    # song: section 1 = 2 × 16 sixteenths (4 quarters), then section 2 with pattern 3 (1/32) on track 1
     sec2 = [n for n in first if n[0] >= 8 * ME.TPQ and n[0] < 12 * ME.TPQ]
     assert sec2[0] == (8 * ME.TPQ, 48, 0)
     total = sum(ME.section_quarters(p, r) for r in p.song)
     assert total == pytest.approx(28.0)
     drums = chans[next(n for n in chans if n.startswith("Spur 3"))]
     assert {n for _, n, _ in drums} <= set(PF.LANE_GM) and drums[0][2] == 2
-    # Spur 2 pausiert in Abschnitt 2 und 3
+    # track 2 rests in sections 2 and 3
     second = chans[next(n for n in chans if n.startswith("Spur 2"))]
     assert all(t < 8 * ME.TPQ for t, _, _ in second)
 
@@ -233,7 +233,7 @@ def test_midi_drum_channel_and_lane_map(tmp_path):
     ons = [m for tr in mf.tracks for m in tr if m.type == "note_on"]
     assert ons and all(m.channel == 9 for m in ons)
     assert {m.note for m in ons} == {35, 40, 42, 81}
-    assert any(m.velocity == 127 for m in ons)          # Akzent
+    assert any(m.velocity == 127 for m in ons)          # accent
 
 
 def test_swing_timing():
@@ -261,7 +261,7 @@ def test_roundtrip_export_import(tmp_path):
 
 def test_import_drums_and_split(tmp_path):
     notes = [MI.Note(i * 0.25, 0.1, 36 if i % 4 == 0 else 42, 110 if i % 8 == 0 else 80) for i in range(32)]
-    notes.append(MI.Note(0, 0.1, 99, 80))       # keine Lane
+    notes.append(MI.Note(0, 0.1, 99, 80))       # no lane
     pats, rep = MI.import_patterns(notes, MI.ImportOptions(length=16, drums=True, patterns=2, accent_from=100))
     assert len(pats) == 2
     assert pats[0][0].hit == 1 and pats[0][1].hit == 1 << 3 and pats[1][0].hit == 1
@@ -277,7 +277,7 @@ def test_import_chord_overflow():
     assert steps[1].time == PF.ST_TIE
 
 
-# ------------------------------------------------------------------------------- Generatoren ---
+# ------------------------------------------------------------------------------- generators ---
 def test_euclid():
     s = lambda p: "".join("x" if b else "." for b in p)  # noqa: E731
     assert s(G.euclid(8, 3)) == "x..x..x."
@@ -297,7 +297,7 @@ def test_scales_and_chords():
     assert G.scale_notes(0, "Dur (Ionisch)", 60, 72) == [60, 62, 64, 65, 67, 69, 71, 72]
     assert G.chord_from_roman("I", 0) == [60, 64, 67]
     assert G.chord_from_roman("vi", 0) == [69, 72, 76]
-    assert G.chord_from_roman("V7", 7) == [74, 78, 81, 84]        # D7 in G-Dur: D F# A C
+    assert G.chord_from_roman("V7", 7) == [74, 78, 81, 84]        # D7 in G major: D F# A C
     assert G.chord_from_roman("ii7", 0) == [62, 65, 69, 72]
     assert G.chord_from_roman("Imaj7", 0) == [60, 64, 67, 71]
     assert G.chord_from_roman("vii°", 0) == [71, 74, 77]
@@ -346,7 +346,7 @@ def test_humanize_and_variation():
     assert [s.notes for s in G.variation(st, 16, "B", seed=1)[:12]] == [s.notes for s in st[:12]]
 
 
-# ------------------------------------------------------------------------------- Gerät ---
+# ------------------------------------------------------------------------------- device ---
 class FakeLink:
     def __init__(self):
         self.dev = FakeFM1()
@@ -377,7 +377,7 @@ def test_write_pattern_roundtrip_and_undo():
     assert link.dev.tracks[1]["len"] == before.length
 
 
-# ------------------------------------------------------------ Generatoren: Extremwerte (Abnahme) ---
+# ------------------------------------------------------------ generators: extreme values (acceptance) ---
 def _ok_steps(r):
     r = r[0] if isinstance(r, tuple) else r
     assert len(r) == PF.NSTEP
@@ -389,7 +389,7 @@ def _ok_steps(r):
 @pytest.mark.parametrize("n", [0, 1, 2, 3, 63, 64, 65, 1000])
 @pytest.mark.parametrize("key,scale", [(0, "Dur (Ionisch)"), (11, "Dur-Pentatonik"), (11, "Blues"), (6, "Chromatisch")])
 def test_generators_extremes(n, key, scale):
-    """0 und 64+ Steps, 0 Schläge, Tonart H, Fünfton-Skala, leere Akkorde, Noten am Rand – nie eine Ausnahme."""
+    """0 and 64+ steps, 0 beats, key B, pentatonic scale, empty chords, notes at the edge – never an exception."""
     lanes = [G.LaneSpec(lane, st, pu, ro, ac) for lane, (st, pu, ro, ac) in enumerate(
         [(0, 0, 0, 0), (1, 0, 0, 1), (64, 64, 63, 1), (16, 20, 70, 16), (1, 1, 0, 1), (3, 2, 1, 2), (64, 0, 0, 0), (16, 4, 0, 3)])]
     d = _ok_steps(G.drum_pattern(lanes, n))
@@ -428,7 +428,7 @@ def test_generators_extremes(n, key, scale):
     m.train([60, 62, 64, 65], [1, 1, 1, 1])
     _ok_steps(m.generate(n, 1, 60))
     m1 = G.Markov(1)
-    m1.train([60, 62], [0, 0])                    # Dauer 0 darf keine Endlosschleife werden
+    m1.train([60, 62], [0, 0])                    # duration 0 must not become an endless loop
     _ok_steps(m1.generate(n, 1))
 
 
@@ -439,8 +439,8 @@ def test_roman_errors_are_german():
 
 
 def test_read_midi_splits_channels_and_handles_empty(tmp_path):
-    """Format-0-Datei (alles in einer Spur): Schlagzeug (Kanal 10) und Bass werden getrennte Einträge;
-    16 Spuren bleiben 16; eine Datei ohne Noten ergibt keine Einträge, aber das Tempo."""
+    """Format 0 file (everything in one track): drums (channel 10) and bass become separate entries;
+    16 tracks stay 16; a file without notes gives no entries, but the tempo."""
     import mido
     mf = mido.MidiFile(ticks_per_beat=480)
     tr = mido.MidiTrack()
@@ -456,7 +456,7 @@ def test_read_midi_splits_channels_and_handles_empty(tmp_path):
     tracks, bpm = MI.read_midi(p)
     assert round(bpm) == 97 and [t.channel for t in tracks] == [1, 9]
     assert all(len(t.notes) == 8 for t in tracks) and all(n.pitch == 36 for n in tracks[1].notes)
-    assert tracks[0].name == tracks[1].name                                  # Spur-Name bleibt, Kanal zeigt die Liste
+    assert tracks[0].name == tracks[1].name                                  # the track name stays, the channel shows the list
     mf = mido.MidiFile(ticks_per_beat=96)
     for k in range(16):
         t = mido.MidiTrack()
@@ -485,8 +485,8 @@ def test_read_midi_splits_channels_and_handles_empty(tmp_path):
 
 
 def test_import_patterns_window_equals_full_pass():
-    """Aufteilen auf viele Patterns: das Zeitfenster je Pattern liefert genau dasselbe wie der volle Durchlauf
-    (auch bei weicher Rasterung, Akkord-Überlauf und unsortierten Noten) – und bleibt schnell."""
+    """splitting over many patterns: the time window per pattern gives exactly the same as the full pass
+    (also with soft quantizing, chord overflow and unsorted notes) – and stays fast."""
     import random
     import time
     from fm1companion import midi_import as MI
@@ -507,13 +507,13 @@ def test_import_patterns_window_equals_full_pass():
     assert time.perf_counter() - t < 0.5
 
 
-# ================================================================== Abspielen (fm1companion/playback.py) ===
+# ================================================================== playback (fm1companion/playback.py) ===
 from fm1companion import playback as P  # noqa: E402
 
 
 class _DemoLink:
-    """Link-Ersatz um ein FakeFM1: Anfragen werden beantwortet, Noten mitgeschrieben; busy=True wie während
-    einer App-Anfrage (normale Noten gehen dann nicht raus, force-Nachrichten schon)."""
+    """Link replacement around a FakeFM1: requests are answered, notes recorded; busy=True as during
+    an app request (normal notes do not go out then, force messages do)."""
 
     def __init__(self, dev=None):
         self.d = dev or FakeFM1()
@@ -537,7 +537,7 @@ class _DemoLink:
 
 def test_routing_channels():
     r = P.Routing()
-    assert [r.channel(k) for k in range(5)] == [0, 1, 2, 3, None]       # CH1-4, Spur 5 = MIDI-Spur
+    assert [r.channel(k) for k in range(5)] == [0, 1, 2, 3, None]       # CH1-4, track 5 = MIDI track
     r.route = 3                                                          # CH9-12
     assert [r.channel(k) for k in range(4)] == [8, 9, 10, 11] and "Kanal 9–12" in r.describe()
     r.route = 1                                                          # SEL
@@ -547,7 +547,7 @@ def test_routing_channels():
 def test_read_routing_from_demo_device():
     link = _DemoLink()
     link.d.globals[14] = 2                                               # ROUT CH5-8
-    link.d.track_sounds[2][2] = 1                                        # Spur 3 scharf
+    link.d.track_sounds[2][2] = 1                                        # track 3 armed
     r = P.read_routing(link)
     assert r.known and r.route == 2 and r.drum_channel == 10 and r.first == 4
     assert [t.engine for t in r.tracks] == [19, 12, 15, 10] and r.armed_tracks() == [2]
@@ -570,14 +570,14 @@ def test_plan_for_device_skips_midi_tracks_and_warns_on_sel():
     assert any("Spur 5" in s and "MIDI-Spur" in s for s in plan.skipped)
     plan = P.plan_for_device(evs, P.Routing(route=1))
     assert any("SEL" in s for s in plan.skipped)
-    # Komponieren: alles auf die Zielspur
+    # compose: everything onto the target track
     plan = P.plan_for_device(evs[:1], P.Routing(route=2), track_override=1)
     assert [(e.track, e.channel) for e in plan.events] == [(1, 5)]
 
 
 def test_plan_drum_channel_collision():
     r = P.Routing(route=3, tracks=[P.TrackSound(0, 10, 0), P.TrackSound(1, 19, 0), P.TrackSound(2, 12, 0),
-                                   P.TrackSound(3, 15, 0)])       # CH9-12, DRUM 10 = Kanal von Spur 2
+                                   P.TrackSound(3, 15, 0)])       # CH9-12, DRUM 10 = channel of track 2
     plan = P.plan_for_device([ME.NoteEvent(1, 0, 1, 60, 90, 1, 0, 0)], r)
     assert not plan.events and "DRUM-Kanal" in plan.skipped[0]
 
@@ -586,29 +586,29 @@ def test_sequencer_plays_and_leaves_no_hanging_notes():
     import time
     link = _DemoLink()
     evs = [ME.NoteEvent(0, i * 0.5, 0.4, 60 + i, 100, 0, 0, i) for i in range(4)]
-    evs.append(ME.NoteEvent(1, 0, 8.0, 48, 90, 1, 0, 0))               # lange Note – beim Stopp noch an
+    evs.append(ME.NoteEvent(1, 0, 8.0, 48, 90, 1, 0, 0))               # long note – still on at stop
     seq = P.MidiSequencer(P.link_sender(link))
     seq.start(evs, 240)
     time.sleep(0.45)
     assert seq.running and link.d.sounding
     seq.stop()
-    assert not seq.running and not link.d.sounding                       # alles aus
+    assert not seq.running and not link.d.sounding                       # everything off
     assert ((0xB1, 123, 0), True) in link.out and ((0xB0, 64, 0), True) in link.out
 
 
 def test_sequencer_overlap_and_busy_device():
     import time
     link = _DemoLink()
-    # gleiche Note überlappend: das erste Off darf die zweite Note nicht abschneiden
+    # the same note overlapping: the first Off must not cut off the second note
     evs = [ME.NoteEvent(0, 0.0, 1.0, 60, 100, 0, 0, 0), ME.NoteEvent(0, 0.5, 1.0, 60, 100, 0, 0, 1)]
     seq = P.MidiSequencer(P.link_sender(link))
-    seq.start(evs, 600)                                                  # 0,1 s je Viertel
-    time.sleep(0.12)                                                     # nach dem ersten Off-Zeitpunkt (0,1 s)
+    seq.start(evs, 600)                                                  # 0.1 s per quarter
+    time.sleep(0.12)                                                     # after the first Off time (0.1 s)
     assert (0, 60) in link.d.sounding
     while seq.running:
         time.sleep(0.02)
     assert not link.d.sounding
-    # Gerät belegt: Note-Ons fallen weg, das Aufräumen geht trotzdem raus
+    # device busy: note-ons are dropped, the cleanup still goes out
     link2 = _DemoLink()
     link2.busy = True
     seq2 = P.MidiSequencer(P.link_sender(link2))
@@ -628,7 +628,7 @@ def test_sequencer_loop_and_finish_callback():
     time.sleep(0.35)
     assert seq.loops >= 2 and seq.running
     seq.stop()
-    assert not done                                                      # Stopp ist kein „fertig“
+    assert not done                                                      # stop is not "done"
     seq.start([ME.NoteEvent(0, 0, 0.2, 60, 100, 0, 0, 0)], 600)
     time.sleep(0.2)
     assert done and not seq.running
@@ -646,7 +646,7 @@ def test_compare_sounds():
 def test_song_start_and_stop_on_demo():
     link = _DemoLink()
     rc, _rows = P.song_start(link)
-    assert rc == 1                                    # kein Song im Gerät: abgelehnt
+    assert rc == 1                                    # no song in the device: refused
     link.d.song["rows"] = [[0, 0, 0, 0, 1]]
     assert P.song_start(link)[0] == 0 and link.d.song["running"]
     assert P.transport_stop(link) and not link.d.song["running"]
@@ -675,7 +675,7 @@ def test_fm6_patch_read_from_project_bytes():
     rec = bytearray(PF.PROJ_FM6_OFF + 4 * 128)
     patch = bytes(dx7.pack(dx7.init_voice()))
     rec[PF.PROJ_FM6_OFF + 128:PF.PROJ_FM6_OFF + 256] = patch
-    rec[PF.PROJ_FM6_OFF + 256 + 110] = 99                                 # unplausibel: Algorithmus > 31
+    rec[PF.PROJ_FM6_OFF + 256 + 110] = 99                                 # implausible: algorithm > 31
     prj = PF.Project(tracks=PF._new_tracks())
     PF._read_fm6(prj, bytes(rec), PF.PROJ_FM6_OFF)
     assert prj.tracks[1].fm6 == patch and prj.tracks[0].fm6 is None and prj.tracks[2].fm6 is None
@@ -687,7 +687,7 @@ def test_edit_history_undo_redo():
     a = [PF.Step([60], PF.ST_NOTE, vel=100)] + [PF.Step() for _ in range(3)]
     b = [PF.Step([62], PF.ST_NOTE, vel=100)] + [PF.Step() for _ in range(3)]
     h.push(a, 4, "eins")
-    h.push(a, 4, "doppelt")                                              # gleicher Zustand: kein neuer Eintrag
+    h.push(a, 4, "doppelt")                                              # same state: no new entry
     assert len(h.undo_stack) == 1
     st = h.undo(b, 4)
     assert st[0][0].notes == [60] and h.can_redo() and not h.can_undo()
@@ -695,7 +695,7 @@ def test_edit_history_undo_redo():
     assert st[0][0].notes == [62]
     for i in range(5):
         h.push([PF.Step([i], PF.ST_NOTE)], 1)
-    assert len(h.undo_stack) == 3 and not h.can_redo()                  # begrenzt, Wiederholen verworfen
+    assert len(h.undo_stack) == 3 and not h.can_redo()                  # limited, redo discarded
 
 
 def test_demo_device_records_notes():
