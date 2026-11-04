@@ -10,30 +10,32 @@ Die Prüfsumme ist das Zweierkomplement der Datensumme (7 Bit).
 """
 from __future__ import annotations
 
+from .i18n import _
+
 import random
 from dataclasses import dataclass, field
 
-# Operator-Bytes (VCED-Reihenfolge): Kürzel, Höchstwert, deutscher Name
+# Operator-Bytes (VCED-Reihenfolge): Kürzel, Höchstwert, Name
 OP_PARAMS = [
-    ("R1", 99, "Rate 1"), ("R2", 99, "Rate 2"), ("R3", 99, "Rate 3"), ("R4", 99, "Rate 4"),
-    ("L1", 99, "Level 1"), ("L2", 99, "Level 2"), ("L3", 99, "Level 3"), ("L4", 99, "Level 4"),
-    ("BP", 99, "Breakpoint"), ("LD", 99, "Tiefe links"), ("RD", 99, "Tiefe rechts"),
-    ("LC", 3, "Kurve links"), ("RC", 3, "Kurve rechts"), ("RS", 7, "Rate-Skalierung"),
-    ("AMS", 3, "AM-Empfindlichkeit"), ("KVS", 7, "Anschlagdynamik"), ("OL", 99, "Ausgangspegel"),
-    ("MODE", 1, "Fest/Verhältnis"), ("FC", 31, "Frequenz grob"), ("FF", 99, "Frequenz fein"), ("DET", 14, "Verstimmung"),
+    ("R1", 99, _("Rate 1")), ("R2", 99, _("Rate 2")), ("R3", 99, _("Rate 3")), ("R4", 99, _("Rate 4")),
+    ("L1", 99, _("Level 1")), ("L2", 99, _("Level 2")), ("L3", 99, _("Level 3")), ("L4", 99, _("Level 4")),
+    ("BP", 99, _("Breakpoint")), ("LD", 99, _("Left depth")), ("RD", 99, _("Right depth")),
+    ("LC", 3, _("Left curve")), ("RC", 3, _("Right curve")), ("RS", 7, _("Rate scaling")),
+    ("AMS", 3, _("AM sensitivity")), ("KVS", 7, _("Velocity sensitivity")), ("OL", 99, _("Output level")),
+    ("MODE", 1, _("Fixed/ratio")), ("FC", 31, _("Frequency coarse")), ("FF", 99, _("Frequency fine")), ("DET", 14, _("Detune")),
 ]
 VOICE_PARAMS = [
-    ("PR1", 99, "Pitch-Rate 1"), ("PR2", 99, "Pitch-Rate 2"), ("PR3", 99, "Pitch-Rate 3"), ("PR4", 99, "Pitch-Rate 4"),
-    ("PL1", 99, "Pitch-Level 1"), ("PL2", 99, "Pitch-Level 2"), ("PL3", 99, "Pitch-Level 3"), ("PL4", 99, "Pitch-Level 4"),
-    ("ALG", 31, "Algorithmus"), ("FB", 7, "Feedback"), ("OKS", 1, "Oszillator-Sync"),
-    ("LFS", 99, "LFO-Tempo"), ("LFD", 99, "LFO-Verzögerung"), ("LPMD", 99, "LFO-Pitch-Tiefe"),
-    ("LAMD", 99, "LFO-Amp-Tiefe"), ("LKS", 1, "LFO-Sync"), ("LFW", 5, "LFO-Welle"), ("LPMS", 7, "Pitch-Mod-Empf."),
-    ("TRNSP", 48, "Transponierung"),
+    ("PR1", 99, _("Pitch rate 1")), ("PR2", 99, _("Pitch rate 2")), ("PR3", 99, _("Pitch rate 3")), ("PR4", 99, _("Pitch rate 4")),
+    ("PL1", 99, _("Pitch level 1")), ("PL2", 99, _("Pitch level 2")), ("PL3", 99, _("Pitch level 3")), ("PL4", 99, _("Pitch level 4")),
+    ("ALG", 31, _("Algorithm")), ("FB", 7, _("Feedback")), ("OKS", 1, _("Oscillator sync")),
+    ("LFS", 99, _("LFO speed")), ("LFD", 99, _("LFO delay")), ("LPMD", 99, _("LFO pitch depth")),
+    ("LAMD", 99, _("LFO amp depth")), ("LKS", 1, _("LFO sync")), ("LFW", 5, _("LFO wave")), ("LPMS", 7, _("Pitch mod sens.")),
+    ("TRNSP", 48, _("Transpose")),
 ]
-OPI = {n: i for i, (n, _, _) in enumerate(OP_PARAMS)}
-VI = {n: 126 + i for i, (n, _, _) in enumerate(VOICE_PARAMS)}
+OPI = {n: i for i, (n, _hi, _name) in enumerate(OP_PARAMS)}
+VI = {n: 126 + i for i, (n, _hi, _name) in enumerate(VOICE_PARAMS)}
 NAME, SIZE, PACKED = 145, 155, 128
-LFO_WAVES = ["Dreieck", "Säge ab", "Säge auf", "Rechteck", "Sinus", "S&H"]
+LFO_WAVES = [_("Triangle"), _("Saw down"), _("Saw up"), _("Square"), _("Sine"), "S&H"]
 CURVES = ["-LIN", "-EXP", "+EXP", "+LIN"]
 
 
@@ -160,7 +162,7 @@ def bank_syx(voices, channel: int = 0) -> bytes:
 @dataclass
 class ParseResult:
     voices: list = field(default_factory=list)      # VCED-Listen
-    warnings: list = field(default_factory=list)    # deutsche Hinweise
+    warnings: list = field(default_factory=list)    # Hinweise (übersetzt)
     bank: bool = False                              # stammt aus einem 32er-Bank
 
 
@@ -170,16 +172,16 @@ def parse_syx(data: bytes) -> ParseResult:
     d = bytes(data)
     res = ParseResult()
     if not d:
-        res.warnings.append("Die Datei ist leer.")
+        res.warnings.append(_("The file is empty."))
         return res
     if d[0] != 0xF0 and len(d) in (4096, 4096 + 1):
         res.voices = [unpack(d[k * 128:k * 128 + 128]) for k in range(32)]
         res.bank = True
-        res.warnings.append("Rohe 4096-Byte-Bank ohne SysEx-Rahmen gelesen.")
+        res.warnings.append(_("Read a raw 4096-byte bank without SysEx frame."))
         return res
     if d[0] != 0xF0 and len(d) == SIZE:
         res.voices = [sanitize(d)]
-        res.warnings.append("Rohe 155-Byte-Voice ohne SysEx-Rahmen gelesen.")
+        res.warnings.append(_("Read a raw 155-byte voice without SysEx frame."))
         return res
     i = 0
     n_msg = 0
@@ -200,31 +202,31 @@ def parse_syx(data: bytes) -> ParseResult:
             body = body[:-1]
         if m[3] == 0x09 and m[4] == 0x20 and m[5] == 0x00:
             if len(body) < 4096:
-                res.warnings.append(f"Bank-Nachricht {n_msg} ist zu kurz ({len(body)} statt 4097 Bytes) – übersprungen.")
+                res.warnings.append(_("Bank message {n} is too short ({size} instead of 4097 bytes) – skipped.").format(n=n_msg, size=len(body)))
                 continue
             vm = body[:4096]
             if any(x > 127 for x in vm):
-                res.warnings.append(f"Bank-Nachricht {n_msg} enthält ungültige Bytes – übersprungen.")
+                res.warnings.append(_("Bank message {n} contains invalid bytes – skipped.").format(n=n_msg))
                 continue
             if len(body) < 4097 or checksum(vm) != body[4096]:
-                res.warnings.append(f"Bank-Nachricht {n_msg}: Prüfsumme fehlt oder falsch – trotzdem gelesen.")
+                res.warnings.append(_("Bank message {n}: checksum missing or wrong – read anyway.").format(n=n_msg))
             res.voices += [unpack(vm[k * 128:k * 128 + 128]) for k in range(32)]
             res.bank = True
         elif m[3] == 0x00 and m[4] == 0x01 and m[5] == 0x1B:
             if len(body) < SIZE:
-                res.warnings.append(f"Voice-Nachricht {n_msg} ist zu kurz – übersprungen.")
+                res.warnings.append(_("Voice message {n} is too short – skipped.").format(n=n_msg))
                 continue
             vc = body[:SIZE]
             if len(body) < SIZE + 1 or checksum(vc) != body[SIZE]:
-                res.warnings.append(f"Voice-Nachricht {n_msg}: Prüfsumme fehlt oder falsch – trotzdem gelesen.")
+                res.warnings.append(_("Voice message {n}: checksum missing or wrong – read anyway.").format(n=n_msg))
             res.voices.append(sanitize(vc))
         elif m[3] == 0x7D and m[4] == 4 and m[5] == 8 and len(m) == 231:
             vc = m[6:6 + SIZE]
             if all(x <= vmax(k) and (k < NAME or x >= 32) for k, x in enumerate(vc)):
                 res.voices.append(list(vc))
-                res.warnings.append("MainStage-Hülle erkannt: nur Voice und Name übernommen.")
+                res.warnings.append(_("MainStage wrapper detected: only voice and name taken over."))
     if not res.voices:
-        res.warnings.append("Keine DX7-Voice in der Datei gefunden.")
+        res.warnings.append(_("No DX7 voice found in the file."))
     return res
 
 
@@ -369,7 +371,7 @@ def variations(v, n: int = 8, amount: float = 0.25, seed: int | None = None) -> 
 
 def describe(v) -> str:
     alg = v[VI["ALG"]] + 1
-    return f"Algorithmus {alg}, Feedback {v[VI['FB']]}"
+    return _("Algorithm {alg}, feedback {fb}").format(alg=alg, fb=v[VI['FB']])
 
 
 # ------------------------------------------------------------ Senden ---

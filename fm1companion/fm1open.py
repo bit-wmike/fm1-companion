@@ -26,6 +26,8 @@ import zlib
 from dataclasses import dataclass
 from typing import Callable
 
+from .i18n import N_, _, decimal
+
 SLOTS, DISK_SLOTS = 8, 16
 HEADER, RATE = 512, 32000
 CHUNK_FRAMES, CHUNK_BYTES = 320, 228
@@ -37,13 +39,14 @@ BLOCK_MAGIC = b"\x01\x45\x14\x5a"
 MAX_FRAMES = (REGION - HEADER) // CHUNK_BYTES * CHUNK_FRAMES
 # Pads 1–8 spielen auf diesen MIDI-Noten (sample_metadata.inc: sample_notes)
 PAD_NOTES = [36, 38, 37, 41, 47, 48, 42, 46]
-PAD_ROLES = ["Kick", "Snare", "Rimshot", "Tom tief", "Tom mittel", "Tom hoch", "Hi-Hat zu", "Hi-Hat offen"]
-STATUS_TEXT = {0: "keine gültige Sample-Bank", 1: "prüft die Bank …", 2: "bereit", 3: "empfängt gerade",
-               4: "Fehler beim Lesen/Prüfen der Bank"}
-ERRORS = {65: "ungültige Flash-Anfrage", 66: "Flash-Fehler", 67: "Gerät beschäftigt (anderer Anschluss überträgt)",
-          68: "Flash nicht gelöscht", 69: "Flash-Kontext", 70: "Flash nicht verfügbar",
-          71: "Daten oder Parameter ungültig", 72: "zu wenig Speicher",
-          73: "alte Bank belegt den erweiterten Speicher – erst sichern und verkleinern"}
+PAD_ROLES = ["Kick", "Snare", "Rimshot", _("Tom low"), _("Tom mid"), _("Tom high"), _("Hi-hat closed"), _("Hi-hat open")]
+# texts translated where used: _(STATUS_TEXT[st]), _(ERRORS[code])
+STATUS_TEXT = {0: N_("no valid sample bank"), 1: N_("checking the bank …"), 2: N_("ready"), 3: N_("receiving"),
+               4: N_("error while reading/checking the bank")}
+ERRORS = {65: N_("invalid flash request"), 66: N_("flash error"), 67: N_("device busy (another port is transferring)"),
+          68: N_("flash not erased"), 69: N_("flash context"), 70: N_("flash not available"),
+          71: N_("data or parameters invalid"), 72: N_("not enough memory"),
+          73: N_("old bank occupies the extended memory – back it up and shrink it first")}
 
 
 class FM1OpenError(Exception):
@@ -84,7 +87,7 @@ def unpack7(a) -> bytes | None:
 
 def frame(cmd: int, token: int, payload=b"") -> list[int]:
     if not 0 <= cmd < 128 or not 0 <= token < 16384 or len(payload) > 132:
-        raise ValueError("ungültige Protokoll-Parameter")
+        raise ValueError(_("invalid protocol parameters"))
     d = [0xF0, 0x7D, 0x46, 0x4D, 0x02, cmd, token & 127, token >> 7, *pack7(payload)]
     d.append((-sum(d[1:])) & 127)
     d.append(0xF7)
@@ -248,7 +251,7 @@ def sea_decode(data: bytes) -> list[int]:
     for c in range(0, len(data) - CHUNK_BYTES + 1, CHUNK_BYTES):
         ch = data[c:c + CHUNK_BYTES]
         if ch[:4] != BLOCK_MAGIC:
-            raise FM1OpenError("SEA5-Block ungültig")
+            raise FM1OpenError(_("SEA5 block invalid"))
         st = list(struct.unpack_from("<8h", ch, 4))
         for g in range(16):
             scale = (ch[20 + g // 2] >> (0 if g & 1 else 4)) & 15
@@ -298,14 +301,14 @@ def read_bank(data: bytes) -> list[SampleEntry]:
     """prüft eine Bank wie die Workbench (Samples.js read) -> 8 Einträge."""
     data = bytes(data)
     if not HEADER <= len(data) <= REGION:
-        raise FM1OpenError("Sample-Bank: Länge ungültig")
+        raise FM1OpenError(_("Sample bank: length invalid"))
     magic, ver, size, crc, commit, rate, r0, r1 = struct.unpack_from("<8I", data)
     if magic != MAGIC or ver != 1 or size != len(data) or commit or rate != RATE or r0 or r1:
-        raise FM1OpenError("Sample-Bank: Format ungültig (keine FM1-Open-Bank?)")
+        raise FM1OpenError(_("Sample bank: format invalid (not an FM1 Open bank?)"))
     if crc != bank_crc(data):
-        raise FM1OpenError("Sample-Bank: Prüfsumme falsch (Datei beschädigt)")
+        raise FM1OpenError(_("Sample bank: checksum wrong (file damaged)"))
     if any(data[480:512]):
-        raise FM1OpenError("Sample-Bank: reservierte Felder belegt")
+        raise FM1OpenError(_("Sample bank: reserved fields in use"))
     nxt, out = HEADER, []
     for i in range(DISK_SLOTS):
         at = 32 + i * 28
@@ -313,17 +316,17 @@ def read_bank(data: bytes) -> list[SampleEntry]:
         name = data[at + 12:at + 28]
         if (off != nxt or frames > MAX_FRAMES or n != chunk_bytes(frames) or n > len(data) - nxt or name[15]
                 or any(b and not 32 <= b <= 126 for b in name)):
-            raise FM1OpenError(f"Sample-Bank: Slot {i + 1} ungültig")
+            raise FM1OpenError(_("Sample bank: slot {n} invalid").format(n=i + 1))
         for p in range(off, off + n, CHUNK_BYTES):
             if data[p:p + 4] != BLOCK_MAGIC:
-                raise FM1OpenError("Sample-Bank: SEA5-Block ungültig")
+                raise FM1OpenError(_("Sample bank: SEA5 block invalid"))
         txt = name.split(b"\0", 1)[0].decode("ascii")
         if i >= SLOTS and (frames or txt):
-            raise FM1OpenError("Sample-Bank: Format ungültig")
+            raise FM1OpenError(_("Sample bank: format invalid"))
         out.append(SampleEntry(txt, frames, data[off:off + n]))
         nxt += n
     if nxt != len(data):
-        raise FM1OpenError("Sample-Bank: überzählige Daten")
+        raise FM1OpenError(_("Sample bank: surplus data"))
     return out[:SLOTS]
 
 
@@ -334,11 +337,12 @@ def clean_name(name: str) -> str:
 def build_bank(entries: list[SampleEntry], capacity: int = CAPACITY) -> bytes:
     """8 Einträge -> Bank (wie Samples.js encodeBank)."""
     if len(entries) != SLOTS:
-        raise FM1OpenError("Die Bank braucht genau 8 Slots")
+        raise FM1OpenError(_("The bank needs exactly 8 slots"))
     size = HEADER + sum(len(e.data) for e in entries)
     if size > capacity:
-        raise FM1OpenError(f"Zu lang: {used_seconds(entries):.2f} s – alle 8 Slots zusammen fassen "
-                           f"{capacity_seconds(capacity):.2f} s. Kürzen oder andere Slots leeren.")
+        raise FM1OpenError(_("Too long: {used} s – all 8 slots together hold {capacity} s. Shorten or empty other "
+                             "slots.").format(used=decimal(used_seconds(entries), 2),
+                                              capacity=decimal(capacity_seconds(capacity), 2)))
     d = bytearray(size)
     struct.pack_into("<3I", d, 0, MAGIC, 1, size)
     struct.pack_into("<I", d, 20, RATE)
@@ -358,7 +362,7 @@ def build_bank(entries: list[SampleEntry], capacity: int = CAPACITY) -> bytes:
 
 
 def empty_bank() -> list[SampleEntry]:
-    return [SampleEntry() for _ in range(SLOTS)]
+    return [SampleEntry() for _i in range(SLOTS)]
 
 
 def used_seconds(entries: list[SampleEntry]) -> float:
@@ -377,9 +381,9 @@ def free_frames(entries: list[SampleEntry], slot: int, capacity: int = CAPACITY)
 def make_entry(pcm, name: str, progress=None) -> SampleEntry:
     pcm = list(pcm)
     if not pcm:
-        raise FM1OpenError("kein Audio")
+        raise FM1OpenError(_("no audio"))
     if len(pcm) > MAX_FRAMES:
-        raise FM1OpenError("zu lang für die Sample-Bank")
+        raise FM1OpenError(_("too long for the sample bank"))
     return SampleEntry(clean_name(name), len(pcm), sea_encode(pcm, progress))
 
 
@@ -415,7 +419,7 @@ def render_zone(zone) -> list[int]:
     sr, x = S.read_mono(Path(zone.path))
     y = S.apply_edit(sr, x, zone.edit)
     if not y:
-        raise FM1OpenError(f"{Path(zone.path).name}: kein Audio übrig")
+        raise FM1OpenError(_("{name}: no audio left").format(name=Path(zone.path).name))
     return to_pcm(resample(y, sr))
 
 
@@ -448,7 +452,7 @@ class Client:
     def _send(self, msg):
         if hasattr(self.link, "send_midi"):
             if not self.link.send_midi(msg, force=True):
-                raise FM1OpenError("Gerät nicht verbunden")
+                raise FM1OpenError(_("Device not connected"))
         else:
             self.link.send(msg)
 
@@ -458,7 +462,7 @@ class Client:
         msg = frame(cmd, tok, bytes(payload))
         while not self.q.empty():
             self.q.get_nowait()
-        for _ in range(self.attempts):
+        for _attempt in range(self.attempts):
             self._send(msg)                      # Wiederholung: gleiches Token -> Gerät schickt die gespeicherte Antwort
             end = time.monotonic() + self.timeout
             while True:
@@ -473,12 +477,13 @@ class Client:
                     continue
                 data = r[2]
                 if not data:
-                    raise FM1OpenError("Antwort unvollständig")
+                    raise FM1OpenError(_("Answer incomplete"))
                 code = data[0]
                 if code and not (empty_ok and code == 1):
-                    raise FM1OpenError(ERRORS.get(code, f"Gerät meldet Fehler {code}"), code)
+                    raise FM1OpenError(_(ERRORS[code]) if code in ERRORS else
+                                       _("device reports error {code}").format(code=code), code)
                 return data[1:]
-        raise FM1OpenError("Keine Antwort – läuft FM1 Open auf dem FM-1?")
+        raise FM1OpenError(_("No answer – is FM1 Open running on the FM-1?"))
 
     # ---- Abfragen
     def probe(self) -> dict:
@@ -486,7 +491,7 @@ class Client:
         info = self.query(0)
         if len(info) != 14 or info[1] != 16 or not ((info[0] == 3 and info[3] | info[4] << 8 == 4048) or
                                                      (info[0] == 4 and info[3] | info[4] << 8 == 4064)):
-            raise FM1OpenError("Antwort passt nicht zu FM1 Open")
+            raise FM1OpenError(_("Answer does not match FM1 Open"))
         self.version = info[0]
         self.capacity = CAPACITY_V13
         try:
@@ -501,10 +506,10 @@ class Client:
     def sample_status(self) -> tuple[int, int]:
         d = self.query(11)
         if len(d) != 9 or d[0] > 4:
-            raise FM1OpenError("Sample-Status: Antwort ungültig")
+            raise FM1OpenError(_("Sample status: answer invalid"))
         size, region = struct.unpack_from("<II", d, 1)
         if region != REGION or (size and not (d[0] == 2 and HEADER <= size <= REGION)):
-            raise FM1OpenError("Sample-Bereich passt nicht – nichts verändert")
+            raise FM1OpenError(_("Sample area does not match – nothing changed"))
         return d[0], size
 
     def read_bytes(self, start: int, n: int) -> bytes:
@@ -514,7 +519,7 @@ class Client:
             k = min(64, start + n - at)
             p = self.query(15, struct.pack("<IB", at, k))
             if len(p) != k:
-                raise FM1OpenError("Sample-Bank: Stück unvollständig")
+                raise FM1OpenError(_("Sample bank: chunk incomplete"))
             out += p
         return bytes(out)
 
@@ -531,15 +536,16 @@ class Client:
     def read_bank(self, progress=None, cancel=lambda: False) -> bytes:
         st, size = self.sample_status()
         if st != 2:
-            raise FM1OpenError(f"Sample-Bank nicht bereit ({STATUS_TEXT.get(st, st)})")
+            raise FM1OpenError(_("Sample bank not ready ({state})").format(
+                state=_(STATUS_TEXT[st]) if st in STATUS_TEXT else st))
         out = bytearray()
         for at in range(0, size, 64):
             if cancel():
-                raise FM1OpenError("abgebrochen")
+                raise FM1OpenError(_("cancelled"))
             n = min(64, size - at)
             p = self.query(15, struct.pack("<IB", at, n))
             if len(p) != n:
-                raise FM1OpenError("Sample-Bank: Stück unvollständig")
+                raise FM1OpenError(_("Sample bank: chunk incomplete"))
             out += p
             if progress:
                 progress(at + n, size)
@@ -549,18 +555,18 @@ class Client:
         """ganze Bank schreiben (löscht zuerst!) und zurücklesen."""
         read_bank(data)
         if len(data) > self.capacity:
-            raise FM1OpenError("Bank zu groß für dieses Gerät")
-        st, _ = self.sample_status()
+            raise FM1OpenError(_("Bank too large for this device"))
+        st, _size = self.sample_status()
         if st in (1, 3):
-            raise FM1OpenError("Sample-Bank ist gerade beschäftigt – kurz warten")
+            raise FM1OpenError(_("Sample bank is busy right now – wait a moment"))
         n = len(data)
         total = n * (2 if verify else 1)
         self.query(12, struct.pack("<I", n))
         try:
             for at in range(0, n, 128):
                 if cancel():
-                    raise FM1OpenError("Abgebrochen – die Bank auf dem FM-1 ist jetzt leer/ungültig. "
-                                       "Bitte das Backup zurückspielen.")
+                    raise FM1OpenError(_("Cancelled – the bank on the FM-1 is now empty/invalid. Please "
+                                         "restore the backup."))
                 self.query(13, struct.pack("<I", at) + data[at:at + 128])
                 if progress:
                     progress(min(n, at + 128), total)
@@ -571,14 +577,14 @@ class Client:
             except FM1OpenError:
                 pass
         if verify:
-            for _ in range(20):
+            for _i in range(20):
                 st, size = self.sample_status()
                 if st != 1:
                     break
                 time.sleep(0.25)
             back = self.read_bank(lambda a, b: progress(n + a, total) if progress else None)
             if back != data:
-                raise FM1OpenError("Zurückgelesene Bank weicht ab – Schreiben nicht bestätigt, bitte wiederholen")
+                raise FM1OpenError(_("Read-back bank differs – writing not confirmed, please repeat"))
 
 
 def detect(link, timeout: float = 0.8) -> dict | None:

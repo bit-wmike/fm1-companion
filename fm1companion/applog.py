@@ -35,7 +35,8 @@ def setup(level: int = logging.INFO) -> Path | None:
         h.setFormatter(logging.Formatter("%(asctime)s %(levelname)-7s %(name)s: %(message)s"))
         root.addHandler(h)
     except OSError as e:
-        print(f"Protokoll nicht beschreibbar: {e}", file=sys.stderr)
+        from .i18n import _
+        print(_("Log not writable: {error}").format(error=e), file=sys.stderr)
         return None
     _configured = True
     logging.getLogger("fm1companion").info("Start %s %s, Python %s", APP_ID, __version__, sys.version.split()[0])

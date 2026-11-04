@@ -7,21 +7,23 @@ fragt die App erneut. Die Bestätigungen der einzelnen Aktionen bleiben davon un
 """
 from __future__ import annotations
 
+from .i18n import _
+
 RISK_VERSION = 1
-TITLE = "Bevor du dein FM-1 veränderst"
+TITLE = _("Before you change your FM-1")
 TEXT_LINES = [
-    "Die FM-1 Companion Suite ist ein inoffizielles Community-Projekt und nicht mit M-VAVE verbunden.",
-    "Firmware installieren, Rettung (Update-Modus, ROM-Bootmodus), Reste aufräumen und das Zurückschreiben "
-    "aus dem Studio verändern dein Gerät. Das geschieht auf eigenes Risiko – im schlimmsten Fall startet "
-    "das FM-1 nicht mehr und muss mit den Rettungswerkzeugen wiederbelebt werden.",
-    "Mach vorher ein Backup (die App bietet es vor jeder Installation an) und trenne das Gerät während eines "
-    "Vorgangs nicht.",
-    "Nicht jede Funktion ist auf echter Hardware getestet, und schon gar nicht auf allen Geräten, "
-    "Flash-Chips und Firmware-Versionen. Was getestet ist und was nicht, steht in docs/UNTESTED.md.",
-    "Es gibt keine Gewährleistung und keine Haftung, soweit gesetzlich zulässig "
-    "(GNU GPL 3.0, Abschnitte 15 und 16).",
+    _("FM-1 Companion Suite is an unofficial community project and not affiliated with M-VAVE."),
+    _("Installing firmware, recovery (update mode, ROM boot mode), cleaning up leftovers and writing back "
+      "from the Studio change your device. You do this at your own risk – in the worst case the FM-1 no "
+      "longer starts and has to be revived with the recovery tools."),
+    _("Make a backup first (the app offers one before every installation) and do not disconnect the device "
+      "during an operation."),
+    _("Not every function has been tested on real hardware, let alone on all devices, flash chips and "
+      "firmware versions. What is tested and what is not is listed in docs/UNTESTED.md."),
+    _("There is no warranty and no liability, to the extent permitted by law "
+      "(GNU GPL 3.0, sections 15 and 16)."),
 ]
-CHECK_TEXT = "Ich habe verstanden"
+CHECK_TEXT = _("I understand")
 
 
 def text_plain() -> str:

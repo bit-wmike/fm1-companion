@@ -12,41 +12,89 @@ from pathlib import Path
 
 from . import flashmodel as fm, package as pk
 from .. import melodee16 as m16
+from ..i18n import N_, _
 
-TRAP_TEXT = ("Beim Wechsel auf die Original-Firmware vergleicht die laufende Felucca-Firmware den Bootbereich "
-             "(CHECK HEAD). Weicht er ab – z. B. nach m-bootloader oder M-VAVE Open V12/V14 –, zeigt das FM-1 "
-             "„FAILED -5“ (Felucca-1.6.1-Kopien: -15). Es wird nichts geschrieben, die jetzige Firmware läuft weiter. "
-             "Auswege: eine Felucca-Firmware mit neuer Prüfung (felucca-bsp afd83ede) oder der Download-Modus "
-             "(Rettung Stufe 2, M-Flasher).")
+# fixed sentences of flashmodel.describe_loss() (flashmodel.py is pinned and stays German) -> UI language
+_LOSS_TEXT = {
+    "Alles, was du unter V16 gespeichert hast (Patterns, Einstellungen), ist danach nicht mehr nutzbar – "  # i18n: ignore
+    "die App kann von V16 kein Backup machen.":
+        N_("Everything you saved under V16 (patterns, settings) can no longer be used afterwards – "
+           "the app cannot make a backup of V16."),
+    "V15 und Community-Firmwares schreiben nur bis 0x92FFF: Reste von V16 in 0x93000–0xA8FFF bleiben "  # i18n: ignore
+    "liegen. Melodee 1.5.1 lief damit im Emulator wie auf sauberem Flash; prüfen kannst du es mit "
+    "„Ist mein FM-1 sauber?“ (Rettung).":
+        N_("V15 and community firmwares only write up to 0x92FFF: leftovers of V16 in 0x93000–0xA8FFF remain. "
+           "Melodee 1.5.1 ran with them in the emulator as on a clean flash; you can check it with "
+           "“Is my FM-1 clean?” (Recovery)."),
+}
+
+
+_LOSS_WHAT = {"Songs, Presets und Einstellungen": N_("songs, presets and settings"),  # i18n: ignore
+              "weitere Song- und Preset-Bereiche": N_("further song and preset areas")}  # i18n: ignore
+_LOSS_RE = [
+    (re.compile(r"^Beim Schreiben von V16: der Bereich 0x93000–0xA8FFF \(22 Sektoren\) – bei dir: (?P<what>.+)\. "  # i18n: ignore
+                r"So gut wie sicher: Der Update-Loader schreibt genau so weit, wie das Paket lang ist \(bei V15 an "  # i18n: ignore
+                r"echter Hardware aufgezeichnet\)\.$"),
+     N_("When writing V16: the area 0x93000–0xA8FFF (22 sectors) – on your device: {what}. As good as certain: the "
+        "update loader writes exactly as far as the package is long (recorded with V15 on real hardware).")),
+    (re.compile(r"^Beim ersten Start formatiert V16 zusätzlich (?P<ranges>.+?) – bei dir: (?P<what>.+)\. "  # i18n: ignore
+                r"Beobachtet im Emulator, nicht an echter Hardware\. Die Ressourcen schreibt die App beim Rückweg auf "  # i18n: ignore
+                r"Melodee neu\.$"),
+     N_("At the first start V16 additionally formats {ranges} – on your device: {what}. Observed in the emulator, not "
+        "on real hardware. The app rewrites the resources on the way back to Melodee.")),
+    (re.compile(r"^Beim ersten Start formatiert V16 zusätzlich (?P<ranges>.+?) – bei dir: (?P<what>.+)\. "  # i18n: ignore
+                r"Beobachtet im Emulator, nicht an echter Hardware\.$"),  # i18n: ignore
+     N_("At the first start V16 additionally formats {ranges} – on your device: {what}. Observed in the emulator, not "
+        "on real hardware.")),
+]
+
+
+def _loss_text(t: str) -> str:
+    if t in _LOSS_TEXT:
+        return _(_LOSS_TEXT[t])
+    for rx, msg in _LOSS_RE:
+        m = rx.match(t)
+        if m:
+            parts = m.groupdict()
+            what = parts["what"]
+            parts["what"] = _(_LOSS_WHAT[what]) if what in _LOSS_WHAT else what
+            return _(msg).format(**parts)
+    return t
+
+TRAP_TEXT = _("When switching to the original firmware, the running Felucca firmware compares the boot area "
+              "(CHECK HEAD). If it differs – e.g. after m-bootloader or M-VAVE Open V12/V14 –, the FM-1 shows "
+              "“FAILED -5” (Felucca 1.6.1 copies: -15). Nothing is written, the current firmware keeps running. "
+              "Ways out: a Felucca firmware with the new check (felucca-bsp afd83ede) or download mode "
+              "(recovery stage 2, M-Flasher).")
 BOOT_CHANGERS = ("m-bootloader", "mbootloader", "open", "fm1open")
 
-RISK_TEXT = {"keins": "kein Risiko", "niedrig": "geringes Risiko", "mittel": "mittleres Risiko", "hoch": "hohes Risiko"}
+RISK_TEXT = {"keins": _("no risk"), "niedrig": _("low risk"), "mittel": _("medium risk"), "hoch": _("high risk")}
 
 # Bestätigungen, die der Nutzer ausdrücklich geben muss
 CONFIRM_TEXT = {
-    "unknown_file": "Ich weiß, was ich tue: Diese Datei ist in keinem Katalog. Ich habe Kennung und Prüfsumme "
-                    "selbst geprüft.",
-    "power": "Das FM-1 ist geladen bzw. am Strom, das Kabel steckt direkt am Rechner, und der Rechner geht "
-             "während der Installation nicht schlafen.",
-    "no_backup": "Ich mache kein Backup und nehme in Kauf, dass Projekte und Sounds verloren gehen.",
-    "beta": "Mir ist klar, dass dies eine Testversion (Beta) ist.",
-    "felucca09": "Ich weiß, dass Felucca 0.9-Daten beim Wechsel auf 1.x den Start verhindern können "
-                 "(Backup ist Pflicht; Abhilfe siehe Rettung).",
-    "no_checksum": "Prüfsumme nicht verfügbar: Ich installiere dieses Paket, obwohl die App es gegen keine "
-                   "Prüfsumme prüfen kann (das Release hat keine SHA256SUMS-Datei).",
-    "melodee16_down": "Mir ist klar: Projekte, Presets und Backups von Melodee 1.6 kann die ältere Firmware nicht "
-                      "lesen. Mein Rückweg ist ein Backup von vor dem Update auf 1.6.",
-    "v16": "Mir ist klar: V16 ist experimentell und nur mit Backup gedacht. Der Rückweg von V16 auf V15 ist mit echter "
-           "V16 noch nicht bestätigt – im schlimmsten Fall hilft nur der ROM-Bootmodus (Rettung Stufe 2).",
+    "unknown_file": _("I know what I am doing: this file is in no catalog. I have checked the identity and "
+                      "checksum myself."),
+    "power": _("The FM-1 is charged or on power, the cable is plugged directly into the computer, and the "
+               "computer does not go to sleep during the installation."),
+    "no_backup": _("I am not making a backup and accept that projects and sounds may be lost."),
+    "beta": _("I understand that this is a test version (beta)."),
+    "felucca09": _("I know that Felucca 0.9 data can prevent the start when switching to 1.x "
+                   "(backup is mandatory; for the remedy see Recovery)."),
+    "no_checksum": _("Checksum not available: I am installing this package although the app cannot check it "
+                     "against any checksum (the release has no SHA256SUMS file)."),
+    "melodee16_down": _("I understand: the older firmware cannot read projects, presets and backups from "
+                        "Melodee 1.6. My way back is a backup from before the update to 1.6."),
+    "v16": _("I understand: V16 is experimental and meant only with a backup. The way back from V16 to V15 has not "
+             "yet been confirmed with real V16 – in the worst case only ROM boot mode helps (recovery stage 2)."),
 }
 
-V16_WARNING = ("Experimentell – nur mit Backup. V16 nutzt einen anderen Flash-Aufbau als V15 und alle Community-Firmwares. "
-               "Belegt ist: Der Update-Loader ist in V15 und V16 derselbe, und ein FM-1, das sich als Version 16 meldete "
-               "(ein V15-Abkömmling), ließ sich per normalem Update auf V15 zurücksetzen. Mit echter V16 ist der Rückweg "
-               "aber noch nicht bestätigt, und offen ist, ob der Loader dabei auch den Bootkopf neu schreibt. Klappt "
-               "der Rückweg nicht, hilft der ROM-Bootmodus (Rettung Stufe 2). "
-               "Empfehlung: nicht auf dem Haupt-FM-1.")
-MULTI_DEVICE_TEXT = "Bitte nur das FM-1 angeschlossen lassen, das du aktualisieren willst."
+V16_WARNING = _("Experimental – only with a backup. V16 uses a different flash layout than V15 and all community "
+                "firmwares. Established: the update loader is the same in V15 and V16, and an FM-1 that reported as "
+                "version 16 (a V15 derivative) could be reset to V15 with a normal update. With real V16, however, the "
+                "way back has not yet been confirmed, and it is open whether the loader also rewrites the boot header. "
+                "If the way back does not work, ROM boot mode helps (recovery stage 2). "
+                "Recommendation: not on your main FM-1.")
+MULTI_DEVICE_TEXT = _("Please leave only the FM-1 connected that you want to update.")
 
 
 @dataclass
@@ -167,25 +215,27 @@ def check_package(t: Target, info: pk.PackageInfo) -> list[str]:
     """Sperren für ein vorliegendes Paket (Prüfsumme, Modell, Unversehrtheit, Loader)"""
     out = []
     if t.sha256 and info.sha256 != t.sha256:
-        out.append(f"Die Prüfsumme von {info.path.name} stimmt nicht mit dem Katalog überein "
-                   f"(erwartet {t.sha256[:12]}…, Datei {info.sha256[:12]}…). Die Datei ist beschädigt oder "
-                   "wurde ausgetauscht – sie wird nicht installiert.")
+        out.append(_("The checksum of {name} does not match the catalog (expected {expected}…, file {actual}…). "
+                     "The file is damaged or was replaced – it is not installed.").format(
+                         name=info.path.name, expected=t.sha256[:12], actual=info.sha256[:12]))
     if info.model != "FM-1":
-        out.append(f"Das Paket ist für „{info.model}“, nicht für das FM-1 ({info.product}).")
+        out.append(_("The package is for “{model}”, not for the FM-1 ({product}).").format(
+            model=info.model, product=info.product))
     if t.product and info.product != t.product and t.known:
-        out.append(f"Das Paket meldet {info.product}, erwartet war {t.product}.")
+        out.append(_("The package reports {product}, {expected} was expected.").format(
+            product=info.product, expected=t.product))
     if info.damage:
-        out.append(f"Das Paket ist beschädigt ({info.damage}). Bitte neu herunterladen.")
+        out.append(_("The package is damaged ({damage}). Please download it again.").format(damage=info.damage))
     if info.family not in ("stock", "felucca") and t.family not in ("stock", "felucca"):
-        out.append("Die App kennt den Update-Loader dieses Pakets nicht und schickt es deshalb an keinen "
-                   "Loader. Bitte den Installer des Autors benutzen.")
+        out.append(_("The app does not know the update loader of this package and therefore sends it to no "
+                     "loader. Please use the author's installer."))
     if info.flash_bytes > 0xFF000:
-        out.append(f"Das Paket würde bis {fm.hx(info.flash_bytes - 1)} schreiben – bis in den geschützten Bereich ab "
-                   "0xFF000 (Gerätekennung, Bluetooth-Adresse). Kein bekanntes FM-1-Paket tut das; es wird nicht "
-                   "installiert.")
+        out.append(_("The package would write up to {end} – into the protected area from 0xFF000 (device ID, "
+                     "Bluetooth address). No known FM-1 package does that; it is not installed.").format(
+                         end=fm.hx(info.flash_bytes - 1)))
     if info.family == "stock" and not info.official:
-        out.append("Das Paket enthält den Original-Loader, ist aber keine unveränderte Original-Firmware "
-                   "(V15/V16). Veränderte Original-Pakete werden nicht installiert.")
+        out.append(_("The package contains the original loader, but is not an unmodified original firmware "
+                     "(V15/V16). Modified original packages are not installed."))
     return out
 
 
@@ -255,51 +305,52 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
     # ---- Sperren
     if state.busy or (journal_active and journal_active.get("phase") not in ("done", "failed", "safe")
                       and not state.update_mode and journal_active.get("pid_alive")):
-        p.blockers.append("Es läuft bereits eine Installation. Bitte warten, bis sie fertig ist.")
+        p.blockers.append(_("An installation is already running. Please wait until it is finished."))
     if not state.connected:
-        p.blockers.append("Kein FM-1 verbunden. Bitte per USB-Datenkabel anschließen und einschalten.")
+        p.blockers.append(_("No FM-1 connected. Please connect it with a USB data cable and switch it on."))
     if state.open_firmware:
-        p.blockers.append("Auf diesem FM-1 läuft die M-VAVE-Open-Firmware. Erst mit M-VAVEs eigenem Werkzeug "
-                          "(FM1 Workbench) zur Original-Firmware zurückkehren, dann hier installieren.")
+        p.blockers.append(_("This FM-1 runs the M-VAVE Open firmware. First return to the original firmware with "
+                            "M-VAVE's own tool (FM1 Workbench), then install here."))
     if state.identity and not state.update_mode and not state.open_firmware and \
             not state.identity.startswith("FM-1_"):
-        p.blockers.append(f"Das angeschlossene Gerät meldet „{state.identity}“ – das ist kein FM-1.")
+        p.blockers.append(_("The connected device reports “{identity}” – that is not an FM-1.").format(
+            identity=state.identity))
     if info is not None:
         p.blockers += check_package(t, info)
     if fam not in ("stock", "felucca") and info is None and not t.key:
-        p.blockers.append("Unbekannte Loader-Familie.")
+        p.blockers.append(_("Unknown loader family."))
     if state.ports > 1 and not state.pinned:
-        p.blockers.append(MULTI_DEVICE_TEXT + " Es sind mehrere FM-1 (oder Geräte im Update-Modus) angeschlossen, "
-                          "und die App kann das Zielgerät nicht eindeutig an USB-Anschluss oder Seriennummer "
-                          "erkennen. Nach dem Neustart in den Update-Modus könnte sie sonst das falsche Gerät "
-                          "beschreiben.")
+        p.blockers.append(_("{please} Several FM-1 (or devices in update mode) are connected, and the app cannot "
+                            "identify the target device unambiguously by USB port or serial number. After the "
+                            "restart into update mode it could otherwise write to the wrong device.").format(
+                                please=MULTI_DEVICE_TEXT))
     elif state.ports > 1:
-        p.warnings.append("Es sind mehrere FM-1 angeschlossen. Die App hält das Zielgerät über seinen "
-                          "USB-Anschluss fest – bitte während der Installation kein Kabel umstecken.")
+        p.warnings.append(_("Several FM-1 are connected. The app pins the target device by its USB port – "
+                            "please do not move any cable during the installation."))
 
     # ---- Update-Modus: nur fortsetzen, wenn der wartende Loader zum Paket passt
     if state.update_mode:
         rule = pk.LoaderRule(fam, t.product or (info.product if info else "")) if fam else None
         if rule is None or not rule(state.identity):
-            hint = {"ota-FM-1_900": "Er wartet auf ein Paket der Felucca-Familie (z. B. Melodee) – am besten "
-                                    "genau das, dessen Installation unterbrochen wurde.",
-                    "ota-FM-1_015": "Er wartet auf die unveränderte Original-Firmware V15."}
-            h = hint.get(state.identity) or ("Er wartet auf das Paket, dessen Installation unterbrochen wurde."
+            hint = {"ota-FM-1_900": _("It is waiting for a package of the Felucca family (e.g. Melodee) – ideally "
+                                      "exactly the one whose installation was interrupted."),
+                    "ota-FM-1_015": _("It is waiting for the unmodified original firmware V15.")}
+            h = hint.get(state.identity) or (_("It is waiting for the package whose installation was interrupted.")
                                             if pk.FELUCCA_LOADER_RE.match(state.identity) or
                                             pk.STOCK_LOADER_RE.match(state.identity) else
-                                            "Diesen Loader kennt die App nicht.")
-            p.blockers.append(f"Das FM-1 wartet im Update-Modus ({state.identity}). Dieses Paket gehört nicht zu "
-                              f"diesem Loader – es wird nichts gesendet. {h}")
+                                            _("The app does not know this loader."))
+            p.blockers.append(_("The FM-1 is waiting in update mode ({identity}). This package does not belong to "
+                                "this loader – nothing is sent. {hint}").format(identity=state.identity, hint=h))
         p.resume = True
-        p.steps.append(Step("fetch", "Paket laden & Prüfsumme prüfen", "keins",
-                            "Paket holen und gegen die bekannte Prüfsumme prüfen."))
+        p.steps.append(Step("fetch", _("Load package & check checksum"), "keins",
+                            _("Fetch the package and check it against the known checksum.")))
         if journal_active and journal_active.get("sha256") and info is not None \
                 and journal_active["sha256"] != info.sha256:
-            p.warnings.append(f"Unterbrochen wurde „{journal_active.get('target', '?')}“. Am sichersten ist es, "
-                              "genau dieses Paket noch einmal zu schreiben.")
-        p.steps.append(Step("resume", "Unterbrochene Installation abschließen", "mittel",
-                            "Der wartende Update-Loader liest das ganze Paket noch einmal und schreibt es. "
-                            "Bereits richtige Bereiche werden übersprungen.", writes=True))
+            p.warnings.append(_("“{target}” was interrupted. The safest thing is to write exactly this package "
+                                "again.").format(target=journal_active.get('target', '?')))
+        p.steps.append(Step("resume", _("Finish the interrupted installation"), "mittel",
+                            _("The waiting update loader reads the whole package once more and writes it. "
+                              "Areas that are already correct are skipped."), writes=True))
         _tail(p, t)
         _confirm_power(p, t, fam)
         return p
@@ -308,19 +359,20 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
     if info is not None and t.file is not None:
         v = fm.name_version(Path(t.file).name)
         if v is not None and pk.is_stock_identity(info.product) and v != int(info.product[-3:]):
-            p.blockers.append(f"Der Dateiname „{Path(t.file).name}“ sagt V{v}, das Paket selbst ist aber "
-                              f"{info.product} (V{int(info.product[-3:])}). Die App richtet sich nur nach dem Inhalt – "
-                              "diese Datei wird nicht installiert. Bitte die Datei richtig benennen oder neu laden.")
+            p.blockers.append(_("The file name “{name}” says V{name_version}, but the package itself is {product} "
+                                "(V{version}). The app goes only by the content – this file is not installed. Please "
+                                "name the file correctly or download it again.").format(
+                                    name=Path(t.file).name, name_version=v, product=info.product,
+                                    version=int(info.product[-3:])))
     lchange = layout_change(state, t)
     if lchange and not state.identity and not state.felucca:
         # z. B. Melodee, deren Erkennung noch läuft: sonst sähe der Plan „kein Backup möglich“ statt der Backup-Pflicht
-        p.blockers.append("Die laufende Firmware ist (noch) nicht erkannt. Für den Wechsel zwischen V16 und dem "
-                          "V15-Aufbau muss die App wissen, was gerade läuft – bitte warten, bis das FM-1 oben erkannt "
-                          "ist, und den Plan neu öffnen. Ohne Erkennung: zuerst die Original-V15 installieren.")
+        p.blockers.append(_("The running firmware is not recognized (yet). For the switch between V16 and the V15 "
+                            "layout the app must know what is running – please wait until the FM-1 is recognized at "
+                            "the top, and open the plan again. Without recognition: install the original V15 first."))
     if lchange and state.felucca and backup is False:
-        p.blockers.append("Für den Wechsel zwischen V16 und dem V15-Aufbau ist ein Backup Pflicht: Dabei werden "
-                          "Bereiche überschrieben, in denen deine Projekte und Sounds liegen. Bitte „Vorher ein Backup "
-                          "machen“ anhaken.")
+        p.blockers.append(_("A backup is mandatory for the switch between V16 and the V15 layout: it overwrites "
+                            "areas where your projects and sounds are stored. Please tick “Make a backup first”."))
 
     mel = melodee_change(state, t)
     if mel == "up16" and state.felucca and backup is False:
@@ -328,105 +380,106 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
 
     # ---- normaler Ablauf
     if state.felucca and backup is not False:
-        p.steps.append(Step("backup", "Backup des Geräts", "keins",
-                            "Alle Projekte, Sounds und Einstellungen werden vorher gesichert (nur lesen). "
-                            "Klappt das Backup nicht, bricht die Installation ab."))
+        p.steps.append(Step("backup", _("Backup of the device"), "keins",
+                            _("All projects, sounds and settings are backed up first (read only). "
+                              "If the backup fails, the installation is aborted.")))
     elif state.felucca:
-        p.warnings.append("Ohne Backup: Projekte, Sounds und Einstellungen auf dem Gerät werden vorher NICHT "
-                          "gesichert.")
+        p.warnings.append(_("Without backup: projects, sounds and settings on the device are NOT backed up "
+                            "first."))
         p.confirmations.append("no_backup")
     else:
-        p.warnings.append("Kein Backup möglich: Die laufende Firmware hat kein Editor-Protokoll, die App kann von "
-                          "ihr nichts sichern. Wichtige Projekte vorher mit dem Werkzeug der Firmware sichern.")
+        p.warnings.append(_("No backup possible: the running firmware has no editor protocol, the app cannot back "
+                            "up anything from it. Back up important projects first with the firmware's own tool."))
         p.confirmations.append("no_backup")
-    p.steps.append(Step("fetch", "Paket laden & Prüfsumme prüfen", "keins",
-                        "Paket herunterladen (oder vorhandene Datei nehmen) und gegen die Prüfsumme prüfen."))
+    p.steps.append(Step("fetch", _("Load package & check checksum"), "keins",
+                        _("Download the package (or take the existing file) and check it against the checksum.")))
     p.v15_option = v15_option(state, t)
     if p.v15_option == "locked" and v16_switch(state, t):
-        p.v15_reason = ("Pflicht: V16 geht nur von der Original-Firmware aus – deine jetzige Firmware würde V16 mit "
-                        "„FAILED -5“ ablehnen." if t.is_v16 else
-                        "Pflicht: Der Rückweg von V16 führt über die Original-V15 (derselbe Update-Loader wie V16).")
+        p.v15_reason = (_("Mandatory: V16 only works from the original firmware – your current firmware would refuse "
+                          "V16 with “FAILED -5”.") if t.is_v16 else
+                        _("Mandatory: the way back from V16 leads via the original V15 (the same update loader as "
+                          "V16)."))
     default = p.v15_option in ("locked", "default_on")
     p.via_stock = p.v15_option == "locked" or (p.v15_option != "none" and (default if via_v15 is None else via_v15))
     if p.via_stock:
-        why = (("V16 lässt sich nur von der Original-Firmware aus installieren: Deine jetzige Firmware vergleicht vor "
-                "dem Original-Loader den Bootkopf und würde V16 mit „FAILED -5“ ablehnen." if t.is_v16 else
-                "Der Rückweg von V16 geht über die Original-V15 – sie nutzt denselben Update-Loader wie V16.")
+        why = ((_("V16 can only be installed from the original firmware: your current firmware compares the boot "
+                  "header before the original loader and would refuse V16 with “FAILED -5”.") if t.is_v16 else
+                _("The way back from V16 goes via the original V15 – it uses the same update loader as V16."))
                if p.v15_option == "locked" and v16_switch(state, t) else
-               "Diese Firmware wird laut Katalog von der Original-Firmware V15 aus installiert."
+               _("According to the catalog, this firmware is installed from the original firmware V15.")
                if p.v15_option == "locked" else
-               "Firmware-Wechsel: Über die Original-V15 startet die neue Firmware von einem sauberen, bewährten "
-               "Stand – das vermeidet Flüchtigkeitsfehler beim schnellen Hin- und Herwechseln.")
-        p.steps.append(Step("stock", "Zwischenschritt: Original-V15 aufspielen", "hoch",
-                            why + " Die App spielt die unveränderte V15 (Prüfsumme db1642b2…) über M-VAVEs eigenen "
-                            "Loader auf und prüft danach, ob das FM-1 „FM-1_015“ meldet.", writes=True))
+               _("Firmware switch: via the original V15 the new firmware starts from a clean, proven state – "
+                 "this avoids careless mistakes when switching back and forth quickly."))
+        p.steps.append(Step("stock", _("Intermediate step: install original V15"), "hoch",
+                            _("{why} The app installs the unmodified V15 (checksum db1642b2…) via M-VAVE's own "
+                              "loader and then checks whether the FM-1 reports “FM-1_015”.").format(why=why),
+                            writes=True))
         if stock_package is not None and not stock_package.official == "FM-1_015":
-            p.blockers.append("Die bereitgelegte V15-Datei ist nicht die unveränderte Original-Firmware.")
-        p.warnings.append("Deine Projekte auf dem Gerät können beim Zwischenschritt verloren gehen – die App sichert "
-                          "sie vorher." if state.felucca else
-                          "Deine Projekte auf dem Gerät können beim Zwischenschritt verloren gehen – von dieser "
-                          "Firmware kann die App sie nicht sichern.")
+            p.blockers.append(_("The prepared V15 file is not the unmodified original firmware."))
+        p.warnings.append(_("Your projects on the device can be lost in the intermediate step – the app backs them "
+                            "up first.") if state.felucca else
+                          _("Your projects on the device can be lost in the intermediate step – the app cannot back "
+                            "them up from this firmware."))
         if state.felucca:
             p.warnings.append(TRAP_TEXT)
     if t.is_stock and state.felucca and not p.via_stock:
         p.warnings.append(TRAP_TEXT)
     if t.is_v16:
-        p.warnings.insert(0, "<b>V16 (experimentell):</b> " + V16_WARNING)
+        p.warnings.insert(0, _("<b>V16 (experimental):</b> {warning}").format(warning=V16_WARNING))
         p.confirmations.append("v16")
     if lchange:
-        p.lost += fm.describe_loss(state.identity, state.firmware_key, t.product or "")
+        p.lost += [_loss_text(x) for x in fm.describe_loss(state.identity, state.firmware_key, t.product or "")]
         if not t.is_v16 and info is not None and info.flash_bytes > fm.V15_END:
-            p.lost.append(f"Dieses Paket schreibt bis {fm.hx(info.flash_bytes - 1)} – über 0x92FFF hinaus, wo die "
-                          "Firmwares mit V15-Aufbau (auch Melodee) Songs, Presets und Sounds speichern.")
-    p.steps.append(Step("install", f"{t.name} aufspielen", "hoch" if _not_resumable(t, fam) else "mittel",
-                        "Die laufende Firmware startet den Update-Loader aus dem Paket, der Loader schreibt die "
-                        "Firmware. Nicht abziehen, nicht ausschalten.", writes=True))
+            p.lost.append(_("This package writes up to {end} – beyond 0x92FFF, where the firmwares with the V15 "
+                            "layout (Melodee too) store songs, presets and sounds.").format(end=fm.hx(info.flash_bytes - 1)))
+    p.steps.append(Step("install", _("Install {name}").format(name=t.name), "hoch" if _not_resumable(t, fam) else "mittel",
+                        _("The running firmware starts the update loader from the package, the loader writes the "
+                          "firmware. Do not unplug, do not switch off."), writes=True))
     _tail(p, t)
 
     # ---- Warnungen und Bestätigungen
     cur = (state.firmware_key or "").lower()
     if cur and t.key and cur != t.key or (state.identity and t.product and state.identity != t.product
                                           and not t.key):
-        p.lost.append("Projekte, Sounds und Einstellungen der jetzigen Firmware sind danach nicht mehr nutzbar "
-                      "(das Backup bleibt auf dem Rechner)." if state.felucca else
-                      "Projekte, Sounds und Einstellungen der jetzigen Firmware sind danach nicht mehr nutzbar.")
+        p.lost.append(_("Projects, sounds and settings of the current firmware can no longer be used afterwards "
+                        "(the backup stays on the computer).") if state.felucca else
+                      _("Projects, sounds and settings of the current firmware can no longer be used afterwards."))
     elif not cur and state.identity and not state.update_mode and not lchange:
-        p.lost.append("Welche Firmware gerade läuft, ist unbekannt – ist es eine andere als die neue, sind deren "
-                      "Projekte, Sounds und Einstellungen danach nicht mehr nutzbar.")
+        p.lost.append(_("Which firmware is running right now is unknown – if it is a different one than the new one, "
+                        "its projects, sounds and settings can no longer be used afterwards."))
     if t.is_stock:
-        p.lost.append("Die Original-Firmware kann Daten der bisherigen Firmware überschreiben.")
+        p.lost.append(_("The original firmware can overwrite data of the previous firmware."))
         if state.felucca or (state.identity and not pk.is_stock_identity(state.identity)):
-            p.warnings.append("Nach einer Felucca-Firmware liest die Original-Firmware deren Reste als eigene "
-                              "Einstellungen: Presets können verstümmelt sein. Zuerst am FM-1 System > Reset Patches "
-                              "probieren; hilft das nicht: Rettung > „Einstellungen nach Rückkehr reparieren“.")
+            p.warnings.append(_("After a Felucca firmware, the original firmware reads its leftovers as its own "
+                                "settings: presets can be garbled. First try System > Reset Patches on the FM-1; "
+                                "if that does not help: Recovery > “Repair settings after return”."))
     if "beta" in t.notes or t.prerelease:
-        p.warnings.append("Testversion (Beta / Release Candidate): Projekte lassen sich evtl. nicht in ältere "
-                          "Versionen laden.")
+        p.warnings.append(_("Test version (beta / release candidate): projects may not load in older "
+                            "versions."))
         p.confirmations.append("beta")
     if "projectsNotBackwardCompatible" in t.notes:
-        p.warnings.append("Projekte dieser Version lassen sich nicht in ältere Versionen zurückladen.")
+        p.warnings.append(_("Projects of this version cannot be loaded back into older versions."))
     _melodee16(p, state, t, mel)
     if any(b in (t.key or "").lower() or b in (t.family or "").lower() for b in BOOT_CHANGERS):
-        p.warnings.append("Diese Installation ändert den Bootbereich des FM-1. Danach lehnen viele Felucca-Firmwares "
-                          "(auch Melodee und SLOOP) die Rückkehr zur Original-V15 ab („FAILED -5“). Der Rückweg geht "
-                          "dann nur über den Download-Modus (Rettung Stufe 2 / M-Flasher).")
+        p.warnings.append(_("This installation changes the boot area of the FM-1. Afterwards many Felucca firmwares "
+                            "(Melodee and SLOOP too) refuse the return to the original V15 (“FAILED -5”). The way "
+                            "back then only goes via download mode (recovery stage 2 / M-Flasher)."))
     if "needsMiniLab3" in t.notes:
-        p.warnings.append("Diese Firmware ist für die Bedienung mit einem Arturia MiniLab 3 gedacht.")
+        p.warnings.append(_("This firmware is meant to be operated with an Arturia MiniLab 3."))
     if _felucca09_risk(state, t):
-        p.warnings.append("Wechsel von Felucca 0.9 auf 1.x: Bekannt ist, dass alte 0.9-Daten den Start von 1.0.x "
-                          "verhindern (schwarzer Bildschirm, ROM-UBOOT). Backup ist Pflicht. Abhilfe in der "
-                          "Rettung (Stufe 2): Datenbereiche 0x97000 und 0xFC000 löschen – das löscht Songs und "
-                          "Einstellungen.")
+        p.warnings.append(_("Switch from Felucca 0.9 to 1.x: old 0.9 data is known to prevent 1.0.x from starting "
+                            "(black screen, ROM-UBOOT). Backup is mandatory. Remedy in recovery (stage 2): erase the "
+                            "data areas 0x97000 and 0xFC000 – this erases songs and settings."))
         p.confirmations.append("felucca09")
         if "no_backup" in p.confirmations:
-            p.blockers.append("Für Felucca 0.9 → 1.x ist ein Backup Pflicht – ohne Backup geht es hier nicht.")
+            p.blockers.append(_("For Felucca 0.9 → 1.x a backup is mandatory – without a backup it is not possible here."))
     if not t.checksum and t.known:
-        p.warnings.append("Prüfsumme nicht verfügbar: Dieses Release hat keine SHA256SUMS-Datei, und der Katalog "
-                          "kennt die Prüfsumme nicht. Die App kann nicht prüfen, ob die Datei unverändert ist.")
+        p.warnings.append(_("Checksum not available: this release has no SHA256SUMS file, and the catalog does not "
+                            "know the checksum. The app cannot check whether the file is unmodified."))
         p.confirmations.append("no_checksum")
     if not t.known:
-        p.warnings.append(f"Eigene Datei: Kennung {info.product if info else '?'}, SHA-256 "
-                          f"{info.sha256 if info else '?'} – in keinem Katalog.")
+        p.warnings.append(_("Own file: identity {identity}, SHA-256 {sha256} – in no catalog.").format(
+            identity=info.product if info else '?', sha256=info.sha256 if info else '?'))
         p.confirmations.append("unknown_file")
     _confirm_power(p, t, fam)
     return p
@@ -473,12 +526,12 @@ def _melodee16(p: InstallPlan, state: DeviceState, t: Target, mel: str):
 
 def _tail(p: InstallPlan, t: Target):
     if t.resources:
-        p.steps.append(Step("resources", "Ressourcen schreiben", "niedrig",
-                            "Schriften, Werkssounds und Bluetooth-Programm (Melodee ab 1.6). Scheitert das, läuft "
-                            "die Firmware trotzdem – es lässt sich später nachholen.", writes=True))
-    p.steps.append(Step("verify", "Neustart abwarten & Identität prüfen", "keins",
-                        f"Das FM-1 startet neu und muss danach „{t.product}“ melden." if t.product else
-                        "Das FM-1 startet neu und muss sich danach mit der neuen Firmware melden."))
+        p.steps.append(Step("resources", _("Write resources"), "niedrig",
+                            _("Fonts, factory sounds and Bluetooth program (Melodee 1.6 and later). If this fails, "
+                              "the firmware still runs – it can be done later."), writes=True))
+    p.steps.append(Step("verify", _("Wait for restart & check identity"), "keins",
+                        _("The FM-1 restarts and must then report “{product}”.").format(product=t.product) if t.product
+                        else _("The FM-1 restarts and must then report with the new firmware.")))
 
 
 def _not_resumable(t: Target, fam: str) -> bool:
@@ -487,10 +540,10 @@ def _not_resumable(t: Target, fam: str) -> bool:
 
 def _confirm_power(p: InstallPlan, t: Target, fam: str):
     if _not_resumable(t, fam) or p.via_stock or t.is_stock:
-        p.warnings.append("Ein Stromausfall während des Schreibens lässt sich hier NICHT fortsetzen – das FM-1 "
-                          "bliebe dann schwarz (nur die Rettung Stufe 2 hilft)." if _not_resumable(t, fam) else
-                          "Die Original-Firmware hat keinen Startschutz: Während des Schreibens darf der Strom "
-                          "nicht ausfallen.")
+        p.warnings.append(_("A power loss while writing can NOT be resumed here – the FM-1 would then stay black "
+                            "(only recovery stage 2 helps).") if _not_resumable(t, fam) else
+                          _("The original firmware has no start protection: the power must not fail while "
+                            "writing."))
         if "power" not in p.confirmations:
             p.confirmations.append("power")
 

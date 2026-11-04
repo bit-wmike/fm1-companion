@@ -11,6 +11,8 @@ from __future__ import annotations
 import zlib
 from dataclasses import dataclass, field
 
+from .i18n import _
+
 HDR = (0x7D, 0x46, 0x4C)
 
 
@@ -48,7 +50,7 @@ class ProtocolError(Exception):
 def frame(cmd: int, args=()) -> list[int]:
     a = [int(x) for x in args]
     if any(x < 0 or x > 127 for x in a) or not 0 <= cmd <= 127:
-        raise ProtocolError("SysEx-Daten müssen 7 Bit sein")
+        raise ProtocolError(_("SysEx data must be 7-bit"))
     return [0xF0, *HDR, cmd, *a, 0xF7]
 
 
@@ -69,7 +71,7 @@ def u32(n: int) -> list[int]:
 
 def r32(a, off: int = 0) -> int:
     if len(a) < off + 5 or a[off + 4] > 15:
-        raise ProtocolError("ungültige Zahl im Datenstrom")
+        raise ProtocolError(_("invalid number in the data stream"))
     return (a[off] | a[off + 1] << 7 | a[off + 2] << 14 | a[off + 3] << 21 | a[off + 4] << 28) & 0xFFFFFFFF
 
 
@@ -99,18 +101,18 @@ def unpack7(a, size: int) -> bytes:
     while len(out) < size:
         n = min(7, size - len(out))
         if i >= len(a):
-            raise ProtocolError("kurzer Datenblock")
+            raise ProtocolError(_("short data block"))
         mask = a[i]
         i += 1
         if mask >> n:
-            raise ProtocolError("ungültige Bytes im Datenblock")
+            raise ProtocolError(_("invalid bytes in the data block"))
         for k in range(n):
             if i >= len(a) or a[i] > 127:
-                raise ProtocolError("kurzer Datenblock")
+                raise ProtocolError(_("short data block"))
             out.append(a[i] | ((mask >> k) & 1) << 7)
             i += 1
     if i != len(a):
-        raise ProtocolError("überzählige Bytes im Datenblock")
+        raise ProtocolError(_("surplus bytes in the data block"))
     return bytes(out)
 
 
@@ -130,7 +132,7 @@ class Reader:
 
     def b(self) -> int:
         if self.i >= len(self.a):
-            raise ProtocolError("Antwort zu kurz")
+            raise ProtocolError(_("answer too short"))
         v = self.a[self.i]
         self.i += 1
         return v
@@ -140,7 +142,7 @@ class Reader:
         while j < len(self.a) and self.a[j] != 0:
             j += 1
         if j >= len(self.a):
-            raise ProtocolError("String ohne Ende")
+            raise ProtocolError(_("string without end"))
         txt = bytes(self.a[self.i:j]).decode("latin-1")
         self.i = j + 1
         return txt
@@ -186,7 +188,7 @@ def parse_info(a) -> Info:
         info.g_count = r.b()
         info.nstep = r.b()
         info.p_e0 = r.b()
-        info.engines = [r.s() for _ in range(ne)]
+        info.engines = [r.s() for _i in range(ne)]
         if r.more():
             info.ntrk = r.b()
     except ProtocolError:
@@ -247,7 +249,7 @@ AUDIO_FLAGS_ALL = 2 | 4 | 8 | 16
 
 def parse_audio_stats(a) -> dict:
     if not a or a[0] < 2:
-        raise ProtocolError("unbekanntes Format der Audio-Statistik")
+        raise ProtocolError(_("unknown format of the audio statistics"))
     names = AUDIO_SCHEMAS.get(a[0])
     if names is None:                       # neueres Schema: die bekannten Felder vorn lesen
         names = AUDIO_SCHEMAS[max(AUDIO_SCHEMAS)]
@@ -285,7 +287,7 @@ def parse_library_list(a) -> tuple[int, list[LibrarySlot]]:
     r = Reader(a)
     op, lo, hi, rc = r.b(), r.b(), r.b(), r.b()
     if op != 0 or rc != 0:
-        raise ProtocolError(f"Preset-Liste abgelehnt (rc {rc})")
+        raise ProtocolError(_("preset list rejected (rc {code})").format(code=rc))
     first = lo | hi << 7
     count = r.b()
     total = r.b() | r.b() << 7

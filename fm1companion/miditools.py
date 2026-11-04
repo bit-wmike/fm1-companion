@@ -18,6 +18,8 @@ import time
 from collections import deque
 from dataclasses import dataclass, field
 
+from .i18n import N_, _, pgettext
+
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 
@@ -41,13 +43,14 @@ FELUCCA_CMDS = {
     75: "CZ_GET", 76: "CZ_PUT", 77: "CZ_BANK", 78: "NATIVE", 80: "LIBRARY", 95: "PROPHET",
 }
 FELUCCA_PUSH = {23, 24, 26, 32}
-FELUCCA_DE = {
-    "INFO": "Geräte-Info", "GET": "Parameter lesen", "SET": "Parameter setzen", "DUMP": "alle Werte",
-    "DESC": "Parameter-Beschreibung", "PING": "Lebenszeichen", "WATCH": "Live-Abgleich",
-    "CHANGED": "Wert am Gerät geändert", "RELOAD": "Sound neu geladen", "STEP_CHANGED": "Step geändert",
-    "TRACK": "Spur wählen/abfragen", "TRACK_PARAM": "Spur-Parameter", "TRACK_CHANGED": "Spur-Wert geändert",
-    "BACKUP_LIST": "Backup-Liste", "BACKUP_GET": "Backup lesen", "BACKUP_PUT": "Backup schreiben",
-    "AUDIO_STATS": "Audio-Statistik", "LIBRARY": "Preset-Bibliothek", "PROJECT": "Projekt", "PATTERN": "Pattern",
+FELUCCA_TEXT = {                         # shown translated: _(FELUCCA_TEXT[name])
+    "INFO": N_("device info"), "GET": N_("read parameter"), "SET": N_("set parameter"), "DUMP": N_("all values"),
+    "DESC": N_("parameter description"), "PING": N_("sign of life"), "WATCH": N_("live sync"),
+    "CHANGED": N_("value changed on the device"), "RELOAD": N_("sound reloaded"), "STEP_CHANGED": N_("step changed"),
+    "TRACK": N_("select/query track"), "TRACK_PARAM": N_("track parameter"),
+    "TRACK_CHANGED": N_("track value changed"), "BACKUP_LIST": N_("backup list"), "BACKUP_GET": N_("read backup"),
+    "BACKUP_PUT": N_("write backup"), "AUDIO_STATS": N_("audio statistics"), "LIBRARY": N_("preset library"),
+    "PROJECT": N_("project"), "PATTERN": N_("pattern"),
 }
 
 
@@ -62,42 +65,43 @@ def v14_enc(v: int) -> list[int]:
 
 
 # ---------------------------------------------------------------- CC-Namen ---
-GM_CC = {
-    0: "Bank Select MSB", 1: "Modulation", 2: "Breath", 4: "Foot", 5: "Portamento-Zeit", 6: "Data Entry MSB",
-    7: "Lautstärke", 8: "Balance", 10: "Panorama", 11: "Expression", 12: "Effekt 1", 13: "Effekt 2",
-    16: "Allzweck 1", 17: "Allzweck 2", 18: "Allzweck 3", 19: "Allzweck 4", 32: "Bank Select LSB",
-    38: "Data Entry LSB", 64: "Sustain", 65: "Portamento an/aus", 66: "Sostenuto", 67: "Soft-Pedal",
-    68: "Legato", 69: "Hold 2", 70: "Klangvariation", 71: "Resonanz", 72: "Release", 73: "Attack",
-    74: "Helligkeit/Cutoff", 75: "Decay", 76: "Vibrato-Rate", 77: "Vibrato-Tiefe", 78: "Vibrato-Verzögerung",
-    80: "Allzweck 5", 81: "Allzweck 6", 82: "Allzweck 7", 83: "Allzweck 8", 84: "Portamento-Steuerung",
-    91: "Hall", 93: "Chorus", 94: "Effekt 4", 95: "Effekt 5", 96: "Data +", 97: "Data −", 98: "NRPN LSB",
-    99: "NRPN MSB", 100: "RPN LSB", 101: "RPN MSB", 120: "All Sound Off", 121: "Reset Controller",
-    122: "Local Control", 123: "All Notes Off", 124: "Omni aus", 125: "Omni an", 126: "Mono", 127: "Poly",
+GM_CC = {                                # names translated where used (cc_name)
+    0: "Bank Select MSB", 1: "Modulation", 2: "Breath", 4: "Foot", 5: N_("Portamento time"), 6: "Data Entry MSB",
+    7: N_("Volume"), 8: "Balance", 10: N_("Pan"), 11: "Expression", 12: N_("Effect 1"), 13: N_("Effect 2"),
+    16: N_("General purpose 1"), 17: N_("General purpose 2"), 18: N_("General purpose 3"), 19: N_("General purpose 4"),
+    32: "Bank Select LSB", 38: "Data Entry LSB", 64: "Sustain", 65: N_("Portamento on/off"), 66: "Sostenuto",
+    67: N_("Soft pedal"), 68: "Legato", 69: "Hold 2", 70: N_("Sound variation"), 71: N_("Resonance"), 72: "Release",
+    73: "Attack", 74: N_("Brightness/cutoff"), 75: "Decay", 76: N_("Vibrato rate"), 77: N_("Vibrato depth"),
+    78: N_("Vibrato delay"), 80: N_("General purpose 5"), 81: N_("General purpose 6"), 82: N_("General purpose 7"),
+    83: N_("General purpose 8"), 84: N_("Portamento control"), 91: N_("Reverb"), 93: "Chorus", 94: N_("Effect 4"),
+    95: N_("Effect 5"), 96: "Data +", 97: "Data −", 98: "NRPN LSB", 99: "NRPN MSB", 100: "RPN LSB", 101: "RPN MSB",
+    120: "All Sound Off", 121: "Reset Controller", 122: "Local Control", 123: "All Notes Off", 124: N_("Omni off"),
+    125: N_("Omni on"), 126: "Mono", 127: "Poly",
 }
 # was Melodee mit eingehenden CCs macht (midi_control.c midi_parameter/midi_control, mod.c mod_midi,
 # midi_knobs.c Profil GENERAL); Profil MINILAB: 74 71 76 77 93 18 19 16 statt 16..19, 80..83
 MELODEE_CC = {
-    1: "Mod-Rad (Matrix MODW)", 2: "Breath (FM6)", 4: "Foot (FM6)", 5: "Glide / FM6-Portamento",
-    6: "Data Entry (RPN 0 = Bend-Bereich)", 7: "Spur-Lautstärke (LEVEL)", 10: "Panorama (PAN)",
-    11: "Expression (Matrix EXPR)", 16: "MIDI-Knopf: Volume", 17: "MIDI-Knopf: Select", 18: "MIDI-Knopf: Presets",
-    19: "MIDI-Knopf: Spurwahl", 38: "Data Entry LSB (Bend-Cent)", 64: "Sustain", 65: "Portamento an/aus (FM6)",
-    71: "Resonanz (Engine-Makro)", 72: "Release", 73: "Attack", 74: "Helligkeit (Engine-Makro)", 75: "Decay",
-    80: "MIDI-Knopf: KNOB1", 81: "MIDI-Knopf: KNOB2", 82: "MIDI-Knopf: KNOB3", 83: "MIDI-Knopf: KNOB4",
-    91: "– (Melodee: ohne Wirkung)", 100: "RPN LSB", 101: "RPN MSB", 120: "All Sound Off",
-    121: "Reset Controller", 123: "All Notes Off",
+    1: N_("Mod wheel (matrix MODW)"), 2: "Breath (FM6)", 4: "Foot (FM6)", 5: "Glide / FM6-Portamento",
+    6: N_("Data Entry (RPN 0 = bend range)"), 7: N_("Track volume (LEVEL)"), 10: "Panorama (PAN)",
+    11: "Expression (Matrix EXPR)", 16: N_("MIDI knob: Volume"), 17: N_("MIDI knob: Select"),
+    18: N_("MIDI knob: Presets"), 19: N_("MIDI knob: track select"), 38: N_("Data Entry LSB (bend cents)"),
+    64: "Sustain", 65: N_("Portamento on/off (FM6)"), 71: N_("Resonance (engine macro)"), 72: "Release", 73: "Attack",
+    74: N_("Brightness (engine macro)"), 75: "Decay", 80: N_("MIDI knob: KNOB1"), 81: N_("MIDI knob: KNOB2"),
+    82: N_("MIDI knob: KNOB3"), 83: N_("MIDI knob: KNOB4"), 91: N_("– (Melodee: no effect)"), 100: "RPN LSB",
+    101: "RPN MSB", 120: "All Sound Off", 121: "Reset Controller", 123: "All Notes Off",
 }
 
 
 def cc_name(cc: int, firmware: str = "") -> str:
     if firmware == "melodee" and cc in MELODEE_CC:
-        return MELODEE_CC[cc]
-    return GM_CC.get(cc, f"CC {cc}")
+        return _(MELODEE_CC[cc])
+    return _(GM_CC[cc]) if cc in GM_CC else f"CC {cc}"
 
 
 # ------------------------------------------------------------- Nachrichten ---
-TYPE_NAMES = {0x80: "Note aus", 0x90: "Note an", 0xA0: "Poly-Aftertouch", 0xB0: "Controller", 0xC0: "Programm",
-              0xD0: "Aftertouch", 0xE0: "Pitch-Bend"}
-SYS_NAMES = {0xF1: "MTC-Viertel", 0xF2: "Song-Position", 0xF3: "Song-Auswahl", 0xF6: "Tune Request",
+TYPE_NAMES = {0x80: N_("Note off"), 0x90: N_("Note on"), 0xA0: N_("Poly aftertouch"), 0xB0: N_("Controller"),
+              0xC0: N_("Program"), 0xD0: N_("Aftertouch"), 0xE0: N_("Pitch bend")}      # translated in decode()
+SYS_NAMES = {0xF1: N_("MTC quarter frame"), 0xF2: N_("Song position"), 0xF3: N_("Song select"), 0xF6: "Tune Request",
              0xF8: "Clock", 0xFA: "Start", 0xFB: "Continue", 0xFC: "Stop", 0xFE: "Active Sensing", 0xFF: "Reset"}
 # Filter-Gruppen für den Monitor
 KIND_NOTE, KIND_CC, KIND_PROG, KIND_BEND, KIND_AT, KIND_CLOCK, KIND_TRANSPORT, KIND_SENSE, KIND_SYSEX, KIND_OTHER = (
@@ -132,148 +136,155 @@ def unpack_bits(s) -> bytes:
 
 
 def describe_felucca(cmd: int, a: list[int], direction: str = "") -> str:
-    name = FELUCCA_CMDS.get(cmd, f"Befehl {cmd}")
-    de = FELUCCA_DE.get(name, "")
-    head = f"Felucca {name}" + (f" – {de}" if de else "")
+    name = FELUCCA_CMDS.get(cmd) or _("command {n}").format(n=cmd)
+    text = _(FELUCCA_TEXT[name]) if name in FELUCCA_TEXT else ""
+    head = f"Felucca {name}" + (f" – {text}" if text else "")
     if cmd in FELUCCA_PUSH:
-        head += " (Meldung)"
+        head += " " + _("(notification)")
     detail = ""
     try:
         if cmd == 1 and direction == "in" and a:
             end = a.index(0)
             detail = bytes(a[:end]).decode("latin-1")
         elif cmd in (2, 3, 23) and len(a) >= 2:
-            detail = ("global " if a[0] == 1 else "") + f"Parameter {a[1]}"
+            detail = (_("global parameter {n}") if a[0] == 1 else _("parameter {n}")).format(n=a[1])
             if len(a) >= 4:
                 detail += f" = {v14_dec(a[2], a[3])}"
         elif cmd in (31, 32) and len(a) >= 2:
-            detail = f"Spur {a[0] + 1}, Parameter {a[1]}"
+            detail = _("track {track}, parameter {n}").format(track=a[0] + 1, n=a[1])
             if len(a) >= 4:
                 detail += f" = {v14_dec(a[2], a[3])}"
         elif cmd == 5 and len(a) >= 2:
-            detail = ("global " if a[0] == 1 else "") + f"Parameter {a[1]}"
+            detail = (_("global parameter {n}") if a[0] == 1 else _("parameter {n}")).format(n=a[1])
             if len(a) > 9:
                 r = a[9:]
                 lab = bytes(r[:r.index(0)]).decode("latin-1") if 0 in r else ""
                 detail += f" „{lab}“ {v14_dec(a[3], a[4])}…{v14_dec(a[5], a[6])}"
         elif cmd == 27 and a:
-            detail = f"Spur {a[0] + 1}" + (" gewählt" if direction == "in" else "")
+            detail = (_("track {track} selected") if direction == "in" else _("track {track}")).format(track=a[0] + 1)
         elif cmd == 22 and a:
-            detail = "an" if a[0] & 1 else "aus"
+            detail = pgettext("state", "on") if a[0] & 1 else pgettext("state", "off")
         elif cmd in (65, 66, 67, 9, 73) and a:
-            detail = f"Argumente {a[:4]}"
+            detail = _("arguments {args}").format(args=a[:4])
         elif cmd == 24 and len(a) >= 2:
-            detail = f"Engine {a[0]}, Preset {a[1]}" + (f", Spur {a[2] + 1}" if len(a) > 2 else "")
+            detail = (_("engine {engine}, preset {preset}, track {track}") if len(a) > 2 else
+                      _("engine {engine}, preset {preset}")).format(engine=a[0], preset=a[1],
+                                                                    track=a[2] + 1 if len(a) > 2 else 0)
     except (ValueError, IndexError):
         detail = ""
     n = len(a)
     return head + (f": {detail}" if detail else "") + (f" [{n} Bytes]" if n > 8 else "")
 
 
-DX7_FMT = {0: "1 Voice (155 Parameter)", 9: "32 Voices (Bank)", 1: "Performance", 2: "Bank Performances"}
+DX7_FMT = {0: N_("1 voice (155 parameters)"), 9: N_("32 voices (bank)"), 1: "Performance", 2: "Bank Performances"}
 
 
 def describe_sysex(b: list[int], direction: str = "") -> str:
     if len(b) < 3:
-        return "SysEx (leer)"
+        return _("SysEx (empty)")
     body = b[1:-1] if b[-1] == 0xF7 else b[1:]
     if tuple(body[:3]) == FELUCCA_HDR and len(body) >= 4:
         return describe_felucca(body[3], body[4:], direction)
     if body[:3] == [0x7D, 0x4D, 0x4C]:
-        return "Melodee-Preset-Datei (User-Preset als SysEx)"
+        return _("Melodee preset file (user preset as SysEx)")
     if body[0] == 0x43 and len(body) >= 3:                       # Yamaha
         sub, ch = body[1] >> 4, (body[1] & 15) + 1
         if sub == 0 and len(body) >= 3:
-            return f"Yamaha DX7 Dump: {DX7_FMT.get(body[2], f'Format {body[2]}')}, Gerät {ch}"
+            fmt = _(DX7_FMT[body[2]]) if body[2] in DX7_FMT else _("format {n}").format(n=body[2])
+            return _("Yamaha DX7 dump: {format}, device {device}").format(format=fmt, device=ch)
         if sub == 1 and len(body) >= 4:
             grp = body[2]
             pnum = body[3] + (128 if grp & 3 == 1 else 0)
-            what = "Funktion" if grp >> 2 == 2 else "Voice-Parameter"
-            return f"Yamaha DX7 {what} {pnum} = {body[4] if len(body) > 4 else '?'}, Gerät {ch}"
+            what = _("Yamaha DX7 function {n} = {value}, device {device}") if grp >> 2 == 2 else \
+                _("Yamaha DX7 voice parameter {n} = {value}, device {device}")
+            return what.format(n=pnum, value=body[4] if len(body) > 4 else "?", device=ch)
         if sub == 2:
-            return f"Yamaha DX7 Dump-Anforderung ({DX7_FMT.get(body[2] if len(body) > 2 else -1, '?')})"
+            f = body[2] if len(body) > 2 else -1
+            return _("Yamaha DX7 dump request ({format})").format(format=_(DX7_FMT[f]) if f in DX7_FMT else "?")
         return "Yamaha SysEx"
     if body[:3] == [0x22, 0x24, 0x35]:
         key = body[3] if len(body) > 3 else -1
         if key == 0x7F:
-            return "M-VAVE Update: Update-Modus starten (Gerät startet neu in den Loader)"
+            return _("M-VAVE update: start update mode (device restarts into the loader)")
         if key == 0x7D:
-            return "M-VAVE Soft-Key: ROM-Bootmodus (WL82 UBOOT) – Gerät bleibt bis zum Aus-/Einschalten stumm"
-        return f"M-VAVE Steuer-SysEx 22 24 35 {key:02X}" if key >= 0 else "M-VAVE Steuer-SysEx 22 24 35 (unvollständig)"
+            return _("M-VAVE soft key: ROM boot mode (WL82 UBOOT) – device stays silent until switched "
+                     "off and on")
+        return _("M-VAVE control SysEx 22 24 35 {key}").format(key=f"{key:02X}") if key >= 0 else \
+            _("M-VAVE control SysEx 22 24 35 (incomplete)")
     if body[:3] == [0x00, 0x32, 0x45]:
-        return "M-VAVE Update: Kennung abfragen (Handshake)"
+        return _("M-VAVE update: query identifier (handshake)")
     if body[0] == 0x00 and len(body) >= 4:
         u = unpack_bits(body)
         if u[:2] == b"\x00\x59":
             chn = u[2]
             if chn == 0x11:
                 if len(u) >= 33:
-                    return "M-VAVE Update: Kennung " + u[6:33].rstrip(b"\0").decode("latin-1", "replace")
-                return "M-VAVE Update: Kennung abfragen"
+                    return _("M-VAVE update: identifier {id}").format(id=u[6:33].rstrip(b"\0").decode("latin-1", "replace"))
+                return _("M-VAVE update: query identifier")
             if chn == 0x30:
                 if len(u) == 15:
                     addr = int.from_bytes(u[7:11], "little")
-                    return f"M-VAVE Update: Gerät fordert Daten an (Adresse {addr:#x})"
-                return f"M-VAVE Update: Firmware-Daten ({max(0, len(u) - 15)} Bytes)"
-            return f"M-VAVE Update-Protokoll (Kanal {chn:02X})"
+                    return _("M-VAVE update: device requests data (address {address})").format(address=addr)
+                return _("M-VAVE update: firmware data ({n} bytes)").format(n=max(0, len(u) - 15))
+            return _("M-VAVE update protocol (channel {channel})").format(channel=chn)
     if body[0] == 0x7E and len(body) >= 4:
         if body[2:4] == [0x06, 0x01]:
             return "Universal: Identity Request"
         if body[2:4] == [0x06, 0x02]:
             return "Universal: Identity Reply"
         if body[2] == 0x09:
-            return "Universal: General MIDI " + ("an" if body[3] in (1, 3) else "aus")
+            return _("Universal: General MIDI on") if body[3] in (1, 3) else _("Universal: General MIDI off")
         return "Universal Non-Realtime"
     if body[0] == 0x7F and len(body) >= 4:
         if body[2:4] == [0x04, 0x01] and len(body) >= 6:
-            return f"Universal: Master-Lautstärke {round((body[4] | body[5] << 7) / 163.83)} %"
+            return _("Universal: master volume {percent} %").format(percent=round((body[4] | body[5] << 7) / 163.83))
         return "Universal Realtime"
     if body[0] == 0x01:
         return "Sequential (Prophet) SysEx"
     if body[0] == 0x41:
         return "Roland SysEx"
-    return f"SysEx Hersteller {body[0]:02X}"
+    return _("SysEx manufacturer {id}").format(id=body[0])
 
 
 def decode(b, direction: str = "", firmware: str = "") -> Decoded:
     b = list(b)
     if not b:
-        return Decoded(KIND_OTHER, "leer", None, "", "")
+        return Decoded(KIND_OTHER, _("empty"), None, "", "")
     st = b[0]
     raw = _hex(b)
     if st == 0xF0:
         return Decoded(KIND_SYSEX, "SysEx", None, raw, describe_sysex(b, direction))
     if st >= 0xF0:
-        name = SYS_NAMES.get(st, f"System {st:02X}")
+        name = _(SYS_NAMES[st]) if st in SYS_NAMES else f"System {st:02X}"
         kind = (KIND_CLOCK if st == 0xF8 else KIND_SENSE if st == 0xFE
                 else KIND_TRANSPORT if st in (0xFA, 0xFB, 0xFC, 0xF2) else KIND_OTHER)
         meaning = name
         if st == 0xF2 and len(b) >= 3:
-            meaning = f"Song-Position {b[1] | b[2] << 7} (16tel)"
+            meaning = _("Song position {n} (16ths)").format(n=b[1] | b[2] << 7)
         return Decoded(kind, name, None, raw, meaning)
     if st < 0x80:
-        return Decoded(KIND_OTHER, "Daten", None, raw, "Datenbytes ohne Status")
+        return Decoded(KIND_OTHER, _("Data"), None, raw, _("data bytes without status"))
     t, ch = st & 0xF0, (st & 15) + 1
     d1 = b[1] if len(b) > 1 else 0
     d2 = b[2] if len(b) > 2 else 0
     if t == 0x90 and d2 == 0:
         t = 0x80                                           # Note an mit Velocity 0 = Note aus
-    name = TYPE_NAMES[t]
+    name = _(TYPE_NAMES[t])
     if t in (0x80, 0x90):
         return Decoded(KIND_NOTE, name, ch, raw, f"{note_name(d1)} ({d1}), Velocity {d2}")
     if t == 0xA0:
-        return Decoded(KIND_AT, name, ch, raw, f"{note_name(d1)} Druck {d2}")
+        return Decoded(KIND_AT, name, ch, raw, _("{note} pressure {value}").format(note=note_name(d1), value=d2))
     if t == 0xB0:
         return Decoded(KIND_CC, name, ch, raw, f"CC {d1} {cc_name(d1, firmware)} = {d2}")
     if t == 0xC0:
-        prog = f"Programm {d1 + 1}"
+        prog = _("Program {n}").format(n=d1 + 1)
         if ch != 10:
             prog += f" – {GM_PROGRAMS[d1]}"
         return Decoded(KIND_PROG, name, ch, raw, prog)
     if t == 0xD0:
-        return Decoded(KIND_AT, name, ch, raw, f"Druck {d1}")
+        return Decoded(KIND_AT, name, ch, raw, _("pressure {value}").format(value=d1))
     v = (d1 | d2 << 7) - 8192
-    return Decoded(KIND_BEND, name, ch, raw, f"{v:+d}" + (" (Mitte)" if v == 0 else ""))
+    return Decoded(KIND_BEND, name, ch, raw, f"{v:+d}" + (_(" (center)") if v == 0 else ""))
 
 
 # --------------------------------------------------------- Tempo aus Clock ---
@@ -360,16 +371,16 @@ class EventLog:
         self.t0 = time.perf_counter()
 
 
-DIR_DE = {"in": "← vom Gerät", "out": "→ zum Gerät"}
+DIR_TEXT = {"in": N_("← from the device"), "out": N_("→ to the device")}       # translated where used
 
 
 def export_text(events, fmt: str = "txt") -> str:
-    rows = [(f"{e.t:10.3f}", DIR_DE.get(e.direction, e.direction), e.port, e.dec.type,
+    rows = [(f"{e.t:10.3f}", _(DIR_TEXT[e.direction]) if e.direction in DIR_TEXT else e.direction, e.port, e.dec.type,
              str(e.dec.channel or ""), e.data.hex(" ").upper(), e.dec.meaning) for e in events]
     if fmt == "csv":
         buf = io.StringIO()
         w = csv.writer(buf)
-        w.writerow(["Zeit (s)", "Richtung", "Port", "Typ", "Kanal", "Daten", "Bedeutung"])
+        w.writerow([_("Time (s)"), _("Direction"), _("Port"), _("Type"), _("Channel"), _("Data"), _("Meaning")])
         w.writerows([[c.strip() for c in r] for r in rows])
         return buf.getvalue()
     return "\n".join("  ".join(r) for r in rows) + ("\n" if rows else "")

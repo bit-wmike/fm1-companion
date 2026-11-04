@@ -15,9 +15,10 @@ import platform
 import re
 from pathlib import Path
 
-REDACTED = "(entfernt)"
-HOST_PLACEHOLDER = "<rechner>"
-USER_PLACEHOLDER = "<benutzer>"
+# placeholders in shared reports (meant for developers) – not translated
+REDACTED = "(entfernt)"  # i18n: ignore
+HOST_PLACEHOLDER = "<rechner>"  # i18n: ignore
+USER_PLACEHOLDER = "<benutzer>"  # i18n: ignore
 SECRET_KEY = re.compile(r"token|passw|secret|api[_-]?key", re.IGNORECASE)
 _TEXT_PATTERNS = [
     re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b"),

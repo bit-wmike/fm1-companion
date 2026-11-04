@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import backup, config
+from .i18n import _, ngettext
 
 DEFAULTS = {"on_connect": True, "days": 1, "periodic": False, "hours": 6, "keep_monthly": True,
             "mirror": "", "delay_s": 20}
@@ -60,7 +61,9 @@ def capture_to_file(link, folder: Path, profile, fw_key: str, version: str, note
     """Backup lesen und speichern. abort() -> True bricht beim nächsten Stück ab."""
     def prog(a, b):
         if abort and abort():
-            raise backup.BackupError("abgebrochen (Gerät wird anderweitig gebraucht)")
+            err = backup.BackupError(_("cancelled (the device is needed for something else)"))
+            err.cancelled = True
+            raise err
         if progress:
             progress(a, b)
     f = backup.capture(link, version, progress=prog,
@@ -108,10 +111,10 @@ class Meta:
 
 def content_text(projects: int, presets: int, objects: int) -> str:
     """„2 Projekte, 5 Presets · 57 Teile“ – überall dieselbe Formel (Liste, Browser, Übersicht)."""
-    parts = [f"{projects} Projekt{'e' if projects != 1 else ''}"]
+    parts = [ngettext("{n} project", "{n} projects", projects).format(n=projects)]
     if presets >= 0:
-        parts.append(f"{presets} Preset{'s' if presets != 1 else ''}")
-    return ", ".join(parts) + f" · {objects} Teile"
+        parts.append(ngettext("{n} preset", "{n} presets", presets).format(n=presets))
+    return ", ".join(parts) + " · " + ngettext("{n} part", "{n} parts", objects).format(n=objects)
 
 
 def _index_file() -> Path:
@@ -196,13 +199,15 @@ def damaged_meta(path: Path) -> Meta | None:
         st = path.stat()
         raw = path.read_bytes()
     except OSError as e:
-        return Meta(path, "", "", "", "", "", "", [], False, "beschädigt", 0, 0.0, 0, 0, "", damaged=str(e.strerror))
+        return Meta(path, "", "", "", "", "", "", [], False, "beschädigt", 0, 0.0, 0, 0, "",  # i18n: ignore
+                    damaged=str(e.strerror))
     try:
         json.loads(raw.decode("utf-8"))
         return None
     except (ValueError, UnicodeDecodeError) as e:
-        why = "kein gültiges JSON (abgeschnitten oder beschädigt)" if raw else "leere Datei"
-        return Meta(path, "", "", "", path.parent.name, "", "", [], False, "beschädigt", st.st_size, st.st_mtime, 0, 0,
+        why = _("no valid JSON (truncated or damaged)") if raw else _("empty file")
+        return Meta(path, "", "", "", path.parent.name, "", "", [], False, "beschädigt",  # i18n: ignore
+                    st.st_size, st.st_mtime, 0, 0,
                     "", damaged=f"{why}: {type(e).__name__}")
 
 
@@ -230,10 +235,10 @@ def set_meta(path: Path, **changes):
     try:
         f = json.loads(path.read_text("utf-8"))
     except ValueError:
-        raise backup.BackupError("Die Datei ist kein lesbares Backup (beschädigt) – Notiz/Schlagwörter lassen sich "
-                                 "nicht speichern.")
+        raise backup.BackupError(_("The file is not a readable backup (damaged) – note/labels cannot "
+                                 "be saved."))
     if not isinstance(f, dict) or f.get("format") not in (backup.FORMAT, "sloop-backup"):
-        raise backup.BackupError("Die Datei ist kein Backup der App oder des Web-Editors.")
+        raise backup.BackupError(_("The file is not a backup of the app or the web editor."))
     c = f.setdefault("companion", {})
     c.update(changes)
     # (SLOOP-Backups bleiben im Format des SLOOP-Editors); Änderungszeit bleibt
@@ -297,13 +302,13 @@ def os_error_text(e: BaseException) -> str:
     path = getattr(e, "filename", None)
     where = f" ({path})" if path else ""
     if code in (_e.EACCES, _e.EPERM, _e.EROFS):
-        return "keine Schreibrechte" + where
+        return _("no write permission") + where
     if code == _e.ENOSPC:
-        return "der Datenträger ist voll" + where
+        return _("the drive is full") + where
     if code == _e.ENOENT:
-        return "Ordner oder Datei nicht gefunden" + where
+        return _("folder or file not found") + where
     if code in (_e.EIO, _e.ESTALE, _e.ENOTCONN, _e.EHOSTDOWN, _e.EHOSTUNREACH, _e.ENETUNREACH):
-        return "Datenträger oder Netzlaufwerk antwortet nicht" + where
+        return _("drive or network drive does not respond") + where
     if code is None:
         return str(e)
     return f"{getattr(e, 'strerror', '') or e}{where}"
@@ -314,7 +319,7 @@ def mirror_file(path: Path, root: Path, target: Path) -> Path:
     OSError mit deutscher Meldung, wenn das Ziel fehlt (NAS nicht eingehängt) oder die Kopie nicht stimmt."""
     path, target = Path(path), Path(target)
     if not target.is_dir():
-        raise OSError(f"Spiegel-Ordner {target} ist nicht erreichbar – ist das Laufwerk (NAS) eingehängt?")
+        raise OSError(_("Mirror folder {folder} is not reachable – is the drive (NAS) mounted?").format(folder=target))
     try:
         rel = path.relative_to(root)
     except ValueError:
@@ -328,7 +333,8 @@ def mirror_file(path: Path, root: Path, target: Path) -> Path:
         shutil.copyfile(path, tmp)
         if _sha(tmp) != _sha(path):
             tmp.unlink(missing_ok=True)
-            raise OSError(f"Prüfung der Kopie {dest.name} fehlgeschlagen – die Kopie im Spiegel ist nicht identisch")
+            raise OSError(_("Verifying the copy {name} failed – the copy in the mirror is not identical").format(
+                name=dest.name))
         tmp.replace(dest)
         try:
             shutil.copystat(path, dest)
@@ -360,7 +366,7 @@ def mirror_all(root: Path, target: Path) -> tuple[int, int, list[str]]:
 
 @dataclass
 class Status:
-    text: str = "Automatische Backups: noch nichts passiert."
+    text: str = field(default_factory=lambda: _("Automatic backups: nothing has happened yet."))
     last_path: Path | None = None
     last_time: float = 0.0
     mirror: str = ""
@@ -408,40 +414,41 @@ def import_zip(src: Path, root: Path) -> tuple[list[Path], list[str]]:
     try:
         z = zipfile.ZipFile(src)
     except zipfile.BadZipFile:
-        raise backup.BackupError(f"{src.name} ist keine lesbare Zip-Datei (beschädigt oder abgeschnitten). "
-                                 "Bitte die Datei noch einmal kopieren.")
+        raise backup.BackupError(_("{name} is not a readable zip file (damaged or truncated). "
+                                   "Please copy the file again.").format(name=src.name))
     with z:
         try:
             man = json.loads(z.read("manifest.json"))
         except KeyError:
-            raise backup.BackupError(f"{src.name} enthält kein Inhaltsverzeichnis (manifest.json) – das ist keine "
-                                     "Backup-Sammlung dieser App. Einzelne Backup-Dateien (.json) nimmst du über "
-                                     "„Datei hinzufügen“ im Reiter „Liste“ auf.")
+            raise backup.BackupError(_("{name} has no table of contents (manifest.json) – this is not a "
+                                       "backup collection of this app. Single backup files (.json) are added with "
+                                       "“Add file” in the tab “List”.").format(name=src.name))
         except (ValueError, zipfile.BadZipFile) as e:
-            raise backup.BackupError(f"Das Inhaltsverzeichnis in {src.name} ist beschädigt ({type(e).__name__}). "
-                                     "Es wurde nichts übernommen.")
+            raise backup.BackupError(_("The table of contents in {name} is damaged ({error}). "
+                                       "Nothing was taken over.").format(name=src.name, error=type(e).__name__))
         if not isinstance(man, dict) or man.get("format") != "fm1companion-backupset":
-            raise backup.BackupError(f"{src.name} ist eine Zip-Datei, aber keine Backup-Sammlung dieser App.")
+            raise backup.BackupError(_("{name} is a zip file but not a backup collection of this app.").format(
+                name=src.name))
         entries = man.get("backups")
         for e in entries if isinstance(entries, list) else []:
             name = e.get("file", "") if isinstance(e, dict) else ""
             if not isinstance(name, str) or not name:
-                skipped.append(f"{name or '?'}: ungültiger Eintrag im Inhaltsverzeichnis")
+                skipped.append(_("{name}: invalid entry in the table of contents").format(name=name or '?'))
                 continue
             rel = Path(name).relative_to("backups") if name.startswith("backups/") else Path(Path(name).name)
             if ".." in rel.parts or rel.is_absolute():
-                skipped.append(f"{name}: ungültiger Pfad")
+                skipped.append(_("{name}: invalid path").format(name=name))
                 continue
             try:
                 data = z.read(name)
             except KeyError:
-                skipped.append(f"{name}: fehlt im Zip")
+                skipped.append(_("{name}: missing in the zip").format(name=name))
                 continue
             except zipfile.BadZipFile:
-                skipped.append(f"{name}: im Zip beschädigt")
+                skipped.append(_("{name}: damaged in the zip").format(name=name))
                 continue
             if hashlib.sha256(data).hexdigest() != e.get("sha256"):
-                skipped.append(f"{name}: Prüfsumme stimmt nicht")
+                skipped.append(_("{name}: checksum does not match").format(name=name))
                 continue
             try:
                 backup_inspect.inspect(data.decode("utf-8"))
@@ -450,7 +457,7 @@ def import_zip(src: Path, root: Path) -> tuple[list[Path], list[str]]:
                 continue
             dest = Path(root) / rel
             if dest.exists():
-                skipped.append(f"{rel.name}: schon vorhanden")
+                skipped.append(_("{name}: already there").format(name=rel.name))
                 continue
             backup.write_text_atomic(dest, data.decode("utf-8"))
             got.append(dest)

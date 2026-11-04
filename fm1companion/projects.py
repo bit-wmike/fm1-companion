@@ -21,12 +21,14 @@ from pathlib import Path
 from typing import Callable
 
 from . import backup
+from .i18n import N_, _
 from .protocol import crc32
 
 FORMAT = "fm1companion-project"
 SUFFIX = ".fm1proj"
 # grobe Formatkennung über die ersten 4 Bytes (Magic)
-MAGICS = {b"HPJ1": "kompakt (1.6)", b"FBKQ": "FBKQ (1.6 rc.6+, mit Pattern-Sounds)", b"FBKP": "FBKP (1.6)",
+# format labels (translated by format_of(); also written as "kind" into new project files)
+MAGICS = {b"HPJ1": N_("compact (1.6)"), b"FBKQ": N_("FBKQ (1.6 rc.6+, with pattern sounds)"), b"FBKP": "FBKP (1.6)",
           b"FBKN": "FBKN", b"FBKM": "FBKM", b"FBKL": "FBKL", b"FBKK": "FBKK", b"FBK9": "FBK9",
           # SLOOP (firmware/src/project.c): Projekte und Sections A..D (Backup-Objekte 0 und 2..5)
           b"FUN6": "FUN6 (SLOOP 2.6+)", b"FUN5": "FUN5 (SLOOP 2.4–2.5)", b"FUN4": "FUN4 (SLOOP 2.0–2.3)",
@@ -37,8 +39,8 @@ def format_of(data: bytes) -> str:
     head = data[:4]
     for k, v in MAGICS.items():
         if head == k or head == k[::-1]:
-            return v
-    return f"unbekannt ({head.hex()})" if head else "leer"
+            return _(v)
+    return _("unknown ({magic})").format(magic=head.hex()) if head else _("empty")
 
 
 @dataclass
@@ -71,7 +73,7 @@ def list_slots(link) -> tuple[list[SlotInfo], int]:
 
 def _safe(name: str) -> str:
     """Dateiname aus einem Projektnamen: Sonderzeichen werden „_“, höchstens 80 Zeichen, nie leer/„.“."""
-    s = re.sub(r"[^\w\-. äöüÄÖÜß]+", "_", name).strip(" .")[:80].strip(" .")
+    s = re.sub(r"[^\w\-. äöüÄÖÜß]+", "_", name).strip(" .")[:80].strip(" .")  # i18n: ignore
     return s or "Projekt"
 
 
@@ -93,7 +95,7 @@ class ProjectFile:
         o = self.meta["object"]
         raw = base64.b64decode(o["data"])
         if len(raw) != o["size"] or crc32(raw) != o["crc"]:
-            raise backup.BackupError(f"{self.path.name}: Prüfsumme stimmt nicht")
+            raise backup.BackupError(_("{name}: checksum does not match").format(name=self.path.name))
         return raw
 
 
@@ -104,9 +106,9 @@ def export_slot(link, slot: int, folder: Path, name: str, firmware: str, device:
     man = {o.id: o for o in (manifest if manifest is not None else backup.list_objects(link))}
     o = man.get(oid)
     if not o or not o.size:
-        raise backup.BackupError(f"Projektplatz {slot} ist leer")
+        raise backup.BackupError(_("Project slot {slot} is empty").format(slot=slot))
     data = backup.read_object(link, o, progress)
-    return save_project(folder, name, data, firmware, device, notes, source=f"Platz {slot}")
+    return save_project(folder, name, data, firmware, device, notes, source=_("slot {n}").format(n=slot))
 
 
 def save_project(folder: Path, name: str, data: bytes, firmware: str, device: str = "", notes: str = "",
@@ -128,7 +130,7 @@ def save_project(folder: Path, name: str, data: bytes, firmware: str, device: st
 def load_project(path: Path) -> ProjectFile:
     meta = json.loads(Path(path).read_text("utf-8"))
     if meta.get("format") != FORMAT or "object" not in meta:
-        raise backup.BackupError(f"{Path(path).name} ist keine FM-1-Companion-Projektdatei")
+        raise backup.BackupError(_("{name} is not an FM-1 Companion project file").format(name=Path(path).name))
     pf = ProjectFile(Path(path), meta)
     pf.data  # prüfen
     return pf
@@ -174,22 +176,22 @@ def import_to_slot(link, pf: ProjectFile, slot: int, progress: Callable[[int], N
     oid = backup.project_id(slot)
     proto = backup.protocol(link)[0]
     if proto == backup.SLOOP and not 1 <= slot <= 4:
-        raise backup.BackupError("SLOOP hat nur die Projektplätze 1–4 (Sections A–D) – es wurde nichts geschrieben.")
+        raise backup.BackupError(_("SLOOP only has project slots 1–4 (sections A–D) – nothing was written."))
     src = family(pf.meta.get("firmware", "")) or family_of_data(data)
     dst = family(device_firmware) or ("sloop" if proto == backup.SLOOP else "")
     if src and dst and src != dst:
-        raise backup.BackupError(f"Das Projekt stammt von {src.capitalize() if src != 'sloop' else 'SLOOP'}, auf dem "
-                                 f"FM-1 läuft {dst.capitalize() if dst != 'sloop' else 'SLOOP'} – die Projektformate "
-                                 "passen nicht zusammen. Es wurde nichts geschrieben.")
+        raise backup.BackupError(_("The project comes from {source}, the FM-1 runs {target} – the project formats "
+                                   "do not match. Nothing was written.").format(
+            source=src.capitalize() if src != 'sloop' else 'SLOOP', target=dst.capitalize() if dst != 'sloop' else 'SLOOP'))
     rc = backup.preflight(link, oid, data, proto)
     if rc == 1:
-        raise backup.BackupError("Das Gerät nimmt dieses Projekt nicht an (anderes Format oder andere Firmware) – "
-                                 "es wurde nichts geschrieben.")
+        raise backup.BackupError(_("The device does not accept this project (different format or different "
+                                   "firmware) – nothing was written."))
     if rc == 3:
-        raise backup.BackupError("Bitte erst die Wiedergabe am FM-1 stoppen – es wurde nichts geschrieben.")
+        raise backup.BackupError(_("Please stop playback on the FM-1 first – nothing was written."))
     if rc:
-        raise backup.BackupError(f"Das Gerät lehnt das Projekt ab ({backup.RC_TEXT.get(rc, f'Code {rc}')}) – "
-                                 "es wurde nichts geschrieben.")
+        raise backup.BackupError(_("The device rejects the project ({reason}) – nothing was written.").format(
+            reason=backup.RC_TEXT.get(rc, f'Code {rc}')))
     backup.write_object(link, oid, data, progress, proto)
 
 

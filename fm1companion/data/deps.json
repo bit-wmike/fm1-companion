@@ -1,30 +1,30 @@
 {
-  "_comment": "Einzige Liste der Systempakete. Benutzt von .deb (Depends/Recommends), .run-Installer, install.sh und 'fm1-companion --check'. Neue Pakete hier eintragen.",
+  "_comment": "Einzige Liste der Systempakete. Benutzt von .deb (Depends/Recommends), .run-Installer, install.sh und 'fm1-companion --check'. Neue Pakete hier eintragen. Die why-Texte sind englisch und werden in diag.py übersetzt (DEP_WHY).",
   "required": [
-    {"package": "python3", "version": ">= 3.11", "check": {"python": "3.11"}, "why": "Python ab 3.11"},
-    {"package": "python3-pyqt6", "check": {"module": "PyQt6.QtWidgets"}, "why": "Oberfläche"},
-    {"package": "python3-pyqt6.qtsvg", "check": {"module": "PyQt6.QtSvg"}, "why": "Symbole im App-Design"},
-    {"package": "python3-pyqt6.qtwebengine", "check": {"module": "PyQt6.QtWebEngineWidgets"}, "why": "Editor, Simulator"},
-    {"package": "python3-pyqt6.qtwebchannel", "check": {"module": "PyQt6.QtWebChannel"}, "why": "Web-MIDI-Brücke für Editor und Simulator"},
+    {"package": "python3", "version": ">= 3.11", "check": {"python": "3.11"}, "why": "Python 3.11 or newer"},
+    {"package": "python3-pyqt6", "check": {"module": "PyQt6.QtWidgets"}, "why": "user interface"},
+    {"package": "python3-pyqt6.qtsvg", "check": {"module": "PyQt6.QtSvg"}, "why": "icons in the app design"},
+    {"package": "python3-pyqt6.qtwebengine", "check": {"module": "PyQt6.QtWebEngineWidgets"}, "why": "editor, simulator"},
+    {"package": "python3-pyqt6.qtwebchannel", "check": {"module": "PyQt6.QtWebChannel"}, "why": "Web MIDI bridge for editor and simulator"},
     {"package": "python3-mido", "check": {"module": "mido"}, "why": "MIDI"},
-    {"package": "python3-rtmidi", "check": {"module": "rtmidi"}, "why": "MIDI-Anschluss"},
-    {"package": "python3-numpy", "check": {"module": "numpy"}, "why": "Samples, Klänge"},
-    {"package": "git", "check": {"exe": "git"}, "why": "Firmware-Werkzeuge"},
-    {"package": "qt6-translations-l10n", "check": {"file": "/usr/share/qt6/translations/qtbase_de.qm"}, "why": "Qt-Dialoge auf Deutsch (Kürzel „Strg“, „Abbrechen“); Paketname gleich in Bookworm (6.4.2) und Trixie (6.8.2)"}
+    {"package": "python3-rtmidi", "check": {"module": "rtmidi"}, "why": "MIDI connection"},
+    {"package": "python3-numpy", "check": {"module": "numpy"}, "why": "samples, sounds"},
+    {"package": "git", "check": {"exe": "git"}, "why": "firmware tools"},
+    {"package": "qt6-translations-l10n", "check": {"file": "/usr/share/qt6/translations/qtbase_de.qm"}, "why": "Qt dialogs in your language (shortcuts “Ctrl”, “Cancel”); same package name in Bookworm (6.4.2) and Trixie (6.8.2)"}
   ],
   "recommended": [
-    {"package": "python3-pyqt6.qtmultimedia", "check": {"module": "PyQt6.QtMultimedia"}, "why": "Vorhören (Ersatz, wenn pw-play/paplay/aplay fehlen)"},
-    {"package": "ffmpeg", "check": {"exe": "ffmpeg"}, "why": "MP3/FLAC/AIFF-Samples"},
-    {"package": "alsa-utils", "check": {"exe": "arecord"}, "why": "Aufnahme (ALSA), MIDI-Verbindungen"},
-    {"package": "pipewire-bin", "check": {"exe": "pw-record"}, "why": "Aufnahme und Vorhören (pw-record, pw-play)"},
-    {"package": "audacity", "check": {"exe": "audacity"}, "why": "Aufnahmen bearbeiten"},
-    {"package": "fluidsynth", "check": {"exe": "fluidsynth"}, "why": "Klangerzeuger"},
-    {"package": "fluid-soundfont-gm", "check": {"file": "/usr/share/sounds/sf2/FluidR3_GM.sf2"}, "why": "General-MIDI-Klänge"}
+    {"package": "python3-pyqt6.qtmultimedia", "check": {"module": "PyQt6.QtMultimedia"}, "why": "previewing (fallback when pw-play/paplay/aplay are missing)"},
+    {"package": "ffmpeg", "check": {"exe": "ffmpeg"}, "why": "MP3/FLAC/AIFF samples"},
+    {"package": "alsa-utils", "check": {"exe": "arecord"}, "why": "recording (ALSA), MIDI connections"},
+    {"package": "pipewire-bin", "check": {"exe": "pw-record"}, "why": "recording and previewing (pw-record, pw-play)"},
+    {"package": "audacity", "check": {"exe": "audacity"}, "why": "editing recordings"},
+    {"package": "fluidsynth", "check": {"exe": "fluidsynth"}, "why": "sound generator"},
+    {"package": "fluid-soundfont-gm", "check": {"file": "/usr/share/sounds/sf2/FluidR3_GM.sf2"}, "why": "General MIDI sounds"}
   ],
   "suggested": [
-    {"package": "python3-crcmod", "why": "Rettung über U-Boot (jl-uboot-tool)"},
-    {"package": "python3-yaml", "why": "Rettung über U-Boot (jl-uboot-tool)"},
-    {"package": "python3-pycryptodome", "why": "Rettung über U-Boot (jl-uboot-tool)"},
-    {"package": "python3-tqdm", "why": "Rettung über U-Boot (jl-uboot-tool)"}
+    {"package": "python3-crcmod", "why": "rescue via U-Boot (jl-uboot-tool)"},
+    {"package": "python3-yaml", "why": "rescue via U-Boot (jl-uboot-tool)"},
+    {"package": "python3-pycryptodome", "why": "rescue via U-Boot (jl-uboot-tool)"},
+    {"package": "python3-tqdm", "why": "rescue via U-Boot (jl-uboot-tool)"}
   ]
 }

@@ -14,6 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .i18n import _, decimal, ngettext
 from .protocol import Cmd, Step, parse_desc, parse_info, parse_pattern, r14, v14, ProtocolError
 
 NSTEP = 64
@@ -37,10 +38,11 @@ class MidiTrackInfo:
     @property
     def summary(self) -> str:
         if not self.notes:
-            return "keine Noten"
+            return _("no notes")
         lo, hi = min(n.pitch for n in self.notes), max(n.pitch for n in self.notes)
         bars = max(n.start + n.length for n in self.notes) / 4
-        return f"{len(self.notes)} Noten, Tonumfang {lo}–{hi}, ca. {f'{bars:.1f}'.replace('.', ',')} Takte"
+        return _("{n} notes, range {low}–{high}, about {bars} bars").format(
+            n=len(self.notes), low=lo, high=hi, bars=decimal(bars, 1))
 
 
 def read_midi(path: Path, progress=None) -> tuple[list[MidiTrackInfo], float]:
@@ -57,7 +59,7 @@ def read_midi(path: Path, progress=None) -> tuple[list[MidiTrackInfo], float]:
             progress(ti, len(mf.tracks))
         t = 0
         on: dict[tuple[int, int], tuple[int, int]] = {}
-        name = tr.name or f"Spur {ti + 1}"
+        name = tr.name or _("Track {n}").format(n=ti + 1)
         per_ch: dict[int, MidiTrackInfo] = {}
         for msg in tr:
             t += msg.time
@@ -94,7 +96,7 @@ class Options:
 
 
 def to_steps(notes: list[Note], o: Options) -> list[Step]:
-    steps = [Step() for _ in range(NSTEP)]
+    steps = [Step() for _i in range(NSTEP)]
     held_until = [-1] * NSTEP
     grid = 1.0 / o.steps_per_beat
     for n in notes:
@@ -146,24 +148,24 @@ def write_pattern(link, track: int, pattern: int | None, steps: list[Step], leng
         try:
             ps = parse_pattern(link.request(Cmd.PATTERN, [track, 1, pattern], timeout=1.5))
             if ps.rc:
-                raise ProtocolError("Pattern-Wechsel abgelehnt – bitte SONG/Wiedergabe stoppen")
+                raise ProtocolError(_("Pattern change refused – please stop SONG/playback"))
             if ps.queued != 127:
-                raise ProtocolError("Das FM-1 spielt gerade – bitte stoppen, damit das Pattern sofort wechselt")
+                raise ProtocolError(_("The FM-1 is playing – please stop it so the pattern changes right away"))
         except ProtocolError:
             raise
         except Exception:
-            note = "Diese Firmware kennt keine Pattern-Bänke – geschrieben wurde in das aktuelle Pattern."
+            note = _("This firmware has no pattern banks – the current pattern was written.")
     for i, st in enumerate(steps):
         a = link.request(Cmd.TRACK_STEP, [track, i, *st.encode()], timeout=1.0, retries=1)
         if a[0] != track or a[1] != i:
-            raise ProtocolError("unerwartete Antwort beim Schreiben der Steps")
+            raise ProtocolError(_("unexpected answer while writing the steps"))
         if progress:
             progress(i + 1, len(steps))
     pid = find_param(link)
     if pid is not None:
         link.request(Cmd.TRACK_PARAM, [track, pid, *v14(length)], timeout=1.0)
     else:
-        note = (note + " " if note else "") + "Die Pattern-Länge bitte am FM-1 einstellen."
+        note = (note + " " if note else "") + _("Please set the pattern length on the FM-1.")
     return note
 
 
@@ -218,16 +220,17 @@ def _select(link, track: int, pattern: int | None) -> tuple[int | None, str]:
         ps = parse_pattern(link.request(Cmd.PATTERN, [track, 0], timeout=1.5))
         prev = ps.active
         if pattern >= ps.count:
-            raise ProtocolError(f"Diese Spur hat nur {ps.count} Patterns")
+            raise ProtocolError(ngettext("This track only has {n} pattern", "This track only has {n} patterns",
+                                             ps.count).format(n=ps.count))
         ps = parse_pattern(link.request(Cmd.PATTERN, [track, 1, pattern], timeout=1.5))
     except ProtocolError:
         raise
     except Exception:
-        return None, "Diese Firmware kennt keine Pattern-Bänke – benutzt wurde das aktuelle Pattern."
+        return None, _("This firmware has no pattern banks – the current pattern was used.")
     if ps.rc:
-        raise ProtocolError("Pattern-Wechsel abgelehnt – bitte SONG/Wiedergabe stoppen")
+        raise ProtocolError(_("Pattern change refused – please stop SONG/playback"))
     if ps.queued != 127:
-        raise ProtocolError("Das FM-1 spielt gerade – bitte stoppen, damit das Pattern sofort wechselt")
+        raise ProtocolError(_("The FM-1 is playing – please stop it so the pattern changes right away"))
     return prev, ""
 
 
@@ -241,12 +244,12 @@ def _len_param(link) -> int | None:
 
 
 def read_device_pattern(link, track: int, pattern: int | None, progress=None) -> PatternSnapshot:
-    prev, _ = _select(link, track, pattern)
+    prev, _note = _select(link, track, pattern)
     steps = []
     for i in range(NSTEP):
         a = link.request(Cmd.TRACK_STEP, [track, i], timeout=1.0, retries=1)
         if a[0] != track or a[1] != i:
-            raise ProtocolError("unerwartete Antwort beim Lesen der Steps")
+            raise ProtocolError(_("unexpected answer while reading the steps"))
         steps.append(unwire_step(a[2:]))
         if progress:
             progress(i + 1, NSTEP * 2)
@@ -260,33 +263,33 @@ def read_device_pattern(link, track: int, pattern: int | None, progress=None) ->
 def write_device_pattern(link, track: int, pattern: int | None, steps: list, length: int, progress=None,
                          verify: bool = True, swing: int | None = None) -> str:
     """schreibt 64 Steps + LEN, liest zur Kontrolle nach. -> Hinweistext ("" = alles gut)."""
-    _, note = _select(link, track, pattern)
-    steps = list(steps[:NSTEP]) + [PF.Step() for _ in range(NSTEP - len(steps))]
+    _prev, note = _select(link, track, pattern)
+    steps = list(steps[:NSTEP]) + [PF.Step() for _i in range(NSTEP - len(steps))]
     for i, st in enumerate(steps):
         a = link.request(Cmd.TRACK_STEP, [track, i, *wire_step(st)], timeout=1.0, retries=1)
         if a[0] != track or a[1] != i:
-            raise ProtocolError("unerwartete Antwort beim Schreiben der Steps")
+            raise ProtocolError(_("unexpected answer while writing the steps"))
         if verify and not same_step(unwire_step(a[2:]), st):
-            raise ProtocolError(f"Step {i + 1} kam anders zurück, als er geschrieben wurde")
+            raise ProtocolError(_("Step {step} came back different from what was written").format(step=i + 1))
         if progress:
             progress(i + 1, NSTEP)
     pid = _len_param(link)
     if pid is not None:
         a = link.request(Cmd.TRACK_PARAM, [track, pid, *v14(length)], timeout=1.0)
         if verify and r14(a, 2) != length:
-            raise ProtocolError("Die Pattern-Länge wurde nicht übernommen")
+            raise ProtocolError(_("The pattern length was not accepted"))
     else:
-        note = (note + " " if note else "") + "Die Pattern-Länge bitte am FM-1 einstellen."
+        note = (note + " " if note else "") + _("Please set the pattern length on the FM-1.")
     if swing is not None:
         try:
             link.request(Cmd.TRACK_PARAM, [track, P_SSWING, *v14(swing)], timeout=1.0)
         except Exception:  # noqa: BLE001
-            note = (note + " " if note else "") + "Swing ließ sich nicht setzen."
+            note = (note + " " if note else "") + _("Swing could not be set.")
     if verify:
         for i in sorted({0, max(0, min(NSTEP, length) - 1), NSTEP - 1}):    # LEN 0/>64 vom Gerät: kein Index -1/64
             a = link.request(Cmd.TRACK_STEP, [track, i], timeout=1.0, retries=1)
             if not same_step(unwire_step(a[2:]), steps[i]):
-                raise ProtocolError(f"Kontroll-Lesen: Step {i + 1} stimmt nicht")
+                raise ProtocolError(_("Verification read: step {step} does not match").format(step=i + 1))
     return note
 
 
@@ -319,23 +322,29 @@ class LossReport:
 
     def text(self) -> str:
         if not self.total:
-            return "Keine Noten in der Spur."
-        parts = [f"{self.used} von {self.total} Noten werden übertragen."]
+            return _("No notes in the track.")
+        parts = [ngettext("{used} of {n} note will be transferred.", "{used} of {n} notes will be transferred.",
+                          self.total).format(used=self.used, n=self.total)]
         if self.outside:
-            parts.append(f"{self.outside} liegen außerhalb des Bereichs.")
+            parts.append(ngettext("{n} is outside the range.", "{n} are outside the range.",
+                                  self.outside).format(n=self.outside))
         if self.chord_overflow:
-            parts.append(f"{self.chord_overflow} fallen weg (mehr als 4 Noten pro Step).")
+            parts.append(ngettext("{n} is dropped (more than 4 notes per step).",
+                                  "{n} are dropped (more than 4 notes per step).",
+                                  self.chord_overflow).format(n=self.chord_overflow))
         if self.no_lane:
-            parts.append(f"{self.no_lane} Drum-Noten haben keine Lane.")
+            parts.append(ngettext("{n} drum note has no lane.", "{n} drum notes have no lane.",
+                                  self.no_lane).format(n=self.no_lane))
         if self.merged:
-            parts.append(f"{self.merged} doppelte Noten zusammengelegt.")
+            parts.append(ngettext("{n} duplicate note merged.", "{n} duplicate notes merged.",
+                                  self.merged).format(n=self.merged))
         return " ".join(parts)
 
 
 def to_pf_steps(notes: list[Note], o: ImportOptions, chunk: int = 0, report: LossReport | None = None) -> list:
     """MIDI-Noten -> projectfmt.Steps für Pattern `chunk` (bei Aufteilung)."""
     rep = report or LossReport()
-    steps = [PF.Step() for _ in range(NSTEP)]
+    steps = [PF.Step() for _i in range(NSTEP)]
     held_until = [-1] * NSTEP
     grid = 1.0 / o.steps_per_beat
     first = chunk * o.length
@@ -440,10 +449,10 @@ def read_song(link) -> SongSnapshot:
     (Version 4 hängt noch das Loop-Byte an). Wirft ProtocolError, wenn die Firmware das nicht kann."""
     a = link.request(Cmd.BANK_SONG, [0], timeout=2.0)
     if len(a) < 6 or a[0] != 0 or a[1] != 0:
-        raise ProtocolError("Song-Kette nicht lesbar")
+        raise ProtocolError(_("Song chain not readable"))
     n = a[2]
     if len(a) < 6 + 5 * n:
-        raise ProtocolError("unvollständige Song-Antwort")
+        raise ProtocolError(_("incomplete song answer"))
     rows = [(list(a[6 + 5 * i: 10 + 5 * i]), a[10 + 5 * i]) for i in range(n)]
     return SongSnapshot(rows)
 

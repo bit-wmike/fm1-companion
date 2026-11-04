@@ -7,6 +7,7 @@ import html
 from PyQt6.QtWidgets import QCheckBox, QDialog, QDialogButtonBox, QLabel, QVBoxLayout
 
 from .. import risk
+from ..i18n import _
 
 
 class RiskDialog(QDialog):
@@ -24,8 +25,8 @@ class RiskDialog(QDialog):
         self.check = QCheckBox(risk.CHECK_TEXT)
         lay.addWidget(self.check)
         self.buttons = QDialogButtonBox()
-        self.ok = self.buttons.addButton("Weiter", QDialogButtonBox.ButtonRole.AcceptRole)
-        cancel = self.buttons.addButton("Abbrechen", QDialogButtonBox.ButtonRole.RejectRole)
+        self.ok = self.buttons.addButton(_("Continue"), QDialogButtonBox.ButtonRole.AcceptRole)
+        cancel = self.buttons.addButton(_("Cancel"), QDialogButtonBox.ButtonRole.RejectRole)
         self.ok.setEnabled(False)
         cancel.setDefault(True)
         self.check.toggled.connect(self.ok.setEnabled)

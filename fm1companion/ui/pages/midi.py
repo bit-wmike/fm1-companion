@@ -28,7 +28,7 @@ from ..common import (Card, button, empty_state, fs_error_text, heading, icon, l
                       start_dir)
 from ..responsive import reflow
 from . import PageSpec
-from ...i18n import _
+from ...i18n import _, decimal, ngettext, pgettext
 
 SETTINGS = {"learn": [], "learn_port": "", "routing_presets": [], "bpm": 120.0, "swing": 0, "kb_channel": 1,
             "kb_velocity": 100, "kb_octave": 4, "kb_out": "fm1", "clock_out": "fm1", "hide_clock": True,
@@ -54,13 +54,13 @@ def mido_names(output: bool) -> tuple[list[str], str]:
         names = mido.get_output_names() if output else mido.get_input_names()
         return [n for n in names if "rtmidi" not in n.lower()], ""
     except Exception as e:                                 # noqa: BLE001
-        return [], f"Weitere MIDI-Anschlüsse brauchen python3-rtmidi ({type(e).__name__})."
+        return [], _("More MIDI ports need python3-rtmidi ({error}).").format(error=type(e).__name__)
 
 
 
 def _de(x: float, nd: int) -> str:
-    """Zahl mit deutschem Dezimalkomma (die Oberfläche ist deutsch: „120,0 BPM“, nicht „120.0 BPM“)."""
-    return f"{x:.{nd}f}".replace(".", ",")
+    """Zahl mit dem Dezimaltrennzeichen der Oberflächensprache („120,0 BPM“ / „120.0 BPM“)."""
+    return decimal(x, nd)
 
 class Outputs:
     """offene mido-Ausgänge (lazy, eine Instanz je Name)."""
@@ -88,9 +88,9 @@ class Outputs:
 
 
 # ============================================================== Monitor ===
-FILTERS = [("note", "Noten"), ("cc", "Controller"), ("prog", "Programm"), ("bend", "Pitch-Bend"),
+FILTERS = [("note", pgettext("MIDI", "Notes")), ("cc", _("Controller")), ("prog", _("Program")), ("bend", _("Pitch bend")),
            ("at", "Aftertouch"), ("sysex", "SysEx"), ("transport", "Start/Stop"), ("clock", "Clock"),
-           ("sense", "Active Sensing"), ("other", "Sonstiges")]
+           ("sense", "Active Sensing"), ("other", _("Other"))]
 MAX_ROWS = 2000           # Zeilen in der Tabelle (das Protokoll dahinter hält 20 000 für den Export)
 PER_TICK = 400            # mehr neue Zeilen je Aktualisierung (10×/s) zeigt die Tabelle nicht – sonst stockt die Oberfläche
 
@@ -107,22 +107,23 @@ class MonitorTab(QWidget):
         lay = QVBoxLayout(self)
         bar = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Suchen (z. B. „C4“, „CC 74“, „TRACK_PARAM“) …")
+        self.search.setPlaceholderText(_("Search (e.g. “C4”, “CC 74”, “TRACK_PARAM”) …"))
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self.refilter)
         bar.addWidget(self.search, 1)
         self.dir = QComboBox()
-        for k, t in (("", "beide Richtungen"), ("in", "nur vom Gerät ←"), ("out", "nur zum Gerät →")):
+        for k, t in (("", _("both directions")), ("in", _("only from the device ←")), ("out", _("only to the device →"))):
             self.dir.addItem(t, k)
         self.dir.currentIndexChanged.connect(self.refilter)
         bar.addWidget(self.dir)
-        self.b_pause = button("Pause", "media-playback-pause", tooltip="Anzeige anhalten (Leertaste)")
+        self.b_pause = button(_("Pause"), "media-playback-pause", tooltip=_("Pause the display (space bar)"))
         self.b_pause.setCheckable(True)
         self.b_pause.toggled.connect(self._pause)
         bar.addWidget(self.b_pause)
-        bar.addWidget(button("Leeren", "edit-clear", slot=self.clear, tooltip="Protokoll verwerfen (nicht nur die Anzeige)"))
-        bar.addWidget(button("Exportieren …", "document-save", slot=self.export,
-                             tooltip="das gefilterte Protokoll als Text oder CSV speichern (bis 20 000 Nachrichten)"))
+        bar.addWidget(button(_("Clear"), "edit-clear", slot=self.clear, tooltip=_("Discard the log (not "
+                                                                                "just the display)")))
+        bar.addWidget(button(_("Export …"), "document-save", slot=self.export,
+                             tooltip=_("save the filtered log as text or CSV (up to 20 000 messages)")))
         lay.addLayout(bar)
         fl = QHBoxLayout()
         self.cbs: dict[str, QCheckBox] = {}
@@ -136,7 +137,7 @@ class MonitorTab(QWidget):
         lay.addLayout(fl)
         reflow(fl)                                         # Filter brechen bei schmalem Fenster um
         self.table = QTableWidget(0, 7)
-        self.table.setHorizontalHeaderLabels(["Zeit", "Richtung", "Port", "Typ", "Kanal", "Daten", "Bedeutung"])
+        self.table.setHorizontalHeaderLabels([_("Time"), _("Direction"), "Port", _("Type"), _("Channel"), _("Data"), _("Meaning")])
         self.table.verticalHeader().hide()
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -146,20 +147,20 @@ class MonitorTab(QWidget):
             self.table.setColumnWidth(i, w)
         hh.setStretchLastSection(True)
         lay.addWidget(self.table, 1)
-        self.empty = empty_state("activity", "Spiel etwas am FM-1 – hier erscheinen die Nachrichten",
-                                 "Noten, Regler, Clock und SysEx in beide Richtungen. Mit „Mithören“ unten kommen "
-                                 "weitere MIDI-Eingänge (Controller, Klangerzeuger) dazu.")
+        self.empty = empty_state("activity", _("Play something on the FM-1 – the messages appear here"),
+                                 _("Notes, controls, clock and SysEx in both directions. With “Listen in” "
+                                   "below, more MIDI inputs (controllers, sound generators) are added."))
         lay.addWidget(self.empty, 1)
         self.table.hide()
         st = QHBoxLayout()
         self.status = label("", "muted")
         st.addWidget(self.status, 1)
-        st.addWidget(QLabel("Weiterer Eingang:"))
+        st.addWidget(QLabel(_("Additional input:")))
         self.in_combo = QComboBox()
         self.in_combo.setMinimumWidth(220)
         st.addWidget(self.in_combo)
-        self.b_listen = button("Mithören", "list-add", slot=self.add_input,
-                               tooltip="auch diesen MIDI-Eingang anzeigen (z. B. Controller, Klangerzeuger)")
+        self.b_listen = button(_("Listen in"), "list-add", slot=self.add_input,
+                               tooltip=_("also show this MIDI input (e.g. controller, sound generator)"))
         st.addWidget(self.b_listen)
         self.in_list = QLabel("")
         self.in_list.setProperty("role", "muted")
@@ -192,12 +193,12 @@ class MonitorTab(QWidget):
         for n in names:
             self.in_combo.addItem(n)
         if not names:
-            self.in_combo.addItem("kein weiterer MIDI-Eingang gefunden")
+            self.in_combo.addItem(_("no additional MIDI input found"))
         self.in_combo.setEnabled(bool(names))
         self.b_listen.setEnabled(bool(names))
-        self.in_combo.setToolTip(hint or ("MIDI-Eingänge des Systems (USB-Controller, Klangerzeuger)" if names else
-                                          "Kein weiterer MIDI-Eingang angeschlossen – Controller anstecken, dann die "
-                                          "Seite neu öffnen."))
+        self.in_combo.setToolTip(hint or (_("MIDI inputs of the system (USB controllers, sound generators)") if names else
+                                          _("No additional MIDI input connected – plug in a controller, "
+                                            "then open the page again.")))
 
     def add_input(self):
         name = self.in_combo.currentText()
@@ -207,9 +208,9 @@ class MonitorTab(QWidget):
             import mido
             self.inputs[name] = mido.open_input(name, callback=self._on_input(name))
         except Exception as e:                             # noqa: BLE001
-            show_error(self, "Eingang lässt sich nicht öffnen", f"{name}: {e}")
+            show_error(self, _("Input cannot be opened"), f"{name}: {e}")
             return
-        self.in_list.setText("hört mit: " + ", ".join(n.split(":")[0] for n in self.inputs))
+        self.in_list.setText(_("listening to: {ports}").format(ports=", ".join(n.split(":")[0] for n in self.inputs)))
 
     def close_inputs(self):
         for p in self.inputs.values():
@@ -264,7 +265,8 @@ class MonitorTab(QWidget):
         t.setRowCount(r0 + len(rows))
         for i, e in enumerate(rows):
             r = r0 + i
-            vals = (_de(e.t, 3).rjust(9), M.DIR_DE.get(e.direction, e.direction), e.port, e.dec.type,
+            direction = _(M.DIR_TEXT[e.direction]) if e.direction in M.DIR_TEXT else e.direction
+            vals = (_de(e.t, 3).rjust(9), direction, e.port, e.dec.type,
                     str(e.dec.channel or ""), e.dec.data, e.dec.meaning)
             for c, v in enumerate(vals):
                 it = QTableWidgetItem(v)
@@ -278,21 +280,24 @@ class MonitorTab(QWidget):
     def _status(self):
         bpm = self.meter.bpm if self.meter.alive() else None
         n = len(self.log.events)
-        parts = [f"{n} Nachrichten" + (f" (Tabelle zeigt die letzten {MAX_ROWS})" if n > MAX_ROWS else "")]
+        parts = [ngettext("{n} message (the table shows the last {rows})", "{n} messages (the table shows the last {rows})",
+                          n).format(n=n, rows=MAX_ROWS) if n > MAX_ROWS else
+                 ngettext("{n} message", "{n} messages", n).format(n=n)]
         if self.skipped:
-            parts.append(f"{self.skipped} bei Sturzflut nicht angezeigt (im Export enthalten)")
+            parts.append(_("{n} not shown during a flood (included in the export)").format(n=self.skipped))
         if bpm:
             j = self.meter.jitter_ms
-            parts.append(f"eingehende Clock: {_de(bpm, 1)} BPM" + (f" (±{_de(j, 2)} ms)" if j is not None else ""))
+            parts.append(_("incoming clock: {bpm} BPM (±{jitter} ms)").format(bpm=_de(bpm, 1), jitter=_de(j, 2))
+                         if j is not None else _("incoming clock: {bpm} BPM").format(bpm=_de(bpm, 1)))
         if self.paused:
-            parts.append("angehalten")
+            parts.append(_("paused"))
         self.status.setText(" · ".join(parts))
 
-    def refilter(self, *_):
+    def refilter(self, *_args):
         self.table.setRowCount(0)
         self._append([e for e in list(self.log.events)[-MAX_ROWS:] if self.visible_kind(e)])
 
-    def _filter_changed(self, *_):
+    def _filter_changed(self, *_args):
         s = _settings()
         s["hide_clock"] = not self.cbs["clock"].isChecked()
         s["hide_sense"] = not self.cbs["sense"].isChecked()
@@ -301,7 +306,7 @@ class MonitorTab(QWidget):
 
     def _pause(self, on):
         self.paused = on
-        self.b_pause.setText("Weiter" if on else "Pause")
+        self.b_pause.setText(_("Continue") if on else _("Pause"))
         if not on:
             self.refilter()
 
@@ -315,9 +320,9 @@ class MonitorTab(QWidget):
         self._status()
 
     def export(self):
-        fn, filt = QFileDialog.getSaveFileName(self, "MIDI-Protokoll speichern",
+        fn, filt = QFileDialog.getSaveFileName(self, _("Save MIDI log"),
                                                str(start_dir("MIDI") / "midi-monitor.txt"),
-                                               "Text (*.txt);;CSV-Tabelle (*.csv)")
+                                               _("Text (*.txt);;CSV table (*.csv)"))
         if not fn:
             return
         fmt = "csv" if fn.lower().endswith(".csv") or "CSV" in filt else "txt"
@@ -325,9 +330,10 @@ class MonitorTab(QWidget):
         try:
             Path(fn).write_text(M.export_text(events, fmt), "utf-8")
         except OSError as e:
-            show_error(self, "MIDI-Protokoll speichern", fs_error_text(e, "Nicht gespeichert"))
+            show_error(self, _("Save MIDI log"), fs_error_text(e, _("Not saved")))
             return
-        notify(f"{len(events)} Nachrichten gespeichert: {Path(fn).name}", "success")
+        notify(ngettext("{n} message saved: {file}", "{n} messages saved: {file}", len(events)).format(
+            n=len(events), file=Path(fn).name), "success")
 
 
 # ============================================================= Tastatur ===
@@ -355,8 +361,8 @@ class Piano(QWidget):
         self.setMinimumHeight(140)
         self.setMinimumWidth(500)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setToolTip("Mit der Maus spielen oder mit der Tastatur: untere Reihe Y S X D C V … = C bis H, "
-                        "obere Reihe Q 2 W 3 E … eine Oktave höher.")
+        self.setToolTip(_("Play with the mouse or with the keyboard: bottom row Y S X D C V … = C to B, "
+                          "top row Q 2 W 3 E … one octave higher."))
 
     def sizeHint(self):
         return QSize(800, 160)
@@ -460,16 +466,16 @@ class KeyboardTab(QWidget):
         self.sounding: set[int] = set()
         lay = QVBoxLayout(self)
         row = QHBoxLayout()                     # Gruppen (Beschriftung + Feld) bleiben beim Umbrechen zusammen
-        g1, g2, g3, g4 = (QHBoxLayout() for _ in range(4))
-        g1.addWidget(QLabel("Ziel:"))
+        g1, g2, g3, g4 = (QHBoxLayout() for _i in range(4))
+        g1.addWidget(QLabel(_("Target:")))
         self.out = QComboBox()
         self.out.setMinimumWidth(260)
         g1.addWidget(self.out)
-        g2.addWidget(QLabel("Kanal:"))
+        g2.addWidget(QLabel(_("Channel:")))
         self.channel = QSpinBox(minimum=1, maximum=16, value=int(s["kb_channel"]))
-        self.channel.setToolTip("Melodee: Kanal 1–4 = Spur 1–4 (bei ROUT CH1-4), SEL = gewählte Spur")
+        self.channel.setToolTip(_("Melodee: channel 1–4 = track 1–4 (with ROUT CH1-4), SEL = selected track"))
         g2.addWidget(self.channel)
-        g3.addWidget(QLabel("Anschlag:"))
+        g3.addWidget(QLabel(_("Velocity:")))
         self.vel = QSlider(Qt.Orientation.Horizontal, minimum=1, maximum=127, value=int(s["kb_velocity"]))
         self.vel.setMaximumWidth(140)
         self.vel.setMinimumWidth(100)
@@ -477,10 +483,10 @@ class KeyboardTab(QWidget):
         self.vel.valueChanged.connect(lambda v: self.vel_l.setText(str(v)))
         g3.addWidget(self.vel)
         g3.addWidget(self.vel_l)
-        g4.addWidget(button("", "go-down", slot=lambda: self.shift(-1), tooltip="Oktave tiefer (Bild ↓)"))
+        g4.addWidget(button("", "go-down", slot=lambda: self.shift(-1), tooltip=_("Octave down (Page ↓)")))
         self.oct_l = QLabel()
         g4.addWidget(self.oct_l)
-        g4.addWidget(button("", "go-up", slot=lambda: self.shift(1), tooltip="Oktave höher (Bild ↑)"))
+        g4.addWidget(button("", "go-up", slot=lambda: self.shift(1), tooltip=_("Octave up (Page ↑)")))
         for g in (g1, g2, g3, g4):
             row.addLayout(g)
         lay.addLayout(row)
@@ -488,11 +494,11 @@ class KeyboardTab(QWidget):
         mid = QHBoxLayout()
         wheels = QVBoxLayout()
         self.bend = QSlider(Qt.Orientation.Vertical, minimum=-8192, maximum=8191, value=0)
-        self.bend.setToolTip("Pitch-Bend (springt beim Loslassen zurück)")
+        self.bend.setToolTip(_("Pitch bend (springs back when released)"))
         self.bend.valueChanged.connect(lambda v: self.send([0xE0 | self.ch(), (v + 8192) & 127, (v + 8192) >> 7]))
         self.bend.sliderReleased.connect(lambda: self.bend.setValue(0))
         self.mod = QSlider(Qt.Orientation.Vertical, minimum=0, maximum=127, value=0)
-        self.mod.setToolTip("Modulationsrad (CC 1)")
+        self.mod.setToolTip(_("Modulation wheel (CC 1)"))
         self.mod.valueChanged.connect(lambda v: self.send([0xB0 | self.ch(), 1, v]))
         wl = QHBoxLayout()
         wl.addWidget(self.bend)
@@ -506,23 +512,25 @@ class KeyboardTab(QWidget):
         mid.addWidget(self.piano, 1)
         lay.addLayout(mid)
         opts = QHBoxLayout()
-        self.sustain = QCheckBox("Sustain (CC 64)")
-        self.sustain.setToolTip("Haltepedal: Noten klingen nach dem Loslassen weiter. Wird beim Verlassen der Seite gelöst.")
+        self.sustain = QCheckBox(_("Sustain (CC 64)"))
+        self.sustain.setToolTip(_("Sustain pedal: notes keep sounding after release. Released when "
+                                  "leaving the page."))
         self.sustain.toggled.connect(lambda on: self.send([0xB0 | self.ch(), 64, 127 if on else 0]))
         opts.addWidget(self.sustain)
-        self.hold = QCheckBox("Akkord halten")
-        self.hold.setToolTip("Tasten rasten ein: noch einmal drücken lässt los. Beim Verlassen der Seite wird alles gelöst.")
+        self.hold = QCheckBox(_("Hold chord"))
+        self.hold.setToolTip(_("Keys latch: pressing again releases. Everything is released when leaving "
+                               "the page."))
         self.hold.toggled.connect(lambda on: None if on else self.all_off())
         opts.addWidget(self.hold)
-        opts.addWidget(button("Alle Noten aus", "media-playback-stop", slot=self.all_off,
-                              tooltip="sendet Note aus für alles, was klingt, und CC 123"))
+        opts.addWidget(button(_("All notes off"), "media-playback-stop", slot=self.all_off,
+                              tooltip=_("sends note off for everything that sounds, and CC 123")))
         opts.addStretch(1)
         self.info = label("", "muted")
         opts.addWidget(self.info)
         lay.addLayout(opts)
-        lay.addWidget(label("Tipp: Klick in die Tastatur, dann spielen mit Y S X D C … und Q 2 W 3 E … "
-                            "Für Melodee-Spur 5–8 (MIDI-Spuren) den Kanal der Spur wählen und als Ziel "
-                            "„FM-1 Klangerzeuger“ – oder direkt das FM-1 auf Kanal 1–4.", "muted"))
+        lay.addWidget(label(_("Tip: click into the keyboard, then play with Y S X D C … and Q 2 W 3 E … "
+                              "For Melodee tracks 5–8 (MIDI tracks) choose the track's channel and “FM-1 "
+                              "sound generator” as target – or the FM-1 directly on channel 1–4."), "muted"))
         lay.addStretch(1)
         QShortcut(QKeySequence("PgDown"), self, activated=lambda: self.shift(-1))
         QShortcut(QKeySequence("PgUp"), self, activated=lambda: self.shift(1))
@@ -537,7 +545,7 @@ class KeyboardTab(QWidget):
         cur = self.out.currentData() or _settings()["kb_out"]
         self.out.blockSignals(True)
         self.out.clear()
-        self.out.addItem(icon("audio-midi"), "FM-1 (App-Verbindung)", FM1)
+        self.out.addItem(icon("audio-midi"), _("FM-1 (app connection)"), FM1)
         names, hint = mido_names(True)
         for n in names:
             self.out.addItem(n, n)
@@ -549,7 +557,7 @@ class KeyboardTab(QWidget):
 
     def send(self, data) -> bool:
         ok = self.page.send_to(self.out.currentData() or FM1, data)
-        self.info.setText("" if ok else "nicht gesendet – FM-1 beschäftigt oder nicht verbunden")
+        self.info.setText("" if ok else _("not sent – FM-1 busy or not connected"))
         return ok
 
     def press(self, n):
@@ -599,7 +607,7 @@ class KeyboardTab(QWidget):
         self._oct_label()
 
     def _oct_label(self):
-        self.oct_l.setText(f"ab {M.note_name(self.piano.base)}")
+        self.oct_l.setText(_("from {note}").format(note=M.note_name(self.piano.base)))
         s = _settings()
         s["kb_octave"] = self.piano.base // 12 - 1
 
@@ -618,55 +626,59 @@ class ClockTab(QWidget):
         self.master = ClockMaster(self._send, float(s["bpm"]))
         self.master.swing = int(s["swing"]) / 100
         lay = QVBoxLayout(self)
-        c = Card("Taktgeber (Clock-Master)", icon="metronome",
-                 subtitle="Die App gibt das Tempo vor: 24 Pulse pro Viertel, Start/Stop/Weiter. Melodee folgt, "
-                          "wenn am FM-1 GLO › CLK auf „USB“ steht (40–240 BPM). Auf „INT“ führt das FM-1 selbst – "
-                          "ab Melodee 1.6.1 sendet es dann seinen eigenen Takt. Der Takt läuft weiter, wenn du die "
-                          "Seite wechselst – „Stopp“ hier oder beim Beenden der App.")
+        c = Card(_("Clock master"), icon="metronome",
+                 subtitle=_("The app sets the tempo: 24 pulses per quarter, Start/Stop/Continue. Melodee "
+                            "follows when GLO › CLK on the FM-1 is set to “USB” (40–240 BPM). On “INT” "
+                            "the FM-1 leads itself – from Melodee 1.6.1 it then sends its own clock. The "
+                            "clock keeps running when you change the page – “Stop” here or when quitting "
+                            "the app."))
         g = QGridLayout()
-        g.addWidget(QLabel("Tempo:"), 0, 0)
+        g.addWidget(QLabel(_("Tempo:")), 0, 0)
         self.bpm = QDoubleSpinBox(minimum=30, maximum=300, decimals=1, value=float(s["bpm"]), suffix=" BPM")
         self.bpm.setSingleStep(1)
         self.bpm.valueChanged.connect(self._bpm)
         g.addWidget(self.bpm, 0, 1)
-        g.addWidget(button("Tap", "hand", slot=self._tap, tooltip="im Takt klicken (oder T drücken)"), 0, 2)
-        g.addWidget(QLabel("Swing:"), 1, 0)
+        g.addWidget(button("Tap", "hand", slot=self._tap, tooltip=_("click in time (or press T)")), 0, 2)
+        g.addWidget(QLabel(_("Swing:")), 1, 0)
         self.swing = QSlider(Qt.Orientation.Horizontal, minimum=0, maximum=50, value=int(s["swing"]))
         self.swing_l = QLabel()
         self.swing.valueChanged.connect(self._swing)
         g.addWidget(self.swing, 1, 1)
         g.addWidget(self.swing_l, 1, 2)
-        g.addWidget(QLabel("Ziel:"), 2, 0)
+        g.addWidget(QLabel(_("Target:")), 2, 0)
         self.out = QComboBox()
         self.out.currentIndexChanged.connect(lambda _i: self._update_hint())
         g.addWidget(self.out, 2, 1, 1, 2)
-        g.addWidget(QLabel("Start ab Takt:"), 3, 0)
+        g.addWidget(QLabel(_("Start at bar:")), 3, 0)
         self.bar = QSpinBox(minimum=1, maximum=1024, value=1)
-        self.bar.setToolTip("1 = von vorn (MIDI Start). Ab Takt 2: Song Position + Continue – der Follower steigt an "
-                            "dieser Stelle ein (Melodee ab 1.6.1 mit CLK USB; ältere Firmware läuft einfach weiter).")
+        self.bar.setToolTip(_("1 = from the beginning (MIDI Start). From bar 2: Song Position + Continue "
+                              "– the follower joins at this point (Melodee from 1.6.1 with CLK USB; older "
+                              "firmware simply continues)."))
         g.addWidget(self.bar, 3, 1)
         c.lay.addLayout(g)
         row = QHBoxLayout()
-        self.b_start = button("Start", "media-playback-start", "primary", self.start,
-                              "sendet MIDI Start (von vorn) und dann 24 Pulse je Viertel")
-        self.b_cont = button("Weiter", "media-skip-forward", slot=lambda: self.start(True),
-                             tooltip="sendet MIDI Continue: läuft an der Stelle weiter, an der gestoppt wurde")
-        self.b_stop = button("Stopp", "media-playback-stop", slot=self.stop, tooltip="sendet MIDI Stop und beendet den Takt")
+        self.b_start = button(_("Start"), "media-playback-start", "primary", self.start,
+                              _("sends MIDI Start (from the beginning) and then 24 pulses per quarter"))
+        self.b_cont = button(_("Continue"), "media-skip-forward", slot=lambda: self.start(True),
+                             tooltip=_("sends MIDI Continue: continues where it was stopped"))
+        self.b_stop = button(_("Stop"), "media-playback-stop", slot=self.stop, tooltip=_("sends MIDI Stop "
+                                                                                       "and ends the "
+                                                                                       "clock"))
         for b in (self.b_start, self.b_cont, self.b_stop):
             row.addWidget(b)
         row.addStretch(1)
         c.lay.addLayout(row)
-        self.state = label("gestoppt", "muted")
+        self.state = label(_("stopped"), "muted")
         c.lay.addWidget(self.state)
         self.hint = label("", "muted")
         self.hint.setWordWrap(True)
         self.hint.hide()
         c.lay.addWidget(self.hint)
         lay.addWidget(c)
-        f = Card("Eingehende Clock (Follower)", icon="activity",
-                 subtitle="Misst Tempo und Gleichmäßigkeit einer Clock, die vom FM-1 oder einem mitgehörten "
-                          "Eingang (Reiter Monitor) kommt.")
-        self.follow = label("keine Clock empfangen", "")
+        f = Card(_("Incoming clock (follower)"), icon="activity",
+                 subtitle=_("Measures tempo and steadiness of a clock coming from the FM-1 or a monitored "
+                            "input (tab Monitor)."))
+        self.follow = label(_("no clock received"), "")
         f.lay.addWidget(self.follow)
         lay.addWidget(f)
         lay.addStretch(1)
@@ -680,7 +692,7 @@ class ClockTab(QWidget):
     def fill_outputs(self):
         cur = self.out.currentData() or _settings()["clock_out"]
         self.out.clear()
-        self.out.addItem("FM-1 (App-Verbindung)", FM1)
+        self.out.addItem(_("FM-1 (app connection)"), FM1)
         for n in mido_names(True)[0]:
             self.out.addItem(n, n)
         self.out.setCurrentIndex(max(0, self.out.findData(cur)))
@@ -700,12 +712,13 @@ class ClockTab(QWidget):
 
     def _send(self, data):                       # aus dem Clock-Thread
         if not self.page.send_to(self._target, data, realtime=True):
-            raise RuntimeError("nicht gesendet")
+            raise RuntimeError(_("not sent"))
 
     def start(self, cont=False):
         self._target = self.out.currentData() or FM1
         if self._target == FM1 and (self.page.ctx.link is None or self.page.ctx.link.closed):
-            self.state.setText("Nicht gestartet: kein FM-1 verbunden. FM-1 anstecken oder oben ein anderes Ziel wählen.")
+            self.state.setText(_("Not started: no FM-1 connected. Plug in the FM-1 or choose a different "
+                                 "target above."))
             return
         s = _settings()
         s.update(bpm=self.bpm.value(), swing=self.swing.value(), clock_out=self._target)
@@ -733,30 +746,41 @@ class ClockTab(QWidget):
 
     def _swing(self, v):
         self.master.swing = v / 100
-        self.swing_l.setText(f"{50 + v // 2} %" if v else "aus")
+        self.swing_l.setText(f"{50 + v // 2} %" if v else pgettext("state", "off"))
 
     def refresh(self):
         m = self.master
         if m.running:
             st = m.jitter_stats()
-            j = (f" · Genauigkeit: Pulse im Mittel {_de(st['mean_ms'], 2)} ms neben der Sollzeit, 95 % unter "
-                 f"{_de(st['p95_ms'], 2)} ms (unter 1 ms ist unhörbar)") if st.get("n") else ""
-            err = f" · {m.send_errors} Pulse nicht gesendet (Ziel weg?)" if m.send_errors else ""
-            self.state.setText(f"läuft: {_de(m.bpm, 1)} BPM, {m.pulses} Pulse ({m.pulses // 96 + 1}. Takt){j}{err}")
+            parts = [_("running: {bpm} BPM, {pulses} pulses (bar {bar})").format(
+                bpm=_de(m.bpm, 1), pulses=m.pulses, bar=m.pulses // 96 + 1)]
+            if st.get("n"):
+                parts.append(_("Accuracy: pulses on average {mean} ms off the target time, 95 % under {p95} ms (under "
+                               "1 ms is inaudible)").format(mean=_de(st["mean_ms"], 2), p95=_de(st["p95_ms"], 2)))
+            if m.send_errors:
+                parts.append(ngettext("{n} pulse not sent (target gone?)", "{n} pulses not sent (target gone?)",
+                                      m.send_errors).format(n=m.send_errors))
+            self.state.setText(" · ".join(parts))
         else:
-            self.state.setText("gestoppt")
+            self.state.setText(_("stopped"))
         mt = self.page.monitor.meter
         if m.running and mt.alive() and getattr(self, "_target", None) == FM1:
             # zwei Takte zugleich: das FM-1 führt selbst (CLK INT, ab Melodee 1.6.1) und hört nicht auf die App
-            self.hint.setText("Es kommt gleichzeitig eine Clock herein – vermutlich sendet das FM-1 selbst (CLK INT). "
-                              "Am FM-1 GLO › GLOBAL › CLK auf USB stellen, dann folgt es der App.")
+            self.hint.setText(_("A clock is coming in at the same time – probably the FM-1 is sending "
+                                "itself (CLK INT). On the FM-1 set GLO › GLOBAL › CLK to USB, then it "
+                                "follows the app."))
             self.hint.show()
         if mt.alive():
             j = mt.jitter_ms
-            self.follow.setText(f"{_de(mt.bpm, 1)} BPM" + (f", Schwankung ±{_de(j, 2)} ms zwischen den Pulsen" if j is not None else "")
-                                if mt.bpm else "Clock erkannt, messe …")
+            if not mt.bpm:
+                self.follow.setText(_("Clock detected, measuring …"))
+            elif j is not None:
+                self.follow.setText(_("{bpm} BPM, fluctuation ±{jitter} ms between the pulses").format(
+                    bpm=_de(mt.bpm, 1), jitter=_de(j, 2)))
+            else:
+                self.follow.setText(_("{bpm} BPM").format(bpm=_de(mt.bpm, 1)))
         else:
-            self.follow.setText("keine Clock empfangen")
+            self.follow.setText(_("no clock received"))
 
 
 # ============================================================== Regler ===
@@ -784,20 +808,21 @@ class ControlsTab(QWidget):
         self.learning: int | None = None
         lay = QVBoxLayout(self)
         top = QHBoxLayout()
-        self.b_read = button("Vom FM-1 lesen", "view-refresh", "primary", self.read)
+        self.b_read = button(_("Read from FM-1"), "view-refresh", "primary", self.read)
         top.addWidget(self.b_read)
         self.filter = QLineEdit()
-        self.filter.setPlaceholderText("Parameter suchen …")
+        self.filter.setPlaceholderText(_("Search parameters …"))
         self.filter.textChanged.connect(self._filter)
         top.addWidget(self.filter, 1)
-        top.addWidget(QLabel("Lern-Eingang:"))
+        top.addWidget(QLabel(_("Learn input:")))
         self.learn_in = QComboBox()
         self.learn_in.setMinimumWidth(200)
         top.addWidget(self.learn_in)
-        top.addWidget(button("Zuordnungen löschen", "edit-clear", slot=self.clear_learn))
+        top.addWidget(button(_("Delete assignments"), "edit-clear", slot=self.clear_learn))
         lay.addLayout(top)
-        self.state = label("Noch nichts gelesen – so geht's: „Vom FM-1 lesen“ holt Namen, Bereiche und Werte der "
-                           "gewählten Spur. Dann Regler bewegen; mit „Lernen“ einen Knopf deines Controllers zuordnen.",
+        self.state = label(_("Nothing read yet – how it works: “Read from FM-1” fetches names, ranges and "
+                             "values of the selected track. Then move the controls; with “Learn” assign a "
+                             "knob of your controller."),
                            "muted")
         lay.addWidget(self.state)
         self.scroll = QScrollArea()
@@ -857,7 +882,7 @@ class ControlsTab(QWidget):
         self.hold()
         link, info = ctx.link, ctx.info
         self.b_read.setEnabled(False)
-        self.state.setText("lese Parameter …")
+        self.state.setText(_("reading parameters …"))
 
         def work(w):
             sel = 0
@@ -890,8 +915,10 @@ class ControlsTab(QWidget):
                 out.append(p)
             return sel, dec, out
         run_job(self, work, on_done=self.values_ready.emit,
-                on_progress=lambda a, t: self.state.setText(f"lese Parameter {a + 1} von {t} … (Namen, Bereiche, Werte)"),
-                on_fail=lambda m, tb: (self.b_read.setEnabled(True), self.state.setText(f"Lesen fehlgeschlagen: {m}")))
+                on_progress=lambda a, t: self.state.setText(
+                    _("reading parameter {n} of {total} … (names, ranges, values)").format(n=a + 1, total=t)),
+                on_fail=lambda m, tb: (self.b_read.setEnabled(True),
+                                       self.state.setText(_("Reading failed: {error}").format(error=m))))
 
     def _show(self, res):
         sel, dec, plist = res
@@ -909,7 +936,7 @@ class ControlsTab(QWidget):
         self.learning = None                               # die alten „Lernen“-Knöpfe sind weg (sonst KeyError in on_cc)
         for i, p in enumerate(plist):
             name = QLabel(f"{p.d.label}" + (f" ({p.d.unit})" if p.d.unit else ""))
-            name.setToolTip(f"Parameter {p.id}, {p.d.min} … {p.d.max}")
+            name.setToolTip(_("Parameter {id}, {min} … {max}").format(id=p.id, min=p.d.min, max=p.d.max))
             if p.d.fmt == 8 and p.d.names:
                 w = QComboBox()
                 w.addItems(p.d.names)
@@ -920,9 +947,9 @@ class ControlsTab(QWidget):
                 w = QSlider(Qt.Orientation.Horizontal, minimum=p.d.min, maximum=p.d.max, value=p.value)
                 val = QLabel(str(p.value))
                 w.valueChanged.connect(lambda v, pid=p.id, lab=val: (lab.setText(str(v)), self.change(pid, v)))
-            lb = QPushButton("Lernen")
+            lb = QPushButton(_("Learn"))
             lb.setCheckable(True)
-            lb.setToolTip("danach einen Knopf am Lern-Eingang bewegen – noch einmal klicken bricht ab")
+            lb.setToolTip(_("then move a knob on the learn input – clicking again cancels"))
             lb.toggled.connect(lambda on, pid=p.id, b=lb: self.start_learn(pid, b, on))
             m = self.mapping_for(p.id)
             if m:
@@ -935,12 +962,15 @@ class ControlsTab(QWidget):
         self.grid.setColumnStretch(1, 1)
         self.grid.setColumnStretch(5, 1)
         if plist:
-            self.state.setText(f"Spur {sel + 1}: {len(plist)} Parameter. Änderungen gehen sofort ans FM-1 "
-                               "(der eingebettete Editor pausiert, solange dieser Reiter offen ist, und läuft "
-                               "beim Verlassen von selbst weiter).")
+            self.state.setText(ngettext(
+                "Track {track}: {n} parameter. Changes go to the FM-1 immediately (the embedded editor pauses while "
+                "this tab is open and resumes by itself when you leave it).",
+                "Track {track}: {n} parameters. Changes go to the FM-1 immediately (the embedded editor pauses while "
+                "this tab is open and resumes by itself when you leave it).", len(plist)).format(
+                track=sel + 1, n=len(plist)))
         else:
-            self.state.setText("Keine Parameter gelesen – diese Firmware beschreibt ihre Parameter nicht (DESC). "
-                               "Regeln geht dann über den Reiter „Tastatur“ (Mod-Rad) oder den Editor.")
+            self.state.setText(_("No parameters read – this firmware does not describe its parameters "
+                                 "(DESC). Then control via the tab “Keyboard” (mod wheel) or the editor."))
 
     def forget(self, why: str):
         """anderes Gerät oder getrennt: keine veralteten Regler zeigen."""
@@ -948,7 +978,8 @@ class ControlsTab(QWidget):
             return
         self.release()
         self._show((0, M.v14_dec, []))
-        self.state.setText(f"{why} – „Vom FM-1 lesen“ holt die Parameter des jetzt verbundenen Geräts.")
+        self.state.setText(_("{reason} – “Read from FM-1” fetches the parameters of the device connected "
+                             "now.").format(reason=why))
 
     def _filter(self, txt):
         q = txt.lower().strip()
@@ -968,7 +999,7 @@ class ControlsTab(QWidget):
     def fill_learn(self):
         names, hint = mido_names(False)
         self.learn_in.clear()
-        self.learn_in.addItem("– kein –", "")
+        self.learn_in.addItem(_("– none –"), "")
         for n in names:
             self.learn_in.addItem(n, n)
         cur = _settings()["learn_port"]
@@ -978,7 +1009,7 @@ class ControlsTab(QWidget):
             self.learn_in.setToolTip(hint)
         self._learn_port()
 
-    def _learn_port(self, *_):
+    def _learn_port(self, *_args):
         name = self.learn_in.currentData() or ""
         self.learn_name = name                             # für learn_feed (MIDI-Thread liest kein Widget)
         _settings()["learn_port"] = name
@@ -994,7 +1025,7 @@ class ControlsTab(QWidget):
                 import mido
                 self.learn_port = mido.open_input(name, callback=lambda m: self.page.learn_feed(name, m.bytes()))
             except Exception as e:                         # noqa: BLE001
-                self.state.setText(f"Lern-Eingang nicht verfügbar: {e}")
+                self.state.setText(_("Learn input not available: {error}").format(error=e))
 
     def mapping_for(self, pid):
         return next((m for m in _settings()["learn"] if m["id"] == pid), None)
@@ -1005,12 +1036,12 @@ class ControlsTab(QWidget):
                 if row[3] is not btn and row[3].isChecked():
                     row[3].setChecked(False)
             self.learning = pid
-            btn.setText("bewegen …")
+            btn.setText(_("move …"))
         else:
             if self.learning == pid:
                 self.learning = None
             m = self.mapping_for(pid)
-            btn.setText(f"CC {m['cc']}" if m else "Lernen")
+            btn.setText(f"CC {m['cc']}" if m else _("Learn"))
 
     def on_cc(self, ch, cc, val):
         """im GUI-Thread: CC vom Lern-Eingang."""
@@ -1038,7 +1069,7 @@ class ControlsTab(QWidget):
         _settings()["learn"] = []
         _save()
         for pid, row in getattr(self, "rows", {}).items():
-            row[3].setText("Lernen")
+            row[3].setText(_("Learn"))
 
 
 def r14_pair(lo, hi):
@@ -1076,37 +1107,38 @@ class RoutingTab(QWidget):
         self.page = page
         self.ports: list[alsaseq.SeqPort] = []
         lay = QVBoxLayout(self)
-        lay.addWidget(label("Verbindet MIDI-Anschlüsse direkt im ALSA-Sequencer (wie „aconnect“): Haken = der Sender "
-                            "(Zeile) schickt an den Empfänger (Spalte). Die FM-1-Verbindung der App selbst läuft über "
-                            "eigene rtmidi-Anschlüsse („RtMidi…“) – die zeigt die Tabelle grau, sie gehören der App.",
+        lay.addWidget(label(_("Connects MIDI ports directly in the ALSA sequencer (like “aconnect”): "
+                              "check mark = the sender (row) sends to the receiver (column). The app's "
+                              "own FM-1 connection runs via its own rtmidi ports (“RtMidi…”) – the table "
+                              "shows them grey, they belong to the app."),
                             "muted"))
         row = QHBoxLayout()
-        row.addWidget(button("Aktualisieren", "view-refresh", slot=self.refresh))
-        self.show_sys = QCheckBox("System-Ports zeigen")
-        self.show_sys.toggled.connect(lambda _: self._fill())
+        row.addWidget(button(_("Refresh"), "view-refresh", slot=self.refresh))
+        self.show_sys = QCheckBox(_("Show system ports"))
+        self.show_sys.toggled.connect(lambda _on: self._fill())
         row.addWidget(self.show_sys)
         row.addStretch(1)
-        row.addWidget(button("Controller → FM-1", "cable", slot=self.quick_controller,
-                             tooltip="ersten gefundenen MIDI-Controller (z. B. MiniLab) mit dem FM-1 verbinden"))
-        row.addWidget(button("FM-1 → Klangerzeuger", "cable", slot=self.quick_fluid,
-                             tooltip="MIDI-Ausgang des FM-1 an FluidSynth (Seite Klangerzeuger)"))
+        row.addWidget(button(_("Controller → FM-1"), "cable", slot=self.quick_controller,
+                             tooltip=_("connect the first MIDI controller found (e.g. MiniLab) to the FM-1")))
+        row.addWidget(button(_("FM-1 → sound generator"), "cable", slot=self.quick_fluid,
+                             tooltip=_("MIDI output of the FM-1 to FluidSynth (page Sound Module)")))
         lay.addLayout(row)
         reflow(row)
         self.table = QTableWidget()
         self.table.cellClicked.connect(self._clicked)
         lay.addWidget(self.table, 1)
-        self.empty = empty_state("cable", "Keine MIDI-Anschlüsse gefunden",
-                                 "Der ALSA-Sequencer ist nicht erreichbar oder „aconnect“ fehlt. "
-                                 "So geht's: sudo apt install alsa-utils – und ein MIDI-Gerät anstecken.")
+        self.empty = empty_state("cable", _("No MIDI ports found"),
+                                 _("The ALSA sequencer is not reachable or “aconnect” is missing. How to "
+                                   "fix: sudo apt install alsa-utils – and plug in a MIDI device."))
         lay.addWidget(self.empty)
         pr = QHBoxLayout()
-        pr.addWidget(QLabel("Vorlagen:"))
+        pr.addWidget(QLabel(_("Templates:")))
         self.presets = QComboBox()
         self.presets.setMinimumWidth(220)
         pr.addWidget(self.presets)
-        pr.addWidget(button("Anwenden", "media-playback-start", slot=self.apply_preset))
-        pr.addWidget(button("Aktuelle speichern …", "document-save", slot=self.save_preset))
-        pr.addWidget(button("Löschen", "edit-delete", slot=self.delete_preset))
+        pr.addWidget(button(_("Apply"), "media-playback-start", slot=self.apply_preset))
+        pr.addWidget(button(_("Save current …"), "document-save", slot=self.save_preset))
+        pr.addWidget(button(_("Delete"), "edit-delete", slot=self.delete_preset))
         pr.addStretch(1)
         lay.addLayout(pr)
         reflow(pr)
@@ -1117,7 +1149,7 @@ class RoutingTab(QWidget):
 
     def refresh(self):
         run_job(self, lambda w: alsaseq.list_ports(), on_done=self.ports_ready.emit,
-                on_fail=lambda m, tb: self.msg.setText(f"Lesen fehlgeschlagen: {m}"))
+                on_fail=lambda m, tb: self.msg.setText(_("Reading failed: {error}").format(error=m)))
 
     def _got(self, ports):
         self.ports = ports
@@ -1145,7 +1177,7 @@ class RoutingTab(QWidget):
                 it.setFlags(Qt.ItemFlag.ItemIsEnabled)
                 if s.app or d.app or s.client == d.client:
                     it.setFlags(Qt.ItemFlag.NoItemFlags)
-                    it.setToolTip("gehört der App (rtmidi)" if (s.app or d.app) else "")
+                    it.setToolTip(_("belongs to the app (rtmidi)") if (s.app or d.app) else "")
                 t.setItem(r, c, it)
         t.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
 
@@ -1164,8 +1196,9 @@ class RoutingTab(QWidget):
 
         def done(res):
             bad = [m for ok, m in res if not ok]
-            self.msg.setText("Fehler: " + "; ".join(bad) if bad else
-                             ("getrennt" if disconnect else f"{len(pairs)} Verbindung(en) hergestellt"))
+            self.msg.setText(_("Error: {errors}").format(errors="; ".join(bad)) if bad else
+                             (_("disconnected") if disconnect else
+                              ngettext("{n} connection made", "{n} connections made", len(pairs)).format(n=len(pairs))))
             self.refresh()
         run_job(self, work, on_done=done)
 
@@ -1182,7 +1215,8 @@ class RoutingTab(QWidget):
         ctrl = alsaseq.find(self.ports, r"minilab|arturia|keystep|launchkey|keylab|akai|mpk|nanokey|controller|"
                                         r"keyboard|smk|novation", True)
         if not fm or not ctrl:
-            self.msg.setText("Kein " + ("FM-1" if not fm else "Controller") + " im Sequencer gefunden.")
+            self.msg.setText(_("No FM-1 found in the sequencer.") if not fm else
+                             _("No controller found in the sequencer."))
             return
         self._do([(ctrl.addr, fm.addr)])
 
@@ -1190,8 +1224,8 @@ class RoutingTab(QWidget):
         fm = self._fm1(True)
         fl = alsaseq.find(self.ports, r"klangerzeuger|fluid", False)
         if not fm or not fl:
-            self.msg.setText("Erst den Klangerzeuger starten (Reiter „Klangerzeuger“ auf dieser Seite)." if not fl
-                             else "Kein FM-1 im Sequencer gefunden.")
+            self.msg.setText(_("Start the sound generator first (tab “Sound Module” on this page).") if not fl
+                             else _("No FM-1 found in the sequencer."))
             return
         self._do([(fm.addr, fl.addr)])
 
@@ -1199,21 +1233,23 @@ class RoutingTab(QWidget):
     def _fill_presets(self):
         self.presets.clear()
         for d in _settings()["routing_presets"]:
-            self.presets.addItem(d.get("name", "Vorlage"), d)
+            self.presets.addItem(d.get("name", _("Template")), d)
 
     def save_preset(self):
-        name, ok = QInputDialog.getText(self, "Vorlage speichern", "Name (z. B. „MiniLab → FM-1“):")
+        name, ok = QInputDialog.getText(self, _("Save template"), _("Name (e.g. “MiniLab → FM-1”):"))
         if not ok or not name.strip():
             return
         pr = alsaseq.capture(name.strip(), self.ports)
         if not pr.pairs:
-            self.msg.setText("Keine eigenen Verbindungen zum Speichern.")
+            self.msg.setText(_("No own connections to save."))
             return
         s = _settings()
         s["routing_presets"] = [d for d in s["routing_presets"] if d.get("name") != pr.name] + [pr.to_json()]
         _save()
         self._fill_presets()
-        self.msg.setText(f"Vorlage „{pr.name}“ mit {len(pr.pairs)} Verbindung(en) gespeichert.")
+        self.msg.setText(ngettext("Template “{name}” saved with {n} connection.",
+                                  "Template “{name}” saved with {n} connections.", len(pr.pairs)).format(
+            name=pr.name, n=len(pr.pairs)))
 
     def apply_preset(self):
         d = self.presets.currentData()
@@ -1221,7 +1257,7 @@ class RoutingTab(QWidget):
             return
         pairs, missing = alsaseq.resolve(alsaseq.Preset.from_json(d), self.ports)
         if missing:
-            self.msg.setText("Nicht angeschlossen: " + ", ".join(missing))
+            self.msg.setText(_("Not connected: {ports}").format(ports=", ".join(missing)))
         if pairs:
             self._do(pairs)
 
@@ -1247,17 +1283,18 @@ class MidiPage(QWidget):
         self.outputs = Outputs()
         self.listening = None
         lay = QVBoxLayout(self)
-        lay.addWidget(heading("MIDI", "Alles, was zwischen App, FM-1 und anderen MIDI-Geräten läuft: mitlesen, "
-                                      "spielen, Tempo vorgeben, Parameter regeln und Anschlüsse verbinden."))
+        lay.addWidget(heading("MIDI", _("Everything that runs between the app, the FM-1 and other MIDI "
+                                        "devices: monitor, play, set the tempo, adjust parameters and "
+                                        "connect ports.")))
         self.tabs = QTabWidget()
         self.monitor = MonitorTab(self)
         self.keyboard = KeyboardTab(self)
         self.clock = ClockTab(self)
         self.controls = ControlsTab(self)
         self.routing = RoutingTab(self)
-        for w, t, ic in ((self.monitor, "Monitor", "activity"), (self.keyboard, "Tastatur", "piano"),
-                         (self.clock, "Takt", "metronome"), (self.controls, "Regler", "sliders-horizontal"),
-                         (self.routing, "Verbindungen", "cable")):
+        for w, t, ic in ((self.monitor, _("Monitor"), "activity"), (self.keyboard, _("Keyboard"), "piano"),
+                         (self.clock, _("Clock"), "metronome"), (self.controls, _("Controls"), "sliders-horizontal"),
+                         (self.routing, _("Connections"), "cable")):
             self.tabs.addTab(w, icon(ic), t)
         self.tabs.currentChanged.connect(self._tab)
         lay.addWidget(self.tabs, 1)
@@ -1323,7 +1360,7 @@ class MidiPage(QWidget):
         tag = self._tag()
         if tag != self._dev_tag:
             self._dev_tag = tag
-            self.controls.forget("Gerät gewechselt" if self.ctx.link is not None else "FM-1 getrennt")
+            self.controls.forget(_("Device changed") if self.ctx.link is not None else _("FM-1 disconnected"))
 
     def _tab(self, i):
         if self.tabs.widget(i) is not self.keyboard and not self.keyboard.quiet():
@@ -1357,7 +1394,7 @@ class MidiPage(QWidget):
             self.monitor.timer.stop()
             self._unlisten()
 
-    def open_with(self, tab: str = "", **_):
+    def open_with(self, tab: str = "", **_kw):
         names = {"monitor": self.monitor, "tastatur": self.keyboard, "takt": self.clock, "regler": self.controls,
                  "verbindungen": self.routing}
         if tab in names:

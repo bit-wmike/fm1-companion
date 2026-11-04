@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Callable
 
 from .config import CACHE_DIR, DATA_DIR, load as load_settings
+from .i18n import N_, _
 
 UA = "fm1-companion"
 LAST_ERROR: dict[str, str] = {}          # key -> warum die Release-Liste leer blieb (für die Oberfläche)
@@ -76,18 +77,18 @@ BUILTIN = [
     FirmwareSpec("melodee", "Melodee", "keremimo/melodee", "melodee-{ver}.fwsc",
                  manual_online="https://keremimo.github.io/melodee/webapp/manual/",
                  resources="melodee-{ver}-res.bin", resource_tool="tools/fm1_resources.py",
-                 description="Multi-Engine-Synth und Sequencer: 4 Synth-Spuren + 4 MIDI-Spuren, 32 Projekte, "
-                             "Song-Modus mit 64 Sections.",
-                 samples="keine eigenen Samples (seit 1.5 entfernt)",
+                 description=_("Multi-engine synth and sequencer: 4 synth tracks + 4 MIDI tracks, 32 projects, "
+                               "song mode with 64 sections."),
+                 samples=_("no own samples (removed since 1.5)"),
                  family="melodee", author="Kerem Kiliç (Ellic Studio)", license="GPL-3.0", category="Synth",
                  installer_url="https://keremimo.github.io/melodee/"),
     FirmwareSpec("skiff", "Skiff", "illuminus5/skiff", "skiff-{ver}.fwsc",
-                 description="Sechs-Spur-Groovebox: 14 Engines, Pattern-Pool, Songs, Performance-Layer.",
-                 samples="3 Sample-Slots (USR1–3)",
+                 description=_("Six-track groovebox: 14 engines, pattern pool, songs, performance layer."),
+                 samples=_("3 sample slots (USR1–3)"),
                  family="skiff", author="illuminus5", license="GPL-3.0", category="Groovebox"),
     FirmwareSpec("sloop", "SLOOP", "isod89/sloop-fm1", "sloop-{ver}.fwsc",
-                 description="Live-Groovebox: 3 Synths + Drums, Looping, Punch-in-Effekte, 4 Song-Sections.",
-                 samples="4 Sample-Slots (USR1–4), auch als Drum-Kit",
+                 description=_("Live groovebox: 3 synths + drums, looping, punch-in effects, 4 song sections."),
+                 samples=_("4 sample slots (USR1–4), also as a drum kit"),
                  family="sloop", author="isod89", license="GPL-3.0", category="Groovebox"),
 ]
 
@@ -95,17 +96,18 @@ BUILTIN = [
 # Original-Firmware von M-VAVE (Rückweg). V16 liegt unter einer Adresse, deren Inhalt M-VAVE austauscht:
 # die Prüfsumme wird immer verglichen, bei Abweichung wird nichts installiert.
 STOCK = [
-    FirmwareSpec("stock-v15", "Original-Firmware V15", "m-vave/fm1_open", "FM-1_015.fwsc", sums="", installer="",
-                 editor="", description="M-VAVEs Original-Firmware V15 – der bewährte Rückweg und Ausgangspunkt für "
-                 "fast alle Community-Firmwares.", samples="8 Sample-Slots (Original)", protocol="none", family="stock",
+    FirmwareSpec("stock-v15", _("Original firmware V15"), "m-vave/fm1_open", "FM-1_015.fwsc", sums="", installer="",
+                 editor="", description=_("M-VAVE's original firmware V15 – the proven way back and starting point for "
+                                          "almost all community firmwares."), samples=_("8 sample slots (original)"),
+                 protocol="none", family="stock",
                  product="FM-1_015", author="M-VAVE", license="Apache-2.0", category="Original",
                  download_url="https://github.com/m-vave/fm1_open/raw/b178ac43c25f010c60a878056fb5331fe693fd62/"
                               "sdk/firmware/FM-1_015.fwsc",
                  sha256="db1642b2b6fa5c2cccb11ffd13878068bb28601678d3644049f99dc40e7edb8a", loader_family="stock",
                  release_tag="V15", homepage="https://github.com/m-vave/fm1_open"),
-    FirmwareSpec("stock-v16", "Original-Firmware V16", "m-vave/fm1_open", "FM-1.fwsc", sums="", installer="",
-                 editor="", description="M-VAVEs aktuelle Firmware V16 (Oktober 2026): acht Stimmen, 20 Noten "
-                 "Polyphonie, 64-Step-Pattern.", protocol="none", family="stock", product="FM-1_016",
+    FirmwareSpec("stock-v16", _("Original firmware V16"), "m-vave/fm1_open", "FM-1.fwsc", sums="", installer="",
+                 editor="", description=_("M-VAVE's current firmware V16 (October 2026): eight voices, 20 notes "
+                                          "polyphony, 64-step patterns."), protocol="none", family="stock", product="FM-1_016",
                  author="M-VAVE", license="Apache-2.0", category="Original",
                  download_url="https://yms-file-store.oss-cn-hongkong.aliyuncs.com/software/firmware/FM-1.fwsc",
                  sha256="d017fb65e70aca97ee29d944470c3515a74581df5c0576bf70de917c7b2b61d5", loader_family="stock",
@@ -194,7 +196,7 @@ def fetch_releases(s: FirmwareSpec, use_cache_secs: int = 600) -> list[Release]:
     try:
         data = _http_json(f"https://api.github.com/repos/{s.repo}/releases?per_page=40")
         if not isinstance(data, list):
-            raise ValueError("unerwartete API-Antwort")
+            raise ValueError(_("unexpected API response"))
         for r in data:
             if r.get("draft"):
                 continue
@@ -294,9 +296,9 @@ def download(s: FirmwareSpec, rel: Release, log: Callable[[str], None] = print,
         url = rel.assets.get(n) or _download_url(s, rel.tag, n)
         dest = folder / n
         if dest.exists() and dest.stat().st_size and n != s.sums:
-            log(f"{n} liegt schon vor")
+            log(_("{name} is already there").format(name=n))
             continue
-        log(f"lade {n} …")
+        log(_("downloading {name} …").format(name=n))
         _fetch(url, dest, progress)
     verified = False
     if sums_ok:
@@ -309,13 +311,13 @@ def download(s: FirmwareSpec, rel: Release, log: Callable[[str], None] = print,
             if n == s.sums:
                 continue
             if n not in sums:
-                raise RuntimeError(f"{n} steht nicht in {s.sums}")
+                raise RuntimeError(_("{name} is not listed in {sums}").format(name=n, sums=s.sums))
             h = hashlib.sha256((folder / n).read_bytes()).hexdigest()
             if h != sums[n]:
                 (folder / n).unlink(missing_ok=True)
-                raise RuntimeError(f"Prüfsumme von {n} stimmt nicht – Datei gelöscht, bitte erneut laden")
+                raise RuntimeError(_("Checksum of {name} does not match – file deleted, please download again").format(name=n))
         verified = True
-        log("Prüfsummen stimmen")
+        log(_("Checksums match"))
     res = folder / res_name if res_name and (folder / res_name).exists() else None
     return Package(s, rel, folder / names[0], res, verified)
 
@@ -331,20 +333,20 @@ def _download_fixed(s: FirmwareSpec, rel: Release, log, progress) -> Package:
     name = next(iter(rel.assets), s.asset)
     dest = folder / name
     if dest.exists() and s.sha256 and _sha(dest) == s.sha256:
-        log(f"{name} liegt schon vor (Prüfsumme stimmt)")
+        log(_("{name} is already there (checksum matches)").format(name=name))
         return Package(s, rel, dest, None, True)
-    log(f"lade {name} …")
-    tmp = folder / (name + ".neu")
+    log(_("downloading {name} …").format(name=name))
+    tmp = folder / (name + ".neu")  # i18n: ignore (file name)
     _fetch(rel.assets.get(name) or s.download_url, tmp, progress)
     if s.sha256:
         h = _sha(tmp)
         if h != s.sha256.lower():
             tmp.unlink(missing_ok=True)
-            raise ChecksumError(f"Die Datei unter {s.download_url} hat nicht die erwartete Prüfsumme "
-                                f"({h[:12]}… statt {s.sha256[:12]}…). Der Hersteller hat sie vermutlich ausgetauscht – "
-                                "sie wird nicht installiert.")
+            raise ChecksumError(_("The file at {url} does not have the expected checksum ({actual}… instead of "
+                                  "{expected}…). The manufacturer has probably replaced it – it is not "
+                                  "installed.").format(url=s.download_url, actual=h[:12], expected=s.sha256[:12]))
     tmp.replace(dest)
-    log("Prüfsumme stimmt" if s.sha256 else "Hinweis: keine Prüfsumme bekannt")
+    log(_("Checksum matches") if s.sha256 else _("Note: no checksum known"))
     return Package(s, rel, dest, None, bool(s.sha256))
 
 
@@ -374,28 +376,28 @@ def local_packages() -> list[Path]:
 def _git(args, cwd=None, timeout=600):
     r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, timeout=timeout)
     if r.returncode:
-        raise RuntimeError((r.stderr or r.stdout).strip().splitlines()[-1] if (r.stderr or r.stdout) else "git-Fehler")
+        raise RuntimeError((r.stderr or r.stdout).strip().splitlines()[-1] if (r.stderr or r.stdout) else _("git error"))
     return r.stdout
 
 
 def ensure_tools(s: FirmwareSpec, tag: str, log: Callable[[str], None] = print) -> Path:
     """Repo der Firmware klonen (nur einmal) und auf den Tag stellen."""
     if not shutil.which("git"):
-        raise RuntimeError("git fehlt (sudo apt install git)")
+        raise RuntimeError(_("git is missing (sudo apt install git)"))
     d = REPOS_DIR / s.key
     if not (d / ".git").exists():
-        log(f"hole die Werkzeuge von {s.repo} (einmalig) …")
+        log(_("fetching the tools from {repo} (once) …").format(repo=s.repo))
         d.parent.mkdir(parents=True, exist_ok=True)
         _git(["clone", "--filter=blob:none", "--no-checkout", f"https://github.com/{s.repo}.git", str(d)])
     else:
-        log("aktualisiere die Werkzeuge …")
+        log(_("updating the tools …"))
         try:
             _git(["fetch", "--tags", "--force", "--quiet"], cwd=d, timeout=180)
         except (RuntimeError, subprocess.TimeoutExpired) as e:
-            log(f"Aktualisieren nicht möglich ({e}), nutze vorhandenen Stand")
+            log(_("Updating not possible ({error}), using the existing state").format(error=e))
     _git(["checkout", "--force", "--quiet", tag], cwd=d)
     if not (d / s.installer).exists():
-        raise RuntimeError(f"{s.name} {tag} hat keinen Installer unter {s.installer}")
+        raise RuntimeError(_("{name} {tag} has no installer at {path}").format(name=s.name, tag=tag, path=s.installer))
     return d
 
 
@@ -459,18 +461,19 @@ def tool_trust(s: FirmwareSpec, tag: str, commit: str) -> tuple[bool, str]:
     if known:
         if commit == known:
             return True, ""
-        return False, (f"Der Tag {tag} von {s.repo} zeigt jetzt auf Commit {commit[:12]}, bekannt ist "
-                       f"{known[:12]} – der Tag wurde verschoben.")
+        return False, _("The tag {tag} of {repo} now points to commit {commit}, the known one is {known} – the tag "
+                        "was moved.").format(tag=tag, repo=s.repo, commit=commit[:12], known=known[:12])
     if s.builtin:
         if not seen:
             approve_tool(s, tag, commit, remember_only=True)      # erster Kontakt: Stand festhalten
             return True, ""
         if seen == commit:
             return True, ""
-        return False, (f"Der Tag {tag} von {s.repo} zeigt jetzt auf Commit {commit[:12]}, beim letzten Mal war es "
-                       f"{seen[:12]} – der Tag wurde verschoben.")
-    return False, (f"{s.name} wurde von dir hinzugefügt. Das Ressourcen-Werkzeug ({s.resource_tool}) kommt aus "
-                   f"github.com/{s.repo} (Tag {tag}, Commit {commit[:12]}) und läuft mit deinen Benutzerrechten.")
+        return False, _("The tag {tag} of {repo} now points to commit {commit}, last time it was {seen} – the tag "
+                        "was moved.").format(tag=tag, repo=s.repo, commit=commit[:12], seen=seen[:12])
+    return False, _("{name} was added by you. The resource tool ({tool}) comes from github.com/{repo} (tag {tag}, "
+                    "commit {commit}) and runs with your user rights.").format(
+                        name=s.name, tool=s.resource_tool, repo=s.repo, tag=tag, commit=commit[:12])
 
 
 def approve_tool(s: FirmwareSpec, tag: str, commit: str, remember_only: bool = False) -> None:
@@ -608,6 +611,9 @@ def query_identity(port_name: str = "", timeout=20) -> tuple[str, str]:
 
 # -------------------------------------------------------------- Install ---
 
+INSTALLER_ABORTED = N_("Installer aborted (code {code}): {error}")
+
+
 class InstallError(Exception):
     state = "safe"
     code = ""
@@ -632,22 +638,23 @@ def install(s: FirmwareSpec, pkg_path: Path, tag: str, port_name: str = "", res:
     except fp.PackageError as e:
         raise InstallError(str(e))
     if s.sha256 and info.sha256 != s.sha256.lower():
-        raise InstallError(f"Die Prüfsumme von {Path(pkg_path).name} stimmt nicht – nichts installiert.")
+        raise InstallError(_("The checksum of {name} does not match – nothing installed.").format(name=Path(pkg_path).name))
     if expect_sha and info.sha256 != expect_sha.lower():
-        raise InstallError(f"{Path(pkg_path).name} hat sich seit der Prüfung verändert – nichts installiert.")
+        raise InstallError(_("{name} has changed since the check – nothing installed.").format(name=Path(pkg_path).name))
     if not s.sha256 and not s.builtin and not info.official and not confirmed_unknown and not s.repo:
-        raise InstallError("Unbekannte Datei: bitte im Installationsplan ausdrücklich bestätigen.")
+        raise InstallError(_("Unknown file: please confirm explicitly in the installation plan."))
     if os.environ.get("FM1C_DEMO") == "1":
         from .flash import demo
         demo.register(Path(pkg_path).read_bytes())
-    log("starte den Installer …")
+    log(_("starting the installer …"))
     try:
         eng = fe.Engine(log=log, progress=lambda a, b: progress(a) if progress and b else None, cancel=cancel)
     except fe.FlashError as e:
-        err = InstallError(f"Installer abgebrochen (Code {e.code}): {e}")
+        err = InstallError(_(INSTALLER_ABORTED).format(code=e.code, error=e))
         err.state, err.code = e.state, e.code
         raise err
-    log(f"Paket: {info.product} ({info.family}), SHA-256 {info.sha256[:16]}…")
+    log(_("Package: {product} ({family}), SHA-256 {sha256}…").format(product=info.product, family=info.family,
+                                                                     sha256=info.sha256[:16]))
     try:
         result = eng.write(info, port=port_name, label=display_label(s, tag), device_id=device_id, pin=pin)
     except fe.FlashError as e:
@@ -656,7 +663,7 @@ def install(s: FirmwareSpec, pkg_path: Path, tag: str, port_name: str = "", res:
         raise err
     ident = result.identity
     if s.resources and res is not None and s.resource_tool:
-        log("schreibe die Ressourcen …")
+        log(_("writing the resources …"))
         try:
             repo = ensure_tools(s, tag, log)
             # genau das Gerät, das gerade installiert wurde (bei mehreren FM-1 nie nach Namensanfang raten)
@@ -665,24 +672,25 @@ def install(s: FirmwareSpec, pkg_path: Path, tag: str, port_name: str = "", res:
             if report is not None:
                 report["resources"] = RESOURCES_DONE.get(how if isinstance(how, str) else "", RESOURCES_DONE["written"])
         except ToolNotTrusted as e:            # fremdes/verschobenes Werkzeug: nie ungefragt mitten in der Installation
-            log(f"Ressourcen nicht geschrieben: {e} Die App fragt dich, wenn du „Schrift & Werkssounds nachschreiben“ "
-                "(Firmware+ › Installieren & Versionen) wählst.")
+            log(_("Resources not written: {error} The app asks you when you choose “Rewrite font & factory sounds” "
+                  "(Firmware+ › Install & Versions).").format(error=e))
             if report is not None:
-                report["resources"] = ("Ressourcen NICHT geschrieben (Werkzeug-Stand muss erst bestätigt werden) – bitte "
-                                       "über „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen) nachholen")
+                report["resources"] = _("Resources NOT written (the tool state must be confirmed first) – please "
+                                        "catch up via “Rewrite font & factory sounds” (Firmware+ › Install & Versions)")
         except Exception as e:  # noqa: BLE001 – die Firmware läuft trotzdem
-            log(f"Ressourcen nicht geschrieben ({e}) – später über „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen) nachholen.")
+            log(_("Resources not written ({error}) – catch up later via “Rewrite font & factory sounds” "
+                  "(Firmware+ › Install & Versions).").format(error=e))
             if report is not None:
-                report["resources"] = ("Ressourcen NICHT geschrieben – bitte über „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen) "
-                                       "nachholen")
+                report["resources"] = _("Resources NOT written – please catch up via “Rewrite font & factory sounds” "
+                                        "(Firmware+ › Install & Versions)")
     remember_identity(ident or info.product, s.key, tag)
     return ident
 
 
 # Melodee ab 1.6.0-rc.8 schreibt der Update-Loader die Ressourcen selbst aus dem Paket (ldr_core.c ldr_res);
 # fm1_resources.py fragt zuerst den Status (Befehl 82) und meldet dann „current“, ohne etwas zu schreiben.
-RESOURCES_DONE = {"written": "Ressourcen geschrieben",
-                  "current": "Ressourcen schon vollständig (vom Update-Loader mitgeschrieben)"}
+RESOURCES_DONE = {"written": _("Resources written"),
+                  "current": _("Resources already complete (written along by the update loader)")}
 
 
 def write_resources(s: FirmwareSpec, repo: Path, res: Path, port_name: str = "",
@@ -692,7 +700,7 @@ def write_resources(s: FirmwareSpec, repo: Path, res: Path, port_name: str = "",
     if not s.resource_tool:
         return ""
     commit = check_tool(s, repo, tag)          # fremden/verschobenen Code nie ungefragt ausführen
-    log(f"Ressourcen-Werkzeug: {s.repo} @ {commit[:12]}")
+    log(_("Resource tool: {repo} @ {commit}").format(repo=s.repo, commit=commit[:12]))
     last = ""
     for k in range(tries):
         time.sleep(5)
@@ -706,9 +714,10 @@ def write_resources(s: FirmwareSpec, repo: Path, res: Path, port_name: str = "",
         if m:
             log(RESOURCES_DONE[m.group(1)])
             return m.group(1)
-        log(f"Versuch {k + 1}: {last}")
-    raise InstallError(f"Ressourcen konnten nicht geschrieben werden: {last}. Wiedergabe stoppen und Bluetooth aus, "
-                       "dann in der App „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen).")
+        log(_("Attempt {n}: {output}").format(n=k + 1, output=last))
+    raise InstallError(_("Resources could not be written: {output}. Stop playback and switch Bluetooth off, "
+                         "then in the app “Rewrite font & factory sounds” (Firmware+ › Install & Versions).").format(
+                             output=last))
 
 
 # ------------------------------------------------------- Fehlertexte ---
@@ -718,24 +727,28 @@ def friendly_error(e: BaseException) -> str:
     Die technischen Details gehören ins Protokoll (siehe explain())."""
     import errno as _errno
     if isinstance(e, urllib.error.HTTPError):
-        return {403: "GitHub hat den Download abgelehnt (HTTP 403). Meist ist das stündliche Abruf-Limit erreicht "
-                     "(60 Abrufe pro Stunde ohne Anmeldung). Bitte in einer Stunde erneut versuchen.",
-                404: "Die Datei gibt es unter dieser Adresse nicht (mehr) (HTTP 404). Vielleicht wurde das Release "
-                     "zurückgezogen – bitte die Liste neu laden.",
-                429: "Zu viele Anfragen an den Server (HTTP 429). Bitte etwas warten und erneut versuchen."}.get(
-            e.code, f"Der Server hat mit einem Fehler geantwortet (HTTP {e.code}). Später erneut versuchen.")
+        return {403: _("GitHub refused the download (HTTP 403). Usually the hourly request limit has been reached "
+                       "(60 requests per hour without signing in). Please try again in an hour."),
+                404: _("The file does not exist (any more) at this address (HTTP 404). Perhaps the release was "
+                       "withdrawn – please reload the list."),
+                429: _("Too many requests to the server (HTTP 429). Please wait a little and try again.")}.get(
+            e.code, _("The server answered with an error (HTTP {code}). Try again later.").format(code=e.code))
     if isinstance(e, urllib.error.URLError) or isinstance(e, TimeoutError) or \
             type(e).__name__ in ("RemoteDisconnected", "IncompleteRead"):
-        return ("Keine Verbindung zum Server – bist du online? (Netzwerk prüfen; heruntergeladene Pakete "
-                "funktionieren auch offline.)")
+        return _("No connection to the server – are you online? (Check the network; downloaded packages "
+                 "also work offline.)")
     if isinstance(e, OSError) and getattr(e, "errno", None) in (_errno.EACCES, _errno.EPERM, _errno.EROFS):
-        where = f" „{e.filename}“" if getattr(e, "filename", None) else ""
-        return (f"Keine Schreibrechte für{where or ' den Ordner'}. Bitte die Rechte des Ordners prüfen oder in den "
-                "Einstellungen einen anderen Hauptordner wählen.")
+        if getattr(e, "filename", None):
+            return _("No write permission for “{path}”. Please check the permissions of the folder or choose another "
+                     "main folder in the settings.").format(path=e.filename)
+        return _("No write permission for the folder. Please check the permissions of the folder or choose another "
+                 "main folder in the settings.")
     if isinstance(e, OSError) and getattr(e, "errno", None) == _errno.ENOSPC:
-        return "Der Datenträger ist voll. Bitte Platz schaffen und erneut versuchen."
+        return _("The disk is full. Please free up space and try again.")
     msg = str(e) or type(e).__name__
-    msg = re.sub(r"^Installer abgebrochen \(Code \w+\):\s*", "", msg)
+    for t in {INSTALLER_ABORTED, _(INSTALLER_ABORTED)}:        # source text and UI language
+        head, _sep, tail = t.partition("{code}")
+        msg = re.sub("^" + re.escape(head) + r"\w+" + re.escape(tail.partition("{error}")[0].rstrip()) + r"\s*", "", msg)
     return msg
 
 

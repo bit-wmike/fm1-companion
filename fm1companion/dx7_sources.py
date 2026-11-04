@@ -9,7 +9,9 @@ import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 
-UNCLEAR = "Lizenz unklar – nur für privaten Gebrauch prüfen"
+from .i18n import _
+
+UNCLEAR = _("Licence unclear – check before private use only")
 
 
 @dataclass
@@ -23,6 +25,7 @@ class Collection:
     description: str = ""
     clear: bool = True        # Lizenz eindeutig frei?
     tags: list = field(default_factory=list)
+    folder: str = ""           # Ordnername auf der Platte (bleibt in jeder Sprache gleich)
 
     @property
     def url(self) -> str:
@@ -39,23 +42,25 @@ _MENE = ["acid_techno", "ambient_texture", "bass_funk_slap", "bells_marimba", "b
          "strings_orchestral", "synthwave_bass", "synthwave_pad", "vibes_bells", "vocal_choir", "woodwinds_sax"]
 
 COLLECTIONS = [
-    Collection("fm1-factory", "FM-1 Werks-Presets (128 Voices)", "KingParamount/fm1-factory-presets",
+    Collection("fm1-factory", _("FM-1 factory presets (128 voices)"), "KingParamount/fm1-factory-presets",
                "04b34cabd69745cf3a549af588619108e2866c0d",
                [f"banks/FM-1_factory_bank{i}.syx" for i in range(1, 5)], "CC0 1.0",
-               "Die DX7-Voices der Original-Firmware des M-VAVE FM-1, aus M-VAVEs Wiederherstellungs-Tool.",
-               tags=["FM-1", "Werk"]),
-    Collection("mene311", "mene311 FM-1 Banks (26 × 32)", "mene311/fm1-banks",
+               _("The DX7 voices of the original M-VAVE FM-1 firmware, from M-VAVE's recovery tool."),
+               tags=["FM-1", "Werk"], folder="FM-1 Werks-Presets"),  # i18n: ignore
+    Collection("mene311", _("mene311 FM-1 banks (26 × 32)"), "mene311/fm1-banks",
                "f47b11b9035be0dfe7f899aec90798dccbcde9ee",
                [f"banks/FM-1_{n}.syx" for n in _MENE], "MIT",
-               "Thematische Bänke für das FM-1: Bass, Pads, Orgel, Chiptune, Effekte …", tags=["FM-1"]),
-    Collection("yamaha-rom", "Yamaha DX7 Werks-ROMs (ROM1A–ROM4B)", _BSP[0], _BSP[1],
+               _("Themed banks for the FM-1: bass, pads, organ, chiptune, effects …"), tags=["FM-1"],
+               folder="mene311 FM-1 Banks"),
+    Collection("yamaha-rom", _("Yamaha DX7 factory ROMs (ROM1A–ROM4B)"), _BSP[0], _BSP[1],
                [f"public/dx7-banks/factory/rom{n}.syx" for n in ("1a", "1b", "2a", "2b", "3a", "3b", "4a", "4b")],
-               UNCLEAR, "Die originalen Yamaha-Cartridges, gespiegelt im FM1 Editor & Librarian (Code: MIT; "
-               "die Voices selbst stammen von Yamaha).", clear=False, tags=["Yamaha", "Werk"]),
-    Collection("greymatter", "Grey Matter E! (Auswahl)", _BSP[0], _BSP[1],
+               UNCLEAR, _("The original Yamaha cartridges, mirrored in FM1 Editor & Librarian (code: MIT; "
+               "the voices themselves come from Yamaha)."), clear=False, tags=["Yamaha", "Werk"],
+               folder="Yamaha DX7 Werks-ROMs"),  # i18n: ignore
+    Collection("greymatter", _("Grey Matter E! (selection)"), _BSP[0], _BSP[1],
                [f"public/dx7-banks/greymatter/{n}.syx" for n in (2, 5, 7)], UNCLEAR,
-               "Bänke der E!-Erweiterung von Grey Matter Response, gespiegelt im FM1 Editor & Librarian.",
-               clear=False, tags=["E!"]),
+               _("Banks of the E! expansion by Grey Matter Response, mirrored in FM1 Editor & Librarian."),
+               clear=False, tags=["E!"], folder="Grey Matter E!"),
 ]
 
 
@@ -70,7 +75,7 @@ def _fetch(url: str, timeout: float = 30) -> bytes:
 
 
 def folder_of(root: Path, c: Collection) -> Path:
-    return Path(root) / c.title.split(" (")[0]
+    return Path(root) / (c.folder or c.title.split(" (")[0])
 
 
 def installed(root: Path, c: Collection) -> bool:
@@ -87,13 +92,13 @@ def download(c: Collection, root: Path, fetch=None, log=None, progress=None, can
     d.mkdir(parents=True, exist_ok=True)
     for i, path in enumerate(c.files):
         if cancel and cancel():
-            raise RuntimeError("abgebrochen")
+            raise RuntimeError(_("cancelled"))
         target = d / Path(path).name
         if not target.exists():
             data = fetch(c.raw_url(path))
             res = dx7.parse_syx(data)
             if not res.voices:
-                raise RuntimeError(f"{Path(path).name}: keine DX7-Daten")
+                raise RuntimeError(_("{name}: no DX7 data").format(name=Path(path).name))
             tmp = target.with_suffix(".part")
             tmp.write_bytes(data)
             tmp.replace(target)
@@ -102,26 +107,27 @@ def download(c: Collection, root: Path, fetch=None, log=None, progress=None, can
         if progress:
             progress(i + 1, len(c.files))
     (d / "QUELLE.txt").write_text(
-        f"{c.title}\nQuelle: {c.url}\nLizenz: {c.licence}\n\n{c.description}\n", "utf-8")
+        _("{title}\nSource: {url}\nLicence: {licence}\n\n{description}\n").format(
+            title=c.title, url=c.url, licence=c.licence, description=c.description), "utf-8")
     (d / ".sammlung.json").write_text(json.dumps({"key": c.key, "commit": c.commit, "licence": c.licence}), "utf-8")
     return d
 
 
 def net_error_text(msg: str) -> str:
-    """Netzfehler (urllib/OSError-Text) in einen deutschen Satz übersetzen."""
+    """Netzfehler (urllib/OSError-Text) in einen verständlichen Satz übersetzen."""
     m = str(msg or "")
     low = m.lower()
     if "name or service not known" in low or "nodename nor servname" in low or "temporary failure in name" in low \
             or "getaddrinfo" in low or "no address associated" in low:
-        return "Keine Internetverbindung (GitHub nicht erreichbar)."
+        return _("No internet connection (GitHub not reachable).")
     if "timed out" in low or "timeout" in low:
-        return "Zeitüberschreitung – die Verbindung zu GitHub ist zu langsam oder unterbrochen."
+        return _("Timeout – the connection to GitHub is too slow or was interrupted.")
     if "404" in low:
-        return "Die Datei gibt es auf GitHub nicht mehr (404) – bitte die App aktualisieren."
+        return _("The file no longer exists on GitHub (404) – please update the app.")
     if "403" in low or "429" in low:
-        return "GitHub lehnt gerade ab (zu viele Anfragen) – in ein paar Minuten noch einmal."
+        return _("GitHub is refusing right now (too many requests) – try again in a few minutes.")
     if "certificate" in low or "ssl" in low:
-        return "Sichere Verbindung nicht möglich (Zertifikat) – stimmen Datum und Uhrzeit des Rechners?"
+        return _("Secure connection not possible (certificate) – are the computer's date and time correct?")
     if "network is unreachable" in low or "connection refused" in low or "unreachable" in low:
-        return "Kein Netz – WLAN/Kabel prüfen."
+        return _("No network – check Wi-Fi/cable.")
     return m + "."

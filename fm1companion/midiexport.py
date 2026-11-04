@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import projectfmt as F
+from .i18n import _, pgettext
 
 TPQ = 480
 
@@ -194,7 +195,7 @@ def to_midi(prj: F.Project, o: Options | None = None, pattern: tuple[int, int] |
         if not mine:
             continue
         tr = mido.MidiTrack()
-        label = f"Spur {t.index + 1} {t.engine_name}"
+        label = _("Track {n}").format(n=t.index + 1) + f" {t.engine_name}"
         if t.preset_name:
             label += f" {t.preset_name}"
         if t.mute:
@@ -208,7 +209,7 @@ def to_midi(prj: F.Project, o: Options | None = None, pattern: tuple[int, int] |
             msgs.append((off, 0, mido.Message("note_off", channel=e.channel, note=e.note, velocity=0)))
         msgs.sort(key=lambda x: (x[0], x[1]))
         now = 0
-        for tick, _, m in msgs:
+        for tick, _prio, m in msgs:
             tr.append(m.copy(time=tick - now))
             now = tick
         tr.append(mido.MetaMessage("end_of_track", time=0))
@@ -226,11 +227,12 @@ def save_midi(prj: F.Project, path: Path, o: Options | None = None, pattern=None
 def to_csv(prj: F.Project, o: Options | None = None, pattern=None) -> str:
     buf = io.StringIO()
     w = csv.writer(buf, delimiter=";")
-    w.writerow(["Spur", "Pattern", "Step", "Beginn (Viertel)", "Länge (Viertel)", "Note", "Name", "Anschlag",
-                "Kanal", "Drum"])
+    # Translators: column headers of the CSV export
+    w.writerow([_("Track"), "Pattern", "Step", _("Start (quarters)"), _("Length (quarters)"), "Note", "Name",
+                _("Velocity"), _("Channel"), "Drum"])
     for e in events(prj, o, pattern):
         w.writerow([e.track + 1, e.pattern + 1, e.step + 1, f"{e.start:.4f}", f"{e.length:.4f}", e.note,
-                    F.note_name(e.note), e.vel, e.channel + 1, "ja" if e.drum else ""])
+                    F.note_name(e.note), e.vel, e.channel + 1, pgettext("csv", "yes") if e.drum else ""])
     return buf.getvalue()
 
 

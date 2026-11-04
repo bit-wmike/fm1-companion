@@ -1,0 +1,4123 @@
+# German translation of FM-1 Companion – tools: catalog, MIDI, simulator, wizard, system check, link import …
+# SPDX-License-Identifier: GPL-3.0-only
+msgid ""
+msgstr ""
+"Project-Id-Version: FM-1 Companion\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: fm1companion/ui/pages/discover.py:32
+msgid "recently updated"
+msgstr "zuletzt aktualisiert"
+
+#: fm1companion/ui/pages/discover.py:32
+msgid "popularity (stars)"
+msgstr "Beliebtheit (Sterne)"
+
+#: fm1companion/ui/pages/discover.py:33
+msgid "directly installable first"
+msgstr "direkt installierbar zuerst"
+
+#: fm1companion/ui/pages/discover.py:34
+msgid "Directly installable"
+msgstr "Direkt installierbar"
+
+#: fm1companion/ui/pages/discover.py:34
+msgid "Package with checksum in the catalog – the app can install it"
+msgstr "Paket mit Prüfsumme im Katalog – die App kann es aufspielen"
+
+#: fm1companion/ui/pages/discover.py:36
+msgid "With simulator"
+msgstr "Mit Simulator"
+
+#: fm1companion/ui/pages/discover.py:36
+msgid "try it out in the browser without installing anything"
+msgstr "im Browser ausprobieren, ohne etwas aufzuspielen"
+
+#: fm1companion/ui/pages/discover.py:37
+msgid "With editor"
+msgstr "Mit Editor"
+
+#: fm1companion/ui/pages/discover.py:37
+msgid "has an online editor"
+msgstr "hat einen Online-Editor"
+
+#: fm1companion/ui/pages/discover.py:38
+msgid "Backup-capable"
+msgstr "Backup-fähig"
+
+#: fm1companion/ui/pages/discover.py:38
+msgid "Felucca protocol: backups, projects and editor bridge in the app"
+msgstr "Felucca-Protokoll: Backups, Projekte und Editor-Brücke in der App"
+
+#: fm1companion/ui/pages/discover.py:39
+msgid "Remembered"
+msgstr "Gemerkt"
+
+#: fm1companion/ui/pages/discover.py:39
+msgid "your wishlist"
+msgstr "deine Merkliste"
+
+#: fm1companion/ui/pages/discover.py:111
+msgid "installable"
+msgstr "installierbar"
+
+#: fm1companion/ui/pages/discover.py:113 fm1companion/ui/pages/discover.py:508
+#: fm1companion/ui/pages/discover.py:649
+msgid "Beta"
+msgstr "Beta"
+
+#: fm1companion/ui/pages/discover.py:115 fm1companion/ui/pages/discover.py:648
+msgctxt "license"
+msgid "closed"
+msgstr "geschlossen"
+
+#: fm1companion/ui/pages/discover.py:117
+msgid "paid"
+msgstr "kostenpflichtig"
+
+#: fm1companion/ui/pages/discover.py:162
+msgid "Author's description"
+msgstr "Beschreibung des Autors (englisch)"
+
+#: fm1companion/ui/pages/discover.py:222
+#, python-brace-format
+msgid "by {author}"
+msgstr "von {author}"
+
+#: fm1companion/ui/pages/discover.py:288 fm1companion/ui/pages/discover.py:716
+msgid "All firmwares"
+msgstr "Alle Firmwares"
+
+#: fm1companion/ui/pages/discover.py:328
+#, python-brace-format
+msgid "by <b>{author}</b>"
+msgstr "von <b>{author}</b>"
+
+#: fm1companion/ui/pages/discover.py:329
+#, python-brace-format
+msgid "License: {license}"
+msgstr "Lizenz: {license}"
+
+#: fm1companion/ui/pages/discover.py:330
+#, python-brace-format
+msgid "Based on: {lineage}"
+msgstr "Basis: {lineage}"
+
+#: fm1companion/ui/pages/discover.py:332
+#, python-brace-format
+msgid "★ {stars} on GitHub"
+msgstr "★ {stars} auf GitHub"
+
+#: fm1companion/ui/pages/discover.py:341
+msgid "Install …"
+msgstr "Installieren …"
+
+#: fm1companion/ui/pages/discover.py:342
+msgid "install on the active FM-1 (with confirmation and backup)"
+msgstr "auf das aktive FM-1 aufspielen (mit Rückfrage und Backup)"
+
+#: fm1companion/ui/pages/discover.py:345
+msgid "No verified package in the catalog – see the author's website/installer"
+msgstr "Kein geprüftes Paket im Katalog – siehe Webseite/Installer des Autors"
+
+#: fm1companion/ui/pages/discover.py:349
+msgid "Try in the simulator"
+msgstr "Im Simulator ausprobieren"
+
+#: fm1companion/ui/pages/discover.py:350
+msgid "runs on the computer – nothing is written to the FM-1"
+msgstr "läuft im Rechner – nichts wird aufs FM-1 geschrieben"
+
+#: fm1companion/ui/pages/discover.py:352
+msgid "Open online editor"
+msgstr "Online-Editor öffnen"
+
+#: fm1companion/ui/pages/discover.py:353
+#: fm1companion/ui/pages/discover.py:1061
+#: fm1companion/ui/linkimport_dialog.py:151
+msgid "Add to my firmwares"
+msgstr "Zu meinen Firmwares"
+
+#: fm1companion/ui/pages/discover.py:354
+msgid "then also appears in the tab “Install & versions”"
+msgstr "erscheint dann auch im Reiter „Installieren & Versionen“"
+
+#: fm1companion/ui/pages/discover.py:356
+msgid "Remember"
+msgstr "Merken"
+
+#: fm1companion/ui/pages/discover.py:362
+msgid "Links"
+msgstr "Links"
+
+#: fm1companion/ui/pages/discover.py:382
+msgid "Good to know"
+msgstr "Gut zu wissen"
+
+#: fm1companion/ui/pages/discover.py:392
+msgid "Author's description, from awesome-fm-1 – deliberately not translated"
+msgstr "Beschreibung des Autors (englisch), aus awesome-fm-1 – bewusst nicht übersetzt"
+
+#: fm1companion/ui/pages/discover.py:397 fm1companion/ui/pages/discover.py:745
+#: fm1companion/linkimport.py:599
+msgid "Description"
+msgstr "Beschreibung"
+
+#: fm1companion/ui/pages/discover.py:399
+msgid "What the app can do with it"
+msgstr "Was die App damit kann"
+
+#: fm1companion/ui/pages/discover.py:413 fm1companion/ui/pages/help.py:239
+msgid "Versions"
+msgstr "Versionen"
+
+#: fm1companion/ui/pages/discover.py:422
+msgid "Load the project's README"
+msgstr "README des Projekts laden"
+
+#: fm1companion/ui/pages/discover.py:427
+msgid "From the author"
+msgstr "Vom Autor"
+
+#: fm1companion/ui/pages/discover.py:442
+msgid "Author's web installer"
+msgstr "Web-Installer des Autors"
+
+#: fm1companion/ui/pages/discover.py:442
+msgid "Simulator in the browser"
+msgstr "Simulator im Browser"
+
+#: fm1companion/ui/pages/discover.py:443 fm1companion/linkimport.py:600
+msgid "Online editor"
+msgstr "Online-Editor"
+
+#: fm1companion/ui/pages/discover.py:443 fm1companion/linkimport.py:601
+msgid "Manual"
+msgstr "Handbuch"
+
+#: fm1companion/ui/pages/discover.py:443 fm1companion/linkimport.py:600
+msgid "Website"
+msgstr "Webseite"
+
+#: fm1companion/ui/pages/discover.py:443
+msgid "Source code"
+msgstr "Quellcode"
+
+#: fm1companion/ui/pages/discover.py:444
+msgid "Downloads (M-VAVE)"
+msgstr "Downloads (M-VAVE)"
+
+#: fm1companion/ui/pages/discover.py:444
+msgid "Release notes (M-VAVE)"
+msgstr "Versionshinweise (M-VAVE)"
+
+#: fm1companion/ui/pages/discover.py:445
+msgid "MIDI reference (M-VAVE)"
+msgstr "MIDI-Referenz (M-VAVE)"
+
+#: fm1companion/ui/pages/discover.py:448
+msgid "View on GitHub"
+msgstr "Auf GitHub ansehen"
+
+#: fm1companion/ui/pages/discover.py:452
+msgid "View on thefirmwarehub.com"
+msgstr "Auf thefirmwarehub.com ansehen"
+
+#: fm1companion/ui/pages/discover.py:453
+msgid "View in the FM1 firmware directory"
+msgstr "Im FM1-Firmware-Verzeichnis ansehen"
+
+#: fm1companion/ui/pages/discover.py:461
+msgid "Install via M-VAVE's standard update protocol – the checksum is verified before installing"
+msgstr "Installieren über das Standard-Update-Protokoll von M-VAVE – Prüfsumme wird vor dem Aufspielen geprüft"
+
+#: fm1companion/ui/pages/discover.py:462
+msgid "Install via M-VAVE's standard update protocol"
+msgstr "Installieren über das Standard-Update-Protokoll von M-VAVE"
+
+#: fm1companion/ui/pages/discover.py:464
+msgid "Install only via the manufacturer's site"
+msgstr "Installieren nur über die Seite des Herstellers"
+
+#: fm1companion/ui/pages/discover.py:466
+msgid "No verified package in the catalog; enter a .fwsc address via “Paste link”"
+msgstr "Kein geprüftes Paket im Katalog; per „Link einfügen“ eine .fwsc-Adresse eintragen"
+
+#: fm1companion/ui/pages/discover.py:468
+#, python-brace-format
+msgid "Backups, projects and editor bridge (Felucca protocol; {evidence})"
+msgstr "Backups, Projekte und Editor-Brücke (Felucca-Protokoll; {evidence})"
+
+#: fm1companion/ui/pages/discover.py:471
+msgid "Backups/projects: unknown – checked when connecting"
+msgstr "Backups/Projekte: unbekannt – wird beim Verbinden geprüft"
+
+#: fm1companion/ui/pages/discover.py:473
+msgid "Backup & projects"
+msgstr "Backup & Projekte"
+
+#: fm1companion/ui/pages/discover.py:475
+msgid "Online editor in the app"
+msgstr "Online-Editor in der App"
+
+#: fm1companion/ui/pages/discover.py:475
+msgid "Editor from the repo"
+msgstr "Editor aus dem Repo"
+
+#: fm1companion/ui/pages/discover.py:476
+msgid "no editor known"
+msgstr "kein Editor bekannt"
+
+#: fm1companion/ui/pages/discover.py:477
+msgid "Emulator"
+msgstr "Emulator"
+
+#: fm1companion/ui/pages/discover.py:478
+msgid "try it out on the computer"
+msgstr "im Rechner ausprobieren"
+
+#: fm1companion/ui/pages/discover.py:478
+msgid "no browser emulator known"
+msgstr "kein Browser-Emulator bekannt"
+
+#: fm1companion/ui/pages/discover.py:497
+msgid "no .fwsc package"
+msgstr "kein .fwsc-Paket"
+
+#: fm1companion/ui/pages/discover.py:497
+#, python-brace-format
+msgid "Package: {name}"
+msgstr "Paket: {name}"
+
+#: fm1companion/ui/pages/discover.py:499
+#, python-brace-format
+msgid "Pre-release · {package}"
+msgstr "Vorabversion · {package}"
+
+#: fm1companion/ui/pages/discover.py:506
+msgid "in the Mooring catalog, checksum known"
+msgstr "im Mooring-Katalog, Prüfsumme bekannt"
+
+#: fm1companion/ui/pages/discover.py:506
+msgid "known package (recognition only)"
+msgstr "bekanntes Paket (nur Erkennung)"
+
+#: fm1companion/ui/pages/discover.py:508
+msgid "interruption not resumable"
+msgstr "Abbruch nicht fortsetzbar"
+
+#: fm1companion/ui/pages/discover.py:509
+msgid "projects not backward compatible"
+msgstr "Projekte nicht abwärtskompatibel"
+
+#: fm1companion/ui/pages/discover.py:510
+msgid "needs MiniLab 3"
+msgstr "braucht MiniLab 3"
+
+#: fm1companion/ui/pages/discover.py:515
+msgid "no versions known"
+msgstr "keine Versionen bekannt"
+
+#: fm1companion/ui/pages/discover.py:524
+msgid "State from GitHub"
+msgstr "Stand von GitHub"
+
+#: fm1companion/ui/pages/discover.py:540
+msgid "README not loaded – try again"
+msgstr "README nicht geladen – erneut versuchen"
+
+#: fm1companion/ui/pages/discover.py:581
+#: fm1companion/ui/linkimport_dialog.py:398
+msgid "Paste link …"
+msgstr "Link einfügen …"
+
+#: fm1companion/ui/pages/discover.py:582
+msgid "Paste a GitHub link, .fwsc package, installer or simulator page (Ctrl+V)"
+msgstr "GitHub-Link, .fwsc-Paket, Installer- oder Simulator-Seite einfügen (Strg+V)"
+
+#: fm1companion/ui/pages/discover.py:587 fm1companion/ui/pages/discover.py:857
+#: fm1companion/ui/pages/discover.py:869 fm1companion/ui/pages/midi.py:1116
+#: fm1companion/ui/pages/help.py:194
+msgid "Refresh"
+msgstr "Aktualisieren"
+
+#: fm1companion/ui/pages/discover.py:588
+msgid "Reload the catalog (awesome-fm-1 and Mooring)"
+msgstr "Katalog neu laden (awesome-fm-1 und Mooring)"
+
+#: fm1companion/ui/pages/discover.py:592 fm1companion/ui/pages/discover.py:594
+msgid "More"
+msgstr "Mehr"
+
+#: fm1companion/ui/pages/discover.py:597
+msgid "My firmwares …"
+msgstr "Meine Firmwares …"
+
+#: fm1companion/ui/pages/discover.py:598
+msgid "GitHub token …"
+msgstr "GitHub-Token …"
+
+#: fm1companion/ui/pages/discover.py:601
+msgid "Update the catalog automatically when opening"
+msgstr "Katalog beim Öffnen automatisch aktualisieren"
+
+#: fm1companion/ui/pages/discover.py:605
+msgid "Load preview images from the internet"
+msgstr "Vorschaubilder aus dem Internet laden"
+
+#: fm1companion/ui/pages/discover.py:610
+msgid "awesome-fm-1 on GitHub"
+msgstr "awesome-fm-1 auf GitHub"
+
+#: fm1companion/ui/pages/discover.py:612
+msgid "FM1 firmware directory"
+msgstr "FM1-Firmware-Verzeichnis"
+
+#: fm1companion/ui/pages/discover.py:630
+msgid "Search: name, author, description, keyword (e.g. “acid”, “drums”, “Vestal”)"
+msgstr "Suchen: Name, Autor, Beschreibung, Stichwort (z. B. „acid“, „Drums“, „Vestal“)"
+
+#: fm1companion/ui/pages/discover.py:640
+msgid "Sort:"
+msgstr "Sortieren:"
+
+#: fm1companion/ui/pages/discover.py:647
+msgctxt "license"
+msgid "open"
+msgstr "offen"
+
+#: fm1companion/ui/pages/discover.py:650 fm1companion/linkimport.py:599
+msgid "Category"
+msgstr "Kategorie"
+
+#: fm1companion/ui/pages/discover.py:650
+msgid "Based on"
+msgstr "Basis"
+
+#: fm1companion/ui/pages/discover.py:652
+msgctxt "release state"
+msgid "Status"
+msgstr "Status"
+
+#: fm1companion/ui/pages/discover.py:677
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+#: fm1companion/ui/pages/discover.py:678
+msgid "Reset all filters"
+msgstr "Alle Filter zurücksetzen"
+
+#: fm1companion/ui/pages/discover.py:724
+msgid "What"
+msgstr "Was"
+
+#: fm1companion/ui/pages/discover.py:729
+msgid "Check for new versions"
+msgstr "Auf neue Versionen prüfen"
+
+#: fm1companion/ui/pages/discover.py:730
+msgid "asks GitHub for the releases of the firmwares you follow (at most 12)"
+msgstr "fragt GitHub nach den Releases der Firmwares, denen du folgst (höchstens 12)"
+
+#: fm1companion/ui/pages/discover.py:735
+msgid "News"
+msgstr "Neuigkeiten"
+
+#: fm1companion/ui/pages/discover.py:740
+msgid "Search tools, editors, recovery, guides, videos …"
+msgstr "Werkzeuge, Editoren, Rettung, Anleitungen, Videos … durchsuchen"
+
+#: fm1companion/ui/pages/discover.py:749
+msgid "Double-click opens the page in the browser. Source: awesome-fm-1 (CC0)."
+msgstr "Doppelklick öffnet die Seite im Browser. Quelle: awesome-fm-1 (CC0)."
+
+#: fm1companion/ui/pages/discover.py:750
+msgid "Tools && knowledge"
+msgstr "Werkzeuge && Wissen"
+
+#: fm1companion/ui/pages/discover.py:771
+msgid "bundled state"
+msgstr "mitgelieferter Stand"
+
+#: fm1companion/ui/pages/discover.py:771
+msgid "state of the last sync"
+msgstr "Stand vom letzten Abgleich"
+
+#: fm1companion/ui/pages/discover.py:771
+msgid "just updated"
+msgstr "gerade aktualisiert"
+
+#: fm1companion/ui/pages/discover.py:772
+msgid "no catalog"
+msgstr "kein Katalog"
+
+#: fm1companion/ui/pages/discover.py:777
+#, python-brace-format
+msgid "{n} firmwares for the FM-1, {installable} of them directly installable. Catalog revision {revision} of {date} ({source}). Sources: <a href='{awesome}'>awesome-fm-1</a> and Mooring (cicloid). More directories: <a href='{hub}'>FM-1 Firmware Hub</a>, <a href='{directory}'>fm1-editor.com/firmware</a>."
+msgstr "{n} Firmwares für das FM-1, {installable} davon direkt installierbar. Katalog-Revision {revision} vom {date} ({source}). Quellen: <a href='{awesome}'>awesome-fm-1</a> und Mooring (cicloid). Mehr Verzeichnisse: <a href='{hub}'>FM-1 Firmware Hub</a>, <a href='{directory}'>fm1-editor.com/firmware</a>."
+
+#: fm1companion/ui/pages/discover.py:803
+msgid "Added by you."
+msgstr "Von dir hinzugefügt."
+
+#: fm1companion/ui/pages/discover.py:848
+msgid "Offline mode: the bundled catalog applies."
+msgstr "Offline-Modus: es gilt der mitgelieferte Katalog."
+
+#: fm1companion/ui/pages/discover.py:852
+msgid "Loading …"
+msgstr "lädt …"
+
+#: fm1companion/ui/pages/discover.py:863
+#, python-brace-format
+msgid "Catalog updated – {n} entry."
+msgid_plural "Catalog updated – {n} entries."
+msgstr[0] "Katalog aktualisiert – {n} Eintrag."
+msgstr[1] "Katalog aktualisiert – {n} Einträge."
+
+#: fm1companion/ui/pages/discover.py:864
+msgid "Catalog updated."
+msgstr "Katalog aktualisiert."
+
+#: fm1companion/ui/pages/discover.py:873
+#, python-brace-format
+msgid "Catalog not updated: {error} You still see the saved state of {date}; everything here also works offline."
+msgstr "Katalog nicht aktualisiert: {error} Du siehst weiter den gespeicherten Stand vom {date}; alles hier geht auch offline."
+
+#: fm1companion/ui/pages/discover.py:877
+#, python-brace-format
+msgid "Catalog not updated: {error} You still see the saved state; everything here also works offline."
+msgstr "Katalog nicht aktualisiert: {error} Du siehst weiter den gespeicherten Stand; alles hier geht auch offline."
+
+#: fm1companion/ui/pages/discover.py:950
+#, python-brace-format
+msgid "{shown} of {total}"
+msgstr "{shown} von {total}"
+
+#: fm1companion/ui/pages/discover.py:955
+msgid ""
+"No firmware matches the search and filters.\n"
+"Tip: “Reset all filters” (button to the right of the filters) or fewer search words."
+msgstr ""
+"Keine Firmware passt zu Suche und Filtern.\n"
+"Tipp: „Alle Filter zurücksetzen“ (Knopf rechts neben den Filtern) oder weniger Suchwörter."
+
+#: fm1companion/ui/pages/discover.py:957
+msgid "The catalog is empty – “Refresh” loads it from the internet."
+msgstr "Der Katalog ist leer – „Aktualisieren“ lädt ihn aus dem Internet."
+
+#: fm1companion/ui/pages/discover.py:1038
+#: fm1companion/ui/pages/discover.py:1236 fm1companion/linkimport.py:453
+#: fm1companion/linkimport.py:456
+#, python-brace-format
+msgid "GitHub: {message}"
+msgstr "GitHub: {message}"
+
+#: fm1companion/ui/pages/discover.py:1055
+#, python-brace-format
+msgid ""
+"Installing directly from the catalog comes with the new installer.\n"
+"\n"
+"Until then: “Add to my firmwares” – then {name} is ready in the tab “Install & versions”, or open the author's web installer in the browser."
+msgstr ""
+"Das Aufspielen direkt aus dem Katalog kommt mit dem neuen Installer.\n"
+"\n"
+"Bis dahin: „Zu meinen Firmwares“ – dann steht {name} im Reiter „Installieren & Versionen“ bereit, oder den Web-Installer des Autors im Browser öffnen."
+
+#: fm1companion/ui/pages/discover.py:1058
+#, python-brace-format
+msgid ""
+"Installing directly from the catalog comes with the new installer.\n"
+"\n"
+"Until then: “Add to my firmwares” – then {name} is ready in the tab “Install & versions”."
+msgstr ""
+"Das Aufspielen direkt aus dem Katalog kommt mit dem neuen Installer.\n"
+"\n"
+"Bis dahin: „Zu meinen Firmwares“ – dann steht {name} im Reiter „Installieren & Versionen“ bereit."
+
+#: fm1companion/ui/pages/discover.py:1062
+msgid "Open web installer"
+msgstr "Web-Installer öffnen"
+
+#: fm1companion/ui/pages/discover.py:1079
+#, python-brace-format
+msgid "{title} opened in the browser."
+msgstr "{title} im Browser geöffnet."
+
+#: fm1companion/ui/pages/discover.py:1092
+#, python-brace-format
+msgid "{name} is already built in – you find it in the tab “Install & versions”."
+msgstr "{name} ist schon fest eingebaut – du findest es im Reiter „Installieren & Versionen“."
+
+#: fm1companion/ui/pages/discover.py:1094
+msgid "Already there"
+msgstr "Schon da"
+
+#: fm1companion/ui/pages/discover.py:1094
+#, python-brace-format
+msgid "{name} is built into the app."
+msgstr "{name} ist fest in der App eingebaut."
+
+#: fm1companion/ui/pages/discover.py:1101
+msgid "In my firmwares ✓"
+msgstr "In meinen Firmwares ✓"
+
+#: fm1companion/ui/pages/discover.py:1102
+#, python-brace-format
+msgid "{name} is now in the tab “Install & versions”."
+msgstr "{name} steht jetzt im Reiter „Installieren & Versionen“."
+
+#: fm1companion/ui/pages/discover.py:1126
+#, python-brace-format
+msgid "{name} saved – now in the tab “Install & versions”."
+msgstr "{name} gespeichert – steht jetzt im Reiter „Installieren & Versionen“."
+
+#: fm1companion/ui/pages/discover.py:1137
+msgid "GitHub token"
+msgstr "GitHub-Token"
+
+#: fm1companion/ui/pages/discover.py:1138
+msgid ""
+"Optional: personal GitHub token (only read access to public repos needed).\n"
+"Without a token GitHub allows 60 requests per hour, with a token 5000.\n"
+"Leave empty to remove."
+msgstr ""
+"Optional: persönlicher GitHub-Token (nur Lesezugriff auf öffentliche Repos nötig).\n"
+"Ohne Token erlaubt GitHub 60 Abfragen pro Stunde, mit Token 5000.\n"
+"Leer lassen zum Entfernen."
+
+#: fm1companion/ui/pages/discover.py:1151
+msgid "remembered"
+msgstr "gemerkt"
+
+#: fm1companion/ui/pages/discover.py:1153
+msgid "your firmware"
+msgstr "deine Firmware"
+
+#: fm1companion/ui/pages/discover.py:1157
+#, python-brace-format
+msgid "on {name}"
+msgstr "auf {name}"
+
+#: fm1companion/ui/pages/discover.py:1167 fm1companion/linkimport.py:349
+msgid "Catalog"
+msgstr "Katalog"
+
+#: fm1companion/ui/pages/discover.py:1174
+#, python-brace-format
+msgid "{name} {version} (pre-release)"
+msgstr "{name} {version} (Vorabversion)"
+
+#: fm1companion/ui/pages/discover.py:1195
+msgid "No news yet. How it works: mark firmwares with “Remember” or add them to your firmwares – then the app shows new versions here. It follows the firmwares on your FM-1 automatically."
+msgstr "Noch keine Neuigkeiten. So geht's: Firmwares mit „Merken“ markieren oder zu deinen Firmwares hinzufügen – dann zeigt die App hier neue Versionen. Firmwares auf deinen FM-1 verfolgt sie automatisch."
+
+#: fm1companion/ui/pages/discover.py:1198
+#, python-brace-format
+msgid "You follow: {names}."
+msgstr "Du folgst: {names}."
+
+#: fm1companion/ui/pages/discover.py:1201
+#, python-brace-format
+msgid "New versions of the firmwares you follow ({names}) and changes in the catalog. “new” = since your last visit. Double-click opens the firmware."
+msgstr "Neue Versionen der Firmwares, denen du folgst ({names}), und Änderungen im Katalog. „neu“ = seit deinem letzten Besuch. Doppelklick öffnet die Firmware."
+
+#: fm1companion/ui/pages/discover.py:1207
+msgid "Offline – news will come next time."
+msgstr "Offline – Neuigkeiten kommen beim nächsten Mal."
+
+#: fm1companion/ui/pages/discover.py:1245
+msgid "Editors, librarians and companion software"
+msgstr "Editoren und Begleit-Software"
+
+#: fm1companion/ui/pages/discover.py:1245
+msgid "Firmware update and recovery"
+msgstr "Update und Rettung"
+
+#: fm1companion/ui/pages/discover.py:1246
+msgid "Patches and sound banks"
+msgstr "Sounds und Patches"
+
+#: fm1companion/ui/pages/discover.py:1246
+msgid "Hardware add-ons"
+msgstr "Hardware-Zubehör"
+
+#: fm1companion/ui/pages/discover.py:1246
+msgid "Documentation and guides"
+msgstr "Anleitungen"
+
+#: fm1companion/ui/pages/discover.py:1247
+msgid "Articles and reviews"
+msgstr "Artikel und Tests"
+
+#: fm1companion/ui/pages/discover.py:1247
+msgid "Videos"
+msgstr "Videos"
+
+#: fm1companion/ui/pages/discover.py:1247
+msgid "Communities"
+msgstr "Communities"
+
+#: fm1companion/ui/pages/discover.py:1248
+msgid "Reverse engineering and firmware development"
+msgstr "Entwicklung und Reverse Engineering"
+
+#: fm1companion/ui/pages/discover.py:1248
+msgid "Related M-VAVE projects"
+msgstr "Verwandte M-VAVE-Projekte"
+
+#: fm1companion/ui/pages/midi.py:57
+#, python-brace-format
+msgid "More MIDI ports need python3-rtmidi ({error})."
+msgstr "Weitere MIDI-Anschlüsse brauchen python3-rtmidi ({error})."
+
+#: fm1companion/ui/pages/midi.py:91
+msgctxt "MIDI"
+msgid "Notes"
+msgstr "Noten"
+
+#: fm1companion/ui/pages/midi.py:91 fm1companion/miditools.py:102
+msgid "Controller"
+msgstr "Controller"
+
+#: fm1companion/ui/pages/midi.py:91 fm1companion/miditools.py:103
+msgid "Program"
+msgstr "Programm"
+
+#: fm1companion/ui/pages/midi.py:91 fm1companion/miditools.py:103
+msgid "Pitch bend"
+msgstr "Pitch-Bend"
+
+#: fm1companion/ui/pages/midi.py:110
+msgid "Search (e.g. “C4”, “CC 74”, “TRACK_PARAM”) …"
+msgstr "Suchen (z. B. „C4“, „CC 74“, „TRACK_PARAM“) …"
+
+#: fm1companion/ui/pages/midi.py:115
+msgid "both directions"
+msgstr "beide Richtungen"
+
+#: fm1companion/ui/pages/midi.py:115
+msgid "only from the device ←"
+msgstr "nur vom Gerät ←"
+
+#: fm1companion/ui/pages/midi.py:115
+msgid "only to the device →"
+msgstr "nur zum Gerät →"
+
+#: fm1companion/ui/pages/midi.py:119 fm1companion/ui/pages/midi.py:309
+msgid "Pause"
+msgstr "Pause"
+
+#: fm1companion/ui/pages/midi.py:119
+msgid "Pause the display (space bar)"
+msgstr "Anzeige anhalten (Leertaste)"
+
+#: fm1companion/ui/pages/midi.py:123
+msgid "Discard the log (not just the display)"
+msgstr "Protokoll verwerfen (nicht nur die Anzeige)"
+
+#: fm1companion/ui/pages/midi.py:126
+msgid "save the filtered log as text or CSV (up to 20 000 messages)"
+msgstr "das gefilterte Protokoll als Text oder CSV speichern (bis 20 000 Nachrichten)"
+
+#: fm1companion/ui/pages/midi.py:140
+msgid "Time"
+msgstr "Zeit"
+
+#: fm1companion/ui/pages/midi.py:140 fm1companion/miditools.py:383
+msgid "Direction"
+msgstr "Richtung"
+
+#: fm1companion/ui/pages/midi.py:140 fm1companion/miditools.py:383
+msgid "Type"
+msgstr "Typ"
+
+#: fm1companion/ui/pages/midi.py:140 fm1companion/miditools.py:266
+#: fm1companion/miditools.py:383
+msgid "Data"
+msgstr "Daten"
+
+#: fm1companion/ui/pages/midi.py:140 fm1companion/miditools.py:383
+msgid "Meaning"
+msgstr "Bedeutung"
+
+#: fm1companion/ui/pages/midi.py:150
+msgid "Play something on the FM-1 – the messages appear here"
+msgstr "Spiel etwas am FM-1 – hier erscheinen die Nachrichten"
+
+#: fm1companion/ui/pages/midi.py:151
+msgid "Notes, controls, clock and SysEx in both directions. With “Listen in” below, more MIDI inputs (controllers, sound generators) are added."
+msgstr "Noten, Regler, Clock und SysEx in beide Richtungen. Mit „Mithören“ unten kommen weitere MIDI-Eingänge (Controller, Klangerzeuger) dazu."
+
+#: fm1companion/ui/pages/midi.py:158
+msgid "Additional input:"
+msgstr "Weiterer Eingang:"
+
+#: fm1companion/ui/pages/midi.py:162
+msgid "Listen in"
+msgstr "Mithören"
+
+#: fm1companion/ui/pages/midi.py:163
+msgid "also show this MIDI input (e.g. controller, sound generator)"
+msgstr "auch diesen MIDI-Eingang anzeigen (z. B. Controller, Klangerzeuger)"
+
+#: fm1companion/ui/pages/midi.py:196 fm1companion/ui/pages/simulator.py:587
+msgid "no additional MIDI input found"
+msgstr "kein weiterer MIDI-Eingang gefunden"
+
+#: fm1companion/ui/pages/midi.py:199
+msgid "MIDI inputs of the system (USB controllers, sound generators)"
+msgstr "MIDI-Eingänge des Systems (USB-Controller, Klangerzeuger)"
+
+#: fm1companion/ui/pages/midi.py:200
+msgid "No additional MIDI input connected – plug in a controller, then open the page again."
+msgstr "Kein weiterer MIDI-Eingang angeschlossen – Controller anstecken, dann die Seite neu öffnen."
+
+#: fm1companion/ui/pages/midi.py:211
+msgid "Input cannot be opened"
+msgstr "Eingang lässt sich nicht öffnen"
+
+#: fm1companion/ui/pages/midi.py:213
+#, python-brace-format
+msgid "listening to: {ports}"
+msgstr "hört mit: {ports}"
+
+#: fm1companion/ui/pages/midi.py:283
+#, python-brace-format
+msgid "{n} message (the table shows the last {rows})"
+msgid_plural "{n} messages (the table shows the last {rows})"
+msgstr[0] "{n} Nachricht (Tabelle zeigt die letzten {rows})"
+msgstr[1] "{n} Nachrichten (Tabelle zeigt die letzten {rows})"
+
+#: fm1companion/ui/pages/midi.py:285
+#, python-brace-format
+msgid "{n} message"
+msgid_plural "{n} messages"
+msgstr[0] "{n} Nachricht"
+msgstr[1] "{n} Nachrichten"
+
+#: fm1companion/ui/pages/midi.py:287
+#, python-brace-format
+msgid "{n} not shown during a flood (included in the export)"
+msgstr "{n} bei Sturzflut nicht angezeigt (im Export enthalten)"
+
+#: fm1companion/ui/pages/midi.py:290
+#, python-brace-format
+msgid "incoming clock: {bpm} BPM (±{jitter} ms)"
+msgstr "eingehende Clock: {bpm} BPM (±{jitter} ms)"
+
+#: fm1companion/ui/pages/midi.py:291
+#, python-brace-format
+msgid "incoming clock: {bpm} BPM"
+msgstr "eingehende Clock: {bpm} BPM"
+
+#: fm1companion/ui/pages/midi.py:293
+msgid "paused"
+msgstr "angehalten"
+
+#: fm1companion/ui/pages/midi.py:323 fm1companion/ui/pages/midi.py:333
+msgid "Save MIDI log"
+msgstr "MIDI-Protokoll speichern"
+
+#: fm1companion/ui/pages/midi.py:325
+msgid "Text (*.txt);;CSV table (*.csv)"
+msgstr "Text (*.txt);;CSV-Tabelle (*.csv)"
+
+#: fm1companion/ui/pages/midi.py:335
+#, python-brace-format
+msgid "{n} message saved: {file}"
+msgid_plural "{n} messages saved: {file}"
+msgstr[0] "{n} Nachricht gespeichert: {file}"
+msgstr[1] "{n} Nachrichten gespeichert: {file}"
+
+#: fm1companion/ui/pages/midi.py:364
+msgid "Play with the mouse or with the keyboard: bottom row Y S X D C V … = C to B, top row Q 2 W 3 E … one octave higher."
+msgstr "Mit der Maus spielen oder mit der Tastatur: untere Reihe Y S X D C V … = C bis H, obere Reihe Q 2 W 3 E … eine Oktave höher."
+
+#: fm1companion/ui/pages/midi.py:474
+msgid "Channel:"
+msgstr "Kanal:"
+
+#: fm1companion/ui/pages/midi.py:476
+msgid "Melodee: channel 1–4 = track 1–4 (with ROUT CH1-4), SEL = selected track"
+msgstr "Melodee: Kanal 1–4 = Spur 1–4 (bei ROUT CH1-4), SEL = gewählte Spur"
+
+#: fm1companion/ui/pages/midi.py:486
+msgid "Octave down (Page ↓)"
+msgstr "Oktave tiefer (Bild ↓)"
+
+#: fm1companion/ui/pages/midi.py:489
+msgid "Octave up (Page ↑)"
+msgstr "Oktave höher (Bild ↑)"
+
+#: fm1companion/ui/pages/midi.py:497
+msgid "Pitch bend (springs back when released)"
+msgstr "Pitch-Bend (springt beim Loslassen zurück)"
+
+#: fm1companion/ui/pages/midi.py:501
+msgid "Modulation wheel (CC 1)"
+msgstr "Modulationsrad (CC 1)"
+
+#: fm1companion/ui/pages/midi.py:515
+msgid "Sustain (CC 64)"
+msgstr "Sustain (CC 64)"
+
+#: fm1companion/ui/pages/midi.py:516
+msgid "Sustain pedal: notes keep sounding after release. Released when leaving the page."
+msgstr "Haltepedal: Noten klingen nach dem Loslassen weiter. Wird beim Verlassen der Seite gelöst."
+
+#: fm1companion/ui/pages/midi.py:520
+msgid "Hold chord"
+msgstr "Akkord halten"
+
+#: fm1companion/ui/pages/midi.py:521
+msgid "Keys latch: pressing again releases. Everything is released when leaving the page."
+msgstr "Tasten rasten ein: noch einmal drücken lässt los. Beim Verlassen der Seite wird alles gelöst."
+
+#: fm1companion/ui/pages/midi.py:526
+msgid "sends note off for everything that sounds, and CC 123"
+msgstr "sendet Note aus für alles, was klingt, und CC 123"
+
+#: fm1companion/ui/pages/midi.py:531
+msgid "Tip: click into the keyboard, then play with Y S X D C … and Q 2 W 3 E … For Melodee tracks 5–8 (MIDI tracks) choose the track's channel and “FM-1 sound generator” as target – or the FM-1 directly on channel 1–4."
+msgstr "Tipp: Klick in die Tastatur, dann spielen mit Y S X D C … und Q 2 W 3 E … Für Melodee-Spur 5–8 (MIDI-Spuren) den Kanal der Spur wählen und als Ziel „FM-1 Klangerzeuger“ – oder direkt das FM-1 auf Kanal 1–4."
+
+#: fm1companion/ui/pages/midi.py:548 fm1companion/ui/pages/midi.py:695
+msgid "FM-1 (app connection)"
+msgstr "FM-1 (App-Verbindung)"
+
+#: fm1companion/ui/pages/midi.py:560
+msgid "not sent – FM-1 busy or not connected"
+msgstr "nicht gesendet – FM-1 beschäftigt oder nicht verbunden"
+
+#: fm1companion/ui/pages/midi.py:610
+#, python-brace-format
+msgid "from {note}"
+msgstr "ab {note}"
+
+#: fm1companion/ui/pages/midi.py:629
+msgid "Clock master"
+msgstr "Taktgeber (Clock-Master)"
+
+#: fm1companion/ui/pages/midi.py:630
+msgid "The app sets the tempo: 24 pulses per quarter, Start/Stop/Continue. Melodee follows when GLO › CLK on the FM-1 is set to “USB” (40–240 BPM). On “INT” the FM-1 leads itself – from Melodee 1.6.1 it then sends its own clock. The clock keeps running when you change the page – “Stop” here or when quitting the app."
+msgstr "Die App gibt das Tempo vor: 24 Pulse pro Viertel, Start/Stop/Weiter. Melodee folgt, wenn am FM-1 GLO › CLK auf „USB“ steht (40–240 BPM). Auf „INT“ führt das FM-1 selbst – ab Melodee 1.6.1 sendet es dann seinen eigenen Takt. Der Takt läuft weiter, wenn du die Seite wechselst – „Stopp“ hier oder beim Beenden der App."
+
+#: fm1companion/ui/pages/midi.py:641
+msgid "click in time (or press T)"
+msgstr "im Takt klicken (oder T drücken)"
+
+#: fm1companion/ui/pages/midi.py:652
+msgid "Start at bar:"
+msgstr "Start ab Takt:"
+
+#: fm1companion/ui/pages/midi.py:654
+msgid "1 = from the beginning (MIDI Start). From bar 2: Song Position + Continue – the follower joins at this point (Melodee from 1.6.1 with CLK USB; older firmware simply continues)."
+msgstr "1 = von vorn (MIDI Start). Ab Takt 2: Song Position + Continue – der Follower steigt an dieser Stelle ein (Melodee ab 1.6.1 mit CLK USB; ältere Firmware läuft einfach weiter)."
+
+#: fm1companion/ui/pages/midi.py:661
+msgid "sends MIDI Start (from the beginning) and then 24 pulses per quarter"
+msgstr "sendet MIDI Start (von vorn) und dann 24 Pulse je Viertel"
+
+#: fm1companion/ui/pages/midi.py:663
+msgid "sends MIDI Continue: continues where it was stopped"
+msgstr "sendet MIDI Continue: läuft an der Stelle weiter, an der gestoppt wurde"
+
+#: fm1companion/ui/pages/midi.py:664
+msgid "sends MIDI Stop and ends the clock"
+msgstr "sendet MIDI Stop und beendet den Takt"
+
+#: fm1companion/ui/pages/midi.py:678
+msgid "Incoming clock (follower)"
+msgstr "Eingehende Clock (Follower)"
+
+#: fm1companion/ui/pages/midi.py:679
+msgid "Measures tempo and steadiness of a clock coming from the FM-1 or a monitored input (tab Monitor)."
+msgstr "Misst Tempo und Gleichmäßigkeit einer Clock, die vom FM-1 oder einem mitgehörten Eingang (Reiter Monitor) kommt."
+
+#: fm1companion/ui/pages/midi.py:681 fm1companion/ui/pages/midi.py:783
+msgid "no clock received"
+msgstr "keine Clock empfangen"
+
+#: fm1companion/ui/pages/midi.py:715
+msgid "not sent"
+msgstr "nicht gesendet"
+
+#: fm1companion/ui/pages/midi.py:720
+msgid "Not started: no FM-1 connected. Plug in the FM-1 or choose a different target above."
+msgstr "Nicht gestartet: kein FM-1 verbunden. FM-1 anstecken oder oben ein anderes Ziel wählen."
+
+#: fm1companion/ui/pages/midi.py:749 fm1companion/miditools.py:166
+msgctxt "state"
+msgid "off"
+msgstr "aus"
+
+#: fm1companion/ui/pages/midi.py:755
+#, python-brace-format
+msgid "running: {bpm} BPM, {pulses} pulses (bar {bar})"
+msgstr "läuft: {bpm} BPM, {pulses} Pulse ({bar}. Takt)"
+
+#: fm1companion/ui/pages/midi.py:758
+#, python-brace-format
+msgid "Accuracy: pulses on average {mean} ms off the target time, 95 % under {p95} ms (under 1 ms is inaudible)"
+msgstr "Genauigkeit: Pulse im Mittel {mean} ms neben der Sollzeit, 95 % unter {p95} ms (unter 1 ms ist unhörbar)"
+
+#: fm1companion/ui/pages/midi.py:761
+#, python-brace-format
+msgid "{n} pulse not sent (target gone?)"
+msgid_plural "{n} pulses not sent (target gone?)"
+msgstr[0] "{n} Puls nicht gesendet (Ziel weg?)"
+msgstr[1] "{n} Pulse nicht gesendet (Ziel weg?)"
+
+#: fm1companion/ui/pages/midi.py:769
+msgid "A clock is coming in at the same time – probably the FM-1 is sending itself (CLK INT). On the FM-1 set GLO › GLOBAL › CLK to USB, then it follows the app."
+msgstr "Es kommt gleichzeitig eine Clock herein – vermutlich sendet das FM-1 selbst (CLK INT). Am FM-1 GLO › GLOBAL › CLK auf USB stellen, dann folgt es der App."
+
+#: fm1companion/ui/pages/midi.py:776
+msgid "Clock detected, measuring …"
+msgstr "Clock erkannt, messe …"
+
+#: fm1companion/ui/pages/midi.py:778
+#, python-brace-format
+msgid "{bpm} BPM, fluctuation ±{jitter} ms between the pulses"
+msgstr "{bpm} BPM, Schwankung ±{jitter} ms zwischen den Pulsen"
+
+#: fm1companion/ui/pages/midi.py:781
+#, python-brace-format
+msgid "{bpm} BPM"
+msgstr "{bpm} BPM"
+
+#: fm1companion/ui/pages/midi.py:814
+msgid "Search parameters …"
+msgstr "Parameter suchen …"
+
+#: fm1companion/ui/pages/midi.py:817
+msgid "Learn input:"
+msgstr "Lern-Eingang:"
+
+#: fm1companion/ui/pages/midi.py:821
+msgid "Delete assignments"
+msgstr "Zuordnungen löschen"
+
+#: fm1companion/ui/pages/midi.py:823
+msgid "Nothing read yet – how it works: “Read from FM-1” fetches names, ranges and values of the selected track. Then move the controls; with “Learn” assign a knob of your controller."
+msgstr "Noch nichts gelesen – so geht's: „Vom FM-1 lesen“ holt Namen, Bereiche und Werte der gewählten Spur. Dann Regler bewegen; mit „Lernen“ einen Knopf deines Controllers zuordnen."
+
+#: fm1companion/ui/pages/midi.py:885
+msgid "reading parameters …"
+msgstr "lese Parameter …"
+
+#: fm1companion/ui/pages/midi.py:919
+#, python-brace-format
+msgid "reading parameter {n} of {total} … (names, ranges, values)"
+msgstr "lese Parameter {n} von {total} … (Namen, Bereiche, Werte)"
+
+#: fm1companion/ui/pages/midi.py:921 fm1companion/ui/pages/midi.py:1152
+#, python-brace-format
+msgid "Reading failed: {error}"
+msgstr "Lesen fehlgeschlagen: {error}"
+
+#: fm1companion/ui/pages/midi.py:939
+#, python-brace-format
+msgid "Parameter {id}, {min} … {max}"
+msgstr "Parameter {id}, {min} … {max}"
+
+#: fm1companion/ui/pages/midi.py:950 fm1companion/ui/pages/midi.py:1044
+#: fm1companion/ui/pages/midi.py:1072
+msgid "Learn"
+msgstr "Lernen"
+
+#: fm1companion/ui/pages/midi.py:952
+msgid "then move a knob on the learn input – clicking again cancels"
+msgstr "danach einen Knopf am Lern-Eingang bewegen – noch einmal klicken bricht ab"
+
+#: fm1companion/ui/pages/midi.py:965
+#, python-brace-format
+msgid "Track {track}: {n} parameter. Changes go to the FM-1 immediately (the embedded editor pauses while this tab is open and resumes by itself when you leave it)."
+msgid_plural "Track {track}: {n} parameters. Changes go to the FM-1 immediately (the embedded editor pauses while this tab is open and resumes by itself when you leave it)."
+msgstr[0] "Spur {track}: {n} Parameter. Änderungen gehen sofort ans FM-1 (der eingebettete Editor pausiert, solange dieser Reiter offen ist, und läuft beim Verlassen von selbst weiter)."
+msgstr[1] "Spur {track}: {n} Parameter. Änderungen gehen sofort ans FM-1 (der eingebettete Editor pausiert, solange dieser Reiter offen ist, und läuft beim Verlassen von selbst weiter)."
+
+#: fm1companion/ui/pages/midi.py:972
+msgid "No parameters read – this firmware does not describe its parameters (DESC). Then control via the tab “Keyboard” (mod wheel) or the editor."
+msgstr "Keine Parameter gelesen – diese Firmware beschreibt ihre Parameter nicht (DESC). Regeln geht dann über den Reiter „Tastatur“ (Mod-Rad) oder den Editor."
+
+#: fm1companion/ui/pages/midi.py:981
+#, python-brace-format
+msgid "{reason} – “Read from FM-1” fetches the parameters of the device connected now."
+msgstr "{reason} – „Vom FM-1 lesen“ holt die Parameter des jetzt verbundenen Geräts."
+
+#: fm1companion/ui/pages/midi.py:1002
+msgid "– none –"
+msgstr "– kein –"
+
+#: fm1companion/ui/pages/midi.py:1028
+#, python-brace-format
+msgid "Learn input not available: {error}"
+msgstr "Lern-Eingang nicht verfügbar: {error}"
+
+#: fm1companion/ui/pages/midi.py:1039
+msgid "move …"
+msgstr "bewegen …"
+
+#: fm1companion/ui/pages/midi.py:1110
+msgid "Connects MIDI ports directly in the ALSA sequencer (like “aconnect”): check mark = the sender (row) sends to the receiver (column). The app's own FM-1 connection runs via its own rtmidi ports (“RtMidi…”) – the table shows them grey, they belong to the app."
+msgstr "Verbindet MIDI-Anschlüsse direkt im ALSA-Sequencer (wie „aconnect“): Haken = der Sender (Zeile) schickt an den Empfänger (Spalte). Die FM-1-Verbindung der App selbst läuft über eigene rtmidi-Anschlüsse („RtMidi…“) – die zeigt die Tabelle grau, sie gehören der App."
+
+#: fm1companion/ui/pages/midi.py:1117
+msgid "Show system ports"
+msgstr "System-Ports zeigen"
+
+#: fm1companion/ui/pages/midi.py:1121
+msgid "Controller → FM-1"
+msgstr "Controller → FM-1"
+
+#: fm1companion/ui/pages/midi.py:1122
+msgid "connect the first MIDI controller found (e.g. MiniLab) to the FM-1"
+msgstr "ersten gefundenen MIDI-Controller (z. B. MiniLab) mit dem FM-1 verbinden"
+
+#: fm1companion/ui/pages/midi.py:1123
+msgid "FM-1 → sound generator"
+msgstr "FM-1 → Klangerzeuger"
+
+#: fm1companion/ui/pages/midi.py:1124
+msgid "MIDI output of the FM-1 to FluidSynth (page Sound Module)"
+msgstr "MIDI-Ausgang des FM-1 an FluidSynth (Seite Klangerzeuger)"
+
+#: fm1companion/ui/pages/midi.py:1130
+msgid "No MIDI ports found"
+msgstr "Keine MIDI-Anschlüsse gefunden"
+
+#: fm1companion/ui/pages/midi.py:1131
+msgid "The ALSA sequencer is not reachable or “aconnect” is missing. How to fix: sudo apt install alsa-utils – and plug in a MIDI device."
+msgstr "Der ALSA-Sequencer ist nicht erreichbar oder „aconnect“ fehlt. So geht's: sudo apt install alsa-utils – und ein MIDI-Gerät anstecken."
+
+#: fm1companion/ui/pages/midi.py:1135
+msgid "Templates:"
+msgstr "Vorlagen:"
+
+#: fm1companion/ui/pages/midi.py:1140
+msgid "Save current …"
+msgstr "Aktuelle speichern …"
+
+#: fm1companion/ui/pages/midi.py:1180
+msgid "belongs to the app (rtmidi)"
+msgstr "gehört der App (rtmidi)"
+
+#: fm1companion/ui/pages/midi.py:1199
+#, python-brace-format
+msgid "Error: {errors}"
+msgstr "Fehler: {errors}"
+
+#: fm1companion/ui/pages/midi.py:1201
+#, python-brace-format
+msgid "{n} connection made"
+msgid_plural "{n} connections made"
+msgstr[0] "{n} Verbindung hergestellt"
+msgstr[1] "{n} Verbindungen hergestellt"
+
+#: fm1companion/ui/pages/midi.py:1218 fm1companion/ui/pages/midi.py:1228
+msgid "No FM-1 found in the sequencer."
+msgstr "Kein FM-1 im Sequencer gefunden."
+
+#: fm1companion/ui/pages/midi.py:1219
+msgid "No controller found in the sequencer."
+msgstr "Kein Controller im Sequencer gefunden."
+
+#: fm1companion/ui/pages/midi.py:1227
+msgid "Start the sound generator first (tab “Sound Module” on this page)."
+msgstr "Erst den Klangerzeuger starten (Reiter „Klangerzeuger“ auf dieser Seite)."
+
+#: fm1companion/ui/pages/midi.py:1236 fm1companion/alsaseq.py:189
+msgid "Template"
+msgstr "Vorlage"
+
+#: fm1companion/ui/pages/midi.py:1239
+msgid "Save template"
+msgstr "Vorlage speichern"
+
+#: fm1companion/ui/pages/midi.py:1239
+msgid "Name (e.g. “MiniLab → FM-1”):"
+msgstr "Name (z. B. „MiniLab → FM-1“):"
+
+#: fm1companion/ui/pages/midi.py:1244
+msgid "No own connections to save."
+msgstr "Keine eigenen Verbindungen zum Speichern."
+
+#: fm1companion/ui/pages/midi.py:1250
+#, python-brace-format
+msgid "Template “{name}” saved with {n} connection."
+msgid_plural "Template “{name}” saved with {n} connections."
+msgstr[0] "Vorlage „{name}“ mit {n} Verbindung gespeichert."
+msgstr[1] "Vorlage „{name}“ mit {n} Verbindungen gespeichert."
+
+#: fm1companion/ui/pages/midi.py:1260
+#, python-brace-format
+msgid "Not connected: {ports}"
+msgstr "Nicht angeschlossen: {ports}"
+
+#: fm1companion/ui/pages/midi.py:1286
+msgid "Everything that runs between the app, the FM-1 and other MIDI devices: monitor, play, set the tempo, adjust parameters and connect ports."
+msgstr "Alles, was zwischen App, FM-1 und anderen MIDI-Geräten läuft: mitlesen, spielen, Tempo vorgeben, Parameter regeln und Anschlüsse verbinden."
+
+#: fm1companion/ui/pages/midi.py:1295
+msgid "Monitor"
+msgstr "Monitor"
+
+#: fm1companion/ui/pages/midi.py:1295
+msgid "Keyboard"
+msgstr "Tastatur"
+
+#: fm1companion/ui/pages/midi.py:1296
+msgid "Clock"
+msgstr "Takt"
+
+#: fm1companion/ui/pages/midi.py:1296
+msgid "Controls"
+msgstr "Regler"
+
+#: fm1companion/ui/pages/midi.py:1297
+msgid "Connections"
+msgstr "Verbindungen"
+
+#: fm1companion/ui/pages/midi.py:1363
+msgid "Device changed"
+msgstr "Gerät gewechselt"
+
+#: fm1companion/syscheck.py:41
+msgid "FAIL"
+msgstr "FEHL"
+
+#: fm1companion/syscheck.py:46
+#, python-brace-format
+msgid "Fix: {fix}"
+msgstr "Lösung: {fix}"
+
+#: fm1companion/syscheck.py:74
+#, python-brace-format
+msgid "{program} not found"
+msgstr "{program} nicht gefunden"
+
+#: fm1companion/syscheck.py:91
+msgid "no output"
+msgstr "keine Ausgabe"
+
+#: fm1companion/syscheck.py:172
+#, python-brace-format
+msgid "{name} keeps disconnecting (port {path})"
+msgstr "{name} trennt sich immer wieder (Anschluss {path})"
+
+#: fm1companion/syscheck.py:173
+#, python-brace-format
+msgid "{count} disconnects since boot, {burst} of them within 10 minutes. This is almost always caused by the cable, the power supply or a hub – rarely by the firmware."
+msgstr "{count} Trennungen seit dem Start, davon {burst} innerhalb von 10 Minuten. Das passiert fast immer wegen Kabel, Stromversorgung oder Hub – selten wegen der Firmware."
+
+#: fm1companion/syscheck.py:176
+msgid "Try a different (short) USB cable, plug the FM-1 directly into the Pi instead of a hub, with a hub use one with its own power supply. Also check the Pi's power supply (see under-voltage)."
+msgstr "Anderes (kurzes) USB-Kabel probieren, das FM-1 direkt an den Pi stecken statt an einen Hub, bei einem Hub einen mit eigenem Netzteil nehmen. Prüfe außerdem das Pi-Netzteil (siehe Unterspannung)."
+
+#: fm1companion/syscheck.py:182
+#, python-brace-format
+msgid "{name} was disconnected {count}× (port {path})"
+msgstr "{name} wurde {count}× getrennt (Anschluss {path})"
+
+#: fm1companion/syscheck.py:184
+msgid "Single disconnects are normal if you unplugged the FM-1, switched it off or installed a firmware."
+msgstr "Einzelne Trennungen sind normal, wenn du das FM-1 ausgesteckt, ausgeschaltet oder eine Firmware installiert hast."
+
+#: fm1companion/syscheck.py:185
+msgid "Only if you did nothing: check the cable and the port."
+msgstr "Nur wenn du nichts gemacht hast: Kabel und Anschluss prüfen."
+
+#: fm1companion/syscheck.py:188
+#, python-brace-format
+msgid "{name} stable on USB ({path}, {ids})"
+msgstr "{name} stabil am USB ({path}, {ids})"
+
+#: fm1companion/syscheck.py:199
+#, python-brace-format
+msgid "USB device could not be recognized properly ({ports})"
+msgstr "USB-Gerät ließ sich nicht richtig erkennen ({ports})"
+
+#: fm1companion/syscheck.py:200
+msgid "USB device could not be recognized properly"
+msgstr "USB-Gerät ließ sich nicht richtig erkennen"
+
+#: fm1companion/syscheck.py:201
+msgid "The Pi got no clean answer from the device when it was plugged in (error -71/-110). Typical for a bad or too long cable, a charge-only cable without data lines or too little power."
+msgstr "Der Pi bekam vom Gerät beim Anstecken keine saubere Antwort (Fehler -71/-110). Typisch für ein schlechtes oder zu langes Kabel, ein reines Ladekabel ohne Datenleitungen oder zu wenig Strom."
+
+#: fm1companion/syscheck.py:204
+msgid "Use a different data cable, plug it directly into the Pi, check the power supply. For the FM-1: switch it off and on once."
+msgstr "Ein anderes Datenkabel nehmen, direkt am Pi anstecken, Netzteil prüfen. Beim FM-1: einmal aus- und wieder einschalten."
+
+#: fm1companion/syscheck.py:211
+msgid "Over-current on a USB port"
+msgstr "Überstrom an einem USB-Anschluss"
+
+#: fm1companion/syscheck.py:212
+msgid "A device drew more current than the port may deliver – the Pi then switches the port off."
+msgstr "Ein Gerät hat mehr Strom gezogen, als der Anschluss liefern darf – der Pi schaltet den Anschluss dann ab."
+
+#: fm1companion/syscheck.py:213
+msgid "Connect power-hungry devices (hard disks, chargers) to a USB hub with its own power supply; check the Pi's power supply (Pi 5: official 27 W power supply)."
+msgstr "Stromhungrige Geräte (Festplatten, Ladegeräte) an einen USB-Hub mit eigenem Netzteil hängen; das Netzteil des Pi prüfen (Pi 5: offizielles 27-W-Netzteil)."
+
+#: fm1companion/syscheck.py:218
+msgid "USB device rejected: not enough power on the bus"
+msgstr "USB-Gerät abgewiesen: zu wenig Strom am Bus"
+
+#: fm1companion/syscheck.py:219
+msgid "The USB port (or hub) cannot power the device."
+msgstr "Der USB-Anschluss (oder Hub) kann das Gerät nicht versorgen."
+
+#: fm1companion/syscheck.py:220
+msgid "Plug the device directly into the Pi or into a hub with its own power supply."
+msgstr "Gerät direkt an den Pi oder an einen Hub mit eigenem Netzteil stecken."
+
+#: fm1companion/syscheck.py:233
+msgid "USB controller crashed – when the FM-1 audio started"
+msgstr "USB-Controller ist abgestürzt – beim Audio-Start des FM-1"
+
+#: fm1companion/syscheck.py:234
+msgid "The computer's USB controller gave up; all USB devices were gone afterwards. At the same time, switching on the FM-1 audio stream failed (usb_set_interface). The FM-1 is also a USB sound card; PipeWire opens it by itself. On the Pi 5, such an audio start of some USB devices can crash the controller – this is a problem of the kernel/controller, not of the FM-1 or the app."
+msgstr "Der USB-Controller des Rechners hat aufgegeben; alle USB-Geräte waren danach weg. Gleichzeitig scheiterte das Einschalten des Audio-Datenstroms des FM-1 (usb_set_interface). Das FM-1 ist auch eine USB-Soundkarte; PipeWire öffnet sie von selbst. Am Pi 5 kann ein solcher Audio-Start mancher USB-Geräte den Controller zum Absturz bringen – das ist ein Problem von Kernel/Controller, nicht des FM-1 oder der App."
+
+#: fm1companion/syscheck.py:239
+msgid "1) Without a reboot: re-register only this controller (echo xhci-hcd.N | sudo tee /sys/bus/platform/drivers/xhci-hcd/unbind, then …/bind; N from the message above) – never the controller with the system disk; otherwise restart the computer. 2) Check whether updates are available (sudo rpi-eeprom-update, apt list --upgradable) and only then update. 3) Plug the FM-1 into the other kind of socket (blue USB 3 / black USB 2) – without a hub. 4) If you don't need the FM-1 sound on the computer (Studio and MIDI don't need it), choose the profile “Off” for the FM-1 in KDE System Settings › Audio; then PipeWire no longer opens the audio stream."
+msgstr "1) Ohne Neustart: nur diesen Controller neu anmelden (echo xhci-hcd.N | sudo tee /sys/bus/platform/drivers/xhci-hcd/unbind, dann …/bind; N aus der Meldung oben) – nie den Controller mit der System-Festplatte; sonst Rechner neu starten. 2) Prüfen, ob Updates bereitliegen (sudo rpi-eeprom-update, apt list --upgradable) und nur dann aktualisieren. 3) FM-1 an die andere Buchsenart stecken (blau USB 3 / schwarz USB 2) – ohne Hub. 4) Brauchst du den Ton des FM-1 nicht im Rechner (Studio und MIDI brauchen ihn nicht), in KDE-Systemeinstellungen › Audio beim FM-1 das Profil „Aus“ wählen; dann öffnet PipeWire den Audio-Datenstrom nicht mehr."
+
+#: fm1companion/syscheck.py:249
+msgid "USB controller crashed"
+msgstr "USB-Controller ist abgestürzt"
+
+#: fm1companion/syscheck.py:250
+msgid "The computer's USB controller gave up; all USB devices were gone afterwards."
+msgstr "Der USB-Controller des Rechners hat aufgegeben; alle USB-Geräte waren danach weg."
+
+#: fm1companion/syscheck.py:251
+msgid "Restart the computer. If it happens more often: use a hub with its own power supply; check whether kernel or bootloader updates are available (sudo rpi-eeprom-update, apt list --upgradable), and only then update."
+msgstr "Rechner neu starten. Passiert es öfter: Hub mit eigenem Netzteil verwenden; prüfen, ob Kernel- oder Bootloader-Updates bereitliegen (sudo rpi-eeprom-update, apt list --upgradable), und nur dann aktualisieren."
+
+#: fm1companion/syscheck.py:256
+#, python-brace-format
+msgid "USB controller reports warnings ({count}×)"
+msgstr "USB-Controller meldet Warnungen ({count}×)"
+
+#: fm1companion/syscheck.py:257
+msgid "Mostly harmless, but can cause dropouts in USB audio/MIDI."
+msgstr "Meist harmlos, kann aber zu Aussetzern bei USB-Audio/MIDI führen."
+
+#: fm1companion/syscheck.py:258
+msgid "If the FM-1 stutters: try a different USB port (on the Pi 5 the blue USB 3 sockets and the black USB 2 sockets are on separate controllers)."
+msgstr "Wenn das FM-1 dabei hakt: anderen USB-Anschluss probieren (die blauen USB-3-Buchsen und die schwarzen USB-2-Buchsen hängen am Pi 5 an getrennten Controllern)."
+
+#: fm1companion/syscheck.py:268
+msgid "USB audio: sample rate could not be set"
+msgstr "USB-Audio: Abtastrate ließ sich nicht einstellen"
+
+#: fm1companion/syscheck.py:269
+msgid "An audio device rejected the requested sample rate. The FM-1 works at 48 kHz; if a program requests 44.1 kHz, it may crackle or stay silent."
+msgstr "Ein Audio-Gerät hat die gewünschte Abtastrate abgelehnt. Das FM-1 arbeitet mit 48 kHz; fordert ein Programm 44,1 kHz an, kann es knacksen oder stumm bleiben."
+
+#: fm1companion/syscheck.py:271
+msgid "Start recording at 48000 Hz (the recording page does this automatically). Leave the default rate in PipeWire at 48000."
+msgstr "Aufnahme mit 48000 Hz starten (die Aufnahme-Seite macht das automatisch). In PipeWire die Standardrate auf 48000 lassen."
+
+#: fm1companion/syscheck.py:275
+#, python-brace-format
+msgid "USB audio: transfer errors ({count}×)"
+msgstr "USB-Audio: Übertragungsfehler ({count}×)"
+
+#: fm1companion/syscheck.py:277
+msgid "Audio packets between the FM-1 and the computer were lost. Result: clicks or dropouts in recordings."
+msgstr "Audio-Pakete zwischen FM-1 und Rechner gingen verloren. Folge: Knackser oder Aussetzer in Aufnahmen."
+
+#: fm1companion/syscheck.py:279
+msgid "Plug the FM-1 directly into the Pi (no hub), unplug other USB devices on the same port, reduce the CPU load; with many messages replace the cable."
+msgstr "FM-1 direkt am Pi anstecken (kein Hub), andere USB-Geräte am selben Anschluss abziehen, CPU-Last senken; bei vielen Meldungen Kabel tauschen."
+
+#: fm1companion/syscheck.py:284
+#, python-brace-format
+msgid "Audio dropouts (XRuns) in PipeWire ({count}×)"
+msgstr "Audio-Aussetzer (XRuns) in PipeWire ({count}×)"
+
+#: fm1companion/syscheck.py:286
+msgid "The audio server could not keep up – audible as clicks."
+msgstr "Der Audio-Server kam nicht hinterher – hörbar als Knackser."
+
+#: fm1companion/syscheck.py:287
+msgid "Close other programs, use larger buffers (PIPEWIRE_QUANTUM=1024/48000), don't record via a USB hub."
+msgstr "Andere Programme schließen, größere Puffer verwenden (PIPEWIRE_QUANTUM=1024/48000), Aufnahme nicht über einen USB-Hub."
+
+#: fm1companion/syscheck.py:294
+#, python-brace-format
+msgid "Under-voltage detected ({count}× since boot)"
+msgstr "Unterspannung erkannt ({count}× seit dem Start)"
+
+#: fm1companion/syscheck.py:295
+msgid "The power supply delivers too little voltage. Then the Pi throttles, and USB devices like the FM-1 can disconnect or have dropouts."
+msgstr "Das Netzteil liefert zu wenig Spannung. Dann drosselt der Pi, und USB-Geräte wie das FM-1 können sich trennen oder Aussetzer haben."
+
+#: fm1companion/syscheck.py:297
+msgid "Use the official Raspberry Pi power supply (Pi 5: 27 W / 5 A), a short thick USB-C cable, no power-hungry devices directly on the Pi."
+msgstr "Offizielles Raspberry-Pi-Netzteil verwenden (Pi 5: 27 W / 5 A), kurzes dickes USB-C-Kabel, keine stromhungrigen Geräte direkt am Pi."
+
+#: fm1companion/syscheck.py:302
+msgid "Overheating in the kernel log"
+msgstr "Überhitzung im Kernel-Protokoll"
+
+#: fm1companion/syscheck.py:303
+msgid "The processor was slowed down because of heat – audio may then drop out."
+msgstr "Der Prozessor wurde wegen Hitze gebremst – Audio kann dann aussetzen."
+
+#: fm1companion/syscheck.py:304
+msgid "Check the cooler/fan (Pi 5: Active Cooler), ventilate the case."
+msgstr "Kühler/Lüfter prüfen (Pi 5: Active Cooler), Gehäuse belüften."
+
+#: fm1companion/syscheck.py:310
+msgid "Storage device reports read errors"
+msgstr "Datenträger meldet Lesefehler"
+
+#: fm1companion/syscheck.py:311
+msgid "The memory card or SSD had errors while reading/writing."
+msgstr "Die Speicherkarte oder SSD hatte Fehler beim Lesen/Schreiben."
+
+#: fm1companion/syscheck.py:312
+msgid "Also save important data (backups in the FM-1 folder) somewhere else; replace the card if necessary."
+msgstr "Wichtige Daten (Backups im FM-1-Ordner) zusätzlich woanders sichern; Karte ggf. tauschen."
+
+#: fm1companion/syscheck.py:318
+msgid "frequency capped now"
+msgstr "Takt begrenzt jetzt"
+
+#: fm1companion/syscheck.py:319
+msgid "under-voltage since boot"
+msgstr "Unterspannung seit dem Start"
+
+#: fm1companion/syscheck.py:319
+msgid "frequency capped since boot"
+msgstr "Takt begrenzt seit dem Start"
+
+#: fm1companion/syscheck.py:320
+msgid "throttled since boot"
+msgstr "gedrosselt seit dem Start"
+
+#: fm1companion/syscheck.py:320
+msgid "temperature limit since boot"
+msgstr "Temperaturgrenze seit dem Start"
+
+#: fm1companion/syscheck.py:327
+msgid "all fine"
+msgstr "alles in Ordnung"
+
+#: fm1companion/syscheck.py:330
+msgid "Under-voltage – right now"
+msgstr "Unterspannung – gerade jetzt"
+
+#: fm1companion/syscheck.py:331
+msgid "The power supply is dropping right now. USB devices may fail."
+msgstr "Das Netzteil bricht gerade ein. USB-Geräte können ausfallen."
+
+#: fm1companion/syscheck.py:332
+msgid "Replace the power supply (Pi 5: official 27 W power supply), check the cable."
+msgstr "Netzteil tauschen (Pi 5: offizielles 27-W-Netzteil), Kabel prüfen."
+
+#: fm1companion/syscheck.py:334
+msgid "Under-voltage occurred since boot"
+msgstr "Unterspannung seit dem Start aufgetreten"
+
+#: fm1companion/syscheck.py:335
+msgid "At some point since switching on, the power supply delivered too little."
+msgstr "Irgendwann seit dem Einschalten hat das Netzteil zu wenig geliefert."
+
+#: fm1companion/syscheck.py:336
+msgid "Check the power supply and cable, especially if the FM-1 sometimes disconnects."
+msgstr "Netzteil und Kabel prüfen, besonders wenn das FM-1 sich manchmal trennt."
+
+#: fm1companion/syscheck.py:339
+msgid "Pi is being throttled because of heat right now"
+msgstr "Pi wird gerade wegen Hitze gedrosselt"
+
+#: fm1companion/syscheck.py:340
+msgid "High temperature slows the processor down; the simulator and recording may stutter."
+msgstr "Hohe Temperatur bremst den Prozessor; Simulator und Aufnahme können stocken."
+
+#: fm1companion/syscheck.py:342
+msgid "Provide cooling (fan, open the case)."
+msgstr "Für Kühlung sorgen (Lüfter, Gehäuse öffnen)."
+
+#: fm1companion/syscheck.py:344
+msgid "Throttled once because of heat since boot"
+msgstr "Seit dem Start einmal wegen Hitze gedrosselt"
+
+#: fm1companion/syscheck.py:345
+msgid "It was too warm for a short time."
+msgstr "War kurz zu warm."
+
+#: fm1companion/syscheck.py:345
+msgid "If there are dropouts, check the cooling."
+msgstr "Bei Aussetzern Kühlung prüfen."
+
+#: fm1companion/syscheck.py:347
+msgid "Power supply and temperature fine"
+msgstr "Stromversorgung und Temperatur in Ordnung"
+
+#: fm1companion/syscheck.py:374
+msgid "Pi 5 detected over-current on USB"
+msgstr "Pi 5 hat Überstrom an USB erkannt"
+
+#: fm1companion/syscheck.py:375
+msgid "The firmware detected a USB over-current."
+msgstr "Die Firmware hat einen USB-Überstrom festgestellt."
+
+#: fm1companion/syscheck.py:376
+msgid "Unplug the devices one by one and check them; power-hungry devices to an active hub."
+msgstr "Geräte einzeln abziehen und prüfen; stromhungrige Geräte an einen aktiven Hub."
+
+#: fm1companion/syscheck.py:379
+#, python-brace-format
+msgid "USB current limited (power supply reports {amps} A)"
+msgstr "USB-Strom begrenzt (Netzteil meldet {amps} A)"
+
+#: fm1companion/syscheck.py:381
+msgid "Without a 5 A power supply the Pi 5 delivers only 600 mA on all USB sockets together. The FM-1 alone fits; with a hard disk or more devices it can get tight."
+msgstr "Ohne 5-A-Netzteil gibt der Pi 5 an allen USB-Buchsen zusammen nur 600 mA ab. Das FM-1 allein passt, mit Festplatte oder weiteren Geräten kann es knapp werden."
+
+#: fm1companion/syscheck.py:384
+msgid "Use the official 27 W power supply or a USB hub with its own power supply. (Advanced: usb_max_current_enable=1 in /boot/firmware/config.txt – only with a good power supply.)"
+msgstr "Offizielles 27-W-Netzteil benutzen oder einen USB-Hub mit eigenem Netzteil. (Fortgeschritten: usb_max_current_enable=1 in /boot/firmware/config.txt – nur mit gutem Netzteil.)"
+
+#: fm1companion/syscheck.py:433
+msgid "The FluidSynth service is occupying the sound card"
+msgstr "Der FluidSynth-Dienst belegt die Soundkarte"
+
+#: fm1companion/syscheck.py:434
+msgid "The FluidSynth service starts at every login"
+msgstr "Der FluidSynth-Dienst startet bei jeder Anmeldung"
+
+#: fm1companion/syscheck.py:435
+msgid "Debian's package “fluidsynth” comes with a service that starts at login and opens the first sound card (on the Pi: HDMI) directly. PipeWire then doesn't get it – no HDMI sound, only “Dummy Output”. The app's sound generator doesn't need the service."
+msgstr "Debians Paket „fluidsynth“ bringt einen Dienst mit, der bei der Anmeldung startet und die erste Soundkarte (am Pi: HDMI) direkt öffnet. PipeWire bekommt sie dann nicht – kein HDMI-Ton, nur noch „Schein-Ausgabe“. Der Klangerzeuger der App braucht den Dienst nicht."
+
+#: fm1companion/syscheck.py:439
+msgid "In the app: notice “Disable service” – or in the terminal: systemctl --user disable --now fluidsynth && systemctl --user restart wireplumber pipewire pipewire-pulse"
+msgstr "In der App: Hinweis „Dienst abschalten“ – oder im Terminal: systemctl --user disable --now fluidsynth && systemctl --user restart wireplumber pipewire pipewire-pulse"
+
+#: fm1companion/syscheck.py:444
+msgid "Sound card occupied directly by a program"
+msgstr "Soundkarte von einem Programm direkt belegt"
+
+#: fm1companion/syscheck.py:445
+#, python-brace-format
+msgid "{programs}. As long as this is the case, PipeWire cannot use this card (it is then missing as an output)."
+msgstr "{programs}. Solange das so ist, kann PipeWire diese Karte nicht benutzen (fehlt dann als Ausgang)."
+
+#: fm1companion/syscheck.py:447
+msgid "Quit the program or switch it from ALSA to PipeWire/PulseAudio in its settings."
+msgstr "Das Programm beenden oder in seinen Einstellungen auf PipeWire/PulseAudio statt ALSA umstellen."
+
+#: fm1companion/syscheck.py:462
+msgid "No player for previewing (pw-play, paplay, aplay, ffplay)"
+msgstr "Kein Abspielprogramm fürs Vorhören (pw-play, paplay, aplay, ffplay)"
+
+#: fm1companion/syscheck.py:463
+msgid "Without one, “Listen”/“Preview” stay silent on the computer (playing on the FM-1 still works)."
+msgstr "Ohne eines bleiben „Anhören“/„Vorhören“ im Rechner stumm (auf dem FM-1 abspielen geht trotzdem)."
+
+#: fm1companion/syscheck.py:467
+#, python-brace-format
+msgid "{title} – sound goes to “{output}”"
+msgstr "{title} – Ton geht an „{output}“"
+
+#: fm1companion/syscheck.py:470
+msgid "Preview: no real audio output"
+msgstr "Vorhören: kein echter Audio-Ausgang"
+
+#: fm1companion/syscheck.py:471
+msgid "PipeWire found no speaker/headphone/HDMI output and plays into the void – “Listen” and the Studio stay silent. Often after a crash of the USB controller (USB speaker/sound card gone) or without a connected HDMI device."
+msgstr "PipeWire hat keinen Lautsprecher/Kopfhörer/HDMI-Ausgang gefunden und spielt ins Leere – „Anhören“ und das Studio bleiben stumm. Häufig nach einem Absturz des USB-Controllers (USB-Lautsprecher/-Soundkarte weg) oder ohne angeschlossenes HDMI-Gerät."
+
+#: fm1companion/syscheck.py:474
+msgid "Connect a speaker/sound card or restart the computer; then choose the output in KDE System Settings › Audio."
+msgstr "Lautsprecher/Soundkarte anschließen bzw. Rechner neu starten; dann in den KDE-Systemeinstellungen › Audio den Ausgang wählen."
+
+#: fm1companion/syscheck.py:477 fm1companion/syscheck.py:481
+#, python-brace-format
+msgid "Preview: {player}"
+msgstr "Vorhören: {player}"
+
+#: fm1companion/syscheck.py:479
+msgid "KDE System Settings › Audio: choose speakers/HDMI/headphones as default – or switch “Output” in the app when previewing."
+msgstr "KDE-Systemeinstellungen › Audio: Lautsprecher/HDMI/Kopfhörer als Standard wählen – oder in der App beim Vorhören „Ausgabe“ umstellen."
+
+#: fm1companion/syscheck.py:487
+#, python-brace-format
+msgid "FM-1 sound card found: {card}"
+msgstr "Soundkarte des FM-1 gefunden: {card}"
+
+#: fm1companion/syscheck.py:488
+msgid "No FM-1 sound card found"
+msgstr "Keine Soundkarte des FM-1 gefunden"
+
+#: fm1companion/syscheck.py:489
+msgid "This is normal without a connected FM-1. With an FM-1: it shows up as a USB audio device."
+msgstr "Ohne angeschlossenes FM-1 ist das normal. Mit FM-1: es meldet sich als USB-Audio-Gerät."
+
+#: fm1companion/syscheck.py:491
+msgid "Switch the FM-1 on and connect it with a USB data cable."
+msgstr "FM-1 einschalten und per USB-Datenkabel anschließen."
+
+#: fm1companion/syscheck.py:494
+msgid "MIDI not usable"
+msgstr "MIDI nicht nutzbar"
+
+#: fm1companion/syscheck.py:495
+msgid "Neither python3-rtmidi nor aconnect is available."
+msgstr "Weder python3-rtmidi noch aconnect sind verfügbar."
+
+#: fm1companion/syscheck.py:499
+#, python-brace-format
+msgid "FM-1 MIDI port: {port}"
+msgstr "MIDI-Port des FM-1: {port}"
+
+#: fm1companion/syscheck.py:500
+#, python-brace-format
+msgid "No FM-1 MIDI port ({n} other port)"
+msgid_plural "No FM-1 MIDI port ({n} other ports)"
+msgstr[0] "Kein FM-1-MIDI-Port ({n} anderer Port)"
+msgstr[1] "Kein FM-1-MIDI-Port ({n} andere Ports)"
+
+#: fm1companion/syscheck.py:505
+msgid "PipeWire is running"
+msgstr "PipeWire läuft"
+
+#: fm1companion/syscheck.py:505
+msgid "PipeWire is not running"
+msgstr "PipeWire läuft nicht"
+
+#: fm1companion/syscheck.py:506
+msgid "PipeWire status unknown"
+msgstr "PipeWire-Status unbekannt"
+
+#: fm1companion/syscheck.py:507
+msgid "Needed for recording via PipeWire (ALSA works without it)."
+msgstr "Für die Aufnahme über PipeWire nötig (ALSA geht auch ohne)."
+
+#: fm1companion/syscheck.py:511 fm1companion/diag.py:48
+msgid "editing recordings"
+msgstr "Aufnahmen bearbeiten"
+
+#: fm1companion/syscheck.py:511
+msgid "MP3/FLAC samples"
+msgstr "MP3/FLAC-Samples"
+
+#: fm1companion/syscheck.py:512
+msgid "sound generator for MIDI tracks 5–8"
+msgstr "Klangerzeuger für MIDI-Spuren 5–8"
+
+#: fm1companion/syscheck.py:514
+#, python-brace-format
+msgid "{program} available ({purpose})"
+msgstr "{program} vorhanden ({purpose})"
+
+#: fm1companion/syscheck.py:514
+#, python-brace-format
+msgid "{program} missing ({purpose})"
+msgstr "{program} fehlt ({purpose})"
+
+#: fm1companion/syscheck.py:523
+#, python-brace-format
+msgid "Free space in the FM-1 folder: {size} GiB"
+msgstr "Freier Platz im FM-1-Ordner: {size} GiB"
+
+#: fm1companion/syscheck.py:524
+msgid "Backups, recordings and firmware downloads need space."
+msgstr "Backups, Aufnahmen und Firmware-Downloads brauchen Platz."
+
+#: fm1companion/syscheck.py:526
+msgid "Delete old recordings/downloads or move the main folder."
+msgstr "Alte Aufnahmen/Downloads löschen oder den Hauptordner verlegen."
+
+#: fm1companion/syscheck.py:540
+msgid "Kernel log not readable"
+msgstr "Kernel-Protokoll nicht lesbar"
+
+#: fm1companion/syscheck.py:541
+#, python-brace-format
+msgid "Without access to the kernel log, USB and power problems cannot be detected ({problem})."
+msgstr "Ohne Zugriff auf das Kernel-Protokoll lassen sich USB- und Stromprobleme nicht erkennen ({problem})."
+
+#: fm1companion/syscheck.py:543
+msgid "Add your user to the group 'adm': sudo usermod -aG adm $USER – then log out and in again. For once also: sudo dmesg"
+msgstr "Deinen Benutzer in die Gruppe 'adm' aufnehmen: sudo usermod -aG adm $USER – danach ab- und wieder anmelden. Einmalig geht auch: sudo dmesg"
+
+#: fm1companion/syscheck.py:558
+#, python-brace-format
+msgid "FM-1 Companion {version} – system check {time}"
+msgstr "FM-1 Companion {version} – Systemcheck {time}"
+
+#: fm1companion/syscheck.py:560
+#, python-brace-format
+msgid "Computer: {model}"
+msgstr "Rechner: {model}"
+
+#: fm1companion/ui/pages/simulator.py:52
+msgid "low (play directly)"
+msgstr "niedrig (direkt spielen)"
+
+#: fm1companion/ui/pages/simulator.py:52
+msgid "balanced"
+msgstr "ausgewogen"
+
+#: fm1companion/ui/pages/simulator.py:53
+msgid "stable (large buffers, against crackling)"
+msgstr "stabil (große Puffer, gegen Knackser)"
+
+#: fm1companion/ui/pages/simulator.py:57
+msgid "M-VAVE FM1 Open (built from the official source code)"
+msgstr "M-VAVE FM1 Open (aus dem offiziellen Quellcode gebaut)"
+
+#: fm1companion/ui/pages/simulator.py:58
+msgid "Built from M-VAVE's official source code (not checked by M-VAVE): FM1 Open V14 with 8 tracks, DX7, 808, 303, PSG, sampler – playing, editing, projects, sounds and samples. User interface in English. The firmware update part is removed (installing works via “Firmware+” in the app)."
+msgstr "Aus dem offiziellen Quellcode von M-VAVE gebaut (nicht von M-VAVE geprüft): FM1 Open V14 mit 8 Spuren, DX7, 808, 303, PSG, Sampler – Spielen, Bearbeiten, Projekte, Sounds und Samples. Oberfläche englisch. Der Firmware-Update-Teil ist entfernt (Installieren geht über „Firmware+“ in der App)."
+
+#: fm1companion/ui/pages/simulator.py:61
+msgid "Melodee 1.6.1 (stable) – user interface and sound of the firmware; nothing is saved. First press “Switch on” (or simply play a key on the FM-1)."
+msgstr "Melodee 1.6.1 (stabil) – Oberfläche und Klang der Firmware; nichts wird gespeichert. Erst „Switch on“ drücken (oder einfach eine Taste am FM-1 spielen)."
+
+#: fm1companion/ui/pages/simulator.py:63
+msgid "fm1-emu – real firmware (slower)"
+msgstr "fm1-emu – echte Firmware (langsamer)"
+
+#: fm1companion/ui/pages/simulator.py:64
+msgid "CPU emulator by Joakim Eriksson (MIT): runs real .fwsc firmwares (Stock, Skiff, ORBIT …). Much slower than the WASM simulators – on the Pi 5 ORBIT is well playable, Skiff 2 just about, Stock V15 hardly. Best use “Open in Firefox”."
+msgstr "CPU-Emulator von Joakim Eriksson (MIT): lässt echte .fwsc-Firmwares laufen (Stock, Skiff, ORBIT …). Deutlich langsamer als die WASM-Simulatoren – am Pi 5 ist ORBIT gut spielbar, Skiff 2 knapp, Stock V15 kaum. Am besten „In Firefox öffnen“."
+
+#: fm1companion/ui/pages/simulator.py:67
+msgid "Community workbench by thegiantsnail (GPL-3.0) with a software FM-1."
+msgstr "Community-Werkbank von thegiantsnail (GPL-3.0) mit Software-FM-1."
+
+#: fm1companion/ui/pages/simulator.py:68
+msgid "Felucca – the base of most firmwares"
+msgstr "Felucca – die Basis der meisten Firmwares"
+
+#: fm1companion/ui/pages/simulator.py:69
+msgid "SLOOP-based groovebox with event tape"
+msgstr "SLOOP-basierte Groovebox mit Event-Tape"
+
+#: fm1companion/ui/pages/simulator.py:70
+msgid "909, 808, two 303s"
+msgstr "909, 808, zwei 303"
+
+#: fm1companion/ui/pages/simulator.py:71
+msgid "Omnichord-like chord harp"
+msgstr "Omnichord-artige Akkord-Harfe"
+
+#: fm1companion/ui/pages/simulator.py:72
+msgid "Chord instrument à la Orchid"
+msgstr "Akkord-Instrument à la Orchid"
+
+#: fm1companion/ui/pages/simulator.py:73
+msgid "Formant vocal synth"
+msgstr "Formant-Gesangssynth"
+
+#: fm1companion/ui/pages/simulator.py:74
+msgid "RemoteFM1 (link only)"
+msgstr "RemoteFM1 (nur Link)"
+
+#: fm1companion/ui/pages/simulator.py:75
+msgid "Quixotic7, GPL-3.0: the real FM-1 as a USB control panel for an emulated firmware. Ran badly on the Pi – therefore only as a reference; opens the project page in the browser."
+msgstr "Quixotic7, GPL-3.0: das echte FM-1 als USB-Bedienfeld für eine emulierte Firmware. Lief am Pi schlecht – deshalb nur als Verweis; öffnet die Projektseite im Browser."
+
+#: fm1companion/ui/pages/simulator.py:131
+msgid "Play FM-1 firmwares on the computer – the real code of the firmware as WebAssembly. On the Pi it often runs more smoothly in Firefox."
+msgstr "FM-1-Firmwares im Rechner spielen – der echte Code der Firmware als WebAssembly. Am Pi läuft er in Firefox oft flüssiger."
+
+#: fm1companion/ui/pages/simulator.py:136
+msgid "Launch"
+msgstr "Starten"
+
+#: fm1companion/ui/pages/simulator.py:139
+msgid "Load the selected simulator here in the app (Enter or double-click in the list)"
+msgstr "Gewählten Simulator hier in der App laden (Enter oder Doppelklick in der Liste)"
+
+#: fm1companion/ui/pages/simulator.py:142
+msgctxt "simulator"
+msgid "Stop"
+msgstr "Stoppen"
+
+#: fm1companion/ui/pages/simulator.py:143
+msgid "Stop the simulator – frees computing power and sound. Without stopping it keeps running, even when you change the page (like a switched-on instrument)."
+msgstr "Simulator beenden – gibt Rechenleistung und Ton frei. Ohne Stoppen läuft er weiter, auch wenn du die Seite wechselst (wie ein eingeschaltetes Instrument)."
+
+#: fm1companion/ui/pages/simulator.py:161
+msgid "Open in Firefox"
+msgstr "In Firefox öffnen"
+
+#: fm1companion/ui/pages/simulator.py:162
+msgid "Open in a separate Firefox window (often smoother on the Pi). MIDI from the FM-1 also arrives there as long as the app is running."
+msgstr "Im eigenen Firefox-Fenster öffnen (oft flüssiger am Pi). MIDI vom FM-1 kommt auch dort an, solange die App läuft."
+
+#: fm1companion/ui/pages/simulator.py:168
+msgid "Address of an online simulator (https://…)"
+msgstr "Adresse eines Online-Simulators (https://…)"
+
+#: fm1companion/ui/pages/simulator.py:177
+msgid "<b>MIDI into the simulator</b>"
+msgstr "<b>MIDI in den Simulator</b>"
+
+#: fm1companion/ui/pages/simulator.py:178
+msgid "Keys and knobs of the FM-1"
+msgstr "Tasten und Knöpfe des FM-1"
+
+#: fm1companion/ui/pages/simulator.py:180
+msgid "What you play on the connected FM-1 plays along in the simulator (channel messages and clock)."
+msgstr "Was du am angeschlossenen FM-1 spielst, spielt im Simulator mit (Kanal-Nachrichten und Takt)."
+
+#: fm1companion/ui/pages/simulator.py:186
+msgid "additional MIDI input, e.g. a USB keyboard"
+msgstr "weiterer MIDI-Eingang, z. B. ein USB-Keyboard"
+
+#: fm1companion/ui/pages/simulator.py:189
+msgid "Search MIDI inputs again"
+msgstr "MIDI-Eingänge neu suchen"
+
+#: fm1companion/ui/pages/simulator.py:200
+msgid "Crackling? Choose “stable” – the sound then comes a little later. Applies at the next start (also in Firefox)."
+msgstr "Knackst es? „stabil“ wählen – der Ton kommt dann etwas später. Gilt beim nächsten Start (auch in Firefox)."
+
+#: fm1companion/ui/pages/simulator.py:230
+msgid "Choose a simulator on the left."
+msgstr "Wähle links einen Simulator."
+
+#: fm1companion/ui/pages/simulator.py:235
+msgid "Record the simulator's sound as WAV to ~/FM-1/Aufnahmen (Ctrl+R)"
+msgstr "Ton des Simulators als WAV nach ~/FM-1/Aufnahmen aufnehmen (Strg+R)"
+
+#: fm1companion/ui/pages/simulator.py:248
+msgid "Qt WebEngine is missing for the built-in simulator (sudo apt install python3-pyqt6.qtwebengine). “Open in Firefox” still works."
+msgstr "Für den eingebauten Simulator fehlt Qt WebEngine (sudo apt install python3-pyqt6.qtwebengine). „In Firefox öffnen“ geht trotzdem."
+
+#: fm1companion/ui/pages/simulator.py:276
+#: fm1companion/ui/pages/simulator.py:338
+msgid "No simulator started yet"
+msgstr "Noch kein Simulator gestartet"
+
+#: fm1companion/ui/pages/simulator.py:277
+msgid "Choose a simulator on the left and press “Launch”. With a connected FM-1 its keys play along in the simulator."
+msgstr "Links einen Simulator wählen und „Starten“ drücken. Mit angeschlossenem FM-1 spielen seine Tasten im Simulator mit."
+
+#: fm1companion/ui/pages/simulator.py:339
+#: fm1companion/ui/pages/simulator.py:469
+msgid "Choose a simulator on the left and press “Launch”."
+msgstr "Links einen Simulator wählen und „Starten“ drücken."
+
+#: fm1companion/ui/pages/simulator.py:355
+msgid "BUNDLED (offline)"
+msgstr "MITGELIEFERT (offline)"
+
+#: fm1companion/ui/pages/simulator.py:357
+msgid "No simulators bundled – installation incomplete?"
+msgstr "Keine Simulatoren mitgeliefert – Installation unvollständig?"
+
+#: fm1companion/ui/pages/simulator.py:362
+msgid "RECENTLY OPENED (online)"
+msgstr "ZULETZT GEÖFFNET (online)"
+
+#: fm1companion/ui/pages/simulator.py:366
+msgid "ONLINE SIMULATORS (need internet)"
+msgstr "ONLINE-SIMULATOREN (brauchen Internet)"
+
+#: fm1companion/ui/pages/simulator.py:397
+msgid "Runs on the developer's site; needs internet. MIDI: choose the input “FM-1 (keys)” in the page."
+msgstr "Läuft auf der Seite des Entwicklers; braucht Internet. MIDI: in der Seite den Eingang „FM-1 (Tasten)“ wählen."
+
+#: fm1companion/ui/pages/simulator.py:402
+#, python-brace-format
+msgid "<b>{title}</b> · version {version}<br>{description}<br><small>Source: <a href='{url}'>{repo}</a> · License: {license} · {size}</small>"
+msgstr "<b>{title}</b> · Version {version}<br>{description}<br><small>Quelle: <a href='{url}'>{repo}</a> · Lizenz: {license} · {size}</small>"
+
+#: fm1companion/ui/pages/simulator.py:407
+#, python-brace-format
+msgid ""
+"State: {ref} ({commit})\n"
+"Built: {date} with {toolchain}\n"
+"License: {license}"
+msgstr ""
+"Stand: {ref} ({commit})\n"
+"Gebaut: {date} mit {toolchain}\n"
+"Lizenz: {license}"
+
+#: fm1companion/ui/pages/simulator.py:425
+#, python-brace-format
+msgid "{title}: project page opened in the browser."
+msgstr "{title}: Projektseite im Browser geöffnet."
+
+#: fm1companion/ui/pages/simulator.py:432
+#, python-brace-format
+msgid "Simulator damaged: {files} – please reinstall the app."
+msgstr "Simulator beschädigt: {files} – bitte die App neu installieren."
+
+#: fm1companion/ui/pages/simulator.py:448
+msgid "<b style='color:#2a2'>● local</b>"
+msgstr "<b style='color:#2a2'>● lokal</b>"
+
+#: fm1companion/ui/pages/simulator.py:462
+#, python-brace-format
+msgid "{title} stopped."
+msgstr "{title} beendet."
+
+#: fm1companion/ui/pages/simulator.py:469
+msgid "Simulator stopped"
+msgstr "Simulator gestoppt"
+
+#: fm1companion/ui/pages/simulator.py:489
+msgid "No connection"
+msgstr "Keine Verbindung"
+
+#: fm1companion/ui/pages/simulator.py:489
+#, python-brace-format
+msgid "{title} is on the internet ({url}) and cannot be reached right now. The bundled simulators also work offline."
+msgstr "{title} liegt im Internet ({url}) und ist gerade nicht erreichbar. Die mitgelieferten Simulatoren gehen auch offline."
+
+#: fm1companion/ui/pages/simulator.py:493
+msgid "Online simulator not reachable – offline?"
+msgstr "Online-Simulator nicht erreichbar – offline?"
+
+#: fm1companion/ui/pages/simulator.py:495
+msgid "Simulator could not be loaded."
+msgstr "Simulator konnte nicht geladen werden."
+
+#: fm1companion/ui/pages/simulator.py:497
+msgid "Press “Switch on” or play a key on the FM-1. Computer keyboard: Z S X D C …"
+msgstr "„Switch on“ drücken oder am FM-1 eine Taste spielen. Computertastatur: Z S X D C …"
+
+#: fm1companion/ui/pages/simulator.py:498
+msgid "Just play a key (mouse, computer keyboard Z S X …, or on the FM-1)."
+msgstr "Einfach eine Taste spielen (Maus, Computertastatur Z S X …, oder am FM-1)."
+
+#: fm1companion/ui/pages/simulator.py:499
+#, python-brace-format
+msgid "{title} is running (online)."
+msgstr "{title} läuft (online)."
+
+#: fm1companion/ui/pages/simulator.py:499
+#, python-brace-format
+msgid "{title} is running."
+msgstr "{title} läuft."
+
+#: fm1companion/ui/pages/simulator.py:511
+#, python-brace-format
+msgid "Invalid address: {url}"
+msgstr "Ungültige Adresse: {url}"
+
+#: fm1companion/ui/pages/simulator.py:538
+msgid "Firefox not found – sudo apt install firefox-esr"
+msgstr "Firefox nicht gefunden – sudo apt install firefox-esr"
+
+#: fm1companion/ui/pages/simulator.py:543
+#, python-brace-format
+msgid "Firefox could not be started: {error}"
+msgstr "Firefox ließ sich nicht starten: {error}"
+
+#: fm1companion/ui/pages/simulator.py:546
+#, python-brace-format
+msgid "{title} opened in Firefox. MIDI from the FM-1 arrives there as long as the app is running – the simulator here can be stopped."
+msgstr "{title} in Firefox geöffnet. MIDI vom FM-1 kommt dort an, solange die App läuft – der Simulator hier kann gestoppt werden."
+
+#: fm1companion/ui/pages/simulator.py:583
+msgid "no additional MIDI input"
+msgstr "kein weiterer MIDI-Eingang"
+
+#: fm1companion/ui/pages/simulator.py:601
+#, python-brace-format
+msgid "MIDI input cannot be opened: {errors}"
+msgstr "MIDI-Eingang lässt sich nicht öffnen: {errors}"
+
+#: fm1companion/ui/pages/simulator.py:607
+msgid "FM-1 (keys)"
+msgstr "FM-1 (Tasten)"
+
+#: fm1companion/ui/pages/simulator.py:614
+#, python-brace-format
+msgid "MIDI active from: {sources}"
+msgstr "MIDI aktiv von: {sources}"
+
+#: fm1companion/ui/pages/simulator.py:615
+msgid "No MIDI input active – connect the FM-1 or choose a keyboard. Playing also works with the mouse and the computer keyboard."
+msgstr "Kein MIDI-Eingang aktiv – FM-1 anschließen oder ein Keyboard wählen. Spielen geht auch mit Maus und Computertastatur."
+
+#: fm1companion/ui/pages/simulator.py:634
+msgid "Connect the online editor to the FM-1?"
+msgstr "Online-Editor mit dem FM-1 verbinden?"
+
+#: fm1companion/ui/pages/simulator.py:635
+#, python-brace-format
+msgid "<b>{title}</b> is loaded from <b>{origin}</b> – a site on the internet that does not belong to this app."
+msgstr "<b>{title}</b> wird von <b>{origin}</b> geladen – einer Seite im Internet, die nicht zu dieser App gehört."
+
+#: fm1companion/ui/pages/simulator.py:639
+msgid ""
+"If you allow it, this site may send editor commands (SysEx) to your FM-1 and thereby change sounds, presets and settings on the device. Firmware update and boot mode always stay blocked.\n"
+"\n"
+"Without permission only notes, controllers and clock go to the FM-1. The permission applies only to exactly this address; if the site switches to another address, the safe filter applies again."
+msgstr ""
+"Erlaubst du es, darf diese Seite Editor-Befehle (SysEx) an dein FM-1 senden und damit Klänge, Presets und Einstellungen auf dem Gerät ändern. Firmware-Update und Bootmodus bleiben immer gesperrt.\n"
+"\n"
+"Ohne Erlaubnis gehen nur Noten, Controller und Takt ans FM-1. Die Erlaubnis gilt nur für genau diese Adresse; wechselt die Seite zu einer anderen Adresse, gilt wieder der sichere Filter."
+
+#: fm1companion/ui/pages/simulator.py:644
+msgid "Allow (remember for this address)"
+msgstr "Erlauben (für diese Adresse merken)"
+
+#: fm1companion/ui/pages/simulator.py:645
+msgid "Allow notes only"
+msgstr "Nur Noten erlauben"
+
+#: fm1companion/ui/pages/simulator.py:669
+msgid "firmware update and boot mode are blocked for web pages"
+msgstr "Firmware-Update und Bootmodus sind aus Web-Seiten gesperrt"
+
+#: fm1companion/ui/pages/simulator.py:671
+msgid "this address has no permission for editor commands – only notes, controllers and clock; the app asks for permission when opening the online editor"
+msgstr "diese Adresse hat keine Erlaubnis für Editor-Befehle – nur Noten, Controller und Takt; die Erlaubnis fragt die App beim Öffnen des Online-Editors"
+
+#: fm1companion/ui/pages/simulator.py:674
+msgid "simulators may only send notes, controllers and clock to the FM-1 – for device access use the page “Editor”"
+msgstr "Simulatoren dürfen nur Noten, Controller und Takt ans FM-1 schicken – für Geräte-Zugriff die Seite „Editor“"
+
+#: fm1companion/ui/pages/simulator.py:676
+#, python-brace-format
+msgid "{n} message of the page to the FM-1 held back ({reason})."
+msgid_plural "{n} messages of the page to the FM-1 held back ({reason})."
+msgstr[0] "{n} Nachricht der Seite ans FM-1 zurückgehalten ({reason})."
+msgstr[1] "{n} Nachrichten der Seite ans FM-1 zurückgehalten ({reason})."
+
+#: fm1companion/ui/pages/simulator.py:688
+msgid "Start a simulator first."
+msgstr "Erst einen Simulator starten."
+
+#: fm1companion/ui/pages/simulator.py:700
+msgid "Recording only works once the simulator makes sound – play a key once."
+msgstr "Aufnahme geht erst, wenn der Simulator Ton macht – einmal eine Taste spielen."
+
+#: fm1companion/ui/pages/simulator.py:713
+#, python-brace-format
+msgid "{duration} saved (silent!)"
+msgstr "{duration} gespeichert (still!)"
+
+#: fm1companion/ui/pages/simulator.py:714
+#, python-brace-format
+msgid "{duration} saved"
+msgstr "{duration} gespeichert"
+
+#: fm1companion/ui/pages/simulator.py:716
+msgid "Recording failed"
+msgstr "Aufnahme fehlgeschlagen"
+
+#: fm1companion/ui/pages/simulator.py:736
+#, python-brace-format
+msgid "{title} is running and switched on. Play: on the FM-1 or with the computer keyboard (Z S X D C …)."
+msgstr "{title} läuft und ist eingeschaltet. Spielen: am FM-1 oder mit der Computertastatur (Z S X D C …)."
+
+#: fm1companion/ui/pages/simulator.py:755
+#, python-brace-format
+msgid "⚠ too slow: {percent} % tempo"
+msgstr "⚠ zu langsam: {percent} % Tempo"
+
+#. Translators: {percent} includes the percent sign ("43 %")
+#: fm1companion/ui/pages/simulator.py:759
+#, python-brace-format
+msgid ""
+"The computer manages only {percent} of the required computing power – the simulator plays slower, the sound stutters and crackles. This is not the firmware's fault.\n"
+"Remedy: close other programs, “Open in Firefox” (often faster on the Pi) or choose latency “stable” and restart."
+msgstr ""
+"Der Rechner schafft nur {percent} der nötigen Rechenleistung – der Simulator spielt langsamer, der Ton stockt und knackt. Das liegt nicht an der Firmware.\n"
+"Abhilfe: andere Programme schließen, „In Firefox öffnen“ (am Pi oft schneller) oder Latenz „stabil“ wählen und neu starten."
+
+#: fm1companion/ui/pages/simulator.py:764
+msgid "Real time"
+msgstr "Echtzeit"
+
+#: fm1companion/ui/pages/simulator.py:766
+#, python-brace-format
+msgid "The computer keeps up: the simulator plays at normal tempo (measured {percent} %)."
+msgstr "Der Rechner hält mit: der Simulator spielt in normalem Tempo (gemessen {percent} %)."
+
+#: fm1companion/ui/pages/simulator.py:784
+#, python-brace-format
+msgid "Recording saved: {path}"
+msgstr "Aufnahme gespeichert: {path}"
+
+#: fm1companion/ui/wizard.py:32
+#, python-brace-format
+msgid "Welcome to the {suite}"
+msgstr "Willkommen in der {suite}"
+
+#: fm1companion/ui/wizard.py:33
+msgid "Everything is set up in a minute. You can open the wizard again later via Help › Setup wizard."
+msgstr "In einer Minute ist alles eingerichtet. Du kannst den Assistenten später über Hilfe › Einrichtungs-Assistent wieder öffnen."
+
+#: fm1companion/ui/wizard.py:36
+msgid "The suite takes care of everything around your M-VAVE FM-1: changing firmware, backups, sounds and presets, samples, MIDI, simulator and recording."
+msgstr "Die Suite kümmert sich um alles rund um dein M-VAVE FM-1: Firmware wechseln, Backups, Klänge und Presets, Samples, MIDI, Simulator und Aufnahme."
+
+#: fm1companion/ui/wizard.py:40
+msgid "Appearance:"
+msgstr "Aussehen:"
+
+#: fm1companion/ui/wizard.py:61
+msgid "Main folder"
+msgstr "Hauptordner"
+
+#: fm1companion/ui/wizard.py:62
+msgid "Your backups, projects, kits, recordings and firmware downloads live here."
+msgstr "Hier liegen deine Backups, Projekte, Kits, Aufnahmen und Firmware-Downloads."
+
+#: fm1companion/ui/wizard.py:66
+msgid "Choose …"
+msgstr "Wählen …"
+
+#: fm1companion/ui/wizard.py:71
+msgid "Tip: put the folder where you also back it up (e.g. on the NAS drive). The app never deletes it – not even when uninstalling."
+msgstr "Tipp: Lege den Ordner dorthin, wo du ihn auch sicherst (z. B. auf das NAS-Laufwerk). Die App löscht ihn nie – auch nicht beim Deinstallieren."
+
+#: fm1companion/ui/wizard.py:83
+msgid "Choose main folder"
+msgstr "Hauptordner wählen"
+
+#: fm1companion/ui/wizard.py:99
+msgid "Main folder not writable"
+msgstr "Hauptordner nicht beschreibbar"
+
+#: fm1companion/ui/wizard.py:108
+msgid "Sample folders"
+msgstr "Sample-Ordner"
+
+#: fm1companion/ui/wizard.py:109
+msgid "Where are your samples (e.g. Pocket Operator sounds)? Optional – can also be done later."
+msgstr "Wo liegen deine Samples (z. B. Pocket-Operator-Klänge)? Optional – geht auch später."
+
+#: fm1companion/ui/wizard.py:138
+msgid "Check dependencies"
+msgstr "Abhängigkeiten prüfen"
+
+#: fm1companion/ui/wizard.py:139
+msgid "Which system packages the suite needs and whether they are installed."
+msgstr "Welche Systempakete die Suite braucht und ob sie da sind."
+
+#: fm1companion/ui/wizard.py:153 fm1companion/ui/wizard.py:184
+msgid "Copy command"
+msgstr "Befehl kopieren"
+
+#: fm1companion/ui/wizard.py:154
+msgid "Put the apt command on the clipboard – then paste it in the terminal"
+msgstr "Den apt-Befehl in die Zwischenablage legen – dann im Terminal einfügen"
+
+#: fm1companion/ui/wizard.py:170 fm1companion/ui/pages/help.py:245
+#, python-brace-format
+msgid "{why} – <b>missing</b>"
+msgstr "{why} – <b>fehlt</b>"
+
+#: fm1companion/ui/wizard.py:170
+#, python-brace-format
+msgid "{why} – optional"
+msgstr "{why} – optional"
+
+#: fm1companion/ui/wizard.py:174
+msgid "Install what is missing (in the terminal):"
+msgstr "Fehlendes nachinstallieren (im Terminal):"
+
+#: fm1companion/ui/wizard.py:175
+msgid "Everything is there."
+msgstr "Alles da."
+
+#: fm1companion/ui/wizard.py:183
+msgid "Copied ✔"
+msgstr "Kopiert ✔"
+
+#: fm1companion/ui/wizard.py:191
+msgid "Connect & name the FM-1"
+msgstr "FM-1 anschließen & benennen"
+
+#: fm1companion/ui/wizard.py:192
+msgid "Switch your FM-1 on and connect it with a USB data cable. It appears here by itself."
+msgstr "Schalte dein FM-1 ein und verbinde es per USB-Datenkabel. Es erscheint hier von selbst."
+
+#: fm1companion/ui/wizard.py:195
+msgid "Searching …"
+msgstr "Suche …"
+
+#: fm1companion/ui/wizard.py:200
+msgid "e.g. Studio FM-1"
+msgstr "z. B. Studio-FM-1"
+
+#: fm1companion/ui/wizard.py:203
+msgid "A second FM-1? Just plug it in instead – every device gets its own profile, own colour and own backups. This step is optional."
+msgstr "Ein zweites FM-1? Einfach umstecken – jedes Gerät bekommt sein eigenes Profil, eigene Farbe und eigene Backups. Dieser Schritt ist optional."
+
+#: fm1companion/ui/wizard.py:221
+msgid "Firmware without editor protocol"
+msgstr "Firmware ohne Editor-Protokoll"
+
+#: fm1companion/ui/wizard.py:224
+#, python-brace-format
+msgid "<b>Found:</b> {port} – {firmware}"
+msgstr "<b>Gefunden:</b> {port} – {firmware}"
+
+#: fm1companion/ui/wizard.py:230
+msgid "An FM-1 is waiting in <b>update mode</b>. After the wizard, continue on the page “Recovery” – there the interrupted installation is completed."
+msgstr "Ein FM-1 wartet im <b>Update-Modus</b>. Nach dem Assistenten geht es auf der Seite „Rettung“ weiter – dort wird die unterbrochene Installation abgeschlossen."
+
+#: fm1companion/ui/wizard.py:234
+msgid "FM-1 found, but it does not answer (yet) – one moment. If it does not answer at all: check the data cable, close other MIDI programs."
+msgstr "FM-1 gefunden, es antwortet aber (noch) nicht – einen Moment. Antwortet es gar nicht: Datenkabel prüfen, andere MIDI-Programme schließen."
+
+#: fm1companion/ui/wizard.py:238
+msgid "No FM-1 connected yet. You can also skip this step."
+msgstr "Noch kein FM-1 verbunden. Du kannst diesen Schritt auch überspringen."
+
+#: fm1companion/ui/wizard.py:249
+msgid "Renaming not possible"
+msgstr "Umbenennen nicht möglich"
+
+#: fm1companion/ui/wizard.py:257
+msgctxt "wizard page"
+msgid "Automatic backup"
+msgstr "Automatische Sicherung"
+
+#: fm1companion/ui/wizard.py:258
+msgid "On the first connection the app makes a backup automatically."
+msgstr "Beim ersten Verbinden macht die App automatisch ein Backup."
+
+#: fm1companion/ui/wizard.py:260
+msgid "As soon as an FM-1 with Melodee, Skiff or SLOOP is connected, the app backs up the complete state once a day when plugging in (running music, all projects, user presets, settings) to <b>FM-1/Backups/&lt;device name&gt;</b>. This takes a few seconds; the FM-1 briefly stops playback for it.<br><br>Before every firmware installation and before every restore an additional safety backup is made. Automatic backups are tidied up by rules (the latest ones, the newest per month and per firmware stay); the app never deletes your own backups.<br><br>You can set this under <b>Backups</b> and in the settings."
+msgstr "Sobald ein FM-1 mit Melodee, Skiff oder SLOOP verbunden ist, sichert die App einmal täglich beim Anstecken den kompletten Stand (laufende Musik, alle Projekte, User-Presets, Einstellungen) nach <b>FM-1/Backups/&lt;Gerätename&gt;</b>. Das dauert ein paar Sekunden; das FM-1 stoppt dafür kurz die Wiedergabe.<br><br>Vor jeder Firmware-Installation und vor jedem Zurückspielen entsteht zusätzlich ein Sicherheits-Backup. Automatische Backups werden nach Regeln aufgeräumt (die letzten, das neueste je Monat und je Firmware bleiben); deine eigenen Backups löscht die App nie.<br><br>Einstellen lässt sich das unter <b>Backups</b> und in den Einstellungen."
+
+#: fm1companion/ui/wizard.py:275
+msgid "Update channel"
+msgstr "Update-Kanal"
+
+#: fm1companion/ui/wizard.py:276
+msgid "Which firmware versions should the app offer?"
+msgstr "Welche Firmware-Versionen soll die App anbieten?"
+
+#: fm1companion/ui/wizard.py:279
+msgid "Stable versions (recommended)"
+msgstr "Stabile Versionen (empfohlen)"
+
+#: fm1companion/ui/wizard.py:280
+msgid "Release candidates too"
+msgstr "Auch Release Candidates"
+
+#: fm1companion/ui/wizard.py:285
+msgid "Release candidates (RC) are pre-releases with the newest features – usually well tested, but not final yet. You can change this at any time in the settings."
+msgstr "Release Candidates (RC) sind Vorabversionen mit den neuesten Funktionen – meist gut getestet, aber noch nicht final. Du kannst das jederzeit in den Einstellungen ändern."
+
+#: fm1companion/ui/wizard.py:288
+msgid "Before every update the app makes a backup automatically."
+msgstr "Vor jedem Update legt die App automatisch ein Backup an."
+
+#: fm1companion/ui/wizard.py:295
+msgid "Done!"
+msgstr "Fertig!"
+
+#: fm1companion/ui/wizard.py:296
+msgid "Have fun with your FM-1."
+msgstr "Viel Spaß mit deinem FM-1."
+
+#: fm1companion/ui/wizard.py:298
+msgid "<ul><li><b>Ctrl+K</b> – find everything</li><li><b>Ctrl+B</b> – backup</li><li><b>F1</b> – help</li></ul>At the bottom right you see compactly how your computer is doing – a click opens the system check."
+msgstr "<ul><li><b>Strg+K</b> – alles finden</li><li><b>Strg+B</b> – Backup</li><li><b>F1</b> – Hilfe</li></ul>Unten rechts siehst du kompakt, wie es deinem Rechner geht – ein Klick öffnet den Systemcheck."
+
+#: fm1companion/ui/wizard.py:301
+msgid "What's new in 2.0?"
+msgstr "Was ist neu in 2.0?"
+
+#: fm1companion/ui/wizard.py:311
+msgid "Setup"
+msgstr "Einrichtung"
+
+#: fm1companion/ui/wizard.py:316
+msgid "Next >"
+msgstr "Weiter >"
+
+#: fm1companion/ui/wizard.py:316
+msgid "< Back"
+msgstr "< Zurück"
+
+#: fm1companion/ui/wizard.py:318
+msgid "Finish"
+msgstr "Fertig"
+
+#: fm1companion/ui/wizard.py:355
+msgid "The digital twin of your FM-1: the same firmware on the computer – play, export as WAV (also single tracks) for Logic/Audacity and write back to the FM-1."
+msgstr "Der digitale Zwilling deines FM-1: dieselbe Firmware im Rechner – spielen, als WAV (auch Einzelspuren) für Logic/Audacity ausgeben und zurück aufs FM-1 schreiben."
+
+#: fm1companion/ui/wizard.py:357
+msgid "All firmwares in one place: catalog with everything there is for the FM-1, plus install, switch versions and back to the original."
+msgstr "Alle Firmwares an einem Ort: Katalog mit allem, was es fürs FM-1 gibt, dazu Installieren, Versionen wechseln und zurück zum Original."
+
+#: fm1companion/ui/wizard.py:359
+msgid "Step by step back from update mode – even if the display stays dark."
+msgstr "Schritt für Schritt aus dem Update-Modus zurück – auch wenn das Display dunkel bleibt."
+
+#: fm1companion/ui/wizard.py:361
+msgid "Play FM-1 firmwares directly on the computer, without a device."
+msgstr "FM-1-Firmwares direkt im Rechner spielen, ohne Gerät."
+
+#: fm1companion/ui/wizard.py:362
+msgid "Browse, back up, swap and restore all user presets."
+msgstr "Alle User-Presets durchsuchen, sichern, tauschen und zurückspielen."
+
+#: fm1companion/ui/wizard.py:363
+msgid "Import DX7 sounds and bring them to the FM-1 as FM voices."
+msgstr "DX7-Klänge importieren und als FM-Voices aufs FM-1 bringen."
+
+#: fm1companion/ui/wizard.py:364
+msgid "Connect ports, monitor, send clock."
+msgstr "Ports verbinden, mitlesen, Clock senden."
+
+#: fm1companion/ui/wizard.py:365
+msgid "Make the MIDI tracks 5–8 audible – with FluidSynth on the computer."
+msgstr "Die MIDI-Spuren 5–8 hörbar machen – mit FluidSynth im Rechner."
+
+#: fm1companion/ui/wizard.py:366
+msgid "Projects › View & export"
+msgstr "Projekte › Ansicht & Export"
+
+#: fm1companion/ui/wizard.py:366
+msgid "View projects as tracks and patterns and export them as MIDI."
+msgstr "Projekte als Spuren und Patterns ansehen und als MIDI exportieren."
+
+#: fm1companion/ui/wizard.py:368
+msgid "Generate ideas, chords and patterns and play them on the device."
+msgstr "Ideen, Akkorde und Patterns erzeugen und aufs Gerät spielen."
+
+#: fm1companion/ui/wizard.py:369
+msgid "Backups › Browse"
+msgstr "Backups › Durchsuchen"
+
+#: fm1companion/ui/wizard.py:369
+msgid "Look into backups, compare, extract parts."
+msgstr "In Backups hineinschauen, vergleichen, Teile herausholen."
+
+#: fm1companion/ui/wizard.py:371
+msgid "All your FM-1 with profile, colour and history."
+msgstr "Alle deine FM-1 mit Profil, Farbe und Verlauf."
+
+#: fm1companion/ui/wizard.py:372
+msgid "Guides, FAQ and diagnostics – also offline. F1."
+msgstr "Anleitungen, FAQ und Diagnose – auch offline. F1."
+
+#: fm1companion/ui/wizard.py:373
+msgid "Command search"
+msgstr "Befehlssuche"
+
+#: fm1companion/ui/wizard.py:373
+msgid "Ctrl+K: every page, every action, every help topic via the keyboard."
+msgstr "Strg+K: jede Seite, jede Aktion, jedes Hilfe-Thema per Tastatur."
+
+#: fm1companion/ui/wizard.py:374
+msgid "Finds loose contacts, under-voltage and USB audio errors in the kernel log."
+msgstr "Findet Wackelkontakte, Unterspannung und USB-Audio-Fehler im Kernel-Protokoll."
+
+#: fm1companion/ui/wizard.py:376
+msgid "New design"
+msgstr "Neues Design"
+
+#: fm1companion/ui/wizard.py:376
+msgid "Light, dark or automatic – with accent colour and consistent icons."
+msgstr "Hell, dunkel oder automatisch – mit Akzentfarbe und einheitlichen Symbolen."
+
+#: fm1companion/ui/wizard.py:400
+#, python-brace-format
+msgid "New in the {suite} {version}"
+msgstr "Neu in der {suite} {version}"
+
+#: fm1companion/ui/wizard.py:401
+msgid "A lot is a lot, more is better: everything for the FM-1 now in one app. A click on a card opens the area."
+msgstr "Viel ist viel, mehr ist besser: alles fürs FM-1 jetzt in einer App. Klick auf eine Karte öffnet den Bereich."
+
+#: fm1companion/ui/wizard.py:434
+msgid "not included in this edition"
+msgstr "in dieser Ausgabe nicht enthalten"
+
+#: fm1companion/ui/wizard.py:440
+msgid "Let's go"
+msgstr "Los geht's"
+
+#: fm1companion/linkimport.py:116
+msgid "Nothing recognized – please paste a link, a .fwsc file or a name."
+msgstr "Nichts erkannt – bitte einen Link, eine .fwsc-Datei oder einen Namen einfügen."
+
+#: fm1companion/linkimport.py:145
+#, python-brace-format
+msgid "{name} is already built into the app."
+msgstr "{name} ist schon fest in der App eingebaut."
+
+#: fm1companion/linkimport.py:156
+#, python-brace-format
+msgid "File {path} not found."
+msgstr "Datei {path} nicht gefunden."
+
+#: fm1companion/linkimport.py:160
+#, python-brace-format
+msgid "{name} is not a firmware file (.fwsc) – checksum calculated anyway, installing it would be dangerous."
+msgstr "{name} ist keine Firmware-Datei (.fwsc) – Prüfsumme trotzdem berechnet, Aufspielen wäre gefährlich."
+
+#: fm1companion/linkimport.py:165
+#, python-brace-format
+msgid "File {name} could not be read: {error}."
+msgstr "Datei {name} ließ sich nicht lesen: {error}."
+
+#: fm1companion/linkimport.py:173
+#, python-brace-format
+msgid "Known package: {label} (checksum matches the Mooring catalog)."
+msgstr "Bekanntes Paket: {label} (Prüfsumme stimmt mit dem Mooring-Katalog überein)."
+
+#: fm1companion/linkimport.py:175
+msgid "Package is not in the catalog – checksum was calculated, please check the origin yourself."
+msgstr "Paket ist nicht im Katalog – Prüfsumme wurde berechnet, Herkunft bitte selbst prüfen."
+
+#: fm1companion/linkimport.py:178
+#, python-brace-format
+msgid "Package identifier: {product}."
+msgstr "Paket-Kennung: {product}."
+
+#: fm1companion/linkimport.py:184
+#, python-brace-format
+msgid "The file name matches {name} – details taken from there (guessed)."
+msgstr "Der Dateiname passt zu {name} – Angaben von dort übernommen (geraten)."
+
+#: fm1companion/linkimport.py:213
+#, python-brace-format
+msgid "Anchor “#{anchor}” on {host} belongs to {name} (similar name)."
+msgstr "Sprungmarke „#{anchor}“ auf {host} gehört zu {name} (ähnlicher Name)."
+
+#: fm1companion/linkimport.py:217
+#, python-brace-format
+msgid "Link to {host} without a recognizable firmware – please use the link of the firmware itself."
+msgstr "Link auf {host} ohne erkennbare Firmware – bitte den Link der Firmware selbst nehmen."
+
+#: fm1companion/linkimport.py:243 fm1companion/linkimport.py:266
+#, python-brace-format
+msgid "According to the catalog the page belongs to {name}."
+msgstr "Seite gehört laut Katalog zu {name}."
+
+#: fm1companion/linkimport.py:249
+#, python-brace-format
+msgid "Repo guessed from the GitHub Pages address: {repo}."
+msgstr "Repo aus der GitHub-Pages-Adresse geraten: {repo}."
+
+#: fm1companion/linkimport.py:261
+msgid "Direct package address – checksum is unknown, the app can calculate it when checking."
+msgstr "Direkte Paket-Adresse – Prüfsumme ist unbekannt, die App kann sie beim Prüfen berechnen."
+
+#: fm1companion/linkimport.py:270
+msgid "Unknown page – taken as homepage."
+msgstr "Unbekannte Seite – als Homepage übernommen."
+
+#: fm1companion/linkimport.py:280
+#, python-brace-format
+msgid "Package {label} is in the Mooring catalog – checksum taken over."
+msgstr "Paket {label} ist im Mooring-Katalog – Prüfsumme übernommen."
+
+#: fm1companion/linkimport.py:290
+#, python-brace-format
+msgid "{repo} is in the catalog: {name}."
+msgstr "{repo} steht im Katalog: {name}."
+
+#: fm1companion/linkimport.py:299
+#, python-brace-format
+msgid "{repo} is not in the catalog – name and author guessed from the repo."
+msgstr "{repo} steht nicht im Katalog – Name und Autor aus dem Repo geraten."
+
+#: fm1companion/linkimport.py:308
+msgid "New firmware"
+msgstr "Neue Firmware"
+
+#: fm1companion/linkimport.py:321
+msgid "Whether backup and projects work (Felucca protocol) is checked when connecting."
+msgstr "Ob Backup und Projekte gehen (Felucca-Protokoll), wird beim Verbinden geprüft."
+
+#: fm1companion/linkimport.py:358
+#, python-brace-format
+msgid "GitHub search not possible: {error}"
+msgstr "GitHub-Suche nicht möglich: {error}"
+
+#: fm1companion/linkimport.py:376
+#, python-brace-format
+msgid "“{query}” found in the catalog: {name}."
+msgstr "„{query}“ im Katalog gefunden: {name}."
+
+#: fm1companion/linkimport.py:384
+#, python-brace-format
+msgid "Found on GitHub: {repo} – {description} (please check)."
+msgstr "Auf GitHub gefunden: {repo} – {description} (bitte prüfen)."
+
+#: fm1companion/linkimport.py:386
+#, python-brace-format
+msgid "Found on GitHub: {repo} (please check)."
+msgstr "Auf GitHub gefunden: {repo} (bitte prüfen)."
+
+#: fm1companion/linkimport.py:391
+#, python-brace-format
+msgid "“{query}” is not in the catalog – please add the details yourself."
+msgstr "„{query}“ steht nicht im Katalog – bitte die Angaben selbst ergänzen."
+
+#: fm1companion/linkimport.py:393
+msgid "No matching FM-1 firmware found on GitHub either – best paste the GitHub link."
+msgstr "Auch auf GitHub keine passende FM-1-Firmware gefunden – am besten den GitHub-Link einfügen."
+
+#: fm1companion/linkimport.py:400
+#, python-brace-format
+msgid "{n} possible firmwares found – please choose the right one."
+msgstr "{n} mögliche Firmwares gefunden – bitte die richtige auswählen."
+
+#: fm1companion/linkimport.py:470
+msgid "Details taken from fmhub.json in the repo."
+msgstr "Angaben aus fmhub.json im Repo übernommen."
+
+#: fm1companion/linkimport.py:477
+#, python-brace-format
+msgid "GitHub has a newer version ({new}) than the catalog ({old}) – the new version is taken over."
+msgstr "Auf GitHub gibt es eine neuere Version ({new}) als im Katalog ({old}) – die neue Version wird übernommen."
+
+#: fm1companion/linkimport.py:490
+#, python-brace-format
+msgid "Latest release with package: {tag} ({file})."
+msgstr "Neuestes Release mit Paket: {tag} ({file})."
+
+#: fm1companion/linkimport.py:493
+msgid "The releases on GitHub contain no .fwsc package – searching on the installer page and in the repo."
+msgstr "Die Releases auf GitHub enthalten kein .fwsc-Paket – suche auf der Installer-Seite und im Repo."
+
+#: fm1companion/linkimport.py:501
+#, python-brace-format
+msgid "Repo contains {path} – backup and projects via the Felucca protocol expected."
+msgstr "Repo enthält {path} – Backup und Projekte über das Felucca-Protokoll erwartet."
+
+#: fm1companion/linkimport.py:519
+#, python-brace-format
+msgid "Package found on the installer page: {package} (version {version})."
+msgstr "Paket auf der Installer-Seite gefunden: {package} (Version {version})."
+
+#: fm1companion/linkimport.py:520
+#, python-brace-format
+msgid "Package found on the installer page: {package} (version {version}) – without checksum."
+msgstr "Paket auf der Installer-Seite gefunden: {package} (Version {version}) – ohne Prüfsumme."
+
+#: fm1companion/linkimport.py:522
+#, python-brace-format
+msgid "Package found on the installer page: {package}."
+msgstr "Paket auf der Installer-Seite gefunden: {package}."
+
+#: fm1companion/linkimport.py:523
+#, python-brace-format
+msgid "Package found on the installer page: {package} – without checksum."
+msgstr "Paket auf der Installer-Seite gefunden: {package} – ohne Prüfsumme."
+
+#: fm1companion/linkimport.py:534
+#, python-brace-format
+msgid "Package is directly in the repo: {path} (branch {branch}) – checksum unknown."
+msgstr "Paket liegt direkt im Repo: {path} (Zweig {branch}) – Prüfsumme unbekannt."
+
+#: fm1companion/linkimport.py:537
+#, python-brace-format
+msgid "More packages in the repo: {files}."
+msgstr "Weitere Pakete im Repo: {files}."
+
+#: fm1companion/linkimport.py:539
+msgid "No package found (neither in the releases nor on the installer page or in the repo) – probably only installable via the web installer in the browser."
+msgstr "Kein Paket gefunden (weder in den Releases noch auf der Installer-Seite oder im Repo) – vermutlich nur über den Web-Installer im Browser installierbar."
+
+#: fm1companion/linkimport.py:547
+msgid "Please enter a name."
+msgstr "Bitte einen Namen angeben."
+
+#: fm1companion/linkimport.py:549
+msgid "The key may only contain lowercase letters, digits, dot, - and _."
+msgstr "Der Schlüssel darf nur Kleinbuchstaben, Ziffern, Punkt, - und _ enthalten."
+
+#: fm1companion/linkimport.py:552
+#, python-brace-format
+msgid "The key “{key}” already exists ({name})."
+msgstr "Den Schlüssel „{key}“ gibt es schon ({name})."
+
+#: fm1companion/linkimport.py:554
+msgid "Please enter the GitHub repo as owner/name."
+msgstr "GitHub-Repo bitte als besitzer/name angeben."
+
+#: fm1companion/linkimport.py:558
+#, python-brace-format
+msgid "{field}: please enter a complete https address."
+msgstr "{field}: bitte eine vollständige https-Adresse angeben."
+
+#: fm1companion/linkimport.py:560
+msgid "The checksum must be 64 hex characters (SHA-256) long."
+msgstr "Die Prüfsumme muss 64 Hex-Zeichen (SHA-256) lang sein."
+
+#: fm1companion/linkimport.py:562
+msgid "Please enter at least a GitHub repo, a package address or a website."
+msgstr "Bitte mindestens ein GitHub-Repo, eine Paket-Adresse oder eine Webseite angeben."
+
+#: fm1companion/linkimport.py:597
+msgid "Key"
+msgstr "Schlüssel"
+
+#: fm1companion/linkimport.py:597
+msgid "GitHub repo"
+msgstr "GitHub-Repo"
+
+#: fm1companion/linkimport.py:597
+msgid "Package name"
+msgstr "Paketname"
+
+#: fm1companion/linkimport.py:598
+msgid "Author"
+msgstr "Autor"
+
+#: fm1companion/linkimport.py:598
+msgid "Family"
+msgstr "Familie"
+
+#: fm1companion/linkimport.py:599
+msgid "Package identifier"
+msgstr "Paket-Kennung"
+
+#: fm1companion/linkimport.py:600
+msgid "Online simulator"
+msgstr "Online-Simulator"
+
+#: fm1companion/linkimport.py:601
+msgid "Web installer"
+msgstr "Web-Installer"
+
+#: fm1companion/linkimport.py:601
+msgid "Package address"
+msgstr "Paket-Adresse"
+
+#: fm1companion/linkimport.py:602
+msgid "Checksum (SHA-256)"
+msgstr "Prüfsumme (SHA-256)"
+
+#: fm1companion/linkimport.py:602
+msgid "Protocol"
+msgstr "Protokoll"
+
+#: fm1companion/linkimport.py:602
+msgid "Only from V15"
+msgstr "Nur von V15 aus"
+
+#: fm1companion/ui/linkimport_dialog.py:32
+msgid "unique short name (folder name), only a–z, 0–9, - and _"
+msgstr "eindeutiger Kurzname (Ordnername), nur a–z, 0–9, - und _"
+
+#: fm1companion/ui/linkimport_dialog.py:33
+#, python-brace-format
+msgid "file name of the package in the GitHub release; {ver} stands for the version without “v”"
+msgstr "Dateiname des Pakets im GitHub-Release; {ver} steht für die Version ohne „v“"
+
+#: fm1companion/ui/linkimport_dialog.py:34
+msgid "fixed address of the .fwsc package (if not via GitHub releases)"
+msgstr "feste Adresse des .fwsc-Pakets (falls nicht über GitHub-Releases)"
+
+#: fm1companion/ui/linkimport_dialog.py:35
+msgid "checksum of the package – the app checks it before installing"
+msgstr "Prüfsumme des Pakets – die App prüft sie vor dem Aufspielen"
+
+#: fm1companion/ui/linkimport_dialog.py:36
+msgid "Felucca protocol = the app can do backups, projects and the editor bridge"
+msgstr "Felucca-Protokoll = die App kann Backups, Projekte und die Editor-Brücke"
+
+#: fm1companion/ui/linkimport_dialog.py:37
+msgid "package can only be installed from the original firmware V15"
+msgstr "Paket lässt sich nur von der Original-Firmware V15 aus aufspielen"
+
+#: fm1companion/ui/linkimport_dialog.py:55
+msgid "Edit firmware"
+msgstr "Firmware bearbeiten"
+
+#: fm1companion/ui/linkimport_dialog.py:55
+msgid "Paste link"
+msgstr "Link einfügen"
+
+#: fm1companion/ui/linkimport_dialog.py:61
+msgid "Paste a link – GitHub repo, release, .fwsc package, installer or simulator page, an entry from thefirmwarehub.com or fm1-editor.com, a local .fwsc file or simply a name. The app fills in what it finds out; please check fields marked <b style='color:#c77700'>guessed</b>."
+msgstr "Füge einen Link ein – GitHub-Repo, Release, .fwsc-Paket, Installer- oder Simulator-Seite, einen Eintrag von thefirmwarehub.com oder fm1-editor.com, eine lokale .fwsc-Datei oder einfach einen Namen. Die App füllt aus, was sie herausfindet; <b style='color:#c77700'>geraten</b> markierte Felder bitte prüfen."
+
+#: fm1companion/ui/linkimport_dialog.py:70
+msgid "https://github.com/owner/firmware  or  ~/Downloads/package.fwsc  or  orbit"
+msgstr "https://github.com/besitzer/firmware  oder  ~/Downloads/paket.fwsc  oder  orbit"
+
+#: fm1companion/ui/linkimport_dialog.py:73
+msgid "Recognize"
+msgstr "Erkennen"
+
+#: fm1companion/ui/linkimport_dialog.py:75
+msgid "look it up on GitHub"
+msgstr "auf GitHub nachsehen"
+
+#: fm1companion/ui/linkimport_dialog.py:76
+msgid "query releases and repo files (needs internet)"
+msgstr "Releases und Repo-Dateien abfragen (braucht Internet)"
+
+#: fm1companion/ui/linkimport_dialog.py:78
+msgid "Matches …"
+msgstr "Treffer …"
+
+#: fm1companion/ui/linkimport_dialog.py:79
+msgid "Several firmwares match the name – choose the right one"
+msgstr "Mehrere Firmwares passen zum Namen – die richtige auswählen"
+
+#: fm1companion/ui/linkimport_dialog.py:104
+msgid "Advanced: key, package name, checksum, family, identifier, protocol …"
+msgstr "Erweitert: Schlüssel, Paketname, Prüfsumme, Familie, Kennung, Protokoll …"
+
+#: fm1companion/ui/linkimport_dialog.py:126
+msgid "unknown – checked when connecting"
+msgstr "unbekannt – wird beim Verbinden geprüft"
+
+#: fm1companion/ui/linkimport_dialog.py:127
+msgid "Felucca protocol (backup, projects, editor)"
+msgstr "Felucca-Protokoll (Backup, Projekte, Editor)"
+
+#: fm1companion/ui/linkimport_dialog.py:159
+msgid "Saved entry – all fields can be changed."
+msgstr "Gespeicherter Eintrag – alle Felder lassen sich ändern."
+
+#: fm1companion/ui/linkimport_dialog.py:173
+msgid "Looking it up on GitHub …"
+msgstr "Sehe auf GitHub nach …"
+
+#: fm1companion/ui/linkimport_dialog.py:217
+msgid " GitHub queried."
+msgstr " GitHub abgefragt."
+
+#: fm1companion/ui/linkimport_dialog.py:223
+#, python-brace-format
+msgid " GitHub not queried: {error}"
+msgstr " GitHub nicht abgefragt: {error}"
+
+#: fm1companion/ui/linkimport_dialog.py:228
+msgid "Nothing recognized – this doesn't look like a link, file or firmware name. Examples: https://github.com/owner/firmware, ~/Downloads/package.fwsc, orbit."
+msgstr "Nichts erkannt – das sieht nicht nach Link, Datei oder Firmware-Name aus. Beispiele: https://github.com/besitzer/firmware, ~/Downloads/paket.fwsc, orbit."
+
+#: fm1companion/ui/linkimport_dialog.py:230
+msgid "Nothing recognized yet."
+msgstr "Noch nichts erkannt."
+
+#: fm1companion/ui/linkimport_dialog.py:233
+#, python-brace-format
+msgid "Recognized: <b>{name}</b>. Guessed: {fields}."
+msgstr "Erkannt: <b>{name}</b>. Geraten: {fields}."
+
+#: fm1companion/ui/linkimport_dialog.py:234
+#, python-brace-format
+msgid "Recognized: <b>{name}</b>."
+msgstr "Erkannt: <b>{name}</b>."
+
+#: fm1companion/ui/linkimport_dialog.py:240
+#, python-brace-format
+msgid "Matches ({n}) …"
+msgstr "Treffer ({n}) …"
+
+#: fm1companion/ui/linkimport_dialog.py:288
+msgid "certain"
+msgstr "sicher"
+
+#: fm1companion/ui/linkimport_dialog.py:288
+msgid "from the catalog or directly from the link"
+msgstr "aus dem Katalog oder direkt aus dem Link"
+
+#: fm1companion/ui/linkimport_dialog.py:289
+msgid "guessed"
+msgstr "geraten"
+
+#: fm1companion/ui/linkimport_dialog.py:289
+msgid "please check"
+msgstr "bitte prüfen"
+
+#: fm1companion/ui/linkimport_dialog.py:290
+msgid "by you"
+msgstr "von dir"
+
+#: fm1companion/ui/linkimport_dialog.py:290
+msgid "entered by you"
+msgstr "von dir eingetragen"
+
+#: fm1companion/ui/linkimport_dialog.py:320
+#, python-brace-format
+msgid "“{name}” saved – appears under “My firmwares”. Nothing was installed."
+msgstr "„{name}“ gespeichert – erscheint unter „Meine Firmwares“. Installiert wurde nichts."
+
+#: fm1companion/ui/linkimport_dialog.py:330
+msgid "Which firmware do you mean?"
+msgstr "Welche Firmware meinst du?"
+
+#: fm1companion/ui/linkimport_dialog.py:334
+msgid "Several firmwares match your input. Choose the right one – the app then fills in all the details. <i>Fork</i> means: created on GitHub as a branch of another firmware."
+msgstr "Zu deiner Eingabe passen mehrere Firmwares. Wähle die richtige aus – die App füllt dann alle Angaben dazu aus. <i>Fork</i> heißt: auf GitHub als Abzweig einer anderen Firmware angelegt."
+
+#: fm1companion/ui/linkimport_dialog.py:350
+msgid "name matches exactly"
+msgstr "Name passt genau"
+
+#: fm1companion/ui/linkimport_dialog.py:351
+msgid "without GitHub repo"
+msgstr "ohne GitHub-Repo"
+
+#: fm1companion/ui/linkimport_dialog.py:366
+msgid "Take this one"
+msgstr "Diese nehmen"
+
+#: fm1companion/ui/linkimport_dialog.py:375
+msgid "No description."
+msgstr "Keine Beschreibung."
+
+#: fm1companion/ui/linkimport_dialog.py:389
+msgid "My firmwares"
+msgstr "Meine Firmwares"
+
+#: fm1companion/ui/linkimport_dialog.py:392
+msgid "Firmwares you added yourself. They also appear in Firmware+ › “Install & versions”."
+msgstr "Firmwares, die du selbst hinzugefügt hast. Sie erscheinen auch in Firmware+ › „Installieren & Versionen“."
+
+#: fm1companion/ui/linkimport_dialog.py:400
+msgid "Edit …"
+msgstr "Bearbeiten …"
+
+#: fm1companion/ui/linkimport_dialog.py:421
+msgid "No own firmwares yet – how it works: “Paste link …” or in “Firmware+” at a firmware “Add to my firmwares”."
+msgstr "Noch keine eigenen Firmwares – so geht's: „Link einfügen …“ oder in „Firmware+“ bei einer Firmware „Zu meinen Firmwares“."
+
+#: fm1companion/ui/linkimport_dialog.py:448
+#, python-brace-format
+msgid "Remove “{key}” from your firmwares? Downloaded packages are kept."
+msgstr "„{key}“ aus deinen Firmwares entfernen? Heruntergeladene Pakete bleiben erhalten."
+
+#: fm1companion/catalog.py:48
+#, python-brace-format
+msgid "Redirect to an insecure address refused: {url}"
+msgstr "Weiterleitung auf eine unsichere Adresse abgelehnt: {url}"
+
+#: fm1companion/catalog.py:60
+#, python-brace-format
+msgid "only https addresses allowed: {url}"
+msgstr "nur https-Adressen erlaubt: {url}"
+
+#: fm1companion/catalog.py:71
+msgid "Original"
+msgstr "Original"
+
+#: fm1companion/catalog.py:71
+msgid "Synth"
+msgstr "Synth"
+
+#: fm1companion/catalog.py:71
+msgid "Groovebox"
+msgstr "Groovebox"
+
+#: fm1companion/catalog.py:72
+msgid "Sampler"
+msgstr "Sampler"
+
+#: fm1companion/catalog.py:72
+msgid "Generative"
+msgstr "Generativ"
+
+#: fm1companion/catalog.py:73
+msgid "Tool"
+msgstr "Werkzeug"
+
+#: fm1companion/catalog.py:73
+msgid "Games & fun"
+msgstr "Spiele & Spaß"
+
+#: fm1companion/catalog.py:74
+msgid "standalone"
+msgstr "eigenständig"
+
+#: fm1companion/catalog.py:76
+msgid "proprietary"
+msgstr "proprietär"
+
+#: fm1companion/catalog.py:76
+msgid "no license stated"
+msgstr "keine Lizenz angegeben"
+
+#: fm1companion/catalog.py:78
+msgid "The FM-1's factory firmware: 6-operator FM like the DX7, 128 presets, arpeggiator and step sequencer. With it you can get back from any custom firmware."
+msgstr "Die Werks-Firmware des FM-1: 6-Operator-FM wie der DX7, 128 Presets, Arpeggiator und Step-Sequencer. Mit ihr kommst du von jeder Custom-Firmware zurück."
+
+#: fm1companion/catalog.py:80
+msgid "Listed in the Mooring catalog (installable), but not (yet) in the awesome-fm-1 list."
+msgstr "Steht im Mooring-Katalog (installierbar), aber (noch) nicht in der awesome-fm-1-Liste."
+
+#: fm1companion/catalog.py:118
+#, python-brace-format
+msgid "known Felucca protocol family ({family})"
+msgstr "bekannte Felucca-Protokoll-Familie ({family})"
+
+#: fm1companion/catalog.py:123
+msgid "Beta – may still have bugs."
+msgstr "Beta – kann noch Fehler haben."
+
+#: fm1companion/catalog.py:124
+msgid "An interrupted installation cannot be resumed – charge the battery fully first or leave it on the power supply and don't move the cable!"
+msgstr "Ein abgebrochenes Aufspielen lässt sich nicht fortsetzen – vorher Akku voll laden oder am Netzteil lassen und das Kabel nicht bewegen!"
+
+#: fm1companion/catalog.py:126
+msgid "Projects from this version cannot be loaded into older versions."
+msgstr "Projekte aus dieser Version lassen sich nicht in ältere Versionen laden."
+
+#: fm1companion/catalog.py:127
+msgid "Needs an Arturia MiniLab 3 to play."
+msgstr "Braucht ein Arturia MiniLab 3 zum Spielen."
+
+#: fm1companion/catalog.py:128
+msgid "Can only be installed from the original firmware V15 – the app takes the detour automatically."
+msgstr "Nur von der Original-Firmware V15 aus installierbar – die App macht den Umweg automatisch."
+
+#: fm1companion/catalog.py:269
+msgid "Paid – purchase and installation go through the manufacturer's site."
+msgstr "Kostenpflichtig – Kauf und Installation laufen über die Seite des Herstellers."
+
+#: fm1companion/catalog.py:271
+msgid "Closed source."
+msgstr "Geschlossener Quellcode."
+
+#: fm1companion/catalog.py:273
+msgid "No ready-made package – only for building yourself from the source code."
+msgstr "Kein fertiges Paket – nur zum Selberbauen aus dem Quellcode."
+
+#: fm1companion/catalog.py:408
+msgid "not a Mooring catalog"
+msgstr "kein Mooring-Katalog"
+
+#: fm1companion/catalog.py:431
+msgid "no signature"
+msgstr "keine Signatur"
+
+#: fm1companion/catalog.py:437
+msgid "signature unreadable"
+msgstr "Signatur unlesbar"
+
+#: fm1companion/catalog.py:439
+msgid "checksum does not match"
+msgstr "Prüfsumme passt nicht"
+
+#: fm1companion/catalog.py:440
+msgid "checksum matches, key unknown"
+msgstr "Prüfsumme passt, Schlüssel unbekannt"
+
+#: fm1companion/catalog.py:880
+#, python-brace-format
+msgid "HTTP {code} at {url}"
+msgstr "HTTP {code} bei {url}"
+
+#: fm1companion/catalog.py:891
+#, python-brace-format
+msgid "loading {name} …"
+msgstr "lade {name} …"
+
+#: fm1companion/catalog.py:931
+#, python-brace-format
+msgid "{name} is new in the catalog"
+msgstr "{name} ist neu im Katalog"
+
+#: fm1companion/catalog.py:935
+#, python-brace-format
+msgid "{name} {version} is available"
+msgstr "{name} {version} ist da"
+
+#: fm1companion/catalog.py:1032
+#, python-brace-format
+msgid "GitHub limit reached – try again later (from {time}). With your own GitHub token (settings of “Firmware+”) you get more requests."
+msgstr "GitHub-Limit erreicht – später erneut (ab {time} Uhr). Mit einem eigenen GitHub-Token (Einstellungen von „Firmware+“) gibt es mehr Abfragen."
+
+#: fm1companion/catalog.py:1034
+msgid "GitHub limit reached – try again later. With your own GitHub token (settings of “Firmware+”) you get more requests."
+msgstr "GitHub-Limit erreicht – später erneut. Mit einem eigenen GitHub-Token (Einstellungen von „Firmware+“) gibt es mehr Abfragen."
+
+#: fm1companion/catalog.py:1067
+msgid "GitHub is refusing access right now (403) – try again later."
+msgstr "GitHub verweigert gerade den Zugriff (403) – später erneut."
+
+#: fm1companion/catalog.py:1072
+msgid "Repository not found on GitHub (deleted, renamed or private)"
+msgstr "Repo auf GitHub nicht gefunden (gelöscht, umbenannt oder privat)"
+
+#: fm1companion/catalog.py:1074
+#, python-brace-format
+msgid "GitHub answers with error {code} – showing the saved state"
+msgstr "GitHub antwortet mit Fehler {code} – zeige gespeicherten Stand"
+
+#: fm1companion/catalog.py:1075
+#, python-brace-format
+msgid "GitHub error {code}"
+msgstr "GitHub-Fehler {code}"
+
+#: fm1companion/catalog.py:1078
+msgid "offline – showing the saved state"
+msgstr "offline – zeige gespeicherten Stand"
+
+#: fm1companion/catalog.py:1079
+msgid "no connection to GitHub"
+msgstr "keine Verbindung zu GitHub"
+
+#: fm1companion/catalog.py:1284
+msgid "README not reachable"
+msgstr "README nicht erreichbar"
+
+#: fm1companion/catalog.py:1301
+msgid "Image too large"
+msgstr "Bild zu groß"
+
+#: fm1companion/fm1open.py:42
+msgid "Tom low"
+msgstr "Tom tief"
+
+#: fm1companion/fm1open.py:42
+msgid "Tom mid"
+msgstr "Tom mittel"
+
+#: fm1companion/fm1open.py:42
+msgid "Tom high"
+msgstr "Tom hoch"
+
+#: fm1companion/fm1open.py:42
+msgid "Hi-hat closed"
+msgstr "Hi-Hat zu"
+
+#: fm1companion/fm1open.py:42
+msgid "Hi-hat open"
+msgstr "Hi-Hat offen"
+
+#: fm1companion/fm1open.py:44
+msgid "no valid sample bank"
+msgstr "keine gültige Sample-Bank"
+
+#: fm1companion/fm1open.py:44
+msgid "checking the bank …"
+msgstr "prüft die Bank …"
+
+#: fm1companion/fm1open.py:44
+msgid "ready"
+msgstr "bereit"
+
+#: fm1companion/fm1open.py:44
+msgid "receiving"
+msgstr "empfängt gerade"
+
+#: fm1companion/fm1open.py:45
+msgid "error while reading/checking the bank"
+msgstr "Fehler beim Lesen/Prüfen der Bank"
+
+#: fm1companion/fm1open.py:46
+msgid "invalid flash request"
+msgstr "ungültige Flash-Anfrage"
+
+#: fm1companion/fm1open.py:46
+msgid "device busy (another port is transferring)"
+msgstr "Gerät beschäftigt (anderer Anschluss überträgt)"
+
+#: fm1companion/fm1open.py:47
+msgid "flash not erased"
+msgstr "Flash nicht gelöscht"
+
+#: fm1companion/fm1open.py:47
+msgid "flash context"
+msgstr "Flash-Kontext"
+
+#: fm1companion/fm1open.py:47
+msgid "flash not available"
+msgstr "Flash nicht verfügbar"
+
+#: fm1companion/fm1open.py:48
+msgid "data or parameters invalid"
+msgstr "Daten oder Parameter ungültig"
+
+#: fm1companion/fm1open.py:48
+msgid "not enough memory"
+msgstr "zu wenig Speicher"
+
+#: fm1companion/fm1open.py:49
+msgid "old bank occupies the extended memory – back it up and shrink it first"
+msgstr "alte Bank belegt den erweiterten Speicher – erst sichern und verkleinern"
+
+#: fm1companion/fm1open.py:90
+msgid "invalid protocol parameters"
+msgstr "ungültige Protokoll-Parameter"
+
+#: fm1companion/fm1open.py:254
+msgid "SEA5 block invalid"
+msgstr "SEA5-Block ungültig"
+
+#: fm1companion/fm1open.py:304
+msgid "Sample bank: length invalid"
+msgstr "Sample-Bank: Länge ungültig"
+
+#: fm1companion/fm1open.py:307
+msgid "Sample bank: format invalid (not an FM1 Open bank?)"
+msgstr "Sample-Bank: Format ungültig (keine FM1-Open-Bank?)"
+
+#: fm1companion/fm1open.py:309
+msgid "Sample bank: checksum wrong (file damaged)"
+msgstr "Sample-Bank: Prüfsumme falsch (Datei beschädigt)"
+
+#: fm1companion/fm1open.py:311
+msgid "Sample bank: reserved fields in use"
+msgstr "Sample-Bank: reservierte Felder belegt"
+
+#: fm1companion/fm1open.py:319
+#, python-brace-format
+msgid "Sample bank: slot {n} invalid"
+msgstr "Sample-Bank: Slot {n} ungültig"
+
+#: fm1companion/fm1open.py:322
+msgid "Sample bank: SEA5 block invalid"
+msgstr "Sample-Bank: SEA5-Block ungültig"
+
+#: fm1companion/fm1open.py:325
+msgid "Sample bank: format invalid"
+msgstr "Sample-Bank: Format ungültig"
+
+#: fm1companion/fm1open.py:329
+msgid "Sample bank: surplus data"
+msgstr "Sample-Bank: überzählige Daten"
+
+#: fm1companion/fm1open.py:340
+msgid "The bank needs exactly 8 slots"
+msgstr "Die Bank braucht genau 8 Slots"
+
+#: fm1companion/fm1open.py:343
+#, python-brace-format
+msgid "Too long: {used} s – all 8 slots together hold {capacity} s. Shorten or empty other slots."
+msgstr "Zu lang: {used} s – alle 8 Slots zusammen fassen {capacity} s. Kürzen oder andere Slots leeren."
+
+#: fm1companion/fm1open.py:384
+msgid "no audio"
+msgstr "kein Audio"
+
+#: fm1companion/fm1open.py:386
+msgid "too long for the sample bank"
+msgstr "zu lang für die Sample-Bank"
+
+#: fm1companion/fm1open.py:455
+msgid "Device not connected"
+msgstr "Gerät nicht verbunden"
+
+#: fm1companion/fm1open.py:480
+msgid "Answer incomplete"
+msgstr "Antwort unvollständig"
+
+#: fm1companion/fm1open.py:484
+#, python-brace-format
+msgid "device reports error {code}"
+msgstr "Gerät meldet Fehler {code}"
+
+#: fm1companion/fm1open.py:486
+msgid "No answer – is FM1 Open running on the FM-1?"
+msgstr "Keine Antwort – läuft FM1 Open auf dem FM-1?"
+
+#: fm1companion/fm1open.py:494
+msgid "Answer does not match FM1 Open"
+msgstr "Antwort passt nicht zu FM1 Open"
+
+#: fm1companion/fm1open.py:509
+msgid "Sample status: answer invalid"
+msgstr "Sample-Status: Antwort ungültig"
+
+#: fm1companion/fm1open.py:512
+msgid "Sample area does not match – nothing changed"
+msgstr "Sample-Bereich passt nicht – nichts verändert"
+
+#: fm1companion/fm1open.py:522 fm1companion/fm1open.py:548
+msgid "Sample bank: chunk incomplete"
+msgstr "Sample-Bank: Stück unvollständig"
+
+#: fm1companion/fm1open.py:539
+#, python-brace-format
+msgid "Sample bank not ready ({state})"
+msgstr "Sample-Bank nicht bereit ({state})"
+
+#: fm1companion/fm1open.py:558
+msgid "Bank too large for this device"
+msgstr "Bank zu groß für dieses Gerät"
+
+#: fm1companion/fm1open.py:561
+msgid "Sample bank is busy right now – wait a moment"
+msgstr "Sample-Bank ist gerade beschäftigt – kurz warten"
+
+#: fm1companion/fm1open.py:568
+msgid "Cancelled – the bank on the FM-1 is now empty/invalid. Please restore the backup."
+msgstr "Abgebrochen – die Bank auf dem FM-1 ist jetzt leer/ungültig. Bitte das Backup zurückspielen."
+
+#: fm1companion/fm1open.py:587
+msgid "Read-back bank differs – writing not confirmed, please repeat"
+msgstr "Zurückgelesene Bank weicht ab – Schreiben nicht bestätigt, bitte wiederholen"
+
+#: fm1companion/ui/common.py:214
+#, python-brace-format
+msgid "{days} d {hours} h {minutes} min"
+msgstr "{days} T {hours} h {minutes} min"
+
+#: fm1companion/ui/common.py:294
+#, python-brace-format
+msgid "Failed: {error}"
+msgstr "Fehlgeschlagen: {error}"
+
+#: fm1companion/ui/common.py:366
+msgid "Proceed"
+msgstr "Fortfahren"
+
+#: fm1companion/ui/common.py:416
+#, python-brace-format
+msgid "{title} – running …"
+msgstr "{title} – läuft …"
+
+#: fm1companion/ui/common.py:449
+msgid "Cancels at the next safe point."
+msgstr "Bricht am nächsten sicheren Punkt ab."
+
+#: fm1companion/ui/common.py:450
+msgid "This operation cannot be cancelled safely – please wait until it is finished."
+msgstr "Dieser Vorgang lässt sich nicht sicher abbrechen – bitte warten, bis er fertig ist."
+
+#: fm1companion/ui/common.py:516
+#, python-brace-format
+msgid "{title}: done."
+msgstr "{title}: erledigt."
+
+#: fm1companion/ui/common.py:529
+#, python-brace-format
+msgid "ERROR: {error}"
+msgstr "FEHLER: {error}"
+
+#: fm1companion/ui/common.py:534
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+#: fm1companion/ui/common.py:682
+msgid "Show/hide background and details"
+msgstr "Hintergründe und Einzelheiten ein-/ausblenden"
+
+#: fm1companion/ui/common.py:836
+msgid "another FM-1"
+msgstr "einem anderen FM-1"
+
+#: fm1companion/ui/common.py:886
+#, python-brace-format
+msgid "This undo belongs to {device} – please connect that device again. (Otherwise the old content would end up on the wrong FM-1.)"
+msgstr "Dieses Rückgängig gehört zu {device} – bitte das Gerät wieder verbinden. (Sonst würde der alte Inhalt auf dem falschen FM-1 landen.)"
+
+#: fm1companion/ui/common.py:896
+msgid "Undo not possible"
+msgstr "Rückgängig nicht möglich"
+
+#: fm1companion/ui/common.py:910
+#, python-brace-format
+msgid "No write permission ({path}) – please check the folder's permissions or choose a different main folder in the settings."
+msgstr "Keine Schreibrechte ({path}) – bitte Rechte des Ordners prüfen oder in den Einstellungen einen anderen Hauptordner wählen."
+
+#: fm1companion/ui/common.py:912
+msgid "No write permission – please check the folder's permissions or choose a different main folder in the settings."
+msgstr "Keine Schreibrechte – bitte Rechte des Ordners prüfen oder in den Einstellungen einen anderen Hauptordner wählen."
+
+#: fm1companion/ui/common.py:915
+#, python-brace-format
+msgid "The storage device is full ({path})."
+msgstr "Der Datenträger ist voll ({path})."
+
+#: fm1companion/ui/common.py:915
+msgid "The storage device is full."
+msgstr "Der Datenträger ist voll."
+
+#: fm1companion/ui/common.py:917
+#, python-brace-format
+msgid "File or folder not found ({path})."
+msgstr "Datei oder Ordner nicht gefunden ({path})."
+
+#: fm1companion/ui/common.py:917
+msgid "File or folder not found."
+msgstr "Datei oder Ordner nicht gefunden."
+
+#: fm1companion/ui/common.py:919
+#, python-brace-format
+msgid "This is a folder, not a file ({path})."
+msgstr "Das ist ein Ordner, keine Datei ({path})."
+
+#: fm1companion/ui/common.py:919
+msgid "This is a folder, not a file."
+msgstr "Das ist ein Ordner, keine Datei."
+
+#: fm1companion/ui/common.py:921
+#, python-brace-format
+msgid "Part of the path is not a folder ({path})."
+msgstr "Ein Teil des Pfads ist kein Ordner ({path})."
+
+#: fm1companion/ui/common.py:921
+msgid "Part of the path is not a folder."
+msgstr "Ein Teil des Pfads ist kein Ordner."
+
+#: fm1companion/ui/common.py:924
+#, python-brace-format
+msgid "File error ({path}): {error}"
+msgstr "Dateifehler ({path}): {error}"
+
+#: fm1companion/ui/common.py:925
+#, python-brace-format
+msgid "File error: {error}"
+msgstr "Dateifehler: {error}"
+
+#: fm1companion/ui/common.py:928
+#, python-brace-format
+msgid "{what}: {error}"
+msgstr "{what}: {error}"
+
+#: fm1companion/ui/common.py:941
+#, python-brace-format
+msgid "Folder “{name}” cannot be created"
+msgstr "Ordner „{name}“ nicht anlegbar"
+
+#: fm1companion/ui/editor_page.py:42
+msgid "Reload the editor page (it reconnects by itself afterwards)"
+msgstr "Editor-Seite neu laden (verbindet sich danach von selbst wieder)"
+
+#: fm1companion/ui/editor_page.py:47
+msgid "Zoom of the editor – a click resets to 100 %. Remembered."
+msgstr "Vergrößerung des Editors – Klick setzt auf 100 % zurück. Wird gemerkt."
+
+#: fm1companion/ui/editor_page.py:49
+msgid "Zoom out the editor (Ctrl+−)"
+msgstr "Editor verkleinern (Strg+−)"
+
+#: fm1companion/ui/editor_page.py:50
+msgid "Zoom in the editor (Ctrl++)"
+msgstr "Editor vergrößern (Strg++)"
+
+#: fm1companion/ui/editor_page.py:59
+msgid ""
+"Qt WebEngine is missing for the built-in editor.\n"
+"\n"
+"sudo apt install python3-pyqt6.qtwebengine"
+msgstr ""
+"Für den eingebauten Editor fehlt Qt WebEngine.\n"
+"\n"
+"sudo apt install python3-pyqt6.qtwebengine"
+
+#: fm1companion/ui/editor_page.py:75
+msgid "No editor loaded yet."
+msgstr "Noch kein Editor geladen."
+
+#: fm1companion/ui/editor_page.py:108
+msgid "No FM-1 connected – the editor waits and connects by itself as soon as an FM-1 is plugged in."
+msgstr "Kein FM-1 verbunden – der Editor wartet und verbindet sich von selbst, sobald ein FM-1 angesteckt ist."
+
+#: fm1companion/ui/editor_page.py:128
+#, python-brace-format
+msgid "{name}: no built-in editor – presets via SysEx on the page “Presets”."
+msgstr "{name}: kein eingebauter Editor – Presets per SysEx über die Seite „Presets“."
+
+#: fm1companion/ui/editor_page.py:130
+#, python-brace-format
+msgid "Online editor of the author: <a href=\"{url}\">{url}</a>"
+msgstr "Online-Editor des Autors: <a href=\"{url}\">{url}</a>"
+
+#: fm1companion/ui/editor_page.py:133
+#, python-brace-format
+msgid "{name} does not come with an editor the app can embed.<br>Presets can be sent via SysEx on the page <b>Presets</b> (FM voices); MIDI works via the page <b>MIDI</b>."
+msgstr "{name} bringt keinen Editor mit, den die App einbetten kann.<br>Presets lassen sich per SysEx über die Seite <b>Presets</b> (FM-Voices) senden; MIDI geht über die Seite <b>MIDI</b>."
+
+#: fm1companion/ui/editor_page.py:137
+msgid "There is no known editor for this firmware."
+msgstr "Für diese Firmware gibt es keinen bekannten Editor."
+
+#: fm1companion/ui/editor_page.py:138
+msgid "Connect an FM-1 with Melodee, Skiff or SLOOP. If the version is unknown: install it once via the app or enter the version in Settings › Devices."
+msgstr "Verbinde ein FM-1 mit Melodee, Skiff oder SLOOP. Wenn die Version unbekannt ist: einmal über die App installieren oder in den Einstellungen › Geräte die Version eintragen."
+
+#: fm1companion/ui/editor_page.py:143
+#, python-brace-format
+msgid "Preparing the editor of {name} {version} …"
+msgstr "Bereite den Editor von {name} {version} vor …"
+
+#: fm1companion/ui/editor_page.py:144
+msgid "(determining the version)"
+msgstr "(Version wird ermittelt)"
+
+#: fm1companion/ui/editor_page.py:146 fm1companion/ui/editor_page.py:175
+#, python-brace-format
+msgid "Editor: {name} {version} · MIDI via the app"
+msgstr "Editor: {name} {version} · MIDI über die App"
+
+#: fm1companion/ui/editor_page.py:158
+msgid "no version found (offline?)"
+msgstr "keine Version gefunden (offline?)"
+
+#: fm1companion/ui/editor_page.py:172
+#, python-brace-format
+msgid "Editor: {name} {version} · demo – simulation of the editor (own memory)"
+msgstr "Editor: {name} {version} · Demo – Simulation des Editors (eigener Speicher)"
+
+#: fm1companion/ui/editor_page.py:177
+#, python-brace-format
+msgid "Editor: {name} {version} · MIDI via the app (device version unknown – set it in Settings › Devices)"
+msgstr "Editor: {name} {version} · MIDI über die App (Version des Geräts unbekannt – in Einstellungen › Geräte setzen)"
+
+#: fm1companion/ui/editor_page.py:183
+#, python-brace-format
+msgid "Editor not available: {error}"
+msgstr "Editor nicht verfügbar: {error}"
+
+#: fm1companion/ui/editor_page.py:184
+#, python-brace-format
+msgid "The editor for {name} {version} could not be provided:<br><code>{error}</code><br><br>The first time the app needs internet once, after that no more."
+msgstr "Der Editor für {name} {version} konnte nicht bereitgestellt werden:<br><code>{error}</code><br><br>Beim ersten Mal braucht die App einmal Internet, danach nicht mehr."
+
+#: fm1companion/ui/editor_page.py:219
+#, python-brace-format
+msgid "{name} {version} comes without a manual."
+msgstr "{name} {version} bringt kein Handbuch mit."
+
+#: fm1companion/ui/editor_page.py:224
+msgid "Manual: fetching the images once from the online manual …"
+msgstr "Handbuch: hole die Bilder einmalig aus dem Online-Handbuch …"
+
+#: fm1companion/ui/editor_page.py:228
+#, python-brace-format
+msgid "Manual {name} {version} · {n} images missing (offline?) – the text is complete"
+msgstr "Handbuch {name} {version} · {n} Bilder fehlen (offline?) – Text ist vollständig"
+
+#: fm1companion/ui/editor_page.py:230 fm1companion/ui/editor_page.py:235
+#, python-brace-format
+msgid "Manual {name} {version}"
+msgstr "Handbuch {name} {version}"
+
+#: fm1companion/ui/editor_page.py:273
+msgid "Save backup from the editor"
+msgstr "Backup aus dem Editor speichern"
+
+#: fm1companion/ui/editor_page.py:273
+msgid "Save file from the editor"
+msgstr "Datei aus dem Editor speichern"
+
+#: fm1companion/ui/editor_page.py:278
+msgid "Saving cancelled – nothing written."
+msgstr "Speichern abgebrochen – nichts geschrieben."
+
+#: fm1companion/ui/editor_page.py:283
+#, python-brace-format
+msgid "Saved: {path}"
+msgstr "Gespeichert: {path}"
+
+#: fm1companion/ui/editor_page.py:287
+#, python-brace-format
+msgid "Saving {name} …"
+msgstr "Speichere {name} …"
+
+#: fm1companion/miditools.py:47
+msgid "device info"
+msgstr "Geräte-Info"
+
+#: fm1companion/miditools.py:47
+msgid "read parameter"
+msgstr "Parameter lesen"
+
+#: fm1companion/miditools.py:47
+msgid "set parameter"
+msgstr "Parameter setzen"
+
+#: fm1companion/miditools.py:47
+msgid "all values"
+msgstr "alle Werte"
+
+#: fm1companion/miditools.py:48
+msgid "parameter description"
+msgstr "Parameter-Beschreibung"
+
+#: fm1companion/miditools.py:48
+msgid "sign of life"
+msgstr "Lebenszeichen"
+
+#: fm1companion/miditools.py:48
+msgid "live sync"
+msgstr "Live-Abgleich"
+
+#: fm1companion/miditools.py:49
+msgid "value changed on the device"
+msgstr "Wert am Gerät geändert"
+
+#: fm1companion/miditools.py:49
+msgid "sound reloaded"
+msgstr "Sound neu geladen"
+
+#: fm1companion/miditools.py:49
+msgid "step changed"
+msgstr "Step geändert"
+
+#: fm1companion/miditools.py:50
+msgid "select/query track"
+msgstr "Spur wählen/abfragen"
+
+#: fm1companion/miditools.py:50
+msgid "track parameter"
+msgstr "Spur-Parameter"
+
+#: fm1companion/miditools.py:51
+msgid "track value changed"
+msgstr "Spur-Wert geändert"
+
+#: fm1companion/miditools.py:51
+msgid "backup list"
+msgstr "Backup-Liste"
+
+#: fm1companion/miditools.py:51
+msgid "read backup"
+msgstr "Backup lesen"
+
+#: fm1companion/miditools.py:52
+msgid "write backup"
+msgstr "Backup schreiben"
+
+#: fm1companion/miditools.py:52
+msgid "audio statistics"
+msgstr "Audio-Statistik"
+
+#: fm1companion/miditools.py:52
+msgid "preset library"
+msgstr "Preset-Bibliothek"
+
+#: fm1companion/miditools.py:53
+msgid "pattern"
+msgstr "Pattern"
+
+#: fm1companion/miditools.py:69
+msgid "Portamento time"
+msgstr "Portamento-Zeit"
+
+#: fm1companion/miditools.py:70
+msgid "Effect 1"
+msgstr "Effekt 1"
+
+#: fm1companion/miditools.py:70
+msgid "Effect 2"
+msgstr "Effekt 2"
+
+#: fm1companion/miditools.py:71
+msgid "General purpose 1"
+msgstr "Allzweck 1"
+
+#: fm1companion/miditools.py:71
+msgid "General purpose 2"
+msgstr "Allzweck 2"
+
+#: fm1companion/miditools.py:71
+msgid "General purpose 3"
+msgstr "Allzweck 3"
+
+#: fm1companion/miditools.py:71
+msgid "General purpose 4"
+msgstr "Allzweck 4"
+
+#: fm1companion/miditools.py:72
+msgid "Portamento on/off"
+msgstr "Portamento an/aus"
+
+#: fm1companion/miditools.py:73
+msgid "Soft pedal"
+msgstr "Soft-Pedal"
+
+#: fm1companion/miditools.py:73
+msgid "Sound variation"
+msgstr "Klangvariation"
+
+#: fm1companion/miditools.py:73
+msgid "Resonance"
+msgstr "Resonanz"
+
+#: fm1companion/miditools.py:74
+msgid "Brightness/cutoff"
+msgstr "Helligkeit/Cutoff"
+
+#: fm1companion/miditools.py:74
+msgid "Vibrato rate"
+msgstr "Vibrato-Rate"
+
+#: fm1companion/miditools.py:74
+msgid "Vibrato depth"
+msgstr "Vibrato-Tiefe"
+
+#: fm1companion/miditools.py:75
+msgid "Vibrato delay"
+msgstr "Vibrato-Verzögerung"
+
+#: fm1companion/miditools.py:75
+msgid "General purpose 5"
+msgstr "Allzweck 5"
+
+#: fm1companion/miditools.py:75
+msgid "General purpose 6"
+msgstr "Allzweck 6"
+
+#: fm1companion/miditools.py:75
+msgid "General purpose 7"
+msgstr "Allzweck 7"
+
+#: fm1companion/miditools.py:76
+msgid "General purpose 8"
+msgstr "Allzweck 8"
+
+#: fm1companion/miditools.py:76
+msgid "Portamento control"
+msgstr "Portamento-Steuerung"
+
+#: fm1companion/miditools.py:76
+msgid "Effect 4"
+msgstr "Effekt 4"
+
+#: fm1companion/miditools.py:77
+msgid "Effect 5"
+msgstr "Effekt 5"
+
+#: fm1companion/miditools.py:78
+msgid "Omni off"
+msgstr "Omni aus"
+
+#: fm1companion/miditools.py:79
+msgid "Omni on"
+msgstr "Omni an"
+
+#: fm1companion/miditools.py:84
+msgid "Mod wheel (matrix MODW)"
+msgstr "Mod-Rad (Matrix MODW)"
+
+#: fm1companion/miditools.py:85
+msgid "Data Entry (RPN 0 = bend range)"
+msgstr "Data Entry (RPN 0 = Bend-Bereich)"
+
+#: fm1companion/miditools.py:85
+msgid "Track volume (LEVEL)"
+msgstr "Spur-Lautstärke (LEVEL)"
+
+#: fm1companion/miditools.py:86
+msgid "MIDI knob: Volume"
+msgstr "MIDI-Knopf: Volume"
+
+#: fm1companion/miditools.py:86
+msgid "MIDI knob: Select"
+msgstr "MIDI-Knopf: Select"
+
+#: fm1companion/miditools.py:87
+msgid "MIDI knob: Presets"
+msgstr "MIDI-Knopf: Presets"
+
+#: fm1companion/miditools.py:87
+msgid "MIDI knob: track select"
+msgstr "MIDI-Knopf: Spurwahl"
+
+#: fm1companion/miditools.py:87
+msgid "Data Entry LSB (bend cents)"
+msgstr "Data Entry LSB (Bend-Cent)"
+
+#: fm1companion/miditools.py:88
+msgid "Portamento on/off (FM6)"
+msgstr "Portamento an/aus (FM6)"
+
+#: fm1companion/miditools.py:88
+msgid "Resonance (engine macro)"
+msgstr "Resonanz (Engine-Makro)"
+
+#: fm1companion/miditools.py:89
+msgid "Brightness (engine macro)"
+msgstr "Helligkeit (Engine-Makro)"
+
+#: fm1companion/miditools.py:89
+msgid "MIDI knob: KNOB1"
+msgstr "MIDI-Knopf: KNOB1"
+
+#: fm1companion/miditools.py:89
+msgid "MIDI knob: KNOB2"
+msgstr "MIDI-Knopf: KNOB2"
+
+#: fm1companion/miditools.py:90
+msgid "MIDI knob: KNOB3"
+msgstr "MIDI-Knopf: KNOB3"
+
+#: fm1companion/miditools.py:90
+msgid "MIDI knob: KNOB4"
+msgstr "MIDI-Knopf: KNOB4"
+
+#: fm1companion/miditools.py:90
+msgid "– (Melodee: no effect)"
+msgstr "– (Melodee: ohne Wirkung)"
+
+#: fm1companion/miditools.py:102
+msgid "Note off"
+msgstr "Note aus"
+
+#: fm1companion/miditools.py:102
+msgid "Note on"
+msgstr "Note an"
+
+#: fm1companion/miditools.py:102
+msgid "Poly aftertouch"
+msgstr "Poly-Aftertouch"
+
+#: fm1companion/miditools.py:103
+msgid "Aftertouch"
+msgstr "Aftertouch"
+
+#: fm1companion/miditools.py:104
+msgid "MTC quarter frame"
+msgstr "MTC-Viertel"
+
+#: fm1companion/miditools.py:104
+msgid "Song position"
+msgstr "Song-Position"
+
+#: fm1companion/miditools.py:104
+msgid "Song select"
+msgstr "Song-Auswahl"
+
+#: fm1companion/miditools.py:139
+#, python-brace-format
+msgid "command {n}"
+msgstr "Befehl {n}"
+
+#: fm1companion/miditools.py:143
+msgid "(notification)"
+msgstr "(Meldung)"
+
+#: fm1companion/miditools.py:150 fm1companion/miditools.py:158
+#, python-brace-format
+msgid "global parameter {n}"
+msgstr "global Parameter {n}"
+
+#: fm1companion/miditools.py:150 fm1companion/miditools.py:158
+#, python-brace-format
+msgid "parameter {n}"
+msgstr "Parameter {n}"
+
+#: fm1companion/miditools.py:154
+#, python-brace-format
+msgid "track {track}, parameter {n}"
+msgstr "Spur {track}, Parameter {n}"
+
+#: fm1companion/miditools.py:164
+#, python-brace-format
+msgid "track {track} selected"
+msgstr "Spur {track} gewählt"
+
+#: fm1companion/miditools.py:164
+#, python-brace-format
+msgid "track {track}"
+msgstr "Spur {track}"
+
+#: fm1companion/miditools.py:166
+msgctxt "state"
+msgid "on"
+msgstr "an"
+
+#: fm1companion/miditools.py:168
+#, python-brace-format
+msgid "arguments {args}"
+msgstr "Argumente {args}"
+
+#: fm1companion/miditools.py:170
+#, python-brace-format
+msgid "engine {engine}, preset {preset}, track {track}"
+msgstr "Engine {engine}, Preset {preset}, Spur {track}"
+
+#: fm1companion/miditools.py:171
+#, python-brace-format
+msgid "engine {engine}, preset {preset}"
+msgstr "Engine {engine}, Preset {preset}"
+
+#: fm1companion/miditools.py:179
+msgid "1 voice (155 parameters)"
+msgstr "1 Voice (155 Parameter)"
+
+#: fm1companion/miditools.py:179
+msgid "32 voices (bank)"
+msgstr "32 Voices (Bank)"
+
+#: fm1companion/miditools.py:184
+msgid "SysEx (empty)"
+msgstr "SysEx (leer)"
+
+#: fm1companion/miditools.py:189
+msgid "Melodee preset file (user preset as SysEx)"
+msgstr "Melodee-Preset-Datei (User-Preset als SysEx)"
+
+#: fm1companion/miditools.py:193
+#, python-brace-format
+msgid "format {n}"
+msgstr "Format {n}"
+
+#: fm1companion/miditools.py:194
+#, python-brace-format
+msgid "Yamaha DX7 dump: {format}, device {device}"
+msgstr "Yamaha DX7 Dump: {format}, Gerät {device}"
+
+#: fm1companion/miditools.py:198
+#, python-brace-format
+msgid "Yamaha DX7 function {n} = {value}, device {device}"
+msgstr "Yamaha DX7 Funktion {n} = {value}, Gerät {device}"
+
+#: fm1companion/miditools.py:199
+#, python-brace-format
+msgid "Yamaha DX7 voice parameter {n} = {value}, device {device}"
+msgstr "Yamaha DX7 Voice-Parameter {n} = {value}, Gerät {device}"
+
+#: fm1companion/miditools.py:203
+#, python-brace-format
+msgid "Yamaha DX7 dump request ({format})"
+msgstr "Yamaha DX7 Dump-Anforderung ({format})"
+
+#: fm1companion/miditools.py:208
+msgid "M-VAVE update: start update mode (device restarts into the loader)"
+msgstr "M-VAVE Update: Update-Modus starten (Gerät startet neu in den Loader)"
+
+#: fm1companion/miditools.py:210
+msgid "M-VAVE soft key: ROM boot mode (WL82 UBOOT) – device stays silent until switched off and on"
+msgstr "M-VAVE Soft-Key: ROM-Bootmodus (WL82 UBOOT) – Gerät bleibt bis zum Aus-/Einschalten stumm"
+
+#: fm1companion/miditools.py:212
+#, python-brace-format
+msgid "M-VAVE control SysEx 22 24 35 {key}"
+msgstr "M-VAVE Steuer-SysEx 22 24 35 {key}"
+
+#: fm1companion/miditools.py:213
+msgid "M-VAVE control SysEx 22 24 35 (incomplete)"
+msgstr "M-VAVE Steuer-SysEx 22 24 35 (unvollständig)"
+
+#: fm1companion/miditools.py:215
+msgid "M-VAVE update: query identifier (handshake)"
+msgstr "M-VAVE Update: Kennung abfragen (Handshake)"
+
+#: fm1companion/miditools.py:222
+#, python-brace-format
+msgid "M-VAVE update: identifier {id}"
+msgstr "M-VAVE Update: Kennung {id}"
+
+#: fm1companion/miditools.py:223
+msgid "M-VAVE update: query identifier"
+msgstr "M-VAVE Update: Kennung abfragen"
+
+#: fm1companion/miditools.py:227
+#, python-brace-format
+msgid "M-VAVE update: device requests data (address {address})"
+msgstr "M-VAVE Update: Gerät fordert Daten an (Adresse {address:#x})"
+
+#: fm1companion/miditools.py:228
+#, python-brace-format
+msgid "M-VAVE update: firmware data ({n} bytes)"
+msgstr "M-VAVE Update: Firmware-Daten ({n} Bytes)"
+
+#: fm1companion/miditools.py:229
+#, python-brace-format
+msgid "M-VAVE update protocol (channel {channel})"
+msgstr "M-VAVE Update-Protokoll (Kanal {channel:02X})"
+
+#: fm1companion/miditools.py:236
+msgid "Universal: General MIDI on"
+msgstr "Universal: General MIDI an"
+
+#: fm1companion/miditools.py:236
+msgid "Universal: General MIDI off"
+msgstr "Universal: General MIDI aus"
+
+#: fm1companion/miditools.py:240
+#, python-brace-format
+msgid "Universal: master volume {percent} %"
+msgstr "Universal: Master-Lautstärke {percent} %"
+
+#: fm1companion/miditools.py:246
+#, python-brace-format
+msgid "SysEx manufacturer {id}"
+msgstr "SysEx Hersteller {id:02X}"
+
+#: fm1companion/miditools.py:263
+#, python-brace-format
+msgid "Song position {n} (16ths)"
+msgstr "Song-Position {n} (16tel)"
+
+#: fm1companion/miditools.py:266
+msgid "data bytes without status"
+msgstr "Datenbytes ohne Status"
+
+#: fm1companion/miditools.py:276
+#, python-brace-format
+msgid "{note} pressure {value}"
+msgstr "{note} Druck {value}"
+
+#: fm1companion/miditools.py:285
+#, python-brace-format
+msgid "pressure {value}"
+msgstr "Druck {value}"
+
+#: fm1companion/miditools.py:287
+msgid " (center)"
+msgstr " (Mitte)"
+
+#: fm1companion/miditools.py:374
+msgid "← from the device"
+msgstr "← vom Gerät"
+
+#: fm1companion/miditools.py:374
+msgid "→ to the device"
+msgstr "→ zum Gerät"
+
+#: fm1companion/miditools.py:383
+msgid "Time (s)"
+msgstr "Zeit (s)"
+
+#: fm1companion/miditools.py:383
+msgid "Port"
+msgstr "Port"
+
+#: fm1companion/alsaseq.py:139
+#, python-brace-format
+msgid "invalid port address: {address}"
+msgstr "ungültige Port-Adresse: {address}"
+
+#: fm1companion/alsaseq.py:145
+msgid "“aconnect” is missing – sudo apt install alsa-utils"
+msgstr "„aconnect“ fehlt – sudo apt install alsa-utils"
+
+#: fm1companion/alsaseq.py:152
+msgid "was already connected"
+msgstr "war schon verbunden"
+
+#: fm1companion/alsaseq.py:154
+msgid "was not connected"
+msgstr "war nicht verbunden"
+
+#: fm1companion/ui/pages/help.py:74
+msgid "Guides, answers and diagnostics – also offline."
+msgstr "Anleitungen, Antworten und Diagnose – auch offline."
+
+#: fm1companion/ui/pages/help.py:83
+msgid "Search the help …"
+msgstr "In der Hilfe suchen …"
+
+#: fm1companion/ui/pages/help.py:99
+msgid "Guides"
+msgstr "Anleitungen"
+
+#: fm1companion/ui/pages/help.py:159
+#, python-brace-format
+msgid "{n} match"
+msgid_plural "{n} matches"
+msgstr[0] "{n} Treffer"
+msgstr[1] "{n} Treffer"
+
+#: fm1companion/ui/pages/help.py:175
+#, python-brace-format
+msgid "The page “{key}” does not exist in this version."
+msgstr "Die Seite „{key}“ gibt es in dieser Version nicht."
+
+#: fm1companion/ui/pages/help.py:200
+msgid "Log folder"
+msgstr "Protokoll-Ordner"
+
+#: fm1companion/ui/pages/help.py:214
+msgid "No entries in the log yet."
+msgstr "Noch keine Einträge im Protokoll."
+
+#: fm1companion/ui/pages/help.py:232
+msgid "Pages that could not be loaded"
+msgstr "Seiten, die nicht geladen werden konnten"
+
+#: fm1companion/ui/pages/help.py:238
+msgid "None – all pages were loaded."
+msgstr "Keine – alle Seiten wurden geladen."
+
+#: fm1companion/ui/pages/help.py:241
+msgid "Dependencies"
+msgstr "Abhängigkeiten"
+
+#: fm1companion/ui/pages/help.py:246
+#, python-brace-format
+msgid "{why} – optional, missing"
+msgstr "{why} – optional, fehlt"
+
+#: fm1companion/ui/pages/help.py:251
+msgid "Install:"
+msgstr "Nachinstallieren:"
+
+#: fm1companion/ui/pages/help.py:252
+msgid "MIDI ports"
+msgstr "MIDI-Anschlüsse"
+
+#: fm1companion/ui/pages/help.py:254
+msgid "searching …"
+msgstr "werden gesucht …"
+
+#: fm1companion/ui/pages/help.py:257
+#, python-brace-format
+msgid "MIDI not usable: {error}"
+msgstr "MIDI nicht nutzbar: {error}"
+
+#: fm1companion/ui/pages/help.py:258
+#, python-brace-format
+msgid "Inputs: {inputs}<br>Outputs: {outputs}"
+msgstr "Eingänge: {inputs}<br>Ausgänge: {outputs}"
+
+#: fm1companion/ui/pages/help.py:260
+msgid "Log"
+msgstr "Protokoll"
+
+#: fm1companion/ui/theme.py:25
+msgid "FM-1 orange"
+msgstr "FM-1-Orange"
+
+#: fm1companion/ui/theme.py:25
+msgid "Breeze blue"
+msgstr "Breeze-Blau"
+
+#: fm1companion/ui/theme.py:25
+msgid "Violet"
+msgstr "Violett"
+
+#: fm1companion/ui/theme.py:26
+msgid "Green"
+msgstr "Grün"
+
+#: fm1companion/ui/theme.py:26
+msgid "Red"
+msgstr "Rot"
+
+#: fm1companion/ui/theme.py:26
+msgid "Yellow"
+msgstr "Gelb"
+
+#: fm1companion/ui/theme.py:26
+msgid "Turquoise"
+msgstr "Türkis"
+
+#: fm1companion/ui/theme.py:28
+msgid "Automatic (light/dark like the system)"
+msgstr "Automatisch (hell/dunkel wie das System)"
+
+#: fm1companion/ui/theme.py:28
+msgid "Light"
+msgstr "Hell"
+
+#: fm1companion/ui/theme.py:28
+msgid "Dark"
+msgstr "Dunkel"
+
+#: fm1companion/ui/theme.py:29
+msgid "System style (KDE/Breeze)"
+msgstr "Systemstil (KDE/Breeze)"
+
+#: fm1companion/editor_host.py:50
+#, python-brace-format
+msgid "providing the editor of {name} {version} …"
+msgstr "stelle den Editor von {name} {version} bereit …"
+
+#: fm1companion/editor_host.py:58
+#, python-brace-format
+msgid "Editor for {version} not available: {error}"
+msgstr "Editor für {version} nicht verfügbar: {error}"
+
+#: fm1companion/editor_host.py:71
+#, python-brace-format
+msgid "{name} {version} contains no editor under {path}"
+msgstr "{name} {version} enthält keinen Editor unter {path}"
+
+#: fm1companion/demodata.py:59
+msgid "Example samples of the FM-1 Companion Suite (generated synthetically, free to use). Can be deleted at any time."
+msgstr "Beispiel-Samples der FM-1 Companion Suite (synthetisch erzeugt, frei verwendbar). Löschen jederzeit möglich."
+
+#: fm1companion/ui/feedback.py:32
+#, python-brace-format
+msgid "{title} – done"
+msgstr "{title} – fertig"
+
+#: fm1companion/ui/feedback.py:35
+#, python-brace-format
+msgid "RESULT: {text}"
+msgstr "ERGEBNIS: {text}"
+
+#: fm1companion/ui/web.py:56
+msgid "Qt WebEngine is missing (sudo apt install python3-pyqt6.qtwebengine)"
+msgstr "Qt WebEngine fehlt (sudo apt install python3-pyqt6.qtwebengine)"
+
+#: fm1companion/applog.py:39
+#, python-brace-format
+msgid "Log not writable: {error}"
+msgstr "Protokoll nicht beschreibbar: {error}"
+
+#: fm1companion/diag.py:42
+msgid "Python 3.11 or newer"
+msgstr "Python ab 3.11"
+
+#: fm1companion/diag.py:42
+msgid "user interface"
+msgstr "Oberfläche"
+
+#: fm1companion/diag.py:42
+msgid "icons in the app design"
+msgstr "Symbole im App-Design"
+
+#: fm1companion/diag.py:42
+msgid "editor, simulator"
+msgstr "Editor, Simulator"
+
+#: fm1companion/diag.py:43
+msgid "Web MIDI bridge for editor and simulator"
+msgstr "Web-MIDI-Brücke für Editor und Simulator"
+
+#: fm1companion/diag.py:43
+msgid "MIDI connection"
+msgstr "MIDI-Anschluss"
+
+#: fm1companion/diag.py:43
+msgid "samples, sounds"
+msgstr "Samples, Klänge"
+
+#: fm1companion/diag.py:44
+msgid "firmware tools"
+msgstr "Firmware-Werkzeuge"
+
+#: fm1companion/diag.py:45
+msgid "Qt dialogs in your language (shortcuts “Ctrl”, “Cancel”); same package name in Bookworm (6.4.2) and Trixie (6.8.2)"
+msgstr "Qt-Dialoge auf Deutsch (Kürzel „Strg“, „Abbrechen“); Paketname gleich in Bookworm (6.4.2) und Trixie (6.8.2)"
+
+#: fm1companion/diag.py:46
+msgid "previewing (fallback when pw-play/paplay/aplay are missing)"
+msgstr "Vorhören (Ersatz, wenn pw-play/paplay/aplay fehlen)"
+
+#: fm1companion/diag.py:46
+msgid "MP3/FLAC/AIFF samples"
+msgstr "MP3/FLAC/AIFF-Samples"
+
+#: fm1companion/diag.py:47
+msgid "recording (ALSA), MIDI connections"
+msgstr "Aufnahme (ALSA), MIDI-Verbindungen"
+
+#: fm1companion/diag.py:47
+msgid "recording and previewing (pw-record, pw-play)"
+msgstr "Aufnahme und Vorhören (pw-record, pw-play)"
+
+#: fm1companion/diag.py:48
+msgid "sound generator"
+msgstr "Klangerzeuger"
+
+#: fm1companion/diag.py:48
+msgid "General MIDI sounds"
+msgstr "General-MIDI-Klänge"
+
+#: fm1companion/diag.py:49
+msgid "rescue via U-Boot (jl-uboot-tool)"
+msgstr "Rettung über U-Boot (jl-uboot-tool)"

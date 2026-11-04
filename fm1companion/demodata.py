@@ -8,6 +8,8 @@ import struct
 import wave
 from pathlib import Path
 
+from .i18n import _
+
 RATE = 44100
 
 
@@ -34,11 +36,12 @@ def _noise(n, decay, tone=0.0, f=180, seed=1):
             for i in range(n)]
 
 
+# the keys are file names (stay as they are)
 SOUNDS = {"Kick 01": _kick, "Snare 01": lambda: _noise(int(RATE * 0.3), 18, 0.35, 190, 2),
-          "Hat geschlossen": lambda: _noise(int(RATE * 0.08), 60, 0, seed=3),
+          "Hat geschlossen": lambda: _noise(int(RATE * 0.08), 60, 0, seed=3),  # i18n: ignore – file name
           "Hat offen": lambda: _noise(int(RATE * 0.4), 9, 0, seed=4),
           "Clap": lambda: [s * (1 if (i // 900) % 2 == 0 or i > 3600 else 0.3) for i, s in enumerate(_noise(int(RATE * 0.25), 16, 0, seed=5))],
-          "Tom tief": lambda: [math.sin(2 * math.pi * (90 + 40 * math.exp(-i / RATE * 20)) * i / RATE) * math.exp(-i / RATE * 9)
+          "Tom tief": lambda: [math.sin(2 * math.pi * (90 + 40 * math.exp(-i / RATE * 20)) * i / RATE) * math.exp(-i / RATE * 9)  # i18n: ignore – file name
                                for i in range(int(RATE * 0.4))],
           "Bass C2": lambda: [(math.sin(2 * math.pi * 65.41 * i / RATE) + 0.3 * math.sin(4 * math.pi * 65.41 * i / RATE))
                               * 0.7 * math.exp(-i / RATE * 3) for i in range(int(RATE * 0.8))]}
@@ -53,6 +56,6 @@ def create(folder: Path) -> list[Path]:
         if not p.exists():
             _write(p, fn())
         out.append(p)
-    (folder / "LIESMICH.txt").write_text("Beispiel-Samples der FM-1 Companion Suite (synthetisch erzeugt, frei "
-                                         "verwendbar). Löschen jederzeit möglich.\n", "utf-8")
+    (folder / "LIESMICH.txt").write_text(_("Example samples of the FM-1 Companion Suite (generated synthetically, free "  # i18n: ignore
+                                           "to use). Can be deleted at any time.") + "\n", "utf-8")
     return out

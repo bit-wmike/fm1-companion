@@ -20,11 +20,13 @@ from PyQt6.QtCore import QPointF, QRectF, Qt
 from PyQt6.QtGui import QColor, QFont, QGuiApplication, QPainter, QPainterPath, QPalette, QPen, QPixmap
 from PyQt6.QtWidgets import QApplication, QStyleFactory
 
-ACCENTS = [("FM-1-Orange", "#ff7a1a"), ("Breeze-Blau", "#3daee9"), ("Violett", "#9b6bff"),
-           ("Grün", "#2ecc71"), ("Rot", "#ef4f5f"), ("Gelb", "#f5b82e"), ("Türkis", "#1abc9c")]
+from ..i18n import _
+
+ACCENTS = [(_("FM-1 orange"), "#ff7a1a"), (_("Breeze blue"), "#3daee9"), (_("Violet"), "#9b6bff"),
+           (_("Green"), "#2ecc71"), (_("Red"), "#ef4f5f"), (_("Yellow"), "#f5b82e"), (_("Turquoise"), "#1abc9c")]
 DEFAULT_ACCENT = "#ff7a1a"
-MODES = [("auto", "Automatisch (hell/dunkel wie das System)"), ("light", "Hell"), ("dark", "Dunkel"),
-         ("system", "Systemstil (KDE/Breeze)")]
+MODES = [("auto", _("Automatic (light/dark like the system)")), ("light", _("Light")), ("dark", _("Dark")),
+         ("system", _("System style (KDE/Breeze)"))]
 
 _system_palette: QPalette | None = None
 _system_style: str = ""

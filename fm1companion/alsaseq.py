@@ -18,6 +18,8 @@ import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .i18n import _
+
 PROC = Path("/proc/asound/seq/clients")
 APP_CLIENT_RE = re.compile(r"rtmidi|fm-1 companion|fm1 companion", re.I)
 
@@ -134,22 +136,22 @@ def list_ports() -> list[SeqPort]:
 def connect_cmd(src: str, dst: str, disconnect: bool = False) -> list[str]:
     for a in (src, dst):
         if not re.fullmatch(r"\d+:\d+", a):
-            raise ValueError(f"ungültige Port-Adresse: {a}")
+            raise ValueError(_("invalid port address: {address}").format(address=a))
     return [aconnect_exe() or "aconnect", *(["-d"] if disconnect else []), src, dst]
 
 
 def connect(src: str, dst: str, disconnect: bool = False) -> tuple[bool, str]:
     if not aconnect_exe():
-        return False, "„aconnect“ fehlt – sudo apt install alsa-utils"
+        return False, _("“aconnect” is missing – sudo apt install alsa-utils")
     try:
         r = _run(connect_cmd(src, dst, disconnect))
     except (OSError, subprocess.SubprocessError) as e:
         return False, str(e)
     msg = (r.stderr or r.stdout).strip()
     if r.returncode and "already subscribed" in msg.lower():
-        return True, "war schon verbunden"
+        return True, _("was already connected")
     if r.returncode and disconnect and "no subscription" in msg.lower():
-        return True, "war nicht verbunden"
+        return True, _("was not connected")
     return r.returncode == 0, msg
 
 
@@ -184,7 +186,7 @@ class Preset:
 
     @staticmethod
     def from_json(d: dict) -> "Preset":
-        return Preset(d.get("name", "Vorlage"), [tuple(p) for p in d.get("pairs", []) if len(p) == 2])
+        return Preset(d.get("name", _("Template")), [tuple(p) for p in d.get("pairs", []) if len(p) == 2])
 
 
 def port_key(p: SeqPort) -> str:

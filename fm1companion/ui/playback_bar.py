@@ -16,10 +16,11 @@ from PyQt6.QtWidgets import QCheckBox, QComboBox, QLabel, QVBoxLayout, QWidget
 from .. import midiexport as ME, playback as P, projectfmt as PF
 from .audio import OutputButton, Player
 from .common import button, flow_row, run_job
+from ..i18n import _, ngettext
 
 DEVICE, COMPUTER, STUDIO = "device", "computer", "studio"
-STUDIO_LABEL = "im Studio (identischer Klang)"
-COMPUTER_LABEL = "im Rechner (Annäherung – klingt nur ähnlich)"
+STUDIO_LABEL = _("in the studio (identical sound)")
+COMPUTER_LABEL = _("on the computer (approximation – only sounds similar)")
 
 
 def studio_for(ctx):
@@ -45,13 +46,15 @@ def device_color(ctx) -> str:
     return prof.color if prof else "#888888"
 
 
-def device_badge_html(ctx, verb: str = "Aktives FM-1") -> str:
+def device_badge_html(ctx, verb: str | None = None) -> str:
     """„● Name – Melodee 1.6 – voller Zugriff (+ 1 weiteres angeschlossen)“ mit der Profilfarbe."""
     port = getattr(ctx, "port", None)
     if not port:
-        return "<b style='color:#888'>●</b> Kein FM-1 verbunden"
+        return "<b style='color:#888'>●</b> " + _("No FM-1 connected")
+    if verb is None:
+        verb = _("Active FM-1")
     if getattr(port, "virtual", False):
-        verb = "Aktives Gerät"
+        verb = _("Active device")
     col = html.escape(device_color(ctx))
     try:
         title = ctx.title()
@@ -62,16 +65,17 @@ def device_badge_html(ctx, verb: str = "Aktives FM-1") -> str:
     except Exception:  # noqa: BLE001
         state = ""
     others = max(0, len(getattr(ctx, "ports", []) or []) - (0 if getattr(port, "virtual", False) else 1))
-    more = (f" <span style='opacity:.75'>· {others} weitere{'s' if others == 1 else ''} FM-1 angeschlossen – "
-            "umschalten oben in der Leiste</span>") if others else ""
-    return (f"{verb}: <b style='color:{col}'>●</b> <b>{html.escape(title)}</b>"
+    more = (" <span style='opacity:.75'>· " + ngettext(
+        "{n} more FM-1 connected – switch at the top of the bar", "{n} more FM-1 connected – switch at the top of the bar",
+        others).format(n=others) + "</span>") if others else ""
+    return (_("{label}:").format(label=verb) + f" <b style='color:{col}'>●</b> <b>{html.escape(title)}</b>"
             + (f" – {html.escape(state)}" if state else "") + more)
 
 
 class DeviceBadge(QLabel):
     """Zeile „Aktives FM-1: ● Name …“, folgt Gerätewechseln."""
 
-    def __init__(self, ctx, verb: str = "Aktives FM-1", parent=None):
+    def __init__(self, ctx, verb: str | None = None, parent=None):
         super().__init__(parent)
         self.ctx, self.verb = ctx, verb
         self.setWordWrap(True)
@@ -115,7 +119,7 @@ class PlaybackBar(QWidget):
     Darunter eine Statuszeile. source() liefert eine Source (oder None)."""
     state_changed = pyqtSignal(bool)
 
-    def __init__(self, ctx, source=None, parent=None, loop: bool = False, play_text: str = "Abspielen",
+    def __init__(self, ctx, source=None, parent=None, loop: bool = False, play_text: str | None = None,
                  shortcut_hint: str = "", compact: bool = False, lead: QWidget | None = None):
         """compact: der Ruhe-Hinweis steht nur im Tooltip (spart eine Zeile über einer knappen Piano-Roll);
         lead: Widget, das vorne in die Knopfreihe kommt."""
@@ -132,24 +136,24 @@ class PlaybackBar(QWidget):
         self._label = ""
         v = QVBoxLayout(self)
         v.setContentsMargins(0, 0, 0, 0)
-        self.b_play = button(play_text, ("media-playback-start",), "primary", self.play,
-                             "Auf dem verbundenen FM-1 mit dessen eigenen Klängen abspielen – ohne FM-1 im "
-                             "Studio-Zwilling (identischer Klang)" + (f" ({shortcut_hint})" if shortcut_hint else ""))
-        self.b_stop = button("Stopp", ("media-playback-stop",), "", self.stop,
-                             "Anhalten – alle Noten am FM-1 werden beendet (All Notes Off)")
+        self.b_play = button(_("Play") if play_text is None else play_text, ("media-playback-start",), "primary",
+                             self.play, _("Play on the connected FM-1 with its own sounds – without an FM-1 in the "
+                                          "studio twin (identical sound)") + (f" ({shortcut_hint})" if shortcut_hint else ""))
+        self.b_stop = button(_("Stop"), ("media-playback-stop",), "", self.stop,
+                             _("Stop – all notes on the FM-1 are ended (All Notes Off)"))
         self.b_stop.setEnabled(False)
         self.target = QComboBox()
-        self.target.setToolTip("Wo es klingt: auf dem FM-1 selbst (seine Klänge, wie gerade eingestellt) oder im "
-                               "Studio-Zwilling (dieselbe Firmware im Rechner)")
+        self.target.setToolTip(_("Where it sounds: on the FM-1 itself (its sounds, as currently set) or in the "
+                                 "studio twin (the same firmware on the computer)"))
         self.target.currentIndexChanged.connect(self._target_changed)
         # lange Gerätenamen dürfen die Spalte nicht verbreitern (sonst kippen schmal/breit-Umschalter hin und her)
         self.target.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.target.setMinimumContentsLength(16)
-        self.loop = QCheckBox("Schleife")
+        self.loop = QCheckBox(_("Loop"))
         self.loop.setChecked(loop)
-        self.loop.setToolTip("Immer wieder von vorn, bis „Stopp“")
+        self.loop.setToolTip(_("Again and again from the start, until “Stop”"))
         self.out_btn = OutputButton(self)
-        self.row = flow_row(lead, self.b_play, self.b_stop, QLabel("Ziel:"), self.target, self.loop, self.out_btn)
+        self.row = flow_row(lead, self.b_play, self.b_stop, QLabel(_("Target:")), self.target, self.loop, self.out_btn)
         v.addWidget(self.row)
         self.status = _Status("")
         self.status.setWordWrap(True)
@@ -172,11 +176,11 @@ class PlaybackBar(QWidget):
         name = device_name(self.ctx)
         virtual = getattr(self.ctx, "is_virtual", False)
         if virtual and getattr(self.ctx, "midi_connected", False):
-            self.target.addItem(f"im Studio-Zwilling – aktives Gerät (identischer Klang)", DEVICE)
+            self.target.addItem(_("in the studio twin – active device (identical sound)"), DEVICE)
         elif getattr(self.ctx, "midi_connected", False):
-            self.target.addItem(f"auf dem FM-1 „{name}“ (seine Klänge)", DEVICE)
+            self.target.addItem(_("on the FM-1 “{name}” (its sounds)").format(name=name), DEVICE)
         else:
-            self.target.addItem("auf dem FM-1 (keins verbunden)", DEVICE)
+            self.target.addItem(_("on the FM-1 (none connected)"), DEVICE)
         if studio_for(self.ctx) is not None:
             if not virtual:
                 self.target.addItem(STUDIO_LABEL, STUDIO)
@@ -188,24 +192,24 @@ class PlaybackBar(QWidget):
         self.target.blockSignals(False)
         self._target_changed()
 
-    def _target_changed(self, *_):
+    def _target_changed(self, *_args):
         data = self.target.currentData()
         dev = data == DEVICE and getattr(self.ctx, "midi_connected", False)
         self.out_btn.setVisible(data == COMPUTER or (data == DEVICE and not dev and studio_for(self.ctx) is None))
         if not self.seq.running and not (self.player and self.player.playing):
             if dev and getattr(self.ctx, "is_virtual", False):
-                hint = ("Spielt im Studio-Zwilling (aktives Gerät) – dieselbe Firmware wie am FM-1, mit den Klängen, "
-                        "die dort gerade auf den Spuren eingestellt sind.")
+                hint = _("Plays in the studio twin (active device) – the same firmware as on the FM-1, with the sounds "
+                         "currently set on its tracks.")
             elif dev:
-                hint = (f"Spielt auf „{html.escape(device_name(self.ctx))}“ mit den Klängen, die dort gerade auf den "
-                        "Spuren eingestellt sind. Am FM-1 wird nichts gespeichert.")
+                hint = _("Plays on “{name}” with the sounds currently set on its tracks. Nothing is saved on the "
+                         "FM-1.").format(name=html.escape(device_name(self.ctx)))
             elif data == STUDIO or (data == DEVICE and studio_for(self.ctx) is not None):
-                hint = ("Spielt im Studio-Zwilling: dieselbe Firmware wie am FM-1, Ton über den Rechner – mit den "
-                        "Klängen, die im Studio gerade auf den Spuren eingestellt sind (Seite „Studio“).")
+                hint = _("Plays in the studio twin: the same firmware as on the FM-1, sound through the computer – "
+                         "with the sounds currently set on the tracks in the studio (page “Studio”).")
                 if data == DEVICE:
-                    hint = "Kein FM-1 verbunden – „Abspielen“ spielt dann im Studio. " + hint
+                    hint = _("No FM-1 connected – “Play” then plays in the studio.") + " " + hint
             elif data == DEVICE:
-                hint = "Kein FM-1 verbunden – „Abspielen“ spielt dann im Rechner: " + P.OFFLINE_LABEL + "."
+                hint = _("No FM-1 connected – “Play” then plays on the computer: {label}.").format(label=P.OFFLINE_LABEL)
             else:
                 hint = P.OFFLINE_LABEL + "."
             self.target.setToolTip(hint)
@@ -213,7 +217,7 @@ class PlaybackBar(QWidget):
 
     def _dev_changed(self):
         if self.seq.running and not getattr(self, "_studio_mode", False) and (self.ctx.link is not self._link):
-            self.stop("Wiedergabe beendet – das FM-1 wurde getrennt oder gewechselt.")
+            self.stop(_("Playback ended – the FM-1 was disconnected or changed."))
         self._fill_targets()
 
     @property
@@ -226,10 +230,10 @@ class PlaybackBar(QWidget):
         try:
             src = self.source()
         except Exception as e:  # noqa: BLE001
-            self.status.setText(f"Nicht abspielbar: {e}")
+            self.status.setText(_("Cannot be played: {error}").format(error=e))
             return
         if not src or not src.events:
-            self.status.setText("Nichts abzuspielen – in der Auswahl gibt es keine Noten.")
+            self.status.setText(_("Nothing to play – there are no notes in the selection."))
             return
         want = self.target.currentData()
         want_dev = want == DEVICE
@@ -247,35 +251,39 @@ class PlaybackBar(QWidget):
         name = device_name(self.ctx)
         tag = (getattr(self.ctx.profile, "id", "") if self.ctx.profile else "",
                self.ctx.port.key if self.ctx.port else "")
-        self.status.setText(f"Lese die Spuren von „{html.escape(name)}“ …")
+        self.status.setText(_("Reading the tracks of “{name}” …").format(name=html.escape(name)))
 
         def go(routing: P.Routing):
             if gen != self._gen or self.ctx.link is not link or link is None or link.closed:
                 return
             armed = routing.armed_tracks()
             if armed:
-                self.status.setText(
-                    f"<b>Nicht gestartet:</b> Spur {', '.join(str(k + 1) for k in armed)} ist auf „{html.escape(name)}“ "
-                    "zur Aufnahme scharf geschaltet (REC) – das FM-1 würde die Noten aufnehmen und das Projekt "
-                    "verändern. Bitte REC am FM-1 ausschalten, dann erneut abspielen.")
+                self.status.setText(ngettext(
+                    "<b>Not started:</b> track {tracks} is armed for recording (REC) on “{name}” – the FM-1 would "
+                    "record the notes and change the project. Please switch REC off on the FM-1, then play again.",
+                    "<b>Not started:</b> tracks {tracks} are armed for recording (REC) on “{name}” – the FM-1 would "
+                    "record the notes and change the project. Please switch REC off on the FM-1, then play again.",
+                    len(armed)).format(tracks=", ".join(str(k + 1) for k in armed), name=html.escape(name)))
                 return
             plan = P.plan_for_device(src.events, routing, src.prj, src.track_override)
             if not plan.events:
-                self.status.setText("Nichts zu senden: " + " ".join(plan.skipped))
+                self.status.setText(_("Nothing to send: {reasons}").format(reasons=" ".join(plan.skipped)))
                 return
             notes = list(plan.skipped)
             if src.prj is not None and not (src.live_tag and tuple(src.live_tag[:2]) == tag):
                 diff = P.compare_sounds(src.prj, routing)
                 if diff:
-                    notes.append("Klänge weichen ab (es spielt, was am FM-1 eingestellt ist): " + "; ".join(diff[:4]))
+                    notes.append(_("Sounds differ (what is set on the FM-1 plays): {differences}").format(
+                        differences="; ".join(diff[:4])))
             if src.track_override is not None and routing.tracks and src.track_override < len(routing.tracks):
-                notes.insert(0, f"Spur {src.track_override + 1} am FM-1: {routing.tracks[src.track_override].label}.")
+                notes.insert(0, _("Track {n} on the FM-1: {sound}.").format(
+                    n=src.track_override + 1, sound=routing.tracks[src.track_override].label))
             self.seq = P.MidiSequencer(P.link_sender(link))
             self._hook(link)
             self.seq.start(plan.events, src.bpm, src.loop_quarters if self.loop.isChecked() else None)
             self.mode = DEVICE
-            self._label = (f"Spielt auf <b>„{html.escape(name)}“</b> mit dessen eigenen Klängen · "
-                           f"{html.escape(routing.describe())}")
+            self._label = _("Plays on <b>“{name}”</b> with its own sounds · {routing}").format(
+                name=html.escape(name), routing=html.escape(routing.describe()))
             self._notes = notes
             self._running(True)
             self._tick()
@@ -283,10 +291,10 @@ class PlaybackBar(QWidget):
         if getattr(self.ctx, "connected", False):
             def work(w, lk):
                 return P.read_routing(lk)
-            self.ctx.job(self, "Spuren lesen", work, dialog=False, on_done=go,
+            self.ctx.job(self, _("Read tracks"), work, dialog=False, on_done=go,
                          on_fail=lambda m, tb: go(P.Routing(note=m)))
         else:                                   # nur MIDI (Firmware ohne Editor-Protokoll): Standard annehmen
-            go(P.Routing(note="Diese Firmware lässt sich nicht abfragen – Kanäle 1–4 angenommen."))
+            go(P.Routing(note=_("This firmware cannot be queried – channels 1–4 assumed.")))
 
     def _play_studio(self, src: Source, fallback: bool = False) -> bool:
         """Noten in den Studio-Zwilling (dieselbe Firmware, Ton über den Rechner). False: Zwilling nicht startbar."""
@@ -295,13 +303,13 @@ class PlaybackBar(QWidget):
             if svc is None or not svc.auto_start():
                 return False
         except Exception as e:  # noqa: BLE001
-            self.status.setText(f"Studio nicht startbar ({e}) – spiele die Annäherung im Rechner.")
+            self.status.setText(_("Studio cannot be started ({error}) – playing the approximation on the computer.").format(error=e))
             return False
         self._gen += 1
         gen = self._gen
         link = svc.link
-        pre = "Kein FM-1 verbunden – " if fallback else ""
-        self.status.setText(pre + "Lese die Spuren des Studio-Zwillings …")
+        pre = _("No FM-1 connected – ") if fallback else ""
+        self.status.setText(pre + _("Reading the tracks of the studio twin …"))
         svc.use(True)
         self._studio_user = svc
 
@@ -312,26 +320,30 @@ class PlaybackBar(QWidget):
             armed = routing.armed_tracks()
             if armed:
                 with_rec = ", ".join(str(k + 1) for k in armed)
-                self.status.setText(f"<b>Nicht gestartet:</b> Spur {with_rec} ist im Studio-Zwilling zur Aufnahme "
-                                    "scharf geschaltet (REC) – bitte dort ausschalten (Seite „Studio“).")
+                self.status.setText(ngettext(
+                    "<b>Not started:</b> track {tracks} is armed for recording (REC) in the studio twin – please switch "
+                    "it off there (page “Studio”).",
+                    "<b>Not started:</b> tracks {tracks} are armed for recording (REC) in the studio twin – please "
+                    "switch it off there (page “Studio”).", len(armed)).format(tracks=with_rec))
                 self._release_studio()
                 return
             plan = P.plan_for_device(src.events, routing, src.prj, src.track_override)
             if not plan.events:
-                self.status.setText("Nichts zu senden: " + " ".join(plan.skipped))
+                self.status.setText(_("Nothing to send: {reasons}").format(reasons=" ".join(plan.skipped)))
                 self._release_studio()
                 return
             notes = list(plan.skipped)
             if src.prj is not None:
                 diff = P.compare_sounds(src.prj, routing)
                 if diff:
-                    notes.append("Klänge weichen ab (es spielt, was im Studio eingestellt ist): " + "; ".join(diff[:4]))
+                    notes.append(_("Sounds differ (what is set in the studio plays): {differences}").format(
+                        differences="; ".join(diff[:4])))
             self.seq = P.MidiSequencer(P.link_sender(link))
             self.seq.start(plan.events, src.bpm, src.loop_quarters if self.loop.isChecked() else None)
             self.mode = DEVICE
             self._studio_mode = True
-            self._label = (pre + f"Spielt <b>im Studio-Zwilling</b> (Melodee {html.escape(svc.version)}, identischer "
-                           f"Klang) · {html.escape(routing.describe())}")
+            self._label = pre + _("Plays <b>in the studio twin</b> (Melodee {version}, identical sound) · {routing}").format(
+                version=html.escape(svc.version), routing=html.escape(routing.describe()))
             self._notes = notes
             self._running(True)
             self._tick()
@@ -360,8 +372,8 @@ class PlaybackBar(QWidget):
         if src.track_override is not None:
             evs = [ME.NoteEvent(src.track_override, e.start, e.length, e.note, e.vel, e.channel, e.pattern, e.step,
                                 e.drum) for e in evs]
-        pre = ("Kein FM-1 verbunden – " if fallback else "")
-        self.status.setText(pre + "Klang wird im Rechner berechnet …")
+        pre = (_("No FM-1 connected – ") if fallback else "")
+        self.status.setText(pre + _("Sound is being computed on the computer …"))
         self._running(True, computing=True)
 
         def done(x):
@@ -373,7 +385,7 @@ class PlaybackBar(QWidget):
             if self.player.play_samples(P.to_int16(x), 22050, status=self.status.setText):
                 self._label = pre + "<b>" + P.OFFLINE_LABEL + "</b>"
                 self._notes = [] if src.prj is not None or src.engines else \
-                    ["Ersatzklang, weil die Spur-Engine unbekannt ist."]
+                    [_("Substitute sound because the track engine is unknown.")]
                 self._running(True)
                 self._tick()
             else:
@@ -382,7 +394,7 @@ class PlaybackBar(QWidget):
         def fail(msg, _tb):
             if gen == self._gen:
                 self._running(False)
-                self.status.setText(f"Vorhören nicht möglich: {msg}")
+                self.status.setText(_("Preview not possible: {error}").format(error=msg))
         run_job(self, lambda w: P.render_offline(evs, src.bpm, src.prj, engines=src.engines), on_done=done,
                 on_fail=fail)
 
@@ -397,8 +409,8 @@ class PlaybackBar(QWidget):
         self._release_studio()
         self._running(False)
         if not quiet and (was or reason):
-            self.status.setText(reason or ("Gestoppt – alle Noten am FM-1 sind aus." if self.mode == DEVICE
-                                           else "Gestoppt."))
+            self.status.setText(reason or (_("Stopped – all notes on the FM-1 are off.") if self.mode == DEVICE
+                                           else _("Stopped.")))
 
     def _hook(self, link):
         """Gerät wird getrennt/gewechselt, während es spielt: vor dem Schließen der Verbindung noch alle Noten
@@ -443,17 +455,25 @@ class PlaybackBar(QWidget):
                 self._running(False)
                 self._unhook()
                 err = f" ({s.error})" if s.error else ""
-                where = "den Studio-Zwilling" if getattr(self, "_studio_mode", False) else \
-                    f"„{html.escape(device_name(self.ctx))}“"
+                studio = getattr(self, "_studio_mode", False)
+                name = html.escape(device_name(self.ctx))
                 self._release_studio()
-                self.status.setText(f"Fertig – {s.sent} MIDI-Nachrichten an {where} gesendet, alle Noten aus{err}.")
+                if studio:
+                    msg = ngettext("Done – {n} MIDI message sent to the studio twin, all notes off{error}.",
+                                   "Done – {n} MIDI messages sent to the studio twin, all notes off{error}.", s.sent)
+                else:
+                    msg = ngettext("Done – {n} MIDI message sent to “{name}”, all notes off{error}.",
+                                   "Done – {n} MIDI messages sent to “{name}”, all notes off{error}.", s.sent)
+                self.status.setText(msg.format(n=s.sent, name=name, error=err))
                 return
             bar = int(s.position // 4) + 1
             total = max(1, int((s.total + 3.999) // 4))
-            loop = f", Durchlauf {s.loops + 1}" if self.loop.isChecked() else ""
-            drop = f" · {s.dropped} Noten übersprungen (FM-1 gerade belegt)" if s.dropped else ""
+            loop = _(", pass {n}").format(n=s.loops + 1) if self.loop.isChecked() else ""
+            drop = " · " + ngettext("{n} note skipped (FM-1 busy right now)", "{n} notes skipped (FM-1 busy right now)",
+                                    s.dropped).format(n=s.dropped) if s.dropped else ""
             extra = "<br>" + "<br>".join(html.escape(n) for n in self._notes) if getattr(self, "_notes", None) else ""
-            self.status.setText(f"{self._label} · Takt {min(bar, total)}/{total}{loop}{drop}{extra}")
+            self.status.setText(self._label + " · " + _("bar {bar}/{total}").format(bar=min(bar, total), total=total)
+                                + f"{loop}{drop}{extra}")
         elif self.mode == COMPUTER:
             if self.player is None or not self.player.playing:
                 self._running(False)

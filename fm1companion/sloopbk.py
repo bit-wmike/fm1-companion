@@ -26,6 +26,7 @@ import json
 import re
 from typing import Callable
 
+from .i18n import N_, _
 from .protocol import Cmd, ProtocolError, Reader, crc32, pack7, parse_info, r32, u32, unpack7
 
 BK_LIST, BK_GET, BK_PUT = 34, 35, 36
@@ -39,17 +40,24 @@ SMP_DATA_OFF, SMP_HDR_LEN = 512, 32 + 16 * 28
 MAX_LEN = 0x14000                          # größtes Objekt: ein Sample-Slot (80 KiB)
 MIN_PROTO = 6
 
-TITLES = {0: "laufendes Projekt", 1: "Einstellungen", 2: "Section A", 3: "Section B", 4: "Section C",
-          5: "Section D", 6: "Preset-Bank 1–16", 7: "Preset-Bank 17–32", 8: "FM6-Patch-Bank",
-          9: "SYN-Drum-Kits", 10: "MIDI-Learn", 11: "Farbschema", 32: "Sample USR1", 33: "Sample USR2",
+# object names and device return codes (translated where used: title(), _rc())
+TITLES = {0: N_("running project"), 1: N_("settings"), 2: "Section A", 3: "Section B", 4: "Section C",
+          5: "Section D", 6: N_("preset bank 1–16"), 7: N_("preset bank 17–32"), 8: N_("FM6 patch bank"),
+          9: N_("SYN drum kits"), 10: N_("MIDI Learn"), 11: N_("colour scheme"), 32: "Sample USR1", 33: "Sample USR2",
           34: "Sample USR3", 35: "Sample USR4"}
 
-RC_TEXT = {1: "ungültige Anfrage", 2: "Objekt ungültig (Prüfsumme, Kennung oder Größe)",
-           3: "Song läuft – bitte erst STOP drücken", 4: "Flash-Fehler",
-           5: "Backup veraltet oder abgelaufen – bitte noch einmal starten"}
+RC_TEXT = {1: N_("invalid request"), 2: N_("object invalid (checksum, ID or size)"),
+           3: N_("song is running – please press STOP first"), 4: N_("flash error"),
+           5: N_("backup outdated or expired – please start again")}
 
-STOP_HINT = ("Bitte am FM-1 erst den Song stoppen (STOP) und dann noch einmal zurückspielen. "
-             "SLOOP schreibt Projekte, Preset-Banken und Einstellungen nur, solange nichts läuft.")
+
+def stop_hint() -> str:
+    return _("Please stop the song on the FM-1 first (STOP) and then restore again. "
+             "SLOOP only writes projects, preset banks and settings while nothing is playing.")
+
+
+def _rc(rc) -> str:
+    return _(RC_TEXT[rc]) if rc in RC_TEXT else str(rc)
 
 
 def _err(code: str, text: str, written=None):
@@ -61,7 +69,9 @@ def _err(code: str, text: str, written=None):
 
 
 def title(oid: int) -> str:
-    return TITLES.get(oid, f"Objekt {oid}")
+    if oid in TITLES:
+        return _(TITLES[oid])
+    return _("object {id}").format(id=oid)
 
 
 # ------------------------------------------------------------ Anfragen ---
@@ -98,10 +108,10 @@ def parse_list(a) -> tuple[int, list[tuple[int, int, int]]]:
     r = Reader(a)
     rc, n = r.b(), r.b()
     items = []
-    for _ in range(n):
+    for _i in range(n):
         oid = r.b()
         if r.i + 10 > len(r.a):
-            raise ProtocolError("Inventar zu kurz")
+            raise ProtocolError(_("inventory too short"))
         ln, crc = r32(r.a, r.i), r32(r.a, r.i + 5)
         r.i += 10
         items.append((oid, ln, crc))
@@ -110,14 +120,14 @@ def parse_list(a) -> tuple[int, list[tuple[int, int, int]]]:
 
 def parse_get(a) -> dict:
     if len(a) < 9:
-        raise ProtocolError("Antwort zu kurz")
+        raise ProtocolError(_("answer too short"))
     oid, rc, off, count = a[0], a[1], r32(a, 2), a[7] | a[8] << 7
     return {"id": oid, "rc": rc, "off": off, "count": count, "raw": list(a[9:])}
 
 
 def parse_put(a) -> dict:
     if len(a) < 3:
-        raise ProtocolError("Antwort zu kurz")
+        raise ProtocolError(_("answer too short"))
     return {"op": a[0], "id": a[1], "rc": a[2]}
 
 
@@ -162,23 +172,23 @@ def objects(file) -> dict[int, bytes]:
         try:
             file = json.loads(file)
         except ValueError:
-            raise _err("bkBad", "Keine Backup-Datei (kein JSON)")
+            raise _err("bkBad", _("Not a backup file (no JSON)"))
     if not isinstance(file, dict) or file.get("format") != FORMAT or not _num(file.get("version")) \
             or not file.get("version") >= 1 or not isinstance(file.get("objects"), list):
-        raise _err("bkBad", "Kein SLOOP-Backup")
+        raise _err("bkBad", _("Not a SLOOP backup"))
     m: dict[int, bytes] = {}
     for o in file["objects"]:
         if not isinstance(o, dict):
-            raise _err("bkBad", "SLOOP-Backup: ungültiger Eintrag")
+            raise _err("bkBad", _("SLOOP backup: invalid entry"))
         oid = o.get("id")
         d = b64dec(o.get("data") or "")
         crc = o.get("crc")
         if not _num(oid) or oid not in RESTORE + SAMPLES or not _num(o.get("len")) or len(d) != o["len"] \
                 or not _num(crc) or crc32(d) != (int(crc) & 0xFFFFFFFF):
-            raise _err("bkBad", f"SLOOP-Backup: Objekt {oid} beschädigt")
+            raise _err("bkBad", _("SLOOP backup: object {id} damaged").format(id=oid))
         m[int(oid)] = d
     if 0 not in m or 1 not in m:
-        raise _err("bkBad", "SLOOP-Backup unvollständig (laufendes Projekt oder Einstellungen fehlen)")
+        raise _err("bkBad", _("SLOOP backup incomplete (running project or settings missing)"))
     return m
 
 
@@ -213,9 +223,9 @@ def info_proto(raw) -> int:
         r = Reader(raw)
         r.s()
         ne = r.b()
-        for _ in range(4):
+        for _i in range(4):
             r.b()
-        for _ in range(ne):
+        for _i in range(ne):
             r.s()
         r.b()                     # NTRK
         return r.b() if r.more() else 0
@@ -238,12 +248,12 @@ def list_objects(link) -> list:
     from .backup import ObjInfo
     rc, items = parse_list(_rq(link, req_list(), 5.0, 0))
     if rc:
-        raise _err(f"bkRc{rc}", "Das FM-1 hat keinen nutzbaren Flash-Speicher – Backup nicht möglich."
-                   if rc == 4 else f"Inventar abgelehnt ({RC_TEXT.get(rc, rc)})")
+        raise _err(f"bkRc{rc}", _("The FM-1 has no usable flash memory – backup not possible.")
+                   if rc == 4 else _("inventory rejected ({error})").format(error=_rc(rc)))
     out = []
     for oid, ln, crc in items:
         if ln > MAX_LEN:
-            raise _err("bkRead", f"Objekt {oid} ist unplausibel groß ({ln} Byte)")
+            raise _err("bkRead", _("object {id} is implausibly large ({size} bytes)").format(id=oid, size=ln))
         out.append(ObjInfo(oid, ln, crc, "sloop"))
     return out
 
@@ -255,21 +265,22 @@ def read_object(link, o, progress: Callable[[int], None] | None = None) -> bytes
         g = parse_get(_rq(link, req_get(o.id, off, n), 1.5, 2))
         if g["rc"]:
             raise _err("bkStale" if g["rc"] == 5 else "bkRead",
-                       "Das FM-1 hat sich während des Backups verändert – bitte noch einmal versuchen."
-                       if g["rc"] == 5 else f"Lesen von {title(o.id)} abgelehnt ({RC_TEXT.get(g['rc'], g['rc'])})")
+                       _("The FM-1 changed during the backup – please try again.")
+                       if g["rc"] == 5 else _("reading {part} rejected ({error})").format(part=title(o.id),
+                                                                                       error=_rc(g['rc'])))
         if g["id"] != o.id or g["off"] != off or g["count"] != n:
-            raise _err("bkRead", "unerwartete Antwort beim Lesen")
+            raise _err("bkRead", _("unexpected answer while reading"))
         try:
             data = unpack7(g["raw"], n)
         except ProtocolError:
-            raise _err("bkRead", f"{title(o.id)}: {len(g['raw'])} Byte statt {n}")
+            raise _err("bkRead", _("{part}: {got} bytes instead of {want}").format(part=title(o.id), got=len(g['raw']), want=n))
         buf[off:off + n] = data
         if progress:
             progress(n)
     data = bytes(buf)
     if crc32(data) != o.crc:
-        raise _err("bkStale", "Das FM-1 hat sich während des Backups verändert (Prüfsumme) – bitte noch einmal "
-                              "versuchen, am besten mit gestopptem Song.")
+        raise _err("bkStale", _("The FM-1 changed during the backup (checksum) – please try "
+                                "again, preferably with the song stopped."))
     return data
 
 
@@ -307,14 +318,14 @@ def write_object(link, oid: int, data: bytes, progress: Callable[[int], None] | 
     if r["rc"] in (1, 5) and oid in OPTIONAL:
         return r["rc"]
     if r["rc"]:
-        raise _err("bkWrite", f"{title(oid)}: Beginn abgelehnt ({RC_TEXT.get(r['rc'], r['rc'])})", written)
+        raise _err("bkWrite", _("{part}: begin rejected ({error})").format(part=title(oid), error=_rc(r['rc'])), written)
     try:
         for off in range(0, len(data), CHUNK):
             chunk = data[off:off + CHUNK]
             r = parse_put(_rq(link, req_data(oid, off, chunk), 1.5, 1))
             if r["rc"]:
-                raise _err("bkWrite", f"{title(oid)}: Daten bei Byte {off} abgelehnt "
-                                      f"({RC_TEXT.get(r['rc'], r['rc'])})", written)
+                raise _err("bkWrite", _("{part}: data at byte {offset} rejected ({error})").format(
+                    part=title(oid), offset=off, error=_rc(r['rc'])), written)
             if progress:
                 progress(len(chunk))
         r = parse_put(_rq(link, req_commit(oid), 5.0, 0))
@@ -326,19 +337,19 @@ def write_object(link, oid: int, data: bytes, progress: Callable[[int], None] | 
         raise
     if r["rc"] == 3:
         if written:
-            raise _err("bkStop", "Der Song lief beim Zurückspielen. Schon geschrieben: "
-                       + ", ".join(title(i) for i in written) + f". Nicht geschrieben: {title(oid)} und alles danach. "
-                       + STOP_HINT, written)
-        raise _err("bkStop", STOP_HINT + " Es wurde nichts geschrieben.", written)
+            raise _err("bkStop", _("The song was running during the restore. Already written: {parts}. Not written: "
+                                   "{part} and everything after it.").format(
+                parts=", ".join(title(i) for i in written), part=title(oid)) + " " + stop_hint(), written)
+        raise _err("bkStop", stop_hint() + " " + _("Nothing was written."), written)
     if r["rc"]:
-        raise _err("bkWrite", f"{title(oid)}: vom FM-1 abgelehnt ({RC_TEXT.get(r['rc'], r['rc'])})", written)
+        raise _err("bkWrite", _("{part}: rejected by the FM-1 ({error})").format(part=title(oid), error=_rc(r['rc'])), written)
     return 0
 
 
 def _smp(link, cmd, args, slot, timeout):
     a = link.request(cmd, args, timeout=timeout, retries=0 if cmd != Cmd.SMP_WRITE else 1)
     if not a or a[0] != slot:
-        raise _err("bkWrite", "unerwartete Sample-Antwort")
+        raise _err("bkWrite", _("unexpected sample answer"))
     return a[-1]
 
 
@@ -347,37 +358,37 @@ def write_sample(link, oid: int, d: bytes, progress: Callable[[int], None] | Non
     if not d:
         rc = _smp(link, Cmd.SMP_ERASE, [k], k, 2.5)
         if rc:
-            raise _err("bkWrite", f"USR{k + 1} leeren: Fehler {rc}", written)
+            raise _err("bkWrite", _("clearing USR{slot}: error {code}").format(slot=k + 1, code=rc), written)
         return
     if len(d) < SMP_DATA_OFF:
-        raise _err("bkBad", f"USR{k + 1}: Sample-Objekt zu kurz", written)
+        raise _err("bkBad", _("USR{slot}: sample object too short").format(slot=k + 1), written)
     rc = _smp(link, Cmd.SMP_BEGIN, [k], k, 1.0)
     if rc:
-        raise _err("bkWrite", f"USR{k + 1}: Beginn abgelehnt (Fehler {rc})", written)
+        raise _err("bkWrite", _("USR{slot}: begin rejected (error {code})").format(slot=k + 1, code=rc), written)
     data = d[SMP_DATA_OFF:]
     for off in range(0, len(data), CHUNK):
         o = SMP_DATA_OFF + off
         chunk = data[off:off + CHUNK]
         rc = _smp(link, Cmd.SMP_WRITE, [k, o & 0x7F, (o >> 7) & 0x7F, (o >> 14) & 0x7F, *pack7(chunk)], k, 1.0)
         if rc:
-            raise _err("bkWrite", f"USR{k + 1}: Schreiben abgelehnt (Fehler {rc})", written)
+            raise _err("bkWrite", _("USR{slot}: writing rejected (error {code})").format(slot=k + 1, code=rc), written)
         if progress:
             progress(len(chunk))
     rc = _smp(link, Cmd.SMP_END, [k, *pack7(d[:SMP_HDR_LEN])], k, 2.0)
     if rc:
-        raise _err("bkWrite", f"USR{k + 1}: Abschluss abgelehnt (Fehler {rc})", written)
+        raise _err("bkWrite", _("USR{slot}: completion rejected (error {code})").format(slot=k + 1, code=rc), written)
 
 
 def check_restore(m: dict[int, bytes], file: dict, info) -> dict[int, bytes]:
     """Prüfungen vor dem ersten Schreiben (wie backupRestore). -> ggf. ergänztes {id: bytes}"""
     if not m.get(0) or not m.get(1):
-        raise _err("bkBad", "Im Backup fehlen das laufende Projekt oder die Einstellungen – es wurde nichts "
-                            "geschrieben.")
+        raise _err("bkBad", _("The running project or the settings are missing in the backup – nothing was "
+                              "written."))
     newest = max([0] + [proj_format(m[i]) for i in (0, 2, 3, 4, 5) if i in m])
     if info is not None and newest > dev_format(info.p_count):
-        raise _err("bkNewer", f"Das Backup stammt von einer neueren SLOOP-Version ({file.get('firmware') or '?'}) "
-                              f"als auf dem FM-1 ({info.version}). Erst SLOOP aktualisieren – es wurde nichts "
-                              "geschrieben.")
+        raise _err("bkNewer", _("The backup comes from a newer SLOOP version ({backup}) "
+                                "than the one on the FM-1 ({device}). Update SLOOP first – nothing was "
+                                "written.").format(backup=file.get('firmware') or '?', device=info.version))
     m = dict(m)
     if 10 not in m and fw_at_least(file.get("firmware", ""), (2, 5, 1)):
         d = bytearray(40)                          # MIDI LEARN in der Grundstellung (nichts gelernt, 1 2 3, 10, 2)
@@ -409,7 +420,7 @@ def restore(link, file: dict, progress: Callable[[int, int], None] | None = None
     try:
         for oid in todo:
             if cancelled and cancelled():
-                raise _err("cancel", "abgebrochen", written)
+                raise _err("cancel", _("cancelled"), written)
             d = m[oid]
             if oid in SAMPLES:
                 write_sample(link, oid, d, step, written)
@@ -427,12 +438,12 @@ def restore(link, file: dict, progress: Callable[[int, int], None] | None = None
 def _check_part(m, file, info, ids) -> dict[int, bytes]:
     missing = [i for i in ids if i not in m]
     if missing:
-        raise _err("bkBad", f"{title(missing[0])} ist nicht im Backup")
+        raise _err("bkBad", _("{part} is not in the backup").format(part=title(missing[0])))
     if 0 in ids and not m[0] or 1 in ids and not m[1]:
-        raise _err("bkBad", "Laufendes Projekt/Einstellungen im Backup sind leer – es wurde nichts geschrieben.")
+        raise _err("bkBad", _("Running project/settings in the backup are empty – nothing was written."))
     newest = max([0] + [proj_format(m[i]) for i in ids if i in (0, 2, 3, 4, 5)])
     if info is not None and newest > dev_format(info.p_count):
-        raise _err("bkNewer", f"Projekte aus einer neueren SLOOP-Version ({file.get('firmware') or '?'}) liest "
-                              f"das FM-1 ({info.version}) nicht. Erst SLOOP aktualisieren – es wurde nichts "
-                              "geschrieben.")
+        raise _err("bkNewer", _("The FM-1 ({device}) cannot read projects from a newer SLOOP version ({backup}). "
+                                "Update SLOOP first – nothing was written.").format(
+                                    backup=file.get('firmware') or '?', device=info.version))
     return m

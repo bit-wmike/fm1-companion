@@ -8,6 +8,7 @@ from PyQt6.QtGui import QColor, QFont, QPainter, QPalette, QPen
 from PyQt6.QtWidgets import QWidget
 
 from .. import projectfmt as PF
+from ..i18n import _
 
 KEY_W = 44
 ROW_H = 12
@@ -83,22 +84,22 @@ class StepRoll(QWidget):
     def __init__(self, parent=None, editable: bool = False):
         super().__init__(parent)
         self.editable = editable
-        self.steps: list[PF.Step] = [PF.Step() for _ in range(PF.NSTEP)]
+        self.steps: list[PF.Step] = [PF.Step() for _i in range(PF.NSTEP)]
         self.length = 16
         self.step_w = 22
         self.lo, self.hi = 48, 72
         self.show_lanes = editable
         self.edit_vel = 100
         self.setMouseTracking(True)
-        self.setToolTip("Noten: Klick setzt/entfernt eine Note, Rechtsklick leert den Step. Drum-Lanes: Klick schaltet "
-                        "den Schlag, Umschalt+Klick setzt einen Akzent." if editable else
-                        "Piano-Roll: Farbe = Anschlagstärke, Balken über mehrere Steps = gehaltene Note (TIE)")
+        self.setToolTip(_("Notes: click sets/removes a note, right-click clears the step. Drum lanes: click toggles "
+                          "the hit, Shift+click sets an accent.") if editable else
+                        _("Piano roll: colour = velocity, bar across several steps = held note (TIE)"))
 
     # ------------------------------------------------------------------ Daten
     def set_steps(self, steps, length: int, keep_range: bool = False):
         self.steps = [PF.Step(list(s.notes), s.time, s.accent, s.slide, s.recorded, s.vel, s.hit, s.acc, s.chance)
                       for s in steps[:PF.NSTEP]]
-        self.steps += [PF.Step() for _ in range(PF.NSTEP - len(self.steps))]
+        self.steps += [PF.Step() for _i in range(PF.NSTEP - len(self.steps))]
         self.length = max(1, min(PF.NSTEP, length))
         notes = [n for s in self.steps[:self.length] for n in s.notes if s.time == PF.ST_NOTE]
         if not keep_range:

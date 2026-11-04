@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Callable, Iterable
 
 from .config import DATA_DIR
+from .i18n import _, decimal
 from .protocol import Cmd, pack7, parse_smp_info, SampleSlot
 from .vendor import sampleio as sio
 
@@ -61,27 +62,29 @@ def have_ffmpeg() -> bool:
 def _ffmpeg_to_wav(path: Path) -> Path:
     exe = shutil.which("ffmpeg")
     if not exe:
-        raise ValueError(f"{path.name}: zum Lesen von {path.suffix} wird ffmpeg gebraucht (sudo apt install ffmpeg)")
+        raise ValueError(_("{name}: reading {ext} needs ffmpeg (sudo apt install ffmpeg)").format(name=path.name, ext=path.suffix))
     tmp = Path(tempfile.mkstemp(suffix=".wav", prefix="fm1c-")[1])
     try:
         r = subprocess.run([exe, "-v", "error", "-y", "-i", str(path), "-ac", "1", "-c:a", "pcm_s16le", str(tmp)],
                            capture_output=True, text=True, timeout=120)
     except subprocess.TimeoutExpired:
         tmp.unlink(missing_ok=True)
-        raise ValueError(f"{path.name}: ffmpeg braucht zu lange (Datei zu groß oder beschädigt)") from None
+        raise ValueError(_("{name}: ffmpeg takes too long (file too large or damaged)").format(name=path.name)) from None
     if r.returncode:
         tmp.unlink(missing_ok=True)
         err = r.stderr.strip().splitlines()
-        raise ValueError(f"{path.name}: ffmpeg kann die Datei nicht lesen (beschädigt oder kein Audio)"
-                         + (f" – {err[-1][:120]}" if err else ""))
+        if err:
+            raise ValueError(_("{name}: ffmpeg cannot read the file (damaged or no audio) – {error}").format(
+                name=path.name, error=err[-1][:120]))
+        raise ValueError(_("{name}: ffmpeg cannot read the file (damaged or no audio)").format(name=path.name))
     return tmp
 
 
 def read_mono(path: Path) -> tuple[int, list[float]]:
-    """beliebige Audiodatei -> (Rate, Mono-Floats in [-1, 1)). Fehler sind ValueError mit deutschem Text."""
+    """beliebige Audiodatei -> (Rate, Mono-Floats in [-1, 1)). Fehler sind ValueError mit übersetztem Text."""
     path = Path(path)
     if not path.exists():
-        raise ValueError(f"{path.name}: Datei nicht gefunden (verschoben oder gelöscht?)")
+        raise ValueError(_("{name}: file not found (moved or deleted?)").format(name=path.name))
     is_wav = path.suffix.lower() in (".wav", ".wave")
     if is_wav:
         try:
@@ -90,13 +93,13 @@ def read_mono(path: Path) -> tuple[int, list[float]]:
             return sio.read_any_wav(path)
         except (ValueError, struct.error, IndexError, KeyError):
             if not have_ffmpeg():
-                raise ValueError(f"{path.name}: WAV-Datei beschädigt oder in einem Format, das die App nicht lesen "
-                                 "kann (z. B. komprimiert). Mit ffmpeg ginge es: sudo apt install ffmpeg") from None
+                raise ValueError(_("{name}: WAV file damaged or in a format the app cannot read "
+                                   "(e.g. compressed). With ffmpeg it would work: sudo apt install ffmpeg").format(name=path.name)) from None
     tmp = _ffmpeg_to_wav(path)
     try:
         return sio.read_any_wav(tmp)
     except (ValueError, struct.error, IndexError, KeyError):
-        raise ValueError(f"{path.name}: Audiodatei beschädigt oder leer") from None
+        raise ValueError(_("{name}: audio file damaged or empty").format(name=path.name)) from None
     finally:
         tmp.unlink(missing_ok=True)
 
@@ -122,7 +125,7 @@ def _read_wav_np(path: Path):
     elif bps == 1:
         x = (np.frombuffer(raw, dtype=np.uint8).astype(np.float64) - 128) / 128
     else:
-        raise ValueError("unbekanntes WAV-Format")
+        raise ValueError(_("unknown WAV format"))
     if nch > 1:
         x = x.reshape(-1, nch).mean(axis=1)
     return sr, x.tolist()
@@ -323,14 +326,14 @@ def render_zone(z: Zone) -> list[int]:
         st = os.stat(z.path)
         key = (z.path, st.st_mtime, st.st_size, json.dumps(asdict(z.edit), sort_keys=True))
     except OSError:
-        raise ValueError(f"{Path(z.path).name} fehlt")
+        raise ValueError(_("{name} is missing").format(name=Path(z.path).name))
     if key in _render_cache:
         return _render_cache[key]
     sr, x = read_mono(Path(z.path))
     y = apply_edit(sr, x, z.edit)
     y = sio.resample(y, sr, SLOT_RATE)
     if not y:
-        raise ValueError(f"{Path(z.path).name}: kein Audio übrig")
+        raise ValueError(_("{name}: no audio left").format(name=Path(z.path).name))
     if z.edit.normalize:
         s = sio.to_int16(y)
     else:
@@ -366,18 +369,19 @@ def fit_to_slot(kit: Kit):
 def budget_text(total_bytes: int) -> str:
     """„ZU LANG: 9,2 s von 7,4 s“ – verständliche Erklärung des Slot-Budgets."""
     secs = total_bytes * 2 / SLOT_RATE
-    return (f"Das Kit ist zu lang: {secs:.2f} s, ein Slot fasst {SLOT_SECONDS:.1f} s".replace(".", ",") + " (alle Sounds zusammen, "
-            f"{SLOT_BYTES // 1024} KiB IMA-ADPCM bei {SLOT_RATE // 1000} kHz). „Passend kürzen“ schneidet die längsten "
-            "Sounds, oder entferne Sounds aus dem Kit.")
+    return _("The kit is too long: {secs} s, a slot holds {cap} s (all sounds together, "
+             "{kib} KiB IMA-ADPCM at {khz} kHz). “Fit to slot” shortens the longest "
+             "sounds, or remove sounds from the kit.").format(secs=decimal(secs, 2), cap=decimal(SLOT_SECONDS, 1),
+                                                             kib=SLOT_BYTES // 1024, khz=SLOT_RATE // 1000)
 
 
 def build_slot(kit: Kit) -> tuple[bytes, bytes]:
     if not 1 <= len(kit.zones) <= 16:
-        raise ValueError("Ein Slot hat 1 bis 16 Sounds")
+        raise ValueError(_("A slot has 1 to 16 sounds"))
     zones = []
     for z in kit.zones:
         zones.append((render_zone(z), z.root, z.lo, z.hi))
-    total = sum((len(s) + 1) // 2 for s, *_ in zones)
+    total = sum((len(s) + 1) // 2 for s, *_rest in zones)
     if total > SLOT_BYTES:
         raise ValueError(budget_text(total))
     try:
@@ -386,7 +390,7 @@ def build_slot(kit: Kit) -> tuple[bytes, bytes]:
         msg = str(e)
         if "too long" in msg:
             raise ValueError(budget_text(total)) from e
-        raise ValueError(f"Slot lässt sich nicht bauen: {msg}") from e
+        raise ValueError(_("Cannot build the slot: {error}").format(error=msg)) from e
 
 
 def export_wavs(kit: Kit, folder: Path) -> list[Path]:
@@ -412,28 +416,28 @@ def slot_info(link) -> tuple[int, list[SampleSlot]]:
 
 
 def upload(link, slot: int, header: bytes, data: bytes, progress: Callable[[int, int], None] | None = None):
-    rc_text = {1: "Größe", 2: "Kopf", 3: "Daten-Prüfsumme", 4: "Flash", 5: "Zonen"}
+    rc_text = {1: _("size"), 2: _("header"), 3: _("data checksum"), 4: "Flash", 5: _("zones")}
     a = link.request(Cmd.SMP_BEGIN, [slot], timeout=5.0, retries=0)
     if a[0] != slot or a[-1]:
-        raise RuntimeError("Slot lässt sich nicht öffnen (Wiedergabe stoppen?)")
+        raise RuntimeError(_("Cannot open the slot (stop playback?)"))
     total = len(data)
     for off in range(0, total, 256):
         addr = sio.SLOT_DATA_OFF + off
         a = link.request(Cmd.SMP_WRITE, [slot, addr & 127, addr >> 7 & 127, addr >> 14 & 127, *pack7(data[off:off + 256])],
                          timeout=4.0, retries=0)
         if a[-1]:
-            raise RuntimeError(f"Schreibfehler bei {addr:#x} ({a[-1]})")
+            raise RuntimeError(_("Write error at {addr} ({rc})").format(addr=f"{addr:#x}", rc=a[-1]))
         if progress:
             progress(min(total, off + 256), total)
     a = link.request(Cmd.SMP_END, [slot, *pack7(header[:480])], timeout=8.0, retries=0)
     if a[-1]:
-        raise RuntimeError(f"Abschluss fehlgeschlagen: {rc_text.get(a[-1], a[-1])}")
+        raise RuntimeError(_("Finishing failed: {reason}").format(reason=rc_text.get(a[-1], a[-1])))
 
 
 def erase(link, slot: int):
     a = link.request(Cmd.SMP_ERASE, [slot], timeout=8.0, retries=0)
     if a[-1]:
-        raise RuntimeError("Löschen fehlgeschlagen")
+        raise RuntimeError(_("Erasing failed"))
 
 
 def read_slot(link, slot: int, hint: str = "") -> bytes:
@@ -443,7 +447,7 @@ def read_slot(link, slot: int, hint: str = "") -> bytes:
     objs = backup.list_objects(link, hint)
     o = next((x for x in objs if x.id == 32 + slot), None)
     if o is None:
-        raise RuntimeError(f"USR{slot + 1} taucht im Inventar des FM-1 nicht auf – Sicherung nicht möglich.")
+        raise RuntimeError(_("USR{n} does not appear in the FM-1 inventory – cannot back it up.").format(n=slot + 1))
     return backup.read_object(link, o) if o.size else b""
 
 
@@ -453,7 +457,7 @@ def restore_slot(link, slot: int, data: bytes, progress: Callable[[int, int], No
         erase(link, slot)
         return
     if len(data) < sio.SLOT_DATA_OFF:
-        raise RuntimeError("Gesicherter Slot ist zu kurz")
+        raise RuntimeError(_("Saved slot is too short"))
     upload(link, slot, data[:480], data[sio.SLOT_DATA_OFF:], progress)
 
 
@@ -509,7 +513,7 @@ class Library:
     def scan(self, roots: Iterable[Path], progress: Callable[[int, str], None] | None = None,
              cancel: Callable[[], bool] = lambda: False) -> dict:
         """inkrementell: neue/geänderte Dateien lesen, verschwundene entfernen."""
-        stats = {"neu": 0, "geändert": 0, "entfernt": 0, "gesamt": 0}
+        stats = {"neu": 0, "geändert": 0, "entfernt": 0, "gesamt": 0}  # i18n: ignore (Schlüssel)
         roots = [Path(r).expanduser() for r in roots]
         with self._lock, self._conn() as c:
             known = {r["path"]: (r["mtime"], r["size"]) for r in c.execute("SELECT path, mtime, size FROM samples")}
@@ -542,13 +546,13 @@ class Library:
                         if old:
                             c.execute("UPDATE samples SET size=?, mtime=?, duration=?, rate=?, channels=?, bits=? "
                                       "WHERE path=?", (st.st_size, st.st_mtime, m.duration, m.rate, m.channels, m.bits, sp))
-                            stats["geändert"] += 1
+                            stats["geändert"] += 1  # i18n: ignore
                         else:
                             c.execute("INSERT INTO samples(path, root, folder, name, ext, size, mtime, duration, rate, "
                                       "channels, bits, tags, added) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                                       (sp, str(root), str(p.parent), p.stem, p.suffix.lower(), st.st_size, st.st_mtime,
                                        m.duration, m.rate, m.channels, m.bits, auto_tags(p.relative_to(root)), time.time()))
-                            stats["neu"] += 1
+                            stats["neu"] += 1  # i18n: ignore
             # nur unter Ordnern, die es gibt (abgezogener Stick löscht keine Tags/Favoriten), und nur echte
             # Unterpfade ("/x/Samples" darf "/x/Samples2/…" nicht erfassen)
             alive = [str(r).rstrip(os.sep) + os.sep for r in roots if r.exists()]
@@ -633,8 +637,8 @@ class Library:
         if not sets:
             return
         with self._lock, self._conn() as c:
-            c.execute(f"UPDATE samples SET {', '.join(k + '=?' for k, _ in sets)} WHERE path=?",
-                      [v for _, v in sets] + [path])
+            c.execute(f"UPDATE samples SET {', '.join(k + '=?' for k, _v in sets)} WHERE path=?",
+                      [v for _k, v in sets] + [path])
 
     def mark_used(self, paths: Iterable[str]):
         with self._lock, self._conn() as c:

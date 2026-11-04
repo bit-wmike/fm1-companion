@@ -15,13 +15,14 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, 
                              QLineEdit, QProgressBar, QPushButton, QSpinBox, QVBoxLayout, QWidget)
 
 from .. import recorder
+from ..i18n import _, decimal
 from .audio import LiveWave, Player, Waveform
 from .common import confirm, fmt_secs, fs_error_text, icon, run_job, show_error
 from .. import samples as S
 
 
 def _unique(folder: Path, name: str) -> Path:
-    safe = re.sub(r"[^\w\-. ]+", "_", name).strip() or "Aufnahme"
+    safe = re.sub(r"[^\w\-. ]+", "_", name).strip() or _("Recording")
     p = folder / f"{safe}.wav"
     k = 2
     while p.exists():
@@ -49,24 +50,24 @@ class SampleRecorder(QWidget):
         self.tmpdir = Path(tempfile.mkdtemp(prefix="fm1c-samplerec-"))
 
         lay = QVBoxLayout(self)
-        g = QGroupBox("Quelle")
+        g = QGroupBox(_("Source"))
         f = QFormLayout(g)
         self.source = QComboBox()
-        self.source.setToolTip("FM-1 über USB, ein Eingang des Rechners (Line-in, USB-Mikrofon) oder der "
-                               "Ausgang des Rechners (alles, was gerade spielt)")
-        b_find = QPushButton(icon("view-refresh"), "Suchen")
+        self.source.setToolTip(_("FM-1 via USB, an input of the computer (line-in, USB microphone) or the "
+                                 "output of the computer (everything that is playing right now)"))
+        b_find = QPushButton(icon("view-refresh"), _("Search"))
         b_find.clicked.connect(self.find_sources)
         row = QHBoxLayout()
         row.addWidget(self.source, 1)
         row.addWidget(b_find)
-        f.addRow("Eingang:", row)
-        self.mono = QCheckBox("als Mono speichern")
+        f.addRow(_("Input:"), row)
+        self.mono = QCheckBox(_("save as mono"))
         self.mono.setChecked(True)
-        self.mono.setToolTip("Das FM-1 spielt Samples ohnehin mono ab")
+        self.mono.setToolTip(_("The FM-1 plays samples in mono anyway"))
         f.addRow("", self.mono)
         lay.addWidget(g)
 
-        g2 = QGroupBox("Aufnehmen")
+        g2 = QGroupBox(_("Record"))
         f2 = QFormLayout(g2)
         self.meters = [QProgressBar(), QProgressBar()]
         mrow = QVBoxLayout()
@@ -76,7 +77,7 @@ class SampleRecorder(QWidget):
             m.setFormat("L" if i == 0 else "R")
             m.setMaximumHeight(12)
             mrow.addWidget(m)
-        f2.addRow("Pegel:", mrow)
+        f2.addRow(_("Level:"), mrow)
         self.live = LiveWave()
         f2.addRow(self.live)
         self.preroll = QDoubleSpinBox()
@@ -84,11 +85,11 @@ class SampleRecorder(QWidget):
         self.preroll.setSingleStep(0.1)
         self.preroll.setValue(0.5)
         self.preroll.setSuffix(" s")
-        self.preroll.setToolTip("So viel vor dem Druck auf „Aufnehmen“ kommt mit (während „Bereit“ läuft)")
-        f2.addRow("Vorlauf:", self.preroll)
+        self.preroll.setToolTip(_("This much before pressing “Record” is included (while “Ready” is running)"))
+        f2.addRow(_("Pre-roll:"), self.preroll)
         trow = QHBoxLayout()
-        self.auto = QCheckBox("startet bei Signal über")
-        self.auto.setToolTip("Bereit machen, dann startet die Aufnahme beim ersten Ton von selbst")
+        self.auto = QCheckBox(_("starts on signal above"))
+        self.auto.setToolTip(_("Get ready, then recording starts by itself on the first sound"))
         self.thr = QSpinBox()
         self.thr.setRange(-60, -3)
         self.thr.setValue(-30)
@@ -96,15 +97,15 @@ class SampleRecorder(QWidget):
         trow.addWidget(self.auto)
         trow.addWidget(self.thr)
         trow.addStretch(1)
-        f2.addRow("Auto-Start:", trow)
+        f2.addRow(_("Auto start:"), trow)
         brow = QHBoxLayout()
-        self.b_arm = QPushButton(icon("audio-input-microphone"), "Bereit (mithören)")
-        self.b_arm.setToolTip("Eingang öffnen und Pegel zeigen, ohne zu speichern")
+        self.b_arm = QPushButton(icon("audio-input-microphone"), _("Ready (monitor)"))
+        self.b_arm.setToolTip(_("Open the input and show the level without saving"))
         self.b_arm.clicked.connect(self.toggle_monitor)
-        self.b_rec = QPushButton(icon("media-record"), "Aufnehmen")
+        self.b_rec = QPushButton(icon("media-record"), _("Record"))
         self.b_rec.setProperty("variant", "primary")
         self.b_rec.clicked.connect(self.toggle_record)
-        self.time = QLabel("0,0 s")
+        self.time = QLabel(decimal(0, 1) + " s")
         brow.addWidget(self.b_arm)
         brow.addWidget(self.b_rec)
         brow.addWidget(self.time)
@@ -116,15 +117,15 @@ class SampleRecorder(QWidget):
         f2.addRow(self.state)
         lay.addWidget(g2)
 
-        g3 = QGroupBox("Ergebnis")
+        g3 = QGroupBox(_("Result"))
         f3 = QFormLayout(g3)
         self.wave = Waveform()
-        self.wave.text = "Noch nichts aufgenommen – „Aufnehmen“ drücken, spielen, „Stopp“."
+        self.wave.text = _("Nothing recorded yet – press “Record”, play, “Stop”.")
         f3.addRow(self.wave)
         orow = QHBoxLayout()
-        self.trim = QCheckBox("Stille abschneiden")
+        self.trim = QCheckBox(_("Trim silence"))
         self.trim.setChecked(True)
-        self.norm = QCheckBox("Normalisieren")
+        self.norm = QCheckBox(_("Normalize"))
         self.norm.setChecked(True)
         for c in (self.trim, self.norm):
             c.toggled.connect(self._reprocess)
@@ -132,19 +133,19 @@ class SampleRecorder(QWidget):
         orow.addStretch(1)
         f3.addRow(orow)
         self.name = QLineEdit()
-        self.name.setPlaceholderText("z. B. Snare Küchentopf")
-        f3.addRow("Name:", self.name)
+        self.name.setPlaceholderText(_("e.g. Snare kitchen pot"))
+        f3.addRow(_("Name:"), self.name)
         self.tags = QLineEdit()
-        self.tags.setPlaceholderText("Schlagwörter, durch Komma getrennt (z. B. snare, eigen)")
-        f3.addRow("Schlagwörter:", self.tags)
+        self.tags.setPlaceholderText(_("Tags, separated by commas (e.g. snare, own)"))
+        f3.addRow(_("Tags:"), self.tags)
         srow = QHBoxLayout()
-        self.b_play = QPushButton(icon("media-playback-start"), "Anhören")
+        self.b_play = QPushButton(icon("media-playback-start"), _("Listen"))
         self.b_play.clicked.connect(self.play)
-        self.b_save = QPushButton(icon("document-save"), "In die Bibliothek")
+        self.b_save = QPushButton(icon("document-save"), _("Into the library"))
         self.b_save.setProperty("variant", "primary")
-        self.b_save.setToolTip("Speichert nach ~/FM-1/Samples/Aufnahmen und nimmt es in die Bibliothek auf")
+        self.b_save.setToolTip(_("Saves to ~/FM-1/Samples/Aufnahmen and adds it to the library"))
         self.b_save.clicked.connect(self.save)
-        self.b_drop = QPushButton(icon("edit-delete"), "Verwerfen")
+        self.b_drop = QPushButton(icon("edit-delete"), _("Discard"))
         self.b_drop.clicked.connect(self.discard)
         for b in (self.b_play, self.b_save, self.b_drop):
             srow.addWidget(b)
@@ -165,7 +166,7 @@ class SampleRecorder(QWidget):
         if self.rec and self.rec.running or getattr(self, "_finding", False):
             return
         self._finding = True
-        self.state.setText("Suche Eingänge …")
+        self.state.setText(_("Looking for inputs …"))
         port = self.ctx.port
 
         def done(sources):
@@ -175,7 +176,7 @@ class SampleRecorder(QWidget):
         def fail(m, tb):
             self._finding = False
             self._found([])
-            self.state.setText(f"Eingänge konnten nicht gesucht werden: {m}")
+            self.state.setText(_("Could not look for inputs: {error}").format(error=m))
         run_job(self, lambda w: recorder.list_sources(port), on_done=done, on_fail=fail)
 
     def _found(self, sources):
@@ -191,9 +192,9 @@ class SampleRecorder(QWidget):
         info = getattr(self.ctx, "info", None)
         hint = melodee16.usb_record_hint(info.version if info else "")
         for m in self.meters:
-            m.setToolTip(hint + (" (gilt für die Quelle „FM-1 über USB“)" if hint else ""))
-        self.state.setText("" if ok else "Kein Aufnahme-Eingang gefunden. FM-1 per USB anschließen, ein USB-Mikrofon "
-                                         "einstecken oder PipeWire nutzen (dann geht auch der Ausgang des Rechners).")
+            m.setToolTip(_("{hint} (applies to the source “FM-1 via USB”)").format(hint=hint) if hint else "")
+        self.state.setText("" if ok else _("No recording input found. Connect the FM-1 via USB, plug in a USB microphone "
+                                           "or use PipeWire (then the output of the computer works too)."))
 
     def select_kind(self, kind: str) -> bool:
         i = self.source.findData(kind)
@@ -223,7 +224,7 @@ class SampleRecorder(QWidget):
             self.rec.start()                   # wartet 0,6 s je Aufnahmeweg
         except Exception as e:  # noqa: BLE001
             self.rec = None
-            show_error(self, "Eingang lässt sich nicht öffnen", str(e))
+            show_error(self, _("Cannot open the input"), str(e))
             return False
         self._monitor_started(dev, ch)
         return True
@@ -232,8 +233,9 @@ class SampleRecorder(QWidget):
         self.tail = recorder.TailReader(self.rec.path, ch)
         self.ring = []
         self.live.reset(self.rate)
-        self.b_arm.setText("Bereit – beenden")
-        self.state.setText(f"Hört mit: {dev.title}" + (" · startet beim ersten Ton" if self.auto.isChecked() else ""))
+        self.b_arm.setText(_("Ready – stop"))
+        self.state.setText(_("Monitoring: {source} · starts on the first sound").format(source=dev.title) if self.auto.isChecked()
+                           else _("Monitoring: {source}").format(source=dev.title))
         self.timer.start()
 
     def start_monitor_async(self, then=None):
@@ -247,14 +249,14 @@ class SampleRecorder(QWidget):
         try:
             rec = recorder.Recording(dev, self.tmpdir, ch, self.rate, "monitor")
         except OSError as e:
-            show_error(self, "Eingang lässt sich nicht öffnen", str(e))
+            show_error(self, _("Cannot open the input"), str(e))
             return
         self._opening = True
         self.b_arm.setEnabled(False)
         self.b_rec.setEnabled(False)
-        self.state.setText(f"Öffne {dev.title} …")
+        self.state.setText(_("Opening {source} …").format(source=dev.title))
 
-        def done(_):
+        def done(_rec):
             self._opening = False
             self.b_arm.setEnabled(True)
             self.b_rec.setEnabled(True)
@@ -268,7 +270,7 @@ class SampleRecorder(QWidget):
             self.b_arm.setEnabled(True)
             self.b_rec.setEnabled(True)
             self.state.setText("")
-            show_error(self, "Eingang lässt sich nicht öffnen", m)
+            show_error(self, _("Cannot open the input"), m)
         run_job(self, lambda w: rec.start(), on_done=done, on_fail=fail)
 
     def toggle_monitor(self):
@@ -295,9 +297,9 @@ class SampleRecorder(QWidget):
         self.ring = []
         self.started = time.time()
         self.live.mark()
-        self.b_rec.setText("Stopp")
+        self.b_rec.setText(_("Stop"))
         self.b_rec.setIcon(icon("media-playback-stop"))
-        self.state.setText("Nimmt auf …")
+        self.state.setText(_("Recording …"))
         return True
 
     def stop(self):
@@ -307,12 +309,12 @@ class SampleRecorder(QWidget):
         take = np.concatenate(self.take) if self.take else np.zeros((0, 2))
         self.take = None
         self._stop_capture()
-        self.b_rec.setText("Aufnehmen")
+        self.b_rec.setText(_("Record"))
         self.b_rec.setIcon(icon("media-record"))
         self._raw = take
         self._reprocess()
         if not self.name.text().strip():
-            self.name.setText(time.strftime("Aufnahme %Y-%m-%d %H-%M-%S"))
+            self.name.setText(time.strftime(_("Recording %Y-%m-%d %H-%M-%S")))
 
     def _stop_capture(self):
         self.timer.stop()
@@ -324,7 +326,7 @@ class SampleRecorder(QWidget):
             for p in self.tmpdir.glob("*.wav"):
                 p.unlink(missing_ok=True)
         self.rec = None
-        self.b_arm.setText("Bereit (mithören)")
+        self.b_arm.setText(_("Ready (monitor)"))
         for m in self.meters:
             m.setValue(0)
 
@@ -352,15 +354,15 @@ class SampleRecorder(QWidget):
                     self.record()
         if self.take is not None:
             secs = sum(len(b) for b in self.take) / self.rate
-            self.time.setText(f"{secs:.1f} s".replace(".", ","))
+            self.time.setText(decimal(secs, 1) + " s")
             if secs > 120:
                 self.stop()
-                self.state.setText("Nach 2 Minuten automatisch gestoppt.")
+                self.state.setText(_("Stopped automatically after 2 minutes."))
         if self.rec and not self.rec.running and self.take is not None:
             self.stop()
 
     # ------------------------------------------------------------------ Ergebnis
-    def _reprocess(self, *_):
+    def _reprocess(self, *_args):
         if self._raw is None:
             return
         y = recorder.process_take(self._raw, self.rate, self.trim.isChecked(), self.norm.isChecked())
@@ -370,10 +372,10 @@ class SampleRecorder(QWidget):
         if len(y):
             mono = y if y.ndim == 1 else y.mean(axis=1)
             self.wave.set_data(S.peaks(mono.tolist(), 800), len(y) / self.rate)
-            self.state.setText(f"Aufgenommen: {fmt_secs(len(y) / self.rate) if len(y) > 60 * self.rate else f'{len(y) / self.rate:.2f} s'}"
-                               " – anhören, benennen, in die Bibliothek legen.")
+            length = fmt_secs(len(y) / self.rate) if len(y) > 60 * self.rate else f"{len(y) / self.rate:.2f} s"
+            self.state.setText(_("Recorded: {length} – listen, name it, put it into the library.").format(length=length))
         else:
-            self.wave.clear("Nur Stille aufgenommen – Pegel prüfen.")
+            self.wave.clear(_("Only silence recorded – check the level."))
         self._set_result_enabled(bool(len(y)))
 
     def _set_result_enabled(self, on: bool):
@@ -389,15 +391,15 @@ class SampleRecorder(QWidget):
     def save(self) -> Path | None:
         if self.result is None or not len(self.result):
             return None
-        folder = self.ctx.settings.samples_dir / "Aufnahmen"
+        folder = self.ctx.settings.samples_dir / "Aufnahmen"  # i18n: ignore (Ordnername)
         try:
-            path = _unique(folder, self.name.text().strip() or "Aufnahme")
+            path = _unique(folder, self.name.text().strip() or _("Recording"))
             recorder.write_wav_array(path, self.result, self.rate)
             self.lib.add_file(path, root=self.ctx.settings.samples_dir, tags="aufnahme," + self.tags.text())
         except OSError as e:
-            show_error(self, "In die Bibliothek", fs_error_text(e, "Aufnahme nicht gespeichert"))
+            show_error(self, _("Into the library"), fs_error_text(e, _("Recording not saved")))
             return None
-        self.state.setText(f"Gespeichert: {path.name} – liegt jetzt in der Bibliothek (Ordner Aufnahmen).")
+        self.state.setText(_("Saved: {name} – now in the library (folder Aufnahmen).").format(name=path.name))
         self.result, self._raw = None, None
         self.name.clear()
         self._set_result_enabled(False)
@@ -406,12 +408,12 @@ class SampleRecorder(QWidget):
 
     def discard(self):
         if self.result is not None and len(self.result) and not confirm(
-                self, "Verwerfen", "Die Aufnahme verwerfen? Sie ist noch nicht gespeichert und lässt sich nicht "
-                "zurückholen.", "Verwerfen", danger=True):
+                self, _("Discard"), _("Discard the recording? It is not saved yet and cannot be "
+                                      "recovered."), _("Discard"), danger=True):
             return
         self.result, self._raw = None, None
-        self.wave.clear("Verworfen – nichts gespeichert.")
-        self.state.setText("Aufnahme verworfen.")
+        self.wave.clear(_("Discarded – nothing saved."))
+        self.state.setText(_("Recording discarded."))
         self._set_result_enabled(False)
 
     def shutdown(self):

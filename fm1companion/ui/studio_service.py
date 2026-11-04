@@ -28,6 +28,7 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
 from .. import config, studio as S
+from ..i18n import _
 from ..devices import PortInfo, Profile
 
 SETTINGS = {"last_profile": "", "inputs": [], "fm1_keys": True, "audio": True, "export_dir": "",
@@ -35,7 +36,7 @@ SETTINGS = {"last_profile": "", "inputs": [], "fm1_keys": True, "audio": True, "
             "export_loops": 2}
 HISTORY_MAX = 30
 VIRTUAL_KEY = "studio-twin|STUDIO"
-VIRTUAL_PROFILE = Profile(id="studio-zwilling", name="Studio-Zwilling", color="#a06cd5", notes="virtuell")
+VIRTUAL_PROFILE = Profile(id="studio-zwilling", name=_("Studio twin"), color="#a06cd5", notes=_("virtual"))
 INFO_NAME = "studio-info.json"
 
 
@@ -62,14 +63,14 @@ def route_webengine_audio(sink: str) -> str:
     if not sink:
         return ""
     if not shutil.which("pactl"):
-        return ("Der gewählte Ausgang lässt sich für das Studio nicht einstellen (pactl fehlt: sudo apt install "
-                "pulseaudio-utils) – der Ton kommt über den Standard-Ausgang des Systems.")
+        return _("The chosen output cannot be set for the studio (pactl is missing: {command}) – the sound comes "
+                 "through the system's default output.").format(command="sudo apt install pulseaudio-utils")
     try:
         out = subprocess.run(["pactl", "-f", "json", "list", "sink-inputs"], capture_output=True, text=True,
                              timeout=3).stdout
         items = json.loads(out or "[]")
     except (OSError, subprocess.SubprocessError, ValueError):
-        return "Der gewählte Ausgang ließ sich für das Studio nicht einstellen – Standard-Ausgang des Systems."
+        return _("The chosen output could not be set for the studio – system default output.")
     moved = 0
     for it in items:
         p = it.get("properties", {}) or {}
@@ -79,7 +80,7 @@ def route_webengine_audio(sink: str) -> str:
             with contextlib.suppress(OSError, subprocess.SubprocessError):
                 subprocess.run(["pactl", "move-sink-input", str(it.get("index")), sink], timeout=3)
                 moved += 1
-    return "" if moved else "Der Studio-Ton wurde noch nicht gefunden – er läuft über den Standard-Ausgang."
+    return "" if moved else _("The studio sound was not found yet – it plays through the default output.")
 
 
 class StudioService(QObject):
@@ -184,7 +185,7 @@ class StudioService(QObject):
 
     def _close_twin(self):
         if self.ctx.is_virtual:
-            self.ctx.disconnect("Studio-Zwilling neu gestartet")
+            self.ctx.disconnect(_("Studio twin restarted"))
         st, self.st = self.st, None
         page, self.page = self.page, None
         self.page_changed.emit()           # Studio-Seite lässt die Seite los, bevor sie verschwindet
@@ -244,7 +245,7 @@ class StudioService(QObject):
         path = S.state_path(folder)
         meta, _flash = S.read_state(path)
         self.ensure(meta.get("firmware_version", ""), meta.get("firmware", "melodee"))
-        self.snapshot("vor dem Laden des Studio-Stands", only_if_changed=True)
+        self.snapshot(_("before loading the studio state"), only_if_changed=True)
         self.busy += 1
         try:
             meta = self.st.load_state(path)
@@ -258,7 +259,7 @@ class StudioService(QObject):
         self.st.rejected = list(self.source.get("rejected", []))
         self.cfg["last_profile"] = folder
         self._sum = None
-        self.snapshot("Studio-Stand geladen")
+        self.snapshot(_("Studio state loaded"))
         self.saved_at = time.time()
         self.changed.emit()
         return meta
@@ -267,7 +268,7 @@ class StudioService(QObject):
         """nach dem Einspielen eines Backups (aus einem Arbeits-Thread fertig): Herkunft merken, sichern."""
         self._set_source(kind, backup_version=S.backup_version(archive), **kw)
         self._sum = None
-        self.snapshot("aus " + ("dem FM-1" if kind == "device" else "dem Backup") + " geladen")
+        self.snapshot(_("loaded from the FM-1") if kind == "device" else _("loaded from the backup"))
         self.autosave(force=True)
         self.changed.emit()
 
@@ -288,7 +289,7 @@ class StudioService(QObject):
                     self.open_state(f)
                     return True
                 except Exception as e:  # noqa: BLE001 – kaputter Stand: leer starten
-                    self.last_error = f"Studio-Stand „{f}“ nicht lesbar: {e}"
+                    self.last_error = _("Studio state “{name}” not readable: {error}").format(name=f, error=e)
         dev = c.info.version if (c.info and not c.is_virtual and self.firmware_for(c.firmware_key)) else ""
         if c.profile is not None and not c.is_virtual and dev:
             self.source = {"kind": "new", "time": dt.datetime.now().isoformat(timespec="seconds"),
@@ -302,11 +303,13 @@ class StudioService(QObject):
         if not self.source:
             self.source = {"kind": "new", "time": dt.datetime.now().isoformat(timespec="seconds"),
                            "profile_folder": self.profile_folder()}
-            self.snapshot("leer gestartet")
+            self.snapshot(_("started empty"))
             self.changed.emit()
 
     # ------------------------------------------------------------ Autosave und Verlauf
-    def snapshot(self, label: str = "Zwischenstand", only_if_changed: bool = False) -> bool:
+    def snapshot(self, label: str | None = None, only_if_changed: bool = False) -> bool:
+        if label is None:
+            label = _("Intermediate state")
         if self.st is None:
             return False
         try:
@@ -373,11 +376,11 @@ class StudioService(QObject):
         try:
             path = self.st.save_state(self.state_file(), note=self.source.get("device", ""))
         except (OSError, S.StudioError) as e:
-            self.last_error = f"Studio-Stand nicht gespeichert: {e}"
+            self.last_error = _("Studio state not saved: {error}").format(error=e)
             self.message.emit(self.last_error)
             return None
         if self._sum is not None and s != self._sum and not force:
-            self.snapshot("Änderung um " + time.strftime("%H:%M"))
+            self.snapshot(_("Change at {time}").format(time=time.strftime("%H:%M")))
         self._sum = s
         self.saved_at = time.time()
         self._write_info()
@@ -450,7 +453,7 @@ class StudioService(QObject):
             else:
                 self.st.stop_audio()
         except S.StudioError as e:
-            self.audio_note = f"Ton nicht verfügbar: {e}"
+            self.audio_note = _("Sound not available: {error}").format(error=e)
             self._audio = False
             return self.audio_note
         self._audio = on
@@ -465,7 +468,7 @@ class StudioService(QObject):
                 sink = audioout.effective_output(chosen)
                 if not sink:
                     return
-                for _ in range(20):            # Chromiums Strom erscheint mit kurzer Verzögerung: früh verschieben
+                for _i in range(20):            # Chromiums Strom erscheint mit kurzer Verzögerung: früh verschieben
                     time.sleep(0.1)
                     note = route_webengine_audio(sink)
                     if not note:
@@ -542,13 +545,13 @@ class StudioService(QObject):
     def _virtual_ports(self) -> list[PortInfo]:
         if self.st is None:
             return []
-        label = f"Studio-Zwilling (Melodee {self.st.build.version.lstrip('v')})"
+        label = _("Studio twin (Melodee {version})").format(version=self.st.build.version.lstrip('v'))
         return [PortInfo(in_name=label, out_name=label, label=label, client=None, serial="STUDIO",
-                         usb_path="studio-twin", product="Studio-Zwilling", virtual=True)]
+                         usb_path="studio-twin", product=_("Studio twin"), virtual=True)]
 
     def _virtual_transport(self, port):
         if self.st is None:
-            raise S.StudioError("Der Studio-Zwilling läuft nicht – erst die Seite „Studio“ öffnen.")
+            raise S.StudioError(_("The studio twin is not running – open the page “Studio” first."))
         self._clock = None
         QTimer.singleShot(0, self._update_clock)
         return S.StudioTransport(self.st.backend)
@@ -568,26 +571,27 @@ class StudioService(QObject):
     def source_text(self) -> str:
         s = self.source
         if self.st is None:
-            return "Der Zwilling läuft noch nicht."
+            return _("The twin is not running yet.")
         when = s.get("time", "")
         with contextlib.suppress(ValueError):
-            when = dt.datetime.fromisoformat(when).strftime("%d.%m.%Y %H:%M")
+            # Translators: date and time format (strftime)
+            when = dt.datetime.fromisoformat(when).strftime(_("%Y-%m-%d %H:%M"))
         kind = s.get("kind")
         if kind == "device":
-            txt = f"vom FM-1 „{s.get('device', '?')}“ geholt am {when}"
+            txt = _("fetched from the FM-1 “{device}” on {time}").format(device=s.get('device', '?'), time=when)
         elif kind == "backup":
-            txt = f"aus dem Backup „{Path(s.get('backup', '')).name}“ ({s.get('device') or 'unbekanntes Gerät'}), " \
-                  f"geöffnet am {when}"
+            txt = _("from the backup “{backup}” ({device}), opened on {time}").format(
+                backup=Path(s.get('backup', '')).name, device=s.get('device') or _('unknown device'), time=when)
         elif kind == "state":
-            txt = f"Studio-Stand von „{s.get('profile_folder', '?')}“ ({when})"
+            txt = _("Studio state of “{name}” ({time})").format(name=s.get('profile_folder', '?'), time=when)
         elif kind == "new":
-            txt = "leer gestartet – noch nichts geladen"
+            txt = _("started empty – nothing loaded yet")
         else:
-            txt = "unbekannte Herkunft"
+            txt = _("unknown origin")
         rej = s.get("rejected") or []
         if rej:
             from .. import backup
             names = ", ".join(backup.object_title(i) for i in rej[:4]) + (" …" if len(rej) > 4 else "")
-            txt += (f". Nicht übernommen ({len(rej)}): {names} – diese Teile passen nicht zu Melodee "
-                    f"{self.st.build.version} und werden beim Zurückschreiben ausgelassen")
+            txt += _(". Not taken over ({n}): {names} – these parts do not fit Melodee {version} and are left out "
+                     "when writing back").format(n=len(rej), names=names, version=self.st.build.version)
         return txt

@@ -30,6 +30,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from . import config
+from .i18n import N_, _
 
 MOORING_URL = "https://raw.githubusercontent.com/cicloid/awesome-fm-1/main/mooring/catalog.json"
 README_URL = "https://raw.githubusercontent.com/cicloid/awesome-fm-1/main/README.md"
@@ -44,7 +45,7 @@ class _HttpsOnlyRedirect(urllib.request.HTTPRedirectHandler):
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if urllib.parse.urlsplit(newurl).scheme.lower() != "https":
-            raise urllib.error.URLError(f"Weiterleitung auf eine unsichere Adresse abgelehnt: {newurl}")
+            raise urllib.error.URLError(_("Redirect to an insecure address refused: {url}").format(url=newurl))
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
@@ -56,7 +57,7 @@ def _https_urlopen(req, timeout: float = 20, **kw):
     """Katalog und Vorschaubilder kommen von Adressen aus einem fremden Katalog: nur https."""
     url = req.full_url if isinstance(req, urllib.request.Request) else str(req)
     if urllib.parse.urlsplit(url).scheme.lower() != "https":
-        raise urllib.error.URLError(f"nur https-Adressen erlaubt: {url[:120]}")
+        raise urllib.error.URLError(_("only https addresses allowed: {url}").format(url=url[:120]))
     return _raw_urlopen(req, timeout=timeout, **kw)
 
 
@@ -64,18 +65,68 @@ urlopen = _https_urlopen                  # in Tests ersetzbar
 FELUCCA_PROTOCOL_FAMILIES = {"melodee", "skiff", "sloop", "felucca"}
 
 # Kategorien wie in den Firmware-Verzeichnissen (thefirmwarehub.com / fm1-editor.com)
-CATEGORIES = ["Original", "Synth", "Groovebox", "Sampler", "Akkorde", "Generativ", "Werkzeug", "Spiele & Spaß"]
-LINEAGES = ["Felucca", "SLOOP", "FoMni", "Original M-VAVE", "eigenständig"]
+# the German names are internal keys (stored in the catalog data) – shown via category_name() / lineage_name()
+CATEGORIES = ["Original", "Synth", "Groovebox", "Sampler", "Akkorde", "Generativ", "Werkzeug", "Spiele & Spaß"]  # i18n: ignore
+LINEAGES = ["Felucca", "SLOOP", "FoMni", "Original M-VAVE", "eigenständig"]  # i18n: ignore
+CATEGORY_NAMES = {"Original": N_("Original"), "Synth": N_("Synth"), "Groovebox": N_("Groovebox"),
+                  "Sampler": N_("Sampler"), "Akkorde": N_("Chords"), "Generativ": N_("Generative"),
+                  "Werkzeug": N_("Tool"), "Spiele & Spaß": N_("Games & fun")}  # i18n: ignore
+LINEAGE_NAMES = {"eigenständig": N_("standalone")}  # i18n: ignore
+# license values written by the catalog parser (internal keys) -> display text
+LICENSE_NAMES = {"proprietär": N_("proprietary"), "keine Lizenz angegeben": N_("no license stated")}  # i18n: ignore
+# descriptions the app writes itself (not from awesome-fm-1) – stored in English, shown translated
+STOCK_DESCRIPTION = N_("The FM-1's factory firmware: 6-operator FM like the DX7, 128 presets, arpeggiator and "
+                       "step sequencer. With it you can get back from any custom firmware.")
+MOORING_ONLY_DESCRIPTION = N_("Listed in the Mooring catalog (installable), but not (yet) in the awesome-fm-1 list.")
+_APP_DESCRIPTIONS = {STOCK_DESCRIPTION, MOORING_ONLY_DESCRIPTION}
+# older snapshots / caches stored these texts in German
+_LEGACY_DESCRIPTIONS = {
+    "Die Werks-Firmware des FM-1: 6-Operator-FM wie der DX7, 128 Presets, Arpeggiator und "  # i18n: ignore
+    "Step-Sequencer. Mit ihr kommst du von jeder Custom-Firmware zurück.": STOCK_DESCRIPTION,
+    "Steht im Mooring-Katalog (installierbar), aber (noch) nicht in der awesome-fm-1-Liste.":  # i18n: ignore
+        MOORING_ONLY_DESCRIPTION,
+}
+
+
+def category_name(key: str) -> str:
+    """display name of a category key ("Akkorde" -> "Chords")"""
+    return _(CATEGORY_NAMES[key]) if key in CATEGORY_NAMES else key
+
+
+def lineage_name(key: str) -> str:
+    return _(LINEAGE_NAMES[key]) if key in LINEAGE_NAMES else key
+
+
+def license_name(lic: str) -> str:
+    return _(LICENSE_NAMES[lic]) if lic in LICENSE_NAMES else lic
+
+
+def description_text(e) -> str:
+    """description of an entry for display (app-written descriptions translated, upstream ones as they are)"""
+    d = _LEGACY_DESCRIPTIONS.get(e.description, e.description)
+    return _(d) if d in _APP_DESCRIPTIONS else d
+
+
+def is_app_description(e) -> bool:
+    """True when the description was written by the app (not the author's text from awesome-fm-1)"""
+    return _LEGACY_DESCRIPTIONS.get(e.description, e.description) in _APP_DESCRIPTIONS
+
+
+def protocol_evidence_text(e) -> str:
+    m = re.fullmatch(r"(?:known Felucca protocol family|bekannte Felucca-Protokoll-Familie) \((.+)\)",  # i18n: ignore
+                     e.protocol_evidence or "")
+    return _("known Felucca protocol family ({family})").format(family=m.group(1)) if m else e.protocol_evidence
 FIRMWARE_SECTIONS = {"Official": "official", "Open source": "open", "Closed source": "closed",
                      "Not a synth": "notsynth"}
 
-NOTE_TEXT = {
-    "beta": "Beta – kann noch Fehler haben.",
-    "powerLossNotResumable": "Ein abgebrochenes Aufspielen lässt sich nicht fortsetzen – vorher Akku voll laden "
-                             "oder am Netzteil lassen und das Kabel nicht bewegen!",
-    "projectsNotBackwardCompatible": "Projekte aus dieser Version lassen sich nicht in ältere Versionen laden.",
-    "needsMiniLab3": "Braucht ein Arturia MiniLab 3 zum Spielen.",
-    "requiresStockV15": "Nur von der Original-Firmware V15 aus installierbar – die App macht den Umweg automatisch.",
+NOTE_TEXT = {                      # translated where used: _(NOTE_TEXT[key])
+    "beta": N_("Beta – may still have bugs."),
+    "powerLossNotResumable": N_("An interrupted installation cannot be resumed – charge the battery fully "
+                                "first or leave it on the power supply and don't move the cable!"),
+    "projectsNotBackwardCompatible": N_("Projects from this version cannot be loaded into older versions."),
+    "needsMiniLab3": N_("Needs an Arturia MiniLab 3 to play."),
+    "requiresStockV15": N_("Can only be installed from the original firmware V15 – the app takes the "
+                           "detour automatically."),
 }
 
 
@@ -175,7 +226,7 @@ class Entry:
         if self.section == "closed":
             return False
         lic = self.license.lower()
-        return bool(lic) and not any(x in lic for x in ("proprietär", "kommerziell", "keine"))
+        return bool(lic) and not any(x in lic for x in ("proprietär", "kommerziell", "keine"))  # i18n: ignore
 
     @property
     def beta(self) -> bool:
@@ -211,15 +262,15 @@ class Entry:
         if self.beta and "beta" not in notes:
             notes.insert(0, "beta")
         for n in notes:
-            out.append(NOTE_TEXT.get(n, n))
+            out.append(_(NOTE_TEXT[n]) if n in NOTE_TEXT else n)
         if lp and lp.requires_stock_v15:
-            out.append(NOTE_TEXT["requiresStockV15"])
+            out.append(_(NOTE_TEXT["requiresStockV15"]))
         if "kostenpflichtig" in self.flags:
-            out.append("Kostenpflichtig – Kauf und Installation laufen über die Seite des Herstellers.")
+            out.append(_("Paid – purchase and installation go through the manufacturer's site."))
         if self.section == "closed":
-            out.append("Geschlossener Quellcode.")
+            out.append(_("Closed source."))
         if not lp and "quellcode" in self.flags:
-            out.append("Kein fertiges Paket – nur zum Selberbauen aus dem Quellcode.")
+            out.append(_("No ready-made package – only for building yourself from the source code."))
         return out
 
     def search_text(self) -> str:
@@ -354,7 +405,7 @@ def _split_label(label: str) -> tuple[str, str]:
 def parse_mooring(data: dict) -> dict:
     """-> {revision, issued, packages: [Package], loaders: {sha: family}}"""
     if data.get("format") != "mooring-catalog":
-        raise ValueError("kein Mooring-Katalog")
+        raise ValueError(_("not a Mooring catalog"))
     loaders = {l["sha256"]: l.get("family", "") for l in data.get("loaders", {}).get("loaders", [])}
     pkgs = []
     for e in data.get("allowlist", {}).get("entries", []):
@@ -377,16 +428,16 @@ def mooring_signature_status(catalog_bytes: bytes, intoto_line: bytes | None) ->
     Eine echte Signaturprüfung braucht den öffentlichen Schlüssel (keyid dbe8230a406629ab);
     der ist nicht veröffentlicht – deshalb zeigt die App kein „signiert ✓"."""
     if not intoto_line:
-        return "keine Signatur"
+        return _("no signature")
     try:
         env = json.loads(intoto_line)
         stmt = json.loads(base64.b64decode(env["payload"]))
         want = stmt["subject"][0]["digest"]["sha256"]
     except (ValueError, KeyError, IndexError, TypeError):
-        return "Signatur unlesbar"
+        return _("signature unreadable")
     if hashlib.sha256(catalog_bytes).hexdigest() != want:
-        return "Prüfsumme passt nicht"
-    return "Prüfsumme passt, Schlüssel unbekannt"
+        return _("checksum does not match")
+    return _("checksum matches, key unknown")
 
 
 # ================================================================= README ===
@@ -446,7 +497,7 @@ _CAT_WORDS = [
                   r"composes|random"),
     ("Synth", r"synth|fm\b|polysynth|virtual analog|wavetable|organ|juno|dx7|cs-80|sid|mellotron|vocal|singer|"
               r"physical model|engine"),
-    ("Spiele & Spaß", r"\bgames?\b|doom|\bnes\b|game boy|novelty|parody|\btoy\b|children|toddler|larp|fart|kids"),
+    ("Spiele & Spaß", r"\bgames?\b|doom|\bnes\b|game boy|novelty|parody|\btoy\b|children|toddler|larp|fart|kids"),  # i18n: ignore
     ("Werkzeug", r"midi controller|controller firmware|macro pad|usb keyboard|platform|framework|skeleton|pictures|"
                  r"stopover|time-signal|console|learning|course|beginner"),
 ]
@@ -464,8 +515,8 @@ def categorize(name: str, text: str, section: str) -> list[str]:
         if n_first or n_all:
             score[cat] = n_first * 3 + n_all
     if section == "notsynth":
-        game = score.get("Spiele & Spaß", 0)
-        return ["Spiele & Spaß"] if game >= score.get("Werkzeug", 0) and game else ["Werkzeug"]
+        game = score.get("Spiele & Spaß", 0)  # i18n: ignore
+        return ["Spiele & Spaß"] if game >= score.get("Werkzeug", 0) and game else ["Werkzeug"]  # i18n: ignore
     ranked = sorted(score.items(), key=lambda x: -x[1])
     top = ranked[0][1] if ranked else 0
     cats = [c for c, v in ranked if v >= max(2, top / 2) or v == top]
@@ -543,9 +594,9 @@ def _readme_entry(it: dict) -> Entry:
     if m:
         lic = m.group(1)
     elif _NO_LICENSE.search(desc):
-        lic = "keine Lizenz angegeben"
+        lic = "keine Lizenz angegeben"  # i18n: ignore
     elif it["section"] == "closed":
-        lic = "proprietär"
+        lic = "proprietär"  # i18n: ignore
     flags = []
     low = desc.lower()
     if re.search(r"\bbeta\b", low):
@@ -584,9 +635,8 @@ def merge(readme_text: str | None, mooring: dict | None, builtin_keys: dict | No
     cat = Catalog(resources=res, built=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
     entries: list[Entry] = []
     stock = Entry(key="stock", name="M-VAVE Original-Firmware", author="M-VAVE", section="official",
-                  categories=["Original"], lineage=["Original M-VAVE"], license="proprietär",
-                  description="Die Werks-Firmware des FM-1: 6-Operator-FM wie der DX7, 128 Presets, Arpeggiator und "
-                              "Step-Sequencer. Mit ihr kommst du von jeder Custom-Firmware zurück.")
+                  categories=["Original"], lineage=["Original M-VAVE"], license="proprietär",  # i18n: ignore
+                  description=STOCK_DESCRIPTION)
     for it in items:
         if it["section"] == "official":
             n = it["name"].lower()
@@ -633,8 +683,7 @@ def merge(readme_text: str | None, mooring: dict | None, builtin_keys: dict | No
                     if e is None:
                         e = Entry(key=p.family, name=p._name or p.family, section="mooring",
                                   repo=repo_of(p.source_repo), license=p.license,
-                                  description="Steht im Mooring-Katalog (installierbar), aber (noch) nicht in der "
-                                              "awesome-fm-1-Liste.")
+                                  description=MOORING_ONLY_DESCRIPTION)
                         e.categories = ["Synth"]
                         entries.append(e)
                         by_name[norm(e.name)] = e
@@ -678,7 +727,7 @@ def merge(readme_text: str | None, mooring: dict | None, builtin_keys: dict | No
         seen.add(e.key)
         fam = e.family or e.key
         if fam in FELUCCA_PROTOCOL_FAMILIES:
-            e.protocol, e.protocol_evidence = "felucca", f"bekannte Felucca-Protokoll-Familie ({fam})"
+            e.protocol, e.protocol_evidence = "felucca", f"known Felucca protocol family ({fam})"
         if not e.author and e.repo:
             e.author = e.repo.split("/")[0]
         if e.author.endswith("'s author"):
@@ -728,7 +777,7 @@ def _resolve_lineage(entries: list[Entry]):
                 base = roots.get(norm(m.group(1)))
                 res = ([base] if base else (chain(ref, depth + 1) if ref is not None and ref is not e else []))
         if not res and "__own__" in getattr(e, "_mentions", []):
-            res = ["eigenständig"]
+            res = ["eigenständig"]  # i18n: ignore
         e.lineage = res
         return res
 
@@ -741,7 +790,7 @@ def _resolve_lineage(entries: list[Entry]):
             e.lineage = ["Felucca"] + (["FoMni"] if e.key == "fomni" else [])
     for e in entries:
         if not e.lineage and e.section in ("open", "closed", "notsynth", "mooring"):
-            e.lineage = ["eigenständig"] if re.search(r"original|from scratch|own engine", e.description, re.I) else []
+            e.lineage = ["eigenständig"] if re.search(r"original|from scratch|own engine", e.description, re.I) else []  # i18n: ignore
 
 
 # ============================================================== Laden ===
@@ -828,18 +877,18 @@ def _get(url: str, etag_file: Path | None = None, timeout=20) -> tuple[bytes | N
     except urllib.error.HTTPError as e:
         if e.code == 304:
             return None, ""
-        raise Offline(f"HTTP {e.code} bei {url}") from e
+        raise Offline(_("HTTP {code} at {url}").format(code=e.code, url=url)) from e
     except (urllib.error.URLError, OSError) as e:
         raise Offline(str(getattr(e, "reason", e))) from e
 
 
-def refresh(log=lambda *_: None) -> Catalog:
+def refresh(log=lambda *_a: None) -> Catalog:
     """Live-Stand holen (Mooring + README), zusammenführen, im Cache ablegen. Läuft im Hintergrund."""
     d = cache_dir()
     out = {}
     for name, url in (("mooring.json", MOORING_URL), ("README.md", README_URL)):
         f, ef = d / name, d / (name + ".etag")
-        log(f"lade {url.rsplit('/', 1)[-1]} …")
+        log(_("loading {name} …").format(name=url.rsplit('/', 1)[-1]))
         data, etag = _get(url, ef if f.exists() else None)
         if data is not None:
             f.write_bytes(data)
@@ -878,11 +927,13 @@ def record_changes(old: Catalog, new: Catalog):
     old_keys = {e.key for e in old.entries}
     for e in new.entries:
         if e.key not in old_keys:
-            log.append({"key": e.key, "kind": "neu", "text": f"{e.name} ist neu im Katalog", "date": now})
+            log.append({"key": e.key, "kind": "neu",  # i18n: ignore
+                        "text": _("{name} is new in the catalog").format(name=e.name), "date": now})
         for p in e.packages:
             if p.sha256 and p.sha256 not in known and p.downloadable:
                 log.append({"key": e.key, "kind": "version", "tag": p.version,
-                            "text": f"{e.name} {p.version} ist da", "date": now})
+                            "text": _("{name} {version} is available").format(name=e.name, version=p.version),
+                            "date": now})
     changes_file().write_text(json.dumps(log[-300:], ensure_ascii=False, indent=1), "utf-8")
 
 
@@ -977,8 +1028,11 @@ def _read_cache(f: Path) -> dict | None:
 
 def limit_message(reset: int) -> str:
     when = time.strftime("%H:%M", time.localtime(reset)) if reset else ""
-    return "GitHub-Limit erreicht – später erneut" + (f" (ab {when} Uhr)" if when else "") + \
-        ". Mit einem eigenen GitHub-Token (Einstellungen von „Firmware+“) gibt es mehr Abfragen."
+    if when:
+        return _("GitHub limit reached – try again later (from {time}). With your own GitHub token (settings of "
+                 "“Firmware+”) you get more requests.").format(time=when)
+    return _("GitHub limit reached – try again later. With your own GitHub token (settings of “Firmware+”) you get "
+             "more requests.")
 
 
 def gh_api(path: str, ttl: float = MAX_AGE) -> tuple[object, str]:
@@ -1010,19 +1064,19 @@ def gh_api(path: str, ttl: float = MAX_AGE) -> tuple[object, str]:
             rem = e.headers.get("X-RateLimit-Remaining") if e.headers else None
             reset = int((e.headers.get("X-RateLimit-Reset") if e.headers else 0) or 0)
             msg = limit_message(reset) if rem == "0" or e.code == 429 else \
-                "GitHub verweigert gerade den Zugriff (403) – später erneut."
+                _("GitHub is refusing access right now (403) – try again later.")
             if c:
                 return c["data"], msg
             raise RateLimited(msg, reset) from e
         if e.code == 404:
-            raise Offline("Repo auf GitHub nicht gefunden (gelöscht, umbenannt oder privat)") from e
+            raise Offline(_("Repository not found on GitHub (deleted, renamed or private)")) from e
         if c:
-            return c["data"], f"GitHub antwortet mit Fehler {e.code} – zeige gespeicherten Stand"
-        raise Offline(f"GitHub-Fehler {e.code}") from e
+            return c["data"], _("GitHub answers with error {code} – showing the saved state").format(code=e.code)
+        raise Offline(_("GitHub error {code}").format(code=e.code)) from e
     except (urllib.error.URLError, OSError, ValueError) as e:
         if c:
-            return c["data"], "offline – zeige gespeicherten Stand"
-        raise Offline("keine Verbindung zu GitHub") from e
+            return c["data"], _("offline – showing the saved state")
+        raise Offline(_("no connection to GitHub")) from e
 
 
 def gh_cached(path: str) -> object | None:
@@ -1077,7 +1131,7 @@ def raw_exists(repo: str, path: str) -> bool:
 
 # ------------------------------------------- weitere Quellen (Pages, fmhub.json, Repo-Dateien, Suche)
 FM1_WORDS = re.compile(r"fm[-_ ]?1|felucca|m[-_ ]?vave|sloop|fwsc", re.I)
-FILLER_WORDS = re.compile(r"fm[-_ ]?1|m[-_ ]?vave|\bfirmware\b|\bfw\b|\bfor\b|\bfür\b|\bcustom\b", re.I)
+FILLER_WORDS = re.compile(r"fm[-_ ]?1|m[-_ ]?vave|\bfirmware\b|\bfw\b|\bfor\b|\bfür\b|\bcustom\b", re.I)  # i18n: ignore
 
 
 def fetch_text(url: str, max_bytes: int = 3 << 20, timeout: float = 15) -> str | None:
@@ -1092,7 +1146,7 @@ def fetch_text(url: str, max_bytes: int = 3 << 20, timeout: float = 15) -> str |
 
 def pages_url(repo: str) -> str:
     """'owner/name' -> https://owner.github.io/name/ (Standard-Adresse von GitHub Pages)"""
-    owner, _, name = repo.partition("/")
+    owner, _sep, name = repo.partition("/")
     return f"https://{owner.lower()}.github.io/{name}/" if owner and name else ""
 
 
@@ -1152,7 +1206,7 @@ def repo_fwsc_files(repo: str, refs: tuple[str, ...] = ("HEAD", "gh-pages")) -> 
     out = []
     for ref in refs:
         try:
-            data, _ = gh_api(f"repos/{repo}/git/trees/{ref}?recursive=1")
+            data, _hint = gh_api(f"repos/{repo}/git/trees/{ref}?recursive=1")
         except (RateLimited, Offline):
             continue
         for t in (data.get("tree") or []) if isinstance(data, dict) else []:
@@ -1188,7 +1242,7 @@ def search_repos(text: str, limit: int = 8) -> list[dict]:
     found: dict[str, dict] = {}
     for query in (f"{q} fm-1", f"{q} fm1", f"{q} m-vave", f"{q} in:name"):
         try:
-            data, _ = gh_api("search/repositories?per_page=30&q=" + urllib.parse.quote(query + " fork:true"))
+            data, _hint = gh_api("search/repositories?per_page=30&q=" + urllib.parse.quote(query + " fork:true"))
         except (RateLimited, Offline):
             break
         for it in (data.get("items") or []) if isinstance(data, dict) else []:
@@ -1227,7 +1281,7 @@ def repo_readme(repo: str, ttl: float = 7 * MAX_AGE) -> str:
             continue
     if c:
         return c["data"]
-    raise Offline("README nicht erreichbar")
+    raise Offline(_("README not reachable"))
 
 
 def thumb_file(url: str) -> Path:
@@ -1244,6 +1298,6 @@ def fetch_thumb(url: str, max_bytes: int = 6 << 20) -> Path:
     with urlopen(req, timeout=20) as r:
         data = r.read(max_bytes + 1)
     if len(data) > max_bytes:
-        raise Offline("Bild zu groß")
+        raise Offline(_("Image too large"))
     f.write_bytes(data)
     return f

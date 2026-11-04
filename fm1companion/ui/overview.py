@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (QColorDialog, QFormLayout, QGridLayout, QHBoxLayout
                              QPlainTextEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
 from .. import firmware
+from ..i18n import _, pgettext
 from .common import Card, fmt_date, fmt_size, heading, icon
 
 
@@ -32,7 +33,7 @@ class OverviewPage(QWidget):
         body = QWidget()
         scroll.setWidget(body)
         lay = QVBoxLayout(body)
-        lay.addWidget(heading("Übersicht", "Dein FM-1 auf einen Blick. Mehrere Geräte? Oben links umschalten."))
+        lay.addWidget(heading(_("Overview"), _("Your FM-1 at a glance. Several devices? Switch at the top left.")))
 
         grid = QGridLayout()
         grid.setHorizontalSpacing(12)
@@ -40,19 +41,22 @@ class OverviewPage(QWidget):
         lay.addLayout(grid)
 
         # Gerät (links, über zwei Zeilen)
-        self.dev_card = Card("Gerät", icon="audio-card")
+        self.dev_card = Card(_("Device"), icon="audio-card")
         self.dev_form = QFormLayout()
         self.dev_form.setHorizontalSpacing(12)
         self.dev_card.lay.addLayout(self.dev_form)
         self.lbl = {}
-        for k in ("Name", "Firmware", "Version", "Verbindung", "Seriennummer", "USB"):
+        # keys are identifiers (also used by the tests), the row titles are translated
+        for k, title in (("Name", _("Name:")), ("Firmware", _("Firmware:")), ("Version", _("Version:")),
+                         ("Verbindung", _("Connection:")), ("Seriennummer", _("Serial number:")),  # i18n: ignore
+                         ("USB", _("USB:"))):
             self.lbl[k] = QLabel("–")
             self.lbl[k].setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.lbl[k].setWordWrap(True)
-            self.dev_form.addRow(k + ":", self.lbl[k])
+            self.dev_form.addRow(title, self.lbl[k])
         row = QHBoxLayout()
-        self.b_rename = QPushButton(icon("edit-rename"), "Umbenennen")
-        self.b_color = QPushButton(icon("color-management", "preferences-desktop-color"), "Farbe")
+        self.b_rename = QPushButton(icon("edit-rename"), _("Rename"))
+        self.b_color = QPushButton(icon("color-management", "preferences-desktop-color"), _("Colour"))
         self.b_rename.clicked.connect(self._rename)
         self.b_color.clicked.connect(self._color)
         row.addWidget(self.b_rename)
@@ -60,7 +64,7 @@ class OverviewPage(QWidget):
         row.addStretch(1)
         self.dev_card.lay.addLayout(row)
         self.notes = QPlainTextEdit()
-        self.notes.setPlaceholderText("Notizen zu diesem Gerät (z. B. „das mit dem Kratzer, für Live-Sets“)")
+        self.notes.setPlaceholderText(_("Notes on this device (e.g. “the one with the scratch, for live sets”)"))
         self.notes.setMaximumHeight(56)
         self._notes_pid = ""
         self._notes_timer = QTimer(self, interval=700, singleShot=True)   # nicht bei jedem Tastendruck speichern
@@ -73,16 +77,16 @@ class OverviewPage(QWidget):
         grid.addLayout(right, 0, 1)
 
         # Sicherung (rechts oben)
-        self.bk_card = Card("Sicherung", icon="backup")
+        self.bk_card = Card(pgettext("overview", "Backup"), icon="backup")
         self.bk_text = QLabel("–")
         self.bk_text.setWordWrap(True)
         self.bk_card.lay.addWidget(self.bk_text)
         r3 = QHBoxLayout()
-        b3 = QPushButton(icon("document-save", "backup"), "Backup jetzt")
+        b3 = QPushButton(icon("document-save", "backup"), _("Back up now"))
         b3.setProperty("variant", "primary")
         b3.clicked.connect(self.backup_now.emit)
         self.b_backup = b3
-        b4 = QPushButton(icon("folder-open"), "Alle Backups")
+        b4 = QPushButton(icon("folder-open"), _("All backups"))
         b4.clicked.connect(lambda: self.navigate.emit("backups"))
         r3.addWidget(b3)
         r3.addWidget(b4)
@@ -91,14 +95,14 @@ class OverviewPage(QWidget):
         right.addWidget(self.bk_card)
 
         # Firmware / Updates (rechts darunter)
-        self.up_card = Card("Firmware & Updates", icon="system-software-update")
-        self.up_text = QLabel("Noch nicht geprüft.")
+        self.up_card = Card(_("Firmware & Updates"), icon="system-software-update")
+        self.up_text = QLabel(_("Not checked yet."))
         self.up_text.setWordWrap(True)
         self.up_card.lay.addWidget(self.up_text)
         r2 = QHBoxLayout()
-        b = QPushButton(icon("view-refresh"), "Jetzt prüfen")
+        b = QPushButton(icon("view-refresh"), _("Check now"))
         b.clicked.connect(self.check_updates.emit)
-        b2 = QPushButton(icon("system-software-update", "update-none"), "Zu den Firmwares")
+        b2 = QPushButton(icon("system-software-update", "update-none"), _("To the firmwares"))
         b2.clicked.connect(lambda: self.navigate.emit("firmware"))
         r2.addWidget(b)
         r2.addWidget(b2)
@@ -108,25 +112,30 @@ class OverviewPage(QWidget):
         right.addStretch(1)
 
         # Schnellzugriff: vier echte Aktionen
-        q = Card("Schnellzugriff", icon="zap")
+        q = Card(_("Quick access"), icon="zap")
         qg = QGridLayout()
         qg.setSpacing(8)
         self.quick_buttons = {}
-        for i, (txt, ic, slot, tip) in enumerate([
-                ("Backup jetzt", "document-save", self.backup_now.emit, "Komplettes Backup des aktiven FM-1 anlegen (Strg+B)"),
-                ("Editor öffnen", "audio-midi", lambda: self.navigate.emit("editor"), "Der Web-Editor der installierten Firmware"),
-                ("Firmware prüfen", "view-refresh", self.check_updates.emit, "Nach neuen Versionen für dieses Gerät suchen"),
-                ("Presets sichern", "bookmarks", self._save_presets, "Alle User-Presets des FM-1 einlesen und sichern")]):
+        # keys of quick_buttons are identifiers (also used by the tests); the button texts are translated
+        for i, (key, txt, ic, slot, tip) in enumerate([
+                ("Backup jetzt", _("Back up now"), "document-save", self.backup_now.emit,  # i18n: ignore
+                 _("Make a complete backup of the active FM-1 (Ctrl+B)")),
+                ("Editor öffnen", _("Open editor"), "audio-midi", lambda: self.navigate.emit("editor"),  # i18n: ignore
+                 _("The web editor of the installed firmware")),
+                ("Firmware prüfen", _("Check firmware"), "view-refresh", self.check_updates.emit,  # i18n: ignore
+                 _("Look for new versions for this device")),
+                ("Presets sichern", _("Back up presets"), "bookmarks", self._save_presets,  # i18n: ignore
+                 _("Read and back up all user presets of the FM-1"))]):
             bb = QPushButton(icon(ic, "applications-multimedia"), txt)
             bb.setToolTip(tip)
-            bb.clicked.connect(lambda _=False, f=slot: f())
+            bb.clicked.connect(lambda _c=False, f=slot: f())
             qg.addWidget(bb, i // 2, i % 2)
-            self.quick_buttons[txt] = bb
+            self.quick_buttons[key] = bb
         q.lay.addLayout(qg)
         grid.addWidget(q, 1, 0, Qt.AlignmentFlag.AlignTop)
 
         # Weitere Geräte
-        self.others = Card("Bekannte Geräte", icon="computer")
+        self.others = Card(_("Known devices"), icon="computer")
         self.others_text = QLabel("–")
         self.others_text.setWordWrap(True)
         self.others.lay.addWidget(self.others_text)
@@ -150,7 +159,7 @@ class OverviewPage(QWidget):
             except Exception:  # noqa: BLE001
                 items = []
             if items:
-                nc = Card("Neu im Katalog", icon="newspaper")
+                nc = Card(_("New in the catalogue"), icon="newspaper")
                 for it in items:
                     lab = QLabel(f"<b>{it.get('title', '')}</b> – {it.get('text', '')}")
                     lab.setWordWrap(True)
@@ -178,11 +187,11 @@ class OverviewPage(QWidget):
         self.lbl["Name"].setText(f"<b style='color:{p.color}'>●</b> {html.escape(p.name)}" if p else "–")
         from .device import firmware_name
         if port and port.update_mode:
-            fw_text = "Update-Modus"
+            fw_text = _("update mode")
         elif getattr(c, "firmware_ambiguous", False):
-            fw_text = "unbekannt – bitte wählen"
+            fw_text = _("unknown – please choose")
         else:
-            fw_text = firmware_name(c.firmware_key) or ("unbekannt" if port else "–")
+            fw_text = firmware_name(c.firmware_key) or (_("unknown") if port else "–")
         self.lbl["Firmware"].setText(fw_text)
         from .common import fw_label
         if c.info:
@@ -190,7 +199,7 @@ class OverviewPage(QWidget):
         elif port and port.update_mode:
             ver = c.identity or "–"
         elif port and getattr(c, "identity", ""):
-            ver = f"Kennung {c.identity}" + (f"  ({p.firmware_version})" if p and p.firmware_version else "")
+            ver = _("ID {id}").format(id=c.identity) + (f"  ({p.firmware_version})" if p and p.firmware_version else "")
         else:
             ver = (p.firmware_version if p and p.firmware_version else "–") if port else "–"
         if c.info and p and p.firmware_version and p.firmware_version.lstrip("vV") not in ver:
@@ -199,19 +208,19 @@ class OverviewPage(QWidget):
         if port and hasattr(c, "status_text"):
             state = c.status_text()
             if c.connected or getattr(c, "midi_connected", False):
-                state += f" · über {port.out_name}"
+                state += " · " + _("via {port}").format(port=port.out_name)
         else:
-            state = "kein FM-1 angeschlossen"
+            state = _("no FM-1 connected")
         self.lbl["Verbindung"].setText(state)
-        self.lbl["Seriennummer"].setText((port.serial or "keine (Gerät wird per Profil-Auswahl erkannt)") if port else "–")
-        self.lbl["USB"].setText(f"{port.usb_id} · Port {port.usb_path}" if port and port.usb_id else "–")
+        self.lbl["Seriennummer"].setText((port.serial or _("none (the device is recognised by choosing the profile)")) if port else "–")
+        self.lbl["USB"].setText(_("{id} · port {path}").format(id=port.usb_id, path=port.usb_path) if port and port.usb_id else "–")
         for b in (self.b_rename, self.b_color, self.notes):
             b.setEnabled(p is not None)
         can_backup = bool(c.connected)
-        why = ("Komplettes Backup des aktiven FM-1 anlegen (Strg+B)" if can_backup else
-               ("Backup geht nur bei Firmwares mit Editor-Protokoll (Melodee, Skiff, SLOOP)." if port else
-                "Erst ein FM-1 anschließen."))
-        for b in (self.b_backup, self.quick_buttons.get("Backup jetzt")):
+        why = (_("Make a complete backup of the active FM-1 (Ctrl+B)") if can_backup else
+               (_("Backup only works with firmwares with editor protocol (Melodee, Skiff, SLOOP).") if port else
+                _("Connect an FM-1 first.")))
+        for b in (self.b_backup, self.quick_buttons.get("Backup jetzt")):  # i18n: ignore
             if b is not None:
                 b.setEnabled(can_backup)
                 b.setToolTip(why)
@@ -224,12 +233,13 @@ class OverviewPage(QWidget):
         connected = {pr.id for pr in (c.profile_for_port(x) for x in c.ports) if pr}
         for prof in sorted(c.store.profiles.values(), key=lambda x: x.name):
             fw = firmware.spec(prof.firmware) if prof.firmware else None
-            state = "aktiv" if p and prof.id == p.id else ("angeschlossen" if prof.id in connected else "nicht angeschlossen")
+            state = _("active") if p and prof.id == p.id else (_("plugged in") if prof.id in connected
+                                                               else _("not plugged in"))
             ver = re.sub(r"^[vV](?=\d)", "", prof.firmware_version or "")   # wie oben: „1.6.0-rc.7“, nicht „v1.6.0-rc.7“
-            what = f"{fw.name if fw else prof.firmware} {ver}".strip() or "Firmware unbekannt"
+            what = f"{fw.name if fw else prof.firmware} {ver}".strip() or _("firmware unknown")
             lines.append(f"<b style='color:{prof.color}'>●</b> <b>{html.escape(prof.name)}</b> – "
                          f"{html.escape(what)} · {state}")
-        self.others_text.setText("<br>".join(lines) or "Noch keine Geräte. Schließe ein FM-1 an.")
+        self.others_text.setText("<br>".join(lines) or _("No devices yet. Connect an FM-1."))
 
     def _backup_text(self):
         c = self.ctx
@@ -241,10 +251,10 @@ class OverviewPage(QWidget):
             from .. import autobackup as AB
             files = [m.path for m in AB.list_backups(folder, recursive=False)]   # nur lesbare, neueste zuerst
         except OSError as e:
-            self.bk_text.setText(f"<b>Backup-Ordner nicht erreichbar.</b> {getattr(e, 'strerror', '') or e}")
+            self.bk_text.setText(_("<b>Backup folder not reachable.</b> {error}").format(error=getattr(e, 'strerror', '') or e))
             return
         if not files:
-            self.bk_text.setText("Noch kein Backup von diesem Gerät. <b>Mach am besten jetzt eins.</b>")
+            self.bk_text.setText(_("No backup of this device yet. <b>Best make one now.</b>"))
             return
         f = files[0]
         try:
@@ -253,8 +263,8 @@ class OverviewPage(QWidget):
             fw = meta.get("firmware", "")
         except (OSError, ValueError):
             when, fw = "?", ""
-        self.bk_text.setText(f"Letztes Backup: <b>{when}</b> ({fw}), {len(files)} insgesamt, "
-                             f"{fmt_size(sum(x.stat().st_size for x in files))}.")
+        self.bk_text.setText(_("Last backup: <b>{date}</b> ({firmware}), {n} in total, {size}.").format(
+            date=when, firmware=fw, n=len(files), size=fmt_size(sum(x.stat().st_size for x in files))))
 
     def set_update_info(self, info: dict):
         self.update_info = info
@@ -264,49 +274,51 @@ class OverviewPage(QWidget):
         i = self.update_info
         c = self.ctx
         if not c.profile:
-            self.up_text.setText("Kein Gerät angeschlossen.")
+            self.up_text.setText(_("No device connected."))
             return
         if c.port and c.port.update_mode:
-            self.up_text.setText("Das FM-1 wartet im Update-Modus – erst die Installation abschließen (Seite „Rettung“).")
+            self.up_text.setText(_("The FM-1 is waiting in update mode – finish the installation first (page “Rescue”)."))
             return
         if i and i.get("firmware") and i.get("firmware") != c.firmware_key:
             i = {}                                   # Ergebnis eines anderen Geräts gilt hier nicht
         if not c.firmware_key and not i:
-            self.up_text.setText("Firmware unbekannt – bitte wählen (Hinweis oben) oder „Zu den Firmwares“ (Firmware+)."
+            self.up_text.setText(_("Firmware unknown – please choose (note above) or “To the firmwares” (Firmware+).")
                                  if getattr(c, "firmware_ambiguous", False) else
-                                 "Firmware unbekannt – ein Versionscheck ist so nicht möglich.")
+                                 _("Firmware unknown – a version check is not possible like this."))
             return
         if not i:
-            self.up_text.setText("Noch nicht geprüft.")
+            self.up_text.setText(_("Not checked yet."))
             return
         if i.get("error"):
-            self.up_text.setText(f"Prüfen nicht möglich: {i['error']}")
+            self.up_text.setText(_("Check not possible: {error}").format(error=i['error']))
             return
         cur, new = i.get("current"), i.get("latest")
-        chan = "inkl. Release Candidates" if c.settings.channel == "rc" else "nur stabile Versionen"
+        chan = _("incl. release candidates") if c.settings.channel == "rc" else _("stable versions only")
         if new and cur and new != cur:
-            self.up_text.setText(f"<b>Neue Version verfügbar: {new}</b><br>Installiert: {cur} ({chan})")
+            self.up_text.setText(_("<b>New version available: {new}</b><br>Installed: {current} ({channel})").format(
+                new=new, current=cur, channel=chan))
         elif new and not cur:
-            self.up_text.setText(f"Neueste Version: {new} ({chan}). Welche Version installiert ist, weiß die App "
-                                 "nicht – sie merkt es sich ab der ersten Installation über die App.")
+            self.up_text.setText(_("Newest version: {new} ({channel}). The app does not know which version is "
+                                   "installed – it remembers it from the first installation via the app.").format(
+                                       new=new, channel=chan))
         elif cur:
-            self.up_text.setText(f"Aktuell: {cur} ({chan})")
+            self.up_text.setText(_("Up to date: {current} ({channel})").format(current=cur, channel=chan))
         else:
-            self.up_text.setText("Keine Versionen gefunden – bist du online?")
+            self.up_text.setText(_("No versions found – are you online?"))
 
     def _rename(self):
         p = self.ctx.profile
-        name, ok = QInputDialog.getText(self, "Gerät umbenennen", "Name:", text=p.name)
+        name, ok = QInputDialog.getText(self, _("Rename device"), _("Name:"), text=p.name)
         if ok and name.strip():
             try:                                    # Backups wandern mit (wie auf der Geräte-Seite)
                 self.ctx.rename_profile(name.strip())
             except OSError as e:
                 from .common import show_error
-                show_error(self, "Umbenennen nicht möglich", str(e))
+                show_error(self, _("Rename not possible"), str(e))
 
     def _color(self):
         p = self.ctx.profile
-        col = QColorDialog.getColor(QColor(p.color), self, "Farbe für dieses Gerät")
+        col = QColorDialog.getColor(QColor(p.color), self, _("Colour for this device"))
         if col.isValid():
             p.color = col.name()
             self.ctx.store.save()

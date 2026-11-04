@@ -12,10 +12,11 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QFor
                              QPushButton, QSlider, QSpinBox, QStackedWidget, QVBoxLayout, QWidget)
 
 from .. import samples as S, slicer
+from ..i18n import _, ngettext
 from .audio import Player, SliceView
-from .common import fs_error_text, icon, plural, run_job, show_error
+from .common import fs_error_text, icon, run_job, show_error
 
-MODES = [("onsets", "Transienten (Schläge erkennen)"), ("equal", "Gleich lange Stücke"), ("grid", "BPM-Raster")]
+MODES = [("onsets", _("Transients (detect hits)")), ("equal", _("Equal-length slices")), ("grid", _("BPM grid"))]
 
 
 class SlicerDialog(QDialog):
@@ -23,7 +24,7 @@ class SlicerDialog(QDialog):
         super().__init__(parent)
         self.path = str(path)
         self.out_dir = out_dir
-        self.setWindowTitle(f"Zerschneiden – {Path(path).name}")
+        self.setWindowTitle(_("Slice – {name}").format(name=Path(path).name))
         self.resize(980, 620)
         self.player = player or Player(self)
         self.sr = 0
@@ -40,7 +41,7 @@ class SlicerDialog(QDialog):
         for k, t in MODES:
             self.mode.addItem(t, k)
         self.mode.currentIndexChanged.connect(self._mode_changed)
-        top.addWidget(QLabel("Schneiden nach:"))
+        top.addWidget(QLabel(_("Slice by:")))
         top.addWidget(self.mode)
         self.params = QStackedWidget()
         # Transienten
@@ -50,15 +51,15 @@ class SlicerDialog(QDialog):
         self.sens = QSlider(Qt.Orientation.Horizontal)
         self.sens.setRange(0, 100)
         self.sens.setValue(50)
-        self.sens.setToolTip("Empfindlichkeit: weiter rechts findet auch leise Schläge")
+        self.sens.setToolTip(_("Sensitivity: further right also finds quiet hits"))
         self.gap = QSpinBox()
         self.gap.setRange(10, 1000)
         self.gap.setValue(60)
         self.gap.setSuffix(" ms")
-        self.gap.setToolTip("Mindestabstand zwischen zwei Schnitten")
-        f1.addWidget(QLabel("Empfindlichkeit:"))
+        self.gap.setToolTip(_("Minimum distance between two cuts"))
+        f1.addWidget(QLabel(_("Sensitivity:")))
         f1.addWidget(self.sens, 1)
-        f1.addWidget(QLabel("Abstand min.:"))
+        f1.addWidget(QLabel(_("Min. distance:")))
         f1.addWidget(self.gap)
         # gleich lang
         p2 = QWidget()
@@ -67,7 +68,7 @@ class SlicerDialog(QDialog):
         self.count = QSpinBox()
         self.count.setRange(2, 64)
         self.count.setValue(8)
-        f2.addWidget(QLabel("Anzahl Stücke:"))
+        f2.addWidget(QLabel(_("Number of slices:")))
         f2.addWidget(self.count)
         f2.addStretch(1)
         # Raster
@@ -80,24 +81,24 @@ class SlicerDialog(QDialog):
         self.bpm.setValue(120)
         self.bpm.setSuffix(" BPM")
         self.div = QComboBox()
-        for d, t in ((4, "Viertel"), (8, "Achtel"), (16, "Sechzehntel")):
+        for d, t in ((4, _("Quarters")), (8, _("Eighths")), (16, _("Sixteenths"))):
             self.div.addItem(t, d)
         self.div.setCurrentIndex(1)
-        b_guess = QPushButton(icon("view-refresh"), "aus Länge")
-        b_guess.setToolTip("Tempo aus der Loop-Länge schätzen (ganze Takte)")
+        b_guess = QPushButton(icon("view-refresh"), _("from length"))
+        b_guess.setToolTip(_("Estimate the tempo from the loop length (whole bars)"))
         b_guess.clicked.connect(lambda: self.bpm.setValue(slicer.guess_bpm(self.duration)))
-        f3.addWidget(QLabel("Tempo:"))
+        f3.addWidget(QLabel(_("Tempo:")))
         f3.addWidget(self.bpm)
         f3.addWidget(b_guess)
-        f3.addWidget(QLabel("Raster:"))
+        f3.addWidget(QLabel(_("Grid:")))
         f3.addWidget(self.div)
         f3.addStretch(1)
         for p in (p1, p2, p3):
             self.params.addWidget(p)
         top.addWidget(self.params, 1)
-        self.zero = QCheckBox("auf Nulldurchgang")
+        self.zero = QCheckBox(_("at zero crossing"))
         self.zero.setChecked(True)
-        self.zero.setToolTip("Schnitte auf den nächsten Nulldurchgang legen – vermeidet Knackser")
+        self.zero.setToolTip(_("Move cuts to the next zero crossing – avoids clicks"))
         top.addWidget(self.zero)
         lay.addLayout(top)
         for w in (self.sens, self.gap, self.count, self.bpm, self.div, self.zero):
@@ -108,12 +109,12 @@ class SlicerDialog(QDialog):
         self.view.slice_clicked.connect(self.play_slice)
         self.view.points_changed.connect(self._update_info)
         lay.addWidget(self.view, 1)
-        self.info = QLabel("Lädt …")
+        self.info = QLabel(_("Loading audio …"))
         self.info.setWordWrap(True)
         self.info.setProperty("role", "muted")
         lay.addWidget(self.info)
-        hint = QLabel("Klick: Stück anhören · Doppelklick: Schnitt setzen · Ziehen: verschieben · Rechtsklick oder Entf: "
-                      "Schnitt entfernen · Leertaste: aktuelles Stück · ←/→: vorheriges/nächstes · 1–9: Stück direkt")
+        hint = QLabel(_("Click: play slice · Double-click: set cut · Drag: move · Right-click or Del: "
+                        "remove cut · Space: current slice · ←/→: previous/next · 1–9: slice directly"))
         hint.setWordWrap(True)
         hint.setProperty("role", "small")
         lay.addWidget(hint)
@@ -123,25 +124,25 @@ class SlicerDialog(QDialog):
         self.base = QSpinBox()
         self.base.setRange(0, 112)
         self.base.setValue(36)
-        self.base.setToolTip("Taste des ersten Stücks im Kit (36 = C2, wie Kick bei General MIDI)")
+        self.base.setToolTip(_("Key of the first slice in the kit (36 = C2, like kick in General MIDI)"))
         self.base.valueChanged.connect(lambda v: self.base.setSuffix(f"  ({S.note_name(v)})"))
         self.base.setSuffix(f"  ({S.note_name(36)})")
         self.kitname = QComboBox()
         self.kitname.setEditable(True)
         self.kitname.setEditText(Path(path).stem.upper()[:8])
         self.kitname.lineEdit().setMaxLength(8)
-        f.addRow("Kit-Name:", self.kitname)
-        f.addRow("Erste Taste:", self.base)
+        f.addRow(_("Kit name:"), self.kitname)
+        f.addRow(_("First key:"), self.base)
         bottom.addLayout(f)
         bottom.addStretch(1)
-        self.b_wav = QPushButton(icon("document-export", "document-save"), "Als WAVs in die Bibliothek")
-        self.b_wav.setToolTip("Jedes Stück als eigene WAV-Datei speichern (Samples › Slices)")
+        self.b_wav = QPushButton(icon("document-export", "document-save"), _("As WAVs into the library"))
+        self.b_wav.setToolTip(_("Save each slice as its own WAV file (Samples › Slices)"))
         self.b_wav.clicked.connect(self.export)
-        self.b_kit = QPushButton(icon("list-add"), "Kit bauen")
+        self.b_kit = QPushButton(icon("list-add"), _("Build kit"))
         self.b_kit.setProperty("variant", "primary")
-        self.b_kit.setToolTip("Kit mit einem Stück pro Taste (höchstens 16, passend für einen Slot gekürzt)")
+        self.b_kit.setToolTip(_("Kit with one slice per key (at most 16, shortened to fit a slot)"))
         self.b_kit.clicked.connect(self.build_kit)
-        b_close = QPushButton("Schließen")
+        b_close = QPushButton(_("Close"))
         b_close.clicked.connect(self.reject)
         for b in (self.b_wav, self.b_kit, b_close):
             bottom.addWidget(b)
@@ -182,7 +183,7 @@ class SlicerDialog(QDialog):
             self.bpm.setValue(slicer.guess_bpm(self.duration))
             self.bpm.blockSignals(False)
             self.compute()
-        run_job(self, work, on_done=done, on_fail=lambda m, tb: self.info.setText(f"Datei nicht lesbar: {m}"))
+        run_job(self, work, on_done=done, on_fail=lambda m, tb: self.info.setText(_("File not readable: {error}").format(error=m)))
 
     def load_array(self, x, sr: int):
         """für Tests und Aufnahmen: Audio direkt übergeben."""
@@ -194,7 +195,7 @@ class SlicerDialog(QDialog):
         self.params.setCurrentIndex(i)
         self.compute()
 
-    def compute(self, *_):
+    def compute(self, *_args):
         """Schnitte neu berechnen – entprellt und im Hintergrund (die Transienten-Suche über eine lange Datei
         dauert auf dem Pi Sekunden; der Regler bleibt flüssig)."""
         if not self.sr:
@@ -210,7 +211,7 @@ class SlicerDialog(QDialog):
         x, sr, dur = self.x, self.sr, self.duration
         sens, gap, cnt, bpm, div, zero = (self.sens.value() / 100, self.gap.value() / 1000, self.count.value(),
                                           self.bpm.value(), self.div.currentData(), self.zero.isChecked())
-        self.info.setText("Suche Schnittpunkte …")
+        self.info.setText(_("Looking for cut points …"))
 
         def work(w):
             found = None
@@ -236,7 +237,7 @@ class SlicerDialog(QDialog):
             self.found = found
             self.view.set_points(pts)
             self._update_info()
-        run_job(self, work, on_done=done, on_fail=lambda msg, tb: self.info.setText(f"Berechnung fehlgeschlagen: {msg}"))
+        run_job(self, work, on_done=done, on_fail=lambda msg, tb: self.info.setText(_("Calculation failed: {error}").format(error=msg)))
 
     def ranges(self):
         return slicer.ranges(self.view.points, self.duration)
@@ -244,17 +245,17 @@ class SlicerDialog(QDialog):
     def _update_info(self):
         rs = self.ranges()
         n = len(rs)
-        txt = plural(n, "Stück", "Stücke")
+        txt = ngettext("{n} slice", "{n} slices", n).format(n=n)
         if n:
             lens = [b - a for a, b in rs]
             txt += f", {min(lens) * 1000:.0f}–{max(lens) * 1000:.0f} ms"
         if self.mode.currentData() == "onsets" and getattr(self, "found", None) == 0:
-            txt += (" · Keine Schläge erkannt (gleichmäßiger Klang wie ein Pad?) – Empfindlichkeit nach rechts, "
-                    "oder „Gleich lange Stücke“/„BPM-Raster“ wählen, oder per Doppelklick selbst schneiden.")
+            txt += _(" · No hits detected (even sound like a pad?) – move sensitivity to the right, "
+                     "or choose “Equal-length slices”/“BPM grid”, or cut yourself with a double-click.")
         elif self.mode.currentData() == "onsets" and n > 64:
-            txt += " · Sehr viele Treffer – Empfindlichkeit nach links oder Mindestabstand erhöhen."
+            txt += _(" · Very many hits – move sensitivity to the left or increase the minimum distance.")
         if n > 16:
-            txt += " · Ein Kit fasst 16 Sounds – nur die ersten 16 kommen hinein (die übrigen als WAVs speichern)."
+            txt += _(" · A kit holds 16 sounds – only the first 16 go in (save the rest as WAVs).")
         self.info.setText(txt)
         self.b_kit.setEnabled(n > 0)
         self.b_wav.setEnabled(n > 0)
@@ -283,10 +284,11 @@ class SlicerDialog(QDialog):
         try:
             self.exported = slicer.export_slices(self.x, self.sr, rs, folder, base)
         except OSError as e:
-            show_error(self, "Speichern fehlgeschlagen", fs_error_text(e, "Stücke nicht gespeichert"))
+            show_error(self, _("Saving failed"), fs_error_text(e, _("Slices not saved")))
             return
-        self.info.setText(f"Fertig: {plural(len(self.exported), 'WAV-Datei', 'WAV-Dateien')} gespeichert in {folder} – "
-                          "die Bibliothek liest sie beim Schließen ein.")
+        self.info.setText(ngettext("Done: {n} WAV file saved in {folder} – the library reads it in when closing.",
+                                   "Done: {n} WAV files saved in {folder} – the library reads them in when closing.",
+                                   len(self.exported)).format(n=len(self.exported), folder=folder))
 
     def build_kit(self):
         rs = self.ranges()
@@ -295,7 +297,7 @@ class SlicerDialog(QDialog):
         name = self.kitname.currentText().strip() or "SLICES"
         base = self.base.value()
         self.b_kit.setEnabled(False)
-        self.info.setText("Baue das Kit (liest die Stücke und prüft, ob alles in einen Slot passt) …")
+        self.info.setText(_("Building the kit (reads the slices and checks whether everything fits into a slot) …"))
 
         def done(kit):
             self.kit = kit
@@ -304,5 +306,5 @@ class SlicerDialog(QDialog):
         def fail(m, tb):
             self.b_kit.setEnabled(True)
             self._update_info()
-            show_error(self, "Kit nicht möglich", m)
+            show_error(self, _("Kit not possible"), m)
         run_job(self, lambda w: slicer.kit_from_slices(self.path, rs, name, base), on_done=done, on_fail=fail)

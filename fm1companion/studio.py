@@ -63,6 +63,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
+from .i18n import _
 from .transport import Transport, Link, LinkError
 from .protocol import Cmd, parse_info, v14
 
@@ -76,13 +77,13 @@ FS = 44100
 B = {"FX": 0, "SCL": 1, "ENV": 2, "LFO": 3, "EDIT": 4, "GLO": 5, "HOME": 6, "SAVE": 7, "ARP": 8, "SEQ": 9,
      "PLAY": 10, "REC": 11}
 
-LIMITS = (
-    "Der Zwilling rechnet ohne CPU-Grenze: das Gerät nimmt bei Überlast Stimmen weg (Overload-Shedding), der "
-    "Zwilling nie. Fließkomma-Teile (FM6-Stimmenpaare, die auf dem Gerät CPU1 rechnet, Effektfilter) können in den "
-    "letzten Bits abweichen (unhörbar). Kein BLE, kein USB-Host, "
-    "kein Firmware-Update im Zwilling. Die Ressourcen-Arena hat die Größe der Host-Tests (mindestens die des "
-    "Geräts). Stems entstehen aus mehreren Durchläufen mit stummgeschalteten Spuren (Spur solo, mit ihrem Anteil "
-    "an den gemeinsamen Effekten); die Summe der Stems entspricht wegen Master-Dynamik nicht exakt dem Mix.")
+LIMITS = _(
+    "The twin computes without a CPU limit: under overload the device drops voices (overload shedding), the "
+    "twin never does. Floating-point parts (FM6 voice pairs, which CPU1 computes on the device, effect filters) "
+    "may differ in the last bits (inaudible). No BLE, no USB host, no firmware update in the twin. The resource "
+    "arena has the size of the host tests (at least that of the device). Stems come from several runs with muted "
+    "tracks (track solo, with its share of the shared effects); because of the master dynamics the sum of the "
+    "stems does not exactly match the mix.")
 
 
 class StudioError(Exception):
@@ -137,9 +138,9 @@ class TwinBuild:
         for name, info in self.manifest.get("files", {}).items():
             p = self.path / name
             if not p.exists():
-                bad.append(f"{name} fehlt")
+                bad.append(_("{name} missing").format(name=name))
             elif p.stat().st_size != info.get("size") or hashlib.sha256(p.read_bytes()).hexdigest() != info.get("sha256"):
-                bad.append(f"{name} beschädigt")
+                bad.append(_("{name} damaged").format(name=name))
         return bad
 
 
@@ -164,7 +165,7 @@ def pick_build(firmware: str = "melodee", wanted: str = "") -> tuple[TwinBuild, 
     (bevorzugt die nächstältere: deren Daten liest eine neuere Firmware sicher, umgekehrt nicht immer)."""
     bs = builds(firmware)
     if not bs:
-        raise StudioError(f"Kein Studio-Zwilling für {firmware} mitgeliefert – Installation unvollständig?")
+        raise StudioError(_("No studio twin for {firmware} included – installation incomplete?").format(firmware=firmware))
     want = norm_version(wanted)
     if not want:
         return bs[-1], True, ""
@@ -174,8 +175,9 @@ def pick_build(firmware: str = "melodee", wanted: str = "") -> tuple[TwinBuild, 
     wk = version_key(want)
     older = [b for b in bs if version_key(b.version) < wk]
     best = older[-1] if older else bs[0]
-    return best, False, (f"Für {firmware.capitalize()} {want} gibt es keinen Studio-Zwilling; das Studio läuft mit "
-                         f"{best.version} – Klang und Funktionen können abweichen.")
+    return best, False, _("There is no studio twin for {firmware} {version}; the studio runs with {twin} – sound "
+                          "and functions may differ.").format(firmware=firmware.capitalize(), version=want,
+                                                              twin=best.version)
 
 
 @dataclass
@@ -192,17 +194,19 @@ def check_versions(twin: str, device: str = "", backup: str = "", firmware: str 
     t, d, b = norm_version(twin), norm_version(device), norm_version(backup)
     msgs = []
     if d and d != t:
-        msgs.append(f"Studio läuft mit {firmware} {t}, dein FM-1 hat {d} – Klang kann abweichen.")
+        msgs.append(_("The studio runs with {firmware} {twin}, your FM-1 has {device} – sound may differ.").format(
+            firmware=firmware, twin=t, device=d))
     if b and b != t:
-        msgs.append(f"Das Backup stammt von {firmware} {b}, das Studio läuft mit {t} – Klang kann abweichen.")
+        msgs.append(_("The backup comes from {firmware} {backup}, the studio runs with {twin} – sound may differ.").format(
+            firmware=firmware, backup=b, twin=t))
     if firmware.lower() == "melodee" and any(levels_changed(t, x) for x in (d, b) if x and x != t):
         msgs.append(LEVELS_1_6_0)
     return VersionCheck(t, d, b, not msgs, " ".join(msgs))
 
 
 # Melodee 1.6.0 (docs/RELEASE_1.6.0.md „Sound and levels“): der Mix klingt anders als bis 1.6.0-rc.8
-LEVELS_1_6_0 = ("Ab Melodee 1.6.0 ist der Mix anders als in den Vorabversionen: CZ-1 6 dB leiser, Limiter erst "
-                "bei −2 dBFS, Dither – Lautstärken weichen ab.")
+LEVELS_1_6_0 = _("From Melodee 1.6.0 on the mix differs from the pre-releases: CZ-1 6 dB quieter, limiter only "
+                  "at −2 dBFS, dither – levels differ.")
 _V160 = (1, 6, 0, 3, 0)
 
 
@@ -307,7 +311,7 @@ class NodeBackend(TwinBackend):
                                   text=True, bufsize=1)
         threading.Thread(target=self._reader, daemon=True).start()
         if not self._ready.wait(20):
-            raise StudioError("node-Zwilling startet nicht")
+            raise StudioError(_("node twin does not start"))
         args = {"wasm_path": str(self.build.wasm)}
         if flash:
             args["flash"] = _b64(flash)
@@ -330,7 +334,7 @@ class NodeBackend(TwinBackend):
 
     def call(self, op: str, timeout: float = 60, **args) -> dict:
         if not self.p or self.p.poll() is not None:
-            raise StudioError("Zwilling läuft nicht")
+            raise StudioError(_("Twin is not running"))
         for k in ("flash", "memory"):
             if isinstance(args.get(k), (bytes, bytearray)):
                 args[k] = _b64(args[k])
@@ -344,11 +348,11 @@ class NodeBackend(TwinBackend):
         try:
             r = q.get(timeout=timeout)
         except queue.Empty:
-            raise StudioError(f"Zwilling antwortet nicht ({op})")
+            raise StudioError(_("Twin does not respond ({operation})").format(operation=op))
         finally:
             self._wait.pop(i, None)
         if not r.get("ok"):
-            raise StudioError(r.get("error", "Fehler im Zwilling"))
+            raise StudioError(r.get("error", _("Error in the twin")))
         return {k: _unb64(v) for k, v in r.items()}
 
     def render(self, path: Path, params: dict) -> dict:
@@ -356,7 +360,7 @@ class NodeBackend(TwinBackend):
 
     def set_audio(self, on: bool) -> None:
         if on:
-            raise StudioError("node-Zwilling hat keinen Ton-Ausgang")
+            raise StudioError(_("node twin has no audio output"))
 
     def close(self):
         if self.p:
@@ -389,7 +393,7 @@ class StudioTransport(Transport):
 
     def send(self, data):
         if self._closed:
-            raise LinkError("Studio geschlossen")
+            raise LinkError(_("Studio closed"))
         try:
             self.backend.call("midi", data=[int(x) & 0xFF for x in data])
         except StudioError as e:
@@ -528,7 +532,7 @@ class Studio:
         from . import backup
         vc = self.check_versions(device=device_version(link))
         if not vc.ok and not force:
-            raise StudioError(vc.message + " Nichts geschrieben.")
+            raise StudioError(_("{message} Nothing written.").format(message=vc.message))
         archive = self.backup()
         skip = set(exclude) | (set() if settings else {1})
         if skip:
@@ -631,7 +635,7 @@ class Studio:
         fmt "f32" (32-bit float) oder "s24" (24-bit PCM). 44,1 kHz Stereo wie das Gerät.
         progress(fertige Durchläufe, alle Durchläufe): Mix und je Stem ein Durchlauf."""
         if not seconds and not until_end:
-            raise StudioError("Dauer fehlt (seconds oder until_end)")
+            raise StudioError(_("Duration missing (seconds or until_end)"))
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         params = {"seconds": seconds or 0, "until_end": bool(until_end), "max_seconds": max_seconds,
@@ -684,7 +688,7 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     from . import backup
     backup._match(link, archive, firmware_key)
     if archive.sloop:
-        raise StudioError("SLOOP-Backups kann der Melodee-Zwilling nicht laden.")
+        raise StudioError(_("The Melodee twin cannot load SLOOP backups."))
     sup = {o.id for o in backup.parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))}
     objs = archive.objects
     order = objs[2:] + objs[1:2] + objs[0:1]
@@ -726,9 +730,9 @@ def read_state(path: Path) -> tuple[dict, bytes]:
             meta = json.loads(z.read("studio.json"))
             flash = z.read("flash.bin")
     except (OSError, KeyError, ValueError, zipfile.BadZipFile) as e:
-        raise StudioError(f"Kein Studio-Stand: {path.name} ({e})")
+        raise StudioError(_("Not a studio state: {name} ({error})").format(name=path.name, error=e))
     if meta.get("format") != "fm1-studio-state" or len(flash) != 0x100000:
-        raise StudioError(f"{path.name} ist kein gültiger Studio-Stand")
+        raise StudioError(_("{name} is not a valid studio state").format(name=path.name))
     return meta, flash
 
 

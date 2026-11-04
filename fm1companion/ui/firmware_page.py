@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QF
                              QVBoxLayout, QWidget)
 
 from .. import backup, config, editor_host, firmware
+from ..i18n import _, pgettext
 from .common import JobDialog, call_in_gui, confirm, flow_row, heading, icon, init_gui_caller, run_job, show_error
 from .responsive import adaptive_splitter
 
@@ -164,7 +165,7 @@ class PlanDialog(QDialog):
         from ..flash import planner
         self.planner = planner
         self.plan_fn = plan_fn
-        self.setWindowTitle("Installationsplan")
+        self.setWindowTitle(_("Installation plan"))
         self.setMinimumSize(820, 680)
         self.resize(880, 740)
         lay = QVBoxLayout(self)
@@ -180,15 +181,15 @@ class PlanDialog(QDialog):
         self.lost_label.setStyleSheet("QLabel#PlanLost { border: 1px solid #f67400; border-radius: 6px; padding: 6px; }")
         self.lost_label.hide()
         lay.addWidget(self.lost_label)
-        self.chk_v15 = WrapCheck("Zwischenschritt: Original-V15 aufspielen")
-        self.chk_v15.setToolTip("Über die unveränderte Original-Firmware V15 startet die neue Firmware von einem "
-                                "sauberen, bewährten Stand. Der Zwischenschritt ist selbst eine Installation: Strom und "
-                                "Kabel müssen dann zweimal durchhalten statt einmal.")
+        self.chk_v15 = WrapCheck(_("Intermediate step: install original V15"))
+        self.chk_v15.setToolTip(_("Via the unmodified original firmware V15 the new firmware starts from a clean, "
+                                  "proven state. The intermediate step is itself an installation: power and cable "
+                                  "then have to hold out twice instead of once."))
         self.v15_note = QLabel()
         self.v15_note.setWordWrap(True)
         lay.addWidget(self.chk_v15)
         lay.addWidget(self.v15_note)
-        self.chk_backup = WrapCheck("Vorher ein Backup machen (empfohlen)")
+        self.chk_backup = WrapCheck(_("Make a backup first (recommended)"))
         self.chk_backup.setChecked(backup_default)
         lay.addWidget(self.chk_backup)
         self.backup_note = QLabel()
@@ -196,15 +197,15 @@ class PlanDialog(QDialog):
         lay.addWidget(self.backup_note)
         self.confirm_box = QVBoxLayout()
         lay.addLayout(self.confirm_box)
-        self.chk_dry = WrapCheck("Nur Probelauf: alles prüfen, nichts schreiben")
+        self.chk_dry = WrapCheck(_("Dry run only: check everything, write nothing"))
         lay.addWidget(self.chk_dry)
         self.bb = QDialogButtonBox()
-        self.ok_btn = self.bb.addButton("Installieren", QDialogButtonBox.ButtonRole.AcceptRole)
+        self.ok_btn = self.bb.addButton(_("Install"), QDialogButtonBox.ButtonRole.AcceptRole)
         self.ok_btn.setProperty("variant", "primary")
-        self.bb.addButton("Abbrechen", QDialogButtonBox.ButtonRole.RejectRole)
+        self.bb.addButton(_("Cancel"), QDialogButtonBox.ButtonRole.RejectRole)
         self.bb.accepted.connect(self.accept)
         self.bb.rejected.connect(self.reject)
-        self.ok_hint = QLabel("Bitte oben bestätigen")
+        self.ok_hint = QLabel(_("Please confirm above"))
         self.ok_hint.setProperty("role", "muted")
         brow = QHBoxLayout()
         brow.addWidget(self.ok_hint)
@@ -216,8 +217,8 @@ class PlanDialog(QDialog):
         self.plan = None
         self.refresh()
         self.chk_v15.toggled.connect(self._v15_toggled)
-        self.chk_backup.toggled.connect(lambda _: self.refresh())
-        self.chk_dry.toggled.connect(lambda on: (self.ok_btn.setText("Probelauf starten" if on else "Installieren"),
+        self.chk_backup.toggled.connect(lambda _on: self.refresh())
+        self.chk_dry.toggled.connect(lambda on: (self.ok_btn.setText(_("Start dry run") if on else _("Install")),
                                                  self._update_ok()))
 
     def _v15_toggled(self, on):
@@ -242,38 +243,41 @@ class PlanDialog(QDialog):
         self.chk_v15.blockSignals(False)
         self.v15_note.setVisible(opt != "none")
         self.v15_note.setText(p.v15_reason or {
-            "locked": "Pflicht: Diese Firmware wird laut Katalog nur von der Original-V15 aus installiert.",
-            "default_on": "Firmware-Wechsel (oder laufende Firmware unbekannt): Der Zwischenschritt ist "
-                          "voreingestellt, um Flüchtigkeitsfehler beim schnellen Hin- und Herwechseln zu vermeiden. "
-                          "Er ist aber selbst ein Schreibvorgang – zwei Installationen statt einer, also zweimal ein "
-                          "Zeitraum, in dem Akku und Kabel halten müssen. Nötig ist er nur bei V16 und bei Firmwares, "
-                          "die laut Katalog nur von V15 aus gehen (dann ist er fest). Nur abwählen, wenn du sicher bist.",
-            "default_off": "Update derselben Firmware: normalerweise nicht nötig."}.get(opt, ""))
+            "locked": _("Mandatory: according to the catalog, this firmware is only installed from the original V15."),
+            "default_on": _("Firmware switch (or running firmware unknown): the intermediate step is preset to avoid "
+                            "careless mistakes when switching back and forth quickly. But it is itself a write "
+                            "operation – two installations instead of one, so twice a period in which battery and cable "
+                            "must hold. It is only needed for V16 and for firmwares that according to the catalog only "
+                            "work from V15 (then it is fixed). Only untick it if you are sure."),
+            "default_off": _("Update of the same firmware: normally not needed.")}.get(opt, ""))
         can_backup = p.state.felucca and not p.resume
         self.chk_backup.setVisible(can_backup)
-        self.chk_backup.setText("Vorher ein Backup machen (Pflicht beim Wechsel mit V16)"
+        self.chk_backup.setText(_("Make a backup first (mandatory when switching with V16)")
                                 if self.planner.layout_change(p.state, p.target) else
-                                "Vorher ein Backup machen (empfohlen)")
+                                _("Make a backup first (recommended)"))
         self.backup_note.setVisible(not p.resume)
         self.backup_note.setText(
             ("" if self.chk_backup.isChecked() else
-             "Ohne Backup: Das musst du unten ausdrücklich bestätigen.") if can_backup else
-            "Backup: Von der laufenden Firmware kann die App kein Backup machen (kein Editor-Protokoll). "
-            "Wichtige Projekte vorher mit dem Werkzeug der Firmware sichern.")
+             _("Without backup: you have to confirm this explicitly below.")) if can_backup else
+            _("Backup: the app cannot make a backup of the running firmware (no editor protocol). "
+              "Back up important projects first with the firmware's own tool."))
+        writes = " · " + _("writes")
         rows = "".join(
             f"<tr><td><b>{n}.</b></td><td><b>{st.title}</b><br><small>{st.text}</small></td>"
             f"<td style='color:{RISK_COLOR.get(st.risk, '#888')}'>{self.planner.RISK_TEXT.get(st.risk, st.risk)}"
-            f"{' · schreibt' if st.writes else ''}</td></tr>" for n, st in enumerate(p.steps, 1))
+            f"{writes if st.writes else ''}</td></tr>" for n, st in enumerate(p.steps, 1))
         html = f"<table cellspacing=6>{rows}</table>"
         if p.blockers:
-            html += "<h4 style='color:#da4453'>Nicht möglich</h4><ul>" + "".join(f"<li>{b}</li>" for b in p.blockers) + "</ul>"
+            html += ("<h4 style='color:#da4453'>" + _("Not possible") + "</h4><ul>"
+                     + "".join(f"<li>{b}</li>" for b in p.blockers) + "</ul>")
         if p.warnings:
-            html += "<h4>Hinweise</h4><ul>" + "".join(f"<li>{w}</li>" for w in p.warnings) + "</ul>"
-        html += "<p><small>Während des Schreibens das USB-Kabel nicht abziehen und das FM-1 nicht ausschalten.</small></p>"
+            html += "<h4>" + _("Notes") + "</h4><ul>" + "".join(f"<li>{w}</li>" for w in p.warnings) + "</ul>"
+        html += ("<p><small>" + _("While writing, do not unplug the USB cable and do not switch the FM-1 off.")
+                 + "</small></p>")
         self.view.setHtml(html)
         self.lost_label.setVisible(bool(p.lost))
         if p.lost:
-            self.lost_label.setText("<b>Was danach nicht mehr auf dem Gerät ist:</b> " + " · ".join(p.lost))
+            self.lost_label.setText("<b>" + _("What is no longer on the device afterwards:") + "</b> " + " · ".join(p.lost))
         for c in list(self.confirm_checks):
             if c not in p.confirmations:
                 cb = self.confirm_checks.pop(c)
@@ -282,7 +286,7 @@ class PlanDialog(QDialog):
         for c in p.confirmations:
             if c not in self.confirm_checks:
                 cb = WrapCheck(self.planner.CONFIRM_TEXT.get(c, c), bold=True)
-                cb.toggled.connect(lambda _: self._update_ok())
+                cb.toggled.connect(lambda _on: self._update_ok())
                 self.confirm_box.addWidget(cb)
                 self.confirm_checks[c] = cb
         self._update_ok()
@@ -297,21 +301,21 @@ class PlanDialog(QDialog):
         ok = self.plan.ok and not self.missing()
         self.ok_btn.setEnabled(ok)
         self.ok_hint.setVisible(not ok)
-        self.ok_hint.setText("Nicht möglich – siehe oben" if not self.plan.ok else "Bitte oben bestätigen")
+        self.ok_hint.setText(_("Not possible – see above") if not self.plan.ok else _("Please confirm above"))
 
 
 class InstallDialog(JobDialog):
     """Fortschritt mit Protokoll; Abbrechen nur, solange noch nichts gesendet wurde. Während das FM-1 im Update-Modus
     schreibt: roter Hinweis „Jetzt nicht abstecken“, Abbrechen gesperrt."""
 
-    CANCEL_TIP = ("Bricht vor dem nächsten sicheren Punkt ab. Während geschrieben wird, läuft die Installation zu Ende – "
-                  "ein Abbruch dort würde das FM-1 im Update-Modus lassen.")
+    CANCEL_TIP = _("Cancels before the next safe point. While writing, the installation runs to the end – "
+                   "cancelling there would leave the FM-1 in update mode.")
 
     def __init__(self, parent, title, fn, cancel_event, **kw):
         self.cancel_event = cancel_event
         self.writing = False
-        self.danger = QLabel("<b>Jetzt nicht abstecken und nicht ausschalten.</b> Das FM-1 schreibt gerade seine "
-                             "Firmware. Das dauert ein paar Minuten – danach startet es von selbst neu.")
+        self.danger = QLabel(_("<b>Do not unplug and do not switch off now.</b> The FM-1 is writing its firmware. "
+                               "This takes a few minutes – after that it restarts by itself."))
         self.danger.setObjectName("InstallDanger")
         self.danger.setWordWrap(True)
         self.danger.setStyleSheet("QLabel#InstallDanger { color: #ffffff; background: #da4453; border-radius: 6px; "
@@ -319,7 +323,7 @@ class InstallDialog(JobDialog):
         self.danger.hide()
         super().__init__(parent, title, fn, **kw)
         self.layout().insertWidget(1, self.danger)
-        self.btn_cancel = self.buttons.addButton("Abbrechen (nur vor dem Schreiben)",
+        self.btn_cancel = self.buttons.addButton(_("Cancel (only before writing)"),
                                                  QDialogButtonBox.ButtonRole.ActionRole)
         self.btn_cancel.setToolTip(self.CANCEL_TIP)
         self.btn_cancel.clicked.connect(self._cancel)
@@ -337,14 +341,14 @@ class InstallDialog(JobDialog):
         self.danger.setVisible(on)
         if hasattr(self, "btn_cancel"):
             self.btn_cancel.setEnabled(not on and not self.cancel_event.is_set())
-            self.btn_cancel.setToolTip("Während das FM-1 schreibt, lässt sich nicht sicher abbrechen – bitte warten."
+            self.btn_cancel.setToolTip(_("While the FM-1 is writing, it cannot be cancelled safely – please wait.")
                                        if on else self.CANCEL_TIP)
 
     def _cancel(self):
         if self.writing:
             return
         self.cancel_event.set()
-        self.add("Abbruch angefordert – greift am nächsten sicheren Punkt.")
+        self.add(_("Cancellation requested – takes effect at the next safe point."))
         self.btn_cancel.setEnabled(False)
 
     def _done(self, res):
@@ -358,8 +362,10 @@ class InstallDialog(JobDialog):
         self.danger.hide()
         self.btn_cancel.setEnabled(False)
         super()._fail(*a)
-        if self.cancel_event.is_set() and str(a[0] if a else "").startswith("Abgebrochen"):
-            self._state(False, "Abgebrochen", self.result_label.text())   # gewollt – kein „Fehlgeschlagen“
+        # the cancel messages (cancel_text(), engine "cancelled") all start with this word
+        cancelled = pgettext("install state", "Cancelled")
+        if self.cancel_event.is_set() and str(a[0] if a else "").startswith(cancelled):
+            self._state(False, cancelled, self.result_label.text())   # gewollt – kein „Fehlgeschlagen“
 
 
 def _install(*a, **kw):
@@ -381,9 +387,9 @@ def german_errors(work):
         try:
             return work(w, *a, **k)
         except Exception as e:  # noqa: BLE001
-            if type(e) in (RuntimeError, PackageRefused):      # schon ein fertiger deutscher Satz
+            if type(e) in (RuntimeError, PackageRefused):      # already a finished, translated sentence
                 raise
-            w.log.emit("Technische Details: " + firmware.explain(e))
+            w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
             raise RuntimeError(firmware.friendly_error(e)) from e
     return run
 
@@ -403,17 +409,22 @@ def validate_package(path, spec, known: bool, label: str, expect_sha: str = "", 
     t = planner.Target.from_spec(spec)
     t.known = known
     probs = planner.check_package(t, pi)
-    if pi.loader_rule is None and not any("Loader" in x for x in probs):
-        probs.append("Die Loader-Familie des Pakets ist unbekannt – es wird an keinen Update-Loader geschickt.")
+    if pi.loader_rule is None and not any("Loader" in x or "loader" in x for x in probs):
+        probs.append(_("The loader family of the package is unknown – it is not sent to any update loader."))
     if official and pi.official != official:
-        probs.append(f"Das ist nicht die unveränderte Original-Firmware ({official}).")
+        probs.append(_("This is not the unmodified original firmware ({identity}).").format(identity=official))
     if expect_sha and pi.sha256 != expect_sha.lower():
-        probs.append("Die Datei hat sich seit dem Plan verändert (andere Prüfsumme).")
+        probs.append(_("The file has changed since the plan (different checksum)."))
     if log:
-        log(f"{label}: {pi.product}, SHA-256 {pi.sha256[:16]}…, Loader-Familie {pi.family}"
-            + (f", BESCHÄDIGT ({pi.damage})" if pi.damage else "") + (" – in Ordnung" if not probs else ""))
+        line = _("{label}: {product}, SHA-256 {sha256}…, loader family {family}").format(
+            label=label, product=pi.product, sha256=pi.sha256[:16], family=pi.family)
+        if pi.damage:
+            line = _("{line}, DAMAGED ({damage})").format(line=line, damage=pi.damage)
+        if not probs:
+            line = _("{line} – OK").format(line=line)
+        log(line)
     if probs:
-        raise PackageRefused(f"{label} wird nicht installiert: " + " ".join(probs))
+        raise PackageRefused(_("{label} is not installed: {problems}").format(label=label, problems=" ".join(probs)))
     return pi
 
 
@@ -426,21 +437,22 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     from ..flash import package as fpk, planner, prefs
     s = ctx.settings
     if getattr(ctx, "is_virtual", False):
-        show_error(parent, "Kein echtes FM-1", "Der Studio-Zwilling ist kein echtes FM-1 – Firmware wird nur auf ein angeschlossenes Gerät installiert. Bitte oben ein echtes FM-1 wählen.")
+        show_error(parent, _("Not a real FM-1"), _("The Studio twin is not a real FM-1 – firmware is only installed on a "
+                                                   "connected device. Please choose a real FM-1 at the top."))
         return False
     if not ctx.port:
-        show_error(parent, "Kein Gerät", "Bitte das FM-1 per USB anschließen.")
+        show_error(parent, _("No device"), _("Please connect the FM-1 via USB."))
         return False
     from .risk_dialog import ensure_risk_ack
     if not ensure_risk_ack(parent):              # einmaliger Risiko-Hinweis vor der ersten Installation
         return False
-    target = rel.tag if rel else (tag or "eigene Datei")
+    target = rel.tag if rel else (tag or _("own file"))
     info = None
     if local_pkg is not None:
         try:
             info = fpk.analyze(local_pkg, spec.loader_family)
         except fpk.PackageError as e:
-            show_error(parent, "Kein FM-1-Paket", str(e))
+            show_error(parent, _("No FM-1 package"), str(e))
             return False
     state = device_state(ctx)
     pin = target_pin(ctx)
@@ -457,32 +469,33 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
 
     def make(via, backup=True):
         return planner.plan_install(state, tgt, via_v15=via, backup=backup)
-    dlg = PlanDialog(parent, make, f"{firmware.display_label(spec, target if rel or tag else '')} auf "
-                                   f"{ctx.profile.name if ctx.profile else 'dieses FM-1'}",
+    dlg = PlanDialog(parent, make, _("{firmware} on {device}").format(
+                         firmware=firmware.display_label(spec, target if rel or tag else ''),
+                         device=ctx.profile.name if ctx.profile else _("this FM-1")),
                      bool(s.auto_backup_before_update) and ctx.connected, remembered)
     if dlg.exec() != QDialog.DialogCode.Accepted:
         return False
     plan = dlg.plan
     if not plan.ok:
-        show_error(parent, "Installation nicht möglich", "\n".join(re.sub("<[^>]+>", "", b) for b in plan.blockers))
+        show_error(parent, _("Installation not possible"), "\n".join(re.sub("<[^>]+>", "", b) for b in plan.blockers))
         return False
     if dlg.missing():
-        show_error(parent, "Bestätigung fehlt", "Bitte im Plan alle fett gedruckten Punkte ausdrücklich bestätigen:\n\n"
-                   + "\n".join("• " + planner.CONFIRM_TEXT.get(c, c) for c in dlg.missing()))
+        show_error(parent, _("Confirmation missing"), _("Please confirm all points in bold in the plan explicitly:")
+                   + "\n\n" + "\n".join("• " + planner.CONFIRM_TEXT.get(c, c) for c in dlg.missing()))
         return False
     if plan.v15_option in ("default_on", "default_off"):
         prefs.remember(key, plan.via_stock)
     do_dry = dlg.chk_dry.isChecked() if dry_run is None else dry_run
     # Während der Plan offen war, lief die Geräteerkennung weiter: Ist es noch dasselbe FM-1 im selben Zustand?
     if ctx.port is None or planned_port is None or ctx.port.key != planned_port.key:
-        show_error(parent, "Gerät hat sich geändert",
-                   "Während der Plan offen war, wurde das FM-1 getrennt oder ein anderes Gerät aktiv. Es wurde nichts "
-                   "geschrieben. Bitte das gewünschte FM-1 anschließen bzw. oben links auswählen und den Plan neu öffnen.")
+        show_error(parent, _("Device has changed"),
+                   _("While the plan was open, the FM-1 was disconnected or another device became active. Nothing was "
+                     "written. Please connect the desired FM-1 or select it at the top left, and open the plan again."))
         return False
     if "backup" in plan.kinds() and not do_dry and not ctx.connected:
-        show_error(parent, "Backup nicht möglich",
-                   "Der Plan sieht ein Backup vor, aber die Verbindung zum FM-1 ist inzwischen weg. Es wurde nichts "
-                   "geschrieben. Bitte neu verbinden und den Plan erneut öffnen.")
+        show_error(parent, _("Backup not possible"),
+                   _("The plan includes a backup, but the connection to the FM-1 is gone in the meantime. Nothing was "
+                     "written. Please reconnect and open the plan again."))
         return False
     do_backup = "backup" in plan.kinds() and ctx.connected and not do_dry
     link = ctx.link
@@ -496,8 +509,10 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         bk_folder = ctx.device_folder(s.backups_dir) if profile else s.backups_dir
     except OSError as e:
         if do_backup:
-            show_error(parent, "Backup-Ordner nicht beschreibbar", firmware.friendly_error(e) if not str(e).startswith(
-                "Der Ordner") else str(e))
+            from .device import FolderError
+            show_error(parent, _("Backup folder not writable"),
+                       str(e) if isinstance(e, FolderError)
+                       else firmware.friendly_error(e))
             return False
         bk_folder = None
     via_stock = plan.via_stock
@@ -510,10 +525,10 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
 
     def cancel_text() -> str:
         if not written:
-            return "Abgebrochen – am FM-1 wurde nichts geändert."
-        return (f"Abgebrochen nach dem Zwischenschritt: Auf das FM-1 wurde {', '.join(written)} geschrieben – es "
-                f"läuft jetzt die Original-Firmware V15. {spec.name} wurde NICHT geschrieben. Zum Fortsetzen "
-                f"{spec.name} erneut installieren (der Zwischenschritt ist dann nicht mehr nötig).")
+            return _("Cancelled – nothing was changed on the FM-1.")
+        return _("Cancelled after the intermediate step: {written} was written to the FM-1 – it now runs the "
+                 "original firmware V15. {name} was NOT written. To continue, install {name} again (the "
+                 "intermediate step is then no longer needed).").format(written=", ".join(written), name=spec.name)
 
     def check_cancel():
         if cancel.is_set():
@@ -522,19 +537,19 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     def work(w):
         # ---- 1. jedes Paket des Plans laden und vollständig prüfen – noch nichts am Gerät
         w.progress.emit(0, 0)
-        w.log.emit("Schritt: alle Pakete laden & prüfen (vor jedem Schreiben) …")
+        w.log.emit(_("Step: load & check all packages (before any writing) …"))
         stock_spec = firmware.spec("stock-v15")
         stock_info = None
         try:
             if via_stock:
                 st_pkg = firmware.download(stock_spec, firmware.fetch_releases(stock_spec)[0], log=w.log.emit)
-                stock_info = validate_package(st_pkg.fwsc, stock_spec, True, "Original-V15", official="FM-1_015",
+                stock_info = validate_package(st_pkg.fwsc, stock_spec, True, _("Original V15"), official="FM-1_015",
                                               log=w.log.emit)
             if rel:
                 pkg = firmware.download(spec, rel, log=w.log.emit, progress=lambda a, b: w.progress.emit(a, b))
                 path, res, t = pkg.fwsc, pkg.res, rel.tag
                 if not pkg.verified and not spec.sha256:
-                    w.log.emit("Prüfsumme nicht verfügbar: dieses Release hat keine Prüfsummen-Datei (im Plan bestätigt).")
+                    w.log.emit(_("Checksum not available: this release has no checksum file (confirmed in the plan)."))
             else:
                 path, res, t = local_pkg, None, tag
                 if spec.resources:
@@ -545,29 +560,29 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         except PackageRefused:
             raise
         except Exception as e:  # noqa: BLE001 – Netz/Datei: vor jedem Schreiben, also sagen wir das auch
-            w.log.emit("Technische Details: " + firmware.explain(e))
-            raise RuntimeError(f"{firmware.friendly_error(e)} Am FM-1 wurde nichts geändert.") from e
-        w.log.emit("Alle Pakete geprüft.")
+            w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
+            raise RuntimeError(_("{error} Nothing has been changed on the FM-1.").format(error=firmware.friendly_error(e))) from e
+        w.log.emit(_("All packages checked."))
         check_cancel()
         # ---- 2. Backup (nur lesen). Wenn es gewünscht war und scheitert: immer abbrechen.
         if do_backup:
-            w.log.emit("Schritt: Backup des Geräts …")
+            w.log.emit(_("Step: backup of the device …"))
             if link is None or link.closed:
-                raise RuntimeError("Backup nicht möglich: Die Verbindung zum FM-1 ist weg. Installation abgebrochen – "
-                                   "am FM-1 wurde nichts geändert.")
+                raise RuntimeError(_("Backup not possible: the connection to the FM-1 is gone. Installation aborted – "
+                                     "nothing was changed on the FM-1."))
             try:
                 from .. import autobackup
                 with link.exclusive():
                     bpath = autobackup.capture_to_file(
                         link, bk_folder, profile, old_fw, info_version,
-                        note=f"automatisch vor Installation von {label}", kind="vor-Update",
+                        note=_("automatically before installing {label}").format(label=label), kind="vor-Update",
                         progress=lambda a, b: w.progress.emit(a, b))
-                w.log.emit(f"Backup gespeichert: {bpath.name}")
+                w.log.emit(_("Backup saved: {name}").format(name=bpath.name))
             except Exception as e:  # noqa: BLE001
-                w.log.emit("Technische Details: " + firmware.explain(e))
-                raise RuntimeError("Backup fehlgeschlagen – Installation abgebrochen, am FM-1 wurde nichts geändert. "
-                                   f"Grund: {firmware.friendly_error(e)} Wer ohne Backup installieren will, wählt im "
-                                   "Plan „Vorher ein Backup machen“ ab und bestätigt das.")
+                w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
+                raise RuntimeError(_("Backup failed – installation aborted, nothing was changed on the FM-1. "
+                                     "Reason: {error} If you want to install without a backup, untick “Make a backup "
+                                     "first” in the plan and confirm that.").format(error=firmware.friendly_error(e)))
         check_cancel()
         if link and not do_dry:
             link.close()
@@ -576,20 +591,20 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
             from ..flash import engine as fe
             e = fe.Engine(log=w.log.emit)
             e.write(stock_info or tgt_info, port=port_name, dry_run=True, pin=pin)
-            w.log.emit("Probelauf beendet – es wurde nichts geschrieben.")
+            w.log.emit(_("Dry run finished – nothing was written."))
             return {"dry": True}
         check_cancel()
         # ---- 4. Schreiben
         if stock_info is not None:
-            w.log.emit("Schritt: Zwischenschritt Original-V15 …")
+            w.log.emit(_("Step: intermediate step original V15 …"))
             w.progress.emit(0, 100)
             _install(stock_spec, stock_info.path, "V15", port_name=port_name, log=w.log.emit,
                      progress=lambda pct: w.progress.emit(pct, 100),
                      device_id=profile.id if profile else "", cancel=cancel, pin=pin, expect_sha=stock_info.sha256)
-            written.append("die Original-Firmware V15")
-            w.log.emit("Original-V15 läuft. Weiter mit der Zielfirmware …")
+            written.append(_("the original firmware V15"))
+            w.log.emit(_("Original V15 is running. Continuing with the target firmware …"))
             check_cancel()
-        w.log.emit(f"Schritt: {spec.name} aufspielen …")
+        w.log.emit(_("Step: install {name} …").format(name=spec.name))
         w.progress.emit(0, 100)
         report: dict = {}
         try:
@@ -599,45 +614,47 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
                              cancel=cancel, pin=pin, expect_sha=tgt_info.sha256, report=report)
         except Exception as e:  # noqa: BLE001
             if written:
-                w.log.emit("Technische Details: " + firmware.explain(e))
+                w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
                 if getattr(e, "code", "") == "cancelled" or cancel.is_set():
                     raise RuntimeError(cancel_text()) from e
                 st = getattr(e, "state", "safe")
                 if st == "paused":
-                    now = (f"Das FM-1 wartet jetzt im Update-Modus – {spec.name} ist nicht vollständig geschrieben. "
-                           "Nichts abziehen: auf der Seite „Rettung“ mit „Installation abschließen“ weitermachen.")
+                    now = _("The FM-1 is now waiting in update mode – {name} is not completely written. "
+                            "Do not unplug anything: continue on the “Recovery” page with “Finish installation”.").format(
+                                name=spec.name)
                 elif st == "restart":
-                    now = (f"{spec.name} wurde geschrieben, aber das FM-1 hat sich danach nicht wie erwartet gemeldet. "
-                           "Aus- und wieder einschalten und prüfen, welche Firmware es zeigt.")
+                    now = _("{name} was written, but the FM-1 did not report as expected afterwards. "
+                            "Switch it off and on again and check which firmware it shows.").format(name=spec.name)
                 else:
-                    now = f"Auf dem FM-1 läuft jetzt die Original-Firmware V15; {spec.name} wurde nicht geschrieben."
-                raise RuntimeError(f"{firmware.friendly_error(e)} Vorher geschrieben: {', '.join(written)}. {now}") from e
+                    now = _("The FM-1 now runs the original firmware V15; {name} was not written.").format(name=spec.name)
+                raise RuntimeError(_("{error} Written before: {written}. {now}").format(
+                    error=firmware.friendly_error(e), written=", ".join(written), now=now)) from e
             raise
-        w.log.emit(f"Gerät meldet jetzt: {ident or 'unbekannt'}")
+        w.log.emit(_("Device now reports: {identity}").format(identity=ident or _("unknown")))
         if spec.protocol == "felucca" and spec.repo and spec.editor:
             try:
                 editor_host.prepare(spec, t, log=w.log.emit)
             except Exception as e:  # noqa: BLE001
-                w.log.emit(f"Editor wird später bereitgestellt ({firmware.friendly_error(e)})")
+                w.log.emit(_("The editor will be provided later ({error})").format(error=firmware.friendly_error(e)))
         return {"ident": ident, "tag": t, "resources": report.get("resources", ""), "backup": bool(do_backup),
                 "via": bool(stock_info is not None)}
 
     def summary(res) -> str:
         if res.get("dry"):
-            return ("Probelauf erfolgreich – alle Pakete geprüft, das FM-1 hat geantwortet. Am FM-1 wurde nichts "
-                    "geändert.")
-        parts = [f"Installation abgeschlossen – das FM-1 meldet jetzt {res.get('ident') or 'eine unbekannte Kennung'} "
-                 f"({label})"]
+            return _("Dry run successful – all packages checked, the FM-1 answered. Nothing was changed on the "
+                     "FM-1.")
+        parts = [_("Installation finished – the FM-1 now reports {identity} ({label})").format(
+            identity=res.get('ident') or _("an unknown identity"), label=label)]
         if res.get("via"):
-            parts.append("über die Original-V15")
+            parts.append(_("via the original V15"))
         if res.get("resources"):
             parts.append(res["resources"])
-        parts.append("Backup vorher gespeichert" if res.get("backup") else "ohne Backup")
+        parts.append(_("backup saved beforehand") if res.get("backup") else _("without backup"))
         text = ", ".join(parts) + "."
         if spec.key.startswith("stock") or via_stock:
-            text += (f" Geprüft hat die App die Prüfsumme des Pakets und die Kennung nach dem Neustart "
-                     f"({res.get('ident') or '?'}). Ob jedes Byte im Flash stimmt, lässt sich nur mit einem Flash-Dump "
-                     "prüfen (Rettung › „Ist mein FM-1 sauber?“).")
+            text += " " + _("The app checked the checksum of the package and the identity after the restart "
+                            "({identity}). Whether every byte in the flash is right can only be checked with a flash "
+                            "dump (Recovery › “Is my FM-1 clean?”).").format(identity=res.get('ident') or '?')
         return text
 
     def done(res):
@@ -658,7 +675,8 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
 
     from . import feedback
     try:
-        d = feedback.run(parent, f"{label} {'prüfen (Probelauf)' if do_dry else 'installieren'}", german_errors(work),
+        title = (_("{label} check (dry run)") if do_dry else _("{label} install")).format(label=label)
+        d = feedback.run(parent, title, german_errors(work),
                          cancel, dialog_cls=InstallDialog, on_done=done, done=summary)
     finally:
         ctx.disconnect(None)
@@ -669,24 +687,25 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
 class AddFirmwareDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Firmware hinzufügen")
+        self.setWindowTitle(_("Add firmware"))
         f = QFormLayout(self)
         self.name = QLineEdit()
         self.repo = QLineEdit()
-        self.repo.setPlaceholderText("besitzer/repo auf GitHub, z. B. charlesvestal/fm1-x0x")
+        self.repo.setPlaceholderText(_("owner/repo on GitHub, e.g. charlesvestal/fm1-x0x"))
         self.asset = QLineEdit()
-        self.asset.setPlaceholderText("Paketname im Release, {ver} = Version, z. B. x0x-{ver}.fwsc")
+        # Translators: {ver} is typed literally by the user – keep it
+        self.asset.setPlaceholderText(_("Package name in the release, {{ver}} = version, e.g. x0x-{{ver}}.fwsc").format())
         self.res = QLineEdit()
-        self.res.setPlaceholderText("optional: Ressourcen-Datei, z. B. name-{ver}-res.bin")
+        self.res.setPlaceholderText(_("optional: resource file, e.g. name-{{ver}}-res.bin").format())
         self.desc = QLineEdit()
-        f.addRow("Name:", self.name)
-        f.addRow("GitHub-Repo:", self.repo)
-        f.addRow("Paket:", self.asset)
-        f.addRow("Ressourcen:", self.res)
-        f.addRow("Beschreibung:", self.desc)
-        hint = QLabel("Jede FM-1-Firmware lässt sich installieren: Die App benutzt den eingebauten Installer und prüft "
-                      "Paket-Kennung und Update-Loader. Backups, Projekte und Editor gibt es nur bei Firmwares der "
-                      "Felucca-Familie mit Editor-Protokoll.")
+        f.addRow(_("Name:"), self.name)
+        f.addRow(_("GitHub repo:"), self.repo)
+        f.addRow(_("Package:"), self.asset)
+        f.addRow(_("Resources:"), self.res)
+        f.addRow(_("Description:"), self.desc)
+        hint = QLabel(_("Every FM-1 firmware can be installed: the app uses the built-in installer and checks the "
+                        "package identity and update loader. Backups, projects and editor are only available for "
+                        "firmwares of the Felucca family with an editor protocol."))
         hint.setWordWrap(True)
         f.addRow(hint)
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -704,13 +723,17 @@ class AddFirmwareDialog(QDialog):
                 "description": self.desc.text().strip()}
 
 
+# Translators: strftime format of a date (day.month.year in German)
+DATE_FORMAT = pgettext("date format", "%Y-%m-%d")
+
+
 def _date_text(iso: str) -> str:
     """Veröffentlichungsdatum fürs Auge (TT.MM.JJJJ), "–" wenn unbekannt."""
     if not iso:
         return "–"
     try:
         import datetime as _dt
-        return _dt.date.fromisoformat(iso[:10]).strftime("%d.%m.%Y")
+        return _dt.date.fromisoformat(iso[:10]).strftime(DATE_FORMAT)
     except ValueError:
         return iso
 
@@ -726,10 +749,9 @@ class FirmwarePage(QWidget):
         self.ctx = ctx
         self.releases: dict[str, list[firmware.Release]] = {}
         lay = QVBoxLayout(self)
-        lay.addWidget(heading("Installieren & Versionen", "Versionen prüfen, aktualisieren oder zu einer anderen "
-                                          "Firmware wechseln. "
-                                          "Jede FM-1-Firmware: mit Installationsplan, Prüfsumme, Probelauf und dem "
-                                          "passenden Update-Loader."))
+        lay.addWidget(heading(_("Install & Versions"), _("Check versions, update or switch to another firmware. "
+                                                         "Every FM-1 firmware: with installation plan, checksum, dry "
+                                                         "run and the matching update loader.")))
         split = QSplitter()
         lay.addWidget(split, 1)
 
@@ -739,9 +761,9 @@ class FirmwarePage(QWidget):
         self.cat = QListWidget()
         self.cat.currentRowChanged.connect(self._select)
         ll.addWidget(self.cat, 1)
-        b_add = QPushButton(icon("list-add"), "Firmware hinzufügen …")
+        b_add = QPushButton(icon("list-add"), _("Add firmware …"))
         b_add.clicked.connect(self._add)
-        b_del = QPushButton(icon("list-remove"), "Entfernen")
+        b_del = QPushButton(icon("list-remove"), _("Remove"))
         b_del.clicked.connect(self._remove)
         ll.addLayout(_row(b_add, b_del))
         split.addWidget(left)
@@ -753,7 +775,7 @@ class FirmwarePage(QWidget):
         self.desc.setWordWrap(True)
         self.desc.setOpenExternalLinks(True)
         rl.addWidget(self.desc)
-        self.v16_warn = QLabel("<b>Achtung V16:</b> " + V16_WARNING_HTML)
+        self.v16_warn = QLabel(_("<b>Caution V16:</b> {warning}").format(warning=V16_WARNING_HTML))
         self.v16_warn.setWordWrap(True)
         self.v16_warn.setStyleSheet("QLabel { color: #da4453; border: 1px solid #da4453; border-radius: 4px; "
                                     "padding: 6px; }")
@@ -764,47 +786,49 @@ class FirmwarePage(QWidget):
         self.v16_back.setObjectName("V16Back")
         vb = QVBoxLayout(self.v16_back)
         vb.setContentsMargins(0, 0, 0, 0)
-        lab = QLabel("<b>Auf diesem FM-1 läuft V16 (experimentell).</b> Der Rückweg geht über die Original-V15: Die App "
-                     "spielt erst V15 auf, dann deine Zielfirmware und bei Melodee danach Schrift und Werkssounds.")
+        lab = QLabel(_("<b>This FM-1 runs V16 (experimental).</b> The way back goes via the original V15: the app "
+                       "first installs V15, then your target firmware and, with Melodee, the font and factory sounds "
+                       "after that."))
         lab.setWordWrap(True)
         vb.addWidget(lab)
-        self.b_v16_back = QPushButton(icon("edit-undo", "go-previous"), "Rückweg von V16 …")
+        self.b_v16_back = QPushButton(icon("edit-undo", "go-previous"), _("Way back from V16 …"))
         self.b_v16_back.setProperty("variant", "primary")
-        self.b_v16_back.setToolTip("Zielfirmware und Version wählen – danach zeigt der Installationsplan jeden Schritt")
+        self.b_v16_back.setToolTip(_("Choose target firmware and version – then the installation plan shows every step"))
         self.b_v16_back.clicked.connect(self.return_from_v16)
         vb.addWidget(flow_row(self.b_v16_back))
         self.v16_back.setVisible(False)
         rl.addWidget(self.v16_back)
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Version", "Datum", "Art", "Status"])
+        self.tree.setHeaderLabels([_("Version"), _("Date"), pgettext("release list", "Type"), pgettext("release list", "Status")])
         self.tree.setRootIsDecorated(False)
         self.tree.setWordWrap(True)
         self.loading: set[str] = set()
         self.tree.currentItemChanged.connect(self._release_selected)
-        self.tree.itemDoubleClicked.connect(lambda *_: self._install())
+        self.tree.itemDoubleClicked.connect(lambda *_a: self._install())
         rl.addWidget(self.tree, 2)
         self.notes = QTextBrowser()
         self.notes.setOpenExternalLinks(True)
         rl.addWidget(self.notes, 3)
-        self.b_install = QPushButton(icon("system-software-update", "go-down"), "Auf aktives FM-1 installieren")
+        self.b_install = QPushButton(icon("system-software-update", "go-down"), _("Install on active FM-1"))
         self.b_install.setProperty("variant", "primary")
         self.b_install.clicked.connect(self._install)
-        self.b_dl = QPushButton(icon("download", "go-down"), "Nur herunterladen")
+        self.b_dl = QPushButton(icon("download", "go-down"), _("Download only"))
         self.b_dl.clicked.connect(self._download)
-        self.b_refresh = QPushButton(icon("view-refresh"), "Neu laden")
+        self.b_refresh = QPushButton(icon("view-refresh"), _("Reload"))
         self.b_refresh.clicked.connect(lambda: self.load_releases(force=True))
-        self.chk_rc = QCheckBox("Release Candidates zeigen")
+        self.chk_rc = QCheckBox(_("Show release candidates"))
         self.chk_rc.setChecked(ctx.settings.channel == "rc")
         self.chk_rc.toggled.connect(self._fill)
         rl.addWidget(flow_row(self.b_install, self.b_dl, self.b_refresh, self.chk_rc))     # bricht bei Schmalheit um
-        self.b_local = QPushButton(icon("document-open"), "Eigene .fwsc-Datei installieren …")
+        self.b_local = QPushButton(icon("document-open"), _("Install own .fwsc file …"))
         self.b_local.clicked.connect(self._install_local)
-        self.b_res = QPushButton(icon("run-build", "system-run"), "Schrift && Werkssounds nachschreiben")
-        self.b_res.setToolTip("Melodee ab 1.6: die Ressourcen-Datei (Schrift, Werkssounds, Bluetooth-Programm) "
-                              "nachträglich aufs FM-1 schreiben – z. B. wenn das Display nach dem Update leer bleibt")
+        # German label "Schrift && Werkssounds nachschreiben" – flashmodel.py (pinned, German) names this button
+        self.b_res = QPushButton(icon("run-build", "system-run"), _("Rewrite font && factory sounds"))
+        self.b_res.setToolTip(_("Melodee 1.6 and later: write the resource file (font, factory sounds, Bluetooth "
+                                "program) to the FM-1 afterwards – e.g. if the display stays empty after the update"))
         self.b_res.clicked.connect(self._resources)
-        self.b_stock = QPushButton(icon("edit-undo", "go-previous"), "Zurück zum Original …")
-        self.b_stock.setToolTip("M-VAVEs Original-Firmware V15 oder V16 aufspielen (Prüfsumme wird immer kontrolliert)")
+        self.b_stock = QPushButton(icon("edit-undo", "go-previous"), _("Back to the original …"))
+        self.b_stock.setToolTip(_("Install M-VAVE's original firmware V15 or V16 (the checksum is always checked)"))
         self.b_stock.clicked.connect(self.return_to_original)
         rl.addWidget(flow_row(self.b_local, self.b_stock, self.b_res))
         self.history = QLabel()
@@ -871,8 +895,9 @@ class FirmwarePage(QWidget):
         s = self.current_spec()
         if not s:
             return
-        self.desc.setText(f"<b>{s.name}</b> – {s.description}<br>Samples: {s.samples or 'unbekannt'} · "
-                          f"<a href='{s.url}'>{s.repo}</a>")
+        self.desc.setText(f"<b>{s.name}</b> – {s.description}<br>"
+                          + _("Samples: {samples}").format(samples=s.samples or _("unknown"))
+                          + f" · <a href='{s.url}'>{s.repo}</a>")
         self.v16_warn.setVisible(s.key == "stock-v16" or s.product == "FM-1_016")
         self.b_res.setVisible(bool(s.resources))
         self.load_releases()
@@ -891,10 +916,10 @@ class FirmwarePage(QWidget):
         if not force and not getattr(self, "_shown", False):
             # Datenschutz: beim Programmstart nicht ungefragt ins Netz – erst, wenn du die Seite öffnest
             self._pending_load = True
-            self._message_row("Versionen werden geladen, sobald du diese Seite öffnest.")
+            self._message_row(_("Versions are loaded as soon as you open this page."))
             return
         self.loading.add(s.key)
-        self._message_row("lade …")
+        self._message_row(_("loading …"))
 
         def fetch(w):
             try:
@@ -925,7 +950,7 @@ class FirmwarePage(QWidget):
         if cur and cur.key == key:
             self._fill()
             if err:
-                self.notes.setPlainText(f"Releases konnten nicht geladen werden: {err}")
+                self.notes.setPlainText(_("Releases could not be loaded: {error}").format(error=err))
         if self.ctx.firmware_key == key:
             self.updates_checked.emit(self.update_status())
 
@@ -937,12 +962,12 @@ class FirmwarePage(QWidget):
         rels = self.releases.get(s.key, [])
         if not rels:
             if s.key in self.loading or s.key not in self.releases:
-                self._message_row("lade …")
+                self._message_row(_("loading …"))
                 return
-            why = firmware.LAST_ERROR.get(s.key, "")
-            self._message_row("Keine Versionen gefunden. " + (why or "Mögliche Gründe: kein Internet, das GitHub-"
-                              "Abruf-Limit (60 pro Stunde) ist erreicht, oder das Projekt hat keine Releases.")
-                              + " „Neu laden“ versucht es erneut.")
+            why = firmware.LAST_ERROR.get(s.key, "") or _("Possible reasons: no internet, the GitHub request limit "
+                                                          "(60 per hour) has been reached, or the project has no "
+                                                          "releases.")
+            self._message_row(_("No versions found. {reason} “Reload” tries again.").format(reason=why))
             return
         show_rc = self.chk_rc.isChecked()
         installed = self.ctx.firmware_tag if self.ctx.firmware_key == s.key else ""
@@ -952,10 +977,10 @@ class FirmwarePage(QWidget):
                 continue
             state = []
             if r.tag == installed:
-                state.append("● installiert")
+                state.append(_("● installed"))
             if r.tag in local:
-                state.append("heruntergeladen")
-            it = QTreeWidgetItem([r.tag, _date_text(r.date), "Release Candidate" if r.prerelease else "stabil",
+                state.append(pgettext("release list", "downloaded"))
+            it = QTreeWidgetItem([r.tag, _date_text(r.date), _("Release candidate") if r.prerelease else _("stable"),
                                   ", ".join(state)])
             it.setData(0, Qt.ItemDataRole.UserRole, r.tag)
             if r.tag == installed:
@@ -983,32 +1008,34 @@ class FirmwarePage(QWidget):
         tag = it.data(0, Qt.ItemDataRole.UserRole)
         return next((r for r in self.releases.get(s.key, []) if r.tag == tag), None)
 
-    def _release_selected(self, *_):
+    def _release_selected(self, *_args):
         r = self.selected_release()
         if r:
-            self.notes.setMarkdown(r.notes or f"_{r.tag}: keine Release-Notizen abrufbar._")
+            self.notes.setMarkdown(r.notes or "_" + _("{tag}: no release notes available.").format(tag=r.tag) + "_")
         s = self.current_spec()
         has = r is not None
         self.b_install.setEnabled(has and self.ctx.port is not None and not getattr(self.ctx, "is_virtual", False))
         self.b_dl.setEnabled(has)
         if not has:
-            tip = "Erst eine Version in der Liste wählen." if s and self.releases.get(s.key) else \
-                  "Keine Version geladen – „Neu laden“ versuchen (Internet nötig) oder eine eigene .fwsc-Datei wählen."
+            tip = _("First choose a version in the list.") if s and self.releases.get(s.key) else \
+                  _("No version loaded – try “Reload” (internet needed) or choose your own .fwsc file.")
             self.b_install.setToolTip(tip)
             self.b_dl.setToolTip(tip)
         elif self.ctx.port is None:
-            self.b_install.setToolTip("Erst ein FM-1 per USB anschließen – oder „Nur herunterladen“ für später.")
-            self.b_dl.setToolTip(f"{s.name} {r.tag} nur in den Firmware-Ordner laden (installiert nichts)")
+            self.b_install.setToolTip(_("First connect an FM-1 via USB – or “Download only” for later."))
+            self.b_dl.setToolTip(_("Only download {name} {tag} into the firmware folder (installs nothing)").format(
+                name=s.name, tag=r.tag))
         else:
-            self.b_install.setToolTip(f"{s.name} {r.tag} auf das aktive FM-1 installieren – mit Plan, Prüfsumme und "
-                                      "Bestätigung")
-            self.b_dl.setToolTip(f"{s.name} {r.tag} nur in den Firmware-Ordner laden (installiert nichts)")
+            self.b_install.setToolTip(_("Install {name} {tag} on the active FM-1 – with plan, checksum and "
+                                        "confirmation").format(name=s.name, tag=r.tag))
+            self.b_dl.setToolTip(_("Only download {name} {tag} into the firmware folder (installs nothing)").format(
+                name=s.name, tag=r.tag))
 
     def update_status(self) -> dict:
         key = self.ctx.firmware_key
         s = firmware.spec(key)
         if not s:
-            return {"error": "Firmware des Geräts unbekannt"} if key else {}
+            return {"error": _("Firmware of the device unknown")} if key else {}
         rel = firmware.latest(self.releases.get(key, []), self.ctx.settings.channel)
         cur, new = self.ctx.firmware_tag, rel.tag if rel else ""
         if cur and new and new != cur:
@@ -1040,39 +1067,41 @@ class FirmwarePage(QWidget):
         from . import feedback
 
         def said(pkg) -> str:
-            check = ("Prüfsumme geprüft" if pkg.verified else
-                     "Prüfsumme nicht verfügbar (das Release hat keine Prüfsummen-Datei)")
-            return (f"{s.name} {r.tag} heruntergeladen ({pkg.fwsc.name}, {check}) – noch NICHT installiert. "
-                    f"Gespeichert in {pkg.fwsc.parent}.")
-        feedback.run(self, f"{s.name} {r.tag} herunterladen",
+            check = (_("checksum checked") if pkg.verified else
+                     _("checksum not available (the release has no checksum file)"))
+            return _("{name} {tag} downloaded ({file}, {check}) – NOT installed yet. Saved in {folder}.").format(
+                name=s.name, tag=r.tag, file=pkg.fwsc.name, check=check, folder=pkg.fwsc.parent)
+        feedback.run(self, _("Download {name} {tag}").format(name=s.name, tag=r.tag),
                      german_errors(lambda w: firmware.download(s, r, log=w.log.emit,
                                                                progress=lambda a, b: w.progress.emit(a, b))),
-                     on_done=lambda _: self._fill(), done=said,
-                     actions=[("Jetzt installieren …", lambda pkg: install_flow(self, self.ctx, s, r)),
+                     on_done=lambda _pkg: self._fill(), done=said,
+                     actions=[(_("Install now …"), lambda pkg: install_flow(self, self.ctx, s, r)),
                               feedback.open_folder_action(lambda pkg: pkg.fwsc.parent)])
 
     def _install_local(self, path: str = ""):
         """eigene .fwsc: Kennung + Prüfsumme zeigen, im Katalog suchen, dann den normalen Plan"""
         from ..flash import package as fpk
         if not path:
-            path, _ = QFileDialog.getOpenFileName(self, "Firmware-Paket wählen", str(self.ctx.settings.firmware_dir),
-                                                  "FM-1-Firmware (*.fwsc)")
+            path, _filter = QFileDialog.getOpenFileName(self, _("Choose firmware package"),
+                                                        str(self.ctx.settings.firmware_dir), _("FM-1 firmware (*.fwsc)"))
         if not path:
             return
         try:
             info = fpk.analyze(path)
         except fpk.PackageError as e:
-            show_error(self, "Kein FM-1-Paket", str(e))
+            show_error(self, _("No FM-1 package"), str(e))
             return
         match = match_by_sha(info.sha256)          # nur über die Prüfsumme – nie über den Dateinamen
-        text = (f"<b>{Path(path).name}</b><br>Kennung: <b>{info.product}</b><br>SHA-256: <tt>{info.sha256}</tt><br>"
-                f"Loader-Familie: {dict(stock='Original (M-VAVE)', felucca='Felucca-Familie').get(info.family, 'unbekannt')}"
-                + (f"<br>Beschädigt: {info.damage}" if info.damage else "") + "<br><br>"
-                + (f"Erkannt als <b>{match.name}</b> (Prüfsumme stimmt mit Katalog bzw. geprüftem Release überein)."
-                   if match else "Diese Prüfsumme steht in keinem Katalog und in keinem geprüften Release – die "
-                   "Datei ist <b>unbekannt</b>, egal wie sie heißt. Du musst im Plan ausdrücklich bestätigen, dass "
-                   "du weißt, was du tust."))
-        if not confirm(self, "Eigene Firmware-Datei", text, "Weiter zum Plan"):
+        fam = {"stock": _("Original (M-VAVE)"), "felucca": _("Felucca family")}.get(info.family, _("unknown"))
+        text = (f"<b>{Path(path).name}</b><br>" + _("Identity: <b>{product}</b>").format(product=info.product)
+                + f"<br>SHA-256: <tt>{info.sha256}</tt><br>" + _("Loader family: {family}").format(family=fam)
+                + ("<br>" + _("Damaged: {damage}").format(damage=info.damage) if info.damage else "") + "<br><br>"
+                + (_("Recognized as <b>{name}</b> (checksum matches the catalog or a checked release).").format(
+                    name=match.name)
+                   if match else _("This checksum is in no catalog and in no checked release – the file is "
+                                   "<b>unknown</b>, no matter what it is called. You must confirm explicitly in the "
+                                   "plan that you know what you are doing.")))
+        if not confirm(self, _("Own firmware file"), text, _("On to the plan")):
             return
         sp = match or firmware.FirmwareSpec(key="eigene", name=Path(path).stem, repo="", asset="", sums="", installer="",
                                             editor="", builtin=False, protocol="none", product=info.product,
@@ -1084,20 +1113,20 @@ class FirmwarePage(QWidget):
     def return_to_original(self):
         """Zurück zur Original-Firmware – V15 (empfohlen) oder V16"""
         dlg = QDialog(self)
-        dlg.setWindowTitle("Zurück zum Original")
+        dlg.setWindowTitle(_("Back to the original"))
         lay = QVBoxLayout(dlg)
-        lab = QLabel("<b>V15</b> ist der bewährte Rückweg: alle Installer kennen sie, und fast alle Community-Firmwares "
-                     "werden von ihr aus installiert. <b>V16</b> (Oktober 2026) ist M-VAVEs neueste Version mit acht "
-                     "Stimmen und 64-Step-Pattern. M-VAVE tauscht die V16-Datei auf dem Server gelegentlich aus – "
-                     "passt die Prüfsumme nicht, installiert die App nichts.<br><br>Danach am FM-1 einmal "
-                     "<i>System &gt; Reset Patches</i>, falls Presets verstümmelt aussehen.")
+        lab = QLabel(_("<b>V15</b> is the proven way back: all installers know it, and almost all community firmwares "
+                       "are installed from it. <b>V16</b> (October 2026) is M-VAVE's newest version with eight "
+                       "voices and 64-step patterns. M-VAVE occasionally replaces the V16 file on the server – "
+                       "if the checksum does not match, the app installs nothing.<br><br>Afterwards, on the FM-1, run "
+                       "<i>System &gt; Reset Patches</i> once if presets look garbled."))
         lab.setWordWrap(True)
         lay.addWidget(lab)
         combo = QComboBox()
-        combo.addItem("Original-Firmware V15 (empfohlen)", "stock-v15")
-        combo.addItem("Original-Firmware V16 (experimentell – nur mit Backup)", "stock-v16")
+        combo.addItem(_("Original firmware V15 (recommended)"), "stock-v15")
+        combo.addItem(_("Original firmware V16 (experimental – only with a backup)"), "stock-v16")
         lay.addWidget(combo)
-        warn = QLabel("<b>Achtung V16:</b> " + V16_WARNING_HTML)
+        warn = QLabel(_("<b>Caution V16:</b> {warning}").format(warning=V16_WARNING_HTML))
         warn.setWordWrap(True)
         warn.setStyleSheet("QLabel { color: #da4453; }")
         warn.setVisible(False)
@@ -1115,16 +1144,16 @@ class FirmwarePage(QWidget):
     def return_from_v16(self, key: str = "melodee", tag: str = ""):
         """geführter Rückweg V16 → V15 → Zielfirmware (der Plan erzwingt den Zwischenschritt über V15)"""
         dlg = QDialog(self)
-        dlg.setWindowTitle("Rückweg von V16")
+        dlg.setWindowTitle(_("Way back from V16"))
         lay = QVBoxLayout(dlg)
-        lab = QLabel("<b>So läuft der Rückweg:</b><ol>"
-                     "<li>Ein Backup geht nicht – V16 hat kein Editor-Protokoll. Was du unter V16 gespeichert hast, "
-                     "ist danach weg.</li>"
-                     "<li>Original-V15 aufspielen (gleicher Update-Loader wie V16).</li>"
-                     "<li>Deine Zielfirmware aufspielen; bei Melodee danach Schrift und Werkssounds.</li>"
-                     "<li>Dein Backup von vor V16 zurückspielen (Seite „Backups“).</li></ol>"
-                     "Reste von V16 (0x93000–0xA8FFF) bleiben im Flash liegen; prüfen kannst du das in der Rettung mit "
-                     "„Ist mein FM-1 sauber?“.")
+        lab = QLabel(_("<b>This is how the way back works:</b><ol>"
+                       "<li>A backup is not possible – V16 has no editor protocol. What you saved under V16 is gone "
+                       "afterwards.</li>"
+                       "<li>Install the original V15 (same update loader as V16).</li>"
+                       "<li>Install your target firmware; with Melodee, the font and factory sounds after that.</li>"
+                       "<li>Restore your backup from before V16 (“Backups” page).</li></ol>"
+                       "Leftovers of V16 (0x93000–0xA8FFF) remain in the flash; you can check that in Recovery with "
+                       "“Is my FM-1 clean?”."))
         lab.setWordWrap(True)
         lab.setTextFormat(Qt.TextFormat.RichText)
         lay.addWidget(lab)
@@ -1133,21 +1162,21 @@ class FirmwarePage(QWidget):
         specs = [sp for sp in firmware.catalog() if sp.repo and sp.key != "eigene"]
         for sp in specs:
             fw.addItem(sp.name, sp.key)
-        fw.addItem("Original-Firmware V15 (nur V15)", "stock-v15")
+        fw.addItem(_("Original firmware V15 (V15 only)"), "stock-v15")
         i = fw.findData(key)
         fw.setCurrentIndex(max(0, i))
         ver = QComboBox()
         ver.setMinimumWidth(220)
         state = QLabel("")
         state.setProperty("role", "muted")
-        form.addRow("Zielfirmware:", fw)
-        form.addRow("Version:", ver)
+        form.addRow(_("Target firmware:"), fw)
+        form.addRow(_("Version:"), ver)
         lay.addLayout(form)
         lay.addWidget(state)
         bb = QDialogButtonBox()
-        ok = bb.addButton("Weiter zum Plan", QDialogButtonBox.ButtonRole.AcceptRole)
+        ok = bb.addButton(_("On to the plan"), QDialogButtonBox.ButtonRole.AcceptRole)
         ok.setProperty("variant", "primary")
-        bb.addButton("Abbrechen", QDialogButtonBox.ButtonRole.RejectRole)
+        bb.addButton(_("Cancel"), QDialogButtonBox.ButtonRole.RejectRole)
         bb.accepted.connect(dlg.accept)
         bb.rejected.connect(dlg.reject)
         lay.addWidget(bb)
@@ -1158,13 +1187,13 @@ class FirmwarePage(QWidget):
             rels = self.releases.get(k)
             if rels is None:
                 ok.setEnabled(False)
-                state.setText("Versionen werden geladen …")
+                state.setText(_("Loading versions …"))
                 run_job(dlg, lambda w: firmware.fetch_releases(sp, 600),
                         on_done=lambda r: (self.releases.__setitem__(k, r), fw.currentData() == k and fill(k)),
-                        on_fail=lambda m, tb: state.setText(f"Versionen nicht ladbar: {m}"))
+                        on_fail=lambda m, tb: state.setText(_("Versions cannot be loaded: {error}").format(error=m)))
                 return
             for r in rels:
-                ver.addItem(r.tag + (" (Testversion)" if r.prerelease else ""), r.tag)
+                ver.addItem(_("{tag} (test version)").format(tag=r.tag) if r.prerelease else r.tag, r.tag)
             prof = self.ctx.profile
             before = next((h.get("version", "") for h in reversed(list(getattr(prof, "firmware_history", []) or []))
                            if h.get("firmware") == k), "") if prof else ""
@@ -1172,7 +1201,7 @@ class FirmwarePage(QWidget):
             want = tag or before or (lt.tag if lt else "")
             ver.setCurrentIndex(max(0, ver.findData(want)))
             ok.setEnabled(bool(rels))
-            state.setText("" if rels else "Keine Version gefunden.")
+            state.setText("" if rels else _("No version found."))
         fw.currentIndexChanged.connect(lambda _i: fill(fw.currentData()))
         fill(fw.currentData())
         if dlg.exec() != QDialog.DialogCode.Accepted:
@@ -1180,7 +1209,7 @@ class FirmwarePage(QWidget):
         sp = firmware.spec(fw.currentData())
         rel = next((r for r in self.releases.get(sp.key, []) if r.tag == ver.currentData()), None)
         if sp is None or rel is None:
-            show_error(self, "Keine Version gewählt", "Bitte eine Version wählen. Am FM-1 wurde nichts verändert.")
+            show_error(self, _("No version chosen"), _("Please choose a version. Nothing was changed on the FM-1."))
             return False
         return install_flow(self, self.ctx, sp, rel)
 
@@ -1188,13 +1217,15 @@ class FirmwarePage(QWidget):
         p = self.ctx.profile
         hist = list(getattr(p, "firmware_history", []) or []) if p else []
         if not hist:
-            self.history.setText("<small>Firmware-Verlauf dieses Geräts: noch keine Installation über die App.</small>")
+            self.history.setText("<small>" + _("Firmware history of this device: no installation via the app yet.")
+                                 + "</small>")
             return
-        rows = [f"{time.strftime('%d.%m.%Y', time.localtime(h.get('time', 0)))}: {h.get('name', h.get('firmware'))} {h.get('version', '')}"
-                + (" (über V15)" if h.get("via_v15") else "") for h in hist[-5:]][::-1]
-        self.history.setText("<small><b>Firmware-Verlauf:</b> " + " · ".join(rows) + "</small>")
+        via = " " + _("(via V15)")
+        rows = [f"{time.strftime(DATE_FORMAT, time.localtime(h.get('time', 0)))}: {h.get('name', h.get('firmware'))} {h.get('version', '')}"
+                + (via if h.get("via_v15") else "") for h in hist[-5:]][::-1]
+        self.history.setText("<small><b>" + _("Firmware history:") + "</b> " + " · ".join(rows) + "</small>")
 
-    def open_with(self, install=None, file=None, **_):
+    def open_with(self, install=None, file=None, **_kw):
         """Deep-Link: install=FirmwareSpec|key (z. B. aus dem Katalog), file=Pfad zu einer .fwsc"""
         sp = firmware.spec(install) if isinstance(install, str) else install
         if file:
@@ -1213,10 +1244,11 @@ class FirmwarePage(QWidget):
         s = self.current_spec()
         tag = self.ctx.firmware_tag
         if getattr(self.ctx, "is_virtual", False):
-            show_error(self, "Kein echtes FM-1", "Der Studio-Zwilling ist kein echtes FM-1 – Firmware wird nur auf ein angeschlossenes Gerät installiert. Bitte oben ein echtes FM-1 wählen.")
+            show_error(self, _("Not a real FM-1"), _("The Studio twin is not a real FM-1 – firmware is only installed on a "
+                                                     "connected device. Please choose a real FM-1 at the top."))
             return
         if not (s and s.resources and tag and self.ctx.port):
-            show_error(self, "Nicht möglich", "Dafür muss ein FM-1 mit bekannter Melodee-Version verbunden sein.")
+            show_error(self, _("Not possible"), _("For this, an FM-1 with a known Melodee version must be connected."))
             return
         from .risk_dialog import ensure_risk_ack
         if not ensure_risk_ack(self):
@@ -1227,24 +1259,24 @@ class FirmwarePage(QWidget):
         link = self.ctx.link
 
         if rel is None:
-            show_error(self, "Version nicht in der Liste",
-                       f"Die installierte Version {tag} steht nicht in der geladenen Versionsliste von {s.name}. "
-                       "Bist du online? Bitte „Neu laden“ drücken und es dann erneut versuchen. Am FM-1 wurde nichts "
-                       "verändert.")
+            show_error(self, _("Version not in the list"),
+                       _("The installed version {tag} is not in the loaded version list of {name}. Are you online? "
+                         "Please press “Reload” and then try again. Nothing was changed on the FM-1.").format(
+                           tag=tag, name=s.name))
             return
 
         def work(w):
             pkg = firmware.download(s, rel, log=w.log.emit)
             if not pkg.res:
-                raise RuntimeError(f"{s.name} {tag} hat keine Ressourcen-Datei – es gibt nichts nachzuschreiben. "
-                                   "Am FM-1 wurde nichts verändert.")
+                raise RuntimeError(_("{name} {tag} has no resource file – there is nothing to rewrite. "
+                                     "Nothing was changed on the FM-1.").format(name=s.name, tag=tag))
             repo = firmware.ensure_tools(s, tag, w.log.emit)
             try:
                 firmware.check_tool(s, repo, tag)
             except firmware.ToolNotTrusted as e:       # erst fragen (im GUI-Thread), dann erneut starten
                 if not ask(e):
-                    raise RuntimeError("Abgebrochen: Das Werkzeug aus dem Repo wurde nicht ausgeführt. Am FM-1 "
-                                       "wurde nichts verändert.") from None
+                    raise RuntimeError(_("Cancelled: the tool from the repo was not run. Nothing was changed on "
+                                         "the FM-1.")) from None
                 firmware.approve_tool(s, tag, e.commit)
             if link:
                 link.close()
@@ -1255,29 +1287,30 @@ class FirmwarePage(QWidget):
 
         def done(how):
             if how == "current":     # Melodee ab 1.6.0-rc.8: der Update-Loader hat sie schon geschrieben
-                return (f"Die Ressourcen von {s.name} {tag} (Schriften, Werkssounds, Bluetooth-Programm) waren schon "
-                        "vollständig – das FM-1 hat Länge und Prüfsumme selbst bestätigt, es wurde nichts geschrieben.")
-            return (f"Ressourcen von {s.name} {tag} geschrieben (Schriften, Werkssounds, Bluetooth-Programm). "
-                    "Die Firmware selbst wurde nicht verändert.")
+                return _("The resources of {name} {tag} (fonts, factory sounds, Bluetooth program) were already "
+                         "complete – the FM-1 confirmed length and checksum itself, nothing was written.").format(
+                             name=s.name, tag=tag)
+            return _("Resources of {name} {tag} written (fonts, factory sounds, Bluetooth program). "
+                     "The firmware itself was not changed.").format(name=s.name, tag=tag)
         from . import feedback
         self.ctx.hold = True
         try:
-            feedback.run(self, "Ressourcen schreiben", german_errors(work), done=done)
+            feedback.run(self, _("Write resources"), german_errors(work), done=done)
         finally:
             self.ctx.disconnect(None)
             self.ctx.reconnect_soon()
 
     def confirm_tool(self, e) -> bool:
         """Rückfrage, bevor Code aus einem Firmware-Repo läuft (fremde Firmware oder verschobener Tag)."""
-        moved = (f"<br><br><b>Achtung:</b> Der Tag zeigte vorher auf {html.escape(e.moved_from[:12])}. Ein "
-                 "verschobener Tag kann ein harmloses Neu-Veröffentlichen sein – oder veränderter Code."
+        moved = ("<br><br>" + _("<b>Caution:</b> the tag previously pointed to {commit}. A moved tag can be a "
+                                "harmless re-release – or modified code.").format(commit=html.escape(e.moved_from[:12]))
                  if e.moved_from else "")
-        return confirm(self, "Werkzeug aus dem Firmware-Repo ausführen?",
+        return confirm(self, _("Run tool from the firmware repo?"),
                        f"{html.escape(str(e))}<br><br>Repo: <b>github.com/{html.escape(e.repo)}</b><br>"
                        f"Tag: <b>{html.escape(e.tag or '?')}</b><br>Commit: <tt>{html.escape(e.commit)}</tt>{moved}"
-                       "<br><br>Das Werkzeug ist ein Python-Programm aus diesem Repo und läuft mit deinen "
-                       "Benutzerrechten. Nur erlauben, wenn du dem Repo vertraust. Die Zustimmung gilt für genau "
-                       "diesen Commit.", "Ausführen", danger=True)
+                       "<br><br>" + _("The tool is a Python program from this repo and runs with your user rights. "
+                                      "Only allow it if you trust the repo. The approval applies to exactly this "
+                                      "commit."), _("Run"), danger=True)
 
     def _add(self):
         try:                                   # Katalog-Werkstatt: Link-Import (Repo, Release oder .fwsc-Adresse)
@@ -1290,37 +1323,38 @@ class FirmwarePage(QWidget):
             if dlg.exec() == QDialog.DialogCode.Accepted:
                 self._fill_catalog()
                 self.list_changed.emit()
-                self.ctx.message.emit("Firmware hinzugefügt – sie steht jetzt in der Liste (noch nichts installiert).")
+                self.ctx.message.emit(_("Firmware added – it is now in the list (nothing installed yet)."))
             return
         d = AddFirmwareDialog(self)
         if d.exec() != QDialog.DialogCode.Accepted:
             return
         e = d.entry()
         if not e:
-            show_error(self, "Unvollständig", "Bitte Name, Repo (besitzer/name) und Paketname mit {ver} angeben.")
+            show_error(self, _("Incomplete"), _("Please enter name, repo (owner/name) and package name with {{ver}}.").format())
             return
         s = self.ctx.settings
         s.extra_firmwares = [x for x in s.extra_firmwares if x.get("key") != e["key"]] + [e]
         config.save(s)
         self._fill_catalog()
         self.list_changed.emit()
-        self.ctx.message.emit(f"Firmware „{e['name']}“ hinzugefügt – noch nichts heruntergeladen oder installiert.")
+        self.ctx.message.emit(_("Firmware “{name}” added – nothing downloaded or installed yet.").format(name=e['name']))
 
     def _remove(self):
         sp = self.current_spec()
         if not sp or sp.builtin:
-            show_error(self, "Nicht möglich", "Die eingebauten Firmwares lassen sich nicht entfernen.")
+            show_error(self, _("Not possible"), _("The built-in firmwares cannot be removed."))
             return
-        if not confirm(self, "Aus der Liste entfernen", f"„{sp.name}“ aus der Firmware-Liste entfernen?<br>"
-                       "Heruntergeladene Pakete bleiben im Firmware-Ordner, am FM-1 ändert sich nichts.", "Entfernen"):
+        if not confirm(self, _("Remove from the list"), _("Remove “{name}” from the firmware list?<br>Downloaded "
+                                                         "packages stay in the firmware folder, nothing changes on the "
+                                                         "FM-1.").format(name=sp.name), _("Remove")):
             return
         s = self.ctx.settings
         s.extra_firmwares = [x for x in s.extra_firmwares if x.get("key") != sp.key]
         config.save(s)
         self._fill_catalog()
         self.list_changed.emit()
-        self.ctx.message.emit(f"„{sp.name}“ aus der Liste entfernt. Heruntergeladene Pakete bleiben im Firmware-Ordner, "
-                              "am FM-1 ändert sich nichts.")
+        self.ctx.message.emit(_("“{name}” removed from the list. Downloaded packages stay in the firmware folder, "
+                                "nothing changes on the FM-1.").format(name=sp.name))
 
 
 def _row(*ws):

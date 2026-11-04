@@ -24,6 +24,7 @@ from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import QApplication, QFileDialog
 
 from .. import config
+from ..i18n import _
 
 try:
     from PyQt6.QtWebChannel import QWebChannel
@@ -52,7 +53,7 @@ def profile():
     """das eine gemeinsame Profil (mit Web-MIDI-Ersatz)."""
     global _profile
     if not HAVE_WEBENGINE:
-        raise RuntimeError("Qt WebEngine fehlt (sudo apt install python3-pyqt6.qtwebengine)")
+        raise RuntimeError(_("Qt WebEngine is missing (sudo apt install python3-pyqt6.qtwebengine)"))
     if _profile is None:
         prof = QWebEngineProfile("fm1-companion", QApplication.instance())
         prof.setPersistentStoragePath(str(config.DATA_DIR / "webengine"))
@@ -115,7 +116,7 @@ def _download(item):
     # Standard: in ~/FM-1/Downloads, mit Nachfrage
     folder = config.folder("Downloads")
     name = item.downloadFileName() or "download"
-    path, _ = QFileDialog.getSaveFileName(None, "Speichern", str(folder / name))
+    path, _filter = QFileDialog.getSaveFileName(None, _("Save"), str(folder / name))
     if not path:
         item.cancel()
         return
