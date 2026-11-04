@@ -18,6 +18,7 @@ from ..musik_widgets import StepRoll
 from ..playback_bar import DeviceBadge, PlaybackBar, Source, device_name
 from ..responsive import reflow
 from . import PageSpec
+from ...i18n import _
 
 SETTINGS = {"lane_notes": ",".join(str(n) for n in PF.LANE_GM), "drum_channel": 0, "mode": "song", "loops": 4,
             "last_dir": ""}
@@ -659,7 +660,8 @@ def _make(ctx, window):
     return ProjectView(ctx, window)
 
 
-PAGE = PageSpec(key="project_view", title="Projekt-Ansicht", group="musik", factory=_make,
+PAGE = PageSpec(key="project_view", title=_("Project View"), group="musik", factory=_make,
                 icons=("view-media-playlist", "audio-midi", "document-preview"), order=20,
-                description="Melodee-Projekte ansehen und als MIDI exportieren",
-                keywords=("projekt", "midi", "export", "piano roll", "song", "pattern", "daw", "audacity"))
+                description=_("view Melodee projects and export them as MIDI"),
+                keywords=("projekt", "midi", "export", "piano roll", "song", "pattern", "daw", "audacity",
+                          "project", "view"))

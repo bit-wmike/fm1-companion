@@ -24,6 +24,7 @@ from ... import autobackup as AB, backup, config, studio as S
 from .. import web
 from ..common import button, confirm, flow_row, fw_label, heading, icon, label, run_job, show_error
 from . import PageSpec
+from ...i18n import _
 
 STEMS_TIP = ("Einzelspuren (Stems): je Spur 1–4 eine eigene WAV-Datei, gleich lang wie der Mix. Jede Spur wird "
              "allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master). Darum ist die "
@@ -991,8 +992,9 @@ def _make(ctx, window):
     return StudioPage(ctx, window)
 
 
-PAGE = PageSpec(key="studio", title="Studio", group="musik", factory=_make,
+PAGE = PageSpec(key="studio", title=_("Studio"), group="musik", factory=_make,
                 icons=("audio-x-generic", "applications-multimedia", "media-playback-start"), order=5,
-                description="der digitale Zwilling deines FM-1: holen, spielen, als WAV ausgeben, zurückschreiben",
+                description=_("the digital twin of your FM-1: fetch, play, export as WAV, write back"),
                 keywords=("zwilling", "twin", "wav", "export", "stems", "einzelspuren", "rendern", "logic",
-                          "audacity", "studio", "zurückschreiben"))
+                          "audacity", "studio", "zurückschreiben", "digital twin", "render", "write back",
+                          "single tracks"))

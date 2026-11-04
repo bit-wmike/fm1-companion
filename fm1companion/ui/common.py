@@ -193,7 +193,8 @@ def fmt_size(n: float | None) -> str:
         return "–"
     for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
         if abs(n) < 1024 or unit == "TiB":
-            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}".replace(".", ",")   # deutsch: 430,8 KiB
+            from ..i18n import decimal
+            return f"{n:.0f} {unit}" if unit == "B" else f"{decimal(n, 1)} {unit}"   # de: 430,8 KiB, en: 430.8 KiB
         n /= 1024
     return f"{n:.1f}"
 
@@ -741,7 +742,11 @@ _ENGLISH = {"OK": "OK", "&OK": "OK", "Cancel": "Abbrechen", "&Cancel": "Abbreche
 
 def german_buttons(box):
     """Standardknöpfe einer QDialogButtonBox / QMessageBox deutsch beschriften (falls Qt keine deutsche
-    Übersetzung geladen hat). Gibt box zurück."""
+    Übersetzung geladen hat). Gibt box zurück.
+    Only for the German UI – in any other language Qt's own (or translated) labels stay."""
+    from .. import i18n
+    if i18n.current_language() != "de":
+        return box
     try:
         for b in box.buttons():
             t = b.text()
@@ -773,11 +778,16 @@ _translators: list = []
 
 
 def install_translations(app) -> bool:
-    """Qt-eigene Texte (OK/Abbrechen/Schließen, Datei-Dialoge, Kontextmenüs) auf Deutsch.
-    Lädt qtbase_de.qm aus dem Qt-Übersetzungsordner (Debian: Paket qt6-translations-l10n);
-    fehlt die Datei, beschriftet ein Ereignisfilter die Standardknöpfe selbst. -> True, wenn Qt-Übersetzung geladen."""
+    """Qt's own texts (OK/Cancel/Close, file dialogs, context menus) in the language of the app (i18n).
+    Loads qtbase_<lang>.qm from Qt's translations folder (Debian: package qt6-translations-l10n); for German,
+    if the file is missing, an event filter labels the standard buttons itself. English needs nothing.
+    -> True if a Qt translation was loaded."""
     from PyQt6.QtCore import QLibraryInfo, QLocale, QTranslator
-    QLocale.setDefault(QLocale(QLocale.Language.German, QLocale.Country.Germany))
+    from .. import i18n
+    lang = i18n.current_language()
+    QLocale.setDefault(qt_locale(lang))
+    if lang == i18n.SOURCE_LANGUAGE:
+        return False
     paths = []
     try:
         paths.append(QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath))
@@ -785,7 +795,7 @@ def install_translations(app) -> bool:
         pass
     paths += ["/usr/share/qt6/translations", "/usr/share/qt5/translations"]
     loaded = False
-    for name in ("qtbase_de", "qt_de"):
+    for name in (f"qtbase_{lang}", f"qt_{lang}"):
         for p in paths:
             tr = QTranslator(app)
             if p and tr.load(name, p):
@@ -795,10 +805,23 @@ def install_translations(app) -> bool:
                 break
         if loaded:
             break
-    g = _ButtonGermanizer(app)
-    app.installEventFilter(g)
-    _translators.append(g)
+    if lang == "de":
+        g = _ButtonGermanizer(app)
+        app.installEventFilter(g)
+        _translators.append(g)
     return loaded
+
+
+def qt_locale(lang: str | None = None):
+    """QLocale for number formats (decimal comma in spin boxes) matching the UI language."""
+    from PyQt6.QtCore import QLocale
+    from .. import i18n
+    lang = lang or i18n.current_language()
+    if lang == "de":
+        return QLocale(QLocale.Language.German, QLocale.Country.Germany)
+    if lang == "en":
+        return QLocale(QLocale.Language.English, QLocale.Country.UnitedStates)
+    return QLocale(lang)
 
 
 # ====================================================================== Rückgängig je Gerät

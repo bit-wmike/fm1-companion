@@ -37,7 +37,7 @@ cat <<'HINWEIS'
   aus dem Studio verändern dein Gerät. Das geschieht auf eigenes Risiko – im schlimmsten Fall startet das
   FM-1 nicht mehr und muss mit den Rettungswerkzeugen wiederbelebt werden.
   Mach vorher ein Backup und trenne das Gerät während eines Vorgangs nicht.
-  Nicht jede Funktion ist auf echter Hardware getestet (siehe docs/UNGETESTET.md).
+  Nicht jede Funktion ist auf echter Hardware getestet (siehe docs/UNTESTED.md).
   Es gibt keine Gewährleistung und keine Haftung, soweit gesetzlich zulässig
   (GNU GPL 3.0, Abschnitte 15 und 16). Vor der ersten Installation auf dem FM-1 fragt die App
   noch einmal („Ich habe verstanden“).

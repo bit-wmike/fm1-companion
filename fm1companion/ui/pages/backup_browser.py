@@ -15,6 +15,7 @@ from ... import autobackup as AB, backup, backup_inspect as BI, projects
 from ..common import confirm, flow_row, fmt_date, fmt_size, fw_label, heading, icon, safe_folder, show_error
 from ..responsive import adaptive_splitter, reflow
 from . import PageSpec
+from ...i18n import _
 
 GROUP_ICONS = {"Musik": ("media-playback-start",), "Projekte": ("folder-music", "folder"),
                "Presets": ("audio-x-generic", "preferences-desktop-sound"), "Einstellungen": ("configure", "preferences-system"),
@@ -722,7 +723,8 @@ def _make(ctx, window):
     return BackupBrowserPage(ctx, window)
 
 
-PAGE = PageSpec(key="backup_browser", title="Backup-Browser", group="daten", factory=_make,
+PAGE = PageSpec(key="backup_browser", title=_("Backup Browser"), group="daten", factory=_make,
                 icons=("document-preview", "system-search", "backup"), order=20,
-                description="in Backups hineinschauen, vergleichen, einzelne Teile zurückspielen",
-                keywords=("backup", "diff", "vergleich", "presets", "wiederherstellen", "zip"))
+                description=_("look inside backups, compare them, restore single parts"),
+                keywords=("backup", "diff", "vergleich", "presets", "wiederherstellen", "zip",
+                          "compare", "restore", "browse", "inspect"))

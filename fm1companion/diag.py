@@ -13,6 +13,7 @@ import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from .i18n import _
 
 DATA = Path(__file__).resolve().parent / "data"
 FALLBACK_REQUIRED = ["python3", "python3-pyqt6", "python3-pyqt6.qtsvg", "python3-pyqt6.qtwebengine", "python3-mido",
@@ -77,7 +78,7 @@ def _ver(mod: str, attr: str = "__version__") -> str:
     try:
         m = importlib.import_module(mod)
     except Exception:  # noqa: BLE001
-        return "fehlt"
+        return _("missing")
     for a in (attr, "__version__", "version"):
         v = getattr(m, a, None)
         if isinstance(v, str):
@@ -86,7 +87,7 @@ def _ver(mod: str, attr: str = "__version__") -> str:
         from importlib import metadata
         return metadata.version({"rtmidi": "python-rtmidi"}.get(mod, mod))
     except Exception:  # noqa: BLE001
-        return "vorhanden"
+        return _("present")
 
 
 def versions() -> dict[str, str]:
@@ -96,12 +97,12 @@ def versions() -> dict[str, str]:
         from PyQt6.QtCore import PYQT_VERSION_STR, QT_VERSION_STR
         v["Qt"], v["PyQt6"] = QT_VERSION_STR, PYQT_VERSION_STR
     except ImportError:
-        v["Qt"] = v["PyQt6"] = "fehlt"
+        v["Qt"] = v["PyQt6"] = _("missing")
     try:
         from PyQt6.QtWebEngineCore import qWebEngineVersion
         v["QtWebEngine"] = qWebEngineVersion()
     except Exception:  # noqa: BLE001
-        v["QtWebEngine"] = "fehlt" if importlib.util.find_spec("PyQt6.QtWebEngineCore") is None else "vorhanden"
+        v["QtWebEngine"] = _("missing") if importlib.util.find_spec("PyQt6.QtWebEngineCore") is None else _("present")
     v["numpy"], v["mido"], v["rtmidi"] = _ver("numpy"), _ver("mido"), _ver("rtmidi")
     osr = {}
     try:
@@ -114,10 +115,10 @@ def versions() -> dict[str, str]:
     v["System"] = osr.get("PRETTY_NAME", platform.system())
     v["Kernel"] = platform.release()
     model = Path("/proc/device-tree/model")
-    v["Rechner"] = model.read_text(errors="replace").strip("\0").strip() if model.exists() else platform.machine()
+    v[_("Computer")] = model.read_text(errors="replace").strip("\0").strip() if model.exists() else platform.machine()
     import os
     v["Desktop"] = (os.environ.get("XDG_CURRENT_DESKTOP", "") + (" (Wayland)" if os.environ.get("WAYLAND_DISPLAY") else "")).strip()
-    v["Installiert"] = install_kind()
+    v[_("Installed")] = install_kind()
     from .redact import redact
     return redact(v)
 
@@ -125,14 +126,15 @@ def versions() -> dict[str, str]:
 def install_kind() -> str:
     here = Path(__file__).resolve().parent
     if str(here).startswith("/usr/lib/fm1-companion"):
-        return "Debian-Paket (/usr/lib/fm1-companion)"
+        return _("Debian package ({path})").format(path="/usr/lib/fm1-companion")
     info = here.parent / "install-info.json"
     if info.exists():
         try:
-            return "Installer: " + json.loads(info.read_text()).get("mode", "?") + f" ({here.parent})"
+            return _("Installer: {mode} ({path})").format(mode=json.loads(info.read_text()).get("mode", "?"),
+                                                          path=here.parent)
         except (OSError, ValueError):
             pass
-    return f"aus dem Quellordner ({here.parent})"
+    return _("from the source folder ({path})").format(path=here.parent)
 
 
 def credits() -> list[dict]:

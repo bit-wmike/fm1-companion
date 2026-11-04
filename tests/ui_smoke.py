@@ -14,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+os.environ.setdefault("FM1C_LANG", "de")      # these checks expect the German user interface
 out = Path(sys.argv[1] if len(sys.argv) > 1 else tempfile.mkdtemp())
 out.mkdir(parents=True, exist_ok=True)
 home = Path(os.environ.get("FM1C_TEST_HOME") or tempfile.mkdtemp(prefix="fm1c-home-"))

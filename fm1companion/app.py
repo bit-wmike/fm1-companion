@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from .i18n import _
 
 
 def check() -> int:
@@ -18,14 +19,15 @@ def check() -> int:
             print(f"  ok         {s.package}")
         elif s.required:
             bad += 1
-            print(f"  FEHLT      {s.package}  ({s.why})")
+            print(_("  MISSING    {package}  ({why})").format(package=s.package, why=s.why))
         else:
             print(f"  (optional) {s.package}  ({s.why})")
     cmd = diag.apt_command(states)
     if cmd:
-        print(f"Nachinstallieren: {cmd}")
+        print(_("Install with: {command}").format(command=cmd))
     ins, outs, err = diag.midi_ports()
-    print(f"  MIDI-Ausgänge: {', '.join(outs) or 'keine'}" if not err else f"  MIDI nicht nutzbar: {err}")
+    print(_("  MIDI outputs: {ports}").format(ports=", ".join(outs) or _("none")) if not err
+          else _("  MIDI not usable: {error}").format(error=err))
     return 1 if bad else 0
 
 
@@ -71,7 +73,24 @@ def isolate_demo(env=None, home=None) -> dict:
     return out
 
 
+def take_lang_option(argv: list[str]) -> str | None:
+    """remove ``--lang X`` / ``--lang=X`` from argv -> X (None if not given)"""
+    for i, a in enumerate(list(argv)):
+        if a == "--lang" and i + 1 < len(argv):
+            val = argv[i + 1]
+            del argv[i:i + 2]
+            return val
+        if a.startswith("--lang="):
+            del argv[i]
+            return a.split("=", 1)[1]
+    return None
+
+
 def main() -> int:
+    lang = take_lang_option(sys.argv)
+    if lang:                                   # before anything is translated (also --help)
+        from . import i18n
+        i18n.set_language(lang)
     if "--version" in sys.argv:
         from . import __version__
         print(__version__)
@@ -81,14 +100,15 @@ def main() -> int:
     if "--syscheck" in sys.argv:
         return syscheck_cli()
     if "--help" in sys.argv or "-h" in sys.argv:
-        print("Aufruf: fm1-companion [OPTION]\n\n"
-              "  --demo       mit drei simulierten FM-1 starten (eigene Einstellungen, deine Daten bleiben unberührt)\n"
-              "  --check      Systempakete prüfen und den apt-Befehl für Fehlendes zeigen\n"
-              "  --syscheck   USB, Strom und Audio prüfen (wie Werkzeuge › Systemcheck)\n"
-              "  --no-splash  ohne Startbildschirm starten\n"
-              "  --debug      ausführliches Protokoll (~/.local/state/fm1-companion/logs)\n"
-              "  --version    Version anzeigen\n"
-              "  -h, --help   diese Hilfe")
+        print(_("Usage: fm1-companion [OPTION]\n\n"
+                "  --demo       start with three simulated FM-1 (separate settings, your data stays untouched)\n"
+                "  --check      check system packages and show the apt command for anything missing\n"
+                "  --syscheck   check USB, power and audio (like Tools › System check)\n"
+                "  --lang LANG  user interface language for this start: en, de (default: setting/system)\n"
+                "  --no-splash  start without splash screen\n"
+                "  --debug      verbose log (~/.local/state/fm1-companion/logs)\n"
+                "  --version    show version\n"
+                "  -h, --help   this help"))
         return 0
     if "--demo" in sys.argv:
         os.environ["FM1C_DEMO"] = "1"
@@ -99,7 +119,7 @@ def main() -> int:
         from PyQt6.QtCore import Qt, QCoreApplication
         from PyQt6.QtWidgets import QApplication
     except ImportError:
-        print("PyQt6 fehlt. Installieren mit:\n  " + missing_apt_hint(), file=sys.stderr)
+        print(_("PyQt6 is missing. Install it with:\n  {command}").format(command=missing_apt_hint()), file=sys.stderr)
         return 1
     try:                                       # muss vor der QApplication geladen werden
         import PyQt6.QtWebEngineWidgets  # noqa: F401
@@ -112,7 +132,8 @@ def main() -> int:
     existed = config.CONFIG_FILE.exists()
     app = QApplication(sys.argv)
     from PyQt6.QtCore import QLocale
-    QLocale.setDefault(QLocale(QLocale.Language.German, QLocale.Country.Germany))   # Komma in Spinboxen
+    from .ui.common import qt_locale
+    QLocale.setDefault(qt_locale())            # number format (decimal comma in spin boxes) of the UI language
     app.setApplicationName(APP_NAME)
     app.setApplicationVersion(__version__)
     app.setOrganizationName(APP_ID)
@@ -127,7 +148,7 @@ def main() -> int:
             settings.theme = "auto"
         config.save(settings)
     theme.apply(app, settings.theme)
-    try:                                       # Qt-eigene Texte (Datei-Dialoge, Standardknöpfe) auf Deutsch
+    try:                                       # Qt's own texts (file dialogs, standard buttons) in the UI language
         from .ui.common import install_translations
         install_translations(app)
     except Exception:  # noqa: BLE001
@@ -140,7 +161,7 @@ def main() -> int:
         from .ui.splash import Splash
         splash = Splash()
         splash.show()
-        splash.step("Starte …")
+        splash.step(_("Starting …"))
     from .ui.main_window import MainWindow
     w = MainWindow(progress=splash.step if splash else None)
     holder["w"] = w

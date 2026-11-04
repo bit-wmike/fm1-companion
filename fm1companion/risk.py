@@ -17,7 +17,7 @@ TEXT_LINES = [
     "Mach vorher ein Backup (die App bietet es vor jeder Installation an) und trenne das Gerät während eines "
     "Vorgangs nicht.",
     "Nicht jede Funktion ist auf echter Hardware getestet, und schon gar nicht auf allen Geräten, "
-    "Flash-Chips und Firmware-Versionen. Was getestet ist und was nicht, steht in docs/UNGETESTET.md.",
+    "Flash-Chips und Firmware-Versionen. Was getestet ist und was nicht, steht in docs/UNTESTED.md.",
     "Es gibt keine Gewährleistung und keine Haftung, soweit gesetzlich zulässig "
     "(GNU GPL 3.0, Abschnitte 15 und 16).",
 ]

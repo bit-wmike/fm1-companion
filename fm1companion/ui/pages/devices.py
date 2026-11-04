@@ -18,6 +18,7 @@ from ..common import (Card, FlowLayout, confirm, fmt_date, fmt_size, fw_label, g
                       show_error)
 from . import PageSpec
 from .backup_browser import selective_restore
+from ...i18n import _
 
 
 def profile_folder(ctx, prof) -> Path:
@@ -443,7 +444,8 @@ def _make(ctx, window):
     return DevicesPage(ctx, window)
 
 
-PAGE = PageSpec(key="devices", title="Geräte", group="geraet", factory=_make,
+PAGE = PageSpec(key="devices", title=_("Devices"), group="geraet", factory=_make,
                 icons=("computer", "audio-card", "drive-removable-media"), order=50,
-                description="alle FM-1: Profile, Firmware-Verlauf, vergleichen, von Gerät zu Gerät kopieren",
-                keywords=("profil", "zweites fm-1", "kopieren", "vergleich", "seriennummer"))
+                description=_("all FM-1: profiles, firmware history, compare, copy from device to device"),
+                keywords=("profil", "zweites fm-1", "kopieren", "vergleich", "seriennummer",
+                          "profile", "second fm-1", "copy", "compare", "serial number", "devices"))

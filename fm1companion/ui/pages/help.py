@@ -16,16 +16,29 @@ from ... import applog, diag
 from .. import theme
 from ..common import heading, icon, run_job
 from ..responsive import reflow
+from ...i18n import _
 
-HELP_DIR = Path(__file__).resolve().parents[2] / "data" / "help"
+HELP_ROOT = Path(__file__).resolve().parents[2] / "data" / "help"   # one folder per language: help/<lang>/
+HELP_FALLBACK = "de"                     # the complete set of pages; other languages may have fewer
+HELP_DIR = HELP_ROOT / HELP_FALLBACK     # (kept for code that expects the old name)
 ACTIONS = {"syscheck": "open_syscheck", "shortcuts": "show_shortcuts", "wizard": "open_wizard",
            "whatsnew": "open_whats_new", "report": "save_report", "palette": "open_palette", "about": "_about"}
 
 
-def topics() -> list[tuple[str, str, str]]:
-    """(Schlüssel, Titel, Markdown)"""
+def help_files(lang: str | None = None) -> list[Path]:
+    """help pages for a language: help/<lang>/*.md, missing pages taken from help/de/ (same file name)."""
+    from ... import i18n
+    lang = lang or i18n.current_language()
+    pages: dict[str, Path] = {f.name: f for f in (HELP_ROOT / HELP_FALLBACK).glob("*.md")}
+    if lang != HELP_FALLBACK and (HELP_ROOT / lang).is_dir():
+        pages.update({f.name: f for f in (HELP_ROOT / lang).glob("*.md")})
+    return [pages[k] for k in sorted(pages)]
+
+
+def topics(lang: str | None = None) -> list[tuple[str, str, str]]:
+    """(key, title, Markdown) of all help pages in the UI language (fallback: German)"""
     out = []
-    for f in sorted(HELP_DIR.glob("*.md")):
+    for f in help_files(lang):
         text = f.read_text("utf-8")
         m = re.match(r"#\s+(.+)", text)
         out.append((f.stem, m.group(1).strip() if m else f.stem, text))
@@ -85,7 +98,7 @@ class HelpPage(QWidget):
         gl.addWidget(self.browser, 1)
         self.tabs.addTab(g, icon("help-contents"), "Anleitungen")
         self.topics = topics()
-        for key, title, _ in self.topics:
+        for key, title, _md in self.topics:
             it = QListWidgetItem(title)
             it.setData(Qt.ItemDataRole.UserRole, key)
             self.list.addItem(it)
@@ -250,6 +263,7 @@ def _make(ctx, window):
     return HelpPage(ctx, window)
 
 
-PAGE = PageSpec(key="help", title="Hilfe", group="hilfe", factory=_make, icons=("help-contents", "help-browser"),
-                order=10, description="Anleitungen, Fragen & Antworten, Diagnose",
-                keywords=("hilfe", "anleitung", "faq", "diagnose", "handbuch", "update-modus", "rettung"))
+PAGE = PageSpec(key="help", title=_("Help"), group="hilfe", factory=_make, icons=("help-contents", "help-browser"),
+                order=10, description=_("Guides, questions & answers, diagnostics"),
+                keywords=("hilfe", "anleitung", "faq", "diagnose", "handbuch", "update-modus", "rettung",
+                          "help", "guide", "manual", "diagnostics", "update mode", "recovery"))

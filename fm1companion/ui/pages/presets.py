@@ -15,6 +15,7 @@ from ... import presetlib as pl
 from ..common import (DeviceUndo, confirm, notify, device_tag, flow_row, fs_error_text, heading, icon, plural,
                       fw_label, safe_folder, same_device, show_error)
 from . import PageSpec
+from ...i18n import _
 
 HINT = ("Schreiben, Umbenennen und Löschen speichern im Flash des FM-1 und <b>stoppen dafür die Wiedergabe</b>. "
         "Favoriten, die du während der Wiedergabe änderst, speichert das FM-1 erst nach STOP.")
@@ -905,7 +906,8 @@ def _make(ctx, window):
     return PresetsPage(ctx, window)
 
 
-PAGE = PageSpec(key="presets", title="Presets", group="klang", factory=_make,
+PAGE = PageSpec(key="presets", title=_("Presets"), group="klang", factory=_make,
                 icons=("bookmarks", "folder-favorites", "document-open-recent"), order=10,
-                description="User-Presets des FM-1 sichern, vergleichen, zurückspielen und anhören",
-                keywords=("user", "preset", "bibliothek", "library", "favoriten", "melodee"), needs_device=True)
+                description=_("back up, compare, restore and listen to the FM-1 user presets"),
+                keywords=("user", "preset", "bibliothek", "library", "favoriten", "melodee", "favorites", "compare",
+                          "restore"), needs_device=True)

@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (QFrame, QLineEdit, QListWidget, QListWidgetItem, QS
 
 from . import theme
 from .common import icon
+from ..i18n import _
 
 
 def fuzzy_score(query: str, text: str) -> float:
@@ -56,9 +57,9 @@ def collect(window) -> list[Entry]:
     out: list[Entry] = []
     from .pages import GROUP_TITLES
     for key, spec in window.specs.items():
-        out.append(Entry(spec.title, (GROUP_TITLES.get(spec.group, spec.group) + " · " + (spec.description or "Seite")),
+        out.append(Entry(spec.title, (GROUP_TITLES.get(spec.group, spec.group) + " · " + (spec.description or _("Page"))),
                          lambda k=key: window.go(k), icon(*spec.icons) if spec.icons else QIcon(),
-                         " ".join(spec.keywords) + " " + key, kind="Seite"))
+                         " ".join(spec.keywords) + " " + key, kind=_("Page")))
     # Reiter zusammengelegter Seiten (FM-1-Zustand, Projekt-Ansicht, Aus MIDI-Datei, Backup-Browser, FM-Voices,
     # Simulator, Klangerzeuger …) bleiben einzeln auffindbar
     try:
@@ -74,7 +75,7 @@ def collect(window) -> list[Entry]:
             kws = " ".join(spec.keywords) if spec else ""
             out.append(Entry(title, where + (" · " + desc if desc else ""), lambda k=sub_key: window.go(k),
                              icon(*spec.icons) if spec and spec.icons else (icon(*main.icons) if main and main.icons else QIcon()),
-                             kws + " " + sub_key + " " + (spec.title if spec else ""), kind="Seite"))
+                             kws + " " + sub_key + " " + (spec.title if spec else ""), kind=_("Page")))
     except Exception:  # noqa: BLE001 – Befehlssuche darf nie an den Reitern scheitern
         pass
     pages = {spec.title.lower() for spec in window.specs.values()}
@@ -89,13 +90,13 @@ def collect(window) -> list[Entry]:
                     continue
                 out.append(Entry(t, " › ".join(path),
                                  a.trigger, a.icon(), a.statusTip() or a.toolTip(),
-                                 a.shortcut().toString(QKeySequence.SequenceFormat.NativeText), "Aktion"))
+                                 a.shortcut().toString(QKeySequence.SequenceFormat.NativeText), _("Action")))
     for a in window.menuBar().actions():
         if a.menu():
             walk(a.menu(), [a.menu().title().replace("&", "")])
     for c in getattr(window, "commands", []):
         out.append(Entry(c["title"], c.get("subtitle", ""), c["callback"], icon(c["icon"]) if c.get("icon") else QIcon(),
-                         " ".join(c.get("keywords", ())), kind="Befehl"))
+                         " ".join(c.get("keywords", ())), kind=_("Command")))
     taken = {e.title.lower() for e in out}
     if window.page("help") is not None:
         try:
@@ -103,9 +104,9 @@ def collect(window) -> list[Entry]:
             for key, title, md in topics():
                 words = " ".join(re.findall(r"\*\*(.+?)\*\*", md))[:300]
                 if title.lower() in taken:          # gleichnamige Seite/Aktion: Hilfe-Thema kenntlich machen
-                    title = f"Hilfe: {title}"
-                out.append(Entry(title, "Hilfe", lambda k=key: window.go("help", topic=k), icon("help-contents"),
-                                 words, kind="Hilfe"))
+                    title = _("Help: {title}").format(title=title)
+                out.append(Entry(title, _("Help"), lambda k=key: window.go("help", topic=k), icon("help-contents"),
+                                 words, kind=_("Help")))
         except Exception:  # noqa: BLE001
             pass
     seen, uniq = set(), []
@@ -173,7 +174,7 @@ class CommandPalette(QFrame):
         lay.setSpacing(4)
         self.input = QLineEdit()
         self.input.setObjectName("PaletteInput")
-        self.input.setPlaceholderText("Seite, Aktion oder Hilfe suchen …")
+        self.input.setPlaceholderText(_("Search for a page, action or help …"))
         self.input.textChanged.connect(self.update_results)
         self.input.installEventFilter(self)
         lay.addWidget(self.input)

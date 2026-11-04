@@ -1,57 +1,57 @@
-# Katalog („Firmware+", früher „Entdecken") – Recherche-Notizen
+# Catalog ("Firmware+", formerly "Entdecken" – Discover) – research notes
 
-Stand: 30.10.2026, Workstream *katalog*.
+As of: 30 Oct 2026, workstream *catalog*.
 
-## Quellen
+## Sources
 
-| Quelle | Erreichbar | Inhalt | Nutzung |
+| Source | Reachable | Content | Use |
 |---|---|---|---|
-| Mooring `mooring/catalog.json` (awesome-fm-1, cicloid) | raw.githubusercontent.com ✓ | Schema 3, Revision 6: 145 Pakete (`allowlist.entries`), 121 mit Download (96 Familien), 34 Loader | Pakete, SHA-256, Produkt-Kennung, Hinweise, `requiresStockV15`, Loader → Abstammung |
-| awesome-fm-1 `README.md` (CC0) | raw ✓ | 223 Open-Source-, 4 Closed-Source-, 20 „Not a synth“-Firmwares, 151 Werkzeuge/Links | Namen, Autoren, Beschreibungen, Links nach Rolle, Lizenz, Abstammung, Status |
-| GitHub-REST-API | **im Container gesperrt** (Proxy: nur sitzungsgebundene Repos, 403); auf einem normalen Rechner verfügbar (60/h ohne Token) | Sterne, Releases, Topics | träge Anreicherung mit Cache + ETag, optionaler Token |
-| raw.githubusercontent.com (README, Dateien) | ✓, kein API-Limit | README der Firmware, Datei-Existenz | Vorschaubild (erstes Nicht-Badge-Bild), README-Anzeige, Felucca-Werkzeuge prüfen (`web/fm1backup.js`, `tools/fm1_install.py`) |
-| thefirmwarehub.com, fm1-editor.com/firmware | **nicht erreichbar** aus dem Container | Kategorien, Status | nur als Link-Ziele (`#anker`) und im Link-Import (Anker → unscharfer Namensvergleich). Kein Scraper. |
-| FM-1 Firmware Atlas (wero1414, CC0) | ✓ | 67 Firmwares + echte Sterne vom 14.10.2026 | angesehen, (noch) nicht eingebunden |
+| Mooring `mooring/catalog.json` (awesome-fm-1, cicloid) | raw.githubusercontent.com ✓ | schema 3, revision 6: 145 packages (`allowlist.entries`), 121 with download (96 families), 34 loaders | packages, SHA-256, product identity, notes, `requiresStockV15`, loader → lineage |
+| awesome-fm-1 `README.md` (CC0) | raw ✓ | 223 open-source, 4 closed-source, 20 "Not a synth" firmwares, 151 tools/links | names, authors, descriptions, links by role, licence, lineage, status |
+| GitHub REST API | **blocked in the container** (proxy: only session-bound repos, 403); available on a normal computer (60/h without token) | stars, releases, topics | lazy enrichment with cache + ETag, optional token |
+| raw.githubusercontent.com (README, files) | ✓, no API limit | firmware README, file existence | thumbnail (first non-badge image), README display, checking Felucca tools (`web/fm1backup.js`, `tools/fm1_install.py`) |
+| thefirmwarehub.com, fm1-editor.com/firmware | **not reachable** from the container | categories, status | only as link targets (`#anchor`) and in the link import (anchor → fuzzy name match). No scraper. |
+| FM-1 Firmware Atlas (wero1414, CC0) | ✓ | 67 firmwares + real stars from 14 Oct 2026 | looked at, not integrated (yet) |
 
-## Signatur des Mooring-Katalogs
+## Signature of the Mooring catalog
 
-`catalog.signed.json` (Hülle `mooring-catalog-envelope` v1, Ed25519-Signatur, 64 Byte) und
-`catalog.json.intoto.jsonl` (DSSE/in-toto, keyid `dbe8230a406629ab`). Der **öffentliche Schlüssel ist nicht
-veröffentlicht**: alle 26 Commits des Repos (inkl. der 4 „Publish Mooring“-Commits) enthalten nur die drei
-Katalog-Dateien; kein `cicloid/mooring`-Repo, nichts per Websuche. Ohne Schlüssel keine echte Prüfung –
-deshalb zeigt die App **kein** „signiert ✓“. `catalog.mooring_signature_status()` prüft nur, dass die
-SHA-256 in der in-toto-Aussage zur Katalog-Datei passt (Konsistenz, keine Echtheit). Technisch wäre die
-Prüfung auf Bookworm machbar (python3-cryptography 38 kann Ed25519; im 3.11-Test-venv fehlt es, also
-optionaler Import). Die eigentliche Absicherung bleibt die Paket-Prüfsumme beim Installieren (Installer).
+`catalog.signed.json` (envelope `mooring-catalog-envelope` v1, Ed25519 signature, 64 bytes) and
+`catalog.json.intoto.jsonl` (DSSE/in-toto, keyid `dbe8230a406629ab`). The **public key is not
+published**: all 26 commits of the repo (incl. the 4 "Publish Mooring" commits) contain only the three
+catalog files; no `cicloid/mooring` repo, nothing via web search. Without the key there is no real verification –
+which is why the app shows **no** "signed ✓". `catalog.mooring_signature_status()` only checks that the
+SHA-256 in the in-toto statement matches the catalog file (consistency, not authenticity). Technically the
+check would be feasible on Bookworm (python3-cryptography 38 supports Ed25519; it is missing in the 3.11 test venv,
+hence an optional import). The actual protection remains the package checksum at install time (installer).
 
-## Heuristiken (README)
+## Heuristics (README)
 
-* Eintrag: `- [Name](url) - Beschreibung …`; Inline-Links werden nach Linktext einer Rolle zugeordnet
+* Entry: `- [Name](url) - description …`; inline links are assigned to a role by their link text
   (install/flasher → installer; emulator/simulator/demo/play/try/preview → emulator; editor/studio/workbench →
-  editor; manual/guide/handbook → manual; source; sonst site). Kombi-Texte („Installer and emulator“) → beide.
-* Autor: „<Wort> by X“ bis zum ersten Satzzeichen oder Bindewort, ohne „inspired/steered/… by“; „X's author“
-  wird über den Eintrag X aufgelöst; Rückfall: Repo-Besitzer.
-* Lizenz: SPDX-artige Kennung im Text, „No licence stated“, Closed source → proprietär.
-* Status-Flags: beta, alpha, experimentell, wip (early, prototype, in progress …), kostenpflichtig, quellcode.
-* Kategorie (wie die Hub-Verzeichnisse): Stichwort-Punkte, erster Satz zählt dreifach → Synth, Groovebox,
-  Sampler, Akkorde, Generativ, Werkzeug, Spiele & Spaß, Original (Abschnitt Official).
-* Abstammung: zuerst **Loader-SHA aus Mooring** (feluccaG1/G2 → Felucca, sloopG3 → SLOOP, stock → Original),
-  dann Text („Built on/Based on/X fork/X-based …“) mit Auflösung über andere Einträge (z. B. GHOULBOX-Fork →
-  Felucca), „FoMni“ als Unterzweig von Felucca. 212 von 252 Einträgen haben eine Abstammung.
-* Zuordnung Mooring ↔ README: GitHub-Repo (ohne Unterordner-Links), dann normierter Familien-/Paketname.
-  Familien ohne README-Eintrag werden eigene Einträge (3), README-Einträge ohne Paket bleiben Link-Einträge.
-  Pakete ohne Download (nur Kennung) werden über den Namen zugeordnet; 2 (Vector37, SMK-37) bleiben übrig.
-* Felucca-Protokoll („Backup-fähig“) nur mit Beleg: Familien melodee/skiff/sloop/felucca, oder (Link-Import
-  online) `web/fm1backup.js` bzw. `tools/fm1_install.py` im Repo. Sonst „wird beim Verbinden geprüft“.
+  editor; manual/guide/handbook → manual; source; otherwise site). Combined texts ("Installer and emulator") → both.
+* Author: "<word> by X" up to the first punctuation mark or conjunction, excluding "inspired/steered/… by"; "X's
+  author" is resolved via entry X; fallback: repo owner.
+* Licence: SPDX-like identifier in the text, "No licence stated", closed source → proprietary.
+* Status flags: beta, alpha, experimental, wip (early, prototype, in progress …), paid, source code.
+* Category (like the hub directories): keyword points, the first sentence counts triple → Synth, Groovebox,
+  Sampler, Chords, Generative, Tool, Games & Fun, Original (section Official).
+* Lineage: first the **loader SHA from Mooring** (feluccaG1/G2 → Felucca, sloopG3 → SLOOP, stock → Original),
+  then text ("Built on/Based on/X fork/X-based …") resolved via other entries (e.g. GHOULBOX fork →
+  Felucca), "FoMni" as a sub-branch of Felucca. 212 of 252 entries have a lineage.
+* Matching Mooring ↔ README: GitHub repo (without links to subfolders), then normalised family/package name.
+  Families without a README entry become their own entries (3), README entries without a package stay link entries.
+  Packages without download (identity only) are matched by name; 2 (Vector37, SMK-37) remain unmatched.
+* Felucca protocol ("backup-capable") only with evidence: families melodee/skiff/sloop/felucca, or (link import
+  online) `web/fm1backup.js` or `tools/fm1_install.py` in the repo. Otherwise "checked when connecting".
 
 ## Fixtures
 
-`tests/fixtures/catalog/github_*.json` sind **schema-treu nachgebaut** (GitHub REST v3), weil die API im
-Container gesperrt ist; echte Werte (Tag, Dateiname, Größe, URL) stammen aus dem Mooring-Katalog, Sterne
-und Daten sind Beispiele und tragen ein `_provenance`-Feld. Auf echter Hardware/Netz ungetestet: Antworten
-der echten API (Feldnamen entsprechen der öffentlichen Doku).
+`tests/fixtures/catalog/github_*.json` are **reconstructed true to the schema** (GitHub REST v3), because the API is
+blocked in the container; real values (tag, file name, size, URL) come from the Mooring catalog, stars
+and dates are examples and carry a `_provenance` field. Untested on real hardware/network: responses
+of the real API (field names follow the public documentation).
 
-## Schnappschuss
+## Snapshot
 
 `python3 tools/build_catalog_snapshot.py --mooring … --readme … --screenshots` → `fm1companion/data/catalog_snapshot.json`
-(252 Firmwares, 96 direkt installierbar, 151 Werkzeuge/Links, 141 Vorschaubild-Adressen, ~300 KB).
+(252 firmwares, 96 directly installable, 151 tools/links, 141 thumbnail addresses, ~300 KB).

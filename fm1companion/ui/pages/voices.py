@@ -19,6 +19,7 @@ from ... import config, dx7, dx7_sources, presetlib as pl
 from ..common import (DeviceUndo, button, confirm, device_tag, same_device, empty_state, flow_row, fs_error_text, german_buttons,
                       heading, icon, notify, run_job, safe_folder, show_error)
 from . import PageSpec
+from ...i18n import _
 
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "H"]
 
@@ -978,7 +979,7 @@ def _make(ctx, window):
     return VoicesPage(ctx, window)
 
 
-PAGE = PageSpec(key="voices", title="FM-Voices", group="klang", factory=_make,
+PAGE = PageSpec(key="voices", title=_("FM Voices"), group="klang", factory=_make,
                 icons=("audio-x-generic", "audio-midi", "preferences-desktop-sound"), order=20,
-                description="DX7-Voices sammeln, anhören, erzeugen und ans FM-1 senden",
-                keywords=("dx7", "fm6", "syx", "sysex", "dexed", "voice", "bank", "algorithmus"))
+                description=_("collect, audition, generate DX7 voices and send them to the FM-1"),
+                keywords=("dx7", "fm6", "syx", "sysex", "dexed", "voice", "bank", "algorithmus", "algorithm", "fm voices"))

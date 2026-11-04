@@ -1,41 +1,39 @@
-# Sicherheit
+# Security
 
-## Eine Lücke melden
+## Reporting a vulnerability
 
-Bitte melde Sicherheitslücken **nicht** als öffentliches Issue, sondern privat über GitHub:
-Reiter **Security** › **Report a vulnerability** im Repository
+Please do **not** report security vulnerabilities as a public issue, but privately via GitHub:
+tab **Security** › **Report a vulnerability** in the repository
 (<https://github.com/bit-wmike/fm1-companion/security/advisories/new>).
 
-Hilfreich sind: betroffene Version (`fm1-companion --version`), Schritte zum Nachstellen, was passiert
-und was du erwartet hättest. Bitte keine Tokens, Passwörter oder persönlichen Daten mitschicken – auch
-nicht in angehängten Fehlerberichten (die App entfernt Tokens, prüfe den Inhalt trotzdem vorher).
+Helpful: affected version (`fm1-companion --version`), steps to reproduce, what happens
+and what you expected. Please do not send tokens, passwords or personal data – not even
+in attached error reports (the app removes tokens, but check the content beforehand anyway).
 
-Das Projekt wird in der Freizeit gepflegt; wir melden uns so bald wie möglich und veröffentlichen eine
-Korrektur zusammen mit einem Hinweis, sobald sie fertig ist.
+The project is maintained in spare time; we will get back to you as soon as possible and publish a
+fix together with an advisory once it is ready.
 
-## Was dazu gehört
+## Scope
 
-* Code dieses Repositorys: die App, die Installer (`install.sh`, `.run`, `.deb`), die Werkzeuge in `tools/`.
-* Alles, was ungewollt Daten preisgibt (Fehlerbericht, Diagnose, Protokolle), Code von außen ausführt
-  oder das FM-1 ohne Zustimmung verändert.
-* **Geräte-Sicherheit ist ausdrücklich willkommen:** Wege, auf denen eine Webseite, ein Simulator, ein
-  Paket oder ein Bedienfehler ein FM-1 unbrauchbar machen könnte, auch wenn es „nur“ ein Bug ist.
+* Code in this repository: the app, the installers (`install.sh`, `.run`, `.deb`), the tools in `tools/`.
+* Anything that unintentionally discloses data (error report, diagnostics, logs), runs code from outside
+  or changes the FM-1 without consent.
+* **Device safety is explicitly welcome:** ways in which a web page, a simulator, a
+  package or an operating mistake could brick an FM-1, even if it is "only" a bug.
 
-Nicht dazu gehören Lücken in den Firmwares selbst (Melodee, Skiff, SLOOP, Original-Firmware) oder in
-fremden Werkzeugen – bitte direkt an deren Projekte melden. Vendorte Werkzeuge (z. B.
-`fm1companion/vendor/unbricker`) gerne hier melden, wir geben es weiter.
+Out of scope are vulnerabilities in the firmwares themselves (Melodee, Skiff, SLOOP, original firmware) or in
+third-party tools – please report those directly to their projects. Vendored tools (e.g.
+`fm1companion/vendor/unbricker`) can be reported here; we will pass it on.
 
-## Bekannte Grenzen
+## Known limitations
 
-* **Root-Helfer der Rettung Stufe 2** (`fm1companion/flash/uboot.py`): Vor dem Start mit Root-Rechten
-  werden die Werkzeuge in ein root-eigenes Temp-Verzeichnis kopiert und gegen eingebaute SHA-256-Prüfsummen
-  geprüft. Diese Prüfsummen sichern die **Unversehrtheit** (keine beschädigten oder versehentlich
-  geänderten Dateien), sie sind **keine Sicherheitsgrenze** gegen Schadcode, der bereits mit deinen
-  Benutzerrechten läuft – wer das kann, kann auch die App selbst verändern. Das Werkzeug schreibt seine
-  Sicherungen und Protokolle als root in den Rettungsordner unter `~/FM-1/Rettung`; danach übergibt der
-  Helfer die Dateien an deinen Benutzer, ohne symbolischen Links zu folgen.
-* Online-Editoren und -Simulatoren sind fremde Webseiten. Sie dürfen Editor-Befehle erst nach deiner
-  Zustimmung je Adresse ans FM-1 senden; Firmware-Update und Bootmodus bleiben immer gesperrt.
-* Das Ressourcen-Werkzeug einer Firmware ist Python-Code aus deren Repository. Bei eingebauten Firmwares
-  ist der Commit je Version festgehalten; bei selbst hinzugefügten Firmwares und verschobenen Tags fragt
-  die App vor dem Ausführen.
+* **Root helper of rescue level 2** (`fm1companion/flash/uboot.py`): Before starting with root privileges,
+  the tools are copied into a root-owned temporary directory and checked against built-in SHA-256 checksums.
+  These checksums ensure **integrity** (no damaged or accidentally modified files); they are **not a security
+  boundary** against malicious code that already runs with your user privileges – anything that can do that can
+  also modify the app itself. The tool writes its backups and logs as root into the rescue folder under
+  `~/FM-1/Rettung`; afterwards the helper hands the files over to your user without following symbolic links.
+* Online editors and simulators are third-party web pages. They may send editor commands to the FM-1 only after
+  your consent per address; firmware update and boot mode always stay blocked.
+* A firmware's resource tool is Python code from its repository. For built-in firmwares the commit is pinned per
+  version; for firmwares you added yourself and for moved tags the app asks before running it.

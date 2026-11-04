@@ -7,7 +7,8 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QF
                              QTabWidget, QVBoxLayout, QWidget)
 from PyQt6.QtCore import Qt
 
-from .. import config, firmware
+from .. import config, firmware, i18n
+from ..i18n import _
 from .common import confirm, german_buttons, icon, show_error
 
 
@@ -16,7 +17,7 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.ctx = ctx
         s = ctx.settings
-        self.setWindowTitle("Einstellungen")
+        self.setWindowTitle(_("Settings"))
         self.setMinimumSize(620, 460)
         lay = QVBoxLayout(self)
         tabs = QTabWidget()
@@ -26,27 +27,39 @@ class SettingsDialog(QDialog):
         g = QWidget()
         f = QFormLayout(g)
         self.channel = QComboBox()
-        self.channel.addItem("stabile Versionen (empfohlen)", "stable")
-        self.channel.addItem("auch Release Candidates (Vorabversionen, neueste Funktionen)", "rc")
-        self.channel.setToolTip("Stabil: nur fertige Versionen. Release Candidates (RC): Vorabversionen mit den "
-                                "neuesten Funktionen – gut getestet, aber noch nicht final.")
+        self.channel.addItem(_("stable versions (recommended)"), "stable")
+        self.channel.addItem(_("also release candidates (pre-releases, newest features)"), "rc")
+        self.channel.setToolTip(_("Stable: finished versions only. Release candidates (RC): pre-releases with the "
+                                  "newest features – well tested, but not final yet."))
         self.channel.setCurrentIndex(max(0, self.channel.findData(s.channel)))
-        self.check = QCheckBox("beim Anstecken eines FM-1 nach Firmware-Updates suchen (fragt GitHub)")
-        self.check.setToolTip("Holt die Versionsliste der Firmware des FM-1 von GitHub. Ausgeschaltet geht die App "
-                              "dafür nur auf deinen Klick ins Netz.")
+        self.check = QCheckBox(_("look for firmware updates when an FM-1 is plugged in (asks GitHub)"))
+        self.check.setToolTip(_("Fetches the version list of the FM-1 firmware from GitHub. When switched off, the "
+                                "app only goes online for this when you click."))
         self.check.setChecked(s.check_on_start)
-        self.autobk = QCheckBox("vor jedem Update automatisch sichern")
+        self.autobk = QCheckBox(_("back up automatically before every update"))
         self.autobk.setChecked(s.auto_backup_before_update)
         self.keep = QSpinBox()
         self.keep.setRange(0, 500)
-        self.keep.setSpecialValueText("alle behalten")
+        self.keep.setSpecialValueText(_("keep all"))
         self.keep.setValue(s.keep_backups)
-        self.keep.setToolTip("Wie viele automatische Backups pro Gerät behalten werden. Manuelle Backups bleiben immer.")
-        f.addRow("Update-Kanal:", self.channel)
+        self.keep.setToolTip(_("How many automatic backups are kept per device. Manual backups always stay."))
+        f.addRow(_("Update channel:"), self.channel)
         f.addRow("", self.check)
         f.addRow("", self.autobk)
-        f.addRow("Automatische Backups behalten:", self.keep)
-        tabs.addTab(g, "Allgemein")
+        f.addRow(_("Keep automatic backups:"), self.keep)
+        # language of the user interface: applied at the next start (texts are translated when pages are built)
+        self.language = QComboBox()
+        self.language.addItem(_("System language ({name})").format(
+            name=i18n.language_name(i18n.system_language())), i18n.SYSTEM)
+        for code in i18n.available_languages():
+            self.language.addItem(i18n.language_name(code), code)
+        self.language.setCurrentIndex(max(0, self.language.findData(getattr(s, "language", i18n.SYSTEM))))
+        self.language.setToolTip(_("Language of the user interface. Takes effect after restarting the app."))
+        self.language_hint = QLabel(_("Takes effect after restarting the app."))
+        self.language_hint.setProperty("role", "small")
+        f.addRow(_("Language:"), self.language)
+        f.addRow("", self.language_hint)
+        tabs.addTab(g, _("General"))
 
         # Aussehen
         from . import theme as th
@@ -61,13 +74,13 @@ class SettingsDialog(QDialog):
         for name, col in th.ACCENTS:
             self.accent.addItem(self._swatch(col), name, col)
         if self.accent.findData(pr.get("accent")) < 0:
-            self.accent.addItem(self._swatch(pr.get("accent")), "Eigene Farbe", pr.get("accent"))
-        self.accent.addItem(icon("color-management"), "Eigene Farbe wählen …", "")
+            self.accent.addItem(self._swatch(pr.get("accent")), _("Custom color"), pr.get("accent"))
+        self.accent.addItem(icon("color-management"), _("Choose custom color …"), "")
         self.accent.setCurrentIndex(max(0, self.accent.findData(pr.get("accent"))))
         self.accent.activated.connect(self._accent_pick)
         self.icons = QComboBox()
-        self.icons.addItem("App-Design (einheitlich)", "app")
-        self.icons.addItem("System-Thema (Breeze/Papirus)", "system")
+        self.icons.addItem(_("App design (uniform)"), "app")
+        self.icons.addItem(_("System theme (Breeze/Papirus)"), "system")
         self.icons.setCurrentIndex(max(0, self.icons.findData(pr.get("icons", "app"))))
         self.zoom = QSpinBox()
         self.zoom.setRange(80, 160)
@@ -75,21 +88,21 @@ class SettingsDialog(QDialog):
         self.zoom.setSuffix(" %")
         self.zoom.setValue(round(float(pr.get("zoom", 1.0)) * 100))
         self.notify = QComboBox()
-        for k, t in (("background", "wenn das Fenster im Hintergrund ist"), ("always", "immer"), ("never", "nie")):
+        for k, t in (("background", _("when the window is in the background")), ("always", _("always")), ("never", _("never"))):
             self.notify.addItem(t, k)
         self.notify.setCurrentIndex(max(0, self.notify.findData(pr.get("desktop_notify", "background"))))
-        self.splash = QCheckBox("Startbildschirm anzeigen")
+        self.splash = QCheckBox(_("Show splash screen"))
         self.splash.setChecked(bool(pr.get("splash", True)))
-        af0.addRow("Design:", self.theme)
-        af0.addRow("Akzentfarbe:", self.accent)
-        af0.addRow("Symbole:", self.icons)
-        af0.addRow("Größe der Oberfläche:", self.zoom)
-        af0.addRow("Desktop-Benachrichtigungen:", self.notify)
+        af0.addRow(_("Theme:"), self.theme)
+        af0.addRow(_("Accent color:"), self.accent)
+        af0.addRow(_("Icons:"), self.icons)
+        af0.addRow(_("Interface size:"), self.zoom)
+        af0.addRow(_("Desktop notifications:"), self.notify)
         af0.addRow("", self.splash)
-        wiz = QPushButton(icon("tools-wizard"), "Einrichtungs-Assistent erneut starten …")
+        wiz = QPushButton(icon("tools-wizard"), _("Run setup assistant again …"))
         wiz.clicked.connect(self._wizard)
         af0.addRow("", wiz)
-        tabs.addTab(ap, "Aussehen")
+        tabs.addTab(ap, _("Appearance"))
 
         # Ordner
         o = QWidget()
@@ -101,64 +114,64 @@ class SettingsDialog(QDialog):
         h = QHBoxLayout()
         h.addWidget(self.root)
         h.addWidget(b)
-        of.addRow("Hauptordner:", h)
+        of.addRow(_("Main folder:"), h)
         ol.addLayout(of)
-        hint = QLabel("Darin liegen Backups, Projekte, Kits, Aufnahmen, Firmware und der Sample-Ordner „Samples“.")
+        hint = QLabel(_("It holds backups, projects, kits, recordings, firmware and the sample folder “Samples”."))
         hint.setWordWrap(True)
         ol.addWidget(hint)
-        ol.addWidget(QLabel("Weitere Sample-Ordner (z. B. deine Pocket-Operator-Samples):"))
+        ol.addWidget(QLabel(_("More sample folders (e.g. your Pocket Operator samples):")))
         self.roots = QListWidget()
         for r in s.sample_roots:
             self.roots.addItem(r)
         ol.addWidget(self.roots, 1)
-        b_add = QPushButton(icon("list-add"), "Hinzufügen …")
+        b_add = QPushButton(icon("list-add"), _("Add …"))
         b_add.clicked.connect(self._add_root)
-        b_rm = QPushButton(icon("list-remove"), "Entfernen")
+        b_rm = QPushButton(icon("list-remove"), _("Remove"))
         b_rm.clicked.connect(lambda: self.roots.takeItem(self.roots.currentRow()))
         h2 = QHBoxLayout()
         h2.addWidget(b_add)
         h2.addWidget(b_rm)
         h2.addStretch(1)
         ol.addLayout(h2)
-        self.norm = QCheckBox("neue Kit-Sounds normalisieren")
+        self.norm = QCheckBox(_("normalize new kit sounds"))
         self.norm.setChecked(s.sample_default_normalize)
-        self.trim = QCheckBox("Stille am Anfang/Ende abschneiden")
+        self.trim = QCheckBox(_("trim silence at start/end"))
         self.trim.setChecked(s.sample_default_trim)
         ol.addWidget(self.norm)
         ol.addWidget(self.trim)
-        tabs.addTab(o, "Ordner && Samples")
+        tabs.addTab(o, _("Folders && Samples"))
 
         # Aufnahme
         a = QWidget()
         af = QFormLayout(a)
         self.aud = QLineEdit(s.audacity_cmd)
-        self.open_aud = QCheckBox("nach der Aufnahme in Audacity öffnen")
+        self.open_aud = QCheckBox(_("open in Audacity after recording"))
         self.open_aud.setChecked(s.record_open_audacity)
-        af.addRow("Audacity-Befehl:", self.aud)
+        af.addRow(_("Audacity command:"), self.aud)
         af.addRow("", self.open_aud)
-        tabs.addTab(a, "Aufnahme")
+        tabs.addTab(a, _("Recording"))
 
         # Geräte
         d = QWidget()
         dl = QVBoxLayout(d)
-        intro = QLabel("Bekannte FM-1. Die Firmware-Version trägt die App beim Installieren selbst ein; "
-                       "für vorher installierte Firmware kannst du sie hier setzen.")
+        intro = QLabel(_("Known FM-1. The app enters the firmware version itself when installing; for firmware "
+                         "installed before, you can set it here."))
         intro.setWordWrap(True)                 # vorher bei 620 px Dialogbreite abgeschnitten
         dl.addWidget(intro)
         self.devs = QListWidget()
         dl.addWidget(self.devs, 1)
-        b_ren = QPushButton(icon("edit-rename"), "Umbenennen")
+        b_ren = QPushButton(icon("edit-rename"), _("Rename"))
         b_ren.clicked.connect(self._dev_rename)
-        b_ver = QPushButton(icon("document-edit"), "Firmware-Version setzen")
+        b_ver = QPushButton(icon("document-edit"), _("Set firmware version"))
         b_ver.clicked.connect(self._dev_version)
-        b_del = QPushButton(icon("edit-delete"), "Vergessen")
+        b_del = QPushButton(icon("edit-delete"), _("Forget"))
         b_del.clicked.connect(self._dev_delete)
         h3 = QHBoxLayout()
         for bb in (b_ren, b_ver, b_del):
             h3.addWidget(bb)
         h3.addStretch(1)
         dl.addLayout(h3)
-        tabs.addTab(d, "Geräte")
+        tabs.addTab(d, _("Devices"))
         self._fill_devs()
 
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -185,9 +198,9 @@ class SettingsDialog(QDialog):
             return
         from PyQt6.QtGui import QColor
         from PyQt6.QtWidgets import QColorDialog
-        col = QColorDialog.getColor(QColor(self.accent.itemData(0) or "#ff7a1a"), self, "Akzentfarbe")
+        col = QColorDialog.getColor(QColor(self.accent.itemData(0) or "#ff7a1a"), self, _("Accent color"))
         if col.isValid():
-            self.accent.insertItem(i, self._swatch(col.name()), "Eigene Farbe", col.name())
+            self.accent.insertItem(i, self._swatch(col.name()), _("Custom color"), col.name())
             self.accent.setCurrentIndex(i)
         else:                                   # abgebrochen: bisherige Akzentfarbe behalten
             from . import theme as th
@@ -200,12 +213,12 @@ class SettingsDialog(QDialog):
             w.open_wizard()
 
     def _pick(self, edit):
-        dd = QFileDialog.getExistingDirectory(self, "Ordner wählen", edit.text())
+        dd = QFileDialog.getExistingDirectory(self, _("Choose folder"), edit.text())
         if dd:
             edit.setText(dd)
 
     def _add_root(self):
-        dd = QFileDialog.getExistingDirectory(self, "Sample-Ordner")
+        dd = QFileDialog.getExistingDirectory(self, _("Sample folder"))
         if dd:
             self.roots.addItem(dd)
 
@@ -213,8 +226,8 @@ class SettingsDialog(QDialog):
         self.devs.clear()
         for p in sorted(self.ctx.store.profiles.values(), key=lambda x: x.name):
             fw = firmware.spec(p.firmware)
-            what = f"{fw.name if fw else p.firmware} {p.firmware_version}".strip() or "Firmware unbekannt"
-            it = QListWidgetItem(f"{p.name} – {what}" + (f"  · Seriennr. {p.serial}" if p.serial else ""))
+            what = f"{fw.name if fw else p.firmware} {p.firmware_version}".strip() or _("firmware unknown")
+            it = QListWidgetItem(f"{p.name} – {what}" + (_("  · Serial no. {serial}").format(serial=p.serial) if p.serial else ""))
             it.setData(Qt.ItemDataRole.UserRole, p.id)
             self.devs.addItem(it)
 
@@ -225,7 +238,7 @@ class SettingsDialog(QDialog):
     def _dev_rename(self):
         p = self._cur()
         if p:
-            name, ok = QInputDialog.getText(self, "Umbenennen", "Name:", text=p.name)
+            name, ok = QInputDialog.getText(self, _("Rename"), _("Name:"), text=p.name)
             if ok and name.strip():
                 p.name = name.strip()
                 self.ctx.store.save()
@@ -236,10 +249,11 @@ class SettingsDialog(QDialog):
         if not p:
             return
         keys = [s.key for s in firmware.catalog()]
-        key, ok = QInputDialog.getItem(self, "Firmware", "Firmware:", keys, max(0, keys.index(p.firmware)) if p.firmware in keys else 0, False)
+        key, ok = QInputDialog.getItem(self, _("Firmware"), _("Firmware:"), keys, max(0, keys.index(p.firmware)) if p.firmware in keys else 0, False)
         if not ok:
             return
-        tag, ok = QInputDialog.getText(self, "Version", "Version (wie im Release, z. B. v1.6.0-rc.7):", text=p.firmware_version)
+        tag, ok = QInputDialog.getText(self, _("Version"), _("Version (as in the release, e.g. v1.6.0-rc.7):"),
+                                       text=p.firmware_version)
         if ok:
             p.firmware, p.firmware_version = key, tag.strip()
             self.ctx.store.save()
@@ -248,7 +262,8 @@ class SettingsDialog(QDialog):
 
     def _dev_delete(self):
         p = self._cur()
-        if p and confirm(self, "Gerät vergessen", f"{p.name} vergessen? Backups und Projekte bleiben erhalten.", "Vergessen"):
+        if p and confirm(self, _("Forget device"),
+                         _("Forget {name}? Backups and projects are kept.").format(name=p.name), _("Forget")):
             self.ctx.store.delete(p.id)
             self._fill_devs()
 
@@ -272,7 +287,14 @@ class SettingsDialog(QDialog):
         s.sample_default_trim = self.trim.isChecked()
         s.audacity_cmd = self.aud.text().strip() or "audacity"
         s.record_open_audacity = self.open_aud.isChecked()
+        lang = self.language.currentData() or i18n.SYSTEM
+        self.language_changed = lang != getattr(s, "language", i18n.SYSTEM)
+        s.language = lang
         if not config.save(s):              # nicht beschreibbar: sagen, dass es nur bis zum Beenden gilt
-            show_error(self, "Einstellungen nicht gespeichert", config.save_error)
+            show_error(self, _("Settings not saved"), config.save_error)
         config.ensure_dirs()
+        if self.language_changed:
+            w = self.parent()
+            if w is not None and hasattr(w, "notify"):
+                w.notify(_("The new language is used after restarting the app."), "info")
         self.accept()

@@ -16,6 +16,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import (QDialog, QFileDialog, QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QVBoxLayout)
+from ..i18n import _
 
 log = logging.getLogger("fm1companion.crash")
 
@@ -66,7 +67,7 @@ def build_report(path: Path, exc_text: str = "", extra: dict | None = None) -> P
         if exc_text:
             z.writestr("fehler.txt", _clean(exc_text, home))
         z.writestr("seiten-ladefehler.txt", _clean("\n\n".join(f"{m}\n{tb}" for m, tb in load_errors), home)
-                   or "keine\n")
+                   or "keine\n")                      # i18n: ignore (report content)
         deps = [{"paket": s.package, "ok": s.ok, "pflicht": s.required} for s in diag.check_deps()]
         z.writestr("abhaengigkeiten.json", json.dumps(deps, indent=2, ensure_ascii=False))
         try:
@@ -92,7 +93,7 @@ def build_report(path: Path, exc_text: str = "", extra: dict | None = None) -> P
             z.writestr("system.json", json.dumps(_sanitize(sysinfo, home), indent=2, ensure_ascii=False, default=str))
         except Exception:  # noqa: BLE001
             pass
-        z.writestr("LIESMICH.txt", "Fehlerbericht der FM-1 Companion Suite.\nEnthält Protokolle, Versionen und "
+        z.writestr("LIESMICH.txt", "Fehlerbericht der FM-1 Companion Suite.\nEnthält Protokolle, Versionen und "  # i18n: ignore
                    "Einstellungen ohne persönliche Pfade, Notizen, Zugangsdaten (Tokens, Passwörter),\n"
                    "Rechnernamen und vollständige Seriennummern.\n"
                    "Keine Backups, keine Samples, keine Projekte.\n")
@@ -105,14 +106,14 @@ def default_report_path() -> Path:
 
 def save_report_dialog(parent, exc_text: str = "", path: str | None = None):
     if not path:
-        path, _ = QFileDialog.getSaveFileName(parent, "Fehlerbericht speichern", str(default_report_path()),
-                                              "ZIP-Archiv (*.zip)")
+        path, _filter = QFileDialog.getSaveFileName(parent, _("Save bug report"), str(default_report_path()),
+                                                    _("ZIP archive (*.zip)"))
     if not path:
         return None
     p = build_report(Path(path), exc_text)
     try:
         from .notify import notify
-        notify(f"Fehlerbericht gespeichert: {p.name}", "success")
+        notify(_("Bug report saved: {name}").format(name=p.name), "success")
     except Exception:  # noqa: BLE001
         pass
     return p
@@ -124,16 +125,16 @@ class CrashDialog(QDialog):
         super().__init__(parent)
         self.exc_text = exc_text
         self.saved: Path | None = None
-        self.setWindowTitle("Unerwarteter Fehler")
+        self.setWindowTitle(_("Unexpected error"))
         self.resize(640, 460)
         lay = QVBoxLayout(self)
-        t = QLabel("Da ist etwas schiefgelaufen")
+        t = QLabel(_("Something went wrong"))
         t.setProperty("role", "pageTitle")
         lay.addWidget(t)
         last = exc_text.strip().splitlines()[-1] if exc_text.strip() else ""
-        s = QLabel("Die App läuft weiter; dein FM-1 wurde dabei nicht verändert. Wenn der Fehler wiederkommt, "
-                   "speichere einen Fehlerbericht – er enthält Protokolle und Versionen, aber keine Backups oder "
-                   f"persönlichen Pfade.<br><br><b>{last.replace('<', '&lt;')}</b>")
+        s = QLabel(_("The app keeps running; your FM-1 was not changed. If the error comes back, save a bug report "
+                     "– it contains logs and versions, but no backups or personal paths.")
+                   + f"<br><br><b>{last.replace('<', '&lt;')}</b>")
         s.setWordWrap(True)
         lay.addWidget(s)
         self.details = QPlainTextEdit(exc_text)
@@ -141,13 +142,13 @@ class CrashDialog(QDialog):
         self.details.setVisible(False)
         lay.addWidget(self.details, 1)
         row = QHBoxLayout()
-        self.b_details = QPushButton("Details anzeigen")
+        self.b_details = QPushButton(_("Show details"))
         self.b_details.setCheckable(True)
         self.b_details.toggled.connect(lambda on: (self.details.setVisible(on),
-                                                   self.b_details.setText("Details ausblenden" if on else "Details anzeigen")))
-        self.b_save = QPushButton("Fehlerbericht speichern …")
+                                                   self.b_details.setText(_("Hide details") if on else _("Show details"))))
+        self.b_save = QPushButton(_("Save bug report …"))
         self.b_save.clicked.connect(lambda: self.save())
-        ok = QPushButton("Weiter")
+        ok = QPushButton(_("Continue"))
         ok.setProperty("variant", "primary")
         ok.setDefault(True)
         ok.clicked.connect(self.accept)
@@ -165,7 +166,7 @@ class CrashDialog(QDialog):
         p = save_report_dialog(self, self.exc_text, path)
         if p:
             self.saved = p
-            self.b_save.setText("Gespeichert ✓")
+            self.b_save.setText(_("Saved ✓"))
         return p
 
 

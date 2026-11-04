@@ -25,6 +25,7 @@ from ..common import notify, fmt_size, heading, icon, run_job
 from ..responsive import reflow
 from ..linkimport_dialog import LinkImportDialog, OwnFirmwaresDialog, _looks_like_link
 from . import PageSpec
+from ...i18n import _
 
 CAT_COLORS = {"Original": "#8e44ad", "Synth": "#2a7ab8", "Groovebox": "#e67e22", "Sampler": "#16a085",
               "Akkorde": "#c0398b", "Generativ": "#27ae60", "Werkzeug": "#7f8c8d", "Spiele & Spaß": "#d35400"}
@@ -1241,9 +1242,10 @@ def _make(ctx, window):
     return DiscoverPage(ctx, window)
 
 
-PAGE = PageSpec(key="discover", title="Firmware+", group="daten", factory=_make,
+PAGE = PageSpec(key="discover", title=_("Firmware+"), group="daten", factory=_make,
                 icons=("system-software-update", "plasmadiscover", "system-software-install", "applications-all"),
-                order=12, description="Alle FM-1-Firmwares an einem Ort: finden, ausprobieren, installieren, "
-                                      "Versionen wechseln, zurück zum Original",
+                order=12, description=_("All FM-1 firmwares in one place: find, try out, install, switch versions, "
+                                        "back to the original"),
                 keywords=("firmware", "firmwares", "entdecken", "katalog", "store", "installieren", "update",
-                          "version", "emulator", "link", "awesome-fm-1", "mooring", "hub"))
+                          "version", "emulator", "link", "awesome-fm-1", "mooring", "hub",
+                          "discover", "catalog", "install", "switch", "original"))

@@ -18,11 +18,12 @@ from dataclasses import dataclass, field
 from PyQt6.QtCore import QEvent, QObject, QPoint, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (QApplication, QDialog, QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
                              QPushButton, QToolButton, QVBoxLayout, QWidget)
+from ..i18n import _
 
 log = logging.getLogger("fm1companion.notify")
 LEVEL_ICON = {"info": "dialog-information", "success": "emblem-ok", "warning": "dialog-warning",
               "error": "dialog-error"}
-LEVEL_TITLE = {"info": "Hinweis", "success": "Erledigt", "warning": "Achtung", "error": "Fehler"}
+LEVEL_TITLE = {"info": _("Note"), "success": _("Done"), "warning": _("Attention"), "error": _("Error")}
 
 
 @dataclass
@@ -38,7 +39,7 @@ def _norm_action(action):
     if action is None:
         return None
     if callable(action):
-        return ("Öffnen", action)
+        return (_("Open"), action)
     if isinstance(action, (tuple, list)) and len(action) == 2 and callable(action[1]):
         return (str(action[0]), action[1])
     return None
@@ -102,7 +103,7 @@ class Toast(QFrame):
         h.addLayout(v, 1)
         x = QToolButton()
         x.setIcon(icon("window-close"))
-        x.setToolTip("Schließen")
+        x.setToolTip(_("Close"))
         x.setAutoRaise(True)
         x.clicked.connect(self.dismiss)
         h.addWidget(x, 0, Qt.AlignmentFlag.AlignTop)
@@ -296,10 +297,10 @@ class HistoryDialog(QDialog):
     def __init__(self, nc: NotificationCenter, parent=None):
         super().__init__(parent)
         from .common import fmt_date, heading, icon
-        self.setWindowTitle("Benachrichtigungen")
+        self.setWindowTitle(_("Notifications"))
         self.resize(520, 440)
         lay = QVBoxLayout(self)
-        lay.addWidget(heading("Benachrichtigungen", "Alle Hinweise seit dem Start der App."))
+        lay.addWidget(heading(_("Notifications"), _("All notices since the app was started.")))
         self.list = QListWidget()
         lay.addWidget(self.list, 1)
         for n in nc.history:
@@ -308,12 +309,12 @@ class HistoryDialog(QDialog):
             it.setData(Qt.ItemDataRole.UserRole, n)
             self.list.addItem(it)
         if not nc.history:
-            self.list.addItem("Noch keine Benachrichtigungen.")
+            self.list.addItem(_("No notifications yet."))
         self.list.itemDoubleClicked.connect(self._act)
         row = QHBoxLayout()
         clr = QPushButton(icon("edit-clear-all"), "Verlauf leeren")
         clr.clicked.connect(lambda: (nc.clear(), self.list.clear()))
-        close = QPushButton("Schließen")
+        close = QPushButton(_("Close"))
         close.setDefault(True)
         close.clicked.connect(self.accept)
         row.addWidget(clr)

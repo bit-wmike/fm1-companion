@@ -7,6 +7,7 @@ from PyQt6.QtGui import QColor, QFont, QLinearGradient, QPainter, QPixmap
 from PyQt6.QtWidgets import QApplication, QSplashScreen
 
 from .. import SUITE_NAME, __version__
+from ..i18n import _
 
 W, H = 520, 300
 
@@ -37,7 +38,7 @@ def _pixmap(dpr: float) -> QPixmap:
     f.setBold(True)
     p.setFont(f)
     p.setPen(QColor("#f2f3f5"))
-    name, _, suite = SUITE_NAME.rpartition(" ")
+    name, _sep, suite = SUITE_NAME.rpartition(" ")
     p.drawText(QRectF(150, 58, W - 170, 40), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, name)
     f2 = QFont(f)
     f2.setBold(False)
@@ -49,7 +50,7 @@ def _pixmap(dpr: float) -> QPixmap:
     f3 = QFont(QApplication.font())
     p.setFont(f3)
     p.setPen(QColor("#9aa0a8"))
-    p.drawText(QRectF(150, 128, W - 170, 24), Qt.AlignmentFlag.AlignLeft, "Alles fürs M-VAVE FM-1 in einer App")
+    p.drawText(QRectF(150, 128, W - 170, 24), Qt.AlignmentFlag.AlignLeft, _("Everything for the M-VAVE FM-1 in one app"))
     p.end()
     return pm
 
