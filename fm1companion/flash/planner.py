@@ -10,56 +10,9 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import flashmodel as fm, package as pk
+from . import flashmodel as fm, package as pk, texts as rescue_texts
 from .. import melodee16 as m16
-from ..i18n import N_, _
-
-# fixed sentences of flashmodel.describe_loss() (flashmodel.py is pinned and stays German) -> UI language
-_LOSS_TEXT = {
-    "Alles, was du unter V16 gespeichert hast (Patterns, Einstellungen), ist danach nicht mehr nutzbar – "  # i18n: ignore
-    "die App kann von V16 kein Backup machen.":
-        N_("Everything you saved under V16 (patterns, settings) can no longer be used afterwards – "
-           "the app cannot make a backup of V16."),
-    "V15 und Community-Firmwares schreiben nur bis 0x92FFF: Reste von V16 in 0x93000–0xA8FFF bleiben "  # i18n: ignore
-    "liegen. Melodee 1.5.1 lief damit im Emulator wie auf sauberem Flash; prüfen kannst du es mit "
-    "„Ist mein FM-1 sauber?“ (Rettung).":
-        N_("V15 and community firmwares only write up to 0x92FFF: leftovers of V16 in 0x93000–0xA8FFF remain. "
-           "Melodee 1.5.1 ran with them in the emulator as on a clean flash; you can check it with "
-           "“Is my FM-1 clean?” (Recovery)."),
-}
-
-
-_LOSS_WHAT = {"Songs, Presets und Einstellungen": N_("songs, presets and settings"),  # i18n: ignore
-              "weitere Song- und Preset-Bereiche": N_("further song and preset areas")}  # i18n: ignore
-_LOSS_RE = [
-    (re.compile(r"^Beim Schreiben von V16: der Bereich 0x93000–0xA8FFF \(22 Sektoren\) – bei dir: (?P<what>.+)\. "  # i18n: ignore
-                r"So gut wie sicher: Der Update-Loader schreibt genau so weit, wie das Paket lang ist \(bei V15 an "  # i18n: ignore
-                r"echter Hardware aufgezeichnet\)\.$"),
-     N_("When writing V16: the area 0x93000–0xA8FFF (22 sectors) – on your device: {what}. As good as certain: the "
-        "update loader writes exactly as far as the package is long (recorded with V15 on real hardware).")),
-    (re.compile(r"^Beim ersten Start formatiert V16 zusätzlich (?P<ranges>.+?) – bei dir: (?P<what>.+)\. "  # i18n: ignore
-                r"Beobachtet im Emulator, nicht an echter Hardware\. Die Ressourcen schreibt die App beim Rückweg auf "  # i18n: ignore
-                r"Melodee neu\.$"),
-     N_("At the first start V16 additionally formats {ranges} – on your device: {what}. Observed in the emulator, not "
-        "on real hardware. The app rewrites the resources on the way back to Melodee.")),
-    (re.compile(r"^Beim ersten Start formatiert V16 zusätzlich (?P<ranges>.+?) – bei dir: (?P<what>.+)\. "  # i18n: ignore
-                r"Beobachtet im Emulator, nicht an echter Hardware\.$"),  # i18n: ignore
-     N_("At the first start V16 additionally formats {ranges} – on your device: {what}. Observed in the emulator, not "
-        "on real hardware.")),
-]
-
-
-def _loss_text(t: str) -> str:
-    if t in _LOSS_TEXT:
-        return _(_LOSS_TEXT[t])
-    for rx, msg in _LOSS_RE:
-        m = rx.match(t)
-        if m:
-            parts = m.groupdict()
-            what = parts["what"]
-            parts["what"] = _(_LOSS_WHAT[what]) if what in _LOSS_WHAT else what
-            return _(msg).format(**parts)
-    return t
+from ..i18n import _
 
 TRAP_TEXT = _("When switching to the original firmware, the running Felucca firmware compares the boot area "
               "(CHECK HEAD). If it differs – e.g. after m-bootloader or M-VAVE Open V12/V14 –, the FM-1 shows "
@@ -428,7 +381,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
         p.warnings.insert(0, _("<b>V16 (experimental):</b> {warning}").format(warning=V16_WARNING))
         p.confirmations.append("v16")
     if lchange:
-        p.lost += [_loss_text(x) for x in fm.describe_loss(state.identity, state.firmware_key, t.product or "")]
+        p.lost += [rescue_texts.tr(x) for x in fm.describe_loss(state.identity, state.firmware_key, t.product or "")]
         if not t.is_v16 and info is not None and info.flash_bytes > fm.V15_END:
             p.lost.append(_("This package writes up to {end} – beyond 0x92FFF, where the firmwares with the V15 "
                             "layout (Melodee too) store songs, presets and sounds.").format(end=fm.hx(info.flash_bytes - 1)))

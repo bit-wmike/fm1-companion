@@ -1,0 +1,928 @@
+# German translation of FM-1 Companion – rescue texts: messages of the pinned recovery tools, shown by flash/texts.py.
+# The msgids come from flash/texts.py; the pinned files are flash/flashmodel.py, flash/restzone.py, flash/rescuegate.py.
+# Each msgstr is the ORIGINAL German template of the pinned file, character for character – the German UI shows
+# exactly what those files write. Do not reword.
+# SPDX-License-Identifier: GPL-3.0-only
+msgid ""
+msgstr ""
+"Project-Id-Version: FM-1 Companion\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: fm1companion/flash/texts.py:49
+msgid "yes"
+msgstr "ja"
+
+#: fm1companion/flash/texts.py:49
+msgid "no"
+msgstr "nein"
+
+#: fm1companion/flash/texts.py:48
+msgid "full"
+msgstr "voll"
+
+#: fm1companion/flash/texts.py:107
+msgid "Original firmware V15"
+msgstr "Original-Firmware V15"
+
+#: fm1companion/flash/texts.py:108
+msgid "Original firmware V16"
+msgstr "Original-Firmware V16"
+
+#: fm1companion/flash/texts.py:133
+msgid "too short"
+msgstr "zu kurz"
+
+#: fm1companion/flash/texts.py:131
+msgid "no flash.bin in the package"
+msgstr "kein flash.bin im Paket"
+
+#: fm1companion/flash/texts.py:48
+msgid "partial"
+msgstr "teilweise"
+
+#: fm1companion/flash/texts.py:48
+msgid "interrupted"
+msgstr "unterbrochen"
+
+#: fm1companion/flash/texts.py:50
+msgid "header ok"
+msgstr "Kopf ok"
+
+#: fm1companion/flash/texts.py:50
+msgid "header missing/defective"
+msgstr "Kopf fehlt/defekt"
+
+#: fm1companion/flash/texts.py:51
+msgid "ok"
+msgstr "ok"
+
+#: fm1companion/flash/texts.py:51
+msgid "not ok"
+msgstr "nicht ok"
+
+#: fm1companion/flash/texts.py:64
+#, python-brace-format
+msgid "{name} {size} bytes"
+msgstr "{name} {size} Bytes"
+
+#: fm1companion/flash/texts.py:71
+msgid "boot header"
+msgstr "Bootkopf"
+
+#: fm1companion/flash/texts.py:72
+msgid "key_mac / reserved rest"
+msgstr "key_mac / reservierter Rest"
+
+#: fm1companion/flash/texts.py:73
+msgid "Bluetooth data (V15 layout)"
+msgstr "Bluetooth-Daten (V15-Aufbau)"
+
+#: fm1companion/flash/texts.py:74
+msgid "Bluetooth data (V16 layout)"
+msgstr "Bluetooth-Daten (V16-Aufbau)"
+
+#: fm1companion/flash/texts.py:75
+msgid "factory (V13–V15)"
+msgstr "Werk (V13–V15)"
+
+#: fm1companion/flash/texts.py:76
+msgid "unknown"
+msgstr "unbekannt"
+
+#: fm1companion/flash/texts.py:77
+msgid "damaged"
+msgstr "beschädigt"
+
+#: fm1companion/flash/texts.py:78
+msgid "untested on a real device"
+msgstr "am echten Gerät ungetestet"
+
+#: fm1companion/flash/texts.py:79 fm1companion/flash/texts.py:701
+msgid "Clean"
+msgstr "Sauber"
+
+#: fm1companion/flash/texts.py:80 fm1companion/flash/texts.py:701
+msgid "With notes"
+msgstr "Mit Hinweisen"
+
+#: fm1companion/flash/texts.py:81 fm1companion/flash/texts.py:701
+msgid "Not OK"
+msgstr "Nicht in Ordnung"
+
+#: fm1companion/flash/texts.py:82
+msgid "Quick check (read only)"
+msgstr "Schnellprüfung (nur lesen)"
+
+#: fm1companion/flash/texts.py:83
+msgid "Flash dump check"
+msgstr "Flash-Dump-Prüfung"
+
+#: fm1companion/flash/texts.py:84
+msgid "Clean up leftovers – plan (simulation)"
+msgstr "Reste aufräumen – Plan (Simulation)"
+
+#: fm1companion/flash/texts.py:85
+msgid "Clean up leftovers – plan"
+msgstr "Reste aufräumen – Plan"
+
+#: fm1companion/flash/texts.py:86
+msgid "Clean up leftovers (simulation)"
+msgstr "Reste aufräumen (Simulation)"
+
+#: fm1companion/flash/texts.py:87
+msgid "Clean up leftovers"
+msgstr "Reste aufräumen"
+
+#: fm1companion/flash/texts.py:89
+msgid "factory image of the original firmware V15 (FM-1_015, measured on one device)"
+msgstr "Werks-Abbild der Original-Firmware V15 (FM-1_015, an einem Gerät gemessen)"
+
+#: fm1companion/flash/texts.py:90
+msgid "Demo Melodee (simulation)"
+msgstr "Demo-Melodee (Simulation)"
+
+#: fm1companion/flash/texts.py:91
+msgid "Demo V16 (simulation)"
+msgstr "Demo-V16 (Simulation)"
+
+#: fm1companion/flash/texts.py:92
+msgid "V15 layout (firmware up to 0x92FFF)"
+msgstr "V15-Aufbau (Firmware bis 0x92FFF)"
+
+#: fm1companion/flash/texts.py:93
+msgid "V16 layout (firmware beyond 0x93000)"
+msgstr "V16-Aufbau (Firmware über 0x93000 hinaus)"
+
+#: fm1companion/flash/texts.py:94
+msgid "layout without a reference"
+msgstr "Aufbau ohne Vorlage"
+
+#: fm1companion/flash/texts.py:95
+msgid "firmware without a reference (file table checked)"
+msgstr "Firmware ohne Vorlage (Dateitabelle geprüft)"
+
+#: fm1companion/flash/texts.py:97
+msgid "firmware with the V16 layout (according to its file table)"
+msgstr "Firmware mit V16-Aufbau (laut ihrer Dateitabelle)"
+
+#: fm1companion/flash/texts.py:98
+msgid "known package with the V15 layout"
+msgstr "bekanntes Paket mit V15-Aufbau"
+
+#: fm1companion/flash/texts.py:101
+msgid "known factory image, file table of the firmware: end 0x93000, settings from 0x93000, all checksums match"
+msgstr "bekanntes Werks-Abbild, Dateitabelle der Firmware: Ende 0x93000, Einstellungen ab 0x93000, alle Prüfsummen stimmen"
+
+#: fm1companion/flash/texts.py:103
+msgid "file table of the firmware: end 0x93000, settings from 0x93000, all checksums match"
+msgstr "Dateitabelle der Firmware: Ende 0x93000, Einstellungen ab 0x93000, alle Prüfsummen stimmen"
+
+#: fm1companion/flash/texts.py:104
+msgid "factory boot header (V13–V15)"
+msgstr "Bootkopf ab Werk (V13–V15)"
+
+#: fm1companion/flash/texts.py:105
+msgid "demo boot header (simulation)"
+msgstr "Demo-Bootkopf (Simulation)"
+
+#: fm1companion/flash/texts.py:109
+msgid "factory boot header (V13, V14, V15)"
+msgstr "Bootkopf ab Werk (V13, V14, V15)"
+
+#: fm1companion/flash/texts.py:111
+msgid "boot header of the community packages (Melodee, SLOOP, Skiff, JIANT)"
+msgstr "Bootkopf der Community-Pakete (Melodee, SLOOP, Skiff, JIANT)"
+
+#: fm1companion/flash/texts.py:113
+msgid "Prophet banks"
+msgstr "Prophet-Bänke"
+
+#: fm1companion/flash/texts.py:114
+msgid "shared preset extension"
+msgstr "gemeinsame Preset-Erweiterung"
+
+#: fm1companion/flash/texts.py:115
+msgid "FM6 bank (copy A)"
+msgstr "FM6-Bank (Kopie A)"
+
+#: fm1companion/flash/texts.py:116
+msgid "projects and preset banks (pool)"
+msgstr "Projekte und Preset-Bänke (Pool)"
+
+#: fm1companion/flash/texts.py:117
+msgid "CZ banks"
+msgstr "CZ-Bänke"
+
+#: fm1companion/flash/texts.py:119
+msgid "resources (factory sounds, font, Bluetooth program)"
+msgstr "Ressourcen (Werkssounds, Schrift, Bluetooth-Programm)"
+
+#: fm1companion/flash/texts.py:120
+msgid "update buffer"
+msgstr "Update-Zwischenspeicher"
+
+#: fm1companion/flash/texts.py:121
+msgid "extensions and projects (pool)"
+msgstr "Erweiterungen und Projekte (Pool)"
+
+#: fm1companion/flash/texts.py:122
+msgid "settings"
+msgstr "Einstellungen"
+
+#: fm1companion/flash/texts.py:123
+msgid "songs, presets and settings"
+msgstr "Songs, Presets und Einstellungen"
+
+#: fm1companion/flash/texts.py:124
+msgid "further song and preset areas"
+msgstr "weitere Song- und Preset-Bereiche"
+
+#: fm1companion/flash/texts.py:127
+#, python-brace-format
+msgid "{name} cannot be read ({error})."
+msgstr "{name} lässt sich nicht lesen ({error})."
+
+#: fm1companion/flash/texts.py:128
+msgid "too short for an FM-1 package"
+msgstr "zu kurz für ein FM-1-Paket"
+
+#: fm1companion/flash/texts.py:129
+msgid "package header checksum wrong"
+msgstr "Paketkopf-Prüfsumme falsch"
+
+#: fm1companion/flash/texts.py:130
+msgid "file list of the package damaged"
+msgstr "Dateiliste des Pakets beschädigt"
+
+#: fm1companion/flash/texts.py:132
+msgid "no resource answer"
+msgstr "keine Ressourcen-Antwort"
+
+#: fm1companion/flash/texts.py:134
+msgid "no valid entry “app_area_head” at 0x04000"
+msgstr "kein gültiger Eintrag „app_area_head“ bei 0x04000"
+
+#: fm1companion/flash/texts.py:135
+msgid "no entry “app_area_head” at 0x04000"
+msgstr "kein Eintrag „app_area_head“ bei 0x04000"
+
+#: fm1companion/flash/texts.py:136
+#, python-brace-format
+msgid "app_area_head states an impossible length 0x{size}"
+msgstr "app_area_head nennt eine unmögliche Länge 0x{size}"
+
+#: fm1companion/flash/texts.py:138
+#, python-brace-format
+msgid "{name} lies outside the app area"
+msgstr "{name} liegt außerhalb des App-Bereichs"
+
+#: fm1companion/flash/texts.py:139
+#, python-brace-format
+msgid "checksum (CRC) of {name} does not match"
+msgstr "Prüfsumme (CRC) von {name} stimmt nicht"
+
+#: fm1companion/flash/texts.py:140
+msgid "no file app.bin in the table"
+msgstr "keine Datei app.bin in der Tabelle"
+
+#: fm1companion/flash/texts.py:141
+msgid "no entry PRCT (end of the firmware)"
+msgstr "kein Eintrag PRCT (Ende der Firmware)"
+
+#: fm1companion/flash/texts.py:142
+#, python-brace-format
+msgid "table not readable ({error})"
+msgstr "Tabelle nicht lesbar ({error})"
+
+#: fm1companion/flash/texts.py:143
+#, python-brace-format
+msgid "Cleaning up would touch the area “{why}”"
+msgstr "Aufräumen würde den Bereich „{why}“ berühren"
+
+#: fm1companion/flash/texts.py:147
+#, python-brace-format
+msgid "The file name says V{v}, the package itself is {identity}."
+msgstr "Der Dateiname sagt V{v}, das Paket selbst ist {identity}."
+
+#: fm1companion/flash/texts.py:148
+msgid "The package is not in the list of known packages."
+msgstr "Das Paket steht nicht in der Liste bekannter Pakete."
+
+#: fm1companion/flash/texts.py:149
+msgid "No backup of the current state."
+msgstr "Kein Backup des jetzigen Stands."
+
+#: fm1companion/flash/texts.py:151
+#, python-brace-format
+msgid "Layout change {old} → {new}: writes up to {end}, the data areas are elsewhere afterwards."
+msgstr "Layoutwechsel {old} → {new}: schreibt bis {end}, die Datenbereiche liegen danach woanders."
+
+#: fm1companion/flash/texts.py:154
+#, python-brace-format
+msgid "The target writes {start}–{end}, which the current firmware uses as data storage."
+msgstr "Das Ziel schreibt {start}–{end}, das die jetzige Firmware als Datenspeicher nutzt."
+
+#: fm1companion/flash/texts.py:157
+msgid "The boot header stays the old one (only relevant in ROM boot mode)."
+msgstr "Der Bootkopf bleibt der alte (nur im ROM-Bootmodus relevant)."
+
+#: fm1companion/flash/texts.py:159
+#, python-brace-format
+msgid "This write path only writes 0x04000–0x92FFF; the package needs up to {end}."
+msgstr "Dieser Schreibweg schreibt nur 0x04000–0x92FFF; das Paket braucht bis {end}."
+
+#: fm1companion/flash/texts.py:163
+msgid "The FM-1 did not reveal its identity – the app cannot assign the firmware."
+msgstr "Das FM-1 hat seine Kennung nicht verraten – die App kann die Firmware nicht zuordnen."
+
+#: fm1companion/flash/texts.py:165
+#, python-brace-format
+msgid "The FM-1 reports {identity} ({firmware}) – a firmware the app knows."
+msgstr "Das FM-1 meldet {identity} ({firmware}) – eine Firmware, die die App kennt."
+
+#: fm1companion/flash/texts.py:168
+#, python-brace-format
+msgid "The FM-1 reports {identity} ({firmware}). This identity is not in the list of known packages – that does not mean that something is broken, the app just cannot cross-check it."
+msgstr "Das FM-1 meldet {identity} ({firmware}). Diese Kennung steht nicht in der Liste bekannter Pakete – das heißt nicht, dass etwas kaputt ist, die App kann sie nur nicht gegenprüfen."
+
+#: fm1companion/flash/texts.py:173
+msgid "The resources (factory sounds, font, Bluetooth program) are complete and match the running firmware. The firmware itself, however, is a different build from the one the app knows under this version – so the app cannot cross-check it."
+msgstr "Die Ressourcen (Werkssounds, Schrift, Bluetooth-Programm) sind vollständig und passen zur laufenden Firmware. Die Firmware selbst ist aber ein anderer Build als der, den die App unter dieser Version kennt – die App kann sie darum nicht gegenprüfen."
+
+#: fm1companion/flash/texts.py:178
+msgid "Resources (factory sounds, font, Bluetooth program) are complete: the firmware recomputed header and checksum itself, they match exactly this build."
+msgstr "Ressourcen (Werkssounds, Schrift, Bluetooth-Programm) sind vollständig: Die Firmware hat Kopf und Prüfsumme selbst nachgerechnet, sie passen zu genau diesem Build."
+
+#: fm1companion/flash/texts.py:182
+msgid "The resources are missing or damaged – then factory sounds are missing or the font looks different. Remedy: page “Firmware” › “Rewrite font & factory sounds”."
+msgstr "Die Ressourcen fehlen oder sind beschädigt – dann fehlen Werkssounds oder die Schrift sieht anders aus. Abhilfe: Seite „Firmware“ › „Schrift & Werkssounds nachschreiben“."
+
+#: fm1companion/flash/texts.py:185
+#, python-brace-format
+msgid "Command 82: installed={installed}, length {length}, CRC-32 {crc} (known: {known})"
+msgstr "Befehl 82: installiert={installed}, Länge {length}, CRC-32 {crc} (bekannt: {known})"
+
+#: fm1companion/flash/texts.py:188
+#, python-brace-format
+msgid "Command 82: installed={installed}, length {length}, CRC-32 {crc}"
+msgstr "Befehl 82: installiert={installed}, Länge {length}, CRC-32 {crc}"
+
+#: fm1companion/flash/texts.py:190
+#, python-brace-format
+msgid "Resource status cannot be queried: {error}"
+msgstr "Ressourcen-Status nicht abfragbar: {error}"
+
+#: fm1companion/flash/texts.py:193
+msgid "Without a dump the app does not see into the flash: leftovers of earlier firmwares (e.g. of V16), the boot header and the data areas remain unchecked."
+msgstr "Ohne Dump sieht die App nicht in den Flash: Reste früherer Firmwares (z. B. von V16), der Bootkopf und die Datenbereiche bleiben ungeprüft."
+
+#: fm1companion/flash/texts.py:197
+msgid "Whether every byte of the firmware is correct, the FM-1 checks itself only partly at startup – byte for byte it is only possible with a flash dump (part 2 of this check)."
+msgstr "Ob jedes Byte der Firmware stimmt, prüft das FM-1 beim Start nur teilweise selbst – byte-genau geht es nur mit einem Flash-Dump (Teil 2 dieser Prüfung)."
+
+#: fm1companion/flash/texts.py:199
+msgid "The resource check only exists with Melodee 1.6 and later."
+msgstr "Die Ressourcen-Prüfung gibt es nur bei Melodee ab 1.6."
+
+#: fm1companion/flash/texts.py:203
+#, python-brace-format
+msgid "The file is {size} bytes in size – a complete FM-1 dump has exactly 1 MiB ({full} bytes)."
+msgstr "Die Datei ist {size} Bytes groß – ein vollständiger FM-1-Dump hat genau 1 MiB ({full} Bytes)."
+
+#: fm1companion/flash/texts.py:207
+msgid "The dump is completely empty – no running FM-1 looks like this. Something probably went wrong while reading."
+msgstr "Der Dump ist komplett leer – so sieht kein laufendes FM-1 aus. Wahrscheinlich ist beim Lesen etwas schiefgegangen."
+
+#: fm1companion/flash/texts.py:209
+#, python-brace-format
+msgid "boot header from {name}"
+msgstr "Bootkopf aus {name}"
+
+#: fm1companion/flash/texts.py:210
+#, python-brace-format
+msgid "Boot header 0x00000–0x03FFF: SHA-256 {sha}… ({name})"
+msgstr "Bootkopf 0x00000–0x03FFF: SHA-256 {sha}… ({name})"
+
+#: fm1companion/flash/texts.py:213
+msgid "The boot header is the factory one (the same for V13, V14, V15) – that is how it should be."
+msgstr "Der Bootkopf ist der ab Werk (gleich bei V13, V14, V15) – so soll es sein."
+
+#: fm1companion/flash/texts.py:216
+msgid "This happens in ROM boot mode when the whole flash was written – or perhaps through a normal update to V16: whether the original loader also writes the header is not yet clarified."
+msgstr "Das entsteht im ROM-Bootmodus, wenn der ganze Flash beschrieben wurde – oder vielleicht durch ein normales Update auf V16: Ob der Original-Loader dabei den Kopf mitschreibt, ist noch nicht geklärt."
+
+#: fm1companion/flash/texts.py:219
+msgid "This only happens when the whole flash was written in ROM boot mode."
+msgstr "Das entsteht nur, wenn im ROM-Bootmodus der ganze Flash beschrieben wurde."
+
+#: fm1companion/flash/texts.py:222
+#, python-brace-format
+msgid "The boot header is not the factory one, but: {name}. {how} Melodee then refuses the return to the original V15 (“FAILED -5”)."
+msgstr "Der Bootkopf ist nicht der ab Werk, sondern: {name}. {how} Melodee lehnt dann die Rückkehr zur Original-V15 ab („FAILED -5“)."
+
+#: fm1companion/flash/texts.py:227
+msgid "The app does not know the boot header (e.g. after m-bootloader). The firmware can run anyway; the return to the original firmware can then report “FAILED -5”."
+msgstr "Den Bootkopf kennt die App nicht (z. B. nach m-bootloader). Die Firmware kann trotzdem laufen; die Rückkehr zur Original-Firmware kann dann „FAILED -5“ melden."
+
+#: fm1companion/flash/texts.py:229
+#, python-brace-format
+msgid "{name}, truncated"
+msgstr "{name}, abgeschnitten"
+
+#: fm1companion/flash/texts.py:233
+msgid "The app area holds V16, but only up to 0x92FFF – the rest (end of the program and the 128 factory voices, DX7.bin from 0x96267) is missing. Only a tool for V15-sized packages writes like this (e.g. the unbricker in ROM boot mode). Remedy: install the original V15 and then your firmware again."
+msgstr "Im App-Bereich steht V16, aber nur bis 0x92FFF – der Rest (Ende des Programms und die 128 Werks-Voices, DX7.bin ab 0x96267) fehlt. So schreibt nur ein Werkzeug für V15-große Pakete (z. B. der Unbricker im ROM-Bootmodus). Abhilfe: Original-V15 und danach deine Firmware neu aufspielen."
+
+#: fm1companion/flash/texts.py:236
+msgid "App area 0x04000–0x92FFF = V16, 0x93000–0xA8FFF ≠ V16"
+msgstr "App-Bereich 0x04000–0x92FFF = V16, 0x93000–0xA8FFF ≠ V16"
+
+#: fm1companion/flash/texts.py:238
+#, python-brace-format
+msgid "App area 0x04000–{end}: byte-identical with {name} ({sha}…)"
+msgstr "App-Bereich 0x04000–{end}: byte-gleich mit {name} ({sha}…)"
+
+#: fm1companion/flash/texts.py:240
+#, python-brace-format
+msgid "The flash holds {name} ({identity}), {expected} was expected."
+msgstr "Im Flash steht {name} ({identity}), erwartet war {expected}."
+
+#: fm1companion/flash/texts.py:241
+#, python-brace-format
+msgid "The firmware in the flash is exactly {name}, byte for byte."
+msgstr "Die Firmware im Flash ist byte-genau {name}."
+
+#: fm1companion/flash/texts.py:243
+#, python-brace-format
+msgid "File table 0x04000: header and file checksums match, {layout}{files}"
+msgstr "Dateitabelle 0x04000: Kopf- und Datei-Prüfsummen stimmen, {layout}{files}"
+
+#: fm1companion/flash/texts.py:246
+#, python-brace-format
+msgid "File table 0x04000: ERROR: {errors}, {layout}{files}"
+msgstr "Dateitabelle 0x04000: FEHLER: {errors}, {layout}{files}"
+
+#: fm1companion/flash/texts.py:251
+#, python-brace-format
+msgid "The app area holds a {factory}. It differs from the published V15 package – that is not an error: devices from the factory carry a different image. The file table of the firmware and its checksums match. Do not reinstall anything; this backup is your way back."
+msgstr "Im App-Bereich steht ein {factory}. Es weicht vom veröffentlichten V15-Paket ab – das ist kein Fehler: Geräte ab Werk tragen ein anderes Abbild. Die Dateitabelle der Firmware und ihre Prüfsummen stimmen. Nichts neu aufspielen; diese Sicherung ist dein Rückweg."
+
+#: fm1companion/flash/texts.py:254
+#, python-brace-format
+msgid "factory image or other version of {name}"
+msgstr "Werks-Abbild oder andere Version von {name}"
+
+#: fm1companion/flash/texts.py:258
+#, python-brace-format
+msgid "Factory image or other version (differs from the published package {name} in {n} of {total} sectors) – not an error: the file table of the firmware and the checksums (CRC) of all its files match, it is complete in itself. Devices from the factory often carry a different image than the published package. Do not reinstall anything."
+msgstr "Werks-Abbild oder andere Version (weicht vom veröffentlichten Paket {name} in {n} von {total} Sektoren ab) – kein Fehler: Die Dateitabelle der Firmware und die Prüfsummen (CRC) aller ihrer Dateien stimmen, sie ist in sich vollständig. Geräte ab Werk tragen oft ein anderes Abbild als das veröffentlichte Paket. Nichts neu aufspielen."
+
+#: fm1companion/flash/texts.py:263
+#, python-brace-format
+msgid "Differing sectors compared with {name}: {ranges}"
+msgstr "Abweichende Sektoren gegenüber {name}: {ranges}"
+
+#: fm1companion/flash/texts.py:265
+#, python-brace-format
+msgid "{name} (damaged)"
+msgstr "{name} (beschädigt)"
+
+#: fm1companion/flash/texts.py:269
+#, python-brace-format
+msgid "The firmware in the app area is damaged or incompletely written: {errors}. The firmware table itself states these checksums – this is a real structural error, not a mere deviation from a package. Please reinstall."
+msgstr "Die Firmware im App-Bereich ist beschädigt oder unvollständig geschrieben: {errors}. Diese Prüfsummen rechnet die Firmware-Tabelle selbst vor – das ist ein echter Strukturfehler, keine bloße Abweichung von einem Paket. Bitte neu aufspielen."
+
+#: fm1companion/flash/texts.py:274
+#, python-brace-format
+msgid "The app area resembles {name}, but {n} of {total} sectors differ and the file table of the firmware at 0x04000 is not readable. The firmware is damaged or incompletely written – please reinstall."
+msgstr "Der App-Bereich gleicht {name}, aber {n} von {total} Sektoren weichen ab und die Dateitabelle der Firmware bei 0x04000 ist nicht lesbar. Die Firmware ist beschädigt oder unvollständig geschrieben – bitte neu aufspielen."
+
+#: fm1companion/flash/texts.py:277
+#, python-brace-format
+msgid "Differing sectors: {ranges}"
+msgstr "Abweichende Sektoren: {ranges}"
+
+#: fm1companion/flash/texts.py:280
+#, python-brace-format
+msgid "The firmware in the app area matches no package the app knows (e.g. a newer version). Its file table and checksums match ({layout}) – it is complete in itself."
+msgstr "Die Firmware im App-Bereich passt zu keinem Paket, das die App kennt (z. B. eine neuere Version). Ihre Dateitabelle und Prüfsummen stimmen ({layout}) – sie ist in sich vollständig."
+
+#: fm1companion/flash/texts.py:284
+msgid "The firmware in the app area matches no package the app knows (e.g. a newer version). Whether it is complete cannot be said this way."
+msgstr "Die Firmware im App-Bereich passt zu keinem Paket, das die App kennt (z. B. eine neuere Version). Ob sie vollständig ist, lässt sich so nicht sagen."
+
+#: fm1companion/flash/texts.py:290
+#, python-brace-format
+msgid "Leftovers of V16 are still in {n} sector ({ranges}). V15 and community firmwares never write there and do not clean them up. Melodee 1.5.1 ran with them in the emulator exactly as on a clean flash; for 1.6.0-rc.7 this is not checked. You can erase them in ROM boot mode with “Clean up V16 leftovers” (expert mode of this card, untested on a real device) – or leave them."
+msgid_plural "Leftovers of V16 are still in {n} sectors ({ranges}). V15 and community firmwares never write there and do not clean them up. Melodee 1.5.1 ran with them in the emulator exactly as on a clean flash; for 1.6.0-rc.7 this is not checked. You can erase them in ROM boot mode with “Clean up V16 leftovers” (expert mode of this card, untested on a real device) – or leave them."
+msgstr[0] "In {n} Sektoren ({ranges}) liegen noch Reste von V16. V15 und Community-Firmwares schreiben dort nie hin und räumen sie nicht weg. Melodee 1.5.1 lief im Emulator damit genau wie auf sauberem Flash; für 1.6.0-rc.7 ist das nicht geprüft. Löschen kannst du sie im ROM-Bootmodus mit „V16-Reste aufräumen“ (Expertenmodus dieser Karte, am echten Gerät ungetestet) – oder liegen lassen."
+msgstr[1] "In {n} Sektoren ({ranges}) liegen noch Reste von V16. V15 und Community-Firmwares schreiben dort nie hin und räumen sie nicht weg. Melodee 1.5.1 lief im Emulator damit genau wie auf sauberem Flash; für 1.6.0-rc.7 ist das nicht geprüft. Löschen kannst du sie im ROM-Bootmodus mit „V16-Reste aufräumen“ (Expertenmodus dieser Karte, am echten Gerät ungetestet) – oder liegen lassen."
+
+#: fm1companion/flash/texts.py:299
+#, python-brace-format
+msgid "Leftovers: {ranges} – clean-up plan: {plan}"
+msgstr "Reste: {ranges} – Aufräum-Plan: {plan}"
+
+#: fm1companion/flash/texts.py:302
+msgid "No leftovers of V16 or other known packages in the data areas."
+msgstr "Keine Reste von V16 oder anderen bekannten Paketen in den Datenbereichen."
+
+#: fm1companion/flash/texts.py:305
+msgid "The Melodee resources (factory sounds, font, Bluetooth program) at 0xCB000 are complete and belong to exactly this build."
+msgstr "Die Melodee-Ressourcen (Werkssounds, Schrift, Bluetooth-Programm) bei 0xCB000 sind vollständig und gehören zu genau diesem Build."
+
+#: fm1companion/flash/texts.py:309
+msgid "The Melodee resources are complete in themselves, but belong to a different build. Remedy: “Rewrite font & factory sounds” (page “Firmware”)."
+msgstr "Die Melodee-Ressourcen sind in sich vollständig, gehören aber zu einem anderen Build. Abhilfe: „Schrift & Werkssounds nachschreiben“ (Seite „Firmware“)."
+
+#: fm1companion/flash/texts.py:313
+msgid "The Melodee resources at 0xCB000 are missing or damaged – then factory sounds are missing. Remedy: “Rewrite font & factory sounds” (page “Firmware”)."
+msgstr "Die Melodee-Ressourcen bei 0xCB000 fehlen oder sind beschädigt – dann fehlen Werkssounds. Abhilfe: „Schrift & Werkssounds nachschreiben“ (Seite „Firmware“)."
+
+#: fm1companion/flash/texts.py:315
+#, python-brace-format
+msgid "Resources 0xCB000: {head}, payload {payload}"
+msgstr "Ressourcen 0xCB000: {head}, Nutzdaten {payload}"
+
+#: fm1companion/flash/texts.py:320
+msgid "Whether your songs, presets and settings are consistent in themselves is checked by the firmware itself – the app only compares with known packages."
+msgstr "Ob deine Songs, Presets und Einstellungen in sich stimmen, prüft die Firmware selbst – die App vergleicht nur mit bekannten Paketen."
+
+#: fm1companion/flash/texts.py:323
+msgid "It cannot assess areas without a reference (settings, Bluetooth pairings, serial number)."
+msgstr "Bereiche ohne Vorlage (Einstellungen, Bluetooth-Kopplungen, Seriennummer) kann sie nicht bewerten."
+
+#: fm1companion/flash/texts.py:324
+msgid "The dump shows the state at the time of reading."
+msgstr "Der Dump zeigt den Stand zum Zeitpunkt des Lesens."
+
+#: fm1companion/flash/texts.py:329
+#, python-brace-format
+msgid "When writing V16: the area 0x93000–0xA8FFF (22 sectors) – on your device: {what}. As good as certain: the update loader writes exactly as far as the package is long (recorded with V15 on real hardware)."
+msgstr "Beim Schreiben von V16: der Bereich 0x93000–0xA8FFF (22 Sektoren) – bei dir: {what}. So gut wie sicher: Der Update-Loader schreibt genau so weit, wie das Paket lang ist (bei V15 an echter Hardware aufgezeichnet)."
+
+#: fm1companion/flash/texts.py:334
+#, python-brace-format
+msgid "At the first start V16 additionally formats {ranges} – on your device: {what}. Observed in the emulator, not on real hardware. The app rewrites the resources on the way back to Melodee."
+msgstr "Beim ersten Start formatiert V16 zusätzlich {ranges} – bei dir: {what}. Beobachtet im Emulator, nicht an echter Hardware. Die Ressourcen schreibt die App beim Rückweg auf Melodee neu."
+
+#: fm1companion/flash/texts.py:339
+#, python-brace-format
+msgid "At the first start V16 additionally formats {ranges} – on your device: {what}. Observed in the emulator, not on real hardware."
+msgstr "Beim ersten Start formatiert V16 zusätzlich {ranges} – bei dir: {what}. Beobachtet im Emulator, nicht an echter Hardware."
+
+#: fm1companion/flash/texts.py:344
+msgid "Everything you saved under V16 (patterns, settings) can no longer be used afterwards – the app cannot make a backup of V16."
+msgstr "Alles, was du unter V16 gespeichert hast (Patterns, Einstellungen), ist danach nicht mehr nutzbar – die App kann von V16 kein Backup machen."
+
+#: fm1companion/flash/texts.py:348
+msgid "V15 and community firmwares only write up to 0x92FFF: leftovers of V16 in 0x93000–0xA8FFF remain. Melodee 1.5.1 ran with them in the emulator as on a clean flash; you can check it with “Is my FM-1 clean?” (Recovery)."
+msgstr "V15 und Community-Firmwares schreiben nur bis 0x92FFF: Reste von V16 in 0x93000–0xA8FFF bleiben liegen. Melodee 1.5.1 lief damit im Emulator wie auf sauberem Flash; prüfen kannst du es mit „Ist mein FM-1 sauber?“ (Rettung)."
+
+#: fm1companion/flash/texts.py:353
+#, python-brace-format
+msgid "{addr} is not a sector boundary – refused."
+msgstr "{addr} ist keine Sektorgrenze – abgelehnt."
+
+#: fm1companion/flash/texts.py:355
+#, python-brace-format
+msgid "{addr} lies outside the leftover zone {lo}–{hi} – refused."
+msgstr "{addr} liegt außerhalb der Restzone {lo}–{hi} – abgelehnt."
+
+#: fm1companion/flash/texts.py:356
+#, python-brace-format
+msgid "{addr} touches “{why}” – is never erased."
+msgstr "{addr} berührt „{why}“ – wird nie gelöscht."
+
+#: fm1companion/flash/texts.py:357
+msgid "The dump is not exactly 1 MiB – so nothing is erased."
+msgstr "Der Dump hat nicht genau 1 MiB – so wird nichts gelöscht."
+
+#: fm1companion/flash/texts.py:361
+msgid "The firmware in the flash is not one the app knows byte for byte (or it is damaged). Then it cannot be said for sure which areas belong to it – nothing is erased. First install a known firmware (e.g. Melodee 1.6.0-rc.7) and then read the flash again."
+msgstr "Die Firmware im Flash ist keine, die die App byte-genau kennt (oder sie ist beschädigt). Dann lässt sich nicht sicher sagen, welche Bereiche ihr gehören – es wird nichts gelöscht. Spiel zuerst eine bekannte Firmware auf (z. B. Melodee 1.6.0-rc.7) und lies den Flash dann neu."
+
+#: fm1companion/flash/texts.py:366
+#, python-brace-format
+msgid "The FM-1 holds {name}. With V16, 0x93000–0xA8FFF belongs to the firmware itself – nothing is ever cleaned up there. Cleaning up is only possible when V15, Melodee or another firmware with the V15 layout runs again."
+msgstr "Auf dem FM-1 steht {name}. Bei V16 gehört 0x93000–0xA8FFF zur Firmware selbst – dort wird nie aufgeräumt. Aufräumen geht erst, wenn wieder V15, Melodee oder eine andere Firmware mit V15-Aufbau läuft."
+
+#: fm1companion/flash/texts.py:369
+msgid "The app lacks the V16 profile – without it, it recognizes no leftovers. Nothing is erased."
+msgstr "Der App fehlt der V16-Steckbrief – ohne ihn erkennt sie keine Reste. Es wird nichts gelöscht."
+
+#: fm1companion/flash/texts.py:372
+msgid "Erasing was interrupted, but the content is no longer clearly a half-erased V16 leftover – stays as it is."
+msgstr "Löschen wurde unterbrochen, der Inhalt ist aber nicht mehr eindeutig ein halb gelöschter V16-Rest – bleibt, wie er ist."
+
+#: fm1companion/flash/texts.py:374
+msgid "carries no V16 bytes (e.g. data of your firmware) – stays."
+msgstr "trägt keine V16-Bytes (z. B. Daten deiner Firmware) – bleibt."
+
+#: fm1companion/flash/texts.py:376
+msgid "was planned, but according to the fresh backup it is not (or no longer) a V16 leftover – stays."
+msgstr "war geplant, ist laut frischer Sicherung aber kein V16-Rest (mehr) – bleibt."
+
+#: fm1companion/flash/texts.py:377
+msgid "V16 leftover, but not confirmed – stays."
+msgstr "V16-Rest, aber nicht bestätigt – bleibt."
+
+#: fm1companion/flash/texts.py:379
+#, python-brace-format
+msgid "Two readings of {addr} differ from each other – the USB connection is unreliable."
+msgstr "Zwei Lesungen von {addr} weichen voneinander ab – die USB-Verbindung ist unzuverlässig."
+
+#: fm1companion/flash/texts.py:380
+msgid "Crash simulation is only available with the mock FM-1."
+msgstr "Absturz-Simulation gibt es nur mit dem Mock-FM-1."
+
+#: fm1companion/flash/texts.py:381
+msgid "Step 1/5: check the device (chip key, flash ID)"
+msgstr "Schritt 1/5: Gerät prüfen (Chip-Key, Flash-ID)"
+
+#: fm1companion/flash/texts.py:383
+msgid "Step 2/5: mandatory backup – whole flash, read twice and compared"
+msgstr "Schritt 2/5: Pflicht-Sicherung – ganzer Flash, zweimal gelesen und verglichen"
+
+#: fm1companion/flash/texts.py:384
+msgid "Step 3/5: plan from this backup"
+msgstr "Schritt 3/5: Plan aus dieser Sicherung"
+
+#: fm1companion/flash/texts.py:385
+#, python-brace-format
+msgid "Refused: {reason} Nothing was erased."
+msgstr "Abgelehnt: {reason} Es wurde nichts gelöscht."
+
+#: fm1companion/flash/texts.py:387
+#, python-brace-format
+msgid "Firmware: {firmware} · V16 leftovers: {n} sector {ranges} · empty: {empty} · staying: {kept}"
+msgid_plural "Firmware: {firmware} · V16 leftovers: {n} sectors {ranges} · empty: {empty} · staying: {kept}"
+msgstr[0] "Firmware: {firmware} · V16-Reste: {n} Sektoren {ranges} · leer: {empty} · bleiben: {kept}"
+msgstr[1] "Firmware: {firmware} · V16-Reste: {n} Sektoren {ranges} · leer: {empty} · bleiben: {kept}"
+
+#: fm1companion/flash/texts.py:391
+#, python-brace-format
+msgid "Step 4/5: erase {n} sector, check it on its own ({untested}). Do not unplug anything now."
+msgid_plural "Step 4/5: erase {n} sectors, check each one on its own ({untested}). Do not unplug anything now."
+msgstr[0] "Schritt 4/5: {n} Sektoren löschen, jeden einzeln prüfen ({untested}). Jetzt nichts abstecken."
+msgstr[1] "Schritt 4/5: {n} Sektoren löschen, jeden einzeln prüfen ({untested}). Jetzt nichts abstecken."
+
+#: fm1companion/flash/texts.py:395
+#, python-brace-format
+msgid "Sector {key} has changed since the backup – stopped."
+msgstr "Sektor {key} hat sich seit der Sicherung verändert – angehalten."
+
+#: fm1companion/flash/texts.py:397
+msgid "Simulated crash in the middle of erasing (only in the simulation)."
+msgstr "Simulierter Absturz mitten im Löschen (nur in der Simulation)."
+
+#: fm1companion/flash/texts.py:399
+#, python-brace-format
+msgid "Sector {key} is not empty after erasing – second attempt"
+msgstr "Sektor {key} ist nach dem Löschen nicht leer – zweiter Versuch"
+
+#: fm1companion/flash/texts.py:400
+#, python-brace-format
+msgid "Sector {key} is not empty after two erase attempts."
+msgstr "Sektor {key} ist nach zwei Löschversuchen nicht leer."
+
+#: fm1companion/flash/texts.py:404
+#, python-brace-format
+msgid "After erasing {key}, {addr} has changed as well – the chip erased more than the one sector. Stopped immediately."
+msgstr "Nach dem Löschen von {key} hat sich auch {addr} verändert – der Chip hat mehr gelöscht als den einen Sektor. Sofort angehalten."
+
+#: fm1companion/flash/texts.py:406
+#, python-brace-format
+msgid "{key} erased and checked ({kind})"
+msgstr "{key} gelöscht und geprüft ({kind})"
+
+#: fm1companion/flash/texts.py:409
+msgid "Step 5/5: read back the whole flash and compare it with what is expected"
+msgstr "Schritt 5/5: ganzen Flash zurücklesen und mit dem Erwarteten vergleichen"
+
+#: fm1companion/flash/texts.py:410
+#, python-brace-format
+msgid "The flash differs from what is expected at {addr}."
+msgstr "Der Flash weicht bei {addr} vom Erwarteten ab."
+
+#: fm1companion/flash/texts.py:413
+#, python-brace-format
+msgid "Done: {n} sector erased and checked, everything else byte-identical with the backup."
+msgid_plural "Done: {n} sectors erased and checked, everything else byte-identical with the backup."
+msgstr[0] "Fertig: {n} Sektoren gelöscht und geprüft, alles andere byte-gleich mit der Sicherung."
+msgstr[1] "Fertig: {n} Sektoren gelöscht und geprüft, alles andere byte-gleich mit der Sicherung."
+
+#: fm1companion/flash/texts.py:415
+#, python-brace-format
+msgid "STOPPED: {error}"
+msgstr "ANGEHALTEN: {error}"
+
+#: fm1companion/flash/texts.py:421
+#, python-brace-format
+msgid "Stopped: {error} Erased and checked: {n} sector ({erased}). Your backup is ready; the journal remembers the state. Please only use the FM-1 normally again when the run is finished: start “Clean up V16 leftovers” once more in ROM boot mode – it continues there."
+msgid_plural "Stopped: {error} Erased and checked: {n} sectors ({erased}). Your backup is ready; the journal remembers the state. Please only use the FM-1 normally again when the run is finished: start “Clean up V16 leftovers” once more in ROM boot mode – it continues there."
+msgstr[0] "Angehalten: {error} Gelöscht und geprüft: {n} Sektoren ({erased}). Deine Sicherung liegt bereit; das Journal merkt sich den Stand. Bitte das FM-1 erst wieder normal benutzen, wenn der Lauf fertig ist: im ROM-Bootmodus noch einmal „V16-Reste aufräumen“ starten – er setzt dort fort."
+msgstr[1] "Angehalten: {error} Gelöscht und geprüft: {n} Sektoren ({erased}). Deine Sicherung liegt bereit; das Journal merkt sich den Stand. Bitte das FM-1 erst wieder normal benutzen, wenn der Lauf fertig ist: im ROM-Bootmodus noch einmal „V16-Reste aufräumen“ starten – er setzt dort fort."
+
+#: fm1companion/flash/texts.py:431
+#, python-brace-format
+msgid "Stopped: {error} Erased and checked: {n} sector. Your backup is ready; the journal remembers the state. Please only use the FM-1 normally again when the run is finished: start “Clean up V16 leftovers” once more in ROM boot mode – it continues there."
+msgid_plural "Stopped: {error} Erased and checked: {n} sectors. Your backup is ready; the journal remembers the state. Please only use the FM-1 normally again when the run is finished: start “Clean up V16 leftovers” once more in ROM boot mode – it continues there."
+msgstr[0] "Angehalten: {error} Gelöscht und geprüft: {n} Sektoren. Deine Sicherung liegt bereit; das Journal merkt sich den Stand. Bitte das FM-1 erst wieder normal benutzen, wenn der Lauf fertig ist: im ROM-Bootmodus noch einmal „V16-Reste aufräumen“ starten – er setzt dort fort."
+msgstr[1] "Angehalten: {error} Gelöscht und geprüft: {n} Sektoren. Deine Sicherung liegt bereit; das Journal merkt sich den Stand. Bitte das FM-1 erst wieder normal benutzen, wenn der Lauf fertig ist: im ROM-Bootmodus noch einmal „V16-Reste aufräumen“ starten – er setzt dort fort."
+
+#: fm1companion/flash/texts.py:439
+#, python-brace-format
+msgid "{n} sector still carries V16 bytes ({ranges}). This one – and only this one – would be erased by “Clean up”."
+msgid_plural "{n} sectors still carry V16 bytes ({ranges}). These – and only these – would be erased by “Clean up”."
+msgstr[0] "{n} Sektoren tragen noch V16-Bytes ({ranges}). Diese – und nur diese – würde „Aufräumen“ löschen."
+msgstr[1] "{n} Sektoren tragen noch V16-Bytes ({ranges}). Diese – und nur diese – würde „Aufräumen“ löschen."
+
+#: fm1companion/flash/texts.py:443
+msgid "There are no V16 leftovers in 0x93000–0xA8FFF. There is nothing to clean up."
+msgstr "In 0x93000–0xA8FFF liegen keine V16-Reste. Es gibt nichts aufzuräumen."
+
+#: fm1companion/flash/texts.py:446
+#, python-brace-format
+msgid "{n} sector with V16 leftovers erased and checked on its own; then the whole flash read back: everything else is byte-identical with the backup."
+msgid_plural "{n} sectors with V16 leftovers erased, each one checked on its own; then the whole flash read back: everything else is byte-identical with the backup."
+msgstr[0] "{n} Sektoren mit V16-Resten gelöscht, jeder einzeln geprüft; danach den ganzen Flash zurückgelesen: Alles andere ist byte-gleich mit der Sicherung."
+msgstr[1] "{n} Sektoren mit V16-Resten gelöscht, jeder einzeln geprüft; danach den ganzen Flash zurückgelesen: Alles andere ist byte-gleich mit der Sicherung."
+
+#: fm1companion/flash/texts.py:451
+msgid "There was nothing to erase – there are no V16 leftovers in 0x93000–0xA8FFF."
+msgstr "Es gab nichts zu löschen – in 0x93000–0xA8FFF liegen keine V16-Reste."
+
+#: fm1companion/flash/texts.py:452
+#, python-brace-format
+msgid "Firmware in the flash: {firmware}"
+msgstr "Firmware im Flash: {firmware}"
+
+#: fm1companion/flash/texts.py:454
+#, python-brace-format
+msgid "{n} sector in the zone stays untouched (no V16 bytes, e.g. data of your firmware)."
+msgid_plural "{n} sectors in the zone stay untouched (no V16 bytes, e.g. data of your firmware)."
+msgstr[0] "{n} Sektoren in der Zone bleiben unangetastet (keine V16-Bytes, z. B. Daten deiner Firmware)."
+msgstr[1] "{n} Sektoren in der Zone bleiben unangetastet (keine V16-Bytes, z. B. Daten deiner Firmware)."
+
+#: fm1companion/flash/texts.py:456
+#, python-brace-format
+msgid "stays {addr}: {why}"
+msgstr "bleibt {addr}: {why}"
+
+#: fm1companion/flash/texts.py:457
+#, python-brace-format
+msgid "Backup (read twice, identical): {path}"
+msgstr "Sicherung (zweimal gelesen, identisch): {path}"
+
+#: fm1companion/flash/texts.py:458
+#, python-brace-format
+msgid "Flash afterwards: {path}"
+msgstr "Flash danach: {path}"
+
+#: fm1companion/flash/texts.py:459
+#, python-brace-format
+msgid "Journal: {path}"
+msgstr "Journal: {path}"
+
+#: fm1companion/flash/texts.py:463
+#, python-brace-format
+msgid "This function is {untested} – so far only checked with the unbricker's simulated FM-1. That the chip erases exactly 4 KiB with the command “erase sector” is assumed; the app then checks every block and stops immediately if it was more."
+msgstr "Diese Funktion ist {untested} – bisher nur mit dem simulierten FM-1 des Unbrickers geprüft. Dass der Chip beim Befehl „Sektor löschen“ genau 4 KiB löscht, ist angenommen; die App prüft danach jeden Block nach und hält sofort an, wenn es mehr war."
+
+#: fm1companion/flash/texts.py:468
+msgid "Whether your firmware runs better with or without the leftovers, this run does not say. Melodee 1.5.1 ran in the emulator with leftovers just as without; for 1.6.0-rc.7 this is not checked."
+msgstr "Ob deine Firmware mit oder ohne die Reste besser läuft, sagt dieser Lauf nicht. Melodee 1.5.1 lief im Emulator mit Resten genauso wie ohne; für 1.6.0-rc.7 ist das nicht geprüft."
+
+#: fm1companion/flash/texts.py:471
+msgid "Boot header, firmware area and everything outside 0x93000–0xA8FFF are not changed."
+msgstr "Bootkopf, Firmware-Bereich und alles außerhalb 0x93000–0xA8FFF werden nicht verändert."
+
+#: fm1companion/flash/texts.py:474
+msgid "Demo options are only available in the simulation."
+msgstr "Demo-Optionen gibt es nur in der Simulation."
+
+#: fm1companion/flash/texts.py:476
+#, python-brace-format
+msgid "V16 package {path} not readable ({error}) – continuing without it"
+msgstr "V16-Paket {path} nicht lesbar ({error}) – ohne es weiter"
+
+#: fm1companion/flash/texts.py:477
+msgid "Without a confirmed sector list nothing is erased."
+msgstr "Ohne bestätigte Sektorliste wird nichts gelöscht."
+
+#: fm1companion/flash/texts.py:479
+msgid "SIMULATION: the unbricker's mock FM-1 – no real device, nothing is changed on hardware."
+msgstr "SIMULATION: Mock-FM-1 des Unbrickers – kein echtes Gerät, nichts wird an Hardware verändert."
+
+#: fm1companion/flash/texts.py:480
+#, python-brace-format
+msgid "REFUSED: {reason} Nothing was erased."
+msgstr "ABGELEHNT: {reason} Es wurde nichts gelöscht."
+
+#: fm1companion/flash/texts.py:481
+#, python-brace-format
+msgid "ERROR: {error}"
+msgstr "FEHLER: {error}"
+
+#: fm1companion/flash/texts.py:482
+#, python-brace-format
+msgid "Result file not writable: {error}"
+msgstr "Ergebnis-Datei nicht schreibbar: {error}"
+
+#: fm1companion/flash/texts.py:483
+#, python-brace-format
+msgid "Log: {path}"
+msgstr "Protokoll: {path}"
+
+#: fm1companion/flash/texts.py:488
+msgid "Safe way: M-Flasher (github.com/jvitkauskas/m-flasher, reads the flash map from the firmware) or fm1_rescue.py from felucca-bsp (chooses the package that matches the boot header and writes nothing else)."
+msgstr "Sicherer Weg: M-Flasher (github.com/jvitkauskas/m-flasher, liest die Flash-Karte aus der Firmware) oder fm1_rescue.py aus felucca-bsp (wählt das Paket passend zum Bootkopf und schreibt sonst nichts)."
+
+#: fm1companion/flash/texts.py:491
+msgid "The backup is not exactly 1 MiB – so nothing is written."
+msgstr "Die Sicherung hat nicht genau 1 MiB – so wird nichts geschrieben."
+
+#: fm1companion/flash/texts.py:495
+#, python-brace-format
+msgid "The FM-1 holds {name} with the V16 layout: there 0x93000–0xA8FFF still belongs to the firmware (end of the program and the factory voices DX7.bin), the settings are elsewhere (0xBA000 onwards). “Repair settings” is only built for the V15 layout and would overwrite the firmware. Nothing was written."
+msgstr "Auf dem FM-1 steht {name} mit V16-Aufbau: Dort gehört 0x93000–0xA8FFF noch zur Firmware (Ende des Programms und die Werks-Voices DX7.bin), die Einstellungen liegen woanders (0xBA000 ff.). „Einstellungen reparieren“ ist nur für den V15-Aufbau gebaut und würde die Firmware überschreiben. Es wurde nichts geschrieben."
+
+#: fm1companion/flash/texts.py:500
+msgid "The app area holds the beginning of V16 (truncated). So the layout is not that of V15 – “Repair settings” does not help here and writes nothing. First write back the original V15, then back up again."
+msgstr "Im App-Bereich steht der Anfang von V16 (abgeschnitten). Damit ist der Aufbau nicht der von V15 – „Einstellungen reparieren“ hilft hier nicht und schreibt nichts. Erst die Original-V15 zurückschreiben, dann neu sichern."
+
+#: fm1companion/flash/texts.py:505
+#, python-brace-format
+msgid "The file table of the firmware in the flash says: it extends to {end} and has a SEQ64 area – that is the V16 layout. There 0x93000–0xA8FFF belongs to the firmware. “Repair settings” would overwrite it. Nothing was written."
+msgstr "Die Dateitabelle der Firmware im Flash sagt: Sie reicht bis {end} und hat einen SEQ64-Bereich – das ist der V16-Aufbau. Dort gehört 0x93000–0xA8FFF zur Firmware. „Einstellungen reparieren“ würde sie überschreiben. Es wurde nichts geschrieben."
+
+#: fm1companion/flash/texts.py:510
+#, python-brace-format
+msgid "The file table of the firmware in the flash says: it extends to {end} – that is the V16 layout. There 0x93000–0xA8FFF belongs to the firmware. “Repair settings” would overwrite it. Nothing was written."
+msgstr "Die Dateitabelle der Firmware im Flash sagt: Sie reicht bis {end} – das ist der V16-Aufbau. Dort gehört 0x93000–0xA8FFF zur Firmware. „Einstellungen reparieren“ würde sie überschreiben. Es wurde nichts geschrieben."
+
+#: fm1companion/flash/texts.py:515
+#, python-brace-format
+msgid "The firmware in the flash has a layout the tool is not built for (end {end}, settings from {vm}; e.g. V13/V14). When in doubt, the app writes nothing."
+msgstr "Die Firmware im Flash hat einen Aufbau, für den das Werkzeug nicht gebaut ist (Ende {end}, Einstellungen ab {vm}; z. B. V13/V14). Im Zweifel schreibt die App nichts."
+
+#: fm1companion/flash/texts.py:519
+#, python-brace-format
+msgid "The firmware in the flash is damaged ({errors}). Then it cannot be said for sure where it ends – nothing was written. First write back the original V15."
+msgstr "Die Firmware im Flash ist beschädigt ({errors}). Dann lässt sich nicht sicher sagen, wo sie endet – es wurde nichts geschrieben. Zuerst die Original-V15 zurückschreiben."
+
+#: fm1companion/flash/texts.py:523
+msgid "The firmware in the flash is not one the app knows, and its file table is not readable. Then it cannot be proven that 0x93000–0xE8FFF contains only settings – nothing was written."
+msgstr "Die Firmware im Flash ist keine, die die App kennt, und ihre Dateitabelle ist nicht lesbar. Dann lässt sich nicht beweisen, dass 0x93000–0xE8FFF nur Einstellungen enthält – es wurde nichts geschrieben."
+
+#: fm1companion/flash/texts.py:529
+#, python-brace-format
+msgid "The backup shows the boot header of V16 ({sha}…). M-VAVE's updater writes its own, larger boot loader when installing V16. Whether the original V15 starts under it has not been established, and this tool cannot write the V16 app (0x4000–0xA8FFF) – it only writes up to 0x92FFF. The app never writes the boot header. That is why nothing was written. {alternative}"
+msgstr "Die Sicherung zeigt den Bootkopf von V16 ({sha}…). M-VAVEs Updater schreibt beim Installieren von V16 einen eigenen, größeren Bootlader. Ob die Original-V15 darunter startet, ist nicht geklärt, und die V16-App (0x4000–0xA8FFF) kann dieses Werkzeug nicht schreiben – es schreibt nur bis 0x92FFF. Den Bootkopf schreibt die App nie. Darum wurde nichts geschrieben. {alternative}"
+
+#: fm1companion/flash/texts.py:536
+#, python-brace-format
+msgid "The app does not know the boot header in the backup ({sha}…, {head}) as the factory one. Whether the original V15 starts under it, it cannot say (e.g. after m-bootloader or a write of the whole flash). When in doubt, nothing was written. {alternative}"
+msgstr "Den Bootkopf in der Sicherung ({sha}…, {head}) kennt die App nicht als den ab Werk. Ob die Original-V15 darunter startet, kann sie nicht sagen (z. B. nach m-bootloader oder einem Schreiben des ganzen Flashs). Im Zweifel wurde nichts geschrieben. {alternative}"
+
+#: fm1companion/flash/texts.py:539
+msgid "This option is not available through the app."
+msgstr "Diese Option gibt es über die App nicht."
+
+#: fm1companion/flash/texts.py:541
+msgid "In ROM boot mode the app only writes the checked original V15 (--verify-v15)."
+msgstr "Im ROM-Bootmodus schreibt die App nur die geprüfte Original-V15 (--verify-v15)."
+
+#: fm1companion/flash/texts.py:542
+#, python-brace-format
+msgid "REFUSED (suite check of the backup): {reason}"
+msgstr "ABGELEHNT (Suite-Prüfung der Sicherung): {reason}"
+
+#: fm1companion/flash/texts.py:543
+#, python-brace-format
+msgid "Suite check of the backup: OK – {basis}"
+msgstr "Suite-Prüfung der Sicherung: OK – {basis}"
+
+#: fm1companion/flash/texts.py:544
+msgid "Ended without a backup – nothing was written."
+msgstr "Ohne Sicherung beendet – es wurde nichts geschrieben."
+
+#: fm1companion/flash/texts.py:547
+#, python-brace-format
+msgid "{reason} Nothing was written."
+msgstr "{reason} Es wurde nichts geschrieben."
+
+#: fm1companion/flash/texts.py:548
+#, python-brace-format
+msgid "{reason} Nothing was erased."
+msgstr "{reason} Es wurde nichts gelöscht."
+
+#: fm1companion/flash/texts.py:549
+#, python-brace-format
+msgid "REFUSED: {reason}"
+msgstr "ABGELEHNT: {reason}"

@@ -188,10 +188,15 @@ def german_left_in_source(text: str, rel: str = "") -> list[tuple[int, str]]:
     return sorted(hits)
 
 
+# pinned rescue files (checksums in flash/uboot_manifest.OWN, partly run as root): they stay German and are not
+# edited; flash/texts.py translates their messages for display (coverage: tests/test_rescue_texts.py)
+PINNED = {"flash/flashmodel.py", "flash/restzone.py", "flash/rescuegate.py"}
+
+
 def german_left(pkg: Path = PKG) -> dict[str, list[tuple[int, str]]]:
     out = {}
     for f in i18n_extract.source_files(pkg):
-        if f.name == "i18n.py":
+        if f.name == "i18n.py" or f.relative_to(pkg).as_posix() in PINNED:
             continue
         rel = f.relative_to(pkg.parent).as_posix()
         try:
@@ -231,7 +236,8 @@ def main(argv=None) -> int:
                         print(f"  {k}: {m[:100]!r}")
     left = german_left()
     total = sum(len(v) for v in left.values())
-    print(f"German left in source: {total} strings in {len(left)} files")
+    print(f"German left in source: {total} strings in {len(left)} files (pinned rescue files not counted: "
+          "flash/texts.py translates them)")
     if a.german_left:
         width = max((len(k) for k in left), default=10)
         for rel, hits in sorted(left.items(), key=lambda kv: (-len(kv[1]), kv[0])):

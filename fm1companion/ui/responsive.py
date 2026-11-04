@@ -397,6 +397,42 @@ def fit_height(widget: QWidget) -> QWidget:
     return widget
 
 
+class _WrapHeight(QObject):
+    def __init__(self, label):
+        super().__init__(label)
+        self.label = label
+        self._last = -1
+        label.installEventFilter(self)
+        _keep(self)
+
+    def update(self):
+        if not self.label.wordWrap():
+            return
+        w = self.label.width()
+        h = self.label.heightForWidth(w) if w > 0 else -1
+        if h > 0 and h != self._last:
+            self._last = h
+            self.label.setMinimumHeight(h)
+
+    def eventFilter(self, obj, ev):
+        if ev.type() in (QEvent.Type.Resize, QEvent.Type.Show):
+            self.update()
+        return False
+
+
+def wrap_height(label):
+    """a word-wrapped QLabel keeps the height of all its lines when the page gets narrow (the page scrolls
+    instead of cutting the text – longer translations need more lines)"""
+    f = label._wrap_height = _WrapHeight(label)
+    set_text = label.setText
+
+    def _set_text(text):
+        set_text(text)
+        f.update()
+    label.setText = _set_text
+    return label
+
+
 class _LayoutWatch(QObject):
     """meldet LayoutRequest-Ereignisse eines Widgets; lebt als dessen Kind."""
 

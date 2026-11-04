@@ -13,7 +13,7 @@ from .. import backup, projects
 from .common import (FlowLayout, confirm, device_tag, flow_row, fmt_date, fmt_size, fs_error_text, heading, icon,
                      same_device, show_error)
 from .playback_bar import DeviceBadge, device_name
-from .responsive import adaptive_splitter
+from .responsive import adaptive_splitter, wrap_height
 from ..i18n import _, ngettext, pgettext
 import time
 
@@ -91,6 +91,7 @@ class ProjectsPage(QWidget):
                                   "with “Add file”."))
         self.lib_empty.setWordWrap(True)
         self.lib_empty.setProperty("role", "muted")
+        wrap_height(self.lib_empty)
         ll.addWidget(self.lib_empty)
         self.lib.itemDoubleClicked.connect(lambda *_: self._view_lib())
         self.lib.setToolTip(_("Double-click: view and listen"))
