@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Simulation der Melodee-Preset-Bibliothek für den Demo-Modus (wird von demo_device.FakeFM1 im
-markierten klang-Block aufgerufen). Prüft Anfragen wie firmware/src/editor_library.c."""
+"""Simulation of the Melodee preset library for demo mode (called by demo_device.FakeFM1 in the
+marked sound block). Checks requests like firmware/src/editor_library.c."""
 from __future__ import annotations
 
 import random
@@ -39,7 +39,7 @@ def handle(dev, cmd: int, a: list[int], pcount: int, ntrk: int):
         dev.klang_writes = 0
     bank, tracks = dev.klang_bank, dev.klang_tracks
     if cmd in (37, 38):
-        if len(a) != 4 or a[0] not in (16, 2, NENG):   # Kategorie "general" (16 bei 1.6, sonst NENGINES)
+        if len(a) != 4 or a[0] not in (16, 2, NENG):   # category "general" (16 in 1.6, otherwise NENGINES)
             return [1]
         gen = a[0]
         slot, cnt = v14dec(a[1], a[2]), a[3]
@@ -53,12 +53,12 @@ def handle(dev, cmd: int, a: list[int], pcount: int, ntrk: int):
             bank[slot]["fav"] = bool(cnt)
         rc = 4 if getattr(dev, "playing", False) else 0
         return [rc, gen, *v14enc(slot), cnt]
-    if cmd == 69:                               # FM6_PUT: nur Ziel 0 (Spur)
+    if cmd == 69:                               # FM6_PUT: only target 0 (track)
         if len(a) != 130 or a[0] != 0 or a[1] >= ntrk:
             return [a[0] if a else 0, a[1] if len(a) > 1 else 0, 1]
         tracks[a[1]].update(engine=12, kind=1, raw=bytes(a[2:]))
         return [0, a[1], 0]
-    # ---- Befehl 80
+    # ---- command 80
     n = len(a)
     op = a[0] if n else 127
     k = a[1] | a[2] << 7 if n >= 3 else SLOTS
@@ -99,7 +99,7 @@ def handle(dev, cmd: int, a: list[int], pcount: int, ntrk: int):
                 rc = 1
             if not rc:
                 if getattr(dev, "playing", False):
-                    dev.playing = False               # Schreiben stoppt die Wiedergabe (ed_flash_stop)
+                    dev.playing = False               # writing stops playback (ed_flash_stop)
                 old = bank[k]
                 bank[k] = {"engine": eng, "name": name[:12] if not kind else name, "p": vals, "kind": kind, "raw": raw,
                            "fav": bool(old and old["fav"])}

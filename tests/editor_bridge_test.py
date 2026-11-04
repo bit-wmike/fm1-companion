@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Ende-zu-Ende-Test der Web-MIDI-Brücke:
+"""End-to-end test of the Web MIDI bridge:
 
-  echter Melodee-Editor (rc.7) in QtWebEngine
+  real Melodee editor (rc.7) in QtWebEngine
      → Polyfill (navigator.requestMIDIAccess) → QWebChannel → MidiBridge
-     → Link → Kindprozess mit dem Mock-FM-1 aus dem Editor selbst (tests/mock_fm1.mjs)
+     → Link → child process with the mock FM-1 from the editor itself (tests/mock_fm1.mjs)
 
-Prüft: Verbinden, Version lesen, Parameter-Änderung, Pause während einer App-Operation
-und automatisches Wiederverbinden des Editors danach.
+Checks: connecting, reading the version, a parameter change, pause during an app operation
+and automatic reconnecting of the editor afterwards.
 
-  QT_QPA_PLATFORM=offscreen python3 tests/editor_bridge_test.py /pfad/zu/melodee/web/editor.html
+  QT_QPA_PLATFORM=offscreen python3 tests/editor_bridge_test.py /path/to/melodee/web/editor.html
 """
 from __future__ import annotations
 
@@ -30,12 +30,12 @@ os.environ["FM1C_DEMO"] = "1"
 os.environ["FM1C_DEMO_CMD"] = "\x1f".join(["node", str(ROOT / "tests" / "mock_fm1.mjs"), editor_html])
 os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
 
-# Profil vorbereiten: Demo-Gerät = Melodee v1.6.0-rc.7
+# prepare the profile: demo device = Melodee v1.6.0-rc.7
 devfile = home / ".local/share/fm1-companion/devices.json"
 devfile.parent.mkdir(parents=True, exist_ok=True)
 devfile.write_text(json.dumps({"profiles": [{"id": "test1", "name": "Test-FM-1", "serial": "DEMO-1",
                                              "firmware": "melodee", "firmware_version": "v1.6.0-rc.7"}]}))
-# Editor-Repo aus dem vorhandenen Klon wiederverwenden (spart den Download)
+# reuse the editor repo from the existing clone (saves the download)
 repos = home / ".local/share/fm1-companion/repos"
 repos.mkdir(parents=True, exist_ok=True)
 src_repo = Path(editor_html).resolve().parents[1]
@@ -97,20 +97,20 @@ def until(cond, ms=20000, step=250):
 
 
 def main():
-    check(until(lambda: w.ctx.connected, 15000), "App verbindet sich mit dem Mock-FM-1")
-    check(w.ctx.info and "MOCK" in w.ctx.info.version, f"App liest INFO ({w.ctx.info.version if w.ctx.info else '-'})")
+    check(until(lambda: w.ctx.connected, 15000), "app connects to the mock FM-1")
+    check(w.ctx.info and "MOCK" in w.ctx.info.version, f"app reads INFO ({w.ctx.info.version if w.ctx.info else '-'})")
     w.go("editor")
     check(until(lambda: js("!!(window.__fm1Companion && navigator.requestMIDIAccess)"), 30000),
-          "Polyfill im Editor aktiv")
+          "polyfill active in the editor")
     connected = until(lambda: "1.2.1" in (js("document.getElementById('version')?.textContent || ''") or ""), 30000)
-    check(connected, "Editor verbindet sich über die Brücke und zeigt die Mock-Version")
+    check(connected, "editor connects via the bridge and shows the mock version")
     label = js("document.getElementById('connect').textContent")
-    check(label and "connect" in label.lower() and "dis" in label.lower(), f"Editor-Knopf zeigt '{label}'")
+    check(label and "connect" in label.lower() and "dis" in label.lower(), f"editor button shows '{label}'")
     traffic0 = w.editor.bridge.traffic
-    # eine Parameteränderung über das Mock-Protokoll: der Editor schickt SET und bekommt die Antwort
+    # a parameter change via the mock protocol: the editor sends SET and gets the answer
     wait(1500)
-    check(w.editor.bridge.traffic > traffic0 or traffic0 > 5, f"Nachrichten laufen über die Brücke ({w.editor.bridge.traffic})")
-    # App-Operation: Editor muss pausieren und sich danach wieder verbinden
+    check(w.editor.bridge.traffic > traffic0 or traffic0 > 5, f"messages go through the bridge ({w.editor.bridge.traffic})")
+    # app operation: the editor must pause and reconnect afterwards
     done = {}
 
     def op(wk, link):
@@ -118,13 +118,13 @@ def main():
         return link.ping()
     w.ctx.job(w, "Test", op, dialog=False, on_done=lambda r: done.setdefault("r", r))
     paused = until(lambda: not w.editor.bridge.connected, 3000, 50)
-    check(paused, "Brücke wird während einer App-Operation pausiert")
+    check(paused, "bridge is paused during an app operation")
     check(until(lambda: not (js("document.getElementById('version')?.textContent || ''") or ""), 3000, 100),
-          "Editor sieht das Gerät während der App-Operation als getrennt")
-    check(until(lambda: "r" in done, 5000), f"App-Operation läuft exklusiv ({done.get('r')})")
-    check(until(lambda: w.editor.bridge.connected, 3000), "Brücke danach wieder verbunden")
+          "editor sees the device as disconnected during the app operation")
+    check(until(lambda: "r" in done, 5000), f"app operation runs exclusively ({done.get('r')})")
+    check(until(lambda: w.editor.bridge.connected, 3000), "bridge connected again afterwards")
     re = until(lambda: "1.2.1" in (js("document.getElementById('version')?.textContent || ''") or ""), 20000)
-    check(re, "Editor verbindet sich nach der Pause von selbst wieder")
+    check(re, "editor reconnects by itself after the pause")
     if not re:
         print("DEBUG:", js("document.getElementById('connect').textContent + ' | ' + (document.querySelector('#say,#status,.say')?.textContent||'') + ' | ' + document.body.innerText.slice(0,300)"))
     w.grab().save(str(home / "editor_connected.png"))
@@ -135,5 +135,5 @@ def main():
 QTimer.singleShot(300, main)
 app.exec()
 fails = [r for r in results if not r[0]]
-print(f"{len(results) - len(fails)}/{len(results)} bestanden")
+print(f"{len(results) - len(fails)}/{len(results)} passed")
 sys.exit(1 if fails else 0)

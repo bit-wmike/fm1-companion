@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""klang: Preset-Bibliothek (Befehl 80) – byte-genau wie der Melodee-Editor, gegen FakeFM1 und den Editor-Mock."""
+"""Sound: preset library (command 80) – byte-exact like the Melodee editor, against FakeFM1 and the editor mock."""
 from __future__ import annotations
 
 import json
@@ -69,10 +69,10 @@ def test_put_args_byte_exact(bank):
     raw = bytes(dx7.pack(v))
     assert a[0] == 12 and a[1:12] == [*b"INIT VOICE", 0]
     end = 12 + 2 * 91 + 32
-    assert a[end] == 1 | 64 | 32                 # Art 1, Standard-Bedienwerte, nativer Name bleibt
+    assert a[end] == 1 | 64 | 32                 # kind 1, default controls, native name stays
     assert a[end + 1:end + 3] == [128 & 127, 1] and a[end + 3:] == pl.pack7(raw)
     with pytest.raises(pl.PresetError):
-        bank.put_args(pl.Preset(name="x", engine=12, params=[0] * 91))   # FM6 ohne Voice
+        bank.put_args(pl.Preset(name="x", engine=12, params=[0] * 91))   # FM6 without voice
 
 
 def test_list_get_and_probe(bank):
@@ -102,10 +102,10 @@ def test_write_with_undo_and_ops(bank):
     assert bank.get(5).name == "VON SPUR"
     bank.load(0, 1)
     with pytest.raises(pl.PresetError):
-        bank.load(99, 0)                          # leerer Platz: rc 1
+        bank.load(99, 0)                          # empty slot: rc 1
     assert bank.set_favorite(0, True) == 0
     bank.link.dev.playing = True
-    assert bank.set_favorite(1, True) == 4        # während der Wiedergabe: nach STOP
+    assert bank.set_favorite(1, True) == 4        # during playback: after STOP
 
 
 def test_file_roundtrip_and_dedupe(tmp_path, bank):
@@ -130,7 +130,7 @@ def test_file_roundtrip_and_dedupe(tmp_path, bank):
 
 def test_map_params():
     caps = pl.Caps(p_count=10, p_e0=2)
-    p = pl.Preset(params=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])   # 12 Werte, letzte 8 = Engine
+    p = pl.Preset(params=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])   # 12 values, last 8 = engine
     assert pl.map_params(p, caps) == [1, 2, 5, 6, 7, 8, 9, 10, 11, 12]
 
 
@@ -139,9 +139,9 @@ def test_legacy_refusal():
     assert "1.5" in pl.refusal_text(c)
 
 
-@pytest.mark.skipif(not (EDITOR.exists() and shutil.which("node")), reason="Editor-Mock nicht verfügbar")
+@pytest.mark.skipif(not (EDITOR.exists() and shutil.which("node")), reason="editor mock not available")
 def test_against_editor_mock():
-    """der Referenz-Mock des Melodee-Editors (makeMockDevice mit shared)."""
+    """the reference mock of the Melodee editor (makeMockDevice with shared)."""
     from fm1companion.transport import Link, SubprocessTransport
     link = Link(SubprocessTransport(["node", str(ROOT / "tests/mock_fm1_shared.mjs"), str(EDITOR)]))
     try:

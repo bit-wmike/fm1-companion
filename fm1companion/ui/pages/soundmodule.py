@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Klangerzeuger: der Pi spielt mit FluidSynth, was Melodees MIDI-Spuren 5–8 senden.
+"""Sound module: the Pi plays with FluidSynth what Melodee's MIDI tracks 5–8 send.
 
-Ablauf: FluidSynth starten (eigener Prozess), FM-1-Ausgang per aconnect anschließen, je Kanal einen
-Klang wählen. Eigene Kits und Sample-Ordner werden zu SoundFonts (sf2.py) und lassen sich auf einen
-Kanal legen – so spielen z. B. Pocket-Operator-Samples auf einer MIDI-Spur.
+Flow: start FluidSynth (separate process), connect the FM-1 output via aconnect, choose a sound
+per channel. Custom kits and sample folders become SoundFonts (sf2.py) and can be put on a
+channel – so e.g. Pocket Operator samples play on a MIDI track.
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from ...i18n import _, pgettext
 SETTINGS = {"soundfont": "", "driver": "auto", "latency": "ausgewogen", "gain": 0.6, "polyphony": 96,
             "autoconnect": True, "autostart": False,
             "channels": [{"number": n, "enabled": True, "program": p} for n, p in zip(SM.DEFAULT_CHANNELS, (0, 33, 48, 81))],
-            "custom": {}}                       # Kanal -> {"path": sf2, "name": …}
+            "custom": {}}                       # channel -> {"path": sf2, "name": …}
 
 
 def _settings() -> dict:
@@ -112,7 +112,7 @@ class SoundModulePage(QWidget):
         scroll.setWidget(inner)
         outer.addWidget(scroll, 1)
 
-        # ---- fehlt FluidSynth?
+        # ---- FluidSynth missing?
         self.missing = Card(_("FluidSynth is not installed"), icon="dialog-warning",
                             subtitle=_("The sound module needs FluidSynth and a General MIDI sound bank. "
                                        "Run this once in the terminal, then open this page again:"))
@@ -126,7 +126,7 @@ class SoundModulePage(QWidget):
         self.missing.lay.addLayout(cmdrow)
         lay.addWidget(self.missing)
 
-        # ---- Motor
+        # ---- Engine
         eng = Card(_("Sound Module"), icon="speaker")
         g = QGridLayout()
         g.addWidget(QLabel(_("Sound bank:")), 0, 0)
@@ -175,7 +175,7 @@ class SoundModulePage(QWidget):
         eng.lay.addWidget(self.status)
         lay.addWidget(eng)
 
-        # ---- Kanäle
+        # ---- Channels
         ch = Card(_("Channels"), icon="piano",
                   subtitle=_("Only the ticked channels sound – the keys of the FM-1 send on channel 1–4 and would "
                              "otherwise sound twice. On the FM-1 you set the channel of a MIDI track with E1 (CH)."))
@@ -196,7 +196,7 @@ class SoundModulePage(QWidget):
         ch.lay.addWidget(self.ch_msg)
         lay.addWidget(ch)
 
-        # ---- Eigene Samples
+        # ---- Own samples
         kit = Card(_("Own samples as a sound"), icon="drum",
                    subtitle=_("A kit from “Samples & Kits” or a folder with WAVs becomes a SoundFont "
                               "(in ~/FM-1/SoundFonts) and plays on the chosen channel: drum kits from C2 one sound "
@@ -232,7 +232,7 @@ class SoundModulePage(QWidget):
         if s["autostart"] and self.exe:
             QTimer.singleShot(1500, self.start)
 
-    # ---- Zustand
+    # ---- State
     def recheck(self):
         self.exe = SM.find_binary()
         self.missing.setVisible(not self.exe)
@@ -250,7 +250,7 @@ class SoundModulePage(QWidget):
         if not fonts and not cur:
             self.sf.addItem(_("no sound bank found (sudo apt install fluid-soundfont-gm)"), "")
         self.sf.setCurrentIndex(max(0, self.sf.findData(cur)))
-        drivers = self._drivers = SM.audio_drivers(self.exe) if self.exe else []   # einmal fragen, nicht bei jedem Start
+        drivers = self._drivers = SM.audio_drivers(self.exe) if self.exe else []   # ask once, not on every start
         self.drv.clear()
         self.drv.addItem(_("automatic"), "auto")
         for d in drivers:
@@ -286,7 +286,7 @@ class SoundModulePage(QWidget):
                  channels=[r.data() for r in self.rows])
         _save()
 
-    # ---- Starten/Stoppen
+    # ---- Start/stop
     def toggle(self):
         if self.fs.running:
             self.stop()
@@ -323,7 +323,7 @@ class SoundModulePage(QWidget):
         self.status.setText(_("starting …"))
 
     def _started(self):
-        """0,6 s nach dem Start: läuft FluidSynth noch? Sonst in Alltagssprache sagen, woran es lag."""
+        """0.6 s after start: is FluidSynth still running? Otherwise explain in plain language what went wrong."""
         if self.fs.running:
             self.apply()
             notify(_("Sound module started"), "success")
@@ -336,7 +336,7 @@ class SoundModulePage(QWidget):
 
     def stop(self):
         was = self.fs.running
-        self.fs.stop(block=False)                 # Beenden kann bis zu 3 s dauern – nicht im GUI-Thread warten
+        self.fs.stop(block=False)                 # quitting can take up to 3 s – don't wait in the GUI thread
         self.timer.stop()
         self.connected_to = ""
         self._show_state()
@@ -405,7 +405,7 @@ class SoundModulePage(QWidget):
         else:
             self.status.setText(_("off"))
 
-    # ---- Anschließen
+    # ---- Connect
     def connect_fm1(self, quiet=False):
         port = self.ctx.port
 
@@ -431,7 +431,7 @@ class SoundModulePage(QWidget):
             self._show_state()
         run_job(self, work, on_done=done, on_fail=lambda m, tb: None if quiet else self.ch_msg.setText(m))
 
-    # ---- Kanäle
+    # ---- Channels
     def add_channel(self):
         used = {r.num.value() for r in self.rows}
         n = next((c for c in range(1, 17) if c not in used), 16)
@@ -481,7 +481,7 @@ class SoundModulePage(QWidget):
         self.fs.send(f"noteon {c} {note} 100")
         QTimer.singleShot(500, lambda: self.fs.send(f"noteoff {c} {note}"))
 
-    # ---- Eigene Samples
+    # ---- Own samples
     def make_kit(self):
         path = self.kits.currentData()
         if not path:
@@ -489,7 +489,7 @@ class SoundModulePage(QWidget):
         from ...samples import Kit
         try:
             kit = Kit.load(Path(path))
-        except Exception as e:                                # noqa: BLE001 – kaputte/fremde Kit-Datei
+        except Exception as e:                                # noqa: BLE001 – broken/foreign kit file
             self.kit_msg.setText(_("Kit {name} cannot be read – the file is damaged or "
                                    "not a kit. Save it again under “Samples & Kits”.").format(name=Path(path).name))
             self.kit_msg.setToolTip(_("Technical: {error}").format(error=e))
@@ -547,7 +547,7 @@ class SoundModulePage(QWidget):
             self.sf.setCurrentIndex(self.sf.count() - 1)
             self.store()
 
-    # ---- Seite
+    # ---- Page
     def activate(self):
         self.recheck() if not self.fs.running else self._show_state()
 

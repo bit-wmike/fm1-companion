@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Debian-Paket bauen: dist/fm1-companion_<version>_all.deb
+"""Build the Debian package: dist/fm1-companion_<version>_all.deb
 
   python3 tools/build_deb.py [--maintainer "Name <mail>"] [--out DIR]
 
-Layout: /usr/lib/fm1-companion/fm1companion, /usr/bin/fm1-companion (immer /usr/bin/python3),
-Startmenü, hicolor-Symbole, AppStream-Metadaten, Handbuchseite. Abhängigkeiten aus fm1companion/data/deps.json.
+Layout: /usr/lib/fm1-companion/fm1companion, /usr/bin/fm1-companion (always /usr/bin/python3),
+start menu entry, hicolor icons, AppStream metadata, man page. Dependencies from fm1companion/data/deps.json.
 """
 from __future__ import annotations
 
@@ -53,12 +53,12 @@ def build(out: Path = DIST, maintainer: str = "FM-1 Companion Suite <fm1-compani
             dst = lib / f.relative_to(ROOT)
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, dst)
-        (lib / "installed-by-deb").write_text("Dieses Verzeichnis gehört zum Debian-Paket fm1-companion.\n")
+        (lib / "installed-by-deb").write_text("This directory belongs to the Debian package fm1-companion.\n")
         b = root / "usr/bin/fm1-companion"
         b.parent.mkdir(parents=True)
         b.write_text(LAUNCHER)
         desk = (ROOT / "data/fm1-companion.desktop.in").read_text().replace("@EXEC@", "fm1-companion")
-        desk += "Actions=demo;\n\n[Desktop Action demo]\nName=Demo-Modus (ohne Gerät)\nExec=fm1-companion --demo\n"
+        desk += "Actions=demo;\n\n[Desktop Action demo]\nName=Demo mode (no device)\nName[de]=Demo-Modus (ohne Gerät)\nExec=fm1-companion --demo\n"
         (root / "usr/share/applications").mkdir(parents=True)
         (root / "usr/share/applications/fm1-companion.desktop").write_text(desk)
         for d in (ROOT / "data/icons/hicolor").iterdir():
@@ -106,10 +106,10 @@ def build(out: Path = DIST, maintainer: str = "FM-1 Companion Suite <fm1-compani
             f"Installed-Size: {size}\nDepends: {diag.debian_field('required')}\n"
             f"Recommends: {diag.debian_field('recommended')}\nSuggests: {diag.debian_field('suggested')}\n"
             "Section: sound\nPriority: optional\nHomepage: https://github.com/bit-wmike/fm1-companion\n"
-            "Description: Desktop-Suite für den M-VAVE FM-1\n"
-            " Firmware installieren und wechseln, Backups, Projekte, Presets, Samples, MIDI,\n"
-            " Simulator und Aufnahme für den Taschen-Synthesizer M-VAVE FM-1 mit Firmwares\n"
-            " der Felucca-Familie (Melodee, Skiff, SLOOP). Keine Telemetrie.\n")
+            "Description: Desktop suite for the M-VAVE FM-1\n"
+            " Install and switch firmware, backups, projects, presets, samples, MIDI,\n"
+            " simulator and recording for the M-VAVE FM-1 pocket synthesizer with firmwares\n"
+            " of the Felucca family (Melodee, Skiff, SLOOP). No telemetry.\n")
         for name, body in (("postinst", POSTINST), ("prerm", PRERM)):
             (deb / name).write_text(body)
             (deb / name).chmod(0o755)

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Dialog „Loop zerschneiden“: Schnittmarken finden/setzen, Stücke vorhören, als WAVs in die
-Bibliothek legen oder direkt ein Kit bauen."""
+"""“Slice loop” dialog: find/set slice markers, preview pieces, put them into the library as WAVs
+or build a kit directly."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -31,7 +31,7 @@ class SlicerDialog(QDialog):
         self.x = np.zeros(0)
         self.kit: S.Kit | None = None
         self.exported: list[Path] = []
-        self._seq = 0                          # laufende Nummer der Berechnung (Schieberegler → Hintergrund)
+        self._seq = 0                          # running number of the computation (slider → background)
         self._timer = QTimer(self, singleShot=True, interval=150)
         self._timer.timeout.connect(self._compute_now)
 
@@ -44,7 +44,7 @@ class SlicerDialog(QDialog):
         top.addWidget(QLabel(_("Slice by:")))
         top.addWidget(self.mode)
         self.params = QStackedWidget()
-        # Transienten
+        # transients
         p1 = QWidget()
         f1 = QHBoxLayout(p1)
         f1.setContentsMargins(0, 0, 0, 0)
@@ -61,7 +61,7 @@ class SlicerDialog(QDialog):
         f1.addWidget(self.sens, 1)
         f1.addWidget(QLabel(_("Min. distance:")))
         f1.addWidget(self.gap)
-        # gleich lang
+        # equal length
         p2 = QWidget()
         f2 = QHBoxLayout(p2)
         f2.setContentsMargins(0, 0, 0, 0)
@@ -71,7 +71,7 @@ class SlicerDialog(QDialog):
         f2.addWidget(QLabel(_("Number of slices:")))
         f2.addWidget(self.count)
         f2.addStretch(1)
-        # Raster
+        # grid
         p3 = QWidget()
         f3 = QHBoxLayout(p3)
         f3.setContentsMargins(0, 0, 0, 0)
@@ -157,7 +157,7 @@ class SlicerDialog(QDialog):
         self._load()
 
     def remove_current(self):
-        """Entf: den Schnitt am Anfang des gewählten Stücks entfernen (der erste bei 0 s bleibt)."""
+        """Del: remove the slice at the start of the selected piece (the first one at 0 s stays)."""
         i = self.view.current
         pts = sorted(self.view.points)
         if 0 <= i < len(pts) and pts[i] > 0:
@@ -186,7 +186,7 @@ class SlicerDialog(QDialog):
         run_job(self, work, on_done=done, on_fail=lambda m, tb: self.info.setText(_("File not readable: {error}").format(error=m)))
 
     def load_array(self, x, sr: int):
-        """für Tests und Aufnahmen: Audio direkt übergeben."""
+        """for tests and recordings: pass audio directly."""
         self.sr, self.x = sr, np.asarray(x, dtype=np.float64)
         self.view.set_data(S.peaks(self.x.tolist(), 1200), self.duration)
         self._compute_now()
@@ -196,8 +196,8 @@ class SlicerDialog(QDialog):
         self.compute()
 
     def compute(self, *_args):
-        """Schnitte neu berechnen – entprellt und im Hintergrund (die Transienten-Suche über eine lange Datei
-        dauert auf dem Pi Sekunden; der Regler bleibt flüssig)."""
+        """Recompute slices – debounced and in the background (the transient search over a long file
+        takes seconds on the Pi; the slider stays smooth)."""
         if not self.sr:
             return
         self._timer.start()

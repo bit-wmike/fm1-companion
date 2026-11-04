@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Startbildschirm: Logo, Name, Version und was gerade geladen wird."""
+"""Splash screen: logo, name, version and what is currently loading."""
 from __future__ import annotations
 
 from PyQt6.QtCore import QRectF, Qt

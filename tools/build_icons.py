@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Lucide-Symbole für die App übernehmen und das App-Symbol in allen hicolor-Größen rendern.
+"""Import Lucide icons for the app and render the app icon in all hicolor sizes.
 
   npm pack lucide-static@1.57.0 && tar xzf lucide-static-1.57.0.tgz
   python3 tools/build_icons.py path/to/package
 
-Kopiert nur die benutzten Symbole (siehe fm1companion/icons/names.py) verkleinert nach
-fm1companion/icons/lucide/ und rendert data/icons/hicolor/<n>x<n>/apps/fm1-companion.png.
+Copies only the icons in use (see fm1companion/icons/names.py), minified, to
+fm1companion/icons/lucide/ and renders data/icons/hicolor/<n>x<n>/apps/fm1-companion.png.
 """
 from __future__ import annotations
 

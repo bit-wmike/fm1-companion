@@ -1,19 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Seiten der Suite, die sich selbst anmelden.
+"""Suite pages that register themselves.
 
-Jede Datei in diesem Paket kann eine oder mehrere Seiten bereitstellen, indem sie
-``PAGE = PageSpec(...)`` oder ``PAGES = [PageSpec(...), ...]`` definiert. Das Hauptfenster
-findet sie beim Start von selbst und sortiert sie in die Gruppen der Navigation ein.
-Eine Seite, die beim Laden scheitert, wird übersprungen (und in Hilfe › Diagnose
-gemeldet) – sie darf die App nie mitreißen.
+Each file in this package can provide one or more pages by defining
+``PAGE = PageSpec(...)`` or ``PAGES = [PageSpec(...), ...]``. The main window
+finds them by itself at startup and sorts them into the navigation groups.
+A page that fails to load is skipped (and reported in Help › Diagnostics)
+– it must never take the app down with it.
 
-Konventionen für Seiten (QWidget):
-  * Konstruktor: ``factory(ctx, window)`` – ctx ist der DeviceContext, window das Hauptfenster.
-  * optional ``activate()`` / ``deactivate()``: Seite wird sichtbar / verlassen.
-  * optional ``open_with(**kwargs)``: Sprung von anderen Seiten mit Daten
+Conventions for pages (QWidget):
+  * constructor: ``factory(ctx, window)`` – ctx is the DeviceContext, window the main window.
+  * optional ``activate()`` / ``deactivate()``: page becomes visible / is left.
+  * optional ``open_with(**kwargs)``: jump from other pages with data
     (``window.go("simulator", url=...)``).
-  * optional ``shutdown()``: beim Beenden der App (Prozesse stoppen, Web-Seiten abbauen).
-  * optional Signal ``navigate = pyqtSignal(str)``: andere Seite öffnen.
+  * optional ``shutdown()``: on app exit (stop processes, tear down web pages).
+  * optional signal ``navigate = pyqtSignal(str)``: open another page.
 """
 from __future__ import annotations
 
@@ -24,15 +24,15 @@ from dataclasses import dataclass, field
 from typing import Callable
 from ...i18n import _
 
-# Gruppen der Navigation in dieser Reihenfolge
+# navigation groups in this order
 # (the keys are internal identifiers and stay German; the titles are translated)
 GROUPS: list[tuple[str, str]] = [
     ("geraet", _("Device")),
     ("klang", _("Sound")),
     ("musik", _("Music")),
     ("daten", _("Data & Tools")),
-    ("entdecken", _("Discover")),           # (weiter gültig; eingebaute Seiten nutzen "daten")
-    ("werkzeuge", _("Tools")),              # (weiter gültig; eingebaute Seiten nutzen "daten")
+    ("entdecken", _("Discover")),           # (still valid; built-in pages use "daten")
+    ("werkzeuge", _("Tools")),              # (still valid; built-in pages use "daten")
     ("hilfe", _("Help")),
 ]
 GROUP_TITLES = dict(GROUPS)
@@ -40,23 +40,23 @@ GROUP_TITLES = dict(GROUPS)
 
 @dataclass
 class PageSpec:
-    key: str                                   # eindeutig, z. B. "simulator"
-    title: str                                 # in der Navigation, z. B. "Simulator"
-    group: str                                 # Schlüssel aus GROUPS
+    key: str                                   # unique, e.g. "simulator"
+    title: str                                 # in the navigation, e.g. "Simulator"
+    group: str                                 # key from GROUPS
     factory: Callable                          # factory(ctx, window) -> QWidget
-    icons: tuple[str, ...] = ()                # Symbolnamen (Desktop-Thema), erstes vorhandenes gewinnt
-    order: int = 50                            # Reihenfolge innerhalb der Gruppe (klein = oben)
-    description: str = ""                      # ein Satz – für Befehlssuche und Tooltip
-    keywords: tuple[str, ...] = ()             # zusätzliche Suchbegriffe für die Befehlssuche
-    needs_device: bool = False                 # nur informativ (Hinweis in der Navigation)
+    icons: tuple[str, ...] = ()                # icon names (desktop theme), first available wins
+    order: int = 50                            # order within the group (small = top)
+    description: str = ""                      # one sentence – for command search and tooltip
+    keywords: tuple[str, ...] = ()             # additional search terms for command search
+    needs_device: bool = False                 # informational only (hint in the navigation)
     extra: dict = field(default_factory=dict)
 
 
-load_errors: list[tuple[str, str]] = []        # (Modul, Traceback) – für Hilfe › Diagnose
+load_errors: list[tuple[str, str]] = []        # (module, traceback) – for Help › Diagnostics
 
 
 def discover() -> list[PageSpec]:
-    """alle Seiten aus diesem Paket (Reihenfolge: Gruppe, order, Titel)."""
+    """all pages from this package (order: group, order, title)."""
     specs: list[PageSpec] = []
     load_errors.clear()
     for info in sorted(pkgutil.iter_modules(__path__), key=lambda i: i.name):
@@ -65,7 +65,7 @@ def discover() -> list[PageSpec]:
         name = f"{__name__}.{info.name}"
         try:
             mod = importlib.import_module(name)
-        except Exception:                      # noqa: BLE001 – kaputte Seite überspringen
+        except Exception:                      # noqa: BLE001 – skip broken page
             load_errors.append((name, traceback.format_exc()))
             continue
         found = getattr(mod, "PAGES", None) or ([mod.PAGE] if hasattr(mod, "PAGE") else [])

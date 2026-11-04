@@ -1,26 +1,26 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Backups für Menschen erklären, vergleichen und gezielt zurückspielen (planen).
+"""Explain, compare and selectively restore (plan) backups for humans.
 
-Grundlage ist das Inventar der Felucca-/Melodee-Backups (web/EDITOR_PROTOCOL.md,
-"Historical v7: full backup" und "Shared user library"):
+The basis is the inventory of Felucca/Melodee backups (web/EDITOR_PROTOCOL.md,
+"Historical v7: full backup" and "Shared user library"):
 
-* 0 laufende Musik, 1 Einstellungen (PER5), 2–5 und 64–91 Projektplätze 1–32
-* Melodee 1.6 (29/57 Objekte): 22 gemeinsame Preset-Banken im Format UPB2
-  (3716 Byte: 8 Byte Kopf, 18 Datensätze × 206 Byte). Bank → Objekt:
-  0–3 → 6, 7, 17, 18 (allgemein), 4–7 → 21, 22, 19, 20 (früher FM6-Voices),
-  8–15 → 9–16 (früher CZ-1-Töne), 16–20 → 23–27 (früher Prophet), 21 → 28
-  (nur sechs sichtbare Plätze). Bank b hält U(b·18+1) … U(b·18+18), zusammen U001–U384.
-* Datensatz (firmware/src/upreset.c up_rec_t, kompakt): used (0xA5, Bit 1 = Favorit),
-  ver, engine, np, name[12], 144 Byte Werte/Voice, 46 Byte Rest.
-* ältere Firmwares: UPB1 (16 × 238 Byte), NFM1 (FM6), CZCB (CZ-1), P5U1 (Prophet) –
-  sie werden erkannt und beschrieben; unbekannte Objekte erscheinen generisch.
+* 0 running music, 1 settings (PER5), 2–5 and 64–91 project slots 1–32
+* Melodee 1.6 (29/57 objects): 22 shared preset banks in UPB2 format
+  (3716 bytes: 8-byte header, 18 records × 206 bytes). Bank → object:
+  0–3 → 6, 7, 17, 18 (general), 4–7 → 21, 22, 19, 20 (formerly FM6 voices),
+  8–15 → 9–16 (formerly CZ-1 tones), 16–20 → 23–27 (formerly Prophet), 21 → 28
+  (only six visible slots). Bank b holds U(b·18+1) … U(b·18+18), together U001–U384.
+* Record (firmware/src/upreset.c up_rec_t, compact): used (0xA5, bit 1 = favourite),
+  ver, engine, np, name[12], 144 bytes of values/voice, 46 bytes rest.
+* older firmwares: UPB1 (16 × 238 bytes), NFM1 (FM6), CZCB (CZ-1), P5U1 (Prophet) –
+  they are recognised and described; unknown objects appear generically.
 
-Auch SLOOP-Backups ("sloop-backup", Befehle 34–36) lassen sich ansehen, vergleichen und
-(ganz oder teilweise) zurückspielen – in SLOOPs Reihenfolge (Banken, Projekte, laufendes
-Projekt, Einstellungen, Samples).
-Die Projektinhalte selbst entschlüsselt der Musik-Bereich: über
-``register_project_decoder(fn)`` kann er eine Funktion fn(bytes, firmware) -> dict | None
-anmelden (Schlüssel "summary" wird angezeigt).
+SLOOP backups ("sloop-backup", commands 34–36) can be viewed, compared and
+restored (fully or partially) as well – in SLOOP's order (banks, projects, running
+project, settings, samples).
+The project contents themselves are decoded by the music section: via
+``register_project_decoder(fn)`` it can register a function fn(bytes, firmware) -> dict | None
+(key "summary" is displayed).
 """
 from __future__ import annotations
 
@@ -66,7 +66,7 @@ SMPF = 0x504D5346
 UP_USED, UP_STAR = 0xA5, 2
 PER_BANK = 18
 SLOTS = 384
-# gemeinsame Bank -> Backup-Objekt (Melodee 1.6, EDITOR_PROTOCOL.md "Shared user library")
+# shared bank -> backup object (Melodee 1.6, EDITOR_PROTOCOL.md "Shared user library")
 SHARED_BANK_IDS = [6, 7, 17, 18, 21, 22, 19, 20, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
 BANK_OF_OID = {oid: b for b, oid in enumerate(SHARED_BANK_IDS)}
 KNOWN_RECORD_VERSIONS = {4, 5, 8, 9, 10, 11, 12, 13}
@@ -78,7 +78,7 @@ RETIRED_ENGINES = {0, 1, 2, 4, 5, 6, 7, 8, 9, 11, 13, 14}
 
 
 def engine_name(e: int) -> str:
-    """Anzeigename wie überall (presetlib.engine_display_name), plus Hinweis auf stillgelegte Engines."""
+    """Display name as everywhere (presetlib.engine_display_name), plus a note on retired engines."""
     from .presetlib import engine_display_name
     n = ENGINES.get(e)
     if n is None:
@@ -88,7 +88,7 @@ def engine_name(e: int) -> str:
     return engine_display_name(e)
 
 
-# SLOOP (web/editor.html, Engines in INFO-Reihenfolge)
+# SLOOP (web/editor.html, engines in INFO order)
 SLOOP_ENGINES = ["ANALOG", "DIGITAL", "PHASE", "LOFI", "SAMPLE", "VOICE", "TRIO", "WHEEL", "GRAIN", "FM6", "PHYS",
                  "NOISE"]
 
@@ -114,21 +114,21 @@ def slot_label(slot: int) -> str:
     return f"U{slot:03d}"
 
 
-# ------------------------------------------------------------ Datentypen ---
+# ------------------------------------------------------------ data types ---
 
 @dataclass
 class PresetSlot:
-    slot: int                 # 1-basiert (U001 = 1)
+    slot: int                 # 1-based (U001 = 1)
     used: bool
     favorite: bool = False
     engine: int = 0
     name: str = ""
     version: int = 0
     oid: int = 0
-    digest: str = ""          # Inhalt ohne Favoriten-Bit
+    digest: str = ""          # content without the favourite bit
     raw: bytes = b""
-    prefix: str = "U"         # "U" (User-Preset), "F" (FM6-Voice), "CZ", "P5"
-    fw: str = ""              # "sloop": SLOOPs Engine-Liste und Datensatz-Format
+    prefix: str = "U"         # "U" (user preset), "F" (FM6 voice), "CZ", "P5"
+    fw: str = ""              # "sloop": SLOOP's engine list and record format
 
     @property
     def label(self) -> str:
@@ -149,13 +149,13 @@ class PresetSlot:
 class ObjectView:
     id: int
     title: str
-    group: str                # "Musik", "Projekte", "Presets", "Einstellungen", "Samples", "Sonstiges"
+    group: str                # "Musik", "Projekte", "Presets", "Einstellungen", "Samples", "Sonstiges" (category keys)
     size: int
     crc: int
     data: bytes
     format: str = ""
     detail: str = ""
-    slot: int | None = None   # Projektplatz (0 = laufende Musik)
+    slot: int | None = None   # project slot (0 = running music)
     presets: list[PresetSlot] = field(default_factory=list)
     project_info: dict = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
@@ -176,8 +176,8 @@ class Report:
     created: str
     companion: dict
     objects: list[ObjectView]
-    known: bool               # Inventar, das der Web-Editor kennt
-    restorable: bool          # die App kann es (teilweise) zurückspielen
+    known: bool               # inventory the web editor knows
+    restorable: bool          # the app can restore it (partially)
     path: Path | None = None
     archive: backup.Archive | None = None
     settings: dict = field(default_factory=dict)
@@ -227,7 +227,7 @@ class Report:
         return txt.replace(" · ", ", " + ngettext("{n} sample", "{n} samples", n_s).format(n=n_s) + " · ", 1)
 
 
-# ----------------------------------------------------------- Dekodieren ---
+# ----------------------------------------------------------- decoding ---
 
 def _name(b: bytes) -> str:
     b = b.split(b"\0", 1)[0]
@@ -243,7 +243,7 @@ def _digest(b: bytes) -> str:
 
 
 def decode_up_bank(data: bytes, first_slot: int, oid: int) -> list[PresetSlot] | None:
-    """UPB1/UPB2-Bank -> Plätze (None, wenn das Format nicht passt)."""
+    """UPB1/UPB2 bank -> slots (None if the format does not match)."""
     if len(data) < 8 or _u32(data, 0) not in (UPB1, UPB2):
         return None
     rsize, n = struct.unpack_from("<HH", data, 4)
@@ -253,7 +253,7 @@ def decode_up_bank(data: bytes, first_slot: int, oid: int) -> list[PresetSlot] |
     for i in range(n):
         slot = first_slot + i
         if _u32(data, 0) == UPB2 and slot > SLOTS:
-            break                                   # Bank 21: nur sechs sichtbare Plätze
+            break                                   # bank 21: only six visible slots
         r = data[8 + i * rsize: 8 + (i + 1) * rsize]
         used = (r[0] & ~UP_STAR) == UP_USED
         if not used:
@@ -304,7 +304,7 @@ def decode_p5u1(data: bytes, first: int, oid: int) -> list[PresetSlot] | None:
 
 
 def decode_settings(data: bytes) -> dict:
-    """die wichtigsten Felder des Einstellungs-Datensatzes (PER5, Melodee; PER3, SLOOP)."""
+    """the most important fields of the settings record (PER5, Melodee; PER3, SLOOP)."""
     if len(data) < 8:
         return {}
     magic = _u32(data, 0)
@@ -322,13 +322,13 @@ def decode_settings(data: bytes) -> dict:
     return {"Format": _("unknown ({magic})").format(magic=data[:4].hex())}
 
 
-# ------------------------------------------------------------ Projekt-Hook ---
+# ------------------------------------------------------------ project hook ---
 
 _project_decoders: list[Callable[[bytes, str], dict | None]] = []
 
 
 def register_project_decoder(fn: Callable[[bytes, str], dict | None]):
-    """Musik-Bereich: fn(data, firmware) -> {"summary": "...", ...} oder None."""
+    """Music section: fn(data, firmware) -> {"summary": "...", ...} or None."""
     if fn not in _project_decoders:
         _project_decoders.append(fn)
 
@@ -339,7 +339,7 @@ def project_info(data: bytes, firmware: str = "") -> dict:
     for fn in _project_decoders:
         try:
             r = fn(data, firmware)
-        except Exception:                           # noqa: BLE001 – Entschlüsseln ist nur Zugabe
+        except Exception:                           # noqa: BLE001 – decoding is just a bonus
             r = None
         if r:
             info.update(r)
@@ -347,7 +347,7 @@ def project_info(data: bytes, firmware: str = "") -> dict:
     return info
 
 
-# ------------------------------------------------------------- Objekte ---
+# ------------------------------------------------------------- objects ---
 
 def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = "",
              sloop: bool = False) -> ObjectView:
@@ -403,7 +403,7 @@ def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = ""
     if oid == 8:
         v.title, v.group = _("Old FM6 bank (retired)"), G_OTHER
         return v
-    # Preset-Objekte
+    # preset objects
     v.group = G_PRESETS
     magic = _u32(data, 0) if size >= 4 else -1
     if n_objects in (29, 57) or magic == UPB2:
@@ -423,7 +423,7 @@ def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = ""
                 v.presets = [PresetSlot(s, False, oid=oid) for s in range(lo, hi + 1)]
                 v.format = _("empty")
     else:
-        # ältere Inventare
+        # older inventories
         if oid in (6, 7, 17, 18):
             first = {6: 1, 7: 17, 17: 33, 18: 49}[oid]
             v.title = _("User presets U{first:02d}–U{last:02d}").format(first=first, last=first + 15)
@@ -463,7 +463,7 @@ def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = ""
 
 
 def inspect(source) -> Report:
-    """Path / dict / JSON-Text / backup.Archive -> Report. Wirft backup.BackupError bei kaputten Dateien."""
+    """Path / dict / JSON text / backup.Archive -> Report. Raises backup.BackupError for broken files."""
     path = None
     if isinstance(source, backup.Archive):
         arch = source
@@ -496,7 +496,7 @@ def _from_archive(arch: backup.Archive, path: Path | None) -> Report:
 
 
 def _from_sloop(f: dict, path: Path | None) -> Report:
-    """SLOOP-Backup: dieselben Prüfungen wie backupObjects() im SLOOP-Editor."""
+    """SLOOP backup: the same checks as backupObjects() in the SLOOP editor."""
     arch = backup.read(f)
     objs = [describe(o["id"], o["bytes"], o["crc"], len(arch.objects), arch.firmware, sloop=True)
             for o in arch.objects]
@@ -601,7 +601,7 @@ class Diff:
 
 
 def diff(a: Report, b: Report) -> Diff:
-    """Unterschiede von a (alt) nach b (neu)."""
+    """Differences from a (old) to b (new)."""
     changes = []
     ids = [o.id for o in a.objects] + [o.id for o in b.objects if not a.obj(o.id)]
     for oid in ids:
@@ -637,7 +637,7 @@ def diff(a: Report, b: Report) -> Diff:
                 f.append(F_NAME)
             if x.engine != y.engine:
                 f.append(F_ENGINE)
-            # Name/Engine stecken im Datensatz – "Klang" nur, wenn sich mehr geändert hat
+            # name/engine are inside the record – "sound" only if more has changed
             if x.digest != y.digest and _payload(x) != _payload(y):
                 f.append(F_SOUND)
             if x.favorite != y.favorite:
@@ -650,11 +650,11 @@ def diff(a: Report, b: Report) -> Diff:
 def _payload(p: PresetSlot) -> bytes:
     r = p.raw
     if p.prefix == "U" and len(r) >= 16:
-        return r[1:2] + r[3:4] + r[16:]            # ohne used/engine/Name
+        return r[1:2] + r[3:4] + r[16:]            # without used/engine/name
     return r
 
 
-# ------------------------------------------------- Teil-Zurückspielen ---
+# ------------------------------------------------- partial restore ---
 
 @dataclass
 class PlanItem:
@@ -667,12 +667,12 @@ class PlanItem:
 
 @dataclass
 class Plan:
-    items: list[PlanItem]                  # in Schreibreihenfolge
+    items: list[PlanItem]                  # in write order
     skipped: list[PlanItem]
     errors: list[str]
     notes: list[str]
     clear_extension: bool = False
-    expect: dict = field(default_factory=dict)   # id -> (size, crc) auf dem Gerät beim Planen
+    expect: dict = field(default_factory=dict)   # id -> (size, crc) on the device at planning time
 
     @property
     def ok(self) -> bool:
@@ -701,7 +701,7 @@ class Plan:
         return "".join(lines)
 
 
-SELECTABLE_SKIP = {8}                     # Melodee: alte, stillgelegte FM6-Bank
+SELECTABLE_SKIP = {8}                     # Melodee: old, retired FM6 bank
 
 
 def is_sloop(rep: Report) -> bool:
@@ -709,19 +709,19 @@ def is_sloop(rep: Report) -> bool:
 
 
 def skip_ids(rep: Report) -> set[int]:
-    """Objekte, die man nicht einzeln zurückspielen kann (SLOOP: keine)."""
+    """Objects that cannot be restored individually (SLOOP: none)."""
     return set() if is_sloop(rep) else SELECTABLE_SKIP
 
 
 def selectable(rep: Report) -> list[ObjectView]:
-    """Objekte, die man einzeln zurückspielen kann."""
+    """Objects that can be restored individually."""
     return [o for o in rep.objects if o.id not in skip_ids(rep)]
 
 
 def plan_restore(rep: Report, ids: Iterable[int], device_manifest: list | None,
                  current: Report | None = None, device_inventory_len: int | None = None) -> Plan:
-    """Prüft eine Auswahl gegen das Gerät (Inventar aus BACKUP_LIST) und ordnet sie wie der Editor:
-    Projekte/Banken/Samples, dann Einstellungen, die laufende Musik zuletzt."""
+    """Checks a selection against the device (inventory from BACKUP_LIST) and orders it like the editor:
+    projects/banks/samples, then settings, the running music last."""
     want = [i for i in dict.fromkeys(ids) if i not in skip_ids(rep)]
     errors, notes = [], []
     if not rep.restorable or rep.archive is None:
@@ -733,7 +733,7 @@ def plan_restore(rep: Report, ids: Iterable[int], device_manifest: list | None,
     r16 = refuse_16(rep, current.firmware if current is not None else "", n_dev if man else None)
     if r16:
         return Plan([], [], [r16], [])
-    # alte Preset-Banken (nicht UPB2) nur gemeinsam – die Firmware wandelt sie zusammen um
+    # old preset banks (not UPB2) only together – the firmware converts them as a group
     old_banks = [o.id for o in rep.objects if o.group == "Presets" and o.used and o.format != "UPB2"]
     if n_dev in (29, 57) and any(i in old_banks for i in want):
         missing = [i for i in old_banks if i not in want]
@@ -795,7 +795,7 @@ def plan_restore(rep: Report, ids: Iterable[int], device_manifest: list | None,
 
 
 def _plan_sloop(rep: Report, want: list[int], device_manifest: list | None, current: Report | None) -> Plan:
-    """Teil-Zurückspielen eines SLOOP-Backups: Reihenfolge wie backupRestore im SLOOP-Editor."""
+    """Partial restore of a SLOOP backup: order as in backupRestore in the SLOOP editor."""
     from . import sloopbk
     errors, notes = [], []
     man = {o.id: o for o in (device_manifest or [])}
@@ -809,7 +809,7 @@ def _plan_sloop(rep: Report, want: list[int], device_manifest: list | None, curr
             errors.append(_("<b>{part}</b> is empty in the backup – SLOOP does not accept that.").format(part=o.title))
             continue
         if man and oid not in man and oid not in (10, 11):
-            # 8 (FM6-Bank) und 9 (SYN-Kits) listet jede Firmware, die sie kennt; 10/11 nur, wenn belegt
+            # 8 (FM6 bank) and 9 (SYN kits) are listed by every firmware that knows them; 10/11 only if used
             if o.used:
                 notes.append(_("{part}: unknown to the SLOOP version on the device – skipped.").format(part=o.title))
             continue
@@ -859,10 +859,10 @@ def _plan_sloop(rep: Report, want: list[int], device_manifest: list | None, curr
     return Plan(items, skipped, errors, notes, False, expect)
 
 
-# --------------------------------------------- Geräte-Kompatibilität ---
+# --------------------------------------------- device compatibility ---
 
 def fw_name(key: str) -> str:
-    """Anzeigename zu einem Firmware-Schlüssel („melodee“ → „Melodee“)."""
+    """Display name for a firmware key ("melodee" → "Melodee")."""
     if not key:
         return _("unknown firmware")
     try:
@@ -876,9 +876,9 @@ def fw_name(key: str) -> str:
 
 
 def comparable(a: Report, b: Report) -> str:
-    """"" wenn sich zwei Stände sinnvoll vergleichen lassen, sonst der Grund in Alltagssprache.
-    Verschiedene Firmware-Familien (Melodee ↔ SLOOP) haben andere Objekte und Formate –
-    ein Unterschieds-Vergleich wäre Unsinn („Projekt 5 fehlt“)."""
+    """"" if two states can sensibly be compared, otherwise the reason in plain language.
+    Different firmware families (Melodee ↔ SLOOP) have different objects and formats –
+    a diff would be nonsense ("Project 5 missing")."""
     if a.format != b.format:
         return _("Not comparable: one is a Melodee/Felucca backup, the other a SLOOP backup. "
                   "The two firmwares store projects, presets and settings completely differently.")
@@ -893,12 +893,12 @@ def comparable(a: Report, b: Report) -> str:
 class Compat:
     ok: bool
     reason: str
-    possible: list[str] = field(default_factory=list)   # was trotzdem geht
+    possible: list[str] = field(default_factory=list)   # what still works
     allowed_ids: set[int] = field(default_factory=set)
 
 
 def compatibility(src: Report, target_fw_key: str, target_version: str, target_ids: list[int] | None) -> Compat:
-    """Kann der Inhalt von src auf ein Gerät mit dieser Firmware?"""
+    """Can the content of src go onto a device with this firmware?"""
     sk = src.firmware_key
     tk = target_fw_key or ""
     if not src.restorable:
@@ -920,7 +920,7 @@ def compatibility(src: Report, target_fw_key: str, target_version: str, target_i
                                    _("use a backup from before the update to Melodee 1.6"),
                                    _("export projects as MIDI (Projects › MIDI export)")])
     if target_ids is not None and is_sloop(src):
-        target_ids = list(target_ids) + [i for i in (10, 11) if i not in target_ids]   # nur belegt im Inventar
+        target_ids = list(target_ids) + [i for i in (10, 11) if i not in target_ids]   # only used ones in the inventory
     if target_ids is not None:
         common = ids & set(target_ids)
         if not common:
@@ -941,8 +941,8 @@ def compatibility(src: Report, target_fw_key: str, target_version: str, target_i
 
 
 def refuse_16(src: Report, target_version: str = "", target_inventory: int | None = None) -> str:
-    """Backup von Melodee 1.6 auf eine ältere Melodee? -> deutsche Erklärung, sonst ''. Ältere Firmware lehnt
-    Backups von 1.6 ab (RELEASE_1.6.0.md „Upgrading“) – die App sagt das vorher statt eines Gerätefehlers."""
+    """Backup from Melodee 1.6 onto an older Melodee? -> German explanation, otherwise ''. Older firmware rejects
+    backups from 1.6 (RELEASE_1.6.0.md "Upgrading") – the app says so up front instead of a device error."""
     from . import melodee16 as M
     if is_sloop(src) or src.firmware_key not in ("melodee", ""):
         return ""
@@ -961,7 +961,7 @@ def _ver(s: str) -> str:
 
 @dataclass
 class DeviceComparison:
-    rows: list[tuple[str, str, str]]        # (Eigenschaft, A, B)
+    rows: list[tuple[str, str, str]]        # (property, A, B)
     only_a: list[str]
     only_b: list[str]
     both: list[str]

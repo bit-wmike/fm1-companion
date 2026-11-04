@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Simulator-Seite im Demo-Modus (offscreen): Bibliothek, Laden der mitgelieferten WASM-Simulatoren ohne
-JS-Fehler, MIDI vom Demo-FM-1 bis in den Simulator, Aufnahme als WAV, Online-Sprung (open_with),
-„In Firefox öffnen“ (Befehl, ohne Firefox zu starten), MIDI-Relais für Firefox (SSE).
+"""Simulator page in demo mode (offscreen): library, loading the bundled WASM simulators without
+JS errors, MIDI from the demo FM-1 into the simulator, recording as WAV, online jump (open_with),
+"Open in Firefox" (command, without starting Firefox), MIDI relay for Firefox (SSE).
 
   flock /tmp/fm1c-ui.lock timeout 600 env QT_QPA_PLATFORM=offscreen python3 tests/ui_sim_test.py
 """
@@ -94,7 +94,7 @@ def select(p, key):
     return False
 
 
-# kleine "Online"-Seite mit Web-MIDI
+# small "online" page with Web MIDI
 site = home / "site"
 site.mkdir()
 (site / "index.html").write_text("""<!doctype html><title>Test-Emu</title><body>emu<script>
@@ -117,42 +117,42 @@ w.show()
 
 def flow():
     p = w.page("simulator")
-    check(p is not None and "simulator" in w.absorbed, "Seite 'Simulator' angemeldet (Reiter von Entdecken)")
+    check(p is not None and "simulator" in w.absorbed, "page 'Simulator' registered (tab of Discover)")
     from fm1companion.ui.main_window import ALIASES
     check(ALIASES.get("simulator") == ("discover", "simulator") and w.resolve("simulator")[0] == "discover",
-          "simulator leitet auf Entdecken › Simulator weiter")
+          "simulator redirects to Discover › Simulator")
     keys = list(p.entries)
-    check("fm1-open" in keys and "melodee" in keys, f"Bibliothek listet die mitgelieferten Simulatoren ({keys[:4]})")
-    check(any(k.startswith("url:") for k in keys), "Bibliothek listet Online-Emulatoren")
-    check(until(lambda: w.ctx.connected, 15000), "Demo-FM-1 verbunden")
+    check("fm1-open" in keys and "melodee" in keys, f"library lists the bundled simulators ({keys[:4]})")
+    check(any(k.startswith("url:") for k in keys), "library lists online emulators")
+    check(until(lambda: w.ctx.connected, 15000), "demo FM-1 connected")
     w.go("simulator")
 
-    # ---- FM1 Open (aus dem offiziellen Quellcode gebaut)
+    # ---- FM1 Open (built from the official source code)
     select(p, "fm1-open")
-    check("V14" in p.details.text() and "4c7496daac" in p.details.text(), "Details: Version, Quelle, Commit")
+    check("V14" in p.details.text() and "4c7496daac" in p.details.text(), "details: version, source, commit")
     p.start()
-    check(until(lambda: js("document.readyState") == "complete", 30000), "FM1 Open: Seite geladen")
+    check(until(lambda: js("document.readyState") == "complete", 30000), "FM1 Open: page loaded")
     ready = until(lambda: js("document.getElementById('sim-placeholder')?.hidden===true"), 30000)
-    check(ready, "FM1 Open: WASM aus simulator.wasm geladen, SHA-256 geprüft, Panel bereit")
+    check(ready, "FM1 Open: WASM loaded from simulator.wasm, SHA-256 checked, panel ready")
     check(js("getComputedStyle(document.getElementById('mode-update')).display") == "none",
-          "FM1 Open: Firmware-Update-Reiter ausgeblendet")
-    check(js("typeof FM1_PACKAGE") == "object" and js("FM1_PACKAGE===null"), "FM1 Open: keine Firmware im Paket")
-    check(js("document.documentElement.lang") == "en", "FM1 Open: Oberfläche englisch")
+          "FM1 Open: firmware update tab hidden")
+    check(js("typeof FM1_PACKAGE") == "object" and js("FM1_PACKAGE===null"), "FM1 Open: no firmware in the package")
+    check(js("document.documentElement.lang") == "en", "FM1 Open: UI in English")
     wait(1500)
     errs = js_errors(p)
-    check(not errs, f"FM1 Open: keine JS-Fehler ({errs[:3]})")
-    # MIDI vom Demo-FM-1: so, als käme eine Note von seinen Tasten
+    check(not errs, f"FM1 Open: no JS errors ({errs[:3]})")
+    # MIDI from the demo FM-1: as if a note came from its keys
     w.ctx.link._receive([0x90, 60, 100])
-    check(until(lambda: (js("__fm1sim.notesIn") or 0) >= 1, 5000), "MIDI vom FM-1 kommt im Simulator an")
+    check(until(lambda: (js("__fm1sim.notesIn") or 0) >= 1, 5000), "MIDI from the FM-1 arrives in the simulator")
     w.ctx.link._receive([0x80, 60, 0])
     audio = until(lambda: (js("__fm1sim.status().nodes") or 0) >= 1, 8000)
     st = js("JSON.stringify(__fm1sim.status())")
     print("   Audio-Status:", st)
     if audio:
-        check(True, "FM1 Open: Audio-Thread (AudioWorklet) gestartet durch MIDI")
+        check(True, "FM1 Open: audio thread (AudioWorklet) started by MIDI")
         w.ctx.link._receive([0x90, 64, 110])
         p.b_rec.click()
-        check(until(lambda: p.rec_running, 3000), "Aufnahme läuft")
+        check(until(lambda: p.rec_running, 3000), "recording running")
         wait(1500)
         w.ctx.link._receive([0x80, 64, 0])
         p.b_rec.click()
@@ -165,121 +165,121 @@ def flow():
                 import array
                 a = array.array("h", frames)
                 peak = max((abs(x) for x in a), default=0)
-            print(f"   WAV: {n} Frames, {wf.getframerate()} Hz, Spitze {peak}")
-            check(n > 22050, "WAV länger als 0,5 s")
-            check(peak > 100, f"WAV nicht still (Spitze {peak})")
+            print(f"   WAV: {n} frames, {wf.getframerate()} Hz, peak {peak}")
+            check(n > 22050, "WAV longer than 0.5 s")
+            check(peak > 100, f"WAV not silent (peak {peak})")
     else:
-        print("   (offscreen ohne Audio-Gerät: AudioContext läuft nicht – Aufnahme-Test übersprungen)")
+        print("   (offscreen without an audio device: AudioContext does not run – recording test skipped)")
 
     # ---- Melodee
     select(p, "melodee")
     p.start()
-    check(until(lambda: js("document.title") == "Melodee in the browser", 30000), "Melodee: Seite geladen")
-    check(until(lambda: js("!!document.getElementById('power')"), 5000), "Melodee: Einschalt-Knopf da")
+    check(until(lambda: js("document.title") == "Melodee in the browser", 30000), "Melodee: page loaded")
+    check(until(lambda: js("!!document.getElementById('power')"), 5000), "Melodee: power button present")
     w.ctx.link._receive([0x90, 60, 100])
-    check(until(lambda: (js("__fm1sim.notesIn") or 0) >= 1, 5000), "Melodee: MIDI vom FM-1 kommt an")
+    check(until(lambda: (js("__fm1sim.notesIn") or 0) >= 1, 5000), "Melodee: MIDI from the FM-1 arrives")
     mel_audio = until(lambda: (js("__fm1sim.status().nodes") or 0) >= 1, 8000)
-    print("   Melodee-Status:", js("JSON.stringify(__fm1sim.status())"), js("document.getElementById('status').textContent"))
+    print("   Melodee status:", js("JSON.stringify(__fm1sim.status())"), js("document.getElementById('status').textContent"))
     if mel_audio:
         check(until(lambda: js("document.getElementById('poweron').hidden") is True, 8000),
-              "Melodee: per MIDI eingeschaltet (WASM im AudioWorklet)")
-    else:                          # ohne Audio-Gerät: Einschalt-Fläche wie nach „Switch on“ ausblenden
+              "Melodee: switched on via MIDI (WASM in the AudioWorklet)")
+    else:                          # without an audio device: hide the power overlay as after "Switch on"
         js("document.getElementById('poweron').hidden=true")
     p.speed_timer.setInterval(500)
     check(until(lambda: "eingeschaltet" in p.state.text(), 6000) and "Switch on" not in p.state.text(),
-          f"Statuszeile nach dem Einschalten ohne „Switch on drücken“ ({p.state.text()[:60]})")
+          f"status line after switching on without \"press Switch on\" ({p.state.text()[:60]})")
     p.speed_timer.setInterval(2000)
     wait(1000)
     errs = js_errors(p)
-    check(not errs, f"Melodee: keine JS-Fehler ({errs[:3]})")
+    check(not errs, f"Melodee: no JS errors ({errs[:3]})")
     if mel_audio:
-        # Echtzeit-Anzeige: erst „Echtzeit“; dann bremst ein absichtlich langsamer Zusatz-Knoten im selben
-        # Audio-Graphen (wie ein zu schwacher Pi) – die Anzeige muss ehrlich „zu langsam“ melden.
+        # real-time display: first "Echtzeit" (real time); then a deliberately slow extra node in the same
+        # audio graph slows it down (like a too weak Pi) – the display must honestly report "zu langsam" (too slow).
         p.speed_timer.setInterval(700)
-        check(until(lambda: p.speed_label.text() == "Echtzeit", 12000), f"Tempo-Anzeige: Echtzeit ({p.speed_label.text()!r})")
+        check(until(lambda: p.speed_label.text() == "Echtzeit", 12000), f"speed display: real time ({p.speed_label.text()!r})")
         js("(async()=>{const c=__fm1sim.contexts.find(x=>x.state==='running');"
            "const src='class B extends AudioWorkletProcessor{process(){const t=Date.now()+5;while(Date.now()<t){}return true}}"
            "registerProcessor(\"bremse\",B)';await c.audioWorklet.addModule('data:text/javascript,'+encodeURIComponent(src));"
            "const n=new AudioWorkletNode(c,'bremse');n.connect(c.destination);window.__bremse=n})()")
         check(until(lambda: "zu langsam" in p.speed_label.text(), 20000),
-              f"Tempo-Anzeige: zu langsam ({p.speed_label.text()!r}, {js('JSON.stringify(__fm1sim.speed())')})")
-        check("Firefox" in p.speed_label.toolTip(), "Tooltip nennt Abhilfe")
+              f"speed display: too slow ({p.speed_label.text()!r}, {js('JSON.stringify(__fm1sim.speed())')})")
+        check("Firefox" in p.speed_label.toolTip(), "tooltip names the remedy")
         js("window.__bremse&&window.__bremse.disconnect()")
         p.speed_timer.setInterval(2000)
 
-    # ---- Online-Sprung (lokaler Teststand statt Internet)
+    # ---- online jump (local test stand instead of the internet)
     url = f"http://127.0.0.1:{srv.server_address[1]}/index.html"
     w.go("simulator", url=url, title="Test-Emu", kind="emulator")
-    check(until(lambda: js("document.title") == "Test-Emu", 15000), "open_with(url) lädt die Seite")
-    check("ONLINE" in p.badge.text(), "Online-Abzeichen sichtbar")
-    check(any(r.get("url") == url for r in config.module("simulator")["recent"]), "unter 'zuletzt geöffnet' gemerkt")
+    check(until(lambda: js("document.title") == "Test-Emu", 15000), "open_with(url) loads the page")
+    check("ONLINE" in p.badge.text(), "online badge visible")
+    check(any(r.get("url") == url for r in config.module("simulator")["recent"]), "remembered under 'recently opened'")
     check(until(lambda: "FM-1 (Tasten)" in (js("window.names") or []), 8000),
-          f"Web-MIDI der Seite sieht 'FM-1 (Tasten)' ({js('window.names')})")
+          f"the page's Web MIDI sees 'FM-1 (Tasten)' ({js('window.names')})")
     w.ctx.link._receive([0x90, 62, 90])
-    check(until(lambda: [0x90, 62, 90] in (js("window.got") or []), 5000), "Note vom FM-1 über Web-MIDI in der Seite")
-    check(js("!!window.__fm1sim"), "Host-Skript auch in Online-Seiten")
-    # Ausgang: Update-SysEx wird verworfen, Noten gehen raus
+    check(until(lambda: [0x90, 62, 90] in (js("window.got") or []), 5000), "note from the FM-1 via Web MIDI in the page")
+    check(js("!!window.__fm1sim"), "host script in online pages too")
+    # output: update SysEx is dropped, notes go out
     sent = []
     orig = w.ctx.link.send_midi
     w.ctx.link.send_midi = lambda d, force=False: sent.append(list(d)) or True
     js("navigator.requestMIDIAccess({sysex:true}).then(a=>{const o=[...a.outputs.values()].find(x=>x.name==='FM-1');"
        "o.send([0xF0,0x22,0x24,0x35,0x7F,0xF7]);o.send([0x90,60,1]);})")
-    check(until(lambda: [0x90, 60, 1] in sent, 5000), "Seite kann Noten an das FM-1 senden")
-    check(not any(x[:1] == [0xF0] for x in sent) and p.bridge.blocked >= 1, "Update-SysEx aus der Seite blockiert")
-    check(until(lambda: "zurückgehalten" in p.state.text(), 3000), f"Hinweis auf den Sicherheitsfilter ({p.state.text()[:70]})")
-    # versteckt hinter einer Note, in Stücken, Soft-Key: alles bleibt draußen
+    check(until(lambda: [0x90, 60, 1] in sent, 5000), "the page can send notes to the FM-1")
+    check(not any(x[:1] == [0xF0] for x in sent) and p.bridge.blocked >= 1, "update SysEx from the page blocked")
+    check(until(lambda: "zurückgehalten" in p.state.text(), 3000), f"hint about the safety filter ({p.state.text()[:70]})")
+    # hidden behind a note, in pieces, soft key: everything stays out
     js("navigator.requestMIDIAccess({sysex:true}).then(a=>{const o=[...a.outputs.values()].find(x=>x.name==='FM-1');"
        "o.send([0x90,61,1,0xF0,0x22,0x24,0x35,0x7D,0xF7]);o.send([0x22,0x24,0x35,0x7D,0xF7]);"
        "o.send([0xF0,0x22,0x24,0x35,0x7D,0xF7]);o.send([0xF0,0x00,0x32,0x45,0,0,0,0x40,0x7F,0xF7]);o.send([0xB0,1,2]);})")
     check(until(lambda: [0xB0, 1, 2] in sent, 5000) and sent == [[0x90, 60, 1], [0xB0, 1, 2]] and p.bridge.blocked >= 5,
-          f"versteckte/zerlegte Update-SysEx bleiben draußen ({sent}, {p.bridge.blocked} blockiert)")
-    # als Online-EDITOR geöffnet, Herkunft NICHT bestätigt: nur Noten, Felucca-SysEx bleibt draußen
+          f"hidden/split update SysEx stay out ({sent}, {p.bridge.blocked} blocked)")
+    # opened as an online EDITOR, origin NOT confirmed: only notes, Felucca SysEx stays out
     from fm1companion import sims as _sims
     asked = []
     p.ask_origin = lambda o, t="": asked.append(o) or False
     sent.clear()
     w.go("simulator", url=url, title="Test-Editor", kind="editor")
     check(until(lambda: js("document.title") == "Test-Emu" and p.current is not None and p.current.kind == "editor", 15000),
-          "Seite als Online-Editor geöffnet (ohne Erlaubnis)")
-    check(asked == [_sims.origin_of(url)], f"einmalige Rückfrage für die Herkunft ({asked})")
+          "page opened as online editor (without permission)")
+    check(asked == [_sims.origin_of(url)], f"one-time prompt for the origin ({asked})")
     js("navigator.requestMIDIAccess({sysex:true}).then(a=>{const o=[...a.outputs.values()].find(x=>x.name==='FM-1');"
        "o.send([0xF0,0x7D,0x46,0x4C,1,0xF7]);o.send([0x90,63,3]);})")
     check(until(lambda: [0x90, 63, 3] in sent, 5000) and not any(x[:1] == [0xF0] for x in sent),
-          f"ohne Erlaubnis: nur Noten ans FM-1 ({sent})")
-    check(not _sims.origin_trusted(_sims.origin_of(url)), "Ablehnung wird nicht als Erlaubnis gespeichert")
-    # jetzt erlauben: wird gespeichert, beim nächsten Öffnen nicht erneut gefragt
+          f"without permission: only notes to the FM-1 ({sent})")
+    check(not _sims.origin_trusted(_sims.origin_of(url)), "declining is not stored as a permission")
+    # now allow: it is stored, not asked again at the next opening
     p.ask_origin = lambda o, t="": asked.append(o) or True
     sent.clear()
     w.go("simulator", url=url, title="Test-Editor", kind="editor")
     check(until(lambda: js("document.title") == "Test-Emu" and p.current is not None and p.current.kind == "editor", 15000),
-          "Seite als Online-Editor geöffnet")
+          "page opened as online editor")
     js("navigator.requestMIDIAccess({sysex:true}).then(a=>{const o=[...a.outputs.values()].find(x=>x.name==='FM-1');"
        "o.send([0xF0,0x7D,0x46,0x4C,1,0xF7]);o.send([0xF0,0x22,0x24,0x35,0x7F,0xF7]);o.send([0x90,64,3]);})")
     check(until(lambda: [0x90, 64, 3] in sent, 5000) and [0xF0, 0x7D, 0x46, 0x4C, 1, 0xF7] in sent
-          and not any(x[:2] == [0xF0, 0x22] for x in sent), f"Editor: Felucca durch, Update-Schlüssel nicht ({sent})")
-    check(_sims.origin_trusted(_sims.origin_of(url)), "Erlaubnis für die Herkunft gespeichert")
+          and not any(x[:2] == [0xF0, 0x22] for x in sent), f"editor: Felucca through, update key not ({sent})")
+    check(_sims.origin_trusted(_sims.origin_of(url)), "permission for the origin stored")
     n_asked = len(asked)
     w.go("simulator", url=url, title="Test-Editor", kind="editor")
     check(until(lambda: js("document.title") == "Test-Emu", 15000) and len(asked) == n_asked,
-          "bestätigte Herkunft: keine erneute Rückfrage")
-    # die Seite wechselt die Herkunft (localhost statt 127.0.0.1): sofort wieder der sichere Filter
+          "confirmed origin: no further prompt")
+    # the page changes its origin (localhost instead of 127.0.0.1): the safe filter again at once
     other = url.replace("127.0.0.1", "localhost")
     p.page.runJavaScript(f"location.href={json.dumps(other)}")
     check(until(lambda: p.page.url().host() == "localhost" and js("document.title") == "Test-Emu", 15000),
-          f"Seite hat die Herkunft gewechselt ({p.page.url().toString()})")
+          f"the page has changed its origin ({p.page.url().toString()})")
     sent.clear()
     js("navigator.requestMIDIAccess({sysex:true}).then(a=>{const o=[...a.outputs.values()].find(x=>x.name==='FM-1');"
        "o.send([0xF0,0x7D,0x46,0x4C,1,0xF7]);o.send([0x90,65,3]);})")
     check(until(lambda: [0x90, 65, 3] in sent, 5000) and not any(x[:1] == [0xF0] for x in sent),
-          f"nach Herkunftswechsel: Felucca-SysEx wieder gesperrt ({sent})")
+          f"after the origin change: Felucca SysEx blocked again ({sent})")
     _sims.forget_origin(_sims.origin_of(url))
     w.ctx.link.send_midi = orig
 
-    # ---- Offline-Meldung
+    # ---- offline message
     w.go("simulator", url="http://127.0.0.1:9/nichts", title="Weg")
-    check(until(lambda: "nicht erreichbar" in p.state.text(), 15000), f"Offline-Hinweis ({p.state.text()})")
+    check(until(lambda: "nicht erreichbar" in p.state.text(), 15000), f"offline hint ({p.state.text()})")
 
-    # ---- Firefox fehlt: Meldung statt stillem Nichts
+    # ---- Firefox missing: a message instead of silent nothing
     select(p, "melodee")
     orig_which = shutil.which
     shutil.which = lambda n: None
@@ -287,7 +287,7 @@ def flow():
         p.b_ff.click()
     finally:
         shutil.which = orig_which
-    check("Firefox nicht gefunden" in p.state.text() and "apt install" in p.state.text(), f"ohne Firefox: {p.state.text()}")
+    check("Firefox nicht gefunden" in p.state.text() and "apt install" in p.state.text(), f"without Firefox: {p.state.text()}")
     # ---- Firefox
     calls = []
     p.popen = lambda cmd, **k: calls.append(cmd)
@@ -299,20 +299,20 @@ def flow():
     finally:
         shutil.which = orig_which
     exp = f"http://127.0.0.1:{w.server.port}/sims/melodee/index.html?fm1latency="
-    check(calls and calls[0][0] == "/usr/bin/firefox" and calls[0][-1].startswith(exp), f"Firefox-Befehl {calls}")
-    # die Firefox-URL liefert wirklich den Simulator
+    check(calls and calls[0][0] == "/usr/bin/firefox" and calls[0][-1].startswith(exp), f"Firefox command {calls}")
+    # the Firefox URL really delivers the simulator
     body = urllib.request.urlopen(calls[0][-1], timeout=5).read()
-    check(b"Melodee in the browser" in body and b"fm1sim-host.js" in body, "lokaler Server liefert /sims/melodee/")
+    check(b"Melodee in the browser" in body and b"fm1sim-host.js" in body, "local server delivers /sims/melodee/")
     wasm = urllib.request.urlopen(f"http://127.0.0.1:{w.server.port}/sims/melodee/melodee.wasm", timeout=5)
-    check(wasm.headers.get("Content-Type") == "application/wasm", "WASM mit richtigem Typ")
+    check(wasm.headers.get("Content-Type") == "application/wasm", "WASM with the right type")
     check(urllib.request.urlopen(f"http://127.0.0.1:{w.server.port}/sims/_host/fm1sim-host.js", timeout=5).status == 200,
-          "Host-Skript erreichbar")
+          "host script reachable")
     try:
         urllib.request.urlopen(f"http://127.0.0.1:{w.server.port}/sims/../../config.py", timeout=5)
-        check(False, "kein Zugriff außerhalb von sims/")
+        check(False, "no access outside sims/")
     except Exception:
-        check(True, "kein Zugriff außerhalb von sims/")
-    # MIDI-Relais (Firefox): SSE-Client empfängt eine FM-1-Note
+        check(True, "no access outside sims/")
+    # MIDI relay (Firefox): an SSE client receives an FM-1 note
     got = []
 
     def sse():
@@ -324,23 +324,23 @@ def flow():
     threading.Thread(target=sse, daemon=True).start()
     until(lambda: w.server.relay.clients > 0, 5000)
     w.ctx.link._receive([0x90, 65, 77])
-    check(until(lambda: got == [[0x90, 65, 77]], 5000), f"MIDI-Relais für Firefox ({got})")
+    check(until(lambda: got == [[0x90, 65, 77]], 5000), f"MIDI relay for Firefox ({got})")
     p.stop()
-    check(until(lambda: "gestoppt" in (js("document.body.innerText") or ""), 5000), "Stoppen entlädt den Simulator")
-    check(not p.b_stop.isEnabled() and not p.b_rec.isChecked(), "nach Stopp: Stoppen grau, keine Aufnahme")
-    check(p.speed_label.text() == "" and not p.speed_timer.isActive(), "nach Stopp: keine Tempo-Anzeige mehr")
-    check(not p.b_rec.isEnabled(), "nach Stopp: Aufnehmen grau (nichts aufzunehmen)")
-    # erneut starten, Seite wechseln, zurück: läuft weiter (gewollt – wie ein Instrument), kein Fehler
+    check(until(lambda: "gestoppt" in (js("document.body.innerText") or ""), 5000), "stopping unloads the simulator")
+    check(not p.b_stop.isEnabled() and not p.b_rec.isChecked(), "after stop: Stop grey, no recording")
+    check(p.speed_label.text() == "" and not p.speed_timer.isActive(), "after stop: no speed display any more")
+    check(not p.b_rec.isEnabled(), "after stop: Record grey (nothing to record)")
+    # start again, switch pages, back: keeps running (intended – like an instrument), no error
     select(p, "melodee")
     p.start()
-    check(until(lambda: js("document.title") == "Melodee in the browser", 30000), "Melodee erneut gestartet")
+    check(until(lambda: js("document.title") == "Melodee in the browser", 30000), "Melodee started again")
     w.go("midi")
     wait(500)
     w.go("simulator")
     check(p.current is not None and p.current.key == "melodee" and js("document.title") == "Melodee in the browser",
-          "Seitenwechsel lässt den Simulator laufen")
+          "a page switch leaves the simulator running")
     errs = [m for m in p.page.messages if m[0] >= 2]
-    check(not errs, f"keine JS-Fehler nach Neustart ({errs[:3]})")
+    check(not errs, f"no JS errors after the restart ({errs[:3]})")
     p.stop()
     app.quit()
 
@@ -359,7 +359,7 @@ app.exec()
 w.close()
 fails = [r for r in results if not r[0]]
 for e in errors:
-    print("AUSNAHME:\n" + e)
-print(f"{len(results) - len(fails)}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+    print("EXCEPTION:\n" + e)
+print(f"{len(results) - len(fails)}/{len(results)} passed, {len(errors)} exceptions")
 shutil.rmtree(home, ignore_errors=True)
 sys.exit(1 if fails or errors else 0)

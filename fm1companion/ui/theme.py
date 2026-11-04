@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Aussehen der Suite: Design-Token, Akzentfarbe, globales Stylesheet (hell/dunkel/automatisch/System).
+"""Look of the suite: design tokens, accent color, global stylesheet (light/dark/automatic/system).
 
-Modi (Settings.theme):
-  * "auto"   – App-Design, hell oder dunkel wie das System (Standard ab 2.0)
-  * "light" / "dark" – App-Design erzwungen (Fusion + eigenes Stylesheet)
-  * "system" – Stil und Farben des Desktops (KDE/Breeze); nur die eigenen Bausteine
-               (Seitenleiste, Karten, Überschriften, Hinweise) bekommen ein leichtes Stylesheet.
+Modes (Settings.theme):
+  * "auto"   – app design, light or dark like the system (default since 2.0)
+  * "light" / "dark" – app design forced (Fusion + own stylesheet)
+  * "system" – style and colors of the desktop (KDE/Breeze); only our own building blocks
+               (sidebar, cards, headings, notices) get a light stylesheet.
 
-Seiten müssen nichts tun: heading(), Card(), Knöpfe, Tabellen … werden global gestaltet.
-Knopf-Varianten über die Eigenschaft ``variant`` (primary | secondary | danger | flat),
-siehe ``common.set_variant``. Farben für eigene Zeichnungen: ``theme.color("accent")``.
+Pages don't need to do anything: heading(), Card(), buttons, tables … are styled globally.
+Button variants via the property ``variant`` (primary | secondary | danger | flat),
+see ``common.set_variant``. Colors for custom drawings: ``theme.color("accent")``.
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ _current: "Tokens | None" = None
 _mode: str = ""
 
 
-# ------------------------------------------------------------------ Farben ---
+# ------------------------------------------------------------------ Colors ---
 def _lin(c: float) -> float:
     c /= 255
     return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
@@ -53,14 +53,14 @@ def contrast(a, b) -> float:
 
 
 def mix(a, b, t: float) -> str:
-    """a nach b mischen (t=0 -> a, t=1 -> b)."""
+    """blend a towards b (t=0 -> a, t=1 -> b)."""
     qa, qb = QColor(a), QColor(b)
     return QColor(round(qa.red() + (qb.red() - qa.red()) * t), round(qa.green() + (qb.green() - qa.green()) * t),
                   round(qa.blue() + (qb.blue() - qa.blue()) * t)).name()
 
 
 def _towards(col, target, bg, need: float) -> str:
-    """col schrittweise Richtung target schieben, bis der Kontrast zu bg reicht."""
+    """shift col step by step towards target until the contrast to bg is sufficient."""
     c = QColor(col).name()
     for i in range(21):
         cand = mix(col, target, i / 20)
@@ -72,21 +72,21 @@ def _towards(col, target, bg, need: float) -> str:
 @dataclass(frozen=True)
 class Tokens:
     dark: bool
-    bg: str            # Seitenhintergrund
-    panel: str         # Seitenleiste, Statusleiste
-    card: str          # Karten, Menüs
-    field: str         # Eingabefelder, Tabellen
-    alt: str           # wechselnde Zeilen
-    border: str        # dezente Linien
-    field_border: str  # Rahmen von Eingabefeldern (>= 3:1)
+    bg: str            # page background
+    panel: str         # sidebar, status bar
+    card: str          # cards, menus
+    field: str         # input fields, tables
+    alt: str           # alternating rows
+    border: str        # subtle lines
+    field_border: str  # border of input fields (>= 3:1)
     text: str
-    muted: str         # Nebentext (>= 4.5:1)
+    muted: str         # secondary text (>= 4.5:1)
     hover: str
     pressed: str
-    accent: str        # Akzent-Füllung (Knöpfe, Auswahlbalken)
-    on_accent: str     # Text auf Akzent (>= 4.5:1)
-    accent_fg: str     # Akzent als Schrift/Link auf bg (>= 4.5:1)
-    accent_soft: str   # Auswahl-Hintergrund
+    accent: str        # accent fill (buttons, selection bars)
+    on_accent: str     # text on accent (>= 4.5:1)
+    accent_fg: str     # accent as text/link on bg (>= 4.5:1)
+    accent_soft: str   # selection background
     danger: str
     on_danger: str
     warning: str
@@ -130,7 +130,7 @@ def make_tokens(dark: bool, accent: str = DEFAULT_ACCENT) -> Tokens:
 
 
 def tokens_from_palette(pal: QPalette, accent: str | None = None) -> Tokens:
-    """Token für den Systemstil: aus der Desktop-Palette abgeleitet."""
+    """Tokens for the system style: derived from the desktop palette."""
     win = pal.color(QPalette.ColorRole.Window).name()
     dark = QColor(win).lightness() < 128
     base = make_tokens(dark, accent or pal.color(QPalette.ColorRole.Highlight).name())
@@ -150,7 +150,7 @@ def current() -> Tokens:
 
 
 def color(name: str) -> QColor:
-    """Farbe des aktuellen Designs, z. B. color("accent"), color("muted"), color("danger")."""
+    """Color of the current design, e.g. color("accent"), color("muted"), color("danger")."""
     return QColor(getattr(current(), name, "#888888"))
 
 
@@ -158,7 +158,7 @@ def mode() -> str:
     return _mode or "auto"
 
 
-# ---------------------------------------------------------- Einstellungen ---
+# ---------------------------------------------------------- Settings ---
 def prefs() -> dict:
     from .. import config
     return config.module("rahmen", {"accent": DEFAULT_ACCENT, "icons": "app", "zoom": 1.0, "sidebar": True,
@@ -166,7 +166,7 @@ def prefs() -> dict:
                                     "seen_version": "", "design_migrated": False})
 
 
-# ------------------------------------------------------------ Grafiken ---
+# ------------------------------------------------------------ Graphics ---
 def _asset_dir():
     from .. import config
     d = config.CACHE_DIR / "theme"
@@ -175,7 +175,7 @@ def _asset_dir():
 
 
 def _draw(name: str, col: str, size: int = 32) -> str:
-    """kleine Grafiken für das Stylesheet (Pfeile, Haken) – mit QPainter, ohne SVG-Abhängigkeit."""
+    """small graphics for the stylesheet (arrows, checkmarks) – with QPainter, without an SVG dependency."""
     key = hashlib.md5(f"{name}{col}{size}v2".encode()).hexdigest()[:10]
     path = _asset_dir() / f"{name}-{key}.png"
     if path.exists():
@@ -209,7 +209,7 @@ def _draw(name: str, col: str, size: int = 32) -> str:
 
 # ------------------------------------------------------------ Stylesheet ---
 def stylesheet(t: Tokens, pt: float) -> str:
-    """vollständiges App-Design (t.native=False) oder leichtes Stylesheet für den Systemstil."""
+    """full app design (t.native=False) or a light stylesheet for the system style."""
     h1, h2, small = pt * 1.75, pt * 1.15, max(7.0, pt * 0.86)
     common = f"""
 QLabel[role="pageTitle"] {{ font-size: {h1:.1f}pt; font-weight: 700; color: {t.text}; }}
@@ -419,7 +419,7 @@ def system_is_dark() -> bool:
 
 
 def apply(app: QApplication, mode: str, accent: str | None = None, zoom: float | None = None):
-    """Design anwenden (jederzeit erneut aufrufbar, z. B. nach den Einstellungen)."""
+    """Apply the design (can be called again at any time, e.g. after the settings)."""
     global _system_palette, _system_style, _current, _mode, _base_font
     if _system_palette is None:
         _system_palette = QPalette(app.palette())
@@ -427,7 +427,7 @@ def apply(app: QApplication, mode: str, accent: str | None = None, zoom: float |
         _base_font = QFont(app.font())
     try:
         pr = prefs()
-    except Exception:  # noqa: BLE001 – Design darf nie am Speichern scheitern
+    except Exception:  # noqa: BLE001 – design must never fail because of saving
         pr = {}
     accent = accent or pr.get("accent") or DEFAULT_ACCENT
     zoom = float(zoom if zoom is not None else pr.get("zoom", 1.0) or 1.0)
@@ -466,8 +466,8 @@ _styles: dict = {}
 
 
 def _set_style(app: QApplication, name: str):
-    """Stil nur wechseln, wenn er sich ändert; Stil-Objekte behalten (wiederholtes setStyle mit neuen
-    Objekten bringt Qt mit gesetztem Stylesheet zum Absturz)."""
+    """Only switch the style if it changes; keep style objects (repeated setStyle with new
+    objects crashes Qt when a stylesheet is set)."""
     base = app.style()
     cur = (base.baseStyle() if hasattr(base, "baseStyle") and base.baseStyle() else base).objectName().lower()
     if cur == name.lower() or app.style().objectName().lower() == name.lower():

@@ -1,4 +1,4 @@
-# Catalog ("Firmware+", formerly "Entdecken" – Discover) – research notes
+# Catalog ("Firmware+", formerly "Discover") – research notes
 
 As of: 30 Oct 2026, workstream *catalog*.
 

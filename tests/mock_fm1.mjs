@@ -1,7 +1,7 @@
-// Das simulierte FM-1 aus dem Melodee-Editor selbst (makeMockDevice) als Prozess:
-// eine MIDI-Nachricht pro Zeile als Hex auf stdin/stdout. Damit testet die App ihre
-// Web-MIDI-Brücke gegen genau das Gerät, gegen das der Editor-Entwickler testet.
-//   node tests/mock_fm1.mjs /pfad/zu/editor.html
+// The simulated FM-1 from the Melodee editor itself (makeMockDevice) as a process:
+// one MIDI message per line as hex on stdin/stdout. With it the app tests its
+// Web MIDI bridge against exactly the device the editor's developer tests against.
+//   node tests/mock_fm1.mjs /path/to/editor.html
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import readline from "node:readline";
@@ -12,12 +12,12 @@ const mock = E.makeMockDevice({ auto: false });
 const input = [...mock.access.inputs.values()][0];
 const output = [...mock.access.outputs.values()][0];
 input.onmidimessage = (e) => process.stdout.write(Buffer.from(e.data).toString("hex") + "\n");
-console.log("# Melodee-Editor-Mock bereit");
+console.log("# Melodee editor mock ready");
 const rl = readline.createInterface({ input: process.stdin });
 const queue = [];
 let busy = false;
 rl.on("line", (l) => { l = l.trim(); if (!l || l.startsWith("#")) return; queue.push(Uint8Array.from(Buffer.from(l, "hex"))); pump(); });
-// das Mock-Gerät hält nur einen Frame gleichzeitig (wie das echte): nacheinander zustellen
+// the mock device holds only one frame at a time (like the real one): deliver one after the other
 function pump() {
   if (busy || !queue.length) return;
   busy = true;

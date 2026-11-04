@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Installationsplan: welche Schritte in welcher Reihenfolge, mit Risiko, Warnungen und Sperren.
+"""Installation plan: which steps in which order, with risk, warnings and locks.
 
-plan_install(device_state, target) ist rein (kein MIDI, kein Netz) und vollständig getestet.
-Regeln und Begründungen: docs/flash-protocol.md.
+plan_install(device_state, target) is pure (no MIDI, no network) and fully tested.
+Rules and rationale: docs/flash-protocol.md.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ BOOT_CHANGERS = ("m-bootloader", "mbootloader", "open", "fm1open")
 
 RISK_TEXT = {"keins": _("no risk"), "niedrig": _("low risk"), "mittel": _("medium risk"), "hoch": _("high risk")}
 
-# Bestätigungen, die der Nutzer ausdrücklich geben muss
+# confirmations the user must give explicitly
 CONFIRM_TEXT = {
     "unknown_file": _("I know what I am doing: this file is in no catalog. I have checked the identity and "
                       "checksum myself."),
@@ -52,16 +52,16 @@ MULTI_DEVICE_TEXT = _("Please leave only the FM-1 connected that you want to upd
 
 @dataclass
 class DeviceState:
-    """was die App über das angeschlossene FM-1 weiß"""
-    identity: str = ""            # Handshake-Kennung, z. B. "FM-1_91060", "ota-FM-1_900"
-    felucca: bool = False         # Felucca-Protokoll nutzbar (Backup möglich)
-    firmware_key: str = ""        # z. B. "melodee"
-    version: str = ""             # z. B. "Melodee 1.6.0-rc.7"
+    """what the app knows about the connected FM-1"""
+    identity: str = ""            # handshake identity, e.g. "FM-1_91060", "ota-FM-1_900"
+    felucca: bool = False         # Felucca protocol usable (backup possible)
+    firmware_key: str = ""        # e.g. "melodee"
+    version: str = ""             # e.g. "Melodee 1.6.0-rc.7"
     port: str = ""
     connected: bool = True
-    ports: int = 1                # wie viele FM-1 (auch im Update-Modus) angeschlossen sind
-    busy: bool = False            # eine andere Installation läuft
-    pinned: bool = False          # Zielgerät eindeutig über USB-Anschluss/Seriennummer festgehalten
+    ports: int = 1                # how many FM-1 (including in update mode) are connected
+    busy: bool = False            # another installation is running
+    pinned: bool = False          # target device unambiguously pinned by USB connection/serial number
 
     @property
     def update_mode(self) -> bool:
@@ -74,21 +74,21 @@ class DeviceState:
 
 @dataclass
 class Target:
-    """was installiert werden soll"""
+    """what is to be installed"""
     name: str
-    product: str = ""             # erwartete Kennung (aus Paket oder Katalog)
-    sha256: str = ""              # erwartete Prüfsumme ("" = unbekannt)
-    family: str = ""              # Loader-Familie "stock"|"felucca"|"" (unbekannt)
+    product: str = ""             # expected identity (from package or catalog)
+    sha256: str = ""              # expected checksum ("" = unknown)
+    family: str = ""              # loader family "stock"|"felucca"|"" (unknown)
     requires_stock_v15: bool = False
     notes: list[str] = field(default_factory=list)
-    resources: bool = False       # Melodee ab 1.6: Ressourcen nach der Firmware schreiben
+    resources: bool = False       # Melodee 1.6+: write resources after the firmware
     key: str = ""                 # FirmwareSpec.key
     tag: str = ""
     file: Path | None = None
-    package: pk.PackageInfo | None = None    # wenn die Datei schon vorliegt und untersucht ist
-    known: bool = True            # aus Katalog/Builtin; False = eigene Datei
+    package: pk.PackageInfo | None = None    # if the file is already present and inspected
+    known: bool = True            # from catalog/builtin; False = own file
     prerelease: bool = False
-    checksum: bool = True         # False: Paket lässt sich gegen keine Prüfsumme prüfen (Bestätigung nötig)
+    checksum: bool = True         # False: package cannot be checked against any checksum (confirmation needed)
 
     @classmethod
     def from_spec(cls, spec, tag: str = "", file: Path | None = None, package=None, prerelease=False):
@@ -131,7 +131,7 @@ def _family(spec) -> str:
 class Step:
     kind: str                     # backup | fetch | stock | install | resume | resources | verify
     title: str
-    risk: str                     # keins | niedrig | mittel | hoch
+    risk: str                     # keins | niedrig | mittel | hoch  (none | low | medium | high)
     text: str
     writes: bool = False
 
@@ -144,11 +144,11 @@ class InstallPlan:
     warnings: list[str] = field(default_factory=list)
     blockers: list[str] = field(default_factory=list)
     confirmations: list[str] = field(default_factory=list)
-    lost: list[str] = field(default_factory=list)    # was danach weg ist
+    lost: list[str] = field(default_factory=list)    # what is gone afterwards
     via_stock: bool = False
     resume: bool = False
-    v15_option: str = "none"      # none | default_on | default_off | locked (Zwischenschritt V15 im Dialog)
-    v15_reason: str = ""          # Begründung, wenn der Zwischenschritt nicht vom Katalog, sondern von V16 kommt
+    v15_option: str = "none"      # none | default_on | default_off | locked (intermediate step V15 in the dialog)
+    v15_reason: str = ""          # rationale when the intermediate step comes from V16 rather than the catalog
 
     @property
     def ok(self) -> bool:
@@ -165,7 +165,7 @@ class InstallPlan:
 
 
 def check_package(t: Target, info: pk.PackageInfo) -> list[str]:
-    """Sperren für ein vorliegendes Paket (Prüfsumme, Modell, Unversehrtheit, Loader)"""
+    """Locks for an available package (checksum, model, integrity, loader)"""
     out = []
     if t.sha256 and info.sha256 != t.sha256:
         out.append(_("The checksum of {name} does not match the catalog (expected {expected}…, file {actual}…). "
@@ -193,9 +193,9 @@ def check_package(t: Target, info: pk.PackageInfo) -> list[str]:
 
 
 def v15_option(state: DeviceState, t: Target) -> str:
-    """Zwischenschritt über Original-V15: none (Ziel ist Original / Gerät läuft schon V15 / nicht möglich),
-    locked (Katalog verlangt V15), default_on (Firmware-Wechsel oder unbekannte Firmware), default_off (Update
-    derselben Firmware)."""
+    """Intermediate step via stock V15: none (target is stock / device already runs V15 / not possible),
+    locked (catalog requires V15), default_on (firmware change or unknown firmware), default_off (update
+    of the same firmware)."""
     if state.identity == "FM-1_015" or state.update_mode:
         return "none"
     if v16_switch(state, t):
@@ -215,20 +215,20 @@ def runs_v16(state: DeviceState) -> bool:
 
 
 def v16_switch(state: DeviceState, t: Target) -> bool:
-    """Wechsel zwischen V16 und V15-Aufbau, der nur über die Original-V15 geht:
-    - Ziel V16 von einer Firmware, die nicht die Original-Firmware ist: Melodee & Co. vergleichen vor dem Original-Loader
-      den Bootkopf des Pakets mit dem des Geräts (melodee firmware/src/ota.c, „CHECK HEAD“). V16 hat einen anderen
-      Bootkopf als der Werks-Kopf (V13–V15) – das gäbe „FAILED -5“. [Paket]
-    - von V16 auf etwas anderes als V15: Ob V16 den Loader einer Community-Firmware annimmt, ist unbekannt; der Weg
-      über V15 nutzt in beiden Richtungen denselben Original-Loader. [Annahme, vorsichtig]"""
+    """Switch between V16 and V15 layout that only works via stock V15:
+    - Target V16 from a firmware that is not the stock firmware: Melodee & co. compare the package's boot header
+      with the device's before handing over to the stock loader (melodee firmware/src/ota.c, "CHECK HEAD"). V16 has a
+      different boot header than the factory header (V13–V15) – that would give "FAILED -5". [Pkg]
+    - From V16 to anything other than V15: whether V16 accepts the loader of a community firmware is unknown; the path
+      via V15 uses the same stock loader in both directions. [Assumption, cautious]"""
     if t.is_v16:
         return not runs_v16(state) and not pk.is_stock_identity(state.identity)
     return runs_v16(state) and t.product != "FM-1_015" and t.key != "stock-v15"
 
 
 def v16_layout(t: Target) -> bool:
-    """Ziel nutzt den V16-Aufbau: Kennung/Katalog sagen V16 – oder das vorliegende Paket schreibt über 0x92FFF hinaus
-    (Inhalt zählt, nicht Name oder Kennung: so fällt auch ein umbenanntes oder umgekennzeichnetes Paket auf)"""
+    """Target uses the V16 layout: identity/catalog say V16 – or the available package writes beyond 0x92FFF
+    (content counts, not name or identity: so a renamed or relabelled package is caught too)"""
     return t.is_v16 or bool(t.package is not None and t.package.flash_bytes > fm.V15_END)
 
 
@@ -237,14 +237,14 @@ def layout_change(state: DeviceState, t: Target) -> bool:
 
 
 def switch_key(state: DeviceState, t: Target) -> str:
-    """Schlüssel, unter dem die Wahl für genau diesen Wechsel gemerkt wird"""
+    """Key under which the choice for exactly this switch is remembered"""
     return f"{(state.firmware_key or state.identity or '?').lower()}>{(t.key or t.product or t.name).lower()}"
 
 
 def plan_install(state: DeviceState, target: Target, journal_active: dict | None = None,
                  stock_package: pk.PackageInfo | None = None, via_v15: bool | None = None,
                  backup: bool | None = None) -> InstallPlan:
-    """backup: None/True = vorher sichern (wenn die Firmware das kann), False = ausdrücklich ohne Backup"""
+    """backup: None/True = back up first (if the firmware supports it), False = explicitly without backup"""
     p = InstallPlan(target=target, state=state)
     t = target
     info = t.package
@@ -255,7 +255,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
             t.product = info.product
     fam = t.family if t.family in ("stock", "felucca") else (info.family if info else "")
 
-    # ---- Sperren
+    # ---- locks
     if state.busy or (journal_active and journal_active.get("phase") not in ("done", "failed", "safe")
                       and not state.update_mode and journal_active.get("pid_alive")):
         p.blockers.append(_("An installation is already running. Please wait until it is finished."))
@@ -281,7 +281,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
         p.warnings.append(_("Several FM-1 are connected. The app pins the target device by its USB port – "
                             "please do not move any cable during the installation."))
 
-    # ---- Update-Modus: nur fortsetzen, wenn der wartende Loader zum Paket passt
+    # ---- update mode: only continue if the waiting loader matches the package
     if state.update_mode:
         rule = pk.LoaderRule(fam, t.product or (info.product if info else "")) if fam else None
         if rule is None or not rule(state.identity):
@@ -308,7 +308,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
         _confirm_power(p, t, fam)
         return p
 
-    # ---- Vorprüfung (flashmodel.preflight): Kennung aus dem Paket, nie aus dem Dateinamen
+    # ---- pre-check (flashmodel.preflight): identity from the package, never from the file name
     if info is not None and t.file is not None:
         v = fm.name_version(Path(t.file).name)
         if v is not None and pk.is_stock_identity(info.product) and v != int(info.product[-3:]):
@@ -319,7 +319,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
                                     version=int(info.product[-3:])))
     lchange = layout_change(state, t)
     if lchange and not state.identity and not state.felucca:
-        # z. B. Melodee, deren Erkennung noch läuft: sonst sähe der Plan „kein Backup möglich“ statt der Backup-Pflicht
+        # e.g. Melodee whose detection is still running: otherwise the plan would show "no backup possible" instead of the mandatory backup
         p.blockers.append(_("The running firmware is not recognized (yet). For the switch between V16 and the V15 "
                             "layout the app must know what is running – please wait until the FM-1 is recognized at "
                             "the top, and open the plan again. Without recognition: install the original V15 first."))
@@ -331,7 +331,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
     if mel == "up16" and state.felucca and backup is False:
         p.blockers.append(m16.BACKUP_REQUIRED_16)
 
-    # ---- normaler Ablauf
+    # ---- normal flow
     if state.felucca and backup is not False:
         p.steps.append(Step("backup", _("Backup of the device"), "keins",
                             _("All projects, sounds and settings are backed up first (read only). "
@@ -390,7 +390,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
                           "firmware. Do not unplug, do not switch off."), writes=True))
     _tail(p, t)
 
-    # ---- Warnungen und Bestätigungen
+    # ---- warnings and confirmations
     cur = (state.firmware_key or "").lower()
     if cur and t.key and cur != t.key or (state.identity and t.product and state.identity != t.product
                                           and not t.key):
@@ -439,14 +439,14 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
 
 
 def target_version(t: Target) -> str:
-    """Version des Ziels: Release-Tag, sonst aus dem Namen (z. B. „melodee-1.6.0.fwsc“)"""
+    """Version of the target: release tag, otherwise from the name (e.g. "melodee-1.6.0.fwsc")"""
     return t.tag or (t.name if m16.version_key(t.name) else "")
 
 
 def melodee_change(state: DeviceState, t: Target) -> str:
-    """Wechsel über die Grenze von Melodee 1.6 (RELEASE_1.6.0.md „Upgrading“)?
-    up16: Melodee < 1.6 -> Melodee ≥ 1.6 · down16: Melodee ≥ 1.6 -> ältere Melodee oder andere Firmware ·
-    within: Melodee -> Melodee, ohne die Grenze zu kreuzen · '' sonst / unbekannt"""
+    """Switch across the Melodee 1.6 boundary (RELEASE_1.6.0.md "Upgrading")?
+    up16: Melodee < 1.6 -> Melodee ≥ 1.6 · down16: Melodee ≥ 1.6 -> older Melodee or other firmware ·
+    within: Melodee -> Melodee without crossing the boundary · '' otherwise / unknown"""
     cur = (state.firmware_key or "").lower() == "melodee" or m16.is_melodee(state.version)
     if not cur or state.update_mode:
         return ""

@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Geheimnisse und persönliche Angaben aus allem entfernen, was die App nach außen gibt
-(Fehlerbericht, Diagnose, Systemcheck-Bericht, kopierte Berichte).
+"""Remove secrets and personal details from everything the app hands out
+(bug report, diagnostics, system check report, copied reports).
 
-* Schlüssel, die nach Zugangsdaten aussehen (token, passw…, secret, api_key/api-key), werden in jeder
-  Verschachtelungstiefe durch ``REDACTED`` ersetzt – egal, was drinsteht.
-* Bekannte Token-Formate (GitHub ``ghp_…``/``github_pat_…``, ``Authorization: …``) werden auch in freiem
-  Text (Protokolle, Fehlermeldungen) ersetzt.
-* Das Home-Verzeichnis wird zu ``~``, der Rechnername zu ``<rechner>``, der Benutzername zu ``<benutzer>``.
+* Keys that look like credentials (token, passw…, secret, api_key/api-key) are replaced by ``REDACTED`` at any
+  nesting depth – no matter what they contain.
+* Known token formats (GitHub ``ghp_…``/``github_pat_…``, ``Authorization: …``) are also replaced in free
+  text (logs, error messages).
+* The home directory becomes ``~``, the host name ``<rechner>``, the user name ``<benutzer>``.
 """
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ def redact_text(text: str, home: str | None = None, host: str | None = None, use
 
 
 def redact(obj, home: str | None = None, host: str | None = None, user: str | None = None):
-    """rekursiv bereinigte Kopie von dict/list/str (andere Werte unverändert)."""
+    """recursively cleaned copy of dict/list/str (other values unchanged)."""
     if isinstance(obj, dict):
         out = {}
         for k, v in obj.items():

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""klang: DX7-SysEx, Renderer, Generatoren, Sammlungen."""
+"""Sound: DX7 SysEx, renderer, generators, collections."""
 from __future__ import annotations
 
 import random
@@ -44,8 +44,8 @@ def test_single_and_bank_roundtrip():
 def test_tolerant_parsing():
     v = dx7.init_voice()
     s = bytearray(dx7.single_syx(v))
-    s[-2] ^= 1                                       # falsche Prüfsumme
-    r = dx7.parse_syx(bytes(s) + b"\x00\x01" + bytes(dx7.single_syx(v))[:-1])   # Müll, dann ohne F7
+    s[-2] ^= 1                                       # wrong checksum
+    r = dx7.parse_syx(bytes(s) + b"\x00\x01" + bytes(dx7.single_syx(v))[:-1])   # garbage, then without F7
     assert len(r.voices) == 2 and any("Prüfsumme" in w for w in r.warnings)
     raw = bytes(x for _ in range(32) for x in dx7.pack(v))
     assert len(dx7.parse_syx(raw).voices) == 32

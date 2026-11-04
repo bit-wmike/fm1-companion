@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Systemcheck: Auswertung realistischer Kernel-Protokolle (Raspberry Pi 5) – ohne Qt."""
+"""System check: evaluation of realistic kernel logs (Raspberry Pi 5) – without Qt."""
 from __future__ import annotations
 
 import sys
@@ -27,7 +27,7 @@ def test_reconnect_loop():
     f = sc.analyze_log((FX / "pi5_fm1_reconnect_loop.txt").read_text())
     k = keys(f)
     assert k["fm1-loop"] == "error"
-    assert k["usb-enum"] == "error"           # -71 am Anschluss des FM-1
+    assert k["usb-enum"] == "error"           # -71 at the FM-1's port
     loop = next(x for x in f if x.key.startswith("fm1-loop"))
     assert "3-1.2" in loop.title and "4 Trennungen" in loop.detail and loop.evidence
 
@@ -91,13 +91,13 @@ def test_unreadable_log(monkeypatch):
 
 
 def test_xhci_dead_during_fm1_audio_start():
-    """Pi 5 (Bericht 2.2.0): Controller stirbt, gleichzeitig scheitert der Audio-Start des FM-1 → gezielter Rat."""
+    """Pi 5 (report 2.2.0): the controller dies, at the same time the FM-1's audio start fails → targeted advice."""
     f = {x.key: x for x in sc.analyze_log((FX / "pi5_xhci_dead_on_fm1_audio.txt").read_text())}
     x = f["xhci-dead"]
     assert x.level == "error" and "Audio-Start des FM-1" in x.title
     assert "rpi-eeprom-update" in x.fix and "Profil „Aus“" in x.fix and "unbind" in x.fix
-    assert "full-upgrade" not in x.fix                 # erst prüfen, nicht blind aktualisieren
-    # ohne FM-1-Bezug: die allgemeine Meldung
+    assert "full-upgrade" not in x.fix                 # check first, do not update blindly
+    # without FM-1 relation: the general message
     plain = sc.analyze_log("[ 10.0] xhci-hcd xhci-hcd.1: HC died; cleaning up\n")
     assert next(y for y in plain if y.key == "xhci-dead").title == "USB-Controller ist abgestürzt"
 
@@ -112,7 +112,7 @@ def test_playback_dummy_output_warns():
 
 
 def test_fluidsynth_service_blocking_hdmi(tmp_path):
-    """Pi 5 (Bericht nach 2.2.2): Debians fluidsynth.service hielt /dev/snd/pcmC0D0p → kein HDMI-Ausgang."""
+    """Pi 5 (report after 2.2.2): Debian's fluidsynth.service held /dev/snd/pcmC0D0p → no HDMI output."""
     import os
     from fm1companion import audiofix as AF
     proc = tmp_path / "proc"
@@ -123,7 +123,7 @@ def test_fluidsynth_service_blocking_hdmi(tmp_path):
         (proc / str(pid) / "comm").write_text(comm + "\n")
         os.symlink(target, d / "5")
     hs = AF.playback_holders(proc)
-    assert [(h.pid, h.name, h.card) for h in hs] == [(898, "fluidsynth", 0)]       # PipeWire selbst zählt nicht
+    assert [(h.pid, h.name, h.card) for h in hs] == [(898, "fluidsynth", 0)]       # PipeWire itself does not count
     f = {x.key: x for x in sc.blocked_findings(hs, (True, True))}
     assert f["fluidsynth-service"].level == "error" and "PID 898" in f["fluidsynth-service"].detail
     assert "disable --now fluidsynth" in f["fluidsynth-service"].fix

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Echter Startpfad als Unterprozess (python -m fm1companion): Splash, Assistent, Hauptfenster, Beenden.
+"""Real start path as a subprocess (python -m fm1companion): splash, wizard, main window, quit.
 
-Prüft, dass die App in schwierigen Umgebungen startet UND sauber endet (Exit-Code 0, kein Signal 11 beim
-Abbau der QApplication, kein Traceback): frisches HOME, kaputte Einstellungsdatei, nicht beschreibbares HOME,
-fehlendes QtWebEngine, fehlendes rtmidi. FM1C_AUTOQUIT_MS lässt die App nach n ms wie über „Beenden“ schließen.
-Läuft unter flock /tmp/fm1c-ui.lock (UI-Tests teilen sich die Maschine)."""
+Checks that the app starts in difficult environments AND ends cleanly (exit code 0, no signal 11 while
+tearing down the QApplication, no traceback): fresh HOME, broken settings file, non-writable HOME,
+missing QtWebEngine, missing rtmidi. FM1C_AUTOQUIT_MS makes the app close after n ms as if via "Quit".
+Runs under flock /tmp/fm1c-ui.lock (UI tests share the machine)."""
 from __future__ import annotations
 
 import os
@@ -22,7 +22,7 @@ NOISE = ("QRhi", "GPUInfo", "propagateSizeHints", "dbus", "RHI for backend", "XD
          "Surface ", "Using ", "Init Parameters", "  *  ", "No suitable graphics backend", "QStandardPaths",
          "Failed to connect", "offscreen", "ALSA", "rtmidi", "snd_", "QWindowsVista")
 
-# Bootstrap, der vor dem Start ausgewählte Module unerreichbar macht (fehlendes Debian-Paket simulieren)
+# bootstrap that makes selected modules unreachable before the start (simulates a missing Debian package)
 BLOCKER = """
 import builtins, runpy, sys
 blocked = tuple(x for x in {blocked!r})
@@ -42,7 +42,7 @@ def _env(home: Path, demo: bool = True) -> dict:
     env.update(HOME=str(home), QT_QPA_PLATFORM="offscreen", FM1C_AUTOQUIT_MS="2500",
                PYTHONPATH=str(ROOT), LANG="de_DE.UTF-8")
     env.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
-    env["HTTPS_PROXY"] = env["https_proxy"] = "http://127.0.0.1:9"      # kein Netz: Update-Suche scheitert sofort
+    env["HTTPS_PROXY"] = env["https_proxy"] = "http://127.0.0.1:9"      # no network: the update check fails at once
     if demo:
         env["FM1C_DEMO"] = "1"
     return env
@@ -61,7 +61,7 @@ def _clean(text: str) -> str:
 
 def _assert_clean_exit(res, what: str):
     err = _clean(res.stderr)
-    assert res.returncode == 0, f"{what}: Exit-Code {res.returncode} (139 = Absturz beim Beenden)\n{err[-3000:]}"
+    assert res.returncode == 0, f"{what}: exit code {res.returncode} (139 = crash on quit)\n{err[-3000:]}"
     assert "Traceback" not in res.stderr, f"{what}: Traceback\n{err[-3000:]}"
     assert "Segmentation" not in res.stderr, what
 
@@ -76,19 +76,19 @@ def _log_text(home: Path) -> str:
 
 
 def test_fresh_start_and_quit(tmp_path):
-    """Erster Start: ohne Config, ohne ~/FM-1 – Splash, Assistent, Fenster, Beenden -> Exit 0, Config geschrieben."""
+    """First start: without config, without ~/FM-1 – splash, wizard, window, quit -> exit 0, config written."""
     home = tmp_path / "home"
     home.mkdir()
     res = _run(home)
     _assert_clean_exit(res, "Erster Start")
     cfg = list(home.rglob("config.json"))
-    assert cfg, "keine Einstellungen geschrieben"
+    assert cfg, "no settings written"
     assert "wizard_done" in cfg[0].read_text("utf-8")
     assert "Start fm1-companion" in _log_text(home)
 
 
 def test_second_start_no_splash(tmp_path):
-    """Zweiter Start (Assistent erledigt) ohne Splash – ebenfalls sauber."""
+    """Second start (wizard done) without splash – clean as well."""
     home = tmp_path / "home"
     home.mkdir()
     _assert_clean_exit(_run(home), "Erster Start")
@@ -96,21 +96,21 @@ def test_second_start_no_splash(tmp_path):
 
 
 def test_broken_config(tmp_path):
-    """Kaputte config.json (echter Modus, kein Gerät): App startet, legt die Datei beiseite und sagt es."""
+    """Broken config.json (real mode, no device): the app starts, puts the file aside and says so."""
     home = tmp_path / "home"
     cfgdir = home / ".config" / "fm1-companion"
     cfgdir.mkdir(parents=True)
     (cfgdir / "config.json").write_text("{ kaputt", "utf-8")
     res = _run(home, "--no-splash", demo=False)
     _assert_clean_exit(res, "kaputte Config")
-    assert list(cfgdir.glob("config.json.kaputt-*")), "kaputte Datei nicht beiseitegelegt"
-    assert "beschädigt" in _log_text(home), "kein Hinweis auf die beschädigte Einstellungsdatei im Protokoll"
+    assert list(cfgdir.glob("config.json.kaputt-*")), "broken file not put aside"
+    assert "beschädigt" in _log_text(home), "no note about the damaged settings file in the log"
 
 
 def test_readonly_home(tmp_path):
-    """HOME nicht beschreibbar: kein Absturz, Exit 0 (Einstellungen können nicht gespeichert werden)."""
+    """HOME not writable: no crash, exit 0 (settings cannot be saved)."""
     if os.geteuid() == 0:
-        pytest.skip("als root ist jedes Verzeichnis beschreibbar")
+        pytest.skip("as root every directory is writable")
     home = tmp_path / "home"
     home.mkdir()
     home.chmod(stat.S_IRUSR | stat.S_IXUSR)
@@ -122,8 +122,8 @@ def test_readonly_home(tmp_path):
 
 
 def test_config_not_writable(tmp_path):
-    """~/.config ist eine Datei (auch als root nachstellbar; wie voller Datenträger/fehlende Rechte): die App startet,
-    beendet sich sauber und sagt einmal, dass die Einstellungen nicht gespeichert werden – vorher Traceback beim Start."""
+    """~/.config is a file (reproducible as root too; like a full disk/missing permissions): the app starts,
+    quits cleanly and says once that the settings are not saved – before: traceback at start."""
     home = tmp_path / "home"
     home.mkdir()
     (home / ".config").write_text("keine Ordner hier")
@@ -135,21 +135,21 @@ def test_config_not_writable(tmp_path):
 
 
 def test_without_webengine(tmp_path):
-    """python3-pyqt6.qtwebengine fehlt: App startet trotzdem, Editor/Simulator sagen, was fehlt."""
+    """python3-pyqt6.qtwebengine missing: the app starts anyway, editor/simulator say what is missing."""
     home = tmp_path / "home"
     home.mkdir()
     res = _run(home, "--no-splash", blocked=("PyQt6.QtWebEngine",))
     _assert_clean_exit(res, "ohne QtWebEngine")
-    assert "qtwebengine" in _log_text(home).lower(), "fehlendes QtWebEngine wird nicht gemeldet"
+    assert "qtwebengine" in _log_text(home).lower(), "missing QtWebEngine is not reported"
 
 
 def test_without_rtmidi(tmp_path):
-    """python3-rtmidi fehlt: App startet, meldet die fehlende MIDI-Anbindung."""
+    """python3-rtmidi missing: the app starts and reports the missing MIDI connection."""
     home = tmp_path / "home"
     home.mkdir()
     res = _run(home, "--no-splash", blocked=("rtmidi", "mido.backends.rtmidi"))
     _assert_clean_exit(res, "ohne rtmidi")
-    assert "rtmidi" in _log_text(home).lower(), "fehlendes rtmidi wird nicht gemeldet"
+    assert "rtmidi" in _log_text(home).lower(), "missing rtmidi is not reported"
 
 
 def test_cli_flags():

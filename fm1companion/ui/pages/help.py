@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Hilfe-Center: Anleitungen (Markdown aus data/help), Suche, Links in die App und Diagnose."""
+"""Help center: guides (Markdown from data/help), search, links into the app and diagnostics."""
 from __future__ import annotations
 
 import html
@@ -46,7 +46,7 @@ def topics(lang: str | None = None) -> list[tuple[str, str, str]]:
 
 
 def style_document(doc: QTextDocument):
-    """Überschriften, Code und Tabellen im Design der App einfärben."""
+    """Color headings, code and tables in the app's theme."""
     t = theme.current()
     cur = QTextCursor(doc)
     block = doc.begin()
@@ -75,7 +75,7 @@ class HelpPage(QWidget):
         self.tabs = QTabWidget()
         lay.addWidget(self.tabs, 1)
 
-        # ---- Anleitungen
+        # ---- Guides
         g = QWidget()
         gl = QHBoxLayout(g)
         left = QVBoxLayout()
@@ -103,7 +103,7 @@ class HelpPage(QWidget):
             it.setData(Qt.ItemDataRole.UserRole, key)
             self.list.addItem(it)
 
-        # ---- Diagnose
+        # ---- Diagnostics
         self.diag = DiagnoseView(window)
         self.tabs.addTab(self.diag, icon("hwinfo"), _("Diagnostics"))
         self.list.setCurrentRow(0)
@@ -136,8 +136,8 @@ class HelpPage(QWidget):
         text = next((md for k, _t, md in self.topics if k == key), "")
         self.browser.document().setMarkdown(text)
         style_document(self.browser.document())
-        # immer oben anfangen: sonst steht die Schreibmarke am Dokumentende und die Ansicht springt beim
-        # ersten Anzeigen nach unten (Überschrift und erster Absatz waren abgeschnitten)
+        # always start at the top: otherwise the cursor sits at the end of the document and the view jumps
+        # down on first display (heading and first paragraph were cut off)
         self.browser.moveCursor(QTextCursor.MoveOperation.Start)
         self.browser.verticalScrollBar().setValue(0)
         q = self.search.text().strip()
@@ -203,7 +203,7 @@ class DiagnoseView(QWidget):
             row.addWidget(x)
         row.addStretch(1)
         lay.addLayout(row)
-        reflow(row)                                      # Knöpfe brechen bei schmalem Fenster um
+        reflow(row)                                      # buttons wrap when the window is narrow
         split = QSplitter(Qt.Orientation.Vertical)
         self.info = QTextBrowser()
         self.info.setOpenExternalLinks(True)

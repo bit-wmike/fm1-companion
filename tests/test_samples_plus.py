@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Tests für Slicer, Sample-Aufnahme, Takt-Sync, Sample-Pakete und FM1 Open (ohne Qt).
+"""Tests for slicer, sample recording, clock sync, sample packs and FM1 Open (without Qt).
 
   python3 -m pytest tests/test_samples_plus.py -q
 """
@@ -44,7 +44,7 @@ def save(path, x, sr=SR):
 
 @pytest.mark.parametrize("seed,bpm", [(1, 120), (2, 96), (3, 140)])
 def test_onsets_known_positions(seed, bpm):
-    step = 60 / bpm / 2                               # Achtel
+    step = 60 / bpm / 2                               # eighth
     times = [0.04 + i * step for i in range(8)]
     kinds = "khskhshk"
     x = drum_loop(times, kinds, times[-1] + 0.4, seed)
@@ -56,9 +56,9 @@ def test_onsets_known_positions(seed, bpm):
 def test_onsets_sensitivity_and_gap():
     times = [0.1, 0.5, 0.9]
     x = drum_loop(times, "kkk", 1.3)
-    x[int(0.7 * SR):int(0.7 * SR) + 2000] += 0.02 * np.sin(np.arange(2000) / 3)   # leiser Ton
+    x[int(0.7 * SR):int(0.7 * SR) + 2000] += 0.02 * np.sin(np.arange(2000) / 3)   # quiet tone
     assert len(slicer.detect_onsets(x, SR, 0.0)) == 3
-    assert len(slicer.detect_onsets(x, SR, 0.5, min_gap=0.5)) < 3        # Mindestabstand fasst zusammen
+    assert len(slicer.detect_onsets(x, SR, 0.5, min_gap=0.5)) < 3        # the minimum gap merges
     assert slicer.detect_onsets(np.zeros(1000), SR) == []
 
 
@@ -96,11 +96,11 @@ def test_kit_from_many_long_slices_fits(tmp_path):
     p = tmp_path / "long.wav"
     save(p, drum_loop([i * 0.5 for i in range(20)], "k" * 20, 10.5))
     kit = slicer.kit_from_slices(str(p), slicer.ranges(slicer.equal_points(10.5, 20), 10.5))
-    assert len(kit.zones) == 16                                  # höchstens 16 Zonen
+    assert len(kit.zones) == 16                                  # at most 16 zones
     assert S.kit_budget(kit)[0] <= S.SLOT_BYTES
 
 
-# ------------------------------------------------------------- Aufnahme
+# ------------------------------------------------------------- recording
 
 def test_take_processing():
     sr = 1000
@@ -135,10 +135,10 @@ def test_tail_reader_growing_file(tmp_path):
     assert blk.shape == (4, 2) and abs(blk[0, 0] - 0.5) < 1e-6
 
 
-# -------------------------------------------------------------- Takt-Sync
+# -------------------------------------------------------------- clock sync
 
 def clock_stream(bpm, bars, t0=10.0, start_after_ticks=0, beats=4):
-    """(status, t)-Folge: ein paar Ticks vor Start, dann Start und Clock."""
+    """(status, t) sequence: a few ticks before start, then start and clock."""
     dt = 60 / bpm / 24
     ev, t = [], t0
     for _ in range(start_after_ticks):
@@ -161,21 +161,21 @@ def test_barsync_start_and_n_bars():
     for s, t in ev:
         b.feed(s, t)
     assert b.start_time == first_tick
-    assert abs((b.end_time - b.start_time) - 2 * 4 * 0.5) < 1e-9       # 2 Takte bei 120 BPM = 4 s
+    assert abs((b.end_time - b.start_time) - 2 * 4 * 0.5) < 1e-9       # 2 bars at 120 BPM = 4 s
     assert abs(b.bpm - 120) < 0.01 and b.state == "fertig" and not b.stopped_early
 
 
 def test_barsync_next_bar_while_running_and_stop():
     b = R.BarSync()
     ev = clock_stream(100, 4)
-    for s, t in ev[:150]:                                   # läuft schon (Takt 2)
+    for s, t in ev[:150]:                                   # already running (bar 2)
         b.feed(s, t)
     assert b.position[0] == 2
-    b.arm(bars=0, mode="bar")                                # bis Stopp
+    b.arm(bars=0, mode="bar")                                # until stop
     for s, t in ev[150:]:
         b.feed(s, t)
-    assert b.start_tick == 192                               # Anfang Takt 3
-    assert b.end_time == ev[-1][1]                           # endet bei Stopp
+    assert b.start_tick == 192                               # start of bar 3
+    assert b.end_time == ev[-1][1]                           # ends at stop
     b2 = R.BarSync()
     b2.arm(bars=8)
     for s, t in ev:
@@ -191,7 +191,7 @@ def test_take_window_and_start_estimator():
     assert R.take_window(2.0, 4.0, 1.0, 1000, latency_ms=10) == (1010, 3010)
 
 
-# --------------------------------------------------------- Sample-Pakete
+# --------------------------------------------------------- sample packs
 
 from fm1companion import samplepacks as P  # noqa: E402
 
@@ -205,7 +205,7 @@ def test_pack_tree_fixtures():
     assert "808" in fol and fol["808"][0] >= 1
     v = P.parse_tree((FIX / "vcsl.tree").read_text())
     assert any(e.path.startswith("Membranophones/") for e in v)
-    # mit Größen (ls-tree -l) und Sonderzeichen
+    # with sizes (ls-tree -l) and special characters
     t = "100644 blob abc  1234\tA/b.wav\n100644 blob abd\t\"A/\\303\\244.wav\"\n040000 tree x\tA\n100644 blob x\tREADME.md"
     e = P.parse_tree(t)
     assert [x.path for x in e] == ["A/b.wav", "A/ä.wav"] and e[0].size == 1234
@@ -219,7 +219,7 @@ def test_licence_rules():
         else:
             assert not p.free and txt.startswith("Lizenz unklar")
         assert p.licence_note
-    assert not P.pack("dirt").free                       # keine LICENSE im Repository
+    assert not P.pack("dirt").free                       # no LICENSE in the repository
     assert P.pack("vcsl").free and P.pack("vcsl").licence == "CC0-1.0"
     assert "unklar" in P.note_for(P.pack("dirt"))
 
@@ -266,10 +266,10 @@ FM1_OPEN = Path("/tmp/fm1_open")
 
 @pytest.fixture(scope="module")
 def sea_ref(tmp_path_factory):
-    """Referenz-Encoder/-Decoder aus den Original-C-Quellen von FM1 Open (clang/gcc)."""
+    """reference encoder/decoder from the original C sources of FM1 Open (clang/gcc)."""
     cc = _sh.which("clang") or _sh.which("gcc")
     if not cc or not (FM1_OPEN / "web/synth/sea_encode.h").exists():
-        pytest.skip("Compiler oder /tmp/fm1_open fehlt")
+        pytest.skip("compiler or /tmp/fm1_open missing")
     d = tmp_path_factory.mktemp("sea")
     for f in ("web/synth/sea_encode.h", "web/synth/sample_metadata.inc", "web/synth/sea_decode.c",
               "sdk/include/fm1_sea.h"):
@@ -368,7 +368,7 @@ def test_protocol_roundtrip_against_simulator():
 
 
 def test_protocol_retry_uses_cached_reply():
-    dev, link = make_open(drop_replies=1)          # erste Antwort geht verloren
+    dev, link = make_open(drop_replies=1)          # the first reply gets lost
     with F.Client(link, timeout=0.3) as c:
         assert c.sample_status()[0] == 2
 
@@ -377,14 +377,14 @@ def test_write_rejected_bank_and_errors():
     dev, link = make_open()
     with F.Client(link, timeout=0.3) as c:
         with pytest.raises(F.FM1OpenError):
-            c.write_bank(b"\0" * 600)                  # wird schon vor dem Löschen abgelehnt
+            c.write_bank(b"\0" * 600)                  # rejected even before erasing
         assert dev.state == 2 and 12 not in dev.log
         with pytest.raises(F.FM1OpenError) as ex:
-            c.query(12, _st.pack("<I", 100))          # zu klein -> ungültig
+            c.query(12, _st.pack("<I", 100))          # too small -> invalid
         assert ex.value.code == 71
 
 
-# ================================================================== Vorhören: Abspielprogramme und Ausgänge ===
+# ================================================================== preview: players and outputs ===
 PW_DUMP = """[
  {"id": 0, "type": "PipeWire:Interface:Metadata", "props": {"metadata.name": "default"},
   "metadata": [{"subject": 0, "key": "default.audio.sink", "type": "Spa:String:JSON",
@@ -415,7 +415,7 @@ def test_parse_pactl():
 
 
 def test_wav_from_floats_and_ints(tmp_path):
-    """früher: Float-Samples ließen struct.pack scheitern – jetzt werden sie skaliert."""
+    """before: float samples made struct.pack fail – now they are scaled."""
     from fm1companion.ui import audio as AU
     p = AU.write_wav(tmp_path / "f.wav", np.array([0.0, 0.5, -1.0, 2.0], dtype=np.float32), 22050)
     with wave.open(str(p)) as w:
@@ -482,7 +482,7 @@ def test_syscheck_playback_finding():
     assert syscheck.playback_finding(["pw-play"], A.Output("hdmi", "HDMI", True)).level == "ok"
 
 
-# ---- nie unbemerkt aufs FM-1 (Pi 5: Studio-Ton ging ans FM-1, dessen Audio-Start ließ den USB-Controller abstürzen)
+# ---- never unnoticed to the FM-1 (Pi 5: Studio sound went to the FM-1, whose audio start crashed the USB controller)
 def test_effective_output_avoids_fm1_and_guard_resets_default():
     from fm1companion import audioout as A
     fm1 = A.Output("alsa_output.usb-Generic_Melodee_FM-1-00.analog-stereo", "Melodee FM-1 Analog Stereo", True, 51)
@@ -490,15 +490,15 @@ def test_effective_output_avoids_fm1_and_guard_resets_default():
     dummy = A.Output("auto_null", "Schein-Ausgabe", False, 30)
     outs = [fm1, dummy, hdmi]
     assert A.best_other(outs) is hdmi
-    assert A.effective_output("", outs) == hdmi.name                 # Standard ist das FM-1 → HDMI
-    assert A.effective_output(fm1.name, outs) == fm1.name            # ausdrücklich gewählt: bleibt
+    assert A.effective_output("", outs) == hdmi.name                 # the default is the FM-1 → HDMI
+    assert A.effective_output(fm1.name, outs) == fm1.name            # chosen explicitly: stays
     fm1.default, hdmi.default = False, True
-    assert A.effective_output("", outs) == ""                        # Standard ist HDMI → Standard benutzen
+    assert A.effective_output("", outs) == ""                        # the default is HDMI → use the default
     fm1.default, hdmi.default = True, False
     calls = []
     r = A.keep_default_off_fm1(outs, setter=lambda o: calls.append(o.name) or True)
     assert r == (fm1, hdmi) and calls == [hdmi.name]
     fm1.default, hdmi.default = False, True
-    assert A.keep_default_off_fm1(outs, setter=lambda o: 1 / 0) is None   # nichts zu tun: kein Aufruf
+    assert A.keep_default_off_fm1(outs, setter=lambda o: 1 / 0) is None   # nothing to do: no call
     only = [A.Output(fm1.name, fm1.description, True)]
     assert A.best_other(only) is None and A.keep_default_off_fm1(only, setter=lambda o: True) is None

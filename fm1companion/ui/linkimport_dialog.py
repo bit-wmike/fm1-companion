@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Dialoge für den Link-Import: „Link einfügen …" und „Meine Firmwares".
+"""Dialogs for link import: “Paste link …" and “My firmwares".
 
-Wiederverwendbar (z. B. von Firmware+ › „Installieren & Versionen“):
+Reusable (e.g. from Firmware+ › “Install & versions”):
     from .linkimport_dialog import LinkImportDialog, OwnFirmwaresDialog
     d = LinkImportDialog(parent, text=clipboard_text)
     if d.exec(): spec = d.saved_spec
@@ -26,7 +26,7 @@ FIELDS = [("name", "line"), ("key", "line"), ("repo", "line"), ("asset", "line")
           ("family", "line"), ("product", "line"), ("description", "text"), ("homepage", "line"),
           ("installer_url", "line"), ("emulator_url", "line"), ("editor_url", "line"), ("manual_url", "line"),
           ("protocol", "proto"), ("requires_stock_v15", "check")]
-# Expertenfelder: hinter „Erweitert“ (werden beim Erkennen trotzdem gefüllt und geprüft)
+# expert fields: behind “Advanced” (still filled and checked during detection)
 ADVANCED = {"key", "asset", "download_url", "sha256", "family", "product", "protocol", "requires_stock_v15",
             "installer_url", "emulator_url", "editor_url", "manual_url"}
 TIPS = {"key": _("unique short name (folder name), only a–z, 0–9, - and _"),
@@ -42,7 +42,7 @@ def online_allowed() -> bool:
 
 
 class LinkImportDialog(QDialog):
-    """Link → vorausgefüllter Eintrag mit Markierung „sicher/geraten" → korrigieren → speichern."""
+    """Link → prefilled entry marked “certain/guessed" → correct → save."""
 
     def __init__(self, parent=None, text: str = "", draft: L.FirmwareDraft | None = None, editing_key: str = "",
                  cat: catmod.Catalog | None = None, online: bool | None = None):
@@ -53,7 +53,7 @@ class LinkImportDialog(QDialog):
         self.draft = draft
         self._gen = 0
         self.setWindowTitle(_("Edit firmware") if editing_key else _("Paste link"))
-        # passt auch auf den 14"-Laptop (1280×720): nie höher als der nutzbare Bildschirm
+        # also fits on the 14" laptop (1280×720): never taller than the usable screen
         avail = (parent.screen() if parent is not None and parent.screen() else QGuiApplication.primaryScreen())
         geo = avail.availableGeometry() if avail else None
         self.resize(min(720, geo.width() - 40) if geo else 720, min(700, geo.height() - 60) if geo else 700)
@@ -160,15 +160,15 @@ class LinkImportDialog(QDialog):
         elif text.strip():
             self.recognize()
 
-    # ------------------------------------------------------------ Erkennen
+    # ------------------------------------------------------------ Detect
     def recognize(self):
         text = self.input.text()
         self._gen += 1
         gen = self._gen
-        if not self._picking:                  # neue Eingabe: alte Trefferliste gilt nicht mehr
+        if not self._picking:                  # new input: the old hit list no longer applies
             self.candidates = []
         self.show_draft(L.resolve(text, self.cat, online=False))
-        # auch bei einem bloßen Namen: Katalog + GitHub-Suche (linkimport._resolve_name)
+        # also for a bare name: catalog + GitHub search (linkimport._resolve_name)
         if self.chk_online.isChecked() and (self.draft.repo or self.draft.source in ("url", "name")):
             self.status.setText(_("Looking it up on GitHub …"))
             run_job(self, lambda w: L.resolve(text, self.cat, online=True),
@@ -178,9 +178,9 @@ class LinkImportDialog(QDialog):
             self.status.setText(self._summary())
             self._offer_choice()
 
-    # ------------------------------------------------------------ mehrere Treffer
+    # ------------------------------------------------------------ several hits
     def _offer_choice(self):
-        """mehrere mögliche Firmwares und keine eindeutig: Auswahlfenster öffnen."""
+        """several possible firmwares and none unambiguous: open the selection window."""
         d = self.draft
         if not self._picking and d is not None and d.source == "name" and len(self.candidates) > 1 and not d.exact:
             self.choose()
@@ -245,7 +245,7 @@ class LinkImportDialog(QDialog):
         self.hints.setText("".join(f"• {h}<br>" for h in d.hints))
         self.errors.clear()
         self.status.setText(self._summary())
-        # geratene Expertenfelder sollen geprüft werden: dann „Erweitert“ aufklappen
+        # guessed expert fields should be checked: then expand “Advanced”
         guessed = [n for n in ADVANCED if d.confidence.get(n) == L.GUESS and getattr(d, n) not in ("", None, False)]
         if guessed or self.editing_key:
             self.advanced.set_open(True)
@@ -298,7 +298,7 @@ class LinkImportDialog(QDialog):
         self.draft.confidence[name] = "du"
         self._marker(name, "du")
 
-    # ------------------------------------------------------------ Speichern
+    # ------------------------------------------------------------ Save
     def current_draft(self) -> L.FirmwareDraft:
         d = self.draft or L.empty_draft()
         for name, _k in FIELDS:
@@ -310,7 +310,7 @@ class LinkImportDialog(QDialog):
         errs = L.validate(d, self.editing_key)
         if errs:
             self.errors.setText("<br>".join(errs))
-            self.advanced.set_open(True)         # Fehler können Expertenfelder betreffen
+            self.advanced.set_open(True)         # errors may concern expert fields
             return
         try:
             self.saved_spec = L.save(d, self.editing_key)
@@ -323,7 +323,7 @@ class LinkImportDialog(QDialog):
 
 
 class CandidatesDialog(QDialog):
-    """„Welche Firmware meinst du?“ – Treffer aus dem Katalog und der GitHub-Suche zur Auswahl."""
+    """“Which firmware do you mean?” – hits from the catalog and the GitHub search to choose from."""
 
     def __init__(self, parent, candidates: list[dict], current_repo: str = ""):
         super().__init__(parent)
@@ -380,7 +380,7 @@ class CandidatesDialog(QDialog):
 
 
 class OwnFirmwaresDialog(QDialog):
-    """selbst eingetragene Firmwares ansehen, bearbeiten, entfernen."""
+    """view, edit, remove self-entered firmwares."""
 
     def __init__(self, parent=None, cat=None):
         super().__init__(parent)

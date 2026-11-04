@@ -1,35 +1,35 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Sperren für die Rettung Stufe 2 (ROM-Bootmodus), geprüft an der Sicherung aus DEMSELBEN Werkzeuglauf.
+"""Locks for rescue stage 2 (ROM boot mode), checked against the backup from the SAME tool run.
 
-Der mitgelieferte MvaveFM1Unbricker (vendor/unbricker/fm1_unbrick.py, unverändert) kennt nur den V15-Aufbau:
-  * `repair-settings` setzt fest 0x93000–0xE8FFF und 0xFC000–0xFEFFF zurück. Bei V16 liegt in 0x93000–0xA8FFF noch
-    Programmcode (Ende von app.bin, DX7.bin), dazu VM 0xBA000–0xD9FFF, SEQ64 und USER [Paket: V16 FM-1_016; m-flasher
-    docs/development.md; felucca-bsp tools/fm1_rescue.py]. Auf einem V16-Gerät würde er die Firmware überschreiben;
-    er warnt nur bei Felucca-Markern.
-  * `restore` schreibt immer die Original-V15 nach 0x4000–0x92FFF, auch unter einem V16-Bootkopf. M-UPGRADE schreibt
-    den Kopf beim Installieren von V16 neu (felucca-bsp tools/fm1_rescue.py: „each version brings its own
-    bootloader“; der V16-Kopf legt isd_config bei 0x3938 statt 0x38D0 ab, m-flasher). Ob V15 darunter startet, ist
-    offen – fm1_rescue.py wählt darum das Paket nach dem Kopf und schreibt sonst nichts.
+The bundled MvaveFM1Unbricker (vendor/unbricker/fm1_unbrick.py, unmodified) only knows the V15 layout:
+  * `repair-settings` always resets 0x93000–0xE8FFF and 0xFC000–0xFEFFF. With V16, 0x93000–0xA8FFF still holds
+    program code (end of app.bin, DX7.bin), plus VM 0xBA000–0xD9FFF, SEQ64 and USER [Pkg: V16 FM-1_016; m-flasher
+    docs/development.md; felucca-bsp tools/fm1_rescue.py]. On a V16 device it would overwrite the firmware;
+    it only warns on Felucca markers.
+  * `restore` always writes stock V15 to 0x4000–0x92FFF, even under a V16 boot header. M-UPGRADE rewrites
+    the header when installing V16 (felucca-bsp tools/fm1_rescue.py: "each version brings its own
+    bootloader"; the V16 header places isd_config at 0x3938 instead of 0x38D0, m-flasher). Whether V15 boots under it is
+    open – which is why fm1_rescue.py picks the package by the header and otherwise writes nothing.
 
-Diese Datei läuft als root (uboot.Runner → ROOT_HELPER, geprüfte Kopie, Prüfsumme in uboot_manifest.OWN) und benutzt
-den Unbricker als Bibliothek: Sein `take_backup` (ganzer Flash zweimal gelesen, verglichen, als Datei gesichert und
-rückgelesen) bekommt eine Prüfung dahinter. Sie läuft, NACHDEM die Sicherung liegt und BEVOR der Unbricker irgendetwas
-löscht oder schreibt (in beiden Befehlen ist die Sicherung Schritt 3, geschrieben wird erst ab Schritt 5/6). Passt etwas
-nicht, bricht der Lauf mit SafetyError ab – es wurde nichts geschrieben. Alle Tore des Unbrickers gelten weiter.
+This file runs as root (uboot.Runner → ROOT_HELPER, verified copy, checksum in uboot_manifest.OWN) and uses
+the Unbricker as a library: its `take_backup` (whole flash read twice, compared, saved to a file and
+read back) gets a check after it. The check runs AFTER the backup exists and BEFORE the Unbricker erases or writes
+anything (in both commands the backup is step 3, writing only starts at step 5/6). If something does not
+match, the run aborts with SafetyError – nothing has been written. All of the Unbricker's gates still apply.
 
-Regeln (im Zweifel ablehnen):
-  repair-settings – nur, wenn die frische Sicherung den V15-Aufbau BEWEIST:
-    a) App-Bereich byte-gleich mit einem bekannten Paket mit V15-Aufbau (Original-V15, Melodee, SLOOP, Skiff, JIANT …)
-       und genau 0x93000 lang, oder
-    b) App-Bereich = ein bekanntes Werks-Abbild (flashmodel.FACTORY_APPS) und die Dateitabelle stimmt, oder
-    c) die Dateitabelle der Firmware selbst (Kopf- und Datei-CRCs geprüft) sagt: Firmware endet bei 0x93000, VM beginnt
-       dort, kein SEQ64 (flashmodel.directory_layout == „v15-layout“).
-    Sonst (V16, abgeschnittenes V16, V13/V14 mit 0x94000, beschädigt, unbekannt): abgelehnt.
-  restore – nur unter dem Bootkopf ab Werk (V13/V14/V15, d9f43191…). V16-Kopf: abgelehnt (die V16-App schreibt dieses
-    Werkzeug nicht: der Unbricker schreibt nur 0x4000–0x92FFF). Unbekannter Kopf (m-bootloader, Community-Kopf …):
-    abgelehnt. Den Kopf schreibt hier niemand.
+Rules (refuse when in doubt):
+  repair-settings – only if the fresh backup PROVES the V15 layout:
+    a) app area byte-identical to a known package with V15 layout (stock V15, Melodee, SLOOP, Skiff, JIANT …)
+       and exactly 0x93000 long, or
+    b) app area = a known factory image (flashmodel.FACTORY_APPS) and the file table is valid, or
+    c) the firmware's own file table (header and file CRCs verified) says: firmware ends at 0x93000, VM starts
+       there, no SEQ64 (flashmodel.directory_layout == "v15-layout").
+    Otherwise (V16, truncated V16, V13/V14 with 0x94000, damaged, unknown): refused.
+  restore – only under the factory boot header (V13/V14/V15, d9f43191…). V16 header: refused (this tool does not
+    write the V16 app: the Unbricker only writes 0x4000–0x92FFF). Unknown header (m-bootloader, community header …):
+    refused. Nobody writes the header here.
 
-Am echten Gerät UNGETESTET (nur mit dem Mock-FM-1 des Unbrickers); die Prüfung selbst liest nur die Sicherung.
+UNTESTED on a real device (only with the Unbricker's mock FM-1); the check itself only reads the backup.
 """
 from __future__ import annotations
 
@@ -41,18 +41,18 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 if __package__:
     from . import flashmodel as fm
-else:                                   # als Skript: flashmodel.py liegt daneben (Quellbaum oder geprüfte root-Kopie)
+else:                                   # as a script: flashmodel.py sits next to it (source tree or verified root copy)
     sys.path.insert(0, str(HERE))
     import flashmodel as fm             # noqa: E402
 
-EXIT_REFUSED = 10                       # wie restzone: Regel verletzt, nichts geschrieben
+EXIT_REFUSED = 10                       # like restzone: rule violated, nothing written
 COMMANDS = ("restore", "repair-settings")
 ALTERNATIVE = ("Sicherer Weg: M-Flasher (github.com/jvitkauskas/m-flasher, liest die Flash-Karte aus der Firmware) "
                "oder fm1_rescue.py aus felucca-bsp (wählt das Paket passend zum Bootkopf und schreibt sonst nichts).")
 
 
 def _unbricker():
-    """vendor/unbricker/fm1_unbrick.py (unverändert) – neben diesem Skript (root-Kopie) oder im Quellbaum"""
+    """vendor/unbricker/fm1_unbrick.py (unmodified) – next to this script (root copy) or in the source tree"""
     try:
         import fm1_unbrick
         return fm1_unbrick
@@ -64,10 +64,10 @@ def _unbricker():
     return fm1_unbrick
 
 
-# ----------------------------------------------------------------------------- die Prüfungen (reine Funktionen)
+# ----------------------------------------------------------------------------- the checks (pure functions)
 def repair_verdict(dump: bytes, refs) -> dict:
-    """darf repair-settings (0x93000–0xE8FFF, 0xFC000–0xFEFFF) auf diesem Flash schreiben? -> {"ok", "reason",
-    "firmware", "basis"}. Wirft nie."""
+    """may repair-settings (0x93000–0xE8FFF, 0xFC000–0xFEFFF) write to this flash? -> {"ok", "reason",
+    "firmware", "basis"}. Never raises."""
     v = {"ok": False, "reason": "", "firmware": "", "basis": ""}
     if len(dump) != fm.FLASH_SIZE:
         v["reason"] = "Die Sicherung hat nicht genau 1 MiB – so wird nichts geschrieben."
@@ -123,8 +123,8 @@ def repair_verdict(dump: bytes, refs) -> dict:
 
 
 def restore_verdict(dump: bytes, refs, factory_heads=None, heads: dict | None = None) -> dict:
-    """darf die Original-V15 (0x4000–0x92FFF) unter dem Bootkopf dieses Flashs geschrieben werden? -> {"ok", "reason",
-    "head"}. Wirft nie."""
+    """may stock V15 (0x4000–0x92FFF) be written under this flash's boot header? -> {"ok", "reason",
+    "head"}. Never raises."""
     v = {"ok": False, "reason": "", "head": ""}
     if len(dump) != fm.FLASH_SIZE:
         v["reason"] = "Die Sicherung hat nicht genau 1 MiB – so wird nichts geschrieben."
@@ -151,7 +151,7 @@ def restore_verdict(dump: bytes, refs, factory_heads=None, heads: dict | None = 
     return v
 
 
-# ----------------------------------------------------------------------------- Lauf
+# ----------------------------------------------------------------------------- run
 def build_parser():
     ap = argparse.ArgumentParser(prog="rescuegate.py", add_help=True, allow_abbrev=False,
                                  description="Unbricker restore / repair-settings mit Prüfung der frischen Sicherung")
@@ -166,7 +166,7 @@ FORBIDDEN_ARGS = ("--i-know", "--force-write", "--mock-chip-key")
 
 
 def main(argv=None, device=None) -> int:
-    """device: nur Tests – ein fertiges fm1_unbrick.Fm1Device (Mock), wie fm1_unbrick.main(device=…)"""
+    """device: tests only – a ready fm1_unbrick.Fm1Device (mock), like fm1_unbrick.main(device=…)"""
     argv = list(sys.argv[1:] if argv is None else argv)
     ap = build_parser()
     args, rest = ap.parse_known_args(argv)
@@ -178,7 +178,7 @@ def main(argv=None, device=None) -> int:
             raise ValueError("Diese Option gibt es über die App nicht.")
         if args.demo_refs and not dry:
             raise ValueError("Demo-Optionen gibt es nur in der Simulation.")
-        side = HERE / "known_packages.json"            # root-Kopie: neben dem Skript; Quellbaum: data/
+        side = HERE / "known_packages.json"            # root copy: next to the script; source tree: data/
         refs_file = args.refs or (side if side.is_file() else None)
         refs = fm.load_known(refs_file)
         heads = fm.known_heads(refs_file)

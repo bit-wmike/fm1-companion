@@ -7,14 +7,14 @@ body:
       value: |
         Thanks for your report! **Please do not report security vulnerabilities here** – report them privately (see SECURITY.md).
 
-        **Before you attach anything:** The app's error report (Hilfe › Diagnose › "Fehlerbericht speichern" – Help ›
-        Diagnostics › Save error report) is a ZIP. The app removes tokens, passwords, host names, home paths and full
+        **Before you attach anything:** The app's bug report (Help › Diagnostics › "Save bug report")
+        is a ZIP. The app removes tokens, passwords, host names, home paths and full
         serial numbers – still, take a quick look inside before you upload it. **Never paste a GitHub token or password into an issue.**
   - type: input
     id: version
     attributes:
       label: Suite version
-      description: "`fm1-companion --version` or Hilfe › Über (Help › About)"
+      description: "`fm1-companion --version` or Help › About"
       placeholder: "2.4.0"
     validations:
       required: true

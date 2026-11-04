@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""SLOOP-Backup (Protokoll v6, Befehle 34–36): byte-genau wie der SLOOP-Web-Editor, Rundreise gegen das
-Demo-Gerät und gegen den Mock des Editors selbst (makeMockDevice), rc-Behandlung, Dateiformat.
+"""SLOOP backup (protocol v6, commands 34–36): byte-exact like the SLOOP web editor, round trip against the
+demo device and against the editor's own mock (makeMockDevice), rc handling, file format.
 
   python3 -m pytest tests/test_sloop_backup.py -q
 """
@@ -28,7 +28,7 @@ from fm1companion.transport import Link, LinkError, SubprocessTransport, Transpo
 EDITOR = Path("/tmp/sloop-fm1/web/editor.html")
 NODE = shutil.which("node") or ("/opt/node22/bin/node" if Path("/opt/node22/bin/node").exists() else None)
 MOCK = ROOT / "tests" / "mock_sloop.mjs"
-need_editor = pytest.mark.skipif(not (EDITOR.exists() and NODE), reason="SLOOP-Editor oder node fehlt")
+need_editor = pytest.mark.skipif(not (EDITOR.exists() and NODE), reason="SLOOP editor or node missing")
 
 
 class LocalTransport(Transport):
@@ -55,7 +55,7 @@ def node(*args, timeout=120) -> str:
 
 
 def put_sample(link, slot, name=b"KICK"):
-    """ein Sample über SMP_BEGIN/WRITE/END in den Slot (Kopf wie samples.py: SMPF, 1 Zone)"""
+    """a sample via SMP_BEGIN/WRITE/END into the slot (header like samples.py: SMPF, 1 zone)"""
     data = bytes((i * 7) & 255 for i in range(1000))
     hdr = bytearray(480)
     struct.pack_into("<IHB", hdr, 0, 0x504D5346, 1, 1)
@@ -69,7 +69,7 @@ def put_sample(link, slot, name=b"KICK"):
     assert link.request(13, [slot, *pack7(bytes(hdr))])[-1] == 0
 
 
-# ------------------------------------------------------------ Protokoll ---
+# ------------------------------------------------------------ protocol ---
 
 @need_editor
 def test_requests_byte_exact_like_editor():
@@ -86,7 +86,7 @@ def test_wire_frames_and_parsers():
     man = backup.list_objects(link)
     assert t.sent[-1] == frame(34, [])
     assert all(o.proto == "sloop" for o in man)
-    assert [o.id for o in man] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 33, 34, 35]      # 10/11: nur wenn belegt
+    assert [o.id for o in man] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 33, 34, 35]      # 10/11: only if used
     o = next(o for o in man if o.id == 2)
     backup.read_object(link, o)
     gets = [f for f in t.sent if f[4] == 35]
@@ -106,7 +106,7 @@ def test_base64_lenient_like_editor():
 def test_demo_speaks_only_its_own_protocol():
     _, link, _ = sloop()
     with pytest.raises(LinkError):
-        link.request(65, [], timeout=0.3, retries=0)                 # Melodees BACKUP_LIST: SLOOP schweigt
+        link.request(65, [], timeout=0.3, retries=0)                 # Melodee's BACKUP_LIST: SLOOP stays silent
     mel = Link(LocalTransport(FakeFM1()))
     with pytest.raises(LinkError):
         mel.request(34, [], timeout=0.3, retries=0)
@@ -118,12 +118,12 @@ def test_demo_speaks_only_its_own_protocol():
 def test_old_sloop_without_backup_is_explained():
     dev, link, _ = sloop()
     orig = dev._handle
-    dev._handle = lambda c, a: orig(c, a)[:-1] + [5] if c == 1 else orig(c, a)   # INFO: Protokoll 5 (2.0–2.2)
+    dev._handle = lambda c, a: orig(c, a)[:-1] + [5] if c == 1 else orig(c, a)   # INFO: protocol 5 (2.0–2.2)
     with pytest.raises(backup.BackupError, match="ab SLOOP 2.3"):
         backup.list_objects(link)
 
 
-# ---------------------------------------------------- Rundreise (Demo) ---
+# ---------------------------------------------------- round trip (demo) ---
 
 def test_capture_restore_roundtrip_demo(tmp_path):
     dev, link, _ = sloop()
@@ -140,13 +140,13 @@ def test_capture_restore_roundtrip_demo(tmp_path):
     arch = backup.load_file(p)
     assert arch.sloop and arch.created == f["date"]
     before = {k: v for k, v in dev.objs.items()}
-    # Gerät verändern …
+    # change the device …
     dev.objs[2], dev.objs[3], dev.objs[6] = b"", sloop_project(77), b""
     dev.objs[0] = sloop_project(78)
-    link.request(14, [1])                                            # USR2 leeren
+    link.request(14, [1])                                            # clear USR2
     dev.log.clear()
     backup.restore(link, arch)
-    # … SLOOPs Reihenfolge: Banken, Sections, laufendes Projekt, Einstellungen (dann Samples über SMP_*)
+    # … SLOOP's order: banks, sections, running project, settings (then samples via SMP_*)
     assert dev.log == [6, 7, 8, 9, 10, 2, 3, 4, 5, 0, 1]
     assert {k: dev.objs[k] for k in (0, 1, 2, 3, 6, 7, 9)} == {k: before[k] for k in (0, 1, 2, 3, 6, 7, 9)}
     g = backup.capture(link, "")
@@ -164,10 +164,10 @@ def test_song_playing_rc3_writes_nothing():
         backup.restore(link, arch)
     assert e.value.code == "bkStop" and "STOP" in str(e.value) and "nichts geschrieben" in str(e.value)
     assert dev.log == [] and dev.objs[2] == b""
-    # nur die Einstellungen: geht auch beim Spielen, solange die Song-Reihenfolge gleich bleibt
+    # only the settings: works while playing too, as long as the song order stays the same
     assert backup.restore_selected(link, arch, [1]) == [1]
     s = bytearray(arch.objects[1]["bytes"])
-    s[51] = 2                                                         # Section A: 2 statt 4 Takte
+    s[51] = 2                                                         # section A: 2 instead of 4 bars
     f2 = dict(arch.file, objects=[dict(o, data=sloopbk.b64enc(bytes(s)), crc=crc32(bytes(s))) if o["id"] == 1
                                   else o for o in arch.file["objects"]])
     with pytest.raises(backup.BackupError, match="STOP"):
@@ -183,7 +183,7 @@ def test_rc3_in_the_middle_names_what_was_written():
 
     def commit():
         if dev.bk_put["id"] == 2:
-            dev.playing = True                                       # jemand drückt PLAY mitten im Zurückspielen
+            dev.playing = True                                       # someone presses PLAY in the middle of restoring
         return orig()
     dev._sloop_commit = commit
     with pytest.raises(backup.BackupError) as e:
@@ -200,12 +200,12 @@ def test_damaged_and_invalid_objects():
     d[3] ^= 1
     bad["objects"][2]["data"] = sloopbk.b64enc(bytes(d))
     with pytest.raises(backup.BackupError):
-        backup.read(bad)                                              # vor dem ersten Schreiben abgelehnt
+        backup.read(bad)                                              # rejected before the first write
     nope = json.loads(json.dumps(f))
     nope["objects"] = [o for o in nope["objects"] if o["id"] != 1]
     with pytest.raises(backup.BackupError, match="unvollständig"):
         backup.read(nope)
-    # gültige Datei, aber ein Projekt mit falscher Summe: Commit rc 2, abort-frei, Meldung auf Deutsch
+    # valid file, but a project with a wrong sum: commit rc 2, abort-free, message in German
     p = bytearray(sloop_project(5))
     p[100] ^= 0xFF
     f3 = json.loads(json.dumps(f))
@@ -219,7 +219,7 @@ def test_damaged_and_invalid_objects():
 def test_snapshot_gone_is_stale():
     dev, link, _ = sloop()
     man = backup.list_objects(link)
-    link.request(*sloopbk.req_begin(2, 10, 0))                       # ein Restore beginnt: Schnappschuss weg
+    link.request(*sloopbk.req_begin(2, 10, 0))                       # a restore begins: snapshot gone
     with pytest.raises(backup.BackupError) as e:
         backup.read_object(link, man[0])
     assert e.value.code == "bkStale"
@@ -258,7 +258,7 @@ def test_formats_must_match_device():
         backup.restore_selected(mlink, slo, [2])
 
 
-# --------------------------------------------- Projekte, Browser, Dateien ---
+# --------------------------------------------- projects, browser, files ---
 
 def test_projects_on_sloop(tmp_path):
     dev, link, _ = sloop()
@@ -286,7 +286,7 @@ def test_inspect_plan_and_selective_restore():
     assert rep.restorable and rep.format == "sloop-backup" and rep.firmware_key == "sloop"
     names = [p.name for p in rep.used_presets]
     assert names == ["ACID LINE", "SLOOP KEYS", "GRAIN PAD"] and rep.used_presets[1].engine_name == "FM6"
-    assert rep.obj(8) in BI.selectable(rep)                         # (bei Melodee ausgenommen)
+    assert rep.obj(8) in BI.selectable(rep)                         # (excluded with Melodee)
     dev.objs[2] = b""
     dev.objs[6] = b""
     cur = BI.inspect(backup.capture_live(link, ""))
@@ -297,12 +297,12 @@ def test_inspect_plan_and_selective_restore():
     dev.log.clear()
     assert backup.restore_selected(link, arch, plan.ids(), expect=plan.expect) == [6, 2]
     assert dev.log == [6, 2] and dev.objs[2] == arch.objects[2]["bytes"]
-    # Gerät inzwischen verändert -> nichts schreiben
+    # device changed in the meantime -> write nothing
     dev.objs[3] = sloop_project(9)
     exp = {3: (0, 0)}
     with pytest.raises(backup.BackupError, match="verändert"):
         backup.restore_selected(link, arch, [3], expect=exp)
-    # Melodee -> SLOOP verweigert, SLOOP -> SLOOP erlaubt (auch MIDI-Learn, das nicht im Inventar steht)
+    # Melodee -> SLOOP refused, SLOOP -> SLOOP allowed (also MIDI learn, which is not in the inventory)
     c = BI.compatibility(rep, "sloop", "FELUCCA SLOOP 2.8.3", [o.id for o in man])
     assert c.ok and {8, 10, 11} & c.allowed_ids == {8}
 
@@ -319,13 +319,13 @@ def test_autobackup_file_and_meta_keep_editor_format(tmp_path):
     assert m.fw_key == "sloop" and m.projects == 1 and m.fmt == "sloop-backup"
 
 
-# ------------------------------------------- gegen den SLOOP-Editor selbst ---
+# ------------------------------------------- against the SLOOP editor itself ---
 
 @need_editor
 def test_file_text_byte_exact_with_editor(tmp_path):
     _, link, _ = sloop()
     f = backup.capture(link, "")
-    f["firmware"] = "FELUCCA SLOOP 2.8.3 – ä"                         # auch Nicht-ASCII wie JSON.stringify
+    f["firmware"] = "FELUCCA SLOOP 2.8.3 – ä"                         # non-ASCII too, like JSON.stringify
     p = tmp_path / "py.json"
     p.write_text(sloopbk.dumps(f), "utf-8")
     assert node("stringify", p) == p.read_text("utf-8")
@@ -335,13 +335,13 @@ def test_file_text_byte_exact_with_editor(tmp_path):
 
 @need_editor
 def test_roundtrip_against_editor_mock(tmp_path):
-    # 1. der Editor sichert seinen Mock (mit Preset, Projekt in C, Sample in USR2)
+    # 1. the editor backs up its mock (with preset, project in C, sample in USR2)
     js = json.loads(node("capture"))
     ids = [o["id"] for o in js["objects"]]
     assert ids[:2] == [0, 1] and 33 in ids
-    arch = backup.read(js)                                            # die App liest Editor-Dateien
+    arch = backup.read(js)                                            # the app reads editor files
     assert BI.inspect(arch).restorable
-    # 2. die App spielt es über die Befehle 34–36 (+ SMP_*) in einen frischen Mock zurück und liest wieder
+    # 2. the app plays it back via commands 34–36 (+ SMP_*) into a fresh mock and reads again
     t = SubprocessTransport([NODE, str(MOCK), str(EDITOR)])
     link = Link(t)
     try:
@@ -353,7 +353,7 @@ def test_roundtrip_against_editor_mock(tmp_path):
         t.close()
     strip = lambda f: [(o["id"], o["len"], o["crc"], o["data"]) for o in f["objects"]]   # noqa: E731
     assert strip(back) == strip(js)
-    # 3. und der Editor spielt die Datei der App zurück: gleicher Stand
+    # 3. and the editor plays back the app's file: same state
     p = tmp_path / "app.json"
     backup.write_file(p, back)
     again = json.loads(node("restore", p))

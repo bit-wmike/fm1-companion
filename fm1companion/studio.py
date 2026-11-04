@@ -1,48 +1,48 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Studio: der digitale Zwilling des FM-1 in der Suite.
+"""Studio: the FM-1's digital twin in the suite.
 
-Das FM-1 ist das Instrument, die Suite das Studio. Der Zwilling ist **dieselbe Firmware** wie auf dem Gerät
-(Melodees eigener C-Code, für den Rechner als WebAssembly übersetzt, siehe tools/build_sims.py --target
-melodee-studio und tools/studio/melodee_studio.c): dieselben Engines, Effekte, derselbe Mixer und Sequencer, dazu
-der NOR-Flash (Einstellungen, Projekte, User-Presets) und das Editor-SysEx-Protokoll über den USB-Pfad der Firmware.
-Er läuft in QtWebEngine (Web Worker; Ton über AudioWorklet -> Chromium -> PipeWire = die Lautsprecher des Pi) und
-spricht nach außen genau wie ein echtes FM-1: ``Studio.link`` ist ein ``transport.Link`` – backup.read/restore,
-Presets, Projekt-Schreiben, playback.py usw. funktionieren unverändert.
+The FM-1 is the instrument, the suite is the studio. The twin is **the same firmware** as on the device
+(Melodee's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py --target
+melodee-studio and tools/studio/melodee_studio.c): the same engines, effects, the same mixer and sequencer, plus
+the NOR flash (settings, projects, user presets) and the editor SysEx protocol over the firmware's USB path.
+It runs in QtWebEngine (web worker; sound via AudioWorklet -> Chromium -> PipeWire = the Pi's speakers) and
+talks to the outside exactly like a real FM-1: ``Studio.link`` is a ``transport.Link`` – backup.read/restore,
+presets, project writing, playback.py etc. work unchanged.
 
-Schichten (mit wenig Aufwand für weitere Firmwares/Emulatoren offen gehalten):
+Layers (kept open for further firmwares/emulators with little effort):
 
-* ``TwinBuild``   – ein mitgelieferter Zwilling: ``sims/<firmware>-studio/<version>/`` mit manifest.json
-                    (mehrere Versionen nebeneinander; ``builds()``, ``pick_build()`` wählt passend oder die nächste)
-* ``TwinBackend`` – wo der Zwilling läuft. ``WebEngineBackend`` (Laufzeit: QtWebEngine), ``NodeBackend`` (nur
-                    Tests/Entwicklung, braucht node). Ein späteres Backend (z. B. fm1-emu: CPU-Emulation echter
-                    .fwsc-Pakete) muss nur dieselben Methoden liefern.
-* ``StudioTransport`` – ``transport.Transport`` über ein Backend (für ``Link``)
-* ``Studio``      – die Fassade für Oberfläche und Werkzeuge
+* ``TwinBuild``   – a bundled twin: ``sims/<firmware>-studio/<version>/`` with manifest.json
+                    (several versions side by side; ``builds()``, ``pick_build()`` picks a match or the nearest)
+* ``TwinBackend`` – where the twin runs. ``WebEngineBackend`` (runtime: QtWebEngine), ``NodeBackend`` (only
+                    tests/development, needs node). A later backend (e.g. fm1-emu: CPU emulation of real
+                    .fwsc packages) only has to provide the same methods.
+* ``StudioTransport`` – ``transport.Transport`` over a backend (for ``Link``)
+* ``Studio``      – the facade for the UI and tools
 
 API (``Studio``)::
 
-    st = Studio.create(version="v1.6.0-rc.8")           # oder Studio.for_version(device_version)
-    st.open_from_backup(path | bytes | dict | Archive)  # komplettes Backup über das Editor-Protokoll einspielen
-    st.open_from_device(link)                           # Backup vom echten FM-1 lesen, dann einspielen
-    st.link                                             # Link zum Zwilling (wie zu einem echten FM-1)
-    st.play(how="play"|"song") / st.stop()              # Transport (PLAY-Taste bzw. Song-Kette, Editor-Stopp)
-    st.load_project(slot)                               # Projekt 1..32 (slot 0..31) laden wie die PROJECT-Seite
-    st.start_audio() / st.stop_audio()                  # Echtzeit-Ton (WebEngine: Standard-Ausgang)
+    st = Studio.create(version="v1.6.0-rc.8")           # or Studio.for_version(device_version)
+    st.open_from_backup(path | bytes | dict | Archive)  # load a complete backup via the editor protocol
+    st.open_from_device(link)                           # read a backup from the real FM-1, then load it
+    st.link                                             # link to the twin (as to a real FM-1)
+    st.play(how="play"|"song") / st.stop()              # transport (PLAY key or song chain, editor stop)
+    st.load_project(slot)                               # load project 1..32 (slot 0..31) like the PROJECT page
+    st.start_audio() / st.stop_audio()                  # real-time sound (WebEngine: default output)
     st.render_wav(path, seconds=None, until_end=False, stems=False, start="play", source="live", fmt="f32")
-                                                        # offline, schneller als Echtzeit -> RenderResult
+                                                        # offline, faster than real time -> RenderResult
     st.save_state(path=None, profile=None) / st.load_state(path=None, profile=None)
-                                                        # der ganze Flash (= alles, was das Gerät behält)
-    st.backup() -> Archive                              # Backup DES ZWILLINGS (z. B. zurück aufs FM-1)
-    st.write_to_device(link)                            # dieses Backup auf das echte FM-1 spielen
-    st.version_info() / st.check_versions(device=..., backup=...) -> VersionCheck (Warnung auf Deutsch)
-    st.set_clock(run)                                   # Uhr des Zwillings anhalten/laufen lassen (Worker 'clock')
-    st.flash_sum() / st.set_flash(bytes)                # Änderungen erkennen, Zwischenstand zurückholen
-    st.play_midi(data)                                  # Kanal-Nachricht ohne Warten (MIDI-Keyboard)
-    open_from_backup(..., tolerant=True)                # abgelehnte Teile überspringen -> st.rejected
+                                                        # the whole flash (= everything the device keeps)
+    st.backup() -> Archive                              # backup OF THE TWIN (e.g. back onto the FM-1)
+    st.write_to_device(link)                            # write this backup to the real FM-1
+    st.version_info() / st.check_versions(device=..., backup=...) -> VersionCheck (warning in German)
+    st.set_clock(run)                                   # pause/run the twin's clock (worker 'clock')
+    st.flash_sum() / st.set_flash(bytes)                # detect changes, restore an intermediate state
+    st.play_midi(data)                                  # channel message without waiting (MIDI keyboard)
+    open_from_backup(..., tolerant=True)                # skip rejected parts -> st.rejected
 
-Oberfläche: ui/studio_service.py (Dienst der App, virtuelles Gerät) und ui/pages/studio.py (Seite „Studio“).
+UI: ui/studio_service.py (the app's service, virtual device) and ui/pages/studio.py ("Studio" page).
 
-Grenzen: siehe NOTICE des Builds und ``LIMITS`` unten.
+Limits: see the build's NOTICE and ``LIMITS`` below.
 """
 from __future__ import annotations
 
@@ -73,7 +73,7 @@ STATE_NAME = "Studio-Stand.fm1studio"
 STUDIO_ABI = 1
 FS = 44100
 
-# panel.c: die Tasten nach Beschriftung (PANEL_DEFAULT; ein angelerntes Panel löst der Zwilling selbst auf)
+# panel.c: the keys by label (PANEL_DEFAULT; the twin resolves a learned panel itself)
 B = {"FX": 0, "SCL": 1, "ENV": 2, "LFO": 3, "EDIT": 4, "GLO": 5, "HOME": 6, "SAVE": 7, "ARP": 8, "SEQ": 9,
      "PLAY": 10, "REC": 11}
 
@@ -90,12 +90,12 @@ class StudioError(Exception):
     pass
 
 
-# ======================================================================= Versionen und Builds
+# ======================================================================= versions and builds
 _VER = re.compile(r"v?(\d+)\.(\d+)(?:\.(\d+))?(?:[- ]?(rc|beta|alpha)\.?(\d+))?", re.I)
 
 
 def norm_version(s: str) -> str:
-    """'MELODEE v1.6.0-rc.7' / '1.6.0-rc.7' / 'Melodee 1.6.0 rc7' -> 'v1.6.0-rc.7' ('' wenn keine Version)."""
+    """'MELODEE v1.6.0-rc.7' / '1.6.0-rc.7' / 'Melodee 1.6.0 rc7' -> 'v1.6.0-rc.7' ('' if no version)."""
     m = _VER.search(s or "")
     if not m:
         return ""
@@ -104,7 +104,7 @@ def norm_version(s: str) -> str:
 
 
 def version_key(s: str) -> tuple:
-    """sortierbar: Vorabversionen (rc) vor der fertigen Version."""
+    """sortable: pre-releases (rc) before the final version."""
     m = _VER.search(s or "")
     if not m:
         return (0, 0, 0, 0, 0)
@@ -116,8 +116,8 @@ def version_key(s: str) -> tuple:
 @dataclass
 class TwinBuild:
     firmware: str                 # "melodee"
-    version: str                  # "v1.6.0-rc.8" (wie die Firmware sie meldet)
-    path: Path                    # Ordner mit manifest.json und dem WASM
+    version: str                  # "v1.6.0-rc.8" (as the firmware reports it)
+    path: Path                    # folder with manifest.json and the WASM
     manifest: dict = field(default_factory=dict)
 
     @property
@@ -129,7 +129,7 @@ class TwinBuild:
         return self.manifest.get("identity", "")
 
     @property
-    def url_path(self) -> str:    # unter dem lokalen Server (editor_host.LocalServer: /sims/...)
+    def url_path(self) -> str:    # under the local server (editor_host.LocalServer: /sims/...)
         return f"/sims/{self.path.parent.name}/{self.path.name}/{self.wasm.name}"
 
     def verify(self) -> list[str]:
@@ -145,7 +145,7 @@ class TwinBuild:
 
 
 def builds(firmware: str = "melodee") -> list[TwinBuild]:
-    """alle mitgelieferten Zwillinge einer Firmware, älteste zuerst."""
+    """all bundled twins of a firmware, oldest first."""
     out = []
     d = SIMS_DIR / f"{firmware}-studio"
     for sub in sorted(d.iterdir()) if d.is_dir() else []:
@@ -161,8 +161,8 @@ def builds(firmware: str = "melodee") -> list[TwinBuild]:
 
 
 def pick_build(firmware: str = "melodee", wanted: str = "") -> tuple[TwinBuild, bool, str]:
-    """-> (Build, genau?, Warnung). Ohne Wunsch: der neueste. Sonst die gleiche Version, sonst die nächste
-    (bevorzugt die nächstältere: deren Daten liest eine neuere Firmware sicher, umgekehrt nicht immer)."""
+    """-> (build, exact?, warning). Without a request: the newest. Otherwise the same version, otherwise the nearest
+    (preferably the next older one: a newer firmware reads its data safely, not always the other way round)."""
     bs = builds(firmware)
     if not bs:
         raise StudioError(_("No studio twin for {firmware} included – installation incomplete?").format(firmware=firmware))
@@ -190,7 +190,7 @@ class VersionCheck:
 
 
 def check_versions(twin: str, device: str = "", backup: str = "", firmware: str = "Melodee") -> VersionCheck:
-    """Vergleicht die Firmware des Zwillings mit der des Geräts (INFO) und der des Backups -> Warnung."""
+    """Compares the twin's firmware with the device's (INFO) and the backup's -> warning."""
     t, d, b = norm_version(twin), norm_version(device), norm_version(backup)
     msgs = []
     if d and d != t:
@@ -204,41 +204,41 @@ def check_versions(twin: str, device: str = "", backup: str = "", firmware: str 
     return VersionCheck(t, d, b, not msgs, " ".join(msgs))
 
 
-# Melodee 1.6.0 (docs/RELEASE_1.6.0.md „Sound and levels“): der Mix klingt anders als bis 1.6.0-rc.8
+# Melodee 1.6.0 (docs/RELEASE_1.6.0.md "Sound and levels"): the mix sounds different than up to 1.6.0-rc.8
 LEVELS_1_6_0 = _("From Melodee 1.6.0 on the mix differs from the pre-releases: CZ-1 6 dB quieter, limiter only "
                   "at −2 dBFS, dither – levels differ.")
 _V160 = (1, 6, 0, 3, 0)
 
 
 def levels_changed(a: str, b: str) -> bool:
-    """liegt die Pegeländerung von Melodee 1.6.0 zwischen den beiden Versionen?"""
+    """does the level change of Melodee 1.6.0 lie between the two versions?"""
     ka, kb = version_key(a), version_key(b)
     return ka != (0, 0, 0, 0, 0) and kb != (0, 0, 0, 0, 0) and (ka < _V160) != (kb < _V160)
 
 
 def device_version(link) -> str:
-    """Firmware-Version des angeschlossenen Geräts (Editor INFO, z. B. 'MELODEE v1.6.0-rc.7' -> 'v1.6.0-rc.7')."""
+    """Firmware version of the connected device (editor INFO, e.g. 'MELODEE v1.6.0-rc.7' -> 'v1.6.0-rc.7')."""
     return norm_version(parse_info(link.request(Cmd.INFO, [], timeout=1.5, retries=1)).version)
 
 
 def backup_version(archive) -> str:
-    """Firmware-Version, mit der ein Backup gemacht wurde (Begleitblock der App, sonst das Feld 'firmware')."""
+    """Firmware version a backup was made with (the app's companion block, otherwise the 'firmware' field)."""
     c = archive.companion or {}
     return norm_version(c.get("firmware_version") or c.get("version_string") or archive.firmware or "")
 
 
 # ======================================================================= Backends
 class TwinBackend:
-    """Wo ein Zwilling läuft. Alle Methoden sind aus jedem Thread aufrufbar und blockieren bis zum Ergebnis.
+    """Where a twin runs. All methods can be called from any thread and block until the result.
 
-    Pflicht für ein Backend (auch ein künftiges fm1-emu-Backend):
-      start(flash|None) -> info dict {version, fs, flash_size, ...}   (Einschalten, mit diesem Flash)
-      call(op, **args) -> dict     Befehle von twin-host.js: midi(data), press(label), transport_start(how),
+    Required for a backend (including a future fm1-emu backend):
+      start(flash|None) -> info dict {version, fs, flash_size, ...}   (power on, with this flash)
+      call(op, **args) -> dict     commands of twin-host.js: midi(data), press(label), transport_start(how),
                                    project_load(slot), project_used, transport, info, frame, run(ms), reset
-      get_flash() -> bytes / set_flash(bytes)    (Einschalten mit neuem Flash)
-      render(path, params) -> dict              (offline, in einer eigenen Instanz; schreibt PCM nach path)
-      set_audio(on)                              (Echtzeit-Ton)
-      on_midi: Callable[[list[int]], None]       (alles, was das Gerät über USB-MIDI sendet)
+      get_flash() -> bytes / set_flash(bytes)    (power on with new flash)
+      render(path, params) -> dict              (offline, in a separate instance; writes PCM to path)
+      set_audio(on)                              (real-time sound)
+      on_midi: Callable[[list[int]], None]       (everything the device sends over USB MIDI)
       close()
     """
     build: TwinBuild
@@ -263,12 +263,12 @@ class TwinBackend:
         raise NotImplementedError
 
     def set_clock(self, run: bool) -> None:
-        """Uhr des Zwillings (Worker-Befehl 'clock'): False hält die Gerätezeit an, solange kein Ton sie antreibt
-        (spart Rechenzeit, wenn das Studio nicht sichtbar ist und nichts spielt)."""
+        """The twin's clock (worker command 'clock'): False stops device time as long as no sound drives it
+        (saves CPU time when the studio is not visible and nothing is playing)."""
         self.call("clock", run=bool(run))
 
     def post(self, op: str, **args) -> None:
-        """Befehl ohne auf die Antwort zu warten (Noten vom MIDI-Keyboard). Standard: wie call."""
+        """Command without waiting for the reply (notes from the MIDI keyboard). Default: like call."""
         self.call(op, **args)
 
     def close(self) -> None:
@@ -280,7 +280,7 @@ class TwinBackend:
             for m in msgs:
                 try:
                     fn([int(x) & 0xFF for x in m])
-                except Exception:                    # noqa: BLE001 – nie den Lese-Thread abschießen
+                except Exception:                    # noqa: BLE001 – never kill the reader thread
                     pass
 
 
@@ -293,8 +293,8 @@ def _unb64(v):
 
 
 class NodeBackend(TwinBackend):
-    """Zwilling in node (tests/studio_node_host.mjs) – für Tests und Entwicklung ohne QtWebEngine. Nicht zur
-    Laufzeit der App (dort gibt es kein node)."""
+    """Twin in node (tests/studio_node_host.mjs) – for tests and development without QtWebEngine. Not for the
+    app's runtime (there is no node there)."""
 
     def __init__(self, build: TwinBuild, node: str | None = None, script: Path | None = None):
         self.build = build
@@ -371,15 +371,15 @@ class NodeBackend(TwinBackend):
             self.p = None
 
 
-# ======================================================================= Transport für Link
+# ======================================================================= transport for Link
 class StudioTransport(Transport):
-    """``transport.Transport`` über einen Zwilling: send() gibt die Nachricht(en) über den USB-MIDI-Pfad der
-    Firmware hinein; alles, was der Zwilling sendet, geht an ``receiver`` – wie ein echtes FM-1 am USB."""
+    """``transport.Transport`` over a twin: send() feeds the message(s) in via the firmware's USB MIDI path;
+    everything the twin sends goes to ``receiver`` – like a real FM-1 on USB."""
 
     def __init__(self, backend: TwinBackend):
         self.backend = backend
         self._closed = False
-        # mehrere Leitungen an einem Zwilling (Studio selbst und das virtuelle Gerät der Suite): jede bekommt alles
+        # several lines on one twin (the studio itself and the suite's virtual device): each gets everything
         sinks = getattr(backend, "_sinks", None)
         if sinks is None:
             sinks = backend._sinks = []
@@ -412,13 +412,13 @@ class StudioTransport(Transport):
 
 # ======================================================================= WAV
 def wav_header(frames: int, fmt: str = "f32", fs: int = FS, channels: int = 2) -> bytes:
-    """RIFF-Kopf: fmt "f32" = IEEE float 32 bit (WAVE_FORMAT_EXTENSIBLE-frei, Format 3), "s24" = PCM 24 bit."""
+    """RIFF header: fmt "f32" = IEEE float 32 bit (without WAVE_FORMAT_EXTENSIBLE, format 3), "s24" = PCM 24 bit."""
     bits, tag = (32, 3) if fmt == "f32" else (24, 1)
     block = channels * bits // 8
     data = frames * block
     fmt_chunk = struct.pack("<HHIIHH", tag, channels, fs, fs * block, block, bits)
     extra = b""
-    if tag == 3:                                     # float: fact-Chunk (Pflicht laut Spezifikation)
+    if tag == 3:                                     # float: fact chunk (mandatory according to the specification)
         fmt_chunk += struct.pack("<H", 0)
         extra = b"fact" + struct.pack("<II", 4, frames)
     return (b"RIFF" + struct.pack("<I", 4 + 8 + len(fmt_chunk) + len(extra) + 8 + data) + b"WAVE" +
@@ -426,7 +426,7 @@ def wav_header(frames: int, fmt: str = "f32", fs: int = FS, channels: int = 2) -
 
 
 def finish_wav(raw: Path, out: Path, frames: int, fmt: str, fs: int = FS):
-    """rohe PCM-Daten (raw) -> WAV-Datei out (atomar)."""
+    """raw PCM data (raw) -> WAV file out (atomic)."""
     tmp = out.with_suffix(out.suffix + ".part")
     with open(tmp, "wb") as f, open(raw, "rb") as r:
         f.write(wav_header(frames, fmt, fs))
@@ -440,9 +440,9 @@ class RenderResult:
     path: Path
     seconds: float
     frames: int
-    ended: bool                      # until_end: der Song ist zu Ende gelaufen
+    ended: bool                      # until_end: the song has played to the end
     peak: float
-    stems: dict[int, Path] = field(default_factory=dict)   # Spur (0..3) -> WAV
+    stems: dict[int, Path] = field(default_factory=dict)   # track (0..3) -> WAV
 
 
 # ======================================================================= Studio
@@ -450,17 +450,17 @@ class Studio:
     def __init__(self, backend: TwinBackend, warning: str = ""):
         self.backend = backend
         self.build = backend.build
-        self.warning = warning                       # gewählter Build passt nicht genau (pick_build)
+        self.warning = warning                       # the chosen build does not match exactly (pick_build)
         self.info: dict = {}
-        self.rejected: list[int] = []                # Backup-Teile, die der Zwilling beim Einspielen abgelehnt hat
+        self.rejected: list[int] = []                # backup parts the twin rejected while loading
         self.transport = StudioTransport(backend)
         self.link = Link(self.transport)
 
-    # ------------------------------------------------------------- Erzeugen
+    # ------------------------------------------------------------- creating
     @classmethod
     def create(cls, firmware: str = "melodee", version: str = "", backend: str | type = "webengine",
                flash: bytes | None = None, **kw) -> "Studio":
-        """Zwilling der gewünschten (oder nächsten) Version starten. backend: "webengine" | "node" | Klasse."""
+        """Start a twin of the requested (or nearest) version. backend: "webengine" | "node" | class."""
         build, _exact, warning = pick_build(firmware, version)
         if backend == "node":
             be = NodeBackend(build, **kw)
@@ -474,7 +474,7 @@ class Studio:
 
     @classmethod
     def for_backup(cls, archive, **kw) -> "Studio":
-        """Zwilling in der Version, mit der das Backup gemacht wurde (sonst die nächste, mit Warnung)."""
+        """Twin in the version the backup was made with (otherwise the nearest, with a warning)."""
         archive = _archive(archive)
         st = cls.create(version=backup_version(archive), **kw)
         st.open_from_backup(archive)
@@ -485,12 +485,12 @@ class Studio:
             self.link.close()
         self.backend.close()
 
-    # ------------------------------------------------------------- Zustand
+    # ------------------------------------------------------------- state
     def open_from_backup(self, src, progress: Callable[[int, int], None] | None = None, tolerant: bool = False):
-        """Komplettes Backup (Datei, JSON-Text/-Bytes, dict oder backup.Archive) in den Zwilling spielen – über das
-        Backup-Protokoll der Firmware (backup.restore), also genau wie auf ein echtes FM-1. -> Archive
-        tolerant=True: Teile, die die Firmware ablehnt (andere Version, beschädigt), werden übersprungen statt
-        abzubrechen; ihre IDs stehen danach in ``self.rejected`` (der Zwilling behält dort seinen eigenen Stand)."""
+        """Load a complete backup (file, JSON text/bytes, dict or backup.Archive) into the twin – via the
+        firmware's backup protocol (backup.restore), i.e. exactly as onto a real FM-1. -> Archive
+        tolerant=True: parts the firmware rejects (different version, damaged) are skipped instead of
+        aborting; their IDs are then in ``self.rejected`` (the twin keeps its own state there)."""
         from . import backup
         archive = _archive(src)
         self.stop()
@@ -504,7 +504,7 @@ class Studio:
 
     def open_from_device(self, link, progress: Callable[[int, int], None] | None = None, note: str = "",
                          tolerant: bool = False):
-        """Backup vom echten FM-1 lesen und in den Zwilling spielen. -> (Archive, VersionCheck)"""
+        """Read a backup from the real FM-1 and load it into the twin. -> (Archive, VersionCheck)"""
         from . import backup
         dev = device_version(link)
         f = backup.capture(link, dev, progress, companion={"firmware": self.build.firmware, "firmware_version": dev,
@@ -515,7 +515,7 @@ class Studio:
         return archive, self.check_versions(device=dev)
 
     def backup(self, progress=None):
-        """Backup des Zwillings (Format des Web-Editors) -> backup.Archive"""
+        """Backup of the twin (web editor format) -> backup.Archive"""
         from . import backup
         self.stop()
         f = backup.capture(self.link, self.build.version, progress,
@@ -526,9 +526,9 @@ class Studio:
 
     def write_to_device(self, link, progress=None, force: bool = False, settings: bool = True,
                         exclude=()):
-        """Den Stand des Zwillings auf das echte FM-1 schreiben (backup.restore). Andere Firmware-Version am Gerät:
-        StudioError, außer force=True. settings=False: das Objekt „Einstellungen“ (1) bleibt am Gerät, wie es ist;
-        exclude: weitere Objekt-IDs, die nicht geschrieben werden (z. B. ``self.rejected``). -> Archive"""
+        """Write the twin's state to the real FM-1 (backup.restore). Different firmware version on the device:
+        StudioError, unless force=True. settings=False: the "settings" object (1) stays on the device as it is;
+        exclude: further object IDs that are not written (e.g. ``self.rejected``). -> Archive"""
         from . import backup
         vc = self.check_versions(device=device_version(link))
         if not vc.ok and not force:
@@ -546,11 +546,11 @@ class Studio:
         return bytes(self.backend.get_flash())
 
     def flash_sum(self) -> int:
-        """kurze Prüfsumme des Flashs (erkennt Änderungen, ohne 1 MB zu übertragen)."""
+        """short checksum of the flash (detects changes without transferring 1 MB)."""
         return int(self.backend.call("flash_sum")["sum"])
 
     def set_flash(self, flash: bytes) -> dict:
-        """mit diesem Flash neu einschalten (Rückgängig/Wiederherstellen)."""
+        """power on again with this flash (undo/restore)."""
         self.info = self.backend.set_flash(bytes(flash))
         return self.info
 
@@ -558,9 +558,9 @@ class Studio:
         self.backend.set_clock(run)
 
     def save_state(self, path: Path | None = None, profile=None, note: str = "") -> Path:
-        """Den ganzen Flash des Zwillings (alles, was ein FM-1 behält) als Datei. Ohne path: im Datenordner der App
-        beim Geräteprofil (``state_path(profile)``). Nicht gespeicherte Änderungen im RAM (das laufende Projekt)
-        gehören nicht dazu – wie beim Gerät; vorher ggf. speichern (Editor PROJECT save)."""
+        """The twin's whole flash (everything an FM-1 keeps) as a file. Without path: in the app's data folder
+        with the device profile (``state_path(profile)``). Unsaved changes in RAM (the running project)
+        are not included – as on the device; save first if needed (editor PROJECT save)."""
         path = Path(path) if path else state_path(profile)
         path.parent.mkdir(parents=True, exist_ok=True)
         meta = {"format": "fm1-studio-state", "version": 1, "firmware": self.build.firmware,
@@ -575,7 +575,7 @@ class Studio:
         return path
 
     def load_state(self, path: Path | None = None, profile=None) -> dict:
-        """Gespeicherten Stand laden: der Zwilling startet neu mit diesem Flash. -> Metadaten (mit Warnung)"""
+        """Load a saved state: the twin restarts with this flash. -> metadata (with warning)"""
         meta, flash = read_state(Path(path) if path else state_path(profile))
         self.info = self.backend.set_flash(flash)
         vc = check_versions(self.build.version, backup=meta.get("firmware_version", ""))
@@ -583,13 +583,13 @@ class Studio:
         return meta
 
     def power_cycle(self) -> dict:
-        """Aus- und einschalten (RAM weg, Flash bleibt) – wie am Gerät."""
+        """Power off and on (RAM gone, flash stays) – like on the device."""
         self.info = self.backend.call("reset")
         return self.info
 
-    # ------------------------------------------------------------- Spielen
+    # ------------------------------------------------------------- playing
     def play(self, how: str = "play") -> dict:
-        """how "play": die PLAY-Taste (von vorn); "song": die Song-Kette ab Zeile 1."""
+        """how "play": the PLAY key (from the start); "song": the song chain from row 1."""
         return self.backend.call("transport_start", how=how)["transport"]
 
     def stop(self) -> dict:
@@ -602,7 +602,7 @@ class Studio:
         return self.backend.call("press", label=B[label.upper()])
 
     def load_project(self, slot: int) -> int:
-        """Projekt slot (0..31 = Projekt 1..32) laden, wie die PROJECT-Seite. -> 0 ok, 1 leer, 2 erst stoppen"""
+        """Load project slot (0..31 = project 1..32), like the PROJECT page. -> 0 ok, 1 empty, 2 stop first"""
         return self.backend.call("project_load", slot=int(slot))["rc"]
 
     def projects(self) -> list[int]:
@@ -618,22 +618,22 @@ class Studio:
         self.link.send_midi([(0x90 if velocity else 0x80) | channel, note & 127, velocity & 127])
 
     def play_midi(self, data):
-        """Kanal-Nachricht (MIDI-Keyboard) in den Zwilling, ohne auf ihn zu warten."""
+        """Channel message (MIDI keyboard) into the twin, without waiting for it."""
         self.backend.post("midi", data=[int(x) & 0xFF for x in data])
 
-    # ------------------------------------------------------------- Rendern
+    # ------------------------------------------------------------- rendering
     def render_wav(self, path, seconds: float | None = None, until_end: bool = False, stems: bool = False,
                    start: str = "play", source: str = "live", fmt: str = "f32", max_seconds: float = 900,
                    tail_seconds: float = 2.0, project: int | None = None,
                    progress: Callable[[int, int], None] | None = None) -> RenderResult:
-        """Offline rendern (eigene Instanz, schneller als Echtzeit; der laufende Zwilling bleibt unberührt).
-        source "live": vom aktuellen RAM-Stand (auch Ungespeichertes), "saved": frisch eingeschaltet aus dem Flash.
-        start "play" (PLAY von vorn) | "song" (Song-Kette) | "none" (wie es gerade läuft).
-        seconds ODER until_end (bis der Transport steht, plus tail_seconds; höchstens max_seconds).
-        stems=True: zusätzlich je Spur 1..4 eine WAV (<name>_spur1.wav …): dieselbe Wiedergabe mit allen anderen
-        Spuren stumm (TRACK_MIX), also die Spur mit ihrem Anteil an den gemeinsamen Effekten.
-        fmt "f32" (32-bit float) oder "s24" (24-bit PCM). 44,1 kHz Stereo wie das Gerät.
-        progress(fertige Durchläufe, alle Durchläufe): Mix und je Stem ein Durchlauf."""
+        """Render offline (separate instance, faster than real time; the running twin stays untouched).
+        source "live": from the current RAM state (including unsaved), "saved": freshly powered on from the flash.
+        start "play" (PLAY from the start) | "song" (song chain) | "none" (as it is currently running).
+        seconds OR until_end (until the transport stops, plus tail_seconds; at most max_seconds).
+        stems=True: additionally one WAV per track 1..4 (<name>_spur1.wav …): the same playback with all other
+        tracks muted (TRACK_MIX), i.e. the track with its share of the shared effects.
+        fmt "f32" (32-bit float) or "s24" (24-bit PCM). 44.1 kHz stereo like the device.
+        progress(finished passes, all passes): one pass for the mix and one per stem."""
         if not seconds and not until_end:
             raise StudioError(_("Duration missing (seconds or until_end)"))
         path = Path(path)
@@ -652,7 +652,7 @@ class Studio:
         if progress:
             progress(1, passes)
         if stems:
-            if until_end:                                  # alle Stems gleich lang wie der Mix
+            if until_end:                                  # all stems as long as the mix
                 params.update(until_end=False, seconds=r["frames"] / FS)
             for k in range(4):
                 p = path.with_name(f"{path.stem}_spur{k + 1}{path.suffix}")
@@ -668,7 +668,7 @@ class Studio:
         finish_wav(raw, path, int(r["frames"]), params["format"], int(r.get("fs", FS)))
         return r
 
-    # ------------------------------------------------------------- Versionen
+    # ------------------------------------------------------------- versions
     def version_info(self) -> dict:
         return {"firmware": self.build.firmware, "version": self.build.version, "identity": self.build.identity,
                 "reported": self.info.get("version", ""), "commit": self.build.manifest.get("commit", ""),
@@ -683,8 +683,8 @@ class Studio:
 
 
 def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee") -> list[int]:
-    """Backup Teil für Teil einspielen (Projekte/Banken, dann Einstellungen, die laufende Musik zuletzt – wie
-    backup.restore); Teile, die die Firmware ablehnt, überspringen. -> abgelehnte Objekt-IDs"""
+    """Load a backup part by part (projects/banks, then settings, the running music last – like
+    backup.restore); skip parts the firmware rejects. -> rejected object IDs"""
     from . import backup
     backup._match(link, archive, firmware_key)
     if archive.sloop:
@@ -717,7 +717,7 @@ def _archive(src):
 
 
 def state_path(profile=None) -> Path:
-    """Datenordner der App/studio/<Geräteprofil>/Studio-Stand.fm1studio"""
+    """app data folder/studio/<device profile>/Studio-Stand.fm1studio"""
     from . import config
     from .devices import safe_folder_name
     name = getattr(profile, "folder_name", None) or (safe_folder_name(profile) if isinstance(profile, str) else "Studio")
@@ -738,14 +738,14 @@ def read_state(path: Path) -> tuple[dict, bytes]:
 
 # ======================================================================= QtWebEngine
 class WebEngineBackend(TwinBackend):
-    """Zwilling in QtWebEngine: Seite sims/_studio/studio.html (lokaler Server der App), Zwilling im Web Worker,
-    Ton über AudioWorklet (Chromium -> PipeWire-Standardausgang), Offline-Rendern in einem zweiten Worker; PCM und
-    Flash gehen über den lokalen Server (POST) zu Python. Braucht eine laufende QApplication; Aufrufe aus dem GUI-
-    Thread warten mit einer lokalen Ereignisschleife, aus anderen Threads blockierend."""
+    """Twin in QtWebEngine: page sims/_studio/studio.html (the app's local server), twin in a web worker,
+    sound via AudioWorklet (Chromium -> PipeWire default output), offline rendering in a second worker; PCM and
+    flash go to Python via the local server (POST). Needs a running QApplication; calls from the GUI
+    thread wait with a local event loop, from other threads they block."""
 
     def __init__(self, build: TwinBuild, server=None, page=None, clock: bool = True, on_event=None):
         self.build = build
-        self.on_event = on_event                     # Ereignisse der sichtbaren Bedienfläche (Taste, Rückgängig …)
+        self.on_event = on_event                     # events of the visible control surface (key, undo …)
         self.server = server
         self._own_server = server is None
         self.page = page

@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""2.3.2: Melodee 1.6.1 (ohne Qt-Widgets).
+"""2.3.2: Melodee 1.6.1 (without Qt widgets).
 
   python3 -m pytest tests/test_release_232.py -q
 
-* Studio-Zwilling 1.6.1 neben rc.7, rc.8 und 1.6.0; Simulator auf 1.6.1; NOTICE mit schriftlichem Angebot
-* Werkzeug-Pin v1.6.1 (M4)
-* Clock/Sync von 1.6.1: CLK INT sendet selbst Clock, Song-Start ab Abschnitt (Song Position + Continue),
-  Song Position von der App (ClockMaster)
+* Studio twin 1.6.1 next to rc.7, rc.8 and 1.6.0; simulator on 1.6.1; NOTICE with written offer
+* tool pin v1.6.1 (M4)
+* clock/sync of 1.6.1: CLK INT sends clock itself, song start from a section (Song Position + Continue),
+  Song Position from the app (ClockMaster)
 """
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def test_twin_161_built_and_picked():
     b, exact, warn = studio.pick_build("melodee", "MELODEE v1.6.0")
     assert exact and b.version == "v1.6.0" and not warn
     assert studio.pick_build("melodee")[0].version == "v1.6.1"
-    vc = studio.check_versions("v1.6.1", device="MELODEE v1.6.0")         # gleiche Pegel: nur der Versionshinweis
+    vc = studio.check_versions("v1.6.1", device="MELODEE v1.6.0")         # same levels: only the version note
     assert not vc.ok and "CZ-1" not in vc.message
 
 
@@ -72,9 +72,9 @@ def test_song_start_from_section_and_clock_on_demo():
     from test_music import _DemoLink
     link = _DemoLink()
     link.d.song["rows"] = [[0, 0, 0, 0, 1], [1, 1, 1, 1, 2]]
-    assert P.song_start(link, 2)[0] == 1                     # gibt es nicht
+    assert P.song_start(link, 2)[0] == 1                     # does not exist
     assert P.song_start(link, 1)[0] == 0 and link.d.song["row"] == 1
-    assert P.song_start(link, 0)[0] == 2                     # läuft schon: erst stoppen (wie chain_prepare_from)
+    assert P.song_start(link, 0)[0] == 2                     # already running: stop first (like chain_prepare_from)
     assert P.transport_stop(link)
     link.d.globals[P.G_CLOCK] = 1
     assert P.read_clock(link) == 1

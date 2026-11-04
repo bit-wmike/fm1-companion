@@ -2,13 +2,13 @@
 # Derived from MSFA (Copyright 2012, 2013 Google Inc., Apache-2.0) and Dexed's msfa changes
 # (Copyright 2016-2025 Pascal Gauthier, Apache-2.0) as adapted in M-VAVE FM1 Open web/synth/dx7*.c
 # (Apache-2.0). Tables and envelope/scaling math ported to Python/numpy; Apache-2.0 is GPL-3.0 compatible.
-"""Vorhören einer DX7-Voice: angenäherter 6-Operator-FM-Renderer in reinem numpy.
+"""Preview of a DX7 voice: approximate 6-operator FM renderer in pure numpy.
 
-Nicht bit-genau, aber mit den Original-Kurven: 32 Algorithmen mit Feedback (auch die Schleifen über
-mehrere Operatoren bei 4 und 6), Hüllkurven (DX7-Zeitverhalten wie msfa), Rate-/Level-Skalierung,
-Verhältnis/Festfrequenz/Verstimmung, Pegelkurve, Anschlagdynamik, Pitch-Hüllkurve und ein einfacher LFO.
-Operatoren ohne Feedback werden für den ganzen Ton auf einmal berechnet; nur Feedback-Operatoren
-laufen Sample für Sample (das ist der teure Teil).
+Not bit-exact, but with the original curves: 32 algorithms with feedback (including the loops across
+several operators in 4 and 6), envelopes (DX7 timing like msfa), rate/level scaling,
+ratio/fixed frequency/detune, level curve, velocity sensitivity, pitch envelope and a simple LFO.
+Operators without feedback are computed for the whole note at once; only feedback operators
+run sample by sample (that is the expensive part).
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ import numpy as np
 from . import dx7
 
 SR = 44100
-N = 64                                   # Blockgröße wie msfa
+N = 64                                   # block size like msfa
 LVLLUT = [0, 5, 9, 13, 17, 20, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 42, 43, 45, 46]
 VELOCITY = [0, 70, 86, 97, 106, 114, 121, 126, 132, 138, 142, 148, 152, 156, 160, 163, 166, 170, 173, 174, 178, 181,
             184, 186, 189, 190, 194, 196, 198, 200, 202, 205, 206, 209, 211, 214, 216, 218, 220, 222, 224, 225, 227,
@@ -70,7 +70,7 @@ def scale_rate(note, rs):
 
 
 class Env:
-    """msfa Env: Pegel in Q24-Oktaven (2^24 = Verdopplung), ein Schritt pro 64-Sample-Block."""
+    """msfa Env: level in Q24 octaves (2^24 = doubling), one step per 64-sample block."""
 
     def __init__(self, rates, levels, out, rate_scaling):
         self.r, self.l, self.out, self.rs = rates, levels, out, rate_scaling
@@ -145,7 +145,7 @@ class PitchEnv:
 
 
 def lfo_shape(wave: int, phase: np.ndarray, rng) -> np.ndarray:
-    """LFO-Werte −1..1 je Block."""
+    """LFO values −1..1 per block."""
     ph = phase % 1.0
     if wave == 0:
         return 1 - 4 * np.abs(ph - 0.5)
@@ -164,7 +164,7 @@ def lfo_shape(wave: int, phase: np.ndarray, rng) -> np.ndarray:
 
 def render(voice, note: int = 60, velocity: int = 100, seconds: float = 2.0, hold: float | None = None,
            sr: int = SR, normalize: float = 0.89) -> np.ndarray:
-    """-> float32-Mono −1..1. hold: Sekunden bis zum Loslassen (Standard 70 % der Länge)."""
+    """-> float32 mono −1..1. hold: seconds until release (default 70 % of the length)."""
     v = dx7.sanitize(voice)
     nb = max(1, int(seconds * sr) // N)
     ns = nb * N
@@ -175,7 +175,7 @@ def render(voice, note: int = 60, velocity: int = 100, seconds: float = 2.0, hol
     fb = v[dx7.VI["FB"]]
     fb_shift = 8 - fb if fb else 16
     vel = max(1, min(127, velocity))
-    # ---- Operatoren vorbereiten (k = 0 ist Operator 6, wie msfa)
+    # ---- prepare operators (k = 0 is operator 6, like msfa)
     envs, logf, fixed, ams = [], [], [], []
     for k in range(6):
         p = v[k * 21:k * 21 + 21]
@@ -195,7 +195,7 @@ def render(voice, note: int = 60, velocity: int = 100, seconds: float = 2.0, hol
         logf.append(lf)
         ams.append(AMS[p[14] & 3])
     penv = PitchEnv(v[126:130], v[130:134])
-    # ---- Hüllkurven blockweise
+    # ---- envelopes block by block
     lev = np.zeros((6, nb + 1))
     pit = np.zeros(nb + 1)
     for b in range(nb + 1):
@@ -206,13 +206,13 @@ def render(voice, note: int = 60, velocity: int = 100, seconds: float = 2.0, hol
         for k in range(6):
             lev[k, b] = envs[k].step()
         pit[b] = penv.step() / (1 << 24)
-    # ---- LFO (einfach): Tempo, Verzögerung, Pitch- und Amp-Tiefe
+    # ---- LFO (simple): rate, delay, pitch and amp depth
     lfs, lfd, pmd, amd = v[137], v[138], v[139], v[140]
     if pmd or amd:
         sr_ = 1 if lfs == 0 else (165 * lfs) >> 6
         sr_ *= 11 if sr_ < 160 else 11 + ((sr_ - 160) >> 4)
         t = np.arange(nb + 1) * N / sr
-        lfo_hz = sr_ * 25190424 / 2 ** 32                   # msfa: lfo_unit * sr_ pro Block -> Hz
+        lfo_hz = sr_ * 25190424 / 2 ** 32                   # msfa: lfo_unit * sr_ per block -> Hz
         ph = t * lfo_hz
         lv = lfo_shape(v[142], ph, np.random.default_rng(1))
         delay = np.clip((t - lfd * 0.03) / max(0.05, lfd * 0.03 + 0.05), 0, 1) if lfd else np.ones_like(t)
@@ -220,7 +220,7 @@ def render(voice, note: int = 60, velocity: int = 100, seconds: float = 2.0, hol
         amod = (0.5 - 0.5 * lv) * delay * (amd / 99)
     else:
         amod = None
-    # ---- Gain je Operator: 2^(Pegel - 14) (Q24-Oktaven), linear zwischen den Blöcken
+    # ---- gain per operator: 2^(level - 14) (Q24 octaves), linear between blocks
     xs = np.arange(ns) / N
     xb = np.arange(nb + 1)
     gains, incs = [], []
@@ -233,7 +233,7 @@ def render(voice, note: int = 60, velocity: int = 100, seconds: float = 2.0, hol
         f = np.exp2(lfk) / sr if not fixed[k] else np.full(nb + 1, 2.0 ** logf[k] / sr)
         incs.append(np.repeat(np.minimum(f[:nb], 0.5), N))
     phases = [np.cumsum(i) - i for i in incs]
-    # ---- Algorithmus
+    # ---- algorithm
     flags = dx7.ALGORITHMS[alg]
     buses = {1: np.zeros(ns), 2: np.zeros(ns)}
     has = {1: False, 2: False}
@@ -262,7 +262,7 @@ def render(voice, note: int = 60, velocity: int = 100, seconds: float = 2.0, hol
             buses[outbus] = y
             has[outbus] = True
         k += 1
-    # ---- ausgeben
+    # ---- output
     out[-min(len(out), 441):] *= np.linspace(1, 0, min(len(out), 441))
     out = np.nan_to_num(out)
     peak = float(np.max(np.abs(out))) if len(out) else 0.0
@@ -272,7 +272,7 @@ def render(voice, note: int = 60, velocity: int = 100, seconds: float = 2.0, hol
 
 
 def _feedback(phases, gains, shift: int) -> np.ndarray:
-    """Feedback-Kette (1 bis 3 Operatoren) Sample für Sample; Feedback vom Ende der Kette."""
+    """Feedback chain (1 to 3 operators) sample by sample; feedback from the end of the chain."""
     n = len(phases[0])
     scale = 2.0 ** (-shift - 1)
     tau = 2 * math.pi

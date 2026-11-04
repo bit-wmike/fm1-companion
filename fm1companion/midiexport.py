@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Melodee-Projekt -> Standard-MIDI-Datei (Typ 1), CSV und JSON.
+"""Melodee project -> Standard MIDI File (type 1), CSV and JSON.
 
-Zeitmodell wie im Sequencer der Firmware (seq.c, mix.c, song_chain.c):
-* Step-Länge = DIV (1/4 … 4BAR) in Vierteln; SWING (Pattern + global, max. 100) verlängert gerade Steps um
-  swing/250 und kürzt ungerade um dasselbe.
-* Notenlänge = Step × GATE/128, über TIE-Steps verlängert; SLIDE bindet bis zum nächsten Step.
-  Aufgenommene Gates (acc ohne Hits) gelten als acc/255.
-* Drum-Lanes spielen ihre GM-Note (KICK 36 … BELL 56); Akzent = 127, sonst Step-Anschlag (0 = 96).
-* Song: jeder Abschnitt dauert repeat × Länge des Patterns von Spur 1 (bei REST/HOLD auf Spur 1: ein 4/4-Takt
-  je Wiederholung); jede Spur spielt ihr Pattern ab Abschnittsbeginn in Schleife; HOLD setzt die Phase fort.
-* Aufgenommene Noten mit Originaltiming ersetzen die Übersichts-Steps (Flag "recorded").
-Nicht nachgerechnet: ARP, Akkord-Tasten (CHRD), Strum, Chance (alle Steps werden exportiert), Motion.
+Timing model as in the firmware's sequencer (seq.c, mix.c, song_chain.c):
+* Step length = DIV (1/4 … 4BAR) in quarters; SWING (pattern + global, max. 100) lengthens even steps by
+  swing/250 and shortens odd ones by the same.
+* Note length = step × GATE/128, extended over TIE steps; SLIDE ties to the next step.
+  Recorded gates (acc without hits) count as acc/255.
+* Drum lanes play their GM note (KICK 36 … BELL 56); accent = 127, otherwise step velocity (0 = 96).
+* Song: each section lasts repeat × the length of track 1's pattern (with REST/HOLD on track 1: one 4/4 bar
+  per repetition); every track loops its pattern from the start of the section; HOLD continues the phase.
+* Recorded notes with original timing replace the overview steps (flag "recorded").
+Not modelled: ARP, chord keys (CHRD), strum, chance (all steps are exported), motion.
 """
 from __future__ import annotations
 
@@ -28,8 +28,8 @@ TPQ = 480
 
 @dataclass
 class NoteEvent:
-    track: int          # 0-basiert
-    start: float        # Viertel
+    track: int          # 0-based
+    start: float        # quarters
     length: float
     note: int
     vel: int
@@ -41,16 +41,16 @@ class NoteEvent:
 
 @dataclass
 class Options:
-    mode: str = "song"                  # "song", "active" (aktive Patterns), "pattern"
-    loops: int = 4                      # Wiederholungen für "active"
+    mode: str = "song"                  # "song", "active" (active patterns), "pattern"
+    loops: int = 4                      # repetitions for "active"
     lane_notes: tuple = tuple(F.LANE_GM)
-    drum_channel: int | None = None     # None = Kanal der Spur, sonst 0..15 (9 = GM-Drums)
+    drum_channel: int | None = None     # None = the track's channel, otherwise 0..15 (9 = GM drums)
     include_muted: bool = True
-    tracks: tuple | None = None         # nur diese Spuren (0-basiert)
+    tracks: tuple | None = None         # only these tracks (0-based)
 
 
 def step_times(p: F.Pattern, global_swing: int = 0) -> list[tuple[float, float]]:
-    """(Beginn, Länge) jedes Steps 0..LEN-1 in Vierteln, geswingt."""
+    """(start, length) of every step 0..LEN-1 in quarters, swung."""
     base = p.step_quarters
     sw = max(0, min(100, p.swing + global_swing)) * base / 250
     out, t = [], 0.0
@@ -68,7 +68,7 @@ def pattern_quarters(p: F.Pattern, global_swing: int = 0) -> float:
 
 def pattern_events(p: F.Pattern, track: int, channel: int, start: float = 0.0, global_swing: int = 0,
                    o: Options | None = None, until: float | None = None, phase: float = 0.0) -> list[NoteEvent]:
-    """eine Schleife des Patterns ab `start` (mit Phase `phase` Viertel bereits gespielt)."""
+    """one loop of the pattern from `start` (with phase `phase` quarters already played)."""
     o = o or Options()
     times = step_times(p, global_swing)
     n = len(times)
@@ -119,7 +119,7 @@ def pattern_events(p: F.Pattern, track: int, channel: int, start: float = 0.0, g
 
 
 def _looped(p, track, ch, start, end, gsw, o, phase=0.0):
-    """das Pattern in Schleife von start bis end; phase: schon gespielte Viertel (HOLD)."""
+    """the pattern looped from start to end; phase: quarters already played (HOLD)."""
     ln = pattern_quarters(p, gsw)
     out, n = [], 0
     while ln > 0:

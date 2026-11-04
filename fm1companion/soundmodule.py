@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Der Pi als Klangerzeuger: FluidSynth spielt, was die MIDI-Spuren 5–8 von Melodee senden.
+"""The Pi as a sound module: FluidSynth plays what Melodee's MIDI tracks 5–8 send.
 
-Melodee (firmware/src/eng_midi.c, midi_track.c, ui.c): Spuren 5–8 sind reine MIDI-Spuren
-("MIDI Track"-Engine, kein Klang am FM-1). Sie senden ihre Noten und Controller über **USB-MIDI**
-(den Port „Melodee“) auf dem Kanal ihres Parameters CH (E1, 1–16); eine neu angelegte Spur N
-startet mit Kanal N, also 5–8. Die Tasten des FM-1 senden außerdem auf Kanal 1–4 (Spur 1–4) –
-die spielt das FM-1 selbst; der Klangerzeuger lässt deshalb nur die gewählten Kanäle durch
-(FluidSynth-MIDI-Router), sonst klänge alles doppelt.
+Melodee (firmware/src/eng_midi.c, midi_track.c, ui.c): tracks 5–8 are pure MIDI tracks
+("MIDI Track" engine, no sound on the FM-1). They send their notes and controllers over **USB MIDI**
+(the "Melodee" port) on the channel of their CH parameter (E1, 1–16); a newly created track N
+starts with channel N, i.e. 5–8. The FM-1's keys also send on channels 1–4 (tracks 1–4) –
+the FM-1 plays those itself; the sound module therefore only lets the selected channels through
+(FluidSynth MIDI router), otherwise everything would sound twice.
 
-FluidSynth läuft als eigener Prozess: ``fluidsynth -a <treiber> -m alsa_seq -p <name> -g … -z … -c …
--o synth.polyphony=… <soundfont>``. Bewusst ohne ``-i``/``-s``: ``-i`` schaltet die Befehlszeile auf
-stdin ab, ``-s`` öffnet einen TCP-Server (Port 9800) für das ganze Netz. Befehle gehen als Textzeilen
-über stdin (``select``, ``prog``, ``gain``, ``cc``, ``reverb``, ``router_*``); Schließen von stdin bzw.
-``quit`` beendet ihn. Der FM-1-Ausgang wird per ``aconnect`` mit FluidSynths Sequencer-Port verbunden.
+FluidSynth runs as a separate process: ``fluidsynth -a <driver> -m alsa_seq -p <name> -g … -z … -c …
+-o synth.polyphony=… <soundfont>``. Deliberately without ``-i``/``-s``: ``-i`` disables the command line on
+stdin, ``-s`` opens a TCP server (port 9800) for the whole network. Commands go as text lines
+via stdin (``select``, ``prog``, ``gain``, ``cc``, ``reverb``, ``router_*``); closing stdin or
+``quit`` ends it. The FM-1 output is connected to FluidSynth's sequencer port via ``aconnect``.
 """
 from __future__ import annotations
 
@@ -32,12 +32,12 @@ from .miditools import GM_PROGRAMS
 SYSTEM_SF2 = [Path("/usr/share/sounds/sf2/FluidR3_GM.sf2"), Path("/usr/share/sounds/sf2/TimGM6mb.sf2"),
               Path("/usr/share/sounds/sf2/default-GM.sf2"), Path("/usr/share/sounds/sf3/MuseScore_General.sf3")]
 INSTALL_HINT = "sudo apt install fluidsynth fluid-soundfont-gm"
-CLIENT_NAME = "FM-1 Klangerzeuger"                   # ALSA-Clientname (Kennung, bleibt gleich)
-DEFAULT_CHANNELS = [5, 6, 7, 8]          # Melodee: Spur 5–8 starten auf Kanal 5–8
+CLIENT_NAME = "FM-1 Klangerzeuger"                   # ALSA client name (identifier, stays the same)
+DEFAULT_CHANNELS = [5, 6, 7, 8]          # Melodee: tracks 5–8 start on channels 5–8
 
-# (Perioden-Größe, Anzahl) – Latenz ≈ Größe × Anzahl / Rate
+# (period size, count) – latency ≈ size × count / rate
 LATENCY = {"niedrig": (64, 2), "ausgewogen": (128, 2), "sicher": (256, 3)}
-# Anzeige je Einstellungswert (die Schlüssel sind gespeicherte Werte und bleiben deutsch)
+# display per setting value (the keys are stored values and stay German)
 LATENCY_DE = {"niedrig": _("low (~3 ms, needs a quiet Pi)"), "ausgewogen": _("balanced (~5 ms)"),
               "sicher": _("safe (~16 ms, no dropouts)")}
 ROUTER_TYPES = ("note", "cc", "prog", "pbend", "cpress", "kpress")
@@ -58,8 +58,8 @@ _DRIVERS: dict[str, list[str]] = {}
 
 
 def audio_drivers(exe: str | None = None) -> list[str]:
-    """welche Audio-Treiber diese FluidSynth-Version kennt (``fluidsynth -a help``) – je Binary einmal gefragt,
-    damit die Oberfläche nicht bei jedem Öffnen der Seite einen Prozess startet."""
+    """which audio drivers this FluidSynth version knows (``fluidsynth -a help``) – asked once per binary,
+    so that the UI does not start a process every time the page is opened."""
     exe = exe or find_binary()
     if not exe:
         return []
@@ -73,7 +73,7 @@ def audio_drivers(exe: str | None = None) -> list[str]:
     return _DRIVERS[exe]
 
 
-# typische Meldungen von FluidSynth -> was der Nutzer tun kann
+# typical FluidSynth messages -> what the user can do
 FAIL_HINTS = [
     ("audio driver", _("The audio output could not be opened – is another program using it exclusively right now "
                        "(e.g. Audacity in recording mode)? Choose another driver under “Audio” "
@@ -88,7 +88,7 @@ FAIL_HINTS = [
 
 
 def explain_failure(log) -> str:
-    """die letzten Logzeilen von FluidSynth in einen verständlichen Hinweis übersetzen."""
+    """translate FluidSynth's last log lines into an understandable hint."""
     text = " ".join(log).lower()
     for key, hint in FAIL_HINTS:
         if key in text:
@@ -117,7 +117,7 @@ def pick_driver(available: list[str]) -> str:
 class Channel:
     number: int                       # 1..16
     enabled: bool = True
-    sfont: int = 1                    # SoundFont-ID in FluidSynth (Ladereihenfolge, ab 1)
+    sfont: int = 1                    # SoundFont ID in FluidSynth (load order, from 1)
     bank: int = 0
     program: int = 0
     volume: int = 100                 # CC7
@@ -129,7 +129,7 @@ class Channel:
 @dataclass
 class Config:
     soundfont: str = ""
-    extra_fonts: list[str] = field(default_factory=list)   # z. B. eigene Kits als .sf2
+    extra_fonts: list[str] = field(default_factory=list)   # e.g. own kits as .sf2
     driver: str = "auto"
     latency: str = "ausgewogen"
     gain: float = 0.6
@@ -160,7 +160,7 @@ def channel_commands(ch: Channel) -> list[str]:
 
 
 def router_commands(channels: list[int]) -> list[str]:
-    """nur diese Kanäle (1..16) durchlassen. Ohne Regeln lässt der Router nichts durch."""
+    """let only these channels (1..16) through. Without rules the router lets nothing through."""
     out = ["router_clear"]
     for typ in ROUTER_TYPES:
         for c in sorted(set(channels)):
@@ -175,8 +175,8 @@ def program_label(bank: int, program: int) -> str:
 
 
 def _die_with_parent():
-    """im Kindprozess (Linux): stirbt die App hart (Absturz, kill -9), bekommt FluidSynth SIGTERM –
-    kein Zombie, der weiter die Audio-Hardware hält. Auf anderen Systemen ohne Wirkung."""
+    """in the child process (Linux): if the app dies hard (crash, kill -9), FluidSynth gets SIGTERM –
+    no zombie that keeps holding the audio hardware. No effect on other systems."""
     try:
         import ctypes
         import signal
@@ -186,7 +186,7 @@ def _die_with_parent():
 
 
 class FluidSynth:
-    """ein laufender FluidSynth-Prozess (alle Methoden aus dem GUI-Thread aufrufbar)."""
+    """a running FluidSynth process (all methods callable from the GUI thread)."""
 
     def __init__(self, popen=subprocess.Popen):
         self._popen = popen
@@ -194,7 +194,7 @@ class FluidSynth:
         self.log: deque[str] = deque(maxlen=300)
         self.cmd: list[str] = []
         self.started = 0.0
-        self.fonts: list[str] = []            # geladene SoundFonts, Index + 1 = ID
+        self.fonts: list[str] = []            # loaded SoundFonts, index + 1 = ID
         self._lock = threading.Lock()
 
     @property
@@ -233,10 +233,10 @@ class FluidSynth:
                 return False
 
     def load_font(self, path: str) -> int:
-        """lädt einen weiteren SoundFont, gibt seine ID zurück (FluidSynth zählt ab 1 hoch)."""
+        """loads another SoundFont, returns its ID (FluidSynth counts up from 1)."""
         if path in self.fonts:
             return self.fonts.index(path) + 1
-        self.send(f'load "{path}" 0')                 # FluidSynth 2 zerlegt Zeilen wie die Shell
+        self.send(f'load "{path}" 0')                 # FluidSynth 2 splits lines like the shell
         self.fonts.append(path)
         return len(self.fonts)
 
@@ -254,8 +254,8 @@ class FluidSynth:
         self.send(*[f"cc {c} 123 0" for c in range(16)])
 
     def stop(self, timeout: float = 2.0, block: bool = True):
-        """FluidSynth beenden. block=False: der Prozess wird sofort abgekoppelt (running ist gleich False) und
-        im Hintergrund zu Ende gewartet – für den GUI-Thread, der nie warten darf."""
+        """Quit FluidSynth. block=False: the process is detached immediately (running becomes False) and
+        waited for in the background – for the GUI thread, which must never wait."""
         p = self.p
         self.p = None
         if p is None:
@@ -284,15 +284,15 @@ class FluidSynth:
                         p.wait(1.5)
                     except subprocess.TimeoutExpired:
                         p.kill()
-        except Exception:                                  # noqa: BLE001 – Beenden darf nie hängen
+        except Exception:                                  # noqa: BLE001 – quitting must never hang
             pass
 
     @property
     def pid(self) -> int | None:
         return self.p.pid if self.p is not None else None
 
-    def cpu_percent(self, _state={}) -> float | None:      # noqa: B006 – Messstand je Prozess
-        """CPU-Last des Prozesses seit dem letzten Aufruf (aus /proc, Linux)."""
+    def cpu_percent(self, _state={}) -> float | None:      # noqa: B006 – measurement state per process
+        """CPU load of the process since the last call (from /proc, Linux)."""
         pid = self.pid
         if pid is None:
             return None

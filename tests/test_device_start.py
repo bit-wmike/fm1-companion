@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Gerät erkennen, während der Geräte-Prozess noch startet (Demo/Simulation auf einem ausgelasteten Rechner).
+"""Detect the device while the device process is still starting (demo/simulation on a busy computer).
 
-Früher gab die Geräteprüfung nach ~5 s auf und das FM-1 blieb dauerhaft „nur MIDI“ (ui_p4_review_test „neu
-verbunden“ wackelte auf Python 3.11). Jetzt wartet sie, solange der Prozess lebt und noch nichts gesagt hat."""
+Previously the device check gave up after ~5 s and the FM-1 stayed "MIDI only" for good (ui_p4_review_test
+"reconnected" was flaky on Python 3.11). Now it waits as long as the process lives and has not said anything yet."""
 import sys
 import time
 from pathlib import Path
@@ -44,8 +44,8 @@ def test_dead_device_process_fails_fast():
 
 
 def test_late_probe_of_previous_device_is_ignored():
-    """Gerätewechsel: das Ergebnis eines noch laufenden Probe-Jobs des vorigen Geräts darf das neue Gerät nicht
-    überschreiben (vorher: DEMO-1 stand nach dem Wechsel von DEMO-2 mit „sloop“ und FM-1_900 da)."""
+    """device switch: the result of a still running probe job of the previous device must not overwrite the new
+    device (before: DEMO-1 showed "sloop" and FM-1_900 after switching from DEMO-2)."""
     from fm1companion.protocol import Info
     from fm1companion.ui.device import DeviceContext
     old, new = SimpleNamespace(hs_identity="FM-1_900"), SimpleNamespace(hs_identity="FM-1_91060")

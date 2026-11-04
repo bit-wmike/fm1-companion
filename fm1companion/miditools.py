@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""MIDI verstehen: Nachrichten in lesbaren Text übersetzen (für den MIDI-Monitor).
+"""Understand MIDI: translate messages into readable text (for the MIDI monitor).
 
-* Kanalnachrichten: Notennamen, CC-Namen (General MIDI + was Melodee mit dem CC macht),
-  Programmwechsel, Pitch-Bend, Aftertouch.
-* System: Clock (mit gemessenem Tempo), Start/Stop/Continue, Song Position, Active Sensing.
-* SysEx: Felucca-/Melodee-Editor-Befehle mit Namen und Kurzinhalt, Melodee-Preset-Dateien,
-  Yamaha DX7 (Voice/Bank/Parameter), das M-VAVE-Update-Protokoll, Universal-SysEx.
+* Channel messages: note names, CC names (General MIDI + what Melodee does with the CC),
+  program change, pitch bend, aftertouch.
+* System: clock (with measured tempo), start/stop/continue, song position, active sensing.
+* SysEx: Felucca/Melodee editor commands with names and short content, Melodee preset files,
+  Yamaha DX7 (voice/bank/parameter), the M-VAVE update protocol, universal SysEx.
 
-Quellen: Melodee web/EDITOR_PROTOCOL.md, web/editor.html (``const CMD``),
-firmware/src/midi_control.c, mod.c, midi_knobs.c (CC-Belegung), tools/fm1_install.py (Update).
+Sources: Melodee web/EDITOR_PROTOCOL.md, web/editor.html (``const CMD``),
+firmware/src/midi_control.c, mod.c, midi_knobs.c (CC mapping), tools/fm1_install.py (update).
 """
 from __future__ import annotations
 
@@ -24,13 +24,13 @@ NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 
 def note_name(n: int) -> str:
-    """60 -> C4 (wie Melodee und die Sample-Seite)."""
+    """60 -> C4 (like Melodee and the samples page)."""
     return f"{NOTE_NAMES[n % 12]}{n // 12 - 1}"
 
 
 # ------------------------------------------------------------- Felucca SysEx ---
 FELUCCA_HDR = (0x7D, 0x46, 0x4C)
-# Befehlsnamen: protocol.Cmd der App + die Tabelle ``const CMD`` des Melodee-Editors
+# command names: the app's protocol.Cmd + the Melodee editor's ``const CMD`` table
 FELUCCA_CMDS = {
     1: "INFO", 2: "GET", 3: "SET", 4: "DUMP", 5: "DESC", 6: "STEP_GET", 7: "STEP_SET", 8: "PRESET",
     9: "PROJECT", 10: "NAMES", 11: "SMP_BEGIN", 12: "SMP_WRITE", 13: "SMP_END", 14: "SMP_ERASE",
@@ -55,7 +55,7 @@ FELUCCA_TEXT = {                         # shown translated: _(FELUCCA_TEXT[name
 
 
 def v14_dec(lo: int, hi: int) -> int:
-    """Melodee-Wert: 14 Bit mit +8192 versetzt (editor.c ed_rv). protocol.r14 rechnet anders!"""
+    """Melodee value: 14 bits offset by +8192 (editor.c ed_rv). protocol.r14 computes differently!"""
     return (lo | hi << 7) - 8192
 
 
@@ -64,7 +64,7 @@ def v14_enc(v: int) -> list[int]:
     return [u & 0x7F, u >> 7 & 0x7F]
 
 
-# ---------------------------------------------------------------- CC-Namen ---
+# ---------------------------------------------------------------- CC names ---
 GM_CC = {                                # names translated where used (cc_name)
     0: "Bank Select MSB", 1: "Modulation", 2: "Breath", 4: "Foot", 5: N_("Portamento time"), 6: "Data Entry MSB",
     7: N_("Volume"), 8: "Balance", 10: N_("Pan"), 11: "Expression", 12: N_("Effect 1"), 13: N_("Effect 2"),
@@ -78,8 +78,8 @@ GM_CC = {                                # names translated where used (cc_name)
     120: "All Sound Off", 121: "Reset Controller", 122: "Local Control", 123: "All Notes Off", 124: N_("Omni off"),
     125: N_("Omni on"), 126: "Mono", 127: "Poly",
 }
-# was Melodee mit eingehenden CCs macht (midi_control.c midi_parameter/midi_control, mod.c mod_midi,
-# midi_knobs.c Profil GENERAL); Profil MINILAB: 74 71 76 77 93 18 19 16 statt 16..19, 80..83
+# what Melodee does with incoming CCs (midi_control.c midi_parameter/midi_control, mod.c mod_midi,
+# midi_knobs.c profile GENERAL); profile MINILAB: 74 71 76 77 93 18 19 16 instead of 16..19, 80..83
 MELODEE_CC = {
     1: N_("Mod wheel (matrix MODW)"), 2: "Breath (FM6)", 4: "Foot (FM6)", 5: "Glide / FM6-Portamento",
     6: N_("Data Entry (RPN 0 = bend range)"), 7: N_("Track volume (LEVEL)"), 10: "Panorama (PAN)",
@@ -98,12 +98,12 @@ def cc_name(cc: int, firmware: str = "") -> str:
     return _(GM_CC[cc]) if cc in GM_CC else f"CC {cc}"
 
 
-# ------------------------------------------------------------- Nachrichten ---
+# ------------------------------------------------------------- messages ---
 TYPE_NAMES = {0x80: N_("Note off"), 0x90: N_("Note on"), 0xA0: N_("Poly aftertouch"), 0xB0: N_("Controller"),
               0xC0: N_("Program"), 0xD0: N_("Aftertouch"), 0xE0: N_("Pitch bend")}      # translated in decode()
 SYS_NAMES = {0xF1: N_("MTC quarter frame"), 0xF2: N_("Song position"), 0xF3: N_("Song select"), 0xF6: "Tune Request",
              0xF8: "Clock", 0xFA: "Start", 0xFB: "Continue", 0xFC: "Stop", 0xFE: "Active Sensing", 0xFF: "Reset"}
-# Filter-Gruppen für den Monitor
+# filter groups for the monitor
 KIND_NOTE, KIND_CC, KIND_PROG, KIND_BEND, KIND_AT, KIND_CLOCK, KIND_TRANSPORT, KIND_SENSE, KIND_SYSEX, KIND_OTHER = (
     "note", "cc", "prog", "bend", "at", "clock", "transport", "sense", "sysex", "other")
 
@@ -113,7 +113,7 @@ class Decoded:
     kind: str
     type: str
     channel: int | None          # 1..16
-    data: str                    # Rohdaten kurz (hex)
+    data: str                    # raw data, short (hex)
     meaning: str
 
 
@@ -123,7 +123,7 @@ def _hex(b, limit=24) -> str:
 
 
 def unpack_bits(s) -> bytes:
-    """8→7-Bitstrom des M-VAVE-Updates zurück in Bytes (wie fm1_install.unpack7)."""
+    """8→7-bit stream of the M-VAVE update back into bytes (like fm1_install.unpack7)."""
     out, acc, nb = bytearray(), 0, 0
     for b in s:
         acc |= (b & 0x7F) << nb
@@ -268,7 +268,7 @@ def decode(b, direction: str = "", firmware: str = "") -> Decoded:
     d1 = b[1] if len(b) > 1 else 0
     d2 = b[2] if len(b) > 2 else 0
     if t == 0x90 and d2 == 0:
-        t = 0x80                                           # Note an mit Velocity 0 = Note aus
+        t = 0x80                                           # note on with velocity 0 = note off
     name = _(TYPE_NAMES[t])
     if t in (0x80, 0x90):
         return Decoded(KIND_NOTE, name, ch, raw, f"{note_name(d1)} ({d1}), Velocity {d2}")
@@ -287,9 +287,9 @@ def decode(b, direction: str = "", firmware: str = "") -> Decoded:
     return Decoded(KIND_BEND, name, ch, raw, f"{v:+d}" + (_(" (center)") if v == 0 else ""))
 
 
-# --------------------------------------------------------- Tempo aus Clock ---
+# --------------------------------------------------------- tempo from clock ---
 class ClockMeter:
-    """misst das Tempo einer eingehenden MIDI-Clock (24 Pulse pro Viertel) und ihre Stabilität."""
+    """measures the tempo of an incoming MIDI clock (24 pulses per quarter) and its stability."""
 
     def __init__(self, window: int = 96):
         self.times: deque[float] = deque(maxlen=window)
@@ -301,7 +301,7 @@ class ClockMeter:
     def feed(self, status: int, t: float | None = None):
         t = time.perf_counter() if t is None else t
         if status == 0xF8:
-            if self.times and t - self.times[-1] > 0.5:   # Pause: neu einmessen
+            if self.times and t - self.times[-1] > 0.5:   # pause: re-measure
                 self.times.clear()
             self.times.append(t)
         elif status in (0xFA, 0xFB):
@@ -321,7 +321,7 @@ class ClockMeter:
 
     @property
     def jitter_ms(self) -> float | None:
-        """Standardabweichung der Pulsabstände in ms."""
+        """Standard deviation of the pulse intervals in ms."""
         if len(self.times) < 8:
             return None
         iv = [b - a for a, b in zip(self.times, list(self.times)[1:])]
@@ -333,10 +333,10 @@ class ClockMeter:
         return bool(self.times) and now - self.times[-1] < 0.5
 
 
-# ------------------------------------------------------------- Protokoll ---
+# ------------------------------------------------------------- protocol ---
 @dataclass
 class Event:
-    t: float                     # Sekunden seit Start des Monitors
+    t: float                     # seconds since the monitor started
     direction: str               # "in" / "out"
     port: str
     data: bytes
@@ -344,7 +344,7 @@ class Event:
 
 
 class EventLog:
-    """Ringpuffer für den Monitor (der MIDI-Thread schreibt, die Oberfläche liest gesammelt)."""
+    """Ring buffer for the monitor (the MIDI thread writes, the UI reads in batches)."""
 
     def __init__(self, size: int = 5000):
         self.events: deque[Event] = deque(maxlen=size)

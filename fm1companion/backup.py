@@ -1,24 +1,24 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Komplette Geräte-Backups – Python-Port von web/fm1backup.js (Melodee).
+"""Complete device backups – Python port of web/fm1backup.js (Melodee).
 
-Das Dateiformat ist byte-genau das des Web-Editors ("felucca-backup", Version 1):
-Backups der App lassen sich im Editor zurückspielen und umgekehrt. Zusätzlich
-schreibt die App einen Block "companion" mit Gerät, Firmware und Notiz hinein;
-der Editor ignoriert unbekannte Felder.
+The file format is byte-for-byte that of the web editor ("felucca-backup", version 1):
+the app's backups can be restored in the editor and vice versa. In addition, the app
+writes a "companion" block with device, firmware and note into it;
+the editor ignores unknown fields.
 
-Ablauf (Befehle 65–67):
-  LIST  – Inventar: pro Objekt id, Größe, CRC
-  GET   – Objekt stückweise lesen (256 Byte)
-  PUT   – begin / data / commit / abort pro Objekt
+Procedure (commands 65–67):
+  LIST  – inventory: id, size, CRC per object
+  GET   – read an object in chunks (256 bytes)
+  PUT   – begin / data / commit / abort per object
 
-Wiederherstellen prüft erst jedes Byte der Datei, dann jede Objektgröße beim
-Gerät (begin + abort, nichts wird geschrieben), und spielt die laufende Musik
-(Objekt 0) zuletzt ein – genau wie der Editor.
+Restoring first checks every byte of the file, then every object size with the
+device (begin + abort, nothing is written), and restores the running music
+(object 0) last – exactly like the editor.
 
-SLOOP (ab 2.3) hat ein eigenes Backup-Protokoll (Befehle 34–36) und ein eigenes
-Dateiformat ("sloop-backup"): siehe sloopbk.py. Alle Funktionen hier wählen das
-Protokoll selbst (Firmware-Schlüssel als Hinweis, sonst über INFO) – die Oberfläche
-muss davon nichts wissen.
+SLOOP (2.3+) has its own backup protocol (commands 34–36) and its own
+file format ("sloop-backup"): see sloopbk.py. All functions here pick the
+protocol themselves (firmware key as a hint, otherwise via INFO) – the UI
+does not need to know about it.
 """
 from __future__ import annotations
 
@@ -35,8 +35,8 @@ from .protocol import Cmd, u32, r32, pack7, unpack7, crc32, ProtocolError
 CHUNK = 256
 FORMAT = "felucca-backup"
 
-# Inventare, die der Editor kennt (Anzahl Objekte -> IDs). Andere Firmwares der
-# Familie können eigene Listen haben; die App sichert sie generisch.
+# Inventories the editor knows (number of objects -> IDs). Other firmwares of the
+# family may have their own lists; the app backs them up generically.
 _IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 32, 33, 34]
 KNOWN_ID_SETS = {
     12: _IDS,
@@ -83,7 +83,7 @@ def max_size(oid: int) -> int:
 
 
 def project_slot(oid: int) -> int | None:
-    """Objekt-ID -> Projektplatz 1..32 (0 = laufende Musik)."""
+    """Object ID -> project slot 1..32 (0 = running music)."""
     if oid == 0:
         return 0
     if 2 <= oid <= 5:
@@ -94,7 +94,7 @@ def project_slot(oid: int) -> int | None:
 
 
 def project_id(slot: int) -> int:
-    """Projektplatz 1..32 -> Objekt-ID."""
+    """Project slot 1..32 -> object ID."""
     if slot == 0:
         return 0
     if 1 <= slot <= 4:
@@ -114,16 +114,16 @@ def _check(rc: int):
 
 
 def object_title(oid: int, sloop: bool = False) -> str:
-    """Name eines Backup-Objekts in Alltagssprache („Preset-Bank U073–U090“ statt „Objekt 17“)."""
+    """Name of a backup object in plain language ("Preset bank U073–U090" instead of "Object 17")."""
     try:
         from . import backup_inspect as BI
         return BI.describe(oid, b"", 0, 57, "", sloop=sloop).title
-    except Exception:                               # noqa: BLE001 – Name ist nur Zugabe
+    except Exception:                               # noqa: BLE001 – the name is just a bonus
         return _("object {id}").format(id=oid)
 
 
 def _with_written(e: BaseException, written: list) -> BaseException:
-    """an einen Fehler anhängen, was vor dem Abbruch schon geschrieben wurde (für die Rückmeldung)."""
+    """append to an error what had already been written before the abort (for the feedback)."""
     if not hasattr(e, "written") or not getattr(e, "written"):
         try:
             e.written = list(written)
@@ -137,7 +137,7 @@ class ObjInfo:
     id: int
     size: int
     crc: int
-    proto: str = "felucca"          # "felucca" (65–67) oder "sloop" (34–36)
+    proto: str = "felucca"          # "felucca" (65–67) or "sloop" (34–36)
 
 
 FELUCCA, SLOOP = "felucca", "sloop"
@@ -145,14 +145,14 @@ SLOOP_FORMAT = "sloop-backup"
 
 
 def protocol(link, hint: str = "") -> tuple[str, object]:
-    """welches Backup-Protokoll spricht das Gerät? -> (FELUCCA|SLOOP, Info oder None).
-    hint: Firmware-Schlüssel (ctx.firmware_key), falls bekannt."""
+    """which backup protocol does the device speak? -> (FELUCCA|SLOOP, info or None).
+    hint: firmware key (ctx.firmware_key), if known."""
     from . import sloopbk
     if hint in ("melodee", "skiff", "felucca"):
         return FELUCCA, None
     try:
         info = sloopbk.read_info(link)
-    except Exception:                               # noqa: BLE001 – dann wie bisher
+    except Exception:                               # noqa: BLE001 – then as before
         return (SLOOP if hint == SLOOP else FELUCCA), None
     if info.firmware_name == SLOOP or hint == SLOOP:
         proto = sloopbk.info_proto(info.raw)
@@ -212,7 +212,7 @@ def read_object(link, o: ObjInfo, progress: Callable[[int], None] | None = None)
 
 def capture(link, firmware: str, progress: Callable[[int, int], None] | None = None,
             companion: dict | None = None, firmware_key: str = "") -> dict:
-    """komplettes Backup lesen – im Format, das zur Firmware gehört (Melodee/Felucca oder SLOOP)."""
+    """read a complete backup – in the format that belongs to the firmware (Melodee/Felucca or SLOOP)."""
     proto, info = protocol(link, firmware_key or (companion or {}).get("firmware", ""))
     if proto == SLOOP:
         from . import sloopbk
@@ -237,15 +237,15 @@ def capture(link, firmware: str, progress: Callable[[int, int], None] | None = N
          "created": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"), "objects": objects}
     if companion:
         f["companion"] = companion
-    read(f)        # dieselbe Prüfung wie beim Laden
+    read(f)        # the same check as when loading
     return f
 
 
 @dataclass
 class Archive:
     file: dict
-    objects: list[dict]          # mit "bytes"
-    known: bool                  # Inventar, das der Editor kennt
+    objects: list[dict]          # with "bytes"
+    known: bool                  # inventory the editor knows
 
     @property
     def format(self) -> str:
@@ -315,7 +315,7 @@ def load_file(path: Path) -> Archive:
 
 
 def dumps(file: dict) -> str:
-    """Dateitext wie der jeweilige Web-Editor ihn schreibt (SLOOP: JSON.stringify(f, null, 1))."""
+    """File text as the respective web editor writes it (SLOOP: JSON.stringify(f, null, 1))."""
     if file.get("format") == SLOOP_FORMAT:
         from . import sloopbk
         return sloopbk.dumps(file)
@@ -323,10 +323,10 @@ def dumps(file: dict) -> str:
 
 
 def write_text_atomic(path: Path, text: str, keep_times: tuple[int, int] | None = None):
-    """Datei nur ganz oder gar nicht schreiben: erst in eine versteckte .tmp-Datei im selben Ordner
-    (mit fsync), dann umbenennen. Bricht das Schreiben ab (Platte voll, Prozess beendet), bleibt die
-    alte Datei unverändert und die .tmp-Datei wird – soweit möglich – wieder entfernt.
-    keep_times: (atime_ns, mtime_ns) der neuen Datei (Notiz ändern, ohne das Datum zu ändern)."""
+    """Write a file completely or not at all: first into a hidden .tmp file in the same folder
+    (with fsync), then rename. If writing aborts (disk full, process killed), the old file
+    stays unchanged and the .tmp file is removed again – as far as possible.
+    keep_times: (atime_ns, mtime_ns) of the new file (change the note without changing the date)."""
     import os
     import tempfile
     path = Path(path)
@@ -356,7 +356,7 @@ def write_text_atomic(path: Path, text: str, keep_times: tuple[int, int] | None 
 
 
 def _sweep_tmp(folder: Path, older_than_s: float = 600):
-    """Reste abgebrochener Schreibvorgänge (.<name>.*.tmp) aufräumen – nur ältere, die niemand mehr schreibt."""
+    """Clean up leftovers of aborted writes (.<name>.*.tmp) – only older ones that nobody is writing any more."""
     import time
     try:
         now = time.time()
@@ -383,7 +383,7 @@ def _put(link, args, timeout=4.0) -> list[int]:
 
 def write_object(link, oid: int, data: bytes, progress: Callable[[int], None] | None = None,
                  proto: str | None = None):
-    """ein einzelnes Objekt schreiben (begin, data, commit; bei Fehler abort)."""
+    """write a single object (begin, data, commit; abort on error)."""
     if (proto or protocol(link)[0]) == SLOOP:
         from . import sloopbk
         sloopbk.write_object(link, oid, data, progress)
@@ -408,8 +408,8 @@ def write_object(link, oid: int, data: bytes, progress: Callable[[int], None] | 
 
 
 def preflight(link, oid: int, data: bytes, proto: str | None = None) -> int:
-    """fragt das Gerät, ob es dieses Objekt annehmen würde – ohne zu schreiben.
-    (SLOOP prüft beim Beginn nur die Größe; den Inhalt erst beim Commit.)"""
+    """asks the device whether it would accept this object – without writing.
+    (SLOOP only checks the size at begin; the content only at commit.)"""
     if (proto or protocol(link)[0]) == SLOOP:
         from . import sloopbk
         rc = sloopbk.parse_put(link.request(*sloopbk.req_begin(oid, len(data), crc32(data)), timeout=1.5,
@@ -436,8 +436,8 @@ def _match(link, archive: Archive, hint: str = "") -> tuple[str, object]:
 
 
 def check_16(archive: Archive, supported, device_version: str = ""):
-    """Backup von Melodee 1.6 auf eine Firmware ohne 1.6-Inventar? -> BackupError mit Erklärung (vor jedem
-    Schreiben; sonst meldete das Gerät nur „älteres Format“ oder „kennt … nicht“)."""
+    """Backup from Melodee 1.6 onto a firmware without the 1.6 inventory? -> BackupError with explanation (before any
+    write; otherwise the device would only report "older format" or "does not know …")."""
     from . import melodee16 as M
     if archive.sloop:
         return
@@ -476,7 +476,7 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
         if o["id"] not in sup_ids and o["size"]:
             raise BackupError(_("The firmware on the FM-1 does not know “{part}” from the backup "
                                 "(different version). Nothing was written.").format(part=object_title(o['id'])))
-    # Vorabprüfung jedes Objekts, bevor irgendetwas ersetzt wird
+    # pre-check every object before anything is replaced
     for o in archive.objects:
         if not is_sample(o["id"]) and o["size"] and o["id"] in sup_ids:
             rc = preflight(link, o["id"], o["bytes"], FELUCCA)
@@ -493,7 +493,7 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
         if len(archive.objects) == 28 and 28 in sup_ids:
             _check(_put(link, [0, 28, *u32(0), *u32(0)])[2])
             _check(_put(link, [2, 28])[2])
-        order = archive.objects[2:] + archive.objects[1:2] + archive.objects[0:1]   # laufende Musik zuletzt
+        order = archive.objects[2:] + archive.objects[1:2] + archive.objects[0:1]   # running music last
         for o in order:
             oid, data = o["id"], o["bytes"]
             if oid not in sup_ids:
@@ -528,16 +528,16 @@ def _restore_sample(link, slot: int, data: bytes, step):
     step(512)
 
 
-# ------------------------------------------------- Teil-Zurückspielen ---
+# ------------------------------------------------- partial restore ---
 
 def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int], None] | None = None,
                      expect: dict | None = None, clear_extension: bool = False,
                      cancelled: Callable[[], bool] | None = None) -> list[int]:
-    """nur ausgewählte Objekte zurückspielen – dieselben Regeln wie restore():
-    erst jede Datei-Prüfung (read), dann Vorabprüfung jedes Objekts beim Gerät (begin+abort),
-    erst danach schreiben; Projekte/Banken/Samples, dann Einstellungen, die laufende Musik zuletzt.
-    expect: id -> (size, crc) wie beim Planen gesehen; hat sich das Gerät seitdem verändert, wird abgebrochen.
-    Gibt die geschriebenen IDs in Reihenfolge zurück."""
+    """restore only selected objects – the same rules as restore():
+    first every file check (read), then a pre-check of every object with the device (begin+abort),
+    only then write; projects/banks/samples, then settings, the running music last.
+    expect: id -> (size, crc) as seen when planning; if the device has changed since then, it aborts.
+    Returns the written IDs in order."""
     want = set(ids)
     by_id = {o["id"]: o for o in archive.objects}
     missing = want - set(by_id)
@@ -603,7 +603,7 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
 
 
 def written_text(e: BaseException, planned, sloop: bool = False, titles: dict | None = None) -> str:
-    """Rückmeldung nach einem Abbruch: was steht jetzt auf dem Gerät? planned: IDs in Schreibreihenfolge."""
+    """Feedback after an abort: what is on the device now? planned: IDs in write order."""
     done = list(getattr(e, "written", None) or [])
     titles = titles or {}
 
@@ -631,5 +631,5 @@ def _restore_selected_sloop(link, archive: Archive, want: set, progress, expect,
 
 
 def capture_live(link, firmware: str, progress=None, companion: dict | None = None) -> Archive:
-    """aktuellen Gerätestand nur im Speicher lesen (für Vergleiche) – ohne Datei."""
+    """read the current device state into memory only (for comparisons) – without a file."""
     return read(capture(link, firmware, progress, companion))

@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""User-Presets von Melodee (gemeinsame Bibliothek, Befehl 80, ab Melodee 1.5) und die lokale Preset-Bibliothek.
+"""Melodee user presets (shared library, command 80, Melodee 1.5+) and the local preset library.
 
-Protokoll: web/EDITOR_PROTOCOL.md "Shared user library (command 80)", nachgebaut wie der Editor
-(web/editor.html ``sharedBank``) und die Firmware (firmware/src/editor_library.c):
+Protocol: web/EDITOR_PROTOCOL.md "Shared user library (command 80)", rebuilt like the editor
+(web/editor.html ``sharedBank``) and the firmware (firmware/src/editor_library.c):
 
-  Anfrage  80: op slotLo slotHi args…      Antwort: op slotLo slotHi rc …   (rc 0 ok, 1 ungültig/leer, 2 abgelehnt/Flash)
-  op 0 Liste (count 1..16) · 1 Lesen · 2 Schreiben · 3 Spur speichern · 4 auf Spur laden · 5 Löschen · 6 Umbenennen
+  Request  80: op slotLo slotHi args…      Reply: op slotLo slotHi rc …   (rc 0 ok, 1 invalid/empty, 2 rejected/flash)
+  op 0 list (count 1..16) · 1 read · 2 write · 3 save track · 4 load onto track · 5 delete · 6 rename
 
-Werte sind v14 mit Offset 8192 (wie Firmware ed_rv / Editor v14enc) – nicht das Zweierkomplement aus protocol.py.
-Ältere Firmware ohne Befehl 80 (Melodee < 1.5: UP_* 16–21, 64 Plätze) wird erkannt und klar abgelehnt.
+Values are v14 with offset 8192 (like firmware ed_rv / editor v14enc) – not the two's complement from protocol.py.
+Older firmware without command 80 (Melodee < 1.5: UP_* 16–21, 64 slots) is detected and clearly rejected.
 """
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ FORMAT_VERSION = 1
 NATIVE_SIZE = {1: 128, 2: 144, 3: 138, 4: 54}
 NATIVE_ENGINE = {1: 12, 2: 15, 3: 19, 4: 10}
 NATIVE_NAMES = {0: _("Parameters"), 1: _("DX7 voice"), 2: _("CZ-1 tone"), 3: _("Prophet program"), 4: _("Drum patch")}
-# feste Engine-Nummern (EDITOR_PROTOCOL.md "engine byte"; core.h) – falls INFO keine Namen liefert
+# fixed engine numbers (EDITOR_PROTOCOL.md "engine byte"; core.h) – in case INFO provides no names
 ENGINE_NAMES = {0: "ANALOG", 1: "DIGITAL", 2: "PHASE", 3: "SID", 4: "SAMPLE", 5: "VOICE", 6: "TRIO", 7: "WHEEL",
                 8: "GRAIN", 9: "PHYS", 10: "DRUM", 11: "NOISE", 12: "FM6", 13: "SLICE", 14: "OBXF", 15: "CZ-1",
                 19: "PROPHET", 21: "MIDI Track"}
@@ -49,21 +49,21 @@ class PresetError(Exception):
 
 
 def engine_display_name(e: int, engines=None) -> str:
-    """einheitlicher Anzeigename einer Engine-Nummer für alle Seiten (Presets, FM-1, Voices).
-    engines: Namensliste aus INFO (info.engines), falls vorhanden – wird nur benutzt, wenn sie einen
-    echten Namen liefert; sonst die festen Namen aus dem Protokoll (z. B. 12 -> "FM6")."""
+    """uniform display name of an engine number for all pages (presets, FM-1, voices).
+    engines: name list from INFO (info.engines), if present – only used if it provides a
+    real name; otherwise the fixed names from the protocol (e.g. 12 -> "FM6")."""
     try:
         e = int(e)
     except (TypeError, ValueError):
         return str(e)
-    if engines and len(engines) > 12 and 0 <= e < len(engines):      # kurze Listen: Nummern anders belegt
+    if engines and len(engines) > 12 and 0 <= e < len(engines):      # short lists: numbers assigned differently
         n = str(engines[e] or "").strip()
         if n and n != "-" and not n.lower().startswith("engine"):
             return n
     return ENGINE_NAMES.get(e, f"Engine {e}")
 
 
-# ------------------------------------------------------------- Kodierung ---
+# ------------------------------------------------------------- encoding ---
 
 def v14enc(v: int) -> list[int]:
     u = max(-8192, min(8191, int(round(v)))) + 8192
@@ -79,7 +79,7 @@ def str_z(s: str) -> list[int]:
 
 
 def pack7(raw) -> list[int]:
-    """Editor czBkPack: je 7 Bytes ein Maskenbyte mit den obersten Bits vorneweg."""
+    """Editor czBkPack: every 7 bytes, a mask byte with the top bits up front."""
     out = []
     raw = list(raw)
     for i in range(0, len(raw), 7):
@@ -108,20 +108,20 @@ def clean_name(s: str, limit: int) -> str:
     return re.sub(r"[^ -~]", " ", str(s or "")).strip()[:limit]
 
 
-# Umlaute und ß werden umgeschrieben statt verschluckt (das FM-1 nimmt nur ASCII 32–126)
+# umlauts and ß are transliterated instead of dropped (the FM-1 only accepts ASCII 32–126)
 _TRANSLIT = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue", "ß": "ss",
                            "é": "e", "è": "e", "à": "a", "–": "-", "—": "-", "„": '"', "“": '"', "”": '"', "’": "'"})
 
 
 def name_limit(engine: int) -> int:
-    """12 Zeichen für normale Presets, 20 für native Voices (FM6, CZ-1, Prophet) – wie die Firmware (op 2/6)."""
+    """12 characters for normal presets, 20 for native voices (FM6, CZ-1, Prophet) – like the firmware (op 2/6)."""
     return 20 if engine in (NATIVE_ENGINE[1], NATIVE_ENGINE[2], NATIVE_ENGINE[3]) else 12
 
 
 def fit_name(s: str, limit: int) -> tuple[str, str]:
-    """Namen an das FM-1 anpassen -> (Name, Erklärung). Die Erklärung ist leer, wenn nichts geändert wurde;
-    sonst sagt sie in einem Satz, was warum geändert wurde (Umlaute umgeschrieben, Sonderzeichen entfernt,
-    auf limit Zeichen gekürzt)."""
+    """Adapt names to the FM-1 -> (name, explanation). The explanation is empty if nothing was changed;
+    otherwise it says in one sentence what was changed and why (umlauts transliterated, special characters removed,
+    shortened to limit characters)."""
     raw = str(s or "")
     t = raw.translate(_TRANSLIT)
     notes = []
@@ -166,18 +166,18 @@ class _R:
         return t
 
 
-# ---------------------------------------------------------- Fähigkeiten ---
+# ---------------------------------------------------------- capabilities ---
 
 @dataclass
 class Caps:
-    shared: bool = False           # INFO-Tag "U" (55 01 lo hi) oder Befehl 80 antwortet
+    shared: bool = False           # INFO tag "U" (55 01 lo hi) or command 80 answers
     total: int = SLOTS
     legacy: bool = False           # Melodee < 1.5 (UP_* 16–21)
     p_count: int = 0
     p_e0: int = 0
     ntrk: int = 4
     engines: list = field(default_factory=list)
-    general_ns: int | None = None  # Favoriten-Kategorie der User-Plätze (FAV_GET/SET)
+    general_ns: int | None = None  # favourites category of the user slots (FAV_GET/SET)
     favorites: bool = False
     version: str = ""
 
@@ -186,7 +186,7 @@ class Caps:
 
 
 def parse_caps(info) -> Caps:
-    """aus protocol.Info (mit .raw) die Fähigkeiten wie der Editor (parse[CMD.INFO]) lesen."""
+    """read the capabilities from protocol.Info (with .raw) like the editor does (parse[CMD.INFO])."""
     c = Caps(p_count=info.p_count, p_e0=info.p_e0, ntrk=info.ntrk or 1, engines=list(info.engines),
              version=info.version)
     raw = list(info.raw or [])
@@ -219,14 +219,14 @@ def parse_caps(info) -> Caps:
 
 
 def probe(link, info) -> Caps:
-    """Fähigkeiten feststellen; wenn INFO nichts sagt, mit einer harmlosen Liste (op 0, 1 Platz) fragen."""
+    """Determine capabilities; if INFO says nothing, ask with a harmless list request (op 0, 1 slot)."""
     c = parse_caps(info)
     if not c.shared:
         try:
             a = link.request(CMD_LIBRARY, [0, 0, 0, 1], timeout=1.0, retries=0)
             if len(a) >= 7 and a[0] == 0 and a[3] == 0:
                 c.shared, c.total = True, a[5] | a[6] << 7
-        except Exception:                                  # noqa: BLE001 – keine Antwort = kein Befehl 80
+        except Exception:                                  # noqa: BLE001 – no reply = no command 80
             pass
     if not c.shared:
         try:
@@ -235,7 +235,7 @@ def probe(link, info) -> Caps:
         except Exception:                                  # noqa: BLE001
             pass
     if c.shared and not c.favorites:
-        try:                                               # FAV_GET ist rein lesend
+        try:                                               # FAV_GET is read-only
             a = link.request(CMD_FAV_GET, [c.general_ns or 0, *v14enc(0), 1], timeout=0.6, retries=0)
             c.favorites = bool(a) and a[0] == 0
         except Exception:                                  # noqa: BLE001
@@ -252,14 +252,14 @@ def refusal_text(c: Caps) -> str:
              "You can still send DX7 voices as SysEx (Presets › FM Voices).")
 
 
-# --------------------------------------------------------------- Preset ---
+# --------------------------------------------------------------- preset ---
 
 @dataclass
 class Preset:
     name: str = ""
     engine: int = 0
     engine_name: str = ""
-    params: list = field(default_factory=list)       # P_COUNT Werte in Protokoll-Reihenfolge
+    params: list = field(default_factory=list)       # P_COUNT values in protocol order
     legacy: list = field(default_factory=lambda: [0] * 32)
     native_kind: int = 0
     native: bytes = b""
@@ -270,7 +270,7 @@ class Preset:
     device: str = ""
     firmware: str = ""
     read_date: str = ""
-    slot: int | None = None                          # Herkunftsplatz (0-basiert)
+    slot: int | None = None                          # slot of origin (0-based)
     used: bool = True
     path: Path | None = None
 
@@ -327,7 +327,7 @@ class Preset:
         return NATIVE_NAMES.get(self.native_kind, "?")
 
     def dx7_voice(self):
-        """bei FM6-Presets die DX7-Voice (VCED), sonst None."""
+        """for FM6 presets the DX7 voice (VCED), otherwise None."""
         if self.native_kind == 1:
             from . import dx7
             return dx7.unpack(self.native)
@@ -335,7 +335,7 @@ class Preset:
 
 
 def preset_from_voice(vced, name: str = "", p_count: int = 0) -> Preset:
-    """DX7-Voice -> FM6-Preset (native kind 1). Die Felucca-Bedienwerte setzt das Gerät (PUT Bit 6)."""
+    """DX7 voice -> FM6 preset (native kind 1). The device sets the Felucca control values (PUT bit 6)."""
     from . import dx7
     vm = bytes(dx7.pack(dx7.sanitize(vced)))
     nm = clean_name(name or dx7.name(vced), 20) or "PATCH"
@@ -347,10 +347,10 @@ def _now() -> str:
     return dt.datetime.now().replace(microsecond=0).isoformat()
 
 
-# ------------------------------------------------------------- Gerät ---
+# ------------------------------------------------------------- device ---
 
 class SharedBank:
-    """Befehl 80 über einen Link (immer aus einem Hintergrund-Thread mit exklusivem Zugriff aufrufen)."""
+    """Command 80 over a link (always call from a background thread with exclusive access)."""
 
     def __init__(self, link, caps: Caps):
         self.link, self.caps = link, caps
@@ -414,7 +414,7 @@ class SharedBank:
             if kind not in NATIVE_SIZE or eng != NATIVE_ENGINE[kind] or len(raw) != size or size != NATIVE_SIZE[kind]:
                 raise PresetError(_("{slot}: invalid native data").format(slot=f"U{slot + 1:03d}"))
             native = bytes(raw)
-            if kind == 1:                                   # voller DX7-Name, wenn der Kurzname sein Anfang ist
+            if kind == 1:                                   # full DX7 name if the short name is its beginning
                 from . import dx7
                 full = dx7.name(dx7.unpack(native))
                 if nm.strip() == full[:12].strip():
@@ -424,7 +424,7 @@ class SharedBank:
                       p_e0=self.caps.p_e0, firmware=self.caps.version, read_date=_now(), slot=slot, used=bool(used & 1))
 
     def put_args(self, p: Preset, defaults: bool | None = None) -> list[int]:
-        """Argumente nach dem Kopf – byte-genau wie Editor sharedBank.put."""
+        """Arguments after the header – byte-exact like the editor's sharedBank.put."""
         kind = p.native_kind
         if kind and p.engine != NATIVE_ENGINE[kind]:
             raise PresetError(_("Native data does not match the engine"))
@@ -468,7 +468,7 @@ class SharedBank:
         self.check(self._rq(self.request(6, slot, *[ord(c) for c in nm]), flash=True), 6, slot)
 
     def set_favorite(self, slot: int, on: bool) -> int:
-        """-> rc: 0 gespeichert, 3 nur im RAM, 4 wird nach STOP gespeichert."""
+        """-> rc: 0 saved, 3 only in RAM, 4 will be saved after STOP."""
         a = self.link.request(CMD_FAV_SET, [self.caps.general_ns or 0, *v14enc(slot), 1 if on else 0], timeout=1.5, retries=0)
         rc = a[0] if a else 1
         if rc not in (0, 3, 4):
@@ -476,19 +476,19 @@ class SharedBank:
         return rc
 
     def voice_to_track(self, track: int, vmem: bytes):
-        """FM6_PUT Ziel 0: Voice live auf eine Spur (nicht gespeichert)."""
+        """FM6_PUT target 0: voice live onto a track (not saved)."""
         a = self.link.request(CMD_FM6_PUT, [0, track, *[x & 127 for x in vmem]], timeout=1.5, retries=0)
         if len(a) < 3 or a[2]:
             raise PresetError(_("The voice was not accepted"))
 
     def write_with_undo(self, slot: int, p: Preset, defaults: bool | None = None) -> Preset:
-        """vorher lesen (für Rückgängig), dann schreiben, dann zur Kontrolle wieder lesen."""
+        """read first (for undo), then write, then read again for verification."""
         old = self.get(slot)
         self.put(slot, p, defaults)
         return old
 
     def restore(self, slot: int, old: Preset):
-        """Rückgängig: alten Inhalt zurückschreiben (oder Platz leeren, wenn er leer war)."""
+        """Undo: write back the old content (or clear the slot if it was empty)."""
         if not old.used:
             self.erase(slot)
         else:
@@ -496,8 +496,8 @@ class SharedBank:
 
 
 def map_params(p: Preset, caps: Caps) -> list[int]:
-    """Werte auf den P_COUNT des Geräts abbilden (wie die Firmware: vordere Werte der Reihe nach,
-    die letzten 8 sind P_E0..P_E7; fehlende = 0) und in −64…127 halten."""
+    """Map values onto the device's P_COUNT (like the firmware: leading values in order,
+    the last 8 are P_E0..P_E7; missing = 0) and keep them within −64…127."""
     n, pe0 = caps.p_count, caps.p_e0 or max(0, caps.p_count - 8)
     src = list(p.params)
     if not src:
@@ -515,18 +515,18 @@ def map_params(p: Preset, caps: Caps) -> list[int]:
     return [max(-64, min(127, int(v))) for v in out]
 
 
-# ---------------------------------------------------------- Bibliothek ---
+# ---------------------------------------------------------- library ---
 
 def safe_file(s: str) -> str:
     return re.sub(r"[^\w .,+()-]", "_", s).strip() or "Preset"
 
 
 class Library:
-    """~/FM-1/Presets/<Gerät>/U001 Name.fm1preset (+ eigene Ordner). Duplikate nach Inhalts-Hash."""
+    """~/FM-1/Presets/<device>/U001 Name.fm1preset (+ own folders). Duplicates by content hash."""
 
     def __init__(self, root: Path):
         self.root = Path(root)
-        try:                                   # Ordner erst bei Bedarf; schreibgeschützt -> nur lesen
+        try:                                   # folder only when needed; read-only -> read only
             self.root.mkdir(parents=True, exist_ok=True)
         except OSError:
             pass
@@ -550,7 +550,7 @@ class Library:
         return {p.content_hash(): p.path for p in self.all()}
 
     def save(self, p: Preset, folder: str = "", known: dict | None = None) -> tuple[Path, bool]:
-        """-> (Pfad, neu?). Gleicher Inhalt wird nicht doppelt abgelegt."""
+        """-> (path, new?). The same content is not stored twice."""
         known = self.hashes() if known is None else known
         h = p.content_hash()
         if h in known and known[h] and Path(known[h]).exists():
@@ -583,7 +583,7 @@ class Library:
             p.path.unlink()
 
     def rename(self, p: Preset, name: str) -> Path:
-        """Preset in der Bibliothek umbenennen (Name in der Datei und Dateiname); am FM-1 ändert sich nichts."""
+        """Rename a preset in the library (name in the file and file name); nothing changes on the FM-1."""
         name = clean_name(name, 20)
         if not name:
             raise PresetError(_("The name must not be empty"))
@@ -601,14 +601,14 @@ class Library:
         try:
             self.write(p, f)
         except OSError:
-            p.name, p.path = before, old         # nichts geändert – auch nicht im Speicher
+            p.name, p.path = before, old         # nothing changed – not even in memory
             raise
         if f != old and old.exists():
             old.unlink()
         return f
 
     def import_file(self, f: Path, folder: str = "Importiert") -> list[Path]:
-        """.fm1preset, Satz (.zip), Editor-Bibliothek (felucca-library .json) oder DX7-SysEx (.syx)."""
+        """.fm1preset, set (.zip), editor library (felucca-library .json) or DX7 SysEx (.syx)."""
         f = Path(f)
         data = f.read_bytes()
         presets = read_any(data, f.name)
@@ -617,7 +617,7 @@ class Library:
 
 
 def read_any(data: bytes, filename: str = "") -> list[Preset]:
-    """wie _read_any, aber jeder Lesefehler ist ein PresetError mit deutscher Erklärung."""
+    """like _read_any, but every read error is a PresetError with a German explanation."""
     try:
         return _read_any(data, filename)
     except PresetError:
@@ -665,7 +665,7 @@ def export_zip(presets: list[Preset], target: Path):
 
 
 def to_felucca(presets: list[Preset], caps_engines=None, firmware: str = "") -> dict:
-    """Bibliotheksdatei des Melodee-Web-Editors (felucca-library v1, kind "bank")."""
+    """Library file of the Melodee web editor (felucca-library v1, kind "bank")."""
     pats = []
     pc = max((len(p.params) for p in presets), default=0)
     for p in presets:
@@ -703,7 +703,7 @@ def from_felucca(d: dict) -> list[Preset]:
 
 
 def diff(a: Preset, b: Preset) -> list[str]:
-    """kurze Liste der Unterschiede (Gerät a / Bibliothek b)."""
+    """short list of the differences (device a / library b)."""
     out = []
     if a.name != b.name:
         out.append(f"Name: {a.name!r} ↔ {b.name!r}")

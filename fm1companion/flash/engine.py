@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Die Installation selbst: Melodees Installer (vendor/fm1_install.py) als Bibliothek, mit Journal,
-Loader-Regeln, Fortschritt, Probelauf und deutschen Fehlermeldungen.
+"""The installation itself: Melodee's installer (vendor/fm1_install.py) as a library, with journal,
+loader rules, progress, dry run and German error messages.
 
-Backend: fm1_install.MidoBackend (echte Ports) oder flash.sim.SimBackend (Tests, Demo).
+Backend: fm1_install.MidoBackend (real ports) or flash.sim.SimBackend (tests, demo).
 """
 from __future__ import annotations
 
@@ -20,16 +20,16 @@ from .journal import Journal
 STEP_PHASE = {"start": "step1", "check": "step1", "loader": "loader", "write": "writing", "reboot": "reboot",
               "done": "done"}
 
-# Protokollzeilen, an denen die Oberfläche den gefährlichen Abschnitt erkennt (InstallDialog: „Jetzt nicht abstecken“)
+# Log lines by which the UI recognises the dangerous section (InstallDialog: "Do not unplug now")
 LOG_WRITING = _("FM-1 is switching to update mode …")
 LOG_REBOOT = _("Written – the FM-1 is restarting …")
 
-# was ein Fehler hinterlässt (wie Melodees progress.js afterFailure)
+# what a failure leaves behind (like Melodee's progress.js afterFailure)
 SAFE, PAUSED, RESTART = "safe", "paused", "restart"
 
 
-# Codes, die Felucca-Firmwares in Schritt 1 auf dem FM-1-Bildschirm zeigen (felucca-bsp/melodee/sloop ota.c,
-# fm-1.drewr.dev/bootloader-check). Der Rechner sieht nur, dass das Gerät aufhört zu lesen.
+# Codes that Felucca firmwares show on the FM-1 screen in step 1 (felucca-bsp/melodee/sloop ota.c,
+# fm-1.drewr.dev/bootloader-check). The computer only sees that the device stops reading.
 DEVICE_CODES = {
     -2: _("package header damaged (CRC)"),
     -3: _("package without update loader or without flash.bin (e.g. m-bootloader installer)"),
@@ -75,7 +75,7 @@ MESSAGES = {
 }
 
 
-# deutsche Fassung von fi.LOADER_HINT (welches Paket der wartende Loader annimmt)
+# German version of fi.LOADER_HINT (which package the waiting loader accepts)
 LOADER_HINT_DE = {
     "ota-FM-1_900": _("It is waiting for a package of the Felucca family (Melodee, SLOOP, Skiff …) – ideally exactly "
                       "the one whose installation was interrupted."),
@@ -106,13 +106,13 @@ class Result:
     identity: str
     dry_run: bool = False
     log: tuple = ()
-    port: str = ""                # Port-Name des Geräts nach der Installation (für die Ressourcen)
+    port: str = ""                # port name of the device after installation (for the resources)
 
 
 @dataclass
 class Pin:
-    """hält EIN Gerät über Neustarts und Update-Modus hinweg fest: USB-Anschluss (sysfs-Pfad, ändert sich beim
-    Neu-Anmelden nicht), sonst Seriennummer"""
+    """pins ONE device across reboots and update mode: USB connection (sysfs path, does not change on
+    re-enumeration), otherwise serial number"""
     usb_path: str = ""
     serial: str = ""
 
@@ -133,7 +133,7 @@ class Pin:
 
 
 def default_details(name: str) -> dict:
-    """USB-Angaben (sysfs) zu einem mido-Portnamen"""
+    """USB details (sysfs) for a mido port name"""
     from .. import devices
     m = devices.CLIENT_RE.search(name)
     return devices.usb_details(int(m.group(1))) if m else {}
@@ -169,10 +169,10 @@ class Engine:
         self.progress = progress or (lambda a, b: None)
         self.cancel = cancel or threading.Event()
 
-    # ------------------------------------------------------------ Suche
+    # ------------------------------------------------------------ search
     def updater(self, port: str = "", pin: Pin | None = None) -> fi.Updater:
         if pin is not None and pin.usable:
-            # nur Ports genau dieses USB-Geräts (auch nach Neustarts, egal unter welchem Namen es erscheint)
+            # only ports of exactly this USB device (also after reboots, whatever name it appears under)
             def flt(name):
                 return pin.matches(self._details(name))
             return fi.Updater(self.backend, None, port_filter=flt, cancelled=self.cancel.is_set)
@@ -185,11 +185,11 @@ class Engine:
             return {}
 
     def candidate_ports(self) -> list[str]:
-        """alle Ports, die ein FM-1 (auch im Update-Modus) sein können"""
+        """all ports that can be an FM-1 (including in update mode)"""
         return [n for n in self.backend.input_names() if self.port_filter(n)]
 
     def pin_for(self, port: str) -> Pin | None:
-        """Pin aus einem Portnamen (oder Teil davon), wenn die USB-Angaben eindeutig sind"""
+        """Pin from a port name (or part of one), if the USB details are unambiguous"""
         all_names = self.backend.input_names()
         names = [n for n in all_names if n == port] or [n for n in all_names if port and port.lower() in n.lower()]
         if len(names) != 1:
@@ -199,12 +199,12 @@ class Engine:
         return pin if pin.usable else None
 
     def current_port(self, pin: Pin) -> str:
-        """Port-Name, unter dem das festgehaltene Gerät gerade erscheint ("" = nicht da / nicht eindeutig)"""
+        """Port name under which the pinned device currently appears ("" = not present / ambiguous)"""
         names = [n for n in self.backend.input_names() if pin.matches(self._details(n))]
         return names[0] if len(names) == 1 else ""
 
     def probe(self, port: str = "", want=None):
-        """Handshake (stört das Gerät nicht) -> Identity oder None"""
+        """Handshake (does not disturb the device) -> Identity or None"""
         up = self.updater(port)
         dev = up.find(want, only_port=bool(port))
         if dev:
@@ -213,7 +213,7 @@ class Engine:
         return None
 
     def find_device(self, port: str = ""):
-        """das Gerät am angegebenen Port; ohne Port: das einzige antwortende FM-1"""
+        """the device on the given port; without a port: the only responding FM-1"""
         up = self.updater(port)
         if port:
             dev = up.find(only_port=True)
@@ -241,13 +241,13 @@ class Engine:
             raise FlashError("notfound", MESSAGES["notfound"])
         return up, found[0]
 
-    # ------------------------------------------------------------ Schreiben
+    # ------------------------------------------------------------ writing
     def write(self, info: pk.PackageInfo, port: str = "", label: str = "", device_id: str = "",
               dry_run: bool = False, expect_sha: str = "", allow_resume: bool = True, pin: Pin | None = None) -> Result:
-        """ein Paket auf das FM-1 schreiben (oder im Probelauf nur alles prüfen).
+        """write a package to the FM-1 (or, in a dry run, only check everything).
 
-        pin: Zielgerät über USB-Anschluss/Seriennummer festhalten (sonst aus `port` abgeleitet, wenn möglich).
-        Sind mehrere FM-1 angeschlossen und lässt sich das Ziel nicht festhalten, wird nichts gesendet."""
+        pin: pin the target device by USB connection/serial number (otherwise derived from `port`, if possible).
+        If several FM-1 are connected and the target cannot be pinned, nothing is sent."""
         rule = info.loader_rule
         if rule is None:
             raise FlashError("badpkg", _("The loader family of this package is unknown – it is not sent."))
@@ -270,7 +270,7 @@ class Engine:
                                                 "Several FM-1 are connected, and the app cannot pin the target device "
                                                 "unambiguously – nothing was sent."))
             up, dev = self.find_device(port)
-            # nach den Neustarts zuerst Ports desselben Geräts fragen ("Melodee FM-1 Update" -> "Melodee FM-1")
+            # after the reboots, ask ports of the same device first ("Melodee FM-1 Update" -> "Melodee FM-1")
             up.port = re.split(r"\s+update\b|:", dev.name, maxsplit=1, flags=re.I)[0].strip() or dev.name
         self.log(_("Device: {identity} at “{port}”").format(identity=dev.id.text, port=dev.name))
         if fi.model_of(dev.id.text) != info.model:
@@ -306,7 +306,7 @@ class Engine:
                                    start_identity=dev.id.text, loader_hint=info.resumable_hint,
                                    resume=dev.id.loader, pid=os.getpid())
             except BaseException:
-                dev.link.close()            # nichts gesendet: Port nicht offen lassen
+                dev.link.close()            # nothing sent: do not leave the port open
                 raise
             phase = {"p": "loader" if dev.id.loader else "prepared"}
             total = max(1, len(info.image))
@@ -334,8 +334,8 @@ class Engine:
                 raise self._translate(e, phase["p"], up, info)
             except FlashError:
                 raise
-            except Exception as e:  # noqa: BLE001 – unerwarteter Fehler (MIDI-Treiber, Programmfehler): Journal
-                # muss trotzdem stimmen, damit die Rettung danach das Richtige anbietet
+            except Exception as e:  # noqa: BLE001 – unexpected error (MIDI driver, program bug): journal
+                # must still be correct so that the rescue afterwards offers the right thing
                 raise self._unexpected(e, phase["p"])
             self.journal.finish("done")
             return Result(ident, port=getattr(up, "last_port", "") or "")

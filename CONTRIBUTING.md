@@ -45,7 +45,7 @@ QT_QPA_PLATFORM=offscreen python3 tests/ui_smoke.py screenshots   # screenshots 
 ```
 
 As root (e.g. in a container) Qt WebEngine needs `QTWEBENGINE_DISABLE_SANDBOX=1`. The UI scripts print
-`N/M bestanden` (passed) at the end and exit with code 0 only if everything passed. New features get a
+`N/M passed` at the end and exit with code 0 only if everything passed. New features get a
 test; you test device access against the simulation (`fm1companion/demo_device.py`, `FM1C_DEMO=1`).
 
 ## Code style

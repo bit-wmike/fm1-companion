@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Sicherheitsbefunde S1–S3 (docs/RESEARCH-2026-11.md): Rettung Stufe 2 und Dump-Prüfung.
+"""Security findings S1–S3 (docs/RESEARCH-2026-11.md): rescue level 2 and the dump check.
 
-S1: „Einstellungen reparieren“ schreibt nie auf einen Flash mit V16- oder unbekanntem Aufbau.
-S2: „Original-V15 zurückschreiben“ schreibt nie unter einem V16- oder unbekannten Bootkopf.
-S3: ein Werks-Abbild (gültige Dateitabelle, andere Bytes als das V15-Paket) heißt nicht „beschädigt“.
-Alles gegen das Mock-FM-1 des Unbrickers; geprüft wird an dessen Löschen-/Schreiben-Protokoll (MockUboot.ops).
+S1: "Repair settings" never writes to a flash with a V16 or unknown layout.
+S2: "Write back original V15" never writes under a V16 or unknown boot head.
+S3: a factory image (valid file table, other bytes than the V15 package) is not called "damaged".
+Everything against the Unbricker's mock FM-1; checked against its erase/write log (MockUboot.ops).
 """
 from __future__ import annotations
 
@@ -23,11 +23,11 @@ sys.path.insert(0, str(ROOT))
 from fm1companion.flash import flashmodel as m, rescuegate as g, uboot  # noqa: E402
 
 V15 = Path("/tmp/fm1_open/sdk/firmware/FM-1_015.fwsc")
-need_v15 = pytest.mark.skipif(not V15.exists(), reason="Original-V15 fehlt")
+need_v15 = pytest.mark.skipif(not V15.exists(), reason="original V15 missing")
 FU = g._unbricker()
 
 
-# ----------------------------------------------------------------------------- Hilfen
+# ----------------------------------------------------------------------------- helpers
 def _dump_of(flash: bytes) -> bytearray:
     d = bytearray(b"\xff" * m.FLASH_SIZE)
     d[:len(flash)] = flash
@@ -35,15 +35,15 @@ def _dump_of(flash: bytes) -> bytearray:
 
 
 def _with_user_data(d: bytearray, vm_start=0x93000) -> bytearray:
-    """Einstellungen im VM-Bereich, damit repair-settings wirklich etwas zu tun hätte"""
+    """settings in the VM area, so that repair-settings would really have something to do"""
     d[vm_start:vm_start + 0x3000] = hashlib.sha256(b"vm").digest() * (0x3000 // 32)
     d[0xFC000:0xFD000] = hashlib.sha256(b"glob").digest() * (0x1000 // 32)
     return d
 
 
 def _edit_directory(d: bytearray, fn, area_len=None) -> bytearray:
-    """Dateitabelle bei 0x4000 entschlüsseln, fn(plain) ändern lassen, Kopf-CRCs neu rechnen, wieder verschlüsseln
-    (die Stromchiffre hängt nur von der Position ab und ist ihr eigenes Inverses)"""
+    """decrypt the file table at 0x4000, let fn(plain) change it, recompute the header CRCs, encrypt again
+    (the stream cipher only depends on the position and is its own inverse)"""
     n = area_len or 0x200
     plain = bytearray(m._decrypt_area(bytes(d), m.APP_START, n))
     fn(plain)
@@ -64,8 +64,8 @@ def _entry(plain, name: bytes):
 
 
 def v16_layout_dump(v15_flash: bytes) -> bytes:
-    """Dump, dessen eigene (CRC-gültige) Dateitabelle den V16-Aufbau sagt: PRCT bis 0xA9000, VM ab 0xBA000, SEQ64 –
-    so wie V16 (FM-1_016) ihn hat. Die Bytes sind sonst V15 – darum kennt kein Steckbrief sie."""
+    """dump whose own (CRC-valid) file table states the V16 layout: PRCT up to 0xA9000, VM from 0xBA000, SEQ64 –
+    as V16 (FM-1_016) has it. Otherwise the bytes are V15 – that is why no profile knows them."""
     d = _with_user_data(_dump_of(v15_flash), 0xBA000)
 
     def fn(p):
@@ -79,7 +79,7 @@ def v16_layout_dump(v15_flash: bytes) -> bytes:
 
 
 def factory_like_dump(v15_flash: bytes) -> bytes:
-    """wie ein Werksgerät: andere Bytes in app.bin als das V15-Paket, Dateitabelle mit passender CRC (gültig)"""
+    """like a factory device: other bytes in app.bin than the V15 package, file table with a matching CRC (valid)"""
     d = _with_user_data(_dump_of(v15_flash))
     area = 0x8E25B
     plain = bytearray(m._decrypt_area(bytes(d), m.APP_START, area))
@@ -94,7 +94,7 @@ def factory_like_dump(v15_flash: bytes) -> bytes:
 
 
 def factory_dump(tmp_path) -> Path:
-    """sauberer Werks-Dump für repair-settings: Sektor 0x93000 beginnt mit 55 AA AA 55, Rest der Fenster leer"""
+    """clean factory dump for repair-settings: sector 0x93000 starts with 55 AA AA 55, the rest of the windows empty"""
     f = bytearray(b"\xff" * m.FLASH_SIZE)
     f[0x93000:0x93004] = b"\x55\xAA\xAA\x55"
     f[0x93004:0x93100] = b"\x01" * 0xFC
@@ -104,7 +104,7 @@ def factory_dump(tmp_path) -> Path:
 
 
 def run_gate(argv, image: bytes, tmp_path):
-    """rescuegate.main gegen ein Mock-FM-1 mit diesem Flash -> (rc, Ergebnis, Mock)"""
+    """rescuegate.main against a mock FM-1 with this flash -> (rc, result, mock)"""
     mock = FU.MockUboot(image=image)
     dev = FU.Fm1Device("mock://fm1-uboot", mock, io_max=mock.usb_buffer_size(), mock=True)
     res = tmp_path / "res.json"
@@ -113,16 +113,16 @@ def run_gate(argv, image: bytes, tmp_path):
 
 
 def writes(mock) -> list:
-    return list(mock.ops)                             # MockUboot.ops: nur erase_sector / erase_block / write
+    return list(mock.ops)                             # MockUboot.ops: only erase_sector / erase_block / write
 
 
 @pytest.fixture
 def incwd(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)                       # der Unbricker legt backups/ im Arbeitsordner an
+    monkeypatch.chdir(tmp_path)                       # the Unbricker creates backups/ in the working folder
     return tmp_path
 
 
-# ----------------------------------------------------------------------------- Struktur (Dateitabelle)
+# ----------------------------------------------------------------------------- structure (file table)
 @need_v15
 def test_app_directory_v15_is_valid_and_v15_layout():
     p = m.Package.load(V15)
@@ -160,11 +160,11 @@ def test_s3_known_factory_hash_is_recognised(monkeypatch):
 def test_s3_real_structural_error_is_still_damaged():
     p = m.Package.load(V15)
     d = _dump_of(p.flash)
-    d[0x30000] ^= 1                                   # ein Bit in app.bin: Datei-CRC stimmt nicht mehr
+    d[0x30000] ^= 1                                   # one bit in app.bin: the file CRC no longer matches
     rep = m.check_dump(bytes(d), packages=[p])
     assert rep.level == m.RED and any("CRC" in t and "beschädigt" in t for _, t in rep.findings)
     d = _dump_of(p.flash)
-    d[0x4000:0x5000] = b"\xff" * 0x1000               # abgebrochen: Tabelle weg, Rest fast gleich V15
+    d[0x4000:0x5000] = b"\xff" * 0x1000               # aborted: table gone, the rest almost equal to V15
     assert m.check_dump(bytes(d), packages=[p]).level == m.RED
 
 
@@ -184,8 +184,8 @@ def test_s1_repair_refused_on_v16_layout_dump(incwd):
     assert rc == g.EXIT_REFUSED and res["checked"] and not res["ok"]
     assert "V16-Aufbau" in res["refused"] and "nichts geschrieben" in res["refused"]
     assert writes(mock) == [] and mock.lowest_touched() is None
-    assert list(incwd.glob("backups/*/full-flash-before.bin"))      # Sicherung liegt trotzdem
-    # Beleg für den Befund: der Unbricker allein hätte in 0x93000–0xA8FFF (V16: noch Firmware) geschrieben
+    assert list(incwd.glob("backups/*/full-flash-before.bin"))      # the backup is there anyway
+    # evidence for the finding: the Unbricker alone would have written into 0x93000–0xA8FFF (V16: still firmware)
     mock = FU.MockUboot(image=v16_layout_dump(p.flash))
     dev = FU.Fm1Device("mock://fm1-uboot", mock, io_max=mock.usb_buffer_size(), mock=True)
     assert FU.main(["repair-settings", "--factory", str(factory_dump(incwd)), "--yes", "--dry-run",
@@ -202,7 +202,7 @@ def test_s1_repair_refused_on_known_v16_and_truncated_v16(incwd):
     assert not v["ok"] and "V16-Aufbau" in v["reason"]
     v = g.repair_verdict(m.demo_dumps()["demo-v16-abgeschnitten.bin"], refs)
     assert not v["ok"] and "abgeschnitten" in v["reason"]
-    v = g.repair_verdict(bytes(m.FLASH_SIZE * b"\x00"), refs)            # unbekannt, keine Tabelle
+    v = g.repair_verdict(bytes(m.FLASH_SIZE * b"\x00"), refs)            # unknown, no table
     assert not v["ok"] and "nichts" in v["reason"]
 
 
@@ -214,7 +214,7 @@ def test_s1_repair_refused_on_damaged_or_v14(incwd):
     v = g.repair_verdict(bytes(d), m.load_known())
     assert not v["ok"] and "beschädigt" in v["reason"]
 
-    def v14(pl):                                      # V13/V14: Firmware und VM bis/ab 0x94000 [Paket FM-1-RE]
+    def v14(pl):                                      # V13/V14: firmware and VM up to/from 0x94000 [package FM-1-RE]
         struct.pack_into("<I", pl, _entry(pl, b"PRCT") + 8, 0x94000)
         struct.pack_into("<II", pl, _entry(pl, b"VM\0") + 4, 0x94000, 0x55000)
     d = _edit_directory(_dump_of(p.flash), v14)
@@ -234,7 +234,7 @@ def test_s1_repair_allowed_on_v15_and_factory_image(incwd):
                              factory_like_dump(p.flash), incwd)
     assert rc == 0 and res["ok"], res
     touched = sorted({op[1] for op in mock.ops if op[0] != "read"})
-    assert touched and min(touched) >= 0x93000                        # nie Bootkopf oder Firmware
+    assert touched and min(touched) >= 0x93000                        # never boot head or firmware
 
 
 def test_s1_done_text_never_claims_untouched_firmware_without_check():
@@ -244,7 +244,7 @@ def test_s1_done_text_never_claims_untouched_firmware_without_check():
     assert "Simulation" in recovery.repair_done_text({}, sim=True)
 
 
-# ----------------------------------------------------------------------------- S2: restore unter fremdem Bootkopf
+# ----------------------------------------------------------------------------- S2: restore under a foreign boot head
 def _v16_head_refs(head: bytes):
     refs = m.load_known()
     for k in refs:
@@ -260,7 +260,7 @@ def test_s2_v16_head_v15_not_written(incwd):
     d[:m.HEAD_END] = head
     v = g.restore_verdict(bytes(d), _v16_head_refs(head))
     assert not v["ok"] and "V16" in v["reason"] and "M-Flasher" in v["reason"]
-    # durch den echten Lauf: Steckbrief-Datei mit diesem Kopf als V16-Kopf
+    # through the real run: profile file with this head as V16 head
     raw = json.loads(m.DATA_FILE.read_text("utf-8"))
     for e in raw["packages"]:
         if e["family"] == "v16-layout":
@@ -270,7 +270,7 @@ def test_s2_v16_head_v15_not_written(incwd):
     rc, res, mock = run_gate(["restore", str(V15), "--yes", "--verify-v15", "--refs", str(refs)], bytes(d), incwd)
     assert rc == g.EXIT_REFUSED and "V16" in res["refused"] and writes(mock) == []
     assert mock.lowest_touched() is None
-    # Beleg für den Befund: der Unbricker allein schreibt V15 unter jedem Kopf
+    # evidence for the finding: the Unbricker alone writes V15 under any head
     mock = FU.MockUboot(image=bytes(d))
     dev = FU.Fm1Device("mock://fm1-uboot", mock, io_max=mock.usb_buffer_size(), mock=True)
     assert FU.main(["restore", str(V15), "--yes", "--verify-v15", "--dry-run", "--log-dir", str(incwd / "logs")],
@@ -279,16 +279,16 @@ def test_s2_v16_head_v15_not_written(incwd):
 
 @need_v15
 def test_s2_unknown_head_refused_factory_head_written(incwd):
-    d = bytearray(FU.synthetic_flash())               # zufälliger Kopf = unbekannt
+    d = bytearray(FU.synthetic_flash())               # random head = unknown
     rc, res, mock = run_gate(["restore", str(V15), "--yes", "--verify-v15"], bytes(d), incwd)
     assert rc == g.EXIT_REFUSED and "kennt die App nicht" in res["refused"] and mock.lowest_touched() is None
     p = m.Package.load(V15)
-    d[:m.HEAD_END] = p.flash[:m.HEAD_END]             # Kopf ab Werk (= V15-Paket)
+    d[:m.HEAD_END] = p.flash[:m.HEAD_END]             # factory head (= V15 package)
     assert m.sha(bytes(d[:m.HEAD_END])) == m.FACTORY_HEAD_SHA256
     rc, res, mock = run_gate(["restore", str(V15), "--yes", "--verify-v15"], bytes(d), incwd)
     assert rc == 0 and res["ok"] and mock.lowest_touched() == 0x4000
     assert bytes(mock.flash[m.APP_START:m.V15_END]) == p.flash[m.APP_START:]
-    assert bytes(mock.flash[:m.HEAD_END]) == p.flash[:m.HEAD_END]      # Kopf nie angefasst
+    assert bytes(mock.flash[:m.HEAD_END]) == p.flash[:m.HEAD_END]      # head never touched
 
 
 def test_gate_refuses_dangerous_options(tmp_path):
@@ -297,10 +297,10 @@ def test_gate_refuses_dangerous_options(tmp_path):
         assert r == g.EXIT_REFUSED
     assert g.main(["restore", "x.fwsc", "--yes", "--result", str(tmp_path / "r.json")]) == g.EXIT_REFUSED
     assert g.main(["repair-settings", "--factory", "f", "--yes", "--demo-refs",
-                   "--result", str(tmp_path / "r.json")]) == g.EXIT_REFUSED      # Demo nur in der Simulation
+                   "--result", str(tmp_path / "r.json")]) == g.EXIT_REFUSED      # demo only in the simulation
 
 
-# ----------------------------------------------------------------------------- Einbindung (Runner, root-Kopie)
+# ----------------------------------------------------------------------------- integration (runner, root copy)
 def test_runner_routes_restore_and_repair_through_gate(tmp_path):
     from fm1companion.flash import uboot_manifest as M
     r = uboot.Runner(dry_run=False, cwd=tmp_path, root_cmd=["pkexec"])
@@ -311,14 +311,14 @@ def test_runner_routes_restore_and_repair_through_gate(tmp_path):
     calls = []
     r.run = lambda cmd, *a, **k: calls.append((cmd, a, k)) or 0
     r.repair_settings("f.bin")
-    with pytest.raises(RuntimeError):                  # V16-Paket: wie bisher schon vorher abgelehnt
+    with pytest.raises(RuntimeError):                  # V16 package: refused beforehand, as before
         r.restore(str(tmp_path / "fehlt.fwsc"))
     assert calls and all(k.get("script") == uboot.GATE_SCRIPT for _c, _a, k in calls)
     assert "--result" in calls[0][1]
 
 
 def test_root_helper_runs_gate_copy_in_simulation(tmp_path):
-    """der echte ROOT_HELPER kopiert Unbricker + rescuegate + flashmodel + Steckbriefe, prüft und startet"""
+    """the real ROOT_HELPER copies Unbricker + rescuegate + flashmodel + profiles, checks and starts"""
     jl = tmp_path / "jl"
     jl.mkdir()
     (jl / "x.py").write_text("")

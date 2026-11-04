@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Abspielen von Projekten und Patterns – auf dem verbundenen FM-1 (mit seinen eigenen Klängen), im Studio-Zwilling
-(dieselbe Firmware im Rechner: identischer Klang) oder – nur wenn es keinen Zwilling gibt – als Annäherung im
-Rechner. Gemeinsam für Projekt-Ansicht und Komponieren (fm1companion/playback.py macht die Arbeit).
+"""Playback of projects and patterns – on the connected FM-1 (with its own sounds), in the studio twin
+(the same firmware on the computer: identical sound) or – only if there is no twin – as an approximation on the
+computer. Shared by project view and compose (fm1companion/playback.py does the work).
 
-Dazu ``DeviceBadge``: zeigt unmissverständlich, WELCHES FM-1 gerade aktiv ist (Name und Farbe wie oben in der
-Leiste) – wichtig, wenn mehrere angeschlossen sind."""
+Plus ``DeviceBadge``: shows unmistakably WHICH FM-1 is currently active (name and color as at the top of the
+bar) – important when several are connected."""
 from __future__ import annotations
 
 import html
@@ -24,7 +24,7 @@ COMPUTER_LABEL = _("on the computer (approximation – only sounds similar)")
 
 
 def studio_for(ctx):
-    """der Studio-Dienst, wenn es einen Zwilling für die Firmware gibt (ohne Gerät: Melodee) – sonst None."""
+    """the studio service if there is a twin for the firmware (without a device: Melodee) – otherwise None."""
     win = getattr(ctx, "window", None)
     svc = getattr(win, "studio", None)
     if svc is None or not svc.available():
@@ -47,7 +47,7 @@ def device_color(ctx) -> str:
 
 
 def device_badge_html(ctx, verb: str | None = None) -> str:
-    """„● Name – Melodee 1.6 – voller Zugriff (+ 1 weiteres angeschlossen)“ mit der Profilfarbe."""
+    """“● Name – Melodee 1.6 – full access (+ 1 more connected)” with the profile color."""
     port = getattr(ctx, "port", None)
     if not port:
         return "<b style='color:#888'>●</b> " + _("No FM-1 connected")
@@ -73,7 +73,7 @@ def device_badge_html(ctx, verb: str | None = None) -> str:
 
 
 class DeviceBadge(QLabel):
-    """Zeile „Aktives FM-1: ● Name …“, folgt Gerätewechseln."""
+    """Row “Active FM-1: ● Name …”, follows device changes."""
 
     def __init__(self, ctx, verb: str | None = None, parent=None):
         super().__init__(parent)
@@ -95,34 +95,34 @@ class DeviceBadge(QLabel):
 
 @dataclass
 class Source:
-    """Was abgespielt werden soll."""
+    """What should be played."""
     events: list
     bpm: float
     title: str = ""
     prj: PF.Project | None = None
-    track_override: int | None = None      # alle Noten auf diese FM-1-Spur (Komponieren)
+    track_override: int | None = None      # all notes onto this FM-1 track (compose)
     loop_quarters: float | None = None
-    live_tag: tuple | None = None          # die laufende Musik genau dieses Geräts (Klänge passen sicher)
+    live_tag: tuple | None = None          # the running music of exactly this device (sounds certainly match)
     engines: dict = field(default_factory=dict)
 
 
 class _Status(QLabel):
-    """Statuszeile, die nur Platz braucht, wenn sie etwas zu sagen hat."""
+    """Status line that only takes up space when it has something to say."""
 
-    def setText(self, text):  # noqa: N802 – Qt-Name
+    def setText(self, text):  # noqa: N802 – Qt name
         super().setText(text)
         self.setVisible(bool(text))
 
 
 class PlaybackBar(QWidget):
-    """[▶ Abspielen] [■ Stopp]  Ziel: auf dem FM-1 „Name“ / im Rechner   [Schleife]   [Ausgabe …]
-    Darunter eine Statuszeile. source() liefert eine Source (oder None)."""
+    """[▶ Play] [■ Stop]  Target: on the FM-1 “Name” / on the computer   [Loop]   [Output …]
+    Below it a status line. source() returns a Source (or None)."""
     state_changed = pyqtSignal(bool)
 
     def __init__(self, ctx, source=None, parent=None, loop: bool = False, play_text: str | None = None,
                  shortcut_hint: str = "", compact: bool = False, lead: QWidget | None = None):
-        """compact: der Ruhe-Hinweis steht nur im Tooltip (spart eine Zeile über einer knappen Piano-Roll);
-        lead: Widget, das vorne in die Knopfreihe kommt."""
+        """compact: the idle hint is only in the tooltip (saves a row above a tight piano roll);
+        lead: widget placed at the front of the button row."""
         super().__init__(parent)
         self.ctx = ctx
         self.compact = compact
@@ -146,7 +146,7 @@ class PlaybackBar(QWidget):
         self.target.setToolTip(_("Where it sounds: on the FM-1 itself (its sounds, as currently set) or in the "
                                  "studio twin (the same firmware on the computer)"))
         self.target.currentIndexChanged.connect(self._target_changed)
-        # lange Gerätenamen dürfen die Spalte nicht verbreitern (sonst kippen schmal/breit-Umschalter hin und her)
+        # long device names must not widen the column (otherwise narrow/wide switches flip back and forth)
         self.target.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.target.setMinimumContentsLength(16)
         self.loop = QCheckBox(_("Loop"))
@@ -168,7 +168,7 @@ class PlaybackBar(QWidget):
                 s.connect(self._dev_changed)
         self._fill_targets()
 
-    # ------------------------------------------------------------------ Ziel
+    # ------------------------------------------------------------------ Target
     def _fill_targets(self):
         cur = self.target.currentData() or DEVICE
         self.target.blockSignals(True)
@@ -224,7 +224,7 @@ class PlaybackBar(QWidget):
     def playing(self) -> bool:
         return self.seq.running or bool(self.player and self.player.playing)
 
-    # ------------------------------------------------------------------ Abspielen
+    # ------------------------------------------------------------------ Play
     def play(self):
         self.stop(quiet=True)
         try:
@@ -293,11 +293,11 @@ class PlaybackBar(QWidget):
                 return P.read_routing(lk)
             self.ctx.job(self, _("Read tracks"), work, dialog=False, on_done=go,
                          on_fail=lambda m, tb: go(P.Routing(note=m)))
-        else:                                   # nur MIDI (Firmware ohne Editor-Protokoll): Standard annehmen
+        else:                                   # MIDI only (firmware without editor protocol): assume default
             go(P.Routing(note=_("This firmware cannot be queried – channels 1–4 assumed.")))
 
     def _play_studio(self, src: Source, fallback: bool = False) -> bool:
-        """Noten in den Studio-Zwilling (dieselbe Firmware, Ton über den Rechner). False: Zwilling nicht startbar."""
+        """Notes into the studio twin (same firmware, sound via the computer). False: twin cannot be started."""
         svc = studio_for(self.ctx)
         try:
             if svc is None or not svc.auto_start():
@@ -398,9 +398,9 @@ class PlaybackBar(QWidget):
         run_job(self, lambda w: P.render_offline(evs, src.bpm, src.prj, engines=src.engines), on_done=done,
                 on_fail=fail)
 
-    # ------------------------------------------------------------------ Stopp
+    # ------------------------------------------------------------------ Stop
     def stop(self, reason: str = "", quiet: bool = False):
-        self._gen += 1                                   # eine laufende Berechnung/Abfrage spielt danach nicht mehr los
+        self._gen += 1                                   # a running computation/query won't start playing afterwards
         was = self.playing
         self.seq.stop()
         self._unhook()
@@ -413,8 +413,8 @@ class PlaybackBar(QWidget):
                                            else _("Stopped.")))
 
     def _hook(self, link):
-        """Gerät wird getrennt/gewechselt, während es spielt: vor dem Schließen der Verbindung noch alle Noten
-        beenden (sonst hingen sie am FM-1 – das merkt den Wechsel nicht). DeviceContext meldet das über
+        """Device is disconnected/changed while playing: end all notes before closing the connection
+        (otherwise they would hang on the FM-1 – it doesn't notice the change). DeviceContext reports this via
         ``about_to_disconnect``."""
         self._unhook()
         self._link = link

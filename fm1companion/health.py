@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Hardware-Infos: der Rechner (Raspberry Pi oder jedes Linux) und das FM-1.
+"""Hardware info: the computer (Raspberry Pi or any Linux) and the FM-1.
 
-Alles wird aus /proc, /sys und – wenn vorhanden – vcgencmd gelesen; fehlt
-etwas (anderer Rechner, kein Pi), bleibt das Feld einfach leer.
+Everything is read from /proc, /sys and – if present – vcgencmd; if something
+is missing (different computer, not a Pi), the field simply stays empty.
 """
 from __future__ import annotations
 
@@ -104,14 +104,14 @@ class PiMonitor:
             d["swap_total"], d["swap_used"] = st * 1024, (st - sf) * 1024
         up = _read("/proc/uptime").split()
         d["uptime_s"] = float(up[0]) if up else None
-        # Lüfter (Pi 5 / Argon & Co.)
+        # fan (Pi 5 / Argon & co.)
         fan = None
         for p in Path("/sys/devices/platform").glob("cooling_fan*/hwmon/*/fan1_input"):
             v = _read(str(p))
             if v.isdigit():
                 fan = int(v)
         d["fan_rpm"] = fan
-        # vcgencmd (nur Raspberry Pi)
+        # vcgencmd (Raspberry Pi only)
         thr = _run(["vcgencmd", "get_throttled"])
         if thr:
             m2 = re.search(r"0x([0-9a-fA-F]+)", thr)
@@ -123,7 +123,7 @@ class PiMonitor:
         ext5 = _run(["vcgencmd", "pmic_read_adc", "EXT5V_V"])
         m3 = re.search(r"=([\d.]+)V", ext5)
         d["ext5v"] = float(m3.group(1)) if m3 else None
-        # Speicher
+        # memory
         disks = []
         for folder in folders or [Path.home()]:
             try:
@@ -136,7 +136,7 @@ class PiMonitor:
         return d
 
     def quick(self, folder: Path | None = None) -> dict:
-        """günstige Werte für die Statusleiste (nur /proc und /sys, kein Unterprozess)."""
+        """cheap values for the status bar (only /proc and /sys, no subprocess)."""
         d: dict = {"cpu_percent": self._cpu_percent()}
         t = _read("/sys/class/thermal/thermal_zone0/temp")
         d["temp_c"] = int(t) / 1000 if t.lstrip("-").isdigit() else None
@@ -161,7 +161,7 @@ class PiMonitor:
 
     @staticmethod
     def undervoltage_alarm() -> bool | None:
-        """Pi: hwmon 'rpi_volt' meldet Unterspannung über in0_lcrit_alarm (ohne vcgencmd)."""
+        """Pi: hwmon 'rpi_volt' reports undervoltage via in0_lcrit_alarm (without vcgencmd)."""
         for h in Path("/sys/class/hwmon").glob("hwmon*"):
             if _read(str(h / "name")) == "rpi_volt":
                 v = _read(str(h / "in0_lcrit_alarm"))
@@ -170,7 +170,7 @@ class PiMonitor:
 
     @staticmethod
     def throttled() -> tuple[int | None, list[str]]:
-        """vcgencmd get_throttled (Unterprozess – nicht im GUI-Thread aufrufen)."""
+        """vcgencmd get_throttled (subprocess – do not call in the GUI thread)."""
         thr = _run(["vcgencmd", "get_throttled"])
         m = re.search(r"0x([0-9a-fA-F]+)", thr)
         if not m:
@@ -196,18 +196,18 @@ class PiMonitor:
 
 # ---------------------------------------------------------------- FM-1 ---
 
-MELODEE_POOL_BYTES = 79 * 4096          # Melodee 1.6: Projekte + Presets teilen sich 79 Sektoren
+MELODEE_POOL_BYTES = 79 * 4096          # Melodee 1.6: projects + presets share 79 sectors
 
 
 def audio_stats_supported(version: str) -> bool:
-    """Befehl 72 ist nur bei Melodee und M-VAVE FM1 Open AUDIO_STATS – bei SLOOP z. B. DSYN_LIST.
-    Andere Firmwares bekommen ihn deshalb nie."""
+    """Command 72 is AUDIO_STATS only on Melodee and M-VAVE FM1 Open – on SLOOP, e.g., it is DSYN_LIST.
+    Other firmwares therefore never get it."""
     v = (version or "").lower()
     return "melodee" in v or bool(re.search(r"fm-?1[ _-]?open|official[ _-]open", v))
 
 
 def fm1_report(link) -> dict:
-    """alles, was sich über das Protokoll erfragen lässt – Fehler einzelner Teile sind kein Abbruch."""
+    """everything that can be queried via the protocol – errors in individual parts do not abort."""
     rep: dict = {}
     try:
         info = parse_info(link.request(Cmd.INFO, [], timeout=1.5))
@@ -260,8 +260,8 @@ def fm1_report(link) -> dict:
 
 
 def fm1_live(link, version: str | None = None) -> dict | None:
-    """aktuelle Last-Werte (AUDIO_STATS mit allen lesenden Erweiterungen). Mit `version`: None, wenn die Firmware
-    keine AUDIO_STATS kennt (dann wird gar nichts gesendet)."""
+    """current load values (AUDIO_STATS with all reading extensions). With `version`: None if the firmware
+    does not know AUDIO_STATS (then nothing is sent at all)."""
     from .protocol import AUDIO_FLAGS_ALL
     if version is not None and not audio_stats_supported(version):
         return None
@@ -270,7 +270,7 @@ def fm1_live(link, version: str | None = None) -> dict | None:
 
 
 def fm1_presets(link, log=None) -> list:
-    """alle User-Preset-Plätze (Befehl 80, je 16 Einträge)."""
+    """all user preset slots (command 80, 16 entries each)."""
     from .protocol import CMD_LIBRARY, parse_library_list
     out = []
     start, total = 0, 1

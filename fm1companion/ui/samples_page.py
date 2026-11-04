@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Samples: Bibliothek, Vorhören, Kit-Baukasten und Slots auf dem FM-1."""
+"""Samples: library, preview, kit builder and slots on the FM-1."""
 from __future__ import annotations
 
 import os
@@ -30,7 +30,7 @@ class SamplesPage(QWidget):
         self.kit: S.Kit = S.Kit(name="KIT 1")
         self.kit_dirty = False
         self.slots: list = []
-        self.slot_undo = DeviceUndo()          # (Slot, alter Inhalt als Backup-Objekt) je Gerät
+        self.slot_undo = DeviceUndo()          # (slot, old content as backup object) per device
         self._slots_busy = False
         self._search_timer = QTimer(self, singleShot=True, interval=250)
         self._search_timer.timeout.connect(self.refresh_table)
@@ -46,7 +46,7 @@ class SamplesPage(QWidget):
         split = QSplitter()
         self.tabs.addTab(split, icon("folder-sound", "audio-x-generic"), _("Library && Kits"))
 
-        # ---------------- links: Filter
+        # ---------------- left: filters
         left = QWidget()
         ll = QVBoxLayout(left)
         ll.setContentsMargins(0, 0, 0, 0)
@@ -97,7 +97,7 @@ class SamplesPage(QWidget):
         ll.addWidget(self.ffmpeg_hint)
         split.addWidget(left)
 
-        # ---------------- Mitte: Tabelle + Wellenform
+        # ---------------- middle: table + waveform
         mid = QWidget()
         ml = QVBoxLayout(mid)
         ml.setContentsMargins(0, 0, 0, 0)
@@ -136,7 +136,7 @@ class SamplesPage(QWidget):
         ml.addLayout(_row(b_play, b_stop, self.chk_auto, self.out_btn, None, b_fav, b_tags, b_show, b_slice, b_tokit))
         split.addWidget(mid)
 
-        # ---------------- rechts: Kit + Slots
+        # ---------------- right: kit + slots
         right = QWidget()
         rl = QVBoxLayout(right)
         rl.setContentsMargins(0, 0, 0, 0)
@@ -187,7 +187,7 @@ class SamplesPage(QWidget):
         b_hear.setToolTip(_("as it sounds on the FM-1 (22 kHz, edited)"))
         b_hear.clicked.connect(self._hear_zone)
         kl.addLayout(_row(b_up, b_down, b_rm, None, b_hear))
-        # Zonen-Bearbeitung
+        # zone editing
         zf = QFormLayout()
         self.z_root = QSpinBox()
         self.z_root.setRange(0, 127)
@@ -223,7 +223,7 @@ class SamplesPage(QWidget):
         kl.addLayout(_row(b_fit, b_wav))
         rl.addWidget(kg, 3)
 
-        # ---------------- Reiter „Auf dem FM-1“: Sample-Slots (Skiff/SLOOP) und FM1-Open-Bank – oben, auch bei 720p sichtbar
+        # ---------------- “On the FM-1” tab: sample slots (Skiff/SLOOP) and FM1 Open bank – at the top, visible even at 720p
         self.dev_tab = QWidget()
         dl = QVBoxLayout(self.dev_tab)
         dl.setContentsMargins(0, 8, 0, 0)
@@ -276,12 +276,12 @@ class SamplesPage(QWidget):
         split.setStretchFactor(1, 3)
         split.setStretchFactor(2, 2)
         split.setSizes([200, 460, 380])
-        # schmal (z. B. halber 1080p-Bildschirm): Filter über die Liste – zwei statt drei Spalten
+        # narrow (e.g. half a 1080p screen): filters above the list – two columns instead of three
         self._lib_split, self._lib_cols, self._lib_inner = split, (left, mid, rscroll), None
         on_narrow(split, lambda: sum(max(w.minimumWidth(), w.minimumSizeHint().width()) for w in (left, mid, rscroll))
                   + 2 * split.handleWidth() + 48, self._lib_narrow)
 
-        # ---------------- weitere Reiter
+        # ---------------- further tabs
         from .sample_recorder import SampleRecorder
         self.recorder = SampleRecorder(ctx, self.lib, self.player)
         self.recorder.saved.connect(self._recorded)
@@ -306,7 +306,7 @@ class SamplesPage(QWidget):
         self.refresh_table()
         QTimer.singleShot(1500, self.scan)
 
-    # ============================================================ Bibliothek
+    # ============================================================ Library
     def _add_root(self):
         d = QFileDialog.getExistingDirectory(self, _("Add sample folder"), str(Path.home()))
         if not d:
@@ -330,7 +330,7 @@ class SamplesPage(QWidget):
         st = self.lib.stats()
         self.lib_info.setText(_("{n} samples, {length}, {size} · new {new}, changed {changed}, removed {removed}").format(
             n=st['count'], length=fmt_secs(st['seconds']), size=fmt_size(st['bytes']),
-            new=stats['neu'], changed=stats['geändert'], removed=stats['entfernt']))  # i18n: ignore (Schlüssel)
+            new=stats['neu'], changed=stats['geändert'], removed=stats['entfernt']))  # i18n: ignore (key)
         self.refresh_filters()
         self.refresh_table()
         self._ffmpeg_note()
@@ -389,7 +389,7 @@ class SamplesPage(QWidget):
         self.tags.blockSignals(False)
 
     def _ffmpeg_note(self):
-        """Hinweis, wenn MP3/FLAC & Co. ohne ffmpeg nicht gelesen werden können."""
+        """Notice when MP3/FLAC & co. can't be read without ffmpeg."""
         if S.have_ffmpeg():
             self.ffmpeg_hint.hide()
             return
@@ -447,10 +447,10 @@ class SamplesPage(QWidget):
             self.player.play(Path(it.data(0, Qt.ItemDataRole.UserRole)), status=self.lib_info.setText)
 
     def deactivate(self):
-        """Seite verlassen: Vorhören anhalten (die Aufnahme im Reiter „Aufnehmen“ läuft weiter)."""
+        """Leaving the page: stop the preview (the recording in the “Record” tab keeps running)."""
         self.player.stop()
 
-    # ------------------------------------------------------------ Ziehen & Ablegen
+    # ------------------------------------------------------------ Drag & drop
     def dragEnterEvent(self, e):
         if e.mimeData().hasUrls() and any(u.isLocalFile() for u in e.mimeData().urls()):
             e.acceptProposedAction()
@@ -459,12 +459,12 @@ class SamplesPage(QWidget):
         self.add_paths([u.toLocalFile() for u in e.mimeData().urls() if u.isLocalFile()])
 
     def add_paths(self, paths: list[str]) -> int:
-        """Ordner werden Bibliotheks-Ordner, einzelne Dateien landen in Samples › Importiert (Kopie).
-        -> Zahl der übernommenen Ordner + Dateien (Dateien werden im Hintergrund kopiert)."""
+        """Folders become library folders, single files end up in Samples › Imported (copy).
+        -> number of folders + files taken over (files are copied in the background)."""
         import shutil
         s = self.ctx.settings
         n = 0
-        dest = s.samples_dir / "Importiert"  # i18n: ignore (Ordnername)
+        dest = s.samples_dir / "Importiert"  # i18n: ignore (folder name)
         files, skipped = [], []
         for p in map(Path, paths):
             if p.is_dir():
@@ -559,7 +559,7 @@ class SamplesPage(QWidget):
         self.recorder.shutdown()
 
     def open_slicer(self, path: str | None = None):
-        """Slicer für die gewählte (oder angegebene) Datei; baut auf Wunsch direkt ein Kit."""
+        """Slicer for the selected (or given) file; optionally builds a kit directly."""
         from .slicer_dialog import SlicerDialog
         if not path:
             it = self.table.currentItem()
@@ -640,7 +640,7 @@ class SamplesPage(QWidget):
             show_error(self, _("Open kit"), fs_error_text(e, _("Kit not readable")))
             self._fill_kits()
             return
-        except Exception:  # noqa: BLE001 – kaputtes JSON o. Ä.
+        except Exception:  # noqa: BLE001 – broken JSON or similar
             show_error(self, _("Kit damaged"), _("“{name}” is not a valid kit file (damaged or from "
                                                  "another app). The current kit stays open.").format(name=Path(path).stem))
             self._fill_kits()
@@ -783,14 +783,14 @@ class SamplesPage(QWidget):
         self.lib.mark_used(paths[:room])
         self.kit_dirty = True
         self._fill_zones()
-        if self.kit.mode == "keys":            # Grundton erkennen – Audio lesen gehört nicht in den GUI-Thread
+        if self.kit.mode == "keys":            # detect the root note – reading audio doesn't belong in the GUI thread
             def work(w):
                 out = {}
                 for z in new_zones:
                     try:
                         sr, x = S.read_mono(Path(z.path))
                         out[z.path] = S.detect_root(sr, x, Path(z.path).stem)
-                    except Exception:  # noqa: BLE001 – dann bleibt C4
+                    except Exception:  # noqa: BLE001 – then it stays C4
                         pass
                 return out
 
@@ -920,12 +920,12 @@ class SamplesPage(QWidget):
         self.slots = []
         self._slots_busy = False
         self._slots_reading = None
-        self._slots_gen = getattr(self, "_slots_gen", 0) + 1   # Ergebnisse älterer Lesevorgänge verwerfen
+        self._slots_gen = getattr(self, "_slots_gen", 0) + 1   # discard results of older reads
         self.slot_info.setText(self._no_device_text())
         self.b_upload.setEnabled(self.ctx.connected)
         self.b_upload.setToolTip(self._upload_tip())
         self.b_sread.setEnabled(self.ctx.link is not None)
-        self.b_serase.setEnabled(False)                # erst nach dem Lesen, mit gewähltem Slot
+        self.b_serase.setEnabled(False)                # only after reading, with the selected slot
         self._open_felucca_note()
         self._slot_undo_enable()
         if self.ctx.connected and self.tabs.currentIndex() == self.dev_tab_index:
@@ -960,10 +960,10 @@ class SamplesPage(QWidget):
         if not self.ctx.require(self):
             self._slots_busy = False
             return
-        # Gerät + Verbindungs-Generation: auch ein Neu-Verbinden desselben FM-1 macht alte Ergebnisse ungültig
+        # device + connection generation: even reconnecting the same FM-1 invalidates old results
         key = (self.ctx.port.key if self.ctx.port else "", getattr(self, "_slots_gen", 0))
         if getattr(self, "_slots_reading", None) == key:
-            return                                     # läuft schon für dieses Gerät (z. B. Reiterwechsel + Knopf)
+            return                                     # already running for this device (e.g. tab change + button)
         self._slots_reading = key
         self.slot_info.setText(_("Reading the sample slots …"))
 
@@ -980,7 +980,7 @@ class SamplesPage(QWidget):
         return (self.ctx.port.key if self.ctx.port else "", getattr(self, "_slots_gen", 0))
 
     def _lib_narrow(self, narrow: bool):
-        """Bibliothek: drei Spalten (Filter | Liste | Kit) oder zwei (Filter über Liste | Kit)."""
+        """Library: three columns (filters | list | kit) or two (filters above list | kit)."""
         split = self._lib_split
         left, mid, kit = self._lib_cols
         total = max(split.width(), 600)
@@ -1005,7 +1005,7 @@ class SamplesPage(QWidget):
         split.setSizes([sizes.get(split.widget(i), 0) for i in range(split.count())])
 
     def _tab_changed(self, i: int):
-        """Reiter „Auf dem FM-1“ geöffnet: Slots automatisch lesen (einmal je Gerät), Kit-Hinweis aktualisieren."""
+        """“On the FM-1” tab opened: read slots automatically (once per device), update the kit hint."""
         if i != self.dev_tab_index:
             return
         self._kit_hint()
@@ -1026,7 +1026,7 @@ class SamplesPage(QWidget):
             if self._slots_reading == key:
                 self._slots_reading = None
             if key != self._current_key():
-                return                                 # Ergebnis eines inzwischen getrennten/gewechselten Geräts
+                return                                 # result of a device that has been disconnected/changed in the meantime
         self._slots_busy = False
         kib, slots = res
         keep = self.slot_list.currentRow()
@@ -1037,7 +1037,7 @@ class SamplesPage(QWidget):
             self.slot_info.setText(_("<b>{firmware} has no sample slots</b> (Melodee from 1.5 plays only synth and "
                                      "drum engines). You can still build kits, save them and export them as WAVs – "
                                      "uploading works on an FM-1 with Skiff or SLOOP.").format(firmware=fw))
-            self.slot_list.setVisible(False)          # keine leere Liste, die nach „hier fehlt was“ aussieht
+            self.slot_list.setVisible(False)          # no empty list that looks like “something is missing here”
             self.b_upload.setEnabled(False)
             self.b_upload.setToolTip(_("This firmware has no sample slots (Melodee from 1.5) – uploading is not possible here"))
             self.b_serase.setEnabled(False)
@@ -1057,7 +1057,7 @@ class SamplesPage(QWidget):
             it.setData(Qt.ItemDataRole.UserRole, s.index)
             self.slot_list.addItem(it)
         self.slot_info.setText(_("{n} slots of {kib} KiB each.").format(n=len(slots), kib=kib))
-        self.slot_list.setCurrentRow(keep if 0 <= keep < len(slots) else 0)    # Auswahl bleibt beim Neu-Lesen
+        self.slot_list.setCurrentRow(keep if 0 <= keep < len(slots) else 0)    # selection stays when re-reading
 
     def _upload(self):
         it = self.slot_list.currentItem()
@@ -1099,7 +1099,7 @@ class SamplesPage(QWidget):
                                      "content is saved – “Undo” brings it back.").format(kit=kit.name, zones=len(kit.zones), n=slot + 1),
                          fail_text=lambda m: (_("Not uploaded: {error} – the old slot content is saved (“Undo”).") if kept else
                                               _("Not uploaded: {error} – nothing was changed on the FM-1.")).format(error=m))
-        if kept:                               # auch nach einem Abbruch mittendrin
+        if kept:                               # also after a cancel midway
             self.slot_undo.push(self.ctx, (slot, kept[0]), f"USR{slot + 1}", tag)
         self._slot_undo_enable()
         if d.ok:
@@ -1162,7 +1162,7 @@ OPEN_TITLE = _("FM1 Open: 8 slots, together ~19.5 s")
 
 
 def _write_bytes_atomic(path: Path, data: bytes):
-    """Backup-Datei ganz oder gar nicht schreiben (versteckte .tmp-Datei, dann umbenennen)."""
+    """Write the backup file all or nothing (hidden .tmp file, then rename)."""
     import os
     import tempfile
     path = Path(path)
@@ -1184,12 +1184,12 @@ def _write_bytes_atomic(path: Path, data: bytes):
 
 
 def _open_felucca_note(self):
-    """FM1 Open ist eine eigene Firmware: Spricht das FM-1 Felucca (Melodee/SLOOP/Skiff), kann es kein FM1 Open sein –
-    dann ist der Kasten gesperrt und sagt das, statt beim Lesen nach Sekunden „keine Antwort“ zu melden."""
+    """FM1 Open is a separate firmware: if the FM-1 speaks Felucca (Melodee/SLOOP/Skiff), it can't be FM1 Open –
+    then the box is locked and says so, instead of reporting “no response” after seconds when reading."""
     felucca = bool(self.ctx.connected)
     self.b_open_read.setEnabled(self.ctx.link is not None and not felucca)
     self.b_open_restore.setEnabled(not felucca)
-    self.open_list.setVisible(not felucca)          # keine leere Liste für ein Gerät, das gar kein FM1 Open ist
+    self.open_list.setVisible(not felucca)          # no empty list for a device that isn't FM1 Open at all
     self.open_budget.setVisible(not felucca)
     if felucca:
         self.open_info.setText(_("Only for an FM-1 with the M-VAVE firmware FM1 Open – this one runs {firmware}.").format(firmware=self.ctx.title()))
@@ -1290,7 +1290,7 @@ def open_read(self):
                 return info, None, None
             w.log.emit(_("Reading the sample bank ({kib} KiB) …").format(kib=size // 1024))
             bank = c.read_bank(lambda a, b: w.progress.emit(a, b))
-        F.read_bank(bank)                 # prüft die Bank, bevor sie gesichert wird
+        F.read_bank(bank)                 # checks the bank before it is backed up
         p = folder / time.strftime("FM1-Open-Samples %Y-%m-%d %H-%M-%S.fm1s")
         _write_bytes_atomic(p, bank)
         w.log.emit(_("Backed up: {path}").format(path=p))
@@ -1330,7 +1330,7 @@ def open_export(self):
 
 
 def open_upload(self, what: str, restore_path: str | None = None):
-    """what: "zone" | "kit" | "clear" | "restore". Schreibt die ganze Bank – mit Rückfrage und Backup."""
+    """what: "zone" | "kit" | "clear" | "restore". Writes the whole bank – with confirmation and backup."""
     F = self.F
     if self.ctx.link is None:
         show_error(self, _("No device"), _("Please connect an FM-1 with FM1 Open via USB."))
@@ -1431,7 +1431,7 @@ for _f in (_build_open, _open_enable, _open_show, _open_backup_dir, _open_felucc
 
 
 def _row(*ws):
-    """Knopfreihe, die bei schmalem Fenster umbricht (None = Lücke, wird ignoriert)."""
+    """Button row that wraps when the window is narrow (None = gap, is ignored)."""
     h = FlowLayout()
     for w in ws:
         if isinstance(w, QWidget):

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Daten-Bereich im Demo-Modus: Auto-Backup beim Verbinden, Backup-Browser (Presets, Projekte, Vergleich,
-Teil-Zurückspielen), Geräte-Seite (Vergleich, Kopie Melodee→SLOOP verweigert, Melodee→Melodee erlaubt).
+"""Data area in demo mode: auto backup on connecting, backup browser (presets, projects, comparison,
+partial restore), Devices page (comparison, copy Melodee→SLOOP refused, Melodee→Melodee allowed).
 
   QT_QPA_PLATFORM=offscreen python3 tests/ui_data_test.py
 """
@@ -149,96 +149,96 @@ def autos(folder):
 
 def flow():
     ctx = w.ctx
-    check(until(lambda: ctx.connected and ctx.firmware_key == "melodee"), "Demo-Melodee verbunden")
+    check(until(lambda: ctx.connected and ctx.firmware_key == "melodee"), "demo Melodee connected")
     folder = ctx.device_folder(ctx.settings.backups_dir)
-    check(until(lambda: len(autos(folder)) == 1, 15000), "Automatisches Backup beim Verbinden")
+    check(until(lambda: len(autos(folder)) == 1, 15000), "automatic backup on connecting")
     check(until(lambda: "gespeichert" in AB.STATUS.text), f"Status: {AB.STATUS.text}")
     wait(300)
-    check(len(autos(folder)) == 1 and not w.backups.auto.run(), "zweites Verbinden: Backup aktuell → keins")
+    check(len(autos(folder)) == 1 and not w.backups.auto.run(), "second connect: backup current → none")
     m = autos(folder)[0]
-    check(m.fw_key == "melodee" and "Melodee" in m.firmware, "Backup mit Firmware beschriftet")
-    # nie während eines anderen Gerätezugriffs
+    check(m.fw_key == "melodee" and "Melodee" in m.firmware, "backup labelled with the firmware")
+    # never during another device access
     ctx.link.hold(settle=False)
-    check(not w.backups.auto.run(force=True) and "wartet" in AB.STATUS.text, "wartet, solange das Gerät belegt ist")
+    check(not w.backups.auto.run(force=True) and "wartet" in AB.STATUS.text, "waits while the device is busy")
     ctx.link.release()
     w.backups.auto._retries = 99
 
-    # ---- Presets aufs Demo-Gerät, Backup machen
-    check(device_write(6, bank({0: rec("BASS ONE"), 4: rec("SID LEAD"), 9: rec("FM KEYS", 12)})), "Presets geschrieben")
+    # ---- presets onto the demo device, make a backup
+    check(device_write(6, bank({0: rec("BASS ONE"), 4: rec("SID LEAD"), 9: rec("FM KEYS", 12)})), "presets written")
     from fm1companion.ui.backups_page import make_backup
     p = make_backup(ctx, w, "mit Presets")
-    check(p is not None, "Backup mit Presets")
+    check(p is not None, "backup with presets")
     w.go("backup_browser")
     br = w.page("backup_browser")
-    check(br is not None, "Backup-Browser vorhanden")
+    check(br is not None, "backup browser present")
     br.open_path(p)
-    check(br.rep and len(br.rep.used_presets) == 3, f"Browser: 3 Presets ({len(br.rep.used_presets) if br.rep else '-'})")
-    check(br.ptable.topLevelItemCount() == 3 and br.ptable.topLevelItem(0).text(0) == "U001", "Preset-Tabelle")
+    check(br.rep and len(br.rep.used_presets) == 3, f"browser: 3 presets ({len(br.rep.used_presets) if br.rep else '-'})")
+    check(br.ptable.topLevelItemCount() == 3 and br.ptable.topLevelItem(0).text(0) == "U001", "preset table")
     br.p_search.setText("lead")
-    check(br.ptable.topLevelItemCount() == 1 and br.ptable.topLevelItem(0).text(1) == "SID LEAD", "Preset-Suche")
+    check(br.ptable.topLevelItemCount() == 1 and br.ptable.topLevelItem(0).text(1) == "SID LEAD", "preset search")
     br.p_search.setText("")
     titles = []
     for i in range(br.content.topLevelItemCount()):
         g = br.content.topLevelItem(i)
         titles += [g.child(j).text(0) for j in range(g.childCount())]
-    check("Projekt 7" in titles and "Preset-Bank U001–U018 (allgemein)" in titles, "Inhaltsbaum: Projekte und Banken")
-    css = app.styleSheet()                    # Häkchen im Baum nur einmal zeichnen (sonst Doppel-Kästchen mit Breeze/Qt 6.8)
+    check("Projekt 7" in titles and "Preset-Bank U001–U018 (allgemein)" in titles, "content tree: projects and banks")
+    css = app.styleSheet()                    # draw the tick in the tree only once (otherwise double boxes with Breeze/Qt 6.8)
     item_rule = css.split("QTreeView::item, QListView::item, QTableView::item {", 1)[-1].split("}", 1)[0]
     check("QTreeView::indicator" not in css or "background" in item_rule,
-          "Stylesheet: Listen-Einträge mit Hintergrund → Häkchen nur vom Stylesheet gezeichnet")
-    check(br.timeline.count() >= 2, f"Zeitleiste ({br.timeline.count()})")
+          "stylesheet: list items with a background → ticks drawn by the stylesheet only")
+    check(br.timeline.count() >= 2, f"timeline ({br.timeline.count()})")
 
-    # ---- Gerät ändern, mit Live vergleichen
-    check(device_write(6, bank({0: rec("BASS TWO"), 4: rec("SID LEAD")})), "Preset umbenannt, eins gelöscht")
-    check(device_write(68, b"P" * 1200), "Projekt 9 belegt")
+    # ---- change the device, compare with live
+    check(device_write(6, bank({0: rec("BASS TWO"), 4: rec("SID LEAD")})), "preset renamed, one deleted")
+    check(device_write(68, b"P" * 1200), "project 9 used")
     br._fill_timeline()
     br.cmp_with.setCurrentIndex(br.cmp_with.findData("__live__"))
     br.compare()
     summ = br.cmp_sum.text()
     check("1 Preset geändert" in summ and "1 Preset gelöscht" in summ and "Projekt 9 neu" in summ, f"Diff: {summ}")
-    check(br.cmp_tree.topLevelItemCount() == 2, f"nur Änderungen ({br.cmp_tree.topLevelItemCount()})")
+    check(br.cmp_tree.topLevelItemCount() == 2, f"only changes ({br.cmp_tree.topLevelItemCount()})")
 
-    # ---- nur die Preset-Bank zurückspielen
+    # ---- restore only the preset bank
     br._select_changed()
-    check(set(br.selected_ids()) == {6, 68}, f"Änderungen ausgewählt {br.selected_ids()}")
+    check(set(br.selected_ids()) == {6, 68}, f"changes selected {br.selected_ids()}")
     br.select_ids([6])
     n_before = len(list(folder.glob("*.json")))
     log_boxes.clear()
     ok = br.restore_selected()
-    check(ok, "Ausgewählte zurückgespielt")
-    check(any("Preset-Bank U001–U018" in b and "BASS TWO" in b for b in log_boxes), "Bestätigung nennt Bank und Preset")
-    check(len(list(folder.glob("*.json"))) == n_before + 1, "Sicherheits-Backup angelegt")
-    check(BI.decode_up_bank(device_read(6), 1, 6)[9].name == "FM KEYS", "Bank wieder wie im Backup")
-    check(len(device_read(68)) == 1200, "Projekt 9 unangetastet")
+    check(ok, "selected ones restored")
+    check(any("Preset-Bank U001–U018" in b and "BASS TWO" in b for b in log_boxes), "confirmation names bank and preset")
+    check(len(list(folder.glob("*.json"))) == n_before + 1, "safety backup created")
+    check(BI.decode_up_bank(device_read(6), 1, 6)[9].name == "FM KEYS", "bank as in the backup again")
+    check(len(device_read(68)) == 1200, "project 9 untouched")
     decline_next.append(1)
     br.select_ids([68])
-    check(not br.restore_selected() and len(device_read(68)) == 1200, "Abbrechen schreibt nichts")
+    check(not br.restore_selected() and len(device_read(68)) == 1200, "cancelling writes nothing")
 
-    # ---- Etikett, Anheften
+    # ---- label, pinning
     AB.set_meta(p, labels=["Live-Set Oktober"], pinned=True)
     w.backups.refresh()
     check(any("#Live-Set Oktober" in w.backups.tree.topLevelItem(i).text(6)
-              for i in range(w.backups.tree.topLevelItemCount())), "Etikett in der Backup-Liste")
+              for i in range(w.backups.tree.topLevelItemCount())), "label in the backup list")
 
-    # ---- Abnahme p2: Notiz gleicher Länge sichtbar, beschädigte Datei, kaputtes Zip, Export-Fehler
+    # ---- acceptance p2: note of the same length visible, damaged file, broken zip, export errors
     AB.set_meta(p, note="abc")
     w.backups.refresh()
     w.backups._set_meta(p, note="abd")
     check(any("abd" in w.backups.tree.topLevelItem(i).text(6) for i in range(w.backups.tree.topLevelItemCount())),
-          "Notiz gleicher Länge sofort sichtbar (Index)")
+          "note of the same length visible at once (index)")
     broken = folder / "FM-1_A_melodee_2020-01-01_00-00-00.json"
     broken.write_text(p.read_text()[:2000])
     w.backups.refresh()
     rows = [w.backups.tree.topLevelItem(i) for i in range(w.backups.tree.topLevelItemCount())]
     bad = next((r for r in rows if r.data(0, Qt.ItemDataRole.UserRole) == str(broken)), None)
     check(bad is not None and bad.text(3) == "beschädigt" and "beschädigt" in w.backups.info.text(),
-          "abgeschnittene Datei wird als beschädigt gezeigt")
+          "truncated file is shown as damaged")
     w.backups.tree.setCurrentItem(bad)
     n_boxes = len(log_boxes)
     w.backups._restore()
-    check(len(log_boxes) == n_boxes + 1 and "lässt sich nicht" in log_boxes[-1], "beschädigt: Zurückspielen verweigert, erklärt")
+    check(len(log_boxes) == n_boxes + 1 and "lässt sich nicht" in log_boxes[-1], "damaged: restoring refused, explained")
     w.backups._browse()
-    check(br.rep is not None and br.rep.path != broken, "beschädigt: Browser öffnet sie nicht")
+    check(br.rep is not None and br.rep.path != broken, "damaged: the browser does not open it")
     broken.unlink()
     from PyQt6.QtWidgets import QFileDialog
     badzip = home / "kaputt.zip"
@@ -255,15 +255,15 @@ def flow():
     n_boxes = len(log_boxes)
     br._export()
     check(len(log_boxes) == n_boxes + 1 and "Nicht exportiert" not in log_boxes[-1] and "Errno" not in log_boxes[-1]
-          and ("Ordner" in log_boxes[-1] or "Datei" in log_boxes[-1]), f"Export in unmöglichen Ordner: {log_boxes[-1][:70]}")
-    # Vergleich Melodee ↔ Melodee mit „Geänderte Teile“ ohne Vergleich: Hinweis statt Nichts
+          and ("Ordner" in log_boxes[-1] or "Datei" in log_boxes[-1]), f"export into an impossible folder: {log_boxes[-1][:70]}")
+    # comparison Melodee ↔ Melodee with "Changed parts" without a comparison: a hint instead of nothing
     n_boxes = len(log_boxes)
     br.other = None
     br.last_diff = None
     br._select_changed()
-    check(len(log_boxes) == n_boxes + 1 and "Vergleich" in log_boxes[-1], "„Geänderte Teile“ ohne Vergleich erklärt sich")
+    check(len(log_boxes) == n_boxes + 1 and "Vergleich" in log_boxes[-1], "\"Changed parts\" without a comparison explains itself")
 
-    # ---- Auto-Backup mit manipulierten Zeitstempeln
+    # ---- auto backup with manipulated timestamps
     newest = AB.list_backups(folder, recursive=False)[0]
     f_json = json.loads(newest.path.read_text())
     old_created = f_json["created"]
@@ -274,38 +274,38 @@ def flow():
             j = json.loads(m_.path.read_text())
             j["created"] = f_json["created"]
             m_.path.write_text(json.dumps(j))
-    check(AB.needs_backup(folder, 1) and not AB.needs_backup(folder, 7), "needs_backup rechnet mit dem Datum im Backup")
+    check(AB.needs_backup(folder, 1) and not AB.needs_backup(folder, 7), "needs_backup counts with the date in the backup")
     n_auto = len(autos(folder))
-    check(w.backups.auto.run(), "Auto-Backup startet, wenn das letzte zu alt ist")
-    check(until(lambda: not w.backups.auto.running and len(autos(folder)) == n_auto + 1, 20000), "Auto-Backup angelegt")
-    check(not w.backups.auto.run(), "frisch gesichert → kein weiteres")
-    # Aufbewahrung: manuelle und angeheftete bleiben, auch bei keep=1
+    check(w.backups.auto.run(), "auto backup starts when the last one is too old")
+    check(until(lambda: not w.backups.auto.running and len(autos(folder)) == n_auto + 1, 20000), "auto backup created")
+    check(not w.backups.auto.run(), "freshly backed up → no further one")
+    # retention: manual and pinned ones stay, even with keep=1
     AB.set_meta(p, pinned=True)
     pinned_auto = autos(folder)[0].path
     AB.set_meta(pinned_auto, pinned=True)
     from fm1companion.ui.backups_page import prune
     prune(folder, 1)
     names = {x.name for x in folder.glob("*.json")}
-    check(p.name in names and pinned_auto.name in names, "Aufbewahrung löscht weder manuelle noch angeheftete")
+    check(p.name in names and pinned_auto.name in names, "retention deletes neither manual nor pinned ones")
     AB.set_meta(p, pinned=False)
-    # Spiegel-Ordner nicht eingehängt
+    # mirror folder not mounted
     AB.settings()["mirror"] = str(home / "nas-nicht-da")
     from fm1companion.ui.backups_page import _mirror_quiet
     _mirror_quiet(ctx, p)
-    check("eingehängt" in AB.STATUS.mirror and "nicht möglich" in AB.STATUS.mirror, f"Spiegel fehlt: {AB.STATUS.mirror}")
+    check("eingehängt" in AB.STATUS.mirror and "nicht möglich" in AB.STATUS.mirror, f"mirror missing: {AB.STATUS.mirror}")
     AB.settings()["mirror"] = ""
     AB.STATUS.mirror = ""
 
-    # ---- Projekte: Platz leeren mit Kopie (Undo), fremdes .fm1proj verweigert
+    # ---- projects: clear a slot with a copy (undo), foreign .fm1proj refused
     w.go("projects")
     pp = w.projects
-    check(until(lambda: pp.slots and not pp.reading, 10000), "Projektplätze automatisch gelesen")
+    check(until(lambda: pp.slots and not pp.reading, 10000), "project slots read automatically")
     n_read = [0]
     orig_read = pp.read_slots
     pp.read_slots = lambda *a, **k: (n_read.__setitem__(0, n_read[0] + 1), orig_read(*a, **k))
     w.go("backups")
     w.go("projects")
-    check(n_read[0] == 0 and pp.slots, "Reiterwechsel liest die Plätze nicht noch einmal")
+    check(n_read[0] == 0 and pp.slots, "a tab switch does not read the slots again")
     pp.read_slots = orig_read
     slot1 = device_read(2)
     for i in range(pp.dev_tree.topLevelItemCount()):
@@ -313,16 +313,16 @@ def flow():
             pp.dev_tree.setCurrentItem(pp.dev_tree.topLevelItem(i))
     n_boxes = len(log_boxes)
     pp._erase()
-    check("Platz" in log_boxes[n_boxes] and "Kopie" in log_boxes[n_boxes], "Leeren: Bestätigung nennt Platz und Kopie")
+    check("Platz" in log_boxes[n_boxes] and "Kopie" in log_boxes[n_boxes], "clear: the confirmation names slot and copy")
     lib = list(ctx.settings.projects_dir.glob("*vor dem Leeren*.fm1proj"))
     check(len(lib) == 1 and device_read(2) == b"" and projects.load_project(lib[0]).data == slot1,
-          "Platz 1 geleert, Kopie in der Bibliothek")
+          "slot 1 cleared, copy in the library")
     pp.refresh_library()
     for i in range(pp.lib.topLevelItemCount()):
         if pp.lib.topLevelItem(i).data(0, Qt.ItemDataRole.UserRole) == str(lib[0]):
             pp.lib.setCurrentItem(pp.lib.topLevelItem(i))
     pp._import()
-    check(device_read(2) == slot1, f"Kopie wieder eingespielt (Undo) {log_boxes[-1][:80]}")
+    check(device_read(2) == slot1, f"copy played back (undo) {log_boxes[-1][:80]}")
     fremd = projects.save_project(ctx.settings.projects_dir, "SLOOP Section A", b"6NUF" + bytes(200), "FELUCCA SLOOP 2.8.3", "X")
     pp.refresh_library()
     for i in range(pp.lib.topLevelItemCount()):
@@ -331,62 +331,62 @@ def flow():
     n_boxes = len(log_boxes)
     pp._import()
     check(len(log_boxes) == n_boxes + 1 and "SLOOP" in log_boxes[-1] and "nichts geschrieben" in log_boxes[-1]
-          and device_read(2) == slot1, "SLOOP-Projekt auf Melodee: verweigert, nichts geschrieben")
+          and device_read(2) == slot1, "SLOOP project on Melodee: refused, nothing written")
     fremd.unlink()
 
-    # ---- Geräte-Seite: SLOOP als Ziel verweigert
+    # ---- Devices page: SLOOP as target refused
     melodee_prof = ctx.profile
     port2 = next(x for x in ctx.ports if x.serial == "DEMO-2")
     ctx.connect_port(port2)
-    check(until(lambda: ctx.connected and ctx.firmware_key == "sloop"), "SLOOP-Demo verbunden")
+    check(until(lambda: ctx.connected and ctx.firmware_key == "sloop"), "SLOOP demo connected")
     sloop_prof = ctx.profile
     check(until(lambda: len(autos(ctx.device_folder(ctx.settings.backups_dir))) == 1, 15000), "Auto-Backup SLOOP")
-    # ---- Abnahme p2: Melodee-Backup mit SLOOP-Stand vergleichen → „nicht vergleichbar“
+    # ---- acceptance p2: compare a Melodee backup with the SLOOP state → "not comparable"
     sp0 = AB.list_backups(ctx.device_folder(ctx.settings.backups_dir), recursive=False)[0].path
     w.go("backup_browser")
     br.open_path(p)
     br.compare_with(BI.inspect(sp0), "SLOOP")
     check("Nicht vergleichbar" in br.cmp_sum.text() and br.cmp_tree.topLevelItemCount() == 0,
-          "Melodee ↔ SLOOP: nicht vergleichbar statt Unsinn")
+          "Melodee ↔ SLOOP: not comparable instead of nonsense")
     br.cmp_with.setCurrentIndex(0)
-    br.compare()                                      # Live-Stand (SLOOP) gegen Melodee-Backup
-    check("Nicht vergleichbar" in br.cmp_sum.text(), "Live-Vergleich mit anderer Firmware verweigert")
-    # Projekt-Ansicht: SLOOP-Projekt wird erklärt, Lesen vom SLOOP-Gerät ohne Gerätezugriff abgelehnt
+    br.compare()                                      # live state (SLOOP) against a Melodee backup
+    check("Nicht vergleichbar" in br.cmp_sum.text(), "live comparison with another firmware refused")
+    # project view: the SLOOP project is explained, reading from the SLOOP device refused without device access
     pv = w.page("project_view")
     w.go("project_view")
     pv.open_backup(str(sp0))
-    check(pv.prj is not None and not pv.prj.ok and "SLOOP-Web-Editor" in pv.info.text(), "SLOOP-Projekt: klare Erklärung")
+    check(pv.prj is not None and not pv.prj.ok and "SLOOP-Web-Editor" in pv.info.text(), "SLOOP project: clear explanation")
     n_boxes = len(log_boxes)
     pv.slot.setValue(0)
     pv.read_device()
-    check(len(log_boxes) == n_boxes + 1 and "SLOOP" in log_boxes[-1], "Vom SLOOP-FM-1 lesen: Hinweis statt Fehler")
+    check(len(log_boxes) == n_boxes + 1 and "SLOOP" in log_boxes[-1], "read from the SLOOP FM-1: a hint instead of an error")
     w.go("projects")
     check(until(lambda: pp.slots and not pp.reading, 10000) and pp.dev_tree.headerItem().text(0) == "Section"
-          and "Section" in pp.dev_info.text(), "Projekte-Seite nennt SLOOP-Sections")
+          and "Section" in pp.dev_info.text(), "Projects page names SLOOP sections")
     w.go("devices")
     dv = w.page("devices")
-    check(dv.cards.count() == 2, "zwei Geräte-Karten")
+    check(dv.cards.count() == 2, "two device cards")
     res = dv.compare(melodee_prof.id, sloop_prof.id)
     check(res and res.rows[0][1].startswith("Melodee") and "SLOOP" in res.rows[0][2] and "FM KEYS" in res.only_a,
-          f"Geräte verglichen {res.rows[0] if res else ''}")
+          f"devices compared {res.rows[0] if res else ''}")
     before = device_read(6)
     comp, ok = dv.copy(melodee_prof.id)
-    check(comp is not None and not comp.ok and not ok and "sloop" in comp.reason.lower(), "Kopie Melodee → SLOOP verweigert")
-    check(device_read(6) == before, "SLOOP unverändert")
+    check(comp is not None and not comp.ok and not ok and "sloop" in comp.reason.lower(), "copy Melodee → SLOOP refused")
+    check(device_read(6) == before, "SLOOP unchanged")
 
-    # ---- SLOOP: eigenes Backup-Protokoll (34–36) und Dateiformat des SLOOP-Editors
+    # ---- SLOOP: own backup protocol (34–36) and file format of the SLOOP editor
     sp = make_backup(ctx, w, "SLOOP von Hand")
     sf = json.loads(sp.read_text()) if sp else {}
     check(sf.get("format") == "sloop-backup" and sf.get("firmware", "").startswith("FELUCCA SLOOP")
           and sp.read_text() == json.dumps(sf, indent=1, ensure_ascii=False), "SLOOP-Backup im Format des SLOOP-Editors")
     sec_a = device_read(2)
-    check(sec_a[:4] == b"6NUF", "Section A ist ein SLOOP-Projekt (FUN6)")
-    check(device_write(2, b""), "Section A geleert")
+    check(sec_a[:4] == b"6NUF", "section A is a SLOOP project (FUN6)")
+    check(device_write(2, b""), "section A cleared")
     br.open_path(sp)
-    check(br.rep.restorable and br.rep.format == "sloop-backup", "Browser: SLOOP-Backup zurückspielbar")
+    check(br.rep.restorable and br.rep.format == "sloop-backup", "browser: SLOOP backup restorable")
     br.select_ids([2])
-    check(br.restore_selected() and device_read(2) == sec_a, "SLOOP: Section A einzeln zurückgespielt")
-    check(device_write(2, b"") and device_write(6, b""), "SLOOP: Section A und Preset-Bank geleert")
+    check(br.restore_selected() and device_read(2) == sec_a, "SLOOP: section A restored on its own")
+    check(device_write(2, b"") and device_write(6, b""), "SLOOP: section A and preset bank cleared")
     w.go("backups")
     w.backups.refresh()
     for i in range(w.backups.tree.topLevelItemCount()):
@@ -394,7 +394,7 @@ def flow():
             w.backups.tree.setCurrentItem(w.backups.tree.topLevelItem(i))
     w.backups._restore()
     check(device_read(2) == sec_a and BI.decode_up_bank(device_read(6), 1, 6)[0].name == "ACID LINE",
-          "SLOOP: komplettes Backup zurückgespielt")
+          "SLOOP: complete backup restored")
     w.go("backup_browser")
     br.open_path(sp)
     for i in range(br.content.topLevelItemCount()):
@@ -403,22 +403,22 @@ def flow():
             if g.child(j).data(0, Qt.ItemDataRole.UserRole) == 2:
                 br.content.setCurrentItem(g.child(j))
     check(br.b_view.isEnabled() and br.view_project() and w.page("project_view").isVisible(),
-          "„Projekt ansehen“ öffnet die Projekt-Ansicht")
+          "\"View project\" opens the project view")
 
-    # ---- zweites FM-1 bekommt Melodee: Kopie erlaubt
+    # ---- the second FM-1 gets Melodee: copy allowed
     os.environ["FM1C_DEMO_CMD"] = f"{sys.executable}\x1f-m\x1ffm1companion.demo_device"
     ctx.connect_port(port2)
     check(until(lambda: ctx.connected and ctx.firmware_key == "melodee" and ctx.profile.id == sloop_prof.id),
-          "zweites FM-1 jetzt mit Melodee")
+          "second FM-1 now with Melodee")
     wait(2500)
     until(lambda: not w.backups.auto.running, 10000)
     dv.rename(sloop_prof.id, "Zweites FM-1")
-    check(ctx.profile.name == "Zweites FM-1" and ctx.device_folder(ctx.settings.backups_dir).exists(), "umbenannt")
+    check(ctx.profile.name == "Zweites FM-1" and ctx.device_folder(ctx.settings.backups_dir).exists(), "renamed")
     comp, ok = dv.copy(melodee_prof.id)
     check(comp is not None and comp.ok and ok, f"Kopie Melodee → Melodee ({comp.reason if comp else '-'})")
     got = BI.decode_up_bank(device_read(6), 1, 6)
-    check([x.name for x in got if x.used] == ["BASS ONE", "SID LEAD", "FM KEYS"], "Presets angekommen")
-    check(len(device_read(66)) == 2500, "Projekt 7 angekommen")
+    check([x.name for x in got if x.used] == ["BASS ONE", "SID LEAD", "FM KEYS"], "presets arrived")
+    check(len(device_read(66)) == 2500, "project 7 arrived")
     os.environ.pop("FM1C_DEMO_CMD", None)
     app.quit()
 
@@ -436,7 +436,7 @@ QTimer.singleShot(240000, app.quit)
 app.exec()
 fails = [r for r in results if not r[0]]
 for e in errors:
-    print("AUSNAHME:\n" + e)
-print(f"{len(results) - len(fails)}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+    print("EXCEPTION:\n" + e)
+print(f"{len(results) - len(fails)}/{len(results)} passed, {len(errors)} exceptions")
 shutil.rmtree(home, ignore_errors=True)
 sys.exit(1 if fails or errors else 0)

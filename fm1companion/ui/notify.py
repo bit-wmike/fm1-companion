@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Hinweise: kleine Toasts oben rechts im Fenster (unter der Werkzeugleiste), ein Verlauf und optional Desktop-Benachrichtigungen.
+"""Notices: small toasts at the top right of the window (below the toolbar), a history and optional desktop notifications.
 
-Für Seiten:
+For pages:
     from fm1companion.ui.notify import notify
-    notify("Backup fertig", "success", action=("Ordner öffnen", lambda: ...))
-oder ``window.notify(text, level, action)``. Funktioniert aus jedem Thread (wird in den GUI-Thread
-übergeben). level: "info" | "success" | "warning" | "error".
+    notify("Backup done", "success", action=("Open folder", lambda: ...))
+or ``window.notify(text, level, action)``. Works from any thread (is handed over to the GUI
+thread). level: "info" | "success" | "warning" | "error".
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ LEVEL_TITLE = {"info": _("Note"), "success": _("Done"), "warning": _("Attention"
 class Note:
     text: str
     level: str = "info"
-    action: tuple | None = None          # (Beschriftung, Funktion)
+    action: tuple | None = None          # (label, function)
     time: float = field(default_factory=time.time)
     read: bool = False
 
@@ -54,20 +54,20 @@ _center: "NotificationCenter | None" = None
 
 
 def notify(text: str, level: str = "info", action=None):
-    """modulweiter Helfer – sicher aus Hintergrund-Threads."""
+    """module-wide helper – safe from background threads."""
     level = level if level in LEVEL_ICON else "info"
     if _bus is not None:
-        _bus.posted.emit(text, level, action)       # NotificationCenter.post schreibt ins Protokoll
+        _bus.posted.emit(text, level, action)       # NotificationCenter.post writes to the log
     else:
         _log_note(text, level)
 
 
 def _log_note(text: str, level: str):
-    """jeder Hinweis landet im Protokoll (und damit im Fehlerbericht) – mit seiner Stufe."""
+    """every notice ends up in the log (and thus in the error report) – with its level."""
     getattr(log, {"error": "error", "warning": "warning"}.get(level, "info"))("[%s] %s", LEVEL_TITLE.get(level, level), text)
 
 
-LANE_BELOW_H = 900       # Fensterhöhe, unter der Hinweise eine eigene Zeile bekommen
+LANE_BELOW_H = 900       # window height below which notices get their own row
 LANE_BELOW_W = 1150
 
 
@@ -110,8 +110,8 @@ class Toast(QFrame):
         self.timer = QTimer(self)
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.dismiss)
-        # feste Lebensdauer – auch unter dem Mauszeiger (ein Toast soll nie dauerhaft Knöpfe verdecken);
-        # alles bleibt im Verlauf (Glocke) nachlesbar
+        # fixed lifetime – even under the mouse pointer (a toast should never permanently cover buttons);
+        # everything stays readable in the history (bell)
         self.lifetime = 12000 if note.level == "error" else 8000 if note.level == "warning" else 6000
         self.timer.start(self.lifetime)
 
@@ -129,10 +129,10 @@ class Toast(QFrame):
 
 
 class NotificationCenter(QObject):
-    """gehört zum Hauptfenster: Toast-Stapel, Verlauf, Desktop-Benachrichtigung."""
+    """belongs to the main window: toast stack, history, desktop notification."""
     changed = pyqtSignal()
     MAX_TOASTS = 4
-    MAX_LANE = 2              # in der Hinweis-Zeile höchstens zwei (alles bleibt im Verlauf)
+    MAX_LANE = 2              # at most two in the notice row (everything stays in the history)
 
     def __init__(self, window: QWidget):
         super().__init__(window)
@@ -149,7 +149,7 @@ class NotificationCenter(QObject):
 
     # ------------------------------------------------------------------
     def post(self, text: str, level: str = "info", action=None, quiet: bool = False):
-        """quiet=True: nur kurz zeigen, zählt an der Glocke nicht als ungelesen (z. B. „Aktiv: FM-1 B“)."""
+        """quiet=True: only show briefly, doesn't count as unread on the bell (e.g. “Active: FM-1 B”)."""
         note = Note(text, level if level in LEVEL_ICON else "info", _norm_action(action), read=quiet)
         _log_note(note.text, note.level)
         self.history.insert(0, note)
@@ -184,7 +184,7 @@ class NotificationCenter(QObject):
         self._layout()
 
     def _top(self) -> int:
-        """Oberkante des Seitenbereichs (unter Menü- und Werkzeugleiste)."""
+        """Top edge of the page area (below the menu and toolbar)."""
         w = self.window
         cw = w.centralWidget() if hasattr(w, "centralWidget") else None
         if cw is not None and cw.isVisible():
@@ -192,19 +192,19 @@ class NotificationCenter(QObject):
         return 0
 
     def lane_mode(self) -> bool:
-        """kleines Fenster (Laptop 1280×720, halber Bildschirm): Hinweise bekommen eine eigene Zeile über der
-        Seite und schieben sie kurz nach unten, statt Knöpfe zu verdecken. Großes Fenster: schwebend oben rechts."""
+        """small window (laptop 1280×720, half screen): notices get their own row above the
+        page and push it down briefly instead of covering buttons. Large window: floating at the top right."""
         w = self.window
         lane = getattr(w, "toast_lane", None)
         return lane is not None and (w.height() < LANE_BELOW_H or w.width() < LANE_BELOW_W)
 
     def _layout(self):
-        """oben rechts stapeln (neueste oben) – schwebend oder, bei kleinem Fenster, in der Hinweis-Zeile."""
+        """stack at the top right (newest on top) – floating or, with a small window, in the notice row."""
         w = self.window
         lane = getattr(w, "toast_lane", None)
         if self.lane_mode():
             lay = lane.layout()
-            # nebeneinander, so viele wie in die Breite passen (neueste rechts) – schiebt die Seite nur einmal
+            # side by side, as many as fit in the width (newest on the right) – pushes the page only once
             fit = max(1, min(self.MAX_LANE, (max(lane.width(), w.width() - 120) + 8) // 368))
             while len(self.toasts) > fit:
                 self.toasts[0].dismiss()
@@ -245,8 +245,8 @@ class NotificationCenter(QObject):
             pref = prefs().get("desktop_notify", "background")
         except Exception:  # noqa: BLE001
             pref = "background"
-        # „im Hintergrund“ = KEIN Fenster der App ist aktiv. Vorher zählte nur das Hauptfenster: Bei offenem
-        # Assistenten/Dialog landeten Hinweise wie „FM-1 A verbunden“ zusätzlich als Desktop-Benachrichtigung.
+        # “in the background” = NO window of the app is active. Previously only the main window counted: with an
+        # open wizard/dialog, notices like “FM-1 A connected” additionally ended up as desktop notifications.
         if pref == "never" or (pref == "background" and (self.window.isActiveWindow()
                                                           or QApplication.activeWindow() is not None)):
             return
@@ -267,11 +267,11 @@ class NotificationCenter(QObject):
             if self.tray is None:
                 self.tray = QSystemTrayIcon(self.window.windowIcon(), self)
                 self.tray.setToolTip(APP_NAME)
-                self.tray.activated.connect(self._to_front)       # Klick aufs Symbol holt das Fenster nach vorn
+                self.tray.activated.connect(self._to_front)       # clicking the icon brings the window to the front
                 self.tray.messageClicked.connect(self._to_front)
                 self._tray_hide = QTimer(self)
                 self._tray_hide.setSingleShot(True)
-                self._tray_hide.timeout.connect(self.tray.hide)   # nur für die Meldung da, kein totes Dauersymbol
+                self._tray_hide.timeout.connect(self.tray.hide)   # only there for the message, no dead permanent icon
             self.tray.show()
             self.tray.showMessage(title, note.text)
             self._tray_hide.start(20000)
@@ -292,7 +292,7 @@ def center() -> NotificationCenter | None:
 
 
 class HistoryDialog(QDialog):
-    """Verlauf aller Hinweise dieser Sitzung."""
+    """History of all notices of this session."""
 
     def __init__(self, nc: NotificationCenter, parent=None):
         super().__init__(parent)

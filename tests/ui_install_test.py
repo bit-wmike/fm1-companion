@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Installer-Werkstatt: Plan-Dialog, Installation, Rückkehr zum Original, Rettung, generisches Gerät (Demo).
+"""Installer workshop: plan dialog, installation, return to the original, recovery, generic device (demo).
 
-Geprüft werden: Backup anlegen und zurückspielen (mit Sicherheits-Backup), Projekte holen,
-umbenennen und in einen Platz spielen, Kit bauen und hochladen, Firmware-Wechsel-Ablauf
-(Download und Installer simuliert) mit Auto-Backup, Profil-Update und Rückkehr-Angebot,
-Einstellungen speichern, Geräteprofil umbenennen.
+Checked: plan with confirmations, installation of a file of your own with progress, dry run, failed or
+deselected backup, renamed foreign file, several FM-1, device gone while the plan is open, renaming,
+back to the original (V15) including a broken target package and abort after the V15 step,
+recovery of an interrupted installation on DEMO-2 and level 2 in the simulation.
 
-  QT_QPA_PLATFORM=offscreen python3 tests/ui_flow_test.py
+  QT_QPA_PLATFORM=offscreen python3 tests/ui_install_test.py
 """
 from __future__ import annotations
 
@@ -57,7 +57,7 @@ s.sample_roots = [str(samp)]
 config.save(s)
 config.ensure_dirs()
 
-# ---- automatische Antworten auf Dialoge
+# ---- automatic answers to dialogs
 answers = {"text": [], "item": [], "int": []}
 log_boxes: list[str] = []
 
@@ -86,14 +86,14 @@ plan_ctl = {"confirm": True, "backup": None, "plans": [], "accept": True, "asked
 
 
 def dialog_exec(self):
-    """JobDialoge laufen lassen, bis sie fertig sind; andere Dialoge sofort bestätigen.
-    Installationsplan: alle Bestätigungen ankreuzen (plan_ctl), Backup-Haken nach Wunsch."""
+    """let JobDialogs run until they are done; confirm other dialogs immediately.
+    Installation plan: tick all confirmations (plan_ctl), backup checkbox as wanted."""
     from fm1companion.ui.common import JobDialog
     from fm1companion.ui.device import FirmwareChoiceDialog
     from fm1companion.ui.firmware_page import PlanDialog
     if isinstance(self, FirmwareChoiceDialog):
         plan_ctl["asked_fw"] += 1
-        return 1                                   # Vorauswahl „weiß nicht“
+        return 1                                   # preselection "weiß nicht" (don't know)
     if isinstance(self, PlanDialog):
         if plan_ctl["backup"] is not None:
             self.chk_backup.setChecked(plan_ctl["backup"])
@@ -113,7 +113,7 @@ def dialog_exec(self):
         self.log_text = self.logv.toPlainText()
         plan_ctl["last_log"] = self.log_text
         if not self.ok or os.environ.get("FM1C_TEST_VERBOSE"):
-            print("---- Protokoll " + self.windowTitle() + ":\n" + self.log_text[-1500:], flush=True)
+            print("---- log " + self.windowTitle() + ":\n" + self.log_text[-1500:], flush=True)
         return 1 if self.ok else 0
     return 1
 
@@ -156,59 +156,59 @@ def flow():
     editor_host.prepare = lambda *a, **k: None
     fp.editor_host.prepare = editor_host.prepare
     ctx = w.ctx
-    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1"), "Demo-Melodee verbunden")
-    check(until(lambda: ctx.identity == "FM-1_91060"), f"Handshake-Kennung gelesen ({ctx.identity})")
-    check(ctx.protocol == "felucca" and ctx.midi_connected, "Protokoll: felucca")
+    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1"), "demo Melodee connected")
+    check(until(lambda: ctx.identity == "FM-1_91060"), f"handshake identity read ({ctx.identity})")
+    check(ctx.protocol == "felucca" and ctx.midi_connected, "protocol: felucca")
 
-    # ---- generisches Gerät (Firmware ohne Editor-Protokoll)
+    # ---- generic device (firmware without editor protocol)
     ctx.connect_port(next(p for p in ctx.ports if p.serial == "DEMO-3"))
-    check(until(lambda: ctx.identity == "FM-1_900", 15000), f"DEMO-3 meldet FM-1_900 ({ctx.identity})")
-    check(not ctx.connected and ctx.midi_connected and ctx.protocol == "generic", "DEMO-3: nur MIDI, kein Felucca")
+    check(until(lambda: ctx.identity == "FM-1_900", 15000), f"DEMO-3 reports FM-1_900 ({ctx.identity})")
+    check(not ctx.connected and ctx.midi_connected and ctx.protocol == "generic", "DEMO-3: MIDI only, no Felucca")
     check("FM-1_900" in ctx.title() and "nur MIDI" in ctx.status_text(), f"Titel/Status: {ctx.title()} / {ctx.status_text()}")
-    check(ctx.firmware_guess[:1] == ["sloop"] or "sloop" in ctx.firmware_guess, f"Kandidaten {ctx.firmware_guess}")
+    check(ctx.firmware_guess[:1] == ["sloop"] or "sloop" in ctx.firmware_guess, f"candidates {ctx.firmware_guess}")
     check(ctx.firmware_key == "" and "unbekannt – bitte wählen" in ctx.title(),
-          f"DEMO-3 (ORBIT) wird nicht als SLOOP geraten ({ctx.firmware_key!r}, {ctx.title()})")
+          f"DEMO-3 (ORBIT) is not guessed as SLOOP ({ctx.firmware_key!r}, {ctx.title()})")
     check(until(lambda: ctx.profile.firmware_choice.get("FM-1_900") == "?", 5000) and plan_ctl["asked_fw"] == 1,
-          f"einmal gefragt, „weiß nicht“ gemerkt ({plan_ctl['asked_fw']})")
+          f"asked once, \"don't know\" remembered ({plan_ctl['asked_fw']})")
     from fm1companion.flash import planner
     st3 = fp.device_state(ctx)
     check(st3.firmware_key == "" and planner.v15_option(st3, planner.Target.from_spec(firmware.spec("sloop")))
-          == "default_on", "unbekannte Firmware gilt als Wechsel: V15-Zwischenschritt vorgewählt")
+          == "default_on", "unknown firmware counts as a switch: V15 intermediate step preselected")
     ctx.connect_port(next(p for p in ctx.ports if p.serial == "DEMO-3"))
-    check(until(lambda: ctx.identity == "FM-1_900", 15000), "DEMO-3 neu verbunden")
+    check(until(lambda: ctx.identity == "FM-1_900", 15000), "DEMO-3 reconnected")
     wait(800)
-    check(plan_ctl["asked_fw"] == 1, "nicht noch einmal gefragt")
+    check(plan_ctl["asked_fw"] == 1, "not asked again")
     ctx.choose_firmware("orbit")
     check(ctx.profile.firmware_choice.get("FM-1_900") == "orbit" and ctx.firmware_key == "orbit",
-          "Wahl der Firmware gemerkt")
+          "the firmware choice is remembered")
 
-    # ---- eigene Datei auf Melodee (Update derselben Firmware: kein V15-Schritt)
+    # ---- own file on Melodee (update of the same firmware: no V15 step)
     ctx.connect_port(next(p for p in ctx.ports if p.serial == "DEMO-1"))
-    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1"), "zurück auf DEMO-1")
+    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1"), "back on DEMO-1")
     pkg = home / "melodee-1.7.0.fwsc"
     pkg.write_bytes(fpk.build_package("FM-1_91070"))
     ok = fp.install_flow(w, ctx, firmware.spec("melodee"), None, pkg, "v1.7.0")
     dev = demo.device("demo-in")
     check(ok and dev.identity == "FM-1_91070" and dev.flash == fpk.analyze(pkg).image,
-          f"Installation über Plan + Fortschritt ({dev.identity})")
+          f"installation via plan + progress ({dev.identity})")
     hist = journal.Journal().history()
-    check(hist and hist[-1]["phase"] == "done" and hist[-1]["product"] == "FM-1_91070", "Journal: erledigt")
+    check(hist and hist[-1]["phase"] == "done" and hist[-1]["product"] == "FM-1_91070", "journal: done")
     prof = ctx.store.by_serial("DEMO-1")
-    check(prof.firmware_history and prof.firmware_history[-1]["version"] == "v1.7.0", "Firmware-Verlauf im Profil")
+    check(prof.firmware_history and prof.firmware_history[-1]["version"] == "v1.7.0", "firmware history in the profile")
 
     p0 = plan_ctl["plans"][-1]
     check("unknown_file" in p0.confirmations and "backup" in p0.kinds(),
-          "eigene Datei ohne bekannte Prüfsumme: Bestätigung „unbekannte Datei“, Backup-Schritt im Plan")
+          "own file without a known checksum: confirmation \"unknown file\", backup step in the plan")
 
-    # ---- Probelauf schreibt nichts
-    check(until(lambda: ctx.connected, 10000), "nach der Installation wieder verbunden")
+    # ---- a dry run writes nothing
+    check(until(lambda: ctx.connected, 10000), "connected again after the installation")
     before = len(dev.sends)
     ok = fp.install_flow(w, ctx, firmware.spec("melodee"), None, pkg, "v1.7.0", dry_run=True)
-    check(ok and bytes(fi.UPGRADE) not in dev.sends[before:], "Probelauf sendet kein UPGRADE")
+    check(ok and bytes(fi.UPGRADE) not in dev.sends[before:], "dry run sends no UPGRADE")
 
-    # ---- Backup gewünscht, aber gescheitert: immer Abbruch, nichts gesendet
+    # ---- backup wanted, but failed: always abort, nothing sent
     from fm1companion import autobackup
-    check(until(lambda: ctx.connected, 10000), "verbunden")
+    check(until(lambda: ctx.connected, 10000), "connected")
     real_capture = autobackup.capture_to_file
 
     def broken_capture(*a, **k):
@@ -221,28 +221,28 @@ def flow():
         autobackup.capture_to_file = real_capture
     check(not ok and bytes(fi.UPGRADE) not in dev.sends[before:] and dev.identity == ident0
           and "Backup fehlgeschlagen" in plan_ctl["last_log"] and "Keine Schreibrechte" in plan_ctl["last_log"],
-          "gescheitertes Backup bricht die Installation ab (deutsche Meldung, nichts gesendet)")
+          "a failed backup aborts the installation (readable message, nothing sent)")
 
-    # ---- Backup abgewählt: Bestätigung „no_backup“ im Plan, kein Backup-Schritt
-    check(until(lambda: ctx.connected, 10000), "verbunden")
+    # ---- backup deselected: confirmation "no_backup" in the plan, no backup step
+    check(until(lambda: ctx.connected, 10000), "connected")
     plan_ctl["backup"], plan_ctl["confirm"] = False, False
     before = len(dev.sends)
     ok = fp.install_flow(w, ctx, firmware.spec("melodee"), None, pkg, "v1.7.0")
     p1 = plan_ctl["plans"][-1]
     check(not ok and "no_backup" in p1.confirmations and "backup" not in p1.kinds()
           and bytes(fi.UPGRADE) not in dev.sends[before:],
-          "ohne Backup: Pflicht-Bestätigung im Plan, ohne sie wird nichts installiert")
+          "without a backup: required confirmation in the plan, without it nothing is installed")
     plan_ctl["backup"], plan_ctl["confirm"] = None, True
     s.auto_backup_before_update = False
-    check(until(lambda: ctx.connected, 10000), "verbunden")
+    check(until(lambda: ctx.connected, 10000), "connected")
     ok = fp.install_flow(w, ctx, firmware.spec("melodee"), None, pkg, "v1.7.0", dry_run=True)
     p2 = plan_ctl["plans"][-1]
     s.auto_backup_before_update = True
     check("no_backup" in p2.confirmations and "backup" not in p2.kinds(),
-          "Einstellung „kein Auto-Backup“: Plan verlangt die Bestätigung „no_backup“")
+          "setting \"no auto backup\": the plan requires the confirmation \"no_backup\"")
 
-    # ---- umbenannte fremde Datei: nicht als Melodee erkannt (nur Prüfsumme zählt)
-    check(until(lambda: ctx.connected, 10000), "verbunden")
+    # ---- renamed foreign file: not detected as Melodee (only the checksum counts)
+    check(until(lambda: ctx.connected, 10000), "connected")
     fake = home / "melodee-1.6.0-rc.7.fwsc"
     fake.write_bytes(fpk.build_package("FM-1_906", seed=9))
     plan_ctl["accept"] = False
@@ -252,9 +252,9 @@ def flow():
     p3 = plan_ctl["plans"][-1]
     check(p3.target.key == "eigene" and not p3.target.known and "unknown_file" in p3.confirmations
           and any("unbekannt" in b for b in log_boxes),
-          f"umbenannte fremde Datei bleibt unbekannt ({p3.target.key}, {p3.confirmations})")
+          f"renamed foreign file stays unknown ({p3.target.key}, {p3.confirmations})")
 
-    # ---- mehrere FM-1, Ziel nicht festzuhalten: Sperre
+    # ---- several FM-1, target cannot be pinned: lock
     real_pin = fp.target_pin
     fp.target_pin = lambda c: None
     try:
@@ -264,17 +264,17 @@ def flow():
     finally:
         fp.target_pin = real_pin
     check(not ok and any(planner.MULTI_DEVICE_TEXT in b for b in p4.blockers)
-          and bytes(fi.UPGRADE) not in dev.sends[before:], "mehrere FM-1 ohne eindeutiges Ziel: Sperre")
+          and bytes(fi.UPGRADE) not in dev.sends[before:], "several FM-1 without a unique target: lock")
 
-    # ---- Gerät verschwindet, während der Plan offen ist: keine Ausnahme, nichts gesendet
-    check(until(lambda: ctx.connected, 10000), "verbunden")
+    # ---- the device disappears while the plan is open: no exception, nothing sent
+    check(until(lambda: ctx.connected, 10000), "connected")
     plan_ctl["accept"] = True
     _orig_exec = QDialog.exec
 
     def exec_and_unplug(self):
         if isinstance(self, fp.PlanDialog):
-            ctx.disconnect("FM-1 getrennt")       # wie ein gezogenes Kabel während des Dialogs
-            ctx.hold = True                       # Demo-Scan soll nicht sofort neu verbinden
+            ctx.disconnect("FM-1 getrennt")       # like a pulled cable during the dialog
+            ctx.hold = True                       # the demo scan should not reconnect immediately
         return _orig_exec(self)
     QDialog.exec = exec_and_unplug
     log_boxes.clear()
@@ -286,33 +286,33 @@ def flow():
         ctx.hold = False
     check(not ok and len(errors) == n_err and bytes(fi.UPGRADE) not in dev.sends[before:]
           and any("Gerät hat sich geändert" in b or "getrennt" in b for b in log_boxes),
-          f"Gerät weg während des Plans: sauber abgebrochen ({log_boxes[-1][:60] if log_boxes else '-'})")
+          f"device gone during the plan: aborted cleanly ({log_boxes[-1][:60] if log_boxes else '-'})")
 
-    # ---- Umbenennen: Name eines anderen Geräts wird abgelehnt (sonst gemeinsamer Backup-Ordner)
-    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1", 10000), "verbunden")
+    # ---- renaming: another device's name is refused (otherwise a shared backup folder)
+    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1", 10000), "connected")
     other = ctx.store.create("Zweites Gerät", serial="DEMO-9")
     try:
         ctx.rename_profile("zweites gerät")
-        check(False, "Umbenennen auf fremden Namen abgelehnt")
+        check(False, "renaming to a foreign name refused")
     except OSError as e:
-        check("schon vergeben" in str(e) and ctx.profile.name != "zweites gerät", "Umbenennen auf fremden Namen abgelehnt")
+        check("schon vergeben" in str(e) and ctx.profile.name != "zweites gerät", "renaming to a foreign name refused")
     ctx.rename_profile("Mein FM-1 ÄÖÜ – Studio  ")
     check(ctx.profile.name == "Mein FM-1 ÄÖÜ – Studio" and (Path(s.user_root) / "Backups" / ctx.profile.folder_name).exists(),
-          f"Umlaute/Leerzeichen im Namen, Ordner mitgewandert ({ctx.profile.folder_name})")
+          f"umlauts/spaces in the name, folder moved along ({ctx.profile.folder_name})")
     ctx.store.delete(other.id)
 
-    # ---- Zurück zum Original (V15, hash-geprüft, aus dem Zwischenspeicher)
+    # ---- back to the original (V15, hash-checked, from the cache)
     v15 = Path("/tmp/fm1_open/sdk/firmware/FM-1_015.fwsc")
     if v15.exists():
         d = s.firmware_dir / "stock-v15" / "V15"
         d.mkdir(parents=True, exist_ok=True)
         shutil.copy(v15, d / "FM-1_015.fwsc")
-        # ---- Zielpaket kaputt: wird VOR dem V15-Zwischenschritt erkannt, nichts geschrieben
-        check(until(lambda: ctx.connected, 10000), "wieder verbunden")
+        # ---- target package broken: detected BEFORE the V15 intermediate step, nothing written
+        check(until(lambda: ctx.connected, 10000), "connected again")
         bad = home / "dl" / "sloop-9.9.9.fwsc"
         bad.parent.mkdir(exist_ok=True)
         raw = bytearray(fpk.build_package("FM-1_900", seed=3))
-        raw[-300] ^= 0xFF                                    # flash.bin/ota.bin-Prüfsumme kaputt
+        raw[-300] ^= 0xFF                                    # flash.bin/ota.bin checksum broken
         bad.write_bytes(bytes(raw))
         real_dl = firmware.download
         rel = firmware.Release(tag="v9.9.9", prerelease=False, assets={"sloop-9.9.9.fwsc": "https://example.invalid/x"})
@@ -328,14 +328,14 @@ def flow():
         finally:
             firmware.download = real_dl
         p5 = plan_ctl["plans"][-1]
-        check(p5.via_stock and "no_checksum" in p5.confirmations, f"SLOOP ohne SHA256SUMS: Bestätigung "
-              f"„Prüfsumme nicht verfügbar“, V15-Zwischenschritt ({p5.confirmations})")
+        check(p5.via_stock and "no_checksum" in p5.confirmations, f"SLOOP without SHA256SUMS: confirmation "
+              f"\"checksum not available\", V15 intermediate step ({p5.confirmations})")
         check(not ok and bytes(fi.UPGRADE) not in dev.sends[before:] and dev.identity == ident0
               and "wird nicht installiert" in plan_ctl["last_log"],
-              f"kaputtes Zielpaket vor jedem Schreiben erkannt – V15 nicht geschrieben ({dev.identity})")
+              f"broken target package detected before any writing – V15 not written ({dev.identity})")
 
-        # ---- Abbruch nach dem V15-Schritt: Meldung sagt, was geschrieben wurde
-        check(until(lambda: ctx.connected, 10000), "wieder verbunden")
+        # ---- abort after the V15 step: the message says what was written
+        check(until(lambda: ctx.connected, 10000), "connected again")
         good = home / "dl" / "sloop-9.9.8.fwsc"
         good.write_bytes(fpk.build_package("FM-1_900", seed=4))
         rel2 = firmware.Release(tag="v9.9.8", prerelease=False, assets={"sloop-9.9.8.fwsc": "https://example.invalid/y"})
@@ -356,21 +356,21 @@ def flow():
         log = plan_ctl["last_log"]
         check(not ok and dev.identity == "FM-1_015" and "Original-Firmware V15" in log.split("FEHLER:")[-1]
               and "nichts geändert" not in log.split("FEHLER:")[-1],
-              f"Abbruch nach V15 nennt, was geschrieben wurde ({log.split('FEHLER:')[-1].strip()[:120]})")
+              f"abort after V15 names what was written ({log.split('FEHLER:')[-1].strip()[:120]})")
         hist = journal.Journal().history()
         check(hist and "V15 V15" not in hist[-1].get("target", "") and hist[-1].get("target") ==
-              "Original-Firmware V15", f"Journal-Name ohne doppelte Version ({hist[-1].get('target')})")
+              "Original-Firmware V15", f"journal name without a doubled version ({hist[-1].get('target')})")
 
-        check(until(lambda: ctx.connected, 10000), "wieder verbunden")
+        check(until(lambda: ctx.connected, 10000), "connected again")
         w.go("firmware")
         ok = w.firmware.return_to_original()
-        check(ok and dev.identity == "FM-1_015" and not dev.bricked, f"Zurück zu V15 ({dev.identity})")
+        check(ok and dev.identity == "FM-1_015" and not dev.bricked, f"back to V15 ({dev.identity})")
     else:
-        check(True, "V15-Datei fehlt – Rückkehr übersprungen")
+        check(True, "V15 file missing – return skipped")
 
-    # ---- Rettung: unterbrochene Installation auf DEMO-2
+    # ---- recovery: interrupted installation on DEMO-2
     page = w.page("recovery") if hasattr(w, "page") else None
-    check(page is not None, "Seite Rettung registriert")
+    check(page is not None, "page Recovery registered")
     d2 = demo.device("demo2-in")
     pkg2 = home / "sloop-9.9.fwsc"
     pkg2.write_bytes(fpk.build_package("FM-1_901", seed=5))
@@ -379,35 +379,35 @@ def flow():
     from fm1companion.flash import engine
     try:
         engine.Engine(log=lambda *_: None).write(fpk.analyze(pkg2), port="demo2-in", label="SLOOP 9.9")
-        check(False, "Stromausfall simuliert")
+        check(False, "power cut simulated")
     except engine.FlashError as e:
-        check(e.state == engine.PAUSED, f"Stromausfall → Update-Modus ({e.code})")
-    check(until(lambda: any(p.update_mode for p in ctx.ports), 8000), "Update-Modus-Port erscheint live")
+        check(e.state == engine.PAUSED, f"power cut → update mode ({e.code})")
+    check(until(lambda: any(p.update_mode for p in ctx.ports), 8000), "update mode port appears live")
     w.go("recovery")
     page.refresh()
     check("wartet im Update-Modus" in page.status.text() and "SLOOP 9.9" in page.status.text(),
-          "Rettung zeigt Gerät und Journal")
-    # falsches Paket (Original-V15) für den Felucca-Loader: Knopf aus, Aufruf lehnt ab, nichts gesendet
-    ctx.connect_port(next(p for p in ctx.ports if p.update_mode))      # wie bei nur einem Gerät: der Loader wird aktiv
+          "Recovery shows device and journal")
+    # wrong package (original V15) for the Felucca loader: button off, the call refuses, nothing sent
+    ctx.connect_port(next(p for p in ctx.ports if p.update_mode))      # as with only one device: the loader becomes active
     page.refresh()
     check(until(lambda: ctx.identity.startswith("ota-"), 8000) and not page.b_v15.isEnabled()
-          and "Felucca-Loader" in page.b_v15.toolTip(), f"„Original-V15“ bei Felucca-Loader gesperrt ({ctx.identity})")
+          and "Felucca-Loader" in page.b_v15.toolTip(), f"\"Original V15\" locked with a Felucca loader ({ctx.identity})")
     n_before = len(d2.sends)
     log_boxes.clear()
     check(not page.finish_install(stock=True) and len(d2.sends) == n_before
           and any("Passt nicht" in b or "nimmt die Original-V15 nicht an" in b for b in log_boxes),
-          "V15 an Felucca-Loader: abgelehnt, nichts gesendet")
+          "V15 to a Felucca loader: refused, nothing sent")
     ok = page.finish_install()
     check(ok and d2.identity == "FM-1_901" and d2.flash == fpk.analyze(pkg2).image,
-          f"Rettung abgeschlossen ({ok}, {d2.identity}, {d2.flash == fpk.analyze(pkg2).image}, {d2.log[-3:]})")
-    check(journal.Journal().active is None, "Journal wieder leer")
+          f"recovery finished ({ok}, {d2.identity}, {d2.flash == fpk.analyze(pkg2).image}, {d2.log[-3:]})")
+    check(journal.Journal().active is None, "journal empty again")
 
-    # ---- Stufe 2 in der Simulation (Mock-FM-1 von MvaveFM1Unbricker)
+    # ---- level 2 in the simulation (mock FM-1 of MvaveFM1Unbricker)
     if v15.exists():
         page.chk_sim.setChecked(True)
         ok = page.uboot_restore()
         check(ok and list((Path(s.user_root) / "Rettung" / "backups").glob("*/full-flash-before.bin")),
-              "Stufe 2 (Simulation): Doppelsicherung, Schreiben, Rücklesen")
+              "level 2 (simulation): double backup, writing, reading back")
     w.go("overview")
     app.quit()
 
@@ -425,8 +425,8 @@ QTimer.singleShot(300000, app.quit)
 app.exec()
 fails = [r for r in results if not r[0]]
 for e in errors:
-    print("AUSNAHME:\n" + e)
-print(f"{len(results) - len(fails)}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+    print("EXCEPTION:\n" + e)
+print(f"{len(results) - len(fails)}/{len(results)} passed, {len(errors)} exceptions")
 import shutil as _sh
 _sh.rmtree(home, ignore_errors=True)
 sys.exit(1 if fails or errors else 0)

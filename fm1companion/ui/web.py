@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Gemeinsame Web-Engine für alle eingebetteten Web-Seiten der Suite.
+"""Shared web engine for all embedded web pages of the suite.
 
-Qt erlaubt pro Prozess nur EIN Profil mit demselben Speicher-Namen. Deshalb gibt es
-hier genau eins (``profile()``), mit dem Web-MIDI-Ersatz (webmidi_polyfill.js), der
-jede Seite über QWebChannel mit der App verbindet – Editor, Simulator, Online-Editoren.
+Qt only allows ONE profile with the same storage name per process. That's why there is
+exactly one here (``profile()``), with the Web MIDI replacement (webmidi_polyfill.js), which
+connects every page to the app via QWebChannel – editor, simulator, online editors.
 
-Bausteine:
-  * ``profile()``        – das gemeinsame Profil (lazy, an die QApplication gehängt)
-  * ``RoutingPage``      – QWebEnginePage: Links ins Internet -> normaler Browser,
-                           Links auf dem lokalen Server -> optionaler router(url) -> bool
-  * ``make_view(...)``   – View + Page + Kanal (+ MidiBridge als "fm1midi") in einem Schritt
-  * ``add_download_handler(fn)`` – fn(download_request) -> True, wenn erledigt
-  * ``shutdown_all()``   – beim Beenden: Views und Seiten VOR dem Profil abbauen
+Building blocks:
+  * ``profile()``        – the shared profile (lazy, attached to the QApplication)
+  * ``RoutingPage``      – QWebEnginePage: links to the internet -> normal browser,
+                           links on the local server -> optional router(url) -> bool
+  * ``make_view(...)``   – view + page + channel (+ MidiBridge as "fm1midi") in one step
+  * ``add_download_handler(fn)`` – fn(download_request) -> True if handled
+  * ``shutdown_all()``   – on exit: tear down views and pages BEFORE the profile
 """
 from __future__ import annotations
 
@@ -31,14 +31,14 @@ try:
     from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineScript
     from PyQt6.QtWebEngineWidgets import QWebEngineView
     HAVE_WEBENGINE = True
-except ImportError:          # python3-pyqt6.qtwebengine fehlt
+except ImportError:          # python3-pyqt6.qtwebengine missing
     HAVE_WEBENGINE = False
 
 POLYFILL = Path(__file__).resolve().parents[1] / "web" / "webmidi_polyfill.js"
 LOCAL_HOSTS = ("127.0.0.1", "localhost")
 
 _profile = None
-_tracked: list[weakref.ref] = []            # (View/Seite) für shutdown_all, Views zuerst
+_tracked: list[weakref.ref] = []            # (view/page) for shutdown_all, views first
 _download_handlers: list[Callable] = []
 
 
@@ -50,7 +50,7 @@ def _qwebchannel_js() -> str:
 
 
 def profile():
-    """das eine gemeinsame Profil (mit Web-MIDI-Ersatz)."""
+    """the one shared profile (with Web MIDI replacement)."""
     global _profile
     if not HAVE_WEBENGINE:
         raise RuntimeError(_("Qt WebEngine is missing (sudo apt install python3-pyqt6.qtwebengine)"))
@@ -71,17 +71,17 @@ def profile():
 
 
 def track(*objs):
-    """für shutdown_all() merken (Reihenfolge: zuerst übergeben = zuerst abgebaut)."""
+    """remember for shutdown_all() (order: handed over first = torn down first)."""
     for o in objs:
         _tracked.append(weakref.ref(o))
 
 
 def shutdown_all():
-    """Views und Seiten abbauen, solange das Profil noch lebt (sonst warnt Qt beim Beenden)."""
+    """Tear down views and pages while the profile is still alive (otherwise Qt warns on exit)."""
     from PyQt6 import sip
     views = [r() for r in _tracked]
     _tracked.clear()
-    # erst alle Views, dann alle Seiten
+    # first all views, then all pages
     ordered = [o for o in views if o is not None and HAVE_WEBENGINE and isinstance(o, QWebEngineView)] + \
               [o for o in views if o is not None and not (HAVE_WEBENGINE and isinstance(o, QWebEngineView))]
     for o in ordered:
@@ -94,7 +94,7 @@ def shutdown_all():
 
 # ------------------------------------------------------------ Downloads
 def add_download_handler(fn: Callable, first: bool = True):
-    """fn(QWebEngineDownloadRequest) -> True, wenn erledigt. Spätere Handler werden zuerst gefragt."""
+    """fn(QWebEngineDownloadRequest) -> True if handled. Later handlers are asked first."""
     if first:
         _download_handlers.insert(0, fn)
     else:
@@ -113,7 +113,7 @@ def _download(item):
                 return
         except Exception:                      # noqa: BLE001
             continue
-    # Standard: in ~/FM-1/Downloads, mit Nachfrage
+    # default: into ~/FM-1/Downloads, with a prompt
     folder = config.folder("Downloads")
     name = item.downloadFileName() or "download"
     path, _filter = QFileDialog.getSaveFileName(None, _("Save"), str(folder / name))
@@ -125,11 +125,11 @@ def _download(item):
     item.accept()
 
 
-# ------------------------------------------------------------ Seiten
+# ------------------------------------------------------------ Pages
 if HAVE_WEBENGINE:
     class RoutingPage(QWebEnginePage):
-        """Links ins Internet öffnen im normalen Browser (außer allow_remote=True);
-        Navigation auf dem lokalen Server fragt router(url) -> True = normal laden."""
+        """Open links to the internet in the normal browser (unless allow_remote=True);
+        navigation on the local server asks router(url) -> True = load normally."""
 
         def __init__(self, parent=None, router: Callable | None = None, allow_remote: bool = False):
             super().__init__(profile(), parent)
@@ -149,8 +149,8 @@ if HAVE_WEBENGINE:
             return self.router(url) if self.router else True
 
         def createWindow(self, _type):
-            # target=_blank / window.open: nur http/https/mailto im normalen Browser öffnen, alles andere
-            # (file:, eigene Schemata, javascript: …) verwerfen
+            # target=_blank / window.open: only open http/https/mailto in the normal browser, discard everything
+            # else (file:, custom schemes, javascript: …)
             tmp = QWebEnginePage(self.profile(), self)
             tmp.urlChanged.connect(lambda u, p=tmp: (open_new_window_url(u), p.deleteLater()))
             return tmp
@@ -158,7 +158,7 @@ if HAVE_WEBENGINE:
 
 def make_view(parent, bridge=None, router: Callable | None = None, allow_remote: bool = False,
               page_class=None):
-    """-> (view, page, channel). bridge: MidiBridge (wird als "fm1midi" angemeldet) oder None."""
+    """-> (view, page, channel). bridge: MidiBridge (registered as "fm1midi") or None."""
     cls = page_class or RoutingPage
     page = cls(parent, router=router, allow_remote=allow_remote) if cls is RoutingPage else cls(profile(), parent)
     channel = QWebChannel(page)
@@ -175,13 +175,13 @@ EXTERNAL_SCHEMES = ("http", "https", "mailto")
 
 
 def external_link_allowed(url) -> bool:
-    """darf diese Adresse aus einer Webseite heraus im Standardprogramm geöffnet werden?"""
+    """may this address be opened from a web page in the default application?"""
     u = url if isinstance(url, QUrl) else QUrl(str(url))
     return u.isValid() and u.scheme().lower() in EXTERNAL_SCHEMES
 
 
 def open_new_window_url(url) -> bool:
-    """neues Fenster einer Webseite: nur http/https/mailto über QDesktopServices -> True, wenn geöffnet."""
+    """new window of a web page: only http/https/mailto via QDesktopServices -> True if opened."""
     if not external_link_allowed(url):
         return False
     QDesktopServices.openUrl(url if isinstance(url, QUrl) else QUrl(str(url)))

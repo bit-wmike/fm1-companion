@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Baut fm1companion/data/catalog_snapshot.json – den mitgelieferten Firmware-Katalog.
+"""Builds fm1companion/data/catalog_snapshot.json – the bundled firmware catalog.
 
-  python3 tools/build_catalog_snapshot.py                       # Quellen live von GitHub (raw)
+  python3 tools/build_catalog_snapshot.py                       # sources live from GitHub (raw)
   python3 tools/build_catalog_snapshot.py --mooring /tmp/awesome-fm-1/mooring/catalog.json \\
-          --readme /tmp/awesome-fm-1/README.md [--screenshots] [--out DATEI]
+          --readme /tmp/awesome-fm-1/README.md [--screenshots] [--out FILE]
 
---screenshots liest die README jedes Firmware-Repos über raw.githubusercontent.com (keine
-GitHub-API, kein Limit) und merkt sich das erste echte Bild als Vorschaubild.
+--screenshots reads the README of each firmware repo via raw.githubusercontent.com (no
+GitHub API, no rate limit) and keeps the first real image as the preview image.
 """
 from __future__ import annotations
 

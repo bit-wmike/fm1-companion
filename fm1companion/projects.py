@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Projekte einzeln verwalten (Melodee 1.6: 32 Projektplätze; SLOOP: 4 Sections A–D).
+"""Manage projects individually (Melodee 1.6: 32 project slots; SLOOP: 4 sections A–D).
 
-Die Firmware bietet keinen eigenen "Projekt exportieren"-Befehl, aber die
-Backup-Objekte sind pro Projektplatz einzeln les- und schreibbar (IDs 2–5 und
-64–91; SLOOP: 2–5 = Sections A–D über die Befehle 34–36). Daraus baut die App eine Projekt-Bibliothek auf dem Rechner:
+The firmware offers no "export project" command of its own, but the
+backup objects can be read and written individually per project slot (IDs 2–5 and
+64–91; SLOOP: 2–5 = sections A–D via commands 34–36). From this the app builds a project library on the computer:
 
-  <Name>.fm1proj   JSON: Firmware, Datum, Notiz, Herkunft und das Objekt selbst
+  <Name>.fm1proj   JSON: firmware, date, note, origin and the object itself
 
-Ein Projekt lässt sich so in jeden freien (oder belegten) Platz zurückspielen –
-auch auf einem anderen FM-1 mit derselben Firmware.
+A project can thus be restored into any free (or used) slot –
+even on another FM-1 with the same firmware.
 """
 from __future__ import annotations
 
@@ -26,11 +26,11 @@ from .protocol import crc32
 
 FORMAT = "fm1companion-project"
 SUFFIX = ".fm1proj"
-# grobe Formatkennung über die ersten 4 Bytes (Magic)
+# rough format detection via the first 4 bytes (magic)
 # format labels (translated by format_of(); also written as "kind" into new project files)
 MAGICS = {b"HPJ1": N_("compact (1.6)"), b"FBKQ": N_("FBKQ (1.6 rc.6+, with pattern sounds)"), b"FBKP": "FBKP (1.6)",
           b"FBKN": "FBKN", b"FBKM": "FBKM", b"FBKL": "FBKL", b"FBKK": "FBKK", b"FBK9": "FBK9",
-          # SLOOP (firmware/src/project.c): Projekte und Sections A..D (Backup-Objekte 0 und 2..5)
+          # SLOOP (firmware/src/project.c): projects and sections A..D (backup objects 0 and 2..5)
           b"FUN6": "FUN6 (SLOOP 2.6+)", b"FUN5": "FUN5 (SLOOP 2.4–2.5)", b"FUN4": "FUN4 (SLOOP 2.0–2.3)",
           b"FUN3": "FUN3 (SLOOP 1.x)", b"FUN2": "FUN2 (SLOOP)", b"FUN1": "FUN1 (SLOOP)"}
 
@@ -56,7 +56,7 @@ class SlotInfo:
 
 
 def list_slots(link) -> tuple[list[SlotInfo], int]:
-    """-> (Projektplätze, Größe der laufenden Musik). Leere Plätze haben size 0."""
+    """-> (project slots, size of the running music). Empty slots have size 0."""
     man = backup.list_objects(link)
     slots = []
     live = 0
@@ -72,7 +72,7 @@ def list_slots(link) -> tuple[list[SlotInfo], int]:
 
 
 def _safe(name: str) -> str:
-    """Dateiname aus einem Projektnamen: Sonderzeichen werden „_“, höchstens 80 Zeichen, nie leer/„.“."""
+    """File name from a project name: special characters become '_', at most 80 characters, never empty/'.'."""
     s = re.sub(r"[^\w\-. äöüÄÖÜß]+", "_", name).strip(" .")[:80].strip(" .")  # i18n: ignore
     return s or "Projekt"
 
@@ -101,7 +101,7 @@ class ProjectFile:
 
 def export_slot(link, slot: int, folder: Path, name: str, firmware: str, device: str = "",
                 notes: str = "", progress: Callable[[int], None] | None = None, manifest=None) -> Path:
-    """manifest: schon gelesenes Inventar (backup.list_objects) – spart bei „Alle holen“ einen Stopp je Platz."""
+    """manifest: already read inventory (backup.list_objects) – saves one stop per slot for "Fetch all"."""
     oid = backup.project_id(slot)
     man = {o.id: o for o in (manifest if manifest is not None else backup.list_objects(link))}
     o = man.get(oid)
@@ -132,7 +132,7 @@ def load_project(path: Path) -> ProjectFile:
     if meta.get("format") != FORMAT or "object" not in meta:
         raise backup.BackupError(_("{name} is not an FM-1 Companion project file").format(name=Path(path).name))
     pf = ProjectFile(Path(path), meta)
-    pf.data  # prüfen
+    pf.data  # verify
     return pf
 
 
@@ -152,7 +152,7 @@ def update_meta(pf: ProjectFile, **changes):
 
 
 def family(firmware: str) -> str:
-    """Firmware-Familie aus einer Versionszeichenkette oder einem Schlüssel: melodee / sloop / skiff / ""."""
+    """Firmware family from a version string or a key: melodee / sloop / skiff / ""."""
     v = (firmware or "").lower()
     for k in ("melodee", "sloop", "skiff"):
         if k in v:
@@ -161,7 +161,7 @@ def family(firmware: str) -> str:
 
 
 def family_of_data(data: bytes) -> str:
-    """Familie, soweit sie aus dem Projekt selbst hervorgeht (SLOOP: FUNx, Melodee: HPJ1/FBKx/FUNxx)."""
+    """Family, as far as it can be told from the project itself (SLOOP: FUNx, Melodee: HPJ1/FBKx/FUNxx)."""
     k = format_of(data)
     if "SLOOP" in k:
         return "sloop"
@@ -196,7 +196,7 @@ def import_to_slot(link, pf: ProjectFile, slot: int, progress: Callable[[int], N
 
 
 def erase_slot(link, slot: int):
-    """einen Platz leeren: ein leeres Objekt schreiben (wie das Löschen in Melodee)."""
+    """clear a slot: write an empty object (like deleting in Melodee)."""
     backup.write_object(link, backup.project_id(slot), b"")
 
 

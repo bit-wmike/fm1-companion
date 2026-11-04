@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Reiter „Sample-Pakete“: kostenlose Sammlungen von GitHub durchsehen und laden."""
+"""“Sample packs” tab: browse and download free collections from GitHub."""
 from __future__ import annotations
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -79,7 +79,7 @@ class PacksTab(QWidget):
             row2.addWidget(b)
         row2.addStretch(1)
         rl.addLayout(row2)
-        reflow(row2)                                     # Knöpfe brechen bei schmalem Fenster um
+        reflow(row2)                                     # buttons wrap when the window is narrow
         self.bar = QProgressBar()
         self.bar.setVisible(False)
         rl.addWidget(self.bar)
@@ -185,7 +185,7 @@ class PacksTab(QWidget):
         elif not confirm(self, _("Load sample pack"), _("{what}\n\nLicence: {licence}.").format(what=what, licence=P.licence_text(p)),
                          _("Download")):
             return
-        dest = self.ctx.settings.samples_dir / "Pakete"  # i18n: ignore (Ordnername)
+        dest = self.ctx.settings.samples_dir / "Pakete"  # i18n: ignore (folder name)
         self.busy, self._cancel = True, False
         for b in (self.b_sel, self.b_all):
             b.setEnabled(False)

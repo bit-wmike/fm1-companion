@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""DX7-Voices: SysEx lesen und schreiben, Parameter, Generatoren.
+"""DX7 voices: read and write SysEx, parameters, generators.
 
-Formate (wie der Melodee-Editor, web/editor.html ``FM6``):
-  * VCED – eine Voice ausgepackt, 155 Bytes (Operator 6 zuerst, je 21 Bytes, dann 19 Voice-Bytes, Name 10)
-  * VMEM – eine Voice gepackt, 128 Bytes (der Datensatz eines 32er-Banks; Melodee "native kind 1")
-  * Einzel-Voice-SysEx  F0 43 0n 00 01 1B <155> <Prüfsumme> F7  (163 Bytes)
-  * 32er-Bank-SysEx     F0 43 0n 09 20 00 <4096> <Prüfsumme> F7 (4104 Bytes)
-Die Prüfsumme ist das Zweierkomplement der Datensumme (7 Bit).
+Formats (like the Melodee editor, web/editor.html ``FM6``):
+  * VCED – one voice unpacked, 155 bytes (operator 6 first, 21 bytes each, then 19 voice bytes, name 10)
+  * VMEM – one voice packed, 128 bytes (the record of a 32-voice bank; Melodee "native kind 1")
+  * single-voice SysEx  F0 43 0n 00 01 1B <155> <checksum> F7  (163 bytes)
+  * 32-voice bank SysEx F0 43 0n 09 20 00 <4096> <checksum> F7 (4104 bytes)
+The checksum is the two's complement of the data sum (7 bits).
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from .i18n import _
 import random
 from dataclasses import dataclass, field
 
-# Operator-Bytes (VCED-Reihenfolge): Kürzel, Höchstwert, Name
+# operator bytes (VCED order): abbreviation, maximum, name
 OP_PARAMS = [
     ("R1", 99, _("Rate 1")), ("R2", 99, _("Rate 2")), ("R3", 99, _("Rate 3")), ("R4", 99, _("Rate 4")),
     ("L1", 99, _("Level 1")), ("L2", 99, _("Level 2")), ("L3", 99, _("Level 3")), ("L4", 99, _("Level 4")),
@@ -44,7 +44,7 @@ def vmax(i: int) -> int:
 
 
 def at(op: int, field_: str) -> int:
-    """Index des Felds von Operator op (1..6) in der VCED."""
+    """Index of the field of operator op (1..6) in the VCED."""
     return (6 - op) * 21 + OPI[field_]
 
 
@@ -54,7 +54,7 @@ def sanitize(v) -> list[int]:
 
 
 def unpack(b) -> list[int]:
-    """VMEM (128) -> VCED (155), wie eng_fm6.c fm6_unpack."""
+    """VMEM (128) -> VCED (155), like eng_fm6.c fm6_unpack."""
     v = [0] * SIZE
     for k in range(6):
         o, d = k * 17, k * 21
@@ -87,7 +87,7 @@ def unpack(b) -> list[int]:
 
 
 def pack(v) -> list[int]:
-    """VCED (155) -> VMEM (128), wie eng_fm6.c fm6_pack."""
+    """VCED (155) -> VMEM (128), like eng_fm6.c fm6_pack."""
     b = [0] * PACKED
     for k in range(6):
         o, d = k * 17, k * 21
@@ -128,7 +128,7 @@ def checksum(data) -> int:
 
 
 def init_voice() -> list[int]:
-    """die DX7-INIT-VOICE: Algorithmus 1, nur Operator 1 hörbar."""
+    """the DX7 INIT VOICE: algorithm 1, only operator 1 audible."""
     v = [0] * SIZE
     for op in range(1, 7):
         for f, x in (("R1", 99), ("R2", 99), ("R3", 99), ("R4", 99), ("L1", 99), ("L2", 99), ("L3", 99), ("L4", 0),
@@ -161,14 +161,14 @@ def bank_syx(voices, channel: int = 0) -> bytes:
 
 @dataclass
 class ParseResult:
-    voices: list = field(default_factory=list)      # VCED-Listen
-    warnings: list = field(default_factory=list)    # Hinweise (übersetzt)
-    bank: bool = False                              # stammt aus einem 32er-Bank
+    voices: list = field(default_factory=list)      # VCED lists
+    warnings: list = field(default_factory=list)    # hints (translated)
+    bank: bool = False                              # comes from a 32-voice bank
 
 
 def parse_syx(data: bytes) -> ParseResult:
-    """liest alles, was nach DX7-Voices aussieht – auch unsaubere Dateien: mehrere Nachrichten,
-    falsche Prüfsummen (Warnung), rohe 4096/155-Byte-Dateien, fehlendes F7 am Ende."""
+    """reads everything that looks like DX7 voices – including messy files: several messages,
+    wrong checksums (warning), raw 4096/155-byte files, missing F7 at the end."""
     d = bytes(data)
     res = ParseResult()
     if not d:
@@ -231,14 +231,14 @@ def parse_syx(data: bytes) -> ParseResult:
 
 
 def voice_key(v) -> str:
-    """Inhalts-Schlüssel (ohne Namen) – für Duplikate."""
+    """Content key (without name) – for duplicates."""
     return bytes(pack(sanitize(v))[:118]).hex()
 
 
-# ------------------------------------------------------------ Algorithmen ---
-# Die 32 DX7-Algorithmen als Bus-Tabelle wie msfa (Google, Apache-2.0) / FM1 Open web/synth/dx7core.c:
-# Eintrag k gilt für Operator 6-k (Operator 6 zuerst). Bits: 1/2 Ausgabe auf Bus 1/2 (0 = Ausgang),
-# 4 addieren, 0x10/0x20 Eingang von Bus 1/2, 0x40 Feedback-Eingang, 0x80 Feedback-Ausgang.
+# ------------------------------------------------------------ algorithms ---
+# The 32 DX7 algorithms as a bus table like msfa (Google, Apache-2.0) / FM1 Open web/synth/dx7core.c:
+# entry k applies to operator 6-k (operator 6 first). Bits: 1/2 output to bus 1/2 (0 = output),
+# 4 add, 0x10/0x20 input from bus 1/2, 0x40 feedback input, 0x80 feedback output.
 ALGORITHMS = [
     (0xc1, 0x11, 0x11, 0x14, 0x01, 0x14), (0x01, 0x11, 0x11, 0x14, 0xc1, 0x14), (0xc1, 0x11, 0x14, 0x01, 0x11, 0x14),
     (0x41, 0x11, 0x94, 0x01, 0x11, 0x14), (0xc1, 0x14, 0x01, 0x14, 0x01, 0x14), (0x41, 0x94, 0x01, 0x14, 0x01, 0x14),
@@ -255,7 +255,7 @@ ALGORITHMS = [
 
 
 def graph(alg: int) -> dict:
-    """Algorithmus 0..31 -> {"carriers": [Op], "edges": [(von, nach)], "feedback": (von, nach)}; Operatoren 1..6."""
+    """Algorithm 0..31 -> {"carriers": [op], "edges": [(from, to)], "feedback": (from, to)}; operators 1..6."""
     flags = ALGORITHMS[alg & 31]
     bus: dict[int, list[int]] = {1: [], 2: []}
     edges, car = [], []
@@ -278,7 +278,7 @@ def graph(alg: int) -> dict:
     return {"carriers": sorted(car), "edges": edges, "feedback": (fb_out, fb_in) if fb_out else None}
 
 
-# ------------------------------------------------------------- Generatoren ---
+# ------------------------------------------------------------- generators ---
 
 def _clamp(i, x):
     return max(0, min(vmax(i), int(round(x))))
@@ -289,7 +289,7 @@ def carriers(alg: int) -> list[int]:
 
 
 def random_voice(rng: random.Random | None = None, alg: int | None = None) -> list[int]:
-    """musikalisch eingeschränkter Zufall: hörbare Träger, sinnvolle Hüllkurven, ganzzahlige Verhältnisse."""
+    """musically constrained randomness: audible carriers, sensible envelopes, integer ratios."""
     rng = rng or random.Random()
     v = init_voice()
     a = rng.randrange(32) if alg is None else alg
@@ -325,7 +325,7 @@ def random_voice(rng: random.Random | None = None, alg: int | None = None) -> li
 
 
 def mutate(v, amount: float = 0.3, keep_alg: bool = True, rng: random.Random | None = None) -> list[int]:
-    """amount 0..1: wie viele Werte sich wie stark ändern. Träger bleiben hörbar."""
+    """amount 0..1: how many values change and how much. Carriers stay audible."""
     rng = rng or random.Random()
     v = sanitize(v)
     out = list(v)
@@ -348,7 +348,7 @@ def mutate(v, amount: float = 0.3, keep_alg: bool = True, rng: random.Random | N
 
 
 def morph(a, b, t: float) -> list[int]:
-    """lineare Mischung zweier Voices (t 0 = a, 1 = b); Algorithmus, Modi und Name vom näheren."""
+    """linear blend of two voices (t 0 = a, 1 = b); algorithm, modes and name from the nearer one."""
     a, b = sanitize(a), sanitize(b)
     near = a if t < 0.5 else b
     out = list(near)
@@ -374,11 +374,11 @@ def describe(v) -> str:
     return _("Algorithm {alg}, feedback {fb}").format(alg=alg, fb=v[VI['FB']])
 
 
-# ------------------------------------------------------------ Senden ---
-# Wie "FM1 Editor & Librarian" (benny-sparra/fm1-dx7-patch-importer, MIT): M-VAVEs eigene Firmware
-# (Kennung FM-1_0xx bis 019) bekommt den Einzel-Voice-Dump in den Edit-Puffer (Speichern mit SAVE am
-# Gerät); jede andere/unbekannte Firmware die 155 DX7-Parameteränderungen F0 43 1n gg pp dd F7, die nur
-# den aktuellen Klang ändern und nichts überschreiben. Melodee und FM1 Open nehmen den Einzel-Dump.
+# ------------------------------------------------------------ sending ---
+# Like "FM1 Editor & Librarian" (benny-sparra/fm1-dx7-patch-importer, MIT): M-VAVE's own firmware
+# (identity FM-1_0xx up to 019) gets the single-voice dump into the edit buffer (save with SAVE on the
+# device); every other/unknown firmware gets the 155 DX7 parameter changes F0 43 1n gg pp dd F7, which only
+# change the current sound and overwrite nothing. Melodee and FM1 Open accept the single dump.
 
 def param_changes(v, channel: int = 0) -> list[bytes]:
     v = sanitize(v)
@@ -392,7 +392,7 @@ def is_mvave_stock(identity: str) -> bool:
 
 
 def send_plan(firmware_key: str, identity: str = "") -> str:
-    """-> "single" (Einzel-Voice-Dump) oder "params" (Parameteränderungen)."""
+    """-> "single" (single-voice dump) or "params" (parameter changes)."""
     fw = (firmware_key or "").lower()
     if fw in ("melodee", "fm1open", "fm1_open", "open", "stock", "mvave") or is_mvave_stock(identity):
         return "single"

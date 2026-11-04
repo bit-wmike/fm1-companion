@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Vorhören und Wellenform-Anzeige."""
+"""Preview playback and waveform display."""
 from __future__ import annotations
 
 import os
@@ -17,13 +17,13 @@ from PyQt6.QtWidgets import QMenu, QSizePolicy, QToolButton, QWidget
 
 from ..i18n import _, ngettext
 
-HAVE_MM: bool | None = None          # Qt Multimedia: erst beim ersten Bedarf geladen (None = noch nicht geprüft)
+HAVE_MM: bool | None = None          # Qt Multimedia: only loaded when first needed (None = not checked yet)
 NO_PLAYER_HINT = _("No player program found (pw-play, paplay, aplay or ffplay). "
                    "On the Pi: sudo apt install pipewire-bin – or alsa-utils.")
 
 
 def _have_mm() -> bool:
-    """Qt Multimedia vorhanden? (python3-pyqt6.qtmultimedia ist nur „empfohlen“ und fehlt oft.)"""
+    """Is Qt Multimedia available? (python3-pyqt6.qtmultimedia is only “recommended” and often missing.)"""
     global HAVE_MM
     if HAVE_MM is None:
         try:
@@ -35,7 +35,7 @@ def _have_mm() -> bool:
 
 
 class PlayerError(Exception):
-    """Abspielen nicht möglich – die Meldung ist deutsch und nennt die Lösung."""
+    """Playback not possible – the message is user-readable and names the solution."""
 
 
 from ..audioout import (BACKENDS, FM1_SINK, Output, available_backends, list_outputs, output_hint,  # noqa: E402,F401
@@ -44,7 +44,7 @@ from .. import audioout as _ao  # noqa: E402
 
 
 def chosen_output() -> str:
-    """vom Nutzer gewählter Ausgang ("" = Standard des Systems)."""
+    """output chosen by the user ("" = system default)."""
     try:
         from .. import config
         return str(config.module("audio", {"output": ""}).get("output") or "")
@@ -62,14 +62,14 @@ def set_output(name: str):
 
 
 def current_output() -> Output | None:
-    """der Ausgang, auf dem das Vorhören gerade landet (gewählt, sonst Standard – aber nie unbemerkt das FM-1)."""
+    """the output the preview currently goes to (chosen, otherwise default – but never unnoticed the FM-1)."""
     outs = list_outputs()
     want = _ao.effective_output(chosen_output(), outs)
     return next((o for o in outs if o.name == want), None) or next((o for o in outs if o.default), None)
 
 
 def keep_off_fm1() -> bool:
-    """Einstellung: das FM-1 nie von selbst zum Standard-Ausgang werden lassen (Standard: an)."""
+    """Setting: never let the FM-1 become the default output by itself (default: on)."""
     try:
         from .. import config
         return bool(config.module("audio", {"output": "", "keep_off_fm1": True}).get("keep_off_fm1", True))
@@ -87,10 +87,10 @@ def set_keep_off_fm1(on: bool):
 
 
 def guard_default_output(delays=(0.0, 2.5, 6.0)):
-    """im Hintergrund: Wird das FM-1 beim Anstecken zum Standard-Ausgang des Systems, den Standard gleich wieder auf
-    Lautsprecher/HDMI stellen – sonst landet jeder Ton am FM-1, und PipeWire öffnet dessen Audio-Strom (am Pi 5 hat
-    genau das den USB-Controller abstürzen lassen). Mehrfach geprüft, weil PipeWire die Soundkarte des FM-1 erst
-    einige Sekunden nach dem MIDI-Port anmeldet. Abschaltbar im Menü „Ausgabe“."""
+    """in the background: if the FM-1 becomes the system's default output when plugged in, immediately set the default back to
+    speakers/HDMI – otherwise every sound ends up on the FM-1, and PipeWire opens its audio stream (on the Pi 5 exactly
+    that crashed the USB controller). Checked several times because PipeWire registers the FM-1's sound card only
+    a few seconds after the MIDI port. Can be turned off in the “Output” menu."""
     if not keep_off_fm1():
         return
 
@@ -111,27 +111,27 @@ def guard_default_output(delays=(0.0, 2.5, 6.0)):
     threading.Thread(target=work, daemon=True, name="fm1c-audio-guard").start()
 
 
-_all_players: "weakref.WeakSet" = weakref.WeakSet()   # alle Player des Prozesses – nie zwei gleichzeitig; schwach,
-#                                                     damit geschlossene Dialoge ihren Player freigeben
+_all_players: "weakref.WeakSet" = weakref.WeakSet()   # all players of the process – never two at once; weak,
+#                                                     so that closed dialogs release their player
 _hinted: set[str] = set()
 
 
 def stop_all():
-    """alle Player anhalten (Seitenwechsel, Beenden)."""
+    """stop all players (page change, exit)."""
     for p in list(_all_players):
         try:
             p.stop()
-        except Exception:  # noqa: BLE001 – beim Beenden darf nichts mehr stören
+        except Exception:  # noqa: BLE001 – nothing may interfere on exit
             pass
 
 
 def _to_int16_bytes(samples) -> bytes:
-    """Liste/Array aus ints oder floats (−1..1) -> 16-Bit-PCM. Floats wurden früher mit struct.pack verworfen."""
+    """List/array of ints or floats (−1..1) -> 16-bit PCM. Floats used to be rejected by struct.pack."""
     try:
         import numpy as np
         a = np.asarray(samples)
         if a.dtype.kind == "f":
-            a = np.clip(a, -1.0, 1.0) * 32767          # Gleitkomma heißt immer −1..1 (darüber: begrenzt)
+            a = np.clip(a, -1.0, 1.0) * 32767          # floating point always means −1..1 (beyond: clamped)
         return np.clip(np.round(a), -32768, 32767).astype("<i2").tobytes()
     except ImportError:
         vals = [max(-32768, min(32767, int(round(max(-1.0, min(1.0, v)) * 32767 if isinstance(v, float) else v))))
@@ -149,18 +149,18 @@ def write_wav(path: Path, samples, rate: int, channels: int = 1) -> Path:
 
 
 class Player:
-    """spielt eine Datei ab – robust gegen fehlende Teile:
+    """plays a file – robust against missing parts:
 
-    1. Abspielprogramme pw-play / paplay / aplay / ffplay (das erste, das wirklich startet; bricht eines sofort
-       mit Fehler ab – z. B. PipeWire nicht erreichbar –, wird das nächste versucht),
-    2. sonst Qt Multimedia (erst dann geladen – auf Systemen ohne Audio-Gerät kann es beim Anlegen abstürzen),
-    3. sonst eine klare deutsche Meldung statt Stille.
+    1. players pw-play / paplay / aplay / ffplay (the first one that really starts; if one aborts immediately
+       with an error – e.g. PipeWire unreachable –, the next one is tried),
+    2. otherwise Qt Multimedia (only loaded then – on systems without an audio device it can crash on creation),
+    3. otherwise a clear message instead of silence.
 
-    Der gewählte Audio-Ausgang („Ausgabe“) geht als --target/--device und PULSE_SINK mit. Fehler, die erst nach dem
-    Start auftreten, meldet ein Wächter (Qt-Timer) nach. Startet ein Player, halten alle anderen an.
-    play()/play_samples() melden Fehler als Toast und geben False zurück; die *_strict-Varianten werfen PlayerError."""
+    The chosen audio output (“Output”) is passed as --target/--device and PULSE_SINK. Errors that only occur after
+    the start are reported later by a watchdog (Qt timer). When a player starts, all others stop.
+    play()/play_samples() report errors as a toast and return False; the *_strict variants raise PlayerError."""
 
-    START_CHECK = 0.03            # so lange wird auf einen Sofort-Abbruch gewartet (s) – mehr blockiert die Oberfläche
+    START_CHECK = 0.03            # how long to wait for an immediate abort (s) – more blocks the UI
 
     def __init__(self, parent=None):
         self.parent = parent
@@ -178,11 +178,11 @@ class Player:
         self._path, self._target = None, ""
         _all_players.add(self)
 
-    def __del__(self):                         # Dialog zu: ein noch laufendes Vorhören endet mit
+    def __del__(self):                         # dialog closed: a still running preview ends with it
         try:
             if self.proc is not None and self.proc.poll() is None:
                 self.proc.terminate()
-        except Exception:  # noqa: BLE001 – beim Aufräumen darf nichts mehr stören
+        except Exception:  # noqa: BLE001 – nothing may interfere during cleanup
             pass
 
     @property
@@ -207,7 +207,7 @@ class Player:
                 return False
         return False
 
-    # ---- Abspielprogramme
+    # ---- Players
     @staticmethod
     def _args(exe: str, path: Path, target: str) -> list[str]:
         if exe == "pw-play":
@@ -219,7 +219,7 @@ class Player:
         return [exe, "-nodisp", "-autoexit", "-loglevel", "error", str(path)]
 
     def _try_exe(self, exe: str, path: Path, target: str) -> str:
-        """-> "" wenn es läuft (oder schon fertig ist), sonst die Fehlermeldung."""
+        """-> "" if it is running (or already finished), otherwise the error message."""
         if exe == "aplay" and path.suffix.lower() not in (".wav", ".wave"):
             return _("aplay only plays WAV files ({suffix})").format(suffix=path.suffix)
         env = dict(os.environ)
@@ -245,12 +245,12 @@ class Player:
         return ""
 
     def play_strict(self, path: Path) -> bool:
-        """-> True, wenn das Abspielen gestartet wurde; PlayerError, wenn es grundsätzlich nicht geht."""
+        """-> True if playback was started; PlayerError if it is fundamentally not possible."""
         stop_all()
         path = Path(path)
         if not path.exists():
             raise PlayerError(_("The file {name} no longer exists.").format(name=path.name))
-        target = _ao.effective_output(chosen_output())   # nie unbemerkt ans FM-1 (Standard, der das FM-1 ist)
+        target = _ao.effective_output(chosen_output())   # never unnoticed to the FM-1 (a default that is the FM-1)
         self.errors = []
         self._path, self._target = path, target
         backends = available_backends()
@@ -292,8 +292,8 @@ class Player:
         self.mp.play()
 
     def _start_watch(self):
-        """Wächter: bricht das Abspielprogramm gleich nach dem Start mit Fehler ab (PipeWire nicht erreichbar,
-        Format abgelehnt …), wird das nächste versucht, zuletzt Qt Multimedia – und sonst klar gemeldet."""
+        """Watchdog: if the player aborts with an error right after starting (PipeWire unreachable,
+        format rejected …), the next one is tried, finally Qt Multimedia – and otherwise clearly reported."""
         try:
             from PyQt6.QtCore import QCoreApplication, QTimer
             if QCoreApplication.instance() is None:
@@ -344,8 +344,8 @@ class Player:
         QTimer.singleShot(200, check)
 
     def play(self, path: Path, status=None) -> bool:
-        """Datei abspielen. Geht es nicht (kein Abspielprogramm, Datei weg), gibt es False, einen Toast
-        (einmal je Meldung) und – falls angegeben – status(text) mit der Erklärung."""
+        """Play a file. If it doesn't work (no player, file gone), returns False, a toast
+        (once per message) and – if given – status(text) with the explanation."""
         self._status = status
         try:
             ok = self.play_strict(path)
@@ -366,8 +366,8 @@ class Player:
         return ok
 
     def _hint_output(self):
-        """einmal je Ausgang: Hinweis, wenn der Ton ans FM-1 (USB-Audio) geht (im Hintergrund ermittelt –
-        pw-dump darf die Oberfläche nicht aufhalten)."""
+        """once per output: notice when the sound goes to the FM-1 (USB audio) (determined in the background –
+        pw-dump must not block the UI)."""
         def work():
             try:
                 o = current_output()
@@ -385,7 +385,7 @@ class Player:
         if status:
             try:
                 status(_("Playback not possible: {error}").format(error=msg))
-            except RuntimeError:                    # Label schon gelöscht
+            except RuntimeError:                    # label already deleted
                 pass
         if msg != self.last_error:
             self.last_error = msg
@@ -394,20 +394,20 @@ class Player:
 
     def play_samples_strict(self, samples, rate: int) -> bool:
         self._tmp_n = (self._tmp_n + 1) % 2
-        # jedes Mal eine neue, sicher angelegte Datei (mkstemp: zufälliger Name, 0600 – kein vorhersagbarer Name in
-        # /tmp, den ein anderer Benutzer vorher als Symlink anlegen könnte); die vorletzte wird weggeräumt, die
-        # gerade gelesene nie überschrieben
+        # a new, safely created file every time (mkstemp: random name, 0600 – no predictable name in
+        # /tmp that another user could create beforehand as a symlink); the second-to-last is cleaned up, the
+        # one just being read is never overwritten
         fd, name = tempfile.mkstemp(prefix="fm1c-preview-", suffix=".wav")
         os.close(fd)
         tmp = Path(name)
-        if not getattr(Player, "_preview_cleanup", None):     # beim Beenden wegräumen (blieb sonst in /tmp)
+        if not getattr(Player, "_preview_cleanup", None):     # clean up on exit (otherwise stayed in /tmp)
             import atexit
             Player._preview_cleanup = set()
             atexit.register(lambda s=Player._preview_cleanup: [p.unlink(missing_ok=True) for p in list(s)])
         Player._preview_cleanup.add(tmp)
         mine = self.__dict__.setdefault("_tmp_files", [])
         mine.append(tmp)
-        stop_all()                                   # erst anhalten, dann die Datei schreiben
+        stop_all()                                   # stop first, then write the file
         while len(mine) > 2:
             old = mine.pop(0)
             Player._preview_cleanup.discard(old)
@@ -421,7 +421,7 @@ class Player:
         if self.proc and self.proc.poll() is None:
             self.proc.terminate()
             try:
-                self.proc.wait(0.3)             # kein Zombie; pw-play endet sofort
+                self.proc.wait(0.3)             # no zombie; pw-play ends immediately
             except subprocess.TimeoutExpired:
                 self.proc.kill()
         self.proc = None
@@ -434,7 +434,7 @@ class Player:
 
 
 class OutputButton(QToolButton):
-    """„Ausgabe: …“ – wohin das Vorhören im Rechner geht (Standard des Systems oder ein bestimmter Ausgang)."""
+    """“Output: …” – where the preview on the computer goes (system default or a specific output)."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -456,7 +456,7 @@ class OutputButton(QToolButton):
         h = output_hint(o) if o else ""
         import importlib.util
         try:
-            mm = importlib.util.find_spec("PyQt6.QtMultimedia") is not None   # nur nachsehen, nicht laden
+            mm = importlib.util.find_spec("PyQt6.QtMultimedia") is not None   # only check, don't load
         except (ImportError, ValueError):
             mm = False
         self.setToolTip(tip + (" " + h if h else "") + "\n" + _("Player programs: {names}").format(
@@ -494,7 +494,7 @@ class OutputButton(QToolButton):
 
 
 class Waveform(QWidget):
-    """Wellenform mit verschiebbaren Start-/Ende-Markern (Sekunden)."""
+    """Waveform with movable start/end markers (seconds)."""
     markers_changed = pyqtSignal(float, float)
 
     def __init__(self, parent=None):
@@ -583,8 +583,8 @@ class Waveform(QWidget):
 
 
 class SliceView(QWidget):
-    """Wellenform mit Schnittmarken: ziehen = verschieben, Doppelklick = Marke setzen,
-    Rechtsklick = Marke entfernen, Klick = Stück wählen (und vorhören)."""
+    """Waveform with slice markers: drag = move, double-click = set marker,
+    right-click = remove marker, click = select piece (and preview it)."""
     points_changed = pyqtSignal()
     slice_clicked = pyqtSignal(int)
 
@@ -716,7 +716,7 @@ class SliceView(QWidget):
 
 
 class LiveWave(QWidget):
-    """laufende Wellenform (rechts neu, links alt) für Aufnahmen."""
+    """running waveform (new on the right, old on the left) for recordings."""
 
     def __init__(self, seconds: float = 6.0, parent=None):
         super().__init__(parent)
@@ -736,7 +736,7 @@ class LiveWave(QWidget):
         self.update()
 
     def push(self, block):
-        """block: float-Array (n, Kanäle) oder (n,)"""
+        """block: float array (n, channels) or (n,)"""
         import numpy as np
         a = np.asarray(block)
         if a.ndim == 2:

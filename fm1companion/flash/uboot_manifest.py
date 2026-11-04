@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Prüfsummen der Werkzeuge, die die Rettung (Stufe 2) mit Root-Rechten ausführt – fest in die App eingebaut.
+"""Checksums of the tools that the rescue (stage 2) runs with root privileges – built into the app.
 
-Vor jedem Start als root kopiert der pkexec-Befehl genau diese Dateien in ein root-eigenes Temp-Verzeichnis,
-prüft jede gegen diese Liste und führt nur die geprüfte Kopie aus (nie Code aus beschreibbaren Ordnern).
+Before every start as root, the pkexec command copies exactly these files into a root-owned temp directory,
+checks each against this list and runs only the verified copy (never code from writable folders).
   * unbricker: vendor/unbricker (MvaveFM1Unbricker 707470a, MIT)
-  * jl: kagaimiqs jl-uboot-tool am festen Stand adb3f18 (MIT), ohne docs/README/LICENSE
+  * jl: kagaimiq's jl-uboot-tool at the fixed revision adb3f18 (MIT), without docs/README/LICENSE
 """
 JL_COMMIT = "adb3f18889e88ac512ce0a3c4d8cc3d3cb30696a"
 
@@ -61,23 +61,25 @@ JL = {
     "scsiio/win32port.py": "a00d0530f03edd1beba9e08d6786c8e87437d0d7821d731b7d6e54be5a1860ee",
 }
 
-# „Reste aufräumen“ (flash/restzone.py) mit seinem Flash-Modell und den Steckbriefen – laufen als root neben dem
-# Unbricker. Nach jeder Änderung an einer dieser Dateien neu erzeugen (tests/test_safety.py prüft das):
+# "Clean up leftovers" (flash/restzone.py) with its flash model and the profiles – run as root next to the
+# Unbricker. Regenerate after every change to one of these files (tests/test_safety.py checks this):
 #   python3 -c "from fm1companion.flash import uboot_manifest as M; print(M.own_lines())"
-# 2026-11 (Sicherheitsbefunde S1–S3, docs/RESEARCH-2026-11.md): flashmodel.py neu gepinnt – app_directory /
-# directory_layout (Dateitabelle des App-Bereichs mit Kopf- und Datei-CRCs), FACTORY_APPS (Werks-Abbild 8c1d13a5…) und
-# check_dump nennt Werks-Abbilder mit gültiger Struktur nicht mehr „beschädigt“. rescuegate.py neu: prüft vor
-# restore/repair-settings die Sicherung desselben Laufs (V16-Bootkopf, V16-Aufbau) und läuft dazu als root mit.
+# 2026-11 (security findings S1–S3, docs/RESEARCH-2026-11.md): flashmodel.py re-pinned – app_directory /
+# directory_layout (file table of the app area with header and file CRCs), FACTORY_APPS (factory image 8c1d13a5…) and
+# check_dump no longer calls factory images with a valid structure "damaged". rescuegate.py new: before
+# restore/repair-settings it checks the backup of the same run (V16 boot header, V16 layout) and also runs as root.
+# 2026-11: restzone.py, flashmodel.py and rescuegate.py re-pinned after translating their comments and docstrings
+# to English – code unchanged (ast.dump without docstrings identical).
 OWN = {
-    "restzone.py": "3617d3b6489f52135f5e734204b3b4214bf3c0bce2f69c6c1c1961e4a535dcbd",
-    "flashmodel.py": "2ab186514ae62f90bae4fc001b040871854075400106cd94a6a6c0eacc9cf4f9",
+    "restzone.py": "d9abf7bb2be89644061890087002a34c94b09c6fbea31b359a28ca8111562f58",
+    "flashmodel.py": "bf345dfb3c0ba8ceef40d49cb461f31b78ee8be5065981e6912b0fd847d5963f",
     "known_packages.json": "3d1e9f45cd2374e4114e4e557583d145ce6de7dde07b6a3feddea637979f0f99",
-    "rescuegate.py": "6ae1f5a36e8774906f41066f23155c87cefa9788860a9435dc184205bf9868d8",
+    "rescuegate.py": "29a789d9f1b2402e828f4cadc49d04815cd879b24160f9ca3a929d761bda75c6",
 }
 
 
 def own_lines() -> str:
-    """die OWN-Zeilen für die aktuellen Dateien (Hilfe beim Neu-Erzeugen)"""
+    """the OWN lines for the current files (helper for regenerating)"""
     import hashlib
     from .uboot import OWN_FILES
     return "\n".join(f'    "{n}": "{hashlib.sha256(p.read_bytes()).hexdigest()}",' for n, p in OWN_FILES.items())

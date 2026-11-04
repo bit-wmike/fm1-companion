@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""FM-1: alles, was das Gerät über sich verrät – Verbindung, Live-Last, Speicher, User-Presets.
+"""FM-1: everything the device reveals about itself – connection, live load, memory, user presets.
 
-Solange die Seite offen ist, reserviert die App das Gerät (der Editor pausiert und verbindet
-sich beim Zurückwechseln von selbst neu). So stören sich die Live-Abfragen und der Editor nicht.
-Alle Abfragen sind rein lesend.
+While the page is open, the app reserves the device (the editor pauses and reconnects by itself
+when you switch back). That way the live queries and the editor don't interfere with each other.
+All queries are read-only.
 """
 from __future__ import annotations
 
@@ -84,7 +84,7 @@ class FM1Page(QWidget):
         grid.setContentsMargins(0, 0, 0, 0)
         lay.addWidget(self.content)
 
-        # --- Gerät
+        # --- Device
         g = QGroupBox(_("Device"))
         self.dev = QFormLayout(g)
         self.f = {}
@@ -93,7 +93,7 @@ class FM1Page(QWidget):
             self.dev.addRow(_(ROW_TITLES[k]), self.f[k])
         grid.addWidget(g, 0, 0)
 
-        # --- Verbindung
+        # --- Connection
         c = QGroupBox(_("Connection"))
         self.con = QFormLayout(c)
         for k in CONNECTION_ROWS:
@@ -126,7 +126,7 @@ class FM1Page(QWidget):
             lf.addRow(_(ROW_TITLES[k]), self.f["L" + k])
         grid.addWidget(lv, 1, 0, 1, 2)
 
-        # --- Speicher
+        # --- Memory
         sp = QGroupBox(_("Storage"))
         sl = QVBoxLayout(sp)
         sf = QFormLayout()
@@ -144,7 +144,7 @@ class FM1Page(QWidget):
         sl.addLayout(h)
         grid.addWidget(sp, 2, 0)
 
-        # --- User-Presets
+        # --- User presets
         up = QGroupBox(_("User presets"))
         ul = QVBoxLayout(up)
         fl = QHBoxLayout()
@@ -177,7 +177,7 @@ class FM1Page(QWidget):
         ctx.changed.connect(self._dev_changed)
         self._dev_changed()
 
-    # ------------------------------------------------------------ Seite
+    # ------------------------------------------------------------ Page
     def activate(self):
         self.active = True
         self._dev_changed()
@@ -202,7 +202,7 @@ class FM1Page(QWidget):
             self.held_link = None
 
     def _generic_text(self) -> str:
-        """was über ein FM-1 ohne Editor-Protokoll (oder im Update-Modus) bekannt ist"""
+        """what is known about an FM-1 without the editor protocol (or in update mode)"""
         c = self.ctx
         p, prof = c.port, c.profile
         from .device import firmware_name
@@ -242,7 +242,7 @@ class FM1Page(QWidget):
             return
         self._static()
         key = self.ctx.port.key if self.ctx.port else ""
-        if key != getattr(self, "_shown_key", ""):        # anderes Gerät: keine Werte des vorigen zeigen
+        if key != getattr(self, "_shown_key", ""):        # different device: don't show the previous one's values
             self._shown_key = key
             self._clear_dynamic()
         if self.active:
@@ -259,7 +259,7 @@ class FM1Page(QWidget):
         self.preset_note.setText("")
         self.live_state.setText("")
 
-    # ------------------------------------------------------------ fest
+    # ------------------------------------------------------------ fixed
     def _static(self):
         p, info, prof = self.ctx.port, self.ctx.info, self.ctx.profile
         self.engines = list(info.engines) if info else []
@@ -279,7 +279,7 @@ class FM1Page(QWidget):
         self.f["Soundkarte"].setText(_("{name} (card {n})").format(name=card, n=p.card) if card and p.card is not None
                                      else (card or "–"))
 
-    # ------------------------------------------------------------ Abfragen
+    # ------------------------------------------------------------ Queries
     def refresh(self):
         if not self.ctx.connected:
             return
@@ -288,7 +288,7 @@ class FM1Page(QWidget):
         self.live_state.setText(_("reading …"))
 
         def work(w):
-            rep = health.fm1_report(link)       # sendet AUDIO_STATS (72) nur an Melodee / FM1 Open
+            rep = health.fm1_report(link)       # sends AUDIO_STATS (72) only to Melodee / FM1 Open
             try:
                 rep["preset_list"] = health.fm1_presets(link)
             except Exception:
@@ -350,7 +350,7 @@ class FM1Page(QWidget):
             return
         version = self.ctx.info.version if self.ctx.info else ""
         if not health.audio_stats_supported(version):
-            self._show_live(None)               # Befehl 72 bedeutet bei anderen Firmwares etwas anderes
+            self._show_live(None)               # command 72 means something else on other firmwares
             self.timer.stop()
             return
         self.live_busy = True

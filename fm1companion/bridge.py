@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Web-MIDI-Brücke zwischen eingebetteten Web-Seiten (QtWebEngine) und MIDI-Ports.
+"""Web MIDI bridge between embedded web pages (QtWebEngine) and MIDI ports.
 
-Die JS-Seite (web/webmidi_polyfill.js) sieht ein normales MIDIAccess-Objekt.
+The JS side (web/webmidi_polyfill.js) sees a normal MIDIAccess object.
 
-* Editor (Standard): genau ein Ein- und Ausgang – das FM-1, das in der App gerade aktiv ist
-  (``attach(link, label)``). Bei App-Operationen (Backup, Update …) meldet die Brücke den Port kurz
-  als getrennt; der Editor verbindet sich danach von selbst neu.
-* Simulator & Co.: zusätzlich beliebig viele weitere Ports (``set_extra_ports``), z. B. „FM-1 (Tasten)“
-  und ein USB-Keyboard. Eingehendes schiebt die App mit ``inject(port_id, bytes)`` hinein (aus jedem
-  Thread), Ausgehendes geht an ``extra_send(port_id, bytes)``. ``out_filter(bytes) -> bool`` entscheidet
-  für JEDE ausgehende Nachricht (auch an das FM-1), ob sie raus darf – Simulator-Seiten bekommen so z. B.
-  nie Firmware-Update-SysEx durch.
+* Editor (default): exactly one input and output – the FM-1 currently active in the app
+  (``attach(link, label)``). During app operations (backup, update …) the bridge briefly reports the port
+  as disconnected; the editor reconnects by itself afterwards.
+* Simulator & co.: additionally any number of further ports (``set_extra_ports``), e.g. "FM-1 (keys)"
+  and a USB keyboard. The app pushes incoming data in with ``inject(port_id, bytes)`` (from any
+  thread), outgoing data goes to ``extra_send(port_id, bytes)``. ``out_filter(bytes) -> bool`` decides
+  for EVERY outgoing message (also to the FM-1) whether it may go out – this way simulator pages, for example,
+  never get firmware update SysEx through.
 """
 from __future__ import annotations
 
@@ -21,11 +21,11 @@ from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
 
 
 class MidiBridge(QObject):
-    midiIn = pyqtSignal(str, list)        # Port-ID, Bytes
-    portsChanged = pyqtSignal(str)        # JSON-Liste der Ports
-    blockedChanged = pyqtSignal(int)      # Anzahl der vom out_filter verworfenen Nachrichten (für einen Hinweis)
-    _incoming = pyqtSignal(list)          # intern: aus dem MIDI-Thread in den GUI-Thread
-    _injected = pyqtSignal(str, list)     # intern: inject() aus beliebigem Thread
+    midiIn = pyqtSignal(str, list)        # port ID, bytes
+    portsChanged = pyqtSignal(str)        # JSON list of the ports
+    blockedChanged = pyqtSignal(int)      # number of messages dropped by out_filter (for a hint)
+    _incoming = pyqtSignal(list)          # internal: from the MIDI thread into the GUI thread
+    _injected = pyqtSignal(str, list)     # internal: inject() from any thread
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -33,14 +33,14 @@ class MidiBridge(QObject):
         self._label = "FM-1"
         self._paused = False
         self.traffic = 0
-        self.blocked = 0                  # vom out_filter verworfene Nachrichten
+        self.blocked = 0                  # messages dropped by out_filter
         self._extra: list[dict] = []
         self.extra_send: Callable[[str, list[int]], None] | None = None
         self.out_filter: Callable[[list[int]], bool] | None = None
         self._incoming.connect(self._deliver)
         self._injected.connect(self._deliver_extra)
 
-    # ---------------- Python-Seite ----------------
+    # ---------------- Python side ----------------
     def attach(self, link, label: str):
         if self._link is not None:
             self._link.remove_passthrough(self._forward)
@@ -51,7 +51,7 @@ class MidiBridge(QObject):
         self._publish()
 
     def _forward(self, data):
-        """aus dem MIDI-Thread: in den GUI-Thread weiterreichen."""
+        """from the MIDI thread: pass on to the GUI thread."""
         self._incoming.emit(list(data))
 
     def detach(self):
@@ -63,7 +63,7 @@ class MidiBridge(QObject):
             self._publish()
 
     def set_extra_ports(self, ports: list[dict]):
-        """weitere Ports: [{"id": "...", "name": "...", "type": "input"|"output"}, ...]"""
+        """further ports: [{"id": "...", "name": "...", "type": "input"|"output"}, ...]"""
         self._extra = [{"id": p["id"], "name": p["name"], "type": p["type"], "state": "connected",
                         "manufacturer": p.get("manufacturer", "")} for p in ports]
         self._publish()
@@ -72,7 +72,7 @@ class MidiBridge(QObject):
         return list(self._extra)
 
     def inject(self, port_id: str, data):
-        """Nachricht in einen zusätzlichen Eingang der Seite schieben (thread-sicher)."""
+        """Push a message into an additional input of the page (thread-safe)."""
         self._injected.emit(port_id, [int(x) & 0xFF for x in data])
 
     @property
@@ -100,7 +100,7 @@ class MidiBridge(QObject):
         if any(p["id"] == port_id and p["type"] == "input" for p in self._extra):
             self.midiIn.emit(port_id, data)
 
-    # ---------------- JS-Seite ----------------
+    # ---------------- JS side ----------------
     @pyqtSlot(result=str)
     def ports(self) -> str:
         return json.dumps(self._ports())

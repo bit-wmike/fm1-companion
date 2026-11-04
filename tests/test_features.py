@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Tests der Funktionen hinter den Seiten – gegen das simulierte FM-1, ohne Qt.
+"""Tests of the functions behind the pages – against the simulated FM-1, without Qt.
 
   python3 -m pytest tests/test_features.py -q
 """
@@ -42,7 +42,7 @@ def write_wav(path: Path, f0=220.0, secs=0.5, ch=1, rate=44100, amp=0.5):
     return path
 
 
-# ------------------------------------------------------------- Projekte
+# ------------------------------------------------------------- projects
 
 def test_project_export_import(tmp_path):
     dev, link = make()
@@ -52,13 +52,13 @@ def test_project_export_import(tmp_path):
     p = projects.export_slot(link, 7, tmp_path, "Mein Song", "Melodee 1.6.0-rc.7", "FM-1 A", "Strophe")
     pf = projects.load_project(p)
     assert pf.name == "Mein Song" and pf.data == dev.objs[66]
-    # in einen freien Platz spielen
+    # play into a free slot
     projects.import_to_slot(link, pf, 20)
     assert dev.objs[backup.project_id(20)] == pf.data
-    # leeren
+    # clear
     projects.erase_slot(link, 20)
     assert dev.objs[backup.project_id(20)] == b""
-    # Bibliothek und Namenskonflikt
+    # library and name conflict
     p2 = projects.save_project(tmp_path, "Mein Song", pf.data, "x")
     assert p2.name.startswith("Mein Song (2)")
     assert len(projects.library(tmp_path)) == 2
@@ -121,7 +121,7 @@ def test_sample_library_and_kit(tmp_path):
     path = kit.save(tmp_path)
     k2 = S.Kit.load(path)
     assert k2.name == "PO KIT" and len(k2.zones) == 2 and k2.zones[1].root == 37
-    # Root-Erkennung aus Dateinamen
+    # root detection from file names
     sr, x = S.read_mono(root / "vox C4.wav")
     assert sr == 48000 and S.detect_root(sr, x, "vox C4") == 60
 
@@ -172,7 +172,7 @@ def test_non_wav_with_ffmpeg(tmp_path):
     import shutil
     import subprocess
     if not shutil.which("ffmpeg"):
-        pytest.skip("ffmpeg fehlt")
+        pytest.skip("ffmpeg missing")
     w = write_wav(tmp_path / "a.wav", 300, 0.5)
     mp3 = tmp_path / "a.mp3"
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(w), str(mp3)], check=True)
@@ -181,7 +181,7 @@ def test_non_wav_with_ffmpeg(tmp_path):
     assert S.probe(mp3).duration > 0.4
 
 
-# ---------------------------------------------------------- MIDI-Import
+# ---------------------------------------------------------- MIDI import
 
 def _midi(path: Path):
     import mido
@@ -190,7 +190,7 @@ def _midi(path: Path):
     mf.tracks.append(tr)
     tr.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(100)))
     tr.append(mido.MetaMessage("track_name", name="Bass"))
-    # C3 eine Viertel, dann Akkord C-E-G als Achtel, dann Pause, dann D3 lang
+    # C3 a quarter, then chord C-E-G as eighths, then a rest, then D3 long
     seq = [(0, [48], 480, 100), (480, [60, 64, 67], 240, 120), (1440, [50], 960, 90)]
     events = []
     for start, notes, length, vel in seq:
@@ -212,9 +212,9 @@ def test_midi_to_steps_and_write(tmp_path):
     assert round(bpm) == 100 and len(tracks) == 1 and len(tracks[0].notes) == 5
     steps = MI.to_steps(tracks[0].notes, MI.Options(length=16))
     assert steps[0].notes == [48] and steps[0].time == 0
-    assert [steps[i].time for i in (1, 2, 3)] == [1, 1, 1]          # C3 eine Viertel = 4 Sechzehntel
-    assert sorted(steps[4].notes) == [60, 64, 67] and steps[4].flags & 1  # Akkord mit Akzent
-    assert steps[5].time == 1 and steps[6].time == 2                   # Achtel = 2 Steps, dann Pause
+    assert [steps[i].time for i in (1, 2, 3)] == [1, 1, 1]          # C3 a quarter = 4 sixteenths
+    assert sorted(steps[4].notes) == [60, 64, 67] and steps[4].flags & 1  # chord with accent
+    assert steps[5].time == 1 and steps[6].time == 2                   # eighth = 2 steps, then a rest
     assert steps[12].notes == [50] and all(steps[i].time == 1 for i in (13, 14, 15))
     dev, link = make()
     note = MI.write_pattern(link, 1, 3, steps, 16)
@@ -224,7 +224,7 @@ def test_midi_to_steps_and_write(tmp_path):
     assert note == ""
 
 
-# ------------------------------------------------------------ Aufnahme
+# ------------------------------------------------------------ recording
 
 def test_split_pairs(tmp_path):
     p = tmp_path / "rec.wav"

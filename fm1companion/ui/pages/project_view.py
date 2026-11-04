@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Projekt-Ansicht: Melodee-Projekte aus Backups, Projektdateien oder direkt vom FM-1 ansehen und exportieren."""
+"""Project view: view and export Melodee projects from backups, project files or directly from the FM-1."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -45,7 +45,7 @@ class ProjectView(QWidget):
         lay.addWidget(heading(_("Project View"), _("View and listen to Melodee projects (on the FM-1 with its own "
                                                    "sounds or on the computer) and export them as a MIDI file for "
                                                    "Audacity, LMMS, Ardour or MuseScore.")))
-        self.live_tag = None                       # (Profil-ID, Port, Name) wenn die laufende Musik eines Geräts offen ist
+        self.live_tag = None                       # (profile ID, port, name) when a device's running music is open
         self.live_slot = None
         open_card = Card(_("1 · Open project"))
         top = FlowLayout()
@@ -70,7 +70,7 @@ class ProjectView(QWidget):
         self.choice.setMinimumWidth(220)
         self.choice.setToolTip(_("Project in the opened file"))
         self.choice.currentIndexChanged.connect(self._choose)
-        self.choice.hide()                         # erst sichtbar, wenn eine Datei mit Projekten offen ist
+        self.choice.hide()                         # only visible once a file with projects is open
         top.addWidget(self.choice)
         open_card.lay.addLayout(top)
         self.badge = DeviceBadge(ctx, _("Live reading and playback go to"))
@@ -89,7 +89,7 @@ class ProjectView(QWidget):
         QShortcut(QKeySequence("Ctrl+O"), self, activated=self.open_backup)
         QShortcut(QKeySequence("Ctrl+E"), self, activated=self.export_midi)
 
-    # ---------------------------------------------------------------------------------------- Aufbau
+    # ---------------------------------------------------------------------------------------- Layout
     def _build_main(self) -> QWidget:
         w = QWidget()
         v = QVBoxLayout(w)
@@ -148,7 +148,7 @@ class ProjectView(QWidget):
         rv.addWidget(sc, 1)
         split.addWidget(rollbox)
         split.setStretchFactor(1, 2)
-        v.insertWidget(1, self._build_play())           # Anhören gleich unter der Projektinfo – sichtbar ohne Rollen
+        v.insertWidget(1, self._build_play())           # listening right below the project info – visible without scrolling
         v.addWidget(split, 1)
         v.addWidget(self._build_export())
         return w
@@ -213,7 +213,7 @@ class ProjectView(QWidget):
             loop = ME.pattern_quarters(t.patterns[self.cur[1]], self.prj.swing)
         elif evs:
             loop = max(e.start + e.length for e in evs)
-            loop = float(int(loop + 3.999) // 4 * 4) or None   # auf ganze Takte
+            loop = float(int(loop + 3.999) // 4 * 4) or None   # to whole bars
         return Source(evs, self.prj.bpm or 120, self.prj.name or self.source, self.prj, loop_quarters=loop,
                       live_tag=self.live_tag)
 
@@ -226,7 +226,7 @@ class ProjectView(QWidget):
             self.song_from.setMaximum(max(1, len(self.prj.song)))
 
     def device_song(self):
-        """laufende Musik: das FM-1 spielt seinen eigenen Song (BANK_SONG start) – kein Flash-Zugriff."""
+        """running music: the FM-1 plays its own song (BANK_SONG start) – no flash access."""
         if not self.ctx.require(self):
             return
         from ... import playback as P
@@ -302,11 +302,11 @@ class ProjectView(QWidget):
                                        "into Audacity or a DAW)")))
         row.addStretch(1)
         g.addLayout(row, 2, 0, 1, 4)
-        reflow(row)                                      # Export-Knöpfe brechen bei schmalem Fenster um
+        reflow(row)                                      # export buttons wrap when the window is narrow
         card.lay.addLayout(g)
         return card
 
-    # ---------------------------------------------------------------------------------------- Laden
+    # ---------------------------------------------------------------------------------------- Load
     def open_backup(self, path: str | None = None):
         if not path:
             start = str(config.load().backups_dir) if hasattr(config.load(), "backups_dir") else str(Path.home())
@@ -339,7 +339,7 @@ class ProjectView(QWidget):
 
     def open_with(self, path=None, data: bytes | None = None, title: str = "", firmware: str = "",
                   read_slot: int | None = None, **_kw):
-        """von anderen Seiten: Datei/Daten zeigen – oder mit read_slot einen Platz des aktiven FM-1 lesen."""
+        """from other pages: show a file/data – or read a slot of the active FM-1 with read_slot."""
         if read_slot is not None:
             self.slot.setValue(max(0, min(self.slot.maximum(), int(read_slot))))
             self.read_device()
@@ -427,7 +427,7 @@ class ProjectView(QWidget):
         self.stack.setCurrentIndex(1)
         self.show_project()
 
-    # ---------------------------------------------------------------------------------------- Anzeige
+    # ---------------------------------------------------------------------------------------- Display
     def show_project(self):
         prj = self.prj
         if not prj.ok:
@@ -503,7 +503,7 @@ class ProjectView(QWidget):
                 v = row.banks[t.index] if t.index < len(row.banks) else 0
                 it = QTableWidgetItem(bank_text(v))
                 sid, how = prj.resolved_sound(r, t.index) if v != PF.CHAIN_REST else (0, "")
-                if sid:                                 # Melodee 1.6: Song-Block- bzw. Pattern-Preset (nur Anzeige)
+                if sid:                                 # Melodee 1.6: song block or pattern preset (display only)
                     it.setText(f"{bank_text(v)} · {prj.sound_name(sid)}")
                     it.setToolTip(_("{kind}: {name} ({engine}) – sounds exact only in the studio or on the FM-1; "
                                     "MIDI export and preview use the track's sound.").format(
@@ -522,14 +522,14 @@ class ProjectView(QWidget):
         self.mode.model().item(0).setEnabled(bool(prj.song))
         if not prj.song and self.mode.currentData() == "song":
             self.mode.setCurrentIndex(1)
-        # erstes belegtes Pattern zeigen
+        # show the first occupied pattern
         first = next(((t.index, t.active) for t in used if t.active < len(t.patterns) and t.patterns[t.active].used),
                      next(((t.index, b) for t in used for b, p in enumerate(t.patterns) if p.used), (0, 0)))
         self.show_pattern(*first)
 
     @staticmethod
     def extras_note(prj) -> str:
-        """Melodee 1.6: Punch-Effekte und Song-/Pattern-Presets werden angezeigt, aber nur im Studio exakt gespielt"""
+        """Melodee 1.6: punch effects and song/pattern presets are displayed, but only played exactly in the studio"""
         n_p = sum(len(r.punches) for r in prj.song)
         if not (n_p or prj.sounds):
             return ""
@@ -613,7 +613,7 @@ class ProjectView(QWidget):
         return path
 
     def _write(self, path: Path, fn) -> bool:
-        """Datei schreiben; Fehler (z. B. schreibgeschützter Ordner) als deutsche Meldung statt Absturz."""
+        """Write the file; errors (e.g. read-only folder) as a readable message instead of a crash."""
         try:
             fn()
             return True

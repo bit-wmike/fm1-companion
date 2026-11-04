@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Daten: Backups erklären, vergleichen, gezielt zurückspielen, Aufbewahrung, Spiegel, Geräte-Kopie.
+"""Data: explain backups, compare them, restore selectively, retention, mirror, device copy.
 
   python3 -m pytest tests/test_data.py -q
 """
@@ -48,8 +48,8 @@ def melodee(presets=True):
     dev = FakeFM1()
     if presets:
         dev.objs[6] = bank({0: rec("BASS ONE"), 4: rec("SID LEAD", fav=True), 17: rec("PAD", 12)})
-        dev.objs[21] = bank({2: rec("DX PIANO", 12)})        # Bank 4 -> U073..U090
-        dev.objs[28] = bank({0: rec("LAST", 10), 17: rec("WIPE-PENDING", 0)})  # Bank 21: nur U379..U384
+        dev.objs[21] = bank({2: rec("DX PIANO", 12)})        # bank 4 -> U073..U090
+        dev.objs[28] = bank({0: rec("LAST", 10), 17: rec("WIPE-PENDING", 0)})  # bank 21: only U379..U384
     return dev, Link(LocalTransport(dev))
 
 
@@ -63,7 +63,7 @@ def test_inspect_melodee_backup():
     assert rep.obj(21).title == "Preset-Bank U073–U090 (früher FM6-Voices)"
     assert rep.obj(28).title == "Preset-Bank U379–U384 (Zusatzplätze)"
     labels = {p.label: p for p in rep.used_presets}
-    assert set(labels) == {"U001", "U005", "U018", "U075", "U379"}       # WIPE-PENDING liegt außerhalb
+    assert set(labels) == {"U001", "U005", "U018", "U075", "U379"}       # WIPE-PENDING lies outside
     assert labels["U005"].favorite and labels["U005"].engine_name == "SID" and labels["U018"].engine_name == "FM6"
     assert "3 von 18 belegt, 1 Favoriten" in rep.obj(6).detail
     assert len(rep.presets) == 384
@@ -71,12 +71,12 @@ def test_inspect_melodee_backup():
 
 
 def test_inspect_generic_and_damaged():
-    # 12er-Inventar (Felucca/Skiff): generisch, kein Absturz bei Zufallsdaten
+    # 12-object inventory (Felucca/Skiff): generic, no crash with random data
     dev = FakeFM1(samples=3)
     rep = BI.inspect(backup.capture(Link(LocalTransport(dev)), "FELUCCA v1.0"))
     assert len(rep.objects) == 12 and rep.obj(6).title == "User-Presets U01–U16"
     assert rep.obj(6).format == "unbekanntes Format" and rep.obj(32).group == "Samples"
-    # 29er-Inventar (shared library ohne Projektpool)
+    # 29-object inventory (shared library without project pool)
     dev = FakeFM1(ids=list(range(29)))
     dev.objs[6] = bank({1: rec("X")})
     rep = BI.inspect(backup.capture(Link(LocalTransport(dev)), "Melodee 1.5"))
@@ -95,11 +95,11 @@ def test_inspect_sloop_file():
                      {"id": 2, "len": 3, "crc": crc32(data), "data": base64.b64encode(data).decode()},
                      {"id": 9, "len": 0, "crc": 0, "data": ""}]}
     rep = BI.inspect(json.dumps(f))
-    # seit ws/sloop: SLOOP-Backups lassen sich auch zurückspielen (Befehle 34–36)
+    # since ws/sloop: SLOOP backups can be restored too (commands 34–36)
     assert rep.restorable and rep.firmware_key == "sloop"
     assert rep.obj(2).title == "Song-Section A" and rep.obj(9).title == "SYN-Drum-Kits"
     assert BI.plan_restore(rep, [2], []).ok
-    assert not BI.plan_restore(rep, [1], []).ok           # leere Einstellungen nimmt SLOOP nicht an
+    assert not BI.plan_restore(rep, [1], []).ok           # SLOOP does not accept empty settings
 
 
 def test_old_formats_decoded():
@@ -121,8 +121,8 @@ def test_diff_and_summary():
     a = BI.inspect(backup.capture(link, "fw"))
     dev.objs[6] = bank({0: rec("BASS TWO"), 4: rec("SID LEAD", fav=False), 17: rec("PAD", 12, fill=70),
                         9: rec("NEW ONE", 10)})
-    dev.objs[68] = b"P" * 900                                      # Projekt 9 neu
-    dev.objs[66] = b""                                             # Projekt 7 geleert
+    dev.objs[68] = b"P" * 900                                      # project 9 new
+    dev.objs[66] = b""                                             # project 7 cleared
     b = BI.inspect(backup.capture(link, "fw"))
     d = BI.diff(a, b)
     kinds = {p.label: (p.kind, p.fields) for p in d.presets}
@@ -148,7 +148,7 @@ def test_selective_restore_order_and_skip():
     man = backup.list_objects(link)
     plan = BI.plan_restore(rep, [0, 66, 6, 1, 7, 8], man, cur)
     assert plan.ok and plan.ids() == [6, 66, 1, 0]                 # live music last, settings before
-    assert [s.id for s in plan.skipped] == [7]                     # schon identisch
+    assert [s.id for s in plan.skipped] == [7]                     # already identical
     assert "BASS ONE" in plan.items[0].detail and "laufende Musik" in plan.html()
     dev.log.clear()
     written = backup.restore_selected(link, arch, plan.ids(), expect=plan.expect)
@@ -167,7 +167,7 @@ def test_selective_restore_refuses_changed_device_and_bad_format():
     with pytest.raises(backup.BackupError, match="verändert"):
         backup.restore_selected(link, arch, plan.ids(), expect=plan.expect)
     assert dev.log == []
-    # Gerät lehnt in der Vorabprüfung ab -> nichts geschrieben
+    # the device refuses in the pre-check -> nothing written
     orig = dev._handle
 
     def refuse(cmd, a):
@@ -185,14 +185,14 @@ def test_plan_errors_unknown_object_and_old_banks():
     rep = BI.inspect(backup.capture(link, "fw"))
     small = FakeFM1(ids=list(range(29)))
     man = backup.list_objects(Link(LocalTransport(small)))
-    plan = BI.plan_restore(rep, [66], man)                          # 1.6-Backup (57 Objekte) auf 29er-Firmware
+    plan = BI.plan_restore(rep, [66], man)                          # 1.6 backup (57 objects) on 29-object firmware
     assert not plan.ok and "Melodee 1.6" in plan.errors[0] and "nichts geschrieben" in plan.errors[0]
     man12 = backup.list_objects(Link(LocalTransport(FakeFM1(samples=3))))
     small.objs[20] = b"\x07" * 500
     rep29 = BI.inspect(backup.capture(Link(LocalTransport(small)), "Melodee 1.5.1"))
-    plan = BI.plan_restore(rep29, [20], man12)                      # Objekt 20 gibt es dort nicht
+    plan = BI.plan_restore(rep29, [20], man12)                      # object 20 does not exist there
     assert not plan.ok and "kennt das Objekt nicht" in plan.errors[0]
-    # Bank in altem Format -> alle alten Banken zusammen
+    # bank in old format -> all old banks together
     old = FakeFM1(ids=list(range(28)))
     old.objs[6] = b"\x01" * 3816
     old.objs[7] = b"\x02" * 3816
@@ -208,9 +208,9 @@ def test_compatibility():
     assert not c.ok and "SLOOP" in c.reason and "Melodee" in c.reason and c.possible
     c = BI.compatibility(rep, "melodee", "Melodee 1.6.0-rc.7", [o.id for o in backup.list_objects(link)])
     assert c.ok and 66 in c.allowed_ids and 8 not in c.allowed_ids
-    c = BI.compatibility(rep, "melodee", "Melodee 1.5.0", list(range(29)))   # 1.6-Backup auf 1.5: vorher ablehnen
+    c = BI.compatibility(rep, "melodee", "Melodee 1.5.0", list(range(29)))   # 1.6 backup on 1.5: refuse beforehand
     assert not c.ok and "Melodee 1.6" in c.reason and "nichts geschrieben" in c.reason and c.possible
-    c = BI.compatibility(rep, "melodee", "MELODEE v1.5.1", None)              # Seite „Backups“: nur die Version
+    c = BI.compatibility(rep, "melodee", "MELODEE v1.5.1", None)              # page "Backups": only the version
     assert not c.ok and "MELODEE v1.5.1" in c.reason
     assert BI.compatibility(rep, "melodee", "MELODEE v1.6.0", None).ok
     small = FakeFM1(ids=list(range(29)))
@@ -221,7 +221,7 @@ def test_compatibility():
     assert cmp.rows[0] == ("Firmware", "Melodee 1.6.0-rc.7", "SLOOP") and "BASS ONE" in cmp.only_a
 
 
-# ------------------------------------------------------- Aufbewahrung / Spiegel ---
+# ------------------------------------------------------- retention / mirror ---
 
 def _fake_backup(folder: Path, name: str, created: dt.datetime, kind="auto", fw="melodee", pinned=False):
     from fm1companion import autobackup as AB
@@ -247,7 +247,7 @@ def test_retention_keeps_pinned_monthly_and_per_firmware(isolated):
     folder = isolated / "B"
     now = dt.datetime(2026, 10, 30, 12, tzinfo=dt.timezone.utc)
     paths = {}
-    for i in range(8):                                   # 8 automatische, täglich, Oktober
+    for i in range(8):                                   # 8 automatic ones, daily, October
         paths[i] = _fake_backup(folder, f"a{i}_auto.json", now - dt.timedelta(days=i))
     paths["sept"] = _fake_backup(folder, "sept_auto.json", now - dt.timedelta(days=40))
     paths["sept_old"] = _fake_backup(folder, "sept2_auto.json", now - dt.timedelta(days=45))
@@ -257,7 +257,7 @@ def test_retention_keeps_pinned_monthly_and_per_firmware(isolated):
     gone = AB.prune(folder, 3)
     left = {p.name for p in folder.glob("*.json")}
     assert {"a0_auto.json", "a1_auto.json", "a2_auto.json"} <= left
-    assert "sept_auto.json" in left and "sept2_auto.json" not in left          # je Monat das neueste
+    assert "sept_auto.json" in left and "sept2_auto.json" not in left          # the newest per month
     assert "pin_auto.json" in left and "manual.json" in left and "s_vor-Update.json" in left
     assert "a5_auto.json" not in left and len(gone) == 6
 
@@ -269,7 +269,7 @@ def test_meta_labels_pin_keep_mtime(isolated):
     AB.set_meta(p, labels=["Live-Set Oktober"], pinned=True, note="vor Firmware-Wechsel")
     m = AB.read_meta(p)
     assert m.pinned and m.labels == ["Live-Set Oktober"] and m.note == "vor Firmware-Wechsel"
-    assert p.stat().st_mtime_ns == mt and backup.load_file(p)          # Datei bleibt gültig
+    assert p.stat().st_mtime_ns == mt and backup.load_file(p)          # the file stays valid
     assert AB.needs_backup(isolated, 1) and not AB.needs_backup(isolated, 10000)
 
 
@@ -279,13 +279,13 @@ def test_mirror_copy_and_verify(isolated, monkeypatch):
     p = _fake_backup(root / "Gerät A", "m.json", dt.datetime(2026, 1, 1, tzinfo=dt.timezone.utc))
     nas = isolated / "nas"
     with pytest.raises(OSError):
-        AB.mirror_file(p, root, nas)                       # nicht eingehängt
+        AB.mirror_file(p, root, nas)                       # not mounted
     nas.mkdir()
     d = AB.mirror_file(p, root, nas)
     assert d == nas / "Gerät A" / "m.json" and d.read_bytes() == p.read_bytes()
     ok, bad, _ = AB.mirror_all(root, nas)
     assert (ok, bad) == (1, 0)
-    # kaputte Kopie wird erkannt
+    # a broken copy is detected
     import shutil as sh
     real = sh.copyfile
     monkeypatch.setattr(AB.shutil, "copyfile", lambda a, b: (real(a, b), open(b, "ab").write(b"x")))
@@ -327,10 +327,10 @@ def test_zip_roundtrip_and_export_parts(isolated):
     assert projects.load_project(next((isolated / "lib").glob("*.fm1proj"))).data == dev.objs[66]
 
 
-# ------------------------------------------------------------ Abnahme-Runde (p2): Regressionstests ---
+# ------------------------------------------------------------ acceptance round (p2): regression tests ---
 
 def test_set_meta_same_size_is_visible(isolated):
-    """Notiz „abc“ → „abd“ (gleiche Größe, gleiche mtime): der Index darf keinen alten Wert liefern."""
+    """note "abc" → "abd" (same size, same mtime): the index must not return an old value."""
     from fm1companion import autobackup as AB
     p = _fake_backup(isolated / "Backups" / "A", "x.json", dt.datetime(2026, 2, 1, tzinfo=dt.timezone.utc))
     AB.set_meta(p, note="abc")
@@ -339,17 +339,17 @@ def test_set_meta_same_size_is_visible(isolated):
     AB.set_meta(p, note="abd")
     m = AB.read_meta(p)
     assert m.note == "abd"
-    assert p.stat().st_mtime_ns == st.st_mtime_ns          # Datum bleibt
+    assert p.stat().st_mtime_ns == st.st_mtime_ns          # the date stays
     assert not list(p.parent.glob("*.tmp")) and not list(p.parent.glob(".*.tmp"))
 
 
 def test_atomic_write_disk_full_and_interrupt(isolated, monkeypatch):
-    """Platte voll / Prozess stirbt mitten im Schreiben: alte Datei bleibt, keine halbe Datei, keine .tmp-Reste."""
+    """disk full / process dies in the middle of writing: the old file stays, no half file, no .tmp leftovers."""
     p = isolated / "Backups" / "b.json"
     backup.write_text_atomic(p, '{"a": 1}')
     assert json.loads(p.read_text()) == {"a": 1}
 
-    def full(fd):                                   # fsync der .tmp-Datei: Platte voll
+    def full(fd):                                   # fsync of the .tmp file: disk full
         raise OSError(28, "No space left on device")
     monkeypatch.setattr(os, "fsync", full)
     with pytest.raises(OSError):
@@ -358,20 +358,20 @@ def test_atomic_write_disk_full_and_interrupt(isolated, monkeypatch):
     assert json.loads(p.read_text()) == {"a": 1}
     assert [x.name for x in p.parent.iterdir()] == ["b.json"]
 
-    def killed(fd):                                 # Prozess wird beendet
+    def killed(fd):                                 # the process is killed
         raise KeyboardInterrupt
     monkeypatch.setattr(os, "fsync", killed)
     with pytest.raises(KeyboardInterrupt):
         backup.write_text_atomic(p, '{"a": 3}')
     monkeypatch.undo()
     assert json.loads(p.read_text()) == {"a": 1} and [x.name for x in p.parent.iterdir()] == ["b.json"]
-    # Reste eines abgebrochenen Vorgangs (älter als 10 Minuten) werden beim nächsten Schreiben entfernt
+    # leftovers of an aborted operation (older than 10 minutes) are removed at the next write
     stale = p.parent / ".b.json.abc.tmp"
     stale.write_text("x")
     os.utime(stale, (time.time() - 3600, time.time() - 3600))
     backup.write_text_atomic(p, '{"a": 4}')
     assert not stale.exists() and json.loads(p.read_text()) == {"a": 4}
-    # Backup-Listen sehen .tmp-Dateien nie
+    # backup lists never see .tmp files
     from fm1companion import autobackup as AB
     assert all(m.path.suffix == ".json" for m in AB.list_backups(isolated / "Backups", include_damaged=True))
 
@@ -413,7 +413,7 @@ def test_comparable_refuses_other_firmware():
 
 
 def test_object_titles_in_errors_and_written_state():
-    """Fehlertexte nennen Objekte in Alltagssprache; nach einem Abbruch steht fest, was schon geschrieben ist."""
+    """error texts name objects in everyday language; after an abort it is clear what has already been written."""
     assert backup.object_title(21) == "Preset-Bank U073–U090 (früher FM6-Voices)"
     assert backup.object_title(66) == "Projekt 7" and backup.object_title(0) == "Laufende Musik"
     assert backup.object_title(2, sloop=True) == "Song-Section A"
@@ -428,7 +428,7 @@ def test_object_titles_in_errors_and_written_state():
     real = dev._handle
 
     def flaky(cmd, a):
-        if cmd == 67 and a[0] == 2 and a[1] == 66:         # Commit von Projekt 7 schlägt fehl (Flash-Fehler)
+        if cmd == 67 and a[0] == 2 and a[1] == 66:         # commit of project 7 fails (flash error)
             dev.staged = None
             return [2, 66, 4]
         return real(cmd, a)
@@ -440,14 +440,14 @@ def test_object_titles_in_errors_and_written_state():
     assert "Preset-Bank U001–U018" in txt and "Projekt 7" in txt and "Laufende Musik" in txt
     assert "Noch im alten Zustand" in txt and dev.objs[0] == b"live" * 10
     dev._handle = real
-    # ohne Abbruch: nichts geschrieben
+    # without abort: nothing written
     e2 = backup.BackupError("x")
     assert backup.written_text(e2, [6]) == "Auf dem FM-1 wurde nichts verändert."
-    # unbekanntes Objekt: Name statt Nummer, nichts geschrieben
+    # unknown object: name instead of number, nothing written
     dev2 = FakeFM1(ids=list(range(29)))
     link2 = Link(LocalTransport(dev2))
     with pytest.raises(backup.BackupError) as e3:
-        backup.restore_selected(link2, arch, [66])                 # 1.6-Backup auf 29er-Firmware: vorher abgelehnt
+        backup.restore_selected(link2, arch, [66])                 # 1.6 backup on 29-object firmware: refused beforehand
     assert "Melodee 1.6" in str(e3.value) and "nichts geschrieben" in str(e3.value)
 
 
@@ -470,7 +470,7 @@ def test_project_names_and_firmware_family(isolated):
     assert p2 != p and p2.name.endswith(" (2).fm1proj")
     assert projects.family("FELUCCA SLOOP 2.8.3") == "sloop" and projects.family("Melodee 1.6.0-rc.7") == "melodee"
     assert projects.family_of_data(b"6NUF" + bytes(10)) == "sloop" and projects.family_of_data(b"HPJ1") == "melodee"
-    # .fm1proj von SLOOP auf ein Melodee-Gerät: verweigert, bevor das Gerät angefasst wird
+    # .fm1proj from SLOOP onto a Melodee device: refused before the device is touched
     dev, link = melodee()
     pf = projects.ProjectFile(p, {**projects.load_project(p).meta, "firmware": "FELUCCA SLOOP 2.8.3",
                                   "object": {"size": 14, "crc": crc32(b"6NUF" + bytes(10)),
@@ -492,8 +492,8 @@ def test_mirror_errors_are_german(isolated):
 
 
 def test_melodee16_backup_refused_on_older_firmware_before_writing():
-    """Melodee 1.6: ältere Firmware lehnt Backups von 1.6 ab – die Suite sagt das vorher (deutsch), statt eines
-    Gerätefehlers („älteres Format“), und schreibt nichts. Umgekehrt (1.5 -> 1.6) bleibt erlaubt."""
+    """Melodee 1.6: older firmware refuses backups from 1.6 – the suite says so beforehand (readably), instead of a
+    device error ("older format"), and writes nothing. The other way round (1.5 -> 1.6) stays allowed."""
     from fm1companion import melodee16 as M
     dev, link = melodee()
     arch = backup.read(backup.capture(link, "MELODEE v1.6.0", companion={"firmware": "melodee",
@@ -507,10 +507,10 @@ def test_melodee16_backup_refused_on_older_firmware_before_writing():
     with pytest.raises(backup.BackupError):
         backup.restore_selected(Link(LocalTransport(old)), arch, [1])
     assert old.objs == before
-    # 1.5-Backup (29 Objekte) auf 1.6: wie bisher
+    # 1.5 backup (29 objects) on 1.6: as before
     a15 = backup.read(backup.capture(Link(LocalTransport(old)), "MELODEE v1.5.1", companion={"firmware": "melodee"}))
     backup.restore(link, a15, firmware_key="melodee")
-    # Erkennung
+    # detection
     assert M.backup_is_16(n_objects=57) and M.backup_is_16("MELODEE v1.6.0-rc.8")
     assert not M.backup_is_16("FELUCCA v1.6.1", {"firmware": "felucca"}, 12)
     assert M.device_before_16("MELODEE v1.5.1") and not M.device_before_16("MELODEE v1.6.0-rc.7")

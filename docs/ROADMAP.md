@@ -15,7 +15,7 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 
 ## Status 2.2.0 (Melodee)
 
-Done: page **Studio** (MUSIK group, first entry) – fetch from the active FM-1 (the backup also lands in the list),
+Done: page **Studio** (Music group, first entry) – fetch from the active FM-1 (the backup also lands in the list),
 open from a backup, automatically load the last Studio state per device profile; version banner (twin vs.
 device/backup); playable FM-1 (screen, LEDs, keys, knobs; mouse, computer keyboard, MIDI keyboard, keys of the real
 FM-1); load/play the twin's projects, song, space bar; WAV export (24 bit / 32 bit float, song to the end,
@@ -23,8 +23,8 @@ seconds or loops, separate tracks); Studio state saved automatically, snapshots 
 undo/redo; writing back with confirmation, safety backup, settings only on request,
 version lock (expert checkbox). The twin can be selected as a **virtual device** (projects, composing, presets,
 backups, editor work through `StudioTransport`); it is never in `ctx.ports`, `ctx.is_virtual` marks it,
-automatic backups and the firmware check skip it. Playback bar: "Im Studio (identischer Klang)" (in the Studio,
-identical sound) instead of the approximation on the computer (which remains only if there is no twin). Building new
+automatic backups and the firmware check skip it. Playback bar: "in the Studio (identical sound)"
+instead of the approximation on the computer (which remains only if there is no twin). Building new
 versions: `docs/studio-build.md`.
 
 Open (Melodee): output selection for the Studio is "best effort" (pactl move-sink-input of the QtWebEngine audio);
@@ -47,8 +47,8 @@ breaks the resource table in the host test setup (not investigated, host only).
 Done: twin **Melodee 1.6.1** (tag v1.6.1, commit 165d177; glue layer unchanged, identity FM-1_91061) next to
 1.6.0, rc.7 and rc.8; `pick_build` takes exactly 1.6.1 for 1.6.1, and still 1.6.0 for 1.6.0. Simulator on 1.6.1.
 Tool pin v1.6.1 (`KNOWN_TOOL_COMMITS`). 1.6.0 → 1.6.1 is a normal update in the installation plan.
-Clock/sync of 1.6.1 (checked against `midi_clock.c`, `editor.c`, `project.c`): "Song am FM-1 selbst starten" (start
-the song on the FM-1 itself) from a section (BANK_SONG op 2 with row → `chain_prepare_from`; with CLK INT the FM-1
+Clock/sync of 1.6.1 (checked against `midi_clock.c`, `editor.c`, `project.c`): "Start the song
+on the FM-1 itself" from a section (BANK_SONG op 2 with row → `chain_prepare_from`; with CLK INT the FM-1
 then sends Song Position + Continue), the MIDI page's clock generator can start from a bar (Song Position +
 Continue, `clock.song_position`) and warns when the FM-1 sends clock itself with CLK INT. Help page "Melodee 1.6.0"
 extended with 1.6.1 (keep CLK when loading a project, the backup restores CLK).

@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Aufnahme über den USB-Audio-Eingang des FM-1.
+"""Recording via the FM-1's USB audio input.
 
-Melodee meldet sich am Rechner als Audio-Gerät "Melodee" (SLOOP/Skiff als
-"Felucca"). Je nach Einstellung am FM-1 liefert es Stereo (die Summe) oder
-mehrere Spuren getrennt (Melodee: "four-track capture"). Die App nimmt auf, was
-das Gerät anbietet, teilt Mehrkanal-Aufnahmen in Stereo-Paare auf und öffnet
-das Ergebnis auf Wunsch direkt in Audacity – jede Spur als eigene Spur.
+Melodee shows up on the computer as the audio device "Melodee" (SLOOP/Skiff as
+"Felucca"). Depending on the setting on the FM-1, it delivers stereo (the sum) or
+several tracks separately (Melodee: "four-track capture"). The app records whatever
+the device offers, splits multichannel recordings into stereo pairs and, on request, opens
+the result directly in Audacity – each track as its own track.
 
-Aufnahme-Wege: erst PipeWire (pw-record), sonst ALSA (arecord).
+Recording paths: PipeWire first (pw-record), otherwise ALSA (arecord).
 """
 from __future__ import annotations
 
@@ -31,20 +31,20 @@ from .i18n import N_, _
 
 try:
     import numpy as np
-except ImportError:      # pragma: no cover - numpy ist Pflicht
+except ImportError:      # pragma: no cover - numpy is required
     np = None
 
 
 @dataclass
 class CaptureDevice:
-    card_id: str               # ALSA-Kartenname, z. B. "Melodee"
+    card_id: str               # ALSA card name, e.g. "Melodee"
     card_index: int | None
-    channels: list[int]        # mögliche Kanalzahlen
+    channels: list[int]        # possible channel counts
     rates: list[int]
-    pw_node: str = ""          # PipeWire-Knoten (falls vorhanden)
-    label: str = ""            # Anzeige („FM-1 (USB)“, „USB-Mikrofon“, „Ausgang des Pi mithören“ …)
+    pw_node: str = ""          # PipeWire node (if present)
+    label: str = ""            # display ("FM-1 (USB)", "USB microphone", "Monitor the Pi's output" …)
     kind: str = "fm1"          # "fm1", "input", "monitor", "demo"
-    alsa_dev: str = ""         # z. B. "plughw:CARD=Device,DEV=0" (ALSA-Weg)
+    alsa_dev: str = ""         # e.g. "plughw:CARD=Device,DEV=0" (ALSA path)
 
     @property
     def title(self) -> str:
@@ -166,7 +166,7 @@ class Recording:
         return time.time() - self.started if self.started else 0.0
 
     def levels(self) -> list[float]:
-        """Spitzenpegel je Kanal aus dem Ende der wachsenden Datei (0..1)."""
+        """Peak level per channel from the end of the growing file (0..1)."""
         try:
             size = self.path.stat().st_size
             frame = 2 * self.channels
@@ -200,7 +200,7 @@ class Recording:
 
 
 def _fix_header(path: Path):
-    """falls die Aufnahme hart beendet wurde: Längen im WAV-Kopf korrigieren."""
+    """if the recording was terminated hard: fix the lengths in the WAV header."""
     try:
         with open(path, "r+b") as f:
             d = f.read(4096)
@@ -211,7 +211,7 @@ def _fix_header(path: Path):
             if i < 0:
                 return
             f.seek(4)
-            f.write(struct.pack("<I", min(0xFFFFFFFF, size - 8)))          # > 4 GiB: struct.error sonst
+            f.write(struct.pack("<I", min(0xFFFFFFFF, size - 8)))          # > 4 GiB: struct.error otherwise
             f.seek(i + 4)
             f.write(struct.pack("<I", min(0xFFFFFFFF, size - i - 8)))
     except OSError:
@@ -219,8 +219,8 @@ def _fix_header(path: Path):
 
 
 def split_pairs(path: Path, labels: list[str] | None = None) -> list[Path]:
-    """Mehrkanal-WAV -> Stereo-Dateien je Kanalpaar (Spur 1, Spur 2 …). Stückweise, damit auch eine
-    halbstündige Vierspur-Aufnahme nicht den ganzen Speicher braucht."""
+    """Multichannel WAV -> stereo files per channel pair (track 1, track 2 …). In chunks, so that even a
+    half-hour four-track recording does not need all the memory."""
     with wave.open(str(path)) as w:
         nch, sw, sr, n = w.getnchannels(), w.getsampwidth(), w.getframerate(), w.getnframes()
         if nch <= 2:
@@ -269,8 +269,8 @@ def open_in_audacity(files: list[Path], cmd: str = "audacity") -> bool:
 
 
 # =================================================================== Suite 2.0
-# Alle Aufnahme-Quellen, Mitlesen der wachsenden Datei, Nachbearbeitung, Takt-Sync,
-# Export. (Alles zusätzlich – das Bisherige bleibt, wie es ist.)
+# All recording sources, reading along the growing file, post-processing, clock sync,
+# export. (All additional – the existing behaviour stays as it is.)
 
 DEMO = os.environ.get("FM1C_DEMO") == "1"
 
@@ -309,8 +309,8 @@ def _pw_nodes() -> list[dict]:
 
 
 def list_sources(port: PortInfo | None = None) -> list[CaptureDevice]:
-    """alle Aufnahme-Quellen: FM-1 (USB-Audio), andere Eingänge (Line-in, USB-Mikrofon),
-    der Ausgang des Rechners zum Mithören (PipeWire) und im Demo-Modus ein Testsignal."""
+    """all recording sources: FM-1 (USB audio), other inputs (line-in, USB microphone),
+    the computer's output for monitoring (PipeWire) and, in demo mode, a test signal."""
     out: list[CaptureDevice] = []
     fm1 = find_capture(port)
     if fm1:
@@ -330,7 +330,7 @@ def list_sources(port: PortInfo | None = None) -> list[CaptureDevice]:
             seen_cards.add(str(props.get("alsa.id", props.get("api.alsa.card.name", ""))).lower())
         elif mc == "Audio/Sink":
             out.append(CaptureDevice("", None, [2], [44100, 48000], name, _("Listen to output: {name}").format(name=desc), "monitor"))
-    if not nodes:                                 # ohne PipeWire: ALSA-Karten mit Aufnahme
+    if not nodes:                                 # without PipeWire: ALSA cards with capture
         for idx, cid, longname in _alsa_cards():
             if cid.lower() in seen_cards or not _has_alsa_capture(idx):
                 continue
@@ -344,14 +344,14 @@ def list_sources(port: PortInfo | None = None) -> list[CaptureDevice]:
 
 
 class TailReader:
-    """liest neue Frames aus einer wachsenden 16-bit-WAV-Datei (pw-record/arecord schreiben laufend)."""
+    """reads new frames from a growing 16-bit WAV file (pw-record/arecord write continuously)."""
 
     def __init__(self, path: Path, channels: int):
         self.path = Path(path)
         self.channels = channels
-        self.pos = 0                 # Byte-Position im Datenteil
+        self.pos = 0                 # byte position in the data chunk
         self.data_off = 0
-        self.frames = 0              # bisher gelesene Frames
+        self.frames = 0              # frames read so far
 
     def _find_data(self) -> int:
         try:
@@ -363,7 +363,7 @@ class TailReader:
         return i + 8 if i >= 0 and head[:4] == b"RIFF" else 0
 
     def read(self, max_frames: int = 1 << 22):
-        """-> neue Frames als float-Array (n, Kanäle) in [-1, 1)."""
+        """-> new frames as a float array (n, channels) in [-1, 1)."""
         if not self.data_off:
             self.data_off = self._find_data()
             if not self.data_off:
@@ -387,7 +387,7 @@ class TailReader:
 
 
 def read_wav_array(path: Path):
-    """-> (rate, float-Array (n, Kanäle)); 16/24/32 bit PCM oder float."""
+    """-> (rate, float array (n, channels)); 16/24/32-bit PCM or float."""
     from .vendor import sampleio as sio
     d = Path(path).read_bytes()
     ch = sio.wav_chunks(d)
@@ -406,7 +406,7 @@ def read_wav_array(path: Path):
     elif bps == 4:
         x = np.frombuffer(raw, dtype="<i4") / 2147483648.0
     else:
-        x = (np.frombuffer(raw, dtype=np.uint8).astype(np.float64) - 128) / 128.0   # uint8 - 128 liefe über
+        x = (np.frombuffer(raw, dtype=np.uint8).astype(np.float64) - 128) / 128.0   # uint8 - 128 would overflow
     return sr, x.reshape(-1, nch)
 
 
@@ -425,7 +425,7 @@ def write_wav_array(path: Path, x, sr: int):
 
 
 def trim_silence(x, sr: int, threshold_db: float = -48.0, keep_ms: float = 8.0):
-    """Stille vorn/hinten weg (Schwelle relativ zum Spitzenpegel), mit etwas Luft vor dem Anschlag."""
+    """Trim silence at the start/end (threshold relative to the peak level), with a little air before the attack."""
     a = np.asarray(x)
     mono = np.abs(a).max(axis=1) if a.ndim == 2 else np.abs(a)
     pk = mono.max(initial=0)
@@ -467,7 +467,7 @@ def process_take(x, sr: int, trim: bool = True, norm: bool = True, fade_ms: floa
 
 
 def split_tracks(path: Path, mode: str = "pairs", labels: list[str] | None = None) -> list[Path]:
-    """Mehrkanal-Aufnahme aufteilen: "pairs" = Stereo-Paare (wie split_pairs), "mono" = jeder Kanal einzeln."""
+    """Split a multichannel recording: "pairs" = stereo pairs (like split_pairs), "mono" = each channel separately."""
     if mode == "pairs":
         return split_pairs(path, labels)
     sr, a = read_wav_array(path)
@@ -486,7 +486,7 @@ EXPORT_FORMATS = {"wav": ("WAV (16 bit)", []), "flac": (N_("FLAC (lossless)"), [
 
 
 def export_audio(src: Path, fmt: str, dst: Path | None = None) -> Path:
-    """WAV -> WAV/FLAC/MP3 über ffmpeg (WAV ohne ffmpeg: einfache Kopie)."""
+    """WAV -> WAV/FLAC/MP3 via ffmpeg (WAV without ffmpeg: plain copy)."""
     dst = Path(dst) if dst else Path(src).with_suffix("." + fmt)
     if fmt == "wav":
         if Path(src) != dst:
@@ -504,7 +504,7 @@ def export_audio(src: Path, fmt: str, dst: Path | None = None) -> Path:
 
 def cut_wav(src: Path, dst: Path, start: float, end: float, norm: bool = False, fade_in_ms: float = 0.0,
             fade_out_ms: float = 0.0) -> Path:
-    """Ausschnitt (Sekunden) mit optionalem Normalisieren/Ein-/Ausblenden als neue Datei."""
+    """Excerpt (seconds) with optional normalising/fade-in/fade-out as a new file."""
     sr, a = read_wav_array(src)
     y = a[int(max(0, start) * sr):int(end * sr) if end > 0 else len(a)]
     if norm:
@@ -513,24 +513,24 @@ def cut_wav(src: Path, dst: Path, start: float, end: float, norm: bool = False, 
     return write_wav_array(dst, y, sr)
 
 
-# ------------------------------------------------------------ Takt-Sync ---
+# ------------------------------------------------------------ clock sync ---
 
 class BarSync:
-    """Startet/stoppt eine Aufnahme taktgenau anhand der MIDI-Clock des FM-1.
+    """Starts/stops a recording in time with the FM-1's MIDI clock.
 
-    feed(status, t) mit jedem Echtzeit-Byte (F8 Clock, FA Start, FB Continue, FC Stop,
-    F2 Song Position) und seiner Ankunftszeit. Nach arm(bars) liefert sie start_time
-    (erster Clock-Tick nach Start bzw. am nächsten Taktanfang) und end_time (nach
-    `bars` Takten). 24 Ticks je Viertel, 4/4.
+    feed(status, t) with every real-time byte (F8 clock, FA start, FB continue, FC stop,
+    F2 song position) and its arrival time. After arm(bars) it provides start_time
+    (first clock tick after start or at the next bar start) and end_time (after
+    `bars` bars). 24 ticks per quarter, 4/4.
     """
     PPQN = 24
 
     def __init__(self, beats_per_bar: int = 4):
         self.beats = beats_per_bar
         self.running = False
-        self.tick = -1                  # Ticks seit Songanfang (0 = erster Tick nach Start)
+        self.tick = -1                  # ticks since the start of the song (0 = first tick after start)
         self.pending_first = False
-        self.times: list[float] = []    # letzte Tick-Zeiten (Tempo)
+        self.times: list[float] = []    # last tick times (tempo)
         self.disarm()
 
     @property
@@ -547,10 +547,10 @@ class BarSync:
         self.stopped_early = False
 
     def arm(self, bars: int = 4, mode: str = "start"):
-        """mode "start": auf das nächste MIDI-Start warten; "bar": nächster Taktanfang (läuft schon)."""
+        """mode "start": wait for the next MIDI start; "bar": next bar start (already running)."""
         self.disarm()
         self.armed = True
-        self.bars = max(0, int(bars))       # 0 = bis Stopp
+        self.bars = max(0, int(bars))       # 0 = until stop
         self.mode = "bar" if mode == "bar" and self.running and self.tick >= 0 else "start"
 
     @property
@@ -573,7 +573,7 @@ class BarSync:
 
     @property
     def position(self) -> tuple[int, int]:
-        """(Takt, Schlag) ab 1 – für die Anzeige."""
+        """(bar, beat) from 1 – for display."""
         if self.tick < 0:
             return 0, 0
         return self.tick // self.ticks_per_bar + 1, self.tick % self.ticks_per_bar // self.PPQN + 1
@@ -611,14 +611,14 @@ class BarSync:
             self.pending_first = False
 
     def feed_spp(self, beats16: int):
-        """Song Position Pointer (in Sechzehnteln) setzt die Position."""
+        """Song Position Pointer (in sixteenths) sets the position."""
         self.tick = beats16 * 6 - 1
         self.pending_first = False
 
 
 def take_window(start_time: float, end_time: float, audio_t0: float, rate: int, latency_ms: float = 0.0):
-    """Wall-Clock-Zeiten -> Frame-Bereich in der Aufnahme. audio_t0 = Zeit des ersten Frames,
-    latency_ms verschiebt (positive Werte: Audio kommt später an als die MIDI-Clock)."""
+    """Wall-clock times -> frame range in the recording. audio_t0 = time of the first frame,
+    latency_ms shifts (positive values: audio arrives later than the MIDI clock)."""
     lat = latency_ms / 1000
     a = int(round((start_time - audio_t0 + lat) * rate))
     b = int(round((end_time - audio_t0 + lat) * rate))
@@ -626,8 +626,8 @@ def take_window(start_time: float, end_time: float, audio_t0: float, rate: int, 
 
 
 class StartEstimator:
-    """schätzt, wann der erste Frame einer laufenden Aufnahme aufgenommen wurde:
-    t0 <= Beobachtungszeit - Frames/Rate; die engste Schranke über viele Beobachtungen gewinnt."""
+    """estimates when the first frame of a running recording was captured:
+    t0 <= observation time - frames/rate; the tightest bound over many observations wins."""
 
     def __init__(self, rate: int):
         self.rate = rate
@@ -639,7 +639,7 @@ class StartEstimator:
             self.t0 = est
 
 
-# ------------------------------------------------------------ Demo-Signal ---
+# ------------------------------------------------------------ demo signal ---
 
 def _demo_block(start: int, n: int, rate: int, ch: int, bpm: float = 120.0):
     t = (start + np.arange(n)) / rate
@@ -662,7 +662,7 @@ def _demo_block(start: int, n: int, rate: int, ch: int, bpm: float = 120.0):
 
 
 def demo_signal(path: Path, rate: int = 44100, channels: int = 2, seconds: float = 0.0):
-    """schreibt in Echtzeit einen Drum-Loop in eine wachsende WAV-Datei (wie pw-record)."""
+    """writes a drum loop in real time into a growing WAV file (like pw-record)."""
     import signal as _sig
     stop = {"now": False}
     _sig.signal(_sig.SIGINT, lambda *_: stop.update(now=True))

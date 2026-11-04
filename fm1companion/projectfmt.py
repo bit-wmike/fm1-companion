@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Melodee-Projekte lesen (Backup-Objekte 0, 2–5, 64–91 und .fm1proj).
+"""Read Melodee projects (backup objects 0, 2–5, 64–91 and .fm1proj).
 
-Das Format ist aus den Quellen von Melodee 1.6.0-rc.7 abgeleitet (firmware/src/project.c,
-pattern_store.c, project_stream.c, step_snapshot.h) und an Bytes geprüft, die Melodees eigener
-Firmware-Code geschrieben hat (tools/melodee_fixtures, tests/fixtures/musik). Die Offsets stehen in
+The format is derived from the sources of Melodee 1.6.0-rc.7 (firmware/src/project.c,
+pattern_store.c, project_stream.c, step_snapshot.h) and checked against bytes written by Melodee's own
+firmware code (tools/melodee_fixtures, tests/fixtures/musik). The offsets are in
 docs/melodee-project-format.md.
 
-Schichten:
-  HPJ1   kompaktes Abbild: 32-Byte-Kopf, nur die belegten 256-Byte-Seiten   -> 27 904-Byte-Datensatz
-  FBK?   Bank-Container (FBKK, FBKL … FBKQ): Kopf, FUN-Datensatz, Bank-Ende mit den übrigen Patterns, Song
-  FUN?   der Klang-/Aktiv-Pattern-Datensatz (FUN16 … FUN22, 13 212 Byte)
-Ältere Formate (FUN7/FUN8/FBK9) werden nach der Protokoll-Doku gelesen, aber nicht gegen Firmware-Code geprüft.
+Layers:
+  HPJ1   compact image: 32-byte header, only the used 256-byte pages   -> 27,904-byte record
+  FBK?   bank container (FBKK, FBKL … FBKQ): header, FUN record, bank tail with the remaining patterns, song
+  FUN?   the sound/active-pattern record (FUN16 … FUN22, 13,212 bytes)
+Older formats (FUN7/FUN8/FBK9) are read according to the protocol docs, but not checked against firmware code.
 
-`decode()` wirft nie: Unbekanntes landet als Hinweis in `Project.warnings` ("unbekannter Teil").
+`decode()` never raises: anything unknown ends up as a note in `Project.warnings` ("unbekannter Teil").
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from pathlib import Path
 
 from .i18n import _, ngettext
 
-# ---------------------------------------------------------------- Konstanten (rc.7, layout.json) ---
+# ---------------------------------------------------------------- constants (rc.7, layout.json) ---
 NSTEP = 64
 NPART = 4
 NTRK = 8
@@ -39,20 +39,20 @@ PJ_HEAD = 32
 PJ_TPAGES = (BANK_TAIL_SIZE + 255) // 256       # 58
 PJ_SPAGES = (BANK_ACTIVE_OFF + 255) // 256      # 52
 
-# FUN22 (Offsets im FUN-Datensatz)
+# FUN22 (offsets in the FUN record)
 PROJ_REC_OFF = 4192
 PROJ_REC_DIR = 13152
 PROJ_NAME_OFF = 13196
 PROJ_FM6_OFF = 3104
 PROJ_MPC_OCT_WIRE = 3096
 
-# Bank-Ende (Offsets relativ zum Beginn des Bank-Endes)
+# bank tail (offsets relative to the start of the bank tail)
 FBKP = dict(npat=16, timing=8, chain=520, motion=648, fn=712, rec=780, recn=176, trk=956, steps=1456, mask=2)
 FBKL = dict(npat=8, timing=8, chain=264, motion=392, fn=456, rec=524, recn=44, trk=568, steps=1068, mask=1)
-SONG_BYTES = 580          # count, loop, sounds, 0, 64 × (repeat, 8 Bänke)
-FX_BYTES = 768            # 64 × 4 Punch-Effekte × 3 (chain_fx_t: fx 1..27 = Effekt + 1, start, length in Steps)
+SONG_BYTES = 580          # count, loop, sounds, 0, 64 × (repeat, 8 banks)
+FX_BYTES = 768            # 64 × 4 punch effects × 3 (chain_fx_t: fx 1..27 = effect + 1, start, length in steps)
 FX_EVENTS = 4
-# Melodee 1.6 firmware/src/punch.c PUNCH_NAME (Effekt-ID = Index; im Song gespeichert als Index + 1)
+# Melodee 1.6 firmware/src/punch.c PUNCH_NAME (effect ID = index; stored in the song as index + 1)
 PUNCH_NAMES = ["LOOP 1/4", "LOOP 1/8", "LOOP 1/16", "LOOP 1/32", "STUTTER", "REVERSE", "STOP", "HALF",
                "LOW PASS", "HIGH PASS", "PHONE", "CRUSH", "ALIAS", "GATE", "ECHO", "WOBBLE",
                "KILL LOW", "KILL MID", "KILL HIGH", "REWIND", "OCT UP", "FLANGER", "AUTO-PAN", "FREEZE", "LOOP 1/8T",
@@ -68,7 +68,7 @@ FUN_MAGICS = {0x46554E49: ("FUN22", 8), 0x46554E48: ("FUN21", 8), 0x46554E47: ("
               0x46554E45: ("FUN18", 8), 0x46554E44: ("FUN17", 9), 0x46554E43: ("FUN16", 9)}
 LEGACY_MAGICS = {0x37554E46: "FUN7", 0x38554E46: "FUN8", 0x394B4246: "FBK9"}
 
-# Parameter-IDs (gleich in allen gelesenen Formaten, da neue Parameter nur vor P_E0 angehängt werden)
+# parameter IDs (the same in all formats read, since new parameters are only appended before P_E0)
 P_LEVEL, P_ROOT, P_SCALE, P_QUANT, P_TRANS = 0, 25, 26, 27, 28
 P_SLEN, P_SDIV, P_SSWING, P_SGATE = 29, 30, 31, 32
 P_VOICE, P_PAN, P_MUTE = 37, 39, 40
@@ -88,7 +88,7 @@ _TABLES = None
 
 
 def tables() -> dict:
-    """Parameter-, Engine- und Preset-Tabellen von Melodee 1.6.0-rc.7 (aus dem Firmware-Code erzeugt)."""
+    """Parameter, engine and preset tables of Melodee 1.6.0-rc.7 (generated from the firmware code)."""
     global _TABLES
     if _TABLES is None:
         try:
@@ -134,17 +134,17 @@ class FormatError(Exception):
     pass
 
 
-# --------------------------------------------------------------------------------- Datenmodell ---
+# --------------------------------------------------------------------------------- data model ---
 @dataclass
 class Step:
-    notes: list[int] = field(default_factory=list)   # 0..4 MIDI-Noten
+    notes: list[int] = field(default_factory=list)   # 0..4 MIDI notes
     time: int = ST_REST                              # 0 NOTE, 1 TIE, 2 REST
     accent: bool = False
     slide: bool = False
-    recorded: bool = False                           # Übersicht aufgenommener Noten (siehe Pattern.recorded)
-    vel: int = 0                                     # 0 = Standard (96 bei Drum-Hits)
-    hit: int = 0                                     # Bit l: Drum-Lane l schlägt an
-    acc: int = 0                                     # Akzente der Lanes (ohne Hits: aufgenommenes Gate 1..255)
+    recorded: bool = False                           # overview of recorded notes (see Pattern.recorded)
+    vel: int = 0                                     # 0 = default (96 for drum hits)
+    hit: int = 0                                     # bit l: drum lane l hits
+    acc: int = 0                                     # accents of the lanes (without hits: recorded gate 1..255)
     chance: int = 100                                # 0..100 %
 
     @property
@@ -171,7 +171,7 @@ class Step:
 
     @classmethod
     def from_nine(cls, b: bytes) -> "Step":
-        """FUN7/FUN8/FUN16/FUN17: 4 Noten, n | time << 3 | flags << 5 | recorded << 7, vel, hit, acc, chance."""
+        """FUN7/FUN8/FUN16/FUN17: 4 notes, n | time << 3 | flags << 5 | recorded << 7, vel, hit, acc, chance."""
         meta = b[4]
         n, time = meta & 7, (meta >> 3) & 3
         if n > 4 or time > 2 or b[8] > 101:
@@ -187,7 +187,7 @@ class Pattern:
     index: int
     steps: list[Step] = field(default_factory=lambda: [Step() for _i in range(NSTEP)])
     length: int = 16       # LEN (Steps)
-    div: int = 2           # DIV-Index (2 = 1/16)
+    div: int = 2           # DIV index (2 = 1/16)
     swing: int = 0
     gate: int = 64
     recorded: list["TimedNote"] = field(default_factory=list)
@@ -211,10 +211,10 @@ class Pattern:
 
 @dataclass
 class TimedNote:
-    """eine aufgenommene Note mit Originaltiming (FUN13+): Beginn im Step + Bruchteil, Dauer in Steps."""
+    """a recorded note with original timing (FUN13+): start in the step + fraction, duration in steps."""
     step: int
-    onset: float           # 0..1 des (geswingten) Steps
-    duration: float        # in Steps
+    onset: float           # 0..1 of the (swung) step
+    duration: float        # in steps
     note: int
     vel: int
 
@@ -227,10 +227,10 @@ class Track:
     params: list[int] = field(default_factory=list)
     patterns: list[Pattern] = field(default_factory=list)
     active: int = 0
-    user_slot: int = 0                  # gemeinsame Bibliothek: Platz + 1 (U,3-Herkunft), 0 = keiner
+    user_slot: int = 0                  # shared library: slot + 1 (U,3 origin), 0 = none
     midi_only: bool = False
     in_use: bool = True
-    fm6: bytes | None = None             # gepackter FM6-Patch (128 Byte) der Spur, falls im Projekt lesbar
+    fm6: bytes | None = None             # packed FM6 patch (128 bytes) of the track, if readable in the project
 
     def p(self, pid: int, default: int = 0) -> int:
         return self.params[pid] if 0 <= pid < len(self.params) else default
@@ -263,7 +263,7 @@ class Track:
 
     @property
     def midi_channel(self) -> int:
-        """0-basiert. Parts: Spur 1–4 = Kanal 1–4 (Melodee ROUT CH1-4); MIDI-Spuren: ihr Kanal-Parameter (E1)."""
+        """0-based. Parts: tracks 1–4 = channels 1–4 (Melodee ROUT CH1-4); MIDI tracks: their channel parameter (E1)."""
         if self.midi_only and len(self.params) > 116:
             ch = self.params[116]
             if 1 <= ch <= 16:
@@ -273,7 +273,7 @@ class Track:
 
 @dataclass
 class Punch:
-    """ein zeitgesteuerter Punch-Effekt im Song (Melodee 1.6, chain_fx_t): Steps start .. start+length-1"""
+    """a timed punch effect in the song (Melodee 1.6, chain_fx_t): steps start .. start+length-1"""
     fx: int                   # 0..26 (PUNCH_NAMES)
     start: int
     length: int
@@ -284,14 +284,14 @@ class Punch:
 
     @property
     def text(self) -> str:
-        """„REVERSE 5–8“ (Steps 1-basiert, wie START/END am Gerät)"""
+        """"REVERSE 5–8" (steps 1-based, like START/END on the device)"""
         a = self.start + 1
         return f"{self.name} {a}–{a + max(1, self.length) - 1}" if self.length > 1 else f"{self.name} {a}"
 
 
 @dataclass
 class SongSound:
-    """Preset-Kopie für einen Song-Block oder ein Pattern (Melodee 1.6, song_sound_t) – nur zum Anzeigen"""
+    """Preset copy for a song block or a pattern (Melodee 1.6, song_sound_t) – display only"""
     name: str
     engine: int
     preset: int
@@ -304,8 +304,8 @@ class SongSound:
 @dataclass
 class SongRow:
     repeat: int
-    banks: list[int]          # je Spur: Pattern-Index, CHAIN_REST oder CHAIN_HOLD
-    sounds: list[int] = field(default_factory=list)    # je Spur: Song-Block-Preset (Project.sounds, 1-basiert), 0 = keins
+    banks: list[int]          # per track: pattern index, CHAIN_REST or CHAIN_HOLD
+    sounds: list[int] = field(default_factory=list)    # per track: song block preset (Project.sounds, 1-based), 0 = none
     punches: list[Punch] = field(default_factory=list)
 
 
@@ -320,9 +320,9 @@ class Project:
     tracks: list[Track] = field(default_factory=list)
     song: list[SongRow] = field(default_factory=list)
     song_loop: bool = False
-    sounds: list[SongSound] = field(default_factory=list)        # Preset-Kopien (Song-Blöcke, Patterns)
-    pattern_sounds: dict = field(default_factory=dict)           # (Spur, Pattern) -> Preset-Kopie (1-basiert)
-    motion: list[tuple[int, int, int, int]] = field(default_factory=list)   # (Spur, Step, Parameter, Wert)
+    sounds: list[SongSound] = field(default_factory=list)        # preset copies (song blocks, patterns)
+    pattern_sounds: dict = field(default_factory=dict)           # (track, pattern) -> preset copy (1-based)
+    motion: list[tuple[int, int, int, int]] = field(default_factory=list)   # (track, step, parameter, value)
     selected: int = 0
     tracks_in_use: int = NPART
     warnings: list[str] = field(default_factory=list)
@@ -353,12 +353,12 @@ class Project:
         return self.sounds[sid - 1].name if 0 < sid <= len(self.sounds) else f"Preset {sid}"
 
     def resolved_sound(self, row: int, track: int) -> tuple[int, str]:
-        """welcher Klang spielt? Reihenfolge wie Melodee 1.6: Song-Block-Preset, dann Pattern-Preset, dann der
-        Klang der Spur. -> (Preset-Kopie oder 0, "block"|"pattern"|"")"""
+        """which sound plays? Order as in Melodee 1.6: song block preset, then pattern preset, then the
+        track's sound. -> (preset copy or 0, "block"|"pattern"|"")"""
         if not 0 <= row < len(self.song):
             return 0, ""
         while row > 0 and track < len(self.song[row].banks) and self.song[row].banks[track] == CHAIN_HOLD:
-            row -= 1                                     # fortgesetzter Block: der Klang seines Anfangs
+            row -= 1                                     # continued block: the sound of its beginning
         r = self.song[row]
         sid = r.sounds[track] if track < len(r.sounds) else 0
         if sid:
@@ -393,7 +393,7 @@ class Project:
             "motion": [list(m) for m in self.motion]}
 
 
-# ------------------------------------------------------------------------------------ Lesen ---
+# ------------------------------------------------------------------------------------ reading ---
 def fnv(data: bytes, h: int = 2166136261) -> int:
     for b in data:
         h = ((h ^ b) * 16777619) & 0xFFFFFFFF
@@ -408,14 +408,14 @@ def _bits_get(b: bytes, pos: int, n: int) -> tuple[int, int]:
 
 
 def expand_hpj1(data: bytes) -> bytes:
-    """kompaktes HPJ1-Abbild -> der 27 904-Byte-Datensatz (Löcher = Nullen)."""
+    """compact HPJ1 image -> the 27,904-byte record (holes = zeros)."""
     magic, length, *maps = struct.unpack_from("<IIIIII", data)
     if magic != MAGIC_HPJ1 or length != BANK_STORE_SIZE:
         raise FormatError(_("not an HPJ1 image"))
     bitmap = maps[0] | maps[1] << 32 | maps[2] << 64 | maps[3] << 96
     out = bytearray(BANK_STORE_SIZE)
     at = PJ_HEAD
-    for p in range(PJ_TPAGES):                          # das Bank-Ende T
+    for p in range(PJ_TPAGES):                          # the bank tail T
         if bitmap >> p & 1:
             rel = p * 256
             k = min(256, BANK_TAIL_SIZE - rel)
@@ -423,7 +423,7 @@ def expand_hpj1(data: bytes) -> bytes:
                 raise FormatError(_("HPJ1 image too short"))
             out[BANK_ACTIVE_OFF + rel:BANK_ACTIVE_OFF + rel + k] = data[at:at + k]
             at += k
-    for p in range(PJ_SPAGES):                          # Kopf + FUN-Datensatz S
+    for p in range(PJ_SPAGES):                          # header + FUN record S
         if bitmap >> (64 + p) & 1:
             rel = p * 256
             k = min(256, BANK_ACTIVE_OFF - rel)
@@ -443,7 +443,7 @@ def _new_tracks(n_parts_banks=NPAT) -> list[Track]:
 
 
 def _decode_fun(prj: Project, r: bytes, steps8: bool, np_: int, fx_in_wire: bool = False):
-    """FUN16..FUN22: Globals, je Part Parameter, Engine, Preset und das aktive Pattern."""
+    """FUN16..FUN22: globals, per part parameters, engine, preset and the active pattern."""
     g = list(struct.unpack_from("<27h", r, 8))
     prj.globals = g
     prj.bpm, prj.swing = g[G_BPM], g[G_SWING]
@@ -455,12 +455,12 @@ def _decode_fun(prj: Project, r: bytes, steps8: bool, np_: int, fx_in_wire: bool
         tr = prj.tracks[t]
         vals = []
         for i in range(np_):
-            if fx_in_wire and 96 <= i <= 99:              # FUN17: FX-Felder liegen im Global-Bereich
+            if fx_in_wire and 96 <= i <= 99:              # FUN17: FX fields live in the global area
                 vals.append(0)
                 continue
             vals.append(r[pos] - 64)
             pos += 1
-        # nach Anzahl abbilden: die ersten np-8 in Reihenfolge, die letzten 8 = Engine-Parameter
+        # map by count: the first np-8 in order, the last 8 = engine parameters
         defaults = [p["def"] for p in tables()["params"]] or [0] * P_COUNT_NOW
         params = [vals[i] if i < np_ - 8 else defaults[i] for i in range(P_COUNT_NOW - 8)] + vals[np_ - 8:]
         tr.params = params
@@ -476,7 +476,7 @@ def _decode_fun(prj: Project, r: bytes, steps8: bool, np_: int, fx_in_wire: bool
             pos += stride
         pat.length, pat.div, pat.swing, pat.gate = (tr.p(P_SLEN, 16), tr.p(P_SDIV, 2), tr.p(P_SSWING, 0),
                                                     tr.p(P_SGATE, 64))
-    # Song (alt, 16 Zeilen) und Motion
+    # song (old, 16 rows) and motion
     count = r[pos]
     legacy = [(r[pos + 4 + 2 * i], r[pos + 5 + 2 * i]) for i in range(16)]
     pos += 36
@@ -496,7 +496,7 @@ def _decode_fun(prj: Project, r: bytes, steps8: bool, np_: int, fx_in_wire: bool
 
 
 def _read_fm6(prj: Project, r: bytes, off: int):
-    """die vier FM6-Patches (je 128 Byte, 7 Bit) – nur übernehmen, wenn sie plausibel sind (für das Vorhören)."""
+    """the four FM6 patches (128 bytes each, 7 bits) – only taken over if plausible (for the preview)."""
     if len(r) < off + NPART * 128:
         return
     for t in range(NPART):
@@ -506,7 +506,7 @@ def _read_fm6(prj: Project, r: bytes, off: int):
 
 
 def _records(prj: Project, r: bytes, counts: list[int], owners: list[int]):
-    """aufgenommene Noten: Owner für Owner hintereinander ab PROJ_REC_OFF."""
+    """recorded notes: owner after owner, one after another, from PROJ_REC_OFF."""
     at = 0
     for owner, count in zip(owners, counts):
         if count > RECORD_MAX - at:
@@ -555,7 +555,7 @@ def _decode_bank(prj: Project, rec: bytes):
     prj.tracks = _new_tracks(NPAT if p16 else NPAT_V1)
     count, legacy = _decode_fun(prj, fun, stride == 8, fun[66], fname == "FUN17")
     tail = rec[BANK_ACTIVE_OFF:]
-    if not wide:                                          # FBKK: dicht, 4 Parts × 8 Bänke
+    if not wide:                                          # FBKK: dense, 4 parts × 8 banks
         _tail_fbkk(prj, tail, count, legacy)
         counts = _counts(fun[PROJ_REC_DIR - 0:], 32)
         owners = [o // NPAT_V1 * NPAT + o % NPAT_V1 for o in range(32)]
@@ -612,7 +612,7 @@ def _tail_wide(prj: Project, tail: bytes, kind: str, L: dict):
         prj.song = rows
         pos += SONG_BYTES
     else:
-        pass   # FBKL: Song aus der alten Kette (unten)
+        pass   # FBKL: song from the old chain (below)
     if songfx:
         fx = tail[pos:pos + FX_BYTES]
         for r, row in enumerate(prj.song):
@@ -663,7 +663,7 @@ def _tail_wide(prj: Project, tail: bytes, kind: str, L: dict):
                     if mask >> i & 1:
                         pat.steps[i] = Step.from_bits(tail[pos:pos + 8])
                         pos += 8
-        if k >= NPART:                                       # MIDI-Spur: Parameter im Bank-Ende
+        if k >= NPART:                                       # MIDI track: parameters in the bank tail
             b0 = L["trk"] + (k - NPART) * (P_COUNT_NOW + 1)
             tr.params = [v - 64 for v in tail[b0:b0 + P_COUNT_NOW]]
             tr.engine = 21
@@ -677,7 +677,7 @@ def _tail_wide(prj: Project, tail: bytes, kind: str, L: dict):
 
 
 def _decode_legacy(prj: Project, data: bytes, kind: str):
-    """FUN7 (3388), FUN8 (3584), FBK9 (20224) nach web/EDITOR_PROTOCOL.md – nicht gegen Firmware-Code geprüft."""
+    """FUN7 (3388), FUN8 (3584), FBK9 (20224) according to web/EDITOR_PROTOCOL.md – not checked against firmware code."""
     prj.container = kind
     rec = data[8:8 + 3584] if kind == "FBK9" else data
     prj.format = _("{format} (older format)").format(format=kind)
@@ -728,7 +728,7 @@ def _decode_legacy(prj: Project, data: bytes, kind: str):
 
 
 def decode(data: bytes, firmware: str = "") -> Project:
-    """Projekt-Objekt (Backup/.fm1proj) -> Project. Wirft nie."""
+    """Project object (backup/.fm1proj) -> Project. Never raises."""
     prj = Project(size=len(data))
     try:
         if not data:
@@ -780,7 +780,7 @@ def decode(data: bytes, firmware: str = "") -> Project:
 
 
 def summary_for_backup(data: bytes, firmware: str = "") -> dict | None:
-    """Hook für backup_inspect.register_project_decoder."""
+    """Hook for backup_inspect.register_project_decoder."""
     prj = decode(data, firmware)
     if not prj.ok:
         return None
@@ -788,7 +788,7 @@ def summary_for_backup(data: bytes, firmware: str = "") -> dict | None:
 
 
 def load_any(path: Path) -> list[tuple[str, Project]]:
-    """Backup (.json) oder .fm1proj -> [(Titel, Projekt)]."""
+    """Backup (.json) or .fm1proj -> [(title, project)]."""
     from . import backup, projects
     path = Path(path)
     if path.suffix == projects.SUFFIX:
@@ -823,7 +823,7 @@ register()
 
 
 def demo_project_bytes() -> bytes:
-    """ein echtes Melodee-1.6-Projektobjekt (von Melodees Firmware-Code geschrieben) für Demo-Modus und Tests."""
+    """a real Melodee 1.6 project object (written by Melodee's firmware code) for demo mode and tests."""
     try:
         return (Path(__file__).parent / "data" / "melodee_demo_project.bin").read_bytes()
     except OSError:

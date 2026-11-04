@@ -63,7 +63,7 @@ SUITE_REPO = "https://github.com/bit-wmike/fm1-companion"
 
 
 def source_offer(project: str, commit: str, extra: str = "") -> str:
-    """GPL-3.0 §6: schriftliches Angebot + genauer Stand der Quellen (an jede NOTICE angehängt)."""
+    """GPL-3.0 §6: written offer + exact revision of the sources (appended to every NOTICE)."""
     return (
         "\nCorresponding Source (GNU GPL 3.0, section 6)\n"
         f"The complete corresponding source of this build is {project} at commit {commit}\n"
@@ -95,7 +95,7 @@ def wasi_sdk(work: Path, given: str | None) -> Path:
         print("lade WASI SDK 27 …")
         urllib.request.urlretrieve(WASI_URL, arc)
     if sha(arc) != WASI_SHA256:
-        raise SystemExit("WASI SDK: SHA-256 stimmt nicht")
+        raise SystemExit("WASI SDK: SHA-256 does not match")
     with tarfile.open(arc) as tf:
         tf.extractall(work)
     return d
@@ -174,7 +174,7 @@ def build_fm1_open(work, sdk, local):
     for k, v in rep.items():
         page = page.replace(k, v)
     if re.search(r"/\*FM1_[A-Z_]+\*/", page):
-        raise SystemExit("fm1-open: Platzhalter übrig")
+        raise SystemExit("fm1-open: placeholder left over")
     # Firmware updates belong to the app's installer: hide the tab (it has no package anyway).
     guard = ("<style>#mode-update,#tab-update,#stock-restore,#open-firmware,#force-update{display:none!important}</style>"
              "<script>window.__FM1SIM_ID='fm1-open';document.addEventListener('fm1-view-change',()=>{"

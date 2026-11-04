@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""MIDI-Zentrale: Monitor, Bildschirm-Tastatur, Takt (Clock), Regler mit MIDI-Learn, Verbindungen.
+"""MIDI hub: monitor, on-screen keyboard, clock, knobs with MIDI learn, connections.
 
-* Monitor: hört über ``link.add_listener`` alles mit, was zwischen App und FM-1 läuft, und auf
-  Wunsch weitere MIDI-Eingänge (mido/rtmidi). Ein Ringpuffer sammelt im MIDI-Thread, die Tabelle
-  wird zehnmal pro Sekunde gesammelt aktualisiert.
-* Regler: hält das FM-1 (wie die FM-1-Seite), solange der Reiter offen ist – Anfrage/Antwort mit
-  DESC/DUMP/TRACK_PARAM darf nicht mit dem eingebetteten Editor kollidieren (das Gerät hält nur
-  einen SysEx-Rahmen gleichzeitig, Antworten werden nach Befehl zugeordnet). Schreiben läuft in
-  einem eigenen Thread, Knopfbewegungen werden pro Parameter zusammengefasst (nur der letzte Wert).
+* Monitor: listens via ``link.add_listener`` to everything that runs between the app and the FM-1, and
+  optionally to further MIDI inputs (mido/rtmidi). A ring buffer collects in the MIDI thread, the table
+  is updated in batches ten times per second.
+* Knobs: holds the FM-1 (like the FM-1 page) while the tab is open – request/response with
+  DESC/DUMP/TRACK_PARAM must not collide with the embedded editor (the device only holds
+  one SysEx frame at a time, responses are matched by command). Writing runs in
+  a separate thread, knob movements are coalesced per parameter (only the last value).
 """
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ def _save():
 
 
 def mido_names(output: bool) -> tuple[list[str], str]:
-    """(Portnamen, Hinweis) – ohne rtmidi gibt es keine weiteren Ports."""
+    """(port names, hint) – without rtmidi there are no further ports."""
     try:
         import mido
         names = mido.get_output_names() if output else mido.get_input_names()
@@ -59,11 +59,11 @@ def mido_names(output: bool) -> tuple[list[str], str]:
 
 
 def _de(x: float, nd: int) -> str:
-    """Zahl mit dem Dezimaltrennzeichen der Oberflächensprache („120,0 BPM“ / „120.0 BPM“)."""
+    """Number with the decimal separator of the UI language (“120,0 BPM” / “120.0 BPM”)."""
     return decimal(x, nd)
 
 class Outputs:
-    """offene mido-Ausgänge (lazy, eine Instanz je Name)."""
+    """open mido outputs (lazy, one instance per name)."""
 
     def __init__(self):
         self.ports: dict = {}
@@ -91,8 +91,8 @@ class Outputs:
 FILTERS = [("note", pgettext("MIDI", "Notes")), ("cc", _("Controller")), ("prog", _("Program")), ("bend", _("Pitch bend")),
            ("at", "Aftertouch"), ("sysex", "SysEx"), ("transport", "Start/Stop"), ("clock", "Clock"),
            ("sense", "Active Sensing"), ("other", _("Other"))]
-MAX_ROWS = 2000           # Zeilen in der Tabelle (das Protokoll dahinter hält 20 000 für den Export)
-PER_TICK = 400            # mehr neue Zeilen je Aktualisierung (10×/s) zeigt die Tabelle nicht – sonst stockt die Oberfläche
+MAX_ROWS = 2000           # rows in the table (the log behind it keeps 20 000 for export)
+PER_TICK = 400            # the table doesn't show more new rows per update (10×/s) – otherwise the UI stutters
 
 
 class MonitorTab(QWidget):
@@ -102,7 +102,7 @@ class MonitorTab(QWidget):
         self.log = M.EventLog(20000)
         self.meter = M.ClockMeter()
         self.paused = False
-        self.inputs: dict = {}                             # Name -> mido-Port
+        self.inputs: dict = {}                             # name -> mido port
         s = _settings()
         lay = QVBoxLayout(self)
         bar = QHBoxLayout()
@@ -135,7 +135,7 @@ class MonitorTab(QWidget):
             fl.addWidget(cb)
         fl.addStretch(1)
         lay.addLayout(fl)
-        reflow(fl)                                         # Filter brechen bei schmalem Fenster um
+        reflow(fl)                                         # filters wrap when the window is narrow
         self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels([_("Time"), _("Direction"), "Port", _("Type"), _("Channel"), _("Data"), _("Meaning")])
         self.table.verticalHeader().hide()
@@ -173,7 +173,7 @@ class MonitorTab(QWidget):
         QShortcut(QKeySequence("Space"), self.table, activated=self.b_pause.toggle)
         self.fill_inputs()
 
-    # ---- Zuführung (MIDI-Threads)
+    # ---- Feed (MIDI threads)
     def on_link(self, data, direction):
         st = data[0] if data else 0
         if direction == "in" and st >= 0xF8:
@@ -221,7 +221,7 @@ class MonitorTab(QWidget):
         self.inputs.clear()
         self.in_list.setText("")
 
-    # ---- Anzeige
+    # ---- Display
     def visible_kind(self, ev) -> bool:
         cb = self.cbs.get(ev.dec.kind)
         if cb is not None and not cb.isChecked():
@@ -242,7 +242,7 @@ class MonitorTab(QWidget):
             return
         rows = [e for e in new if self.visible_kind(e)]
         self.hidden += len(new) - len(rows)
-        if len(rows) > PER_TICK:                           # Sturzflut (z. B. dichte Clock): Anzeige kürzen, Protokoll behält alles
+        if len(rows) > PER_TICK:                           # flood (e.g. dense clock): shorten the display, the log keeps everything
             self.skipped += len(rows) - PER_TICK
             rows = rows[-PER_TICK:]
         self._append(rows)
@@ -259,7 +259,7 @@ class MonitorTab(QWidget):
         t.setUpdatesEnabled(False)
         rows = rows[-MAX_ROWS:]
         extra = t.rowCount() + len(rows) - MAX_ROWS
-        if extra > 0:                                     # älteste Zeilen in einem Rutsch weg (ein Modell-Signal)
+        if extra > 0:                                     # remove the oldest rows in one go (one model signal)
             t.model().removeRows(0, min(extra, t.rowCount()))
         r0 = t.rowCount()
         t.setRowCount(r0 + len(rows))
@@ -336,8 +336,8 @@ class MonitorTab(QWidget):
             n=len(events), file=Path(fn).name), "success")
 
 
-# ============================================================= Tastatur ===
-# deutsche Tastatur (QWERTZ), wie in Trackern: untere Reihe ab Y = C, obere ab Q = C eine Oktave höher
+# ============================================================= Keyboard ===
+# German keyboard (QWERTZ), like in trackers: bottom row from Y = C, top row from Q = C one octave higher
 KEYMAP = {}
 for i, ch in enumerate("YSXDCVGBHNJM"):
     KEYMAP[ord(ch)] = i
@@ -356,7 +356,7 @@ class Piano(QWidget):
         self.octaves = octaves
         self.base = 48
         self.down: set[int] = set()
-        self.key_down: set[int] = set()                    # Qt-Tasten, die gerade gedrückt sind
+        self.key_down: set[int] = set()                    # Qt keys currently pressed
         self.mouse_note: int | None = None
         self.setMinimumHeight(140)
         self.setMinimumWidth(500)
@@ -437,8 +437,8 @@ class Piano(QWidget):
         self.note_off.emit(self.base + k)
 
     def release_all_keys(self):
-        """Note-Off für alles, was über Tastatur oder Maus gedrückt ist – Fokusverlust und Seitenwechsel
-        liefern sonst nie ein keyRelease, und die Note hinge am FM-1."""
+        """Note-off for everything pressed via keyboard or mouse – focus loss and page changes
+        otherwise never deliver a keyRelease, and the note would hang on the FM-1."""
         for key in list(self.key_down):
             k = KEYMAP.get(key)
             if k is not None:
@@ -465,7 +465,7 @@ class KeyboardTab(QWidget):
         self.held: set[int] = set()
         self.sounding: set[int] = set()
         lay = QVBoxLayout(self)
-        row = QHBoxLayout()                     # Gruppen (Beschriftung + Feld) bleiben beim Umbrechen zusammen
+        row = QHBoxLayout()                     # groups (label + field) stay together when wrapping
         g1, g2, g3, g4 = (QHBoxLayout() for _i in range(4))
         g1.addWidget(QLabel(_("Target:")))
         self.out = QComboBox()
@@ -588,17 +588,17 @@ class KeyboardTab(QWidget):
         self.piano.update()
 
     def all_off(self):
-        """alles still: Note-Off für jede klingende Note, Sustain-Pedal hoch, dann CC 123."""
+        """all silent: note-off for every sounding note, sustain pedal up, then CC 123."""
         self.piano.release_all_keys()
         for n in list(self.sounding):
             self._off(n)
         self.held.clear()
         if self.sustain.isChecked():
-            self.sustain.setChecked(False)                 # sendet CC 64 = 0
+            self.sustain.setChecked(False)                 # sends CC 64 = 0
         self.send([0xB0 | self.ch(), 123, 0])
 
     def quiet(self) -> bool:
-        """True, wenn nichts klingt und kein Pedal gedrückt ist."""
+        """True if nothing is sounding and no pedal is pressed."""
         return not self.sounding and not self.sustain.isChecked() and not self.held
 
     def shift(self, d):
@@ -616,7 +616,7 @@ class KeyboardTab(QWidget):
         s.update(kb_channel=self.channel.value(), kb_velocity=self.vel.value(), kb_out=self.out.currentData() or FM1)
 
 
-# ================================================================ Takt ===
+# ================================================================ Clock ===
 class ClockTab(QWidget):
     def __init__(self, page):
         super().__init__()
@@ -704,13 +704,13 @@ class ClockTab(QWidget):
         return P.sends_clock(getattr(info, "version", "") or "")
 
     def _update_hint(self):
-        """Melodee ab 1.6.1 sendet mit CLK INT selbst Clock: daran erinnern, wenn die App das FM-1 takten soll."""
+        """Melodee from 1.6.1 sends clock itself with CLK INT: remind about that if the app should clock the FM-1."""
         from ... import playback as P
         show = (self.out.currentData() or FM1) == FM1 and self._device_sends_clock()
         self.hint.setText(P.CLOCK_CONFLICT if show else "")
         self.hint.setVisible(show)
 
-    def _send(self, data):                       # aus dem Clock-Thread
+    def _send(self, data):                       # from the clock thread
         if not self.page.send_to(self._target, data, realtime=True):
             raise RuntimeError(_("not sent"))
 
@@ -765,7 +765,7 @@ class ClockTab(QWidget):
             self.state.setText(_("stopped"))
         mt = self.page.monitor.meter
         if m.running and mt.alive() and getattr(self, "_target", None) == FM1:
-            # zwei Takte zugleich: das FM-1 führt selbst (CLK INT, ab Melodee 1.6.1) und hört nicht auf die App
+            # two clocks at once: the FM-1 leads itself (CLK INT, from Melodee 1.6.1) and doesn't listen to the app
             self.hint.setText(_("A clock is coming in at the same time – probably the FM-1 is sending "
                                 "itself (CLK INT). On the FM-1 set GLO › GLOBAL › CLK to USB, then it "
                                 "follows the app."))
@@ -783,7 +783,7 @@ class ClockTab(QWidget):
             self.follow.setText(_("no clock received"))
 
 
-# ============================================================== Regler ===
+# ============================================================== Knobs ===
 class Param:
     def __init__(self, pid, d):
         self.id, self.d = pid, d
@@ -835,7 +835,7 @@ class ControlsTab(QWidget):
         self.learn_port = None
         self.fill_learn()
 
-    # ---- Halten wie die FM-1-Seite
+    # ---- Hold like the FM-1 page
     def hold(self):
         link = self.page.ctx.link
         if self.held_link is link or link is None or link.closed:
@@ -869,12 +869,12 @@ class ControlsTab(QWidget):
                     a = link.request(Cmd.TRACK_PARAM, [self.track, pid, *self.enc14(v)], timeout=0.8, retries=0)
                     if len(a) >= 4:
                         self.params[pid].value = self.dec14(a[2], a[3])
-                except Exception:                          # noqa: BLE001 – nächster Versuch beim nächsten Dreh
+                except Exception:                          # noqa: BLE001 – next attempt on the next turn
                     pass
                 if stop.is_set():
                     return
 
-    # ---- Lesen
+    # ---- Read
     def read(self):
         ctx = self.page.ctx
         if not ctx.require(self):
@@ -888,7 +888,7 @@ class ControlsTab(QWidget):
             sel = 0
             try:
                 sel = link.request(Cmd.TRACK, [], timeout=1.0)[0]
-            except Exception:                              # noqa: BLE001 – ältere Firmware: eine Spur
+            except Exception:                              # noqa: BLE001 – older firmware: one track
                 pass
             n = max(1, getattr(info, "p_count", 0) or 64)
             out, dec = [], M.v14_dec
@@ -899,7 +899,7 @@ class ControlsTab(QWidget):
                 except Exception:                          # noqa: BLE001
                     continue
                 if pid == 0 and len(a) >= 9 and M.v14_dec(a[3], a[4]) <= -4096 and abs(r14(a, 3)) < 4096:
-                    dec = r14_pair                         # Demo-Gerät: Zweierkomplement statt +8192
+                    dec = r14_pair                         # demo device: two's complement instead of +8192
                 try:
                     d = _parse_desc(a, dec)
                 except (ProtocolError, IndexError):
@@ -933,7 +933,7 @@ class ControlsTab(QWidget):
         self.params = {p.id: p for p in plist}
         self.widgets.clear()
         self.rows = {}
-        self.learning = None                               # die alten „Lernen“-Knöpfe sind weg (sonst KeyError in on_cc)
+        self.learning = None                               # the old “Learn” buttons are gone (otherwise KeyError in on_cc)
         for i, p in enumerate(plist):
             name = QLabel(f"{p.d.label}" + (f" ({p.d.unit})" if p.d.unit else ""))
             name.setToolTip(_("Parameter {id}, {min} … {max}").format(id=p.id, min=p.d.min, max=p.d.max))
@@ -973,7 +973,7 @@ class ControlsTab(QWidget):
                                  "(DESC). Then control via the tab “Keyboard” (mod wheel) or the editor."))
 
     def forget(self, why: str):
-        """anderes Gerät oder getrennt: keine veralteten Regler zeigen."""
+        """different device or disconnected: don't show outdated knobs."""
         if not self.params and not getattr(self, "rows", None):
             return
         self.release()
@@ -995,7 +995,7 @@ class ControlsTab(QWidget):
             self.pending[pid] = int(v)
         self.wake.set()
 
-    # ---- MIDI-Learn
+    # ---- MIDI learn
     def fill_learn(self):
         names, hint = mido_names(False)
         self.learn_in.clear()
@@ -1011,7 +1011,7 @@ class ControlsTab(QWidget):
 
     def _learn_port(self, *_args):
         name = self.learn_in.currentData() or ""
-        self.learn_name = name                             # für learn_feed (MIDI-Thread liest kein Widget)
+        self.learn_name = name                             # for learn_feed (the MIDI thread doesn't read widgets)
         _settings()["learn_port"] = name
         _save()
         if self.learn_port is not None:
@@ -1044,7 +1044,7 @@ class ControlsTab(QWidget):
             btn.setText(f"CC {m['cc']}" if m else _("Learn"))
 
     def on_cc(self, ch, cc, val):
-        """im GUI-Thread: CC vom Lern-Eingang."""
+        """in the GUI thread: CC from the learn input."""
         if self.learning is not None:
             pid = self.learning
             lst = [m for m in _settings()["learn"] if m["id"] != pid and not (m["cc"] == cc and m["ch"] == ch)]
@@ -1079,7 +1079,7 @@ def r14_pair(lo, hi):
 def _parse_desc(a, dec):
     if dec is r14_pair:
         return parse_desc(a)
-    # wie protocol.parse_desc, aber mit Melodees +8192-Werten
+    # like protocol.parse_desc, but with Melodee's +8192 values
     from ...protocol import Desc, Reader
     r = Reader(a)
     scope, pid, fmt = r.b(), r.b(), r.b()
@@ -1098,7 +1098,7 @@ def _parse_desc(a, dec):
     return d
 
 
-# ========================================================= Verbindungen ===
+# ========================================================= Connections ===
 class RoutingTab(QWidget):
     ports_ready = pyqtSignal(object)
 
@@ -1229,7 +1229,7 @@ class RoutingTab(QWidget):
             return
         self._do([(fm.addr, fl.addr)])
 
-    # ---- Vorlagen
+    # ---- Templates
     def _fill_presets(self):
         self.presets.clear()
         for d in _settings()["routing_presets"]:
@@ -1270,7 +1270,7 @@ class RoutingTab(QWidget):
             self._fill_presets()
 
 
-# ================================================================ Seite ===
+# ================================================================ Page ===
 class MidiPage(QWidget):
     navigate = pyqtSignal(str)
     cc_in = pyqtSignal(int, int, int)
@@ -1314,13 +1314,13 @@ class MidiPage(QWidget):
         except Exception:                                  # noqa: BLE001
             return ""
 
-    # ---- Senden
+    # ---- Send
     def send_to(self, target, data, realtime=False) -> bool:
         if target == FM1 or not target:
             link = self.ctx.link
             if link is None or link.closed:
                 return False
-            # Echtzeit-Bytes dürfen laut Protokoll zwischen SysEx-Rahmen; nur wenn WIR das Gerät halten
+            # real-time bytes may appear between SysEx frames per the protocol; only when WE hold the device
             force = realtime and getattr(link, "_exclusive_depth", 0) <= self.own_holds
             try:
                 return link.send_midi(list(data), force=force)
@@ -1333,11 +1333,11 @@ class MidiPage(QWidget):
             return False
 
     def learn_feed(self, port, b):
-        """aus einem MIDI-Thread: CCs an Regler/MIDI-Learn."""
+        """from a MIDI thread: CCs to knobs/MIDI learn."""
         if len(b) == 3 and b[0] & 0xF0 == 0xB0 and port == getattr(self.controls, "learn_name", ""):
             self.cc_in.emit((b[0] & 15) + 1, b[1], b[2])
 
-    # ---- Mithören
+    # ---- Listening
     def _listen(self):
         link = self.ctx.link
         if link is self.listening:
@@ -1364,7 +1364,7 @@ class MidiPage(QWidget):
 
     def _tab(self, i):
         if self.tabs.widget(i) is not self.keyboard and not self.keyboard.quiet():
-            self.keyboard.all_off()                        # kein Hänger am FM-1, wenn der Reiter wechselt
+            self.keyboard.all_off()                        # no hanging note on the FM-1 when the tab changes
         if self.tabs.widget(i) is not self.controls:
             self.controls.release()
         elif self.controls.params:
@@ -1390,7 +1390,7 @@ class MidiPage(QWidget):
         self.keyboard.store()
         _save()
         self.controls.release()
-        if not self.clock.master.running:              # läuft die Clock, hört der Monitor weiter mit
+        if not self.clock.master.running:              # while the clock runs, the monitor keeps listening
             self.monitor.timer.stop()
             self._unlisten()
 

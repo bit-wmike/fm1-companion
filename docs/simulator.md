@@ -22,7 +22,7 @@ Rebuild: `python3 tools/build_sims.py --repo fm1-open=/path/to/fm1_open --repo m
   MIDI adapter (worklet messages for fm1-open/melodee, computer-key fallback), recording tap → WAV download,
   `?fm1latency=` latencyHint override, SSE MIDI relay when opened in Firefox, and a workaround for
   Chromium 102 (Qt 6.4) which forbids synchronous `WebAssembly.Module/Instance` > 4 KB on the main thread.
-* Online pages get MIDI via their own Web-MIDI port list ("FM-1 (Tasten)" – Tasten = keys –, chosen system inputs).
+* Online pages get MIDI via their own Web-MIDI port list ("FM-1 (keys)", chosen system inputs).
 * Additional sources (time-boxed): **fm1-emu** (Joakim Eriksson, MIT; CPU emulator running real .fwsc)
   is listed online, labelled slower, Firefox recommended – not bundled (Rust/cargo pages build with a firmware
   catalog step, out of time box). **FM-1 Workbench** (thegiantsnail) online entry. **RemoteFM1** (Quixotic7)
