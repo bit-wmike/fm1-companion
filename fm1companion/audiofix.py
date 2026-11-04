@@ -16,6 +16,8 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from .i18n import _
+
 SERVICE = "fluidsynth.service"
 PCM_RE = re.compile(r"^/dev/snd/pcmC(\d+)D(\d+)p$")
 AUDIO_DAEMONS = {"pipewire", "wireplumber", "pipewire-pulse", "pulseaudio", "jackd", "jackdbus"}
@@ -30,7 +32,8 @@ class Holder:
 
     @property
     def text(self) -> str:
-        return f"{self.name} (PID {self.pid}) belegt Soundkarte {self.card}, Gerät {self.device}"
+        return _("{name} (PID {pid}) is using sound card {card}, device {device}").format(
+            name=self.name, pid=self.pid, card=self.card, device=self.device)
 
 
 def _systemctl_user(*args: str, timeout: float = 5) -> tuple[int, str]:
@@ -83,12 +86,12 @@ def playback_holders(proc: Path = Path("/proc")) -> list[Holder]:
 def disable_fluidsynth_service(restart_audio: bool = True) -> tuple[bool, str]:
     """Benutzerdienst abschalten (FluidSynth bleibt installiert) und PipeWire die Karte neu suchen lassen.
     -> (ok, deutsche Meldung)"""
-    rc, _ = _systemctl_user("disable", "--now", SERVICE, timeout=15)
+    rc, _out = _systemctl_user("disable", "--now", SERVICE, timeout=15)
     if rc != 0:
-        return False, ("Der Dienst ließ sich nicht abschalten. Im Terminal: systemctl --user disable --now "
-                       "fluidsynth")
+        return False, _("The service could not be disabled. In a terminal: {command}").format(
+            command="systemctl --user disable --now fluidsynth")
     if restart_audio:
         _systemctl_user("restart", "wireplumber", "pipewire", "pipewire-pulse", timeout=20)
-    return True, ("Der automatische FluidSynth-Dienst ist abgeschaltet und der Ton neu gestartet – HDMI/Lautsprecher "
-                  "sollten wieder als Ausgang erscheinen. FluidSynth bleibt installiert; der Klangerzeuger der App "
-                  "startet es selbst, wenn du ihn benutzt.")
+    return True, _("The automatic FluidSynth service is disabled and the sound restarted – HDMI/speakers "
+                   "should show up as outputs again. FluidSynth stays installed; the app's sound module "
+                   "starts it by itself when you use it.")

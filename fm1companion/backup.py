@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from .i18n import N_, _
 from .protocol import Cmd, u32, r32, pack7, unpack7, crc32, ProtocolError
 
 CHUNK = 256
@@ -49,8 +50,20 @@ KNOWN_ID_SETS = {
     57: list(range(29)) + list(range(64, 92)),
 }
 
-RC_TEXT = {1: "ungültiges Objekt", 2: "Daten fehlerhaft (Prüfung fehlgeschlagen)",
-           3: "Wiedergabe zuerst stoppen", 4: "Flash-Schreibfehler", 5: "Backup neu starten (veraltet)"}
+
+class _Texts(dict):
+    """dict of N_()-marked texts that translates on access (RC_TEXT[rc], RC_TEXT.get(rc, default))"""
+
+    def __getitem__(self, key):
+        return _(super().__getitem__(key))
+
+    def get(self, key, default=None):
+        return self[key] if key in self else default
+
+
+# device return codes -> text
+RC_TEXT = _Texts({1: N_("invalid object"), 2: N_("data faulty (check failed)"),
+                  3: N_("stop playback first"), 4: N_("flash write error"), 5: N_("restart the backup (outdated)")})
 
 
 class BackupError(Exception):
@@ -91,9 +104,13 @@ def project_id(slot: int) -> int:
     raise ValueError("Projektplatz 1..32")
 
 
+def rc_text(rc: int) -> str:
+    return RC_TEXT.get(rc) or _("error {code}").format(code=rc)
+
+
 def _check(rc: int):
     if rc:
-        raise BackupError(RC_TEXT.get(rc, f"Fehler {rc}"))
+        raise BackupError(rc_text(rc))
 
 
 def object_title(oid: int, sloop: bool = False) -> str:
@@ -102,7 +119,7 @@ def object_title(oid: int, sloop: bool = False) -> str:
         from . import backup_inspect as BI
         return BI.describe(oid, b"", 0, 57, "", sloop=sloop).title
     except Exception:                               # noqa: BLE001 – Name ist nur Zugabe
-        return f"Objekt {oid}"
+        return _("object {id}").format(id=oid)
 
 
 def _with_written(e: BaseException, written: list) -> BaseException:
@@ -140,29 +157,29 @@ def protocol(link, hint: str = "") -> tuple[str, object]:
     if info.firmware_name == SLOOP or hint == SLOOP:
         proto = sloopbk.info_proto(info.raw)
         if proto and proto < sloopbk.MIN_PROTO:
-            raise BackupError(f"{info.version} kann noch keine Backups über USB – das geht erst ab SLOOP 2.3. "
-                              "Bitte SLOOP aktualisieren.")
+            raise BackupError(_("{version} cannot make backups over USB yet – that needs SLOOP 2.3 or later. "
+                                "Please update SLOOP.").format(version=info.version))
         return SLOOP, info
     return FELUCCA, info
 
 
 def parse_manifest(a) -> list[ObjInfo]:
     if not a or a[0] != 1:
-        raise BackupError("Gerät kennt dieses Backup-Protokoll nicht")
+        raise BackupError(_("the device does not know this backup protocol"))
     _check(a[1])
     n = a[2]
     if len(a) != 3 + n * 11:
-        raise BackupError("unvollständiges Inventar")
+        raise BackupError(_("incomplete inventory"))
     out = []
     for i in range(n):
         p = 3 + i * 11
         oid, size, crc = a[p], r32(a, p + 1), r32(a, p + 6)
         if size > max_size(oid) or (not size and crc):
-            raise BackupError("Objekt zu groß")
+            raise BackupError(_("object too large"))
         out.append(ObjInfo(oid, size, crc))
     known = KNOWN_ID_SETS.get(n)
     if known and [o.id for o in out] != known:
-        raise BackupError("unerwartete Objekt-Reihenfolge")
+        raise BackupError(_("unexpected object order"))
     return out
 
 
@@ -183,13 +200,13 @@ def read_object(link, o: ObjInfo, progress: Callable[[int], None] | None = None)
         a = link.request(Cmd.BACKUP_GET, [o.id, *u32(off), size & 127, size >> 7], timeout=1.0, retries=1)
         _check(a[1])
         if a[0] != o.id or r32(a, 2) != off or (a[7] | a[8] << 7) != size:
-            raise BackupError("unerwartete Antwort beim Lesen")
+            raise BackupError(_("unexpected answer while reading"))
         buf[off:off + size] = unpack7(a[9:], size)
         if progress:
             progress(size)
     data = bytes(buf)
     if crc32(data) != o.crc:
-        raise BackupError("Das Gerät hat sich während des Backups verändert. Bitte gestoppt erneut versuchen.")
+        raise BackupError(_("The device changed during the backup. Please try again with playback stopped."))
     return data
 
 
@@ -259,7 +276,7 @@ def read(file) -> Archive:
         try:
             file = json.loads(file)
         except ValueError:
-            raise BackupError("Keine Backup-Datei (kein JSON)")
+            raise BackupError(_("Not a backup file (no JSON)"))
     if isinstance(file, dict) and file.get("format") == SLOOP_FORMAT:
         from . import sloopbk
         m = sloopbk.objects(file)
@@ -268,28 +285,28 @@ def read(file) -> Archive:
         return Archive(file=file, objects=objs, known=True)
     if not isinstance(file, dict) or file.get("format") != FORMAT or file.get("version") != 1 \
             or not isinstance(file.get("objects"), list) or not file["objects"]:
-        raise BackupError("Kein vollständiges Felucca-/Melodee-Backup")
+        raise BackupError(_("Not a complete Felucca/Melodee backup"))
     known_ids = KNOWN_ID_SETS.get(len(file["objects"]))
     objs = []
     for i, o in enumerate(file["objects"]):
         try:
             oid, size, crc, data = o["id"], o["size"], o["crc"], o["data"]
         except (KeyError, TypeError):
-            raise BackupError("ungültiges Objekt im Backup")
+            raise BackupError(_("invalid object in the backup"))
         if known_ids and oid != known_ids[i]:
-            raise BackupError("unerwartete Objekt-Reihenfolge im Backup")
+            raise BackupError(_("unexpected object order in the backup"))
         if not isinstance(oid, int) or not isinstance(size, int) or not 0 <= size <= max_size(oid) or not isinstance(crc, int) \
                 or not 0 <= crc <= 0xFFFFFFFF or not isinstance(data, str) or len(data) != 4 * ((size + 2) // 3):
-            raise BackupError("ungültiges Objekt im Backup")
+            raise BackupError(_("invalid object in the backup"))
         try:
             raw = base64.b64decode(data, validate=True)
         except ValueError:
-            raise BackupError("Backup beschädigt (Base64)")
+            raise BackupError(_("Backup damaged (Base64)"))
         if len(raw) != size or crc32(raw) != crc:
-            raise BackupError("Prüfsumme im Backup stimmt nicht")
+            raise BackupError(_("Checksum in the backup does not match"))
         objs.append({**o, "bytes": raw})
     if not objs[0]["size"] or (len(objs) > 1 and not objs[1]["size"]):
-        raise BackupError("Backup enthält die laufende Musik oder die Einstellungen nicht")
+        raise BackupError(_("The backup does not contain the running music or the settings"))
     return Archive(file=file, objects=objs, known=bool(known_ids))
 
 
@@ -410,11 +427,11 @@ def preflight(link, oid: int, data: bytes, proto: str | None = None) -> int:
 def _match(link, archive: Archive, hint: str = "") -> tuple[str, object]:
     proto, info = protocol(link, hint)
     if archive.sloop and proto != SLOOP:
-        raise BackupError("Das ist ein SLOOP-Backup, auf dem FM-1 läuft aber eine andere Firmware. "
-                          "Es wurde nichts geschrieben.")
+        raise BackupError(_("This is a SLOOP backup, but the FM-1 runs a different firmware. "
+                            "Nothing was written."))
     if not archive.sloop and proto == SLOOP:
-        raise BackupError("Das ist ein Melodee-/Felucca-Backup, auf dem FM-1 läuft aber SLOOP – die Formate "
-                          "passen nicht zusammen. Es wurde nichts geschrieben.")
+        raise BackupError(_("This is a Melodee/Felucca backup, but the FM-1 runs SLOOP – the formats "
+                            "do not match. Nothing was written."))
     return proto, info
 
 
@@ -454,23 +471,23 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
     if len(supported) != 57:
         for o in archive.objects:
             if is_project(o["id"]) and o["size"] > live and not (live >= 19008 and o["size"] in (19084, 19092, 20224)):
-                raise BackupError("Dieses Backup braucht eine Firmware mit größerem Aufnahmespeicher")
+                raise BackupError(_("This backup needs a firmware with a larger recording memory"))
     for o in archive.objects:
         if o["id"] not in sup_ids and o["size"]:
-            raise BackupError(f"Die Firmware auf dem FM-1 kennt „{object_title(o['id'])}“ aus dem Backup nicht "
-                              "(andere Version). Es wurde nichts geschrieben.")
+            raise BackupError(_("The firmware on the FM-1 does not know “{part}” from the backup "
+                                "(different version). Nothing was written.").format(part=object_title(o['id'])))
     # Vorabprüfung jedes Objekts, bevor irgendetwas ersetzt wird
     for o in archive.objects:
         if not is_sample(o["id"]) and o["size"] and o["id"] in sup_ids:
             rc = preflight(link, o["id"], o["bytes"], FELUCCA)
             if rc == 1:
-                raise BackupError("Das Backup hat ein älteres Format. Erst mit Melodee 1.2 zurückspielen. "
-                                  "Es wurde nichts geschrieben.")
+                raise BackupError(_("The backup has an older format. Restore it with Melodee 1.2 first. "
+                                    "Nothing was written."))
             if rc == 3:
-                raise BackupError("Bitte erst die Wiedergabe am FM-1 stoppen – es wurde nichts geschrieben.")
+                raise BackupError(_("Please stop playback on the FM-1 first – nothing was written."))
             if rc:
-                raise BackupError(f"„{object_title(o['id'])}“: {RC_TEXT.get(rc, f'Fehler {rc}')}. "
-                                  "Es wurde nichts geschrieben.")
+                raise BackupError(_("“{part}”: {error}. Nothing was written.").format(part=object_title(o['id']),
+                                                                                   error=rc_text(rc)))
     written: list[int] = []
     try:
         if len(archive.objects) == 28 and 28 in sup_ids:
@@ -494,13 +511,13 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
 def _restore_sample(link, slot: int, data: bytes, step):
     def check(a):
         if a[0] != slot:
-            raise BackupError("unerwartete Sample-Antwort")
+            raise BackupError(_("unexpected sample answer"))
         _check(a[-1])
     if not data:
         check(link.request(Cmd.SMP_ERASE, [slot], timeout=4.0, retries=0))
         return
     if len(data) < 512:
-        raise BackupError("Sample-Objekt zu kurz")
+        raise BackupError(_("sample object too short"))
     check(link.request(Cmd.SMP_BEGIN, [slot], timeout=4.0, retries=0))
     for off in range(512, len(data), CHUNK):
         chunk = data[off:off + CHUNK]
@@ -525,7 +542,7 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
     by_id = {o["id"]: o for o in archive.objects}
     missing = want - set(by_id)
     if missing:
-        raise BackupError(f"„{object_title(sorted(missing)[0], archive.sloop)}“ ist nicht im Backup")
+        raise BackupError(_("“{part}” is not in the backup").format(part=object_title(sorted(missing)[0], archive.sloop)))
     proto, info = _match(link, archive)
     if proto == SLOOP:
         return _restore_selected_sloop(link, archive, want, progress, expect, cancelled, info)
@@ -534,14 +551,14 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
     sup = {o.id: o for o in supported}
     for oid in want:
         if oid not in sup and by_id[oid]["size"]:
-            raise BackupError(f"Die Firmware auf dem FM-1 kennt „{object_title(oid)}“ aus dem Backup nicht "
-                              "(andere Version). Es wurde nichts geschrieben.")
+            raise BackupError(_("The firmware on the FM-1 does not know “{part}” from the backup "
+                                "(different version). Nothing was written.").format(part=object_title(oid)))
     if expect:
         for oid, (size, crc) in expect.items():
             cur = sup.get(oid)
             if cur is not None and (cur.size, cur.crc) != (size, crc):
-                raise BackupError("Das Gerät hat sich seit dem Lesen verändert. Bitte noch einmal auswählen "
-                                  "und bestätigen – es wurde nichts geschrieben.")
+                raise BackupError(_("The device has changed since it was read. Please select and confirm "
+                                    "again – nothing was written."))
     order_ids = [o["id"] for o in archive.objects[2:] + archive.objects[1:2] + archive.objects[0:1]]
     todo = [by_id[i] for i in order_ids if i in want and i in sup]
     total = sum(o["size"] for o in todo) or 1
@@ -557,13 +574,14 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
         if not is_sample(o["id"]) and o["size"]:
             rc = preflight(link, o["id"], o["bytes"], FELUCCA)
             if rc == 1:
-                raise BackupError(f"„{object_title(o['id'])}“: Das Gerät nimmt dieses Format nicht an "
-                                  "(ältere oder andere Firmware). Es wurde nichts geschrieben.")
+                raise BackupError(_("“{part}”: The device does not accept this format "
+                                    "(older or different firmware). Nothing was written.").format(
+                    part=object_title(o['id'])))
             if rc == 3:
-                raise BackupError("Bitte erst die Wiedergabe am FM-1 stoppen – es wurde nichts geschrieben.")
+                raise BackupError(_("Please stop playback on the FM-1 first – nothing was written."))
             if rc:
-                raise BackupError(f"„{object_title(o['id'])}“: {RC_TEXT.get(rc, f'Fehler {rc}')}. "
-                                  "Es wurde nichts geschrieben.")
+                raise BackupError(_("“{part}”: {error}. Nothing was written.").format(part=object_title(o['id']),
+                                                                                   error=rc_text(rc)))
     written: list[int] = []
     try:
         if clear_extension and 28 in sup and 28 not in want:
@@ -571,7 +589,9 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
             _check(_put(link, [2, 28])[2])
         for o in todo:
             if cancelled and cancelled():
-                raise BackupError("abgebrochen")
+                err = BackupError(_("cancelled"))
+                err.cancelled = True
+                raise err
             if is_sample(o["id"]):
                 _restore_sample(link, o["id"] - 32, o["bytes"], step)
             else:
@@ -591,10 +611,10 @@ def written_text(e: BaseException, planned, sloop: bool = False, titles: dict | 
         return titles.get(i) or object_title(i, sloop)
     rest = [i for i in planned if i not in done]
     if not done:
-        return "Auf dem FM-1 wurde nichts verändert."
-    txt = "Schon auf dem FM-1 geschrieben: " + ", ".join(name(i) for i in done) + "."
+        return _("Nothing was changed on the FM-1.")
+    txt = _("Already written to the FM-1: {parts}.").format(parts=", ".join(name(i) for i in done))
     if rest:
-        txt += " Noch im alten Zustand: " + ", ".join(name(i) for i in rest) + "."
+        txt += " " + _("Still in the old state: {parts}.").format(parts=", ".join(name(i) for i in rest))
     return txt
 
 
@@ -605,8 +625,8 @@ def _restore_selected_sloop(link, archive: Archive, want: set, progress, expect,
         for oid, (size, crc) in expect.items():
             c = cur.get(oid)
             if c is not None and (c.size, c.crc) != (size, crc):
-                raise BackupError("Das Gerät hat sich seit dem Lesen verändert. Bitte noch einmal auswählen "
-                                  "und bestätigen – es wurde nichts geschrieben.")
+                raise BackupError(_("The device has changed since it was read. Please select and confirm "
+                                    "again – nothing was written."))
     return sloopbk.restore(link, archive.file, progress, ids=sorted(want), cancelled=cancelled, info=info)
 
 

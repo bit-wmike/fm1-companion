@@ -10,14 +10,16 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 
+from .i18n import N_, _, ngettext
 from .projectfmt import NSTEP, ST_NOTE, ST_REST, ST_TIE, Step, LANES
 
 MAX_NOTES = 4          # Melodee: bis zu 4 Noten je Step
 
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+# The German names below are keys (used by callers and tests); the UI shows the *_LABELS (translated with _()).
 SCALES = {
     "Dur (Ionisch)": [0, 2, 4, 5, 7, 9, 11],
-    "Moll (Äolisch)": [0, 2, 3, 5, 7, 8, 10],
+    "Moll (Äolisch)": [0, 2, 3, 5, 7, 8, 10],  # i18n: ignore – key
     "Dorisch": [0, 2, 3, 5, 7, 9, 10],
     "Phrygisch": [0, 1, 3, 5, 7, 8, 10],
     "Lydisch": [0, 2, 4, 6, 7, 9, 11],
@@ -40,6 +42,18 @@ PROGRESSIONS = {
     "Kanon (Pachelbel)": "I V vi iii IV I IV V",
     "i–iv–v (Moll)": "i iv v i",
     "I–IV (Gospel)": "I IV I IV",
+}
+SCALE_LABELS = {
+    "Dur (Ionisch)": N_("Major (Ionian)"), "Moll (Äolisch)": N_("Minor (Aeolian)"), "Dorisch": N_("Dorian"),  # i18n: ignore – keys
+    "Phrygisch": N_("Phrygian"), "Lydisch": N_("Lydian"), "Mixolydisch": N_("Mixolydian"), "Lokrisch": N_("Locrian"),
+    "Harmonisch Moll": N_("Harmonic minor"), "Melodisch Moll": N_("Melodic minor"),
+    "Dur-Pentatonik": N_("Major pentatonic"), "Moll-Pentatonik": N_("Minor pentatonic"), "Blues": N_("Blues"),
+    "Chromatisch": N_("Chromatic"),
+}
+PROGRESSION_LABELS = {
+    "I–vi–IV–V (50er)": N_("I–vi–IV–V (50s)"), "Andalusisch (i–VII–VI–V)": N_("Andalusian (i–VII–VI–V)"),
+    "12-Takt-Blues": N_("12-bar blues"), "Kanon (Pachelbel)": N_("Canon (Pachelbel)"),
+    "i–iv–v (Moll)": N_("i–iv–v (minor)"),
 }
 ROMAN = {"I": 0, "II": 1, "III": 2, "IV": 3, "V": 4, "VI": 5, "VII": 6}
 
@@ -78,7 +92,7 @@ def _len(length: int) -> int:
 
 def drum_pattern(specs: list[LaneSpec], length: int = 16, vel: int = 100) -> list[Step]:
     """mehrere Lanes -> Drum-Grid-Steps (hit/acc-Bits)."""
-    steps = [Step() for _ in range(NSTEP)]
+    steps = [Step() for _i in range(NSTEP)]
     length = _len(length)
     for sp in specs:
         if not sp.enabled or not 0 <= sp.lane < 8:
@@ -114,7 +128,7 @@ def parse_roman(sym: str) -> tuple[int, str, int]:
         i += 1
     num, rest = s[:i], s[i:]
     if not num or num.upper() not in ROMAN:
-        raise ValueError(f"Unbekannte Stufe: {sym}")
+        raise ValueError(_("Unknown degree: {symbol}").format(symbol=sym))
     minor = num.islower()
     quality = "min" if minor else "maj"
     rest_l = rest.lower()
@@ -150,7 +164,7 @@ def chord_from_roman(sym: str, key_root: int, scale: str = "Dur (Ionisch)", octa
 
 def voice(chord: list[int], voicing: str = "eng", inversion: int = 0, max_notes: int = MAX_NOTES) -> list[int]:
     notes = sorted(chord)[:max_notes]
-    for _ in range(inversion % max(1, len(notes))):
+    for _i in range(inversion % max(1, len(notes))):
         notes = notes[1:] + [notes[0] + 12]
     if voicing == "weit" and len(notes) >= 3:          # open: mittlere Note eine Oktave hoch
         notes = [notes[0], notes[2], notes[1] + 12] + notes[3:]
@@ -190,6 +204,12 @@ RHYTHMS = {
     "Charleston": [1, 0, 0, 1, 0, 0, 0, 0],
     "Reggae-Skank": [0, 0, 1, 0, 0, 0, 1, 0],
 }
+RHYTHM_LABELS = {"ganze Akkorde": N_("whole chords"), "Halbe": N_("Halves"), "Viertel": N_("Quarters"),
+                 "Reggae-Skank": N_("Reggae skank")}
+VOICINGS = ["eng", "weit", "drop-2", "Grundton tief"]
+VOICING_LABELS = {"eng": N_("close"), "weit": N_("open"), "Grundton tief": N_("low root")}
+BASS_STYLES = ["Grundton", "Oktaven", "Achtel-Puls", "Walking"]
+BASS_STYLE_LABELS = {"Grundton": N_("root"), "Oktaven": N_("octaves"), "Achtel-Puls": N_("eighth pulse")}
 
 
 @dataclass
@@ -213,7 +233,7 @@ def chord_steps(o: ChordOptions) -> tuple[list[Step], list[str]]:
     chords = [voice(chord_from_roman(s, o.key, o.scale, o.octave), o.voicing, o.inversion) for s in syms]
     if o.smooth:
         chords = smooth_inversions(chords)
-    steps = [Step() for _ in range(NSTEP)]
+    steps = [Step() for _i in range(NSTEP)]
     rhythm = RHYTHMS.get(o.rhythm, [1])
     names = []
     i = 0
@@ -237,26 +257,28 @@ def chord_steps(o: ChordOptions) -> tuple[list[Step], list[str]]:
 
 
 # ---------------------------------------------------------------------- Melodie ---
-ARP_MODES = ["auf", "ab", "auf/ab", "Zufall", "Akkord-Muster 1-3-5-8"]
+ARP_MODES = ["auf", "ab", "auf/ab", "Zufall", "Akkord-Muster 1-3-5-8"]  # i18n: ignore – keys
+ARP_MODE_LABELS = {"auf": N_("up"), "ab": N_("down"), "auf/ab": N_("up/down"), "Zufall": N_("random"),  # i18n: ignore – keys
+                   "Akkord-Muster 1-3-5-8": N_("chord pattern 1-3-5-8")}
 
 
-def arp_steps(chord: list[int], mode: str = "auf", length: int = 16, octaves: int = 1, gate_tie: bool = False,
-              vel: int = 100, seed: int = 1) -> list[Step]:
+def arp_steps(chord: list[int], mode: str = "auf", length: int = 16, octaves: int = 1,  # i18n: ignore
+              gate_tie: bool = False, vel: int = 100, seed: int = 1) -> list[Step]:
     rnd = random.Random(seed)
     pool = sorted(min(127, n + 12 * o) for o in range(max(1, octaves)) for n in chord)
     length = _len(length)
     if not pool:
-        return [Step() for _ in range(NSTEP)]
+        return [Step() for _i in range(NSTEP)]
     if mode == "ab":
         seq = pool[::-1]
-    elif mode == "auf/ab":
+    elif mode == "auf/ab":  # i18n: ignore
         seq = pool + pool[-2:0:-1]
     elif mode.startswith("Akkord"):
         c = sorted(chord)
         seq = [c[0], c[min(1, len(c) - 1)], c[min(2, len(c) - 1)], min(127, c[0] + 12)]
     else:
         seq = pool
-    steps = [Step() for _ in range(NSTEP)]
+    steps = [Step() for _i in range(NSTEP)]
     for i in range(length):
         n = rnd.choice(pool) if mode == "Zufall" else seq[i % len(seq)]
         steps[i] = Step(notes=[n], time=ST_NOTE, vel=vel)
@@ -266,7 +288,7 @@ def arp_steps(chord: list[int], mode: str = "auf", length: int = 16, octaves: in
 def bass_steps(chords: list[list[int]], steps_per_chord: int = 4, length: int = 16, style: str = "Grundton",
                vel: int = 110, seed: int = 1) -> list[Step]:
     rnd = random.Random(seed)
-    steps = [Step() for _ in range(NSTEP)]
+    steps = [Step() for _i in range(NSTEP)]
     chords = [c for c in chords if c]
     steps_per_chord = max(1, steps_per_chord)
     if not chords:
@@ -317,7 +339,7 @@ def random_walk(o: WalkOptions) -> list[Step]:
         idx = roots[0] if roots else 0
     else:
         idx = rnd.randrange(len(pool))
-    steps = [Step() for _ in range(NSTEP)]
+    steps = [Step() for _i in range(NSTEP)]
     last_note = False
     for i in range(_len(o.length)):
         r = rnd.random()
@@ -357,13 +379,13 @@ class Markov:
 
     def generate(self, length: int = 16, seed: int = 1, transpose: int = 0, vel: int = 100) -> list[Step]:
         rnd = random.Random(seed)
-        steps = [Step() for _ in range(NSTEP)]
+        steps = [Step() for _i in range(NSTEP)]
         length = _len(length)
         if not self.trained or not length:
             return steps
         state = list(rnd.choice(self.starts))
         out = list(state)
-        while sum(max(1, d) for _, d in out) < length:
+        while sum(max(1, d) for _n, d in out) < length:
             nxt = self.table.get(tuple(state))
             if not nxt:
                 state = list(rnd.choice(self.starts))
@@ -386,7 +408,7 @@ class Markov:
 
 def markov_from_midi(path, order: int = 1, steps_per_beat: int = 4) -> Markov:
     from . import midi_import as MI
-    tracks, _ = MI.read_midi(path)
+    tracks, _bpm = MI.read_midi(path)
     m = Markov(order)
     for t in tracks:
         mono = {}
@@ -404,8 +426,8 @@ def call_response(call: list[Step], length: int, key: int = 0, scale: str = "Dur
     rnd = random.Random(seed)
     length = _len(length)
     half = max(1, length // 2)
-    steps = [Step() for _ in range(NSTEP)]
-    call = list(call) + [Step() for _ in range(NSTEP - len(call))]
+    steps = [Step() for _i in range(NSTEP)]
+    call = list(call) + [Step() for _i in range(NSTEP - len(call))]
     pool = scale_notes(key, scale, 36, 96)
     for i in range(half):
         steps[i] = _copy(call[i])
@@ -434,20 +456,21 @@ def _copy(s: Step) -> Step:
     return Step(list(s.notes), s.time, s.accent, s.slide, s.recorded, s.vel, s.hit, s.acc, s.chance)
 
 
-VEL_CURVES = ["gleich", "Betonung 1 und 3", "Crescendo", "Decrescendo", "Zufall ±"]
+VEL_CURVES = ["gleich", "Betonung 1 und 3", "Crescendo", "Decrescendo", "Zufall ±"]  # i18n: ignore – keys
+VEL_CURVE_LABELS = {"gleich": N_("even"), "Betonung 1 und 3": N_("accent on 1 and 3"), "Zufall ±": N_("random ±")}  # i18n: ignore – keys
 
 
 def humanize(steps: list[Step], length: int, curve: str = "Zufall ±", amount: int = 12, chance: int = 100,
              chance_offbeats_only: bool = True, seed: int = 1) -> list[Step]:
     rnd = random.Random(seed)
-    out = [_copy(s) for s in steps] + [Step() for _ in range(NSTEP - len(steps))]
+    out = [_copy(s) for s in steps] + [Step() for _i in range(NSTEP - len(steps))]
     length = _len(length)
     for i in range(length):
         s = out[i]
         if s.time != ST_NOTE:
             continue
         v = s.vel or 96
-        if curve == "Betonung 1 und 3":
+        if curve == "Betonung 1 und 3":  # i18n: ignore
             v += amount if i % 8 == 0 else amount // 2 if i % 4 == 0 else -amount // 2
         elif curve == "Crescendo":
             v += int(amount * (2 * i / max(1, length - 1) - 1))
@@ -465,7 +488,7 @@ def variation(steps: list[Step], length: int, kind: str, key: int = 0, scale: st
               seed: int = 1) -> list[Step]:
     """B/C-Varianten eines Patterns: 'B' = andere Töne im Schlussviertel, 'C' = ausgedünnt + Oktavsprünge."""
     rnd = random.Random(seed)
-    out = [_copy(s) for s in steps] + [Step() for _ in range(NSTEP - len(steps))]
+    out = [_copy(s) for s in steps] + [Step() for _i in range(NSTEP - len(steps))]
     length = _len(length)
     pool = scale_notes(key, scale, 0, 127)
     if kind == "B":
@@ -488,14 +511,19 @@ def variation(steps: list[Step], length: int, kind: str, key: int = 0, scale: st
 def describe(steps: list[Step], length: int) -> str:
     notes = sum(1 for s in steps[:length] if s.time == ST_NOTE and s.notes)
     hits = sum(bin(s.hit).count("1") for s in steps[:length])
-    parts = [f"{length} Steps"]
+    parts = [ngettext("{n} step", "{n} steps", length).format(n=length)]
     if notes:
-        parts.append(f"{notes} Noten-Steps")
+        parts.append(ngettext("{n} note step", "{n} note steps", notes).format(n=notes))
     if hits:
-        parts.append(f"{hits} Drum-Schläge")
+        parts.append(ngettext("{n} drum hit", "{n} drum hits", hits).format(n=hits))
     return ", ".join(parts)
+
+
+def label(key: str, labels: dict) -> str:
+    """translated display name of a generator key (scale, progression, rhythm, mode …)"""
+    return _(labels[key]) if key in labels else key
 
 
 __all__ = ["euclid", "drum_pattern", "LaneSpec", "chord_steps", "ChordOptions", "arp_steps", "bass_steps",
            "random_walk", "WalkOptions", "Markov", "markov_from_midi", "call_response", "humanize", "variation",
-           "SCALES", "PROGRESSIONS", "LANES", "scale_notes", "chord_from_roman", "voice", "describe"]
+           "SCALES", "PROGRESSIONS", "LANES", "label", "scale_notes", "chord_from_roman", "voice", "describe"]

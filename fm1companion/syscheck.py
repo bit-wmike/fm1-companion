@@ -17,6 +17,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .i18n import N_, _, decimal, ngettext
+
 LEVELS = ("ok", "info", "warn", "error", "unknown")
 FM1_RE = re.compile(r"fm-?1|melodee|felucca|sloop|skiff|m-vave|ellic|wl82|uboot", re.I)
 FM1_IDS = {"1209:0001"}                       # Melodee/Felucca (pid.codes) – "Ellic Studio Melodee FM-1"
@@ -36,12 +38,12 @@ class Finding:
     evidence: list[str] = field(default_factory=list)   # passende Log-Zeilen
 
     def text(self) -> str:
-        mark = {"ok": "OK  ", "info": "INFO", "warn": "WARN", "error": "FEHL", "unknown": "?   "}[self.level]
+        mark = {"ok": "OK  ", "info": "INFO", "warn": "WARN", "error": _("FAIL"), "unknown": "?   "}[self.level]
         out = [f"[{mark}] {self.title}"]
         if self.detail:
             out.append("       " + self.detail)
         if self.fix:
-            out.append("       Lösung: " + self.fix)
+            out.append("       " + _("Fix: {fix}").format(fix=self.fix))
         for e in self.evidence[:6]:
             out.append("         | " + e)
         return "\n".join(out)
@@ -69,7 +71,7 @@ def parse_log(text: str) -> list[LogLine]:
 # ----------------------------------------------------------- Log lesen ---
 def _run(args, timeout=6) -> tuple[int, str, str]:
     if not shutil.which(args[0]):
-        return 127, "", f"{args[0]} nicht gefunden"
+        return 127, "", _("{program} not found").format(program=args[0])
     try:
         p = subprocess.run(args, capture_output=True, text=True, timeout=timeout, errors="replace")
         return p.returncode, p.stdout, p.stderr
@@ -86,13 +88,13 @@ def read_kernel_log() -> tuple[str, str, str]:
     lines = [ln for ln in out2.splitlines() if ln.strip() and not ln.startswith(("Hint:", "-- "))]
     if rc2 == 0 and len(lines) > 3:
         return out2, "journalctl", ""
-    why = (err or "").strip() or (err2 or "").strip() or "keine Ausgabe"
+    why = (err or "").strip() or (err2 or "").strip() or _("no output")
     return "", "", why
 
 
 def read_user_journal() -> str:
     """Meldungen von PipeWire/WirePlumber dieser Sitzung (für XRuns)."""
-    rc, out, _ = _run(["journalctl", "--user", "-b", "--no-pager", "-o", "short-monotonic",
+    rc, out, _err = _run(["journalctl", "--user", "-b", "--no-pager", "-o", "short-monotonic",
                        "-u", "pipewire", "-u", "wireplumber", "-u", "pipewire-pulse"])
     return out if rc == 0 else ""
 
@@ -167,20 +169,24 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
         burst = _max_in_window(d.disconnects, 600)
         if burst >= 3:
             found.append(Finding(
-                f"fm1-loop:{path}", "error", f"{name} trennt sich immer wieder (Anschluss {path})",
-                f"{len(d.disconnects)} Trennungen seit dem Start, davon {burst} innerhalb von 10 Minuten. Das passiert "
-                "fast immer wegen Kabel, Stromversorgung oder Hub – selten wegen der Firmware.",
-                "Anderes (kurzes) USB-Kabel probieren, das FM-1 direkt an den Pi stecken statt an einen Hub, "
-                "bei einem Hub einen mit eigenem Netzteil nehmen. Prüfe außerdem das Pi-Netzteil (siehe Unterspannung).",
+                f"fm1-loop:{path}", "error", _("{name} keeps disconnecting (port {path})").format(name=name, path=path),
+                _("{count} disconnects since boot, {burst} of them within 10 minutes. This is almost "
+                  "always caused by the cable, the power supply or a hub – rarely by the firmware.").format(
+                      count=len(d.disconnects), burst=burst),
+                _("Try a different (short) USB cable, plug the FM-1 directly into the Pi instead of a "
+                  "hub, with a hub use one with its own power supply. Also check the Pi's power supply "
+                  "(see under-voltage)."),
                 _ev(ev, 8)))
         elif d.disconnects:
             found.append(Finding(
-                f"fm1-disc:{path}", "info", f"{name} wurde {len(d.disconnects)}× getrennt (Anschluss {path})",
-                "Einzelne Trennungen sind normal, wenn du das FM-1 ausgesteckt, ausgeschaltet oder eine Firmware "
-                "installiert hast.", "Nur wenn du nichts gemacht hast: Kabel und Anschluss prüfen.", _ev(ev, 4)))
+                f"fm1-disc:{path}", "info", _("{name} was disconnected {count}× (port {path})").format(
+                    name=name, count=len(d.disconnects), path=path),
+                _("Single disconnects are normal if you unplugged the FM-1, switched it off or installed "
+                  "a firmware."), _("Only if you did nothing: check the cable and the port."), _ev(ev, 4)))
     if fm1 and not any(f.key.startswith(("fm1-loop", "fm1-disc")) for f in found):
         d = next(iter(fm1.values()))
-        found.append(Finding("fm1-usb", "ok", f"{d.product or 'FM-1'} stabil am USB ({d.path}, {d.ids or 'ID ?'})"))
+        found.append(Finding("fm1-usb", "ok", _("{name} stable on USB ({path}, {ids})").format(
+            name=d.product or 'FM-1', path=d.path, ids=d.ids or 'ID ?')))
 
     # --- Fehler beim Erkennen eines USB-Geräts (-71/-110 …)
     enum = _grep(lines, r"device descriptor read/\d+, error|device not accepting address|unable to enumerate USB device|"
@@ -190,26 +196,28 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
         on_fm1 = any(p in fm1 or any(p.startswith((f + ".", f + "-")) for f in fm1) for p in paths)
         found.append(Finding(
             "usb-enum", "error" if on_fm1 or len(enum) >= 3 else "warn",
-            "USB-Gerät ließ sich nicht richtig erkennen" + (f" ({', '.join(paths)})" if paths else ""),
-            "Der Pi bekam vom Gerät beim Anstecken keine saubere Antwort (Fehler -71/-110). Typisch für ein "
-            "schlechtes oder zu langes Kabel, ein reines Ladekabel ohne Datenleitungen oder zu wenig Strom.",
-            "Ein anderes Datenkabel nehmen, direkt am Pi anstecken, Netzteil prüfen. Beim FM-1: einmal aus- und "
-            "wieder einschalten.", _ev(enum)))
+            _("USB device could not be recognized properly ({ports})").format(ports=", ".join(paths)) if paths
+            else _("USB device could not be recognized properly"),
+            _("The Pi got no clean answer from the device when it was plugged in (error -71/-110). "
+              "Typical for a bad or too long cable, a charge-only cable without data lines or too little "
+              "power."),
+            _("Use a different data cable, plug it directly into the Pi, check the power supply. For the "
+              "FM-1: switch it off and on once."), _ev(enum)))
 
     # --- Überstrom
     oc = _grep(lines, r"over-?current")
     if oc:
         found.append(Finding(
-            "usb-overcurrent", "error", "Überstrom an einem USB-Anschluss",
-            "Ein Gerät hat mehr Strom gezogen, als der Anschluss liefern darf – der Pi schaltet den Anschluss dann ab.",
-            "Stromhungrige Geräte (Festplatten, Ladegeräte) an einen USB-Hub mit eigenem Netzteil hängen; das "
-            "Netzteil des Pi prüfen (Pi 5: offizielles 27-W-Netzteil).", _ev(oc)))
+            "usb-overcurrent", "error", _("Over-current on a USB port"),
+            _("A device drew more current than the port may deliver – the Pi then switches the port off."),
+            _("Connect power-hungry devices (hard disks, chargers) to a USB hub with its own power "
+              "supply; check the Pi's power supply (Pi 5: official 27 W power supply)."), _ev(oc)))
     power = _grep(lines, r"insufficient available bus power|rejected \d+ configuration")
     if power:
         found.append(Finding(
-            "usb-power", "error", "USB-Gerät abgewiesen: zu wenig Strom am Bus",
-            "Der USB-Anschluss (oder Hub) kann das Gerät nicht versorgen.",
-            "Gerät direkt an den Pi oder an einen Hub mit eigenem Netzteil stecken.", _ev(power)))
+            "usb-power", "error", _("USB device rejected: not enough power on the bus"),
+            _("The USB port (or hub) cannot power the device."),
+            _("Plug the device directly into the Pi or into a hub with its own power supply."), _ev(power)))
 
     # --- xHCI (USB-Controller)
     xdead = _grep(lines, r"xhci.*(not responding|assume dead|HC died|host system error|Host halt failed)")
@@ -222,33 +230,33 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
                 and any(re.search(rf"\busb {re.escape(pth)}:", ln.msg) for pth in fm1)]
         if trig:
             found.append(Finding(
-                "xhci-dead", "error", "USB-Controller ist abgestürzt – beim Audio-Start des FM-1",
-                "Der USB-Controller des Rechners hat aufgegeben; alle USB-Geräte waren danach weg. Gleichzeitig "
-                "scheiterte das Einschalten des Audio-Datenstroms des FM-1 (usb_set_interface). Das FM-1 ist auch "
-                "eine USB-Soundkarte; PipeWire öffnet sie von selbst. Am Pi 5 kann ein solcher Audio-Start mancher "
-                "USB-Geräte den Controller zum Absturz bringen – das ist ein Problem von Kernel/Controller, nicht "
-                "des FM-1 oder der App.",
-                "1) Ohne Neustart: nur diesen Controller neu anmelden (echo xhci-hcd.N | sudo tee "
-                "/sys/bus/platform/drivers/xhci-hcd/unbind, dann …/bind; N aus der Meldung oben) – nie den Controller "
-                "mit der System-Festplatte; sonst Rechner neu starten. 2) Prüfen, ob Updates bereitliegen "
-                "(sudo rpi-eeprom-update, apt list --upgradable) und nur dann aktualisieren. "
-                "3) FM-1 an die andere Buchsenart stecken (blau USB 3 / schwarz USB 2) – ohne Hub. "
-                "4) Brauchst du den Ton des FM-1 nicht im Rechner (Studio und MIDI brauchen ihn nicht), in "
-                "KDE-Systemeinstellungen › Audio beim FM-1 das Profil „Aus“ wählen; dann öffnet PipeWire den "
-                "Audio-Datenstrom nicht mehr.", _ev(xdead + trig)))
+                "xhci-dead", "error", _("USB controller crashed – when the FM-1 audio started"),
+                _("The computer's USB controller gave up; all USB devices were gone afterwards. At the "
+                  "same time, switching on the FM-1 audio stream failed (usb_set_interface). The FM-1 is "
+                  "also a USB sound card; PipeWire opens it by itself. On the Pi 5, such an audio start "
+                  "of some USB devices can crash the controller – this is a problem of the "
+                  "kernel/controller, not of the FM-1 or the app."),
+                _("1) Without a reboot: re-register only this controller (echo xhci-hcd.N | sudo tee "
+                  "/sys/bus/platform/drivers/xhci-hcd/unbind, then …/bind; N from the message above) – "
+                  "never the controller with the system disk; otherwise restart the computer. 2) Check "
+                  "whether updates are available (sudo rpi-eeprom-update, apt list --upgradable) and only "
+                  "then update. 3) Plug the FM-1 into the other kind of socket (blue USB 3 / black USB 2) "
+                  "– without a hub. 4) If you don't need the FM-1 sound on the computer (Studio and MIDI "
+                  "don't need it), choose the profile “Off” for the FM-1 in KDE System Settings › Audio; "
+                  "then PipeWire no longer opens the audio stream."), _ev(xdead + trig)))
         else:
             found.append(Finding(
-                "xhci-dead", "error", "USB-Controller ist abgestürzt",
-                "Der USB-Controller des Rechners hat aufgegeben; alle USB-Geräte waren danach weg.",
-                "Rechner neu starten. Passiert es öfter: Hub mit eigenem Netzteil verwenden; prüfen, ob Kernel- oder "
-                "Bootloader-Updates bereitliegen (sudo rpi-eeprom-update, apt list --upgradable), und nur dann "
-                "aktualisieren.", _ev(xdead)))
+                "xhci-dead", "error", _("USB controller crashed"),
+                _("The computer's USB controller gave up; all USB devices were gone afterwards."),
+                _("Restart the computer. If it happens more often: use a hub with its own power supply; "
+                  "check whether kernel or bootloader updates are available (sudo rpi-eeprom-update, apt "
+                  "list --upgradable), and only then update."), _ev(xdead)))
     elif len(xwarn) >= 3:
         found.append(Finding(
-            "xhci-warn", "warn", f"USB-Controller meldet Warnungen ({len(xwarn)}×)",
-            "Meist harmlos, kann aber zu Aussetzern bei USB-Audio/MIDI führen.",
-            "Wenn das FM-1 dabei hakt: anderen USB-Anschluss probieren (die blauen USB-3-Buchsen und die "
-            "schwarzen USB-2-Buchsen hängen am Pi 5 an getrennten Controllern).", _ev(xwarn)))
+            "xhci-warn", "warn", _("USB controller reports warnings ({count}×)").format(count=len(xwarn)),
+            _("Mostly harmless, but can cause dropouts in USB audio/MIDI."),
+            _("If the FM-1 stutters: try a different USB port (on the Pi 5 the blue USB 3 sockets and the "
+              "black USB 2 sockets are on separate controllers)."), _ev(xwarn)))
 
     # --- snd-usb-audio
     freq = _grep(lines, r"cannot set freq|clock source \d+ is not valid|uac_clock_source_is_valid")
@@ -257,85 +265,91 @@ def analyze_log(text: str, fm1_paths: set[str] | None = None, user_journal: str 
                        r"snd-usb-audio.*error|snd_usb_audio.*error|ep \S+: no free urbs")
     if freq:
         found.append(Finding(
-            "snd-freq", "warn", "USB-Audio: Abtastrate ließ sich nicht einstellen",
-            "Ein Audio-Gerät hat die gewünschte Abtastrate abgelehnt. Das FM-1 arbeitet mit 48 kHz; fordert ein "
-            "Programm 44,1 kHz an, kann es knacksen oder stumm bleiben.",
-            "Aufnahme mit 48000 Hz starten (die Aufnahme-Seite macht das automatisch). In PipeWire die Standardrate "
-            "auf 48000 lassen.", _ev(freq)))
+            "snd-freq", "warn", _("USB audio: sample rate could not be set"),
+            _("An audio device rejected the requested sample rate. The FM-1 works at 48 kHz; if a program "
+              "requests 44.1 kHz, it may crackle or stay silent."),
+            _("Start recording at 48000 Hz (the recording page does this automatically). Leave the "
+              "default rate in PipeWire at 48000."), _ev(freq)))
     if urb:
         found.append(Finding(
-            "snd-urb", "warn" if len(urb) < 20 else "error", f"USB-Audio: Übertragungsfehler ({len(urb)}×)",
-            "Audio-Pakete zwischen FM-1 und Rechner gingen verloren. Folge: Knackser oder Aussetzer in Aufnahmen.",
-            "FM-1 direkt am Pi anstecken (kein Hub), andere USB-Geräte am selben Anschluss abziehen, CPU-Last "
-            "senken; bei vielen Meldungen Kabel tauschen.", _ev(urb)))
+            "snd-urb", "warn" if len(urb) < 20 else "error", _("USB audio: transfer errors ({count}×)").format(
+                count=len(urb)),
+            _("Audio packets between the FM-1 and the computer were lost. Result: clicks or dropouts in "
+              "recordings."),
+            _("Plug the FM-1 directly into the Pi (no hub), unplug other USB devices on the same port, "
+              "reduce the CPU load; with many messages replace the cable."), _ev(urb)))
     xr = [ln for ln in parse_log(user_journal) if re.search(r"xrun|XRun|underrun|overrun", ln.msg)]
     if xr:
         found.append(Finding(
-            "xrun", "warn" if len(xr) < 30 else "error", f"Audio-Aussetzer (XRuns) in PipeWire ({len(xr)}×)",
-            "Der Audio-Server kam nicht hinterher – hörbar als Knackser.",
-            "Andere Programme schließen, größere Puffer verwenden (PIPEWIRE_QUANTUM=1024/48000), Aufnahme nicht "
-            "über einen USB-Hub.", _ev(xr)))
+            "xrun", "warn" if len(xr) < 30 else "error", _("Audio dropouts (XRuns) in PipeWire ({count}×)").format(
+                count=len(xr)),
+            _("The audio server could not keep up – audible as clicks."),
+            _("Close other programs, use larger buffers (PIPEWIRE_QUANTUM=1024/48000), don't record via a "
+              "USB hub."), _ev(xr)))
 
     # --- Unterspannung / Temperatur im Log
     uv = _grep(lines, r"under-?voltage detected")
     if uv:
         found.append(Finding(
-            "undervoltage-log", "error", f"Unterspannung erkannt ({len(uv)}× seit dem Start)",
-            "Das Netzteil liefert zu wenig Spannung. Dann drosselt der Pi, und USB-Geräte wie das FM-1 können sich "
-            "trennen oder Aussetzer haben.",
-            "Offizielles Raspberry-Pi-Netzteil verwenden (Pi 5: 27 W / 5 A), kurzes dickes USB-C-Kabel, keine "
-            "stromhungrigen Geräte direkt am Pi.", _ev(uv)))
+            "undervoltage-log", "error", _("Under-voltage detected ({count}× since boot)").format(count=len(uv)),
+            _("The power supply delivers too little voltage. Then the Pi throttles, and USB devices like "
+              "the FM-1 can disconnect or have dropouts."),
+            _("Use the official Raspberry Pi power supply (Pi 5: 27 W / 5 A), a short thick USB-C cable, "
+              "no power-hungry devices directly on the Pi."), _ev(uv)))
     hot = _grep(lines, r"temperature above threshold|thermal.*(critical|throttl)|cpu clock throttled")
     if hot:
         found.append(Finding(
-            "thermal-log", "warn", "Überhitzung im Kernel-Protokoll",
-            "Der Prozessor wurde wegen Hitze gebremst – Audio kann dann aussetzen.",
-            "Kühler/Lüfter prüfen (Pi 5: Active Cooler), Gehäuse belüften.", _ev(hot)))
+            "thermal-log", "warn", _("Overheating in the kernel log"),
+            _("The processor was slowed down because of heat – audio may then drop out."),
+            _("Check the cooler/fan (Pi 5: Active Cooler), ventilate the case."), _ev(hot)))
 
     # --- Speicherkarte
     io = _grep(lines, r"I/O error, dev (mmcblk|sd|nvme)|EXT4-fs error|mmc\d+: (error|timeout)|Buffer I/O error")
     if io:
         found.append(Finding(
-            "disk-io", "warn", "Datenträger meldet Lesefehler",
-            "Die Speicherkarte oder SSD hatte Fehler beim Lesen/Schreiben.",
-            "Wichtige Daten (Backups im FM-1-Ordner) zusätzlich woanders sichern; Karte ggf. tauschen.", _ev(io)))
+            "disk-io", "warn", _("Storage device reports read errors"),
+            _("The memory card or SSD had errors while reading/writing."),
+            _("Also save important data (backups in the FM-1 folder) somewhere else; replace the card if "
+              "necessary."), _ev(io)))
     return found
 
 
 # ------------------------------------------------------------ Systemwerte ---
-THROTTLE = {0: "Unterspannung jetzt", 1: "Takt begrenzt jetzt", 2: "gedrosselt jetzt", 3: "Temperaturgrenze jetzt",
-            16: "Unterspannung seit dem Start", 17: "Takt begrenzt seit dem Start",
-            18: "gedrosselt seit dem Start", 19: "Temperaturgrenze seit dem Start"}
+THROTTLE = {0: N_("under-voltage now"), 1: N_("frequency capped now"), 2: N_("throttled now"),
+            3: N_("temperature limit now"), 16: N_("under-voltage since boot"), 17: N_("frequency capped since boot"),
+            18: N_("throttled since boot"), 19: N_("temperature limit since boot")}
 
 
 def throttled_findings(raw: int | None) -> list[Finding]:
     if raw is None:
         return []
-    names = [t for b, t in THROTTLE.items() if raw >> b & 1]
-    ev = [f"vcgencmd get_throttled → throttled={hex(raw)} ({', '.join(names) or 'alles in Ordnung'})"]
+    names = [_(t) for b, t in THROTTLE.items() if raw >> b & 1]
+    ev = [f"vcgencmd get_throttled → throttled={hex(raw)} ({', '.join(names) or _('all fine')})"]
     out = []
     if raw & 0x1:
-        out.append(Finding("uv-now", "error", "Unterspannung – gerade jetzt",
-                           "Das Netzteil bricht gerade ein. USB-Geräte können ausfallen.",
-                           "Netzteil tauschen (Pi 5: offizielles 27-W-Netzteil), Kabel prüfen.", ev))
+        out.append(Finding("uv-now", "error", _("Under-voltage – right now"),
+                           _("The power supply is dropping right now. USB devices may fail."),
+                           _("Replace the power supply (Pi 5: official 27 W power supply), check the cable."), ev))
     elif raw & 0x10000:
-        out.append(Finding("uv-past", "warn", "Unterspannung seit dem Start aufgetreten",
-                           "Irgendwann seit dem Einschalten hat das Netzteil zu wenig geliefert.",
-                           "Netzteil und Kabel prüfen, besonders wenn das FM-1 sich manchmal trennt.", ev))
+        out.append(Finding("uv-past", "warn", _("Under-voltage occurred since boot"),
+                           _("At some point since switching on, the power supply delivered too little."),
+                           _("Check the power supply and cable, especially if the FM-1 sometimes "
+                             "disconnects."), ev))
     if raw & 0x8 or raw & 0x4:
-        out.append(Finding("temp-now", "warn", "Pi wird gerade wegen Hitze gedrosselt",
-                           "Hohe Temperatur bremst den Prozessor; Simulator und Aufnahme können stocken.",
-                           "Für Kühlung sorgen (Lüfter, Gehäuse öffnen).", ev))
+        out.append(Finding("temp-now", "warn", _("Pi is being throttled because of heat right now"),
+                           _("High temperature slows the processor down; the simulator and recording may "
+                             "stutter."),
+                           _("Provide cooling (fan, open the case)."), ev))
     elif raw & 0xC0000:
-        out.append(Finding("temp-past", "info", "Seit dem Start einmal wegen Hitze gedrosselt",
-                           "War kurz zu warm.", "Bei Aussetzern Kühlung prüfen.", ev))
+        out.append(Finding("temp-past", "info", _("Throttled once because of heat since boot"),
+                           _("It was too warm for a short time."), _("If there are dropouts, check the cooling."), ev))
     if not out:
-        out.append(Finding("power-ok", "ok", "Stromversorgung und Temperatur in Ordnung", evidence=ev))
+        out.append(Finding("power-ok", "ok", _("Power supply and temperature fine"), evidence=ev))
     return out
 
 
 def get_throttled() -> int | None:
-    rc, out, _ = _run(["vcgencmd", "get_throttled"], timeout=3)
+    rc, out, _err = _run(["vcgencmd", "get_throttled"], timeout=3)
     m = re.search(r"0x([0-9a-fA-F]+)", out) if rc == 0 else None
     return int(m.group(1), 16) if m else None
 
@@ -357,15 +371,19 @@ def pi5_power_findings(root: Path = Path("/proc/device-tree/chosen/power")) -> l
     oc = _dt_u32(root / "usb_over_current_detected")
     out = []
     if oc:
-        out.append(Finding("pi5-oc", "error", "Pi 5 hat Überstrom an USB erkannt",
-                           "Die Firmware hat einen USB-Überstrom festgestellt.",
-                           "Geräte einzeln abziehen und prüfen; stromhungrige Geräte an einen aktiven Hub."))
+        out.append(Finding("pi5-oc", "error", _("Pi 5 detected over-current on USB"),
+                           _("The firmware detected a USB over-current."),
+                           _("Unplug the devices one by one and check them; power-hungry devices to an "
+                             "active hub.")))
     if cur is not None and cur < 5000 and not usb_en:
-        out.append(Finding("pi5-usb-budget", "warn", f"USB-Strom begrenzt (Netzteil meldet {cur / 1000:.1f} A)",
-                           "Ohne 5-A-Netzteil gibt der Pi 5 an allen USB-Buchsen zusammen nur 600 mA ab. Das FM-1 "
-                           "allein passt, mit Festplatte oder weiteren Geräten kann es knapp werden.",
-                           "Offizielles 27-W-Netzteil benutzen oder einen USB-Hub mit eigenem Netzteil. (Fortgeschritten: "
-                           "usb_max_current_enable=1 in /boot/firmware/config.txt – nur mit gutem Netzteil.)"))
+        out.append(Finding("pi5-usb-budget", "warn", _("USB current limited (power supply reports {amps} A)").format(
+            amps=decimal(cur / 1000, 1)),
+                           _("Without a 5 A power supply the Pi 5 delivers only 600 mA on all USB sockets "
+                             "together. The FM-1 alone fits; with a hard disk or more devices it can get "
+                             "tight."),
+                           _("Use the official 27 W power supply or a USB hub with its own power supply. "
+                             "(Advanced: usb_max_current_enable=1 in /boot/firmware/config.txt – only "
+                             "with a good power supply.)")))
     return out
 
 
@@ -383,17 +401,17 @@ def midi_ports() -> list[str] | None:
         import mido
         return sorted(set(mido.get_input_names()) | set(mido.get_output_names()))
     except Exception:  # noqa: BLE001 – ohne rtmidi
-        rc, out, _ = _run(["aconnect", "-l"])
+        rc, out, _err = _run(["aconnect", "-l"])
         if rc != 0:
             return None
         return re.findall(r"client \d+: '([^']+)'", out)
 
 
 def pipewire_running() -> bool | None:
-    rc, _, _ = _run(["pw-cli", "info", "0"], timeout=3)
+    rc, _out, _err = _run(["pw-cli", "info", "0"], timeout=3)
     if rc == 0:
         return True
-    rc2, out, _ = _run(["systemctl", "--user", "is-active", "pipewire"], timeout=3)
+    rc2, out, _err = _run(["systemctl", "--user", "is-active", "pipewire"], timeout=3)
     if rc2 == 127 and rc == 127:
         return None
     return out.strip() == "active"
@@ -412,20 +430,21 @@ def blocked_findings(holders=None, service=None) -> list[Finding]:
     if active or (enabled and fs):
         out.append(Finding(
             "fluidsynth-service", "error" if fs else "warn",
-            "Der FluidSynth-Dienst " + ("belegt die Soundkarte" if fs else "startet bei jeder Anmeldung"),
-            "Debians Paket „fluidsynth“ bringt einen Dienst mit, der bei der Anmeldung startet und die erste "
-            "Soundkarte (am Pi: HDMI) direkt öffnet. PipeWire bekommt sie dann nicht – kein HDMI-Ton, nur noch "
-            "„Schein-Ausgabe“. Der Klangerzeuger der App braucht den Dienst nicht."
+            _("The FluidSynth service is occupying the sound card") if fs
+            else _("The FluidSynth service starts at every login"),
+            _("Debian's package “fluidsynth” comes with a service that starts at login and opens the "
+              "first sound card (on the Pi: HDMI) directly. PipeWire then doesn't get it – no HDMI sound, "
+              "only “Dummy Output”. The app's sound generator doesn't need the service.")
             + (" " + "; ".join(h.text for h in fs) + "." if fs else ""),
-            "In der App: Hinweis „Dienst abschalten“ – oder im Terminal: systemctl --user disable --now fluidsynth "
-            "&& systemctl --user restart wireplumber pipewire pipewire-pulse"))
+            _("In the app: notice “Disable service” – or in the terminal: systemctl --user disable --now "
+              "fluidsynth && systemctl --user restart wireplumber pipewire pipewire-pulse")))
     others = [h for h in holders if not h.name.startswith("fluidsynth")]
     if others:
         out.append(Finding(
-            "snd-blocked", "warn", "Soundkarte von einem Programm direkt belegt",
-            "; ".join(h.text for h in others) + ". Solange das so ist, kann PipeWire diese Karte nicht benutzen "
-            "(fehlt dann als Ausgang).",
-            "Das Programm beenden oder in seinen Einstellungen auf PipeWire/PulseAudio statt ALSA umstellen."))
+            "snd-blocked", "warn", _("Sound card occupied directly by a program"),
+            _("{programs}. As long as this is the case, PipeWire cannot use this card (it is then missing as an "
+              "output).").format(programs="; ".join(h.text for h in others)),
+            _("Quit the program or switch it from ALSA to PipeWire/PulseAudio in its settings.")))
     return out
 
 
@@ -440,61 +459,72 @@ def playback_finding(backends: list[str] | None = None, default=None) -> Finding
         except Exception:  # noqa: BLE001
             default = None
     if not backends:
-        return Finding("playback", "warn", "Kein Abspielprogramm fürs Vorhören (pw-play, paplay, aplay, ffplay)",
-                       "Ohne eines bleiben „Anhören“/„Vorhören“ im Rechner stumm (auf dem FM-1 abspielen geht trotzdem).",
+        return Finding("playback", "warn", _("No player for previewing (pw-play, paplay, aplay, ffplay)"),
+                       _("Without one, “Listen”/“Preview” stay silent on the computer (playing on the "
+                         "FM-1 still works)."),
                        "sudo apt install pipewire-bin")
-    where = f" – Ton geht an „{default.description}“" if default else ""
+    def where(title: str) -> str:
+        return _("{title} – sound goes to “{output}”").format(title=title, output=default.description) \
+            if default else title
     if default is not None and default.is_dummy:
-        return Finding("playback", "warn", f"Vorhören: kein echter Audio-Ausgang{where}",
-                       "PipeWire hat keinen Lautsprecher/Kopfhörer/HDMI-Ausgang gefunden und spielt ins Leere – "
-                       "„Anhören“ und das Studio bleiben stumm. Häufig nach einem Absturz des USB-Controllers "
-                       "(USB-Lautsprecher/-Soundkarte weg) oder ohne angeschlossenes HDMI-Gerät.",
-                       "Lautsprecher/Soundkarte anschließen bzw. Rechner neu starten; dann in den "
-                       "KDE-Systemeinstellungen › Audio den Ausgang wählen.")
+        return Finding("playback", "warn", where(_("Preview: no real audio output")),
+                       _("PipeWire found no speaker/headphone/HDMI output and plays into the void – "
+                         "“Listen” and the Studio stay silent. Often after a crash of the USB controller "
+                         "(USB speaker/sound card gone) or without a connected HDMI device."),
+                       _("Connect a speaker/sound card or restart the computer; then choose the output in "
+                         "KDE System Settings › Audio."))
     if default is not None and default.is_fm1:
-        return Finding("playback", "warn", f"Vorhören: {backends[0]}{where}", audioout.output_hint(default),
-                       "KDE-Systemeinstellungen › Audio: Lautsprecher/HDMI/Kopfhörer als Standard wählen – oder in der "
-                       "App beim Vorhören „Ausgabe“ umstellen.")
-    return Finding("playback", "ok", f"Vorhören: {backends[0]}{where}")
+        return Finding("playback", "warn", where(_("Preview: {player}").format(player=backends[0])),
+                       audioout.output_hint(default),
+                       _("KDE System Settings › Audio: choose speakers/HDMI/headphones as default – or "
+                         "switch “Output” in the app when previewing."))
+    return Finding("playback", "ok", where(_("Preview: {player}").format(player=backends[0])))
 
 
 def status_findings(folder: Path | None = None) -> list[Finding]:
     out = []
     cards = fm1_alsa_cards()
-    out.append(Finding("alsa", "ok", f"Soundkarte des FM-1 gefunden: {cards[0]}") if cards else
-               Finding("alsa", "info", "Keine Soundkarte des FM-1 gefunden",
-                       "Ohne angeschlossenes FM-1 ist das normal. Mit FM-1: es meldet sich als USB-Audio-Gerät.",
-                       "FM-1 einschalten und per USB-Datenkabel anschließen."))
+    out.append(Finding("alsa", "ok", _("FM-1 sound card found: {card}").format(card=cards[0])) if cards else
+               Finding("alsa", "info", _("No FM-1 sound card found"),
+                       _("This is normal without a connected FM-1. With an FM-1: it shows up as a USB "
+                         "audio device."),
+                       _("Switch the FM-1 on and connect it with a USB data cable.")))
     ports = midi_ports()
     if ports is None:
-        out.append(Finding("midi", "warn", "MIDI nicht nutzbar",
-                           "Weder python3-rtmidi noch aconnect sind verfügbar.",
+        out.append(Finding("midi", "warn", _("MIDI not usable"),
+                           _("Neither python3-rtmidi nor aconnect is available."),
                            "sudo apt install python3-rtmidi alsa-utils"))
     else:
         fm = [p for p in ports if FM1_RE.search(p)]
-        out.append(Finding("midi", "ok" if fm else "info",
-                           f"MIDI-Port des FM-1: {fm[0]}" if fm else f"Kein FM-1-MIDI-Port ({len(ports)} andere Ports)"))
+        title = _("FM-1 MIDI port: {port}").format(port=fm[0]) if fm else \
+            ngettext("No FM-1 MIDI port ({n} other port)", "No FM-1 MIDI port ({n} other ports)", len(ports)).format(
+                n=len(ports))
+        out.append(Finding("midi", "ok" if fm else "info", title))
     pw = pipewire_running()
     out.append(Finding("pipewire", {True: "ok", False: "warn", None: "unknown"}[pw],
-                       {True: "PipeWire läuft", False: "PipeWire läuft nicht",
-                        None: "PipeWire-Status unbekannt"}[pw],
-                       "" if pw else "Für die Aufnahme über PipeWire nötig (ALSA geht auch ohne).",
+                       {True: _("PipeWire is running"), False: _("PipeWire is not running"),
+                        None: _("PipeWire status unknown")}[pw],
+                       "" if pw else _("Needed for recording via PipeWire (ALSA works without it)."),
                        "" if pw else "systemctl --user enable --now pipewire pipewire-pulse wireplumber"))
     out.extend(blocked_findings())
     out.append(playback_finding())
-    for exe, pkg, why in (("audacity", "audacity", "Aufnahmen bearbeiten"), ("ffmpeg", "ffmpeg", "MP3/FLAC-Samples"),
-                          ("fluidsynth", "fluidsynth", "Klangerzeuger für MIDI-Spuren 5–8")):
+    for exe, pkg, why in (("audacity", "audacity", N_("editing recordings")), ("ffmpeg", "ffmpeg", N_("MP3/FLAC samples")),
+                          ("fluidsynth", "fluidsynth", N_("sound generator for MIDI tracks 5–8"))):
         ok = shutil.which(exe) is not None
-        out.append(Finding(f"tool-{exe}", "ok" if ok else "info", f"{exe} {'vorhanden' if ok else 'fehlt'} ({why})",
+        title = (_("{program} available ({purpose})") if ok else _("{program} missing ({purpose})")).format(
+            program=exe, purpose=_(why))
+        out.append(Finding(f"tool-{exe}", "ok" if ok else "info", title,
                            fix="" if ok else f"sudo apt install {pkg}"))
     if folder is not None:
         try:
             u = shutil.disk_usage(folder)
             gib = u.free / 2 ** 30
             lvl = "error" if u.free < 200 * 2 ** 20 else "warn" if u.free < 2 * 2 ** 30 else "ok"
-            out.append(Finding("disk", lvl, f"Freier Platz im FM-1-Ordner: {gib:.1f} GiB".replace(".", ","),
-                               "" if lvl == "ok" else "Backups, Aufnahmen und Firmware-Downloads brauchen Platz.",
-                               "" if lvl == "ok" else "Alte Aufnahmen/Downloads löschen oder den Hauptordner verlegen."))
+            out.append(Finding("disk", lvl, _("Free space in the FM-1 folder: {size} GiB").format(size=decimal(gib, 1)),
+                               "" if lvl == "ok" else _("Backups, recordings and firmware downloads need "
+                                                        "space."),
+                               "" if lvl == "ok" else _("Delete old recordings/downloads or move the main "
+                                                        "folder.")))
         except OSError:
             pass
     return out
@@ -507,10 +537,11 @@ def run_all(folder: Path | None = None, fm1_paths: set[str] | None = None) -> tu
     found: list[Finding] = []
     if problem:
         found.append(Finding(
-            "log-access", "unknown", "Kernel-Protokoll nicht lesbar",
-            f"Ohne Zugriff auf das Kernel-Protokoll lassen sich USB- und Stromprobleme nicht erkennen ({problem}).",
-            "Deinen Benutzer in die Gruppe 'adm' aufnehmen: sudo usermod -aG adm $USER – danach ab- und wieder "
-            "anmelden. Einmalig geht auch: sudo dmesg"))
+            "log-access", "unknown", _("Kernel log not readable"),
+            _("Without access to the kernel log, USB and power problems cannot be detected ({problem}).").format(
+                problem=problem),
+            _("Add your user to the group 'adm': sudo usermod -aG adm $USER – then log out and in again. "
+              "For once also: sudo dmesg")))
     else:
         found += analyze_log(text, fm1_paths, read_user_journal())
     found += throttled_findings(get_throttled())
@@ -523,9 +554,12 @@ def run_all(folder: Path | None = None, fm1_paths: set[str] | None = None) -> tu
 
 def report(found: list[Finding], meta: dict | None = None) -> str:
     from . import __version__
-    head = [f"FM-1 Companion {__version__} – Systemcheck {time.strftime('%d.%m.%Y %H:%M')}",
-            f"Rechner: {Path('/proc/device-tree/model').read_text(errors='replace').strip(chr(0)) if Path('/proc/device-tree/model').exists() else os.uname().machine}",
-            f"Quelle: {(meta or {}).get('source') or 'kein Kernel-Protokoll'}", ""]
+    model = Path("/proc/device-tree/model")
+    head = [_("FM-1 Companion {version} – system check {time}").format(version=__version__,
+                                                                     time=time.strftime("%d.%m.%Y %H:%M")),
+            _("Computer: {model}").format(model=model.read_text(errors="replace").strip(chr(0)) if model.exists()
+                                          else os.uname().machine),
+            _("Source: {source}").format(source=(meta or {}).get("source") or _("no kernel log")), ""]
     from .redact import redact_text             # Rechnername, Home, Tokens nie im geteilten Bericht
     return redact_text("\n".join(head + [f.text() for f in found]) + "\n")
 

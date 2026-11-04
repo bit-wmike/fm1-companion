@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 
 from . import backup
+from .i18n import N_, _
 from .protocol import Cmd, Reader, parse_audio_stats, parse_info, ProtocolError
 
 
@@ -34,9 +35,11 @@ def _run(args, timeout=3) -> str:
         return ""
 
 
-THROTTLE_BITS = {0: "Unterspannung jetzt", 1: "Takt gedrosselt (ARM) jetzt", 2: "gedrosselt jetzt",
-                 3: "Temperaturgrenze jetzt", 16: "Unterspannung seit dem Start", 17: "Takt gedrosselt seit dem Start",
-                 18: "gedrosselt seit dem Start", 19: "Temperaturgrenze seit dem Start"}
+# vcgencmd get_throttled bits -> text (translated where used)
+THROTTLE_BITS = {0: N_("under-voltage now"), 1: N_("clock throttled (ARM) now"), 2: N_("throttled now"),
+                 3: N_("temperature limit now"), 16: N_("under-voltage since start-up"),
+                 17: N_("clock throttled since start-up"), 18: N_("throttled since start-up"),
+                 19: N_("temperature limit since start-up")}
 
 
 class PiMonitor:
@@ -113,7 +116,7 @@ class PiMonitor:
         if thr:
             m2 = re.search(r"0x([0-9a-fA-F]+)", thr)
             bits = int(m2.group(1), 16) if m2 else 0
-            d["throttled"] = [txt for b, txt in THROTTLE_BITS.items() if bits >> b & 1]
+            d["throttled"] = [_(txt) for b, txt in THROTTLE_BITS.items() if bits >> b & 1]
             d["throttled_raw"] = hex(bits)
         volts = _run(["vcgencmd", "measure_volts", "core"])
         d["core_volts"] = volts.split("=")[-1] if volts else ""
@@ -173,7 +176,7 @@ class PiMonitor:
         if not m:
             return None, []
         bits = int(m.group(1), 16)
-        return bits, [txt for b, txt in THROTTLE_BITS.items() if bits >> b & 1]
+        return bits, [_(txt) for b, txt in THROTTLE_BITS.items() if bits >> b & 1]
 
     @staticmethod
     def usb_devices() -> list[dict]:

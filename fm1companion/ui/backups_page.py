@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (QCheckBox, QFileDialog, QFormLayout, QGroupBox, QHB
                              QVBoxLayout, QWidget)
 
 from .. import autobackup as AB, backup, config, projects
+from ..i18n import N_, _, ngettext, pgettext
 from .common import confirm, fmt_date, fmt_size, fw_label, heading, icon, show_error
 from .responsive import reflow
 
@@ -32,8 +33,9 @@ class _Row(QTreeWidgetItem):
         return super().__lt__(other)
 
 backup_filename = AB.backup_filename          # (firmware_page importiert es von hier)
-KIND_TEXT = {"manuell": "manuell", "auto": "automatisch", "vor-Update": "vor Firmware-Wechsel",
-             "sicherheit": "Sicherheit"}
+# backup kinds (the keys are stored in the backup files) -> display text, translated where used: _(KIND_TEXT[k])
+KIND_TEXT = {"manuell": N_("manual"), "auto": N_("automatic"), "vor-Update": N_("before firmware change"),
+             "sicherheit": N_("safety")}
 
 
 def no_backup_reason(ctx) -> str:
@@ -41,64 +43,69 @@ def no_backup_reason(ctx) -> str:
     if ctx.connected:
         return ""
     if ctx.port is None:
-        return "Kein FM-1 verbunden. Bitte ein FM-1 per USB anschließen."
+        return _("No FM-1 connected. Please connect an FM-1 via USB.")
     if getattr(ctx, "protocol", "") == "update":
-        return ("Das FM-1 ist im Update-Modus – erst die Installation abschließen (Seite „Rettung“), dann sichern.")
+        return _("The FM-1 is in update mode – finish the installation first (page “Rescue”), then back up.")
     if getattr(ctx, "midi_connected", False):
         from .device import firmware_name
-        fw = firmware_name(ctx.firmware_key) or "Die laufende Firmware"
-        return (f"{fw} hat kein Editor-Protokoll – davon kann die App kein Backup machen. Backups gibt es bei "
-                "Melodee, Skiff und SLOOP. Wichtige Projekte bitte mit dem Werkzeug der Firmware sichern.")
-    return "Das FM-1 antwortet nicht. Kabel prüfen und neu verbinden."
+        fw = firmware_name(ctx.firmware_key) or _("The running firmware")
+        return _("{firmware} has no editor protocol – the app cannot make a backup of it. Backups are available "
+                 "for Melodee, Skiff and SLOOP. Please back up important projects with the firmware's own tool."
+                 ).format(firmware=fw)
+    return _("The FM-1 does not respond. Check the cable and reconnect.")
 
 
 def make_backup(ctx, parent, note: str = "", kind: str = "") -> Path | None:
+    from .device import FolderError
     why = no_backup_reason(ctx)
     if why:
-        show_error(parent, "Backup nicht möglich", why)
+        show_error(parent, _("Backup not possible"), why)
         return None
     prof = ctx.profile
     try:
         folder = ctx.device_folder(ctx.settings.backups_dir)
     except OSError as e:
-        show_error(parent, "Backup nicht möglich", str(e) if str(e).startswith("Der Ordner") else
-                   f"Der Backup-Ordner lässt sich nicht anlegen: {e.strerror or e}")
+        show_error(parent, _("Backup not possible"), str(e) if isinstance(e, FolderError) else
+                   _("The backup folder cannot be created: {error}").format(error=e.strerror or e))
         return None
     version = ctx.info.version if ctx.info else ""
     fw = ctx.firmware_key
     akind = {"auto": "sicherheit", "": "manuell"}.get(kind, kind)
 
     def work(w, link):
-        w.log.emit("Lese das Inventar …")
+        w.log.emit(_("Reading the inventory …"))
         try:
             path = AB.capture_to_file(link, folder, prof, fw, version, note, akind,
                                       progress=lambda a, b: w.progress.emit(a, b),
                                       abort=lambda: bool(getattr(w, "cancelled", False)))
         except backup.BackupError as e:
-            if "abgebrochen" in str(e):
-                raise backup.BackupError("Abgebrochen – es wurde keine Datei gespeichert, am FM-1 wurde nichts "
-                                         "verändert.") from e
+            if getattr(e, "cancelled", False):
+                raise backup.BackupError(_("Cancelled – no file was saved, nothing was changed on the FM-1.")) from e
             raise
         except OSError as e:
             from .. import firmware as _fw
-            w.log.emit("Technische Details: " + _fw.explain(e))
-            raise RuntimeError(f"Das Backup wurde gelesen, aber nicht gespeichert: {_fw.friendly_error(e)}") from e
-        w.log.emit(f"Gesichert: {fmt_size(path.stat().st_size)} – Firmware {fw or '?'} {version}")
-        w.log.emit(f"Datei: {path}")
+            w.log.emit(_("Technical details: ") + _fw.explain(e))
+            raise RuntimeError(_("The backup was read but not saved: {error}").format(error=_fw.friendly_error(e))) from e
+        w.log.emit(_("Saved: {size} – firmware {firmware} {version}").format(
+            size=fmt_size(path.stat().st_size), firmware=fw or '?', version=version))
+        w.log.emit(_("File: {path}").format(path=path))
         try:
             prune(folder, ctx.settings.keep_backups)
         except OSError as e:
-            w.log.emit(f"Alte automatische Backups konnten nicht gelöscht werden: {e.strerror or e}")
+            w.log.emit(_("Old automatic backups could not be deleted: {error}").format(error=e.strerror or e))
         _mirror_quiet(ctx, path, w.log.emit)
         return path
 
     def said(path) -> str:
         m = AB.read_meta(path)
-        parts = f"{m.objects} Teile, {m.projects} Projekte, " if m else ""
-        return (f"Backup gespeichert: {Path(path).name} ({parts}{fmt_size(Path(path).stat().st_size)}). "
-                "Am FM-1 wurde nichts verändert.")
+        size = fmt_size(Path(path).stat().st_size)
+        if m:
+            return _("Backup saved: {name} ({parts} parts, {projects} projects, {size}). Nothing was changed on "
+                     "the FM-1.").format(name=Path(path).name, parts=m.objects, projects=m.projects, size=size)
+        return _("Backup saved: {name} ({size}). Nothing was changed on the FM-1.").format(name=Path(path).name,
+                                                                                          size=size)
     from .feedback import open_folder_action
-    d = ctx.job(parent, "Backup", work, done=said, actions=[open_folder_action(lambda p: Path(p).parent)],
+    d = ctx.job(parent, _("Backup"), work, done=said, actions=[open_folder_action(lambda p: Path(p).parent)],
                 cancellable=(kind != "auto"))
     return d.result_value if d.ok else None
 
@@ -109,11 +116,11 @@ def _mirror_quiet(ctx, path: Path, log=None):
         return
     try:
         AB.mirror_file(path, ctx.settings.backups_dir, Path(target))
-        AB.STATUS.mirror = f"Spiegel aktuell ({time.strftime('%H:%M')})"
+        AB.STATUS.mirror = _("Mirror up to date ({time})").format(time=time.strftime('%H:%M'))
         if log:
-            log(f"Gespiegelt und geprüft: {target}")
+            log(_("Mirrored and verified: {target}").format(target=target))
     except OSError as e:
-        AB.STATUS.mirror = f"Spiegel nicht möglich: {e}"
+        AB.STATUS.mirror = _("Mirror not possible: {error}").format(error=e)
         if log:
             log(AB.STATUS.mirror)
 
@@ -140,7 +147,7 @@ class AutoBackupService(QObject):
         self._retries = 0
         self.connect_timer = QTimer(self)
         self.connect_timer.setSingleShot(True)
-        self.connect_timer.timeout.connect(lambda: self.run("beim Verbinden"))
+        self.connect_timer.timeout.connect(lambda: self.run(_("on connect")))
         self.tick = QTimer(self)
         self.tick.timeout.connect(self._periodic)
         self.tick.start(60_000)
@@ -165,51 +172,54 @@ class AutoBackupService(QObject):
             try:
                 folder = self.ctx.device_folder(self.ctx.settings.backups_dir)
             except OSError as e:
-                AB.STATUS.add(f"Automatisches Backup nicht möglich: {e}")
+                AB.STATUS.add(_("Automatic backup not possible: {error}").format(error=e))
                 return
             if AB.needs_backup(folder, s["hours"] / 24):
-                self.run("regelmäßig", force=True)
+                self.run(_("periodic"), force=True)
 
     def busy_reason(self) -> str:
         c = self.ctx
         if not c.connected or not c.profile:
-            return "kein Gerät"
+            return _("no device")
         if getattr(c, "is_virtual", False):
-            return "Studio-Zwilling (kein echtes FM-1)"
+            return _("Studio twin (not a real FM-1)")
         if c.hold:
-            return "Firmware-Installation läuft"
+            return _("firmware installation in progress")
         if self.running:
-            return "läuft schon"
+            return _("already running")
         if c.link._exclusive_depth:
-            return "Gerät gerade in Benutzung"
+            return _("device in use right now")
         win = getattr(c, "window", None)
         if win is not None:
             try:
                 cur = win.stack.currentWidget()
                 key = next((k for k, p in win.pages.items() if p is cur), "")
                 if key in ("editor", "recorder"):
-                    return "Editor/Aufnahme offen"
+                    return _("editor/recording open")
                 rec = getattr(getattr(win, "recorder", None), "rec", None)
                 if rec is not None and rec.running:
-                    return "Aufnahme läuft"
+                    return _("recording in progress")
             except Exception:                      # noqa: BLE001
                 pass
         return ""
 
-    def run(self, reason: str = "beim Verbinden", force: bool = False) -> bool:
+    def run(self, reason: str = "", force: bool = False) -> bool:
+        reason = reason or _("on connect")
         c = self.ctx
         if not c.connected or not c.profile or getattr(c, "is_virtual", False):
             return False
         try:
             folder = c.device_folder(c.settings.backups_dir)
         except OSError as e:
-            AB.STATUS.add(f"Automatisches Backup nicht möglich: {e}")
-            c.message.emit(f"Automatisches Backup nicht möglich: {e}")
+            AB.STATUS.add(_("Automatic backup not possible: {error}").format(error=e))
+            c.message.emit(_("Automatic backup not possible: {error}").format(error=e))
             self.updated.emit()
             return False
         s = AB.settings()
         if not force and not AB.needs_backup(folder, s["days"]):
-            AB.STATUS.add(f"{c.profile.name}: letztes Backup ist aktuell (jünger als {s['days']} Tag(e)).")
+            AB.STATUS.add(ngettext("{device}: the last backup is up to date (younger than {n} day).",
+                                   "{device}: the last backup is up to date (younger than {n} days).",
+                                   int(s['days'])).format(device=c.profile.name, n=s['days']))
             self.updated.emit()
             return False
         why = self.busy_reason()
@@ -217,7 +227,7 @@ class AutoBackupService(QObject):
             if self._retries < 30:
                 self._retries += 1
                 QTimer.singleShot(60_000, lambda: self.run(reason, force))
-            AB.STATUS.add(f"Automatisches Backup wartet ({why}).")
+            AB.STATUS.add(_("Automatic backup is waiting ({reason}).").format(reason=why))
             self.updated.emit()
             return False
         self.running = True
@@ -230,33 +240,34 @@ class AutoBackupService(QObject):
             return link._exclusive_depth > 1 or c.hold or link.closed
 
         def work(w, link):
-            p = AB.capture_to_file(link, folder, prof, fw, version, f"automatisch {reason}", "auto", abort=abort)
+            p = AB.capture_to_file(link, folder, prof, fw, version, _("automatic, {reason}").format(reason=reason), "auto",
+                                   abort=abort)
             prune(folder, keep)
             target = s.get("mirror")
             if target:
                 try:
                     AB.mirror_file(p, root, Path(target))
-                    AB.STATUS.mirror = f"Spiegel aktuell ({time.strftime('%H:%M')})"
+                    AB.STATUS.mirror = _("Mirror up to date ({time})").format(time=time.strftime('%H:%M'))
                 except OSError as e:
-                    AB.STATUS.mirror = f"Spiegel nicht möglich: {e}"
+                    AB.STATUS.mirror = _("Mirror not possible: {error}").format(error=e)
             return p
 
         def done(p):
             self.running = False
             AB.STATUS.last_path, AB.STATUS.last_time = p, time.time()
-            AB.STATUS.add(f"Automatisches Backup von {prof.name} ({reason}) gespeichert.")
-            c.message.emit(f"Automatisches Backup von {prof.name} gespeichert.")
+            AB.STATUS.add(_("Automatic backup of {device} ({reason}) saved.").format(device=prof.name, reason=reason))
+            c.message.emit(_("Automatic backup of {device} saved.").format(device=prof.name))
             self.updated.emit()
 
         def fail(msg, tb):
             self.running = False
-            AB.STATUS.add(f"Automatisches Backup nicht gemacht: {msg}")
-            c.message.emit(f"Automatisches Backup nicht gemacht: {msg}")
+            AB.STATUS.add(_("Automatic backup not made: {error}").format(error=msg))
+            c.message.emit(_("Automatic backup not made: {error}").format(error=msg))
             self.updated.emit()
 
-        AB.STATUS.add(f"Automatisches Backup von {prof.name} läuft …")
+        AB.STATUS.add(_("Automatic backup of {device} running …").format(device=prof.name))
         self.updated.emit()
-        c.job(c.window, "Automatisches Backup", work, dialog=False, on_done=done, on_fail=fail)
+        c.job(c.window, _("Automatic backup"), work, dialog=False, on_done=done, on_fail=fail)
         return True
 
 
@@ -278,25 +289,26 @@ class BackupsPage(QWidget):
         body = QWidget()
         scroll.setWidget(body)
         lay = QVBoxLayout(body)
-        lay.addWidget(heading("Backups", "Komplette Sicherungen (laufende Musik, alle Projekte, User-Presets, "
-                                         "Einstellungen). Gleiches Format wie der Web-Editor – Dateien sind austauschbar. "
-                                         "Hineinschauen, vergleichen und Teile zurückspielen: im Reiter <b>Durchsuchen & Vergleichen</b>."))
+        lay.addWidget(heading(_("Backups"), _("Complete backups (running music, all projects, user presets, "
+                                         "settings). Same format as the web editor – files are interchangeable. "
+                                         "Look inside, compare and restore parts: in the tab <b>Browse & Compare</b>.")))
         top = QHBoxLayout()
-        self.chk_all = QCheckBox("Backups aller Geräte zeigen")
+        self.chk_all = QCheckBox(_("Show backups of all devices"))
         self.chk_all.toggled.connect(self.refresh)
         top.addWidget(self.chk_all)
-        self.chk_pinned = QCheckBox("nur angeheftete")
+        self.chk_pinned = QCheckBox(_("pinned only"))
         self.chk_pinned.toggled.connect(self.refresh)
         top.addWidget(self.chk_pinned)
         top.addStretch(1)
         lay.addLayout(top)
         reflow(top)                                      # schmal: Häkchen untereinander statt abgeschnitten
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Datum", "Gerät", "Firmware", "Art", "Inhalt", "Größe", "Notiz / Schlagwörter"])
+        self.tree.setHeaderLabels([_("Date"), _("Device"), _("Firmware"), _("Kind"), _("Content"), _("Size"),
+                                     _("Note / Labels")])
         self.tree.setRootIsDecorated(False)
         self.tree.setSortingEnabled(True)
         self.tree.setMinimumHeight(260)
-        self.tree.itemDoubleClicked.connect(lambda *_: self._browse())
+        self.tree.itemDoubleClicked.connect(lambda *_a: self._browse())
         lay.addWidget(self.tree, 1)
         self.info = QLabel()
         self.info.setWordWrap(True)
@@ -309,26 +321,26 @@ class BackupsPage(QWidget):
                 b.setToolTip(tip)
             return b
         row = QHBoxLayout()
-        for b in (btn(("document-save", "backup"), "Backup jetzt", self._new, "Strg+B"),
-                  btn(("document-preview", "system-search"), "Inhalt ansehen …", self._browse,
-                      "Öffnet das Backup im Reiter „Durchsuchen & Vergleichen“: Projekte, Presets, Einstellungen "
-                      "ansehen, mit einem anderen Stand vergleichen, einzelne Teile zurückspielen (auch Doppelklick)"),
-                  btn(("document-revert", "edit-undo"), "Alles zurückspielen …", self._restore),
-                  btn(("folder-music",), "Projekte daraus entnehmen", self._extract)):
+        for b in (btn(("document-save", "backup"), _("Back up now"), self._new, _("Ctrl+B")),
+                  btn(("document-preview", "system-search"), _("View content …"), self._browse,
+                      _("Opens the backup in the tab “Browse & Compare”: view projects, presets, settings, "
+                      "compare with another state, restore single parts (also double-click)")),
+                  btn(("document-revert", "edit-undo"), _("Restore everything …"), self._restore),
+                  btn(("folder-music",), _("Extract projects"), self._extract)):
             row.addWidget(b)
         row.addStretch(1)
         lay.addLayout(row)
         reflow(row)                                      # Knopfreihen brechen bei halber Bildschirmbreite um
         row2 = QHBoxLayout()
-        for b in (btn(("document-edit",), "Notiz", self._note),
-                  btn(("tag", "bookmark-new"), "Schlagwörter", self._labels, "z. B. „vor Firmware-Wechsel“, „Live-Set Oktober“"),
-                  btn(("pin", "window-pin", "emblem-favorite"), "Anheften", self._pin,
-                      "Angeheftete Backups werden nie automatisch gelöscht"),
-                  btn(("document-import", "document-open"), "Datei hinzufügen …", self._import),
-                  btn(("edit-delete",), "Löschen", self._delete)):
+        for b in (btn(("document-edit",), pgettext("backup", "Note"), self._note),
+                  btn(("tag", "bookmark-new"), _("Labels"), self._labels, _("e.g. “before firmware change”, “live set October”")),
+                  btn(("pin", "window-pin", "emblem-favorite"), _("Pin"), self._pin,
+                      _("Pinned backups are never deleted automatically")),
+                  btn(("document-import", "document-open"), _("Add file …"), self._import),
+                  btn(("edit-delete",), _("Delete"), self._delete)):
             row2.addWidget(b)
         row2.addStretch(1)
-        row2.addWidget(btn(("folder-open",), "Ordner öffnen", self._open_folder))
+        row2.addWidget(btn(("folder-open",), _("Open folder"), self._open_folder))
         lay.addLayout(row2)
         reflow(row2)
         lay.addWidget(self._auto_box())
@@ -340,40 +352,40 @@ class BackupsPage(QWidget):
     # ------------------------------------------------------- Automatik
     def _auto_box(self) -> QWidget:
         s = AB.settings()
-        g = QGroupBox("Automatische Backups")
+        g = QGroupBox(_("Automatic backups"))
         f = QFormLayout(g)
         f.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)   # schmal: Feld unter das lange Häkchen
-        self.a_connect = QCheckBox("beim Verbinden, wenn das letzte Backup älter ist als")
+        self.a_connect = QCheckBox(_("on connect, if the last backup is older than"))
         self.a_connect.setChecked(s["on_connect"])
         self.a_days = QSpinBox()
         self.a_days.setRange(1, 60)
-        self.a_days.setSuffix(" Tag(e)")
+        self.a_days.setSuffix(_(" day(s)"))
         self.a_days.setValue(int(s["days"]))
         self.a_days.setMaximumWidth(130)
         f.addRow(self.a_connect, self.a_days)
-        self.a_periodic = QCheckBox("regelmäßig, solange verbunden, alle")
+        self.a_periodic = QCheckBox(_("periodically while connected, every"))
         self.a_periodic.setChecked(s["periodic"])
-        self.a_periodic.setToolTip("Achtung: ein Backup stoppt kurz die Wiedergabe am FM-1. "
-                                   "Läuft nie, während der Editor oder die Aufnahme offen ist.")
+        self.a_periodic.setToolTip(_("Note: a backup briefly stops playback on the FM-1. "
+                                   "Never runs while the editor or a recording is open."))
         self.a_hours = QSpinBox()
         self.a_hours.setRange(1, 72)
-        self.a_hours.setSuffix(" Stunden")
+        self.a_hours.setSuffix(_(" hours"))
         self.a_hours.setValue(int(s["hours"]))
         self.a_hours.setMaximumWidth(130)
         f.addRow(self.a_periodic, self.a_hours)
         self.a_keep = QSpinBox()
         self.a_keep.setRange(1, 500)
         self.a_keep.setValue(int(self.ctx.settings.keep_backups or 20))
-        self.a_monthly = QCheckBox("zusätzlich je Monat das neueste behalten")
+        self.a_monthly = QCheckBox(_("also keep the newest of each month"))
         self.a_monthly.setChecked(s["keep_monthly"])
-        f.addRow("Automatische behalten:", self._h(self.a_keep, self.a_monthly))
+        f.addRow(_("Keep automatic ones:"), self._h(self.a_keep, self.a_monthly))
         self.a_mirror = QLineEdit(s["mirror"])
-        self.a_mirror.setPlaceholderText("optional: z. B. /mnt/nas/FM-1-Backups – jede Sicherung wird kopiert und geprüft")
+        self.a_mirror.setPlaceholderText(_("optional: e.g. /mnt/nas/FM-1-Backups – every backup is copied and verified"))
         b_pick = QPushButton(icon("folder-open"), "…")
         b_pick.clicked.connect(self._pick_mirror)
-        b_now = QPushButton(icon("folder-sync", "view-refresh"), "Jetzt spiegeln")
+        b_now = QPushButton(icon("folder-sync", "view-refresh"), _("Mirror now"))
         b_now.clicked.connect(self._mirror_now)
-        f.addRow("Spiegel-Ordner:", self._h(self.a_mirror, b_pick, b_now))
+        f.addRow(_("Mirror folder:"), self._h(self.a_mirror, b_pick, b_now))
         for wdg in (self.a_connect, self.a_periodic, self.a_monthly):
             wdg.toggled.connect(self._save_auto)
         for wdg in (self.a_days, self.a_hours, self.a_keep):
@@ -383,11 +395,11 @@ class BackupsPage(QWidget):
         self.a_status.setWordWrap(True)
         self.a_status.setMinimumWidth(0)
         self.a_status.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-        f.addRow("Status:", self.a_status)
-        hint = QLabel("Ein Backup stoppt am FM-1 kurz die Wiedergabe. Automatisch gesichert wird deshalb nur, wenn "
-                      "sonst nichts mit dem Gerät passiert – nie während einer Installation, im Editor oder bei einer "
-                      "Aufnahme. Vor jeder Firmware-Installation sichert die App standardmäßig, beschriftet mit der alten "
-                      "Firmware (ohne Backup nur nach ausdrücklicher Bestätigung im Installationsplan).")
+        f.addRow(_("Status:"), self.a_status)
+        hint = QLabel(_("A backup briefly stops playback on the FM-1. Automatic backups therefore only run when "
+                      "nothing else is happening with the device – never during an installation, in the editor or "
+                      "during a recording. Before every firmware installation the app backs up by default, labelled "
+                      "with the old firmware (no backup only after explicit confirmation in the installation plan)."))
         hint.setWordWrap(True)
         hint.setMinimumWidth(0)
         hint.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
@@ -406,7 +418,7 @@ class BackupsPage(QWidget):
         h.addStretch(0)
         return w
 
-    def _save_auto(self, *_):
+    def _save_auto(self, *_args):
         s = AB.settings()
         s.update(on_connect=self.a_connect.isChecked(), days=self.a_days.value(), periodic=self.a_periodic.isChecked(),
                  hours=self.a_hours.value(), keep_monthly=self.a_monthly.isChecked(),
@@ -415,7 +427,7 @@ class BackupsPage(QWidget):
         config.save(self.ctx.settings)
 
     def _pick_mirror(self):
-        d = QFileDialog.getExistingDirectory(self, "Spiegel-Ordner wählen", self.a_mirror.text() or str(Path.home()))
+        d = QFileDialog.getExistingDirectory(self, _("Choose mirror folder"), self.a_mirror.text() or str(Path.home()))
         if d:
             self.a_mirror.setText(d)
             self._save_auto()
@@ -424,7 +436,7 @@ class BackupsPage(QWidget):
         self._save_auto()
         target = AB.settings()["mirror"]
         if not target:
-            show_error(self, "Kein Spiegel-Ordner", "Bitte erst einen Spiegel-Ordner eintragen (z. B. ein NAS-Laufwerk).")
+            show_error(self, _("No mirror folder"), _("Please enter a mirror folder first (e.g. a NAS drive)."))
             return
         from .common import JobDialog
 
@@ -432,14 +444,16 @@ class BackupsPage(QWidget):
             ok, bad, msgs = AB.mirror_all(self.ctx.settings.backups_dir, Path(target))
             for m in msgs:
                 w.log.emit(m)
-            w.log.emit(f"{ok} Backups im Spiegel geprüft, {bad} Fehler.")
-            AB.STATUS.mirror = f"Spiegel: {ok} geprüft, {bad} Fehler ({time.strftime('%H:%M')})"
+            w.log.emit(_("{ok} backups verified in the mirror, {bad} errors.").format(ok=ok, bad=bad))
+            AB.STATUS.mirror = _("Mirror: {ok} verified, {bad} errors ({time})").format(ok=ok, bad=bad,
+                                                                                    time=time.strftime('%H:%M'))
             return ok, bad
         from . import feedback
-        feedback.run(self, "Backups spiegeln", work,
-                     done=lambda r: f"Spiegel aktualisiert: {r[0]} Backups kopiert und geprüft"
-                                    + (f", {r[1]} FEHLER (siehe Protokoll)." if r[1] else ", keine Fehler.")
-                                    + f" Ziel: {target}")
+        feedback.run(self, _("Mirror backups"), work,
+                     done=lambda r: (_("Mirror updated: {ok} backups copied and verified, {bad} ERRORS (see log). "
+                                       "Target: {target}") if r[1] else
+                                     _("Mirror updated: {ok} backups copied and verified, no errors. Target: {target}")
+                                     ).format(ok=r[0], bad=r[1], target=target))
         self._auto_status()
 
     def _auto_status(self):
@@ -448,7 +462,7 @@ class BackupsPage(QWidget):
         if st.mirror:
             lines.append(st.mirror)
         self.a_status.setText("<br>".join(lines))
-        self.a_status.setToolTip("\n".join(st.history) or "noch nichts")
+        self.a_status.setToolTip("\n".join(st.history) or _("nothing yet"))
 
     # ------------------------------------------------------------ Liste
     def _folder(self) -> Path:
@@ -462,7 +476,7 @@ class BackupsPage(QWidget):
         try:
             folder = self._folder()
         except OSError as e:
-            self.info.setText(f"<b>Backup-Ordner nicht erreichbar.</b> {e}")
+            self.info.setText(_("<b>Backup folder not reachable.</b> {error}").format(error=e))
             return
         total = 0
         metas = AB.list_backups(folder, include_damaged=True)
@@ -471,37 +485,37 @@ class BackupsPage(QWidget):
                 continue
             if m.damaged:
                 it = _Row([dt.datetime.fromtimestamp(m.mtime).strftime("%d.%m.%Y %H:%M") if m.mtime
-                           else "?", m.device or m.path.parent.name, "–", "beschädigt",
-                           "Datei nicht lesbar", fmt_size(m.size), m.path.name])
+                           else "?", m.device or m.path.parent.name, "–", _("damaged"),
+                           _("file not readable"), fmt_size(m.size), m.path.name])
                 it.setData(0, Qt.ItemDataRole.UserRole, str(m.path))
                 it.setData(0, SORT, float(m.mtime or 0))
                 it.setData(5, SORT, float(m.size))
                 it.setData(1, Qt.ItemDataRole.UserRole, "damaged")
                 it.setIcon(0, icon("dialog-warning", "emblem-important"))
                 for c in range(7):
-                    it.setToolTip(c, f"{m.path}\nBeschädigt: {m.damaged}. Zurückspielen nicht möglich – löschen oder "
-                                     "aus dem Spiegel-Ordner wiederherstellen.")
+                    it.setToolTip(c, _("{path}\nDamaged: {problem}. Restoring is not possible – delete it or "
+                                       "recover it from the mirror folder.").format(path=m.path, problem=m.damaged))
                     it.setForeground(c, QColor("#da4453"))
                 self.tree.addTopLevelItem(it)
                 total += m.size
                 continue
             note = " · ".join(([m.note] if m.note else []) + [f"#{x}" for x in m.labels])
             it = _Row([m.when.astimezone().strftime("%d.%m.%Y %H:%M"), m.device or m.path.parent.name,
-                       fw_label(m.firmware), KIND_TEXT.get(m.kind, m.kind),
+                       fw_label(m.firmware), _(KIND_TEXT[m.kind]) if m.kind in KIND_TEXT else m.kind,
                        AB.content_text(m.projects, m.presets, m.objects), fmt_size(m.size), note])
             it.setData(0, Qt.ItemDataRole.UserRole, str(m.path))
             it.setData(0, SORT, m.when.timestamp())
             it.setData(5, SORT, float(m.size))
             it.setToolTip(0, str(m.path))
-            it.setToolTip(4, "Teile = einzeln sicherbare Bausteine des Backups (laufende Musik, Einstellungen, "
-                             "jeder Projektplatz, jede Preset-Bank, jeder Sample-Slot)")
+            it.setToolTip(4, _("Parts = separately storable building blocks of the backup (running music, settings, "
+                             "every project slot, every preset bank, every sample slot)"))
             if note:
                 it.setToolTip(6, note)
             if m.pinned:
                 it.setIcon(0, icon("pin", "window-pin", "emblem-favorite"))
-                it.setToolTip(6, "angeheftet – wird nie automatisch gelöscht")
+                it.setToolTip(6, _("pinned – never deleted automatically"))
             if m.fmt != backup.FORMAT:
-                it.setToolTip(4, "SLOOP-Backup (Format des SLOOP-Web-Editors) – in beide Richtungen austauschbar")
+                it.setToolTip(4, _("SLOOP backup (format of the SLOOP web editor) – interchangeable in both directions"))
             self.tree.addTopLevelItem(it)
             total += m.size
         self.tree.setSortingEnabled(True)
@@ -512,20 +526,21 @@ class BackupsPage(QWidget):
         bad = sum(1 for m in metas if m.damaged)
         why = no_backup_reason(self.ctx) if self.ctx.port is not None else ""
         if n:
-            self.info.setText(f"{n} Backup{'s' if n != 1 else ''}, {fmt_size(total)} in {folder}" +
-                              (f" – <b style='color:#da4453'>{bad} beschädigt</b>" if bad else "") +
-                              (f"<br><small>{why}</small>" if why else ""))
+            self.info.setText(ngettext("{n} backup, {size} in {folder}", "{n} backups, {size} in {folder}", n).format(
+                n=n, size=fmt_size(total), folder=folder) +
+                (" – <b style='color:#da4453'>" + _("{n} damaged").format(n=bad) + "</b>" if bad else "") +
+                (f"<br><small>{why}</small>" if why else ""))
         elif why:
-            self.info.setText(f"<b>Noch keine Backups von diesem Gerät.</b> {why}")
+            self.info.setText(_("<b>No backups of this device yet.</b> {reason}").format(reason=why))
         else:
-            self.info.setText("Noch keine Backups – so geht's: FM-1 anschließen und „Backup jetzt“ (Strg+B). "
-                              "Automatische Backups stellst du unten ein.")
+            self.info.setText(_("No backups yet – here's how: connect the FM-1 and click “Back up now” (Ctrl+B). "
+                              "Automatic backups are set up below."))
 
     def _open_folder(self):
         try:
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(self._folder())))
         except OSError as e:
-            show_error(self, "Ordner nicht erreichbar", str(e))
+            show_error(self, _("Folder not reachable"), str(e))
 
     def _sel(self) -> Path | None:
         it = self.tree.currentItem()
@@ -535,13 +550,13 @@ class BackupsPage(QWidget):
         """ausgewähltes Backup, wenn es lesbar ist (sonst Hinweis)"""
         it = self.tree.currentItem()
         if it is not None and it.data(1, Qt.ItemDataRole.UserRole) == "damaged":
-            show_error(self, "Backup beschädigt", f"{Path(it.data(0, Qt.ItemDataRole.UserRole)).name} lässt sich nicht "
-                       "lesen. Zurückspielen und Öffnen sind nicht möglich – Löschen geht.")
+            show_error(self, _("Backup damaged"), _("{name} cannot be read. Restoring and opening are not possible – deleting is.").format(
+                name=Path(it.data(0, Qt.ItemDataRole.UserRole)).name))
             return None
         return self._sel()
 
     def _new(self):
-        note, ok = QInputDialog.getText(self, "Backup", "Notiz (optional):")
+        note, ok = QInputDialog.getText(self, _("Backup"), _("Note (optional):"))
         if ok:
             make_backup(self.ctx, self, note.strip())
             self.refresh()
@@ -562,12 +577,13 @@ class BackupsPage(QWidget):
         try:
             r = BI.inspect(p)
         except Exception as e:  # noqa: BLE001
-            show_error(self, "Backup beschädigt", str(e))
+            show_error(self, _("Backup damaged"), str(e))
             return
-        lines = [f"<b>{p.name}</b>", f"Firmware: {r.firmware}", f"Erstellt: {fmt_date(r.created)}", r.summary(), ""]
+        lines = [f"<b>{p.name}</b>", _("Firmware: {firmware}").format(firmware=r.firmware),
+                 _("Created: {date}").format(date=fmt_date(r.created)), r.summary(), ""]
         lines += [f"{o.title}: {fmt_size(o.size)}" for o in r.objects if o.used]
         from PyQt6.QtWidgets import QMessageBox
-        QMessageBox(QMessageBox.Icon.Information, "Backup", "<br>".join(lines), parent=self).exec()
+        QMessageBox(QMessageBox.Icon.Information, _("Backup"), "<br>".join(lines), parent=self).exec()
 
     def _restore(self):
         p = self._sel_ok()
@@ -575,12 +591,12 @@ class BackupsPage(QWidget):
             return
         why = no_backup_reason(self.ctx)
         if why:
-            show_error(self, "Zurückspielen nicht möglich", why)
+            show_error(self, _("Restore not possible"), why)
             return
         try:
             a = backup.load_file(p)
         except Exception as e:  # noqa: BLE001
-            show_error(self, "Backup beschädigt", str(e))
+            show_error(self, _("Backup damaged"), str(e))
             return
         comp = a.companion
         # dieselbe Prüfung wie auf der Geräte-Seite: nur innerhalb derselben Firmware-Familie
@@ -589,30 +605,37 @@ class BackupsPage(QWidget):
             rep = BI.inspect(p)
             compat = BI.compatibility(rep, self.ctx.firmware_key, self.ctx.info.version if self.ctx.info else "", None)
         except Exception as e:  # noqa: BLE001
-            show_error(self, "Backup beschädigt", str(e))
+            show_error(self, _("Backup damaged"), str(e))
             return
         if not compat.ok:
-            show_error(self, "Zurückspielen nicht möglich",
+            show_error(self, _("Restore not possible"),
                        f"<b>{p.name}</b><br><br>{compat.reason}" +
-                       ("<br><br>Was geht:<ul>" + "".join(f"<li>{x}</li>" for x in compat.possible) + "</ul>"
+                       ("<br><br>" + _("What is possible:") + "<ul>" + "".join(f"<li>{x}</li>" for x in compat.possible) + "</ul>"
                         if compat.possible else ""))
             return
         warn = ""
         if comp.get("device_id") and self.ctx.profile and comp["device_id"] != self.ctx.profile.id:
-            warn += f"<br><br>Das Backup stammt von einem anderen Gerät ({comp.get('device')}). Das ist erlaubt."
-        if not confirm(self, "Backup zurückspielen",
-                       f"Alles auf <b>{self.ctx.profile.name if self.ctx.profile else 'dem FM-1'}</b> wird durch den Stand "
-                       f"vom {fmt_date(a.created)} ersetzt: laufende Musik, alle Projekte, Presets und Einstellungen.<br><br>"
-                       "Vorher wird automatisch ein Sicherheits-Backup des jetzigen Stands angelegt.<br>"
-                       "Nur Teile zurückspielen? Dafür gibt es den Reiter „Durchsuchen & Vergleichen“." + warn +
-                       ("<br><br><b>SLOOP:</b> Bitte vorher den Song am FM-1 stoppen (STOP) – sonst lehnt SLOOP das "
-                        "Zurückspielen ab." if a.sloop else ""),
-                       "Zurückspielen", danger=True):
+            warn += "<br><br>" + _("The backup comes from another device ({device}). That is allowed.").format(
+                device=comp.get('device'))
+        if self.ctx.profile:
+            everything = _("Everything on <b>{device}</b> will be replaced by the state of {date}: running music, all "
+                           "projects, presets and settings.").format(device=self.ctx.profile.name,
+                                                                     date=fmt_date(a.created))
+        else:
+            everything = _("Everything on <b>the FM-1</b> will be replaced by the state of {date}: running music, all "
+                           "projects, presets and settings.").format(date=fmt_date(a.created))
+        if not confirm(self, _("Restore backup"),
+                       everything + "<br><br>" +
+                       _("A safety backup of the current state is made automatically first.") + "<br>" +
+                       _("Restore only parts? Use the tab “Browse & Compare”.") + warn +
+                       ("<br><br>" + _("<b>SLOOP:</b> Please stop the song on the FM-1 first (STOP) – otherwise SLOOP "
+                                       "refuses the restore.") if a.sloop else ""),
+                       _("Restore"), danger=True):
             return
-        safety = make_backup(self.ctx, self, f"automatisch vor dem Zurückspielen von {p.name}", "auto")
-        if safety is None and not confirm(self, "Kein Sicherheits-Backup",
-                                          "Das Sicherheits-Backup hat nicht geklappt. Trotzdem zurückspielen?",
-                                          "Trotzdem", danger=True):
+        safety = make_backup(self.ctx, self, _("automatic, before restoring {name}").format(name=p.name), "auto")
+        if safety is None and not confirm(self, _("No safety backup"),
+                                          _("The safety backup failed. Restore anyway?"),
+                                          _("Restore anyway"), danger=True):
             return
 
         fw_key = self.ctx.firmware_key or ""
@@ -620,31 +643,31 @@ class BackupsPage(QWidget):
         planned = [o["id"] for o in a.objects]
 
         def work(w, link):
-            w.log.emit("Prüfe jedes Objekt beim Gerät, bevor etwas ersetzt wird …" if not a.sloop else
-                       "Prüfe das Backup und schreibe es in SLOOPs Reihenfolge: Banken, Projekte, Einstellungen, "
-                       "Samples …")
+            w.log.emit(_("Checking every object with the device before anything is replaced …") if not a.sloop else
+                       _("Checking the backup and writing it in SLOOP's order: banks, projects, settings, "
+                         "samples …"))
             try:
                 backup.restore(link, a, progress=lambda x, y: w.progress.emit(x, y), firmware_key=fw_key)
             except Exception as e:
                 state["error"] = e
                 for i in getattr(e, "written", None) or []:
-                    w.log.emit(f"✓ {backup.object_title(i, a.sloop)} geschrieben")
+                    w.log.emit(_("✓ {part} written").format(part=backup.object_title(i, a.sloop)))
                 raise
-            w.log.emit("Fertig. Das FM-1 spielt jetzt den Stand aus dem Backup.")
+            w.log.emit(_("Done. The FM-1 now plays the state from the backup."))
             return len([o for o in a.objects if o.get("size")]) if not a.sloop else len(a.objects)
         when = fmt_date(a.created)
-        after = (f" Der vorherige Stand liegt im Sicherheits-Backup {safety.name}." if safety
-                 else " Es gibt KEIN Sicherheits-Backup des vorherigen Stands.")
+        after = " " + (_("The previous state is in the safety backup {name}.").format(name=safety.name) if safety
+                       else _("There is NO safety backup of the previous state."))
 
         def failed(m):
             e = state["error"]
             where = backup.written_text(e, planned, a.sloop) if e is not None else ""
-            return f"Zurückspielen fehlgeschlagen: {m}<br>{where}{after}"
-        self.ctx.job(self, "Backup zurückspielen", work,
-                     cancel_tip="Ein komplettes Zurückspielen lässt sich nicht sicher abbrechen – bitte warten. "
-                                "Einzelne Teile spielst du im Reiter „Durchsuchen & Vergleichen“ zurück.",
-                     done=lambda n: f"Rücksicherung abgeschlossen: {n} Teile vom Stand {when} geschrieben – laufende "
-                                    "Musik, Projekte, Presets und Einstellungen." + after,
+            return _("Restore failed: {error}").format(error=m) + f"<br>{where}{after}"
+        self.ctx.job(self, _("Restore backup"), work,
+                     cancel_tip=_("A complete restore cannot be cancelled safely – please wait. "
+                                  "Single parts are restored in the tab “Browse & Compare”."),
+                     done=lambda n: _("Restore complete: {n} parts of the state of {date} written – running "
+                                      "music, projects, presets and settings.").format(n=n, date=when) + after,
                      fail_text=failed)
         self.refresh()
 
@@ -655,27 +678,32 @@ class BackupsPage(QWidget):
         try:
             a = backup.load_file(p)
         except Exception as e:  # noqa: BLE001
-            show_error(self, "Backup beschädigt", str(e))
+            show_error(self, _("Backup damaged"), str(e))
             return
         objs = projects.projects_from_backup(a)
         if not objs:
-            show_error(self, "Keine Projekte", "Dieses Backup enthält keine gespeicherten Projekte.")
+            show_error(self, _("No projects"), _("This backup contains no saved projects."))
             return
         dest = self.ctx.settings.projects_dir
         dev = (a.companion or {}).get("device", "")
-        what = "Section" if a.sloop else "Platz"
+        what = _("Section") if a.sloop else _("Slot")
         try:
             for slot, data in objs:
-                name = f"{dev or 'FM-1'} {what} {'ABCD'[slot - 1] if a.sloop and 1 <= slot <= 4 else slot}"
-                projects.save_project(dest, name, data, a.firmware, dev, source=f"Backup {p.name}, {what} {slot}")
+                name = _("{device} {what} {slot}").format(
+                    device=dev or 'FM-1', what=what, slot='ABCD'[slot - 1] if a.sloop and 1 <= slot <= 4 else slot)
+                projects.save_project(dest, name, data, a.firmware, dev,
+                                      source=_("Backup {name}, {what} {slot}").format(name=p.name, what=what, slot=slot))
         except OSError as e:
             from .common import fs_error_text
-            show_error(self, "Nicht gespeichert", fs_error_text(e, "Projekte nicht in die Bibliothek geschrieben"))
+            show_error(self, _("Not saved"), fs_error_text(e, _("projects not written to the library")))
             return
         from PyQt6.QtWidgets import QMessageBox
-        QMessageBox(QMessageBox.Icon.Information, "Projekte entnommen",
-                    f"{len(objs)} Projekt(e) liegen jetzt in der Projekt-Bibliothek ({dest}). Dort kannst du sie "
-                    "umbenennen und einspielen. Am FM-1 wurde nichts verändert.", parent=self).exec()
+        QMessageBox(QMessageBox.Icon.Information, _("Projects extracted"),
+                    ngettext("{n} project is now in the project library ({folder}). There you can rename and "
+                             "load it. Nothing was changed on the FM-1.",
+                             "{n} projects are now in the project library ({folder}). There you can rename and "
+                             "load them. Nothing was changed on the FM-1.", len(objs)).format(n=len(objs), folder=dest),
+                    parent=self).exec()
         win = getattr(self.ctx, "window", None)
         if win is not None and hasattr(win, "projects"):
             try:
@@ -688,7 +716,7 @@ class BackupsPage(QWidget):
         if not p:
             return
         m = AB.read_meta(p)
-        txt, ok = QInputDialog.getText(self, "Notiz", "Notiz zum Backup:", text=m.note if m else "")
+        txt, ok = QInputDialog.getText(self, pgettext("backup", "Note"), _("Note for the backup:"), text=m.note if m else "")
         if ok:
             self._set_meta(p, note=txt)
 
@@ -697,8 +725,8 @@ class BackupsPage(QWidget):
         if not p:
             return
         m = AB.read_meta(p)
-        txt, ok = QInputDialog.getText(self, "Schlagwörter", "Schlagwörter, durch Komma getrennt\n"
-                                                          "(z. B. vor Firmware-Wechsel, Live-Set Oktober):",
+        txt, ok = QInputDialog.getText(self, _("Labels"), _("Labels, separated by commas\n"
+                                                            "(e.g. before firmware change, live set October):"),
                                        text=", ".join(m.labels) if m else "")
         if ok:
             self._set_meta(p, labels=[x.strip() for x in txt.split(",") if x.strip()])
@@ -713,41 +741,42 @@ class BackupsPage(QWidget):
     def _set_meta(self, p: Path, **kw):
         try:
             AB.set_meta(p, **kw)
-            what = {"note": "Notiz gespeichert", "labels": "Schlagwörter gespeichert",
-                    "pinned": "angeheftet – wird nie automatisch gelöscht" if kw.get("pinned") else "nicht mehr angeheftet"}
+            what = {"note": _("note saved"), "labels": _("labels saved"),
+                    "pinned": _("pinned – never deleted automatically") if kw.get("pinned") else _("no longer pinned")}
             self.ctx.message.emit(f"{p.name}: " + ", ".join(what[k] for k in kw if k in what))
         except (OSError, ValueError, backup.BackupError) as e:
             from .common import fs_error_text
-            show_error(self, "Nicht gespeichert", fs_error_text(e, f"{p.name} lässt sich nicht ändern")
+            show_error(self, _("Not saved"), fs_error_text(e, _("{name} cannot be changed").format(name=p.name))
                        if isinstance(e, OSError) else f"{p.name}: {e}")
         self.refresh()
 
     def _import(self):
-        files, _ = QFileDialog.getOpenFileNames(self, "Backup-Dateien hinzufügen", str(Path.home() / "Downloads"),
-                                                "Backups (*.json)")
+        files, _filter = QFileDialog.getOpenFileNames(self, _("Add backup files"), str(Path.home() / "Downloads"),
+                                                      _("Backups (*.json)"))
         from .common import fs_error_text
         for f in files:
             try:
                 from .. import backup_inspect as BI
                 BI.inspect(Path(f))
             except Exception as e:  # noqa: BLE001
-                show_error(self, "Keine gültige Datei", f"{Path(f).name}: {e}")
+                show_error(self, _("Not a valid file"), f"{Path(f).name}: {e}")
                 continue
             try:
                 folder = self._folder()
                 dest = folder / Path(f).name
                 if dest.exists():
                     if dest.read_bytes() == Path(f).read_bytes():
-                        self.ctx.message.emit(f"{Path(f).name} ist schon im Backup-Ordner (identisch) – nichts kopiert.")
+                        self.ctx.message.emit(_("{name} is already in the backup folder (identical) – nothing copied.").format(
+                            name=Path(f).name))
                         continue
                     n = 2
                     while dest.exists():
                         dest = folder / f"{Path(f).stem} ({n}){Path(f).suffix}"
                         n += 1
                 shutil.copy2(f, dest)
-                self.ctx.message.emit(f"Backup hinzugefügt: {dest.name} (Kopie, das Original bleibt)")
+                self.ctx.message.emit(_("Backup added: {name} (copy, the original stays)").format(name=dest.name))
             except OSError as e:
-                show_error(self, "Nicht kopiert", fs_error_text(e, f"{Path(f).name} nicht kopiert"))
+                show_error(self, _("Not copied"), fs_error_text(e, _("{name} not copied").format(name=Path(f).name)))
                 break
         self.refresh()
 
@@ -756,11 +785,11 @@ class BackupsPage(QWidget):
         if not p:
             return
         m = AB.read_meta(p)
-        extra = "<br><br><b>Dieses Backup ist angeheftet.</b>" if m and m.pinned else ""
-        if confirm(self, "Löschen", f"{p.name} endgültig löschen?{extra}", "Löschen", danger=True):
+        extra = "<br><br>" + _("<b>This backup is pinned.</b>") if m and m.pinned else ""
+        if confirm(self, _("Delete"), _("Delete {name} permanently?").format(name=p.name) + extra, _("Delete"), danger=True):
             try:
                 p.unlink(missing_ok=True)
-                self.ctx.message.emit(f"Gelöscht: {p.name}")
+                self.ctx.message.emit(_("Deleted: {name}").format(name=p.name))
             except OSError as e:
-                show_error(self, "Nicht gelöscht", f"{p.name}: {e.strerror or e}")
+                show_error(self, _("Not deleted"), f"{p.name}: {e.strerror or e}")
             self.refresh()

@@ -15,6 +15,7 @@ from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import QDialogButtonBox
 
 from .common import JobDialog
+from ..i18n import _
 
 
 def _supports(name: str) -> bool:
@@ -28,13 +29,13 @@ def mark_done(d: JobDialog, text: str, actions=()):
     """Ergebnis sichtbar machen (Überschrift, letzte Protokollzeile, Folge-Knöpfe)"""
     d.summary = text
     try:
-        d.head.setText(f"{d.windowTitle()} – fertig")
+        d.head.setText(_("{title} – done").format(title=d.windowTitle()))
         d.head.setToolTip(text)
         d.add("")
-        d.add("ERGEBNIS: " + text)
+        d.add(_("RESULT: {text}").format(text=text))
         for label, fn in actions or ():
             b = d.buttons.addButton(label, QDialogButtonBox.ButtonRole.ActionRole)
-            b.clicked.connect(lambda _=False, f=fn, dd=d: (dd.accept(), f()))
+            b.clicked.connect(lambda _c=False, f=fn, dd=d: (dd.accept(), f()))
     except RuntimeError:                       # Dialog schon weg
         pass
 
@@ -70,6 +71,6 @@ def open_folder(path):
     QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
 
 
-def open_folder_action(path_of: Callable[[object], object], label: str = "Ordner öffnen"):
+def open_folder_action(path_of: Callable[[object], object], label: str | None = None):
     """Knopf „Ordner öffnen“; path_of(Ergebnis) -> Ordner"""
-    return (label, lambda res: open_folder(path_of(res)))
+    return (label or _("Open folder"), lambda res: open_folder(path_of(res)))

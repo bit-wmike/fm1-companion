@@ -14,6 +14,7 @@ from .. import config, editor_host, firmware
 from ..bridge import MidiBridge
 from . import web
 from .common import icon, run_job
+from ..i18n import _
 
 HAVE_WEBENGINE = web.HAVE_WEBENGINE
 
@@ -32,21 +33,21 @@ class EditorPage(QWidget):
         lay.setContentsMargins(0, 0, 0, 0)
         bar = QHBoxLayout()
         bar.setContentsMargins(8, 6, 8, 0)
-        self.state = QLabel("Editor")
+        self.state = QLabel(_("Editor"))
         self.state.setWordWrap(True)              # lange Hinweise umbrechen statt das Fenster breit zu zwingen
         self.state.setMinimumWidth(160)
         bar.addWidget(self.state, 1)
-        self.b_reload = QPushButton(icon("view-refresh"), "Neu laden")
+        self.b_reload = QPushButton(icon("view-refresh"), _("Reload"))
         self.b_reload.clicked.connect(lambda: self.load(force=True))
-        self.b_reload.setToolTip("Editor-Seite neu laden (verbindet sich danach von selbst wieder)")
+        self.b_reload.setToolTip(_("Reload the editor page (it reconnects by itself afterwards)"))
         self.b_zoom_out = QPushButton(icon("zoom-out"), "−")
         self.b_zoom_in = QPushButton(icon("zoom-in"), "+")
         self.zoom_label = QPushButton("100 %")
         self.zoom_label.setFlat(True)
-        self.zoom_label.setToolTip("Vergrößerung des Editors – Klick setzt auf 100 % zurück. Wird gemerkt.")
+        self.zoom_label.setToolTip(_("Zoom of the editor – a click resets to 100 %. Remembered."))
         self.zoom_label.clicked.connect(lambda: self._zoom(None))
-        self.b_zoom_out.setToolTip("Editor verkleinern (Strg+−)")
-        self.b_zoom_in.setToolTip("Editor vergrößern (Strg++)")
+        self.b_zoom_out.setToolTip(_("Zoom out the editor (Ctrl+−)"))
+        self.b_zoom_in.setToolTip(_("Zoom in the editor (Ctrl++)"))
         self.b_zoom_out.setShortcut("Ctrl+-")
         self.b_zoom_in.setShortcut("Ctrl++")
         self.b_zoom_out.clicked.connect(lambda: self._zoom(-0.1))
@@ -55,8 +56,8 @@ class EditorPage(QWidget):
             bar.addWidget(b)
         lay.addLayout(bar)
         if not HAVE_WEBENGINE:
-            msg = QLabel("Für den eingebauten Editor fehlt Qt WebEngine.\n\n"
-                         "sudo apt install python3-pyqt6.qtwebengine")
+            msg = QLabel(_("Qt WebEngine is missing for the built-in editor.\n\nsudo apt install "
+                           "python3-pyqt6.qtwebengine"))
             msg.setWordWrap(True)
             lay.addWidget(msg, 1)
             self.view = None
@@ -71,13 +72,13 @@ class EditorPage(QWidget):
         self.zoom_label.setText(f"{round(self.view.zoomFactor() * 100)} %")
         self.view.loadFinished.connect(self._loaded)
         lay.addWidget(self.view, 1)
-        self.view.setHtml(self._placeholder("Noch kein Editor geladen."))
+        self.view.setHtml(self._placeholder(_("No editor loaded yet.")))
         ctx.changed.connect(self._dev_changed)
         ctx.editor_pause.connect(self.bridge.set_paused)
 
     # --------------------------------------------------------------
     def _placeholder(self, text: str) -> str:
-        return web.placeholder_html("Editor", text)
+        return web.placeholder_html(_("Editor"), text)
 
     def _zoom(self, d):
         """d = Schritt, None = zurück auf 100 %."""
@@ -104,8 +105,8 @@ class EditorPage(QWidget):
                 self.load()                    # zeigt den Leerzustand „kein Editor bei dieser Firmware“
         else:
             self.bridge.detach()
-            self.state.setText("Kein FM-1 verbunden – der Editor wartet und verbindet sich von selbst, sobald "
-                               "ein FM-1 angesteckt ist.")
+            self.state.setText(_("No FM-1 connected – the editor waits and connects by itself as soon as "
+                                 "an FM-1 is plugged in."))
 
     def activate(self):
         self.visible_now = True
@@ -122,25 +123,27 @@ class EditorPage(QWidget):
         proto = getattr(self.ctx, "protocol", "")
         if proto == "generic" or (spec and (spec.protocol != "felucca" or not spec.editor)):
             # Firmware ohne Editor-Protokoll (z. B. ORBIT, Original-Firmware): klarer Leerzustand statt Warten
-            name = spec.name if spec else "Diese Firmware"
+            name = spec.name if spec else _("This firmware")
             self.loaded_for = ""
-            self.state.setText(f"{name}: kein eingebauter Editor – Presets per SysEx über die Seite „Presets“.")
-            extra = (f'<br><br>Online-Editor des Autors: <a href="{spec.editor_url}">{spec.editor_url}</a>'
+            self.state.setText(_("{name}: no built-in editor – presets via SysEx on the page “Presets”.").format(
+                                   name=name))
+            extra = ("<br><br>" + _('Online editor of the author: <a href="{url}">{url}</a>').format(url=spec.editor_url)
                      if spec and spec.editor_url else "")
-            self.view.setHtml(self._placeholder(f"{name} bringt keinen Editor mit, den die App einbetten kann.<br>"
-                                                "Presets lassen sich per SysEx über die Seite <b>Presets</b> "
-                                                "(FM-Voices) senden; MIDI geht über die Seite <b>MIDI</b>." + extra))
+            self.view.setHtml(self._placeholder(
+                _("{name} does not come with an editor the app can embed.<br>Presets can be sent via SysEx on the page "
+                  "<b>Presets</b> (FM voices); MIDI works via the page <b>MIDI</b>.").format(name=name) + extra))
             return
         if not spec:
-            self.state.setText("Für diese Firmware gibt es keinen bekannten Editor.")
-            self.view.setHtml(self._placeholder("Verbinde ein FM-1 mit Melodee, Skiff oder SLOOP. Wenn die Version "
-                                                "unbekannt ist: einmal über die App installieren oder in den "
-                                                "Einstellungen › Geräte die Version eintragen."))
+            self.state.setText(_("There is no known editor for this firmware."))
+            self.view.setHtml(self._placeholder(_("Connect an FM-1 with Melodee, Skiff or SLOOP. If the "
+                                                  "version is unknown: install it once via the app or "
+                                                  "enter the version in Settings › Devices.")))
             return
         want_tag = tag
-        self.state.setText(f"Bereite den Editor von {spec.name} {tag or '(Version wird ermittelt)'} vor …")
+        self.state.setText(_("Preparing the editor of {name} {version} …").format(
+            name=spec.name, version=tag or _("(determining the version)")))
         if not force and self.loaded_for and (f"{key}/{tag}" == self.loaded_for if tag else self.loaded_for.startswith(key + "/")):
-            self.state.setText(f"Editor: {spec.name} {tag} · MIDI über die App")
+            self.state.setText(_("Editor: {name} {version} · MIDI via the app").format(name=spec.name, version=tag))
             return
 
         def work(w):
@@ -152,7 +155,7 @@ class EditorPage(QWidget):
                     rels = firmware.fetch_releases(spec)
                     t = rels[0].tag if rels else ""
             if not t:
-                raise RuntimeError("keine Version gefunden (offline?)")
+                raise RuntimeError(_("no version found (offline?)"))
             editor_host.prepare(spec, t, log=w.log.emit)
             return t
 
@@ -166,18 +169,22 @@ class EditorPage(QWidget):
             self.current = (spec, t, demo)
             self.view.load(self._editor_url())
             if demo:
-                self.state.setText(f"Editor: {spec.name} {t} · Demo – Simulation des Editors (eigener Speicher)")
+                self.state.setText(_("Editor: {name} {version} · demo – simulation of the editor (own "
+                                     "memory)").format(name=spec.name, version=t))
                 return
-            self.state.setText(f"Editor: {spec.name} {t} · MIDI über die App"
-                               + ("" if want_tag else " (Version des Geräts unbekannt – in Einstellungen › Geräte setzen)"))
+            self.state.setText(_("Editor: {name} {version} · MIDI via the app").format(name=spec.name, version=t)
+                               if want_tag else
+                               _("Editor: {name} {version} · MIDI via the app (device version unknown – set it in "
+                                 "Settings › Devices)").format(name=spec.name, version=t))
 
         def fail(msg, tb):
             if not self.view:
                 return
-            self.state.setText(f"Editor nicht verfügbar: {msg}")
-            self.view.setHtml(self._placeholder(f"Der Editor für {spec.name} {want_tag} konnte nicht bereitgestellt "
-                                                f"werden:<br><code>{msg}</code><br><br>Beim ersten Mal braucht die App "
-                                                "einmal Internet, danach nicht mehr."))
+            self.state.setText(_("Editor not available: {error}").format(error=msg))
+            self.view.setHtml(self._placeholder(_("The editor for {name} {version} could not be "
+                                                  "provided:<br><code>{error}</code><br><br>The first "
+                                                  "time the app needs internet once, after that no more.").format(
+                                                    name=spec.name, version=want_tag, error=msg)))
         run_job(self, work, on_done=done, on_fail=fail)
 
     # ------------------------------------------------------------ Links im Editor
@@ -203,28 +210,29 @@ class EditorPage(QWidget):
         return True
 
     def open_manual(self):
-        spec, tag, _ = self.current
+        spec, tag, _demo = self.current
         idx = editor_host.manual_index(spec, tag)
         if not idx:
             if spec.manual_online:
                 QDesktopServices.openUrl(QUrl(spec.manual_online))
             else:
-                self.state.setText(f"{spec.name} {tag} bringt kein Handbuch mit.")
+                self.state.setText(_("{name} {version} comes without a manual.").format(name=spec.name, version=tag))
             return
         rel = idx.relative_to(editor_host.SITES).as_posix()
         target = QUrl(f"http://127.0.0.1:{self.server.port}/{rel}")
         if editor_host.missing_manual_images(idx) and spec.manual_online:
-            self.state.setText("Handbuch: hole die Bilder einmalig aus dem Online-Handbuch …")
+            self.state.setText(_("Manual: fetching the images once from the online manual …"))
 
             def done(n):
                 left = len(editor_host.missing_manual_images(idx))
-                self.state.setText(f"Handbuch {spec.name} {tag}" + (
-                    f" · {left} Bilder fehlen (offline?) – Text ist vollständig" if left else ""))
+                self.state.setText(_("Manual {name} {version} · {n} images missing (offline?) – the text is "
+                                     "complete").format(name=spec.name, version=tag, n=left) if left else
+                                   _("Manual {name} {version}").format(name=spec.name, version=tag))
                 self.view.load(target)
             run_job(self, lambda w: editor_host.fetch_manual_images(spec, idx), on_done=done,
-                    on_fail=lambda *_: done(0))
+                    on_fail=lambda *_a: done(0))
         else:
-            self.state.setText(f"Handbuch {spec.name} {tag}")
+            self.state.setText(_("Manual {name} {version}").format(name=spec.name, version=tag))
             self.view.load(target)
 
     def shutdown(self):
@@ -257,23 +265,24 @@ class EditorPage(QWidget):
         if name.endswith(".json"):
             folder = self.ctx.device_folder(self.ctx.settings.backups_dir)
         else:
-            folder = self.ctx.settings.root / "Editor-Exporte"
+            folder = self.ctx.settings.root / "Editor-Exporte"  # i18n: ignore – folder name on disk
         try:
             folder.mkdir(parents=True, exist_ok=True)
         except OSError:
             folder = Path.home()
-        title = "Backup aus dem Editor speichern" if name.endswith(".json") else "Datei aus dem Editor speichern"
-        path, _ = QFileDialog.getSaveFileName(self, title, str(folder / name))
+        title = _("Save backup from the editor") if name.endswith(".json") else _("Save file from the "
+                                                                                   "editor")
+        path, _filter = QFileDialog.getSaveFileName(self, title, str(folder / name))
         if not path:
             item.cancel()
-            self.state.setText("Speichern abgebrochen – nichts geschrieben.")
+            self.state.setText(_("Saving cancelled – nothing written."))
             return True
         item.setDownloadDirectory(str(Path(path).parent))
         item.setDownloadFileName(Path(path).name)
         try:
-            item.isFinishedChanged.connect(lambda p=path: self.state.setText(f"Gespeichert: {p}"))
+            item.isFinishedChanged.connect(lambda p=path: self.state.setText(_("Saved: {path}").format(path=p)))
         except Exception:                                   # noqa: BLE001 – ältere Qt ohne das Signal
             pass
         item.accept()
-        self.state.setText(f"Speichere {Path(path).name} …")
+        self.state.setText(_("Saving {name} …").format(name=Path(path).name))
         return True

@@ -10,6 +10,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ..i18n import _
 from ..vendor import fm1_install as fi
 
 STOCK_V15_SHA256 = fi.STOCK_V15_SHA256
@@ -46,9 +47,9 @@ class LoaderRule:
     def __init__(self, family: str, product: str):
         self.family, self.product = family, product
         if family == "stock":
-            self.label = "dem Original-Loader (ota-FM-1_015)"
+            self.label = _("the original loader (ota-FM-1_015)")
         else:
-            self.label = f"dem Felucca-Loader (ota-FM-1_900 oder ota-{product})"
+            self.label = _("the Felucca loader (ota-FM-1_900 or ota-{product})").format(product=product)
 
     def __call__(self, text: str) -> bool:
         if self.family == "stock":
@@ -94,7 +95,7 @@ class PackageInfo:
 def _crc16(data: bytes, crc: int = 0) -> int:
     for b in data:
         crc ^= b << 8
-        for _ in range(8):
+        for _bit in range(8):
             crc = ((crc << 1) ^ 0x1021) & 0xFFFF if crc & 0x8000 else (crc << 1) & 0xFFFF
     return crc
 
@@ -111,16 +112,16 @@ def _jl(b: bytes, key: int = 0xFFFF) -> bytes:
 def ufw_check(image: bytes) -> tuple[str, list[tuple[int, str, int, int]]]:
     """(Fehler oder "", [(Typ, Name, Offset, Größe)]) – wie SLOOPs package_damage()"""
     if len(image) < 0x40:
-        return "zu kurz", []
+        return _("too short"), []
     hdr = _jl(image[0:0x40])
     if _crc16(hdr[2:0x40]) != int.from_bytes(hdr[0:2], "little"):
-        return "Kopf-Prüfsumme falsch", []
+        return _("header checksum wrong"), []
     count = int.from_bytes(hdr[8:10], "little")
     if not 1 <= count <= 12 or len(image) < 0x40 + 0x50 * count:
-        return "Dateiliste ungültig", []
+        return _("file list invalid"), []
     lst = image[0x40:0x40 + 0x50 * count]
     if _crc16(lst) != int.from_bytes(hdr[2:4], "little"):
-        return "Prüfsumme der Dateiliste falsch", []
+        return _("checksum of the file list wrong"), []
     entries = []
     for i in range(count):
         e = _jl(lst[i * 0x50:(i + 1) * 0x50])
@@ -130,14 +131,14 @@ def ufw_check(image: bytes) -> tuple[str, list[tuple[int, str, int, int]]]:
         size = int.from_bytes(e[12:16], "little")
         name = e[0x40:0x50].split(b"\0")[0].decode("ascii", "replace")
         if off + size > len(image):
-            return f"{name}: abgeschnitten", entries
+            return _("{name}: truncated").format(name=name), entries
         if typ in (0, 100) and _crc16(image[off:off + size]) != dcrc:
-            return f"{name}: Prüfsumme falsch", entries
+            return _("{name}: checksum wrong").format(name=name), entries
         entries.append((typ, name, off, size))
     if not any(t == 0 for t, *_ in entries):
-        return "kein flash.bin im Paket", entries
+        return _("no flash.bin in the package"), entries
     if not any(t == 100 for t, *_ in entries):
-        return "kein Update-Loader (ota.bin) im Paket", entries
+        return _("no update loader (ota.bin) in the package"), entries
     return "", entries
 
 
@@ -147,15 +148,15 @@ def analyze(path: Path | str, catalog_family: str = "") -> PackageInfo:
     try:
         raw = path.read_bytes()
     except OSError as e:
-        raise PackageError(f"{path.name} lässt sich nicht lesen: {e.strerror}")
+        raise PackageError(_("{name} cannot be read: {error}").format(name=path.name, error=e.strerror))
     if len(raw) > 4 * 1024 * 1024:
-        raise PackageError(f"{path.name} ist zu groß für ein FM-1-Paket")
+        raise PackageError(_("{name} is too large for an FM-1 package").format(name=path.name))
     try:
         product = fi.product_of(raw)
     except fi.InstallError:
-        raise PackageError(f"{path.name} ist kein FM-1-Paket (zu kurz)")
+        raise PackageError(_("{name} is not an FM-1 package (too short)").format(name=path.name))
     if not re.fullmatch(r"[^_]+_\d+", product):
-        raise PackageError(f"{path.name} ist kein FM-1-Paket (Kennung {product!r})")
+        raise PackageError(_("{name} is not an FM-1 package (identity {identity})").format(name=path.name, identity=repr(product)))
     sha = hashlib.sha256(raw).hexdigest()
     image = fi.logical_image(raw)
     damage, entries = ufw_check(image)
@@ -213,7 +214,7 @@ def build_package(product: str, family: str = "felucca", app: bytes | None = Non
     img[0x40:head] = ents
     # Marker-Bytes einflechten: logisch 940 Kopfbytes -> 20 Blöcke à 0x2F + Marker
     if len(product) > 20:
-        raise ValueError("Kennung zu lang")
+        raise ValueError("identity too long")
     raw = bytearray()
     for i in range(20):
         raw += img[i * 0x2F:(i + 1) * 0x2F]

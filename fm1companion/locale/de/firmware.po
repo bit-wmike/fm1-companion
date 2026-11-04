@@ -1,0 +1,2892 @@
+# German translation of FM-1 Companion – firmware: install & versions, recovery, clean check, flashing.
+# SPDX-License-Identifier: GPL-3.0-only
+msgid ""
+msgstr ""
+"Project-Id-Version: FM-1 Companion\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: fm1companion/ui/firmware_page.py:168
+msgid "Installation plan"
+msgstr "Installationsplan"
+
+#: fm1companion/ui/firmware_page.py:184 fm1companion/flash/planner.py:413
+msgid "Intermediate step: install original V15"
+msgstr "Zwischenschritt: Original-V15 aufspielen"
+
+#: fm1companion/ui/firmware_page.py:185
+msgid "Via the unmodified original firmware V15 the new firmware starts from a clean, proven state. The intermediate step is itself an installation: power and cable then have to hold out twice instead of once."
+msgstr "Über die unveränderte Original-Firmware V15 startet die neue Firmware von einem sauberen, bewährten Stand. Der Zwischenschritt ist selbst eine Installation: Strom und Kabel müssen dann zweimal durchhalten statt einmal."
+
+#: fm1companion/ui/firmware_page.py:192 fm1companion/ui/firmware_page.py:257
+msgid "Make a backup first (recommended)"
+msgstr "Vorher ein Backup machen (empfohlen)"
+
+#: fm1companion/ui/firmware_page.py:200
+msgid "Dry run only: check everything, write nothing"
+msgstr "Nur Probelauf: alles prüfen, nichts schreiben"
+
+#: fm1companion/ui/firmware_page.py:203 fm1companion/ui/firmware_page.py:221
+msgid "Install"
+msgstr "Installieren"
+
+#: fm1companion/ui/firmware_page.py:205 fm1companion/ui/firmware_page.py:1179
+#: fm1companion/ui/risk_dialog.py:29
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: fm1companion/ui/firmware_page.py:208 fm1companion/ui/firmware_page.py:304
+msgid "Please confirm above"
+msgstr "Bitte oben bestätigen"
+
+#: fm1companion/ui/firmware_page.py:221
+msgid "Start dry run"
+msgstr "Probelauf starten"
+
+#: fm1companion/ui/firmware_page.py:246
+msgid "Mandatory: according to the catalog, this firmware is only installed from the original V15."
+msgstr "Pflicht: Diese Firmware wird laut Katalog nur von der Original-V15 aus installiert."
+
+#: fm1companion/ui/firmware_page.py:247
+msgid "Firmware switch (or running firmware unknown): the intermediate step is preset to avoid careless mistakes when switching back and forth quickly. But it is itself a write operation – two installations instead of one, so twice a period in which battery and cable must hold. It is only needed for V16 and for firmwares that according to the catalog only work from V15 (then it is fixed). Only untick it if you are sure."
+msgstr "Firmware-Wechsel (oder laufende Firmware unbekannt): Der Zwischenschritt ist voreingestellt, um Flüchtigkeitsfehler beim schnellen Hin- und Herwechseln zu vermeiden. Er ist aber selbst ein Schreibvorgang – zwei Installationen statt einer, also zweimal ein Zeitraum, in dem Akku und Kabel halten müssen. Nötig ist er nur bei V16 und bei Firmwares, die laut Katalog nur von V15 aus gehen (dann ist er fest). Nur abwählen, wenn du sicher bist."
+
+#: fm1companion/ui/firmware_page.py:252
+msgid "Update of the same firmware: normally not needed."
+msgstr "Update derselben Firmware: normalerweise nicht nötig."
+
+#: fm1companion/ui/firmware_page.py:255
+msgid "Make a backup first (mandatory when switching with V16)"
+msgstr "Vorher ein Backup machen (Pflicht beim Wechsel mit V16)"
+
+#: fm1companion/ui/firmware_page.py:261
+msgid "Without backup: you have to confirm this explicitly below."
+msgstr "Ohne Backup: Das musst du unten ausdrücklich bestätigen."
+
+#: fm1companion/ui/firmware_page.py:262
+msgid "Backup: the app cannot make a backup of the running firmware (no editor protocol). Back up important projects first with the firmware's own tool."
+msgstr "Backup: Von der laufenden Firmware kann die App kein Backup machen (kein Editor-Protokoll). Wichtige Projekte vorher mit dem Werkzeug der Firmware sichern."
+
+#: fm1companion/ui/firmware_page.py:264
+msgid "writes"
+msgstr "schreibt"
+
+#: fm1companion/ui/firmware_page.py:271 fm1companion/ui/firmware_page.py:1251
+#: fm1companion/ui/firmware_page.py:1345
+msgid "Not possible"
+msgstr "Nicht möglich"
+
+#: fm1companion/ui/firmware_page.py:274
+msgid "Notes"
+msgstr "Hinweise"
+
+#: fm1companion/ui/firmware_page.py:275
+msgid "While writing, do not unplug the USB cable and do not switch the FM-1 off."
+msgstr "Während des Schreibens das USB-Kabel nicht abziehen und das FM-1 nicht ausschalten."
+
+#: fm1companion/ui/firmware_page.py:280
+msgid "What is no longer on the device afterwards:"
+msgstr "Was danach nicht mehr auf dem Gerät ist:"
+
+#: fm1companion/ui/firmware_page.py:304
+msgid "Not possible – see above"
+msgstr "Nicht möglich – siehe oben"
+
+#: fm1companion/ui/firmware_page.py:311
+msgid "Cancels before the next safe point. While writing, the installation runs to the end – cancelling there would leave the FM-1 in update mode."
+msgstr "Bricht vor dem nächsten sicheren Punkt ab. Während geschrieben wird, läuft die Installation zu Ende – ein Abbruch dort würde das FM-1 im Update-Modus lassen."
+
+#: fm1companion/ui/firmware_page.py:317
+msgid "<b>Do not unplug and do not switch off now.</b> The FM-1 is writing its firmware. This takes a few minutes – after that it restarts by itself."
+msgstr "<b>Jetzt nicht abstecken und nicht ausschalten.</b> Das FM-1 schreibt gerade seine Firmware. Das dauert ein paar Minuten – danach startet es von selbst neu."
+
+#: fm1companion/ui/firmware_page.py:326
+msgid "Cancel (only before writing)"
+msgstr "Abbrechen (nur vor dem Schreiben)"
+
+#: fm1companion/ui/firmware_page.py:344
+msgid "While the FM-1 is writing, it cannot be cancelled safely – please wait."
+msgstr "Während das FM-1 schreibt, lässt sich nicht sicher abbrechen – bitte warten."
+
+#: fm1companion/ui/firmware_page.py:351
+msgid "Cancellation requested – takes effect at the next safe point."
+msgstr "Abbruch angefordert – greift am nächsten sicheren Punkt."
+
+#: fm1companion/ui/firmware_page.py:366
+msgctxt "install state"
+msgid "Cancelled"
+msgstr "Abgebrochen"
+
+#: fm1companion/ui/firmware_page.py:392 fm1companion/ui/firmware_page.py:563
+#: fm1companion/ui/firmware_page.py:582 fm1companion/ui/firmware_page.py:617
+#: fm1companion/ui/pages/recovery.py:465
+#, python-brace-format
+msgid "Technical details: {details}"
+msgstr "Technische Details: {details}"
+
+#: fm1companion/ui/firmware_page.py:413
+msgid "The loader family of the package is unknown – it is not sent to any update loader."
+msgstr "Die Loader-Familie des Pakets ist unbekannt – es wird an keinen Update-Loader geschickt."
+
+#: fm1companion/ui/firmware_page.py:415
+#, python-brace-format
+msgid "This is not the unmodified original firmware ({identity})."
+msgstr "Das ist nicht die unveränderte Original-Firmware ({identity})."
+
+#: fm1companion/ui/firmware_page.py:417
+msgid "The file has changed since the plan (different checksum)."
+msgstr "Die Datei hat sich seit dem Plan verändert (andere Prüfsumme)."
+
+#: fm1companion/ui/firmware_page.py:419
+#, python-brace-format
+msgid "{label}: {product}, SHA-256 {sha256}…, loader family {family}"
+msgstr "{label}: {product}, SHA-256 {sha256}…, Loader-Familie {family}"
+
+#: fm1companion/ui/firmware_page.py:422
+#, python-brace-format
+msgid "{line}, DAMAGED ({damage})"
+msgstr "{line}, BESCHÄDIGT ({damage})"
+
+#: fm1companion/ui/firmware_page.py:424
+#, python-brace-format
+msgid "{line} – OK"
+msgstr "{line} – in Ordnung"
+
+#: fm1companion/ui/firmware_page.py:427
+#, python-brace-format
+msgid "{label} is not installed: {problems}"
+msgstr "{label} wird nicht installiert: {problems}"
+
+#: fm1companion/ui/firmware_page.py:440 fm1companion/ui/firmware_page.py:1247
+#: fm1companion/ui/pages/recovery.py:606
+msgid "Not a real FM-1"
+msgstr "Kein echtes FM-1"
+
+#: fm1companion/ui/firmware_page.py:440 fm1companion/ui/firmware_page.py:1247
+msgid "The Studio twin is not a real FM-1 – firmware is only installed on a connected device. Please choose a real FM-1 at the top."
+msgstr "Der Studio-Zwilling ist kein echtes FM-1 – Firmware wird nur auf ein angeschlossenes Gerät installiert. Bitte oben ein echtes FM-1 wählen."
+
+#: fm1companion/ui/firmware_page.py:444 fm1companion/ui/pages/recovery.py:624
+msgid "No device"
+msgstr "Kein Gerät"
+
+#: fm1companion/ui/firmware_page.py:444
+msgid "Please connect the FM-1 via USB."
+msgstr "Bitte das FM-1 per USB anschließen."
+
+#: fm1companion/ui/firmware_page.py:449
+msgid "own file"
+msgstr "eigene Datei"
+
+#: fm1companion/ui/firmware_page.py:455 fm1companion/ui/firmware_page.py:1092
+#: fm1companion/ui/pages/recovery.py:388
+msgid "No FM-1 package"
+msgstr "Kein FM-1-Paket"
+
+#: fm1companion/ui/firmware_page.py:472
+#, python-brace-format
+msgid "{firmware} on {device}"
+msgstr "{firmware} auf {device}"
+
+#: fm1companion/ui/firmware_page.py:474
+msgid "this FM-1"
+msgstr "dieses FM-1"
+
+#: fm1companion/ui/firmware_page.py:480
+msgid "Installation not possible"
+msgstr "Installation nicht möglich"
+
+#: fm1companion/ui/firmware_page.py:483
+msgid "Confirmation missing"
+msgstr "Bestätigung fehlt"
+
+#: fm1companion/ui/firmware_page.py:483
+msgid "Please confirm all points in bold in the plan explicitly:"
+msgstr "Bitte im Plan alle fett gedruckten Punkte ausdrücklich bestätigen:"
+
+#: fm1companion/ui/firmware_page.py:491
+msgid "Device has changed"
+msgstr "Gerät hat sich geändert"
+
+#: fm1companion/ui/firmware_page.py:492
+msgid "While the plan was open, the FM-1 was disconnected or another device became active. Nothing was written. Please connect the desired FM-1 or select it at the top left, and open the plan again."
+msgstr "Während der Plan offen war, wurde das FM-1 getrennt oder ein anderes Gerät aktiv. Es wurde nichts geschrieben. Bitte das gewünschte FM-1 anschließen bzw. oben links auswählen und den Plan neu öffnen."
+
+#: fm1companion/ui/firmware_page.py:496
+msgid "Backup not possible"
+msgstr "Backup nicht möglich"
+
+#: fm1companion/ui/firmware_page.py:497
+msgid "The plan includes a backup, but the connection to the FM-1 is gone in the meantime. Nothing was written. Please reconnect and open the plan again."
+msgstr "Der Plan sieht ein Backup vor, aber die Verbindung zum FM-1 ist inzwischen weg. Es wurde nichts geschrieben. Bitte neu verbinden und den Plan erneut öffnen."
+
+#: fm1companion/ui/firmware_page.py:513
+msgid "Backup folder not writable"
+msgstr "Backup-Ordner nicht beschreibbar"
+
+#: fm1companion/ui/firmware_page.py:528
+msgid "Cancelled – nothing was changed on the FM-1."
+msgstr "Abgebrochen – am FM-1 wurde nichts geändert."
+
+#: fm1companion/ui/firmware_page.py:529
+#, python-brace-format
+msgid "Cancelled after the intermediate step: {written} was written to the FM-1 – it now runs the original firmware V15. {name} was NOT written. To continue, install {name} again (the intermediate step is then no longer needed)."
+msgstr "Abgebrochen nach dem Zwischenschritt: Auf das FM-1 wurde {written} geschrieben – es läuft jetzt die Original-Firmware V15. {name} wurde NICHT geschrieben. Zum Fortsetzen {name} erneut installieren (der Zwischenschritt ist dann nicht mehr nötig)."
+
+#: fm1companion/ui/firmware_page.py:540
+msgid "Step: load & check all packages (before any writing) …"
+msgstr "Schritt: alle Pakete laden & prüfen (vor jedem Schreiben) …"
+
+#: fm1companion/ui/firmware_page.py:546
+msgid "Original V15"
+msgstr "Original-V15"
+
+#: fm1companion/ui/firmware_page.py:552
+msgid "Checksum not available: this release has no checksum file (confirmed in the plan)."
+msgstr "Prüfsumme nicht verfügbar: dieses Release hat keine Prüfsummen-Datei (im Plan bestätigt)."
+
+#: fm1companion/ui/firmware_page.py:564
+#, python-brace-format
+msgid "{error} Nothing has been changed on the FM-1."
+msgstr "{error} Am FM-1 wurde nichts geändert."
+
+#: fm1companion/ui/firmware_page.py:565
+msgid "All packages checked."
+msgstr "Alle Pakete geprüft."
+
+#: fm1companion/ui/firmware_page.py:569
+msgid "Step: backup of the device …"
+msgstr "Schritt: Backup des Geräts …"
+
+#: fm1companion/ui/firmware_page.py:571
+msgid "Backup not possible: the connection to the FM-1 is gone. Installation aborted – nothing was changed on the FM-1."
+msgstr "Backup nicht möglich: Die Verbindung zum FM-1 ist weg. Installation abgebrochen – am FM-1 wurde nichts geändert."
+
+#: fm1companion/ui/firmware_page.py:578
+#, python-brace-format
+msgid "automatically before installing {label}"
+msgstr "automatisch vor Installation von {label}"
+
+#: fm1companion/ui/firmware_page.py:583
+#, python-brace-format
+msgid "Backup failed – installation aborted, nothing was changed on the FM-1. Reason: {error} If you want to install without a backup, untick “Make a backup first” in the plan and confirm that."
+msgstr "Backup fehlgeschlagen – Installation abgebrochen, am FM-1 wurde nichts geändert. Grund: {error} Wer ohne Backup installieren will, wählt im Plan „Vorher ein Backup machen“ ab und bestätigt das."
+
+#: fm1companion/ui/firmware_page.py:594
+msgid "Dry run finished – nothing was written."
+msgstr "Probelauf beendet – es wurde nichts geschrieben."
+
+#: fm1companion/ui/firmware_page.py:599
+msgid "Step: intermediate step original V15 …"
+msgstr "Schritt: Zwischenschritt Original-V15 …"
+
+#: fm1companion/ui/firmware_page.py:604
+msgid "the original firmware V15"
+msgstr "die Original-Firmware V15"
+
+#: fm1companion/ui/firmware_page.py:605
+msgid "Original V15 is running. Continuing with the target firmware …"
+msgstr "Original-V15 läuft. Weiter mit der Zielfirmware …"
+
+#: fm1companion/ui/firmware_page.py:607
+#, python-brace-format
+msgid "Step: install {name} …"
+msgstr "Schritt: {name} aufspielen …"
+
+#: fm1companion/ui/firmware_page.py:622
+#, python-brace-format
+msgid "The FM-1 is now waiting in update mode – {name} is not completely written. Do not unplug anything: continue on the “Recovery” page with “Finish installation”."
+msgstr "Das FM-1 wartet jetzt im Update-Modus – {name} ist nicht vollständig geschrieben. Nichts abziehen: auf der Seite „Rettung“ mit „Installation abschließen“ weitermachen."
+
+#: fm1companion/ui/firmware_page.py:626
+#, python-brace-format
+msgid "{name} was written, but the FM-1 did not report as expected afterwards. Switch it off and on again and check which firmware it shows."
+msgstr "{name} wurde geschrieben, aber das FM-1 hat sich danach nicht wie erwartet gemeldet. Aus- und wieder einschalten und prüfen, welche Firmware es zeigt."
+
+#: fm1companion/ui/firmware_page.py:629
+#, python-brace-format
+msgid "The FM-1 now runs the original firmware V15; {name} was not written."
+msgstr "Auf dem FM-1 läuft jetzt die Original-Firmware V15; {name} wurde nicht geschrieben."
+
+#: fm1companion/ui/firmware_page.py:630
+#, python-brace-format
+msgid "{error} Written before: {written}. {now}"
+msgstr "{error} Vorher geschrieben: {written}. {now}"
+
+#: fm1companion/ui/firmware_page.py:633
+#, python-brace-format
+msgid "Device now reports: {identity}"
+msgstr "Gerät meldet jetzt: {identity}"
+
+#: fm1companion/ui/firmware_page.py:633 fm1companion/ui/firmware_page.py:899
+#: fm1companion/ui/firmware_page.py:1095 fm1companion/ui/pages/recovery.py:390
+msgid "unknown"
+msgstr "unbekannt"
+
+#: fm1companion/ui/firmware_page.py:638
+#, python-brace-format
+msgid "The editor will be provided later ({error})"
+msgstr "Editor wird später bereitgestellt ({error})"
+
+#: fm1companion/ui/firmware_page.py:644
+msgid "Dry run successful – all packages checked, the FM-1 answered. Nothing was changed on the FM-1."
+msgstr "Probelauf erfolgreich – alle Pakete geprüft, das FM-1 hat geantwortet. Am FM-1 wurde nichts geändert."
+
+#: fm1companion/ui/firmware_page.py:646
+#, python-brace-format
+msgid "Installation finished – the FM-1 now reports {identity} ({label})"
+msgstr "Installation abgeschlossen – das FM-1 meldet jetzt {identity} ({label})"
+
+#: fm1companion/ui/firmware_page.py:647
+msgid "an unknown identity"
+msgstr "eine unbekannte Kennung"
+
+#: fm1companion/ui/firmware_page.py:649
+msgid "via the original V15"
+msgstr "über die Original-V15"
+
+#: fm1companion/ui/firmware_page.py:652
+msgid "backup saved beforehand"
+msgstr "Backup vorher gespeichert"
+
+#: fm1companion/ui/firmware_page.py:652
+msgid "without backup"
+msgstr "ohne Backup"
+
+#: fm1companion/ui/firmware_page.py:655
+#, python-brace-format
+msgid "The app checked the checksum of the package and the identity after the restart ({identity}). Whether every byte in the flash is right can only be checked with a flash dump (Recovery › “Is my FM-1 clean?”)."
+msgstr "Geprüft hat die App die Prüfsumme des Pakets und die Kennung nach dem Neustart ({identity}). Ob jedes Byte im Flash stimmt, lässt sich nur mit einem Flash-Dump prüfen (Rettung › „Ist mein FM-1 sauber?“)."
+
+#: fm1companion/ui/firmware_page.py:678
+#, python-brace-format
+msgid "{label} check (dry run)"
+msgstr "{label} prüfen (Probelauf)"
+
+#: fm1companion/ui/firmware_page.py:678
+#, python-brace-format
+msgid "{label} install"
+msgstr "{label} installieren"
+
+#: fm1companion/ui/firmware_page.py:690
+msgid "Add firmware"
+msgstr "Firmware hinzufügen"
+
+#: fm1companion/ui/firmware_page.py:694
+msgid "owner/repo on GitHub, e.g. charlesvestal/fm1-x0x"
+msgstr "besitzer/repo auf GitHub, z. B. charlesvestal/fm1-x0x"
+
+#. Translators: {ver} is typed literally by the user – keep it
+#: fm1companion/ui/firmware_page.py:697
+#, python-brace-format
+msgid "Package name in the release, {{ver}} = version, e.g. x0x-{{ver}}.fwsc"
+msgstr "Paketname im Release, {{ver}} = Version, z. B. x0x-{{ver}}.fwsc"
+
+#: fm1companion/ui/firmware_page.py:699
+#, python-brace-format
+msgid "optional: resource file, e.g. name-{{ver}}-res.bin"
+msgstr "optional: Ressourcen-Datei, z. B. name-{{ver}}-res.bin"
+
+#: fm1companion/ui/firmware_page.py:701
+msgid "Name:"
+msgstr "Name:"
+
+#: fm1companion/ui/firmware_page.py:702
+msgid "GitHub repo:"
+msgstr "GitHub-Repo:"
+
+#: fm1companion/ui/firmware_page.py:703
+msgid "Package:"
+msgstr "Paket:"
+
+#: fm1companion/ui/firmware_page.py:704
+msgid "Resources:"
+msgstr "Ressourcen:"
+
+#: fm1companion/ui/firmware_page.py:705
+msgid "Description:"
+msgstr "Beschreibung:"
+
+#: fm1companion/ui/firmware_page.py:706
+msgid "Every FM-1 firmware can be installed: the app uses the built-in installer and checks the package identity and update loader. Backups, projects and editor are only available for firmwares of the Felucca family with an editor protocol."
+msgstr "Jede FM-1-Firmware lässt sich installieren: Die App benutzt den eingebauten Installer und prüft Paket-Kennung und Update-Loader. Backups, Projekte und Editor gibt es nur bei Firmwares der Felucca-Familie mit Editor-Protokoll."
+
+#. Translators: strftime format of a date (day.month.year in German)
+#: fm1companion/ui/firmware_page.py:727
+#, python-format
+msgctxt "date format"
+msgid "%Y-%m-%d"
+msgstr "%d.%m.%Y"
+
+#: fm1companion/ui/firmware_page.py:752
+msgid "Check versions, update or switch to another firmware. Every FM-1 firmware: with installation plan, checksum, dry run and the matching update loader."
+msgstr "Versionen prüfen, aktualisieren oder zu einer anderen Firmware wechseln. Jede FM-1-Firmware: mit Installationsplan, Prüfsumme, Probelauf und dem passenden Update-Loader."
+
+#: fm1companion/ui/firmware_page.py:764
+msgid "Add firmware …"
+msgstr "Firmware hinzufügen …"
+
+#: fm1companion/ui/firmware_page.py:778 fm1companion/ui/firmware_page.py:1129
+#, python-brace-format
+msgid "<b>Caution V16:</b> {warning}"
+msgstr "<b>Achtung V16:</b> {warning}"
+
+#: fm1companion/ui/firmware_page.py:789
+msgid "<b>This FM-1 runs V16 (experimental).</b> The way back goes via the original V15: the app first installs V15, then your target firmware and, with Melodee, the font and factory sounds after that."
+msgstr "<b>Auf diesem FM-1 läuft V16 (experimentell).</b> Der Rückweg geht über die Original-V15: Die App spielt erst V15 auf, dann deine Zielfirmware und bei Melodee danach Schrift und Werkssounds."
+
+#: fm1companion/ui/firmware_page.py:794
+msgid "Way back from V16 …"
+msgstr "Rückweg von V16 …"
+
+#: fm1companion/ui/firmware_page.py:796
+msgid "Choose target firmware and version – then the installation plan shows every step"
+msgstr "Zielfirmware und Version wählen – danach zeigt der Installationsplan jeden Schritt"
+
+#: fm1companion/ui/firmware_page.py:802
+msgid "Date"
+msgstr "Datum"
+
+#: fm1companion/ui/firmware_page.py:802
+msgctxt "release list"
+msgid "Type"
+msgstr "Art"
+
+#: fm1companion/ui/firmware_page.py:802
+msgctxt "release list"
+msgid "Status"
+msgstr "Status"
+
+#: fm1companion/ui/firmware_page.py:812
+msgid "Install on active FM-1"
+msgstr "Auf aktives FM-1 installieren"
+
+#: fm1companion/ui/firmware_page.py:815
+msgid "Download only"
+msgstr "Nur herunterladen"
+
+#: fm1companion/ui/firmware_page.py:817
+msgid "Reload"
+msgstr "Neu laden"
+
+#: fm1companion/ui/firmware_page.py:819
+msgid "Show release candidates"
+msgstr "Release Candidates zeigen"
+
+#: fm1companion/ui/firmware_page.py:823
+msgid "Install own .fwsc file …"
+msgstr "Eigene .fwsc-Datei installieren …"
+
+#: fm1companion/ui/firmware_page.py:826
+msgid "Rewrite font && factory sounds"
+msgstr "Schrift && Werkssounds nachschreiben"
+
+#: fm1companion/ui/firmware_page.py:827
+msgid "Melodee 1.6 and later: write the resource file (font, factory sounds, Bluetooth program) to the FM-1 afterwards – e.g. if the display stays empty after the update"
+msgstr "Melodee ab 1.6: die Ressourcen-Datei (Schrift, Werkssounds, Bluetooth-Programm) nachträglich aufs FM-1 schreiben – z. B. wenn das Display nach dem Update leer bleibt"
+
+#: fm1companion/ui/firmware_page.py:830
+msgid "Back to the original …"
+msgstr "Zurück zum Original …"
+
+#: fm1companion/ui/firmware_page.py:831
+msgid "Install M-VAVE's original firmware V15 or V16 (the checksum is always checked)"
+msgstr "M-VAVEs Original-Firmware V15 oder V16 aufspielen (Prüfsumme wird immer kontrolliert)"
+
+#: fm1companion/ui/firmware_page.py:899
+#, python-brace-format
+msgid "Samples: {samples}"
+msgstr "Samples: {samples}"
+
+#: fm1companion/ui/firmware_page.py:919
+msgid "Versions are loaded as soon as you open this page."
+msgstr "Versionen werden geladen, sobald du diese Seite öffnest."
+
+#: fm1companion/ui/firmware_page.py:922 fm1companion/ui/firmware_page.py:965
+msgid "loading …"
+msgstr "lade …"
+
+#: fm1companion/ui/firmware_page.py:953
+#, python-brace-format
+msgid "Releases could not be loaded: {error}"
+msgstr "Releases konnten nicht geladen werden: {error}"
+
+#: fm1companion/ui/firmware_page.py:967
+msgid "Possible reasons: no internet, the GitHub request limit (60 per hour) has been reached, or the project has no releases."
+msgstr "Mögliche Gründe: kein Internet, das GitHub-Abruf-Limit (60 pro Stunde) ist erreicht, oder das Projekt hat keine Releases."
+
+#: fm1companion/ui/firmware_page.py:970
+#, python-brace-format
+msgid "No versions found. {reason} “Reload” tries again."
+msgstr "Keine Versionen gefunden. {reason} „Neu laden“ versucht es erneut."
+
+#: fm1companion/ui/firmware_page.py:980
+msgid "● installed"
+msgstr "● installiert"
+
+#: fm1companion/ui/firmware_page.py:982
+msgctxt "release list"
+msgid "downloaded"
+msgstr "heruntergeladen"
+
+#: fm1companion/ui/firmware_page.py:983
+msgid "Release candidate"
+msgstr "Release Candidate"
+
+#: fm1companion/ui/firmware_page.py:983
+msgid "stable"
+msgstr "stabil"
+
+#: fm1companion/ui/firmware_page.py:1014
+#, python-brace-format
+msgid "{tag}: no release notes available."
+msgstr "{tag}: keine Release-Notizen abrufbar."
+
+#: fm1companion/ui/firmware_page.py:1020
+msgid "First choose a version in the list."
+msgstr "Erst eine Version in der Liste wählen."
+
+#: fm1companion/ui/firmware_page.py:1021
+msgid "No version loaded – try “Reload” (internet needed) or choose your own .fwsc file."
+msgstr "Keine Version geladen – „Neu laden“ versuchen (Internet nötig) oder eine eigene .fwsc-Datei wählen."
+
+#: fm1companion/ui/firmware_page.py:1025
+msgid "First connect an FM-1 via USB – or “Download only” for later."
+msgstr "Erst ein FM-1 per USB anschließen – oder „Nur herunterladen“ für später."
+
+#: fm1companion/ui/firmware_page.py:1026 fm1companion/ui/firmware_page.py:1031
+#, python-brace-format
+msgid "Only download {name} {tag} into the firmware folder (installs nothing)"
+msgstr "{name} {tag} nur in den Firmware-Ordner laden (installiert nichts)"
+
+#: fm1companion/ui/firmware_page.py:1029
+#, python-brace-format
+msgid "Install {name} {tag} on the active FM-1 – with plan, checksum and confirmation"
+msgstr "{name} {tag} auf das aktive FM-1 installieren – mit Plan, Prüfsumme und Bestätigung"
+
+#: fm1companion/ui/firmware_page.py:1038
+msgid "Firmware of the device unknown"
+msgstr "Firmware des Geräts unbekannt"
+
+#: fm1companion/ui/firmware_page.py:1070
+msgid "checksum checked"
+msgstr "Prüfsumme geprüft"
+
+#: fm1companion/ui/firmware_page.py:1071
+msgid "checksum not available (the release has no checksum file)"
+msgstr "Prüfsumme nicht verfügbar (das Release hat keine Prüfsummen-Datei)"
+
+#: fm1companion/ui/firmware_page.py:1072
+#, python-brace-format
+msgid "{name} {tag} downloaded ({file}, {check}) – NOT installed yet. Saved in {folder}."
+msgstr "{name} {tag} heruntergeladen ({file}, {check}) – noch NICHT installiert. Gespeichert in {folder}."
+
+#: fm1companion/ui/firmware_page.py:1074
+#, python-brace-format
+msgid "Download {name} {tag}"
+msgstr "{name} {tag} herunterladen"
+
+#: fm1companion/ui/firmware_page.py:1078
+msgid "Install now …"
+msgstr "Jetzt installieren …"
+
+#: fm1companion/ui/firmware_page.py:1085
+msgid "Choose firmware package"
+msgstr "Firmware-Paket wählen"
+
+#: fm1companion/ui/firmware_page.py:1086 fm1companion/ui/pages/recovery.py:360
+msgid "FM-1 firmware (*.fwsc)"
+msgstr "FM-1-Firmware (*.fwsc)"
+
+#: fm1companion/ui/firmware_page.py:1095 fm1companion/ui/pages/recovery.py:390
+msgid "Original (M-VAVE)"
+msgstr "Original (M-VAVE)"
+
+#: fm1companion/ui/firmware_page.py:1095 fm1companion/ui/pages/recovery.py:390
+msgid "Felucca family"
+msgstr "Felucca-Familie"
+
+#: fm1companion/ui/firmware_page.py:1096
+#, python-brace-format
+msgid "Identity: <b>{product}</b>"
+msgstr "Kennung: <b>{product}</b>"
+
+#: fm1companion/ui/firmware_page.py:1097
+#, python-brace-format
+msgid "Loader family: {family}"
+msgstr "Loader-Familie: {family}"
+
+#: fm1companion/ui/firmware_page.py:1098
+#, python-brace-format
+msgid "Damaged: {damage}"
+msgstr "Beschädigt: {damage}"
+
+#: fm1companion/ui/firmware_page.py:1099
+#, python-brace-format
+msgid "Recognized as <b>{name}</b> (checksum matches the catalog or a checked release)."
+msgstr "Erkannt als <b>{name}</b> (Prüfsumme stimmt mit Katalog bzw. geprüftem Release überein)."
+
+#: fm1companion/ui/firmware_page.py:1101
+msgid "This checksum is in no catalog and in no checked release – the file is <b>unknown</b>, no matter what it is called. You must confirm explicitly in the plan that you know what you are doing."
+msgstr "Diese Prüfsumme steht in keinem Katalog und in keinem geprüften Release – die Datei ist <b>unbekannt</b>, egal wie sie heißt. Du musst im Plan ausdrücklich bestätigen, dass du weißt, was du tust."
+
+#: fm1companion/ui/firmware_page.py:1104
+msgid "Own firmware file"
+msgstr "Eigene Firmware-Datei"
+
+#: fm1companion/ui/firmware_page.py:1104 fm1companion/ui/firmware_page.py:1177
+msgid "On to the plan"
+msgstr "Weiter zum Plan"
+
+#: fm1companion/ui/firmware_page.py:1116
+msgid "Back to the original"
+msgstr "Zurück zum Original"
+
+#: fm1companion/ui/firmware_page.py:1118
+msgid "<b>V15</b> is the proven way back: all installers know it, and almost all community firmwares are installed from it. <b>V16</b> (October 2026) is M-VAVE's newest version with eight voices and 64-step patterns. M-VAVE occasionally replaces the V16 file on the server – if the checksum does not match, the app installs nothing.<br><br>Afterwards, on the FM-1, run <i>System &gt; Reset Patches</i> once if presets look garbled."
+msgstr "<b>V15</b> ist der bewährte Rückweg: alle Installer kennen sie, und fast alle Community-Firmwares werden von ihr aus installiert. <b>V16</b> (Oktober 2026) ist M-VAVEs neueste Version mit acht Stimmen und 64-Step-Pattern. M-VAVE tauscht die V16-Datei auf dem Server gelegentlich aus – passt die Prüfsumme nicht, installiert die App nichts.<br><br>Danach am FM-1 einmal <i>System &gt; Reset Patches</i>, falls Presets verstümmelt aussehen."
+
+#: fm1companion/ui/firmware_page.py:1126
+msgid "Original firmware V15 (recommended)"
+msgstr "Original-Firmware V15 (empfohlen)"
+
+#: fm1companion/ui/firmware_page.py:1127
+msgid "Original firmware V16 (experimental – only with a backup)"
+msgstr "Original-Firmware V16 (experimentell – nur mit Backup)"
+
+#: fm1companion/ui/firmware_page.py:1147
+msgid "Way back from V16"
+msgstr "Rückweg von V16"
+
+#: fm1companion/ui/firmware_page.py:1149
+msgid "<b>This is how the way back works:</b><ol><li>A backup is not possible – V16 has no editor protocol. What you saved under V16 is gone afterwards.</li><li>Install the original V15 (same update loader as V16).</li><li>Install your target firmware; with Melodee, the font and factory sounds after that.</li><li>Restore your backup from before V16 (“Backups” page).</li></ol>Leftovers of V16 (0x93000–0xA8FFF) remain in the flash; you can check that in Recovery with “Is my FM-1 clean?”."
+msgstr "<b>So läuft der Rückweg:</b><ol><li>Ein Backup geht nicht – V16 hat kein Editor-Protokoll. Was du unter V16 gespeichert hast, ist danach weg.</li><li>Original-V15 aufspielen (gleicher Update-Loader wie V16).</li><li>Deine Zielfirmware aufspielen; bei Melodee danach Schrift und Werkssounds.</li><li>Dein Backup von vor V16 zurückspielen (Seite „Backups“).</li></ol>Reste von V16 (0x93000–0xA8FFF) bleiben im Flash liegen; prüfen kannst du das in der Rettung mit „Ist mein FM-1 sauber?“."
+
+#: fm1companion/ui/firmware_page.py:1165
+msgid "Original firmware V15 (V15 only)"
+msgstr "Original-Firmware V15 (nur V15)"
+
+#: fm1companion/ui/firmware_page.py:1172
+msgid "Target firmware:"
+msgstr "Zielfirmware:"
+
+#: fm1companion/ui/firmware_page.py:1173
+msgid "Version:"
+msgstr "Version:"
+
+#: fm1companion/ui/firmware_page.py:1190
+msgid "Loading versions …"
+msgstr "Versionen werden geladen …"
+
+#: fm1companion/ui/firmware_page.py:1193
+#, python-brace-format
+msgid "Versions cannot be loaded: {error}"
+msgstr "Versionen nicht ladbar: {error}"
+
+#: fm1companion/ui/firmware_page.py:1196
+#, python-brace-format
+msgid "{tag} (test version)"
+msgstr "{tag} (Testversion)"
+
+#: fm1companion/ui/firmware_page.py:1204
+msgid "No version found."
+msgstr "Keine Version gefunden."
+
+#: fm1companion/ui/firmware_page.py:1212
+msgid "No version chosen"
+msgstr "Keine Version gewählt"
+
+#: fm1companion/ui/firmware_page.py:1212
+msgid "Please choose a version. Nothing was changed on the FM-1."
+msgstr "Bitte eine Version wählen. Am FM-1 wurde nichts verändert."
+
+#: fm1companion/ui/firmware_page.py:1220
+msgid "Firmware history of this device: no installation via the app yet."
+msgstr "Firmware-Verlauf dieses Geräts: noch keine Installation über die App."
+
+#: fm1companion/ui/firmware_page.py:1223
+msgid "(via V15)"
+msgstr "(über V15)"
+
+#: fm1companion/ui/firmware_page.py:1226
+msgid "Firmware history:"
+msgstr "Firmware-Verlauf:"
+
+#: fm1companion/ui/firmware_page.py:1251
+msgid "For this, an FM-1 with a known Melodee version must be connected."
+msgstr "Dafür muss ein FM-1 mit bekannter Melodee-Version verbunden sein."
+
+#: fm1companion/ui/firmware_page.py:1262
+msgid "Version not in the list"
+msgstr "Version nicht in der Liste"
+
+#: fm1companion/ui/firmware_page.py:1263
+#, python-brace-format
+msgid "The installed version {tag} is not in the loaded version list of {name}. Are you online? Please press “Reload” and then try again. Nothing was changed on the FM-1."
+msgstr "Die installierte Version {tag} steht nicht in der geladenen Versionsliste von {name}. Bist du online? Bitte „Neu laden“ drücken und es dann erneut versuchen. Am FM-1 wurde nichts verändert."
+
+#: fm1companion/ui/firmware_page.py:1271
+#, python-brace-format
+msgid "{name} {tag} has no resource file – there is nothing to rewrite. Nothing was changed on the FM-1."
+msgstr "{name} {tag} hat keine Ressourcen-Datei – es gibt nichts nachzuschreiben. Am FM-1 wurde nichts verändert."
+
+#: fm1companion/ui/firmware_page.py:1278
+msgid "Cancelled: the tool from the repo was not run. Nothing was changed on the FM-1."
+msgstr "Abgebrochen: Das Werkzeug aus dem Repo wurde nicht ausgeführt. Am FM-1 wurde nichts verändert."
+
+#: fm1companion/ui/firmware_page.py:1290
+#, python-brace-format
+msgid "The resources of {name} {tag} (fonts, factory sounds, Bluetooth program) were already complete – the FM-1 confirmed length and checksum itself, nothing was written."
+msgstr "Die Ressourcen von {name} {tag} (Schriften, Werkssounds, Bluetooth-Programm) waren schon vollständig – das FM-1 hat Länge und Prüfsumme selbst bestätigt, es wurde nichts geschrieben."
+
+#: fm1companion/ui/firmware_page.py:1293
+#, python-brace-format
+msgid "Resources of {name} {tag} written (fonts, factory sounds, Bluetooth program). The firmware itself was not changed."
+msgstr "Ressourcen von {name} {tag} geschrieben (Schriften, Werkssounds, Bluetooth-Programm). Die Firmware selbst wurde nicht verändert."
+
+#: fm1companion/ui/firmware_page.py:1298 fm1companion/flash/planner.py:529
+msgid "Write resources"
+msgstr "Ressourcen schreiben"
+
+#: fm1companion/ui/firmware_page.py:1305
+#, python-brace-format
+msgid "<b>Caution:</b> the tag previously pointed to {commit}. A moved tag can be a harmless re-release – or modified code."
+msgstr "<b>Achtung:</b> Der Tag zeigte vorher auf {commit}. Ein verschobener Tag kann ein harmloses Neu-Veröffentlichen sein – oder veränderter Code."
+
+#: fm1companion/ui/firmware_page.py:1308
+msgid "Run tool from the firmware repo?"
+msgstr "Werkzeug aus dem Firmware-Repo ausführen?"
+
+#: fm1companion/ui/firmware_page.py:1311
+msgid "The tool is a Python program from this repo and runs with your user rights. Only allow it if you trust the repo. The approval applies to exactly this commit."
+msgstr "Das Werkzeug ist ein Python-Programm aus diesem Repo und läuft mit deinen Benutzerrechten. Nur erlauben, wenn du dem Repo vertraust. Die Zustimmung gilt für genau diesen Commit."
+
+#: fm1companion/ui/firmware_page.py:1313
+msgid "Run"
+msgstr "Ausführen"
+
+#: fm1companion/ui/firmware_page.py:1326
+msgid "Firmware added – it is now in the list (nothing installed yet)."
+msgstr "Firmware hinzugefügt – sie steht jetzt in der Liste (noch nichts installiert)."
+
+#: fm1companion/ui/firmware_page.py:1333
+msgid "Incomplete"
+msgstr "Unvollständig"
+
+#: fm1companion/ui/firmware_page.py:1333
+#, python-brace-format
+msgid "Please enter name, repo (owner/name) and package name with {{ver}}."
+msgstr "Bitte Name, Repo (besitzer/name) und Paketname mit {{ver}} angeben."
+
+#: fm1companion/ui/firmware_page.py:1340
+#, python-brace-format
+msgid "Firmware “{name}” added – nothing downloaded or installed yet."
+msgstr "Firmware „{name}“ hinzugefügt – noch nichts heruntergeladen oder installiert."
+
+#: fm1companion/ui/firmware_page.py:1345
+msgid "The built-in firmwares cannot be removed."
+msgstr "Die eingebauten Firmwares lassen sich nicht entfernen."
+
+#: fm1companion/ui/firmware_page.py:1347
+msgid "Remove from the list"
+msgstr "Aus der Liste entfernen"
+
+#: fm1companion/ui/firmware_page.py:1347
+#, python-brace-format
+msgid "Remove “{name}” from the firmware list?<br>Downloaded packages stay in the firmware folder, nothing changes on the FM-1."
+msgstr "„{name}“ aus der Firmware-Liste entfernen?<br>Heruntergeladene Pakete bleiben im Firmware-Ordner, am FM-1 ändert sich nichts."
+
+#: fm1companion/ui/firmware_page.py:1356
+#, python-brace-format
+msgid "“{name}” removed from the list. Downloaded packages stay in the firmware folder, nothing changes on the FM-1."
+msgstr "„{name}“ aus der Liste entfernt. Heruntergeladene Pakete bleiben im Firmware-Ordner, am FM-1 ändert sich nichts."
+
+#: fm1companion/ui/pages/recovery.py:29
+msgid "Exactly one device “WL82 UBOOT1.00” (USB 4c4a:8057) must be connected. The app never chooses a drive by itself."
+msgstr "Es muss genau ein Gerät „WL82 UBOOT1.00“ (USB 4c4a:8057) angeschlossen sein. Die App wählt nie selbst einen Datenträger aus."
+
+#: fm1companion/ui/pages/recovery.py:32
+msgid "<b>First:</b> charge the battery for at least one hour, use a USB <b>data</b> cable directly on the computer (no hub), close other MIDI programs and browser tabs."
+msgstr "<b>Zuerst:</b> Akku mindestens eine Stunde laden, ein USB-<b>Daten</b>kabel direkt am Rechner (kein Hub), andere MIDI-Programme und Browser-Tabs schließen."
+
+#: fm1companion/ui/pages/recovery.py:34
+msgid "<b>The basics first:</b><ul><li>Charge the battery for at least one hour – a deeply discharged battery can prevent the start.</li><li>Try another USB <b>data</b> cable (not a charge-only cable), another USB port directly on the computer (no hub) or another computer.</li><li>Close other music programs and browser tabs with MIDI.</li></ul>"
+msgstr "<b>Erst die Grundlagen:</b><ul><li>Akku mindestens eine Stunde laden – ein tiefentladener Akku kann den Start verhindern.</li><li>Ein anderes USB-<b>Daten</b>kabel (kein reines Ladekabel), einen anderen USB-Anschluss direkt am Rechner (kein Hub) oder einen anderen Rechner probieren.</li><li>Andere Musik-Programme und Browser-Tabs mit MIDI schließen.</li></ul>"
+
+#: fm1companion/ui/pages/recovery.py:40
+msgid "<ol><li>Switch the FM-1 off.</li><li>Hold <b>OCT−</b> pressed while switching it on.</li><li><b>Three short flashes</b> of the key lighting = update mode. One long flash = ROM boot mode → stage 2.</li><li>Plug in the USB cable – the app detects the device here immediately.</li></ol>"
+msgstr "<ol><li>FM-1 ausschalten.</li><li><b>OCT−</b> gedrückt halten und dabei einschalten.</li><li><b>Drei kurze Blitze</b> der Tastenbeleuchtung = Update-Modus. Ein langer Blitz = ROM-Bootmodus → Stufe 2.</li><li>USB-Kabel einstecken – die App erkennt das Gerät hier sofort.</li></ol>"
+
+#: fm1companion/ui/pages/recovery.py:45
+msgid "The OCT− key combination is documented for Melodee 1.3.5 and later, TransitFM1 and Felucca firmwares with start protection.<br>According to the community (not confirmed): hold OCT− and OCT+ together for 10 seconds. Caution: with Melodee, OCT−+OCT+ is the calibration. Do not switch off and on twice in a row while the FM-1 is in update mode (TransitFM1: the second time ends up in ROM boot mode).<br>The update loader of the M-VAVE FM1 Open reports as “ota-FM1C_…” – the app sends it nothing (use the FM1 Open updater from M-VAVE for that).<br>“Finish installation” knows the interrupted package from the app's journal and checks beforehand whether the waiting update loader belongs to this package – otherwise nothing is sent."
+msgstr "Die OCT−-Tastenkombination ist dokumentiert für Melodee ab 1.3.5, TransitFM1 und Felucca-Firmwares mit Startschutz.<br>Laut Community (nicht bestätigt): OCT− und OCT+ zusammen 10 Sekunden halten. Achtung: bei Melodee ist OCT−+OCT+ die Kalibrierung. Nicht zweimal hintereinander aus- und einschalten, während das FM-1 im Update-Modus ist (TransitFM1: das zweite Mal landet im ROM-Bootmodus).<br>Der Update-Loader der M-VAVE FM1 Open meldet sich als „ota-FM1C_…“ – ihm schickt die App nichts (dafür den FM1-Open-Updater von M-VAVE benutzen).<br>„Installation abschließen“ kennt das unterbrochene Paket aus dem Journal der App und prüft vorher, ob der wartende Update-Loader zu diesem Paket gehört – sonst wird nichts gesendet."
+
+#: fm1companion/ui/pages/recovery.py:54
+msgid "<ol><li>Once: “Fetch tool” (jl-uboot-tool, is checked).</li><li>Connect the fully charged FM-1 directly to the computer – below it must say “Found”.</li><li>“Write back original V15” – the app first backs up the whole flash twice and checks the boot header on this backup: it only writes under the factory header.</li><li>Switch the FM-1 off and on again.</li></ol><small>A session in ROM boot mode usually lasts only <b>one</b> tool run. After that (also after a refusal) switch the FM-1 off and on and bring it into ROM boot mode again.</small>"
+msgstr "<ol><li>Einmalig „Werkzeug holen“ (jl-uboot-tool, wird geprüft).</li><li>FM-1 voll geladen und direkt am Rechner anschließen – unten muss „Gefunden“ stehen.</li><li>„Original-V15 zurückschreiben“ – die App sichert vorher den ganzen Flash zweimal und prüft an dieser Sicherung den Bootkopf: Nur unter dem Kopf ab Werk wird geschrieben.</li><li>FM-1 aus- und wieder einschalten.</li></ol><small>Eine Sitzung im ROM-Bootmodus hält meist nur <b>einen</b> Werkzeuglauf. Danach (auch nach einer Ablehnung) das FM-1 aus- und einschalten und neu in den ROM-Bootmodus bringen.</small>"
+
+#: fm1companion/ui/pages/recovery.py:61
+msgid "The app uses the bundled <a href='https://github.com/Quixotic7/MvaveFM1Unbricker'>MvaveFM1Unbricker</a> (MIT) with kagaimiq's jl-uboot-tool. It backs up the whole flash twice and compares, checks chip key 0x980F and flash ID 0x856014, writes <b>only 0x4000–0x92FFF</b> from the original V15 and reads everything back. Below 0x4000 it never writes, nothing is erased completely. <br><b>Boot header:</b> before writing, the app checks the boot header (0x0000–0x3FFF) on the backup from the same run. Only under the factory header (V13–V15) is V15 written. If the device has the header of V16 (M-VAVE's updater rewrites it for V16) or an unknown one (e.g. m-bootloader), nothing is written: whether V15 starts under it has not been established, and this tool cannot write the V16 app (0x4000–0xA8FFF). Then use M-Flasher (below) or <a href='https://github.com/hugelton/felucca-bsp'>fm1_rescue.py</a> from felucca-bsp – it chooses the package to match the header. The app never writes the header.<br>Needs administrator rights (pkexec) and the kernel module <tt>sg</tt> (USB 4c4a:8057).<br><b>Honestly:</b> in this app only tested in the simulation; the tool itself has been used by the community on real devices.<br><br><b>Alternative: <a href='https://github.com/jvitkauskas/m-flasher'>M-Flasher</a></b> (MIT, separate program with a flash map; writes only what changes, and checks everything). Download mode: running original or Felucca FM-1 via the “DOWNLOAD MODE” button; Felucca/SLOOP: hold OCT− and OCT+ for 5 s; with m-bootloader: REC while switching on. For the Pi there is an ARM64 package (<tt>sudo apt install ./m-flasher_…_arm64.deb</tt>).<br><br><small>Felucca 0.9 → 1.0.x (known): 1.0.x does not start because of old 0.9 data. Remedy according to the instructions: erase the data areas 0x97000 (32 KiB) and 0xFC000 (8 KiB) – this erases songs and settings. For this the app does “Repair settings” with a factory dump (a backup is mandatory here). This only works if the backup from the same run shows the V15 layout (firmware ends at 0x93000) – with V16 there is still firmware in 0x93000–0xA8FFF, then nothing is written.</small><br><br><b>If the FM-1 does not appear as “WL82 UBOOT1.00” at all</b> (after MvaveFM1Unbricker, Troubleshooting): 1. <b>Leave it switched on for two minutes</b> – Felucca firmwares have a watchdog and start protection that switches to ROM boot mode by itself after two failed starts. 2. Hold OCT− and OCT+ for 10 s while switching on (update mode). 3. <b>Three quick restarts:</b> on, wait 10 s, off; on, 10 s, off; on – if every start crashes, the third ends up in ROM boot mode. Only if none of this helps: stage 3 (hardware)."
+msgstr "Die App benutzt das mitgelieferte <a href='https://github.com/Quixotic7/MvaveFM1Unbricker'>MvaveFM1Unbricker</a> (MIT) mit kagaimiqs jl-uboot-tool. Es sichert den ganzen Flash zweimal und vergleicht, prüft Chip-Key 0x980F und Flash-ID 0x856014, schreibt <b>nur 0x4000–0x92FFF</b> aus der Original-V15 und liest alles zurück. Unter 0x4000 wird nie geschrieben, nichts wird komplett gelöscht. <br><b>Bootkopf:</b> Vor dem Schreiben prüft die App an der Sicherung aus demselben Lauf den Bootkopf (0x0000–0x3FFF). Nur unter dem Kopf ab Werk (V13–V15) wird die V15 geschrieben. Hat das Gerät den Kopf von V16 (M-VAVEs Updater schreibt ihn bei V16 neu) oder einen unbekannten (z. B. m-bootloader), wird nichts geschrieben: Ob V15 darunter startet, ist nicht geklärt, und die V16-App (0x4000–0xA8FFF) kann dieses Werkzeug nicht schreiben. Dann M-Flasher (unten) oder <a href='https://github.com/hugelton/felucca-bsp'>fm1_rescue.py</a> aus felucca-bsp benutzen – es wählt das Paket passend zum Kopf. Den Kopf schreibt die App nie.<br>Braucht Administratorrechte (pkexec) und das Kernelmodul <tt>sg</tt> (USB 4c4a:8057).<br><b>Ehrlich:</b> In dieser App nur in der Simulation getestet; das Werkzeug selbst wurde von der Community an echten Geräten benutzt.<br><br><b>Alternative: <a href='https://github.com/jvitkauskas/m-flasher'>M-Flasher</a></b> (MIT, eigenes Programm mit Flash-Karte; schreibt nur, was sich ändert, und prüft alles). Download-Modus: laufendes Original- oder Felucca-FM-1 per Knopf „DOWNLOAD MODE“; Felucca/SLOOP: OCT− und OCT+ 5 s halten; mit m-bootloader: REC beim Einschalten. Für den Pi gibt es ein ARM64-Paket (<tt>sudo apt install ./m-flasher_…_arm64.deb</tt>).<br><br><small>Felucca 0.9 → 1.0.x (bekannt): 1.0.x startet wegen alter 0.9-Daten nicht. Abhilfe laut Anleitung: Datenbereiche 0x97000 (32 KiB) und 0xFC000 (8 KiB) löschen – das löscht Songs und Einstellungen. Die App macht dafür „Einstellungen reparieren“ mit Werks-Dump (Backup ist dabei Pflicht). Das geht nur, wenn die Sicherung aus demselben Lauf den V15-Aufbau zeigt (Firmware endet bei 0x93000) – bei V16 liegt in 0x93000–0xA8FFF noch Firmware, dann wird nichts geschrieben.</small><br><br><b>Wenn das FM-1 gar nicht als „WL82 UBOOT1.00“ erscheint</b> (nach MvaveFM1Unbricker, Troubleshooting): 1. <b>Zwei Minuten eingeschaltet lassen</b> – Felucca-Firmwares haben einen Watchdog und Startschutz, der nach zwei Fehlstarts von selbst in den ROM-Bootmodus wechselt. 2. OCT− und OCT+ beim Einschalten 10 s halten (Update-Modus). 3. <b>Drei schnelle Neustarts:</b> ein, 10 s warten, aus; ein, 10 s, aus; ein – stürzt jeder Start ab, landet der dritte im ROM-Bootmodus. Erst wenn nichts davon hilft: Stufe 3 (Hardware)."
+
+#: fm1companion/ui/pages/recovery.py:93
+msgid "<b>Symptom:</b> the FM-1 appears neither in update mode nor as “WL82 UBOOT1.00” – not even after <b>two minutes switched on</b> (watchdog) and <b>three quick restarts</b> (on, 10 s, off; on, 10 s, off; on). Then only hardware helps: a <b>Seeed XIAO RP2040</b> on the USB data lines forces ROM boot mode (<a href='https://github.com/kurogedelic/FM-1-transporter'>FM-1 Transporter</a>)."
+msgstr "<b>Symptom:</b> Das FM-1 erscheint weder im Update-Modus noch als „WL82 UBOOT1.00“ – auch nicht nach <b>zwei Minuten eingeschaltet</b> (Watchdog) und <b>drei schnellen Neustarts</b> (ein, 10 s, aus; ein, 10 s, aus; ein). Dann hilft nur Hardware: ein <b>Seeed XIAO RP2040</b> an den USB-Datenleitungen erzwingt den ROM-Bootmodus (<a href='https://github.com/kurogedelic/FM-1-transporter'>FM-1 Transporter</a>)."
+
+#: fm1companion/ui/pages/recovery.py:98
+msgid "<ol><li>Connect the XIAO RP2040 to D+, D− and GND of the FM-1 as instructed (VBUS free).</li><li>Flash the Transporter firmware with the unbricker tool in the terminal.</li><li>In the terminal: rekey → info → dump → restore (the app does not run stage 3 itself).</li></ol>"
+msgstr "<ol><li>XIAO RP2040 nach Anleitung an D+, D− und GND des FM-1 anschließen (VBUS frei).</li><li>Transporter-Firmware mit dem Unbricker-Werkzeug im Terminal aufspielen.</li><li>Im Terminal: rekey → info → dump → restore (die App führt Stufe 3 nicht selbst aus).</li></ol>"
+
+#: fm1companion/ui/pages/recovery.py:101
+msgid "<b>Wiring (tested, TRANSPORTER-GUIDE):</b> XIAO <b>D6 (GP0) → D+ (green)</b>, <b>D7 (GP1) → D− (white)</b>, <b>GND → GND (black)</b>, <b>do not connect VBUS (red)</b> (tape it off). Flash the UF2: hold the BOOT button and plug in. <b>Honestly:</b> the bundled UF2 is only a placeholder – the real Transporter firmware is only created with <tt>python3 fm1_transporter_recover.py setup</tt> from the unbricker repo (MvaveFM1Unbricker). After that, also with this tool in the terminal: rekey → info (must show <tt>key=980F id=856014</tt>) → dump (read twice, compare, keep) → restore --write. The app itself does not run stage 3.<br><br><b>RP2040 only! No RP2350 boards</b> (GPIO erratum and D+ pull-up make the Transporter unusable).<br><br><b>Untested, not confirmed by the community:</b> with a <b>Raspberry Pi Pico (RP2040)</b> instead of the XIAO – pin 1 = GP0 → D+, pin 2 = GP1 → D−, any GND, VBUS free. Either try the XIAO UF2 or rebuild kurogedelic/FM-1-transporter with <tt>-DPICO_BOARD=pico</tt> and the same loader (pico-sdk). The XIAO remains the documented way."
+msgstr "<b>Verkabelung (getestet, TRANSPORTER-GUIDE):</b> XIAO <b>D6 (GP0) → D+ (grün)</b>, <b>D7 (GP1) → D− (weiß)</b>, <b>GND → GND (schwarz)</b>, <b>VBUS (rot) nicht anschließen</b> (abkleben). UF2 aufspielen: BOOT-Taste halten und einstecken. <b>Ehrlich:</b> Die mitgelieferte UF2 ist nur ein Platzhalter – die echte Transporter-Firmware entsteht erst mit <tt>python3 fm1_transporter_recover.py setup</tt> aus dem Unbricker-Repo (MvaveFM1Unbricker). Danach, ebenfalls mit diesem Werkzeug im Terminal: rekey → info (muss <tt>key=980F id=856014</tt> zeigen) → dump (zweimal lesen, vergleichen, behalten) → restore --write. Die App selbst führt Stufe 3 nicht aus.<br><br><b>Nur RP2040! Keine RP2350-Boards</b> (GPIO-Erratum und D+-Pull-up machen den Transporter unbrauchbar).<br><br><b>Ungetestet, nicht von der Community bestätigt:</b> mit einem <b>Raspberry Pi Pico (RP2040)</b> statt XIAO – Pin 1 = GP0 → D+, Pin 2 = GP1 → D−, ein beliebiger GND, VBUS frei. Entweder die XIAO-UF2 probieren oder kurogedelic/FM-1-transporter mit <tt>-DPICO_BOARD=pico</tt> und demselben Loader neu bauen (pico-sdk). Der XIAO bleibt der dokumentierte Weg."
+
+#: fm1companion/ui/pages/recovery.py:114
+msgid "<b>… an installation is aborted?</b> Do not unplug anything, check the cable, then “Finish installation” here – the app knows the interrupted package from its journal.<br><b>… the FM-1 shows “FAILED -5”?</b> The running firmware refused the original firmware (CHECK HEAD). Nothing was written; the FM-1 keeps running. Report the problem to the firmware author.<br><b>… presets are garbled after returning to the original firmware?</b> System &gt; Reset Patches.<br><b>Prevention:</b> battery full, keep a backup after every successful flash. The detour via the original V15 before third-party firmware is preset, but is itself a write operation: two installations instead of one, so twice a period in which battery and cable must hold. It is mandatory only for V16 and for firmwares that only work from V15."
+msgstr "<b>… eine Installation abbricht?</b> Nichts abziehen, Kabel prüfen, dann hier „Installation abschließen“ – die App kennt das unterbrochene Paket aus ihrem Journal.<br><b>… das FM-1 „FAILED -5“ zeigt?</b> Die laufende Firmware hat die Original-Firmware abgelehnt (CHECK HEAD). Es wurde nichts geschrieben; das FM-1 läuft weiter. Problem beim Firmware-Autor melden.<br><b>… Presets nach der Rückkehr zur Original-Firmware verstümmelt sind?</b> System &gt; Reset Patches.<br><b>Vorbeugen:</b> Akku voll, nach jedem erfolgreichen Flash ein Backup behalten. Der Umweg über die Original-V15 vor Fremd-Firmware ist voreingestellt, aber selbst ein Schreibvorgang: zwei Installationen statt einer, also zweimal ein Zeitraum, in dem Akku und Kabel halten müssen. Pflicht ist er nur bei V16 und bei Firmwares, die nur von V15 aus gehen."
+
+#: fm1companion/ui/pages/recovery.py:131
+msgid "FM-1 does not start, is stuck in update mode, or an installation was interrupted? Step by step back to a working device."
+msgstr "FM-1 startet nicht, hängt im Update-Modus oder eine Installation wurde unterbrochen? Schritt für Schritt zurück zu einem laufenden Gerät."
+
+#: fm1companion/ui/pages/recovery.py:143
+msgid "Details: basics"
+msgstr "Details: Grundlagen"
+
+#: fm1companion/ui/pages/recovery.py:147
+msgid "Stage 1 – update mode: finish installation"
+msgstr "Stufe 1 – Update-Modus: Installation abschließen"
+
+#: fm1companion/ui/pages/recovery.py:150
+msgid "<b>Symptom:</b> black screen or “UPDATING”, installers report “update mode”, an installation was aborted."
+msgstr "<b>Symptom:</b> schwarzer Bildschirm oder „UPDATING“, Installer melden „Update-Modus“, eine Installation wurde abgebrochen."
+
+#: fm1companion/ui/pages/recovery.py:153 fm1companion/ui/pages/recovery.py:426
+#: fm1companion/ui/pages/recovery.py:469
+msgid "Finish installation"
+msgstr "Installation abschließen"
+
+#: fm1companion/ui/pages/recovery.py:156
+msgid "Write original V15 instead"
+msgstr "Stattdessen Original-V15 schreiben"
+
+#: fm1companion/ui/pages/recovery.py:157 fm1companion/ui/pages/recovery.py:294
+msgid "Only possible if the FM-1 is waiting in the original update mode (ota-FM-1_015)."
+msgstr "Nur möglich, wenn das FM-1 im Original-Update-Modus (ota-FM-1_015) wartet."
+
+#: fm1companion/ui/pages/recovery.py:159
+msgid "Choose another package …"
+msgstr "Anderes Paket wählen …"
+
+#: fm1companion/ui/pages/recovery.py:162
+msgid "Details: key combinations, community notes, journal"
+msgstr "Details: Tastenkombinationen, Community-Hinweise, Journal"
+
+#: fm1companion/ui/pages/recovery.py:167
+msgid "Stage 2 – ROM boot mode “WL82 UBOOT1.00”"
+msgstr "Stufe 2 – ROM-Bootmodus „WL82 UBOOT1.00“"
+
+#: fm1companion/ui/pages/recovery.py:169
+msgid "<b>Symptom:</b> black screen, no MIDI device, the computer shows a USB drive “WL82 UBOOT1.00”. <b>Do not format it!</b>"
+msgstr "<b>Symptom:</b> schwarzer Bildschirm, kein MIDI-Gerät, der Rechner zeigt einen USB-Datenträger „WL82 UBOOT1.00“. <b>Nicht formatieren!</b>"
+
+#: fm1companion/ui/pages/recovery.py:173
+msgid "Simulation – practice run with the tool's mock FM-1, nothing is written"
+msgstr "Simulation – Übungslauf mit dem Mock-FM-1 des Werkzeugs, nichts wird geschrieben"
+
+#: fm1companion/ui/pages/recovery.py:176
+msgid "Pre-ticked in demo mode. For a real recovery the tick must be removed – then the tool really writes to the flash of the connected FM-1."
+msgstr "Im Demo-Modus vorangehakt. Zum echten Retten muss das Häkchen weg – dann schreibt das Werkzeug wirklich in den Flash des angeschlossenen FM-1."
+
+#: fm1companion/ui/pages/recovery.py:179
+msgid "<small>In demo mode the simulation is pre-ticked. For a real FM-1 remove the tick – only then is anything written.</small>"
+msgstr "<small>Im Demo-Modus ist die Simulation vorangehakt. Für ein echtes FM-1 das Häkchen entfernen – erst dann wird geschrieben.</small>"
+
+#: fm1companion/ui/pages/recovery.py:181
+msgid "<small>Tick it to practise without a device: then everything runs against a simulated flash, nothing is changed on the FM-1.</small>"
+msgstr "<small>Zum Üben ohne Gerät anhaken: dann läuft alles gegen einen simulierten Flash, am FM-1 wird nichts verändert.</small>"
+
+#: fm1companion/ui/pages/recovery.py:184
+msgid "Fetch tool (jl-uboot-tool) …"
+msgstr "Werkzeug holen (jl-uboot-tool) …"
+
+#: fm1companion/ui/pages/recovery.py:186
+msgid "Write back original V15 …"
+msgstr "Original-V15 zurückschreiben …"
+
+#: fm1companion/ui/pages/recovery.py:189
+msgid "Repair settings after return …"
+msgstr "Einstellungen nach Rückkehr reparieren …"
+
+#: fm1companion/ui/pages/recovery.py:190
+msgid "repair-settings: resets the settings areas with a factory dump – only with the V15 layout (the app checks this on the fresh backup). Upstream only tested with a mock – try System > Reset Patches first."
+msgstr "repair-settings: setzt die Einstellungsbereiche mit einem Werks-Dump zurück – nur bei V15-Aufbau (prüft die App an der frischen Sicherung). Upstream nur mit Mock getestet – erst System > Reset Patches probieren."
+
+#: fm1companion/ui/pages/recovery.py:194
+msgid "Emergency full backup …"
+msgstr "Notfall-Komplettsicherung …"
+
+#: fm1companion/ui/pages/recovery.py:195
+msgid "Optional, advanced: send an original FM-1 into ROM boot mode via softkey and only read the whole flash. Needs administrator rights. Never runs automatically."
+msgstr "Optional, fortgeschritten: Original-FM-1 per Softkey in den ROM-Bootmodus schicken und den ganzen Flash nur lesen. Braucht Administratorrechte. Läuft nie automatisch."
+
+#: fm1companion/ui/pages/recovery.py:197
+msgid "For this, jl-uboot-tool must be fetched and an FM-1 connected (running with the original firmware or already in ROM boot mode)."
+msgstr "Dafür muss jl-uboot-tool geholt sein und ein FM-1 angeschlossen (laufend mit Original-Firmware oder schon im ROM-Bootmodus)."
+
+#: fm1companion/ui/pages/recovery.py:205
+msgid "Open M-Flasher"
+msgstr "M-Flasher öffnen"
+
+#: fm1companion/ui/pages/recovery.py:206
+msgid "M-Flasher is installed (alternative tool, see details)"
+msgstr "M-Flasher ist installiert (alternatives Werkzeug, siehe Details)"
+
+#: fm1companion/ui/pages/recovery.py:209
+msgid "Details: tool, memory areas, M-Flasher, Felucca 0.9"
+msgstr "Details: Werkzeug, Speicherbereiche, M-Flasher, Felucca 0.9"
+
+#: fm1companion/ui/pages/recovery.py:210
+msgid "M-Flasher: found – button above."
+msgstr "M-Flasher: gefunden – Knopf oben."
+
+#: fm1companion/ui/pages/recovery.py:211
+msgid "M-Flasher: not installed."
+msgstr "M-Flasher: nicht installiert."
+
+#: fm1companion/ui/pages/recovery.py:216
+msgid "Stage 3 – FM-1 Transporter (hardware)"
+msgstr "Stufe 3 – FM-1 Transporter (Hardware)"
+
+#: fm1companion/ui/pages/recovery.py:218
+msgid "Open Transporter guide"
+msgstr "Transporter-Anleitung öffnen"
+
+#: fm1companion/ui/pages/recovery.py:222
+msgid "Details: wiring, boards, terminal commands"
+msgstr "Details: Verkabelung, Boards, Terminal-Befehle"
+
+#: fm1companion/ui/pages/recovery.py:231
+msgid "What to do if … (abort, FAILED -5, garbled presets, prevention)"
+msgstr "Was tun, wenn … (Abbruch, FAILED -5, verstümmelte Presets, Vorbeugen)"
+
+#: fm1companion/ui/pages/recovery.py:272
+#, python-brace-format
+msgid "<span style='color:#f67400'>● Detected live: an FM-1 is waiting in update mode</span> at “{port}” (loader {loader})."
+msgstr "<span style='color:#f67400'>● Live erkannt: ein FM-1 wartet im Update-Modus</span> an „{port}“ (Loader {loader})."
+
+#: fm1companion/ui/pages/recovery.py:274
+#, python-brace-format
+msgid "<span style='color:#f67400'>● Detected live: an FM-1 is waiting in update mode</span> at “{port}”."
+msgstr "<span style='color:#f67400'>● Live erkannt: ein FM-1 wartet im Update-Modus</span> an „{port}“."
+
+#: fm1companion/ui/pages/recovery.py:277
+msgid "<span style='color:#888'>○ Not detected: no FM-1 in update mode.</span> The display updates by itself."
+msgstr "<span style='color:#888'>○ Nicht erkannt: kein FM-1 im Update-Modus.</span> Die Anzeige aktualisiert sich von selbst."
+
+#: fm1companion/ui/pages/recovery.py:280
+#, python-brace-format
+msgid "Interrupted installation according to the journal: <b>{target}</b> ({product}, phase “{phase}”)."
+msgstr "Unterbrochene Installation laut Journal: <b>{target}</b> ({product}, Phase „{phase}“)."
+
+#: fm1companion/ui/pages/recovery.py:286
+msgid "Only possible once an FM-1 in update mode is detected (see status above)."
+msgstr "Erst möglich, wenn ein FM-1 im Update-Modus erkannt ist (siehe Zustand oben)."
+
+#: fm1companion/ui/pages/recovery.py:288
+msgid "Writes the package of the interrupted installation (according to the journal) – after checking checksum and loader."
+msgstr "Schreibt das Paket der unterbrochenen Installation (laut Journal) – nach Prüfung von Prüfsumme und Loader."
+
+#: fm1companion/ui/pages/recovery.py:290
+msgid "No journal entry: you will be asked for the package whose installation was interrupted."
+msgstr "Kein Journal-Eintrag: Du wirst nach dem Paket gefragt, dessen Installation unterbrochen wurde."
+
+#: fm1companion/ui/pages/recovery.py:296
+#, python-brace-format
+msgid "The FM-1 is waiting as “{identity}” – {loader}. It does not accept the original V15; please finish the interrupted package."
+msgstr "Das FM-1 wartet als „{identity}“ – {loader}. Er nimmt die Original-V15 nicht an; bitte das unterbrochene Paket abschließen."
+
+#: fm1companion/ui/pages/recovery.py:301
+msgid "Choose another .fwsc package – the app checks whether it matches the waiting loader."
+msgstr "Ein anderes .fwsc-Paket wählen – die App prüft, ob es zum wartenden Loader passt."
+
+#: fm1companion/ui/pages/recovery.py:306
+#, python-brace-format
+msgid "<span style='color:#f67400'>● Detected live:</span> {devices}"
+msgstr "<span style='color:#f67400'>● Live erkannt:</span> {devices}"
+
+#: fm1companion/ui/pages/recovery.py:309
+msgid "<span style='color:#f67400'>● An FM-1 in ROM boot mode is on USB</span>, but there is no SCSI device for it: run <tt>sudo modprobe sg</tt>."
+msgstr "<span style='color:#f67400'>● Ein FM-1 im ROM-Bootmodus ist am USB</span>, aber kein SCSI-Gerät dazu: <tt>sudo modprobe sg</tt> ausführen."
+
+#: fm1companion/ui/pages/recovery.py:312
+msgid "<span style='color:#888'>○ Not detected: no device “WL82 UBOOT1.00” connected.</span>"
+msgstr "<span style='color:#888'>○ Nicht erkannt: kein Gerät „WL82 UBOOT1.00“ angeschlossen.</span>"
+
+#: fm1companion/ui/pages/recovery.py:315
+#, python-brace-format
+msgid "Packages are missing for the tool: <tt>sudo apt install {packages}</tt>"
+msgstr "Für das Werkzeug fehlen Pakete: <tt>sudo apt install {packages}</tt>"
+
+#: fm1companion/ui/pages/recovery.py:318
+msgid "Tool jl-uboot-tool: present (checked before every start)."
+msgstr "Werkzeug jl-uboot-tool: vorhanden (wird vor jedem Start geprüft)."
+
+#: fm1companion/ui/pages/recovery.py:319
+msgid "Tool jl-uboot-tool: not fetched yet – first “Fetch tool”."
+msgstr "Werkzeug jl-uboot-tool: noch nicht geholt – zuerst „Werkzeug holen“."
+
+#: fm1companion/ui/pages/recovery.py:323
+msgid "Fetches kagaimiq's jl-uboot-tool once at the checked state – nothing is changed on the FM-1."
+msgstr "Holt kagaimiqs jl-uboot-tool einmalig auf den geprüften Stand – nichts wird am FM-1 verändert."
+
+#: fm1companion/ui/pages/recovery.py:324
+msgid "Already present; fetching again only checks it."
+msgstr "Schon vorhanden; erneut holen prüft es nur."
+
+#: fm1companion/ui/pages/recovery.py:326
+msgid "Writes the original V15 (0x4000–0x92FFF) to the flash of the FM-1 in ROM boot mode – after the mandatory double backup, only under the factory boot header."
+msgstr "Schreibt die Original-V15 (0x4000–0x92FFF) in den Flash des FM-1 im ROM-Bootmodus – nach Pflicht-Doppelsicherung, nur unter dem Bootkopf ab Werk."
+
+#: fm1companion/ui/pages/recovery.py:329
+msgid "Only resets the settings areas to a factory dump – only if the fresh backup shows the V15 layout."
+msgstr "Setzt nur die Einstellungsbereiche auf einen Werks-Dump zurück – nur, wenn die frische Sicherung den V15-Aufbau zeigt."
+
+#: fm1companion/ui/pages/recovery.py:333
+#, python-brace-format
+msgid "{action} Simulation: runs against a mock, nothing is written."
+msgstr "{action} Simulation: läuft gegen einen Mock, nichts wird geschrieben."
+
+#: fm1companion/ui/pages/recovery.py:336
+msgid "First “Fetch tool” – without jl-uboot-tool the app cannot talk to the chip."
+msgstr "Zuerst „Werkzeug holen“ – ohne jl-uboot-tool kann die App nicht mit dem Chip sprechen."
+
+#: fm1companion/ui/pages/recovery.py:339
+msgid "Only possible once exactly one device “WL82 UBOOT1.00” is detected (see status above)."
+msgstr "Erst möglich, wenn genau ein Gerät „WL82 UBOOT1.00“ erkannt ist (siehe Zustand oben)."
+
+#: fm1companion/ui/pages/recovery.py:340
+msgid "Several devices in ROM boot mode – please connect only one."
+msgstr "Mehrere Geräte im ROM-Bootmodus – bitte nur eins anschließen."
+
+#: fm1companion/ui/pages/recovery.py:359
+msgid "Package of the interrupted installation"
+msgstr "Paket der unterbrochenen Installation"
+
+#: fm1companion/ui/pages/recovery.py:366
+msgid "No device in update mode"
+msgstr "Kein Gerät im Update-Modus"
+
+#: fm1companion/ui/pages/recovery.py:366
+msgid "Please bring the FM-1 into update mode as described and connect it."
+msgstr "Bitte das FM-1 wie beschrieben in den Update-Modus bringen und anschließen."
+
+#: fm1companion/ui/pages/recovery.py:376
+msgid "the unmodified <b>original firmware V15</b> (checksum db1642b2…)"
+msgstr "die unveränderte <b>Original-Firmware V15</b> (Prüfsumme db1642b2…)"
+
+#: fm1companion/ui/pages/recovery.py:378 fm1companion/ui/pages/recovery.py:408
+msgid "Does not match the waiting loader"
+msgstr "Passt nicht zum wartenden Loader"
+
+#: fm1companion/ui/pages/recovery.py:379
+#, python-brace-format
+msgid "The FM-1 is waiting as “{identity}” – that is {loader}. It does not accept the original V15. Nothing was sent. Please use “Finish installation” with the package of the interrupted installation."
+msgstr "Das FM-1 wartet als „{identity}“ – das ist {loader}. Er nimmt die Original-V15 nicht an. Es wurde nichts gesendet. Bitte „Installation abschließen“ mit dem Paket der unterbrochenen Installation benutzen."
+
+#: fm1companion/ui/pages/recovery.py:388
+#, python-brace-format
+msgid "{error} Nothing was sent."
+msgstr "{error} Es wurde nichts gesendet."
+
+#: fm1companion/ui/pages/recovery.py:391
+#, python-brace-format
+msgid "Identity {product} · loader family {family} · SHA-256 {sha256}…"
+msgstr "Kennung {product} · Loader-Familie {family} · SHA-256 {sha256}…"
+
+#: fm1companion/ui/pages/recovery.py:394
+#, python-brace-format
+msgid "damaged: {damage}"
+msgstr "beschädigt: {damage}"
+
+#: fm1companion/ui/pages/recovery.py:397
+msgid "Package damaged"
+msgstr "Paket beschädigt"
+
+#: fm1companion/ui/pages/recovery.py:397
+#, python-brace-format
+msgid "{name} is damaged ({damage}) and is not sent. Please download the package again (Firmware+ › “Install & Versions” › “Download only”)."
+msgstr "{name} ist beschädigt ({damage}) und wird nicht gesendet. Bitte das Paket neu herunterladen (Firmware+ › „Installieren & Versionen“ › „Nur herunterladen“)."
+
+#: fm1companion/ui/pages/recovery.py:403
+msgid "Unknown update loader"
+msgstr "Unbekannter Update-Loader"
+
+#: fm1companion/ui/pages/recovery.py:403
+#, python-brace-format
+msgid "The app does not know the update loader of {name} and therefore sends the package to no loader. Nothing was sent."
+msgstr "Die App kennt den Update-Loader von {name} nicht und schickt das Paket deshalb an keinen Loader. Es wurde nichts gesendet."
+
+#: fm1companion/ui/pages/recovery.py:409
+#, python-brace-format
+msgid "The FM-1 is waiting as “{identity}”, but {name} belongs to {loader}. Nothing was sent. Please choose the package whose installation was interrupted."
+msgstr "Das FM-1 wartet als „{identity}“, {name} gehört aber zu {loader}. Es wurde nichts gesendet. Bitte das Paket wählen, dessen Installation unterbrochen wurde."
+
+#: fm1companion/ui/pages/recovery.py:415
+#, python-brace-format
+msgid "<b>{target}</b> (the package of the interrupted installation){facts}"
+msgstr "<b>{target}</b> (das Paket der unterbrochenen Installation){facts}"
+
+#: fm1companion/ui/pages/recovery.py:416
+msgid "the interrupted firmware"
+msgstr "die unterbrochene Firmware"
+
+#: fm1companion/ui/pages/recovery.py:418
+#, python-brace-format
+msgid "the package <b>{name}</b>{facts}"
+msgstr "das Paket <b>{name}</b>{facts}"
+
+#: fm1companion/ui/pages/recovery.py:420
+#, python-brace-format
+msgid "<b>Caution:</b> “{target}” was interrupted – that is a different package. The safest thing is to write exactly the interrupted package again."
+msgstr "<b>Achtung:</b> Unterbrochen wurde „{target}“ – das ist ein anderes Paket. Am sichersten ist es, genau das unterbrochene Paket noch einmal zu schreiben."
+
+#: fm1companion/ui/pages/recovery.py:427
+#, python-brace-format
+msgid "The waiting FM-1 receives {what}.<br><br>The app checks checksum and loader once more beforehand – if anything does not match, nothing is sent.<br>While writing, do not unplug the cable and do not switch the FM-1 off."
+msgstr "Das wartende FM-1 bekommt {what}.<br><br>Die App prüft vorher noch einmal Prüfsumme und Loader – passt etwas nicht, wird nichts gesendet.<br>Während des Schreibens das Kabel nicht abziehen und das FM-1 nicht ausschalten."
+
+#: fm1companion/ui/pages/recovery.py:430
+msgctxt "button"
+msgid "Finish"
+msgstr "Abschließen"
+
+#: fm1companion/ui/pages/recovery.py:444
+msgid "The V15 file is not the unmodified original firmware – nothing sent."
+msgstr "Die V15-Datei ist nicht die unveränderte Original-Firmware – nichts gesendet."
+
+#: fm1companion/ui/pages/recovery.py:445 fm1companion/firmware.py:656
+#, python-brace-format
+msgid "Package: {product} ({family}), SHA-256 {sha256}…"
+msgstr "Paket: {product} ({family}), SHA-256 {sha256}…"
+
+#: fm1companion/ui/pages/recovery.py:452
+#, python-brace-format
+msgid "Device reports: {identity}"
+msgstr "Gerät meldet: {identity}"
+
+#: fm1companion/ui/pages/recovery.py:452
+msgid "nothing"
+msgstr "nichts"
+
+#: fm1companion/ui/pages/recovery.py:454
+#, python-brace-format
+msgid "Recovery: {target}"
+msgstr "Rettung: {target}"
+
+#: fm1companion/ui/pages/recovery.py:456
+#, python-brace-format
+msgid "Done – the FM-1 reports {identity}."
+msgstr "Fertig – das FM-1 meldet {identity}."
+
+#: fm1companion/ui/pages/recovery.py:470
+#, python-brace-format
+msgid "Installation finished – the FM-1 now reports {identity} and starts normally."
+msgstr "Installation abgeschlossen – das FM-1 meldet jetzt {identity} und startet normal."
+
+#: fm1companion/ui/pages/recovery.py:482
+msgid "Fetch tool"
+msgstr "Werkzeug holen"
+
+#: fm1companion/ui/pages/recovery.py:483
+msgid "The app downloads kagaimiq's <b>jl-uboot-tool</b> (MIT) from GitHub at the checked state adb3f18 and checks the checksum of the WL82 loader (d41da612…). Nothing is installed, it is only copied into the app data folder. Continue?"
+msgstr "Die App lädt kagaimiqs <b>jl-uboot-tool</b> (MIT) von GitHub auf den geprüften Stand adb3f18 und prüft die Prüfsumme des WL82-Loaders (d41da612…). Es wird nichts installiert, nur in den App-Datenordner kopiert. Fortfahren?"
+
+#: fm1companion/ui/pages/recovery.py:485
+msgid "Download"
+msgstr "Herunterladen"
+
+#: fm1companion/ui/pages/recovery.py:488
+msgid "Fetch jl-uboot-tool"
+msgstr "jl-uboot-tool holen"
+
+#: fm1companion/ui/pages/recovery.py:489
+msgid "jl-uboot-tool fetched and checked (state adb3f18). Nothing was changed on the FM-1."
+msgstr "jl-uboot-tool geholt und geprüft (Stand adb3f18). Am FM-1 wurde nichts verändert."
+
+#: fm1companion/ui/pages/recovery.py:499 fm1companion/ui/pages/recovery.py:552
+#: fm1companion/ui/clean_check.py:354
+#, python-brace-format
+msgid "{message} Found: {devices}"
+msgstr "{message} Gefunden: {devices}"
+
+#: fm1companion/ui/pages/recovery.py:500
+msgid "No unambiguous device"
+msgstr "Kein eindeutiges Gerät"
+
+#: fm1companion/ui/pages/recovery.py:503
+msgid "Size does not match"
+msgstr "Größe passt nicht"
+
+#: fm1companion/ui/pages/recovery.py:503 fm1companion/ui/pages/recovery.py:556
+#, python-brace-format
+msgid "{device} – that is not an FM-1."
+msgstr "{device} – das ist kein FM-1."
+
+#: fm1companion/ui/pages/recovery.py:509
+msgid "Recovery stage 2 – step 1 of 3"
+msgstr "Rettung Stufe 2 – Schritt 1 von 3"
+
+#: fm1companion/ui/pages/recovery.py:510
+msgid "The FM-1 must be <b>fully charged</b> and connected directly to the computer."
+msgstr "Das FM-1 muss <b>voll geladen</b> sein und direkt am Rechner hängen."
+
+#: fm1companion/ui/pages/recovery.py:512
+#, python-brace-format
+msgid "Device: <b>{device}</b>"
+msgstr "Gerät: <b>{device}</b>"
+
+#: fm1companion/ui/pages/recovery.py:512
+msgid "Simulation"
+msgstr "Simulation"
+
+#: fm1companion/ui/pages/recovery.py:514
+msgid "Procedure: read the whole flash twice and compare (mandatory, also contains your projects), check the boot header on this backup (it only continues under the factory header – with a V16 or unknown header nothing is written), write the firmware area 0x4000–0x92FFF from the original V15, read back."
+msgstr "Ablauf: ganzen Flash zweimal lesen und vergleichen (Pflicht, enthält auch deine Projekte), an dieser Sicherung den Bootkopf prüfen (nur unter dem Kopf ab Werk geht es weiter – bei V16- oder unbekanntem Kopf wird nichts geschrieben), Firmwarebereich 0x4000–0x92FFF aus der Original-V15 schreiben, zurücklesen."
+
+#: fm1companion/ui/pages/recovery.py:520 fm1companion/ui/pages/recovery.py:581
+msgctxt "typed confirmation"
+msgid "WRITE"
+msgstr "SCHREIBEN"
+
+#: fm1companion/ui/pages/recovery.py:521
+msgid "Recovery stage 2 – step 2 of 3"
+msgstr "Rettung Stufe 2 – Schritt 2 von 3"
+
+#: fm1companion/ui/pages/recovery.py:522
+#, python-brace-format
+msgid "To confirm, type {word} (writes to the flash of the FM-1):"
+msgstr "Zum Bestätigen {word} eintippen (schreibt in den Flash des FM-1):"
+
+#: fm1companion/ui/pages/recovery.py:525
+msgid "Recovery stage 2 – step 3 of 3"
+msgstr "Rettung Stufe 2 – Schritt 3 von 3"
+
+#: fm1companion/ui/pages/recovery.py:526
+msgid "Now the system asks for your password (pkexec): the tool needs administrator rights for direct USB access. After that do not unplug anything until “Done” appears."
+msgstr "Jetzt fragt das System nach deinem Passwort (pkexec): Das Werkzeug braucht Administratorrechte für den direkten USB-Zugriff. Danach nichts abziehen, bis „Done“ erscheint."
+
+#: fm1companion/ui/pages/recovery.py:528
+msgctxt "button"
+msgid "Start"
+msgstr "Starten"
+
+#: fm1companion/ui/pages/recovery.py:537
+msgid "Write original V15 in ROM boot mode"
+msgstr "Original-V15 im ROM-Bootmodus schreiben"
+
+#: fm1companion/ui/pages/recovery.py:538
+msgid "Simulation finished – nothing was written."
+msgstr "Simulation beendet – nichts wurde geschrieben."
+
+#: fm1companion/ui/pages/recovery.py:539
+msgid "Original V15 written (0x4000–0x92FFF) and read back. The double backup of the whole flash is in the recovery folder. Now switch the FM-1 off and on again."
+msgstr "Original-V15 geschrieben (0x4000–0x92FFF) und zurückgelesen. Die Doppelsicherung des ganzen Flashs liegt im Rettungsordner. Jetzt das FM-1 aus- und wieder einschalten."
+
+#: fm1companion/ui/pages/recovery.py:541
+msgid "Open recovery folder"
+msgstr "Rettungsordner öffnen"
+
+#: fm1companion/ui/pages/recovery.py:553
+#, python-brace-format
+msgid "{message} Found: none."
+msgstr "{message} Gefunden: keins."
+
+#: fm1companion/ui/pages/recovery.py:561 fm1companion/ui/pages/recovery.py:571
+#: fm1companion/ui/pages/recovery.py:590
+msgid "Repair settings"
+msgstr "Einstellungen reparieren"
+
+#: fm1companion/ui/pages/recovery.py:564
+msgid "Factory dump (1 MiB) of a fresh original FM-1"
+msgstr "Werks-Dump (1 MiB) eines frischen Original-FM-1"
+
+#: fm1companion/ui/pages/recovery.py:565
+msgid "Flash dump (*.bin)"
+msgstr "Flash-Dump (*.bin)"
+
+#: fm1companion/ui/pages/recovery.py:572
+msgid "<b>Upstream only tested with a mock.</b> First try <i>System &gt; Reset Patches</i> on the FM-1.<br>The tool backs up the flash twice and then resets only the settings areas (0x93000–0xE8FFF, 0xFC000–0xFEFFF) to the factory dump. Songs and settings of the previous firmware are lost in the process (they stay in the backup), with Melodee also factory sounds and font (0xCB000).<br>These areas are pure data only with the <b>V15 layout</b>. That is why the app checks on the backup from the same run where the firmware ends – with V16 (there is still firmware in 0x93000–0xA8FFF), an unknown or a damaged layout nothing is written."
+msgstr "<b>Upstream nur mit Mock getestet.</b> Zuerst am FM-1 <i>System &gt; Reset Patches</i> probieren.<br>Das Werkzeug sichert den Flash zweimal und setzt dann nur die Einstellungsbereiche (0x93000–0xE8FFF, 0xFC000–0xFEFFF) auf den Werks-Dump zurück. Songs und Einstellungen der vorigen Firmware gehen dabei verloren (bleiben im Backup), bei Melodee auch Werkssounds und Schrift (0xCB000).<br>Diese Bereiche sind nur beim <b>V15-Aufbau</b> reine Daten. Darum prüft die App an der Sicherung aus demselben Lauf, wo die Firmware endet – bei V16 (dort liegt in 0x93000–0xA8FFF noch Firmware), einem unbekannten oder beschädigten Aufbau wird nichts geschrieben."
+
+#: fm1companion/ui/pages/recovery.py:579
+msgid "Repair"
+msgstr "Reparieren"
+
+#: fm1companion/ui/pages/recovery.py:582
+msgid "Confirm"
+msgstr "Bestätigen"
+
+#: fm1companion/ui/pages/recovery.py:582
+#, python-brace-format
+msgid "To confirm, type {word}:"
+msgstr "Zum Bestätigen {word} eintippen:"
+
+#: fm1companion/ui/pages/recovery.py:598
+msgid "Emergency full backup (optional)"
+msgstr "Notfall-Komplettsicherung (optional)"
+
+#: fm1companion/ui/pages/recovery.py:599
+msgid "For advanced users: an FM-1 with the <b>original firmware</b> is sent into ROM boot mode via softkey, then the whole flash is only read twice and compared. Needs administrator rights. Afterwards switch the FM-1 off and on."
+msgstr "Für Fortgeschrittene: Ein FM-1 mit <b>Original-Firmware</b> wird per Softkey in den ROM-Bootmodus geschickt, dann wird der ganze Flash zweimal nur gelesen und verglichen. Braucht Administratorrechte. Danach das FM-1 aus- und einschalten."
+
+#: fm1companion/ui/pages/recovery.py:601
+msgid "Back up"
+msgstr "Sichern"
+
+#: fm1companion/ui/pages/recovery.py:606
+msgid "The Studio twin is not a real FM-1 – a full backup only works from a connected device. Please choose a real FM-1 at the top."
+msgstr "Der Studio-Zwilling ist kein echtes FM-1 – eine Komplettsicherung geht nur von einem angeschlossenen Gerät. Bitte oben ein echtes FM-1 wählen."
+
+#: fm1companion/ui/pages/recovery.py:614
+msgid "Already a device in ROM boot mode"
+msgstr "Schon ein Gerät im ROM-Bootmodus"
+
+#: fm1companion/ui/pages/recovery.py:615
+msgid "A device “WL82 UBOOT1.00” is already connected. So that the backup surely comes from the right FM-1: unplug this device first, or – if it is the one you want – back it up without softkey (disconnect the FM-1 first, then try again)."
+msgstr "Es ist bereits ein Gerät „WL82 UBOOT1.00“ angeschlossen. Damit die Sicherung sicher vom richtigen FM-1 kommt: erst dieses Gerät abziehen, oder – wenn es das gewünschte ist – es ohne Softkey sichern (FM-1 vorher trennen, dann erneut versuchen)."
+
+#: fm1companion/ui/pages/recovery.py:620 fm1companion/ui/pages/recovery.py:652
+msgid "Emergency full backup"
+msgstr "Notfall-Komplettsicherung"
+
+#: fm1companion/ui/pages/recovery.py:624
+msgid "Please connect the FM-1 with the original firmware."
+msgstr "Bitte das FM-1 mit Original-Firmware anschließen."
+
+#: fm1companion/ui/pages/recovery.py:632
+msgid "Waiting for the FM-1 in ROM boot mode (USB 4c4a:8057) …"
+msgstr "Warte auf das FM-1 im ROM-Bootmodus (USB 4c4a:8057) …"
+
+#: fm1companion/ui/pages/recovery.py:639
+msgid "Several devices in ROM boot mode – please leave only the FM-1 connected that you want to back up."
+msgstr "Mehrere Geräte im ROM-Bootmodus – bitte nur das FM-1 angeschlossen lassen, das du sichern willst."
+
+#: fm1companion/ui/pages/recovery.py:643
+msgid "The FM-1 did not appear in ROM boot mode (USB 4c4a:8057). Switch it off and on again and try again."
+msgstr "Das FM-1 ist nicht im ROM-Bootmodus erschienen (USB 4c4a:8057). Aus- und wieder einschalten und erneut versuchen."
+
+#: fm1companion/ui/pages/recovery.py:648
+msgid "Exactly one device “WL82 UBOOT1.00” must be connected."
+msgstr "Es muss genau ein Gerät „WL82 UBOOT1.00“ angeschlossen sein."
+
+#: fm1companion/ui/pages/recovery.py:653
+#, python-brace-format
+msgid "Full backup read (twice, compared) and saved in {folder}. Nothing was written on the FM-1 – now switch it off and on again."
+msgstr "Komplettsicherung gelesen (zweimal, verglichen) und gespeichert in {folder}. Am FM-1 wurde nichts geschrieben – jetzt aus- und wieder einschalten."
+
+#: fm1companion/ui/pages/recovery.py:655
+msgid "Open folder"
+msgstr "Ordner öffnen"
+
+#: fm1companion/ui/pages/recovery.py:662
+msgid "the update loader of the M-VAVE FM1 Open (only accepts the package of exactly its build)"
+msgstr "der Update-Loader der M-VAVE FM1 Open (nimmt nur das Paket genau seines Builds an)"
+
+#: fm1companion/ui/pages/recovery.py:664
+msgid "a Felucca loader (Melodee, SLOOP, Skiff …)"
+msgstr "ein Felucca-Loader (Melodee, SLOOP, Skiff …)"
+
+#: fm1companion/ui/pages/recovery.py:665
+msgid "an update loader the app does not know"
+msgstr "ein Update-Loader, den die App nicht kennt"
+
+#: fm1companion/ui/pages/recovery.py:672
+msgid "Simulation finished – nothing was written on the FM-1."
+msgstr "Simulation beendet – am FM-1 wurde nichts geschrieben."
+
+#: fm1companion/ui/pages/recovery.py:673
+msgid "the firmware in the flash"
+msgstr "die Firmware im Flash"
+
+#: fm1companion/ui/pages/recovery.py:674
+msgid "V15 layout"
+msgstr "V15-Aufbau"
+
+#: fm1companion/ui/pages/recovery.py:675
+#, python-brace-format
+msgid "The settings areas 0x93000–0xE8FFF and 0xFC000–0xFEFFF are now in factory state (rewritten and read back where necessary). Beforehand the app checked on the backup from this run that {firmware} has the V15 layout and ends before 0x93000 ({basis}); that is why the tool did not write the boot header and the firmware area 0x0000–0x92FFF. Songs, sounds and settings from these areas – with Melodee also factory sounds and font – are now only in the backup in the recovery folder. Now switch the FM-1 off and on again."
+msgstr "Die Einstellungsbereiche 0x93000–0xE8FFF und 0xFC000–0xFEFFF sind jetzt im Werkszustand (wo nötig neu geschrieben und zurückgelesen). Vorher hat die App an der Sicherung aus diesem Lauf geprüft, dass {firmware} den V15-Aufbau hat und vor 0x93000 endet ({basis}); den Bootkopf und den Firmware-Bereich 0x0000–0x92FFF hat das Werkzeug darum nicht beschrieben. Songs, Sounds und Einstellungen aus diesen Bereichen – bei Melodee auch Werkssounds und Schrift – liegen nur noch in der Sicherung im Rettungsordner. Jetzt das FM-1 aus- und wieder einschalten."
+
+#: fm1companion/ui/pages/recovery.py:688
+#, python-brace-format
+msgid "Refused – nothing was written. {reason} The backup from this run is in the recovery folder. The FM-1 usually leaves ROM boot mode after one tool run – for another attempt switch it off and on and bring it into ROM boot mode again."
+msgstr "Abgelehnt – es wurde nichts geschrieben. {reason} Die Sicherung aus diesem Lauf liegt im Rettungsordner. Das FM-1 verlässt den ROM-Bootmodus meist nach einem Werkzeuglauf – für einen weiteren Versuch aus- und einschalten und neu in den ROM-Bootmodus bringen."
+
+#: fm1companion/ui/pages/recovery.py:691
+msgid "The check of the backup did not pass (details in the log)."
+msgstr "Die Prüfung der Sicherung hat nicht bestanden (Details im Protokoll)."
+
+#: fm1companion/ui/pages/recovery.py:695
+msgid "The tool ended without checking the backup – the app cannot say what happened. Please look at the log."
+msgstr "Das Werkzeug hat ohne die Prüfung der Sicherung geendet – die App kann nicht sagen, was geschehen ist. Bitte das Protokoll ansehen."
+
+#: fm1companion/ui/pages/recovery.py:704
+#, python-brace-format
+msgid "The tool reports an error (code {code}) – details in the log. {hint}"
+msgstr "Das Werkzeug meldet einen Fehler (Code {code}) – Details im Protokoll. {hint}"
+
+#: fm1companion/ui/pages/recovery.py:705
+msgid "Code 3: firmware area possibly incomplete – do NOT switch off, try again."
+msgstr "Code 3: Firmwarebereich evtl. unvollständig – NICHT ausschalten, erneut versuchen."
+
+#: fm1companion/ui/pages/recovery.py:706
+msgid "Nothing was written, unless the log says otherwise."
+msgstr "Es wurde nichts geschrieben, falls das Protokoll nichts anderes sagt."
+
+#: fm1companion/ui/clean_check.py:25
+msgid "Checks whether everything is in its place after many firmware switches. <b>Quick check:</b> read only over USB, without risk. <b>Dump check:</b> compares a full backup of the flash sector by sector with all packages the app knows."
+msgstr "Prüft, ob nach vielen Firmware-Wechseln alles an seinem Platz ist. <b>Schnellprüfung:</b> nur lesen über USB, ohne Risiko. <b>Dump-Prüfung:</b> vergleicht eine Komplettsicherung des Flashs Sektor für Sektor mit allen Paketen, die die App kennt."
+
+#: fm1companion/ui/clean_check.py:28
+msgid "<b>Quick check</b> asks for identity and version, with Melodee 1.6 and later also the resource status (factory sounds, font, Bluetooth program): the firmware recomputes header and CRC-32 itself for this. It does not look into the rest of the flash.<br><br><b>Dump check</b> needs a 1 MiB full backup (e.g. “Emergency full backup” in stage 2 or “full-flash-before.bin” from the recovery folder). It checks the boot header, the firmware area, a truncated V16, leftovers of V16 in the data areas and the Melodee resources. In ROM boot mode it only reads – it never writes.<br><br><b>Clean up V16 leftovers</b> (expert mode, ROM boot mode, <b>untested on a real device</b>): erases selected single 4 KiB sectors in 0x93000–0xA8FFF – but only those that, according to a freshly read backup, still carry exactly V16 bytes, and only if the flash holds a known firmware with the V15 layout byte for byte (Melodee, V15, SLOOP …), never with V16. Nothing is written. Beforehand the whole flash is read twice and backed up, checked after every sector, and the whole flash compared at the end; a journal makes an aborted run resumable. From everything known so far (emulator, source code), the leftovers are harmless – so leaving them is fine too."
+msgstr "<b>Schnellprüfung</b> fragt Kennung und Version ab, bei Melodee ab 1.6 zusätzlich den Ressourcen-Status (Werkssounds, Schrift, Bluetooth-Programm): Die Firmware rechnet dafür Kopf und CRC-32 selbst nach. Sie sieht nicht in den restlichen Flash.<br><br><b>Dump-Prüfung</b> braucht eine 1-MiB-Komplettsicherung (z. B. „Notfall-Komplettsicherung“ in Stufe 2 oder „full-flash-before.bin“ aus dem Rettungsordner). Sie prüft Bootkopf, Firmware-Bereich, ein abgeschnittenes V16, Reste von V16 in den Datenbereichen und die Melodee-Ressourcen. Gelesen wird im ROM-Bootmodus nur – geschrieben wird nie.<br><br><b>V16-Reste aufräumen</b> (Expertenmodus, ROM-Bootmodus, <b>am echten Gerät ungetestet</b>): löscht gezielt einzelne 4-KiB-Sektoren in 0x93000–0xA8FFF – aber nur solche, die laut einer frisch gelesenen Sicherung noch genau V16-Bytes tragen, und nur, wenn im Flash byte-genau eine bekannte Firmware mit V15-Aufbau steht (Melodee, V15, SLOOP …), nie bei V16. Geschrieben wird nichts. Vorher wird der ganze Flash zweimal gelesen und gesichert, nach jedem Sektor geprüft, am Ende der ganze Flash verglichen; ein Journal macht einen abgebrochenen Lauf fortsetzbar. Nach allem, was bisher bekannt ist (Emulator, Quelltext), sind die Reste harmlos – liegen lassen ist also auch in Ordnung."
+
+#: fm1companion/ui/clean_check.py:45
+msgid "Clean"
+msgstr "Sauber"
+
+#: fm1companion/ui/clean_check.py:45
+msgid "With notes"
+msgstr "Mit Hinweisen"
+
+#: fm1companion/ui/clean_check.py:45
+msgid "Not OK"
+msgstr "Nicht in Ordnung"
+
+#: fm1companion/ui/clean_check.py:91
+#, python-brace-format
+msgid "{name} cannot be read ({error}). Nothing was changed."
+msgstr "{name} lässt sich nicht lesen ({error}). Es wurde nichts verändert."
+
+#: fm1companion/ui/clean_check.py:100
+#, python-brace-format
+msgid "{error} Please choose a full backup (e.g. full-flash-before.bin)."
+msgstr "{error} Bitte eine Komplettsicherung wählen (z. B. full-flash-before.bin)."
+
+#: fm1companion/ui/clean_check.py:101
+#, python-brace-format
+msgid "Flash dump “{name}”"
+msgstr "Flash-Dump „{name}“"
+
+#: fm1companion/ui/clean_check.py:111 fm1companion/ui/clean_check.py:188
+msgid "Is my FM-1 clean?"
+msgstr "Ist mein FM-1 sauber?"
+
+#: fm1companion/ui/clean_check.py:141
+msgid "What this check does not cover:"
+msgstr "Was diese Prüfung nicht abdeckt:"
+
+#: fm1companion/ui/clean_check.py:149
+#, python-brace-format
+msgid "Compared with: {packages}"
+msgstr "Verglichen mit: {packages}"
+
+#: fm1companion/ui/clean_check.py:151
+msgid "Technical details"
+msgstr "Technische Details"
+
+#: fm1companion/ui/clean_check.py:155
+msgid "Put the report as text on the clipboard – e.g. for a question in the forum"
+msgstr "Den Bericht als Text in die Zwischenablage legen – z. B. für eine Frage im Forum"
+
+#: fm1companion/ui/clean_check.py:160
+msgid "To Firmware+ › Install"
+msgstr "Zu Firmware+ › Installieren"
+
+#: fm1companion/ui/clean_check.py:161
+msgid "There: “Rewrite font & factory sounds”"
+msgstr "Dort: „Schrift & Werkssounds nachschreiben“"
+
+#: fm1companion/ui/clean_check.py:170
+#, python-brace-format
+msgid "Is my FM-1 clean? – {level}"
+msgstr "Ist mein FM-1 sauber? – {level}"
+
+#: fm1companion/ui/clean_check.py:174
+msgid "Not covered:"
+msgstr "Nicht abgedeckt:"
+
+#: fm1companion/ui/clean_check.py:176
+msgid "Details:"
+msgstr "Details:"
+
+#: fm1companion/ui/clean_check.py:197
+msgid "Quick check (read only)"
+msgstr "Schnellprüfung (nur lesen)"
+
+#: fm1companion/ui/clean_check.py:200
+msgid "Check dump file …"
+msgstr "Dump-Datei prüfen …"
+
+#: fm1companion/ui/clean_check.py:201
+msgid "Choose a 1 MiB full backup of the flash and compare it with all known packages – nothing happens on the FM-1."
+msgstr "Eine 1-MiB-Komplettsicherung des Flashs wählen und mit allen bekannten Paketen vergleichen – am FM-1 passiert dabei nichts."
+
+#: fm1companion/ui/clean_check.py:204
+msgid "Read && check in ROM boot mode …"
+msgstr "Im ROM-Bootmodus lesen && prüfen …"
+
+#: fm1companion/ui/clean_check.py:205
+msgid "For advanced users: read the FM-1 completely twice in ROM boot mode (“WL82 UBOOT1.00”) (read only, needs administrator rights) and check it right away."
+msgstr "Für Fortgeschrittene: das FM-1 im ROM-Bootmodus („WL82 UBOOT1.00“) zweimal komplett auslesen (nur lesen, braucht Administratorrechte) und gleich prüfen."
+
+#: fm1companion/ui/clean_check.py:210
+msgid "Create example dumps (demo)"
+msgstr "Beispiel-Dumps anlegen (Demo)"
+
+#: fm1companion/ui/clean_check.py:211
+msgid "Creates three made-up dumps (clean, with V16 leftovers, V16 truncated), so you can try the dump check without a device."
+msgstr "Legt drei erfundene Dumps an (sauber, mit V16-Resten, V16 abgeschnitten), damit du die Dump-Prüfung ohne Gerät ausprobieren kannst."
+
+#: fm1companion/ui/clean_check.py:223
+msgid "Expert mode: clean up V16 leftovers in ROM boot mode"
+msgstr "Expertenmodus: V16-Reste im ROM-Bootmodus aufräumen"
+
+#: fm1companion/ui/clean_check.py:224
+msgid "Shows “Clean up V16 leftovers …”. Only erases sectors that provably still contain V16 – untested on a real device."
+msgstr "Zeigt „V16-Reste aufräumen …“. Löscht nur Sektoren, die nachweislich noch V16 enthalten – am echten Gerät ungetestet."
+
+#: fm1companion/ui/clean_check.py:228
+msgid "Clean up V16 leftovers …"
+msgstr "V16-Reste aufräumen …"
+
+#: fm1companion/ui/clean_check.py:230
+msgid "In ROM boot mode: back up, look for leftovers of V16 in 0x93000–0xA8FFF, after your confirmation erase exactly these sectors and check them. Untested on a real device."
+msgstr "Im ROM-Bootmodus: sichern, Reste von V16 in 0x93000–0xA8FFF suchen, nach deiner Bestätigung genau diese Sektoren löschen und prüfen. Am echten Gerät ungetestet."
+
+#: fm1companion/ui/clean_check.py:235
+msgid "Details: what is checked, what is not, cleaning up leftovers"
+msgstr "Details: was geprüft wird, was nicht, Reste aufräumen"
+
+#: fm1companion/ui/clean_check.py:245
+msgid "First connect an FM-1 via USB (switched on normally, not in update mode)."
+msgstr "Erst ein FM-1 per USB anschließen (normal eingeschaltet, nicht im Update-Modus)."
+
+#: fm1companion/ui/clean_check.py:248
+msgid "The FM-1 is waiting in update mode – finish the installation first (stage 1)."
+msgstr "Das FM-1 wartet im Update-Modus – erst die Installation abschließen (Stufe 1)."
+
+#: fm1companion/ui/clean_check.py:252
+msgid "Reads identity, version and – with Melodee 1.6 and later – the resource status. Changes nothing on the FM-1."
+msgstr "Liest Kennung, Version und – bei Melodee ab 1.6 – den Ressourcen-Status. Ändert nichts am FM-1."
+
+#: fm1companion/ui/clean_check.py:253
+msgid "Reads the identity of the FM-1. Changes nothing on the FM-1."
+msgstr "Liest die Kennung des FM-1. Ändert nichts am FM-1."
+
+#: fm1companion/ui/clean_check.py:267
+#, python-brace-format
+msgid "Last result: {level}"
+msgstr "Letztes Ergebnis: {level}"
+
+#: fm1companion/ui/clean_check.py:276
+msgid "Quick check not possible"
+msgstr "Schnellprüfung nicht möglich"
+
+#: fm1companion/ui/clean_check.py:277
+#, python-brace-format
+msgid "{reason} Nothing was changed."
+msgstr "{reason} Es wurde nichts verändert."
+
+#: fm1companion/ui/clean_check.py:288
+#, python-brace-format
+msgid "The device was switched or disconnected during the check – this report applies to “{name}”."
+msgstr "Während der Prüfung wurde das Gerät gewechselt oder getrennt – dieser Bericht gilt für „{name}“."
+
+#: fm1companion/ui/clean_check.py:302
+msgid "no answer to command 82 – this firmware does not know the resource query"
+msgstr "keine Antwort auf Befehl 82 – diese Firmware kennt die Ressourcen-Abfrage nicht"
+
+#: fm1companion/ui/clean_check.py:304
+msgid "no answer to command 82 (stop playback, switch Bluetooth off and try again)"
+msgstr "keine Antwort auf Befehl 82 (Wiedergabe stoppen, Bluetooth aus und erneut versuchen)"
+
+#: fm1companion/ui/clean_check.py:305
+#, python-brace-format
+msgid "Quick check of “{name}” running …"
+msgstr "Schnellprüfung von „{name}“ läuft …"
+
+#: fm1companion/ui/clean_check.py:306
+msgid "Quick check"
+msgstr "Schnellprüfung"
+
+#: fm1companion/ui/clean_check.py:308
+msgid "Quick check failed"
+msgstr "Schnellprüfung fehlgeschlagen"
+
+#: fm1companion/ui/clean_check.py:308
+#, python-brace-format
+msgid "{error} Nothing was changed on the FM-1."
+msgstr "{error} Am FM-1 wurde nichts verändert."
+
+#: fm1companion/ui/clean_check.py:316
+msgid "Choose flash dump (1 MiB)"
+msgstr "Flash-Dump (1 MiB) wählen"
+
+#: fm1companion/ui/clean_check.py:318
+msgid "Flash dump (*.bin);;All files (*)"
+msgstr "Flash-Dump (*.bin);;Alle Dateien (*)"
+
+#: fm1companion/ui/clean_check.py:321
+#, python-brace-format
+msgid "Checking “{name}” …"
+msgstr "Prüfe „{name}“ …"
+
+#: fm1companion/ui/clean_check.py:324
+msgid "Dump check not possible"
+msgstr "Dump-Prüfung nicht möglich"
+
+#: fm1companion/ui/clean_check.py:334
+msgid "Example dumps"
+msgstr "Beispiel-Dumps"
+
+#: fm1companion/ui/clean_check.py:334
+#, python-brace-format
+msgid "The folder {folder} is not writable ({error})."
+msgstr "Der Ordner {folder} ist nicht beschreibbar ({error})."
+
+#: fm1companion/ui/clean_check.py:337
+#, python-brace-format
+msgid "Three example dumps are in {folder}: demo-sauber.bin, demo-v16-reste.bin, demo-v16-abgeschnitten.bin. Now “Check dump file …”."
+msgstr "Drei Beispiel-Dumps liegen in {folder}: demo-sauber.bin, demo-v16-reste.bin, demo-v16-abgeschnitten.bin. Jetzt „Dump-Datei prüfen …“."
+
+#: fm1companion/ui/clean_check.py:346
+msgid "Tool missing"
+msgstr "Werkzeug fehlt"
+
+#: fm1companion/ui/clean_check.py:346
+msgid "First “Fetch tool” in stage 2 – without jl-uboot-tool the app cannot read the flash. Nothing was changed."
+msgstr "Zuerst in Stufe 2 „Werkzeug holen“ – ohne jl-uboot-tool kann die App den Flash nicht lesen. Es wurde nichts verändert."
+
+#: fm1companion/ui/clean_check.py:351
+msgid "Exactly one device “WL82 UBOOT1.00” (USB 4c4a:8057) must be connected. How the FM-1 gets there: see stage 2. The app never chooses a drive by itself."
+msgstr "Es muss genau ein Gerät „WL82 UBOOT1.00“ (USB 4c4a:8057) angeschlossen sein. So kommt das FM-1 dorthin: siehe Stufe 2. Die App wählt nie selbst einen Datenträger aus."
+
+#: fm1companion/ui/clean_check.py:355
+msgid "No device in ROM boot mode"
+msgstr "Kein Gerät im ROM-Bootmodus"
+
+#: fm1companion/ui/clean_check.py:363
+msgid "Read && check in ROM boot mode"
+msgstr "Im ROM-Bootmodus lesen && prüfen"
+
+#: fm1companion/ui/clean_check.py:364
+msgid "<b>Simulation:</b> the tool reads its practice flash (random data) – nothing happens on the FM-1."
+msgstr "<b>Simulation:</b> Das Werkzeug liest seinen Übungs-Flash (Zufallsdaten) – am FM-1 passiert nichts."
+
+#: fm1companion/ui/clean_check.py:366
+msgid "The built-in unbricker reads the whole flash <b>twice</b> and compares both readings. <b>Nothing is written</b>. Needs administrator rights (password prompt). Afterwards switch the FM-1 off and on again."
+msgstr "Der eingebaute Unbricker liest den ganzen Flash <b>zweimal</b> und vergleicht beide Lesungen. Es wird <b>nichts geschrieben</b>. Braucht Administratorrechte (Passwortabfrage). Danach das FM-1 aus- und wieder einschalten."
+
+#: fm1companion/ui/clean_check.py:368
+msgid "Read"
+msgstr "Lesen"
+
+#: fm1companion/ui/clean_check.py:377
+#, python-brace-format
+msgid "The tool reports an error (code {code}) – details in the log. Nothing was written."
+msgstr "Das Werkzeug meldet einen Fehler (Code {code}) – Details im Protokoll. Es wurde nichts geschrieben."
+
+#: fm1companion/ui/clean_check.py:381
+msgid "The tool did not store a full backup – details in the log."
+msgstr "Das Werkzeug hat keine Komplettsicherung abgelegt – Details im Protokoll."
+
+#: fm1companion/ui/clean_check.py:383
+#, python-brace-format
+msgid "Full backup: {path}"
+msgstr "Komplettsicherung: {path}"
+
+#: fm1companion/ui/clean_check.py:385
+#, python-brace-format
+msgid "Read in ROM boot mode ({folder})"
+msgstr "Im ROM-Bootmodus gelesen ({folder})"
+
+#: fm1companion/ui/clean_check.py:387 fm1companion/ui/clean_check.py:443
+msgid "Simulation: that was the practice flash of the tool, not your FM-1."
+msgstr "Simulation: Das war der Übungs-Flash des Werkzeugs, nicht dein FM-1."
+
+#: fm1companion/ui/clean_check.py:390
+msgid "Read in ROM boot mode"
+msgstr "Im ROM-Bootmodus lesen"
+
+#: fm1companion/ui/clean_check.py:391
+#, python-brace-format
+msgid "Read (twice, compared) and saved: {path}. Nothing was written on the FM-1 – now switch it off and on again."
+msgstr "Gelesen (zweimal, verglichen) und gespeichert: {path}. Am FM-1 wurde nichts geschrieben – jetzt aus- und wieder einschalten."
+
+#: fm1companion/ui/clean_check.py:410
+msgid "First “Fetch tool” in stage 2 – without jl-uboot-tool the app cannot talk to the chip. Nothing was changed."
+msgstr "Zuerst in Stufe 2 „Werkzeug holen“ – ohne jl-uboot-tool kann die App nicht mit dem Chip sprechen. Es wurde nichts verändert."
+
+#: fm1companion/ui/clean_check.py:415
+#, python-brace-format
+msgid "Exactly one FM-1 in ROM boot mode (“WL82 UBOOT1.00”, USB 4c4a:8057, 1 MiB) must be connected. The app never chooses a drive by itself. Found: {devices}. Nothing was changed."
+msgstr "Es muss genau ein FM-1 im ROM-Bootmodus („WL82 UBOOT1.00“, USB 4c4a:8057, 1 MiB) angeschlossen sein. Die App wählt nie selbst einen Datenträger aus. Gefunden: {devices}. Es wurde nichts verändert."
+
+#: fm1companion/ui/clean_check.py:418
+msgctxt "device"
+msgid "none"
+msgstr "keins"
+
+#: fm1companion/ui/clean_check.py:438
+#, python-brace-format
+msgid "The tool did not store a result (code {code}) – details in the log. {outcome}"
+msgstr "Das Werkzeug hat kein Ergebnis abgelegt (Code {code}) – Details im Protokoll. {outcome}"
+
+#: fm1companion/ui/clean_check.py:439
+msgid "Nothing was erased."
+msgstr "Es wurde nichts gelöscht."
+
+#: fm1companion/ui/clean_check.py:440
+msgid "Whether anything was erased is in the log and in the journal in the recovery folder."
+msgstr "Ob gelöscht wurde, steht im Protokoll und im Journal im Rettungsordner."
+
+#: fm1companion/ui/clean_check.py:446
+#, python-brace-format
+msgid "{level} – result follows."
+msgstr "{level} – Ergebnis folgt."
+
+#: fm1companion/ui/clean_check.py:453
+msgid "Clean up V16 leftovers"
+msgstr "V16-Reste aufräumen"
+
+#: fm1companion/ui/clean_check.py:461
+#, python-brace-format
+msgid "{title} – step 1 of 2"
+msgstr "{title} – Schritt 1 von 2"
+
+#: fm1companion/ui/clean_check.py:462
+msgid "<b>Simulation:</b> everything runs against the practice flash of the tool – nothing happens on the FM-1."
+msgstr "<b>Simulation:</b> Alles läuft gegen den Übungs-Flash des Werkzeugs – am FM-1 passiert nichts."
+
+#: fm1companion/ui/clean_check.py:463
+msgid "<b>Experimental, untested on a real device.</b>"
+msgstr "<b>Experimentell, am echten Gerät ungetestet.</b>"
+
+#: fm1companion/ui/clean_check.py:464
+msgid "The FM-1 must be in ROM boot mode. First the unbricker reads the whole flash <b>twice</b>, compares it and saves it as a file. Then the app looks in 0x93000–0xA8FFF for sectors that still carry exactly V16 bytes. <b>Nothing is erased in this step.</b>"
+msgstr "Das FM-1 muss im ROM-Bootmodus sein. Zuerst liest der Unbricker den ganzen Flash <b>zweimal</b>, vergleicht und sichert ihn als Datei. Dann sucht die App in 0x93000–0xA8FFF nach Sektoren, die noch genau V16-Bytes tragen. <b>In diesem Schritt wird nichts gelöscht.</b>"
+
+#: fm1companion/ui/clean_check.py:467
+msgid "Read && plan"
+msgstr "Lesen && planen"
+
+#: fm1companion/ui/clean_check.py:467
+msgid "Needs administrator rights (password prompt)."
+msgstr "Braucht Administratorrechte (Passwortabfrage)."
+
+#: fm1companion/ui/clean_check.py:469
+#, python-brace-format
+msgid "{title}: read and plan"
+msgstr "{title}: lesen und planen"
+
+#: fm1companion/ui/clean_check.py:480
+#, python-brace-format
+msgid "{title} – step 2 of 2"
+msgstr "{title} – Schritt 2 von 2"
+
+#: fm1companion/ui/clean_check.py:481
+#, python-brace-format
+msgid "<b>{n} sector of 4 KiB will be erased: {ranges}</b> – only V16 leftovers, nothing of your firmware ({firmware})."
+msgid_plural "<b>{n} sectors of 4 KiB each will be erased: {ranges}</b> – only V16 leftovers, nothing of your firmware ({firmware})."
+msgstr[0] "<b>Gelöscht werden {n} Sektoren à 4 KiB: {ranges}</b> – nur V16-Reste, nichts von deiner Firmware ({firmware})."
+msgstr[1] "<b>Gelöscht werden {n} Sektoren à 4 KiB: {ranges}</b> – nur V16-Reste, nichts von deiner Firmware ({firmware})."
+
+#: fm1companion/ui/clean_check.py:487
+msgid "Beforehand the tool reads the flash twice once more and backs it up; only what this fresh backup confirms again as a V16 leftover is erased. It checks after every sector, and the whole flash at the end. Boot header, firmware and everything outside 0x93000–0xA8FFF stay as they are."
+msgstr "Vorher liest das Werkzeug den Flash noch einmal zweimal und sichert ihn; gelöscht wird nur, was diese frische Sicherung erneut als V16-Rest bestätigt. Nach jedem Sektor prüft es nach, am Ende den ganzen Flash. Bootkopf, Firmware und alles außerhalb 0x93000–0xA8FFF bleiben, wie sie sind."
+
+#: fm1companion/ui/clean_check.py:491
+#, python-brace-format
+msgid "Backup from step 1: {path}"
+msgstr "Sicherung von Schritt 1: {path}"
+
+#: fm1companion/ui/clean_check.py:492
+msgid "<b>Untested on a real device.</b> Do not unplug anything while erasing. An aborted run can be resumed with this button."
+msgstr "<b>Am echten Gerät ungetestet.</b> Während des Löschens nichts abstecken. Ein abgebrochener Lauf lässt sich mit diesem Knopf fortsetzen."
+
+#. Translators: the word the user must type to confirm the erase – capital letters
+#: fm1companion/ui/clean_check.py:497
+msgctxt "typed confirmation"
+msgid "CLEAN UP"
+msgstr "AUFRÄUMEN"
+
+#: fm1companion/ui/clean_check.py:498
+#, python-brace-format
+msgid "{title} – confirm"
+msgstr "{title} – Bestätigen"
+
+#: fm1companion/ui/clean_check.py:499
+#, python-brace-format
+msgid "To erase {n} sector, type {word}:"
+msgid_plural "To erase {n} sectors, type {word}:"
+msgstr[0] "Zum Löschen von {n} Sektoren {word} eintippen:"
+msgstr[1] "Zum Löschen von {n} Sektoren {word} eintippen:"
+
+#: fm1companion/ui/clean_check.py:503
+msgid "Clean-up cancelled – nothing was erased."
+msgstr "Aufräumen abgebrochen – es wurde nichts gelöscht."
+
+#: fm1companion/ui/clean_check.py:508
+#, python-brace-format
+msgid "{level}: {n} sector erased and checked."
+msgid_plural "{level}: {n} sectors erased and checked."
+msgstr[0] "{level}: {n} Sektoren gelöscht und geprüft."
+msgstr[1] "{level}: {n} Sektoren gelöscht und geprüft."
+
+#: fm1companion/ui/clean_check.py:511
+#, python-brace-format
+msgid "Simulation finished – nothing was changed on the FM-1. {result}"
+msgstr "Simulation beendet – am FM-1 wurde nichts verändert. {result}"
+
+#: fm1companion/ui/clean_check.py:512
+#, python-brace-format
+msgid "{result} Now switch the FM-1 off and on again."
+msgstr "{result} Jetzt das FM-1 aus- und wieder einschalten."
+
+#: fm1companion/ui/clean_check.py:513
+#, python-brace-format
+msgid "{title}: erase"
+msgstr "{title}: löschen"
+
+#: fm1companion/ui/clean_check.py:516
+msgid "Clean-up"
+msgstr "Aufräumen"
+
+#: fm1companion/flash/planner.py:21
+msgid "Everything you saved under V16 (patterns, settings) can no longer be used afterwards – the app cannot make a backup of V16."
+msgstr "Alles, was du unter V16 gespeichert hast (Patterns, Einstellungen), ist danach nicht mehr nutzbar – die App kann von V16 kein Backup machen."
+
+#: fm1companion/flash/planner.py:26
+msgid "V15 and community firmwares only write up to 0x92FFF: leftovers of V16 in 0x93000–0xA8FFF remain. Melodee 1.5.1 ran with them in the emulator as on a clean flash; you can check it with “Is my FM-1 clean?” (Recovery)."
+msgstr "V15 und Community-Firmwares schreiben nur bis 0x92FFF: Reste von V16 in 0x93000–0xA8FFF bleiben liegen. Melodee 1.5.1 lief damit im Emulator wie auf sauberem Flash; prüfen kannst du es mit „Ist mein FM-1 sauber?“ (Rettung)."
+
+#: fm1companion/flash/planner.py:32
+msgid "songs, presets and settings"
+msgstr "Songs, Presets und Einstellungen"
+
+#: fm1companion/flash/planner.py:33
+msgid "further song and preset areas"
+msgstr "weitere Song- und Preset-Bereiche"
+
+#: fm1companion/flash/planner.py:38
+#, python-brace-format
+msgid "When writing V16: the area 0x93000–0xA8FFF (22 sectors) – on your device: {what}. As good as certain: the update loader writes exactly as far as the package is long (recorded with V15 on real hardware)."
+msgstr "Beim Schreiben von V16: der Bereich 0x93000–0xA8FFF (22 Sektoren) – bei dir: {what}. So gut wie sicher: Der Update-Loader schreibt genau so weit, wie das Paket lang ist (bei V15 an echter Hardware aufgezeichnet)."
+
+#: fm1companion/flash/planner.py:43
+#, python-brace-format
+msgid "At the first start V16 additionally formats {ranges} – on your device: {what}. Observed in the emulator, not on real hardware. The app rewrites the resources on the way back to Melodee."
+msgstr "Beim ersten Start formatiert V16 zusätzlich {ranges} – bei dir: {what}. Beobachtet im Emulator, nicht an echter Hardware. Die Ressourcen schreibt die App beim Rückweg auf Melodee neu."
+
+#: fm1companion/flash/planner.py:47
+#, python-brace-format
+msgid "At the first start V16 additionally formats {ranges} – on your device: {what}. Observed in the emulator, not on real hardware."
+msgstr "Beim ersten Start formatiert V16 zusätzlich {ranges} – bei dir: {what}. Beobachtet im Emulator, nicht an echter Hardware."
+
+#: fm1companion/flash/planner.py:64
+msgid "When switching to the original firmware, the running Felucca firmware compares the boot area (CHECK HEAD). If it differs – e.g. after m-bootloader or M-VAVE Open V12/V14 –, the FM-1 shows “FAILED -5” (Felucca 1.6.1 copies: -15). Nothing is written, the current firmware keeps running. Ways out: a Felucca firmware with the new check (felucca-bsp afd83ede) or download mode (recovery stage 2, M-Flasher)."
+msgstr "Beim Wechsel auf die Original-Firmware vergleicht die laufende Felucca-Firmware den Bootbereich (CHECK HEAD). Weicht er ab – z. B. nach m-bootloader oder M-VAVE Open V12/V14 –, zeigt das FM-1 „FAILED -5“ (Felucca-1.6.1-Kopien: -15). Es wird nichts geschrieben, die jetzige Firmware läuft weiter. Auswege: eine Felucca-Firmware mit neuer Prüfung (felucca-bsp afd83ede) oder der Download-Modus (Rettung Stufe 2, M-Flasher)."
+
+#: fm1companion/flash/planner.py:71
+msgid "no risk"
+msgstr "kein Risiko"
+
+#: fm1companion/flash/planner.py:71
+msgid "low risk"
+msgstr "geringes Risiko"
+
+#: fm1companion/flash/planner.py:71
+msgid "medium risk"
+msgstr "mittleres Risiko"
+
+#: fm1companion/flash/planner.py:71
+msgid "high risk"
+msgstr "hohes Risiko"
+
+#: fm1companion/flash/planner.py:75
+msgid "I know what I am doing: this file is in no catalog. I have checked the identity and checksum myself."
+msgstr "Ich weiß, was ich tue: Diese Datei ist in keinem Katalog. Ich habe Kennung und Prüfsumme selbst geprüft."
+
+#: fm1companion/flash/planner.py:77
+msgid "The FM-1 is charged or on power, the cable is plugged directly into the computer, and the computer does not go to sleep during the installation."
+msgstr "Das FM-1 ist geladen bzw. am Strom, das Kabel steckt direkt am Rechner, und der Rechner geht während der Installation nicht schlafen."
+
+#: fm1companion/flash/planner.py:79
+msgid "I am not making a backup and accept that projects and sounds may be lost."
+msgstr "Ich mache kein Backup und nehme in Kauf, dass Projekte und Sounds verloren gehen."
+
+#: fm1companion/flash/planner.py:80
+msgid "I understand that this is a test version (beta)."
+msgstr "Mir ist klar, dass dies eine Testversion (Beta) ist."
+
+#: fm1companion/flash/planner.py:81
+msgid "I know that Felucca 0.9 data can prevent the start when switching to 1.x (backup is mandatory; for the remedy see Recovery)."
+msgstr "Ich weiß, dass Felucca 0.9-Daten beim Wechsel auf 1.x den Start verhindern können (Backup ist Pflicht; Abhilfe siehe Rettung)."
+
+#: fm1companion/flash/planner.py:83
+msgid "Checksum not available: I am installing this package although the app cannot check it against any checksum (the release has no SHA256SUMS file)."
+msgstr "Prüfsumme nicht verfügbar: Ich installiere dieses Paket, obwohl die App es gegen keine Prüfsumme prüfen kann (das Release hat keine SHA256SUMS-Datei)."
+
+#: fm1companion/flash/planner.py:85
+msgid "I understand: the older firmware cannot read projects, presets and backups from Melodee 1.6. My way back is a backup from before the update to 1.6."
+msgstr "Mir ist klar: Projekte, Presets und Backups von Melodee 1.6 kann die ältere Firmware nicht lesen. Mein Rückweg ist ein Backup von vor dem Update auf 1.6."
+
+#: fm1companion/flash/planner.py:87
+msgid "I understand: V16 is experimental and meant only with a backup. The way back from V16 to V15 has not yet been confirmed with real V16 – in the worst case only ROM boot mode helps (recovery stage 2)."
+msgstr "Mir ist klar: V16 ist experimentell und nur mit Backup gedacht. Der Rückweg von V16 auf V15 ist mit echter V16 noch nicht bestätigt – im schlimmsten Fall hilft nur der ROM-Bootmodus (Rettung Stufe 2)."
+
+#: fm1companion/flash/planner.py:91
+msgid "Experimental – only with a backup. V16 uses a different flash layout than V15 and all community firmwares. Established: the update loader is the same in V15 and V16, and an FM-1 that reported as version 16 (a V15 derivative) could be reset to V15 with a normal update. With real V16, however, the way back has not yet been confirmed, and it is open whether the loader also rewrites the boot header. If the way back does not work, ROM boot mode helps (recovery stage 2). Recommendation: not on your main FM-1."
+msgstr "Experimentell – nur mit Backup. V16 nutzt einen anderen Flash-Aufbau als V15 und alle Community-Firmwares. Belegt ist: Der Update-Loader ist in V15 und V16 derselbe, und ein FM-1, das sich als Version 16 meldete (ein V15-Abkömmling), ließ sich per normalem Update auf V15 zurücksetzen. Mit echter V16 ist der Rückweg aber noch nicht bestätigt, und offen ist, ob der Loader dabei auch den Bootkopf neu schreibt. Klappt der Rückweg nicht, hilft der ROM-Bootmodus (Rettung Stufe 2). Empfehlung: nicht auf dem Haupt-FM-1."
+
+#: fm1companion/flash/planner.py:97
+msgid "Please leave only the FM-1 connected that you want to update."
+msgstr "Bitte nur das FM-1 angeschlossen lassen, das du aktualisieren willst."
+
+#: fm1companion/flash/planner.py:218
+#, python-brace-format
+msgid "The checksum of {name} does not match the catalog (expected {expected}…, file {actual}…). The file is damaged or was replaced – it is not installed."
+msgstr "Die Prüfsumme von {name} stimmt nicht mit dem Katalog überein (erwartet {expected}…, Datei {actual}…). Die Datei ist beschädigt oder wurde ausgetauscht – sie wird nicht installiert."
+
+#: fm1companion/flash/planner.py:222
+#, python-brace-format
+msgid "The package is for “{model}”, not for the FM-1 ({product})."
+msgstr "Das Paket ist für „{model}“, nicht für das FM-1 ({product})."
+
+#: fm1companion/flash/planner.py:225
+#, python-brace-format
+msgid "The package reports {product}, {expected} was expected."
+msgstr "Das Paket meldet {product}, erwartet war {expected}."
+
+#: fm1companion/flash/planner.py:228
+#, python-brace-format
+msgid "The package is damaged ({damage}). Please download it again."
+msgstr "Das Paket ist beschädigt ({damage}). Bitte neu herunterladen."
+
+#: fm1companion/flash/planner.py:230
+msgid "The app does not know the update loader of this package and therefore sends it to no loader. Please use the author's installer."
+msgstr "Die App kennt den Update-Loader dieses Pakets nicht und schickt es deshalb an keinen Loader. Bitte den Installer des Autors benutzen."
+
+#: fm1companion/flash/planner.py:233
+#, python-brace-format
+msgid "The package would write up to {end} – into the protected area from 0xFF000 (device ID, Bluetooth address). No known FM-1 package does that; it is not installed."
+msgstr "Das Paket würde bis {end} schreiben – bis in den geschützten Bereich ab 0xFF000 (Gerätekennung, Bluetooth-Adresse). Kein bekanntes FM-1-Paket tut das; es wird nicht installiert."
+
+#: fm1companion/flash/planner.py:237
+msgid "The package contains the original loader, but is not an unmodified original firmware (V15/V16). Modified original packages are not installed."
+msgstr "Das Paket enthält den Original-Loader, ist aber keine unveränderte Original-Firmware (V15/V16). Veränderte Original-Pakete werden nicht installiert."
+
+#: fm1companion/flash/planner.py:308
+msgid "An installation is already running. Please wait until it is finished."
+msgstr "Es läuft bereits eine Installation. Bitte warten, bis sie fertig ist."
+
+#: fm1companion/flash/planner.py:310
+msgid "No FM-1 connected. Please connect it with a USB data cable and switch it on."
+msgstr "Kein FM-1 verbunden. Bitte per USB-Datenkabel anschließen und einschalten."
+
+#: fm1companion/flash/planner.py:312
+msgid "This FM-1 runs the M-VAVE Open firmware. First return to the original firmware with M-VAVE's own tool (FM1 Workbench), then install here."
+msgstr "Auf diesem FM-1 läuft die M-VAVE-Open-Firmware. Erst mit M-VAVEs eigenem Werkzeug (FM1 Workbench) zur Original-Firmware zurückkehren, dann hier installieren."
+
+#: fm1companion/flash/planner.py:316
+#, python-brace-format
+msgid "The connected device reports “{identity}” – that is not an FM-1."
+msgstr "Das angeschlossene Gerät meldet „{identity}“ – das ist kein FM-1."
+
+#: fm1companion/flash/planner.py:321
+msgid "Unknown loader family."
+msgstr "Unbekannte Loader-Familie."
+
+#: fm1companion/flash/planner.py:323
+#, python-brace-format
+msgid "{please} Several FM-1 (or devices in update mode) are connected, and the app cannot identify the target device unambiguously by USB port or serial number. After the restart into update mode it could otherwise write to the wrong device."
+msgstr "{please} Es sind mehrere FM-1 (oder Geräte im Update-Modus) angeschlossen, und die App kann das Zielgerät nicht eindeutig an USB-Anschluss oder Seriennummer erkennen. Nach dem Neustart in den Update-Modus könnte sie sonst das falsche Gerät beschreiben."
+
+#: fm1companion/flash/planner.py:328
+msgid "Several FM-1 are connected. The app pins the target device by its USB port – please do not move any cable during the installation."
+msgstr "Es sind mehrere FM-1 angeschlossen. Die App hält das Zielgerät über seinen USB-Anschluss fest – bitte während der Installation kein Kabel umstecken."
+
+#: fm1companion/flash/planner.py:335
+msgid "It is waiting for a package of the Felucca family (e.g. Melodee) – ideally exactly the one whose installation was interrupted."
+msgstr "Er wartet auf ein Paket der Felucca-Familie (z. B. Melodee) – am besten genau das, dessen Installation unterbrochen wurde."
+
+#: fm1companion/flash/planner.py:337
+msgid "It is waiting for the unmodified original firmware V15."
+msgstr "Er wartet auf die unveränderte Original-Firmware V15."
+
+#: fm1companion/flash/planner.py:338
+msgid "It is waiting for the package whose installation was interrupted."
+msgstr "Er wartet auf das Paket, dessen Installation unterbrochen wurde."
+
+#: fm1companion/flash/planner.py:341
+msgid "The app does not know this loader."
+msgstr "Diesen Loader kennt die App nicht."
+
+#: fm1companion/flash/planner.py:342
+#, python-brace-format
+msgid "The FM-1 is waiting in update mode ({identity}). This package does not belong to this loader – nothing is sent. {hint}"
+msgstr "Das FM-1 wartet im Update-Modus ({identity}). Dieses Paket gehört nicht zu diesem Loader – es wird nichts gesendet. {hint}"
+
+#: fm1companion/flash/planner.py:345 fm1companion/flash/planner.py:394
+msgid "Load package & check checksum"
+msgstr "Paket laden & Prüfsumme prüfen"
+
+#: fm1companion/flash/planner.py:346
+msgid "Fetch the package and check it against the known checksum."
+msgstr "Paket holen und gegen die bekannte Prüfsumme prüfen."
+
+#: fm1companion/flash/planner.py:349
+#, python-brace-format
+msgid "“{target}” was interrupted. The safest thing is to write exactly this package again."
+msgstr "Unterbrochen wurde „{target}“. Am sichersten ist es, genau dieses Paket noch einmal zu schreiben."
+
+#: fm1companion/flash/planner.py:351
+msgid "Finish the interrupted installation"
+msgstr "Unterbrochene Installation abschließen"
+
+#: fm1companion/flash/planner.py:352
+msgid "The waiting update loader reads the whole package once more and writes it. Areas that are already correct are skipped."
+msgstr "Der wartende Update-Loader liest das ganze Paket noch einmal und schreibt es. Bereits richtige Bereiche werden übersprungen."
+
+#: fm1companion/flash/planner.py:362
+#, python-brace-format
+msgid "The file name “{name}” says V{name_version}, but the package itself is {product} (V{version}). The app goes only by the content – this file is not installed. Please name the file correctly or download it again."
+msgstr "Der Dateiname „{name}“ sagt V{name_version}, das Paket selbst ist aber {product} (V{version}). Die App richtet sich nur nach dem Inhalt – diese Datei wird nicht installiert. Bitte die Datei richtig benennen oder neu laden."
+
+#: fm1companion/flash/planner.py:370
+msgid "The running firmware is not recognized (yet). For the switch between V16 and the V15 layout the app must know what is running – please wait until the FM-1 is recognized at the top, and open the plan again. Without recognition: install the original V15 first."
+msgstr "Die laufende Firmware ist (noch) nicht erkannt. Für den Wechsel zwischen V16 und dem V15-Aufbau muss die App wissen, was gerade läuft – bitte warten, bis das FM-1 oben erkannt ist, und den Plan neu öffnen. Ohne Erkennung: zuerst die Original-V15 installieren."
+
+#: fm1companion/flash/planner.py:374
+msgid "A backup is mandatory for the switch between V16 and the V15 layout: it overwrites areas where your projects and sounds are stored. Please tick “Make a backup first”."
+msgstr "Für den Wechsel zwischen V16 und dem V15-Aufbau ist ein Backup Pflicht: Dabei werden Bereiche überschrieben, in denen deine Projekte und Sounds liegen. Bitte „Vorher ein Backup machen“ anhaken."
+
+#: fm1companion/flash/planner.py:383
+msgid "Backup of the device"
+msgstr "Backup des Geräts"
+
+#: fm1companion/flash/planner.py:384
+msgid "All projects, sounds and settings are backed up first (read only). If the backup fails, the installation is aborted."
+msgstr "Alle Projekte, Sounds und Einstellungen werden vorher gesichert (nur lesen). Klappt das Backup nicht, bricht die Installation ab."
+
+#: fm1companion/flash/planner.py:387
+msgid "Without backup: projects, sounds and settings on the device are NOT backed up first."
+msgstr "Ohne Backup: Projekte, Sounds und Einstellungen auf dem Gerät werden vorher NICHT gesichert."
+
+#: fm1companion/flash/planner.py:391
+msgid "No backup possible: the running firmware has no editor protocol, the app cannot back up anything from it. Back up important projects first with the firmware's own tool."
+msgstr "Kein Backup möglich: Die laufende Firmware hat kein Editor-Protokoll, die App kann von ihr nichts sichern. Wichtige Projekte vorher mit dem Werkzeug der Firmware sichern."
+
+#: fm1companion/flash/planner.py:395
+msgid "Download the package (or take the existing file) and check it against the checksum."
+msgstr "Paket herunterladen (oder vorhandene Datei nehmen) und gegen die Prüfsumme prüfen."
+
+#: fm1companion/flash/planner.py:398
+msgid "Mandatory: V16 only works from the original firmware – your current firmware would refuse V16 with “FAILED -5”."
+msgstr "Pflicht: V16 geht nur von der Original-Firmware aus – deine jetzige Firmware würde V16 mit „FAILED -5“ ablehnen."
+
+#: fm1companion/flash/planner.py:400
+msgid "Mandatory: the way back from V16 leads via the original V15 (the same update loader as V16)."
+msgstr "Pflicht: Der Rückweg von V16 führt über die Original-V15 (derselbe Update-Loader wie V16)."
+
+#: fm1companion/flash/planner.py:405
+msgid "V16 can only be installed from the original firmware: your current firmware compares the boot header before the original loader and would refuse V16 with “FAILED -5”."
+msgstr "V16 lässt sich nur von der Original-Firmware aus installieren: Deine jetzige Firmware vergleicht vor dem Original-Loader den Bootkopf und würde V16 mit „FAILED -5“ ablehnen."
+
+#: fm1companion/flash/planner.py:407
+msgid "The way back from V16 goes via the original V15 – it uses the same update loader as V16."
+msgstr "Der Rückweg von V16 geht über die Original-V15 – sie nutzt denselben Update-Loader wie V16."
+
+#: fm1companion/flash/planner.py:409
+msgid "According to the catalog, this firmware is installed from the original firmware V15."
+msgstr "Diese Firmware wird laut Katalog von der Original-Firmware V15 aus installiert."
+
+#: fm1companion/flash/planner.py:411
+msgid "Firmware switch: via the original V15 the new firmware starts from a clean, proven state – this avoids careless mistakes when switching back and forth quickly."
+msgstr "Firmware-Wechsel: Über die Original-V15 startet die neue Firmware von einem sauberen, bewährten Stand – das vermeidet Flüchtigkeitsfehler beim schnellen Hin- und Herwechseln."
+
+#: fm1companion/flash/planner.py:414
+#, python-brace-format
+msgid "{why} The app installs the unmodified V15 (checksum db1642b2…) via M-VAVE's own loader and then checks whether the FM-1 reports “FM-1_015”."
+msgstr "{why} Die App spielt die unveränderte V15 (Prüfsumme db1642b2…) über M-VAVEs eigenen Loader auf und prüft danach, ob das FM-1 „FM-1_015“ meldet."
+
+#: fm1companion/flash/planner.py:418
+msgid "The prepared V15 file is not the unmodified original firmware."
+msgstr "Die bereitgelegte V15-Datei ist nicht die unveränderte Original-Firmware."
+
+#: fm1companion/flash/planner.py:419
+msgid "Your projects on the device can be lost in the intermediate step – the app backs them up first."
+msgstr "Deine Projekte auf dem Gerät können beim Zwischenschritt verloren gehen – die App sichert sie vorher."
+
+#: fm1companion/flash/planner.py:421
+msgid "Your projects on the device can be lost in the intermediate step – the app cannot back them up from this firmware."
+msgstr "Deine Projekte auf dem Gerät können beim Zwischenschritt verloren gehen – von dieser Firmware kann die App sie nicht sichern."
+
+#: fm1companion/flash/planner.py:428
+#, python-brace-format
+msgid "<b>V16 (experimental):</b> {warning}"
+msgstr "<b>V16 (experimentell):</b> {warning}"
+
+#: fm1companion/flash/planner.py:433
+#, python-brace-format
+msgid "This package writes up to {end} – beyond 0x92FFF, where the firmwares with the V15 layout (Melodee too) store songs, presets and sounds."
+msgstr "Dieses Paket schreibt bis {end} – über 0x92FFF hinaus, wo die Firmwares mit V15-Aufbau (auch Melodee) Songs, Presets und Sounds speichern."
+
+#: fm1companion/flash/planner.py:435
+#, python-brace-format
+msgid "Install {name}"
+msgstr "{name} aufspielen"
+
+#: fm1companion/flash/planner.py:436
+msgid "The running firmware starts the update loader from the package, the loader writes the firmware. Do not unplug, do not switch off."
+msgstr "Die laufende Firmware startet den Update-Loader aus dem Paket, der Loader schreibt die Firmware. Nicht abziehen, nicht ausschalten."
+
+#: fm1companion/flash/planner.py:444
+msgid "Projects, sounds and settings of the current firmware can no longer be used afterwards (the backup stays on the computer)."
+msgstr "Projekte, Sounds und Einstellungen der jetzigen Firmware sind danach nicht mehr nutzbar (das Backup bleibt auf dem Rechner)."
+
+#: fm1companion/flash/planner.py:446
+msgid "Projects, sounds and settings of the current firmware can no longer be used afterwards."
+msgstr "Projekte, Sounds und Einstellungen der jetzigen Firmware sind danach nicht mehr nutzbar."
+
+#: fm1companion/flash/planner.py:448
+msgid "Which firmware is running right now is unknown – if it is a different one than the new one, its projects, sounds and settings can no longer be used afterwards."
+msgstr "Welche Firmware gerade läuft, ist unbekannt – ist es eine andere als die neue, sind deren Projekte, Sounds und Einstellungen danach nicht mehr nutzbar."
+
+#: fm1companion/flash/planner.py:451
+msgid "The original firmware can overwrite data of the previous firmware."
+msgstr "Die Original-Firmware kann Daten der bisherigen Firmware überschreiben."
+
+#: fm1companion/flash/planner.py:453
+msgid "After a Felucca firmware, the original firmware reads its leftovers as its own settings: presets can be garbled. First try System > Reset Patches on the FM-1; if that does not help: Recovery > “Repair settings after return”."
+msgstr "Nach einer Felucca-Firmware liest die Original-Firmware deren Reste als eigene Einstellungen: Presets können verstümmelt sein. Zuerst am FM-1 System > Reset Patches probieren; hilft das nicht: Rettung > „Einstellungen nach Rückkehr reparieren“."
+
+#: fm1companion/flash/planner.py:457
+msgid "Test version (beta / release candidate): projects may not load in older versions."
+msgstr "Testversion (Beta / Release Candidate): Projekte lassen sich evtl. nicht in ältere Versionen laden."
+
+#: fm1companion/flash/planner.py:461
+msgid "Projects of this version cannot be loaded back into older versions."
+msgstr "Projekte dieser Version lassen sich nicht in ältere Versionen zurückladen."
+
+#: fm1companion/flash/planner.py:464
+msgid "This installation changes the boot area of the FM-1. Afterwards many Felucca firmwares (Melodee and SLOOP too) refuse the return to the original V15 (“FAILED -5”). The way back then only goes via download mode (recovery stage 2 / M-Flasher)."
+msgstr "Diese Installation ändert den Bootbereich des FM-1. Danach lehnen viele Felucca-Firmwares (auch Melodee und SLOOP) die Rückkehr zur Original-V15 ab („FAILED -5“). Der Rückweg geht dann nur über den Download-Modus (Rettung Stufe 2 / M-Flasher)."
+
+#: fm1companion/flash/planner.py:468
+msgid "This firmware is meant to be operated with an Arturia MiniLab 3."
+msgstr "Diese Firmware ist für die Bedienung mit einem Arturia MiniLab 3 gedacht."
+
+#: fm1companion/flash/planner.py:470
+msgid "Switch from Felucca 0.9 to 1.x: old 0.9 data is known to prevent 1.0.x from starting (black screen, ROM-UBOOT). Backup is mandatory. Remedy in recovery (stage 2): erase the data areas 0x97000 and 0xFC000 – this erases songs and settings."
+msgstr "Wechsel von Felucca 0.9 auf 1.x: Bekannt ist, dass alte 0.9-Daten den Start von 1.0.x verhindern (schwarzer Bildschirm, ROM-UBOOT). Backup ist Pflicht. Abhilfe in der Rettung (Stufe 2): Datenbereiche 0x97000 und 0xFC000 löschen – das löscht Songs und Einstellungen."
+
+#: fm1companion/flash/planner.py:475
+msgid "For Felucca 0.9 → 1.x a backup is mandatory – without a backup it is not possible here."
+msgstr "Für Felucca 0.9 → 1.x ist ein Backup Pflicht – ohne Backup geht es hier nicht."
+
+#: fm1companion/flash/planner.py:477
+msgid "Checksum not available: this release has no SHA256SUMS file, and the catalog does not know the checksum. The app cannot check whether the file is unmodified."
+msgstr "Prüfsumme nicht verfügbar: Dieses Release hat keine SHA256SUMS-Datei, und der Katalog kennt die Prüfsumme nicht. Die App kann nicht prüfen, ob die Datei unverändert ist."
+
+#: fm1companion/flash/planner.py:481
+#, python-brace-format
+msgid "Own file: identity {identity}, SHA-256 {sha256} – in no catalog."
+msgstr "Eigene Datei: Kennung {identity}, SHA-256 {sha256} – in keinem Katalog."
+
+#: fm1companion/flash/planner.py:530
+msgid "Fonts, factory sounds and Bluetooth program (Melodee 1.6 and later). If this fails, the firmware still runs – it can be done later."
+msgstr "Schriften, Werkssounds und Bluetooth-Programm (Melodee ab 1.6). Scheitert das, läuft die Firmware trotzdem – es lässt sich später nachholen."
+
+#: fm1companion/flash/planner.py:532
+msgid "Wait for restart & check identity"
+msgstr "Neustart abwarten & Identität prüfen"
+
+#: fm1companion/flash/planner.py:533
+#, python-brace-format
+msgid "The FM-1 restarts and must then report “{product}”."
+msgstr "Das FM-1 startet neu und muss danach „{product}“ melden."
+
+#: fm1companion/flash/planner.py:534
+msgid "The FM-1 restarts and must then report with the new firmware."
+msgstr "Das FM-1 startet neu und muss sich danach mit der neuen Firmware melden."
+
+#: fm1companion/flash/planner.py:543
+msgid "A power loss while writing can NOT be resumed here – the FM-1 would then stay black (only recovery stage 2 helps)."
+msgstr "Ein Stromausfall während des Schreibens lässt sich hier NICHT fortsetzen – das FM-1 bliebe dann schwarz (nur die Rettung Stufe 2 hilft)."
+
+#: fm1companion/flash/planner.py:545
+msgid "The original firmware has no start protection: the power must not fail while writing."
+msgstr "Die Original-Firmware hat keinen Startschutz: Während des Schreibens darf der Strom nicht ausfallen."
+
+#: fm1companion/flash/engine.py:24
+msgid "FM-1 is switching to update mode …"
+msgstr "FM-1 wechselt in den Update-Modus …"
+
+#: fm1companion/flash/engine.py:25
+msgid "Written – the FM-1 is restarting …"
+msgstr "Geschrieben – das FM-1 startet neu …"
+
+#: fm1companion/flash/engine.py:34
+msgid "package header damaged (CRC)"
+msgstr "Paketkopf beschädigt (CRC)"
+
+#: fm1companion/flash/engine.py:35
+msgid "package without update loader or without flash.bin (e.g. m-bootloader installer)"
+msgstr "Paket ohne Update-Loader bzw. ohne flash.bin (z. B. m-bootloader-Installer)"
+
+#: fm1companion/flash/engine.py:36
+msgid "CHECK HEAD FAILED: boot area of the package ≠ boot area of the device (nothing written)"
+msgstr "CHECK HEAD FAILED: Bootbereich des Pakets ≠ Bootbereich des Geräts (nichts geschrieben)"
+
+#: fm1companion/flash/engine.py:37
+msgid "unknown update loader in the package – refused"
+msgstr "unbekannter Update-Loader im Paket – abgelehnt"
+
+#: fm1companion/flash/engine.py:38
+msgid "loader not read back correctly while staging"
+msgstr "Loader beim Zwischenspeichern nicht korrekt zurückgelesen"
+
+#: fm1companion/flash/engine.py:39
+msgid "computer did not confirm the end of step 1"
+msgstr "Rechner hat das Ende von Schritt 1 nicht bestätigt"
+
+#: fm1companion/flash/engine.py:40
+msgid "Felucca 1.6.1: flash.bin not 0x93000 bytes (Open V12/V14)"
+msgstr "Felucca 1.6.1: flash.bin nicht 0x93000 Bytes (Open V12/V14)"
+
+#: fm1companion/flash/engine.py:45
+msgid "unknown error"
+msgstr "unbekannter Fehler"
+
+#: fm1companion/flash/engine.py:55
+msgid "No FM-1 answered. Check the USB data cable (not a charge-only cable), close other music apps and try again."
+msgstr "Kein FM-1 hat geantwortet. USB-Datenkabel prüfen (kein reines Ladekabel), andere Musik-Apps schließen und erneut versuchen."
+
+#: fm1companion/flash/engine.py:57
+msgid "The connected device is not an FM-1, or the package is for a different device."
+msgstr "Das angeschlossene Gerät ist kein FM-1 oder das Paket ist für ein anderes Gerät."
+
+#: fm1companion/flash/engine.py:58
+msgid "The USB connection was lost."
+msgstr "Die USB-Verbindung ist abgerissen."
+
+#: fm1companion/flash/engine.py:59
+msgid "The FM-1 stopped requesting data."
+msgstr "Das FM-1 hat aufgehört, Daten anzufordern."
+
+#: fm1companion/flash/engine.py:60
+msgid "The FM-1 in update mode was not found. Plug the cable in again and choose “Resume” – it stays in update mode until the installation is finished."
+msgstr "Das FM-1 im Update-Modus wurde nicht gefunden. Kabel neu einstecken und „Fortsetzen“ wählen – es bleibt im Update-Modus, bis die Installation fertig ist."
+
+#: fm1companion/flash/engine.py:62
+msgid "The FM-1 did not come back after writing. Switch it off and on again."
+msgstr "Das FM-1 ist nach dem Schreiben nicht zurückgekommen. Aus- und wieder einschalten."
+
+#: fm1companion/flash/engine.py:63
+msgid "Written, but the FM-1 reports a different firmware."
+msgstr "Geschrieben, aber das FM-1 meldet eine andere Firmware."
+
+#: fm1companion/flash/engine.py:64
+msgid "The FM-1 requested data outside the package – aborted."
+msgstr "Das FM-1 hat Daten außerhalb des Pakets angefordert – abgebrochen."
+
+#: fm1companion/flash/engine.py:65
+msgid "The FM-1 is waiting in an update mode that does not match this package. Nothing was sent."
+msgstr "Das FM-1 wartet in einem Update-Modus, der nicht zu diesem Paket passt. Es wurde nichts gesendet."
+
+#: fm1companion/flash/engine.py:66
+msgid "Cancelled before anything was sent. Nothing has changed on the FM-1."
+msgstr "Abgebrochen, bevor etwas gesendet wurde. Am FM-1 hat sich nichts geändert."
+
+#: fm1companion/flash/engine.py:67
+msgid "The running firmware refused the original firmware (CHECK HEAD, “FAILED -5” on the FM-1): its boot area differs. Nothing was written, the current firmware keeps running. Please do not force another path. The cause is usually a changed boot area (m-bootloader, Open V12/V14). Way out: firmware with the new check, or download mode (recovery stage 2)."
+msgstr "Die laufende Firmware hat die Original-Firmware abgelehnt (CHECK HEAD, am FM-1 „FAILED -5“): Ihr Bootbereich weicht ab. Es wurde nichts geschrieben, die jetzige Firmware läuft weiter. Bitte keinen anderen Weg erzwingen. Ursache ist meist ein geänderter Bootbereich (m-bootloader, Open V12/V14). Ausweg: Firmware mit neuer Prüfung oder Download-Modus (Rettung Stufe 2)."
+
+#: fm1companion/flash/engine.py:71
+msgid "The FM-1 refused the package in step 1. Does the display show “FAILED <number>”? -3/-7: unknown loader, -5: boot area differs, -15: Felucca 1.6.1 check (see help)."
+msgstr "Das FM-1 hat das Paket in Schritt 1 abgelehnt. Steht auf dem Display „FAILED <Zahl>“? -3/-7: unbekannter Loader, -5: Bootbereich weicht ab, -15: Felucca-1.6.1-Prüfung (siehe Hilfe)."
+
+#: fm1companion/flash/engine.py:73 fm1companion/flash/journal.py:72
+msgid "An installation is already running."
+msgstr "Es läuft schon eine Installation."
+
+#: fm1companion/flash/engine.py:74
+msgid "Several FM-1 are answering. Please unplug all the others."
+msgstr "Mehrere FM-1 antworten. Bitte alle anderen abziehen."
+
+#: fm1companion/flash/engine.py:80
+msgid "It is waiting for a package of the Felucca family (Melodee, SLOOP, Skiff …) – ideally exactly the one whose installation was interrupted."
+msgstr "Er wartet auf ein Paket der Felucca-Familie (Melodee, SLOOP, Skiff …) – am besten genau das, dessen Installation unterbrochen wurde."
+
+#: fm1companion/flash/engine.py:82
+msgid "It is waiting for the unmodified original firmware V15 (FM-1_015.fwsc)."
+msgstr "Er wartet auf die unveränderte Original-Firmware V15 (FM-1_015.fwsc)."
+
+#: fm1companion/flash/engine.py:90
+msgid "It is waiting for the Felucca package whose installation was interrupted."
+msgstr "Er wartet auf das Felucca-Paket, dessen Installation unterbrochen wurde."
+
+#: fm1companion/flash/engine.py:92
+msgid "It is waiting for the original firmware from M-VAVE."
+msgstr "Er wartet auf die Original-Firmware von M-VAVE."
+
+#: fm1companion/flash/engine.py:94
+#, python-brace-format
+msgid "This is the update loader of the M-VAVE FM1 Open (build {build}…). It only accepts the package of exactly this build; the app sends it nothing – please use the FM1 Open updater from M-VAVE."
+msgstr "Das ist der Update-Loader der M-VAVE FM1 Open (Build {build}…). Er nimmt nur das Paket genau dieses Builds an; die App schickt ihm nichts – bitte den FM1-Open-Updater von M-VAVE benutzen."
+
+#: fm1companion/flash/engine.py:97
+#, python-brace-format
+msgid "The app does not know this loader ({loader})."
+msgstr "Diesen Loader ({loader}) kennt die App nicht."
+
+#: fm1companion/flash/engine.py:100
+msgid "The target device can no longer be found at its USB port. Please leave only the FM-1 connected that you want to update, and do not move any cable."
+msgstr "Das Zielgerät ist an seinem USB-Anschluss nicht (mehr) zu finden. Bitte nur das FM-1 angeschlossen lassen, das du aktualisieren willst, und kein Kabel umstecken."
+
+#: fm1companion/flash/engine.py:131
+#, python-brace-format
+msgid "USB port {path}"
+msgstr "USB-Anschluss {path}"
+
+#: fm1companion/flash/engine.py:132
+#, python-brace-format
+msgid "serial number {serial}"
+msgstr "Seriennummer {serial}"
+
+#: fm1companion/flash/engine.py:156
+msgid "mido/rtmidi is missing for the installation (sudo apt install python3-mido python3-rtmidi)."
+msgstr "Für die Installation fehlt mido/rtmidi (sudo apt install python3-mido python3-rtmidi)."
+
+#: fm1companion/flash/engine.py:253
+msgid "The loader family of this package is unknown – it is not sent."
+msgstr "Die Loader-Familie dieses Pakets ist unbekannt – es wird nicht gesendet."
+
+#: fm1companion/flash/engine.py:255
+msgid "The checksum of the package does not match – it is not sent."
+msgstr "Die Prüfsumme des Pakets stimmt nicht – es wird nicht gesendet."
+
+#: fm1companion/flash/engine.py:257
+#, python-brace-format
+msgid "The package is damaged ({damage})."
+msgstr "Das Paket ist beschädigt ({damage})."
+
+#: fm1companion/flash/engine.py:266
+#, python-brace-format
+msgid "Target device pinned: {pin}"
+msgstr "Zielgerät festgehalten: {pin}"
+
+#: fm1companion/flash/engine.py:269
+msgid "Please leave only the FM-1 connected that you want to update. Several FM-1 are connected, and the app cannot pin the target device unambiguously – nothing was sent."
+msgstr "Bitte nur das FM-1 angeschlossen lassen, das du aktualisieren willst. Mehrere FM-1 sind angeschlossen, und die App kann das Zielgerät nicht eindeutig festhalten – es wurde nichts gesendet."
+
+#: fm1companion/flash/engine.py:275
+#, python-brace-format
+msgid "Device: {identity} at “{port}”"
+msgstr "Gerät: {identity} an „{port}“"
+
+#: fm1companion/flash/engine.py:278
+#, python-brace-format
+msgid "The device reports {identity}, the package is for {product}."
+msgstr "Das Gerät meldet {identity}, das Paket ist für {product}."
+
+#: fm1companion/flash/engine.py:283
+#, python-brace-format
+msgid "The FM-1 is waiting in update mode as “{identity}” – but this package ({product}) belongs to {loader}. Nothing was sent. {hint}"
+msgstr "Das FM-1 wartet im Update-Modus als „{identity}“ – dieses Paket ({product}) gehört aber zu {loader}. Es wurde nichts gesendet. {hint}"
+
+#: fm1companion/flash/engine.py:289
+msgid "The FM-1 is waiting in update mode – please resume via recovery."
+msgstr "Das FM-1 wartet im Update-Modus – bitte über die Rettung fortsetzen."
+
+#: fm1companion/flash/engine.py:292
+msgid "resume in update mode"
+msgstr "Fortsetzen im Update-Modus"
+
+#: fm1companion/flash/engine.py:292
+msgid "step 1 + step 2"
+msgstr "Schritt 1 + Schritt 2"
+
+#: fm1companion/flash/engine.py:293
+#, python-brace-format
+msgid "Dry run: {label} ({product}, {family}) would go to {identity} – {how}. Nothing sent."
+msgstr "Probelauf: {label} ({product}, {family}) würde an {identity} gehen – {how}. Nichts gesendet."
+
+#: fm1companion/flash/engine.py:320
+#, python-brace-format
+msgid "Starting the update to {target} …"
+msgstr "Starte das Update auf {target} …"
+
+#: fm1companion/flash/engine.py:330
+#, python-brace-format
+msgid "Done: the FM-1 reports {identity}"
+msgstr "Fertig: das FM-1 meldet {identity}"
+
+#: fm1companion/flash/engine.py:352
+msgid "Unexpected error after writing. The FM-1 probably starts normally – plug the cable in again and check which firmware it reports."
+msgstr "Unerwarteter Fehler nach dem Schreiben. Das FM-1 startet vermutlich normal – Kabel neu einstecken und prüfen, welche Firmware es meldet."
+
+#: fm1companion/flash/engine.py:355
+msgid "Unexpected error while writing. The FM-1 is probably waiting in update mode: check the cable and resume with the same package on the “Recovery” page."
+msgstr "Unerwarteter Fehler während des Schreibens. Das FM-1 wartet vermutlich im Update-Modus: Kabel prüfen und auf der Seite „Rettung“ mit demselben Paket fortsetzen."
+
+#: fm1companion/flash/engine.py:358
+msgid "Unexpected error before writing. Nothing was written, the previous firmware keeps running."
+msgstr "Unerwarteter Fehler vor dem Schreiben. Es wurde nichts geschrieben, die bisherige Firmware läuft weiter."
+
+#: fm1companion/flash/engine.py:378
+#, python-brace-format
+msgid "{message} Nothing was written."
+msgstr "{message} Es wurde nichts geschrieben."
+
+#: fm1companion/flash/engine.py:380
+msgid "The FM-1 started an update loader that does not match this package. Nothing was written; the FM-1 is now waiting in update mode. On the “Recovery” page only a package that belongs to this loader is sent."
+msgstr "Das FM-1 hat einen Update-Loader gestartet, der nicht zu diesem Paket passt. Es wurde nichts geschrieben; das FM-1 wartet jetzt im Update-Modus. Auf der Seite „Rettung“ wird nur ein Paket gesendet, das zu diesem Loader gehört."
+
+#: fm1companion/flash/engine.py:384
+#, python-brace-format
+msgid "{message} The FM-1 is waiting in update mode: check the cable and resume with the same package (“Recovery” page)."
+msgstr "{message} Das FM-1 wartet im Update-Modus: Kabel prüfen und mit demselben Paket fortsetzen (Seite „Rettung“)."
+
+#: fm1companion/flash/package.py:50
+msgid "the original loader (ota-FM-1_015)"
+msgstr "dem Original-Loader (ota-FM-1_015)"
+
+#: fm1companion/flash/package.py:52
+#, python-brace-format
+msgid "the Felucca loader (ota-FM-1_900 or ota-{product})"
+msgstr "dem Felucca-Loader (ota-FM-1_900 oder ota-{product})"
+
+#: fm1companion/flash/package.py:115
+msgid "too short"
+msgstr "zu kurz"
+
+#: fm1companion/flash/package.py:118
+msgid "header checksum wrong"
+msgstr "Kopf-Prüfsumme falsch"
+
+#: fm1companion/flash/package.py:121
+msgid "file list invalid"
+msgstr "Dateiliste ungültig"
+
+#: fm1companion/flash/package.py:124
+msgid "checksum of the file list wrong"
+msgstr "Prüfsumme der Dateiliste falsch"
+
+#: fm1companion/flash/package.py:134
+#, python-brace-format
+msgid "{name}: truncated"
+msgstr "{name}: abgeschnitten"
+
+#: fm1companion/flash/package.py:136
+#, python-brace-format
+msgid "{name}: checksum wrong"
+msgstr "{name}: Prüfsumme falsch"
+
+#: fm1companion/flash/package.py:139
+msgid "no flash.bin in the package"
+msgstr "kein flash.bin im Paket"
+
+#: fm1companion/flash/package.py:141
+msgid "no update loader (ota.bin) in the package"
+msgstr "kein Update-Loader (ota.bin) im Paket"
+
+#: fm1companion/flash/package.py:151
+#, python-brace-format
+msgid "{name} cannot be read: {error}"
+msgstr "{name} lässt sich nicht lesen: {error}"
+
+#: fm1companion/flash/package.py:153
+#, python-brace-format
+msgid "{name} is too large for an FM-1 package"
+msgstr "{name} ist zu groß für ein FM-1-Paket"
+
+#: fm1companion/flash/package.py:157
+#, python-brace-format
+msgid "{name} is not an FM-1 package (too short)"
+msgstr "{name} ist kein FM-1-Paket (zu kurz)"
+
+#: fm1companion/flash/package.py:159
+#, python-brace-format
+msgid "{name} is not an FM-1 package (identity {identity})"
+msgstr "{name} ist kein FM-1-Paket (Kennung {identity})"
+
+#: fm1companion/flash/uboot.py:51
+msgid "This FM-1 has a flash chip from UCUN (UC25HQ80, ID 0xB36014) instead of the usual Puya (0x856014). The USB ROM recovery (stage 2) does not support this flash yet and therefore stops – nothing was written. The firmware itself runs on it (Melodee 1.6.0 and later also saves correctly); normal installations via “Firmware+” work. For a ROM recovery, please wait for a version of the recovery tool that knows 0xB36014."
+msgstr "Dieses FM-1 hat einen Flash-Baustein von UCUN (UC25HQ80, Kennung 0xB36014) statt des üblichen Puya (0x856014). Die USB-ROM-Rettung (Stufe 2) unterstützt diesen Flash noch nicht und hält darum an – es wurde nichts geschrieben. Die Firmware selbst läuft darauf (Melodee ab 1.6.0 speichert auch richtig); normale Installationen über „Firmware+“ funktionieren. Für eine ROM-Rettung bitte auf eine Version des Rettungswerkzeugs warten, die 0xB36014 kennt."
+
+#: fm1companion/flash/uboot.py:81
+msgid "size unknown"
+msgstr "Größe unbekannt"
+
+#: fm1companion/flash/uboot.py:82
+msgid "no block device"
+msgstr "kein Blockgerät"
+
+#: fm1companion/flash/uboot.py:234
+#, python-brace-format
+msgid "ERROR: {path} is missing ({error}) – first “Fetch tool”. Nothing executed."
+msgstr "FEHLER: {path} fehlt ({error}) – zuerst „Werkzeug holen“. Nichts ausgeführt."
+
+#: fm1companion/flash/uboot.py:236
+#, python-brace-format
+msgid "ERROR: {path} does not have the expected checksum – modified? Nothing executed."
+msgstr "FEHLER: {path} hat nicht die erwartete Prüfsumme – verändert? Nichts ausgeführt."
+
+#: fm1companion/flash/uboot.py:238
+#, python-brace-format
+msgid "Tools checked ({n} files, SHA-256) – starting the checked copy as root."
+msgstr "Werkzeuge geprüft ({n} Dateien, SHA-256) – starte die geprüfte Kopie als root."
+
+#: fm1companion/flash/uboot.py:292
+#, python-brace-format
+msgid "$ {root_cmd} {script} {command} {args}  (checked copy with root rights)"
+msgstr "$ {root_cmd} {script} {command} {args}  (geprüfte Kopie mit Root-Rechten)"
+
+#: fm1companion/flash/uboot.py:313
+#, python-brace-format
+msgid "NOTE: {text}"
+msgstr "HINWEIS: {text}"
+
+#: fm1companion/flash/uboot.py:371
+#, python-brace-format
+msgid "The package cannot be read ({error}). Nothing was written."
+msgstr "Das Paket lässt sich nicht lesen ({error}). Es wurde nichts geschrieben."
+
+#: fm1companion/flash/uboot.py:373
+#, python-brace-format
+msgid "{name} is {identity} and extends to {end}. In ROM boot mode the tool only writes 0x04000–0x92FFF – V16 would then be truncated (end of the program and factory voices missing). Nothing was written. Only the original V15 here, V16 afterwards via the normal update path."
+msgstr "{name} ist {identity} und reicht bis {end}. Im ROM-Bootmodus schreibt das Werkzeug nur 0x04000–0x92FFF – V16 wäre danach abgeschnitten (Programmende und Werks-Voices fehlen). Es wurde nichts geschrieben. Hier nur die Original-V15, V16 danach über den normalen Update-Weg."
+
+#: fm1companion/flash/uboot.py:398
+msgid "Without a confirmed sector list nothing is erased."
+msgstr "Ohne bestätigte Sektorliste wird nichts gelöscht."
+
+#: fm1companion/flash/sim.py:356
+#, python-brace-format
+msgid "no simulated FM-1 at {port}"
+msgstr "kein simuliertes FM-1 an {port}"
+
+#: fm1companion/flash/journal.py:83
+msgid "Another program window is installing a firmware right now."
+msgstr "Ein anderes Programmfenster installiert gerade eine Firmware."
+
+#: fm1companion/firmware.py:80
+msgid "Multi-engine synth and sequencer: 4 synth tracks + 4 MIDI tracks, 32 projects, song mode with 64 sections."
+msgstr "Multi-Engine-Synth und Sequencer: 4 Synth-Spuren + 4 MIDI-Spuren, 32 Projekte, Song-Modus mit 64 Sections."
+
+#: fm1companion/firmware.py:82
+msgid "no own samples (removed since 1.5)"
+msgstr "keine eigenen Samples (seit 1.5 entfernt)"
+
+#: fm1companion/firmware.py:86
+msgid "Six-track groovebox: 14 engines, pattern pool, songs, performance layer."
+msgstr "Sechs-Spur-Groovebox: 14 Engines, Pattern-Pool, Songs, Performance-Layer."
+
+#: fm1companion/firmware.py:87
+msgid "3 sample slots (USR1–3)"
+msgstr "3 Sample-Slots (USR1–3)"
+
+#: fm1companion/firmware.py:90
+msgid "Live groovebox: 3 synths + drums, looping, punch-in effects, 4 song sections."
+msgstr "Live-Groovebox: 3 Synths + Drums, Looping, Punch-in-Effekte, 4 Song-Sections."
+
+#: fm1companion/firmware.py:91
+msgid "4 sample slots (USR1–4), also as a drum kit"
+msgstr "4 Sample-Slots (USR1–4), auch als Drum-Kit"
+
+#: fm1companion/firmware.py:99
+msgid "Original firmware V15"
+msgstr "Original-Firmware V15"
+
+#: fm1companion/firmware.py:100
+msgid "M-VAVE's original firmware V15 – the proven way back and starting point for almost all community firmwares."
+msgstr "M-VAVEs Original-Firmware V15 – der bewährte Rückweg und Ausgangspunkt für fast alle Community-Firmwares."
+
+#: fm1companion/firmware.py:101
+msgid "8 sample slots (original)"
+msgstr "8 Sample-Slots (Original)"
+
+#: fm1companion/firmware.py:108
+msgid "Original firmware V16"
+msgstr "Original-Firmware V16"
+
+#: fm1companion/firmware.py:109
+msgid "M-VAVE's current firmware V16 (October 2026): eight voices, 20 notes polyphony, 64-step patterns."
+msgstr "M-VAVEs aktuelle Firmware V16 (Oktober 2026): acht Stimmen, 20 Noten Polyphonie, 64-Step-Pattern."
+
+#: fm1companion/firmware.py:199
+msgid "unexpected API response"
+msgstr "unerwartete API-Antwort"
+
+#: fm1companion/firmware.py:299
+#, python-brace-format
+msgid "{name} is already there"
+msgstr "{name} liegt schon vor"
+
+#: fm1companion/firmware.py:301 fm1companion/firmware.py:338
+#, python-brace-format
+msgid "downloading {name} …"
+msgstr "lade {name} …"
+
+#: fm1companion/firmware.py:314
+#, python-brace-format
+msgid "{name} is not listed in {sums}"
+msgstr "{name} steht nicht in {sums}"
+
+#: fm1companion/firmware.py:318
+#, python-brace-format
+msgid "Checksum of {name} does not match – file deleted, please download again"
+msgstr "Prüfsumme von {name} stimmt nicht – Datei gelöscht, bitte erneut laden"
+
+#: fm1companion/firmware.py:320
+msgid "Checksums match"
+msgstr "Prüfsummen stimmen"
+
+#: fm1companion/firmware.py:336
+#, python-brace-format
+msgid "{name} is already there (checksum matches)"
+msgstr "{name} liegt schon vor (Prüfsumme stimmt)"
+
+#: fm1companion/firmware.py:345
+#, python-brace-format
+msgid "The file at {url} does not have the expected checksum ({actual}… instead of {expected}…). The manufacturer has probably replaced it – it is not installed."
+msgstr "Die Datei unter {url} hat nicht die erwartete Prüfsumme ({actual}… statt {expected}…). Der Hersteller hat sie vermutlich ausgetauscht – sie wird nicht installiert."
+
+#: fm1companion/firmware.py:349
+msgid "Checksum matches"
+msgstr "Prüfsumme stimmt"
+
+#: fm1companion/firmware.py:349
+msgid "Note: no checksum known"
+msgstr "Hinweis: keine Prüfsumme bekannt"
+
+#: fm1companion/firmware.py:379
+msgid "git error"
+msgstr "git-Fehler"
+
+#: fm1companion/firmware.py:386
+msgid "git is missing (sudo apt install git)"
+msgstr "git fehlt (sudo apt install git)"
+
+#: fm1companion/firmware.py:389
+#, python-brace-format
+msgid "fetching the tools from {repo} (once) …"
+msgstr "hole die Werkzeuge von {repo} (einmalig) …"
+
+#: fm1companion/firmware.py:393
+msgid "updating the tools …"
+msgstr "aktualisiere die Werkzeuge …"
+
+#: fm1companion/firmware.py:397
+#, python-brace-format
+msgid "Updating not possible ({error}), using the existing state"
+msgstr "Aktualisieren nicht möglich ({error}), nutze vorhandenen Stand"
+
+#: fm1companion/firmware.py:400
+#, python-brace-format
+msgid "{name} {tag} has no installer at {path}"
+msgstr "{name} {tag} hat keinen Installer unter {path}"
+
+#: fm1companion/firmware.py:464
+#, python-brace-format
+msgid "The tag {tag} of {repo} now points to commit {commit}, the known one is {known} – the tag was moved."
+msgstr "Der Tag {tag} von {repo} zeigt jetzt auf Commit {commit}, bekannt ist {known} – der Tag wurde verschoben."
+
+#: fm1companion/firmware.py:472
+#, python-brace-format
+msgid "The tag {tag} of {repo} now points to commit {commit}, last time it was {seen} – the tag was moved."
+msgstr "Der Tag {tag} von {repo} zeigt jetzt auf Commit {commit}, beim letzten Mal war es {seen} – der Tag wurde verschoben."
+
+#: fm1companion/firmware.py:474
+#, python-brace-format
+msgid "{name} was added by you. The resource tool ({tool}) comes from github.com/{repo} (tag {tag}, commit {commit}) and runs with your user rights."
+msgstr "{name} wurde von dir hinzugefügt. Das Ressourcen-Werkzeug ({tool}) kommt aus github.com/{repo} (Tag {tag}, Commit {commit}) und läuft mit deinen Benutzerrechten."
+
+#: fm1companion/firmware.py:614
+#, python-brace-format
+msgid "Installer aborted (code {code}): {error}"
+msgstr "Installer abgebrochen (Code {code}): {error}"
+
+#: fm1companion/firmware.py:641
+#, python-brace-format
+msgid "The checksum of {name} does not match – nothing installed."
+msgstr "Die Prüfsumme von {name} stimmt nicht – nichts installiert."
+
+#: fm1companion/firmware.py:643
+#, python-brace-format
+msgid "{name} has changed since the check – nothing installed."
+msgstr "{name} hat sich seit der Prüfung verändert – nichts installiert."
+
+#: fm1companion/firmware.py:645
+msgid "Unknown file: please confirm explicitly in the installation plan."
+msgstr "Unbekannte Datei: bitte im Installationsplan ausdrücklich bestätigen."
+
+#: fm1companion/firmware.py:649
+msgid "starting the installer …"
+msgstr "starte den Installer …"
+
+#: fm1companion/firmware.py:666
+msgid "writing the resources …"
+msgstr "schreibe die Ressourcen …"
+
+#: fm1companion/firmware.py:675
+#, python-brace-format
+msgid "Resources not written: {error} The app asks you when you choose “Rewrite font & factory sounds” (Firmware+ › Install & Versions)."
+msgstr "Ressourcen nicht geschrieben: {error} Die App fragt dich, wenn du „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen) wählst."
+
+#: fm1companion/firmware.py:678
+msgid "Resources NOT written (the tool state must be confirmed first) – please catch up via “Rewrite font & factory sounds” (Firmware+ › Install & Versions)"
+msgstr "Ressourcen NICHT geschrieben (Werkzeug-Stand muss erst bestätigt werden) – bitte über „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen) nachholen"
+
+#: fm1companion/firmware.py:681
+#, python-brace-format
+msgid "Resources not written ({error}) – catch up later via “Rewrite font & factory sounds” (Firmware+ › Install & Versions)."
+msgstr "Ressourcen nicht geschrieben ({error}) – später über „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen) nachholen."
+
+#: fm1companion/firmware.py:684
+msgid "Resources NOT written – please catch up via “Rewrite font & factory sounds” (Firmware+ › Install & Versions)"
+msgstr "Ressourcen NICHT geschrieben – bitte über „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen) nachholen"
+
+#: fm1companion/firmware.py:692
+msgid "Resources written"
+msgstr "Ressourcen geschrieben"
+
+#: fm1companion/firmware.py:693
+msgid "Resources already complete (written along by the update loader)"
+msgstr "Ressourcen schon vollständig (vom Update-Loader mitgeschrieben)"
+
+#: fm1companion/firmware.py:703
+#, python-brace-format
+msgid "Resource tool: {repo} @ {commit}"
+msgstr "Ressourcen-Werkzeug: {repo} @ {commit}"
+
+#: fm1companion/firmware.py:717
+#, python-brace-format
+msgid "Attempt {n}: {output}"
+msgstr "Versuch {n}: {output}"
+
+#: fm1companion/firmware.py:718
+#, python-brace-format
+msgid "Resources could not be written: {output}. Stop playback and switch Bluetooth off, then in the app “Rewrite font & factory sounds” (Firmware+ › Install & Versions)."
+msgstr "Ressourcen konnten nicht geschrieben werden: {output}. Wiedergabe stoppen und Bluetooth aus, dann in der App „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen)."
+
+#: fm1companion/firmware.py:730
+msgid "GitHub refused the download (HTTP 403). Usually the hourly request limit has been reached (60 requests per hour without signing in). Please try again in an hour."
+msgstr "GitHub hat den Download abgelehnt (HTTP 403). Meist ist das stündliche Abruf-Limit erreicht (60 Abrufe pro Stunde ohne Anmeldung). Bitte in einer Stunde erneut versuchen."
+
+#: fm1companion/firmware.py:732
+msgid "The file does not exist (any more) at this address (HTTP 404). Perhaps the release was withdrawn – please reload the list."
+msgstr "Die Datei gibt es unter dieser Adresse nicht (mehr) (HTTP 404). Vielleicht wurde das Release zurückgezogen – bitte die Liste neu laden."
+
+#: fm1companion/firmware.py:734
+msgid "Too many requests to the server (HTTP 429). Please wait a little and try again."
+msgstr "Zu viele Anfragen an den Server (HTTP 429). Bitte etwas warten und erneut versuchen."
+
+#: fm1companion/firmware.py:735
+#, python-brace-format
+msgid "The server answered with an error (HTTP {code}). Try again later."
+msgstr "Der Server hat mit einem Fehler geantwortet (HTTP {code}). Später erneut versuchen."
+
+#: fm1companion/firmware.py:738
+msgid "No connection to the server – are you online? (Check the network; downloaded packages also work offline.)"
+msgstr "Keine Verbindung zum Server – bist du online? (Netzwerk prüfen; heruntergeladene Pakete funktionieren auch offline.)"
+
+#: fm1companion/firmware.py:742
+#, python-brace-format
+msgid "No write permission for “{path}”. Please check the permissions of the folder or choose another main folder in the settings."
+msgstr "Keine Schreibrechte für „{path}“. Bitte die Rechte des Ordners prüfen oder in den Einstellungen einen anderen Hauptordner wählen."
+
+#: fm1companion/firmware.py:744
+msgid "No write permission for the folder. Please check the permissions of the folder or choose another main folder in the settings."
+msgstr "Keine Schreibrechte für den Ordner. Bitte die Rechte des Ordners prüfen oder in den Einstellungen einen anderen Hauptordner wählen."
+
+#: fm1companion/firmware.py:747
+msgid "The disk is full. Please free up space and try again."
+msgstr "Der Datenträger ist voll. Bitte Platz schaffen und erneut versuchen."
+
+#: fm1companion/risk.py:13
+msgid "Before you change your FM-1"
+msgstr "Bevor du dein FM-1 veränderst"
+
+#: fm1companion/risk.py:15
+msgid "FM-1 Companion Suite is an unofficial community project and not affiliated with M-VAVE."
+msgstr "Die FM-1 Companion Suite ist ein inoffizielles Community-Projekt und nicht mit M-VAVE verbunden."
+
+#: fm1companion/risk.py:16
+msgid "Installing firmware, recovery (update mode, ROM boot mode), cleaning up leftovers and writing back from the Studio change your device. You do this at your own risk – in the worst case the FM-1 no longer starts and has to be revived with the recovery tools."
+msgstr "Firmware installieren, Rettung (Update-Modus, ROM-Bootmodus), Reste aufräumen und das Zurückschreiben aus dem Studio verändern dein Gerät. Das geschieht auf eigenes Risiko – im schlimmsten Fall startet das FM-1 nicht mehr und muss mit den Rettungswerkzeugen wiederbelebt werden."
+
+#: fm1companion/risk.py:19
+msgid "Make a backup first (the app offers one before every installation) and do not disconnect the device during an operation."
+msgstr "Mach vorher ein Backup (die App bietet es vor jeder Installation an) und trenne das Gerät während eines Vorgangs nicht."
+
+#: fm1companion/risk.py:21
+msgid "Not every function has been tested on real hardware, let alone on all devices, flash chips and firmware versions. What is tested and what is not is listed in docs/UNTESTED.md."
+msgstr "Nicht jede Funktion ist auf echter Hardware getestet, und schon gar nicht auf allen Geräten, Flash-Chips und Firmware-Versionen. Was getestet ist und was nicht, steht in docs/UNTESTED.md."
+
+#: fm1companion/risk.py:23
+msgid "There is no warranty and no liability, to the extent permitted by law (GNU GPL 3.0, sections 15 and 16)."
+msgstr "Es gibt keine Gewährleistung und keine Haftung, soweit gesetzlich zulässig (GNU GPL 3.0, Abschnitte 15 und 16)."
+
+#: fm1companion/risk.py:26
+msgid "I understand"
+msgstr "Ich habe verstanden"
+
+#: fm1companion/melodee16.py:65
+msgid "<b>Melodee 1.6:</b> Existing projects are loaded, but what 1.6 saves can no longer be read by older firmware – and older firmware refuses backups from 1.6. The backup the app now makes beforehand is your way back; that is why it is mandatory here."
+msgstr "<b>Melodee 1.6:</b> Bestehende Projekte werden geladen, aber was 1.6 speichert, kann ältere Firmware nicht mehr lesen – und ältere Firmware lehnt Backups von 1.6 ab. Das Backup, das die App jetzt vorher macht, ist dein Rückweg; darum ist es hier Pflicht."
+
+#: fm1companion/melodee16.py:68
+msgid "<b>Melodee 1.6.0 sounds different:</b> CZ-1 tracks are 6 dB quieter, the limiter only kicks in at −2 dBFS (loud mixes get louder), TPDF dither everywhere. Existing projects may therefore sound different – check the balance. The USB recording now sits before MASTER (the volume knob no longer changes the recording level); the sound from the computer is set with “USB VOLUME” in the HOME menu."
+msgstr "<b>Melodee 1.6.0 klingt anders:</b> CZ-1-Spuren sind 6 dB leiser, der Limiter greift erst bei −2 dBFS (laute Mixe werden lauter), überall TPDF-Dither. Bestehende Projekte können darum anders klingen – Balance prüfen. Die USB-Aufnahme liegt jetzt vor MASTER (der Lautstärkeregler ändert den Aufnahmepegel nicht mehr); den Ton vom Rechner stellt „USB VOLUME“ im HOME-Menü ein."
+
+#: fm1companion/melodee16.py:72
+msgid "From Melodee 1.5.1 or older: the update loader cannot write the factory sounds the first time, because your preset banks are still stored there; the new firmware moves them into the shared memory at start-up. The app then writes the factory sounds itself (step “Write resources”) – a second installation as with the Firmware Hub is not needed. If the FM-1 then shows “Setup unfinished”: “Rewrite font & factory sounds” or install the same version once more."
+msgstr "Von Melodee 1.5.1 oder älter: Der Update-Loader kann die Werkssounds beim ersten Mal nicht schreiben, weil dort noch deine Preset-Banken liegen; die neue Firmware zieht sie beim Start in den gemeinsamen Speicher um. Die App schreibt die Werkssounds danach selbst (Schritt „Ressourcen schreiben“) – eine zweite Installation wie beim Firmware Hub ist nicht nötig. Zeigt das FM-1 danach „Setup unfinished“: „Schrift & Werkssounds nachschreiben“ oder dieselbe Version noch einmal installieren."
+
+#: fm1companion/melodee16.py:78
+msgid "A backup is mandatory for the switch to Melodee 1.6: older firmware cannot read the projects of 1.6, the backup from before is the only way back. Please tick “Make a backup first”."
+msgstr "Für den Wechsel auf Melodee 1.6 ist ein Backup Pflicht: Ältere Firmware kann die Projekte von 1.6 nicht lesen, das Backup von vorher ist der einzige Rückweg. Bitte „Vorher ein Backup machen“ anhaken."
+
+#: fm1companion/melodee16.py:83
+#, python-brace-format
+msgid "<b>Back from Melodee 1.6:</b> {target} cannot read the projects and presets that Melodee 1.6 saved, and may overwrite their memory. Backups from Melodee 1.6 (including the one the app makes now) cannot be restored there either – only on Melodee 1.6 or newer again. For the way back, use the backup from before the update to 1.6."
+msgstr "<b>Zurück von Melodee 1.6:</b> {target} kann die Projekte und Presets, die Melodee 1.6 gespeichert hat, nicht lesen und überschreibt deren Speicher evtl. Auch Backups von Melodee 1.6 (auch das, das die App jetzt macht) lassen sich dort nicht zurückspielen – nur wieder auf Melodee 1.6 oder neuer. Für den Rückweg das Backup von vor dem Update auf 1.6 verwenden."
+
+#: fm1companion/melodee16.py:89
+msgid "Projects, presets and settings from Melodee 1.6 cannot be used with the older firmware (backups from 1.6 can only be restored on Melodee 1.6 or newer)."
+msgstr "Projekte, Presets und Einstellungen von Melodee 1.6 sind mit der älteren Firmware nicht nutzbar (Backups von 1.6 lassen sich nur auf Melodee 1.6 oder neuer zurückspielen)."
+
+#: fm1companion/melodee16.py:95
+msgid "a firmware without the 32 project slots of 1.6 (e.g. Melodee 1.5.1 or older)"
+msgstr "eine Firmware ohne die 32 Projektplätze von 1.6 (z. B. Melodee 1.5.1 oder älter)"
+
+#: fm1companion/melodee16.py:96
+#, python-brace-format
+msgid "This backup comes from Melodee 1.6{backup_version}, the FM-1 runs {device}. Older firmware cannot read the projects and presets of 1.6 and refuses such backups. Nothing was written. Remedy: bring the FM-1 to Melodee 1.6 or newer (Firmware+) and then restore – or use a backup from before the update to 1.6."
+msgstr "Dieses Backup stammt von Melodee 1.6{backup_version}, auf dem FM-1 läuft {device}. Ältere Firmware kann die Projekte und Presets von 1.6 nicht lesen und lehnt solche Backups ab. Es wurde nichts geschrieben. Abhilfe: das FM-1 auf Melodee 1.6 oder neuer bringen (Firmware+) und dann zurückspielen – oder ein Backup von vor dem Update auf 1.6 nehmen."
+
+#: fm1companion/melodee16.py:130
+msgid "Melodee 1.6.0 and later: the USB recording sits before MASTER – the volume knob on the FM-1 does not change the recording level. USB VOLUME (HOME menu) only controls the sound from the computer to the FM-1."
+msgstr "Melodee ab 1.6.0: Die USB-Aufnahme liegt vor MASTER – der Lautstärkeregler am FM-1 ändert den Aufnahmepegel nicht. USB VOLUME (HOME-Menü) regelt nur den Ton vom Rechner zum FM-1."
+
+#: fm1companion/melodee16.py:134
+msgid "With this Melodee version the stereo recording over USB follows the MASTER knob: for a good level, turn MASTER up (from Melodee 1.6.0 on, the recording sits before MASTER)."
+msgstr "Bei dieser Melodee-Version folgt die Stereo-Aufnahme über USB dem MASTER-Regler: für einen guten Pegel MASTER aufdrehen (ab Melodee 1.6.0 liegt die Aufnahme vor MASTER)."

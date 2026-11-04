@@ -18,7 +18,7 @@ from ..musik_widgets import StepRoll
 from ..playback_bar import DeviceBadge, PlaybackBar, Source, device_name
 from ..responsive import reflow
 from . import PageSpec
-from ...i18n import _
+from ...i18n import _, ngettext, pgettext
 
 SETTINGS = {"lane_notes": ",".join(str(n) for n in PF.LANE_GM), "drum_channel": 0, "mode": "song", "loops": 4,
             "last_dir": ""}
@@ -29,7 +29,7 @@ def _settings():
 
 
 def bank_text(v: int) -> str:
-    return "Pause" if v == PF.CHAIN_REST else "halten" if v == PF.CHAIN_HOLD else f"P{v + 1}"
+    return _("Rest") if v == PF.CHAIN_REST else _("hold") if v == PF.CHAIN_HOLD else f"P{v + 1}"
 
 
 class ProjectView(QWidget):
@@ -42,45 +42,45 @@ class ProjectView(QWidget):
         self.source = ""
         self.source_note = ""
         lay = QVBoxLayout(self)
-        lay.addWidget(heading("Projekt-Ansicht", "Melodee-Projekte ansehen, anhören (auf dem FM-1 mit seinen eigenen "
-                              "Klängen oder im Rechner) und als MIDI-Datei für Audacity, LMMS, Ardour oder MuseScore "
-                              "exportieren."))
+        lay.addWidget(heading(_("Project View"), _("View and listen to Melodee projects (on the FM-1 with its own "
+                                                   "sounds or on the computer) and export them as a MIDI file for "
+                                                   "Audacity, LMMS, Ardour or MuseScore.")))
         self.live_tag = None                       # (Profil-ID, Port, Name) wenn die laufende Musik eines Geräts offen ist
         self.live_slot = None
-        open_card = Card("1 · Projekt öffnen")
+        open_card = Card(_("1 · Open project"))
         top = FlowLayout()
-        top.addWidget(button("Backup öffnen …", ("document-open",), slot=self.open_backup,
-                             tooltip="Ein Backup aus ~/FM-1/Backups öffnen (alle Projekte darin) – Strg+O"))
-        top.addWidget(button("Projektdatei öffnen …", ("document-open-folder", "folder"), slot=self.open_project,
-                             tooltip="Eine .fm1proj-Datei aus der Projekt-Bibliothek öffnen"))
-        sep = QLabel("  oder live vom FM-1:")
+        top.addWidget(button(_("Open backup …"), ("document-open",), slot=self.open_backup,
+                             tooltip=_("Open a backup from ~/FM-1/Backups (all projects in it) – Ctrl+O")))
+        top.addWidget(button(_("Open project file …"), ("document-open-folder", "folder"), slot=self.open_project,
+                             tooltip=_("Open a .fm1proj file from the project library")))
+        sep = QLabel("  " + _("or live from the FM-1:"))
         sep.setProperty("role", "muted")
         top.addWidget(sep)
         self.slot = QSpinBox()
         self.slot.setRange(0, 32)
-        self.slot.setSpecialValueText("laufende Musik")
-        self.slot.setPrefix("Projekt ")
-        self.slot.setToolTip("Was vom aktiven FM-1 gelesen wird: die laufende Musik oder ein gespeicherter Projektplatz")
+        self.slot.setSpecialValueText(_("running music"))
+        self.slot.setPrefix(_("Project "))
+        self.slot.setToolTip(_("What is read from the active FM-1: the running music or a saved project slot"))
         top.addWidget(self.slot)
-        self.b_read = button("Vom FM-1 lesen", ("go-down", "document-import"), "primary", self.read_device,
-                             tooltip="Liest das Projekt vom aktiven FM-1 (oben in der Leiste) über die Backup-Befehle "
-                                     "– nur lesen, am FM-1 wird nichts geändert")
+        self.b_read = button(_("Read from FM-1"), ("go-down", "document-import"), "primary", self.read_device,
+                             tooltip=_("Reads the project from the active FM-1 (at the top of the bar) with the backup "
+                                       "commands – read only, nothing is changed on the FM-1"))
         top.addWidget(self.b_read)
         self.choice = QComboBox()
         self.choice.setMinimumWidth(220)
-        self.choice.setToolTip("Projekt in der geöffneten Datei")
+        self.choice.setToolTip(_("Project in the opened file"))
         self.choice.currentIndexChanged.connect(self._choose)
         self.choice.hide()                         # erst sichtbar, wenn eine Datei mit Projekten offen ist
         top.addWidget(self.choice)
         open_card.lay.addLayout(top)
-        self.badge = DeviceBadge(ctx, "Live-Lesen und Abspielen gehen an")
+        self.badge = DeviceBadge(ctx, _("Live reading and playback go to"))
         open_card.lay.addWidget(self.badge)
         lay.addWidget(open_card)
         self.stack = QStackedWidget()
-        self.empty = empty_state("view-media-playlist", "Noch kein Projekt geöffnet",
-                                 "So geht's: ein Backup öffnen (Geräte-Backups liegen in ~/FM-1/Backups), eine "
-                                 "Projektdatei aus der Bibliothek wählen oder die laufende Musik direkt vom FM-1 lesen.",
-                                 "Backup öffnen …", self.open_backup)
+        self.empty = empty_state("view-media-playlist", _("No project opened yet"),
+                                 _("How it works: open a backup (device backups are in ~/FM-1/Backups), choose a "
+                                   "project file from the library or read the running music directly from the FM-1."),
+                                 _("Open backup …"), self.open_backup)
         self.stack.addWidget(self.empty)
         self.stack.addWidget(self._build_main())
         lay.addWidget(self.stack, 1)
@@ -100,21 +100,21 @@ class ProjectView(QWidget):
         split = QSplitter(Qt.Orientation.Vertical)
         tabs = QTabWidget()
         self.tracks = QTableWidget(0, 8)
-        self.tracks.setHorizontalHeaderLabels(["Spur", "Engine", "Preset", "Lautst.", "Pan", "Stumm", "Pattern",
-                                               "MIDI-Kanal"])
+        self.tracks.setHorizontalHeaderLabels([_("Track"), "Engine", "Preset", _("Vol."), "Pan", _("Mute"), "Pattern",
+                                               _("MIDI channel")])
         self.tracks.verticalHeader().hide()
         self.tracks.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tracks.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.tracks.horizontalHeader().setStretchLastSection(True)
-        tabs.addTab(self.tracks, "Spuren")
+        tabs.addTab(self.tracks, _("Tracks"))
         self.grid = QTableWidget(0, PF.NPAT)
         self.grid.setHorizontalHeaderLabels([str(i + 1) for i in range(PF.NPAT)])
         self.grid.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.grid.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.grid.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.grid.cellClicked.connect(self._cell)
-        self.grid.setToolTip("Patterns je Spur: gefüllt = belegt, fett = aktiv. Klick zeigt die Noten.")
-        tabs.addTab(self.grid, "Pattern-Übersicht")
+        self.grid.setToolTip(_("Patterns per track: filled = in use, bold = active. A click shows the notes."))
+        tabs.addTab(self.grid, _("Pattern overview"))
         self.song = QTableWidget(0, 2)
         self.song.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.song.verticalHeader().hide()
@@ -130,12 +130,12 @@ class ProjectView(QWidget):
         f.setBold(True)
         self.roll_title.setFont(f)
         bar.addWidget(self.roll_title, 1)
-        bar.addWidget(QLabel("Zoom:"))
+        bar.addWidget(QLabel(_("Zoom:")))
         self.zoom = QSlider(Qt.Orientation.Horizontal)
         self.zoom.setRange(8, 48)
         self.zoom.setValue(20)
         self.zoom.setMaximumWidth(160)
-        self.zoom.setToolTip("Breite eines Steps")
+        self.zoom.setToolTip(_("Width of one step"))
         self.zoom.valueChanged.connect(lambda v: (self.roll.set_zoom(v), self.roll.resize(self.roll.sizeHint())))
         bar.addWidget(self.zoom)
         rv.addLayout(bar)
@@ -154,41 +154,41 @@ class ProjectView(QWidget):
         return w
 
     def _build_play(self) -> QWidget:
-        card = Card("2 · Anhören")
+        card = Card(_("2 · Listen"))
         s = _settings()
         self.mode = QComboBox()
-        self.mode.addItem("Song (Abschnitte nacheinander)", "song")
-        self.mode.addItem("aktive Patterns in Schleife", "active")
-        self.mode.addItem("nur das gezeigte Pattern", "pattern")
+        self.mode.addItem(_("Song (sections one after another)"), "song")
+        self.mode.addItem(_("active patterns in a loop"), "active")
+        self.mode.addItem(_("only the shown pattern"), "pattern")
         self.mode.setCurrentIndex(max(0, self.mode.findData(s.get("mode", "song"))))
-        self.mode.setToolTip("Was gespielt und exportiert wird")
+        self.mode.setToolTip(_("What is played and exported"))
         self.loops = QSpinBox()
         self.loops.setRange(1, 64)
         self.loops.setValue(int(s.get("loops", 4)))
-        self.loops.setSuffix(" Durchläufe")
-        self.loops.setToolTip("Wie oft die aktiven Patterns laufen (Ablauf „aktive Patterns“)")
-        self.muted = QCheckBox("stumme Spuren mitspielen")
+        self.loops.setSuffix(_(" passes"))
+        self.loops.setToolTip(_("How often the active patterns run (sequence “active patterns”)"))
+        self.muted = QCheckBox(_("play muted tracks too"))
         self.muted.setChecked(True)
-        self.muted.setToolTip("Spuren, die im Projekt stumm geschaltet sind, trotzdem spielen und exportieren")
+        self.muted.setToolTip(_("Play and export tracks that are muted in the project anyway"))
         sel = FlowLayout()
-        sel.addWidget(QLabel("Auswahl:"))
+        sel.addWidget(QLabel(_("Selection:")))
         sel.addWidget(self.mode)
         sel.addWidget(self.loops)
         sel.addWidget(self.muted)
         card.lay.addLayout(sel)
-        self.player_bar = PlaybackBar(self.ctx, self.play_source, self, play_text="Abspielen",
-                                      shortcut_hint="Leertaste")
+        self.player_bar = PlaybackBar(self.ctx, self.play_source, self, play_text=_("Play"),
+                                      shortcut_hint=_("Space"))
         card.lay.addWidget(self.player_bar)
-        self.b_song = button("Song am FM-1 selbst starten", ("media-playback-start", "media-seek-forward"), "",
-                             self.device_song, "Das FM-1 spielt seine laufende Musik selbst ab (sein Song, exakt "
-                             "sein Klang). Nur für die gerade gelesene laufende Musik des aktiven FM-1; nichts wird "
-                             "gespeichert.")
-        self.b_song_stop = button("FM-1 stoppen", ("media-playback-stop",), "", self.device_stop,
-                                  "Den Transport des FM-1 anhalten (wie die STOP-Taste)")
+        self.b_song = button(_("Start the song on the FM-1 itself"), ("media-playback-start", "media-seek-forward"), "",
+                             self.device_song, _("The FM-1 plays its running music itself (its song, exactly its "
+                                                 "sound). Only for the running music of the active FM-1 just read; "
+                                                 "nothing is saved."))
+        self.b_song_stop = button(_("Stop FM-1"), ("media-playback-stop",), "", self.device_stop,
+                                  _("Stop the transport of the FM-1 (like the STOP button)"))
         self.song_from = QSpinBox(minimum=1, maximum=1, value=1)
-        self.song_from.setPrefix("ab Abschnitt ")
-        self.song_from.setToolTip("Abschnitt des Songs, mit dem das FM-1 beginnt (wie PLAY am SONG-Cursor). Ab Melodee "
-                                  "1.6.1 mit CLK INT bekommen mitlaufende Geräte dann Song Position + Continue.")
+        self.song_from.setPrefix(_("from section "))
+        self.song_from.setToolTip(_("Section of the song the FM-1 starts with (like PLAY at the SONG cursor). From "
+                                    "Melodee 1.6.1 with CLK INT, following devices then get Song Position + Continue."))
         self.song_row = flow_row(self.b_song, self.song_from, self.b_song_stop)
         self.song_row.hide()
         card.lay.addWidget(self.song_row)
@@ -241,24 +241,31 @@ class ProjectView(QWidget):
 
         def done(res):
             rc, rows, clk = res
-            where = f" ab Abschnitt {row + 1}" if row else ""
             sync = P.song_sync_note(version, clk, row) if rc == 0 else ""
-            self.player_bar.status.setText(
-                f"„{name}“ spielt seinen Song selbst{where} ({rows} Abschnitte) – exakt sein Klang. „FM-1 stoppen“ "
-                "hält an." + (" " + sync if sync else "")
-                if rc == 0 else f"„{name}“ hat den Start abgelehnt (Code {rc}) – ist ein Song angelegt? Am FM-1 SONG "
-                                "prüfen oder „Abspielen“ nutzen.")
-        self.ctx.job(self, "Song starten", work, dialog=False, on_done=done,
-                     on_fail=lambda m, tb: self.player_bar.status.setText(f"Start nicht möglich: {m}"))
+            if rc != 0:
+                text = _("“{name}” refused the start (code {code}) – is a song set up? Check SONG on the FM-1 or use "
+                         "“Play”.").format(name=name, code=rc)
+            elif row:
+                text = ngettext("“{name}” plays its song itself from section {section} ({n} section) – exactly its "
+                                "sound. “Stop FM-1” stops it.",
+                                "“{name}” plays its song itself from section {section} ({n} sections) – exactly its "
+                                "sound. “Stop FM-1” stops it.", rows).format(name=name, section=row + 1, n=rows)
+            else:
+                text = ngettext("“{name}” plays its song itself ({n} section) – exactly its sound. “Stop FM-1” stops it.",
+                                "“{name}” plays its song itself ({n} sections) – exactly its sound. “Stop FM-1” stops it.",
+                                rows).format(name=name, n=rows)
+            self.player_bar.status.setText(text + (" " + sync if sync else ""))
+        self.ctx.job(self, _("Start song"), work, dialog=False, on_done=done,
+                     on_fail=lambda m, tb: self.player_bar.status.setText(_("Start not possible: {error}").format(error=m)))
 
     def device_stop(self):
         if not self.ctx.require(self):
             return
         from ... import playback as P
-        self.ctx.job(self, "FM-1 stoppen", lambda w, link: P.transport_stop(link), dialog=False,
-                     on_done=lambda ok: self.player_bar.status.setText("FM-1 gestoppt." if ok else
-                                                                        "Das FM-1 hat nicht geantwortet."),
-                     on_fail=lambda m, tb: self.player_bar.status.setText(f"Nicht gestoppt: {m}"))
+        self.ctx.job(self, _("Stop FM-1"), lambda w, link: P.transport_stop(link), dialog=False,
+                     on_done=lambda ok: self.player_bar.status.setText(_("FM-1 stopped.") if ok else
+                                                                        _("The FM-1 did not answer.")),
+                     on_fail=lambda m, tb: self.player_bar.status.setText(_("Not stopped: {error}").format(error=m)))
 
     def deactivate(self):
         self.player_bar.stop(quiet=True)
@@ -267,32 +274,32 @@ class ProjectView(QWidget):
         self.player_bar.shutdown()
 
     def _build_export(self) -> QWidget:
-        card = Card("3 · Exportieren")
+        card = Card(_("3 · Export"))
         g = QGridLayout()
         s = _settings()
         self.drumch = QComboBox()
-        self.drumch.addItem("Drums auf dem Kanal der Spur", 0)
-        self.drumch.addItem("Drums auf Kanal 10 (GM)", 1)
+        self.drumch.addItem(_("Drums on the track's channel"), 0)
+        self.drumch.addItem(_("Drums on channel 10 (GM)"), 1)
         self.drumch.setCurrentIndex(int(s.get("drum_channel", 0)))
         self.lanes = QLineEdit(s.get("lane_notes", SETTINGS["lane_notes"]))
-        self.lanes.setToolTip("GM-Noten der 8 Drum-Lanes: KICK, SNARE, CLAP, HAT CL, HAT OP, TOM, RIM, BELL")
-        g.addWidget(label("Exportiert die Auswahl aus „Anhören“.", "muted"), 0, 0, 1, 2)
+        self.lanes.setToolTip(_("GM notes of the 8 drum lanes: KICK, SNARE, CLAP, HAT CL, HAT OP, TOM, RIM, BELL"))
+        g.addWidget(label(_("Exports the selection from “Listen”."), "muted"), 0, 0, 1, 2)
         g.addWidget(self.drumch, 0, 3)
-        g.addWidget(QLabel("Lane-Noten:"), 1, 0)
+        g.addWidget(QLabel(_("Lane notes:")), 1, 0)
         g.addWidget(self.lanes, 1, 1)
         row = QHBoxLayout()
-        self.b_midi = button("MIDI-Datei …", ("audio-midi", "document-save"), "", self.export_midi,
-                             "Standard-MIDI-Datei (Typ 1): eine Spur je FM-1-Spur, Kanal wie am FM-1 (Strg+E)")
+        self.b_midi = button(_("MIDI file …"), ("audio-midi", "document-save"), "", self.export_midi,
+                             _("Standard MIDI File (type 1): one track per FM-1 track, channel as on the FM-1 (Ctrl+E)"))
         row.addWidget(self.b_midi)
         row.addWidget(button("CSV …", ("text-csv", "document-save"), slot=self.export_csv,
-                             tooltip="Alle Noten als Tabelle (Tabellenkalkulation)"))
+                             tooltip=_("All notes as a table (spreadsheet)")))
         row.addWidget(button("JSON …", ("document-save",), slot=self.export_json,
-                             tooltip="Das ganze Projekt als lesbare JSON-Datei"))
-        row.addWidget(button("Bild …", ("image-x-generic", "document-save"), slot=self.export_png,
-                             tooltip="Die Piano-Roll als PNG-Bild"))
-        row.addWidget(button("Export-Ordner öffnen", ("folder-open",), slot=self.open_folder,
-                             tooltip="Den Ordner ~/FM-1/MIDI-Export im Dateimanager öffnen (von dort in Audacity "
-                                     "oder eine DAW ziehen)"))
+                             tooltip=_("The whole project as a readable JSON file")))
+        row.addWidget(button(_("Image …"), ("image-x-generic", "document-save"), slot=self.export_png,
+                             tooltip=_("The piano roll as a PNG image")))
+        row.addWidget(button(_("Open export folder"), ("folder-open",), slot=self.open_folder,
+                             tooltip=_("Open the folder ~/FM-1/MIDI-Export in the file manager (drag from there "
+                                       "into Audacity or a DAW)")))
         row.addStretch(1)
         g.addLayout(row, 2, 0, 1, 4)
         reflow(row)                                      # Export-Knöpfe brechen bei schmalem Fenster um
@@ -303,15 +310,15 @@ class ProjectView(QWidget):
     def open_backup(self, path: str | None = None):
         if not path:
             start = str(config.load().backups_dir) if hasattr(config.load(), "backups_dir") else str(Path.home())
-            path, _ = QFileDialog.getOpenFileName(self, "Backup öffnen", start, "FM-1-Backup (*.json)")
+            path, _filter = QFileDialog.getOpenFileName(self, _("Open backup"), start, _("FM-1 backup (*.json)"))
             if not path:
                 return
         self._load_path(Path(path))
 
     def open_project(self, path: str | None = None):
         if not path:
-            path, _ = QFileDialog.getOpenFileName(self, "Projektdatei öffnen", str(start_dir("Projekte")),
-                                                  "FM-1-Projekt (*.fm1proj)")
+            path, _filter = QFileDialog.getOpenFileName(self, _("Open project file"), str(start_dir("Projekte")),  # i18n: ignore
+                                                        _("FM-1 project (*.fm1proj)"))
             if not path:
                 return
         self._load_path(Path(path))
@@ -320,27 +327,27 @@ class ProjectView(QWidget):
         try:
             items = PF.load_any(path)
         except Exception as e:  # noqa: BLE001
-            show_error(self, "Datei nicht lesbar", f"{path.name} ließ sich nicht öffnen:\n{e}")
+            show_error(self, _("File not readable"), _("{name} could not be opened:\n{error}").format(name=path.name, error=e))
             return
         if not items:
-            show_error(self, "Keine Projekte", f"In {path.name} ist kein Projekt gespeichert.")
+            show_error(self, _("No projects"), _("There is no project saved in {name}.").format(name=path.name))
             return
         self.source = path.stem
-        self.source_note = f"Datei {path.name}"
+        self.source_note = _("File {name}").format(name=path.name)
         self.live_tag = self.live_slot = None
         self.set_items(items)
 
     def open_with(self, path=None, data: bytes | None = None, title: str = "", firmware: str = "",
-                  read_slot: int | None = None, **_):
+                  read_slot: int | None = None, **_kw):
         """von anderen Seiten: Datei/Daten zeigen – oder mit read_slot einen Platz des aktiven FM-1 lesen."""
         if read_slot is not None:
             self.slot.setValue(max(0, min(self.slot.maximum(), int(read_slot))))
             self.read_device()
         elif data is not None:
-            self.source = title or "Projekt"
-            self.source_note = title or "Projekt"
+            self.source = title or _("Project")
+            self.source_note = title or _("Project")
             self.live_tag = self.live_slot = None
-            self.set_items([(title or "Projekt", PF.decode(data, firmware))])
+            self.set_items([(title or _("Project"), PF.decode(data, firmware))])
         elif path:
             self._load_path(Path(path))
 
@@ -354,26 +361,27 @@ class ProjectView(QWidget):
         key = getattr(self.ctx, "firmware_key", "") or ""
         if key == "sloop":
             if slot > 4:
-                show_error(self, "SLOOP hat nur 4 Plätze", "SLOOP speichert Projekte als Sections A–D (Plätze 1–4). "
-                                                           "Bitte 0 (laufendes Projekt) oder 1–4 wählen.")
+                show_error(self, _("SLOOP only has 4 slots"), _("SLOOP saves projects as sections A–D (slots 1–4). "
+                                                                "Please choose 0 (running project) or 1–4."))
                 return
-            show_error(self, "SLOOP-Projekte", "Die Projekt-Ansicht kennt nur das Melodee-Format. SLOOP-Projekte sind "
-                                               "anders aufgebaut – zum Ansehen nimm den SLOOP-Web-Editor (Seite "
-                                               "„Editor“). Sichern geht wie gewohnt über Backups.")
+            show_error(self, _("SLOOP projects"), _("The project view only knows the Melodee format. SLOOP projects are "
+                                                    "built differently – to view them use the SLOOP web editor (page "
+                                                    "“Editor”). Backing up works as usual via backups."))
             return
         if key and key not in ("melodee", "skiff", "felucca"):
             from ..device import firmware_name
-            show_error(self, "Andere Firmware", f"{firmware_name(key) or 'Diese Firmware'} hat keine Projekte, die die "
-                                                "App lesen kann. Die Projekt-Ansicht zeigt Melodee-Projekte.")
+            show_error(self, _("Other firmware"), _("{firmware} has no projects the app can read. The project view shows "
+                                                    "Melodee projects.").format(
+                firmware=firmware_name(key) or _("This firmware")))
             return
 
         def work(w, link):
             man = {o.id: o for o in backup.list_objects(link)}
             o = man.get(oid)
             if not o or not o.size:
-                raise backup.BackupError(f"Projektplatz {slot} ist leer – nichts zu lesen." if slot else
-                                         "Keine laufende Musik gefunden.")
-            w.log.emit(f"Lese {o.size} Byte …")
+                raise backup.BackupError(_("Project slot {slot} is empty – nothing to read.").format(slot=slot) if slot
+                                         else _("No running music found."))
+            w.log.emit(_("Reading {n} bytes …").format(n=o.size))
             done = [0]
 
             def prog(n):
@@ -388,23 +396,24 @@ class ProjectView(QWidget):
 
         def done(data):
             if data:
-                what = "Laufende Musik" if not slot else f"Projekt {slot}"
-                title = f"{what} von „{dev}“"
+                what = _("Running music") if not slot else _("Project {n}").format(n=slot)
+                title = _("{what} from “{device}”").format(what=what, device=dev)
                 self.source = title
-                self.source_note = (f"live gelesen von <b>„{dev}“</b>" + (f" ({fwl})" if fwl else "") +
-                                    f" um {time.strftime('%H:%M')} – {what}")
+                self.source_note = (_("read live from <b>“{device}”</b>").format(device=dev) + (f" ({fwl})" if fwl else "")
+                                    + " " + _("at {time} – {what}").format(time=time.strftime('%H:%M'), what=what))
                 self.live_tag, self.live_slot = tag, slot
                 self.set_items([(title, PF.decode(data, fw))])
-        self.ctx.job(self, f"Projekt von „{dev}“ lesen", work, on_done=done,
-                     done_text=lambda d: ("Laufende Musik" if not slot else f"Projekt {slot}") + f" von „{dev}“ gelesen "
-                     f"({len(d)} Byte) und geöffnet – nur angesehen, am FM-1 wurde nichts geändert.")
+        self.ctx.job(self, _("Read project from “{device}”").format(device=dev), work, on_done=done,
+                     done_text=lambda d: _("{what} read from “{device}” ({n} bytes) and opened – only viewed, nothing "
+                                           "was changed on the FM-1.").format(
+                         what=_("Running music") if not slot else _("Project {n}").format(n=slot), device=dev, n=len(d)))
 
     def set_items(self, items):
         self.items = items
         self.choice.blockSignals(True)
         self.choice.clear()
         for title, prj in items:
-            self.choice.addItem(title + ("" if prj.ok else " (nicht lesbar)"))
+            self.choice.addItem(title + ("" if prj.ok else " " + _("(not readable)")))
         self.choice.blockSignals(False)
         self.choice.setVisible(bool(items))
         first = next((i for i, (t, p) in enumerate(items) if p.ok), 0)
@@ -425,28 +434,31 @@ class ProjectView(QWidget):
             if prj.format.startswith("SLOOP"):
                 self.info.setText(f"<b>{prj.format}</b> – {'; '.join(prj.warnings)}")
             else:
-                self.info.setText(f"<b>Dieses Projekt ließ sich nicht lesen.</b> Format: {prj.format}. "
-                                  f"{'; '.join(prj.warnings)}<br>Was geht: das Projekt bleibt im Backup erhalten und "
-                                  "lässt sich wie gewohnt zurückspielen – nur die Ansicht fehlt.")
+                self.info.setText(_("<b>This project could not be read.</b> Format: {format}. {warnings}<br>What "
+                                    "works: the project stays in the backup and can be restored as usual – only the "
+                                    "view is missing.").format(format=prj.format, warnings='; '.join(prj.warnings)))
             self.tracks.setRowCount(0)
             self.grid.setRowCount(0)
             self.song.setRowCount(0)
             self.roll.set_steps([], 16)
             self.roll_title.setText("")
             return
-        warn = f"<br><i>Hinweis: {'; '.join(prj.warnings)}</i>" if prj.warnings else ""
+        warn = ("<br><i>" + _("Note: {warnings}").format(warnings='; '.join(prj.warnings)) + "</i>") if prj.warnings else ""
         name = f"<b>{prj.name}</b> · " if prj.name else ""
-        src = f"<br>Quelle: {self.source_note}" if getattr(self, "source_note", "") else ""
-        self.info.setText(f"{name}{prj.bpm} BPM · Swing {prj.swing} · {len(prj.used_tracks)} Spuren · "
-                          f"Format {prj.format}{warn}{self.extras_note(prj)}{src}")
+        src = ("<br>" + _("Source: {source}").format(source=self.source_note)) if getattr(self, "source_note", "") else ""
+        self.info.setText(name + ngettext("{bpm} BPM · Swing {swing} · {n} track · Format {format}",
+                                          "{bpm} BPM · Swing {swing} · {n} tracks · Format {format}",
+                                          len(prj.used_tracks)).format(bpm=prj.bpm, swing=prj.swing,
+                                                                        n=len(prj.used_tracks), format=prj.format)
+                          + f"{warn}{self.extras_note(prj)}{src}")
         self._update_song_row()
         used = prj.used_tracks
         self.tracks.setRowCount(len(used))
         for r, t in enumerate(used):
             preset = t.preset_name or (f"Preset {t.preset + 1}" if t.preset < 0xFE else "")
             if t.user_slot:
-                preset += f" (Bibliothek U{t.user_slot:03d})"
-            vals = [t.name, t.engine_name, preset, str(t.level), str(t.pan), "ja" if t.mute else "",
+                preset += " " + _("(library U{slot:03d})").format(slot=t.user_slot)
+            vals = [t.name, t.engine_name, preset, str(t.level), str(t.pan), _("yes") if t.mute else "",
                     f"P{t.active + 1}", str(t.midi_channel + 1)]
             for c, v in enumerate(vals):
                 self.tracks.setItem(r, c, QTableWidgetItem(v))
@@ -464,23 +476,24 @@ class ProjectView(QWidget):
                         it.setBackground(QBrush(c))
                         it.setText(("●" if b == t.active else "") + ("D" if p.has_drums else "♪"))
                         sid = prj.pattern_sounds.get((t.index, b), 0)
-                        it.setToolTip(f"{t.name}, Pattern {b + 1}: {p.note_count} Noten/Schläge, {p.length} Steps, "
-                                      f"{PF.enum_name(PF.P_SDIV, p.div)}" + (" – aktiv" if b == t.active else "")
-                                      + (f" – eigenes Preset: {prj.sound_name(sid)}" if sid else ""))
+                        it.setToolTip(_("{track}, pattern {pattern}: {notes} notes/hits, {length} steps, {div}").format(
+                            track=t.name, pattern=b + 1, notes=p.note_count, length=p.length,
+                            div=PF.enum_name(PF.P_SDIV, p.div)) + (" – " + _("active") if b == t.active else "")
+                                      + (" – " + _("own preset: {name}").format(name=prj.sound_name(sid)) if sid else ""))
                     elif b == t.active:
                         it.setText("●")
-                        it.setToolTip("aktiv, leer")
+                        it.setToolTip(_("active, empty"))
                     it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 else:
                     it.setFlags(Qt.ItemFlag.NoItemFlags)
-                    it.setToolTip("Diese Spur hat nur 8 Patterns")
+                    it.setToolTip(_("This track only has 8 patterns"))
                 self.grid.setItem(r, b, it)
         # Song
         n = len(used)
         punches = any(row.punches for row in prj.song)
         self.song.clearSpans()
         self.song.setColumnCount(2 + n + (1 if punches else 0))
-        self.song.setHorizontalHeaderLabels(["Abschnitt", "Wdh."] + [t.name for t in used]
+        self.song.setHorizontalHeaderLabels([pgettext("song", "Section"), _("Rep.")] + [t.name for t in used]
                                             + (["Punch-FX"] if punches else []))
         self.song.setRowCount(len(prj.song))
         for r, row in enumerate(prj.song):
@@ -492,18 +505,19 @@ class ProjectView(QWidget):
                 sid, how = prj.resolved_sound(r, t.index) if v != PF.CHAIN_REST else (0, "")
                 if sid:                                 # Melodee 1.6: Song-Block- bzw. Pattern-Preset (nur Anzeige)
                     it.setText(f"{bank_text(v)} · {prj.sound_name(sid)}")
-                    it.setToolTip(("Song-Block-Preset" if how == "block" else "Pattern-Preset") +
-                                  f": {prj.sound_name(sid)} ({prj.sounds[sid - 1].engine_name}) – klingt exakt nur im "
-                                  "Studio bzw. am FM-1; MIDI-Export und Vorhören nehmen den Klang der Spur.")
+                    it.setToolTip(_("{kind}: {name} ({engine}) – sounds exact only in the studio or on the FM-1; "
+                                    "MIDI export and preview use the track's sound.").format(
+                        kind=_("Song block preset") if how == "block" else _("Pattern preset"),
+                        name=prj.sound_name(sid), engine=prj.sounds[sid - 1].engine_name))
                 self.song.setItem(r, 2 + c, it)
             if punches:
                 it = QTableWidgetItem(", ".join(x.text for x in row.punches))
-                it.setToolTip("Zeitgesteuerte Punch-Effekte dieses Abschnitts (Steps START–END, bei jeder Wiederholung)"
-                              " – wirken nur am FM-1 und im Studio, nicht im MIDI-Export.")
+                it.setToolTip(_("Timed punch effects of this section (steps START–END, on every repeat) – only work "
+                                "on the FM-1 and in the studio, not in the MIDI export."))
                 self.song.setItem(r, 2 + n, it)
         if not prj.song:
             self.song.setRowCount(1)
-            self.song.setItem(0, 0, QTableWidgetItem("Kein Song angelegt – exportiert werden dann die aktiven Patterns."))
+            self.song.setItem(0, 0, QTableWidgetItem(_("No song set up – the active patterns are exported instead.")))
             self.song.setSpan(0, 0, 1, self.song.columnCount())
         self.mode.model().item(0).setEnabled(bool(prj.song))
         if not prj.song and self.mode.currentData() == "song":
@@ -519,11 +533,13 @@ class ProjectView(QWidget):
         n_p = sum(len(r.punches) for r in prj.song)
         if not (n_p or prj.sounds):
             return ""
-        parts = ([f"{n_p} Punch-Effekte"] if n_p else []) + \
-                ([f"{len(prj.sounds)} Song-/Pattern-Presets ({', '.join(x.name for x in prj.sounds[:4])}"
-                  + (" …" if len(prj.sounds) > 4 else "") + ")"] if prj.sounds else [])
-        return ("<br><i>" + " und ".join(parts) + " (Melodee 1.6) stehen in der Song-Tabelle. Vorhören und MIDI-Export "
-                "spielen sie nicht – exakt klingen sie nur im Studio (oder am FM-1).</i>")
+        parts = ([ngettext("{n} punch effect", "{n} punch effects", n_p).format(n=n_p)] if n_p else []) + \
+                ([ngettext("{n} song/pattern preset ({names})", "{n} song/pattern presets ({names})",
+                           len(prj.sounds)).format(n=len(prj.sounds), names=', '.join(x.name for x in prj.sounds[:4])
+                                                   + (" …" if len(prj.sounds) > 4 else ""))] if prj.sounds else [])
+        return ("<br><i>" + _("{items} (Melodee 1.6) are in the song table. Preview and MIDI export do not play them – "
+                              "they only sound exact in the studio (or on the FM-1).").format(
+            items=_(" and ").join(parts)) + "</i>")
 
     def _cell(self, r: int, c: int):
         used = self.prj.used_tracks if self.prj else []
@@ -539,8 +555,9 @@ class ProjectView(QWidget):
         self.roll.set_steps(p.steps, p.length)
         self.roll.set_zoom(self.zoom.value())
         self.roll.resize(self.roll.sizeHint())
-        extra = f", {len(p.recorded)} aufgenommene Noten" if p.recorded else ""
-        state = "" if p.used else " – leer"
+        extra = ngettext(", {n} recorded note", ", {n} recorded notes", len(p.recorded)).format(
+            n=len(p.recorded)) if p.recorded else ""
+        state = "" if p.used else " – " + _("empty")
         self.roll_title.setText(f"{t.name} · Pattern {b + 1}{state} · {p.length} Steps · "
                                 f"{PF.enum_name(PF.P_SDIV, p.div)} · Swing {p.swing}{extra}")
 
@@ -564,31 +581,31 @@ class ProjectView(QWidget):
                           drum_channel=9 if self.drumch.currentIndex() else None, include_muted=self.muted.isChecked())
 
     def _target(self, suffix: str, title: str, filt: str, ask: bool = True) -> Path | None:
-        base = (self.prj.name or self.source or "FM-1 Projekt").replace("/", "_")
+        base = (self.prj.name or self.source or "FM-1 Projekt").replace("/", "_")  # i18n: ignore – file name
         if self.mode.currentData() == "pattern":
-            base += f" Spur {self.cur[0] + 1} P{self.cur[1] + 1}"
+            base += f" Spur {self.cur[0] + 1} P{self.cur[1] + 1}"  # i18n: ignore – file name
         path = start_dir("MIDI-Export") / f"{base}{suffix}"
         if not ask:
             return path
-        p, _ = QFileDialog.getSaveFileName(self, title, str(path), filt)
+        p, _filter = QFileDialog.getSaveFileName(self, title, str(path), filt)
         return Path(p) if p else None
 
     def _ready(self) -> bool:
         if not self.prj or not self.prj.ok:
-            show_error(self, "Nichts zu exportieren", "Bitte zuerst ein lesbares Projekt öffnen.")
+            show_error(self, _("Nothing to export"), _("Please open a readable project first."))
             return False
         return True
 
     def export_midi(self, path: Path | None = None) -> Path | None:
         if not self._ready():
             return None
-        path = path or self._target(".mid", "MIDI-Datei speichern", "MIDI (*.mid)")
+        path = path or self._target(".mid", _("Save MIDI file"), "MIDI (*.mid)")
         if not path:
             return None
         o = self.options()
         pat = self.cur if o.mode == "pattern" else None
         if not ME.events(self.prj, o, pat):
-            show_error(self, "Keine Noten", "In der gewählten Auswahl gibt es keine Noten.")
+            show_error(self, _("No notes"), _("There are no notes in the chosen selection."))
             return None
         if not self._write(path, lambda: ME.save_midi(self.prj, path, o, pat)):
             return None
@@ -601,13 +618,13 @@ class ProjectView(QWidget):
             fn()
             return True
         except OSError as e:
-            show_error(self, "Nicht gespeichert", fs_error_text(e, f"„{path.name}“ nicht gespeichert"))
+            show_error(self, _("Not saved"), fs_error_text(e, _("“{name}” not saved").format(name=path.name)))
             return False
 
     def export_csv(self, path: Path | None = None):
         if not self._ready():
             return None
-        path = path or self._target(".csv", "CSV speichern", "CSV (*.csv)")
+        path = path or self._target(".csv", _("Save CSV"), "CSV (*.csv)")
         if path:
             o = self.options()
             if not self._write(path, lambda: path.write_text(ME.to_csv(self.prj, o, self.cur if o.mode == "pattern"
@@ -619,7 +636,7 @@ class ProjectView(QWidget):
     def export_json(self, path: Path | None = None):
         if not self._ready():
             return None
-        path = path or self._target(".json", "JSON speichern", "JSON (*.json)")
+        path = path or self._target(".json", _("Save JSON"), "JSON (*.json)")
         if path:
             if not self._write(path, lambda: path.write_text(ME.to_json(self.prj), "utf-8")):
                 return None
@@ -629,11 +646,11 @@ class ProjectView(QWidget):
     def export_png(self, path: Path | None = None):
         if not self._ready():
             return None
-        path = path or self._target(".png", "Bild speichern", "PNG (*.png)")
+        path = path or self._target(".png", _("Save image"), "PNG (*.png)")
         if path:
             self.roll.resize(self.roll.sizeHint())
             if not self.roll.grab().save(str(path), "PNG"):
-                show_error(self, "Nicht gespeichert", f"„{path.name}“ ließ sich nicht schreiben – Ordner schreibgeschützt?")
+                show_error(self, _("Not saved"), _("“{name}” could not be written – folder write-protected?").format(name=path.name))
                 return None
             self._done(path)
         return path
@@ -641,17 +658,17 @@ class ProjectView(QWidget):
     def _done(self, path: Path):
         try:
             from ..common import notify
-            notify(f"Gespeichert: {path.name}", "success", ("Ordner öffnen", self.open_folder))
+            notify(_("Saved: {file}").format(file=path.name), "success", (_("Open folder"), self.open_folder))
         except Exception:  # noqa: BLE001
             pass
         msg = getattr(self.ctx, "message", None)
         if msg is not None:
-            msg.emit(f"Gespeichert: {path}")
+            msg.emit(_("Saved: {file}").format(file=path))
 
     def open_folder(self):
         folder, err = safe_folder("MIDI-Export")
         if err:
-            show_error(self, "Ordner öffnen", err)
+            show_error(self, _("Open folder"), err)
             return
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
 

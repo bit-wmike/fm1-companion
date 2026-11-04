@@ -16,6 +16,7 @@ import uuid
 from pathlib import Path
 
 from .. import config
+from ..i18n import _
 
 _LOCK = threading.Lock()
 PHASES = ("prepared", "step1", "loader", "writing", "reboot", "resources", "done", "failed", "safe")
@@ -68,7 +69,7 @@ class Journal:
     def acquire(self):
         """eine Installation zur Zeit – im Prozess und zwischen Prozessen"""
         if not _LOCK.acquire(blocking=False):
-            raise Busy("Es läuft schon eine Installation.")
+            raise Busy(_("An installation is already running."))
         try:
             self.dir.mkdir(parents=True, exist_ok=True)
             try:
@@ -79,7 +80,7 @@ class Journal:
                 except (OSError, ValueError):
                     pid = 0
                 if pid and pid != os.getpid() and _alive(pid):
-                    raise Busy("Ein anderes Programmfenster installiert gerade eine Firmware.")
+                    raise Busy(_("Another program window is installing a firmware right now."))
                 self.lockfile.unlink(missing_ok=True)
                 fd = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             os.write(fd, str(os.getpid()).encode())

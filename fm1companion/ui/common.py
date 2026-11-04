@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (QDialog, QDialogButtonBox, QFrame, QHBoxLayout, QLa
                              QPlainTextEdit, QProgressBar, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout,
                              QWidget)
 
+from ..i18n import _
 
 ICON_DIR = Path(__file__).resolve().parents[1] / "icons"
 _svg_cache: dict[str, str] = {}
@@ -209,7 +210,9 @@ def fmt_secs(s: float | None) -> str:
         return f"{s // 60}:{s % 60:02d} min"
     d, rest = divmod(s, 86400)
     h, rest = divmod(rest, 3600)
-    return (f"{d} T " if d else "") + f"{h} h {rest // 60} min"
+    if d:
+        return _("{days} d {hours} h {minutes} min").format(days=d, hours=h, minutes=rest // 60)
+    return f"{h} h {rest // 60} min"
 
 
 def fmt_date(iso: str) -> str:
@@ -288,11 +291,11 @@ def run_job(parent: QWidget | None, fn: Callable, *args, on_done=None, on_fail=N
         _running.discard(w)
         t = _text_of(fail_text, msg)
         if t or notify_fail:
-            notify(t or f"Fehlgeschlagen: {msg}", "error")
+            notify(t or _("Failed: {error}").format(error=msg), "error")
         if on_fail:
             on_fail(msg, tb)
         elif not (t or notify_fail):
-            show_error(parent, "Fehler", msg, tb)
+            show_error(parent, _("Error"), msg, tb)
 
     w.done.connect(ok)
     w.failed.connect(bad)
@@ -313,7 +316,7 @@ def show_done(parent, title: str, msg: str):
     """kurze Erfolgsmeldung als Dialog (für Aktionen, deren Ergebnis man sehen muss)."""
     box = QMessageBox(QMessageBox.Icon.Information, title, msg, QMessageBox.StandardButton.Ok, parent)
     german_buttons(box)
-    box.button(QMessageBox.StandardButton.Ok).setText("Schließen")
+    box.button(QMessageBox.StandardButton.Ok).setText(_("Close"))
     box.exec()
 
 
@@ -359,11 +362,12 @@ def init_gui_caller():
         _gui_caller = _GuiCaller()
 
 
-def confirm(parent, title: str, text: str, ok: str = "Fortfahren", danger: bool = False) -> bool:
+def confirm(parent, title: str, text: str, ok: str | None = None, danger: bool = False) -> bool:
+    ok = ok or _("Proceed")
     box = QMessageBox(QMessageBox.Icon.Warning if danger else QMessageBox.Icon.Question, title, text,
                       parent=parent)
     yes = box.addButton(ok, QMessageBox.ButtonRole.AcceptRole)
-    no = box.addButton("Abbrechen", QMessageBox.ButtonRole.RejectRole)
+    no = box.addButton(_("Cancel"), QMessageBox.ButtonRole.RejectRole)
     if danger:                                 # zerstörende Aktion: roter Knopf, Abbrechen ist Standard
         yes.setProperty("variant", "danger")
         box.setDefaultButton(no)
@@ -409,7 +413,7 @@ class JobDialog(QDialog):
         self.state_icon.setFixedSize(28, 28)
         self.state_icon.hide()
         top.addWidget(self.state_icon, 0, Qt.AlignmentFlag.AlignVCenter)
-        self.head = QLabel(f"{title} – läuft …")
+        self.head = QLabel(_("{title} – running …").format(title=title))
         f = self.head.font()
         f.setPointSizeF(f.pointSizeF() * 1.2)
         f.setBold(True)
@@ -425,7 +429,7 @@ class JobDialog(QDialog):
         self.bar = QProgressBar()
         self.bar.setRange(0, 0)
         lay.addWidget(self.bar)
-        self.details_btn = QPushButton("Details anzeigen")
+        self.details_btn = QPushButton(_("Show details"))
         self.details_btn.setProperty("variant", "flat")
         self.details_btn.setCheckable(True)
         self.details_btn.toggled.connect(self._details)
@@ -440,11 +444,11 @@ class JobDialog(QDialog):
         german_buttons(self.buttons)
         self.buttons.rejected.connect(self.reject)
         self.buttons.button(QDialogButtonBox.StandardButton.Close).setEnabled(False)
-        self.cancel_button = self.buttons.addButton("Abbrechen", QDialogButtonBox.ButtonRole.ActionRole)
+        self.cancel_button = self.buttons.addButton(_("Cancel"), QDialogButtonBox.ButtonRole.ActionRole)
         self.cancel_button.setEnabled(bool(cancellable))
-        self.cancel_button.setToolTip("Bricht am nächsten sicheren Punkt ab." if cancellable else
-                                      (cancel_tip or "Dieser Vorgang lässt sich nicht sicher abbrechen – "
-                                       "bitte warten, bis er fertig ist."))
+        self.cancel_button.setToolTip(_("Cancels at the next safe point.") if cancellable else
+                                      (cancel_tip or _("This operation cannot be cancelled safely – "
+                                                       "please wait until it is finished.")))
         self.cancel_button.clicked.connect(self._cancel)
         if not cancellable and type(self) is not JobDialog:
             self.cancel_button.hide()          # Unterklassen mit eigenem Abbrechen (z. B. Installation)
@@ -469,11 +473,11 @@ class JobDialog(QDialog):
     def _cancel(self):
         self.worker.cancelled = True
         self.cancel_button.setEnabled(False)
-        self.add("Abbruch angefordert – greift am nächsten sicheren Punkt.")
+        self.add(_("Cancellation requested – takes effect at the next safe point."))
 
     def _details(self, on: bool):
         self.logv.setVisible(on)
-        self.details_btn.setText("Details ausblenden" if on else "Details anzeigen")
+        self.details_btn.setText(_("Hide details") if on else _("Show details"))
 
     def _state(self, ok: bool, head: str, text: str):
         from . import theme
@@ -498,7 +502,7 @@ class JobDialog(QDialog):
         self._details(False)
         close = self.buttons.button(QDialogButtonBox.StandardButton.Close)
         close.setEnabled(True)
-        close.setText("Schließen")
+        close.setText(_("Close"))
         close.setDefault(True)
         close.setFocus()
 
@@ -509,11 +513,11 @@ class JobDialog(QDialog):
         self.bar.setValue(1)
         ret = self._on_done(res) if self._on_done else None
         text = _text_of(self._done_text, res) or (ret if isinstance(ret, str) else "") or self._last_log \
-            or f"{self.title}: erledigt."
-        self._state(True, "Fertig", text)
+            or _("{title}: done.").format(title=self.title)
+        self._state(True, _("Finished"), text)
         for label, fn in self._actions:
             b = self.buttons.addButton(label, QDialogButtonBox.ButtonRole.ActionRole)
-            b.clicked.connect(lambda _=False, f=fn: (f(self.result_value), self.accept()))
+            b.clicked.connect(lambda _c=False, f=fn: (f(self.result_value), self.accept()))
         if self._close_on_success:
             self.accept()
 
@@ -522,12 +526,12 @@ class JobDialog(QDialog):
         self.bar.setRange(0, 1)
         self.bar.setValue(0)
         self.add("")
-        self.add("FEHLER: " + msg)
+        self.add(_("ERROR: {error}").format(error=msg))
         if tb:
             self.add("")
             self.add(tb.rstrip())
         text = _text_of(self._fail_text, msg) or msg
-        self._state(False, "Fehlgeschlagen", text)
+        self._state(False, _("Failed"), text)
 
     def reject(self):
         if self.buttons.button(QDialogButtonBox.StandardButton.Close).isEnabled():
@@ -675,7 +679,7 @@ class Disclosure(QWidget):
         self.button.setCheckable(True)
         self.button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.button.setArrowType(Qt.ArrowType.RightArrow)
-        self.button.setToolTip("Hintergründe und Einzelheiten ein-/ausblenden")
+        self.button.setToolTip(_("Show/hide background and details"))
         self.button.setCursor(Qt.CursorShape.PointingHandCursor)
         lay.addWidget(self.button, 0, Qt.AlignmentFlag.AlignLeft)
         if isinstance(content, str):
@@ -727,17 +731,17 @@ def hbox(*widgets, stretch_last=False) -> QHBoxLayout:
 
 # ====================================================================== Deutsch für Qt-Standardknöpfe
 GERMAN_BUTTONS = {
-    "Ok": "OK", "Cancel": "Abbrechen", "Close": "Schließen", "Yes": "Ja", "No": "Nein", "Apply": "Übernehmen",
-    "Save": "Speichern", "Discard": "Verwerfen", "Open": "Öffnen", "Reset": "Zurücksetzen", "Help": "Hilfe",
-    "Abort": "Abbrechen", "Retry": "Wiederholen", "Ignore": "Ignorieren", "YesToAll": "Ja, alle",
-    "NoToAll": "Nein, keine", "RestoreDefaults": "Standardwerte", "SaveAll": "Alle speichern",
+    "Ok": "OK", "Cancel": "Abbrechen", "Close": "Schließen", "Yes": "Ja", "No": "Nein", "Apply": "Übernehmen",  # i18n: ignore
+    "Save": "Speichern", "Discard": "Verwerfen", "Open": "Öffnen", "Reset": "Zurücksetzen", "Help": "Hilfe",  # i18n: ignore
+    "Abort": "Abbrechen", "Retry": "Wiederholen", "Ignore": "Ignorieren", "YesToAll": "Ja, alle",  # i18n: ignore
+    "NoToAll": "Nein, keine", "RestoreDefaults": "Standardwerte", "SaveAll": "Alle speichern",  # i18n: ignore
 }
-_ENGLISH = {"OK": "OK", "&OK": "OK", "Cancel": "Abbrechen", "&Cancel": "Abbrechen", "Close": "Schließen",
-            "&Close": "Schließen", "Yes": "Ja", "&Yes": "Ja", "No": "Nein", "&No": "Nein", "Apply": "Übernehmen",
-            "&Apply": "Übernehmen", "Save": "Speichern", "&Save": "Speichern", "Discard": "Verwerfen",
-            "Open": "Öffnen", "&Open": "Öffnen", "Reset": "Zurücksetzen", "Help": "Hilfe", "Abort": "Abbrechen",
-            "Retry": "Wiederholen", "Ignore": "Ignorieren", "Restore Defaults": "Standardwerte",
-            "Show Details...": "Details anzeigen …", "Hide Details...": "Details ausblenden …"}
+_ENGLISH = {"OK": "OK", "&OK": "OK", "Cancel": "Abbrechen", "&Cancel": "Abbrechen", "Close": "Schließen",  # i18n: ignore
+            "&Close": "Schließen", "Yes": "Ja", "&Yes": "Ja", "No": "Nein", "&No": "Nein", "Apply": "Übernehmen",  # i18n: ignore
+            "&Apply": "Übernehmen", "Save": "Speichern", "&Save": "Speichern", "Discard": "Verwerfen",  # i18n: ignore
+            "Open": "Öffnen", "&Open": "Öffnen", "Reset": "Zurücksetzen", "Help": "Hilfe", "Abort": "Abbrechen",  # i18n: ignore
+            "Retry": "Wiederholen", "Ignore": "Ignorieren", "Restore Defaults": "Standardwerte",  # i18n: ignore
+            "Show Details...": "Details anzeigen …", "Hide Details...": "Details ausblenden …"}  # i18n: ignore
 
 
 def german_buttons(box):
@@ -829,7 +833,7 @@ def device_tag(ctx) -> tuple[str, str, str]:
     """(Profil-ID, Port-Schlüssel, Anzeigename) des gerade verbundenen FM-1."""
     prof = getattr(ctx, "profile", None)
     port = getattr(ctx, "port", None)
-    name = prof.name if prof else (port.label if port else "einem anderen FM-1")
+    name = prof.name if prof else (port.label if port else _("another FM-1"))
     return (prof.id if prof else "", port.key if port else "", name)
 
 
@@ -879,8 +883,8 @@ class DeviceUndo:
         return bool(self.items) and same_device(self.items[-1][0], device_tag(ctx))
 
     def refusal(self) -> str:
-        return (f"Dieses Rückgängig gehört zu {self.owner()} – bitte das Gerät wieder verbinden. "
-                "(Sonst würde der alte Inhalt auf dem falschen FM-1 landen.)")
+        return _("This undo belongs to {device} – please connect that device again. (Otherwise the old content "
+                 "would end up on the wrong FM-1.)").format(device=self.owner())
 
     def check(self, ctx, parent=None) -> bool:
         """True, wenn der oberste Eintrag zum verbundenen Gerät gehört; sonst Hinweis und False."""
@@ -889,7 +893,7 @@ class DeviceUndo:
         if self.matches(ctx):
             return True
         if parent is not None:
-            show_error(parent, "Rückgängig nicht möglich", self.refusal())
+            show_error(parent, _("Undo not possible"), self.refusal())
         return False
 
 
@@ -898,23 +902,30 @@ def fs_error_text(e: BaseException, what: str = "") -> str:
     """verständliche deutsche Meldung zu OSError & Co. (statt "[Errno 13] …")."""
     import errno as _e
     path = getattr(e, "filename", None) or ""
-    where = f" ({path})" if path else ""
     code = getattr(e, "errno", None)
+
+    def msg(with_path: str, without: str) -> str:
+        return with_path.format(path=path) if path else without
     if code in (_e.EACCES, _e.EPERM, _e.EROFS):
-        base = "Keine Schreibrechte" + where + " – bitte Rechte des Ordners prüfen oder in den Einstellungen einen anderen Hauptordner wählen."
+        base = msg(_("No write permission ({path}) – please check the folder's permissions or choose a different main "
+                     "folder in the settings."),
+                   _("No write permission – please check the folder's permissions or choose a different main folder in "
+                     "the settings."))
     elif code == _e.ENOSPC:
-        base = "Der Datenträger ist voll" + where + "."
+        base = msg(_("The storage device is full ({path})."), _("The storage device is full."))
     elif code == _e.ENOENT:
-        base = "Datei oder Ordner nicht gefunden" + where + "."
+        base = msg(_("File or folder not found ({path})."), _("File or folder not found."))
     elif code == _e.EISDIR:
-        base = "Das ist ein Ordner, keine Datei" + where + "."
+        base = msg(_("This is a folder, not a file ({path})."), _("This is a folder, not a file."))
     elif code == _e.ENOTDIR:
-        base = "Ein Teil des Pfads ist kein Ordner" + where + "."
+        base = msg(_("Part of the path is not a folder ({path})."), _("Part of the path is not a folder."))
     elif isinstance(e, OSError):
-        base = f"Dateifehler{where}: {e.strerror or e}"
+        err = e.strerror or e
+        base = (_("File error ({path}): {error}").format(path=path, error=err) if path else
+                _("File error: {error}").format(error=err))
     else:
         base = str(e) or type(e).__name__
-    return (what + ": " if what else "") + base
+    return _("{what}: {error}").format(what=what, error=base) if what else base
 
 
 def safe_folder(name: str) -> tuple[Path, str]:
@@ -927,7 +938,7 @@ def safe_folder(name: str) -> tuple[Path, str]:
             root = Path(config.load().root)
         except Exception:  # noqa: BLE001
             root = Path.home() / "FM-1"
-        return root / name, fs_error_text(e, f"Ordner „{name}“ nicht anlegbar")
+        return root / name, fs_error_text(e, _("Folder “{name}” cannot be created").format(name=name))
 
 
 # ====================================================================== Layout-Helfer

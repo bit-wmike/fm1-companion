@@ -501,10 +501,10 @@ def main():
     ap.add_argument("--samples", type=int, default=0)
     ap.add_argument("--version", default="Melodee 1.6.0-rc.7")
     ap.add_argument("--generic", metavar="KENNUNG", default="",
-                    help="Firmware ohne Editor-Protokoll: beantwortet nur den Update-Handshake")
+                    help="firmware without editor protocol: only answers the update handshake")
     args = ap.parse_args()
     dev = FakeFM1(args.samples, args.version, identity=args.generic, generic=bool(args.generic))
-    print("# fake FM-1 bereit", flush=True)
+    print("# fake FM-1 bereit", flush=True)  # i18n: ignore – read by the app/tests
     for line in sys.stdin:
         line = line.strip()
         if not line:
@@ -512,7 +512,7 @@ def main():
         try:
             r = dev.handle(list(bytes.fromhex(line)))
         except Exception as e:  # noqa: BLE001
-            print(f"# Fehler: {e}", flush=True)
+            print(f"# error: {e}", flush=True)
             continue
         if r is not None:
             print(bytes(r).hex(), flush=True)

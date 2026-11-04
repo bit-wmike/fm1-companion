@@ -15,9 +15,11 @@ from PyQt6.QtCore import QPointF, QRectF, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPainterPath, QPalette, QPen
 from PyQt6.QtWidgets import QMenu, QSizePolicy, QToolButton, QWidget
 
+from ..i18n import _, ngettext
+
 HAVE_MM: bool | None = None          # Qt Multimedia: erst beim ersten Bedarf geladen (None = noch nicht geprüft)
-NO_PLAYER_HINT = ("Kein Abspielprogramm gefunden (pw-play, paplay, aplay oder ffplay). "
-                  "Auf dem Pi: sudo apt install pipewire-bin – oder alsa-utils.")
+NO_PLAYER_HINT = _("No player program found (pw-play, paplay, aplay or ffplay). "
+                   "On the Pi: sudo apt install pipewire-bin – or alsa-utils.")
 
 
 def _have_mm() -> bool:
@@ -101,9 +103,9 @@ def guard_default_output(delays=(0.0, 2.5, 6.0)):
                 r = None
             if r:
                 from .common import notify
-                notify(f"Das FM-1 („{r[0].description}“) war zum Standard-Ausgang geworden – der Ton des Rechners "
-                       f"läuft wieder über „{r[1].description}“. Das FM-1 bleibt unter „Ausgabe“ wählbar; "
-                       "abschalten lässt sich das dort.", "info")
+                notify(_("The FM-1 (“{fm1}”) had become the default output – the computer's sound plays through "
+                         "“{output}” again. The FM-1 can still be chosen under “Output”; this can be switched off "
+                         "there.").format(fm1=r[0].description, output=r[1].description), "info")
                 return
     import threading
     threading.Thread(target=work, daemon=True, name="fm1c-audio-guard").start()
@@ -219,7 +221,7 @@ class Player:
     def _try_exe(self, exe: str, path: Path, target: str) -> str:
         """-> "" wenn es läuft (oder schon fertig ist), sonst die Fehlermeldung."""
         if exe == "aplay" and path.suffix.lower() not in (".wav", ".wave"):
-            return f"aplay spielt nur WAV-Dateien ({path.suffix})"
+            return _("aplay only plays WAV files ({suffix})").format(suffix=path.suffix)
         env = dict(os.environ)
         if target:
             env["PULSE_SINK"] = target
@@ -229,7 +231,7 @@ class Player:
                                     stdin=subprocess.DEVNULL, env=env)
         except OSError as e:
             err.close()
-            return f"lässt sich nicht starten: {e.strerror or e}"
+            return _("cannot be started: {error}").format(error=e.strerror or e)
         try:
             rc = proc.wait(self.START_CHECK)
         except subprocess.TimeoutExpired:
@@ -238,7 +240,7 @@ class Player:
             err.seek(0)
             msg = err.read().decode("utf-8", "replace").strip().splitlines()
             err.close()
-            return (msg[-1] if msg else f"Abbruch mit Code {rc}")[:200]
+            return (msg[-1] if msg else _("aborted with code {code}").format(code=rc))[:200]
         self.proc, self._err_file, self.backend = proc, err, exe
         return ""
 
@@ -247,7 +249,7 @@ class Player:
         stop_all()
         path = Path(path)
         if not path.exists():
-            raise PlayerError(f"Die Datei {path.name} gibt es nicht mehr.")
+            raise PlayerError(_("The file {name} no longer exists.").format(name=path.name))
         target = _ao.effective_output(chosen_output())   # nie unbemerkt ans FM-1 (Standard, der das FM-1 ist)
         self.errors = []
         self._path, self._target = path, target
@@ -268,19 +270,18 @@ class Player:
             except PlayerError as e:
                 self.errors.append(f"Qt Multimedia: {e}")
         if not self.errors:
-            raise PlayerError(NO_PLAYER_HINT + " (Qt Multimedia fehlt ebenfalls: sudo apt install "
-                              "python3-pyqt6.qtmultimedia)")
-        raise PlayerError("Kein Ton möglich – " + "; ".join(self.errors) +
-                          ". Läuft PipeWire? (fm1-companion --check prüft das) – sonst sudo apt install pipewire-bin "
-                          "alsa-utils.")
+            raise PlayerError(NO_PLAYER_HINT + " " + _("(Qt Multimedia is missing too: {command})").format(
+                command="sudo apt install python3-pyqt6.qtmultimedia"))
+        raise PlayerError(_("No sound possible – {errors}. Is PipeWire running? (fm1-companion --check checks it) – "
+                            "otherwise sudo apt install pipewire-bin alsa-utils.").format(errors="; ".join(self.errors)))
 
     def _play_qt(self, path: Path):
         from PyQt6.QtCore import QCoreApplication
         if QCoreApplication.instance() is None:
-            raise PlayerError("ohne laufende Oberfläche nicht verfügbar")
+            raise PlayerError(_("not available without a running user interface"))
         from PyQt6.QtMultimedia import QAudioOutput, QMediaDevices, QMediaPlayer
         if not QMediaDevices.audioOutputs():
-            raise PlayerError("kein Audio-Ausgang gefunden")
+            raise PlayerError(_("no audio output found"))
         if self.mp is None:
             self.mp = QMediaPlayer(self.parent)
             self.out = QAudioOutput(self.parent)
@@ -337,8 +338,9 @@ class Player:
                     return
                 except PlayerError as e:
                     self.errors.append(f"Qt Multimedia: {e}")
-            self._report("Kein Ton – " + "; ".join(self.errors) + ". Läuft PipeWire? (fm1-companion --check) – "
-                         "sonst sudo apt install pipewire-bin alsa-utils.", self._status)
+            self._report(_("No sound – {errors}. Is PipeWire running? (fm1-companion --check) – otherwise "
+                           "sudo apt install pipewire-bin alsa-utils.").format(errors="; ".join(self.errors)),
+                         self._status)
         QTimer.singleShot(200, check)
 
     def play(self, path: Path, status=None) -> bool:
@@ -382,13 +384,13 @@ class Player:
     def _report(self, msg: str, status=None):
         if status:
             try:
-                status(f"Abspielen nicht möglich: {msg}")
+                status(_("Playback not possible: {error}").format(error=msg))
             except RuntimeError:                    # Label schon gelöscht
                 pass
         if msg != self.last_error:
             self.last_error = msg
             from .common import notify
-            notify(f"Abspielen nicht möglich: {msg}", "error")
+            notify(_("Playback not possible: {error}").format(error=msg), "error")
 
     def play_samples_strict(self, samples, rate: int) -> bool:
         self._tmp_n = (self._tmp_n + 1) % 2
@@ -448,41 +450,41 @@ class OutputButton(QToolButton):
         want = chosen_output()
         outs = _ao._outputs_cache[1] if cached_only else list_outputs()
         o = next((x for x in outs if x.name == want), None) if want else next((x for x in outs if x.default), None)
-        name = o.description if o else ("gewählt" if want else "Standard")
-        self.setText(f"Ausgabe: {name}"[:48])
-        tip = "Wohin das Vorhören im Rechner geht."
+        name = o.description if o else (_("chosen") if want else _("Default"))
+        self.setText(_("Output: {name}").format(name=name)[:48])
+        tip = _("Where the preview on the computer goes.")
         h = output_hint(o) if o else ""
         import importlib.util
         try:
             mm = importlib.util.find_spec("PyQt6.QtMultimedia") is not None   # nur nachsehen, nicht laden
         except (ImportError, ValueError):
             mm = False
-        self.setToolTip(tip + (" " + h if h else "") + "\nAbspielprogramme: " + (", ".join(available_backends())
-                        or "keines gefunden") + (", Qt Multimedia" if mm else ""))
+        self.setToolTip(tip + (" " + h if h else "") + "\n" + _("Player programs: {names}").format(
+            names=(", ".join(available_backends()) or _("none found")) + (", Qt Multimedia" if mm else "")))
 
     def _fill(self):
         m = self.menu()
         m.clear()
         want = chosen_output()
         outs = list_outputs(max_age=0)
-        a = m.addAction("Standard des Systems (nie unbemerkt das FM-1)")
+        a = m.addAction(_("System default (never the FM-1 unnoticed)"))
         a.setCheckable(True)
         a.setChecked(not want)
         a.triggered.connect(lambda: self._set(""))
         for o in outs:
-            label = o.description + (" (Standard)" if o.default else "") + (" – das FM-1" if o.is_fm1 else "")
+            label = o.description + (" " + _("(default)") if o.default else "") + (" – " + _("the FM-1") if o.is_fm1 else "")
             a = m.addAction(label)
             a.setCheckable(True)
             a.setChecked(o.name == want)
             a.triggered.connect(lambda _c=False, n=o.name: self._set(n))
         if not outs:
-            m.addAction("(keine Ausgänge gefunden – pw-dump/pactl fehlt?)").setEnabled(False)
+            m.addAction(_("(no outputs found – pw-dump/pactl missing?)")).setEnabled(False)
         m.addSeparator()
-        k = m.addAction("FM-1 nie von selbst zum Standard-Ausgang werden lassen")
+        k = m.addAction(_("Never let the FM-1 become the default output by itself"))
         k.setCheckable(True)
         k.setChecked(keep_off_fm1())
-        k.setToolTip("Steckt man das FM-1 an, macht der Rechner es oft zum Standard-Ausgang – dann käme jeder Ton aus "
-                     "dem FM-1. Die App stellt den Standard dann gleich wieder auf Lautsprecher/HDMI zurück.")
+        k.setToolTip(_("When the FM-1 is plugged in, the computer often makes it the default output – then every sound "
+                       "would come out of the FM-1. The app then sets the default straight back to speakers/HDMI."))
         k.triggered.connect(lambda on: (set_keep_off_fm1(on), guard_default_output() if on else None))
 
     def _set(self, name: str):
@@ -505,7 +507,7 @@ class Waveform(QWidget):
         self.end = 0.0
         self.editable = False
         self._drag = None
-        self.text = "kein Sound gewählt"
+        self.text = _("no sound selected")
 
     def set_data(self, peaks, duration: float, start=0.0, end=0.0, editable=False):
         self.peaks, self.duration = peaks, duration
@@ -513,8 +515,8 @@ class Waveform(QWidget):
         self.text = ""
         self.update()
 
-    def clear(self, text="kein Sound gewählt"):
-        self.peaks, self.duration, self.text = [], 0.0, text
+    def clear(self, text=None):
+        self.peaks, self.duration, self.text = [], 0.0, _("no sound selected") if text is None else text
         self.update()
 
     def _x(self, t: float) -> float:
@@ -523,7 +525,7 @@ class Waveform(QWidget):
     def _t(self, x: float) -> float:
         return max(0.0, min(self.duration, x / max(1, self.width()) * self.duration))
 
-    def paintEvent(self, _):
+    def paintEvent(self, _event):
         p = QPainter(self)
         pal = self.palette()
         p.fillRect(self.rect(), pal.color(QPalette.ColorRole.Base))
@@ -554,7 +556,8 @@ class Waveform(QWidget):
                 x = self._x(t)
                 p.drawLine(QPointF(x, 0), QPointF(x, h))
         p.setPen(txt)
-        p.drawText(6, 14, f"{self.duration:.2f} s" + (f"  ·  Auswahl {self.end - self.start:.2f} s" if self.editable else ""))
+        p.drawText(6, 14, f"{self.duration:.2f} s" + ("  ·  " + _("selection {seconds} s").format(
+            seconds=f"{self.end - self.start:.2f}") if self.editable else ""))
 
     def mousePressEvent(self, e):
         if not self.editable or not self.duration:
@@ -573,7 +576,7 @@ class Waveform(QWidget):
             self.end = max(t, self.start + 0.01)
         self.update()
 
-    def mouseReleaseEvent(self, _):
+    def mouseReleaseEvent(self, _event):
         if self._drag:
             self._drag = None
             self.markers_changed.emit(self.start, self.end)
@@ -596,7 +599,7 @@ class SliceView(QWidget):
         self.points: list[float] = []
         self.current = -1
         self._drag = -1
-        self.text = "keine Datei geladen"
+        self.text = _("no file loaded")
 
     def set_data(self, peaks, duration: float):
         self.peaks, self.duration, self.text = peaks, duration, ""
@@ -632,7 +635,7 @@ class SliceView(QWidget):
                 idx = i
         return idx
 
-    def paintEvent(self, _):
+    def paintEvent(self, _event):
         p = QPainter(self)
         pal = self.palette()
         p.fillRect(self.rect(), pal.color(QPalette.ColorRole.Base))
@@ -662,7 +665,8 @@ class SliceView(QWidget):
             x = self._x(t)
             p.drawLine(QPointF(x, 0), QPointF(x, h))
             p.drawText(QPointF(x + 3, 12), str(i + 1))
-        p.drawText(6, h - 6, f"{self.duration:.2f} s · {len(self.points)} Stücke")
+        p.drawText(6, h - 6, ngettext("{seconds} s · {n} piece", "{seconds} s · {n} pieces", len(self.points)).format(
+            seconds=f"{self.duration:.2f}", n=len(self.points)))
 
     def mousePressEvent(self, e):
         if not self.duration:
@@ -703,7 +707,7 @@ class SliceView(QWidget):
         else:
             self.setCursor(Qt.CursorShape.SizeHorCursor if self._near(x) >= 0 else Qt.CursorShape.ArrowCursor)
 
-    def mouseReleaseEvent(self, _):
+    def mouseReleaseEvent(self, _event):
         if self._drag >= 0:
             self._drag = -1
             self.points.sort()
@@ -724,7 +728,7 @@ class LiveWave(QWidget):
         self._acc = None
         self.rate = 44100
         self.marker_cols: list[int] = []
-        self.text = "Noch kein Signal"
+        self.text = _("No signal yet")
 
     def reset(self, rate: int = 44100):
         self.rate = rate
@@ -753,7 +757,7 @@ class LiveWave(QWidget):
     def mark(self):
         self.marker_cols.append(len(self.cols))
 
-    def paintEvent(self, _):
+    def paintEvent(self, _event):
         p = QPainter(self)
         pal = self.palette()
         p.fillRect(self.rect(), pal.color(QPalette.ColorRole.Base))

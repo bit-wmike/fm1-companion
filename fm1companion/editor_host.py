@@ -26,6 +26,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from .config import DATA_DIR
+from .i18n import _
 from .firmware import REPOS_DIR, FirmwareSpec, ensure_tools
 
 SITES = DATA_DIR / "editor"
@@ -46,7 +47,7 @@ def prepare(spec: FirmwareSpec, tag: str, log=print) -> Path:
     repo = REPOS_DIR / spec.key
     if not (repo / ".git").exists():
         ensure_tools(spec, tag, log)
-    log(f"stelle den Editor von {spec.name} {tag} bereit …")
+    log(_("providing the editor of {name} {version} …").format(name=spec.name, version=tag))
     folder = str(Path(spec.editor).parent) or "web"
     r = subprocess.run(["git", "archive", "--format=tar", tag, folder], cwd=repo, capture_output=True, timeout=300)
     if r.returncode:
@@ -54,7 +55,8 @@ def prepare(spec: FirmwareSpec, tag: str, log=print) -> Path:
         subprocess.run(["git", "fetch", "--tags", "--quiet"], cwd=repo, timeout=180)
         r = subprocess.run(["git", "archive", "--format=tar", tag, folder], cwd=repo, capture_output=True, timeout=300)
         if r.returncode:
-            raise RuntimeError(f"Editor für {tag} nicht verfügbar: {r.stderr.decode(errors='replace').strip()[:200]}")
+            raise RuntimeError(_("Editor for {version} not available: {error}").format(
+                                   version=tag, error=r.stderr.decode(errors='replace').strip()[:200]))
     if d.exists():
         shutil.rmtree(d)
     d.mkdir(parents=True)
@@ -66,7 +68,8 @@ def prepare(spec: FirmwareSpec, tag: str, log=print) -> Path:
         except TypeError:                      # Python < 3.11.4: ohne Filter keine Links/Gerätedateien
             tf.extractall(d, members=[m for m in members if m.isfile() or m.isdir()])
     if not (d / spec.editor).exists():
-        raise RuntimeError(f"{spec.name} {tag} enthält keinen Editor unter {spec.editor}")
+        raise RuntimeError(_("{name} {version} contains no editor under {path}").format(
+                               name=spec.name, version=tag, path=spec.editor))
     marker.write_text(tag)
     return d
 

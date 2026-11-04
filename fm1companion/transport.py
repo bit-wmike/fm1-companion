@@ -21,6 +21,7 @@ import threading
 import time
 from typing import Callable
 
+from .i18n import _
 from .protocol import frame, unframe, ProtocolError
 
 
@@ -69,7 +70,7 @@ class MidoTransport(Transport):
 
     def send(self, data):
         if self._closed:
-            raise LinkError("Verbindung geschlossen")
+            raise LinkError(_("connection closed"))
         msg = self.mido.Message.from_bytes(list(data))
         self.out.send(msg)
 
@@ -123,7 +124,7 @@ class SubprocessTransport(Transport):
 
     def send(self, data):
         if self.p.poll() is not None:
-            raise LinkError("Simulation beendet")
+            raise LinkError(_("simulation ended"))
         self.p.stdin.write(bytes(data).hex() + "\n")
         self.p.stdin.flush()
 
@@ -253,7 +254,7 @@ class Link:
     # -------- Anfragen --------
     def request(self, cmd: int, args=(), timeout: float = 1.5, retries: int = 1) -> list[int]:
         if self.closed:
-            raise LinkError("Gerät nicht verbunden")
+            raise LinkError(_("device not connected"))
         with self._req_lock:
             last = None
             for attempt in range(retries + 1):
@@ -263,7 +264,7 @@ class Link:
                     self._send(frame(cmd, args))
                     return q.get(timeout=timeout)
                 except queue.Empty:
-                    last = LinkError(f"keine Antwort auf Befehl {cmd}")
+                    last = LinkError(_("no answer to command {cmd}").format(cmd=cmd))
                 except (OSError, ProtocolError) as e:
                     last = LinkError(str(e))
                     break

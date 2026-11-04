@@ -16,6 +16,8 @@ import struct
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .i18n import _
+
 # Generator-Nummern (SoundFont 2.01, Kap. 8.1.2)
 G_INSTRUMENT, G_RELEASE_VOL, G_KEYRANGE, G_ATTENUATION, G_SAMPLE_ID, G_SAMPLE_MODES, G_ROOTKEY = 41, 38, 43, 48, 53, 54, 58
 PAD = 46                                         # Pflicht-Nullsamples nach jedem Sample
@@ -74,13 +76,13 @@ def _zstr(s: str) -> bytes:
 
 def build(bank: Bank) -> bytes:
     if not bank.presets or not bank.samples:
-        raise ValueError("Der SoundFont braucht mindestens einen Sound.")
+        raise ValueError(_("The SoundFont needs at least one sound."))
     # ---- Samples
     smpl = bytearray()
     shdr = bytearray()
     for s in bank.samples:
         if not s.data:
-            raise ValueError(f"{s.name}: leeres Sample")
+            raise ValueError(_("{name}: empty sample").format(name=s.name))
         start = len(smpl) // 2
         smpl += struct.pack(f"<{len(s.data)}h", *[max(-32768, min(32767, int(v))) for v in s.data])
         end = len(smpl) // 2
@@ -149,7 +151,7 @@ def bank_from_kit(kit, program: int = 0) -> Bank:
     """samples.Kit -> Bank (nutzt samples.render_zone: dieselbe Bearbeitung wie für das FM-1)."""
     from . import samples as S
     if not kit.zones:
-        raise ValueError("Das Kit ist leer.")
+        raise ValueError(_("The kit is empty."))
     b = Bank(name=kit.name or "Kit")
     drum = kit.mode == "drum"
     if drum:
@@ -177,7 +179,7 @@ def bank_from_folder(folder: Path, base_note: int = 36, name: str = "") -> Bank:
     files = sorted((p for p in folder.iterdir() if p.suffix.lower() in AUDIO and not p.name.startswith(".")),
                    key=lambda p: p.name.lower())[:max(1, 128 - base_note)]
     if not files:
-        raise ValueError(f"In „{folder.name}“ liegen keine Audiodateien.")
+        raise ValueError(_("There are no audio files in “{folder}”.").format(folder=folder.name))
     b = Bank(name=name or folder.name)
     zs = []
     for i, f in enumerate(files):

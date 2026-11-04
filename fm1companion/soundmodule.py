@@ -26,18 +26,20 @@ from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .i18n import _
 from .miditools import GM_PROGRAMS
 
 SYSTEM_SF2 = [Path("/usr/share/sounds/sf2/FluidR3_GM.sf2"), Path("/usr/share/sounds/sf2/TimGM6mb.sf2"),
               Path("/usr/share/sounds/sf2/default-GM.sf2"), Path("/usr/share/sounds/sf3/MuseScore_General.sf3")]
 INSTALL_HINT = "sudo apt install fluidsynth fluid-soundfont-gm"
-CLIENT_NAME = "FM-1 Klangerzeuger"
+CLIENT_NAME = "FM-1 Klangerzeuger"                   # ALSA-Clientname (Kennung, bleibt gleich)
 DEFAULT_CHANNELS = [5, 6, 7, 8]          # Melodee: Spur 5–8 starten auf Kanal 5–8
 
 # (Perioden-Größe, Anzahl) – Latenz ≈ Größe × Anzahl / Rate
 LATENCY = {"niedrig": (64, 2), "ausgewogen": (128, 2), "sicher": (256, 3)}
-LATENCY_DE = {"niedrig": "niedrig (~3 ms, braucht einen ruhigen Pi)", "ausgewogen": "ausgewogen (~5 ms)",
-              "sicher": "sicher (~16 ms, keine Aussetzer)"}
+# Anzeige je Einstellungswert (die Schlüssel sind gespeicherte Werte und bleiben deutsch)
+LATENCY_DE = {"niedrig": _("low (~3 ms, needs a quiet Pi)"), "ausgewogen": _("balanced (~5 ms)"),
+              "sicher": _("safe (~16 ms, no dropouts)")}
 ROUTER_TYPES = ("note", "cc", "prog", "pbend", "cpress", "kpress")
 
 
@@ -73,27 +75,28 @@ def audio_drivers(exe: str | None = None) -> list[str]:
 
 # typische Meldungen von FluidSynth -> was der Nutzer tun kann
 FAIL_HINTS = [
-    ("audio driver", "Der Audio-Ausgang ließ sich nicht öffnen – läuft gerade ein anderes Programm mit exklusivem "
-                     "Zugriff (z. B. Audacity im Aufnahme-Modus)? Unter „Audio“ einen anderen Treiber wählen "
-                     "(pipewire/pulseaudio/alsa) oder Latenz „sicher“."),
-    ("alsa_seq", "Der ALSA-Sequencer ist nicht erreichbar (snd-seq fehlt?). Ein Neustart des Pi hilft meist."),
-    ("soundfont", "Die Klangbank ließ sich nicht laden – Datei beschädigt oder keine .sf2/.sf3? Unter „Klangbank“ "
-                  "eine andere wählen (sudo apt install fluid-soundfont-gm)."),
-    ("sfont", "Die Klangbank ließ sich nicht laden – unter „Klangbank“ eine andere wählen."),
-    ("permission", "Keine Berechtigung für das Audio-Gerät – gehört dein Benutzer zur Gruppe „audio“?"),
-    ("busy", "Das Audio-Gerät ist belegt – ein anderes Programm hält es. Dort stoppen oder Treiber „pipewire“ wählen."),
+    ("audio driver", _("The audio output could not be opened – is another program using it exclusively right now "
+                       "(e.g. Audacity in recording mode)? Choose another driver under “Audio” "
+                       "(pipewire/pulseaudio/alsa) or latency “safe”.")),
+    ("alsa_seq", _("The ALSA sequencer is not reachable (snd-seq missing?). Restarting the Pi usually helps.")),
+    ("soundfont", _("The sound bank could not be loaded – file damaged or not a .sf2/.sf3? Choose another one "
+                    "under “Sound bank” (sudo apt install fluid-soundfont-gm).")),
+    ("sfont", _("The sound bank could not be loaded – choose another one under “Sound bank”.")),
+    ("permission", _("No permission for the audio device – is your user in the group “audio”?")),
+    ("busy", _("The audio device is busy – another program holds it. Stop it there or choose driver “pipewire”.")),
 ]
 
 
 def explain_failure(log) -> str:
-    """die letzten Logzeilen von FluidSynth in einen deutschen Hinweis übersetzen."""
+    """die letzten Logzeilen von FluidSynth in einen verständlichen Hinweis übersetzen."""
     text = " ".join(log).lower()
     for key, hint in FAIL_HINTS:
         if key in text:
             return hint
     last = next((ln for ln in reversed(list(log)) if ln.strip()), "")
-    return ("FluidSynth hat sich sofort wieder beendet" + (f": „{last[:160]}“" if last else " – ohne Meldung")
-            + ". Unter „Details“ steht die ganze Ausgabe.")
+    if last:
+        return _("FluidSynth quit right away: “{line}”. “Details” shows the whole output.").format(line=last[:160])
+    return _("FluidSynth quit right away – without a message. “Details” shows the whole output.")
 
 
 def parse_drivers(text: str) -> list[str]:
@@ -167,7 +170,7 @@ def router_commands(channels: list[int]) -> list[str]:
 
 def program_label(bank: int, program: int) -> str:
     if bank == 128:
-        return f"Schlagzeug {program + 1}"
+        return _("Drums {n}").format(n=program + 1)
     return f"{program + 1:03d} {GM_PROGRAMS[program % 128]}"
 
 

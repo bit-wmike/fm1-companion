@@ -11,27 +11,30 @@ from PyQt6.QtWidgets import (QDialog, QDialogButtonBox, QInputDialog, QLabel, QL
                              QVBoxLayout, QWidget)
 
 from .. import config, firmware
+from ..i18n import _
 from ..devices import PortInfo, Profile, ProfileStore, scan_ports, usable_serial
 from ..protocol import Cmd, Info, parse_info
 from ..transport import Link, LinkError, MidoTransport, SubprocessTransport
 from .common import JobDialog, run_job, show_error
 
 DEMO = os.environ.get("FM1C_DEMO") == "1"
-UNKNOWN_CHOICE = "?"        # „weiß nicht“ – gemerkt, damit die App nur einmal fragt
+UNKNOWN_CHOICE = "?"        # "don't know" – gemerkt, damit die App nur einmal fragt
 
 
 class FolderError(OSError):
-    """Ordner lässt sich nicht anlegen/beschreiben – Text ist eine fertige deutsche Meldung"""
+    """Ordner lässt sich nicht anlegen/beschreiben – Text ist eine fertige (übersetzte) Meldung"""
 
 
 def folder_error_text(path, e: OSError) -> str:
     import errno
-    why = {errno.EACCES: "keine Schreibrechte", errno.EPERM: "keine Schreibrechte",
-           errno.EROFS: "der Datenträger ist schreibgeschützt", errno.ENOSPC: "der Datenträger ist voll",
-           errno.ENAMETOOLONG: "der Name ist zu lang", errno.ENOENT: "der Ordner fehlt (Laufwerk getrennt?)"}.get(
-        getattr(e, "errno", None), "Fehler beim Schreiben")
-    return (f"Der Ordner „{path}“ lässt sich nicht anlegen oder beschreiben: {why}. Bitte die Rechte prüfen oder in "
-            f"den Einstellungen einen anderen Hauptordner wählen. (Technisch: {e.strerror or e})")
+    why = {errno.EACCES: _("no write permission"), errno.EPERM: _("no write permission"),
+           errno.EROFS: _("the drive is write-protected"), errno.ENOSPC: _("the drive is full"),
+           errno.ENAMETOOLONG: _("the name is too long"),
+           errno.ENOENT: _("the folder is missing (drive disconnected?)")}.get(
+        getattr(e, "errno", None), _("error while writing"))
+    return _("The folder “{path}” cannot be created or written: {reason}. Please check the permissions or choose "
+             "another main folder in the settings. (Technical: {error})").format(path=path, reason=why,
+                                                                                error=e.strerror or e)
 
 
 def handshake(link, tries: int = 2, timeout: float = 1.0) -> str:
@@ -45,7 +48,7 @@ def handshake(link, tries: int = 2, timeout: float = 1.0) -> str:
             q.put(bytes(data))
     link.add_listener(listen)
     try:
-        for _ in range(tries):
+        for _try in range(tries):
             if not link.send_midi(list(fi.HS_QUERY), force=True):
                 return ""
             end = time.monotonic() + timeout
@@ -65,7 +68,7 @@ def handshake(link, tries: int = 2, timeout: float = 1.0) -> str:
 def _probe_loader(port) -> str:
     from ..flash import engine
     try:
-        ident = engine.Engine(log=lambda *_: None).probe(port.in_name)
+        ident = engine.Engine(log=lambda *_a: None).probe(port.in_name)
         return ident.text if ident else ""
     except Exception:  # noqa: BLE001
         return ""
@@ -128,13 +131,15 @@ class FirmwareChoiceDialog(QDialog):
 
     def __init__(self, parent, identity: str, candidates: list[str], device: str = ""):
         super().__init__(parent)
-        self.setWindowTitle("Welche Firmware läuft hier?")
+        self.setWindowTitle(_("Which firmware is running here?"))
         lay = QVBoxLayout(self)
-        lab = QLabel(f"{device or 'Dieses FM-1'} meldet die Kennung <b>{identity}</b>. Diese Kennung benutzen "
-                     "mehrere Firmwares, und die laufende Firmware hat kein Editor-Protokoll, über das die App "
-                     "nachfragen könnte. Welche ist es? Die Antwort wird für dieses Gerät gemerkt.<br><br>"
-                     "<small>Im Zweifel „weiß nicht“: Dann behandelt die App jede Installation als "
-                     "Firmware-Wechsel (mit Zwischenschritt über die Original-V15).</small>")
+        intro = (_("{device} reports the ID <b>{id}</b>.").format(device=device, id=identity) if device
+                 else _("This FM-1 reports the ID <b>{id}</b>.").format(id=identity))
+        lab = QLabel(intro + " " + _("Several firmwares use this ID, and the running firmware has no editor "
+                                     "protocol the app could ask. Which one is it? The answer is remembered for this "
+                                     "device.") + "<br><br><small>" +
+                     _("If in doubt, “don't know”: then the app treats every installation as a firmware change "
+                       "(with an intermediate step via the original V15).") + "</small>")
         lab.setWordWrap(True)
         lay.addWidget(lab)
         self.list = QListWidget()
@@ -142,11 +147,11 @@ class FirmwareChoiceDialog(QDialog):
             it = QListWidgetItem(firmware_name(k) or k)
             it.setData(Qt.ItemDataRole.UserRole, k)
             self.list.addItem(it)
-        it = QListWidgetItem("weiß nicht")
+        it = QListWidgetItem(_("don't know"))
         it.setData(Qt.ItemDataRole.UserRole, UNKNOWN_CHOICE)
         self.list.addItem(it)
         self.list.setCurrentRow(self.list.count() - 1)
-        self.list.itemDoubleClicked.connect(lambda *_: self.accept())
+        self.list.itemDoubleClicked.connect(lambda *_a: self.accept())
         lay.addWidget(self.list, 1)
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         bb.accepted.connect(self.accept)
@@ -240,19 +245,19 @@ class DeviceContext(QObject):
 
     def title(self) -> str:
         if not self.port:
-            return "Kein FM-1 verbunden"
+            return _("No FM-1 connected")
         if self.is_virtual:
             from .common import fw_label
-            return f"{self.port.label} – virtuell" + (f" ({fw_label(self.info.version)})" if self.info else "")
+            return _("{device} – virtual").format(device=self.port.label) + (f" ({fw_label(self.info.version)})" if self.info else "")
         name = self.profile.name if self.profile else self.port.label
         if self.info:
             from .common import fw_label
             fw = fw_label(self.info.version)
         elif self.protocol == "update":
-            fw = f"Update-Modus ({self.identity})" if self.identity else "Update-Modus"
+            fw = _("update mode ({id})").format(id=self.identity) if self.identity else _("update mode")
         elif self.midi_connected:
             name = firmware_name(self.firmware_key)
-            fw = (name or ("unbekannt – bitte wählen" if self.firmware_ambiguous else "unbekannte Firmware")) + \
+            fw = (name or (_("unknown – please choose") if self.firmware_ambiguous else _("unknown firmware"))) + \
                 (f" ({self.identity})" if self.identity else "")
         else:
             fw = "…"
@@ -261,16 +266,16 @@ class DeviceContext(QObject):
     def status_text(self) -> str:
         """kurzer Zustand für Werkzeugleiste/Übersicht"""
         if self.is_virtual:
-            return ("virtuell – der Zwilling im Studio, kein echtes FM-1" if self.connected
-                    else "virtuell – Zwilling startet …")
+            return (_("virtual – the twin in the Studio, not a real FM-1") if self.connected
+                    else _("virtual – twin is starting …"))
         p = self.protocol
-        return {"felucca": "verbunden – voller Zugriff", "generic": "verbunden – nur MIDI (Firmware ohne Editor-"
-                "Protokoll)", "update": "im Update-Modus – Installation abschließen (Seite „Rettung“)"}.get(
-            p, "nicht verbunden")
+        return {"felucca": _("connected – full access"),
+                "generic": _("connected – MIDI only (firmware without editor protocol)"),
+                "update": _("in update mode – finish the installation (page “Rescue”)")}.get(p, _("not connected"))
 
     def device_folder(self, base) -> "os.PathLike":
-        """Ordner dieses Geräts unter `base` (angelegt). FolderError (deutsche Meldung), wenn das nicht geht."""
-        sub = self.profile.folder_name if self.profile else "Unbekanntes Gerät"
+        """Ordner dieses Geräts unter `base` (angelegt). FolderError (fertige Meldung), wenn das nicht geht."""
+        sub = self.profile.folder_name if self.profile else "Unbekanntes Gerät"   # folder name on disk  # i18n: ignore
         d = base / sub
         try:
             d.mkdir(parents=True, exist_ok=True)
@@ -307,9 +312,9 @@ class DeviceContext(QObject):
             self.vports = vports         # virtuelle Geräte stehen getrennt (nur Geräteauswahl oben)
             self.ports_changed.emit()
         if self.port and self.port.key not in keys + vkeys:
-            self.disconnect("FM-1 getrennt")
+            self.disconnect(_("FM-1 disconnected"))
         if self.link and not self.link.t.alive:
-            self.disconnect("Verbindung verloren")
+            self.disconnect(_("Connection lost"))
         if not self.port and ports:         # nie von selbst auf ein virtuelles Gerät verbinden
             last = self.settings.last_device
             def is_last(p):
@@ -323,7 +328,7 @@ class DeviceContext(QObject):
         self.disconnect(None)
         self.port = port
         if port.update_mode:
-            self.message.emit("Das FM-1 ist im Update-Modus. Die Seite „Rettung“ schließt die Installation ab.")
+            self.message.emit(_("The FM-1 is in update mode. The page “Rescue” finishes the installation."))
             self.identity = ""
             self._assign_profile()
             self.changed.emit()
@@ -338,7 +343,7 @@ class DeviceContext(QObject):
         try:
             if getattr(port, "virtual", False):
                 if self.virtual_transport is None:
-                    raise RuntimeError("Studio nicht verfügbar")
+                    raise RuntimeError(_("Studio not available"))
                 t = self.virtual_transport(port)
             elif DEMO:
                 cmd = os.environ.get("FM1C_DEMO_CMD")
@@ -354,7 +359,7 @@ class DeviceContext(QObject):
             else:
                 t = MidoTransport(port.in_name, port.out_name)
         except Exception as e:  # noqa: BLE001
-            self.message.emit(f"MIDI-Port lässt sich nicht öffnen: {e}")
+            self.message.emit(_("The MIDI port cannot be opened: {error}").format(error=e))
             self.port = None
             return
         self.link = Link(t)
@@ -372,7 +377,7 @@ class DeviceContext(QObject):
         last = None
         link = link or self.link
         wait_started = getattr(link.t, "wait_started", None)
-        for _ in range(4):          # das erste Paket nach dem Öffnen geht manchmal verloren
+        for _try in range(4):       # das erste Paket nach dem Öffnen geht manchmal verloren
             try:
                 info = parse_info(link.request(Cmd.INFO, [], timeout=1.0, retries=0))
                 self._hs_identity = link.hs_identity = handshake(link, tries=1, timeout=0.6)
@@ -384,7 +389,7 @@ class DeviceContext(QObject):
                 if wait_started is not None and not wait_started(self.STARTUP_GRACE):
                     break
                 time.sleep(0.3)
-        raise last or LinkError("keine Antwort")
+        raise last or LinkError(_("no answer"))
 
     def _probed(self, info: Info, link=None):
         if link is not None and link is not self.link:
@@ -447,11 +452,11 @@ class DeviceContext(QObject):
             p.last_seen = time.time()
             self.store.save()
         if ident:
-            self.message.emit(f"FM-1 verbunden ({ident}) – diese Firmware hat kein Editor-Protokoll: MIDI, Presets per "
-                              "SysEx und Firmware-Installation gehen, Backups und Projekte nicht.")
+            self.message.emit(_("FM-1 connected ({id}) – this firmware has no editor protocol: MIDI, presets via "
+                                "SysEx and firmware installation work, backups and projects do not.").format(id=ident))
         else:
-            self.message.emit("Das Gerät antwortet weder auf Editor-Befehle noch auf die Update-Kennung. Die "
-                              "MIDI-Verbindung bleibt offen.")
+            self.message.emit(_("The device answers neither editor commands nor the update ID. The "
+                                "MIDI connection stays open."))
         self.changed.emit()
         if self.firmware_ambiguous and p and ident and not choice:
             QTimer.singleShot(300, lambda port=self.port: self.ask_firmware(port))
@@ -493,11 +498,15 @@ class DeviceContext(QObject):
             self.store.save()
         if key != UNKNOWN_CHOICE:
             self.firmware_guess = [key]
-            self.message.emit(f"Gemerkt: Auf {self.profile.name if self.profile else 'diesem FM-1'} läuft "
-                              f"{firmware_name(key)} (Kennung {self.identity}).")
+            if self.profile:
+                self.message.emit(_("Remembered: {device} runs {firmware} (ID {id}).").format(
+                    device=self.profile.name, firmware=firmware_name(key), id=self.identity))
+            else:
+                self.message.emit(_("Remembered: this FM-1 runs {firmware} (ID {id}).").format(
+                    firmware=firmware_name(key), id=self.identity))
         else:
-            self.message.emit("Gemerkt: Firmware unbekannt – Installationen gelten als Firmware-Wechsel (mit "
-                              "V15-Zwischenschritt).")
+            self.message.emit(_("Remembered: firmware unknown – installations count as a firmware change (with "
+                                "V15 intermediate step)."))
         self.changed.emit()
 
     def _loader_probed(self, ident):
@@ -554,19 +563,21 @@ class DeviceContext(QObject):
         self._asking = True
         try:
             names = [c.name + (f" ({c.firmware} {c.firmware_version})" if c.firmware else "") for c in cands]
-            names.append("Neues Gerät anlegen …")
+            names.append(_("Create new device …"))
             last = next((i for i, c in enumerate(cands) if c.id == self.settings.last_device), 0)
-            item, ok = QInputDialog.getItem(self.window, "Welches FM-1 ist das?",
-                                            "Dieses FM-1 hat keine Seriennummer. Welches deiner Geräte ist es?",
+            item, ok = QInputDialog.getItem(self.window, _("Which FM-1 is this?"),
+                                            _("This FM-1 has no serial number. Which of your devices is it?"),
                                             names, last, False)
             if ok and item == names[-1]:
-                name, ok2 = QInputDialog.getText(self.window, "Neues Gerät", "Name für dieses FM-1:")
+                name, ok2 = QInputDialog.getText(self.window, _("New device"), _("Name for this FM-1:"))
                 return self.store.create(name if ok2 else "")
             return cands[names.index(item)] if ok and item in names[:-1] else cands[last]
         finally:
             self._asking = False
 
-    def disconnect(self, reason: str | None = "getrennt"):
+    def disconnect(self, reason: str | None = ""):
+        if reason == "":
+            reason = _("disconnected")
         if self.link:
             try:
                 self.about_to_disconnect.emit(self.link)
@@ -592,7 +603,7 @@ class DeviceContext(QObject):
     # ------------------------------------------------------- Zugriffe
     def require(self, parent) -> bool:
         if not self.connected:
-            show_error(parent, "Kein Gerät", "Bitte ein FM-1 mit Melodee, Skiff oder SLOOP per USB verbinden.")
+            show_error(parent, _("No device"), _("Please connect an FM-1 with Melodee, Skiff or SLOOP via USB."))
             return False
         return True
 
@@ -602,7 +613,7 @@ class DeviceContext(QObject):
 
         def wrapped(w, *a, **k):
             if link is None or link.closed:
-                raise LinkError("Gerät nicht verbunden")
+                raise LinkError(_("device not connected"))
             with link.exclusive():
                 return fn(w, link, *a, **k)
         if dialog:
@@ -626,8 +637,9 @@ class DeviceContext(QObject):
         other = self.store.name_taken(name, except_id=p.id) if hasattr(self.store, "name_taken") else None
         if other is not None:
             # sonst landeten die Backups zweier Geräte im selben Ordner
-            raise FolderError(f"Der Name „{name}“ ist schon vergeben (Gerät „{other.name}“) – die Backups beider Geräte "
-                              "würden sonst im selben Ordner landen. Bitte einen anderen Namen wählen.")
+            raise FolderError(_("The name “{name}” is already taken (device “{device}”) – otherwise the backups of both "
+                                "devices would end up in the same folder. Please choose another name.").format(
+                                    name=name, device=other.name))
         old_folder = p.folder_name
         new_folder = Profile(id=p.id, name=name).folder_name
         if old_folder != new_folder:
@@ -637,6 +649,6 @@ class DeviceContext(QObject):
                 raise FolderError(folder_error_text(self.settings.backups_dir / old_folder, e)) from e
         p.name = name
         self.store.save()
-        self.message.emit(f"Umbenannt in „{name}“" + (f" – Backups liegen jetzt in „{new_folder}“."
-                                                     if old_folder != new_folder else "."))
+        self.message.emit(_("Renamed to “{name}” – backups are now in “{folder}”.").format(name=name, folder=new_folder)
+                          if old_folder != new_folder else _("Renamed to “{name}”.").format(name=name))
         self.changed.emit()

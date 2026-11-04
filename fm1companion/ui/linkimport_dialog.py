@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QF
 from .. import catalog as catmod
 from .. import linkimport as L
 from .common import Disclosure, confirm, fs_error_text, icon, notify, run_job
+from ..i18n import _, ngettext
 
 FIELDS = [("name", "line"), ("key", "line"), ("repo", "line"), ("asset", "line"), ("download_url", "line"),
           ("sha256", "line"), ("author", "line"), ("license", "line"), ("category", "combo"),
@@ -28,12 +29,12 @@ FIELDS = [("name", "line"), ("key", "line"), ("repo", "line"), ("asset", "line")
 # Expertenfelder: hinter „Erweitert“ (werden beim Erkennen trotzdem gefüllt und geprüft)
 ADVANCED = {"key", "asset", "download_url", "sha256", "family", "product", "protocol", "requires_stock_v15",
             "installer_url", "emulator_url", "editor_url", "manual_url"}
-TIPS = {"key": "eindeutiger Kurzname (Ordnername), nur a–z, 0–9, - und _",
-        "asset": "Dateiname des Pakets im GitHub-Release; {ver} steht für die Version ohne „v“",
-        "download_url": "feste Adresse des .fwsc-Pakets (falls nicht über GitHub-Releases)",
-        "sha256": "Prüfsumme des Pakets – die App prüft sie vor dem Aufspielen",
-        "protocol": "Felucca-Protokoll = die App kann Backups, Projekte und die Editor-Brücke",
-        "requires_stock_v15": "Paket lässt sich nur von der Original-Firmware V15 aus aufspielen"}
+TIPS = {"key": _("unique short name (folder name), only a–z, 0–9, - and _"),
+        "asset": _("file name of the package in the GitHub release; {ver} stands for the version without “v”"),
+        "download_url": _("fixed address of the .fwsc package (if not via GitHub releases)"),
+        "sha256": _("checksum of the package – the app checks it before installing"),
+        "protocol": _("Felucca protocol = the app can do backups, projects and the editor bridge"),
+        "requires_stock_v15": _("package can only be installed from the original firmware V15")}
 
 
 def online_allowed() -> bool:
@@ -51,30 +52,31 @@ class LinkImportDialog(QDialog):
         self.saved_spec = None
         self.draft = draft
         self._gen = 0
-        self.setWindowTitle("Firmware bearbeiten" if editing_key else "Link einfügen")
+        self.setWindowTitle(_("Edit firmware") if editing_key else _("Paste link"))
         # passt auch auf den 14"-Laptop (1280×720): nie höher als der nutzbare Bildschirm
         avail = (parent.screen() if parent is not None and parent.screen() else QGuiApplication.primaryScreen())
         geo = avail.availableGeometry() if avail else None
         self.resize(min(720, geo.width() - 40) if geo else 720, min(700, geo.height() - 60) if geo else 700)
         lay = QVBoxLayout(self)
-        intro = QLabel("Füge einen Link ein – GitHub-Repo, Release, .fwsc-Paket, Installer- oder Simulator-Seite, "
-                       "einen Eintrag von thefirmwarehub.com oder fm1-editor.com, eine lokale .fwsc-Datei oder "
-                       "einfach einen Namen. Die App füllt aus, was sie herausfindet; "
-                       "<b style='color:#c77700'>geraten</b> markierte Felder bitte prüfen.")
+        intro = QLabel(_("Paste a link – GitHub repo, release, .fwsc package, installer or simulator "
+                         "page, an entry from thefirmwarehub.com or fm1-editor.com, a local .fwsc file or "
+                         "simply a name. The app fills in what it finds out; please check fields marked "
+                         "<b style='color:#c77700'>guessed</b>."))
         intro.setWordWrap(True)
         intro.setTextFormat(Qt.TextFormat.RichText)
         lay.addWidget(intro)
         row = QHBoxLayout()
         self.input = QLineEdit(text)
-        self.input.setPlaceholderText("https://github.com/besitzer/firmware  oder  ~/Downloads/paket.fwsc  oder  orbit")
+        self.input.setPlaceholderText(_("https://github.com/owner/firmware  or  ~/Downloads/package.fwsc  "
+                                        "or  orbit"))
         self.input.returnPressed.connect(self.recognize)
-        self.b_go = QPushButton(icon("edit-find", "system-search"), "Erkennen")
+        self.b_go = QPushButton(icon("edit-find", "system-search"), _("Recognize"))
         self.b_go.clicked.connect(self.recognize)
-        self.chk_online = QCheckBox("auf GitHub nachsehen")
-        self.chk_online.setToolTip("Releases und Repo-Dateien abfragen (braucht Internet)")
+        self.chk_online = QCheckBox(_("look it up on GitHub"))
+        self.chk_online.setToolTip(_("query releases and repo files (needs internet)"))
         self.chk_online.setChecked(online_allowed() if online is None else online)
-        self.b_pick = QPushButton(icon("view-list-details", "view-list-text"), "Treffer …")
-        self.b_pick.setToolTip("Mehrere Firmwares passen zum Namen – die richtige auswählen")
+        self.b_pick = QPushButton(icon("view-list-details", "view-list-text"), _("Matches …"))
+        self.b_pick.setToolTip(_("Several firmwares match the name – choose the right one"))
         self.b_pick.clicked.connect(self.choose)
         self.b_pick.hide()
         self.candidates: list[dict] = []
@@ -99,7 +101,7 @@ class LinkImportDialog(QDialog):
         body_lay.addLayout(self.form)
         adv = QWidget()
         self.adv_form = QFormLayout(adv)
-        self.advanced = Disclosure("Erweitert: Schlüssel, Paketname, Prüfsumme, Familie, Kennung, Protokoll …", adv)
+        self.advanced = Disclosure(_("Advanced: key, package name, checksum, family, identifier, protocol …"), adv)
         body_lay.addWidget(self.advanced)
         body_lay.addStretch(1)
         self.w: dict[str, QWidget] = {}
@@ -115,12 +117,14 @@ class LinkImportDialog(QDialog):
             elif kind == "combo":
                 w = QComboBox()
                 w.setEditable(True)
-                w.addItems([""] + catmod.CATEGORIES)
+                w.addItem("", "")
+                for k in catmod.CATEGORIES:                # shown translated, saved as the catalog key
+                    w.addItem(catmod.category_name(k), k)
                 w.currentTextChanged.connect(lambda _t, n=name: self._edited(n) if self.w[n].hasFocus() else None)
             elif kind == "proto":
                 w = QComboBox()
-                w.addItem("unbekannt – wird beim Verbinden geprüft", "none")
-                w.addItem("Felucca-Protokoll (Backup, Projekte, Editor)", "felucca")
+                w.addItem(_("unknown – checked when connecting"), "none")
+                w.addItem(_("Felucca protocol (backup, projects, editor)"), "felucca")
                 w.activated.connect(lambda _i, n=name: self._edited(n))
             else:
                 w = QCheckBox()
@@ -133,7 +137,7 @@ class LinkImportDialog(QDialog):
             h = QHBoxLayout()
             h.addWidget(w, 1)
             h.addWidget(m)
-            (self.adv_form if name in ADVANCED else self.form).addRow(L.LABELS.get(name, name) + ":", h)
+            (self.adv_form if name in ADVANCED else self.form).addRow(L.label(name) + ":", h)
         lay.addWidget(scroll, 1)
         self.hints = QLabel()
         self.hints.setWordWrap(True)
@@ -144,15 +148,15 @@ class LinkImportDialog(QDialog):
         self.errors.setStyleSheet("color:#d9534f;")
         lay.addWidget(self.errors)
         bb = QDialogButtonBox()
-        self.b_save = bb.addButton("Zu meinen Firmwares", QDialogButtonBox.ButtonRole.AcceptRole)
+        self.b_save = bb.addButton(_("Add to my firmwares"), QDialogButtonBox.ButtonRole.AcceptRole)
         self.b_save.setIcon(icon("list-add", "document-save"))
-        bb.addButton("Abbrechen", QDialogButtonBox.ButtonRole.RejectRole)
+        bb.addButton(_("Cancel"), QDialogButtonBox.ButtonRole.RejectRole)
         bb.accepted.connect(self._save)
         bb.rejected.connect(self.reject)
         lay.addWidget(bb)
         if draft is not None:
             self.show_draft(draft)
-            self.status.setText("Gespeicherter Eintrag – alle Felder lassen sich ändern.")
+            self.status.setText(_("Saved entry – all fields can be changed."))
         elif text.strip():
             self.recognize()
 
@@ -166,7 +170,7 @@ class LinkImportDialog(QDialog):
         self.show_draft(L.resolve(text, self.cat, online=False))
         # auch bei einem bloßen Namen: Katalog + GitHub-Suche (linkimport._resolve_name)
         if self.chk_online.isChecked() and (self.draft.repo or self.draft.source in ("url", "name")):
-            self.status.setText("Sehe auf GitHub nach …")
+            self.status.setText(_("Looking it up on GitHub …"))
             run_job(self, lambda w: L.resolve(text, self.cat, online=True),
                     on_done=lambda d: self._online_done(gen, d),
                     on_fail=lambda m, tb: self._online_fail(gen, m))
@@ -210,28 +214,30 @@ class LinkImportDialog(QDialog):
             self._set_value(n, v)
             self._marker(n, "du")
             self.draft.confidence[n] = "du"
-        self.status.setText(self._summary() + " GitHub abgefragt.")
+        self.status.setText(self._summary() + _(" GitHub queried."))
         self._offer_choice()
 
     def _online_fail(self, gen, msg):
         if gen == self._gen:
             from ..dx7_sources import net_error_text
-            self.status.setText(self._summary() + f" GitHub nicht abgefragt: {net_error_text(msg)}")
+            self.status.setText(self._summary() + _(" GitHub not queried: {error}").format(error=net_error_text(msg)))
 
     def _summary(self) -> str:
         d = self.draft
         if not d or not d.name:
-            return ("Nichts erkannt – das sieht nicht nach Link, Datei oder Firmware-Name aus. Beispiele: "
-                    "https://github.com/besitzer/firmware, ~/Downloads/paket.fwsc, orbit." if self.input.text().strip()
-                    else "Noch nichts erkannt.")
-        guessed = [L.LABELS.get(n, n) for n, h in d.confidence.items() if h == L.GUESS and getattr(d, n, "")]
-        return f"Erkannt: <b>{d.name}</b>." + (f" Geraten: {', '.join(guessed)}." if guessed else "")
+            return (_("Nothing recognized – this doesn't look like a link, file or firmware name. "
+                      "Examples: https://github.com/owner/firmware, ~/Downloads/package.fwsc, orbit.") if self.input.text().strip()
+                    else _("Nothing recognized yet."))
+        guessed = [L.label(n) for n, h in d.confidence.items() if h == L.GUESS and getattr(d, n, "")]
+        if guessed:
+            return _("Recognized: <b>{name}</b>. Guessed: {fields}.").format(name=d.name, fields=", ".join(guessed))
+        return _("Recognized: <b>{name}</b>.").format(name=d.name)
 
     def show_draft(self, d: L.FirmwareDraft):
         self.draft = d
         if d.candidates and not self._picking:
             self.candidates = list(d.candidates)
-        self.b_pick.setText(f"Treffer ({len(self.candidates)}) …")
+        self.b_pick.setText(_("Matches ({n}) …").format(n=len(self.candidates)))
         self.b_pick.setVisible(len(self.candidates) > 1)
         for name, _kind in FIELDS:
             self._set_value(name, getattr(d, name))
@@ -254,7 +260,11 @@ class LinkImportDialog(QDialog):
         elif isinstance(w, QComboBox) and name == "protocol":
             w.setCurrentIndex(max(0, w.findData(v or "none")))
         elif isinstance(w, QComboBox):
-            w.setCurrentText(str(v or ""))
+            i = w.findData(v) if v else -1
+            if i >= 0:
+                w.setCurrentIndex(i)
+            else:
+                w.setCurrentText(str(v or ""))
         else:
             w.setChecked(bool(v))
         w.blockSignals(False)
@@ -268,16 +278,19 @@ class LinkImportDialog(QDialog):
         if isinstance(w, QComboBox) and name == "protocol":
             return w.currentData()
         if isinstance(w, QComboBox):
-            return w.currentText().strip()
+            t = w.currentText().strip()
+            i = w.currentIndex()
+            return w.itemData(i) if i >= 0 and w.itemText(i) == t and w.itemData(i) else t
         return w.isChecked()
 
     def _marker(self, name, how):
         m = self.mark[name]
-        style = {L.SURE: ("sicher", "#2e9d4f"), L.GUESS: ("geraten", "#c77700"), "du": ("von dir", "#3daee9")}
-        t, col = style.get(how, ("", ""))
+        style = {L.SURE: (_("certain"), "#2e9d4f", _("from the catalog or directly from the link")),
+                 L.GUESS: (_("guessed"), "#c77700", _("please check")),
+                 "du": (_("by you"), "#3daee9", _("entered by you"))}
+        t, col, tip = style.get(how, ("", "", ""))
         m.setText(f"<span style='color:{col}'>● {t}</span>" if t else "")
-        m.setToolTip({"sicher": "aus dem Katalog oder direkt aus dem Link", "geraten": "bitte prüfen",
-                      "von dir": "von dir eingetragen"}.get(t, ""))
+        m.setToolTip(tip)
 
     def _edited(self, name):
         if self.draft is None:
@@ -302,10 +315,10 @@ class LinkImportDialog(QDialog):
         try:
             self.saved_spec = L.save(d, self.editing_key)
         except OSError as e:
-            self.errors.setText(fs_error_text(e, "Nicht gespeichert"))
+            self.errors.setText(fs_error_text(e, _("Not saved")))
             return
-        notify(f"„{getattr(self.saved_spec, 'name', '') or 'Firmware'}“ gespeichert – erscheint unter „Meine Firmwares“. "
-               "Installiert wurde nichts.", "success")
+        notify(_("“{name}” saved – appears under “My firmwares”. Nothing was installed.").format(
+            name=getattr(self.saved_spec, "name", "") or _("Firmware")), "success")
         self.accept()
 
 
@@ -314,12 +327,13 @@ class CandidatesDialog(QDialog):
 
     def __init__(self, parent, candidates: list[dict], current_repo: str = ""):
         super().__init__(parent)
-        self.setWindowTitle("Welche Firmware meinst du?")
+        self.setWindowTitle(_("Which firmware do you mean?"))
         self.resize(640, 440)
         self.candidates = candidates
         lay = QVBoxLayout(self)
-        intro = QLabel("Zu deiner Eingabe passen mehrere Firmwares. Wähle die richtige aus – die App füllt dann alle "
-                       "Angaben dazu aus. <i>Fork</i> heißt: auf GitHub als Abzweig einer anderen Firmware angelegt.")
+        intro = QLabel(_("Several firmwares match your input. Choose the right one – the app then fills "
+                         "in all the details. <i>Fork</i> means: created on GitHub as a branch of another "
+                         "firmware."))
         intro.setWordWrap(True)
         lay.addWidget(intro)
         self.list = QListWidget()
@@ -333,8 +347,8 @@ class CandidatesDialog(QDialog):
             if c.get("fork"):
                 meta.append("Fork")
             if c.get("exact"):
-                meta.append("Name passt genau")
-            it = QListWidgetItem(f"{c['title']}   —   {c['repo'] or 'ohne GitHub-Repo'}\n{' · '.join(meta)}")
+                meta.append(_("name matches exactly"))
+            it = QListWidgetItem(f"{c['title']}   —   {c['repo'] or _('without GitHub repo')}\n{' · '.join(meta)}")
             it.setToolTip(c.get("description") or "")
             self.list.addItem(it)
             if c["repo"] and c["repo"].lower() == (current_repo or "").lower():
@@ -349,16 +363,16 @@ class CandidatesDialog(QDialog):
         self.list.currentRowChanged.connect(self._show_desc)
         self._show_desc(pre)
         bb = QDialogButtonBox()
-        ok = bb.addButton("Diese nehmen", QDialogButtonBox.ButtonRole.AcceptRole)
+        ok = bb.addButton(_("Take this one"), QDialogButtonBox.ButtonRole.AcceptRole)
         ok.setIcon(icon("dialog-ok-apply", "dialog-ok"))
-        bb.addButton("Abbrechen", QDialogButtonBox.ButtonRole.RejectRole)
+        bb.addButton(_("Cancel"), QDialogButtonBox.ButtonRole.RejectRole)
         bb.accepted.connect(self.accept)
         bb.rejected.connect(self.reject)
         lay.addWidget(bb)
 
     def _show_desc(self, row: int):
         c = self.candidates[row] if 0 <= row < len(self.candidates) else None
-        self.desc.setText((c.get("description") or "Keine Beschreibung.") if c else "")
+        self.desc.setText((c.get("description") or _("No description.")) if c else "")
 
     def selected(self) -> dict | None:
         row = self.list.currentRow()
@@ -372,21 +386,22 @@ class OwnFirmwaresDialog(QDialog):
         super().__init__(parent)
         self.cat = cat
         self.changed = False
-        self.setWindowTitle("Meine Firmwares")
+        self.setWindowTitle(_("My firmwares"))
         self.resize(560, 420)
         lay = QVBoxLayout(self)
-        lay.addWidget(QLabel("Firmwares, die du selbst hinzugefügt hast. Sie erscheinen auch in Firmware+ › „Installieren & Versionen“."))
+        lay.addWidget(QLabel(_("Firmwares you added yourself. They also appear in Firmware+ › “Install & "
+                               "versions”.")))
         self.list = QListWidget()
-        self.list.itemDoubleClicked.connect(lambda *_: self._edit())
+        self.list.itemDoubleClicked.connect(lambda *_a: self._edit())
         lay.addWidget(self.list, 1)
         row = QHBoxLayout()
-        b_new = QPushButton(icon("edit-paste", "list-add"), "Link einfügen …")
+        b_new = QPushButton(icon("edit-paste", "list-add"), _("Paste link …"))
         b_new.clicked.connect(self._new)
-        self.b_edit = QPushButton(icon("document-edit", "edit-rename"), "Bearbeiten …")
+        self.b_edit = QPushButton(icon("document-edit", "edit-rename"), _("Edit …"))
         self.b_edit.clicked.connect(self._edit)
-        self.b_del = QPushButton(icon("list-remove", "edit-delete"), "Entfernen")
+        self.b_del = QPushButton(icon("list-remove", "edit-delete"), _("Remove"))
         self.b_del.clicked.connect(self._remove)
-        close = QPushButton("Schließen")
+        close = QPushButton(_("Close"))
         close.clicked.connect(self.accept)
         for b in (b_new, self.b_edit, self.b_del):
             row.addWidget(b)
@@ -403,8 +418,8 @@ class OwnFirmwaresDialog(QDialog):
             it.setToolTip(e.get("description") or e.get("repo") or "")
             self.list.addItem(it)
         if not self.list.count():
-            it = QListWidgetItem("Noch keine eigenen Firmwares – so geht's: „Link einfügen …“ oder in "
-                                 "„Firmware+“ bei einer Firmware „Zu meinen Firmwares“.")
+            it = QListWidgetItem(_("No own firmwares yet – how it works: “Paste link …” or in “Firmware+” "
+                                   "at a firmware “Add to my firmwares”."))
             it.setFlags(Qt.ItemFlag.NoItemFlags)
             self.list.addItem(it)
         has = bool(L.own_entries())
@@ -430,8 +445,9 @@ class OwnFirmwaresDialog(QDialog):
 
     def _remove(self):
         key = self._key()
-        if key and confirm(self, "Entfernen", f"„{key}“ aus deinen Firmwares entfernen? Heruntergeladene Pakete "
-                                              "bleiben erhalten.", "Entfernen", danger=True):
+        if key and confirm(self, _("Remove"), _("Remove “{key}” from your firmwares? Downloaded packages "
+                                                "are kept.").format(
+                                                  key=key), _("Remove"), danger=True):
             L.remove(key)
             self.changed = True
             self.fill()

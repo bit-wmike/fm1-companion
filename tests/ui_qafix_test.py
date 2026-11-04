@@ -377,7 +377,8 @@ def flow():
     dp.b.setCurrentIndex(dp.b.findData(profs[1]))
     check(dp.b_cmp.isEnabled(), "Geräte: Vergleich A ≠ B möglich")
     from fm1companion.ui.pages.discover import EN_LABEL
-    check(EN_LABEL == "Beschreibung des Autors (englisch)", "Entdecken: englische Beschreibung gekennzeichnet")
+    from fm1companion.i18n import _ as _t
+    check(_t(EN_LABEL) == "Beschreibung des Autors (englisch)", "Entdecken: englische Beschreibung gekennzeichnet")
     # Toast oben rechts, feste Lebensdauer
     from fm1companion.ui.notify import center
     nc = center()

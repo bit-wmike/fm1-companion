@@ -27,6 +27,7 @@ from pathlib import Path
 import os
 
 from .devices import alsa_card_for, PortInfo, PORT_RE
+from .i18n import N_, _
 
 try:
     import numpy as np
@@ -140,9 +141,11 @@ class Recording:
                 cmds.append(("ALSA", ["arecord", "-q", "-D", dev, "-f", "S16_LE", "-r", str(self.rate),
                                       "-c", str(self.channels), "-t", "wav", str(self.path)]))
         if not cmds and self.dev.kind == "monitor":
-            raise RuntimeError("Den Ausgang mithören geht nur mit PipeWire (sudo apt install pipewire-bin)")
+            raise RuntimeError(_("Listening to the output only works with PipeWire ({command})").format(
+                command="sudo apt install pipewire-bin"))
         if not cmds:
-            raise RuntimeError("Weder pw-record noch arecord gefunden (sudo apt install pipewire-bin alsa-utils)")
+            raise RuntimeError(_("Neither pw-record nor arecord found ({command})").format(
+                command="sudo apt install pipewire-bin alsa-utils"))
         last = ""
         for backend, args in cmds:
             self.path.unlink(missing_ok=True)
@@ -152,7 +155,7 @@ class Recording:
                 self.proc, self.backend, self.started = p, backend, time.time()
                 return
             last = (p.stderr.read() or "").strip()
-        raise RuntimeError(f"Aufnahme startet nicht: {last or 'unbekannter Fehler'}")
+        raise RuntimeError(_("Recording does not start: {error}").format(error=last or _("unknown error")))
 
     @property
     def running(self) -> bool:
@@ -225,7 +228,7 @@ def split_pairs(path: Path, labels: list[str] | None = None) -> list[Path]:
         pairs = nch // 2
         outs = []
         for k in range(pairs):
-            label = (labels[k] if labels and k < len(labels) else f"Spur {k + 1}")
+            label = (labels[k] if labels and k < len(labels) else f"Spur {k + 1}")  # i18n: ignore – file name
             dst = path.with_name(f"{path.stem} – {label}.wav")
             o = wave.open(str(dst), "wb")
             o.setnchannels(2)
@@ -242,12 +245,12 @@ def split_pairs(path: Path, labels: list[str] | None = None) -> list[Path]:
                 got = len(raw) // (nch * sw)
                 done += got
                 a = np.frombuffer(raw[:got * nch * sw], dtype=np.uint8).reshape(got, nch, sw)
-                for k, (_, o) in enumerate(outs):
+                for k, (_d, o) in enumerate(outs):
                     o.writeframes(a[:, 2 * k:2 * k + 2, :].tobytes())
         finally:
-            for _, o in outs:
+            for _d, o in outs:
                 o.close()
-    return [d for d, _ in outs]
+    return [d for d, _o in outs]
 
 
 def open_in_audacity(files: list[Path], cmd: str = "audacity") -> bool:
@@ -311,7 +314,7 @@ def list_sources(port: PortInfo | None = None) -> list[CaptureDevice]:
     out: list[CaptureDevice] = []
     fm1 = find_capture(port)
     if fm1:
-        fm1.label = f"FM-1 über USB ({fm1.card_id})"
+        fm1.label = _("FM-1 via USB ({card})").format(card=fm1.card_id)
         out.append(fm1)
     nodes = _pw_nodes()
     seen_cards = {fm1.card_id.lower()} if fm1 else set()
@@ -326,7 +329,7 @@ def list_sources(port: PortInfo | None = None) -> list[CaptureDevice]:
                                      name, desc, "input"))
             seen_cards.add(str(props.get("alsa.id", props.get("api.alsa.card.name", ""))).lower())
         elif mc == "Audio/Sink":
-            out.append(CaptureDevice("", None, [2], [44100, 48000], name, f"Ausgang mithören: {desc}", "monitor"))
+            out.append(CaptureDevice("", None, [2], [44100, 48000], name, _("Listen to output: {name}").format(name=desc), "monitor"))
     if not nodes:                                 # ohne PipeWire: ALSA-Karten mit Aufnahme
         for idx, cid, longname in _alsa_cards():
             if cid.lower() in seen_cards or not _has_alsa_capture(idx):
@@ -336,7 +339,7 @@ def list_sources(port: PortInfo | None = None) -> list[CaptureDevice]:
                                      f"plughw:CARD={cid},DEV=0"))
     if DEMO:
         out.append(CaptureDevice("demo", None, [1, 2, 8], [44100, 48000], "",
-                                 "Demo-Signal (Drum-Loop, nur im Demo-Modus)", "demo"))
+                                 _("Demo signal (drum loop, demo mode only)"), "demo"))
     return out
 
 
@@ -472,12 +475,13 @@ def split_tracks(path: Path, mode: str = "pairs", labels: list[str] | None = Non
         return [path]
     out = []
     for c in range(a.shape[1]):
-        label = labels[c] if labels and c < len(labels) else f"Kanal {c + 1}"
+        label = labels[c] if labels and c < len(labels) else f"Kanal {c + 1}"  # i18n: ignore – file name
         out.append(write_wav_array(path.with_name(f"{path.stem} – {label}.wav"), a[:, c], sr))
     return out
 
 
-EXPORT_FORMATS = {"wav": ("WAV (16 bit)", []), "flac": ("FLAC (verlustfrei)", ["-c:a", "flac"]),
+# titles marked for translation (translate with _() where shown)
+EXPORT_FORMATS = {"wav": ("WAV (16 bit)", []), "flac": (N_("FLAC (lossless)"), ["-c:a", "flac"]),
                   "mp3": ("MP3 (320 kbit/s)", ["-c:a", "libmp3lame", "-b:a", "320k"])}
 
 
@@ -490,7 +494,7 @@ def export_audio(src: Path, fmt: str, dst: Path | None = None) -> Path:
         return dst
     exe = shutil.which("ffmpeg")
     if not exe:
-        raise RuntimeError("Für FLAC/MP3 wird ffmpeg gebraucht (sudo apt install ffmpeg)")
+        raise RuntimeError(_("FLAC/MP3 needs ffmpeg ({command})").format(command="sudo apt install ffmpeg"))
     r = subprocess.run([exe, "-v", "error", "-y", "-i", str(src), *EXPORT_FORMATS[fmt][1], str(dst)],
                        capture_output=True, text=True, timeout=600)
     if r.returncode:
@@ -564,8 +568,8 @@ class BarSync:
         if self.start_time is None:
             return "wartet"
         if self.end_time is None:
-            return "nimmt auf"
-        return "fertig"
+            return "nimmt auf"  # i18n: ignore – state key
+        return "fertig"  # i18n: ignore – state key
 
     @property
     def position(self) -> tuple[int, int]:

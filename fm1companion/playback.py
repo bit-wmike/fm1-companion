@@ -36,6 +36,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from . import midiexport as ME, projectfmt as PF
+from .i18n import _
 
 ROUTE_NAMES = {0: "CH1-4", 1: "SEL", 2: "CH5-8", 3: "CH9-12", 4: "CH13-16"}
 ENGINE_DRUM = 10
@@ -44,7 +45,7 @@ CMD_GET, CMD_TRACK, CMD_FM6_GET, CMD_BANK_SONG = 2, 27, 68, 74
 G_CLOCK, G_DRUM, G_ROUTE = 2, 13, 14
 CLOCK_NAMES = {0: "INT", 1: "USB", 2: "TRS", 3: "BLE"}        # params.c N_CLOCK (BLE nur mit Bluetooth-Build)
 CLOCK_OUT_FROM = (1, 6, 1, 0, 0)    # ab Melodee 1.6.1 sendet CLK INT Clock/Start/Stop/Song Position (melodee16.version_key)
-OFFLINE_LABEL = "Vorhören im Rechner – klingt ähnlich, nicht exakt wie das FM-1"
+OFFLINE_LABEL = _("Preview on the computer – sounds similar, not exactly like the FM-1")
 
 
 class PlaybackError(Exception):
@@ -92,10 +93,10 @@ class Routing:
     def describe(self) -> str:
         r = ROUTE_NAMES.get(self.route, str(self.route))
         if self.route == 1:
-            ch = "jeder Kanal → gewählte Spur"
+            ch = _("every channel → selected track")
         else:
-            ch = f"Kanal {self.first + 1}–{self.first + 4} → Spur 1–4"
-        src = "vom FM-1 gelesen" if self.known else "angenommen (Standard)"
+            ch = _("channel {first}–{last} → track 1–4").format(first=self.first + 1, last=self.first + 4)
+        src = _("read from the FM-1") if self.known else _("assumed (default)")
         return f"ROUT {r}: {ch} ({src})"
 
     def armed_tracks(self) -> list[int]:
@@ -166,7 +167,8 @@ def compare_sounds(prj: PF.Project, routing: Routing) -> list[str]:
         d = routing.tracks[t.index]
         if d.engine != t.engine or (t.preset < 0xFE and d.preset != t.preset):
             want = t.engine_name + (f" „{t.preset_name}“" if t.preset_name else "")
-            out.append(f"Spur {t.index + 1}: im Projekt {want}, am FM-1 gerade {d.label}")
+            out.append(_("Track {n}: {project} in the project, {device} on the FM-1 right now").format(
+                n=t.index + 1, project=want, device=d.label))
     return out
 
 
@@ -206,16 +208,18 @@ def plan_for_device(events: list[ME.NoteEvent], routing: Routing, prj: PF.Projec
         chans.add(ch)
     for k in sorted(gone):
         if k < 0:
-            skipped.append(f"Spur {-k}: ihr Kanal ist am FM-1 der DRUM-Kanal ({routing.drum_channel}) – die Noten "
-                           "würden auf der Drum-Spur landen und werden deshalb nicht gesendet.")
+            skipped.append(_("Track {track}: its channel is the DRUM channel on the FM-1 ({channel}) – the notes "
+                             "would land on the drum track and are therefore not sent.").format(
+                track=-k, channel=routing.drum_channel))
         elif k >= PF.NPART:
-            skipped.append(f"Spur {k + 1} ist eine reine MIDI-Spur (spielt externe Geräte, keinen Klang im FM-1) – "
-                           "wird nicht gesendet.")
+            skipped.append(_("Track {track} is a pure MIDI track (plays external devices, no sound in the FM-1) – "
+                             "not sent.").format(track=k + 1))
         else:
-            skipped.append(f"Spur {k + 1} ist bei ROUT {ROUTE_NAMES.get(routing.route)} nicht erreichbar.")
+            skipped.append(_("Track {track} cannot be reached with ROUT {route}.").format(
+                track=k + 1, route=ROUTE_NAMES.get(routing.route)))
     if routing.route == 1:
-        skipped.append("ROUT steht am FM-1 auf SEL: alle Noten spielen mit dem Klang der gerade gewählten Spur. "
-                       "Für getrennte Spuren am FM-1 GLO › SYSTEM › ROUT auf CH1-4 stellen.")
+        skipped.append(_("ROUT is set to SEL on the FM-1: all notes play with the sound of the currently selected "
+                         "track. For separate tracks set GLO › SYSTEM › ROUT to CH1-4 on the FM-1."))
     return Plan(out, skipped, chans)
 
 
@@ -296,7 +300,7 @@ class MidiSequencer:
         try:
             ok = bool(self.send(msg, force))
         except Exception as e:  # noqa: BLE001 – Port weg: merken, weiterlaufen bis Stopp
-            self.error = str(e) or "Senden fehlgeschlagen"
+            self.error = str(e) or _("Sending failed")
             ok = False
         if ok:
             self.sent += 1
@@ -416,19 +420,19 @@ def song_sync_note(version: str, clock: int | None, row: int = 0) -> str:
     if not sends_clock(version):
         return ""
     if clock is None:
-        return "Steht am FM-1 CLK auf INT, gibt es den Takt an mitlaufende Geräte weiter (USB, Bluetooth)."
+        return _("If CLK is set to INT on the FM-1, it passes the clock on to following devices (USB, Bluetooth).")
     if clock != 0:
-        return (f"CLK steht auf {CLOCK_NAMES.get(clock, clock)}: das FM-1 folgt einer fremden Clock und sendet "
-                "selbst keine.")
+        return _("CLK is set to {clock}: the FM-1 follows an external clock and sends none itself.").format(
+            clock=CLOCK_NAMES.get(clock, clock))
     if row:
-        return ("CLK INT: mitlaufende Geräte bekommen Song Position und Continue und steigen an derselben Stelle "
-                "ein (Song Position hat keinen Vorlauf – Geräte, die erst suchen müssen, verpassen evtl. die ersten "
-                "Pulse).")
-    return "CLK INT: mitlaufende Geräte bekommen Start und den Takt des FM-1."
+        return _("CLK INT: following devices get Song Position and Continue and join at the same place "
+                 "(Song Position has no lead-in – devices that have to seek first may miss the first pulses).")
+    return _("CLK INT: following devices get Start and the clock of the FM-1.")
 
 
-CLOCK_CONFLICT = ("Melodee ab 1.6.1 sendet mit CLK INT selbst MIDI-Clock. Soll die App den Takt vorgeben, am FM-1 "
-                  "GLO › GLOBAL › CLK auf USB stellen – auf INT hört es nicht auf die App und es laufen zwei Takte.")
+CLOCK_CONFLICT = _("Melodee 1.6.1 and later sends MIDI clock itself with CLK INT. If the app is to set the tempo, "
+                   "set GLO › GLOBAL › CLK to USB on the FM-1 – on INT it does not listen to the app and two "
+                   "clocks run.")
 
 
 def transport_stop(link) -> bool:

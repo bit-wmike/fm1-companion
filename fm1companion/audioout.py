@@ -11,6 +11,8 @@ import subprocess
 import time
 from dataclasses import dataclass
 
+from .i18n import _
+
 BACKENDS = ("pw-play", "paplay", "aplay", "ffplay")
 FM1_SINK = re.compile(r"fm-?1|melodee|m-?vave|felucca|sloop|skiff", re.I)
 DUMMY_SINK = re.compile(r"auto_null|dummy|schein-?ausgabe", re.I)
@@ -105,13 +107,14 @@ def list_outputs(max_age: float = 8.0) -> list[Output]:
 def output_hint(o: Output | None) -> str:
     """deutscher Hinweis, wenn der Ton vermutlich nicht dort ankommt, wo man ihn erwartet."""
     if o is not None and o.is_dummy:
-        return ("Es gibt gerade keinen echten Audio-Ausgang („Schein-Ausgabe“) – der Ton geht ins Leere. "
-                "Lautsprecher/Soundkarte anschließen (nach einem USB-Absturz: Rechner neu starten) und in "
-                "KDE-Systemeinstellungen › Audio auswählen.")
+        return _("There is no real audio output right now (“Dummy Output”) – the sound goes nowhere. "
+                 "Connect speakers/a sound card (after a USB crash: restart the computer) and select it in "
+                 "KDE System Settings › Audio.")
     if o is not None and o.is_fm1:
-        return (f"Der Ton geht an „{o.description}“ – das ist das FM-1 selbst (USB-Audio). Zu hören ist er dann nur "
-                "am Kopfhörer/Lautsprecher des FM-1 (MASTER-Lautstärke, bei Melodee USB AUDIO › Wiedergabe an). "
-                "Anderen Ausgang wählen: Knopf „Ausgabe“ oder KDE-Systemeinstellungen › Audio.")
+        return _("The sound goes to “{output}” – that is the FM-1 itself (USB audio). You will only hear it on "
+                 "the FM-1's headphones/speaker (MASTER volume, on the Melodee USB AUDIO › playback on). "
+                 "Choose another output: the “Output” button or KDE System Settings › Audio.").format(
+            output=o.description)
     return ""
 
 

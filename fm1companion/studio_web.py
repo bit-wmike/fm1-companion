@@ -19,6 +19,7 @@ from PyQt6.QtCore import QEventLoop, QObject, QThread, QTimer, QUrl, pyqtSignal,
 from PyQt6.QtWidgets import QApplication
 
 
+from .i18n import _
 from .studio import StudioError
 
 
@@ -45,7 +46,7 @@ class WebTwin(QObject):
         super().__init__()
         app = QApplication.instance()
         if app is None:
-            raise StudioError("Das Studio braucht eine laufende Qt-Anwendung")
+            raise StudioError(_("The studio needs a running Qt application"))
         if self.thread() is not app.thread():
             self.moveToThread(app.thread())
         self.server = server
@@ -82,7 +83,7 @@ class WebTwin(QObject):
         self.page.setWebChannel(self.channel)
         self.page.load(QUrl(self.server.sim_url("_studio", "studio.html")))
         if not self._wait(lambda: self._ready.is_set(), timeout):
-            raise StudioError("Studio-Seite lädt nicht: " + " | ".join(self.console[-5:]))
+            raise StudioError(_("Studio page does not load: {details}").format(details=" | ".join(self.console[-5:])))
 
     def close(self):
         p, self.page = self.page, None
@@ -154,14 +155,14 @@ class WebTwin(QObject):
         try:
             self._post.emit(json.dumps({"id": i, "op": op, "sink": url, **args}))
             if not self._wait(lambda: "reply" in w, timeout):
-                raise StudioError(f"Studio antwortet nicht ({op})")
+                raise StudioError(_("Studio does not respond ({operation})").format(operation=op))
         finally:
             self._waits.pop(i, None)
             for k in keys:
                 self.server.exchange.remove(k)
         r = w["reply"]
         if not r.get("ok"):
-            raise StudioError(r.get("error", "Fehler im Studio"))
+            raise StudioError(r.get("error", _("Error in the studio")))
         return {k: (got.get(v["sink"], b"") if isinstance(v, dict) and "sink" in v else v) for k, v in r.items()}
 
     def post(self, op: str, **args):

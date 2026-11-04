@@ -23,101 +23,103 @@ from . import PageSpec
 from ... import firmware
 from ...flash import engine as fe, journal as fj, package as fpk, uboot
 from ..common import Card, Disclosure, confirm, heading, icon, show_error
-from ...i18n import _
+from ...i18n import _, pgettext
 
 DEMO = os.environ.get("FM1C_DEMO") == "1"
+ONE_UBOOT = _("Exactly one device “WL82 UBOOT1.00” (USB 4c4a:8057) must be connected. The app never chooses a drive "
+              "by itself.")
 
-BASICS_SHORT = ("<b>Zuerst:</b> Akku mindestens eine Stunde laden, ein USB-<b>Daten</b>kabel direkt am Rechner "
-                "(kein Hub), andere MIDI-Programme und Browser-Tabs schließen.")
-BASICS = ("<b>Erst die Grundlagen:</b><ul>"
-          "<li>Akku mindestens eine Stunde laden – ein tiefentladener Akku kann den Start verhindern.</li>"
-          "<li>Ein anderes USB-<b>Daten</b>kabel (kein reines Ladekabel), einen anderen USB-Anschluss direkt am "
-          "Rechner (kein Hub) oder einen anderen Rechner probieren.</li>"
-          "<li>Andere Musik-Programme und Browser-Tabs mit MIDI schließen.</li></ul>")
+BASICS_SHORT = _("<b>First:</b> charge the battery for at least one hour, use a USB <b>data</b> cable directly on the "
+                 "computer (no hub), close other MIDI programs and browser tabs.")
+BASICS = _("<b>The basics first:</b><ul>"
+           "<li>Charge the battery for at least one hour – a deeply discharged battery can prevent the start.</li>"
+           "<li>Try another USB <b>data</b> cable (not a charge-only cable), another USB port directly on the "
+           "computer (no hub) or another computer.</li>"
+           "<li>Close other music programs and browser tabs with MIDI.</li></ul>")
 
-STEPS_UPDATE = ("<ol><li>FM-1 ausschalten.</li>"
-                "<li><b>OCT−</b> gedrückt halten und dabei einschalten.</li>"
-                "<li><b>Drei kurze Blitze</b> der Tastenbeleuchtung = Update-Modus. Ein langer Blitz = ROM-Bootmodus "
-                "→ Stufe 2.</li>"
-                "<li>USB-Kabel einstecken – die App erkennt das Gerät hier sofort.</li></ol>")
-DETAILS_UPDATE = ("Die OCT−-Tastenkombination ist dokumentiert für Melodee ab 1.3.5, TransitFM1 und Felucca-Firmwares "
-                  "mit Startschutz.<br>Laut Community (nicht bestätigt): OCT− und OCT+ zusammen 10 Sekunden halten. "
-                  "Achtung: bei Melodee ist OCT−+OCT+ die Kalibrierung. Nicht zweimal hintereinander aus- und "
-                  "einschalten, während das FM-1 im Update-Modus ist (TransitFM1: das zweite Mal landet im "
-                  "ROM-Bootmodus).<br>Der Update-Loader der M-VAVE FM1 Open meldet sich als „ota-FM1C_…“ – ihm "
-                  "schickt die App nichts (dafür den FM1-Open-Updater von M-VAVE benutzen).<br>"
-                  "„Installation abschließen“ kennt das unterbrochene Paket aus dem Journal der "
-                  "App und prüft vorher, ob der wartende Update-Loader zu diesem Paket gehört – sonst wird nichts "
-                  "gesendet.")
+STEPS_UPDATE = _("<ol><li>Switch the FM-1 off.</li>"
+                 "<li>Hold <b>OCT−</b> pressed while switching it on.</li>"
+                 "<li><b>Three short flashes</b> of the key lighting = update mode. One long flash = ROM boot mode "
+                 "→ stage 2.</li>"
+                 "<li>Plug in the USB cable – the app detects the device here immediately.</li></ol>")
+DETAILS_UPDATE = _("The OCT− key combination is documented for Melodee 1.3.5 and later, TransitFM1 and Felucca "
+                   "firmwares with start protection.<br>According to the community (not confirmed): hold OCT− and OCT+ "
+                   "together for 10 seconds. Caution: with Melodee, OCT−+OCT+ is the calibration. Do not switch off and "
+                   "on twice in a row while the FM-1 is in update mode (TransitFM1: the second time ends up in "
+                   "ROM boot mode).<br>The update loader of the M-VAVE FM1 Open reports as “ota-FM1C_…” – the app "
+                   "sends it nothing (use the FM1 Open updater from M-VAVE for that).<br>"
+                   "“Finish installation” knows the interrupted package from the app's journal and checks beforehand "
+                   "whether the waiting update loader belongs to this package – otherwise nothing is sent.")
 
-STEPS_UBOOT = ("<ol><li>Einmalig „Werkzeug holen“ (jl-uboot-tool, wird geprüft).</li>"
-               "<li>FM-1 voll geladen und direkt am Rechner anschließen – unten muss „Gefunden“ stehen.</li>"
-               "<li>„Original-V15 zurückschreiben“ – die App sichert vorher den ganzen Flash zweimal und prüft an "
-               "dieser Sicherung den Bootkopf: Nur unter dem Kopf ab Werk wird geschrieben.</li>"
-               "<li>FM-1 aus- und wieder einschalten.</li></ol>"
-               "<small>Eine Sitzung im ROM-Bootmodus hält meist nur <b>einen</b> Werkzeuglauf. Danach (auch nach "
-               "einer Ablehnung) das FM-1 aus- und einschalten und neu in den ROM-Bootmodus bringen.</small>")
-DETAILS_UBOOT = ("Die App benutzt das mitgelieferte <a href='https://github.com/Quixotic7/MvaveFM1Unbricker'>"
-                 "MvaveFM1Unbricker</a> (MIT) mit kagaimiqs jl-uboot-tool. Es sichert den ganzen Flash zweimal und "
-                 "vergleicht, prüft Chip-Key 0x980F und Flash-ID 0x856014, schreibt <b>nur 0x4000–0x92FFF</b> aus der "
-                 "Original-V15 und liest alles zurück. Unter 0x4000 wird nie geschrieben, nichts wird komplett gelöscht. "
-                 "<br><b>Bootkopf:</b> Vor dem Schreiben prüft die App an der Sicherung aus demselben Lauf den Bootkopf "
-                 "(0x0000–0x3FFF). Nur unter dem Kopf ab Werk (V13–V15) wird die V15 geschrieben. Hat das Gerät den "
-                 "Kopf von V16 (M-VAVEs Updater schreibt ihn bei V16 neu) oder einen unbekannten (z. B. m-bootloader), "
-                 "wird nichts geschrieben: Ob V15 darunter startet, ist nicht geklärt, und die V16-App "
-                 "(0x4000–0xA8FFF) kann dieses Werkzeug nicht schreiben. Dann M-Flasher (unten) oder "
-                 "<a href='https://github.com/hugelton/felucca-bsp'>fm1_rescue.py</a> aus felucca-bsp benutzen – es "
-                 "wählt das Paket passend zum Kopf. Den Kopf schreibt die App nie.<br>"
-                 "Braucht Administratorrechte (pkexec) und das Kernelmodul <tt>sg</tt> (USB 4c4a:8057).<br>"
-                 "<b>Ehrlich:</b> In dieser App nur in der Simulation getestet; das Werkzeug selbst wurde von der "
-                 "Community an echten Geräten benutzt.<br><br>"
-                 "<b>Alternative: <a href='https://github.com/jvitkauskas/m-flasher'>M-Flasher</a></b> (MIT, eigenes "
-                 "Programm mit Flash-Karte; schreibt nur, was sich ändert, und prüft alles). Download-Modus: laufendes "
-                 "Original- oder Felucca-FM-1 per Knopf „DOWNLOAD MODE“; Felucca/SLOOP: OCT− und OCT+ 5 s halten; mit "
-                 "m-bootloader: REC beim Einschalten. Für den Pi gibt es ein ARM64-Paket "
-                 "(<tt>sudo apt install ./m-flasher_…_arm64.deb</tt>).<br><br>"
-                 "<small>Felucca 0.9 → 1.0.x (bekannt): 1.0.x startet wegen alter 0.9-Daten nicht. Abhilfe laut Anleitung: "
-                 "Datenbereiche 0x97000 (32 KiB) und 0xFC000 (8 KiB) löschen – das löscht Songs und Einstellungen. Die App "
-                 "macht dafür „Einstellungen reparieren“ mit Werks-Dump (Backup ist dabei Pflicht). Das geht nur, wenn "
-                 "die Sicherung aus demselben Lauf den V15-Aufbau zeigt (Firmware endet bei 0x93000) – bei V16 liegt "
-                 "in 0x93000–0xA8FFF noch Firmware, dann wird nichts geschrieben.</small><br><br>"
-                 "<b>Wenn das FM-1 gar nicht als „WL82 UBOOT1.00“ erscheint</b> (nach MvaveFM1Unbricker, "
-                 "Troubleshooting): 1. <b>Zwei Minuten eingeschaltet lassen</b> – Felucca-Firmwares haben einen "
-                 "Watchdog und Startschutz, der nach zwei Fehlstarts von selbst in den ROM-Bootmodus wechselt. "
-                 "2. OCT− und OCT+ beim Einschalten 10 s halten (Update-Modus). 3. <b>Drei schnelle Neustarts:</b> "
-                 "ein, 10 s warten, aus; ein, 10 s, aus; ein – stürzt jeder Start ab, landet der dritte im "
-                 "ROM-Bootmodus. Erst wenn nichts davon hilft: Stufe 3 (Hardware).")
+STEPS_UBOOT = _("<ol><li>Once: “Fetch tool” (jl-uboot-tool, is checked).</li>"
+                "<li>Connect the fully charged FM-1 directly to the computer – below it must say “Found”.</li>"
+                "<li>“Write back original V15” – the app first backs up the whole flash twice and checks the boot "
+                "header on this backup: it only writes under the factory header.</li>"
+                "<li>Switch the FM-1 off and on again.</li></ol>"
+                "<small>A session in ROM boot mode usually lasts only <b>one</b> tool run. After that (also after "
+                "a refusal) switch the FM-1 off and on and bring it into ROM boot mode again.</small>")
+DETAILS_UBOOT = _("The app uses the bundled <a href='https://github.com/Quixotic7/MvaveFM1Unbricker'>"
+                  "MvaveFM1Unbricker</a> (MIT) with kagaimiq's jl-uboot-tool. It backs up the whole flash twice and "
+                  "compares, checks chip key 0x980F and flash ID 0x856014, writes <b>only 0x4000–0x92FFF</b> from the "
+                  "original V15 and reads everything back. Below 0x4000 it never writes, nothing is erased completely. "
+                  "<br><b>Boot header:</b> before writing, the app checks the boot header (0x0000–0x3FFF) on the backup "
+                  "from the same run. Only under the factory header (V13–V15) is V15 written. If the device has the "
+                  "header of V16 (M-VAVE's updater rewrites it for V16) or an unknown one (e.g. m-bootloader), "
+                  "nothing is written: whether V15 starts under it has not been established, and this tool cannot "
+                  "write the V16 app (0x4000–0xA8FFF). Then use M-Flasher (below) or "
+                  "<a href='https://github.com/hugelton/felucca-bsp'>fm1_rescue.py</a> from felucca-bsp – it "
+                  "chooses the package to match the header. The app never writes the header.<br>"
+                  "Needs administrator rights (pkexec) and the kernel module <tt>sg</tt> (USB 4c4a:8057).<br>"
+                  "<b>Honestly:</b> in this app only tested in the simulation; the tool itself has been used by the "
+                  "community on real devices.<br><br>"
+                  "<b>Alternative: <a href='https://github.com/jvitkauskas/m-flasher'>M-Flasher</a></b> (MIT, separate "
+                  "program with a flash map; writes only what changes, and checks everything). Download mode: running "
+                  "original or Felucca FM-1 via the “DOWNLOAD MODE” button; Felucca/SLOOP: hold OCT− and OCT+ for 5 s; "
+                  "with m-bootloader: REC while switching on. For the Pi there is an ARM64 package "
+                  "(<tt>sudo apt install ./m-flasher_…_arm64.deb</tt>).<br><br>"
+                  "<small>Felucca 0.9 → 1.0.x (known): 1.0.x does not start because of old 0.9 data. Remedy according "
+                  "to the instructions: erase the data areas 0x97000 (32 KiB) and 0xFC000 (8 KiB) – this erases songs "
+                  "and settings. For this the app does “Repair settings” with a factory dump (a backup is mandatory "
+                  "here). This only works if the backup from the same run shows the V15 layout (firmware ends at "
+                  "0x93000) – with V16 there is still firmware in 0x93000–0xA8FFF, then nothing is written."
+                  "</small><br><br>"
+                  "<b>If the FM-1 does not appear as “WL82 UBOOT1.00” at all</b> (after MvaveFM1Unbricker, "
+                  "Troubleshooting): 1. <b>Leave it switched on for two minutes</b> – Felucca firmwares have a "
+                  "watchdog and start protection that switches to ROM boot mode by itself after two failed starts. "
+                  "2. Hold OCT− and OCT+ for 10 s while switching on (update mode). 3. <b>Three quick restarts:</b> "
+                  "on, wait 10 s, off; on, 10 s, off; on – if every start crashes, the third ends up in "
+                  "ROM boot mode. Only if none of this helps: stage 3 (hardware).")
 
-TIER3_SHORT = ("<b>Symptom:</b> Das FM-1 erscheint weder im Update-Modus noch als „WL82 UBOOT1.00“ – auch nicht "
-               "nach <b>zwei Minuten eingeschaltet</b> (Watchdog) und <b>drei schnellen Neustarts</b> (ein, 10 s, "
-               "aus; ein, 10 s, aus; ein). Dann hilft nur Hardware: ein <b>Seeed XIAO RP2040</b> an den "
-               "USB-Datenleitungen erzwingt den ROM-Bootmodus "
-               "(<a href='https://github.com/kurogedelic/FM-1-transporter'>FM-1 Transporter</a>).")
-STEPS_TIER3 = ("<ol><li>XIAO RP2040 nach Anleitung an D+, D− und GND des FM-1 anschließen (VBUS frei).</li>"
-               "<li>Transporter-Firmware mit dem Unbricker-Werkzeug im Terminal aufspielen.</li>"
-               "<li>Im Terminal: rekey → info → dump → restore (die App führt Stufe 3 nicht selbst aus).</li></ol>")
-TIER3 = ("<b>Verkabelung (getestet, TRANSPORTER-GUIDE):</b> XIAO <b>D6 (GP0) → D+ (grün)</b>, "
-         "<b>D7 (GP1) → D− (weiß)</b>, <b>GND → GND (schwarz)</b>, <b>VBUS (rot) nicht anschließen</b> (abkleben). "
-         "UF2 aufspielen: BOOT-Taste halten und einstecken. <b>Ehrlich:</b> Die mitgelieferte UF2 ist nur ein "
-         "Platzhalter – die echte Transporter-Firmware entsteht erst mit <tt>python3 fm1_transporter_recover.py "
-         "setup</tt> aus dem Unbricker-Repo (MvaveFM1Unbricker). Danach, ebenfalls mit diesem Werkzeug im Terminal: "
-         "rekey → info (muss <tt>key=980F id=856014</tt> zeigen) → dump (zweimal lesen, vergleichen, behalten) → "
-         "restore --write. Die App selbst führt Stufe 3 nicht aus.<br><br>"
-         "<b>Nur RP2040! Keine RP2350-Boards</b> (GPIO-Erratum und D+-Pull-up machen den Transporter unbrauchbar).<br><br>"
-         "<b>Ungetestet, nicht von der Community bestätigt:</b> mit einem <b>Raspberry Pi Pico (RP2040)</b> statt XIAO – "
-         "Pin 1 = GP0 → D+, Pin 2 = GP1 → D−, ein beliebiger GND, VBUS frei. Entweder die XIAO-UF2 probieren oder "
-         "kurogedelic/FM-1-transporter mit <tt>-DPICO_BOARD=pico</tt> und demselben Loader neu bauen (pico-sdk). "
-         "Der XIAO bleibt der dokumentierte Weg.")
+TIER3_SHORT = _("<b>Symptom:</b> the FM-1 appears neither in update mode nor as “WL82 UBOOT1.00” – not even "
+                "after <b>two minutes switched on</b> (watchdog) and <b>three quick restarts</b> (on, 10 s, "
+                "off; on, 10 s, off; on). Then only hardware helps: a <b>Seeed XIAO RP2040</b> on the "
+                "USB data lines forces ROM boot mode "
+                "(<a href='https://github.com/kurogedelic/FM-1-transporter'>FM-1 Transporter</a>).")
+STEPS_TIER3 = _("<ol><li>Connect the XIAO RP2040 to D+, D− and GND of the FM-1 as instructed (VBUS free).</li>"
+                "<li>Flash the Transporter firmware with the unbricker tool in the terminal.</li>"
+                "<li>In the terminal: rekey → info → dump → restore (the app does not run stage 3 itself).</li></ol>")
+TIER3 = _("<b>Wiring (tested, TRANSPORTER-GUIDE):</b> XIAO <b>D6 (GP0) → D+ (green)</b>, "
+          "<b>D7 (GP1) → D− (white)</b>, <b>GND → GND (black)</b>, <b>do not connect VBUS (red)</b> (tape it off). "
+          "Flash the UF2: hold the BOOT button and plug in. <b>Honestly:</b> the bundled UF2 is only a "
+          "placeholder – the real Transporter firmware is only created with <tt>python3 fm1_transporter_recover.py "
+          "setup</tt> from the unbricker repo (MvaveFM1Unbricker). After that, also with this tool in the terminal: "
+          "rekey → info (must show <tt>key=980F id=856014</tt>) → dump (read twice, compare, keep) → "
+          "restore --write. The app itself does not run stage 3.<br><br>"
+          "<b>RP2040 only! No RP2350 boards</b> (GPIO erratum and D+ pull-up make the Transporter unusable).<br><br>"
+          "<b>Untested, not confirmed by the community:</b> with a <b>Raspberry Pi Pico (RP2040)</b> instead of the "
+          "XIAO – pin 1 = GP0 → D+, pin 2 = GP1 → D−, any GND, VBUS free. Either try the XIAO UF2 or rebuild "
+          "kurogedelic/FM-1-transporter with <tt>-DPICO_BOARD=pico</tt> and the same loader (pico-sdk). "
+          "The XIAO remains the documented way.")
 
-FAQ = ("<b>… eine Installation abbricht?</b> Nichts abziehen, Kabel prüfen, dann hier „Installation abschließen“ – "
-       "die App kennt das unterbrochene Paket aus ihrem Journal.<br>"
-       "<b>… das FM-1 „FAILED -5“ zeigt?</b> Die laufende Firmware hat die Original-Firmware abgelehnt (CHECK HEAD). "
-       "Es wurde nichts geschrieben; das FM-1 läuft weiter. Problem beim Firmware-Autor melden.<br>"
-       "<b>… Presets nach der Rückkehr zur Original-Firmware verstümmelt sind?</b> System &gt; Reset Patches.<br>"
-       "<b>Vorbeugen:</b> Akku voll, nach jedem erfolgreichen Flash ein Backup behalten. Der Umweg über die "
-       "Original-V15 vor Fremd-Firmware ist voreingestellt, aber selbst ein Schreibvorgang: zwei Installationen "
-       "statt einer, also zweimal ein Zeitraum, in dem Akku und Kabel halten müssen. Pflicht ist er nur bei V16 und "
-       "bei Firmwares, die nur von V15 aus gehen.")
+FAQ = _("<b>… an installation is aborted?</b> Do not unplug anything, check the cable, then “Finish installation” "
+        "here – the app knows the interrupted package from its journal.<br>"
+        "<b>… the FM-1 shows “FAILED -5”?</b> The running firmware refused the original firmware (CHECK HEAD). "
+        "Nothing was written; the FM-1 keeps running. Report the problem to the firmware author.<br>"
+        "<b>… presets are garbled after returning to the original firmware?</b> System &gt; Reset Patches.<br>"
+        "<b>Prevention:</b> battery full, keep a backup after every successful flash. The detour via the "
+        "original V15 before third-party firmware is preset, but is itself a write operation: two installations "
+        "instead of one, so twice a period in which battery and cable must hold. It is mandatory only for V16 and "
+        "for firmwares that only work from V15.")
 
 
 class RecoveryPage(QWidget):
@@ -126,8 +128,8 @@ class RecoveryPage(QWidget):
         self.ctx, self.window = ctx, window
         self.journal = fj.Journal()
         outer = QVBoxLayout(self)
-        outer.addWidget(heading("Rettung", "FM-1 startet nicht, hängt im Update-Modus oder eine Installation wurde "
-                                           "unterbrochen? Schritt für Schritt zurück zu einem laufenden Gerät."))
+        outer.addWidget(heading(_("Recovery"), _("FM-1 does not start, is stuck in update mode, or an installation was "
+                                                 "interrupted? Step by step back to a working device.")))
         area = QScrollArea()
         area.setWidgetResizable(True)
         body = QWidget()
@@ -138,84 +140,86 @@ class RecoveryPage(QWidget):
         basics = self._label(BASICS_SHORT)
         lay.addWidget(basics)
         self.details: dict[str, Disclosure] = {}
-        self.details["basics"] = Disclosure("Details: Grundlagen", BASICS)
+        self.details["basics"] = Disclosure(_("Details: basics"), BASICS)
         lay.addWidget(self.details["basics"])
 
         # ---- Stufe 1
-        c1 = Card("Stufe 1 – Update-Modus: Installation abschließen")
+        c1 = Card(_("Stage 1 – update mode: finish installation"))
         self.status = self._label("")
         self.status.setObjectName("rettungStatus")
-        c1.layout().addWidget(self._label("<b>Symptom:</b> schwarzer Bildschirm oder „UPDATING“, Installer melden "
-                                          "„Update-Modus“, eine Installation wurde abgebrochen." + STEPS_UPDATE))
+        c1.layout().addWidget(self._label(_("<b>Symptom:</b> black screen or “UPDATING”, installers report "
+                                            "“update mode”, an installation was aborted.") + STEPS_UPDATE))
         c1.layout().addWidget(self.status)
-        self.b_finish = QPushButton(icon("system-software-update"), "Installation abschließen")
+        self.b_finish = QPushButton(icon("system-software-update"), _("Finish installation"))
         self.b_finish.setProperty("variant", "primary")
         self.b_finish.clicked.connect(self.finish_install)
-        self.b_v15 = QPushButton(icon("edit-undo"), "Stattdessen Original-V15 schreiben")
-        self.b_v15.setToolTip("Nur möglich, wenn das FM-1 im Original-Update-Modus (ota-FM-1_015) wartet.")
+        self.b_v15 = QPushButton(icon("edit-undo"), _("Write original V15 instead"))
+        self.b_v15.setToolTip(_("Only possible if the FM-1 is waiting in the original update mode (ota-FM-1_015)."))
         self.b_v15.clicked.connect(lambda: self.finish_install(stock=True))
-        self.b_file = QPushButton(icon("document-open"), "Anderes Paket wählen …")
+        self.b_file = QPushButton(icon("document-open"), _("Choose another package …"))
         self.b_file.clicked.connect(lambda: self.finish_install(choose=True))
         c1.layout().addLayout(_row(self.b_finish, self.b_v15, self.b_file))
-        self.details["update"] = Disclosure("Details: Tastenkombinationen, Community-Hinweise, Journal", DETAILS_UPDATE)
+        self.details["update"] = Disclosure(_("Details: key combinations, community notes, journal"), DETAILS_UPDATE)
         c1.layout().addWidget(self.details["update"])
         lay.addWidget(c1)
 
         # ---- Stufe 2
-        c2 = Card("Stufe 2 – ROM-Bootmodus „WL82 UBOOT1.00“")
+        c2 = Card(_("Stage 2 – ROM boot mode “WL82 UBOOT1.00”"))
         c2.layout().addWidget(self._label(
-            "<b>Symptom:</b> schwarzer Bildschirm, kein MIDI-Gerät, der Rechner zeigt einen USB-Datenträger "
-            "„WL82 UBOOT1.00“. <b>Nicht formatieren!</b>" + STEPS_UBOOT))
+            _("<b>Symptom:</b> black screen, no MIDI device, the computer shows a USB drive "
+              "“WL82 UBOOT1.00”. <b>Do not format it!</b>") + STEPS_UBOOT))
         self.uboot_status = self._label("")
         c2.layout().addWidget(self.uboot_status)
-        self.chk_sim = QCheckBox("Simulation – Übungslauf mit dem Mock-FM-1 des Werkzeugs, nichts wird geschrieben")
+        self.chk_sim = QCheckBox(_("Simulation – practice run with the tool's mock FM-1, nothing is written"))
         self.chk_sim.setChecked(DEMO)
         self.chk_sim.toggled.connect(lambda _on: self.refresh())
-        self.chk_sim.setToolTip("Im Demo-Modus vorangehakt. Zum echten Retten muss das Häkchen weg – dann schreibt "
-                                "das Werkzeug wirklich in den Flash des angeschlossenen FM-1.")
+        self.chk_sim.setToolTip(_("Pre-ticked in demo mode. For a real recovery the tick must be removed – then the "
+                                  "tool really writes to the flash of the connected FM-1."))
         c2.layout().addWidget(self.chk_sim)
-        self.sim_note = self._label("<small>Im Demo-Modus ist die Simulation vorangehakt. Für ein echtes FM-1 das "
-                                    "Häkchen entfernen – erst dann wird geschrieben.</small>" if DEMO else
-                                    "<small>Zum Üben ohne Gerät anhaken: dann läuft alles gegen einen simulierten "
-                                    "Flash, am FM-1 wird nichts verändert.</small>")
+        self.sim_note = self._label(_("<small>In demo mode the simulation is pre-ticked. For a real FM-1 remove the "
+                                      "tick – only then is anything written.</small>") if DEMO else
+                                    _("<small>Tick it to practise without a device: then everything runs against a "
+                                      "simulated flash, nothing is changed on the FM-1.</small>"))
         c2.layout().addWidget(self.sim_note)
-        self.b_setup = QPushButton(icon("download"), "Werkzeug holen (jl-uboot-tool) …")
+        self.b_setup = QPushButton(icon("download"), _("Fetch tool (jl-uboot-tool) …"))
         self.b_setup.clicked.connect(self.uboot_setup)
-        self.b_restore = QPushButton(icon("tools-wizard", "system-run"), "Original-V15 zurückschreiben …")
+        self.b_restore = QPushButton(icon("tools-wizard", "system-run"), _("Write back original V15 …"))
         self.b_restore.setProperty("variant", "primary")
         self.b_restore.clicked.connect(self.uboot_restore)
-        self.b_repair = QPushButton(icon("configure"), "Einstellungen nach Rückkehr reparieren …")
-        self.b_repair.setToolTip("repair-settings: setzt die Einstellungsbereiche mit einem Werks-Dump zurück – nur "
-                                 "bei V15-Aufbau (prüft die App an der frischen Sicherung). Upstream nur mit Mock "
-                                 "getestet – erst System > Reset Patches probieren.")
+        self.b_repair = QPushButton(icon("configure"), _("Repair settings after return …"))
+        self.b_repair.setToolTip(_("repair-settings: resets the settings areas with a factory dump – only with the "
+                                   "V15 layout (the app checks this on the fresh backup). Upstream only tested with a "
+                                   "mock – try System > Reset Patches first."))
         self.b_repair.clicked.connect(self.uboot_repair)
-        self.b_dump = QPushButton(icon("document-save"), "Notfall-Komplettsicherung …")
-        self._dump_tip = ("Optional, fortgeschritten: Original-FM-1 per Softkey in den ROM-Bootmodus schicken und den "
-                          "ganzen Flash nur lesen. Braucht Administratorrechte. Läuft nie automatisch.")
+        self.b_dump = QPushButton(icon("document-save"), _("Emergency full backup …"))
+        self._dump_tip = _("Optional, advanced: send an original FM-1 into ROM boot mode via softkey and only read the "
+                           "whole flash. Needs administrator rights. Never runs automatically.")
+        self._dump_needs = _("For this, jl-uboot-tool must be fetched and an FM-1 connected (running with the "
+                             "original firmware or already in ROM boot mode).")
         self.b_dump.setToolTip(self._dump_tip)
         self.b_dump.clicked.connect(self.uboot_full_backup)
         c2.layout().addLayout(_row(self.b_setup, self.b_restore))
         c2.layout().addLayout(_row(self.b_repair, self.b_dump))
         mf = shutil.which("m-flasher")
         if mf:
-            b_mf = QPushButton(icon("system-run"), "M-Flasher öffnen")
-            b_mf.setToolTip("M-Flasher ist installiert (alternatives Werkzeug, siehe Details)")
+            b_mf = QPushButton(icon("system-run"), _("Open M-Flasher"))
+            b_mf.setToolTip(_("M-Flasher is installed (alternative tool, see details)"))
             b_mf.clicked.connect(lambda: subprocess.Popen([mf], start_new_session=True))
             c2.layout().addLayout(_row(b_mf))
-        self.details["uboot"] = Disclosure("Details: Werkzeug, Speicherbereiche, M-Flasher, Felucca 0.9",
-                                           DETAILS_UBOOT + ("<br><br>M-Flasher: " + ("gefunden – Knopf oben." if mf
-                                                                                      else "nicht installiert.")))
+        self.details["uboot"] = Disclosure(_("Details: tool, memory areas, M-Flasher, Felucca 0.9"),
+                                           DETAILS_UBOOT + "<br><br>" + (_("M-Flasher: found – button above.") if mf
+                                                                         else _("M-Flasher: not installed.")))
         c2.layout().addWidget(self.details["uboot"])
         lay.addWidget(c2)
 
         # ---- Stufe 3
-        c3 = Card("Stufe 3 – FM-1 Transporter (Hardware)")
+        c3 = Card(_("Stage 3 – FM-1 Transporter (hardware)"))
         c3.layout().addWidget(self._label(TIER3_SHORT + STEPS_TIER3))
-        b_guide = QPushButton(icon("help-contents"), "Transporter-Anleitung öffnen")
+        b_guide = QPushButton(icon("help-contents"), _("Open Transporter guide"))
         b_guide.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(
             str(uboot.VENDOR / "TRANSPORTER-GUIDE.md"))))
         c3.layout().addLayout(_row(b_guide))
-        self.details["tier3"] = Disclosure("Details: Verkabelung, Boards, Terminal-Befehle", TIER3)
+        self.details["tier3"] = Disclosure(_("Details: wiring, boards, terminal commands"), TIER3)
         c3.layout().addWidget(self.details["tier3"])
         lay.addWidget(c3)
 
@@ -224,7 +228,7 @@ class RecoveryPage(QWidget):
         self.clean = CleanCheckCard(ctx, self, window, sim=lambda: self.chk_sim.isChecked(), runner=self._runner)
         lay.addWidget(self.clean)
 
-        self.details["faq"] = Disclosure("Was tun, wenn … (Abbruch, FAILED -5, verstümmelte Presets, Vorbeugen)", FAQ)
+        self.details["faq"] = Disclosure(_("What to do if … (abort, FAILED -5, garbled presets, prevention)"), FAQ)
         lay.addWidget(self.details["faq"])
         lay.addStretch(1)
 
@@ -265,74 +269,83 @@ class RecoveryPage(QWidget):
         ident = self.ctx.identity if self.ctx.port is port else ""
         lines = []
         if port:
-            lines.append(f"<span style='color:#f67400'>● Live erkannt: ein FM-1 wartet im Update-Modus</span> an "
-                         f"„{port.label}“" + (f" (Loader {ident})" if ident else "") + ".")
+            lines.append((_("<span style='color:#f67400'>● Detected live: an FM-1 is waiting in update mode</span> at "
+                            "“{port}” (loader {loader}).") if ident else
+                          _("<span style='color:#f67400'>● Detected live: an FM-1 is waiting in update mode</span> at "
+                            "“{port}”.")).format(port=port.label, loader=ident))
         else:
-            lines.append("<span style='color:#888'>○ Nicht erkannt: kein FM-1 im Update-Modus.</span> Die Anzeige "
-                         "aktualisiert sich von selbst.")
+            lines.append(_("<span style='color:#888'>○ Not detected: no FM-1 in update mode.</span> The display "
+                           "updates by itself."))
         if act:
-            lines.append(f"Unterbrochene Installation laut Journal: <b>{act.get('target', '?')}</b> "
-                         f"({act.get('product', '')}, Phase „{act.get('phase', '')}“).")
+            lines.append(_("Interrupted installation according to the journal: <b>{target}</b> "
+                           "({product}, phase “{phase}”).").format(target=act.get('target', '?'),
+                                                                  product=act.get('product', ''),
+                                                                  phase=act.get('phase', '')))
         self.status.setText("<br>".join(lines))
         # Knöpfe der Stufe 1: nur mit einem wartenden Gerät – und „Original-V15“ nur, wenn der Loader sie annimmt
-        wait_hint = "Erst möglich, wenn ein FM-1 im Update-Modus erkannt ist (siehe Zustand oben)."
+        wait_hint = _("Only possible once an FM-1 in update mode is detected (see status above).")
         self.b_finish.setEnabled(bool(port))
-        self.b_finish.setToolTip(("Schreibt das Paket der unterbrochenen Installation (laut Journal) – nach Prüfung von "
-                                  "Prüfsumme und Loader." if act else
-                                  "Kein Journal-Eintrag: Du wirst nach dem Paket gefragt, dessen Installation "
-                                  "unterbrochen wurde.") if port else wait_hint)
+        self.b_finish.setToolTip((_("Writes the package of the interrupted installation (according to the journal) – "
+                                    "after checking checksum and loader.") if act else
+                                  _("No journal entry: you will be asked for the package whose installation was "
+                                    "interrupted.")) if port else wait_hint)
         v15_ok = bool(port) and (not ident or bool(fpk.STOCK_LOADER_RE.match(ident)))
         self.b_v15.setEnabled(v15_ok)
-        self.b_v15.setToolTip("Nur möglich, wenn das FM-1 im Original-Update-Modus (ota-FM-1_015) wartet." if v15_ok
-                              else (f"Das FM-1 wartet als „{ident}“ – {_loader_kind(ident)}. Er nimmt die "
-                                    "Original-V15 nicht an; bitte das unterbrochene Paket abschließen." if port
-                                    else wait_hint))
+        self.b_v15.setToolTip(_("Only possible if the FM-1 is waiting in the original update mode (ota-FM-1_015).")
+                              if v15_ok else
+                              (_("The FM-1 is waiting as “{identity}” – {loader}. It does not accept the original "
+                                 "V15; please finish the interrupted package.").format(identity=ident,
+                                                                                      loader=_loader_kind(ident))
+                               if port else wait_hint))
         self.b_file.setEnabled(bool(port))
-        self.b_file.setToolTip("Ein anderes .fwsc-Paket wählen – die App prüft, ob es zum wartenden Loader passt."
+        self.b_file.setToolTip(_("Choose another .fwsc package – the app checks whether it matches the waiting loader.")
                                if port else wait_hint)
         devs = uboot.scan() if not DEMO else []
         usb = self.ctx.uboot if hasattr(self.ctx, "uboot") else []
         if devs:
-            txt = "<span style='color:#f67400'>● Live erkannt:</span> " + "; ".join(d.describe() for d in devs)
+            txt = _("<span style='color:#f67400'>● Detected live:</span> {devices}").format(
+                devices="; ".join(d.describe() for d in devs))
         elif usb:
-            txt = ("<span style='color:#f67400'>● Ein FM-1 im ROM-Bootmodus ist am USB</span>, aber kein SCSI-Gerät "
-                   "dazu: <tt>sudo modprobe sg</tt> ausführen.")
+            txt = _("<span style='color:#f67400'>● An FM-1 in ROM boot mode is on USB</span>, but there is no SCSI "
+                    "device for it: run <tt>sudo modprobe sg</tt>.")
         else:
-            txt = "<span style='color:#888'>○ Nicht erkannt: kein Gerät „WL82 UBOOT1.00“ angeschlossen.</span>"
+            txt = _("<span style='color:#888'>○ Not detected: no device “WL82 UBOOT1.00” connected.</span>")
         miss = uboot.missing_deps()
         if miss:
-            txt += f"<br>Für das Werkzeug fehlen Pakete: <tt>sudo apt install {' '.join(miss)}</tt>"
+            txt += "<br>" + _("Packages are missing for the tool: <tt>sudo apt install {packages}</tt>").format(
+                packages=" ".join(miss))
         ready = uboot.tool_ready()
-        txt += "<br>Werkzeug jl-uboot-tool: " + ("vorhanden (wird vor jedem Start geprüft)." if ready else
-                                                 "noch nicht geholt – zuerst „Werkzeug holen“.")
+        txt += "<br>" + (_("Tool jl-uboot-tool: present (checked before every start).") if ready else
+                         _("Tool jl-uboot-tool: not fetched yet – first “Fetch tool”."))
         self.uboot_status.setText(txt)
         # Knöpfe der Stufe 2: Simulation geht immer (Übung); echt nur mit Werkzeug und genau einem Gerät
         sim = self.chk_sim.isChecked()
-        self.b_setup.setToolTip("Holt kagaimiqs jl-uboot-tool einmalig auf den geprüften Stand – nichts wird am FM-1 "
-                                "verändert." + ("" if not ready else " Schon vorhanden; erneut holen prüft es nur."))
-        for b, what in ((self.b_restore, "Schreibt die Original-V15 (0x4000–0x92FFF) in den Flash des FM-1 im "
-                                         "ROM-Bootmodus – nach Pflicht-Doppelsicherung, nur unter dem Bootkopf ab Werk."),
-                        (self.b_repair, "Setzt nur die Einstellungsbereiche auf einen Werks-Dump zurück – nur, wenn "
-                                        "die frische Sicherung den V15-Aufbau zeigt.")):
+        self.b_setup.setToolTip(_("Fetches kagaimiq's jl-uboot-tool once at the checked state – nothing is changed on "
+                                  "the FM-1.") + ("" if not ready else " " + _("Already present; fetching again only "
+                                                                               "checks it.")))
+        for b, what in ((self.b_restore, _("Writes the original V15 (0x4000–0x92FFF) to the flash of the FM-1 in "
+                                           "ROM boot mode – after the mandatory double backup, only under the factory "
+                                           "boot header.")),
+                        (self.b_repair, _("Only resets the settings areas to a factory dump – only if the fresh "
+                                          "backup shows the V15 layout."))):
             if sim:
                 b.setEnabled(True)
-                b.setToolTip(what + " Simulation: läuft gegen einen Mock, nichts wird geschrieben.")
+                b.setToolTip(_("{action} Simulation: runs against a mock, nothing is written.").format(action=what))
             elif not ready:
                 b.setEnabled(False)
-                b.setToolTip("Zuerst „Werkzeug holen“ – ohne jl-uboot-tool kann die App nicht mit dem Chip sprechen.")
+                b.setToolTip(_("First “Fetch tool” – without jl-uboot-tool the app cannot talk to the chip."))
             elif len(devs) != 1:
                 b.setEnabled(False)
-                b.setToolTip("Erst möglich, wenn genau ein Gerät „WL82 UBOOT1.00“ erkannt ist (siehe Zustand oben)."
-                             if not devs else "Mehrere Geräte im ROM-Bootmodus – bitte nur eins anschließen.")
+                b.setToolTip(_("Only possible once exactly one device “WL82 UBOOT1.00” is detected (see status above).")
+                             if not devs else _("Several devices in ROM boot mode – please connect only one."))
             else:
                 b.setEnabled(True)
                 b.setToolTip(what)
         dump_ok = sim or (ready and (bool(devs) or self.ctx.port is not None))
         self.b_dump.setEnabled(dump_ok)
         if not dump_ok:
-            self.b_dump.setToolTip("Dafür muss jl-uboot-tool geholt sein und ein FM-1 angeschlossen (laufend mit "
-                                   "Original-Firmware oder schon im ROM-Bootmodus).")
-        elif self.b_dump.toolTip().startswith("Dafür"):
+            self.b_dump.setToolTip(self._dump_needs)
+        elif self.b_dump.toolTip() == self._dump_needs:
             self.b_dump.setToolTip(self._dump_tip)
 
     # ------------------------------------------------------------ Stufe 1
@@ -343,15 +356,15 @@ class RecoveryPage(QWidget):
         act = self.journal.active
         if act and not choose and act.get("package") and Path(act["package"]).exists():
             return Path(act["package"])
-        path, _ = QFileDialog.getOpenFileName(self, "Paket der unterbrochenen Installation",
-                                              str(self.ctx.settings.firmware_dir), "FM-1-Firmware (*.fwsc)")
+        path, _filter = QFileDialog.getOpenFileName(self, _("Package of the interrupted installation"),
+                                                    str(self.ctx.settings.firmware_dir), _("FM-1 firmware (*.fwsc)"))
         return Path(path) if path else None
 
     def finish_install(self, stock: bool = False, choose: bool = False) -> bool:
         port = self.update_port()
         if port is None:
-            show_error(self, "Kein Gerät im Update-Modus", "Bitte das FM-1 wie beschrieben in den Update-Modus bringen "
-                                                          "und anschließen.")
+            show_error(self, _("No device in update mode"), _("Please bring the FM-1 into update mode as described "
+                                                              "and connect it."))
             return False
         src = self._package_for("", stock, choose)
         if src is None:
@@ -360,52 +373,61 @@ class RecoveryPage(QWidget):
         ident_now = self.ctx.identity if self.ctx.port is port else ""
         expect_sha = ""
         if stock:
-            what = "die unveränderte <b>Original-Firmware V15</b> (Prüfsumme db1642b2…)"
+            what = _("the unmodified <b>original firmware V15</b> (checksum db1642b2…)")
             if ident_now and not fpk.STOCK_LOADER_RE.match(ident_now):
-                show_error(self, "Passt nicht zum wartenden Loader",
-                           f"Das FM-1 wartet als „{ident_now}“ – das ist {_loader_kind(ident_now)}. Er nimmt die "
-                           "Original-V15 nicht an. Es wurde nichts gesendet. Bitte „Installation abschließen“ mit dem "
-                           "Paket der unterbrochenen Installation benutzen.")
+                show_error(self, _("Does not match the waiting loader"),
+                           _("The FM-1 is waiting as “{identity}” – that is {loader}. It does not accept the original "
+                             "V15. Nothing was sent. Please use “Finish installation” with the package of the "
+                             "interrupted installation.").format(identity=ident_now, loader=_loader_kind(ident_now)))
                 return False
         else:
             # das Paket schon hier prüfen – der Nutzer sieht vor dem Klick, was gesendet würde
             try:
                 pre = fpk.analyze(Path(src))
             except fpk.PackageError as e:
-                show_error(self, "Kein FM-1-Paket", f"{e} Es wurde nichts gesendet.")
+                show_error(self, _("No FM-1 package"), _("{error} Nothing was sent.").format(error=e))
                 return False
-            fam = {"stock": "Original (M-VAVE)", "felucca": "Felucca-Familie"}.get(pre.family, "unbekannt")
-            facts = (f"<br><small>Kennung {pre.product} · Loader-Familie {fam} · SHA-256 {pre.sha256[:16]}…"
-                     + (f" · <b>beschädigt: {pre.damage}</b>" if pre.damage else "") + "</small>")
+            fam = {"stock": _("Original (M-VAVE)"), "felucca": _("Felucca family")}.get(pre.family, _("unknown"))
+            facts = _("Identity {product} · loader family {family} · SHA-256 {sha256}…").format(
+                product=pre.product, family=fam, sha256=pre.sha256[:16])
             if pre.damage:
-                show_error(self, "Paket beschädigt", f"{Path(src).name} ist beschädigt ({pre.damage}) und wird nicht "
-                           "gesendet. Bitte das Paket neu herunterladen (Firmware+ › „Installieren & Versionen“ › „Nur herunterladen“).")
+                facts += " · <b>" + _("damaged: {damage}").format(damage=pre.damage) + "</b>"
+            facts = "<br><small>" + facts + "</small>"
+            if pre.damage:
+                show_error(self, _("Package damaged"), _("{name} is damaged ({damage}) and is not sent. Please download "
+                                                         "the package again (Firmware+ › “Install & Versions” › "
+                                                         "“Download only”).").format(name=Path(src).name,
+                                                                                      damage=pre.damage))
                 return False
             if pre.loader_rule is None:
-                show_error(self, "Unbekannter Update-Loader", f"Die App kennt den Update-Loader von {Path(src).name} "
-                           "nicht und schickt das Paket deshalb an keinen Loader. Es wurde nichts gesendet.")
+                show_error(self, _("Unknown update loader"), _("The app does not know the update loader of {name} and "
+                                                               "therefore sends the package to no loader. Nothing was "
+                                                               "sent.").format(name=Path(src).name))
                 return False
             if ident_now and not pre.loader_rule(ident_now):
-                show_error(self, "Passt nicht zum wartenden Loader",
-                           f"Das FM-1 wartet als „{ident_now}“, {Path(src).name} gehört aber zu {pre.loader_rule.label}. "
-                           "Es wurde nichts gesendet. Bitte das Paket wählen, dessen Installation unterbrochen wurde.")
+                show_error(self, _("Does not match the waiting loader"),
+                           _("The FM-1 is waiting as “{identity}”, but {name} belongs to {loader}. Nothing was sent. "
+                             "Please choose the package whose installation was interrupted.").format(
+                               identity=ident_now, name=Path(src).name, loader=pre.loader_rule.label))
                 return False
             if act.get("package") and Path(act["package"]) == Path(src):
                 expect_sha = act.get("sha256") or ""
-                what = (f"<b>{act.get('target') or act.get('product') or 'die unterbrochene Firmware'}</b> "
-                        f"(das Paket der unterbrochenen Installation){facts}")
+                what = _("<b>{target}</b> (the package of the interrupted installation){facts}").format(
+                    target=act.get('target') or act.get('product') or _("the interrupted firmware"), facts=facts)
             else:
-                what = f"das Paket <b>{Path(src).name}</b>{facts}"
+                what = _("the package <b>{name}</b>{facts}").format(name=Path(src).name, facts=facts)
                 if act.get("sha256") and act["sha256"] != pre.sha256:
-                    what += (f"<br><b>Achtung:</b> Unterbrochen wurde „{act.get('target', '?')}“ – das ist ein anderes "
-                             "Paket. Am sichersten ist es, genau das unterbrochene Paket noch einmal zu schreiben.")
+                    what += "<br>" + _("<b>Caution:</b> “{target}” was interrupted – that is a different package. The "
+                                       "safest thing is to write exactly the interrupted package again.").format(
+                                           target=act.get('target', '?'))
         from ..risk_dialog import ensure_risk_ack
         if not ensure_risk_ack(self):
             return False
-        if not confirm(self, "Installation abschließen",
-                       f"Das wartende FM-1 bekommt {what}.<br><br>"
-                       "Die App prüft vorher noch einmal Prüfsumme und Loader – passt etwas nicht, wird nichts gesendet."
-                       "<br>Während des Schreibens das Kabel nicht abziehen und das FM-1 nicht ausschalten.", "Abschließen"):
+        if not confirm(self, _("Finish installation"),
+                       _("The waiting FM-1 receives {what}.<br><br>"
+                         "The app checks checksum and loader once more beforehand – if anything does not match, nothing "
+                         "is sent.<br>While writing, do not unplug the cable and do not switch the FM-1 off.").format(
+                           what=what), pgettext("button", "Finish")):
             return False
         cancel = threading.Event()
         device_id = self.ctx.profile.id if self.ctx.profile else ""
@@ -419,33 +441,34 @@ class RecoveryPage(QWidget):
                 path = firmware.download(src, firmware.fetch_releases(src)[0], log=w.log.emit).fwsc
             info = fpk.analyze(path)
             if stock and info.official != "FM-1_015":
-                raise RuntimeError("Die V15-Datei ist nicht die unveränderte Original-Firmware – nichts gesendet.")
-            w.log.emit(f"Paket: {info.product} ({info.family}), SHA-256 {info.sha256[:16]}…")
+                raise RuntimeError(_("The V15 file is not the unmodified original firmware – nothing sent."))
+            w.log.emit(_("Package: {product} ({family}), SHA-256 {sha256}…").format(
+                product=info.product, family=info.family, sha256=info.sha256[:16]))
             if DEMO:
                 from ...flash import demo
                 demo.register(Path(path).read_bytes())
             eng = fe.Engine(log=w.log.emit, progress=lambda a, b: w.progress.emit(a, b or 100), cancel=cancel)
             ident = eng.probe(port.in_name)
-            w.log.emit(f"Gerät meldet: {ident.text if ident else 'nichts'}")
+            w.log.emit(_("Device reports: {identity}").format(identity=ident.text if ident else _("nothing")))
             pin = fe.Pin(usb_path=port.usb_path) if port.usb_path else None
-            r = eng.write(info, port=port.in_name, label=f"Rettung: {act.get('target') or info.product}",
+            r = eng.write(info, port=port.in_name, label=_("Recovery: {target}").format(target=act.get('target') or info.product),
                           device_id=device_id, pin=pin, expect_sha=expect_sha)
-            w.log.emit(f"Fertig – das FM-1 meldet {r.identity}.")
+            w.log.emit(_("Done – the FM-1 reports {identity}.").format(identity=r.identity))
             return r.identity
 
         def run(w):
             try:
                 return work(w)
             except (RuntimeError, fe.FlashError):
-                raise                                   # schon deutsche Sätze
+                raise                                   # already readable sentences
             except Exception as e:  # noqa: BLE001
-                w.log.emit("Technische Details: " + firmware.explain(e))
+                w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
                 raise RuntimeError(firmware.friendly_error(e)) from e
         from ..feedback import run as fb_run
         try:
-            d = fb_run(self, "Installation abschließen", run,
-                       done=lambda ident: f"Installation abgeschlossen – das FM-1 meldet jetzt {ident} und startet "
-                                          "normal.")
+            d = fb_run(self, _("Finish installation"), run,
+                       done=lambda ident: _("Installation finished – the FM-1 now reports {identity} and starts "
+                                            "normally.").format(identity=ident))
         finally:
             self.ctx.reconnect_soon(1500)
         self.refresh()
@@ -456,14 +479,14 @@ class RecoveryPage(QWidget):
         return uboot.Runner(dry_run=self.chk_sim.isChecked(), log=log)
 
     def uboot_setup(self):
-        if not confirm(self, "Werkzeug holen",
-                       "Die App lädt kagaimiqs <b>jl-uboot-tool</b> (MIT) von GitHub auf den geprüften Stand adb3f18 und "
-                       "prüft die Prüfsumme des WL82-Loaders (d41da612…). Es wird nichts installiert, nur in den "
-                       "App-Datenordner kopiert. Fortfahren?", "Herunterladen"):
+        if not confirm(self, _("Fetch tool"),
+                       _("The app downloads kagaimiq's <b>jl-uboot-tool</b> (MIT) from GitHub at the checked state "
+                         "adb3f18 and checks the checksum of the WL82 loader (d41da612…). Nothing is installed, it is "
+                         "only copied into the app data folder. Continue?"), _("Download")):
             return False
         from ..feedback import run as fb_run
-        d = fb_run(self, "jl-uboot-tool holen", lambda w: _check(self._runner(w.log.emit).setup()),
-                   done="jl-uboot-tool geholt und geprüft (Stand adb3f18). Am FM-1 wurde nichts verändert.")
+        d = fb_run(self, _("Fetch jl-uboot-tool"), lambda w: _check(self._runner(w.log.emit).setup()),
+                   done=_("jl-uboot-tool fetched and checked (state adb3f18). Nothing was changed on the FM-1."))
         return d.ok
 
     def uboot_restore(self) -> bool:
@@ -471,35 +494,38 @@ class RecoveryPage(QWidget):
         devs = [] if sim else uboot.scan()
         if not sim:
             if len(devs) != 1:
-                show_error(self, "Kein eindeutiges Gerät",
-                           "Es muss genau ein Gerät „WL82 UBOOT1.00“ (USB 4c4a:8057) angeschlossen sein. Die App wählt "
-                           "nie selbst einen Datenträger aus." + (" Gefunden: " + ", ".join(x.sg for x in devs)
-                                                                    if devs else ""))
+                msg = ONE_UBOOT
+                if devs:
+                    msg = _("{message} Found: {devices}").format(message=msg, devices=", ".join(x.sg for x in devs))
+                show_error(self, _("No unambiguous device"), msg)
                 return False
             if not devs[0].size_ok:
-                show_error(self, "Größe passt nicht", f"{devs[0].describe()} – das ist kein FM-1.")
+                show_error(self, _("Size does not match"), _("{device} – that is not an FM-1.").format(device=devs[0].describe()))
                 return False
         dev = devs[0] if devs else None
         from ..risk_dialog import ensure_risk_ack
         if not ensure_risk_ack(self):
             return False
-        if not confirm(self, "Rettung Stufe 2 – Schritt 1 von 3",
-                       BASICS + "<br>Das FM-1 muss <b>voll geladen</b> sein und direkt am Rechner hängen.<br>"
-                       f"Gerät: <b>{dev.describe() if dev else 'Simulation'}</b><br><br>"
-                       "Ablauf: ganzen Flash zweimal lesen und vergleichen (Pflicht, enthält auch deine Projekte), "
-                       "an dieser Sicherung den Bootkopf prüfen (nur unter dem Kopf ab Werk geht es weiter – bei "
-                       "V16- oder unbekanntem Kopf wird nichts geschrieben), Firmwarebereich 0x4000–0x92FFF aus der "
-                       "Original-V15 schreiben, zurücklesen.", "Weiter",
+        if not confirm(self, _("Recovery stage 2 – step 1 of 3"),
+                       BASICS + "<br>" + _("The FM-1 must be <b>fully charged</b> and connected directly to the "
+                                           "computer.") + "<br>" +
+                       _("Device: <b>{device}</b>").format(device=dev.describe() if dev else _("Simulation"))
+                       + "<br><br>" +
+                       _("Procedure: read the whole flash twice and compare (mandatory, also contains your projects), "
+                         "check the boot header on this backup (it only continues under the factory header – with a "
+                         "V16 or unknown header nothing is written), write the firmware area 0x4000–0x92FFF from the "
+                         "original V15, read back."), _("Continue"),
                        danger=True):
             return False
-        text, ok = QInputDialog.getText(self, "Rettung Stufe 2 – Schritt 2 von 3",
-                                        "Zum Bestätigen SCHREIBEN eintippen (schreibt in den Flash des FM-1):")
-        if not ok or text.strip().upper() not in ("SCHREIBEN", "WRITE"):
+        word = pgettext("typed confirmation", "WRITE")
+        text, ok = QInputDialog.getText(self, _("Recovery stage 2 – step 2 of 3"),
+                                        _("To confirm, type {word} (writes to the flash of the FM-1):").format(word=word))
+        if not ok or text.strip().upper() not in {word.upper(), "SCHREIBEN", "WRITE"}:  # i18n: ignore
             return False
-        if not sim and not confirm(self, "Rettung Stufe 2 – Schritt 3 von 3",
-                                   "Jetzt fragt das System nach deinem Passwort (pkexec): Das Werkzeug braucht "
-                                   "Administratorrechte für den direkten USB-Zugriff. Danach nichts abziehen, bis "
-                                   "„Done“ erscheint.", "Starten", danger=True):
+        if not sim and not confirm(self, _("Recovery stage 2 – step 3 of 3"),
+                                   _("Now the system asks for your password (pkexec): the tool needs administrator "
+                                     "rights for direct USB access. After that do not unplug anything until “Done” "
+                                     "appears."), pgettext("button", "Start"), danger=True):
             return False
 
         def work(w):
@@ -508,11 +534,11 @@ class RecoveryPage(QWidget):
             r = self._runner(w.log.emit)
             return _gate_check(r, r.restore(str(v15), device=dev.sg if dev else ""))
         from ..feedback import run as fb_run
-        d = fb_run(self, "Original-V15 im ROM-Bootmodus schreiben", work,
-                   done=("Simulation beendet – nichts wurde geschrieben." if sim else
-                         "Original-V15 geschrieben (0x4000–0x92FFF) und zurückgelesen. Die Doppelsicherung des "
-                         "ganzen Flashs liegt im Rettungsordner. Jetzt das FM-1 aus- und wieder einschalten."),
-                   actions=[("Rettungsordner öffnen", lambda _r: QDesktopServices.openUrl(
+        d = fb_run(self, _("Write original V15 in ROM boot mode"), work,
+                   done=(_("Simulation finished – nothing was written.") if sim else
+                         _("Original V15 written (0x4000–0x92FFF) and read back. The double backup of the "
+                           "whole flash is in the recovery folder. Now switch the FM-1 off and on again.")),
+                   actions=[(_("Open recovery folder"), lambda _r: QDesktopServices.openUrl(
                        QUrl.fromLocalFile(str(uboot.work_dir()))))])
         return d.ok
 
@@ -523,46 +549,45 @@ class RecoveryPage(QWidget):
             return None, True
         devs = uboot.scan()
         if len(devs) != 1:
-            show_error(self, title, "Es muss genau ein Gerät „WL82 UBOOT1.00“ (USB 4c4a:8057) angeschlossen sein. Die "
-                       "App wählt nie selbst einen Datenträger aus." + (" Gefunden: " + ", ".join(x.sg for x in devs)
-                                                                        if devs else " Gefunden: keins."))
+            show_error(self, title, _("{message} Found: {devices}").format(message=ONE_UBOOT, devices=", ".join(
+                x.sg for x in devs)) if devs else _("{message} Found: none.").format(message=ONE_UBOOT))
             return None, False
         if not devs[0].size_ok:
-            show_error(self, title, f"{devs[0].describe()} – das ist kein FM-1.")
+            show_error(self, title, _("{device} – that is not an FM-1.").format(device=devs[0].describe()))
             return None, False
         return devs[0], True
 
     def uboot_repair(self) -> bool:
-        dev, ok = self._one_uboot("Einstellungen reparieren")
+        dev, ok = self._one_uboot(_("Repair settings"))
         if not ok:
             return False
-        path, _ = QFileDialog.getOpenFileName(self, "Werks-Dump (1 MiB) eines frischen Original-FM-1",
-                                              str(uboot.work_dir()), "Flash-Dump (*.bin)")
+        path, _filter = QFileDialog.getOpenFileName(self, _("Factory dump (1 MiB) of a fresh original FM-1"),
+                                                    str(uboot.work_dir()), _("Flash dump (*.bin)"))
         if not path:
             return False
         from ..risk_dialog import ensure_risk_ack
         if not ensure_risk_ack(self):
             return False
-        if not confirm(self, "Einstellungen reparieren",
-                       "<b>Upstream nur mit Mock getestet.</b> Zuerst am FM-1 <i>System &gt; Reset Patches</i> "
-                       "probieren.<br>Das Werkzeug sichert den Flash zweimal und setzt dann nur die "
-                       "Einstellungsbereiche (0x93000–0xE8FFF, 0xFC000–0xFEFFF) auf den Werks-Dump zurück. Songs und "
-                       "Einstellungen der vorigen Firmware gehen dabei verloren (bleiben im Backup), bei Melodee auch "
-                       "Werkssounds und Schrift (0xCB000).<br>Diese Bereiche sind nur beim <b>V15-Aufbau</b> reine "
-                       "Daten. Darum prüft die App an der Sicherung aus demselben Lauf, wo die Firmware endet – bei "
-                       "V16 (dort liegt in 0x93000–0xA8FFF noch Firmware), einem unbekannten oder beschädigten Aufbau "
-                       "wird nichts geschrieben.", "Reparieren",
-                       danger=True):
+        if not confirm(self, _("Repair settings"),
+                       _("<b>Upstream only tested with a mock.</b> First try <i>System &gt; Reset Patches</i> on the "
+                         "FM-1.<br>The tool backs up the flash twice and then resets only the settings areas "
+                         "(0x93000–0xE8FFF, 0xFC000–0xFEFFF) to the factory dump. Songs and settings of the previous "
+                         "firmware are lost in the process (they stay in the backup), with Melodee also factory sounds "
+                         "and font (0xCB000).<br>These areas are pure data only with the <b>V15 layout</b>. That is why "
+                         "the app checks on the backup from the same run where the firmware ends – with V16 (there is "
+                         "still firmware in 0x93000–0xA8FFF), an unknown or a damaged layout nothing is written."),
+                       _("Repair"), danger=True):
             return False
-        text, ok = QInputDialog.getText(self, "Bestätigen", "Zum Bestätigen SCHREIBEN eintippen:")
-        if not ok or text.strip().upper() not in ("SCHREIBEN", "WRITE"):
+        word = pgettext("typed confirmation", "WRITE")
+        text, ok = QInputDialog.getText(self, _("Confirm"), _("To confirm, type {word}:").format(word=word))
+        if not ok or text.strip().upper() not in {word.upper(), "SCHREIBEN", "WRITE"}:  # i18n: ignore
             return False
         def work(w):
             r = self._runner(w.log.emit)
             _gate_check(r, r.repair_settings(path, device=dev.sg if dev else ""))
             return r.last_verdict().get("verdict") or {}
         from ..feedback import run as fb_run
-        d = fb_run(self, "Einstellungen reparieren", work,
+        d = fb_run(self, _("Repair settings"), work,
                    done=lambda v: repair_done_text(v, sim=dev is None))
         return d.ok
 
@@ -570,33 +595,33 @@ class RecoveryPage(QWidget):
         from ..risk_dialog import ensure_risk_ack
         if not ensure_risk_ack(self):
             return False
-        if not confirm(self, "Notfall-Komplettsicherung (optional)",
-                       "Für Fortgeschrittene: Ein FM-1 mit <b>Original-Firmware</b> wird per Softkey in den "
-                       "ROM-Bootmodus geschickt, dann wird der ganze Flash zweimal nur gelesen und verglichen. Braucht "
-                       "Administratorrechte. Danach das FM-1 aus- und einschalten.", "Sichern"):
+        if not confirm(self, _("Emergency full backup (optional)"),
+                       _("For advanced users: an FM-1 with the <b>original firmware</b> is sent into ROM boot mode via "
+                         "softkey, then the whole flash is only read twice and compared. Needs administrator rights. "
+                         "Afterwards switch the FM-1 off and on."), _("Back up")):
             return False
-        folder = str(uboot.work_dir() / "Komplettsicherungen")
+        folder = str(uboot.work_dir() / "Komplettsicherungen")  # i18n: ignore (folder name on disk)
         sim = self.chk_sim.isChecked()
         if not sim and getattr(self.ctx, "is_virtual", False):
-            show_error(self, "Kein echtes FM-1", "Der Studio-Zwilling ist kein echtes FM-1 – eine Komplettsicherung "
-                       "geht nur von einem angeschlossenen Gerät. Bitte oben ein echtes FM-1 wählen.")
+            show_error(self, _("Not a real FM-1"), _("The Studio twin is not a real FM-1 – a full backup only works "
+                                                     "from a connected device. Please choose a real FM-1 at the top."))
             return False
         port = self.ctx.port
         softkey = not sim and self.ctx.protocol != "update"
         if not sim:
             before = uboot.scan()
             if softkey and before:
-                show_error(self, "Schon ein Gerät im ROM-Bootmodus",
-                           "Es ist bereits ein Gerät „WL82 UBOOT1.00“ angeschlossen. Damit die Sicherung sicher vom "
-                           "richtigen FM-1 kommt: erst dieses Gerät abziehen, oder – wenn es das gewünschte ist – "
-                           "es ohne Softkey sichern (FM-1 vorher trennen, dann erneut versuchen).")
+                show_error(self, _("Already a device in ROM boot mode"),
+                           _("A device “WL82 UBOOT1.00” is already connected. So that the backup surely comes from the "
+                             "right FM-1: unplug this device first, or – if it is the one you want – back it up without "
+                             "softkey (disconnect the FM-1 first, then try again)."))
                 return False
             if not softkey and len(before) != 1:
-                dev, ok = self._one_uboot("Notfall-Komplettsicherung")
+                dev, ok = self._one_uboot(_("Emergency full backup"))
                 if not ok:
                     return False
         if softkey and port is None:
-            show_error(self, "Kein Gerät", "Bitte das FM-1 mit Original-Firmware anschließen.")
+            show_error(self, _("No device"), _("Please connect the FM-1 with the original firmware."))
             return False
 
         def work(w):
@@ -604,55 +629,55 @@ class RecoveryPage(QWidget):
             dev = ""
             if softkey:
                 _check(r.softkey(port.in_name), r)
-                w.log.emit("Warte auf das FM-1 im ROM-Bootmodus (USB 4c4a:8057) …")
-                for _ in range(40):
+                w.log.emit(_("Waiting for the FM-1 in ROM boot mode (USB 4c4a:8057) …"))
+                for _try in range(40):
                     found = [d for d in uboot.scan() if not port.usb_path or d.usb_path == port.usb_path]
                     if len(found) == 1:
                         dev = found[0].sg
                         break
                     if len(found) > 1:
-                        raise RuntimeError("Mehrere Geräte im ROM-Bootmodus – bitte nur das FM-1 angeschlossen lassen, "
-                                           "das du sichern willst.")
+                        raise RuntimeError(_("Several devices in ROM boot mode – please leave only the FM-1 connected "
+                                             "that you want to back up."))
                     threading.Event().wait(0.5)
                 if not dev:
-                    raise RuntimeError("Das FM-1 ist nicht im ROM-Bootmodus erschienen (USB 4c4a:8057). Aus- und wieder "
-                                       "einschalten und erneut versuchen.")
+                    raise RuntimeError(_("The FM-1 did not appear in ROM boot mode (USB 4c4a:8057). Switch it off and "
+                                         "on again and try again."))
             elif not sim:
                 devs = uboot.scan()
                 if len(devs) != 1:
-                    raise RuntimeError("Es muss genau ein Gerät „WL82 UBOOT1.00“ angeschlossen sein.")
+                    raise RuntimeError(_("Exactly one device “WL82 UBOOT1.00” must be connected."))
                 dev = devs[0].sg
             return _check(r.backup(folder, device=dev), r)
         from ..feedback import run as fb_run
-        d = fb_run(self, "Notfall-Komplettsicherung", work,
-                   done=f"Komplettsicherung gelesen (zweimal, verglichen) und gespeichert in {folder}. Am FM-1 wurde "
-                        "nichts geschrieben – jetzt aus- und wieder einschalten.",
-                   actions=[("Ordner öffnen", lambda _r: QDesktopServices.openUrl(QUrl.fromLocalFile(folder)))])
+        d = fb_run(self, _("Emergency full backup"), work,
+                   done=_("Full backup read (twice, compared) and saved in {folder}. Nothing was written on the "
+                          "FM-1 – now switch it off and on again.").format(folder=folder),
+                   actions=[(_("Open folder"), lambda _r: QDesktopServices.openUrl(QUrl.fromLocalFile(folder)))])
         return d.ok
 
 
 def _loader_kind(ident: str) -> str:
     """welcher Update-Loader wartet – in Worten (nur Anzeige)"""
     if fpk.OPEN_LOADER_RE.match(ident or ""):
-        return "der Update-Loader der M-VAVE FM1 Open (nimmt nur das Paket genau seines Builds an)"
+        return _("the update loader of the M-VAVE FM1 Open (only accepts the package of exactly its build)")
     if (ident or "").startswith("ota-FM-1_9"):
-        return "ein Felucca-Loader (Melodee, SLOOP, Skiff …)"
-    return "ein Update-Loader, den die App nicht kennt"
+        return _("a Felucca loader (Melodee, SLOOP, Skiff …)")
+    return _("an update loader the app does not know")
 
 
 def repair_done_text(verdict: dict, sim: bool = False) -> str:
     """Abschluss von „Einstellungen reparieren“. Nur nach rc 0 – dann hat rescuegate an der Sicherung desselben Laufs
     den V15-Aufbau festgestellt, und die Tore des Unbrickers lassen nur 0x93000–0xE8FFF und 0xFC000–0xFEFFF zu."""
     if sim:
-        return "Simulation beendet – am FM-1 wurde nichts geschrieben."
-    fw = verdict.get("firmware") or "die Firmware im Flash"
-    basis = verdict.get("basis") or "V15-Aufbau"
-    return ("Die Einstellungsbereiche 0x93000–0xE8FFF und 0xFC000–0xFEFFF sind jetzt im Werkszustand (wo nötig neu "
-            "geschrieben und zurückgelesen). Vorher hat die App an der Sicherung aus diesem Lauf geprüft, dass "
-            f"{fw} den V15-Aufbau hat und vor 0x93000 endet ({basis}); den Bootkopf und den Firmware-Bereich "
-            "0x0000–0x92FFF hat das Werkzeug darum nicht beschrieben. Songs, Sounds und Einstellungen aus diesen "
-            "Bereichen – bei Melodee auch Werkssounds und Schrift – liegen nur noch in der Sicherung im "
-            "Rettungsordner. Jetzt das FM-1 aus- und wieder einschalten.")
+        return _("Simulation finished – nothing was written on the FM-1.")
+    fw = verdict.get("firmware") or _("the firmware in the flash")
+    basis = verdict.get("basis") or _("V15 layout")
+    return _("The settings areas 0x93000–0xE8FFF and 0xFC000–0xFEFFF are now in factory state (rewritten and read back "
+             "where necessary). Beforehand the app checked on the backup from this run that {firmware} has the V15 "
+             "layout and ends before 0x93000 ({basis}); that is why the tool did not write the boot header and the "
+             "firmware area 0x0000–0x92FFF. Songs, sounds and settings from these areas – with Melodee also factory "
+             "sounds and font – are now only in the backup in the recovery folder. Now switch the FM-1 off and on "
+             "again.").format(firmware=fw, basis=basis)
 
 
 def _gate_check(runner, rc: int):
@@ -660,16 +685,15 @@ def _gate_check(runner, rc: int):
     from ...flash import rescuegate
     res = runner.last_verdict() if hasattr(runner, "last_verdict") else {}
     if rc == rescuegate.EXIT_REFUSED or (rc != 0 and res.get("refused")):
-        raise RuntimeError("Abgelehnt – es wurde nichts geschrieben. " + (res.get("refused") or
-                           "Die Prüfung der Sicherung hat nicht bestanden (Details im Protokoll).")
-                           + " Die Sicherung aus diesem Lauf liegt im Rettungsordner. Das FM-1 verlässt den "
-                           "ROM-Bootmodus meist nach einem Werkzeuglauf – für einen weiteren Versuch aus- und "
-                           "einschalten und neu in den ROM-Bootmodus bringen.")
+        raise RuntimeError(_("Refused – nothing was written. {reason} The backup from this run is in the recovery "
+                             "folder. The FM-1 usually leaves ROM boot mode after one tool run – for another attempt "
+                             "switch it off and on and bring it into ROM boot mode again.").format(
+            reason=res.get("refused") or _("The check of the backup did not pass (details in the log).")))
     if rc != 0 and getattr(runner, "hint", ""):
         raise RuntimeError(runner.hint)
     if rc == 0 and not res.get("checked"):
-        raise RuntimeError("Das Werkzeug hat ohne die Prüfung der Sicherung geendet – die App kann nicht sagen, was "
-                           "geschehen ist. Bitte das Protokoll ansehen.")
+        raise RuntimeError(_("The tool ended without checking the backup – the app cannot say what happened. "
+                             "Please look at the log."))
     return _check(rc)
 
 
@@ -677,9 +701,9 @@ def _check(rc: int, runner=None):
     if rc != 0 and getattr(runner, "hint", ""):      # z. B. UCUN-Flash (0xB36014): Rettung kennt ihn noch nicht
         raise RuntimeError(runner.hint)
     if rc != 0:
-        raise RuntimeError(f"Das Werkzeug meldet einen Fehler (Code {rc}) – Details im Protokoll. "
-                           + ("Code 3: Firmwarebereich evtl. unvollständig – NICHT ausschalten, erneut versuchen."
-                              if rc == 3 else "Es wurde nichts geschrieben, falls das Protokoll nichts anderes sagt."))
+        raise RuntimeError(_("The tool reports an error (code {code}) – details in the log. {hint}").format(
+            code=rc, hint=_("Code 3: firmware area possibly incomplete – do NOT switch off, try again.") if rc == 3
+            else _("Nothing was written, unless the log says otherwise.")))
     return rc
 
 

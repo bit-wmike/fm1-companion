@@ -32,6 +32,28 @@ from pathlib import Path
 from typing import Callable, Iterable
 
 from . import backup
+from .i18n import N_, _, ngettext, pgettext
+
+# object groups – identifiers (compared in code and tests); display text: group_text()
+G_MUSIC, G_PROJECTS, G_PRESETS = "Musik", "Projekte", "Presets"          # i18n: ignore
+G_SETTINGS, G_SAMPLES, G_OTHER = "Einstellungen", "Samples", "Sonstiges"  # i18n: ignore
+GROUP_TEXT = {G_MUSIC: N_("Music"), G_PROJECTS: N_("Projects"), G_PRESETS: N_("Presets"), G_SETTINGS: N_("Settings"),
+              G_SAMPLES: N_("Samples"), G_OTHER: N_("Other")}
+# change kinds – identifiers; display text: kind_text()
+K_NEW, K_CLEARED, K_CHANGED, K_ADDED, K_MISSING, K_DELETED, K_SAME = (
+    "neu", "geleert", "geändert", "hinzugekommen", "fehlt", "gelöscht", "gleich")    # i18n: ignore
+KIND_TEXT = {K_NEW: N_("new"), K_CLEARED: N_("cleared"), K_CHANGED: N_("changed"), K_ADDED: N_("added"),
+             K_MISSING: N_("missing"), K_DELETED: N_("deleted"), K_SAME: N_("same")}
+# changed preset fields – identifiers
+F_NAME, F_ENGINE, F_SOUND, F_FAVORITE = "Name", "Engine", "Klang", "Favorit"        # i18n: ignore
+
+
+def group_text(group: str) -> str:
+    return _(GROUP_TEXT[group]) if group in GROUP_TEXT else group
+
+
+def kind_text(kind: str) -> str:
+    return _(KIND_TEXT[kind]) if kind in KIND_TEXT else kind
 
 UPB2 = 0x32425055
 UPB1 = 0x31425055
@@ -61,7 +83,9 @@ def engine_name(e: int) -> str:
     n = ENGINES.get(e)
     if n is None:
         return engine_display_name(e)
-    return engine_display_name(e) + (" (stillgelegt)" if e in RETIRED_ENGINES else "")
+    if e in RETIRED_ENGINES:
+        return _("{engine} (retired)").format(engine=engine_display_name(e))
+    return engine_display_name(e)
 
 
 # SLOOP (web/editor.html, Engines in INFO-Reihenfolge)
@@ -71,14 +95,14 @@ SLOOP_ENGINES = ["ANALOG", "DIGITAL", "PHASE", "LOFI", "SAMPLE", "VOICE", "TRIO"
 
 def bank_origin(b: int) -> str:
     if b < 4:
-        return "allgemein"
+        return _("general")
     if b < 8:
-        return "früher FM6-Voices"
+        return _("formerly FM6 voices")
     if b < 16:
-        return "früher CZ-1-Töne"
+        return _("formerly CZ-1 tones")
     if b < 21:
-        return "früher Prophet-Programme"
-    return "Zusatzplätze"
+        return _("formerly Prophet programs")
+    return _("extra slots")
 
 
 def bank_range(b: int) -> tuple[int, int]:
@@ -196,9 +220,11 @@ class Report:
 
     def summary(self) -> str:
         from .autobackup import content_text
-        n_s = sum(1 for o in self.objects if o.group == "Samples" and o.used)
+        n_s = sum(1 for o in self.objects if o.group == G_SAMPLES and o.used)
         txt = content_text(len(self.used_projects), len(self.used_presets), len(self.objects))
-        return txt.replace(" · ", f", {n_s} Samples · " if n_s else " · ")
+        if not n_s:
+            return txt
+        return txt.replace(" · ", ", " + ngettext("{n} sample", "{n} samples", n_s).format(n=n_s) + " · ", 1)
 
 
 # ----------------------------------------------------------- Dekodieren ---
@@ -259,7 +285,7 @@ def decode_czcb(data: bytes, first: int, oid: int) -> list[PresetSlot] | None:
     for k in range(16):
         t = data[28 + k * 144: 28 + (k + 1) * 144]
         u = bool(used >> k & 1)
-        out.append(PresetSlot(first + k, u, engine=15, name=f"Ton {first + k}" if u else "", oid=oid,
+        out.append(PresetSlot(first + k, u, engine=15, name=_("Tone {n}").format(n=first + k) if u else "", oid=oid,
                               digest=_digest(t) if u else "", raw=t if u else b"", prefix="CZ", version=13))
     return out
 
@@ -272,7 +298,7 @@ def decode_p5u1(data: bytes, first: int, oid: int) -> list[PresetSlot] | None:
     for k in range(26):
         p = data[12 + k * 138: 12 + (k + 1) * 138]
         u = bool(used >> k & 1)
-        out.append(PresetSlot(first + k, u, bool(fav >> k & 1) and u, 19, f"Programm {first + k}" if u else "",
+        out.append(PresetSlot(first + k, u, bool(fav >> k & 1) and u, 19, _("Program {n}").format(n=first + k) if u else "",
                               12, oid, _digest(p) if u else "", p if u else b"", prefix="P5"))
     return out
 
@@ -284,15 +310,16 @@ def decode_settings(data: bytes) -> dict:
     magic = _u32(data, 0)
     if magic == PER5 and len(data) >= 604:
         boot, drumch, lights = _u32(data, 576), _u32(data, 588), _u32(data, 592)
+        off = pgettext("setting", "off")
         return {"Format": "PER5 (Melodee)",
-                "Vorlage gespeichert": "ja" if len(data) > 604 else "nein",
-                "Projekt beim Einschalten": f"Platz {boot}" if 1 <= boot <= 32 else "aus",
-                "Drum-MIDI-Kanal": "aus" if drumch == 17 else str(drumch or 10),
-                "Tastenbeleuchtung": ["mittel", "aus", "schwach", "mittel", "hell", "voll"][lights]
+                _("Template saved"): _("yes") if len(data) > 604 else _("no"),
+                _("Project at power-on"): _("slot {n}").format(n=boot) if 1 <= boot <= 32 else off,
+                _("Drum MIDI channel"): off if drumch == 17 else str(drumch or 10),
+                _("Key lighting"): [_("medium"), off, _("low"), _("medium"), _("bright"), _("full")][lights]
                 if 0 <= lights <= 5 else str(lights)}
     if magic == PER3:
         return {"Format": "PER3 (SLOOP)"}
-    return {"Format": f"unbekannt ({data[:4].hex()})"}
+    return {"Format": _("unknown ({magic})").format(magic=data[:4].hex())}
 
 
 # ------------------------------------------------------------ Projekt-Hook ---
@@ -325,109 +352,113 @@ def project_info(data: bytes, firmware: str = "") -> dict:
 def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = "",
              sloop: bool = False) -> ObjectView:
     size = len(data)
-    v = ObjectView(oid, f"Objekt {oid}", "Sonstiges", size, crc, data)
+    v = ObjectView(oid, _("Object {id}").format(id=oid), G_OTHER, size, crc, data)
     if oid == 0:
-        v.title, v.group, v.slot = "Laufende Musik", "Musik", None
+        v.title, v.group, v.slot = _("Running music"), G_MUSIC, None
         if size:
             v.project_info = project_info(data, firmware)
             v.format = v.project_info.get("format", "")
         return v
     if oid == 1:
-        v.title, v.group = "Einstellungen", "Einstellungen"
+        v.title, v.group = _("Settings"), G_SETTINGS
         v.format = decode_settings(data).get("Format", "")
         return v
     slot = backup.project_slot(oid)
     if slot and not (sloop and oid > 5):
         v.slot = slot
-        v.title = f"Song-Section {'ABCD'[slot - 1]}" if sloop else f"Projekt {slot}"
-        v.group = "Projekte"
+        v.title = (_("Song section {letter}").format(letter='ABCD'[slot - 1]) if sloop
+                   else _("Project {n}").format(n=slot))
+        v.group = G_PROJECTS
         if size:
             v.project_info = project_info(data, firmware)
             v.format = v.project_info.get("format", "")
             v.detail = v.project_info.get("summary", "")
         return v
     if backup.is_sample(oid):
-        v.title, v.group = f"Sample-Slot USR{oid - 31}", "Samples"
+        v.title, v.group = _("Sample slot USR{n}").format(n=oid - 31), G_SAMPLES
         if size >= 512 and _u32(data, 0) == SMPF:
             v.format = "Sample"
-            v.detail = f"{data[6]} Zonen, Name {_name(data[8:16]) or '–'}"
+            v.detail = ngettext("{n} zone, name {name}", "{n} zones, name {name}", data[6]).format(
+                n=data[6], name=_name(data[8:16]) or '–')
         return v
     if sloop:
-        names = {6: "Preset-Bank 1–16", 7: "Preset-Bank 17–32", 8: "FM6-Patch-Bank", 9: "SYN-Drum-Kits",
-                 10: "MIDI-Learn", 11: "Farbschema"}
-        v.title = names.get(oid, v.title)
-        v.group = "Presets" if oid in (6, 7, 8, 9) else "Einstellungen"
+        from .sloopbk import title as sloop_title
+        if oid in (6, 7, 8, 9, 10, 11):
+            v.title = sloop_title(oid)
+        v.group = G_PRESETS if oid in (6, 7, 8, 9) else G_SETTINGS
         if oid in (6, 7):
             first = 1 + (oid - 6) * 16
             pr = decode_up_bank(data, first, oid) if size else [PresetSlot(first + k, False, oid=oid) for k in range(16)]
             if pr is None:
-                v.format = "unbekanntes Format"
+                v.format = _("unknown format")
             else:
                 for x in pr:
                     x.fw = "sloop"
-                v.presets, v.format = pr, "UPB1" if size else "leer"
+                v.presets, v.format = pr, "UPB1" if size else _("empty")
                 used = [x for x in pr if x.used]
-                v.detail = f"{len(used)} von {len(pr)} belegt"
+                v.detail = _("{used} of {total} used").format(used=len(used), total=len(pr))
         elif oid == 10 and size:
-            v.detail = "gelernte MIDI-Zuordnungen und Kanäle"
+            v.detail = _("learned MIDI assignments and channels")
         return v
     if oid == 8:
-        v.title, v.group = "Alte FM6-Bank (stillgelegt)", "Sonstiges"
+        v.title, v.group = _("Old FM6 bank (retired)"), G_OTHER
         return v
     # Preset-Objekte
-    v.group = "Presets"
+    v.group = G_PRESETS
     magic = _u32(data, 0) if size >= 4 else -1
     if n_objects in (29, 57) or magic == UPB2:
         b = BANK_OF_OID.get(oid)
         if b is not None:
             lo, hi = bank_range(b)
-            v.title = f"Preset-Bank {slot_label(lo)}–{slot_label(hi)} ({bank_origin(b)})"
+            v.title = _("Preset bank {first}–{last} ({origin})").format(first=slot_label(lo), last=slot_label(hi),
+                                                                         origin=bank_origin(b))
             if size:
                 pr = decode_up_bank(data, lo, oid)
                 if pr is None:
-                    v.format = "unbekanntes Format"
-                    v.warnings.append("Bank in einem älteren Format – die Firmware wandelt sie beim Start um")
+                    v.format = _("unknown format")
+                    v.warnings.append(_("bank in an older format – the firmware converts it at start-up"))
                 else:
                     v.presets, v.format = pr, "UPB2"
             else:
                 v.presets = [PresetSlot(s, False, oid=oid) for s in range(lo, hi + 1)]
-                v.format = "leer"
+                v.format = _("empty")
     else:
         # ältere Inventare
         if oid in (6, 7, 17, 18):
             first = {6: 1, 7: 17, 17: 33, 18: 49}[oid]
-            v.title = f"User-Presets U{first:02d}–U{first + 15:02d}"
+            v.title = _("User presets U{first:02d}–U{last:02d}").format(first=first, last=first + 15)
             pr = decode_up_bank(data, first, oid) if size else None
         elif 19 <= oid <= 22:
             first = {21: 1, 22: 17, 19: 33, 20: 49}[oid]
-            v.title = f"FM6-Voices F{first:03d}–F{first + 15:03d}"
+            v.title = _("FM6 voices F{first:03d}–F{last:03d}").format(first=first, last=first + 15)
             pr = decode_nfm1(data, first, oid) if size else None
             if size and pr is None:
-                v.format = "UPF6 (alte FM6-Voices)" if size in (3728, 4240) else ""
+                v.format = _("UPF6 (old FM6 voices)") if size in (3728, 4240) else ""
         elif 9 <= oid <= 16:
             first = (oid - 9) * 16 + 1
-            v.title = f"CZ-1-Bank {oid - 8} (Töne {first}–{first + 15})"
+            v.title = _("CZ-1 bank {n} (tones {first}–{last})").format(n=oid - 8, first=first, last=first + 15)
             pr = decode_czcb(data, first, oid) if size else None
             if size >= 28 and _u32(data, 0) == CZCB:
-                v.detail = f"Bankname {_name(data[12:28])}"
+                v.detail = _("bank name {name}").format(name=_name(data[12:28]))
         elif 23 <= oid <= 27:
             first = (oid - 23) * 26 + 1
-            v.title = f"Prophet-Bank {oid - 22} (Programme {first}–{first + 25})"
+            v.title = _("Prophet bank {n} (programs {first}–{last})").format(n=oid - 22, first=first, last=first + 25)
             pr = decode_p5u1(data, first, oid) if size else None
         else:
-            v.title, v.group, pr = f"Objekt {oid}", "Sonstiges", None
+            v.title, v.group, pr = _("Object {id}").format(id=oid), G_OTHER, None
         if pr is not None:
             v.presets = pr
             v.format = v.format or {UPB1: "UPB1", UPB2: "UPB2", NFM1: "NFM1", CZCB: "CZCB", P5U1: "P5U1"}.get(magic, "")
         elif size and not v.format:
-            v.format = "unbekanntes Format"
+            v.format = _("unknown format")
     if v.presets:
         used = [p for p in v.presets if p.used]
         fav = sum(1 for p in used if p.favorite)
-        v.detail = (v.detail + " · " if v.detail else "") + f"{len(used)} von {len(v.presets)} belegt" + \
-            (f", {fav} Favoriten" if fav else "")
+        v.detail = (v.detail + " · " if v.detail else "") + \
+            _("{used} of {total} used").format(used=len(used), total=len(v.presets)) + \
+            (", " + ngettext("{n} favourite", "{n} favourites", fav).format(n=fav) if fav else "")
         if any(p.used and not p.known_format for p in v.presets):
-            v.warnings.append("enthält Presets in einem Format, das diese Firmware nicht liest (OLD FORMAT)")
+            v.warnings.append(_("contains presets in a format this firmware does not read (OLD FORMAT)"))
     return v
 
 
@@ -444,7 +475,7 @@ def inspect(source) -> Report:
         try:
             source = json.loads(source)
         except ValueError:
-            raise backup.BackupError("Keine Backup-Datei (kein JSON)")
+            raise backup.BackupError(_("Not a backup file (no JSON)"))
     if isinstance(source, dict) and source.get("format") == "sloop-backup":
         return _from_sloop(source, path)
     arch = backup.read(source)
@@ -459,8 +490,8 @@ def _from_archive(arch: backup.Archive, path: Path | None) -> Report:
     if s:
         rep.settings = decode_settings(s.data)
     if not arch.known:
-        rep.warnings.append(f"Inventar mit {n} Objekten: kennt der Web-Editor nicht (andere Firmware) – "
-                            "die App zeigt es allgemein an.")
+        rep.warnings.append(_("Inventory with {n} objects: unknown to the web editor (different firmware) – "
+                              "the app shows it in a general way.").format(n=n))
     return rep
 
 
@@ -482,7 +513,7 @@ def _from_sloop(f: dict, path: Path | None) -> Report:
 class Change:
     id: int
     title: str
-    kind: str                 # "neu", "geleert", "geändert", "hinzugekommen", "fehlt"
+    kind: str                 # K_NEW, K_CLEARED, K_CHANGED, K_ADDED, K_MISSING
     old_size: int = 0
     new_size: int = 0
 
@@ -490,26 +521,27 @@ class Change:
 @dataclass
 class PresetChange:
     label: str
-    kind: str                 # "neu", "gelöscht", "geändert"
+    kind: str                 # K_NEW, K_DELETED, K_CHANGED
     old: PresetSlot | None
     new: PresetSlot | None
     fields: list[str] = field(default_factory=list)
 
     def text(self) -> str:
-        if self.kind == "neu":
-            return f"{self.label}: neu „{self.new.name}“ ({self.new.engine_name})"
-        if self.kind == "gelöscht":
-            return f"{self.label}: „{self.old.name}“ gelöscht"
+        if self.kind == K_NEW:
+            return _("{slot}: new “{name}” ({engine})").format(slot=self.label, name=self.new.name,
+                                                              engine=self.new.engine_name)
+        if self.kind == K_DELETED:
+            return _("{slot}: “{name}” deleted").format(slot=self.label, name=self.old.name)
         bits = []
-        if "Name" in self.fields:
-            bits.append(f"„{self.old.name}“ → „{self.new.name}“")
-        if "Engine" in self.fields:
+        if F_NAME in self.fields:
+            bits.append(_("“{old}” → “{new}”").format(old=self.old.name, new=self.new.name))
+        if F_ENGINE in self.fields:
             bits.append(f"{self.old.engine_name} → {self.new.engine_name}")
-        if "Klang" in self.fields:
-            bits.append("Klang geändert")
-        if "Favorit" in self.fields:
-            bits.append("Favorit " + ("an" if self.new.favorite else "aus"))
-        return f"{self.label} „{self.new.name}“: " + ", ".join(bits)
+        if F_SOUND in self.fields:
+            bits.append(_("sound changed"))
+        if F_FAVORITE in self.fields:
+            bits.append(_("favourite on") if self.new.favorite else _("favourite off"))
+        return _("{slot} “{name}”: {changes}").format(slot=self.label, name=self.new.name, changes=", ".join(bits))
 
 
 @dataclass
@@ -528,29 +560,44 @@ class Diff:
 
     def summary(self) -> str:
         if self.identical:
-            return "Keine Unterschiede – beide Stände sind gleich."
+            return _("No differences – both states are the same.")
         parts = []
-        pc = {k: sum(1 for p in self.presets if p.kind == k) for k in ("neu", "geändert", "gelöscht")}
-        for k, word in (("geändert", "geändert"), ("neu", "neu"), ("gelöscht", "gelöscht")):
-            if pc[k]:
-                parts.append(f"{pc[k]} Preset{'s' if pc[k] != 1 else ''} {word}")
-        bank_changes = [c for c in self.objects if c.title.startswith(("Preset", "User-Presets", "FM6", "CZ", "Prophet"))]
+        pc = {k: sum(1 for p in self.presets if p.kind == k) for k in (K_NEW, K_CHANGED, K_DELETED)}
+        if pc[K_CHANGED]:
+            parts.append(ngettext("{n} preset changed", "{n} presets changed", pc[K_CHANGED]).format(n=pc[K_CHANGED]))
+        if pc[K_NEW]:
+            parts.append(ngettext("{n} preset new", "{n} presets new", pc[K_NEW]).format(n=pc[K_NEW]))
+        if pc[K_DELETED]:
+            parts.append(ngettext("{n} preset deleted", "{n} presets deleted", pc[K_DELETED]).format(n=pc[K_DELETED]))
+        bank_changes = [c for c in self.objects if self._is_bank(c.id)]
         if bank_changes and not self.presets:
-            parts.append(f"{len(bank_changes)} Preset-Objekte geändert")
+            parts.append(ngettext("{n} preset object changed", "{n} preset objects changed",
+                                  len(bank_changes)).format(n=len(bank_changes)))
         for c in self.objects:
-            if c.title.startswith(("Projekt", "Song-Section")):
-                word = {"neu": "neu", "geleert": "geleert", "geändert": "geändert",
-                        "hinzugekommen": "neu", "fehlt": "fehlt"}[c.kind]
-                parts.append(f"{c.title} {word}")
+            if self._is_project(c.id):
+                word = {K_NEW: _("{part} new"), K_CLEARED: _("{part} cleared"), K_CHANGED: _("{part} changed"),
+                        K_ADDED: _("{part} new"), K_MISSING: _("{part} missing")}[c.kind]
+                parts.append(word.format(part=c.title))
         live = next((c for c in self.objects if c.id == 0), None)
         if live:
-            parts.append("laufende Musik geändert")
-        parts.append("Einstellungen " + ("geändert" if any(c.id == 1 for c in self.objects) else "gleich"))
-        rest = [c for c in self.objects if c.id not in (0, 1) and not c.title.startswith(
-            ("Projekt", "Song-Section", "Preset", "User-Presets", "FM6", "CZ", "Prophet"))]
+            parts.append(_("running music changed"))
+        parts.append(_("settings changed") if any(c.id == 1 for c in self.objects) else _("settings unchanged"))
+        rest = [c for c in self.objects if c.id not in (0, 1) and not self._is_project(c.id) and not self._is_bank(c.id)]
         if rest:
-            parts.append(f"{len(rest)} weitere Objekte geändert")
+            parts.append(ngettext("{n} more object changed", "{n} more objects changed", len(rest)).format(n=len(rest)))
         return ", ".join(parts)
+
+    def _view(self, oid: int):
+        return self.b.obj(oid) or self.a.obj(oid)
+
+    def _is_project(self, oid: int) -> bool:
+        o = self._view(oid)
+        return bool(o is not None and o.slot)
+
+    def _is_bank(self, oid: int) -> bool:
+        """preset banks (also older user preset, FM6, CZ-1 and Prophet banks); not SLOOP's drum kits"""
+        o = self._view(oid)
+        return bool(o is not None and o.group == G_PRESETS and not (is_sloop(self.b) and oid == 9))
 
 
 def diff(a: Report, b: Report) -> Diff:
@@ -562,15 +609,15 @@ def diff(a: Report, b: Report) -> Diff:
         title = (ob or oa).title
         if oa is None:
             if ob.used:
-                changes.append(Change(oid, title, "hinzugekommen", 0, ob.size))
+                changes.append(Change(oid, title, K_ADDED, 0, ob.size))
             continue
         if ob is None:
             if oa.used:
-                changes.append(Change(oid, title, "fehlt", oa.size, 0))
+                changes.append(Change(oid, title, K_MISSING, oa.size, 0))
             continue
         if oa.digest == ob.digest:
             continue
-        kind = "neu" if not oa.used else "geleert" if not ob.used else "geändert"
+        kind = K_NEW if not oa.used else K_CLEARED if not ob.used else K_CHANGED
         changes.append(Change(oid, title, kind, oa.size, ob.size))
     pa = {p.label: p for p in a.presets}
     pb = {p.label: p for p in b.presets}
@@ -581,22 +628,22 @@ def diff(a: Report, b: Report) -> Diff:
         if not xu and not yu:
             continue
         if not xu:
-            pchanges.append(PresetChange(label, "neu", None, y))
+            pchanges.append(PresetChange(label, K_NEW, None, y))
         elif not yu:
-            pchanges.append(PresetChange(label, "gelöscht", x, None))
+            pchanges.append(PresetChange(label, K_DELETED, x, None))
         else:
             f = []
             if x.name != y.name:
-                f.append("Name")
+                f.append(F_NAME)
             if x.engine != y.engine:
-                f.append("Engine")
+                f.append(F_ENGINE)
             # Name/Engine stecken im Datensatz – "Klang" nur, wenn sich mehr geändert hat
             if x.digest != y.digest and _payload(x) != _payload(y):
-                f.append("Klang")
+                f.append(F_SOUND)
             if x.favorite != y.favorite:
-                f.append("Favorit")
+                f.append(F_FAVORITE)
             if f:
-                pchanges.append(PresetChange(label, "geändert", x, y, f))
+                pchanges.append(PresetChange(label, K_CHANGED, x, y, f))
     return Diff(a, b, changes, pchanges)
 
 
@@ -614,7 +661,7 @@ class PlanItem:
     id: int
     title: str
     data: bytes
-    action: str               # "überschreiben", "neu belegen", "leeren", "gleich"
+    action: str               # display text ("will be overwritten" …); K_SAME for skipped items
     detail: str = ""
 
 
@@ -634,20 +681,23 @@ class Plan:
     def ids(self) -> list[int]:
         return [i.id for i in self.items]
 
-    def html(self, device: str = "dem FM-1") -> str:
+    def html(self, device: str = "") -> str:
         if self.errors:
             return "<br>".join(self.errors)
-        lines = [f"Auf <b>{device}</b> wird jetzt geschrieben:", "<ul>"]
+        head = (_("This will now be written to <b>{device}</b>:").format(device=device) if device
+                else _("This will now be written to <b>the FM-1</b>:"))
+        lines = [head, "<ul>"]
         for it in self.items:
             lines.append(f"<li><b>{it.title}</b>: {it.action}" + (f"<br><small>{it.detail}</small>" if it.detail else "")
                          + "</li>")
         lines.append("</ul>")
         if self.skipped:
-            lines.append("Schon identisch (wird nicht geschrieben): " + ", ".join(i.title for i in self.skipped) + "<br>")
+            lines.append(_("Already identical (not written): {parts}").format(
+                parts=", ".join(i.title for i in self.skipped)) + "<br>")
         for n in self.notes:
             lines.append(n + "<br>")
-        lines.append("Alles andere auf dem Gerät bleibt unverändert. Das Gerät prüft jedes Objekt vorher – "
-                     "passt eines nicht, wird gar nichts geschrieben.")
+        lines.append(_("Everything else on the device stays unchanged. The device checks every object first – "
+                       "if one does not fit, nothing at all is written."))
         return "".join(lines)
 
 
@@ -675,7 +725,7 @@ def plan_restore(rep: Report, ids: Iterable[int], device_manifest: list | None,
     want = [i for i in dict.fromkeys(ids) if i not in skip_ids(rep)]
     errors, notes = [], []
     if not rep.restorable or rep.archive is None:
-        return Plan([], [], ["Dieses Backup-Format kann die App nicht zurückspielen."], [])
+        return Plan([], [], [_("The app cannot restore this backup format.")], [])
     if is_sloop(rep):
         return _plan_sloop(rep, want, device_manifest, current)
     man = {o.id: o for o in (device_manifest or [])}
@@ -689,34 +739,34 @@ def plan_restore(rep: Report, ids: Iterable[int], device_manifest: list | None,
         missing = [i for i in old_banks if i not in want]
         if missing:
             want += missing
-            notes.append("Preset-Banken aus einer älteren Firmware gehen nur gemeinsam zurück – "
-                         "die Firmware wandelt sie beim nächsten Start zusammen um. Alle Banken wurden mit ausgewählt.")
+            notes.append(_("Preset banks from an older firmware can only be restored together – "
+                           "the firmware converts them together at the next start. All banks were selected too."))
     clear_ext = len(rep.objects) == 28 and 28 in man and any(i in old_banks for i in want)
     live = man[0].size if 0 in man else 0
     items, skipped = [], []
     for oid in want:
         o = rep.obj(oid)
         if o is None:
-            errors.append(f"Objekt {oid} ist nicht im Backup.")
+            errors.append(_("Object {id} is not in the backup.").format(id=oid))
             continue
         if man and oid not in man:
             if o.used:
-                errors.append(f"<b>{o.title}</b>: diese Firmware auf dem Gerät kennt das Objekt nicht.")
+                errors.append(_("<b>{part}</b>: the firmware on the device does not know this object.").format(part=o.title))
             continue
         if man and n_dev != 57 and o.slot is not None and o.size > live and live and \
                 not (live >= 19008 and o.size in (19084, 19092, 20224)):
-            errors.append(f"<b>{o.title}</b> braucht eine Firmware mit größerem Aufnahmespeicher.")
+            errors.append(_("<b>{part}</b> needs a firmware with a larger recording memory.").format(part=o.title))
             continue
         cur = man.get(oid)
         if cur is not None and cur.size == o.size and cur.crc == o.crc:
-            skipped.append(PlanItem(oid, o.title, o.data, "gleich"))
+            skipped.append(PlanItem(oid, o.title, o.data, K_SAME))
             continue
         if not o.used:
-            action = "wird geleert" if (cur is None or cur.size) else "bleibt leer"
+            action = _("will be cleared") if (cur is None or cur.size) else _("stays empty")
         elif cur is not None and not cur.size:
-            action = "leerer Platz wird belegt"
+            action = _("empty slot will be filled")
         else:
-            action = "wird überschrieben"
+            action = _("will be overwritten")
         detail = ""
         if current is not None and o.presets:
             co = current.obj(oid)
@@ -725,19 +775,21 @@ def plan_restore(rep: Report, ids: Iterable[int], device_manifest: list | None,
                          Report(rep.format, "", "", {}, [o], True, True))
                 if d.presets:
                     txt = [p.text() for p in d.presets[:8]]
-                    detail = "; ".join(txt) + (f" … und {len(d.presets) - 8} weitere" if len(d.presets) > 8 else "")
+                    detail = "; ".join(txt) + (" … " + _("and {n} more").format(n=len(d.presets) - 8)
+                                               if len(d.presets) > 8 else "")
         elif current is not None and o.slot is not None:
             co = current.obj(oid)
             if co is not None and co.used:
-                detail = f"jetzt auf dem Gerät: {co.size} Byte ({co.format or 'Projekt'})"
+                detail = _("now on the device: {size} bytes ({format})").format(size=co.size,
+                                                                                  format=co.format or _("project"))
         items.append(PlanItem(oid, o.title, o.data, action, detail))
     order = {oid: i for i, oid in enumerate([o.id for o in rep.objects[2:]] + [1, 0])}
     items.sort(key=lambda it: order.get(it.id, 999))
     if any(it.id == 0 for it in items):
-        notes.append("Die laufende Musik wird zuletzt ersetzt – die Wiedergabe stoppt dabei.")
+        notes.append(_("The running music is replaced last – playback stops then."))
     if not items and not errors:
-        errors.append("Nichts zu tun: alles Ausgewählte ist auf dem Gerät schon genau so." if skipped
-                      else "Nichts ausgewählt.")
+        errors.append(_("Nothing to do: everything selected is already exactly like this on the device.") if skipped
+                      else _("Nothing selected."))
     expect = {oid: (m.size, m.crc) for oid, m in man.items() if oid in {it.id for it in items}}
     return Plan(items, skipped, errors, notes, clear_ext, expect)
 
@@ -751,29 +803,29 @@ def _plan_sloop(rep: Report, want: list[int], device_manifest: list | None, curr
     for oid in want:
         o = rep.obj(oid)
         if o is None:
-            errors.append(f"Objekt {oid} ist nicht im Backup.")
+            errors.append(_("Object {id} is not in the backup.").format(id=oid))
             continue
         if oid in (0, 1) and not o.used:
-            errors.append(f"<b>{o.title}</b> ist im Backup leer – das nimmt SLOOP nicht an.")
+            errors.append(_("<b>{part}</b> is empty in the backup – SLOOP does not accept that.").format(part=o.title))
             continue
         if man and oid not in man and oid not in (10, 11):
             # 8 (FM6-Bank) und 9 (SYN-Kits) listet jede Firmware, die sie kennt; 10/11 nur, wenn belegt
             if o.used:
-                notes.append(f"{o.title}: kennt die SLOOP-Version auf dem Gerät nicht – wird übersprungen.")
+                notes.append(_("{part}: unknown to the SLOOP version on the device – skipped.").format(part=o.title))
             continue
         cur = man.get(oid)
         if cur is not None and cur.size == o.size and cur.crc == o.crc:
-            skipped.append(PlanItem(oid, o.title, o.data, "gleich"))
+            skipped.append(PlanItem(oid, o.title, o.data, K_SAME))
             continue
         if oid in (10, 11) and cur is None and not o.used:
-            skipped.append(PlanItem(oid, o.title, o.data, "gleich"))
+            skipped.append(PlanItem(oid, o.title, o.data, K_SAME))
             continue
         if not o.used:
-            action = "wird geleert" if (cur is None or cur.size) else "bleibt leer"
+            action = _("will be cleared") if (cur is None or cur.size) else _("stays empty")
         elif cur is not None and not cur.size:
-            action = "leerer Platz wird belegt"
+            action = _("empty slot will be filled")
         else:
-            action = "wird überschrieben"
+            action = _("will be overwritten")
         detail = ""
         if current is not None and o.presets:
             co = current.obj(oid)
@@ -781,27 +833,28 @@ def _plan_sloop(rep: Report, want: list[int], device_manifest: list | None, curr
                 d = diff(Report(rep.format, "", "", {}, [co], True, True), Report(rep.format, "", "", {}, [o], True, True))
                 if d.presets:
                     detail = "; ".join(p.text() for p in d.presets[:8]) + \
-                        (f" … und {len(d.presets) - 8} weitere" if len(d.presets) > 8 else "")
+                        (" … " + _("and {n} more").format(n=len(d.presets) - 8) if len(d.presets) > 8 else "")
         elif current is not None and (o.slot is not None or oid == 0):
             co = current.obj(oid)
             if co is not None and co.used:
-                detail = f"jetzt auf dem Gerät: {co.size} Byte ({co.format or 'Projekt'})"
+                detail = _("now on the device: {size} bytes ({format})").format(size=co.size,
+                                                                                  format=co.format or _("project"))
         items.append(PlanItem(oid, o.title, o.data, action, detail))
     order = {oid: i for i, oid in enumerate(sloopbk.RESTORE + sloopbk.SAMPLES)}
     items.sort(key=lambda it: order.get(it.id, 999))
     newest = max([0] + [sloopbk.proj_format(it.data) for it in items if it.id in (0, 2, 3, 4, 5)])
     dev_fmt = max([0] + [sloopbk.proj_format(current.obj(i).data) for i in (0,) if current and current.obj(i)])
     if dev_fmt and newest > dev_fmt:
-        errors.append(f"Die Projekte im Backup (Format FUN{newest}) sind neuer, als die SLOOP-Version auf dem "
-                      f"Gerät liest (FUN{dev_fmt}). Erst SLOOP aktualisieren.")
+        errors.append(_("The projects in the backup (format FUN{backup}) are newer than the SLOOP version on the "
+                        "device reads (FUN{device}). Update SLOOP first.").format(backup=newest, device=dev_fmt))
     if items and any(it.id not in sloopbk.SAMPLES and it.id != 1 for it in items):
-        notes.append("Der Song muss am FM-1 gestoppt sein (STOP) – sonst lehnt SLOOP das Schreiben ab "
-                     "(dann wird nichts ersetzt).")
+        notes.append(_("The song must be stopped on the FM-1 (STOP) – otherwise SLOOP refuses to write "
+                       "(then nothing is replaced)."))
     if any(it.id == 0 for it in items):
-        notes.append("Das laufende Projekt wird sofort geladen.")
+        notes.append(_("The running project is loaded immediately."))
     if not items and not errors:
-        errors.append("Nichts zu tun: alles Ausgewählte ist auf dem Gerät schon genau so." if skipped
-                      else "Nichts ausgewählt.")
+        errors.append(_("Nothing to do: everything selected is already exactly like this on the device.") if skipped
+                      else _("Nothing selected."))
     expect = {oid: (m.size, m.crc) for oid, m in man.items() if oid in {it.id for it in items}}
     return Plan(items, skipped, errors, notes, False, expect)
 
@@ -811,7 +864,7 @@ def _plan_sloop(rep: Report, want: list[int], device_manifest: list | None, curr
 def fw_name(key: str) -> str:
     """Anzeigename zu einem Firmware-Schlüssel („melodee“ → „Melodee“)."""
     if not key:
-        return "unbekannte Firmware"
+        return _("unknown firmware")
     try:
         from .firmware import spec
         sp = spec(key)
@@ -827,12 +880,12 @@ def comparable(a: Report, b: Report) -> str:
     Verschiedene Firmware-Familien (Melodee ↔ SLOOP) haben andere Objekte und Formate –
     ein Unterschieds-Vergleich wäre Unsinn („Projekt 5 fehlt“)."""
     if a.format != b.format:
-        return ("Nicht vergleichbar: das eine ist ein Melodee-/Felucca-Backup, das andere ein SLOOP-Backup. "
-                "Die beiden Firmwares speichern Projekte, Presets und Einstellungen völlig verschieden.")
+        return _("Not comparable: one is a Melodee/Felucca backup, the other a SLOOP backup. "
+                  "The two firmwares store projects, presets and settings completely differently.")
     ka, kb = a.firmware_key, b.firmware_key
     if ka and kb and ka != kb:
-        return (f"Nicht vergleichbar: der eine Stand stammt von <b>{fw_name(ka)}</b>, der andere von "
-                f"<b>{fw_name(kb)}</b>. Vergleichen geht nur innerhalb derselben Firmware.")
+        return _("Not comparable: one state comes from <b>{a}</b>, the other from "
+                 "<b>{b}</b>. Comparing only works within the same firmware.").format(a=fw_name(ka), b=fw_name(kb))
     return ""
 
 
@@ -849,39 +902,42 @@ def compatibility(src: Report, target_fw_key: str, target_version: str, target_i
     sk = src.firmware_key
     tk = target_fw_key or ""
     if not src.restorable:
-        return Compat(False, "Dieses Backup-Format kann die App nicht einspielen.")
+        return Compat(False, _("The app cannot load this backup format."))
     if not sk or not tk:
-        return Compat(False, "Die Firmware einer Seite ist unbekannt – zur Sicherheit wird nichts kopiert.")
+        return Compat(False, _("The firmware of one side is unknown – to be safe, nothing is copied."))
     if sk != tk:
-        return Compat(False, f"Das Backup stammt von <b>{fw_name(sk)}</b>, auf dem Ziel läuft <b>{fw_name(tk)}</b>. "
-                             "Projekte, Presets und Einstellungen haben bei verschiedenen Firmwares andere "
-                             "Formate – das Ziel würde sie ablehnen oder falsch lesen. Es wird nichts geschrieben.",
-                      ["Presets einzeln über die Preset-Bibliothek übertragen (sobald verfügbar)",
-                       "Projekte als MIDI exportieren und dort neu aufbauen",
-                       "oder das Ziel-FM-1 auf dieselbe Firmware bringen"])
+        return Compat(False, _("The backup comes from <b>{source}</b>, the target runs <b>{target}</b>. "
+                               "Projects, presets and settings have different formats in different firmwares – "
+                               "the target would refuse them or read them wrongly. Nothing is written.").format(
+                                   source=fw_name(sk), target=fw_name(tk)),
+                      [_("transfer presets one by one via the preset library (once available)"),
+                       _("export projects as MIDI and rebuild them there"),
+                       _("or bring the target FM-1 to the same firmware")])
     ids = {o.id for o in src.objects}
     r16 = refuse_16(src, target_version, None if target_ids is None else len(target_ids))
     if r16:
-        return Compat(False, r16, ["das FM-1 auf Melodee 1.6 oder neuer bringen (Firmware+), dann zurückspielen",
-                                   "ein Backup von vor dem Update auf Melodee 1.6 nehmen",
-                                   "Projekte als MIDI exportieren (Projekte › MIDI-Export)"])
+        return Compat(False, r16, [_("bring the FM-1 to Melodee 1.6 or newer (Firmware+), then restore"),
+                                   _("use a backup from before the update to Melodee 1.6"),
+                                   _("export projects as MIDI (Projects › MIDI export)")])
     if target_ids is not None and is_sloop(src):
         target_ids = list(target_ids) + [i for i in (10, 11) if i not in target_ids]   # nur belegt im Inventar
     if target_ids is not None:
         common = ids & set(target_ids)
         if not common:
-            return Compat(False, "Ziel kennt keines der Objekte aus der Quelle.")
+            return Compat(False, _("The target knows none of the objects from the source."))
         note = ""
         if len(target_ids) != len(src.objects):
-            note = (f" Inventar unterschiedlich ({len(src.objects)} ↔ {len(target_ids)} Objekte, andere Version): "
-                    "nur gemeinsame Objekte, das Gerät prüft jedes vorher.")
+            note = " " + _("Inventory differs ({source} ↔ {target} objects, different version): "
+                           "only common objects, the device checks each one first.").format(
+                               source=len(src.objects), target=len(target_ids))
         from .firmware import version_key
         sv = _ver(src.firmware)
         tv = _ver(target_version)
         if sv and tv and version_key(sv) > version_key(tv):
-            note += f" Quelle ist neuer ({sv} → {tv}): neuere Projekte lehnt das Gerät evtl. ab."
-        return Compat(True, "Gleiche Firmware-Familie – kopieren möglich." + note, allowed_ids=common - skip_ids(src))
-    return Compat(True, "Gleiche Firmware-Familie.", allowed_ids=ids - skip_ids(src))
+            note += " " + _("The source is newer ({source} → {target}): the device may refuse newer projects.").format(
+                source=sv, target=tv)
+        return Compat(True, _("Same firmware family – copying possible.") + note, allowed_ids=common - skip_ids(src))
+    return Compat(True, _("Same firmware family."), allowed_ids=ids - skip_ids(src))
 
 
 def refuse_16(src: Report, target_version: str = "", target_inventory: int | None = None) -> str:
@@ -914,11 +970,12 @@ class DeviceComparison:
 def compare_devices(a: Report | None, b: Report | None, fw_a: str = "", fw_b: str = "") -> DeviceComparison:
     def f(r, fallback):
         return (r.firmware if r else "") or fallback or "–"
-    rows = [("Firmware", f(a, fw_a), f(b, fw_b)),
-            ("Stand vom", a.created if a else "kein Backup", b.created if b else "kein Backup"),
-            ("Projekte belegt", ", ".join(str(o.slot) for o in a.used_projects) or "keine" if a else "–",
-             ", ".join(str(o.slot) for o in b.used_projects) or "keine" if b else "–"),
-            ("Presets belegt", str(len(a.used_presets)) if a else "–", str(len(b.used_presets)) if b else "–")]
+    none = _("none")
+    rows = [(_("Firmware"), f(a, fw_a), f(b, fw_b)),
+            (_("State of"), a.created if a else _("no backup"), b.created if b else _("no backup")),
+            (_("Projects used"), ", ".join(str(o.slot) for o in a.used_projects) or none if a else "–",
+             ", ".join(str(o.slot) for o in b.used_projects) or none if b else "–"),
+            (_("Presets used"), str(len(a.used_presets)) if a else "–", str(len(b.used_presets)) if b else "–")]
     na = {p.name for p in a.used_presets} if a else set()
     nb = {p.name for p in b.used_presets} if b else set()
     return DeviceComparison(rows, sorted(na - nb), sorted(nb - na), sorted(na & nb))

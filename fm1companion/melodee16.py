@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import re
 
+from .i18n import _
+
 _VER = re.compile(r"v?(\d+)\.(\d+)(?:\.(\d+))?(?:[- ]?(rc|beta|alpha)\.?(\d+))?", re.I)
 LINE_16 = (1, 6, 0, 0, 0)          # jede 1.6-Version, auch die Vorabversionen
 FINAL_160 = (1, 6, 0, 3, 0)        # die fertige 1.6.0 (neue Pegel)
@@ -60,42 +62,41 @@ def new_levels(old: str, new: str) -> bool:
 
 
 # ------------------------------------------------------------------ Texte
-UPGRADE_16 = ("<b>Melodee 1.6:</b> Bestehende Projekte werden geladen, aber was 1.6 speichert, kann ältere Firmware "
-              "nicht mehr lesen – und ältere Firmware lehnt Backups von 1.6 ab. Das Backup, das die App jetzt vorher "
-              "macht, ist dein Rückweg; darum ist es hier Pflicht.")
-LEVELS_160 = ("<b>Melodee 1.6.0 klingt anders:</b> CZ-1-Spuren sind 6 dB leiser, der Limiter greift erst bei "
-              "−2 dBFS (laute Mixe werden lauter), überall TPDF-Dither. Bestehende Projekte können darum anders "
-              "klingen – Balance prüfen. Die USB-Aufnahme liegt jetzt vor MASTER (der Lautstärkeregler ändert den "
-              "Aufnahmepegel nicht mehr); den Ton vom Rechner stellt „USB VOLUME“ im HOME-Menü ein.")
-RESOURCES_FROM_15 = ("Von Melodee 1.5.1 oder älter: Der Update-Loader kann die Werkssounds beim ersten Mal nicht "
-                     "schreiben, weil dort noch deine Preset-Banken liegen; die neue Firmware zieht sie beim Start "
-                     "in den gemeinsamen Speicher um. Die App schreibt die Werkssounds danach selbst (Schritt "
-                     "„Ressourcen schreiben“) – eine zweite Installation wie beim Firmware Hub ist nicht nötig. Zeigt "
-                     "das FM-1 danach „Setup unfinished“: „Schrift & Werkssounds nachschreiben“ oder dieselbe Version "
-                     "noch einmal installieren.")
-BACKUP_REQUIRED_16 = ("Für den Wechsel auf Melodee 1.6 ist ein Backup Pflicht: Ältere Firmware kann die Projekte von "
-                      "1.6 nicht lesen, das Backup von vorher ist der einzige Rückweg. Bitte „Vorher ein Backup "
-                      "machen“ anhaken.")
+UPGRADE_16 = _("<b>Melodee 1.6:</b> Existing projects are loaded, but what 1.6 saves can no longer be read by older "
+               "firmware – and older firmware refuses backups from 1.6. The backup the app now makes beforehand is "
+               "your way back; that is why it is mandatory here.")
+LEVELS_160 = _("<b>Melodee 1.6.0 sounds different:</b> CZ-1 tracks are 6 dB quieter, the limiter only kicks in at "
+               "−2 dBFS (loud mixes get louder), TPDF dither everywhere. Existing projects may therefore sound "
+               "different – check the balance. The USB recording now sits before MASTER (the volume knob no longer "
+               "changes the recording level); the sound from the computer is set with “USB VOLUME” in the HOME menu.")
+RESOURCES_FROM_15 = _("From Melodee 1.5.1 or older: the update loader cannot write the factory sounds the first "
+                      "time, because your preset banks are still stored there; the new firmware moves them into the "
+                      "shared memory at start-up. The app then writes the factory sounds itself (step “Write "
+                      "resources”) – a second installation as with the Firmware Hub is not needed. If the FM-1 then "
+                      "shows “Setup unfinished”: “Rewrite font & factory sounds” or install the same version "
+                      "once more.")
+BACKUP_REQUIRED_16 = _("A backup is mandatory for the switch to Melodee 1.6: older firmware cannot read the projects "
+                       "of 1.6, the backup from before is the only way back. Please tick “Make a backup first”.")
 
 
 def downgrade_text(target: str) -> str:
-    return (f"<b>Zurück von Melodee 1.6:</b> {target} kann die Projekte und Presets, die Melodee 1.6 gespeichert hat, "
-            "nicht lesen und überschreibt deren Speicher evtl. Auch Backups von Melodee 1.6 (auch das, das die App "
-            "jetzt macht) lassen sich dort nicht zurückspielen – nur wieder auf Melodee 1.6 oder neuer. Für den "
-            "Rückweg das Backup von vor dem Update auf 1.6 verwenden.")
+    return _("<b>Back from Melodee 1.6:</b> {target} cannot read the projects and presets that Melodee 1.6 saved, "
+             "and may overwrite their memory. Backups from Melodee 1.6 (including the one the app makes now) cannot "
+             "be restored there either – only on Melodee 1.6 or newer again. For the way back, use the backup from "
+             "before the update to 1.6.").format(target=target)
 
 
-DOWNGRADE_LOST = ("Projekte, Presets und Einstellungen von Melodee 1.6 sind mit der älteren Firmware nicht nutzbar "
-                  "(Backups von 1.6 lassen sich nur auf Melodee 1.6 oder neuer zurückspielen).")
+DOWNGRADE_LOST = _("Projects, presets and settings from Melodee 1.6 cannot be used with the older firmware "
+                   "(backups from 1.6 can only be restored on Melodee 1.6 or newer).")
 
 
 def restore_refusal(backup_version: str = "", device_version: str = "") -> str:
     b = f" ({backup_version})" if version_key(backup_version) else ""
-    d = device_version or "eine Firmware ohne die 32 Projektplätze von 1.6 (z. B. Melodee 1.5.1 oder älter)"
-    return (f"Dieses Backup stammt von Melodee 1.6{b}, auf dem FM-1 läuft {d}. Ältere Firmware kann die Projekte "
-            "und Presets von 1.6 nicht lesen und lehnt solche Backups ab. Es wurde nichts geschrieben. "
-            "Abhilfe: das FM-1 auf Melodee 1.6 oder neuer bringen (Firmware+) und dann zurückspielen – oder ein "
-            "Backup von vor dem Update auf 1.6 nehmen.")
+    d = device_version or _("a firmware without the 32 project slots of 1.6 (e.g. Melodee 1.5.1 or older)")
+    return _("This backup comes from Melodee 1.6{backup_version}, the FM-1 runs {device}. Older firmware cannot read "
+             "the projects and presets of 1.6 and refuses such backups. Nothing was written. "
+             "Remedy: bring the FM-1 to Melodee 1.6 or newer (Firmware+) and then restore – or use a "
+             "backup from before the update to 1.6.").format(backup_version=b, device=d)
 
 
 # ------------------------------------------------------------------ Backups
@@ -126,9 +127,10 @@ def usb_record_hint(version: str) -> str:
         return ""
     k = version_key(version)
     if k is not None and k >= FINAL_160:
-        return ("Melodee ab 1.6.0: Die USB-Aufnahme liegt vor MASTER – der Lautstärkeregler am FM-1 ändert den "
-                "Aufnahmepegel nicht. USB VOLUME (HOME-Menü) regelt nur den Ton vom Rechner zum FM-1.")
+        return _("Melodee 1.6.0 and later: the USB recording sits before MASTER – the volume knob on the FM-1 does "
+                 "not change the recording level. USB VOLUME (HOME menu) only controls the sound from the computer "
+                 "to the FM-1.")
     if k is not None:
-        return ("Bei dieser Melodee-Version folgt die Stereo-Aufnahme über USB dem MASTER-Regler: für einen guten "
-                "Pegel MASTER aufdrehen (ab Melodee 1.6.0 liegt die Aufnahme vor MASTER).")
+        return _("With this Melodee version the stereo recording over USB follows the MASTER knob: for a good "
+                 "level, turn MASTER up (from Melodee 1.6.0 on, the recording sits before MASTER).")
     return ""

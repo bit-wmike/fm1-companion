@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Callable
 
 from .. import config
+from ..i18n import N_, _
 
 VENDOR = Path(__file__).resolve().parent.parent / "vendor" / "unbricker"
 SCRIPT = VENDOR / "fm1_unbrick.py"
@@ -47,11 +48,11 @@ DEPS = {"crcmod": "python3-crcmod", "yaml": "python3-yaml", "Cryptodome": "pytho
 # FM-1 mit UCUN-UC25HQ80-Flash (JEDEC 0xB36014): Melodee 1.6.0 läuft darauf (#110), die ROM-Rettung prüft aber auf
 # 0x856014 (Unbricker, upstream tools/fm1_recover.py) und hält an. Nur eine verständliche Meldung, kein anderes Verhalten.
 UCUN_FLASH_ID = 0xB36014
-UCUN_TEXT = ("Dieses FM-1 hat einen Flash-Baustein von UCUN (UC25HQ80, Kennung 0xB36014) statt des üblichen Puya "
-             "(0x856014). Die USB-ROM-Rettung (Stufe 2) unterstützt diesen Flash noch nicht und hält darum an – es "
-             "wurde nichts geschrieben. Die Firmware selbst läuft darauf (Melodee ab 1.6.0 speichert auch richtig); "
-             "normale Installationen über „Firmware+“ funktionieren. Für eine ROM-Rettung bitte auf eine Version des "
-             "Rettungswerkzeugs warten, die 0xB36014 kennt.")
+UCUN_TEXT = _("This FM-1 has a flash chip from UCUN (UC25HQ80, ID 0xB36014) instead of the usual Puya "
+              "(0x856014). The USB ROM recovery (stage 2) does not support this flash yet and therefore stops – "
+              "nothing was written. The firmware itself runs on it (Melodee 1.6.0 and later also saves correctly); "
+              "normal installations via “Firmware+” work. For a ROM recovery, please wait for a version of the "
+              "recovery tool that knows 0xB36014.")
 _FLASH_ID_RE = re.compile(r"(?:flash[ _-]?id|jedec|\bid=)\D{0,12}(?:0x)?([0-9a-f]{6})\b", re.I)
 
 
@@ -77,8 +78,9 @@ class UbootDevice:
         return self.size in (0, EXPECTED_SIZE) or self.size < 64 * 1024 * 1024
 
     def describe(self) -> str:
-        sz = f"{self.size // 1024} KiB" if self.size else "Größe unbekannt"
-        return f"{self.vendor} {self.model} – {self.sg} ({self.block or 'kein Blockgerät'}, {sz}, USB {self.usb_id})"
+        sz = f"{self.size // 1024} KiB" if self.size else _("size unknown")
+        block = self.block or _("no block device")
+        return f"{self.vendor} {self.model} – {self.sg} ({block}, {sz}, USB {self.usb_id})"
 
 
 def _read(p: Path) -> str:
@@ -169,7 +171,7 @@ def tool_ready() -> bool:
 # Grenze (siehe SECURITY.md): Die Prüfsummen sichern die Unversehrtheit der Werkzeuge – sie sind keine
 # Sicherheitsgrenze gegen Code, der schon mit Benutzerrechten läuft. Sicherungen und Protokolle schreibt das
 # Werkzeug als root in den Rettungsordner des Benutzers; die Rückgabe folgt keinen symbolischen Links.
-ROOT_HELPER = r"""
+ROOT_HELPER = r"""# i18n: ignore (German output, shown in the UI language via helper_line())
 import hashlib, json, os, pwd, shutil, subprocess, sys, tempfile
 spec = json.loads(sys.argv[1])
 tmp = tempfile.mkdtemp(prefix="fm1c-rettung-")
@@ -226,6 +228,26 @@ sys.exit(rc)
 """
 
 
+# what ROOT_HELPER prints (German, the helper text stays as it is) -> message shown in the UI language
+_HELPER_LINES = [
+    (re.compile(r"^FEHLER: (?P<path>.+) fehlt \((?P<error>.*)\) – zuerst „Werkzeug holen“\. Nichts ausgeführt\.$"),  # i18n: ignore
+     N_("ERROR: {path} is missing ({error}) – first “Fetch tool”. Nothing executed.")),
+    (re.compile(r"^FEHLER: (?P<path>.+) hat nicht die erwartete Prüfsumme – verändert\? Nichts ausgeführt\.$"),  # i18n: ignore
+     N_("ERROR: {path} does not have the expected checksum – modified? Nothing executed.")),
+    (re.compile(r"^Werkzeuge geprüft \((?P<n>\d+) Dateien, SHA-256\) – starte die geprüfte Kopie als root\.$"),  # i18n: ignore
+     N_("Tools checked ({n} files, SHA-256) – starting the checked copy as root.")),
+]
+
+
+def helper_line(line: str) -> str:
+    """an output line of ROOT_HELPER in the UI language (other lines unchanged)"""
+    for rx, msg in _HELPER_LINES:
+        m = rx.match(line)
+        if m:
+            return _(msg).format(**m.groupdict())
+    return line
+
+
 def root_python() -> str:
     """System-Python für den root-Teil (dort liegen die apt-Pakete crcmod, yaml, pycryptodome)"""
     return "/usr/bin/python3" if Path("/usr/bin/python3").exists() else sys.executable
@@ -267,8 +289,8 @@ class Runner:
         argv = self.argv(cmd, *args, script=script, root=root)
         self.cwd.mkdir(parents=True, exist_ok=True)
         if "-c" in argv and ROOT_HELPER in argv:
-            self.log(f"$ {' '.join(self.root_cmd)} {Path(script).name} {cmd} {' '.join(args)}  "
-                     "(geprüfte Kopie mit Root-Rechten)")
+            self.log(_("$ {root_cmd} {script} {command} {args}  (checked copy with root rights)").format(
+                root_cmd=" ".join(self.root_cmd), script=Path(script).name, command=cmd, args=" ".join(args)))
         else:
             self.log("$ " + " ".join(a if " " not in a else repr(a) for a in argv))
         env = dict(os.environ, PYTHONUNBUFFERED="1")
@@ -284,11 +306,11 @@ class Runner:
         for line in self.proc.stdout:
             line = line.rstrip()
             if line:
-                self.log(line)
+                self.log(helper_line(line))
                 if not hinted and flash_hint(line):
                     hinted = True
                     self.hint = UCUN_TEXT
-                    self.log("HINWEIS: " + UCUN_TEXT)
+                    self.log(_("NOTE: {text}").format(text=UCUN_TEXT))
         return self.proc.wait()
 
     # --------------------------------------------------- die Befehle
@@ -346,12 +368,13 @@ class Runner:
         try:
             pkg = fm.Package.load(package)
         except fm.PackageError as e:
-            raise RuntimeError(f"Das Paket lässt sich nicht lesen ({e}). Es wurde nichts geschrieben.")
+            raise RuntimeError(_("The package cannot be read ({error}). Nothing was written.").format(error=e))
         if any(c == "TOOL_TRUNCATES" for _lv, c, _t in fm.preflight(pkg, have_backup=True, mode="from4000")):
-            raise RuntimeError(f"{Path(package).name} ist {pkg.identity} und reicht bis {fm.hx(pkg.write_end - 1)}. Im "
-                               "ROM-Bootmodus schreibt das Werkzeug nur 0x04000–0x92FFF – V16 wäre danach abgeschnitten "
-                               "(Programmende und Werks-Voices fehlen). Es wurde nichts geschrieben. Hier nur die "
-                               "Original-V15, V16 danach über den normalen Update-Weg.")
+            raise RuntimeError(_("{name} is {identity} and extends to {end}. In ROM boot mode the tool only writes "
+                                 "0x04000–0x92FFF – V16 would then be truncated (end of the program and factory voices "
+                                 "missing). Nothing was written. Only the original V15 here, V16 afterwards via the "
+                                 "normal update path.").format(name=Path(package).name, identity=pkg.identity,
+                                                                end=fm.hx(pkg.write_end - 1)))
         return self.run("restore", package, "--yes", *(["--verify-v15"] if verify_v15 else []),
                         *(["--device", device] if device else []), "--result", str(self._gate_file("restore")),
                         *self._sim_image(mock_image), script=GATE_SCRIPT)
@@ -372,7 +395,7 @@ class Runner:
         args = [folder, "--result", result]
         if command == "clean":
             if not only:
-                raise RuntimeError("Ohne bestätigte Sektorliste wird nichts gelöscht.")
+                raise RuntimeError(_("Without a confirmed sector list nothing is erased."))
             args += ["--only", ",".join(f"0x{a:05X}" for a in only)]
         for p in v16_packages or []:
             args += ["--v16-package", p]

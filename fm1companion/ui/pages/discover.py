@@ -25,17 +25,18 @@ from ..common import notify, fmt_size, heading, icon, run_job
 from ..responsive import reflow
 from ..linkimport_dialog import LinkImportDialog, OwnFirmwaresDialog, _looks_like_link
 from . import PageSpec
-from ...i18n import _
+from ...i18n import N_, _, ngettext, pgettext
 
-CAT_COLORS = {"Original": "#8e44ad", "Synth": "#2a7ab8", "Groovebox": "#e67e22", "Sampler": "#16a085",
-              "Akkorde": "#c0398b", "Generativ": "#27ae60", "Werkzeug": "#7f8c8d", "Spiele & Spaß": "#d35400"}
-SORTS = [("az", "A–Z"), ("updated", "zuletzt aktualisiert"), ("stars", "Beliebtheit (Sterne)"),
-         ("installable", "direkt installierbar zuerst")]
-CHIPS = [("installable", "Direkt installierbar", "Paket mit Prüfsumme im Katalog – die App kann es aufspielen"),
-         ("emulator", "Mit Simulator", "im Browser ausprobieren, ohne etwas aufzuspielen"),
-         ("editor", "Mit Editor", "hat einen Online-Editor"),
-         ("backup", "Backup-fähig", "Felucca-Protokoll: Backups, Projekte und Editor-Brücke in der App"),
-         ("wish", "Gemerkt", "deine Merkliste")]
+CAT_COLORS = {"Original": "#8e44ad", "Synth": "#2a7ab8", "Groovebox": "#e67e22", "Sampler": "#16a085",  # i18n: ignore
+              "Akkorde": "#c0398b", "Generativ": "#27ae60", "Werkzeug": "#7f8c8d", "Spiele & Spaß": "#d35400"}  # i18n: ignore
+SORTS = [("az", "A–Z"), ("updated", _("recently updated")), ("stars", _("popularity (stars)")),
+         ("installable", _("directly installable first"))]
+CHIPS = [("installable", _("Directly installable"), _("Package with checksum in the catalog – the app can "
+                                                   "install it")),
+         ("emulator", _("With simulator"), _("try it out in the browser without installing anything")),
+         ("editor", _("With editor"), _("has an online editor")),
+         ("backup", _("Backup-capable"), _("Felucca protocol: backups, projects and editor bridge in the app")),
+         ("wish", _("Remembered"), _("your wishlist"))]
 DEFAULTS = {"wishlist": [], "github_token": "", "last_visit": 0.0, "thumbnails": True, "sort": "az",
             "auto_refresh": True}
 
@@ -82,8 +83,9 @@ class EntryModel(QAbstractListModel):
         if role == Qt.ItemDataRole.UserRole:
             return e
         if role == Qt.ItemDataRole.ToolTipRole:
-            own = e.section == "own"
-            return f"<b>{e.name}</b><br>" + ("" if own else f"<i>{EN_LABEL}:</i><br>") + e.description[:300]
+            own = e.section == "own" or catmod.is_app_description(e)
+            return (f"<b>{e.name}</b><br>" + ("" if own else f"<i>{_(EN_LABEL)}:</i><br>")
+                    + catmod.description_text(e)[:300])
         return None
 
     def thumb(self, e: catmod.Entry) -> QPixmap | None:
@@ -102,17 +104,17 @@ class EntryModel(QAbstractListModel):
 
 
 def badges(e: catmod.Entry) -> list[tuple[str, str]]:
-    out = [(c, CAT_COLORS.get(c, "#888")) for c in e.categories[:1]]
+    out = [(catmod.category_name(c), CAT_COLORS.get(c, "#888")) for c in e.categories[:1]]
     if e.lineage:
-        out.append((e.lineage[-1], "#5d6d7e"))
+        out.append((catmod.lineage_name(e.lineage[-1]), "#5d6d7e"))
     if e.installable:
-        out.append(("installierbar", "#2e9d4f"))
+        out.append((_("installable"), "#2e9d4f"))
     if e.beta:
-        out.append(("Beta", "#c77700"))
+        out.append((_("Beta"), "#c77700"))
     if e.section == "closed":
-        out.append(("geschlossen", "#7f8c8d"))
-    if "kostenpflichtig" in e.flags:
-        out.append(("kostenpflichtig", "#b03a2e"))
+        out.append((pgettext("license", "closed"), "#7f8c8d"))
+    if "kostenpflichtig" in e.flags:  # i18n: ignore
+        out.append((_("paid"), "#b03a2e"))
     return out
 
 
@@ -157,7 +159,7 @@ def draw_badges(p: QPainter, x: int, y: int, maxx: int, items, small: QFont) -> 
     return x
 
 
-EN_LABEL = "Beschreibung des Autors (englisch)"
+EN_LABEL = N_("Author's description")
 
 
 class CardDelegate(QStyledItemDelegate):
@@ -217,23 +219,23 @@ class CardDelegate(QStyledItemDelegate):
         sm = QFontMetrics(small)
         p.setFont(small)
         p.setPen(pal.color(QPalette.ColorRole.PlaceholderText))
-        by = ("von " + e.author) if e.author else ""
+        by = _("by {author}").format(author=e.author) if e.author else ""
         if e.stars:
             by += f"   ★ {e.stars}"
         p.drawText(QRect(x, y, maxx - x, sm.height()), Qt.AlignmentFlag.AlignLeft,
                    sm.elidedText(by, Qt.TextElideMode.ElideRight, maxx - x))
         y += sm.height() + 3
-        if e.section != "own" and e.description:
+        if e.section != "own" and e.description and not catmod.is_app_description(e):
             ital = QFont(small)
             ital.setItalic(True)
             p.setFont(ital)
             p.drawText(QRect(x, y, maxx - x, sm.height()), Qt.AlignmentFlag.AlignLeft,
-                       QFontMetrics(ital).elidedText(EN_LABEL + ":", Qt.TextElideMode.ElideRight, maxx - x))
+                       QFontMetrics(ital).elidedText(_(EN_LABEL) + ":", Qt.TextElideMode.ElideRight, maxx - x))
             p.setFont(small)
             y += sm.height() + 1
         p.setPen(pal.color(QPalette.ColorRole.Text))
         desc_rect = QRect(x, y, maxx - x, sm.height() * 2 + 2)
-        lines = _two_lines(e.description, sm, maxx - x)
+        lines = _two_lines(catmod.description_text(e), sm, maxx - x)
         p.drawText(desc_rect, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop, lines)
         draw_badges(p, r.left() + 10, r.bottom() - sm.height() - 10, maxx, badges(e), small)
         p.restore()
@@ -283,7 +285,7 @@ class DetailView(QWidget):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         top = QHBoxLayout()
-        b = QPushButton(icon("go-previous"), "Alle Firmwares")
+        b = QPushButton(icon("go-previous"), _("All firmwares"))
         b.setFlat(True)
         b.clicked.connect(self.back)
         top.addWidget(b)
@@ -322,10 +324,12 @@ class DetailView(QWidget):
         t.setFont(f)
         t.setWordWrap(True)
         info.addWidget(t)
-        sub = [f"von <b>{e.author}</b>" if e.author else "", e.license and f"Lizenz: {e.license}",
-               " › ".join(e.lineage) and "Basis: " + " › ".join(e.lineage)]
+        lineage = " › ".join(catmod.lineage_name(x) for x in e.lineage)
+        sub = [_("by <b>{author}</b>").format(author=e.author) if e.author else "",
+               e.license and _("License: {license}").format(license=catmod.license_name(e.license)),
+               lineage and _("Based on: {lineage}").format(lineage=lineage)]
         if e.stars:
-            sub.append(f"★ {e.stars} auf GitHub")
+            sub.append(_("★ {stars} on GitHub").format(stars=e.stars))
         s = QLabel(" · ".join(x for x in sub if x))
         s.setWordWrap(True)
         info.addWidget(s)
@@ -334,27 +338,28 @@ class DetailView(QWidget):
         bl.setTextFormat(Qt.TextFormat.RichText)
         info.addWidget(bl)
         acts = QHBoxLayout()
-        self.b_install = _btn("Installieren …", ("system-software-update", "go-down"), self.page.install,
-                              "auf das aktive FM-1 aufspielen (mit Rückfrage und Backup)", primary=True)
+        self.b_install = _btn(_("Install …"), ("system-software-update", "go-down"), self.page.install,
+                              _("install on the active FM-1 (with confirmation and backup)"), primary=True)
         self.b_install.setEnabled(e.installable or e.builtin)
         if not (e.installable or e.builtin):
-            self.b_install.setToolTip("Kein geprüftes Paket im Katalog – siehe Webseite/Installer des Autors")
+            self.b_install.setToolTip(_("No verified package in the catalog – see the author's "
+                                        "website/installer"))
         acts.addWidget(self.b_install)
         if e.emulator_url:
-            acts.addWidget(_btn("Im Simulator ausprobieren", ("media-playback-start",), self.page.emulator,
-                                "läuft im Rechner – nichts wird aufs FM-1 geschrieben"))
+            acts.addWidget(_btn(_("Try in the simulator"), ("media-playback-start",), self.page.emulator,
+                                _("runs on the computer – nothing is written to the FM-1")))
         if e.editor_url:
-            acts.addWidget(_btn("Online-Editor öffnen", ("document-edit", "audio-midi"), self.page.editor))
-        self.b_add = _btn("Zu meinen Firmwares", ("list-add",), self.page.add_own,
-                          "erscheint dann auch im Reiter „Installieren & Versionen“")
+            acts.addWidget(_btn(_("Open online editor"), ("document-edit", "audio-midi"), self.page.editor))
+        self.b_add = _btn(_("Add to my firmwares"), ("list-add",), self.page.add_own,
+                          _("then also appears in the tab “Install & versions”"))
         acts.addWidget(self.b_add)
-        self.b_wish = QPushButton(icon("bookmark-new", "starred", "emblem-favorite"), "Merken")
+        self.b_wish = QPushButton(icon("bookmark-new", "starred", "emblem-favorite"), _("Remember"))
         self.b_wish.setCheckable(True)
         self.b_wish.setChecked(e.key in self.page.model.wish)
         self.b_wish.toggled.connect(self.page.toggle_wish)
         acts.addWidget(self.b_wish)
         more = QToolButton()
-        more.setText("Links")
+        more.setText(_("Links"))
         more.setIcon(icon("internet-web-browser", "applications-internet"))
         more.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
@@ -374,7 +379,7 @@ class DetailView(QWidget):
         # ---- Warnungen
         warns = e.warnings()
         if warns:
-            w = QLabel("<b>Gut zu wissen</b><br>" + "<br>".join(f"⚠ {x}" for x in warns))
+            w = QLabel("<b>" + _("Good to know") + "</b><br>" + "<br>".join(f"⚠ {x}" for x in warns))
             w.setWordWrap(True)
             w.setTextFormat(Qt.TextFormat.RichText)
             w.setStyleSheet("background:rgba(230,126,34,0.13);border:1px solid rgba(230,126,34,0.5);"
@@ -382,18 +387,19 @@ class DetailView(QWidget):
             lay.addWidget(w)
             self.labels["warnings"] = w
         # ---- Beschreibung
-        d = QLabel(f"{e.description}" + ("" if e.section == "own" else
-                                         f"<br><span style='color:gray'>{EN_LABEL}, aus awesome-fm-1 – "
-                                         "bewusst nicht übersetzt</span>"))
+        d = QLabel(catmod.description_text(e) + ("" if e.section == "own" or catmod.is_app_description(e) else
+                                                 "<br><span style='color:gray'>"
+                                                 + _("Author's description, from awesome-fm-1 – deliberately not "
+                                                     "translated") + "</span>"))
         d.setWordWrap(True)
         d.setTextFormat(Qt.TextFormat.RichText)
         d.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        lay.addWidget(_section("Beschreibung", d))
+        lay.addWidget(_section(_("Description"), d))
         # ---- Matrix
-        lay.addWidget(_section("Was die App damit kann", self.matrix(e)))
+        lay.addWidget(_section(_("What the app can do with it"), self.matrix(e)))
         # ---- Versionen
         self.versions = QTreeWidget()
-        self.versions.setHeaderLabels(["Version", "Datum", "Größe", "Hinweise"])
+        self.versions.setHeaderLabels([_("Version"), _("Date"), _("Size"), _("Notes")])
         self.versions.setRootIsDecorated(False)
         self.versions.setMinimumHeight(140)
         self.fill_versions(e, catmod.cached_enrichment(e.repo) if e.repo else None)
@@ -404,7 +410,7 @@ class DetailView(QWidget):
         self.gh_state = QLabel()
         self.gh_state.setWordWrap(True)
         vl.addWidget(self.gh_state)
-        lay.addWidget(_section("Versionen", vb))
+        lay.addWidget(_section(_("Versions"), vb))
         # ---- README
         self.readme = QTextBrowser()
         self.readme.setOpenExternalLinks(True)
@@ -413,12 +419,12 @@ class DetailView(QWidget):
         rb = QWidget()
         rl = QVBoxLayout(rb)
         rl.setContentsMargins(0, 0, 0, 0)
-        self.b_readme = QPushButton(icon("document-preview", "text-x-generic"), "README des Projekts laden")
+        self.b_readme = QPushButton(icon("document-preview", "text-x-generic"), _("Load the project's README"))
         self.b_readme.setEnabled(bool(e.repo))
         self.b_readme.clicked.connect(self.load_readme)
         rl.addWidget(self.b_readme, 0, Qt.AlignmentFlag.AlignLeft)
         rl.addWidget(self.readme)
-        lay.addWidget(_section("Vom Autor", rb))
+        lay.addWidget(_section(_("From the author"), rb))
         lay.addStretch(1)
         self.scroll.setWidget(body)
         self.scroll.verticalScrollBar().setValue(0)
@@ -433,17 +439,18 @@ class DetailView(QWidget):
 
     @staticmethod
     def link_list(e: catmod.Entry) -> list[tuple[str, str]]:
-        names = {"installer": "Web-Installer des Autors", "emulator": "Simulator im Browser", "editor": "Online-Editor",
-                 "manual": "Handbuch", "site": "Webseite", "source": "Quellcode", "downloads": "Downloads (M-VAVE)",
-                 "release_notes": "Versionshinweise (M-VAVE)", "midi": "MIDI-Referenz (M-VAVE)"}
+        names = {"installer": _("Author's web installer"), "emulator": _("Simulator in the browser"),
+                 "editor": _("Online editor"), "manual": _("Manual"), "site": _("Website"), "source": _("Source code"),
+                 "downloads": _("Downloads (M-VAVE)"), "release_notes": _("Release notes (M-VAVE)"),
+                 "midi": _("MIDI reference (M-VAVE)")}
         out = []
         if e.repo:
-            out.append(("Auf GitHub ansehen", e.repo_url))
+            out.append((_("View on GitHub"), e.repo_url))
         for k, u in e.links.items():
             if not k.startswith("firmware_"):
                 out.append((names.get(k, k), u))
-        out.append(("Auf thefirmwarehub.com ansehen", f"{catmod.HUB_URL}#{e.hub_anchor}"))
-        out.append(("Im FM1-Firmware-Verzeichnis ansehen", f"{catmod.DIRECTORY_URL}#{e.hub_anchor}"))
+        out.append((_("View on thefirmwarehub.com"), f"{catmod.HUB_URL}#{e.hub_anchor}"))
+        out.append((_("View in the FM1 firmware directory"), f"{catmod.DIRECTORY_URL}#{e.hub_anchor}"))
         return out
 
     def matrix(self, e: catmod.Entry) -> QWidget:
@@ -451,31 +458,33 @@ class DetailView(QWidget):
         g = QGridLayout(w)
         g.setContentsMargins(0, 0, 0, 0)
         if e.installable or e.builtin:
-            inst = ("✓", "Installieren über das Standard-Update-Protokoll von M-VAVE"
-                    + (" – Prüfsumme wird vor dem Aufspielen geprüft" if e.installable else ""))
+            inst = ("✓", _("Install via M-VAVE's standard update protocol – the checksum is verified before "
+                           "installing") if e.installable else _("Install via M-VAVE's standard update protocol"))
         elif "kostenpflichtig" in e.flags or e.section == "closed":
-            inst = ("–", "Installieren nur über die Seite des Herstellers")
+            inst = ("–", _("Install only via the manufacturer's site"))
         else:
-            inst = ("–", "Kein geprüftes Paket im Katalog; per „Link einfügen“ eine .fwsc-Adresse eintragen")
+            inst = ("–", _("No verified package in the catalog; enter a .fwsc address via “Paste link”"))
         if e.protocol == "felucca":
-            bk = ("✓", f"Backups, Projekte und Editor-Brücke (Felucca-Protokoll; {e.protocol_evidence})")
+            bk = ("✓", _("Backups, projects and editor bridge (Felucca protocol; {evidence})").format(
+                evidence=catmod.protocol_evidence_text(e)))
         else:
-            bk = ("?", "Backups/Projekte: unbekannt – wird beim Verbinden geprüft")
-        rows = [("Installieren", *inst), ("Backup & Projekte", *bk),
-                ("Editor", "✓" if e.editor_url or e.protocol == "felucca" else "✗",
-                 "Online-Editor in der App" if e.editor_url else ("Editor aus dem Repo" if e.protocol == "felucca"
-                                                                  else "kein Editor bekannt")),
-                ("Emulator", "✓" if e.emulator_url else "✗",
-                 "im Rechner ausprobieren" if e.emulator_url else "kein Browser-Emulator bekannt")]
+            bk = ("?", _("Backups/projects: unknown – checked when connecting"))
+        # (key for self.labels, title, mark, text)
+        rows = [("Installieren", _("Install"), *inst), ("Backup & Projekte", _("Backup & projects"), *bk),  # i18n: ignore
+                ("Editor", _("Editor"), "✓" if e.editor_url or e.protocol == "felucca" else "✗",
+                 _("Online editor in the app") if e.editor_url else (_("Editor from the repo") if e.protocol == "felucca"
+                                                                     else _("no editor known"))),
+                ("Emulator", _("Emulator"), "✓" if e.emulator_url else "✗",
+                 _("try it out on the computer") if e.emulator_url else _("no browser emulator known"))]
         colors = {"✓": "#2e9d4f", "✗": "#888", "?": "#c77700", "–": "#888"}
-        for i, (name, mark, text) in enumerate(rows):
+        for i, (key, name, mark, text) in enumerate(rows):
             m = QLabel(f"<b style='color:{colors[mark]};font-size:14pt'>{mark}</b>")
             g.addWidget(m, i, 0)
             g.addWidget(QLabel(f"<b>{name}</b>"), i, 1)
             lt = QLabel(text)
             lt.setWordWrap(True)
             g.addWidget(lt, i, 2)
-            self.labels[f"m_{name}"] = mark
+            self.labels[f"m_{key}"] = mark
         g.setColumnStretch(2, 1)
         return w
 
@@ -485,22 +494,25 @@ class DetailView(QWidget):
         for r in (gh or {}).get("releases", []):
             fw = [a for a in r["assets"] if a["name"].lower().endswith(".fwsc")]
             size = fmt_size(fw[0]["size"]) if fw else ""
-            it = QTreeWidgetItem([r["tag"], r["date"], size, ("Vorabversion · " if r["prerelease"] else "")
-                                  + ("Paket: " + fw[0]["name"] if fw else "kein .fwsc-Paket")])
+            pkg = _("Package: {name}").format(name=fw[0]["name"]) if fw else _("no .fwsc package")
+            it = QTreeWidgetItem([r["tag"], r["date"], size,
+                                  _("Pre-release · {package}").format(package=pkg) if r["prerelease"] else pkg])
             self.versions.addTopLevelItem(it)
             seen.add(r["tag"])
         for p in e.packages:
             if p.version in seen:
                 continue
             seen.add(p.version)
-            note = "im Mooring-Katalog, Prüfsumme bekannt" if p.downloadable else "bekanntes Paket (nur Erkennung)"
-            short = {"beta": "Beta", "powerLossNotResumable": "Abbruch nicht fortsetzbar",
-                     "projectsNotBackwardCompatible": "Projekte nicht abwärtskompatibel", "needsMiniLab3": "braucht MiniLab 3"}
+            note = _("in the Mooring catalog, checksum known") if p.downloadable else _("known package "
+                                                                                     "(recognition only)")
+            short = {"beta": _("Beta"), "powerLossNotResumable": _("interruption not resumable"),
+                     "projectsNotBackwardCompatible": _("projects not backward compatible"),
+                     "needsMiniLab3": _("needs MiniLab 3")}
             if p.notes:
                 note += " · " + ", ".join(short.get(n, n) for n in p.notes)
             self.versions.addTopLevelItem(QTreeWidgetItem([p.version or p.label, "", fmt_size(p.raw_size), note]))
         if not self.versions.topLevelItemCount():
-            self.versions.addTopLevelItem(QTreeWidgetItem(["keine Versionen bekannt"]))
+            self.versions.addTopLevelItem(QTreeWidgetItem([_("no versions known")]))
         for c in range(4):
             self.versions.resizeColumnToContents(c)
 
@@ -509,12 +521,12 @@ class DetailView(QWidget):
             return
         if info:
             self.fill_versions(self.entry, info)
-        self.gh_state.setText(msg or ("Stand von GitHub" if info else ""))
+        self.gh_state.setText(msg or (_("State from GitHub") if info else ""))
 
     def load_readme(self):
         e = self.entry
         self.b_readme.setEnabled(False)
-        self.b_readme.setText("lade …")
+        self.b_readme.setText(_("loading …"))
 
         def done(txt, key=e.key):
             if self.entry and self.entry.key == key:
@@ -525,7 +537,7 @@ class DetailView(QWidget):
         def fail(msg, tb, key=e.key):
             if self.entry and self.entry.key == key:
                 from ...dx7_sources import net_error_text
-                self.b_readme.setText("README nicht geladen – erneut versuchen")
+                self.b_readme.setText(_("README not loaded – try again"))
                 self.b_readme.setToolTip(net_error_text(msg))
                 self.b_readme.setEnabled(True)
         run_job(self, lambda w: catmod.repo_readme(e.repo), on_done=done, on_fail=fail)
@@ -566,38 +578,38 @@ class DiscoverPage(QWidget):
         top = QHBoxLayout()
         self.head = heading("Firmware+", "")
         top.addWidget(self.head, 1)
-        self.b_link = QPushButton(icon("edit-paste", "insert-link"), "Link einfügen …")
-        self.b_link.setToolTip("GitHub-Link, .fwsc-Paket, Installer- oder Simulator-Seite einfügen (Strg+V)")
+        self.b_link = QPushButton(icon("edit-paste", "insert-link"), _("Paste link …"))
+        self.b_link.setToolTip(_("Paste a GitHub link, .fwsc package, installer or simulator page (Ctrl+V)"))
         f = self.b_link.font()
         f.setBold(True)
         self.b_link.setFont(f)
         self.b_link.clicked.connect(lambda: self.link_import(""))
-        self.b_refresh = QPushButton(icon("view-refresh"), "Aktualisieren")
-        self.b_refresh.setToolTip("Katalog neu laden (awesome-fm-1 und Mooring)")
+        self.b_refresh = QPushButton(icon("view-refresh"), _("Refresh"))
+        self.b_refresh.setToolTip(_("Reload the catalog (awesome-fm-1 and Mooring)"))
         self.b_refresh.clicked.connect(lambda: self.refresh(force=True))
         self.b_menu = QToolButton()
         self.b_menu.setIcon(icon("application-menu", "configure", "open-menu"))
-        self.b_menu.setToolTip("Mehr")
+        self.b_menu.setToolTip(_("More"))
         if self.b_menu.icon().isNull():
-            self.b_menu.setText("Mehr")
+            self.b_menu.setText(_("More"))
         self.b_menu.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         m = QMenu(self.b_menu)
-        m.addAction(icon("folder"), "Meine Firmwares …", self.own_dialog)
-        m.addAction(icon("dialog-password", "security-high"), "GitHub-Token …", self.token_dialog)
+        m.addAction(icon("folder"), _("My firmwares …"), self.own_dialog)
+        m.addAction(icon("dialog-password", "security-high"), _("GitHub token …"), self.token_dialog)
         m.addSeparator()
         # automatische Netzzugriffe dieser Seite – beide abschaltbar (Datenschutz, siehe README)
-        self.a_auto = m.addAction("Katalog beim Öffnen automatisch aktualisieren")
+        self.a_auto = m.addAction(_("Update the catalog automatically when opening"))
         self.a_auto.setCheckable(True)
         self.a_auto.setChecked(bool(settings().get("auto_refresh", True)))
         self.a_auto.toggled.connect(lambda on: self._set_pref("auto_refresh", on))
-        self.a_thumbs = m.addAction("Vorschaubilder aus dem Internet laden")
+        self.a_thumbs = m.addAction(_("Load preview images from the internet"))
         self.a_thumbs.setCheckable(True)
         self.a_thumbs.setChecked(bool(settings().get("thumbnails", True)))
         self.a_thumbs.toggled.connect(lambda on: self._set_pref("thumbnails", on))
         m.addSeparator()
-        m.addAction("awesome-fm-1 auf GitHub", lambda: QDesktopServices.openUrl(QUrl(catmod.AWESOME_URL)))
+        m.addAction(_("awesome-fm-1 on GitHub"), lambda: QDesktopServices.openUrl(QUrl(catmod.AWESOME_URL)))
         m.addAction("FM-1 Firmware Hub", lambda: QDesktopServices.openUrl(QUrl(catmod.HUB_URL)))
-        m.addAction("FM1-Firmware-Verzeichnis", lambda: QDesktopServices.openUrl(QUrl(catmod.DIRECTORY_URL)))
+        m.addAction(_("FM1 firmware directory"), lambda: QDesktopServices.openUrl(QUrl(catmod.DIRECTORY_URL)))
         self.b_menu.setMenu(m)
         for b in (self.b_link, self.b_refresh, self.b_menu):
             top.addWidget(b, 0, Qt.AlignmentFlag.AlignTop)
@@ -615,7 +627,8 @@ class DiscoverPage(QWidget):
         gl.setContentsMargins(0, 0, 0, 0)
         row = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Suchen: Name, Autor, Beschreibung, Stichwort (z. B. „acid“, „Drums“, „Vestal“)")
+        self.search.setPlaceholderText(_("Search: name, author, description, keyword (e.g. “acid”, "
+                                         "“drums”, “Vestal”)"))
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self.apply_filter)
         row.addWidget(self.search, 1)
@@ -624,21 +637,26 @@ class DiscoverPage(QWidget):
             self.sort.addItem(t, k)
         self.sort.setCurrentIndex(max(0, self.sort.findData(st.get("sort", "az"))))
         self.sort.currentIndexChanged.connect(self._sort_changed)
-        row.addWidget(QLabel("Sortieren:"))
+        row.addWidget(QLabel(_("Sort:")))
         row.addWidget(self.sort)
         gl.addLayout(row)
         frow = QHBoxLayout()
         self.menus: dict[str, set] = {}
         self.menu_buttons = {}
-        for key, title, values in (("cat", "Kategorie", catmod.CATEGORIES), ("lin", "Basis", catmod.LINEAGES),
-                                   ("lic", "Lizenz", ["offen", "geschlossen"]), ("status", "Status", ["stabil", "Beta"])):
+        # filter values are internal keys; the menu shows their display names
+        value_names = {"offen": pgettext("license", "open"),  # i18n: ignore
+                       "geschlossen": pgettext("license", "closed"),  # i18n: ignore
+                       "stabil": _("stable"), "Beta": _("Beta")}  # i18n: ignore
+        for key, title, values in (("cat", _("Category"), catmod.CATEGORIES), ("lin", _("Based on"), catmod.LINEAGES),
+                                   ("lic", _("License"), ["offen", "geschlossen"]),  # i18n: ignore
+                                   ("status", pgettext("release state", "Status"), ["stabil", "Beta"])):  # i18n: ignore
             b = QToolButton()
             b.setText(title)
             b.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
             mm = QMenu(b)
             self.menus[key] = set()
             for v in values:
-                a = QAction(v, mm)
+                a = QAction(value_names.get(v) or catmod.category_name(catmod.lineage_name(v)), mm)
                 a.setCheckable(True)
                 a.toggled.connect(lambda on, k=key, val=v: self._menu_toggled(k, val, on))
                 mm.addAction(a)
@@ -656,8 +674,8 @@ class DiscoverPage(QWidget):
             self.chips[key] = c
             frow.addWidget(c)
         ic = icon("edit-clear-all", "edit-clear")
-        b_reset = QPushButton(ic, "" if not ic.isNull() else "Zurücksetzen")
-        b_reset.setToolTip("Alle Filter zurücksetzen")
+        b_reset = QPushButton(ic, "" if not ic.isNull() else _("Reset"))
+        b_reset.setToolTip(_("Reset all filters"))
         b_reset.clicked.connect(self.reset_filters)
         frow.addWidget(b_reset)
         frow.addStretch(1)
@@ -695,7 +713,7 @@ class DiscoverPage(QWidget):
         self.detail.back.connect(lambda: self.stack.setCurrentIndex(0))
         self.stack.addWidget(self.detail)
         sl.addWidget(self.stack)
-        self.tabs.addTab(store, icon("applications-all", "view-grid"), "Alle Firmwares")
+        self.tabs.addTab(store, icon("applications-all", "view-grid"), _("All firmwares"))
         # ---- Neuigkeiten
         news = QWidget()
         nl = QVBoxLayout(news)
@@ -703,33 +721,33 @@ class DiscoverPage(QWidget):
         self.news_info.setWordWrap(True)
         nl.addWidget(self.news_info)
         self.news = QTreeWidget()
-        self.news.setHeaderLabels(["", "Firmware", "Was", "Datum"])
+        self.news.setHeaderLabels(["", _("Firmware"), _("What"), _("Date")])
         self.news.setRootIsDecorated(False)
         self.news.itemDoubleClicked.connect(lambda it, _c: self.open_key(it.data(1, Qt.ItemDataRole.UserRole)))
         nl.addWidget(self.news, 1)
         nr = QHBoxLayout()
-        self.b_news = QPushButton(icon("view-refresh"), "Auf neue Versionen prüfen")
-        self.b_news.setToolTip("fragt GitHub nach den Releases der Firmwares, denen du folgst (höchstens 12)")
+        self.b_news = QPushButton(icon("view-refresh"), _("Check for new versions"))
+        self.b_news.setToolTip(_("asks GitHub for the releases of the firmwares you follow (at most 12)"))
         self.b_news.clicked.connect(self.check_news)
         nr.addWidget(self.b_news)
         nr.addStretch(1)
         nl.addLayout(nr)
-        self.tabs.addTab(news, icon("view-calendar-upcoming-events", "appointment-new"), "Neuigkeiten")
+        self.tabs.addTab(news, icon("view-calendar-upcoming-events", "appointment-new"), _("News"))
         # ---- Werkzeuge & Wissen
         res = QWidget()
         rl = QVBoxLayout(res)
         self.res_search = QLineEdit()
-        self.res_search.setPlaceholderText("Werkzeuge, Editoren, Rettung, Anleitungen, Videos … durchsuchen")
+        self.res_search.setPlaceholderText(_("Search tools, editors, recovery, guides, videos …"))
         self.res_search.setClearButtonEnabled(True)
         self.res_search.textChanged.connect(self.fill_resources)
         rl.addWidget(self.res_search)
         self.res = QTreeWidget()
-        self.res.setHeaderLabels(["Name", "Beschreibung"])
+        self.res.setHeaderLabels([_("Name"), _("Description")])
         self.res.setWordWrap(True)
         self.res.itemDoubleClicked.connect(self._open_resource)
         rl.addWidget(self.res, 1)
-        rl.addWidget(QLabel("Doppelklick öffnet die Seite im Browser. Quelle: awesome-fm-1 (CC0)."))
-        self.tabs.addTab(res, icon("help-contents", "tools"), "Werkzeuge && Wissen")
+        rl.addWidget(QLabel(_("Double-click opens the page in the browser. Source: awesome-fm-1 (CC0).")))
+        self.tabs.addTab(res, icon("help-contents", "tools"), _("Tools && knowledge"))
 
         paste = QShortcut(QKeySequence(QKeySequence.StandardKey.Paste), self)
         paste.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
@@ -750,16 +768,18 @@ class DiscoverPage(QWidget):
                 if g.get("stars") is not None:
                     e.stars = g["stars"]
         self._own_entries()
-        src = {"snapshot": "mitgelieferter Stand", "cache": "Stand vom letzten Abgleich", "live": "gerade aktualisiert",
-               "leer": "kein Katalog"}.get(cat.source, cat.source)
+        src = {"snapshot": _("bundled state"), "cache": _("state of the last sync"), "live": _("just updated"),
+               "leer": _("no catalog")}.get(cat.source, cat.source)
         date = cat.issued[:10] if cat.issued else ""
         date = ".".join(reversed(date.split("-"))) if date else "?"
         n_inst = sum(1 for e in cat.entries if e.installable)
         sub = self.head.findChildren(QLabel)
-        text = (f"{len(cat.entries)} Firmwares für das FM-1, {n_inst} davon direkt installierbar. Katalog-Revision "
-                f"{cat.revision} vom {date} ({src}). Quellen: <a href='{catmod.AWESOME_URL}'>awesome-fm-1</a> und "
-                f"Mooring (cicloid). Mehr Verzeichnisse: <a href='{catmod.HUB_URL}'>FM-1 Firmware Hub</a>, "
-                f"<a href='{catmod.DIRECTORY_URL}'>fm1-editor.com/firmware</a>.")
+        text = _("{n} firmwares for the FM-1, {installable} of them directly installable. Catalog revision "
+                 "{revision} of {date} ({source}). Sources: <a href='{awesome}'>awesome-fm-1</a> and Mooring "
+                 "(cicloid). More directories: <a href='{hub}'>FM-1 Firmware Hub</a>, "
+                 "<a href='{directory}'>fm1-editor.com/firmware</a>.").format(
+            n=len(cat.entries), installable=n_inst, revision=cat.revision, date=date, source=src,
+            awesome=catmod.AWESOME_URL, hub=catmod.HUB_URL, directory=catmod.DIRECTORY_URL)
         if len(sub) > 1:
             sub[1].setText(text)
         else:
@@ -780,7 +800,7 @@ class DiscoverPage(QWidget):
             if d.get("key") in keys or d.get("catalog_id") in keys:
                 continue
             e = catmod.Entry(key=d.get("key", ""), name=d.get("name", "?"), author=d.get("author", ""),
-                             description=d.get("description", "") or "Von dir hinzugefügt.", section="own",
+                             description=d.get("description", "") or _("Added by you."), section="own",
                              categories=[d.get("category") or "Synth"], license=d.get("license", ""),
                              repo=d.get("repo", ""), protocol=d.get("protocol", "none"), family=d.get("family", ""),
                              links={k: v for k, v in (("emulator", d.get("emulator_url")), ("editor", d.get("editor_url")),
@@ -789,7 +809,7 @@ class DiscoverPage(QWidget):
             if d.get("download_url") and d.get("sha256"):
                 e.packages = [catmod.Package(label=d.get("name", ""), url=d["download_url"], sha256=d["sha256"],
                                              product=d.get("product", ""))]
-            e.flags.append("eigener Eintrag")
+            e.flags.append("eigener Eintrag")  # i18n: ignore
             self.cat.entries.append(e)
 
     def eventFilter(self, obj, ev):
@@ -825,32 +845,37 @@ class DiscoverPage(QWidget):
     def refresh(self, force: bool = False):
         if self._refreshing or not net_allowed():
             if not net_allowed():
-                self._note("Offline-Modus: es gilt der mitgelieferte Katalog.")
+                self._note(_("Offline mode: the bundled catalog applies."))
             return
         self._refreshing = True
         self.b_refresh.setEnabled(False)
-        self.b_refresh.setText("lädt …")
+        self.b_refresh.setText(_("Loading …"))
 
         def done(cat):
             self._refreshing = False
             self.b_refresh.setEnabled(True)
-            self.b_refresh.setText("Aktualisieren")
+            self.b_refresh.setText(_("Refresh"))
             self.set_catalog(catmod.load())
             try:
                 n = len(self.cat.entries)
             except Exception:  # noqa: BLE001
                 n = 0
-            notify(f"Katalog aktualisiert – {n} Einträge." if n else "Katalog aktualisiert.", "success")
+            notify(ngettext("Catalog updated – {n} entry.", "Catalog updated – {n} entries.", n).format(n=n) if n
+                   else _("Catalog updated."), "success")
 
         def fail(msg, tb):
             self._refreshing = False
             self.b_refresh.setEnabled(True)
-            self.b_refresh.setText("Aktualisieren")
+            self.b_refresh.setText(_("Refresh"))
             from ...dx7_sources import net_error_text      # Netzfehler als deutscher Satz statt „[Errno -3] …“
             age = catmod.cache_age()
-            when = f" vom {time.strftime('%d.%m.%Y', time.localtime(time.time() - age))}" if age is not None else ""
-            text = (f"Katalog nicht aktualisiert: {net_error_text(msg)} Du siehst weiter den gespeicherten "
-                    f"Stand{when}; alles hier geht auch offline.")
+            if age is not None:
+                text = _("Catalog not updated: {error} You still see the saved state of {date}; everything here also "
+                         "works offline.").format(error=net_error_text(msg),
+                                                  date=time.strftime("%d.%m.%Y", time.localtime(time.time() - age)))
+            else:
+                text = _("Catalog not updated: {error} You still see the saved state; everything here also works "
+                         "offline.").format(error=net_error_text(msg))
             self._note(text)
             if force:                                   # auf Knopfdruck: sichtbar, nicht nur in der Statuszeile
                 notify(text, "warning")
@@ -886,9 +911,11 @@ class DiscoverPage(QWidget):
             return False
         if m["lin"] and not (m["lin"] & set(e.lineage)):
             return False
-        if m["lic"] and not ((("offen" in m["lic"]) and e.open_source) or (("geschlossen" in m["lic"]) and not e.open_source)):
+        if m["lic"] and not ((("offen" in m["lic"]) and e.open_source) or  # i18n: ignore
+                             (("geschlossen" in m["lic"]) and not e.open_source)):  # i18n: ignore
             return False
-        if m["status"] and not ((("Beta" in m["status"]) and e.beta) or (("stabil" in m["status"]) and not e.beta)):
+        if m["status"] and not ((("Beta" in m["status"]) and e.beta) or  # i18n: ignore
+                                (("stabil" in m["status"]) and not e.beta)):  # i18n: ignore
             return False
         c = {k: b.isChecked() for k, b in self.chips.items()}
         if c["installable"] and not e.installable:
@@ -920,14 +947,14 @@ class DiscoverPage(QWidget):
         items = self.filtered()
         self.model.set_items(items)
         n = len(self.cat.entries)
-        self.count.setText(f"{len(items)} von {n}")
+        self.count.setText(_("{shown} of {total}").format(shown=len(items), total=n))
         empty = not items
         self.view.setVisible(not empty)
         self.empty.setVisible(empty)
         if empty:
-            self.empty.setText("Keine Firmware passt zu Suche und Filtern.\nTipp: „Alle Filter zurücksetzen“ (Knopf rechts neben den Filtern) "
-                               "oder weniger Suchwörter." if n else
-                               "Der Katalog ist leer – „Aktualisieren“ lädt ihn aus dem Internet.")
+            self.empty.setText(_("No firmware matches the search and filters.\nTip: “Reset all filters” (button to the "
+                                 "right of the filters) or fewer search words.") if n else
+                               _("The catalog is empty – “Refresh” loads it from the internet."))
 
     # ------------------------------------------------------------ Vorschaubilder
     def want_thumb(self, key: str):
@@ -1008,7 +1035,7 @@ class DiscoverPage(QWidget):
             self.detail.github_loaded(key, info, info.get("message", ""))
 
         def fail(msg, tb, key=e.key):
-            self.detail.github_loaded(key, None, f"GitHub: {msg}")
+            self.detail.github_loaded(key, None, _("GitHub: {message}").format(message=msg))
         run_job(self, lambda w: catmod.enrich(e.repo), on_done=done, on_fail=fail)
 
     # ------------------------------------------------------------ Aktionen
@@ -1025,15 +1052,15 @@ class DiscoverPage(QWidget):
         if page is not None and hasattr(page, "open_with"):
             self.window.go("firmware", install=spec)
             return
-        box = QMessageBox(QMessageBox.Icon.Information, "Installieren",
-                          f"Das Aufspielen direkt aus dem Katalog kommt mit dem neuen Installer.\n\n"
-                          f"Bis dahin: „Zu meinen Firmwares“ – dann steht {e.name} im Reiter „Installieren & "
-                          f"Versionen“ bereit"
-                          + (", oder den Web-Installer des Autors im Browser öffnen." if e.links.get("installer") else "."),
-                          parent=self)
-        add = box.addButton("Zu meinen Firmwares", QMessageBox.ButtonRole.AcceptRole)
-        web = box.addButton("Web-Installer öffnen", QMessageBox.ButtonRole.ActionRole) if e.links.get("installer") else None
-        box.addButton("Schließen", QMessageBox.ButtonRole.RejectRole)
+        text = (_("Installing directly from the catalog comes with the new installer.\n\nUntil then: “Add to my "
+                  "firmwares” – then {name} is ready in the tab “Install & versions”, or open the author's web "
+                  "installer in the browser.") if e.links.get("installer") else
+                _("Installing directly from the catalog comes with the new installer.\n\nUntil then: “Add to my "
+                  "firmwares” – then {name} is ready in the tab “Install & versions”.")).format(name=e.name)
+        box = QMessageBox(QMessageBox.Icon.Information, _("Install"), text, parent=self)
+        add = box.addButton(_("Add to my firmwares"), QMessageBox.ButtonRole.AcceptRole)
+        web = box.addButton(_("Open web installer"), QMessageBox.ButtonRole.ActionRole) if e.links.get("installer") else None
+        box.addButton(_("Close"), QMessageBox.ButtonRole.RejectRole)
         box.exec()
         if box.clickedButton() is add:
             self.add_own()
@@ -1044,12 +1071,12 @@ class DiscoverPage(QWidget):
         e = self.current
         if not (e and url):
             return
-        title = f"{e.name} – {'Simulator' if kind == 'emulator' else 'Editor'}"
+        title = f"{e.name} – {_('Simulator') if kind == 'emulator' else _('Editor')}"
         if self.window is not None and self.window.page("simulator") is not None:
             self.window.go("simulator", url=url, title=title, kind=kind)
         else:
             QDesktopServices.openUrl(QUrl(url))
-            self._note(f"{title} im Browser geöffnet.")
+            self._note(_("{title} opened in the browser.").format(title=title))
 
     def emulator(self):
         self._web(self.current.emulator_url if self.current else "", "emulator")
@@ -1062,16 +1089,17 @@ class DiscoverPage(QWidget):
         if not e:
             return
         if e.builtin:
-            self._note(f"{e.name} ist schon fest eingebaut – du findest es im Reiter „Installieren & Versionen“.")
-            QMessageBox.information(self, "Schon da", f"{e.name} ist fest in der App eingebaut.")
+            self._note(_("{name} is already built in – you find it in the tab “Install & versions”.").format(
+                           name=e.name))
+            QMessageBox.information(self, _("Already there"), _("{name} is built into the app.").format(name=e.name))
             return
         from ... import linkimport as L
         d = L.empty_draft()
         L._from_entry(d, e)
         d.key = e.key if not any(s.key == e.key and s.builtin for s in firmware.catalog()) else L.unique_key(e.key)
         L.save(d, editing_key=e.key)
-        self.detail.b_add.setText("In meinen Firmwares ✓")
-        self._note(f"{e.name} steht jetzt im Reiter „Installieren & Versionen“.")
+        self.detail.b_add.setText(_("In my firmwares ✓"))
+        self._note(_("{name} is now in the tab “Install & versions”.").format(name=e.name))
 
     def toggle_wish(self, on: bool):
         e = self.current
@@ -1095,7 +1123,7 @@ class DiscoverPage(QWidget):
         d = LinkImportDialog(self, text, cat=self.cat, online=net_allowed())
         if d.exec() and d.saved_spec is not None:
             self.set_catalog(self.cat)
-            self._note(f"{d.saved_spec.name} gespeichert – steht jetzt im Reiter „Installieren & Versionen“.")
+            self._note(_("{name} saved – now in the tab “Install & versions”.").format(name=d.saved_spec.name))
         return d
 
     def own_dialog(self):
@@ -1106,10 +1134,11 @@ class DiscoverPage(QWidget):
 
     def token_dialog(self):
         st = settings()
-        tok, ok = QInputDialog.getText(self, "GitHub-Token",
-                                       "Optional: persönlicher GitHub-Token (nur Lesezugriff auf öffentliche Repos "
-                                       "nötig).\nOhne Token erlaubt GitHub 60 Abfragen pro Stunde, mit Token 5000.\n"
-                                       "Leer lassen zum Entfernen.", QLineEdit.EchoMode.Password, st.get("github_token", ""))
+        tok, ok = QInputDialog.getText(self, _("GitHub token"),
+                                       _("Optional: personal GitHub token (only read access to public "
+                                         "repos needed).\nWithout a token GitHub allows 60 requests per "
+                                         "hour, with a token 5000.\nLeave empty to remove."),
+                                       QLineEdit.EchoMode.Password, st.get("github_token", ""))
         if ok:
             st["github_token"] = tok.strip()
             config.save()
@@ -1119,13 +1148,13 @@ class DiscoverPage(QWidget):
         """key -> Grund"""
         out = {}
         for k in self.model.wish:
-            out[k] = "gemerkt"
+            out[k] = _("remembered")
         for d in config.load().extra_firmwares:
-            out.setdefault(d.get("catalog_id") or d.get("key"), "deine Firmware")
+            out.setdefault(d.get("catalog_id") or d.get("key"), _("your firmware"))
         try:
             for p in self.ctx.store.profiles.values():
                 if p.firmware:
-                    out[p.firmware] = f"auf {p.name}"
+                    out[p.firmware] = _("on {name}").format(name=p.name)
         except AttributeError:
             pass
         return {k: v for k, v in out.items() if k}
@@ -1135,21 +1164,21 @@ class DiscoverPage(QWidget):
         fol = self.followed()
         rows = []
         for c in catmod.recorded_changes():
-            rows.append((c.get("date", "")[:10], c.get("key"), c.get("text", ""), "Katalog"))
+            rows.append((c.get("date", "")[:10], c.get("key"), c.get("text", ""), _("Catalog")))
         for key, why in fol.items():
             g = self.gh.get(key)
             e = self.cat.by_key(key)
             if not (g and e):
                 continue
             for r in g.get("releases", [])[:3]:
-                rows.append((r["date"], key, f"{e.name} {r['tag']}" + (" (Vorabversion)" if r["prerelease"] else ""),
-                             why))
+                rows.append((r["date"], key, _("{name} {version} (pre-release)").format(name=e.name, version=r["tag"])
+                             if r["prerelease"] else f"{e.name} {r['tag']}", why))
         rows.sort(key=lambda r: r[0], reverse=True)
         last = time.strftime("%Y-%m-%d", time.localtime(self.last_visit)) if self.last_visit else ""
         for date, key, text, why in rows[:200]:
             new = bool(last and date and date > last)
             e = self.cat.by_key(key or "")
-            it = QTreeWidgetItem(["neu" if new else "", e.name if e else key, f"{text} · {why}",
+            it = QTreeWidgetItem([_("new") if new else "", e.name if e else key, f"{text} · {why}",
                                   ".".join(reversed(date.split("-"))) if date else ""])
             it.setData(1, Qt.ItemDataRole.UserRole, key)
             if new:
@@ -1163,16 +1192,19 @@ class DiscoverPage(QWidget):
             self.news.resizeColumnToContents(c)
         names = ", ".join(self.cat.by_key(k).name for k in list(fol)[:6] if self.cat.by_key(k))
         if not rows:
-            self.news_info.setText("Noch keine Neuigkeiten. So geht's: Firmwares mit „Merken“ markieren oder zu deinen "
-                                   "Firmwares hinzufügen – dann zeigt die App hier neue Versionen. Firmwares auf deinen "
-                                   "FM-1 verfolgt sie automatisch." + (f"\nDu folgst: {names}." if names else ""))
+            text = _("No news yet. How it works: mark firmwares with “Remember” or add them to your firmwares – then "
+                     "the app shows new versions here. It follows the firmwares on your FM-1 automatically.")
+            if names:
+                text += "\n" + _("You follow: {names}.").format(names=names)
+            self.news_info.setText(text)
         else:
-            self.news_info.setText(f"Neue Versionen der Firmwares, denen du folgst ({names or 'keine'}), und Änderungen "
-                                   "im Katalog. „neu“ = seit deinem letzten Besuch. Doppelklick öffnet die Firmware.")
+            self.news_info.setText(_("New versions of the firmwares you follow ({names}) and changes in the catalog. "
+                                     "“new” = since your last visit. Double-click opens the firmware.").format(
+                names=names or _("none")))
 
     def check_news(self):
         if not net_allowed():
-            self.news_info.setText("Offline – Neuigkeiten kommen beim nächsten Mal.")
+            self.news_info.setText(_("Offline – news will come next time."))
             return
         repos = [(k, self.cat.by_key(k).repo) for k in self.followed() if self.cat.by_key(k) and self.cat.by_key(k).repo]
         if not repos:
@@ -1200,19 +1232,20 @@ class DiscoverPage(QWidget):
             if msg:
                 self.news_info.setText(self.news_info.text() + "\n" + msg)
         run_job(self, work, on_done=done, on_fail=lambda m, tb: (self.b_news.setEnabled(True),
-                                                                   self.news_info.setText(f"GitHub: {m}")))
+                                                                   self.news_info.setText(
+                                                                       _("GitHub: {message}").format(message=m))))
 
     # ------------------------------------------------------------ Werkzeuge & Wissen
     def fill_resources(self):
         self.res.clear()
         words = self.res_search.text().lower().split()
         groups: dict[str, QTreeWidgetItem] = {}
-        names = {"Editors, librarians and companion software": "Editoren und Begleit-Software",
-                 "Firmware update and recovery": "Update und Rettung", "Patches and sound banks": "Sounds und Patches",
-                 "Hardware add-ons": "Hardware-Zubehör", "Documentation and guides": "Anleitungen",
-                 "Articles and reviews": "Artikel und Tests", "Videos": "Videos", "Communities": "Communities",
-                 "Reverse engineering and firmware development": "Entwicklung und Reverse Engineering",
-                 "Related M-VAVE projects": "Verwandte M-VAVE-Projekte"}
+        # section titles of awesome-fm-1 (English upstream) – shown translated
+        names = {k: _(k) for k in (
+            N_("Editors, librarians and companion software"), N_("Firmware update and recovery"),
+            N_("Patches and sound banks"), N_("Hardware add-ons"), N_("Documentation and guides"),
+            N_("Articles and reviews"), N_("Videos"), N_("Communities"),
+            N_("Reverse engineering and firmware development"), N_("Related M-VAVE projects"))}
         for r in self.cat.resources:
             if words and not all(w in (r.name + " " + r.description + " " + r.section).lower() for w in words):
                 continue

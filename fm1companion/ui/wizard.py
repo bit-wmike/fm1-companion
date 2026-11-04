@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (QButtonGroup, QComboBox, QDialog, QFileDialog, QFra
 from .. import SUITE_NAME, __version__, config, diag
 from . import theme
 from .common import heading, icon
+from ..i18n import N_, _, pgettext
 
 
 def _p(text: str, role: str = "") -> QLabel:
@@ -28,14 +29,15 @@ def _p(text: str, role: str = "") -> QLabel:
 class _Welcome(QWizardPage):
     def __init__(self, wz):
         super().__init__()
-        self.setTitle(f"Willkommen in der {SUITE_NAME}")
-        self.setSubTitle("In einer Minute ist alles eingerichtet. Du kannst den Assistenten später über "
-                         "Hilfe › Einrichtungs-Assistent wieder öffnen.")
+        self.setTitle(_("Welcome to the {suite}").format(suite=SUITE_NAME))
+        self.setSubTitle(_("Everything is set up in a minute. You can open the wizard again later via "
+                           "Help › Setup wizard."))
         lay = QVBoxLayout(self)
-        lay.addWidget(_p("Die Suite kümmert sich um alles rund um dein M-VAVE FM-1: Firmware wechseln, Backups, "
-                         "Klänge und Presets, Samples, MIDI, Simulator und Aufnahme."))
+        lay.addWidget(_p(_("The suite takes care of everything around your M-VAVE FM-1: changing "
+                           "firmware, backups, sounds and presets, samples, MIDI, simulator and "
+                           "recording.")))
         row = QHBoxLayout()
-        row.addWidget(QLabel("Aussehen:"))
+        row.addWidget(QLabel(_("Appearance:")))
         self.theme = QComboBox()
         for k, t in theme.MODES:
             self.theme.addItem(t, k)
@@ -56,18 +58,18 @@ class _Welcome(QWizardPage):
 class _Folder(QWizardPage):
     def __init__(self, wz):
         super().__init__()
-        self.setTitle("Hauptordner")
-        self.setSubTitle("Hier liegen deine Backups, Projekte, Kits, Aufnahmen und Firmware-Downloads.")
+        self.setTitle(_("Main folder"))
+        self.setSubTitle(_("Your backups, projects, kits, recordings and firmware downloads live here."))
         lay = QVBoxLayout(self)
         h = QHBoxLayout()
         self.edit = QLineEdit(wz.ctx.settings.user_root)
-        b = QPushButton(icon("folder-open"), "Wählen …")
+        b = QPushButton(icon("folder-open"), _("Choose …"))
         b.clicked.connect(self._pick)
         h.addWidget(self.edit, 1)
         h.addWidget(b)
         lay.addLayout(h)
-        lay.addWidget(_p("Tipp: Lege den Ordner dorthin, wo du ihn auch sicherst (z. B. auf das NAS-Laufwerk). "
-                         "Die App löscht ihn nie – auch nicht beim Deinstallieren.", "muted"))
+        lay.addWidget(_p(_("Tip: put the folder where you also back it up (e.g. on the NAS drive). The "
+                           "app never deletes it – not even when uninstalling."), "muted"))
         lay.addStretch(1)
         # NICHT als Pflichtfeld "root*": Qt zählt ein Pflichtfeld erst als ausgefüllt, wenn es sich vom
         # Anfangswert unterscheidet – mit vorausgefülltem ~/FM-1 blieb „Weiter“ grau, der Assistent hing fest.
@@ -78,7 +80,7 @@ class _Folder(QWizardPage):
         return bool(self.edit.text().strip())
 
     def _pick(self):
-        d = QFileDialog.getExistingDirectory(self, "Hauptordner wählen", self.edit.text())
+        d = QFileDialog.getExistingDirectory(self, _("Choose main folder"), self.edit.text())
         if d:
             self.edit.setText(d)
 
@@ -94,7 +96,7 @@ class _Folder(QWizardPage):
         except OSError as e:
             from .common import show_error
             from .device import folder_error_text
-            show_error(self, "Hauptordner nicht beschreibbar", folder_error_text(root, e))
+            show_error(self, _("Main folder not writable"), folder_error_text(root, e))
             return False
         self.edit.setText(str(root))
         return True
@@ -103,17 +105,18 @@ class _Folder(QWizardPage):
 class _Samples(QWizardPage):
     def __init__(self, wz):
         super().__init__()
-        self.setTitle("Sample-Ordner")
-        self.setSubTitle("Wo liegen deine Samples (z. B. Pocket-Operator-Klänge)? Optional – geht auch später.")
+        self.setTitle(_("Sample folders"))
+        self.setSubTitle(_("Where are your samples (e.g. Pocket Operator sounds)? Optional – can also be "
+                           "done later."))
         lay = QVBoxLayout(self)
         self.list = QListWidget()
         for r in wz.ctx.settings.sample_roots:
             self.list.addItem(r)
         lay.addWidget(self.list, 1)
         h = QHBoxLayout()
-        add = QPushButton(icon("list-add"), "Ordner hinzufügen …")
+        add = QPushButton(icon("list-add"), _("Add folder …"))
         add.clicked.connect(self._add)
-        rm = QPushButton(icon("list-remove"), "Entfernen")
+        rm = QPushButton(icon("list-remove"), _("Remove"))
         rm.clicked.connect(lambda: self.list.takeItem(self.list.currentRow()))
         h.addWidget(add)
         h.addWidget(rm)
@@ -121,7 +124,7 @@ class _Samples(QWizardPage):
         lay.addLayout(h)
 
     def _add(self):
-        d = QFileDialog.getExistingDirectory(self, "Sample-Ordner")
+        d = QFileDialog.getExistingDirectory(self, _("Sample folder"))
         if d:
             self.list.addItem(d)
 
@@ -132,8 +135,8 @@ class _Samples(QWizardPage):
 class _Deps(QWizardPage):
     def __init__(self, wz):
         super().__init__()
-        self.setTitle("Abhängigkeiten prüfen")
-        self.setSubTitle("Welche Systempakete die Suite braucht und ob sie da sind.")
+        self.setTitle(_("Check dependencies"))
+        self.setSubTitle(_("Which system packages the suite needs and whether they are installed."))
         lay = QVBoxLayout(self)
         self.text = _p("")
         self.text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -147,10 +150,10 @@ class _Deps(QWizardPage):
         self.cmd_label.hide()
         lay.addWidget(self.cmd_label)
         h = QHBoxLayout()
-        self.copy = QPushButton(icon("edit-copy"), "Befehl kopieren")
-        self.copy.setToolTip("Den apt-Befehl in die Zwischenablage legen – dann im Terminal einfügen")
+        self.copy = QPushButton(icon("edit-copy"), _("Copy command"))
+        self.copy.setToolTip(_("Put the apt command on the clipboard – then paste it in the terminal"))
         self.copy.clicked.connect(self._copy)
-        again = QPushButton(icon("view-refresh"), "Erneut prüfen")
+        again = QPushButton(icon("view-refresh"), _("Check again"))
         again.clicked.connect(self.initializePage)
         h.addWidget(self.copy)
         h.addWidget(again)
@@ -161,11 +164,15 @@ class _Deps(QWizardPage):
 
     def initializePage(self):
         states = diag.check_deps()
+        def state(s) -> str:
+            if s.ok:
+                return s.why
+            return (_("{why} – <b>missing</b>") if s.required else _("{why} – optional")).format(why=s.why)
         rows = "".join(f"<tr><td>{'✔' if s.ok else ('✖' if s.required else '–')}</td><td>{s.package}</td>"
-                       f"<td>{s.why}{'' if s.ok else (' – <b>fehlt</b>' if s.required else ' – optional')}</td></tr>"
-                       for s in states)
+                       f"<td>{state(s)}</td></tr>" for s in states)
         self.cmd = diag.apt_command(states)
-        tail = "<p>Fehlendes nachinstallieren (im Terminal):</p>" if self.cmd else "<p><b>Alles da.</b></p>"
+        tail = ("<p>" + _("Install what is missing (in the terminal):") + "</p>") if self.cmd else \
+            ("<p><b>" + _("Everything is there.") + "</b></p>")
         self.text.setText(f"<table cellpadding='2'>{rows}</table>{tail}")
         self.cmd_label.setText(self.cmd)
         self.cmd_label.setVisible(bool(self.cmd))
@@ -173,27 +180,28 @@ class _Deps(QWizardPage):
 
     def _copy(self):
         QGuiApplication.clipboard().setText(self.cmd)
-        self.copy.setText("Kopiert ✔")
-        QTimer.singleShot(2000, lambda: self.copy.setText("Befehl kopieren"))
+        self.copy.setText(_("Copied ✔"))
+        QTimer.singleShot(2000, lambda: self.copy.setText(_("Copy command")))
 
 
 class _Device(QWizardPage):
     def __init__(self, wz):
         super().__init__()
         self.wz = wz
-        self.setTitle("FM-1 anschließen & benennen")
-        self.setSubTitle("Schalte dein FM-1 ein und verbinde es per USB-Datenkabel. Es erscheint hier von selbst.")
+        self.setTitle(_("Connect & name the FM-1"))
+        self.setSubTitle(_("Switch your FM-1 on and connect it with a USB data cable. It appears here by "
+                           "itself."))
         lay = QVBoxLayout(self)
-        self.state = _p("Suche …")
+        self.state = _p(_("Searching …"))
         lay.addWidget(self.state)
         h = QHBoxLayout()
-        h.addWidget(QLabel("Name:"))
+        h.addWidget(QLabel(_("Name:")))
         self.name = QLineEdit()
-        self.name.setPlaceholderText("z. B. Studio-FM-1")
+        self.name.setPlaceholderText(_("e.g. Studio FM-1"))
         h.addWidget(self.name, 1)
         lay.addLayout(h)
-        lay.addWidget(_p("Ein zweites FM-1? Einfach umstecken – jedes Gerät bekommt sein eigenes Profil, eigene Farbe "
-                         "und eigene Backups. Dieser Schritt ist optional.", "muted"))
+        lay.addWidget(_p(_("A second FM-1? Just plug it in instead – every device gets its own profile, "
+                           "own colour and own backups. This step is optional."), "muted"))
         lay.addStretch(1)
         wz.ctx.changed.connect(self._update)
         wz.ctx.ports_changed.connect(self._update)
@@ -210,23 +218,24 @@ class _Device(QWizardPage):
                 fw = c.info.version
             else:
                 from .device import firmware_name
-                fw = (firmware_name(c.firmware_key) or "Firmware ohne Editor-Protokoll") + \
+                fw = (firmware_name(c.firmware_key) or _("Firmware without editor protocol")) + \
                      (f" ({c.identity})" if c.identity else "")
-            self.state.setText(f"<b style='color:{c.profile.color}'>●</b> <b>Gefunden:</b> {c.port.label} – {fw}")
+            self.state.setText(f"<b style='color:{c.profile.color}'>●</b> "
+                               + _("<b>Found:</b> {port} – {firmware}").format(port=c.port.label, firmware=fw))
             if self._named_for != c.profile.id:
                 self._named_for = c.profile.id
                 self.name.setText(c.profile.name)
             self.name.setEnabled(True)
         elif c.port and proto == "update":
-            self.state.setText("Ein FM-1 wartet im <b>Update-Modus</b>. Nach dem Assistenten geht es auf der Seite "
-                               "„Rettung“ weiter – dort wird die unterbrochene Installation abgeschlossen.")
+            self.state.setText(_("An FM-1 is waiting in <b>update mode</b>. After the wizard, continue on "
+                                 "the page “Recovery” – there the interrupted installation is completed."))
             self.name.setEnabled(c.profile is not None)
         elif c.port:
-            self.state.setText("FM-1 gefunden, es antwortet aber (noch) nicht – einen Moment. Antwortet es gar nicht: "
-                               "Datenkabel prüfen, andere MIDI-Programme schließen.")
+            self.state.setText(_("FM-1 found, but it does not answer (yet) – one moment. If it does not "
+                                 "answer at all: check the data cable, close other MIDI programs."))
             self.name.setEnabled(c.profile is not None)
         else:
-            self.state.setText("Noch kein FM-1 verbunden. Du kannst diesen Schritt auch überspringen.")
+            self.state.setText(_("No FM-1 connected yet. You can also skip this step."))
             self.name.setEnabled(False)
 
     def apply(self):
@@ -237,7 +246,7 @@ class _Device(QWizardPage):
                 c.rename_profile(n)
             except OSError as e:               # Backup-Ordner nicht verschiebbar: Name bleibt, Hinweis statt Absturz
                 from .common import show_error
-                show_error(self, "Umbenennen nicht möglich", str(e))
+                show_error(self, _("Renaming not possible"), str(e))
 
 
 class _AutoBackup(QWizardPage):
@@ -245,50 +254,51 @@ class _AutoBackup(QWizardPage):
 
     def __init__(self, wz):
         super().__init__()
-        self.setTitle("Automatische Sicherung")
-        self.setSubTitle("Beim ersten Verbinden macht die App automatisch ein Backup.")
+        self.setTitle(pgettext("wizard page", "Automatic backup"))
+        self.setSubTitle(_("On the first connection the app makes a backup automatically."))
         lay = QVBoxLayout(self)
-        lay.addWidget(_p("Sobald ein FM-1 mit Melodee, Skiff oder SLOOP verbunden ist, sichert die App einmal täglich "
-                         "beim Anstecken den kompletten Stand (laufende Musik, alle Projekte, User-Presets, "
-                         "Einstellungen) nach <b>FM-1/Backups/&lt;Gerätename&gt;</b>. Das dauert ein paar Sekunden; "
-                         "das FM-1 stoppt dafür kurz die Wiedergabe.<br><br>"
-                         "Vor jeder Firmware-Installation und vor jedem Zurückspielen entsteht zusätzlich ein "
-                         "Sicherheits-Backup. Automatische Backups werden nach Regeln aufgeräumt (die letzten, "
-                         "das neueste je Monat und je Firmware bleiben); deine eigenen Backups löscht die App nie.<br><br>"
-                         "Einstellen lässt sich das unter <b>Backups</b> und in den Einstellungen."))
+        lay.addWidget(_p(_("As soon as an FM-1 with Melodee, Skiff or SLOOP is connected, the app backs "
+                           "up the complete state once a day when plugging in (running music, all "
+                           "projects, user presets, settings) to <b>FM-1/Backups/&lt;device name&gt;</b>. "
+                           "This takes a few seconds; the FM-1 briefly stops playback for "
+                           "it.<br><br>Before every firmware installation and before every restore an "
+                           "additional safety backup is made. Automatic backups are tidied up by rules "
+                           "(the latest ones, the newest per month and per firmware stay); the app never "
+                           "deletes your own backups.<br><br>You can set this under <b>Backups</b> and in "
+                           "the settings.")))
         lay.addStretch(1)
 
 
 class _Channel(QWizardPage):
     def __init__(self, wz):
         super().__init__()
-        self.setTitle("Update-Kanal")
-        self.setSubTitle("Welche Firmware-Versionen soll die App anbieten?")
+        self.setTitle(_("Update channel"))
+        self.setSubTitle(_("Which firmware versions should the app offer?"))
         lay = QVBoxLayout(self)
         self.grp = QButtonGroup(self)
-        self.stable = QRadioButton("Stabile Versionen (empfohlen)")
-        self.rc = QRadioButton("Auch Release Candidates")
+        self.stable = QRadioButton(_("Stable versions (recommended)"))
+        self.rc = QRadioButton(_("Release candidates too"))
         for b in (self.stable, self.rc):
             self.grp.addButton(b)
             lay.addWidget(b)
         (self.rc if wz.ctx.settings.channel == "rc" else self.stable).setChecked(True)
-        lay.addWidget(_p("Release Candidates (RC) sind Vorabversionen mit den neuesten Funktionen – meist gut getestet, "
-                         "aber noch nicht final. Du kannst das jederzeit in den Einstellungen ändern.", "muted"))
-        lay.addWidget(_p("Vor jedem Update legt die App automatisch ein Backup an.", "muted"))
+        lay.addWidget(_p(_("Release candidates (RC) are pre-releases with the newest features – usually "
+                           "well tested, but not final yet. You can change this at any time in the "
+                           "settings."), "muted"))
+        lay.addWidget(_p(_("Before every update the app makes a backup automatically."), "muted"))
         lay.addStretch(1)
 
 
 class _Done(QWizardPage):
     def __init__(self, wz):
         super().__init__()
-        self.setTitle("Fertig!")
-        self.setSubTitle("Viel Spaß mit deinem FM-1.")
+        self.setTitle(_("Done!"))
+        self.setSubTitle(_("Have fun with your FM-1."))
         lay = QVBoxLayout(self)
-        lay.addWidget(_p("<ul><li><b>Strg+K</b> – alles finden</li><li><b>Strg+B</b> – Backup</li>"
-                         "<li><b>F1</b> – Hilfe</li></ul>"
-                         "Unten rechts siehst du kompakt, wie es deinem Rechner geht – ein Klick öffnet den "
-                         "Systemcheck."))
-        self.tour = QPushButton(icon("help-hint"), "Was ist neu in 2.0?")
+        lay.addWidget(_p(_("<ul><li><b>Ctrl+K</b> – find everything</li><li><b>Ctrl+B</b> – "
+                           "backup</li><li><b>F1</b> – help</li></ul>At the bottom right you see "
+                           "compactly how your computer is doing – a click opens the system check.")))
+        self.tour = QPushButton(icon("help-hint"), _("What's new in 2.0?"))
         self.tour.clicked.connect(lambda: QTimer.singleShot(0, wz.window.open_whats_new) if wz.window else None)
         lay.addWidget(self.tour, 0, Qt.AlignmentFlag.AlignLeft)
         lay.addStretch(1)
@@ -298,13 +308,14 @@ class FirstRunWizard(QWizard):
     def __init__(self, ctx, window=None, upgrade: bool = False):
         super().__init__(window)
         self.ctx, self.window, self.upgrade = ctx, window, upgrade
-        self.setWindowTitle("Einrichtung")
+        self.setWindowTitle(_("Setup"))
         self.setWizardStyle(QWizard.WizardStyle.ModernStyle)
         from .main_window import app_icon
         self.setPixmap(QWizard.WizardPixmap.LogoPixmap, app_icon().pixmap(48, 48))
         self.setOption(QWizard.WizardOption.NoBackButtonOnStartPage, True)
-        for b, t in ((QWizard.WizardButton.NextButton, "Weiter >"), (QWizard.WizardButton.BackButton, "< Zurück"),
-                     (QWizard.WizardButton.FinishButton, "Fertig"), (QWizard.WizardButton.CancelButton, "Abbrechen")):
+        for b, t in ((QWizard.WizardButton.NextButton, _("Next >")), (QWizard.WizardButton.BackButton, _("< "
+                                                                                                        "Back")),
+                     (QWizard.WizardButton.FinishButton, _("Finish")), (QWizard.WizardButton.CancelButton, _("Cancel"))):
             self.setButtonText(b, t)
         self.resize(680, 500)
         self.p_welcome, self.p_folder, self.p_samples = _Welcome(self), _Folder(self), _Samples(self)
@@ -341,28 +352,28 @@ class FirstRunWizard(QWizard):
 # ---------------------------------------------------------------- Was ist neu ---
 # (Titel, Text, Symbol, mögliche Seiten-Schlüssel/Modulnamen)
 NEWS = [
-    ("Studio", "Der digitale Zwilling deines FM-1: dieselbe Firmware im Rechner – spielen, als WAV (auch "
-     "Einzelspuren) für Logic/Audacity ausgeben und zurück aufs FM-1 schreiben.", "audio-lines", ("studio",)),
-    ("Firmware+", "Alle Firmwares an einem Ort: Katalog mit allem, was es fürs FM-1 gibt, dazu Installieren, "
-     "Versionen wechseln und zurück zum Original.", "compass", ("discover", "catalog")),
-    ("Rettung", "Schritt für Schritt aus dem Update-Modus zurück – auch wenn das Display dunkel bleibt.", "life-buoy",
+    (N_("Studio"), N_("The digital twin of your FM-1: the same firmware on the computer – play, export as WAV "
+                  "(also single tracks) for Logic/Audacity and write back to the FM-1."), "audio-lines", ("studio",)),
+    (N_("Firmware+"), N_("All firmwares in one place: catalog with everything there is for the FM-1, plus "
+                     "install, switch versions and back to the original."), "compass", ("discover", "catalog")),
+    (N_("Recovery"), N_("Step by step back from update mode – even if the display stays dark."), "life-buoy",
      ("recovery",)),
-    ("Simulator", "FM-1-Firmwares direkt im Rechner spielen, ohne Gerät.", "monitor-play", ("simulator",)),
-    ("Presets", "Alle User-Presets durchsuchen, sichern, tauschen und zurückspielen.", "library", ("presets",)),
-    ("FM-Voices", "DX7-Klänge importieren und als FM-Voices aufs FM-1 bringen.", "audio-lines", ("voices",)),
-    ("MIDI", "Ports verbinden, mitlesen, Clock senden.", "piano", ("midi",)),
-    ("Klangerzeuger", "Die MIDI-Spuren 5–8 hörbar machen – mit FluidSynth im Rechner.", "speaker", ("soundmodule",)),
-    ("Projekte › Ansicht & Export", "Projekte als Spuren und Patterns ansehen und als MIDI exportieren.", "list-music",
+    (N_("Simulator"), N_("Play FM-1 firmwares directly on the computer, without a device."), "monitor-play", ("simulator",)),
+    (N_("Presets"), N_("Browse, back up, swap and restore all user presets."), "library", ("presets",)),
+    (N_("FM Voices"), N_("Import DX7 sounds and bring them to the FM-1 as FM voices."), "audio-lines", ("voices",)),
+    (N_("MIDI"), N_("Connect ports, monitor, send clock."), "piano", ("midi",)),
+    (N_("Sound Module"), N_("Make the MIDI tracks 5–8 audible – with FluidSynth on the computer."), "speaker", ("soundmodule",)),
+    (N_("Projects › View & export"), N_("View projects as tracks and patterns and export them as MIDI."), "list-music",
      ("project_view", "projectview")),
-    ("Komponieren", "Ideen, Akkorde und Patterns erzeugen und aufs Gerät spielen.", "pen-tool", ("compose",)),
-    ("Backups › Durchsuchen", "In Backups hineinschauen, vergleichen, Teile herausholen.", "archive",
+    (N_("Compose"), N_("Generate ideas, chords and patterns and play them on the device."), "pen-tool", ("compose",)),
+    (N_("Backups › Browse"), N_("Look into backups, compare, extract parts."), "archive",
      ("backup_browser", "backupbrowser")),
-    ("Geräte", "Alle deine FM-1 mit Profil, Farbe und Verlauf.", "keyboard-music", ("devices",)),
-    ("Hilfe-Center", "Anleitungen, FAQ und Diagnose – auch offline. F1.", "book-open", ("help",)),
-    ("Befehlssuche", "Strg+K: jede Seite, jede Aktion, jedes Hilfe-Thema per Tastatur.", "command", ("@palette",)),
-    ("Systemcheck", "Findet Wackelkontakte, Unterspannung und USB-Audio-Fehler im Kernel-Protokoll.", "activity",
+    (N_("Devices"), N_("All your FM-1 with profile, colour and history."), "keyboard-music", ("devices",)),
+    (N_("Help Center"), N_("Guides, FAQ and diagnostics – also offline. F1."), "book-open", ("help",)),
+    (N_("Command search"), N_("Ctrl+K: every page, every action, every help topic via the keyboard."), "command", ("@palette",)),
+    (N_("System check"), N_("Finds loose contacts, under-voltage and USB audio errors in the kernel log."), "activity",
      ("@syscheck",)),
-    ("Neues Design", "Hell, dunkel oder automatisch – mit Akzentfarbe und einheitlichen Symbolen.", "palette",
+    (N_("New design"), N_("Light, dark or automatic – with accent colour and consistent icons."), "palette",
      ("@settings",)),
 ]
 
@@ -383,12 +394,12 @@ class WhatsNewDialog(QDialog):
     def __init__(self, window):
         super().__init__(window)
         self.window = window
-        self.setWindowTitle("Was ist neu in 2.0")
+        self.setWindowTitle(_("What's new in 2.0"))
         self.resize(860, 620)
         lay = QVBoxLayout(self)
-        lay.addWidget(heading(f"Neu in der {SUITE_NAME} {__version__}",
-                              "Viel ist viel, mehr ist besser: alles fürs FM-1 jetzt in einer App. Klick auf eine Karte "
-                              "öffnet den Bereich."))
+        lay.addWidget(heading(_("New in the {suite} {version}").format(suite=SUITE_NAME, version=__version__),
+                              _("A lot is a lot, more is better: everything for the FM-1 now in one app. "
+                                "A click on a card opens the area.")))
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         body = QWidget()
@@ -407,25 +418,26 @@ class WhatsNewDialog(QDialog):
             il = QLabel()
             il.setPixmap(icon(ic).pixmap(22, 22))
             h.addWidget(il)
+            title = _(title)
             t = QLabel(title)
             t.setProperty("role", "cardTitle")
             h.addWidget(t, 1)
             v.addLayout(h)
-            v.addWidget(_p(text, "muted"))
+            v.addWidget(_p(_(text), "muted"))
             if target:
-                b = QPushButton("Öffnen")
+                b = QPushButton(_("Open"))
                 b.setProperty("variant", "flat")
-                b.clicked.connect(lambda _=False, tg=target: self._open(tg))
+                b.clicked.connect(lambda _c=False, tg=target: self._open(tg))
                 v.addWidget(b, 0, Qt.AlignmentFlag.AlignLeft)
                 self.cards[title] = b
             else:
-                v.addWidget(_p("in dieser Ausgabe nicht enthalten", "small"))
+                v.addWidget(_p(_("not included in this edition"), "small"))
                 self.cards[title] = None
             grid.addWidget(card, n // 3, n % 3)
             n += 1
         row = QHBoxLayout()
         row.addStretch(1)
-        ok = QPushButton("Los geht's")
+        ok = QPushButton(_("Let's go"))
         ok.setProperty("variant", "primary")
         ok.setDefault(True)
         ok.clicked.connect(self.accept)

@@ -17,6 +17,22 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 
 from . import APP_ID
+from .i18n import N_
+
+
+class Msg:
+    """a message translated only when shown: the settings are read while the UI language is still being
+    determined (i18n reads the language setting from here), so load() must not translate anything itself."""
+
+    def __init__(self, msgid: str, kind: str = "", **kw):
+        self.msgid, self.kind, self.kw = msgid, kind, kw
+
+    def __str__(self) -> str:
+        from .i18n import _
+        return _(self.msgid).format(**self.kw)
+
+    def __repr__(self) -> str:
+        return f"Msg({self.msgid!r}, {self.kw!r})"
 
 
 def _xdg(var: str, default: str) -> Path:
@@ -113,9 +129,10 @@ _lock = threading.Lock()
 _settings: Settings | None = None
 folder_problems: dict[str, str] = {}     # Ordnername -> Fehler beim Anlegen (Hauptordner schreibgeschützt …)
 # was beim Laden auffiel (für einen einmaligen Hinweis in der Oberfläche)
-load_problems: list[str] = []
+load_problems: list[Msg] = []
 broken_file: Path | None = None          # unlesbare config.json wurde hierhin umbenannt
 read_error: str = ""                     # Einstellungsdatei nicht lesbar (Rechte, Ordner fehlt/ist eine Datei)
+_read_exc: OSError | None = None         # (der Grund dazu, übersetzt erst in problems_text())
 
 
 def _expected(f) -> str:
@@ -124,36 +141,38 @@ def _expected(f) -> str:
 
 
 def _coerce(name: str, typ: str, v, default):
-    """Wert prüfen; (Wert, Problem oder "")"""
+    """Wert prüfen; (Wert, Problem (Msg) oder None)"""
     if typ == "bool":
-        return (v, "") if isinstance(v, bool) else (default, f"{name}: kein Ja/Nein-Wert")
+        return (v, None) if isinstance(v, bool) else (default, Msg(N_("{name}: not a yes/no value"), name=name))
     if typ == "int":
-        return (v, "") if isinstance(v, int) and not isinstance(v, bool) else (default, f"{name}: keine Zahl")
+        return ((v, None) if isinstance(v, int) and not isinstance(v, bool)
+                else (default, Msg(N_("{name}: not a number"), name=name)))
     if typ == "float":
-        return ((float(v), "") if isinstance(v, (int, float)) and not isinstance(v, bool)
-                else (default, f"{name}: keine Zahl"))
+        return ((float(v), None) if isinstance(v, (int, float)) and not isinstance(v, bool)
+                else (default, Msg(N_("{name}: not a number"), name=name)))
     if typ == "str":
-        return (v, "") if isinstance(v, str) else (default, f"{name}: kein Text")
+        return (v, None) if isinstance(v, str) else (default, Msg(N_("{name}: not a text"), name=name))
     if typ.startswith("list"):
         if not isinstance(v, list):
-            return default, f"{name}: keine Liste"
+            return default, Msg(N_("{name}: not a list"), name=name)
         inner = typ[5:-1] if typ.startswith("list[") else ""
         want = {"str": str, "dict": dict}.get(inner)
         if want is None:
-            return v, ""
+            return v, None
         good = [x for x in v if isinstance(x, want)]
-        return good, ("" if len(good) == len(v) else f"{name}: {len(v) - len(good)} ungültige Einträge entfernt")
+        return good, (None if len(good) == len(v) else
+                      Msg(N_("{name}: {n} invalid entries removed"), name=name, n=len(v) - len(good)))
     if typ == "dict":
-        return (v, "") if isinstance(v, dict) else (default, f"{name}: kein Wörterbuch")
-    return v, ""
+        return (v, None) if isinstance(v, dict) else (default, Msg(N_("{name}: not a dictionary"), name=name))
+    return v, None
 
 
-def from_dict(raw) -> tuple[Settings, list[str]]:
+def from_dict(raw) -> tuple[Settings, list[Msg]]:
     """Settings aus einem (evtl. kaputten) Wörterbuch – jedes Feld einzeln geprüft, sonst Standardwert."""
     s = Settings()
-    problems: list[str] = []
+    problems: list[Msg] = []
     if not isinstance(raw, dict):
-        return s, ["Datei enthält kein JSON-Objekt"]
+        return s, [Msg(N_("the file contains no JSON object"))]
     fields_ = {f.name: f for f in dataclasses.fields(Settings)}
     for k, v in raw.items():
         f = fields_.get(k)
@@ -166,20 +185,22 @@ def from_dict(raw) -> tuple[Settings, list[str]]:
     if isinstance(s.modules, dict):
         for k in [k for k, v in s.modules.items() if not isinstance(v, dict)]:
             s.modules.pop(k)
-            problems.append(f"modules.{k}: kein Wörterbuch")
+            problems.append(Msg(N_("{name}: not a dictionary"), name=f"modules.{k}"))
     if not s.user_root.strip():
         s.user_root = Settings().user_root
-        problems.append("user_root: leer")
+        problems.append(Msg(N_("{name}: empty"), name="user_root"))
     return s, problems
 
 
 def _why(e: OSError) -> str:
-    """Betriebssystem-Fehler in Alltagssprache (die strerror-Texte sind englisch)."""
+    """Betriebssystem-Fehler in Alltagssprache (die strerror-Texte sind englisch). Nicht in load() benutzen."""
     import errno as _e
-    return {_e.EACCES: "keine Rechte", _e.EPERM: "keine Rechte", _e.EROFS: "der Datenträger ist schreibgeschützt",
-            _e.ENOSPC: "der Datenträger ist voll", _e.ENOTDIR: "ein Teil des Pfads ist eine Datei statt eines Ordners",
-            _e.EISDIR: "dort liegt ein Ordner statt der Datei", _e.EDQUOT: "dein Speicherkontingent ist voll",
-            _e.EIO: "Lese-/Schreibfehler des Datenträgers"}.get(getattr(e, "errno", None), e.strerror or str(e))
+    from .i18n import _
+    return {_e.EACCES: _("no permission"), _e.EPERM: _("no permission"),
+            _e.EROFS: _("the drive is write-protected"), _e.ENOSPC: _("the drive is full"),
+            _e.ENOTDIR: _("part of the path is a file instead of a folder"),
+            _e.EISDIR: _("there is a folder instead of the file"), _e.EDQUOT: _("your storage quota is full"),
+            _e.EIO: _("read/write error of the drive")}.get(getattr(e, "errno", None), e.strerror or str(e))
 
 
 def _read_json(p: Path):
@@ -187,7 +208,7 @@ def _read_json(p: Path):
 
 
 def load() -> Settings:
-    global _settings, broken_file, read_error
+    global _settings, broken_file, read_error, _read_exc
     with _lock:
         if _settings is None:
             s = Settings()
@@ -198,7 +219,7 @@ def load() -> Settings:
                 pass
             except (IsADirectoryError, NotADirectoryError, PermissionError) as e:
                 # nicht lesbar (Rechte, ~/.config ist eine Datei …) – NICHT „beschädigt“ und nichts umbenennen
-                read_error = f"{CONFIG_FILE}: {_why(e)}"
+                read_error, _read_exc = f"{CONFIG_FILE}: {e.strerror or e}", e
             except (OSError, ValueError, UnicodeDecodeError) as e:
                 # unlesbar: beiseitelegen (nicht still überschreiben) und – wenn vorhanden – die Sicherung nehmen
                 stamp = time.strftime("%Y-%m-%d_%H%M%S")
@@ -208,10 +229,11 @@ def load() -> Settings:
                     broken_file = dest
                 except OSError:
                     broken_file = CONFIG_FILE
-                load_problems.append(f"Die Einstellungsdatei war beschädigt ({type(e).__name__}).")
+                load_problems.append(Msg(N_("The settings file was damaged ({error})."), "broken",
+                                         error=type(e).__name__))
                 try:
                     raw = _read_json(BACKUP_FILE)
-                    load_problems.append("Die letzte Sicherung (config.json.bak) wurde geladen.")
+                    load_problems.append(Msg(N_("The last backup (config.json.bak) was loaded."), "backup"))
                 except (OSError, ValueError, UnicodeDecodeError):
                     raw = None
             if raw is not None:
@@ -273,8 +295,9 @@ def save(s: Settings | None = None) -> bool:
                 tmp.unlink()
             except OSError:
                 pass
-            save_error = (f"Die Einstellungen konnten nicht gespeichert werden ({CONFIG_FILE.parent}: "
-                          f"{_why(e)}). Sie gelten, bis du die App beendest.")
+            from .i18n import _
+            save_error = _("The settings could not be saved ({folder}: {reason}). They apply until you quit the "
+                           "app.").format(folder=CONFIG_FILE.parent, reason=_why(e))
             import logging
             logging.getLogger("fm1companion.config").warning(save_error)
             for fn in list(save_listeners):
@@ -289,20 +312,22 @@ def save(s: Settings | None = None) -> bool:
 
 def problems_text() -> str:
     """einmaliger Hinweis für die Oberfläche ("" = alles in Ordnung)"""
-    fields_ = [p for p in load_problems if not p.startswith(("Die Einstellungsdatei", "Die letzte Sicherung"))]
+    from .i18n import _
+    fields_ = [str(p) for p in load_problems if getattr(p, "kind", "") not in ("broken", "backup")]
     if broken_file is None and not fields_ and not read_error:
         return ""
     if read_error and broken_file is None:
-        head = (f"Die Einstellungsdatei ist nicht lesbar ({read_error}). Es gelten die Standard-Einstellungen; "
-                "prüfe die Rechte deines Ordners ~/.config.")
+        where = f"{CONFIG_FILE}: {_why(_read_exc)}" if _read_exc is not None else read_error
+        head = _("The settings file is not readable ({error}). The default settings apply; "
+                 "check the permissions of your folder ~/.config.").format(error=where)
     elif broken_file is not None:
-        head = (f"Die Einstellungsdatei war beschädigt und wurde als „{broken_file.name}“ beiseitegelegt. "
-                + ("Die letzte Sicherung (config.json.bak) wurde geladen."
-                   if any(p.startswith("Die letzte Sicherung") for p in load_problems)
-                   else "Es gelten wieder die Standard-Einstellungen."))
+        head = (_("The settings file was damaged and was put aside as “{name}”.").format(name=broken_file.name) + " "
+                + (_("The last backup (config.json.bak) was loaded.")
+                   if any(getattr(p, "kind", "") == "backup" for p in load_problems)
+                   else _("The default settings apply again.")))
     else:
-        head = "In den Einstellungen standen ungültige Werte; sie wurden durch Standardwerte ersetzt."
-    return head + (" Betroffen: " + "; ".join(fields_[:6]) + "." if fields_ else "")
+        head = _("The settings contained invalid values; they were replaced by default values.")
+    return head + (" " + _("Affected: {fields}.").format(fields="; ".join(fields_[:6])) if fields_ else "")
 
 
 def module(name: str, defaults: dict | None = None) -> dict:

@@ -17,6 +17,7 @@ import queue
 import threading
 import time
 
+from ..i18n import _
 from ..vendor import fm1_install as fi
 from . import package as pk
 
@@ -248,15 +249,15 @@ class SimFM1:
                         ln.dead = True
                     self.links.clear()
                     self.session = None
-                    self.bricked = "Stromausfall bei nicht fortsetzbarem Loader: ROM-UBOOT"
+                    self.bricked = "power loss with a non-resumable loader: ROM-UBOOT"
                 return
             a += n
         img = bytes(buf)
         is_stock_img = img[:0x400] in self.stock_heads
         if self.loader_kind == "stock" and not is_stock_img:
-            self.bricked = "fremdes Paket im Original-Loader: Bootbereich überschrieben"
+            self.bricked = "foreign package in the original loader: boot area overwritten"
         if self.loader_kind == "felucca" and is_stock_img:
-            self.bricked = "Original-Firmware im Felucca-Loader: nur App-Bereich geschrieben"
+            self.bricked = "original firmware in the Felucca loader: only the app area written"
         ok = yield (0xF0000000, 8)
         if ok[:7] != b"success":
             return
@@ -352,7 +353,7 @@ class SimBackend:
         dev = self.device_for(in_name)
         if dev is None:
             self.opened_other.append(in_name)
-            raise OSError(f"kein simuliertes FM-1 an {in_name}")
+            raise OSError(_("no simulated FM-1 at {port}").format(port=in_name))
         return SimLink(self, dev, in_name)
 
 

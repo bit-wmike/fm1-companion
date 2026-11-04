@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Callable
 
 from .config import CACHE_DIR
+from .i18n import _
 
 AUDIO = {".wav", ".wave", ".aif", ".aiff", ".flac", ".mp3", ".ogg"}
 
@@ -50,33 +51,33 @@ class Pack:
         return "quelle:" + self.id
 
 
-FREE = {"CC0-1.0": "CC0 – gemeinfrei, frei nutzbar (auch kommerziell, ohne Namensnennung)",
-        "CC-BY-4.0": "CC BY 4.0 – frei nutzbar mit Namensnennung",
-        "CC-BY-3.0": "CC BY 3.0 – frei nutzbar mit Namensnennung"}
+FREE = {"CC0-1.0": _("CC0 – public domain, free to use (also commercially, no attribution)"),
+        "CC-BY-4.0": _("CC BY 4.0 – free to use with attribution"),
+        "CC-BY-3.0": _("CC BY 3.0 – free to use with attribution")}
 
 # Geprüft am 30.10.2026 (LICENSE-Datei bzw. README im Repository).
 PACKS = [
     Pack("vcsl", "VCSL – Versilian Community Sample Library", "sgossner/VCSL", "CC0-1.0",
-         "Rund 4 000 Samples echter Instrumente: Trommeln (Membranophones), Becken, Glocken und Percussion "
-         "(Idiophones), Bläser, Saiten, Elektronik. Ideal für eigene Drum-Kits.",
-         "LICENSE im Repository: CC0 1.0 Universal.", ("akustisch", "percussion", "instrumente"), "≈ 1,3 GB"),
-    Pack("vsco2ce", "VSCO 2 Community Edition (Orchester)", "sgossner/VSCO-2-CE", "CC0-1.0",
-         "Orchester-Samples: Streicher, Holz, Blech, Pauken und Orchester-Percussion.",
-         "LICENSE im Repository: CC0 1.0 Universal.", ("orchester", "instrumente"), "≈ 1 GB"),
+         _("About 4,000 samples of real instruments: drums (membranophones), cymbals, bells and percussion "
+           "(idiophones), winds, strings, electronics. Ideal for your own drum kits."),
+         _("LICENSE in the repository: CC0 1.0 Universal."), ("akustisch", "percussion", "instrumente"), _("≈ 1.3 GB")),
+    Pack("vsco2ce", _("VSCO 2 Community Edition (orchestra)"), "sgossner/VSCO-2-CE", "CC0-1.0",
+         _("Orchestra samples: strings, woodwinds, brass, timpani and orchestral percussion."),
+         _("LICENSE in the repository: CC0 1.0 Universal."), ("orchester", "instrumente"), "≈ 1 GB"),
     Pack("dirt", "Dirt-Samples (TidalCycles)", "tidalcycles/Dirt-Samples", "unklar",
-         "Die Klangsammlung von TidalCycles/SuperDirt: Bassdrums, Breaks, Drum-Machine-Hits, Stimmen, FX "
-         "(rund 2 000 kurze Sounds).",
-         "Das Repository hat keine LICENSE-Datei und die README nennt keine Lizenz; die Sounds stammen aus "
-         "vielen Quellen. Nur zum Ausprobieren – nicht für Veröffentlichungen.", ("drums", "breaks", "fx"), "≈ 230 MB"),
+         _("The sound collection of TidalCycles/SuperDirt: bass drums, breaks, drum machine hits, voices, FX "
+           "(about 2,000 short sounds)."),
+         _("The repository has no LICENSE file and the README names no licence; the sounds come from "
+           "many sources. For trying out only – not for publishing."), ("drums", "breaks", "fx"), "≈ 230 MB"),
     Pack("drummachines", "Tidal Drum Machines", "ritchse/tidal-drum-machines", "unklar",
-         "Samples klassischer Drum-Machines (TR-808, TR-909, LinnDrum …), sortiert nach Gerät.",
-         "Keine Lizenzangabe im Repository; Aufnahmen kommerzieller Geräte unbekannter Herkunft. "
-         "Nur zum Ausprobieren.", ("drums", "808", "909"), "≈ 300 MB"),
+         _("Samples of classic drum machines (TR-808, TR-909, LinnDrum …), sorted by device."),
+         _("No licence information in the repository; recordings of commercial devices of unknown origin. "
+           "For trying out only."), ("drums", "808", "909"), "≈ 300 MB"),
 ]
 
 
 def licence_text(p: Pack) -> str:
-    return FREE.get(p.licence, "Lizenz unklar – nur zum Ausprobieren, nicht veröffentlichen")
+    return FREE.get(p.licence, _("Licence unclear – for trying out only, do not publish"))
 
 
 def pack(pid: str) -> Pack:
@@ -100,7 +101,7 @@ def parse_tree(text: str) -> list[Entry]:
     (Ohne -l: die Größen fehlen, dafür muss git keine einzige Audiodatei laden.)"""
     out = []
     for line in text.splitlines():
-        meta, _, path = line.partition("\t")
+        meta, _sep, path = line.partition("\t")
         parts = meta.split()
         if len(parts) < 3 or parts[1] != "blob" or not path:
             continue
@@ -138,28 +139,28 @@ class Cancelled(RuntimeError):
 
 
 def git_error_text(line: str) -> str:
-    """letzte git-Zeile -> deutscher Satz."""
+    """letzte git-Zeile -> verständlicher Satz."""
     low = line.lower()
     if "could not resolve host" in low or "name or service not known" in low or "temporary failure" in low:
-        return "Keine Internetverbindung (GitHub nicht erreichbar)."
+        return _("No internet connection (GitHub not reachable).")
     if "timed out" in low or "operation too slow" in low:
-        return "Zeitüberschreitung – die Verbindung zu GitHub ist zu langsam oder abgebrochen."
+        return _("Timeout – the connection to GitHub is too slow or was cut off.")
     if "repository not found" in low or "404" in low:
-        return "Das Paket gibt es auf GitHub nicht mehr – bitte die App aktualisieren."
+        return _("The pack no longer exists on GitHub – please update the app.")
     if "rate limit" in low or "403" in low or "429" in low:
-        return "GitHub lehnt gerade ab (zu viele Anfragen) – in ein paar Minuten noch einmal."
+        return _("GitHub is refusing right now (too many requests) – try again in a few minutes.")
     if "no space left" in low:
-        return "Kein freier Speicherplatz mehr."
+        return _("No free disk space left.")
     if "ssl" in low or "certificate" in low:
-        return "Sichere Verbindung nicht möglich (Zertifikat) – stimmen Datum und Uhrzeit des Rechners?"
-    return "git: " + (line or "unbekannter Fehler")
+        return _("Secure connection not possible (certificate) – are the computer's date and time correct?")
+    return "git: " + (line or _("unknown error"))
 
 
 def _git(*args, cwd=None, timeout=600, cancel=None) -> str:
     """git ausführen; cancel() wird alle 0,2 s geprüft und beendet den Vorgang (Cancelled)."""
     exe = shutil.which("git")
     if not exe:
-        raise RuntimeError("Für Sample-Pakete wird git gebraucht (sudo apt install git)")
+        raise RuntimeError(_("Sample packs need git (sudo apt install git)"))
     env = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "LC_ALL": "C"}
     if cancel is None:
         r = subprocess.run([exe, *args], cwd=cwd, capture_output=True, text=True, timeout=timeout, env=env)
@@ -175,11 +176,11 @@ def _git(*args, cwd=None, timeout=600, cancel=None) -> str:
                 if cancel():
                     proc.kill()
                     proc.communicate()
-                    raise Cancelled("abgebrochen")
+                    raise Cancelled(_("cancelled"))
                 if time.time() - t0 > timeout:
                     proc.kill()
                     proc.communicate()
-                    raise RuntimeError("Zeitüberschreitung – die Verbindung zu GitHub ist zu langsam oder abgebrochen.")
+                    raise RuntimeError(_("Timeout – the connection to GitHub is too slow or was cut off."))
         rc = proc.returncode
     if rc:
         msg = (err or out).strip().splitlines()
@@ -228,13 +229,16 @@ def download(p: Pack, dest_root: Path, folder_list: list[str] | None = None,
     _git("sparse-checkout", "set", "--no-cone", *pats, cwd=repo)
     sel = [e for e in entries if not want or e.folder in want]
     size = sum(e.size for e in sel)
-    log(f"lade {len(sel)} Audiodateien" + (f" ({size / 1e6:.0f} MB)" if size else "") + " … (je nach Größe einige Minuten)")
+    if size:
+        log(_("loading {n} audio files ({mb} MB) … (a few minutes depending on size)").format(n=len(sel), mb=f"{size / 1e6:.0f}"))
+    else:
+        log(_("loading {n} audio files … (a few minutes depending on size)").format(n=len(sel)))
     _git("read-tree", "-mu", "HEAD", cwd=repo, timeout=3600, cancel=cancel)   # holt nur die gewählten Dateien
     target = Path(dest_root) / folder_name(p)
     out = []
     for i, e in enumerate(sel):
         if cancel():
-            raise Cancelled("abgebrochen")
+            raise Cancelled(_("cancelled"))
         src = repo / e.path
         if not src.exists():
             continue
@@ -256,12 +260,15 @@ def folder_name(p: Pack) -> str:
 def write_source_note(p: Pack, target: Path):
     target.mkdir(parents=True, exist_ok=True)
     (target / "QUELLE.txt").write_text(
-        f"{p.name}\nQuelle: {p.url}\nLizenz: {p.licence} – {licence_text(p)}\n{p.licence_note}\n"
-        f"Geladen am {time.strftime('%d.%m.%Y')} mit FM-1 Companion.\n", "utf-8")
+        _("{name}\nSource: {url}\nLicence: {licence} – {licence_text}\n{note}\n"
+          "Downloaded on {date} with FM-1 Companion.\n").format(
+            name=p.name, url=p.url, licence=p.licence, licence_text=licence_text(p), note=p.licence_note,
+            date=time.strftime('%d.%m.%Y')), "utf-8")
 
 
 def note_for(p: Pack) -> str:
-    return f"Quelle: {p.name} – {p.url} · Lizenz: {p.licence if p.free else 'unklar'}"
+    return _("Source: {name} – {url} · Licence: {licence}").format(
+        name=p.name, url=p.url, licence=p.licence if p.free else _("unclear"))
 
 
 def _safe_dir(name: str) -> str:

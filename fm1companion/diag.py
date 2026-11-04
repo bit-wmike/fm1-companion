@@ -13,7 +13,7 @@ import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from .i18n import _
+from .i18n import N_, SOURCE_LANGUAGE, _, current_language
 
 DATA = Path(__file__).resolve().parent / "data"
 FALLBACK_REQUIRED = ["python3", "python3-pyqt6", "python3-pyqt6.qtsvg", "python3-pyqt6.qtwebengine", "python3-mido",
@@ -35,6 +35,21 @@ def debian_field(kind: str = "required") -> str:
     """'python3 (>= 3.11), python3-pyqt6, …' für die control-Datei."""
     return ", ".join(f"{d['package']} ({d['version']})" if d.get("version") else d["package"]
                      for d in deps().get(kind, []))
+
+
+# the "why" texts of data/deps.json (English) – marked here so they get into the translation template
+DEP_WHY = (
+    N_("Python 3.11 or newer"), N_("user interface"), N_("icons in the app design"), N_("editor, simulator"),
+    N_("Web MIDI bridge for editor and simulator"), N_("MIDI"), N_("MIDI connection"), N_("samples, sounds"),
+    N_("firmware tools"),
+    N_("Qt dialogs in your language (shortcuts “Ctrl”, “Cancel”); same package name in Bookworm (6.4.2) and Trixie (6.8.2)"),
+    N_("previewing (fallback when pw-play/paplay/aplay are missing)"), N_("MP3/FLAC/AIFF samples"),
+    N_("recording (ALSA), MIDI connections"), N_("recording and previewing (pw-record, pw-play)"),
+    N_("editing recordings"), N_("sound generator"), N_("General MIDI sounds"),
+    N_("rescue via U-Boot (jl-uboot-tool)"),
+)
+# needed only when the UI is not English (Qt's own dialog texts) – otherwise just recommended
+UI_LANGUAGE_PACKAGES = {"qt6-translations-l10n"}
 
 
 @dataclass
@@ -64,7 +79,10 @@ def check_deps() -> list[DepState]:
                 want = tuple(int(x) for x in c["python"].split("."))
                 ok = sys.version_info[:len(want)] >= want
                 detail = platform.python_version()
-            out.append(DepState(d["package"], ok, kind == "required", d.get("why", ""), detail))
+            required = kind == "required" and not (d["package"] in UI_LANGUAGE_PACKAGES
+                                                   and current_language() == SOURCE_LANGUAGE)
+            why = d.get("why", "")
+            out.append(DepState(d["package"], ok, required, _(why) if why else "", detail))
     return out
 
 

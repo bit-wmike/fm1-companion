@@ -12,13 +12,13 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QHBoxLayout, QIn
                              QMenu, QPushButton, QSpinBox, QSplitter, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from ... import presetlib as pl
-from ..common import (DeviceUndo, confirm, notify, device_tag, flow_row, fs_error_text, heading, icon, plural,
+from ..common import (DeviceUndo, confirm, notify, device_tag, flow_row, fs_error_text, heading, icon,
                       fw_label, safe_folder, same_device, show_error)
 from . import PageSpec
-from ...i18n import _
+from ...i18n import _, ngettext, pgettext
 
-HINT = ("Schreiben, Umbenennen und Löschen speichern im Flash des FM-1 und <b>stoppen dafür die Wiedergabe</b>. "
-        "Favoriten, die du während der Wiedergabe änderst, speichert das FM-1 erst nach STOP.")
+HINT = _("Writing, renaming and deleting save to the flash of the FM-1 and <b>stop playback for this</b>. "
+         "Favourites you change during playback are saved by the FM-1 only after STOP.")
 
 
 def _tree(headers):
@@ -45,15 +45,15 @@ class PresetsPage(QWidget):
         self.busy = False
         self.active = False
         lay = QVBoxLayout(self)
-        lay.addWidget(heading("Presets", "Die 384 User-Plätze deines FM-1 (Melodee ab 1.5) und deine eigene "
-                                         "Preset-Bibliothek im Ordner FM-1/Presets – sichern, vergleichen, "
-                                         "zurückspielen, anhören."))
+        lay.addWidget(heading(_("Presets"), _("The 384 user slots of your FM-1 (Melodee from 1.5) and your own "
+                                              "preset library in the folder FM-1/Presets – back up, compare, "
+                                              "restore, listen.")))
         self.state = QLabel("")
         self.state.setWordWrap(True)
         self._note = ""                               # Ergebnis der letzten Aktion, bleibt nach dem Neu-Lesen stehen
         self._worker = None
-        self.b_cancel = QPushButton(icon("process-stop", "dialog-cancel"), "Abbrechen")
-        self.b_cancel.setToolTip("Laufenden Vorgang nach dem aktuellen Platz anhalten – schon Erledigtes bleibt")
+        self.b_cancel = QPushButton(icon("process-stop", "dialog-cancel"), _("Cancel"))
+        self.b_cancel.setToolTip(_("Stop the running task after the current slot – what is done stays"))
         self.b_cancel.clicked.connect(self.cancel_job)
         self.b_cancel.hide()
         srow = QHBoxLayout()
@@ -68,20 +68,20 @@ class PresetsPage(QWidget):
         fl = QHBoxLayout()
         self.search = QLineEdit()
         self.search.setMinimumWidth(160)
-        self.search.setPlaceholderText("Suchen: Name, Engine, Platz, Schlagwort …  (Strg+F)")
+        self.search.setPlaceholderText(_("Search: name, engine, slot, tag …  (Ctrl+F)"))
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self.fill)
         fl.addWidget(self.search, 1)
         self.engine = QComboBox()
-        self.engine.addItem("alle Engines", None)
+        self.engine.addItem(_("all engines"), None)
         self.engine.currentIndexChanged.connect(self.fill)
-        self.engine.setToolTip("nach Engine filtern")
+        self.engine.setToolTip(_("filter by engine"))
         fl.addWidget(self.engine)
-        self.only_used = QCheckBox("nur belegte")
+        self.only_used = QCheckBox(_("used only"))
         self.only_used.setChecked(True)
         self.only_used.toggled.connect(self.fill)
         fl.addWidget(self.only_used)
-        self.only_fav = QCheckBox("nur Favoriten ★")
+        self.only_fav = QCheckBox(_("favourites only ★"))
         self.only_fav.toggled.connect(self.fill)
         fl.addWidget(self.only_fav)
         lay.addLayout(fl)
@@ -93,49 +93,49 @@ class PresetsPage(QWidget):
         left = QWidget()
         ll = QVBoxLayout(left)
         ll.setContentsMargins(0, 0, 0, 0)
-        ll.addWidget(QLabel("<b>Am FM-1</b>"))
-        self.dev = _tree(["Platz", "Engine", "Name", "★", "Art", "Bibliothek"])
+        ll.addWidget(QLabel(_("<b>On the FM-1</b>")))
+        self.dev = _tree([_("Slot"), _("Engine"), _("Name"), "★", _("Kind"), _("Library")])
         self.dev.itemSelectionChanged.connect(self._sel_changed)
         ll.addWidget(self.dev, 1)
-        self.empty = QLabel("Noch kein FM-1 mit Melodee verbunden – so geht's: FM-1 per USB anstecken, "
-                            "Melodee 1.5 oder neuer muss laufen.")
+        self.empty = QLabel(_("No FM-1 with Melodee connected yet – here's how: plug in the FM-1 via USB, "
+                              "Melodee 1.5 or newer must be running."))
         self.empty.setWordWrap(True)
         ll.addWidget(self.empty)
         r1 = self._flow(ll)
-        self.b_read = self._btn("Einlesen", "view-refresh", self.read_list, "Liste der Plätze neu lesen (F5)", r1)
+        self.b_read = self._btn(_("Read in"), "view-refresh", self.read_list, _("Read the list of slots again (F5)"), r1)
         self.b_read.setProperty("variant", "primary")
         QShortcut(QKeySequence("F5"), self, activated=self.read_list)
-        self.b_all = self._btn("Alle sichern", "document-save-all", self.save_all,
-                               "alle belegten Plätze vollständig in die Bibliothek holen", r1)
+        self.b_all = self._btn(_("Back up all"), "document-save-all", self.save_all,
+                               _("fetch all used slots completely into the library"), r1)
         self.b_all.setProperty("variant", "primary")
-        self.b_fetch = self._btn("In Bibliothek", "go-next", self.fetch_selected,
-                                 "markierte Plätze in die Bibliothek holen", r1)
+        self.b_fetch = self._btn(_("To library"), "go-next", self.fetch_selected,
+                                 _("fetch the marked slots into the library"), r1)
         # Anhören / Speichern auf einer Spur
         r2 = self._flow(ll)
-        tl = QLabel("Spur:")
-        tl.setToolTip("Spur am FM-1 zum Anhören / Speichern")
+        tl = QLabel(_("Track:"))
+        tl.setToolTip(_("Track on the FM-1 for listening / saving"))
         r2.addWidget(tl)
         self.track = QSpinBox()
         self.track.setRange(1, 4)
-        self.track.setToolTip("Spur am FM-1 zum Anhören / Speichern")
+        self.track.setToolTip(_("Track on the FM-1 for listening / saving"))
         r2.addWidget(self.track)
-        self.b_load = self._btn("Anhören", "media-playback-start", self.load_track,
-                                "Preset auf die Spur laden (ändert nur den Klang der Spur, speichert nichts)", r2)
-        self.b_store = self._btn("Aktuellen Klang als Preset speichern …", "document-save", self.store_track,
-                                 "den aktuellen Klang der Spur in diesen Platz speichern", r2)
+        self.b_load = self._btn(_("Listen"), "media-playback-start", self.load_track,
+                                _("Load the preset onto the track (changes only the sound of the track, saves nothing)"), r2)
+        self.b_store = self._btn(_("Save current sound as preset …"), "document-save", self.store_track,
+                                 _("save the current sound of the track into this slot"), r2)
         # seltener gebrauchte Aktionen: „Mehr“-Menü (und Kontextmenü der Liste)
         self.more = QMenu(self)
-        self.b_ren = self._menu_action(self.more, "Umbenennen …", "edit-rename", self.rename, "Preset am FM-1 umbenennen (F2)")
+        self.b_ren = self._menu_action(self.more, _("Rename …"), "edit-rename", self.rename, _("Rename the preset on the FM-1 (F2)"))
         QShortcut(QKeySequence("F2"), self.dev, activated=self.rename)
-        self.b_fav = self._menu_action(self.more, "Favorit ★ an/aus", "starred", self.toggle_fav, "Favorit an/aus")
-        self.b_move = self._menu_action(self.more, "Verschieben/Tauschen …", "transform-move", self.move_slot,
-                                        "Platz in einen anderen Platz verschieben oder zwei Plätze tauschen")
+        self.b_fav = self._menu_action(self.more, _("Favourite ★ on/off"), "starred", self.toggle_fav, _("Favourite on/off"))
+        self.b_move = self._menu_action(self.more, _("Move/swap …"), "transform-move", self.move_slot,
+                                        _("Move a slot into another slot or swap two slots"))
         self.more.addSeparator()
-        self.b_del = self._menu_action(self.more, "Platz leeren …", "edit-delete", self.erase, "Platz am FM-1 leeren")
-        self.b_undo = self._menu_action(self.more, "Rückgängig", "edit-undo", self.do_undo,
-                                        "letzte Änderung am FM-1 zurücknehmen")
-        self.b_more = QPushButton(icon("overflow-menu", "application-menu"), "Mehr ▾")
-        self.b_more.setToolTip("Umbenennen, Favorit, Verschieben, Leeren, Rückgängig")
+        self.b_del = self._menu_action(self.more, _("Clear slot …"), "edit-delete", self.erase, _("Clear the slot on the FM-1"))
+        self.b_undo = self._menu_action(self.more, _("Undo"), "edit-undo", self.do_undo,
+                                        _("take back the last change on the FM-1"))
+        self.b_more = QPushButton(icon("overflow-menu", "application-menu"), _("More ▾"))
+        self.b_more.setToolTip(_("Rename, favourite, move, clear, undo"))
         self.b_more.setMenu(self.more)
         r2.addWidget(self.b_more)
         self.dev.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -145,27 +145,27 @@ class PresetsPage(QWidget):
         right = QWidget()
         rl = QVBoxLayout(right)
         rl.setContentsMargins(0, 0, 0, 0)
-        rl.addWidget(QLabel("<b>Bibliothek</b> (alle Geräte)"))
-        self.lib = _tree(["Name", "Engine", "Gerät", "Platz", "Schlagwörter", "Art"])
+        rl.addWidget(QLabel(_("<b>Library</b> (all devices)")))
+        self.lib = _tree([_("Name"), _("Engine"), _("Device"), _("Slot"), _("Labels"), _("Kind")])
         self.lib.itemSelectionChanged.connect(self._sel_changed)
         rl.addWidget(self.lib, 1)
-        self.lib_empty = QLabel("Noch keine Presets in der Bibliothek – so geht's: „Alle sichern“ holt alle "
-                                "belegten Plätze vom FM-1, „Importieren“ liest .fm1preset-, Satz-, Editor- und .syx-Dateien.")
+        self.lib_empty = QLabel(_("No presets in the library yet – here's how: “Back up all” fetches all "
+                                  "used slots from the FM-1, “Import” reads .fm1preset, set, editor and .syx files."))
         self.lib_empty.setWordWrap(True)
         rl.addWidget(self.lib_empty)
         q1 = self._flow(rl)
-        self.b_put = self._btn("In Platz schreiben …", "go-previous", self.write_selected,
-                               "Bibliotheks-Preset in den markierten Platz am FM-1 schreiben", q1)
-        self.b_cmp = self._btn("Vergleichen", "kompare", self.compare, "Platz am FM-1 mit Bibliotheks-Preset vergleichen", q1)
-        self.b_tag = self._btn("Schlagwörter …", "tag", self.edit_tags, "Schlagwörter setzen (mit Komma getrennt)", q1)
-        self.b_lren = self._btn("Umbenennen …", "edit-rename", self.lib_rename,
-                                "Namen des Bibliotheks-Presets ändern (nur die Datei, am FM-1 nichts)", q1)
+        self.b_put = self._btn(_("Write to slot …"), "go-previous", self.write_selected,
+                               _("Write the library preset into the marked slot on the FM-1"), q1)
+        self.b_cmp = self._btn(_("Compare"), "kompare", self.compare, _("Compare the slot on the FM-1 with the library preset"), q1)
+        self.b_tag = self._btn(_("Labels …"), "tag", self.edit_tags, _("Set tags (separated by commas)"), q1)
+        self.b_lren = self._btn(_("Rename …"), "edit-rename", self.lib_rename,
+                                _("Change the name of the library preset (only the file, nothing on the FM-1)"), q1)
         q2 = self._flow(rl)
-        self._btn("Importieren …", "document-import", self.import_files, "Dateien in die Bibliothek holen", q2)
-        self.b_exp = self._btn("Exportieren …", "document-export", lambda: self.export(),   # (clicked liefert False als target)
-                               "markierte Presets als Satz (.zip), einzeln (.fm1preset) oder für den Web-Editor (.json)", q2)
-        self.b_ldel = self._btn("Entfernen", "edit-delete", self.lib_delete, "aus der Bibliothek löschen", q2)
-        self._btn("Ordner öffnen", "folder-open", self.open_folder, "Bibliotheksordner im Dateimanager", q2)
+        self._btn(_("Import …"), "document-import", self.import_files, _("Fetch files into the library"), q2)
+        self.b_exp = self._btn(_("Export …"), "document-export", lambda: self.export(),   # (clicked liefert False als target)
+                               _("marked presets as a set (.zip), single (.fm1preset) or for the web editor (.json)"), q2)
+        self.b_ldel = self._btn(_("Remove"), "edit-delete", self.lib_delete, _("delete from the library"), q2)
+        self._btn(_("Open folder"), "folder-open", self.open_folder, _("Library folder in the file manager"), q2)
         sp.addWidget(right)
         sp.setChildrenCollapsible(False)
         left.setMinimumWidth(300)
@@ -218,7 +218,7 @@ class PresetsPage(QWidget):
         return pl.Library(self.root)
 
     def device_name(self) -> str:
-        return self.ctx.profile.folder_name if self.ctx.profile else "Unbekanntes Gerät"
+        return self.ctx.profile.folder_name if self.ctx.profile else _("Unknown device")
 
     def activate(self):
         self.active = True
@@ -254,13 +254,13 @@ class PresetsPage(QWidget):
         """Zustandszeile ohne gelesene Liste (nach Gerätewechsel)."""
         c = self.ctx
         if c.connected:
-            return f"{fw_label(c.title())}: Plätze noch nicht gelesen – „Einlesen“ (F5)."
+            return _("{firmware}: slots not read yet – “Read in” (F5).").format(firmware=fw_label(c.title()))
         if getattr(c, "midi_connected", False):
-            return (f"{fw_label(c.title())}: Diese Firmware hat keine Preset-Bibliothek über USB (nur MIDI). "
-                    "Deine Bibliothek rechts kannst du trotzdem durchsuchen und exportieren.")
-        return "Kein FM-1 verbunden – die Bibliothek rechts ist trotzdem nutzbar."
+            return _("{firmware}: This firmware has no preset library via USB (MIDI only). "
+                     "You can still search and export your library on the right.").format(firmware=fw_label(c.title()))
+        return _("No FM-1 connected – the library on the right can be used anyway.")
 
-    def _job(self, title, fn, done, dialog=False, partial=None, cancellable=False, unit="Plätze"):
+    def _job(self, title, fn, done, dialog=False, partial=None, cancellable=False, unit=None):
         """fn(worker, bank) exklusiv am Gerät. partial(): wird bei Fehlern aufgerufen, damit schon erledigte
         Schritte rückgängig-bar bleiben. cancellable: „Abbrechen“ anbieten (fn prüft worker.cancelled zwischen
         den Plätzen). Fortschritt (worker.progress) erscheint in der Zustandszeile."""
@@ -304,24 +304,29 @@ class PresetsPage(QWidget):
             self._enable()
             QTimer.singleShot(0, self._after_job)
             if cancelled:
-                self.state.setText(f"{title}: abgebrochen – am FM-1 wurde nichts weiter geändert."
-                                   + (" Schon Geändertes nimmt „Rückgängig“ zurück." if partial and self.undo else ""))
+                text = _("{title}: cancelled – nothing more was changed on the FM-1.").format(title=title)
+                if partial and self.undo:
+                    text += _(" “Undo” takes back what was already changed.")
+                self.state.setText(text)
                 return
             if self.caps and not self.caps.shared:       # kein Fehler, sondern eine Eigenschaft der Firmware
-                self.state.setText(f"{fw_label(self.ctx.title())}: keine User-Presets über USB – "
-                                   "die Bibliothek rechts kannst du trotzdem nutzen. Am FM-1 wurde nichts geändert.")
+                self.state.setText(_("{firmware}: no user presets via USB – "
+                                     "you can still use the library on the right. Nothing was changed on the FM-1.").format(
+                    firmware=fw_label(self.ctx.title())))
                 self.empty.setText(pl.refusal_text(self.caps))
                 return
-            self.state.setText(f"<b>{title} fehlgeschlagen:</b> {msg}"
-                               + (" Bereits geänderte Plätze lassen sich mit „Rückgängig“ zurücknehmen."
-                                  if partial and self.undo else ""))
+            text = _("<b>{title} failed:</b> {error}").format(title=title, error=msg)
+            if partial and self.undo:
+                text += _(" Slots already changed can be taken back with “Undo”.")
+            self.state.setText(text)
             show_error(self, title, msg, tb)
 
         def progress(a, b):
             if b and self.busy:
                 el = time.monotonic() - t0
-                rest = f", noch etwa {int(el / a * (b - a)) + 1} s" if a and el > 1.5 and a < b else ""
-                self.state.setText(f"{title} … {a} von {b} {unit}{rest}")
+                rest = _(", about {n} s left").format(n=int(el / a * (b - a)) + 1) if a and el > 1.5 and a < b else ""
+                self.state.setText(_("{title} … {a} of {b} {unit}{rest}").format(title=title, a=a, b=b, unit=unit or _("slots"),
+                                                                                  rest=rest))
         self.state.setText(f"{title} …")
         self.b_cancel.setVisible(bool(cancellable))
         self._worker = self.ctx.job(self, title, work, dialog=False, on_done=ok, on_fail=fail, on_progress=progress)
@@ -331,7 +336,7 @@ class PresetsPage(QWidget):
         if self._worker is not None:
             self._worker.cancelled = True
             self.b_cancel.setEnabled(False)
-            self.state.setText("Wird nach dem aktuellen Platz angehalten …")
+            self.state.setText(_("Stopping after the current slot …"))
             QTimer.singleShot(0, lambda: self.b_cancel.setEnabled(True))
 
     def _set_note(self, text: str):
@@ -350,21 +355,23 @@ class PresetsPage(QWidget):
             used = sum(s["used"] for s in slots)
             fav = sum(s["favorite"] for s in slots)
             note, self._note = self._note, ""
-            self.state.setText((note + " — " if note else "")
-                               + f"{fw_label(self.ctx.title())}: {used} von {len(slots)} Plätzen belegt"
-                               + (f", {fav} Favoriten" if fav else "") + ".")
+            fw = fw_label(self.ctx.title())
+            summary = (_("{firmware}: {used} of {total} slots used, {fav} favourites.").format(
+                           firmware=fw, used=used, total=len(slots), fav=fav) if fav
+                       else _("{firmware}: {used} of {total} slots used.").format(firmware=fw, used=used, total=len(slots)))
+            self.state.setText((note + " — " if note else "") + summary)
             self._engines()
             self.fill()
             if getattr(self, "_save_after_read", False):
                 self._save_after_read = False
                 QTimer.singleShot(0, self.save_all)
-        self._job("Preset-Liste lesen", work, done, cancellable=True)
+        self._job(_("Read preset list"), work, done, cancellable=True)
 
     def _engines(self):
         cur = self.engine.currentData()
         self.engine.blockSignals(True)
         self.engine.clear()
-        self.engine.addItem("alle Engines", None)
+        self.engine.addItem(_("all engines"), None)
         engs = sorted({s["engine"] for s in self.slots if s["used"]} | {p.engine for p in self.lib_items})
         for e in engs:
             self.engine.addItem(self._ename(e), e)
@@ -390,11 +397,11 @@ class PresetsPage(QWidget):
         if ok and self.caps is not None and not self.caps.shared:
             self.empty.setText(pl.refusal_text(self.caps))
         elif not ok and getattr(self.ctx, "midi_connected", False):
-            self.empty.setText("Diese Firmware hat keine Preset-Bibliothek, die die App über USB lesen kann "
-                               "(nur Melodee ab 1.5). Presets speicherst du hier direkt am FM-1.")
+            self.empty.setText(_("This firmware has no preset library the app can read via USB "
+                                 "(Melodee from 1.5 only). Here you save presets directly on the FM-1."))
         elif not ok:
-            self.empty.setText("Noch kein FM-1 mit Melodee verbunden – so geht's: FM-1 per USB anstecken, "
-                               "Melodee 1.5 oder neuer muss laufen.")
+            self.empty.setText(_("No FM-1 with Melodee connected yet – here's how: plug in the FM-1 via USB, "
+                                 "Melodee 1.5 or newer must be running."))
         hashes = {p.content_hash() for p in self.lib_items}
         self.dev.setSortingEnabled(False)
         self.dev.clear()
@@ -407,7 +414,7 @@ class PresetsPage(QWidget):
             if not self._match([label, s["name"], eng], s["engine"] if s["used"] else -1, s["favorite"]):
                 continue
             inlib = "" if not p else ("✓" if p.content_hash() in hashes else "–")
-            it = QTreeWidgetItem([label, eng, s["name"] if s["used"] else "(leer)", "★" if s["favorite"] else "",
+            it = QTreeWidgetItem([label, eng, s["name"] if s["used"] else _("(empty)"), "★" if s["favorite"] else "",
                                   p.kind_text if p else "", inlib])
             it.setData(0, Qt.ItemDataRole.UserRole, s["slot"])
             self.dev.addTopLevelItem(it)
@@ -443,8 +450,8 @@ class PresetsPage(QWidget):
                         (self.b_cmp, ok and len(ls) == 1 and len(used) == 1), (self.b_tag, bool(ls)),
                         (self.b_lren, len(ls) == 1), (self.b_exp, bool(ls)), (self.b_ldel, bool(ls))):
             b.setEnabled(bool(cond))
-        self.b_undo.setText(f"Rückgängig: {self.undo.what()}" if self.undo else "Rückgängig")
-        self.b_undo.setToolTip("letzte Änderung am FM-1 zurücknehmen" if not self.undo or self.undo.matches(self.ctx)
+        self.b_undo.setText(_("Undo: {what}").format(what=self.undo.what()) if self.undo else _("Undo"))
+        self.b_undo.setToolTip(_("take back the last change on the FM-1") if not self.undo or self.undo.matches(self.ctx)
                                else self.undo.refusal())
 
     def _sel_changed(self):
@@ -469,7 +476,7 @@ class PresetsPage(QWidget):
             self.lib_items = self.library().all()
         except OSError as e:
             self.lib_items = []
-            self.fs_error = fs_error_text(e, "Bibliothek nicht lesbar")
+            self.fs_error = fs_error_text(e, _("Library not readable"))
         if self.fs_error:
             self.lib_empty.setText(self.fs_error)
         self._engines()
@@ -477,14 +484,15 @@ class PresetsPage(QWidget):
 
     def _slot_text(self, slot: int) -> str:
         s = self.slots[slot]
-        return (f"U{slot + 1:03d} „{s['name']}“ ({self._ename(s['engine'])})" if s["used"]
-                else f"U{slot + 1:03d} (leer)")
+        label = f"U{slot + 1:03d}"
+        return (_("{slot} “{name}” ({engine})").format(slot=label, name=s['name'], engine=self._ename(s['engine'])) if s["used"]
+                else _("{slot} (empty)").format(slot=label))
 
     # ------------------------------------------------------------ Sichern
     def _fetch(self, slots: list[int], title: str):
         if not slots:
-            self.state.setText(f"{title}: Es ist kein belegter Platz gewählt – nichts zu sichern."
-                               if self.slots else f"{title}: Erst „Einlesen“, dann sichern.")
+            self.state.setText(_("{title}: No used slot is chosen – nothing to back up.").format(title=title)
+                               if self.slots else _("{title}: First “Read in”, then back up.").format(title=title))
             return
         dev = self.device_name()
         favs = {k: self.slots[k]["favorite"] for k in slots}   # im GUI-Thread lesen, nicht im Hintergrund
@@ -503,9 +511,9 @@ class PresetsPage(QWidget):
                 got[k] = p
                 if p.used:
                     try:
-                        _, n = lib.save(p, dev, known)
+                        _path, n = lib.save(p, dev, known)
                     except OSError as e:
-                        raise pl.PresetError(fs_error_text(e, "Preset nicht in der Bibliothek gespeichert")) from e
+                        raise pl.PresetError(fs_error_text(e, _("Preset not saved in the library"))) from e
                     new += n
                 w.progress.emit(i + 1, len(slots))
             return got, new
@@ -513,17 +521,18 @@ class PresetsPage(QWidget):
         def done(res):
             got, new = res
             self.cache.update(got)
-            stopped = " (abgebrochen)" if len(got) < len(slots) else ""
-            self.state.setText(f"{len(got)} von {len(slots)} Presets gelesen{stopped}, {new} neu in der Bibliothek "
-                               f"(Ordner Presets/{dev}); {len(got) - new} waren schon da. Am FM-1 wurde nichts geändert.")
+            stopped = _(" (cancelled)") if len(got) < len(slots) else ""
+            self.state.setText(_("{got} of {total} presets read{stopped}, {new} new in the library "
+                                 "(folder Presets/{device}); {old} were already there. Nothing was changed on the FM-1.").format(
+                got=len(got), total=len(slots), stopped=stopped, new=new, device=dev, old=len(got) - new))
             self.refresh_library()
-        self._job(title, work, done, cancellable=True, unit="Presets")
+        self._job(title, work, done, cancellable=True, unit=_("presets"))
 
     def save_all(self):
-        self._fetch([s["slot"] for s in self.slots if s["used"]], "Alle Presets sichern")
+        self._fetch([s["slot"] for s in self.slots if s["used"]], _("Back up all presets"))
 
     def fetch_selected(self):
-        self._fetch([k for k in self.sel_slots() if self.slots[k]["used"]], "Presets holen")
+        self._fetch([k for k in self.sel_slots() if self.slots[k]["used"]], _("Fetch presets"))
 
     # ------------------------------------------------------------ Schreiben
     def _after_write(self, slot, old, what):
@@ -534,7 +543,7 @@ class PresetsPage(QWidget):
         """Rückgängig-Einträge für schon erledigte Schritte anlegen (auch nach einem Fehler mittendrin)."""
         for k, old in olds:
             self.cache.pop(k, None)
-            self.undo.push(self.ctx, (k, old), what.format(f"U{k + 1:03d}"), getattr(self, "_job_tag", None))
+            self.undo.push(self.ctx, (k, old), what.format(slot=f"U{k + 1:03d}"), getattr(self, "_job_tag", None))
         olds.clear()
 
     def write_selected(self):
@@ -544,18 +553,18 @@ class PresetsPage(QWidget):
         start = ds[0]
         targets = list(range(start, min(len(self.slots), start + len(ls))))
         if len(targets) < len(ls):
-            show_error(self, "Zu wenig Plätze", f"{len(ls)} Presets passen ab U{start + 1:03d} nicht mehr hinein.")
+            show_error(self, _("Not enough slots"), _("{n} presets no longer fit from {slot} on.").format(n=len(ls), slot=f"U{start + 1:03d}"))
             return
         occupied = [k for k in targets if self.slots[k]["used"]]
-        text = (f"„{ls[0].name}“ in {self._slot_text(start)} schreiben?" if len(ls) == 1 else
-                f"{len(ls)} Presets in U{start + 1:03d}–U{targets[-1] + 1:03d} schreiben?")
+        text = (_("Write “{name}” into {slot}?").format(name=ls[0].name, slot=self._slot_text(start)) if len(ls) == 1 else
+                _("Write {n} presets into {first}–{last}?").format(n=len(ls), first=f"U{start + 1:03d}", last=f"U{targets[-1] + 1:03d}"))
         if occupied:
-            text += "\n\nÜberschrieben wird:\n" + "\n".join(self._slot_text(k) for k in occupied[:12])
+            text += _("\n\nWill be overwritten:\n{slots}").format(slots="\n".join(self._slot_text(k) for k in occupied[:12]))
             if len(occupied) > 12:
-                text += f"\n… und {len(occupied) - 12} weitere"
-        text += ("\n\nDer alte Inhalt wird vorher gelesen – du kannst es mit „Rückgängig“ zurücknehmen. "
-                 "Das FM-1 stoppt dafür die Wiedergabe.")
-        if not confirm(self, "Ins FM-1 schreiben", text, "Schreiben", danger=bool(occupied)):
+                text += _("\n… and {n} more").format(n=len(occupied) - 12)
+        text += _("\n\nThe old content is read first – you can take it back with “Undo”. "
+                  "The FM-1 stops playback for this.")
+        if not confirm(self, _("Write into the FM-1"), text, _("Write"), danger=bool(occupied)):
             return
 
         olds: list = []                     # wächst mit jedem geschriebenen Platz
@@ -571,40 +580,43 @@ class PresetsPage(QWidget):
             return len(olds)
 
         def done(n):
-            self._keep(olds, "{} geschrieben")
+            self._keep(olds, _("{slot} written"))
             if n == 0:                         # vor dem ersten Platz abgebrochen
-                self._set_note("Schreiben abgebrochen – am FM-1 wurde nichts geändert.")
+                self._set_note(_("Writing cancelled – nothing was changed on the FM-1."))
                 self.read_list()
                 return
-            stopped = f" ({len(ls) - n} nach dem Abbrechen nicht mehr geschrieben)" if n < len(ls) else ""
-            self._set_note(f"{plural(n, 'Preset', 'Presets')} geschrieben{stopped}: "
-                           + (f"„{ls[0].name}“ → U{start + 1:03d}" if n == 1 else
-                              f"U{start + 1:03d}–U{start + n:03d}")
-                           + ". „Rückgängig“ stellt den alten Inhalt wieder her.")
+            stopped = _(" ({n} not written after cancelling)").format(n=len(ls) - n) if n < len(ls) else ""
+            where = (_("“{name}” → {slot}").format(name=ls[0].name, slot=f"U{start + 1:03d}") if n == 1 else
+                     f"U{start + 1:03d}–U{start + n:03d}")
+            self._set_note(ngettext("{n} preset written{stopped}: {where}. “Undo” restores the old content.",
+                                    "{n} presets written{stopped}: {where}. “Undo” restores the old content.", n).format(
+                n=n, stopped=stopped, where=where))
             self.read_list()
 
-        self._job("Presets schreiben", work, done, partial=lambda: self._keep(olds, "{} geschrieben"),
-                  cancellable=len(ls) > 1, unit="Presets")
+        self._job(_("Write presets"), work, done, partial=lambda: self._keep(olds, _("{slot} written")),
+                  cancellable=len(ls) > 1, unit=_("presets"))
 
     def do_undo(self):
         if not self.undo or not self.undo.check(self.ctx, self):
             return
         slot, old = self.undo.peek()
         what = self.undo.what()
-        if not confirm(self, "Rückgängig", f"{what} zurücknehmen? U{slot + 1:03d} bekommt wieder "
-                       + (f"„{old.name}“." if old.used else "den leeren Zustand."), "Zurücknehmen"):
+        label = f"U{slot + 1:03d}"
+        question = (_("Take back {what}? {slot} gets “{name}” again.").format(what=what, slot=label, name=old.name) if old.used
+                    else _("Take back {what}? {slot} becomes empty again.").format(what=what, slot=label))
+        if not confirm(self, _("Undo"), question, _("Revert")):
             return
 
         def work(w, bank):
             bank.restore(slot, old)
 
-        def done(_):
+        def done(_res):
             self.undo.pop()
             self.cache.pop(slot, None)
-            self._set_note(f"Zurückgenommen: {what} – U{slot + 1:03d} ist wieder "
-                           + (f"„{old.name}“." if old.used else "leer."))
+            self._set_note(_("Taken back: {what} – {slot} is “{name}” again.").format(what=what, slot=label, name=old.name)
+                           if old.used else _("Taken back: {what} – {slot} is empty again.").format(what=what, slot=label))
             self.read_list()
-        self._job("Rückgängig", work, done)
+        self._job(_("Undo"), work, done)
 
     def ask_name(self, title: str, prompt: str, current: str, limit: int) -> str | None:
         """Namen erfragen und VOR dem Senden an die Grenzen des FM-1 anpassen (ASCII, limit Zeichen) –
@@ -614,9 +626,10 @@ class PresetsPage(QWidget):
             return None
         fitted, why = pl.fit_name(name, limit)
         if not fitted:
-            show_error(self, title, "Der Name darf nicht leer sein" + (f" – {why}" if why else "."))
+            show_error(self, title, _("The name must not be empty – {reason}").format(reason=why) if why
+                       else _("The name must not be empty."))
             return None
-        if why and not confirm(self, title, f"{why}\n\nSo übernehmen?", "Übernehmen"):
+        if why and not confirm(self, title, _("{reason}\n\nTake it like this?").format(reason=why), _("Accept")):
             return None
         return fitted
 
@@ -627,8 +640,9 @@ class PresetsPage(QWidget):
         k = ds[0]
         limit = pl.name_limit(self.slots[k]["engine"])
         old_name = self.slots[k]["name"]
-        name = self.ask_name("Umbenennen", f"Neuer Name für {self._slot_text(k)}\n(höchstens {limit} Zeichen, "
-                             "Buchstaben/Ziffern/einfache Zeichen – Umlaute schreibt die App um):", old_name, limit)
+        name = self.ask_name(_("Rename"), _("New name for {slot}\n(at most {n} characters, "
+                                            "letters/digits/simple characters – the app transliterates umlauts):").format(
+            slot=self._slot_text(k), n=limit), old_name, limit)
         if not name or name == old_name:
             return
 
@@ -638,20 +652,21 @@ class PresetsPage(QWidget):
             olds.append((k, bank.get(k)))
             bank.rename(k, name)
 
-        def done(_):
-            self._keep(olds, "{} umbenannt")
-            self._set_note(f"U{k + 1:03d} umbenannt: „{old_name}“ → „{name}“.")
+        def done(_res):
+            self._keep(olds, _("{slot} renamed"))
+            self._set_note(_("{slot} renamed: “{old}” → “{new}”.").format(slot=f"U{k + 1:03d}", old=old_name, new=name))
             self.read_list()
-        self._job("Umbenennen", work, done, partial=lambda: self._keep(olds, "{} umbenannt"))
+        self._job(_("Rename"), work, done, partial=lambda: self._keep(olds, _("{slot} renamed")))
 
     def erase(self):
         ds = [k for k in self.sel_slots() if self.slots[k]["used"]]
         if not ds:
             return
-        if not confirm(self, "Löschen", f"{plural(len(ds), 'Platz', 'Plätze')} am FM-1 leeren?\n\n"
-                       + "\n".join(self._slot_text(k) for k in ds[:12])
-                       + (f"\n… und {len(ds) - 12} weitere" if len(ds) > 12 else "")
-                       + "\n\nDer Inhalt wird vorher gelesen (Rückgängig möglich).", "Löschen", danger=True):
+        more = _("\n… and {n} more").format(n=len(ds) - 12) if len(ds) > 12 else ""
+        if not confirm(self, _("Delete"), ngettext("Clear {n} slot on the FM-1?\n\n{slots}{more}\n\nThe content is read first (undo possible).",
+                                                   "Clear {n} slots on the FM-1?\n\n{slots}{more}\n\nThe content is read first (undo possible).",
+                                                   len(ds)).format(n=len(ds), slots="\n".join(self._slot_text(k) for k in ds[:12]), more=more),
+                       _("Delete"), danger=True):
             return
 
         olds: list = []
@@ -667,17 +682,18 @@ class PresetsPage(QWidget):
             return len(olds)
 
         def done(n):
-            self._keep(olds, "{} gelöscht")
+            self._keep(olds, _("{slot} deleted"))
             if n == 0:
-                self._set_note("Leeren abgebrochen – am FM-1 wurde nichts geändert.")
+                self._set_note(_("Clearing cancelled – nothing was changed on the FM-1."))
                 self.read_list()
                 return
-            self._set_note(f"{plural(n, 'Platz', 'Plätze')} geleert"
-                           + (f": U{ds[0] + 1:03d} „{names[0]}“" if n == 1 else "")
-                           + (f" ({len(ds) - n} nach dem Abbrechen nicht mehr)" if n < len(ds) else "")
-                           + ". „Rückgängig“ holt den Inhalt zurück.")
+            detail = _(": {slot} “{name}”").format(slot=f"U{ds[0] + 1:03d}", name=names[0]) if n == 1 else ""
+            stopped = _(" ({n} not any more after cancelling)").format(n=len(ds) - n) if n < len(ds) else ""
+            self._set_note(ngettext("{n} slot cleared{detail}{stopped}. “Undo” brings the content back.",
+                                    "{n} slots cleared{detail}{stopped}. “Undo” brings the content back.", n).format(
+                n=n, detail=detail, stopped=stopped))
             self.read_list()
-        self._job("Löschen", work, done, partial=lambda: self._keep(olds, "{} gelöscht"), cancellable=len(ds) > 1)
+        self._job(_("Delete"), work, done, partial=lambda: self._keep(olds, _("{slot} deleted")), cancellable=len(ds) > 1)
 
     def toggle_fav(self):
         ds = [k for k in self.sel_slots() if self.slots[k]["used"]]
@@ -688,27 +704,31 @@ class PresetsPage(QWidget):
 
         def done(rc):
             self.slots[k]["favorite"] = on
-            what = f"U{k + 1:03d} „{self.slots[k]['name']}“ ist " + ("jetzt Favorit ★" if on else "kein Favorit mehr")
-            self.state.setText(what + {0: " – gespeichert.", 3: " – aber nur bis zum Ausschalten (kein Flash).",
-                                       4: " – das FM-1 speichert es nach STOP."}.get(rc, "."))
+            label, name = f"U{k + 1:03d}", self.slots[k]['name']
+            what = (_("{slot} “{name}” is now a favourite ★").format(slot=label, name=name) if on
+                    else _("{slot} “{name}” is no longer a favourite").format(slot=label, name=name))
+            self.state.setText(what + {0: _(" – saved."), 3: _(" – but only until switching off (no flash)."),
+                                       4: _(" – the FM-1 saves it after STOP.")}.get(rc, "."))
             self.fill()
             self.select_slot(k)
-        self._job("Favorit", lambda w, bank: bank.set_favorite(k, on), done)
+        self._job(_("Favourite"), lambda w, bank: bank.set_favorite(k, on), done)
 
     def move_slot(self):
         ds = [k for k in self.sel_slots() if self.slots[k]["used"]]
         if len(ds) != 1:
             return
         a = ds[0]
-        b, ok = QInputDialog.getInt(self, "Verschieben/Tauschen", f"Ziel-Platz für {self._slot_text(a)} (1–384):\n"
-                                    "Ist das Ziel belegt, werden die beiden Plätze getauscht.", a + 2, 1, len(self.slots))
+        b, ok = QInputDialog.getInt(self, _("Move/swap"), _("Target slot for {slot} (1–384):\n"
+                                                           "If the target is used, the two slots are swapped.").format(
+            slot=self._slot_text(a)), a + 2, 1, len(self.slots))
         b -= 1
         if not ok or b == a:
             return
         swap = self.slots[b]["used"]
-        if not confirm(self, "Verschieben/Tauschen", (f"{self._slot_text(a)} und {self._slot_text(b)} tauschen?" if swap
-                       else f"{self._slot_text(a)} nach U{b + 1:03d} verschieben?") +
-                       "\n\nBeide alten Inhalte werden vorher gelesen (Rückgängig möglich).", "Ausführen"):
+        if not confirm(self, _("Move/swap"), (_("Swap {a} and {b}?\n\nBoth old contents are read first (undo possible).").format(
+                           a=self._slot_text(a), b=self._slot_text(b)) if swap
+                       else _("Move {a} to {slot}?\n\nBoth old contents are read first (undo possible).").format(
+                           a=self._slot_text(a), slot=f"U{b + 1:03d}")), _("Execute")):
             return
 
         olds: list = []
@@ -725,50 +745,54 @@ class PresetsPage(QWidget):
 
         ta, tb = self._slot_text(a), self._slot_text(b)
 
-        def done(_):
-            self._keep(olds, "{} geändert")
-            self._set_note(f"Getauscht: {ta} ↔ {tb}." if swap else f"Verschoben: {ta} → U{b + 1:03d} (U{a + 1:03d} ist jetzt leer).")
+        def done(_res):
+            self._keep(olds, _("{slot} changed"))
+            self._set_note(_("Swapped: {a} ↔ {b}.").format(a=ta, b=tb) if swap else
+                           _("Moved: {a} → {target} ({source} is empty now).").format(a=ta, target=f"U{b + 1:03d}", source=f"U{a + 1:03d}"))
             self.read_list()
-        self._job("Verschieben", work, done, partial=lambda: self._keep(olds, "{} geändert"))
+        self._job(_("Move"), work, done, partial=lambda: self._keep(olds, _("{slot} changed")))
 
     def load_track(self):
         ds = [k for k in self.sel_slots() if self.slots[k]["used"]]
         if len(ds) != 1:
             return
         k, tr = ds[0], self.track.value()
-        self._job("Anhören", lambda w, bank: bank.load(k, tr - 1),
-                  lambda _: self.state.setText(f"{self._slot_text(k)} liegt jetzt auf Spur {tr} – spiel ein paar Töne "
-                                               "am FM-1. Gespeichert wurde nichts."))
+        self._job(_("Listen"), lambda w, bank: bank.load(k, tr - 1),
+                  lambda _res: self.state.setText(_("{slot} is now on track {track} – play a few notes "
+                                                    "on the FM-1. Nothing was saved.").format(slot=self._slot_text(k), track=tr)))
 
     def store_track(self):
         ds = self.sel_slots()
         if len(ds) != 1:
             return
         k, tr = ds[0], self.track.value()
-        name, ok = QInputDialog.getText(self, "Spur speichern", f"Name (leer = automatisch), Klang von Spur {tr} "
-                                        f"nach U{k + 1:03d}:", text="")
+        name, ok = QInputDialog.getText(self, _("Save track"), _("Name (empty = automatic), sound of track {track} "
+                                                                 "to {slot}:").format(track=tr, slot=f"U{k + 1:03d}"), text="")
         if not ok:
             return
         name, why = pl.fit_name(name, 20)
-        if why and not confirm(self, "Spur speichern", f"{why}\n\nSo übernehmen?", "Übernehmen"):
+        if why and not confirm(self, _("Save track"), _("{reason}\n\nTake it like this?").format(reason=why), _("Accept")):
             return
-        if self.slots[k]["used"] and not confirm(self, "Überschreiben", f"{self._slot_text(k)} wird überschrieben. "
-                                                 "Der alte Inhalt wird vorher gelesen (Rückgängig möglich).",
-                                                 "Überschreiben", danger=True):
+        if self.slots[k]["used"] and not confirm(self, _("Overwrite"), _("{slot} will be overwritten. "
+                                                                         "The old content is read first (undo possible).").format(
+                                                     slot=self._slot_text(k)),
+                                                 _("Overwrite"), danger=True):
             return
 
         olds: list = []
 
-        def done(_):
-            self._keep(olds, "{} gespeichert")
-            self._set_note(f"Klang von Spur {tr} in U{k + 1:03d} gespeichert" + (f" als „{name}“" if name else "")
-                           + ". „Rückgängig“ stellt den alten Inhalt wieder her.")
+        def done(_res):
+            self._keep(olds, _("{slot} saved"))
+            label = f"U{k + 1:03d}"
+            self._set_note(_("Sound of track {track} saved in {slot} as “{name}”. “Undo” restores the old content.").format(
+                track=tr, slot=label, name=name) if name else
+                _("Sound of track {track} saved in {slot}. “Undo” restores the old content.").format(track=tr, slot=label))
             self.read_list()
 
         def work(w, bank):
             olds.append((k, bank.get(k)))
             bank.store(k, tr - 1, name)
-        self._job("Spur speichern", work, done, partial=lambda: self._keep(olds, "{} gespeichert"))
+        self._job(_("Save track"), work, done, partial=lambda: self._keep(olds, _("{slot} saved")))
 
     # ------------------------------------------------------------ Vergleich
     def compare(self):
@@ -782,11 +806,12 @@ class PresetsPage(QWidget):
             lines = pl.diff(dp, lp)
             self.compare_result = lines
             from PyQt6.QtWidgets import QMessageBox
-            box = QMessageBox(QMessageBox.Icon.Information, "Vergleich",
-                              f"U{k + 1:03d} (FM-1) ↔ „{lp.name}“ (Bibliothek):\n\n" + "\n".join(lines), parent=self)
+            box = QMessageBox(QMessageBox.Icon.Information, _("Comparison"),
+                              _("{slot} (FM-1) ↔ “{name}” (library):\n\n{lines}").format(
+                                  slot=f"U{k + 1:03d}", name=lp.name, lines="\n".join(lines)), parent=self)
             box.exec()
             self.fill()
-        self._job("Vergleichen", lambda w, bank: bank.get(k), done)
+        self._job(_("Compare"), lambda w, bank: bank.get(k), done)
 
     # ------------------------------------------------------------ Bibliothek
     def edit_tags(self):
@@ -794,7 +819,7 @@ class PresetsPage(QWidget):
         if not ls:
             return
         cur = ", ".join(sorted({t for p in ls for t in p.tags}))
-        text, ok = QInputDialog.getText(self, "Schlagwörter", "Schlagwörter (mit Komma getrennt):", text=cur)
+        text, ok = QInputDialog.getText(self, _("Labels"), _("Tags (separated by commas):"), text=cur)
         if not ok:
             return
         tags = [t.strip() for t in text.split(",") if t.strip()]
@@ -804,15 +829,16 @@ class PresetsPage(QWidget):
                 p.tags = tags
                 lib.update(p)
         except OSError as e:
-            show_error(self, "Schlagwörter", fs_error_text(e, "Schlagwörter nicht gespeichert"))
+            show_error(self, _("Labels"), fs_error_text(e, _("Tags not saved")))
         else:
-            self.state.setText(f"Schlagwörter für {plural(len(ls), 'Preset', 'Presets')} gespeichert (nur Bibliothek, am FM-1 nichts geändert).")
+            self.state.setText(ngettext("Tags saved for {n} preset (library only, nothing changed on the FM-1).",
+                                        "Tags saved for {n} presets (library only, nothing changed on the FM-1).", len(ls)).format(n=len(ls)))
         self.refresh_library()
 
     def import_files(self, files=None):
         if not files:
-            files, _ = QFileDialog.getOpenFileNames(self, "Presets importieren", str(Path.home()),
-                                                    "Presets (*.fm1preset *.zip *.json *.syx);;Alle Dateien (*)")
+            files, _filter = QFileDialog.getOpenFileNames(self, _("Import presets"), str(Path.home()),
+                                                          _("Presets (*.fm1preset *.zip *.json *.syx);;All files (*)"))
         if not files:
             return
         n, errs = 0, []
@@ -826,14 +852,16 @@ class PresetsPage(QWidget):
             except pl.PresetError as e:
                 errs.append(f"{Path(f).name}: {e}")
             except Exception as e:                 # noqa: BLE001 – unerwartet, aber kein Absturz
-                errs.append(f"{Path(f).name}: Datei nicht lesbar ({type(e).__name__})")
+                errs.append(_("{name}: file not readable ({error})").format(name=Path(f).name, error=type(e).__name__))
         new = len(lib.hashes()) - known
-        text = (f"{plural(n, 'Preset', 'Presets')} importiert, davon {new} neu in der Bibliothek "
-                f"(Ordner Presets/Importiert); {n - new} gab es schon." if n else "Nichts importiert.")
+        text = (ngettext("{n} preset imported, {new} of them new in the library (folder Presets/Importiert); {old} existed already.",
+                         "{n} presets imported, {new} of them new in the library (folder Presets/Importiert); {old} existed already.",
+                         n).format(n=n, new=new, old=n - new) if n else _("Nothing imported."))
         if errs:
-            text += " Nicht lesbar: " + "; ".join(errs)
-            show_error(self, "Importieren", f"{len(errs)} Datei(en) konnten nicht gelesen werden:\n\n" + "\n".join(errs)
-                       + "\n\nDie Bibliothek wurde dadurch nicht verändert; lesbare Dateien sind übernommen.")
+            text += _(" Not readable: {list}").format(list="; ".join(errs))
+            show_error(self, _("Import"), ngettext("{n} file could not be read:\n\n{list}\n\nThe library was not changed by this; readable files are taken over.",
+                                                   "{n} files could not be read:\n\n{list}\n\nThe library was not changed by this; readable files are taken over.",
+                                                   len(errs)).format(n=len(errs), list="\n".join(errs)))
         self.state.setText(text)
         self.refresh_library()
 
@@ -842,17 +870,18 @@ class PresetsPage(QWidget):
         if len(ls) != 1:
             return
         p = ls[0]
-        name = self.ask_name("Umbenennen", f"Neuer Name für „{p.name}“ in der Bibliothek\n(höchstens 20 Zeichen; "
-                             "nur die Datei ändert sich, am FM-1 nichts):", p.name, 20)
+        name = self.ask_name(_("Rename"), _("New name for “{name}” in the library\n(at most 20 characters; "
+                                            "only the file changes, nothing on the FM-1):").format(name=p.name), p.name, 20)
         if not name or name == p.name:
             return
         old = p.name
         try:
             f = self.library().rename(p, name)
         except (OSError, pl.PresetError) as e:
-            show_error(self, "Umbenennen", fs_error_text(e, "Nicht umbenannt") if isinstance(e, OSError) else str(e))
+            show_error(self, _("Rename"), fs_error_text(e, _("Not renamed")) if isinstance(e, OSError) else str(e))
             return
-        self.state.setText(f"In der Bibliothek umbenannt: „{old}“ → „{name}“ ({f.name}). Am FM-1 wurde nichts geändert.")
+        self.state.setText(_("Renamed in the library: “{old}” → “{new}” ({file}). Nothing was changed on the FM-1.").format(
+            old=old, new=name, file=f.name))
         self.refresh_library()
 
     def export(self, target=None):
@@ -861,8 +890,8 @@ class PresetsPage(QWidget):
             return
         if target is None:
             target, flt = QFileDialog.getSaveFileName(
-                self, "Exportieren", str(Path.home() / ("Presets.zip" if len(ls) > 1 else pl.safe_file(ls[0].name) + ".fm1preset")),
-                "Satz (*.zip);;Einzeln (*.fm1preset);;Melodee-Web-Editor (*.json)")
+                self, _("Export"), str(Path.home() / ("Presets.zip" if len(ls) > 1 else pl.safe_file(ls[0].name) + ".fm1preset")),
+                _("Set (*.zip);;Single (*.fm1preset);;Melodee web editor (*.json)"))
         if not target:
             return
         t = Path(target)
@@ -875,25 +904,30 @@ class PresetsPage(QWidget):
                 t = t.with_suffix(".zip")      # mehrere Presets passen nur in einen Satz
                 pl.export_zip(ls, t)
         except OSError as e:
-            show_error(self, "Export", fs_error_text(e, "Nicht exportiert"))
+            show_error(self, pgettext("error title", "Export"), fs_error_text(e, _("Not exported")))
             return
-        self.state.setText(f"{plural(len(ls), 'Preset', 'Presets')} exportiert: {t.name} – nur als Datei, am FM-1 nichts geändert.")
-        notify(f"{plural(len(ls), 'Preset', 'Presets')} exportiert: {t.name}", "success")
+        self.state.setText(ngettext("{n} preset exported: {file} – only as a file, nothing changed on the FM-1.",
+                                    "{n} presets exported: {file} – only as a file, nothing changed on the FM-1.", len(ls)).format(
+            n=len(ls), file=t.name))
+        notify(ngettext("{n} preset exported: {file}", "{n} presets exported: {file}", len(ls)).format(n=len(ls), file=t.name), "success")
 
     def lib_delete(self):
         ls = self.sel_lib()
-        names = "\n".join(f"„{p.name}“ ({p.device or 'ohne Gerät'}{', ' + p.label if p.slot is not None else ''})" for p in ls[:12])
-        if ls and confirm(self, "Entfernen", f"{plural(len(ls), 'Preset', 'Presets')} aus der Bibliothek löschen?\n\n{names}"
-                          + (f"\n… und {len(ls) - 12} weitere" if len(ls) > 12 else "")
-                          + "\n\nDie Dateien werden gelöscht; das FM-1 bleibt unverändert.", "Löschen", danger=True):
+        names = "\n".join(_("“{name}” ({device}{slot})").format(name=p.name, device=p.device or _("without device"),
+                                                                  slot=', ' + p.label if p.slot is not None else '') for p in ls[:12])
+        more = _("\n… and {n} more").format(n=len(ls) - 12) if len(ls) > 12 else ""
+        if ls and confirm(self, _("Remove"), ngettext("Delete {n} preset from the library?\n\n{names}{more}\n\nThe files are deleted; the FM-1 stays unchanged.",
+                                                      "Delete {n} presets from the library?\n\n{names}{more}\n\nThe files are deleted; the FM-1 stays unchanged.",
+                                                      len(ls)).format(n=len(ls), names=names, more=more), _("Delete"), danger=True):
             lib = self.library()
             try:
                 for p in ls:
                     lib.delete(p)
             except OSError as e:
-                show_error(self, "Entfernen", fs_error_text(e, "Nicht gelöscht"))
+                show_error(self, _("Remove"), fs_error_text(e, _("Not deleted")))
             else:
-                self.state.setText(f"{plural(len(ls), 'Preset', 'Presets')} aus der Bibliothek entfernt – das FM-1 bleibt unverändert.")
+                self.state.setText(ngettext("{n} preset removed from the library – the FM-1 stays unchanged.",
+                                            "{n} presets removed from the library – the FM-1 stays unchanged.", len(ls)).format(n=len(ls)))
             self.refresh_library()
 
     def open_folder(self):

@@ -12,6 +12,7 @@ import threading
 from dataclasses import dataclass
 from typing import Callable
 
+from ..i18n import _
 from ..vendor import fm1_install as fi
 from . import package as pk
 from .journal import Journal
@@ -20,8 +21,8 @@ STEP_PHASE = {"start": "step1", "check": "step1", "loader": "loader", "write": "
               "done": "done"}
 
 # Protokollzeilen, an denen die Oberfläche den gefährlichen Abschnitt erkennt (InstallDialog: „Jetzt nicht abstecken“)
-LOG_WRITING = "FM-1 wechselt in den Update-Modus …"
-LOG_REBOOT = "Geschrieben – das FM-1 startet neu …"
+LOG_WRITING = _("FM-1 is switching to update mode …")
+LOG_REBOOT = _("Written – the FM-1 is restarting …")
 
 # was ein Fehler hinterlässt (wie Melodees progress.js afterFailure)
 SAFE, PAUSED, RESTART = "safe", "paused", "restart"
@@ -30,18 +31,18 @@ SAFE, PAUSED, RESTART = "safe", "paused", "restart"
 # Codes, die Felucca-Firmwares in Schritt 1 auf dem FM-1-Bildschirm zeigen (felucca-bsp/melodee/sloop ota.c,
 # fm-1.drewr.dev/bootloader-check). Der Rechner sieht nur, dass das Gerät aufhört zu lesen.
 DEVICE_CODES = {
-    -2: "Paketkopf beschädigt (CRC)",
-    -3: "Paket ohne Update-Loader bzw. ohne flash.bin (z. B. m-bootloader-Installer)",
-    -5: "CHECK HEAD FAILED: Bootbereich des Pakets ≠ Bootbereich des Geräts (nichts geschrieben)",
-    -7: "unbekannter Update-Loader im Paket – abgelehnt",
-    -11: "Loader beim Zwischenspeichern nicht korrekt zurückgelesen",
-    -13: "Rechner hat das Ende von Schritt 1 nicht bestätigt",
-    -15: "Felucca 1.6.1: flash.bin nicht 0x93000 Bytes (Open V12/V14)",
+    -2: _("package header damaged (CRC)"),
+    -3: _("package without update loader or without flash.bin (e.g. m-bootloader installer)"),
+    -5: _("CHECK HEAD FAILED: boot area of the package ≠ boot area of the device (nothing written)"),
+    -7: _("unknown update loader in the package – refused"),
+    -11: _("loader not read back correctly while staging"),
+    -13: _("computer did not confirm the end of step 1"),
+    -15: _("Felucca 1.6.1: flash.bin not 0x93000 bytes (Open V12/V14)"),
 }
 
 
 def device_code_text(code: int) -> str:
-    return f"FAILED {code}: {DEVICE_CODES.get(code, 'unbekannter Fehler')}"
+    return "FAILED {code}: {text}".format(code=code, text=DEVICE_CODES.get(code, _("unknown error")))
 
 
 class FlashError(Exception):
@@ -51,34 +52,34 @@ class FlashError(Exception):
 
 
 MESSAGES = {
-    "notfound": "Kein FM-1 hat geantwortet. USB-Datenkabel prüfen (kein reines Ladekabel), andere Musik-Apps "
-                "schließen und erneut versuchen.",
-    "model": "Das angeschlossene Gerät ist kein FM-1 oder das Paket ist für ein anderes Gerät.",
-    "lost": "Die USB-Verbindung ist abgerissen.",
-    "stopped": "Das FM-1 hat aufgehört, Daten anzufordern.",
-    "noloader": "Das FM-1 im Update-Modus wurde nicht gefunden. Kabel neu einstecken und „Fortsetzen“ wählen – "
-                "es bleibt im Update-Modus, bis die Installation fertig ist.",
-    "noreturn": "Das FM-1 ist nach dem Schreiben nicht zurückgekommen. Aus- und wieder einschalten.",
-    "mismatch": "Geschrieben, aber das FM-1 meldet eine andere Firmware.",
-    "badreq": "Das FM-1 hat Daten außerhalb des Pakets angefordert – abgebrochen.",
-    "loader": "Das FM-1 wartet in einem Update-Modus, der nicht zu diesem Paket passt. Es wurde nichts gesendet.",
-    "cancelled": "Abgebrochen, bevor etwas gesendet wurde. Am FM-1 hat sich nichts geändert.",
-    "checkhead": "Die laufende Firmware hat die Original-Firmware abgelehnt (CHECK HEAD, am FM-1 „FAILED -5“): "
-                 "Ihr Bootbereich weicht ab. Es wurde nichts geschrieben, die jetzige Firmware läuft weiter. "
-                 "Bitte keinen anderen Weg erzwingen. Ursache ist meist ein geänderter Bootbereich (m-bootloader, "
-                 "Open V12/V14). Ausweg: Firmware mit neuer Prüfung oder Download-Modus (Rettung Stufe 2).",
-    "stopped1": "Das FM-1 hat das Paket in Schritt 1 abgelehnt. Steht auf dem Display „FAILED <Zahl>“? "
-                "-3/-7: unbekannter Loader, -5: Bootbereich weicht ab, -15: Felucca-1.6.1-Prüfung (siehe Hilfe).",
-    "busy": "Es läuft schon eine Installation.",
-    "ambiguous": "Mehrere FM-1 antworten. Bitte alle anderen abziehen.",
+    "notfound": _("No FM-1 answered. Check the USB data cable (not a charge-only cable), close other music apps "
+                  "and try again."),
+    "model": _("The connected device is not an FM-1, or the package is for a different device."),
+    "lost": _("The USB connection was lost."),
+    "stopped": _("The FM-1 stopped requesting data."),
+    "noloader": _("The FM-1 in update mode was not found. Plug the cable in again and choose “Resume” – "
+                  "it stays in update mode until the installation is finished."),
+    "noreturn": _("The FM-1 did not come back after writing. Switch it off and on again."),
+    "mismatch": _("Written, but the FM-1 reports a different firmware."),
+    "badreq": _("The FM-1 requested data outside the package – aborted."),
+    "loader": _("The FM-1 is waiting in an update mode that does not match this package. Nothing was sent."),
+    "cancelled": _("Cancelled before anything was sent. Nothing has changed on the FM-1."),
+    "checkhead": _("The running firmware refused the original firmware (CHECK HEAD, “FAILED -5” on the FM-1): "
+                   "its boot area differs. Nothing was written, the current firmware keeps running. "
+                   "Please do not force another path. The cause is usually a changed boot area (m-bootloader, "
+                   "Open V12/V14). Way out: firmware with the new check, or download mode (recovery stage 2)."),
+    "stopped1": _("The FM-1 refused the package in step 1. Does the display show “FAILED <number>”? "
+                  "-3/-7: unknown loader, -5: boot area differs, -15: Felucca 1.6.1 check (see help)."),
+    "busy": _("An installation is already running."),
+    "ambiguous": _("Several FM-1 are answering. Please unplug all the others."),
 }
 
 
 # deutsche Fassung von fi.LOADER_HINT (welches Paket der wartende Loader annimmt)
 LOADER_HINT_DE = {
-    "ota-FM-1_900": "Er wartet auf ein Paket der Felucca-Familie (Melodee, SLOOP, Skiff …) – am besten genau das, dessen "
-                    "Installation unterbrochen wurde.",
-    "ota-FM-1_015": "Er wartet auf die unveränderte Original-Firmware V15 (FM-1_015.fwsc).",
+    "ota-FM-1_900": _("It is waiting for a package of the Felucca family (Melodee, SLOOP, Skiff …) – ideally exactly "
+                      "the one whose installation was interrupted."),
+    "ota-FM-1_015": _("It is waiting for the unmodified original firmware V15 (FM-1_015.fwsc)."),
 }
 
 
@@ -86,17 +87,18 @@ def loader_hint(text: str) -> str:
     if text in LOADER_HINT_DE:
         return LOADER_HINT_DE[text]
     if re.match(r"^ota-FM-1_9\d\d$", text or ""):
-        return "Er wartet auf das Felucca-Paket, dessen Installation unterbrochen wurde."
+        return _("It is waiting for the Felucca package whose installation was interrupted.")
     if re.match(r"^ota-FM-1_0\d\d$", text or ""):
-        return "Er wartet auf die Original-Firmware von M-VAVE."
+        return _("It is waiting for the original firmware from M-VAVE.")
     if re.match(r"^ota-FM1C_[0-9a-f]{16}$", text or ""):
-        return ("Das ist der Update-Loader der M-VAVE FM1 Open (Build " + text[9:] + "…). Er nimmt nur das Paket "
-                "genau dieses Builds an; die App schickt ihm nichts – bitte den FM1-Open-Updater von M-VAVE benutzen.")
-    return f"Diesen Loader ({text}) kennt die App nicht."
+        return _("This is the update loader of the M-VAVE FM1 Open (build {build}…). It only accepts the package of "
+                 "exactly this build; the app sends it nothing – please use the FM1 Open updater from M-VAVE.").format(
+                     build=text[9:])
+    return _("The app does not know this loader ({loader}).").format(loader=text)
 
 
-MESSAGES["pinned_lost"] = ("Das Zielgerät ist an seinem USB-Anschluss nicht (mehr) zu finden. Bitte nur das FM-1 "
-                           "angeschlossen lassen, das du aktualisieren willst, und kein Kabel umstecken.")
+MESSAGES["pinned_lost"] = _("The target device can no longer be found at its USB port. Please leave only the FM-1 "
+                             "connected that you want to update, and do not move any cable.")
 
 
 @dataclass
@@ -126,7 +128,8 @@ class Pin:
         return False
 
     def __str__(self):
-        return f"USB-Anschluss {self.usb_path}" if self.usb_path else f"Seriennummer {self.serial}"
+        return (_("USB port {path}").format(path=self.usb_path) if self.usb_path
+                else _("serial number {serial}").format(serial=self.serial))
 
 
 def default_details(name: str) -> dict:
@@ -150,8 +153,8 @@ def default_backend():
         b.input_names()
         return b
     except ImportError:
-        raise FlashError("usage", "Für die Installation fehlt mido/rtmidi (sudo apt install python3-mido "
-                                  "python3-rtmidi).")
+        raise FlashError("usage", _("mido/rtmidi is missing for the installation (sudo apt install python3-mido "
+                                    "python3-rtmidi)."))
 
 
 class Engine:
@@ -247,11 +250,11 @@ class Engine:
         Sind mehrere FM-1 angeschlossen und lässt sich das Ziel nicht festhalten, wird nichts gesendet."""
         rule = info.loader_rule
         if rule is None:
-            raise FlashError("badpkg", "Die Loader-Familie dieses Pakets ist unbekannt – es wird nicht gesendet.")
+            raise FlashError("badpkg", _("The loader family of this package is unknown – it is not sent."))
         if expect_sha and info.sha256 != expect_sha.lower():
-            raise FlashError("badpkg", "Die Prüfsumme des Pakets stimmt nicht – es wird nicht gesendet.")
+            raise FlashError("badpkg", _("The checksum of the package does not match – it is not sent."))
         if info.damage:
-            raise FlashError("badpkg", f"Das Paket ist beschädigt ({info.damage}).")
+            raise FlashError("badpkg", _("The package is damaged ({damage}).").format(damage=info.damage))
         label = label or info.product
         if pin is None or not pin.usable:
             pin = self.pin_for(port) if port else None
@@ -260,32 +263,35 @@ class Engine:
             dev = up.find(only_port=False)
             if dev is None:
                 raise FlashError("notfound", MESSAGES["pinned_lost"])
-            self.log(f"Zielgerät festgehalten: {pin}")
+            self.log(_("Target device pinned: {pin}").format(pin=pin))
         else:
             if len(self.candidate_ports()) > 1:
-                raise FlashError("ambiguous", "Bitte nur das FM-1 angeschlossen lassen, das du aktualisieren willst. "
-                                              "Mehrere FM-1 sind angeschlossen, und die App kann das Zielgerät nicht "
-                                              "eindeutig festhalten – es wurde nichts gesendet.")
+                raise FlashError("ambiguous", _("Please leave only the FM-1 connected that you want to update. "
+                                                "Several FM-1 are connected, and the app cannot pin the target device "
+                                                "unambiguously – nothing was sent."))
             up, dev = self.find_device(port)
             # nach den Neustarts zuerst Ports desselben Geräts fragen ("Melodee FM-1 Update" -> "Melodee FM-1")
             up.port = re.split(r"\s+update\b|:", dev.name, maxsplit=1, flags=re.I)[0].strip() or dev.name
-        self.log(f"Gerät: {dev.id.text} an „{dev.name}“")
+        self.log(_("Device: {identity} at “{port}”").format(identity=dev.id.text, port=dev.name))
         if fi.model_of(dev.id.text) != info.model:
             dev.link.close()
-            raise FlashError("model", f"Das Gerät meldet {dev.id.text}, das Paket ist für {info.product}.")
+            raise FlashError("model", _("The device reports {identity}, the package is for {product}.").format(
+                identity=dev.id.text, product=info.product))
         if dev.id.loader:
             if not rule(dev.id.text):
                 dev.link.close()
-                raise FlashError("loader", f"Das FM-1 wartet im Update-Modus als „{dev.id.text}“ – dieses Paket "
-                                           f"({info.product}) gehört aber zu {rule.label}. Es wurde nichts gesendet. "
-                                           + loader_hint(dev.id.text), detail=dev.id.text)
+                raise FlashError("loader", _("The FM-1 is waiting in update mode as “{identity}” – but this package "
+                                             "({product}) belongs to {loader}. Nothing was sent. {hint}").format(
+                                                 identity=dev.id.text, product=info.product, loader=rule.label,
+                                                 hint=loader_hint(dev.id.text)), detail=dev.id.text)
             if not allow_resume:
                 dev.link.close()
-                raise FlashError("loader", "Das FM-1 wartet im Update-Modus – bitte über die Rettung fortsetzen.")
+                raise FlashError("loader", _("The FM-1 is waiting in update mode – please resume via recovery."))
         if dry_run:
             dev.link.close()
-            self.log(f"Probelauf: {label} ({info.product}, {info.family}) würde an {dev.id.text} gehen – "
-                     f"{'Fortsetzen im Update-Modus' if dev.id.loader else 'Schritt 1 + Schritt 2'}. Nichts gesendet.")
+            how = _("resume in update mode") if dev.id.loader else _("step 1 + step 2")
+            self.log(_("Dry run: {label} ({product}, {family}) would go to {identity} – {how}. Nothing sent.").format(
+                label=label, product=info.product, family=info.family, identity=dev.id.text, how=how))
             return Result(dev.id.text, dry_run=True)
         try:
             self.journal.acquire()
@@ -311,7 +317,7 @@ class Engine:
                     phase["p"] = ph
                     self.journal.update(phase=ph)
                 if k == "start":
-                    self.log(f"Starte das Update auf {a} …")
+                    self.log(_("Starting the update to {target} …").format(target=a))
                 elif k == "check":
                     self.progress(min(int(a or 0), 100), 0)
                 elif k == "loader":
@@ -321,7 +327,7 @@ class Engine:
                 elif k == "reboot":
                     self.log(LOG_REBOOT)
                 elif k == "done":
-                    self.log(f"Fertig: das FM-1 meldet {a}")
+                    self.log(_("Done: the FM-1 reports {identity}").format(identity=a))
             try:
                 ident = up.install(dev, info.image, info.product, step, rule)
             except fi.InstallError as e:
@@ -343,14 +349,14 @@ class Engine:
     def _unexpected(e: BaseException, phase: str) -> FlashError:
         detail = f"{type(e).__name__}: {e}"
         if phase == "reboot":
-            return FlashError("internal", "Unerwarteter Fehler nach dem Schreiben. Das FM-1 startet vermutlich normal – "
-                                          "Kabel neu einstecken und prüfen, welche Firmware es meldet.", RESTART, detail)
+            return FlashError("internal", _("Unexpected error after writing. The FM-1 probably starts normally – "
+                                            "plug the cable in again and check which firmware it reports."), RESTART, detail)
         if phase in ("loader", "writing"):
-            return FlashError("internal", "Unerwarteter Fehler während des Schreibens. Das FM-1 wartet vermutlich im "
-                                          "Update-Modus: Kabel prüfen und auf der Seite „Rettung“ mit demselben Paket "
-                                          "fortsetzen.", PAUSED, detail)
-        return FlashError("internal", "Unerwarteter Fehler vor dem Schreiben. Es wurde nichts geschrieben, die bisherige "
-                                      "Firmware läuft weiter.", SAFE, detail)
+            return FlashError("internal", _("Unexpected error while writing. The FM-1 is probably waiting in "
+                                            "update mode: check the cable and resume with the same package on the "
+                                            "“Recovery” page."), PAUSED, detail)
+        return FlashError("internal", _("Unexpected error before writing. Nothing was written, the previous "
+                                        "firmware keeps running."), SAFE, detail)
 
     def _translate(self, e: fi.InstallError, phase: str, up: fi.Updater, info: pk.PackageInfo) -> FlashError:
         code = e.code
@@ -369,14 +375,14 @@ class Engine:
         if code == "stopped" and phase in ("prepared", "step1"):
             msg = MESSAGES["stopped1"]
         if state == SAFE and code not in ("cancelled", "loader"):
-            msg += " Es wurde nichts geschrieben."
+            msg = _("{message} Nothing was written.").format(message=msg)
         if state == PAUSED and code == "loader":
-            msg = ("Das FM-1 hat einen Update-Loader gestartet, der nicht zu diesem Paket passt. Es wurde "
-                   "nichts geschrieben; das FM-1 wartet jetzt im Update-Modus. Auf der Seite „Rettung“ wird nur ein "
-                   "Paket gesendet, das zu diesem Loader gehört.")
+            msg = _("The FM-1 started an update loader that does not match this package. Nothing was "
+                    "written; the FM-1 is now waiting in update mode. On the “Recovery” page only a "
+                    "package that belongs to this loader is sent.")
         elif state == PAUSED and code != "noloader":
-            msg += (" Das FM-1 wartet im Update-Modus: Kabel prüfen und mit demselben Paket fortsetzen "
-                    "(Seite „Rettung“).")
+            msg = _("{message} The FM-1 is waiting in update mode: check the cable and resume with the same "
+                    "package (“Recovery” page).").format(message=msg)
         if code == "mismatch":
             msg += f" ({e})"
         return FlashError(code, msg, state, str(e))

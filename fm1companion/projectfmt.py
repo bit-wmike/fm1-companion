@@ -21,6 +21,8 @@ import struct
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .i18n import _, ngettext
+
 # ---------------------------------------------------------------- Konstanten (rc.7, layout.json) ---
 NSTEP = 64
 NPART = 4
@@ -104,7 +106,7 @@ def engine_name(e: int) -> str:
     eng = tables()["engines"]
     if 0 <= e < len(eng) and eng[e]["name"] not in ("-", ""):
         return eng[e]["name"]
-    return "(alte Engine)" if 0 <= e < 22 else f"Engine {e}"
+    return _("(old engine)") if 0 <= e < 22 else _("Engine {n}").format(n=e)
 
 
 def preset_name(engine: int, preset: int) -> str:
@@ -162,7 +164,7 @@ class Step:
         time = ST_NOTE if code < 5 else ST_TIE if code == 5 else ST_REST
         prob = w1 >> 25
         if code == 7 or prob > 101:
-            raise FormatError("ungültiger Step")
+            raise FormatError(_("invalid step"))
         return cls(notes=notes[:n], time=time, accent=bool(w1 & 1), slide=bool(w1 & 2), recorded=bool(w0 >> 31),
                    vel=(w1 >> 2) & 127, hit=(w1 >> 9) & 255, acc=(w1 >> 17) & 255,
                    chance=100 if prob == 0 else prob if prob <= 100 else 0)
@@ -173,7 +175,7 @@ class Step:
         meta = b[4]
         n, time = meta & 7, (meta >> 3) & 3
         if n > 4 or time > 2 or b[8] > 101:
-            raise FormatError("ungültiger Step")
+            raise FormatError(_("invalid step"))
         prob = b[8]
         return cls(notes=list(b[:4])[:n] if time == ST_NOTE else [], time=time, accent=bool(meta & 32),
                    slide=bool(meta & 64), recorded=bool(meta & 128), vel=b[5] & 127, hit=b[6], acc=b[7],
@@ -183,7 +185,7 @@ class Step:
 @dataclass
 class Pattern:
     index: int
-    steps: list[Step] = field(default_factory=lambda: [Step() for _ in range(NSTEP)])
+    steps: list[Step] = field(default_factory=lambda: [Step() for _i in range(NSTEP)])
     length: int = 16       # LEN (Steps)
     div: int = 2           # DIV-Index (2 = 1/16)
     swing: int = 0
@@ -235,7 +237,7 @@ class Track:
 
     @property
     def name(self) -> str:
-        return f"Spur {self.index + 1}"
+        return _("Track {n}").format(n=self.index + 1)
 
     @property
     def engine_name(self) -> str:
@@ -244,7 +246,7 @@ class Track:
     @property
     def preset_name(self) -> str:
         if self.preset in (0xFF, 0xFE):
-            return "Grundklang"
+            return _("Basic sound")
         return preset_name(self.engine, self.preset)
 
     @property
@@ -334,14 +336,18 @@ class Project:
 
     def summary(self) -> str:
         if not self.ok:
-            return f"{self.format}: " + ("; ".join(self.warnings) or "nicht lesbar")
+            return f"{self.format}: " + ("; ".join(self.warnings) or _("not readable"))
         used = sum(1 for t in self.tracks for p in t.patterns if p.used)
-        name = f"„{self.name}“, " if self.name else ""
-        song = f", Song mit {len(self.song)} Abschnitten" if self.song else ""
+        name = _("“{name}”, ").format(name=self.name) if self.name else ""
+        song = ngettext(", song with {n} section", ", song with {n} sections", len(self.song)).format(
+            n=len(self.song)) if self.song else ""
         n_p = sum(len(r.punches) for r in self.song)
-        extra = (f", {n_p} Punch-Effekte" if n_p else "") + (f", {len(self.sounds)} Song-/Pattern-Presets"
-                                                              if self.sounds else "")
-        return f"{name}{self.bpm} BPM, {len(self.used_tracks)} Spuren, {used} Patterns belegt{song}{extra}"
+        extra = (ngettext(", {n} punch effect", ", {n} punch effects", n_p).format(n=n_p) if n_p else "") + (
+            ngettext(", {n} song/pattern preset", ", {n} song/pattern presets", len(self.sounds)).format(
+                n=len(self.sounds)) if self.sounds else "")
+        core = _("{bpm} BPM, {tracks} tracks, {patterns} patterns used").format(
+            bpm=self.bpm, tracks=len(self.used_tracks), patterns=used)
+        return f"{name}{core}{song}{extra}"
 
     def sound_name(self, sid: int) -> str:
         return self.sounds[sid - 1].name if 0 < sid <= len(self.sounds) else f"Preset {sid}"
@@ -405,7 +411,7 @@ def expand_hpj1(data: bytes) -> bytes:
     """kompaktes HPJ1-Abbild -> der 27 904-Byte-Datensatz (Löcher = Nullen)."""
     magic, length, *maps = struct.unpack_from("<IIIIII", data)
     if magic != MAGIC_HPJ1 or length != BANK_STORE_SIZE:
-        raise FormatError("kein HPJ1-Abbild")
+        raise FormatError(_("not an HPJ1 image"))
     bitmap = maps[0] | maps[1] << 32 | maps[2] << 64 | maps[3] << 96
     out = bytearray(BANK_STORE_SIZE)
     at = PJ_HEAD
@@ -414,7 +420,7 @@ def expand_hpj1(data: bytes) -> bytes:
             rel = p * 256
             k = min(256, BANK_TAIL_SIZE - rel)
             if at + k > len(data):
-                raise FormatError("HPJ1-Abbild zu kurz")
+                raise FormatError(_("HPJ1 image too short"))
             out[BANK_ACTIVE_OFF + rel:BANK_ACTIVE_OFF + rel + k] = data[at:at + k]
             at += k
     for p in range(PJ_SPAGES):                          # Kopf + FUN-Datensatz S
@@ -422,7 +428,7 @@ def expand_hpj1(data: bytes) -> bytes:
             rel = p * 256
             k = min(256, BANK_ACTIVE_OFF - rel)
             if at + k > len(data):
-                raise FormatError("HPJ1-Abbild zu kurz")
+                raise FormatError(_("HPJ1 image too short"))
             out[rel:rel + k] = data[at:at + k]
             at += k
     return bytes(out)
@@ -462,7 +468,7 @@ def _decode_fun(prj: Project, r: bytes, steps8: bool, np_: int, fx_in_wire: bool
         pos += 2
         tr.active = ((banks >> (3 * t)) & 7) | ((banks >> (12 + t)) & 1) << 3
         if tr.active >= len(tr.patterns):
-            raise FormatError("aktives Pattern außerhalb")
+            raise FormatError(_("active pattern out of range"))
         pat = tr.patterns[tr.active]
         for i in range(NSTEP):
             chunk = r[pos:pos + stride]
@@ -504,9 +510,9 @@ def _records(prj: Project, r: bytes, counts: list[int], owners: list[int]):
     at = 0
     for owner, count in zip(owners, counts):
         if count > RECORD_MAX - at:
-            raise FormatError("zu viele aufgenommene Noten")
+            raise FormatError(_("too many recorded notes"))
         k, b = divmod(owner, NPAT)
-        for _ in range(count):
+        for _i in range(count):
             v = r[PROJ_REC_OFF + at * 8:PROJ_REC_OFF + at * 8 + 8]
             at += 1
             on, pos = _bits_get(v, 0, 16)
@@ -522,7 +528,7 @@ def _records(prj: Project, r: bytes, counts: list[int], owners: list[int]):
 
 def _counts(buf: bytes, n: int) -> list[int]:
     out, pos = [], 0
-    for _ in range(n):
+    for _i in range(n):
         v, pos = _bits_get(buf, pos, 11)
         out.append(v)
     return out
@@ -533,15 +539,15 @@ def _decode_bank(prj: Project, rec: bytes):
     kind = BANK_MAGICS[magic]
     prj.container = kind
     if size != BANK_STORE_SIZE:
-        raise FormatError("Größe im Kopf stimmt nicht")
+        raise FormatError(_("size in the header does not match"))
     stored = struct.unpack_from("<I", rec, BANK_STORE_SIZE - 4)[0]
     prj.hash_ok = stored == fnv(rec[:BANK_STORE_SIZE - 4])
     if not prj.hash_ok:
-        prj.warnings.append("Prüfsumme des Projekts stimmt nicht – Daten evtl. beschädigt")
+        prj.warnings.append(_("Project checksum does not match – data may be damaged"))
     fun = rec[8:8 + PROJ_STORE_SIZE]
     fmagic = struct.unpack_from("<I", fun)[0]
     if fmagic not in FUN_MAGICS:
-        raise FormatError(f"unbekannter Teil: Klang-Datensatz {fun[:4]!r}")
+        raise FormatError(_("unknown part: sound record {magic}").format(magic=repr(fun[:4])))
     fname, stride = FUN_MAGICS[fmagic]
     prj.format = f"{kind}/{fname}"
     p16 = kind in ("FBKP", "FBKQ")
@@ -565,7 +571,7 @@ def _decode_bank(prj: Project, rec: bytes):
     try:
         _records(prj, fun, counts, owners)
     except FormatError as e:
-        prj.warnings.append(f"aufgenommene Noten nicht lesbar ({e})")
+        prj.warnings.append(_("recorded notes not readable ({error})").format(error=e))
     for k, t in enumerate(prj.tracks):
         t.in_use = k < max(1, prj.tracks_in_use)
 
@@ -619,7 +625,7 @@ def _tail_wide(prj: Project, tail: bytes, kind: str, L: dict):
         cnt = tail[pos]
         size = tail[pos + 2] | tail[pos + 3] << 8
         if size != SOUND_SIZE:
-            raise FormatError("unbekannter Teil: Song-Klänge in anderer Größe")
+            raise FormatError(_("unknown part: song sounds of a different size"))
         ids = tail[pos + 4:pos + 4 + 64 * NTRK]
         for r, row in enumerate(prj.song):
             row.sounds = [v if v <= cnt else 0 for v in ids[r * NTRK:(r + 1) * NTRK]]
@@ -667,18 +673,18 @@ def _tail_wide(prj: Project, tail: bytes, kind: str, L: dict):
             if ap and not any(tail[L["timing"] + (k * L["npat"] + tr.active) * 4:][:1]):
                 ap.length = tr.p(P_SLEN, 16)
     if pos > len(tail) - 4:
-        raise FormatError("Bank-Ende übergelaufen")
+        raise FormatError(_("bank tail overflowed"))
 
 
 def _decode_legacy(prj: Project, data: bytes, kind: str):
     """FUN7 (3388), FUN8 (3584), FBK9 (20224) nach web/EDITOR_PROTOCOL.md – nicht gegen Firmware-Code geprüft."""
     prj.container = kind
     rec = data[8:8 + 3584] if kind == "FBK9" else data
-    prj.format = kind + " (älteres Format)"
+    prj.format = _("{format} (older format)").format(format=kind)
     prj.tracks = _new_tracks(NPAT_V1)
     np_ = rec[66]
     if not 8 <= np_ <= 127:
-        raise FormatError("Parameterzahl unplausibel")
+        raise FormatError(_("implausible number of parameters"))
     g = list(struct.unpack_from("<27h", rec, 8))
     prj.globals, prj.bpm, prj.swing, prj.selected = g, g[0], g[1], rec[62]
     pos = 68
@@ -726,11 +732,11 @@ def decode(data: bytes, firmware: str = "") -> Project:
     prj = Project(size=len(data))
     try:
         if not data:
-            prj.format = "leer"
-            prj.warnings.append("Projektplatz ist leer")
+            prj.format = _("empty")
+            prj.warnings.append(_("Project slot is empty"))
             return prj
         if len(data) < 8:
-            raise FormatError("zu kurz")
+            raise FormatError(_("too short"))
         magic = struct.unpack_from("<I", data)[0]
         if magic == MAGIC_HPJ1:
             rec = expand_hpj1(data)
@@ -739,7 +745,7 @@ def decode(data: bytes, firmware: str = "") -> Project:
             prj.format = "HPJ1/" + prj.format
         elif magic in BANK_MAGICS:
             if len(data) != BANK_STORE_SIZE:
-                raise FormatError("Bank-Container mit falscher Größe")
+                raise FormatError(_("bank container with wrong size"))
             _decode_bank(prj, data)
         elif magic in FUN_MAGICS and len(data) == PROJ_STORE_SIZE:
             fname, stride = FUN_MAGICS[magic]
@@ -755,19 +761,21 @@ def decode(data: bytes, firmware: str = "") -> Project:
         else:
             head = data[:4]
             if head[1:4] == b"NUF" and 0x30 <= head[0] <= 0x39:        # "6NUF" = FUN6, SLOOP (project.c)
-                prj.format = f"SLOOP-Projekt (FUN{head[0] - 0x30})"
-                raise FormatError("Das ist ein SLOOP-Projekt. Die Projekt-Ansicht kennt nur das Melodee-Format – "
-                                  "SLOOP-Projekte sind anders aufgebaut (Sections, eigener Sequencer). Zum Ansehen "
-                                  "und Bearbeiten nimm den SLOOP-Web-Editor (Seite „Editor“); sichern und "
-                                  "zurückspielen geht wie gewohnt über Backups.")
+                # Translators: must start with "SLOOP" (the project view checks it)
+                prj.format = _("SLOOP project (FUN{n})").format(n=head[0] - 0x30)
+                raise FormatError(_("This is a SLOOP project. The project view only knows the Melodee format – "
+                                    "SLOOP projects are built differently (sections, own sequencer). To view and "
+                                    "edit it, use the SLOOP web editor (page “Editor”); backing up and restoring "
+                                    "works as usual via backups."))
             fw = firmware.lower()
-            other = "andere Firmware" if fw and "melodee" not in fw else "unbekanntes Format"
+            other = _("other firmware") if fw and "melodee" not in fw else _("unknown format")
             prj.format = other
-            raise FormatError(f"unbekannter Teil (Kennung {head.hex()}, {len(data)} Byte) – {other}")
+            raise FormatError(_("unknown part (ID {magic}, {size} bytes) – {reason}").format(
+                magic=head.hex(), size=len(data), reason=other))
         prj.ok = True
     except (FormatError, struct.error, IndexError, ValueError, KeyError) as e:
         prj.ok = False
-        prj.warnings.append(str(e) or "unbekannter Teil")
+        prj.warnings.append(str(e) or _("unknown part"))
     return prj
 
 
@@ -793,8 +801,9 @@ def load_any(path: Path) -> list[tuple[str, Project]]:
             slot = backup.project_slot(o["id"])
             if arch.sloop and slot and slot > 4:
                 continue
-            title = ("Laufendes Projekt" if arch.sloop else "Laufende Musik") if slot == 0 else \
-                (f"Section {'ABCD'[slot - 1]}" if arch.sloop else f"Projekt {slot}")
+            title = (_("Running project") if arch.sloop else _("Running music")) if slot == 0 else \
+                (_("Section {letter}").format(letter='ABCD'[slot - 1]) if arch.sloop
+                 else _("Project {n}").format(n=slot))
             prj = decode(o["bytes"], arch.firmware)
             if prj.name:
                 title += f" – {prj.name}"

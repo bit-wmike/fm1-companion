@@ -16,7 +16,7 @@ from ... import applog, diag
 from .. import theme
 from ..common import heading, icon, run_job
 from ..responsive import reflow
-from ...i18n import _
+from ...i18n import _, ngettext
 
 HELP_ROOT = Path(__file__).resolve().parents[2] / "data" / "help"   # one folder per language: help/<lang>/
 HELP_FALLBACK = "de"                     # the complete set of pages; other languages may have fewer
@@ -71,7 +71,7 @@ class HelpPage(QWidget):
         super().__init__()
         self.ctx, self.window = ctx, window
         lay = QVBoxLayout(self)
-        lay.addWidget(heading("Hilfe", "Anleitungen, Antworten und Diagnose – auch offline."))
+        lay.addWidget(heading(_("Help"), _("Guides, answers and diagnostics – also offline.")))
         self.tabs = QTabWidget()
         lay.addWidget(self.tabs, 1)
 
@@ -80,7 +80,7 @@ class HelpPage(QWidget):
         gl = QHBoxLayout(g)
         left = QVBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("In der Hilfe suchen …")
+        self.search.setPlaceholderText(_("Search the help …"))
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._filter)
         left.addWidget(self.search)
@@ -96,7 +96,7 @@ class HelpPage(QWidget):
         self.browser.setOpenLinks(False)
         self.browser.anchorClicked.connect(self.link)
         gl.addWidget(self.browser, 1)
-        self.tabs.addTab(g, icon("help-contents"), "Anleitungen")
+        self.tabs.addTab(g, icon("help-contents"), _("Guides"))
         self.topics = topics()
         for key, title, _md in self.topics:
             it = QListWidgetItem(title)
@@ -105,7 +105,7 @@ class HelpPage(QWidget):
 
         # ---- Diagnose
         self.diag = DiagnoseView(window)
-        self.tabs.addTab(self.diag, icon("hwinfo"), "Diagnose")
+        self.tabs.addTab(self.diag, icon("hwinfo"), _("Diagnostics"))
         self.list.setCurrentRow(0)
 
     # ------------------------------------------------------------
@@ -156,7 +156,7 @@ class HelpPage(QWidget):
             cnt = md.count(q) if q else 0
             it.setText(self.topics[i][1] + (f"  ({cnt})" if q and cnt else ""))
             n += hit
-        self.hits.setText(f"{n} Treffer" if q else "")
+        self.hits.setText(ngettext("{n} match", "{n} matches", n).format(n=n) if q else "")
         cur = self.list.currentItem()
         if q and (cur is None or cur.isHidden()):
             first = next((self.list.item(i) for i in range(self.list.count()) if not self.list.item(i).isHidden()), None)
@@ -172,7 +172,7 @@ class HelpPage(QWidget):
             if self.window.page(key) is not None:
                 self.window.go(key)
             else:
-                self.window.notify(f"Die Seite „{key}“ gibt es in dieser Version nicht.", "info")
+                self.window.notify(_("The page “{key}” does not exist in this version.").format(key=key), "info")
         elif s.startswith("app://action/"):
             fn = getattr(self.window, ACTIONS.get(s[len("app://action/"):].strip("/"), ""), None)
             if fn:
@@ -191,13 +191,13 @@ class DiagnoseView(QWidget):
         self.window = window
         lay = QVBoxLayout(self)
         row = QHBoxLayout()
-        b = QPushButton(icon("view-refresh"), "Aktualisieren")
+        b = QPushButton(icon("view-refresh"), _("Refresh"))
         b.clicked.connect(self.refresh)
-        b2 = QPushButton(icon("utilities-system-monitor"), "Systemcheck …")
+        b2 = QPushButton(icon("utilities-system-monitor"), _("System check …"))
         b2.clicked.connect(lambda: window.open_syscheck())
-        b3 = QPushButton(icon("tools-report-bug"), "Fehlerbericht speichern …")
+        b3 = QPushButton(icon("tools-report-bug"), _("Save bug report …"))
         b3.clicked.connect(lambda: window.save_report())
-        b4 = QPushButton(icon("folder-open"), "Protokoll-Ordner")
+        b4 = QPushButton(icon("folder-open"), _("Log folder"))
         b4.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(applog.log_dir()))))
         for x in (b, b2, b3, b4):
             row.addWidget(x)
@@ -211,7 +211,7 @@ class DiagnoseView(QWidget):
         self.logv = QPlainTextEdit()
         self.logv.setReadOnly(True)
         self.logv.setFont(QFont("monospace"))
-        self.logv.setPlaceholderText("Noch keine Einträge im Protokoll.")
+        self.logv.setPlaceholderText(_("No entries in the log yet."))
         split.addWidget(self.logv)
         split.setSizes([400, 220])
         lay.addWidget(split, 1)
@@ -229,33 +229,35 @@ class DiagnoseView(QWidget):
 
     def html(self) -> str:
         e = html.escape
-        parts = ["<h3>Seiten, die nicht geladen werden konnten</h3>"]
+        parts = ["<h3>" + _("Pages that could not be loaded") + "</h3>"]
         if load_errors:
             for mod, tb in load_errors:
                 last = tb.strip().splitlines()[-1] if tb.strip() else ""
                 parts.append(f"<p><b>{e(mod)}</b>: {e(last)}</p><pre>{e(tb[-1500:])}</pre>")
         else:
-            parts.append("<p>Keine – alle Seiten wurden geladen.</p>")
-        parts.append("<h3>Versionen</h3><table cellpadding='2'>")
+            parts.append("<p>" + _("None – all pages were loaded.") + "</p>")
+        parts.append("<h3>" + _("Versions") + "</h3><table cellpadding='2'>")
         parts += [f"<tr><td>{e(k)}:&nbsp;</td><td>{e(v)}</td></tr>" for k, v in diag.versions().items()]
-        parts.append("</table><h3>Abhängigkeiten</h3><table cellpadding='2'>")
+        parts.append("</table><h3>" + _("Dependencies") + "</h3><table cellpadding='2'>")
         states = diag.check_deps()
         for s in states:
             mark = "✔" if s.ok else ("✖" if s.required else "–")
-            parts.append(f"<tr><td>{mark}</td><td>{e(s.package)}</td><td>{e(s.why)}"
-                         f"{'' if s.ok else (' – <b>fehlt</b>' if s.required else ' – optional, fehlt')}</td></tr>")
+            why = e(s.why) if s.ok else (_("{why} – <b>missing</b>") if s.required else
+                                         _("{why} – optional, missing")).format(why=e(s.why))
+            parts.append(f"<tr><td>{mark}</td><td>{e(s.package)}</td><td>{why}</td></tr>")
         parts.append("</table>")
         cmd = diag.apt_command(states)
         if cmd:
-            parts.append(f"<p>Nachinstallieren:<br><code>{e(cmd)}</code></p>")
-        parts.append("<h3>MIDI-Anschlüsse</h3>")
+            parts.append("<p>" + _("Install:") + f"<br><code>{e(cmd)}</code></p>")
+        parts.append("<h3>" + _("MIDI ports") + "</h3>")
         if self._ports is None:
-            parts.append("<p>werden gesucht …</p>")
+            parts.append("<p>" + _("searching …") + "</p>")
         else:
             ins, outs, err = self._ports
-            parts.append(f"<p>MIDI nicht nutzbar: {e(err)}</p>" if err else
-                         f"<p>Eingänge: {e(', '.join(ins) or 'keine')}<br>Ausgänge: {e(', '.join(outs) or 'keine')}</p>")
-        parts.append(f"<h3>Protokoll</h3><p>{e(str(applog.log_file()))}</p>")
+            parts.append("<p>" + _("MIDI not usable: {error}").format(error=e(err)) + "</p>" if err else
+                         "<p>" + _("Inputs: {inputs}<br>Outputs: {outputs}").format(
+                             inputs=e(", ".join(ins) or _("none")), outputs=e(", ".join(outs) or _("none"))) + "</p>")
+        parts.append("<h3>" + _("Log") + f"</h3><p>{e(str(applog.log_file()))}</p>")
         return "".join(parts)
 
 

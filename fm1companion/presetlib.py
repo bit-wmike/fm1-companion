@@ -22,6 +22,8 @@ import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .i18n import _, ngettext
+
 CMD_LIBRARY = 80
 CMD_DESC = 5
 CMD_FAV_GET = 37
@@ -34,7 +36,7 @@ FORMAT_VERSION = 1
 
 NATIVE_SIZE = {1: 128, 2: 144, 3: 138, 4: 54}
 NATIVE_ENGINE = {1: 12, 2: 15, 3: 19, 4: 10}
-NATIVE_NAMES = {0: "Parameter", 1: "DX7-Voice", 2: "CZ-1-Ton", 3: "Prophet-Programm", 4: "Drum-Patch"}
+NATIVE_NAMES = {0: _("Parameters"), 1: _("DX7 voice"), 2: _("CZ-1 tone"), 3: _("Prophet program"), 4: _("Drum patch")}
 # feste Engine-Nummern (EDITOR_PROTOCOL.md "engine byte"; core.h) – falls INFO keine Namen liefert
 ENGINE_NAMES = {0: "ANALOG", 1: "DIGITAL", 2: "PHASE", 3: "SID", 4: "SAMPLE", 5: "VOICE", 6: "TRIO", 7: "WHEEL",
                 8: "GRAIN", 9: "PHYS", 10: "DRUM", 11: "NOISE", 12: "FM6", 13: "SLICE", 14: "OBXF", 15: "CZ-1",
@@ -95,7 +97,7 @@ def unpack7(a) -> list[int]:
         i += 1
         n = min(7, len(a) - i)
         if m >> n:
-            raise PresetError("ungültige gepackte Bytes")
+            raise PresetError(_("invalid packed bytes"))
         for j in range(n):
             b.append(a[i] | ((m >> j) & 1) << 7)
             i += 1
@@ -124,18 +126,18 @@ def fit_name(s: str, limit: int) -> tuple[str, str]:
     t = raw.translate(_TRANSLIT)
     notes = []
     if t != raw:
-        notes.append("Umlaute/Sonderzeichen umgeschrieben")
+        notes.append(_("umlauts/special characters transliterated"))
     t2 = re.sub(r"[^ -~]", "", t)
     if t2 != t:
-        notes.append("Zeichen außerhalb von ASCII entfernt")
+        notes.append(_("characters outside ASCII removed"))
     t2 = re.sub(r"\s+", " ", t2).strip()
     if len(t2) > limit:
-        notes.append(f"auf {limit} Zeichen gekürzt")
+        notes.append(_("shortened to {n} characters").format(n=limit))
         t2 = t2[:limit].rstrip()
     why = ""
     if notes:
-        why = (f"Das FM-1 speichert Namen nur mit Buchstaben, Ziffern und einfachen Zeichen (höchstens {limit}). "
-               f"Daher: {', '.join(notes)} → „{t2}“.")
+        why = _("The FM-1 stores names only with letters, digits and simple characters (at most {n}). "
+                "Therefore: {changes} → “{name}”.").format(n=limit, changes=", ".join(notes), name=t2)
     return t2, why
 
 
@@ -145,7 +147,7 @@ class _R:
 
     def b(self):
         if self.i >= len(self.a):
-            raise PresetError("Antwort zu kurz")
+            raise PresetError(_("Answer too short"))
         self.i += 1
         return self.a[self.i - 1]
 
@@ -158,7 +160,7 @@ class _R:
         while j < len(self.a) and self.a[j]:
             j += 1
         if j >= len(self.a):
-            raise PresetError("Text ohne Ende")
+            raise PresetError(_("Text without end"))
         t = bytes(self.a[self.i:j]).decode("latin-1")
         self.i = j + 1
         return t
@@ -192,9 +194,9 @@ def parse_caps(info) -> Caps:
         r = _R(raw)
         r.s()
         ne = r.b()
-        for _ in range(4):
+        for _i in range(4):
             r.b()
-        for _ in range(ne):
+        for _i in range(ne):
             r.s()
         if r.i < len(raw):
             r.b()                                  # NTRK
@@ -243,11 +245,11 @@ def probe(link, info) -> Caps:
 
 def refusal_text(c: Caps) -> str:
     if c.legacy:
-        return ("Diese Melodee-Version hat noch die alte Preset-Ablage (64 Plätze, vor 1.5). Die Preset-Bibliothek "
-                "der Suite arbeitet mit der gemeinsamen Bibliothek ab Melodee 1.5 – bitte Melodee aktualisieren "
-                "(vorher ein Backup machen). Bis dahin: Presets im Editor unter „Library“ bearbeiten.")
-    return ("Diese Firmware hat keine gemeinsame Preset-Bibliothek (Befehl 80, gibt es ab Melodee 1.5). "
-            "DX7-Voices kannst du trotzdem als SysEx senden (Presets › FM-Voices).")
+        return _("This Melodee version still has the old preset storage (64 slots, before 1.5). The suite's preset "
+                 "library works with the shared library from Melodee 1.5 – please update Melodee "
+                 "(make a backup first). Until then: edit presets in the editor under “Library”.")
+    return _("This firmware has no shared preset library (command 80, available from Melodee 1.5). "
+             "You can still send DX7 voices as SysEx (Presets › FM Voices).")
 
 
 # --------------------------------------------------------------- Preset ---
@@ -297,9 +299,9 @@ class Preset:
     @classmethod
     def from_json(cls, d: dict) -> "Preset":
         if d.get("format") != FORMAT:
-            raise PresetError("keine .fm1preset-Datei")
+            raise PresetError(_("not a .fm1preset file"))
         if int(d.get("version", 1)) > FORMAT_VERSION:
-            raise PresetError("Datei aus einer neueren Version der Suite")
+            raise PresetError(_("File from a newer version of the suite"))
         p = cls(name=str(d.get("name", "")), engine=int(d.get("engine", 0)), engine_name=str(d.get("engine_name", "")),
                 params=[int(x) for x in d.get("params", [])], legacy=[int(x) & 127 for x in d.get("legacy", [0] * 32)][:32],
                 native_kind=int(d.get("native_kind", 0)), native=base64.b64decode(d.get("native", "") or ""),
@@ -311,14 +313,14 @@ class Preset:
 
     def validate(self):
         if self.native_kind not in NATIVE_SIZE and self.native_kind != 0:
-            raise PresetError(f"unbekannte Art {self.native_kind}")
+            raise PresetError(_("unknown kind {kind}").format(kind=self.native_kind))
         if self.native_kind:
             if len(self.native) != NATIVE_SIZE[self.native_kind]:
-                raise PresetError("Native Daten haben die falsche Länge")
+                raise PresetError(_("Native data has the wrong length"))
             if self.engine != NATIVE_ENGINE[self.native_kind]:
-                raise PresetError("Native Daten passen nicht zur Engine")
+                raise PresetError(_("Native data does not match the engine"))
         if any(not -64 <= v <= 127 for v in self.params):
-            raise PresetError("Parameterwert außerhalb −64…127")
+            raise PresetError(_("Parameter value outside −64…127"))
 
     @property
     def kind_text(self) -> str:
@@ -356,17 +358,19 @@ class SharedBank:
     @staticmethod
     def request(op: int, slot: int, *args) -> list[int]:
         if not isinstance(slot, int) or not 0 <= slot < SLOTS:
-            raise PresetError("ungültiger Preset-Platz")
+            raise PresetError(_("invalid preset slot"))
         return [op, slot & 127, slot >> 7, *args]
 
     @staticmethod
     def check(a, op: int, slot: int) -> _R:
         if len(a) < 4 or a[0] != op or (a[1] | a[2] << 7) != slot:
-            raise PresetError("unerwartete Antwort vom FM-1")
+            raise PresetError(_("unexpected answer from the FM-1"))
         if a[3]:
-            raise PresetError({1: f"U{slot + 1:03d}: ungültig oder leer (rc 1)",
-                               2: f"U{slot + 1:03d}: vom FM-1 abgelehnt oder Speicherfehler (rc 2) – "
-                                  "läuft die Wiedergabe noch?"}.get(a[3], f"Fehler {a[3]}"))
+            label = f"U{slot + 1:03d}"
+            raise PresetError({1: _("{slot}: invalid or empty (rc 1)").format(slot=label),
+                               2: _("{slot}: refused by the FM-1 or memory error (rc 2) – "
+                                    "is playback still running?").format(slot=label)}.get(
+                a[3], _("Error {code}").format(code=a[3])))
         return _R(a[4:])
 
     def _rq(self, args, flash=False):
@@ -377,7 +381,7 @@ class SharedBank:
         r = self.check(a, 0, start)
         n, total = r.b(), r.b() | r.b() << 7
         if not n or n > count or start + n > total:
-            raise PresetError("ungültige Listen-Antwort")
+            raise PresetError(_("invalid list answer"))
         out = []
         for i in range(n):
             used, eng, old = r.b(), r.b(), r.b()
@@ -389,7 +393,7 @@ class SharedBank:
         out, total = [], 1
         while len(out) < total:
             if cancel and cancel():
-                raise PresetError("abgebrochen")
+                raise PresetError(_("cancelled"))
             total, chunk = self.list(len(out), 16)
             out += chunk
             if progress:
@@ -400,15 +404,15 @@ class SharedBank:
         a = self._rq(self.request(1, slot))
         r = self.check(a, 1, slot)
         used, eng, nm = r.b(), r.b(), r.s()
-        params = [r.v() for _ in range(self.caps.p_count)]
-        legacy = [r.b() for _ in range(32)]
+        params = [r.v() for _i in range(self.caps.p_count)]
+        legacy = [r.b() for _i in range(32)]
         kind = r.b()
         native = b""
         if kind:
             size = r.b() | r.b() << 7
             raw = unpack7(r.a[r.i:])
             if kind not in NATIVE_SIZE or eng != NATIVE_ENGINE[kind] or len(raw) != size or size != NATIVE_SIZE[kind]:
-                raise PresetError(f"U{slot + 1:03d}: ungültige native Daten")
+                raise PresetError(_("{slot}: invalid native data").format(slot=f"U{slot + 1:03d}"))
             native = bytes(raw)
             if kind == 1:                                   # voller DX7-Name, wenn der Kurzname sein Anfang ist
                 from . import dx7
@@ -423,9 +427,9 @@ class SharedBank:
         """Argumente nach dem Kopf – byte-genau wie Editor sharedBank.put."""
         kind = p.native_kind
         if kind and p.engine != NATIVE_ENGINE[kind]:
-            raise PresetError("Native Daten passen nicht zur Engine")
+            raise PresetError(_("Native data does not match the engine"))
         if not kind and p.engine in (12, 19):
-            raise PresetError("FM6- und Prophet-Presets brauchen ihre Voice-Daten")
+            raise PresetError(_("FM6 and Prophet presets need their voice data"))
         name = clean_name(p.name or "PATCH", 20 if kind else 12) or "PATCH"
         values = map_params(p, self.caps)
         if defaults is None:
@@ -460,7 +464,7 @@ class SharedBank:
     def rename(self, slot: int, name: str):
         nm = clean_name(name, 20)
         if not nm:
-            raise PresetError("Der Name darf nicht leer sein")
+            raise PresetError(_("The name must not be empty"))
         self.check(self._rq(self.request(6, slot, *[ord(c) for c in nm]), flash=True), 6, slot)
 
     def set_favorite(self, slot: int, on: bool) -> int:
@@ -468,14 +472,14 @@ class SharedBank:
         a = self.link.request(CMD_FAV_SET, [self.caps.general_ns or 0, *v14enc(slot), 1 if on else 0], timeout=1.5, retries=0)
         rc = a[0] if a else 1
         if rc not in (0, 3, 4):
-            raise PresetError(f"Favorit abgelehnt (rc {rc})")
+            raise PresetError(_("Favourite refused (rc {rc})").format(rc=rc))
         return rc
 
     def voice_to_track(self, track: int, vmem: bytes):
         """FM6_PUT Ziel 0: Voice live auf eine Spur (nicht gespeichert)."""
         a = self.link.request(CMD_FM6_PUT, [0, track, *[x & 127 for x in vmem]], timeout=1.5, retries=0)
         if len(a) < 3 or a[2]:
-            raise PresetError("Die Voice wurde nicht angenommen")
+            raise PresetError(_("The voice was not accepted"))
 
     def write_with_undo(self, slot: int, p: Preset, defaults: bool | None = None) -> Preset:
         """vorher lesen (für Rückgängig), dann schreiben, dann zur Kontrolle wieder lesen."""
@@ -582,10 +586,10 @@ class Library:
         """Preset in der Bibliothek umbenennen (Name in der Datei und Dateiname); am FM-1 ändert sich nichts."""
         name = clean_name(name, 20)
         if not name:
-            raise PresetError("Der Name darf nicht leer sein")
+            raise PresetError(_("The name must not be empty"))
         old = p.path
         if not old:
-            raise PresetError("Dieses Preset liegt nicht als Datei vor")
+            raise PresetError(_("This preset does not exist as a file"))
         stem = (f"{p.label} " if p.slot is not None else "") + safe_file(name)
         f = old.with_name(f"{stem}.fm1preset")
         k = 2
@@ -619,12 +623,12 @@ def read_any(data: bytes, filename: str = "") -> list[Preset]:
     except PresetError:
         raise
     except zipfile.BadZipFile as e:
-        raise PresetError("Die .zip-Datei ist beschädigt oder keine Zip-Datei") from e
+        raise PresetError(_("The .zip file is damaged or not a zip file")) from e
     except UnicodeDecodeError as e:
-        raise PresetError("Die Datei ist keine Textdatei (kein .fm1preset/.json)") from e
+        raise PresetError(_("The file is not a text file (not .fm1preset/.json)")) from e
     except (ValueError, TypeError, KeyError, AttributeError) as e:
-        raise PresetError("Die Datei ist beschädigt oder kein bekanntes Preset-Format "
-                          "(.fm1preset, .zip-Satz, Editor-.json, DX7-.syx)") from e
+        raise PresetError(_("The file is damaged or not a known preset format "
+                            "(.fm1preset, .zip set, editor .json, DX7 .syx)")) from e
 
 
 def _read_any(data: bytes, filename: str = "") -> list[Preset]:
@@ -644,7 +648,7 @@ def _read_any(data: bytes, filename: str = "") -> list[Preset]:
         return [Preset.from_json(d)]
     if d.get("format") in ("felucca-library", "felucca-patch"):
         return from_felucca(d)
-    raise PresetError("Unbekanntes Dateiformat")
+    raise PresetError(_("Unknown file format"))
 
 
 def export_zip(presets: list[Preset], target: Path):
@@ -699,7 +703,7 @@ def from_felucca(d: dict) -> list[Preset]:
 
 
 def diff(a: Preset, b: Preset) -> list[str]:
-    """kurze deutsche Liste der Unterschiede (Gerät a / Bibliothek b)."""
+    """kurze Liste der Unterschiede (Gerät a / Bibliothek b)."""
     out = []
     if a.name != b.name:
         out.append(f"Name: {a.name!r} ↔ {b.name!r}")
@@ -710,11 +714,11 @@ def diff(a: Preset, b: Preset) -> list[str]:
         if x != y:
             n += 1
             if n <= 12:
-                out.append(f"Parameter {i}: {x} ↔ {y}")
+                out.append(_("Parameter {i}: {a} ↔ {b}").format(i=i, a=x, b=y))
     if n > 12:
-        out.append(f"… und {n - 12} weitere Parameter")
+        out.append(ngettext("… and {n} more parameter", "… and {n} more parameters", n - 12).format(n=n - 12))
     if len(a.params) != len(b.params):
-        out.append(f"Anzahl Parameter: {len(a.params)} ↔ {len(b.params)}")
+        out.append(_("Number of parameters: {a} ↔ {b}").format(a=len(a.params), b=len(b.params)))
     if (a.native_kind, bytes(a.native)) != (b.native_kind, bytes(b.native)):
-        out.append(f"Native Daten ({a.kind_text} ↔ {b.kind_text}) unterscheiden sich")
-    return out or ["identisch"]
+        out.append(_("Native data ({a} ↔ {b}) differs").format(a=a.kind_text, b=b.kind_text))
+    return out or [_("identical")]

@@ -13,6 +13,8 @@ import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ..i18n import _
+
 DIR = Path(__file__).resolve().parent
 
 
@@ -39,28 +41,32 @@ class Sim:
         return self.manifest.get("entry", "index.html")
 
 
+# Display texts (English source). They are translated here at run time; because tools/i18n_extract.py does not
+# scan sims/, ui/pages/simulator.py lists them again with N_() (SIM_TEXTS) – keep both in sync.
+# display titles (the manifest.json files of the bundled builds carry a German title)
+TITLES = {"fm1-open": "M-VAVE FM1 Open (built from the official source code)"}
 DESCRIPTIONS = {
-    "fm1-open": "Aus dem offiziellen Quellcode von M-VAVE gebaut (nicht von M-VAVE geprüft): FM1 Open V14 mit 8 Spuren, DX7, 808, 303, PSG, Sampler – "
-                "Spielen, Bearbeiten, Projekte, Sounds und Samples. Oberfläche englisch. Der Firmware-Update-Teil "
-                "ist entfernt (Installieren geht über „Firmware+“ in der App).",
-    "melodee": "Melodee 1.6.1 (stabil) – Oberfläche und Klang der Firmware; "
-               "nichts wird gespeichert. Erst „Switch on“ drücken (oder einfach eine Taste am FM-1 spielen).",
+    "fm1-open": "Built from M-VAVE's official source code (not checked by M-VAVE): FM1 Open V14 with 8 tracks, "
+                "DX7, 808, 303, PSG, sampler – playing, editing, projects, sounds and samples. User interface in "
+                "English. The firmware update part is removed (installing works via “Firmware+” in the app).",
+    "melodee": "Melodee 1.6.1 (stable) – user interface and sound of the firmware; nothing is saved. First press "
+               "“Switch on” (or simply play a key on the FM-1).",
 }
 
 # Online-Simulatoren aus der Firmware-Liste (awesome-fm-1). Laufen nur mit Internet.
 ONLINE = [
-    ("fm1-emu – echte Firmware (langsamer)", "https://joakimeriksson.github.io/fm1-emu/",
-     "CPU-Emulator von Joakim Eriksson (MIT): lässt echte .fwsc-Firmwares laufen (Stock, Skiff, ORBIT …). Deutlich "
-     "langsamer als die WASM-Simulatoren – am Pi 5 ist ORBIT gut spielbar, Skiff 2 knapp, Stock V15 kaum. "
-     "Am besten „In Firefox öffnen“."),
+    ("fm1-emu – real firmware (slower)", "https://joakimeriksson.github.io/fm1-emu/",
+     "CPU emulator by Joakim Eriksson (MIT): runs real .fwsc firmwares (Stock, Skiff, ORBIT …). Much slower than "
+     "the WASM simulators – on the Pi 5 ORBIT is well playable, Skiff 2 just about, Stock V15 hardly. Best use "
+     "“Open in Firefox”."),
     ("FM-1 Workbench (Community)", "https://fm1-workbench.web.app",
-     "Community-Werkbank von thegiantsnail (GPL-3.0) mit Software-FM-1."),
-    ("Felucca (try)", "https://hugelton.github.io/Felucca/webapp/try/", "Felucca – die Basis der meisten Firmwares"),
-    ("ORBIT", "https://dspaudio.github.io/orbit-web-emu/", "SLOOP-basierte Groovebox mit Event-Tape"),
-    ("X0X", "https://charlesvestal.github.io/fm1-x0x/emu/", "909, 808, zwei 303"),
-    ("FoMni", "https://charlesvestal.github.io/fm1-fomni/", "Omnichord-artige Akkord-Harfe"),
-    ("ChoralRoot FM-1", "https://quixotic7.github.io/ChoralRootFM1/emu/", "Akkord-Instrument à la Orchid"),
-    ("MONK-1", "https://charlesvestal.github.io/fm1-monk/emu/", "Formant-Gesangssynth"),
+     "Community workbench by thegiantsnail (GPL-3.0) with a software FM-1."),
+    ("Felucca (try)", "https://hugelton.github.io/Felucca/webapp/try/", "Felucca – the base of most firmwares"),
+    ("ORBIT", "https://dspaudio.github.io/orbit-web-emu/", "SLOOP-based groovebox with event tape"),
+    ("X0X", "https://charlesvestal.github.io/fm1-x0x/emu/", "909, 808, two 303s"),
+    ("FoMni", "https://charlesvestal.github.io/fm1-fomni/", "Omnichord-like chord harp"),
+    ("ChoralRoot FM-1", "https://quixotic7.github.io/ChoralRootFM1/emu/", "Chord instrument à la Orchid"),
+    ("MONK-1", "https://charlesvestal.github.io/fm1-monk/emu/", "Formant vocal synth"),
 ]
 
 
@@ -74,12 +80,13 @@ def bundled() -> list[Sim]:
             m = json.loads(mf.read_text("utf-8"))
         except (OSError, ValueError):
             continue
-        out.append(Sim(key=m["name"], title=m.get("title", m["name"]), version=m.get("version", ""),
+        title = _(TITLES[m["name"]]) if m["name"] in TITLES else m.get("title", m["name"])
+        out.append(Sim(key=m["name"], title=title, version=m.get("version", ""),
                        kind=m.get("kind", "emulator"), license=m.get("license", ""),
                        source_repo=m.get("source_repo", ""), commit=m.get("commit", ""), ref=m.get("ref", ""),
                        toolchain=m.get("toolchain", ""), build_date=m.get("build_date", ""),
                        size=sum(f.get("size", 0) for f in m.get("files", {}).values()),
-                       description=DESCRIPTIONS.get(m["name"], ""), manifest=m))
+                       description=_(DESCRIPTIONS[m["name"]]) if m["name"] in DESCRIPTIONS else "", manifest=m))
     return out
 
 
@@ -89,15 +96,15 @@ def online(url: str, title: str = "", kind: str = "emulator", description: str =
 
 # nur als Verweis (läuft nicht sinnvoll eingebettet / auf dem Pi): öffnet im normalen Browser
 LINKS = [
-    ("RemoteFM1 (nur Link)", "https://github.com/Quixotic7/RemoteFM1",
-     "Quixotic7, GPL-3.0: das echte FM-1 als USB-Bedienfeld für eine emulierte Firmware. Lief am Pi schlecht – "
-     "deshalb nur als Verweis; öffnet die Projektseite im Browser."),
+    ("RemoteFM1 (link only)", "https://github.com/Quixotic7/RemoteFM1",
+     "Quixotic7, GPL-3.0: the real FM-1 as a USB control panel for an emulated firmware. Ran badly on the Pi – "
+     "therefore only as a reference; opens the project page in the browser."),
 ]
 
 
 def online_list() -> list[Sim]:
-    return [online(u, t, description=d) for t, u, d in ONLINE] + \
-        [online(u, t, kind="link", description=d) for t, u, d in LINKS]
+    return [online(u, _(t), description=_(d)) for t, u, d in ONLINE] + \
+        [online(u, _(t), kind="link", description=_(d)) for t, u, d in LINKS]
 
 
 def verify(sim: Sim) -> list[str]:
@@ -106,9 +113,9 @@ def verify(sim: Sim) -> list[str]:
     for name, info in sim.manifest.get("files", {}).items():
         p = DIR / sim.key / name
         if not p.exists():
-            problems.append(f"{name} fehlt")
+            problems.append(_("{name} missing").format(name=name))
         elif p.stat().st_size != info.get("size") or hashlib.sha256(p.read_bytes()).hexdigest() != info.get("sha256"):
-            problems.append(f"{name} beschädigt")
+            problems.append(_("{name} damaged").format(name=name))
     return problems
 
 
