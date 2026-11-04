@@ -71,7 +71,7 @@ def test_v16_head_is_not_called_rom_only():
     rep = m.check_dump(bytes(d), refs, factory_heads=m.demo_heads())
     head = next(t for _, t in rep.findings if "Bootkopf" in t)
     assert "noch nicht geklärt" in head and "entsteht nur" not in head
-    help_md = (ROOT / "fm1companion/data/help/11-v16-hinweis.md").read_text("utf-8")
+    help_md = (ROOT / "fm1companion/data/help/de/11-v16-hinweis.md").read_text("utf-8")
     assert "schreiben den Bootkopf (0x0–0x3FFF) nie" not in help_md and "**offen**" in help_md
 
 

@@ -1,77 +1,80 @@
-# Rückmeldung je Aktion – Prüfliste (Bereich Seiten/Klang/Musik/Samples/Daten-Seiten)
+# Feedback per action – checklist (area pages/sound/music/samples/data pages)
 
-Regel: Jede Aktion sagt auf Deutsch, **was passiert ist**, auch bei Teilergebnissen, und wenn es zählt, **was nicht
-passiert ist**. Kein stilles Gelingen, kein nacktes „OK“.
+Rule: every action says **what happened**, also for partial results, and, where it matters, **what did not
+happen**. No silent success, no bare "OK".
 
-Mittel: `JobDialog(..., done_text=, fail_text=, actions=, cancellable=)` zeigt „<Titel> – läuft …“ → grünes
-„Fertig“ + Ergebniszeile bzw. rotes „Fehlgeschlagen“ + Erklärung, Protokoll unter „Details“, Knopf
-„Schließen“. `run_job(..., done_text=, fail_text=, notify_fail=)` zeigt Toasts für Hintergrund-Jobs.
-Ohne `done_text` nimmt der Dialog die letzte Protokollzeile, nie ein leeres „OK“.
+The app's messages are currently German; the quoted messages below are English renderings of them (the UI
+translation is in progress, see [TRANSLATING.md](TRANSLATING.md)).
 
-| Seite / Aktion | vorher | nachher |
+Means: `JobDialog(..., done_text=, fail_text=, actions=, cancellable=)` shows "<title> – running …" → green
+"Done" + result line or red "Failed" + explanation, log under "Details", button
+"Close". `run_job(..., done_text=, fail_text=, notify_fail=)` shows toasts for background jobs.
+Without `done_text` the dialog takes the last log line, never an empty "OK".
+
+| Page / action | before | after |
 |---|---|---|
-| **Alle JobDialoge** | Überschrift „… – fertig“, Knopf „Close“/„Schließen“, sonst nichts | „läuft …“ / ✓ „Fertig“ + Ergebniszeile / ✗ „Fehlgeschlagen“ + Erklärung, Details aufklappbar, „Abbrechen“ (oder grau mit Grund) |
-| Dateifehler in Jobs | „[Errno 13] Permission denied: …“ | „Keine Schreibrechte (…) – bitte Rechte prüfen …“ |
-| Komponieren · In Pattern schreiben | Statuszeile | Dialog: „Spur k, Pattern b: n Steps geschrieben und nachgelesen. Alter Inhalt gesichert. Dauerhaft erst mit SAVE.“ |
-| Komponieren · Rückgängig | Statuszeile | Dialog: „… hat wieder den alten Inhalt.“; auf fremdem Gerät: Ablehnung mit Gerätenamen |
-| Komponieren · Als MIDI speichern | Statuszeile, Absturz bei Dateifehler | Statuszeile „nur als Datei, am FM-1 nichts geändert“ + Toast; Dateifehler deutsch |
-| Werkstatt · Auf das FM-1 spielen | Log „Fertig“; ohne Datei: nichts | „n Patterns geschrieben (…); Song-Kette ersetzt/unverändert. Alter Stand gesichert.“; Abbruch: „x Patterns vorher gelesen – Rückgängig holt sie zurück“ bzw. „nichts geändert“; ohne Datei: Erklärung |
-| Werkstatt · Rückgängig | nur Log | „n Patterns (und Song-Kette) haben wieder den alten Stand.“ |
-| Presets · Lesen/Sichern/Schreiben/Löschen/Umbenennen/Verschieben/Spur speichern | Statuszeile | Statuszeile mit Zahlen; bei Teilfehler: „Bereits geänderte Plätze lassen sich mit Rückgängig zurücknehmen.“ |
-| Presets · Tags / Entfernen | still | Statuszeile „… (nur Bibliothek, am FM-1 nichts geändert)“ |
-| Presets · Exportieren | Statuszeile | Statuszeile + Toast, „am FM-1 nichts geändert“ |
-| FM-Voices · Sammlung laden | „fertig (…)“ | „heruntergeladen … – ans FM-1 wurde nichts gesendet“ + Toast |
-| FM-Voices · Zur eigenen Bank | still | Statuszeile mit Anzahl |
-| FM-Voices · FM6-Preset / Rückgängig / SysEx | Statuszeile | unverändert (schon klar), Rückgängig je Gerät |
-| Samples · Kit in Slot laden | Dialog „fertig“ | „Kit „X“ (n Sounds) liegt jetzt in USRk. Alter Inhalt gesichert – Rückgängig“; Fehler: ob gesichert oder „nichts geändert“ |
-| Samples · Slot leeren / Rückgängig | Dialog „fertig“ / – | „USRk ist leer. Alter Inhalt gesichert“ / „USRk hat wieder den alten Inhalt“ |
-| Samples · Als WAVs exportieren | Erfolg als **Warn**-Dialog (show_error) | Toast „n WAV-Dateien exportiert nach …“ |
-| Samples · Kit speichern | still | Toast „Kit „X“ gespeichert (n Sounds) – nur auf dem Rechner“ |
-| Samples · Passend kürzen | still | Toast „nur im Kit-Baukasten, Dateien unverändert“ |
-| Samples · Dateien hierher ziehen | still (nur Neu-Einlesen) | Toast mit Anzahl |
-| Samples · FM1 Open lesen / schreiben | Dialog „fertig“ | „gelesen und gesichert: Datei – am FM-1 nichts geändert“ / „geschrieben und Byte für Byte geprüft; vorheriger Stand als .fm1s“ |
-| Samples · MP3 ohne ffmpeg | Länge „?“ | Hinweis „für MP3/FLAC: sudo apt install ffmpeg“ (Liste und Tooltip) |
-| Sample-Pakete · Laden | Statuszeile | Statuszeile + Toast (Erfolg/Fehler) |
-| Aufnahme · Exportieren | Geräte-Zeile | + Toast „n von m exportiert (neben dem Original), k übersprungen“ |
-| Aufnahme · Als Sample / Löschen | Zeile / still | + Toast, Dateifehler deutsch |
-| Projekte · Holen | Dialog „fertig“ | „n von m Projekt(en) in die Bibliothek geholt – am FM-1 nichts geändert“ |
-| Projekte · Platz leeren / Einspielen | Dialog „fertig“ | „Platz k ist jetzt leer“ / „„X“ liegt jetzt in Platz k – unter SAVE > PROJECT laden“; Fehler: „das Gerät hat nichts geschrieben“ |
-| Projekt-Ansicht · Vom FM-1 lesen | Dialog „fertig“ | „… gelesen und geöffnet – nur angesehen, am FM-1 nichts geändert“ |
-| Projekt-Ansicht · Exporte | Toast | Toast; Dateifehler deutsch statt Absturz |
-| Backup-Browser · Sicherheits-Backup / Zurückspielen | Dialog „fertig“ | „Jetziger Stand gesichert: Datei. Noch nichts zurückgespielt“ / „n Teile zurückgespielt; vorheriger Stand im Sicherheits-Backup …“ |
-| Backup-Browser · Live-Stand lesen | Dialog „fertig“ | schließt selbst; „nur im Speicher, am FM-1 nichts geändert“ |
-| Firmware+ · Katalog aktualisieren | still | Toast mit Anzahl Einträge; Fehler: Hinweis „gespeicherter Stand“ |
-| Firmware+ · Link speichern | still | Toast „gespeichert – Installiert wurde nichts“; Dateifehler deutsch |
-| Klangerzeuger · Start / Stopp | Toast / still | Toast / Toast |
-| MIDI · Protokoll exportieren | Toast; Absturz bei Dateifehler | Toast; Dateifehler deutsch |
-| Geräte · Vergleichen | A = B möglich | Knopf grau mit Grund; A ≠ B voreingestellt |
+| **All JobDialogs** | heading "… – done", button "Close"/"Schließen", nothing else | "running …" / ✓ "Done" + result line / ✗ "Failed" + explanation, collapsible details, "Cancel" (or greyed out with a reason) |
+| File errors in jobs | "[Errno 13] Permission denied: …" | "No write permission (…) – please check the permissions …" |
+| Compose · Write to pattern | status line | dialog: "Track k, pattern b: n steps written and read back. Old content backed up. Permanent only after SAVE." |
+| Compose · Undo | status line | dialog: "… has its old content again."; on a different device: refusal naming the device |
+| Compose · Save as MIDI | status line, crash on file error | status line "only as a file, nothing changed on the FM-1" + toast; file error in plain language |
+| Workshop · Play onto the FM-1 | log "Done"; without a file: nothing | "n patterns written (…); song chain replaced/unchanged. Old state backed up."; abort: "x patterns read beforehand – Undo brings them back" or "nothing changed"; without a file: explanation |
+| Workshop · Undo | log only | "n patterns (and the song chain) have their old state again." |
+| Presets · Read/Back up/Write/Delete/Rename/Move/Save track | status line | status line with numbers; on partial failure: "Slots already changed can be reverted with Undo." |
+| Presets · Tags / Remove | silent | status line "… (library only, nothing changed on the FM-1)" |
+| Presets · Export | status line | status line + toast, "nothing changed on the FM-1" |
+| FM voices · Load collection | "done (…)" | "downloaded … – nothing was sent to the FM-1" + toast |
+| FM voices · To your own bank | silent | status line with count |
+| FM voices · FM6 preset / Undo / SysEx | status line | unchanged (already clear), undo per device |
+| Samples · Load kit into slot | dialog "done" | "Kit "X" (n sounds) is now in USRk. Old content backed up – Undo"; error: whether backed up or "nothing changed" |
+| Samples · Clear slot / Undo | dialog "done" / – | "USRk is empty. Old content backed up" / "USRk has its old content again" |
+| Samples · Export as WAVs | success shown as a **warning** dialog (show_error) | toast "n WAV files exported to …" |
+| Samples · Save kit | silent | toast "Kit "X" saved (n sounds) – on the computer only" |
+| Samples · Trim to fit | silent | toast "only in the kit builder, files unchanged" |
+| Samples · Drag files here | silent (only re-scan) | toast with count |
+| Samples · FM1 Open read / write | dialog "done" | "read and backed up: file – nothing changed on the FM-1" / "written and verified byte by byte; previous state as .fm1s" |
+| Samples · MP3 without ffmpeg | length "?" | hint "for MP3/FLAC: sudo apt install ffmpeg" (list and tooltip) |
+| Sample packs · Load | status line | status line + toast (success/error) |
+| Recording · Export | device line | + toast "n of m exported (next to the original), k skipped" |
+| Recording · As sample / Delete | line / silent | + toast, file errors in plain language |
+| Projects · Fetch | dialog "done" | "n of m project(s) fetched into the library – nothing changed on the FM-1" |
+| Projects · Clear slot / Load in | dialog "done" | "Slot k is now empty" / ""X" is now in slot k – load it via SAVE > PROJECT"; error: "the device did not write anything" |
+| Project view · Read from FM-1 | dialog "done" | "… read and opened – only viewed, nothing changed on the FM-1" |
+| Project view · Exports | toast | toast; file errors in plain language instead of a crash |
+| Backup browser · Safety backup / Restore | dialog "done" | "Current state backed up: file. Nothing restored yet" / "n parts restored; previous state in the safety backup …" |
+| Backup browser · Read live state | dialog "done" | closes by itself; "only in memory, nothing changed on the FM-1" |
+| Firmware+ · Update catalog | silent | toast with number of entries; error: hint "saved state" |
+| Firmware+ · Save link | silent | toast "saved – nothing was installed"; file errors in plain language |
+| Sound module · Start / Stop | toast / silent | toast / toast |
+| MIDI · Export log | toast; crash on file error | toast; file errors in plain language |
+| Devices · Compare | A = B possible | button greyed out with a reason; A ≠ B preselected |
 
-Nicht in diesem Bereich (separat geprüft): Firmware-Seite (Download/Installation), Backups-Seite, Übersicht,
-Rettung, Hauptfenster – sie nutzen dieselbe JobDialog-API.
+Not in this area (checked separately): firmware page (download/installation), backups page, overview,
+rescue, main window – they use the same JobDialog API.
 
-## Rückmeldungen – Installer, Firmware, Backups, Rettung, Gerät (ws/fixa)
+## Feedback – installer, firmware, backups, rescue, device (ws/fixa)
 
-Jede Aktion meldet am Ende, was passiert ist und was nicht (Fertig/Fehlgeschlagen über `JobDialog(done_text=…)`,
-Wrapper `ui/feedback.run`, kleine Aktionen über die Statuszeile `ctx.message`).
+Every action reports at the end what happened and what did not (Done/Failed via `JobDialog(done_text=…)`,
+wrapper `ui/feedback.run`, small actions via the status line `ctx.message`).
 
-| Aktion | Wo | Rückmeldung bei Erfolg | bei Fehler / Abbruch |
+| Action | Where | Feedback on success | on error / abort |
 |---|---|---|---|
-| Firmware installieren | Firmware, Katalog, eigene Datei | „Installation abgeschlossen – das FM-1 meldet jetzt <Kennung> (<Firmware Version>), über die Original-V15, Ressourcen geschrieben / NICHT geschrieben, Backup vorher gespeichert / ohne Backup.“ | deutscher Grund; vor V15: „am FM-1 wurde nichts geändert“; nach V15: „Auf das FM-1 wurde die Original-Firmware V15 geschrieben … <Ziel> wurde NICHT geschrieben“ |
-| Probelauf | Plan „Nur Probelauf“ | „Probelauf erfolgreich – alle Pakete geprüft, das FM-1 hat geantwortet. Am FM-1 wurde nichts geändert.“ | Grund (z. B. Paket beschädigt), nichts gesendet |
-| Nur herunterladen | Firmware | „<Firmware> <Version> heruntergeladen (<Datei>, Prüfsumme geprüft / nicht verfügbar) – noch NICHT installiert. Gespeichert in …“ + [Jetzt installieren …] [Ordner öffnen] | HTTP 403/404/offline auf Deutsch, Details unter „Details anzeigen“ |
-| Schrift & Werkssounds nachschreiben | Firmware | „Ressourcen von Melodee <tag> geschrieben … Die Firmware selbst wurde nicht verändert.“ | deutscher Grund |
-| Firmware hinzufügen / entfernen | Firmware | Statuszeile: „… hinzugefügt – noch nichts installiert“ / „… entfernt. Pakete bleiben, am FM-1 ändert sich nichts.“ | – |
-| Release-Liste | Firmware | „lade …“, dann Liste | „Keine Versionen gefunden. <Grund: offline / Abruf-Limit / keine Releases>“ |
-| Backup jetzt | Backups, Übersicht, Strg+B | „Backup gespeichert: <Datei> (57 Teile, 12 Projekte, 412 KB). Am FM-1 wurde nichts verändert.“ + [Ordner öffnen] | Firmware ohne Backup: „<Firmware> hat kein Editor-Protokoll – davon kann die App kein Backup machen …“; schreibgeschützt: „Keine Schreibrechte …“ |
-| Alles zurückspielen | Backups | „Rücksicherung abgeschlossen: N Teile vom Stand <Datum> geschrieben … Der vorherige Stand liegt im Sicherheits-Backup <Datei>.“ (oder: „Es gibt KEIN Sicherheits-Backup“) | andere Firmware-Familie: „Zurückspielen nicht möglich“ + was geht |
-| Spiegeln | Backups | „Spiegel aktualisiert: N Backups kopiert und geprüft, keine Fehler. Ziel: …“ | Anzahl Fehler |
-| Notiz / Etiketten / Anheften / Hinzufügen / Löschen | Backups | Statuszeile: „<Datei>: Notiz gespeichert“, „angeheftet – wird nie automatisch gelöscht“, „Backup hinzugefügt (Kopie)“, „Gelöscht: …“ | „Nicht gespeichert … (schreibgeschützter Ordner?)“ |
-| Projekte entnehmen | Backups | Info: „N Projekte liegen jetzt in der Projekt-Bibliothek … Am FM-1 wurde nichts verändert.“ | – |
-| Beschädigte Backups | Backups | in der Liste rot „beschädigt“, Zählung im Kopf | Öffnen/Zurückspielen: „lässt sich nicht lesen … Löschen geht“ |
-| Umbenennen | Übersicht | „Umbenannt in „X“ – Backups liegen jetzt in „X“.“ | „Umbenennen nicht möglich“ + Grund |
-| Firmware wählen (mehrdeutige Kennung) | Gerät verbinden | „Gemerkt: Auf <Gerät> läuft <Firmware> (Kennung …)“ / „Firmware unbekannt – Installationen gelten als Wechsel“ | – |
-| Neu verbinden | Hauptfenster | „Verbinde neu mit …“ / „N FM-1 gefunden“ / „kein FM-1 gefunden – USB-Datenkabel prüfen“ | – |
-| FM-1-Seite „Neu einlesen“ | FM-1 | „eingelesen um HH:MM:SS (nur gelesen, nichts verändert)“; generisch: was bekannt ist + warum keine Live-Werte | „Fehler: …“ |
-| Rettung: Installation abschließen | Rettung | „Installation abgeschlossen – das FM-1 meldet jetzt <Kennung> und startet normal.“ | Engine-Meldung (deutsch) |
-| Rettung: Werkzeug holen / V15 im ROM-Modus / Einstellungen reparieren / Komplettsicherung | Rettung | jeweils, was geschrieben bzw. NICHT geschrieben wurde (Simulation: „nichts wurde geschrieben“) + [Ordner öffnen] | Code-Erklärung |
-| Einstellungen kaputt | Start | einmaliger Hinweis: Datei beiseitegelegt / ungültige Felder ersetzt | – |
+| Install firmware | Firmware, catalog, own file | "Installation finished – the FM-1 now reports <identity> (<firmware version>), via the original V15, resources written / NOT written, backup saved beforehand / without backup." | reason in plain language; before V15: "nothing was changed on the FM-1"; after V15: "The original firmware V15 was written to the FM-1 … <target> was NOT written" |
+| Dry run | plan "Nur Probelauf" (dry run only) | "Dry run successful – all packages checked, the FM-1 answered. Nothing was changed on the FM-1." | reason (e.g. package damaged), nothing sent |
+| Download only | Firmware | "<firmware> <version> downloaded (<file>, checksum verified / not available) – NOT installed yet. Saved in …" + [Install now …] [Open folder] | HTTP 403/404/offline in plain language, details under "Show details" |
+| Rewrite font & factory sounds | Firmware | "Resources of Melodee <tag> written … The firmware itself was not changed." | reason in plain language |
+| Add / remove firmware | Firmware | status line: "… added – nothing installed yet" / "… removed. Packages remain, nothing changes on the FM-1." | – |
+| Release list | Firmware | "loading …", then the list | "No versions found. <reason: offline / rate limit / no releases>" |
+| Backup now | Backups, overview, Ctrl+B | "Backup saved: <file> (57 parts, 12 projects, 412 KB). Nothing was changed on the FM-1." + [Open folder] | firmware without backup: "<firmware> has no editor protocol – the app cannot make a backup of it …"; read-only: "No write permission …" |
+| Restore everything | Backups | "Restore finished: N parts from the state of <date> written … The previous state is in the safety backup <file>." (or: "There is NO safety backup") | different firmware family: "Restore not possible" + what is possible |
+| Mirror | Backups | "Mirror updated: N backups copied and verified, no errors. Target: …" | number of errors |
+| Note / labels / pin / add / delete | Backups | status line: "<file>: note saved", "pinned – will never be deleted automatically", "Backup added (copy)", "Deleted: …" | "Not saved … (read-only folder?)" |
+| Extract projects | Backups | info: "N projects are now in the project library … Nothing was changed on the FM-1." | – |
+| Damaged backups | Backups | shown red as "damaged" in the list, count in the header | open/restore: "cannot be read … deleting works" |
+| Rename | Overview | "Renamed to "X" – backups are now in "X"." | "Renaming not possible" + reason |
+| Choose firmware (ambiguous identity) | connecting a device | "Remembered: <device> runs <firmware> (identity …)" / "Firmware unknown – installations count as a switch" | – |
+| Reconnect | main window | "Reconnecting to …" / "N FM-1 found" / "no FM-1 found – check the USB data cable" | – |
+| FM-1 page "Neu einlesen" (re-read) | FM-1 | "read at HH:MM:SS (read only, nothing changed)"; generic: what is known + why there are no live values | "Error: …" |
+| Rescue: finish installation | Rescue | "Installation finished – the FM-1 now reports <identity> and starts normally." | engine message (in plain language) |
+| Rescue: fetch tool / V15 in ROM mode / repair settings / full backup | Rescue | in each case, what was written or NOT written (simulation: "nothing was written") + [Open folder] | explanation of the code |
+| Settings broken | start | one-time notice: file moved aside / invalid fields replaced | – |

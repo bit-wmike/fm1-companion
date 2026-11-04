@@ -18,6 +18,7 @@ from ..musik_widgets import EditHistory, StepRoll
 from ..playback_bar import PlaybackBar, Source, device_name
 from ..responsive import adaptive_splitter, fit_height, on_narrow
 from . import PageSpec
+from ...i18n import _
 
 
 def _spin(lo, hi, val, suffix="", tip=""):
@@ -665,7 +666,8 @@ def _make(ctx, window):
     return ComposePage(ctx, window)
 
 
-PAGE = PageSpec(key="compose", title="Komponieren", group="musik", factory=_make,
+PAGE = PageSpec(key="compose", title=_("Compose"), group="musik", factory=_make,
                 icons=("music-note-16th", "audio-x-generic", "media-playlist-shuffle"), order=30,
-                description="Rhythmen, Akkorde und Melodien erzeugen und ins FM-1 schreiben",
-                keywords=("euklid", "akkord", "melodie", "arpeggio", "bass", "markov", "generator", "pattern"))
+                description=_("generate rhythms, chords and melodies and write them to the FM-1"),
+                keywords=("euklid", "akkord", "melodie", "arpeggio", "bass", "markov", "generator", "pattern",
+                          "euclid", "chord", "melody", "rhythm", "compose"))

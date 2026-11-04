@@ -10,7 +10,7 @@ Pi 5 (Cortex-A76 @ 2.4 GHz) is roughly 3–5× slower per core than this contain
 should keep a comfortable margin (Melodee ≈ 4–6×, FM1 Open ≈ 12–20× realtime, estimated, not measured).
 The *page* (canvas drawing, 30–60 fps frame posts) costs more than the DSP on the Pi; Firefox is faster there.
 
-Rebuild: `python3 tools/build_sims.py --repo fm1-open=/tmp/fm1_open --repo melodee=/tmp/melodee`.
+Rebuild: `python3 tools/build_sims.py --repo fm1-open=/path/to/fm1_open --repo melodee=/path/to/melodee`.
 
 ## Decisions
 * Official workbench shipped whole (play/edit, projects & voices, samples, manual) with `FM1_PACKAGE = null`
@@ -22,7 +22,7 @@ Rebuild: `python3 tools/build_sims.py --repo fm1-open=/tmp/fm1_open --repo melod
   MIDI adapter (worklet messages for fm1-open/melodee, computer-key fallback), recording tap → WAV download,
   `?fm1latency=` latencyHint override, SSE MIDI relay when opened in Firefox, and a workaround for
   Chromium 102 (Qt 6.4) which forbids synchronous `WebAssembly.Module/Instance` > 4 KB on the main thread.
-* Online pages get MIDI via their own Web-MIDI port list ("FM-1 (Tasten)", chosen system inputs).
+* Online pages get MIDI via their own Web-MIDI port list ("FM-1 (Tasten)" – Tasten = keys –, chosen system inputs).
 * Additional sources (time-boxed): **fm1-emu** (Joakim Eriksson, MIT; CPU emulator running real .fwsc)
   is listed online, labelled slower, Firefox recommended – not bundled (Rust/cargo pages build with a firmware
   catalog step, out of time box). **FM-1 Workbench** (thegiantsnail) online entry. **RemoteFM1** (Quixotic7)

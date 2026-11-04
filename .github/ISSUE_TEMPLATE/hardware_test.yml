@@ -1,75 +1,75 @@
-name: Hardware-Testbericht
-description: Du hast eine Funktion an einem echten FM-1 ausprobiert – egal ob es geklappt hat oder nicht.
+name: Hardware test report
+description: You tried a function on a real FM-1 – whether it worked or not.
 labels: ["hardware-test"]
 body:
   - type: markdown
     attributes:
       value: |
-        Testberichte von echter Hardware helfen am meisten (siehe docs/UNGETESTET.md). Bitte nur mit Backup und auf
-        eigenes Risiko testen. Keine Seriennummern, Tokens oder persönlichen Daten angeben.
+        Test reports from real hardware help most (see docs/UNTESTED.md). Please only test with a backup and at
+        your own risk. Do not include serial numbers, tokens or personal data.
   - type: input
     id: version
     attributes:
-      label: Version der Suite
+      label: Suite version
       placeholder: "2.3.2"
     validations:
       required: true
   - type: input
     id: device
     attributes:
-      label: Gerät
-      description: Modell/Revision, falls bekannt (z. B. Flash-Chip laut „Ist mein FM-1 sauber?“)
+      label: Device
+      description: Model/revision, if known (e.g. flash chip according to "Ist mein FM-1 sauber?" – Is my FM-1 clean?)
       placeholder: "M-VAVE FM-1"
     validations:
       required: true
   - type: input
     id: firmware
     attributes:
-      label: Firmware vorher → nachher
-      placeholder: "z. B. Original V15 → Melodee 1.6.0"
+      label: Firmware before → after
+      placeholder: "e.g. original V15 → Melodee 1.6.0"
     validations:
       required: true
   - type: input
     id: computer
     attributes:
-      label: Rechner und System
-      placeholder: "z. B. Raspberry Pi 5, Raspberry Pi OS Bookworm"
+      label: Computer and system
+      placeholder: "e.g. Raspberry Pi 5, Raspberry Pi OS Bookworm"
   - type: dropdown
     id: feature
     attributes:
-      label: Getestete Funktion
+      label: Tested function
       options:
-        - Firmware installieren / wechseln
-        - Zurück zum Original (V15/V16)
-        - Unterbrochene Installation abschließen (Update-Modus)
-        - Schrift & Werkssounds nachschreiben
-        - Rettung Stufe 2 (ROM-Bootmodus)
-        - Ist mein FM-1 sauber? / Reste aufräumen
-        - Studio – aufs FM-1 zurückschreiben
-        - Backup / Wiederherstellen
-        - Presets, Samples, Projekte schreiben
-        - Etwas anderes
+        - Install / switch firmware
+        - Back to the original (V15/V16)
+        - Finish an interrupted installation (update mode)
+        - Rewrite font & factory sounds
+        - Rescue level 2 (ROM boot mode)
+        - Is my FM-1 clean? / Clean up leftovers
+        - Studio – write back to the FM-1
+        - Backup / restore
+        - Write presets, samples, projects
+        - Something else
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Was hast du gemacht?
+      label: What did you do?
     validations:
       required: true
   - type: dropdown
     id: result
     attributes:
-      label: Ergebnis
+      label: Result
       options:
-        - Hat funktioniert
-        - Hat teilweise funktioniert
-        - Hat nicht funktioniert, Gerät läuft aber
-        - Gerät startete danach nicht mehr / musste gerettet werden
+        - It worked
+        - It partly worked
+        - It did not work, but the device runs
+        - The device no longer started afterwards / had to be rescued
     validations:
       required: true
   - type: textarea
     id: notes
     attributes:
-      label: Details, Meldungen der App
+      label: Details, messages from the app
       render: text

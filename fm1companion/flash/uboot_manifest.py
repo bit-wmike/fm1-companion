@@ -64,7 +64,7 @@ JL = {
 # „Reste aufräumen“ (flash/restzone.py) mit seinem Flash-Modell und den Steckbriefen – laufen als root neben dem
 # Unbricker. Nach jeder Änderung an einer dieser Dateien neu erzeugen (tests/test_safety.py prüft das):
 #   python3 -c "from fm1companion.flash import uboot_manifest as M; print(M.own_lines())"
-# 2026-11 (Sicherheitsbefunde S1–S3, docs/RECHERCHE-2026-11.md): flashmodel.py neu gepinnt – app_directory /
+# 2026-11 (Sicherheitsbefunde S1–S3, docs/RESEARCH-2026-11.md): flashmodel.py neu gepinnt – app_directory /
 # directory_layout (Dateitabelle des App-Bereichs mit Kopf- und Datei-CRCs), FACTORY_APPS (Werks-Abbild 8c1d13a5…) und
 # check_dump nennt Werks-Abbilder mit gültiger Struktur nicht mehr „beschädigt“. rescuegate.py neu: prüft vor
 # restore/repair-settings die Sicherung desselben Laufs (V16-Bootkopf, V16-Aufbau) und läuft dazu als root mit.

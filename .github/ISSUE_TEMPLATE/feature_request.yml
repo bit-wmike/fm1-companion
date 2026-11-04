@@ -1,20 +1,20 @@
-name: Wunsch / Idee
-description: Eine neue Funktion oder Verbesserung vorschlagen.
+name: Feature request / idea
+description: Suggest a new feature or an improvement.
 labels: ["enhancement"]
 body:
   - type: textarea
     id: problem
     attributes:
-      label: Worum geht es?
-      description: Welches Problem soll gelöst werden, oder was möchtest du mit dem FM-1 machen?
+      label: What is it about?
+      description: Which problem should be solved, or what would you like to do with the FM-1?
     validations:
       required: true
   - type: textarea
     id: idea
     attributes:
-      label: Deine Idee
+      label: Your idea
   - type: input
     id: firmware
     attributes:
-      label: Betroffene Firmware (falls bestimmte)
-      placeholder: "z. B. Melodee, SLOOP, alle"
+      label: Affected firmware (if a specific one)
+      placeholder: "e.g. Melodee, SLOOP, all"

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Sicherheitsbefunde S1–S3 (docs/RECHERCHE-2026-11.md): Rettung Stufe 2 und Dump-Prüfung.
+"""Sicherheitsbefunde S1–S3 (docs/RESEARCH-2026-11.md): Rettung Stufe 2 und Dump-Prüfung.
 
 S1: „Einstellungen reparieren“ schreibt nie auf einen Flash mit V16- oder unbekanntem Aufbau.
 S2: „Original-V15 zurückschreiben“ schreibt nie unter einem V16- oder unbekannten Bootkopf.

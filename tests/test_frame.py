@@ -103,7 +103,7 @@ def test_deb_suggests(tmp_path):
     assert "Suggests: python3-crcmod" in info
     assert "Depends: python3 (>= 3.11), python3-pyqt6, python3-pyqt6.qtsvg" in info
     files = subprocess.run(["dpkg-deb", "-c", str(deb)], capture_output=True, text=True, check=True).stdout
-    assert "fm1companion/data/help/12-glossar.md" in files
+    assert "fm1companion/data/help/de/12-glossar.md" in files
 
 
 def test_exec_quote():

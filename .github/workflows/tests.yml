@@ -15,17 +15,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Systempakete
+      - name: System packages
         run: |
           sudo apt-get update -q
           sudo apt-get install -y --no-install-recommends python3 python3-pytest python3-numpy python3-mido \
             python3-rtmidi python3-pyqt6 python3-pyqt6.qtsvg git ruff || \
           sudo apt-get install -y --no-install-recommends python3 python3-pytest python3-numpy python3-mido \
             python3-rtmidi python3-pyqt6 python3-pyqt6.qtsvg git
-      - name: ruff (Syntaxfehler und undefinierte Namen im Kern)
+      - name: ruff (syntax errors and undefined names in the core)
         run: |
           if command -v ruff >/dev/null; then ruff check --isolated --select E9,F63,F7 .; else python3 -m compileall -q fm1companion tools tests packaging; fi
-      - name: pytest (ohne Qt WebEngine und ohne Gerät)
+      - name: pytest (without Qt WebEngine and without a device)
         env:
           QT_QPA_PLATFORM: offscreen
           FM1C_NO_NET: "1"

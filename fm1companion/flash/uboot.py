@@ -29,7 +29,7 @@ SCRIPT = VENDOR / "fm1_unbrick.py"
 TRANSPORTER_SCRIPT = VENDOR / "fm1_transporter_recover.py"
 RESTZONE_SCRIPT = Path(__file__).resolve().parent / "restzone.py"
 # „Original-V15 zurückschreiben“ und „Einstellungen reparieren“ laufen über diese Sperre: sie prüft die Sicherung aus
-# demselben Lauf (V16-Aufbau, V16-Bootkopf), bevor der Unbricker schreibt (Sicherheitsbefunde S1/S2, RECHERCHE-2026-11)
+# demselben Lauf (V16-Aufbau, V16-Bootkopf), bevor der Unbricker schreibt (Sicherheitsbefunde S1/S2, RESEARCH-2026-11)
 GATE_SCRIPT = Path(__file__).resolve().parent / "rescuegate.py"
 # eigene Dateien, die als root mit dem Unbricker zusammen laufen (Prüfsummen in uboot_manifest.OWN)
 OWN_FILES = {"restzone.py": RESTZONE_SCRIPT, "flashmodel.py": RESTZONE_SCRIPT.parent / "flashmodel.py",

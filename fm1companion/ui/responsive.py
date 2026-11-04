@@ -232,7 +232,7 @@ def reflow(box: QBoxLayout, hspacing: int | None = None, vspacing: int | None = 
             parent.takeAt(idx)
             parent.setWidget(row, role, cont)
         else:
-            raise ValueError("reflow: Eltern-Layout nicht unterstützt")
+            raise ValueError("reflow: parent layout not supported")
     elif isinstance(parent, QWidget):
         # Reihe war das Layout eines Widgets: altes Layout ablösen, Container einsetzen
         QWidget().setLayout(box)

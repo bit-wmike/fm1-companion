@@ -1,20 +1,20 @@
-name: Fehlerbericht
-description: Etwas funktioniert nicht wie erwartet.
+name: Bug report
+description: Something does not work as expected.
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Danke für deinen Bericht! **Sicherheitslücken bitte nicht hier**, sondern privat melden (siehe SECURITY.md).
+        Thanks for your report! **Please do not report security vulnerabilities here** – report them privately (see SECURITY.md).
 
-        **Bevor du etwas anhängst:** Der Fehlerbericht der App (Hilfe › Diagnose › „Fehlerbericht speichern“) ist ein
-        ZIP. Die App entfernt Tokens, Passwörter, Rechnernamen, Home-Pfade und volle Seriennummern – schau trotzdem
-        kurz hinein, bevor du ihn hochlädst. **Füge niemals ein GitHub-Token oder Passwort in ein Issue ein.**
+        **Before you attach anything:** The app's error report (Hilfe › Diagnose › "Fehlerbericht speichern" – Help ›
+        Diagnostics › Save error report) is a ZIP. The app removes tokens, passwords, host names, home paths and full
+        serial numbers – still, take a quick look inside before you upload it. **Never paste a GitHub token or password into an issue.**
   - type: input
     id: version
     attributes:
-      label: Version der Suite
-      description: "`fm1-companion --version` oder Hilfe › Über"
+      label: Suite version
+      description: "`fm1-companion --version` or Hilfe › Über (Help › About)"
       placeholder: "2.3.2"
     validations:
       required: true
@@ -22,22 +22,22 @@ body:
     id: system
     attributes:
       label: System
-      placeholder: "z. B. Raspberry Pi OS Bookworm (Pi 5), Ubuntu 24.04, KDE Plasma 6"
+      placeholder: "e.g. Raspberry Pi OS Bookworm (Pi 5), Ubuntu 24.04, KDE Plasma 6"
   - type: input
     id: device
     attributes:
-      label: FM-1 und Firmware (falls beteiligt)
-      placeholder: "z. B. Melodee 1.6.0, SLOOP 2.8, Original V15 – oder: ohne Gerät / Demo-Modus"
+      label: FM-1 and firmware (if involved)
+      placeholder: "e.g. Melodee 1.6.0, SLOOP 2.8, original V15 – or: no device / demo mode"
   - type: textarea
     id: what
     attributes:
-      label: Was ist passiert?
-      description: Schritte zum Nachstellen, was du erwartet hast, was stattdessen passiert ist.
+      label: What happened?
+      description: Steps to reproduce, what you expected, what happened instead.
     validations:
       required: true
   - type: textarea
     id: log
     attributes:
-      label: Fehlermeldung / Protokoll (optional)
-      description: Nur die relevanten Zeilen. Vorher auf Tokens und persönliche Daten prüfen.
+      label: Error message / log (optional)
+      description: Only the relevant lines. Check for tokens and personal data first.
       render: text

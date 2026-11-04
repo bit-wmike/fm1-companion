@@ -1,46 +1,54 @@
-.TH FM1-COMPANION 1 "November 2026" "FM-1 Companion Suite 2.3.2" "Benutzerbefehle"
+.TH FM1-COMPANION 1 "November 2026" "FM-1 Companion Suite 2.3.2" "User Commands"
 .SH NAME
-fm1-companion \- Desktop-Suite für den M-VAVE FM-1
-.SH ÜBERSICHT
+fm1-companion \- desktop suite for the M-VAVE FM-1
+.SH SYNOPSIS
 .B fm1-companion
 [\fB\-\-demo\fR] [\fB\-\-check\fR] [\fB\-\-syscheck\fR] [\fB\-\-version\fR] [\fB\-\-no\-splash\fR] [\fB\-\-debug\fR]
-.SH BESCHREIBUNG
-Firmware installieren und wechseln, Backups, Projekte, Studio-Zwilling (WAV-Export), Presets, Samples, MIDI, Simulator und Aufnahme
-für den Taschen-Synthesizer M-VAVE FM-1 mit Firmwares der Felucca-Familie (Melodee, Skiff, SLOOP).
-.SH OPTIONEN
+.SH DESCRIPTION
+Install and switch firmware, backups, projects, Studio twin (WAV export), presets, samples, MIDI, simulator and recording
+for the M-VAVE FM-1 pocket synthesizer with firmwares of the Felucca family (Melodee, Skiff, SLOOP).
+.PP
+The user interface is currently German; English is in progress.
+.SH OPTIONS
 .TP
 .B \-\-demo
-startet mit zwei simulierten FM-1 (ohne Gerät).
+start with two simulated FM-1 (without a device).
 .TP
 .B \-\-check
-prüft die benötigten Systempakete und zeigt den apt-Befehl für fehlende.
+check the required system packages and show the apt command for missing ones.
 .TP
 .B \-\-syscheck
-durchsucht das Kernel-Protokoll nach USB-, Strom- und Audio-Problemen und gibt einen Bericht aus.
+search the kernel log for USB, power and audio problems and print a report.
 .TP
 .B \-\-version
-zeigt die Version.
+show the version.
 .TP
 .B \-\-no\-splash
-ohne Startbildschirm.
+start without the splash screen.
 .TP
 .B \-\-debug
-ausführliches Protokoll.
-.SH UMGEBUNG
+verbose log.
+.TP
+.BI \-\-lang " LANG"
+user interface language for this start: en or de (default: the setting, otherwise the system language).
+.SH ENVIRONMENT
 .TP
 .B FM1C_NO_NET=1
-keine automatischen Netzzugriffe (Update-Suche beim Anstecken, Katalog-Aktualisierung, Vorschaubilder);
-Katalog und Link-Import nutzen nur den mitgelieferten Stand.
-.SH DATEIEN
+no automatic network access (update check when plugging in, catalog update, thumbnails);
+the catalog and the link import only use the bundled data.
+.TP
+.B FM1C_LANG=en|de
+user interface language, overrides the setting (like \-\-lang).
+.SH FILES
 .TP
 .I ~/FM-1/
-Backups, Projekte, Samples, Kits, Aufnahmen, Firmware (wird nie automatisch gelöscht).
+backups, projects, samples, kits, recordings, firmware (never deleted automatically).
 .TP
 .I ~/.config/fm1-companion/config.json
-Einstellungen (nur für den Benutzer lesbar, 0600).
+settings (readable only by the user, 0600).
 .TP
 .I ~/.local/state/fm1-companion/logs/
-Protokolle.
-.SH LIZENZ
-GPL-3.0-only. Inoffizielles Community-Projekt, nicht mit M-VAVE verbunden. Keine Gewährleistung
-(GPL-3.0, Abschnitte 15 und 16); Flashen und Rettung auf eigenes Risiko.
+logs.
+.SH LICENSE
+GPL-3.0-only. Unofficial community project, not affiliated with M-VAVE. No warranty
+(GPL-3.0, sections 15 and 16); flashing and rescue at your own risk.

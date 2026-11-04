@@ -43,6 +43,8 @@ class Settings:
     sample_roots: list[str] = field(default_factory=list)   # Ordner, die die Sample-Bibliothek durchsucht
     # Aussehen
     theme: str = "system"                  # "system", "light", "dark"
+    # Language of the user interface: "system" (system locale if translated, else English), "de", "en", …
+    language: str = "system"
     # Aufnahme
     record_mode: str = "auto"              # "auto", "stereo", "tracks"
     record_open_audacity: bool = True

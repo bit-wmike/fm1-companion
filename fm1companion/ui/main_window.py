@@ -30,37 +30,38 @@ from .recorder_page import RecorderPage
 from .samples_page import SamplesPage
 from .settings_dialog import SettingsDialog
 from .workshop_page import WorkshopPage
+from ..i18n import _
 
 # eingebaute Seiten: (Schlüssel, Titel, Symbole, Gruppe, Reihenfolge, Beschreibung)
-PAGES = [("overview", "Übersicht", ("go-home", "user-home"), "geraet", 10,
-          "aktives Gerät, Sicherung, Firmware & Updates – und der Zustand des FM-1 (Live-Last, Speicher)"),
-         ("editor", "Editor", ("audio-midi", "audio-card", "applications-multimedia"), "geraet", 40,
-          "der Original-Web-Editor der installierten Firmware"),
-         ("samples", "Samples & Kits", ("audio-x-generic", "folder-sound"), "klang", 30,
-          "Sample-Bibliothek, Kits bauen und hochladen"),
-         ("projects", "Projekte", ("folder-music", "folder-sound", "folder"), "musik", 10,
-          "Projektplätze holen, sammeln, zurückspielen – ansehen und als MIDI exportieren"),
-         ("recorder", "Aufnahme", ("media-record", "audio-input-microphone"), "musik", 50,
-          "USB-Audio des FM-1 aufnehmen, Audacity"),
-         ("backups", "Backups", ("backup", "document-save"), "daten", 10,
-          "komplette Sicherungen anlegen, zurückspielen, durchsuchen und vergleichen")]
+PAGES = [("overview", _("Overview"), ("go-home", "user-home"), "geraet", 10,
+          _("active device, backup, firmware & updates – and the state of the FM-1 (live load, memory)")),
+         ("editor", _("Editor"), ("audio-midi", "audio-card", "applications-multimedia"), "geraet", 40,
+          _("the original web editor of the installed firmware")),
+         ("samples", _("Samples & Kits"), ("audio-x-generic", "folder-sound"), "klang", 30,
+          _("sample library, build and upload kits")),
+         ("projects", _("Projects"), ("folder-music", "folder-sound", "folder"), "musik", 10,
+          _("fetch, collect and restore project slots – view them and export them as MIDI")),
+         ("recorder", _("Recording"), ("media-record", "audio-input-microphone"), "musik", 50,
+          _("record the USB audio of the FM-1, Audacity")),
+         ("backups", _("Backups"), ("backup", "document-save"), "daten", 10,
+          _("create, restore, browse and compare full backups"))]
 
 # Zusammengelegte Seiten: Haupt-Schlüssel -> [(Reiter-Schlüssel, Reiter-Titel, Seiten-Schlüssel der Unterseite)].
 # Der erste Reiter ist die Hauptunterseite; die weiteren Seiten-Schlüssel bleiben als Weiterleitung erhalten
 # (window.go("fm1") -> Übersicht › Zustand).
 COMPOSITES: dict[str, list[tuple[str, str, str]]] = {
-    "overview": [("start", "Start", "overview"), ("zustand", "Zustand", "fm1")],
-    "projects": [("plaetze", "Plätze & Bibliothek", "projects"), ("ansicht", "Ansicht & Export", "project_view")],
-    "compose": [("erzeugen", "Erzeugen", "compose"), ("midi", "Aus MIDI-Datei", "workshop")],
-    "backups": [("liste", "Liste", "backups"), ("browser", "Durchsuchen & Vergleichen", "backup_browser")],
-    "presets": [("user", "User-Presets am FM-1", "presets"), ("voices", "FM-Voices (DX7)", "voices")],
+    "overview": [("start", _("Start"), "overview"), ("zustand", _("Status"), "fm1")],
+    "projects": [("plaetze", _("Slots & Library"), "projects"), ("ansicht", _("View & Export"), "project_view")],
+    "compose": [("erzeugen", _("Generate"), "compose"), ("midi", _("From MIDI File"), "workshop")],
+    "backups": [("liste", _("List"), "backups"), ("browser", _("Browse & Compare"), "backup_browser")],
+    "presets": [("user", _("User Presets on the FM-1"), "presets"), ("voices", _("FM Voices (DX7)"), "voices")],
 }
 # Seiten, die als weiterer Reiter in das vorhandene Reiter-Widget einer Seite (page.tabs) eingehängt werden
 FLAT_COMPOSITES: dict[str, list[tuple[str, str, str]]] = {
-    "midi": [("klangerzeuger", "Klangerzeuger", "soundmodule")],
+    "midi": [("klangerzeuger", _("Sound Module"), "soundmodule")],
     # Firmware+ (Katalog) und die frühere Seite „Firmware“ sind EINE Seite: Installieren, Versionen wechseln,
     # Update-Modus und Rückweg zum Original liegen im Reiter „Installieren & Versionen“ (window.go("firmware"))
-    "discover": [("install", "Installieren & Versionen", "firmware"), ("simulator", "Simulator", "simulator")],
+    "discover": [("install", _("Install & Versions"), "firmware"), ("simulator", _("Simulator"), "simulator")],
 }
 # eingehängte Reiter an fester Position statt hinten (Reiter-Index in page.tabs)
 FLAT_TAB_POS: dict[str, int] = {"firmware": 1}
@@ -199,7 +200,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._progress = progress or (lambda text: None)
         self.commands: list[dict] = []          # zusätzliche Einträge für die Befehlssuche
-        self.setWindowTitle(APP_NAME + (" – Demo-Modus – Daten getrennt" if DEMO else ""))
+        self.setWindowTitle(APP_NAME + (_(" – demo mode – data kept separate") if DEMO else ""))
         self.setWindowIcon(app_icon())
         self.resize(1280, 820)
         self.ctx = DeviceContext(self)
@@ -226,7 +227,7 @@ class MainWindow(QMainWindow):
         self.nav.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.stack = QStackedWidget()
         self.stack.setObjectName("PageStack")
-        self._progress("Starte die Grundseiten …")
+        self._progress(_("Starting the basic pages …"))
         self.pages: dict[str, QWidget] = {}
         self.specs: dict[str, PageSpec] = {}
         self.overview = OverviewPage(self.ctx)
@@ -242,19 +243,21 @@ class MainWindow(QMainWindow):
                  for key, title, icons, group, order, desc in PAGES]
         builtin = {s.key for s in specs}
         self.absorbed: dict[str, PageSpec] = {    # Seiten, die als Reiter in einer anderen Seite aufgehen
-            "fm1": PageSpec("fm1", "FM-1-Zustand", "geraet", (lambda c, w: w.fm1), ("audio-card", "hwinfo"), 20,
-                            "Zustand des FM-1: Live-Last, Speicher, User-Presets",
-                            ("zustand", "live", "cpu", "speicher", "presets", "diagnose")),
-            "workshop": PageSpec("workshop", "Aus MIDI-Datei", "musik", (lambda c, w: w.workshop),
-                                 ("tools", "audio-x-midi"), 40, "MIDI-Datei → Pattern auf eine FM-1-Spur",
-                                 ("werkstatt", "midi", "pattern", "daw", "musescore", "lmms", "import")),
+            "fm1": PageSpec("fm1", _("FM-1 Status"), "geraet", (lambda c, w: w.fm1), ("audio-card", "hwinfo"), 20,
+                            _("State of the FM-1: live load, memory, user presets"),
+                            ("zustand", "live", "cpu", "speicher", "presets", "diagnose", "status", "memory", "load",
+                             "diagnostics")),
+            "workshop": PageSpec("workshop", _("From MIDI File"), "musik", (lambda c, w: w.workshop),
+                                 ("tools", "audio-x-midi"), 40, _("MIDI file → pattern on an FM-1 track"),
+                                 ("werkstatt", "midi", "pattern", "daw", "musescore", "lmms", "import", "workshop",
+                                  "midi file")),
             # die frühere Seite „Firmware“ – jetzt Reiter von Firmware+ (Schlüssel "firmware" bleibt gültig)
-            "firmware": PageSpec("firmware", "Installieren & Versionen", "daten", (lambda c, w: w.firmware),
+            "firmware": PageSpec("firmware", _("Install & Versions"), "daten", (lambda c, w: w.firmware),
                                  ("system-software-update", "update-none"), 30,
-                                 "Firmware installieren, wechseln, aktualisieren; Versionen herunterladen; "
-                                 "zurück zum Original",
+                                 _("install, switch and update firmware; download versions; back to the original"),
                                  ("firmware", "installieren", "update", "aktualisieren", "version", "wechseln",
-                                  "herunterladen", "original", "v15", "v16", "fwsc", "hinzufügen", "rückweg")),
+                                  "herunterladen", "original", "v15", "v16", "fwsc", "hinzufügen", "rückweg", "install",  # i18n: ignore
+                                  "switch", "download", "add", "way back")),
         }
         absorbed_keys = set(ALIASES)
         for s in discover():
@@ -267,11 +270,11 @@ class MainWindow(QMainWindow):
         if not any(s.key == "discover" for s in specs):   # Katalog-Modul fehlt/kaputt: Installieren bleibt erreichbar
             specs.append(PageSpec("discover", "Firmware+", "daten", (lambda c, w: w.firmware),
                                   ("system-software-update", "update-none"), 12,
-                                  "Firmware installieren, wechseln, aktualisieren"))
+                                  _("install, switch and update firmware")))
         self.subpages: dict[str, QWidget] = {}    # alter Schlüssel -> Unterseite
         self._build_nav(sort_specs(specs))
         self.nav.currentRowChanged.connect(self._page)
-        self._progress("Richte das Fenster ein …")
+        self._progress(_("Setting up the window …"))
         central = QWidget()
         h = QHBoxLayout(central)
         h.setContentsMargins(0, 0, 0, 0)
@@ -307,7 +310,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(640, 480)                 # darunter wäre nichts mehr bedienbar; Seiten rollen ab hier
 
         # Werkzeugleiste: Gerät
-        tb = QToolBar("Gerät")
+        tb = QToolBar(_("Device"))
         tb.setObjectName("MainToolbar")
         tb.setMovable(False)
         tb.setIconSize(QSize(18, 18))
@@ -327,19 +330,19 @@ class MainWindow(QMainWindow):
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         tb.addWidget(spacer)
         self.search_button = QToolButton()
-        self.search_button.setText("Suchen …  Strg+K")
+        self.search_button.setText(_("Search …  Ctrl+K"))
         self.search_button.setIcon(icon("system-search"))
         self.search_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        self.search_button.setToolTip("Befehlssuche: Seiten, Aktionen und Hilfe finden (Strg+K)")
+        self.search_button.setToolTip(_("Command search: find pages, actions and help (Ctrl+K)"))
         self.search_button.clicked.connect(self.open_palette)
         tb.addWidget(self.search_button)
-        a_bk = QAction(icon("document-save", "backup"), "Backup jetzt", self)
-        a_bk.setToolTip("Komplettes Backup des aktiven FM-1 anlegen (Strg+B)")
+        a_bk = QAction(icon("document-save", "backup"), _("Back up now"), self)
+        a_bk.setToolTip(_("Create a full backup of the active FM-1 (Ctrl+B)"))
         a_bk.triggered.connect(self._backup_now)
         tb.addAction(a_bk)
         self.bell = QToolButton()
         self.bell.setIcon(icon("notifications"))
-        self.bell.setToolTip("Benachrichtigungen")
+        self.bell.setToolTip(_("Notifications"))
         self.bell.clicked.connect(self.show_notifications)
         tb.addWidget(self.bell)
 
@@ -412,9 +415,9 @@ class MainWindow(QMainWindow):
                 return
             self.missing_deps = [s.package for s in miss]
             what = ", ".join(f"{s.package} ({s.why})" if s.why else s.package for s in miss)
-            self.notify(f"Es fehlt etwas: {what}. Die App läuft, aber nicht alle Seiten. Nachinstallieren mit: "
-                        f"{diag.apt_command(miss, include_optional=False)}", "warning",
-                        ("Diagnose öffnen", lambda: self.open_help("diagnose")))
+            self.notify(_("Something is missing: {what}. The app runs, but not all pages. Install with: {command}")
+                        .format(what=what, command=diag.apt_command(miss, include_optional=False)), "warning",
+                        (_("Open diagnostics"), lambda: self.open_help("diagnose")))
         # Qt-Module nie erstmals in einem Hintergrund-Thread laden (Qt Multimedia zieht dabei PipeWire/FFmpeg-
         # Plugins nach; parallel zum GUI-Thread führte das gelegentlich zum Absturz): vorher hier im GUI-Thread
         import importlib
@@ -442,39 +445,39 @@ class MainWindow(QMainWindow):
 
     def _menus(self):
         mb = self.menuBar()
-        m = mb.addMenu("&Datei")
+        m = mb.addMenu(_("&File"))
         # fest Strg+, (wie in der Hilfe): StandardKey.Preferences ist unter KDE Strg+Umschalt+, und sonst leer
-        self._act(m, "Einstellungen …", self._settings, "Ctrl+,",
+        self._act(m, _("Settings …"), self._settings, "Ctrl+,",
                   ("configure", "preferences-system"))
-        self._act(m, "Hauptordner öffnen", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.ctx.settings.root))),
+        self._act(m, _("Open main folder"), lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.ctx.settings.root))),
                   None, ("folder-open",))
         m.addSeparator()
-        self._act(m, "Beenden", self.close, QKeySequence.StandardKey.Quit, ("application-exit",))
+        self._act(m, _("Quit"), self.close, QKeySequence.StandardKey.Quit, ("application-exit",))
 
-        g = mb.addMenu("&Gerät")
-        self._act(g, "Backup jetzt", self._backup_now, "Ctrl+B", ("document-save",))
-        self._act(g, "Neu verbinden", self._reconnect, "F5", ("view-refresh",))
-        self._act(g, "Gerät umbenennen …", lambda: self.overview._rename() if self.ctx.profile else None, None,
+        g = mb.addMenu(_("&Device"))
+        self._act(g, _("Back up now"), self._backup_now, "Ctrl+B", ("document-save",))
+        self._act(g, _("Reconnect"), self._reconnect, "F5", ("view-refresh",))
+        self._act(g, _("Rename device …"), lambda: self.overview._rename() if self.ctx.profile else None, None,
                   ("edit-rename",))
-        self._act(g, "Zustand des FM-1", lambda: self.go("fm1"), None, ("audio-card",))
+        self._act(g, _("FM-1 status"), lambda: self.go("fm1"), None, ("audio-card",))
 
-        v = mb.addMenu("&Ansicht")
-        self.a_sidebar = self._act(v, "Seitenleiste", self.toggle_sidebar, "F9", ("view-sidebar",), checkable=True)
-        sm = v.addMenu(icon("view-sidebar"), "Seitenleiste: Breite")
+        v = mb.addMenu(_("&View"))
+        self.a_sidebar = self._act(v, _("Sidebar"), self.toggle_sidebar, "F9", ("view-sidebar",), checkable=True)
+        sm = v.addMenu(icon("view-sidebar"), _("Sidebar: width"))
         sgrp = QActionGroup(self)
         self.sidebar_mode_actions = {}
-        for key, title in (("auto", "Automatisch (nach Fensterbreite)"), ("wide", "Breit, mit Namen"),
-                           ("icons", "Schmal, nur Symbole")):
+        for key, title in (("auto", _("Automatic (by window width)")), ("wide", _("Wide, with names")),
+                           ("icons", _("Narrow, icons only"))):
             a = self._act(sm, title, lambda _=False, k=key: self.set_sidebar_mode(k), checkable=True)
             sgrp.addAction(a)
             a.setChecked(self.sidebar_mode() == key)
             self.sidebar_mode_actions[key] = a
-        self.a_full = self._act(v, "Vollbild", self.toggle_fullscreen, "F11", ("view-fullscreen",), checkable=True)
+        self.a_full = self._act(v, _("Full screen"), self.toggle_fullscreen, "F11", ("view-fullscreen",), checkable=True)
         v.addSeparator()
-        self._act(v, "Vergrößern", lambda: self.zoom(+0.1), QKeySequence.StandardKey.ZoomIn, ("zoom-in",))
-        self._act(v, "Verkleinern", lambda: self.zoom(-0.1), QKeySequence.StandardKey.ZoomOut, ("zoom-out",))
-        self._act(v, "Normalgröße", lambda: self.zoom(0), "Ctrl+0", ("zoom-original",))
-        dm = v.addMenu(icon("preferences-desktop-theme"), "Design")
+        self._act(v, _("Zoom in"), lambda: self.zoom(+0.1), QKeySequence.StandardKey.ZoomIn, ("zoom-in",))
+        self._act(v, _("Zoom out"), lambda: self.zoom(-0.1), QKeySequence.StandardKey.ZoomOut, ("zoom-out",))
+        self._act(v, _("Normal size"), lambda: self.zoom(0), "Ctrl+0", ("zoom-original",))
+        dm = v.addMenu(icon("preferences-desktop-theme"), _("Theme"))
         grp = QActionGroup(self)
         self.theme_actions = {}
         for key, title in theme.MODES:
@@ -483,25 +486,25 @@ class MainWindow(QMainWindow):
             a.setChecked(self.ctx.settings.theme == key)
             self.theme_actions[key] = a
         v.addSeparator()
-        self._act(v, "Benachrichtigungen …", self.show_notifications, None, ("notifications",))
+        self._act(v, _("Notifications …"), self.show_notifications, None, ("notifications",))
 
-        w = mb.addMenu("&Werkzeuge")
-        self._act(w, "Befehlssuche …", self.open_palette, "Ctrl+K", ("system-search",),
-                  "Seiten, Aktionen und Hilfe finden")
-        self._act(w, "Systemcheck …", self.open_syscheck, None, ("utilities-system-monitor",),
-                  "USB, Strom und Audio auf Probleme prüfen")
+        w = mb.addMenu(_("&Tools"))
+        self._act(w, _("Command search …"), self.open_palette, "Ctrl+K", ("system-search",),
+                  _("Find pages, actions and help"))
+        self._act(w, _("System check …"), self.open_syscheck, None, ("utilities-system-monitor",),
+                  _("Check USB, power and audio for problems"))
 
-        hm = mb.addMenu("&Hilfe")
-        self._act(hm, "Hilfe-Center", lambda: self.open_help(), "F1", ("help-contents",))
-        self._act(hm, "Tastenkürzel", self.show_shortcuts, "Ctrl+/", ("help-keyboard-shortcuts",))
+        hm = mb.addMenu(_("&Help"))
+        self._act(hm, _("Help Center"), lambda: self.open_help(), "F1", ("help-contents",))
+        self._act(hm, _("Keyboard shortcuts"), self.show_shortcuts, "Ctrl+/", ("help-keyboard-shortcuts",))
         hm.addSeparator()
-        self._act(hm, "Einrichtungs-Assistent …", self.open_wizard, None, ("tools-wizard",))
-        self._act(hm, "Was ist neu in 2.0", self.open_whats_new, None, ("help-hint",))
+        self._act(hm, _("Setup assistant …"), self.open_wizard, None, ("tools-wizard",))
+        self._act(hm, _("What's new in 2.0"), self.open_whats_new, None, ("help-hint",))
         hm.addSeparator()
-        self._act(hm, "Fehlerbericht erstellen …", self.save_report, None, ("tools-report-bug",))
-        self._act(hm, "Diagnose", lambda: self.open_help("diagnose"), None, ("hwinfo",))
+        self._act(hm, _("Create bug report …"), self.save_report, None, ("tools-report-bug",))
+        self._act(hm, _("Diagnostics"), lambda: self.open_help("diagnose"), None, ("hwinfo",))
         hm.addSeparator()
-        self._act(hm, f"Über {SUITE_NAME}", self._about, None, ("help-about",))
+        self._act(hm, _("About {name}").format(name=SUITE_NAME), self._about, None, ("help-about",))
 
         self.hotkeys: list[tuple[str, str]] = []     # (Tastenkürzel, Seitentitel) – für den Kürzel-Dialog
         keys = [k for k in HOTKEY_ORDER if k in self.specs] + [k for k in self.specs if k not in HOTKEY_ORDER]
@@ -510,7 +513,7 @@ class MainWindow(QMainWindow):
             act.setShortcut(f"Ctrl+{i + 1}")
             act.triggered.connect(lambda _=False, k=key: self.go(k))
             self.addAction(act)
-            self.hotkeys.append((f"Strg+{i + 1}", self.specs[key].title))
+            self.hotkeys.append((_("Ctrl+{n}").format(n=i + 1), self.specs[key].title))
 
     def _sidebar_panel(self) -> QWidget:
         panel = QFrame()
@@ -524,7 +527,7 @@ class MainWindow(QMainWindow):
         self.brand_box = brand
         logo = QLabel()
         logo.setPixmap(self.windowIcon().pixmap(30, 30))
-        logo.setToolTip(f"{SUITE_NAME} {__version__}" + (" – Demo-Modus" if DEMO else ""))
+        logo.setToolTip(f"{SUITE_NAME} {__version__}" + (_(" – demo mode") if DEMO else ""))
         brand.addWidget(logo)
         tv = QVBoxLayout()
         tv.setSpacing(0)
@@ -600,8 +603,8 @@ class MainWindow(QMainWindow):
             it.setToolTip(f"{spec.title if spec else it.text()}" + (f" – {desc}" if desc else "") if on else desc)
         self.sidebar_button.setIcon(icon("sidebar-expand-left", "panel-left-open") if on
                                     else icon("sidebar-collapse-left", "panel-left-close"))
-        self.sidebar_button.setToolTip("Seitenleiste mit Namen zeigen" if on
-                                       else "Seitenleiste schmal: nur Symbole (mehr Platz für die Seite)")
+        self.sidebar_button.setToolTip(_("Show the sidebar with names") if on
+                                       else _("Narrow sidebar: icons only (more room for the page)"))
         self.nav.doItemsLayout()
         self.nav.viewport().update()
 
@@ -634,7 +637,7 @@ class MainWindow(QMainWindow):
     def _build_nav(self, specs: list[PageSpec]):
         group = None
         for s in specs:
-            self._progress(f"Lade {s.title} …")
+            self._progress(_("Loading {page} …").format(page=s.title))
             try:
                 page = self._make_page(s)
             except Exception:                  # noqa: BLE001 – eine kaputte Seite darf die App nicht stoppen
@@ -770,22 +773,22 @@ class MainWindow(QMainWindow):
         self.dev_combo.blockSignals(True)
         self.dev_combo.clear()
         if not self.ctx.ports:
-            self.dev_combo.addItem("kein FM-1 angeschlossen", None)
+            self.dev_combo.addItem(_("no FM-1 connected"), None)
         for p in self.ctx.ports:
             prof = self.ctx.profile_for_port(p)
-            name = prof.name if prof else "neues FM-1"
+            name = prof.name if prof else _("new FM-1")
             self.dev_combo.addItem(icon("audio-midi", "media-flash"), f"{name}  ·  {p.label}"
-                                   + ("  (Update-Modus)" if p.update_mode else ""), p.key)
+                                   + (_("  (update mode)") if p.update_mode else ""), p.key)
         vports = list(getattr(self.ctx, "vports", []) or [])
         if vports:
             self.dev_combo.insertSeparator(self.dev_combo.count())
         for p in vports:                       # der Studio-Zwilling: klar als virtuell gekennzeichnet
-            self.dev_combo.addItem(icon("computer", "audio-card"), f"{p.label}  ·  virtuell (kein echtes FM-1)",
+            self.dev_combo.addItem(icon("computer", "audio-card"), _("{label}  ·  virtual (not a real FM-1)").format(label=p.label),
                                    p.key)
             self.dev_combo.setItemData(self.dev_combo.count() - 1,
-                                       "Der Zwilling im Studio: Projekte, Komponieren, Presets, Backups und Editor "
-                                       "arbeiten dann mit ihm statt mit einem echten FM-1. Firmware, Rettung und "
-                                       "USB-Audio gibt es für ihn nicht.", Qt.ItemDataRole.ToolTipRole)
+                                       _("The twin in the Studio: Projects, Compose, Presets, Backups and Editor "
+                                         "then work with it instead of a real FM-1. Firmware, Recovery and USB "
+                                         "audio are not available for it."), Qt.ItemDataRole.ToolTipRole)
         if self.ctx.port:
             self.dev_combo.setCurrentIndex(max(0, self.dev_combo.findData(self.ctx.port.key)))
         self.dev_combo.blockSignals(False)
@@ -802,12 +805,13 @@ class MainWindow(QMainWindow):
     def _reconnect(self):
         port = self.ctx.port
         if port:
-            self.statusBar().showMessage(f"Verbinde neu mit „{port.label}“ …", 6000)
+            self.statusBar().showMessage(_("Reconnecting to “{port}” …").format(port=port.label), 6000)
             self.ctx.connect_port(port)
         else:
             self.ctx.scan()
-            self.statusBar().showMessage("Neu gesucht: " + (f"{len(self.ctx.ports)} FM-1 gefunden." if self.ctx.ports
-                                         else "kein FM-1 gefunden – USB-Datenkabel prüfen."), 8000)
+            self.statusBar().showMessage(_("Searched again: {result}").format(
+                result=_("{n} FM-1 found.").format(n=len(self.ctx.ports)) if self.ctx.ports
+                else _("no FM-1 found – check the USB data cable.")), 8000)
 
     def _check_blocking_services(self):
         """Debians fluidsynth-Dienst belegt die HDMI-Karte (kein Ton mehr über PipeWire): anbieten, ihn abzuschalten."""
@@ -823,11 +827,11 @@ class MainWindow(QMainWindow):
                 def ok(res):
                     self.notify(res[1], "success" if res[0] else "warning")
                 run_job(self, lambda w: AF.disable_fluidsynth_service(), on_done=ok,
-                        on_fail=lambda m, tb: self.notify(f"Abschalten ging nicht: {m}", "warning"))
-            self.notify("Der FluidSynth-Dienst des Systems startet bei jeder Anmeldung und belegt dabei die erste "
-                        "Soundkarte (am Pi: HDMI) – dann fehlt dein Lautsprecher-/HDMI-Ausgang. Die App braucht den "
-                        "Dienst nicht (der Klangerzeuger startet FluidSynth selbst).", "warning",
-                        ("Dienst abschalten", fix))
+                        on_fail=lambda m, tb: self.notify(_("Could not disable it: {error}").format(error=m), "warning"))
+            self.notify(_("The system's FluidSynth service starts at every login and takes the first sound card "
+                          "(on the Pi: HDMI) – then your speaker/HDMI output is missing. The app does not need the "
+                          "service (the sound module starts FluidSynth itself)."), "warning",
+                        (_("Disable service"), fix))
         run_job(self, lambda w: AF.fluidsynth_service(), on_done=done, on_fail=lambda m, tb: None)
 
     def _audio_guard(self):
@@ -848,7 +852,7 @@ class MainWindow(QMainWindow):
         if getattr(c, "protocol", "") and hasattr(c, "status_text"):
             state = c.status_text()
         else:
-            state = "verbunden" if c.connected else ("antwortet nicht" if c.port else "nicht verbunden")
+            state = _("connected") if c.connected else (_("not responding") if c.port else _("not connected"))
         import html
         # ohne Gerät nur „Kein FM-1 verbunden“ (vorher doppelt: „Kein FM-1 verbunden – nicht verbunden“)
         text = html.escape(c.title()) + (f" – {html.escape(state)}" if c.port else "")
@@ -863,15 +867,18 @@ class MainWindow(QMainWindow):
             from .common import fw_label
             if switching:
                 self._switching = False
-                self.notifications.post(f"Aktiv: {c.profile.name} – {fw_label(c.info.version) if c.info else ''}",
+                self.notifications.post(_("Active: {name} – {firmware}").format(
+                    name=c.profile.name, firmware=fw_label(c.info.version) if c.info else ""),
                                         "info", quiet=True)
             else:
-                self.notify(f"{c.profile.name} verbunden – {fw_label(c.info.version) if c.info else ''}", "success")
+                self.notify(_("{name} connected – {firmware}").format(
+                    name=c.profile.name, firmware=fw_label(c.info.version) if c.info else ""), "success")
         elif c.port and switching and getattr(c, "protocol", "") == "generic" and c.profile and conn != self._last_conn:
             self._switching = False
-            self.notifications.post(f"Aktiv: {c.profile.name} – {c.title().split(' – ', 1)[-1]}", "info", quiet=True)
+            self.notifications.post(_("Active: {name} – {firmware}").format(
+                name=c.profile.name, firmware=c.title().split(" – ", 1)[-1]), "info", quiet=True)
         elif self._last_conn and self._last_conn[1] and not c.port and not switching:
-            self.notify("FM-1 getrennt", "warning")
+            self.notify(_("FM-1 disconnected"), "warning")
         self._last_conn = conn
         if c.connected and not getattr(c, "is_virtual", False):
             key = (c.profile.id if c.profile else "") + c.firmware_key
@@ -887,19 +894,21 @@ class MainWindow(QMainWindow):
         self.overview.set_update_info(info)
         new, cur = info.get("latest"), info.get("current")
         if new and new != cur:
-            self.statusBar().showMessage(f"Neue Firmware verfügbar: {new} (installiert: {cur or 'unbekannt'})", 15000)
-            self.notify(f"Neue Firmware verfügbar: {new} (installiert: {cur or 'unbekannt'})", "info",
-                        ("Ansehen", lambda: self.go("firmware")))
+            msg = _("New firmware available: {new} (installed: {current})").format(new=new, current=cur or _("unknown"))
+            self.statusBar().showMessage(msg, 15000)
+            self.notify(msg, "info",
+                        (_("View"), lambda: self.go("firmware")))
 
     def _offer_restore(self, key):
         f = find_backup_for(self.ctx, key)
         if not f:
             return
-        box = QMessageBox(QMessageBox.Icon.Question, "Zurück zu deinen Daten?",
-                          f"Für diese Firmware gibt es ein Backup von diesem Gerät:\n{f.name}\n\n"
-                          "Jetzt zurückspielen? (Projekte, Presets und Einstellungen von damals.)", parent=self)
-        yes = box.addButton("Zu den Backups", QMessageBox.ButtonRole.AcceptRole)
-        box.addButton("Nein, danke", QMessageBox.ButtonRole.RejectRole)
+        box = QMessageBox(QMessageBox.Icon.Question, _("Back to your data?"),
+                          _("There is a backup from this device for this firmware:\n{name}\n\n"
+                            "Restore it now? (Projects, presets and settings from back then.)").format(name=f.name),
+                          parent=self)
+        yes = box.addButton(_("Go to backups"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(_("No, thanks"), QMessageBox.ButtonRole.RejectRole)
         box.exec()
         if box.clickedButton() is yes:
             self.go("backups")
@@ -909,8 +918,8 @@ class MainWindow(QMainWindow):
         if path:
             self.backups.refresh()
             self.overview.refresh()
-            self.notify(f"Backup gespeichert: {Path(path).name}", "success",
-                        ("Ordner öffnen", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(Path(path).parent)))))
+            self.notify(_("Backup saved: {name}").format(name=Path(path).name), "success",
+                        (_("Open folder"), lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(Path(path).parent)))))
 
     # ------------------------------------------------------------ Sonstiges
     def _settings(self):
@@ -941,7 +950,7 @@ class MainWindow(QMainWindow):
         pr["zoom"] = z
         config.save(self.ctx.settings)
         self.apply_theme()
-        self.statusBar().showMessage(f"Zoom {round(z * 100)} %", 2500)
+        self.statusBar().showMessage(_("Zoom {percent}%").format(percent=round(z * 100)), 2500)
 
     def toggle_sidebar(self, on=None):
         on = (not self.sidebar.isVisible()) if on is None or not isinstance(on, bool) else on
@@ -967,7 +976,7 @@ class MainWindow(QMainWindow):
         self.bell.setText(str(n) if n else "")
         self.bell.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon if n
                                      else Qt.ToolButtonStyle.ToolButtonIconOnly)
-        self.bell.setToolTip(f"Benachrichtigungen ({n} neu)" if n else "Benachrichtigungen")
+        self.bell.setToolTip(_("Notifications ({n} new)").format(n=n) if n else _("Notifications"))
 
     def show_notifications(self):
         HistoryDialog(self.notifications, self).exec()
@@ -1055,7 +1064,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, e):
         rec = self.recorder.rec
         if rec and rec.running:
-            if QMessageBox.question(self, "Aufnahme läuft", "Eine Aufnahme läuft. Beenden und speichern?") \
+            if QMessageBox.question(self, _("Recording in progress"), _("A recording is running. Stop and save it?")) \
                     != QMessageBox.StandardButton.Yes:
                 e.ignore()
                 return

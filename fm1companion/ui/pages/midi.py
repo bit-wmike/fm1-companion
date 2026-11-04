@@ -28,6 +28,7 @@ from ..common import (Card, button, empty_state, fs_error_text, heading, icon, l
                       start_dir)
 from ..responsive import reflow
 from . import PageSpec
+from ...i18n import _
 
 SETTINGS = {"learn": [], "learn_port": "", "routing_presets": [], "bpm": 120.0, "swing": 0, "kb_channel": 1,
             "kb_velocity": 100, "kb_octave": 4, "kb_out": "fm1", "clock_out": "fm1", "hide_clock": True,
@@ -1052,7 +1053,7 @@ def _parse_desc(a, dec):
     r = Reader(a)
     scope, pid, fmt = r.b(), r.b(), r.b()
     vals = []
-    for _ in range(3):
+    for _i in range(3):
         lo, hi = r.b(), r.b()
         vals.append(M.v14_dec(lo, hi))
     lab, unit = r.s(), r.s()
@@ -1379,7 +1380,8 @@ def _make(ctx, window):
     return MidiPage(ctx, window)
 
 
-PAGE = PageSpec(key="midi", title="MIDI", group="daten", factory=_make,
+PAGE = PageSpec(key="midi", title=_("MIDI"), group="daten", factory=_make,
                 icons=("audio-midi", "piano"), order=20,
-                description="MIDI-Monitor, Bildschirm-Tastatur, Clock, Regler mit MIDI-Learn, Verbindungen",
-                keywords=("monitor", "clock", "takt", "tastatur", "keyboard", "aconnect", "routing", "cc", "learn"))
+                description=_("MIDI monitor, on-screen keyboard, clock, controls with MIDI learn, connections"),
+                keywords=("monitor", "clock", "takt", "tastatur", "keyboard", "aconnect", "routing", "cc", "learn",
+                          "tempo", "connections", "controller"))

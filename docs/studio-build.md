@@ -1,55 +1,57 @@
-# Studio-Zwilling: eine neue Melodee-Version hinzufügen
+# Studio twin: adding a new Melodee version
 
-Der Studio-Zwilling ist Melodees eigener Firmware-Code, für den Rechner als WebAssembly übersetzt – zusammen mit
-einer kleinen Klebeschicht (`tools/studio/melodee_studio.c`), die den NOR-Flash, den USB-SysEx-Pfad (Editor-
-Protokoll), Tasten/Regler/LEDs, den Bildschirm und das Rendern nach außen gibt (ABI `st_*`, siehe
-`fm1companion/sims/_studio/twin-core.js`). Mehrere Versionen liegen nebeneinander:
+The Studio twin is Melodee's own firmware code, compiled for the computer as WebAssembly – together with
+a small glue layer (`tools/studio/melodee_studio.c`) that exposes the NOR flash, the USB SysEx path (editor
+protocol), keys/knobs/LEDs, the screen and rendering (ABI `st_*`, see
+`fm1companion/sims/_studio/twin-core.js`). Several versions sit side by side:
 
 ```
 fm1companion/sims/melodee-studio/<version>/   manifest.json, twin.wasm, LICENSE, NOTICE
-fm1companion/sims/_studio/                    gemeinsamer Host (Seite, Worker, AudioWorklet, Bedienfläche)
+fm1companion/sims/_studio/                    shared host (page, worker, AudioWorklet, control surface)
 ```
 
-`studio.pick_build()` wählt beim Öffnen die Version des Geräts bzw. Backups, sonst die nächstältere (mit Warnung).
+When opening, `studio.pick_build()` picks the version of the device or backup, otherwise the next older one (with
+a warning).
 
-## Voraussetzungen (nur auf dem Bau-Rechner, nicht auf dem Pi)
+## Requirements (only on the build machine, not on the Pi)
 
 * `git`, Python 3
-* **Pillow** und **fontTools** – Melodees Kopfdatei-Generatoren (Schriften, Bilder) brauchen sie:
+* **Pillow** and **fontTools** – Melodee's header generators (fonts, images) need them:
   `sudo apt install python3-pil python3-fonttools`
-* **WASI SDK 27** (clang für wasm32-wasi). Ohne `--wasi-sdk DIR` lädt das Skript es nach `--work` (~125 MB).
-* zum Prüfen: `node` (≥ 18) für `tests/test_studio.py`, QtWebEngine für `tests/ui_studio_test.py`
+* **WASI SDK 27** (clang for wasm32-wasi). Without `--wasi-sdk DIR` the script downloads it to `--work` (~125 MB).
+* for checking: `node` (≥ 18) for `tests/test_studio.py`, QtWebEngine for `tests/ui_studio_test.py`
 
-## Bauen
+## Building
 
 ```sh
-git clone https://github.com/keremimo/melodee /tmp/melodee        # oder vorhandenen Klon nehmen (nur gelesen)
-python3 tools/build_sims.py --target melodee-studio --ref v1.6.0-rc.9 --repo melodee=/tmp/melodee
+git clone https://github.com/keremimo/melodee /path/to/melodee   # or use an existing clone (read only)
+python3 tools/build_sims.py --target melodee-studio --ref v1.6.0-rc.9 --repo melodee=/path/to/melodee
 ```
 
-Das legt `fm1companion/sims/melodee-studio/1.6.0-rc.9/` an (Manifest mit Commit, Werkzeugkette, Prüfsummen,
-`firmware_version`, `identity`, `abi`). Soll die Version dauerhaft zur Liste gehören, in `tools/build_sims.py`
-unter `STUDIOS["melodee-studio"]["refs"]` eintragen (dann baut `--target melodee-studio` ohne `--ref` alle).
+This creates `fm1companion/sims/melodee-studio/1.6.0-rc.9/` (manifest with commit, toolchain, checksums,
+`firmware_version`, `identity`, `abi`). If the version should permanently belong to the list, add it in
+`tools/build_sims.py` under `STUDIOS["melodee-studio"]["refs"]` (then `--target melodee-studio` without `--ref`
+builds all of them).
 
-Ändert sich zwischen Versionen etwas an Melodees Schnittstellen (Namen in `hostsim.c`, Flash-Aufteilung,
-Projekt-Speicher), muss `tools/studio/melodee_studio.c` angepasst werden; das Manifest hält die Prüfsumme der
-Klebeschicht fest (`glue_sha256`), `tests/test_studio.py` prüft sie.
+If something in Melodee's interfaces changes between versions (names in `hostsim.c`, flash layout,
+project storage), `tools/studio/melodee_studio.c` must be adapted; the manifest records the checksum of the
+glue layer (`glue_sha256`), `tests/test_studio.py` checks it.
 
-## Prüfen
+## Checking
 
 ```sh
-python3 -m pytest tests/test_studio.py -q                      # Builds, Firmware-Kern in node, Backup-Rundreise
+python3 -m pytest tests/test_studio.py -q                      # builds, firmware core in node, backup round trip
 QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 python3 tests/ui_studio_test.py
 QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 python3 tests/ui_studio_page_test.py
 ```
 
-`tests/test_studio.py::test_builds_side_by_side` erwartet die mitgelieferten Versionen – neue Version dort
-ergänzen. Die Pakete (.deb, .run) nehmen alles unter `fm1companion/` mit (`tools/build_common.app_files`);
-`tests/test_packaging.py` prüft, dass Host-Dateien und jedes `twin.wasm` im Paket landen.
+`tests/test_studio.py::test_builds_side_by_side` expects the bundled versions – add the new version there.
+The packages (.deb, .run) include everything under `fm1companion/` (`tools/build_common.app_files`);
+`tests/test_packaging.py` checks that the host files and every `twin.wasm` end up in the package.
 
-## Andere Firmwares
+## Other firmwares
 
-SLOOP, Skiff und FM1 Open folgen demselben Muster: eigener Eintrag in `STUDIOS`, eigene Klebeschicht
-`tools/studio/<firmware>_studio.c` mit derselben `st_*`-ABI. Host (JS) und Python (`fm1companion/studio.py`,
-`ui/studio_service.py`, Seite `ui/pages/studio.py`) bleiben gleich; `StudioService.firmware_for()` muss die neue
-Firmware kennen. Siehe `docs/ROADMAP.md`.
+SLOOP, Skiff and FM1 Open follow the same pattern: their own entry in `STUDIOS`, their own glue layer
+`tools/studio/<firmware>_studio.c` with the same `st_*` ABI. The host (JS) and Python (`fm1companion/studio.py`,
+`ui/studio_service.py`, page `ui/pages/studio.py`) stay the same; `StudioService.firmware_for()` must know the new
+firmware. See `docs/ROADMAP.md`.

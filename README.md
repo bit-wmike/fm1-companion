@@ -1,46 +1,52 @@
 # FM-1 Companion Suite 2.3.2
 
 > [!WARNING]
-> **Inoffizielles Community-Projekt – nicht mit M-VAVE verbunden.**
-> Firmware installieren, Rettung (Update-Modus, ROM-Bootmodus), „Ist mein FM-1 sauber?“/Reste aufräumen und das
-> Zurückschreiben aus dem Studio verändern dein Gerät und geschehen **auf eigenes Risiko**. Mach vorher ein Backup.
+> **Unofficial community project – not affiliated with M-VAVE.**
+> Installing firmware, rescue (update mode, ROM boot mode), "Is my FM-1 clean?" / clean up leftovers and writing
+> back from the Studio change your device and are done **at your own risk**. Make a backup first.
 >
-> **Diese Funktionen sind noch nicht auf echter Hardware getestet:** Firmware-Wechsel, Zurück zum Original,
-> Rettung Stufe 1–3, Reste aufräumen, die ROM-Prüfung von „Ist mein FM-1 sauber?“ und das Zurückschreiben aus dem
-> Studio. Sie laufen bisher nur gegen Simulationen.
-> An echter Hardware benutzt wurde bisher: ein Update **Melodee 1.6.0-rc.8 → 1.6.0** über die Suite (hat
-> funktioniert), Backups, MIDI und die Grundfunktionen des Studios – an einem einzigen Gerät.
-> Die genaue Liste: [docs/UNGETESTET.md](docs/UNGETESTET.md). Keine Gewährleistung (GPL-3.0, Abschnitte 15 und 16).
+> **These functions have not been tested on real hardware yet:** switching firmware, back to the original,
+> rescue levels 1–3, clean up leftovers, the ROM check of "Is my FM-1 clean?" and writing back from the Studio.
+> So far they have only run against simulations.
+> Used on real hardware so far: one update **Melodee 1.6.0-rc.8 → 1.6.0** through the suite (it worked), backups,
+> MIDI and the basic functions of the Studio – on a single device.
+> The exact list: [docs/UNTESTED.md](docs/UNTESTED.md). No warranty (GPL-3.0, sections 15 and 16).
 
-Die Desktop-Suite für das **M-VAVE FM-1** mit Firmwares der Felucca-Familie (**Melodee**, **Skiff**, **SLOOP**)
-und der offiziellen Firmware. Alles rund ums Gerät in einer App – gebaut für den Raspberry Pi 5
-(Raspberry Pi OS Bookworm/Trixie, KDE Plasma), läuft auf jedem Debian/Ubuntu.
+> [!NOTE]
+> **The UI is currently German; English is in progress** – see [docs/TRANSLATING.md](docs/TRANSLATING.md) to help
+> translate. Until then, this README gives the German labels you need to find in the app, with an English gloss.
 
-## Was drin ist
+The desktop suite for the **M-VAVE FM-1** with firmwares of the Felucca family (**Melodee**, **Skiff**, **SLOOP**)
+and the official firmware. Everything around the device in one app – built for the Raspberry Pi 5
+(Raspberry Pi OS Bookworm/Trixie, KDE Plasma), runs on any Debian/Ubuntu.
 
-| Bereich | Was es kann |
+## What's inside
+
+Section names are the German labels shown in the app's sidebar.
+
+| Section | What it does |
 |---|---|
-| **Übersicht** | aktives Gerät, Sicherung, Firmware & Updates, Schnellzugriff – Reiter „Zustand“: Live-Last, Speicher-Pool, Projekte, alle 384 User-Presets |
-| **Editor** | der Original-Web-Editor der installierten Firmware, eingebettet und offline |
-| **Geräte** | mehrere FM-1 mit eigenen Profilen, Firmware-Verlauf, von Gerät zu Gerät kopieren |
-| **Klang** | Presets (mit Reiter FM-Voices/DX7), Samples & Kits (mit Reiter „Auf dem FM-1“) |
-| **Studio** | der digitale Zwilling deines FM-1: dieselbe Melodee-Firmware im Rechner (1.6.1, dazu 1.6.0 und 1.6.0-rc.7/rc.8), mit dem kompletten Gerätezustand aus dem Backup – am Bildschirm, mit Tastatur oder MIDI-Keyboard spielen, Projekte abspielen, als WAV (24 bit oder 32 bit float, optional Einzelspuren) für Logic/Audacity ausgeben, Zwischenstände mit Rückgängig, mit Sicherheits-Backup zurück aufs FM-1 schreiben; auch als virtuelles Gerät für Projekte, Komponieren, Presets und Backups |
-| **Musik** | Projekte (Plätze & Bibliothek / Ansicht & Export), Komponieren (Erzeugen / Aus MIDI-Datei), Aufnahme mit Audacity |
-| **Daten & Werkzeuge** | Backups (Liste / Durchsuchen & Vergleichen), Firmware+, Rettung, MIDI (mit Klangerzeuger) |
-| **Firmware+** | alle Firmwares an einem Ort: Katalog (suchen, ansehen, im Simulator ausprobieren, Links importieren, Neuigkeiten) und Reiter „Installieren & Versionen“ (Versionen von GitHub, installieren, wechseln, mehrere Versionen herunterladen, eigene .fwsc, zurück zum Original, Rückweg von V16) |
-| **Rettung** | Update-Modus, unterbrochene Installation abschließen, „Ist mein FM-1 sauber?“, Rettung Stufe 2 |
-| **Hilfe** | Hilfe-Center (offline), FAQ, Diagnose, Systemcheck |
+| **Übersicht** (Overview) | active device, backup, firmware & updates, quick access – tab "Zustand" (State): live load, memory pool, projects, all 384 user presets |
+| **Editor** | the original web editor of the installed firmware, embedded and offline |
+| **Geräte** (Devices) | several FM-1 with their own profiles, firmware history, copy from device to device |
+| **Klang** (Sound) | presets (with tab FM-Voices/DX7), samples & kits (with tab "Auf dem FM-1" – On the FM-1) |
+| **Studio** | the digital twin of your FM-1: the same Melodee firmware on the computer (1.6.1, plus 1.6.0 and 1.6.0-rc.7/rc.8), with the complete device state from the backup – play on screen, with the computer keyboard or a MIDI keyboard, play projects, export as WAV (24 bit or 32 bit float, optionally separate tracks) for Logic/Audacity, snapshots with undo, write back to the FM-1 with a safety backup; also usable as a virtual device for projects, composing, presets and backups |
+| **Musik** (Music) | projects (slots & library / view & export), composing (generate / from MIDI file), recording with Audacity |
+| **Daten & Werkzeuge** (Data & Tools) | backups (list / browse & compare), Firmware+, Rettung (Rescue), MIDI (with sound module) |
+| **Firmware+** | all firmwares in one place: catalog (search, view, try in the simulator, import links, news) and tab "Installieren & Versionen" (Install & Versions: versions from GitHub, install, switch, download several versions, your own .fwsc, back to the original, way back from V16) |
+| **Rettung** (Rescue) | update mode, finish an interrupted installation, "Ist mein FM-1 sauber?" (Is my FM-1 clean?), rescue level 2 |
+| **Hilfe** (Help) | help center (offline), FAQ, diagnostics, system check |
 
-Dazu der Rahmen: helles/dunkles/automatisches Design mit Akzentfarbe, einheitliche Symbole, Befehlssuche
-(**Strg+K**), Hinweise mit Verlauf, Einrichtungs-Assistent, „Was ist neu“, Absturz-Dialog mit Fehlerbericht und
-eine schmale Rechner-Anzeige unten rechts (CPU, RAM, Temperatur, freier Platz). Ein Klick darauf öffnet den
-**Systemcheck**: Er liest das Kernel-Protokoll und erklärt auf Deutsch, wenn das FM-1 sich immer wieder trennt,
-das Netzteil schwächelt, USB-Audio Fehler meldet oder der Pi zu heiß wird.
-Welche Bereiche enthalten sind, zeigt die App selbst (Seitenleiste, Hilfe › Was ist neu).
+Plus the frame: light/dark/automatic theme with accent colour, consistent icons, command search
+(**Ctrl+K**), notifications with history, setup assistant, "What's new", crash dialog with error report and
+a slim computer indicator at the bottom right (CPU, RAM, temperature, free space). Clicking it opens the
+**system check**: it reads the kernel log and explains (currently in German) when the FM-1 keeps disconnecting,
+the power supply is weak, USB audio reports errors or the Pi gets too hot.
+The app itself shows which sections are included (sidebar, Hilfe › Was ist neu – Help › What's new).
 
-## Installieren
+## Install
 
-**Aus dem Quellcode** (empfohlen, solange es noch keine Release-Pakete gibt):
+**From source:**
 
 ```bash
 git clone https://github.com/bit-wmike/fm1-companion.git
@@ -48,108 +54,117 @@ cd fm1-companion
 ./install.sh
 ```
 
-`install.sh` prüft die Systempakete und installiert fehlende (fragt nach sudo; `--no-apt` überspringt das),
-installiert die App für deinen Benutzer und legt einen Startmenü-Eintrag an. Weitere Schalter: `--desktop`
-(Verknüpfung auf dem Schreibtisch), `--no-fluidsynth-fix` (siehe unten). Entfernen: `./uninstall.sh`
-(`--all` zusätzlich Einstellungen und interne Daten) oder Startmenü › „FM-1 Companion deinstallieren“.
-Updates: `git pull && ./install.sh` – deine Einstellungen und `~/FM-1` bleiben erhalten.
+`install.sh` checks the system packages and installs missing ones (asks for sudo; `--no-apt` skips that),
+installs the app for your user and adds a start menu entry. More switches: `--desktop`
+(shortcut on the desktop), `--no-fluidsynth-fix` (see below). Remove: `./uninstall.sh`
+(`--all` also removes settings and internal data) or start menu › "FM-1 Companion deinstallieren" (uninstall).
+Updates: `git pull && ./install.sh` – your settings and `~/FM-1` are kept.
 
-Ist Debians FluidSynth-Benutzerdienst (`fluidsynth.service`) aktiv, belegt er bei jeder Anmeldung die erste
-Soundkarte (am Pi: HDMI). Der Installer schaltet ihn dann ab und sagt das deutlich (FluidSynth bleibt
-installiert, die App startet es selbst); mit `--no-fluidsynth-fix` bleibt er unverändert. Der grafische
-Installer fragt per Häkchen.
+If Debian's FluidSynth user service (`fluidsynth.service`) is active, it grabs the first sound card at every
+login (on the Pi: HDMI). The installer then disables it and says so clearly (FluidSynth stays installed, the app
+starts it itself); with `--no-fluidsynth-fix` it is left unchanged. The graphical installer asks with a
+checkbox.
 
-**Pakete (.deb/.run):** unter [Releases](https://github.com/bit-wmike/fm1-companion/releases), sobald
-veröffentlicht. Bis dahin selbst bauen (Ergebnis in `dist/`):
+**Packages (.deb/.run):** version 2.3.2 is available under
+[Releases](https://github.com/bit-wmike/fm1-companion/releases):
+
+```bash
+sudo apt install ./fm1-companion_2.3.2_all.deb
+sh FM-1-Companion-Suite-2.3.2.run
+```
+
+You can also build them yourself (result in `dist/`):
 
 ```bash
 python3 tools/build_deb.py        # dist/fm1-companion_2.3.2_all.deb  → sudo apt install ./dist/fm1-companion_2.3.2_all.deb
 python3 tools/build_run.py        # dist/FM-1-Companion-Suite-2.3.2.run → sh dist/FM-1-Companion-Suite-2.3.2.run
 ```
 
-Der `.run`-Installer ist ein grafischer Assistent (Lizenz, Hinweis, nur für mich oder für alle, Startmenü,
-Desktop-Verknüpfung, Beispiel-Samples); ohne Fenster:
+The `.run` installer is a graphical assistant (licence, notice, just for me or for all users, start menu,
+desktop shortcut, example samples); without a window:
 `sh FM-1-Companion-Suite-2.3.2.run --unattended [--prefix DIR] [--no-deps]`.
 
-## Voraussetzungen
+## Requirements
 
-Pflicht: `python3` (≥ 3.11), `python3-pyqt6`, `python3-pyqt6.qtsvg`, `python3-pyqt6.qtwebengine`,
+Required: `python3` (≥ 3.11), `python3-pyqt6`, `python3-pyqt6.qtsvg`, `python3-pyqt6.qtwebengine`,
 `python3-pyqt6.qtwebchannel`, `python3-mido`, `python3-rtmidi`, `python3-numpy`, `git`, `qt6-translations-l10n`.
-Empfohlen: `python3-pyqt6.qtmultimedia`, `ffmpeg`, `alsa-utils`, `pipewire-bin`, `audacity`, `fluidsynth`,
-`fluid-soundfont-gm`. Die Liste steht an einer Stelle: `fm1companion/data/deps.json`.
-Prüfen: `fm1-companion --check`. Der Starter nutzt immer `/usr/bin/python3` – auch wenn ein venv aktiv ist.
+Recommended: `python3-pyqt6.qtmultimedia`, `ffmpeg`, `alsa-utils`, `pipewire-bin`, `audacity`, `fluidsynth`,
+`fluid-soundfont-gm`. The list lives in one place: `fm1companion/data/deps.json`.
+Check: `fm1-companion --check`. The launcher always uses `/usr/bin/python3` – even if a venv is active.
 
-## Ausprobieren ohne Gerät
+## Try it without a device
 
-`fm1-companion --demo` startet mit zwei simulierten FM-1 (Melodee 1.6 und SLOOP 2.8).
-Weitere Schalter: `--syscheck` (Systemcheck im Terminal), `--no-splash`, `--debug`, `--version`.
+`fm1-companion --demo` starts with two simulated FM-1 (Melodee 1.6 and SLOOP 2.8).
+More switches: `--syscheck` (system check in the terminal), `--no-splash`, `--debug`, `--version`.
 
-## Datenschutz
+## Privacy
 
-Ohne Telemetrie, ohne Konten. Automatisch fragt die App nur zwei Dinge ab (abschaltbar): beim Anstecken eines
-FM-1 die Versionsliste seiner Firmware auf GitHub und beim Öffnen des Katalogs den Katalog von awesome-fm-1
-samt Vorschaubildern. Alles andere nur auf deinen Klick. Fehlerberichte werden nur lokal gespeichert.
+No telemetry, no accounts. The app only makes two automatic requests (both can be switched off): when an FM-1 is
+plugged in, the list of versions of its firmware on GitHub, and when the catalog is opened, the awesome-fm-1
+catalog including thumbnails. Everything else happens only when you click. Error reports are only stored locally.
 
-* **Abschalten:** Einstellungen › „beim Anstecken eines FM-1 nach Firmware-Updates suchen“; im Katalog
-  (Firmware+ › „Mehr“) „Katalog beim Öffnen automatisch aktualisieren“ und „Vorschaubilder aus dem Internet
-  laden“.
-* **Ohne automatische Netzzugriffe:** `FM1C_NO_NET=1 fm1-companion` schaltet beide automatischen Abfragen ab;
-  Katalog und Link-Import arbeiten dann nur mit dem mitgelieferten Stand. Was du selbst startest (Firmware- oder
-  Editor-Download, „Neu laden“ der Versionsliste), geht weiterhin ins Netz.
-* **Fehlerberichte** (ZIP, Hilfe › Diagnose) enthalten Protokolle, Versionen und Einstellungen – ohne
-  persönliche Pfade, Notizen, Rechnernamen, Zugangsdaten (z. B. ein GitHub-Token) und volle Seriennummern.
-  Ob du ihn weitergibst, entscheidest du; schau ihn vorher an.
-* Ein optionales **GitHub-Token** (Katalog › „Mehr“ › „GitHub-Token …“) steht in `config.json`, die nur für
-  deinen Benutzer lesbar gespeichert wird (0600).
+* **Switch off:** Einstellungen (Settings) › "beim Anstecken eines FM-1 nach Firmware-Updates suchen" (check for
+  firmware updates when an FM-1 is plugged in); in the catalog (Firmware+ › "Mehr" – More) "Katalog beim Öffnen
+  automatisch aktualisieren" (update catalog automatically when opening) and "Vorschaubilder aus dem Internet
+  laden" (load thumbnails from the internet).
+* **No automatic network access:** `FM1C_NO_NET=1 fm1-companion` switches off both automatic requests;
+  the catalog and the link import then only work with the bundled data. What you start yourself (firmware or
+  editor download, "Neu laden" – reload – of the version list) still goes to the network.
+* **Error reports** (ZIP, Hilfe › Diagnose – Help › Diagnostics) contain logs, versions and settings – without
+  personal paths, notes, host names, credentials (e.g. a GitHub token) and full serial numbers.
+  Whether you share one is up to you; look at it first.
+* An optional **GitHub token** (catalog › "Mehr" › "GitHub-Token …") is stored in `config.json`, which is saved
+  readable only by your user (0600).
 
-## Sicherheit
+## Security
 
-* **Risiko-Hinweis:** Vor der ersten Firmware-Installation, Rettungs- oder ROM-Aktion zeigt die App einmal einen
-  Hinweis („Ich habe verstanden“). Die Bestätigungen jeder einzelnen Aktion bleiben.
-* **Online-Editoren** aus dem Katalog sind fremde Webseiten: Editor-Befehle (SysEx) ans FM-1 erst nach deiner
-  Zustimmung je Adresse; wechselt die Seite die Adresse, gilt wieder der sichere Filter (nur Noten, Controller,
-  Takt). Firmware-Update und Bootmodus sind aus Webseiten immer gesperrt.
-* **Werkzeuge aus Firmware-Repos:** Für „Schrift & Werkssounds“ führt die App das Python-Werkzeug der Firmware
-  aus deren Repository aus. Bei eingebauten Firmwares ist der Commit je Version festgehalten – zeigt ein Tag
-  später auf einen anderen Commit, fragt die App. Bei selbst hinzugefügten Firmwares fragt sie vor dem ersten
-  Ausführen jedes Commits (Repo und Commit werden angezeigt).
-* Sicherheitslücken bitte privat melden: [SECURITY.md](SECURITY.md).
+* **Risk notice:** Before the first firmware installation, rescue or ROM action the app shows a notice once
+  ("Ich habe verstanden" – I understand). The confirmations of each individual action remain.
+* **Online editors** from the catalog are third-party web pages: editor commands (SysEx) reach the FM-1 only after
+  your consent per address; if the page changes its address, the safe filter applies again (only notes,
+  controllers, clock). Firmware update and boot mode are always blocked from web pages.
+* **Tools from firmware repos:** For "Schrift & Werkssounds" (font & factory sounds) the app runs the firmware's
+  Python tool from its repository. For built-in firmwares the commit is pinned per version – if a tag later points
+  to a different commit, the app asks. For firmwares you added yourself it asks before running each commit for
+  the first time (repo and commit are shown).
+* Please report security vulnerabilities privately: [SECURITY.md](SECURITY.md).
 
-## Wo liegt was
+## Where things are
 
 ```
-~/FM-1/                                   deine Daten (wird NIE automatisch gelöscht)
-  Backups/<Gerät>/  Projekte/  Samples/  Kits/  Aufnahmen/  Firmware/
-~/.config/fm1-companion/config.json       Einstellungen
-~/.local/share/fm1-companion/             Geräteprofile, Werkzeug-Repos, Editor-Kopien (+ app/ bei Benutzer-Installation)
-~/.local/state/fm1-companion/logs/        Protokolle
+~/FM-1/                                   your data (NEVER deleted automatically)
+  Backups/<device>/  Projekte/  Samples/  Kits/  Aufnahmen/  Firmware/
+~/.config/fm1-companion/config.json       settings
+~/.local/share/fm1-companion/             device profiles, tool repos, editor copies (+ app/ for a per-user install)
+~/.local/state/fm1-companion/logs/        logs
 ```
+
+The folder names under `~/FM-1/` are German: Projekte = projects, Aufnahmen = recordings.
 
 ## Tests
 
 ```bash
 QT_QPA_PLATFORM=offscreen python3 -m pytest tests/test_*.py fm1companion/vendor/unbricker/tests -q
-QT_QPA_PLATFORM=offscreen python3 tests/ui_flow_test.py        # jedes tests/ui_*_test.py einzeln
-QT_QPA_PLATFORM=offscreen python3 tests/ui_smoke.py /tmp/screenshots
+QT_QPA_PLATFORM=offscreen python3 tests/ui_flow_test.py        # each tests/ui_*_test.py on its own
+QT_QPA_PLATFORM=offscreen python3 tests/ui_smoke.py screenshots
 ```
 
-Mitmachen: [CONTRIBUTING.md](CONTRIBUTING.md) · Aufbau des Codes: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Code structure: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
+Translations: [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
-## Rechtliches
+## Legal
 
-* Die FM-1 Companion Suite ist ein **inoffizielles** Projekt der Community. Sie ist nicht mit M-VAVE oder den
-  Entwicklern der unterstützten Firmwares verbunden und wird von ihnen weder unterstützt noch geprüft.
-* „M-VAVE“, „FM-1“ und andere Produkt- und Firmennamen sind Marken ihrer jeweiligen Inhaber. Sie werden hier nur
-  beschreibend verwendet, um zu sagen, mit welchem Gerät die Software zusammenarbeitet.
-* Die Software wird ohne jede Gewährleistung bereitgestellt; die Haftung ist ausgeschlossen, soweit gesetzlich
-  zulässig (GNU GPL 3.0, Abschnitte 15 und 16). Die Benutzung – insbesondere das Flashen – geschieht auf eigenes
-  Risiko.
-* Mitgelieferte Simulatoren sind **aus dem offiziellen Quellcode gebaut** (M-VAVE FM1 Open) bzw. aus dem
-  Quellcode der Firmware (Melodee); Quellenangaben und das GPL-Angebot stehen in
-  `fm1companion/sims/*/NOTICE`.
+* The FM-1 Companion Suite is an **unofficial** community project. It is not affiliated with M-VAVE or the
+  developers of the supported firmwares and is neither supported nor reviewed by them.
+* "M-VAVE", "FM-1" and other product and company names are trademarks of their respective owners. They are used
+  here only descriptively, to say which device the software works with.
+* The software is provided without any warranty; liability is excluded to the extent permitted by law
+  (GNU GPL 3.0, sections 15 and 16). Use – in particular flashing – is at your own risk.
+* Bundled simulators are **built from the official source code** (M-VAVE FM1 Open) or from the firmware's source
+  code (Melodee); attributions and the GPL offer are in `fm1companion/sims/*/NOTICE`.
 
-## Mitwirkende und Lizenz
+## Credits and licence
 
-GPL-3.0-only. Danke an Melodee (Kerem Kiliç), Felucca (Leo Kuroshita / Hügelton
-Instruments), Skiff (illuminus5), SLOOP (isod89), M-VAVE FM1 Open, awesome-fm-1 (cicloid, CC0-1.0) und Lucide (ISC).
-Vollständige Liste: Hilfe › Über › Mitwirkende & Lizenzen (`fm1companion/data/credits.json`).
+GPL-3.0-only. Thanks to Melodee (Kerem Kiliç), Felucca (Leo Kuroshita / Hügelton
+Instruments), Skiff (illuminus5), SLOOP (isod89), M-VAVE FM1 Open, awesome-fm-1 (cicloid, CC0-1.0) and Lucide (ISC).
+Full list: Hilfe › Über › Mitwirkende & Lizenzen (Help › About › Credits & Licences, `fm1companion/data/credits.json`).

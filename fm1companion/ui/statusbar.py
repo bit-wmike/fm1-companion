@@ -17,14 +17,15 @@ from PyQt6.QtWidgets import (QDialog, QFileDialog, QHBoxLayout, QLabel, QPushBut
 
 from .. import health, syscheck
 from .common import fmt_secs, fmt_size, heading, icon, run_job
+from ..i18n import _, decimal, ngettext
 
 LEVEL_ICON = {"ok": "emblem-ok", "info": "dialog-information", "warn": "dialog-warning", "error": "dialog-error",
               "unknown": "help-browser"}
-LEVEL_TEXT = {"ok": "in Ordnung", "info": "Hinweis", "warn": "Warnung", "error": "Problem", "unknown": "unbekannt"}
+LEVEL_TEXT = {"ok": _("OK"), "info": _("Note"), "warn": _("Warning"), "error": _("Problem"), "unknown": _("unknown")}
 
 
 def _de(v: float, digits=0) -> str:
-    return f"{v:.{digits}f}".replace(".", ",")
+    return decimal(v, digits)
 
 
 class _Sig(QObject):
@@ -55,7 +56,7 @@ class PiStatus(QWidget):
         self.button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.button.setAutoRaise(True)
         self.button.clicked.connect(open_check)
-        self.button.setAccessibleName("Rechner-Status, Klick öffnet den Systemcheck")
+        self.button.setAccessibleName(_("Computer status, click opens the system check"))
         h.addWidget(self.button)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
@@ -84,8 +85,8 @@ class PiStatus(QWidget):
         if v.get("temp_c") is not None:
             parts.append(f"{_de(v['temp_c'])} °C")
         if v.get("disk_free") is not None:
-            parts.append(f"{fmt_size(v['disk_free']).replace('.', ',')} frei")
-        self.button.setText("  ·  ".join(parts) or "Systemcheck")
+            parts.append(_("{size} free").format(size=fmt_size(v['disk_free'])))
+        self.button.setText("  ·  ".join(parts) or _("System check"))
         warn = self.warning or (v.get("temp_c") or 0) >= 80
         self.button.setIcon(icon("dialog-warning") if warn else icon("utilities-system-monitor", "computer"))
         self.button.setToolTip(self._tooltip())
@@ -104,21 +105,24 @@ class PiStatus(QWidget):
         v = self.values
         rows = []
         if v.get("cpu_percent") is not None:
-            rows.append(("Prozessor", f"{_de(v['cpu_percent'])} %" + (f" bei {_de(v['freq_mhz'])} MHz" if v.get("freq_mhz") else "")))
+            rows.append((_("Processor"), f"{_de(v['cpu_percent'])} %"
+                         + (_(" at {mhz} MHz").format(mhz=_de(v['freq_mhz'])) if v.get("freq_mhz") else "")))
         if v.get("load"):
-            rows.append(("Last (1/5/15 min)", " / ".join(_de(x, 2) for x in v["load"])))
+            rows.append((_("Load (1/5/15 min)"), " / ".join(_de(x, 2) for x in v["load"])))
         if v.get("mem_percent") is not None:
-            rows.append(("Arbeitsspeicher", f"{_de(v['mem_percent'])} % von {fmt_size(v.get('mem_total'))}"))
+            rows.append((_("Memory"), _("{percent} % of {total}").format(percent=_de(v['mem_percent']),
+                                                                        total=fmt_size(v.get('mem_total')))))
         if v.get("temp_c") is not None:
-            rows.append(("Temperatur", f"{_de(v['temp_c'], 1)} °C"))
+            rows.append((_("Temperature"), f"{_de(v['temp_c'], 1)} °C"))
         if v.get("disk_free") is not None:
-            rows.append(("FM-1-Ordner", f"{fmt_size(v['disk_free'])} frei von {fmt_size(v.get('disk_total'))}"))
+            rows.append((_("FM-1 folder"), _("{free} free of {total}").format(free=fmt_size(v['disk_free']),
+                                                                             total=fmt_size(v.get('disk_total')))))
         if v.get("undervoltage"):
-            rows.append(("Stromversorgung", "<b>Unterspannung!</b>"))
+            rows.append((_("Power supply"), _("<b>Undervoltage!</b>")))
         if self.thr_bits is not None:
-            rows.append(("Drosselung", ", ".join(self.thr_names) or "keine"))
+            rows.append((_("Throttling"), ", ".join(self.thr_names) or _("none")))
         body = "".join(f"<tr><td>{a}:&nbsp;</td><td>{b}</td></tr>" for a, b in rows)
-        return f"<b>Rechner</b><table>{body}</table><i>Klicken für den Systemcheck</i>"
+        return _("<b>Computer</b><table>{rows}</table><i>Click for the system check</i>").format(rows=body)
 
 
 class SystemCheckDialog(QDialog):
@@ -131,28 +135,28 @@ class SystemCheckDialog(QDialog):
         self.runner = runner or syscheck.run_all
         self.found: list[syscheck.Finding] = []
         self.meta: dict = {}
-        self.setWindowTitle("Systemcheck")
+        self.setWindowTitle(_("System check"))
         self.resize(780, 560)
         lay = QVBoxLayout(self)
-        lay.addWidget(heading("Systemcheck", "Sucht im Kernel-Protokoll und im System nach allem, was dem FM-1 "
-                                             "schaden kann: Wackelkontakte, zu wenig Strom, USB-Audio-Fehler, Hitze."))
-        self.summary = QLabel("Prüfe …")
+        lay.addWidget(heading(_("System check"), _("Searches the kernel log and the system for anything that can harm "
+                                                   "the FM-1: loose contacts, too little power, USB audio errors, heat.")))
+        self.summary = QLabel(_("Checking …"))
         self.summary.setWordWrap(True)
         lay.addWidget(self.summary)
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Befund", "Stufe"])
+        self.tree.setHeaderLabels([_("Finding"), _("Level")])
         self.tree.setColumnWidth(0, 600)
         self.tree.setWordWrap(True)
         self.tree.setAlternatingRowColors(False)
         lay.addWidget(self.tree, 1)
         row = QHBoxLayout()
-        self.b_again = QPushButton(icon("view-refresh"), "Erneut prüfen")
+        self.b_again = QPushButton(icon("view-refresh"), _("Check again"))
         self.b_again.clicked.connect(self.run)
-        self.b_copy = QPushButton(icon("edit-copy"), "Bericht kopieren")
+        self.b_copy = QPushButton(icon("edit-copy"), _("Copy report"))
         self.b_copy.clicked.connect(self.copy)
-        self.b_save = QPushButton(icon("document-save"), "Speichern …")
+        self.b_save = QPushButton(icon("document-save"), _("Save …"))
         self.b_save.clicked.connect(self.save)
-        close = QPushButton("Schließen")
+        close = QPushButton(_("Close"))
         close.setDefault(True)
         close.clicked.connect(self.accept)
         for b in (self.b_again, self.b_copy, self.b_save):
@@ -177,10 +181,10 @@ class SystemCheckDialog(QDialog):
 
     def run(self):
         self.b_again.setEnabled(False)
-        self.summary.setText("Prüfe Kernel-Protokoll, Stromversorgung, USB und Audio …")
+        self.summary.setText(_("Checking kernel log, power supply, USB and audio …"))
         folder, paths = self._folder(), self._fm1_paths()
         run_job(self, lambda w: self.runner(folder, paths), on_done=self.show_result,
-                on_fail=lambda m, tb: (self.summary.setText(f"Prüfung fehlgeschlagen: {m}"), self.b_again.setEnabled(True)))
+                on_fail=lambda m, tb: (self.summary.setText(_("Check failed: {error}").format(error=m)), self.b_again.setEnabled(True)))
 
     def show_result(self, res):
         self.found, self.meta = res
@@ -190,15 +194,16 @@ class SystemCheckDialog(QDialog):
             it = QTreeWidgetItem([f.title, LEVEL_TEXT[f.level]])
             it.setIcon(0, icon(LEVEL_ICON[f.level]))
             it.setData(0, Qt.ItemDataRole.UserRole, f.key)
-            tip = "\n".join(x for x in (f.detail, ("Lösung: " + f.fix) if f.fix else "") if x)
+            fix = _("Solution: {fix}").format(fix=f.fix) if f.fix else ""
+            tip = "\n".join(x for x in (f.detail, fix) if x)
             it.setToolTip(0, tip)
-            for txt in (f.detail, ("Lösung: " + f.fix) if f.fix else ""):
+            for txt in (f.detail, fix):
                 if txt:
                     c = QTreeWidgetItem([txt, ""])
                     c.setFirstColumnSpanned(True)
                     it.addChild(c)
             if f.evidence:
-                ev = QTreeWidgetItem(["Protokoll-Zeilen", ""])
+                ev = QTreeWidgetItem([_("Log lines"), ""])
                 for e in f.evidence:
                     ev.addChild(QTreeWidgetItem([e, ""]))
                 it.addChild(ev)
@@ -206,16 +211,19 @@ class SystemCheckDialog(QDialog):
             if f.level in ("error", "warn", "unknown"):
                 it.setExpanded(True)
         n = {lv: sum(1 for f in self.found if f.level == lv) for lv in ("error", "warn")}
-        src = {"dmesg": "dmesg", "journalctl": "journalctl -k"}.get(self.meta.get("source"), "kein Kernel-Protokoll")
+        src = {"dmesg": "dmesg", "journalctl": "journalctl -k"}.get(self.meta.get("source"), _("no kernel log"))
         if n["error"]:
-            pe = "1 Problem" if n['error'] == 1 else f"{n['error']} Probleme"
-            wa = "eine Warnung" if n['warn'] == 1 else f"{n['warn']} Warnungen"
-            head = f"<b>{pe}</b> und {wa} gefunden." if n['warn'] else f"<b>{pe}</b> gefunden."
+            pe = ngettext("{n} problem", "{n} problems", n["error"]).format(n=n["error"])
+            wa = ngettext("one warning", "{n} warnings", n["warn"]).format(n=n["warn"])
+            head = (_("<b>{problems}</b> and {warnings} found.").format(problems=pe, warnings=wa) if n['warn']
+                    else _("<b>{problems}</b> found.").format(problems=pe))
         elif n["warn"]:
-            head = f"<b>{'1 Warnung' if n['warn'] == 1 else str(n['warn']) + ' Warnungen'}</b>, sonst alles in Ordnung."
+            head = _("<b>{warnings}</b>, otherwise everything is fine.").format(
+                warnings=ngettext("{n} warning", "{n} warnings", n["warn"]).format(n=n["warn"]))
         else:
-            head = "<b>Alles in Ordnung.</b>"
-        self.summary.setText(f"{head} Quelle: {src}, geprüft um {time.strftime('%H:%M:%S')}.")
+            head = _("<b>Everything is fine.</b>")
+        self.summary.setText(_("{summary} Source: {source}, checked at {time}.").format(
+            summary=head, source=src, time=time.strftime('%H:%M:%S')))
         self.finished_check.emit()
 
     def report(self) -> str:
@@ -226,7 +234,7 @@ class SystemCheckDialog(QDialog):
 
     def save(self, path: str | None = None):
         if not path:
-            path, _ = QFileDialog.getSaveFileName(self, "Bericht speichern",
+            path, _filter = QFileDialog.getSaveFileName(self, _("Save report"),
                                                   str(Path.home() / f"systemcheck-{time.strftime('%Y-%m-%d_%H-%M')}.txt"),
                                                   "Text (*.txt)")
         if path:

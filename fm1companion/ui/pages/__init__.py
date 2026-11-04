@@ -22,16 +22,18 @@ import pkgutil
 import traceback
 from dataclasses import dataclass, field
 from typing import Callable
+from ...i18n import _
 
 # Gruppen der Navigation in dieser Reihenfolge
+# (the keys are internal identifiers and stay German; the titles are translated)
 GROUPS: list[tuple[str, str]] = [
-    ("geraet", "Gerät"),
-    ("klang", "Klang"),
-    ("musik", "Musik"),
-    ("daten", "Daten & Werkzeuge"),
-    ("entdecken", "Entdecken"),             # (weiter gültig; eingebaute Seiten nutzen "daten")
-    ("werkzeuge", "Werkzeuge"),             # (weiter gültig; eingebaute Seiten nutzen "daten")
-    ("hilfe", "Hilfe"),
+    ("geraet", _("Device")),
+    ("klang", _("Sound")),
+    ("musik", _("Music")),
+    ("daten", _("Data & Tools")),
+    ("entdecken", _("Discover")),           # (weiter gültig; eingebaute Seiten nutzen "daten")
+    ("werkzeuge", _("Tools")),              # (weiter gültig; eingebaute Seiten nutzen "daten")
+    ("hilfe", _("Help")),
 ]
 GROUP_TITLES = dict(GROUPS)
 
@@ -74,5 +76,5 @@ def discover() -> list[PageSpec]:
 
 
 def sort_specs(specs: list[PageSpec]) -> list[PageSpec]:
-    order = {k: i for i, (k, _) in enumerate(GROUPS)}
+    order = {k: i for i, (k, _t) in enumerate(GROUPS)}
     return sorted(specs, key=lambda s: (order.get(s.group, len(order)), s.order, s.title.lower()))

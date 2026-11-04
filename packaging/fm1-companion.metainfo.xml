@@ -4,19 +4,20 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <name>FM-1 Companion Suite</name>
-  <summary>Alles fürs M-VAVE FM-1: Firmware, Backups, Klänge, MIDI, Simulator</summary>
-  <summary xml:lang="en">Companion suite for the M-VAVE FM-1 pocket synth</summary>
+  <summary>Companion suite for the M-VAVE FM-1 pocket synth</summary>
+  <summary xml:lang="de">Alles fürs M-VAVE FM-1: Firmware, Backups, Klänge, MIDI, Simulator</summary>
   <description>
-    <p>Desktop-Suite für den Taschen-Synthesizer M-VAVE FM-1 mit Firmwares der Felucca-Familie (Melodee, Skiff, SLOOP).</p>
+    <p>Desktop suite for the M-VAVE FM-1 pocket synthesizer with firmwares of the Felucca family (Melodee, Skiff, SLOOP).</p>
     <ul>
-      <li>Firmware installieren, wechseln und zurück zum Original</li>
-      <li>Komplette Backups und einzelne Projekte, mehrere Geräte mit eigenen Profilen</li>
-      <li>Presets, FM-Voices, Samples und Kits</li>
-      <li>Studio: digitaler Zwilling des FM-1 (Melodee) – spielen, als WAV ausgeben, zurückschreiben</li>
-      <li>MIDI-Werkzeuge, Klangerzeuger, Simulator und Aufnahme mit Audacity</li>
-      <li>Hilfe-Center und Systemcheck für USB, Strom und Audio</li>
+      <li>Install and switch firmware, and go back to the original</li>
+      <li>Full backups and single projects, several devices with their own profiles</li>
+      <li>Presets, FM voices, samples and kits</li>
+      <li>Studio: digital twin of the FM-1 (Melodee) – play, export as WAV, write back</li>
+      <li>MIDI tools, sound module, simulator and recording with Audacity</li>
+      <li>Help center and system check for USB, power and audio</li>
     </ul>
-    <p>Keine Telemetrie. Inoffizielles Community-Projekt, nicht mit M-VAVE verbunden.</p>
+    <p>The user interface is currently German; English is in progress.</p>
+    <p>No telemetry. Unofficial community project, not affiliated with M-VAVE.</p>
   </description>
   <launchable type="desktop-id">fm1-companion.desktop</launchable>
   <categories><category>AudioVideo</category><category>Audio</category><category>Music</category></categories>
@@ -27,43 +28,43 @@
   <url type="bugtracker">https://github.com/bit-wmike/fm1-companion/issues</url>
   <releases>
     <release version="2.3.2" date="2026-11-03">
-      <description><p>Melodee 1.6.1: Studio-Zwilling und Simulator mit 1.6.1 (1.6.0, rc.7 und rc.8 bleiben für Geräte auf diesen Versionen). Update von 1.6.0 auf 1.6.1 ohne Zusatz-Warnungen. „Song am FM-1 selbst starten“ geht jetzt ab einem Abschnitt – mitlaufende Geräte bekommen ab 1.6.1 Song Position und Continue. Der Taktgeber der MIDI-Seite kann ab einem Takt starten (Song Position) und erinnert daran, am FM-1 CLK auf USB zu stellen, weil 1.6.1 mit CLK INT selbst Clock sendet. Hilfe: was 1.6.1 an Clock, Sync und CLK ändert.</p></description>
+      <description><p>Melodee 1.6.1: Studio twin and simulator with 1.6.1 (1.6.0, rc.7 and rc.8 remain for devices on those versions). Update from 1.6.0 to 1.6.1 without extra warnings. “Start the song on the FM-1 itself” now works from a section – following devices get Song Position and Continue from 1.6.1 on. The MIDI page’s clock generator can start from a bar (Song Position) and reminds you to set CLK to USB on the FM-1, because 1.6.1 sends clock itself with CLK INT. Help: what 1.6.1 changes about clock, sync and CLK.</p></description>
     </release>
     <release version="2.3.1" date="2026-11-02">
-      <description><p>Sicherheit und Datenschutz vor der Veröffentlichung: Fehlerberichte, Diagnose und Systemcheck-Bericht ohne Tokens, Passwörter und Rechnernamen; Einstellungen nur für dich lesbar; einmaliger Risiko-Hinweis vor der ersten Installation oder Rettung; Online-Editoren dürfen erst nach Zustimmung je Adresse mit dem FM-1 reden; Werkzeuge aus fremden Firmware-Repos laufen erst nach Rückfrage; der lokale Server und neue Fenster aus Webseiten sind abgesichert; der Installer fragt, bevor er den FluidSynth-Dienst abschaltet.</p></description>
+      <description><p>Security and privacy before publication: error reports, diagnostics and the system check report without tokens, passwords and host names; settings readable only by you; a one-time risk notice before the first installation or rescue; online editors may talk to the FM-1 only after consent per address; tools from third-party firmware repos run only after asking; the local server and new windows from web pages are secured; the installer asks before it disables the FluidSynth service.</p></description>
     </release>
     <release version="2.3.0" date="2026-11-02">
-      <description><p>Melodee 1.6.0: Studio-Zwilling und Simulator mit der fertigen 1.6.0 (rc.7 und rc.8 bleiben für Geräte auf diesen Versionen). Sicheres Update: Backup von 1.5.1 aus Pflicht, Hinweis auf die neuen Lautstärken (CZ-1 leiser, Limiter), klare Warnung beim Rückweg von 1.6, und ein Backup von 1.6 wird auf älterer Melodee vorher mit Erklärung abgelehnt statt mit Gerätefehler. Werkssounds, die der neue Update-Loader schon geschrieben hat, schreibt die App nicht nochmal. Projekt-Ansicht zeigt Punch-Effekte sowie Song- und Pattern-Presets. Aufnahme-Hinweis zu USB vor MASTER, Hilfeseite „Melodee 1.6.0“, deutliche Meldung für FM-1 mit UCUN-Flash in der ROM-Rettung.</p></description>
+      <description><p>Melodee 1.6.0: Studio twin and simulator with the final 1.6.0 (rc.7 and rc.8 remain for devices on those versions). Safe update: backup from 1.5.1 mandatory, note about the new volume levels (CZ-1 quieter, limiter), a clear warning on the way back from 1.6, and a backup from 1.6 is refused on older Melodee beforehand with an explanation instead of a device error. Factory sounds that the new update loader has already written are not written again by the app. The project view shows punch effects as well as song and pattern presets. Recording note about USB before MASTER, help page “Melodee 1.6.0”, a clear message for FM-1 with UCUN flash in the ROM rescue.</p></description>
     </release>
     <release version="2.2.3" date="2026-11-02">
-      <description><p>Kein Ton über HDMI mehr? Debians FluidSynth-Dienst belegt bei jeder Anmeldung die erste Soundkarte. Die App erkennt das, schaltet den Dienst auf Klick ab (der Installer gleich mit), und der Systemcheck nennt jedes Programm, das eine Soundkarte an PipeWire vorbei belegt.</p></description>
+      <description><p>No more sound over HDMI? Debian’s FluidSynth service grabs the first sound card at every login. The app detects this, disables the service on click (the installer does so right away), and the system check names every program that grabs a sound card past PipeWire.</p></description>
     </release>
     <release version="2.2.2" date="2026-11-02">
-      <description><p>Ton nie mehr unbemerkt über das FM-1: Wird das FM-1 beim Anstecken zum Standard-Ausgang, stellt die App den Standard auf Lautsprecher/HDMI zurück, und Vorhören wie Studio spielen über den echten Ausgang. Das FM-1 bleibt unter „Ausgabe“ wählbar.</p></description>
+      <description><p>Sound never again unnoticed through the FM-1: if the FM-1 becomes the default output when plugged in, the app sets the default back to speakers/HDMI, and previewing as well as the Studio play through the real output. The FM-1 remains selectable under “Output”.</p></description>
     </release>
     <release version="2.2.1" date="2026-11-02">
-      <description><p>Systemcheck: erkennt, wenn der USB-Controller beim Audio-Start des FM-1 abstürzt, und gibt gezielte Hilfe; warnt, wenn es keinen echten Audio-Ausgang gibt („Schein-Ausgabe“).</p></description>
+      <description><p>System check: detects when the USB controller crashes at the FM-1’s audio start and gives targeted help; warns when there is no real audio output (“dummy output”).</p></description>
     </release>
     <release version="2.2.0" date="2026-11-02">
-      <description><p>Neu: das Studio – ein digitaler Zwilling des FM-1 mit derselben Melodee-Firmware im Rechner. Komplettes Backup vom FM-1 holen, am Bildschirm mit Maus, Tastatur oder MIDI-Keyboard spielen, Projekte abspielen, als WAV (24 bit, optional Einzelspuren) für Logic oder Audacity ausgeben, Zwischenstände mit Rückgängig, mit Sicherheits-Backup zurück aufs FM-1 schreiben. Der Zwilling lässt sich als virtuelles Gerät wählen; Projekte und Komponieren spielen ohne FM-1 im Studio mit identischem Klang.</p></description>
+      <description><p>New: the Studio – a digital twin of the FM-1 with the same Melodee firmware on the computer. Fetch a full backup from the FM-1, play on screen with mouse, computer keyboard or MIDI keyboard, play projects, export as WAV (24 bit, optionally separate tracks) for Logic or Audacity, snapshots with undo, write back to the FM-1 with a safety backup. The twin can be selected as a virtual device; projects and composing play in the Studio without an FM-1 with identical sound.</p></description>
     </release>
     <release version="2.1.0" date="2026-11-02">
-      <description><p>Projekte und Patterns auf dem FM-1 mit seinen eigenen Klängen abspielen (oder im Rechner vorhören), Rückgängig in Komponieren, robustes Vorhören mit wählbarer Audio-Ausgabe, Firmware+ vereint Firmware und Entdecken, klarere Projekte-Seite mit Anzeige des aktiven FM-1, behobene Darstellungsfehler im Backup-Vergleich.</p></description>
+      <description><p>Play projects and patterns on the FM-1 with its own sounds (or preview them on the computer), undo in composing, robust previewing with selectable audio output, Firmware+ combines Firmware and Discover, a clearer projects page showing the active FM-1, fixed display errors in the backup comparison.</p></description>
     </release>
     <release version="2.0.4" date="2026-11-02">
-      <description><p>Firmware hinzufügen: Die Suche findet auch Firmwares, die auf GitHub als Fork angelegt sind (z. B. Dungeon Tracker), und lässt bei mehreren Treffern auswählen, welche Firmware gemeint ist.</p></description>
+      <description><p>Add firmware: the search also finds firmwares that are set up on GitHub as a fork (e.g. Dungeon Tracker), and lets you choose which firmware is meant when there are several matches.</p></description>
     </release>
     <release version="2.0.3" date="2026-11-02">
-      <description><p>Firmware hinzufügen: Auch ein bloßer Name (z. B. „Karma“) wird jetzt auf GitHub gesucht, wenn er nicht im Katalog steht.</p></description>
+      <description><p>Add firmware: a bare name (e.g. “Karma”) is now also searched on GitHub if it is not in the catalog.</p></description>
     </release>
     <release version="2.0.2" date="2026-11-02">
-      <description><p>Über 30 Fehler behoben (Abstürze, Knöpfe ohne Funktion, Datenverlust bei Samples, Backup-Meldungen, Installer). Firmware hinzufügen findet jetzt auch Pakete auf Installer-Seiten und im Repo, sucht unbekannte Namen auf GitHub und übernimmt neuere Releases.</p></description>
+      <description><p>More than 30 bugs fixed (crashes, buttons without function, data loss with samples, backup messages, installer). Add firmware now also finds packages on installer pages and in the repo, searches GitHub for unknown names and picks up newer releases.</p></description>
     </release>
     <release version="2.0.1" date="2026-11-02">
-      <description><p>Responsives Layout, V16-Unterstützung mit Flash-Sicherheit, „Ist mein FM-1 sauber?“, Reste aufräumen (Expertenmodus).</p></description>
+      <description><p>Responsive layout, V16 support with flash safety, “Is my FM-1 clean?”, clean up leftovers (expert mode).</p></description>
     </release>
     <release version="2.0.0" date="2026-10-30">
-      <description><p>Suite 2.0: neues Design, Hilfe-Center, Befehlssuche, Systemcheck, Installer und viele neue Bereiche.</p></description>
+      <description><p>Suite 2.0: new design, help center, command search, system check, installer and many new sections.</p></description>
     </release>
     <release version="1.0.1" date="2026-10-01"/>
   </releases>

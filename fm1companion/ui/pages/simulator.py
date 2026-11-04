@@ -26,6 +26,7 @@ from ... import config, sims
 from ...bridge import MidiBridge
 from ..common import fmt_secs, fmt_size, heading, icon
 from . import PageSpec
+from ...i18n import _
 
 LEFT_MIN = 380          # linke Spalte: nie schmaler (Knöpfe, Adressfeld, Beschreibung)
 
@@ -766,7 +767,8 @@ def _make(ctx, window):
     return SimulatorPage(ctx, window)
 
 
-PAGE = PageSpec(key="simulator", title="Simulator", group="klang", factory=_make,
+PAGE = PageSpec(key="simulator", title=_("Simulator"), group="klang", factory=_make,
                 icons=("media-playback-start", "applications-multimedia"), order=40,
-                description="FM-1-Simulatoren im Rechner spielen (FM1 Open aus dem offiziellen Quellcode gebaut, Melodee, online)",
-                keywords=("emulator", "wasm", "firefox", "melodee", "fm1 open", "simulator"))
+                description=_("play FM-1 simulators on the computer (FM1 Open built from the official source code, "
+                                     "Melodee, online)"),
+                keywords=("emulator", "wasm", "firefox", "melodee", "fm1 open", "simulator", "play", "browser"))

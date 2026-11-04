@@ -20,6 +20,7 @@ from ...miditools import GM_PROGRAMS
 from ...protocol import Cmd
 from ..common import Card, badge, button, heading, label, notify, run_job, safe_folder, show_error, start_dir
 from . import PageSpec
+from ...i18n import _
 
 SETTINGS = {"soundfont": "", "driver": "auto", "latency": "ausgewogen", "gain": 0.6, "polyphony": 96,
             "autoconnect": True, "autostart": False,
@@ -563,7 +564,8 @@ def _make(ctx, window):
     return SoundModulePage(ctx, window)
 
 
-PAGE = PageSpec(key="soundmodule", title="Klangerzeuger", group="klang", factory=_make,
+PAGE = PageSpec(key="soundmodule", title=_("Sound Module"), group="klang", factory=_make,
                 icons=("audio-speakers", "speaker"), order=50,
-                description="Der Pi spielt Melodees MIDI-Spuren 5–8 mit FluidSynth – auch mit eigenen Samples",
-                keywords=("fluidsynth", "soundfont", "sf2", "gm", "midi-spur", "sound module", "kit"))
+                description=_("The Pi plays Melodee's MIDI tracks 5–8 with FluidSynth – also with your own samples"),
+                keywords=("fluidsynth", "soundfont", "sf2", "gm", "midi-spur", "sound module", "kit", "klangerzeuger",
+                          "midi track", "synth"))

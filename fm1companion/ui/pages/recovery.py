@@ -23,6 +23,7 @@ from . import PageSpec
 from ... import firmware
 from ...flash import engine as fe, journal as fj, package as fpk, uboot
 from ..common import Card, Disclosure, confirm, heading, icon, show_error
+from ...i18n import _
 
 DEMO = os.environ.get("FM1C_DEMO") == "1"
 
@@ -694,8 +695,8 @@ def _make(ctx, window):
     return RecoveryPage(ctx, window)
 
 
-PAGE = PageSpec(key="recovery", title="Rettung", group="daten", factory=_make,
+PAGE = PageSpec(key="recovery", title=_("Recovery"), group="daten", factory=_make,
                 icons=("tools-wizard", "help-hint", "dialog-warning"), order=14,
-                description="FM-1 startet nicht oder hängt im Update-Modus – Schritt für Schritt retten",
+                description=_("FM-1 does not start or is stuck in update mode – rescue it step by step"),
                 keywords=("recovery", "brick", "update-modus", "uboot", "wl82", "transporter", "oct", "sauber", "dump",
-                          "flash prüfen", "v16"))
+                          "flash prüfen", "v16", "rescue", "update mode", "unbrick", "check flash", "clean"))

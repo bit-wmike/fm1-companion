@@ -58,8 +58,13 @@ def test_deb(dist):
         for f in b.manifest["files"]:
             assert f"{lib}sims/melodee-studio/{b.path.name}/{f}" in files, (b.version, f)
         assert f"{lib}sims/melodee-studio/{b.path.name}/manifest.json" in files
-    for f in ("studio.py", "studio_web.py", "ui/studio_service.py", "ui/pages/studio.py", "data/help/13-studio.md"):
+    for f in ("studio.py", "studio_web.py", "ui/studio_service.py", "ui/pages/studio.py", "data/help/de/13-studio.md"):
         assert lib + f in files, f
+    # translations (.po, read directly – no .mo build step) and the help pages per language
+    for f in ("i18n.py", "locale/messages.pot", "locale/de/frame.po", "data/help/de/01-erste-schritte.md"):
+        assert lib + f in files, f
+    for po in (ROOT / "fm1companion/locale").rglob("*.po"):
+        assert lib + po.relative_to(ROOT / "fm1companion").as_posix() in files, po
     x = dist / "x"
     subprocess.run(["dpkg-deb", "-x", str(deb), str(x)], check=True)
     launcher = (x / "usr/bin/fm1-companion").read_text()
@@ -106,6 +111,10 @@ def test_run_installer(dist, tmp_path):
     launcher = home / ".local/bin/fm1-companion"
     assert (app / "fm1companion/__main__.py").exists() and (app / "install-info.json").exists()
     assert (app / "fm1companion/sims/_studio/studio-panel.js").exists()               # Studio-Zwilling im .run
+    for po in (ROOT / "fm1companion/locale").rglob("*.po"):                          # translations and help per language
+        assert (app / po.relative_to(ROOT).as_posix()).exists(), po
+    assert (app / "fm1companion/locale/messages.pot").exists()
+    assert (app / "fm1companion/data/help/de/01-erste-schritte.md").exists()
     assert sorted(p.parent.name for p in (app / "fm1companion/sims/melodee-studio").glob("*/twin.wasm")) == \
         sorted(p.parent.name for p in (ROOT / "fm1companion/sims/melodee-studio").glob("*/twin.wasm"))
     assert "exec /usr/bin/python3 -m fm1companion" in launcher.read_text() or py in launcher.read_text()

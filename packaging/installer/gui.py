@@ -35,7 +35,7 @@ RISK_FALLBACK = [
     "Firmware installieren, Rettung (Update-Modus, ROM-Bootmodus), Reste aufräumen und das Zurückschreiben aus dem "
     "Studio verändern dein Gerät. Das geschieht auf eigenes Risiko.",
     "Mach vorher ein Backup und trenne das Gerät während eines Vorgangs nicht.",
-    "Nicht jede Funktion ist auf echter Hardware getestet (siehe docs/UNGETESTET.md).",
+    "Nicht jede Funktion ist auf echter Hardware getestet (siehe docs/UNTESTED.md).",
     "Es gibt keine Gewährleistung und keine Haftung, soweit gesetzlich zulässig (GNU GPL 3.0, Abschnitte 15 und 16).",
 ]
 

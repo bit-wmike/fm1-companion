@@ -1,85 +1,85 @@
-# Fahrplan: Studio-Zwilling
+# Roadmap: Studio twin
 
-Leitbild: Das FM-1 ist das Instrument (skizzieren, ausprobieren), die Suite ist das Studio. Die Suite hat einen
-digitalen Zwilling des FM-1: dieselbe Firmware, mit dem kompletten Gerätezustand aus dem Backup, identischer
-Klang über die Lautsprecher am Rechner, in der Suite weiter bearbeitbar, als WAV ausgebbar und zurück aufs FM-1
-schreibbar. Die Suite ersetzt keine DAW (Logic, Audacity), kann aber alles, was zum FM-1 gehört.
+Guiding idea: the FM-1 is the instrument (sketching, trying things out), the suite is the studio. The suite has a
+digital twin of the FM-1: the same firmware, with the complete device state from the backup, identical
+sound through the computer's speakers, further editable in the suite, exportable as WAV and writable back to the
+FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everything that belongs to the FM-1.
 
-| Schritt | Firmware | Stand |
+| Step | Firmware | Status |
 |---|---|---|
-| 1 | **Melodee** (Priorität 1), passend zur Version auf dem Gerät (1.6.1, 1.6.0, 1.6.0-rc.7 und rc.8 mitgeliefert) | **fertig in 2.2.0**, 1.6.0 seit 2.3.0, 1.6.1 seit 2.3.2 (Seite „Studio“, virtuelles Gerät, Wiedergabe-Ziel „Im Studio“) |
-| 2 | **SLOOP** (neueste stabile, zurzeit 2.8.4) | erst wenn Melodee gut läuft |
-| 3 | **Skiff** (neueste stabile, zurzeit 2.1.1) | erst wenn Melodee gut läuft |
-| 4 | **Original-Firmware:** vorerst über **FM1 Open** (M-VAVEs offener V14-Code), mit Hinweis, dass V16 abweichen kann | danach |
-| – | **Original V16** | **pausiert, nicht gestrichen** |
+| 1 | **Melodee** (priority 1), matching the version on the device (1.6.1, 1.6.0, 1.6.0-rc.7 and rc.8 bundled) | **done in 2.2.0**, 1.6.0 since 2.3.0, 1.6.1 since 2.3.2 (page "Studio", virtual device, playback target "Im Studio" – in the Studio) |
+| 2 | **SLOOP** (latest stable, currently 2.8.4) | only once Melodee runs well |
+| 3 | **Skiff** (latest stable, currently 2.1.1) | only once Melodee runs well |
+| 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V16 may differ | after that |
+| – | **Original V16** | **paused, not dropped** |
 
-## Stand 2.2.0 (Melodee)
+## Status 2.2.0 (Melodee)
 
-Erledigt: Seite **Studio** (MUSIK, erster Eintrag) – vom aktiven FM-1 holen (Backup landet auch in der Liste), aus
-Backup öffnen, letzten Studio-Stand je Geräteprofil automatisch laden; Versions-Banner (Zwilling vs. Gerät/Backup);
-spielbares FM-1 (Bildschirm, LEDs, Tasten, Regler; Maus, Rechner-Tastatur, MIDI-Keyboard, Tasten des echten FM-1);
-Projekte des Zwillings laden/abspielen, Song, Leertaste; WAV-Export (24 bit / 32 bit float, Song bis zum Ende,
-Sekunden oder Durchläufe, Einzelspuren); Studio-Stand automatisch gesichert, Zwischenstände mit
-Rückgängig/Wiederherstellen; Zurückschreiben mit Bestätigung, Sicherheits-Backup, Einstellungen nur auf Wunsch,
-Versionssperre (Experten-Haken). Der Zwilling ist als **virtuelles Gerät** wählbar (Projekte, Komponieren, Presets,
-Backups, Editor arbeiten über `StudioTransport`); er ist nie in `ctx.ports`, `ctx.is_virtual` kennzeichnet ihn,
-automatische Backups und Firmware-Prüfung lassen ihn aus. Wiedergabe-Leiste: „Im Studio (identischer Klang)“
-statt der Annäherung im Rechner (die bleibt nur, wenn es keinen Zwilling gibt). Neue Versionen bauen:
-`docs/studio-build.md`.
+Done: page **Studio** (MUSIK group, first entry) – fetch from the active FM-1 (the backup also lands in the list),
+open from a backup, automatically load the last Studio state per device profile; version banner (twin vs.
+device/backup); playable FM-1 (screen, LEDs, keys, knobs; mouse, computer keyboard, MIDI keyboard, keys of the real
+FM-1); load/play the twin's projects, song, space bar; WAV export (24 bit / 32 bit float, song to the end,
+seconds or loops, separate tracks); Studio state saved automatically, snapshots with
+undo/redo; writing back with confirmation, safety backup, settings only on request,
+version lock (expert checkbox). The twin can be selected as a **virtual device** (projects, composing, presets,
+backups, editor work through `StudioTransport`); it is never in `ctx.ports`, `ctx.is_virtual` marks it,
+automatic backups and the firmware check skip it. Playback bar: "Im Studio (identischer Klang)" (in the Studio,
+identical sound) instead of the approximation on the computer (which remains only if there is no twin). Building new
+versions: `docs/studio-build.md`.
 
-Offen (Melodee): Ausgabe-Wahl für das Studio ist „bestmöglich“ (pactl move-sink-input des QtWebEngine-Tons);
-Tempo/Last am Pi 5 messen; ein CPU-Lastmodell wie am Gerät (Overload-Shedding) gibt es im Zwilling nicht.
+Open (Melodee): output selection for the Studio is "best effort" (pactl move-sink-input of the QtWebEngine audio);
+measure tempo/load on the Pi 5; a CPU load model like on the device (overload shedding) does not exist in the twin.
 
-## Stand 2.3.0 (Melodee 1.6.0)
+## Status 2.3.0 (Melodee 1.6.0)
 
-Erledigt: Zwilling für die fertige **Melodee 1.6.0** (Tag v1.6.0, Commit 8f0e251; Klebeschicht unverändert), rc.7
-und rc.8 bleiben für Geräte auf diesen Versionen; `pick_build` nimmt für 1.6.0 genau 1.6.0, die Versionswarnung nennt
-zwischen rc.x und 1.6.0 die neuen Pegel (CZ-1 −6 dB, Limiter −2 dBFS). Simulator auf 1.6.0. Projekt-Ansicht liest
-Punch-Effekte, Song-Block- und Pattern-Presets (nur Anzeige; exakt klingen sie nur im Studio) – geprüft an einem
-1.6.0-Projekt aus Melodees eigenem Code (`tools/melodee_fixtures/fixturegen16.c`, `tests/fixtures/musik16`).
-Sicherheit beim Wechsel auf/ab 1.6: `fm1companion/melodee16.py` (Installationsplan, Backup-Sperre).
+Done: twin for the final **Melodee 1.6.0** (tag v1.6.0, commit 8f0e251; glue layer unchanged), rc.7
+and rc.8 remain for devices on those versions; `pick_build` takes exactly 1.6.0 for 1.6.0, the version warning
+names the new levels between rc.x and 1.6.0 (CZ-1 −6 dB, limiter −2 dBFS). Simulator on 1.6.0. The project view reads
+punch effects, song block and pattern presets (display only; they sound exact only in the Studio) – checked against a
+1.6.0 project from Melodee's own code (`tools/melodee_fixtures/fixturegen16.c`, `tests/fixtures/musik16`).
+Safety when switching to/from 1.6: `fm1companion/melodee16.py` (installation plan, backup lock).
 
-Offen: `fixturegen16.c` speichert den Song nur als laufende Musik (Objekt 0) – `project_save_as` mit Song-Presets
-bricht im Host-Test-Aufbau die Ressourcen-Tabelle (nicht untersucht, nur Host).
+Open: `fixturegen16.c` stores the song only as running music (object 0) – `project_save_as` with song presets
+breaks the resource table in the host test setup (not investigated, host only).
 
-## Stand 2.3.2 (Melodee 1.6.1)
+## Status 2.3.2 (Melodee 1.6.1)
 
-Erledigt: Zwilling **Melodee 1.6.1** (Tag v1.6.1, Commit 165d177; Klebeschicht unverändert, Kennung FM-1_91061) neben
-1.6.0, rc.7 und rc.8; `pick_build` nimmt für 1.6.1 genau 1.6.1, für 1.6.0 weiter 1.6.0. Simulator auf 1.6.1.
-Werkzeug-Pin v1.6.1 (`KNOWN_TOOL_COMMITS`). 1.6.0 → 1.6.1 ist im Installationsplan ein normales Update.
-Clock/Sync von 1.6.1 (gegen `midi_clock.c`, `editor.c`, `project.c` geprüft): „Song am FM-1 selbst starten“ ab einem
-Abschnitt (BANK_SONG op 2 mit Zeile → `chain_prepare_from`; mit CLK INT sendet das FM-1 dann Song Position +
-Continue), der Taktgeber der MIDI-Seite kann ab einem Takt starten (Song Position + Continue, `clock.song_position`)
-und warnt, wenn das FM-1 mit CLK INT selbst Clock sendet. Hilfe „Melodee 1.6.0“ um 1.6.1 ergänzt (CLK beim
-Projekt-Laden behalten, Backup stellt CLK wieder her).
+Done: twin **Melodee 1.6.1** (tag v1.6.1, commit 165d177; glue layer unchanged, identity FM-1_91061) next to
+1.6.0, rc.7 and rc.8; `pick_build` takes exactly 1.6.1 for 1.6.1, and still 1.6.0 for 1.6.0. Simulator on 1.6.1.
+Tool pin v1.6.1 (`KNOWN_TOOL_COMMITS`). 1.6.0 → 1.6.1 is a normal update in the installation plan.
+Clock/sync of 1.6.1 (checked against `midi_clock.c`, `editor.c`, `project.c`): "Song am FM-1 selbst starten" (start
+the song on the FM-1 itself) from a section (BANK_SONG op 2 with row → `chain_prepare_from`; with CLK INT the FM-1
+then sends Song Position + Continue), the MIDI page's clock generator can start from a bar (Song Position +
+Continue, `clock.song_position`) and warns when the FM-1 sends clock itself with CLK INT. Help page "Melodee 1.6.0"
+extended with 1.6.1 (keep CLK when loading a project, the backup restores CLK).
 
-Offen: Der Zwilling gibt die Clock des FM-1 (eigener Echtzeit-Ring in `usb.c`) nicht nach außen – das bräuchte eine
-neue Klebeschicht und damit neue Builds aller Versionen. Clock-Ausgabe an echter Hardware ungetestet (auch bei
-Melodee selbst nur automatisch geprüft).
+Open: the twin does not output the FM-1's clock (its own real-time ring in `usb.c`) – that would need a
+new glue layer and thus new builds of all versions. Clock output untested on real hardware (also only checked
+automatically in Melodee itself).
 
-## Zweiter Weg: fm1-emu (Prozessor-Emulation)
+## Second route: fm1-emu (processor emulation)
 
-[joakimeriksson/fm1-emu](https://github.com/joakimeriksson/fm1-emu) (MIT) emuliert das FM-1 auf Prozessor-Ebene
-und führt **unveränderte .fwsc-Pakete** aus – jede Firmware, jede Version, laut Projekt auch **Original V13/V15/V16**.
-Es speichert den Flash als Sektor-Dateien (`.fm1save`), emuliert USB-MIDI für Firmwares, die USB abfragen
-(Felucca-Familie: Melodee, SLOOP …, also auch das Editor-Protokoll der Suite) und kann USB-Audio aufnehmen.
-Nachteil: langsamer (Melodee im Browser ~2,5-fach Echtzeit auf einem Laptop; auf dem Pi 5 vermutlich um Echtzeit
-oder darunter – messen). WAV-Ausgabe geht unabhängig vom Tempo.
+[joakimeriksson/fm1-emu](https://github.com/joakimeriksson/fm1-emu) (MIT) emulates the FM-1 at processor level
+and runs **unmodified .fwsc packages** – any firmware, any version, according to the project also **original
+V13/V15/V16**. It stores the flash as sector files (`.fm1save`), emulates USB-MIDI for firmwares that poll USB
+(Felucca family: Melodee, SLOOP …, so also the suite's editor protocol) and can record USB audio.
+Drawback: slower (Melodee in the browser ~2.5× real time on a laptop; on the Pi 5 probably around real time
+or below – to be measured). WAV export works regardless of the tempo.
 
-Plan: Der Studio-Zwilling bekommt eine austauschbare Engine. Erste Engine: Melodee aus dem Quellcode übersetzt
-(schnell, Echtzeit am Pi). Zweite Engine: fm1-emu für alle anderen Firmwares/Versionen und als Ersatz, wenn es
-keinen passenden Quellcode-Build gibt. Weitere Funde im Verzeichnis
-[aroum/fm1-custom-fw](https://github.com/aroum/fm1-custom-fw) (Abschnitt „Emulators“): Quixotic7/FM1VST
-(Felucca-Familie als DAW-Plugin aus dem Quellcode), weavejam/Felucca (rendert Felucca-Projekte offline als Mix +
-4 Stems), hdavid/fm1-emulator (Desktop-Fork mit USB-MIDI).
+Plan: the Studio twin gets a replaceable engine. First engine: Melodee compiled from source
+(fast, real time on the Pi). Second engine: fm1-emu for all other firmwares/versions and as a fallback when there
+is no matching source build. More finds in the directory
+[aroum/fm1-custom-fw](https://github.com/aroum/fm1-custom-fw) (section "Emulators"): Quixotic7/FM1VST
+(Felucca family as a DAW plugin from source), weavejam/Felucca (renders Felucca projects offline as mix +
+4 stems), hdavid/fm1-emulator (desktop fork with USB-MIDI).
 
-## V16 (pausiert)
+## V16 (paused)
 
-Der Nutzer will V16 ausdrücklich. Blocker: Der V16-Quellcode ist nicht offen; M-VAVE hat nur V14 als
-`m-vave/fm1_open` veröffentlicht. Wege, sobald wieder Zeit ist:
+V16 support is explicitly wanted. Blocker: the V16 source code is not open; M-VAVE has only published V14 as
+`m-vave/fm1_open`. Routes, once there is time again:
 
-- Bei jedem neuen Stand von `m-vave/fm1_open` prüfen, ob V15/V16 dazugekommen sind (dann wie Melodee bauen).
-- M-VAVE nach dem V16-Code fragen (Forum: forum.m-vave.com).
-- **Neu und am aussichtsreichsten:** fm1-emu (siehe oben) führt V16 schon aus. Offen: M-VAVEs Firmware steuert
-  USB über Interrupts, die fm1-emu noch nicht nachbildet – ein Backup per USB geht damit noch nicht; Klang,
-  Bedienung und Flash schon. Tempo auf dem Pi messen.
+- With every new state of `m-vave/fm1_open`, check whether V15/V16 have been added (then build like Melodee).
+- Ask M-VAVE for the V16 code (forum: forum.m-vave.com).
+- **New and most promising:** fm1-emu (see above) already runs V16. Open: M-VAVE's firmware drives
+  USB via interrupts, which fm1-emu does not emulate yet – so a backup via USB does not work yet; sound,
+  operation and flash do. Measure the tempo on the Pi.

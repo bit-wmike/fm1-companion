@@ -42,7 +42,7 @@ docs/                design notes and research per area (docs/<area>.md)
 ## 2. Architecture rules
 
 ### Navigation (13 entries) and merged pages
-Since the usability pass the sidebar has 13 entries in 5 groups (Firmware and Entdecken were merged into **Firmware+** in 2.1; Firmware+ and Rettung live under Daten & Werkzeuge):
+Since the usability pass the sidebar has 13 entries in 5 groups (Firmware and Entdecken were merged into **Firmware+** in 2.1; Firmware+ and Rettung live under Daten & Werkzeuge). Group, entry and tab names below are the German UI labels (the UI is not translated yet):
 
 | Group | Entry | Tabs (old page key → tab) |
 |---|---|---|
@@ -145,15 +145,16 @@ internet content never get editor SysEx to the real FM-1 without the per-origin 
 Allowed at runtime: stdlib, PyQt6 (+WebEngine, WebChannel, optional QtMultimedia), numpy, mido+rtmidi,
 plus command-line tools from Debian packages (ffmpeg, alsa-utils: aconnect/arecord/aplay, pipewire-bin:
 pw-record/pw-play, fluidsynth, git, vcgencmd, journalctl, dmesg …). Anything optional must be imported
-lazily with a clear German hint ("sudo apt install …") when missing. Every new apt package goes into
+lazily with a clear user-facing hint ("sudo apt install …") when missing. Every new apt package goes into
 `fm1companion/data/deps.json` (the single list used by the installers, the .deb and `--check`).
 Python **3.11** syntax only (no PEP 695 `type`/generics, no 3.12 f-string quote nesting); PyQt6 **6.4**
 APIs only; numpy **1.24** APIs only (no numpy 2-only functions); mido 1.2.10.
 
-### UI quality bar ("gekaufte Software")
-German texts, consistent wording ("FM-1", "Firmware", "Backup", "Preset", "Projekt", "Sample").
-Every page: `heading()`, sensible empty states ("Noch keine … – so geht's: …"), tooltips, no "TODO",
-no English UI strings, human-readable errors, progress for long operations, cancel where safe,
+### UI quality bar ("gekaufte Software" – feels like bought software)
+UI texts are currently German and go through the translation system (English is in progress, see
+[TRANSLATING.md](TRANSLATING.md)); consistent wording ("FM-1", "Firmware", "Backup", "Preset", "Projekt", "Sample").
+Every page: `heading()`, sensible empty states ("Noch keine … – so geht's: …" – none yet, here is how), tooltips,
+no "TODO", no untranslatable hard-coded UI strings, human-readable errors, progress for long operations, cancel where safe,
 keyboard shortcuts where natural, works at 1280×800 (use scroll areas), dark and light theme.
 **Device safety:** never write to the FM-1 without an explicit user action and a confirmation that says
 exactly what will be overwritten; read-before-write so the user can undo; prefer backups first.

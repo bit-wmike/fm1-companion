@@ -1,109 +1,118 @@
-# Mitmachen bei der FM-1 Companion Suite
+# Contributing to the FM-1 Companion Suite
 
-Danke, dass du helfen willst! Die Suite ist ein inoffizielles Community-Projekt für den M-VAVE FM-1
-(GPL-3.0-only). Beiträge sind willkommen: Fehlerberichte, **Testberichte von echter Hardware**,
-Übersetzungshilfen, Code und Dokumentation.
+Thanks for wanting to help! The suite is an unofficial community project for the M-VAVE FM-1
+(GPL-3.0-only). Contributions are welcome: bug reports, **test reports from real hardware**,
+translations, code and documentation.
 
-Bitte lies vorher kurz [SECURITY.md](SECURITY.md) (Sicherheitslücken nicht öffentlich melden) und den
-[Verhaltenskodex](CODE_OF_CONDUCT.md). Wie der Code aufgebaut ist, steht in
+Please read [SECURITY.md](SECURITY.md) first (do not report security vulnerabilities publicly) and the
+[Code of Conduct](CODE_OF_CONDUCT.md). How the code is structured is described in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Entwicklungsumgebung
+## Language
 
-Die App läuft mit Debian-/Ubuntu-Paketen, ohne pip und ohne Compiler auf dem Zielrechner.
+* **Everything public is in English:** commit messages, pull requests, issues, review comments and the
+  documentation in this repository.
+* **UI texts go through the translation system.** The app's UI is currently German; English is in progress.
+  Do not hard-code new UI strings in either language outside that system.
+* **Translations:** see [docs/TRANSLATING.md](docs/TRANSLATING.md).
+
+## Development environment
+
+The app runs with Debian/Ubuntu packages, without pip and without a compiler on the target machine.
 
 ```bash
 git clone https://github.com/bit-wmike/fm1-companion.git
 cd fm1-companion
-# Systempakete (die Liste steht in fm1companion/data/deps.json):
+# System packages (the list is in fm1companion/data/deps.json):
 sudo apt install python3 python3-pyqt6 python3-pyqt6.qtsvg python3-pyqt6.qtwebengine \
   python3-pyqt6.qtwebchannel python3-mido python3-rtmidi python3-numpy git qt6-translations-l10n
-# empfohlen: python3-pyqt6.qtmultimedia ffmpeg alsa-utils pipewire-bin fluidsynth fluid-soundfont-gm
-python3 -m fm1companion --check        # fehlt etwas?
-python3 -m fm1companion --demo         # ohne FM-1: zwei simulierte Geräte
+# recommended: python3-pyqt6.qtmultimedia ffmpeg alsa-utils pipewire-bin fluidsynth fluid-soundfont-gm
+python3 -m fm1companion --check        # anything missing?
+python3 -m fm1companion --demo         # without an FM-1: two simulated devices
 ```
 
-Für Tests zusätzlich `python3-pytest`. Zielversionen: Python ≥ 3.11, PyQt6 ≥ 6.4, NumPy ≥ 1.24 (Debian
-Bookworm). Bitte keine Sprachmittel oder APIs, die erst später kamen (z. B. PEP 695, NumPy-2-Funktionen).
+For tests you also need `python3-pytest`. Target versions: Python ≥ 3.11, PyQt6 ≥ 6.4, NumPy ≥ 1.24 (Debian
+Bookworm). Please do not use language features or APIs that came later (e.g. PEP 695, NumPy 2 functions).
 
 ## Tests
 
 ```bash
-# Unit-Tests (ohne Bildschirm)
+# Unit tests (no display)
 QT_QPA_PLATFORM=offscreen python3 -m pytest tests/test_*.py fm1companion/vendor/unbricker/tests -q
-# Oberflächen-Tests: jedes Skript einzeln, ohne Bildschirm, im Demo-Modus mit eigenem Temp-HOME
+# UI tests: each script on its own, no display, in demo mode with its own temporary HOME
 QT_QPA_PLATFORM=offscreen python3 tests/ui_flow_test.py
-QT_QPA_PLATFORM=offscreen python3 tests/ui_smoke.py /tmp/screenshots   # Screenshots aller Seiten
+QT_QPA_PLATFORM=offscreen python3 tests/ui_smoke.py screenshots   # screenshots of all pages
 ```
 
-Als root (z. B. im Container) braucht Qt WebEngine `QTWEBENGINE_DISABLE_SANDBOX=1`. Die UI-Skripte geben am
-Ende `N/M bestanden` aus und enden mit Code 0 nur, wenn alles bestanden ist. Neue Funktionen bekommen einen
-Test; Gerätezugriffe testest du gegen die Simulation (`fm1companion/demo_device.py`, `FM1C_DEMO=1`).
+As root (e.g. in a container) Qt WebEngine needs `QTWEBENGINE_DISABLE_SANDBOX=1`. The UI scripts print
+`N/M bestanden` (passed) at the end and exit with code 0 only if everything passed. New features get a
+test; you test device access against the simulation (`fm1companion/demo_device.py`, `FM1C_DEMO=1`).
 
-## Code-Stil
+## Code style
 
-* Oberfläche **deutsch**, Anrede „du“, kurz und klar; einheitliche Begriffe („FM-1“, „Firmware“, „Backup“,
-  „Preset“, „Projekt“, „Sample“). Keine englischen UI-Texte, keine „TODO“s in der Oberfläche.
-* Jede Python-Datei beginnt mit `# SPDX-License-Identifier: GPL-3.0-only`.
-* Zeilen bis 120 Zeichen. `ruff check --select E9,F63,F7 .` muss sauber sein; bitte keine neuen
-  ungenutzten Importe.
-* Nie im GUI-Thread blockieren (kein Netz, kein `sleep`, keine Geräteanfragen) – dafür gibt es `run_job`
-  und `ctx.job` (siehe docs/ARCHITECTURE.md).
-* Optionale Abhängigkeiten nur verzögert importieren, mit deutschem Hinweis („sudo apt install …“);
-  jede neue Paketabhängigkeit gehört in `fm1companion/data/deps.json`.
+* UI: short and clear, consistent terms ("FM-1", "Firmware", "Backup", "Preset", "Projekt"/project, "Sample").
+  The German UI addresses the user informally ("du"). No "TODO"s in the UI. All UI texts go through the
+  translation system (see above).
+* Every Python file starts with `# SPDX-License-Identifier: GPL-3.0-only`.
+* Lines up to 120 characters. `ruff check --select E9,F63,F7 .` must be clean; please do not add new
+  unused imports.
+* Never block the GUI thread (no network, no `sleep`, no device requests) – use `run_job`
+  and `ctx.job` for that (see docs/ARCHITECTURE.md).
+* Import optional dependencies lazily only, with a user-facing hint ("sudo apt install …");
+  every new package dependency goes into `fm1companion/data/deps.json`.
 
-## Sicherheitsregeln (Gerät und Nutzerdaten)
+## Safety rules (device and user data)
 
-Diese Regeln sind wichtiger als jede Funktion:
+These rules are more important than any feature:
 
-1. **Nie ungefragt aufs FM-1 schreiben.** Jede schreibende Aktion braucht eine ausdrückliche Handlung und
-   eine Bestätigung, die genau sagt, was überschrieben wird. Vorher lesen, damit Rückgängig möglich ist;
-   Backups vor Installationen anbieten.
-2. **Firmware-Update- und Bootmodus-SysEx** (`F0 22 24 35 7F`, `F0 22 24 35 7D`, Kennungsabfrage, Update-
-   Datenstrom) dürfen nie aus Webseiten, Simulatoren oder Online-Editoren ans Gerät gelangen
+1. **Never write to the FM-1 without being asked.** Every writing action needs an explicit user action and
+   a confirmation that says exactly what will be overwritten. Read first so that undo is possible;
+   offer backups before installations.
+2. **Firmware update and boot mode SysEx** (`F0 22 24 35 7F`, `F0 22 24 35 7D`, identity query, update
+   data stream) must never reach the device from web pages, simulators or online editors
    (`sims.sim_out_allowed`, `sims.OutGate`).
-3. Neue Flash-, Rettungs- oder Schreibwege bleiben als **ungetestet** markiert (in der App und in
-   [docs/UNGETESTET.md](docs/UNGETESTET.md)), bis jemand sie auf echter Hardware geprüft hat.
-4. **Keine persönlichen Daten** in Code, Tests, Fixtures oder Doku: keine echten Namen, Rechnernamen,
-   Home-Pfade, Seriennummern, Tokens. Beispiele nutzen `/home/user`, `pi`, „Max Mustermann“.
-5. Alles, was die App nach außen gibt (Fehlerbericht, Diagnose, kopierte Berichte), läuft durch
-   `fm1companion/redact.py`. Netzzugriffe nur über https und nur auf Klick – die zwei abschaltbaren
-   automatischen Abfragen stehen in der README unter „Datenschutz“.
-6. Code aus fremden Repos wird nicht ungefragt ausgeführt (siehe `firmware.check_tool`).
+3. New flash, rescue or write paths stay marked as **untested** (in the app and in
+   [docs/UNTESTED.md](docs/UNTESTED.md)) until someone has checked them on real hardware.
+4. **No personal data** in code, tests, fixtures or docs: no real names, host names,
+   home paths, serial numbers, tokens. Examples use `/home/user`, `pi`, "Max Mustermann".
+5. Everything the app hands out (error report, diagnostics, copied reports) goes through
+   `fm1companion/redact.py`. Network access only over https and only on click – the two automatic requests
+   that can be switched off are listed in the README under "Privacy".
+6. Code from third-party repos is not run without asking (see `firmware.check_tool`).
 
-## Simulatoren und Studio-Zwilling bauen
+## Building the simulators and the Studio twin
 
-Die mitgelieferten WebAssembly-Dateien unter `fm1companion/sims/` werden in einer Entwicklungsumgebung
-gebaut, nie auf dem Rechner der Nutzer:
-
-```bash
-python3 tools/build_sims.py --repo fm1-open=/pfad/zu/fm1_open --repo melodee=/pfad/zu/melodee
-python3 tools/build_sims.py --target melodee-studio --ref v1.6.0 --repo melodee=/pfad/zu/melodee
-```
-
-Benötigt git, WASI SDK 27 (lädt das Skript bei Bedarf) und für Melodee Python mit Pillow und fontTools.
-Jeder Build schreibt `manifest.json` (Prüfsummen, Commit) und eine `NOTICE` mit Quellenangabe und
-GPL-Angebot. Für ein Release die Quell-Tarballs erzeugen und anhängen:
+The bundled WebAssembly files under `fm1companion/sims/` are built in a development environment,
+never on the users' machines:
 
 ```bash
-python3 tools/make_source_tarballs.py --repo melodee=/pfad/zu/melodee --repo fm1_open=/pfad/zu/fm1_open
+python3 tools/build_sims.py --repo fm1-open=/path/to/fm1_open --repo melodee=/path/to/melodee
+python3 tools/build_sims.py --target melodee-studio --ref v1.6.0 --repo melodee=/path/to/melodee
 ```
 
-## Pakete bauen
+Requires git, WASI SDK 27 (the script downloads it if needed) and, for Melodee, Python with Pillow and fontTools.
+Every build writes `manifest.json` (checksums, commit) and a `NOTICE` with attribution and
+GPL offer. For a release, create the source tarballs and attach them:
+
+```bash
+python3 tools/make_source_tarballs.py --repo melodee=/path/to/melodee --repo fm1_open=/path/to/fm1_open
+```
+
+## Building packages
 
 ```bash
 python3 tools/build_deb.py     # dist/fm1-companion_<version>_all.deb
 python3 tools/build_run.py     # dist/FM-1-Companion-Suite-<version>.run
 ```
 
-## Hardware-Tests
+## Hardware tests
 
-Am meisten hilft ein ehrlicher Testbericht von echter Hardware (Vorlage „Hardware-Testbericht“ bei den
-Issues): Gerät, Firmware vorher/nachher, was genau gemacht wurde, Ergebnis. Bitte nur mit Backup und auf
-eigenes Risiko – siehe die Warnung in der README.
+What helps most is an honest test report from real hardware (template "Hardware test report" in the
+issues): device, firmware before/after, what exactly was done, result. Please only with a backup and at
+your own risk – see the warning in the README.
 
-## Pull Requests
+## Pull requests
 
-* Ein Thema pro Pull Request, kurze Beschreibung, was und warum.
-* Tests laufen lassen und das Ergebnis in die PR-Beschreibung schreiben.
-* Mit einem Beitrag erklärst du dich einverstanden, dass er unter GPL-3.0-only veröffentlicht wird.
+* One topic per pull request, a short description of what and why – in English.
+* Run the tests and put the result in the PR description.
+* By contributing you agree that your contribution is published under GPL-3.0-only.

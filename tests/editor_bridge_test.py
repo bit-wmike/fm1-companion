@@ -21,6 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+os.environ.setdefault("FM1C_LANG", "de")      # these checks expect the German user interface
 editor_html = sys.argv[1] if len(sys.argv) > 1 else "/tmp/melodee/web/editor.html"
 home = Path(tempfile.mkdtemp(prefix="fm1c-bridge-"))
 for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache")):

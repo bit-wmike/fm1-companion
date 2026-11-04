@@ -104,7 +104,7 @@ exponent 3 (duration × 2^exp / 65536 steps), pitch 6 (+24), gate 1.
 ## 6. Other formats
 
 FUN7 (3388) / FUN8 (3584) / FBK9 (20224) are read after `web/EDITOR_PROTOCOL.md` (not verified against code).
-Templates (TPL*), SLOOP/Skiff objects and anything else decode as "unbekanntes Format" / "andere Firmware"
+Templates (TPL*), SLOOP/Skiff objects and anything else decode as "unbekanntes Format" (unknown format) / "andere Firmware" (other firmware)
 without raising.
 
 ## 7. Time model used by the MIDI export
