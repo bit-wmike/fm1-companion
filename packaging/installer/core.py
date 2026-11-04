@@ -127,8 +127,9 @@ def fluidsynth_service_enabled() -> bool:
     if os.geteuid() == 0 or not shutil.which("systemctl"):
         return False
     try:
-        return subprocess.run(["systemctl", "--user", "is-enabled", "fluidsynth.service"], capture_output=True,
-                              text=True, timeout=5).stdout.strip() == "enabled"
+        r = subprocess.run(["systemctl", "--user", "is-enabled", "fluidsynth.service"], capture_output=True,
+                           text=True, timeout=5)
+        return bool(r) and (getattr(r, "stdout", "") or "").strip() == "enabled"
     except (OSError, subprocess.SubprocessError):
         return False
 
