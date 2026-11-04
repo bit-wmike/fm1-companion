@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Simuliertes FM-1 für das Update-Protokoll (Tests, Demo-Modus). Nichts wird irgendwo geschrieben.
+"""Simulated FM-1 for the update protocol (tests, demo mode). Nothing is written anywhere.
 
-Spricht dasselbe Protokoll wie felucca-bsp/chip/ota.c und die Loader (siehe docs/flash-protocol.md):
-Handshake 0x11, UPGRADE, Leseanfragen 0x30 auf dem logischen Abbild, 0xE0000000 / 0xF0000000.
-Angelehnt an Melodees Testgerät (web/install/fakefm1.js, test_web.mjs FakeFM1) – hier in Python
-und synchron: das Gerät antwortet direkt in send(), Neustarts laufen über eine kurze Offline-Zeit.
+Speaks the same protocol as felucca-bsp/chip/ota.c and the loaders (see docs/flash-protocol.md):
+handshake 0x11, UPGRADE, read requests 0x30 on the logical image, 0xE0000000 / 0xF0000000.
+Modelled on Melodee's test device (web/install/fakefm1.js, test_web.mjs FakeFM1) – here in Python
+and synchronous: the device answers directly in send(), reboots go through a short offline period.
 
   SimFM1(identity, policy="felucca"|"stock"|"open", name=…, felucca_loader="ota-FM-1_900",
          resumable=True, power_loss_at=None, boot_matches_stock=True)
-  SimBackend([geräte]) -> input_names(), output_names(), open(in, out)   (wie fm1_install.MidoBackend)
+  SimBackend([devices]) -> input_names(), output_names(), open(in, out)   (like fm1_install.MidoBackend)
 """
 from __future__ import annotations
 
@@ -55,37 +55,37 @@ class SimFM1:
                  felucca_loader="ota-FM-1_900", resumable=True, power_loss_at=None,
                  boot_matches_stock=True, reboot_s=0.05, usb_id="1209:0001", serial="", usb_path=""):
         self.identity = identity
-        self.policy = policy                 # Schritt-1-Regeln der laufenden Firmware
+        self.policy = policy                 # step-1 rules of the running firmware
         self.app_name = name
         self.felucca_loader = felucca_loader
-        self.resumable = resumable           # Felucca G2/G3: nach Stromausfall wieder im Update-Modus
-        self.power_loss_at = power_loss_at   # 0..1: Schritt 2 bricht bei diesem Anteil ab (einmal)
-        self.boot_matches_stock = boot_matches_stock   # False: CHECK HEAD schlägt fehl (FAILED -5)
+        self.resumable = resumable           # Felucca G2/G3: back in update mode after power loss
+        self.power_loss_at = power_loss_at   # 0..1: step 2 aborts at this fraction (once)
+        self.boot_matches_stock = boot_matches_stock   # False: CHECK HEAD fails (FAILED -5)
         self.reboot_s = reboot_s
         self.serial = serial
-        self.usb_path = usb_path             # physischer USB-Anschluss (bleibt über Neustarts gleich)
+        self.usb_path = usb_path             # physical USB connection (stays the same across reboots)
         self.app_usb_id = usb_id
         self.state = "app"                   # app | loader | uboot
-        self.loader_kind = ""                # "stock" | "felucca" im Update-Modus
+        self.loader_kind = ""                # "stock" | "felucca" in update mode
         self.loader_id = ""
         self.online_at = 0.0
         self.pending_state = None
         self.session = None
         self.waiting = None
         self.links: list["SimLink"] = []
-        self.products: dict[str, str] = {}   # sha256(logisches Abbild) -> Kennung nach dem Schreiben
+        self.products: dict[str, str] = {}   # sha256(logical image) -> identity after writing
         self.stock_heads: set[bytes] = set()
-        self.stock_products: dict[bytes, str] = {}   # Kopf des logischen Abbilds -> Kennung des Original-Pakets
-        self.flash: bytes = b""              # zuletzt vollständig geschriebenes Abbild
-        self.partial = 0                     # Bytes, die im laufenden Schritt 2 schon kamen
+        self.stock_products: dict[bytes, str] = {}   # header of the logical image -> identity of the stock package
+        self.flash: bytes = b""              # last completely written image
+        self.partial = 0                     # bytes already received in the current step 2
         self.log: list[str] = []
-        self.bricked = ""                    # gesetzt, wenn etwas Gefährliches passiert wäre
-        self.sends: list[bytes] = []         # alles, was der Host geschickt hat
+        self.bricked = ""                    # set if something dangerous would have happened
+        self.sends: list[bytes] = []         # everything the host has sent
         self._lock = threading.RLock()
 
-    # -------------------------------------------------- Registrierung
+    # -------------------------------------------------- registration
     def register(self, raw: bytes, product: str | None = None, stock: bool | None = None):
-        """ein Paket bekannt machen (welche Kennung es nach dem Schreiben meldet)"""
+        """register a package (which identity it reports after writing)"""
         img = fi.logical_image(raw)
         self.products[hashlib.sha256(img).hexdigest()] = product or fi.product_of(raw)
         is_stock = stock if stock is not None else hashlib.sha256(raw).hexdigest() in pk.OFFICIAL
@@ -93,7 +93,7 @@ class SimFM1:
             self.stock_heads.add(img[:0x400])
             self.stock_products[img[:0x400]] = product or fi.product_of(raw)
 
-    # -------------------------------------------------- Zustand / Ports
+    # -------------------------------------------------- state / ports
     @property
     def online(self) -> bool:
         self._tick()
@@ -136,7 +136,7 @@ class SimFM1:
         self.state = "rebooting"
 
     def power_cycle(self, hold_oct_minus: bool = False):
-        """aus- und einschalten (Rettung: OCT− halten -> Update-Modus, wenn die Firmware das kann)"""
+        """power off and on (rescue: hold OCT− -> update mode, if the firmware supports it)"""
         if self.state == "uboot":
             return
         if self.state == "loader" or hold_oct_minus and self.loader_kind:
@@ -144,7 +144,7 @@ class SimFM1:
         else:
             self._restart("app")
 
-    # -------------------------------------------------- Empfang
+    # -------------------------------------------------- receiving
     def receive(self, data: bytes, link: "SimLink"):
         with self._lock:
             self.sends.append(data)
@@ -177,7 +177,7 @@ class SimFM1:
         self.waiting = want
         link.emit(request_frame(*want))
 
-    # -------------------------------------------------- Schritt 1: laufende Firmware
+    # -------------------------------------------------- step 1: running firmware
     def _step1(self):
         hdr = (yield (0, BLOCK)) + (yield (BLOCK, BLOCK))
         dec = pk._jl(hdr[:0x40])
@@ -204,8 +204,8 @@ class SimFM1:
                 self.log.append("refused: foreign loader (-7)")
                 return
             if official:
-                # Melodee ota.c: Bootkopf des Pakets == Bootkopf des Geräts? Das Gerät trägt den Werks-Kopf (V13–V15);
-                # V16 bringt einen anderen mit -> FAILED -5 (nichts geschrieben)
+                # Melodee ota.c: package boot header == device boot header? The device carries the factory header (V13–V15);
+                # V16 brings a different one -> FAILED -5 (nothing written)
                 v16 = self.stock_products.get(hdr[:0x400]) == "FM-1_016"
                 for a in range(0, 0x4000, BLOCK):
                     yield (fl_off + a, BLOCK)
@@ -223,7 +223,7 @@ class SimFM1:
         self.log.append(f"loader staged: {self.loader_id}")
         self._restart("loader")
 
-    # -------------------------------------------------- Schritt 2: Loader
+    # -------------------------------------------------- step 2: loader
     def _step2(self):
         hdr = yield (0, 0x40)
         dec = pk._jl(hdr)
@@ -311,7 +311,7 @@ class SimLink:
 
 
 class SimBackend:
-    """Ersatz für fm1_install.MidoBackend: Ports der simulierten Geräte (plus fremde Geräte)."""
+    """Replacement for fm1_install.MidoBackend: ports of the simulated devices (plus foreign devices)."""
 
     def __init__(self, devices=(), other_ports=("Midi Through Port-0",)):
         self.devices: list[SimFM1] = list(devices)
@@ -343,7 +343,7 @@ class SimBackend:
         return None
 
     def details(self, name: str) -> dict:
-        """wie devices.usb_details: USB-Anschluss und Seriennummer des Geräts hinter einem Port"""
+        """like devices.usb_details: USB connection and serial number of the device behind a port"""
         dev = self.device_for(name)
         if dev is None:
             return {}
@@ -358,6 +358,6 @@ class SimBackend:
 
 
 def fast_delays():
-    """kurze Wartezeiten für die Simulation (Werte wie in Melodees Tests verkürzt)"""
+    """short wait times for the simulation (values shortened as in Melodee's tests)"""
     return {"open": 0.0, "start": 0.01, "reply": 0.0, "loader": 0.02, "reboot": 0.02, "retry": 0.02,
             "poll": 0.05, "hs": 0.1, "idle_check": 1.0, "idle_write": 2.0, "wait_loader": 3.0, "wait_reboot": 3.0}

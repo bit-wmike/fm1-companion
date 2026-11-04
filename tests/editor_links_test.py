@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Links im eingebetteten Editor: Installer -> Firmware-Seite, Handbuch -> lokale Kopie (Bilder einmalig
-nachladen, danach offline), zurück zum Editor, externe Links -> normaler Browser, Beenden ohne Warnung.
+"""Links in the embedded editor: installer -> firmware page, manual -> local copy (images fetched once,
+offline afterwards), back to the editor, external links -> normal browser, quitting without a warning.
 
-Die Online-Quelle der Handbuch-Bilder wird durch einen lokalen Server ersetzt.
+The online source of the manual images is replaced by a local server.
 
   QT_QPA_PLATFORM=offscreen python3 tests/editor_links_test.py
 """
@@ -46,7 +46,7 @@ s.check_on_start = False
 config.save(s)
 config.ensure_dirs()
 
-# Stellvertreter für das Online-Handbuch: liefert für jeden *.png-Namen ein kleines PNG
+# stand-in for the online manual: delivers a small PNG for every *.png name
 PNG = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010806000000"
                     "1f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082")
 hits = []
@@ -119,61 +119,61 @@ def current_page():
 
 w = MainWindow()
 w.show()
-check(until(lambda: w.ctx.connected and w.ctx.firmware_key == "melodee"), "Demo-Melodee verbunden")
+check(until(lambda: w.ctx.connected and w.ctx.firmware_key == "melodee"), "demo Melodee connected")
 w.go("editor")
-check(until(lambda: "web/editor.html?mock=1" in url(), 180000), f"Editor geladen ({url()})")
-check(until(lambda: js("document.readyState") == "complete"), "Editor fertig")
+check(until(lambda: "web/editor.html?mock=1" in url(), 180000), f"editor loaded ({url()})")
+check(until(lambda: js("document.readyState") == "complete"), "editor ready")
 
-# 1) Installer -> Firmware-Seite der App, Editor bleibt stehen
+# 1) installer -> the app's firmware page, the editor stays
 js("document.querySelector('a[href=\"../installer/\"]').click()")
-# (die frühere Firmware-Seite ist jetzt der Reiter „Installieren & Versionen“ in Firmware+)
+# (the former firmware page is now the tab "Install & Versions" in Firmware+)
 check(until(lambda: w.firmware.isVisible() and current_page() is not w.editor, 5000),
-      "Installer-Link öffnet Firmware+ › Installieren & Versionen")
+      "installer link opens Firmware+ › Install & Versions")
 wait(500)
-check("web/editor.html?mock=1" in url(), "Editor ist nicht auf eine 404-Seite gewechselt")
+check("web/editor.html?mock=1" in url(), "editor has not switched to a 404 page")
 
-# 2) Handbuch -> lokale Kopie, Bilder werden einmalig geholt
+# 2) manual -> local copy, images are fetched once
 w.go("editor")
 idx = editor_host.manual_index(firmware.spec("melodee"), w.editor.current[1])
-check(idx is not None, "Handbuch liegt der Version bei")
+check(idx is not None, "the manual comes with the version")
 n_missing = len(editor_host.missing_manual_images(idx))
-check(n_missing > 10, f"vor dem ersten Öffnen fehlen die Bilder ({n_missing})")
+check(n_missing > 10, f"before the first opening the images are missing ({n_missing})")
 js("document.querySelector('a[href=\"../manual/\"]').click()")
-check(until(lambda: "/web/manual/" in url()), f"Handbuch geöffnet ({url()})")
-check(until(lambda: not editor_host.missing_manual_images(idx)), "alle Bilder geholt und abgelegt")
-check(len([h for h in hits if h.endswith(".png")]) == n_missing, f"jedes Bild genau einmal geladen ({len(hits)})")
+check(until(lambda: "/web/manual/" in url()), f"manual opened ({url()})")
+check(until(lambda: not editor_host.missing_manual_images(idx)), "all images fetched and stored")
+check(len([h for h in hits if h.endswith(".png")]) == n_missing, f"every image loaded exactly once ({len(hits)})")
 check(until(lambda: js("document.title") not in (None, "") and "404" not in js("document.title")),
-      f"Handbuch-Seite ok ({js('document.title')})")
+      f"manual page ok ({js('document.title')})")
 check(until(lambda: js("[...document.images].filter(i=>i.complete&&i.naturalWidth>0).length") == len(
     js("[...document.images].map(i=>i.src)") or [1, 2]) and js("document.images.length") > 0),
-      "Bilder im Handbuch werden angezeigt")
+      "images in the manual are shown")
 
-# 3) aus dem Handbuch zurück zum Editor
+# 3) from the manual back to the editor
 js("document.querySelector('a[href=\"../editor/\"]').click()")
-check(until(lambda: "web/editor.html?mock=1" in url()), f"Editor-Link führt zurück ({url()})")
+check(until(lambda: "web/editor.html?mock=1" in url()), f"editor link leads back ({url()})")
 
-# 4) zweites Öffnen: keine weiteren Downloads (offline-fähig)
+# 4) second opening: no further downloads (works offline)
 before = len(hits)
 w.editor.open_manual()
-check(until(lambda: "/web/manual/" in url()), "Handbuch erneut geöffnet")
-check(len(hits) == before, "zweites Öffnen ohne Netz-Zugriff")
+check(until(lambda: "/web/manual/" in url()), "manual opened again")
+check(len(hits) == before, "second opening without network access")
 
-# 5) externer Link -> normaler Browser, Seite bleibt
+# 5) external link -> normal browser, the page stays
 js("const a=document.querySelector('a[href^=\"https://github.com\"]'); a.removeAttribute('target'); a.click()")
-check(until(lambda: any(u.startswith("https://github.com") for u in opened), 5000), f"externer Link im Browser ({opened})")
-check("/web/manual/" in url(), "eingebettete Seite bleibt beim Handbuch")
+check(until(lambda: any(u.startswith("https://github.com") for u in opened), 5000), f"external link in the browser ({opened})")
+check("/web/manual/" in url(), "embedded page stays on the manual")
 js("const b=document.querySelector('a[href^=\"https://\"]'); b.setAttribute('target','_blank'); b.click()")
-check(until(lambda: len(opened) >= 2, 5000), f"target=_blank ebenfalls im Browser ({opened[-1] if opened else ''})")
+check(until(lambda: len(opened) >= 2, 5000), f"target=_blank in the browser as well ({opened[-1] if opened else ''})")
 
-# 6) Offline: Bilder fehlen -> Text trotzdem, freundlicher Hinweis
+# 6) offline: images missing -> text anyway, friendly hint
 for p in idx.parent.glob("*.png"):
     p.unlink()
 srv.shutdown()
 w.editor.open_manual()
-check(until(lambda: "Bilder fehlen" in w.editor.state.text(), 30000), f"offline: Hinweis ({w.editor.state.text()})")
-check(until(lambda: "/web/manual/" in url()), "offline: Handbuch-Text trotzdem geöffnet")
+check(until(lambda: "Bilder fehlen" in w.editor.state.text(), 30000), f"offline: hint ({w.editor.state.text()})")
+check(until(lambda: "/web/manual/" in url()), "offline: manual text opened anyway")
 
-# 6b) Download aus dem Editor (Backup-JSON): Dialog schlägt den Geräte-Ordner der Backups vor, Datei landet dort
+# 6b) download from the editor (backup JSON): the dialog suggests the device folder of the backups, the file lands there
 from PyQt6.QtWidgets import QFileDialog
 asked = []
 
@@ -185,23 +185,23 @@ def fake_save(parent, title, start, *a, **k):
 
 QFileDialog.getSaveFileName = staticmethod(fake_save)
 w.editor.view.load(w.editor._editor_url())
-check(until(lambda: "web/editor.html" in url() and js("document.readyState") == "complete", 60000), "Editor wieder geladen")
+check(until(lambda: "web/editor.html" in url() and js("document.readyState") == "complete", 60000), "editor loaded again")
 js("const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['{\"fm1\":1}'],{type:'application/json'}));"
    "a.download='melodee-backup-test.json';document.body.appendChild(a);a.click()")
 dev_folder = w.ctx.device_folder(w.ctx.settings.backups_dir)
 check(until(lambda: asked, 10000) and "Backup" in asked[0][0] and str(asked[0][1]).startswith(str(dev_folder)),
-      f"Backup-Download: Dialog im Geräte-Ordner ({asked[0] if asked else '-'})")
+      f"backup download: dialog in the device folder ({asked[0] if asked else '-'})")
 target = dev_folder / "melodee-backup-test.json"
-check(until(lambda: target.exists() and target.read_text().startswith("{"), 10000), f"Datei liegt unter {target}")
-check(until(lambda: "Gespeichert" in w.editor.state.text(), 5000), f"Rückmeldung: {w.editor.state.text()}")
+check(until(lambda: target.exists() and target.read_text().startswith("{"), 10000), f"file is at {target}")
+check(until(lambda: "Gespeichert" in w.editor.state.text(), 5000), f"feedback: {w.editor.state.text()}")
 
-# 7) Beenden: Seite vor Profil abbauen
+# 7) quit: tear down the page before the profile
 w.close()
 wait(300)
-check(w.editor.view is None, "Editor beim Beenden sauber abgebaut")
+check(w.editor.view is None, "editor torn down cleanly when quitting")
 
 ok = sum(r for r, _ in results)
-print(f"\n{ok}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+print(f"\n{ok}/{len(results)} passed, {len(errors)} exceptions")
 for e in errors:
     print(e)
 sys.exit(0 if ok == len(results) and not errors else 1)

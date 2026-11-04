@@ -18,7 +18,7 @@ body:
     id: device
     attributes:
       label: Device
-      description: Model/revision, if known (e.g. flash chip according to "Ist mein FM-1 sauber?" – Is my FM-1 clean?)
+      description: Model/revision, if known (e.g. flash chip according to "Is my FM-1 clean?")
       placeholder: "M-VAVE FM-1"
     validations:
       required: true

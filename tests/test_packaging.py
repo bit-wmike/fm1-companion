@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Pakete: .deb (Dateien, control, Starter), .run (entpacken, unbeaufsichtigt installieren und entfernen),
-install.sh/uninstall.sh – alles in einem falschen HOME. Der Ordner ~/FM-1 muss stehen bleiben."""
+"""Packages: .deb (files, control, launcher), .run (extract, unattended install and removal),
+install.sh/uninstall.sh – all in a fake HOME. The folder ~/FM-1 must stay. Also: the installers speak English,
+German when the system language is German."""
 from __future__ import annotations
 
 import os
@@ -29,7 +30,14 @@ def fake_env(home: Path) -> dict:
     return env
 
 
-@pytest.mark.skipif(not shutil.which("dpkg-deb"), reason="dpkg-deb fehlt")
+def lang_env(env: dict, lang: str) -> dict:
+    """env with only LANG deciding the language (no FM1C_LANG from conftest, no LC_*)"""
+    e = {k: v for k, v in env.items() if k not in ("FM1C_LANG", "LC_ALL", "LC_MESSAGES", "LANGUAGE")}
+    e["LANG"] = lang
+    return e
+
+
+@pytest.mark.skipif(not shutil.which("dpkg-deb"), reason="dpkg-deb missing")
 def test_deb(dist):
     import build_deb
     deb = build_deb.build(dist)
@@ -48,7 +56,7 @@ def test_deb(dist):
               "./usr/share/man/man1/fm1-companion.1.gz", "./usr/share/doc/fm1-companion/copyright"):
         assert f in files, f
     assert "__pycache__" not in files and "root/root" in files
-    # der Studio-Zwilling: gemeinsamer Host, jede mitgelieferte Version, Seite, Dienst und Hilfe
+    # the Studio twin: shared host, every bundled version, page, service and help
     lib = "./usr/lib/fm1-companion/fm1companion/"
     for f in ("twin-core.js", "twin-host.js", "studio-worker.js", "studio-worklet.js", "studio.html", "studio.js",
               "studio-panel.js"):
@@ -78,7 +86,7 @@ def test_deb(dist):
     assert meta.findtext("id") == "fm1-companion" and meta.find("launchable").text == "fm1-companion.desktop"
 
 
-@pytest.mark.skipif(not shutil.which("dpkg") or os.geteuid() != 0, reason="dpkg/root fehlt")
+@pytest.mark.skipif(not shutil.which("dpkg") or os.geteuid() != 0, reason="dpkg/root missing")
 def test_deb_dpkg_root(dist, tmp_path):
     import build_deb
     deb = build_deb.build(dist)
@@ -88,7 +96,7 @@ def test_deb_dpkg_root(dist, tmp_path):
     (r / "var/lib/dpkg/status").touch()
     base = ["dpkg", f"--root={r}", "--force-script-chrootless", "--force-not-root"]
     subprocess.run(base + ["--force-depends", "-i", str(deb)], check=True, capture_output=True)
-    assert list((r / "usr/lib/fm1-companion").rglob("__pycache__")), "postinst übersetzt Bytecode"
+    assert list((r / "usr/lib/fm1-companion").rglob("__pycache__")), "postinst compiles bytecode"
     subprocess.run(base + ["-r", "fm1-companion"], check=True, capture_output=True)
     assert not (r / "usr/lib/fm1-companion").exists() and not (r / "usr/bin/fm1-companion").exists()
 
@@ -110,7 +118,7 @@ def test_run_installer(dist, tmp_path):
     app = home / ".local/share/fm1-companion/app"
     launcher = home / ".local/bin/fm1-companion"
     assert (app / "fm1companion/__main__.py").exists() and (app / "install-info.json").exists()
-    assert (app / "fm1companion/sims/_studio/studio-panel.js").exists()               # Studio-Zwilling im .run
+    assert (app / "fm1companion/sims/_studio/studio-panel.js").exists()               # Studio twin in the .run
     for po in (ROOT / "fm1companion/locale").rglob("*.po"):                          # translations and help per language
         assert (app / po.relative_to(ROOT).as_posix()).exists(), po
     assert (app / "fm1companion/locale/messages.pot").exists()
@@ -124,21 +132,25 @@ def test_run_installer(dist, tmp_path):
     assert len(list((home / "FM-1/Samples/Beispiele (Demo)").glob("*.wav"))) == 7
     out = subprocess.run([str(launcher), "--version"], env=env, capture_output=True, text=True)
     assert out.stdout.strip() == "2.4.0", out.stderr
-    # Update: Einstellungen bleiben
+    # update: settings are kept
     cfg = home / ".config/fm1-companion"
     cfg.mkdir(parents=True)
     (cfg / "config.json").write_text('{"theme": "dark"}')
     subprocess.run(["sh", str(run), "--unattended", "--no-deps", "--prefix", str(home / ".local")], env=env, check=True,
                    capture_output=True)
     assert (cfg / "config.json").read_text() == '{"theme": "dark"}'
-    # Deinstallieren über den installierten Befehl, mit Einstellungen und Daten
+    # uninstall via the installed command, with settings and data
     res = subprocess.run([str(home / ".local/bin/fm1-companion-uninstall"), "--unattended", "--settings", "--data"],
                          env=env, capture_output=True, text=True)
     assert res.returncode == 0, res.stderr
     assert not app.exists() and not launcher.exists() and not cfg.exists()
     assert not (home / ".local/share/applications/fm1-companion.desktop").exists()
-    assert (home / "FM-1/Backups/wichtig.json").exists(), "~/FM-1 muss bleiben"
+    assert (home / "FM-1/Backups/wichtig.json").exists(), "~/FM-1 must stay"
     assert (home / "FM-1/Samples/Beispiele (Demo)").exists()
+    # --help of the .run in both languages
+    for lang, text in (("de_DE.UTF-8", "selbstentpackender Installer"), ("C.UTF-8", "self-extracting installer")):
+        out = subprocess.run(["sh", str(run), "--help"], env=lang_env(env, lang), capture_output=True, text=True).stdout
+        assert text in out and "--unattended" in out, (lang, out)
 
 
 def test_install_sh(tmp_path):
@@ -168,4 +180,59 @@ def test_never_deletes_user_root(tmp_path, monkeypatch):
     (home / ".config/fm1-companion").mkdir(parents=True)
     (home / ".config/fm1-companion/config.json").write_text('{"user_root": "%s"}' % (data / "meinFM1"))
     core.uninstall(home / ".local", settings=True, data=True, log=lambda *_: None)
-    assert (data / "meinFM1").exists(), "Hauptordner innerhalb der App-Daten bleibt"
+    assert (data / "meinFM1").exists(), "main folder inside the app data stays"
+
+
+# ------------------------------------------------------------ installer language (English, German on German systems)
+
+def test_installer_language_rule():
+    sys.path.insert(0, str(ROOT / "packaging/installer"))
+    import core
+    assert core.language({"LANG": "de_DE.UTF-8"}) == "de" and core.language({"LANG": "C"}) == "en"
+    assert core.language({}) == "en" and core.language({"LANG": "en_GB.UTF-8"}) == "en"
+    assert core.language({"LC_ALL": "C.UTF-8", "LANG": "de_DE.UTF-8"}) == "en"          # LC_ALL wins
+    assert core.language({"LC_MESSAGES": "de_AT.UTF-8", "LANG": "C"}) == "de"
+    assert core.language({"LC_ALL": "", "LC_MESSAGES": "", "LANG": "de_CH"}) == "de"    # empty ones do not count
+    assert core.language({"FM1C_LANG": "en", "LANG": "de_DE.UTF-8"}) == "en"            # the app's override
+    assert core.language({"FM1C_LANG": "system", "LANG": "de_DE.UTF-8"}) == "de"
+
+
+@pytest.mark.parametrize("lang,de", [("de_DE.UTF-8", True), ("C", False)])
+def test_shell_scripts_bilingual(tmp_path, lang, de):
+    env = lang_env(fake_env(tmp_path / "home"), lang)
+    out = subprocess.run(["bash", str(ROOT / "install.sh"), "--help"], env=env, capture_output=True, text=True)
+    assert out.returncode == 0 and "--no-apt" in out.stdout
+    assert ("Systempakete prüfen" in out.stdout) == de and ("check/install system packages" in out.stdout) != de
+    assert not (tmp_path / "home/.local").exists(), "--help installs nothing"
+    out = subprocess.run(["bash", str(ROOT / "uninstall.sh"), "--help"], env=env, capture_output=True, text=True)
+    assert out.returncode == 0 and "--all" in out.stdout
+    assert ("wird nie gelöscht" in out.stdout) == de and ("is never deleted" in out.stdout) != de
+    # the risk notice in install.sh: both languages, same content (docs/UNTESTED.md, GPL sections 15 and 16)
+    sh = (ROOT / "install.sh").read_text("utf-8")
+    assert "inoffizielles Community-Projekt" in sh and "unofficial community project" in sh
+    assert "Abschnitte 15 und 16" in sh and "sections 15 and 16" in sh and sh.count("docs/UNTESTED.md") == 2
+    # the core's messages (here: uninstalling from an empty prefix)
+    res = subprocess.run([sys.executable, str(ROOT / "packaging/installer/core.py"), "uninstall", "--prefix",
+                          str(tmp_path / "prefix")], env=env, capture_output=True, text=True)
+    assert res.returncode == 0, res.stderr
+    assert ("bleibt unangetastet" in res.stdout) == de and ("is left untouched" in res.stdout) != de
+
+
+def test_gui_risk_notice_both_languages(monkeypatch):
+    """the graphical installer shows the app's own risk notice: English source text, German from the catalog"""
+    sys.path.insert(0, str(ROOT / "packaging/installer"))
+    import gui
+    from fm1companion import i18n
+    en = gui.risk_lines(ROOT, "en")
+    de = gui.risk_lines(ROOT, "de")
+    assert en == gui._risk_source_lines(ROOT) and len(en) == len(de) == 5
+    cat = i18n.Catalog("de")
+    assert de == [cat.get(None, x) for x in en]
+    assert any("docs/UNTESTED.md" in x for x in en) and any("docs/UNTESTED.md" in x for x in de)
+    assert "sections 15 and 16" in en[-1] and "Abschnitte 15 und 16" in de[-1]
+    assert gui.risk_lines(Path("/nonexistent"), "de") == gui.RISK_FALLBACK
+    assert gui.risk_lines(Path("/nonexistent"), "en") == gui.RISK_FALLBACK_EN
+    monkeypatch.setenv("FM1C_LANG", "en")
+    assert gui.risk_title() == "Important notice" and gui.understood_text() == "I understand"
+    monkeypatch.setenv("FM1C_LANG", "de")
+    assert gui.risk_title() == "Wichtiger Hinweis" and gui.understood_text() == "Ich habe verstanden"

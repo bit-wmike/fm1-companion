@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Firmware-Katalog, Schnappschuss, Link-Import, GitHub-Cache – ohne Netz.
+"""Firmware catalog, snapshot, link import, GitHub cache – without network.
 
   python3 -m pytest tests/test_catalog.py -q
 """
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 AWESOME = Path("/tmp/awesome-fm-1")
 FIX = ROOT / "tests" / "fixtures" / "catalog"
-need_awesome = pytest.mark.skipif(not (AWESOME / "README.md").exists(), reason="awesome-fm-1-Klon fehlt")
+need_awesome = pytest.mark.skipif(not (AWESOME / "README.md").exists(), reason="awesome-fm-1 clone missing")
 
 
 @pytest.fixture()
@@ -112,8 +112,8 @@ def test_merge_both_directions(real):
     assert len(matched) >= 60
     fams = {p.family for p in moor["packages"] if p.family}
     covered = {p.family for e in cat.entries for p in e.packages if p.family}
-    assert fams == covered                      # jede Mooring-Familie landet in einem Eintrag
-    assert sum(1 for e in cat.entries if not e.packages) >= 100   # reine Link-Einträge bleiben
+    assert fams == covered                      # every Mooring family lands in an entry
+    assert sum(1 for e in cat.entries if not e.packages) >= 100   # pure link entries stay
     stock = cat.by_key("stock")
     assert [p.version for p in stock.packages][:2] == ["V16", "V15"] and stock.lineage == ["Original M-VAVE"]
     fel = cat.by_key("felucca")
@@ -130,7 +130,7 @@ def test_spec_and_warnings(real):
     cat, _ = real
     h = cat.by_key("hortator")
     s = h.to_spec()
-    # Live-Klon von awesome-fm-1: die Hortator-Version wandert mit (0.25.0 → 0.26.0 …), nur das Muster ist fest
+    # live clone of awesome-fm-1: the Hortator version moves along (0.25.0 → 0.26.0 …), only the pattern is fixed
     assert re.fullmatch(r"hortator-\d+\.\d+\.\d+\.fwsc", s.asset) and s.download_url.endswith("/" + s.asset)
     assert s.requires_stock_v15 and s.protocol == "none" and s.product == "FM-1_900"
     assert cat.by_key("x0x").to_spec().asset == "x0x-{ver}.fwsc"
@@ -156,7 +156,7 @@ def test_snapshot_builder_and_shipped_snapshot(tmp_path):
 def test_signature_status(env):
     c = env[0]
     if not (AWESOME / "mooring/catalog.json.intoto.jsonl").exists():
-        pytest.skip("kein Klon")
+        pytest.skip("no clone")
     data = (AWESOME / "mooring/catalog.json").read_bytes()
     line = (AWESOME / "mooring/catalog.json.intoto.jsonl").read_bytes()
     assert c.mooring_signature_status(data, line) == "Prüfsumme passt, Schlüssel unbekannt"
@@ -185,7 +185,7 @@ def test_first_image(env):
     assert c.first_image("kein Bild", "a/b") == ""
 
 
-# ------------------------------------------------------------------ GitHub-Cache
+# ------------------------------------------------------------------ GitHub cache
 class FakeResp(io.BytesIO):
     def __init__(self, data: bytes, headers=None):
         super().__init__(data)
@@ -218,10 +218,10 @@ def test_github_enrich_with_fixtures(env, monkeypatch):
     info = c.enrich("dspaudio/orbit")
     assert info["stars"] == 42 and info["releases"][0]["tag"] == "v0.7.1"
     assert info["releases"][0]["assets"][0]["size"] == 610019
-    assert len(info["releases"]) == 2 and info["releases"][1]["prerelease"]       # Entwurf ausgelassen
+    assert len(info["releases"]) == 2 and info["releases"][1]["prerelease"]       # draft left out
     n = len(seen)
     c.enrich("dspaudio/orbit")
-    assert len(seen) == n                         # aus dem Cache (24 h)
+    assert len(seen) == n                         # from the cache (24 h)
     assert c.cached_enrichment("dspaudio/orbit")["stars"] == 42
 
 
@@ -232,7 +232,7 @@ def test_github_rate_limit_keeps_cache(env, monkeypatch):
     reset = int(time.time()) + 1800
     monkeypatch.setattr(c, "urlopen", lambda req, timeout=0: (_ for _ in ()).throw(
         http_error(403, {"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": str(reset)})))
-    data, msg = c.gh_api("repos/dspaudio/orbit", ttl=0)        # abgelaufen -> neu fragen -> Limit
+    data, msg = c.gh_api("repos/dspaudio/orbit", ttl=0)        # expired -> ask again -> limit
     assert data["stargazers_count"] == 42 and "GitHub-Limit erreicht" in msg
     with pytest.raises(c.RateLimited) as e:
         c.gh_api("repos/other/repo")
@@ -304,7 +304,7 @@ def test_refresh_offline_and_changes(env, monkeypatch):
     assert any(x["key"] == "orbit" and x["kind"] == "version" for x in ch)
 
 
-# ------------------------------------------------------------------ Link-Import
+# ------------------------------------------------------------------ link import
 CASES = [
     ("https://github.com/dspaudio/orbit", "orbit", "dspaudio/orbit"),
     ("https://github.com/dspaudio/orbit/releases", "orbit", "dspaudio/orbit"),
@@ -479,14 +479,14 @@ def test_resolve_garbage_never_raises(env, text):
     assert d.hints or d.source == ""
 
 
-# ------------------------------------------------------- weitere Quellen: Pages, fmhub.json, Repo, Suche
+# ------------------------------------------------------- more sources: Pages, fmhub.json, repo, search
 INSTALLER_HTML = ('<html><script>const STOCK = [{version: "V15", product: "FM-1_015"}];\n'
                   'const meta = {"version": "3.0.3", "product": "FM-1_926", "pkg": "../../firmware/karma-3.0.3.fwsc", '
                   '"sha256": "' + "ab" * 32 + '"};</script></html>')
 
 
 def _gh(routes: dict):
-    """urlopen-Ersatz: Adresse -> Antwort (dict/list = JSON, str = Text); alles andere 404."""
+    """urlopen replacement: address -> answer (dict/list = JSON, str = text); everything else 404."""
     def fake(req, timeout=0):
         v = routes.get(req.full_url)
         if v is None:
@@ -501,7 +501,7 @@ def test_installer_meta_parsing(env):
     m = c.installer_meta(INSTALLER_HTML, base)
     assert m == {"url": "https://me.github.io/karma-fm1/firmware/karma-3.0.3.fwsc", "version": "3.0.3",
                  "product": "FM-1_926", "sha256": "ab" * 32}
-    # ohne eingebettete Daten: erster Verweis auf ein Paket, aber nie das Original FM-1.fwsc
+    # without embedded data: first reference to a package, but never the original FM-1.fwsc
     m = c.installer_meta('<a href="../FM-1.fwsc">o</a> <a href="pkg/cool-1.2.fwsc">x</a>', base)
     assert m["url"] == "https://me.github.io/karma-fm1/webapp/installer/pkg/cool-1.2.fwsc" and not m["sha256"]
     assert c.installer_meta("<html>nichts</html>", base) == {}
@@ -533,7 +533,7 @@ def test_resolve_online_package_in_repo_tree(env, monkeypatch):
     d = L.resolve("https://github.com/me/box", online=True)
     assert d.download_url == "https://raw.githubusercontent.com/me/box/HEAD/docs/firmware/box-1.10.fwsc"
     assert d.asset == "box-1.10.fwsc" and d.release_tag == "1.10" and not d.sha256
-    assert any("box-1.2.fwsc" in h for h in d.hints)          # weitere Pakete genannt, FM-1.fwsc nicht
+    assert any("box-1.2.fwsc" in h for h in d.hints)          # further packages named, FM-1.fwsc not
     assert not any("FM-1.fwsc" in h for h in d.hints)
 
 
@@ -558,13 +558,13 @@ def test_resolve_name_via_github_search(env, monkeypatch):
         assert d.repo == "me/karma-fm1" and d.confidence["repo"] == L.GUESS and d.exact, text
         assert d.download_url.endswith("karma-3.0.3.fwsc") and d.source == "name"
         repos = [x["repo"] for x in d.candidates]
-        assert "other/karmic-fm1" in repos and "x/karma-chameleon" not in repos      # kein FM-1-Bezug
-        assert "copycat/karma-fm1" not in repos                                      # bloße Kopie (Fork)
+        assert "other/karmic-fm1" in repos and "x/karma-chameleon" not in repos      # no FM-1 relation
+        assert "copycat/karma-fm1" not in repos                                      # a mere copy (fork)
 
 
 def test_resolve_name_finds_fork_and_offers_choice(env, monkeypatch):
-    """„dungeon tracker“: das Repo ist ein Fork (nur mit fork:true zu finden) und muss vor GR!MM stehen,
-    das nur wegen „dungeon synth“ in der Beschreibung auftaucht."""
+    """"dungeon tracker": the repo is a fork (only found with fork:true) and must come before GR!MM,
+    which only shows up because of "dungeon synth" in the description."""
     c, L = env[0], env[1]
     api = "https://api.github.com/"
     rel = "https://github.com/BourbonWX/Dungeon-Tracker/releases/download/v1.0.0/dungeon-tracker-1.0.fwsc"
@@ -584,10 +584,10 @@ def test_resolve_name_finds_fork_and_offers_choice(env, monkeypatch):
     assert d.repo == "BourbonWX/Dungeon-Tracker" and d.download_url == rel and d.exact
     assert [x["repo"] for x in d.candidates] == ["BourbonWX/Dungeon-Tracker", "GRiMMBIENT/grimm"]
     assert d.candidates[0]["fork"] and d.candidates[0]["exact"] and not d.candidates[1]["exact"]
-    # ohne Netz: nicht im Katalog, nur der Name
+    # without network: not in the catalog, only the name
     d = L.resolve("dungeon tracker", cat, online=False)
     assert not d.repo and not d.candidates and not d.exact
-    # mehrdeutiger Name: mehrere Kandidaten, kein eindeutiger → Hinweis zum Auswählen
+    # ambiguous name: several candidates, none unique → hint to choose
     cat2 = c.Catalog(entries=[c.Entry(key="drift-a", name="DRIFT (A)", repo="a/drift-fm1"),
                               c.Entry(key="drift-b", name="DRIFT (B)", repo="b/drift-fm1")])
     d = L.resolve("drift", cat2, online=False)
@@ -608,7 +608,7 @@ def test_resolve_newer_release_than_catalog_and_multiple_builds(env, monkeypatch
                                                {"name": "SHA256SUMS", "browser_download_url": dl + "v0.10.0/SHA256SUMS"}]}],
         dl + "v0.10.0/SHA256SUMS": "ef" * 32 + "  orbit.fwsc\n" + "12" * 32 + "  other.fwsc\n"}))
     d = L.resolve("https://github.com/dspaudio/orbit", cat, online=True)
-    assert d.download_url == dl + "v0.10.0/orbit.fwsc" and d.asset == "orbit.fwsc"     # nicht der BLE-Build
+    assert d.download_url == dl + "v0.10.0/orbit.fwsc" and d.asset == "orbit.fwsc"     # not the BLE build
     assert d.sha256 == "ef" * 32 and d.release_tag == "v0.10.0"
     assert any("neuere Version" in h for h in d.hints)
 

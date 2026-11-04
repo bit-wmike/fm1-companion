@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Zusammengelegte Seiten: mehrere bisher eigenständige Seiten als Reiter EINER Seite.
+"""Merged pages: several previously standalone pages as tabs of ONE page.
 
-Die Navigation bleibt kurz (Ziel: ~13 Seiten), die alten Seiten-Schlüssel funktionieren weiter –
-``window.go("backup_browser", path=...)`` landet auf „Backups › Durchsuchen & Vergleichen“.
+Navigation stays short (goal: ~13 pages), the old page keys keep working –
+``window.go("backup_browser", path=...)`` lands on “Backups › Browse & compare”.
 
-Jede Unterseite behält ihren Code; ihr eigener Seitenkopf wird ausgeblendet und sein Untertitel wandert in
-den gemeinsamen Kopf, sobald der Reiter aktiv ist. activate/deactivate/shutdown/open_with und das Signal
-``navigate`` werden an die Unterseiten durchgereicht; unbekannte Attribute (``page.tree``, ``page.refresh()``)
-landen bei der Hauptunterseite (erster Reiter), damit bestehender Code und Tests weiter funktionieren.
+Each subpage keeps its code; its own page header is hidden and its subtitle moves into
+the shared header as soon as the tab is active. activate/deactivate/shutdown/open_with and the signal
+``navigate`` are passed through to the subpages; unknown attributes (``page.tree``, ``page.refresh()``)
+go to the main subpage (first tab), so existing code and tests keep working.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ class TabbedPage(QWidget):
     navigate = pyqtSignal(str)
 
     def __init__(self, title: str, subtitle: str, tabs: list[tuple[str, str, QWidget]], parent=None):
-        """tabs: [(Reiter-Schlüssel, Reiter-Beschriftung, Unterseite), ...] – der erste Reiter ist der Haupt-Reiter."""
+        """tabs: [(tab key, tab label, subpage), ...] – the first tab is the main tab."""
         super().__init__(parent)
         self.setObjectName("TabbedPage")
         self._keys: list[str] = []
@@ -36,8 +36,8 @@ class TabbedPage(QWidget):
         self.head = heading(title, subtitle or " ")
         self.sub_label = self.head.findChildren(QLabel)[-1]
         lay.addWidget(self.head)
-        # heißt bewusst page_tabs: viele Unterseiten haben selbst ein Attribut „tabs“, das über __getattr__
-        # weiter erreichbar bleibt (z. B. page("compose").tabs = die inneren Reiter von Komponieren)
+        # deliberately called page_tabs: many subpages have their own attribute “tabs”, which stays reachable
+        # via __getattr__ (e.g. page("compose").tabs = the inner tabs of Compose)
         self.page_tabs = QTabWidget()
         self.page_tabs.setObjectName("PageTabs")
         self.page_tabs.setDocumentMode(True)
@@ -48,7 +48,7 @@ class TabbedPage(QWidget):
         self._current = self.page_tabs.currentIndex()
         self._show_subtitle(self._current)
 
-    # ------------------------------------------------------------------ Aufbau
+    # ------------------------------------------------------------------ Layout
     def add_tab(self, key: str, label: str, page: QWidget):
         head = page.findChild(QWidget, "PageHeading")
         if head is not None:
@@ -61,7 +61,7 @@ class TabbedPage(QWidget):
             lay.setContentsMargins(0, max(m.top(), 6), 0, 0)
         self._keys.append(key)
         self._subs.append(page)
-        self.page_tabs.addTab(page, label.replace("&", "&&"))      # „&“ im Titel, kein Tastenkürzel
+        self.page_tabs.addTab(page, label.replace("&", "&&"))      # “&” in the title, not a shortcut
         sig = getattr(page, "navigate", None)
         if sig is not None and hasattr(sig, "connect"):
             try:
@@ -70,7 +70,7 @@ class TabbedPage(QWidget):
                 pass
 
     def __getattr__(self, name: str):
-        """unbekannte Attribute kommen von der Hauptunterseite (erster Reiter)."""
+        """unknown attributes come from the main subpage (first tab)."""
         if name.startswith("_") or name in ("page_tabs", "head", "sub_label"):
             raise AttributeError(name)
         subs = self.__dict__.get("_subs") or []
@@ -78,7 +78,7 @@ class TabbedPage(QWidget):
             return getattr(subs[0], name)
         raise AttributeError(name)
 
-    # ------------------------------------------------------------------ Reiter
+    # ------------------------------------------------------------------ Tabs
     @property
     def keys(self) -> list[str]:
         return list(self._keys)
@@ -117,7 +117,7 @@ class TabbedPage(QWidget):
         if 0 <= i < len(self._subs) and hasattr(self._subs[i], "activate"):
             self._subs[i].activate()
 
-    # ------------------------------------------------------------------ Seiten-Haken
+    # ------------------------------------------------------------------ Page hooks
     def activate(self):
         self._active = True
         cur = self.current()
@@ -142,7 +142,7 @@ class TabbedPage(QWidget):
             if hasattr(p, "shutdown"):
                 try:
                     p.shutdown()
-                except Exception:              # noqa: BLE001 – Beenden darf nicht hängen bleiben
+                except Exception:              # noqa: BLE001 – exit must not get stuck
                     pass
             elif hasattr(p, "deactivate"):
                 try:
@@ -150,7 +150,7 @@ class TabbedPage(QWidget):
                 except Exception:              # noqa: BLE001
                     pass
 
-    def keyPressEvent(self, e):                 # Strg+Tab wechselt den Reiter (wie in Browsern)
+    def keyPressEvent(self, e):                 # Ctrl+Tab switches the tab (like in browsers)
         if e.key() == Qt.Key.Key_Tab and e.modifiers() & Qt.KeyboardModifier.ControlModifier:
             n = self.page_tabs.count()
             if n:
@@ -159,12 +159,12 @@ class TabbedPage(QWidget):
         super().keyPressEvent(e)
 
 
-# ====================================================================== Reiter in eine bestehende Seite einhängen
+# ====================================================================== Embed tabs into an existing page
 class TabAdopter:
-    """Hängt weitere Seiten als Reiter in das vorhandene QTabWidget einer Seite (``main.tabs``) – z. B. den
-    Klangerzeuger als sechsten Reiter der MIDI-Seite. Die Hauptseite behält ihren Kopf; die Unterseite zeigt
-    ihren Titel als Abschnitt. activate/deactivate/shutdown/open_with/set_tab der Hauptseite werden so ergänzt,
-    dass die Unterseiten dieselben Haken bekommen wie eigenständige Seiten."""
+    """Embeds further pages as tabs into a page's existing QTabWidget (``main.tabs``) – e.g. the
+    sound module as the sixth tab of the MIDI page. The main page keeps its header; the subpage shows
+    its title as a section. activate/deactivate/shutdown/open_with/set_tab of the main page are extended
+    so that the subpages get the same hooks as standalone pages."""
 
     def __init__(self, main: QWidget, parts: list[tuple[str, str, QWidget]]):
         self.main = main
@@ -216,7 +216,7 @@ class TabAdopter:
             self.tabs.setCurrentWidget(page)
             return True
         orig = self._orig.get("open_with")
-        if orig is not None:                       # Reiter der Hauptseite (z. B. "monitor")
+        if orig is not None:                       # tab of the main page (e.g. "monitor")
             orig(tab=key_or_index)
             return True
         return False

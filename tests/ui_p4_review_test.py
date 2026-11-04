@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Fahrprüfung MIDI/Simulator/Katalog/Komponieren: kein Netz im GUI-Thread, offline sauber, Oberfläche blockiert
-nie, Gerätewechsel DEMO-1/2/3 und Trennen/Neuverbinden bei offener Seite, Piano-Roll mit vielen Noten.
+"""Road test MIDI/simulator/catalog/compose: no network in the GUI thread, clean offline, the UI never
+blocks, device switch DEMO-1/2/3 and disconnect/reconnect with the page open, piano roll with many notes.
 
   flock /tmp/fm1c-ui.lock timeout 600 env QT_QPA_PLATFORM=offscreen python3 tests/ui_p4_review_test.py
 """
@@ -24,7 +24,7 @@ for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share")
     os.environ[k] = str(home / sub)
 os.environ["FM1C_DEMO"] = "1"
 for k in ("HTTPS_PROXY", "HTTP_PROXY", "https_proxy", "http_proxy", "ALL_PROXY", "all_proxy"):
-    os.environ.pop(k, None)           # ein Proxy auf 127.0.0.1 würde „offline“ sonst unterlaufen
+    os.environ.pop(k, None)           # a proxy on 127.0.0.1 would otherwise undermine "offline"
 os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
 
 errors: list[str] = []
@@ -32,7 +32,7 @@ sys.excepthook = lambda t, v, tb: errors.append("".join(traceback.format_excepti
 threading.excepthook = lambda a: errors.append("".join(traceback.format_exception(a.exc_type, a.exc_value,
                                                                                   a.exc_traceback)))
 
-# ---- Netz: im GUI-Thread verboten (wird protokolliert), überall „offline“ (wie ohne Internet)
+# ---- network: forbidden in the GUI thread (logged), "offline" everywhere (as without internet)
 MAIN = threading.main_thread()
 gui_net: list[str] = []
 _orig_connect = socket.socket.connect
@@ -107,7 +107,7 @@ def until(cond, ms=10000):
     return False
 
 
-# ---- Herzschlag: misst die längste Lücke der Ereignisschleife (= wie lange die Oberfläche stand)
+# ---- heartbeat: measures the longest gap of the event loop (= how long the UI stood still)
 beat = {"last": None, "max": 0.0, "where": ""}
 clock = QElapsedTimer()
 clock.start()
@@ -137,23 +137,23 @@ AREA = [("midi", None), ("soundmodule", None), ("compose", None), ("workshop", N
 
 
 def flow():
-    check(until(lambda: w.ctx.connected, 20000), "Demo-FM-1 verbunden")
+    check(until(lambda: w.ctx.connected, 20000), "demo FM-1 connected")
 
-    # ---- 1) Alle Seiten des Gebiets öffnen, offline: nichts blockiert, kein Netz im GUI-Thread
+    # ---- 1) open all pages of the area, offline: nothing blocks, no network in the GUI thread
     for key, _ in AREA:
         reset_beat(f"Seite {key}")
         w.go(key)
         wait(400)
-        check(beat["max"] < 1500, f"{key}: Oberfläche nie > 1,5 s blockiert (längste Lücke {beat['max']:.0f} ms)")
+        check(beat["max"] < 1500, f"{key}: UI never blocked > 1.5 s (longest gap {beat['max']:.0f} ms)")
 
     disc = w.page("discover")
     tab_names = [disc.tabs.tabText(i) for i in range(disc.tabs.count())]
     for i in range(disc.tabs.count()):
         disc.tabs.setCurrentIndex(i)
         wait(300)
-    check(not any("lade" in t.lower() and "…" in t for t in tab_names), f"Reiter ohne „lade …“ ({tab_names})")
+    check(not any("lade" in t.lower() and "…" in t for t in tab_names), f"tabs without \"lade …\" (loading) ({tab_names})")
 
-    # Katalog und Neuigkeiten offline: Rückmeldung statt Hängen, gespeicherter Stand bleibt
+    # catalog and news offline: feedback instead of hanging, the stored state stays
     w.go("discover")
     disc.tabs.setCurrentIndex(0)
     n_before = disc.model.rowCount()
@@ -165,19 +165,19 @@ def flow():
     reset_beat("Katalog offline aktualisieren")
     disc.refresh(force=True)
     check(until(lambda: disc.b_refresh.isEnabled() and disc.b_refresh.text() == "Aktualisieren", 30000),
-          f"Katalog offline: Knopf kommt zurück ({disc.b_refresh.text()})")
+          f"catalog offline: the button comes back ({disc.b_refresh.text()})")
     check(any(k == "warning" and "Keine Internetverbindung" in t and "offline" in t and "Errno" not in t
               for k, t in toasts),
-          f"Katalog offline: Warnung nennt Grund und dass es offline weitergeht ({toasts[-1:]})")
-    check(disc.model.rowCount() == n_before and n_before > 0, f"gespeicherter Katalog bleibt sichtbar ({n_before})")
-    check(beat["max"] < 1500, f"Katalog-Aktualisierung offline blockiert nicht ({beat['max']:.0f} ms)")
+          f"catalog offline: the warning names the reason and that it continues offline ({toasts[-1:]})")
+    check(disc.model.rowCount() == n_before and n_before > 0, f"stored catalog stays visible ({n_before})")
+    check(beat["max"] < 1500, f"catalog refresh offline does not block ({beat['max']:.0f} ms)")
     if hasattr(disc, "check_news"):
         disc.tabs.setCurrentIndex(1)
         reset_beat("Neuigkeiten offline")
         toasts.clear()
         disc.check_news()
-        check(until(lambda: disc.b_news.isEnabled(), 30000), "Neuigkeiten offline: Knopf kommt zurück")
-        check(beat["max"] < 1500, f"Neuigkeiten offline blockieren nicht ({beat['max']:.0f} ms)")
+        check(until(lambda: disc.b_news.isEnabled(), 30000), "news offline: the button comes back")
+        check(beat["max"] < 1500, f"news offline does not block ({beat['max']:.0f} ms)")
     D.notify = orig_notify
     e = next((x for x in disc.cat.entries if x.repo), None)
     if e is not None:
@@ -187,7 +187,7 @@ def flow():
         txt = disc.detail.findChildren(type(disc.b_refresh))
         check(not errors, f"Detailseite offline ({e.name}) ohne Ausnahme")
 
-    # ---- 2) Piano-Roll mit vielen Noten: Klicks bleiben flott
+    # ---- 2) piano roll with many notes: clicks stay quick
     w.go("compose")
     cp = w.page("compose")
     full = []
@@ -213,14 +213,14 @@ def flow():
         roll.mousePressEvent(ev)
         roll.repaint()
     per = (time.perf_counter() - t0) / n * 1000
-    check(per < 25, f"Piano-Roll: Klick + Neuzeichnen bei 64 vollen Steps und maximalem Zoom {per:.1f} ms (< 25)")
+    check(per < 25, f"piano roll: click + redraw with 64 full steps and maximum zoom {per:.1f} ms (< 25)")
     reset_beat("Vorhören voller Pattern")
     cp.preview()
     wait(1500)
-    check(beat["max"] < 150, f"Vorhören rechnet nicht im GUI-Thread (längste Lücke {beat['max']:.0f} ms)")
+    check(beat["max"] < 150, f"preview does not compute in the GUI thread (longest gap {beat['max']:.0f} ms)")
     cp.stop()
 
-    # ---- 3) Gerätewechsel DEMO-1 → 2 → 3 → 1 mit jeder offenen Seite
+    # ---- 3) device switch DEMO-1 → 2 → 3 → 1 with every page open
     ports = {p.serial: p for p in w.ctx.ports}
     for key, _ in AREA:
         w.go(key)
@@ -232,26 +232,26 @@ def flow():
                        (w.ctx.connected if fw else getattr(w.ctx, "midi_connected", True)), 20000)
             wait(300)
             check(ok and len(errors) == n_err and beat["max"] < 1500,
-                  f"{key}: Wechsel auf {serial} ohne Ausnahme, Oberfläche frei ({beat['max']:.0f} ms)")
+                  f"{key}: switch to {serial} without exception, UI free ({beat['max']:.0f} ms)")
 
-    # Seiteninhalt nach Wechsel: Komponieren-Rückgängig an DEMO-1 gebunden, Regler leer nach Wechsel
+    # page content after a switch: compose undo bound to DEMO-1, controls empty after the switch
     midi = w.page("midi")
-    check(midi is not None, "MIDI-Seite vorhanden")
+    check(midi is not None, "MIDI page present")
 
-    # ---- 4) Gerät „abziehen“ (Demo-Prozess beenden) bei offener Seite, dann neu verbinden
+    # ---- 4) "unplug" the device (end the demo process) with the page open, then reconnect
     for key in ("midi", "compose", "simulator"):
         w.go(key)
         n_err = len(errors)
         old = w.ctx.link
         old.t.p.kill()
-        # erkannt = alte Verbindung geschlossen (die Suche verbindet danach sofort neu – „getrennt“ ist kurz)
+        # detected = old connection closed (the scan reconnects immediately afterwards – "disconnected" is short)
         gone = until(lambda: old.closed or w.ctx.link is not old, 15000)
-        check(gone, f"{key}: getrenntes Gerät wird erkannt")
+        check(gone, f"{key}: disconnected device is detected")
         w.ctx.scan()
         back = until(lambda: w.ctx.connected, 20000)
-        check(back and len(errors) == n_err, f"{key}: neu verbunden ohne Ausnahme")
+        check(back and len(errors) == n_err, f"{key}: reconnected without exception")
 
-    # ---- 5) Klangerzeuger: kaputte bzw. leere Kit-Datei -> Satz statt Ausnahme
+    # ---- 5) sound module: broken or empty kit file -> a sentence instead of an exception
     sm = w.page("soundmodule")
     kdir = home / "kits"
     kdir.mkdir(exist_ok=True)
@@ -266,7 +266,7 @@ def flow():
         sm.make_kit()
         check(want in sm.kit_msg.text() and len(errors) == n_err, f"Kit {path.name}: {sm.kit_msg.text()[:70]}")
 
-    check(not gui_net, "kein Netzaufruf im GUI-Thread" + (f":\n{gui_net[0]}" if gui_net else ""))
+    check(not gui_net, "no network call in the GUI thread" + (f":\n{gui_net[0]}" if gui_net else ""))
 
 
 def run():
@@ -277,9 +277,9 @@ def run():
     w.close()
     wait(300)
     for e in errors:
-        print("AUSNAHME:\n" + e)
+        print("EXCEPTION:\n" + e)
     ok = sum(1 for c, _ in results if c)
-    print(f"{ok}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+    print(f"{ok}/{len(results)} passed, {len(errors)} exceptions")
     shutil.rmtree(home, ignore_errors=True)
     app.exit(0 if ok == len(results) and not errors else 1)
 

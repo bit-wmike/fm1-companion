@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Gemeinsame Diagnose-Bausteine: Versionen, Abhängigkeiten (aus data/deps.json), Mitwirkende.
+"""Shared diagnostic building blocks: versions, dependencies (from data/deps.json), contributors.
 
-Ohne Qt nutzbar (für --check, Installer und Fehlerberichte).
+Usable without Qt (for --check, the installer and bug reports).
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def packages(kind: str = "required") -> list[str]:
 
 
 def debian_field(kind: str = "required") -> str:
-    """'python3 (>= 3.11), python3-pyqt6, …' für die control-Datei."""
+    """'python3 (>= 3.11), python3-pyqt6, …' for the control file."""
     return ", ".join(f"{d['package']} ({d['version']})" if d.get("version") else d["package"]
                      for d in deps().get(kind, []))
 

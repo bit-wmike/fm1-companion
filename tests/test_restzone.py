@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""„Reste aufräumen“ (fm1companion/flash/restzone.py): harte Tore, Plan aus frischem Dump, Löschen mit dem Mock-FM-1 des
-Unbrickers, Journal und Fortsetzen nach Absturz, Blockprüfung, root-Kopie über ROOT_HELPER.
+""""Clean up leftovers" (fm1companion/flash/restzone.py): hard gates, plan from a fresh dump, erasing with the Unbricker's
+mock FM-1, journal and resuming after a crash, block check, root copy via ROOT_HELPER.
 
-Teile mit echten Paketen brauchen FM1_TEST_PKGDIR (v16.fwsc, melodee.fwsc, zip_v15.fwsc) – sonst übersprungen.
+Parts with real packages need FM1_TEST_PKGDIR (v16.fwsc, melodee.fwsc, zip_v15.fwsc) – otherwise skipped.
 """
 import hashlib
 import json
@@ -22,7 +22,7 @@ fu = rz._unbricker()
 PKGDIR = os.environ.get("FM1_TEST_PKGDIR", "")
 need_pkgs = pytest.mark.skipif(not PKGDIR or not all((Path(PKGDIR) / f).is_file()
                                                      for f in ("v16.fwsc", "melodee.fwsc", "zip_v15.fwsc")),
-                               reason="echte FM-1-Pakete fehlen (FM1_TEST_PKGDIR)")
+                               reason="real FM-1 packages missing (FM1_TEST_PKGDIR)")
 REFS = fm.load_known() + fm.demo_refs()
 
 
@@ -52,20 +52,20 @@ def test_plan_demo_and_refusals():
     assert p.ok and p.firmware.startswith("Demo-Melodee")
     assert p.addrs() == list(range(0x97000, 0xA9000, 0x1000))
     assert p.sectors[0]["kind"] == "teilweise" and p.sectors[1]["kind"] == "voll"
-    assert [s["addr"] for s in p.skipped] == [0x93000, 0x94000, 0x95000, 0x96000]       # Nutzerdaten bleiben
-    # ein Sektor, den die Firmware inzwischen neu beschrieben hat, ist kein Rest mehr
+    assert [s["addr"] for s in p.skipped] == [0x93000, 0x94000, 0x95000, 0x96000]       # user data stays
+    # a sector the firmware has rewritten in the meantime is no longer a leftover
     d = bytearray(img)
     d[0xA0000:0xA0000 + 0x1000] = b"\xff" * 0x1000
     d[0xA0010:0xA0030] = b"Melodee-Pool-Eintrag 0123456789ab"[:32]
     p2 = rz.make_plan(bytes(d), REFS)
     assert 0xA0000 not in p2.addrs() and any(s["addr"] == 0xA0000 for s in p2.skipped)
-    # V16 im App-Bereich: nie
+    # V16 in the app area: never
     v16 = fm._demo_bytes("demo-v16", 0xA9000)
     d = bytearray(img)
     d[0x4000:0xA9000] = v16[0x4000:]
     p3 = rz.make_plan(bytes(d), REFS)
     assert not p3.ok and "V16" in p3.reason and not p3.sectors
-    # unbekannte / beschädigte Firmware: nie
+    # unknown / damaged firmware: never
     d = bytearray(img)
     d[0x50000] ^= 0xFF
     p4 = rz.make_plan(bytes(d), REFS)
@@ -82,11 +82,11 @@ def test_execute_erases_exactly_the_plan(tmp_path):
     res = rz.execute(dev, fu, tmp_path, REFS, only=only)
     assert res["ok"] and res["level"] == "gruen" and len(res["erased"]) == 17
     assert all(op == ("erase_sector", a, 0x1000) for op, a in zip(dev.ldr.ops, sorted(only, reverse=True)))
-    assert {o[0] for o in dev.ldr.ops} == {"erase_sector"}                            # nie Block, nie Schreiben
+    assert {o[0] for o in dev.ldr.ops} == {"erase_sector"}                            # never a block, never writing
     want = bytearray(img)
     for a in only:
         want[a:a + 0x1000] = b"\xff" * 0x1000
-    assert bytes(dev.ldr.flash) == bytes(want)                                         # sonst kein Byte verändert
+    assert bytes(dev.ldr.flash) == bytes(want)                                         # otherwise not a byte changed
     assert any("nicht bestätigt" in s["why"] for s in res["skipped"])
     assert Path(res["backup"]).read_bytes() == img and Path(res["after"]).read_bytes() == bytes(want)
     j = json.loads((tmp_path / rz.JOURNAL_NAME).read_text())
@@ -106,7 +106,7 @@ def test_abort_and_resume_with_journal(tmp_path):
     half = bytes(dev.ldr.flash[0xA6000:0xA7000])
     assert half != b"\xff" * 0x1000 and not rz.v16_kind(half, 0xA6000, [r for r in REFS if r.family == "v16-layout"])
     assert "Angehalten" in rz.report(res).findings[0][1]
-    # neuer Lauf, neue Sicherung: der halb gelöschte Sektor ist dank Journal als „unterbrochen“ erkannt
+    # new run, new backup: thanks to the journal the half-erased sector is recognised as "interrupted"
     plan = rz.execute(dev, fu, tmp_path, REFS, plan_only=True)
     assert {"addr": "0xA6000", "kind": "unterbrochen"} in plan["planned"] and len(plan["planned"]) == 16
     res = rz.execute(dev, fu, tmp_path, REFS, only={int(p["addr"], 16) for p in plan["planned"]})
@@ -116,7 +116,7 @@ def test_abort_and_resume_with_journal(tmp_path):
 
 
 def test_resume_never_erases_rewritten_sector(tmp_path):
-    """nach dem Absturz hat die Firmware den halb gelöschten Sektor neu beschrieben -> bleibt"""
+    """after the crash the firmware rewrote the half-erased sector -> stays"""
     img = rz.demo_image()
     dev = mock(img)
     rz.execute(dev, fu, tmp_path, REFS, only={0x98000}, abort_after=1)
@@ -126,7 +126,7 @@ def test_resume_never_erases_rewritten_sector(tmp_path):
     plan = rz.execute(dev, fu, tmp_path, REFS, plan_only=True)
     assert "0x98000" not in [p["addr"] for p in plan["planned"]]
     assert any(s["addr"] == "0x98000" and "unterbrochen" in s["why"] for s in plan["skipped"])
-    # Journal eines anderen Geräts/Firmwarestands (anderer App-Bereich) zählt nicht
+    # a journal of another device/firmware state (different app area) does not count
     j = json.loads((tmp_path / rz.JOURNAL_NAME).read_text())
     j["app_sha256"] = "0" * 64
     (tmp_path / rz.JOURNAL_NAME).write_text(json.dumps(j))
@@ -137,7 +137,7 @@ def test_chip_that_erases_more_stops_at_once(tmp_path):
     img = rz.demo_image()
     dev = mock(img)
 
-    def greedy(addr):                                  # „Sektor löschen“ löscht in Wahrheit 64 KiB
+    def greedy(addr):                                  # "erase sector" really erases 64 KiB
         dev.ldr.ops.append(("erase_sector", addr, 0x1000))
         lo = addr - addr % 0x10000
         dev.ldr.flash[lo:lo + 0x10000] = b"\xff" * 0x10000
@@ -152,7 +152,7 @@ def test_changed_since_backup_and_flaky_reads(tmp_path):
     real_read = dev.ldr.flash_read
     calls = {"n": 0}
 
-    def drift(addr, n):                                # nach der Sicherung ändert sich ein Sektor (darf nicht sein)
+    def drift(addr, n):                                # after the backup a sector changes (must not happen)
         calls["n"] += 1
         if calls["n"] > 2 * 2048:
             dev.ldr.flash[0x97100] = 0x00
@@ -161,7 +161,7 @@ def test_changed_since_backup_and_flaky_reads(tmp_path):
     res = rz.execute(dev, fu, tmp_path, REFS, only={0x97000})
     assert not res["ok"] and "verändert" in res["error"] and not [o for o in dev.ldr.ops if o[0] != "write"]
     dev2 = mock(img)
-    dev2.ldr.flaky_read = 5                            # Sicherung: zwei Lesungen unterschiedlich -> nichts passiert
+    dev2.ldr.flaky_read = 5                            # backup: two reads differ -> nothing happens
     with pytest.raises(fu.UnbrickError):
         rz.execute(dev2, fu, tmp_path / "b", REFS, only={0x97000})
     assert not dev2.ldr.ops
@@ -185,24 +185,24 @@ def test_cli_dry_run_and_refusals(tmp_path):
     assert r.returncode == rz.EXIT_REFUSED and img.read_bytes() == rz.demo_image()
     r = subprocess.run(base + ["plan", str(tmp_path / "o"), "--result", str(tmp_path / "x.json"), "--demo-refs",
                                "--log-dir", str(tmp_path / "logs")], capture_output=True, text=True)
-    assert r.returncode == rz.EXIT_REFUSED                        # Demo-Optionen nur in der Simulation
+    assert r.returncode == rz.EXIT_REFUSED                        # demo options only in the simulation
 
 
 def test_root_copy_contains_own_files_and_hashes_match(tmp_path):
     from fm1companion.flash import uboot, uboot_manifest as M
     assert set(M.OWN) == set(uboot.OWN_FILES)
     for n, p in uboot.OWN_FILES.items():
-        assert hashlib.sha256(p.read_bytes()).hexdigest() == M.OWN[n], f"uboot_manifest.OWN veraltet: {n}"
+        assert hashlib.sha256(p.read_bytes()).hexdigest() == M.OWN[n], f"uboot_manifest.OWN outdated: {n}"
     argv = uboot.Runner(dry_run=False, cwd=tmp_path, root_cmd=["pkexec"]).argv("plan", "x", "--result", "r.json",
                                                                                script=uboot.RESTZONE_SCRIPT)
     spec = json.loads(argv[-1])
     assert spec["script"] == "restzone.py" and set(spec["own"]) == set(M.OWN)
-    # Restore & Co. bekommen die eigenen Dateien nicht mit
+    # restore & co. do not get the own files
     assert json.loads(uboot.Runner(dry_run=False, cwd=tmp_path, root_cmd=["pkexec"]).argv("backup", "x")[-1])["own"] == {}
 
 
 def test_root_helper_runs_verified_copy_in_simulation(tmp_path):
-    """der echte ROOT_HELPER (ohne pkexec) kopiert Unbricker + restzone + flashmodel + Steckbriefe, prüft und startet"""
+    """the real ROOT_HELPER (without pkexec) copies Unbricker + restzone + flashmodel + profiles, checks and starts"""
     from fm1companion.flash import uboot, uboot_manifest as M
     jl = tmp_path / "jl"
     jl.mkdir()
@@ -218,7 +218,7 @@ def test_root_helper_runs_verified_copy_in_simulation(tmp_path):
 
 @need_pkgs
 def test_real_chain_melodee_v16_v15_melodee(tmp_path):
-    """echte Pakete: Melodee → V16 (komplett, gebootet) → V15 → Melodee; Plan = genau die V16-Reste des Modells"""
+    """real packages: Melodee → V16 (complete, booted) → V15 → Melodee; plan = exactly the model's V16 leftovers"""
     pk = {k: fm.Package.load(Path(PKGDIR) / f) for k, f in (("v16", "v16.fwsc"), ("mel", "melodee.fwsc"),
                                                             ("v15", "zip_v15.fwsc"))}
     known = list(pk.values())
@@ -228,7 +228,7 @@ def test_real_chain_melodee_v16_v15_melodee(tmp_path):
     flash = bytes(rep["flash"].data)
     want = sorted(r["sector"] for r in rep["foreign_residue"] if 0x93000 <= r["sector"] < 0xA9000)
     refs = fm.load_known()
-    p = rz.make_plan(flash, refs)                       # nur Steckbrief-Hashes, ohne Paketdatei
+    p = rz.make_plan(flash, refs)                       # only profile hashes, without a package file
     assert p.ok and p.firmware.startswith("Melodee") and p.addrs() == want and len(want) == 18
     p2 = rz.make_plan(flash, refs, [pk["v16"]])
     assert p2.addrs() == want
@@ -236,18 +236,18 @@ def test_real_chain_melodee_v16_v15_melodee(tmp_path):
     res = rz.execute(dev, fu, tmp_path, refs, [pk["v16"]], only=set(want))
     assert res["ok"] and len(res["erased"]) == 18
     assert bytes(dev.ldr.flash[:0x93000]) == flash[:0x93000] and bytes(dev.ldr.flash[0xA9000:]) == flash[0xA9000:]
-    # abgebrochenes V16 (bei 10 %): Teilsektor an der Abbruchstelle wird erkannt
+    # aborted V16 (at 10 %): the partial sector at the abort point is detected
     rep = fm.replay(start, [("ota", pk["v16"], 0.1), ("ota", pk["v15"], 1.0), ("ota", pk["mel"], 1.0)], pk["mel"], known)
     flash = bytes(rep["flash"].data)
     want = sorted(r["sector"] for r in rep["foreign_residue"] if 0x93000 <= r["sector"] < 0xA9000)
     assert rz.make_plan(flash, refs).addrs() == want
-    # V16 läuft: nie
+    # V16 running: never
     v16_state = bytes(fm.installed_state(pk["v16"]).data)
     assert not rz.make_plan(v16_state, refs).ok
 
 
 def test_erase_order_top_down():
-    """Der erste Löschbefehl darf nie im 64-KiB-Block des Firmware-Endes (0x90000–0x9FFFF) liegen."""
+    """The first erase command must never lie in the 64 KiB block of the firmware end (0x90000–0x9FFFF)."""
     import inspect
     from fm1companion.flash import restzone
     src = inspect.getsource(restzone)

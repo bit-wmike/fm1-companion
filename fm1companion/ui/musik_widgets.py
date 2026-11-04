@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Gemeinsame Widgets des Musik-Bereichs: Piano-Roll mit Drum-Grid (anzeigen und bearbeiten) und eine
-kleine Vorhör-Synthese (bewusst einfach: klingt nicht wie das FM-1)."""
+"""Shared widgets of the music area: piano roll with drum grid (view and edit) and a
+small preview synthesizer (deliberately simple: doesn't sound like the FM-1)."""
 from __future__ import annotations
 
 from PyQt6.QtCore import QPointF, QRectF, QSize, Qt, pyqtSignal
@@ -16,7 +16,7 @@ LANE_H = 16
 
 
 def vel_color(vel: int, base: QColor) -> QColor:
-    """leise = blass/kühl, laut = kräftig/warm."""
+    """quiet = pale/cool, loud = strong/warm."""
     v = max(1, min(127, vel or 96)) / 127
     c = QColor.fromHsvF((0.62 - 0.62 * v) % 1.0, 0.35 + 0.6 * v, 0.55 + 0.4 * v)
     return c
@@ -27,8 +27,8 @@ def copy_steps(steps) -> list:
 
 
 class EditHistory:
-    """Rückgängig/Wiederholen für Bearbeitungen am Rechner (Piano-Roll, Erzeugen, Feinschliff …).
-    Ein Zustand ist (Steps, Länge); push() VOR jeder Änderung mit dem alten Zustand aufrufen."""
+    """Undo/redo for edits on the computer (piano roll, generate, fine-tuning …).
+    A state is (steps, length); call push() BEFORE every change with the old state."""
 
     def __init__(self, limit: int = 200):
         self.undo_stack: list[tuple[list, int, str]] = []
@@ -57,7 +57,7 @@ class EditHistory:
         return bool(self.redo_stack)
 
     def undo(self, cur_steps, cur_length: int):
-        """-> (Steps, Länge, was) des vorigen Zustands oder None; der aktuelle wandert auf den Wiederholen-Stapel."""
+        """-> (steps, length, what) of the previous state or None; the current one moves to the redo stack."""
         if not self.undo_stack:
             return None
         st = self.undo_stack.pop()
@@ -77,9 +77,9 @@ class EditHistory:
 
 
 class StepRoll(QWidget):
-    """Steps eines Patterns: oben Noten (Piano-Roll), unten die 8 Drum-Lanes (falls benutzt oder bearbeitbar)."""
+    """Steps of a pattern: notes at the top (piano roll), the 8 drum lanes below (if used or editable)."""
     changed = pyqtSignal()
-    about_to_change = pyqtSignal()           # vor einer Bearbeitung mit der Maus (für Rückgängig)
+    about_to_change = pyqtSignal()           # before a mouse edit (for undo)
 
     def __init__(self, parent=None, editable: bool = False):
         super().__init__(parent)
@@ -95,7 +95,7 @@ class StepRoll(QWidget):
                           "the hit, Shift+click sets an accent.") if editable else
                         _("Piano roll: colour = velocity, bar across several steps = held note (TIE)"))
 
-    # ------------------------------------------------------------------ Daten
+    # ------------------------------------------------------------------ Data
     def set_steps(self, steps, length: int, keep_range: bool = False):
         self.steps = [PF.Step(list(s.notes), s.time, s.accent, s.slide, s.recorded, s.vel, s.hit, s.acc, s.chance)
                       for s in steps[:PF.NSTEP]]
@@ -131,10 +131,10 @@ class StepRoll(QWidget):
     def _roll_h(self):
         return self._rows() * ROW_H
 
-    # ------------------------------------------------------------------ Zeichnen
+    # ------------------------------------------------------------------ Drawing
     def paintEvent(self, ev):
-        # Nur den sichtbaren/neu zu zeichnenden Ausschnitt malen: in der Scroll-Fläche ist die Rolle bei vollem
-        # Zoom ~3900×1800 px groß, gezeigt wird ein Bruchteil – sonst kostet jeder Klick auf dem Pi > 100 ms.
+        # Only paint the visible/to-be-redrawn region: in the scroll area the roll is ~3900×1800 px at full
+        # zoom, only a fraction is shown – otherwise every click costs > 100 ms on the Pi.
         p = QPainter(self)
         pal = self.palette()
         clip = QRectF(ev.rect()) if ev is not None else QRectF(self.rect())
@@ -147,20 +147,20 @@ class StepRoll(QWidget):
         strong.setAlpha(70)
         sw, rh = self.step_w, ROW_H
         top = 16
-        c0 = max(0, int((clip.left() - KEY_W) // sw) - 1)           # sichtbare Spalten (Steps) …
+        c0 = max(0, int((clip.left() - KEY_W) // sw) - 1)           # visible columns (steps) …
         c1 = min(self.length, int((clip.right() - KEY_W) // sw) + 2)
-        r0 = max(0, int((clip.top() - top) // rh) - 1)              # … und Zeilen (Tonhöhen)
+        r0 = max(0, int((clip.top() - top) // rh) - 1)              # … and rows (pitches)
         r1 = min(self._rows(), int((clip.bottom() - top) // rh) + 2)
         x0, x1 = KEY_W + c0 * sw, KEY_W + c1 * sw
         font = QFont(self.font())
         font.setPointSizeF(max(6.5, font.pointSizeF() - 2))
         p.setFont(font)
-        # Kopf: Step-Nummern
+        # header: step numbers
         for i in range(c0 - c0 % 4, c1):
             if i % 4 == 0:
                 p.setPen(text)
                 p.drawText(QRectF(KEY_W + i * sw, 0, sw * 4, 14), Qt.AlignmentFlag.AlignLeft, str(i + 1))
-        # Tastatur + Zeilen
+        # keyboard + rows
         black = {1, 3, 6, 8, 10}
         shade = QColor(text)
         shade.setAlpha(14)
@@ -179,9 +179,9 @@ class StepRoll(QWidget):
         for i in range(c0, min(c1, self.length) + 1):
             p.setPen(QPen(strong if i % 4 == 0 else grid, 1))
             p.drawLine(QPointF(KEY_W + i * sw, y_lo), QPointF(KEY_W + i * sw, min(y_hi, top + self._roll_h())))
-        # Noten (eine Note mit TIE kann links außerhalb beginnen – deshalb ab dem Anfang ihrer Haltekette)
+        # notes (a note with TIE can start outside on the left – hence from the start of its tie chain)
         hl = pal.color(QPalette.ColorRole.Highlight)
-        start = min(c0, self.length - 1)            # (Fläche breiter als die Rolle: c0 kann hinter dem Ende liegen)
+        start = min(c0, self.length - 1)            # (area wider than the roll: c0 can lie past the end)
         while start > 0 and self.steps[start].time == PF.ST_TIE:
             start -= 1
         for i in range(start, c1):
@@ -206,7 +206,7 @@ class StepRoll(QWidget):
                 if s.slide:
                     p.setPen(QPen(text, 1))
                     p.drawLine(rect.topRight(), QPointF(rect.right() + sw / 2, rect.top() - 3))
-        # Drum-Lanes
+        # drum lanes
         if self.show_lanes and clip.bottom() >= top + self._roll_h():
             y0 = top + self._roll_h() + 6
             for lane in range(8):
@@ -224,7 +224,7 @@ class StepRoll(QWidget):
                         p.fillRect(rect, grid)
         p.end()
 
-    # ------------------------------------------------------------------ Bearbeiten
+    # ------------------------------------------------------------------ Editing
     def _hit(self, pos):
         x, y = pos.x() - KEY_W, pos.y() - 16
         if x < 0:
@@ -277,9 +277,9 @@ class StepRoll(QWidget):
         self.changed.emit()
 
 
-# --------------------------------------------------------------------------- Vorhören ---
+# --------------------------------------------------------------------------- Preview ---
 def render_preview(events, bpm: float, rate: int = 22050, max_secs: float = 30.0) -> list[int]:
-    """NoteEvents (midiexport) -> 16-Bit-Samples. Einfacher Sägezahn mit Hüllkurve; Drums als Rauschen/Sinus."""
+    """NoteEvents (midiexport) -> 16-bit samples. Simple sawtooth with envelope; drums as noise/sine."""
     import numpy as np
     spb = 60.0 / max(20.0, bpm)
     if not events:

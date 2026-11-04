@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Simuliertes FM-1 mit M-VAVE FM1 Open V14 – die Geräteseite des Datei-Protokolls nach
-app/transfer.c und app/samples.c (GPL-3.0-only WITH linking exception, (c) 2026 M-VAVE).
+"""Simulated FM-1 with M-VAVE FM1 Open V14 – the device side of the file protocol after
+app/transfer.c and app/samples.c (GPL-3.0-only WITH linking exception, (c) 2026 M-VAVE).
 
-Kann: Befehl 0 (Projekt-Info), 21/22 (Fähigkeiten), 11–16 (Sample-Bank: Status, Beginn,
-Schreiben, Abschluss, Lesen, Abbruch) mit Token, Prüfsumme, Bit-Packung, Antwort-Cache für
-Wiederholungen und derselben Prüfung der Bank wie die Firmware (valid(), SEA5-Blockköpfe, CRC).
-Spricht KEIN Felucca-Protokoll (wie das echte Gerät).
+Can do: command 0 (project info), 21/22 (capabilities), 11–16 (sample bank: status, begin,
+write, commit, read, abort) with token, checksum, bit packing, reply cache for
+repeats and the same check of the bank as the firmware (valid(), SEA5 block headers, CRC).
+Does NOT speak the Felucca protocol (like the real device).
 
-  python3 tests/fm1open_sim.py     (stdin/stdout: eine MIDI-Nachricht pro Zeile als Hex)
+  python3 tests/fm1open_sim.py     (stdin/stdout: one MIDI message per line as hex)
 """
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class FM1OpenDevice:
         self.flash = bytearray(b"\xff" * GROOVE_SAMPLE_BYTES)
         self.state, self.total, self.position, self.header = 0, 0, 0, bytearray(512)
         self.cache_req, self.cache_reply = None, None
-        self.drop = drop_replies                 # Tests: so viele Antworten „verlieren“
+        self.drop = drop_replies                 # tests: "lose" this many replies
         self.log: list[int] = []
         if bank:
             self.flash[:len(bank)] = bank
@@ -78,7 +78,7 @@ class FM1OpenDevice:
     def begin(self, n):
         if n < 512 or n > GROOVE_SAMPLE_LIMIT:
             return INVALID
-        self.flash[:4096] = b"\xff" * 4096          # erster Sektor gelöscht
+        self.flash[:4096] = b"\xff" * 4096          # first sector erased
         self.state, self.total, self.position = 3, n, 0
         self.header = bytearray(512)
         self.log.append(12)
@@ -93,7 +93,7 @@ class FM1OpenDevice:
             self.header[off:off + n] = data[:n]
             for i in range(len(data)):
                 if 16 <= off + i < 20:
-                    copy[i] = 255                       # Commit-Wort bleibt bis zum Abschluss gelöscht
+                    copy[i] = 255                       # commit word stays erased until the commit
         first, last = off // 4096, (off + len(data) - 1) // 4096
         if off and off % 4096 == 0:
             self.flash[first * 4096:(first + 1) * 4096] = b"\xff" * 4096
@@ -152,7 +152,7 @@ class FM1OpenDevice:
             return None
         if any(b >= 128 for b in m[1:-1]) or sum(m[1:-1]) & 127:
             return None
-        if self.cache_req == m and self.cache_reply:      # genaue Wiederholung: gespeicherte Antwort
+        if self.cache_req == m and self.cache_reply:      # exact repeat: stored reply
             return self.cache_reply
         data, bits, value = bytearray(), 0, 0
         for b in m[8:-2]:
@@ -190,7 +190,7 @@ class FM1OpenDevice:
 
 
 def demo_bank() -> bytes:
-    """8 kurze synthetische Sounds (wie die Werksbank: Namen, Längen in 10-ms-Schritten)."""
+    """8 short synthetic sounds (like the factory bank: names, lengths in 10 ms steps)."""
     from fm1companion import fm1open as F
     names = ["BWOOM", "PAH", "HEY", "WAH", "HAHA", "YOI", "TSI", "SHAA"]
     ents = []
@@ -204,7 +204,7 @@ def demo_bank() -> bytes:
 
 def main():
     dev = FM1OpenDevice(demo_bank() if "--empty" not in sys.argv else None)
-    print("# FM1-Open-Simulation bereit", flush=True)
+    print("# FM1 Open simulation ready", flush=True)
     for line in sys.stdin:
         line = line.strip()
         if not line or line.startswith("#"):
@@ -212,7 +212,7 @@ def main():
         try:
             r = dev.handle(list(bytes.fromhex(line)))
         except Exception as e:  # noqa: BLE001
-            print(f"# Fehler: {e}", flush=True)
+            print(f"# error: {e}", flush=True)
             continue
         if r is not None:
             print(bytes(r).hex(), flush=True)

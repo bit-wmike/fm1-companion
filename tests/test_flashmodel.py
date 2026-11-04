@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Flash-Modell (fm1companion/flash/flashmodel.py): Pakete, Layouts, Installationsketten, Dump-Prüfung.
+"""Flash model (fm1companion/flash/flashmodel.py): packages, layouts, installation chains, dump check.
 
-Teile mit echten Paketen brauchen FM1_TEST_PKGDIR (zip_v15.fwsc, v16.fwsc, melodee.fwsc, sloop.fwsc, skiff.fwsc,
-jiant.fwsc) – ohne diese Variable werden sie mit klarer Meldung übersprungen. Die Pakete gehören nicht ins Repo.
+Parts with real packages need FM1_TEST_PKGDIR (zip_v15.fwsc, v16.fwsc, melodee.fwsc, sloop.fwsc, skiff.fwsc,
+jiant.fwsc) – without this variable they are skipped with a clear message. The packages do not belong in the repo.
 """
 import hashlib
 import json
@@ -21,8 +21,8 @@ PKGDIR = os.environ.get("FM1_TEST_PKGDIR", "")
 LABELS = {"v15": "zip_v15.fwsc", "v16": "v16.fwsc", "melodee_1.5.1": "melodee.fwsc",
           "sloop_2.8.3": "sloop.fwsc", "skiff_2.0.3": "skiff.fwsc", "jiant_0.9.9": "jiant.fwsc"}
 need_pkgs = pytest.mark.skipif(not PKGDIR or not all((Path(PKGDIR) / f).is_file() for f in LABELS.values()),
-                               reason="echte FM-1-Pakete fehlen: FM1_TEST_PKGDIR auf einen Ordner mit zip_v15.fwsc, "
-                                      "v16.fwsc, melodee.fwsc, sloop.fwsc, skiff.fwsc, jiant.fwsc setzen")
+                               reason="real FM-1 packages missing: set FM1_TEST_PKGDIR to a folder with zip_v15.fwsc, "
+                                      "v16.fwsc, melodee.fwsc, sloop.fwsc, skiff.fwsc, jiant.fwsc")
 
 
 @pytest.fixture(scope="module")
@@ -30,7 +30,7 @@ def pk():
     return {k: m.Package.load(Path(PKGDIR) / v) for k, v in LABELS.items()}
 
 
-# ------------------------------------------------------------------ ohne Pakete
+# ------------------------------------------------------------------ without packages
 def test_known_packages_file_is_consistent():
     refs = m.load_known()
     ids = {r.identity for r in refs}
@@ -43,7 +43,7 @@ def test_known_packages_file_is_consistent():
     assert len(v16.sectors) == 22 and min(v16.sectors) == 0x93000 and m.V15_END in v16.app_prefix
     assert rc7.file_sha256.startswith("607f746a") and rc7.resources["crc"] == 0x2035D335
     assert all(r.family == "v15-layout" for r in refs if r.identity != "FM-1_016")
-    # die App-Prüfsummen müssen zu den Werten der Original-Firmware-Spezifikation passen
+    # the app's checksums must match the values of the original firmware specification
     from fm1companion import firmware
     assert firmware.spec("stock-v15").sha256 == v15.file_sha256 and firmware.spec("stock-v16").sha256 == v16.file_sha256
 
@@ -60,7 +60,7 @@ def test_name_version_and_cleanup_rules():
 
 
 def test_resource_status_and_header():
-    # Antwort auf Befehl 82: rc, installed, Länge (5×7 Bit), CRC (5×7 Bit)
+    # reply to command 82: rc, installed, length (5×7 bit), CRC (5×7 bit)
     def r35(n):
         return [(n >> 7 * i) & 127 for i in range(5)]
     st = m.parse_resource_status([0, 1, *r35(53844), *r35(0x2035D335)])
@@ -85,7 +85,7 @@ def test_quick_check_sentences():
     ok = m.quick_check("FM-1_91060", "Melodee 1.6.0-rc.7",
                        {"installed": True, "length": rc7.resources["length"], "crc": rc7.resources["crc"]}, refs)
     assert ok.level == m.GREEN and any("genau diesem Build" in t for _, t in ok.findings)
-    assert any("Reste" in t for t in ok.not_covered)                         # ehrlich: was ohne Dump fehlt
+    assert any("Reste" in t for t in ok.not_covered)                         # honest: what is missing without a dump
     miss = m.quick_check("FM-1_91060", "Melodee 1.6.0-rc.7", {"installed": False, "length": 1, "crc": 2}, refs)
     assert miss.level == m.YELLOW and any("Schrift & Werkssounds nachschreiben" in t for _, t in miss.findings)
     other = m.quick_check("FM-1_91060", "Melodee 1.6.0-rc.7", {"installed": True, "length": 5, "crc": 6}, refs)
@@ -95,13 +95,13 @@ def test_quick_check_sentences():
 
 
 def test_demo_dumps_cover_three_verdicts():
-    refs, heads = m.load_known() + m.demo_refs(), m.demo_heads()     # wie in der App: echte + Demo-Steckbriefe
+    refs, heads = m.load_known() + m.demo_refs(), m.demo_heads()     # as in the app: real + demo profiles
     d = m.demo_dumps()
     clean = m.check_dump(d["demo-sauber.bin"], refs, factory_heads=heads)
     assert clean.level == m.GREEN and clean.firmware.startswith("Demo-Melodee")
     res = m.check_dump(d["demo-v16-reste.bin"], refs, factory_heads=heads)
     assert res.level == m.YELLOW and res.residue == [(0x97000, 0x12000)]
-    assert any("V16-Reste aufräumen" in t and "ungetestet" in t for _, t in res.findings)  # Aufräumen: ehrlich „ungetestet“
+    assert any("V16-Reste aufräumen" in t and "ungetestet" in t for _, t in res.findings)  # cleaning up: honestly "untested"
     tr = m.check_dump(d["demo-v16-abgeschnitten.bin"], refs, factory_heads=heads)
     assert tr.level == m.RED and "abgeschnitten" in tr.firmware
     with pytest.raises(m.DumpError):
@@ -118,7 +118,7 @@ def test_describe_loss_names_melodee_regions():
     assert m.describe_loss("FM-1_91060", "melodee", "FM-1_900") == []
 
 
-# ------------------------------------------------------------------ mit echten Paketen
+# ------------------------------------------------------------------ with real packages
 @need_pkgs
 def test_identities_hashes_layouts(pk):
     refs = {r.label: r for r in m.load_known()}
@@ -145,7 +145,7 @@ def test_same_loader_in_v15_and_v16(pk):
 
 @need_pkgs
 def test_chain_melodee_v16_back_with_factory_head(pk):
-    """echtes Gerät: Bootkopf ab Werk; normaler Update schreibt ihn nie -> bleibt Werk, 22 Sektoren V16-Reste"""
+    """real device: factory boot head; a normal update never writes it -> stays factory, 22 sectors of V16 leftovers"""
     known = list(pk.values())
     mel = pk["melodee_1.5.1"]
     start = m.installed_state(mel, head=pk["v15"].flash[:m.HEAD_END])
@@ -155,7 +155,7 @@ def test_chain_melodee_v16_back_with_factory_head(pk):
     assert len(r["foreign_residue"]) == 22 and m.cleanup_plan(r["foreign_residue"]) == [(0x93000, 0x16000)]
     rep = m.check_dump(bytes(r["flash"].data), packages=known, expected="FM-1_91051")
     assert rep.level == m.YELLOW and rep.residue == [(0x93000, 0x16000)] and rep.firmware == "Melodee 1.5.1"
-    # mit V15-Erststart verschwinden die ersten vier Reste-Sektoren
+    # with the V15 first start the first four leftover sectors disappear
     r2 = m.replay(start, [("ota", pk["v16"], 1.0), ("ota", pk["v15"], 1.0), ("boot", pk["v15"]), ("ota", mel, 1.0)],
                   mel, known)
     assert min(x["sector"] for x in r2["foreign_residue"]) == 0x97000
@@ -163,7 +163,7 @@ def test_chain_melodee_v16_back_with_factory_head(pk):
 
 @need_pkgs
 def test_truncated_v16_is_detected(pk):
-    """Hypothese aus einem Nutzerbericht: V16 nur bis 0x92FFF geschrieben (nur ein ROM-Bootmodus-Werkzeug für V15-große Pakete kann das)"""
+    """hypothesis from a user report: V16 only written up to 0x92FFF (only a ROM boot mode tool for V15-sized packages can do that)"""
     known = list(pk.values())
     start = m.installed_state(pk["melodee_1.5.1"], head=pk["v15"].flash[:m.HEAD_END])
     r = m.replay(start, [(pk["v16"], "from4000", 0x93000)], pk["v16"], known)

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Der einmalige Risiko-Hinweis vor der ersten Firmware-Installation bzw. Rettungs-/ROM-Aktion.
+"""The one-time risk notice before the first firmware installation or rescue/ROM action.
 
-Derselbe Text steht im grafischen Installer und in install.sh (ohne Qt nutzbar). Die Zustimmung wird in den
-Einstellungen gespeichert (``Settings.risk_ack``); erhöht sich ``RISK_VERSION`` (Text wesentlich geändert),
-fragt die App erneut. Die Bestätigungen der einzelnen Aktionen bleiben davon unberührt.
+The same text appears in the graphical installer and in install.sh (usable without Qt). Consent is stored in the
+settings (``Settings.risk_ack``); if ``RISK_VERSION`` is raised (text changed substantially),
+the app asks again. The confirmations of the individual actions are not affected by this.
 """
 from __future__ import annotations
 

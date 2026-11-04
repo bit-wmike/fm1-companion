@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Gemerkte Wahl „Zwischenschritt über Original-V15“ – nur pro Wechsel (z. B. „melodee>sloop“), keine globale
-Abschaltung (Projektvorgabe: Schutz vor Flüchtigkeitsfehlern bleibt der Standard)."""
+"""Remembered choice "intermediate step via stock V15" – only per switch (e.g. "melodee>sloop"), no global
+opt-out (project rule: protection against careless mistakes stays the default)."""
 from __future__ import annotations
 
 from .. import config

@@ -71,7 +71,7 @@ cd fm1-companion
 `install.sh` checks the system packages and installs missing ones (asks for sudo; `--no-apt` skips that),
 installs the app for your user and adds a start menu entry. More switches: `--desktop`
 (shortcut on the desktop), `--no-fluidsynth-fix` (see below). Remove: `./uninstall.sh`
-(`--all` also removes settings and internal data) or start menu › "FM-1 Companion deinstallieren" (uninstall).
+(`--all` also removes settings and internal data) or start menu › "Uninstall FM-1 Companion".
 Updates: `git pull && ./install.sh` – your settings and `~/FM-1` are kept.
 
 If Debian's FluidSynth user service (`fluidsynth.service`) is active, it grabs the first sound card at every
@@ -126,17 +126,17 @@ catalog including thumbnails. Everything else happens only when you click. Error
 * **Error reports** (ZIP, Help › Diagnostics) contain logs, versions and settings – without
   personal paths, notes, host names, credentials (e.g. a GitHub token) and full serial numbers.
   Whether you share one is up to you; look at it first.
-* An optional **GitHub token** (catalog › "Mehr" › "GitHub-Token …") is stored in `config.json`, which is saved
+* An optional **GitHub token** (catalog › "More" › "GitHub token …") is stored in `config.json`, which is saved
   readable only by your user (0600).
 
 ## Security
 
 * **Risk notice:** Before the first firmware installation, rescue or ROM action the app shows a notice once
-  ("Ich habe verstanden" – I understand). The confirmations of each individual action remain.
+  ("I understand"). The confirmations of each individual action remain.
 * **Online editors** from the catalog are third-party web pages: editor commands (SysEx) reach the FM-1 only after
   your consent per address; if the page changes its address, the safe filter applies again (only notes,
   controllers, clock). Firmware update and boot mode are always blocked from web pages.
-* **Tools from firmware repos:** For "Schrift & Werkssounds" (font & factory sounds) the app runs the firmware's
+* **Tools from firmware repos:** For "Rewrite font & factory sounds" the app runs the firmware's
   Python tool from its repository. For built-in firmwares the commit is pinned per version – if a tag later points
   to a different commit, the app asks. For firmwares you added yourself it asks before running each commit for
   the first time (repo and commit are shown).

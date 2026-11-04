@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""„Link einfügen": aus einem beliebigen Link (oder Dateipfad, Namen, kopiertem Text) einen
-vorausgefüllten Firmware-Eintrag machen, den der Nutzer prüfen und korrigieren kann.
+""""Paste link": turn any link (or file path, name, copied text) into a
+pre-filled firmware entry that the user can check and correct.
 
     draft = resolve("https://github.com/dspaudio/orbit/releases/tag/v0.7.1")
     draft.name, draft.repo, draft.confidence["repo"]   # "ORBIT", "dspaudio/orbit", "sicher"
 
-Ohne Netz wird aufgelöst, was der mitgelieferte Katalog hergibt; mit ``online=True``
-(nur im Hintergrund-Thread!) zusätzlich GitHub-Releases und Hinweise im Repo.
-Kein Qt hier – der Dialog liegt in ui/linkimport_dialog.py.
+Without network, whatever the bundled catalog provides is resolved; with ``online=True``
+(only in a background thread!) also GitHub releases and hints in the repo.
+No Qt here – the dialog lives in ui/linkimport_dialog.py.
 """
 from __future__ import annotations
 
@@ -27,15 +27,15 @@ SPEC_FIELDS = [f for f in firmware.FirmwareSpec.__dataclass_fields__ if f != "bu
 
 @dataclass
 class FirmwareDraft(firmware.FirmwareSpec):
-    """FirmwareSpec-Felder + was davon sicher und was geraten ist."""
-    confidence: dict = field(default_factory=dict)       # Feld -> "sicher" | "geraten"
-    hints: list = field(default_factory=list)            # deutsche Sätze: was geraten / geprüft wurde
-    source: str = ""                                     # Art der Eingabe
+    """FirmwareSpec fields + which of them are certain and which are guessed."""
+    confidence: dict = field(default_factory=dict)       # field -> "sicher" (certain) | "geraten" (guessed)
+    hints: list = field(default_factory=list)            # German sentences: what was guessed / verified
+    source: str = ""                                     # kind of input
     input: str = ""
     local_file: str = ""
     tag: str = ""
-    candidates: list = field(default_factory=list)       # bei Namen: mögliche Firmwares (Katalog + GitHub)
-    exact: bool = False                                  # Name passt eindeutig zu genau einer Firmware
+    candidates: list = field(default_factory=list)       # for names: possible firmwares (catalog + GitHub)
+    exact: bool = False                                  # name matches exactly one firmware unambiguously
 
     def set(self, name: str, value, how: str = SURE, overwrite: bool = True):
         if value in (None, "", []) or (not overwrite and getattr(self, name)):
@@ -58,13 +58,13 @@ def empty_draft(text: str = "") -> FirmwareDraft:
                          input=text)
 
 
-# ------------------------------------------------------------ Eingabe zerlegen
+# ------------------------------------------------------------ parse input
 _URL = re.compile(r"(?:https?://|www\.|file://)[^\s<>\"'`]+|(?<![\w/])(?:github\.com|[\w-]+\.github\.io|"
                   r"raw\.githubusercontent\.com|thefirmwarehub\.com|fm1-editor\.com)/?[^\s<>\"'`]*", re.I)
 
 
 def extract(text: str) -> tuple[str, str]:
-    """-> (Art, Wert): ("url", …) | ("file", …) | ("name", …) | ("", "")"""
+    """-> (kind, value): ("url", …) | ("file", …) | ("name", …) | ("", "")"""
     t = (text or "").strip()
     if not t:
         return "", ""
@@ -82,7 +82,7 @@ def extract(text: str) -> tuple[str, str]:
         p = Path(cand).expanduser()
         try:
             is_file = p.is_file()
-        except (OSError, ValueError):                   # Name zu lang, Nullbytes …
+        except (OSError, ValueError):                   # name too long, NUL bytes …
             is_file = False
         if cand.lower().endswith(".fwsc") or is_file:
             return "file", str(p)
@@ -105,7 +105,7 @@ def unique_key(base: str, own_key: str = "") -> str:
     return k
 
 
-# ------------------------------------------------------------ Auflösen
+# ------------------------------------------------------------ resolving
 def resolve(text: str, cat: catmod.Catalog | None = None, online: bool = False) -> FirmwareDraft:
     cat = cat if cat is not None else catmod.load()
     kind, val = extract(text)
@@ -204,7 +204,7 @@ def _from_url(d: FirmwareDraft, url: str, cat) -> catmod.Entry | None:
     pu = urllib.parse.urlparse(url)
     host = pu.netloc.lower().removeprefix("www.")
     parts = [x for x in pu.path.split("/") if x]
-    # ---- Firmware-Verzeichnisse mit Sprungmarke
+    # ---- firmware directories with an anchor
     if host in ("thefirmwarehub.com", "fm1-editor.com"):
         anchor = urllib.parse.unquote(pu.fragment)
         if anchor:
@@ -303,7 +303,7 @@ def _finish(d: FirmwareDraft, online: bool):
     if online and d.repo:
         _online(d)
     if d.download_url and not d.release_tag and d.tag:
-        d.release_tag = d.tag                          # feste Paket-Adresse: Version für die Anzeige
+        d.release_tag = d.tag                          # fixed package address: version for display
     if not d.name:
         d.set("name", d.repo.split("/")[-1] if d.repo else _("New firmware"), GUESS)
     if not d.key:
@@ -327,7 +327,7 @@ def _names_of(e: catmod.Entry) -> list[str]:
 
 
 def _catalog_candidates(val: str, cat) -> tuple[catmod.Entry | None, bool, list[dict]]:
-    """-> (beste Katalog-Firmware, eindeutig?, Kandidaten)"""
+    """-> (best catalog firmware, unambiguous?, candidates)"""
     n = catmod.norm(val)
     bare = catmod.norm(catmod.FILLER_WORDS.sub(" ", val.lower()))
     entry = cat.by_name(val, 0.7) or next(iter(cat.search(val)), None)
@@ -345,7 +345,7 @@ def _catalog_candidates(val: str, cat) -> tuple[catmod.Entry | None, bool, list[
     found = [e for e in ([entry] if entry else []) + near + cat.search(val)[:8] if e]
     uniq = list({e.key: e for e in found}.values())[:8]
     if exact and sum(1 for e in uniq if same(e)) > 1:
-        exact = False                                   # gleich heißende Einträge: lieber fragen
+        exact = False                                   # entries with the same name: better to ask
     return entry, exact, [{"title": e.name, "repo": e.repo, "description": e.description, "source": _("Catalog"),
                            "stars": None, "fork": False, "exact": same(e),
                            "input": f"https://github.com/{e.repo}" if e.repo else e.name} for e in uniq]
@@ -354,7 +354,7 @@ def _catalog_candidates(val: str, cat) -> tuple[catmod.Entry | None, bool, list[
 def _github_candidates(val: str, skip: set[str]) -> tuple[list[dict], str]:
     try:
         hits = catmod.search_repos(val)
-    except Exception as e:  # noqa: BLE001 – Suche ist nur ein Zusatz
+    except Exception as e:  # noqa: BLE001 – search is just an extra
         return [], _("GitHub search not possible: {error}").format(error=e)
     return [{"title": h["repo"].split("/")[1].replace("-", " ").replace("_", " ").strip(), "repo": h["repo"],
              "description": h["description"], "source": "GitHub", "stars": h["stars"], "fork": h["fork"],
@@ -363,8 +363,8 @@ def _github_candidates(val: str, skip: set[str]) -> tuple[list[dict], str]:
 
 
 def _resolve_name(text: str, val: str, cat, online: bool) -> FirmwareDraft:
-    """Name statt Link: Katalog, mit Netz zusätzlich die GitHub-Suche. Mehrere mögliche Firmwares landen in
-    ``candidates`` (der Dialog lässt dann wählen); ``exact`` heißt: der Name passt eindeutig."""
+    """Name instead of a link: catalog, with network also the GitHub search. Several possible firmwares end up in
+    ``candidates`` (the dialog then lets the user choose); ``exact`` means: the name matches unambiguously."""
     entry, exact, cands = _catalog_candidates(val, cat)
     hits, note = [], ""
     if online and not exact:
@@ -402,7 +402,7 @@ def _resolve_name(text: str, val: str, cat, online: bool) -> FirmwareDraft:
 
 
 def _matches(pattern: str, name: str) -> bool:
-    """Paketname passt zum Muster mit {ver}?"""
+    """Does the package name match the pattern with {ver}?"""
     if not pattern:
         return False
     rx = re.escape(pattern).replace(re.escape("{ver}"), r"[\w.+-]+")
@@ -410,8 +410,8 @@ def _matches(pattern: str, name: str) -> bool:
 
 
 def _pick_release(d: FirmwareDraft, rels: list) -> tuple[dict | None, dict | None]:
-    """Release + .fwsc-Asset: gewünschte Version, sonst das neueste stabile; bei mehreren Paketen
-    (z. B. orbit.fwsc / orbit-ble.fwsc) das, was zum bekannten Paketnamen passt."""
+    """Release + .fwsc asset: the requested version, otherwise the newest stable one; with several packages
+    (e.g. orbit.fwsc / orbit-ble.fwsc) the one matching the known package name."""
     def fwsc(r):
         a = [x for x in r["assets"] if x["name"].lower().endswith(".fwsc")]
         known = [x for x in a if _matches(d.asset, x["name"])]
@@ -428,7 +428,7 @@ def _pick_release(d: FirmwareDraft, rels: list) -> tuple[dict | None, dict | Non
 
 
 def _release_sum(rel: dict, name: str) -> str:
-    """Prüfsumme aus SHA256SUMS (o. ä.) im selben Release, sonst ''."""
+    """Checksum from SHA256SUMS (or similar) in the same release, otherwise ''."""
     sums = next((x for x in rel["assets"] if re.fullmatch(r"(?i)sha256sums(\.txt)?|.*\.sha256", x["name"])), None)
     txt = catmod.fetch_text(sums["url"], 64 << 10) if sums and sums.get("url") else None
     for line in (txt or "").splitlines():
@@ -439,14 +439,14 @@ def _release_sum(rel: dict, name: str) -> str:
 
 
 def _from_release_url(url: str, repo: str) -> str:
-    """Tag aus einer Release-Download-Adresse dieses Repos, sonst ''."""
+    """Tag from a release download address of this repo, otherwise ''."""
     m = re.match(rf"https://github\.com/{re.escape(repo)}/releases/download/([^/]+)/", url or "", re.I)
     return urllib.parse.unquote(m.group(1)) if m else ""
 
 
 def _online(d: FirmwareDraft):
-    """GitHub: Releases (Paketname, Version), fmhub.json, Web-Installer-Seite, .fwsc im Repo und
-    Hinweise im Repo (Felucca-Werkzeuge)."""
+    """GitHub: releases (package name, version), fmhub.json, web installer page, .fwsc in the repo and
+    hints in the repo (Felucca tools)."""
     try:
         info = catmod.enrich(d.repo)
     except catmod.RateLimited as e:
@@ -473,7 +473,7 @@ def _online(d: FirmwareDraft):
     pinned = _from_release_url(d.download_url, d.repo)
     if rel and a:
         if pinned and pinned != rel["tag"] and firmware.version_key(rel["tag"]) > firmware.version_key(pinned):
-            # Katalog kennt nur eine ältere Version: den GitHub-Releases folgen statt auf die alte festzulegen
+            # catalog only knows an older version: follow the GitHub releases instead of pinning the old one
             d.hints.append(_("GitHub has a newer version ({new}) than the catalog ({old}) – the new "
                              "version is taken over.").format(new=rel['tag'], old=pinned))
             d.download_url = d.sha256 = d.release_tag = ""
@@ -504,7 +504,7 @@ def _online(d: FirmwareDraft):
 
 
 def _find_elsewhere(d: FirmwareDraft):
-    """kein Release-Paket: Web-Installer-Seite (GitHub Pages), dann .fwsc-Dateien im Repo."""
+    """no release package: web installer page (GitHub Pages), then .fwsc files in the repo."""
     base = catmod.pages_url(d.repo)
     pages = [d.installer_url, base + "webapp/installer/", base + "installer/", base, d.homepage]
     meta = catmod.find_installer_package([u for u in pages if u and u.startswith("https://")])
@@ -540,7 +540,7 @@ def _find_elsewhere(d: FirmwareDraft):
                      "– probably only installable via the web installer in the browser."))
 
 
-# ------------------------------------------------------------ Prüfen & Speichern
+# ------------------------------------------------------------ check & save
 def validate(d: FirmwareDraft, editing_key: str = "") -> list[str]:
     errs = []
     if not d.name.strip():

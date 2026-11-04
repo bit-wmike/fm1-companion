@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Der Studio-Zwilling in QtWebEngine (Teil von studio.WebEngineBackend).
+"""The studio twin in QtWebEngine (part of studio.WebEngineBackend).
 
-Eine unsichtbare QWebEnginePage lädt sims/_studio/studio.html vom lokalen Server der App; das QWebChannel-Objekt
-"studio" (StudioBridge) trägt Befehle als JSON hin und Antworten/Ereignisse zurück. Binärdaten (Flash, PCM) gehen
-über Einmal-Adressen des Servers (editor_host.Exchange). ``WebTwin.call`` ist aus jedem Thread aufrufbar: im GUI-
-Thread wartet eine lokale Ereignisschleife, in anderen Threads ein threading.Event.
+An invisible QWebEnginePage loads sims/_studio/studio.html from the app's local server; the QWebChannel object
+"studio" (StudioBridge) carries commands there as JSON and replies/events back. Binary data (flash, PCM) goes
+via the server's one-time addresses (editor_host.Exchange). ``WebTwin.call`` can be called from any thread: in the GUI
+thread a local event loop waits, in other threads a threading.Event.
 """
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ class StudioBridge(QObject):
 
 
 class WebTwin(QObject):
-    _post = pyqtSignal(str)                    # aus jedem Thread -> GUI-Thread -> bridge.command
+    _post = pyqtSignal(str)                    # from any thread -> GUI thread -> bridge.command
 
     def __init__(self, server, build, on_midi: Callable | None = None, page=None):
         super().__init__()
@@ -61,9 +61,9 @@ class WebTwin(QObject):
         self._ready = threading.Event()
         self._post.connect(self.bridge.command.emit)
         self.console: list[str] = []
-        self.on_event: Callable | None = None      # {ev: "ui", ...} von der Bedienfläche (GUI-Thread)
+        self.on_event: Callable | None = None      # {ev: "ui", ...} from the control surface (GUI thread)
 
-    # ------------------------------------------------------------- Laden
+    # ------------------------------------------------------------- loading
     def load(self, timeout: float = 30):
         from PyQt6.QtWebChannel import QWebChannel
         from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineSettings
@@ -90,9 +90,9 @@ class WebTwin(QObject):
         if p is not None:
             from PyQt6 import sip
             if not sip.isdeleted(p):
-                sip.delete(p)                  # sofort: das gemeinsame Profil darf keine Seite überleben
+                sip.delete(p)                  # immediately: the shared profile must not outlive any page
 
-    # ------------------------------------------------------------- Warten
+    # ------------------------------------------------------------- waiting
     def _wait(self, done: Callable[[], bool], timeout: float) -> bool:
         app = QApplication.instance()
         if QThread.currentThread() is app.thread():
@@ -130,14 +130,14 @@ class WebTwin(QObject):
             if self.on_event:
                 try:
                     self.on_event(m)
-                except Exception:              # noqa: BLE001 – die Seite darf an einem Fehler nicht hängen
+                except Exception:              # noqa: BLE001 – the page must not hang on an error
                     pass
             return
         w = self._waits.get(m.get("id"))
         if w is not None:
             w["reply"] = m
 
-    # ------------------------------------------------------------- Befehle
+    # ------------------------------------------------------------- commands
     def call(self, op: str, timeout: float = 60, sink=None, **args) -> dict:
         i = next(self._ids)
         got: dict[str, bytes] = {}
@@ -166,7 +166,7 @@ class WebTwin(QObject):
         return {k: (got.get(v["sink"], b"") if isinstance(v, dict) and "sink" in v else v) for k, v in r.items()}
 
     def post(self, op: str, **args):
-        """Befehl ohne Antwort abzuwarten (Antwort wird verworfen) – aus jedem Thread."""
+        """Command without waiting for the reply (the reply is discarded) – from any thread."""
         self._post.emit(json.dumps({"id": 0, "op": op, "nowait": True, **args}))
 
     def render(self, path: Path, params: dict) -> dict:

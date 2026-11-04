@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""„Ist mein FM-1 sauber?“ – Karte auf der Seite „Rettung“ und Ergebnisfenster mit Ampel.
+"""“Is my FM-1 clean?” – card on the “Rescue” page and result window with traffic light.
 
-Teil 1 nur lesend über USB-MIDI (Kennung, Version, bei Melodee ab 1.6 der Ressourcen-Status, Befehl 82).
-Teil 2 mit Flash-Dump: Datei wählen oder im ROM-Bootmodus über den eingebauten Unbricker lesen (`backup`, liest zweimal).
-Die Bewertung macht flash/flashmodel.py; hier nur Oberfläche, Hintergrund-Jobs und Gerätewechsel.
+Part 1 read-only via USB MIDI (identifier, version, for Melodee from 1.6 the resource status, command 82).
+Part 2 with flash dump: choose a file or read it in ROM boot mode via the built-in unbricker (`backup`, reads twice).
+The assessment is done by flash/flashmodel.py; here only UI, background jobs and device changes.
 """
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ def _color(level: str) -> str:
 
 
 def local_packages() -> list:
-    """FM-1-Pakete, die auf dem Rechner liegen (Firmware-Ordner, Journal-Kopien) – für Sektorvergleiche"""
+    """FM-1 packages present on the computer (firmware folder, journal copies) – for sector comparisons"""
     from .. import firmware
     files: list[Path] = []
     try:
@@ -82,7 +82,7 @@ def local_packages() -> list:
 
 
 def analyse_dump(path: Path | str):
-    """Dump-Datei lesen und prüfen (läuft im Hintergrund) -> Report"""
+    """Read and check the dump file (runs in the background) -> report"""
     path = Path(path)
     try:
         data = path.read_bytes()
@@ -103,7 +103,7 @@ def analyse_dump(path: Path | str):
 
 
 class ReportDialog(QDialog):
-    """Ergebnis mit Ampel, Sätzen in Alltagssprache, „Was das nicht abdeckt“ und technischen Details"""
+    """Result with traffic light, plain-language sentences, “What this doesn't cover” and technical details"""
 
     def __init__(self, parent, rep: fm.Report, source: str = "", window=None):
         super().__init__(parent)
@@ -185,7 +185,7 @@ class ReportDialog(QDialog):
 
 
 class CleanCheckCard(Card):
-    """die Karte auf der Rettungsseite. sim(): Simulationshäkchen der Stufe 2; runner(log): uboot.Runner"""
+    """the card on the rescue page. sim(): level 2 simulation checkbox; runner(log): uboot.Runner"""
 
     def __init__(self, ctx, page, window=None, sim=lambda: DEMO, runner=None):
         super().__init__(_("Is my FM-1 clean?"))
@@ -221,7 +221,7 @@ class CleanCheckCard(Card):
         self.status.setWordWrap(True)
         self.status.setProperty("role", "muted")
         self.layout().addWidget(self.status)
-        # ---- Expertenmodus: V16-Reste aufräumen (ROM-Bootmodus)
+        # ---- Expert mode: clean up V16 leftovers (ROM boot mode)
         self.opts = config.module("rettung", {"experte": False})
         self.chk_expert = QCheckBox(_("Expert mode: clean up V16 leftovers in ROM boot mode"))
         self.chk_expert.setToolTip(_("Shows “Clean up V16 leftovers …”. Only erases sectors that provably still "
@@ -239,7 +239,7 @@ class CleanCheckCard(Card):
         ctx.changed.connect(self.refresh)
         self.refresh()
 
-    # ------------------------------------------------------------ Zustand
+    # ------------------------------------------------------------ State
     def refresh(self):
         c = self.ctx
         if self._busy:
@@ -273,7 +273,7 @@ class CleanCheckCard(Card):
         self.last_dialog = ReportDialog(self, rep, source, self.window)
         self.last_dialog.exec()
 
-    # ------------------------------------------------------------ Teil 1: nur lesen
+    # ------------------------------------------------------------ Part 1: read only
     def quick(self):
         c = self.ctx
         if c.port is None or c.protocol == "update":
@@ -293,7 +293,7 @@ class CleanCheckCard(Card):
                                      "to “{name}”.").format(name=name))
             self._show(rep, name)
 
-        if not c.connected:          # Firmware ohne Editor-Protokoll: nur Kennung
+        if not c.connected:          # firmware without editor protocol: identifier only
             finish((None, ""))
             return True
 
@@ -312,7 +312,7 @@ class CleanCheckCard(Card):
                   self, _("Quick check failed"), _("{error} Nothing was changed on the FM-1.").format(error=m))))
         return True
 
-    # ------------------------------------------------------------ Teil 2: Dump
+    # ------------------------------------------------------------ Part 2: dump
     def dump_file(self, path: str = ""):
         if not path:
             start = config.folder("Rettung")
@@ -399,14 +399,14 @@ class CleanCheckCard(Card):
             self._show(rep)
         return d.ok
 
-    # ------------------------------------------------------------ Expertenmodus: V16-Reste aufräumen
+    # ------------------------------------------------------------ Expert mode: clean up V16 leftovers
     def _expert_toggled(self, on: bool):
         self.opts["experte"] = bool(on)
         config.save()
         self.b_clean.setVisible(on)
 
     def _rom_device(self, title: str):
-        """(Gerätepfad, ok) – Simulation: ("", True); echt: genau ein WL82 UBOOT1.00 mit Werkzeug"""
+        """(device path, ok) – simulation: ("", True); real: exactly one WL82 UBOOT1.00 with the tool"""
         from ..flash import uboot
         if self.sim():
             return "", True
@@ -424,7 +424,7 @@ class CleanCheckCard(Card):
         return devs[0].sg, True
 
     def _residue_job(self, title: str, command: str, dev: str, only=None, done: str = ""):
-        """restzone über den Unbricker-Weg (root/pkexec bzw. Simulation) -> (Ergebnis-dict, Report) oder None"""
+        """restzone via the unbricker path (root/pkexec or simulation) -> (result dict, report) or None"""
         import json
         import time
         from ..flash import restzone, uboot
@@ -432,7 +432,7 @@ class CleanCheckCard(Card):
         result = folder / f"ergebnis-{command}-{time.strftime('%Y%m%d-%H%M%S')}.json"
 
         def work(w):
-            # vorliegende V16-Pakete helfen bei halb geschriebenen Sektoren (sonst genügen die Steckbrief-Prüfsummen)
+            # available V16 packages help with half-written sectors (otherwise the profile checksums suffice)
             v16 = [str(p.path) for p in local_packages() if fm.classify_family(p) == "v16-layout"]
             r = (self.runner or (lambda log: uboot.Runner(dry_run=self.sim(), log=log)))(w.log.emit)
             rc = r.residue(command, str(folder), str(result), only=only, device=dev, v16_packages=v16)
@@ -452,8 +452,8 @@ class CleanCheckCard(Card):
         return d.result_value if d.ok and d.result_value else None
 
     def clean_residue(self) -> bool:
-        """Expertenmodus: Schritt 1 sichern + planen (nichts löschen), Schritt 2 nach Tipp-Bestätigung genau die
-        geplanten Sektoren löschen – mit frischer Sicherung, nur was diese erneut als V16-Rest bestätigt."""
+        """Expert mode: step 1 back up + plan (delete nothing), step 2 after typed confirmation delete exactly the
+        planned sectors – with a fresh backup, only what it again confirms as a V16 leftover."""
         title = _("Clean up V16 leftovers")
         dev, ok = self._rom_device(title)
         if not ok:

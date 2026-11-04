@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""FM-Voices: DX7-Bänke verwalten, Voices anhören (Rechner-Vorschau), ans FM-1 senden, eigene Bänke bauen,
-neue Voices erzeugen (Zufall, Mutation, Morph, Variationen)."""
+"""FM voices: manage DX7 banks, listen to voices (computer preview), send to the FM-1, build custom banks,
+generate new voices (random, mutation, morph, variations)."""
 from __future__ import annotations
 
 import random
@@ -22,14 +22,14 @@ from . import PageSpec
 from ...i18n import _, ngettext, pgettext
 
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", pgettext("note name", "B")]
-GENERATED = _("Generated")           # Name der Bank mit erzeugten Voices (nur im Speicher)
+GENERATED = _("Generated")           # name of the bank with generated voices (in memory only)
 
 
 @dataclass
 class VoiceRef:
     voice: list
-    bank: str              # Anzeigename der Bank
-    index: int             # Position in der Bank
+    bank: str              # display name of the bank
+    index: int             # position in the bank
     path: Path | None = None
 
     @property
@@ -37,10 +37,10 @@ class VoiceRef:
         return dx7.name(self.voice) or _("(no name)")
 
 
-# ------------------------------------------------------------------ Grafik ---
+# ------------------------------------------------------------------ Graphics ---
 
 class AlgoView(QWidget):
-    """zeichnet einen der 32 Algorithmen: Träger unten, Modulatoren darüber, Feedback als Schleife."""
+    """draws one of the 32 algorithms: carriers at the bottom, modulators above, feedback as a loop."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -146,7 +146,7 @@ class AlgoView(QWidget):
 
 
 class EnvView(QWidget):
-    """die sechs Operator-Hüllkurven (Zeit grob aus den Raten, Pegel aus den Levels)."""
+    """the six operator envelopes (time roughly from the rates, level from the levels)."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -201,7 +201,7 @@ class EnvView(QWidget):
         p.drawText(6, 14, _("Envelopes (carriers bold)"))
 
 
-# ------------------------------------------------------------------ Seite ---
+# ------------------------------------------------------------------ Page ---
 
 class VoicesPage(QWidget):
     def __init__(self, ctx, window=None):
@@ -210,7 +210,7 @@ class VoicesPage(QWidget):
         self.banks: dict[str, list[VoiceRef]] = {}
         self.current: VoiceRef | None = None
         self.partner: VoiceRef | None = None
-        self.undo = DeviceUndo()           # (Platz, altes Preset) je Gerät
+        self.undo = DeviceUndo()           # (slot, old preset) per device
         self.fs_error = ""
         self.player = None
         self.render_seq = 0
@@ -242,7 +242,7 @@ class VoicesPage(QWidget):
         lay.addLayout(top)
 
         sp = QSplitter(Qt.Orientation.Horizontal)
-        # Leerzustand (keine Bänke): Einstieg statt leerer Tabellen
+        # empty state (no banks): a starting point instead of empty tables
         self.stack = QStackedWidget()
         self.start = empty_state("audio-lines", _("No DX7 voices yet"),
                                  _("DX7 sounds for the FM6 engine: “Collections” downloads free banks from GitHub (e.g. the 128 "
@@ -301,7 +301,7 @@ class VoicesPage(QWidget):
         self.ops.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.ops.setMinimumHeight(200)
         rl.addWidget(self.ops)
-        # Vorschau
+        # Preview
         pv = QGroupBox(_("Listen (calculated on the computer – similar, not identical to the FM-1)"))
         pl_ = QVBoxLayout(pv)
         hk = []
@@ -326,7 +326,7 @@ class VoicesPage(QWidget):
         self.wave = Waveform()
         pl_.addWidget(self.wave)
         rl.addWidget(pv)
-        # Senden / Export
+        # Send / export
         sd = QGroupBox(_("To the FM-1 and to files"))
         sl = QVBoxLayout(sd)
         self.b_send = QPushButton(icon("document-send"), _("To the FM-1 …"))
@@ -342,7 +342,7 @@ class VoicesPage(QWidget):
         b_add.clicked.connect(self.add_to_own)
         sl.addWidget(flow_row(self.b_send, self.b_undo, b_exp, b_add))
         rl.addWidget(sd)
-        # Generatoren
+        # Generators
         gb = QGroupBox(_("Create new sounds"))
         gl = QGridLayout(gb)
         b_rand = QPushButton(icon("roll"), _("Random voice"))
@@ -389,14 +389,14 @@ class VoicesPage(QWidget):
         b_keep.clicked.connect(self.keep_child)
         gl.addWidget(b_keep, 4, 3)
         rl.addWidget(gb)
-        # Eigene Bank
+        # Own bank
         ob = QGroupBox(_("Own bank (32 slots – drag voices here)"))
         ol = QVBoxLayout(ob)
         self.own = OwnBank(self)
         ol.addWidget(self.own)
         obs = []
         for text, fn in ((_("Remove"), self.own.remove_selected), (_("Clear"), self.own.clear_all),
-                         (_("Save bank (.syx) …"), lambda: self.save_own())):   # (clicked liefert False als target)
+                         (_("Save bank (.syx) …"), lambda: self.save_own())):   # (clicked passes False as target)
             b = QPushButton(text)
             b.clicked.connect(fn)
             obs.append(b)
@@ -412,7 +412,7 @@ class VoicesPage(QWidget):
         self.scan()
 
     def deactivate(self):
-        """Seite verlassen: Vorschau anhalten."""
+        """Leaving the page: stop the preview."""
         if self.player is not None:
             self.player.stop()
 
@@ -423,7 +423,7 @@ class VoicesPage(QWidget):
         self.b_undo.setEnabled(bool(self.undo))
         self.b_undo.setToolTip("" if not self.undo or self.undo.matches(self.ctx) else self.undo.refusal())
 
-    # ------------------------------------------------------------ Bänke
+    # ------------------------------------------------------------ Banks
     @property
     def root(self) -> Path:
         p, self.fs_error = safe_folder("DX7")
@@ -453,7 +453,7 @@ class VoicesPage(QWidget):
             if not res.voices:
                 continue
             rel = f.relative_to(root)
-            label = f"{rel.parent.name + ' / ' if rel.parent.name and rel.parent.name != 'Sammlungen' else ''}{f.stem}"  # i18n: ignore (Ordnername)
+            label = f"{rel.parent.name + ' / ' if rel.parent.name and rel.parent.name != 'Sammlungen' else ''}{f.stem}"  # i18n: ignore (folder name)
             banks[label] = [VoiceRef(v, label, i, f) for i, v in enumerate(res.voices)]
         for k in (GENERATED,):
             if k in self.banks:
@@ -534,7 +534,7 @@ class VoicesPage(QWidget):
             files, _filter = QFileDialog.getOpenFileNames(self, _("Import DX7 banks"), str(Path.home()),
                                                           _("DX7 SysEx (*.syx *.SYX);;All files (*)"))
         n, bad = 0, []
-        target = self.root / "Importiert"  # i18n: ignore (Ordnername)
+        target = self.root / "Importiert"  # i18n: ignore (folder name)
         if files:
             try:
                 target.mkdir(parents=True, exist_ok=True)
@@ -578,7 +578,7 @@ class VoicesPage(QWidget):
         d.exec()
         self.scan()
 
-    # ------------------------------------------------------------ Anhören
+    # ------------------------------------------------------------ Listen
     def preview(self, note: int = 60, voice=None, play: bool = True):
         v = voice if voice is not None else (self.current.voice if self.current else None)
         if v is None:
@@ -592,7 +592,7 @@ class VoicesPage(QWidget):
             x = fmrender.render(v, note=note, seconds=2.0)
             d = config.CACHE_DIR / "klang"
             d.mkdir(parents=True, exist_ok=True)
-            path = d / f"vorschau-{seq % 4}.wav"  # i18n: ignore (Dateiname)
+            path = d / f"vorschau-{seq % 4}.wav"  # i18n: ignore (file name)
             fmrender.write_wav(x, path)
             return x, path, time.time() - t0
 
@@ -613,7 +613,7 @@ class VoicesPage(QWidget):
             self.state.setText(_("Preview calculated in {secs} s.").format(secs=f"{secs:.2f}"))
         run_job(self, work, on_done=done, on_fail=lambda m, tb: self.state.setText(_("Preview failed: {error}").format(error=m)))
 
-    # ------------------------------------------------------------ Senden
+    # ------------------------------------------------------------ Send
     def send(self):
         if not self.current:
             return
@@ -654,7 +654,7 @@ class VoicesPage(QWidget):
 
         def fail(m, tb):
             if m in (pl.refusal_text(pl.Caps()), pl.refusal_text(pl.Caps(legacy=True))):
-                # keine Panne, sondern eine Eigenschaft der Firmware: ruhig erklären
+                # not a glitch but a property of the firmware: explain calmly
                 self.state.setText(_("Not possible on this FM-1 – nothing was changed on the FM-1. {reason}").format(reason=m))
                 show_error(self, _("Not possible on this FM-1"), _("{reason}\n\nNothing was changed on the FM-1.").format(reason=m))
                 return
@@ -671,7 +671,7 @@ class VoicesPage(QWidget):
         tag0 = device_tag(self.ctx)
 
         def gone() -> bool:
-            """Gerät gewechselt, seit die Plätze gelesen wurden? Dann nicht schreiben – die Belegung stimmt nicht mehr."""
+            """Device changed since the slots were read? Then don't write – the occupancy is no longer accurate."""
             if same_device(tag0, device_tag(self.ctx)):
                 return False
             self.state.setText(_("The FM-1 was changed while you were choosing the slot – nothing saved. "
@@ -752,7 +752,7 @@ class VoicesPage(QWidget):
         self.state.setText(ngettext("{n} SysEx message sent.", "{n} SysEx messages sent.", sent).format(n=sent) if sent == len(msgs)
                            else _("Sending not possible – the device is busy right now."))
 
-    # ------------------------------------------------------------ Export / eigene Bank
+    # ------------------------------------------------------------ Export / own bank
     def export_voice(self, target=None):
         if not self.current:
             return
@@ -783,7 +783,7 @@ class VoicesPage(QWidget):
             name, ok = QInputDialog.getText(self, _("Save bank"), _("Name of the bank:"), text=_("My bank"))
             if not ok or not name.strip():
                 return
-            target = self.root / "Eigene Bänke" / (pl.safe_file(name) + ".syx")  # i18n: ignore (Ordnername)
+            target = self.root / "Eigene Bänke" / (pl.safe_file(name) + ".syx")  # i18n: ignore (folder name)
         target = Path(target)
         vs = self.own.voices()
         try:
@@ -795,7 +795,7 @@ class VoicesPage(QWidget):
         self.state.setText(_("Bank saved: {name} ({n} voices, rest INIT VOICE).").format(name=target.name, n=len(vs)))
         self.scan()
 
-    # ------------------------------------------------------------ Generatoren
+    # ------------------------------------------------------------ Generators
     def _generated(self, v, label=GENERATED) -> VoiceRef:
         lst = self.banks.setdefault(GENERATED, [])
         ref = VoiceRef(v, GENERATED, len(lst))
@@ -857,7 +857,7 @@ class VoicesPage(QWidget):
 
 
 class OwnBank(QListWidget):
-    """bis zu 32 Voices; Drag & Drop aus der Voice-Liste, Reihenfolge per Ziehen."""
+    """up to 32 voices; drag & drop from the voice list, reorder by dragging."""
 
     def __init__(self, page):
         super().__init__()
@@ -943,7 +943,7 @@ class CollectionsDialog(QDialog):
 
     @property
     def root(self) -> Path:
-        return self.page.root / "Sammlungen"  # i18n: ignore (Ordnername)
+        return self.page.root / "Sammlungen"  # i18n: ignore (folder name)
 
     def fill(self):
         self.tree.clear()

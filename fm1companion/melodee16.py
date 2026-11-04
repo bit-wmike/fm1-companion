@@ -1,21 +1,21 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Melodee 1.6: was die Suite beim Wechsel auf, ab und zwischen den 1.6-Versionen wissen muss.
+"""Melodee 1.6: what the suite needs to know when switching to, from and between the 1.6 versions.
 
-Quelle: keremimo/melodee v1.6.0 docs/RELEASE_1.6.0.md („Upgrading“, „Sound and levels“, „MIDI and USB“) und
-firmware/src/res.c, firmware/loader/ldr_core.c (ldr_res). Kurz:
+Source: keremimo/melodee v1.6.0 docs/RELEASE_1.6.0.md ("Upgrading", "Sound and levels", "MIDI and USB") and
+firmware/src/res.c, firmware/loader/ldr_core.c (ldr_res). In short:
 
-* Melodee 1.6 speichert Projekte und Presets in einem gemeinsamen Speicher-Pool und neuen Formaten (FBKM–FBKQ,
-  kompakte Datensätze). Ältere Firmware kann das nicht lesen, überschreibt die Sektoren evtl. und lehnt Backups von
-  1.6 ab. Das Backup VOR dem Update ist der Rückweg.
-* Backups von 1.6 haben 57 Objekte (32 Projekte; IDs 64–91 = Projekte 5–32) – das hat keine ältere Firmware.
-* 1.6.0 (fertig) mischt anders als die Vorabversionen: CZ-1 6 dB leiser, Limiter ab −2 dBFS, TPDF-Dither; die
-  USB-Stereo-Aufnahme liegt vor MASTER, der Ton vom Rechner folgt USB VOLUME statt MASTER.
-* Ressourcen (Schrift, Werkssounds, Bluetooth-Programm): ab 1.6.0-rc.8 schreibt der Update-Loader sie selbst aus dem
-  Paket. Kommt man von ≤ 1.5.1, liegen dort noch Preset-Banken – dann lässt der Loader den Bereich in Ruhe, die neue
-  Firmware zieht die Banken beim ersten Start um („Setup unfinished“), und erst danach lassen sich die Ressourcen
-  schreiben (Editor-Befehl 82; der Firmware Hub braucht dafür eine zweite Installation).
+* Melodee 1.6 stores projects and presets in a shared storage pool and in new formats (FBKM–FBKQ,
+  compact records). Older firmware cannot read that, may overwrite the sectors and rejects backups from
+  1.6. The backup BEFORE the update is the way back.
+* Backups from 1.6 have 57 objects (32 projects; IDs 64–91 = projects 5–32) – no older firmware has that.
+* 1.6.0 (final) mixes differently from the pre-releases: CZ-1 6 dB quieter, limiter from −2 dBFS, TPDF dither; the
+  USB stereo recording is taken before MASTER, the sound from the computer follows USB VOLUME instead of MASTER.
+* Resources (font, factory sounds, Bluetooth program): from 1.6.0-rc.8 on, the update loader writes them itself from the
+  package. Coming from ≤ 1.5.1, preset banks still live there – then the loader leaves the area alone, the new
+  firmware moves the banks on first boot ("Setup unfinished"), and only after that can the resources be
+  written (editor command 82; the Firmware Hub needs a second installation for this).
 
-Rein (keine Qt-, keine MIDI-Abhängigkeit).
+Pure (no Qt, no MIDI dependency).
 """
 from __future__ import annotations
 
@@ -24,13 +24,13 @@ import re
 from .i18n import _
 
 _VER = re.compile(r"v?(\d+)\.(\d+)(?:\.(\d+))?(?:[- ]?(rc|beta|alpha)\.?(\d+))?", re.I)
-LINE_16 = (1, 6, 0, 0, 0)          # jede 1.6-Version, auch die Vorabversionen
-FINAL_160 = (1, 6, 0, 3, 0)        # die fertige 1.6.0 (neue Pegel)
-OBJECTS_16 = 57                    # Backup-Inventar ab 1.6 (32 Projektplätze)
+LINE_16 = (1, 6, 0, 0, 0)          # every 1.6 version, including the pre-releases
+FINAL_160 = (1, 6, 0, 3, 0)        # the final 1.6.0 (new levels)
+OBJECTS_16 = 57                    # backup inventory from 1.6 (32 project slots)
 
 
 def version_key(s: str) -> tuple | None:
-    """'MELODEE v1.6.0-rc.8' -> (1, 6, 0, 2, 8); fertige Version -> (1, 6, 0, 3, 0); keine Version -> None"""
+    """'MELODEE v1.6.0-rc.8' -> (1, 6, 0, 2, 8); final version -> (1, 6, 0, 3, 0); no version -> None"""
     m = _VER.search(s or "")
     if not m:
         return None
@@ -44,24 +44,24 @@ def is_melodee(version: str = "", key: str = "") -> bool:
 
 
 def is_16(version: str) -> bool:
-    """Melodee-Version der 1.6-Reihe (oder neuer)?  '' / unbekannt -> False"""
+    """Melodee version of the 1.6 series (or newer)?  '' / unknown -> False"""
     k = version_key(version)
     return k is not None and k >= LINE_16
 
 
 def before_16(version: str) -> bool:
-    """bekannte Melodee-Version VOR 1.6 (1.5.1 und älter)?  '' / unbekannt -> False"""
+    """known Melodee version BEFORE 1.6 (1.5.1 and older)?  '' / unknown -> False"""
     k = version_key(version)
     return k is not None and k < LINE_16
 
 
 def new_levels(old: str, new: str) -> bool:
-    """liegt die Pegeländerung der fertigen 1.6.0 zwischen old und new (in dieser Richtung: alt -> neu)?"""
+    """does the level change of the final 1.6.0 lie between old and new (in this direction: old -> new)?"""
     a, b = version_key(old), version_key(new)
     return a is not None and b is not None and a < FINAL_160 <= b
 
 
-# ------------------------------------------------------------------ Texte
+# ------------------------------------------------------------------ texts
 UPGRADE_16 = _("<b>Melodee 1.6:</b> Existing projects are loaded, but what 1.6 saves can no longer be read by older "
                "firmware – and older firmware refuses backups from 1.6. The backup the app now makes beforehand is "
                "your way back; that is why it is mandatory here.")
@@ -102,8 +102,8 @@ def restore_refusal(backup_version: str = "", device_version: str = "") -> str:
 # ------------------------------------------------------------------ Backups
 def backup_is_16(firmware: str = "", companion: dict | None = None, n_objects: int = 0,
                  ids=()) -> bool:
-    """stammt ein Backup von Melodee 1.6 (oder neuer)? Inventar zählt vor dem Namen: 57 Objekte bzw. Projekt-IDs
-    64–91 gibt es nur ab 1.6."""
+    """does a backup come from Melodee 1.6 (or newer)? The inventory counts before the name: 57 objects or project IDs
+    64–91 exist only from 1.6 on."""
     if n_objects == OBJECTS_16 or any(64 <= int(i) <= 91 for i in ids):
         return True
     c = companion or {}
@@ -114,15 +114,15 @@ def backup_is_16(firmware: str = "", companion: dict | None = None, n_objects: i
 
 
 def device_before_16(device_version: str = "", n_objects: int | None = None, key: str = "") -> bool:
-    """läuft auf dem FM-1 eine Felucca-Firmware, die Backups von Melodee 1.6 NICHT lesen kann?
-    Inventar (BACKUP_LIST) zählt vor dem Namen."""
+    """is the FM-1 running a Felucca firmware that can NOT read backups from Melodee 1.6?
+    The inventory (BACKUP_LIST) counts before the name."""
     if n_objects is not None:
         return n_objects != OBJECTS_16
     return is_melodee(device_version, key) and before_16(device_version)
 
 
 def usb_record_hint(version: str) -> str:
-    """Hinweis zum Aufnahmepegel über USB (Seite „Aufnahme“, Samples › Aufnehmen) – je nach Melodee-Version."""
+    """Note about the recording level over USB (page "Recording", Samples › Record) – depending on the Melodee version."""
     if not is_melodee(version):
         return ""
     k = version_key(version)

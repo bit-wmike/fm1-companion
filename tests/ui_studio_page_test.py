@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Studio-Seite gegen das Demo-Gerät (offscreen): Zwilling startet, vom FM-1 holen (Backup landet auch in der
-Liste), Versions-Banner, aus einem Backup öffnen, Abspielen/Stoppen, WAV-Export (kurz, mit Stems), Studio-Stand
-automatisch sichern und wieder laden, Zwischenstand + Rückgängig/Wiederherstellen, Zurückschreiben mit Bestätigung
-und Sicherheits-Backup, der Zwilling als virtuelles Gerät (Projekte über StudioTransport, nie automatische Backups),
-Wiedergabe-Ziel „Im Studio“ in der Projekt-Ansicht. Optional Bildschirmfotos (FM1C_SHOTS=<Ordner>).
+"""Studio page against the demo device (offscreen): the twin starts, fetch from the FM-1 (the backup also lands in
+the list), version banner, open from a backup, play/stop, WAV export (short, with stems), save the Studio state
+automatically and load it again, snapshot + undo/redo, writing back with confirmation
+and safety backup, the twin as a virtual device (projects via StudioTransport, never automatic backups),
+playback target "Im Studio" (in the Studio) in the project view. Optional screenshots (FM1C_SHOTS=<folder>).
 
   QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 python3 tests/ui_studio_page_test.py
 """
@@ -122,53 +122,53 @@ def shot(name, width=None):
 def flow():
     from fm1companion import autobackup as AB, backup, studio as S
     from fm1companion.ui.pages.studio import StudioPage
-    check(until(lambda: ctx.connected), "Demo-Gerät verbunden")
+    check(until(lambda: ctx.connected), "demo device connected")
     svc = w.studio
-    check(svc is not None and not svc.running, "Studio-Dienst da, Zwilling startet erst bei Bedarf")
+    check(svc is not None and not svc.running, "Studio service present, the twin only starts when needed")
     keys = [w.nav.item(i).data(Qt.ItemDataRole.UserRole) for i in range(w.nav.count())]
-    check("studio" in keys and keys.index("studio") < keys.index("projects"), "Seite Studio: erste in MUSIK")
+    check("studio" in keys and keys.index("studio") < keys.index("projects"), "page Studio: first in MUSIC")
     w.go("studio")
     page = w.page("studio")
-    check(isinstance(page, StudioPage), "Studio-Seite geöffnet")
-    check(until(lambda: svc.running, 30000), f"Zwilling läuft: Melodee {svc.version}")
-    check(svc.version == "v1.6.0-rc.7", "Version passend zum Demo-FM-1 (Melodee 1.6.0-rc.7)")
-    check(until(lambda: page.view.page() is svc.page), "Bedienfläche zeigt den Zwilling")
+    check(isinstance(page, StudioPage), "Studio page opened")
+    check(until(lambda: svc.running, 30000), f"twin running: Melodee {svc.version}")
+    check(svc.version == "v1.6.0-rc.7", "version matching the demo FM-1 (Melodee 1.6.0-rc.7)")
+    check(until(lambda: page.view.page() is svc.page), "control surface shows the twin")
     wait(800)
-    # Bedienfläche: der Bildschirm wird gezeichnet (Frame-Abfrage im Worker)
+    # control surface: the screen is drawn (frame query in the worker)
     got = {}
     page.view.page().runJavaScript("!!document.getElementById('device') && document.querySelectorAll('.key').length",
                                    lambda v: got.setdefault("keys", v))
-    check(until(lambda: "keys" in got) and got["keys"] == 27, f"Bedienfläche mit 27 Tasten: {got}")
+    check(until(lambda: "keys" in got) and got["keys"] == 27, f"control surface with 27 keys: {got}")
 
-    # ---- vom FM-1 holen
+    # ---- fetch from the FM-1
     bdir = ctx.device_folder(ctx.settings.backups_dir)
     before = set(bdir.glob("*.json"))
     p = page.fetch_from_device()
-    check(p is not None and Path(p).exists() and Path(p) not in before, f"Vom FM-1 geholt, Backup in der Liste: {p}")
+    check(p is not None and Path(p).exists() and Path(p) not in before, f"fetched from the FM-1, backup in the list: {p}")
     check(svc.source.get("kind") == "device" and svc.source.get("device") == ctx.profile.name,
-          "Herkunft: " + svc.source_text())
-    check(0 in svc.st.projects(), f"Projekt 1 des Demo-FM-1 im Zwilling: {svc.st.projects()}")
-    check(svc.st.rejected, f"abgelehnte Demo-Teile gemerkt (Demo-Daten sind kein echtes Melodee): {svc.st.rejected}")
-    check(page.banner.isVisible() and "dieselbe Firmware" in page.banner.text(), "Banner: " + page.banner.text())
+          "source: " + svc.source_text())
+    check(0 in svc.st.projects(), f"project 1 of the demo FM-1 in the twin: {svc.st.projects()}")
+    check(svc.st.rejected, f"rejected demo parts noted (demo data is not real Melodee): {svc.st.rejected}")
+    check(page.banner.isVisible() and "dieselbe Firmware" in page.banner.text(), "banner: " + page.banner.text())
     st_file = svc.state_file()
-    check(st_file.exists() and st_file.parent.name == ctx.profile.folder_name, f"Studio-Stand gesichert: {st_file}")
-    # Versionswarnung (Gerät meldet eine andere Version)
+    check(st_file.exists() and st_file.parent.name == ctx.profile.folder_name, f"Studio state saved: {st_file}")
+    # version warning (the device reports a different version)
     old = ctx.info.version
     ctx.info.version = "MELODEE v1.6.0-rc.8"
     page.refresh()
-    check("rc.8" in page.banner.text() and "abweichen" in page.banner.text(), "Versionswarnung: " + page.banner.text())
+    check("rc.8" in page.banner.text() and "abweichen" in page.banner.text(), "version warning: " + page.banner.text())
     ctx.info.version = old
     page.refresh()
 
-    # ---- Abspielen / Stoppen (Leertaste über die Seite)
+    # ---- play / stop (space bar via the page)
     page.play("play")
-    check(until(lambda: svc.transport().get("busy") or svc.transport().get("playing"), 3000), "PLAY: Zwilling spielt")
+    check(until(lambda: svc.transport().get("busy") or svc.transport().get("playing"), 3000), "PLAY: the twin plays")
     page.toggle_play()
-    check(until(lambda: not svc.transport().get("busy"), 3000), "Leertaste/Umschalten: gestoppt")
+    check(until(lambda: not svc.transport().get("busy"), 3000), "space bar/toggle: stopped")
     shot("studio-1280.png")
 
-    # ---- WAV-Export (kurz) mit Stems. Die Musik des Demo-Geräts ist ein altes Testformat (Engines, die Melodee
-    # nicht kennt: still) – darum ein frisches Gerät mit den Einschalt-Klängen und ein paar Steps je Spur
+    # ---- WAV export (short) with stems. The demo device's music is an old test format (engines Melodee
+    # does not know: silent) – hence a fresh device with the power-on sounds and a few steps per track
     from fm1companion.protocol import Cmd
     svc.st.set_flash(bytes([0xFF]) * 0x100000)
     for k in range(4):
@@ -180,112 +180,112 @@ def flow():
     if ok:
         with wave.open(str(r.path)) as wf:
             ok = wf.getsampwidth() == 3 and wf.getframerate() == 44100 and wf.getnchannels() == 2
-    check(ok and r.peak > 0.01, f"WAV 24 bit + 4 Stems exportiert, hörbar: {r and r.path}, Spitze {r and r.peak:.3f}")
+    check(ok and r.peak > 0.01, f"WAV 24 bit + 4 stems exported, audible: {r and r.path}, peak {r and r.peak:.3f}")
     from fm1companion.ui.studio_service import music_dir
-    check("FM-1 Studio" in str(music_dir()), f"Standard-Ordner im Musik-Ordner: {music_dir()}")
+    check("FM-1 Studio" in str(music_dir()), f"default folder in the music folder: {music_dir()}")
 
-    # ---- Zwischenstand, Änderung, Rückgängig/Wiederherstellen, Autosave
+    # ---- snapshot, change, undo/redo, autosave
     page.snap()
     n0 = len(svc.history)
     from fm1companion.protocol import Cmd
     L = svc.link
     for i in range(0, 16, 4):
         L.request(Cmd.TRACK_STEP, [1, i, 1, 48 + i, 0, 0, 0, 0, 0, 100])
-    check(L.request(Cmd.PROJECT, [1, 3])[2] == 1, "Änderung im Zwilling: Projekt 4 gespeichert")
+    check(L.request(Cmd.PROJECT, [1, 3])[2] == 1, "change in the twin: project 4 saved")
     sum0 = svc._sum
-    wait(600)                                           # die Firmware schreibt den Flash in ihrer Hauptschleife
-    svc._tick()                                         # Autosave-Takt erkennt die Änderung
+    wait(600)                                           # the firmware writes the flash in its main loop
+    svc._tick()                                         # the autosave tick detects the change
     check(svc._sum != sum0 and len(svc.history) == n0 + 1 and 3 in svc.st.projects(),
-          f"Änderung erkannt, gesichert, als Zwischenstand: {len(svc.history)}")
+          f"change detected, saved, as a snapshot: {len(svc.history)}")
     page.undo()
-    check(3 not in svc.st.projects() and svc.can_redo(), "Rückgängig: Projekt 4 wieder leer")
+    check(3 not in svc.st.projects() and svc.can_redo(), "undo: project 4 empty again")
     page.redo()
-    check(3 in svc.st.projects(), "Wiederherstellen: Projekt 4 wieder da")
-    # Studio-Stand nach Neustart des Zwillings wieder laden
+    check(3 in svc.st.projects(), "redo: project 4 back")
+    # load the Studio state again after restarting the twin
     svc.autosave(force=True)
     svc.st.power_cycle()
     svc.st.load_state(svc.state_file())
-    check(3 in svc.st.projects(), "Studio-Stand aus der Datei geladen")
+    check(3 in svc.st.projects(), "Studio state loaded from the file")
 
-    # ---- aus einem Backup öffnen (ein echtes Melodee-Backup: das des Zwillings)
+    # ---- open from a backup (a real Melodee backup: the twin's)
     arch = svc.st.backup()
     bfile = bdir / "Studio-Test_melodee.json"
     backup.write_file(bfile, arch.file)
     check(page.open_backup(bfile) == bfile and svc.source.get("kind") == "backup" and not svc.st.rejected,
-          "Aus Backup geöffnet (nichts abgelehnt): " + svc.source_text())
+          "opened from a backup (nothing rejected): " + svc.source_text())
 
-    # ---- zurückschreiben: Bestätigung + Sicherheits-Backup
+    # ---- write back: confirmation + safety backup
     n_before = set(bdir.glob("*.json"))
     dialog_answer["accept"] = False
-    check(page.write_back() is None, "Zurückschreiben abgebrochen: nichts passiert")
+    check(page.write_back() is None, "write back cancelled: nothing happens")
     dialog_answer["accept"] = True
     seen_dialogs.clear()
     safety = page.write_back({"settings": False, "force": False})
     new = set(bdir.glob("*.json")) - n_before
     meta = AB.read_meta(safety) if safety else None
     check(safety is not None and safety in new and meta and meta.kind == "sicherheit",
-          f"Sicherheits-Backup vor dem Schreiben: {safety and safety.name}")
+          f"safety backup before writing: {safety and safety.name}")
     from fm1companion import projects as PJ
     slots = []
     d = ctx.job(w, "Test", lambda wk, link: PJ.list_slots(link))
     slots = [x.slot for x in (d.result_value or ([], 0))[0] if x.used]
-    check(4 in slots, f"Demo-FM-1 hat jetzt Projekt 4 aus dem Studio: {slots}")
+    check(4 in slots, f"the demo FM-1 now has project 4 from the Studio: {slots}")
     page.write_back()
-    check("WriteBackDialog" in seen_dialogs, "Zurückschreiben zeigt den Bestätigungsdialog")
+    check("WriteBackDialog" in seen_dialogs, "write back shows the confirmation dialog")
 
-    # ---- virtuelles Gerät
+    # ---- virtual device
     page.use_as_device()
-    check(until(lambda: ctx.connected and ctx.is_virtual, 10000), f"Zwilling als aktives Gerät: {ctx.title()}")
-    check(ctx.port not in ctx.ports and "virtuell" in ctx.status_text(), "nie in ctx.ports, klar als virtuell markiert")
+    check(until(lambda: ctx.connected and ctx.is_virtual, 10000), f"twin as the active device: {ctx.title()}")
+    check(ctx.port not in ctx.ports and "virtuell" in ctx.status_text(), "never in ctx.ports, clearly marked as virtual")
     texts = [w.dev_combo.itemText(i) for i in range(w.dev_combo.count())]
-    check(any("virtuell" in t for t in texts), f"Geräteauswahl: {texts}")
+    check(any("virtuell" in t for t in texts), f"device selection: {texts}")
     ab = getattr(w.backups, "auto", None) or getattr(w, "autobackup", None)
     if ab is not None:
-        check(ab.busy_reason().startswith("Studio") and ab.run() is False, "keine automatischen Backups des Zwillings")
+        check(ab.busy_reason().startswith("Studio") and ab.run() is False, "no automatic backups of the twin")
     d = ctx.job(w, "Test", lambda wk, link: PJ.list_slots(link))
     vslots = [x.slot for x in (d.result_value or ([], 0))[0] if x.used]
-    check(4 in vslots, f"Projekte-Code liest den Zwilling über StudioTransport: {vslots}")
-    check(not page.b_fetch.isEnabled() and not page.b_write.isEnabled(), "Holen/Zurückschreiben aus, solange der "
-          "Zwilling selbst aktiv ist")
-    # Firmware/Rettung: der Zwilling ist nie ein Flash-Ziel
+    check(4 in vslots, f"the projects code reads the twin via StudioTransport: {vslots}")
+    check(not page.b_fetch.isEnabled() and not page.b_write.isEnabled(), "fetch/write back off while the "
+          "twin itself is active")
+    # firmware/recovery: the twin is never a flash target
     from fm1companion.ui import firmware_page as FP
     from fm1companion.ui import common as UC
     errs = []
     saved_err = FP.show_error
     FP.show_error = lambda *a, **k: errs.append(a[1] if len(a) > 1 else "")
     try:
-        check(FP.target_pin(ctx) is None, "Zwilling: kein Installationsziel (target_pin)")
+        check(FP.target_pin(ctx) is None, "twin: no installation target (target_pin)")
         sp = next(iter(__import__("fm1companion.firmware", fromlist=["catalog"]).catalog()))
         check(FP.install_flow(w, ctx, sp, dry_run=True) is False and any("kein echtes FM-1" in e or
-              "Kein echtes" in e for e in errs), f"Zwilling: Installation verweigert ({errs[-1:] })")
+              "Kein echtes" in e for e in errs), f"twin: installation refused ({errs[-1:] })")
     finally:
         FP.show_error = saved_err
     fwp = getattr(w, "firmware", None)
     if fwp is not None and hasattr(fwp, "b_install"):
         fwp._release_selected()
-        check(not fwp.b_install.isEnabled(), "Zwilling: Knopf „Auf aktives FM-1 installieren“ aus")
-    # Projekt-Ansicht: Wiedergabe-Ziel „Im Studio“
+        check(not fwp.b_install.isEnabled(), "twin: button \"Install on the active FM-1\" off")
+    # project view: playback target "Im Studio" (in the Studio)
     pv = w.page("project_view")
     if pv is not None and hasattr(pv, "player_bar"):
         items = [pv.player_bar.target.itemText(i) for i in range(pv.player_bar.target.count())]
-        check(any("Studio" in t and "identisch" in t for t in items), f"Wiedergabe-Ziele: {items}")
-    # zurück zum Demo-FM-1
+        check(any("Studio" in t and "identisch" in t for t in items), f"playback targets: {items}")
+    # back to the demo FM-1
     real = ctx.ports[0]
     ctx.connect_port(real)
-    check(until(lambda: ctx.connected and not ctx.is_virtual, 15000), "wieder das echte (Demo-)FM-1")
-    # Komponieren: Vorhören „im Studio (identischer Klang)“ statt der Annäherung im Rechner
+    check(until(lambda: ctx.connected and not ctx.is_virtual, 15000), "the real (demo) FM-1 again")
+    # compose: preview "im Studio (identischer Klang)" (in the Studio, identical sound) instead of the approximation on the computer
     w.go("compose")
     cp = w.page("compose")
     bar = cp.play_bar
     items = [bar.target.itemText(i) for i in range(bar.target.count())]
     check("im Studio (identischer Klang)" in items and not any("Annäherung" in t for t in items),
-          f"Komponieren: Ziele {items}")
+          f"compose: targets {items}")
     bar.target.setCurrentIndex(bar.target.findData("studio"))
     cp.preview()
     check(until(lambda: bar.playing and "Studio-Zwilling" in bar.status.text(), 10000) and svc.users == 1,
-          "Vorhören spielt im Studio-Zwilling: " + bar.status.text()[:120])
+          "preview plays in the Studio twin: " + bar.status.text()[:120])
     bar.stop()
-    check(not bar.playing and svc.users == 0, "Stopp gibt den Zwilling frei")
+    check(not bar.playing and svc.users == 0, "stop releases the twin")
     w.go("studio")
     wait(500)
     shot("studio-640.png", 640)

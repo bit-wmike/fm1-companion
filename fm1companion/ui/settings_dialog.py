@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Einstellungen."""
+"""Settings."""
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout,
@@ -23,7 +23,7 @@ class SettingsDialog(QDialog):
         tabs = QTabWidget()
         lay.addWidget(tabs)
 
-        # Allgemein
+        # General
         g = QWidget()
         f = QFormLayout(g)
         self.channel = QComboBox()
@@ -61,7 +61,7 @@ class SettingsDialog(QDialog):
         f.addRow("", self.language_hint)
         tabs.addTab(g, _("General"))
 
-        # Aussehen
+        # Appearance
         from . import theme as th
         pr = th.prefs()
         ap = QWidget()
@@ -104,7 +104,7 @@ class SettingsDialog(QDialog):
         af0.addRow("", wiz)
         tabs.addTab(ap, _("Appearance"))
 
-        # Ordner
+        # Folders
         o = QWidget()
         ol = QVBoxLayout(o)
         of = QFormLayout()
@@ -141,7 +141,7 @@ class SettingsDialog(QDialog):
         ol.addWidget(self.trim)
         tabs.addTab(o, _("Folders && Samples"))
 
-        # Aufnahme
+        # Recording
         a = QWidget()
         af = QFormLayout(a)
         self.aud = QLineEdit(s.audacity_cmd)
@@ -151,12 +151,12 @@ class SettingsDialog(QDialog):
         af.addRow("", self.open_aud)
         tabs.addTab(a, _("Recording"))
 
-        # Geräte
+        # Devices
         d = QWidget()
         dl = QVBoxLayout(d)
         intro = QLabel(_("Known FM-1. The app enters the firmware version itself when installing; for firmware "
                          "installed before, you can set it here."))
-        intro.setWordWrap(True)                 # vorher bei 620 px Dialogbreite abgeschnitten
+        intro.setWordWrap(True)                 # previously cut off at a 620 px dialog width
         dl.addWidget(intro)
         self.devs = QListWidget()
         dl.addWidget(self.devs, 1)
@@ -202,7 +202,7 @@ class SettingsDialog(QDialog):
         if col.isValid():
             self.accent.insertItem(i, self._swatch(col.name()), _("Custom color"), col.name())
             self.accent.setCurrentIndex(i)
-        else:                                   # abgebrochen: bisherige Akzentfarbe behalten
+        else:                                   # cancelled: keep the previous accent color
             from . import theme as th
             self.accent.setCurrentIndex(max(0, self.accent.findData(th.prefs().get("accent"))))
 
@@ -290,7 +290,7 @@ class SettingsDialog(QDialog):
         lang = self.language.currentData() or i18n.SYSTEM
         self.language_changed = lang != getattr(s, "language", i18n.SYSTEM)
         s.language = lang
-        if not config.save(s):              # nicht beschreibbar: sagen, dass es nur bis zum Beenden gilt
+        if not config.save(s):              # not writable: say that it only applies until exit
             show_error(self, _("Settings not saved"), config.save_error)
         config.ensure_dirs()
         if self.language_changed:

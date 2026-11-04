@@ -3,8 +3,8 @@
 Rule: every action says **what happened**, also for partial results, and, where it matters, **what did not
 happen**. No silent success, no bare "OK".
 
-The app's messages are currently German; the quoted messages below are English renderings of them (the UI
-translation is in progress, see [TRANSLATING.md](TRANSLATING.md)).
+The quoted messages below are the app's English texts (German is a translation, see
+[TRANSLATING.md](TRANSLATING.md)); this audit was written when the UI was still German only.
 
 Means: `JobDialog(..., done_text=, fail_text=, actions=, cancellable=)` shows "<title> – running …" → green
 "Done" + result line or red "Failed" + explanation, log under "Details", button
@@ -13,7 +13,7 @@ Without `done_text` the dialog takes the last log line, never an empty "OK".
 
 | Page / action | before | after |
 |---|---|---|
-| **All JobDialogs** | heading "… – done", button "Close"/"Schließen", nothing else | "running …" / ✓ "Done" + result line / ✗ "Failed" + explanation, collapsible details, "Cancel" (or greyed out with a reason) |
+| **All JobDialogs** | heading "… – done", button "Close", nothing else | "running …" / ✓ "Done" + result line / ✗ "Failed" + explanation, collapsible details, "Cancel" (or greyed out with a reason) |
 | File errors in jobs | "[Errno 13] Permission denied: …" | "No write permission (…) – please check the permissions …" |
 | Compose · Write to pattern | status line | dialog: "Track k, pattern b: n steps written and read back. Old content backed up. Permanent only after SAVE." |
 | Compose · Undo | status line | dialog: "… has its old content again."; on a different device: refusal naming the device |
@@ -60,7 +60,7 @@ wrapper `ui/feedback.run`, small actions via the status line `ctx.message`).
 | Action | Where | Feedback on success | on error / abort |
 |---|---|---|---|
 | Install firmware | Firmware, catalog, own file | "Installation finished – the FM-1 now reports <identity> (<firmware version>), via the original V15, resources written / NOT written, backup saved beforehand / without backup." | reason in plain language; before V15: "nothing was changed on the FM-1"; after V15: "The original firmware V15 was written to the FM-1 … <target> was NOT written" |
-| Dry run | plan "Nur Probelauf" (dry run only) | "Dry run successful – all packages checked, the FM-1 answered. Nothing was changed on the FM-1." | reason (e.g. package damaged), nothing sent |
+| Dry run | plan "Dry run only" | "Dry run successful – all packages checked, the FM-1 answered. Nothing was changed on the FM-1." | reason (e.g. package damaged), nothing sent |
 | Download only | Firmware | "<firmware> <version> downloaded (<file>, checksum verified / not available) – NOT installed yet. Saved in …" + [Install now …] [Open folder] | HTTP 403/404/offline in plain language, details under "Show details" |
 | Rewrite font & factory sounds | Firmware | "Resources of Melodee <tag> written … The firmware itself was not changed." | reason in plain language |
 | Add / remove firmware | Firmware | status line: "… added – nothing installed yet" / "… removed. Packages remain, nothing changes on the FM-1." | – |
@@ -74,7 +74,7 @@ wrapper `ui/feedback.run`, small actions via the status line `ctx.message`).
 | Rename | Overview | "Renamed to "X" – backups are now in "X"." | "Renaming not possible" + reason |
 | Choose firmware (ambiguous identity) | connecting a device | "Remembered: <device> runs <firmware> (identity …)" / "Firmware unknown – installations count as a switch" | – |
 | Reconnect | main window | "Reconnecting to …" / "N FM-1 found" / "no FM-1 found – check the USB data cable" | – |
-| FM-1 page "Neu einlesen" (re-read) | FM-1 | "read at HH:MM:SS (read only, nothing changed)"; generic: what is known + why there are no live values | "Error: …" |
+| FM-1 page "Read again" | FM-1 | "read at HH:MM:SS (read only, nothing changed)"; generic: what is known + why there are no live values | "Error: …" |
 | Rescue: finish installation | Rescue | "Installation finished – the FM-1 now reports <identity> and starts normally." | engine message (in plain language) |
 | Rescue: fetch tool / V15 in ROM mode / repair settings / full backup | Rescue | in each case, what was written or NOT written (simulation: "nothing was written") + [Open folder] | explanation of the code |
 | Settings broken | start | one-time notice: file moved aside / invalid fields replaced | – |

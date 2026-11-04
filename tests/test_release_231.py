@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Sicherheits- und Datenschutz-Korrekturen für 2.3.1 (ohne Qt-Widgets).
+"""Security and privacy fixes for 2.3.1 (without Qt widgets).
 
   python3 -m pytest tests/test_release_231.py -q
 
-H1  Fehlerbericht/Diagnose ohne Tokens, Passwörter, Rechnernamen
-N1  config.json nur für den Benutzer lesbar (0600)
-N2  lokaler Server: nur Host 127.0.0.1:<port>/localhost:<port>, sonst 421
-N3  neue Fenster aus Webseiten: nur http/https/mailto
-N4  Katalog: nur https
-M3  Online-Seiten: Editor-SysEx nur nach Zustimmung je Herkunft und nur, solange die Seite dort bleibt
-M4  Ressourcen-Werkzeug aus Firmware-Repos: gepinnte Commits, Rückfrage bei fremden Repos/verschobenen Tags
-     und der einmalige Risiko-Hinweis (Zustimmung in den Einstellungen)
+H1  bug report/diagnostics without tokens, passwords, host names
+N1  config.json readable only by the user (0600)
+N2  local server: only host 127.0.0.1:<port>/localhost:<port>, otherwise 421
+N3  new windows from web pages: only http/https/mailto
+N4  catalog: https only
+M3  online pages: editor SysEx only after consent per origin and only as long as the page stays there
+M4  resource tool from firmware repos: pinned commits, prompt for foreign repos/moved tags
+     and the one-time risk notice (consent in the settings)
 """
 from __future__ import annotations
 
@@ -109,10 +109,10 @@ def test_config_written_0600(cfg):
         cfg.module("catalog", {})["github_token"] = TOKEN
         assert cfg.save(s)
         assert stat.S_IMODE(cfg.CONFIG_FILE.stat().st_mode) == 0o600
-        assert cfg.save(s)                              # zweites Mal: auch die Sicherung ist privat
+        assert cfg.save(s)                              # second time: the backup copy is private too
         assert stat.S_IMODE(cfg.CONFIG_FILE.stat().st_mode) == 0o600
         assert stat.S_IMODE(cfg.BACKUP_FILE.stat().st_mode) == 0o600
-        os.chmod(cfg.CONFIG_FILE, 0o644)                # alte Datei mit 0644 wird beim Speichern privat
+        os.chmod(cfg.CONFIG_FILE, 0o644)                # an old file with 0644 becomes private when saving
         assert cfg.save(s) and stat.S_IMODE(cfg.CONFIG_FILE.stat().st_mode) == 0o600
         assert json.loads(cfg.CONFIG_FILE.read_text())["modules"]["catalog"]["github_token"] == TOKEN
     finally:
@@ -198,17 +198,17 @@ def test_out_gate_per_origin(cfg):
     assert sims.origin_of("about:blank") == "" and sims.origin_of("") == ""
     url = "https://ed.example/editor/"
     g = sims.OutGate("editor", url)
-    # nicht bestätigt: nur der sichere Filter
+    # not confirmed: only the safe filter
     assert g.allowed(note, url) and not g.allowed(felucca, url) and not g.allowed(update, url)
     assert not sims.origin_trusted("https://ed.example")
     sims.trust_origin("https://ed.example")
     assert sims.origin_trusted("https://ed.example")
     assert "https://ed.example" in json.loads(cfg.CONFIG_FILE.read_text())["modules"]["simulator"]["device_origins"]
     assert g.allowed(felucca, url) and g.allowed(felucca, "https://ed.example/other") and not g.allowed(update, url)
-    # Seite hat die Herkunft gewechselt -> sicherer Filter
+    # the page has changed its origin -> safe filter
     for other in ("https://evil.example/", "http://ed.example/", "https://ed.example:8443/", "https://sub.ed.example/", ""):
         assert not g.allowed(felucca, other) and g.allowed(note, other) and not g.allowed(update, other), other
-    # Simulatoren/Emulatoren: nie Editor-SysEx, auch bei bestätigter Herkunft
+    # simulators/emulators: never editor SysEx, even with a confirmed origin
     assert not sims.OutGate("emulator", url).allowed(felucca, url)
     assert not sims.OutGate("", url).allowed(felucca, url)
     sims.forget_origin("https://ed.example")
@@ -224,20 +224,20 @@ def test_tool_trust_pins_and_asks(cfg, tmp_path, monkeypatch):
     assert fw.tool_trust(mel, "v1.6.0", known) == (True, "")
     ok, why = fw.tool_trust(mel, "v1.6.0", "f" * 40)
     assert not ok and "verschoben" in why
-    # unbekannter Tag einer eingebauten Firmware: erster Stand wird festgehalten, Abweichung später gemeldet
+    # unknown tag of a built-in firmware: the first state is recorded, a deviation reported later
     assert fw.tool_trust(mel, "v9.9.9", "a" * 40)[0]
     assert fw.tool_trust(mel, "v9.9.9", "a" * 40)[0]
     assert not fw.tool_trust(mel, "v9.9.9", "b" * 40)[0]
     fw.approve_tool(mel, "v9.9.9", "b" * 40)
     assert fw.tool_trust(mel, "v9.9.9", "b" * 40)[0]
-    # vom Nutzer hinzugefügte Firmware: immer erst fragen, Zustimmung gilt für genau diesen Commit
+    # firmware added by the user: always ask first, consent applies to exactly this commit
     own = fw.FirmwareSpec("eigene", "Eigene", "someone/fw", "fw-{ver}.fwsc", resource_tool="tools/r.py",
                           builtin=False)
     ok, why = fw.tool_trust(own, "v1", "c" * 40)
     assert not ok and "someone/fw" in why and "cccccccccccc" in why
     fw.approve_tool(own, "v1", "c" * 40)
     assert fw.tool_trust(own, "v1", "c" * 40)[0] and not fw.tool_trust(own, "v1", "d" * 40)[0]
-    # write_resources führt nichts aus, solange nicht bestätigt
+    # write_resources runs nothing as long as it is not confirmed
     ran = []
     monkeypatch.setattr(fw, "repo_commit", lambda d: "e" * 40)
     monkeypatch.setattr(fw.subprocess, "run", lambda *a, **k: ran.append(a))
@@ -258,7 +258,7 @@ def test_risk_ack_stored(cfg):
     text = risk.text_plain()
     assert "M-VAVE" in text and "GPL" in text and "15 und 16" in text and "Backup" in text
     assert risk.CHECK_TEXT == "Ich habe verstanden"
-    # derselbe Hinweis steht in den Installern
+    # the same notice is in the installers (English and German)
     assert "Ich habe verstanden" in (ROOT / "packaging/installer/gui.py").read_text("utf-8")
     sh = (ROOT / "install.sh").read_text("utf-8")
     assert "inoffizielles" in sh and "15 und 16" in sh

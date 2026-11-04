@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Grafischen Installer bauen: dist/FM-1-Companion-Suite-<version>.run (sh-Stub + tar.gz).
+"""Build the graphical installer: dist/FM-1-Companion-Suite-<version>.run (sh stub + tar.gz).
 
   python3 tools/build_run.py [--out DIR]
 """

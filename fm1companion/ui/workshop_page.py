@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Werkstatt: am Rechner bauen, auf dem FM-1 spielen – MIDI-Datei → Pattern(s), auch als Drum-Grid."""
+"""Workshop: build on the computer, play on the FM-1 – MIDI file → pattern(s), also as a drum grid."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,7 +16,7 @@ from ..i18n import _, ngettext, pgettext
 
 
 class PianoRoll(StepRoll):
-    """(alter Name – die Werkstatt zeigt jetzt die gemeinsame Piano-Roll mit Drum-Grid)"""
+    """(old name – the workshop now shows the shared piano roll with drum grid)"""
 
 
 class WorkshopPage(QWidget):
@@ -27,7 +27,7 @@ class WorkshopPage(QWidget):
         self.chunks: list[list] = []
         self.steps = []
         self.path: str = ""
-        self.undo = DeviceUndo()        # {"track", "patterns": [PatternSnapshot], "song": SongSnapshot|None} je Gerät
+        self.undo = DeviceUndo()        # {"track", "patterns": [PatternSnapshot], "song": SongSnapshot|None} per device
         self.report = MI.LossReport()
         lay = QVBoxLayout(self)
         lay.addWidget(heading(_("From MIDI file: MIDI → pattern"),
@@ -53,7 +53,7 @@ class WorkshopPage(QWidget):
         top.addWidget(self.b_opts)
         self.setAcceptDrops(True)
         lay.addLayout(top)
-        mid_w = QWidget()                      # oben: Spuren + Übertragung, unten: Vorschau – im Splitter verschiebbar
+        mid_w = QWidget()                      # top: tracks + transfer, bottom: preview – adjustable in the splitter
         mid = QHBoxLayout(mid_w)
         mid.setContentsMargins(0, 0, 0, 0)
         self.list = QListWidget()
@@ -148,7 +148,7 @@ class WorkshopPage(QWidget):
         self.loss = QLabel("")
         self.loss.setWordWrap(True)
         pl.addWidget(self.loss)
-        lead = QWidget()                       # „Vorschau Pattern: [n]“ vorne in der Anhören-Reihe (spart eine Zeile)
+        lead = QWidget()                       # “Preview pattern: [n]” at the front of the listen row (saves a row)
         prow = QHBoxLayout(lead)
         prow.setContentsMargins(0, 0, 0, 0)
         prow.addWidget(QLabel(_("Preview pattern:")))
@@ -173,8 +173,8 @@ class WorkshopPage(QWidget):
         vs.setChildrenCollapsible(False)
         vs.addWidget(mid_w)
         vs.addWidget(prev_w)
-        # die Vorschau bekommt den größeren Teil (bei 1280×720 sonst nur ~140 px für die Piano-Roll); die Optionen
-        # rollen selbst und lassen sich ganz einklappen
+        # the preview gets the larger share (at 1280×720 otherwise only ~140 px for the piano roll); the options
+        # scroll by themselves and can be collapsed entirely
         vs.setStretchFactor(0, 2)
         vs.setStretchFactor(1, 3)
         self._split_sized = False
@@ -185,7 +185,7 @@ class WorkshopPage(QWidget):
         lay.addWidget(vs, 1)
         row.setStretchFactor(self.b_send, 0)
         row.insertStretch(0, 1)
-        lay.addLayout(row)                     # Hauptknopf immer sichtbar – auch bei eingeklappten Optionen
+        lay.addLayout(row)                     # main button always visible – even with collapsed options
         note = QLabel(_("Note: the patterns are overwritten and selected on the FM-1; the app reads them first for "
                         "“Undo”. Afterwards save on the FM-1 (SAVE)."))
         note.setWordWrap(True)
@@ -197,8 +197,8 @@ class WorkshopPage(QWidget):
         self._size_split()
 
     def _size_split(self):
-        """Startaufteilung Optionen/Vorschau, solange der Nutzer den Teiler nicht selbst verschoben hat: Vorschau
-        so hoch wie die Piano-Roll braucht, höchstens 60 % und mindestens 55 % (wenn die Rolle das braucht)"""
+        """Initial options/preview split as long as the user hasn't moved the divider: preview
+        as tall as the piano roll needs, at most 60 % and at least 55 % (if the roll needs it)"""
         vs = self.preview_split
         if self._split_sized or not self.opts_box.isVisible():
             return
@@ -277,7 +277,7 @@ class WorkshopPage(QWidget):
                     name=Path(path).name, n=a + 1, total=t)))
 
     def _play_source(self):
-        """das gezeigte Pattern, gespielt auf der gewählten Zielspur (Tempo der MIDI-Datei)."""
+        """the shown pattern, played on the selected target track (tempo of the MIDI file)."""
         from .. import midiexport as ME
         from .playback_bar import Source
         if not self.chunks:
@@ -328,7 +328,7 @@ class WorkshopPage(QWidget):
             self.npat.blockSignals(True)
             self.npat.setValue(min(16, need))
             self.npat.blockSignals(False)
-            self._npat_suffix(self.npat.value())         # (bei gesperrten Signalen sonst „16 Pattern“)
+            self._npat_suffix(self.npat.value())         # (otherwise “16 Pattern” with blocked signals)
         self._preview()
 
     def _opts(self) -> MI.ImportOptions:
@@ -356,7 +356,7 @@ class WorkshopPage(QWidget):
             self.roll.set_steps(c, self.length.value())
             self.roll.resize(self.roll.sizeHint())
             notes = [n for st in c[:self.length.value()] for n in st.notes if st.time == PF.ST_NOTE]
-            if notes:                                    # die Noten ins Bild holen (sonst evtl. unter dem Rand)
+            if notes:                                    # bring the notes into view (otherwise possibly below the edge)
                 mid_y = 16 + (self.roll.hi - (max(notes) + min(notes)) // 2) * 12
                 self.roll_scroll.ensureVisible(0, mid_y, 0, self.roll_scroll.viewport().height() // 2)
 
@@ -407,14 +407,14 @@ class WorkshopPage(QWidget):
             return
         swing = None if self.swing.value() < 0 else self.swing.value()
         entry = {"track": tr, "patterns": [], "song": None}
-        tag = device_tag(self.ctx)     # wächst Schritt für Schritt (auch bei Abbruch)
+        tag = device_tag(self.ctx)     # grows step by step (also on cancel)
 
         def work(w, link):
             total = len(targets) * 128
             for j, (b, steps) in enumerate(zip(targets, chunks)):
                 w.log.emit(_("Pattern {pattern}: reading …").format(pattern=_("(current)") if b is None else b + 1))
                 snap = MI.read_device_pattern(link, tr, b, progress=lambda a, t: w.progress.emit(j * 128 + a // 2, total))
-                entry["patterns"].append(snap)          # vor dem Schreiben merken: auch halb geschriebene zurückholbar
+                entry["patterns"].append(snap)          # remember before writing: even half-written ones can be restored
                 note = MI.write_device_pattern(link, tr, b, steps, length, swing=swing,
                                                progress=lambda a, t: w.progress.emit(j * 128 + 64 + a, total))
                 if note:
@@ -499,7 +499,7 @@ class WorkshopPage(QWidget):
                                                "undone.").format(error=m))
         if getattr(d, "ok", False):
             self.undo.pop()
-        elif done_steps:              # teilweise zurückgeholt: Rest bleibt rückgängig-bar
+        elif done_steps:              # partially restored: the rest remains undoable
             entry["patterns"] = [s for s in snaps if not any(s is x for x in done_steps)]
             if song is not None and any(song is x for x in done_steps):
                 entry["song"] = None

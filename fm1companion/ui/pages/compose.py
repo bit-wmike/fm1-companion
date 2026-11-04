@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Komponieren: Rhythmen, Akkordfolgen, Bass, Arpeggios und Melodien erzeugen, am Rechner vorhören und bearbeiten,
-dann in ein Pattern einer FM-1-Spur schreiben (mit Kontroll-Lesen und Rückgängig)."""
+"""Compose: generate rhythms, chord progressions, bass, arpeggios and melodies, preview and edit them on the computer,
+then write them into a pattern of an FM-1 track (with verification read and undo)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -36,9 +36,9 @@ class ComposePage(QWidget):
     def __init__(self, ctx, window=None):
         super().__init__()
         self.ctx, self.window = ctx, window
-        self.undo = DeviceUndo()                  # MI.PatternSnapshot je Gerät
+        self.undo = DeviceUndo()                  # MI.PatternSnapshot per device
         self.markov: G.Markov | None = None
-        self.history = EditHistory()              # Rückgängig/Wiederholen für alle Bearbeitungen am Rechner
+        self.history = EditHistory()              # undo/redo for all edits on the computer
         self._restoring = False
         lay = QVBoxLayout(self)
         lay.addWidget(heading(_("Compose"), _("Generate ideas instead of typing steps: Euclidean rhythms, chord "
@@ -53,21 +53,21 @@ class ComposePage(QWidget):
         split.addWidget(self._build_center())
         split.setStretchFactor(1, 3)
         lay.addWidget(split, 1)
-        # schmal: Einstellungen über der Vorschau (Splitter, beliebig verschiebbar); breit: nebeneinander
+        # narrow: settings above the preview (splitter, freely adjustable); wide: side by side
         adaptive_splitter(split, ratios=(2, 3), slack=16)
         QShortcut(QKeySequence("Ctrl+G"), self, activated=self.generate)
         QShortcut(QKeySequence("Space"), self, activated=self._toggle_preview)
         for seq, fn in (("Ctrl+Z", self.undo_edit), ("Ctrl+Shift+Z", self.redo_edit), ("Ctrl+Y", self.redo_edit)):
-            QShortcut(QKeySequence(seq), self, activated=fn)     # Fenster-weit, solange die Seite sichtbar ist;
-            #                                                    Textfelder behalten ihr eigenes Strg+Z
+            QShortcut(QKeySequence(seq), self, activated=fn)     # window-wide while the page is visible;
+            #                                                    text fields keep their own Ctrl+Z
         self.generate()
-        self.history.clear()                      # der Startzustand ist nichts, wohin man zurück will
+        self.history.clear()                      # the initial state is nothing one wants to go back to
         self._history_buttons()
         ctx.changed.connect(self._dev_changed)
         self._dev_changed()
 
     def _dev_changed(self):
-        """anderes Gerät: Rückgängig bleibt gespeichert, ist aber nur am ursprünglichen FM-1 erlaubt."""
+        """different device: undo stays saved, but is only allowed on the original FM-1."""
         name = device_name(self.ctx)
         self.dev_card_title(_("To the FM-1 “{name}”").format(name=name) if name else _("To the FM-1 (none connected)"))
         ok = self.undo.matches(self.ctx)
@@ -75,7 +75,7 @@ class ComposePage(QWidget):
         self.b_undo.setToolTip(_("Restore the pattern that was overwritten last") if ok or not self.undo
                                else self.undo.refusal())
 
-    # ------------------------------------------------------------------------------------- Aufbau
+    # ------------------------------------------------------------------------------------- Layout
     def _build_left(self) -> QWidget:
         box = QWidget()
         v = QVBoxLayout(box)
@@ -107,7 +107,7 @@ class ComposePage(QWidget):
         self.tabs.addTab(self._tab_bass(), _("Bass/Arp"))
         self.tabs.addTab(self._tab_melody(), _("Melody"))
         self.tabs.setCurrentIndex(1)
-        # Grundlagen und Reiter rollen gemeinsam – auch bei 720 px Höhe bleibt alles erreichbar
+        # basics and tabs scroll together – everything stays reachable even at 720 px height
         inner = QWidget()
         iv = QVBoxLayout(inner)
         iv.setContentsMargins(0, 0, 0, 0)
@@ -120,8 +120,8 @@ class ComposePage(QWidget):
         sc.setWidget(inner)
         self.left_scroll = sc
         v.addWidget(sc, 1)
-        self.tabs.currentChanged.connect(lambda _i: QTimer.singleShot(0, self._fit_left))   # z. B. nach Zoom
-        for cb in box.findChildren(QComboBox):          # lange Einträge dürfen die Spalte nicht verbreitern
+        self.tabs.currentChanged.connect(lambda _i: QTimer.singleShot(0, self._fit_left))   # e.g. after zoom
+        for cb in box.findChildren(QComboBox):          # long entries must not widen the column
             cb.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             cb.setMinimumContentsLength(10)
         v.addWidget(button(_("Generate"), ("system-run", "media-playback-start"), "", self.generate,
@@ -131,9 +131,9 @@ class ComposePage(QWidget):
         return box
 
     def _fit_left(self):
-        """linke Spalte so breit wie der breiteste Reiter es braucht (Rhythmus-Raster), mindestens 330 px –
-        sonst würde das Raster ohne waagrechte Rollleiste abgeschnitten. Fest (nicht je Reiter), damit ein
-        Reiterwechsel nie das ganze Layout umklappt."""
+        """left column as wide as the widest tab needs (rhythm grid), at least 330 px –
+        otherwise the grid would be cut off without a horizontal scroll bar. Fixed (not per tab) so that a
+        tab change never flips the whole layout."""
         sc = self.left_scroll
         tabs = max((self.tabs.widget(i).minimumSizeHint().width() for i in range(self.tabs.count())), default=0)
         need = max(tabs + 8, sc.widget().minimumSizeHint().width()) + sc.verticalScrollBar().sizeHint().width() + 4
@@ -149,12 +149,12 @@ class ComposePage(QWidget):
             below.addWidget(self.desc)
         elif not narrow and not in_bar:
             below.removeWidget(self.desc)
-            item = bar.takeAt(1)                      # Platzhalter-Dehnung hinter dem Einstellungen-Knopf
+            item = bar.takeAt(1)                      # placeholder stretch behind the settings button
             del item
             bar.insertWidget(1, self.desc, 1)
 
     def toggle_settings(self, on: bool):
-        """Einstellungen ein-/ausklappen – mehr Platz für die Piano-Roll (z. B. bei 1280×720)."""
+        """Collapse/expand settings – more room for the piano roll (e.g. at 1280×720)."""
         self.left.setVisible(on)
         self.b_settings.setChecked(on)
 
@@ -174,7 +174,7 @@ class ComposePage(QWidget):
                    _spin(0, 63, ro, "", _("Shift to the right")), _spin(0, 16, ac, "", _("every n-th hit accented (0 = none)")))
             for c, wdg in enumerate(row):
                 if c:
-                    wdg.setMinimumWidth(58)          # schmale Zahlenfelder: Raster passt in die Einstellungs-Spalte
+                    wdg.setMinimumWidth(58)          # narrow number fields: the grid fits in the settings column
                 g.addWidget(wdg, lane + 1, c)
             self.lane_rows.append(row)
         g.addWidget(label(_("Euclidean rhythms spread n hits as evenly as possible – E(3,8) is the tresillo. The "
@@ -261,7 +261,7 @@ class ComposePage(QWidget):
 
     def _build_center(self) -> QWidget:
         w = QWidget()
-        top = QWidget()                                 # oben: Vorschau (Piano-Roll) – im Splitter größer ziehbar
+        top = QWidget()                                 # top: preview (piano roll) – can be dragged larger in the splitter
         v = QVBoxLayout(top)
         v.setContentsMargins(0, 0, 0, 0)
         bar = QHBoxLayout()
@@ -275,7 +275,7 @@ class ComposePage(QWidget):
         self.desc.setWordWrap(True)
         self.desc.setMinimumWidth(80)
         bar.addWidget(self.desc, 1)
-        # nur Symbole: die Kopfzeile darf nicht breiter werden (sonst kippt breit/schmal bei ~900 px hin und her)
+        # icons only: the header row must not get wider (otherwise wide/narrow flips back and forth at ~900 px)
         self.b_hist_undo = button("", ("edit-undo",), slot=self.undo_edit,
                                   tooltip=_("Undo the last edit (Ctrl+Z) – piano roll, generate, fine-tuning"))
         self.b_hist_redo = button("", ("edit-redo",), slot=self.redo_edit,
@@ -288,7 +288,7 @@ class ComposePage(QWidget):
         self.play_bar = PlaybackBar(self.ctx, self.play_source, self, loop=True, play_text=_("Preview"),
                                     shortcut_hint=_("Space"), compact=True)
         v.addWidget(self.play_bar)
-        self._bar, self._desc_below = bar, QHBoxLayout()   # schmale Vorschau: Beschreibung unter die Knöpfe
+        self._bar, self._desc_below = bar, QHBoxLayout()   # narrow preview: description below the buttons
         v.addLayout(self._desc_below)
         on_narrow(top, 600, self._place_desc)
         self.roll = StepRoll(editable=True)
@@ -307,10 +307,10 @@ class ComposePage(QWidget):
         zrow.addWidget(self.zoom)
         zrow.addStretch(1)
         v.addLayout(zrow)
-        bottom = QWidget()                              # unten: Feinschliff und „Auf das FM-1“
+        bottom = QWidget()                              # bottom: fine-tuning and “To the FM-1”
         v = QVBoxLayout(bottom)
         v.setContentsMargins(0, 0, 0, 0)
-        hum = QWidget()                                 # eingeklappt, damit die Piano-Roll auch auf 1280×720 Platz hat
+        hum = QWidget()                                 # collapsed so the piano roll has room even at 1280×720
         h = QGridLayout(hum)
         h.setContentsMargins(0, 0, 0, 0)
         self.curve = QComboBox()
@@ -334,7 +334,7 @@ class ComposePage(QWidget):
         disc.button.setToolTip(_("Apply velocity curves, Melodee chance and variations B/C to the generated pattern"))
         v.addWidget(disc)
         dev = Card(_("Onto the FM-1"))
-        dev.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)   # Knopfreihe darf umbrechen
+        dev.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)   # button row may wrap
         self.track = QComboBox()
         for k in range(PF.NTRK):
             self.track.addItem(_("Track {n}").format(n=k + 1) + (" (MIDI)" if k >= PF.NPART else ""), k)
@@ -357,7 +357,7 @@ class ComposePage(QWidget):
         vs = QSplitter(Qt.Orientation.Vertical)
         vs.setChildrenCollapsible(False)
         vs.addWidget(top)
-        vs.addWidget(fit_height(bottom))                 # umbrechende Knopfreihe nie abschneiden
+        vs.addWidget(fit_height(bottom))                 # never cut off a wrapping button row
         vs.setStretchFactor(0, 1)
         vs.setStretchFactor(1, 0)
         self.preview_split = vs
@@ -367,7 +367,7 @@ class ComposePage(QWidget):
         return w
 
     def dev_card_title(self, text: str):
-        """Titel der Karte „Auf das FM-1“ – nennt das aktive Gerät (bei mehreren FM-1 eindeutig)."""
+        """Title of the “To the FM-1” card – names the active device (unambiguous with several FM-1s)."""
         card = getattr(self, "_dev_card", None)
         if card is not None and getattr(card, "title_label", None) is not None:
             card.title_label.setText(text)
@@ -385,7 +385,7 @@ class ComposePage(QWidget):
         self.roll.set_zoom(v)
         self.roll.resize(self.roll.sizeHint())
 
-    # ------------------------------------------------------------------------------------- Erzeugen
+    # ------------------------------------------------------------------------------------- Generate
     def _reseed(self):
         import random
         self.seed.setValue(random.randint(1, 99999))
@@ -419,7 +419,7 @@ class ComposePage(QWidget):
                     steps = G.bass_steps(chords, o.steps_per_chord, n, style, seed=seed)
                 else:
                     steps = G.arp_steps(chords[0], style, n, self.arp_oct.value(), seed=seed)
-                    if len(chords) > 1:      # Arp folgt den Akkorden
+                    if len(chords) > 1:      # arp follows the chords
                         for i in range(n):
                             c = chords[(i // max(1, o.steps_per_chord)) % len(chords)]
                             seg = G.arp_steps(c, style, o.steps_per_chord, self.arp_oct.value(), seed=seed + i)
@@ -464,7 +464,7 @@ class ComposePage(QWidget):
         self.desc.setText(_("<b>edited</b> · {description}").format(description=G.describe(self.roll.steps, self.roll.length)))
         self._history_buttons()
 
-    # ---- Rückgängig / Wiederholen (am Rechner; das Zurückholen am FM-1 macht „Rückgängig am FM-1“)
+    # ---- Undo / redo (on the computer; restoring on the FM-1 is done by “Undo on the FM-1”)
     def _remember(self, what: str = ""):
         if self._restoring:
             return
@@ -542,13 +542,13 @@ class ComposePage(QWidget):
             show_error(self, _("MIDI file not readable"), msg)
         run_job(self, lambda w: G.markov_from_midi(Path(path), order), on_done=done, on_fail=fail)
 
-    # ------------------------------------------------------------------------------------- Hören
+    # ------------------------------------------------------------------------------------- Listen
     def pattern_obj(self) -> PF.Pattern:
         return PF.Pattern(0, steps=list(self.roll.steps), length=self.roll.length)
 
     @property
     def player(self):
-        """der Rechner-Player des Vorhörens (None, solange nur auf dem FM-1 gespielt wurde)."""
+        """the computer player of the preview (None as long as only the FM-1 has played)."""
         return self.play_bar.player
 
     def play_source(self) -> Source:
@@ -559,8 +559,8 @@ class ComposePage(QWidget):
                       loop_quarters=ME.pattern_quarters(pat))
 
     def preview(self):
-        """Vorhören: auf dem verbundenen FM-1 mit dem Klang der Zielspur (Noten per MIDI, im Hintergrund) –
-        ohne FM-1 als Annäherung im Rechner (Berechnung im Hintergrund, die Oberfläche bleibt bedienbar)."""
+        """Preview: on the connected FM-1 with the target track's sound (notes via MIDI, in the background) –
+        without an FM-1 as an approximation on the computer (computed in the background, the UI stays usable)."""
         self.play_bar.play()
 
     def _toggle_preview(self):
@@ -595,7 +595,7 @@ class ComposePage(QWidget):
 
     # ------------------------------------------------------------------------------------- FM-1
     def write(self):
-        """Erst lesen (für Rückgängig und um zu sagen, ob das Pattern belegt ist), dann bestätigen, dann schreiben."""
+        """Read first (for undo and to say whether the pattern is occupied), then confirm, then write."""
         if not self.ctx.require(self):
             return
         k, b = self.track.currentData(), self.pattern.currentData()
@@ -643,8 +643,8 @@ class ComposePage(QWidget):
                     track=k + 1, pattern=b + 1) + " " + (note or "") + " " +
                     _("Listen on the FM-1 and store it with SAVE."))
             self.undo.push(self.ctx, snap, _("Track {track}, pattern {pattern}").format(track=k + 1, pattern=b + 1),
-                           tag)                                                    # vor dem Schreiben: auch halb
-            self._dev_changed()                                                    # Geschriebenes ist zurückholbar
+                           tag)                                                    # before writing: even half
+            self._dev_changed()                                                    # written content can be restored
             self.ctx.job(self, _("Write pattern"), work, on_done=done,
                          done_text=_("Track {track}, pattern {pattern}: {n} steps written and read back. The old "
                                      "content is kept for “Undo”. It only becomes permanent with SAVE on the "
@@ -680,7 +680,7 @@ class ComposePage(QWidget):
                          track=snap.track + 1, pattern=(snap.pattern or 0) + 1))
 
     def deactivate(self):
-        self.play_bar.stop(quiet=True)              # Vorhören ist an die Seite gebunden, nicht an die App
+        self.play_bar.stop(quiet=True)              # preview is bound to the page, not to the app
 
     def shutdown(self):
         self.play_bar.shutdown()

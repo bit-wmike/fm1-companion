@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Einrichtungs-Assistent (erster Start, jederzeit über Hilfe erneut) und „Was ist neu in 2.0“."""
+"""Setup wizard (first start, re-run any time via Help) and “What's new in 2.0”."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -71,8 +71,8 @@ class _Folder(QWizardPage):
         lay.addWidget(_p(_("Tip: put the folder where you also back it up (e.g. on the NAS drive). The "
                            "app never deletes it – not even when uninstalling."), "muted"))
         lay.addStretch(1)
-        # NICHT als Pflichtfeld "root*": Qt zählt ein Pflichtfeld erst als ausgefüllt, wenn es sich vom
-        # Anfangswert unterscheidet – mit vorausgefülltem ~/FM-1 blieb „Weiter“ grau, der Assistent hing fest.
+        # NOT as mandatory field "root*": Qt only counts a mandatory field as filled once it differs from its
+        # initial value – with a prefilled ~/FM-1 “Next” stayed grayed out and the wizard got stuck.
         self.registerField("root", self.edit)
         self.edit.textChanged.connect(self.completeChanged)
 
@@ -85,7 +85,7 @@ class _Folder(QWizardPage):
             self.edit.setText(d)
 
     def validatePage(self) -> bool:
-        """Ordner muss sich anlegen und beschreiben lassen – sonst bleibt der Assistent hier und sagt warum."""
+        """The folder must be creatable and writable – otherwise the wizard stays here and says why."""
         import os
         root = Path(self.edit.text().strip() or "~").expanduser()
         try:
@@ -141,7 +141,7 @@ class _Deps(QWizardPage):
         self.text = _p("")
         self.text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         lay.addWidget(self.text)
-        self.cmd_label = QLabel("")                # der apt-Befehl: umbrechend, kopierbar, Monospace
+        self.cmd_label = QLabel("")                # the apt command: wrapping, copyable, monospace
         self.cmd_label.setWordWrap(True)
         self.cmd_label.setTextFormat(Qt.TextFormat.PlainText)
         self.cmd_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -244,13 +244,13 @@ class _Device(QWizardPage):
         if c.profile and n and n != c.profile.name:
             try:
                 c.rename_profile(n)
-            except OSError as e:               # Backup-Ordner nicht verschiebbar: Name bleibt, Hinweis statt Absturz
+            except OSError as e:               # backup folder not movable: name stays, notice instead of crash
                 from .common import show_error
                 show_error(self, _("Renaming not possible"), str(e))
 
 
 class _AutoBackup(QWizardPage):
-    """Hinweis-Schritt: Was die App beim ersten Verbinden von selbst tut."""
+    """Info step: what the app does by itself on the first connection."""
 
     def __init__(self, wz):
         super().__init__()
@@ -340,8 +340,8 @@ class FirstRunWizard(QWizard):
         super().accept()
 
     def reject(self):
-        # nur zurückstellen, wenn die Vorschau das Design wirklich geändert hat (ein unnötiges Neu-Stylen der ganzen
-        # App beim Abbrechen stürzte beim zweiten Öffnen offscreen ab)
+        # only restore if the preview actually changed the theme (needlessly restyling the whole
+        # app on cancel crashed offscreen on the second opening)
         if getattr(self, "_previewed", False):
             from PyQt6.QtWidgets import QApplication
             theme.apply(QApplication.instance(), self._mode_before)
@@ -349,8 +349,8 @@ class FirstRunWizard(QWizard):
         super().reject()
 
 
-# ---------------------------------------------------------------- Was ist neu ---
-# (Titel, Text, Symbol, mögliche Seiten-Schlüssel/Modulnamen)
+# ---------------------------------------------------------------- What's new ---
+# (title, text, icon, possible page keys/module names)
 NEWS = [
     (N_("Studio"), N_("The digital twin of your FM-1: the same firmware on the computer – play, export as WAV "
                   "(also single tracks) for Logic/Audacity and write back to the FM-1."), "audio-lines", ("studio",)),
@@ -379,7 +379,7 @@ NEWS = [
 
 
 def find_page(window, candidates) -> str | None:
-    """Seiten-Schlüssel finden: direkt oder über den Modulnamen der Seite (ui/pages/<name>.py)."""
+    """Find the page key: directly or via the page's module name (ui/pages/<name>.py)."""
     for c in candidates:
         if window.page(c) is not None:
             return c

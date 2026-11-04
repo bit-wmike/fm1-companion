@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Startpunkt der Desktop-App."""
+"""Entry point of the desktop app."""
 from __future__ import annotations
 
 import os
@@ -9,7 +9,7 @@ from .i18n import _
 
 
 def check() -> int:
-    """Abhängigkeiten prüfen (für install.sh, Installer und Einrichtungs-Assistent). Liste: data/deps.json."""
+    """Check dependencies (for install.sh, the installer and the setup wizard). List: data/deps.json."""
     from . import __version__, diag
     print(f"FM-1 Companion {__version__}, Python {sys.version.split()[0]}")
     states = diag.check_deps()
@@ -32,12 +32,12 @@ def check() -> int:
 
 
 def missing_apt_hint() -> str:
-    """apt-Befehl für alles Fehlende aus data/deps.json (einzige Paketliste – vorher stand hier eine eigene,
-    unvollständige Liste ohne qtsvg, numpy und git)."""
+    """apt command for everything missing from data/deps.json (the only package list – previously there was a separate,
+    incomplete list here without qtsvg, numpy and git)."""
     try:
         from . import diag
         return diag.apt_command(diag.check_deps(), include_optional=False) or "sudo apt install python3-pyqt6"
-    except Exception:  # noqa: BLE001 – der Hinweis selbst darf nie scheitern
+    except Exception:  # noqa: BLE001 – the hint itself must never fail
         return "sudo apt install python3-pyqt6 python3-pyqt6.qtsvg python3-pyqt6.qtwebengine python3-pyqt6.qtwebchannel"
 
 
@@ -53,11 +53,11 @@ XDG_VARS = (("XDG_CONFIG_HOME", ".config", "config"), ("XDG_DATA_HOME", ".local/
 
 
 def isolate_demo(env=None, home=None) -> dict:
-    """Demo-Modus: eigene Einstellungen, Daten und eigener Hauptordner – die echten bleiben unberührt.
+    """Demo mode: separate settings, data and main folder – the real ones stay untouched.
 
-    Muss VOR dem ersten Import von config laufen (config liest die XDG-Ordner beim Import).
-    FM1C_DEMO_KEEP_XDG=1 (Tests, Sandkasten mit eigenen XDG-Ordnern) lässt die XDG-Ordner, wie sie sind;
-    der Demo-Hauptordner kommt dann in deren Cache-Ordner. -> die gesetzten Werte"""
+    Must run BEFORE the first import of config (config reads the XDG folders on import).
+    FM1C_DEMO_KEEP_XDG=1 (tests, sandbox with its own XDG folders) leaves the XDG folders as they are;
+    the demo main folder then goes into their cache folder. -> the values that were set"""
     env = os.environ if env is None else env
     home = Path(home) if home else Path.home()
     own = env.get("FM1C_DEMO_KEEP_XDG") == "1"
@@ -121,7 +121,7 @@ def main() -> int:
     except ImportError:
         print(_("PyQt6 is missing. Install it with:\n  {command}").format(command=missing_apt_hint()), file=sys.stderr)
         return 1
-    try:                                       # muss vor der QApplication geladen werden
+    try:                                       # must be loaded before the QApplication
         import PyQt6.QtWebEngineWidgets  # noqa: F401
     except ImportError:
         pass
@@ -142,7 +142,7 @@ def main() -> int:
     from .ui import theme
     settings = config.load()
     pr = theme.prefs()
-    if not pr.get("design_migrated"):           # 1.x-Standard "system" -> neues App-Design (automatisch hell/dunkel)
+    if not pr.get("design_migrated"):           # 1.x default "system" -> new app theme (automatic light/dark)
         pr["design_migrated"] = True
         if settings.theme == "system":
             settings.theme = "auto"
@@ -173,17 +173,17 @@ def main() -> int:
     from PyQt6.QtCore import QTimer
     QTimer.singleShot(400, w.maybe_first_run)
     auto_quit = os.environ.get("FM1C_AUTOQUIT_MS", "")
-    if auto_quit.isdigit():                    # nur für Tests: die App nach n ms wie über „Beenden“ schließen
+    if auto_quit.isdigit():                    # tests only: close the app after n ms as if via "Quit"
         def _auto_close():
-            for d in app.topLevelWidgets():    # offene Dialoge (Assistent, Was ist neu) zuerst
+            for d in app.topLevelWidgets():    # open dialogs (wizard, What's new) first
                 if d is not w and d.isVisible() and hasattr(d, "reject"):
                     d.reject()
             w.close()
         QTimer.singleShot(int(auto_quit), _auto_close)
     rc = app.exec()
-    # geordnet abbauen: erst das Fenster (mit allen Seiten, Web-Views und Threads), dann die QApplication.
-    # Überlässt man das dem Aufräumen beim Verlassen der Funktion, zerstört Python die QApplication
-    # vor dem Fenster -> Absturz (Signal 11) beim Beenden, mit QtWebEngine zuverlässig.
+    # tear down in order: first the window (with all pages, web views and threads), then the QApplication.
+    # If this is left to the cleanup when leaving the function, Python destroys the QApplication
+    # before the window -> crash (signal 11) on exit, reliably with QtWebEngine.
     holder.clear()
     try:
         w.shutdown()
@@ -192,7 +192,7 @@ def main() -> int:
         app.processEvents()
         app.sendPostedEvents(None, 0)
         app.processEvents()
-    except Exception:  # noqa: BLE001 – Beenden darf nie an einer Ausnahme scheitern
+    except Exception:  # noqa: BLE001 – quitting must never fail on an exception
         pass
     return rc
 

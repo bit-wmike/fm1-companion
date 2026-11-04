@@ -63,7 +63,7 @@ SUITE_REPO = "https://github.com/bit-wmike/fm1-companion"
 
 
 def source_offer(project: str, commit: str, extra: str = "") -> str:
-    """GPL-3.0 §6: schriftliches Angebot + genauer Stand der Quellen (an jede NOTICE angehängt)."""
+    """GPL-3.0 §6: written offer + exact revision of the sources (appended to every NOTICE)."""
     return (
         "\nCorresponding Source (GNU GPL 3.0, section 6)\n"
         f"The complete corresponding source of this build is {project} at commit {commit}\n"

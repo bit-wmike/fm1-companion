@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Komponier-Werkzeuge: alles erzeugt Melodee-Steps (projectfmt.Step) für ein Pattern mit bis zu 64 Steps.
+"""Composition tools: everything produces Melodee steps (projectfmt.Step) for a pattern of up to 64 steps.
 
-Euklidische Rhythmen, Skalen und Akkordfolgen (Stufen, Umkehrungen, Voicings), Arpeggios, Bass,
-Zufallsmelodie mit Regeln, Markov-Melodie aus einer MIDI-Datei, Frage/Antwort, Humanize und Varianten.
-Jeder Zufall läuft über random.Random(seed): gleicher Seed = gleiches Ergebnis.
+Euclidean rhythms, scales and chord progressions (degrees, inversions, voicings), arpeggios, bass,
+rule-based random melody, Markov melody from a MIDI file, call/response, humanize and variations.
+All randomness goes through random.Random(seed): same seed = same result.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from .i18n import N_, _, ngettext
 from .projectfmt import NSTEP, ST_NOTE, ST_REST, ST_TIE, Step, LANES
 
-MAX_NOTES = 4          # Melodee: bis zu 4 Noten je Step
+MAX_NOTES = 4          # Melodee: up to 4 notes per step
 
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 # The German names below are keys (used by callers and tests); the UI shows the *_LABELS (translated with _()).
@@ -62,15 +62,15 @@ def note_name(n: int) -> str:
     return f"{NOTE_NAMES[n % 12]}{n // 12 - 1}"
 
 
-# ------------------------------------------------------------------------ Rhythmus ---
+# ------------------------------------------------------------------------ rhythm ---
 def euclid(steps: int, pulses: int, rotation: int = 0) -> list[bool]:
-    """Bjorklund/Bresenham-Verteilung: E(3,8) = x..x..x. ; Rotation nach rechts."""
+    """Bjorklund/Bresenham distribution: E(3,8) = x..x..x. ; rotation to the right."""
     steps = max(1, steps)
     pulses = max(0, min(steps, pulses))
     if pulses == 0:
         return [False] * steps
     pat = [((i * pulses) % steps) < pulses for i in range(steps)]
-    # Bresenham beginnt mit einem Schlag auf 0 und ergibt dieselbe Verteilung wie Bjorklund (rotiert)
+    # Bresenham starts with a hit on 0 and gives the same distribution as Bjorklund (rotated)
     rotation %= steps
     return pat[-rotation:] + pat[:-rotation] if rotation else pat
 
@@ -81,17 +81,17 @@ class LaneSpec:
     steps: int = 16
     pulses: int = 4
     rotation: int = 0
-    accent_every: int = 0      # jeder n-te Schlag akzentuiert (0 = keiner)
+    accent_every: int = 0      # every n-th beat accented (0 = none)
     enabled: bool = True
 
 
 def _len(length: int) -> int:
-    """Pattern-Länge immer 0..64 – Aufrufer mit Wunschwerten darüber bekommen 64, darunter nichts."""
+    """Pattern length always 0..64 – callers asking for more get 64, for less nothing."""
     return max(0, min(NSTEP, int(length)))
 
 
 def drum_pattern(specs: list[LaneSpec], length: int = 16, vel: int = 100) -> list[Step]:
-    """mehrere Lanes -> Drum-Grid-Steps (hit/acc-Bits)."""
+    """several lanes -> drum grid steps (hit/acc bits)."""
     steps = [Step() for _i in range(NSTEP)]
     length = _len(length)
     for sp in specs:
@@ -110,14 +110,14 @@ def drum_pattern(specs: list[LaneSpec], length: int = 16, vel: int = 100) -> lis
     return steps
 
 
-# ---------------------------------------------------------------------- Harmonik ---
+# ---------------------------------------------------------------------- harmony ---
 def scale_notes(root: int, scale: str, lo: int = 0, hi: int = 127) -> list[int]:
     iv = SCALES.get(scale, SCALES["Dur (Ionisch)"])
     return [n for n in range(lo, hi + 1) if (n - root) % 12 in iv]
 
 
 def parse_roman(sym: str) -> tuple[int, str, int]:
-    """'vi' -> (Stufe 5, 'min', Alteration). Großbuchstaben Dur, klein Moll, °/dim, 7, maj7, b/#."""
+    """'vi' -> (degree 5, 'min', alteration). Upper case major, lower case minor, °/dim, 7, maj7, b/#."""
     s = sym.strip()
     acc = 0
     while s and s[0] in "b#":
@@ -166,7 +166,7 @@ def voice(chord: list[int], voicing: str = "eng", inversion: int = 0, max_notes:
     notes = sorted(chord)[:max_notes]
     for _i in range(inversion % max(1, len(notes))):
         notes = notes[1:] + [notes[0] + 12]
-    if voicing == "weit" and len(notes) >= 3:          # open: mittlere Note eine Oktave hoch
+    if voicing == "weit" and len(notes) >= 3:          # open: middle note one octave up
         notes = [notes[0], notes[2], notes[1] + 12] + notes[3:]
     elif voicing == "drop-2" and len(notes) >= 4:
         n = sorted(notes)
@@ -178,7 +178,7 @@ def voice(chord: list[int], voicing: str = "eng", inversion: int = 0, max_notes:
 
 
 def smooth_inversions(chords: list[list[int]]) -> list[list[int]]:
-    """Stimmführung: jede Umkehrung so wählen, dass sich möglichst wenig bewegt."""
+    """Voice leading: choose each inversion so that as little as possible moves."""
     out = []
     prev = None
     for c in chords:
@@ -225,7 +225,7 @@ class ChordOptions:
     steps_per_chord: int = 4
     length: int = 16
     vel: int = 100
-    sustain: bool = True        # TIE bis zum nächsten Anschlag
+    sustain: bool = True        # TIE until the next hit
 
 
 def chord_steps(o: ChordOptions) -> tuple[list[Step], list[str]]:
@@ -256,7 +256,7 @@ def chord_steps(o: ChordOptions) -> tuple[list[Step], list[str]]:
     return steps, names
 
 
-# ---------------------------------------------------------------------- Melodie ---
+# ---------------------------------------------------------------------- melody ---
 ARP_MODES = ["auf", "ab", "auf/ab", "Zufall", "Akkord-Muster 1-3-5-8"]  # i18n: ignore – keys
 ARP_MODE_LABELS = {"auf": N_("up"), "ab": N_("down"), "auf/ab": N_("up/down"), "Zufall": N_("random"),  # i18n: ignore – keys
                    "Akkord-Muster 1-3-5-8": N_("chord pattern 1-3-5-8")}
@@ -320,7 +320,7 @@ class WalkOptions:
     scale: str = "Moll-Pentatonik"
     low: int = 60
     high: int = 79
-    max_leap: int = 3          # Skalenstufen
+    max_leap: int = 3          # scale degrees
     rest_prob: float = 0.2
     repeat_prob: float = 0.1
     tie_prob: float = 0.1
@@ -357,7 +357,7 @@ def random_walk(o: WalkOptions) -> list[Step]:
 
 
 class Markov:
-    """Markov-Kette (Ordnung 1 oder 2) über Tonhöhen-Intervalle und Dauern aus einer MIDI-Spur."""
+    """Markov chain (order 1 or 2) over pitch intervals and durations from a MIDI track."""
 
     def __init__(self, order: int = 1):
         self.order = max(1, min(2, order))
@@ -422,7 +422,7 @@ def markov_from_midi(path, order: int = 1, steps_per_beat: int = 4) -> Markov:
 
 
 def call_response(call: list[Step], length: int, key: int = 0, scale: str = "Dur (Ionisch)", seed: int = 1) -> list[Step]:
-    """erste Hälfte = Frage, zweite = Antwort: gleicher Rhythmus, Töne variiert, Ende auf dem Grundton."""
+    """first half = call, second = response: same rhythm, varied notes, ending on the root."""
     rnd = random.Random(seed)
     length = _len(length)
     half = max(1, length // 2)
@@ -451,7 +451,7 @@ def call_response(call: list[Step], length: int, key: int = 0, scale: str = "Dur
     return steps
 
 
-# ---------------------------------------------------------------- Humanize / Varianten ---
+# ---------------------------------------------------------------- humanize / variations ---
 def _copy(s: Step) -> Step:
     return Step(list(s.notes), s.time, s.accent, s.slide, s.recorded, s.vel, s.hit, s.acc, s.chance)
 
@@ -486,7 +486,7 @@ def humanize(steps: list[Step], length: int, curve: str = "Zufall ±", amount: i
 
 def variation(steps: list[Step], length: int, kind: str, key: int = 0, scale: str = "Chromatisch",
               seed: int = 1) -> list[Step]:
-    """B/C-Varianten eines Patterns: 'B' = andere Töne im Schlussviertel, 'C' = ausgedünnt + Oktavsprünge."""
+    """B/C variations of a pattern: 'B' = different notes in the last quarter, 'C' = thinned out + octave jumps."""
     rnd = random.Random(seed)
     out = [_copy(s) for s in steps] + [Step() for _i in range(NSTEP - len(steps))]
     length = _len(length)

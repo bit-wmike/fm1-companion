@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Befehlssuche (Strg+K): unscharfe Suche über Seiten, Menü-Aktionen, Hilfe-Themen und eigene Befehle."""
+"""Command search (Ctrl+K): fuzzy search across pages, menu actions, help topics and custom commands."""
 from __future__ import annotations
 
 import re
@@ -15,7 +15,7 @@ from ..i18n import _
 
 
 def fuzzy_score(query: str, text: str) -> float:
-    """0 = kein Treffer. Belohnt Teilwort am Anfang, Wortanfänge und zusammenhängende Buchstaben."""
+    """0 = no match. Rewards a substring at the start, word starts and contiguous letters."""
     q, t = query.lower().strip(), text.lower()
     if not q:
         return 1.0
@@ -24,7 +24,7 @@ def fuzzy_score(query: str, text: str) -> float:
     i = t.find(q)
     if i >= 0:
         return (800 if i == 0 or not t[i - 1].isalnum() else 600) - i - len(t) * 0.1
-    # Teilfolge
+    # subsequence
     score, pos, run = 0.0, -1, 0
     for ch in q:
         if ch == " ":
@@ -46,7 +46,7 @@ class Entry:
     def score(self, q: str) -> float:
         best = max(fuzzy_score(q, self.title) * 1.2, fuzzy_score(q, self.keywords) * 0.8,
                    fuzzy_score(q, self.subtitle) * 0.6)
-        if not best and " " in q.strip():   # alle Wörter müssen irgendwo vorkommen
+        if not best and " " in q.strip():   # all words must appear somewhere
             hay = f"{self.title} {self.keywords} {self.subtitle}".lower()
             if all(w in hay for w in q.lower().split()):
                 best = 50
@@ -60,8 +60,8 @@ def collect(window) -> list[Entry]:
         out.append(Entry(spec.title, (GROUP_TITLES.get(spec.group, spec.group) + " · " + (spec.description or _("Page"))),
                          lambda k=key: window.go(k), icon(*spec.icons) if spec.icons else QIcon(),
                          " ".join(spec.keywords) + " " + key, kind=_("Page")))
-    # Reiter zusammengelegter Seiten (FM-1-Zustand, Projekt-Ansicht, Aus MIDI-Datei, Backup-Browser, FM-Voices,
-    # Simulator, Klangerzeuger …) bleiben einzeln auffindbar
+    # tabs of merged pages (FM-1 state, project view, from MIDI file, backup browser, FM voices,
+    # simulator, sound module …) stay individually findable
     try:
         from .main_window import ALIASES, COMPOSITES, FLAT_COMPOSITES
         tab_titles = {sub: title for comp in (COMPOSITES, FLAT_COMPOSITES) for tabs in comp.values()
@@ -76,7 +76,7 @@ def collect(window) -> list[Entry]:
             out.append(Entry(title, where + (" · " + desc if desc else ""), lambda k=sub_key: window.go(k),
                              icon(*spec.icons) if spec and spec.icons else (icon(*main.icons) if main and main.icons else QIcon()),
                              kws + " " + sub_key + " " + (spec.title if spec else ""), kind=_("Page")))
-    except Exception:  # noqa: BLE001 – Befehlssuche darf nie an den Reitern scheitern
+    except Exception:  # noqa: BLE001 – command search must never fail because of the tabs
         pass
     pages = {spec.title.lower() for spec in window.specs.values()}
 
@@ -86,7 +86,7 @@ def collect(window) -> list[Entry]:
                 walk(a.menu(), path + [a.menu().title().replace("&", "")])
             elif not a.isSeparator() and a.isEnabled() and a.text():
                 t = a.text().replace("&", "").replace("…", "").strip()
-                if t.lower() in pages:            # Menüpunkt öffnet nur dieselbe Seite -> nicht doppelt zeigen
+                if t.lower() in pages:            # menu item only opens the same page -> don't show twice
                     continue
                 out.append(Entry(t, " › ".join(path),
                                  a.trigger, a.icon(), a.statusTip() or a.toolTip(),
@@ -103,14 +103,14 @@ def collect(window) -> list[Entry]:
             from .pages.help import topics
             for key, title, md in topics():
                 words = " ".join(re.findall(r"\*\*(.+?)\*\*", md))[:300]
-                if title.lower() in taken:          # gleichnamige Seite/Aktion: Hilfe-Thema kenntlich machen
+                if title.lower() in taken:          # page/action with the same name: mark the help topic as such
                     title = _("Help: {title}").format(title=title)
                 out.append(Entry(title, _("Help"), lambda k=key: window.go("help", topic=k), icon("help-contents"),
                                  words, kind=_("Help")))
         except Exception:  # noqa: BLE001
             pass
     seen, uniq = set(), []
-    for e in out:                                 # gleicher Titel + gleiche Art nur einmal
+    for e in out:                                 # same title + same kind only once
         k = (e.kind, e.title.lower())
         if k in seen:
             continue
@@ -161,7 +161,7 @@ class _Delegate(QStyledItemDelegate):
 
 
 class CommandPalette(QFrame):
-    """schwebt oben mittig über dem Hauptfenster; Esc schließt, Enter führt aus."""
+    """floats top-center over the main window; Esc closes, Enter executes."""
     MAX = 50
 
     def __init__(self, window: QWidget):
@@ -181,7 +181,7 @@ class CommandPalette(QFrame):
         self.list = QListWidget()
         self.list.setObjectName("PaletteList")
         self.list.setItemDelegate(_Delegate(self.list))
-        # der Delegat kürzt lange Beschreibungen selbst („…“) – eine waagerechte Leiste war nur Störung
+        # the delegate truncates long descriptions itself (“…”) – a horizontal scroll bar was just noise
         self.list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.list.itemActivated.connect(lambda it: self.execute(it))
         self.list.itemClicked.connect(lambda it: self.execute(it))

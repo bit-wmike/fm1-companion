@@ -16,7 +16,7 @@
       <li>MIDI tools, sound module, simulator and recording with Audacity</li>
       <li>Help center and system check for USB, power and audio</li>
     </ul>
-    <p>The user interface is currently German; English is in progress.</p>
+    <p>The user interface is English, with a German translation.</p>
     <p>No telemetry. Unofficial community project, not affiliated with M-VAVE.</p>
   </description>
   <launchable type="desktop-id">fm1-companion.desktop</launchable>

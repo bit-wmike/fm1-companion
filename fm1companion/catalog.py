@@ -1,19 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Firmware-Katalog „Firmware+": alle bekannten FM-1-Firmwares an einem Ort.
+"""Firmware catalog "Firmware+": all known FM-1 firmwares in one place.
 
-Quellen (siehe docs/catalog.md):
-  * Mooring-Katalog (awesome-fm-1/mooring/catalog.json, Schema 3) – maschinenlesbar:
-    Pakete mit SHA-256, Download-Adresse, Produkt-Identität, Hinweisen (beta, …).
-  * awesome-fm-1 README – Namen, Autoren, Beschreibungen, Links (Installer, Emulator,
-    Editor, Handbuch), Lizenz, Abstammung (Felucca, SLOOP …).
-  * GitHub (optional, später, gecacht) – Sterne, Releases, Screenshot.
+Sources (see docs/catalog.md):
+  * Mooring catalog (awesome-fm-1/mooring/catalog.json, schema 3) – machine-readable:
+    packages with SHA-256, download address, product identity, notes (beta, …).
+  * awesome-fm-1 README – names, authors, descriptions, links (installer, emulator,
+    editor, manual), licence, lineage (Felucca, SLOOP …).
+  * GitHub (optional, later, cached) – stars, releases, screenshot.
 
-Die App bringt einen fertigen Schnappschuss mit (data/catalog_snapshot.json, gebaut mit
-tools/build_catalog_snapshot.py), damit „Firmware+" auch ohne Internet funktioniert.
-Zur Laufzeit: Schnappschuss → zwischengespeicherter Live-Stand (alle 24 h im Hintergrund
-neu) → Anreicherung aus dem GitHub-Cache.
+The app ships a ready-made snapshot (data/catalog_snapshot.json, built with
+tools/build_catalog_snapshot.py) so that "Firmware+" also works without internet.
+At runtime: snapshot → cached live state (refreshed every 24 h in the background)
+→ enrichment from the GitHub cache.
 
-Dieses Modul hat keine Qt-Abhängigkeit.
+This module has no Qt dependency.
 """
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ SNAPSHOT_FILE = Path(__file__).resolve().parent / "data" / "catalog_snapshot.jso
 UA = "fm1-companion"
 MAX_AGE = 24 * 3600
 class _HttpsOnlyRedirect(urllib.request.HTTPRedirectHandler):
-    """Weiterleitungen nur auf https – nie still auf http (oder file:, ftp: …) herunter."""
+    """Redirects only to https – never silently down to http (or file:, ftp: …)."""
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if urllib.parse.urlsplit(newurl).scheme.lower() != "https":
@@ -54,17 +54,17 @@ _raw_urlopen = _opener.open
 
 
 def _https_urlopen(req, timeout: float = 20, **kw):
-    """Katalog und Vorschaubilder kommen von Adressen aus einem fremden Katalog: nur https."""
+    """Catalog and preview images come from addresses in a third-party catalog: https only."""
     url = req.full_url if isinstance(req, urllib.request.Request) else str(req)
     if urllib.parse.urlsplit(url).scheme.lower() != "https":
         raise urllib.error.URLError(_("only https addresses allowed: {url}").format(url=url[:120]))
     return _raw_urlopen(req, timeout=timeout, **kw)
 
 
-urlopen = _https_urlopen                  # in Tests ersetzbar
+urlopen = _https_urlopen                  # replaceable in tests
 FELUCCA_PROTOCOL_FAMILIES = {"melodee", "skiff", "sloop", "felucca"}
 
-# Kategorien wie in den Firmware-Verzeichnissen (thefirmwarehub.com / fm1-editor.com)
+# categories as in the firmware directories (thefirmwarehub.com / fm1-editor.com)
 # the German names are internal keys (stored in the catalog data) – shown via category_name() / lineage_name()
 CATEGORIES = ["Original", "Synth", "Groovebox", "Sampler", "Akkorde", "Generativ", "Werkzeug", "Spiele & Spaß"]  # i18n: ignore
 LINEAGES = ["Felucca", "SLOOP", "FoMni", "Original M-VAVE", "eigenständig"]  # i18n: ignore
@@ -145,7 +145,7 @@ def norm(s: str) -> str:
 
 
 def repo_of(url: str) -> str:
-    """'owner/name' aus einer GitHub-Adresse (auch github.io und raw), sonst ''."""
+    """'owner/name' from a GitHub address (also github.io and raw), otherwise ''."""
     m = re.match(r"https?://(?:www\.)?github\.com/([\w.-]+)/([\w.-]+)", url or "")
     if m:
         return f"{m.group(1)}/{m.group(2).removesuffix('.git')}"
@@ -156,12 +156,12 @@ def repo_of(url: str) -> str:
 
 
 def pages_repo(url: str) -> str:
-    """owner.github.io/repo/... -> 'owner/repo' (geraten)."""
+    """owner.github.io/repo/... -> 'owner/repo' (guessed)."""
     m = re.match(r"https?://([\w-]+)\.github\.io/([\w.-]+)", url or "", re.I)
     return f"{m.group(1)}/{m.group(2)}" if m else ""
 
 
-# ================================================================== Daten ===
+# ================================================================== data ===
 
 @dataclass
 class Package:
@@ -196,13 +196,13 @@ class Entry:
     description: str = ""
     section: str = "open"               # official / open / closed / notsynth / mooring / own
     categories: list[str] = field(default_factory=list)
-    lineage: list[str] = field(default_factory=list)     # z. B. ["Felucca", "FoMni"]
+    lineage: list[str] = field(default_factory=list)     # e.g. ["Felucca", "FoMni"]
     lineage_text: str = ""
     license: str = ""
     repo: str = ""                      # owner/name
-    links: dict[str, str] = field(default_factory=dict)  # Rolle -> URL
-    flags: list[str] = field(default_factory=list)       # beta, experimentell, wip, kostenpflichtig, quellcode
-    packages: list[Package] = field(default_factory=list)  # neueste zuerst
+    links: dict[str, str] = field(default_factory=dict)  # role -> URL
+    flags: list[str] = field(default_factory=list)       # beta, experimentell, wip, kostenpflichtig, quellcode (note keys)
+    packages: list[Package] = field(default_factory=list)  # newest first
     family: str = ""
     protocol: str = "none"
     protocol_evidence: str = ""
@@ -212,7 +212,7 @@ class Entry:
     pushed_at: str = ""
     builtin: bool = False
 
-    # ---- abgeleitet
+    # ---- derived
     @property
     def latest(self) -> Package | None:
         return next((p for p in self.packages if p.downloadable), None)
@@ -291,7 +291,7 @@ class Entry:
         return e
 
     def to_spec(self, package: Package | None = None):
-        """FirmwareSpec für den Installer / „Meine Firmwares"."""
+        """FirmwareSpec for the installer / "My firmwares"."""
         from . import firmware
         p = package or self.latest
         asset = ""
@@ -316,7 +316,7 @@ class Entry:
 
 @dataclass
 class Resource:
-    """Werkzeug, Editor, Anleitung, Video … aus den übrigen README-Abschnitten."""
+    """Tool, editor, guide, video … from the remaining README sections."""
     section: str
     name: str
     url: str
@@ -360,7 +360,7 @@ class Catalog:
                     names.setdefault(norm(cand), e)
         if n in names:
             return names[n]
-        # „karma fm1 firmware“ → „karma“: Füllwörter weglassen und auch die Katalognamen ohne sie vergleichen
+        # "karma fm1 firmware" → "karma": drop filler words and also compare the catalog names without them
         bare = norm(FILLER_WORDS.sub(" ", text.lower()))
         if bare and bare != n:
             stripped = {norm(FILLER_WORDS.sub(" ", k)): e for k, e in names.items()}
@@ -417,16 +417,16 @@ def parse_mooring(data: dict) -> dict:
                     notes=list(dl.get("notes") or []), requires_stock_v15=bool(dl.get("requiresStockV15")),
                     stock=bool(e.get("stock")), source_repo=dl.get("sourceRepo", ""),
                     loader_family=loaders.get(dl.get("loaderSHA256", ""), ""))
-        p._name = name   # type: ignore[attr-defined]  (nur beim Zusammenführen gebraucht)
+        p._name = name   # type: ignore[attr-defined]  (only needed when merging)
         pkgs.append(p)
     return {"revision": data.get("revision", 0), "issued": data.get("issued", ""), "packages": pkgs,
             "loaders": loaders}
 
 
 def mooring_signature_status(catalog_bytes: bytes, intoto_line: bytes | None) -> str:
-    """Prüft nur die Konsistenz (Prüfsumme in der in-toto-Aussage == Katalog-Datei).
-    Eine echte Signaturprüfung braucht den öffentlichen Schlüssel (keyid dbe8230a406629ab);
-    der ist nicht veröffentlicht – deshalb zeigt die App kein „signiert ✓"."""
+    """Only checks consistency (checksum in the in-toto statement == catalog file).
+    A real signature check needs the public key (keyid dbe8230a406629ab);
+    it is not published – which is why the app shows no "signed ✓"."""
     if not intoto_line:
         return _("no signature")
     try:
@@ -546,7 +546,7 @@ def lineage_mentions(text: str) -> list[str]:
 
 
 def parse_readme(text: str) -> tuple[list[dict], list[Resource]]:
-    """-> (Firmware-Einträge als Rohdaten, Ressourcen)"""
+    """-> (firmware entries as raw data, resources)"""
     items, res = [], []
     sec = sub = ""
     for line in text.splitlines():
@@ -630,7 +630,7 @@ _LOADER_LINEAGE = {"stock": "Original M-VAVE", "feluccaG1": "Felucca", "feluccaG
 
 
 def merge(readme_text: str | None, mooring: dict | None, builtin_keys: dict | None = None) -> Catalog:
-    """README-Einträge und Mooring-Pakete zu einem Katalog zusammenführen (beide Richtungen)."""
+    """Merge README entries and Mooring packages into one catalog (both directions)."""
     items, res = parse_readme(readme_text) if readme_text else ([], [])
     cat = Catalog(resources=res, built=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
     entries: list[Entry] = []
@@ -690,7 +690,7 @@ def merge(readme_text: str | None, mooring: dict | None, builtin_keys: dict | No
                     fam_entry[p.family] = e
                     if not e.family:
                         e.family = p.family
-            if e is None:                         # Paket ohne Download: über den Namen zuordnen
+            if e is None:                         # package without download: match by name
                 e = by_name.get(norm(p._name))
             if e is None:
                 orphans.append(p)
@@ -706,11 +706,11 @@ def merge(readme_text: str | None, mooring: dict | None, builtin_keys: dict | No
                 pass
         cat.unknown_packages = orphans
         for e in entries:
-            # neueste zuerst: Pakete mit Download vor reinen Kennungen, dann Reihenfolge im Katalog (neu = hinten)
+            # newest first: packages with a download before bare identities, then catalog order (new = at the end)
             e.packages = list(reversed([p for p in e.packages if p.downloadable])) + \
                 list(reversed([p for p in e.packages if not p.downloadable]))
     _resolve_lineage(entries)
-    # Schlüssel eindeutig machen; eingebaute Firmwares behalten ihren Schlüssel
+    # make keys unique; built-in firmwares keep their key
     builtin_keys = builtin_keys or {"melodee": "keremimo/melodee", "skiff": "illuminus5/skiff",
                                     "sloop": "isod89/sloop-fm1"}
     seen: set[str] = set()
@@ -769,7 +769,7 @@ def _resolve_lineage(entries: list[Entry]):
                 if sub:
                     res = sub
                     break
-        if not res:                       # schwächer: erster bekannter Stammbaum-Name im Text
+        if not res:                       # weaker: first known lineage name in the text
             m = re.search(r"\b(Felucca|SLOOP|FoMni|fm1-base|FM1 Open|X0X|ChoralRoot|GHOULBOX|Golana|Melodee)\b",
                           e.description)
             if m:
@@ -793,7 +793,7 @@ def _resolve_lineage(entries: list[Entry]):
             e.lineage = ["eigenständig"] if re.search(r"original|from scratch|own engine", e.description, re.I) else []  # i18n: ignore
 
 
-# ============================================================== Laden ===
+# ============================================================== loading ===
 
 # ======================================================== Screenshots ===
 
@@ -801,7 +801,7 @@ _BADGE = re.compile(r"shields\.io|badge|/actions/|travis|codecov|awesome\.re|img
 
 
 def first_image(markdown: str, repo: str, branch: str = "HEAD") -> str:
-    """erstes echtes Bild (kein Abzeichen) aus einer README – als absolute Adresse."""
+    """first real image (not a badge) from a README – as an absolute address."""
     for m in re.finditer(r"!\[[^\]]*\]\(\s*<?([^)\s>]+)>?[^)]*\)|<img[^>]+src=[\"']([^\"']+)[\"']", markdown):
         url = (m.group(1) or m.group(2) or "").strip()
         if not url or _BADGE.search(url):
@@ -828,7 +828,7 @@ def cached_file() -> Path:
 
 
 def load(prefer_cache: bool = True) -> Catalog:
-    """Schnappschuss oder neuerer Live-Stand aus dem Cache (ohne Netz)."""
+    """Snapshot or a newer live state from the cache (without network)."""
     snap = load_snapshot()
     if prefer_cache and cached_file().exists():
         try:
@@ -842,7 +842,7 @@ def load(prefer_cache: bool = True) -> Catalog:
 
 
 def _carry_over(old: Catalog, new: Catalog):
-    """Angaben, die nur der Schnappschuss hat (Sterne, Screenshot …), übernehmen."""
+    """Take over details only the snapshot has (stars, screenshot …)."""
     for e in new.entries:
         o = old.by_key(e.key)
         if o:
@@ -866,7 +866,7 @@ class Offline(Exception):
 
 
 def _get(url: str, etag_file: Path | None = None, timeout=20) -> tuple[bytes | None, str]:
-    """-> (Daten oder None bei 304, ETag)"""
+    """-> (data or None on 304, ETag)"""
     hdr = {"User-Agent": UA}
     if etag_file and etag_file.exists():
         hdr["If-None-Match"] = etag_file.read_text().strip()
@@ -883,7 +883,7 @@ def _get(url: str, etag_file: Path | None = None, timeout=20) -> tuple[bytes | N
 
 
 def refresh(log=lambda *_a: None) -> Catalog:
-    """Live-Stand holen (Mooring + README), zusammenführen, im Cache ablegen. Läuft im Hintergrund."""
+    """Fetch the live state (Mooring + README), merge it, store it in the cache. Runs in the background."""
     d = cache_dir()
     out = {}
     for name, url in (("mooring.json", MOORING_URL), ("README.md", README_URL)):
@@ -908,14 +908,14 @@ def refresh(log=lambda *_a: None) -> Catalog:
     return cat
 
 
-# ======================================================= Neuigkeiten ===
+# ======================================================= news ===
 
 def changes_file() -> Path:
     return cache_dir() / "changes.json"
 
 
 def record_changes(old: Catalog, new: Catalog):
-    """neue Pakete (neue Version im Katalog) und neue Firmwares merken – für den Neuigkeiten-Tab."""
+    """remember new packages (new version in the catalog) and new firmwares – for the News tab."""
     if not old.entries:
         return
     try:
@@ -944,11 +944,11 @@ def recorded_changes() -> list[dict]:
         return []
 
 
-# ===================================================== Paket-Identität ===
+# ===================================================== package identity ===
 
 def product_of(raw: bytes) -> str:
-    """Identität eines .fwsc-Pakets (z. B. 'FM-1_900'): ein Marker-Byte nach jedem der ersten
-    20 Blöcke à 0x30 Bytes (Format wie in Melodees tools/fm1_install.py, GPL-3.0)."""
+    """Identity of a .fwsc package (e.g. 'FM-1_900'): one marker byte after each of the first
+    20 blocks of 0x30 bytes (format as in Melodee's tools/fm1_install.py, GPL-3.0)."""
     blocks, blk, keep = 20, 0x30, 0x2F
     if len(raw) < blocks * blk:
         return ""
@@ -957,13 +957,13 @@ def product_of(raw: bytes) -> str:
 
 
 def by_product(identity: str, cat: Catalog | None = None) -> list[Entry]:
-    """alle Katalog-Einträge, deren Pakete diese Kennung melden (z. B. "FM-1_900" teilen sich viele Firmwares).
-    Eingebaute Firmwares zuerst, dann alphabetisch."""
+    """all catalog entries whose packages report this identity (e.g. many firmwares share "FM-1_900").
+    Built-in firmwares first, then alphabetical."""
     if not identity:
         return []
     try:
         cat = cat or load()
-    except Exception:  # noqa: BLE001 – ohne Katalog keine Kandidaten
+    except Exception:  # noqa: BLE001 – no catalog, no candidates
         return []
     out = [e for e in cat.entries if any(p.product == identity for p in e.packages)]
     out.sort(key=lambda e: (not e.builtin, e.name.lower()))
@@ -971,7 +971,7 @@ def by_product(identity: str, cat: Catalog | None = None) -> list[Entry]:
 
 
 def spec_by_sha256(sha: str, cat: Catalog | None = None):
-    """FirmwareSpec zu einem Paket mit genau dieser Prüfsumme (oder None)"""
+    """FirmwareSpec for a package with exactly this checksum (or None)"""
     try:
         cat = cat or load()
     except Exception:  # noqa: BLE001
@@ -980,7 +980,7 @@ def spec_by_sha256(sha: str, cat: Catalog | None = None):
     if e is None:
         return None
     sp = e.to_spec(p)
-    if p is not None and not sp.sha256:          # eingebaute Firmware: genau dieses Paket festhalten
+    if p is not None and not sp.sha256:          # built-in firmware: pin exactly this package
         import dataclasses
         sp = dataclasses.replace(sp, sha256=p.sha256, product=p.product or sp.product,
                                  loader_family=p.loader_family or sp.loader_family)
@@ -998,8 +998,8 @@ def identify_file(path: Path, cat: Catalog | None = None) -> dict:
 
 
 # ============================================================ GitHub ===
-# Anreicherung, nur auf Wunsch/träge: Detailansicht + kleines Hintergrund-Budget.
-# Ohne Token erlaubt GitHub 60 API-Abfragen pro Stunde; bedingte Abfragen (ETag, 304) zählen nicht.
+# Enrichment, only on request/lazily: detail view + a small background budget.
+# Without a token GitHub allows 60 API requests per hour; conditional requests (ETag, 304) do not count.
 
 class RateLimited(Exception):
     def __init__(self, msg: str, reset: int = 0):
@@ -1036,8 +1036,8 @@ def limit_message(reset: int) -> str:
 
 
 def gh_api(path: str, ttl: float = MAX_AGE) -> tuple[object, str]:
-    """GET api.github.com/<path> mit Cache + ETag. -> (Daten, Hinweis). Hinweis ist leer oder eine
-    deutsche Meldung, wenn alte Daten aus dem Cache kommen. Ohne Cache-Daten: RateLimited/Offline."""
+    """GET api.github.com/<path> with cache + ETag. -> (data, hint). The hint is empty or a
+    German message when old data comes from the cache. Without cached data: RateLimited/Offline."""
     f = _gh_cache(path)
     c = _read_cache(f)
     if c and time.time() - c.get("fetched", 0) < ttl:
@@ -1099,7 +1099,7 @@ def norm_releases(data) -> list[dict]:
 
 
 def enrich(repo: str, ttl: float = MAX_AGE) -> dict:
-    """Repo-Infos + Releases. -> {stars, description, topics, pushed_at, releases, message}"""
+    """Repo info + releases. -> {stars, description, topics, pushed_at, releases, message}"""
     info, msg1 = gh_api(f"repos/{repo}", ttl)
     rels, msg2 = gh_api(f"repos/{repo}/releases?per_page=15", ttl)
     info = info if isinstance(info, dict) else {}
@@ -1119,7 +1119,7 @@ def cached_enrichment(repo: str) -> dict | None:
 
 
 def raw_exists(repo: str, path: str) -> bool:
-    """Datei im Repo vorhanden? (raw.githubusercontent.com – keine API, kein Limit)"""
+    """File present in the repo? (raw.githubusercontent.com – no API, no rate limit)"""
     req = urllib.request.Request(f"https://raw.githubusercontent.com/{repo}/HEAD/{path}", method="HEAD",
                                  headers={"User-Agent": UA})
     try:
@@ -1129,13 +1129,13 @@ def raw_exists(repo: str, path: str) -> bool:
         return False
 
 
-# ------------------------------------------- weitere Quellen (Pages, fmhub.json, Repo-Dateien, Suche)
+# ------------------------------------------- further sources (Pages, fmhub.json, repo files, search)
 FM1_WORDS = re.compile(r"fm[-_ ]?1|felucca|m[-_ ]?vave|sloop|fwsc", re.I)
 FILLER_WORDS = re.compile(r"fm[-_ ]?1|m[-_ ]?vave|\bfirmware\b|\bfw\b|\bfor\b|\bfür\b|\bcustom\b", re.I)  # i18n: ignore
 
 
 def fetch_text(url: str, max_bytes: int = 3 << 20, timeout: float = 15) -> str | None:
-    """kleine Text-Datei/Seite holen; None bei Fehler (kein Netz, 404 …)."""
+    """fetch a small text file/page; None on error (no network, 404 …)."""
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     try:
         with urlopen(req, timeout=timeout) as r:
@@ -1145,13 +1145,13 @@ def fetch_text(url: str, max_bytes: int = 3 << 20, timeout: float = 15) -> str |
 
 
 def pages_url(repo: str) -> str:
-    """'owner/name' -> https://owner.github.io/name/ (Standard-Adresse von GitHub Pages)"""
+    """'owner/name' -> https://owner.github.io/name/ (default GitHub Pages address)"""
     owner, _sep, name = repo.partition("/")
     return f"https://{owner.lower()}.github.io/{name}/" if owner and name else ""
 
 
 def fmhub_info(repo: str) -> dict:
-    """fmhub.json im Repo (Kurzbeschreibung fürs Firmware-Verzeichnis): what, author, play, editor, cheat …"""
+    """fmhub.json in the repo (short description for the firmware directory): what, author, play, editor, cheat …"""
     txt = fetch_text(f"https://raw.githubusercontent.com/{repo}/HEAD/fmhub.json", 256 << 10)
     try:
         d = json.loads(txt) if txt else {}
@@ -1165,9 +1165,9 @@ _FWSC_REF = re.compile(r"[\"'(=]\s*((?:https?://|\.{0,2}/)?[\w%./-]*?[\w%.-]+\.f
 
 
 def installer_meta(html: str, base_url: str) -> dict:
-    """Web-Installer-Seite der Felucca-Familie (make_site.py): eingebettetes
-    {"version", "product", "pkg", "sha256"} – sonst der erste Verweis auf eine .fwsc-Datei.
-    -> {url, version, product, sha256} (fehlende Felder leer) oder {}."""
+    """Web installer page of the Felucca family (make_site.py): embedded
+    {"version", "product", "pkg", "sha256"} – otherwise the first link to a .fwsc file.
+    -> {url, version, product, sha256} (missing fields empty) or {}."""
     if not html:
         return {}
     m = _META.search(html)
@@ -1181,14 +1181,14 @@ def installer_meta(html: str, base_url: str) -> dict:
             return {"url": urllib.parse.urljoin(base_url, meta["pkg"]), "version": str(meta.get("version") or ""),
                     "product": str(meta.get("product") or ""),
                     "sha256": sha if re.fullmatch(r"[0-9a-f]{64}", sha) else ""}
-    refs = [r for r in _FWSC_REF.findall(html) if not re.search(r"(^|/)fm-?1\.fwsc$", r, re.I)]  # nicht das Original
+    refs = [r for r in _FWSC_REF.findall(html) if not re.search(r"(^|/)fm-?1\.fwsc$", r, re.I)]  # not the original
     if refs:
         return {"url": urllib.parse.urljoin(base_url, refs[0]), "version": "", "product": "", "sha256": ""}
     return {}
 
 
 def find_installer_package(urls: list[str]) -> dict:
-    """die erste Installer-Seite, die ein Paket nennt. -> installer_meta(...) + {"page": url} oder {}."""
+    """the first installer page that names a package. -> installer_meta(...) + {"page": url} or {}."""
     seen = set()
     for u in urls:
         if not u or u in seen:
@@ -1201,8 +1201,8 @@ def find_installer_package(urls: list[str]) -> dict:
 
 
 def repo_fwsc_files(repo: str, refs: tuple[str, ...] = ("HEAD", "gh-pages")) -> list[dict]:
-    """.fwsc-Dateien, die direkt im Repo liegen (manche veröffentlichen so statt über Releases).
-    -> [{path, ref, url}] – die mit der höchsten Version im Namen zuerst. Eine API-Abfrage je Zweig."""
+    """.fwsc files that sit directly in the repo (some publish this way instead of via releases).
+    -> [{path, ref, url}] – those with the highest version in the name first. One API request per branch."""
     out = []
     for ref in refs:
         try:
@@ -1225,16 +1225,16 @@ def repo_fwsc_files(repo: str, refs: tuple[str, ...] = ("HEAD", "gh-pages")) -> 
 
 
 def search_repos(text: str, limit: int = 8) -> list[dict]:
-    """GitHub-Suche nach FM-1-Firmwares. -> [{repo, description, stars, fork, exact}] – nur Treffer, die nach
-    FM-1 aussehen (Name, Beschreibung oder Themen), der passendste Name zuerst.
+    """GitHub search for FM-1 firmwares. -> [{repo, description, stars, fork, exact}] – only hits that look like
+    FM-1 (name, description or topics), the best-matching name first.
 
-    Viele Firmwares sind auf GitHub als Fork angelegt (z. B. von Felucca); die Suche blendet Forks sonst aus,
-    deshalb ``fork:true``. Reine Kopien (Fork mit demselben Namen wie ein gefundenes Original) fallen weg."""
+    Many firmwares are created on GitHub as a fork (e.g. of Felucca); the search otherwise hides forks,
+    hence ``fork:true``. Plain copies (a fork with the same name as a found original) are dropped."""
     words = [w for w in re.split(r"[\s_]+", FILLER_WORDS.sub(" ", text).strip())
              if w and not FM1_WORDS.fullmatch(w)]
     if not words:
         return []
-    q = " ".join(words).lower()                    # (gleiche Suche = gleicher Cache-Eintrag)
+    q = " ".join(words).lower()                    # (same search = same cache entry)
     want = norm(q)
 
     def bare_name(repo):

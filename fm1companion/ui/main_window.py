@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Hauptfenster: Navigation links, Seiten rechts, Geräteauswahl oben."""
+"""Main window: navigation on the left, pages on the right, device selection at the top."""
 from __future__ import annotations
 
 import os
@@ -32,7 +32,7 @@ from .settings_dialog import SettingsDialog
 from .workshop_page import WorkshopPage
 from ..i18n import _
 
-# eingebaute Seiten: (Schlüssel, Titel, Symbole, Gruppe, Reihenfolge, Beschreibung)
+# built-in pages: (key, title, icons, group, order, description)
 PAGES = [("overview", _("Overview"), ("go-home", "user-home"), "geraet", 10,
           _("active device, backup, firmware & updates – and the state of the FM-1 (live load, memory)")),
          ("editor", _("Editor"), ("audio-midi", "audio-card", "applications-multimedia"), "geraet", 40,
@@ -46,9 +46,9 @@ PAGES = [("overview", _("Overview"), ("go-home", "user-home"), "geraet", 10,
          ("backups", _("Backups"), ("backup", "document-save"), "daten", 10,
           _("create, restore, browse and compare full backups"))]
 
-# Zusammengelegte Seiten: Haupt-Schlüssel -> [(Reiter-Schlüssel, Reiter-Titel, Seiten-Schlüssel der Unterseite)].
-# Der erste Reiter ist die Hauptunterseite; die weiteren Seiten-Schlüssel bleiben als Weiterleitung erhalten
-# (window.go("fm1") -> Übersicht › Zustand).
+# merged pages: main key -> [(tab key, tab title, page key of the subpage)].
+# The first tab is the main subpage; the other page keys are kept as redirects
+# (window.go("fm1") -> Overview › State).
 COMPOSITES: dict[str, list[tuple[str, str, str]]] = {
     "overview": [("start", _("Start"), "overview"), ("zustand", _("Status"), "fm1")],
     "projects": [("plaetze", _("Slots & Library"), "projects"), ("ansicht", _("View & Export"), "project_view")],
@@ -56,25 +56,25 @@ COMPOSITES: dict[str, list[tuple[str, str, str]]] = {
     "backups": [("liste", _("List"), "backups"), ("browser", _("Browse & Compare"), "backup_browser")],
     "presets": [("user", _("User Presets on the FM-1"), "presets"), ("voices", _("FM Voices (DX7)"), "voices")],
 }
-# Seiten, die als weiterer Reiter in das vorhandene Reiter-Widget einer Seite (page.tabs) eingehängt werden
+# pages that are embedded as a further tab into a page's existing tab widget (page.tabs)
 FLAT_COMPOSITES: dict[str, list[tuple[str, str, str]]] = {
     "midi": [("klangerzeuger", _("Sound Module"), "soundmodule")],
-    # Firmware+ (Katalog) und die frühere Seite „Firmware“ sind EINE Seite: Installieren, Versionen wechseln,
-    # Update-Modus und Rückweg zum Original liegen im Reiter „Installieren & Versionen“ (window.go("firmware"))
+    # Firmware+ (catalog) and the former “Firmware” page are ONE page: installing, switching versions,
+    # update mode and the way back to the original live in the “Install & versions” tab (window.go("firmware"))
     "discover": [("install", _("Install & Versions"), "firmware"), ("simulator", _("Simulator"), "simulator")],
 }
-# eingehängte Reiter an fester Position statt hinten (Reiter-Index in page.tabs)
+# embedded tabs at a fixed position instead of at the end (tab index in page.tabs)
 FLAT_TAB_POS: dict[str, int] = {"firmware": 1}
-# alter Seiten-Schlüssel -> (Hauptseite, Reiter)
+# old page key -> (main page, tab)
 ALIASES: dict[str, tuple[str, str]] = {sub: (main, tab) for main, tabs in COMPOSITES.items()
                                        for tab, _t, sub in tabs if sub != main}
 ALIASES.update({sub: (main, tab) for main, tabs in FLAT_COMPOSITES.items() for tab, _t, sub in tabs})
-# Seitenleiste: breit mit Namen bzw. schmal mit Symbolen; Automatik schaltet unter dieser Fensterbreite um
+# sidebar: wide with names or narrow with icons; automatic mode switches below this window width
 SIDEBAR_WIDE = 224
 SIDEBAR_COMPACT = 60
 SIDEBAR_AUTO_BELOW = 1150
 SIDEBAR_MODES = ("auto", "wide", "icons")
-# feste Reihenfolge für Strg+1 … Strg+9 (die wichtigsten Seiten zuerst)
+# fixed order for Ctrl+1 … Ctrl+9 (the most important pages first)
 HOTKEY_ORDER = ["overview", "discover", "editor", "presets", "samples", "projects", "compose", "backups", "help"]
 
 
@@ -82,13 +82,13 @@ log = logging.getLogger("fm1companion.window")
 
 
 def needs_maximize(avail_w: int, avail_h: int, want_w: int, want_h: int, frame: int = 40) -> bool:
-    """Erststart ohne gespeicherte Fenstergröße: passt das Standardfenster (1280×820 + Titelleiste) nicht auf den
-    freien Bildschirm (14"-Laptop 1280×720 abzüglich Leiste), wird maximiert statt über den Rand zu ragen."""
+    """First start without a saved window size: if the default window (1280×820 + title bar) doesn't fit on the
+    free screen (14" laptop 1280×720 minus panel), maximize instead of extending over the edge."""
     return want_w > avail_w or want_h + frame > avail_h
 
 
 def app_icon() -> QIcon:
-    """App-Symbol: installiertes hicolor-Symbol, sonst das mitgelieferte PNG."""
+    """App icon: installed hicolor icon, otherwise the bundled PNG."""
     ic = QIcon.fromTheme("fm1-companion")
     if ic.isNull():
         base = Path(__file__).resolve().parents[1] / "icons"
@@ -97,7 +97,7 @@ def app_icon() -> QIcon:
 
 
 class NavDelegate(QStyledItemDelegate):
-    """Seitenleiste: Gruppenüberschriften in Kapitälchen, Auswahl als Pille mit Akzentstrich."""
+    """Sidebar: group headings in small caps, selection as a pill with an accent stroke."""
 
     def _compact(self) -> bool:
         return bool(getattr(self.parent(), "compact", False))
@@ -106,11 +106,11 @@ class NavDelegate(QStyledItemDelegate):
         sh = super().sizeHint(option, index)
         head = index.data(Qt.ItemDataRole.UserRole) is None
         fm = option.fontMetrics
-        if self._compact():                                   # nur Symbole: Gruppen als dünne Trennlinie
+        if self._compact():                                   # icons only: groups as a thin separator line
             if head:
                 return QSize(40, 11 if index.row() > 0 else 4)
             return QSize(40, max(fm.height() + 10, 32))
-        # kompakt genug, dass alle Seiten auch bei 1280×720 ohne Rollen in die Leiste passen
+        # compact enough that all pages fit into the bar without scrolling even at 1280×720
         return QSize(sh.width(), (fm.height() + 12) if head and index.row() > 0 else max(fm.height() + 10, 30)
                      if not head else fm.height() + 4)
 
@@ -120,14 +120,14 @@ class NavDelegate(QStyledItemDelegate):
         p.save()
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         compact = self._compact()
-        if index.data(Qt.ItemDataRole.UserRole) is None and compact:   # Gruppe in der schmalen Leiste: Linie
+        if index.data(Qt.ItemDataRole.UserRole) is None and compact:   # group in the narrow bar: line
             if index.row() > 0:
                 p.setPen(QPen(QColor(t.border), 1))
                 y = r.center().y()
                 p.drawLine(r.left() + 12, y, r.right() - 12, y)
             p.restore()
             return
-        if index.data(Qt.ItemDataRole.UserRole) is None:            # Gruppenüberschrift
+        if index.data(Qt.ItemDataRole.UserRole) is None:            # group heading
             f = QFont(option.font)
             f.setPointSizeF(max(6.5, f.pointSizeF() * 0.78))
             f.setBold(True)
@@ -176,8 +176,8 @@ class NavDelegate(QStyledItemDelegate):
 
 
 class NavList(QListWidget):
-    """Seitenleiste: Pfeiltasten, Bild auf/ab, Pos1 und Ende überspringen die Gruppenüberschriften
-    (vorher landete Pos1 auf „GERÄT“ – markiert, aber ohne Seite)."""
+    """Sidebar: arrow keys, Page Up/Down, Home and End skip the group headings
+    (previously Home landed on “DEVICE” – highlighted, but without a page)."""
 
     def moveCursor(self, action, modifiers):
         idx = super().moveCursor(action, modifiers)
@@ -188,36 +188,36 @@ class NavList(QListWidget):
         row = idx.row() if idx.isValid() else -1
         while 0 <= row < self.count() and not (self.item(row).flags() & Qt.ItemFlag.ItemIsSelectable):
             row += step
-        if not 0 <= row < self.count():              # oben über der ersten Überschrift: stehen bleiben
+        if not 0 <= row < self.count():              # at the top above the first heading: stay put
             return self.currentIndex()
         return self.model().index(row, 0)
 
 
 class MainWindow(QMainWindow):
-    save_failed = pyqtSignal(str)              # config.save scheiterte (aus beliebigem Thread)
+    save_failed = pyqtSignal(str)              # config.save failed (from any thread)
 
     def __init__(self, progress=None):
         super().__init__()
         self._progress = progress or (lambda text: None)
-        self.commands: list[dict] = []          # zusätzliche Einträge für die Befehlssuche
+        self.commands: list[dict] = []          # additional entries for the command search
         self.setWindowTitle(APP_NAME + (_(" – demo mode – data kept separate") if DEMO else ""))
         self.setWindowIcon(app_icon())
         self.resize(1280, 820)
         self.ctx = DeviceContext(self)
         self.ctx.window = self
         _qa = QApplication.instance()
-        if _qa is not None:                          # auch ohne Fenster-Schließen (app.quit) geordnet abbauen
+        if _qa is not None:                          # tear down in order even without closing the window (app.quit)
             _qa.aboutToQuit.connect(self.shutdown)
         self.ctx.pending_restore_check = ""
         self.server = editor_host.LocalServer()
-        self.studio = None                     # der Studio-Zwilling (ui/studio_service.py) – startet erst bei Bedarf
+        self.studio = None                     # the studio twin (ui/studio_service.py) – only starts when needed
         try:
             from .studio_service import StudioService
             self.studio = StudioService(self)
-        except Exception:                      # noqa: BLE001 – ohne Studio läuft der Rest der App weiter
-            log.exception("Studio-Dienst nicht verfügbar")
+        except Exception:                      # noqa: BLE001 – without the studio the rest of the app keeps running
+            log.exception("Studio service not available")
 
-        # Navigation (gruppiert; Seiten aus ui/pages melden sich selbst an)
+        # navigation (grouped; pages from ui/pages register themselves)
         self.nav = NavList()
         self.nav.compact = False
         self.nav.setObjectName("Sidebar")
@@ -242,7 +242,7 @@ class MainWindow(QMainWindow):
         specs = [PageSpec(key, title, group, (lambda c, w, k=key: getattr(w, k)), icons, order, desc)
                  for key, title, icons, group, order, desc in PAGES]
         builtin = {s.key for s in specs}
-        self.absorbed: dict[str, PageSpec] = {    # Seiten, die als Reiter in einer anderen Seite aufgehen
+        self.absorbed: dict[str, PageSpec] = {    # pages that are merged as tabs into another page
             "fm1": PageSpec("fm1", _("FM-1 Status"), "geraet", (lambda c, w: w.fm1), ("audio-card", "hwinfo"), 20,
                             _("State of the FM-1: live load, memory, user presets"),
                             ("zustand", "live", "cpu", "speicher", "presets", "diagnose", "status", "memory", "load",
@@ -251,7 +251,7 @@ class MainWindow(QMainWindow):
                                  ("tools", "audio-x-midi"), 40, _("MIDI file → pattern on an FM-1 track"),
                                  ("werkstatt", "midi", "pattern", "daw", "musescore", "lmms", "import", "workshop",
                                   "midi file")),
-            # die frühere Seite „Firmware“ – jetzt Reiter von Firmware+ (Schlüssel "firmware" bleibt gültig)
+            # the former “Firmware” page – now a tab of Firmware+ (key "firmware" stays valid)
             "firmware": PageSpec("firmware", _("Install & Versions"), "daten", (lambda c, w: w.firmware),
                                  ("system-software-update", "update-none"), 30,
                                  _("install, switch and update firmware; download versions; back to the original"),
@@ -262,16 +262,16 @@ class MainWindow(QMainWindow):
         absorbed_keys = set(ALIASES)
         for s in discover():
             if s.key in builtin or s.key in {x.key for x in specs}:
-                continue                       # Schlüssel schon vergeben
+                continue                       # key already taken
             if s.key in absorbed_keys:
                 self.absorbed[s.key] = s
                 continue
             specs.append(s)
-        if not any(s.key == "discover" for s in specs):   # Katalog-Modul fehlt/kaputt: Installieren bleibt erreichbar
+        if not any(s.key == "discover" for s in specs):   # catalog module missing/broken: installing stays reachable
             specs.append(PageSpec("discover", "Firmware+", "daten", (lambda c, w: w.firmware),
                                   ("system-software-update", "update-none"), 12,
                                   _("install, switch and update firmware")))
-        self.subpages: dict[str, QWidget] = {}    # alter Schlüssel -> Unterseite
+        self.subpages: dict[str, QWidget] = {}    # old key -> subpage
         self._build_nav(sort_specs(specs))
         self.nav.currentRowChanged.connect(self._page)
         self._progress(_("Setting up the window …"))
@@ -285,7 +285,7 @@ class MainWindow(QMainWindow):
         pv = QVBoxLayout(page_box)
         pv.setContentsMargins(14, 10, 14, 6)
         pv.setSpacing(6)
-        # Hinweise (Toasts) bei kleinem Fenster: eigene Zeile über der Seite – verdeckt dann keine Knöpfe
+        # notices (toasts) with a small window: own row above the page – then they don't cover buttons
         self.toast_lane = QWidget()
         self.toast_lane.setObjectName("ToastLane")
         tl = QHBoxLayout(self.toast_lane)
@@ -294,8 +294,8 @@ class MainWindow(QMainWindow):
         tl.addStretch(1)
         self.toast_lane.hide()
         pv.addWidget(self.toast_lane)
-        # Seiten in einem Rollbereich: eine breite Seite (Simulator) zwingt das Fenster nicht mehr breit,
-        # sie rollt waagrecht; nur die sichtbare Seite zählt für die Mindestgröße (responsive.current_only)
+        # pages in a scroll area: a wide page (simulator) no longer forces the window wide,
+        # it scrolls horizontally; only the visible page counts for the minimum size (responsive.current_only)
         self.page_scroll = QScrollArea()
         self.page_scroll.setObjectName("PageScroll")
         self.page_scroll.setWidgetResizable(True)
@@ -307,9 +307,9 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         responsive.current_only_all(self.stack)
         responsive.current_only(self.stack)
-        self.setMinimumSize(640, 480)                 # darunter wäre nichts mehr bedienbar; Seiten rollen ab hier
+        self.setMinimumSize(640, 480)                 # below this nothing would be usable anymore; pages scroll from here on
 
-        # Werkzeugleiste: Gerät
+        # toolbar: device
         tb = QToolBar(_("Device"))
         tb.setObjectName("MainToolbar")
         tb.setMovable(False)
@@ -346,7 +346,7 @@ class MainWindow(QMainWindow):
         self.bell.clicked.connect(self.show_notifications)
         tb.addWidget(self.bell)
 
-        # Statusleiste: Rechner-Werte, Hinweise
+        # status bar: computer values, notices
         self.notifications = NotificationCenter(self)
         self.notifications.changed.connect(self._bell)
         self.pi_status = PiStatus(lambda: self.ctx.settings.root, self.open_syscheck, self)
@@ -358,14 +358,14 @@ class MainWindow(QMainWindow):
         self.overview.backup_now.connect(self._backup_now)
         self.overview.check_updates.connect(lambda: self.firmware.check_for_device())
         self.firmware.updates_checked.connect(self._updates)
-        disc = self.pages.get("discover")         # Firmware+: Liste im Reiter „Installieren & Versionen“ geändert
+        disc = self.pages.get("discover")         # Firmware+: list changed in the “Install & versions” tab
         if disc is not None and hasattr(disc, "set_catalog"):
             self.firmware.list_changed.connect(lambda: disc.set_catalog(disc.cat))
         if hasattr(self.editor, "navigate"):
             self.editor.navigate.connect(self.go)
         self.ctx.changed.connect(self._dev_changed)
         self.ctx.ports_changed.connect(self._fill_devices)
-        # FM-1 angesteckt: nicht zulassen, dass es unbemerkt der Standard-Ausgang des Rechners wird
+        # FM-1 plugged in: don't let it become the computer's default output unnoticed
         self.ctx.ports_changed.connect(self._audio_guard)
         from PyQt6.QtCore import QTimer as _QT
         _QT.singleShot(1500, self._audio_guard)
@@ -378,7 +378,7 @@ class MainWindow(QMainWindow):
         pr = theme.prefs()
         self.sidebar.setVisible(bool(pr.get("sidebar", True)))
         self.a_sidebar.setChecked(self.sidebar.isVisible())
-        self.nav.compact = None                       # erzwingt den ersten Aufbau
+        self.nav.compact = None                       # forces the first build
         self._update_sidebar()
         self._last_conn = None
         self._checked_for = ""
@@ -388,24 +388,24 @@ class MainWindow(QMainWindow):
         self.save_failed.connect(self._warn_save_failed)
         self._save_hook = self.save_failed.emit
         config.save_listeners.append(self._save_hook)
-        if config.save_error:                         # schon beim Start (vor dem Fenster) gescheitert
+        if config.save_error:                         # already failed at startup (before the window)
             QTimer.singleShot(1400, lambda: self._warn_save_failed(config.save_error))
         cfg_msg = config.problems_text()
-        if cfg_msg:                                   # einmalig: kaputte/ungültige Einstellungen
+        if cfg_msg:                                   # one-time: broken/invalid settings
             self.config_notice = cfg_msg
             QTimer.singleShot(1200, lambda: self.notify(cfg_msg, "warning"))
         self.missing_deps: list[str] = []
         QTimer.singleShot(2500, self._check_required_deps)
 
     def _warn_save_failed(self, text: str):
-        """Einstellungen ließen sich nicht speichern: einmal pro Sitzung sagen (nicht bei jedem Klick)."""
+        """Settings couldn't be saved: say so once per session (not on every click)."""
         if self._save_warned or not text:
             return
         self._save_warned = True
         self.notify(text, "warning")
 
     def _check_required_deps(self):
-        """fehlende Pflichtpakete (QtWebEngine, rtmidi …) einmal beim Start melden – mit dem apt-Befehl."""
+        """Report missing required packages (QtWebEngine, rtmidi …) once at startup – with the apt command."""
         from .. import diag
         from .common import run_job
 
@@ -418,19 +418,19 @@ class MainWindow(QMainWindow):
             self.notify(_("Something is missing: {what}. The app runs, but not all pages. Install with: {command}")
                         .format(what=what, command=diag.apt_command(miss, include_optional=False)), "warning",
                         (_("Open diagnostics"), lambda: self.open_help("diagnose")))
-        # Qt-Module nie erstmals in einem Hintergrund-Thread laden (Qt Multimedia zieht dabei PipeWire/FFmpeg-
-        # Plugins nach; parallel zum GUI-Thread führte das gelegentlich zum Absturz): vorher hier im GUI-Thread
+        # never load Qt modules for the first time in a background thread (Qt Multimedia pulls in PipeWire/FFmpeg
+        # plugins; in parallel to the GUI thread this occasionally crashed): do it here in the GUI thread beforehand
         import importlib
         for d in diag.deps().get("required", []) + diag.deps().get("recommended", []):
             mod = d.get("check", {}).get("module", "")
             if mod.startswith("PyQt6."):
                 try:
                     importlib.import_module(mod)
-                except Exception:  # noqa: BLE001 – fehlt: meldet check_deps
+                except Exception:  # noqa: BLE001 – missing: check_deps reports it
                     pass
         run_job(self, lambda w: diag.check_deps(), on_done=done, on_fail=lambda m, tb: None)
 
-    # ------------------------------------------------------------ Menüs
+    # ------------------------------------------------------------ Menus
     def _act(self, menu, text, slot, shortcut=None, icon_names=(), tip="", checkable=False):
         a = QAction(icon(*icon_names) if icon_names else QIcon(), text, self)
         if shortcut:
@@ -446,7 +446,7 @@ class MainWindow(QMainWindow):
     def _menus(self):
         mb = self.menuBar()
         m = mb.addMenu(_("&File"))
-        # fest Strg+, (wie in der Hilfe): StandardKey.Preferences ist unter KDE Strg+Umschalt+, und sonst leer
+        # fixed Ctrl+, (as in the help): StandardKey.Preferences is Ctrl+Shift+, under KDE and empty otherwise
         self._act(m, _("Settings …"), self._settings, "Ctrl+,",
                   ("configure", "preferences-system"))
         self._act(m, _("Open main folder"), lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.ctx.settings.root))),
@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
         hm.addSeparator()
         self._act(hm, _("About {name}").format(name=SUITE_NAME), self._about, None, ("help-about",))
 
-        self.hotkeys: list[tuple[str, str]] = []     # (Tastenkürzel, Seitentitel) – für den Kürzel-Dialog
+        self.hotkeys: list[tuple[str, str]] = []     # (shortcut, page title) – for the shortcuts dialog
         keys = [k for k in HOTKEY_ORDER if k in self.specs] + [k for k in self.specs if k not in HOTKEY_ORDER]
         for i, key in enumerate(keys[:9]):
             act = QAction(self.specs[key].title.replace("&", "&&"), self)
@@ -539,21 +539,21 @@ class MainWindow(QMainWindow):
         tv.addWidget(t2)
         self.brand_texts = (t1, t2)
         brand.addLayout(tv, 1)
-        # Umschalter breit/schmal oben in der Markenzeile (unten kostete er Höhe – bei 720 px rollte die Leiste)
+        # wide/narrow toggle at the top in the brand row (at the bottom it cost height – at 720 px the bar scrolled)
         self.sidebar_button = QToolButton()
         self.sidebar_button.setObjectName("SidebarToggle")
         self.sidebar_button.setAutoRaise(True)
         self.sidebar_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        self.sidebar_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)   # per Tastatur: Ansicht › Seitenleiste: Breite
+        self.sidebar_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)   # via keyboard: View › Sidebar: width
         self.sidebar_button.clicked.connect(self._toggle_compact)
         brand.addWidget(self.sidebar_button, 0, Qt.AlignmentFlag.AlignTop)
         v.addLayout(brand)
         v.addWidget(self.nav, 1)
         return panel
 
-    # ------------------------------------------------------------ Seitenleiste: breit / nur Symbole
+    # ------------------------------------------------------------ Sidebar: wide / icons only
     def sidebar_mode(self) -> str:
-        """„auto“ (nach Fensterbreite), „wide“ oder „icons“ – manuell Gewähltes hat Vorrang vor der Automatik."""
+        """“auto” (by window width), “wide” or “icons” – a manual choice takes precedence over the automatic mode."""
         m = theme.prefs().get("sidebar_mode", "auto")
         return m if m in SIDEBAR_MODES else "auto"
 
@@ -570,7 +570,7 @@ class MainWindow(QMainWindow):
         self.set_sidebar_mode("wide" if self.nav.compact else "icons")
 
     def _auto_compact(self) -> bool:
-        """Automatik mit Hysterese: unter SIDEBAR_AUTO_BELOW schmal, ab +32 px wieder breit."""
+        """Automatic mode with hysteresis: narrow below SIDEBAR_AUTO_BELOW, wide again from +32 px."""
         w = self.width()
         cur = getattr(self, "_auto_state", None)
         if cur is None or (not cur and w < SIDEBAR_AUTO_BELOW) or (cur and w >= SIDEBAR_AUTO_BELOW + 32):
@@ -583,7 +583,7 @@ class MainWindow(QMainWindow):
         self.set_sidebar_compact(auto if mode == "auto" else mode == "icons")
 
     def set_sidebar_compact(self, on: bool):
-        """Seitenleiste nur mit Symbolen (Namen als Tooltip, Gruppen als Trennlinie) bzw. wieder breit."""
+        """Sidebar with icons only (names as tooltip, groups as separator line) or wide again."""
         on = bool(on)
         if getattr(self.nav, "compact", None) == on:
             return
@@ -615,8 +615,8 @@ class MainWindow(QMainWindow):
             self._update_toolbar()
 
     def _update_toolbar(self):
-        """schmales Fenster: Werkzeugleiste kompakter (Suche und Backup nur als Symbol, kürzerer Gerätezustand),
-        damit „Backup jetzt“ und die Glocke nicht im Überlauf-Menü verschwinden."""
+        """narrow window: more compact toolbar (search and backup as icons only, shorter device state),
+        so that “Back up now” and the bell don't disappear into the overflow menu."""
         compact = bool(getattr(self, "_auto_state", False))
         if getattr(self, "_toolbar_compact", None) == compact:
             return
@@ -633,21 +633,21 @@ class MainWindow(QMainWindow):
         if texts:
             self.dev_state.setText(texts[1] if getattr(self, "_toolbar_compact", False) else texts[0])
 
-    # ------------------------------------------------------------ Seiten
+    # ------------------------------------------------------------ Pages
     def _build_nav(self, specs: list[PageSpec]):
         group = None
         for s in specs:
             self._progress(_("Loading {page} …").format(page=s.title))
             try:
                 page = self._make_page(s)
-            except Exception:                  # noqa: BLE001 – eine kaputte Seite darf die App nicht stoppen
+            except Exception:                  # noqa: BLE001 – a broken page must not stop the app
                 import traceback
                 from .pages import load_errors
                 load_errors.append((s.key, traceback.format_exc()))
-                log.error("Seite %s konnte nicht geladen werden:\n%s", s.key, load_errors[-1][1])
+                log.error("Page %s could not be loaded:\n%s", s.key, load_errors[-1][1])
                 if s.key != "discover":
                     continue
-                page = self.firmware               # Katalog kaputt: „Installieren & Versionen“ trotzdem anbieten
+                page = self.firmware               # catalog broken: still offer “Install & versions”
                 self.subpages["firmware"] = page
             if s.group != group:
                 group = s.group
@@ -670,7 +670,7 @@ class MainWindow(QMainWindow):
                     pass
 
     def _make_page(self, s: PageSpec):
-        """Seite bauen – zusammengelegte Seiten (COMPOSITES) als TabbedPage mit ihren Unterseiten."""
+        """Build a page – merged pages (COMPOSITES) as a TabbedPage with their subpages."""
         tabs = COMPOSITES.get(s.key)
         flat = FLAT_COMPOSITES.get(s.key)
         if not tabs and not flat:
@@ -687,7 +687,7 @@ class MainWindow(QMainWindow):
                     parts.append((tab_key, tab_title, sub))
             if parts and isinstance(getattr(main, "tabs", None), QTabWidget):
                 TabAdopter(main, parts)
-                tw = main.tabs                      # Reiter-Symbole: wie die eigenen Reiter der Hauptseite
+                tw = main.tabs                      # tab icons: like the main page's own tabs
                 for sub_key, pos in FLAT_TAB_POS.items():
                     sub = self.subpages.get(sub_key)
                     i = tw.indexOf(sub) if sub is not None else -1
@@ -716,14 +716,14 @@ class MainWindow(QMainWindow):
         return TabbedPage(s.title, s.description, parts)
 
     def page(self, key: str):
-        """Seite zu einem Schlüssel – auch für alte Schlüssel, die jetzt Reiter einer anderen Seite sind
-        (page("backup_browser") ist die Unterseite „Durchsuchen & Vergleichen“ von „Backups“)."""
+        """Page for a key – also for old keys that are now tabs of another page
+        (page("backup_browser") is the “Browse & compare” subpage of “Backups”)."""
         if key in ALIASES:
             return self.subpages.get(key)
         return self.pages.get(key)
 
     def resolve(self, key: str) -> tuple[str, str]:
-        """(Navigations-Schlüssel, Reiter-Schlüssel oder "") zu einem – ggf. alten – Seiten-Schlüssel."""
+        """(navigation key, tab key or "") for a – possibly old – page key."""
         if key in ALIASES:
             return ALIASES[key]
         if key in COMPOSITES:
@@ -735,9 +735,9 @@ class MainWindow(QMainWindow):
         return next((k for k, p in self.pages.items() if p is cur), "")
 
     def go(self, key: str, **kwargs):
-        """Seite öffnen; kwargs gehen an page.open_with(**kwargs), falls vorhanden.
-        Alte Schlüssel (fm1, workshop, project_view, backup_browser) leiten auf die neue Seite und den
-        passenden Reiter weiter; ``tab=`` wählt einen Reiter einer zusammengelegten Seite direkt."""
+        """Open a page; kwargs go to page.open_with(**kwargs) if present.
+        Old keys (fm1, workshop, project_view, backup_browser) redirect to the new page and the
+        matching tab; ``tab=`` selects a tab of a merged page directly."""
         nav_key, tab = self.resolve(key)
         tab = kwargs.pop("tab", None) or tab
         for i in range(self.nav.count()):
@@ -756,7 +756,7 @@ class MainWindow(QMainWindow):
         if row < 0:
             return
         key = self.nav.item(row).data(Qt.ItemDataRole.UserRole)
-        if key is None:                        # Gruppenüberschrift
+        if key is None:                        # group heading
             return
         prev = self.stack.currentWidget()
         page = self.pages[key]
@@ -768,7 +768,7 @@ class MainWindow(QMainWindow):
         if hasattr(page, "activate"):
             page.activate()
 
-    # ------------------------------------------------------------ Gerät
+    # ------------------------------------------------------------ Device
     def _fill_devices(self):
         self.dev_combo.blockSignals(True)
         self.dev_combo.clear()
@@ -782,7 +782,7 @@ class MainWindow(QMainWindow):
         vports = list(getattr(self.ctx, "vports", []) or [])
         if vports:
             self.dev_combo.insertSeparator(self.dev_combo.count())
-        for p in vports:                       # der Studio-Zwilling: klar als virtuell gekennzeichnet
+        for p in vports:                       # the studio twin: clearly marked as virtual
             self.dev_combo.addItem(icon("computer", "audio-card"), _("{label}  ·  virtual (not a real FM-1)").format(label=p.label),
                                    p.key)
             self.dev_combo.setItemData(self.dev_combo.count() - 1,
@@ -798,7 +798,7 @@ class MainWindow(QMainWindow):
         port = next((p for p in list(self.ctx.ports) + list(getattr(self.ctx, "vports", []) or [])
                      if p.key == key), None)
         if port and (not self.ctx.port or port.key != self.ctx.port.key):
-            self._switching = True             # bewusster Wechsel: kein „getrennt“-Warnhinweis, nur „Aktiv: …“
+            self._switching = True             # deliberate switch: no “disconnected” warning, only “Active: …”
             QTimer.singleShot(8000, lambda: setattr(self, "_switching", False))
             self.ctx.connect_port(port)
 
@@ -814,7 +814,7 @@ class MainWindow(QMainWindow):
                 else _("no FM-1 found – check the USB data cable.")), 8000)
 
     def _check_blocking_services(self):
-        """Debians fluidsynth-Dienst belegt die HDMI-Karte (kein Ton mehr über PipeWire): anbieten, ihn abzuschalten."""
+        """Debian's fluidsynth service occupies the HDMI card (no more sound via PipeWire): offer to turn it off."""
         from .. import audiofix as AF
         from .common import run_job
 
@@ -840,11 +840,11 @@ class MainWindow(QMainWindow):
         try:
             from .audio import guard_default_output
             guard_default_output()
-        except Exception:  # noqa: BLE001 – Komfort, darf nie stören
+        except Exception:  # noqa: BLE001 – convenience, must never interfere
             pass
 
     def _dev_changed(self):
-        if getattr(self, "_shut_down", False):   # Beenden trennt das Gerät – das ist kein „FM-1 getrennt“-Hinweis
+        if getattr(self, "_shut_down", False):   # exiting disconnects the device – that is not an “FM-1 disconnected” notice
             return
         self._fill_devices()
         c = self.ctx
@@ -854,10 +854,10 @@ class MainWindow(QMainWindow):
         else:
             state = _("connected") if c.connected else (_("not responding") if c.port else _("not connected"))
         import html
-        # ohne Gerät nur „Kein FM-1 verbunden“ (vorher doppelt: „Kein FM-1 verbunden – nicht verbunden“)
+        # without a device only “No FM-1 connected” (previously duplicated: “No FM-1 connected – not connected”)
         text = html.escape(c.title()) + (f" – {html.escape(state)}" if c.port else "")
         self._dev_texts = (f"  <b style='color:{col}'>●</b> {text}  ",
-                           # schmales Fenster: nur der Zustand – Name und Firmware stehen schon in der Auswahl
+                           # narrow window: only the state – name and firmware are already in the selection
                            f"  <b style='color:{col}'>●</b> {html.escape(state) if c.port else text}  ")
         self.dev_state.setToolTip(c.title() + (f" – {state}" if c.port else ""))
         self._apply_dev_text()
@@ -921,7 +921,7 @@ class MainWindow(QMainWindow):
             self.notify(_("Backup saved: {name}").format(name=Path(path).name), "success",
                         (_("Open folder"), lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(Path(path).parent)))))
 
-    # ------------------------------------------------------------ Sonstiges
+    # ------------------------------------------------------------ Miscellaneous
     def _settings(self):
         d = SettingsDialog(self.ctx, self)
         if d.exec():
@@ -932,7 +932,7 @@ class MainWindow(QMainWindow):
             self.recorder.refresh_list()
             self.overview.refresh()
 
-    # ------------------------------------------------------------ Design / Ansicht
+    # ------------------------------------------------------------ Design / view
     def apply_theme(self):
         theme.apply(QApplication.instance(), self.ctx.settings.theme)
         for k, a in getattr(self, "theme_actions", {}).items():
@@ -966,9 +966,9 @@ class MainWindow(QMainWindow):
             self.showFullScreen()
         self.a_full.setChecked(self.isFullScreen())
 
-    # ------------------------------------------------------------ Hinweise
+    # ------------------------------------------------------------ Notices
     def notify(self, text: str, level: str = "info", action=None):
-        """Toast + Verlauf (+ Desktop-Benachrichtigung, wenn das Fenster im Hintergrund ist)."""
+        """Toast + history (+ desktop notification if the window is in the background)."""
         return self.notifications.post(text, level, action)
 
     def _bell(self):
@@ -981,9 +981,9 @@ class MainWindow(QMainWindow):
     def show_notifications(self):
         HistoryDialog(self.notifications, self).exec()
 
-    # ------------------------------------------------------------ Befehle, Hilfe, Assistenten
+    # ------------------------------------------------------------ Commands, help, wizards
     def register_command(self, title: str, callback, *, subtitle: str = "", keywords: tuple = (), icon_name: str = ""):
-        """eigenen Eintrag in die Befehlssuche aufnehmen (z. B. aus einer Seite)."""
+        """Add a custom entry to the command search (e.g. from a page)."""
         self.commands.append({"title": title, "callback": callback, "subtitle": subtitle,
                               "keywords": tuple(keywords), "icon": icon_name})
 
@@ -1024,7 +1024,7 @@ class MainWindow(QMainWindow):
         return d
 
     def maybe_first_run(self):
-        """beim echten Start (nicht in Tests): Assistent für neue Nutzer, 'Was ist neu' nach einem Update."""
+        """on a real start (not in tests): wizard for new users, 'What's new' after an update."""
         pr = theme.prefs()
         if not pr.get("wizard_done"):
             pr["wizard_done"] = True
@@ -1053,7 +1053,7 @@ class MainWindow(QMainWindow):
             try:
                 if self.restoreGeometry(QByteArray.fromHex(g.encode())):
                     return
-            except Exception:  # noqa: BLE001 – kaputte gespeicherte Geometrie: Standardgröße nehmen
+            except Exception:  # noqa: BLE001 – broken saved geometry: use the default size
                 pass
         if QApplication.platformName() != "offscreen":
             scr = self.screen() or QApplication.primaryScreen()
@@ -1078,9 +1078,9 @@ class MainWindow(QMainWindow):
         super().closeEvent(e)
 
     def shutdown(self):
-        """alles geordnet anhalten – einmal, beim Schließen ODER beim Beenden der App (aboutToQuit).
-        Reihenfolge: Timer, Seiten, Web-Views (solange das Profil lebt), dann Gerät/Threads, zuletzt der Server.
-        So laufen beim Abbau der QApplication keine Hintergrund-Threads mehr in Qt-Objekte (Absturz 139)."""
+        """stop everything in order – once, on close OR on app exit (aboutToQuit).
+        Order: timers, pages, web views (while the profile lives), then device/threads, finally the server.
+        That way no background threads run into Qt objects anymore while the QApplication is torn down (crash 139)."""
         if getattr(self, "_shut_down", False):
             return
         self._shut_down = True
@@ -1093,7 +1093,7 @@ class MainWindow(QMainWindow):
                   if p is not self.editor and hasattr(p, "shutdown")]
         steps += [lambda: self.editor.shutdown()]
         if getattr(self, "studio", None) is not None:
-            steps += [lambda: self.studio.shutdown()]     # Stand sichern, Zwilling abbauen (vor den Web-Seiten)
+            steps += [lambda: self.studio.shutdown()]     # save the state, tear down the twin (before the web pages)
 
         def web_down():
             from . import web
@@ -1102,5 +1102,5 @@ class MainWindow(QMainWindow):
         for st in steps:
             try:
                 st()
-            except Exception:                  # noqa: BLE001 – Beenden darf nie hängen bleiben
+            except Exception:                  # noqa: BLE001 – exit must never get stuck
                 pass

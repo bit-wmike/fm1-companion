@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Reiter „Aufnehmen“ der Sample-Seite: aus jeder Quelle (FM-1 über USB, Line-in/USB-Mikrofon,
-Ausgang des Rechners) einen Sound aufnehmen – mit Vorlauf, Auto-Start bei Signal, Stille
-abschneiden, Normalisieren – und direkt in die Bibliothek legen."""
+"""“Record” tab of the samples page: record a sound from any source (FM-1 via USB, line-in/USB microphone,
+computer output) – with pre-roll, auto-start on signal, silence trimming, normalizing – and put it
+straight into the library."""
 from __future__ import annotations
 
 import re
@@ -42,8 +42,8 @@ class SampleRecorder(QWidget):
         self.sources: list[recorder.CaptureDevice] = []
         self.rec: recorder.Recording | None = None
         self.tail: recorder.TailReader | None = None
-        self.ring: list[np.ndarray] = []         # Vorlauf (ohne laufende Aufnahme)
-        self.take: list[np.ndarray] | None = None  # laufende Aufnahme
+        self.ring: list[np.ndarray] = []         # pre-roll (without a running recording)
+        self.take: list[np.ndarray] | None = None  # running recording
         self.result: np.ndarray | None = None
         self.rate = 44100
         self.started = 0.0
@@ -160,9 +160,9 @@ class SampleRecorder(QWidget):
         self._set_result_enabled(False)
         self.find_sources()
 
-    # ------------------------------------------------------------------ Quellen
+    # ------------------------------------------------------------------ Sources
     def find_sources(self):
-        """Quellen im Hintergrund suchen (pw-dump darf den GUI-Thread nicht aufhalten)."""
+        """Search for sources in the background (pw-dump must not block the GUI thread)."""
         if self.rec and self.rec.running or getattr(self, "_finding", False):
             return
         self._finding = True
@@ -188,7 +188,7 @@ class SampleRecorder(QWidget):
         ok = bool(self.sources)
         self.b_rec.setEnabled(ok)
         self.b_arm.setEnabled(ok)
-        from .. import melodee16                     # Melodee: Aufnahme vor/nach MASTER (Tooltip am Pegel)
+        from .. import melodee16                     # Melodee: recording before/after MASTER (tooltip on the level meter)
         info = getattr(self.ctx, "info", None)
         hint = melodee16.usb_record_hint(info.version if info else "")
         for m in self.meters:
@@ -202,7 +202,7 @@ class SampleRecorder(QWidget):
             self.source.setCurrentIndex(i)
         return i >= 0
 
-    # ------------------------------------------------------------------ Ablauf
+    # ------------------------------------------------------------------ Flow
     @property
     def monitoring(self) -> bool:
         return bool(self.rec and self.rec.running)
@@ -212,7 +212,7 @@ class SampleRecorder(QWidget):
         return self.take is not None
 
     def start_monitor(self) -> bool:
-        """Eingang öffnen (blockierend – für Tests und start_monitor_async)."""
+        """Open the input (blocking – for tests and start_monitor_async)."""
         i = self.source.currentIndex()
         if not 0 <= i < len(self.sources):
             return False
@@ -221,7 +221,7 @@ class SampleRecorder(QWidget):
         self.rate = 48000 if 48000 in dev.rates and 44100 not in dev.rates else 44100
         try:
             self.rec = recorder.Recording(dev, self.tmpdir, ch, self.rate, "monitor")
-            self.rec.start()                   # wartet 0,6 s je Aufnahmeweg
+            self.rec.start()                   # waits 0.6 s per recording path
         except Exception as e:  # noqa: BLE001
             self.rec = None
             show_error(self, _("Cannot open the input"), str(e))
@@ -239,7 +239,7 @@ class SampleRecorder(QWidget):
         self.timer.start()
 
     def start_monitor_async(self, then=None):
-        """wie start_monitor(), aber ohne den GUI-Thread aufzuhalten; then() läuft nach dem Öffnen."""
+        """like start_monitor(), but without blocking the GUI thread; then() runs after opening."""
         i = self.source.currentIndex()
         if not 0 <= i < len(self.sources) or getattr(self, "_opening", False):
             return
@@ -361,7 +361,7 @@ class SampleRecorder(QWidget):
         if self.rec and not self.rec.running and self.take is not None:
             self.stop()
 
-    # ------------------------------------------------------------------ Ergebnis
+    # ------------------------------------------------------------------ Result
     def _reprocess(self, *_args):
         if self._raw is None:
             return
@@ -391,7 +391,7 @@ class SampleRecorder(QWidget):
     def save(self) -> Path | None:
         if self.result is None or not len(self.result):
             return None
-        folder = self.ctx.settings.samples_dir / "Aufnahmen"  # i18n: ignore (Ordnername)
+        folder = self.ctx.settings.samples_dir / "Aufnahmen"  # i18n: ignore (folder name)
         try:
             path = _unique(folder, self.name.text().strip() or _("Recording"))
             recorder.write_wav_array(path, self.result, self.rate)

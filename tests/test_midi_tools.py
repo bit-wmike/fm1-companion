@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Unit-Tests des MIDI-Bereichs: Decoder, Clock, ALSA-Parser, SF2-Writer, FluidSynth-Befehle."""
+"""Unit tests of the MIDI area: decoder, clock, ALSA parser, SF2 writer, FluidSynth commands."""
 from __future__ import annotations
 
 import math
@@ -17,7 +17,7 @@ from fm1companion import alsaseq, clock, miditools as M, sf2, soundmodule as SM 
 from fm1companion.protocol import frame  # noqa: E402
 
 
-# ------------------------------------------------------------ Decoder ---
+# ------------------------------------------------------------ decoder ---
 def test_notes_cc_prog_bend():
     d = M.decode([0x94, 60, 100])
     assert (d.kind, d.type, d.channel) == ("note", "Note an", 5) and "C4 (60)" in d.meaning
@@ -43,7 +43,7 @@ def test_felucca_names_and_args():
     assert "(Meldung)" in M.decode(frame(23, [0, 1, *M.v14_enc(-3)]), "in").meaning
     assert "= -3" in M.decode(frame(23, [0, 1, *M.v14_enc(-3)]), "in").meaning
     assert "BACKUP_LIST" in M.decode(frame(65)).meaning
-    assert "LIBRARY" in M.decode(frame(80, [0, 0, 0, 16])).meaning       # nur in der Editor-Tabelle
+    assert "LIBRARY" in M.decode(frame(80, [0, 0, 0, 16])).meaning       # only in the editor table
     assert M.v14_dec(*M.v14_enc(0)) == 0 and M.v14_enc(0) == [0, 64]
 
 
@@ -53,7 +53,7 @@ def test_dx7_mvave_universal():
     assert "Voice-Parameter 129" in M.decode([0xF0, 0x43, 0x10, 0x01, 0x01, 7, 0xF7]).meaning
     assert "Update-Modus" in M.decode([0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7]).meaning
     assert "Kennung" in M.decode([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7]).meaning
-    # Datenanforderung des Geräts (15 Bytes ausgepackt, Kanal 00 59 30)
+    # data request of the device (15 bytes unpacked, channel 00 59 30)
     from fm1companion.miditools import unpack_bits
     body = bytearray([0x00, 0x59, 0x30, 0, 0, 0, 0]) + (0x1234).to_bytes(4, "little") + bytes([0x10, 0, 0])
     body.append(~sum(body[6:]) & 0xFF)
@@ -74,7 +74,7 @@ def test_dx7_mvave_universal():
 
 
 def test_mvave_keys_named():
-    """alle Varianten des M-VAVE-Steuer-SysEx bekommen einen Namen, der sagt, was am Gerät passiert."""
+    """all variants of the M-VAVE control SysEx get a name that says what happens on the device."""
     assert "Update-Modus" in M.decode([0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7]).meaning
     assert "Bootmodus" in M.decode([0xF0, 0x22, 0x24, 0x35, 0x7D, 0xF7]).meaning
     assert "22 24 35" in M.decode([0xF0, 0x22, 0x24, 0x35, 0x01, 0xF7]).meaning
@@ -82,12 +82,12 @@ def test_mvave_keys_named():
 
 
 def test_all_editor_commands_named():
-    """Decoder gegen die CMD-Tabelle des Melodee-Editors (web/editor.html): jeder Befehl hat einen Namen."""
+    """decoder against the CMD table of the Melodee editor (web/editor.html): every command has a name."""
     import re
     from pathlib import Path
     html = Path("/tmp/melodee/web/editor.html")
     if not html.exists():
-        pytest.skip("Melodee-Quellen fehlen")
+        pytest.skip("Melodee sources missing")
     m = re.search(r"const CMD = \{(.*?)\};", html.read_text("utf-8"), re.S)
     table = dict(re.findall(r"([A-Z0-9_]+)\s*:\s*(\d+)", m.group(1)))
     assert len(table) >= 50
@@ -103,7 +103,7 @@ def test_long_sysex_decodes_and_hex_is_capped():
     d = M.decode(big)
     assert d.kind == "sysex" and "BACKUP_GET" in d.meaning and "606 Bytes" in d.data and "…" in d.data
     assert "[600 Bytes]" in d.meaning
-    raw = M.decode(list(range(0x00, 0x80)))         # Datenbytes ohne Status
+    raw = M.decode(list(range(0x00, 0x80)))         # data bytes without status
     assert raw.kind == "other" and raw.meaning
 
 
@@ -114,7 +114,7 @@ def test_clock_meter_bpm():
         m.feed(0xF8, t)
         t += 60 / 125 / 24
     assert abs(m.bpm - 125) < 0.01 and m.jitter_ms < 0.01
-    m.feed(0xF8, t + 1.0)                      # Pause -> neu einmessen
+    m.feed(0xF8, t + 1.0)                      # pause -> measure again
     assert m.bpm is None
 
 
@@ -155,9 +155,9 @@ def test_clock_scheduler_jitter():
     assert got[0][1] == clock.START and got[-1][1] == clock.STOP
     assert len(pulses) > 100
     st = cm.jitter_stats()
-    print(f"\nClock-Jitter im Container: Mittel {st['mean_ms']:.3f} ms, p95 {st['p95_ms']:.3f} ms, max {st['max_ms']:.3f} ms")
+    print(f"\nClock jitter in the container: mean {st['mean_ms']:.3f} ms, p95 {st['p95_ms']:.3f} ms, max {st['max_ms']:.3f} ms")
     assert st["p95_ms"] < 2.0
-    # driftfrei: 1,2 s bei 240 BPM = 115 Pulse (±3)
+    # drift-free: 1.2 s at 240 BPM = 115 pulses (±3)
     first_part = [t for t in pulses if t - pulses[0] < 1.2]
     assert abs(len(first_part) - 1.2 / clock.pulse_interval(240)) < 4
 
@@ -236,8 +236,8 @@ def test_connect_cmd_and_presets():
         alsaseq.connect_cmd("24:0; rm", "20:0")
     ports = alsaseq.parse_proc(PROC_FIXTURE)
     pr = alsaseq.capture("Test", ports, {("24:0", "20:0"), ("128:0", "20:0")})
-    assert pr.pairs == [("Minilab3: Minilab3 MIDI", "Melodee: Melodee MIDI 1")]   # App-Verbindung nicht
-    # nach Neustart andere Client-Nummern: per Name wieder auflösen
+    assert pr.pairs == [("Minilab3: Minilab3 MIDI", "Melodee: Melodee MIDI 1")]   # not the app connection
+    # after a restart other client numbers: resolve again by name
     moved = PROC_FIXTURE.replace("Client  24", "Client  28").replace("Client  20", "Client  32")
     pairs, missing = alsaseq.resolve(alsaseq.Preset.from_json(pr.to_json()), alsaseq.parse_proc(moved))
     assert pairs == [("28:0", "32:0")] and not missing
@@ -245,7 +245,7 @@ def test_connect_cmd_and_presets():
 
 # --------------------------------------------------------------- SF2 ---
 def parse_sf2(data: bytes) -> dict:
-    """unabhängiger Mini-Parser: RIFF-Baum + pdta-Tabellen."""
+    """independent mini parser: RIFF tree + pdta tables."""
     assert data[:4] == b"RIFF" and data[8:12] == b"sfbk"
     assert struct.unpack_from("<I", data, 4)[0] == len(data) - 8
     out = {}
@@ -284,12 +284,12 @@ def test_sf2_structure():
     assert sf["ifil"] == struct.pack("<HH", 2, 1) and sf["INAM"].rstrip(b"\0") == b"Test Kit"
     assert sf["phdr_n"] == 2 and sf["inst_n"] == 2 and sf["shdr_n"] == 4 and sf["ibag_n"] == 4
     assert sf["pmod_n"] == 1 and sf["imod_n"] == 1
-    # Samples: Länge + 46 Nullen dazwischen
+    # samples: length + 46 zeros in between
     n = [500, 501, 502]
     assert len(sf["smpl"]) == 2 * (sum(n) + 3 * 46)
     s1 = struct.unpack_from("<20sIIIIIBbHH", sf["shdr"], 46)
     assert s1[1] == 546 and s1[2] == 546 + 501 and s1[5] == 22050 and s1[6] == 61
-    # Zone 2: keyRange zuerst, sampleID zuletzt
+    # zone 2: keyRange first, sampleID last
     gens = [struct.unpack_from("<HH", sf["igen"], i * 4) for i in range(sf["igen_n"])]
     zone2 = gens[10:15]
     assert zone2[0] == (43, (38 << 8) | 38) and zone2[-1] == (53, 2)
@@ -317,7 +317,7 @@ def test_sf2_from_folder_and_kit(tmp_path):
     z = kb.presets[0].zones
     assert (z[0].lo, z[0].hi, z[1].lo, z[1].hi) == (0, 60, 61, 127) and not kb.presets[0].one_shot
     parse_sf2(sf2.build(kb))
-    try:                                        # Gegenprobe mit sf2utils, falls vorhanden (keine Laufzeit-Abhängigkeit)
+    try:                                        # cross-check with sf2utils if available (no runtime dependency)
         from sf2utils.sf2parse import Sf2File
     except ImportError:
         return

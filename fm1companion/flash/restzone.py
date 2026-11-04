@@ -1,35 +1,35 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""„Reste aufräumen“: V16-Reste in 0x93000–0xA8FFF gezielt löschen – im ROM-Bootmodus, Sektor für Sektor.
+""""Clean up leftovers": erase V16 leftovers in 0x93000–0xA8FFF selectively – in ROM boot mode, sector by sector.
 
-Warum es das braucht: V16 schreibt seinen App-Bereich bis 0xA8FFF. V15 und alle Community-Firmwares (Melodee, SLOOP,
-Skiff, JIANT) schreiben nur bis 0x92FFF und räumen den Rest nie weg [Paket + Aufz., docs/flash-protocol.md §17].
+Why this is needed: V16 writes its app area up to 0xA8FFF. V15 and all community firmwares (Melodee, SLOOP,
+Skiff, JIANT) only write up to 0x92FFF and never clean up the rest [Pkg + Rec, docs/flash-protocol.md §17].
 
-Weg: der mitgelieferte, unveränderte MvaveFM1Unbricker (vendor/unbricker/fm1_unbrick.py) als Bibliothek. Er bringt
-über kagaimiqs jl-uboot-tool das Primitiv „einen 4-KiB-Sektor löschen“ (JL_LoaderV2 ERASE_FLASH_SECTOR, dieselbe
-Funktion `erase_repair_sector`, mit der sein `repair-settings` arbeitet – upstream nur mit Mock getestet) und seine
-Sicherheitstore `_check_mutable`/`_check_repairable`. Geschrieben wird nie, nur gelöscht.
+Approach: the bundled, unmodified MvaveFM1Unbricker (vendor/unbricker/fm1_unbrick.py) as a library. Via
+kagaimiq's jl-uboot-tool it provides the primitive "erase one 4 KiB sector" (JL_LoaderV2 ERASE_FLASH_SECTOR, the same
+function `erase_repair_sector` its `repair-settings` uses – upstream only tested with a mock) and its
+safety gates `_check_mutable`/`_check_repairable`. Nothing is ever written, only erased.
 
-Harte Regeln (im Code, nicht nur im Dialog):
-  * nur ganze Sektoren in der Restzone 0x93000–0xA8FFF (`gate`), nie NEVER_ERASE (Bootkopf, key_mac) oder Bluetooth;
-    zusätzlich die Tore des Unbrickers;
-  * nur, wenn ein in DIESER Sitzung frisch gelesener Dump (zweimal gelesen, identisch, als Datei gesichert und
-    rückgelesen – `fm1_unbrick.take_backup`) zeigt, dass der Sektor noch genau V16-Bytes trägt (voll oder als
-    Teilschreibung); was eine Firmware inzwischen neu beschrieben hat, bleibt;
-  * nur, wenn im App-Bereich byte-genau eine bekannte Firmware mit V15-Aufbau steht – nie bei V16 oder Unbekanntem;
-  * unmittelbar vor dem Löschen wird der Sektor erneut (zweimal) gelesen und muss dem Dump gleichen;
-  * nach jedem Sektor: Sektor zweimal lesen (muss leer sein) und den ganzen 64-KiB-Block drumherum mit dem Erwarteten
-    vergleichen (fängt einen Chip ab, der mehr als 4 KiB löscht); am Ende den ganzen Flash;
-  * Journal (atomar, fsync) vor und nach jedem Sektor; nach einem Absturz setzt der nächste Lauf fort. Ein halb
-    gelöschter Sektor zählt nur dann noch als V16-Rest, wenn sein Original laut Journal-Sicherung V16 war und sich
-    seitdem ausschließlich Bits von 0 auf 1 geändert haben (das, was ein Löschvorgang tut).
+Hard rules (in the code, not just in the dialog):
+  * only whole sectors in the leftover zone 0x93000–0xA8FFF (`gate`), never NEVER_ERASE (boot header, key_mac) or
+    Bluetooth; in addition the Unbricker's gates;
+  * only if a dump freshly read in THIS session (read twice, identical, saved to a file and
+    read back – `fm1_unbrick.take_backup`) shows that the sector still carries exactly V16 bytes (fully or as a
+    partial write); whatever a firmware has written there since stays;
+  * only if the app area holds, byte for byte, a known firmware with V15 layout – never with V16 or unknown content;
+  * immediately before erasing, the sector is read again (twice) and must equal the dump;
+  * after each sector: read the sector twice (must be blank) and compare the whole 64 KiB block around it with what
+    is expected (catches a chip that erases more than 4 KiB); at the end, the whole flash;
+  * journal (atomic, fsync) before and after each sector; after a crash the next run continues. A half-erased
+    sector only still counts as a V16 leftover if, according to the journal backup, its original was V16 and
+    since then only bits have changed from 0 to 1 (which is what an erase does).
 
-Nicht abhängig vom Bootkopf: Ob der Original-Loader beim Update auf V16 den Kopf mitschreibt, ist offen; der Kopf
-wird hier weder gelesen noch bewertet und bleibt NEVER_ERASE.
+Independent of the boot header: whether the stock loader also writes the header when updating to V16 is open; the
+header is neither read nor assessed here and stays NEVER_ERASE.
 
-Am echten Gerät UNGETESTET (nur mit dem Mock-FM-1 des Unbrickers). Ob der WL82-Loader „Sektor löschen“ wirklich auf
-genau 4 KiB begrenzt, ist [Annahme] – die Blockprüfung nach jedem Sektor hält dann sofort an.
+UNTESTED on a real device (only with the Unbricker's mock FM-1). Whether the WL82 loader really limits "erase sector"
+to exactly 4 KiB is an [Assumption] – the block check after each sector then stops immediately.
 
-Läuft als Skript (root über uboot.Runner + ROOT_HELPER, geprüfte Kopie) und als Modul (Planung, Tests, Bericht).
+Runs as a script (root via uboot.Runner + ROOT_HELPER, verified copy) and as a module (planning, tests, report).
 """
 from __future__ import annotations
 
@@ -45,18 +45,18 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 if __package__:
     from . import flashmodel as fm
-else:                                   # als Skript: flashmodel.py liegt daneben (Quellbaum oder geprüfte root-Kopie)
+else:                                   # as a script: flashmodel.py sits next to it (source tree or verified root copy)
     sys.path.insert(0, str(HERE))
     import flashmodel as fm             # noqa: E402
 
 SECTOR = fm.SECTOR
 BLOCK64 = 0x10000
-ZONE = (fm.V15_END, 0xA9000)            # 0x93000–0xA8FFF: was V16 über V15-Größe hinaus schreibt [Paket]
+ZONE = (fm.V15_END, 0xA9000)            # 0x93000–0xA8FFF: what V16 writes beyond the V15 size [Pkg]
 BLANK = b"\xff" * SECTOR
-# Bluetooth-Sektor beider Layouts [Paket] – liegt außerhalb der Zone, wird trotzdem hart geprüft
+# Bluetooth sector of both layouts [Pkg] – lies outside the zone, still checked strictly
 BTIF = [(0xE9000, 0xEA000, "Bluetooth-Daten (V15-Aufbau)"), (0xEC000, 0xED000, "Bluetooth-Daten (V16-Aufbau)")]
 FORBIDDEN = list(fm.NEVER_ERASE) + BTIF
-RESUME_MIN_BYTES = 16                   # halb gelöschter Sektor: so viele Nicht-0xFF-Bytes müssen ihn tragen
+RESUME_MIN_BYTES = 16                   # half-erased sector: this many non-0xFF bytes must still carry it
 UNTESTED = "am echten Gerät ungetestet"
 
 EXIT_OK, EXIT_REFUSED, EXIT_FAIL, EXIT_DANGER = 0, 10, 11, 12
@@ -64,16 +64,16 @@ JOURNAL_NAME = "reste-journal.json"
 
 
 class Refused(Exception):
-    """Regel verletzt – es wurde nichts gelöscht"""
+    """Rule violated – nothing was erased"""
 
 
 class Abort(Exception):
-    """Abbruch mitten im Löschen (Fehler, Absturz-Simulation)"""
+    """Abort in the middle of erasing (error, crash simulation)"""
 
 
-# ----------------------------------------------------------------------------- harte Tore
+# ----------------------------------------------------------------------------- hard gates
 def gate(addr: int) -> None:
-    """einziges Tor für jeden Löschbefehl dieser Datei: ganzer Sektor in der Restzone, nichts Verbotenes"""
+    """single gate for every erase command in this file: whole sector in the leftover zone, nothing forbidden"""
     if not isinstance(addr, int) or addr % SECTOR:
         raise Refused(f"{addr!r} ist keine Sektorgrenze – abgelehnt.")
     lo, hi = addr, addr + SECTOR
@@ -84,10 +84,10 @@ def gate(addr: int) -> None:
             raise Refused(f"{fm.hx(addr)} berührt „{why}“ – wird nie gelöscht.")
 
 
-# ----------------------------------------------------------------------------- Erkennung
+# ----------------------------------------------------------------------------- detection
 def v16_kind(blk: bytes, addr: int, v16_refs, v16_pkgs=()) -> str:
-    """„voll“ (genau die V16-Bytes), „teilweise“ (abgebrochen geschrieben: jedes Nicht-0xFF-Byte bzw. jeder
-    Nicht-0xFF-Block gleicht V16) oder „“ (keine V16-Bytes)"""
+    """"voll" (exactly the V16 bytes), "teilweise" (partially written by an abort: every non-0xFF byte or every
+    non-0xFF block equals V16) or "" (no V16 bytes)"""
     if blk == BLANK or len(blk) != SECTOR:
         return ""
     h = fm.sha(blk)
@@ -109,8 +109,8 @@ def v16_kind(blk: bytes, addr: int, v16_refs, v16_pkgs=()) -> str:
 
 
 def half_erased(cur: bytes, orig: bytes) -> bool:
-    """cur kann aus orig durch einen unterbrochenen Löschvorgang entstanden sein: nur Bits 0→1, und noch genug Bytes
-    übrig, dass das kein Zufall neuer Daten ist"""
+    """cur may have come from orig through an interrupted erase: only bits 0→1, and enough bytes still
+    left that this is not coincidentally new data"""
     if len(cur) != len(orig) or cur == BLANK:
         return False
     nz = [i for i, b in enumerate(cur) if b != 0xFF]
@@ -119,14 +119,14 @@ def half_erased(cur: bytes, orig: bytes) -> bool:
 
 @dataclass
 class Plan:
-    ok: bool = False                                  # darf überhaupt gelöscht werden?
-    reason: str = ""                                  # warum nicht (Alltagssprache)
+    ok: bool = False                                  # may it be erased at all?
+    reason: str = ""                                  # why not (plain language)
     firmware: str = ""
     family: str = ""
     app_sha256: str = ""
     sectors: list = field(default_factory=list)       # [{"addr", "kind", "orig_file", "orig_sha256"}]
     skipped: list = field(default_factory=list)       # [{"addr", "why"}]
-    already_clean: int = 0                            # leere Sektoren in der Zone
+    already_clean: int = 0                            # blank sectors in the zone
 
     def addrs(self) -> list[int]:
         return [s["addr"] for s in self.sectors]
@@ -134,9 +134,9 @@ class Plan:
 
 def make_plan(dump: bytes, refs, v16_pkgs=(), journal: dict | None = None, backup_path: str = "",
               jread=None) -> Plan:
-    """Aufräum-Plan aus einem frisch gelesenen 1-MiB-Dump. journal: unfertiges Journal eines früheren Laufs
-    (für halb gelöschte Sektoren); jread(pfad) -> bytes liest dessen Sicherung. Wirft nie; Plan.ok sagt, ob gelöscht
-    werden darf."""
+    """Cleanup plan from a freshly read 1 MiB dump. journal: unfinished journal of an earlier run
+    (for half-erased sectors); jread(path) -> bytes reads its backup. Never raises; Plan.ok says whether erasing
+    is allowed."""
     p = Plan()
     if len(dump) != fm.FLASH_SIZE:
         p.reason = "Der Dump hat nicht genau 1 MiB – so wird nichts gelöscht."
@@ -204,7 +204,7 @@ def _journal_orig(j: dict, jread, cache) -> bytes | None:
     return orig if fm.sha(orig) == j.get("orig_sha256") else None
 
 
-# ----------------------------------------------------------------------------- Journal
+# ----------------------------------------------------------------------------- journal
 def load_journal(path: Path) -> dict | None:
     try:
         d = json.loads(Path(path).read_text("utf-8"))
@@ -214,7 +214,7 @@ def load_journal(path: Path) -> dict | None:
 
 
 def save_journal(path: Path, data: dict) -> None:
-    """atomar: neue Datei schreiben, fsync, umbenennen, Ordner fsync"""
+    """atomic: write new file, fsync, rename, fsync directory"""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".neu")
@@ -233,9 +233,9 @@ def save_journal(path: Path, data: dict) -> None:
         pass
 
 
-# ----------------------------------------------------------------------------- Ablauf am Gerät
+# ----------------------------------------------------------------------------- procedure on the device
 def _unbricker():
-    """vendor/unbricker/fm1_unbrick.py (unverändert) – neben diesem Skript (root-Kopie) oder im Quellbaum"""
+    """vendor/unbricker/fm1_unbrick.py (unmodified) – next to this script (root copy) or in the source tree"""
     try:
         import fm1_unbrick
         return fm1_unbrick
@@ -257,9 +257,9 @@ def _read2(fu, dev, addr: int, n: int) -> bytes:
 
 def execute(dev, fu, outdir: Path, refs, v16_pkgs=(), only: set | None = None, plan_only: bool = False,
             journal_path: Path | None = None, abort_after: int | None = None) -> dict:
-    """am geöffneten Gerät (fm1_unbrick.Fm1Device, echt oder Mock): sichern, planen, löschen, prüfen -> Ergebnis.
-    only: nur diese (vom Nutzer bestätigten) Sektoren – geschnitten mit dem frischen Plan.
-    abort_after: nur Mock – nach so vielen Löschbefehlen einen halb gelöschten Sektor und Abbruch simulieren."""
+    """on the opened device (fm1_unbrick.Fm1Device, real or mock): back up, plan, erase, verify -> result.
+    only: only these sectors (confirmed by the user) – intersected with the fresh plan.
+    abort_after: mock only – after this many erase commands, simulate a half-erased sector and an abort."""
     log = fu.log
     if abort_after is not None and not dev.mock:
         raise Refused("Absturz-Simulation gibt es nur mit dem Mock-FM-1.")
@@ -271,7 +271,7 @@ def execute(dev, fu, outdir: Path, refs, v16_pkgs=(), only: set | None = None, p
         res.update(kw)
         return res
 
-    dev.session = None                                # jede Ausführung ist eine eigene Sitzung mit eigener Sicherung
+    dev.session = None                                # every run is its own session with its own backup
     log.info("Schritt 1/5: Gerät prüfen (Chip-Key, Flash-ID)")
     fu.check_identity(dev, False)
     log.info("Schritt 2/5: Pflicht-Sicherung – ganzer Flash, zweimal gelesen und verglichen")
@@ -286,8 +286,8 @@ def execute(dev, fu, outdir: Path, refs, v16_pkgs=(), only: set | None = None, p
     if not plan.ok:
         log.info("Abgelehnt: %s Es wurde nichts gelöscht.", plan.reason)
         return finish(refused=plan.reason, ok=False, level="gelb")
-    # von oben nach unten: Löscht der Chip wider Erwarten einen ganzen 64-KiB-Block, trifft der erste (geprüfte) Fehlgriff
-    # den Block 0xA0000–0xAFFFF (Reste + gesicherte Daten) und nie das Firmware-Ende 0x90000–0x92FFF; danach hält die Blockprüfung an.
+    # top to bottom: if the chip unexpectedly erases a whole 64 KiB block, the first (verified) mishap hits
+    # block 0xA0000–0xAFFFF (leftovers + backed-up data) and never the firmware end 0x90000–0x92FFF; the block check then stops.
     todo = sorted((s for s in plan.sectors if only is None or s["addr"] in only), key=lambda s: s["addr"], reverse=True)
     if only is not None:
         for a in sorted(only - set(plan.addrs())):
@@ -305,7 +305,7 @@ def execute(dev, fu, outdir: Path, refs, v16_pkgs=(), only: set | None = None, p
             save_journal(journal_path, old)
         return finish(ok=True, level="gruen" if not plan.sectors else "gelb")
 
-    for s in todo:                                   # alle Tore vorab, bevor irgendetwas gelöscht wird
+    for s in todo:                                   # all gates up front, before anything is erased
         gate(s["addr"])
         fu._check_repairable(s["addr"], SECTOR)
     journal = {"schema": 1, "state": "laeuft", "app_sha256": plan.app_sha256, "started": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -332,7 +332,7 @@ def execute(dev, fu, outdir: Path, refs, v16_pkgs=(), only: set | None = None, p
                 fu.erase_repair_sector(dev, addr)
                 erases += 1
                 if abort_after is not None and erases >= abort_after:
-                    blk = dev.ldr.flash[addr:addr + SECTOR]          # Mock: halb gelöscht stehen lassen
+                    blk = dev.ldr.flash[addr:addr + SECTOR]          # mock: leave it half-erased
                     for i in range(0, SECTOR, 2):
                         blk[i] = dump[addr + i]
                     dev.ldr.flash[addr:addr + SECTOR] = blk
@@ -370,9 +370,9 @@ def execute(dev, fu, outdir: Path, refs, v16_pkgs=(), only: set | None = None, p
         return finish(ok=False, level="rot", error=str(e), journal=str(journal_path))
 
 
-# ----------------------------------------------------------------------------- Bericht (Alltagssprache)
+# ----------------------------------------------------------------------------- report (plain language)
 def report(res: dict):
-    """Ergebnis-Datei des Laufs -> flashmodel.Report mit Ampel"""
+    """Result file of the run -> flashmodel.Report with traffic light"""
     r = fm.Report(title=("Reste aufräumen – Plan" if res.get("plan_only") else "Reste aufräumen")
                   + (" (Simulation)" if res.get("mock") else ""))
     r.firmware = res.get("firmware", "")
@@ -419,16 +419,16 @@ def report(res: dict):
     return r
 
 
-# ----------------------------------------------------------------------------- Demo
+# ----------------------------------------------------------------------------- demo
 def demo_image() -> bytes:
-    """Mock-Flash für die Simulation: Demo-Melodee mit V16-Resten 0x97000–0xA8FFF, ein Sektor halb geschrieben,
-    davor Nutzerdaten in 0x93000–0x96FFF"""
+    """Mock flash for the simulation: demo Melodee with V16 leftovers 0x97000–0xA8FFF, one sector half-written,
+    user data in 0x93000–0x96FFF before it"""
     d = bytearray(fm.demo_dumps()["demo-v16-reste.bin"])
-    d[0x97000:0x97800] = b"\xff" * 0x800            # abgebrochener Update: die unteren Blöcke fehlen
+    d[0x97000:0x97800] = b"\xff" * 0x800            # aborted update: the lower blocks are missing
     return bytes(d)
 
 
-# ----------------------------------------------------------------------------- Kommandozeile
+# ----------------------------------------------------------------------------- command line
 def build_parser():
     ap = argparse.ArgumentParser(prog="restzone.py", description="V16-Reste 0x93000–0xA8FFF löschen (ROM-Bootmodus)")
     ap.add_argument("command", choices=["plan", "clean"])
@@ -491,7 +491,7 @@ def main(argv=None) -> int:
             fu.save_retained_ram(dev, out)
             res = execute(dev, fu, out, refs, pkgs, only, plan_only=args.command == "plan",
                           abort_after=args.mock_abort_after)
-            if dev.mock and args.mock_image:          # Simulation: der Mock-Flash überlebt als Datei bis zum nächsten Lauf
+            if dev.mock and args.mock_image:          # simulation: the mock flash survives as a file until the next run
                 Path(args.mock_image).write_bytes(bytes(dev.ldr.flash))
         finally:
             dev.close()

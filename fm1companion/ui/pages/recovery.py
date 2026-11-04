@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Rettung: FM-1 startet nicht, hängt im Update-Modus oder eine Installation wurde unterbrochen.
+"""Rescue: FM-1 doesn't start, hangs in update mode or an installation was interrupted.
 
-Stufe 1 – Update-Modus über USB-MIDI (Journal, richtiges Paket, eigener Loader).
-Stufe 2 – ROM-Bootmodus „WL82 UBOOT1.00“ (MvaveFM1Unbricker + jl-uboot-tool, root über pkexec).
-Stufe 3 – FM-1 Transporter (Hardware: RP2040-Board an den USB-Datenleitungen).
-Grundlagen und Quellen: docs/flash-protocol.md.
+Level 1 – update mode via USB MIDI (journal, correct package, own loader).
+Level 2 – ROM boot mode “WL82 UBOOT1.00” (MvaveFM1Unbricker + jl-uboot-tool, root via pkexec).
+Level 3 – FM-1 Transporter (hardware: RP2040 board on the USB data lines).
+Background and sources: docs/flash-protocol.md.
 """
 from __future__ import annotations
 
@@ -143,7 +143,7 @@ class RecoveryPage(QWidget):
         self.details["basics"] = Disclosure(_("Details: basics"), BASICS)
         lay.addWidget(self.details["basics"])
 
-        # ---- Stufe 1
+        # ---- Level 1
         c1 = Card(_("Stage 1 – update mode: finish installation"))
         self.status = self._label("")
         self.status.setObjectName("rettungStatus")
@@ -163,7 +163,7 @@ class RecoveryPage(QWidget):
         c1.layout().addWidget(self.details["update"])
         lay.addWidget(c1)
 
-        # ---- Stufe 2
+        # ---- Level 2
         c2 = Card(_("Stage 2 – ROM boot mode “WL82 UBOOT1.00”"))
         c2.layout().addWidget(self._label(
             _("<b>Symptom:</b> black screen, no MIDI device, the computer shows a USB drive "
@@ -212,7 +212,7 @@ class RecoveryPage(QWidget):
         c2.layout().addWidget(self.details["uboot"])
         lay.addWidget(c2)
 
-        # ---- Stufe 3
+        # ---- Level 3
         c3 = Card(_("Stage 3 – FM-1 Transporter (hardware)"))
         c3.layout().addWidget(self._label(TIER3_SHORT + STEPS_TIER3))
         b_guide = QPushButton(icon("help-contents"), _("Open Transporter guide"))
@@ -223,7 +223,7 @@ class RecoveryPage(QWidget):
         c3.layout().addWidget(self.details["tier3"])
         lay.addWidget(c3)
 
-        # ---- Ist mein FM-1 sauber?
+        # ---- Is my FM-1 clean?
         from ..clean_check import CleanCheckCard
         self.clean = CleanCheckCard(ctx, self, window, sim=lambda: self.chk_sim.isChecked(), runner=self._runner)
         lay.addWidget(self.clean)
@@ -245,7 +245,7 @@ class RecoveryPage(QWidget):
         lab.setOpenExternalLinks(True)
         return lab
 
-    # ------------------------------------------------------------ Zustand
+    # ------------------------------------------------------------ State
     def activate(self):
         self.timer.start(1500)
         self.refresh()
@@ -257,7 +257,7 @@ class RecoveryPage(QWidget):
         self.timer.stop()
 
     def update_port(self):
-        """ein angeschlossenes FM-1 im Update-Modus (aktiv oder in der Liste)"""
+        """a connected FM-1 in update mode (active or in the list)"""
         c = self.ctx
         if c.port and (c.port.update_mode or c.protocol == "update"):
             return c.port
@@ -282,7 +282,7 @@ class RecoveryPage(QWidget):
                                                                   product=act.get('product', ''),
                                                                   phase=act.get('phase', '')))
         self.status.setText("<br>".join(lines))
-        # Knöpfe der Stufe 1: nur mit einem wartenden Gerät – und „Original-V15“ nur, wenn der Loader sie annimmt
+        # level 1 buttons: only with a waiting device – and “Original V15” only if the loader accepts it
         wait_hint = _("Only possible once an FM-1 in update mode is detected (see status above).")
         self.b_finish.setEnabled(bool(port))
         self.b_finish.setToolTip((_("Writes the package of the interrupted installation (according to the journal) – "
@@ -318,7 +318,7 @@ class RecoveryPage(QWidget):
         txt += "<br>" + (_("Tool jl-uboot-tool: present (checked before every start).") if ready else
                          _("Tool jl-uboot-tool: not fetched yet – first “Fetch tool”."))
         self.uboot_status.setText(txt)
-        # Knöpfe der Stufe 2: Simulation geht immer (Übung); echt nur mit Werkzeug und genau einem Gerät
+        # level 2 buttons: simulation always works (practice); real only with the tool and exactly one device
         sim = self.chk_sim.isChecked()
         self.b_setup.setToolTip(_("Fetches kagaimiq's jl-uboot-tool once at the checked state – nothing is changed on "
                                   "the FM-1.") + ("" if not ready else " " + _("Already present; fetching again only "
@@ -348,7 +348,7 @@ class RecoveryPage(QWidget):
         elif self.b_dump.toolTip() == self._dump_needs:
             self.b_dump.setToolTip(self._dump_tip)
 
-    # ------------------------------------------------------------ Stufe 1
+    # ------------------------------------------------------------ Level 1
     def _package_for(self, ident: str, stock: bool, choose: bool) -> Path | None:
         if stock:
             sp = firmware.spec("stock-v15")
@@ -381,7 +381,7 @@ class RecoveryPage(QWidget):
                              "interrupted installation.").format(identity=ident_now, loader=_loader_kind(ident_now)))
                 return False
         else:
-            # das Paket schon hier prüfen – der Nutzer sieht vor dem Klick, was gesendet würde
+            # check the package right here – the user sees before clicking what would be sent
             try:
                 pre = fpk.analyze(Path(src))
             except fpk.PackageError as e:
@@ -474,7 +474,7 @@ class RecoveryPage(QWidget):
         self.refresh()
         return d.ok
 
-    # ------------------------------------------------------------ Stufe 2
+    # ------------------------------------------------------------ Level 2
     def _runner(self, log):
         return uboot.Runner(dry_run=self.chk_sim.isChecked(), log=log)
 
@@ -543,8 +543,8 @@ class RecoveryPage(QWidget):
         return d.ok
 
     def _one_uboot(self, title: str):
-        """genau EIN Gerät im ROM-Bootmodus (USB 4c4a:8057, WL82 UBOOT1.00) – sonst None (mit Meldung).
-        In der Simulation: (None, True)."""
+        """exactly ONE device in ROM boot mode (USB 4c4a:8057, WL82 UBOOT1.00) – otherwise None (with message).
+        In simulation: (None, True)."""
         if self.chk_sim.isChecked():
             return None, True
         devs = uboot.scan()
@@ -657,7 +657,7 @@ class RecoveryPage(QWidget):
 
 
 def _loader_kind(ident: str) -> str:
-    """welcher Update-Loader wartet – in Worten (nur Anzeige)"""
+    """which update loader is waiting – in words (display only)"""
     if fpk.OPEN_LOADER_RE.match(ident or ""):
         return _("the update loader of the M-VAVE FM1 Open (only accepts the package of exactly its build)")
     if (ident or "").startswith("ota-FM-1_9"):
@@ -666,8 +666,8 @@ def _loader_kind(ident: str) -> str:
 
 
 def repair_done_text(verdict: dict, sim: bool = False) -> str:
-    """Abschluss von „Einstellungen reparieren“. Nur nach rc 0 – dann hat rescuegate an der Sicherung desselben Laufs
-    den V15-Aufbau festgestellt, und die Tore des Unbrickers lassen nur 0x93000–0xE8FFF und 0xFC000–0xFEFFF zu."""
+    """Completion of “Repair settings”. Only after rc 0 – then rescuegate has detected the V15 layout on the backup of
+    the same run, and the unbricker's gates only allow 0x93000–0xE8FFF and 0xFC000–0xFEFFF."""
     if sim:
         return _("Simulation finished – nothing was written on the FM-1.")
     verdict = rescue_texts.verdict(verdict)          # rescuegate.py (pinned) writes German -> UI language
@@ -682,7 +682,7 @@ def repair_done_text(verdict: dict, sim: bool = False) -> str:
 
 
 def _gate_check(runner, rc: int):
-    """wie _check, aber mit dem Grund der Sperre (rescuegate.py), wenn sie abgelehnt hat"""
+    """like _check, but with the reason for the block (rescuegate.py) if it refused"""
     from ...flash import rescuegate
     res = runner.last_verdict() if hasattr(runner, "last_verdict") else {}
     if rc == rescuegate.EXIT_REFUSED or (rc != 0 and res.get("refused")):
@@ -699,7 +699,7 @@ def _gate_check(runner, rc: int):
 
 
 def _check(rc: int, runner=None):
-    if rc != 0 and getattr(runner, "hint", ""):      # z. B. UCUN-Flash (0xB36014): Rettung kennt ihn noch nicht
+    if rc != 0 and getattr(runner, "hint", ""):      # e.g. UCUN flash (0xB36014): rescue doesn't know it yet
         raise RuntimeError(runner.hint)
     if rc != 0:
         raise RuntimeError(_("The tool reports an error (code {code}) – details in the log. {hint}").format(

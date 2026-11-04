@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Das SysEx-Protokoll der Felucca-Familie (Felucca, Melodee, Skiff, SLOOP).
+"""The SysEx protocol of the Felucca family (Felucca, Melodee, Skiff, SLOOP).
 
-Anfrage:  F0 7D 46 4C <cmd> <args...> F7   ("FL", nicht-kommerzielle ID 7D)
-Antwort:  derselbe Kopf, dasselbe <cmd>, danach die Nutzdaten (alles 7 Bit).
+Request:  F0 7D 46 4C <cmd> <args...> F7   ("FL", non-commercial ID 7D)
+Reply:    the same header, the same <cmd>, then the payload (all 7-bit).
 
-Quelle: web/EDITOR_PROTOCOL.md und firmware/src/editor*.c im Melodee-Repo.
+Source: web/EDITOR_PROTOCOL.md and firmware/src/editor*.c in the Melodee repo.
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ class Cmd:
     AUDIO_STATS = 72
     PATTERN = 73
     BANK_SONG = 74
-    RESOURCES = 82      # Melodee ab 1.6: Ressourcen (Argument 0 = Status, nur lesen)
+    RESOURCES = 82      # Melodee 1.6+: resources (argument 0 = status, read only)
 
 
 class ProtocolError(Exception):
@@ -64,7 +64,7 @@ def unframe(data) -> tuple[int, list[int]] | None:
 # ------------------------------------------------------------ numbers ---
 
 def u32(n: int) -> list[int]:
-    """32 Bit als 5 × 7 Bit, LSB zuerst (das letzte Byte 0..15)."""
+    """32 bits as 5 × 7 bits, LSB first (the last byte 0..15)."""
     n &= 0xFFFFFFFF
     return [(n >> (i * 7)) & (15 if i == 4 else 127) for i in range(5)]
 
@@ -76,7 +76,7 @@ def r32(a, off: int = 0) -> int:
 
 
 def v14(n: int) -> list[int]:
-    """vorzeichenbehaftet 14 Bit mit Versatz 8192, LSB zuerst (wie Firmware ed_rv / Editor v14enc)."""
+    """signed 14 bits with offset 8192, LSB first (like firmware ed_rv / editor v14enc)."""
     u = max(-8192, min(8191, int(round(n)))) + 8192
     return [u & 127, u >> 7]
 
@@ -86,7 +86,7 @@ def r14(a, off: int = 0) -> int:
 
 
 def pack7(data: bytes) -> list[int]:
-    """Gruppen zu 7 Bytes, jeweils mit ihren obersten Bits vorneweg."""
+    """Groups of 7 bytes, each with their top bits up front."""
     out = []
     for i in range(0, len(data), 7):
         g = data[i:i + 7]
@@ -121,7 +121,7 @@ def crc32(data: bytes) -> int:
 
 
 class Reader:
-    """liest Bytes, NUL-terminierte Strings und 14-Bit-Werte aus einer Antwort."""
+    """reads bytes, NUL-terminated strings and 14-bit values from a reply."""
 
     def __init__(self, a):
         self.a = list(a)
@@ -168,7 +168,7 @@ class Info:
 
     @property
     def firmware_name(self) -> str:
-        """Melodee meldet "MELODEE v…", SLOOP "FELUCCA SLOOP …", Skiff (wie das Original) "FELUCCA v…"."""
+        """Melodee reports "MELODEE v…", SLOOP "FELUCCA SLOOP …", Skiff (like the original) "FELUCCA v…"."""
         v = self.version.lower()
         for name in ("melodee", "sloop", "skiff", "orbit", "x0x", "loom", "choralroot", "jiant"):
             if name in v:
@@ -192,7 +192,7 @@ def parse_info(a) -> Info:
         if r.more():
             info.ntrk = r.b()
     except ProtocolError:
-        pass                                 # ältere / andere Firmware: nur die Version
+        pass                                 # older / other firmware: version only
     return info
 
 
@@ -209,7 +209,7 @@ class SampleSlot:
 
 
 def parse_smp_info(a) -> tuple[int, list[SampleSlot]]:
-    """-> (Slot-Größe in KiB, Slots). Melodee 1.6: 0 Slots."""
+    """-> (slot size in KiB, slots). Melodee 1.6: 0 slots."""
     r = Reader(a)
     n = r.b()
     kib = r.b()
@@ -222,7 +222,7 @@ def parse_smp_info(a) -> tuple[int, list[SampleSlot]]:
     return kib, slots
 
 
-# Felder von AUDIO_STATS (72) je Schema – wie tools/usb_audio_stats.py von Melodee.
+# fields of AUDIO_STATS (72) per schema – like Melodee's tools/usb_audio_stats.py.
 AUDIO_STAT_NAMES = [
     "play_alt", "capture_alt", "play_rate", "capture_rate", "play_fill", "capture_fill",
     "play_underruns", "play_overruns", "capture_underruns", "capture_overruns", "bad_packets",
@@ -243,7 +243,7 @@ AUDIO_SCHEMAS = {
     5: AUDIO_STAT_NAMES + AUDIO_VOICE_FIELDS + AUDIO_CORE_FIELDS + AUDIO_MEMORY_FIELDS,
     6: AUDIO_STAT_NAMES + AUDIO_VOICE_FIELDS + AUDIO_CORE_FIELDS + AUDIO_MEMORY_FIELDS + AUDIO_PART_FIELDS,
 }
-# Anfrage-Flags (nur lesend; Bit 0 würde die Maxima zurücksetzen – nutzen wir nicht)
+# request flags (read only; bit 0 would reset the maxima – we do not use it)
 AUDIO_FLAGS_ALL = 2 | 4 | 8 | 16
 
 
@@ -251,7 +251,7 @@ def parse_audio_stats(a) -> dict:
     if not a or a[0] < 2:
         raise ProtocolError(_("unknown format of the audio statistics"))
     names = AUDIO_SCHEMAS.get(a[0])
-    if names is None:                       # neueres Schema: die bekannten Felder vorn lesen
+    if names is None:                       # newer schema: read the known fields at the front
         names = AUDIO_SCHEMAS[max(AUDIO_SCHEMAS)]
     vals = {"schema": a[0]}
     for i, name in enumerate(names):
@@ -264,13 +264,13 @@ def parse_audio_stats(a) -> dict:
     return vals
 
 
-# Gemeinsame User-Bibliothek (Befehl 80, Melodee ≥ 1.5): Liste aller Preset-Plätze
+# shared user library (command 80, Melodee ≥ 1.5): list of all preset slots
 CMD_LIBRARY = 80
 
 
 @dataclass
 class LibrarySlot:
-    slot: int          # 0-basiert (U001 = 0)
+    slot: int          # 0-based (U001 = 0)
     used: bool
     engine: int
     favorite: bool
@@ -283,7 +283,7 @@ class LibrarySlot:
 
 
 def parse_library_list(a) -> tuple[int, list[LibrarySlot]]:
-    """Antwort auf LIBRARY op 0 -> (Gesamtzahl Plätze, Einträge)."""
+    """Reply to LIBRARY op 0 -> (total number of slots, entries)."""
     r = Reader(a)
     op, lo, hi, rc = r.b(), r.b(), r.b(), r.b()
     if op != 0 or rc != 0:
@@ -314,9 +314,9 @@ def parse_pattern(a) -> PatternState:
 
 @dataclass
 class Step:
-    notes: list[int] = field(default_factory=list)   # bis zu 4 MIDI-Noten
+    notes: list[int] = field(default_factory=list)   # up to 4 MIDI notes
     time: int = 2                                     # 0 NOTE, 1 TIE, 2 REST
-    flags: int = 0                                    # 1 Akzent, 2 Slide
+    flags: int = 0                                    # 1 accent, 2 slide
     vel: int = 100
     chance: int = 100
 

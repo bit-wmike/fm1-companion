@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Beispieldaten für Demo und erste Schritte: ein paar synthetische Drum-Samples (WAV) – nur stdlib."""
+"""Sample data for the demo and first steps: a few synthetic drum samples (WAV) – stdlib only."""
 from __future__ import annotations
 
 import math
@@ -48,7 +48,7 @@ SOUNDS = {"Kick 01": _kick, "Snare 01": lambda: _noise(int(RATE * 0.3), 18, 0.35
 
 
 def create(folder: Path) -> list[Path]:
-    """legt die Beispiel-Samples an (vorhandene Dateien bleiben unangetastet)."""
+    """creates the sample files (existing files stay untouched)."""
     folder.mkdir(parents=True, exist_ok=True)
     out = []
     for name, fn in SOUNDS.items():

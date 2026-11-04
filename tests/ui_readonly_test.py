@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Schreibgeschützter Hauptordner (~/FM-1): Alle Seiten laden trotzdem, Fehler kommen als deutsche Meldung
-(kein Absturz, kein „[Errno 13]“). Wie im QA-Fall gibt es die Standard-Unterordner schon (Backups, Projekte …),
-neue (DX7, Presets, MIDI-Export, SoundFonts …) lassen sich nicht anlegen. Als root greifen Dateirechte nicht –
-deshalb verweigert der Test os.mkdir unter ~/FM-1 (EACCES).
+"""Read-only main folder (~/FM-1): all pages still load, errors come as readable messages
+(no crash, no "[Errno 13]"). As in the QA case the standard subfolders already exist (Backups, Projekte …),
+new ones (DX7, Presets, MIDI-Export, SoundFonts …) cannot be created. As root, file permissions do not apply –
+so the test refuses os.mkdir under ~/FM-1 (EACCES).
 
   flock /tmp/fm1c-ui.lock timeout 600 env QT_QPA_PLATFORM=offscreen python3 tests/ui_readonly_test.py
 """
@@ -108,30 +108,30 @@ def no_raw(texts) -> bool:
 
 def flow():
     from fm1companion.ui.pages import load_errors
-    check(not (RO / "DX7").exists(), "neue Unterordner lassen sich nicht anlegen")
+    check(not (RO / "DX7").exists(), "new subfolders cannot be created")
     mine = ("presets", "voices", "soundmodule", "compose", "project_view", "midi", "samples", "workshop",
             "recorder", "backup_browser", "devices", "discover", "help", "simulator", "projects")
     bad = [k for k, _ in load_errors if k in mine]
-    check(not bad, f"alle Seiten geladen (Fehler: {bad})")
+    check(not bad, f"all pages loaded (errors: {bad})")
     for k in mine:
-        check(w.page(k) is not None, f"Seite „{k}“ in der Seitenleiste")
+        check(w.page(k) is not None, f"page \"{k}\" in the sidebar")
     for k in list(w.specs):
         w.go(k)
         wait(150)
-    check(until(lambda: w.ctx.connected), "Demo-Gerät verbunden")
+    check(until(lambda: w.ctx.connected), "demo device connected")
     vp = w.page("voices")
     vp.scan()
-    check("Schreibrechte" in vp.state.text() and no_raw([vp.state.text()]), f"FM-Voices: deutscher Hinweis ({vp.state.text()[:60]})")
+    check("Schreibrechte" in vp.state.text() and no_raw([vp.state.text()]), f"FM Voices: readable hint ({vp.state.text()[:60]})")
     pp = w.page("presets")
     pp.refresh_library()
-    check(no_raw([pp.state.text(), pp.lib_empty.text()]), "Presets: kein „[Errno 13]“")
-    # Komponieren: Als MIDI speichern
+    check(no_raw([pp.state.text(), pp.lib_empty.text()]), "Presets: no \"[Errno 13]\"")
+    # Compose: save as MIDI
     cp = w.page("compose")
     boxes.clear()
     r = cp.save_midi(str(RO / "MIDI-Export" / "Idee.mid"))
     check(r is None and boxes and "nicht gespeichert" in boxes[-1] and no_raw(boxes),
-          f"Komponieren: MIDI-Export meldet den Fehler deutsch ({boxes[-1][:60] if boxes else '–'})")
-    # MIDI-Seite: Protokoll exportieren
+          f"Compose: MIDI export reports the error readably ({boxes[-1][:60] if boxes else '–'})")
+    # MIDI page: export the log
     mp = w.page("midi")
     boxes.clear()
     mon = getattr(mp, "monitor", None)
@@ -139,10 +139,10 @@ def flow():
     if target is not None:
         save_target["p"] = str(RO / "MIDI" / "log.txt")
         target.export()
-        check(boxes and no_raw(boxes) and "nicht gespeichert" in boxes[-1].lower(), "MIDI: Export-Fehler deutsch, kein Absturz")
+        check(boxes and no_raw(boxes) and "nicht gespeichert" in boxes[-1].lower(), "MIDI: export error readable, no crash")
     else:
-        check(False, "MIDI-Monitor-Export gefunden")
-    # Presets: Export in schreibgeschützten Ordner
+        check(False, "MIDI monitor export found")
+    # Presets: export into a read-only folder
     import fm1companion.presetlib as pl
     pp.lib_items = [pl.Preset(name="TEST", engine=12)] if hasattr(pl, "Preset") else []
     pp.fill()
@@ -150,14 +150,14 @@ def flow():
         pp.lib.topLevelItem(0).setSelected(True)
         boxes.clear()
         pp.export(str(RO / "Presets" / "x.fm1preset"))
-        check(boxes and no_raw(boxes), f"Presets: Export-Fehler deutsch ({boxes[-1][:60] if boxes else '–'})")
-    # Projekt-Ansicht: Datei schreiben
+        check(boxes and no_raw(boxes), f"Presets: export error readable ({boxes[-1][:60] if boxes else '–'})")
+    # project view: write a file
     pv = w.page("project_view")
     boxes.clear()
     ok = pv._write(RO / "neu" / "x.csv", lambda: (RO / "neu" / "x.csv").write_text("x"))
-    check(ok is False and boxes and no_raw(boxes), "Projekt-Ansicht: Schreibfehler deutsch")
+    check(ok is False and boxes and no_raw(boxes), "project view: write error readable")
     after = sorted(str(p) for p in RO.rglob("*"))
-    check(after == BEFORE, f"nichts im schreibgeschützten Ordner angelegt ({sorted(set(after) - set(BEFORE))[:3]})")
+    check(after == BEFORE, f"nothing created in the read-only folder ({sorted(set(after) - set(BEFORE))[:3]})")
     app.quit()
 
 
@@ -173,18 +173,18 @@ QTimer.singleShot(800, run)
 QTimer.singleShot(240000, app.quit)
 app.exec()
 fails = [r for r in results if not r[0]]
-# Ausnahmen aus Dateien des anderen Bereichs (Übersicht, Backups-Seite, ui/device.py) nur melden – sie stehen
-# als Integrationswunsch im Bericht; dieser Test prüft die Seiten dieses Bereichs.
+# exceptions from files of the other area (Overview, Backups page, ui/device.py) are only reported – they are
+# in the report as an integration request; this test checks the pages of this area.
 OTHER = ("ui/overview.py", "ui/backups_page.py", "ui/device.py", "ui/main_window.py", "ui/fm1_page.py",
          "ui/firmware_page.py", "ui/pages/recovery.py")
-foreign = [e for e in errors if any(f"fm1companion/{o}" in e.splitlines()[1] for o in OTHER)]   # äußerster Aufruf
+foreign = [e for e in errors if any(f"fm1companion/{o}" in e.splitlines()[1] for o in OTHER)]   # outermost call
 errors = [e for e in errors if e not in foreign]
 for e in foreign:
-    print("HINWEIS (anderer Bereich):\n" + e.strip().splitlines()[1] + "\n  " + e.strip().splitlines()[-1])
+    print("NOTE (other area):\n" + e.strip().splitlines()[1] + "\n  " + e.strip().splitlines()[-1])
 for e in errors:
-    print("AUSNAHME:\n" + e)
-print(f"{len(results) - len(fails)}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+    print("EXCEPTION:\n" + e)
+print(f"{len(results) - len(fails)}/{len(results)} passed, {len(errors)} exceptions")
 os.mkdir = _mkdir
 shutil.rmtree(home, ignore_errors=True)
 sys.stdout.flush()
-os._exit(1 if fails or errors else 0)    # ohne Qt-Aufräumen (WebEngine stürzt sonst beim Beenden ab)
+os._exit(1 if fails or errors else 0)    # without Qt cleanup (WebEngine crashes on exit otherwise)

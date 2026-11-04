@@ -56,11 +56,11 @@ reproduced; the app uses its own low-pass + interpolation (numpy). From int16 on
 
 ## Safety in the app
 
-1. "Lesen & sichern" (Read & back up): read the whole bank, store it as `.fm1s` (same format as the Workbench's
+1. "Read & back up": read the whole bank, store it as `.fm1s` (same format as the Workbench's
    "备份网页采样库" – back up web sample library) under Backups/<device>.
 2. Write only after a confirmation that names which slots will be replaced; before that the bank is read again,
    compared with the state at the time of reading (otherwise abort) and backed up once more.
 3. The bank is fully checked before erasing; after writing, everything is read back and compared byte for
-   byte. On abort/error: restore the backup ("Backup zurückspielen …" – Restore backup).
+   byte. On abort/error: restore the backup ("Restore backup …").
 
 Not tested on a real device – only against `tests/fm1open_sim.py` (modelled on transfer.c/samples.c).

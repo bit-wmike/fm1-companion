@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Simulator: FM-1-Firmwares im Rechner spielen.
+"""Simulator: play FM-1 firmwares on the computer.
 
-Mitgelieferte Simulatoren sind der C-Code der Firmware als WebAssembly (kein CPU-Emulator) – sie laufen
-im eingebetteten Browser oder, schneller auf dem Pi, in Firefox. Dazu Online-Simulatoren der Firmware-Liste.
-MIDI vom FM-1 (Tasten/Knöpfe) und von weiteren MIDI-Eingängen geht in den Simulator; der Ton lässt sich
-als WAV nach ~/FM-1/Aufnahmen aufnehmen.
+Bundled simulators are the firmware's C code as WebAssembly (no CPU emulator) – they run
+in the embedded browser or, faster on the Pi, in Firefox. Plus online simulators from the firmware list.
+MIDI from the FM-1 (keys/knobs) and from further MIDI inputs goes into the simulator; the sound can be
+recorded as WAV to ~/FM-1/Aufnahmen.
 """
 from __future__ import annotations
 
@@ -28,11 +28,11 @@ from ..common import fmt_secs, fmt_size, heading, icon
 from . import PageSpec
 from ...i18n import N_, _, ngettext, pgettext
 
-LEFT_MIN = 380          # linke Spalte: nie schmaler (Knöpfe, Adressfeld, Beschreibung)
+LEFT_MIN = 380          # left column: never narrower (buttons, address field, description)
 
 
 class WrapLabel(QLabel):
-    """umbrechendes Label, das die Spalte nicht breiter macht als sie ist (lange Wörter werden umbrochen)."""
+    """wrapping label that doesn't make the column wider than it is (long words are wrapped)."""
 
     def __init__(self, *a):
         super().__init__(*a)
@@ -44,7 +44,7 @@ class WrapLabel(QLabel):
 
 
 def _breakable(text: str) -> str:
-    """lange Zeichenketten (URLs, Commit-Hashes, Lizenz-Kürzel) an / - _ . @ umbrechbar machen"""
+    """make long strings (URLs, commit hashes, license abbreviations) breakable at / - _ . @"""
     return re.sub(r"([/\-_.@])(?=\S)", "\\1\u200b", text)
 
 
@@ -77,14 +77,14 @@ SIM_TEXTS = (
     N_("{name} missing"),
     N_("{name} damaged"),
 )
-SLOW_RATIO = 0.93      # Ton-Uhr / echte Uhr darunter: der Rechner schafft den Simulator nicht in Echtzeit
+SLOW_RATIO = 0.93      # sound clock / real clock below: the computer can't run the simulator in real time
 SETTINGS = {"latency": "interactive", "recent": [], "inputs": [], "fm1_keys": True, "last": ""}
 
 if web.HAVE_WEBENGINE:
     from PyQt6.QtWebEngineCore import QWebEngineScript, QWebEngineSettings
 
     class SimPage(web.RoutingPage):
-        """sammelt Konsolen-Meldungen (Fehlersuche, Tests)."""
+        """collects console messages (debugging, tests)."""
         console = pyqtSignal(int, str)
 
         def __init__(self, *a, **k):
@@ -100,7 +100,7 @@ if web.HAVE_WEBENGINE:
 
 class SimulatorPage(QWidget):
     navigate = pyqtSignal(str)
-    _midi = pyqtSignal(str, list)          # (Quelle, Bytes) aus MIDI-Threads in den GUI-Thread
+    _midi = pyqtSignal(str, list)          # (source, bytes) from MIDI threads into the GUI thread
 
     def __init__(self, ctx, window):
         super().__init__()
@@ -115,7 +115,7 @@ class SimulatorPage(QWidget):
         self.midi_count = 0
         self.inputs = sims.SystemInputs(lambda name, data: self._midi.emit("sys:" + name, data))
         self._midi.connect(self._on_midi)
-        self.popen = subprocess.Popen          # (für Tests austauschbar)
+        self.popen = subprocess.Popen          # (replaceable for tests)
 
         lay = QHBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -125,13 +125,13 @@ class SimulatorPage(QWidget):
         self.split = split
         lay.addWidget(split)
 
-        # ---- links: Bibliothek
+        # ---- left: library
         left = QWidget()
         ll = QVBoxLayout(left)
         ll.addWidget(heading(_("Simulator"), _("Play FM-1 firmwares on the computer – the real code of the "
                                             "firmware as WebAssembly. On the Pi it often runs more "
                                             "smoothly in Firefox.")))
-        # „Starten“ groß oben; Doppelklick/Enter in der Liste startet ebenfalls; „Stoppen“ nur, wenn einer läuft
+        # “Start” large at the top; double-click/Enter in the list also starts; “Stop” only when one is running
         row = QHBoxLayout()
         self.b_start = QPushButton(icon("media-playback-start"), _("Launch"))
         self.b_start.setProperty("variant", "primary")
@@ -173,7 +173,7 @@ class SimulatorPage(QWidget):
         urow.addWidget(b_url)
         ll.addLayout(urow)
 
-        # MIDI + Leistung
+        # MIDI + performance
         ll.addWidget(QLabel(_("<b>MIDI into the simulator</b>")))
         self.cb_fm1 = QCheckBox(_("Keys and knobs of the FM-1"))
         self.cb_fm1.setChecked(bool(self.cfg.get("fm1_keys", True)))
@@ -208,7 +208,7 @@ class SimulatorPage(QWidget):
         for c in (self.port_combo, self.lat_combo):
             c.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             c.setMinimumContentsLength(8)
-        for lab in left.findChildren(QLabel):          # (auch der Seitenkopf: nie breiter als die Spalte)
+        for lab in left.findChildren(QLabel):          # (also the page header: never wider than the column)
             if lab.wordWrap() and not isinstance(lab, WrapLabel):
                 lab.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
                 lab.setMinimumWidth(0)
@@ -220,7 +220,7 @@ class SimulatorPage(QWidget):
         scroll.setMinimumWidth(LEFT_MIN)
         split.addWidget(scroll)
 
-        # ---- rechts: Leiste + Simulator
+        # ---- right: bar + simulator
         right = QWidget()
         rl = QVBoxLayout(right)
         rl.setContentsMargins(0, 0, 0, 0)
@@ -236,9 +236,9 @@ class SimulatorPage(QWidget):
         self.b_rec.setShortcut("Ctrl+R")
         self.b_rec.setCheckable(True)
         self.b_rec.clicked.connect(self.toggle_record)
-        self.b_rec.setEnabled(False)                  # erst, wenn ein Simulator läuft
+        self.b_rec.setEnabled(False)                  # only once a simulator is running
         self.rec_label = QLabel("")
-        self.speed_label = QLabel("")                 # ehrliche Tempo-Anzeige: hält der Rechner Echtzeit?
+        self.speed_label = QLabel("")                 # honest tempo display: does the computer keep up with real time?
         self._slow = 0
         bar.addWidget(self.speed_label)
         bar.addWidget(self.rec_label)
@@ -251,7 +251,7 @@ class SimulatorPage(QWidget):
             rl.addWidget(msg, 1)
         else:
             self.bridge = MidiBridge(self)
-            self.gate = sims.OutGate()                   # pro geladener Seite neu gesetzt (start)
+            self.gate = sims.OutGate()                   # set anew per loaded page (start)
             self.bridge.out_filter = self._out_allowed
             self.bridge.extra_send = self._page_out
             self.bridge.blockedChanged.connect(self._blocked)
@@ -279,13 +279,13 @@ class SimulatorPage(QWidget):
         ctx.changed.connect(self._dev_changed)
         self._dev_changed()
 
-    # ------------------------------------------------------------ Web-Seite
+    # ------------------------------------------------------------ Web page
     def _replace_page(self):
-        """eigene Seite (Konsole mitschneiden, Ton ohne Klick erlauben, Host-Skript für Online-Seiten)."""
+        """own page (capture the console, allow sound without a click, host script for online pages)."""
         old = self.page
         page = SimPage(self, allow_remote=True)
         from PyQt6.QtWebChannel import QWebChannel
-        self.channel = QWebChannel(page)            # der alte Kanal gehört der alten Seite
+        self.channel = QWebChannel(page)            # the old channel belongs to the old page
         self.channel.registerObject("fm1midi", self.bridge)
         page.setWebChannel(self.channel)
         s = page.settings()
@@ -300,7 +300,7 @@ class SimulatorPage(QWidget):
         self.view.setPage(page)
         self.page = page
         web.track(page)
-        if hasattr(page, "loadingChanged"):          # Qt >= 6.2: erkennt auch Fehlerseiten sicher
+        if hasattr(page, "loadingChanged"):          # Qt >= 6.2: also reliably detects error pages
             page.loadingChanged.connect(self._loading)
         else:
             page.loadFinished.connect(self._loaded)
@@ -315,7 +315,7 @@ class SimulatorPage(QWidget):
             pass
 
     def _placeholder(self, title, text):
-        """Platzhalter in den Farben des Themas (hell/dunkel) statt einer weißen Fläche."""
+        """Placeholder in the theme's colors (light/dark) instead of a white area."""
         if not self.view:
             return
         pal = self.palette()
@@ -338,7 +338,7 @@ class SimulatorPage(QWidget):
             self._placeholder(_("No simulator started yet"),
                               _("Choose a simulator on the left and press “Launch”."))
 
-    # ------------------------------------------------------------ Bibliothek
+    # ------------------------------------------------------------ Library
     def fill_list(self):
         self.list.clear()
 
@@ -403,12 +403,12 @@ class SimulatorPage(QWidget):
                                "{repo}</a> · License: {license} · {size}</small>").format(
             title=s.title, version=s.version, description=s.description, url=src,
             repo=s.source_repo.replace("https://github.com/", ""), license=_breakable(s.license), size=fmt_size(s.size)))
-        # Build-Einzelheiten (Commit, Werkzeugkette, Datum) nur im Tooltip
+        # build details (commit, toolchain, date) only in the tooltip
         self.details.setToolTip(_("State: {ref} ({commit})\nBuilt: {date} with {toolchain}\nLicense: {license}").format(
             ref=s.ref, commit=s.commit, date=s.build_date[:10], toolchain=s.toolchain, license=s.license))
         self.b_ff.setEnabled(self.server is not None)
 
-    # ------------------------------------------------------------ Starten / Stoppen
+    # ------------------------------------------------------------ Start / stop
     def _url_for(self, s: sims.Sim, firefox=False) -> str:
         if s.online:
             return s.url
@@ -438,7 +438,7 @@ class SimulatorPage(QWidget):
         config.save()
         self.page.messages.clear()
         self.bridge.blocked = 0
-        # Editoren dürfen (nach einmaliger Zustimmung je Herkunft) mit dem FM-1 reden, Simulatoren nicht
+        # editors may talk to the FM-1 (after one-time consent per origin), simulators may not
         if s.online and s.kind == "editor":
             origin = sims.origin_of(s.url)
             if origin and not sims.origin_trusted(origin) and self.ask_origin(origin, s.title):
@@ -498,13 +498,13 @@ class SimulatorPage(QWidget):
                 "fm1-open": _("Just play a key (mouse, computer keyboard Z S X …, or on the FM-1).")}.get(s.key, "")
         text = (_("{title} is running (online).") if s.online else _("{title} is running.")).format(title=s.title)
         self.state.setText(f"{text} {hint}".strip())
-        # Melodee wartet auf „Switch on“: sobald eingeschaltet, den Hinweis aus der Statuszeile nehmen
+        # Melodee waits for “Switch on”: once switched on, remove the hint from the status line
         self._await_power = s.key == "melodee"
         self._slow = 0
         self.speed_timer.start()
 
     def open_with(self, url: str = "", title: str = "", kind: str = "emulator", **_kw):
-        """Sprung von anderen Seiten (Katalog): Online-Emulator/-Editor laden."""
+        """Jump from other pages (catalog): load an online emulator/editor."""
         if not url:
             return
         if not url.startswith(("http://", "https://")):
@@ -623,13 +623,13 @@ class SimulatorPage(QWidget):
             self.server.relay.publish(data)            # Firefox
         if not self.view or not self.current:
             return
-        if self.current.online:                        # Online-Seiten: über ihre Web-MIDI-Auswahl
+        if self.current.online:                        # online pages: via their Web MIDI selection
             self.bridge.inject("fm1-keys" if source == "fm1" else source, data)
         else:
             self.page.runJavaScript(f"window.__fm1sim&&__fm1sim.midi({json.dumps(data)})")
 
     def ask_origin(self, origin: str, title: str = "") -> bool:
-        """einmalige Rückfrage: darf diese Web-Seite Editor-Daten (SysEx) an das echte FM-1 senden?"""
+        """one-time prompt: may this web page send editor data (SysEx) to the real FM-1?"""
         from PyQt6.QtWidgets import QMessageBox
         box = QMessageBox(QMessageBox.Icon.Warning, _("Connect the online editor to the FM-1?"),
                           _("<b>{title}</b> is loaded from <b>{origin}</b> – a site on the internet that does not "
@@ -648,20 +648,20 @@ class SimulatorPage(QWidget):
         return box.clickedButton() is yes
 
     def _out_allowed(self, data) -> bool:
-        """Filter für jede Nachricht der Seite – prüft die AKTUELLE Adresse der Seite, nicht nur die beim Start."""
+        """Filter for every message of the page – checks the CURRENT address of the page, not only the one at start."""
         try:
             cur = self.page.url().toString() if self.page is not None else ""
-        except RuntimeError:                           # Seite schon abgebaut
+        except RuntimeError:                           # page already torn down
             cur = ""
         return self.gate.allowed(data, cur)
 
     def _page_out(self, port_id: str, data: list):
-        """MIDI aus einer Seite an das FM-1 (vorher durch bridge.out_filter = self._out_allowed / OutGate)."""
+        """MIDI from a page to the FM-1 (beforehand through bridge.out_filter = self._out_allowed / OutGate)."""
         if port_id == "fm1-out" and self.ctx.link is not None:
             self.ctx.link.send_midi(data)
 
     def _blocked(self, n: int):
-        """die Seite wollte etwas ans FM-1 schicken, das der Sicherheitsfilter nicht durchlässt – nicht still schlucken."""
+        """the page wanted to send something to the FM-1 that the safety filter doesn't let through – don't swallow it silently."""
         if n not in (1, 10, 100) and n % 1000:
             return
         s = self.current
@@ -676,7 +676,7 @@ class SimulatorPage(QWidget):
         self.state.setText(ngettext("{n} message of the page to the FM-1 held back ({reason}).",
                                     "{n} messages of the page to the FM-1 held back ({reason}).", n).format(n=n, reason=why))
 
-    # ------------------------------------------------------------ Aufnahme
+    # ------------------------------------------------------------ Recording
     def js(self, code, cb):
         if self.view:
             self.page.runJavaScript(code, cb)
@@ -729,7 +729,7 @@ class SimulatorPage(QWidget):
             self.js("(function(){var p=document.getElementById('poweron');return p?p.hidden:null})()", self._power_state)
 
     def _power_state(self, on):
-        """Melodee-Simulator: die Einschalt-Fläche ist weg -> Statuszeile ohne „Switch on drücken“"""
+        """Melodee simulator: the switch-on area is gone -> status line without “press Switch on”"""
         s = self.current
         if on is True and s is not None and getattr(self, "_await_power", False):
             self._await_power = False
@@ -738,8 +738,8 @@ class SimulatorPage(QWidget):
                                    title=s.title))
 
     def _show_speed(self, r):
-        """Vergleicht die Ton-Uhr des Simulators mit der echten Zeit (Messfenster 4 s). Erst nach zwei langsamen
-        Messungen in Folge warnen – ein einzelner Ruckler (z. B. beim Laden) soll nicht Alarm schlagen."""
+        """Compares the simulator's sound clock with real time (measurement window 4 s). Only warn after two slow
+        measurements in a row – a single stutter (e.g. while loading) should not raise an alarm."""
         ratio = r.get("ratio") if isinstance(r, dict) and r.get("running") else None
         if ratio is None:
             self._slow = 0
@@ -768,7 +768,7 @@ class SimulatorPage(QWidget):
                                             percent=pct))
 
     def _download(self, item) -> bool:
-        """WAV-Aufnahmen dieser Seite direkt nach ~/FM-1/Aufnahmen (ohne Dialog)."""
+        """WAV recordings of this page go directly to ~/FM-1/Aufnahmen (without a dialog)."""
         try:
             page = item.page()
         except Exception:
@@ -784,7 +784,7 @@ class SimulatorPage(QWidget):
         self.state.setText(_("Recording saved: {path}").format(path=folder / name))
         return True
 
-    # ------------------------------------------------------------ Seiten-Hooks
+    # ------------------------------------------------------------ Page hooks
     def _latency(self, _i):
         self.cfg["latency"] = self.lat_combo.currentData()
         config.save()

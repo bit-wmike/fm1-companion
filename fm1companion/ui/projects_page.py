@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Projekte: die 32 Plätze auf dem Gerät und die Projekt-Bibliothek auf dem Rechner."""
+"""Projects: the 32 slots on the device and the project library on the computer."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -32,7 +32,7 @@ class ProjectsPage(QWidget):
         split = QSplitter()
         lay.addWidget(split, 1)
 
-        # Gerät
+        # Device
         g = QGroupBox(_("On the FM-1"))
         self.dev_box = g
         gl = QVBoxLayout(g)
@@ -68,13 +68,13 @@ class ProjectsPage(QWidget):
         b_erase = QPushButton(icon("edit-clear", "edit-delete"), _("Clear slot …"))
         b_erase.setToolTip(_("Deletes the slot on the FM-1 – the app puts a copy into the library first"))
         b_erase.clicked.connect(self._erase)
-        # gruppiert: ansehen | sichern (nur lesen) | ändert das FM-1 – Kurztitel vorn in der Reihe (keine Extrazeilen)
+        # grouped: view | back up (read only) | changes the FM-1 – short title at the front of the row (no extra rows)
         gl.addWidget(flow_row(_section(_("View:")), self.b_view_slot, b_read))
         gl.addWidget(flow_row(_section(_("Back up:")), b_exp, b_all))
         gl.addWidget(flow_row(_section(_("Changes the FM-1:")), b_erase))
         split.addWidget(g)
 
-        # Bibliothek
+        # Library
         lg = QGroupBox(_("Library on the computer"))
         ll = QVBoxLayout(lg)
         self.search = QLineEdit()
@@ -124,10 +124,10 @@ class ProjectsPage(QWidget):
         g.setMinimumWidth(280)
         lg.setMinimumWidth(320)
         split.setStretchFactor(1, 2)
-        adaptive_splitter(split)                 # schmal: Plätze über der Bibliothek
+        adaptive_splitter(split)                 # narrow: slots above the library
         self.active = False
         self.reading = False
-        self._read_for = None                        # device_tag, für das die Plätze gelesen wurden
+        self._read_for = None                        # device_tag for which the slots were read
         ctx.changed.connect(self._dev_changed)
         self._titles()
         self.refresh_library()
@@ -141,7 +141,7 @@ class ProjectsPage(QWidget):
     def _dev_changed(self):
         self._titles()
         if self._read_for is not None and same_device(self._read_for, device_tag(self.ctx)) and self.slots:
-            return                                   # gleiches Gerät, nur neue Infos
+            return                                   # same device, just new info
         self.dev_tree.clear()
         self.slots = []
         self._read_for = None
@@ -150,7 +150,7 @@ class ProjectsPage(QWidget):
             self.read_slots(auto=True)
 
     def activate(self):
-        """Seite (Reiter) geöffnet: Plätze automatisch lesen – wie bei den Presets."""
+        """Page (tab) opened: read the slots automatically – like on the presets page."""
         self.active = True
         if self.ctx.connected and not self.slots and not self.reading:
             self.read_slots(auto=True)
@@ -158,7 +158,7 @@ class ProjectsPage(QWidget):
     def deactivate(self):
         self.active = False
 
-    # ------------------------------------------------------------ Gerät
+    # ------------------------------------------------------------ Device
     def read_slots(self, auto: bool = False):
         if auto:
             if not self.ctx.connected or self.reading:
@@ -188,7 +188,7 @@ class ProjectsPage(QWidget):
         self.progress.hide()
         self._read_for = tag or device_tag(self.ctx)
         self.slots, live = res
-        keep = self._slot()                          # Auswahl über das Neu-Lesen hinweg behalten
+        keep = self._slot()                          # keep the selection across re-reading
         self.dev_tree.clear()
         sloop = getattr(self.ctx, "firmware_key", "") == "sloop"
         self.dev_tree.setHeaderLabels(["Section" if sloop else pgettext("project slot", "Slot"), _("Used"), _("Size")])
@@ -224,7 +224,7 @@ class ProjectsPage(QWidget):
                                     _("Read the chosen slot from the FM-1 (read only) and open it in “View & Export”"))
 
     def _view_slot(self):
-        """Platz lesen und in der Ansicht zeigen (dort: abspielen auf dem FM-1, MIDI-Export)."""
+        """Read a slot and show it in the view (there: play on the FM-1, MIDI export)."""
         slot = self._slot()
         if slot is None:
             show_error(self, _("No slot chosen"), _("Please choose a used slot on the left."))
@@ -248,7 +248,7 @@ class ProjectsPage(QWidget):
         if win is not None and hasattr(win, "go") and win.page("project_view") is not None:
             win.go("project_view", **kw)
             return
-        from .pages.project_view import ProjectView           # ohne Hauptfenster (Tests): eigene Ansicht
+        from .pages.project_view import ProjectView           # without a main window (tests): own view
         self._pv = ProjectView(self.ctx)
         self._pv.open_with(**kw)
         self._pv.show()
@@ -291,7 +291,7 @@ class ProjectsPage(QWidget):
         got: list = []
 
         def work(w, link):
-            man = backup.list_objects(link)              # ein Inventar für alle (jedes LIST stoppt die Wiedergabe)
+            man = backup.list_objects(link)              # one inventory for all (every LIST stops playback)
             for i, (slot, name) in enumerate(items):
                 w.log.emit(f"{self._slot_word()} {self._slot_name(slot)} → {name}")
                 got.append(projects.export_slot(link, slot, folder, name, fw, dev, manifest=man))
@@ -360,7 +360,7 @@ class ProjectsPage(QWidget):
             self._got_slots(d.result_value)
         self.refresh_library()
 
-    # ------------------------------------------------------ Bibliothek
+    # ------------------------------------------------------ Library
     def refresh_library(self):
         self.lib.clear()
         q = self.search.text().lower().split()
@@ -410,7 +410,7 @@ class ProjectsPage(QWidget):
                          "do not match – nothing is written.").format(
                            name=pf.name, source=name_of.get(src_fam, src_fam), target=name_of.get(dst_fam, dst_fam)))
             return
-        if not self.slots and self.ctx.connected:           # Belegung erst lesen, damit die Bestätigung stimmt
+        if not self.slots and self.ctx.connected:           # read the occupancy first so the confirmation is accurate
             def read(w, link):
                 return projects.list_slots(link)
             d0 = self.ctx.job(self, _("Read slots"), read, close_on_success=True)
@@ -545,7 +545,7 @@ def _section(text: str) -> QLabel:
 
 
 def _row(*ws):
-    """Knopfreihe, die bei schmalem Fenster umbricht (None wird ignoriert)."""
+    """Button row that wraps when the window is narrow (None is ignored)."""
     h = FlowLayout()
     for w in ws:
         if w is not None:

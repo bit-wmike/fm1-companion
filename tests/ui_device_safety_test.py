@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Abnahme (p1): Gerät, Firmware, Rettung, Geräteverwaltung – Randfälle im Demo-Modus.
+"""Acceptance (p1): device, firmware, recovery, device management – edge cases in demo mode.
 
-Netz weg (urllib wirft), zwei Geräte gleichzeitig, Gerätewechsel mit offener Zustand-Seite, Geräte-Seite
-(Umbenennen mit Umlauten/langen/gleichen Namen, Vergessen, Kopieren), Assistent vor/zurück/abbrechen,
-Übersicht bei generischem Gerät und Update-Modus. Druckt „N/M bestanden“.
+Network gone (urllib raises), two devices at the same time, device switch with the Status page open, Devices page
+(renaming with umlauts/long/equal names, forgetting, copying), wizard forward/back/cancel,
+Overview with a generic device and update mode. Prints "N/M passed".
 
   flock /tmp/fm1c-ui.lock timeout 600 env QT_QPA_PLATFORM=offscreen python3 tests/ui_device_safety_test.py
 """
@@ -128,17 +128,17 @@ def flow():
     from fm1companion.flash import planner
     from fm1companion.ui import firmware_page as fp
     ctx = w.ctx
-    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1"), "Demo-Melodee verbunden")
+    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1"), "demo Melodee connected")
 
     # ---------------------------------------------------------------- Firmware offline
     w.go("firmware")
-    check(until(lambda: not w.firmware.loading, 60000), "Versionsliste (mit Netz) fertig geladen")
+    check(until(lambda: not w.firmware.loading, 60000), "version list (with network) finished loading")
     real_open = urllib.request.urlopen
 
     def offline(*a, **k):
         raise urllib.error.URLError("Network is unreachable")
     urllib.request.urlopen = offline
-    firmware._releases_from_tags = lambda sp: []          # git ls-remote würde sonst ins Netz gehen
+    firmware._releases_from_tags = lambda sp: []          # git ls-remote would otherwise go to the network
     for c in list((home / ".cache").rglob("releases-*.json")):
         c.unlink()
     try:
@@ -148,66 +148,66 @@ def flow():
         page.load_releases(force=True)
         ok = until(lambda: page.tree.topLevelItemCount() == 1 and "lade …" not in page.tree.topLevelItem(0).text(0), 20000)
         row = page.tree.topLevelItem(0).text(0) if page.tree.topLevelItemCount() else ""
-        check(ok and "Keine Versionen" in row and "online" in row, f"offline: verständliche Zeile statt „lade …“ ({row[:90]})")
+        check(ok and "Keine Versionen" in row and "online" in row, f"offline: understandable line instead of \"lade …\" ({row[:90]})")
         check(not page.b_install.isEnabled() and not page.b_dl.isEnabled() and "Neu laden" in page.b_install.toolTip(),
-              "offline: Installieren/Herunterladen aus, Tooltip erklärt")
-        # Zurück zum Original braucht kein Netz für die Versionsliste; der Download scheitert verständlich
+              "offline: Install/Download off, tooltip explains")
+        # Back to the original needs no network for the version list; the download fails understandably
         plan_ctl["accept"] = True
         log_boxes.clear()
         ok = page.return_to_original()
         log = plan_ctl["last_log"]
         tail = log.split("FEHLER:")[-1]
         check(not ok and "FEHLER" in log and "online" in tail and "nichts geändert" in tail,
-              f"offline: V15-Download scheitert verständlich ({tail.strip()[:100]})")
-        check(until(lambda: ctx.connected, 10000), "nach dem Fehlschlag wieder verbunden")
+              f"offline: V15 download fails understandably ({tail.strip()[:100]})")
+        check(until(lambda: ctx.connected, 10000), "connected again after the failure")
         page._resources()
         tail = plan_ctl["last_log"].split("FEHLER:")[-1]
         check(any("Version nicht in der Liste" in b for b in log_boxes[-1:]) or "online" in tail,
-              f"offline: Ressourcen nachschreiben scheitert verständlich ({tail.strip()[:80]})")
-        check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1", 10000), "wieder verbunden")
+              f"offline: rewriting resources fails understandably ({tail.strip()[:80]})")
+        check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1", 10000), "connected again")
     finally:
         urllib.request.urlopen = real_open
 
-    # ---------------------------------------------------------------- zwei Geräte gleichzeitig
+    # ---------------------------------------------------------------- two devices at the same time
     st = fp.device_state(ctx)
-    check(st.ports >= 2 and st.pinned, f"DEMO-1 und DEMO-2 angeschlossen, Ziel festgehalten ({st.ports}, {st.pinned})")
+    check(st.ports >= 2 and st.pinned, f"DEMO-1 and DEMO-2 plugged in, target pinned ({st.ports}, {st.pinned})")
     p = planner.plan_install(st, planner.Target.from_spec(firmware.spec("melodee"), tag="v1.6.0"))
-    check(p.ok and any("mehrere FM-1" in x for x in p.warnings), "zwei Geräte: Plan erlaubt mit Hinweis (Ziel am USB-Anschluss)")
-    # Umschalten während ein Job läuft: ctx.hold blockiert den Scan, Umschalten ist nicht möglich (modal)
+    check(p.ok and any("mehrere FM-1" in x for x in p.warnings), "two devices: plan allowed with a note (target at the USB port)")
+    # switching while a job runs: ctx.hold blocks the scan, switching is not possible (modal)
     ctx.hold = True
     ctx.scan()
-    check(ctx.port.serial == "DEMO-1", "hold: Scan wechselt das Gerät nicht")
+    check(ctx.port.serial == "DEMO-1", "hold: the scan does not switch the device")
     ctx.hold = False
 
-    # ---------------------------------------------------------------- Übersicht / Zustand bei DEMO-3 und Update-Modus
+    # ---------------------------------------------------------------- Overview / Status with DEMO-3 and update mode
     w.go("fm1")
     fm1 = w.page("fm1")
-    check(until(lambda: fm1.presets or "eingelesen" in fm1.live_state.text(), 15000), "Zustand: Melodee eingelesen")
+    check(until(lambda: fm1.presets or "eingelesen" in fm1.live_state.text(), 15000), "Status: Melodee read")
     ctx.connect_port(next(x for x in ctx.ports if x.serial == "DEMO-3"))
-    check(until(lambda: ctx.identity == "FM-1_900", 15000), "DEMO-3 (generisch) aktiv")
+    check(until(lambda: ctx.identity == "FM-1_900", 15000), "DEMO-3 (generic) active")
     check(not fm1.content.isVisible() and "ohne Editor-Protokoll" in fm1.none.text() and not fm1.timer.isActive(),
-          "Zustand bei generischem Gerät: Erklärung, keine Live-Abfragen")
+          "Status with a generic device: explanation, no live queries")
     w.go("overview")
     ov = w.overview
     check("unbekannt" in ov.lbl["Firmware"].text() and "nur MIDI" in ov.lbl["Verbindung"].text()
           and not ov.b_backup.isEnabled() and "Editor-Protokoll" in ov.b_backup.toolTip(),
-          f"Übersicht bei DEMO-3: Firmware unbekannt, nur MIDI, Backup aus ({ov.lbl['Firmware'].text()})")
-    check("unbekannt" in ov.up_text.text().lower(), f"Übersicht: Firmware-Karte erklärt ({ov.up_text.text()[:60]})")
+          f"Overview with DEMO-3: firmware unknown, MIDI only, backup off ({ov.lbl['Firmware'].text()})")
+    check("unbekannt" in ov.up_text.text().lower(), f"Overview: the firmware card explains ({ov.up_text.text()[:60]})")
     ctx.disconnect("FM-1 getrennt")
     ctx.hold = True
     wait(200)
     check(all(ov.lbl[k].text() == "–" for k in ("Name", "Firmware", "Version", "Seriennummer", "USB"))
           and "kein FM-1" in ov.lbl["Verbindung"].text() and fm1.none.text() == "Kein FM-1 verbunden.",
-          "getrennt: Übersicht und Zustand zeigen „–“")
+          "disconnected: Overview and Status show \"–\"")
     ctx.hold = False
-    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1", 15000), "wieder verbunden (DEMO-1)")
+    check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1", 15000), "connected again (DEMO-1)")
     w.go("fm1")
-    check(until(lambda: "eingelesen" in fm1.live_state.text() or fm1.timer.isActive(), 15000), "Zustand liest neu")
+    check(until(lambda: "eingelesen" in fm1.live_state.text() or fm1.timer.isActive(), 15000), "Status reads again")
     w.go("overview")
     wait(300)
-    check(not fm1.timer.isActive() and fm1.held_link is None, "Live-Werte stoppen beim Verlassen der Seite")
+    check(not fm1.timer.isActive() and fm1.held_link is None, "live values stop when leaving the page")
 
-    # ---------------------------------------------------------------- Geräte-Seite
+    # ---------------------------------------------------------------- Devices page
     w.go("devices")
     dv = w.page("devices")
     prof = ctx.profile
@@ -215,22 +215,22 @@ def flow():
     dv.refresh()
     dv.rename(prof.id, "Mein Studio – Gerät ÄÖÜß")
     check(prof.name == "Mein Studio – Gerät ÄÖÜß" and (Path(s.user_root) / "Backups" / prof.folder_name).is_dir(),
-          f"Umbenennen mit Umlauten ({prof.folder_name})")
+          f"renaming with umlauts ({prof.folder_name})")
     long = "L" * 300
     dv.rename(prof.id, long)
-    check(prof.name == long and len(prof.folder_name.encode()) <= 100, "sehr langer Name: Ordner gekürzt")
+    check(prof.name == long and len(prof.folder_name.encode()) <= 100, "very long name: folder shortened")
     log_boxes.clear()
     dv.rename(prof.id, "zweites gerät")
-    check(prof.name == long and any("schon vergeben" in b for b in log_boxes), "gleicher Name wie anderes Gerät: abgelehnt")
+    check(prof.name == long and any("schon vergeben" in b for b in log_boxes), "same name as another device: refused")
     dv.rename(prof.id, "FM-1 A")
     other = next(x for x in ctx.store.profiles.values() if x.id != prof.id)
-    check(not dv.forget(prof.id, ask=False) and prof.id in ctx.store.profiles, "aktives Profil lässt sich nicht vergessen")
-    check(not dv.b_copy.isEnabled() or dv.a.currentData() != prof.id, "Kopieren: A = Ziel ist gesperrt")
+    check(not dv.forget(prof.id, ask=False) and prof.id in ctx.store.profiles, "the active profile cannot be forgotten")
+    check(not dv.b_copy.isEnabled() or dv.a.currentData() != prof.id, "copying: A = target is locked")
     comp, ok = dv.copy(other.id)
-    check(not ok and any("kein Backup" in b for b in log_boxes[-1:]), "Kopieren ohne Backup der Quelle: klare Meldung")
-    check(dv.forget(other.id, ask=False) and other.id not in ctx.store.profiles, "fremdes Profil vergessen")
+    check(not ok and any("kein Backup" in b for b in log_boxes[-1:]), "copying without a backup of the source: clear message")
+    check(dv.forget(other.id, ask=False) and other.id not in ctx.store.profiles, "another profile forgotten")
 
-    # ---------------------------------------------------------------- Einrichtungs-Assistent
+    # ---------------------------------------------------------------- setup wizard
     from fm1companion.ui.wizard import FirstRunWizard
     wz = FirstRunWizard(ctx, w)
     wz.show()
@@ -238,27 +238,27 @@ def flow():
     for _ in ids[:-1]:
         wz.next()
         app.processEvents()
-    check(wz.currentId() == ids[-1], "Assistent: bis zur letzten Seite")
+    check(wz.currentId() == ids[-1], "wizard: to the last page")
     for _ in ids[:-1]:
         wz.back()
-    check(wz.currentId() == ids[0], "Assistent: ganz zurück")
+    check(wz.currentId() == ids[0], "wizard: all the way back")
     wz.next()
     wz.p_folder.edit.setText("/proc/fm1c-nicht-beschreibbar")
     log_boxes.clear()
     wz.next()
     check(wz.currentPage() is wz.p_folder and any("nicht beschreibbar" in b or "nicht anlegen" in b for b in log_boxes),
-          "Assistent: unbeschreibbarer Hauptordner wird abgelehnt")
+          "wizard: a non-writable main folder is refused")
     wz.p_folder.edit.setText(s.user_root)
     wz.next()
     wz.next()
     wz.next()
-    check("Gefunden" in wz.p_device.state.text(), f"Assistent erkennt das Gerät ({wz.p_device.state.text()[:60]})")
+    check("Gefunden" in wz.p_device.state.text(), f"wizard detects the device ({wz.p_device.state.text()[:60]})")
     wz.reject()
-    check(not wz.isVisible(), "Assistent abgebrochen")
+    check(not wz.isVisible(), "wizard cancelled")
     wz2 = FirstRunWizard(ctx, w)
-    check(wz2.pageIds() == ids, "Assistent erneut öffnen")
+    check(wz2.pageIds() == ids, "open the wizard again")
     wz2.reject()
-    for x in (wz, wz2):                 # vor dem Fenster abbauen (sonst Absturz beim Beenden)
+    for x in (wz, wz2):                 # tear down before the window (otherwise a crash on quit)
         x.setParent(None)
         x.deleteLater()
     wait(200)
@@ -278,8 +278,8 @@ QTimer.singleShot(400000, app.quit)
 app.exec()
 fails = [r for r in results if not r[0]]
 for e in errors:
-    print("AUSNAHME:\n" + e)
-print(f"{len(results) - len(fails)}/{len(results)} bestanden, {len(errors)} Ausnahmen")
+    print("EXCEPTION:\n" + e)
+print(f"{len(results) - len(fails)}/{len(results)} passed, {len(errors)} exceptions")
 import shutil as _sh
 _sh.rmtree(home, ignore_errors=True)
 sys.exit(1 if fails or errors else 0)

@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""ALSA-Sequencer: MIDI-Anschlüsse auflisten und verbinden (wie ``aconnect``).
+"""ALSA sequencer: list and connect MIDI ports (like ``aconnect``).
 
-Gelesen wird ``/proc/asound/seq/clients`` (enthält auch, ob ein Port senden/empfangen kann);
-fehlt die Datei, die Ausgabe von ``aconnect -l`` (+ ``-i``/``-o`` für die Richtung).
-Verbunden/getrennt wird mit ``aconnect SENDER EMPFÄNGER`` bzw. ``aconnect -d …`` (alsa-utils).
+Reads ``/proc/asound/seq/clients`` (which also says whether a port can send/receive);
+if that file is missing, the output of ``aconnect -l`` (+ ``-i``/``-o`` for the direction).
+Connecting/disconnecting uses ``aconnect SENDER RECEIVER`` or ``aconnect -d …`` (alsa-utils).
 
-Die FM-1-Verbindung der App selbst läuft über rtmidi: rtmidi legt dafür eigene Clients
-("RtMidiIn Client"/"RtMidiOut Client" o. ä.) an und verbindet sie mit dem FM-1. Diese
-Verbindungen gehören der App und werden hier nur angezeigt.
+The app's own FM-1 connection runs over rtmidi: rtmidi creates its own clients for it
+("RtMidiIn Client"/"RtMidiOut Client" or similar) and connects them to the FM-1. These
+connections belong to the app and are only displayed here.
 """
 from __future__ import annotations
 
@@ -31,10 +31,10 @@ class SeqPort:
     name: str
     client_name: str
     kernel: bool = False
-    readable: bool = True          # kann senden (Quelle)
-    writable: bool = True          # kann empfangen (Ziel)
-    to: list[str] = field(default_factory=list)       # "c:p", wohin dieser Port sendet
-    frm: list[str] = field(default_factory=list)      # "c:p", wer an ihn sendet
+    readable: bool = True          # can send (source)
+    writable: bool = True          # can receive (destination)
+    to: list[str] = field(default_factory=list)       # "c:p" this port sends to
+    frm: list[str] = field(default_factory=list)      # "c:p" that sends to this port
 
     @property
     def addr(self) -> str:
@@ -82,7 +82,7 @@ def parse_proc(text: str) -> list[SeqPort]:
 
 
 def parse_aconnect(text: str, readable: set[str] | None = None, writable: set[str] | None = None) -> list[SeqPort]:
-    """``aconnect -l``; readable/writable: Adressen aus ``aconnect -i`` / ``-o`` (sonst: beides)."""
+    """``aconnect -l``; readable/writable: addresses from ``aconnect -i`` / ``-o`` (otherwise: both)."""
     ports: list[SeqPort] = []
     cid, cname, kernel = None, "", False
     cur: SeqPort | None = None
@@ -116,7 +116,7 @@ def aconnect_exe() -> str | None:
 
 
 def list_ports() -> list[SeqPort]:
-    """alle Sequencer-Ports (leer, wenn es kein ALSA gibt)."""
+    """all sequencer ports (empty if there is no ALSA)."""
     try:
         return parse_proc(PROC.read_text("utf-8", "replace"))
     except OSError:
@@ -174,12 +174,12 @@ def find(ports: list[SeqPort], pattern: str, readable: bool | None = None) -> Se
     return None
 
 
-# ------------------------------------------------------------- Vorlagen ---
+# ------------------------------------------------------------- presets ---
 @dataclass
 class Preset:
-    """Verbindungen nach Namen (Client-Nummern ändern sich beim Einstecken)."""
+    """Connections by name (client numbers change when devices are plugged in)."""
     name: str
-    pairs: list[tuple[str, str]]          # (Sender-Name, Empfänger-Name) als "Client: Port"
+    pairs: list[tuple[str, str]]          # (sender name, receiver name) as "Client: Port"
 
     def to_json(self) -> dict:
         return {"name": self.name, "pairs": [list(p) for p in self.pairs]}
@@ -204,7 +204,7 @@ def capture(name: str, ports: list[SeqPort], pairs: set[tuple[str, str]] | None 
 
 
 def resolve(preset: Preset, ports: list[SeqPort]) -> tuple[list[tuple[str, str]], list[str]]:
-    """-> (Adress-Paare, fehlende Ports)."""
+    """-> (address pairs, missing ports)."""
     by = {port_key(p): p.addr for p in ports}
     pairs, missing = [], []
     for s, d in preset.pairs:

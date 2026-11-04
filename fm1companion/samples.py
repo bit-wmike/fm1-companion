@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Sample-Bibliothek, Bearbeitung, Kit-Baukasten und Upload in die Slots.
+"""Sample library, editing, kit builder and upload into the slots.
 
-* Bibliothek: durchsucht beliebig viele Ordner (z. B. deine Pocket-Operator-
-  Samples), merkt sich Länge, Format, Tags, Favoriten und Notizen in einer
-  SQLite-Datenbank. Neu einlesen geht inkrementell (nur geänderte Dateien).
-* Bearbeitung: Stille abschneiden, Start/Ende, Normalisieren, Lautstärke,
-  Fade, Umkehren – nichts davon verändert die Originaldatei.
-* Kits: bis zu 16 Sounds pro Slot, jeder auf eigener Taste (Drum-Kit) oder über
-  die Tastatur verteilt (Instrument). Ein Slot fasst 80 KiB, das sind etwa
-  7,4 s Audio insgesamt (22 050 Hz, IMA-ADPCM) – die App zeigt das Budget live.
-* Upload: Befehle 11–15, dasselbe Format wie Felucca, Skiff und SLOOP.
-  (Melodee ab 1.5 hat keine Sample-Slots mehr.)
+* Library: scans any number of folders (e.g. your Pocket Operator
+  samples), remembers length, format, tags, favourites and notes in an
+  SQLite database. Rescanning is incremental (only changed files).
+* Editing: trim silence, start/end, normalise, volume,
+  fade, reverse – none of it changes the original file.
+* Kits: up to 16 sounds per slot, each on its own key (drum kit) or spread
+  across the keyboard (instrument). A slot holds 80 KiB, that is about
+  7.4 s of audio in total (22,050 Hz, IMA-ADPCM) – the app shows the budget live.
+* Upload: commands 11–15, the same format as Felucca, Skiff and SLOOP.
+  (Melodee 1.5+ no longer has sample slots.)
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ from .vendor import sampleio as sio
 
 try:
     import numpy as np
-except ImportError:          # läuft auch ohne, nur langsamer
+except ImportError:          # also works without it, just slower
     np = None
 
 AUDIO_EXT = {".wav", ".wave", ".aif", ".aiff", ".flac", ".mp3", ".ogg", ".opus", ".m4a"}
@@ -55,7 +55,7 @@ def note_name(n: int) -> str:
 # ------------------------------------------------------------ Audio I/O ---
 
 def have_ffmpeg() -> bool:
-    """ffmpeg vorhanden? (nötig für MP3/FLAC/OGG/M4A; Debian: sudo apt install ffmpeg)"""
+    """ffmpeg available? (needed for MP3/FLAC/OGG/M4A; Debian: sudo apt install ffmpeg)"""
     return shutil.which("ffmpeg") is not None
 
 
@@ -81,7 +81,7 @@ def _ffmpeg_to_wav(path: Path) -> Path:
 
 
 def read_mono(path: Path) -> tuple[int, list[float]]:
-    """beliebige Audiodatei -> (Rate, Mono-Floats in [-1, 1)). Fehler sind ValueError mit übersetztem Text."""
+    """any audio file -> (rate, mono floats in [-1, 1)). Errors are ValueError with translated text."""
     path = Path(path)
     if not path.exists():
         raise ValueError(_("{name}: file not found (moved or deleted?)").format(name=path.name))
@@ -140,7 +140,7 @@ class AudioMeta:
 
 
 def probe(path: Path) -> AudioMeta:
-    """schnell: nur den Kopf lesen."""
+    """fast: only read the header."""
     path = Path(path)
     if path.suffix.lower() in (".wav", ".wave"):
         try:
@@ -176,7 +176,7 @@ def probe(path: Path) -> AudioMeta:
 
 
 def peaks(x, buckets: int = 600) -> list[tuple[float, float]]:
-    """x: Liste oder numpy-Array."""
+    """x: list or numpy array."""
     if x is None or len(x) == 0:
         return []
     if np is not None:
@@ -191,13 +191,13 @@ def peaks(x, buckets: int = 600) -> list[tuple[float, float]]:
     return [(min(x[i:i + n]), max(x[i:i + n])) for i in range(0, len(x), n)]
 
 
-# ---------------------------------------------------------- Bearbeitung ---
+# ---------------------------------------------------------- editing ---
 
 @dataclass
 class Edit:
-    """nicht-destruktive Bearbeitung eines Sounds (Zeiten in Sekunden)."""
+    """non-destructive editing of a sound (times in seconds)."""
     start: float = 0.0
-    end: float = 0.0              # 0 = bis zum Ende
+    end: float = 0.0              # 0 = to the end
     trim_silence: bool = True
     normalize: bool = True
     gain_db: float = 0.0
@@ -265,7 +265,7 @@ class Zone:
 
 
 def safe_kit_name(name: str) -> str:
-    """Dateiname für ein Kit: keine Schrägstriche/Steuerzeichen, kein führender Punkt, höchstens 80 Zeichen."""
+    """File name for a kit: no slashes/control characters, no leading dot, at most 80 characters."""
     t = re.sub(r"[^\w\-. ()]+", "_", str(name or "").strip()).strip(" ._")
     return t[:80]
 
@@ -273,11 +273,11 @@ def safe_kit_name(name: str) -> str:
 @dataclass
 class Kit:
     name: str = "KIT"
-    mode: str = "drum"            # "drum": jede Taste ein Sound; "keys": über die Tastatur verteilt
-    base_note: int = 60           # erste Taste im Drum-Modus
+    mode: str = "drum"            # "drum": each key one sound; "keys": spread across the keyboard
+    base_note: int = 60           # first key in drum mode
     zones: list[Zone] = field(default_factory=list)
     notes: str = ""
-    path: str = ""                # wo es gespeichert ist
+    path: str = ""                # where it is stored
 
     def to_json(self) -> dict:
         d = asdict(self)
@@ -299,7 +299,7 @@ class Kit:
     def save(self, folder: Path | None = None) -> Path:
         from .backup import write_text_atomic
         p = Path(self.path) if self.path else Path(folder) / f"{safe_kit_name(self.name) or 'Kit'}{KIT_SUFFIX}"
-        write_text_atomic(p, json.dumps(self.to_json(), indent=1, ensure_ascii=False))   # ganz oder gar nicht
+        write_text_atomic(p, json.dumps(self.to_json(), indent=1, ensure_ascii=False))   # all or nothing
         self.path = str(p)
         return p
 
@@ -308,7 +308,7 @@ class Kit:
         return Kit.from_json(json.loads(Path(path).read_text("utf-8")), str(path))
 
     def assign_keys(self):
-        """Tasten nach Modus vergeben."""
+        """Assign keys according to the mode."""
         if self.mode == "drum":
             for i, z in enumerate(self.zones):
                 z.root = z.lo = z.hi = max(0, min(127, self.base_note + i))
@@ -321,7 +321,7 @@ _render_cache: dict = {}
 
 
 def render_zone(z: Zone) -> list[int]:
-    """Zone -> int16 bei 22 050 Hz, wie sie auf das Gerät geht (mit Cache)."""
+    """Zone -> int16 at 22,050 Hz, as it goes onto the device (with cache)."""
     try:
         st = os.stat(z.path)
         key = (z.path, st.st_mtime, st.st_size, json.dumps(asdict(z.edit), sort_keys=True))
@@ -345,13 +345,13 @@ def render_zone(z: Zone) -> list[int]:
 
 
 def kit_budget(kit: Kit) -> tuple[int, list[int]]:
-    """-> (ADPCM-Bytes gesamt, Bytes je Zone). Ein Slot fasst SLOT_BYTES."""
+    """-> (total ADPCM bytes, bytes per zone). A slot holds SLOT_BYTES."""
     per = [(len(render_zone(z)) + 1) // 2 for z in kit.zones]
     return sum(per), per
 
 
 def fit_to_slot(kit: Kit):
-    """kürzt die längsten Sounds, bis alles in einen Slot passt."""
+    """shortens the longest sounds until everything fits into one slot."""
     total, per = kit_budget(kit)
     guard = 0
     while total > SLOT_BYTES and guard < 200:
@@ -367,7 +367,7 @@ def fit_to_slot(kit: Kit):
 
 
 def budget_text(total_bytes: int) -> str:
-    """„ZU LANG: 9,2 s von 7,4 s“ – verständliche Erklärung des Slot-Budgets."""
+    """"TOO LONG: 9.2 s of 7.4 s" – understandable explanation of the slot budget."""
     secs = total_bytes * 2 / SLOT_RATE
     return _("The kit is too long: {secs} s, a slot holds {cap} s (all sounds together, "
              "{kib} KiB IMA-ADPCM at {khz} kHz). “Fit to slot” shortens the longest "
@@ -386,7 +386,7 @@ def build_slot(kit: Kit) -> tuple[bytes, bytes]:
         raise ValueError(budget_text(total))
     try:
         return sio.user_slot(kit.name, zones)
-    except ValueError as e:                      # englische Meldungen des Hilfsmoduls übersetzen
+    except ValueError as e:                      # translate the helper module's English messages
         msg = str(e)
         if "too long" in msg:
             raise ValueError(budget_text(total)) from e
@@ -394,7 +394,7 @@ def build_slot(kit: Kit) -> tuple[bytes, bytes]:
 
 
 def export_wavs(kit: Kit, folder: Path) -> list[Path]:
-    """bearbeitete Sounds als WAV (22 050 Hz, so wie auf dem FM-1)."""
+    """edited sounds as WAV (22,050 Hz, as on the FM-1)."""
     folder.mkdir(parents=True, exist_ok=True)
     out = []
     for i, z in enumerate(kit.zones):
@@ -409,7 +409,7 @@ def export_wavs(kit: Kit, folder: Path) -> list[Path]:
     return out
 
 
-# --------------------------------------------------------------- Geräte ---
+# --------------------------------------------------------------- devices ---
 
 def slot_info(link) -> tuple[int, list[SampleSlot]]:
     return parse_smp_info(link.request(Cmd.SMP_INFO, [], timeout=2.0))
@@ -441,8 +441,8 @@ def erase(link, slot: int):
 
 
 def read_slot(link, slot: int, hint: str = "") -> bytes:
-    """aktuellen Inhalt eines Sample-Slots lesen (Backup-Objekt 32+slot: Kopf, Füllbytes, Daten) – für
-    Rückgängig vor dem Überschreiben/Leeren. b"" = leerer Slot. hint: Firmware-Schlüssel (ctx.firmware_key)."""
+    """read the current content of a sample slot (backup object 32+slot: header, padding, data) – for
+    undo before overwriting/clearing. b"" = empty slot. hint: firmware key (ctx.firmware_key)."""
     from . import backup
     objs = backup.list_objects(link, hint)
     o = next((x for x in objs if x.id == 32 + slot), None)
@@ -452,7 +452,7 @@ def read_slot(link, slot: int, hint: str = "") -> bytes:
 
 
 def restore_slot(link, slot: int, data: bytes, progress: Callable[[int, int], None] | None = None):
-    """mit read_slot() gelesenen Inhalt zurückschreiben (leer -> Slot leeren)."""
+    """write back content read with read_slot() (empty -> clear the slot)."""
     if not data:
         erase(link, slot)
         return
@@ -461,7 +461,7 @@ def restore_slot(link, slot: int, data: bytes, progress: Callable[[int, int], No
     upload(link, slot, data[:480], data[sio.SLOT_DATA_OFF:], progress)
 
 
-# ------------------------------------------------------------ Bibliothek ---
+# ------------------------------------------------------------ library ---
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS samples (
@@ -474,7 +474,7 @@ CREATE INDEX IF NOT EXISTS i_folder ON samples(folder);
 CREATE INDEX IF NOT EXISTS i_name ON samples(name);
 """
 
-# Schlagwörter aus Datei- und Ordnernamen (Pocket Operator & Co.)
+# tags from file and folder names (Pocket Operator & co.)
 AUTO_TAGS = {
     "kick": ["kick", "bd", "bassdrum", "bass drum"], "snare": ["snare", "sd", "snr"], "clap": ["clap", "cp", "clp"],
     "hihat": ["hat", "hh", "hihat", "chh", "ohh"], "cymbal": ["cym", "crash", "ride"], "tom": ["tom"],
@@ -512,8 +512,8 @@ class Library:
 
     def scan(self, roots: Iterable[Path], progress: Callable[[int, str], None] | None = None,
              cancel: Callable[[], bool] = lambda: False) -> dict:
-        """inkrementell: neue/geänderte Dateien lesen, verschwundene entfernen."""
-        stats = {"neu": 0, "geändert": 0, "entfernt": 0, "gesamt": 0}  # i18n: ignore (Schlüssel)
+        """incremental: read new/changed files, remove vanished ones."""
+        stats = {"neu": 0, "geändert": 0, "entfernt": 0, "gesamt": 0}  # i18n: ignore (key)
         roots = [Path(r).expanduser() for r in roots]
         with self._lock, self._conn() as c:
             known = {r["path"]: (r["mtime"], r["size"]) for r in c.execute("SELECT path, mtime, size FROM samples")}
@@ -553,8 +553,8 @@ class Library:
                                       (sp, str(root), str(p.parent), p.stem, p.suffix.lower(), st.st_size, st.st_mtime,
                                        m.duration, m.rate, m.channels, m.bits, auto_tags(p.relative_to(root)), time.time()))
                             stats["neu"] += 1  # i18n: ignore
-            # nur unter Ordnern, die es gibt (abgezogener Stick löscht keine Tags/Favoriten), und nur echte
-            # Unterpfade ("/x/Samples" darf "/x/Samples2/…" nicht erfassen)
+            # only under folders that exist (an unplugged stick does not delete tags/favourites), and only real
+            # subpaths ("/x/Samples" must not match "/x/Samples2/…")
             alive = [str(r).rstrip(os.sep) + os.sep for r in roots if r.exists()]
             gone = [p for p in known if p not in seen and any(p.startswith(r) for r in alive)]
             for p in gone:
@@ -564,7 +564,7 @@ class Library:
         return stats
 
     def add_file(self, path: Path, root: Path | None = None, tags: str = "", notes: str = "") -> None:
-        """eine Datei sofort aufnehmen (Aufnahme, Slices, Sample-Pakete) – mit zusätzlichen Schlagwörtern."""
+        """add a file immediately (recording, slices, sample packs) – with additional tags."""
         p = Path(path)
         st = p.stat()
         m = probe(p)
@@ -645,7 +645,7 @@ class Library:
             c.executemany("UPDATE samples SET used = used + 1 WHERE path=?", [(p,) for p in paths])
 
     def duplicates(self) -> list[list[str]]:
-        """gleiche Größe und gleicher Inhalt (Hash der ersten 64 KiB + Größe)."""
+        """same size and same content (hash of the first 64 KiB + size)."""
         import hashlib
         with self._conn() as c:
             rows = list(c.execute("SELECT path, size FROM samples WHERE size IN "
