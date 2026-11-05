@@ -46,7 +46,7 @@ msgstr ""
 
 #: fm1companion/app.py:29 fm1companion/backup_inspect.py:973
 #: fm1companion/ui/fm1_page.py:223 fm1companion/ui/fm1_page.py:271
-#: fm1companion/ui/pages/devices.py:236 fm1companion/ui/pages/discover.py:1203
+#: fm1companion/ui/pages/devices.py:236 fm1companion/ui/pages/discover.py:1256
 #: fm1companion/ui/pages/help.py:259 fm1companion/ui/pages/help.py:259
 #: fm1companion/ui/statusbar.py:123
 msgid "none"
@@ -425,7 +425,7 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
-#: fm1companion/backup_inspect.py:45 fm1companion/ui/pages/discover.py:1181
+#: fm1companion/backup_inspect.py:45 fm1companion/ui/pages/discover.py:1234
 msgid "new"
 msgstr ""
 
@@ -964,7 +964,7 @@ msgstr ""
 
 #: fm1companion/backup_inspect.py:974 fm1companion/ui/backups_page.py:306
 #: fm1companion/ui/linkimport_dialog.py:321
-#: fm1companion/ui/pages/discover.py:724
+#: fm1companion/ui/pages/discover.py:726
 #: fm1companion/ui/settings_dialog.py:252
 msgid "Firmware"
 msgstr ""
@@ -1159,11 +1159,11 @@ msgstr ""
 msgid "no connection to GitHub"
 msgstr ""
 
-#: fm1companion/catalog.py:1284
+#: fm1companion/catalog.py:1370
 msgid "README not reachable"
 msgstr ""
 
-#: fm1companion/catalog.py:1301
+#: fm1companion/catalog.py:1387
 msgid "Image too large"
 msgstr ""
 
@@ -4005,7 +4005,7 @@ msgstr ""
 msgid "Whether backup and projects work (Felucca protocol) is checked when connecting."
 msgstr ""
 
-#: fm1companion/linkimport.py:349 fm1companion/ui/pages/discover.py:1167
+#: fm1companion/linkimport.py:349 fm1companion/ui/pages/discover.py:1220
 msgid "Catalog"
 msgstr ""
 
@@ -4044,8 +4044,9 @@ msgid "{n} possible firmwares found – please choose the right one."
 msgstr ""
 
 #: fm1companion/linkimport.py:453 fm1companion/linkimport.py:456
-#: fm1companion/ui/pages/discover.py:1038
-#: fm1companion/ui/pages/discover.py:1236
+#: fm1companion/ui/pages/discover.py:950
+#: fm1companion/ui/pages/discover.py:1084
+#: fm1companion/ui/pages/discover.py:1289
 #, python-brace-format
 msgid "GitHub: {message}"
 msgstr ""
@@ -4139,7 +4140,7 @@ msgstr ""
 
 #: fm1companion/linkimport.py:597 fm1companion/ui/fm1_page.py:162
 #: fm1companion/ui/pages/backup_browser.py:206
-#: fm1companion/ui/pages/discover.py:745 fm1companion/ui/pages/presets.py:97
+#: fm1companion/ui/pages/discover.py:747 fm1companion/ui/pages/presets.py:97
 #: fm1companion/ui/pages/presets.py:149 fm1companion/ui/projects_page.py:85
 #: fm1companion/ui/samples_page.py:105
 msgid "Name"
@@ -4162,7 +4163,7 @@ msgid "Author"
 msgstr ""
 
 #: fm1companion/linkimport.py:598 fm1companion/ui/about.py:76
-#: fm1companion/ui/pages/discover.py:651
+#: fm1companion/ui/pages/discover.py:653
 msgid "License"
 msgstr ""
 
@@ -4174,20 +4175,20 @@ msgstr ""
 msgid "Package identifier"
 msgstr ""
 
-#: fm1companion/linkimport.py:599 fm1companion/ui/pages/discover.py:650
+#: fm1companion/linkimport.py:599 fm1companion/ui/pages/discover.py:652
 msgid "Category"
 msgstr ""
 
-#: fm1companion/linkimport.py:599 fm1companion/ui/pages/discover.py:397
-#: fm1companion/ui/pages/discover.py:745
+#: fm1companion/linkimport.py:599 fm1companion/ui/pages/discover.py:399
+#: fm1companion/ui/pages/discover.py:747
 msgid "Description"
 msgstr ""
 
-#: fm1companion/linkimport.py:600 fm1companion/ui/pages/discover.py:443
+#: fm1companion/linkimport.py:600 fm1companion/ui/pages/discover.py:445
 msgid "Website"
 msgstr ""
 
-#: fm1companion/linkimport.py:600 fm1companion/ui/pages/discover.py:443
+#: fm1companion/linkimport.py:600 fm1companion/ui/pages/discover.py:445
 msgid "Online editor"
 msgstr ""
 
@@ -4195,7 +4196,7 @@ msgstr ""
 msgid "Online simulator"
 msgstr ""
 
-#: fm1companion/linkimport.py:601 fm1companion/ui/pages/discover.py:443
+#: fm1companion/linkimport.py:601 fm1companion/ui/pages/discover.py:445
 msgid "Manual"
 msgstr ""
 
@@ -6548,7 +6549,7 @@ msgstr ""
 #: fm1companion/ui/clean_check.py:166 fm1companion/ui/common.py:319
 #: fm1companion/ui/common.py:505 fm1companion/ui/linkimport_dialog.py:404
 #: fm1companion/ui/notify.py:106 fm1companion/ui/notify.py:317
-#: fm1companion/ui/pages/discover.py:1063 fm1companion/ui/slicer_dialog.py:145
+#: fm1companion/ui/pages/discover.py:1116 fm1companion/ui/slicer_dialog.py:145
 #: fm1companion/ui/statusbar.py:159
 msgid "Close"
 msgstr ""
@@ -6925,7 +6926,7 @@ msgid "pinned only"
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:306 fm1companion/ui/firmware_page.py:803
-#: fm1companion/ui/pages/discover.py:402 fm1companion/ui/pages/discover.py:724
+#: fm1companion/ui/pages/discover.py:404 fm1companion/ui/pages/discover.py:726
 #: fm1companion/ui/pages/studio.py:52 fm1companion/ui/projects_page.py:85
 msgid "Date"
 msgstr ""
@@ -6952,7 +6953,7 @@ msgstr ""
 
 #: fm1companion/ui/backups_page.py:306
 #: fm1companion/ui/pages/backup_browser.py:187
-#: fm1companion/ui/pages/discover.py:402 fm1companion/ui/projects_page.py:40
+#: fm1companion/ui/pages/discover.py:404 fm1companion/ui/projects_page.py:40
 #: fm1companion/ui/projects_page.py:85 fm1companion/ui/projects_page.py:194
 #: fm1companion/ui/recorder_page.py:156
 msgid "Size"
@@ -8251,8 +8252,8 @@ msgid "Renamed to “{name}”."
 msgstr ""
 
 #: fm1companion/ui/editor_page.py:36 fm1companion/ui/editor_page.py:81
-#: fm1companion/ui/main_window.py:38 fm1companion/ui/pages/discover.py:474
-#: fm1companion/ui/pages/discover.py:1074
+#: fm1companion/ui/main_window.py:38 fm1companion/ui/pages/discover.py:476
+#: fm1companion/ui/pages/discover.py:1127
 msgid "Editor"
 msgstr ""
 
@@ -8426,8 +8427,8 @@ msgid "Dry run only: check everything, write nothing"
 msgstr ""
 
 #: fm1companion/ui/firmware_page.py:203 fm1companion/ui/firmware_page.py:221
-#: fm1companion/ui/pages/discover.py:473
-#: fm1companion/ui/pages/discover.py:1060
+#: fm1companion/ui/pages/discover.py:475
+#: fm1companion/ui/pages/discover.py:1113
 msgid "Install"
 msgstr ""
 
@@ -8473,7 +8474,7 @@ msgstr ""
 msgid "Not possible"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:274 fm1companion/ui/pages/discover.py:402
+#: fm1companion/ui/firmware_page.py:274 fm1companion/ui/pages/discover.py:404
 msgid "Notes"
 msgstr ""
 
@@ -8848,7 +8849,7 @@ msgstr ""
 msgid "Choose target firmware and version – then the installation plan shows every step"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:803 fm1companion/ui/pages/discover.py:402
+#: fm1companion/ui/firmware_page.py:803 fm1companion/ui/pages/discover.py:404
 #: fm1companion/ui/settings_dialog.py:255
 msgid "Version"
 msgstr ""
@@ -8905,7 +8906,7 @@ msgid "Versions are loaded as soon as you open this page."
 msgstr ""
 
 #: fm1companion/ui/firmware_page.py:924 fm1companion/ui/firmware_page.py:967
-#: fm1companion/ui/pages/discover.py:529
+#: fm1companion/ui/pages/discover.py:531
 msgid "loading …"
 msgstr ""
 
@@ -8936,7 +8937,7 @@ msgstr ""
 msgid "Release candidate"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:985 fm1companion/ui/pages/discover.py:649
+#: fm1companion/ui/firmware_page.py:985 fm1companion/ui/pages/discover.py:651
 msgid "stable"
 msgstr ""
 
@@ -9655,8 +9656,8 @@ msgid "Felucca protocol (backup, projects, editor)"
 msgstr ""
 
 #: fm1companion/ui/linkimport_dialog.py:151
-#: fm1companion/ui/pages/discover.py:353
-#: fm1companion/ui/pages/discover.py:1061
+#: fm1companion/ui/pages/discover.py:355
+#: fm1companion/ui/pages/discover.py:1114
 msgid "Add to my firmwares"
 msgstr ""
 
@@ -9762,7 +9763,7 @@ msgid "Firmwares you added yourself. They also appear in Firmware+ › “Instal
 msgstr ""
 
 #: fm1companion/ui/linkimport_dialog.py:398
-#: fm1companion/ui/pages/discover.py:581
+#: fm1companion/ui/pages/discover.py:583
 msgid "Paste link …"
 msgstr ""
 
@@ -9864,9 +9865,9 @@ msgstr ""
 msgid "Sound Module"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:64 fm1companion/ui/pages/discover.py:1074
+#: fm1companion/ui/main_window.py:64 fm1companion/ui/pages/discover.py:1127
 #: fm1companion/ui/pages/simulator.py:131
-#: fm1companion/ui/pages/simulator.py:815 fm1companion/ui/wizard.py:361
+#: fm1companion/ui/pages/simulator.py:819 fm1companion/ui/wizard.py:361
 msgid "Simulator"
 msgstr ""
 
@@ -11912,12 +11913,12 @@ msgstr ""
 msgid "installable"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:113 fm1companion/ui/pages/discover.py:508
-#: fm1companion/ui/pages/discover.py:649
+#: fm1companion/ui/pages/discover.py:113 fm1companion/ui/pages/discover.py:510
+#: fm1companion/ui/pages/discover.py:651
 msgid "Beta"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:115 fm1companion/ui/pages/discover.py:648
+#: fm1companion/ui/pages/discover.py:115 fm1companion/ui/pages/discover.py:650
 msgctxt "license"
 msgid "closed"
 msgstr ""
@@ -11935,7 +11936,7 @@ msgstr ""
 msgid "by {author}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:288 fm1companion/ui/pages/discover.py:716
+#: fm1companion/ui/pages/discover.py:288 fm1companion/ui/pages/discover.py:718
 msgid "All firmwares"
 msgstr ""
 
@@ -11968,362 +11969,380 @@ msgid "install on the active FM-1 (with confirmation and backup)"
 msgstr ""
 
 #: fm1companion/ui/pages/discover.py:345
+msgid "No verified package in the catalog – the app looks for the firmware file in the GitHub releases (you check it before saving)"
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:347
 msgid "No verified package in the catalog – see the author's website/installer"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:349
+#: fm1companion/ui/pages/discover.py:351
 msgid "Try in the simulator"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:350
+#: fm1companion/ui/pages/discover.py:352
 msgid "runs on the computer – nothing is written to the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:352
+#: fm1companion/ui/pages/discover.py:354
 msgid "Open online editor"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:354
+#: fm1companion/ui/pages/discover.py:356
 msgid "then also appears in the tab “Install & versions”"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:356
+#: fm1companion/ui/pages/discover.py:358
 msgid "Remember"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:362
+#: fm1companion/ui/pages/discover.py:364
 msgid "Links"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:382
+#: fm1companion/ui/pages/discover.py:384
 msgid "Good to know"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:392
+#: fm1companion/ui/pages/discover.py:394
 msgid "Author's description, from awesome-fm-1 – deliberately not translated"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:399
+#: fm1companion/ui/pages/discover.py:401
 msgid "What the app can do with it"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:413 fm1companion/ui/pages/help.py:239
+#: fm1companion/ui/pages/discover.py:415 fm1companion/ui/pages/help.py:239
 msgid "Versions"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:422
+#: fm1companion/ui/pages/discover.py:424
 msgid "Load the project's README"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:427
+#: fm1companion/ui/pages/discover.py:429
 msgid "From the author"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:442
+#: fm1companion/ui/pages/discover.py:444
 msgid "Author's web installer"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:442
+#: fm1companion/ui/pages/discover.py:444
 msgid "Simulator in the browser"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:443
+#: fm1companion/ui/pages/discover.py:445
 msgid "Source code"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:444
+#: fm1companion/ui/pages/discover.py:446
 msgid "Downloads (M-VAVE)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:444
+#: fm1companion/ui/pages/discover.py:446
 msgid "Release notes (M-VAVE)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:445
+#: fm1companion/ui/pages/discover.py:447
 msgid "MIDI reference (M-VAVE)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:448
+#: fm1companion/ui/pages/discover.py:450
 msgid "View on GitHub"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:452
+#: fm1companion/ui/pages/discover.py:454
 msgid "View on thefirmwarehub.com"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:453
+#: fm1companion/ui/pages/discover.py:455
 msgid "View in the FM1 firmware directory"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:461
+#: fm1companion/ui/pages/discover.py:463
 msgid "Install via M-VAVE's standard update protocol – the checksum is verified before installing"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:462
+#: fm1companion/ui/pages/discover.py:464
 msgid "Install via M-VAVE's standard update protocol"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:464
+#: fm1companion/ui/pages/discover.py:466
 msgid "Install only via the manufacturer's site"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:466
+#: fm1companion/ui/pages/discover.py:468
 msgid "No verified package in the catalog; enter a .fwsc address via “Paste link”"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:468
+#: fm1companion/ui/pages/discover.py:470
 #, python-brace-format
 msgid "Backups, projects and editor bridge (Felucca protocol; {evidence})"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:471
+#: fm1companion/ui/pages/discover.py:473
 msgid "Backups/projects: unknown – checked when connecting"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:473
+#: fm1companion/ui/pages/discover.py:475
 msgid "Backup & projects"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:475
+#: fm1companion/ui/pages/discover.py:477
 msgid "Online editor in the app"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:475
+#: fm1companion/ui/pages/discover.py:477
 msgid "Editor from the repo"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:476
+#: fm1companion/ui/pages/discover.py:478
 msgid "no editor known"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:477
+#: fm1companion/ui/pages/discover.py:479
 msgid "Emulator"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:478
+#: fm1companion/ui/pages/discover.py:480
 msgid "try it out on the computer"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:478
+#: fm1companion/ui/pages/discover.py:480
 msgid "no browser emulator known"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:497
+#: fm1companion/ui/pages/discover.py:499
 msgid "no .fwsc package"
-msgstr ""
-
-#: fm1companion/ui/pages/discover.py:497
-#, python-brace-format
-msgid "Package: {name}"
 msgstr ""
 
 #: fm1companion/ui/pages/discover.py:499
 #, python-brace-format
+msgid "Package: {name}"
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:501
+#, python-brace-format
 msgid "Pre-release · {package}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:506
+#: fm1companion/ui/pages/discover.py:508
 msgid "in the Mooring catalog, checksum known"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:506
+#: fm1companion/ui/pages/discover.py:508
 msgid "known package (recognition only)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:508
+#: fm1companion/ui/pages/discover.py:510
 msgid "interruption not resumable"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:509
+#: fm1companion/ui/pages/discover.py:511
 msgid "projects not backward compatible"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:510
+#: fm1companion/ui/pages/discover.py:512
 msgid "needs MiniLab 3"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:515
+#: fm1companion/ui/pages/discover.py:517
 msgid "no versions known"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:524
+#: fm1companion/ui/pages/discover.py:526
 msgid "State from GitHub"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:540
+#: fm1companion/ui/pages/discover.py:542
 msgid "README not loaded – try again"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:582
+#: fm1companion/ui/pages/discover.py:584
 msgid "Paste a GitHub link, .fwsc package, installer or simulator page (Ctrl+V)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:587 fm1companion/ui/pages/discover.py:857
-#: fm1companion/ui/pages/discover.py:869 fm1companion/ui/pages/help.py:194
+#: fm1companion/ui/pages/discover.py:589 fm1companion/ui/pages/discover.py:862
+#: fm1companion/ui/pages/discover.py:874 fm1companion/ui/pages/help.py:194
 #: fm1companion/ui/pages/midi.py:1116
 msgid "Refresh"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:588
+#: fm1companion/ui/pages/discover.py:590
 msgid "Reload the catalog (awesome-fm-1 and Mooring)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:592 fm1companion/ui/pages/discover.py:594
+#: fm1companion/ui/pages/discover.py:594 fm1companion/ui/pages/discover.py:596
 msgid "More"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:597
+#: fm1companion/ui/pages/discover.py:599
 msgid "My firmwares …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:598
+#: fm1companion/ui/pages/discover.py:600
 msgid "GitHub token …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:601
+#: fm1companion/ui/pages/discover.py:603
 msgid "Update the catalog automatically when opening"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:605
+#: fm1companion/ui/pages/discover.py:607
 msgid "Load preview images from the internet"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:610
+#: fm1companion/ui/pages/discover.py:612
 msgid "awesome-fm-1 on GitHub"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:612
+#: fm1companion/ui/pages/discover.py:614
 msgid "FM1 firmware directory"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:630
+#: fm1companion/ui/pages/discover.py:632
 msgid "Search: name, author, description, keyword (e.g. “acid”, “drums”, “Vestal”)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:640
+#: fm1companion/ui/pages/discover.py:642
 msgid "Sort:"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:647
+#: fm1companion/ui/pages/discover.py:649
 msgctxt "license"
 msgid "open"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:650
+#: fm1companion/ui/pages/discover.py:652
 msgid "Based on"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:652
+#: fm1companion/ui/pages/discover.py:654
 msgctxt "release state"
 msgid "Status"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:677
+#: fm1companion/ui/pages/discover.py:679
 msgid "Reset"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:678
+#: fm1companion/ui/pages/discover.py:680
 msgid "Reset all filters"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:724
+#: fm1companion/ui/pages/discover.py:726
 msgid "What"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:729
+#: fm1companion/ui/pages/discover.py:731
 msgid "Check for new versions"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:730
+#: fm1companion/ui/pages/discover.py:732
 msgid "asks GitHub for the releases of the firmwares you follow (at most 12)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:735
+#: fm1companion/ui/pages/discover.py:737
 msgid "News"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:740
+#: fm1companion/ui/pages/discover.py:742
 msgid "Search tools, editors, recovery, guides, videos …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:749
+#: fm1companion/ui/pages/discover.py:751
 msgid "Double-click opens the page in the browser. Source: awesome-fm-1 (CC0)."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:750
+#: fm1companion/ui/pages/discover.py:752
 msgid "Tools && knowledge"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:771
+#: fm1companion/ui/pages/discover.py:774
 msgid "bundled state"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:771
+#: fm1companion/ui/pages/discover.py:774
 msgid "state of the last sync"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:771
+#: fm1companion/ui/pages/discover.py:774
 msgid "just updated"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:772
+#: fm1companion/ui/pages/discover.py:775
 msgid "no catalog"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:777
+#: fm1companion/ui/pages/discover.py:780
 #, python-brace-format
 msgid "{n} firmwares for the FM-1, {installable} of them directly installable. Catalog revision {revision} of {date} ({source}). Sources: <a href='{awesome}'>awesome-fm-1</a> and Mooring (cicloid). More directories: <a href='{hub}'>FM-1 Firmware Hub</a>, <a href='{directory}'>fm1-editor.com/firmware</a>."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:803
+#: fm1companion/ui/pages/discover.py:806
 msgid "Added by you."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:848
+#: fm1companion/ui/pages/discover.py:853
 msgid "Offline mode: the bundled catalog applies."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:852
+#: fm1companion/ui/pages/discover.py:857
 msgid "Loading …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:863
+#: fm1companion/ui/pages/discover.py:868
 #, python-brace-format
 msgid "Catalog updated – {n} entry."
 msgid_plural "Catalog updated – {n} entries."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/discover.py:864
+#: fm1companion/ui/pages/discover.py:869
 msgid "Catalog updated."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:873
+#: fm1companion/ui/pages/discover.py:878
 #, python-brace-format
 msgid "Catalog not updated: {error} You still see the saved state of {date}; everything here also works offline."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:877
+#: fm1companion/ui/pages/discover.py:882
 #, python-brace-format
 msgid "Catalog not updated: {error} You still see the saved state; everything here also works offline."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:950
+#: fm1companion/ui/pages/discover.py:937
+msgid "Loading stars from GitHub …"
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:944
+#, python-brace-format
+msgid "Stars loaded for {n} firmwares."
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:945
+#, python-brace-format
+msgid "Stars loaded for {n} firmwares – GitHub limit reached, the rest follows later. With your own GitHub token (“More”) it goes faster."
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:996
 #, python-brace-format
 msgid "{shown} of {total}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:955
+#: fm1companion/ui/pages/discover.py:1001
 msgid ""
 "No firmware matches the search and filters.\n"
 "Tip: “Reset all filters” (button to the right of the filters) or fewer search words."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:957
+#: fm1companion/ui/pages/discover.py:1003
 msgid "The catalog is empty – “Refresh” loads it from the internet."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1055
+#: fm1companion/ui/pages/discover.py:1108
 #, python-brace-format
 msgid ""
 "Installing directly from the catalog comes with the new installer.\n"
@@ -12331,7 +12350,7 @@ msgid ""
 "Until then: “Add to my firmwares” – then {name} is ready in the tab “Install & versions”, or open the author's web installer in the browser."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1058
+#: fm1companion/ui/pages/discover.py:1111
 #, python-brace-format
 msgid ""
 "Installing directly from the catalog comes with the new installer.\n"
@@ -12339,135 +12358,135 @@ msgid ""
 "Until then: “Add to my firmwares” – then {name} is ready in the tab “Install & versions”."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1062
+#: fm1companion/ui/pages/discover.py:1115
 msgid "Open web installer"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1079
+#: fm1companion/ui/pages/discover.py:1132
 #, python-brace-format
 msgid "{title} opened in the browser."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1092
+#: fm1companion/ui/pages/discover.py:1145
 #, python-brace-format
 msgid "{name} is already built in – you find it in the tab “Install & versions”."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1094
+#: fm1companion/ui/pages/discover.py:1147
 msgid "Already there"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1094
+#: fm1companion/ui/pages/discover.py:1147
 #, python-brace-format
 msgid "{name} is built into the app."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1101
+#: fm1companion/ui/pages/discover.py:1154
 msgid "In my firmwares ✓"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1102
+#: fm1companion/ui/pages/discover.py:1155
 #, python-brace-format
 msgid "{name} is now in the tab “Install & versions”."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1126
+#: fm1companion/ui/pages/discover.py:1179
 #, python-brace-format
 msgid "{name} saved – now in the tab “Install & versions”."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1137
+#: fm1companion/ui/pages/discover.py:1190
 msgid "GitHub token"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1138
+#: fm1companion/ui/pages/discover.py:1191
 msgid ""
 "Optional: personal GitHub token (only read access to public repos needed).\n"
 "Without a token GitHub allows 60 requests per hour, with a token 5000.\n"
 "Leave empty to remove."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1151
+#: fm1companion/ui/pages/discover.py:1204
 msgid "remembered"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1153
+#: fm1companion/ui/pages/discover.py:1206
 msgid "your firmware"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1157
+#: fm1companion/ui/pages/discover.py:1210
 #, python-brace-format
 msgid "on {name}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1174
+#: fm1companion/ui/pages/discover.py:1227
 #, python-brace-format
 msgid "{name} {version} (pre-release)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1195
+#: fm1companion/ui/pages/discover.py:1248
 msgid "No news yet. How it works: mark firmwares with “Remember” or add them to your firmwares – then the app shows new versions here. It follows the firmwares on your FM-1 automatically."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1198
+#: fm1companion/ui/pages/discover.py:1251
 #, python-brace-format
 msgid "You follow: {names}."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1201
+#: fm1companion/ui/pages/discover.py:1254
 #, python-brace-format
 msgid "New versions of the firmwares you follow ({names}) and changes in the catalog. “new” = since your last visit. Double-click opens the firmware."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1207
+#: fm1companion/ui/pages/discover.py:1260
 msgid "Offline – news will come next time."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1245
+#: fm1companion/ui/pages/discover.py:1298
 msgid "Editors, librarians and companion software"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1245
+#: fm1companion/ui/pages/discover.py:1298
 msgid "Firmware update and recovery"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1246
+#: fm1companion/ui/pages/discover.py:1299
 msgid "Patches and sound banks"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1246
+#: fm1companion/ui/pages/discover.py:1299
 msgid "Hardware add-ons"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1246
+#: fm1companion/ui/pages/discover.py:1299
 msgid "Documentation and guides"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1247
+#: fm1companion/ui/pages/discover.py:1300
 msgid "Articles and reviews"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1247
+#: fm1companion/ui/pages/discover.py:1300
 msgid "Videos"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1247
+#: fm1companion/ui/pages/discover.py:1300
 msgid "Communities"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1248
+#: fm1companion/ui/pages/discover.py:1301
 msgid "Reverse engineering and firmware development"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1248
+#: fm1companion/ui/pages/discover.py:1301
 msgid "Related M-VAVE projects"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1278 fm1companion/ui/wizard.py:357
+#: fm1companion/ui/pages/discover.py:1331 fm1companion/ui/wizard.py:357
 msgid "Firmware+"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1280
+#: fm1companion/ui/pages/discover.py:1333
 msgid "All FM-1 firmwares in one place: find, try out, install, switch versions, back to the original"
 msgstr ""
 
@@ -12625,7 +12644,7 @@ msgstr ""
 msgid "also show this MIDI input (e.g. controller, sound generator)"
 msgstr ""
 
-#: fm1companion/ui/pages/midi.py:196 fm1companion/ui/pages/simulator.py:587
+#: fm1companion/ui/pages/midi.py:196 fm1companion/ui/pages/simulator.py:591
 msgid "no additional MIDI input found"
 msgstr ""
 
@@ -12795,7 +12814,7 @@ msgstr ""
 msgid "sends MIDI Continue: continues where it was stopped"
 msgstr ""
 
-#: fm1companion/ui/pages/midi.py:664 fm1companion/ui/pages/simulator.py:695
+#: fm1companion/ui/pages/midi.py:664 fm1companion/ui/pages/simulator.py:699
 #: fm1companion/ui/pages/studio.py:315 fm1companion/ui/playback_bar.py:142
 #: fm1companion/ui/recorder_page.py:171 fm1companion/ui/sample_recorder.py:300
 #: fm1companion/ui/samples_page.py:116
@@ -15146,7 +15165,7 @@ msgid "Choose a simulator on the left."
 msgstr ""
 
 #: fm1companion/ui/pages/simulator.py:234
-#: fm1companion/ui/pages/simulator.py:709 fm1companion/ui/recorder_page.py:59
+#: fm1companion/ui/pages/simulator.py:713 fm1companion/ui/recorder_page.py:59
 #: fm1companion/ui/sample_recorder.py:70
 #: fm1companion/ui/sample_recorder.py:105
 #: fm1companion/ui/sample_recorder.py:312 fm1companion/ui/samples_page.py:293
@@ -15236,180 +15255,180 @@ msgstr ""
 msgid "Simulator stopped"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:489
+#: fm1companion/ui/pages/simulator.py:493
 msgid "No connection"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:489
+#: fm1companion/ui/pages/simulator.py:493
 #, python-brace-format
 msgid "{title} is on the internet ({url}) and cannot be reached right now. The bundled simulators also work offline."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:493
+#: fm1companion/ui/pages/simulator.py:497
 msgid "Online simulator not reachable – offline?"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:495
+#: fm1companion/ui/pages/simulator.py:499
 msgid "Simulator could not be loaded."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:497
+#: fm1companion/ui/pages/simulator.py:501
 msgid "Press “Switch on” or play a key on the FM-1. Computer keyboard: Z S X D C …"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:498
+#: fm1companion/ui/pages/simulator.py:502
 msgid "Just play a key (mouse, computer keyboard Z S X …, or on the FM-1)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:499
+#: fm1companion/ui/pages/simulator.py:503
 #, python-brace-format
 msgid "{title} is running (online)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:499
+#: fm1companion/ui/pages/simulator.py:503
 #, python-brace-format
 msgid "{title} is running."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:511
+#: fm1companion/ui/pages/simulator.py:515
 #, python-brace-format
 msgid "Invalid address: {url}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:538
+#: fm1companion/ui/pages/simulator.py:542
 msgid "Firefox not found – sudo apt install firefox-esr"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:543
+#: fm1companion/ui/pages/simulator.py:547
 #, python-brace-format
 msgid "Firefox could not be started: {error}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:546
+#: fm1companion/ui/pages/simulator.py:550
 #, python-brace-format
 msgid "{title} opened in Firefox. MIDI from the FM-1 arrives there as long as the app is running – the simulator here can be stopped."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:583
+#: fm1companion/ui/pages/simulator.py:587
 msgid "no additional MIDI input"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:601
+#: fm1companion/ui/pages/simulator.py:605
 #, python-brace-format
 msgid "MIDI input cannot be opened: {errors}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:607
+#: fm1companion/ui/pages/simulator.py:611
 msgid "FM-1 (keys)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:614
+#: fm1companion/ui/pages/simulator.py:618
 #, python-brace-format
 msgid "MIDI active from: {sources}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:615
+#: fm1companion/ui/pages/simulator.py:619
 msgid "No MIDI input active – connect the FM-1 or choose a keyboard. Playing also works with the mouse and the computer keyboard."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:634
+#: fm1companion/ui/pages/simulator.py:638
 msgid "Connect the online editor to the FM-1?"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:635
+#: fm1companion/ui/pages/simulator.py:639
 #, python-brace-format
 msgid "<b>{title}</b> is loaded from <b>{origin}</b> – a site on the internet that does not belong to this app."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:639
+#: fm1companion/ui/pages/simulator.py:643
 msgid ""
 "If you allow it, this site may send editor commands (SysEx) to your FM-1 and thereby change sounds, presets and settings on the device. Firmware update and boot mode always stay blocked.\n"
 "\n"
 "Without permission only notes, controllers and clock go to the FM-1. The permission applies only to exactly this address; if the site switches to another address, the safe filter applies again."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:644
+#: fm1companion/ui/pages/simulator.py:648
 msgid "Allow (remember for this address)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:645
+#: fm1companion/ui/pages/simulator.py:649
 msgid "Allow notes only"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:669
+#: fm1companion/ui/pages/simulator.py:673
 msgid "firmware update and boot mode are blocked for web pages"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:671
+#: fm1companion/ui/pages/simulator.py:675
 msgid "this address has no permission for editor commands – only notes, controllers and clock; the app asks for permission when opening the online editor"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:674
+#: fm1companion/ui/pages/simulator.py:678
 msgid "simulators may only send notes, controllers and clock to the FM-1 – for device access use the page “Editor”"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:676
+#: fm1companion/ui/pages/simulator.py:680
 #, python-brace-format
 msgid "{n} message of the page to the FM-1 held back ({reason})."
 msgid_plural "{n} messages of the page to the FM-1 held back ({reason})."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/simulator.py:688
+#: fm1companion/ui/pages/simulator.py:692
 msgid "Start a simulator first."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:700
+#: fm1companion/ui/pages/simulator.py:704
 msgid "Recording only works once the simulator makes sound – play a key once."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:713
+#: fm1companion/ui/pages/simulator.py:717
 #, python-brace-format
 msgid "{duration} saved (silent!)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:714
+#: fm1companion/ui/pages/simulator.py:718
 #, python-brace-format
 msgid "{duration} saved"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:716
+#: fm1companion/ui/pages/simulator.py:720
 msgid "Recording failed"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:736
+#: fm1companion/ui/pages/simulator.py:740
 #, python-brace-format
 msgid "{title} is running and switched on. Play: on the FM-1 or with the computer keyboard (Z S X D C …)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:755
+#: fm1companion/ui/pages/simulator.py:759
 #, python-brace-format
 msgid "⚠ too slow: {percent} % tempo"
 msgstr ""
 
 #. Translators: {percent} includes the percent sign ("43 %")
-#: fm1companion/ui/pages/simulator.py:759
+#: fm1companion/ui/pages/simulator.py:763
 #, python-brace-format
 msgid ""
 "The computer manages only {percent} of the required computing power – the simulator plays slower, the sound stutters and crackles. This is not the firmware's fault.\n"
 "Remedy: close other programs, “Open in Firefox” (often faster on the Pi) or choose latency “stable” and restart."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:764
+#: fm1companion/ui/pages/simulator.py:768
 msgid "Real time"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:766
+#: fm1companion/ui/pages/simulator.py:770
 #, python-brace-format
 msgid "The computer keeps up: the simulator plays at normal tempo (measured {percent} %)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:784
+#: fm1companion/ui/pages/simulator.py:788
 #, python-brace-format
 msgid "Recording saved: {path}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:817
+#: fm1companion/ui/pages/simulator.py:821
 msgid "play FM-1 simulators on the computer (FM1 Open built from the official source code, Melodee, online)"
 msgstr ""
 

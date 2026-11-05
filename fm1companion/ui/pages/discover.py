@@ -340,9 +340,11 @@ class DetailView(QWidget):
         acts = QHBoxLayout()
         self.b_install = _btn(_("Install …"), ("system-software-update", "go-down"), self.page.install,
                               _("install on the active FM-1 (with confirmation and backup)"), primary=True)
-        self.b_install.setEnabled(e.installable or e.builtin)
+        self.b_install.setEnabled(e.installable or e.builtin or bool(e.repo))
         if not (e.installable or e.builtin):
-            self.b_install.setToolTip(_("No verified package in the catalog – see the author's "
+            self.b_install.setToolTip(_("No verified package in the catalog – the app looks for the firmware "
+                                        "file in the GitHub releases (you check it before saving)") if e.repo else
+                                      _("No verified package in the catalog – see the author's "
                                         "website/installer"))
         acts.addWidget(self.b_install)
         if e.emulator_url:
@@ -761,6 +763,7 @@ class DiscoverPage(QWidget):
     # ------------------------------------------------------------ Catalog
     def set_catalog(self, cat: catmod.Catalog):
         self.cat = cat
+        self._apply_stars(catmod.cached_stars())
         for e in cat.entries:
             g = catmod.cached_enrichment(e.repo) if e.repo else None
             if g:
@@ -836,6 +839,8 @@ class DiscoverPage(QWidget):
     def activate(self):
         if net_allowed() and settings().get("auto_refresh", True) and catmod.needs_refresh() and not self._refreshing:
             self.refresh()
+        if self.sort.currentData() in ("stars", "updated") and settings().get("auto_refresh", True):
+            self.load_stars()
 
     def deactivate(self):
         st = settings()
@@ -904,6 +909,47 @@ class DiscoverPage(QWidget):
         settings()["sort"] = self.sort.currentData()
         config.save()
         self.apply_filter()
+        if self.sort.currentData() in ("stars", "updated"):
+            self.load_stars()
+
+    def _apply_stars(self, stars: dict) -> int:
+        n = 0
+        for e in self.cat.entries:
+            s = stars.get((e.repo or "").lower())
+            if not s:
+                continue
+            if s.get("stars") is not None:
+                e.stars = s["stars"]
+                n += 1
+            if s.get("pushed_at") and s["pushed_at"] > (e.pushed_at or ""):
+                e.pushed_at = s["pushed_at"]
+        return n
+
+    def load_stars(self, force: bool = False):
+        """stars + last update of all catalog entries in one go (GitHub search, ~10 repos per request, cached
+        for a day) – otherwise “popularity” would only know the entries whose details were opened"""
+        if getattr(self, "_stars_job", None) is not None or not net_allowed():
+            return
+        repos = [e.repo for e in self.cat.entries if e.repo]
+        have = catmod.cached_stars()
+        if not force and all((r or "").lower() in have for r in repos):
+            return
+        self._note(_("Loading stars from GitHub …"))
+
+        def done(stars):
+            self._stars_job = None
+            n = self._apply_stars(stars or {})
+            missing = sum(1 for r in repos if (r or "").lower() not in (stars or {}))
+            self.apply_filter()
+            self._note(_("Stars loaded for {n} firmwares.").format(n=n) if not missing else
+                       _("Stars loaded for {n} firmwares – GitHub limit reached, the rest follows later. With your "
+                         "own GitHub token (“More”) it goes faster.").format(n=n))
+
+        def fail(msg, tb):
+            self._stars_job = None
+            self._note(_("GitHub: {message}").format(message=msg))
+        self._stars_job = run_job(self, lambda w: catmod.fetch_stars(repos, progress=lambda a, b: w.progress.emit(a, b)),
+                                  on_done=done, on_fail=fail)
 
     def matches(self, e: catmod.Entry) -> bool:
         m = self.menus
@@ -1047,8 +1093,15 @@ class DiscoverPage(QWidget):
         e = self.current
         if not e:
             return
-        spec = e.to_spec()
         page = self.window.page("firmware") if self.window is not None else None
+        if not (e.installable or e.builtin) and e.repo:
+            # no checked package in the catalog: look at the GitHub releases (same as importing a link),
+            # save it as one of “my firmwares” and continue in “Install & versions”
+            d = self.link_import(f"https://github.com/{e.repo}")
+            if d.saved_spec is not None and page is not None and hasattr(page, "open_with"):
+                self.window.go("firmware", install=d.saved_spec)
+            return
+        spec = e.to_spec()
         if page is not None and hasattr(page, "open_with"):
             self.window.go("firmware", install=spec)
             return
