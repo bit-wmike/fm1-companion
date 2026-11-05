@@ -1118,6 +1118,92 @@ def cached_enrichment(repo: str) -> dict | None:
             "homepage": info.get("homepage") or "", "releases": norm_releases(rels or []), "message": ""}
 
 
+def _stars_file() -> Path:
+    d = cache_dir() / "github"
+    d.mkdir(parents=True, exist_ok=True)
+    return d / "stars.json"
+
+
+def cached_stars() -> dict[str, dict]:
+    """repo (lower case) -> {"stars": int | None, "pushed_at": "YYYY-MM-DD", "t": fetched}"""
+    c = _read_cache(_stars_file())
+    return c if isinstance(c, dict) else {}
+
+
+def _star_batches(repos: list[str], max_len: int = 230) -> list[list[str]]:
+    """GitHub search allows at most 256 characters per query – several ``repo:`` qualifiers per query"""
+    out, cur, n = [], [], len(" fork:true")
+    for r in repos:
+        add = len(r) + 6
+        if cur and n + add > max_len:
+            out.append(cur)
+            cur, n = [], len(" fork:true")
+        cur.append(r)
+        n += add
+    if cur:
+        out.append(cur)
+    return out
+
+
+def fetch_stars(repos, ttl: float = MAX_AGE, progress=None, sleep=time.sleep, max_wait: float = 75) -> dict[str, dict]:
+    """Stars and last push of many repos at once, via the GitHub search (one request per ~10 repos instead of
+    one per repo). Results are cached for ``ttl``; repos GitHub does not know are remembered as unknown.
+    If the search limit is reached (10 per minute without a token) it waits up to ``max_wait`` seconds,
+    otherwise it stops and keeps what it has. -> the whole cache"""
+    have = cached_stars()
+    now = time.time()
+    todo = sorted({r.strip("/") for r in repos if r and "/" in r
+                   and now - have.get(r.strip("/").lower(), {}).get("t", 0) >= ttl})
+    done = 0
+
+    def save():
+        try:
+            _stars_file().write_text(json.dumps(have, ensure_ascii=False), "utf-8")
+        except OSError:
+            pass
+
+    def query(batch: list[str]) -> bool:
+        nonlocal done
+        q = " ".join(f"repo:{r}" for r in batch) + " fork:true"
+        for attempt in range(2):
+            try:
+                data, _hint = gh_api("search/repositories?per_page=100&q=" + urllib.parse.quote(q), ttl)
+                break
+            except RateLimited as e:
+                wait = (e.reset - time.time() + 2) if e.reset else max_wait
+                if attempt or wait > max_wait:
+                    return False
+                sleep(max(1.0, wait))
+            except Offline:
+                # GitHub answers 422 if one repo of the query does not exist (renamed, deleted) – split it up
+                if len(batch) == 1:
+                    have[batch[0].lower()] = {"stars": None, "pushed_at": "", "t": time.time()}
+                    done += 1
+                    return True
+                mid = len(batch) // 2
+                return query(batch[:mid]) and query(batch[mid:])
+        else:
+            return False
+        found = {}
+        for it in (data.get("items") or []) if isinstance(data, dict) else []:
+            found[(it.get("full_name") or "").lower()] = it
+        for r in batch:
+            it = found.get(r.lower())
+            have[r.lower()] = {"stars": it.get("stargazers_count") if it else None,
+                               "pushed_at": ((it or {}).get("pushed_at") or "")[:10], "t": time.time()}
+        done += len(batch)
+        if progress:
+            progress(done, len(todo))
+        return True
+
+    for batch in _star_batches(todo):
+        ok = query(batch)
+        save()
+        if not ok:
+            break
+    return have
+
+
 def raw_exists(repo: str, path: str) -> bool:
     """File present in the repo? (raw.githubusercontent.com – no API, no rate limit)"""
     req = urllib.request.Request(f"https://raw.githubusercontent.com/{repo}/HEAD/{path}", method="HEAD",

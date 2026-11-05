@@ -4121,3 +4121,19 @@ msgstr "General-MIDI-Klänge"
 #: fm1companion/diag.py:49
 msgid "rescue via U-Boot (jl-uboot-tool)"
 msgstr "Rettung über U-Boot (jl-uboot-tool)"
+
+#: fm1companion/ui/pages/discover.py:345
+msgid "No verified package in the catalog – the app looks for the firmware file in the GitHub releases (you check it before saving)"
+msgstr "Kein geprüftes Paket im Katalog – die App sucht die Firmware-Datei in den GitHub-Releases (du prüfst sie vor dem Speichern)"
+
+#: fm1companion/ui/pages/discover.py:937
+msgid "Loading stars from GitHub …"
+msgstr "Lade Sterne von GitHub …"
+
+#: fm1companion/ui/pages/discover.py:944
+msgid "Stars loaded for {n} firmwares."
+msgstr "Sterne für {n} Firmwares geladen."
+
+#: fm1companion/ui/pages/discover.py:945
+msgid "Stars loaded for {n} firmwares – GitHub limit reached, the rest follows later. With your own GitHub token (“More”) it goes faster."
+msgstr "Sterne für {n} Firmwares geladen – GitHub-Limit erreicht, der Rest folgt später. Mit eigenem GitHub-Token („Mehr“) geht es schneller."

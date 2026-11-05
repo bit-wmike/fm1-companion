@@ -630,3 +630,43 @@ def test_fetch_releases_skips_releases_without_our_package(env, monkeypatch):
         {"tag_name": "v0.10.0", "assets": [{"name": "orbit.fwsc", "browser_download_url": "a"}]}])
     rels = fw.fetch_releases(s, 0)
     assert [r.tag for r in rels] == ["v0.10.0"] and fw.latest(rels, "stable").assets == {"orbit.fwsc": "a"}
+
+
+# ------------------------------------------------------------------ stars in bulk
+def test_fetch_stars_batches_splits_and_caches(env, monkeypatch):
+    c = env[0]
+    stars = {"keremimo/melodee": 400, "isod89/sloop-fm1": 300, "illuminus5/skiff": 120,
+             "juanjiant-bit/JIANT": 213}
+    stars.update({f"someone/fw{i:02d}": i for i in range(30)})
+    calls = []
+
+    def fake(path, ttl=0):
+        q = urllib.parse.unquote(path.split("q=", 1)[1])
+        assert len(q) <= 256 and q.endswith(" fork:true")
+        repos = [w[5:] for w in q.split() if w.startswith("repo:")]
+        calls.append(repos)
+        if "gone/deleted" in repos:          # GitHub: 422 when one repo of the query does not exist
+            raise c.Offline("GitHub error 422")
+        return {"items": [{"full_name": r, "stargazers_count": stars[r], "pushed_at": "2026-10-01T00:00:00Z"}
+                          for r in repos if r in stars]}, ""
+    monkeypatch.setattr(c, "gh_api", fake)
+    repos = list(stars) + ["gone/deleted"]
+    got = c.fetch_stars(repos, sleep=lambda s: None)
+    assert got["keremimo/melodee"]["stars"] == 400 and got["juanjiant-bit/jiant"]["stars"] == 213
+    assert got["gone/deleted"]["stars"] is None and got["someone/fw29"]["pushed_at"] == "2026-10-01"
+    assert len(calls) < len(repos)                 # several repos per request
+    n = len(calls)
+    c.fetch_stars(repos, sleep=lambda s: None)     # cached: no new requests
+    assert len(calls) == n
+    assert c.cached_stars()["illuminus5/skiff"]["stars"] == 120
+
+
+def test_fetch_stars_stops_at_rate_limit(env, monkeypatch):
+    c = env[0]
+
+    def limited(path, ttl=0):
+        raise c.RateLimited("limit", int(time.time()) + 3600)
+    monkeypatch.setattr(c, "gh_api", limited)
+    slept = []
+    got = c.fetch_stars(["a/b", "c/d"], sleep=slept.append)
+    assert got == {} and not slept                 # reset far away: does not wait, keeps nothing wrong

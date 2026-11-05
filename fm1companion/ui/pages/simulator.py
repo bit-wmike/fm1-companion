@@ -474,8 +474,12 @@ class SimulatorPage(QWidget):
         if st == QWebEngineLoadingInfo.LoadStatus.LoadStartedStatus or info.url().scheme() in ("data", "about"):
             return
         dom, E = info.errorDomain(), QWebEngineLoadingInfo.ErrorDomain
-        failed = st == QWebEngineLoadingInfo.LoadStatus.LoadFailedStatus or dom not in (
-            E.NoErrorDomain, E.HttpStatusCodeDomain) or (dom == E.HttpStatusCodeDomain and info.errorCode() >= 400)
+        # HttpStatusCodeDomain does not exist in every Qt version (e.g. Qt 6.4 of Debian Bookworm)
+        http = getattr(E, "HttpStatusCodeDomain", None)
+        ok_domains = {d for d in (getattr(E, "NoErrorDomain", None), http) if d is not None}
+        failed = (st == QWebEngineLoadingInfo.LoadStatus.LoadFailedStatus
+                  or (bool(ok_domains) and dom not in ok_domains)
+                  or (http is not None and dom == http and info.errorCode() >= 400))
         if st == QWebEngineLoadingInfo.LoadStatus.LoadStoppedStatus and not failed:
             return
         self._loaded(not failed)

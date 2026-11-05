@@ -157,6 +157,13 @@ def flow():
         check(page.detail.versions.topLevelItemCount() >= 1, "versions list shows \"no versions known\" instead of empty")
     else:
         check(True, "no entry without repo in the catalog")
+    # entry with repo but without a checked package (e.g. JIANT): "Install" is possible via the GitHub releases
+    withrepo = next((e for e in page.cat.entries if e.repo and not e.installable and not e.builtin), None)
+    if withrepo is not None:
+        page.open_entry(withrepo)
+        wait(200)
+        check(page.detail.b_install.isEnabled() and "GitHub-Releases" in page.detail.b_install.toolTip(),
+              f"entry with repo, no package ({withrepo.name}): Install possible via GitHub releases")
     page.open_key("hortator")
     wait(200)
 
