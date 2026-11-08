@@ -10,6 +10,7 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 | 1 | **Melodee** (priority 1), matching the version on the device (1.6.1, 1.6.0, 1.6.0-rc.7 and rc.8 bundled) | **done in 2.2.0**, 1.6.0 since 2.3.0, 1.6.1 since 2.3.2 (page "Studio", virtual device, playback target "Im Studio" – in the Studio) |
 | 2 | **SLOOP** (latest stable, currently 2.8.4) | only once Melodee runs well |
 | 3 | **Skiff**, matching the version on the device (2.2 and 2.1.1 bundled) | **done** (branch `studio-skiff`; same page, virtual device, backup ↔ twin, write back) |
+| 3b | **JIANT FM**, the stable version of its installer (V10.60) and the beta V10.61 | **done** (branch `studio-jiant`; same page, virtual device, backup ↔ twin, write back) |
 | 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V16 may differ | after that |
 | – | **Original V16** | **paused, not dropped** |
 
@@ -79,6 +80,33 @@ has one core (MENU › CPU 2 CORES never starts core 1), no USB audio, no TRS MI
 ends only with SONG ONCE (Skiff loops otherwise); the autosave (`autosave_poll`) writes the flash on its own after the
 music changes, so the Studio's change detection also sees those writes. Checked only against the twin itself, never a
 real Skiff FM-1 (docs/UNTESTED.md).
+
+## Status JIANT FM (V10.60, V10.61)
+
+Done: twin **JIANT FM V10.60** (commit 43b8ea8, the stable version JIANT's `web/EDITIONS.json` names for its official
+installer) and **V10.61** (commit 6c48e2a, its beta), glue layer `tools/studio/jiant_studio.c` – JIANT's unmodified
+sources included as its own browser emulator (`web/emu/felucca_web.c`) and host tests (`tests/editor_test.c`,
+`backup_test.c`) do, plus the editor SysEx path, `ota.c`'s identity handshake and USB MIDI out (held to its TIMER4
+tick, `usb.c` `midi_out_due`). Same `st_*` ABI with `st_transport_set` (stop as `editor.c` `ed_flash_stop`, the song
+as `song_main.c` `chain_prepare`). JIANT has no tags: `build_sims.py` builds commits; the folder and the manifest carry
+the version the commit reports (`felucca.c` FELUCCA_VERSION "V10.60" -> `sims/jiant-studio/10.60/`), the identity is
+JIANT's `tools/build.py` PRODUCT (FM-1_909: its installer builds without `--release`).
+Python: `studio.FIRMWARES["jiant"]` ("JIANT FM", INFO "JIANT", 6 tracks, 4 slots = the current song's sections
+A–D); `backup_firmware()` knows JIANT by the companion block, the firmware string ("JIANT V10.60", as JIANT's editor
+writes it) or the 43-object inventory; `StudioService.firmware_for()` takes the device layer's "jiant" (INFO) and the
+catalog's "jiant-fm"; `firmware.guess_firmware()` maps INFO "JIANT …" and identity FM-1_909 to "jiant-fm". Backup
+layer: JIANT's inventory (0–10, the song index 10, every song's sections 40–71) is `KNOWN_ID_SETS[43]`; 40–63 are
+sections, not sample slots (`is_sample` / `is_project` take `jiant`), and song 7/8's sections 64–71 no longer trigger
+the Melodee 1.6 refusal (`check_16`). The inspector names the songs' sections and the song index.
+
+Open (JIANT): the project view and `projectfmt` do not read JIANT's sections (the export dialog offers no "passes of
+the pattern", the project name comes from the slot), and the Projects page still lists JIANT's slots with Melodee's
+numbering – a separate parser; T5 and T6 are asleep with JIANT's default MENU › TRACKS 4 (their stems are silent);
+one core, no Bluetooth / PROX, no USB host, no USB audio (INPUT hears silence), no TRS MIDI; JIANT's later versions
+(V10.6c … V10.6z10, V10.7; the private-preview line's `web/PUBLIC_RELEASE.json` names V10.6z2) have no twin – their
+letter suffixes sort before V10.60 in `studio.version_key`, so the studio warns and runs V10.60; the catalog entry
+"jiant-fm" still says protocol "none" (the device answers the editor protocol all the same). Checked only against the
+twin itself, never a real JIANT FM-1 (docs/UNTESTED.md).
 
 ## Second route: fm1-emu (processor emulation)
 

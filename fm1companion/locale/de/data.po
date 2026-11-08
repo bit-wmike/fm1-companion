@@ -3490,3 +3490,17 @@ msgstr "FM6-Patches der User-Presets"
 #, python-brace-format
 msgid "Pattern bank, patterns {first}–{last}"
 msgstr "Pattern-Bank, Patterns {first}–{last}"
+
+#: fm1companion/backup_inspect.py:361
+#, python-brace-format
+msgid "Section {letter} of the current song"
+msgstr "Section {letter} des aktuellen Songs"
+
+#: fm1companion/backup_inspect.py:363
+msgid "Song index (every song's rows and scenes)"
+msgstr "Song-Index (Zeilen und Szenen aller Songs)"
+
+#: fm1companion/backup_inspect.py:365
+#, python-brace-format
+msgid "Song {song}, section {letter}"
+msgstr "Song {song}, Section {letter}"

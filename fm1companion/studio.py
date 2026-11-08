@@ -2,10 +2,10 @@
 """Studio: the FM-1's digital twin in the suite.
 
 The FM-1 is the instrument, the suite is the studio. The twin is **the same firmware** as on the device
-(Melodee's or Skiff's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py --target
-melodee-studio / skiff-studio and tools/studio/<firmware>_studio.c): the same engines, effects, the same mixer and
-sequencer, plus the NOR flash (settings, projects, user presets) and the editor SysEx protocol over the firmware's USB
-path.
+(Melodee's, Skiff's or JIANT FM's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py
+--target melodee-studio / skiff-studio / jiant-studio and tools/studio/<firmware>_studio.c): the same engines, effects,
+the same mixer and sequencer, plus the NOR flash (settings, projects, user presets) and the editor SysEx protocol over
+the firmware's USB path.
 It runs in QtWebEngine (web worker; sound via AudioWorklet -> Chromium -> PipeWire = the Pi's speakers) and
 talks to the outside exactly like a real FM-1: ``Studio.link`` is a ``transport.Link`` – backup.read/restore,
 presets, project writing, playback.py etc. work unchanged.
@@ -27,7 +27,7 @@ API (``Studio``)::
     st.open_from_device(link)                           # read a backup from the real FM-1, then load it
     st.link                                             # link to the twin (as to a real FM-1)
     st.play(how="play"|"song") / st.stop()              # transport (PLAY key or song chain, editor stop)
-    st.load_project(slot)                               # load a project (Melodee 1..32, Skiff A..D) like the PROJECT page
+    st.load_project(slot)                               # load a project (Melodee 1..32, Skiff A..D, JIANT's sections A..D)
     st.start_audio() / st.stop_audio()                  # real-time sound (WebEngine: default output)
     st.render_wav(path, seconds=None, until_end=False, stems=False, start="play", source="live", fmt="f32")
                                                         # offline, faster than real time -> RenderResult
@@ -92,10 +92,13 @@ class StudioError(Exception):
 
 
 # the firmwares with a studio twin: key -> display name, the name its editor INFO reports before the version
-# (Skiff answers like Felucca, "FELUCCA v2.2"), the number of tracks and project slots (stems, the project list)
+# (Skiff answers like Felucca, "FELUCCA v2.2"; JIANT "JIANT V10.60"), the number of tracks and project slots (stems, the
+# project list; JIANT's four are the current song's sections A..D). The key is what the device layer calls the firmware
+# (protocol.Info.firmware_name; the catalog's "jiant-fm" starts with it)
 FIRMWARES = {
     "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32},
     "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4},
+    "jiant": {"name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
 }
 
 
@@ -241,21 +244,26 @@ def backup_version(archive) -> str:
 
 
 SKIFF_BACKUP_IDS = [*range(10), *range(16, 35)]     # web/fm1backup.js BACKUP_IDS: the pattern bank's chunks 16..31
+JIANT_BACKUP_IDS = [*range(11), *range(40, 72)]     # JIANT's web/fm1backup.js BACKUP_IDS: the song index, the sections
 
 
 def backup_firmware(archive) -> str:
-    """Which firmware a backup belongs to: "melodee", "skiff", "sloop", "felucca" or "" (unknown). The app's companion
-    block names it; otherwise the 'firmware' field, and Skiff's inventory (the pattern bank) gives Skiff away."""
+    """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "sloop", "felucca" or "" (unknown). The app's
+    companion block names it; otherwise the 'firmware' field (JIANT's editor writes its INFO, "JIANT V10.60"), and the
+    inventory gives Skiff (the pattern bank) and JIANT (the songs) away."""
     if getattr(archive, "sloop", False):
         return "sloop"
     c = archive.companion or {}
     key = (c.get("firmware") or "").lower()
     text = " ".join(str(x) for x in (key, c.get("version_string", ""), archive.firmware or "")).lower()
-    for name in ("melodee", "skiff", "sloop"):
+    for name in ("melodee", "skiff", "jiant", "sloop"):
         if name in text:
             return name
-    if [o["id"] for o in archive.objects] == SKIFF_BACKUP_IDS:
+    ids = [o["id"] for o in archive.objects]
+    if ids == SKIFF_BACKUP_IDS:
         return "skiff"
+    if ids == JIANT_BACKUP_IDS:
+        return "jiant"
     return "felucca" if "felucca" in text else ""
 
 
@@ -746,10 +754,12 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     if archive.sloop:
         raise StudioError(_("The {firmware} twin cannot load SLOOP backups.").format(
             firmware=firmware_name(firmware_key)))
-    sup = {o.id for o in backup.parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))}
+    sup_order = [o.id for o in backup.parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))]
+    sup = set(sup_order)
     objs = archive.objects
     order = objs[2:] + objs[1:2] + objs[0:1]
-    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"])]
+    jiant = backup.is_jiant(sup_order) or backup.is_jiant(o["id"] for o in objs)
+    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"], jiant)]
     total = sum(o["size"] for o in todo) or 1
     done = 0
     rejected = [o["id"] for o in objs if o["id"] not in sup and o["size"]]

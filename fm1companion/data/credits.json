@@ -4,6 +4,7 @@
     {"name": "Melodee", "authors": "Kerem Kiliç", "url": "https://github.com/keremimo/melodee", "license": "GPL-3.0", "kind": "Firmware", "use": "Firmware, Web-Editor, Installer und Handbuch, die die App einbindet"},
     {"name": "Felucca", "authors": "Leo Kuroshita / Hügelton Instruments", "url": "https://github.com/hugelton/Felucca", "license": "GPL-3.0", "kind": "Firmware", "use": "Grundlage von Melodee, Skiff und SLOOP; sampleio.py (vendor) stammt von dort"},
     {"name": "Skiff", "authors": "illuminus5", "url": "https://github.com/illuminus5/skiff", "license": "GPL-3.0", "kind": "Firmware", "use": "Firmware mit Sample-Slots"},
+    {"name": "JIANT FM", "authors": "juanjiant-bit", "url": "https://github.com/juanjiant-bit/JIANT", "license": "GPL-3.0", "kind": "Firmware", "use": "Felucca fork; its unmodified firmware code runs in the studio twin"},
     {"name": "SLOOP", "authors": "isod89", "url": "https://github.com/isod89/sloop-fm1", "license": "GPL-3.0", "kind": "Firmware", "use": "Firmware mit Sample-Slots"},
     {"name": "M-VAVE FM1 Open", "authors": "M-VAVE", "url": "https://github.com/m-vave/fm1_open", "license": "GPL-3.0 mit Ausnahme (siehe Projekt)", "kind": "Firmware/SDK", "use": "offizielle offene Firmware, Simulator-Quellen, Update-Werkzeuge"},
     {"name": "awesome-fm-1 / Mooring", "authors": "cicloid", "url": "https://github.com/cicloid/awesome-fm-1", "license": "CC0-1.0", "kind": "Katalog", "use": "Firmware-Katalog und Linksammlung"},

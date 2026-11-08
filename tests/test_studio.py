@@ -423,3 +423,169 @@ def test_skiff_inventory_in_backup_layer():
     assert backup.known_ids(studio.SKIFF_BACKUP_IDS) == studio.SKIFF_BACKUP_IDS
     assert backup.known_ids(list(range(28)) + [40]) == []
     assert backup.known_ids(list(range(5))) is None
+
+
+# ------------------------------------------------------------------ JIANT FM (tools/studio/jiant_studio.c)
+# JIANT has no tags: the builds are the commits of its web/EDITIONS.json (V10.60 the official installer's stable, V10.61
+# its beta); its web installer builds with a plain tools/build.py, whose PRODUCT is the package identity FM-1_909
+JIANT_COMMIT = {"V10.60": "43b8ea8111949c990bf76523c7d4f4e77b715114", "V10.61": "6c48e2a8e7049c31ab77c57b97c3ef6790d24090"}
+
+
+def test_jiant_builds_side_by_side():
+    bs = studio.builds("jiant")
+    vs = [b.version for b in bs]
+    assert {"V10.60", "V10.61"} <= set(vs) and vs == sorted(vs, key=studio.version_key)
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == [] and b.path.name == b.version.lstrip("V")
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "jiant"
+        assert m["ref"] == m["commit"] == JIANT_COMMIT[b.version] and m["license"] == "GPL-3.0-only"
+        assert m["identity"] == "FM-1_909" and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["tracks"] == 6 and m["projects"] == 4 and m["source_repo"] == "https://github.com/juanjiant-bit/JIANT"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"JIANT-{m['commit']}.tar.gz" in notice
+        assert "juanjiant-bit" in notice and m["glue"] == "tools/studio/jiant_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        third = (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Apache License" in third and "SIL OPEN FONT LICENSE" in third.upper() and "Carnegie Mellon" in third
+    assert not any(s.key.startswith("jiant") for s in sims.bundled())
+    assert {b.firmware for b in studio.builds("melodee")} == {"melodee"}
+    assert {b.firmware for b in studio.builds("skiff")} == {"skiff"}
+
+
+def test_jiant_versions_and_pick():
+    b, exact, warn = studio.pick_build("jiant", "JIANT V10.60")           # JIANT's INFO
+    assert exact and b.version == "V10.60" and not warn
+    b, exact, warn = studio.pick_build("jiant", "V10.61")
+    assert exact and b.version == "V10.61"
+    b, exact, warn = studio.pick_build("jiant", "JIANT V10.59")           # older than everything: the oldest
+    assert not exact and b.version == "V10.60" and "JIANT FM" in warn
+    assert studio.pick_build("jiant")[0].version == "V10.61"
+    assert studio.check_versions("V10.60", device="JIANT V10.60", firmware="JIANT FM").ok
+    vc = studio.check_versions("V10.60", device="JIANT V10.61", firmware="JIANT FM")
+    assert not vc.ok and "JIANT FM" in vc.message and "CZ-1" not in vc.message
+    assert studio.firmware_name("jiant") == "JIANT FM" and studio.FIRMWARES["jiant"]["projects"] == 4
+    # the device layer: INFO "JIANT V10.60" and the catalog's key "jiant-fm" both select the JIANT twin
+    from fm1companion.protocol import Info
+    from fm1companion.ui.studio_service import StudioService
+    from fm1companion import firmware
+    assert Info("JIANT V10.60").firmware_name == "jiant"
+    assert StudioService.firmware_for("jiant") == StudioService.firmware_for("jiant-fm") == "jiant"
+    assert firmware.guess_firmware("", "JIANT V10.60")[0] == "jiant-fm"
+    assert firmware.guess_firmware("FM-1_909")[0] in ("jiant-fm", "")   # ("" if this machine remembered it otherwise)
+
+
+@need_node
+def test_jiant_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_jiant.mjs"), str(studio.SIMS_DIR / "jiant-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"10.60", "10.61"}
+    for x in res:
+        v = x["firmware_version"]
+        assert x["version_export"] == v and x["info"] == "JIANT " + v and x["ping"] == [0]
+        assert bytes(x["identity_reply"]) == _identity_frame("FM-1_909")   # ota.c, as demo_device expects
+        assert x["ids"] == studio.JIANT_BACKUP_IDS == backup.JIANT_IDS and x["screen_lit"] > 2000
+        assert {0, 1, 2, 9, 10, 40} <= {int(k) for k in x["sizes"]}      # music, settings, A, FM6, song index, song 1 A
+        assert all(rc == 0 for rc in x["put_rc"].values())
+        assert all(x["identical"].values()) and x["persisted"] and x["projects_used"] == [0]
+        assert x["live_step0"] == {"note": 40, "vel": 100}
+        a, b = x["takes"]
+        assert a["playing"] and a["play_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
+        assert x["fork_identical"] and x["stopped"] and x["song_play"] and x["editor_stop"]
+        print(f"{v}: {a['realtime']:.1f}x real time (6 tracks)")
+        assert a["realtime"] > 3
+
+
+def _jiant_song(st):
+    L = st.link
+    for k in range(6):
+        for i in range(0, 16, 2 + k % 3):
+            L.request(Cmd.TRACK_STEP, [k, i, 1, 40 + 3 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    assert L.request(Cmd.PROJECT, [1, 0])[2] == 1                          # section A of the current song
+
+
+def test_jiant_backup_round_trip_with_suite_code(node_studio):
+    a = node_studio(firmware="jiant", version="V10.60")
+    assert a.build.firmware == "jiant" and a.build.version == "V10.60" and a.tracks == 6 and a.project_slots == 4
+    assert studio.device_version(a.link) == "v10.60.0" and a.info_name == "JIANT"
+    _jiant_song(a)
+    arch = a.backup()
+    assert [o["id"] for o in arch.objects] == studio.JIANT_BACKUP_IDS and arch.known
+    assert studio.backup_version(arch) == "v10.60.0" and studio.backup_firmware(arch) == "jiant"
+    assert arch.companion["version_string"] == "JIANT V10.60"
+    # a backup of JIANT's own web editor (no companion block; its 'firmware' is the INFO string) and one with an
+    # unknown name: the inventory tells
+    plain = json.loads(backup.dumps(arch.file))
+    plain.pop("companion")
+    plain["firmware"] = "JIANT V10.60"
+    assert studio.backup_firmware(backup.read(plain)) == "jiant"
+    plain["firmware"] = "?"
+    assert studio.backup_firmware(backup.read(plain)) == "jiant"
+    # song 8's sections (ids 68..71, inside Melodee 1.6's project range 64..91): no Melodee 1.6 refusal, restored as
+    # sections (not as sample slots)
+    f = json.loads(backup.dumps(arch.file))
+    src = next(o for o in f["objects"] if o["id"] == 40)
+    for o in f["objects"]:
+        if o["id"] == 68:
+            o.update(size=src["size"], crc=src["crc"], data=src["data"])
+    arch8 = backup.read(f)
+    b = node_studio(firmware="jiant", version="V10.61")
+    b.open_from_backup(arch8)                                                # via backup.restore = editor protocol
+    back = {o["id"]: o["bytes"] for o in b.backup().objects}
+    for o in arch8.objects:
+        if o["id"] != 1:                                                     # (the settings: V10.61 adds its own)
+            assert back[o["id"]] == o["bytes"], o["id"]
+    assert back[68] == back[40] and b.projects() == [0] and not b.rejected
+    vc = b.check_versions(archive=arch)
+    assert not vc.ok and "JIANT FM" in vc.message
+    c = studio.Studio.for_backup(arch8, backend="node")                     # the backup's firmware and version
+    try:
+        assert c.build.firmware == "jiant" and c.build.version == "V10.60" and not c.warning and c.projects() == [0]
+        assert c.load_project(0) == 0 and c.load_project(1) == 1
+        assert c.play()["busy"] and not c.stop()["busy"]                   # st_transport_set
+        assert c.play("song")["busy"] and not c.stop()["busy"]
+    finally:
+        c.close()
+    # the tolerant load (the studio page's) skips nothing of its own firmware
+    d = node_studio(firmware="jiant", version="V10.60")
+    d.open_from_backup(arch8, tolerant=True)
+    assert d.rejected == [] and {o["id"]: o["bytes"] for o in d.backup().objects}[68] == back[68]
+    # the inspector names JIANT's songs
+    from fm1companion import backup_inspect as BI
+    rep = BI.inspect(arch8)
+    assert rep.firmware_key == "jiant" and BI.inspect(backup.read(plain)).firmware_key == "jiant"
+    for oid in (2, 10, 40, 68):
+        assert rep.obj(oid).group == BI.G_PROJECTS and "USR" not in rep.obj(oid).title, oid
+    assert "8" in rep.obj(68).title and "A" in rep.obj(68).title
+    assert BI.compatibility(rep, "jiant-fm", "JIANT V10.60", backup.JIANT_IDS).ok
+
+
+def test_jiant_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="jiant")
+    _jiant_song(st)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="saved", project=0, stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3, 4, 5] and s.peak > 0.05
+    peaks = []
+    for k, p in s.stems.items():
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    # T1..T4 play; T5 and T6 are asleep with JIANT's default MENU > TRACKS 4 (voice.c trk_live): silent stems
+    assert all(pk > 0.01 for pk in peaks[:4]) and peaks[4:] == [0.0, 0.0], peaks
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "jiant" and meta["firmware_version"] == "V10.61" and len(flash) == 0x100000
+
+
+def test_jiant_inventory_in_backup_layer():
+    """JIANT FM: 43 objects (0..10, the songs' sections 40..71); 40..63 are sections, not sample slots."""
+    ids = backup.JIANT_IDS
+    assert backup.known_ids(ids) == ids and backup.is_jiant(ids) and not backup.is_jiant(list(range(43)))
+    assert backup.known_ids(list(range(43))) == []
+    assert backup.is_sample(40) and not backup.is_sample(40, jiant=True)
+    assert not backup.is_project(40) and backup.is_project(40, jiant=True) and backup.is_project(71, jiant=True)
+    assert not backup.is_project(72, jiant=True) and not backup.is_project(80, jiant=True)
+    assert "USR" not in backup.object_title(41, jiant=True)

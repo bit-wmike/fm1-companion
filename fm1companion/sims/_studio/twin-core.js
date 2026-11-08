@@ -86,7 +86,7 @@
     projectUsed(slot) { return !!this.ex.st_project_used(slot); }
     projectCurrent() { return this.ex.st_project_current(); }
     transport() { const t = this.ex.st_transport(); return { playing: !!(t & 1), chain: !!(t & 2), busy: !!(t & 4), rec: !!(t & 8) }; }
-    // (optional export, Skiff's twin and later) the transport without the firmware's own editor command:
+    // (optional export, Skiff's and JIANT FM's twins and later) the transport without the firmware's own editor command:
     // how 0 stop, 1 play as the panel's PLAY, 2 the song from the top, 3 restart. -> false: not exported (Melodee)
     transportSet(how) { if (!this.ex.st_transport_set) return false; this.ex.st_transport_set(how >>> 0); return true; }
     runMs(ms) { this.ex.st_run_ms(ms >>> 0); }

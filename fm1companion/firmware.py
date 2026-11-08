@@ -581,6 +581,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
     for key in ("melodee", "sloop", "skiff"):
         if key in v or family == key:
             return key, tag
+    if "jiant" in v or family.startswith("jiant"):      # JIANT answers INFO "JIANT V10.60" (the catalog's key)
+        return "jiant-fm", tag
     m = re.match(r"FM-1_(\d+)", identity or "")
     if m:
         n = int(m.group(1))
@@ -588,6 +590,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
             return "melodee", ""
         if 700 <= n < 800:
             return "skiff", ""
+        if n == 909:                                    # JIANT's tools/build.py PRODUCT (its web installer's builds)
+            return "jiant-fm", ""
         if n in (15, 16):
             return f"stock-v{n}", f"V{n}"
     return "", ""

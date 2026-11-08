@@ -54,6 +54,19 @@ KNOWN_ID_SETS = {
 ALT_ID_SETS = {
     29: [list(range(10)) + list(range(16, 35))],
 }
+# JIANT FM (web/fm1backup.js BACKUP_IDS, firmware/src/editor_backup.c ED_BK_IDS): 0..9 as Felucca 1.0.3, 10 the song
+# index (every song's rows and scenes), 40..71 every song's sections (40 + 4 x song + section; 2..5 stay the current
+# song's sections). No user sample slots: 40..63 are sections, not samples.
+JIANT_IDS = list(range(11)) + list(range(40, 72))
+KNOWN_ID_SETS[43] = JIANT_IDS
+
+
+def is_jiant(ids) -> bool:
+    """is this inventory (IDs in order) JIANT FM's?"""
+    try:
+        return [int(i) for i in ids] == JIANT_IDS
+    except (TypeError, ValueError):
+        return False
 
 
 def known_ids(ids: list[int]) -> list[int] | None:
@@ -84,12 +97,16 @@ class BackupError(Exception):
     pass
 
 
-def is_project(oid: int) -> bool:
+def is_project(oid: int, jiant: bool = False) -> bool:
+    """a project (music) object; jiant: in JIANT FM's inventory (its songs' sections 40..71)"""
+    if jiant:
+        return oid == 0 or 2 <= oid <= 5 or 40 <= oid < 72
     return oid == 0 or 2 <= oid <= 5 or 64 <= oid < 92
 
 
-def is_sample(oid: int) -> bool:
-    return 32 <= oid < 64
+def is_sample(oid: int, jiant: bool = False) -> bool:
+    """a user sample slot (32..63); JIANT FM has none"""
+    return not jiant and 32 <= oid < 64
 
 
 def max_size(oid: int) -> int:
@@ -127,11 +144,12 @@ def _check(rc: int):
         raise BackupError(rc_text(rc))
 
 
-def object_title(oid: int, sloop: bool = False) -> str:
-    """Name of a backup object in plain language ("Preset bank U073–U090" instead of "Object 17")."""
+def object_title(oid: int, sloop: bool = False, jiant: bool = False) -> str:
+    """Name of a backup object in plain language ("Preset bank U073–U090" instead of "Object 17"); jiant: in JIANT FM's
+    inventory (its songs' sections)."""
     try:
         from . import backup_inspect as BI
-        return BI.describe(oid, b"", 0, 57, "", sloop=sloop).title
+        return BI.describe(oid, b"", 0, 43 if jiant else 57, "", sloop=sloop, jiant=jiant).title
     except Exception:                               # noqa: BLE001 – the name is just a bonus
         return _("object {id}").format(id=oid)
 
@@ -162,7 +180,7 @@ def protocol(link, hint: str = "") -> tuple[str, object]:
     """which backup protocol does the device speak? -> (FELUCCA|SLOOP, info or None).
     hint: firmware key (ctx.firmware_key), if known."""
     from . import sloopbk
-    if hint in ("melodee", "skiff", "felucca"):
+    if hint in ("melodee", "skiff", "felucca") or (hint or "").startswith("jiant"):
         return FELUCCA, None
     try:
         info = sloopbk.read_info(link)
@@ -455,8 +473,8 @@ def check_16(archive: Archive, supported, device_version: str = ""):
     """Backup from Melodee 1.6 onto a firmware without the 1.6 inventory? -> BackupError with explanation (before any
     write; otherwise the device would only report "older format" or "does not know …")."""
     from . import melodee16 as M
-    if archive.sloop:
-        return
+    if archive.sloop or is_jiant(o["id"] for o in archive.objects):
+        return                                      # (JIANT's song sections 64..71 are no Melodee 1.6 projects)
     if M.backup_is_16(archive.firmware, archive.companion, len(archive.objects), [o["id"] for o in archive.objects
                                                                                      if o["size"]]) \
             and M.device_before_16(device_version, len(supported)):
@@ -482,19 +500,20 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
 
     supported = parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))
     sup_ids = {o.id for o in supported}
+    jiant = is_jiant(o.id for o in supported) or is_jiant(o["id"] for o in archive.objects)
     live = next((o.size for o in supported if o.id == 0), 0)
     check_16(archive, supported)
     if len(supported) != 57:
         for o in archive.objects:
-            if is_project(o["id"]) and o["size"] > live and not (live >= 19008 and o["size"] in (19084, 19092, 20224)):
+            if is_project(o["id"], jiant) and o["size"] > live and not (live >= 19008 and o["size"] in (19084, 19092, 20224)):
                 raise BackupError(_("This backup needs a firmware with a larger recording memory"))
     for o in archive.objects:
         if o["id"] not in sup_ids and o["size"]:
             raise BackupError(_("The firmware on the FM-1 does not know “{part}” from the backup "
-                                "(different version). Nothing was written.").format(part=object_title(o['id'])))
+                                "(different version). Nothing was written.").format(part=object_title(o['id'], jiant=jiant)))
     # pre-check every object before anything is replaced
     for o in archive.objects:
-        if not is_sample(o["id"]) and o["size"] and o["id"] in sup_ids:
+        if not is_sample(o["id"], jiant) and o["size"] and o["id"] in sup_ids:
             rc = preflight(link, o["id"], o["bytes"], FELUCCA)
             if rc == 1:
                 raise BackupError(_("The backup has an older format. Restore it with Melodee 1.2 first. "
@@ -502,7 +521,7 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
             if rc == 3:
                 raise BackupError(_("Please stop playback on the FM-1 first – nothing was written."))
             if rc:
-                raise BackupError(_("“{part}”: {error}. Nothing was written.").format(part=object_title(o['id']),
+                raise BackupError(_("“{part}”: {error}. Nothing was written.").format(part=object_title(o['id'], jiant=jiant),
                                                                                    error=rc_text(rc)))
     written: list[int] = []
     try:
@@ -514,7 +533,7 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
             oid, data = o["id"], o["bytes"]
             if oid not in sup_ids:
                 continue
-            if is_sample(oid):
+            if is_sample(oid, jiant):
                 _restore_sample(link, oid - 32, data, step)
             else:
                 write_object(link, oid, data, step, FELUCCA)
@@ -565,10 +584,11 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
     supported = parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))
     check_16(archive, supported)
     sup = {o.id: o for o in supported}
+    jiant = is_jiant(o.id for o in supported) or is_jiant(o["id"] for o in archive.objects)
     for oid in want:
         if oid not in sup and by_id[oid]["size"]:
             raise BackupError(_("The firmware on the FM-1 does not know “{part}” from the backup "
-                                "(different version). Nothing was written.").format(part=object_title(oid)))
+                                "(different version). Nothing was written.").format(part=object_title(oid, jiant=jiant)))
     if expect:
         for oid, (size, crc) in expect.items():
             cur = sup.get(oid)
@@ -587,16 +607,16 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
             progress(done, total)
 
     for o in todo:
-        if not is_sample(o["id"]) and o["size"]:
+        if not is_sample(o["id"], jiant) and o["size"]:
             rc = preflight(link, o["id"], o["bytes"], FELUCCA)
             if rc == 1:
                 raise BackupError(_("“{part}”: The device does not accept this format "
                                     "(older or different firmware). Nothing was written.").format(
-                    part=object_title(o['id'])))
+                    part=object_title(o['id'], jiant=jiant)))
             if rc == 3:
                 raise BackupError(_("Please stop playback on the FM-1 first – nothing was written."))
             if rc:
-                raise BackupError(_("“{part}”: {error}. Nothing was written.").format(part=object_title(o['id']),
+                raise BackupError(_("“{part}”: {error}. Nothing was written.").format(part=object_title(o['id'], jiant=jiant),
                                                                                    error=rc_text(rc)))
     written: list[int] = []
     try:
@@ -608,7 +628,7 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
                 err = BackupError(_("cancelled"))
                 err.cancelled = True
                 raise err
-            if is_sample(o["id"]):
+            if is_sample(o["id"], jiant):
                 _restore_sample(link, o["id"] - 32, o["bytes"], step)
             else:
                 write_object(link, o["id"], o["bytes"], step, FELUCCA)

@@ -30,7 +30,7 @@
     }
   }
 
-  // the transport: a twin with st_transport_set (Skiff) moves it itself; Melodee's twin gets its editor commands
+  // the transport: a twin with st_transport_set (Skiff, JIANT FM) moves it itself; Melodee's twin gets its editor commands
   // (74 BANK_SONG op 3 = stop, 33 SONG op 2 = the chain from row 1)
   function stopTransport(t) {
     if (!t.transportSet(0)) edRequest(t, 74, [3]);
