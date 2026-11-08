@@ -342,8 +342,9 @@ class PlaybackBar(QWidget):
             self.seq.start(plan.events, src.bpm, src.loop_quarters if self.loop.isChecked() else None)
             self.mode = DEVICE
             self._studio_mode = True
-            self._label = pre + _("Plays <b>in the studio twin</b> (Melodee {version}, identical sound) · {routing}").format(
-                version=html.escape(svc.version), routing=html.escape(routing.describe()))
+            self._label = pre + _("Plays <b>in the studio twin</b> ({firmware} {version}, identical sound) · {routing}").format(
+                firmware=html.escape(svc.firmware_name), version=html.escape(svc.version),
+                routing=html.escape(routing.describe()))
             self._notes = notes
             self._running(True)
             self._tick()

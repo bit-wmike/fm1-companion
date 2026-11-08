@@ -30,15 +30,20 @@
     }
   }
 
+  // the transport: a twin with st_transport_set (Skiff) moves it itself; Melodee's twin gets its editor commands
+  // (74 BANK_SONG op 3 = stop, 33 SONG op 2 = the chain from row 1)
+  function stopTransport(t) {
+    if (!t.transportSet(0)) edRequest(t, 74, [3]);
+  }
   function startTransport(t, how) {
     if (how === "play") {                                   // PLAY on the panel, from the top
-      if (t.transport().busy) { edRequest(t, 74, [3]); t.runMs(30); }
+      if (t.transport().busy) { stopTransport(t); t.runMs(30); }
       t.press(TwinCore.B.PLAY);
-    } else if (how === "song") {                            // the song chain from row 1 (editor SONG op 2)
-      if (t.transport().busy) { edRequest(t, 74, [3]); t.runMs(30); }
-      edRequest(t, 33, [2]);
+    } else if (how === "song") {                            // the song from the top
+      if (t.transport().busy) { stopTransport(t); t.runMs(30); }
+      if (!t.transportSet(2)) edRequest(t, 33, [2]);
     } else if (how === "stop") {
-      edRequest(t, 74, [3]);
+      stopTransport(t);
     }
   }
 

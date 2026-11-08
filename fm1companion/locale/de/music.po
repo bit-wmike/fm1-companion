@@ -10,16 +10,16 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: fm1companion/ui/pages/studio.py:29
-msgid "Single tracks (stems): one WAV file per track 1–4, as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
-msgstr "Einzelspuren (Stems): je Spur 1–4 eine eigene WAV-Datei, gleich lang wie der Mix. Jede Spur wird allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master). Darum ist die Summe der Stems nicht bitgenau der Mix (Master-Dynamik), passt in Logic oder Audacity aber übereinander."
+msgid "Single tracks (stems): one WAV file per track (Melodee 1–4, Skiff 1–6), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
+msgstr "Einzelspuren (Stems): je Spur eine eigene WAV-Datei (Melodee 1–4, Skiff 1–6), gleich lang wie der Mix. Jede Spur wird allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master). Darum ist die Summe der Stems nicht bitgenau der Mix (Master-Dynamik), passt in Logic oder Audacity aber übereinander."
 
 #: fm1companion/ui/pages/studio.py:45
 msgid "Open backup in the studio"
 msgstr "Backup ins Studio öffnen"
 
 #: fm1companion/ui/pages/studio.py:49
-msgid "Which backup should the twin load? Melodee backups of all devices, newest first. Nothing changes on the FM-1."
-msgstr "Welches Backup soll der Zwilling laden? Melodee-Backups aller Geräte, neueste zuerst. Am FM-1 ändert sich dadurch nichts."
+msgid "Which backup should the twin load? Melodee and Skiff backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
+msgstr "Welches Backup soll der Zwilling laden? Melodee- und Skiff-Backups aller Geräte, neueste zuerst – es startet der Zwilling der Firmware des Backups. Am FM-1 ändert sich dadurch nichts."
 
 #: fm1companion/ui/pages/studio.py:52 fm1companion/ui/projects_page.py:85
 msgid "Date"
@@ -138,10 +138,10 @@ msgstr "Export-Ordner"
 msgid "Write back to the FM-1"
 msgstr "Aufs FM-1 zurückschreiben"
 
-#: fm1companion/ui/pages/studio.py:196
+#: fm1companion/ui/pages/studio.py:203
 #, python-brace-format
-msgid "Write the state of the studio twin (Melodee {twin}) to <b>“{device}”</b> ({firmware})?"
-msgstr "Den Stand des Studio-Zwillings (Melodee {twin}) auf <b>„{device}“</b> ({firmware}) schreiben?"
+msgid "Write the state of the studio twin ({twin}) to <b>“{device}”</b> ({firmware})?"
+msgstr "Den Stand des Studio-Zwillings ({twin}) auf <b>„{device}“</b> ({firmware}) schreiben?"
 
 #: fm1companion/ui/pages/studio.py:199
 msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: all 32 project slots, the running music and the user presets. Playback on the FM-1 stops in the process."
@@ -363,18 +363,18 @@ msgstr "Der Zwilling ließ sich nicht starten: {error}"
 msgid "The twin itself is active right now – choose a real FM-1 in the device selection at the top."
 msgstr "Aktiv ist gerade der Zwilling selbst – oben in der Geräteauswahl ein echtes FM-1 wählen."
 
-#: fm1companion/ui/pages/studio.py:477
-msgid "This firmware has no editor protocol – the studio needs Melodee."
-msgstr "Diese Firmware hat kein Editor-Protokoll – das Studio braucht Melodee."
+#: fm1companion/ui/pages/studio.py:482
+msgid "This firmware has no editor protocol – the studio needs Melodee or Skiff."
+msgstr "Diese Firmware hat kein Editor-Protokoll – das Studio braucht Melodee oder Skiff."
 
 #: fm1companion/ui/pages/studio.py:478
 msgid "No FM-1 connected."
 msgstr "Kein FM-1 verbunden."
 
-#: fm1companion/ui/pages/studio.py:480
+#: fm1companion/ui/pages/studio.py:485
 #, python-brace-format
-msgid "The FM-1 runs {firmware} – so far there is a studio twin only for Melodee."
-msgstr "Auf dem FM-1 läuft {firmware} – einen Studio-Zwilling gibt es bisher nur für Melodee."
+msgid "The FM-1 runs {firmware} – so far there is a studio twin only for Melodee and Skiff."
+msgstr "Auf dem FM-1 läuft {firmware} – einen Studio-Zwilling gibt es bisher nur für Melodee und Skiff."
 
 #: fm1companion/ui/pages/studio.py:481
 msgid "another firmware"
@@ -401,33 +401,33 @@ msgstr "Den Stand des Zwillings auf das aktive FM-1 schreiben – mit Bestätigu
 msgid "Is the active device"
 msgstr "Ist aktives Gerät"
 
-#: fm1companion/ui/pages/studio.py:510
+#: fm1companion/ui/pages/studio.py:522
 #, python-brace-format
-msgid "<b>Twin:</b> Melodee {version} · {source}"
-msgstr "<b>Zwilling:</b> Melodee {version} · {source}"
+msgid "<b>Twin:</b> {firmware} {version} · {source}"
+msgstr "<b>Zwilling:</b> {firmware} {version} · {source}"
 
 #: fm1companion/ui/pages/studio.py:513
 msgid "The twin is not running yet. Choose a source: from the FM-1, from a backup or the last studio state."
 msgstr "Der Zwilling läuft noch nicht. Wähle eine Quelle: vom FM-1, aus einem Backup oder den letzten Studio-Stand."
 
-#: fm1companion/ui/pages/studio.py:524
+#: fm1companion/ui/pages/studio.py:538
 #, python-brace-format
-msgid "There is no studio twin for {firmware} yet. So far the studio can do Melodee; SLOOP, Skiff and the original firmware (via FM1 Open) follow later – see Help › Studio. Backups of this device cannot be opened here; a Melodee backup can."
-msgstr "Für {firmware} gibt es noch keinen Studio-Zwilling. Das Studio kann bisher Melodee; SLOOP, Skiff und die Original-Firmware (über FM1 Open) folgen später – siehe Hilfe › Studio. Backups dieses Geräts lassen sich hier nicht öffnen; ein Melodee-Backup schon."
+msgid "There is no studio twin for {firmware} yet. So far the studio can do Melodee and Skiff; SLOOP and the original firmware (via FM1 Open) follow later – see Help › Studio. Backups of this device cannot be opened here; a Melodee or Skiff backup can."
+msgstr "Für {firmware} gibt es noch keinen Studio-Zwilling. Das Studio kann bisher Melodee und Skiff; SLOOP und die Original-Firmware (über FM1 Open) folgen später – siehe Hilfe › Studio. Backups dieses Geräts lassen sich hier nicht öffnen; ein Melodee- oder Skiff-Backup schon."
 
 #: fm1companion/ui/pages/studio.py:527
 msgid "this firmware"
 msgstr "diese Firmware"
 
-#: fm1companion/ui/pages/studio.py:539
+#: fm1companion/ui/pages/studio.py:558
 #, python-brace-format
-msgid "Twin and FM-1 have the same firmware (Melodee {version}) – identical sound."
-msgstr "Zwilling und FM-1 haben dieselbe Firmware (Melodee {version}) – identischer Klang."
+msgid "Twin and FM-1 have the same firmware ({firmware} {version}) – identical sound."
+msgstr "Zwilling und FM-1 haben dieselbe Firmware ({firmware} {version}) – identischer Klang."
 
-#: fm1companion/ui/pages/studio.py:542
+#: fm1companion/ui/pages/studio.py:562
 #, python-brace-format
-msgid "Twin: Melodee {version}"
-msgstr "Zwilling: Melodee {version}"
+msgid "Twin: {firmware} {version}"
+msgstr "Zwilling: {firmware} {version}"
 
 #: fm1companion/ui/pages/studio.py:557
 #, python-brace-format
@@ -586,9 +586,9 @@ msgstr "Backup öffnen"
 msgid "The backup cannot be read: {error}"
 msgstr "Das Backup lässt sich nicht lesen: {error}"
 
-#: fm1companion/ui/pages/studio.py:776
-msgid "This is a SLOOP backup. So far there is a studio twin only for Melodee (SLOOP follows later)."
-msgstr "Das ist ein SLOOP-Backup. Einen Studio-Zwilling gibt es bisher nur für Melodee (SLOOP folgt später)."
+#: fm1companion/ui/pages/studio.py:799
+msgid "This is a SLOOP backup. So far there is a studio twin only for Melodee and Skiff (SLOOP follows later)."
+msgstr "Das ist ein SLOOP-Backup. Einen Studio-Zwilling gibt es bisher nur für Melodee und Skiff (SLOOP folgt später)."
 
 #: fm1companion/ui/pages/studio.py:784
 msgid "before opening a backup"
@@ -655,10 +655,10 @@ msgstr "Mix …"
 msgid "Finished"
 msgstr "Fertig"
 
-#: fm1companion/ui/pages/studio.py:910
+#: fm1companion/ui/pages/studio.py:937
 #, python-brace-format
-msgid "Single track {n} of 4 …"
-msgstr "Einzelspur {n} von 4 …"
+msgid "Single track {n} of {total} …"
+msgstr "Einzelspur {n} von {total} …"
 
 #: fm1companion/ui/pages/studio.py:930
 #, python-brace-format
@@ -802,10 +802,10 @@ msgstr "Änderung um {time}"
 msgid "Sound not available: {error}"
 msgstr "Ton nicht verfügbar: {error}"
 
-#: fm1companion/ui/studio_service.py:548
+#: fm1companion/ui/studio_service.py:562
 #, python-brace-format
-msgid "Studio twin (Melodee {version})"
-msgstr "Studio-Zwilling (Melodee {version})"
+msgid "Studio twin ({firmware} {version})"
+msgstr "Studio-Zwilling ({firmware} {version})"
 
 #: fm1companion/ui/studio_service.py:554
 msgid "The studio twin is not running – open the page “Studio” first."
@@ -842,10 +842,10 @@ msgstr "leer gestartet – noch nichts geladen"
 msgid "unknown origin"
 msgstr "unbekannte Herkunft"
 
-#: fm1companion/ui/studio_service.py:595
+#: fm1companion/ui/studio_service.py:610
 #, python-brace-format
-msgid ". Not taken over ({n}): {names} – these parts do not fit Melodee {version} and are left out when writing back"
-msgstr ". Nicht übernommen ({n}): {names} – diese Teile passen nicht zu Melodee {version} und werden beim Zurückschreiben ausgelassen"
+msgid ". Not taken over ({n}): {names} – these parts do not fit {firmware} {version} and are left out when writing back"
+msgstr ". Nicht übernommen ({n}): {names} – diese Teile passen nicht zu {firmware} {version} und werden beim Zurückschreiben ausgelassen"
 
 #: fm1companion/studio.py:80
 msgid "The twin computes without a CPU limit: under overload the device drops voices (overload shedding), the twin never does. Floating-point parts (FM6 voice pairs, which CPU1 computes on the device, effect filters) may differ in the last bits (inaudible). No BLE, no USB host, no firmware update in the twin. The resource arena has the size of the host tests (at least that of the device). Stems come from several runs with muted tracks (track solo, with its share of the shared effects); because of the master dynamics the sum of the stems does not exactly match the mix."
@@ -919,9 +919,10 @@ msgstr "{message} Nichts geschrieben."
 msgid "Duration missing (seconds or until_end)"
 msgstr "Dauer fehlt (seconds oder until_end)"
 
-#: fm1companion/studio.py:691
-msgid "The Melodee twin cannot load SLOOP backups."
-msgstr "SLOOP-Backups kann der Melodee-Zwilling nicht laden."
+#: fm1companion/studio.py:747
+#, python-brace-format
+msgid "The {firmware} twin cannot load SLOOP backups."
+msgstr "SLOOP-Backups kann der {firmware}-Zwilling nicht laden."
 
 #: fm1companion/studio.py:733
 #, python-brace-format
@@ -3638,8 +3639,8 @@ msgstr "Klänge weichen ab (es spielt, was im Studio eingestellt ist): {differen
 
 #: fm1companion/ui/playback_bar.py:345
 #, python-brace-format
-msgid "Plays <b>in the studio twin</b> (Melodee {version}, identical sound) · {routing}"
-msgstr "Spielt <b>im Studio-Zwilling</b> (Melodee {version}, identischer Klang) · {routing}"
+msgid "Plays <b>in the studio twin</b> ({firmware} {version}, identical sound) · {routing}"
+msgstr "Spielt <b>im Studio-Zwilling</b> ({firmware} {version}, identischer Klang) · {routing}"
 
 #: fm1companion/ui/playback_bar.py:376
 msgid "Sound is being computed on the computer …"
@@ -4470,3 +4471,17 @@ msgstr[1] "{n} Drum-Schläge"
 #: fm1companion/ui/workshop_page.py:78
 msgid " steps"
 msgstr " Steps"
+
+#: fm1companion/ui/pages/studio.py:981
+#, python-brace-format
+msgid "The twin runs {twin}, the FM-1 runs {device} – their data do not fit each other. Fetch from the FM-1 first (that starts the {device} twin). Nothing was written."
+msgstr "Der Zwilling läuft mit {twin}, das FM-1 mit {device} – ihre Daten passen nicht zueinander. Erst vom FM-1 holen (das startet den {device}-Zwilling). Es wurde nichts geschrieben."
+
+#: fm1companion/ui/pages/studio.py:544
+#, python-brace-format
+msgid "The twin runs {twin}, your FM-1 runs {device} – “Fetch from FM-1” starts the {device} twin; writing back is not possible like this."
+msgstr "Der Zwilling läuft mit {twin}, dein FM-1 mit {device} – „Vom FM-1 holen“ startet den {device}-Zwilling; Zurückschreiben geht so nicht."
+
+#: fm1companion/ui/pages/studio.py:197
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the four projects A–D, the pattern bank, the running music, the user presets and the sample slots. Playback on the FM-1 stops in the process."
+msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät: die vier Projekte A–D, die Pattern-Bank, die laufende Musik, die User-Presets und die Sample-Slots. Die Wiedergabe am FM-1 stoppt dabei."

@@ -9,6 +9,7 @@ compiles anything. Run this in a development container, not on the user's machin
   python3 tools/build_sims.py [--only fm1-open,melodee] [--work DIR] [--wasi-sdk DIR]
                               [--repo fm1-open=/tmp/fm1_open] [--repo melodee=/tmp/melodee]
   python3 tools/build_sims.py --target melodee-studio [--ref v1.6.0-rc.8 ...] [--repo melodee=/tmp/melodee]
+  python3 tools/build_sims.py --target skiff-studio [--ref v2.2 ...] [--repo skiff=/tmp/skiff]
 
 Needs: git, Python with Pillow + fontTools (Melodee's header generators), and WASI SDK 27
 (downloaded from GitHub into --work when --wasi-sdk is not given; ~125 MB).
@@ -25,6 +26,8 @@ Simulators:
   melodee-studio  (--target) the studio twin: Melodee's firmware for the host WITH NOR flash and the editor SysEx
             (tools/studio/melodee_studio.c), one folder per firmware version under sims/melodee-studio/<version>/.
             New version: python3 tools/build_sims.py --target melodee-studio --ref <tag> --repo melodee=<clone>
+  skiff-studio  (--target) the same for Skiff (tools/studio/skiff_studio.c): sims/skiff-studio/<version>/
+            python3 tools/build_sims.py --target skiff-studio [--ref v2.2] --repo skiff=<clone>
 """
 from __future__ import annotations
 
@@ -238,14 +241,11 @@ BUILDERS = {"fm1-open": build_fm1_open, "melodee": build_melodee}
 # Several versions live side by side: fm1companion/sims/<firmware>-studio/<version>/ (studio.py picks the one
 # that matches the device / backup). Adding a version is one line, e.g.:
 #   python3 tools/build_sims.py --target melodee-studio --ref v1.6.0-rc.9 --repo melodee=/tmp/melodee
-# (needs: git, Pillow + fontTools for Melodee's generators, WASI SDK 27 as above). Later firmwares (SLOOP, Skiff)
-# add an entry here with their own glue file; the JS / Python host stays the same.
+#   python3 tools/build_sims.py --target skiff-studio --ref v2.3 --repo skiff=/tmp/skiff
+# (needs: git, Pillow + fontTools for the firmwares' header generators, WASI SDK 27 as above). A further firmware
+# (SLOOP, FM1 Open) adds an entry here with its own glue file and the few firmware-specific hooks below (header
+# generators, where the version string lives, the release identity, the NOTICE); the JS / Python host stays the same.
 STUDIO_ABI = 1
-STUDIOS = {
-    "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
-                       "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
-                       "license": "GPL-3.0-only"},
-}
 
 
 def melodee_release_identity(version: str) -> str:
@@ -257,31 +257,26 @@ def melodee_release_identity(version: str) -> str:
     return "FM-1_9" + major + (minor.zfill(2) + patch if patch else minor)
 
 
-def build_melodee_studio(work, sdk, local, ref, name="melodee-studio"):
-    spec = STUDIOS[name]
-    src, commit = source(spec["firmware"], work, local, ref=ref, repo_url=spec["repo"],
-                         tree_name=f"{name}-{ref}-src")
+def skiff_release_identity(version: str) -> str:
+    """Skiff's tools/build.py --release X.Y[.Z[.W]][-suffix]: identity FM-1_7XY (one digit each; X.Y.Z keeps X.Y's)."""
+    m = re.fullmatch(r"v?(\d)\.(\d)(?:\.\d){0,2}(?:-[A-Za-z0-9]+)?", version)
+    return "FM-1_7" + m[1] + m[2] if m else "FM-1_700"
+
+
+def _generate_melodee(src: Path):
     run([sys.executable, "-c", 'import sys; sys.path.insert(0, "tools"); sys.argv = ["build.py"]; import build; build.generate()'],
         cwd=src, stdout=subprocess.DEVNULL)
     run([sys.executable, "tools/gen_909_tables.py", "build/gen/x0x_drum_tables.h"], cwd=src, stdout=subprocess.DEVNULL)
-    version = re.search(r'#define MELODEE_VERSION "([^"]*)"', (src / "firmware/src/melodee.c").read_text()).group(1)
-    identity = melodee_release_identity(version)
-    glue = ROOT / spec["glue"]
-    shutil.copy(glue, src / "tests" / "fm1c_studio.c")    # beside hostsim.c: its includes resolve as upstream's tests
-    out = OUT / name / version.lstrip("v")
-    if out.exists():
-        shutil.rmtree(out)
-    out.mkdir(parents=True)
-    cc = sdk / "bin" / "clang"
-    wasm = out / "twin.wasm"
-    run([cc, f"--sysroot={sdk / 'share' / 'wasi-sysroot'}", "-O2", "-ffp-contract=off", "-std=gnu99", "-w",
-         f"-I{SHIM}", "-Ibuild/gen", "-Ifirmware/src", "-Itests", "-mexec-model=reactor",
-         f'-DMELODEE_VERSION="{version}"', f'-DMELODEE_ID="{identity}"',
-         "-Wl,-z,stack-size=1048576", "-Wl,--initial-memory=33554432", "-Wl,--strip-all",
-         "-o", wasm, "tests/fm1c_studio.c"], cwd=src)
-    shutil.copy(src / "LICENSE", out / "LICENSE")
-    source_url = f"{spec['repo']}/archive/{commit}.tar.gz"
-    (out / "NOTICE").write_text(
+
+
+def _generate_skiff(src: Path):
+    """Skiff's tools/build.py generate(): fonts, icons, palettes, sprites, tables, FM6 patches, the CC0 samples."""
+    run([sys.executable, "-c", 'import sys; sys.path.insert(0, "tools"); sys.argv = ["build.py"]; import build; build.generate()'],
+        cwd=src, stdout=subprocess.DEVNULL)
+
+
+def _melodee_notice(spec, version, ref, commit, source_url):
+    return (
         f"Melodee {version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
         f"(commit {commit}; source: {source_url}).\n"
         "GPL-3.0-only. Copyright (C) 2026 Kerem Kilic (Ellic Studio); portions Copyright (C) 2026 Leo Kuroshita, "
@@ -292,11 +287,92 @@ def build_melodee_studio(work, sdk, local, ref, name="melodee-studio"):
         "in/out through usb.c's rings), CPU1 jobs run serially,\nno BLE, no USB host, no updater (ota.c answers the "
         "identity handshake only), no overload shedding. Compiled with WASI SDK clang (include shim "
         "tools/wasm_shim/sys/wait.h).\n" + source_offer(spec["repo"], commit, f", the glue {spec['glue']} and the shim "
-                                                         "tools/wasm_shim"), "utf-8")
+                                                         "tools/wasm_shim"))
+
+
+SKIFF_THIRD_PARTY = ["LICENSES/MIT-DaisySP.txt", "LICENSES/MIT-Rings.txt", "LICENSES/Apache-2.0-msfa.txt",
+                     "LICENSES/OFL-BarlowCondensed.txt", "LICENSES/MIT-Fukiai.txt", "assets/samples-cc0/ATTRIBUTION.txt",
+                     "assets/breaks/ATTRIBUTION.txt"]
+
+
+def _skiff_extra(src: Path, out: Path):
+    """the licence texts of the parts compiled into the twin (Skiff's LICENSING.md lists them)"""
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    (out / "THIRD_PARTY.txt").write_text("".join(f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n"
+                                                 for f in SKIFF_THIRD_PARTY), "utf-8")
+
+
+def _skiff_notice(spec, version, ref, commit, source_url):
+    return (
+        f"Skiff {version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
+        f"(commit {commit}; source: {source_url}).\n"
+        "GPL-3.0-only. Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments (Felucca); "
+        "Copyright (C) 2026 illuminus5 (Skiff's changes and additions).\n"
+        "Ported parts keep their licences (DaisySP and Rings: MIT, msfa: Apache-2.0; the UI font Barlow Condensed and "
+        "the Fukiai icons are rasterised in: OFL 1.1, MIT), the instrument samples are CC0 (Versilian Studios):\n"
+        "Skiff's LICENSING.md and the texts in THIRD_PARTY.txt beside this file.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
+        "includes them as Skiff's own browser emulator and host tests do (web/emu/felucca_web.c, tests/hostsim.c,\n"
+        "editor_test.c, backup_test.c) and replaces only the hardware: keys/LEDs/LCD, ADC (MASTER; battery full), "
+        "NOR flash = a 1 MiB RAM image, USB = always configured (SysEx and MIDI out through usb.c's rings),\none core "
+        "(MENU > CPU 2 CORES has no second core here), no 320 MHz switch, no USB audio, no TRS MIDI, no serial console, "
+        "no updater (ota.c answers the identity handshake only).\nCompiled with WASI SDK clang (include shim "
+        "tools/wasm_shim/sys/wait.h).\n" + source_offer(spec["repo"], commit, f", the glue {spec['glue']} and the shim "
+                                                         "tools/wasm_shim"))
+
+
+STUDIOS = {
+    "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
+                       "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
+                       "license": "GPL-3.0-only", "generate": _generate_melodee,
+                       "version_file": "firmware/src/melodee.c", "version_re": r'#define MELODEE_VERSION "([^"]*)"',
+                       "identity": melodee_release_identity,
+                       "defines": lambda v, i: [f'-DMELODEE_VERSION="{v}"', f'-DMELODEE_ID="{i}"'],
+                       "notice": _melodee_notice, "tracks": 4, "projects": 32},
+    "skiff-studio": {"firmware": "skiff", "repo": "https://github.com/illuminus5/skiff",
+                     "glue": "tools/studio/skiff_studio.c", "refs": ["v2.1.1", "v2.2"], "title": "Skiff studio twin",
+                     "license": "GPL-3.0-only", "generate": _generate_skiff,
+                     "version_file": "firmware/src/felucca.c", "version_re": r'#define FELUCCA_VERSION "([^"]*)"',
+                     "identity": skiff_release_identity,
+                     "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
+                     "notice": _skiff_notice, "extra": _skiff_extra, "tracks": 6, "projects": 4},
+}
+
+
+def build_studio(work, sdk, local, ref, name="melodee-studio"):
+    spec = STUDIOS[name]
+    src, commit = source(spec["firmware"], work, local, ref=ref, repo_url=spec["repo"],
+                         tree_name=f"{name}-{ref}-src")
+    spec["generate"](src)
+    version = re.search(spec["version_re"], (src / spec["version_file"]).read_text()).group(1)
+    identity = spec["identity"](version)
+    glue = ROOT / spec["glue"]
+    shutil.copy(glue, src / "tests" / "fm1c_studio.c")    # beside hostsim.c: its includes resolve as upstream's tests
+    out = OUT / name / version.lstrip("v")
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir(parents=True)
+    cc = sdk / "bin" / "clang"
+    wasm = out / "twin.wasm"
+    run([cc, f"--sysroot={sdk / 'share' / 'wasi-sysroot'}", "-O2", "-ffp-contract=off", "-std=gnu99", "-w",
+         f"-I{SHIM}", "-Ibuild/gen", "-Ifirmware/src", "-Itests", "-mexec-model=reactor",
+         *spec["defines"](version, identity),
+         "-Wl,-z,stack-size=1048576", "-Wl,--initial-memory=33554432", "-Wl,--strip-all",
+         "-o", wasm, "tests/fm1c_studio.c"], cwd=src)
+    shutil.copy(src / "LICENSE", out / "LICENSE")
+    if spec.get("extra"):
+        spec["extra"](src, out)
+    source_url = f"{spec['repo']}/archive/{commit}.tar.gz"
+    (out / "NOTICE").write_text(spec["notice"](spec, version, ref, commit, source_url), "utf-8")
     extra = {"kind": "studio", "firmware": spec["firmware"], "firmware_version": version, "identity": identity,
              "abi": STUDIO_ABI, "wasm": "twin.wasm", "fs": 44100, "flash_size": 0x100000,
              "glue": spec["glue"], "glue_sha256": sha(glue), "source_url": source_url}
+    if spec["firmware"] != "melodee":                     # (Melodee's manifests predate these: their defaults)
+        extra.update(tracks=spec["tracks"], projects=spec["projects"])
     return out, commit, clang_version(cc), extra
+
+
+build_melodee_studio = build_studio                       # (the name of before)
 
 
 def studio_manifest(name, out: Path, ref, commit, toolchain, extra):
@@ -326,7 +402,7 @@ def manifest(name, out: Path, commit, toolchain, extra):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--only", default=",".join(BUILDERS), help="simulators (fm1-open, melodee) and/or studio twins")
-    ap.add_argument("--target", help="a studio twin (melodee-studio): with --ref one version, else all in STUDIOS")
+    ap.add_argument("--target", help="a studio twin (melodee-studio, skiff-studio): with --ref one version, else all in STUDIOS")
     ap.add_argument("--ref", action="append", default=[], help="firmware tag(s) for --target (repeatable)")
     ap.add_argument("--work", default="/tmp/fm1c-simbuild")
     ap.add_argument("--wasi-sdk", default=os.environ.get("FM1_WASI_SDK"))
@@ -338,11 +414,11 @@ def main():
     sdk = wasi_sdk(work, a.wasi_sdk)
     if a.target:
         if a.target not in STUDIOS:
-            raise SystemExit(f"unbekanntes Ziel {a.target} (bekannt: {', '.join(STUDIOS)})")
+            raise SystemExit(f"unknown target {a.target} (known: {', '.join(STUDIOS)})")
         spec = STUDIOS[a.target]
         for ref in a.ref or spec["refs"]:
             print(f"== {a.target} {ref}")
-            out, commit, tc, extra = build_melodee_studio(work, sdk, repos.get(spec["firmware"]), ref, a.target)
+            out, commit, tc, extra = build_studio(work, sdk, repos.get(spec["firmware"]), ref, a.target)
             m = studio_manifest(a.target, out, ref, commit, tc, extra)
             print(f"   {out.relative_to(ROOT)}: " + ", ".join(f"{k} {v['size']} B" for k, v in m["files"].items()))
         return

@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "name": "skiff-studio",
+  "title": "Skiff studio twin",
+  "version": "2.2",
+  "source_repo": "https://github.com/illuminus5/skiff",
+  "ref": "v2.2",
+  "commit": "76b5f9c9f6d523466f5c3910f9baf91110133b7b",
+  "license": "GPL-3.0-only",
+  "build_date": "2026-11-08T17:50:32Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "LICENSING.md": {
+      "sha256": "2bb5a3913bca572ae7be8dd6a1f8052aa3bdb7cdb753aa40043d5db8b322cf60",
+      "size": 11571
+    },
+    "NOTICE": {
+      "sha256": "cf081fcf007c30f774ea097020f2dd09097028d554dd9912d0f7b404b70a38c3",
+      "size": 2263
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "773a89e6fe2898588dccd65d733ba6cdf1986897a826adcc7c0a47ccf79656d3",
+      "size": 25573
+    },
+    "twin.wasm": {
+      "sha256": "cdb01abfa2c384ec5f263db0180610ea8eeb81a79d8a017663442488565cb953",
+      "size": 1209355
+    }
+  },
+  "kind": "studio",
+  "firmware": "skiff",
+  "firmware_version": "v2.2",
+  "identity": "FM-1_722",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/skiff_studio.c",
+  "glue_sha256": "5e71c18f48f17fe83dcf4060b2e7817a795cceb955235562bf1ace2aae66ce91",
+  "source_url": "https://github.com/illuminus5/skiff/archive/76b5f9c9f6d523466f5c3910f9baf91110133b7b.tar.gz",
+  "tracks": 6,
+  "projects": 4
+}

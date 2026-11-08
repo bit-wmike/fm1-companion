@@ -288,6 +288,31 @@ def flow():
     check(not bar.playing and svc.users == 0, "stop releases the twin")
     w.go("studio")
     wait(500)
+
+    # ---- a Skiff backup: the page starts the Skiff twin (projects A–D, six stems); the demo FM-1 runs Melodee, so
+    # writing back is refused
+    sk = S.Studio.create(firmware="skiff", backend="webengine", server=w.server)
+    for k in range(6):
+        for i in range(0, 16, 4):
+            sk.link.request(Cmd.TRACK_STEP, [k, i, 1, 40 + 3 * k, 0, 0, 0, 0, 0, 100])
+    sk.link.request(Cmd.PROJECT, [1, 1])                # project B
+    sfile = bdir / "Studio-Test_skiff.json"
+    backup.write_file(sfile, sk.backup().file)
+    sk.close()
+    check(page.open_backup(sfile) == sfile and svc.firmware == "skiff" and not svc.st.rejected,
+          f"Skiff backup opened: the Skiff twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 4 and labels[0].startswith("Projekt A") and "leer" not in labels[1],
+          f"Skiff project list A–D: {labels}")
+    check("Skiff" in page.src.text() and "Skiff" in page.banner.text() and "Melodee" in page.banner.text(),
+          "banner names both firmwares: " + page.banner.text())
+    check("Studio-Zwilling (Skiff 2.2)" in [x.label for x in svc._virtual_ports()], "virtual device: Skiff twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("Skiff" in b for b in boxes),
+          f"write back of the Skiff twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    r = page.export_wav({"path": out / "Skiff.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 6, f"Skiff export: mix + {r and len(r.stems)} stems")
     shot("studio-640.png", 640)
     if SHOTS:
         sb = w.page_scroll.verticalScrollBar()

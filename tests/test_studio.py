@@ -130,8 +130,10 @@ def node_studio():
         pytest.skip("node missing")
     made = []
 
-    def make(version="v1.6.0-rc.8", **kw):
-        st = studio.Studio.create(version=version, backend="node", **kw)
+    def make(version=None, firmware="melodee", **kw):
+        if version is None:
+            version = "v1.6.0-rc.8" if firmware == "melodee" else ""
+        st = studio.Studio.create(firmware=firmware, version=version, backend="node", **kw)
         made.append(st)
         return st
     yield make
@@ -289,3 +291,135 @@ def test_twin_as_subprocess_device():
         assert len(objs) == 57 and objs[0].id == 0 and objs[0].size > 0
     finally:
         t.close()
+
+
+# ------------------------------------------------------------------ Skiff (tools/studio/skiff_studio.c)
+SKIFF_IDENTITY = {"v2.1.1": "FM-1_721", "v2.2": "FM-1_722"}     # Skiff's tools/build.py --release X.Y: FM-1_7XY
+
+
+def test_skiff_builds_side_by_side():
+    bs = studio.builds("skiff")
+    vs = [b.version for b in bs]
+    assert {"v2.1.1", "v2.2"} <= set(vs) and vs == sorted(vs, key=studio.version_key)
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == []
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "skiff"
+        assert m["ref"] == b.version and len(m["commit"]) == 40 and m["license"] == "GPL-3.0-only"
+        assert m["identity"] == SKIFF_IDENTITY[b.version] and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["tracks"] == 6 and m["projects"] == 4 and m["source_repo"] == "https://github.com/illuminus5/skiff"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"skiff-{m['commit']}.tar.gz" in notice
+        assert "illuminus5" in notice and m["glue"] == "tools/studio/skiff_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        third = (b.path / "THIRD_PARTY.txt").read_text()
+        assert "DaisySP" in third and "Apache License" in third and "Versilian" in third
+    assert not any(s.key.startswith("skiff") for s in sims.bundled())
+    # the Melodee twins are untouched by the Skiff entry
+    assert {b.firmware for b in studio.builds("melodee")} == {"melodee"}
+
+
+def test_skiff_versions_and_pick():
+    b, exact, warn = studio.pick_build("skiff", "FELUCCA v2.2")            # Skiff answers INFO like Felucca
+    assert exact and b.version == "v2.2" and not warn
+    b, exact, warn = studio.pick_build("skiff", "v2.1.1")
+    assert exact and b.version == "v2.1.1"
+    b, exact, warn = studio.pick_build("skiff", "v2.3")                    # newer: the next older one
+    assert not exact and b.version == "v2.2" and "Skiff" in warn
+    b, exact, warn = studio.pick_build("skiff", "v2.0.3")                  # older than everything: the oldest
+    assert not exact and b.version == "v2.1.1"
+    assert studio.pick_build("skiff")[0].version == "v2.2"
+    assert studio.check_versions("v2.2", device="FELUCCA v2.2", firmware="Skiff").ok
+    vc = studio.check_versions("v2.2", device="FELUCCA v2.1.1", firmware="Skiff")
+    assert not vc.ok and "Skiff" in vc.message and "CZ-1" not in vc.message
+    assert studio.firmware_name("skiff") == "Skiff" and studio.FIRMWARES["skiff"]["projects"] == 4
+
+
+@need_node
+def test_skiff_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_skiff.mjs"), str(studio.SIMS_DIR / "skiff-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"2.1.1", "2.2"}
+    for x in res:
+        v = x["firmware_version"]
+        assert x["version_export"] == v and x["info"] == "FELUCCA " + v and x["ping"] == [0]
+        assert bytes(x["identity_reply"]) == _identity_frame(SKIFF_IDENTITY[v])   # ota.c, as demo_device expects
+        assert x["ids"] == studio.SKIFF_BACKUP_IDS and x["screen_lit"] > 10000
+        assert {0, 1, 2, 9, 16} <= {int(k) for k in x["sizes"]}                 # music, settings, A, FM6, pattern bank
+        assert all(x["identical"].values()) and x["persisted"] and x["projects_used"] == [0]
+        assert x["live_step0"] == {"note": 40, "vel": 100}
+        a, b = x["takes"]
+        assert a["playing"] and a["play_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
+        assert x["fork_identical"] and x["stopped"] and x["editor_play"] and x["editor_stop"]
+        if v == "v2.2":
+            assert a["note_ons"] > 0                                            # (2.2) USB MIDI out of the tracks
+        print(f"{v}: {a['realtime']:.1f}x real time (6 tracks)")
+        assert a["realtime"] > 3
+
+
+def _skiff_song(st):
+    L = st.link
+    for k in range(6):
+        for i in range(0, 16, 2 + k % 3):
+            L.request(Cmd.TRACK_STEP, [k, i, 1, 40 + 3 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    assert L.request(Cmd.PROJECT, [1, 0])[2] == 1                          # project A
+
+
+def test_skiff_backup_round_trip_with_suite_code(node_studio, tmp_path):
+    a = node_studio(firmware="skiff")
+    assert a.build.firmware == "skiff" and a.build.version == "v2.2" and a.tracks == 6 and a.project_slots == 4
+    assert studio.device_version(a.link) == "v2.2.0" and a.info_name == "FELUCCA"
+    _skiff_song(a)
+    arch = a.backup()
+    assert [o["id"] for o in arch.objects] == studio.SKIFF_BACKUP_IDS and arch.known
+    assert studio.backup_version(arch) == "v2.2.0" and studio.backup_firmware(arch) == "skiff"
+    assert arch.companion["version_string"] == "FELUCCA v2.2"
+    text = backup.dumps(arch.file)
+    plain = json.loads(text)
+    plain.pop("companion")                                                  # a backup of Skiff's own web editor
+    assert studio.backup_firmware(backup.read(plain)) == "skiff"
+    b = node_studio(firmware="skiff", version="v2.1.1")
+    b.open_from_backup(text)                                                # via backup.restore = editor protocol
+    for o1, o2 in zip(arch.objects, b.backup().objects):
+        assert o1["id"] == o2["id"] and o1["bytes"] == o2["bytes"], o1["id"]
+    assert b.projects() == [0]
+    vc = b.check_versions(archive=arch)
+    assert not vc.ok and "Skiff" in vc.message
+    c = studio.Studio.for_backup(arch, backend="node")                     # the backup's firmware and version
+    try:
+        assert c.build.firmware == "skiff" and c.build.version == "v2.2" and not c.warning and c.projects() == [0]
+        assert c.load_project(0) == 0 and c.load_project(1) == 1
+        assert c.play()["busy"] and not c.stop()["busy"]                   # st_transport_set (Skiff's TRANSPORT differs)
+    finally:
+        c.close()
+    # the inspector names Skiff's pattern bank
+    from fm1companion import backup_inspect as BI
+    rep = BI.inspect(arch)
+    assert rep.firmware_key == "skiff" and "Pattern" in rep.obj(16).title and "FM6" in rep.obj(9).title
+
+
+def test_skiff_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="skiff")
+    _skiff_song(st)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="saved", project=0, stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3, 4, 5] and s.peak > 0.05
+    peaks = []
+    for k, p in s.stems.items():
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    assert all(pk > 0.01 for pk in peaks)                 # every track plays something
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "skiff" and meta["firmware_version"] == "v2.2" and len(flash) == 0x100000
+
+
+def test_skiff_inventory_in_backup_layer():
+    """Skiff 2.x has 29 objects like Melodee 1.5, with other IDs (the pattern bank): both inventories are known."""
+    assert backup.known_ids(list(range(29))) == list(range(29))
+    assert backup.known_ids(studio.SKIFF_BACKUP_IDS) == studio.SKIFF_BACKUP_IDS
+    assert backup.known_ids(list(range(28)) + [40]) == []
+    assert backup.known_ids(list(range(5))) is None
