@@ -110,12 +110,20 @@ def firmware_name(key: str) -> str:
 _VER = re.compile(r"v?(\d+)\.(\d+)(?:\.(\d+))?(?:[- ]?(rc|beta|alpha)\.?(\d+))?", re.I)
 
 
+_SUFFIX = re.compile(r"(?!rc|beta|alpha)([a-z]+\d*)(?![\w.])", re.I)
+
+
 def norm_version(s: str) -> str:
-    """'MELODEE v1.6.0-rc.7' / '1.6.0-rc.7' / 'Melodee 1.6.0 rc7' -> 'v1.6.0-rc.7' ('' if no version)."""
+    """'MELODEE v1.6.0-rc.7' / '1.6.0-rc.7' / 'Melodee 1.6.0 rc7' -> 'v1.6.0-rc.7' ('' if no version). A letter suffix
+    right after X.Y (JIANT's 'V10.6z2') is kept: 'v10.6z2' (jiant_version / jiant_version_key read it)."""
     m = _VER.search(s or "")
     if not m:
         return ""
     a, b, c, pre, n = m.groups()
+    if not c and not pre:
+        x = _SUFFIX.match(s, m.end())
+        if x:
+            return f"v{a}.{b}{x[1].lower()}"
     return f"v{a}.{b}.{c or 0}" + (f"-{pre.lower()}.{n}" if pre else "")
 
 
@@ -127,6 +135,49 @@ def version_key(s: str) -> tuple:
     a, b, c, pre, n = m.groups()
     rank = {"alpha": 0, "beta": 1, "rc": 2}.get((pre or "").lower(), 3)
     return (int(a), int(b), int(c or 0), rank, int(n or 0))
+
+
+# JIANT FM's versions (felucca.c FELUCCA_VERSION, its git history and web/EDITIONS.json, web/BETA_VERSIONS): V10, V10.1 …
+# V10.9, V10.10 … V10.61 (the number after the dot is a whole number: V10.7 of 2026-10-31 came before V10.10), then
+# V10.6c, V10.6d … V10.6z, V10.6z2 … V10.6z10 (a letter, then a count, after V10.61). Its later beta "V10.7" (2026-11-08,
+# after V10.6z10) has the same string as the V10.7 of 2026-10-31; a version string cannot tell them apart, it is read
+# as the earlier one.
+_JIANT_V = re.compile(r"(?<![\w.])[vV]?(\d+)\.(\d+)([a-zA-Z]+\d*)?")
+
+
+def jiant_version(s: str) -> str:
+    """'JIANT V10.6z2' / 'v10.6z2' / 'v10.60.0' -> 'V10.6z2' / 'V10.60' (as JIANT writes it; '' if none)"""
+    m = _JIANT_V.search(s or "")
+    return f"V{m[1]}.{m[2]}{(m[3] or '').lower()}" if m else ""
+
+
+def jiant_version_key(s: str) -> tuple:
+    """sortable in JIANT's release order: V10.7 < V10.10 < V10.60 < V10.61 < V10.6c < V10.6z < V10.6z2 < V10.6z10.
+    A letter suffix after one digit d comes after every two-digit 10d..10d+9 (V10.6c after V10.69)."""
+    m = _JIANT_V.search(s or "")
+    if not m:
+        return (0, 0, 0, "", 0)
+    a, b, suf = m[1], m[2], (m[3] or "").lower()
+    if not suf:
+        return (int(a), int(b), 0, "", 0)
+    letters, n = re.match(r"([a-z]+)(\d*)", suf).groups()
+    return (int(a), int(b) * 10 + 9 if len(b) == 1 else int(b), 1, letters, int(n or 0))
+
+
+def _fw_key(firmware: str) -> str:
+    """a firmware key or display name -> the key ("JIANT FM", "jiant-fm" -> "jiant")"""
+    k = (firmware or "").lower()
+    return "jiant" if k.startswith("jiant") else k
+
+
+def fw_version(firmware: str, s: str) -> str:
+    """the version as that firmware writes it (JIANT: 'V10.6z2'), else norm_version"""
+    return jiant_version(s) if _fw_key(firmware) == "jiant" else norm_version(s)
+
+
+def fw_version_key(firmware: str, s: str) -> tuple:
+    """sortable in that firmware's release order (JIANT: jiant_version_key), else version_key"""
+    return jiant_version_key(s) if _fw_key(firmware) == "jiant" else version_key(s)
 
 
 @dataclass
@@ -173,7 +224,7 @@ def builds(firmware: str = "melodee") -> list[TwinBuild]:
         if m.get("abi") != STUDIO_ABI or m.get("kind") != "studio":
             continue
         out.append(TwinBuild(m.get("firmware", firmware), m.get("firmware_version") or norm_version(sub.name), sub, m))
-    return sorted(out, key=lambda b: version_key(b.version))
+    return sorted(out, key=lambda b: fw_version_key(firmware, b.version))
 
 
 def pick_build(firmware: str = "melodee", wanted: str = "") -> tuple[TwinBuild, bool, str]:
@@ -182,14 +233,14 @@ def pick_build(firmware: str = "melodee", wanted: str = "") -> tuple[TwinBuild, 
     bs = builds(firmware)
     if not bs:
         raise StudioError(_("No studio twin for {firmware} included – installation incomplete?").format(firmware=firmware))
-    want = norm_version(wanted)
+    want = fw_version(firmware, wanted)
     if not want:
         return bs[-1], True, ""
     for b in bs:
-        if norm_version(b.version) == want:                  # (Skiff reports "v2.2": v2.2.0)
+        if fw_version(firmware, b.version) == want:          # (Skiff reports "v2.2": v2.2.0)
             return b, True, ""
-    wk = version_key(want)
-    older = [b for b in bs if version_key(b.version) < wk]
+    wk = fw_version_key(firmware, want)
+    older = [b for b in bs if fw_version_key(firmware, b.version) < wk]
     best = older[-1] if older else bs[0]
     return best, False, _("There is no studio twin for {firmware} {version}; the studio runs with {twin} – sound "
                           "and functions may differ.").format(firmware=firmware_name(firmware), version=want,
@@ -207,7 +258,7 @@ class VersionCheck:
 
 def check_versions(twin: str, device: str = "", backup: str = "", firmware: str = "Melodee") -> VersionCheck:
     """Compares the twin's firmware with the device's (INFO) and the backup's -> warning."""
-    t, d, b = norm_version(twin), norm_version(device), norm_version(backup)
+    t, d, b = fw_version(firmware, twin), fw_version(firmware, device), fw_version(firmware, backup)
     msgs = []
     if d and d != t:
         msgs.append(_("The studio runs with {firmware} {twin}, your FM-1 has {device} – sound may differ.").format(
@@ -244,7 +295,8 @@ def backup_version(archive) -> str:
 
 
 SKIFF_BACKUP_IDS = [*range(10), *range(16, 35)]     # web/fm1backup.js BACKUP_IDS: the pattern bank's chunks 16..31
-JIANT_BACKUP_IDS = [*range(11), *range(40, 72)]     # JIANT's web/fm1backup.js BACKUP_IDS: the song index, the sections
+JIANT_BACKUP_IDS = [*range(11), *range(40, 72)]     # JIANT's web/fm1backup.js: the song index, 8 songs' sections
+JIANT_BACKUP_IDS_6 = [*range(11), *range(40, 64)]   # (V10.6p on: 6 songs)
 
 
 def backup_firmware(archive) -> str:
@@ -262,7 +314,7 @@ def backup_firmware(archive) -> str:
     ids = [o["id"] for o in archive.objects]
     if ids == SKIFF_BACKUP_IDS:
         return "skiff"
-    if ids == JIANT_BACKUP_IDS:
+    if ids in (JIANT_BACKUP_IDS, JIANT_BACKUP_IDS_6):
         return "jiant"
     return "felucca" if "felucca" in text else ""
 

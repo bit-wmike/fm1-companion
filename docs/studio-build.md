@@ -14,7 +14,7 @@ fm1companion/sims/_studio/                    shared host (page, worker, AudioWo
 ```
 
 When opening, `studio.pick_build()` picks the firmware and version of the device or backup, otherwise the next older
-version (with a warning). Bundled: Melodee 1.6.0-rc.7, rc.8, 1.6.0, 1.6.1; Skiff 2.1.1, 2.2; JIANT FM V10.60, V10.61
+version (with a warning). Bundled: Melodee 1.6.0-rc.7, rc.8, 1.6.0, 1.6.1; Skiff 2.1.1, 2.2; JIANT FM V10.60, V10.61, V10.6z2 (its stable)
 (about 1.2–1.4 MB of wasm each).
 
 ## Requirements (only on the build machine, not on the Pi)
@@ -47,7 +47,8 @@ python3 tools/build_sims.py --target skiff-studio --ref v2.3 --repo skiff=/path/
 → `fm1companion/sims/skiff-studio/2.3/`, identity `FM-1_7XY` (Skiff's `tools/build.py --release X.Y`), manifest with
 `tracks` 6 and `projects` 4. The list is `STUDIOS["skiff-studio"]["refs"]`.
 
-JIANT FM has no git tags; a version is a commit (JIANT's `web/EDITIONS.json` names the commits its installer offers):
+JIANT FM has no git tags; a version is a commit (JIANT's `web/STABLE` / `web/PUBLIC_RELEASE.json`, `web/EDITIONS.json`
+and `web/BETA_VERSIONS` name the commits its installer offers):
 
 ```sh
 git clone https://github.com/juanjiant-bit/JIANT /path/to/jiant
@@ -55,19 +56,25 @@ python3 tools/build_sims.py --target jiant-studio --ref <commit> --repo jiant=/p
 ```
 
 → `fm1companion/sims/jiant-studio/<version>/`, the folder named after the version the commit reports (`felucca.c`
-`FELUCCA_VERSION`, e.g. "V10.60" → `10.60/`), identity read from the commit's `tools/build.py` (`PRODUCT`, FM-1_909:
+`FELUCCA_VERSION`, e.g. "V10.6z2" → `10.6z2/`), identity read from the commit's `tools/build.py` (`PRODUCT`, FM-1_909:
 JIANT's web installer builds without `--release`), `tracks` 6, `projects` 4 (the current song's sections A–D). The
-list is `STUDIOS["jiant-studio"]["refs"]`.
+list is `STUDIOS["jiant-studio"]["refs"]`; `STUDIOS["jiant-studio"]["release_status"]` writes each build's status
+into its manifest (`release_status`).
 
-| JIANT version | Commit | Status in `web/EDITIONS.json` | Reports (INFO / identity) | Folder |
-|---|---|---|---|---|
-| V10.60 | 43b8ea8111949c990bf76523c7d4f4e77b715114 | stable (the official installer) | `JIANT V10.60` / `FM-1_909` | `jiant-studio/10.60` |
-| V10.61 | 6c48e2a8e7049c31ab77c57b97c3ef6790d24090 | beta | `JIANT V10.61` / `FM-1_909` | `jiant-studio/10.61` |
+| JIANT version | Commit | Status (manifest `release_status`, 2026-11-08) | Reports (INFO / identity) | Backup objects | Folder |
+|---|---|---|---|---|---|
+| V10.6z2 | cac23c6d0bb9a7f6986eb79bbe42ae710805ce98 | **stable** – the public installer's (`web/STABLE`, `web/PUBLIC_RELEASE.json`) | `JIANT V10.6z2` / `FM-1_909` | 35 (6 songs) | `jiant-studio/10.6z2` |
+| V10.61 | 6c48e2a8e7049c31ab77c57b97c3ef6790d24090 | previous beta (`web/EDITIONS.json`, `web/BETA_VERSIONS`) | `JIANT V10.61` / `FM-1_909` | 43 (8 songs) | `jiant-studio/10.61` |
+| V10.60 | 43b8ea8111949c990bf76523c7d4f4e77b715114 | previous stable (`web/EDITIONS.json`) | `JIANT V10.60` / `FM-1_909` | 43 (8 songs) | `jiant-studio/10.60` |
 
-A JIANT device answers INFO "JIANT V10.60" (`protocol.Info.firmware_name` "jiant"); `studio.pick_build` matches the
-version ("v10.60.0"); a backup of JIANT's own editor carries the INFO string as its `firmware` (and the 43-object
-inventory). JIANT's later versions use letter suffixes (V10.6c … V10.6z10, V10.7), which `studio.version_key` reads
-as 10.6 / 10.7, before 10.60: they get V10.60 with a warning.
+V10.60 and V10.61 stay for devices that still run them (and for their 8-song backups). A JIANT device answers INFO
+"JIANT V10.6z2" (`protocol.Info.firmware_name` "jiant"); `studio.pick_build("jiant", …)` matches the version as JIANT
+writes it; a backup of JIANT's own editor carries the INFO string as its `firmware` (and its 35- or 43-object
+inventory). JIANT's release order (its git history): V10, V10.1 … V10.9, V10.10 … V10.61 (the number after the dot is a whole number), then V10.6c … V10.6z, V10.6z2 … V10.6z10; `studio.jiant_version_key` sorts exactly so, `studio.jiant_version` keeps JIANT's spelling ("V10.6z2") for matching and for the warnings. A version between two builds gets the next older one, with a warning that names it
+("JIANT FM V10.6z10"). JIANT's later beta "V10.7" (2026-11-08, after V10.6z10) has the same string as the V10.7 of
+2026-10-31; a version string cannot tell them apart and is read as the earlier one (it gets V10.60, with a warning).
+From V10.6p JIANT keeps 6 songs (35 objects); an 8-song backup's songs 7 and 8 are refused by the device – the studio's
+tolerant load leaves them out and names them, `backup.restore` stops before writing anything.
 
 Each `STUDIOS` entry names what differs between firmwares: `generate` (the header generators), `version_file` /
 `version_re` (where the version string lives), `identity` (the release identity from the version) or `identity_src`

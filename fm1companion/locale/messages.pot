@@ -233,165 +233,165 @@ msgstr ""
 msgid "{name}: already there"
 msgstr ""
 
-#: fm1companion/backup.py:92
+#: fm1companion/backup.py:95
 msgid "invalid object"
 msgstr ""
 
-#: fm1companion/backup.py:92
+#: fm1companion/backup.py:95
 msgid "data faulty (check failed)"
 msgstr ""
 
-#: fm1companion/backup.py:93
+#: fm1companion/backup.py:96
 msgid "stop playback first"
 msgstr ""
 
-#: fm1companion/backup.py:93
+#: fm1companion/backup.py:96
 msgid "flash write error"
 msgstr ""
 
-#: fm1companion/backup.py:93
+#: fm1companion/backup.py:96
 msgid "restart the backup (outdated)"
 msgstr ""
 
-#: fm1companion/backup.py:139
+#: fm1companion/backup.py:142
 #, python-brace-format
 msgid "error {code}"
 msgstr ""
 
-#: fm1companion/backup.py:154 fm1companion/sloopbk.py:74
+#: fm1companion/backup.py:157 fm1companion/sloopbk.py:74
 #, python-brace-format
 msgid "object {id}"
 msgstr ""
 
-#: fm1companion/backup.py:192
+#: fm1companion/backup.py:195
 #, python-brace-format
 msgid "{version} cannot make backups over USB yet – that needs SLOOP 2.3 or later. Please update SLOOP."
 msgstr ""
 
-#: fm1companion/backup.py:200
+#: fm1companion/backup.py:203
 msgid "the device does not know this backup protocol"
 msgstr ""
 
-#: fm1companion/backup.py:204
+#: fm1companion/backup.py:207
 msgid "incomplete inventory"
 msgstr ""
 
-#: fm1companion/backup.py:210
+#: fm1companion/backup.py:213
 msgid "object too large"
 msgstr ""
 
-#: fm1companion/backup.py:213
+#: fm1companion/backup.py:216
 msgid "unexpected object order"
 msgstr ""
 
-#: fm1companion/backup.py:234 fm1companion/sloopbk.py:272
+#: fm1companion/backup.py:237 fm1companion/sloopbk.py:272
 msgid "unexpected answer while reading"
 msgstr ""
 
-#: fm1companion/backup.py:240
+#: fm1companion/backup.py:243
 msgid "The device changed during the backup. Please try again with playback stopped."
 msgstr ""
 
-#: fm1companion/backup.py:310 fm1companion/backup_inspect.py:509
+#: fm1companion/backup.py:313 fm1companion/backup_inspect.py:509
 #: fm1companion/sloopbk.py:175
 msgid "Not a backup file (no JSON)"
 msgstr ""
 
-#: fm1companion/backup.py:319
+#: fm1companion/backup.py:322
 msgid "Not a complete Felucca/Melodee backup"
 msgstr ""
 
-#: fm1companion/backup.py:323 fm1companion/backup.py:329
-#: fm1companion/backup.py:334
+#: fm1companion/backup.py:326 fm1companion/backup.py:332
+#: fm1companion/backup.py:337
 msgid "invalid object in the backup"
 msgstr ""
 
-#: fm1companion/backup.py:331
+#: fm1companion/backup.py:334
 msgid "unexpected object order in the backup"
 msgstr ""
 
-#: fm1companion/backup.py:338
+#: fm1companion/backup.py:341
 msgid "Backup damaged (Base64)"
 msgstr ""
 
-#: fm1companion/backup.py:340
+#: fm1companion/backup.py:343
 msgid "Checksum in the backup does not match"
 msgstr ""
 
-#: fm1companion/backup.py:343
+#: fm1companion/backup.py:346
 msgid "The backup does not contain the running music or the settings"
 msgstr ""
 
-#: fm1companion/backup.py:464
+#: fm1companion/backup.py:467
 msgid "This is a SLOOP backup, but the FM-1 runs a different firmware. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:467
+#: fm1companion/backup.py:470
 msgid "This is a Melodee/Felucca backup, but the FM-1 runs SLOOP – the formats do not match. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:509
+#: fm1companion/backup.py:512
 msgid "This backup needs a firmware with a larger recording memory"
 msgstr ""
 
-#: fm1companion/backup.py:512 fm1companion/backup.py:590
+#: fm1companion/backup.py:515 fm1companion/backup.py:593
 #, python-brace-format
 msgid "The firmware on the FM-1 does not know “{part}” from the backup (different version). Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:519
+#: fm1companion/backup.py:522
 msgid "The backup has an older format. Restore it with Melodee 1.2 first. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:522 fm1companion/backup.py:617
+#: fm1companion/backup.py:525 fm1companion/backup.py:620
 #: fm1companion/projects.py:191
 msgid "Please stop playback on the FM-1 first – nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:524 fm1companion/backup.py:619
+#: fm1companion/backup.py:527 fm1companion/backup.py:622
 #, python-brace-format
 msgid "“{part}”: {error}. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:549 fm1companion/sloopbk.py:352
+#: fm1companion/backup.py:552 fm1companion/sloopbk.py:352
 msgid "unexpected sample answer"
 msgstr ""
 
-#: fm1companion/backup.py:555
+#: fm1companion/backup.py:558
 msgid "sample object too short"
 msgstr ""
 
-#: fm1companion/backup.py:580
+#: fm1companion/backup.py:583
 #, python-brace-format
 msgid "“{part}” is not in the backup"
 msgstr ""
 
-#: fm1companion/backup.py:596 fm1companion/backup.py:664
+#: fm1companion/backup.py:599 fm1companion/backup.py:667
 msgid "The device has changed since it was read. Please select and confirm again – nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:613
+#: fm1companion/backup.py:616
 #, python-brace-format
 msgid "“{part}”: The device does not accept this format (older or different firmware). Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:628 fm1companion/dx7_sources.py:95
+#: fm1companion/backup.py:631 fm1companion/dx7_sources.py:95
 #: fm1companion/fm1open.py:544 fm1companion/presetlib.py:396
 #: fm1companion/samplepacks.py:179 fm1companion/samplepacks.py:241
 #: fm1companion/sloopbk.py:423 fm1companion/ui/samplepacks_tab.py:209
 msgid "cancelled"
 msgstr ""
 
-#: fm1companion/backup.py:650
+#: fm1companion/backup.py:653
 msgid "Nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/backup.py:651
+#: fm1companion/backup.py:654
 #, python-brace-format
 msgid "Already written to the FM-1: {parts}."
 msgstr ""
 
-#: fm1companion/backup.py:653
+#: fm1companion/backup.py:656
 #, python-brace-format
 msgid "Still in the old state: {parts}."
 msgstr ""
@@ -1394,6 +1394,71 @@ msgstr ""
 #: fm1companion/diag.py:155
 #, python-brace-format
 msgid "from the source folder ({path})"
+msgstr ""
+
+#: fm1companion/diag.py:160
+msgid "firmware, web editor, installer and manual that the app embeds"
+msgstr ""
+
+#: fm1companion/diag.py:161
+msgid "basis of Melodee, Skiff, SLOOP and JIANT FM; sampleio.py (vendor) comes from there"
+msgstr ""
+
+#: fm1companion/diag.py:162
+msgid "firmware with sample slots"
+msgstr ""
+
+#: fm1companion/diag.py:163
+msgid "Felucca fork; its unmodified firmware code runs in the studio twin"
+msgstr ""
+
+#: fm1companion/diag.py:164
+msgid "official open firmware, simulator sources, update tools"
+msgstr ""
+
+#: fm1companion/diag.py:165
+msgid "firmware catalog and link collection"
+msgstr ""
+
+#: fm1companion/diag.py:166
+msgid "icons in the app's design (fm1companion/icons/lucide, licence in icons/LICENSE.lucide)"
+msgstr ""
+
+#: fm1companion/diag.py:167
+msgid "user interface (system package)"
+msgstr ""
+
+#: fm1companion/diag.py:168
+msgid "MIDI and audio computations (system packages)"
+msgstr ""
+
+#: fm1companion/diag.py:169
+msgid "GPL-3.0 with exception (see project)"
+msgstr ""
+
+#: fm1companion/diag.py:170 fm1companion/linkimport.py:349
+#: fm1companion/ui/pages/discover.py:1220
+msgid "Catalog"
+msgstr ""
+
+#: fm1companion/diag.py:170
+msgid "Graphics"
+msgstr ""
+
+#: fm1companion/diag.py:170 fm1companion/ui/pages/presets.py:97
+msgid "Library"
+msgstr ""
+
+#: fm1companion/diag.py:171
+msgid "Lucide Contributors (partly Feather, Cole Bemis)"
+msgstr ""
+
+#: fm1companion/diag.py:172
+msgid "Ole Martin Bjørndalen et al.; Christopher Arndt et al.; NumPy Developers"
+msgstr ""
+
+#: fm1companion/diag.py:173
+msgid "ISC (Feather parts MIT)"
 msgstr ""
 
 #: fm1companion/dx7.py:20
@@ -4030,10 +4095,6 @@ msgstr ""
 msgid "Whether backup and projects work (Felucca protocol) is checked when connecting."
 msgstr ""
 
-#: fm1companion/linkimport.py:349 fm1companion/ui/pages/discover.py:1220
-msgid "Catalog"
-msgstr ""
-
 #: fm1companion/linkimport.py:358
 #, python-brace-format
 msgid "GitHub search not possible: {error}"
@@ -5917,85 +5978,85 @@ msgstr ""
 msgid "The twin computes without a CPU limit: under overload the device drops voices (overload shedding), the twin never does. Floating-point parts (FM6 voice pairs, which CPU1 computes on the device, effect filters) may differ in the last bits (inaudible). No BLE, no USB host, no firmware update in the twin. The resource arena has the size of the host tests (at least that of the device). Stems come from several runs with muted tracks (track solo, with its share of the shared effects); because of the master dynamics the sum of the stems does not exactly match the mix."
 msgstr ""
 
-#: fm1companion/studio.py:157 fm1companion/ui/pages/simulator.py:77
+#: fm1companion/studio.py:208 fm1companion/ui/pages/simulator.py:77
 #, python-brace-format
 msgid "{name} missing"
 msgstr ""
 
-#: fm1companion/studio.py:159 fm1companion/ui/pages/simulator.py:78
+#: fm1companion/studio.py:210 fm1companion/ui/pages/simulator.py:78
 #, python-brace-format
 msgid "{name} damaged"
 msgstr ""
 
-#: fm1companion/studio.py:184
+#: fm1companion/studio.py:235
 #, python-brace-format
 msgid "No studio twin for {firmware} included – installation incomplete?"
 msgstr ""
 
-#: fm1companion/studio.py:194
+#: fm1companion/studio.py:245
 #, python-brace-format
 msgid "There is no studio twin for {firmware} {version}; the studio runs with {twin} – sound and functions may differ."
 msgstr ""
 
-#: fm1companion/studio.py:213
+#: fm1companion/studio.py:264
 #, python-brace-format
 msgid "The studio runs with {firmware} {twin}, your FM-1 has {device} – sound may differ."
 msgstr ""
 
-#: fm1companion/studio.py:216
+#: fm1companion/studio.py:267
 #, python-brace-format
 msgid "The backup comes from {firmware} {backup}, the studio runs with {twin} – sound may differ."
 msgstr ""
 
-#: fm1companion/studio.py:224
+#: fm1companion/studio.py:275
 msgid "From Melodee 1.6.0 on the mix differs from the pre-releases: CZ-1 6 dB quieter, limiter only at −2 dBFS, dither – levels differ."
 msgstr ""
 
-#: fm1companion/studio.py:354
+#: fm1companion/studio.py:406
 msgid "node twin does not start"
 msgstr ""
 
-#: fm1companion/studio.py:377
+#: fm1companion/studio.py:429
 msgid "Twin is not running"
 msgstr ""
 
-#: fm1companion/studio.py:391
+#: fm1companion/studio.py:443
 #, python-brace-format
 msgid "Twin does not respond ({operation})"
 msgstr ""
 
-#: fm1companion/studio.py:395
+#: fm1companion/studio.py:447
 msgid "Error in the twin"
 msgstr ""
 
-#: fm1companion/studio.py:403
+#: fm1companion/studio.py:455
 msgid "node twin has no audio output"
 msgstr ""
 
-#: fm1companion/studio.py:436
+#: fm1companion/studio.py:488
 msgid "Studio closed"
 msgstr ""
 
-#: fm1companion/studio.py:576
+#: fm1companion/studio.py:628
 #, python-brace-format
 msgid "{message} Nothing written."
 msgstr ""
 
-#: fm1companion/studio.py:701
+#: fm1companion/studio.py:753
 msgid "Duration missing (seconds or until_end)"
 msgstr ""
 
-#: fm1companion/studio.py:755
+#: fm1companion/studio.py:807
 #, python-brace-format
 msgid "The {firmware} twin cannot load SLOOP backups."
 msgstr ""
 
-#: fm1companion/studio.py:800
+#: fm1companion/studio.py:852
 #, python-brace-format
 msgid "Not a studio state: {name} ({error})"
 msgstr ""
 
-#: fm1companion/studio.py:802
+#: fm1companion/studio.py:854
 #, python-brace-format
 msgid "{name} is not a valid studio state"
 msgstr ""
@@ -13142,10 +13203,6 @@ msgstr ""
 
 #: fm1companion/ui/pages/presets.py:96
 msgid "<b>On the FM-1</b>"
-msgstr ""
-
-#: fm1companion/ui/pages/presets.py:97
-msgid "Library"
 msgstr ""
 
 #: fm1companion/ui/pages/presets.py:100 fm1companion/ui/pages/presets.py:403

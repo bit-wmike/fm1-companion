@@ -38,8 +38,8 @@ is not part of the state.
 
 ## Versions
 
-The twin exists in several versions (Melodee 1.6.0-rc.7 … 1.6.1, Skiff 2.1.1 and 2.2, JIANT FM V10.60 – the stable
-version of JIANT's installer – and the beta V10.61). The app chooses the firmware
+The twin exists in several versions (Melodee 1.6.0-rc.7 … 1.6.1, Skiff 2.1.1 and 2.2, JIANT FM V10.6z2 – the stable
+version of JIANT's installer – plus V10.60 and V10.61). The app chooses the firmware
 and version of your FM-1 or of the backup. If the version does not match exactly, a note at the top says: “The studio
 runs with Melodee …, your FM-1 has … – sound may differ.”
 Writing back to an FM-1 with a different version is then only possible with the expert box ticked.
@@ -61,7 +61,8 @@ old approximation on the computer only remains when there is no twin for the fir
   (MENU › CPU 2 CORES has no effect), no USB audio and no TRS MIDI. The project view does not read Skiff's songs yet.
 * JIANT FM: the stems of tracks 5 and 6 stay silent while MENU › TRACKS is 4 (JIANT's default: T5 and T6 asleep). The
   twin has one core, no Bluetooth (PROX has no signal), no USB host and no USB audio (the INPUT engine hears silence).
-  JIANT's later versions (V10.6c … V10.6z…, V10.7) have no twin of their own yet: the studio warns and runs V10.60.
+  A JIANT version without a twin of its own (e.g. V10.6c … V10.6z10) runs on the next older twin, with a warning. From
+  V10.6p JIANT has 6 songs: songs 7 and 8 of an older backup are left out (the studio names them).
   The project view does not read JIANT's songs yet.
 * The twin has no CPU limit: the device drops voices when overloaded, the twin never does. Floating-point parts
   can differ in the last bits (inaudible). No Bluetooth, no USB host, no firmware update in the

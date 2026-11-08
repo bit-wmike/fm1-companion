@@ -331,7 +331,8 @@ def _jiant_notice(spec, version, ref, commit, source_url):
         f"JIANT FM {version} – studio twin (firmware code for the host), built from {spec['repo']} commit {commit}\n"
         f"(source: {source_url}; JIANT has no tags: {version} is the version this commit reports).\n"
         "GPL-3.0-only. JIANT FM by juanjiant-bit, a fork of Felucca: Copyright (C) 2026 Leo Kuroshita (@kurogedelic), "
-        "Hügelton Instruments (Felucca), and JIANT's authors (its changes and additions).\n"
+        "Hügelton Instruments (Felucca);\nportions Copyright (C) 2026 Juan Ignacio Antonucci (Juan Jiant) (JIANT's "
+        "changes and additions, as its source files name it).\n"
         "Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0; the UI faces Chakra Petch, Inter Tight and "
         "Michroma and the Fukiai icons are rasterised in: OFL 1.1, MIT; VOICE's English words are a subset of the CMU "
         "Pronouncing Dictionary: BSD-2-Clause):\nJIANT's LICENSING.md and the texts in THIRD_PARTY.txt beside this file. "
@@ -381,11 +382,18 @@ STUDIOS = {
                      "identity": skiff_release_identity,
                      "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
                      "notice": _skiff_notice, "extra": _skiff_extra, "tracks": 6, "projects": 4},
-    # JIANT FM: no git tags; the refs are the commits of web/EDITIONS.json (V10.60 = the official installer's stable,
-    # V10.61 its beta). The folder is the version the commit reports (felucca.c FELUCCA_VERSION, "V10.60" -> 10.60).
+    # JIANT FM: no git tags; the refs are commits its installer offered: V10.6z2 (web/STABLE, web/PUBLIC_RELEASE.json:
+    # the public stable now), V10.60 (the stable before, web/EDITIONS.json) and V10.61 (its beta then). The folder is the
+    # version the commit reports (felucca.c FELUCCA_VERSION, "V10.6z2" -> 10.6z2).
     "jiant-studio": {"firmware": "jiant", "repo": "https://github.com/juanjiant-bit/JIANT",
                      "glue": "tools/studio/jiant_studio.c",
-                     "refs": ["43b8ea8111949c990bf76523c7d4f4e77b715114", "6c48e2a8e7049c31ab77c57b97c3ef6790d24090"],
+                     "refs": ["43b8ea8111949c990bf76523c7d4f4e77b715114", "6c48e2a8e7049c31ab77c57b97c3ef6790d24090",
+                              "cac23c6d0bb9a7f6986eb79bbe42ae710805ce98"],
+                     # what JIANT's installer called each commit (web/STABLE, web/PUBLIC_RELEASE.json, web/EDITIONS.json,
+                     # web/BETA_VERSIONS); "stable" is the one its public installer offers now (2026-11-08)
+                     "release_status": {"cac23c6d0bb9a7f6986eb79bbe42ae710805ce98": "stable",
+                                        "43b8ea8111949c990bf76523c7d4f4e77b715114": "previous stable",
+                                        "6c48e2a8e7049c31ab77c57b97c3ef6790d24090": "previous beta"},
                      "title": "JIANT FM studio twin", "license": "GPL-3.0-only", "generate": _generate_skiff,
                      "version_file": "firmware/src/felucca.c", "version_re": r'#define FELUCCA_VERSION "([^"]*)"',
                      "identity_src": jiant_identity,
@@ -424,6 +432,8 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
              "glue": spec["glue"], "glue_sha256": sha(glue), "source_url": source_url}
     if spec["firmware"] != "melodee":                     # (Melodee's manifests predate these: their defaults)
         extra.update(tracks=spec["tracks"], projects=spec["projects"])
+    if commit in spec.get("release_status", {}):         # (JIANT: which build its installer calls stable)
+        extra["release_status"] = spec["release_status"][commit]
     return out, commit, clang_version(cc), extra
 
 

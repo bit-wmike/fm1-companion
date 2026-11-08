@@ -176,7 +176,8 @@ try:
     r5 = jt.render_wav(out / "jiant.wav", seconds=2, start="play", source="saved", project=0, stems=True, fmt="f32")
     check(len(r5.stems) == 6 and r5.peak > 0.05, f"JIANT: mix + six stems (T5, T6 asleep: TRACKS 4), peak {r5.peak:.3f}")
     jarch = jt.backup()
-    check(studio.backup_firmware(jarch) == "jiant" and len(jarch.objects) == 43, "JIANT backup (43 objects)")
+    check(studio.backup_firmware(jarch) == "jiant" and len(jarch.objects) == (35 if jt.build.version == "V10.6z2" else 43),
+          f"JIANT backup ({len(jarch.objects)} objects: 6 songs from V10.6p, 8 before)")
     jt2 = studio.Studio.for_backup(jarch, backend="webengine", server=st.backend.server)
     same = all(a["bytes"] == b["bytes"] for a, b in zip(jarch.objects, jt2.backup().objects))
     check(jt2.build.firmware == "jiant" and jt2.projects() == [0] and same,

@@ -426,20 +426,24 @@ def test_skiff_inventory_in_backup_layer():
 
 
 # ------------------------------------------------------------------ JIANT FM (tools/studio/jiant_studio.c)
-# JIANT has no tags: the builds are the commits of its web/EDITIONS.json (V10.60 the official installer's stable, V10.61
-# its beta); its web installer builds with a plain tools/build.py, whose PRODUCT is the package identity FM-1_909
-JIANT_COMMIT = {"V10.60": "43b8ea8111949c990bf76523c7d4f4e77b715114", "V10.61": "6c48e2a8e7049c31ab77c57b97c3ef6790d24090"}
+# JIANT has no tags: the builds are commits its installer offered (web/STABLE, web/PUBLIC_RELEASE.json: V10.6z2 the public
+# stable now; web/EDITIONS.json: V10.60 the stable and V10.61 the beta before); its web installer builds with a plain
+# tools/build.py, whose PRODUCT is the package identity FM-1_909
+JIANT_COMMIT = {"V10.60": "43b8ea8111949c990bf76523c7d4f4e77b715114", "V10.61": "6c48e2a8e7049c31ab77c57b97c3ef6790d24090",
+                "V10.6z2": "cac23c6d0bb9a7f6986eb79bbe42ae710805ce98"}
+JIANT_STATUS = {"V10.60": "previous stable", "V10.61": "previous beta", "V10.6z2": "stable"}
 
 
 def test_jiant_builds_side_by_side():
     bs = studio.builds("jiant")
     vs = [b.version for b in bs]
-    assert {"V10.60", "V10.61"} <= set(vs) and vs == sorted(vs, key=studio.version_key)
+    assert vs == ["V10.60", "V10.61", "V10.6z2"]                           # JIANT's release order
     for b in bs:
         m = b.manifest
         assert b.verify() == [] and b.path.name == b.version.lstrip("V")
         assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "jiant"
         assert m["ref"] == m["commit"] == JIANT_COMMIT[b.version] and m["license"] == "GPL-3.0-only"
+        assert m["release_status"] == JIANT_STATUS[b.version]
         assert m["identity"] == "FM-1_909" and m["fs"] == 44100 and m["flash_size"] == 0x100000
         assert m["tracks"] == 6 and m["projects"] == 4 and m["source_repo"] == "https://github.com/juanjiant-bit/JIANT"
         assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
@@ -459,12 +463,31 @@ def test_jiant_versions_and_pick():
     assert exact and b.version == "V10.60" and not warn
     b, exact, warn = studio.pick_build("jiant", "V10.61")
     assert exact and b.version == "V10.61"
+    b, exact, warn = studio.pick_build("jiant", "JIANT V10.6z2")          # the public stable
+    assert exact and b.version == "V10.6z2" and not warn
     b, exact, warn = studio.pick_build("jiant", "JIANT V10.59")           # older than everything: the oldest
-    assert not exact and b.version == "V10.60" and "JIANT FM" in warn
-    assert studio.pick_build("jiant")[0].version == "V10.61"
+    assert not exact and b.version == "V10.60" and "JIANT FM V10.59" in warn
+    b, exact, warn = studio.pick_build("jiant", "JIANT V10.6c")           # after V10.61, before V10.6z2
+    assert not exact and b.version == "V10.61" and "V10.6c" in warn
+    b, exact, warn = studio.pick_build("jiant", "JIANT V10.6z10")         # newer: the next older one
+    assert not exact and b.version == "V10.6z2" and "V10.6z10" in warn and "v10.6" not in warn
+    assert studio.pick_build("jiant")[0].version == "V10.6z2"              # without a wish: the newest = the stable
+    assert studio.pick_build("jiant", studio.norm_version("JIANT V10.6z2"))[0].version == "V10.6z2"   # (device_version)
+    # JIANT's release order (its git history): the number after the dot whole, then the letter suffixes after V10.61
+    order = ["V10.7", "V10.10", "V10.59", "V10.60", "V10.61", "V10.6c", "V10.6d", "V10.6z", "V10.6z2", "V10.6z9",
+             "V10.6z10"]
+    assert sorted(reversed(order), key=studio.jiant_version_key) == order
+    assert studio.jiant_version("JIANT V10.6z2") == studio.jiant_version("v10.6z2") == "V10.6z2"
+    assert studio.jiant_version("v10.60.0") == "V10.60"
+    # the generic key and the normaliser are unchanged for Melodee and Skiff
+    assert studio.norm_version("MELODEE v1.6.0-rc.7") == "v1.6.0-rc.7" and studio.norm_version("FELUCCA v2.2") == "v2.2.0"
+    assert studio.norm_version("Melodee 1.6 rc8") == "v1.6.0-rc.8" and studio.norm_version("JIANT V10.6z2") == "v10.6z2"
+    assert studio.fw_version_key("melodee", "v1.6.0-rc.8") == studio.version_key("v1.6.0-rc.8")
     assert studio.check_versions("V10.60", device="JIANT V10.60", firmware="JIANT FM").ok
     vc = studio.check_versions("V10.60", device="JIANT V10.61", firmware="JIANT FM")
     assert not vc.ok and "JIANT FM" in vc.message and "CZ-1" not in vc.message
+    vc = studio.check_versions("V10.6z2", device="JIANT V10.6z3", firmware="JIANT FM")
+    assert not vc.ok and "V10.6z3" in vc.message and "V10.6z2" in vc.message
     assert studio.firmware_name("jiant") == "JIANT FM" and studio.FIRMWARES["jiant"]["projects"] == 4
     # the device layer: INFO "JIANT V10.60" and the catalog's key "jiant-fm" both select the JIANT twin
     from fm1companion.protocol import Info
@@ -482,12 +505,13 @@ def test_jiant_twin_core_headless():
                        capture_output=True, text=True, timeout=300)
     assert r.returncode == 0, r.stderr[-3000:]
     res = json.loads(r.stdout)
-    assert {x["version"] for x in res} >= {"10.60", "10.61"}
+    assert {x["version"] for x in res} >= {"10.60", "10.61", "10.6z2"}
     for x in res:
         v = x["firmware_version"]
         assert x["version_export"] == v and x["info"] == "JIANT " + v and x["ping"] == [0]
         assert bytes(x["identity_reply"]) == _identity_frame("FM-1_909")   # ota.c, as demo_device expects
-        assert x["ids"] == studio.JIANT_BACKUP_IDS == backup.JIANT_IDS and x["screen_lit"] > 2000
+        six = studio.jiant_version_key(v) >= studio.jiant_version_key("V10.6p")   # (V10.6p: 6 songs, 35 objects)
+        assert x["ids"] == (backup.JIANT_IDS_6 if six else backup.JIANT_IDS) and x["screen_lit"] > 2000
         assert {0, 1, 2, 9, 10, 40} <= {int(k) for k in x["sizes"]}      # music, settings, A, FM6, song index, song 1 A
         assert all(rc == 0 for rc in x["put_rc"].values())
         assert all(x["identical"].values()) and x["persisted"] and x["projects_used"] == [0]
@@ -577,7 +601,7 @@ def test_jiant_render_stems(node_studio, tmp_path):
     assert all(pk > 0.01 for pk in peaks[:4]) and peaks[4:] == [0.0, 0.0], peaks
     path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
     meta, flash = studio.read_state(path)
-    assert meta["firmware"] == "jiant" and meta["firmware_version"] == "V10.61" and len(flash) == 0x100000
+    assert meta["firmware"] == "jiant" and meta["firmware_version"] == "V10.6z2" and len(flash) == 0x100000
 
 
 def test_jiant_inventory_in_backup_layer():
@@ -589,3 +613,33 @@ def test_jiant_inventory_in_backup_layer():
     assert not backup.is_project(40) and backup.is_project(40, jiant=True) and backup.is_project(71, jiant=True)
     assert not backup.is_project(72, jiant=True) and not backup.is_project(80, jiant=True)
     assert "USR" not in backup.object_title(41, jiant=True)
+    six = backup.JIANT_IDS_6                                                # V10.6p on: 6 songs, 40..63
+    assert backup.known_ids(six) == six and backup.is_jiant(six) and studio.JIANT_BACKUP_IDS_6 == six
+
+
+def test_jiant_six_songs_stable(node_studio):
+    """V10.6z2 (the public stable): 35 objects (6 songs); an 8-song archive's songs 7 and 8 do not fit – the tolerant
+    load (the studio page's) leaves them out and names them, everything else is taken."""
+    old = node_studio(firmware="jiant", version="V10.60")
+    _jiant_song(old)
+    f = json.loads(backup.dumps(old.backup().file))
+    src = next(o for o in f["objects"] if o["id"] == 40)
+    for o in f["objects"]:
+        if o["id"] == 68:
+            o.update(size=src["size"], crc=src["crc"], data=src["data"])
+    arch8 = backup.read(f)
+    st = node_studio(firmware="jiant", version="V10.6z2")
+    assert st.build.version == "V10.6z2" and st.build.manifest["release_status"] == "stable"
+    assert studio.device_version(st.link) == "v10.6z2"
+    st.open_from_backup(arch8, tolerant=True)
+    assert st.rejected == [68] and st.projects() == [0]
+    arch6 = st.backup()
+    assert [o["id"] for o in arch6.objects] == backup.JIANT_IDS_6 and studio.backup_firmware(arch6) == "jiant"
+    by = {o["id"]: o["bytes"] for o in arch6.objects}
+    assert by[40] == by[2] and len(by[2]) > 0                  # (V10.6z2 stores V10.60's section in its own format)
+    assert "7" in backup.object_title(64, jiant=True)
+    c = studio.Studio.for_backup(arch6, backend="node")
+    try:
+        assert c.build.version == "V10.6z2" and not c.warning and c.projects() == [0]
+    finally:
+        c.close()

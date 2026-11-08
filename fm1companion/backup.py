@@ -55,16 +55,19 @@ ALT_ID_SETS = {
     29: [list(range(10)) + list(range(16, 35))],
 }
 # JIANT FM (web/fm1backup.js BACKUP_IDS, firmware/src/editor_backup.c ED_BK_IDS): 0..9 as Felucca 1.0.3, 10 the song
-# index (every song's rows and scenes), 40..71 every song's sections (40 + 4 x song + section; 2..5 stay the current
-# song's sections). No user sample slots: 40..63 are sections, not samples.
+# index (every song's rows and scenes), then every song's sections (40 + 4 x song + section; 2..5 stay the current
+# song's sections). JIANT 0.3 .. V10.6o: 8 songs, 40..71 (43 objects); from V10.6p: 6 songs, 40..63 (35 objects; an
+# older archive's songs 7 and 8 are refused at begin, rc 1). No user sample slots: 40..63 are sections, not samples.
 JIANT_IDS = list(range(11)) + list(range(40, 72))
+JIANT_IDS_6 = list(range(11)) + list(range(40, 64))
 KNOWN_ID_SETS[43] = JIANT_IDS
+KNOWN_ID_SETS[35] = JIANT_IDS_6
 
 
 def is_jiant(ids) -> bool:
-    """is this inventory (IDs in order) JIANT FM's?"""
+    """is this inventory (IDs in order) JIANT FM's (8 or, from V10.6p, 6 songs)?"""
     try:
-        return [int(i) for i in ids] == JIANT_IDS
+        return [int(i) for i in ids] in (JIANT_IDS, JIANT_IDS_6)
     except (TypeError, ValueError):
         return False
 

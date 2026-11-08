@@ -38,8 +38,8 @@ gehört nicht zum Stand.
 
 ## Versionen
 
-Den Zwilling gibt es in mehreren Versionen (Melodee 1.6.0-rc.7 … 1.6.1, Skiff 2.1.1 und 2.2, JIANT FM V10.60 – die
-stabile Version von JIANTs Installer – und die Beta V10.61). Die App wählt Firmware
+Den Zwilling gibt es in mehreren Versionen (Melodee 1.6.0-rc.7 … 1.6.1, Skiff 2.1.1 und 2.2, JIANT FM V10.6z2 – die
+stabile Version von JIANTs Installer – sowie V10.60 und V10.61). Die App wählt Firmware
 und Version deines FM-1 bzw. des Backups. Passt die Version nicht genau, zeigt ein Hinweis oben: „Studio läuft mit
 Melodee …, dein FM-1 hat … – Klang kann abweichen.“
 Zurückschreiben auf ein FM-1 mit anderer Version geht dann nur mit dem Experten-Haken.
@@ -62,8 +62,9 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
   Songs noch nicht.
 * JIANT FM: Die Stems der Spuren 5 und 6 bleiben still, solange MENU › TRACKS auf 4 steht (JIANTs Voreinstellung: T5
   und T6 schlafen). Der Zwilling hat einen Kern, kein Bluetooth (PROX bekommt kein Signal), keinen USB-Host und kein
-  USB-Audio (die INPUT-Engine hört Stille). JIANTs spätere Versionen (V10.6c … V10.6z…, V10.7) haben noch keinen
-  eigenen Zwilling: Das Studio warnt und läuft mit V10.60. Die Projektansicht liest JIANTs Songs noch nicht.
+  USB-Audio (die INPUT-Engine hört Stille). Eine JIANT-Version ohne eigenen Zwilling (z. B. V10.6c … V10.6z10) läuft
+  mit dem nächstälteren Zwilling, mit Hinweis. Ab V10.6p hat JIANT 6 Songs: Songs 7 und 8 eines älteren Backups
+  bleiben weg (das Studio nennt sie). Die Projektansicht liest JIANTs Songs noch nicht.
 * Der Zwilling hat keine CPU-Grenze: das Gerät lässt bei Überlast Stimmen weg, der Zwilling nie. Fließkomma-Teile
   können in den letzten Bits abweichen (unhörbar). Kein Bluetooth, kein USB-Host, kein Firmware-Update im
   Zwilling.

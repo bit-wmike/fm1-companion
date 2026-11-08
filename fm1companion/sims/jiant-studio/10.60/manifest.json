@@ -7,7 +7,7 @@
   "ref": "43b8ea8111949c990bf76523c7d4f4e77b715114",
   "commit": "43b8ea8111949c990bf76523c7d4f4e77b715114",
   "license": "GPL-3.0-only",
-  "build_date": "2026-11-08T18:32:11Z",
+  "build_date": "2026-11-08T18:56:02Z",
   "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
   "builder": "tools/build_sims.py",
   "files": {
@@ -20,8 +20,8 @@
       "size": 10840
     },
     "NOTICE": {
-      "sha256": "fa729d087d7e91f438fde8cfaef9a77cc32b0a9265475ab966873aedca649dc3",
-      "size": 2542
+      "sha256": "55da866940a6b56a40603ccbfc3f8ef2b90b9eb3f6a47af7ccb646c7d43eb698",
+      "size": 2619
     },
     "THIRD_PARTY.txt": {
       "sha256": "ea792c8261248ebbb94a00f0793b0dfe686f2a47896973446318e5fb8cb25d1c",
@@ -44,5 +44,6 @@
   "glue_sha256": "c678683fbc554c79acf4da6874a73b00385e1b238b9fca10a81ed3be4f58d347",
   "source_url": "https://github.com/juanjiant-bit/JIANT/archive/43b8ea8111949c990bf76523c7d4f4e77b715114.tar.gz",
   "tracks": 6,
-  "projects": 4
+  "projects": 4,
+  "release_status": "previous stable"
 }
