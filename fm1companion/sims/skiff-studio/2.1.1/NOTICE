@@ -1,0 +1,18 @@
+Skiff v2.1.1 – studio twin (firmware code for the host), built from https://github.com/illuminus5/skiff tag v2.1.1
+(commit 48e77fda5916e9a5ba9e7339161f719d8877ce49; source: https://github.com/illuminus5/skiff/archive/48e77fda5916e9a5ba9e7339161f719d8877ce49.tar.gz).
+GPL-3.0-only. Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments (Felucca); Copyright (C) 2026 illuminus5 (Skiff's changes and additions).
+Ported parts keep their licences (DaisySP and Rings: MIT, msfa: Apache-2.0; the UI font Barlow Condensed and the Fukiai icons are rasterised in: OFL 1.1, MIT), the instrument samples are CC0 (Versilian Studios):
+Skiff's LICENSING.md and the texts in THIRD_PARTY.txt beside this file.
+The firmware sources are unmodified. The glue tools/studio/skiff_studio.c (GPL-3.0-only, in FM-1 Companion's source) includes them as Skiff's own browser emulator and host tests do (web/emu/felucca_web.c, tests/hostsim.c,
+editor_test.c, backup_test.c) and replaces only the hardware: keys/LEDs/LCD, ADC (MASTER; battery full), NOR flash = a 1 MiB RAM image, USB = always configured (SysEx and MIDI out through usb.c's rings),
+one core (MENU > CPU 2 CORES has no second core here), no 320 MHz switch, no USB audio, no TRS MIDI, no serial console, no updater (ota.c answers the identity handshake only).
+Compiled with WASI SDK clang (include shim tools/wasm_shim/sys/wait.h).
+
+Corresponding Source (GNU GPL 3.0, section 6)
+The complete corresponding source of this build is https://github.com/illuminus5/skiff at commit 48e77fda5916e9a5ba9e7339161f719d8877ce49
+together with FM-1 Companion's build script tools/build_sims.py, the glue tools/studio/skiff_studio.c and the shim tools/wasm_shim. A tarball of exactly this commit
+(skiff-48e77fda5916e9a5ba9e7339161f719d8877ce49.tar.gz, made with tools/make_source_tarballs.py) is attached to every
+FM-1 Companion release that ships this build: https://github.com/bit-wmike/fm1-companion/releases
+Written offer: for at least three years after the last release that ships this build, the maintainers of
+FM-1 Companion will give anyone a copy of that corresponding source on request (https://github.com/bit-wmike/fm1-companion/issues),
+free of charge apart from the cost of physically performing the distribution.

@@ -349,8 +349,11 @@ def project_info(data: bytes, firmware: str = "") -> dict:
 
 # ------------------------------------------------------------- objects ---
 
+SKIFF_IDS = list(range(10)) + list(range(16, 35))     # Skiff 2.x (web/fm1backup.js BACKUP_IDS)
+
+
 def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = "",
-             sloop: bool = False) -> ObjectView:
+             sloop: bool = False, skiff: bool = False) -> ObjectView:
     size = len(data)
     v = ObjectView(oid, _("Object {id}").format(id=oid), G_OTHER, size, crc, data)
     if oid == 0:
@@ -403,10 +406,18 @@ def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = ""
     if oid == 8:
         v.title, v.group = _("Old FM6 bank (retired)"), G_OTHER
         return v
+    if skiff and oid == 9:                       # (Skiff: editor_backup.c, up_fm6.c)
+        v.title, v.group = _("FM6 patches of the user presets"), G_PRESETS
+        return v
+    if skiff and 16 <= oid < 32:                 # (Skiff: bank.c, 16 chunks of 4 patterns)
+        first = (oid - 16) * 4 + 1
+        v.title, v.group = _("Pattern bank, patterns {first}–{last}").format(first=first, last=first + 3), G_OTHER
+        v.format = "" if size else _("empty")
+        return v
     # preset objects
     v.group = G_PRESETS
     magic = _u32(data, 0) if size >= 4 else -1
-    if n_objects in (29, 57) or magic == UPB2:
+    if (n_objects in (29, 57) and not skiff) or magic == UPB2:
         b = BANK_OF_OID.get(oid)
         if b is not None:
             lo, hi = bank_range(b)
@@ -484,7 +495,8 @@ def inspect(source) -> Report:
 
 def _from_archive(arch: backup.Archive, path: Path | None) -> Report:
     n = len(arch.objects)
-    objs = [describe(o["id"], o["bytes"], o["crc"], n, arch.firmware) for o in arch.objects]
+    skiff = [o["id"] for o in arch.objects] == SKIFF_IDS
+    objs = [describe(o["id"], o["bytes"], o["crc"], n, arch.firmware, skiff=skiff) for o in arch.objects]
     rep = Report(backup.FORMAT, arch.firmware, arch.created, arch.companion, objs, arch.known, True, path, arch)
     s = rep.obj(1)
     if s:

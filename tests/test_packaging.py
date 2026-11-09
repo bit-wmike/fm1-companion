@@ -62,10 +62,12 @@ def test_deb(dist):
               "studio-panel.js"):
         assert lib + "sims/_studio/" + f in files, f
     from fm1companion import studio
-    for b in studio.builds("melodee"):
-        for f in b.manifest["files"]:
-            assert f"{lib}sims/melodee-studio/{b.path.name}/{f}" in files, (b.version, f)
-        assert f"{lib}sims/melodee-studio/{b.path.name}/manifest.json" in files
+    for fw in ("melodee", "skiff"):
+        assert studio.builds(fw), fw
+        for b in studio.builds(fw):
+            for f in b.manifest["files"]:
+                assert f"{lib}sims/{fw}-studio/{b.path.name}/{f}" in files, (b.version, f)
+            assert f"{lib}sims/{fw}-studio/{b.path.name}/manifest.json" in files
     for f in ("studio.py", "studio_web.py", "ui/studio_service.py", "ui/pages/studio.py", "data/help/de/13-studio.md"):
         assert lib + f in files, f
     # translations (.po, read directly – no .mo build step) and the help pages per language
@@ -123,8 +125,9 @@ def test_run_installer(dist, tmp_path):
         assert (app / po.relative_to(ROOT).as_posix()).exists(), po
     assert (app / "fm1companion/locale/messages.pot").exists()
     assert (app / "fm1companion/data/help/de/01-erste-schritte.md").exists()
-    assert sorted(p.parent.name for p in (app / "fm1companion/sims/melodee-studio").glob("*/twin.wasm")) == \
-        sorted(p.parent.name for p in (ROOT / "fm1companion/sims/melodee-studio").glob("*/twin.wasm"))
+    for fw in ("melodee", "skiff"):
+        assert sorted(p.parent.name for p in (app / f"fm1companion/sims/{fw}-studio").glob("*/twin.wasm")) == \
+            sorted(p.parent.name for p in (ROOT / f"fm1companion/sims/{fw}-studio").glob("*/twin.wasm")) != []
     assert "exec /usr/bin/python3 -m fm1companion" in launcher.read_text() or py in launcher.read_text()
     assert (home / ".local/share/applications/fm1-companion.desktop").exists()
     assert (home / ".local/share/applications/fm1-companion-uninstall.desktop").exists()

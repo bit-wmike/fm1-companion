@@ -49,6 +49,20 @@ KNOWN_ID_SETS = {
     29: list(range(29)),
     57: list(range(29)) + list(range(64, 92)),
 }
+# Inventories of the same length with other IDs (web/fm1backup.js of that firmware): Skiff 2.x has 29 objects too –
+# 0..9, its pattern bank's 16 chunks (16..31) and the sample slots 32..34
+ALT_ID_SETS = {
+    29: [list(range(10)) + list(range(16, 35))],
+}
+
+
+def known_ids(ids: list[int]) -> list[int] | None:
+    """the known inventory these IDs (in this order) are, or None (an unknown one: backed up generically); an
+    inventory of a known length with other IDs -> []"""
+    sets = [s for s in [KNOWN_ID_SETS.get(len(ids))] + ALT_ID_SETS.get(len(ids), []) if s]
+    if not sets:
+        return None
+    return next((s for s in sets if s == list(ids)), [])
 
 
 class _Texts(dict):
@@ -177,8 +191,7 @@ def parse_manifest(a) -> list[ObjInfo]:
         if size > max_size(oid) or (not size and crc):
             raise BackupError(_("object too large"))
         out.append(ObjInfo(oid, size, crc))
-    known = KNOWN_ID_SETS.get(n)
-    if known and [o.id for o in out] != known:
+    if known_ids([o.id for o in out]) == []:
         raise BackupError(_("unexpected object order"))
     return out
 
@@ -286,14 +299,17 @@ def read(file) -> Archive:
     if not isinstance(file, dict) or file.get("format") != FORMAT or file.get("version") != 1 \
             or not isinstance(file.get("objects"), list) or not file["objects"]:
         raise BackupError(_("Not a complete Felucca/Melodee backup"))
-    known_ids = KNOWN_ID_SETS.get(len(file["objects"]))
+    try:
+        known = known_ids([o["id"] for o in file["objects"]])
+    except (KeyError, TypeError):
+        raise BackupError(_("invalid object in the backup"))
     objs = []
     for i, o in enumerate(file["objects"]):
         try:
             oid, size, crc, data = o["id"], o["size"], o["crc"], o["data"]
         except (KeyError, TypeError):
             raise BackupError(_("invalid object in the backup"))
-        if known_ids and oid != known_ids[i]:
+        if known == []:
             raise BackupError(_("unexpected object order in the backup"))
         if not isinstance(oid, int) or not isinstance(size, int) or not 0 <= size <= max_size(oid) or not isinstance(crc, int) \
                 or not 0 <= crc <= 0xFFFFFFFF or not isinstance(data, str) or len(data) != 4 * ((size + 2) // 3):
@@ -307,7 +323,7 @@ def read(file) -> Archive:
         objs.append({**o, "bytes": raw})
     if not objs[0]["size"] or (len(objs) > 1 and not objs[1]["size"]):
         raise BackupError(_("The backup does not contain the running music or the settings"))
-    return Archive(file=file, objects=objs, known=bool(known_ids))
+    return Archive(file=file, objects=objs, known=bool(known))
 
 
 def load_file(path: Path) -> Archive:

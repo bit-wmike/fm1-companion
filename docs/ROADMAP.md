@@ -9,7 +9,7 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 |---|---|---|
 | 1 | **Melodee** (priority 1), matching the version on the device (1.6.1, 1.6.0, 1.6.0-rc.7 and rc.8 bundled) | **done in 2.2.0**, 1.6.0 since 2.3.0, 1.6.1 since 2.3.2 (page "Studio", virtual device, playback target "Im Studio" – in the Studio) |
 | 2 | **SLOOP** (latest stable, currently 2.8.4) | only once Melodee runs well |
-| 3 | **Skiff** (latest stable, currently 2.1.1) | only once Melodee runs well |
+| 3 | **Skiff**, matching the version on the device (2.2 and 2.1.1 bundled) | **done** (branch `studio-skiff`; same page, virtual device, backup ↔ twin, write back) |
 | 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V16 may differ | after that |
 | – | **Original V16** | **paused, not dropped** |
 
@@ -56,6 +56,29 @@ extended with 1.6.1 (keep CLK when loading a project, the backup restores CLK).
 Open: the twin does not output the FM-1's clock (its own real-time ring in `usb.c`) – that would need a
 new glue layer and thus new builds of all versions. Clock output untested on real hardware (also only checked
 automatically in Melodee itself).
+
+## Status Skiff (2.2, 2.1.1)
+
+Done: twin **Skiff 2.2** (tag v2.2, commit 76b5f9c, identity FM-1_722) and **2.1.1** (tag v2.1.1, identity FM-1_721),
+glue layer `tools/studio/skiff_studio.c` – Skiff's unmodified sources included as its own browser emulator
+(`web/emu/felucca_web.c`) and host tests (`tests/editor_test.c`, `backup_test.c`) do, plus the editor SysEx path,
+`ota.c`'s identity handshake and USB MIDI out (2.2: timed with the audio, `usb.c` `mo_take`). Same `st_*` ABI; one
+optional export `st_transport_set` (Skiff's editor TRANSPORT is command 76, Melodee's stop is BANK_SONG 74 op 3:
+`twin-host.js` uses the export when a twin has it, Melodee's builds are unchanged). `build_sims.py` has per-studio
+hooks (header generators, version file/regex, release identity, defines, NOTICE, extra licence files).
+Python: `studio.FIRMWARES` (name, INFO name, tracks, project slots), `backup_firmware()` (companion block, firmware
+string or Skiff's 29-object inventory), `StudioService.firmware_for()` knows Skiff; the page starts the twin of the
+device's or the backup's firmware, lists projects A–D, renders six stems, refuses writing a twin onto a device with a
+different firmware. Backup layer: Skiff 2.x's inventory (29 objects: 0–9, pattern bank 16–31, samples 32–34) was
+rejected as "unexpected object order" (same length as Melodee 1.5's 0–28) – `backup.ALT_ID_SETS` / `known_ids()`;
+the inspector names the pattern bank chunks and the FM6 patches of the user presets.
+
+Open (Skiff): the project view and `projectfmt` do not read Skiff's SKF4 projects (the export dialog therefore offers no
+"passes of the pattern" for Skiff, and the project name comes from the slot only) – a separate parser; the Skiff twin
+has one core (MENU › CPU 2 CORES never starts core 1), no USB audio, no TRS MIDI, no 320 MHz switch; "song to the end"
+ends only with SONG ONCE (Skiff loops otherwise); the autosave (`autosave_poll`) writes the flash on its own after the
+music changes, so the Studio's change detection also sees those writes. Checked only against the twin itself, never a
+real Skiff FM-1 (docs/UNTESTED.md).
 
 ## Second route: fm1-emu (processor emulation)
 

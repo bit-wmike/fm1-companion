@@ -55,6 +55,8 @@ untested, even if it runs cleanly in the simulation.
 |---|---|
 | **Writing back to the FM-1** (Studio › Write back to the FM-1) | simulation only (safety backup first, version check) |
 | Sound fidelity of the twin compared with the device | firmware code identical, timing and overload behaviour not |
+| **Skiff twin** (2.2, 2.1.1: fetch from a Skiff FM-1, open a Skiff backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real Skiff FM-1 or a backup made by a real device or Skiff's web editor |
+| Skiff 2.x backups in the backup layer (29 objects with the pattern bank) | only with backups of the Skiff twin |
 
 ### Backups, presets, projects, samples
 - Restoring a backup to the device (full and partial).

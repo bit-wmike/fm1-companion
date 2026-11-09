@@ -3481,3 +3481,12 @@ msgstr "Simulation beendet"
 #, python-brace-format
 msgid "no answer to command {cmd}"
 msgstr "keine Antwort auf Befehl {cmd}"
+
+#: fm1companion/backup_inspect.py:410
+msgid "FM6 patches of the user presets"
+msgstr "FM6-Patches der User-Presets"
+
+#: fm1companion/backup_inspect.py:414
+#, python-brace-format
+msgid "Pattern bank, patterns {first}–{last}"
+msgstr "Pattern-Bank, Patterns {first}–{last}"

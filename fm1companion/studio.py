@@ -2,9 +2,10 @@
 """Studio: the FM-1's digital twin in the suite.
 
 The FM-1 is the instrument, the suite is the studio. The twin is **the same firmware** as on the device
-(Melodee's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py --target
-melodee-studio and tools/studio/melodee_studio.c): the same engines, effects, the same mixer and sequencer, plus
-the NOR flash (settings, projects, user presets) and the editor SysEx protocol over the firmware's USB path.
+(Melodee's or Skiff's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py --target
+melodee-studio / skiff-studio and tools/studio/<firmware>_studio.c): the same engines, effects, the same mixer and
+sequencer, plus the NOR flash (settings, projects, user presets) and the editor SysEx protocol over the firmware's USB
+path.
 It runs in QtWebEngine (web worker; sound via AudioWorklet -> Chromium -> PipeWire = the Pi's speakers) and
 talks to the outside exactly like a real FM-1: ``Studio.link`` is a ``transport.Link`` – backup.read/restore,
 presets, project writing, playback.py etc. work unchanged.
@@ -26,7 +27,7 @@ API (``Studio``)::
     st.open_from_device(link)                           # read a backup from the real FM-1, then load it
     st.link                                             # link to the twin (as to a real FM-1)
     st.play(how="play"|"song") / st.stop()              # transport (PLAY key or song chain, editor stop)
-    st.load_project(slot)                               # load project 1..32 (slot 0..31) like the PROJECT page
+    st.load_project(slot)                               # load a project (Melodee 1..32, Skiff A..D) like the PROJECT page
     st.start_audio() / st.stop_audio()                  # real-time sound (WebEngine: default output)
     st.render_wav(path, seconds=None, until_end=False, stems=False, start="play", source="live", fmt="f32")
                                                         # offline, faster than real time -> RenderResult
@@ -88,6 +89,18 @@ LIMITS = _(
 
 class StudioError(Exception):
     pass
+
+
+# the firmwares with a studio twin: key -> display name, the name its editor INFO reports before the version
+# (Skiff answers like Felucca, "FELUCCA v2.2"), the number of tracks and project slots (stems, the project list)
+FIRMWARES = {
+    "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32},
+    "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4},
+}
+
+
+def firmware_name(key: str) -> str:
+    return FIRMWARES.get(key, {}).get("name") or (key or "").capitalize()
 
 
 # ======================================================================= versions and builds
@@ -170,13 +183,13 @@ def pick_build(firmware: str = "melodee", wanted: str = "") -> tuple[TwinBuild, 
     if not want:
         return bs[-1], True, ""
     for b in bs:
-        if b.version == want:
+        if norm_version(b.version) == want:                  # (Skiff reports "v2.2": v2.2.0)
             return b, True, ""
     wk = version_key(want)
     older = [b for b in bs if version_key(b.version) < wk]
     best = older[-1] if older else bs[0]
     return best, False, _("There is no studio twin for {firmware} {version}; the studio runs with {twin} – sound "
-                          "and functions may differ.").format(firmware=firmware.capitalize(), version=want,
+                          "and functions may differ.").format(firmware=firmware_name(firmware), version=want,
                                                               twin=best.version)
 
 
@@ -225,6 +238,25 @@ def backup_version(archive) -> str:
     """Firmware version a backup was made with (the app's companion block, otherwise the 'firmware' field)."""
     c = archive.companion or {}
     return norm_version(c.get("firmware_version") or c.get("version_string") or archive.firmware or "")
+
+
+SKIFF_BACKUP_IDS = [*range(10), *range(16, 35)]     # web/fm1backup.js BACKUP_IDS: the pattern bank's chunks 16..31
+
+
+def backup_firmware(archive) -> str:
+    """Which firmware a backup belongs to: "melodee", "skiff", "sloop", "felucca" or "" (unknown). The app's companion
+    block names it; otherwise the 'firmware' field, and Skiff's inventory (the pattern bank) gives Skiff away."""
+    if getattr(archive, "sloop", False):
+        return "sloop"
+    c = archive.companion or {}
+    key = (c.get("firmware") or "").lower()
+    text = " ".join(str(x) for x in (key, c.get("version_string", ""), archive.firmware or "")).lower()
+    for name in ("melodee", "skiff", "sloop"):
+        if name in text:
+            return name
+    if [o["id"] for o in archive.objects] == SKIFF_BACKUP_IDS:
+        return "skiff"
+    return "felucca" if "felucca" in text else ""
 
 
 # ======================================================================= Backends
@@ -442,7 +474,7 @@ class RenderResult:
     frames: int
     ended: bool                      # until_end: the song has played to the end
     peak: float
-    stems: dict[int, Path] = field(default_factory=dict)   # track (0..3) -> WAV
+    stems: dict[int, Path] = field(default_factory=dict)   # track (0..3, Skiff 0..5) -> WAV
 
 
 # ======================================================================= Studio
@@ -474,9 +506,10 @@ class Studio:
 
     @classmethod
     def for_backup(cls, archive, **kw) -> "Studio":
-        """Twin in the version the backup was made with (otherwise the nearest, with a warning)."""
+        """Twin of the backup's firmware in the version it was made with (otherwise the nearest, with a warning)."""
         archive = _archive(archive)
-        st = cls.create(version=backup_version(archive), **kw)
+        fw = backup_firmware(archive)
+        st = cls.create(firmware=fw if fw in FIRMWARES else "melodee", version=backup_version(archive), **kw)
         st.open_from_backup(archive)
         return st
 
@@ -520,7 +553,7 @@ class Studio:
         self.stop()
         f = backup.capture(self.link, self.build.version, progress,
                            companion={"firmware": self.build.firmware, "firmware_version": self.build.version,
-                                      "version_string": "MELODEE " + self.build.version, "kind": "studio",
+                                      "version_string": self.info_name + " " + self.build.version, "kind": "studio",
                                       "device": "Studio", "app": "FM-1 Companion"})
         return backup.read(f)
 
@@ -541,6 +574,26 @@ class Studio:
         else:
             backup.restore(link, archive, progress, firmware_key=self.build.firmware)
         return archive
+
+    @property
+    def firmware_name(self) -> str:
+        """"Melodee", "Skiff" …"""
+        return firmware_name(self.build.firmware)
+
+    @property
+    def info_name(self) -> str:
+        """what the firmware's editor INFO says before its version ("MELODEE", Skiff's "FELUCCA")"""
+        return FIRMWARES.get(self.build.firmware, {}).get("info") or self.build.firmware.upper()
+
+    @property
+    def tracks(self) -> int:
+        """the firmware's tracks (Melodee 4, Skiff 6): the stems of a render"""
+        return int(self.build.manifest.get("tracks") or FIRMWARES.get(self.build.firmware, {}).get("tracks", 4))
+
+    @property
+    def project_slots(self) -> int:
+        """the firmware's project slots (Melodee 32, Skiff 4: A..D)"""
+        return int(self.build.manifest.get("projects") or FIRMWARES.get(self.build.firmware, {}).get("projects", 32))
 
     def flash(self) -> bytes:
         return bytes(self.backend.get_flash())
@@ -602,7 +655,8 @@ class Studio:
         return self.backend.call("press", label=B[label.upper()])
 
     def load_project(self, slot: int) -> int:
-        """Load project slot (0..31 = project 1..32), like the PROJECT page. -> 0 ok, 1 empty, 2 stop first"""
+        """Load project slot (Melodee 0..31 = project 1..32, Skiff 0..3 = A..D), like the PROJECT page.
+        -> 0 ok, 1 empty, 2 stop first"""
         return self.backend.call("project_load", slot=int(slot))["rc"]
 
     def projects(self) -> list[int]:
@@ -630,7 +684,8 @@ class Studio:
         source "live": from the current RAM state (including unsaved), "saved": freshly powered on from the flash.
         start "play" (PLAY from the start) | "song" (song chain) | "none" (as it is currently running).
         seconds OR until_end (until the transport stops, plus tail_seconds; at most max_seconds).
-        stems=True: additionally one WAV per track 1..4 (<name>_spur1.wav …): the same playback with all other
+        stems=True: additionally one WAV per track (Melodee 1..4, Skiff 1..6; <name>_spur1.wav …): the same playback
+        with all other
         tracks muted (TRACK_MIX), i.e. the track with its share of the shared effects.
         fmt "f32" (32-bit float) or "s24" (24-bit PCM). 44.1 kHz stereo like the device.
         progress(finished passes, all passes): one pass for the mix and one per stem."""
@@ -644,7 +699,8 @@ class Studio:
             params["project"] = int(project)
         if source == "live" and project is None:
             params["settle_ms"] = 0
-        passes = 5 if stems else 1
+        n = self.tracks
+        passes = 1 + n if stems else 1
         if progress:
             progress(0, passes)
         r = self._render_one(path, params, None)
@@ -654,9 +710,9 @@ class Studio:
         if stems:
             if until_end:                                  # all stems as long as the mix
                 params.update(until_end=False, seconds=r["frames"] / FS)
-            for k in range(4):
+            for k in range(n):
                 p = path.with_name(f"{path.stem}_spur{k + 1}{path.suffix}")
-                self._render_one(p, {**params, "mutes": [j != k for j in range(4)]}, None)
+                self._render_one(p, {**params, "mutes": [j != k for j in range(n)]}, None)
                 res.stems[k] = p
                 if progress:
                     progress(2 + k, passes)
@@ -679,7 +735,7 @@ class Studio:
             device = device_version(link)
         if archive is not None and not backup:
             backup = backup_version(_archive(archive))
-        return check_versions(self.build.version, device, backup, self.build.firmware.capitalize())
+        return check_versions(self.build.version, device, backup, self.firmware_name)
 
 
 def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee") -> list[int]:
@@ -688,7 +744,8 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     from . import backup
     backup._match(link, archive, firmware_key)
     if archive.sloop:
-        raise StudioError(_("The Melodee twin cannot load SLOOP backups."))
+        raise StudioError(_("The {firmware} twin cannot load SLOOP backups.").format(
+            firmware=firmware_name(firmware_key)))
     sup = {o.id for o in backup.parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))}
     objs = archive.objects
     order = objs[2:] + objs[1:2] + objs[0:1]
