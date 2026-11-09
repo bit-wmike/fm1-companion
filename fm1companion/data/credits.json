@@ -1,14 +1,15 @@
 {
-  "_comment": "Mitwirkende und Fremdmaterial. Weitere Einträge gern als eigene Datei in credits.d/<bereich>.json (gleiches Format: {\"entries\": [...]}).",
+  "_comment": "Contributors and third-party material. Further entries welcome as a file of their own in credits.d/<area>.json (same format: {\"entries\": [...]}). The texts are English; the app translates use, kind, license and authors through the catalog (diag.CREDIT_TEXTS).",
   "entries": [
-    {"name": "Melodee", "authors": "Kerem Kiliç", "url": "https://github.com/keremimo/melodee", "license": "GPL-3.0", "kind": "Firmware", "use": "Firmware, Web-Editor, Installer und Handbuch, die die App einbindet"},
-    {"name": "Felucca", "authors": "Leo Kuroshita / Hügelton Instruments", "url": "https://github.com/hugelton/Felucca", "license": "GPL-3.0", "kind": "Firmware", "use": "Grundlage von Melodee, Skiff und SLOOP; sampleio.py (vendor) stammt von dort"},
-    {"name": "Skiff", "authors": "illuminus5", "url": "https://github.com/illuminus5/skiff", "license": "GPL-3.0", "kind": "Firmware", "use": "Firmware mit Sample-Slots"},
-    {"name": "SLOOP", "authors": "isod89", "url": "https://github.com/isod89/sloop-fm1", "license": "GPL-3.0", "kind": "Firmware", "use": "Firmware mit Sample-Slots"},
-    {"name": "M-VAVE FM1 Open", "authors": "M-VAVE", "url": "https://github.com/m-vave/fm1_open", "license": "GPL-3.0 mit Ausnahme (siehe Projekt)", "kind": "Firmware/SDK", "use": "offizielle offene Firmware, Simulator-Quellen, Update-Werkzeuge"},
-    {"name": "awesome-fm-1 / Mooring", "authors": "cicloid", "url": "https://github.com/cicloid/awesome-fm-1", "license": "CC0-1.0", "kind": "Katalog", "use": "Firmware-Katalog und Linksammlung"},
-    {"name": "Lucide Icons", "authors": "Lucide Contributors (teils Feather, Cole Bemis)", "url": "https://lucide.dev", "license": "ISC (Feather-Teile MIT)", "kind": "Grafik", "use": "Symbole im App-Design (fm1companion/icons/lucide, Lizenz in icons/LICENSE.lucide)"},
-    {"name": "Qt / PyQt6", "authors": "The Qt Company / Riverbank Computing", "url": "https://riverbankcomputing.com", "license": "LGPL-3.0 / GPL-3.0", "kind": "Bibliothek", "use": "Oberfläche (Systempaket)"},
-    {"name": "mido, python-rtmidi, NumPy", "authors": "Ole Martin Bjørndalen u. a.; Christopher Arndt u. a.; NumPy Developers", "url": "https://mido.readthedocs.io", "license": "MIT / MIT / BSD-3-Clause", "kind": "Bibliothek", "use": "MIDI und Audio-Rechnungen (Systempakete)"}
+    {"name": "Melodee", "authors": "Kerem Kiliç", "url": "https://github.com/keremimo/melodee", "license": "GPL-3.0", "kind": "Firmware", "use": "firmware, web editor, installer and manual that the app embeds"},
+    {"name": "Felucca", "authors": "Leo Kuroshita / Hügelton Instruments", "url": "https://github.com/hugelton/Felucca", "license": "GPL-3.0", "kind": "Firmware", "use": "basis of Melodee, Skiff, SLOOP and JIANT FM; sampleio.py (vendor) comes from there"},
+    {"name": "Skiff", "authors": "illuminus5", "url": "https://github.com/illuminus5/skiff", "license": "GPL-3.0", "kind": "Firmware", "use": "firmware with sample slots"},
+    {"name": "JIANT FM", "authors": "juanjiant-bit", "url": "https://github.com/juanjiant-bit/JIANT", "license": "GPL-3.0", "kind": "Firmware", "use": "Felucca fork; its unmodified firmware code runs in the studio twin"},
+    {"name": "SLOOP", "authors": "isod89", "url": "https://github.com/isod89/sloop-fm1", "license": "GPL-3.0", "kind": "Firmware", "use": "firmware with sample slots"},
+    {"name": "M-VAVE FM1 Open", "authors": "M-VAVE", "url": "https://github.com/m-vave/fm1_open", "license": "GPL-3.0 with exception (see project)", "kind": "Firmware/SDK", "use": "official open firmware, simulator sources, update tools"},
+    {"name": "awesome-fm-1 / Mooring", "authors": "cicloid", "url": "https://github.com/cicloid/awesome-fm-1", "license": "CC0-1.0", "kind": "Catalog", "use": "firmware catalog and link collection"},
+    {"name": "Lucide Icons", "authors": "Lucide Contributors (partly Feather, Cole Bemis)", "url": "https://lucide.dev", "license": "ISC (Feather parts MIT)", "kind": "Graphics", "use": "icons in the app's design (fm1companion/icons/lucide, licence in icons/LICENSE.lucide)"},
+    {"name": "Qt / PyQt6", "authors": "The Qt Company / Riverbank Computing", "url": "https://riverbankcomputing.com", "license": "LGPL-3.0 / GPL-3.0", "kind": "Library", "use": "user interface (system package)"},
+    {"name": "mido, python-rtmidi, NumPy", "authors": "Ole Martin Bjørndalen et al.; Christopher Arndt et al.; NumPy Developers", "url": "https://mido.readthedocs.io", "license": "MIT / MIT / BSD-3-Clause", "kind": "Library", "use": "MIDI and audio computations (system packages)"}
   ]
 }

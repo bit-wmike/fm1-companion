@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "name": "jiant-studio",
+  "title": "JIANT FM studio twin",
+  "version": "10.6z2",
+  "source_repo": "https://github.com/juanjiant-bit/JIANT",
+  "ref": "cac23c6d0bb9a7f6986eb79bbe42ae710805ce98",
+  "commit": "cac23c6d0bb9a7f6986eb79bbe42ae710805ce98",
+  "license": "GPL-3.0-only",
+  "build_date": "2026-11-08T18:57:43Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "LICENSING.md": {
+      "sha256": "21807b3e32a06e8547b4cb1665959c2a0b8eb56bdec428f41ea8e937c28c9476",
+      "size": 10840
+    },
+    "NOTICE": {
+      "sha256": "b74c7245878b736af1ff4a31b01590e3353d9fcdb3cddb71f28c5d3f73041ecb",
+      "size": 2621
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "ea792c8261248ebbb94a00f0793b0dfe686f2a47896973446318e5fb8cb25d1c",
+      "size": 27366
+    },
+    "twin.wasm": {
+      "sha256": "eb4aff21137f767632cfd64900bd66b2baa707e7745354e5c3cfd511bfbfe196",
+      "size": 1404852
+    }
+  },
+  "kind": "studio",
+  "firmware": "jiant",
+  "firmware_version": "V10.6z2",
+  "identity": "FM-1_909",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/jiant_studio.c",
+  "glue_sha256": "c678683fbc554c79acf4da6874a73b00385e1b238b9fca10a81ed3be4f58d347",
+  "source_url": "https://github.com/juanjiant-bit/JIANT/archive/cac23c6d0bb9a7f6986eb79bbe42ae710805ce98.tar.gz",
+  "tracks": 6,
+  "projects": 4,
+  "release_status": "stable"
+}

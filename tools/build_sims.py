@@ -10,6 +10,7 @@ compiles anything. Run this in a development container, not on the user's machin
                               [--repo fm1-open=/tmp/fm1_open] [--repo melodee=/tmp/melodee]
   python3 tools/build_sims.py --target melodee-studio [--ref v1.6.0-rc.8 ...] [--repo melodee=/tmp/melodee]
   python3 tools/build_sims.py --target skiff-studio [--ref v2.2 ...] [--repo skiff=/tmp/skiff]
+  python3 tools/build_sims.py --target jiant-studio [--ref <commit> ...] [--repo jiant=/tmp/jiant]
 
 Needs: git, Python with Pillow + fontTools (Melodee's header generators), and WASI SDK 27
 (downloaded from GitHub into --work when --wasi-sdk is not given; ~125 MB).
@@ -28,6 +29,9 @@ Simulators:
             New version: python3 tools/build_sims.py --target melodee-studio --ref <tag> --repo melodee=<clone>
   skiff-studio  (--target) the same for Skiff (tools/studio/skiff_studio.c): sims/skiff-studio/<version>/
             python3 tools/build_sims.py --target skiff-studio [--ref v2.2] --repo skiff=<clone>
+  jiant-studio  (--target) the same for JIANT FM (tools/studio/jiant_studio.c): sims/jiant-studio/<version>/; JIANT has
+            no tags, a ref is a commit (web/EDITIONS.json names them):
+            python3 tools/build_sims.py --target jiant-studio [--ref <commit>] --repo jiant=<clone>
 """
 from __future__ import annotations
 
@@ -242,6 +246,7 @@ BUILDERS = {"fm1-open": build_fm1_open, "melodee": build_melodee}
 # that matches the device / backup). Adding a version is one line, e.g.:
 #   python3 tools/build_sims.py --target melodee-studio --ref v1.6.0-rc.9 --repo melodee=/tmp/melodee
 #   python3 tools/build_sims.py --target skiff-studio --ref v2.3 --repo skiff=/tmp/skiff
+#   python3 tools/build_sims.py --target jiant-studio --ref <commit> --repo jiant=/tmp/jiant
 # (needs: git, Pillow + fontTools for the firmwares' header generators, WASI SDK 27 as above). A further firmware
 # (SLOOP, FM1 Open) adds an entry here with its own glue file and the few firmware-specific hooks below (header
 # generators, where the version string lives, the release identity, the NOTICE); the JS / Python host stays the same.
@@ -261,6 +266,13 @@ def skiff_release_identity(version: str) -> str:
     """Skiff's tools/build.py --release X.Y[.Z[.W]][-suffix]: identity FM-1_7XY (one digit each; X.Y.Z keeps X.Y's)."""
     m = re.fullmatch(r"v?(\d)\.(\d)(?:\.\d){0,2}(?:-[A-Za-z0-9]+)?", version)
     return "FM-1_7" + m[1] + m[2] if m else "FM-1_700"
+
+
+def jiant_identity(src: Path) -> str:
+    """JIANT's tools/build.py PRODUCT: the package identity of the build its web installer offers (a plain
+    tools/build.py, no --release: FM-1_909 since JIANT 0.9.x; ota.c answers it, the installer checks it)"""
+    m = re.search(r'^PRODUCT = "(FM-1_\d+)"', (src / "tools/build.py").read_text("utf-8"), re.M)
+    return m[1] if m else "FM-1_909"
 
 
 def _generate_melodee(src: Path):
@@ -302,6 +314,40 @@ def _skiff_extra(src: Path, out: Path):
                                                  for f in SKIFF_THIRD_PARTY), "utf-8")
 
 
+JIANT_THIRD_PARTY = ["LICENSES/Apache-2.0-msfa.txt", "LICENSES/MIT-Fukiai.txt", "LICENSES/OFL-ChakraPetch.txt",
+                     "LICENSES/OFL-InterTight.txt", "LICENSES/OFL-Michroma.txt", "LICENSES/BSD-2-Clause-CMUdict.txt"]
+
+
+def _jiant_extra(src: Path, out: Path):
+    """the licence texts of the parts compiled into the twin (JIANT's LICENSING.md lists them: msfa in fm6_core.c, the
+    Fukiai icons and the UI faces Chakra Petch, Inter Tight and Michroma rasterised in, VOICE's CMUdict subset)"""
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    (out / "THIRD_PARTY.txt").write_text("".join(f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n"
+                                                 for f in JIANT_THIRD_PARTY), "utf-8")
+
+
+def _jiant_notice(spec, version, ref, commit, source_url):
+    return (
+        f"JIANT FM {version} – studio twin (firmware code for the host), built from {spec['repo']} commit {commit}\n"
+        f"(source: {source_url}; JIANT has no tags: {version} is the version this commit reports).\n"
+        "GPL-3.0-only. JIANT FM by juanjiant-bit, a fork of Felucca: Copyright (C) 2026 Leo Kuroshita (@kurogedelic), "
+        "Hügelton Instruments (Felucca);\nportions Copyright (C) 2026 Juan Ignacio Antonucci (Juan Jiant) (JIANT's "
+        "changes and additions, as its source files name it).\n"
+        "Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0; the UI faces Chakra Petch, Inter Tight and "
+        "Michroma and the Fukiai icons are rasterised in: OFL 1.1, MIT; VOICE's English words are a subset of the CMU "
+        "Pronouncing Dictionary: BSD-2-Clause):\nJIANT's LICENSING.md and the texts in THIRD_PARTY.txt beside this file. "
+        "The Bluetooth stack, the USB host and the JieLi SDK files of JIANT's packages are not part of the twin.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
+        "includes them as JIANT's own browser emulator and host tests do (web/emu/felucca_web.c, tests/hostsim.c,\n"
+        "editor_test.c, backup_test.c) and replaces only the hardware: keys/LEDs/LCD, ADC (MASTER; battery full), "
+        "NOR flash = a 1 MiB RAM image, USB = always configured (SysEx and MIDI out through usb.c's rings),\none core, "
+        "no 320 MHz switch, no supply setup, no Bluetooth, no USB host, no USB audio (the INPUT engine hears silence), "
+        "no TRS MIDI, no serial console, no updater (ota.c answers the identity handshake only).\nCompiled with WASI SDK "
+        "clang (include shim tools/wasm_shim/sys/wait.h).\n" + source_offer(spec["repo"], commit,
+                                                                          f", the glue {spec['glue']} and the shim "
+                                                                          "tools/wasm_shim"))
+
+
 def _skiff_notice(spec, version, ref, commit, source_url):
     return (
         f"Skiff {version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
@@ -336,19 +382,36 @@ STUDIOS = {
                      "identity": skiff_release_identity,
                      "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
                      "notice": _skiff_notice, "extra": _skiff_extra, "tracks": 6, "projects": 4},
+    # JIANT FM: no git tags; the refs are commits its installer offered: V10.6z2 (web/STABLE, web/PUBLIC_RELEASE.json:
+    # the public stable now), V10.60 (the stable before, web/EDITIONS.json) and V10.61 (its beta then). The folder is the
+    # version the commit reports (felucca.c FELUCCA_VERSION, "V10.6z2" -> 10.6z2).
+    "jiant-studio": {"firmware": "jiant", "repo": "https://github.com/juanjiant-bit/JIANT",
+                     "glue": "tools/studio/jiant_studio.c",
+                     "refs": ["43b8ea8111949c990bf76523c7d4f4e77b715114", "6c48e2a8e7049c31ab77c57b97c3ef6790d24090",
+                              "cac23c6d0bb9a7f6986eb79bbe42ae710805ce98"],
+                     # what JIANT's installer called each commit (web/STABLE, web/PUBLIC_RELEASE.json, web/EDITIONS.json,
+                     # web/BETA_VERSIONS); "stable" is the one its public installer offers now (2026-11-08)
+                     "release_status": {"cac23c6d0bb9a7f6986eb79bbe42ae710805ce98": "stable",
+                                        "43b8ea8111949c990bf76523c7d4f4e77b715114": "previous stable",
+                                        "6c48e2a8e7049c31ab77c57b97c3ef6790d24090": "previous beta"},
+                     "title": "JIANT FM studio twin", "license": "GPL-3.0-only", "generate": _generate_skiff,
+                     "version_file": "firmware/src/felucca.c", "version_re": r'#define FELUCCA_VERSION "([^"]*)"',
+                     "identity_src": jiant_identity,
+                     "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
+                     "notice": _jiant_notice, "extra": _jiant_extra, "tracks": 6, "projects": 4},
 }
 
 
 def build_studio(work, sdk, local, ref, name="melodee-studio"):
     spec = STUDIOS[name]
     src, commit = source(spec["firmware"], work, local, ref=ref, repo_url=spec["repo"],
-                         tree_name=f"{name}-{ref}-src")
+                         tree_name=f"{name}-{ref[:12]}-src")
     spec["generate"](src)
     version = re.search(spec["version_re"], (src / spec["version_file"]).read_text()).group(1)
-    identity = spec["identity"](version)
+    identity = spec["identity_src"](src) if spec.get("identity_src") else spec["identity"](version)
     glue = ROOT / spec["glue"]
     shutil.copy(glue, src / "tests" / "fm1c_studio.c")    # beside hostsim.c: its includes resolve as upstream's tests
-    out = OUT / name / version.lstrip("v")
+    out = OUT / name / version.lstrip("vV")
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
@@ -369,6 +432,8 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
              "glue": spec["glue"], "glue_sha256": sha(glue), "source_url": source_url}
     if spec["firmware"] != "melodee":                     # (Melodee's manifests predate these: their defaults)
         extra.update(tracks=spec["tracks"], projects=spec["projects"])
+    if commit in spec.get("release_status", {}):         # (JIANT: which build its installer calls stable)
+        extra["release_status"] = spec["release_status"][commit]
     return out, commit, clang_version(cc), extra
 
 
@@ -379,7 +444,7 @@ def studio_manifest(name, out: Path, ref, commit, toolchain, extra):
     spec = STUDIOS[name]
     files = {p.name: {"sha256": sha(p), "size": p.stat().st_size} for p in sorted(out.iterdir()) if p.is_file()
              and p.name != "manifest.json"}
-    m = {"schema": 1, "name": name, "title": spec["title"], "version": extra["firmware_version"].lstrip("v"),
+    m = {"schema": 1, "name": name, "title": spec["title"], "version": extra["firmware_version"].lstrip("vV"),
          "source_repo": spec["repo"], "ref": ref, "commit": commit, "license": spec["license"],
          "build_date": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
          "toolchain": toolchain, "builder": "tools/build_sims.py", "files": files, **extra}
@@ -402,8 +467,9 @@ def manifest(name, out: Path, commit, toolchain, extra):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--only", default=",".join(BUILDERS), help="simulators (fm1-open, melodee) and/or studio twins")
-    ap.add_argument("--target", help="a studio twin (melodee-studio, skiff-studio): with --ref one version, else all in STUDIOS")
-    ap.add_argument("--ref", action="append", default=[], help="firmware tag(s) for --target (repeatable)")
+    ap.add_argument("--target", help="a studio twin (melodee-studio, skiff-studio, jiant-studio): with --ref one version, "
+                    "else all in STUDIOS")
+    ap.add_argument("--ref", action="append", default=[], help="firmware tag(s) or commit(s) for --target (repeatable)")
     ap.add_argument("--work", default="/tmp/fm1c-simbuild")
     ap.add_argument("--wasi-sdk", default=os.environ.get("FM1_WASI_SDK"))
     ap.add_argument("--repo", action="append", default=[], help="name=/local/git/repo (read only)")

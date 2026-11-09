@@ -155,7 +155,27 @@ def install_kind() -> str:
     return _("from the source folder ({path})").format(path=here.parent)
 
 
+# the texts of data/credits.json (English) for the catalog: credits() translates use, kind, license and authors
+CREDIT_TEXTS = (
+    N_("firmware, web editor, installer and manual that the app embeds"),
+    N_("basis of Melodee, Skiff, SLOOP and JIANT FM; sampleio.py (vendor) comes from there"),
+    N_("firmware with sample slots"),
+    N_("Felucca fork; its unmodified firmware code runs in the studio twin"),
+    N_("official open firmware, simulator sources, update tools"),
+    N_("firmware catalog and link collection"),
+    N_("icons in the app's design (fm1companion/icons/lucide, licence in icons/LICENSE.lucide)"),
+    N_("user interface (system package)"),
+    N_("MIDI and audio computations (system packages)"),
+    N_("GPL-3.0 with exception (see project)"),
+    N_("Catalog"), N_("Graphics"), N_("Library"),
+    N_("Lucide Contributors (partly Feather, Cole Bemis)"),
+    N_("Ole Martin Bjørndalen et al.; Christopher Arndt et al.; NumPy Developers"),
+    N_("ISC (Feather parts MIT)"),
+)
+
+
 def credits() -> list[dict]:
+    """data/credits.json (and credits.d/*.json), their texts translated (CREDIT_TEXTS; unknown texts stay as they are)"""
     out = []
     files = [DATA / "credits.json"] + sorted((DATA / "credits.d").glob("*.json"))
     seen = set()
@@ -164,7 +184,8 @@ def credits() -> list[dict]:
             for e in json.loads(f.read_text("utf-8")).get("entries", []):
                 if e.get("name") and e["name"] not in seen:
                     seen.add(e["name"])
-                    out.append(e)
+                    out.append({**e, **{k: _(e[k]) for k in ("use", "kind", "license", "authors")
+                                        if isinstance(e.get(k), str) and e[k]}})
         except (OSError, ValueError):
             continue
     return out

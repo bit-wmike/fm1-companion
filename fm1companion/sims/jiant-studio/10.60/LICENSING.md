@@ -1,0 +1,111 @@
+# Felucca licensing
+
+Felucca is free software, licensed under the GNU General Public License, version 3 only
+(`GPL-3.0-only`, full text in `LICENSE`). That covers the code and its own assets. A few
+bundled or ported parts keep their own licences; they are listed below, and their licence
+texts are in `LICENSES/`.
+
+Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments
+
+## What is GPL-3.0-only
+
+Every file in this tree that carries an `SPDX-License-Identifier: GPL-3.0-only` header:
+
+- the firmware: `firmware/` (app, HAL, update loader)
+- the build script and tools: `build.sh`, `tools/`
+- the web pages (installer, editor, the browser emulator `web/emu/`) and their tests: `web/` (not the Fukiai and DotGothic16 fonts, below)
+- the host tests: `tests/`
+- JIANT FM's interface art: `assets/ui-art/`, `assets/ui-shapes/` and the concept image `docs/jiant-fm-ui-concept.jpg`
+  (by JIANT's author, under GPL-3.0-only like the rest of JIANT)
+
+One source file is a port and keeps the licence of its original: `firmware/src/fm6_core.c`
+(msfa, Apache-2.0). The Bluetooth files (below, "Radio") keep their own headers too. The firmware built with it is GPL-3.0-only as a whole. (The PHYS engine, ported
+from DaisySP and Rings, MIT, was removed in FELUCCA TONIC.)
+
+You may use, study, change and share Felucca under the GPL. If you distribute Felucca, or
+firmware derived from it, you must also give your recipients its complete corresponding
+source under the same licence. That includes devices that ship with modified Felucca inside.
+
+## Hügelton Instruments' own work
+
+All by Hügelton Instruments (Leo Kuroshita), in this tree:
+
+| What | Licence | Where |
+| --- | --- | --- |
+| Felucca: firmware, tools, web pages, tests | GPL-3.0-only | `LICENSE` |
+| The PHASE engine's waveforms: a C port of the oscillator of CrispyZebra (<https://github.com/hugelton/CrispyZebra>) | GPL-3.0 | `firmware/src/eng_phase.c` |
+| The DRUM voices and kit | GPL-3.0-only | `firmware/src/drum_voice.c`, `firmware/src/eng_drum.c` |
+| The Hügelton Sample Pack: Felucca's drum sounds, made by `tools/gen_waves.py` (not CC0; JIANT builds none of them in: SLICE, which played its BREAK, is retired) | GPL-3.0-only | `tools/gen_waves.py` |
+| The Fukiai icon font (<https://github.com/hugelton/Fukiai>): the firmware's icons (rasterised at build time by `tools/gen_aa_icons.py`) and the web editor's | MIT | `web/fukiai.ttf`, `LICENSES/MIT-Fukiai.txt`, `web/FUKIAI-LICENSE.txt` |
+| fm1-clk320-probe by curist (<https://github.com/curist/fm1-clk320-probe>): the switch from the FM-1's 360 MHz to JieLi's rated 320 MHz behind MENU > SYSTEM > CPU CLOCK (JIANT 0.9.9-stab, as 0.9.12; the check of the clock registers and the switch), unchanged; its sequence after the JieLi AC79 SDK's `sys_clock_update` (Apache-2.0) | MIT | `firmware/hal/fm1_clk320.h`, `LICENSES/MIT-fm1-clk320.txt` |
+
+## Third-party material
+
+| What | Licence | Where |
+| --- | --- | --- |
+| IBM Plex Mono (SemiBold) by IBM Corp. and Michroma by The Michroma Project Authors: the UI's values and big titles since JIANT 0.6.56, rasterised into the firmware at build time (`tools/gen_aa_font.py --preset jiant-lab`; the generated tables are not offered as a font) | SIL OFL 1.1 | `assets/fonts/IBMPlexMono-SemiBold.ttf`, `assets/fonts/Michroma-Regular.ttf`, `LICENSES/OFL-IBMPlexMono.txt`, `LICENSES/OFL-Michroma.txt` |
+| Chakra Petch font by The Chakra Petch Project Authors: the UI text since JIANT 0.5 (the labels since 0.6.56), rasterised into the firmware at build time (`tools/gen_aa_font.py --preset chakra-petch`; the generated tables are not offered as a font) | SIL OFL 1.1 | `assets/fonts/ChakraPetch-*.ttf`, `LICENSES/OFL-ChakraPetch.txt` (also `assets/fonts/OFL-ChakraPetch.txt`) |
+| Inter Tight font by The Inter Project Authors: the UI text up to JIANT 0.4 (kept for the `inter-tight` preset; the font declares no Reserved Font Name) | SIL OFL 1.1 | `assets/fonts/InterTight[wght].ttf`, `LICENSES/OFL-InterTight.txt` (also `assets/fonts/OFL.txt`) |
+| msfa by Google Inc. and Pascal Gauthier, from Dexed (<https://github.com/asb2m10/dexed>): the FM6 engine's synthesis, ported to integer C (Dexed itself is GPL-3.0; only msfa is used; the FM6 factory patches are Felucca's own) | Apache-2.0 | `firmware/src/fm6_core.c`, `LICENSES/Apache-2.0-msfa.txt` |
+| klattsch by Tony Gies (<https://github.com/tgies/klattsch>): design reference for the VOICE engine; no code copied. Formant data from Klatt (1980) / Hillenbrand et al. (1995) | MIT (klattsch) | credit only |
+| The CMU Pronouncing Dictionary (cmudict 0.7b, <https://github.com/cmusphinx/cmudict>) by Carnegie Mellon University: VOICE's English words (JIANT 0.8.5), a subset of ~2100 common words with their pronunciations, packed into the firmware at build time (`tools/gen_lyrics.py`) | BSD-2-Clause | `tools/lyrics/en_dict.txt` (the notice in its header), `LICENSES/BSD-2-Clause-CMUdict.txt` |
+| X0X by charlesvestal (<https://github.com/charlesvestal/fm1-x0x>), a Felucca fork: the design of the browser emulator (the worklet, the device clock driven by its audio, the exports); its files credit it in their headers | GPL-3.0 | `web/emu/` |
+| DotGothic16 font by The DotGothic16 Project Authors (<https://github.com/fontworks-fonts/DotGothic16>): the browser emulator's knob labels, served with its page (cut to printable ASCII; the font declares no Reserved Font Name) | SIL OFL 1.1 | `web/emu/fonts/DotGothic16-subset.woff`, `LICENSES/OFL-DotGothic16.txt` (also `web/emu/fonts/OFL.txt`) |
+| Optimist's Bluetooth LE stack by Henri David (hdavid, <https://github.com/w0ts/optimist>), the hardware-tested copy in fm1-base by Charles Vestal (<https://github.com/charlesvestal/fm1-base>, `bt/ble` at 4039a8b, with its UBSan fix): JIANT's Bluetooth (V10.12), unchanged but for one hook (V10.14: `ble_hw_wl82.c` hands each good packet's RSSI word to `BLE_HW_RX_RSSI` when defined) and (V10.32) its pairing's key made again instead of kept (`BLE_LTK_DERIVE`: `ble_smp.c` `ble_smp_ltk_of`, used by `ble_smp.c` and `ble_host.c`), with its `ble_aes.c` from the same copy; (V10.35) its scanner, the central level 3 (`ble_scan.c`, `ble_ll_central.c`, `ble_hw_wl82_central.c`, `ble_central.c`, `ble_gattc.c`, `ble_smp_init.c` from the same copy; one hook more: `ble_hw_wl82_central.c` hands each good advertising packet's RSSI to `BLE_HW_RX_RSSI`, for AIR); used under the GPL-3.0-only option of its dual licence, headers kept; (V10.13) the host test of its BLE-MIDI codec from the same copy (`tests/bt/ble_midi_test.c`, include path only changed) | GPL-3.0-only OR MPL-2.0 | `firmware/bt/ble/`, `tests/ble_midi_test.c`, `LICENSES/MPL-2.0.txt` |
+| Melodee by Kerem Kilic (Ellic Studio, <https://github.com/keremimo/melodee>, 1.6.0-rc.7, 022bab7): the radio drivers as Melodee carries them (Optimist's, with Melodee's iterative start-up replay and pool placement), and the model of the integration (the radio started on demand with the audio quiet, IRQ 45 / 29 at priority 2 below the audio, the live calibration's constants); `hal/fm1_power.h` (V10.11); (V10.41) the USB MIDI host (`usb_host.c`, input only, the main loop's side in the Bluetooth segment; `usb_host_desc.h` unchanged; `fm1_usb_host_attach` / `fm1_usb_line` in `hal/fm1_usb.h`), retaining the USB host enumeration and input contributed to Melodee by recursivefieldinstruments | GPL-3.0-only | `firmware/hal/fm1_ble.h`, `firmware/hal/fm1_ble_rf.h` (JIANT: one include renamed), `firmware/hal/fm1_power.h`, `firmware/src/usb_host.c`, `firmware/src/usb_host_desc.h` |
+| The radio's own calibration, JieLi's (the AC79 SDK's `wl_rf_common.a`) rewritten in C by Charles Vestal for felucca-bsp (<https://github.com/jmarianski/felucca-bsp>, `chip/`, b0b2428) | Apache-2.0 | `firmware/hal/fm1_rf_cal.h`, `LICENSES/Apache-2.0.txt` |
+| The radio's start-up values captured from M-VAVE's V15 (published under Apache-2.0 in fm1_open) and JieLi's SDK, as Optimist and felucca-bsp carry them | Apache-2.0 | `firmware/hal/ble_rf_tables_v15.h`, `LICENSES/Apache-2.0.txt` |
+| JieLi AC79 SDK by JieLi Technology: three of its files go into every `.fwsc` package (below); none are in this tree | Apache-2.0 | `LICENSES/Apache-2.0.txt` |
+
+On the device, HOME held > ABOUT opens the information screen; turning PRESETS scrolls on into
+CREDITS, a short list of these authors, licences and source URLs.
+
+## JieLi SDK files in the packages (Apache-2.0)
+
+A `.fwsc` package made by `tools/build.py` (with `tools/fm1pkg_make.py`; this is the package the
+web installer installs) holds three unmodified files from the JieLi AC79 SDK
+(<https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK>, `cpu/wl82/tools/`). They are read from your SDK
+checkout at build time (see BUILDING.md); no SDK files are in this tree.
+
+| File in the package | What it is |
+| --- | --- |
+| `uboot.boot` | the first-stage boot loader (SPL) |
+| `cfg_tool.bin` | the chip configuration block |
+| `eq_cfg_hw.bin` | the default hardware EQ table |
+
+They are licensed under the Apache License, Version 2.0 (`LICENSES/Apache-2.0.txt`), not under
+the GPL, and their copyright stays with JieLi Technology. The SDK has no NOTICE file. Apache-2.0
+files may be distributed together with GPL-3.0 code; Felucca itself stays GPL-3.0-only.
+
+Every distribution of a package carries the licence texts with it: the release folder
+(`tools/build.py --release`) and the site (`web/make_site.py`, next to the package in
+`firmware/` and linked from the installer page).
+
+## No vendor material
+
+No M-VAVE material is part of Felucca. The firmware links no vendor code and contains no vendor
+data, and the packages hold only Felucca and the three SDK files above. The installer's
+"Return to official V15" holds only the official file's size and SHA-256: you select the
+official firmware file you downloaded yourself, and it is checked and installed in your browser,
+never uploaded or redistributed.
+
+## Contributions
+
+Contributions are welcome under GPL-3.0-only.
+
+## Trademarks
+
+"Felucca" and "Hügelton Instruments" are names of Hügelton Instruments.
+
+"M-VAVE" and "FM-1" are trademarks of their respective owners. Felucca is independent
+firmware that runs on FM-1 hardware. It is not affiliated with, endorsed by or supported
+by those owners.
+
+## Radio
+
+Felucca never enables the Bluetooth / Wi-Fi radio of the hardware. JIANT FM (V10.12) does, only when MENU > SYSTEM >
+BLUETOOTH is ON (the default is OFF): a Bluetooth LE MIDI peripheral on Optimist's own stack, no JieLi library. Its
+code is a segment of its own at flash 0xEA000 (`firmware/bt/`), linked with the app; the package carries it as a third
+entry, `bt.bin`. The stack's files are offered by their author under GPL-3.0-only OR MPL-2.0; JIANT, and every package
+built from it, is GPL-3.0-only as a whole (the Apache-2.0 radio files above are one-way compatible with it, as
+`fm6_core.c`).

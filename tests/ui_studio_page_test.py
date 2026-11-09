@@ -313,6 +313,32 @@ def flow():
           f"write back of the Skiff twin onto the Melodee FM-1 refused: {boxes[-1:]}")
     r = page.export_wav({"path": out / "Skiff.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
     check(r is not None and len(r.stems) == 6, f"Skiff export: mix + {r and len(r.stems)} stems")
+
+    # ---- a JIANT FM backup: the page starts the JIANT twin (the current song's sections A–D); writing it back onto the
+    # demo FM-1 (Melodee) is refused as well
+    jt = S.Studio.create(firmware="jiant", backend="webengine", server=w.server)
+    for k in range(4):
+        for i in range(0, 16, 4):
+            jt.link.request(Cmd.TRACK_STEP, [k, i, 1, 40 + 3 * k, 0, 0, 0, 0, 0, 100])
+    jt.link.request(Cmd.PROJECT, [1, 1])                # section B
+    jfile = bdir / "Studio-Test_jiant.json"
+    backup.write_file(jfile, jt.backup().file)
+    jver = jt.build.version.lstrip("v")                 # (JIANT names its versions "V10.61")
+    jt.close()
+    check(page.open_backup(jfile) == jfile and svc.firmware == "jiant" and not svc.st.rejected,
+          f"JIANT backup opened: the JIANT twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 4 and labels[0].startswith("Section A") and "leer" in labels[0] and "leer" not in labels[1],
+          f"JIANT section list A–D: {labels}")
+    check("JIANT FM" in page.src.text() and "JIANT FM" in page.banner.text() and "Melodee" in page.banner.text(),
+          "banner names both firmwares: " + page.banner.text())
+    check(f"Studio-Zwilling (JIANT FM {jver})" in [x.label for x in svc._virtual_ports()], "virtual device: JIANT twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("JIANT" in b for b in boxes),
+          f"write back of the JIANT twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    r = page.export_wav({"path": out / "JIANT.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 6, f"JIANT export: mix + {r and len(r.stems)} stems")
     shot("studio-640.png", 640)
     if SHOTS:
         sb = w.page_scroll.verticalScrollBar()

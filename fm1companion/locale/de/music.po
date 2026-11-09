@@ -10,16 +10,16 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: fm1companion/ui/pages/studio.py:29
-msgid "Single tracks (stems): one WAV file per track (Melodee 1–4, Skiff 1–6), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
-msgstr "Einzelspuren (Stems): je Spur eine eigene WAV-Datei (Melodee 1–4, Skiff 1–6), gleich lang wie der Mix. Jede Spur wird allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master). Darum ist die Summe der Stems nicht bitgenau der Mix (Master-Dynamik), passt in Logic oder Audacity aber übereinander."
+msgid "Single tracks (stems): one WAV file per track (Melodee 1–4, Skiff and JIANT FM 1–6), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
+msgstr "Einzelspuren (Stems): je Spur eine eigene WAV-Datei (Melodee 1–4, Skiff und JIANT FM 1–6), gleich lang wie der Mix. Jede Spur wird allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master). Darum ist die Summe der Stems nicht bitgenau der Mix (Master-Dynamik), passt in Logic oder Audacity aber übereinander."
 
 #: fm1companion/ui/pages/studio.py:45
 msgid "Open backup in the studio"
 msgstr "Backup ins Studio öffnen"
 
 #: fm1companion/ui/pages/studio.py:49
-msgid "Which backup should the twin load? Melodee and Skiff backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
-msgstr "Welches Backup soll der Zwilling laden? Melodee- und Skiff-Backups aller Geräte, neueste zuerst – es startet der Zwilling der Firmware des Backups. Am FM-1 ändert sich dadurch nichts."
+msgid "Which backup should the twin load? Melodee, Skiff and JIANT FM backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
+msgstr "Welches Backup soll der Zwilling laden? Melodee-, Skiff- und JIANT-FM-Backups aller Geräte, neueste zuerst – es startet der Zwilling der Firmware des Backups. Am FM-1 ändert sich dadurch nichts."
 
 #: fm1companion/ui/pages/studio.py:52 fm1companion/ui/projects_page.py:85
 msgid "Date"
@@ -364,8 +364,8 @@ msgid "The twin itself is active right now – choose a real FM-1 in the device 
 msgstr "Aktiv ist gerade der Zwilling selbst – oben in der Geräteauswahl ein echtes FM-1 wählen."
 
 #: fm1companion/ui/pages/studio.py:482
-msgid "This firmware has no editor protocol – the studio needs Melodee or Skiff."
-msgstr "Diese Firmware hat kein Editor-Protokoll – das Studio braucht Melodee oder Skiff."
+msgid "This firmware has no editor protocol – the studio needs Melodee, Skiff or JIANT FM."
+msgstr "Diese Firmware hat kein Editor-Protokoll – das Studio braucht Melodee, Skiff oder JIANT FM."
 
 #: fm1companion/ui/pages/studio.py:478
 msgid "No FM-1 connected."
@@ -373,8 +373,8 @@ msgstr "Kein FM-1 verbunden."
 
 #: fm1companion/ui/pages/studio.py:485
 #, python-brace-format
-msgid "The FM-1 runs {firmware} – so far there is a studio twin only for Melodee and Skiff."
-msgstr "Auf dem FM-1 läuft {firmware} – einen Studio-Zwilling gibt es bisher nur für Melodee und Skiff."
+msgid "The FM-1 runs {firmware} – so far there is a studio twin only for Melodee, Skiff and JIANT FM."
+msgstr "Auf dem FM-1 läuft {firmware} – einen Studio-Zwilling gibt es bisher nur für Melodee, Skiff und JIANT FM."
 
 #: fm1companion/ui/pages/studio.py:481
 msgid "another firmware"
@@ -412,8 +412,8 @@ msgstr "Der Zwilling läuft noch nicht. Wähle eine Quelle: vom FM-1, aus einem 
 
 #: fm1companion/ui/pages/studio.py:538
 #, python-brace-format
-msgid "There is no studio twin for {firmware} yet. So far the studio can do Melodee and Skiff; SLOOP and the original firmware (via FM1 Open) follow later – see Help › Studio. Backups of this device cannot be opened here; a Melodee or Skiff backup can."
-msgstr "Für {firmware} gibt es noch keinen Studio-Zwilling. Das Studio kann bisher Melodee und Skiff; SLOOP und die Original-Firmware (über FM1 Open) folgen später – siehe Hilfe › Studio. Backups dieses Geräts lassen sich hier nicht öffnen; ein Melodee- oder Skiff-Backup schon."
+msgid "There is no studio twin for {firmware} yet. So far the studio can do Melodee, Skiff and JIANT FM; SLOOP and the original firmware (via FM1 Open) follow later – see Help › Studio. Backups of this device cannot be opened here; a Melodee, Skiff or JIANT FM backup can."
+msgstr "Für {firmware} gibt es noch keinen Studio-Zwilling. Das Studio kann bisher Melodee, Skiff und JIANT FM; SLOOP und die Original-Firmware (über FM1 Open) folgen später – siehe Hilfe › Studio. Backups dieses Geräts lassen sich hier nicht öffnen; ein Melodee-, Skiff- oder JIANT-FM-Backup schon."
 
 #: fm1companion/ui/pages/studio.py:527
 msgid "this firmware"
@@ -587,8 +587,8 @@ msgid "The backup cannot be read: {error}"
 msgstr "Das Backup lässt sich nicht lesen: {error}"
 
 #: fm1companion/ui/pages/studio.py:799
-msgid "This is a SLOOP backup. So far there is a studio twin only for Melodee and Skiff (SLOOP follows later)."
-msgstr "Das ist ein SLOOP-Backup. Einen Studio-Zwilling gibt es bisher nur für Melodee und Skiff (SLOOP folgt später)."
+msgid "This is a SLOOP backup. So far there is a studio twin only for Melodee, Skiff and JIANT FM (SLOOP follows later)."
+msgstr "Das ist ein SLOOP-Backup. Einen Studio-Zwilling gibt es bisher nur für Melodee, Skiff und JIANT FM (SLOOP folgt später)."
 
 #: fm1companion/ui/pages/studio.py:784
 msgid "before opening a backup"
@@ -4485,3 +4485,22 @@ msgstr "Der Zwilling läuft mit {twin}, dein FM-1 mit {device} – „Vom FM-1 h
 #: fm1companion/ui/pages/studio.py:197
 msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the four projects A–D, the pattern bank, the running music, the user presets and the sample slots. Playback on the FM-1 stops in the process."
 msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät: die vier Projekte A–D, die Pattern-Bank, die laufende Musik, die User-Presets und die Sample-Slots. Die Wiedergabe am FM-1 stoppt dabei."
+
+#: fm1companion/ui/pages/studio.py:201
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: every song's sections A–D and the song index, the running music and the user presets. Playback on the FM-1 stops in the process."
+msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät: die Sections A–D aller Songs und den Song-Index, die laufende Musik und die User-Presets. Die Wiedergabe am FM-1 stoppt dabei."
+
+#: fm1companion/ui/pages/studio.py:500
+#, python-brace-format
+msgid "Section {n}"
+msgstr "Section {n}"
+
+#: fm1companion/ui/pages/studio.py:707
+#, python-brace-format
+msgid "Section {n} loaded."
+msgstr "Section {n} geladen."
+
+#: fm1companion/ui/pages/studio.py:707
+#, python-brace-format
+msgid "Section {n} is empty."
+msgstr "Section {n} ist leer."

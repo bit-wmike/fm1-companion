@@ -1,0 +1,19 @@
+JIANT FM V10.60 – studio twin (firmware code for the host), built from https://github.com/juanjiant-bit/JIANT commit 43b8ea8111949c990bf76523c7d4f4e77b715114
+(source: https://github.com/juanjiant-bit/JIANT/archive/43b8ea8111949c990bf76523c7d4f4e77b715114.tar.gz; JIANT has no tags: V10.60 is the version this commit reports).
+GPL-3.0-only. JIANT FM by juanjiant-bit, a fork of Felucca: Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments (Felucca);
+portions Copyright (C) 2026 Juan Ignacio Antonucci (Juan Jiant) (JIANT's changes and additions, as its source files name it).
+Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0; the UI faces Chakra Petch, Inter Tight and Michroma and the Fukiai icons are rasterised in: OFL 1.1, MIT; VOICE's English words are a subset of the CMU Pronouncing Dictionary: BSD-2-Clause):
+JIANT's LICENSING.md and the texts in THIRD_PARTY.txt beside this file. The Bluetooth stack, the USB host and the JieLi SDK files of JIANT's packages are not part of the twin.
+The firmware sources are unmodified. The glue tools/studio/jiant_studio.c (GPL-3.0-only, in FM-1 Companion's source) includes them as JIANT's own browser emulator and host tests do (web/emu/felucca_web.c, tests/hostsim.c,
+editor_test.c, backup_test.c) and replaces only the hardware: keys/LEDs/LCD, ADC (MASTER; battery full), NOR flash = a 1 MiB RAM image, USB = always configured (SysEx and MIDI out through usb.c's rings),
+one core, no 320 MHz switch, no supply setup, no Bluetooth, no USB host, no USB audio (the INPUT engine hears silence), no TRS MIDI, no serial console, no updater (ota.c answers the identity handshake only).
+Compiled with WASI SDK clang (include shim tools/wasm_shim/sys/wait.h).
+
+Corresponding Source (GNU GPL 3.0, section 6)
+The complete corresponding source of this build is https://github.com/juanjiant-bit/JIANT at commit 43b8ea8111949c990bf76523c7d4f4e77b715114
+together with FM-1 Companion's build script tools/build_sims.py, the glue tools/studio/jiant_studio.c and the shim tools/wasm_shim. A tarball of exactly this commit
+(JIANT-43b8ea8111949c990bf76523c7d4f4e77b715114.tar.gz, made with tools/make_source_tarballs.py) is attached to every
+FM-1 Companion release that ships this build: https://github.com/bit-wmike/fm1-companion/releases
+Written offer: for at least three years after the last release that ships this build, the maintainers of
+FM-1 Companion will give anyone a copy of that corresponding source on request (https://github.com/bit-wmike/fm1-companion/issues),
+free of charge apart from the cost of physically performing the distribution.

@@ -3490,3 +3490,73 @@ msgstr "FM6-Patches der User-Presets"
 #, python-brace-format
 msgid "Pattern bank, patterns {first}–{last}"
 msgstr "Pattern-Bank, Patterns {first}–{last}"
+
+#: fm1companion/backup_inspect.py:361
+#, python-brace-format
+msgid "Section {letter} of the current song"
+msgstr "Section {letter} des aktuellen Songs"
+
+#: fm1companion/backup_inspect.py:363
+msgid "Song index (every song's rows and scenes)"
+msgstr "Song-Index (Zeilen und Szenen aller Songs)"
+
+#: fm1companion/backup_inspect.py:365
+#, python-brace-format
+msgid "Song {song}, section {letter}"
+msgstr "Song {song}, Section {letter}"
+
+#: fm1companion/diag.py
+msgid "firmware, web editor, installer and manual that the app embeds"
+msgstr "Firmware, Web-Editor, Installer und Handbuch, die die App einbindet"
+
+#: fm1companion/diag.py
+msgid "basis of Melodee, Skiff, SLOOP and JIANT FM; sampleio.py (vendor) comes from there"
+msgstr "Grundlage von Melodee, Skiff, SLOOP und JIANT FM; sampleio.py (vendor) stammt von dort"
+
+#: fm1companion/diag.py
+msgid "firmware with sample slots"
+msgstr "Firmware mit Sample-Slots"
+
+#: fm1companion/diag.py
+msgid "Felucca fork; its unmodified firmware code runs in the studio twin"
+msgstr "Felucca-Fork; sein unveränderter Firmware-Code läuft im Studio-Zwilling"
+
+#: fm1companion/diag.py
+msgid "official open firmware, simulator sources, update tools"
+msgstr "offizielle offene Firmware, Simulator-Quellen, Update-Werkzeuge"
+
+#: fm1companion/diag.py
+msgid "firmware catalog and link collection"
+msgstr "Firmware-Katalog und Linksammlung"
+
+#: fm1companion/diag.py
+msgid "icons in the app's design (fm1companion/icons/lucide, licence in icons/LICENSE.lucide)"
+msgstr "Symbole im App-Design (fm1companion/icons/lucide, Lizenz in icons/LICENSE.lucide)"
+
+#: fm1companion/diag.py
+msgid "user interface (system package)"
+msgstr "Oberfläche (Systempaket)"
+
+#: fm1companion/diag.py
+msgid "MIDI and audio computations (system packages)"
+msgstr "MIDI und Audio-Rechnungen (Systempakete)"
+
+#: fm1companion/diag.py
+msgid "GPL-3.0 with exception (see project)"
+msgstr "GPL-3.0 mit Ausnahme (siehe Projekt)"
+
+#: fm1companion/diag.py
+msgid "Graphics"
+msgstr "Grafik"
+
+#: fm1companion/diag.py
+msgid "Lucide Contributors (partly Feather, Cole Bemis)"
+msgstr "Lucide Contributors (teils Feather, Cole Bemis)"
+
+#: fm1companion/diag.py
+msgid "Ole Martin Bjørndalen et al.; Christopher Arndt et al.; NumPy Developers"
+msgstr "Ole Martin Bjørndalen u. a.; Christopher Arndt u. a.; NumPy Developers"
+
+#: fm1companion/diag.py
+msgid "ISC (Feather parts MIT)"
+msgstr "ISC (Feather-Teile MIT)"

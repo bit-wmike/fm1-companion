@@ -211,11 +211,13 @@ class Report:
     def firmware_key(self) -> str:
         k = self.companion.get("firmware", "")
         if k:
-            return k
+            return "jiant" if k.lower().startswith("jiant") else k       # (the catalog's "jiant-fm" and the twin's "jiant")
         v = self.firmware.lower()
-        for name in ("melodee", "sloop", "skiff"):
+        for name in ("melodee", "sloop", "skiff", "jiant"):
             if name in v:
                 return name
+        if self.format != "sloop-backup" and backup.is_jiant(o.id for o in self.objects):
+            return "jiant"
         return "sloop" if self.format == "sloop-backup" else ""
 
     def summary(self) -> str:
@@ -352,8 +354,24 @@ def project_info(data: bytes, firmware: str = "") -> dict:
 SKIFF_IDS = list(range(10)) + list(range(16, 35))     # Skiff 2.x (web/fm1backup.js BACKUP_IDS)
 
 
+def _jiant_object(v: ObjectView, oid: int, size: int) -> ObjectView | None:
+    """JIANT FM's music objects (editor_backup.c): 2..5 the current song's sections, 10 the song index, 40..71 every
+    song's sections (40 + 4 x song + section). JIANT's section format is not decoded here (no project view)."""
+    if 2 <= oid <= 5:
+        v.title = _("Section {letter} of the current song").format(letter="ABCD"[oid - 2])
+    elif oid == 10:
+        v.title = _("Song index (every song's rows and scenes)")
+    elif 40 <= oid < 72:
+        v.title = _("Song {song}, section {letter}").format(song=(oid - 40) // 4 + 1, letter="ABCD"[(oid - 40) % 4])
+    else:
+        return None
+    v.group = G_PROJECTS
+    v.format = "" if size else _("empty")
+    return v
+
+
 def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = "",
-             sloop: bool = False, skiff: bool = False) -> ObjectView:
+             sloop: bool = False, skiff: bool = False, jiant: bool = False) -> ObjectView:
     size = len(data)
     v = ObjectView(oid, _("Object {id}").format(id=oid), G_OTHER, size, crc, data)
     if oid == 0:
@@ -366,6 +384,8 @@ def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = ""
         v.title, v.group = _("Settings"), G_SETTINGS
         v.format = decode_settings(data).get("Format", "")
         return v
+    if jiant and _jiant_object(v, oid, size):
+        return v
     slot = backup.project_slot(oid)
     if slot and not (sloop and oid > 5):
         v.slot = slot
@@ -377,7 +397,7 @@ def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = ""
             v.format = v.project_info.get("format", "")
             v.detail = v.project_info.get("summary", "")
         return v
-    if backup.is_sample(oid):
+    if backup.is_sample(oid, jiant):
         v.title, v.group = _("Sample slot USR{n}").format(n=oid - 31), G_SAMPLES
         if size >= 512 and _u32(data, 0) == SMPF:
             v.format = "Sample"
@@ -406,7 +426,7 @@ def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = ""
     if oid == 8:
         v.title, v.group = _("Old FM6 bank (retired)"), G_OTHER
         return v
-    if skiff and oid == 9:                       # (Skiff: editor_backup.c, up_fm6.c)
+    if (skiff or jiant) and oid == 9:            # (Skiff, JIANT: editor_backup.c, up_fm6.c)
         v.title, v.group = _("FM6 patches of the user presets"), G_PRESETS
         return v
     if skiff and 16 <= oid < 32:                 # (Skiff: bank.c, 16 chunks of 4 patterns)
@@ -495,8 +515,9 @@ def inspect(source) -> Report:
 
 def _from_archive(arch: backup.Archive, path: Path | None) -> Report:
     n = len(arch.objects)
-    skiff = [o["id"] for o in arch.objects] == SKIFF_IDS
-    objs = [describe(o["id"], o["bytes"], o["crc"], n, arch.firmware, skiff=skiff) for o in arch.objects]
+    ids = [o["id"] for o in arch.objects]
+    skiff, jiant = ids == SKIFF_IDS, backup.is_jiant(ids)
+    objs = [describe(o["id"], o["bytes"], o["crc"], n, arch.firmware, skiff=skiff, jiant=jiant) for o in arch.objects]
     rep = Report(backup.FORMAT, arch.firmware, arch.created, arch.companion, objs, arch.known, True, path, arch)
     s = rep.obj(1)
     if s:
@@ -913,6 +934,8 @@ def compatibility(src: Report, target_fw_key: str, target_version: str, target_i
     """Can the content of src go onto a device with this firmware?"""
     sk = src.firmware_key
     tk = target_fw_key or ""
+    if tk.lower().startswith("jiant"):
+        tk = "jiant"                                # (the catalog's "jiant-fm": one family with the twin's "jiant")
     if not src.restorable:
         return Compat(False, _("The app cannot load this backup format."))
     if not sk or not tk:

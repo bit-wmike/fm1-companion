@@ -9,7 +9,7 @@ the builds (see the simulators' NOTICE).
   python3 tools/make_source_tarballs.py --repo melodee=/path/to/melodee --repo fm1_open=/path/to/fm1_open
                                         [--out dist/sources]
 
-Without --repo, /tmp/<name> is searched. If a clone or a commit is missing, the script reports it and
+Without --repo, /tmp/<name> is searched (then /tmp/<name in lower case>, e.g. /tmp/jiant for JIANT). If a clone or a commit is missing, the script reports it and
 exits with code 1 (the remaining tarballs are still written).
 """
 from __future__ import annotations
@@ -58,7 +58,10 @@ def main(argv=None) -> int:
     out.mkdir(parents=True, exist_ok=True)
     ok, sums = True, []
     for (name, commit), users in wanted().items():
-        clone = repos.get(name, Path("/tmp") / name)
+        clone = repos.get(name) or repos.get(name.lower())
+        if clone is None:                # (/tmp/<name>, else lower case: JIANT's clone is usually /tmp/jiant)
+            clone = next((p for p in (Path("/tmp") / name, Path("/tmp") / name.lower())
+                          if (p / ".git").exists() or (p / "HEAD").exists()), Path("/tmp") / name)
         dest = out / f"{name}-{commit}.tar.gz"
         if not (clone / ".git").exists() and not (clone / "HEAD").exists():
             print(f"MISSING: clone of {name} ({clone}) – for {', '.join(users)}", file=sys.stderr)

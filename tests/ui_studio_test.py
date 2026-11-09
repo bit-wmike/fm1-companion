@@ -156,6 +156,35 @@ try:
     check(sk2.play()["busy"] and not sk2.stop()["busy"], "Skiff: play and stop (st_transport_set)")
     sk2.close()
     sk.close()
+    # the JIANT FM twin (tools/studio/jiant_studio.c): editor, identity, stems, its 43-object backup round trip
+    jt = studio.Studio.create(firmware="jiant", backend="webengine", server=st.backend.server)
+    check(jt.build.firmware == "jiant" and jt.info.get("version") == jt.build.version,
+          f"JIANT twin started in QtWebEngine: {jt.info.get('version')}")
+    JL = jt.link
+    check(studio.device_version(JL) == studio.norm_version(jt.build.version), "JIANT INFO via Link")
+    got.clear()
+    JL.add_listener(lambda d, direction: got.append(d) if direction == "in" and d[:2] == [0xF0, 0x00] else None)
+    JL.send_midi([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])
+    t1 = time.time()
+    while not got and time.time() - t1 < 3:
+        app.processEvents()
+    check(got and bytes(got[0]) == _identity_frame(jt.build.identity), f"JIANT identity {jt.build.identity}")
+    for k in range(6):
+        for i in range(0, 16, 2 + k % 3):
+            JL.request(Cmd.TRACK_STEP, [k, i, 1, 40 + 3 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    check(JL.request(Cmd.PROJECT, [1, 0])[2] == 1, "JIANT: section A saved in the twin")
+    r5 = jt.render_wav(out / "jiant.wav", seconds=2, start="play", source="saved", project=0, stems=True, fmt="f32")
+    check(len(r5.stems) == 6 and r5.peak > 0.05, f"JIANT: mix + six stems (T5, T6 asleep: TRACKS 4), peak {r5.peak:.3f}")
+    jarch = jt.backup()
+    check(studio.backup_firmware(jarch) == "jiant" and len(jarch.objects) == (35 if jt.build.version == "V10.6z2" else 43),
+          f"JIANT backup ({len(jarch.objects)} objects: 6 songs from V10.6p, 8 before)")
+    jt2 = studio.Studio.for_backup(jarch, backend="webengine", server=st.backend.server)
+    same = all(a["bytes"] == b["bytes"] for a, b in zip(jarch.objects, jt2.backup().objects))
+    check(jt2.build.firmware == "jiant" and jt2.projects() == [0] and same,
+          "JIANT backup into a second JIANT twin: byte-identical")
+    check(jt2.play()["busy"] and not jt2.stop()["busy"], "JIANT: play and stop (st_transport_set)")
+    jt2.close()
+    jt.close()
     st.close()
     from fm1companion.ui import web
     web.shutdown_all()

@@ -2,10 +2,10 @@
 """Studio: the FM-1's digital twin in the suite.
 
 The FM-1 is the instrument, the suite is the studio. The twin is **the same firmware** as on the device
-(Melodee's or Skiff's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py --target
-melodee-studio / skiff-studio and tools/studio/<firmware>_studio.c): the same engines, effects, the same mixer and
-sequencer, plus the NOR flash (settings, projects, user presets) and the editor SysEx protocol over the firmware's USB
-path.
+(Melodee's, Skiff's or JIANT FM's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py
+--target melodee-studio / skiff-studio / jiant-studio and tools/studio/<firmware>_studio.c): the same engines, effects,
+the same mixer and sequencer, plus the NOR flash (settings, projects, user presets) and the editor SysEx protocol over
+the firmware's USB path.
 It runs in QtWebEngine (web worker; sound via AudioWorklet -> Chromium -> PipeWire = the Pi's speakers) and
 talks to the outside exactly like a real FM-1: ``Studio.link`` is a ``transport.Link`` – backup.read/restore,
 presets, project writing, playback.py etc. work unchanged.
@@ -27,7 +27,7 @@ API (``Studio``)::
     st.open_from_device(link)                           # read a backup from the real FM-1, then load it
     st.link                                             # link to the twin (as to a real FM-1)
     st.play(how="play"|"song") / st.stop()              # transport (PLAY key or song chain, editor stop)
-    st.load_project(slot)                               # load a project (Melodee 1..32, Skiff A..D) like the PROJECT page
+    st.load_project(slot)                               # load a project (Melodee 1..32, Skiff A..D, JIANT's sections A..D)
     st.start_audio() / st.stop_audio()                  # real-time sound (WebEngine: default output)
     st.render_wav(path, seconds=None, until_end=False, stems=False, start="play", source="live", fmt="f32")
                                                         # offline, faster than real time -> RenderResult
@@ -92,10 +92,13 @@ class StudioError(Exception):
 
 
 # the firmwares with a studio twin: key -> display name, the name its editor INFO reports before the version
-# (Skiff answers like Felucca, "FELUCCA v2.2"), the number of tracks and project slots (stems, the project list)
+# (Skiff answers like Felucca, "FELUCCA v2.2"; JIANT "JIANT V10.60"), the number of tracks and project slots (stems, the
+# project list; JIANT's four are the current song's sections A..D). The key is what the device layer calls the firmware
+# (protocol.Info.firmware_name; the catalog's "jiant-fm" starts with it)
 FIRMWARES = {
     "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32},
     "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4},
+    "jiant": {"name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
 }
 
 
@@ -107,12 +110,20 @@ def firmware_name(key: str) -> str:
 _VER = re.compile(r"v?(\d+)\.(\d+)(?:\.(\d+))?(?:[- ]?(rc|beta|alpha)\.?(\d+))?", re.I)
 
 
+_SUFFIX = re.compile(r"(?!rc|beta|alpha)([a-z]+\d*)(?![\w.])", re.I)
+
+
 def norm_version(s: str) -> str:
-    """'MELODEE v1.6.0-rc.7' / '1.6.0-rc.7' / 'Melodee 1.6.0 rc7' -> 'v1.6.0-rc.7' ('' if no version)."""
+    """'MELODEE v1.6.0-rc.7' / '1.6.0-rc.7' / 'Melodee 1.6.0 rc7' -> 'v1.6.0-rc.7' ('' if no version). A letter suffix
+    right after X.Y (JIANT's 'V10.6z2') is kept: 'v10.6z2' (jiant_version / jiant_version_key read it)."""
     m = _VER.search(s or "")
     if not m:
         return ""
     a, b, c, pre, n = m.groups()
+    if not c and not pre:
+        x = _SUFFIX.match(s, m.end())
+        if x:
+            return f"v{a}.{b}{x[1].lower()}"
     return f"v{a}.{b}.{c or 0}" + (f"-{pre.lower()}.{n}" if pre else "")
 
 
@@ -124,6 +135,49 @@ def version_key(s: str) -> tuple:
     a, b, c, pre, n = m.groups()
     rank = {"alpha": 0, "beta": 1, "rc": 2}.get((pre or "").lower(), 3)
     return (int(a), int(b), int(c or 0), rank, int(n or 0))
+
+
+# JIANT FM's versions (felucca.c FELUCCA_VERSION, its git history and web/EDITIONS.json, web/BETA_VERSIONS): V10, V10.1 …
+# V10.9, V10.10 … V10.61 (the number after the dot is a whole number: V10.7 of 2026-10-31 came before V10.10), then
+# V10.6c, V10.6d … V10.6z, V10.6z2 … V10.6z10 (a letter, then a count, after V10.61). Its later beta "V10.7" (2026-11-08,
+# after V10.6z10) has the same string as the V10.7 of 2026-10-31; a version string cannot tell them apart, it is read
+# as the earlier one.
+_JIANT_V = re.compile(r"(?<![\w.])[vV]?(\d+)\.(\d+)([a-zA-Z]+\d*)?")
+
+
+def jiant_version(s: str) -> str:
+    """'JIANT V10.6z2' / 'v10.6z2' / 'v10.60.0' -> 'V10.6z2' / 'V10.60' (as JIANT writes it; '' if none)"""
+    m = _JIANT_V.search(s or "")
+    return f"V{m[1]}.{m[2]}{(m[3] or '').lower()}" if m else ""
+
+
+def jiant_version_key(s: str) -> tuple:
+    """sortable in JIANT's release order: V10.7 < V10.10 < V10.60 < V10.61 < V10.6c < V10.6z < V10.6z2 < V10.6z10.
+    A letter suffix after one digit d comes after every two-digit 10d..10d+9 (V10.6c after V10.69)."""
+    m = _JIANT_V.search(s or "")
+    if not m:
+        return (0, 0, 0, "", 0)
+    a, b, suf = m[1], m[2], (m[3] or "").lower()
+    if not suf:
+        return (int(a), int(b), 0, "", 0)
+    letters, n = re.match(r"([a-z]+)(\d*)", suf).groups()
+    return (int(a), int(b) * 10 + 9 if len(b) == 1 else int(b), 1, letters, int(n or 0))
+
+
+def _fw_key(firmware: str) -> str:
+    """a firmware key or display name -> the key ("JIANT FM", "jiant-fm" -> "jiant")"""
+    k = (firmware or "").lower()
+    return "jiant" if k.startswith("jiant") else k
+
+
+def fw_version(firmware: str, s: str) -> str:
+    """the version as that firmware writes it (JIANT: 'V10.6z2'), else norm_version"""
+    return jiant_version(s) if _fw_key(firmware) == "jiant" else norm_version(s)
+
+
+def fw_version_key(firmware: str, s: str) -> tuple:
+    """sortable in that firmware's release order (JIANT: jiant_version_key), else version_key"""
+    return jiant_version_key(s) if _fw_key(firmware) == "jiant" else version_key(s)
 
 
 @dataclass
@@ -170,7 +224,7 @@ def builds(firmware: str = "melodee") -> list[TwinBuild]:
         if m.get("abi") != STUDIO_ABI or m.get("kind") != "studio":
             continue
         out.append(TwinBuild(m.get("firmware", firmware), m.get("firmware_version") or norm_version(sub.name), sub, m))
-    return sorted(out, key=lambda b: version_key(b.version))
+    return sorted(out, key=lambda b: fw_version_key(firmware, b.version))
 
 
 def pick_build(firmware: str = "melodee", wanted: str = "") -> tuple[TwinBuild, bool, str]:
@@ -179,14 +233,14 @@ def pick_build(firmware: str = "melodee", wanted: str = "") -> tuple[TwinBuild, 
     bs = builds(firmware)
     if not bs:
         raise StudioError(_("No studio twin for {firmware} included – installation incomplete?").format(firmware=firmware))
-    want = norm_version(wanted)
+    want = fw_version(firmware, wanted)
     if not want:
         return bs[-1], True, ""
     for b in bs:
-        if norm_version(b.version) == want:                  # (Skiff reports "v2.2": v2.2.0)
+        if fw_version(firmware, b.version) == want:          # (Skiff reports "v2.2": v2.2.0)
             return b, True, ""
-    wk = version_key(want)
-    older = [b for b in bs if version_key(b.version) < wk]
+    wk = fw_version_key(firmware, want)
+    older = [b for b in bs if fw_version_key(firmware, b.version) < wk]
     best = older[-1] if older else bs[0]
     return best, False, _("There is no studio twin for {firmware} {version}; the studio runs with {twin} – sound "
                           "and functions may differ.").format(firmware=firmware_name(firmware), version=want,
@@ -204,7 +258,7 @@ class VersionCheck:
 
 def check_versions(twin: str, device: str = "", backup: str = "", firmware: str = "Melodee") -> VersionCheck:
     """Compares the twin's firmware with the device's (INFO) and the backup's -> warning."""
-    t, d, b = norm_version(twin), norm_version(device), norm_version(backup)
+    t, d, b = fw_version(firmware, twin), fw_version(firmware, device), fw_version(firmware, backup)
     msgs = []
     if d and d != t:
         msgs.append(_("The studio runs with {firmware} {twin}, your FM-1 has {device} – sound may differ.").format(
@@ -241,21 +295,27 @@ def backup_version(archive) -> str:
 
 
 SKIFF_BACKUP_IDS = [*range(10), *range(16, 35)]     # web/fm1backup.js BACKUP_IDS: the pattern bank's chunks 16..31
+JIANT_BACKUP_IDS = [*range(11), *range(40, 72)]     # JIANT's web/fm1backup.js: the song index, 8 songs' sections
+JIANT_BACKUP_IDS_6 = [*range(11), *range(40, 64)]   # (V10.6p on: 6 songs)
 
 
 def backup_firmware(archive) -> str:
-    """Which firmware a backup belongs to: "melodee", "skiff", "sloop", "felucca" or "" (unknown). The app's companion
-    block names it; otherwise the 'firmware' field, and Skiff's inventory (the pattern bank) gives Skiff away."""
+    """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "sloop", "felucca" or "" (unknown). The app's
+    companion block names it; otherwise the 'firmware' field (JIANT's editor writes its INFO, "JIANT V10.60"), and the
+    inventory gives Skiff (the pattern bank) and JIANT (the songs) away."""
     if getattr(archive, "sloop", False):
         return "sloop"
     c = archive.companion or {}
     key = (c.get("firmware") or "").lower()
     text = " ".join(str(x) for x in (key, c.get("version_string", ""), archive.firmware or "")).lower()
-    for name in ("melodee", "skiff", "sloop"):
+    for name in ("melodee", "skiff", "jiant", "sloop"):
         if name in text:
             return name
-    if [o["id"] for o in archive.objects] == SKIFF_BACKUP_IDS:
+    ids = [o["id"] for o in archive.objects]
+    if ids == SKIFF_BACKUP_IDS:
         return "skiff"
+    if ids in (JIANT_BACKUP_IDS, JIANT_BACKUP_IDS_6):
+        return "jiant"
     return "felucca" if "felucca" in text else ""
 
 
@@ -746,10 +806,12 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     if archive.sloop:
         raise StudioError(_("The {firmware} twin cannot load SLOOP backups.").format(
             firmware=firmware_name(firmware_key)))
-    sup = {o.id for o in backup.parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))}
+    sup_order = [o.id for o in backup.parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))]
+    sup = set(sup_order)
     objs = archive.objects
     order = objs[2:] + objs[1:2] + objs[0:1]
-    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"])]
+    jiant = backup.is_jiant(sup_order) or backup.is_jiant(o["id"] for o in objs)
+    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"], jiant)]
     total = sum(o["size"] for o in todo) or 1
     done = 0
     rejected = [o["id"] for o in objs if o["id"] not in sup and o["size"]]
