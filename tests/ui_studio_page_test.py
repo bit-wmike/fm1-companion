@@ -339,6 +339,43 @@ def flow():
           f"write back of the JIANT twin onto the Melodee FM-1 refused: {boxes[-1:]}")
     r = page.export_wav({"path": out / "JIANT.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
     check(r is not None and len(r.stems) == 6, f"JIANT export: mix + {r and len(r.stems)} stems")
+
+    # ---- a CoralFlower backup: the page starts the CoralFlower twin (no project slots: a note instead); writing it back
+    # onto the demo FM-1 (Melodee) is refused as well
+    cf = S.Studio.create(firmware="coralflower", backend="webengine", server=w.server)
+    cf.set_clock(False)                                 # REC on HOME, a bar counted in, two chords, REC: pattern A
+    cf.press("REC")
+    cf.backend.call("run", ms=2100)
+    for k in (7, 11):
+        cf.backend.call("keys", mask=1 << k)
+        cf.backend.call("run", ms=900)
+        cf.backend.call("keys", mask=0)
+        cf.backend.call("run", ms=100)
+    cf.press("REC")
+    cf.backend.call("run", ms=2500)
+    cf.stop()
+    cf.set_clock(True)
+    cfile = bdir / "Studio-Test_coralflower.json"
+    backup.write_file(cfile, cf.backup().file)
+    cver = cf.build.version
+    cf.close()
+    check(page.open_backup(cfile) == cfile and svc.firmware == "coralflower" and not svc.st.rejected,
+          f"CoralFlower backup opened: the CoralFlower twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 1 and "CoralFlower" in labels[0] and page.projects.item(0).data(Qt.ItemDataRole.UserRole) is None,
+          f"CoralFlower: no project slots, a note: {labels}")
+    page.projects.setCurrentRow(0)
+    page.load_project()                                 # (the note loads nothing)
+    check("CoralFlower" in page.src.text() and "CoralFlower" in page.banner.text() and "Melodee" in page.banner.text(),
+          "banner names both firmwares: " + page.banner.text())
+    check(f"Studio-Zwilling (CoralFlower {cver})" in [x.label for x in svc._virtual_ports()],
+          "virtual device: CoralFlower twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("CoralFlower" in b for b in boxes),
+          f"write back of the CoralFlower twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    r = page.export_wav({"path": out / "CoralFlower.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 4 and r.peak > 0.05, f"CoralFlower export: mix + {r and len(r.stems)} stems")
     shot("studio-640.png", 640)
     if SHOTS:
         sb = w.page_scroll.verticalScrollBar()

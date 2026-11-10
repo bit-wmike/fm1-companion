@@ -1,9 +1,10 @@
 # Studio
 
 The FM-1 is the instrument for sketching, the suite is the studio. On the [Studio](app://page/studio) page
-a **digital twin** of your FM-1 runs: the same firmware as on the device (Melodee, Skiff or JIANT FM), with its complete
-state (Melodee: all 32 projects; Skiff: projects A–D and the pattern bank; JIANT FM: every song's sections and the song
-index; running music, user presets, settings). It sounds identical – just through the computer's speakers.
+a **digital twin** of your FM-1 runs: the same firmware as on the device (Melodee, Skiff, JIANT FM or CoralFlower), with
+its complete state (Melodee: all 32 projects; Skiff: projects A–D and the pattern bank; JIANT FM: every song's sections
+and the song index; CoralFlower: the sequencer's patterns and song with their sounds; running music, user presets,
+settings). It sounds identical – just through the computer's speakers.
 
 ## How it works: FM-1 → Studio → WAV or back
 
@@ -39,7 +40,7 @@ is not part of the state.
 ## Versions
 
 The twin exists in several versions (Melodee 1.6.0-rc.7 … 1.6.1, Skiff 2.1.1 and 2.2, JIANT FM V10.6z2 – the stable
-version of JIANT's installer – plus V10.60 and V10.61). The app chooses the firmware
+version of JIANT's installer – plus V10.60 and V10.61, CoralFlower 0.7.1 – its installer's – and 0.7). The app chooses the firmware
 and version of your FM-1 or of the backup. If the version does not match exactly, a note at the top says: “The studio
 runs with Melodee …, your FM-1 has … – sound may differ.”
 Writing back to an FM-1 with a different version is then only possible with the expert box ticked.
@@ -56,7 +57,8 @@ old approximation on the computer only remains when there is no twin for the fir
 
 ## Limits
 
-* So far **Melodee**, **Skiff** and **JIANT FM**. SLOOP and the original firmware (via FM1 Open) will follow later.
+* So far **Melodee**, **Skiff**, **JIANT FM** and **CoralFlower**. SLOOP and the original firmware (via FM1 Open) will
+  follow later.
 * Skiff: the whole song to the end ends only with SONG ONCE (otherwise Skiff loops); the Skiff twin has one core
   (MENU › CPU 2 CORES has no effect), no USB audio and no TRS MIDI. The project view does not read Skiff's songs yet.
 * JIANT FM: the stems of tracks 5 and 6 stay silent while MENU › TRACKS is 4 (JIANT's default: T5 and T6 asleep). The
@@ -64,6 +66,12 @@ old approximation on the computer only remains when there is no twin for the fir
   A JIANT version without a twin of its own (e.g. V10.6c … V10.6z10) runs on the next older twin, with a warning. From
   V10.6p JIANT has 6 songs: songs 7 and 8 of an older backup are left out (the studio names them).
   The project view does not read JIANT's songs yet.
+* CoralFlower: no project slots – its eight patterns and the song play from the twin's panel (SEQ, PLAY) or with Play;
+  music is made on the panel (CoralFlower has no editor). The four stems are its parts: chords, bass, layer, drums (a
+  stem carries neither the metronome's click nor the power-on sound; the mix has both, as the device plays them).
+  After loading a backup and after writing back, CoralFlower restarts (the twin as well as the FM-1) – that is how it
+  reads what was restored. The twin has one core, no USB audio and no TRS MIDI; the update gesture (OCT− + OCT+ + HOME
+  held) does nothing there. The project view does not read CoralFlower's patterns.
 * The twin has no CPU limit: the device drops voices when overloaded, the twin never does. Floating-point parts
   can differ in the last bits (inaudible). No Bluetooth, no USB host, no firmware update in the
   twin.

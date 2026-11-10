@@ -185,6 +185,45 @@ try:
     check(jt2.play()["busy"] and not jt2.stop()["busy"], "JIANT: play and stop (st_transport_set)")
     jt2.close()
     jt.close()
+    # the CoralFlower twin (tools/studio/coralflower_studio.c): INFO and identity, a take on its panel (no editor), four
+    # stems, its 26-object backup round trip (the restore ends in a restart: a power cycle of the twin)
+    cf = studio.Studio.create(firmware="coralflower", backend="webengine", server=st.backend.server)
+    check(cf.build.firmware == "coralflower" and cf.info.get("version") == "CoralFlower " + cf.build.version,
+          f"CoralFlower twin started in QtWebEngine: {cf.info.get('version')}")
+    CL = cf.link
+    check(studio.device_version(CL) == studio.norm_version(cf.build.version), "CoralFlower INFO via Link")
+    got.clear()
+    CL.add_listener(lambda d, direction: got.append(d) if direction == "in" and d[:2] == [0xF0, 0x00] else None)
+    CL.send_midi([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])
+    t1 = time.time()
+    while not got and time.time() - t1 < 3:
+        app.processEvents()
+    check(got and bytes(got[0]) == _identity_frame(cf.build.identity), f"CoralFlower identity {cf.build.identity}")
+    cf.set_clock(False)                                 # REC on HOME, a bar counted in, four chords, REC: pattern A
+    cf.press("REC")
+    cf.backend.call("run", ms=2100)
+    for k in (7, 11, 14, 9):
+        cf.backend.call("keys", mask=1 << k)
+        cf.backend.call("run", ms=450)
+        cf.backend.call("keys", mask=0)
+        cf.backend.call("run", ms=50)
+    cf.press("REC")
+    cf.backend.call("run", ms=2500)
+    cf.stop()
+    cf.set_clock(True)
+    carch = cf.backup()
+    check(studio.backup_firmware(carch) == "coralflower" and [o["id"] for o in carch.objects] == backup.CORALFLOWER_IDS
+          and all(o["size"] for o in carch.objects if 50 <= o["id"] <= 55), "CoralFlower backup (26 objects, pattern A)")
+    r6 = cf.render_wav(out / "coralflower.wav", seconds=2, start="play", source="saved", stems=True, fmt="f32")
+    check(len(r6.stems) == 4 and r6.peak > 0.05, f"CoralFlower: mix + four stems, peak {r6.peak:.3f}")
+    cf2 = studio.Studio.for_backup(carch, backend="webengine", server=st.backend.server)
+    back = {o["id"]: o["bytes"] for o in cf2.backup().objects}
+    same = all(back[o["id"]] == o["bytes"] for o in carch.objects if 50 <= o["id"] <= 55)
+    check(cf2.build.firmware == "coralflower" and cf2.projects() == [] and same,
+          "CoralFlower backup into a second CoralFlower twin: the patterns byte-identical")
+    check(cf2.play()["busy"] and not cf2.stop()["busy"], "CoralFlower: play and stop (st_transport_set)")
+    cf2.close()
+    cf.close()
     st.close()
     from fm1companion.ui import web
     web.shutdown_all()

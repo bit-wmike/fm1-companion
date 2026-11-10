@@ -170,7 +170,7 @@ class Info:
     def firmware_name(self) -> str:
         """Melodee reports "MELODEE v…", SLOOP "FELUCCA SLOOP …", Skiff (like the original) "FELUCCA v…"."""
         v = self.version.lower()
-        for name in ("melodee", "sloop", "skiff", "orbit", "x0x", "loom", "choralroot", "jiant"):
+        for name in ("melodee", "sloop", "skiff", "orbit", "x0x", "loom", "choralroot", "jiant", "coralflower"):
             if name in v:
                 return name
         if "felucca" in v:

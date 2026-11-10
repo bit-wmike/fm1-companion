@@ -213,11 +213,13 @@ class Report:
         if k:
             return "jiant" if k.lower().startswith("jiant") else k       # (the catalog's "jiant-fm" and the twin's "jiant")
         v = self.firmware.lower()
-        for name in ("melodee", "sloop", "skiff", "jiant"):
+        for name in ("melodee", "sloop", "skiff", "jiant", "coralflower"):
             if name in v:
                 return name
         if self.format != "sloop-backup" and backup.is_jiant(o.id for o in self.objects):
             return "jiant"
+        if self.format != "sloop-backup" and backup.is_coralflower(o.id for o in self.objects):
+            return "coralflower"
         return "sloop" if self.format == "sloop-backup" else ""
 
     def summary(self) -> str:
@@ -370,10 +372,43 @@ def _jiant_object(v: ObjectView, oid: int, size: int) -> ObjectView | None:
     return v
 
 
+def _coral_object(v: ObjectView, oid: int, size: int) -> ObjectView:
+    """CoralFlower's objects (cf_backup.c): ChoralRoot's sound stores 6..11, its settings 30, its loop 31, the
+    sequencer's patterns and song 50..55, the sounds' unsaved edits 56..58, the patterns' own sounds 59, the tweaked
+    pattern sounds 60..67. Their formats are not decoded here (no project or preset view)."""
+    if oid in (6, 7):
+        v.title, v.group = _("User sounds {first}–{last}").format(first=1 + (oid - 6) * 16, last=16 + (oid - 6) * 16), G_PRESETS
+    elif oid == 8:
+        v.title, v.group = _("FM6 patch bank"), G_PRESETS
+    elif oid == 9:
+        v.title, v.group = _("VA patches of the user sounds"), G_PRESETS
+    elif oid in (10, 11):
+        v.title, v.group = _("FM6 patches of the user sounds {first}–{last}").format(
+            first=1 + (oid - 10) * 16, last=16 + (oid - 10) * 16), G_PRESETS
+    elif oid == 30:
+        v.title, v.group = _("Settings"), G_SETTINGS
+    elif oid == 31:
+        v.title, v.group = _("Loop / rhythm machine"), G_PROJECTS
+    elif 50 <= oid <= 55:
+        v.title, v.group = _("Patterns and song (part {n} of 6)").format(n=oid - 49), G_PROJECTS
+    elif 56 <= oid <= 58:
+        v.title = (_("Unsaved edits of the chord sound"), _("Unsaved edits of the bass sound"),
+                   _("Unsaved edits of the layer sound"))[oid - 56]
+        v.group = G_PRESETS
+    elif oid == 59:
+        v.title, v.group = _("The patterns' own sounds"), G_PROJECTS
+    elif 60 <= oid <= 67:
+        v.title, v.group = _("Tweaked pattern sound {n}").format(n=oid - 59), G_PROJECTS
+    v.format = "" if size else _("empty")
+    return v
+
+
 def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = "",
-             sloop: bool = False, skiff: bool = False, jiant: bool = False) -> ObjectView:
+             sloop: bool = False, skiff: bool = False, jiant: bool = False, coral: bool = False) -> ObjectView:
     size = len(data)
     v = ObjectView(oid, _("Object {id}").format(id=oid), G_OTHER, size, crc, data)
+    if coral:
+        return _coral_object(v, oid, size)
     if oid == 0:
         v.title, v.group, v.slot = _("Running music"), G_MUSIC, None
         if size:
@@ -516,10 +551,11 @@ def inspect(source) -> Report:
 def _from_archive(arch: backup.Archive, path: Path | None) -> Report:
     n = len(arch.objects)
     ids = [o["id"] for o in arch.objects]
-    skiff, jiant = ids == SKIFF_IDS, backup.is_jiant(ids)
-    objs = [describe(o["id"], o["bytes"], o["crc"], n, arch.firmware, skiff=skiff, jiant=jiant) for o in arch.objects]
+    skiff, jiant, coral = ids == SKIFF_IDS, backup.is_jiant(ids), backup.is_coralflower(ids)
+    objs = [describe(o["id"], o["bytes"], o["crc"], n, arch.firmware, skiff=skiff, jiant=jiant, coral=coral)
+            for o in arch.objects]
     rep = Report(backup.FORMAT, arch.firmware, arch.created, arch.companion, objs, arch.known, True, path, arch)
-    s = rep.obj(1)
+    s = rep.obj(1) if not coral else None          # (CoralFlower's settings, 30, are its own record: not decoded)
     if s:
         rep.settings = decode_settings(s.data)
     if not arch.known:
@@ -743,7 +779,9 @@ def is_sloop(rep: Report) -> bool:
 
 def skip_ids(rep: Report) -> set[int]:
     """Objects that cannot be restored individually (SLOOP: none)."""
-    return set() if is_sloop(rep) else SELECTABLE_SKIP
+    if is_sloop(rep) or backup.is_coralflower(o.id for o in rep.objects):
+        return set()                              # (CoralFlower: 8 is its FM6 patch bank, in use)
+    return SELECTABLE_SKIP
 
 
 def selectable(rep: Report) -> list[ObjectView]:

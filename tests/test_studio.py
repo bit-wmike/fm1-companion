@@ -643,3 +643,211 @@ def test_jiant_six_songs_stable(node_studio):
         assert c.build.version == "V10.6z2" and not c.warning and c.projects() == [0]
     finally:
         c.close()
+
+
+# ------------------------------------------------------------------ CoralFlower (tools/studio/coralflower_studio.c)
+# CoralFlower's releases are tags; its web installer offers the first entry of web/releases.json (0.7.1, the stable),
+# 0.7 is the release before. tools/build.py --release X.Y: INFO "CoralFlower X.Y", the identity PRODUCT FM-1_930
+CORAL_COMMIT = {"0.7": "65c6b767cc446b1c2b85c32b0812d50719fd10a4", "0.7.1": "46790b943bdb5e4143212d83dc495c832eefdbb8"}
+CORAL_STATUS = {"0.7": "previous stable", "0.7.1": "stable"}
+
+
+def test_coralflower_builds_side_by_side():
+    bs = studio.builds("coralflower")
+    assert [b.version for b in bs] == ["0.7", "0.7.1"]
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == [] and b.path.name == b.version
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "coralflower"
+        assert m["ref"] == "v" + b.version and m["commit"] == CORAL_COMMIT[b.version] and m["license"] == "GPL-3.0-only"
+        assert m["release_status"] == CORAL_STATUS[b.version]
+        assert m["identity"] == "FM-1_930" and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["tracks"] == 4 and m["projects"] == 0 and m["source_repo"] == "https://github.com/FicusFicusov/CoralFlower"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "LICENSING-choralroot.md", "THIRD_PARTY.txt", "twin.wasm"} <= \
+            set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"CoralFlower-{m['commit']}.tar.gz" in notice
+        assert "FicusFicusov" in notice and "ChoralRoot" in notice and m["glue"] == "tools/studio/coralflower_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        third = (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Apache License" in third and "Helena Zhang" in third and "Inter Project" in third and "Fukiai" in third
+    assert not any(s.key.startswith("coralflower") for s in sims.bundled())
+    for fw in ("melodee", "skiff", "jiant"):                                 # the other twins are untouched
+        assert {b.firmware for b in studio.builds(fw)} == {fw}
+
+
+def test_coralflower_versions_and_pick():
+    b, exact, warn = studio.pick_build("coralflower", "CoralFlower 0.7.1")   # CoralFlower's INFO
+    assert exact and b.version == "0.7.1" and not warn
+    b, exact, warn = studio.pick_build("coralflower", "CoralFlower 0.7")
+    assert exact and b.version == "0.7"
+    b, exact, warn = studio.pick_build("coralflower", "CoralFlower 0.6.1")   # older than everything: the oldest
+    assert not exact and b.version == "0.7" and "CoralFlower v0.6.1" in warn
+    b, exact, warn = studio.pick_build("coralflower", "CoralFlower 0.8")     # newer: the next older one
+    assert not exact and b.version == "0.7.1"
+    b, exact, warn = studio.pick_build("coralflower", "CoralFlower 0.7.2-rc1")
+    assert not exact and b.version == "0.7.1"
+    assert studio.pick_build("coralflower")[0].version == "0.7.1"           # without a wish: the newest = the stable
+    assert studio.pick_build("coralflower", studio.norm_version("CoralFlower 0.7"))[0].version == "0.7"
+    # the generic order is CoralFlower's (0.6.1 < 0.6.2-rc1 < 0.7 < 0.7.1)
+    order = ["0.4.2", "0.6", "0.6.1", "0.6.2-rc1", "0.7", "0.7.1"]
+    assert sorted(reversed(order), key=studio.version_key) == order
+    assert studio.check_versions("0.7.1", device="CoralFlower 0.7.1", firmware="CoralFlower").ok
+    vc = studio.check_versions("0.7.1", device="CoralFlower 0.7", firmware="CoralFlower")
+    assert not vc.ok and "CoralFlower" in vc.message and "CZ-1" not in vc.message
+    assert studio.firmware_name("coralflower") == "CoralFlower" and studio.FIRMWARES["coralflower"]["projects"] == 0
+    assert "CoralFlower" in studio.firmware_names() and "JIANT FM" in studio.firmware_names("or")
+    # the device layer: INFO "CoralFlower 0.7.1", the catalog's key "coralflower" and the identity FM-1_930
+    from fm1companion.protocol import Info
+    from fm1companion.ui.studio_service import StudioService
+    from fm1companion import firmware
+    assert Info("CoralFlower 0.7.1").firmware_name == "coralflower"
+    assert StudioService.firmware_for("coralflower") == "coralflower"
+    assert firmware.guess_firmware("", "CoralFlower 0.7.1")[0] == "coralflower"
+    assert firmware.guess_firmware("FM-1_930")[0] in ("coralflower", "")   # ("" if this machine remembered it otherwise)
+
+
+@need_node
+def test_coralflower_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_coralflower.mjs"),
+                        str(studio.SIMS_DIR / "coralflower-studio")], capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"0.7", "0.7.1"}
+    for x in res:
+        v = x["firmware_version"]
+        assert x["version_export"] == x["info"] == "CoralFlower " + v
+        assert x["info_tail"] == [0] * 7 + [0x42, 1, 3, 0x43, 1, 2]       # no editor; backup read + restore, RESTART
+        assert bytes(x["identity_reply"]) == _identity_frame("FM-1_930")   # ota.c, as demo_device expects
+        assert x["ids"] == backup.CORALFLOWER_IDS and x["fresh_sizes"] == {"30": 200} and x["screen_lit"] > 10000
+        assert x["key_lit"] and x["rec_flag"] and {30, 50, 51, 52, 53, 54, 55} <= {int(k) for k in x["sizes"]}
+        assert all(rc == 0 for rc in x["put_rc"].values()) and x["restart_rc"] == [0]
+        assert all(x["identical"].values()) and x["persisted"] and x["bad_crc"] == 2 and x["unknown_id"] == 1
+        a, b = x["takes"]
+        assert a["playing"] and a["play_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
+        assert a["note_ons"] > 0 and a["project"] == 255 and not a["projects"]
+        assert x["fork_identical"] and x["stopped"] and x["song_play"] and x["restart_play"]
+        print(f"{v}: {a['realtime']:.1f}x real time (4 parts)")
+        assert a["realtime"] > 3
+
+
+def _coral_take(st):
+    """a take on the twin's panel, as a player records one (no editor in CoralFlower): REC on HOME, a bar counted in,
+    four chords, REC again -> pattern A; the clock held still meanwhile (only these steps move it)"""
+    be = st.backend
+    st.set_clock(False)
+    st.press("REC")
+    be.call("run", ms=2100)
+    for k in (7, 11, 14, 9):
+        be.call("keys", mask=1 << k)
+        be.call("run", ms=450)
+        be.call("keys", mask=0)
+        be.call("run", ms=50)
+    st.press("REC")
+    be.call("run", ms=2500)
+    st.stop()
+    be.call("run", ms=100)
+    st.set_clock(True)
+
+
+def test_coralflower_backup_round_trip_with_suite_code(node_studio):
+    a = node_studio(firmware="coralflower", version="CoralFlower 0.7.1")
+    assert a.build.firmware == "coralflower" and a.build.version == "0.7.1" and a.tracks == 4 and a.project_slots == 0
+    assert studio.device_version(a.link) == "v0.7.1" and a.info_name == "CoralFlower" and a.projects() == []
+    fresh = a.backup()                                                      # a new device: the sound banks empty
+    assert not fresh.objects[0]["size"] and fresh.coralflower and fresh.project_objects() == []
+    _coral_take(a)
+    arch = a.backup()
+    assert [o["id"] for o in arch.objects] == backup.CORALFLOWER_IDS and arch.known
+    assert studio.backup_version(arch) == "v0.7.1" and studio.backup_firmware(arch) == "coralflower"
+    assert arch.companion["version_string"] == "CoralFlower 0.7.1"
+    seq = {o["id"]: o["bytes"] for o in arch.objects if 50 <= o["id"] <= 55}
+    assert all(seq.values())
+    # a backup of CoralFlower's own web installer (no companion block; 'firmware' is the INFO string) and one with an
+    # unknown name: the inventory tells
+    plain = json.loads(backup.dumps(arch.file))
+    plain.pop("companion")
+    plain["firmware"] = "CoralFlower 0.7.1"
+    assert studio.backup_firmware(backup.read(plain)) == "coralflower"
+    plain["firmware"] = "?"
+    assert studio.backup_firmware(backup.read(plain)) == "coralflower"
+    # into the 0.7 twin through backup.restore (the backup protocol, then RESTART): the twin restarts (a power cycle)
+    # and reads the patterns in
+    b = node_studio(firmware="coralflower", version="0.7")
+    b.open_from_backup(arch)
+    back = {o["id"]: o["bytes"] for o in b.backup().objects}
+    assert {i: back[i] for i in seq} == seq and not b.rejected
+    vc = b.check_versions(archive=arch)
+    assert not vc.ok and "CoralFlower" in vc.message
+    c = studio.Studio.for_backup(arch, backend="node")                     # the backup's firmware and version
+    try:
+        assert c.build.firmware == "coralflower" and c.build.version == "0.7.1" and not c.warning
+        assert c.projects() == [] and c.load_project(0) == 1
+        assert c.play()["busy"] and not c.stop()["busy"]                   # st_transport_set (PLAY: pattern A)
+        assert c.play("song")["busy"] and not c.stop()["busy"]
+    finally:
+        c.close()
+    # the tolerant load (the studio page's) skips nothing of its own firmware
+    d = node_studio(firmware="coralflower", version="0.7.1")
+    d.open_from_backup(arch, tolerant=True)
+    assert d.rejected == [] and {o["id"]: o["bytes"] for o in d.backup().objects}[50] == seq[50]
+    # writing back (the studio's write_to_device; here onto another twin as the "FM-1"): every object but the
+    # settings (30) when asked, then RESTART
+    e = node_studio(firmware="coralflower", version="0.7.1")
+    before = {o["id"]: o["bytes"] for o in e.backup().objects}
+    a.write_to_device(e.link, settings=False)
+    after = {o["id"]: o["bytes"] for o in e.backup().objects}
+    assert {i: after[i] for i in seq} == seq and after[30] == before[30]
+    # the inspector names CoralFlower's objects (no projects, no sample slots, 8 the FM6 bank in use)
+    from fm1companion import backup_inspect as BI
+    rep = BI.inspect(arch)
+    assert rep.firmware_key == "coralflower" and BI.inspect(backup.read(plain)).firmware_key == "coralflower"
+    for oid in (50, 55, 60, 64, 67):
+        assert rep.obj(oid).group == BI.G_PROJECTS and "USR" not in rep.obj(oid).title and not rep.obj(oid).slot, oid
+    assert rep.obj(30).group == BI.G_SETTINGS and "FM6" in rep.obj(8).title and rep.projects == []
+    assert BI.skip_ids(rep) == set() and not rep.warnings
+    comp = BI.compatibility(rep, "coralflower", "CoralFlower 0.7.1", backup.CORALFLOWER_IDS)
+    assert comp.ok and 8 in comp.allowed_ids
+
+
+def test_coralflower_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="coralflower")
+    _coral_take(st)
+    st.link.request(Cmd.BACKUP_LIST, [], timeout=3.0)                      # (LIST writes the patterns not yet saved)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="saved", stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3] and s.peak > 0.05
+    peaks = []
+    for k, p in s.stems.items():
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    # the take is on the Chords track; the bass, the LAYER and the drums have nothing in pattern A (and a stem carries
+    # neither the metronome's click nor the power-on sound)
+    assert peaks[0] > 0.05 and max(peaks[1:]) < 0.05, peaks
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "coralflower" and meta["firmware_version"] == "0.7.1" and len(flash) == 0x100000
+
+
+def test_coralflower_inventory_in_backup_layer():
+    """CoralFlower: 26 objects (ChoralRoot's sounds 6..11, its settings 30, loop 31, the sequencer 50..55, the sounds'
+    edits 56..58, the pattern sounds 59..67); 50..63 are no sample slots, 64..67 no projects, no object 0 or 1."""
+    ids = backup.CORALFLOWER_IDS
+    assert len(ids) == 26 and backup.known_ids(ids) == ids and backup.is_coralflower(ids)
+    for n in (8, 14, 17):                                                   # the older releases' inventories
+        assert backup.is_coralflower(ids[:n]) and backup.known_ids(ids[:n]) in (ids[:n], None)
+    assert backup.known_ids(list(range(17))) == list(range(17))             # (Melodee's 17 stays known)
+    assert not backup.is_coralflower(list(range(26))) and not backup.is_coralflower(ids[:20])
+    assert backup.is_sample(50) and not backup.is_sample(50, coral=True)
+    assert backup.is_project(64) and not backup.is_project(64, coral=True)
+    assert "USR" not in backup.object_title(50, coral=True) and "Project" not in backup.object_title(64, coral=True)
+    # a CoralFlower archive whose sound banks (its first objects) are empty is a valid backup; a Melodee 1.6 check
+    # (project ids 64..91) does not apply to its pattern sounds 64..67
+    f = {"format": backup.FORMAT, "version": 1, "firmware": "CoralFlower 0.7.1", "objects": [
+        {"id": i, "size": 4 if i in (30, 64) else 0, "crc": backup.crc32(b"abcd") if i in (30, 64) else 0,
+         "data": base64.b64encode(b"abcd" if i in (30, 64) else b"").decode()} for i in ids]}
+    arch = backup.read(f)
+    assert arch.coralflower and arch.project_objects() == []
+    backup.check_16(arch, [backup.ObjInfo(i, 0, 0) for i in ids])
+    with pytest.raises(backup.BackupError):
+        backup.read({**f, "objects": [{**o, "size": 0, "crc": 0, "data": ""} for o in f["objects"]]})

@@ -1,8 +1,8 @@
-# Studio twin: adding a new Melodee, Skiff or JIANT FM version
+# Studio twin: adding a new Melodee, Skiff, JIANT FM or CoralFlower version
 
-The Studio twin is the firmware's own code (Melodee's, Skiff's or JIANT FM's), compiled for the computer as
-WebAssembly – together with a small glue layer (`tools/studio/melodee_studio.c`, `tools/studio/skiff_studio.c`,
-`tools/studio/jiant_studio.c`) that exposes the
+The Studio twin is the firmware's own code (Melodee's, Skiff's, JIANT FM's or CoralFlower's), compiled for the computer
+as WebAssembly – together with a small glue layer (`tools/studio/melodee_studio.c`, `tools/studio/skiff_studio.c`,
+`tools/studio/jiant_studio.c`, `tools/studio/coralflower_studio.c`) that exposes the
 NOR flash, the USB SysEx path (editor protocol), keys/knobs/LEDs, the screen and rendering (ABI `st_*`, see
 `fm1companion/sims/_studio/twin-core.js`). Several versions sit side by side:
 
@@ -10,12 +10,14 @@ NOR flash, the USB SysEx path (editor protocol), keys/knobs/LEDs, the screen and
 fm1companion/sims/melodee-studio/<version>/   manifest.json, twin.wasm, LICENSE, NOTICE
 fm1companion/sims/skiff-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
 fm1companion/sims/jiant-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/coralflower-studio/<version>/  manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md,
+                                              LICENSING-choralroot.md, THIRD_PARTY.txt
 fm1companion/sims/_studio/                    shared host (page, worker, AudioWorklet, control surface)
 ```
 
 When opening, `studio.pick_build()` picks the firmware and version of the device or backup, otherwise the next older
-version (with a warning). Bundled: Melodee 1.6.0-rc.7, rc.8, 1.6.0, 1.6.1; Skiff 2.1.1, 2.2; JIANT FM V10.60, V10.61, V10.6z2 (its stable)
-(about 1.2–1.4 MB of wasm each).
+version (with a warning). Bundled: Melodee 1.6.0-rc.7, rc.8, 1.6.0, 1.6.1; Skiff 2.1.1, 2.2; JIANT FM V10.60, V10.61, V10.6z2 (its stable);
+CoralFlower 0.7, 0.7.1 (its stable) (about 1.2–1.4 MB of wasm each, CoralFlower's 0.7 MB).
 
 ## Requirements (only on the build machine, not on the Pi)
 
@@ -76,12 +78,40 @@ inventory). JIANT's release order (its git history): V10, V10.1 … V10.9, V10.1
 From V10.6p JIANT keeps 6 songs (35 objects); an 8-song backup's songs 7 and 8 are refused by the device – the studio's
 tolerant load leaves them out and names them, `backup.restore` stops before writing anything.
 
+CoralFlower's releases are tags `vX.Y[.Z]`; its web installer offers the first entry of `web/releases.json`, built by
+its release workflow with `tools/build.py --release X.Y` (the INFO text "CoralFlower X.Y", the identity `PRODUCT`
+FM-1_930 for every release):
+
+```sh
+git clone https://github.com/FicusFicusov/CoralFlower /path/to/coralflower
+python3 tools/build_sims.py --target coralflower-studio --ref v0.8 --repo coralflower=/path/to/coralflower
+```
+
+→ `fm1companion/sims/coralflower-studio/0.8/`, the version from the tag (`version_ref`: CoralFlower's version string is
+not in its source, `--release` sets it), identity read from the commit's `tools/build.py` (`PRODUCT`), `tracks` 4 (its
+parts: chords, bass, the LAYER, drums), `projects` 0. The list is `STUDIOS["coralflower-studio"]["refs"]`; the build
+takes CoralFlower's own emulator flags (`cflags`: gnu11 and its single-thread `<os/lock.h>`, `tools/emu/web/compat`).
+
+| CoralFlower version | Tag / commit | Status (manifest `release_status`, 2026-11-10) | Reports (INFO / identity) | Backup objects | Folder |
+|---|---|---|---|---|---|
+| 0.7.1 | v0.7.1 / 46790b943bdb5e4143212d83dc495c832eefdbb8 | **stable** – the first entry of `web/releases.json`, what its installer offers | `CoralFlower 0.7.1` / `FM-1_930` | 26 | `coralflower-studio/0.7.1` |
+| 0.7 | v0.7 / 65c6b767cc446b1c2b85c32b0812d50719fd10a4 | previous stable (`web/releases.json`) | `CoralFlower 0.7` / `FM-1_930` | 26 | `coralflower-studio/0.7` |
+
+A CoralFlower device answers INFO "CoralFlower 0.7.1" (`protocol.Info.firmware_name` "coralflower", the catalog's key;
+`firmware.guess_firmware` also maps the identity FM-1_930); CoralFlower's web installer writes the INFO string as a
+backup's `firmware`, and its inventory (26 objects since 0.5: ChoralRoot's sounds 6–11, the settings 30, the loop 31,
+the sequencer's store 50–55, the sounds' edits 56–58, the pattern sounds 59–67; 8, 14 and 17 objects in 0.1–0.4.2)
+gives it away too (`backup.is_coralflower`). Its versions sort with the generic key (0.6.1 < 0.6.2-rc1 < 0.7 < 0.7.1).
+CoralFlower speaks only the backup part of the protocol (INFO, LIST, GET, PUT, RESTART 72; no editor): a restore ends
+in RESTART (`backup.restart_coralflower`), and the studio power-cycles its twin after loading a backup.
+
 Each `STUDIOS` entry names what differs between firmwares: `generate` (the header generators), `version_file` /
 `version_re` (where the version string lives), `identity` (the release identity from the version) or `identity_src`
 (read from the source tree, JIANT), `defines` (version and identity for the glue), `notice`, optionally `extra`
 (further licence files) and, for the Python side, `tracks` and `projects`.
 `build_studio()` is the same for all; a new firmware adds an entry, a glue file, and its key in
-`fm1companion/studio.py` `FIRMWARES`.
+`fm1companion/studio.py` `FIRMWARES`. Optional: `version_ref` (the version from the ref, CoralFlower), `cflags`
+(further compiler flags), `release_status`.
 
 If something in the firmware's interfaces changes between versions (names in `hostsim.c`, flash layout,
 project storage), the glue must be adapted; the manifest records the checksum of the glue layer (`glue_sha256`),
@@ -108,6 +138,19 @@ release (the MENU row; nothing behind it), no sample-slot flash hooks (JIANT has
 (`usb.c` `midi_out_due`). Bluetooth, the USB host and the second core stay out, as in the emulator (`FELUCCA_BT`,
 `FELUCCA_USB_HOST`, `FELUCCA_DUAL_CORE` are off without `felucca.c`). `st_boot` runs the splash (1.73 s device time).
 
+### The CoralFlower glue in short
+
+`coralflower_studio.c` includes CoralFlower's own browser emulator whole (`tools/emu/web/emu_web.c`: the firmware side
+`tools/emu/emu_fw.c` with its include list `emu_firmware.h`, the HAL `emu_hal_fw.h`, the flash image staged before
+power-on), as `tests/cf_backup_test.c` builds the firmware, and adds what the emulator leaves out: `FELUCCA_OTA` 1
+(usb.c's SysEx frame and ring; `cf_backup.c`'s replies go out through `ota_wire_send`, `ota.c` answers the identity
+handshake) and the `st_*` ABI. The clock is the emulator's (tick, a UI frame every 15 ms or the input scan, the audio
+blocks due), the audio kept at 24 bits; a flash erase holds the audio 45 ms as on the device. `st_boot` runs the
+emulator's boot time (1.6 s) and the power-on sound to its end. RESTART only replies (the host restarts the twin).
+Optional exports: `st_transport_set` (PLAY's events: stop, the pattern of PLAY on HOME, the song) and
+`st_track_mute_set` (the stems; CoralFlower has no editor TRACK_MIX; a muted part starts no note, voice.c `P_MUTE`, and
+the click and the power-on sound are held silent in a stem). The update gesture does nothing (`exit` is a no-op).
+
 ## Checking
 
 ```sh
@@ -117,9 +160,11 @@ QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 python3 tests/ui_studio_
 ```
 
 `tests/test_studio.py::test_builds_side_by_side` (Melodee), `test_skiff_builds_side_by_side` and
-`test_jiant_builds_side_by_side` expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`
+`test_jiant_builds_side_by_side` and `test_coralflower_builds_side_by_side` expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`
 and `tests/studio_twin_jiant.mjs` are the Skiff and JIANT core checks in node (editor, identity, backup GET/PUT round
-trip, flash persistence, PLAY, audio, fork, USB MIDI out, stop).
+trip, flash persistence, PLAY, audio, fork, USB MIDI out, stop); `tests/studio_twin_coralflower.mjs` the CoralFlower
+one (INFO, identity, a take recorded on the panel, the 26-object GET/PUT round trip with RESTART, the power cycle,
+PLAY, audio, fork, MIDI out, transport, mutes).
 The packages (.deb, .run) include everything under `fm1companion/` (`tools/build_common.app_files`);
 `tests/test_packaging.py` checks that the host files and every `twin.wasm` end up in the package.
 
@@ -130,5 +175,6 @@ SLOOP and FM1 Open follow the same pattern: their own entry in `STUDIOS`, their 
 `StudioService.firmware_for()` knows it). The host (JS) and the rest of the Python side stay the same. SLOOP has its own
 backup protocol and format (`sloopbk.py`); the twin's load and write back would go through it. See `docs/ROADMAP.md`.
 
-Source tarballs for a release: `python3 tools/make_source_tarballs.py --repo melodee=… --repo skiff=… --repo JIANT=…`
-(without `--repo` it looks in `/tmp/<name>`, then in lower case: `/tmp/jiant`) packs every commit named in a manifest.
+Source tarballs for a release: `python3 tools/make_source_tarballs.py --repo melodee=… --repo skiff=… --repo JIANT=…
+--repo CoralFlower=…` (without `--repo` it looks in `/tmp/<name>`, then in lower case: `/tmp/jiant`, `/tmp/coralflower`)
+packs every commit named in a manifest.

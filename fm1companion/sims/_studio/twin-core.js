@@ -89,6 +89,9 @@
     // (optional export, Skiff's and JIANT FM's twins and later) the transport without the firmware's own editor command:
     // how 0 stop, 1 play as the panel's PLAY, 2 the song from the top, 3 restart. -> false: not exported (Melodee)
     transportSet(how) { if (!this.ex.st_transport_set) return false; this.ex.st_transport_set(how >>> 0); return true; }
+    // (optional export, CoralFlower's twin: no editor TRACK_MIX) part k held silent (on) or not, for the stems.
+    // -> false: not exported (the host uses the editor's TRACK_MIX)
+    muteSet(k, on) { if (!this.ex.st_track_mute_set) return false; this.ex.st_track_mute_set(k >>> 0, on ? 1 : 0); return true; }
     runMs(ms) { this.ex.st_run_ms(ms >>> 0); }
     // n frames -> {l, r} (copies); chunks of up to 4096 frames
     render(n) {

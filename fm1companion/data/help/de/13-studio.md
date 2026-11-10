@@ -1,9 +1,10 @@
 # Studio
 
 Das FM-1 ist das Instrument zum Skizzieren, die Suite ist das Studio. Auf der Seite [Studio](app://page/studio)
-läuft ein **digitaler Zwilling** deines FM-1: dieselbe Firmware wie auf dem Gerät (Melodee, Skiff oder JIANT FM), mit
-seinem kompletten Zustand (Melodee: alle 32 Projekte; Skiff: Projekte A–D und die Pattern-Bank; JIANT FM: die Sections
-aller Songs und der Song-Index; laufende Musik, User-Presets, Einstellungen). Er klingt identisch – nur eben über die
+läuft ein **digitaler Zwilling** deines FM-1: dieselbe Firmware wie auf dem Gerät (Melodee, Skiff, JIANT FM oder
+CoralFlower), mit seinem kompletten Zustand (Melodee: alle 32 Projekte; Skiff: Projekte A–D und die Pattern-Bank; JIANT
+FM: die Sections aller Songs und der Song-Index; CoralFlower: die Patterns und der Song des Sequencers mit ihren Sounds;
+laufende Musik, User-Presets, Einstellungen). Er klingt identisch – nur eben über die
 Lautsprecher am Rechner.
 
 ## So geht's: FM-1 → Studio → WAV oder zurück
@@ -39,7 +40,7 @@ gehört nicht zum Stand.
 ## Versionen
 
 Den Zwilling gibt es in mehreren Versionen (Melodee 1.6.0-rc.7 … 1.6.1, Skiff 2.1.1 und 2.2, JIANT FM V10.6z2 – die
-stabile Version von JIANTs Installer – sowie V10.60 und V10.61). Die App wählt Firmware
+stabile Version von JIANTs Installer – sowie V10.60 und V10.61, CoralFlower 0.7.1 – die seines Installers – und 0.7). Die App wählt Firmware
 und Version deines FM-1 bzw. des Backups. Passt die Version nicht genau, zeigt ein Hinweis oben: „Studio läuft mit
 Melodee …, dein FM-1 hat … – Klang kann abweichen.“
 Zurückschreiben auf ein FM-1 mit anderer Version geht dann nur mit dem Experten-Haken.
@@ -56,7 +57,8 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
 
 ## Grenzen
 
-* Bisher **Melodee**, **Skiff** und **JIANT FM**. SLOOP und die Original-Firmware (über FM1 Open) folgen später.
+* Bisher **Melodee**, **Skiff**, **JIANT FM** und **CoralFlower**. SLOOP und die Original-Firmware (über FM1 Open)
+  folgen später.
 * Skiff: „Ganzer Song bis zum Ende“ endet nur mit SONG ONCE (sonst läuft Skiff in Schleife); der Skiff-Zwilling hat
   einen Kern (MENU › CPU 2 CORES wirkt nicht), kein USB-Audio und kein TRS-MIDI. Die Projektansicht liest Skiffs
   Songs noch nicht.
@@ -65,6 +67,12 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
   USB-Audio (die INPUT-Engine hört Stille). Eine JIANT-Version ohne eigenen Zwilling (z. B. V10.6c … V10.6z10) läuft
   mit dem nächstälteren Zwilling, mit Hinweis. Ab V10.6p hat JIANT 6 Songs: Songs 7 und 8 eines älteren Backups
   bleiben weg (das Studio nennt sie). Die Projektansicht liest JIANTs Songs noch nicht.
+* CoralFlower: keine Projektplätze – seine acht Patterns und der Song spielen über das Panel des Zwillings (SEQ, PLAY)
+  oder mit Abspielen; Musik entsteht am Panel (CoralFlower hat keinen Editor). Die vier Stems sind seine Parts: Akkorde,
+  Bass, Layer, Drums (ein Stem enthält weder den Klick des Metronoms noch den Einschaltklang; der Mix hat beides, wie das
+  Gerät es spielt). Nach dem Laden eines Backups und nach dem Zurückschreiben startet CoralFlower neu (der Zwilling wie
+  das FM-1) – so liest es das Zurückgespielte ein. Der Zwilling hat einen Kern, kein USB-Audio und kein TRS-MIDI; die
+  Update-Geste (OCT− + OCT+ + HOME halten) tut dort nichts. Die Projektansicht liest CoralFlowers Patterns nicht.
 * Der Zwilling hat keine CPU-Grenze: das Gerät lässt bei Überlast Stimmen weg, der Zwilling nie. Fließkomma-Teile
   können in den letzten Bits abweichen (unhörbar). Kein Bluetooth, kein USB-Host, kein Firmware-Update im
   Zwilling.

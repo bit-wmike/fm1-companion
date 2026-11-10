@@ -11,6 +11,7 @@ compiles anything. Run this in a development container, not on the user's machin
   python3 tools/build_sims.py --target melodee-studio [--ref v1.6.0-rc.8 ...] [--repo melodee=/tmp/melodee]
   python3 tools/build_sims.py --target skiff-studio [--ref v2.2 ...] [--repo skiff=/tmp/skiff]
   python3 tools/build_sims.py --target jiant-studio [--ref <commit> ...] [--repo jiant=/tmp/jiant]
+  python3 tools/build_sims.py --target coralflower-studio [--ref v0.7.1 ...] [--repo coralflower=/tmp/coralflower]
 
 Needs: git, Python with Pillow + fontTools (Melodee's header generators), and WASI SDK 27
 (downloaded from GitHub into --work when --wasi-sdk is not given; ~125 MB).
@@ -32,6 +33,10 @@ Simulators:
   jiant-studio  (--target) the same for JIANT FM (tools/studio/jiant_studio.c): sims/jiant-studio/<version>/; JIANT has
             no tags, a ref is a commit (web/EDITIONS.json names them):
             python3 tools/build_sims.py --target jiant-studio [--ref <commit>] --repo jiant=<clone>
+  coralflower-studio  (--target) the same for CoralFlower (tools/studio/coralflower_studio.c, on CoralFlower's own
+            browser emulator tools/emu/web/emu_web.c): sims/coralflower-studio/<version>/; a ref is a release tag
+            (web/releases.json lists them, the installer offers the first):
+            python3 tools/build_sims.py --target coralflower-studio [--ref v0.7.1] --repo coralflower=<clone>
 """
 from __future__ import annotations
 
@@ -247,6 +252,7 @@ BUILDERS = {"fm1-open": build_fm1_open, "melodee": build_melodee}
 #   python3 tools/build_sims.py --target melodee-studio --ref v1.6.0-rc.9 --repo melodee=/tmp/melodee
 #   python3 tools/build_sims.py --target skiff-studio --ref v2.3 --repo skiff=/tmp/skiff
 #   python3 tools/build_sims.py --target jiant-studio --ref <commit> --repo jiant=/tmp/jiant
+#   python3 tools/build_sims.py --target coralflower-studio --ref v0.7.1 --repo coralflower=/tmp/coralflower
 # (needs: git, Pillow + fontTools for the firmwares' header generators, WASI SDK 27 as above). A further firmware
 # (SLOOP, FM1 Open) adds an entry here with its own glue file and the few firmware-specific hooks below (header
 # generators, where the version string lives, the release identity, the NOTICE); the JS / Python host stays the same.
@@ -367,6 +373,58 @@ def _skiff_notice(spec, version, ref, commit, source_url):
                                                          "tools/wasm_shim"))
 
 
+# ---- CoralFlower (FicusFicusov/CoralFlower): a release is a tag vX.Y[.Z]; tools/build.py --release X.Y sets the version
+# string "CoralFlower X.Y" (the INFO text) and keeps the identity PRODUCT (FM-1_930 for every release)
+def coralflower_version(src: Path, ref: str) -> str:
+    """the release version of a tag (v0.7.1 -> 0.7.1), as CoralFlower's release workflow passes it to --release"""
+    m = re.fullmatch(r"v?(\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9.]+)?)", ref)
+    if not m:
+        raise SystemExit(f"coralflower-studio: {ref} is not a release tag (vX.Y[.Z])")
+    return m[1].lower()
+
+
+def coralflower_identity(src: Path) -> str:
+    """CoralFlower's tools/build.py PRODUCT: the package identity its releases answer (ota.c, the installer)"""
+    m = re.search(r'^PRODUCT = "(FM-1_\d+)"', (src / "tools/build.py").read_text("utf-8"), re.M)
+    return m[1] if m else "FM-1_930"
+
+
+CORALFLOWER_THIRD_PARTY = ["LICENSES/Apache-2.0-msfa.txt", "LICENSES/OFL-InterTight.txt",
+                           "LICENSES/OFL-DepartureMono.txt", "LICENSES/MIT-Fukiai.txt"]
+
+
+def _coralflower_extra(src: Path, out: Path):
+    """CoralFlower's licensing records (LICENSING.md, and docs/LICENSING-choralroot.md for the parts it inherited) and
+    the licence texts of the parts compiled into the twin: msfa through Melodee's FM6 engine (fm6_core.c), the UI faces
+    Inter Tight and Departure Mono rasterised in, the Fukiai icons"""
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    shutil.copy(src / "docs/LICENSING-choralroot.md", out / "LICENSING-choralroot.md")
+    (out / "THIRD_PARTY.txt").write_text("".join(f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n"
+                                                 for f in CORALFLOWER_THIRD_PARTY), "utf-8")
+
+
+def _coralflower_notice(spec, version, ref, commit, source_url):
+    return (
+        f"CoralFlower {version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
+        f"(commit {commit}; source: {source_url}).\n"
+        "GPL-3.0-only. CoralFlower by FicusFicusov (CoralFlower contributors), a fork of ChoralRoot FM-1 (Quixotic7, "
+        "ChoralRoot FM-1 contributors), a fork of Felucca:\nCopyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton "
+        "Instruments (Felucca); the FM6 engine Melodee's, Copyright (C) 2026 Kerem Kilic (Ellic Studio).\n"
+        "Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0, Dexed: GPL-3.0-or-later; the UI faces Inter "
+        "Tight and Departure Mono and the Fukiai icons are rasterised in: OFL 1.1, MIT):\nCoralFlower's LICENSING.md, "
+        "LICENSING-choralroot.md (its docs/LICENSING-choralroot.md) and the texts in THIRD_PARTY.txt beside this file. "
+        "The JieLi SDK files of CoralFlower's packages are not part of the twin.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
+        "includes them as CoralFlower's own browser emulator and host tests do (tools/emu/web/emu_web.c,\n"
+        "tools/emu/emu_fw.c, tools/emu/emu_firmware.h, tests/cf_backup_test.c) and adds the USB SysEx path (usb.c, "
+        "cf_backup.c's backup protocol, ota.c's identity handshake); the hardware stand-ins are the emulator's:\n"
+        "keys/LEDs/LCD, the MASTER pot, NOR flash = a 1 MiB RAM image, one core (the bass part's job runs inline), USB = "
+        "always configured (SysEx and MIDI out through usb.c's rings),\nno USB audio, no TRS MIDI, no serial console, "
+        "no updater and no USB boot (ota.c answers the identity handshake only).\nCompiled with WASI SDK clang (include "
+        "shim tools/wasm_shim/sys/wait.h; tools/emu/web/compat from CoralFlower's tree).\n" +
+        source_offer(spec["repo"], commit, f", the glue {spec['glue']} and the shim tools/wasm_shim"))
+
+
 STUDIOS = {
     "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
                        "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
@@ -399,6 +457,18 @@ STUDIOS = {
                      "identity_src": jiant_identity,
                      "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
                      "notice": _jiant_notice, "extra": _jiant_extra, "tracks": 6, "projects": 4},
+    # CoralFlower: release tags; 0.7.1 is what its web installer offers (web/releases.json, the first entry), 0.7 the
+    # release before (same day). The folder is the release version (v0.7.1 -> 0.7.1); INFO says "CoralFlower 0.7.1".
+    # Its own browser emulator's flags (tools/emu/web/build_web.sh: gnu11, the single-thread <os/lock.h>)
+    "coralflower-studio": {"firmware": "coralflower", "repo": "https://github.com/FicusFicusov/CoralFlower",
+                           "glue": "tools/studio/coralflower_studio.c", "refs": ["v0.7", "v0.7.1"],
+                           "release_status": {"46790b943bdb5e4143212d83dc495c832eefdbb8": "stable",
+                                              "65c6b767cc446b1c2b85c32b0812d50719fd10a4": "previous stable"},
+                           "title": "CoralFlower studio twin", "license": "GPL-3.0-only", "generate": _generate_skiff,
+                           "version_ref": coralflower_version, "identity_src": coralflower_identity,
+                           "defines": lambda v, i: [f'-DFELUCCA_VERSION="CoralFlower {v}"', f'-DFELUCCA_ID="{i}"'],
+                           "cflags": ["-std=gnu11", "-Itools/emu/web/compat"],
+                           "notice": _coralflower_notice, "extra": _coralflower_extra, "tracks": 4, "projects": 0},
 }
 
 
@@ -407,7 +477,8 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
     src, commit = source(spec["firmware"], work, local, ref=ref, repo_url=spec["repo"],
                          tree_name=f"{name}-{ref[:12]}-src")
     spec["generate"](src)
-    version = re.search(spec["version_re"], (src / spec["version_file"]).read_text()).group(1)
+    version = (spec["version_ref"](src, ref) if spec.get("version_ref") else      # (CoralFlower: the release tag)
+               re.search(spec["version_re"], (src / spec["version_file"]).read_text()).group(1))
     identity = spec["identity_src"](src) if spec.get("identity_src") else spec["identity"](version)
     glue = ROOT / spec["glue"]
     shutil.copy(glue, src / "tests" / "fm1c_studio.c")    # beside hostsim.c: its includes resolve as upstream's tests
@@ -419,7 +490,7 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
     wasm = out / "twin.wasm"
     run([cc, f"--sysroot={sdk / 'share' / 'wasi-sysroot'}", "-O2", "-ffp-contract=off", "-std=gnu99", "-w",
          f"-I{SHIM}", "-Ibuild/gen", "-Ifirmware/src", "-Itests", "-mexec-model=reactor",
-         *spec["defines"](version, identity),
+         *spec["defines"](version, identity), *spec.get("cflags", []),
          "-Wl,-z,stack-size=1048576", "-Wl,--initial-memory=33554432", "-Wl,--strip-all",
          "-o", wasm, "tests/fm1c_studio.c"], cwd=src)
     shutil.copy(src / "LICENSE", out / "LICENSE")
@@ -467,7 +538,8 @@ def manifest(name, out: Path, commit, toolchain, extra):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--only", default=",".join(BUILDERS), help="simulators (fm1-open, melodee) and/or studio twins")
-    ap.add_argument("--target", help="a studio twin (melodee-studio, skiff-studio, jiant-studio): with --ref one version, "
+    ap.add_argument("--target", help="a studio twin (melodee-studio, skiff-studio, jiant-studio, coralflower-studio): with "
+                    "--ref one version, "
                     "else all in STUDIOS")
     ap.add_argument("--ref", action="append", default=[], help="firmware tag(s) or commit(s) for --target (repeatable)")
     ap.add_argument("--work", default="/tmp/fm1c-simbuild")
