@@ -272,7 +272,7 @@ msgstr "Nota / Etiquetas"
 #: fm1companion/ui/main_window.py:458 fm1companion/ui/overview.py:85
 #: fm1companion/ui/overview.py:121
 msgid "Back up now"
-msgstr "Copia ahora"
+msgstr "Copiar ahora"
 
 #: fm1companion/ui/backups_page.py:324
 msgid "Ctrl+B"
@@ -493,7 +493,7 @@ msgstr "<b>Aún no hay copias de seguridad de este dispositivo.</b> {reason}"
 
 #: fm1companion/ui/backups_page.py:536
 msgid "No backups yet – here's how: connect the FM-1 and click “Back up now” (Ctrl+B). Automatic backups are set up below."
-msgstr "Aún no hay copias de seguridad – así se hace: conecta el FM-1 y haz clic en “Copia ahora” (Ctrl+B). Las copias automáticas se configuran abajo."
+msgstr "Aún no hay copias de seguridad – así se hace: conecta el FM-1 y haz clic en “Copiar ahora” (Ctrl+B). Las copias automáticas se configuran abajo."
 
 #: fm1companion/ui/backups_page.py:543
 msgid "Folder not reachable"
@@ -1041,11 +1041,11 @@ msgid ""
 "No backups yet.\n"
 "Here's how: connect the FM-1,\n"
 "then Ctrl+B (Back up now)."
-msgstr "Aún no hay copias de seguridad.\nAsí se hace: conecta el FM-1\ny pulsa Ctrl+B (Copia ahora)."
+msgstr "Aún no hay copias de seguridad.\nAsí se hace: conecta el FM-1\ny pulsa Ctrl+B (Copiar ahora)."
 
 #: fm1companion/ui/pages/backup_browser.py:319
 msgid "No backups yet – here's how: connect the FM-1, then Ctrl+B (Back up now)."
-msgstr "Aún no hay copias de seguridad – así se hace: conecta el FM-1 y pulsa Ctrl+B (Copia ahora)."
+msgstr "Aún no hay copias de seguridad – así se hace: conecta el FM-1 y pulsa Ctrl+B (Copiar ahora)."
 
 #: fm1companion/ui/pages/backup_browser.py:324
 msgid "Live state of the connected FM-1"
