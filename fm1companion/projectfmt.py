@@ -797,7 +797,7 @@ def load_any(path: Path) -> list[tuple[str, Project]]:
     arch = backup.load_file(path)
     out = []
     for o in arch.objects:
-        if backup.is_project(o["id"]) and o["size"]:
+        if backup.is_project(o["id"], coral=arch.coralflower) and o["size"]:
             slot = backup.project_slot(o["id"])
             if arch.sloop and slot and slot > 4:
                 continue

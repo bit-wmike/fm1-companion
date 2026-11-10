@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "name": "sloop-studio",
+  "title": "SLOOP studio twin",
+  "version": "2.8.4",
+  "source_repo": "https://github.com/isod89/sloop-fm1",
+  "ref": "v2.8.4",
+  "commit": "91f30182d9095e0ecdb43396554f2ce5a67df179",
+  "license": "GPL-3.0-only",
+  "build_date": "2026-11-10T21:13:02Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "LICENSING.md": {
+      "sha256": "ccd7ec8bade6eadf16f8edb63d2759c9e76ee46bbafe9873e26cd49d85af3255",
+      "size": 4604
+    },
+    "NOTICE": {
+      "sha256": "38b5a125042bf2763da8bb40b9489e18204fa104030eb1072bce5af5a7874345",
+      "size": 2499
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "384885b75a5f75dec72423ab5b1f024457525e6bb8b704eedef5784a53359e0c",
+      "size": 25600
+    },
+    "twin.wasm": {
+      "sha256": "0ac2b11bc5147918b76a3866e08e233d7365b3543f70ccda43333f2e70402a08",
+      "size": 933854
+    }
+  },
+  "kind": "studio",
+  "firmware": "sloop",
+  "firmware_version": "SLOOP 2.8.4",
+  "identity": "FM-1_900",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/sloop_studio.c",
+  "glue_sha256": "afe0ac8c3316a6b10b37334d16f805aefb0ffff6e238d4fb38c92b3249848db4",
+  "source_url": "https://github.com/isod89/sloop-fm1/archive/91f30182d9095e0ecdb43396554f2ce5a67df179.tar.gz",
+  "tracks": 4,
+  "projects": 4
+}

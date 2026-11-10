@@ -201,9 +201,23 @@ def proj_format(d: bytes) -> int:
     return d[0] - 0x30 if d and len(d) >= 4 and d[1] == 0x4E and d[2] == 0x55 and d[3] == 0x46 else 0
 
 
-def dev_format(p_count: int) -> int:
-    """bkDevFormat: newest project format the device reads (from INFO)."""
+def dev_format(p_count: int, version: str = "") -> int:
+    """bkDevFormat: newest project format the device reads (from INFO). KARMA (INFO "FELUCCA KARMA 3.1") reads and writes
+    format 7 ("FUN7", format 6 + the CLOUD, project.c PROJ_MAGIC) with SLOOP 2.6's 71 parameters: its own editor's
+    bkDevFormat answers 6 there and refuses KARMA's own backups (bkNewer); the app takes the format from project.c."""
+    if "karma" in (version or "").lower():
+        return 7
     return 6 if p_count >= 71 else 5 if p_count >= 61 else 4
+
+
+def is_karma(info) -> bool:
+    return info is not None and "karma" in (getattr(info, "version", "") or "").lower()
+
+
+def dsu_old(d: bytes) -> bool:
+    """DSYN.bankIsOld (KARMA's web/editor.html): SLOOP 2.5's SYN drum kits ("DSU1"); KARMA's HEX kits ("HEX1",
+    drum_synth.c DSU_MAGIC) cannot take them – KARMA's editor leaves them out and restores the rest"""
+    return len(d) >= 4 and d[:4] == b"DSU1"
 
 
 def fw_at_least(v: str, want) -> bool:
@@ -385,15 +399,23 @@ def check_restore(m: dict[int, bytes], file: dict, info) -> dict[int, bytes]:
         raise _err("bkBad", _("The running project or the settings are missing in the backup – nothing was "
                               "written."))
     newest = max([0] + [proj_format(m[i]) for i in (0, 2, 3, 4, 5) if i in m])
-    if info is not None and newest > dev_format(info.p_count):
+    if info is not None and newest > dev_format(info.p_count, info.version):
         raise _err("bkNewer", _("The backup comes from a newer SLOOP version ({backup}) "
                                 "than the one on the FM-1 ({device}). Update SLOOP first – nothing was "
                                 "written.").format(backup=file.get('firmware') or '?', device=info.version))
+    return with_defaults(m, file, info)
+
+
+def with_defaults(m: dict[int, bytes], file: dict, info) -> dict[int, bytes]:
+    """backupRestore's additions: MIDI LEARN in its default state when a 2.5.1+ backup has none; on KARMA, SLOOP 2.5's SYN
+    kits left out (dsu_old)"""
     m = dict(m)
     if 10 not in m and fw_at_least(file.get("firmware", ""), (2, 5, 1)):
         d = bytearray(40)                          # MIDI LEARN in its default state (nothing learned, 1 2 3, 10, 2)
         d[32:37] = bytes([1, 2, 3, 10, 2])
         m[10] = bytes(d)
+    if is_karma(info) and 9 in m and dsu_old(m[9]):
+        del m[9]
     return m
 
 
@@ -406,6 +428,8 @@ def restore(link, file: dict, progress: Callable[[int, int], None] | None = None
         info = read_info(link)
     m = check_restore(m, file, info) if ids is None else _check_part(m, file, info, ids)
     want = set(m) if ids is None else set(ids)
+    if ids is not None and is_karma(info) and 9 in m and dsu_old(m[9]):
+        want.discard(9)                             # (KARMA: SLOOP 2.5's SYN kits are left out, as its editor does)
     todo = [i for i in RESTORE + SAMPLES if i in m and i in want]
     total = sum(len(m[i]) for i in todo) or 1
     done = 0
@@ -442,8 +466,43 @@ def _check_part(m, file, info, ids) -> dict[int, bytes]:
     if 0 in ids and not m[0] or 1 in ids and not m[1]:
         raise _err("bkBad", _("Running project/settings in the backup are empty – nothing was written."))
     newest = max([0] + [proj_format(m[i]) for i in ids if i in (0, 2, 3, 4, 5)])
-    if info is not None and newest > dev_format(info.p_count):
+    if info is not None and newest > dev_format(info.p_count, info.version):
         raise _err("bkNewer", _("The FM-1 ({device}) cannot read projects from a newer SLOOP version ({backup}). "
                                 "Update SLOOP first – nothing was written.").format(
                                     backup=file.get('firmware') or '?', device=info.version))
     return m
+
+
+def restore_tolerant(link, file: dict, progress: Callable[[int, int], None] | None = None, info=None) -> list[int]:
+    """backupRestore's order, but every object on its own: what the FM-1 (or the studio twin) refuses is left out and
+    reported, the rest is written (the studio's tolerant load). -> the IDs left out"""
+    m = objects(file)
+    if info is None:
+        info = read_info(link)
+    if not m.get(0) or not m.get(1):
+        raise _err("bkBad", _("The running project or the settings are missing in the backup – nothing was "
+                              "written."))
+    full = with_defaults(m, file, info)
+    rejected = [i for i in m if i not in full]       # (KARMA: SLOOP 2.5's SYN kits)
+    newest_ok = dev_format(info.p_count, info.version) if info is not None else 99
+    todo = [i for i in RESTORE + SAMPLES if i in full]
+    total = sum(len(full[i]) for i in todo) or 1
+    done = 0
+    for oid in todo:
+        d = full[oid]
+        try:
+            if oid in (0, 2, 3, 4, 5) and proj_format(d) > newest_ok:
+                raise _err("bkNewer", "newer project format")
+            if oid in SAMPLES:
+                write_sample(link, oid, d)
+            elif write_object(link, oid, d) and d:
+                rejected.append(oid)                 # (an optional object the firmware does not know)
+        except Exception as e:                       # noqa: BLE001 – BackupError (rc), ProtocolError
+            from .backup import BackupError
+            if not isinstance(e, (BackupError, ProtocolError)) or getattr(e, "code", "") == "bkStop":
+                raise
+            rejected.append(oid)
+        done += len(d)
+        if progress:
+            progress(done, total)
+    return sorted(set(rejected), key=(RESTORE + SAMPLES).index)

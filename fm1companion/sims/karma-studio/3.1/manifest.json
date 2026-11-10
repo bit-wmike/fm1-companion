@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "name": "karma-studio",
+  "title": "KARMA studio twin",
+  "version": "3.1",
+  "source_repo": "https://github.com/eatyourgreensstudio-dotcom/karma-fm1",
+  "ref": "v3.1",
+  "commit": "718de454ee8ce0e5c6d12ec5fe5e0ba85d0cb4ba",
+  "license": "GPL-3.0-only",
+  "build_date": "2026-11-10T21:46:55Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "LICENSING.md": {
+      "sha256": "201dba710fe014a53b36f174259281a9de32b330344b11050c1810747cc822bf",
+      "size": 12265
+    },
+    "NOTICE": {
+      "sha256": "c4cacb3103eb7c089b845a840f9e7384a0bc1d03674bec7bfd2218e227d07c5d",
+      "size": 2765
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "deb306ca2c2e59517d405d19c6c040b77e483fa4f9299e3e698cd243bffca47f",
+      "size": 36953
+    },
+    "twin.wasm": {
+      "sha256": "5aaddea4722879e196bba540d4dc1fe2aec5e3c0dba3ff6f984ec16bf6822acc",
+      "size": 898442
+    }
+  },
+  "kind": "studio",
+  "firmware": "karma",
+  "firmware_version": "KARMA 3.1",
+  "identity": "FM-1_926",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/karma_studio.c",
+  "glue_sha256": "fa0de455334bfb5f087356ae485d2e8d53751b47d3fd0932e8a62e0680473220",
+  "source_url": "https://github.com/eatyourgreensstudio-dotcom/karma-fm1/archive/718de454ee8ce0e5c6d12ec5fe5e0ba85d0cb4ba.tar.gz",
+  "tracks": 4,
+  "projects": 4,
+  "release_status": "stable"
+}

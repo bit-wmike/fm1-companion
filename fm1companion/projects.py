@@ -60,6 +60,8 @@ def list_slots(link) -> tuple[list[SlotInfo], int]:
     man = backup.list_objects(link)
     slots = []
     live = 0
+    if backup.is_coralflower(o.id for o in man):
+        return slots, live                          # (CoralFlower: no project slots; 60..67 are pattern sounds)
     for o in man:
         if o.id == 0:
             live = o.size

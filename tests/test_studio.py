@@ -70,7 +70,7 @@ def test_versions_and_pick():
     assert not exact and b.version == "v1.6.0-rc.7"
     assert studio.pick_build("melodee")[0].version == "v1.6.1"          # without a wish: the newest
     with pytest.raises(studio.StudioError):
-        studio.pick_build("sloop")
+        studio.pick_build("no-such-firmware")                         # (SLOOP has a twin now)
     vc = studio.check_versions("v1.6.0-rc.8", device="MELODEE v1.6.0-rc.7")
     assert not vc.ok and vc.message == "Studio läuft mit Melodee v1.6.0-rc.8, dein FM-1 hat v1.6.0-rc.7 – Klang kann abweichen."
     assert studio.check_versions("v1.6.0-rc.8", "v1.6.0-rc.8", "MELODEE v1.6.0-rc.8").ok
@@ -643,3 +643,608 @@ def test_jiant_six_songs_stable(node_studio):
         assert c.build.version == "V10.6z2" and not c.warning and c.projects() == [0]
     finally:
         c.close()
+
+
+# ------------------------------------------------------------------ SLOOP (tools/studio/sloop_studio.c)
+# its release tags; v2.8.5 is the stable its web installer ships (docs/firmware/sloop-2.8.5.fwsc)
+SLOOP_COMMIT = {"2.8.4": "91f30182d9095e0ecdb43396554f2ce5a67df179", "2.8.5": "bac9c05ea7627449405aa10e48da21d75b6c8c56"}
+SLOOP_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 33, 34, 35]   # BK_LIST of a new unit (10, 11 only when not default)
+
+
+def test_sloop_builds_side_by_side():
+    bs = studio.builds("sloop")
+    vs = [b.version for b in bs]
+    assert vs == ["2.8.4", "2.8.5"]
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == [] and b.path.name == b.version and m["firmware_version"] == "SLOOP " + b.version
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "sloop"
+        assert m["ref"] == "v" + b.version and m["commit"] == SLOOP_COMMIT[b.version] and m["license"] == "GPL-3.0-only"
+        assert m["identity"] == "FM-1_900" and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["tracks"] == 4 and m["projects"] == 4 and m["source_repo"] == "https://github.com/isod89/sloop-fm1"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"sloop-fm1-{m['commit']}.tar.gz" in notice
+        assert "isod89" in notice and m["glue"] == "tools/studio/sloop_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        third = (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Apache License" in third and "SIL OPEN FONT LICENSE" in third.upper() and "Electrosmith" in third
+        assert "Emilie Gillet" in third and "CC0" in third
+    assert not any(s.key.startswith("sloop") for s in sims.bundled())
+    assert {b.firmware for b in studio.builds("jiant")} == {"jiant"}
+
+
+def test_sloop_versions_and_pick():
+    b, exact, warn = studio.pick_build("sloop", "FELUCCA SLOOP 2.8.5")   # SLOOP's INFO
+    assert exact and b.version == "2.8.5" and not warn
+    assert studio.pick_build("sloop", "SLOOP 2.8.4")[0].version == "2.8.4"
+    assert studio.pick_build("sloop", "v2.8.5")[1]                        # (device_version)
+    b, exact, warn = studio.pick_build("sloop", "FELUCCA SLOOP 2.8.3")   # older than everything: the oldest
+    assert not exact and b.version == "2.8.4" and "SLOOP v2.8.3" in warn and "2.8.4" in warn
+    b, exact, warn = studio.pick_build("sloop", "FELUCCA SLOOP 2.9")      # newer: the next older one
+    assert not exact and b.version == "2.8.5"
+    assert studio.pick_build("sloop")[0].version == "2.8.5"               # without a wish: the newest = the stable
+    assert studio.version_key("SLOOP 2.8.4") < studio.version_key("SLOOP 2.8.5") < studio.version_key("SLOOP 2.10")
+    assert studio.check_versions("2.8.5", device="FELUCCA SLOOP 2.8.5", firmware="SLOOP").ok
+    vc = studio.check_versions("2.8.5", device="FELUCCA SLOOP 2.8.4", firmware="SLOOP")
+    assert not vc.ok and "SLOOP" in vc.message and "CZ-1" not in vc.message
+    assert studio.firmware_name("sloop") == "SLOOP" and studio.FIRMWARES["sloop"]["projects"] == 4
+    # the device layer: INFO "FELUCCA SLOOP 2.8.5" and the catalog's key "sloop" select the SLOOP twin; the package
+    # identity FM-1_900 is Felucca's too (SLOOP's tools/build.py PRODUCT), so INFO decides
+    from fm1companion.protocol import Info
+    from fm1companion.ui.studio_service import StudioService
+    from fm1companion import firmware
+    assert Info("FELUCCA SLOOP 2.8.5").firmware_name == "sloop"
+    assert StudioService.firmware_for("sloop") == "sloop" and StudioService.firmware_for("skiff") == "skiff"
+    assert firmware.guess_firmware("FM-1_900", "FELUCCA SLOOP 2.8.5") in (("sloop", "v2.8.5"), firmware.guess_firmware(
+        "FM-1_900"))
+    assert firmware.guess_firmware("", "FELUCCA SLOOP 2.8.5") == ("sloop", "v2.8.5")
+
+
+@need_node
+def test_sloop_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_sloop.mjs"), str(studio.SIMS_DIR / "sloop-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"2.8.4", "2.8.5"}
+    for x in res:
+        v = x["firmware_version"]
+        assert x["version_export"] == v and x["info"] == "FELUCCA " + v and x["info_proto"] == 12 and x["ping"] == [0]
+        assert bytes(x["identity_reply"]) == _identity_frame("FM-1_900")   # ota.c, as demo_device expects
+        assert x["ids"] == SLOOP_IDS and x["screen_lit"] > 2000
+        assert {0, 1, 2, 9} <= {int(k) for k in x["sizes"]} and x["sizes"]["2"] == 3816   # FUN6 projects
+        assert all(rc == 0 for rc in x["put_rc"].values())
+        assert all(x["identical"].values()) and x["persisted"] and x["projects_used"] == [0]
+        assert x["live_step0"] == {"note": 48, "vel": 100}
+        a, b = x["takes"]
+        assert a["playing"] and a["leds_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
+        assert x["fork_identical"] and x["stopped"] and x["song_play"] and x["editor_stop"]
+        print(f"{v}: {a['realtime']:.1f}x real time (4 tracks)")
+        assert a["realtime"] > 3
+
+
+def _sloop_song(st, section=0):
+    L = st.link
+    for k in range(3):
+        for i in range(0, 16, 2 + k):
+            L.request(Cmd.TRACK_STEP, [k, i, 1, 48 + 5 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    for i in range(0, 16, 4):                                                # DRUM_STEP: the kick on every beat
+        L.request(33, [i, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert L.request(Cmd.PROJECT, [1, section])[2] == 1                      # SAVE > SECTION A
+
+
+def _sloop_sample(st, slot=1):
+    """a one-zone kit into the user sample slot USR<slot+1> (samples.py's upload, the format of SLOOP's editor)"""
+    import math
+    from fm1companion import samples
+    from fm1companion.vendor import sampleio as sio
+    hdr, data = sio.user_slot("SINE", [([int(12000 * math.sin(i / 7)) for i in range(4000)], 60, None, None)])
+    samples.upload(st.link, slot, hdr, data)
+    return samples.slot_info(st.link)[1][slot]
+
+
+def test_sloop_backup_round_trip_with_suite_code(node_studio, tmp_path):
+    from fm1companion import backup_inspect as BI, sloopbk
+    a = node_studio(firmware="sloop", version="SLOOP 2.8.5")
+    assert a.build.firmware == "sloop" and a.build.version == "2.8.5" and a.tracks == 4 and a.project_slots == 4
+    assert studio.device_version(a.link) == "v2.8.5" and a.info_name == "FELUCCA SLOOP"
+    _sloop_song(a)
+    slot = _sloop_sample(a)
+    assert slot.zones == 1 and slot.name == "SINE"
+    arch = a.backup()                                                        # SLOOP's own format (sloopbk.py)
+    assert arch.sloop and arch.file["format"] == "sloop-backup" and arch.firmware == "FELUCCA SLOOP 2.8.5"
+    assert [o["id"] for o in arch.objects] == SLOOP_IDS and arch.known
+    assert studio.backup_version(arch) == "v2.8.5" and studio.backup_firmware(arch) == "sloop"
+    assert arch.companion["version_string"] == "FELUCCA SLOOP 2.8.5"
+    by = {o["id"]: o["bytes"] for o in arch.objects}
+    assert len(by[33]) > sloopbk.SMP_DATA_OFF and not by[32] and sloopbk.proj_format(by[2]) == 6
+    # the file as SLOOP's web editor writes it (JSON.stringify(f, null, 1)), without the companion block: the format tells
+    p = tmp_path / "sloop.json"
+    backup.write_file(p, arch.file)
+    plain = json.loads(p.read_text("utf-8"))
+    assert p.read_text("utf-8") == sloopbk.dumps(plain)
+    plain.pop("companion")
+    parch = backup.read(plain)
+    assert studio.backup_firmware(parch) == "sloop" and studio.backup_version(parch) == "v2.8.5"
+    # into the older twin via backup.restore (= the editor protocol, SLOOP's order): byte-identical back
+    b = node_studio(firmware="sloop", version="2.8.4")
+    b.open_from_backup(parch)
+    back = {o["id"]: o["bytes"] for o in b.backup().objects}
+    assert back == by and b.projects() == [0] and not b.rejected
+    assert b.load_project(0) == 0 and b.load_project(1) == 1
+    vc = b.check_versions(archive=arch)
+    assert not vc.ok and "SLOOP" in vc.message
+    c = studio.Studio.for_backup(parch, backend="node")                     # the backup's firmware and version
+    try:
+        assert c.build.firmware == "sloop" and c.build.version == "2.8.5" and not c.warning and c.projects() == [0]
+        assert c.play()["busy"] and not c.stop()["busy"]                   # st_transport_set
+        assert c.play("song")["busy"] and not c.stop()["busy"]
+    finally:
+        c.close()
+    # the tolerant load (the studio page's): nothing of its own firmware skipped; a section in a newer project format
+    # than the twin reads, and a damaged settings object, are left out and named; the rest is taken
+    d = node_studio(firmware="sloop")
+    d.open_from_backup(arch, tolerant=True)
+    assert d.rejected == [] and {o["id"]: o["bytes"] for o in d.backup().objects} == by
+    f = json.loads(backup.dumps(arch.file))
+    for o in f["objects"]:
+        if o["id"] in (1, 3):
+            raw = bytearray(by[2] if o["id"] == 3 else by[1])
+            if o["id"] == 3:
+                raw[0] = ord("9")                                            # "FUN9"
+            else:
+                raw[0:4] = b"XXXX"                                           # (not "PER3")
+            o.update(len=len(raw), crc=backup.crc32(bytes(raw)), data=sloopbk.b64enc(bytes(raw)))
+    e = node_studio(firmware="sloop")
+    e.open_from_backup(backup.read(f), tolerant=True)
+    assert sorted(e.rejected) == [1, 3] and e.projects() == [0]
+    # the inspector reads it as SLOOP's (sections A..D, the sample slots)
+    rep = BI.inspect(arch)
+    assert rep.firmware_key == "sloop" and BI.is_sloop(rep)
+    assert "A" in rep.obj(2).title and "USR2" in rep.obj(33).title
+    assert BI.compatibility(rep, "sloop", "FELUCCA SLOOP 2.8.5", SLOOP_IDS).ok
+
+
+def test_sloop_demo_device_and_write_back(node_studio):
+    """The demo's SLOOP device (demo_device.py, as the app's demo mode starts it): fetched into the twin, written back
+    with the checks of a real SLOOP (its own protocol, the settings left as they are)."""
+    from fm1companion.demo_device import FakeFM1
+    from fm1companion.transport import Link
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_sloop_backup import LocalTransport
+    dev = FakeFM1(4, "SLOOP 2.8.5")
+    link = Link(LocalTransport(dev))
+    st = node_studio(firmware="sloop", version="SLOOP 2.8.5")
+    arch, vc = st.open_from_device(link, tolerant=True)
+    assert arch.sloop and vc.ok and st.projects() == [0]
+    assert set(st.rejected) <= {1, 9}                                        # (the demo's settings and SYN kits are filler)
+    before = {o["id"]: o["bytes"] for o in backup.read(backup.capture(link, "x", firmware_key="sloop")).objects}
+    _sloop_song(st, section=1)
+    out = st.write_to_device(link, settings=False, exclude=st.rejected)
+    now = {o["id"]: o["bytes"] for o in backup.read(backup.capture(link, "x", firmware_key="sloop")).objects}
+    twin = {o["id"]: o["bytes"] for o in out.objects}
+    for i in now:
+        assert now[i] == (before[i] if i in (1, *st.rejected) else twin[i]), i
+    assert now[3] and now[3] == twin[3]                                       # section B: the twin's
+    other = node_studio(firmware="melodee")
+    with pytest.raises(backup.BackupError, match="SLOOP"):                   # a Melodee twin's data onto SLOOP: refused
+        other.write_to_device(link, force=True)
+
+
+def test_sloop_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="sloop")
+    _sloop_song(st)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="saved", project=0, stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3] and s.peak > 0.05
+    peaks = []
+    for k, p in s.stems.items():
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    assert all(pk > 0.005 for pk in peaks), peaks
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "sloop" and meta["firmware_version"] == "2.8.5" and len(flash) == 0x100000
+
+
+# ------------------------------------------------------------------ CoralFlower (tools/studio/coralflower_studio.c)
+# CoralFlower's releases are tags; its web installer offers the first entry of web/releases.json (0.7.1, the stable),
+# 0.7 is the release before. tools/build.py --release X.Y: INFO "CoralFlower X.Y", the identity PRODUCT FM-1_930
+CORAL_COMMIT = {"0.7": "65c6b767cc446b1c2b85c32b0812d50719fd10a4", "0.7.1": "46790b943bdb5e4143212d83dc495c832eefdbb8"}
+CORAL_STATUS = {"0.7": "previous stable", "0.7.1": "stable"}
+
+
+def test_coralflower_builds_side_by_side():
+    bs = studio.builds("coralflower")
+    assert [b.version for b in bs] == ["0.7", "0.7.1"]
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == [] and b.path.name == b.version
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "coralflower"
+        assert m["ref"] == "v" + b.version and m["commit"] == CORAL_COMMIT[b.version] and m["license"] == "GPL-3.0-only"
+        assert m["release_status"] == CORAL_STATUS[b.version]
+        assert m["identity"] == "FM-1_930" and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["tracks"] == 4 and m["projects"] == 0 and m["source_repo"] == "https://github.com/FicusFicusov/CoralFlower"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "LICENSING-choralroot.md", "THIRD_PARTY.txt", "twin.wasm"} <= \
+            set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"CoralFlower-{m['commit']}.tar.gz" in notice
+        assert "FicusFicusov" in notice and "ChoralRoot" in notice and m["glue"] == "tools/studio/coralflower_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        third = (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Apache License" in third and "Helena Zhang" in third and "Inter Project" in third and "Fukiai" in third
+    assert not any(s.key.startswith("coralflower") for s in sims.bundled())
+    for fw in ("melodee", "skiff", "jiant"):                                 # the other twins are untouched
+        assert {b.firmware for b in studio.builds(fw)} == {fw}
+
+
+def test_coralflower_versions_and_pick():
+    b, exact, warn = studio.pick_build("coralflower", "CoralFlower 0.7.1")   # CoralFlower's INFO
+    assert exact and b.version == "0.7.1" and not warn
+    b, exact, warn = studio.pick_build("coralflower", "CoralFlower 0.7")
+    assert exact and b.version == "0.7"
+    b, exact, warn = studio.pick_build("coralflower", "CoralFlower 0.6.1")   # older than everything: the oldest
+    assert not exact and b.version == "0.7" and "CoralFlower v0.6.1" in warn
+    b, exact, warn = studio.pick_build("coralflower", "CoralFlower 0.8")     # newer: the next older one
+    assert not exact and b.version == "0.7.1"
+    b, exact, warn = studio.pick_build("coralflower", "CoralFlower 0.7.2-rc1")
+    assert not exact and b.version == "0.7.1"
+    assert studio.pick_build("coralflower")[0].version == "0.7.1"           # without a wish: the newest = the stable
+    assert studio.pick_build("coralflower", studio.norm_version("CoralFlower 0.7"))[0].version == "0.7"
+    # the generic order is CoralFlower's (0.6.1 < 0.6.2-rc1 < 0.7 < 0.7.1)
+    order = ["0.4.2", "0.6", "0.6.1", "0.6.2-rc1", "0.7", "0.7.1"]
+    assert sorted(reversed(order), key=studio.version_key) == order
+    assert studio.check_versions("0.7.1", device="CoralFlower 0.7.1", firmware="CoralFlower").ok
+    vc = studio.check_versions("0.7.1", device="CoralFlower 0.7", firmware="CoralFlower")
+    assert not vc.ok and "CoralFlower" in vc.message and "CZ-1" not in vc.message
+    assert studio.firmware_name("coralflower") == "CoralFlower" and studio.FIRMWARES["coralflower"]["projects"] == 0
+    assert "CoralFlower" in studio.firmware_names() and "JIANT FM" in studio.firmware_names("or")
+    # the device layer: INFO "CoralFlower 0.7.1", the catalog's key "coralflower" and the identity FM-1_930
+    from fm1companion.protocol import Info
+    from fm1companion.ui.studio_service import StudioService
+    from fm1companion import firmware
+    assert Info("CoralFlower 0.7.1").firmware_name == "coralflower"
+    assert StudioService.firmware_for("coralflower") == "coralflower"
+    assert firmware.guess_firmware("", "CoralFlower 0.7.1")[0] == "coralflower"
+    assert firmware.guess_firmware("FM-1_930")[0] in ("coralflower", "")   # ("" if this machine remembered it otherwise)
+
+
+@need_node
+def test_coralflower_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_coralflower.mjs"),
+                        str(studio.SIMS_DIR / "coralflower-studio")], capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"0.7", "0.7.1"}
+    for x in res:
+        v = x["firmware_version"]
+        assert x["version_export"] == x["info"] == "CoralFlower " + v
+        assert x["info_tail"] == [0] * 7 + [0x42, 1, 3, 0x43, 1, 2]       # no editor; backup read + restore, RESTART
+        assert bytes(x["identity_reply"]) == _identity_frame("FM-1_930")   # ota.c, as demo_device expects
+        assert x["ids"] == backup.CORALFLOWER_IDS and x["fresh_sizes"] == {"30": 200} and x["screen_lit"] > 10000
+        assert x["key_lit"] and x["rec_flag"] and {30, 50, 51, 52, 53, 54, 55} <= {int(k) for k in x["sizes"]}
+        assert all(rc == 0 for rc in x["put_rc"].values()) and x["restart_rc"] == [0]
+        assert all(x["identical"].values()) and x["persisted"] and x["bad_crc"] == 2 and x["unknown_id"] == 1
+        a, b = x["takes"]
+        assert a["playing"] and a["play_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
+        assert a["note_ons"] > 0 and a["project"] == 255 and not a["projects"]
+        assert x["fork_identical"] and x["stopped"] and x["song_play"] and x["restart_play"]
+        print(f"{v}: {a['realtime']:.1f}x real time (4 parts)")
+        assert a["realtime"] > 3
+
+
+def _coral_take(st):
+    """a take on the twin's panel, as a player records one (no editor in CoralFlower): REC on HOME, a bar counted in,
+    four chords, REC again -> pattern A; the clock held still meanwhile (only these steps move it)"""
+    be = st.backend
+    st.set_clock(False)
+    st.press("REC")
+    be.call("run", ms=2100)
+    for k in (7, 11, 14, 9):
+        be.call("keys", mask=1 << k)
+        be.call("run", ms=450)
+        be.call("keys", mask=0)
+        be.call("run", ms=50)
+    st.press("REC")
+    be.call("run", ms=2500)
+    st.stop()
+    be.call("run", ms=100)
+    st.set_clock(True)
+
+
+def test_coralflower_backup_round_trip_with_suite_code(node_studio):
+    a = node_studio(firmware="coralflower", version="CoralFlower 0.7.1")
+    assert a.build.firmware == "coralflower" and a.build.version == "0.7.1" and a.tracks == 4 and a.project_slots == 0
+    assert studio.device_version(a.link) == "v0.7.1" and a.info_name == "CoralFlower" and a.projects() == []
+    fresh = a.backup()                                                      # a new device: the sound banks empty
+    assert not fresh.objects[0]["size"] and fresh.coralflower and fresh.project_objects() == []
+    _coral_take(a)
+    arch = a.backup()
+    assert [o["id"] for o in arch.objects] == backup.CORALFLOWER_IDS and arch.known
+    assert studio.backup_version(arch) == "v0.7.1" and studio.backup_firmware(arch) == "coralflower"
+    assert arch.companion["version_string"] == "CoralFlower 0.7.1"
+    seq = {o["id"]: o["bytes"] for o in arch.objects if 50 <= o["id"] <= 55}
+    assert all(seq.values())
+    # a backup of CoralFlower's own web installer (no companion block; 'firmware' is the INFO string) and one with an
+    # unknown name: the inventory tells
+    plain = json.loads(backup.dumps(arch.file))
+    plain.pop("companion")
+    plain["firmware"] = "CoralFlower 0.7.1"
+    assert studio.backup_firmware(backup.read(plain)) == "coralflower"
+    plain["firmware"] = "?"
+    assert studio.backup_firmware(backup.read(plain)) == "coralflower"
+    # into the 0.7 twin through backup.restore (the backup protocol, then RESTART): the twin restarts (a power cycle)
+    # and reads the patterns in
+    b = node_studio(firmware="coralflower", version="0.7")
+    b.open_from_backup(arch)
+    back = {o["id"]: o["bytes"] for o in b.backup().objects}
+    assert {i: back[i] for i in seq} == seq and not b.rejected
+    vc = b.check_versions(archive=arch)
+    assert not vc.ok and "CoralFlower" in vc.message
+    c = studio.Studio.for_backup(arch, backend="node")                     # the backup's firmware and version
+    try:
+        assert c.build.firmware == "coralflower" and c.build.version == "0.7.1" and not c.warning
+        assert c.projects() == [] and c.load_project(0) == 1
+        assert c.play()["busy"] and not c.stop()["busy"]                   # st_transport_set (PLAY: pattern A)
+        assert c.play("song")["busy"] and not c.stop()["busy"]
+    finally:
+        c.close()
+    # the tolerant load (the studio page's) skips nothing of its own firmware
+    d = node_studio(firmware="coralflower", version="0.7.1")
+    d.open_from_backup(arch, tolerant=True)
+    assert d.rejected == [] and {o["id"]: o["bytes"] for o in d.backup().objects}[50] == seq[50]
+    # writing back (the studio's write_to_device; here onto another twin as the "FM-1"): every object but the
+    # settings (30) when asked, then RESTART
+    e = node_studio(firmware="coralflower", version="0.7.1")
+    before = {o["id"]: o["bytes"] for o in e.backup().objects}
+    a.write_to_device(e.link, settings=False)
+    after = {o["id"]: o["bytes"] for o in e.backup().objects}
+    assert {i: after[i] for i in seq} == seq and after[30] == before[30]
+    # the inspector names CoralFlower's objects (no projects, no sample slots, 8 the FM6 bank in use)
+    from fm1companion import backup_inspect as BI
+    rep = BI.inspect(arch)
+    assert rep.firmware_key == "coralflower" and BI.inspect(backup.read(plain)).firmware_key == "coralflower"
+    for oid in (50, 55, 60, 64, 67):
+        assert rep.obj(oid).group == BI.G_PROJECTS and "USR" not in rep.obj(oid).title and not rep.obj(oid).slot, oid
+    assert rep.obj(30).group == BI.G_SETTINGS and "FM6" in rep.obj(8).title and rep.projects == []
+    assert BI.skip_ids(rep) == set() and not rep.warnings
+    comp = BI.compatibility(rep, "coralflower", "CoralFlower 0.7.1", backup.CORALFLOWER_IDS)
+    assert comp.ok and 8 in comp.allowed_ids
+
+
+def test_coralflower_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="coralflower")
+    _coral_take(st)
+    st.link.request(Cmd.BACKUP_LIST, [], timeout=3.0)                      # (LIST writes the patterns not yet saved)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="saved", stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3] and s.peak > 0.05
+    peaks = []
+    for k, p in s.stems.items():
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    # the take is on the Chords track; the bass, the LAYER and the drums have nothing in pattern A (and a stem carries
+    # neither the metronome's click nor the power-on sound)
+    assert peaks[0] > 0.05 and max(peaks[1:]) < 0.05, peaks
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "coralflower" and meta["firmware_version"] == "0.7.1" and len(flash) == 0x100000
+
+
+def test_coralflower_inventory_in_backup_layer():
+    """CoralFlower: 26 objects (ChoralRoot's sounds 6..11, its settings 30, loop 31, the sequencer 50..55, the sounds'
+    edits 56..58, the pattern sounds 59..67); 50..63 are no sample slots, 64..67 no projects, no object 0 or 1."""
+    ids = backup.CORALFLOWER_IDS
+    assert len(ids) == 26 and backup.known_ids(ids) == ids and backup.is_coralflower(ids)
+    for n in (8, 14, 17):                                                   # the older releases' inventories
+        assert backup.is_coralflower(ids[:n]) and backup.known_ids(ids[:n]) in (ids[:n], None)
+    assert backup.known_ids(list(range(17))) == list(range(17))             # (Melodee's 17 stays known)
+    assert not backup.is_coralflower(list(range(26))) and not backup.is_coralflower(ids[:20])
+    assert backup.is_sample(50) and not backup.is_sample(50, coral=True)
+    assert backup.is_project(64) and not backup.is_project(64, coral=True)
+    assert "USR" not in backup.object_title(50, coral=True) and "Project" not in backup.object_title(64, coral=True)
+    # a CoralFlower archive whose sound banks (its first objects) are empty is a valid backup; a Melodee 1.6 check
+    # (project ids 64..91) does not apply to its pattern sounds 64..67
+    f = {"format": backup.FORMAT, "version": 1, "firmware": "CoralFlower 0.7.1", "objects": [
+        {"id": i, "size": 4 if i in (30, 64) else 0, "crc": backup.crc32(b"abcd") if i in (30, 64) else 0,
+         "data": base64.b64encode(b"abcd" if i in (30, 64) else b"").decode()} for i in ids]}
+    arch = backup.read(f)
+    assert arch.coralflower and arch.project_objects() == []
+    backup.check_16(arch, [backup.ObjInfo(i, 0, 0) for i in ids])
+    with pytest.raises(backup.BackupError):
+        backup.read({**f, "objects": [{**o, "size": 0, "crc": 0, "data": ""} for o in f["objects"]]})
+
+
+# ------------------------------------------------------------------ KARMA (tools/studio/karma_studio.c)
+# KARMA (eatyourgreensstudio-dotcom/karma-fm1, a SLOOP fork): v3.1 is what its web installer serves (docs/webapp/installer,
+# 2026-11-10), v3.0.5 the release before. Every build answers INFO "FELUCCA KARMA X.Y" and the identity FM-1_926
+# (tools/build.py PRODUCT); it speaks SLOOP's backup protocol (34-36) and writes SLOOP's "sloop-backup" files.
+KARMA_COMMIT = {"3.0.5": "23304e93d17d12a79546879d60d58c5c3421aac5", "3.1": "718de454ee8ce0e5c6d12ec5fe5e0ba85d0cb4ba"}
+KARMA_STATUS = {"3.0.5": "previous stable", "3.1": "stable"}
+KARMA_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 33, 34, 35]   # editor.c ED_BK_IDS (10, MIDI LEARN: only when learned)
+
+
+def test_karma_builds_side_by_side():
+    bs = studio.builds("karma")
+    vs = [b.version for b in bs]
+    assert vs == ["3.0.5", "3.1"] and [b.path.name for b in bs] == vs      # (KARMA's version string: "KARMA 3.1")
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == []
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "karma"
+        assert m["commit"] == KARMA_COMMIT[b.version] and m["ref"] == "v" + b.version and m["version"] == b.version
+        assert m["firmware_version"] == "KARMA " + b.version
+        assert m["license"] == "GPL-3.0-only" and m["release_status"] == KARMA_STATUS[b.version]
+        assert m["identity"] == "FM-1_926" and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["tracks"] == 4 and m["projects"] == 4
+        assert m["source_repo"] == "https://github.com/eatyourgreensstudio-dotcom/karma-fm1"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"karma-fm1-{m['commit']}.tar.gz" in notice
+        assert "Ariel Muchnik" in notice and m["glue"] == "tools/studio/karma_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        third = (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Emilie Gillet" in third and "Erica Synths" in third and "Terminus" in third and "Electrosmith" in third
+        assert ("Mozilla Public License" in third) == (b.version == "3.1")      # (3.1: the screen reader)
+    assert not any(s.key.startswith("karma") for s in sims.bundled())
+
+
+def test_karma_versions_and_pick():
+    b, exact, warn = studio.pick_build("karma", "FELUCCA KARMA 3.1")      # KARMA's INFO
+    assert exact and b.version == "3.1" and not warn
+    b, exact, warn = studio.pick_build("karma", "KARMA 3.0.5")
+    assert exact and b.version == "3.0.5"
+    b, exact, warn = studio.pick_build("karma", "FELUCCA KARMA 3.0.4")    # between nothing and 3.0.5: the oldest
+    assert not exact and b.version == "3.0.5" and "KARMA" in warn
+    b, exact, warn = studio.pick_build("karma", "FELUCCA KARMA 3.2")      # newer: the next older one
+    assert not exact and b.version == "3.1"
+    assert studio.pick_build("karma")[0].version == "3.1"            # without a wish: the newest = the stable
+    assert studio.pick_build("karma", studio.norm_version("FELUCCA KARMA 3.1"))[0].version == "3.1"
+    assert studio.check_versions("3.1", device="FELUCCA KARMA 3.1", firmware="KARMA").ok
+    vc = studio.check_versions("3.1", device="FELUCCA KARMA 3.0.5", firmware="KARMA")
+    assert not vc.ok and "KARMA" in vc.message and "CZ-1" not in vc.message
+    assert studio.firmware_name("karma") == "KARMA" and studio.FIRMWARES["karma"]["projects"] == 4
+    # the device layer: INFO, the identity and the twin's key select the KARMA twin (KARMA is not in the catalog)
+    from fm1companion import firmware
+    from fm1companion.protocol import Info
+    from fm1companion.ui.common import fw_label
+    from fm1companion.ui.studio_service import StudioService
+    assert Info("FELUCCA KARMA 3.1").firmware_name == "karma" and Info("FELUCCA SLOOP 2.8.3").firmware_name == "sloop"
+    assert StudioService.firmware_for("karma") == "karma" and fw_label("FELUCCA KARMA 3.1") == "KARMA 3.1"
+    assert firmware.guess_firmware("", "FELUCCA KARMA 3.1") == ("karma", "v3.1")
+    assert firmware.guess_firmware("FM-1_926")[0] in ("karma", "")          # ("" if this machine remembered it otherwise)
+
+
+@need_node
+def test_karma_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_karma.mjs"), str(studio.SIMS_DIR / "karma-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"3.0.5", "3.1"}
+    for x in res:
+        v = x["firmware_version"]
+        assert x["version_export"] == v and x["info"] == "FELUCCA " + v and x["ping"] == [0]
+        assert x["ntrk"] == 4 and x["proto"] == 11
+        assert bytes(x["identity_reply"]) == _identity_frame("FM-1_926")   # ota.c, as demo_device expects
+        assert x["ids"] == KARMA_IDS and x["screen_lit"] > 2000
+        assert {0, 1, 2, 3, 4, 5, 9} <= {int(k) for k in x["sizes"]}      # the working project, settings, A..D, HEX kits
+        assert all(rc == 0 for rc in x["put_rc"].values())
+        assert all(x["identical"].values()) and x["persisted"] and x["projects_used"] == [0, 1, 2, 3]
+        assert x["live_step0"] == {"note": 45, "vel": 100}
+        a, b = x["takes"]
+        assert a["playing"] and a["play_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
+        assert x["fork_identical"] and x["stopped"] and x["load_while_playing"] == 2
+        assert x["song_play"] and x["song_stop"]
+        print(f"{v}: {a['realtime']:.1f}x real time (4 tracks)")
+        assert a["realtime"] > 3
+
+
+def _karma_song(st, parts=1):
+    L = st.link
+    for k in range(4):
+        for i in range(0, 16, 2 + k % 2):
+            L.request(Cmd.TRACK_STEP, [k, i, 1, (36 + 2 * (i % 3)) if k == 3 else 45 + 5 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    for p in range(parts):
+        assert L.request(Cmd.PROJECT, [1, p])[2] == 1                      # part A (B, C, D)
+
+
+def test_karma_backup_round_trip_with_suite_code(node_studio):
+    a = node_studio(firmware="karma", version="FELUCCA KARMA 3.0.5")
+    assert a.build.firmware == "karma" and a.build.version == "3.0.5" and a.tracks == 4 and a.project_slots == 4
+    assert studio.device_version(a.link) == "v3.0.5" and a.info_name == "FELUCCA KARMA"
+    assert a.info["version"] == a.build.manifest["firmware_version"] == "KARMA 3.0.5"
+    assert backup.protocol(a.link)[0] == backup.SLOOP                       # (INFO alone tells: SLOOP's commands 34-36)
+    _karma_song(a)
+    arch = a.backup()
+    assert arch.sloop and [o["id"] for o in arch.objects] == KARMA_IDS and arch.firmware == "FELUCCA KARMA 3.0.5"
+    assert studio.backup_version(arch) == "v3.0.5" and studio.backup_firmware(arch) == "karma"
+    assert arch.companion["version_string"] == "FELUCCA KARMA 3.0.5"
+    by = {o["id"]: o["bytes"] for o in arch.objects}
+    from fm1companion import sloopbk
+    assert sloopbk.proj_format(by[0]) == sloopbk.proj_format(by[2]) == 7 and by[8] == b""     # FUN7; FM6 is gone
+    # a backup of KARMA's own web editor (no companion block; its 'firmware' is the INFO string)
+    plain = json.loads(backup.dumps(arch.file))
+    plain.pop("companion")
+    assert studio.backup_firmware(backup.read(plain)) == "karma"
+    # into the 3.1 twin through the suite's SLOOP restore (format 7 accepted on KARMA: its own editor refuses it)
+    b = node_studio(firmware="karma", version="3.1")
+    b.open_from_backup(backup.read(plain))
+    back = {o["id"]: o["bytes"] for o in b.backup().objects}
+    assert all(back[i] == by[i] for i in KARMA_IDS) and b.projects() == [0] and not b.rejected
+    vc = b.check_versions(archive=arch)
+    assert not vc.ok and "KARMA" in vc.message
+    c = studio.Studio.for_backup(arch, backend="node")                     # the backup's firmware and version
+    try:
+        assert c.build.firmware == "karma" and c.build.version == "3.0.5" and not c.warning and c.projects() == [0]
+        assert c.load_project(0) == 0 and c.load_project(1) == 1
+        assert c.play()["busy"] and not c.stop()["busy"]                   # st_transport_set (no editor TRANSPORT)
+        assert c.play("song")["busy"] and not c.stop()["busy"]
+    finally:
+        c.close()
+    # the tolerant load (the studio page's): SLOOP 2.5's SYN kits ("DSU1") do not fit KARMA's HEX kits – left out and
+    # named (KARMA's editor does the same), everything else is taken
+    f = json.loads(backup.dumps(arch.file))
+    old = b"DSU1" + bytes(60)
+    for o in f["objects"]:
+        if o["id"] == 9:
+            o.update(len=len(old), crc=backup.crc32(old), data=sloopbk.b64enc(old))
+    d = node_studio(firmware="karma", version="3.1")
+    d.open_from_backup(backup.read(f), tolerant=True)
+    assert d.rejected == [9] and d.projects() == [0]
+    assert {o["id"]: o["bytes"] for o in d.backup().objects}[2] == by[2]
+    d.open_from_backup(backup.read(f))                                      # (the plain restore leaves them out too)
+    # writing back (backup.restore_selected without the settings, as the page's "keep the settings")
+    e = node_studio(firmware="karma", version="3.1")
+    written = backup.restore_selected(e.link, arch, [i for i in KARMA_IDS if i != 1])
+    assert 1 not in written and 2 in written and e.projects() == [0]
+    # the inspector and the compatibility check name KARMA (not SLOOP)
+    from fm1companion import backup_inspect as BI
+    rep = BI.inspect(arch)
+    assert rep.firmware_key == "karma" and BI.inspect(backup.read(plain)).firmware_key == "karma"
+    assert BI.compatibility(rep, "karma", "FELUCCA KARMA 3.1", KARMA_IDS).ok
+    assert not BI.compatibility(rep, "sloop", "FELUCCA SLOOP 2.6", KARMA_IDS).ok
+
+
+def test_karma_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="karma")
+    _karma_song(st)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="saved", project=0, stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3] and s.peak > 0.05
+    peaks = []
+    for k, p in s.stems.items():
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    assert all(pk > 0.01 for pk in peaks), peaks          # every track plays something
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "karma" and meta["firmware_version"] == "3.1" and len(flash) == 0x100000
+
+
+def test_karma_in_backup_layer():
+    """KARMA's backups are SLOOP's (format, commands, objects 0..10 and 32..35); its projects are format 7 (FUN7)."""
+    from fm1companion import sloopbk
+    from fm1companion.protocol import Info, parse_info
+    assert sloopbk.dev_format(71, "FELUCCA KARMA 3.1") == 7 and sloopbk.dev_format(71, "FELUCCA SLOOP 2.6") == 6
+    assert sloopbk.dsu_old(b"DSU1....") and not sloopbk.dsu_old(b"HEX1....")
+    assert backup.SLOOP_PROTOCOL == ("sloop", "karma") and all(i in sloopbk.RESTORE + sloopbk.SAMPLES for i in KARMA_IDS)
+
+    class FakeLink:                                     # an FM-1 that only answers INFO
+        def __init__(self, version):
+            self.raw = [*version.encode(), 0, 0, 71, 108, 64, 63, 4, 11]
+
+        def request(self, cmd, args=(), timeout=1.0, retries=0):
+            assert cmd == Cmd.INFO
+            return self.raw
+    assert parse_info(FakeLink("FELUCCA KARMA 3.1").raw).firmware_name == "karma"
+    assert backup.protocol(FakeLink("FELUCCA KARMA 3.1"))[0] == backup.SLOOP
+    assert backup.protocol(FakeLink("FELUCCA KARMA 3.1"), "karma")[0] == backup.SLOOP
+    karma = {"format": "sloop-backup", "version": 1, "firmware": "FELUCCA KARMA 3.1", "date": "", "objects": [
+        {"id": i, "len": 4, "crc": backup.crc32(b"\x37NUF"), "data": sloopbk.b64enc(b"\x37NUF")} for i in (0, 1)]}
+    arch = backup.read(karma)
+    with pytest.raises(backup.BackupError, match="KARMA"):              # KARMA's projects onto SLOOP: refused, unwritten
+        backup._match(FakeLink("FELUCCA SLOOP 2.6"), arch)
+    assert backup._match(FakeLink("FELUCCA KARMA 3.1"), arch)[0] == backup.SLOOP
+    assert Info("FELUCCA KARMA 3.1").firmware_name == "karma"

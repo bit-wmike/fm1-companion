@@ -8,9 +8,11 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 | Step | Firmware | Status |
 |---|---|---|
 | 1 | **Melodee** (priority 1), matching the version on the device (1.6.1, 1.6.0, 1.6.0-rc.7 and rc.8 bundled) | **done in 2.2.0**, 1.6.0 since 2.3.0, 1.6.1 since 2.3.2 (page "Studio", virtual device, playback target "Im Studio" – in the Studio) |
-| 2 | **SLOOP** (latest stable, currently 2.8.4) | only once Melodee runs well |
+| 2 | **SLOOP**, the stable of its installer (2.8.5), plus the release before (2.8.4) | **done** (branch `studio-sloop`; same page, virtual device, backup ↔ twin in SLOOP's own format, write back) |
 | 3 | **Skiff**, matching the version on the device (2.2 and 2.1.1 bundled) | **done** (branch `studio-skiff`; same page, virtual device, backup ↔ twin, write back) |
 | 3b | **JIANT FM**, the public stable of its installer (V10.6z2), plus the earlier stable V10.60 and beta V10.61 | **done** (branch `studio-jiant`; same page, virtual device, backup ↔ twin, write back) |
+| 3c | **CoralFlower**, the stable of its installer (0.7.1), plus 0.7 | **done** (branch `studio-coralflower`; same page, virtual device, backup ↔ twin, write back) |
+| 3d | **KARMA**, the version its installer serves (3.1), plus 3.0.5 | **done** (branch `studio-karma`; same page, virtual device, backup ↔ twin through SLOOP's protocol, write back) |
 | 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V16 may differ | after that |
 | – | **Original V16** | **paused, not dropped** |
 
@@ -111,6 +113,79 @@ backup restored onto V10.6p or later loses songs 7 and 8 (the studio's tolerant 
 before writing; JIANT's own editor skips them); the catalog entry
 "jiant-fm" still says protocol "none" (the device answers the editor protocol all the same). Checked only against the
 twin itself, never a real JIANT FM-1 (docs/UNTESTED.md).
+
+## Status SLOOP (2.8.5, 2.8.4)
+
+Done: twin **SLOOP 2.8.5** (tag v2.8.5, commit bac9c05, the stable SLOOP's web installer ships:
+`docs/firmware/sloop-2.8.5.fwsc`) and **2.8.4** (tag v2.8.4, commit 91f3018, the release before), glue layer
+`tools/studio/sloop_studio.c` – SLOOP's unmodified sources included as its own host harness of the whole firmware does
+(`tests/editor_host.c`, `tests/hostsim.c`, `boot_sound_test.c`: SLOOP has no browser emulator of the whole firmware),
+plus `main.c`'s boot, `audio.c`'s ISR, `ota.c`'s identity handshake, USB MIDI out, LEDs and screen. Same `st_*` ABI with
+`st_transport_set` (stop as seq.c's STOP, the song as the SAVE layer's SONG MODE + PLAY). The folder is the number of the
+version (`ui.c` FELUCCA_VERSION "SLOOP 2.8.5" -> `sims/sloop-studio/2.8.5/`), the identity SLOOP's `tools/build.py`
+PRODUCT (FM-1_900, Felucca's too: INFO tells SLOOP).
+Python: `studio.FIRMWARES["sloop"]` ("SLOOP", INFO "FELUCCA SLOOP", 4 tracks, 4 slots = the sections A–D; the build's
+version "2.8.5" without the "SLOOP " of its version string); `backup_firmware()` knows SLOOP by its file format
+("sloop-backup", also the web editor's own files); `StudioService.firmware_for()` takes the device layer's "sloop"
+(INFO "FELUCCA SLOOP …"); the twin loads and writes through SLOOP's own protocol (`sloopbk.py`, commands 34–36, the
+web editor's order); `studio.restore_tolerant` has a SLOOP path (each object on its own, a project format newer than the
+twin reads or a refused object left out and named; the default MIDI LEARN object as the editor adds it). Backup layer:
+SLOOP's inventory (0–11, 32–35) checked against `editor.c` `ED_BK_IDS` / `ed_bk_obj` and the protocol document – it
+matched (no fix needed); `Studio.write_to_device` no longer passes the twin's firmware as the protocol hint (another
+firmware's FM-1 now refuses at once instead of timing out). The demo's SLOOP device reports 2.8.5 (its twin).
+
+Open (SLOOP): the project view and `projectfmt` do not read SLOOP's sections (FUN6; the export dialog offers no "passes
+of the pattern", the name comes from the slot) – a separate parser; one core (MENU › 2ND CORE), no USB audio, no TRS
+MIDI, no USB rescue; the whole song needs a playable song order (an empty section in it: the loop plays to the export's
+limit); versions before 2.8.4 get the 2.8.4 twin with a warning. Checked only against the twin itself and the demo
+device, never a real SLOOP FM-1 (docs/UNTESTED.md).
+
+## Status CoralFlower (0.7.1, 0.7)
+
+Done: twin **CoralFlower 0.7.1** (tag v0.7.1, commit 46790b9: the first entry of `web/releases.json`, what its web
+installer offers) and **0.7** (tag v0.7, commit 65c6b76, the release before), glue layer
+`tools/studio/coralflower_studio.c` – CoralFlower's own browser emulator (`tools/emu/web/emu_web.c`, the firmware through
+`tools/emu/emu_firmware.h`, as `tests/cf_backup_test.c` builds it) with the USB SysEx path added (`cf_backup.c`'s
+backup protocol, `ota.c`'s identity handshake). INFO "CoralFlower 0.7.1", identity FM-1_930 (constant). Optional exports
+`st_transport_set` (PLAY's events) and `st_track_mute_set` (stems: no editor TRACK_MIX in CoralFlower).
+Python: `studio.FIRMWARES["coralflower"]` ("CoralFlower", 4 parts, no project slots, settings object 30, restart after a
+restore); `backup_firmware()` knows it by the companion block, the INFO string or the inventory; the device layer by INFO
+and identity. Backup layer: CoralFlower's inventory (26 objects; 8, 14, 17 in older releases) is known
+(`backup.is_coralflower`, `KNOWN_ID_SETS[26]`, an alternative for 17); bugs fixed on the way: a fresh CoralFlower
+backup was refused (its first objects, the sound banks, are empty: "does not contain the running music or the
+settings"), 50–63 would have been restored as sample slots, the pattern sounds 64–67 counted as Melodee projects (the
+restore's "larger recording memory" refusal, the Melodee 1.6 refusal, the Projects page's slots, health, autobackup),
+8 (CoralFlower's FM6 bank) was left out of partial restores as Melodee's retired bank; a restore now ends with
+RESTART, as CoralFlower's installer does, so the device reads what was restored.
+
+Open (CoralFlower): no project view or `projectfmt` for its patterns (the export dialog offers no "passes of the
+pattern"); music is made on the panel only (no editor protocol: the editor pages and Compose do not work on it); the
+catalog entry "coralflower" still says protocol "none"; one core, no USB audio, no TRS MIDI; checked only against the
+twin itself, never a real CoralFlower FM-1 (docs/UNTESTED.md).
+
+## Status KARMA (3.1, 3.0.5)
+
+Done: twin **KARMA 3.1** (tag `v3.1`, commit 718de45, what KARMA's web installer serves) and **3.0.5** (tag `v3.0.5`,
+commit 23304e9, the release before), glue layer `tools/studio/karma_studio.c` – KARMA's unmodified sources in
+`felucca.c`'s order on its own host-test base, Plaits / Elements (`firmware/mi`, C++) compiled with WASI SDK clang++
+and linked in. Identity FM-1_926 (`tools/build.py` PRODUCT, every build), INFO "FELUCCA KARMA 3.1". Python:
+`studio.FIRMWARES["karma"]` ("KARMA", INFO "FELUCCA", 4 tracks, 4 slots = the song's parts A–D, backups in SLOOP's
+protocol); `protocol.Info.firmware_name` "karma", `firmware.guess_firmware()` (INFO, FM-1_926), `backup.protocol()`
+(`SLOOP_PROTOCOL`: commands 34–36 for SLOOP and KARMA – before, a KARMA FM-1 was taken for plain Felucca and its
+backup asked with Melodee's commands 65–67, which KARMA does not answer), `backup_firmware()` (the `sloop-backup`
+file's `firmware` "FELUCCA KARMA …"), `backup_inspect` / `autobackup` firmware keys, `sloopbk.dev_format` (KARMA's
+projects are format 7: SLOOP's check refused them as "newer"), `sloopbk.with_defaults` (SLOOP 2.5's DSU1 kits left out
+on KARMA, as KARMA's editor does), `sloopbk.restore_tolerant` (the studio's tolerant load in SLOOP's format – also the SLOOP twin's since the
+merge: `studio.restore_tolerant` takes it for every twin whose `FIRMWARES` entry says `"backup": "sloop"`), a KARMA
+backup refused onto SLOOP before anything is written.
+
+Open (KARMA): the project view and `projectfmt` do not read KARMA's FUN7 projects; the Projects page lists KARMA's
+parts by number, not as A–D (it checks for "sloop" only), and `projects.family` does not know KARMA (its FUN7 projects
+read as SLOOP's); KARMA's three saved songs (SAVE on the SONG screen) are in
+no backup (KARMA's own neither); no USB audio / STEMS, no TRS MIDI, one core in the twin; KARMA is not in the bundled
+catalog, so installing it from the app needs a built-in firmware entry (its packages are on its GitHub Pages,
+`docs/firmware/karma-<version>.fwsc`, checksum in `docs/webapp/installer/index.html`), not only the twin. Checked only
+against the twin itself, never a real KARMA FM-1 or a backup of KARMA's own web editor (docs/UNTESTED.md).
 
 ## Second route: fm1-emu (processor emulation)
 

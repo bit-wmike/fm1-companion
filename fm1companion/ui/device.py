@@ -123,7 +123,8 @@ def firmware_name(key: str) -> str:
             return e.name
     except Exception:  # noqa: BLE001
         pass
-    return key
+    from ..studio import FIRMWARES                  # (a firmware known only by its studio twin, e.g. KARMA)
+    return FIRMWARES.get(key, {}).get("name") or key
 
 
 class FirmwareChoiceDialog(QDialog):
@@ -349,8 +350,9 @@ class DeviceContext(QObject):
                 cmd = os.environ.get("FM1C_DEMO_CMD")
                 if cmd:
                     argv = cmd.split("\x1f")
-                elif port.serial == "DEMO-2":      # second demo device: SLOOP with 4 sample slots
-                    argv = [sys.executable, "-m", "fm1companion.demo_device", "--samples", "4", "--version", "SLOOP 2.8.3"]
+                elif port.serial == "DEMO-2":      # second demo device: SLOOP with 4 sample slots, in the version
+                    argv = [sys.executable, "-m", "fm1companion.demo_device", "--samples", "4",   # of the Studio twin
+                            "--version", "SLOOP 2.8.5"]
                 elif port.serial == "DEMO-3":      # third: firmware without editor protocol (handshake only)
                     argv = [sys.executable, "-m", "fm1companion.demo_device", "--generic", "FM-1_900"]
                 else:
