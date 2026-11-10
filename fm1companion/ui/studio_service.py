@@ -608,7 +608,8 @@ class StudioService(QObject):
         if rej:
             from .. import backup
             jiant = self.st is not None and self.st.build.firmware == "jiant"
-            names = ", ".join(backup.object_title(i, jiant=jiant) for i in rej[:4]) + (" …" if len(rej) > 4 else "")
+            sloop = self.st is not None and S.FIRMWARES.get(self.st.build.firmware, {}).get("backup") == "sloop"
+            names = ", ".join(backup.object_title(i, sloop, jiant=jiant) for i in rej[:4]) + (" …" if len(rej) > 4 else "")
             txt += _(". Not taken over ({n}): {names} – these parts do not fit {firmware} {version} and are left out "
                      "when writing back").format(n=len(rej), names=names, firmware=self.st.firmware_name,
                                                  version=self.st.build.version)

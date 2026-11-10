@@ -9,7 +9,8 @@ the builds (see the simulators' NOTICE).
   python3 tools/make_source_tarballs.py --repo melodee=/path/to/melodee --repo fm1_open=/path/to/fm1_open
                                         [--out dist/sources]
 
-Without --repo, /tmp/<name> is searched (then /tmp/<name in lower case>, e.g. /tmp/jiant for JIANT). If a clone or a commit is missing, the script reports it and
+Without --repo, /tmp/<name> is searched (then /tmp/<name in lower case>, e.g. /tmp/jiant for JIANT, then /tmp/<firmware key>
+of the manifests, e.g. /tmp/karma for karma-fm1). If a clone or a commit is missing, the script reports it and
 exits with code 1 (the remaining tarballs are still written).
 """
 from __future__ import annotations
@@ -25,6 +26,9 @@ ROOT = Path(__file__).resolve().parents[1]
 SIMS = ROOT / "fm1companion" / "sims"
 
 
+FIRMWARE_OF: dict[str, str] = {}         # project name -> the manifests' firmware key ("karma-fm1" -> "karma")
+
+
 def wanted() -> dict[tuple[str, str], list[str]]:
     """(project name, commit) -> list of builds that use it"""
     out: dict[tuple[str, str], list[str]] = {}
@@ -32,8 +36,10 @@ def wanted() -> dict[tuple[str, str], list[str]]:
         d = json.loads(m.read_text("utf-8"))
         repo, commit = d.get("source_repo", ""), d.get("commit", "")
         if repo and commit:
-            out.setdefault((repo.rstrip("/").rsplit("/", 1)[-1], commit), []).append(
-                str(m.parent.relative_to(SIMS)))
+            name = repo.rstrip("/").rsplit("/", 1)[-1]
+            out.setdefault((name, commit), []).append(str(m.parent.relative_to(SIMS)))
+            if d.get("firmware"):
+                FIRMWARE_OF.setdefault(name, d["firmware"])
     return out
 
 
@@ -58,10 +64,13 @@ def main(argv=None) -> int:
     out.mkdir(parents=True, exist_ok=True)
     ok, sums = True, []
     for (name, commit), users in wanted().items():
-        clone = repos.get(name) or repos.get(name.lower())
-        if clone is None:                # (/tmp/<name>, else lower case: JIANT's clone is usually /tmp/jiant)
-            clone = next((p for p in (Path("/tmp") / name, Path("/tmp") / name.lower())
-                          if (p / ".git").exists() or (p / "HEAD").exists()), Path("/tmp") / name)
+        fw = FIRMWARE_OF.get(name, "")
+        clone = repos.get(name) or repos.get(name.lower()) or (repos.get(fw) if fw else None)
+        if clone is None:                # (/tmp/<name>, else lower case: JIANT's clone is usually /tmp/jiant; else the
+            cands = [Path("/tmp") / name, Path("/tmp") / name.lower()]   # firmware key: karma-fm1's is /tmp/karma)
+            if fw:
+                cands.append(Path("/tmp") / fw)
+            clone = next((p for p in cands if (p / ".git").exists() or (p / "HEAD").exists()), Path("/tmp") / name)
         dest = out / f"{name}-{commit}.tar.gz"
         if not (clone / ".git").exists() and not (clone / "HEAD").exists():
             print(f"MISSING: clone of {name} ({clone}) – for {', '.join(users)}", file=sys.stderr)

@@ -3522,6 +3522,10 @@ msgid "Felucca fork; its unmodified firmware code runs in the studio twin"
 msgstr "Felucca-Fork; sein unveränderter Firmware-Code läuft im Studio-Zwilling"
 
 #: fm1companion/diag.py
+msgid "SLOOP fork; its unmodified firmware code runs in the studio twin, with the parts it ports (Mutable Instruments' Plaits, Elements and Clouds by Emilie Gillet, MIT; the LXR-02 drum voices by Erica Synths, GPL-3.0)"
+msgstr "SLOOP-Fork; sein unveränderter Firmware-Code läuft im Studio-Zwilling, mit den Teilen, die er portiert (Plaits, Elements und Clouds von Mutable Instruments, von Emilie Gillet, MIT; die Drum-Stimmen des LXR-02 von Erica Synths, GPL-3.0)"
+
+#: fm1companion/diag.py
 msgid "official open firmware, simulator sources, update tools"
 msgstr "offizielle offene Firmware, Simulator-Quellen, Update-Werkzeuge"
 
@@ -3560,3 +3564,8 @@ msgstr "Ole Martin Bjørndalen u. a.; Christopher Arndt u. a.; NumPy Developers"
 #: fm1companion/diag.py
 msgid "ISC (Feather parts MIT)"
 msgstr "ISC (Feather-Teile MIT)"
+
+#: fm1companion/backup.py
+#, python-brace-format
+msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
+msgstr "Dieses Backup stammt von {backup}, auf dem FM-1 läuft {device}, das KARMAs Projekte und Drumkits nicht lesen kann. Es wurde nichts geschrieben."

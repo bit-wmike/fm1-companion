@@ -1,9 +1,10 @@
 # Studio
 
 Das FM-1 ist das Instrument zum Skizzieren, die Suite ist das Studio. Auf der Seite [Studio](app://page/studio)
-läuft ein **digitaler Zwilling** deines FM-1: dieselbe Firmware wie auf dem Gerät (Melodee, Skiff oder JIANT FM), mit
-seinem kompletten Zustand (Melodee: alle 32 Projekte; Skiff: Projekte A–D und die Pattern-Bank; JIANT FM: die Sections
-aller Songs und der Song-Index; laufende Musik, User-Presets, Einstellungen). Er klingt identisch – nur eben über die
+läuft ein **digitaler Zwilling** deines FM-1: dieselbe Firmware wie auf dem Gerät (Melodee, Skiff, JIANT FM oder
+KARMA), mit seinem kompletten Zustand (Melodee: alle 32 Projekte; Skiff: Projekte A–D und die Pattern-Bank; JIANT FM:
+die Sections aller Songs und der Song-Index; KARMA: die Teile A–D des Songs, die Song-Reihenfolge, die HEX-Drumkits
+und die Sample-Slots; laufende Musik, User-Presets, Einstellungen). Er klingt identisch – nur eben über die
 Lautsprecher am Rechner.
 
 ## So geht's: FM-1 → Studio → WAV oder zurück
@@ -11,12 +12,13 @@ Lautsprecher am Rechner.
 1. **Vom FM-1 holen:** liest ein komplettes Backup vom aktiven FM-1 (Name steht auf dem Knopf) und lädt es in
    den Zwilling. Das Backup landet zusätzlich in [Backups](app://page/backups) – es geht nichts verloren. Am FM-1
    wird nichts verändert (die Wiedergabe stoppt kurz).
-   Alternativ **Aus Backup öffnen …** (jedes Melodee-, Skiff- oder JIANT-FM-Backup – es startet der Zwilling der
-   Firmware des Backups) oder **Letzten Studio-Stand öffnen**.
+   Alternativ **Aus Backup öffnen …** (jedes Melodee-, Skiff-, JIANT-FM- oder KARMA-Backup – es startet der
+   Zwilling der Firmware des Backups) oder **Letzten Studio-Stand öffnen**.
 2. **Spielen und verfeinern:** Das FM-1 auf dem Bildschirm reagiert auf Maus, Rechner-Tastatur (untere Reihe
    Z S X D C …, obere Q 2 W 3 E …), ein MIDI-Keyboard (Auswahl „MIDI-Eingang“) und auf Wunsch die Tasten des
    echten FM-1. Regler: ziehen, Mausrad oder Pfeiltasten. **Leertaste** startet/stoppt. Projekte (Melodee 1–32,
-   Skiff A–D, JIANT FM: die Sections A–D des aktuellen Songs) lädst du rechts in der Liste.
+   Skiff A–D, JIANT FM: die Sections A–D des aktuellen Songs, KARMA: die Teile A–D des Songs) lädst du rechts in der
+   Liste.
 3. **Als WAV exportieren …:** ganzer Song bis zum Ende, eine feste Zahl Sekunden oder Durchläufe des Patterns.
    Standard ist WAV 24 bit (44,1 kHz Stereo), wahlweise 32 bit Fließkomma, gespeichert im Ordner
    „FM-1 Studio“ in deinem Musik-Ordner, Dateiname mit Projektname und Datum. **Einzelspuren (Stems):** je Spur
@@ -25,7 +27,7 @@ Lautsprecher am Rechner.
    nicht bitgenau der Mix.
 4. **Aufs FM-1 zurückschreiben …:** fragt nach, nennt das Gerät, macht vorher automatisch ein
    **Sicherheits-Backup** und schreibt dann Projekte, laufende Musik und Presets. Die Einstellungen des Geräts
-   bleiben, außer du setzt den Haken. Geht nur mit vollem Zugriff (Melodee, Skiff oder JIANT FM verbunden – dieselbe
+   bleiben, außer du setzt den Haken. Geht nur mit vollem Zugriff (Melodee, Skiff, JIANT FM oder KARMA verbunden – dieselbe
    Firmware wie die des Zwillings) und nie auf den Zwilling selbst.
 
 ## Studio-Stand und Rückgängig
@@ -39,7 +41,8 @@ gehört nicht zum Stand.
 ## Versionen
 
 Den Zwilling gibt es in mehreren Versionen (Melodee 1.6.0-rc.7 … 1.6.1, Skiff 2.1.1 und 2.2, JIANT FM V10.6z2 – die
-stabile Version von JIANTs Installer – sowie V10.60 und V10.61). Die App wählt Firmware
+stabile Version von JIANTs Installer – sowie V10.60 und V10.61, KARMA 3.1 – die Version, die sein Installer
+ausliefert – sowie 3.0.5). Die App wählt Firmware
 und Version deines FM-1 bzw. des Backups. Passt die Version nicht genau, zeigt ein Hinweis oben: „Studio läuft mit
 Melodee …, dein FM-1 hat … – Klang kann abweichen.“
 Zurückschreiben auf ein FM-1 mit anderer Version geht dann nur mit dem Experten-Haken.
@@ -56,7 +59,8 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
 
 ## Grenzen
 
-* Bisher **Melodee**, **Skiff** und **JIANT FM**. SLOOP und die Original-Firmware (über FM1 Open) folgen später.
+* Bisher **Melodee**, **Skiff**, **JIANT FM** und **KARMA**. SLOOP und die Original-Firmware (über FM1 Open) folgen
+  später.
 * Skiff: „Ganzer Song bis zum Ende“ endet nur mit SONG ONCE (sonst läuft Skiff in Schleife); der Skiff-Zwilling hat
   einen Kern (MENU › CPU 2 CORES wirkt nicht), kein USB-Audio und kein TRS-MIDI. Die Projektansicht liest Skiffs
   Songs noch nicht.
@@ -65,6 +69,11 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
   USB-Audio (die INPUT-Engine hört Stille). Eine JIANT-Version ohne eigenen Zwilling (z. B. V10.6c … V10.6z10) läuft
   mit dem nächstälteren Zwilling, mit Hinweis. Ab V10.6p hat JIANT 6 Songs: Songs 7 und 8 eines älteren Backups
   bleiben weg (das Studio nennt sie). Die Projektansicht liest JIANTs Songs noch nicht.
+* KARMA: Der Zwilling hat einen Kern (wie KARMAs eigener Ein-Kern-Build), kein USB-Audio (MENU › USB AUDIO
+  = STEMS wirkt nicht), kein TRS-MIDI und keine USB-Rettung. KARMA speichert seine Backups im Format von SLOOP; ein
+  SLOOP-Backup (bis 2.6) lässt sich auf ein KARMA-FM-1 schreiben (die SYN-Kits von SLOOP 2.5 bleiben weg, wie in KARMAs
+  Editor), ein KARMA-Backup nie auf SLOOP. KARMAs drei gespeicherte Songs (SAVE auf der SONG-Seite) gehören nicht zum
+  Backup – auch KARMAs eigenes Backup lässt sie weg. Die Projektansicht liest KARMAs Teile noch nicht.
 * Der Zwilling hat keine CPU-Grenze: das Gerät lässt bei Überlast Stimmen weg, der Zwilling nie. Fließkomma-Teile
   können in den letzten Bits abweichen (unhörbar). Kein Bluetooth, kein USB-Host, kein Firmware-Update im
   Zwilling.

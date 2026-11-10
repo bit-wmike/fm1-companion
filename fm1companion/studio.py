@@ -99,11 +99,20 @@ FIRMWARES = {
     "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32},
     "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4},
     "jiant": {"name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
+    # KARMA (a SLOOP fork) answers INFO "FELUCCA KARMA 3.1" (its version string "KARMA 3.1": the twin's version 3.1); three synth tracks and the
+    # drum track; its four projects are the song's parts A..D. It speaks SLOOP's backup protocol (sloopbk.py)
+    "karma": {"name": "KARMA", "info": "FELUCCA KARMA", "tracks": 4, "projects": 4, "backup": "sloop"},
 }
 
 
 def firmware_name(key: str) -> str:
     return FIRMWARES.get(key, {}).get("name") or (key or "").capitalize()
+
+
+def firmware_list() -> str:
+    """the firmwares with a studio twin, for the UI: 'Melodee, Skiff, JIANT FM and KARMA'"""
+    names = [v["name"] for v in FIRMWARES.values()]
+    return _("{names} and {last}").format(names=", ".join(names[:-1]), last=names[-1]) if len(names) > 1 else names[0]
 
 
 # ======================================================================= versions and builds
@@ -223,7 +232,11 @@ def builds(firmware: str = "melodee") -> list[TwinBuild]:
             continue
         if m.get("abi") != STUDIO_ABI or m.get("kind") != "studio":
             continue
-        out.append(TwinBuild(m.get("firmware", firmware), m.get("firmware_version") or norm_version(sub.name), sub, m))
+        version = m.get("firmware_version") or norm_version(sub.name)
+        name = FIRMWARES.get(firmware, {}).get("name", "")
+        if name and version.upper().startswith(name.upper() + " "):
+            version = version[len(name) + 1:]          # (KARMA's version string is "KARMA 3.1": the twin's version 3.1)
+        out.append(TwinBuild(m.get("firmware", firmware), version, sub, m))
     return sorted(out, key=lambda b: fw_version_key(firmware, b.version))
 
 
@@ -300,11 +313,13 @@ JIANT_BACKUP_IDS_6 = [*range(11), *range(40, 64)]   # (V10.6p on: 6 songs)
 
 
 def backup_firmware(archive) -> str:
-    """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "sloop", "felucca" or "" (unknown). The app's
+    """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "karma", "sloop", "felucca" or "" (unknown). The app's
     companion block names it; otherwise the 'firmware' field (JIANT's editor writes its INFO, "JIANT V10.60"), and the
     inventory gives Skiff (the pattern bank) and JIANT (the songs) away."""
-    if getattr(archive, "sloop", False):
-        return "sloop"
+    if getattr(archive, "sloop", False):              # (SLOOP's file format: SLOOP or its fork KARMA, "FELUCCA KARMA 3.1")
+        c = archive.companion or {}
+        text = " ".join(str(x) for x in (c.get("firmware", ""), c.get("version_string", ""), archive.firmware or ""))
+        return "karma" if "karma" in text.lower() else "sloop"
     c = archive.companion or {}
     key = (c.get("firmware") or "").lower()
     text = " ".join(str(x) for x in (key, c.get("version_string", ""), archive.firmware or "")).lower()
@@ -802,7 +817,10 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     """Load a backup part by part (projects/banks, then settings, the running music last – like
     backup.restore); skip parts the firmware rejects. -> rejected object IDs"""
     from . import backup
-    backup._match(link, archive, firmware_key)
+    proto, info = backup._match(link, archive, firmware_key)
+    if archive.sloop and proto == backup.SLOOP and FIRMWARES.get(firmware_key, {}).get("backup") == "sloop":
+        from . import sloopbk                          # (KARMA: SLOOP's protocol and file, part by part)
+        return sloopbk.restore_tolerant(link, archive.file, progress, info)
     if archive.sloop:
         raise StudioError(_("The {firmware} twin cannot load SLOOP backups.").format(
             firmware=firmware_name(firmware_key)))

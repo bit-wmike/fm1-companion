@@ -32,6 +32,8 @@ Simulators:
   jiant-studio  (--target) the same for JIANT FM (tools/studio/jiant_studio.c): sims/jiant-studio/<version>/; JIANT has
             no tags, a ref is a commit (web/EDITIONS.json names them):
             python3 tools/build_sims.py --target jiant-studio [--ref <commit>] --repo jiant=<clone>
+  karma-studio  (--target) the same for KARMA (tools/studio/karma_studio.c, with firmware/mi's C++):
+            sims/karma-studio/<version>/   python3 tools/build_sims.py --target karma-studio [--ref v3.1] --repo karma=<clone>
 """
 from __future__ import annotations
 
@@ -367,6 +369,72 @@ def _skiff_notice(spec, version, ref, commit, source_url):
                                                          "tools/wasm_shim"))
 
 
+def karma_identity(src: Path) -> str:
+    """KARMA's tools/build.py PRODUCT: its own package identity, FM-1_926 in every build (release builds keep it; ota.c
+    answers it, the installer checks it)"""
+    m = re.search(r'^PRODUCT = "(FM-1_\d+)"', (src / "tools/build.py").read_text("utf-8"), re.M)
+    return m[1] if m else "FM-1_926"
+
+
+def _karma_objects(src: Path, sdk: Path) -> list:
+    """firmware/mi (Mutable Instruments' Plaits, Elements and stmlib in their own C++, plus KARMA's plx.cc / elx.cc), compiled
+    as KARMA's tools/plx_host.sh does for its host tests and its browser simulator; linked into the twin with libc++"""
+    out = src / "build" / "wasm" / "plx"
+    out.mkdir(parents=True, exist_ok=True)
+    objs = []
+    for f in sorted((src / "firmware" / "mi").rglob("*.cc")):
+        rel = f.relative_to(src).as_posix()
+        o = out / (rel.replace("/", "_")[:-3] + ".o")
+        run([sdk / "bin" / "clang++", f"--sysroot={sdk / 'share' / 'wasi-sysroot'}", "-O2", "-w", "-std=c++11", "-DTEST",
+             "-ffp-contract=off", "-fno-exceptions", "-fno-rtti", "-Ifirmware/mi", "-c", rel, "-o", o], cwd=src)
+        objs.append(str(o.relative_to(src)))
+    return objs + ["-lc++", "-lc++abi"]
+
+
+# KARMA's LICENSING.md: the licence texts of the parts compiled into the twin (Plaits / Elements / stmlib, PRISM: MIT; the
+# LXR-02 drum voices: their section 7 notice; the screen reader's announce.c (3.1): MPL-2.0; the Terminus screen font:
+# OFL 1.1) and the MIT notices KARMA keeps in the ported files themselves (DaisySP, Rings, Elements, Clouds, Plaits)
+KARMA_THIRD_PARTY = ["LICENSES/MIT-plaits.txt", "LICENSES/LXR-NOTICE.md", "LICENSES/MPL-2.0.txt",
+                     "assets/fonts/Terminus-LICENSE.txt"]
+KARMA_MIT_FILES = ["firmware/src/phys_dsp.c", "firmware/src/phys_symp.c", "firmware/src/strike_dsp.c",
+                   "firmware/src/bow_dsp.c", "firmware/src/cloud_dsp.c", "firmware/src/prism_dsp.c"]
+
+
+def _karma_extra(src: Path, out: Path):
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    parts = [f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n" for f in KARMA_THIRD_PARTY
+             if (src / f).exists()]                       # (MPL-2.0: from 3.1, the screen reader)
+    for f in KARMA_MIT_FILES:
+        if (src / f).exists():
+            head = (src / f).read_text("utf-8").split("*/", 1)[0] + "*/"
+            parts.append(f"===== {f} (its notice) =====\n{head}\n\n")
+    (out / "THIRD_PARTY.txt").write_text("".join(parts), "utf-8")
+
+
+def _karma_notice(spec, version, ref, commit, source_url):
+    return (
+        f"{version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
+        f"(commit {commit}; source: {source_url}).\n"
+        "GPL-3.0-only. KARMA by Ariel Muchnik, a fork of SLOOP (isod89), based on Felucca: Copyright (C) 2026 Leo "
+        "Kuroshita (@kurogedelic), Hügelton Instruments;\nportions Copyright (C) 2026 Ariel Muchnik, Juan Ignacio "
+        "Antonucci (Juan Jiant), Kerem Kilic, Charles Vestal, PatttF, Erica Synths and the others its LICENSING.md "
+        "names.\n"
+        "Ported parts keep their licences (Mutable Instruments' Plaits, Elements, Clouds and stmlib, DaisySP, Rings: "
+        "MIT; Grids: GPL-3.0-or-later; the LXR-02 drum voices: GPL-3.0-only with Erica Synths' section 7 terms;\n"
+        "the screen reader's announce.c: MPL-2.0; the Terminus screen font is rasterised in: OFL 1.1): KARMA's "
+        "LICENSING.md and the texts in THIRD_PARTY.txt beside this file.\n"
+        "Not affiliated with or endorsed by Mutable Instruments or Erica Synths. The JieLi SDK files of KARMA's packages "
+        "are not part of the twin.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
+        "includes them in firmware/src/felucca.c's order on KARMA's own host-test base (tests/hostsim.c, as\n"
+        "tests/ui_pages_test.c and web/emu/sloop_web.c do) and links firmware/mi's C++ as tools/plx_host.sh builds "
+        "it. It replaces only the hardware: keys/LEDs/LCD, ADC (MASTER; battery full),\nNOR flash = a 1 MiB RAM image, "
+        "USB = always configured (SysEx and MIDI out through usb.c's rings), one core (KARMA_DUAL_CORE 0), no USB "
+        "audio, no TRS MIDI, no serial console,\nno USB rescue, no updater (ota.c answers the identity handshake "
+        "only). Compiled with WASI SDK clang (include shim tools/wasm_shim/sys/wait.h).\n"
+        + source_offer(spec["repo"], commit, f", the glue {spec['glue']} and the shim tools/wasm_shim"))
+
+
 STUDIOS = {
     "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
                        "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
@@ -399,6 +467,18 @@ STUDIOS = {
                      "identity_src": jiant_identity,
                      "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
                      "notice": _jiant_notice, "extra": _jiant_extra, "tracks": 6, "projects": 4},
+    # KARMA (a SLOOP fork): v3.1 is what its web installer serves now (docs/webapp/installer, 2026-11-10), v3.0.5 the
+    # release before. It reports "KARMA 3.1" (ui.c FELUCCA_VERSION; INFO "FELUCCA KARMA 3.1"), the folder is the number.
+    "karma-studio": {"firmware": "karma", "repo": "https://github.com/eatyourgreensstudio-dotcom/karma-fm1",
+                     "glue": "tools/studio/karma_studio.c", "refs": ["v3.0.5", "v3.1"],
+                     "release_status": {"718de454ee8ce0e5c6d12ec5fe5e0ba85d0cb4ba": "stable",
+                                        "23304e93d17d12a79546879d60d58c5c3421aac5": "previous stable"},
+                     "title": "KARMA studio twin", "license": "GPL-3.0-only", "generate": _generate_skiff,
+                     "version_file": "firmware/src/ui.c", "version_re": r'#define FELUCCA_VERSION "([^"]*)"',
+                     "identity_src": karma_identity, "folder": lambda v: v.split()[-1].lstrip("vV"),
+                     "objects": _karma_objects,
+                     "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
+                     "notice": _karma_notice, "extra": _karma_extra, "tracks": 4, "projects": 4},
 }
 
 
@@ -411,17 +491,18 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
     identity = spec["identity_src"](src) if spec.get("identity_src") else spec["identity"](version)
     glue = ROOT / spec["glue"]
     shutil.copy(glue, src / "tests" / "fm1c_studio.c")    # beside hostsim.c: its includes resolve as upstream's tests
-    out = OUT / name / version.lstrip("vV")
+    out = OUT / name / (spec["folder"](version) if spec.get("folder") else version.lstrip("vV"))
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
     cc = sdk / "bin" / "clang"
     wasm = out / "twin.wasm"
+    link = spec["objects"](src, sdk) if spec.get("objects") else []   # (KARMA: firmware/mi's C++, linked in)
     run([cc, f"--sysroot={sdk / 'share' / 'wasi-sysroot'}", "-O2", "-ffp-contract=off", "-std=gnu99", "-w",
          f"-I{SHIM}", "-Ibuild/gen", "-Ifirmware/src", "-Itests", "-mexec-model=reactor",
          *spec["defines"](version, identity),
          "-Wl,-z,stack-size=1048576", "-Wl,--initial-memory=33554432", "-Wl,--strip-all",
-         "-o", wasm, "tests/fm1c_studio.c"], cwd=src)
+         "-o", wasm, "tests/fm1c_studio.c", *link], cwd=src)
     shutil.copy(src / "LICENSE", out / "LICENSE")
     if spec.get("extra"):
         spec["extra"](src, out)
@@ -444,7 +525,7 @@ def studio_manifest(name, out: Path, ref, commit, toolchain, extra):
     spec = STUDIOS[name]
     files = {p.name: {"sha256": sha(p), "size": p.stat().st_size} for p in sorted(out.iterdir()) if p.is_file()
              and p.name != "manifest.json"}
-    m = {"schema": 1, "name": name, "title": spec["title"], "version": extra["firmware_version"].lstrip("vV"),
+    m = {"schema": 1, "name": name, "title": spec["title"], "version": out.name,
          "source_repo": spec["repo"], "ref": ref, "commit": commit, "license": spec["license"],
          "build_date": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
          "toolchain": toolchain, "builder": "tools/build_sims.py", "files": files, **extra}

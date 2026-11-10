@@ -185,6 +185,36 @@ try:
     check(jt2.play()["busy"] and not jt2.stop()["busy"], "JIANT: play and stop (st_transport_set)")
     jt2.close()
     jt.close()
+    # the KARMA twin (tools/studio/karma_studio.c, with Plaits / Elements in C++): editor, identity, four stems, its
+    # SLOOP-format backup round trip (commands 34-36)
+    kt = studio.Studio.create(firmware="karma", backend="webengine", server=st.backend.server)
+    check(kt.build.firmware == "karma" and kt.info.get("version") == "KARMA " + kt.build.version,
+          f"KARMA twin started in QtWebEngine: {kt.info.get('version')}")
+    KL = kt.link
+    check(studio.device_version(KL) == studio.norm_version(kt.build.version), "KARMA INFO via Link")
+    got.clear()
+    KL.add_listener(lambda d, direction: got.append(d) if direction == "in" and d[:2] == [0xF0, 0x00] else None)
+    KL.send_midi([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])
+    t1 = time.time()
+    while not got and time.time() - t1 < 3:
+        app.processEvents()
+    check(got and bytes(got[0]) == _identity_frame(kt.build.identity), f"KARMA identity {kt.build.identity}")
+    for k in range(4):
+        for i in range(0, 16, 2 + k % 2):
+            KL.request(Cmd.TRACK_STEP, [k, i, 1, 36 + 2 * (i % 3) if k == 3 else 45 + 5 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    check(KL.request(Cmd.PROJECT, [1, 0])[2] == 1, "KARMA: part A saved in the twin")
+    r6 = kt.render_wav(out / "karma.wav", seconds=2, start="play", source="saved", project=0, stems=True, fmt="f32")
+    check(len(r6.stems) == 4 and r6.peak > 0.05, f"KARMA: mix + four stems, peak {r6.peak:.3f}")
+    karch = kt.backup()
+    check(studio.backup_firmware(karch) == "karma" and karch.sloop and len(karch.objects) == 14,
+          f"KARMA backup (SLOOP's format, {len(karch.objects)} objects)")
+    kt2 = studio.Studio.for_backup(karch, backend="webengine", server=st.backend.server)
+    same = all(a["bytes"] == b["bytes"] for a, b in zip(karch.objects, kt2.backup().objects))
+    check(kt2.build.firmware == "karma" and kt2.projects() == [0] and same,
+          "KARMA backup into a second KARMA twin: byte-identical")
+    check(kt2.play()["busy"] and not kt2.stop()["busy"], "KARMA: play and stop (st_transport_set)")
+    kt2.close()
+    kt.close()
     st.close()
     from fm1companion.ui import web
     web.shutdown_all()

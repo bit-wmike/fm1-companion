@@ -643,3 +643,197 @@ def test_jiant_six_songs_stable(node_studio):
         assert c.build.version == "V10.6z2" and not c.warning and c.projects() == [0]
     finally:
         c.close()
+
+
+# ------------------------------------------------------------------ KARMA (tools/studio/karma_studio.c)
+# KARMA (eatyourgreensstudio-dotcom/karma-fm1, a SLOOP fork): v3.1 is what its web installer serves (docs/webapp/installer,
+# 2026-11-10), v3.0.5 the release before. Every build answers INFO "FELUCCA KARMA X.Y" and the identity FM-1_926
+# (tools/build.py PRODUCT); it speaks SLOOP's backup protocol (34-36) and writes SLOOP's "sloop-backup" files.
+KARMA_COMMIT = {"3.0.5": "23304e93d17d12a79546879d60d58c5c3421aac5", "3.1": "718de454ee8ce0e5c6d12ec5fe5e0ba85d0cb4ba"}
+KARMA_STATUS = {"3.0.5": "previous stable", "3.1": "stable"}
+KARMA_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 33, 34, 35]   # editor.c ED_BK_IDS (10, MIDI LEARN: only when learned)
+
+
+def test_karma_builds_side_by_side():
+    bs = studio.builds("karma")
+    vs = [b.version for b in bs]
+    assert vs == ["3.0.5", "3.1"] and [b.path.name for b in bs] == vs      # (KARMA's version string: "KARMA 3.1")
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == []
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "karma"
+        assert m["commit"] == KARMA_COMMIT[b.version] and m["ref"] == "v" + b.version and m["version"] == b.version
+        assert m["firmware_version"] == "KARMA " + b.version
+        assert m["license"] == "GPL-3.0-only" and m["release_status"] == KARMA_STATUS[b.version]
+        assert m["identity"] == "FM-1_926" and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["tracks"] == 4 and m["projects"] == 4
+        assert m["source_repo"] == "https://github.com/eatyourgreensstudio-dotcom/karma-fm1"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"karma-fm1-{m['commit']}.tar.gz" in notice
+        assert "Ariel Muchnik" in notice and m["glue"] == "tools/studio/karma_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        third = (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Emilie Gillet" in third and "Erica Synths" in third and "Terminus" in third and "Electrosmith" in third
+        assert ("Mozilla Public License" in third) == (b.version == "3.1")      # (3.1: the screen reader)
+    assert not any(s.key.startswith("karma") for s in sims.bundled())
+
+
+def test_karma_versions_and_pick():
+    b, exact, warn = studio.pick_build("karma", "FELUCCA KARMA 3.1")      # KARMA's INFO
+    assert exact and b.version == "3.1" and not warn
+    b, exact, warn = studio.pick_build("karma", "KARMA 3.0.5")
+    assert exact and b.version == "3.0.5"
+    b, exact, warn = studio.pick_build("karma", "FELUCCA KARMA 3.0.4")    # between nothing and 3.0.5: the oldest
+    assert not exact and b.version == "3.0.5" and "KARMA" in warn
+    b, exact, warn = studio.pick_build("karma", "FELUCCA KARMA 3.2")      # newer: the next older one
+    assert not exact and b.version == "3.1"
+    assert studio.pick_build("karma")[0].version == "3.1"            # without a wish: the newest = the stable
+    assert studio.pick_build("karma", studio.norm_version("FELUCCA KARMA 3.1"))[0].version == "3.1"
+    assert studio.check_versions("3.1", device="FELUCCA KARMA 3.1", firmware="KARMA").ok
+    vc = studio.check_versions("3.1", device="FELUCCA KARMA 3.0.5", firmware="KARMA")
+    assert not vc.ok and "KARMA" in vc.message and "CZ-1" not in vc.message
+    assert studio.firmware_name("karma") == "KARMA" and studio.FIRMWARES["karma"]["projects"] == 4
+    # the device layer: INFO, the identity and the twin's key select the KARMA twin (KARMA is not in the catalog)
+    from fm1companion import firmware
+    from fm1companion.protocol import Info
+    from fm1companion.ui.common import fw_label
+    from fm1companion.ui.studio_service import StudioService
+    assert Info("FELUCCA KARMA 3.1").firmware_name == "karma" and Info("FELUCCA SLOOP 2.8.3").firmware_name == "sloop"
+    assert StudioService.firmware_for("karma") == "karma" and fw_label("FELUCCA KARMA 3.1") == "KARMA 3.1"
+    assert firmware.guess_firmware("", "FELUCCA KARMA 3.1") == ("karma", "v3.1")
+    assert firmware.guess_firmware("FM-1_926")[0] in ("karma", "")          # ("" if this machine remembered it otherwise)
+
+
+@need_node
+def test_karma_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_karma.mjs"), str(studio.SIMS_DIR / "karma-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"3.0.5", "3.1"}
+    for x in res:
+        v = x["firmware_version"]
+        assert x["version_export"] == v and x["info"] == "FELUCCA " + v and x["ping"] == [0]
+        assert x["ntrk"] == 4 and x["proto"] == 11
+        assert bytes(x["identity_reply"]) == _identity_frame("FM-1_926")   # ota.c, as demo_device expects
+        assert x["ids"] == KARMA_IDS and x["screen_lit"] > 2000
+        assert {0, 1, 2, 3, 4, 5, 9} <= {int(k) for k in x["sizes"]}      # the working project, settings, A..D, HEX kits
+        assert all(rc == 0 for rc in x["put_rc"].values())
+        assert all(x["identical"].values()) and x["persisted"] and x["projects_used"] == [0, 1, 2, 3]
+        assert x["live_step0"] == {"note": 45, "vel": 100}
+        a, b = x["takes"]
+        assert a["playing"] and a["play_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
+        assert x["fork_identical"] and x["stopped"] and x["load_while_playing"] == 2
+        assert x["song_play"] and x["song_stop"]
+        print(f"{v}: {a['realtime']:.1f}x real time (4 tracks)")
+        assert a["realtime"] > 3
+
+
+def _karma_song(st, parts=1):
+    L = st.link
+    for k in range(4):
+        for i in range(0, 16, 2 + k % 2):
+            L.request(Cmd.TRACK_STEP, [k, i, 1, (36 + 2 * (i % 3)) if k == 3 else 45 + 5 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    for p in range(parts):
+        assert L.request(Cmd.PROJECT, [1, p])[2] == 1                      # part A (B, C, D)
+
+
+def test_karma_backup_round_trip_with_suite_code(node_studio):
+    a = node_studio(firmware="karma", version="FELUCCA KARMA 3.0.5")
+    assert a.build.firmware == "karma" and a.build.version == "3.0.5" and a.tracks == 4 and a.project_slots == 4
+    assert studio.device_version(a.link) == "v3.0.5" and a.info_name == "FELUCCA KARMA"
+    assert a.info["version"] == a.build.manifest["firmware_version"] == "KARMA 3.0.5"
+    assert backup.protocol(a.link)[0] == backup.SLOOP                       # (INFO alone tells: SLOOP's commands 34-36)
+    _karma_song(a)
+    arch = a.backup()
+    assert arch.sloop and [o["id"] for o in arch.objects] == KARMA_IDS and arch.firmware == "FELUCCA KARMA 3.0.5"
+    assert studio.backup_version(arch) == "v3.0.5" and studio.backup_firmware(arch) == "karma"
+    assert arch.companion["version_string"] == "FELUCCA KARMA 3.0.5"
+    by = {o["id"]: o["bytes"] for o in arch.objects}
+    from fm1companion import sloopbk
+    assert sloopbk.proj_format(by[0]) == sloopbk.proj_format(by[2]) == 7 and by[8] == b""     # FUN7; FM6 is gone
+    # a backup of KARMA's own web editor (no companion block; its 'firmware' is the INFO string)
+    plain = json.loads(backup.dumps(arch.file))
+    plain.pop("companion")
+    assert studio.backup_firmware(backup.read(plain)) == "karma"
+    # into the 3.1 twin through the suite's SLOOP restore (format 7 accepted on KARMA: its own editor refuses it)
+    b = node_studio(firmware="karma", version="3.1")
+    b.open_from_backup(backup.read(plain))
+    back = {o["id"]: o["bytes"] for o in b.backup().objects}
+    assert all(back[i] == by[i] for i in KARMA_IDS) and b.projects() == [0] and not b.rejected
+    vc = b.check_versions(archive=arch)
+    assert not vc.ok and "KARMA" in vc.message
+    c = studio.Studio.for_backup(arch, backend="node")                     # the backup's firmware and version
+    try:
+        assert c.build.firmware == "karma" and c.build.version == "3.0.5" and not c.warning and c.projects() == [0]
+        assert c.load_project(0) == 0 and c.load_project(1) == 1
+        assert c.play()["busy"] and not c.stop()["busy"]                   # st_transport_set (no editor TRANSPORT)
+        assert c.play("song")["busy"] and not c.stop()["busy"]
+    finally:
+        c.close()
+    # the tolerant load (the studio page's): SLOOP 2.5's SYN kits ("DSU1") do not fit KARMA's HEX kits – left out and
+    # named (KARMA's editor does the same), everything else is taken
+    f = json.loads(backup.dumps(arch.file))
+    old = b"DSU1" + bytes(60)
+    for o in f["objects"]:
+        if o["id"] == 9:
+            o.update(len=len(old), crc=backup.crc32(old), data=sloopbk.b64enc(old))
+    d = node_studio(firmware="karma", version="3.1")
+    d.open_from_backup(backup.read(f), tolerant=True)
+    assert d.rejected == [9] and d.projects() == [0]
+    assert {o["id"]: o["bytes"] for o in d.backup().objects}[2] == by[2]
+    d.open_from_backup(backup.read(f))                                      # (the plain restore leaves them out too)
+    # writing back (backup.restore_selected without the settings, as the page's "keep the settings")
+    e = node_studio(firmware="karma", version="3.1")
+    written = backup.restore_selected(e.link, arch, [i for i in KARMA_IDS if i != 1])
+    assert 1 not in written and 2 in written and e.projects() == [0]
+    # the inspector and the compatibility check name KARMA (not SLOOP)
+    from fm1companion import backup_inspect as BI
+    rep = BI.inspect(arch)
+    assert rep.firmware_key == "karma" and BI.inspect(backup.read(plain)).firmware_key == "karma"
+    assert BI.compatibility(rep, "karma", "FELUCCA KARMA 3.1", KARMA_IDS).ok
+    assert not BI.compatibility(rep, "sloop", "FELUCCA SLOOP 2.6", KARMA_IDS).ok
+
+
+def test_karma_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="karma")
+    _karma_song(st)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="saved", project=0, stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3] and s.peak > 0.05
+    peaks = []
+    for k, p in s.stems.items():
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    assert all(pk > 0.01 for pk in peaks), peaks          # every track plays something
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "karma" and meta["firmware_version"] == "3.1" and len(flash) == 0x100000
+
+
+def test_karma_in_backup_layer():
+    """KARMA's backups are SLOOP's (format, commands, objects 0..10 and 32..35); its projects are format 7 (FUN7)."""
+    from fm1companion import sloopbk
+    from fm1companion.protocol import Info, parse_info
+    assert sloopbk.dev_format(71, "FELUCCA KARMA 3.1") == 7 and sloopbk.dev_format(71, "FELUCCA SLOOP 2.6") == 6
+    assert sloopbk.dsu_old(b"DSU1....") and not sloopbk.dsu_old(b"HEX1....")
+    assert backup.SLOOP_PROTOCOL == ("sloop", "karma") and all(i in sloopbk.RESTORE + sloopbk.SAMPLES for i in KARMA_IDS)
+
+    class FakeLink:                                     # an FM-1 that only answers INFO
+        def __init__(self, version):
+            self.raw = [*version.encode(), 0, 0, 71, 108, 64, 63, 4, 11]
+
+        def request(self, cmd, args=(), timeout=1.0, retries=0):
+            assert cmd == Cmd.INFO
+            return self.raw
+    assert parse_info(FakeLink("FELUCCA KARMA 3.1").raw).firmware_name == "karma"
+    assert backup.protocol(FakeLink("FELUCCA KARMA 3.1"))[0] == backup.SLOOP
+    assert backup.protocol(FakeLink("FELUCCA KARMA 3.1"), "karma")[0] == backup.SLOOP
+    karma = {"format": "sloop-backup", "version": 1, "firmware": "FELUCCA KARMA 3.1", "date": "", "objects": [
+        {"id": i, "len": 4, "crc": backup.crc32(b"\x37NUF"), "data": sloopbk.b64enc(b"\x37NUF")} for i in (0, 1)]}
+    arch = backup.read(karma)
+    with pytest.raises(backup.BackupError, match="KARMA"):              # KARMA's projects onto SLOOP: refused, unwritten
+        backup._match(FakeLink("FELUCCA SLOOP 2.6"), arch)
+    assert backup._match(FakeLink("FELUCCA KARMA 3.1"), arch)[0] == backup.SLOOP
+    assert Info("FELUCCA KARMA 3.1").firmware_name == "karma"

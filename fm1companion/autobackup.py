@@ -171,7 +171,7 @@ def read_meta(path: Path) -> Meta | None:
             c = f.get("companion") or {}
             objs = f.get("objects") or []
             fw = f.get("firmware", "")
-            key = c.get("firmware") or next((k for k in ("melodee", "sloop", "skiff", "jiant") if k in fw.lower()), "")
+            key = c.get("firmware") or next((k for k in ("melodee", "karma", "sloop", "skiff", "jiant") if k in fw.lower()), "")
             jiant = backup.is_jiant(o.get("id", -1) for o in objs if isinstance(o, dict))
             try:                                   # count used presets once (stored in the index afterwards)
                 from . import backup_inspect as _BI

@@ -1,0 +1,377 @@
+===== LICENSES/MIT-plaits.txt =====
+Except when noted otherwise, all code is copyright Emilie Gillet and is
+released under the MIT License with the following notice:
+
+Copyright 2012 Emilie Gillet.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+-------------------------------------------------------------------------------
+
+The code in third_party/STM is from STMicroelectronics, and released with the
+following notice:
+
+THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
+WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE TIME.
+AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY DIRECT,
+INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING FROM THE
+CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE CODING
+INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
+
+-------------------------------------------------------------------------------
+
+The code in programming/serial is from Ivan A-R, and released under the GPL with
+the following notice:
+
+Author: Ivan A-R <ivan@tuxotronic.org>
+Project page: http://tuxotronic.org/wiki/projects/stm32loader
+
+This file is part of stm32loader.
+
+stm32loader is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 3, or (at your option) any later
+version.
+
+stm32loader is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with stm32loader; see the file COPYING3.  If not see
+<http://www.gnu.org/licenses/>.
+
+===== LICENSES/LXR-NOTICE.md =====
+# LXR firmware: copyright, licence and trademark notice
+
+Copyright (C) 2012-2026 Erica Synths. All rights not expressly granted below are reserved.
+
+## What this notice covers
+
+This notice and the licence in [LICENSE](LICENSE) apply to:
+
+- `LXR_V2_STM32F765/`: the LXR firmware
+- `LXR_V2_STM32F765_Bootloader/`: the LXR bootloader
+- `cmake/`: the build system and tools shared by both
+
+Third-party components keep their own licences, listed [below](#third-party-components).
+
+## Licence
+
+The firmware, bootloader and build system are free software: you can redistribute and/or modify them
+under the terms of the **GNU General Public License version 3** (GPL-3.0-only) as published by the
+Free Software Foundation, with the additional permission and the additional terms below
+(GPL-3.0 section 7). The full licence text is in [LICENSE](LICENSE).
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
+License for more details.
+
+### Additional permission under GNU GPL version 3 section 7
+
+If you modify this Program, or any covered work, by linking or combining it with software from
+STMicroelectronics that is distributed under STMicroelectronics licence terms, in particular the
+"Ultimate Liberty" licence SLA0044 (or a modified version of that software), the licensors of this
+Program grant you additional permission to convey the resulting work. This includes the STM32 USB
+Device Library, the STM32CubeMX-generated code and the STMicroelectronics example code listed below.
+Corresponding Source for a non-source form of such a combination shall include the source code for the
+parts of that software used as well as that of the covered work.
+
+### Additional terms under GNU GPL version 3 section 7
+
+1. **Trademarks (section 7(e)).** This licence does not grant any rights under trademark law in the
+   names "Erica Synths", "LXR" and "LXR-02" or in the associated logos. They may not be used for any
+   product, modified firmware, service or other activity, commercial or not, in a way that suggests
+   that it comes from, is approved by or is affiliated with Erica Synths, without prior written
+   permission from Erica Synths. Truthful statements of compatibility, such as "custom firmware for
+   the Erica Synths LXR-02", are allowed.
+2. **Marking of modified versions (section 7(c)).** Modified versions must be marked in reasonable ways
+   as different from the original version. At a minimum, the start-up screen of the device must show
+   that the firmware is modified (for example a different name or version text), and a modified version
+   must not be presented as official Erica Synths firmware.
+
+## Hardware
+
+The LXR hardware is the property of Erica Synths. That includes the electronic design (schematics,
+printed circuit board layouts, bills of materials), the front panel, enclosure and industrial design, and
+the product's appearance. It is protected by copyright, design rights and other intellectual property
+rights. The hardware is **not** part of this repository and is **not** licensed under GPL-3.0 or any
+other licence. It may not be copied, reproduced, manufactured or sold, in whole or in part, without
+prior written permission from Erica Synths.
+
+The GPL-3.0 licence of the firmware does not grant any rights to the hardware.
+
+## Third-party components
+
+These components are included in source form and are distributed under their own licences. The
+bootloader contains its own copies of the HAL, CMSIS and FatFs files.
+
+| Component | Location | Licence |
+|---|---|---|
+| STM32F7 HAL drivers (STMicroelectronics) | `Drivers/STM32F7xx_HAL_Driver/` | BSD-3-Clause, see the `LICENSE.txt` there |
+| CMSIS core (Arm) | `Drivers/CMSIS/Include/` | Apache-2.0 |
+| CMSIS STM32F7 device files, system and startup code (STMicroelectronics) | `Drivers/CMSIS/Device/ST/`, `Core/Src/system_stm32f7xx.c`, `Core/Startup/` | Apache-2.0 / BSD-3-Clause |
+| STM32 USB Device Library, modified into a USB-MIDI class (STMicroelectronics) | `Middlewares/JS/STM32_USB_Device_Library/` | ST SLA0044 |
+| STM32CubeMX-generated code with Erica Synths additions (STMicroelectronics) | `USB_DEVICE_MIDI/`, `FATFS/`, `Core/Src/stm32f7xx_it.c`, `Core/Src/stm32f7xx_hal_msp.c`, bootloader `Core/Src/main.c` | ST SLA0044 or BSD-3-Clause as stated in each file; Erica Synths additions under GPL-3.0 |
+| newlib system call stubs (STMicroelectronics) | `Core/Src/syscalls.c`, `Core/Src/sysmem.c` | BSD-3-Clause style, as stated in the files |
+| Flash programming helpers, from an STMicroelectronics example (LwIP IAP) | `Core/Src/flash_if.c`, `Core/Inc/flash_if.h` | STMicroelectronics example code, as stated in the files |
+| FatFs R0.12c (ChaN) | `Middlewares/Third_Party/FatFs/` | FatFs licence (BSD-style, 1 clause) |
+| HD44780 LCD routines, based on the mikrocontroller.net AVR-GCC tutorial | `Core/Src/lcd.c`, `Core/Inc/lcd.h` | as published on mikrocontroller.net |
+
+===== assets/fonts/Terminus-LICENSE.txt =====
+Terminus Font (ter-u16n.bdf, ter-u16b.bdf: the bold one, from Terminus 4.48 as packaged by Debian, xfonts-terminus)
+Copyright (C) 2020 Dimitar Toshkov Zhekov
+Source: https://github.com/retro-vault/font-vault (source/fonts/terminus)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is copied below, and is also available with a FAQ at:
+http://scripts.sil.org/OFL
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded,
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION AND CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+
+===== firmware/src/phys_dsp.c (its notice) =====
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2020 Electrosmith, Corp, Emilie Gillet
+ * Ported to fixed-point C for Felucca, 2026: Leo Kuroshita (@kurogedelic), Hügelton Instruments
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+===== firmware/src/phys_symp.c (its notice) =====
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2015 Emilie Gillet
+ * Ported to fixed-point C for Felucca, 2026: Leo Kuroshita (@kurogedelic), Hügelton Instruments
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+===== firmware/src/strike_dsp.c (its notice) =====
+/* SPDX-License-Identifier: MIT
+ * Copyright 2014 Emilie Gillet (emilie.o.gillet@gmail.com)
+ * Ported to fixed-point C, 2026, for the PHYS engine (eng_phys.c).
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+===== firmware/src/bow_dsp.c (its notice) =====
+/* SPDX-License-Identifier: MIT
+ * Copyright 2014 Emilie Gillet (emilie.o.gillet@gmail.com)
+ * Ported to fixed-point C, 2026, for the PHYS engine (eng_phys.c).
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+===== firmware/src/cloud_dsp.c (its notice) =====
+/* SPDX-License-Identifier: MIT
+ * Copyright 2014 Emilie Gillet (emilie.o.gillet@gmail.com)
+ * Ported to fixed-point C, 2026, for the PHYS engine (eng_phys.c).
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+===== firmware/src/prism_dsp.c (its notice) =====
+/* SPDX-License-Identifier: MIT
+ * Copyright 2016 Emilie Gillet (emilie.o.gillet@gmail.com)
+ * Ported to fixed-point C, 2026, for the PRISM engine (eng_prism.c).
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
