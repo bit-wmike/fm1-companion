@@ -12,6 +12,7 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 | 3 | **Skiff**, matching the version on the device (2.2 and 2.1.1 bundled) | **done** (branch `studio-skiff`; same page, virtual device, backup ↔ twin, write back) |
 | 3b | **JIANT FM**, the public stable of its installer (V10.6z2), plus the earlier stable V10.60 and beta V10.61 | **done** (branch `studio-jiant`; same page, virtual device, backup ↔ twin, write back) |
 | 3c | **CoralFlower**, the stable of its installer (0.7.1), plus 0.7 | **done** (branch `studio-coralflower`; same page, virtual device, backup ↔ twin, write back) |
+| 3d | **KARMA**, the version its installer serves (3.1), plus 3.0.5 | **done** (branch `studio-karma`; same page, virtual device, backup ↔ twin through SLOOP's protocol, write back) |
 | 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V16 may differ | after that |
 | – | **Original V16** | **paused, not dropped** |
 
@@ -161,6 +162,30 @@ Open (CoralFlower): no project view or `projectfmt` for its patterns (the export
 pattern"); music is made on the panel only (no editor protocol: the editor pages and Compose do not work on it); the
 catalog entry "coralflower" still says protocol "none"; one core, no USB audio, no TRS MIDI; checked only against the
 twin itself, never a real CoralFlower FM-1 (docs/UNTESTED.md).
+
+## Status KARMA (3.1, 3.0.5)
+
+Done: twin **KARMA 3.1** (tag `v3.1`, commit 718de45, what KARMA's web installer serves) and **3.0.5** (tag `v3.0.5`,
+commit 23304e9, the release before), glue layer `tools/studio/karma_studio.c` – KARMA's unmodified sources in
+`felucca.c`'s order on its own host-test base, Plaits / Elements (`firmware/mi`, C++) compiled with WASI SDK clang++
+and linked in. Identity FM-1_926 (`tools/build.py` PRODUCT, every build), INFO "FELUCCA KARMA 3.1". Python:
+`studio.FIRMWARES["karma"]` ("KARMA", INFO "FELUCCA", 4 tracks, 4 slots = the song's parts A–D, backups in SLOOP's
+protocol); `protocol.Info.firmware_name` "karma", `firmware.guess_firmware()` (INFO, FM-1_926), `backup.protocol()`
+(`SLOOP_PROTOCOL`: commands 34–36 for SLOOP and KARMA – before, a KARMA FM-1 was taken for plain Felucca and its
+backup asked with Melodee's commands 65–67, which KARMA does not answer), `backup_firmware()` (the `sloop-backup`
+file's `firmware` "FELUCCA KARMA …"), `backup_inspect` / `autobackup` firmware keys, `sloopbk.dev_format` (KARMA's
+projects are format 7: SLOOP's check refused them as "newer"), `sloopbk.with_defaults` (SLOOP 2.5's DSU1 kits left out
+on KARMA, as KARMA's editor does), `sloopbk.restore_tolerant` (the studio's tolerant load in SLOOP's format – also the SLOOP twin's since the
+merge: `studio.restore_tolerant` takes it for every twin whose `FIRMWARES` entry says `"backup": "sloop"`), a KARMA
+backup refused onto SLOOP before anything is written.
+
+Open (KARMA): the project view and `projectfmt` do not read KARMA's FUN7 projects; the Projects page lists KARMA's
+parts by number, not as A–D (it checks for "sloop" only), and `projects.family` does not know KARMA (its FUN7 projects
+read as SLOOP's); KARMA's three saved songs (SAVE on the SONG screen) are in
+no backup (KARMA's own neither); no USB audio / STEMS, no TRS MIDI, one core in the twin; KARMA is not in the bundled
+catalog, so installing it from the app needs a built-in firmware entry (its packages are on its GitHub Pages,
+`docs/firmware/karma-<version>.fwsc`, checksum in `docs/webapp/installer/index.html`), not only the twin. Checked only
+against the twin itself, never a real KARMA FM-1 or a backup of KARMA's own web editor (docs/UNTESTED.md).
 
 ## Second route: fm1-emu (processor emulation)
 

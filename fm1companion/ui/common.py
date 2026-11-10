@@ -1090,4 +1090,4 @@ def fw_label(version: str) -> str:
     “SLOOP 2.8.3” is displayed. Stored data stays unchanged."""
     import re as _re
     v = (version or "").strip()
-    return _re.sub(r"\bFELUCCA\s+(?=SLOOP\b)", "", v, flags=_re.IGNORECASE)
+    return _re.sub(r"\bFELUCCA\s+(?=(?:SLOOP|KARMA)\b)", "", v, flags=_re.IGNORECASE)

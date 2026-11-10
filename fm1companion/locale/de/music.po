@@ -4483,8 +4483,8 @@ msgstr "Section {n} geladen."
 msgid "Section {n} is empty."
 msgstr "Section {n} ist leer."
 
-msgid "Single tracks (stems): one WAV file per track (Melodee and SLOOP 1–4, Skiff and JIANT FM 1–6, CoralFlower's chords, bass, layer and drums), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
-msgstr "Einzelspuren (Stems): je Spur eine eigene WAV-Datei (Melodee und SLOOP 1–4, Skiff und JIANT FM 1–6, bei CoralFlower Akkorde, Bass, Layer und Drums), gleich lang wie der Mix. Jede Spur wird allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master). Darum ist die Summe der Stems nicht bitgenau der Mix (Master-Dynamik), passt in Logic oder Audacity aber übereinander."
+msgid "Single tracks (stems): one WAV file per track (Melodee, SLOOP and KARMA 1–4, Skiff and JIANT FM 1–6, CoralFlower's chords, bass, layer and drums), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
+msgstr "Einzelspuren (Stems): je Spur eine eigene WAV-Datei (Melodee, SLOOP und KARMA 1–4, Skiff und JIANT FM 1–6, bei CoralFlower Akkorde, Bass, Layer und Drums), gleich lang wie der Mix. Jede Spur wird allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master). Darum ist die Summe der Stems nicht bitgenau der Mix (Master-Dynamik), passt in Logic oder Audacity aber übereinander."
 
 #, python-brace-format
 msgid "Which backup should the twin load? {firmwares} backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
@@ -4516,3 +4516,26 @@ msgstr "{names} und {last}"
 #, python-brace-format
 msgid "{names} or {last}"
 msgstr "{names} oder {last}"
+
+#: fm1companion/ui/pages/studio.py
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the song's parts A–D, the running music, the song order, the user presets, the HEX drum kits and the sample slots. Playback on the FM-1 stops in the process."
+msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät: die Teile A–D des Songs, die laufende Musik, die Song-Reihenfolge, die User-Presets, die HEX-Drumkits und die Sample-Slots. Die Wiedergabe am FM-1 stoppt dabei."
+
+#: fm1companion/ui/pages/studio.py
+#, python-brace-format
+msgid "Part {n}"
+msgstr "Teil {n}"
+
+#: fm1companion/ui/pages/studio.py
+#, python-brace-format
+msgid "Part {n} loaded."
+msgstr "Teil {n} geladen."
+
+#: fm1companion/ui/pages/studio.py
+#, python-brace-format
+msgid "Part {n} is empty."
+msgstr "Teil {n} ist leer."
+
+#, python-brace-format
+msgid "The {firmware} twin cannot load SLOOP backups."
+msgstr "SLOOP-Backups kann der {firmware}-Zwilling nicht laden."

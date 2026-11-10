@@ -171,7 +171,7 @@ def read_meta(path: Path) -> Meta | None:
             c = f.get("companion") or {}
             objs = f.get("objects") or []
             fw = f.get("firmware", "")
-            key = c.get("firmware") or next((k for k in ("melodee", "sloop", "skiff", "jiant", "coralflower")
+            key = c.get("firmware") or next((k for k in ("melodee", "karma", "sloop", "skiff", "jiant", "coralflower")
                                              if k in fw.lower()), "")
             jiant = backup.is_jiant(o.get("id", -1) for o in objs if isinstance(o, dict))
             coral = backup.is_coralflower(o.get("id", -1) for o in objs if isinstance(o, dict))

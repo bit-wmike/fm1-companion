@@ -578,6 +578,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
     v = version_string.lower()
     m = re.search(r"(\d+\.\d+(?:\.\d+)?(?:-rc\.?\d+)?)", version_string)
     tag = ("v" + m.group(1)) if m else ""
+    if "karma" in v or family == "karma":              # KARMA (a SLOOP fork) answers INFO "FELUCCA KARMA 3.1"
+        return "karma", tag
     for key in ("melodee", "sloop", "skiff"):
         if key in v or family == key:
             return key, tag
@@ -596,6 +598,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
             return "jiant-fm", ""
         if n == 930:                                    # CoralFlower's tools/build.py PRODUCT (every release)
             return "coralflower", ""
+        if n == 926:                                    # KARMA's own identity in every build (tools/build.py PRODUCT)
+            return "karma", ""
         if n in (15, 16):
             return f"stock-v{n}", f"V{n}"
     return "", ""

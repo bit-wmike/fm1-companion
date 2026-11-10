@@ -425,6 +425,31 @@ def flow():
           f"write back of the CoralFlower twin onto the Melodee FM-1 refused: {boxes[-1:]}")
     r = page.export_wav({"path": out / "CoralFlower.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
     check(r is not None and len(r.stems) == 4 and r.peak > 0.05, f"CoralFlower export: mix + {r and len(r.stems)} stems")
+    # ---- a KARMA backup (SLOOP's file format): the page starts the KARMA twin (the song's parts A–D); writing it back
+    # onto the demo FM-1 (Melodee) is refused as well
+    kt = S.Studio.create(firmware="karma", backend="webengine", server=w.server)
+    for k in range(4):
+        for i in range(0, 16, 4):
+            kt.link.request(Cmd.TRACK_STEP, [k, i, 1, 45 + 3 * k, 0, 0, 0, 0, 0, 100])
+    kt.link.request(Cmd.PROJECT, [1, 1])                # part B
+    kfile = bdir / "Studio-Test_karma.json"
+    backup.write_file(kfile, kt.backup().file)
+    kver = kt.build.version
+    kt.close()
+    check(page.open_backup(kfile) == kfile and svc.firmware == "karma" and not svc.st.rejected,
+          f"KARMA backup opened: the KARMA twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 4 and labels[0].startswith("Teil A") and "leer" in labels[0] and "leer" not in labels[1],
+          f"KARMA part list A–D: {labels}")
+    check("KARMA" in page.src.text() and "KARMA" in page.banner.text() and "Melodee" in page.banner.text(),
+          "banner names both firmwares: " + page.banner.text())
+    check(f"Studio-Zwilling (KARMA {kver})" in [x.label for x in svc._virtual_ports()], "virtual device: KARMA twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("KARMA" in b for b in boxes),
+          f"write back of the KARMA twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    r = page.export_wav({"path": out / "KARMA.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 4, f"KARMA export: mix + {r and len(r.stems)} stems")
     shot("studio-640.png", 640)
     if SHOTS:
         sb = w.page_scroll.verticalScrollBar()

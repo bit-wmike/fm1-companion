@@ -123,7 +123,8 @@ def firmware_name(key: str) -> str:
             return e.name
     except Exception:  # noqa: BLE001
         pass
-    return key
+    from ..studio import FIRMWARES                  # (a firmware known only by its studio twin, e.g. KARMA)
+    return FIRMWARES.get(key, {}).get("name") or key
 
 
 class FirmwareChoiceDialog(QDialog):

@@ -213,6 +213,8 @@ class Report:
         if k:
             return "jiant" if k.lower().startswith("jiant") else k       # (the catalog's "jiant-fm" and the twin's "jiant")
         v = self.firmware.lower()
+        if "karma" in v:                                                  # (KARMA: "FELUCCA KARMA 3.1", SLOOP's format)
+            return "karma"
         for name in ("melodee", "sloop", "skiff", "jiant", "coralflower"):
             if name in v:
                 return name

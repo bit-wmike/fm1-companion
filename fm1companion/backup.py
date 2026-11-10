@@ -201,6 +201,9 @@ class ObjInfo:
 
 FELUCCA, SLOOP = "felucca", "sloop"
 SLOOP_FORMAT = "sloop-backup"
+# firmwares that speak SLOOP's backup protocol (34–36) and write its "sloop-backup" files: SLOOP and its fork KARMA
+# (editor.c ED_BK_LIST / GET / PUT, web/editor.html BK: the same commands, objects 0..10 and 32..35, the same file)
+SLOOP_PROTOCOL = (SLOOP, "karma")
 
 
 def protocol(link, hint: str = "") -> tuple[str, object]:
@@ -212,8 +215,8 @@ def protocol(link, hint: str = "") -> tuple[str, object]:
     try:
         info = sloopbk.read_info(link)
     except Exception:                               # noqa: BLE001 – then as before
-        return (SLOOP if hint == SLOOP else FELUCCA), None
-    if info.firmware_name == SLOOP or hint == SLOOP:
+        return (SLOOP if hint in SLOOP_PROTOCOL else FELUCCA), None
+    if info.firmware_name in SLOOP_PROTOCOL or hint in SLOOP_PROTOCOL:
         proto = sloopbk.info_proto(info.raw)
         if proto and proto < sloopbk.MIN_PROTO:
             raise BackupError(_("{version} cannot make backups over USB yet – that needs SLOOP 2.3 or later. "
@@ -503,6 +506,11 @@ def _match(link, archive: Archive, hint: str = "") -> tuple[str, object]:
     if not archive.sloop and proto == SLOOP:
         raise BackupError(_("This is a Melodee/Felucca backup, but the FM-1 runs SLOOP – the formats "
                             "do not match. Nothing was written."))
+    if archive.sloop and info is not None and info.firmware_name != "karma" and "karma" in archive.firmware.lower():
+        # (KARMA reads SLOOP's backups up to 2.6, as its own editor does; SLOOP cannot read KARMA's projects, format 7)
+        raise BackupError(_("This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's "
+                            "projects and drum kits. Nothing was written.").format(backup=archive.firmware,
+                                                                                   device=info.version))
     return proto, info
 
 
