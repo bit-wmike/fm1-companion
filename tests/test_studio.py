@@ -70,7 +70,7 @@ def test_versions_and_pick():
     assert not exact and b.version == "v1.6.0-rc.7"
     assert studio.pick_build("melodee")[0].version == "v1.6.1"          # without a wish: the newest
     with pytest.raises(studio.StudioError):
-        studio.pick_build("sloop")
+        studio.pick_build("no-such-firmware")                         # (SLOOP has a twin now)
     vc = studio.check_versions("v1.6.0-rc.8", device="MELODEE v1.6.0-rc.7")
     assert not vc.ok and vc.message == "Studio läuft mit Melodee v1.6.0-rc.8, dein FM-1 hat v1.6.0-rc.7 – Klang kann abweichen."
     assert studio.check_versions("v1.6.0-rc.8", "v1.6.0-rc.8", "MELODEE v1.6.0-rc.8").ok
@@ -643,3 +643,206 @@ def test_jiant_six_songs_stable(node_studio):
         assert c.build.version == "V10.6z2" and not c.warning and c.projects() == [0]
     finally:
         c.close()
+
+
+# ------------------------------------------------------------------ SLOOP (tools/studio/sloop_studio.c)
+# its release tags; v2.8.5 is the stable its web installer ships (docs/firmware/sloop-2.8.5.fwsc)
+SLOOP_COMMIT = {"2.8.4": "91f30182d9095e0ecdb43396554f2ce5a67df179", "2.8.5": "bac9c05ea7627449405aa10e48da21d75b6c8c56"}
+SLOOP_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 33, 34, 35]   # BK_LIST of a new unit (10, 11 only when not default)
+
+
+def test_sloop_builds_side_by_side():
+    bs = studio.builds("sloop")
+    vs = [b.version for b in bs]
+    assert vs == ["2.8.4", "2.8.5"]
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == [] and b.path.name == b.version and m["firmware_version"] == "SLOOP " + b.version
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "sloop"
+        assert m["ref"] == "v" + b.version and m["commit"] == SLOOP_COMMIT[b.version] and m["license"] == "GPL-3.0-only"
+        assert m["identity"] == "FM-1_900" and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["tracks"] == 4 and m["projects"] == 4 and m["source_repo"] == "https://github.com/isod89/sloop-fm1"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"sloop-fm1-{m['commit']}.tar.gz" in notice
+        assert "isod89" in notice and m["glue"] == "tools/studio/sloop_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        third = (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Apache License" in third and "SIL OPEN FONT LICENSE" in third.upper() and "Electrosmith" in third
+        assert "Emilie Gillet" in third and "CC0" in third
+    assert not any(s.key.startswith("sloop") for s in sims.bundled())
+    assert {b.firmware for b in studio.builds("jiant")} == {"jiant"}
+
+
+def test_sloop_versions_and_pick():
+    b, exact, warn = studio.pick_build("sloop", "FELUCCA SLOOP 2.8.5")   # SLOOP's INFO
+    assert exact and b.version == "2.8.5" and not warn
+    assert studio.pick_build("sloop", "SLOOP 2.8.4")[0].version == "2.8.4"
+    assert studio.pick_build("sloop", "v2.8.5")[1]                        # (device_version)
+    b, exact, warn = studio.pick_build("sloop", "FELUCCA SLOOP 2.8.3")   # older than everything: the oldest
+    assert not exact and b.version == "2.8.4" and "SLOOP v2.8.3" in warn and "2.8.4" in warn
+    b, exact, warn = studio.pick_build("sloop", "FELUCCA SLOOP 2.9")      # newer: the next older one
+    assert not exact and b.version == "2.8.5"
+    assert studio.pick_build("sloop")[0].version == "2.8.5"               # without a wish: the newest = the stable
+    assert studio.version_key("SLOOP 2.8.4") < studio.version_key("SLOOP 2.8.5") < studio.version_key("SLOOP 2.10")
+    assert studio.check_versions("2.8.5", device="FELUCCA SLOOP 2.8.5", firmware="SLOOP").ok
+    vc = studio.check_versions("2.8.5", device="FELUCCA SLOOP 2.8.4", firmware="SLOOP")
+    assert not vc.ok and "SLOOP" in vc.message and "CZ-1" not in vc.message
+    assert studio.firmware_name("sloop") == "SLOOP" and studio.FIRMWARES["sloop"]["projects"] == 4
+    # the device layer: INFO "FELUCCA SLOOP 2.8.5" and the catalog's key "sloop" select the SLOOP twin; the package
+    # identity FM-1_900 is Felucca's too (SLOOP's tools/build.py PRODUCT), so INFO decides
+    from fm1companion.protocol import Info
+    from fm1companion.ui.studio_service import StudioService
+    from fm1companion import firmware
+    assert Info("FELUCCA SLOOP 2.8.5").firmware_name == "sloop"
+    assert StudioService.firmware_for("sloop") == "sloop" and StudioService.firmware_for("skiff") == "skiff"
+    assert firmware.guess_firmware("FM-1_900", "FELUCCA SLOOP 2.8.5") in (("sloop", "v2.8.5"), firmware.guess_firmware(
+        "FM-1_900"))
+    assert firmware.guess_firmware("", "FELUCCA SLOOP 2.8.5") == ("sloop", "v2.8.5")
+
+
+@need_node
+def test_sloop_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_sloop.mjs"), str(studio.SIMS_DIR / "sloop-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"2.8.4", "2.8.5"}
+    for x in res:
+        v = x["firmware_version"]
+        assert x["version_export"] == v and x["info"] == "FELUCCA " + v and x["info_proto"] == 12 and x["ping"] == [0]
+        assert bytes(x["identity_reply"]) == _identity_frame("FM-1_900")   # ota.c, as demo_device expects
+        assert x["ids"] == SLOOP_IDS and x["screen_lit"] > 2000
+        assert {0, 1, 2, 9} <= {int(k) for k in x["sizes"]} and x["sizes"]["2"] == 3816   # FUN6 projects
+        assert all(rc == 0 for rc in x["put_rc"].values())
+        assert all(x["identical"].values()) and x["persisted"] and x["projects_used"] == [0]
+        assert x["live_step0"] == {"note": 48, "vel": 100}
+        a, b = x["takes"]
+        assert a["playing"] and a["leds_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
+        assert x["fork_identical"] and x["stopped"] and x["song_play"] and x["editor_stop"]
+        print(f"{v}: {a['realtime']:.1f}x real time (4 tracks)")
+        assert a["realtime"] > 3
+
+
+def _sloop_song(st, section=0):
+    L = st.link
+    for k in range(3):
+        for i in range(0, 16, 2 + k):
+            L.request(Cmd.TRACK_STEP, [k, i, 1, 48 + 5 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    for i in range(0, 16, 4):                                                # DRUM_STEP: the kick on every beat
+        L.request(33, [i, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert L.request(Cmd.PROJECT, [1, section])[2] == 1                      # SAVE > SECTION A
+
+
+def _sloop_sample(st, slot=1):
+    """a one-zone kit into the user sample slot USR<slot+1> (samples.py's upload, the format of SLOOP's editor)"""
+    import math
+    from fm1companion import samples
+    from fm1companion.vendor import sampleio as sio
+    hdr, data = sio.user_slot("SINE", [([int(12000 * math.sin(i / 7)) for i in range(4000)], 60, None, None)])
+    samples.upload(st.link, slot, hdr, data)
+    return samples.slot_info(st.link)[1][slot]
+
+
+def test_sloop_backup_round_trip_with_suite_code(node_studio, tmp_path):
+    from fm1companion import backup_inspect as BI, sloopbk
+    a = node_studio(firmware="sloop", version="SLOOP 2.8.5")
+    assert a.build.firmware == "sloop" and a.build.version == "2.8.5" and a.tracks == 4 and a.project_slots == 4
+    assert studio.device_version(a.link) == "v2.8.5" and a.info_name == "FELUCCA SLOOP"
+    _sloop_song(a)
+    slot = _sloop_sample(a)
+    assert slot.zones == 1 and slot.name == "SINE"
+    arch = a.backup()                                                        # SLOOP's own format (sloopbk.py)
+    assert arch.sloop and arch.file["format"] == "sloop-backup" and arch.firmware == "FELUCCA SLOOP 2.8.5"
+    assert [o["id"] for o in arch.objects] == SLOOP_IDS and arch.known
+    assert studio.backup_version(arch) == "v2.8.5" and studio.backup_firmware(arch) == "sloop"
+    assert arch.companion["version_string"] == "FELUCCA SLOOP 2.8.5"
+    by = {o["id"]: o["bytes"] for o in arch.objects}
+    assert len(by[33]) > sloopbk.SMP_DATA_OFF and not by[32] and sloopbk.proj_format(by[2]) == 6
+    # the file as SLOOP's web editor writes it (JSON.stringify(f, null, 1)), without the companion block: the format tells
+    p = tmp_path / "sloop.json"
+    backup.write_file(p, arch.file)
+    plain = json.loads(p.read_text("utf-8"))
+    assert p.read_text("utf-8") == sloopbk.dumps(plain)
+    plain.pop("companion")
+    parch = backup.read(plain)
+    assert studio.backup_firmware(parch) == "sloop" and studio.backup_version(parch) == "v2.8.5"
+    # into the older twin via backup.restore (= the editor protocol, SLOOP's order): byte-identical back
+    b = node_studio(firmware="sloop", version="2.8.4")
+    b.open_from_backup(parch)
+    back = {o["id"]: o["bytes"] for o in b.backup().objects}
+    assert back == by and b.projects() == [0] and not b.rejected
+    assert b.load_project(0) == 0 and b.load_project(1) == 1
+    vc = b.check_versions(archive=arch)
+    assert not vc.ok and "SLOOP" in vc.message
+    c = studio.Studio.for_backup(parch, backend="node")                     # the backup's firmware and version
+    try:
+        assert c.build.firmware == "sloop" and c.build.version == "2.8.5" and not c.warning and c.projects() == [0]
+        assert c.play()["busy"] and not c.stop()["busy"]                   # st_transport_set
+        assert c.play("song")["busy"] and not c.stop()["busy"]
+    finally:
+        c.close()
+    # the tolerant load (the studio page's): nothing of its own firmware skipped; a section in a newer project format
+    # than the twin reads, and a damaged settings object, are left out and named; the rest is taken
+    d = node_studio(firmware="sloop")
+    d.open_from_backup(arch, tolerant=True)
+    assert d.rejected == [] and {o["id"]: o["bytes"] for o in d.backup().objects} == by
+    f = json.loads(backup.dumps(arch.file))
+    for o in f["objects"]:
+        if o["id"] in (1, 3):
+            raw = bytearray(by[2] if o["id"] == 3 else by[1])
+            if o["id"] == 3:
+                raw[0] = ord("9")                                            # "FUN9"
+            else:
+                raw[0:4] = b"XXXX"                                           # (not "PER3")
+            o.update(len=len(raw), crc=backup.crc32(bytes(raw)), data=sloopbk.b64enc(bytes(raw)))
+    e = node_studio(firmware="sloop")
+    e.open_from_backup(backup.read(f), tolerant=True)
+    assert sorted(e.rejected) == [1, 3] and e.projects() == [0]
+    # the inspector reads it as SLOOP's (sections A..D, the sample slots)
+    rep = BI.inspect(arch)
+    assert rep.firmware_key == "sloop" and BI.is_sloop(rep)
+    assert "A" in rep.obj(2).title and "USR2" in rep.obj(33).title
+    assert BI.compatibility(rep, "sloop", "FELUCCA SLOOP 2.8.5", SLOOP_IDS).ok
+
+
+def test_sloop_demo_device_and_write_back(node_studio):
+    """The demo's SLOOP device (demo_device.py, as the app's demo mode starts it): fetched into the twin, written back
+    with the checks of a real SLOOP (its own protocol, the settings left as they are)."""
+    from fm1companion.demo_device import FakeFM1
+    from fm1companion.transport import Link
+    sys.path.insert(0, str(ROOT / "tests"))
+    from test_sloop_backup import LocalTransport
+    dev = FakeFM1(4, "SLOOP 2.8.5")
+    link = Link(LocalTransport(dev))
+    st = node_studio(firmware="sloop", version="SLOOP 2.8.5")
+    arch, vc = st.open_from_device(link, tolerant=True)
+    assert arch.sloop and vc.ok and st.projects() == [0]
+    assert set(st.rejected) <= {1, 9}                                        # (the demo's settings and SYN kits are filler)
+    before = {o["id"]: o["bytes"] for o in backup.read(backup.capture(link, "x", firmware_key="sloop")).objects}
+    _sloop_song(st, section=1)
+    out = st.write_to_device(link, settings=False, exclude=st.rejected)
+    now = {o["id"]: o["bytes"] for o in backup.read(backup.capture(link, "x", firmware_key="sloop")).objects}
+    twin = {o["id"]: o["bytes"] for o in out.objects}
+    for i in now:
+        assert now[i] == (before[i] if i in (1, *st.rejected) else twin[i]), i
+    assert now[3] and now[3] == twin[3]                                       # section B: the twin's
+    other = node_studio(firmware="melodee")
+    with pytest.raises(backup.BackupError, match="SLOOP"):                   # a Melodee twin's data onto SLOOP: refused
+        other.write_to_device(link, force=True)
+
+
+def test_sloop_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="sloop")
+    _sloop_song(st)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="saved", project=0, stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3] and s.peak > 0.05
+    peaks = []
+    for k, p in s.stems.items():
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    assert all(pk > 0.005 for pk in peaks), peaks
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "sloop" and meta["firmware_version"] == "2.8.5" and len(flash) == 0x100000

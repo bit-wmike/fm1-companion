@@ -8,7 +8,7 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 | Step | Firmware | Status |
 |---|---|---|
 | 1 | **Melodee** (priority 1), matching the version on the device (1.6.1, 1.6.0, 1.6.0-rc.7 and rc.8 bundled) | **done in 2.2.0**, 1.6.0 since 2.3.0, 1.6.1 since 2.3.2 (page "Studio", virtual device, playback target "Im Studio" – in the Studio) |
-| 2 | **SLOOP** (latest stable, currently 2.8.4) | only once Melodee runs well |
+| 2 | **SLOOP**, the stable of its installer (2.8.5), plus the release before (2.8.4) | **done** (branch `studio-sloop`; same page, virtual device, backup ↔ twin in SLOOP's own format, write back) |
 | 3 | **Skiff**, matching the version on the device (2.2 and 2.1.1 bundled) | **done** (branch `studio-skiff`; same page, virtual device, backup ↔ twin, write back) |
 | 3b | **JIANT FM**, the public stable of its installer (V10.6z2), plus the earlier stable V10.60 and beta V10.61 | **done** (branch `studio-jiant`; same page, virtual device, backup ↔ twin, write back) |
 | 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V16 may differ | after that |
@@ -111,6 +111,32 @@ backup restored onto V10.6p or later loses songs 7 and 8 (the studio's tolerant 
 before writing; JIANT's own editor skips them); the catalog entry
 "jiant-fm" still says protocol "none" (the device answers the editor protocol all the same). Checked only against the
 twin itself, never a real JIANT FM-1 (docs/UNTESTED.md).
+
+## Status SLOOP (2.8.5, 2.8.4)
+
+Done: twin **SLOOP 2.8.5** (tag v2.8.5, commit bac9c05, the stable SLOOP's web installer ships:
+`docs/firmware/sloop-2.8.5.fwsc`) and **2.8.4** (tag v2.8.4, commit 91f3018, the release before), glue layer
+`tools/studio/sloop_studio.c` – SLOOP's unmodified sources included as its own host harness of the whole firmware does
+(`tests/editor_host.c`, `tests/hostsim.c`, `boot_sound_test.c`: SLOOP has no browser emulator of the whole firmware),
+plus `main.c`'s boot, `audio.c`'s ISR, `ota.c`'s identity handshake, USB MIDI out, LEDs and screen. Same `st_*` ABI with
+`st_transport_set` (stop as seq.c's STOP, the song as the SAVE layer's SONG MODE + PLAY). The folder is the number of the
+version (`ui.c` FELUCCA_VERSION "SLOOP 2.8.5" -> `sims/sloop-studio/2.8.5/`), the identity SLOOP's `tools/build.py`
+PRODUCT (FM-1_900, Felucca's too: INFO tells SLOOP).
+Python: `studio.FIRMWARES["sloop"]` ("SLOOP", INFO "FELUCCA SLOOP", 4 tracks, 4 slots = the sections A–D; the build's
+version "2.8.5" without the "SLOOP " of its version string); `backup_firmware()` knows SLOOP by its file format
+("sloop-backup", also the web editor's own files); `StudioService.firmware_for()` takes the device layer's "sloop"
+(INFO "FELUCCA SLOOP …"); the twin loads and writes through SLOOP's own protocol (`sloopbk.py`, commands 34–36, the
+web editor's order); `studio.restore_tolerant` has a SLOOP path (each object on its own, a project format newer than the
+twin reads or a refused object left out and named; the default MIDI LEARN object as the editor adds it). Backup layer:
+SLOOP's inventory (0–11, 32–35) checked against `editor.c` `ED_BK_IDS` / `ed_bk_obj` and the protocol document – it
+matched (no fix needed); `Studio.write_to_device` no longer passes the twin's firmware as the protocol hint (another
+firmware's FM-1 now refuses at once instead of timing out). The demo's SLOOP device reports 2.8.5 (its twin).
+
+Open (SLOOP): the project view and `projectfmt` do not read SLOOP's sections (FUN6; the export dialog offers no "passes
+of the pattern", the name comes from the slot) – a separate parser; one core (MENU › 2ND CORE), no USB audio, no TRS
+MIDI, no USB rescue; the whole song needs a playable song order (an empty section in it: the loop plays to the export's
+limit); versions before 2.8.4 get the 2.8.4 twin with a warning. Checked only against the twin itself and the demo
+device, never a real SLOOP FM-1 (docs/UNTESTED.md).
 
 ## Second route: fm1-emu (processor emulation)
 

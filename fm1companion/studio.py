@@ -2,8 +2,8 @@
 """Studio: the FM-1's digital twin in the suite.
 
 The FM-1 is the instrument, the suite is the studio. The twin is **the same firmware** as on the device
-(Melodee's, Skiff's or JIANT FM's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py
---target melodee-studio / skiff-studio / jiant-studio and tools/studio/<firmware>_studio.c): the same engines, effects,
+(Melodee's, Skiff's, JIANT FM's or SLOOP's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py
+--target melodee-studio / skiff-studio / jiant-studio / sloop-studio and tools/studio/<firmware>_studio.c): the same engines, effects,
 the same mixer and sequencer, plus the NOR flash (settings, projects, user presets) and the editor SysEx protocol over
 the firmware's USB path.
 It runs in QtWebEngine (web worker; sound via AudioWorklet -> Chromium -> PipeWire = the Pi's speakers) and
@@ -27,7 +27,7 @@ API (``Studio``)::
     st.open_from_device(link)                           # read a backup from the real FM-1, then load it
     st.link                                             # link to the twin (as to a real FM-1)
     st.play(how="play"|"song") / st.stop()              # transport (PLAY key or song chain, editor stop)
-    st.load_project(slot)                               # load a project (Melodee 1..32, Skiff A..D, JIANT's sections A..D)
+    st.load_project(slot)                               # load a project (Melodee 1..32, Skiff A..D, JIANT's and SLOOP's sections A..D)
     st.start_audio() / st.stop_audio()                  # real-time sound (WebEngine: default output)
     st.render_wav(path, seconds=None, until_end=False, stems=False, start="play", source="live", fmt="f32")
                                                         # offline, faster than real time -> RenderResult
@@ -99,6 +99,10 @@ FIRMWARES = {
     "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32},
     "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4},
     "jiant": {"name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
+    # SLOOP answers INFO "FELUCCA SLOOP 2.8.5" (its version string, the build's firmware_version, is "SLOOP 2.8.5": the
+    # build's version is "2.8.5"); 4 tracks, the sections A..D; its own backup protocol and file format (sloopbk.py),
+    # which backup.py picks by itself
+    "sloop": {"name": "SLOOP", "info": "FELUCCA SLOOP", "version_prefix": "SLOOP ", "tracks": 4, "projects": 4},
 }
 
 
@@ -223,7 +227,11 @@ def builds(firmware: str = "melodee") -> list[TwinBuild]:
             continue
         if m.get("abi") != STUDIO_ABI or m.get("kind") != "studio":
             continue
-        out.append(TwinBuild(m.get("firmware", firmware), m.get("firmware_version") or norm_version(sub.name), sub, m))
+        version = m.get("firmware_version") or norm_version(sub.name)
+        pre = FIRMWARES.get(firmware, {}).get("version_prefix", "")
+        if pre and version.upper().startswith(pre.upper()):           # (SLOOP: "SLOOP 2.8.5" -> "2.8.5")
+            version = version[len(pre):]
+        out.append(TwinBuild(m.get("firmware", firmware), version, sub, m))
     return sorted(out, key=lambda b: fw_version_key(firmware, b.version))
 
 
@@ -631,8 +639,8 @@ class Studio:
         if skip:
             ids = [o["id"] for o in archive.objects if o["id"] not in skip]
             backup.restore_selected(link, archive, ids, progress)
-        else:
-            backup.restore(link, archive, progress, firmware_key=self.build.firmware)
+        else:                                       # (no hint: the device's INFO picks the protocol, so another
+            backup.restore(link, archive, progress)  # firmware's FM-1 refuses at once instead of timing out)
         return archive
 
     @property
@@ -804,8 +812,7 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     from . import backup
     backup._match(link, archive, firmware_key)
     if archive.sloop:
-        raise StudioError(_("The {firmware} twin cannot load SLOOP backups.").format(
-            firmware=firmware_name(firmware_key)))
+        return _restore_tolerant_sloop(link, archive, progress)
     sup_order = [o.id for o in backup.parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))]
     sup = set(sup_order)
     objs = archive.objects
@@ -821,6 +828,38 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
         except backup.BackupError:
             rejected.append(o["id"])
         done += o["size"]
+        if progress:
+            progress(done, total)
+    return rejected
+
+
+def _restore_tolerant_sloop(link, archive, progress=None) -> list[int]:
+    """restore_tolerant for SLOOP (its own protocol, sloopbk.py): in the web editor's order (banks, sections, the running
+    project, the settings, then the sample slots), each object on its own; one the firmware refuses (another version's
+    format, a project format newer than the twin reads, a damaged one) is skipped. A backup of SLOOP 2.5.1 or later
+    without the MIDI LEARN object gets the default one, as the editor's restore does. -> rejected object IDs"""
+    from . import backup, sloopbk
+    m = sloopbk.objects(archive.file)
+    info = sloopbk.read_info(link)
+    newest = sloopbk.dev_format(info.p_count)
+    if 10 not in m and sloopbk.fw_at_least(archive.firmware, (2, 5, 1)):
+        m[10] = sloopbk.check_restore({0: b"x", 1: b"x"}, {"firmware": archive.firmware}, None)[10]
+    todo = [i for i in sloopbk.RESTORE + sloopbk.SAMPLES if i in m]
+    total = sum(len(m[i]) for i in todo) or 1
+    done = 0
+    rejected = []
+    for oid in todo:
+        d = m[oid]
+        try:
+            if oid in (0, 2, 3, 4, 5) and sloopbk.proj_format(d) > newest:
+                raise backup.BackupError("newer project format")
+            if oid in sloopbk.SAMPLES:
+                sloopbk.write_sample(link, oid, d)
+            elif sloopbk.write_object(link, oid, d) and d:
+                rejected.append(oid)                    # (an object this firmware does not know)
+        except backup.BackupError:
+            rejected.append(oid)
+        done += len(d)
         if progress:
             progress(done, total)
     return rejected

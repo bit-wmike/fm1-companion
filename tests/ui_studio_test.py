@@ -185,6 +185,37 @@ try:
     check(jt2.play()["busy"] and not jt2.stop()["busy"], "JIANT: play and stop (st_transport_set)")
     jt2.close()
     jt.close()
+    # the SLOOP twin (tools/studio/sloop_studio.c): editor, identity, four stems, its own backup protocol (sloopbk.py)
+    sl = studio.Studio.create(firmware="sloop", backend="webengine", server=st.backend.server)
+    check(sl.build.firmware == "sloop" and sl.info.get("version") == "SLOOP " + sl.build.version,
+          f"SLOOP twin started in QtWebEngine: {sl.info.get('version')}")
+    OL = sl.link
+    check(studio.device_version(OL) == studio.norm_version(sl.build.version), "SLOOP INFO via Link")
+    got.clear()
+    OL.add_listener(lambda d, direction: got.append(d) if direction == "in" and d[:2] == [0xF0, 0x00] else None)
+    OL.send_midi([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])
+    t1 = time.time()
+    while not got and time.time() - t1 < 3:
+        app.processEvents()
+    check(got and bytes(got[0]) == _identity_frame(sl.build.identity), f"SLOOP identity {sl.build.identity}")
+    for k in range(3):
+        for i in range(0, 16, 2 + k):
+            OL.request(Cmd.TRACK_STEP, [k, i, 1, 48 + 5 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    for i in range(0, 16, 4):
+        OL.request(33, [i, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])          # DRUM_STEP: the kick
+    check(OL.request(Cmd.PROJECT, [1, 0])[2] == 1, "SLOOP: section A saved in the twin")
+    r6 = sl.render_wav(out / "sloop.wav", seconds=2, start="play", source="saved", project=0, stems=True, fmt="f32")
+    check(len(r6.stems) == 4 and r6.peak > 0.05, f"SLOOP: mix + four stems, peak {r6.peak:.3f}")
+    oarch = sl.backup()
+    check(oarch.sloop and studio.backup_firmware(oarch) == "sloop" and len(oarch.objects) == 14,
+          f"SLOOP backup (sloop-backup, {len(oarch.objects)} objects)")
+    sl2 = studio.Studio.for_backup(oarch, backend="webengine", server=st.backend.server)
+    same = all(a["bytes"] == b["bytes"] for a, b in zip(oarch.objects, sl2.backup().objects))
+    check(sl2.build.firmware == "sloop" and sl2.projects() == [0] and same,
+          "SLOOP backup into a second SLOOP twin: byte-identical")
+    check(sl2.play()["busy"] and not sl2.stop()["busy"], "SLOOP: play and stop (st_transport_set)")
+    sl2.close()
+    sl.close()
     st.close()
     from fm1companion.ui import web
     web.shutdown_all()

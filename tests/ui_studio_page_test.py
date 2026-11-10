@@ -339,6 +339,56 @@ def flow():
           f"write back of the JIANT twin onto the Melodee FM-1 refused: {boxes[-1:]}")
     r = page.export_wav({"path": out / "JIANT.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
     check(r is not None and len(r.stems) == 6, f"JIANT export: mix + {r and len(r.stems)} stems")
+
+    # ---- a SLOOP backup (SLOOP's own format, sloopbk.py): the page starts the SLOOP twin (its sections A–D, four
+    # stems); writing it back onto the demo FM-1 (Melodee) is refused
+    sl = S.Studio.create(firmware="sloop", backend="webengine", server=w.server)
+    for k in range(3):
+        for i in range(0, 16, 4):
+            sl.link.request(Cmd.TRACK_STEP, [k, i, 1, 48 + 5 * k, 0, 0, 0, 0, 0, 100])
+    sl.link.request(Cmd.PROJECT, [1, 1])                # section B
+    ofile = bdir / "Studio-Test_sloop.json"
+    backup.write_file(ofile, sl.backup().file)
+    over = sl.build.version
+    sl.close()
+    from fm1companion.ui.pages.studio import BackupPicker
+    check(page.open_backup(ofile) == ofile and svc.firmware == "sloop" and not svc.st.rejected,
+          f"SLOOP backup opened: the SLOOP twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 4 and labels[0].startswith("Section A") and "leer" in labels[0] and "leer" not in labels[1],
+          f"SLOOP section list A–D: {labels}")
+    check("SLOOP" in page.src.text() and "SLOOP" in page.banner.text() and "Melodee" in page.banner.text(),
+          "banner names both firmwares: " + page.banner.text())
+    check(f"Studio-Zwilling (SLOOP {over})" in [x.label for x in svc._virtual_ports()], "virtual device: SLOOP twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("SLOOP" in b for b in boxes),
+          f"write back of the SLOOP twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    r = page.export_wav({"path": out / "SLOOP.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 4, f"SLOOP export: mix + {r and len(r.stems)} stems")
+    picker = BackupPicker(page, ctx.settings.backups_dir)
+    found = [picker.tree.topLevelItem(i).data(0, Qt.ItemDataRole.UserRole) for i in range(picker.tree.topLevelItemCount())]
+    picker.deleteLater()
+    check(str(ofile) in found, f"the backup list offers SLOOP backups too ({len(found)} entries)")
+    # ---- the demo's SLOOP device (DEMO-2, "SLOOP 2.8.5"): fetched into its twin, written back with a safety backup
+    port2 = next((x for x in ctx.ports if x.serial == "DEMO-2"), None)
+    if port2 is not None:
+        ctx.connect_port(port2)
+        check(until(lambda: ctx.connected and ctx.firmware_key == "sloop", 20000),
+              f"the demo's SLOOP FM-1 connected ({ctx.firmware_key})")
+        page.refresh()
+        ok_dev, why = page._device_ok()
+        check(ok_dev, f"the studio accepts the SLOOP FM-1 {why}")
+        got_path = page.fetch_from_device()
+        check(got_path is not None and svc.firmware == "sloop" and svc.version == "2.8.5",
+              f"fetched from the SLOOP FM-1 into the SLOOP twin {svc.version} (rejected: {svc.st.rejected})")
+        safety = page.write_back({"settings": False, "force": False})
+        check(safety is not None and Path(safety).exists() and backup.load_file(safety).sloop,
+              f"written back onto the SLOOP FM-1, safety backup first: {safety and Path(safety).name}")
+        ctx.connect_port(ctx.ports[0])
+        check(until(lambda: ctx.connected and ctx.firmware_key == "melodee", 20000), "the Melodee demo FM-1 again")
+    else:
+        check(False, "demo port DEMO-2 (SLOOP) missing")
     shot("studio-640.png", 640)
     if SHOTS:
         sb = w.page_scroll.verticalScrollBar()

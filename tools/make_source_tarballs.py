@@ -9,7 +9,8 @@ the builds (see the simulators' NOTICE).
   python3 tools/make_source_tarballs.py --repo melodee=/path/to/melodee --repo fm1_open=/path/to/fm1_open
                                         [--out dist/sources]
 
-Without --repo, /tmp/<name> is searched (then /tmp/<name in lower case>, e.g. /tmp/jiant for JIANT). If a clone or a commit is missing, the script reports it and
+Without --repo, /tmp/<name> is searched (then /tmp/<name in lower case>, e.g. /tmp/jiant for JIANT, then an alias of
+CLONE_ALIASES, e.g. /tmp/sloop for sloop-fm1). If a clone or a commit is missing, the script reports it and
 exits with code 1 (the remaining tarballs are still written).
 """
 from __future__ import annotations
@@ -23,6 +24,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SIMS = ROOT / "fm1companion" / "sims"
+# repositories whose clone usually goes by another name (/tmp/<alias>)
+CLONE_ALIASES = {
+    "sloop-fm1": "sloop",            # isod89/sloop-fm1, cloned as /tmp/sloop
+}
 
 
 def wanted() -> dict[tuple[str, str], list[str]]:
@@ -60,7 +65,8 @@ def main(argv=None) -> int:
     for (name, commit), users in wanted().items():
         clone = repos.get(name) or repos.get(name.lower())
         if clone is None:                # (/tmp/<name>, else lower case: JIANT's clone is usually /tmp/jiant)
-            clone = next((p for p in (Path("/tmp") / name, Path("/tmp") / name.lower())
+            clone = next((p for p in (Path("/tmp") / name, Path("/tmp") / name.lower(),
+                                      Path("/tmp") / CLONE_ALIASES.get(name, name))
                           if (p / ".git").exists() or (p / "HEAD").exists()), Path("/tmp") / name)
         dest = out / f"{name}-{commit}.tar.gz"
         if not (clone / ".git").exists() and not (clone / "HEAD").exists():

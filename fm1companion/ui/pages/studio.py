@@ -26,7 +26,7 @@ from ..common import button, confirm, flow_row, fw_label, heading, icon, label, 
 from . import PageSpec
 from ...i18n import _, ngettext, pgettext
 
-STEMS_TIP = _("Single tracks (stems): one WAV file per track (Melodee 1–4, Skiff and JIANT FM 1–6), as long as the mix. Each "
+STEMS_TIP = _("Single tracks (stems): one WAV file per track (Melodee and SLOOP 1–4, Skiff and JIANT FM 1–6), as long as the mix. Each "
                "track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the "
                "stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or "
                "Audacity.")
@@ -46,7 +46,7 @@ class BackupPicker(QDialog):
         self.resize(640, 420)
         self.path: Path | None = None
         lay = QVBoxLayout(self)
-        lay.addWidget(label(_("Which backup should the twin load? Melodee, Skiff and JIANT FM backups of all devices, "
+        lay.addWidget(label(_("Which backup should the twin load? Melodee, Skiff, JIANT FM and SLOOP backups of all devices, "
                               "newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."),
                             "muted"))
         self.tree = QTreeWidget()
@@ -59,7 +59,7 @@ class BackupPicker(QDialog):
         except OSError:
             metas = []
         for m in metas:
-            if m.fmt != "felucca-backup" or "sloop" in (m.firmware or "").lower():
+            if m.fmt not in ("felucca-backup", "sloop-backup"):
                 continue
             it = QTreeWidgetItem([m.when.astimezone().strftime(_("%Y-%m-%d %H:%M")), m.device or m.path.parent.name,
                                   fw_label(m.firmware) if m.firmware else (m.fw_key or "?"), m.note])
@@ -201,6 +201,10 @@ class WriteBackDialog(QDialog):
                 _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
                   "twin replaces on the device: every song's sections A–D and the song index, the running music and "
                   "the user presets. Playback on the FM-1 stops in the process.") if firmware == "jiant" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces on the device, in SLOOP's order: the user preset banks, the FM6 patch bank, the SYN drum "
+                  "kits, the sections A–D, the running project and the sample slots. Playback on the FM-1 must be "
+                  "stopped (STOP) – SLOOP refuses otherwise.") if firmware == "sloop" else
                 _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
                   "twin replaces on the device: all 32 project slots, the running music and the user presets. "
                   "Playback on the FM-1 stops in the process."))
@@ -483,20 +487,22 @@ class StudioPage(QWidget):
             return False, _("The twin itself is active right now – choose a real FM-1 in the device selection at the top.")
         if not c.connected:
             if c.port is not None and c.protocol == "generic":
-                return False, _("This firmware has no editor protocol – the studio needs Melodee, Skiff or JIANT FM.")
+                return False, _("This firmware has no editor protocol – the studio needs Melodee, Skiff, JIANT FM or "
+                                "SLOOP.")
             return False, _("No FM-1 connected.")
         if not self.svc.firmware_for(c.firmware_key):
-            return False, _("The FM-1 runs {firmware} – so far there is a studio twin only for Melodee, Skiff and "
-                            "JIANT FM.").format(
+            return False, _("The FM-1 runs {firmware} – so far there is a studio twin only for Melodee, Skiff, "
+                            "JIANT FM and SLOOP.").format(
                 firmware=html.escape(fw_label(c.info.version) if c.info else _('another firmware')))
         return True, ""
 
     def _project_label(self, k: int) -> str:
-        """project slot k as the firmware names it: Melodee 1..32, Skiff A..D, JIANT the current song's sections A..D"""
+        """project slot k as the firmware names it: Melodee 1..32, Skiff A..D, JIANT the current song's sections A..D,
+        SLOOP its sections A..D"""
         st = self.svc.st if self.svc is not None else None
         if st is not None and st.build.firmware == "skiff":
             return _("Project {n}").format(n="ABCD"[k] if 0 <= k < 4 else k + 1)
-        if st is not None and st.build.firmware == "jiant":
+        if st is not None and st.build.firmware in ("jiant", "sloop"):
             return _("Section {n}").format(n="ABCD"[k] if 0 <= k < 4 else k + 1)
         return _("Project {n}").format(n=k + 1)
 
@@ -542,9 +548,9 @@ class StudioPage(QWidget):
         text, level = "", ""
         dev_fw = svc.firmware_for(c.firmware_key) if (c.connected and not c.is_virtual) else ""
         if c.connected and not c.is_virtual and not dev_fw:
-            text = _("There is no studio twin for {firmware} yet. So far the studio can do Melodee, Skiff and JIANT FM; "
-                     "SLOOP and the original firmware (via FM1 Open) follow later – see Help › Studio. Backups of this "
-                     "device cannot be opened here; a Melodee, Skiff or JIANT FM backup can.").format(
+            text = _("There is no studio twin for {firmware} yet. So far the studio can do Melodee, Skiff, JIANT FM and "
+                     "SLOOP; the original firmware (via FM1 Open) follows later – see Help › Studio. Backups of this "
+                     "device cannot be opened here; a Melodee, Skiff, JIANT FM or SLOOP backup can.").format(
                 firmware=html.escape(fw_label(c.info.version) if c.info else _('this firmware')))
             level = "warning"
         elif svc.running and dev_fw and dev_fw != svc.firmware:
@@ -703,7 +709,7 @@ class StudioPage(QWidget):
             self.t_state.setText(_("Loading not possible: {error}").format(error=e))
             return
         n = self._project_label(slot).rsplit(" ", 1)[-1]
-        if self.svc.firmware == "jiant":                # (JIANT: the current song's sections)
+        if self.svc.firmware in ("jiant", "sloop"):     # (JIANT: the current song's sections; SLOOP's sections)
             done = {0: _("Section {n} loaded.").format(n=n), 1: _("Section {n} is empty.").format(n=n)}
         else:
             done = {0: _("Project {n} loaded.").format(n=n), 1: _("Project {n} is empty.").format(n=n)}
@@ -804,10 +810,6 @@ class StudioPage(QWidget):
             arch = backup.load_file(path)
         except Exception as e:  # noqa: BLE001
             show_error(self, _("Open backup"), _("The backup cannot be read: {error}").format(error=e))
-            return None
-        if arch.sloop:
-            show_error(self, _("Open backup"), _("This is a SLOOP backup. So far there is a studio twin only for "
-                                                 "Melodee, Skiff and JIANT FM (SLOOP follows later)."))
             return None
         fw = S.backup_firmware(arch)
         try:

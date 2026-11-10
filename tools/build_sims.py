@@ -11,6 +11,7 @@ compiles anything. Run this in a development container, not on the user's machin
   python3 tools/build_sims.py --target melodee-studio [--ref v1.6.0-rc.8 ...] [--repo melodee=/tmp/melodee]
   python3 tools/build_sims.py --target skiff-studio [--ref v2.2 ...] [--repo skiff=/tmp/skiff]
   python3 tools/build_sims.py --target jiant-studio [--ref <commit> ...] [--repo jiant=/tmp/jiant]
+  python3 tools/build_sims.py --target sloop-studio [--ref v2.8.5 ...] [--repo sloop=/tmp/sloop]
 
 Needs: git, Python with Pillow + fontTools (Melodee's header generators), and WASI SDK 27
 (downloaded from GitHub into --work when --wasi-sdk is not given; ~125 MB).
@@ -32,6 +33,8 @@ Simulators:
   jiant-studio  (--target) the same for JIANT FM (tools/studio/jiant_studio.c): sims/jiant-studio/<version>/; JIANT has
             no tags, a ref is a commit (web/EDITIONS.json names them):
             python3 tools/build_sims.py --target jiant-studio [--ref <commit>] --repo jiant=<clone>
+  sloop-studio  (--target) the same for SLOOP (tools/studio/sloop_studio.c): sims/sloop-studio/<version>/
+            python3 tools/build_sims.py --target sloop-studio [--ref v2.8.5] --repo sloop=<clone>
 """
 from __future__ import annotations
 
@@ -247,6 +250,7 @@ BUILDERS = {"fm1-open": build_fm1_open, "melodee": build_melodee}
 #   python3 tools/build_sims.py --target melodee-studio --ref v1.6.0-rc.9 --repo melodee=/tmp/melodee
 #   python3 tools/build_sims.py --target skiff-studio --ref v2.3 --repo skiff=/tmp/skiff
 #   python3 tools/build_sims.py --target jiant-studio --ref <commit> --repo jiant=/tmp/jiant
+#   python3 tools/build_sims.py --target sloop-studio --ref v2.8.5 --repo sloop=/tmp/sloop
 # (needs: git, Pillow + fontTools for the firmwares' header generators, WASI SDK 27 as above). A further firmware
 # (SLOOP, FM1 Open) adds an entry here with its own glue file and the few firmware-specific hooks below (header
 # generators, where the version string lives, the release identity, the NOTICE); the JS / Python host stays the same.
@@ -367,6 +371,56 @@ def _skiff_notice(spec, version, ref, commit, source_url):
                                                          "tools/wasm_shim"))
 
 
+def sloop_identity(src: Path) -> str:
+    """SLOOP's tools/build.py PRODUCT: the package identity of its releases (the .fwsc of its web installer is built
+    without --release: FM-1_900; ota.c answers it)"""
+    m = re.search(r'^PRODUCT = "(FM-1_\d+)"', (src / "tools/build.py").read_text("utf-8"), re.M)
+    return m[1] if m else "FM-1_900"
+
+
+def sloop_folder(version: str) -> str:
+    """ui.c's FELUCCA_VERSION "SLOOP 2.8.5" -> the folder 2.8.5"""
+    return version.split()[-1].lstrip("vV")
+
+
+# the parts of SLOOP compiled into the twin that carry their own licence (SLOOP's LICENSING.md "Third-party material"):
+# msfa in fm6_core.c, the Terminus font of the screen, the CC0 samples; DaisySP's and Rings' MIT notices are in the
+# files themselves (phys_dsp.c, phys_symp.c: their header comment is taken over)
+SLOOP_THIRD_PARTY = ["LICENSES/Apache-2.0-msfa.txt", "assets/fonts/Terminus-LICENSE.txt",
+                     "assets/samples-cc0/ATTRIBUTION.txt", "assets/samples-cc0/CREDITS.txt"]
+SLOOP_NOTICE_FILES = ["firmware/src/phys_dsp.c", "firmware/src/phys_symp.c"]
+
+
+def _sloop_extra(src: Path, out: Path):
+    """the licence texts of the parts compiled into the twin (SLOOP's LICENSING.md lists them)"""
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    texts = [f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n" for f in SLOOP_THIRD_PARTY]
+    for f in SLOOP_NOTICE_FILES:
+        head = (src / f).read_text("utf-8")
+        texts.append(f"===== {f} (its licence notice) =====\n" + head[:head.index("*/") + 2] + "\n\n")
+    (out / "THIRD_PARTY.txt").write_text("".join(texts), "utf-8")
+
+
+def _sloop_notice(spec, version, ref, commit, source_url):
+    return (
+        f"{version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
+        f"(commit {commit}; source: {source_url}).\n"
+        "GPL-3.0-only. SLOOP by isod89, based on Felucca: Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton "
+        "Instruments (Felucca); SLOOP's changes and additions by its authors (SLOOP's README, Credits).\n"
+        "Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0; DaisySP and Rings in phys_dsp.c, "
+        "phys_symp.c: MIT; the Terminus screen font is rasterised in: OFL 1.1), the instrument and drum samples are "
+        "CC0\n(Versilian Studios, Sonic Pi): SLOOP's LICENSING.md and the texts in THIRD_PARTY.txt beside this file. "
+        "The icon atlas is a Felucca Asset (Hügelton Instruments), combined under the additional permission\n(GPL-3.0 "
+        "section 7) of LICENSING.md. The JieLi SDK files of SLOOP's packages are not part of the twin.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
+        "includes them as SLOOP's own host tests do (tests/hostsim.c, editor_host.c, boot_sound_test.c)\nand replaces "
+        "only the hardware: keys/LEDs/LCD, ADC (MASTER; battery full), NOR flash = a 1 MiB RAM image, USB = always "
+        "configured (SysEx and MIDI out through usb.c's rings),\none core (MENU > 2ND CORE has no second core here), no "
+        "USB audio, no TRS MIDI, no serial console, no USB rescue, no updater (ota.c answers the identity handshake "
+        "only).\nCompiled with WASI SDK clang (include shim tools/wasm_shim/sys/wait.h).\n"
+        + source_offer(spec["repo"], commit, f", the glue {spec['glue']} and the shim tools/wasm_shim"))
+
+
 STUDIOS = {
     "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
                        "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
@@ -399,6 +453,15 @@ STUDIOS = {
                      "identity_src": jiant_identity,
                      "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
                      "notice": _jiant_notice, "extra": _jiant_extra, "tracks": 6, "projects": 4},
+    # SLOOP: its release tags; v2.8.5 is the stable its web installer ships (docs/firmware/sloop-2.8.5.fwsc), v2.8.4 the
+    # one before. The folder is the number of the version ui.c reports ("SLOOP 2.8.5" -> 2.8.5).
+    "sloop-studio": {"firmware": "sloop", "repo": "https://github.com/isod89/sloop-fm1",
+                     "glue": "tools/studio/sloop_studio.c", "refs": ["v2.8.4", "v2.8.5"], "title": "SLOOP studio twin",
+                     "license": "GPL-3.0-only", "generate": _generate_skiff,
+                     "version_file": "firmware/src/ui.c", "version_re": r'#define FELUCCA_VERSION "([^"]*)"',
+                     "identity_src": sloop_identity, "folder": sloop_folder,
+                     "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
+                     "notice": _sloop_notice, "extra": _sloop_extra, "tracks": 4, "projects": 4},
 }
 
 
@@ -411,7 +474,7 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
     identity = spec["identity_src"](src) if spec.get("identity_src") else spec["identity"](version)
     glue = ROOT / spec["glue"]
     shutil.copy(glue, src / "tests" / "fm1c_studio.c")    # beside hostsim.c: its includes resolve as upstream's tests
-    out = OUT / name / version.lstrip("vV")
+    out = OUT / name / (spec["folder"](version) if spec.get("folder") else version.lstrip("vV"))
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
@@ -444,7 +507,7 @@ def studio_manifest(name, out: Path, ref, commit, toolchain, extra):
     spec = STUDIOS[name]
     files = {p.name: {"sha256": sha(p), "size": p.stat().st_size} for p in sorted(out.iterdir()) if p.is_file()
              and p.name != "manifest.json"}
-    m = {"schema": 1, "name": name, "title": spec["title"], "version": extra["firmware_version"].lstrip("vV"),
+    m = {"schema": 1, "name": name, "title": spec["title"], "version": out.name,
          "source_repo": spec["repo"], "ref": ref, "commit": commit, "license": spec["license"],
          "build_date": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
          "toolchain": toolchain, "builder": "tools/build_sims.py", "files": files, **extra}
@@ -467,7 +530,7 @@ def manifest(name, out: Path, commit, toolchain, extra):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--only", default=",".join(BUILDERS), help="simulators (fm1-open, melodee) and/or studio twins")
-    ap.add_argument("--target", help="a studio twin (melodee-studio, skiff-studio, jiant-studio): with --ref one version, "
+    ap.add_argument("--target", help="a studio twin (melodee-studio, skiff-studio, jiant-studio, sloop-studio): with --ref one version, "
                     "else all in STUDIOS")
     ap.add_argument("--ref", action="append", default=[], help="firmware tag(s) or commit(s) for --target (repeatable)")
     ap.add_argument("--work", default="/tmp/fm1c-simbuild")

@@ -1,0 +1,19 @@
+SLOOP 2.8.5 – studio twin (firmware code for the host), built from https://github.com/isod89/sloop-fm1 tag v2.8.5
+(commit bac9c05ea7627449405aa10e48da21d75b6c8c56; source: https://github.com/isod89/sloop-fm1/archive/bac9c05ea7627449405aa10e48da21d75b6c8c56.tar.gz).
+GPL-3.0-only. SLOOP by isod89, based on Felucca: Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments (Felucca); SLOOP's changes and additions by its authors (SLOOP's README, Credits).
+Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0; DaisySP and Rings in phys_dsp.c, phys_symp.c: MIT; the Terminus screen font is rasterised in: OFL 1.1), the instrument and drum samples are CC0
+(Versilian Studios, Sonic Pi): SLOOP's LICENSING.md and the texts in THIRD_PARTY.txt beside this file. The icon atlas is a Felucca Asset (Hügelton Instruments), combined under the additional permission
+(GPL-3.0 section 7) of LICENSING.md. The JieLi SDK files of SLOOP's packages are not part of the twin.
+The firmware sources are unmodified. The glue tools/studio/sloop_studio.c (GPL-3.0-only, in FM-1 Companion's source) includes them as SLOOP's own host tests do (tests/hostsim.c, editor_host.c, boot_sound_test.c)
+and replaces only the hardware: keys/LEDs/LCD, ADC (MASTER; battery full), NOR flash = a 1 MiB RAM image, USB = always configured (SysEx and MIDI out through usb.c's rings),
+one core (MENU > 2ND CORE has no second core here), no USB audio, no TRS MIDI, no serial console, no USB rescue, no updater (ota.c answers the identity handshake only).
+Compiled with WASI SDK clang (include shim tools/wasm_shim/sys/wait.h).
+
+Corresponding Source (GNU GPL 3.0, section 6)
+The complete corresponding source of this build is https://github.com/isod89/sloop-fm1 at commit bac9c05ea7627449405aa10e48da21d75b6c8c56
+together with FM-1 Companion's build script tools/build_sims.py, the glue tools/studio/sloop_studio.c and the shim tools/wasm_shim. A tarball of exactly this commit
+(sloop-fm1-bac9c05ea7627449405aa10e48da21d75b6c8c56.tar.gz, made with tools/make_source_tarballs.py) is attached to every
+FM-1 Companion release that ships this build: https://github.com/bit-wmike/fm1-companion/releases
+Written offer: for at least three years after the last release that ships this build, the maintainers of
+FM-1 Companion will give anyone a copy of that corresponding source on request (https://github.com/bit-wmike/fm1-companion/issues),
+free of charge apart from the cost of physically performing the distribution.

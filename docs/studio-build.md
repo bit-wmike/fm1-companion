@@ -1,8 +1,8 @@
-# Studio twin: adding a new Melodee, Skiff or JIANT FM version
+# Studio twin: adding a new Melodee, Skiff, JIANT FM or SLOOP version
 
-The Studio twin is the firmware's own code (Melodee's, Skiff's or JIANT FM's), compiled for the computer as
+The Studio twin is the firmware's own code (Melodee's, Skiff's, JIANT FM's or SLOOP's), compiled for the computer as
 WebAssembly – together with a small glue layer (`tools/studio/melodee_studio.c`, `tools/studio/skiff_studio.c`,
-`tools/studio/jiant_studio.c`) that exposes the
+`tools/studio/jiant_studio.c`, `tools/studio/sloop_studio.c`) that exposes the
 NOR flash, the USB SysEx path (editor protocol), keys/knobs/LEDs, the screen and rendering (ABI `st_*`, see
 `fm1companion/sims/_studio/twin-core.js`). Several versions sit side by side:
 
@@ -10,12 +10,13 @@ NOR flash, the USB SysEx path (editor protocol), keys/knobs/LEDs, the screen and
 fm1companion/sims/melodee-studio/<version>/   manifest.json, twin.wasm, LICENSE, NOTICE
 fm1companion/sims/skiff-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
 fm1companion/sims/jiant-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/sloop-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
 fm1companion/sims/_studio/                    shared host (page, worker, AudioWorklet, control surface)
 ```
 
 When opening, `studio.pick_build()` picks the firmware and version of the device or backup, otherwise the next older
-version (with a warning). Bundled: Melodee 1.6.0-rc.7, rc.8, 1.6.0, 1.6.1; Skiff 2.1.1, 2.2; JIANT FM V10.60, V10.61, V10.6z2 (its stable)
-(about 1.2–1.4 MB of wasm each).
+version (with a warning). Bundled: Melodee 1.6.0-rc.7, rc.8, 1.6.0, 1.6.1; Skiff 2.1.1, 2.2; JIANT FM V10.60, V10.61, V10.6z2 (its stable);
+SLOOP 2.8.4, 2.8.5 (its stable) (about 0.9–1.4 MB of wasm each).
 
 ## Requirements (only on the build machine, not on the Pi)
 
@@ -76,10 +77,42 @@ inventory). JIANT's release order (its git history): V10, V10.1 … V10.9, V10.1
 From V10.6p JIANT keeps 6 songs (35 objects); an 8-song backup's songs 7 and 8 are refused by the device – the studio's
 tolerant load leaves them out and names them, `backup.restore` stops before writing anything.
 
+SLOOP the same way, by its release tags (SLOOP's web installer ships the current stable, `docs/firmware/sloop-X.Y.Z.fwsc`;
+its clone read only):
+
+```sh
+git clone https://github.com/isod89/sloop-fm1 /path/to/sloop
+python3 tools/build_sims.py --target sloop-studio --ref v2.8.6 --repo sloop=/path/to/sloop
+```
+
+→ `fm1companion/sims/sloop-studio/<version>/`, the folder named after the number of the version the tag reports
+(`firmware/src/ui.c` `FELUCCA_VERSION`, "SLOOP 2.8.5" → `2.8.5/`; the manifest's `firmware_version` keeps "SLOOP 2.8.5",
+`studio.builds("sloop")` calls the build "2.8.5"), identity read from the tag's `tools/build.py` (`PRODUCT`, FM-1_900:
+SLOOP's releases are built without `--release`, whose X.Y has no room for 2.8.5; FM-1_900 is also Felucca's own, so
+the identity alone does not tell SLOOP – its INFO does), `tracks` 4, `projects` 4 (the sections A–D). The list is
+`STUDIOS["sloop-studio"]["refs"]`. SLOOP's versions sort with the generic `studio.version_key` (2.8.4 < 2.8.5 < 2.10).
+
+| SLOOP version | Tag / commit | Status (2026-11-10) | Reports (INFO / identity) | Backup objects (BK_LIST) | Folder |
+|---|---|---|---|---|---|
+| 2.8.5 | v2.8.5 / bac9c05ea7627449405aa10e48da21d75b6c8c56 | **stable** – the one SLOOP's web installer ships (`docs/firmware/sloop-2.8.5.fwsc`, README "Status") | `FELUCCA SLOOP 2.8.5` (protocol byte 12) / `FM-1_900` | 14 (+ 10, 11 when set) | `sloop-studio/2.8.5` |
+| 2.8.4 | v2.8.4 / 91f30182d9095e0ecdb43396554f2ce5a67df179 | previous release | `FELUCCA SLOOP 2.8.4` (protocol byte 12) / `FM-1_900` | 14 (+ 10, 11 when set) | `sloop-studio/2.8.4` |
+
+A SLOOP device answers INFO "FELUCCA SLOOP 2.8.5" (`protocol.Info.firmware_name` "sloop", the catalog's key `sloop`,
+`firmware.guess_firmware` "sloop"); `studio.pick_build("sloop", …)` matches the version number; an older SLOOP (2.8.3)
+gets 2.8.4 with a warning, a newer one 2.8.5. SLOOP has its own backup protocol and file format (commands 34–36,
+"sloop-backup", `sloopbk.py`; `backup.py` picks it by INFO): objects 0 the running project, 1 the settings (PER3, with
+the song order), 2–5 the sections A–D (FUN6, 3816 bytes; empty = length 0), 6–7 the user preset banks, 8 the FM6 bank,
+9 the SYN drum kits, 10 MIDI LEARN (listed only when not the default), 11 the theme (only when there is one), 32–35 the
+sample slots USR1–4 (restored through SMP_BEGIN / WRITE / END). The twin loads and writes it as SLOOP's web editor does
+(`sloopbk.restore`, its order: banks, sections, the running project, the settings, the samples); the studio's tolerant
+load (`studio.restore_tolerant`) takes each object on its own and names the ones the firmware refuses. A backup of the
+app, of the twin and of SLOOP's own web editor (no companion block: its `format` tells) all open the SLOOP twin.
+
 Each `STUDIOS` entry names what differs between firmwares: `generate` (the header generators), `version_file` /
 `version_re` (where the version string lives), `identity` (the release identity from the version) or `identity_src`
-(read from the source tree, JIANT), `defines` (version and identity for the glue), `notice`, optionally `extra`
-(further licence files) and, for the Python side, `tracks` and `projects`.
+(read from the source tree, JIANT, SLOOP), `defines` (version and identity for the glue), `notice`, optionally `extra`
+(further licence files), `folder` (the folder from the version, SLOOP's "SLOOP 2.8.5" → `2.8.5`) and, for the Python
+side, `tracks` and `projects`.
 `build_studio()` is the same for all; a new firmware adds an entry, a glue file, and its key in
 `fm1companion/studio.py` `FIRMWARES`.
 
@@ -108,6 +141,20 @@ release (the MENU row; nothing behind it), no sample-slot flash hooks (JIANT has
 (`usb.c` `midi_out_due`). Bluetooth, the USB host and the second core stay out, as in the emulator (`FELUCCA_BT`,
 `FELUCCA_USB_HOST`, `FELUCCA_DUAL_CORE` are off without `felucca.c`). `st_boot` runs the splash (1.73 s device time).
 
+### The SLOOP glue in short
+
+SLOOP has no browser emulator of the whole firmware (its web preview is the DSP and the sequencer only), so
+`sloop_studio.c` follows SLOOP's own host harness of the whole firmware, `tests/editor_host.c` (the editor's protocol with
+the real `storage.c` / `upreset.c` / `project.c` on a RAM image of the NOR, the user sample slots, the FM6 bank and the
+user presets read in place as the XIP window, the flash ranges of `hal/fm1_flash.h`), and adds `main.c`'s boot
+(`felucca_init`, the logo, the project as it was left), `audio.c`'s real ISR, `ota.c`'s identity handshake, the MIDI out
+ring, the LEDs and the screen. `FELUCCA_CPU1` 0 as the host tests (one core: MENU › 2ND CORE has no second core here),
+`FELUCCA_CDC` 0 as the release, no USB audio, no TRS MIDI, no USB rescue (`recovery.c`). `st_boot` runs the logo's 930 ms
+(device time). `st_transport_set(how)`: 0 stop (seq.c's STOP at the next audio block, the clock runs until then), 1 PLAY
+in the twin's mode, 2 the song from the top (SAVE layer › SONG MODE: `arrangement_enabled` when the settings' song order
+is playable, else the loop as 1), 3 restart. `st_project_current` is SLOOP's `live_sec` (the section playing; 255: the
+working project). 2.8.5's `hal/fm1_flash_id.h` (`FL_JEDEC_OK`) is included when the tag has it.
+
 ## Checking
 
 ```sh
@@ -116,19 +163,20 @@ QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 python3 tests/ui_studio_
 QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 python3 tests/ui_studio_page_test.py
 ```
 
-`tests/test_studio.py::test_builds_side_by_side` (Melodee), `test_skiff_builds_side_by_side` and
-`test_jiant_builds_side_by_side` expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`
-and `tests/studio_twin_jiant.mjs` are the Skiff and JIANT core checks in node (editor, identity, backup GET/PUT round
-trip, flash persistence, PLAY, audio, fork, USB MIDI out, stop).
+`tests/test_studio.py::test_builds_side_by_side` (Melodee), `test_skiff_builds_side_by_side`,
+`test_jiant_builds_side_by_side` and `test_sloop_builds_side_by_side` expect the bundled versions – add the new version
+there. `tests/studio_twin_skiff.mjs`, `tests/studio_twin_jiant.mjs` and `tests/studio_twin_sloop.mjs` are the Skiff,
+JIANT and SLOOP core checks in node (editor, identity, backup GET/PUT round trip – SLOOP's with its commands 34–36 –,
+flash persistence, PLAY, audio, fork, stop).
 The packages (.deb, .run) include everything under `fm1companion/` (`tools/build_common.app_files`);
 `tests/test_packaging.py` checks that the host files and every `twin.wasm` end up in the package.
 
 ## Other firmwares
 
-SLOOP and FM1 Open follow the same pattern: their own entry in `STUDIOS`, their own glue layer
-`tools/studio/<firmware>_studio.c` with the same `st_*` ABI, and an entry in `studio.FIRMWARES` (then
-`StudioService.firmware_for()` knows it). The host (JS) and the rest of the Python side stay the same. SLOOP has its own
-backup protocol and format (`sloopbk.py`); the twin's load and write back would go through it. See `docs/ROADMAP.md`.
+FM1 Open follows the same pattern: its own entry in `STUDIOS`, its own glue layer `tools/studio/<firmware>_studio.c`
+with the same `st_*` ABI, and an entry in `studio.FIRMWARES` (then `StudioService.firmware_for()` knows it). The host
+(JS) and the rest of the Python side stay the same. See `docs/ROADMAP.md`.
 
-Source tarballs for a release: `python3 tools/make_source_tarballs.py --repo melodee=… --repo skiff=… --repo JIANT=…`
-(without `--repo` it looks in `/tmp/<name>`, then in lower case: `/tmp/jiant`) packs every commit named in a manifest.
+Source tarballs for a release: `python3 tools/make_source_tarballs.py --repo melodee=… --repo skiff=… --repo JIANT=…
+--repo sloop-fm1=…` (without `--repo` it looks in `/tmp/<name>`, then in lower case: `/tmp/jiant`, then an alias:
+`/tmp/sloop` for sloop-fm1) packs every commit named in a manifest.

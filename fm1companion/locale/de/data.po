@@ -3522,6 +3522,10 @@ msgid "Felucca fork; its unmodified firmware code runs in the studio twin"
 msgstr "Felucca-Fork; sein unveränderter Firmware-Code läuft im Studio-Zwilling"
 
 #: fm1companion/diag.py
+msgid "Felucca descendant with sample slots and a song mode; its unmodified firmware code runs in the studio twin"
+msgstr "Felucca-Abkömmling mit Sample-Slots und Song-Modus; sein unveränderter Firmware-Code läuft im Studio-Zwilling"
+
+#: fm1companion/diag.py
 msgid "official open firmware, simulator sources, update tools"
 msgstr "offizielle offene Firmware, Simulator-Quellen, Update-Werkzeuge"
 
