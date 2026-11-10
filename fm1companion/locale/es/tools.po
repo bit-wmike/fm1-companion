@@ -2030,7 +2030,7 @@ msgstr "{title} está en ejecución y encendido. Tocar: en el FM-1 o con el tecl
 #: fm1companion/ui/pages/simulator.py:759
 #, python-brace-format
 msgid "⚠ too slow: {percent} % tempo"
-msgstr "⚠ demasiado lento: {percent} % de tempo"
+msgstr "⚠ demasiado lento: tempo al {percent} %"
 
 #. Translators: {percent} includes the percent sign ("43 %")
 #: fm1companion/ui/pages/simulator.py:763
@@ -2996,11 +2996,11 @@ msgstr "Tom agudo"
 
 #: fm1companion/fm1open.py:42
 msgid "Hi-hat closed"
-msgstr "Charles cerrado"
+msgstr "Hi-hat cerrado"
 
 #: fm1companion/fm1open.py:42
 msgid "Hi-hat open"
-msgstr "Charles abierto"
+msgstr "Hi-hat abierto"
 
 #: fm1companion/fm1open.py:44
 msgid "no valid sample bank"
