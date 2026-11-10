@@ -9,17 +9,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: fm1companion/ui/pages/studio.py:29
-msgid "Single tracks (stems): one WAV file per track (Melodee 1–4, Skiff and JIANT FM 1–6), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
-msgstr "Pistas separadas (stems): un archivo WAV por pista (Melodee 1–4, Skiff y JIANT FM 1–6), tan largo como la mezcla. Cada pista se renderiza por separado, con su parte de los efectos compartidos (reverb, delay, master). Por eso la suma de las pistas separadas no es idéntica bit a bit a la mezcla (dinámica del master), pero encajan una sobre otra en Logic o Audacity."
-
 #: fm1companion/ui/pages/studio.py:45
 msgid "Open backup in the studio"
 msgstr "Abrir copia de seguridad en el Studio"
-
-#: fm1companion/ui/pages/studio.py:49
-msgid "Which backup should the twin load? Melodee, Skiff and JIANT FM backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
-msgstr "¿Qué copia de seguridad debe cargar el gemelo? Copias de Melodee, Skiff y JIANT FM de todos los dispositivos, las más recientes primero; arranca el gemelo del firmware de la copia. En el FM-1 no cambia nada."
 
 #: fm1companion/ui/pages/studio.py:53 fm1companion/ui/projects_page.py:85
 #: fm1companion/ui/projects_page.py:108 fm1companion/ui/projects_page.py:480
@@ -345,15 +337,6 @@ msgstr "No se pudo arrancar el gemelo: {error}"
 msgid "The twin itself is active right now – choose a real FM-1 in the device selection at the top."
 msgstr "Ahora mismo está activo el propio gemelo; elige un FM-1 real en la selección de dispositivo de arriba."
 
-#: fm1companion/ui/pages/studio.py:486
-msgid "This firmware has no editor protocol – the studio needs Melodee, Skiff or JIANT FM."
-msgstr "Este firmware no tiene protocolo de editor; el Studio necesita Melodee, Skiff o JIANT FM."
-
-#: fm1companion/ui/pages/studio.py:489
-#, python-brace-format
-msgid "The FM-1 runs {firmware} – so far there is a studio twin only for Melodee, Skiff and JIANT FM."
-msgstr "El FM-1 ejecuta {firmware}; por ahora solo hay gemelo del Studio para Melodee, Skiff y JIANT FM."
-
 #: fm1companion/ui/pages/studio.py:491
 msgid "another firmware"
 msgstr "otro firmware"
@@ -387,11 +370,6 @@ msgstr "<b>Gemelo:</b> {firmware} {version} · {source}"
 #: fm1companion/ui/pages/studio.py:533
 msgid "The twin is not running yet. Choose a source: from the FM-1, from a backup or the last studio state."
 msgstr "El gemelo aún no está en marcha. Elige una fuente: desde el FM-1, desde una copia de seguridad o el último estado del Studio."
-
-#: fm1companion/ui/pages/studio.py:545
-#, python-brace-format
-msgid "There is no studio twin for {firmware} yet. So far the studio can do Melodee, Skiff and JIANT FM; SLOOP and the original firmware (via FM1 Open) follow later – see Help › Studio. Backups of this device cannot be opened here; a Melodee, Skiff or JIANT FM backup can."
-msgstr "Todavía no hay gemelo del Studio para {firmware}. Por ahora el Studio admite Melodee, Skiff y JIANT FM; SLOOP y el firmware original (mediante FM1 Open) llegarán más adelante; consulta Ayuda › Studio. Las copias de seguridad de este dispositivo no se pueden abrir aquí; una de Melodee, Skiff o JIANT FM sí."
 
 #: fm1companion/ui/pages/studio.py:548
 msgid "this firmware"
@@ -551,10 +529,6 @@ msgstr "Abrir copia de seguridad"
 #, python-brace-format
 msgid "The backup cannot be read: {error}"
 msgstr "No se puede leer la copia de seguridad: {error}"
-
-#: fm1companion/ui/pages/studio.py:809
-msgid "This is a SLOOP backup. So far there is a studio twin only for Melodee, Skiff and JIANT FM (SLOOP follows later)."
-msgstr "Esta es una copia de seguridad de SLOOP. Por ahora solo hay gemelo del Studio para Melodee, Skiff y JIANT FM (SLOOP llegará más adelante)."
 
 #: fm1companion/ui/pages/studio.py:818
 msgid "before opening a backup"
@@ -4331,3 +4305,45 @@ msgstr "Section {n} cargada."
 #, python-brace-format
 msgid "Section {n} is empty."
 msgstr "Section {n} vacía."
+
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device, in SLOOP's order: the user preset banks, the FM6 patch bank, the SYN drum kits, the sections A–D, the running project and the sample slots. Playback on the FM-1 must be stopped (STOP) – SLOOP refuses otherwise."
+msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo, en el orden de SLOOP: los bancos de presets de usuario, el banco de patches FM6, los kits de batería SYN, las secciones A–D, el proyecto en curso y las ranuras de muestras. La reproducción en el FM-1 debe estar detenida (STOP); si no, SLOOP lo rechaza."
+
+msgid "Single tracks (stems): one WAV file per track (Melodee, SLOOP and KARMA 1–4, Skiff and JIANT FM 1–6, CoralFlower's chords, bass, layer and drums), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
+msgstr "Pistas separadas (stems): un archivo WAV por pista (Melodee, SLOOP y KARMA 1–4, Skiff y JIANT FM 1–6, en CoralFlower acordes, bajo, capa y batería), tan largo como la mezcla. Cada pista se renderiza por separado, con su parte de los efectos compartidos (reverb, delay, master). Por eso la suma de las pistas no es idéntica bit a bit a la mezcla (dinámica del master), pero encajan una sobre otra en Logic o Audacity."
+
+msgid "Which backup should the twin load? {firmwares} backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
+msgstr "¿Qué copia de seguridad debe cargar el gemelo? Copias de {firmwares} de todos los dispositivos, la más reciente primero; se inicia el gemelo del firmware de la copia. En el FM-1 no cambia nada."
+
+msgid "This firmware has no editor protocol – the studio needs {firmwares}."
+msgstr "Este firmware no tiene protocolo de editor; el Studio necesita {firmwares}."
+
+msgid "The FM-1 runs {firmware} – so far there is a studio twin only for {firmwares}."
+msgstr "El FM-1 ejecuta {firmware}; por ahora solo hay gemelo del Studio para {firmwares}."
+
+msgid "There is no studio twin for {firmware} yet. So far the studio can do {firmwares}; the original firmware (via FM1 Open) follows later – see Help › Studio. Backups of this device cannot be opened here; a {firmwares_or} backup can."
+msgstr "Todavía no hay gemelo del Studio para {firmware}. Por ahora el Studio funciona con {firmwares}; el firmware original (mediante FM1 Open) llegará más adelante, consulta Ayuda › Studio. Las copias de seguridad de este dispositivo no se pueden abrir aquí; una copia de {firmwares_or} sí."
+
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the sequencer's patterns and song, the patterns' sounds, the user sounds and the sounds' unsaved edits. Playback on the FM-1 stops, and the FM-1 restarts at the end to load them."
+msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo: los patrones y la canción del secuenciador, los sonidos de los patrones, los sonidos de usuario y los cambios sin guardar de los sonidos. La reproducción en el FM-1 se detiene y al final el FM-1 se reinicia para cargarlos."
+
+msgid "{firmware} has no project slots: its patterns and the song play from the twin's panel (SEQ) or with Play."
+msgstr "{firmware} no tiene ranuras de proyecto: sus patrones y la canción se reproducen desde el panel del gemelo (SEQ) o con Play."
+
+msgid "{names} and {last}"
+msgstr "{names} y {last}"
+
+msgid "{names} or {last}"
+msgstr "{names} o {last}"
+
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the song's parts A–D, the running music, the song order, the user presets, the HEX drum kits and the sample slots. Playback on the FM-1 stops in the process."
+msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo: las partes A–D de la canción, la música en curso, el orden de la canción, los presets de usuario, los kits de batería HEX y las ranuras de muestras. La reproducción en el FM-1 se detiene durante el proceso."
+
+msgid "Part {n}"
+msgstr "Parte {n}"
+
+msgid "Part {n} loaded."
+msgstr "Parte {n} cargada."
+
+msgid "Part {n} is empty."
+msgstr "La parte {n} está vacía."
