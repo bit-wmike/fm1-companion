@@ -12,17 +12,17 @@ msgstr ""
 #: fm1companion/app.py:22
 #, python-brace-format
 msgid "  MISSING    {package}  ({why})"
-msgstr ""
+msgstr "  FALTA      {package}  ({why})"
 
 #: fm1companion/app.py:27
 #, python-brace-format
 msgid "Install with: {command}"
-msgstr ""
+msgstr "Instálalo con: {command}"
 
 #: fm1companion/app.py:29
 #, python-brace-format
 msgid "  MIDI outputs: {ports}"
-msgstr ""
+msgstr "  Salidas MIDI: {ports}"
 
 #: fm1companion/app.py:29 fm1companion/backup_inspect.py:1008
 #: fm1companion/ui/fm1_page.py:223 fm1companion/ui/fm1_page.py:271
@@ -30,12 +30,12 @@ msgstr ""
 #: fm1companion/ui/pages/help.py:259 fm1companion/ui/pages/help.py:259
 #: fm1companion/ui/statusbar.py:123
 msgid "none"
-msgstr ""
+msgstr "ninguna"
 
 #: fm1companion/app.py:30
 #, python-brace-format
 msgid "  MIDI not usable: {error}"
-msgstr ""
+msgstr "  MIDI no utilizable: {error}"
 
 #: fm1companion/app.py:103
 msgid ""
@@ -49,103 +49,103 @@ msgid ""
 "  --debug      verbose log (~/.local/state/fm1-companion/logs)\n"
 "  --version    show version\n"
 "  -h, --help   this help"
-msgstr ""
+msgstr "Uso: fm1-companion [OPCIÓN]\n\n  --demo       iniciar con tres FM-1 simulados (ajustes separados, tus datos no se tocan)\n  --check      comprobar los paquetes del sistema y mostrar el comando apt para lo que falte\n  --syscheck   comprobar USB, alimentación y audio (como Herramientas › Comprobación del sistema)\n  --lang LANG  idioma de la interfaz para este inicio: en, de (predeterminado: ajuste/sistema)\n  --no-splash  iniciar sin pantalla de bienvenida\n  --debug      registro detallado (~/.local/state/fm1-companion/logs)\n  --version    mostrar la versión\n  -h, --help   esta ayuda"
 
 #: fm1companion/app.py:122
 #, python-brace-format
 msgid ""
 "PyQt6 is missing. Install it with:\n"
 "  {command}"
-msgstr ""
+msgstr "Falta PyQt6. Instálalo con:\n  {command}"
 
 #: fm1companion/app.py:164
 msgid "Starting …"
-msgstr ""
+msgstr "Iniciando …"
 
 #: fm1companion/diag.py:108 fm1companion/diag.py:123
 msgid "present"
-msgstr ""
+msgstr "presente"
 
 #: fm1companion/diag.py:136
 msgid "Computer"
-msgstr ""
+msgstr "Ordenador"
 
 #: fm1companion/diag.py:139
 msgid "Installed"
-msgstr ""
+msgstr "Instalado"
 
 #: fm1companion/diag.py:147
 #, python-brace-format
 msgid "Debian package ({path})"
-msgstr ""
+msgstr "Paquete Debian ({path})"
 
 #: fm1companion/diag.py:151
 #, python-brace-format
 msgid "Installer: {mode} ({path})"
-msgstr ""
+msgstr "Instalador: {mode} ({path})"
 
 #: fm1companion/diag.py:155
 #, python-brace-format
 msgid "from the source folder ({path})"
-msgstr ""
+msgstr "desde la carpeta de código fuente ({path})"
 
 #: fm1companion/ui/about.py:27
 msgid "No telemetry, no accounts. The app only asks for two things automatically (can be switched off): when an FM-1 is plugged in, the version list of its firmware on GitHub, and when the catalog is opened, the catalog of awesome-fm-1 with preview images. Everything else only when you click. Bug reports are only saved locally."
-msgstr ""
+msgstr "Sin telemetría ni cuentas. La app solo consulta dos cosas automáticamente (se puede desactivar): al conectar un FM-1, la lista de versiones de su firmware en GitHub, y al abrir el catálogo, el catálogo de awesome-fm-1 con imágenes de vista previa. Todo lo demás, solo cuando haces clic. Los informes de errores solo se guardan localmente."
 
 #: fm1companion/ui/about.py:36 fm1companion/ui/main_window.py:507
 #, python-brace-format
 msgid "About {name}"
-msgstr ""
+msgstr "Acerca de {name}"
 
 #: fm1companion/ui/about.py:48
 #, python-brace-format
 msgid "Version {version} · Everything around the M-VAVE FM-1 in one app: firmware, editor, backups, sounds, MIDI, simulator, samples and recording."
-msgstr ""
+msgstr "Versión {version} · Todo lo relacionado con el M-VAVE FM-1 en una sola app: firmware, editor, copias de seguridad, sonidos, MIDI, simulador, muestras y grabación."
 
 #: fm1companion/ui/about.py:59
 msgid "<p>Free software under the <b>GNU General Public License 3.0</b> (GPL-3.0-only).</p>"
-msgstr ""
+msgstr "<p>Software libre bajo la <b>GNU General Public License 3.0</b> (GPL-3.0-only).</p>"
 
 #: fm1companion/ui/about.py:61
 msgid "<p>Unofficial community project, not affiliated with M-VAVE. No warranty (GPL-3.0, sections 15 and 16). “FM-1” and “M-VAVE” are names of their owners; they are only used here to describe which device the app works with.</p>"
-msgstr ""
+msgstr "<p>Proyecto comunitario no oficial, sin relación con M-VAVE. Sin garantía (GPL-3.0, secciones 15 y 16). “FM-1” y “M-VAVE” son nombres de sus propietarios; aquí solo se usan para describir con qué dispositivo funciona la app.</p>"
 
 #: fm1companion/ui/about.py:64
 msgid "About"
-msgstr ""
+msgstr "Acerca de"
 
 #: fm1companion/ui/about.py:64
 #, python-brace-format
 msgid "<p>Installation: {kind}</p>"
-msgstr ""
+msgstr "<p>Instalación: {kind}</p>"
 
 #: fm1companion/ui/about.py:73
 msgid "<p>The suite stands on the shoulders of these projects – thank you!</p>"
-msgstr ""
+msgstr "<p>La suite se apoya en los hombros de estos proyectos: ¡gracias!</p>"
 
 #: fm1companion/ui/about.py:74 fm1companion/ui/pages/project_view.py:347
 #: fm1companion/ui/pages/project_view.py:348
 #: fm1companion/ui/pages/project_view.py:350
 msgid "Project"
-msgstr ""
+msgstr "Proyecto"
 
 #: fm1companion/ui/about.py:75
 msgid "By / used for"
-msgstr ""
+msgstr "De / usado para"
 
 #: fm1companion/linkimport.py:598 fm1companion/ui/about.py:76
 #: fm1companion/ui/pages/discover.py:653
 msgid "License"
-msgstr ""
+msgstr "Licencia"
 
 #: fm1companion/ui/about.py:77
 msgid "Credits && Licenses"
-msgstr ""
+msgstr "Créditos && licencias"
 
 #: fm1companion/ui/about.py:88
 msgid "System"
-msgstr ""
+msgstr "Sistema"
 
 #: fm1companion/ui/about.py:91 fm1companion/ui/about.py:143
 #: fm1companion/ui/clean_check.py:166 fm1companion/ui/common.py:319
@@ -154,458 +154,458 @@ msgstr ""
 #: fm1companion/ui/pages/discover.py:1116 fm1companion/ui/slicer_dialog.py:145
 #: fm1companion/ui/statusbar.py:159
 msgid "Close"
-msgstr ""
+msgstr "Cerrar"
 
 #: fm1companion/ui/about.py:117
 msgid "Pages"
-msgstr ""
+msgstr "Páginas"
 
 #: fm1companion/ui/about.py:125 fm1companion/ui/about.py:128
 #: fm1companion/ui/main_window.py:499
 msgid "Keyboard shortcuts"
-msgstr ""
+msgstr "Atajos de teclado"
 
 #: fm1companion/ui/about.py:128
 msgid "Tip: with Ctrl+K you can find every page and every action by search."
-msgstr ""
+msgstr "Consejo: con Ctrl+K encuentras cada página y cada acción buscando."
 
 #: fm1companion/ui/about.py:130
 msgid "Filter …"
-msgstr ""
+msgstr "Filtrar …"
 
 #: fm1companion/ui/about.py:134 fm1companion/ui/palette.py:93
 msgid "Action"
-msgstr ""
+msgstr "Acción"
 
 #: fm1companion/ui/about.py:134
 msgid "Shortcut"
-msgstr ""
+msgstr "Atajo"
 
 #: fm1companion/ui/crash.py:109
 msgid "Save bug report"
-msgstr ""
+msgstr "Guardar informe de errores"
 
 #: fm1companion/ui/crash.py:110
 msgid "ZIP archive (*.zip)"
-msgstr ""
+msgstr "Archivo ZIP (*.zip)"
 
 #: fm1companion/ui/crash.py:116
 #, python-brace-format
 msgid "Bug report saved: {name}"
-msgstr ""
+msgstr "Informe de errores guardado: {name}"
 
 #: fm1companion/ui/crash.py:128
 msgid "Unexpected error"
-msgstr ""
+msgstr "Error inesperado"
 
 #: fm1companion/ui/crash.py:131
 msgid "Something went wrong"
-msgstr ""
+msgstr "Algo salió mal"
 
 #: fm1companion/ui/crash.py:135
 msgid "The app keeps running; your FM-1 was not changed. If the error comes back, save a bug report – it contains logs and versions, but no backups or personal paths."
-msgstr ""
+msgstr "La app sigue funcionando; tu FM-1 no se ha modificado. Si el error vuelve a aparecer, guarda un informe de errores: contiene registros y versiones, pero ninguna copia de seguridad ni rutas personales."
 
 #: fm1companion/ui/common.py:432 fm1companion/ui/common.py:480
 #: fm1companion/ui/crash.py:145 fm1companion/ui/crash.py:148
 msgid "Show details"
-msgstr ""
+msgstr "Mostrar detalles"
 
 #: fm1companion/ui/common.py:480 fm1companion/ui/crash.py:148
 msgid "Hide details"
-msgstr ""
+msgstr "Ocultar detalles"
 
 #: fm1companion/ui/crash.py:149 fm1companion/ui/pages/help.py:198
 msgid "Save bug report …"
-msgstr ""
+msgstr "Guardar informe de errores …"
 
 #: fm1companion/ui/clean_check.py:498 fm1companion/ui/crash.py:151
 #: fm1companion/ui/pages/midi.py:309 fm1companion/ui/pages/midi.py:662
 #: fm1companion/ui/pages/recovery.py:517 fm1companion/ui/risk_dialog.py:28
 msgid "Continue"
-msgstr ""
+msgstr "Continuar"
 
 #: fm1companion/ui/crash.py:169
 msgid "Saved ✓"
-msgstr ""
+msgstr "Guardado ✓"
 
 #: fm1companion/ui/main_window.py:37
 msgid "active device, backup, firmware & updates – and the state of the FM-1 (live load, memory)"
-msgstr ""
+msgstr "dispositivo activo, copia de seguridad, firmware y actualizaciones, y el estado del FM-1 (carga en vivo, memoria)"
 
 #: fm1companion/ui/editor_page.py:36 fm1companion/ui/editor_page.py:81
 #: fm1companion/ui/main_window.py:38 fm1companion/ui/pages/discover.py:476
 #: fm1companion/ui/pages/discover.py:1127
 msgid "Editor"
-msgstr ""
+msgstr "Editor"
 
 #: fm1companion/ui/main_window.py:39
 msgid "the original web editor of the installed firmware"
-msgstr ""
+msgstr "el editor web original del firmware instalado"
 
 #: fm1companion/ui/main_window.py:40 fm1companion/ui/samples_page.py:39
 msgid "Samples & Kits"
-msgstr ""
+msgstr "Muestras y kits"
 
 #: fm1companion/ui/main_window.py:41
 msgid "sample library, build and upload kits"
-msgstr ""
+msgstr "biblioteca de muestras, crear y subir kits"
 
 #: fm1companion/ui/main_window.py:43
 msgid "fetch, collect and restore project slots – view them and export them as MIDI"
-msgstr ""
+msgstr "obtener, reunir y restaurar ranuras de proyecto; verlas y exportarlas como MIDI"
 
 #: fm1companion/ui/main_window.py:44 fm1companion/ui/recorder_page.py:46
 #: fm1companion/ui/sample_recorder.py:25
 #: fm1companion/ui/sample_recorder.py:396
 #: fm1companion/ui/settings_dialog.py:152
 msgid "Recording"
-msgstr ""
+msgstr "Grabación"
 
 #: fm1companion/ui/main_window.py:45
 msgid "record the USB audio of the FM-1, Audacity"
-msgstr ""
+msgstr "grabar el audio USB del FM-1, Audacity"
 
 #: fm1companion/ui/main_window.py:47
 msgid "create, restore, browse and compare full backups"
-msgstr ""
+msgstr "crear, restaurar, explorar y comparar copias de seguridad completas"
 
 #: fm1companion/ui/main_window.py:53 fm1companion/ui/pages/midi.py:660
 msgid "Start"
-msgstr ""
+msgstr "Inicio"
 
 #: fm1companion/ui/main_window.py:53
 msgid "Status"
-msgstr ""
+msgstr "Estado"
 
 #: fm1companion/ui/main_window.py:54
 msgid "Slots & Library"
-msgstr ""
+msgstr "Ranuras y biblioteca"
 
 #: fm1companion/ui/main_window.py:54
 msgid "View & Export"
-msgstr ""
+msgstr "Ver y exportar"
 
 #: fm1companion/ui/main_window.py:55 fm1companion/ui/pages/compose.py:127
 msgid "Generate"
-msgstr ""
+msgstr "Generar"
 
 #: fm1companion/ui/main_window.py:55 fm1companion/ui/main_window.py:250
 msgid "From MIDI File"
-msgstr ""
+msgstr "Desde archivo MIDI"
 
 #: fm1companion/ui/main_window.py:56
 msgid "List"
-msgstr ""
+msgstr "Lista"
 
 #: fm1companion/ui/main_window.py:56
 msgid "Browse & Compare"
-msgstr ""
+msgstr "Explorar y comparar"
 
 #: fm1companion/ui/main_window.py:57
 msgid "User Presets on the FM-1"
-msgstr ""
+msgstr "Presets de usuario en el FM-1"
 
 #: fm1companion/ui/main_window.py:57
 msgid "FM Voices (DX7)"
-msgstr ""
+msgstr "Voces FM (DX7)"
 
 #: fm1companion/ui/main_window.py:61 fm1companion/ui/pages/soundmodule.py:105
 #: fm1companion/ui/pages/soundmodule.py:130
 #: fm1companion/ui/pages/soundmodule.py:568 fm1companion/ui/wizard.py:365
 msgid "Sound Module"
-msgstr ""
+msgstr "Módulo de sonido"
 
 #: fm1companion/ui/firmware_page.py:752 fm1companion/ui/main_window.py:64
 #: fm1companion/ui/main_window.py:255
 msgid "Install & Versions"
-msgstr ""
+msgstr "Instalar y versiones"
 
 #: fm1companion/ui/main_window.py:64 fm1companion/ui/pages/discover.py:1127
 #: fm1companion/ui/pages/simulator.py:131
 #: fm1companion/ui/pages/simulator.py:819 fm1companion/ui/wizard.py:361
 msgid "Simulator"
-msgstr ""
+msgstr "Simulador"
 
 #: fm1companion/ui/main_window.py:203
 msgid " – demo mode – data kept separate"
-msgstr ""
+msgstr " – modo demo – datos separados"
 
 #: fm1companion/ui/main_window.py:230
 msgid "Starting the basic pages …"
-msgstr ""
+msgstr "Iniciando las páginas básicas …"
 
 #: fm1companion/ui/main_window.py:246
 msgid "FM-1 Status"
-msgstr ""
+msgstr "Estado del FM-1"
 
 #: fm1companion/ui/main_window.py:247
 msgid "State of the FM-1: live load, memory, user presets"
-msgstr ""
+msgstr "Estado del FM-1: carga en vivo, memoria, presets de usuario"
 
 #: fm1companion/ui/main_window.py:251
 msgid "MIDI file → pattern on an FM-1 track"
-msgstr ""
+msgstr "Archivo MIDI → patrón en una pista del FM-1"
 
 #: fm1companion/ui/main_window.py:257
 msgid "install, switch and update firmware; download versions; back to the original"
-msgstr ""
+msgstr "instalar, cambiar y actualizar firmware; descargar versiones; volver al original"
 
 #: fm1companion/ui/main_window.py:273
 msgid "install, switch and update firmware"
-msgstr ""
+msgstr "instalar, cambiar y actualizar firmware"
 
 #: fm1companion/ui/main_window.py:277
 msgid "Setting up the window …"
-msgstr ""
+msgstr "Preparando la ventana …"
 
 #: fm1companion/ui/main_window.py:333
 msgid "Search …  Ctrl+K"
-msgstr ""
+msgstr "Buscar …  Ctrl+K"
 
 #: fm1companion/ui/main_window.py:336
 msgid "Command search: find pages, actions and help (Ctrl+K)"
-msgstr ""
+msgstr "Búsqueda de comandos: encuentra páginas, acciones y ayuda (Ctrl+K)"
 
 #: fm1companion/ui/main_window.py:340
 msgid "Create a full backup of the active FM-1 (Ctrl+B)"
-msgstr ""
+msgstr "Crear una copia de seguridad completa del FM-1 activo (Ctrl+B)"
 
 #: fm1companion/ui/main_window.py:345 fm1companion/ui/main_window.py:979
 #: fm1companion/ui/notify.py:300 fm1companion/ui/notify.py:303
 msgid "Notifications"
-msgstr ""
+msgstr "Notificaciones"
 
 #: fm1companion/ui/main_window.py:418
 #, python-brace-format
 msgid "Something is missing: {what}. The app runs, but not all pages. Install with: {command}"
-msgstr ""
+msgstr "Falta algo: {what}. La app funciona, pero no todas las páginas. Instálalo con: {command}"
 
 #: fm1companion/ui/main_window.py:420
 msgid "Open diagnostics"
-msgstr ""
+msgstr "Abrir diagnóstico"
 
 #: fm1companion/ui/main_window.py:448
 msgid "&File"
-msgstr ""
+msgstr "&Archivo"
 
 #: fm1companion/ui/main_window.py:450
 msgid "Settings …"
-msgstr ""
+msgstr "Ajustes …"
 
 #: fm1companion/ui/main_window.py:452
 msgid "Open main folder"
-msgstr ""
+msgstr "Abrir carpeta principal"
 
 #: fm1companion/ui/main_window.py:455
 msgid "Quit"
-msgstr ""
+msgstr "Salir"
 
 #: fm1companion/ui/main_window.py:457
 msgid "&Device"
-msgstr ""
+msgstr "&Dispositivo"
 
 #: fm1companion/ui/main_window.py:459
 msgid "Reconnect"
-msgstr ""
+msgstr "Reconectar"
 
 #: fm1companion/ui/main_window.py:460
 msgid "Rename device …"
-msgstr ""
+msgstr "Renombrar dispositivo …"
 
 #: fm1companion/ui/main_window.py:462
 msgid "FM-1 status"
-msgstr ""
+msgstr "Estado del FM-1"
 
 #: fm1companion/ui/main_window.py:464
 msgid "&View"
-msgstr ""
+msgstr "&Ver"
 
 #: fm1companion/ui/main_window.py:465
 msgid "Sidebar"
-msgstr ""
+msgstr "Barra lateral"
 
 #: fm1companion/ui/main_window.py:466
 msgid "Sidebar: width"
-msgstr ""
+msgstr "Barra lateral: ancho"
 
 #: fm1companion/ui/main_window.py:469
 msgid "Automatic (by window width)"
-msgstr ""
+msgstr "Automático (según el ancho de la ventana)"
 
 #: fm1companion/ui/main_window.py:469
 msgid "Wide, with names"
-msgstr ""
+msgstr "Ancha, con nombres"
 
 #: fm1companion/ui/main_window.py:470
 msgid "Narrow, icons only"
-msgstr ""
+msgstr "Estrecha, solo iconos"
 
 #: fm1companion/ui/main_window.py:475
 msgid "Full screen"
-msgstr ""
+msgstr "Pantalla completa"
 
 #: fm1companion/ui/main_window.py:477
 msgid "Zoom in"
-msgstr ""
+msgstr "Acercar"
 
 #: fm1companion/ui/main_window.py:478
 msgid "Zoom out"
-msgstr ""
+msgstr "Alejar"
 
 #: fm1companion/ui/main_window.py:479
 msgid "Normal size"
-msgstr ""
+msgstr "Tamaño normal"
 
 #: fm1companion/ui/main_window.py:480
 msgid "Theme"
-msgstr ""
+msgstr "Tema"
 
 #: fm1companion/ui/main_window.py:489
 msgid "Notifications …"
-msgstr ""
+msgstr "Notificaciones …"
 
 #: fm1companion/ui/main_window.py:491
 msgid "&Tools"
-msgstr ""
+msgstr "&Herramientas"
 
 #: fm1companion/ui/main_window.py:492
 msgid "Command search …"
-msgstr ""
+msgstr "Búsqueda de comandos …"
 
 #: fm1companion/ui/main_window.py:493
 msgid "Find pages, actions and help"
-msgstr ""
+msgstr "Encontrar páginas, acciones y ayuda"
 
 #: fm1companion/ui/main_window.py:494 fm1companion/ui/pages/help.py:196
 msgid "System check …"
-msgstr ""
+msgstr "Comprobación del sistema …"
 
 #: fm1companion/ui/main_window.py:495
 msgid "Check USB, power and audio for problems"
-msgstr ""
+msgstr "Comprobar USB, alimentación y audio en busca de problemas"
 
 #: fm1companion/ui/main_window.py:497
 msgid "&Help"
-msgstr ""
+msgstr "A&yuda"
 
 #: fm1companion/ui/main_window.py:498 fm1companion/ui/wizard.py:372
 msgid "Help Center"
-msgstr ""
+msgstr "Centro de ayuda"
 
 #: fm1companion/ui/main_window.py:501
 msgid "Setup assistant …"
-msgstr ""
+msgstr "Asistente de configuración …"
 
 #: fm1companion/ui/main_window.py:502 fm1companion/ui/wizard.py:397
 msgid "What's new in 2.0"
-msgstr ""
+msgstr "Novedades de la 2.0"
 
 #: fm1companion/ui/main_window.py:504
 msgid "Create bug report …"
-msgstr ""
+msgstr "Crear informe de errores …"
 
 #: fm1companion/ui/main_window.py:505 fm1companion/ui/pages/help.py:108
 msgid "Diagnostics"
-msgstr ""
+msgstr "Diagnóstico"
 
 #: fm1companion/ui/main_window.py:516
 #, python-brace-format
 msgid "Ctrl+{n}"
-msgstr ""
+msgstr "Ctrl+{n}"
 
 #: fm1companion/ui/main_window.py:530
 msgid " – demo mode"
-msgstr ""
+msgstr " – modo demo"
 
 #: fm1companion/ui/main_window.py:606
 msgid "Show the sidebar with names"
-msgstr ""
+msgstr "Mostrar la barra lateral con nombres"
 
 #: fm1companion/ui/main_window.py:607
 msgid "Narrow sidebar: icons only (more room for the page)"
-msgstr ""
+msgstr "Barra lateral estrecha: solo iconos (más espacio para la página)"
 
 #: fm1companion/ui/main_window.py:640
 #, python-brace-format
 msgid "Loading {page} …"
-msgstr ""
+msgstr "Cargando {page} …"
 
 #: fm1companion/ui/main_window.py:779
 msgid "new FM-1"
-msgstr ""
+msgstr "nuevo FM-1"
 
 #: fm1companion/ui/main_window.py:781
 msgid "  (update mode)"
-msgstr ""
+msgstr "  (modo de actualización)"
 
 #: fm1companion/ui/main_window.py:786
 #, python-brace-format
 msgid "{label}  ·  virtual (not a real FM-1)"
-msgstr ""
+msgstr "{label}  ·  virtual (no es un FM-1 real)"
 
 #: fm1companion/ui/main_window.py:789
 msgid "The twin in the Studio: Projects, Compose, Presets, Backups and Editor then work with it instead of a real FM-1. Firmware, Recovery and USB audio are not available for it."
-msgstr ""
+msgstr "El gemelo del Studio: Proyectos, Componer, Presets, Copias de seguridad y Editor trabajan entonces con él en lugar de con un FM-1 real. Firmware, Recuperación y audio USB no están disponibles para él."
 
 #: fm1companion/ui/main_window.py:808
 #, python-brace-format
 msgid "Reconnecting to “{port}” …"
-msgstr ""
+msgstr "Reconectando a “{port}” …"
 
 #: fm1companion/ui/main_window.py:812
 #, python-brace-format
 msgid "Searched again: {result}"
-msgstr ""
+msgstr "Búsqueda repetida: {result}"
 
 #: fm1companion/ui/main_window.py:813
 #, python-brace-format
 msgid "{n} FM-1 found."
-msgstr ""
+msgstr "{n} FM-1 encontrado(s)."
 
 #: fm1companion/ui/main_window.py:814
 msgid "no FM-1 found – check the USB data cable."
-msgstr ""
+msgstr "no se encontró ningún FM-1: revisa el cable USB de datos."
 
 #: fm1companion/ui/main_window.py:830
 #, python-brace-format
 msgid "Could not disable it: {error}"
-msgstr ""
+msgstr "No se pudo desactivar: {error}"
 
 #: fm1companion/ui/main_window.py:831
 msgid "The system's FluidSynth service starts at every login and takes the first sound card (on the Pi: HDMI) – then your speaker/HDMI output is missing. The app does not need the service (the sound module starts FluidSynth itself)."
-msgstr ""
+msgstr "El servicio FluidSynth del sistema se inicia en cada inicio de sesión y ocupa la primera tarjeta de sonido (en la Pi: HDMI); entonces falta tu salida de altavoz/HDMI. La app no necesita el servicio (el módulo de sonido inicia FluidSynth por sí mismo)."
 
 #: fm1companion/ui/main_window.py:834
 msgid "Disable service"
-msgstr ""
+msgstr "Desactivar servicio"
 
 #: fm1companion/ui/main_window.py:855
 msgid "not responding"
-msgstr ""
+msgstr "no responde"
 
 #: fm1companion/ui/main_window.py:870 fm1companion/ui/main_window.py:878
 #, python-brace-format
 msgid "Active: {name} – {firmware}"
-msgstr ""
+msgstr "Activo: {name} – {firmware}"
 
 #: fm1companion/ui/main_window.py:874
 #, python-brace-format
 msgid "{name} connected – {firmware}"
-msgstr ""
+msgstr "{name} conectado – {firmware}"
 
 #: fm1companion/ui/main_window.py:897
 #, python-brace-format
 msgid "New firmware available: {new} (installed: {current})"
-msgstr ""
+msgstr "Nuevo firmware disponible: {new} (instalado: {current})"
 
 #: fm1companion/ui/main_window.py:900
 msgid "View"
-msgstr ""
+msgstr "Ver"
 
 #: fm1companion/ui/main_window.py:906
 msgid "Back to your data?"
-msgstr ""
+msgstr "¿Volver a tus datos?"
 
 #: fm1companion/ui/main_window.py:907
 #, python-brace-format
@@ -614,334 +614,334 @@ msgid ""
 "{name}\n"
 "\n"
 "Restore it now? (Projects, presets and settings from back then.)"
-msgstr ""
+msgstr "Hay una copia de seguridad de este dispositivo para este firmware:\n{name}\n\n¿Restaurarla ahora? (Proyectos, presets y ajustes de aquel momento.)"
 
 #: fm1companion/ui/main_window.py:910
 msgid "Go to backups"
-msgstr ""
+msgstr "Ir a copias de seguridad"
 
 #: fm1companion/ui/main_window.py:911
 msgid "No, thanks"
-msgstr ""
+msgstr "No, gracias"
 
 #: fm1companion/ui/firmware_page.py:580 fm1companion/ui/main_window.py:921
 #, python-brace-format
 msgid "Backup saved: {name}"
-msgstr ""
+msgstr "Copia de seguridad guardada: {name}"
 
 #: fm1companion/ui/main_window.py:953
 #, python-brace-format
 msgid "Zoom {percent}%"
-msgstr ""
+msgstr "Zoom {percent}%"
 
 #: fm1companion/ui/main_window.py:979
 #, python-brace-format
 msgid "Notifications ({n} new)"
-msgstr ""
+msgstr "Notificaciones ({n} nuevas)"
 
 #: fm1companion/ui/main_window.py:1067
 msgid "Recording in progress"
-msgstr ""
+msgstr "Grabación en curso"
 
 #: fm1companion/ui/main_window.py:1067
 msgid "A recording is running. Stop and save it?"
-msgstr ""
+msgstr "Hay una grabación en curso. ¿Detenerla y guardarla?"
 
 #: fm1companion/ui/notify.py:26 fm1companion/ui/pages/devices.py:399
 #: fm1companion/ui/statusbar.py:24
 msgid "Note"
-msgstr ""
+msgstr "Nota"
 
 #: fm1companion/ui/notify.py:26
 msgid "Done"
-msgstr ""
+msgstr "Hecho"
 
 #: fm1companion/ui/notify.py:26
 msgid "Attention"
-msgstr ""
+msgstr "Atención"
 
 #: fm1companion/ui/common.py:298 fm1companion/ui/notify.py:26
 msgid "Error"
-msgstr ""
+msgstr "Error"
 
 #: fm1companion/ui/notify.py:42 fm1companion/ui/pages/simulator.py:170
 #: fm1companion/ui/pages/studio.py:74 fm1companion/ui/wizard.py:428
 msgid "Open"
-msgstr ""
+msgstr "Abrir"
 
 #: fm1companion/ui/notify.py:303
 msgid "All notices since the app was started."
-msgstr ""
+msgstr "Todos los avisos desde que se inició la app."
 
 #: fm1companion/ui/notify.py:312
 msgid "No notifications yet."
-msgstr ""
+msgstr "Aún no hay notificaciones."
 
 #: fm1companion/ui/pages/__init__.py:31
 #: fm1companion/ui/pages/soundmodule.py:183
 msgid "Sound"
-msgstr ""
+msgstr "Sonido"
 
 #: fm1companion/ui/pages/__init__.py:33
 msgid "Data & Tools"
-msgstr ""
+msgstr "Datos y herramientas"
 
 #: fm1companion/ui/pages/__init__.py:34
 msgid "Discover"
-msgstr ""
+msgstr "Descubrir"
 
 #: fm1companion/ui/pages/__init__.py:35
 msgid "Tools"
-msgstr ""
+msgstr "Herramientas"
 
 #: fm1companion/ui/pages/__init__.py:36 fm1companion/ui/pages/help.py:74
 #: fm1companion/ui/pages/help.py:268 fm1companion/ui/palette.py:108
 #: fm1companion/ui/palette.py:109
 msgid "Help"
-msgstr ""
+msgstr "Ayuda"
 
 #: fm1companion/ui/pages/backup_browser.py:757
 msgid "look inside backups, compare them, restore single parts"
-msgstr ""
+msgstr "ver el interior de copias de seguridad, compararlas, restaurar partes sueltas"
 
 #: fm1companion/ui/pages/compose.py:44 fm1companion/ui/pages/compose.py:558
 #: fm1companion/ui/pages/compose.py:693 fm1companion/ui/wizard.py:368
 msgid "Compose"
-msgstr ""
+msgstr "Componer"
 
 #: fm1companion/ui/pages/compose.py:695
 msgid "generate rhythms, chords and melodies and write them to the FM-1"
-msgstr ""
+msgstr "generar ritmos, acordes y melodías y escribirlos en el FM-1"
 
 #: fm1companion/ui/pages/devices.py:463
 msgid "all FM-1: profiles, firmware history, compare, copy from device to device"
-msgstr ""
+msgstr "todos los FM-1: perfiles, historial de firmware, comparar, copiar de un dispositivo a otro"
 
 #: fm1companion/ui/pages/discover.py:1331 fm1companion/ui/wizard.py:357
 msgid "Firmware+"
-msgstr ""
+msgstr "Firmware+"
 
 #: fm1companion/ui/pages/discover.py:1333
 msgid "All FM-1 firmwares in one place: find, try out, install, switch versions, back to the original"
-msgstr ""
+msgstr "Todos los firmwares del FM-1 en un solo lugar: buscar, probar, instalar, cambiar de versión, volver al original"
 
 #: fm1companion/ui/pages/help.py:269
 msgid "Guides, questions & answers, diagnostics"
-msgstr ""
+msgstr "Guías, preguntas y respuestas, diagnóstico"
 
 #: fm1companion/diag.py:43 fm1companion/ui/pages/midi.py:1420
 #: fm1companion/ui/wizard.py:364
 msgid "MIDI"
-msgstr ""
+msgstr "MIDI"
 
 #: fm1companion/ui/pages/midi.py:1422
 msgid "MIDI monitor, on-screen keyboard, clock, controls with MIDI learn, connections"
-msgstr ""
+msgstr "Monitor MIDI, teclado en pantalla, reloj, controles con MIDI learn, conexiones"
 
 #: fm1companion/ui/pages/presets.py:945
 msgid "back up, compare, restore and listen to the FM-1 user presets"
-msgstr ""
+msgstr "hacer copias, comparar, restaurar y escuchar los presets de usuario del FM-1"
 
 #: fm1companion/ui/pages/project_view.py:45
 #: fm1companion/ui/pages/project_view.py:680
 msgid "Project View"
-msgstr ""
+msgstr "Vista de proyecto"
 
 #: fm1companion/ui/pages/project_view.py:682
 msgid "view Melodee projects and export them as MIDI"
-msgstr ""
+msgstr "ver proyectos de Melodee y exportarlos como MIDI"
 
 #: fm1companion/ui/pages/recovery.py:131 fm1companion/ui/pages/recovery.py:723
 #: fm1companion/ui/wizard.py:359
 msgid "Recovery"
-msgstr ""
+msgstr "Recuperación"
 
 #: fm1companion/ui/pages/recovery.py:725
 msgid "FM-1 does not start or is stuck in update mode – rescue it step by step"
-msgstr ""
+msgstr "El FM-1 no arranca o está atascado en modo de actualización: rescátalo paso a paso"
 
 #: fm1companion/ui/pages/simulator.py:821
 msgid "play FM-1 simulators on the computer (FM1 Open built from the official source code, Melodee, online)"
-msgstr ""
+msgstr "tocar simuladores del FM-1 en el ordenador (FM1 Open compilado del código fuente oficial, Melodee, online)"
 
 #: fm1companion/ui/pages/soundmodule.py:570
 msgid "The Pi plays Melodee's MIDI tracks 5–8 with FluidSynth – also with your own samples"
-msgstr ""
+msgstr "La Pi toca las pistas MIDI 5–8 de Melodee con FluidSynth, también con tus propias muestras"
 
 #: fm1companion/ui/pages/studio.py:267 fm1companion/ui/pages/studio.py:760
 #: fm1companion/ui/pages/studio.py:816 fm1companion/ui/pages/studio.py:1048
 #: fm1companion/ui/wizard.py:355
 msgid "Studio"
-msgstr ""
+msgstr "Studio"
 
 #: fm1companion/ui/pages/studio.py:1050
 msgid "the digital twin of your FM-1: fetch, play, export as WAV, write back"
-msgstr ""
+msgstr "el gemelo digital de tu FM-1: obtener, tocar, exportar como WAV, volver a escribir en el FM-1"
 
 #: fm1companion/ui/pages/voices.py:219 fm1companion/ui/pages/voices.py:997
 #: fm1companion/ui/wizard.py:363
 msgid "FM Voices"
-msgstr ""
+msgstr "Voces FM"
 
 #: fm1companion/ui/pages/voices.py:999
 msgid "collect, audition, generate DX7 voices and send them to the FM-1"
-msgstr ""
+msgstr "reunir, escuchar, generar voces DX7 y enviarlas al FM-1"
 
 #: fm1companion/ui/palette.py:60 fm1companion/ui/palette.py:62
 #: fm1companion/ui/palette.py:78
 msgid "Page"
-msgstr ""
+msgstr "Página"
 
 #: fm1companion/ui/palette.py:99
 msgid "Command"
-msgstr ""
+msgstr "Comando"
 
 #: fm1companion/ui/palette.py:107
 #, python-brace-format
 msgid "Help: {title}"
-msgstr ""
+msgstr "Ayuda: {title}"
 
 #: fm1companion/ui/palette.py:177
 msgid "Search for a page, action or help …"
-msgstr ""
+msgstr "Busca una página, acción o ayuda …"
 
 #: fm1companion/ui/settings_dialog.py:30
 msgid "stable versions (recommended)"
-msgstr ""
+msgstr "versiones estables (recomendado)"
 
 #: fm1companion/ui/settings_dialog.py:31
 msgid "also release candidates (pre-releases, newest features)"
-msgstr ""
+msgstr "también versiones candidatas (preversiones, funciones más nuevas)"
 
 #: fm1companion/ui/settings_dialog.py:32
 msgid "Stable: finished versions only. Release candidates (RC): pre-releases with the newest features – well tested, but not final yet."
-msgstr ""
+msgstr "Estable: solo versiones terminadas. Versiones candidatas (RC): preversiones con las funciones más nuevas, bien probadas pero aún no definitivas."
 
 #: fm1companion/ui/settings_dialog.py:35
 msgid "look for firmware updates when an FM-1 is plugged in (asks GitHub)"
-msgstr ""
+msgstr "buscar actualizaciones de firmware al conectar un FM-1 (consulta GitHub)"
 
 #: fm1companion/ui/settings_dialog.py:36
 msgid "Fetches the version list of the FM-1 firmware from GitHub. When switched off, the app only goes online for this when you click."
-msgstr ""
+msgstr "Obtiene de GitHub la lista de versiones del firmware del FM-1. Si está desactivado, la app solo se conecta para esto cuando haces clic."
 
 #: fm1companion/ui/settings_dialog.py:39
 msgid "back up automatically before every update"
-msgstr ""
+msgstr "hacer copia de seguridad automática antes de cada actualización"
 
 #: fm1companion/ui/settings_dialog.py:43
 msgid "keep all"
-msgstr ""
+msgstr "conservar todas"
 
 #: fm1companion/ui/settings_dialog.py:45
 msgid "How many automatic backups are kept per device. Manual backups always stay."
-msgstr ""
+msgstr "Cuántas copias de seguridad automáticas se conservan por dispositivo. Las copias manuales se conservan siempre."
 
 #: fm1companion/ui/settings_dialog.py:46
 msgid "Update channel:"
-msgstr ""
+msgstr "Canal de actualización:"
 
 #: fm1companion/ui/settings_dialog.py:49
 msgid "Keep automatic backups:"
-msgstr ""
+msgstr "Conservar copias automáticas:"
 
 #: fm1companion/ui/settings_dialog.py:52
 #, python-brace-format
 msgid "System language ({name})"
-msgstr ""
+msgstr "Idioma del sistema ({name})"
 
 #: fm1companion/ui/settings_dialog.py:57
 msgid "Language of the user interface. Takes effect after restarting the app."
-msgstr ""
+msgstr "Idioma de la interfaz. Se aplica al reiniciar la app."
 
 #: fm1companion/ui/settings_dialog.py:58
 msgid "Takes effect after restarting the app."
-msgstr ""
+msgstr "Se aplica al reiniciar la app."
 
 #: fm1companion/ui/settings_dialog.py:60
 msgid "Language:"
-msgstr ""
+msgstr "Idioma:"
 
 #: fm1companion/ui/settings_dialog.py:62
 msgid "General"
-msgstr ""
+msgstr "General"
 
 #: fm1companion/ui/settings_dialog.py:77
 #: fm1companion/ui/settings_dialog.py:203
 msgid "Custom color"
-msgstr ""
+msgstr "Color personalizado"
 
 #: fm1companion/ui/settings_dialog.py:78
 msgid "Choose custom color …"
-msgstr ""
+msgstr "Elegir color personalizado …"
 
 #: fm1companion/ui/settings_dialog.py:82
 msgid "App design (uniform)"
-msgstr ""
+msgstr "Diseño de la app (uniforme)"
 
 #: fm1companion/ui/settings_dialog.py:83
 msgid "System theme (Breeze/Papirus)"
-msgstr ""
+msgstr "Tema del sistema (Breeze/Papirus)"
 
 #: fm1companion/ui/settings_dialog.py:91
 msgid "when the window is in the background"
-msgstr ""
+msgstr "cuando la ventana está en segundo plano"
 
 #: fm1companion/ui/settings_dialog.py:91
 msgid "always"
-msgstr ""
+msgstr "siempre"
 
 #: fm1companion/ui/settings_dialog.py:91
 msgid "never"
-msgstr ""
+msgstr "nunca"
 
 #: fm1companion/ui/settings_dialog.py:94
 msgid "Show splash screen"
-msgstr ""
+msgstr "Mostrar pantalla de bienvenida"
 
 #: fm1companion/ui/settings_dialog.py:96
 msgid "Theme:"
-msgstr ""
+msgstr "Tema:"
 
 #: fm1companion/ui/settings_dialog.py:97
 msgid "Accent color:"
-msgstr ""
+msgstr "Color de acento:"
 
 #: fm1companion/ui/settings_dialog.py:98
 msgid "Icons:"
-msgstr ""
+msgstr "Iconos:"
 
 #: fm1companion/ui/settings_dialog.py:99
 msgid "Interface size:"
-msgstr ""
+msgstr "Tamaño de la interfaz:"
 
 #: fm1companion/ui/settings_dialog.py:100
 msgid "Desktop notifications:"
-msgstr ""
+msgstr "Notificaciones de escritorio:"
 
 #: fm1companion/ui/settings_dialog.py:102
 msgid "Run setup assistant again …"
-msgstr ""
+msgstr "Ejecutar de nuevo el asistente de configuración …"
 
 #: fm1companion/ui/settings_dialog.py:105
 msgid "Appearance"
-msgstr ""
+msgstr "Apariencia"
 
 #: fm1companion/ui/settings_dialog.py:117
 msgid "Main folder:"
-msgstr ""
+msgstr "Carpeta principal:"
 
 #: fm1companion/ui/settings_dialog.py:119
 msgid "It holds backups, projects, kits, recordings, firmware and the sample folder “Samples”."
-msgstr ""
+msgstr "Contiene copias de seguridad, proyectos, kits, grabaciones, firmware y la carpeta de muestras “Samples”."
 
 #: fm1companion/ui/settings_dialog.py:122
 msgid "More sample folders (e.g. your Pocket Operator samples):"
-msgstr ""
+msgstr "Más carpetas de muestras (p. ej. tus muestras de Pocket Operator):"
 
 #: fm1companion/ui/settings_dialog.py:127
 msgid "Add …"
-msgstr ""
+msgstr "Añadir …"
 
 #: fm1companion/ui/firmware_page.py:766 fm1companion/ui/firmware_page.py:1351
 #: fm1companion/ui/linkimport_dialog.py:402
@@ -952,252 +952,252 @@ msgstr ""
 #: fm1companion/ui/samples_page.py:184 fm1companion/ui/settings_dialog.py:129
 #: fm1companion/ui/wizard.py:119
 msgid "Remove"
-msgstr ""
+msgstr "Quitar"
 
 #: fm1companion/ui/settings_dialog.py:136
 msgid "normalize new kit sounds"
-msgstr ""
+msgstr "normalizar los sonidos nuevos del kit"
 
 #: fm1companion/ui/settings_dialog.py:138
 msgid "trim silence at start/end"
-msgstr ""
+msgstr "recortar silencio al inicio/final"
 
 #: fm1companion/ui/settings_dialog.py:142
 msgid "Folders && Samples"
-msgstr ""
+msgstr "Carpetas && muestras"
 
 #: fm1companion/ui/settings_dialog.py:148
 msgid "open in Audacity after recording"
-msgstr ""
+msgstr "abrir en Audacity tras grabar"
 
 #: fm1companion/ui/settings_dialog.py:150
 msgid "Audacity command:"
-msgstr ""
+msgstr "Comando de Audacity:"
 
 #: fm1companion/ui/settings_dialog.py:157
 msgid "Known FM-1. The app enters the firmware version itself when installing; for firmware installed before, you can set it here."
-msgstr ""
+msgstr "FM-1 conocido. La app anota la versión de firmware ella misma al instalar; para un firmware instalado antes, puedes indicarla aquí."
 
 #: fm1companion/ui/settings_dialog.py:165
 msgid "Set firmware version"
-msgstr ""
+msgstr "Establecer versión de firmware"
 
 #: fm1companion/ui/settings_dialog.py:201
 msgid "Accent color"
-msgstr ""
+msgstr "Color de acento"
 
 #: fm1companion/ui/pages/studio.py:148 fm1companion/ui/settings_dialog.py:216
 msgid "Choose folder"
-msgstr ""
+msgstr "Elegir carpeta"
 
 #: fm1companion/ui/settings_dialog.py:221 fm1companion/ui/wizard.py:127
 msgid "Sample folder"
-msgstr ""
+msgstr "Carpeta de muestras"
 
 #: fm1companion/ui/settings_dialog.py:230
 #, python-brace-format
 msgid "  · Serial no. {serial}"
-msgstr ""
+msgstr "  · N.º de serie {serial}"
 
 #: fm1companion/ui/firmware_page.py:803 fm1companion/ui/pages/discover.py:404
 #: fm1companion/ui/settings_dialog.py:255
 msgid "Version"
-msgstr ""
+msgstr "Versión"
 
 #: fm1companion/ui/settings_dialog.py:255
 msgid "Version (as in the release, e.g. v1.6.0-rc.7):"
-msgstr ""
+msgstr "Versión (como en la publicación, p. ej. v1.6.0-rc.7):"
 
 #: fm1companion/ui/settings_dialog.py:266
 #, python-brace-format
 msgid "Forget {name}? Backups and projects are kept."
-msgstr ""
+msgstr "¿Olvidar {name}? Las copias de seguridad y los proyectos se conservan."
 
 #: fm1companion/ui/settings_dialog.py:294
 msgid "Settings not saved"
-msgstr ""
+msgstr "Ajustes no guardados"
 
 #: fm1companion/ui/settings_dialog.py:299
 msgid "The new language is used after restarting the app."
-msgstr ""
+msgstr "El nuevo idioma se usará tras reiniciar la app."
 
 #: fm1companion/ui/splash.py:53
 msgid "Everything for the M-VAVE FM-1 in one app"
-msgstr ""
+msgstr "Todo para el M-VAVE FM-1 en una sola app"
 
 #: fm1companion/ui/statusbar.py:24
 msgid "OK"
-msgstr ""
+msgstr "Aceptar"
 
 #: fm1companion/ui/statusbar.py:24
 msgid "Warning"
-msgstr ""
+msgstr "Advertencia"
 
 #: fm1companion/ui/statusbar.py:24
 msgid "Problem"
-msgstr ""
+msgstr "Problema"
 
 #: fm1companion/ui/statusbar.py:59
 msgid "Computer status, click opens the system check"
-msgstr ""
+msgstr "Estado del ordenador; un clic abre la comprobación del sistema"
 
 #: fm1companion/ui/statusbar.py:88
 #, python-brace-format
 msgid "{size} free"
-msgstr ""
+msgstr "{size} libres"
 
 #: fm1companion/ui/statusbar.py:89 fm1companion/ui/statusbar.py:138
 #: fm1companion/ui/statusbar.py:141 fm1companion/ui/wizard.py:374
 msgid "System check"
-msgstr ""
+msgstr "Comprobación del sistema"
 
 #: fm1companion/ui/statusbar.py:108
 msgid "Processor"
-msgstr ""
+msgstr "Procesador"
 
 #: fm1companion/ui/statusbar.py:109
 #, python-brace-format
 msgid " at {mhz} MHz"
-msgstr ""
+msgstr " a {mhz} MHz"
 
 #: fm1companion/ui/statusbar.py:111
 msgid "Load (1/5/15 min)"
-msgstr ""
+msgstr "Carga (1/5/15 min)"
 
 #: fm1companion/ui/statusbar.py:113
 msgid "Memory"
-msgstr ""
+msgstr "Memoria"
 
 #: fm1companion/ui/statusbar.py:113
 #, python-brace-format
 msgid "{percent} % of {total}"
-msgstr ""
+msgstr "{percent} % (de {total})"
 
 #: fm1companion/ui/statusbar.py:116
 msgid "Temperature"
-msgstr ""
+msgstr "Temperatura"
 
 #: fm1companion/ui/statusbar.py:118
 msgid "FM-1 folder"
-msgstr ""
+msgstr "Carpeta FM-1"
 
 #: fm1companion/ui/statusbar.py:118
 #, python-brace-format
 msgid "{free} free of {total}"
-msgstr ""
+msgstr "{free} libres de {total}"
 
 #: fm1companion/ui/statusbar.py:121
 msgid "Power supply"
-msgstr ""
+msgstr "Alimentación"
 
 #: fm1companion/ui/statusbar.py:121
 msgid "<b>Undervoltage!</b>"
-msgstr ""
+msgstr "<b>¡Subtensión!</b>"
 
 #: fm1companion/ui/statusbar.py:123
 msgid "Throttling"
-msgstr ""
+msgstr "Limitación de rendimiento"
 
 #: fm1companion/ui/statusbar.py:125
 #, python-brace-format
 msgid "<b>Computer</b><table>{rows}</table><i>Click for the system check</i>"
-msgstr ""
+msgstr "<b>Ordenador</b><table>{rows}</table><i>Clic para la comprobación del sistema</i>"
 
 #: fm1companion/ui/statusbar.py:141
 msgid "Searches the kernel log and the system for anything that can harm the FM-1: loose contacts, too little power, USB audio errors, heat."
-msgstr ""
+msgstr "Busca en el registro del kernel y en el sistema todo lo que puede perjudicar al FM-1: falsos contactos, alimentación insuficiente, errores de audio USB, calor."
 
 #: fm1companion/ui/statusbar.py:143
 msgid "Checking …"
-msgstr ""
+msgstr "Comprobando …"
 
 #: fm1companion/ui/statusbar.py:147
 msgid "Finding"
-msgstr ""
+msgstr "Hallazgo"
 
 #: fm1companion/ui/statusbar.py:147
 msgid "Level"
-msgstr ""
+msgstr "Nivel"
 
 #: fm1companion/ui/pages/soundmodule.py:125 fm1companion/ui/statusbar.py:153
 #: fm1companion/ui/wizard.py:156
 msgid "Check again"
-msgstr ""
+msgstr "Comprobar de nuevo"
 
 #: fm1companion/ui/clean_check.py:157 fm1companion/ui/statusbar.py:155
 msgid "Copy report"
-msgstr ""
+msgstr "Copiar informe"
 
 #: fm1companion/ui/statusbar.py:157
 msgid "Save …"
-msgstr ""
+msgstr "Guardar …"
 
 #: fm1companion/ui/statusbar.py:184
 msgid "Checking kernel log, power supply, USB and audio …"
-msgstr ""
+msgstr "Comprobando registro del kernel, alimentación, USB y audio …"
 
 #: fm1companion/ui/statusbar.py:187
 #, python-brace-format
 msgid "Check failed: {error}"
-msgstr ""
+msgstr "Fallo en la comprobación: {error}"
 
 #: fm1companion/ui/statusbar.py:197
 #, python-brace-format
 msgid "Solution: {fix}"
-msgstr ""
+msgstr "Solución: {fix}"
 
 #: fm1companion/ui/statusbar.py:206
 msgid "Log lines"
-msgstr ""
+msgstr "Líneas de registro"
 
 #: fm1companion/syscheck.py:562 fm1companion/ui/statusbar.py:214
 msgid "no kernel log"
-msgstr ""
+msgstr "sin registro del kernel"
 
 #: fm1companion/ui/statusbar.py:216
 #, python-brace-format
 msgid "{n} problem"
 msgid_plural "{n} problems"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{n} problema"
+msgstr[1] "{n} problemas"
 
 #: fm1companion/ui/statusbar.py:217
 msgid "one warning"
 msgid_plural "{n} warnings"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "una advertencia"
+msgstr[1] "{n} advertencias"
 
 #: fm1companion/ui/statusbar.py:218
 #, python-brace-format
 msgid "<b>{problems}</b> and {warnings} found."
-msgstr ""
+msgstr "Encontrados: <b>{problems}</b> y {warnings}."
 
 #: fm1companion/ui/statusbar.py:219
 #, python-brace-format
 msgid "<b>{problems}</b> found."
-msgstr ""
+msgstr "Encontrados: <b>{problems}</b>."
 
 #: fm1companion/ui/statusbar.py:221
 #, python-brace-format
 msgid "<b>{warnings}</b>, otherwise everything is fine."
-msgstr ""
+msgstr "<b>{warnings}</b>; por lo demás, todo está bien."
 
 #: fm1companion/ui/statusbar.py:222
 #, python-brace-format
 msgid "{n} warning"
 msgid_plural "{n} warnings"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{n} advertencia"
+msgstr[1] "{n} advertencias"
 
 #: fm1companion/ui/statusbar.py:224
 msgid "<b>Everything is fine.</b>"
-msgstr ""
+msgstr "<b>Todo está bien.</b>"
 
 #: fm1companion/ui/statusbar.py:225
 #, python-brace-format
 msgid "{summary} Source: {source}, checked at {time}."
-msgstr ""
+msgstr "{summary} Fuente: {source}, comprobado a las {time}."
 
 #: fm1companion/ui/statusbar.py:237
 msgid "Save report"
-msgstr ""
+msgstr "Guardar informe"
