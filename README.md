@@ -1,4 +1,4 @@
-# FM-1 Companion Suite 2.4.0
+# FM-1 Companion Suite 2.5.0
 
 > [!WARNING]
 > **Unofficial community project – not affiliated with M-VAVE.**
@@ -79,24 +79,24 @@ login (on the Pi: HDMI). The installer then disables it and says so clearly (Flu
 starts it itself); with `--no-fluidsynth-fix` it is left unchanged. The graphical installer asks with a
 checkbox.
 
-**Packages (.deb/.run):** version 2.4.0 is available under
+**Packages (.deb/.run):** version 2.5.0 is available under
 [Releases](https://github.com/bit-wmike/fm1-companion/releases):
 
 ```bash
-sudo apt install ./fm1-companion_2.4.0_all.deb
-sh FM-1-Companion-Suite-2.4.0.run
+sudo apt install ./fm1-companion_2.5.0_all.deb
+sh FM-1-Companion-Suite-2.5.0.run
 ```
 
 You can also build them yourself (result in `dist/`):
 
 ```bash
-python3 tools/build_deb.py        # dist/fm1-companion_2.4.0_all.deb  → sudo apt install ./dist/fm1-companion_2.4.0_all.deb
-python3 tools/build_run.py        # dist/FM-1-Companion-Suite-2.4.0.run → sh dist/FM-1-Companion-Suite-2.4.0.run
+python3 tools/build_deb.py        # dist/fm1-companion_2.5.0_all.deb  → sudo apt install ./dist/fm1-companion_2.5.0_all.deb
+python3 tools/build_run.py        # dist/FM-1-Companion-Suite-2.5.0.run → sh dist/FM-1-Companion-Suite-2.5.0.run
 ```
 
 The `.run` installer is a graphical assistant (licence, notice, just for me or for all users, start menu,
 desktop shortcut, example samples); without a window:
-`sh FM-1-Companion-Suite-2.4.0.run --unattended [--prefix DIR] [--no-deps]`.
+`sh FM-1-Companion-Suite-2.5.0.run --unattended [--prefix DIR] [--no-deps]`.
 
 ## Requirements
 
