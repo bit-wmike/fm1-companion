@@ -1,0 +1,3771 @@
+# Translation of FM-1 Companion into Español (es) – sound: presets, voices, samples, sample packs, sound module.
+# SPDX-License-Identifier: GPL-3.0-only
+msgid ""
+msgstr ""
+"Project-Id-Version: FM-1 Companion\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: fm1companion/ui/samples_page.py:39
+msgid "Your samples from anywhere on the computer: audition, trim and build them into kits, slice loops, record yourself, download free packs. Upload: Skiff (3 slots), SLOOP (4) and FM1 Open (8 slots, together ~19.5 s). Melodee from 1.5 has no sample slots."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:47
+msgid "Library && Kits"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:54
+msgid "Search: kick, po-33, vocal …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:57
+msgid "favourites only"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:62
+msgid "any length"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:63
+msgid "only sounds up to this length"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:70
+msgid "Folders"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:75 fm1companion/ui/wizard.py:117
+msgid "Add folder …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:77
+msgid "Rescan"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:80
+msgid "Find duplicates …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:81
+msgid "Look for files with the same content in the library"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:84
+msgid "Tip: just drag files or folders here."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:118
+msgid "play on selection"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:714 fm1companion/ui/samples_page.py:120
+msgid "Favourite"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:160 fm1companion/ui/samples_page.py:122
+msgid "Labels …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:124
+msgid "Show in folder"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:126
+msgid "Slice …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:127
+msgid "Cut a loop into slices (transients, equal length, BPM grid) – Ctrl+L"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:133
+msgid "To kit →"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:143
+msgid "Kit builder"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:147
+msgid "New"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:148 fm1companion/ui/samples_page.py:581
+#: fm1companion/ui/samples_page.py:652
+msgid "New kit"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:702 fm1companion/ui/samples_page.py:150
+#: fm1companion/ui/web.py:119
+msgid "Save"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:151 fm1companion/ui/samples_page.py:662
+#: fm1companion/ui/samples_page.py:667 fm1companion/ui/samples_page.py:672
+#: fm1companion/ui/samples_page.py:686
+msgid "Save kit"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:154 fm1companion/ui/samples_page.py:695
+#: fm1companion/ui/samples_page.py:698 fm1companion/ui/samples_page.py:705
+msgid "Delete kit"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:161
+msgid "The FM-1 shows at most 8 characters"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:164
+msgid "Drum kit: one sound per key"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:165
+msgid "Instrument: spread over the keyboard"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:171
+msgid "Kind:"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:172 fm1companion/ui/slicer_dialog.py:135
+msgid "First key:"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:175
+msgctxt "kit zone"
+msgid "Sound"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:175
+msgctxt "keyboard"
+msgid "Key"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:187
+msgid "as it sounds on the FM-1 (22 kHz, edited)"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:128 fm1companion/ui/samples_page.py:195
+msgid "Normalize"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:126 fm1companion/ui/samples_page.py:196
+msgid "Trim silence"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:197
+msgid "Reverse"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:208
+msgid "Root note:"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:146
+#: fm1companion/ui/samples_page.py:210
+msgid "Volume:"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:217
+msgid "%v ms of %m ms"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:219
+msgid "Fit to slot"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:221
+msgid "Export as WAVs"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:234
+msgid "Sample slots on the FM-1 (Skiff, SLOOP)"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:242 fm1companion/ui/samples_page.py:1049
+msgid "Read slots from the FM-1 (happens automatically when this tab is opened)"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:244 fm1companion/ui/samples_page.py:1075
+msgid "Load kit into slot"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:246 fm1companion/ui/samples_page.py:947
+msgid "Write the kit from the kit builder (tab “Library & Kits”) into the chosen slot"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:248 fm1companion/ui/samples_page.py:1116
+#: fm1companion/ui/samples_page.py:1129 fm1companion/ui/samples_page.py:1234
+msgid "Clear slot"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:249
+msgid "Clear the chosen slot on the FM-1 (its content is read first for “Undo”)"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:252 fm1companion/ui/samples_page.py:951
+msgid "Restore the slot content from before the last overwrite/clear"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:164
+#: fm1companion/ui/samplepacks_tab.py:169 fm1companion/ui/samples_page.py:298
+msgid "Sample packs"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:311
+msgid "Add sample folder"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:322
+msgid "reading samples …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:325
+#, python-brace-format
+msgid "{n} files … {name}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:327
+#, python-brace-format
+msgid "Error while reading: {error}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:331
+#, python-brace-format
+msgid "{n} samples, {length}, {size} · new {new}, changed {changed}, removed {removed}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:342
+msgid "All samples"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:380
+msgid "all"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:406
+msgid "mono"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:406
+msgid "stereo"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:406
+#, python-brace-format
+msgid "{n} channels"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:407
+#, python-brace-format
+msgid "{khz} kHz · {bits} bit · {channels}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:415
+#, python-brace-format
+msgid "{ext} – for MP3/FLAC: ffmpeg is missing"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:420
+msgid "longer than a whole slot – must be shortened"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:440
+#, python-brace-format
+msgid "not readable: {error}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:481
+#, python-brace-format
+msgid "{n} file skipped – not an audio file: {names}"
+msgid_plural "{n} files skipped – not audio files: {names}"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/samples_page.py:486
+#, python-brace-format
+msgid "{n} folder added to the library – being read."
+msgid_plural "{n} folders added to the library – being read."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/samples_page.py:508
+#, python-brace-format
+msgid "{n} file copied to Samples › Importiert"
+msgid_plural "{n} files copied to Samples › Importiert"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/samples_page.py:511
+#, python-brace-format
+msgid "{copied}, {folders} added"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:176 fm1companion/ui/samples_page.py:512
+#, python-brace-format
+msgid "{n} folder"
+msgid_plural "{n} folders"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/samples_page.py:515
+msgid "Not all files taken over"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:516
+#, python-brace-format
+msgid "Copying {n} file …"
+msgid_plural "Copying {n} files …"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/samples_page.py:517
+msgid "Take over files"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:518
+#, python-brace-format
+msgid "Copying … {a} of {b}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:526
+msgid "Duplicate samples"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:529
+#, python-brace-format
+msgid "{n} group with the same content."
+msgid_plural "{n} groups with the same content."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/samples_page.py:530
+msgid "No duplicate files found."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:544
+msgid "Double-click: listen. Deleting works in the file manager (“Show in folder”)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:555
+#, python-brace-format
+msgid "{n} samples · new: {name}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:567
+msgid "Slice"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:567
+msgid "First choose a sound (e.g. a drum loop) in the list."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:581
+msgid "The current kit has unsaved changes. Discard them?"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:148
+#: fm1companion/ui/sample_recorder.py:411
+#: fm1companion/ui/sample_recorder.py:412 fm1companion/ui/samples_page.py:581
+#: fm1companion/ui/samples_page.py:634 fm1companion/ui/samples_page.py:652
+msgid "Discard"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:601
+msgid "Separated by commas (e.g. kick, po-33, dirty):"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:619 fm1companion/ui/samples_page.py:1018
+msgid "(unsaved kit)"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:634
+msgid "Change kit"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:634 fm1companion/ui/samples_page.py:652
+msgid "Discard unsaved changes?"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:640
+msgid "Open kit"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:640
+msgid "Kit not readable"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:644
+msgid "Kit damaged"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:644
+#, python-brace-format
+msgid "“{name}” is not a valid kit file (damaged or from another app). The current kit stays open."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:662
+msgid "Name of the kit file:"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:667
+msgid "This name does not work as a file name – please use letters or digits. Nothing saved."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:676
+msgid "Overwrite kit"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:676
+#, python-brace-format
+msgid ""
+"There is already a kit “{name}”. Replace it?\n"
+"\n"
+"The old kit file will be overwritten (the samples in it stay on the disk)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:686
+msgid "Kit not saved"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:690
+#, python-brace-format
+msgid "Kit “{name}” saved ({n} sounds) – only on the computer."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:695
+msgid "This kit is not saved yet – there is no file to delete. “New” discards it."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:698
+#, python-brace-format
+msgid ""
+"Delete kit “{name}” ({n} sounds)?\n"
+"\n"
+"Only the kit file is deleted – the samples stay, and nothing changes on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:707
+#, python-brace-format
+msgid "Kit “{name}” deleted (only the file; samples and FM-1 unchanged)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:734
+#, python-brace-format
+msgid "Root {note}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:746
+#, python-brace-format
+msgid "0 s of {cap} s – one slot holds all sounds together"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:760
+#, python-brace-format
+msgid "TOO LONG: {used} s of {cap} s"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:761
+#, python-brace-format
+msgid "{used} s of {cap} s"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:775 fm1companion/ui/samples_page.py:805
+msgid "Kit full"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:775
+msgid "A slot holds at most 16 sounds."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:805
+#, python-brace-format
+msgid "Only {room} of {n} sounds still fitted in – a slot has at most 16 sounds. Create a second kit for the rest."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:835
+msgid "no zone chosen"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:897
+msgid "Kit shortened to slot length (only in the kit builder, files unchanged)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:903
+msgid "Export to where?"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:906
+#, python-brace-format
+msgid "{n} WAV file exported to {folder}"
+msgid_plural "{n} WAV files exported to {folder}"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/samples_page.py:908
+#, python-brace-format
+msgid "WAV export failed: {error}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:938
+msgid "This FM-1 does not speak the Felucca protocol – the app cannot read Skiff/SLOOP sample slots here. If FM1 Open runs on it, use the box below (“Read & back up”)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:940
+msgid "No FM-1 connected – here's how: plug in the FM-1 via USB; with Skiff or SLOOP the slots appear here."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:944
+msgid "First connect an FM-1 with Skiff or SLOOP – that firmware has the sample slots"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:946
+msgid "First “Read” – then choose a slot"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:957
+msgid "No Felucca device – see FM1 Open below."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:968
+msgid "Reading the sample slots …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:975
+#, python-brace-format
+msgid "Reading slots failed: {error}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:976
+msgid "Read sample slots"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1020
+#, python-brace-format
+msgid "Ready for upload: <b>{name}</b> with {n} sounds from the kit builder (tab “Library & Kits”)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1022
+msgid "No kit built yet – in the tab “Library & Kits” mark sounds and “To kit”."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1037
+#, python-brace-format
+msgid "<b>{firmware} has no sample slots</b> (Melodee from 1.5 plays only synth and drum engines). You can still build kits, save them and export them as WAVs – uploading works on an FM-1 with Skiff or SLOOP."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1042
+msgid "This firmware has no sample slots (Melodee from 1.5) – uploading is not possible here"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1044
+msgid "This firmware has no sample slots"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1046
+msgid "This firmware has no sample slots – after a device change the app reads again"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1055
+#, python-brace-format
+msgid "USR{n}: empty"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1056
+#, python-brace-format
+msgid "USR{n}: {name} – {zones} sounds, {kib} KiB"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1059
+#, python-brace-format
+msgid "{n} slots of {kib} KiB each."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1065
+msgid "Choose slot"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1065
+msgid "First “Read”, then choose a slot."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1068 fm1companion/ui/samples_page.py:1352
+msgid "Empty kit"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1068 fm1companion/ui/samples_page.py:1352
+msgid "Add sounds to the kit first."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1071
+msgid "Kit too long"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:659 fm1companion/ui/samples_page.py:1071
+#, python-brace-format
+msgid ""
+"{reason}\n"
+"\n"
+"Nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1076
+#, python-brace-format
+msgid "USR{n} contains “{name}” ({zones} sounds) and will be replaced by the kit “{kit}”."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1078
+#, python-brace-format
+msgid "The kit “{kit}” goes into the empty slot USR{n}."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1079
+msgid "<br><br>First the app reads the old slot content so you can bring it back with “Undo” (as long as the app is running)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1080
+msgid "Load"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1089 fm1companion/ui/samples_page.py:1125
+#, python-brace-format
+msgid "Saving USR{n} for “Undo” …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1091
+msgid "Building the slot (22 050 Hz, IMA-ADPCM) …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1093
+#, python-brace-format
+msgid "{bytes} bytes, {n} sounds – transferring …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1097
+#, python-brace-format
+msgid "Load kit into USR{n}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1098
+#, python-brace-format
+msgid "Kit “{kit}” ({zones} sounds) is now in USR{n}. The old content is saved – “Undo” brings it back."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1100
+#, python-brace-format
+msgid "Not uploaded: {error} – the old slot content is saved (“Undo”)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1101
+#, python-brace-format
+msgid "Not uploaded: {error} – nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1114
+#, python-brace-format
+msgid "“{name}” ({zones} sounds)"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1115
+msgid "the (already empty) slot"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1116
+#, python-brace-format
+msgid "Clear USR{n} – this deletes {what} on the FM-1.<br><br>First the app reads the content so you can bring it back with “Undo” (as long as the app is running)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1130
+#, python-brace-format
+msgid "USR{n} is empty. The old content is saved – “Undo” brings it back."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1141
+#, python-brace-format
+msgid "Set USR{n} back to the state before the last change (empty)?"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1142
+#, python-brace-format
+msgid "Set USR{n} back to the state before the last change?"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1149
+#, python-brace-format
+msgid "Restore USR{n}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1150
+#, python-brace-format
+msgid "USR{n} has the old content again (empty)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1151
+#, python-brace-format
+msgid "USR{n} has the old content again."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1160
+msgid "Length “?”: for MP3/FLAC: sudo apt install ffmpeg"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1161
+msgid "FM1 Open: 8 slots, together ~19.5 s"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1195
+#, python-brace-format
+msgid "Only for an FM-1 with the M-VAVE firmware FM1 Open – this one runs {firmware}."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1200
+msgid "For an FM-1 with FM1 Open: first “Read” – the app backs up the whole bank before it writes anything (the device always rewrites all 8 slots)."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1211
+msgid "Official M-VAVE firmware FM1 Open (V14): 8 sample pads share one bank"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1225
+msgid "Read && back up"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1226
+msgid "Read the bank from the FM-1 and save it as .fm1s backup (Backups › Device)"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1228
+msgid "Zone → slot"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1229
+msgid "Chosen kit zone into the chosen slot (32 kHz, SEA5)"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1231
+msgid "Kit → slots 1–8"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1232
+msgid "The first 8 sounds of the kit into slot 1–8; other slots stay"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1236
+msgid "Bank file …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1237
+msgid "Save the bank as .fm1s – can also be loaded in the M-VAVE Workbench"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1239
+msgid "Restore backup …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1258
+#, python-brace-format
+msgid "{pad}: empty"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1259
+#, python-brace-format
+msgid "{pad}: {name} – {secs} s"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1259
+msgid "(unnamed)"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1266
+#, python-brace-format
+msgid "{used} s of {cap} s used"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1336
+msgid "Please connect an FM-1 with FM1 Open via USB."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1286
+msgid "Asking the FM-1 for FM1 Open …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1291
+#, python-brace-format
+msgid "Reading the sample bank ({kib} KiB) …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1296
+#, python-brace-format
+msgid "Backed up: {path}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1304
+msgid "FM1 Open detected, but without a valid sample bank. You can write a new bank."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1307
+#, python-brace-format
+msgid "FM1 Open detected. Backup: {name}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1310
+msgid "FM1 Open: read sample bank"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1311
+#, python-brace-format
+msgid "Sample bank read and saved as backup: {name}. Nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1313
+msgid "FM1 Open detected – no sample bank on the device yet. Nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1315
+msgid "No FM1 Open found (or no answer). Is FM1 Open V13/V14 running on the FM-1?"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1321
+msgid "Save sample bank"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1322 fm1companion/ui/samples_page.py:1358
+msgid "FM1 Open sample bank (*.fm1s)"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1327
+msgid "Save bank file"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1329
+#, python-brace-format
+msgid "Bank file saved: {path} – nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1339
+msgid "Read first"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1339
+msgid "Read the sample bank first (“Read & back up”) – that way a backup stays."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1347
+msgid "Choose zone"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1347
+msgid "Choose the sound in the kit builder that should go into the slot."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1364
+msgid "File invalid"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1368
+#, python-brace-format
+msgid "The complete sample bank (all 8 slots) will be replaced by {name}."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1370
+#, python-brace-format
+msgid "Slot {n} ({name}) will be cleared; the other 7 slots stay."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1372
+#, python-brace-format
+msgid "Slot {n} ({old}) ← {new}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1373
+#, python-brace-format
+msgid "{list}. The other slots stay as they were just read."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1374 fm1companion/ui/samples_page.py:1421
+msgid "FM1 Open: write sample bank"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1375
+msgid ""
+"\n"
+"\n"
+"The FM-1 rewrites the whole bank for this (playback pauses briefly). First the app backs up the current bank as a .fm1s file."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1384
+msgid "Checking whether the bank on the FM-1 still matches what was read …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1389
+msgid "The bank on the FM-1 has changed since reading – please first “Read & back up”, then write again. Nothing was changed."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1396
+#, python-brace-format
+msgid "Backup: {name}"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1401
+#, python-brace-format
+msgid "Encoding {name} for slot {n} (32 kHz, SEA5) …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1405
+#, python-brace-format
+msgid "  too long – shortened to {secs} s"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1408
+msgid "The sample bank is full (together ~19.5 s) – clear other slots first."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1411
+#, python-brace-format
+msgid "Writing {kib} KiB and reading back to check …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1413
+msgid "Done – the bank on the FM-1 matches byte for byte."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1420
+msgid "Written and checked. Play the SAMPLER track again on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1422
+msgid "Sample bank written and checked byte for byte. The previous state is a .fm1s backup in the backup folder of the device."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1424
+#, python-brace-format
+msgid "Not written: {error}"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:20
+msgid "Writing, renaming and deleting save to the flash of the FM-1 and <b>stop playback for this</b>. Favourites you change during playback are saved by the FM-1 only after STOP."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:48
+msgid "The 384 user slots of your FM-1 (Melodee from 1.5) and your own preset library in the folder FM-1/Presets – back up, compare, restore, listen."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:56
+msgid "Stop the running task after the current slot – what is done stays"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:71
+msgid "Search: name, engine, slot, tag …  (Ctrl+F)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:76 fm1companion/ui/pages/presets.py:374
+msgid "all engines"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:78
+msgid "filter by engine"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:84
+msgid "favourites only ★"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:96
+msgid "<b>On the FM-1</b>"
+msgstr ""
+
+#: fm1companion/diag.py:170 fm1companion/ui/pages/presets.py:97
+msgid "Library"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:100 fm1companion/ui/pages/presets.py:403
+msgid "No FM-1 with Melodee connected yet – here's how: plug in the FM-1 via USB, Melodee 1.5 or newer must be running."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:105
+msgid "Read in"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:105
+msgid "Read the list of slots again (F5)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:108
+msgid "Back up all"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:109
+msgid "fetch all used slots completely into the library"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:111
+msgid "To library"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:112
+msgid "fetch the marked slots into the library"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:116 fm1companion/ui/pages/presets.py:120
+msgid "Track on the FM-1 for listening / saving"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:123
+msgid "Load the preset onto the track (changes only the sound of the track, saves nothing)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:124
+msgid "Save current sound as preset …"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:125
+msgid "save the current sound of the track into this slot"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:128 fm1companion/ui/pages/presets.py:161
+msgid "Rename …"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:128
+msgid "Rename the preset on the FM-1 (F2)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:130
+msgid "Favourite ★ on/off"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:130
+msgid "Favourite on/off"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:131
+msgid "Move/swap …"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:132
+msgid "Move a slot into another slot or swap two slots"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:134
+msgid "Clear the slot on the FM-1"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:136 fm1companion/ui/pages/presets.py:454
+msgid "take back the last change on the FM-1"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:137
+msgid "More ▾"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:138
+msgid "Rename, favourite, move, clear, undo"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:148
+msgid "<b>Library</b> (all devices)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:152
+msgid "No presets in the library yet – here's how: “Back up all” fetches all used slots from the FM-1, “Import” reads .fm1preset, set, editor and .syx files."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:157
+msgid "Write to slot …"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:158
+msgid "Write the library preset into the marked slot on the FM-1"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:159
+msgid "Compare the slot on the FM-1 with the library preset"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:160
+msgid "Set tags (separated by commas)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:162
+msgid "Change the name of the library preset (only the file, nothing on the FM-1)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:164 fm1companion/ui/pages/voices.py:231
+msgid "Import …"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:164
+msgid "Fetch files into the library"
+msgstr ""
+
+#: fm1companion/ui/pages/midi.py:125 fm1companion/ui/pages/presets.py:165
+msgid "Export …"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:166
+msgid "marked presets as a set (.zip), single (.fm1preset) or for the web editor (.json)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:167
+msgid "delete from the library"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:168
+msgid "Library folder in the file manager"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:221
+msgid "Unknown device"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:257
+#, python-brace-format
+msgid "{firmware}: slots not read yet – “Read in” (F5)."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:259
+#, python-brace-format
+msgid "{firmware}: This firmware has no preset library via USB (MIDI only). You can still search and export your library on the right."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:261
+msgid "No FM-1 connected – the library on the right can be used anyway."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:307
+#, python-brace-format
+msgid "{title}: cancelled – nothing more was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:309
+msgid " “Undo” takes back what was already changed."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:313
+#, python-brace-format
+msgid "{firmware}: no user presets via USB – you can still use the library on the right. Nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:318
+#, python-brace-format
+msgid "<b>{title} failed:</b> {error}"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:320
+msgid " Slots already changed can be taken back with “Undo”."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:327
+#, python-brace-format
+msgid ", about {n} s left"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:328
+#, python-brace-format
+msgid "{title} … {a} of {b} {unit}{rest}"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:328
+msgid "slots"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:339
+msgid "Stopping after the current slot …"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:359
+#, python-brace-format
+msgid "{firmware}: {used} of {total} slots used, {fav} favourites."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:361
+#, python-brace-format
+msgid "{firmware}: {used} of {total} slots used."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:368
+msgid "Read preset list"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:400
+msgid "This firmware has no preset library the app can read via USB (Melodee from 1.5 only). Here you save presets directly on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:453
+#, python-brace-format
+msgid "Undo: {what}"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:479
+msgid "Library not readable"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:488
+#, python-brace-format
+msgid "{slot} “{name}” ({engine})"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:489
+#, python-brace-format
+msgid "{slot} (empty)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:494
+#, python-brace-format
+msgid "{title}: No used slot is chosen – nothing to back up."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:495
+#, python-brace-format
+msgid "{title}: First “Read in”, then back up."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:516
+msgid "Preset not saved in the library"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:524
+msgid " (cancelled)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:525
+#, python-brace-format
+msgid "{got} of {total} presets read{stopped}, {new} new in the library (folder Presets/{device}); {old} were already there. Nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:529 fm1companion/ui/pages/presets.py:597
+msgid "presets"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:532
+msgid "Back up all presets"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:535
+msgid "Fetch presets"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:556
+msgid "Not enough slots"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:556
+#, python-brace-format
+msgid "{n} presets no longer fit from {slot} on."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:559
+#, python-brace-format
+msgid "Write “{name}” into {slot}?"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:560
+#, python-brace-format
+msgid "Write {n} presets into {first}–{last}?"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:562
+#, python-brace-format
+msgid ""
+"\n"
+"\n"
+"Will be overwritten:\n"
+"{slots}"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:564 fm1companion/ui/pages/presets.py:665
+#: fm1companion/ui/pages/presets.py:918
+#, python-brace-format
+msgid ""
+"\n"
+"… and {n} more"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:565
+msgid ""
+"\n"
+"\n"
+"The old content is read first – you can take it back with “Undo”. The FM-1 stops playback for this."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:567
+msgid "Write into the FM-1"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:583 fm1companion/ui/pages/presets.py:596
+#, python-brace-format
+msgid "{slot} written"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:585
+msgid "Writing cancelled – nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:588
+#, python-brace-format
+msgid " ({n} not written after cancelling)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:589
+#, python-brace-format
+msgid "“{name}” → {slot}"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:591
+#, python-brace-format
+msgid "{n} preset written{stopped}: {where}. “Undo” restores the old content."
+msgid_plural "{n} presets written{stopped}: {where}. “Undo” restores the old content."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/presets.py:596
+msgid "Write presets"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:605
+#, python-brace-format
+msgid "Take back {what}? {slot} gets “{name}” again."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:606
+#, python-brace-format
+msgid "Take back {what}? {slot} becomes empty again."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:607 fm1companion/ui/pages/voices.py:724
+msgid "Revert"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:616
+#, python-brace-format
+msgid "Taken back: {what} – {slot} is “{name}” again."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:617
+#, python-brace-format
+msgid "Taken back: {what} – {slot} is empty again."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:629
+#, python-brace-format
+msgid "The name must not be empty – {reason}"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:630
+msgid "The name must not be empty."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:632 fm1companion/ui/pages/presets.py:774
+msgid "Accept"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:632 fm1companion/ui/pages/presets.py:774
+#, python-brace-format
+msgid ""
+"{reason}\n"
+"\n"
+"Take it like this?"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:643
+#, python-brace-format
+msgid ""
+"New name for {slot}\n"
+"(at most {n} characters, letters/digits/simple characters – the app transliterates umlauts):"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:656 fm1companion/ui/pages/presets.py:659
+#, python-brace-format
+msgid "{slot} renamed"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:657
+#, python-brace-format
+msgid "{slot} renamed: “{old}” → “{new}”."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:666
+#, python-brace-format
+msgid ""
+"Clear {n} slot on the FM-1?\n"
+"\n"
+"{slots}{more}\n"
+"\n"
+"The content is read first (undo possible)."
+msgid_plural ""
+"Clear {n} slots on the FM-1?\n"
+"\n"
+"{slots}{more}\n"
+"\n"
+"The content is read first (undo possible)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/presets.py:685 fm1companion/ui/pages/presets.py:696
+#, python-brace-format
+msgid "{slot} deleted"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:687
+msgid "Clearing cancelled – nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:690
+#, python-brace-format
+msgid ": {slot} “{name}”"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:691
+#, python-brace-format
+msgid " ({n} not any more after cancelling)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:692
+#, python-brace-format
+msgid "{n} slot cleared{detail}{stopped}. “Undo” brings the content back."
+msgid_plural "{n} slots cleared{detail}{stopped}. “Undo” brings the content back."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/presets.py:708
+#, python-brace-format
+msgid "{slot} “{name}” is now a favourite ★"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:709
+#, python-brace-format
+msgid "{slot} “{name}” is no longer a favourite"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:710
+msgid " – saved."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:710
+msgid " – but only until switching off (no flash)."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:711
+msgid " – the FM-1 saves it after STOP."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:721 fm1companion/ui/pages/presets.py:728
+msgid "Move/swap"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:721
+#, python-brace-format
+msgid ""
+"Target slot for {slot} (1–384):\n"
+"If the target is used, the two slots are swapped."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:728
+#, python-brace-format
+msgid ""
+"Swap {a} and {b}?\n"
+"\n"
+"Both old contents are read first (undo possible)."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:730
+#, python-brace-format
+msgid ""
+"Move {a} to {slot}?\n"
+"\n"
+"Both old contents are read first (undo possible)."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:731
+msgid "Execute"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:749 fm1companion/ui/pages/presets.py:753
+#, python-brace-format
+msgid "{slot} changed"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:750
+#, python-brace-format
+msgid "Swapped: {a} ↔ {b}."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:751
+#, python-brace-format
+msgid "Moved: {a} → {target} ({source} is empty now)."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:753
+msgid "Move"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:761
+#, python-brace-format
+msgid "{slot} is now on track {track} – play a few notes on the FM-1. Nothing was saved."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:769 fm1companion/ui/pages/presets.py:774
+#: fm1companion/ui/pages/presets.py:795
+msgid "Save track"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:769
+#, python-brace-format
+msgid "Name (empty = automatic), sound of track {track} to {slot}:"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:776
+#, python-brace-format
+msgid "{slot} will be overwritten. The old content is read first (undo possible)."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:785 fm1companion/ui/pages/presets.py:795
+#, python-brace-format
+msgid "{slot} saved"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:787
+#, python-brace-format
+msgid "Sound of track {track} saved in {slot} as “{name}”. “Undo” restores the old content."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:789
+#, python-brace-format
+msgid "Sound of track {track} saved in {slot}. “Undo” restores the old content."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:810
+#, python-brace-format
+msgid ""
+"{slot} (FM-1) ↔ “{name}” (library):\n"
+"\n"
+"{lines}"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:822
+msgid "Tags (separated by commas):"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:832
+msgid "Tags not saved"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:834
+#, python-brace-format
+msgid "Tags saved for {n} preset (library only, nothing changed on the FM-1)."
+msgid_plural "Tags saved for {n} presets (library only, nothing changed on the FM-1)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/presets.py:840
+msgid "Import presets"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:841
+msgid "Presets (*.fm1preset *.zip *.json *.syx);;All files (*)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:855
+#, python-brace-format
+msgid "{name}: file not readable ({error})"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:857
+#, python-brace-format
+msgid "{n} preset imported, {new} of them new in the library (folder Presets/Importiert); {old} existed already."
+msgid_plural "{n} presets imported, {new} of them new in the library (folder Presets/Importiert); {old} existed already."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/presets.py:859
+msgid "Nothing imported."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:861
+#, python-brace-format
+msgid " Not readable: {list}"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:862 fm1companion/ui/pages/voices.py:542
+msgid "Import"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:862
+#, python-brace-format
+msgid ""
+"{n} file could not be read:\n"
+"\n"
+"{list}\n"
+"\n"
+"The library was not changed by this; readable files are taken over."
+msgid_plural ""
+"{n} files could not be read:\n"
+"\n"
+"{list}\n"
+"\n"
+"The library was not changed by this; readable files are taken over."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/presets.py:873
+#, python-brace-format
+msgid ""
+"New name for “{name}” in the library\n"
+"(at most 20 characters; only the file changes, nothing on the FM-1):"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:881
+msgid "Not renamed"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:883
+#, python-brace-format
+msgid "Renamed in the library: “{old}” → “{new}” ({file}). Nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:894
+msgid "Set (*.zip);;Single (*.fm1preset);;Melodee web editor (*.json)"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:907
+msgctxt "error title"
+msgid "Export"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:909
+#, python-brace-format
+msgid "{n} preset exported: {file} – only as a file, nothing changed on the FM-1."
+msgid_plural "{n} presets exported: {file} – only as a file, nothing changed on the FM-1."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/presets.py:912
+#, python-brace-format
+msgid "{n} preset exported: {file}"
+msgid_plural "{n} presets exported: {file}"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/presets.py:916
+#, python-brace-format
+msgid "“{name}” ({device}{slot})"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:916
+msgid "without device"
+msgstr ""
+
+#: fm1companion/ui/pages/presets.py:919
+#, python-brace-format
+msgid ""
+"Delete {n} preset from the library?\n"
+"\n"
+"{names}{more}\n"
+"\n"
+"The files are deleted; the FM-1 stays unchanged."
+msgid_plural ""
+"Delete {n} presets from the library?\n"
+"\n"
+"{names}{more}\n"
+"\n"
+"The files are deleted; the FM-1 stays unchanged."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/presets.py:929
+#, python-brace-format
+msgid "{n} preset removed from the library – the FM-1 stays unchanged."
+msgid_plural "{n} presets removed from the library – the FM-1 stays unchanged."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/voices.py:24
+msgctxt "note name"
+msgid "B"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:25
+msgid "Generated"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:37
+msgid "(no name)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:144
+#, python-brace-format
+msgid "Algorithm {alg} · feedback {fb}"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:145
+#, python-brace-format
+msgid "Algorithm {alg}"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:201
+msgid "Envelopes (carriers bold)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:219
+msgid "DX7 voices for Melodee's FM6 engine and every FM-1: collect banks, audition them on the computer, send them to the FM-1, build your own banks and create new sounds. Folder: FM-1/DX7 (watched)."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:226
+msgid "Search all banks: name, bank, “alg 5”, tag …  (Ctrl+F)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:231
+msgid "copy .syx files into FM-1/DX7"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:232
+msgid "Folder …"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:232
+msgid "take over all .syx of a folder"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:233
+msgid "Collections …"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:233
+msgid "download free DX7 collections from GitHub"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:247
+msgid "No DX7 voices yet"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:248
+msgid "DX7 sounds for the FM6 engine: “Collections” downloads free banks from GitHub (e.g. the 128 factory voices), “Import” takes over your own .syx files into FM-1/DX7."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:250
+msgid "Load collections …"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:251
+msgid "Import your own .syx files …"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:262
+msgid "<b>Banks</b>"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:265
+msgid "Voice"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:265
+msgid "Bank"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:265
+msgid "No."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:273
+msgid "No DX7 banks yet – here's how: “Collections …” downloads e.g. the 128 factory voices of the FM-1, or “Import …” takes over your .syx files."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:285
+msgid "No voice chosen"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:298
+msgid "Mode"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:298
+msgid "Frequency"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:298
+msgid "Det."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:298
+msgctxt "DX7 operator"
+msgid "Level"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:298
+msgid "Rates"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:298
+msgid "Levels"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:298
+msgid "Vel."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:299
+msgid "Role"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:305
+msgid "Listen (calculated on the computer – similar, not identical to the FM-1)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:309
+msgid "C4 for two seconds (Space)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:319
+#, python-brace-format
+msgid "Audition note {n}"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:330
+msgid "To the FM-1 and to files"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:332
+msgid "To the FM-1 …"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:333
+msgid "Melodee: save to a user slot or live onto a track; other firmware: as DX7 SysEx"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:338
+msgid "As .syx …"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:339
+msgid "save this voice as single-voice SysEx"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:341
+msgid "To own bank"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:346
+msgid "Create new sounds"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:348
+msgid "Random voice"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:349
+msgid "musically restricted randomness (audible carriers, sensible envelopes)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:355
+msgid "Strength of the mutation"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:356
+msgid "Keep algorithm"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:358
+msgid "Mutate"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:360
+msgid "Strength:"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:364
+msgid "Remember as morph partner"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:369 fm1companion/ui/pages/voices.py:826
+msgid "Morph"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:371
+msgid "Partner: –"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:376
+msgid "Create variations"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:377
+msgid "8 variations of the voice – listen (double-click) and keep the good ones"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:387
+msgid "Keep"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:388
+msgid "take the chosen variation into your own bank"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:393
+msgid "Own bank (32 slots – drag voices here)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:399
+msgid "Save bank (.syx) …"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:443
+#, python-brace-format
+msgid "{error} Listening and creating work anyway."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:470
+#, python-brace-format
+msgid "All banks ({n} voices)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:522
+msgid "fixed"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:522
+msgid "ratio"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:526
+msgid "Carrier"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:526
+msgid "Modulator"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:534
+msgid "Import DX7 banks"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:535
+msgid "DX7 SysEx (*.syx *.SYX);;All files (*)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:542
+msgid "Folder FM-1/DX7 not writable"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:553
+#, python-brace-format
+msgid "{name}: no DX7 voices"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:567
+#, python-brace-format
+msgid "{n} file taken over."
+msgid_plural "{n} files taken over."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/voices.py:568
+#, python-brace-format
+msgid "{done} Notes: {notes}"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:572
+msgid "Folder with .syx files"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:613
+#, python-brace-format
+msgid "Preview calculated in {secs} s."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:614
+#, python-brace-format
+msgid "Preview failed: {error}"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:624
+msgid "Please connect an FM-1 via USB."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:627
+msgid "Save to a user slot (FM6 preset) …"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:628
+msgid "Load live onto a track (not saved)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:632
+msgid "Send as DX7 SysEx"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:633
+msgid "To the FM-1"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:633
+#, python-brace-format
+msgid "“{name}” – how?"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:639
+msgid "On which track (1–4)?"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:641
+msgid "Load voice onto track"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:643
+#, python-brace-format
+msgid "“{name}” now plays on track {track} (FM6). Nothing was saved."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:658
+#, python-brace-format
+msgid "Not possible on this FM-1 – nothing was changed on the FM-1. {reason}"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:659
+msgid "Not possible on this FM-1"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:661
+#, python-brace-format
+msgid "{title} failed: {error} Nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:665
+#, python-brace-format
+msgid "{title} … {a} of {b}"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:677
+msgid "The FM-1 was changed while you were choosing the slot – nothing saved. Please “To the FM-1” once more."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:688
+msgid "User slot"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:688
+msgid "Into which slot (1–384)? Suggested: the first free one."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:695
+#, python-brace-format
+msgid "{slot} “{name}” ({engine}) will be overwritten."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:697
+#, python-brace-format
+msgid "{slot} is empty."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:698
+msgid "Save as FM6 preset"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:699
+#, python-brace-format
+msgid ""
+"Save “{name}” as FM6 preset in {slot}?\n"
+"\n"
+"{what}\n"
+"\n"
+"The old content is read first (undo possible). The FM-1 stops playback for this."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:713
+#, python-brace-format
+msgid "“{name}” is now in {slot} (FM6). “Undo” restores the old content."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:715
+msgid "Save FM6 preset"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:716
+msgid "Read user slots"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:722
+#, python-brace-format
+msgid "Set {slot} back to “{name}”?"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:723
+#, python-brace-format
+msgid "Set {slot} back to empty?"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:730
+#, python-brace-format
+msgid "{slot} reset."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:736
+msgid "On which MIDI channel (1–16)?"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:740
+msgid "Send a single-voice dump. Depending on the firmware it replaces the sound of the matching FM track (Melodee: the FM6 track; M-VAVE firmware: the chosen preset – hold SAVE on the device to keep it)."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:744
+msgid "This firmware is not known for sure: the voice goes out as 155 single DX7 parameter changes. That only changes the current sound and overwrites no saved preset."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:747
+msgid "Send DX7 SysEx"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:747
+#, python-brace-format
+msgid "“{name}” on channel {channel}: {text}"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:748
+msgid "Send"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:752
+#, python-brace-format
+msgid "{n} SysEx message sent."
+msgid_plural "{n} SysEx messages sent."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/voices.py:753
+msgid "Sending not possible – the device is busy right now."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:760 fm1companion/ui/pages/voices.py:766
+msgid "Save voice"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:761
+msgid "DX7 SysEx (*.syx)"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:768
+#, python-brace-format
+msgid "File saved: {name}"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:775
+#, python-brace-format
+msgid "{n} voice added to your own bank – “Save bank” creates the .syx."
+msgid_plural "{n} voices added to your own bank – “Save bank” creates the .syx."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/voices.py:780
+msgid "Own bank"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:780
+msgid "Your own bank is empty – drag voices from the list here."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:783 fm1companion/ui/pages/voices.py:793
+msgid "Save bank"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:783
+msgid "Name of the bank:"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:783
+msgid "My bank"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:795
+#, python-brace-format
+msgid "Bank saved: {name} ({n} voices, rest INIT VOICE)."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:822
+#, python-brace-format
+msgid "Partner: {name}"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:826
+msgid "First remember a voice as morph partner, then choose a second one."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:856
+#, python-brace-format
+msgid "“{name}” kept (bank “{bank}” and own bank)."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:873
+msgid "Your own bank is full (32 voices)."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:921
+msgid "DX7 collections"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:924
+msgid "Free DX7 collections on GitHub. They go to FM-1/DX7/Sammlungen. Source and licence are given for each collection."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:927
+msgid "Collection"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:927
+msgid "Licence"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:927 fm1companion/ui/samplepacks_tab.py:65
+msgid "Files"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:927
+msgctxt "column"
+msgid "Status"
+msgstr ""
+
+#: fm1companion/samplepacks.py:271 fm1companion/ui/pages/voices.py:951
+msgid "unclear"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:952
+msgid "downloaded"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:961
+#, python-brace-format
+msgid "{description}<br>Source: <a href='{url}'>{repo}</a> · Licence: <b>{licence}</b>"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:969 fm1companion/ui/samplepacks_tab.py:181
+msgid "Licence unclear"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:969
+#, python-brace-format
+msgid ""
+"{title}: {unclear}.\n"
+"\n"
+"Source: {url}\n"
+"\n"
+"Download anyway for private use?"
+msgstr ""
+
+#: fm1companion/ui/pages/simulator.py:451 fm1companion/ui/pages/voices.py:974
+#, python-brace-format
+msgid "Loading {title} …"
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:979
+#, python-brace-format
+msgid "{title}: downloaded ({folder}) – it is in FM-1/DX7/Sammlungen. Nothing was sent to the FM-1."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:981
+#, python-brace-format
+msgid "DX7 collection “{title}” downloaded ({folder})."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:986
+#, python-brace-format
+msgid "Download failed: {error} Files already downloaded stay; “Download” fetches the rest."
+msgstr ""
+
+#: fm1companion/ui/pages/voices.py:990
+#, python-brace-format
+msgid "Loading {title} … {a} of {b} files"
+msgstr ""
+
+#: fm1companion/presetlib.py:39
+msgid "Parameters"
+msgstr ""
+
+#: fm1companion/presetlib.py:39
+msgid "DX7 voice"
+msgstr ""
+
+#: fm1companion/presetlib.py:39
+msgid "CZ-1 tone"
+msgstr ""
+
+#: fm1companion/presetlib.py:39
+msgid "Prophet program"
+msgstr ""
+
+#: fm1companion/presetlib.py:39
+msgid "Drum patch"
+msgstr ""
+
+#: fm1companion/presetlib.py:100
+msgid "invalid packed bytes"
+msgstr ""
+
+#: fm1companion/presetlib.py:129
+msgid "umlauts/special characters transliterated"
+msgstr ""
+
+#: fm1companion/presetlib.py:132
+msgid "characters outside ASCII removed"
+msgstr ""
+
+#: fm1companion/presetlib.py:135
+#, python-brace-format
+msgid "shortened to {n} characters"
+msgstr ""
+
+#: fm1companion/presetlib.py:139
+#, python-brace-format
+msgid "The FM-1 stores names only with letters, digits and simple characters (at most {n}). Therefore: {changes} → “{name}”."
+msgstr ""
+
+#: fm1companion/presetlib.py:150
+msgid "Answer too short"
+msgstr ""
+
+#: fm1companion/presetlib.py:163
+msgid "Text without end"
+msgstr ""
+
+#: fm1companion/presetlib.py:248
+msgid "This Melodee version still has the old preset storage (64 slots, before 1.5). The suite's preset library works with the shared library from Melodee 1.5 – please update Melodee (make a backup first). Until then: edit presets in the editor under “Library”."
+msgstr ""
+
+#: fm1companion/presetlib.py:251
+msgid "This firmware has no shared preset library (command 80, available from Melodee 1.5). You can still send DX7 voices as SysEx (Presets › FM Voices)."
+msgstr ""
+
+#: fm1companion/presetlib.py:302
+msgid "not a .fm1preset file"
+msgstr ""
+
+#: fm1companion/presetlib.py:304
+msgid "File from a newer version of the suite"
+msgstr ""
+
+#: fm1companion/presetlib.py:316
+#, python-brace-format
+msgid "unknown kind {kind}"
+msgstr ""
+
+#: fm1companion/presetlib.py:319
+msgid "Native data has the wrong length"
+msgstr ""
+
+#: fm1companion/presetlib.py:321 fm1companion/presetlib.py:430
+msgid "Native data does not match the engine"
+msgstr ""
+
+#: fm1companion/presetlib.py:323
+msgid "Parameter value outside −64…127"
+msgstr ""
+
+#: fm1companion/presetlib.py:361
+msgid "invalid preset slot"
+msgstr ""
+
+#: fm1companion/presetlib.py:367
+msgid "unexpected answer from the FM-1"
+msgstr ""
+
+#: fm1companion/presetlib.py:370
+#, python-brace-format
+msgid "{slot}: invalid or empty (rc 1)"
+msgstr ""
+
+#: fm1companion/presetlib.py:371
+#, python-brace-format
+msgid "{slot}: refused by the FM-1 or memory error (rc 2) – is playback still running?"
+msgstr ""
+
+#: fm1companion/presetlib.py:384
+msgid "invalid list answer"
+msgstr ""
+
+#: fm1companion/presetlib.py:415
+#, python-brace-format
+msgid "{slot}: invalid native data"
+msgstr ""
+
+#: fm1companion/presetlib.py:432
+msgid "FM6 and Prophet presets need their voice data"
+msgstr ""
+
+#: fm1companion/presetlib.py:467 fm1companion/presetlib.py:589
+msgid "The name must not be empty"
+msgstr ""
+
+#: fm1companion/presetlib.py:475
+#, python-brace-format
+msgid "Favourite refused (rc {rc})"
+msgstr ""
+
+#: fm1companion/presetlib.py:482
+msgid "The voice was not accepted"
+msgstr ""
+
+#: fm1companion/presetlib.py:592
+msgid "This preset does not exist as a file"
+msgstr ""
+
+#: fm1companion/presetlib.py:626
+msgid "The .zip file is damaged or not a zip file"
+msgstr ""
+
+#: fm1companion/presetlib.py:628
+msgid "The file is not a text file (not .fm1preset/.json)"
+msgstr ""
+
+#: fm1companion/presetlib.py:630
+msgid "The file is damaged or not a known preset format (.fm1preset, .zip set, editor .json, DX7 .syx)"
+msgstr ""
+
+#: fm1companion/presetlib.py:651
+msgid "Unknown file format"
+msgstr ""
+
+#: fm1companion/presetlib.py:717
+#, python-brace-format
+msgid "Parameter {i}: {a} ↔ {b}"
+msgstr ""
+
+#: fm1companion/presetlib.py:719
+#, python-brace-format
+msgid "… and {n} more parameter"
+msgid_plural "… and {n} more parameters"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/presetlib.py:721
+#, python-brace-format
+msgid "Number of parameters: {a} ↔ {b}"
+msgstr ""
+
+#: fm1companion/presetlib.py:723
+#, python-brace-format
+msgid "Native data ({a} ↔ {b}) differs"
+msgstr ""
+
+#: fm1companion/presetlib.py:724
+msgid "identical"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:53
+msgid "Source"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:56
+msgid "FM-1 via USB, an input of the computer (line-in, USB microphone) or the output of the computer (everything that is playing right now)"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:63
+msgid "Input:"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:64
+msgid "save as mono"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:66
+msgid "The FM-1 plays samples in mono anyway"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:88
+msgid "This much before pressing “Record” is included (while “Ready” is running)"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:89
+msgid "Pre-roll:"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:91
+msgid "starts on signal above"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:92
+msgid "Get ready, then recording starts by itself on the first sound"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:100
+msgid "Auto start:"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:102
+#: fm1companion/ui/sample_recorder.py:329
+msgid "Ready (monitor)"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:103
+msgid "Open the input and show the level without saving"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:120
+msgid "Result"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:123
+msgid "Nothing recorded yet – press “Record”, play, “Stop”."
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:136
+msgid "e.g. Snare kitchen pot"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:139
+msgid "Tags, separated by commas (e.g. snare, own)"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:140
+msgid "Tags:"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:144
+#: fm1companion/ui/sample_recorder.py:400
+msgid "Into the library"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:146
+msgid "Saves to ~/FM-1/Samples/Aufnahmen and adds it to the library"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:169
+msgid "Looking for inputs …"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:179
+#, python-brace-format
+msgid "Could not look for inputs: {error}"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:195
+#, python-brace-format
+msgid "{hint} (applies to the source “FM-1 via USB”)"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:196
+msgid "No recording input found. Connect the FM-1 via USB, plug in a USB microphone or use PipeWire (then the output of the computer works too)."
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:227
+#: fm1companion/ui/sample_recorder.py:252
+#: fm1companion/ui/sample_recorder.py:273
+msgid "Cannot open the input"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:236
+msgid "Ready – stop"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:237
+#, python-brace-format
+msgid "Monitoring: {source} · starts on the first sound"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:238
+#, python-brace-format
+msgid "Monitoring: {source}"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:257
+#, python-brace-format
+msgid "Opening {source} …"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:302
+msgid "Recording …"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:317
+#, python-format
+msgid "Recording %Y-%m-%d %H-%M-%S"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:360
+msgid "Stopped automatically after 2 minutes."
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:376
+#, python-brace-format
+msgid "Recorded: {length} – listen, name it, put it into the library."
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:378
+msgid "Only silence recorded – check the level."
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:400
+msgid "Recording not saved"
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:402
+#, python-brace-format
+msgid "Saved: {name} – now in the library (folder Aufnahmen)."
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:411
+msgid "Discard the recording? It is not saved yet and cannot be recovered."
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:415
+msgid "Discarded – nothing saved."
+msgstr ""
+
+#: fm1companion/ui/sample_recorder.py:416
+msgid "Recording discarded."
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:19
+msgid "Transients (detect hits)"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:19
+msgid "Equal-length slices"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:19
+msgid "BPM grid"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:27
+#, python-brace-format
+msgid "Slice – {name}"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:44
+msgid "Slice by:"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:54
+msgid "Sensitivity: further right also finds quiet hits"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:59
+msgid "Minimum distance between two cuts"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:60
+msgid "Sensitivity:"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:62
+msgid "Min. distance:"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:71
+msgid "Number of slices:"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:84
+msgid "Eighths"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:84
+msgid "Sixteenths"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:87
+msgid "from length"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:88
+msgid "Estimate the tempo from the loop length (whole bars)"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:99
+msgid "at zero crossing"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:101
+msgid "Move cuts to the next zero crossing – avoids clicks"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:112
+msgid "Loading audio …"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:116
+msgid "Click: play slice · Double-click: set cut · Drag: move · Right-click or Del: remove cut · Space: current slice · ←/→: previous/next · 1–9: slice directly"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:127
+msgid "Key of the first slice in the kit (36 = C2, like kick in General MIDI)"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:134
+msgid "Kit name:"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:138
+msgid "As WAVs into the library"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:139
+msgid "Save each slice as its own WAV file (Samples › Slices)"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:141
+msgid "Build kit"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:143
+msgid "Kit with one slice per key (at most 16, shortened to fit a slot)"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:214
+msgid "Looking for cut points …"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:240
+#, python-brace-format
+msgid "Calculation failed: {error}"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:248
+#, python-brace-format
+msgid "{n} slice"
+msgid_plural "{n} slices"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/slicer_dialog.py:253
+msgid " · No hits detected (even sound like a pad?) – move sensitivity to the right, or choose “Equal-length slices”/“BPM grid”, or cut yourself with a double-click."
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:256
+msgid " · Very many hits – move sensitivity to the left or increase the minimum distance."
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:258
+msgid " · A kit holds 16 sounds – only the first 16 go in (save the rest as WAVs)."
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:287
+msgid "Saving failed"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:287
+msgid "Slices not saved"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:289
+#, python-brace-format
+msgid "Done: {n} WAV file saved in {folder} – the library reads it in when closing."
+msgid_plural "Done: {n} WAV files saved in {folder} – the library reads them in when closing."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/slicer_dialog.py:300
+msgid "Building the kit (reads the slices and checks whether everything fits into a slot) …"
+msgstr ""
+
+#: fm1companion/ui/slicer_dialog.py:309
+msgid "Kit not possible"
+msgstr ""
+
+#: fm1companion/samples.py:65
+#, python-brace-format
+msgid "{name}: reading {ext} needs ffmpeg (sudo apt install ffmpeg)"
+msgstr ""
+
+#: fm1companion/samples.py:72
+#, python-brace-format
+msgid "{name}: ffmpeg takes too long (file too large or damaged)"
+msgstr ""
+
+#: fm1companion/samples.py:77
+#, python-brace-format
+msgid "{name}: ffmpeg cannot read the file (damaged or no audio) – {error}"
+msgstr ""
+
+#: fm1companion/samples.py:79
+#, python-brace-format
+msgid "{name}: ffmpeg cannot read the file (damaged or no audio)"
+msgstr ""
+
+#: fm1companion/samples.py:87
+#, python-brace-format
+msgid "{name}: file not found (moved or deleted?)"
+msgstr ""
+
+#: fm1companion/samples.py:96
+#, python-brace-format
+msgid "{name}: WAV file damaged or in a format the app cannot read (e.g. compressed). With ffmpeg it would work: sudo apt install ffmpeg"
+msgstr ""
+
+#: fm1companion/samples.py:102
+#, python-brace-format
+msgid "{name}: audio file damaged or empty"
+msgstr ""
+
+#: fm1companion/samples.py:128
+msgid "unknown WAV format"
+msgstr ""
+
+#: fm1companion/samples.py:329
+#, python-brace-format
+msgid "{name} is missing"
+msgstr ""
+
+#: fm1companion/fm1open.py:422 fm1companion/samples.py:336
+#, python-brace-format
+msgid "{name}: no audio left"
+msgstr ""
+
+#: fm1companion/samples.py:372
+#, python-brace-format
+msgid "The kit is too long: {secs} s, a slot holds {cap} s (all sounds together, {kib} KiB IMA-ADPCM at {khz} kHz). “Fit to slot” shortens the longest sounds, or remove sounds from the kit."
+msgstr ""
+
+#: fm1companion/samples.py:380
+msgid "A slot has 1 to 16 sounds"
+msgstr ""
+
+#: fm1companion/samples.py:393
+#, python-brace-format
+msgid "Cannot build the slot: {error}"
+msgstr ""
+
+#: fm1companion/samples.py:419
+msgid "size"
+msgstr ""
+
+#: fm1companion/samples.py:419
+msgid "header"
+msgstr ""
+
+#: fm1companion/samples.py:419
+msgid "data checksum"
+msgstr ""
+
+#: fm1companion/samples.py:419
+msgid "zones"
+msgstr ""
+
+#: fm1companion/samples.py:422
+msgid "Cannot open the slot (stop playback?)"
+msgstr ""
+
+#: fm1companion/samples.py:429
+#, python-brace-format
+msgid "Write error at {addr} ({rc})"
+msgstr ""
+
+#: fm1companion/samples.py:434
+#, python-brace-format
+msgid "Finishing failed: {reason}"
+msgstr ""
+
+#: fm1companion/samples.py:440
+msgid "Erasing failed"
+msgstr ""
+
+#: fm1companion/samples.py:450
+#, python-brace-format
+msgid "USR{n} does not appear in the FM-1 inventory – cannot back it up."
+msgstr ""
+
+#: fm1companion/samples.py:460
+msgid "Saved slot is too short"
+msgstr ""
+
+#: fm1companion/samplepacks.py:54
+msgid "CC0 – public domain, free to use (also commercially, no attribution)"
+msgstr ""
+
+#: fm1companion/samplepacks.py:55
+msgid "CC BY 4.0 – free to use with attribution"
+msgstr ""
+
+#: fm1companion/samplepacks.py:56
+msgid "CC BY 3.0 – free to use with attribution"
+msgstr ""
+
+#: fm1companion/samplepacks.py:61
+msgid "About 4,000 samples of real instruments: drums (membranophones), cymbals, bells and percussion (idiophones), winds, strings, electronics. Ideal for your own drum kits."
+msgstr ""
+
+#: fm1companion/samplepacks.py:63 fm1companion/samplepacks.py:66
+msgid "LICENSE in the repository: CC0 1.0 Universal."
+msgstr ""
+
+#: fm1companion/samplepacks.py:63
+msgid "≈ 1.3 GB"
+msgstr ""
+
+#: fm1companion/samplepacks.py:64
+msgid "VSCO 2 Community Edition (orchestra)"
+msgstr ""
+
+#: fm1companion/samplepacks.py:65
+msgid "Orchestra samples: strings, woodwinds, brass, timpani and orchestral percussion."
+msgstr ""
+
+#: fm1companion/samplepacks.py:68
+msgid "The sound collection of TidalCycles/SuperDirt: bass drums, breaks, drum machine hits, voices, FX (about 2,000 short sounds)."
+msgstr ""
+
+#: fm1companion/samplepacks.py:70
+msgid "The repository has no LICENSE file and the README names no licence; the sounds come from many sources. For trying out only – not for publishing."
+msgstr ""
+
+#: fm1companion/samplepacks.py:73
+msgid "Samples of classic drum machines (TR-808, TR-909, LinnDrum …), sorted by device."
+msgstr ""
+
+#: fm1companion/samplepacks.py:74
+msgid "No licence information in the repository; recordings of commercial devices of unknown origin. For trying out only."
+msgstr ""
+
+#: fm1companion/samplepacks.py:80
+msgid "Licence unclear – for trying out only, do not publish"
+msgstr ""
+
+#: fm1companion/dx7_sources.py:122 fm1companion/samplepacks.py:145
+msgid "No internet connection (GitHub not reachable)."
+msgstr ""
+
+#: fm1companion/samplepacks.py:147 fm1companion/samplepacks.py:183
+msgid "Timeout – the connection to GitHub is too slow or was cut off."
+msgstr ""
+
+#: fm1companion/samplepacks.py:149
+msgid "The pack no longer exists on GitHub – please update the app."
+msgstr ""
+
+#: fm1companion/dx7_sources.py:128 fm1companion/samplepacks.py:151
+msgid "GitHub is refusing right now (too many requests) – try again in a few minutes."
+msgstr ""
+
+#: fm1companion/samplepacks.py:153
+msgid "No free disk space left."
+msgstr ""
+
+#: fm1companion/dx7_sources.py:130 fm1companion/samplepacks.py:155
+msgid "Secure connection not possible (certificate) – are the computer's date and time correct?"
+msgstr ""
+
+#: fm1companion/samplepacks.py:163
+msgid "Sample packs need git (sudo apt install git)"
+msgstr ""
+
+#: fm1companion/samplepacks.py:233
+#, python-brace-format
+msgid "loading {n} audio files ({mb} MB) … (a few minutes depending on size)"
+msgstr ""
+
+#: fm1companion/samplepacks.py:235
+#, python-brace-format
+msgid "loading {n} audio files … (a few minutes depending on size)"
+msgstr ""
+
+#: fm1companion/samplepacks.py:263
+#, python-brace-format
+msgid ""
+"{name}\n"
+"Source: {url}\n"
+"Licence: {licence} – {licence_text}\n"
+"{note}\n"
+"Downloaded on {date} with FM-1 Companion.\n"
+msgstr ""
+
+#: fm1companion/samplepacks.py:270
+#, python-brace-format
+msgid "Source: {name} – {url} · Licence: {licence}"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:55
+msgid "Show content"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:56
+msgid "Loads only the folder structure (a few hundred KiB)"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:59
+msgid "Filter folders: kick, snare, bongo …"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:69
+msgid "Load ticked folders"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:72
+msgid "Load whole pack"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:75
+msgid "Stop downloading – files already loaded stay"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:86
+msgid "Choose a pack on the left. Downloaded sounds go to ~/FM-1/Samples/Pakete and appear in the library – with source and licence in the notes."
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:98
+msgid "Cancelling …"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:108
+#, python-brace-format
+msgid "<b style='color:#27ae60'>✔ {licence}</b><br>{note} Source: <a href='{url}'>{url}</a>"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:112
+#, python-brace-format
+msgid "<b style='color:#e67e22'>⚠ Licence unclear</b> – {note}<br>Source: <a href='{url}'>{url}</a>"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:121
+msgid "Not loaded yet – press “Show content”."
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:127
+msgid "(top level)"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:136
+msgid "Reading the content … (only the folder structure)"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:142
+#, python-brace-format
+msgid "{n} audio files in {folders} folders. Tick folders and load them."
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:148
+#, python-brace-format
+msgid "Content not readable: {error}"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:164
+msgid "First “Show content” – then you see folders, size and licence and can tick single folders or load the whole pack. Nothing was loaded yet."
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:169
+msgid "Tick at least one folder."
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:174
+#, python-brace-format
+msgid "{n} files ({mb} MB)"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:175
+#, python-brace-format
+msgid "{n} files"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:177
+msgid "whole pack"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:178
+#, python-brace-format
+msgid "Load {files} from “{pack}” ({part}) – to ~/FM-1/Samples/Pakete."
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:181
+#, python-brace-format
+msgid ""
+"{what}\n"
+"\n"
+"⚠ {licence}.\n"
+"{note}\n"
+"\n"
+"Download for trying out only (do not use in publications)?"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:185
+msgid "Load sample pack"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:185
+#, python-brace-format
+msgid ""
+"{what}\n"
+"\n"
+"Licence: {licence}."
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:210
+msgid "Cancelled – files already loaded stay in Samples › Pakete; a new start loads only the rest."
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:215
+#, python-brace-format
+msgid "Loading failed: {error} Files already loaded stay."
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:216
+#, python-brace-format
+msgid "Sample pack not loaded: {error}"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:218
+#, python-brace-format
+msgid "Sample pack “{name}”: {n} files loaded."
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:220
+#, python-brace-format
+msgid "{n} files loaded to Samples › Pakete › {name}"
+msgstr ""
+
+#: fm1companion/ui/samplepacks_tab.py:222
+#, python-brace-format
+msgid "{n} files loaded to Samples › Pakete › {name} – licence unclear: for trying out only."
+msgstr ""
+
+#: fm1companion/dx7.py:20
+msgid "Rate 1"
+msgstr ""
+
+#: fm1companion/dx7.py:20
+msgid "Rate 2"
+msgstr ""
+
+#: fm1companion/dx7.py:20
+msgid "Rate 3"
+msgstr ""
+
+#: fm1companion/dx7.py:20
+msgid "Rate 4"
+msgstr ""
+
+#: fm1companion/dx7.py:21
+msgid "Level 1"
+msgstr ""
+
+#: fm1companion/dx7.py:21
+msgid "Level 2"
+msgstr ""
+
+#: fm1companion/dx7.py:21
+msgid "Level 3"
+msgstr ""
+
+#: fm1companion/dx7.py:21
+msgid "Level 4"
+msgstr ""
+
+#: fm1companion/dx7.py:22
+msgid "Breakpoint"
+msgstr ""
+
+#: fm1companion/dx7.py:22
+msgid "Left depth"
+msgstr ""
+
+#: fm1companion/dx7.py:22
+msgid "Right depth"
+msgstr ""
+
+#: fm1companion/dx7.py:23
+msgid "Left curve"
+msgstr ""
+
+#: fm1companion/dx7.py:23
+msgid "Right curve"
+msgstr ""
+
+#: fm1companion/dx7.py:23
+msgid "Rate scaling"
+msgstr ""
+
+#: fm1companion/dx7.py:24
+msgid "AM sensitivity"
+msgstr ""
+
+#: fm1companion/dx7.py:24
+msgid "Velocity sensitivity"
+msgstr ""
+
+#: fm1companion/dx7.py:24
+msgid "Output level"
+msgstr ""
+
+#: fm1companion/dx7.py:25
+msgid "Fixed/ratio"
+msgstr ""
+
+#: fm1companion/dx7.py:25
+msgid "Frequency coarse"
+msgstr ""
+
+#: fm1companion/dx7.py:25
+msgid "Frequency fine"
+msgstr ""
+
+#: fm1companion/dx7.py:25
+msgid "Detune"
+msgstr ""
+
+#: fm1companion/dx7.py:28
+msgid "Pitch rate 1"
+msgstr ""
+
+#: fm1companion/dx7.py:28
+msgid "Pitch rate 2"
+msgstr ""
+
+#: fm1companion/dx7.py:28
+msgid "Pitch rate 3"
+msgstr ""
+
+#: fm1companion/dx7.py:28
+msgid "Pitch rate 4"
+msgstr ""
+
+#: fm1companion/dx7.py:29
+msgid "Pitch level 1"
+msgstr ""
+
+#: fm1companion/dx7.py:29
+msgid "Pitch level 2"
+msgstr ""
+
+#: fm1companion/dx7.py:29
+msgid "Pitch level 3"
+msgstr ""
+
+#: fm1companion/dx7.py:29
+msgid "Pitch level 4"
+msgstr ""
+
+#: fm1companion/dx7.py:30
+msgid "Algorithm"
+msgstr ""
+
+#: fm1companion/dx7.py:30
+msgid "Feedback"
+msgstr ""
+
+#: fm1companion/dx7.py:30
+msgid "Oscillator sync"
+msgstr ""
+
+#: fm1companion/dx7.py:31
+msgid "LFO speed"
+msgstr ""
+
+#: fm1companion/dx7.py:31
+msgid "LFO delay"
+msgstr ""
+
+#: fm1companion/dx7.py:31
+msgid "LFO pitch depth"
+msgstr ""
+
+#: fm1companion/dx7.py:32
+msgid "LFO amp depth"
+msgstr ""
+
+#: fm1companion/dx7.py:32
+msgid "LFO sync"
+msgstr ""
+
+#: fm1companion/dx7.py:32
+msgid "LFO wave"
+msgstr ""
+
+#: fm1companion/dx7.py:32
+msgid "Pitch mod sens."
+msgstr ""
+
+#: fm1companion/dx7.py:33
+msgid "Transpose"
+msgstr ""
+
+#: fm1companion/dx7.py:38
+msgid "Triangle"
+msgstr ""
+
+#: fm1companion/dx7.py:38
+msgid "Saw down"
+msgstr ""
+
+#: fm1companion/dx7.py:38
+msgid "Saw up"
+msgstr ""
+
+#: fm1companion/dx7.py:38
+msgid "Square"
+msgstr ""
+
+#: fm1companion/dx7.py:38
+msgid "Sine"
+msgstr ""
+
+#: fm1companion/dx7.py:175
+msgid "The file is empty."
+msgstr ""
+
+#: fm1companion/dx7.py:180
+msgid "Read a raw 4096-byte bank without SysEx frame."
+msgstr ""
+
+#: fm1companion/dx7.py:184
+msgid "Read a raw 155-byte voice without SysEx frame."
+msgstr ""
+
+#: fm1companion/dx7.py:205
+#, python-brace-format
+msgid "Bank message {n} is too short ({size} instead of 4097 bytes) – skipped."
+msgstr ""
+
+#: fm1companion/dx7.py:209
+#, python-brace-format
+msgid "Bank message {n} contains invalid bytes – skipped."
+msgstr ""
+
+#: fm1companion/dx7.py:212
+#, python-brace-format
+msgid "Bank message {n}: checksum missing or wrong – read anyway."
+msgstr ""
+
+#: fm1companion/dx7.py:217
+#, python-brace-format
+msgid "Voice message {n} is too short – skipped."
+msgstr ""
+
+#: fm1companion/dx7.py:221
+#, python-brace-format
+msgid "Voice message {n}: checksum missing or wrong – read anyway."
+msgstr ""
+
+#: fm1companion/dx7.py:227
+msgid "MainStage wrapper detected: only voice and name taken over."
+msgstr ""
+
+#: fm1companion/dx7.py:229
+msgid "No DX7 voice found in the file."
+msgstr ""
+
+#: fm1companion/dx7.py:374
+#, python-brace-format
+msgid "Algorithm {alg}, feedback {fb}"
+msgstr ""
+
+#: fm1companion/dx7_sources.py:14
+msgid "Licence unclear – check before private use only"
+msgstr ""
+
+#: fm1companion/dx7_sources.py:45
+msgid "FM-1 factory presets (128 voices)"
+msgstr ""
+
+#: fm1companion/dx7_sources.py:48
+msgid "The DX7 voices of the original M-VAVE FM-1 firmware, from M-VAVE's recovery tool."
+msgstr ""
+
+#: fm1companion/dx7_sources.py:50
+msgid "mene311 FM-1 banks (26 × 32)"
+msgstr ""
+
+#: fm1companion/dx7_sources.py:53
+msgid "Themed banks for the FM-1: bass, pads, organ, chiptune, effects …"
+msgstr ""
+
+#: fm1companion/dx7_sources.py:55
+msgid "Yamaha DX7 factory ROMs (ROM1A–ROM4B)"
+msgstr ""
+
+#: fm1companion/dx7_sources.py:57
+msgid "The original Yamaha cartridges, mirrored in FM1 Editor & Librarian (code: MIT; the voices themselves come from Yamaha)."
+msgstr ""
+
+#: fm1companion/dx7_sources.py:60
+msgid "Grey Matter E! (selection)"
+msgstr ""
+
+#: fm1companion/dx7_sources.py:62
+msgid "Banks of the E! expansion by Grey Matter Response, mirrored in FM1 Editor & Librarian."
+msgstr ""
+
+#: fm1companion/dx7_sources.py:101
+#, python-brace-format
+msgid "{name}: no DX7 data"
+msgstr ""
+
+#: fm1companion/dx7_sources.py:110
+#, python-brace-format
+msgid ""
+"{title}\n"
+"Source: {url}\n"
+"Licence: {licence}\n"
+"\n"
+"{description}\n"
+msgstr ""
+
+#: fm1companion/dx7_sources.py:124
+msgid "Timeout – the connection to GitHub is too slow or was interrupted."
+msgstr ""
+
+#: fm1companion/dx7_sources.py:126
+msgid "The file no longer exists on GitHub (404) – please update the app."
+msgstr ""
+
+#: fm1companion/dx7_sources.py:132
+msgid "No network – check Wi-Fi/cable."
+msgstr ""
+
+#: fm1companion/sf2.py:79
+msgid "The SoundFont needs at least one sound."
+msgstr ""
+
+#: fm1companion/sf2.py:85
+#, python-brace-format
+msgid "{name}: empty sample"
+msgstr ""
+
+#: fm1companion/sf2.py:154
+msgid "The kit is empty."
+msgstr ""
+
+#: fm1companion/sf2.py:182
+#, python-brace-format
+msgid "There are no audio files in “{folder}”."
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:47
+msgid "Play channel"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:49
+#: fm1companion/ui/pages/soundmodule.py:209
+msgid "Channel "
+msgstr ""
+
+#: fm1companion/miditools.py:70 fm1companion/ui/pages/soundmodule.py:55
+#: fm1companion/ui/pages/soundmodule.py:183
+msgid "Volume"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:56
+msgid "Pan (centre = 64)"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:57
+msgid "Reverb amount"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:58
+msgid "Test tone on this channel"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:78
+#, python-brace-format
+msgid "Own sound: {name}"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:79
+msgid "Drums (General MIDI)"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:105
+msgid "Melodee's MIDI tracks 5–8 make no sound on the FM-1 – they send via USB MIDI (track N starts on channel N). Here the Pi plays them with FluidSynth: General MIDI sounds or your own samples."
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:116
+msgid "FluidSynth is not installed"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:117
+msgid "The sound module needs FluidSynth and a General MIDI sound bank. Run this once in the terminal, then open this page again:"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:123
+msgid "Copy"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:132
+msgid "Sound bank:"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:136
+msgid "Other …"
+msgstr ""
+
+#: fm1companion/ui/pages/simulator.py:195
+#: fm1companion/ui/pages/soundmodule.py:137
+msgid "Latency:"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:143
+msgid "Audio:"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:148
+msgid "Overall volume of FluidSynth (0.6 = default; above 1 it may distort)"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:158
+msgid "Connect FM-1"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:159
+msgid "Connect the MIDI output of the FM-1 to the sound module (aconnect)"
+msgstr ""
+
+#: fm1companion/ui/pages/midi.py:525 fm1companion/ui/pages/soundmodule.py:161
+msgid "All notes off"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:162
+msgid "CC 123 on all 16 channels of FluidSynth – against hanging notes"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:164
+msgid "Connect FM-1 automatically"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:167
+msgid "start with the app"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:179
+msgid "Channels"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:180
+msgid "Only the ticked channels sound – the keys of the FM-1 send on channel 1–4 and would otherwise sound twice. On the FM-1 you set the channel of a MIDI track with E1 (CH)."
+msgstr ""
+
+#: fm1companion/miditools.py:70 fm1companion/ui/pages/soundmodule.py:183
+msgid "Pan"
+msgstr ""
+
+#: fm1companion/miditools.py:76 fm1companion/ui/pages/soundmodule.py:183
+msgid "Reverb"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:190
+msgid "Read channels from the FM-1"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:191
+msgid "reads the channel (CH) of the Melodee tracks 5–8"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:192
+msgid "Add channel"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:200
+msgid "Own samples as a sound"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:201
+msgid "A kit from “Samples & Kits” or a folder with WAVs becomes a SoundFont (in ~/FM-1/SoundFonts) and plays on the chosen channel: drum kits from C2 one sound per key, instrument kits spread over the keyboard."
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:208
+msgid "on"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:211
+msgid "Use as sound"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:212
+msgid "Choose folder …"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:251
+msgid "no sound bank found (sudo apt install fluid-soundfont-gm)"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:268
+msgid "no kits yet – build one under “Samples & Kits”"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:301
+msgid "No sound bank"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:301
+msgid "Please choose a SoundFont file (.sf2) or run “sudo apt install fluid-soundfont-gm”."
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:305
+msgid "Sound bank missing"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:305
+#, python-brace-format
+msgid "The file {path} no longer exists. Choose another one under “Sound bank” – without a sound bank FluidSynth would stay silent."
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:315
+msgid "FluidSynth does not start"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:323
+msgid "starting …"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:329
+msgid "Sound module started"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:334
+#, python-brace-format
+msgid "Start failed – {reason}"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:335
+msgid "Sound module does not start"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:344
+msgid "Sound module stopped"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:379
+msgid "not installed"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:385
+msgctxt "button"
+msgid "Stop"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:396
+#, python-brace-format
+msgid "running for {time} min"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:399
+msgid "FM-1 not connected yet"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:399
+#, python-brace-format
+msgid "on the FM-1: {port}"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:404
+#, python-brace-format
+msgid "FluidSynth has quit – {reason}"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:420
+msgid "Sound module not in the sequencer"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:420
+msgid "no FM-1 found in the sequencer"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:447
+msgid "This firmware reports no track parameters."
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:461
+msgid "Read channels"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:465
+msgid "The FM-1 reports no MIDI tracks 5–8 (older firmware?) – default: track N = channel N."
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:471
+#, python-brace-format
+msgid "From the FM-1: {list}"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:472
+#, python-brace-format
+msgid "Track {track} → channel {channel}"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:477
+msgid "Start the sound module first."
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:493
+#, python-brace-format
+msgid "Kit {name} cannot be read – the file is damaged or not a kit. Save it again under “Samples & Kits”."
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:495
+#, python-brace-format
+msgid "Technical: {error}"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:499
+#, python-brace-format
+msgid "“{name}” has no sounds yet – fill it under “Samples & Kits” first."
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:504
+msgid "Folder with sounds"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:516
+msgid "creating SoundFont …"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:536
+#, python-brace-format
+msgid "“{name}” is on channel {channel} ({n} sounds: {keys}). File: {path}"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:540
+#, python-brace-format
+msgid "SoundFont not created: {error}"
+msgstr ""
+
+#: fm1companion/ui/pages/soundmodule.py:543
+msgid "Choose SoundFont"
+msgstr ""
+
+#: fm1companion/soundmodule.py:41
+msgid "low (~3 ms, needs a quiet Pi)"
+msgstr ""
+
+#: fm1companion/soundmodule.py:41
+msgid "balanced (~5 ms)"
+msgstr ""
+
+#: fm1companion/soundmodule.py:42
+msgid "safe (~16 ms, no dropouts)"
+msgstr ""
+
+#: fm1companion/soundmodule.py:78
+msgid "The audio output could not be opened – is another program using it exclusively right now (e.g. Audacity in recording mode)? Choose another driver under “Audio” (pipewire/pulseaudio/alsa) or latency “safe”."
+msgstr ""
+
+#: fm1companion/soundmodule.py:81
+msgid "The ALSA sequencer is not reachable (snd-seq missing?). Restarting the Pi usually helps."
+msgstr ""
+
+#: fm1companion/soundmodule.py:82
+msgid "The sound bank could not be loaded – file damaged or not a .sf2/.sf3? Choose another one under “Sound bank” (sudo apt install fluid-soundfont-gm)."
+msgstr ""
+
+#: fm1companion/soundmodule.py:84
+msgid "The sound bank could not be loaded – choose another one under “Sound bank”."
+msgstr ""
+
+#: fm1companion/soundmodule.py:85
+msgid "No permission for the audio device – is your user in the group “audio”?"
+msgstr ""
+
+#: fm1companion/soundmodule.py:86
+msgid "The audio device is busy – another program holds it. Stop it there or choose driver “pipewire”."
+msgstr ""
+
+#: fm1companion/soundmodule.py:98
+#, python-brace-format
+msgid "FluidSynth quit right away: “{line}”. “Details” shows the whole output."
+msgstr ""
+
+#: fm1companion/soundmodule.py:99
+msgid "FluidSynth quit right away – without a message. “Details” shows the whole output."
+msgstr ""
+
+#: fm1companion/soundmodule.py:173
+#, python-brace-format
+msgid "Drums {n}"
+msgstr ""
