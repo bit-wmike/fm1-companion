@@ -11,6 +11,7 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 | 2 | **SLOOP**, the stable of its installer (2.8.5), plus the release before (2.8.4) | **done** (branch `studio-sloop`; same page, virtual device, backup ↔ twin in SLOOP's own format, write back) |
 | 3 | **Skiff**, matching the version on the device (2.2 and 2.1.1 bundled) | **done** (branch `studio-skiff`; same page, virtual device, backup ↔ twin, write back) |
 | 3b | **JIANT FM**, the public stable of its installer (V10.6z2), plus the earlier stable V10.60 and beta V10.61 | **done** (branch `studio-jiant`; same page, virtual device, backup ↔ twin, write back) |
+| 3c | **CoralFlower**, the stable of its installer (0.7.1), plus 0.7 | **done** (branch `studio-coralflower`; same page, virtual device, backup ↔ twin, write back) |
 | 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V16 may differ | after that |
 | – | **Original V16** | **paused, not dropped** |
 
@@ -137,6 +138,29 @@ of the pattern", the name comes from the slot) – a separate parser; one core (
 MIDI, no USB rescue; the whole song needs a playable song order (an empty section in it: the loop plays to the export's
 limit); versions before 2.8.4 get the 2.8.4 twin with a warning. Checked only against the twin itself and the demo
 device, never a real SLOOP FM-1 (docs/UNTESTED.md).
+
+## Status CoralFlower (0.7.1, 0.7)
+
+Done: twin **CoralFlower 0.7.1** (tag v0.7.1, commit 46790b9: the first entry of `web/releases.json`, what its web
+installer offers) and **0.7** (tag v0.7, commit 65c6b76, the release before), glue layer
+`tools/studio/coralflower_studio.c` – CoralFlower's own browser emulator (`tools/emu/web/emu_web.c`, the firmware through
+`tools/emu/emu_firmware.h`, as `tests/cf_backup_test.c` builds it) with the USB SysEx path added (`cf_backup.c`'s
+backup protocol, `ota.c`'s identity handshake). INFO "CoralFlower 0.7.1", identity FM-1_930 (constant). Optional exports
+`st_transport_set` (PLAY's events) and `st_track_mute_set` (stems: no editor TRACK_MIX in CoralFlower).
+Python: `studio.FIRMWARES["coralflower"]` ("CoralFlower", 4 parts, no project slots, settings object 30, restart after a
+restore); `backup_firmware()` knows it by the companion block, the INFO string or the inventory; the device layer by INFO
+and identity. Backup layer: CoralFlower's inventory (26 objects; 8, 14, 17 in older releases) is known
+(`backup.is_coralflower`, `KNOWN_ID_SETS[26]`, an alternative for 17); bugs fixed on the way: a fresh CoralFlower
+backup was refused (its first objects, the sound banks, are empty: "does not contain the running music or the
+settings"), 50–63 would have been restored as sample slots, the pattern sounds 64–67 counted as Melodee projects (the
+restore's "larger recording memory" refusal, the Melodee 1.6 refusal, the Projects page's slots, health, autobackup),
+8 (CoralFlower's FM6 bank) was left out of partial restores as Melodee's retired bank; a restore now ends with
+RESTART, as CoralFlower's installer does, so the device reads what was restored.
+
+Open (CoralFlower): no project view or `projectfmt` for its patterns (the export dialog offers no "passes of the
+pattern"); music is made on the panel only (no editor protocol: the editor pages and Compose do not work on it); the
+catalog entry "coralflower" still says protocol "none"; one core, no USB audio, no TRS MIDI; checked only against the
+twin itself, never a real CoralFlower FM-1 (docs/UNTESTED.md).
 
 ## Second route: fm1-emu (processor emulation)
 

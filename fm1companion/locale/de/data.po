@@ -3564,3 +3564,46 @@ msgstr "Ole Martin Bjørndalen u. a.; Christopher Arndt u. a.; NumPy Developers"
 #: fm1companion/diag.py
 msgid "ISC (Feather parts MIT)"
 msgstr "ISC (Feather-Teile MIT)"
+
+msgid "The backup holds nothing"
+msgstr "Das Backup enthält nichts"
+
+#, python-brace-format
+msgid "User sounds {first}–{last}"
+msgstr "User-Sounds {first}–{last}"
+
+msgid "VA patches of the user sounds"
+msgstr "VA-Patches der User-Sounds"
+
+#, python-brace-format
+msgid "FM6 patches of the user sounds {first}–{last}"
+msgstr "FM6-Patches der User-Sounds {first}–{last}"
+
+msgid "Loop / rhythm machine"
+msgstr "Loop / Rhythmusmaschine"
+
+#, python-brace-format
+msgid "Patterns and song (part {n} of 6)"
+msgstr "Patterns und Song (Teil {n} von 6)"
+
+msgid "Unsaved edits of the chord sound"
+msgstr "Ungespeicherte Änderungen am Akkord-Sound"
+
+msgid "Unsaved edits of the bass sound"
+msgstr "Ungespeicherte Änderungen am Bass-Sound"
+
+msgid "Unsaved edits of the layer sound"
+msgstr "Ungespeicherte Änderungen am Layer-Sound"
+
+msgid "The patterns' own sounds"
+msgstr "Die eigenen Sounds der Patterns"
+
+#, python-brace-format
+msgid "Tweaked pattern sound {n}"
+msgstr "Angepasster Pattern-Sound {n}"
+
+msgid "ChoralRoot FM-1 fork (chord instrument); its unmodified firmware code runs in the studio twin"
+msgstr "Fork von ChoralRoot FM-1 (Akkord-Instrument); sein unveränderter Firmware-Code läuft im Studio-Zwilling"
+
+msgid "Felucca fork; basis of CoralFlower"
+msgstr "Fork von Felucca; Grundlage von CoralFlower"

@@ -2,8 +2,9 @@
 """Studio: the FM-1's digital twin in the suite.
 
 The FM-1 is the instrument, the suite is the studio. The twin is **the same firmware** as on the device
-(Melodee's, Skiff's, JIANT FM's or SLOOP's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py
---target melodee-studio / skiff-studio / jiant-studio / sloop-studio and tools/studio/<firmware>_studio.c): the same engines, effects,
+(Melodee's, Skiff's, JIANT FM's, SLOOP's or CoralFlower's own C code, compiled to WebAssembly for the computer, see
+tools/build_sims.py --target melodee-studio / skiff-studio / jiant-studio / sloop-studio / coralflower-studio and
+tools/studio/<firmware>_studio.c): the same engines, effects,
 the same mixer and sequencer, plus the NOR flash (settings, projects, user presets) and the editor SysEx protocol over
 the firmware's USB path.
 It runs in QtWebEngine (web worker; sound via AudioWorklet -> Chromium -> PipeWire = the Pi's speakers) and
@@ -103,11 +104,24 @@ FIRMWARES = {
     # build's version is "2.8.5"); 4 tracks, the sections A..D; its own backup protocol and file format (sloopbk.py),
     # which backup.py picks by itself
     "sloop": {"name": "SLOOP", "info": "FELUCCA SLOOP", "version_prefix": "SLOOP ", "tracks": 4, "projects": 4},
+    # CoralFlower answers INFO "CoralFlower 0.7.1"; its parts (stems): chords, bass, the LAYER, drums; no project slots
+    # (the sequencer's eight patterns and song are one store, backup objects 50..55); its settings are object 30
+    "coralflower": {"name": "CoralFlower", "info": "CoralFlower", "tracks": 4, "projects": 0, "settings_id": 30,
+                    "restart": True},
 }
 
 
 def firmware_name(key: str) -> str:
     return FIRMWARES.get(key, {}).get("name") or (key or "").capitalize()
+
+
+def firmware_names(conj: str = "and") -> str:
+    """the firmwares with a studio twin, for the UI: "Melodee, Skiff, JIANT FM and CoralFlower" (conj "or": … or …)"""
+    names = [f["name"] for f in FIRMWARES.values()]
+    if len(names) < 2:
+        return "".join(names)
+    return (_("{names} or {last}") if conj == "or" else _("{names} and {last}")).format(names=", ".join(names[:-1]),
+                                                                                       last=names[-1])
 
 
 # ======================================================================= versions and builds
@@ -308,7 +322,7 @@ JIANT_BACKUP_IDS_6 = [*range(11), *range(40, 64)]   # (V10.6p on: 6 songs)
 
 
 def backup_firmware(archive) -> str:
-    """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "sloop", "felucca" or "" (unknown). The app's
+    """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "coralflower", "sloop", "felucca" or "" (unknown). The app's
     companion block names it; otherwise the 'firmware' field (JIANT's editor writes its INFO, "JIANT V10.60"), and the
     inventory gives Skiff (the pattern bank) and JIANT (the songs) away."""
     if getattr(archive, "sloop", False):
@@ -316,12 +330,15 @@ def backup_firmware(archive) -> str:
     c = archive.companion or {}
     key = (c.get("firmware") or "").lower()
     text = " ".join(str(x) for x in (key, c.get("version_string", ""), archive.firmware or "")).lower()
-    for name in ("melodee", "skiff", "jiant", "sloop"):
+    for name in ("melodee", "skiff", "jiant", "coralflower", "sloop"):
         if name in text:
             return name
     ids = [o["id"] for o in archive.objects]
     if ids == SKIFF_BACKUP_IDS:
         return "skiff"
+    from . import backup
+    if backup.is_coralflower(ids):                  # (CoralFlower's own page writes its INFO; the inventory tells too)
+        return "coralflower"
     if ids in (JIANT_BACKUP_IDS, JIANT_BACKUP_IDS_6):
         return "jiant"
     return "felucca" if "felucca" in text else ""
@@ -600,7 +617,10 @@ class Studio:
             self.rejected = restore_tolerant(self.link, archive, progress, self.build.firmware)
         else:
             backup.restore(self.link, archive, progress, firmware_key=self.build.firmware)
-        self.info = self.backend.call("info")
+        if FIRMWARES.get(self.build.firmware, {}).get("restart"):
+            self.info = self.backend.call("reset")      # (CoralFlower reads a restore at its next start: a power cycle)
+        else:
+            self.info = self.backend.call("info")
         return archive
 
     def open_from_device(self, link, progress: Callable[[int, int], None] | None = None, note: str = "",
@@ -635,7 +655,7 @@ class Studio:
         if not vc.ok and not force:
             raise StudioError(_("{message} Nothing written.").format(message=vc.message))
         archive = self.backup()
-        skip = set(exclude) | (set() if settings else {1})
+        skip = set(exclude) | (set() if settings else {FIRMWARES.get(self.build.firmware, {}).get("settings_id", 1)})
         if skip:
             ids = [o["id"] for o in archive.objects if o["id"] not in skip]
             backup.restore_selected(link, archive, ids, progress)
@@ -818,7 +838,8 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     objs = archive.objects
     order = objs[2:] + objs[1:2] + objs[0:1]
     jiant = backup.is_jiant(sup_order) or backup.is_jiant(o["id"] for o in objs)
-    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"], jiant)]
+    coral = backup.is_coralflower(sup_order) or archive.coralflower
+    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"], jiant, coral)]
     total = sum(o["size"] for o in todo) or 1
     done = 0
     rejected = [o["id"] for o in objs if o["id"] not in sup and o["size"]]

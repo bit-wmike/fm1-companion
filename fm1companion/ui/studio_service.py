@@ -8,8 +8,8 @@ Belongs to the main window (``window.studio``) and lives independently of the st
 * saves its flash automatically (studio.Studio.save_state) as soon as something has changed, and keeps a
   limited list of snapshots for undo/restore
 * stops the twin's clock when the studio is not visible and nothing is playing
-* offers it as a **virtual device** “Studio twin (Melodee …)” / “(Skiff …)” / “(JIANT FM …)” / “(SLOOP …)” in the
-  device selection: projects, compose, presets, backups and the editor then work with it via
+* offers it as a **virtual device** “Studio twin (Melodee …)” / “(Skiff …)” / “(JIANT FM …)” / “(SLOOP …)” /
+  “(CoralFlower …)” in the device selection: projects, compose, presets, backups and the editor then work with it via
   studio.StudioTransport. It is never ``ctx.ports`` (real devices), only ``ctx.vports``; ``ctx.is_virtual`` tells all pages.
 * routes MIDI keyboards (and optionally the keys of the real FM-1) into the twin
 """
@@ -130,7 +130,7 @@ class StudioService(QObject):
     @staticmethod
     def firmware_for(key: str) -> str:
         """Device firmware key -> twin firmware ("" = doesn't exist (yet)): Melodee, Skiff, JIANT FM (the catalog's
-        "jiant-fm" as the device layer's "jiant"), SLOOP."""
+        "jiant-fm" as the device layer's "jiant"), SLOOP, CoralFlower."""
         key = (key or "").lower()
         for fw in S.FIRMWARES:
             if key.startswith(fw) and S.builds(fw):
@@ -139,12 +139,12 @@ class StudioService(QObject):
 
     @property
     def firmware(self) -> str:
-        """the running twin's firmware key ("melodee", "skiff", "jiant"; "" = not running)"""
+        """the running twin's firmware key ("melodee", "skiff", "jiant", "sloop", "coralflower"; "" = not running)"""
         return self.st.build.firmware if self.st else ""
 
     @property
     def firmware_name(self) -> str:
-        """the running twin's firmware as shown ("Melodee", "Skiff", "JIANT FM")"""
+        """the running twin's firmware as shown ("Melodee", "Skiff", "JIANT FM", "SLOOP", "CoralFlower")"""
         return self.st.firmware_name if self.st else ""
 
     @property
@@ -608,8 +608,8 @@ class StudioService(QObject):
         if rej:
             from .. import backup
             fw = self.st.build.firmware if self.st is not None else ""
-            names = ", ".join(backup.object_title(i, fw == "sloop", jiant=fw == "jiant") for i in rej[:4]) + (
-                " …" if len(rej) > 4 else "")
+            names = ", ".join(backup.object_title(i, fw == "sloop", jiant=fw == "jiant", coral=fw == "coralflower")
+                              for i in rej[:4]) + (" …" if len(rej) > 4 else "")
             txt += _(". Not taken over ({n}): {names} – these parts do not fit {firmware} {version} and are left out "
                      "when writing back").format(n=len(rej), names=names, firmware=self.st.firmware_name,
                                                  version=self.st.build.version)

@@ -9,17 +9,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: fm1companion/ui/pages/studio.py:29
-msgid "Single tracks (stems): one WAV file per track (Melodee and SLOOP 1–4, Skiff and JIANT FM 1–6), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
-msgstr "Einzelspuren (Stems): je Spur eine eigene WAV-Datei (Melodee und SLOOP 1–4, Skiff und JIANT FM 1–6), gleich lang wie der Mix. Jede Spur wird allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master). Darum ist die Summe der Stems nicht bitgenau der Mix (Master-Dynamik), passt in Logic oder Audacity aber übereinander."
 
 #: fm1companion/ui/pages/studio.py:45
 msgid "Open backup in the studio"
 msgstr "Backup ins Studio öffnen"
 
-#: fm1companion/ui/pages/studio.py:49
-msgid "Which backup should the twin load? Melodee, Skiff, JIANT FM and SLOOP backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
-msgstr "Welches Backup soll der Zwilling laden? Melodee-, Skiff-, JIANT-FM- und SLOOP-Backups aller Geräte, neueste zuerst – es startet der Zwilling der Firmware des Backups. Am FM-1 ändert sich dadurch nichts."
 
 #: fm1companion/ui/pages/studio.py:52 fm1companion/ui/projects_page.py:85
 msgid "Date"
@@ -363,18 +357,11 @@ msgstr "Der Zwilling ließ sich nicht starten: {error}"
 msgid "The twin itself is active right now – choose a real FM-1 in the device selection at the top."
 msgstr "Aktiv ist gerade der Zwilling selbst – oben in der Geräteauswahl ein echtes FM-1 wählen."
 
-#: fm1companion/ui/pages/studio.py:482
-msgid "This firmware has no editor protocol – the studio needs Melodee, Skiff, JIANT FM or SLOOP."
-msgstr "Diese Firmware hat kein Editor-Protokoll – das Studio braucht Melodee, Skiff, JIANT FM oder SLOOP."
 
 #: fm1companion/ui/pages/studio.py:478
 msgid "No FM-1 connected."
 msgstr "Kein FM-1 verbunden."
 
-#: fm1companion/ui/pages/studio.py:485
-#, python-brace-format
-msgid "The FM-1 runs {firmware} – so far there is a studio twin only for Melodee, Skiff, JIANT FM and SLOOP."
-msgstr "Auf dem FM-1 läuft {firmware} – einen Studio-Zwilling gibt es bisher nur für Melodee, Skiff, JIANT FM und SLOOP."
 
 #: fm1companion/ui/pages/studio.py:481
 msgid "another firmware"
@@ -410,10 +397,6 @@ msgstr "<b>Zwilling:</b> {firmware} {version} · {source}"
 msgid "The twin is not running yet. Choose a source: from the FM-1, from a backup or the last studio state."
 msgstr "Der Zwilling läuft noch nicht. Wähle eine Quelle: vom FM-1, aus einem Backup oder den letzten Studio-Stand."
 
-#: fm1companion/ui/pages/studio.py:538
-#, python-brace-format
-msgid "There is no studio twin for {firmware} yet. So far the studio can do Melodee, Skiff, JIANT FM and SLOOP; the original firmware (via FM1 Open) follows later – see Help › Studio. Backups of this device cannot be opened here; a Melodee, Skiff, JIANT FM or SLOOP backup can."
-msgstr "Für {firmware} gibt es noch keinen Studio-Zwilling. Das Studio kann bisher Melodee, Skiff, JIANT FM und SLOOP; die Original-Firmware (über FM1 Open) folgt später – siehe Hilfe › Studio. Backups dieses Geräts lassen sich hier nicht öffnen; ein Melodee-, Skiff-, JIANT-FM- oder SLOOP-Backup schon."
 
 #: fm1companion/ui/pages/studio.py:527
 msgid "this firmware"
@@ -4499,3 +4482,37 @@ msgstr "Section {n} geladen."
 #, python-brace-format
 msgid "Section {n} is empty."
 msgstr "Section {n} ist leer."
+
+msgid "Single tracks (stems): one WAV file per track (Melodee and SLOOP 1–4, Skiff and JIANT FM 1–6, CoralFlower's chords, bass, layer and drums), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
+msgstr "Einzelspuren (Stems): je Spur eine eigene WAV-Datei (Melodee und SLOOP 1–4, Skiff und JIANT FM 1–6, bei CoralFlower Akkorde, Bass, Layer und Drums), gleich lang wie der Mix. Jede Spur wird allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master). Darum ist die Summe der Stems nicht bitgenau der Mix (Master-Dynamik), passt in Logic oder Audacity aber übereinander."
+
+#, python-brace-format
+msgid "Which backup should the twin load? {firmwares} backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
+msgstr "Welches Backup soll der Zwilling laden? Backups von {firmwares} aller Geräte, neueste zuerst – es startet der Zwilling der Firmware des Backups. Am FM-1 ändert sich dadurch nichts."
+
+#, python-brace-format
+msgid "This firmware has no editor protocol – the studio needs {firmwares}."
+msgstr "Diese Firmware hat kein Editor-Protokoll – das Studio braucht {firmwares}."
+
+#, python-brace-format
+msgid "The FM-1 runs {firmware} – so far there is a studio twin only for {firmwares}."
+msgstr "Auf dem FM-1 läuft {firmware} – einen Studio-Zwilling gibt es bisher nur für {firmwares}."
+
+#, python-brace-format
+msgid "There is no studio twin for {firmware} yet. So far the studio can do {firmwares}; the original firmware (via FM1 Open) follows later – see Help › Studio. Backups of this device cannot be opened here; a {firmwares_or} backup can."
+msgstr "Für {firmware} gibt es noch keinen Studio-Zwilling. Das Studio kann bisher {firmwares}; die Original-Firmware (über FM1 Open) folgt später – siehe Hilfe › Studio. Backups dieses Geräts lassen sich hier nicht öffnen; ein Backup von {firmwares_or} schon."
+
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the sequencer's patterns and song, the patterns' sounds, the user sounds and the sounds' unsaved edits. Playback on the FM-1 stops, and the FM-1 restarts at the end to load them."
+msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät: die Patterns und den Song des Sequencers, die Sounds der Patterns, die User-Sounds und die ungespeicherten Änderungen der Sounds. Die Wiedergabe am FM-1 stoppt, und das FM-1 startet am Ende neu, um sie zu laden."
+
+#, python-brace-format
+msgid "{firmware} has no project slots: its patterns and the song play from the twin's panel (SEQ) or with Play."
+msgstr "{firmware} hat keine Projektplätze: seine Patterns und der Song spielen über das Panel des Zwillings (SEQ) oder mit Abspielen."
+
+#, python-brace-format
+msgid "{names} and {last}"
+msgstr "{names} und {last}"
+
+#, python-brace-format
+msgid "{names} or {last}"
+msgstr "{names} oder {last}"

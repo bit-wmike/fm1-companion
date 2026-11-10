@@ -583,6 +583,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
             return key, tag
     if "jiant" in v or family.startswith("jiant"):      # JIANT answers INFO "JIANT V10.60" (the catalog's key)
         return "jiant-fm", tag
+    if "coralflower" in v or family == "coralflower":   # CoralFlower answers INFO "CoralFlower 0.7.1" (the catalog's key)
+        return "coralflower", tag
     m = re.match(r"FM-1_(\d+)", identity or "")
     if m:
         n = int(m.group(1))
@@ -592,6 +594,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
             return "skiff", ""
         if n == 909:                                    # JIANT's tools/build.py PRODUCT (its web installer's builds)
             return "jiant-fm", ""
+        if n == 930:                                    # CoralFlower's tools/build.py PRODUCT (every release)
+            return "coralflower", ""
         if n in (15, 16):
             return f"stock-v{n}", f"V{n}"
     return "", ""

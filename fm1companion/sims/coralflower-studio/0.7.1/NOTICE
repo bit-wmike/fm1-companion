@@ -1,0 +1,20 @@
+CoralFlower 0.7.1 – studio twin (firmware code for the host), built from https://github.com/FicusFicusov/CoralFlower tag v0.7.1
+(commit 46790b943bdb5e4143212d83dc495c832eefdbb8; source: https://github.com/FicusFicusov/CoralFlower/archive/46790b943bdb5e4143212d83dc495c832eefdbb8.tar.gz).
+GPL-3.0-only. CoralFlower by FicusFicusov (CoralFlower contributors), a fork of ChoralRoot FM-1 (Quixotic7, ChoralRoot FM-1 contributors), a fork of Felucca:
+Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments (Felucca); the FM6 engine Melodee's, Copyright (C) 2026 Kerem Kilic (Ellic Studio).
+Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0, Dexed: GPL-3.0-or-later; the UI faces Inter Tight and Departure Mono and the Fukiai icons are rasterised in: OFL 1.1, MIT):
+CoralFlower's LICENSING.md, LICENSING-choralroot.md (its docs/LICENSING-choralroot.md) and the texts in THIRD_PARTY.txt beside this file. The JieLi SDK files of CoralFlower's packages are not part of the twin.
+The firmware sources are unmodified. The glue tools/studio/coralflower_studio.c (GPL-3.0-only, in FM-1 Companion's source) includes them as CoralFlower's own browser emulator and host tests do (tools/emu/web/emu_web.c,
+tools/emu/emu_fw.c, tools/emu/emu_firmware.h, tests/cf_backup_test.c) and adds the USB SysEx path (usb.c, cf_backup.c's backup protocol, ota.c's identity handshake); the hardware stand-ins are the emulator's:
+keys/LEDs/LCD, the MASTER pot, NOR flash = a 1 MiB RAM image, one core (the bass part's job runs inline), USB = always configured (SysEx and MIDI out through usb.c's rings),
+no USB audio, no TRS MIDI, no serial console, no updater and no USB boot (ota.c answers the identity handshake only).
+Compiled with WASI SDK clang (include shim tools/wasm_shim/sys/wait.h; tools/emu/web/compat from CoralFlower's tree).
+
+Corresponding Source (GNU GPL 3.0, section 6)
+The complete corresponding source of this build is https://github.com/FicusFicusov/CoralFlower at commit 46790b943bdb5e4143212d83dc495c832eefdbb8
+together with FM-1 Companion's build script tools/build_sims.py, the glue tools/studio/coralflower_studio.c and the shim tools/wasm_shim. A tarball of exactly this commit
+(CoralFlower-46790b943bdb5e4143212d83dc495c832eefdbb8.tar.gz, made with tools/make_source_tarballs.py) is attached to every
+FM-1 Companion release that ships this build: https://github.com/bit-wmike/fm1-companion/releases
+Written offer: for at least three years after the last release that ships this build, the maintainers of
+FM-1 Companion will give anyone a copy of that corresponding source on request (https://github.com/bit-wmike/fm1-companion/issues),
+free of charge apart from the cost of physically performing the distribution.

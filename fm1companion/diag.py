@@ -162,6 +162,8 @@ CREDIT_TEXTS = (
     N_("firmware with sample slots"),
     N_("Felucca fork; its unmodified firmware code runs in the studio twin"),
     N_("Felucca descendant with sample slots and a song mode; its unmodified firmware code runs in the studio twin"),
+    N_("ChoralRoot FM-1 fork (chord instrument); its unmodified firmware code runs in the studio twin"),
+    N_("Felucca fork; basis of CoralFlower"),
     N_("official open firmware, simulator sources, update tools"),
     N_("firmware catalog and link collection"),
     N_("icons in the app's design (fm1companion/icons/lucide, licence in icons/LICENSE.lucide)"),

@@ -24,6 +24,7 @@
   function applyMutes(t, mutes) {
     for (let k = 0; k < mutes.length; k++) {
       if (mutes[k] == null) continue;
+      if (t.muteSet(k, mutes[k])) continue;              // (a twin without TRACK_MIX: CoralFlower)
       const cur = edRequest(t, 28, [k]);                     // TRACK_MIX query: track, level v14, mute
       if (!cur) continue;
       edRequest(t, 28, [k, cur[1], cur[2], mutes[k] ? 1 : 0]);

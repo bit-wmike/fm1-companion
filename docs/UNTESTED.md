@@ -60,6 +60,8 @@ untested, even if it runs cleanly in the simulation.
 | **JIANT FM twin** (V10.6z2, V10.60, V10.61: fetch from a JIANT FM-1, open a JIANT backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real JIANT FM-1 or a backup made by a real device or JIANT's web editor |
 | JIANT backups in the backup layer (43 objects: 0–10, the songs' sections 40–71; 35 objects from V10.6p) | only with backups of the JIANT twin; the device detection by INFO "JIANT …" and identity FM-1_909 only in tests |
 | **SLOOP twin** (2.8.5, 2.8.4: fetch from a SLOOP FM-1, open a SLOOP backup, write back) | only against the twin itself, the demo device and the suite's own code (simulation); never against a real SLOOP FM-1 or a backup made by SLOOP's web editor on a real device |
+| **CoralFlower twin** (0.7.1, 0.7: fetch from a CoralFlower FM-1, open a CoralFlower backup, write back with RESTART) | only against the twin itself and the suite's own code (simulation); never against a real CoralFlower FM-1 or a backup made by a real device or CoralFlower's web installer |
+| CoralFlower backups in the backup layer (26 objects: 6–11, 30, 31, 50–67; 8, 14, 17 in 0.1–0.4.2) | only with backups of the CoralFlower twin; the restart after a restore (RESTART 72) and the device detection by INFO "CoralFlower …" and identity FM-1_930 only in tests |
 
 ### Backups, presets, projects, samples
 - Restoring a backup to the device (full and partial).
