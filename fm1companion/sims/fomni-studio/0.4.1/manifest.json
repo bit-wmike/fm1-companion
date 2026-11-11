@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "name": "fomni-studio",
+  "title": "FoMni studio twin",
+  "version": "0.4.1",
+  "source_repo": "https://github.com/charlesvestal/fm1-fomni",
+  "ref": "v0.4.1",
+  "commit": "17a740b7b2d19615ffe19aa73f8eda67f60f223d",
+  "license": "GPL-3.0-only",
+  "build_date": "2026-11-11T08:23:09Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "LICENSING.md": {
+      "sha256": "cbad393eaf4cd20943875402d545ca1e18043ce97a9444cb2b7b7490055dd8eb",
+      "size": 3646
+    },
+    "NOTICE": {
+      "sha256": "87afd216c44702eca4fba7cbd6e94594bcdb40a3d712bda93222d58ada1298e6",
+      "size": 2390
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "7843ce4f7828908e2ed27f3e7a8c12c3087db35d88334d376d1cd0e14604a379",
+      "size": 8913
+    },
+    "twin.wasm": {
+      "sha256": "d06de900941bd456edc3e2c004f907c8d6af97932b85e562761c6e2df7109bbf",
+      "size": 172860
+    }
+  },
+  "kind": "studio",
+  "firmware": "fomni",
+  "firmware_version": "0.4.1",
+  "identity": "FM-1_8000401",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/fomni_studio.c",
+  "glue_sha256": "2f58bd9cd474c67de7279fae46d2136a7b6563ef62645f9686602c7e3ae94724",
+  "source_url": "https://github.com/charlesvestal/fm1-fomni/archive/17a740b7b2d19615ffe19aa73f8eda67f60f223d.tar.gz",
+  "tracks": 4,
+  "projects": 0,
+  "release_status": "stable"
+}

@@ -2,7 +2,7 @@
 
 The FM-1 is the instrument for sketching, the suite is the studio. On the [Studio](app://page/studio) page
 a **digital twin** of your FM-1 runs: the same firmware as on the device (Melodee, Skiff, JIANT FM, SLOOP,
-CoralFlower, KARMA or M-VAVE's FM1 Open), with its complete state (Melodee: all 32 projects; Skiff: projects A–D and the pattern bank;
+CoralFlower, KARMA, Felucca, ChoralRoot FM-1, X0X, FoMni, AMB-1, LOOM-8 or M-VAVE's FM1 Open), with its complete state (Melodee: all 32 projects; Skiff: projects A–D and the pattern bank;
 JIANT FM: every song's sections and the song index; SLOOP: the sections A–D, the FM6 bank, the SYN drum kits and the
 sample slots; CoralFlower: the sequencer's patterns and song with their sounds; KARMA: the song's parts A–D, the song
 order, the HEX drum kits and the sample slots; FM1 Open: its 16 projects, the DX7 library and the sample bank; running
@@ -10,14 +10,15 @@ music, user presets, settings). It sounds identical – just through the compute
 see “The original firmware and FM1 Open” below.)
 **Felucca** itself, the base of the family, has a twin too (projects A–D, the user presets with their FM6 patches and
 the sample slots USR1–USR3); it opens Felucca backups (also those of Felucca's own web editor) and fetches from and
-writes back to a Felucca FM-1 like the others.
+writes back to a Felucca FM-1 like the others. ChoralRoot FM-1, X0X, FoMni, AMB-1 and LOOM-8 have twins as
+well; what differs for them (loop slots, a backup taken whole, no backup over USB) is under “Limits” below.
 
 ## How it works: FM-1 → Studio → WAV or back
 
 1. **Fetch from FM-1:** reads a complete backup from the active FM-1 (its name is on the button) and loads it into
    the twin. The backup is also stored in [Backups](app://page/backups) – nothing is lost. Nothing is changed
    on the FM-1 (playback stops briefly).
-   Alternatively **Open from backup …** (any Melodee, Skiff, JIANT FM, SLOOP, CoralFlower, KARMA or FM1 Open backup –
+   Alternatively **Open from backup …** (any Melodee, Skiff, JIANT FM, SLOOP, CoralFlower, KARMA, Felucca, ChoralRoot, X0X, LOOM-8 or FM1 Open backup –
    the twin of the backup's firmware starts; SLOOP and KARMA backups in the format of SLOOP's web editor too) or
    **Open last studio state**.
 2. **Play and refine:** the FM-1 on the screen responds to the mouse, the computer keyboard (bottom row
@@ -131,6 +132,21 @@ old approximation on the computer only remains when there is no twin for the fir
   click). After loading a backup and after writing back, ChoralRoot restarts (the twin as well as the FM-1). Backups of
   0.21 and older keep the user sounds in objects the newer firmware no longer has: the studio leaves them out and names
   them. The twin has one core, no USB audio, no TRS MIDI and no Bluetooth; the update gesture does nothing there.
+* X0X (1.2.1, its latest release, and 1.2.0): one project – its sound, the 32 patterns, the song and the knob motion –,
+  no project slots: the patterns and the song play from the twin's panel or with Play. The five stems are its parts:
+  the 909, the 808, 303 A, 303 B and BREAK. X0X has a backup format of its own: **Open from backup …** opens X0X's own
+  `.x0b` files too, and X0X only takes a backup whole. When writing back, X0X must be stopped and asks on its screen
+  (RESTORE FROM USB?): press **SEL** on the FM-1. The break loops in the sample slots are not part of an X0X backup.
+  The twin has one core, no USB audio, no TRS MIDI and no hardware calibration; the update gesture does nothing there.
+  The project view does not read X0X's patterns.
+* FoMni (0.4.1 and 0.4) and AMB-1 (1.3.2 and 1.3.1) have no backup over USB: their twins start empty (or from a
+  studio state) and are never loaded from an FM-1 or written onto one – play them, export them as WAV and keep their
+  states in the studio. FoMni's four stems are its harp voices 1 and 2, the chord with the bass and the rhythm; AMB-1
+  plays itself from the start, its four stems are its layers: pad, bells, bass and pulse.
+* LOOM-8 (0.14 and 0.13.1): its backup is fm1-base's (the user presets and the three projects, taken whole; **Open from
+  backup …** opens LOOM-8's own `.loom8` files too). When writing back, LOOM-8 must be stopped and asks on its screen:
+  press **SEL** on the FM-1. Its sample bank is not part of a backup. The eight stems are its tracks. The twin has one
+  core, no Bluetooth, no USB host and no USB audio; the project view does not read LOOM-8's projects.
 * The twin has no CPU limit: the device drops voices when overloaded, the twin never does. Floating-point parts
   can differ in the last bits (inaudible). No Bluetooth, no USB host, no firmware update in the
   twin.

@@ -385,6 +385,74 @@ try:
     check(cr2.play()["busy"] and not cr2.stop()["busy"], "ChoralRoot: play and stop (st_transport_set)")
     cr2.close()
     cr.close()
+    # the X0X twin (tools/studio/x0x_studio.c, on X0X's own browser emulator): INFO, the identity handshake (1.2.1: the
+    # whole identity for the query with the body 01), a pattern on the panel, five stems, its own backup protocol
+    # (x0xbk.py: the image whole) into a second X0X twin
+    xt = studio.Studio.create(firmware="x0x", backend="webengine", server=st.backend.server)
+    check(xt.build.firmware == "x0x" and xt.info.get("version") == f"X0X {xt.build.version} BETA",
+          f"X0X twin started in QtWebEngine: {xt.info.get('version')}")
+    XL = xt.link
+    check(studio.device_version(XL) == studio.norm_version(xt.build.version), "X0X INFO via Link")
+    from fm1companion import x0xbk
+    got.clear()
+    XL.add_listener(lambda d, direction: got.append(d) if direction == "in" and x0xbk.parse_frame(d) else None)
+    XL.send_midi(x0xbk.frame(0x11, b"\x01"))
+    t1 = time.time()
+    while not got and time.time() - t1 < 3:
+        app.processEvents()
+    ident = got and x0xbk.parse_frame(got[0])[1]
+    check(ident and ident.rstrip(b"\0").decode() == xt.build.identity, f"X0X identity {xt.build.identity}")
+    xt.set_clock(False)
+    for k in (0, 7, 14, 21):                            # the 909's steps 1, 5, 9, 13
+        xt.backend.call("keys", mask=1 << k)
+        xt.backend.call("run", ms=40)
+        xt.backend.call("keys", mask=0)
+        xt.backend.call("run", ms=40)
+    xt.set_clock(True)
+    xarch = xt.backup()
+    check(studio.backup_firmware(xarch) == "x0x" and xarch.x0x and [o["id"] for o in xarch.objects] == x0xbk.OBJ_IDS
+          and xarch.objects[2]["size"] > 0, "X0X backup (its image: six objects, the patterns)")
+    r7 = xt.render_wav(out / "x0x.wav", seconds=2, start="play", source="saved", stems=True, fmt="f32")
+    check(len(r7.stems) == 5 and r7.peak > 0.05, f"X0X: mix + five stems, peak {r7.peak:.3f}")
+    xt2 = studio.Studio.for_backup(xarch, backend="webengine", server=st.backend.server)
+    same = [o["bytes"] for o in xt2.backup().objects] == [o["bytes"] for o in xarch.objects]
+    check(xt2.build.firmware == "x0x" and xt2.projects() == [] and same,
+          "X0X backup into a second X0X twin: byte-identical")
+    check(xt2.play()["busy"] and not xt2.stop()["busy"], "X0X: play and stop (st_transport_set)")
+    xt2.close()
+    xt.close()
+    # AMB-1 and FoMni (no editor, no backup over USB: the twin alone) and LOOM-8 (fm1-base's backup, its "LM8B" image)
+    for fw, n, start in (("amb-1", 4, "none"), ("fomni", 4, "play"), ("loom-8", 8, "play")):
+        ft = studio.Studio.create(firmware=fw, backend="webengine", server=st.backend.server)
+        check(ft.build.firmware == fw and ft.info.get("version", "").startswith(studio.FIRMWARES[fw]["info"] + " "),
+              f"{fw} twin started in QtWebEngine: {ft.info.get('version')}")
+        ft.set_clock(False)
+        for k in (1, 0, 7, 14, 21):                     # (FoMni: a chord and a strum; LOOM-8: steps on its track)
+            ft.backend.call("keys", mask=1 << k | (2 if fw == "fomni" else 0))
+            ft.backend.call("run", ms=60)
+            ft.backend.call("keys", mask=0)
+            ft.backend.call("run", ms=60)
+        if fw == "loom-8":
+            ft.press("SAVE")
+            ft.backend.call("run", ms=3000)
+        ft.set_clock(True)
+        rf = ft.render_wav(out / f"{fw}.wav", seconds=2, start=start, source="live", stems=True, fmt="f32")
+        check(len(rf.stems) == n and rf.peak > 0.02, f"{fw}: mix + {n} stems, peak {rf.peak:.3f}")
+        if fw == "loom-8":
+            larch = ft.backup()
+            lt2 = studio.Studio.for_backup(larch, backend="webengine", server=st.backend.server)
+            check(lt2.build.firmware == "loom-8" and larch.image == "loom-8" and
+                  [o["bytes"] for o in lt2.backup().objects] == [o["bytes"] for o in larch.objects],
+                  "LOOM-8 backup (fm1-base's image) into a second LOOM-8 twin: byte-identical")
+            lt2.close()
+        else:
+            try:
+                ft.backup()
+                check(False, f"{fw}: no backup over USB")
+            except studio.StudioError:
+                check(True, f"{fw}: no backup over USB (the studio says so)")
+        check(ft.play()["busy"] and not ft.stop()["busy"], f"{fw}: play and stop (st_transport_set)")
+        ft.close()
     st.close()
     from fm1companion.ui import web
     web.shutdown_all()

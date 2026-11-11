@@ -169,6 +169,16 @@ CREDIT_TEXTS = (
     N_("Felucca fork (chord instrument), basis of CoralFlower; its unmodified firmware code runs in the studio twin"),
     N_("SLOOP fork; its unmodified firmware code runs in the studio twin, with the parts it ports (Mutable Instruments' "
        "Plaits, Elements and Clouds by Emilie Gillet, MIT; the LXR-02 drum voices by Erica Synths, GPL-3.0)"),
+    N_("Felucca fork (909, 808, two 303s, a break slicer); its unmodified firmware code runs in the studio twin, with "
+       "the engines it ports (the 909 and 808 after 9W9 and 8W8 by athousanddetails, the 303 after Open303 by Robin "
+       "Schmidt, MIT)"),
+    N_("chord harp on X0X's platform; its unmodified firmware code runs in the studio twin, with Chordian's rhythms and "
+       "sounds by Jan125 (CC0)"),
+    N_("generative ambient machine on fm1-base; its unmodified firmware code runs in the studio twin"),
+    N_("groovebox on fm1-base; its unmodified firmware code runs in the studio twin, with the parts it ports (its "
+       "LICENSING.md)"),
+    N_("platform, host simulator and browser emulator of AMB-1 and LOOM-8, compiled into their studio twins"),
+    N_("GPL-3.0 (MPL-2.0 file by file)"),
     N_("official open firmware: its unmodified code runs in the simulator and in the studio twin (also for the original V15/V16), its update tools and its V15 factory voices"),
     N_("firmware catalog and link collection"),
     N_("icons in the app's design (fm1companion/icons/lucide, licence in icons/LICENSE.lucide)"),

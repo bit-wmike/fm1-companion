@@ -2,7 +2,7 @@
 
 Das FM-1 ist das Instrument zum Skizzieren, die Suite ist das Studio. Auf der Seite [Studio](app://page/studio)
 läuft ein **digitaler Zwilling** deines FM-1: dieselbe Firmware wie auf dem Gerät (Melodee, Skiff, JIANT FM, SLOOP,
-CoralFlower, KARMA oder M-VAVEs FM1 Open), mit seinem kompletten Zustand (Melodee: alle 32 Projekte; Skiff: Projekte A–D und die
+CoralFlower, KARMA, Felucca, ChoralRoot FM-1, X0X, FoMni, AMB-1, LOOM-8 oder M-VAVEs FM1 Open), mit seinem kompletten Zustand (Melodee: alle 32 Projekte; Skiff: Projekte A–D und die
 Pattern-Bank; JIANT FM: die Sections aller Songs und der Song-Index; SLOOP: die Sections A–D, die FM6-Bank, die
 SYN-Drumkits und die Sample-Slots; CoralFlower: die Patterns und der Song des Sequencers mit ihren Sounds; KARMA: die
 Teile A–D des Songs, die Song-Reihenfolge, die HEX-Drumkits und die Sample-Slots; FM1 Open: seine 16 Projekte, die
@@ -10,14 +10,16 @@ DX7-Bibliothek und die Sample-Bank; laufende Musik, User-Presets, Einstellungen)
 die Lautsprecher am Rechner. (Ausnahme FM1 Open: siehe unten „Die Original-Firmware und FM1 Open“.)
 Auch **Felucca** selbst, die Grundlage der Familie, hat einen Zwilling (Projekte A–D, die User-Presets mit ihren
 FM6-Patches und die Sample-Slots USR1–USR3); er öffnet Felucca-Backups (auch die von Feluccas eigenem Web-Editor) und
-holt von einem Felucca-FM-1 und schreibt dorthin zurück wie die anderen.
+holt von einem Felucca-FM-1 und schreibt dorthin zurück wie die anderen. Auch ChoralRoot FM-1, X0X, FoMni, AMB-1 und
+LOOM-8 haben Zwillinge; was bei ihnen anders ist (Loop-Plätze, ein Backup nur als Ganzes, kein Backup über USB), steht
+unten unter „Grenzen“.
 
 ## So geht's: FM-1 → Studio → WAV oder zurück
 
 1. **Vom FM-1 holen:** liest ein komplettes Backup vom aktiven FM-1 (Name steht auf dem Knopf) und lädt es in
    den Zwilling. Das Backup landet zusätzlich in [Backups](app://page/backups) – es geht nichts verloren. Am FM-1
    wird nichts verändert (die Wiedergabe stoppt kurz).
-   Alternativ **Aus Backup öffnen …** (jedes Melodee-, Skiff-, JIANT-FM-, SLOOP-, CoralFlower-, KARMA- oder
+   Alternativ **Aus Backup öffnen …** (jedes Melodee-, Skiff-, JIANT-FM-, SLOOP-, CoralFlower-, KARMA-, Felucca-, ChoralRoot-, X0X-, LOOM-8- oder
    FM1-Open-Backup – es
    startet der Zwilling der Firmware des Backups; SLOOP- und KARMA-Backups auch im Format von SLOOPs Web-Editor) oder
    **Letzten Studio-Stand öffnen**.
@@ -137,6 +139,23 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
   dem Zurückschreiben startet ChoralRoot neu (der Zwilling wie das FM-1). Backups von 0.21 und älter halten die
   User-Sounds in Objekten, die die neuere Firmware nicht mehr kennt: das Studio lässt sie weg und nennt sie. Der
   Zwilling hat einen Kern, kein USB-Audio, kein TRS-MIDI und kein Bluetooth; die Update-Geste tut dort nichts.
+* X0X (1.2.1, seine neueste Version, und 1.2.0): ein Projekt – sein Klang, die 32 Patterns, der Song und die
+  Knopfbewegungen –, keine Projektplätze: Patterns und Song spielen vom Bedienfeld des Zwillings oder mit Abspielen. Die
+  fünf Einzelspuren sind seine Teile: die 909, die 808, 303 A, 303 B und BREAK. X0X hat ein eigenes Backup-Format:
+  **Aus Backup öffnen …** öffnet auch X0Xs eigene `.x0b`-Dateien, und X0X nimmt ein Backup nur ganz. Beim
+  Zurückschreiben muss X0X gestoppt sein und fragt auf seinem Bildschirm (RESTORE FROM USB?): **SEL** am FM-1 drücken.
+  Die Break-Loops in den Sample-Plätzen gehören nicht zu einem X0X-Backup. Der Zwilling hat einen Kern, kein USB-Audio,
+  kein TRS-MIDI und keine Hardware-Kalibrierung; die Update-Geste bewirkt dort nichts. Die Projektansicht liest X0Xs
+  Patterns nicht.
+* FoMni (0.4.1 und 0.4) und AMB-1 (1.3.2 und 1.3.1) haben kein Backup über USB: ihre Zwillinge starten leer (oder aus
+  einem Studio-Stand) und werden nie von einem FM-1 geladen oder auf eines geschrieben – spielen, als WAV exportieren
+  und die Stände im Studio behalten. FoMnis vier Einzelspuren sind seine Harfenstimmen 1 und 2, der Akkord mit dem Bass
+  und der Rhythmus; AMB-1 spielt von selbst, seine vier Einzelspuren sind seine Schichten: Pad, Glocken, Bass und Puls.
+* LOOM-8 (0.14 und 0.13.1): sein Backup ist das von fm1-base (die Benutzer-Presets und die drei Projekte, nur als
+  Ganzes; **Aus Backup öffnen …** öffnet auch LOOM-8s eigene `.loom8`-Dateien). Beim Zurückschreiben muss LOOM-8
+  gestoppt sein und fragt auf seinem Bildschirm: **SEL** am FM-1 drücken. Seine Sample-Bank gehört nicht zum Backup. Die
+  acht Einzelspuren sind seine Spuren. Der Zwilling hat einen Kern, kein Bluetooth, keinen USB-Host und kein USB-Audio;
+  die Projektansicht liest LOOM-8s Projekte nicht.
 * Der Zwilling hat keine CPU-Grenze: das Gerät lässt bei Überlast Stimmen weg, der Zwilling nie. Fließkomma-Teile
   können in den letzten Bits abweichen (unhörbar). Kein Bluetooth, kein USB-Host, kein Firmware-Update im
   Zwilling.

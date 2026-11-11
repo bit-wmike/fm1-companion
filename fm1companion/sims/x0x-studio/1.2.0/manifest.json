@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "name": "x0x-studio",
+  "title": "X0X studio twin",
+  "version": "1.2.0",
+  "source_repo": "https://github.com/charlesvestal/fm1-x0x",
+  "ref": "v1.2.0",
+  "commit": "ca2d377e3b9522579245152a81781a575f4d2fea",
+  "license": "GPL-3.0-only",
+  "build_date": "2026-11-11T08:03:02Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "LICENSING.md": {
+      "sha256": "53f7ee6bab43a06c7f0d5aacbff682fb969a46acfae98d6071b9b0a207c29a82",
+      "size": 5197
+    },
+    "NOTICE": {
+      "sha256": "952a31cd82595b57622be6e6169ce2c7dfc1e66e299272c286f00415ab46cd41",
+      "size": 2529
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "7843ce4f7828908e2ed27f3e7a8c12c3087db35d88334d376d1cd0e14604a379",
+      "size": 8913
+    },
+    "twin.wasm": {
+      "sha256": "f9132940fb5c733a665f820299e0c025822ac9493896ae0146383c1127d94240",
+      "size": 638403
+    }
+  },
+  "kind": "studio",
+  "firmware": "x0x",
+  "firmware_version": "1.2.0",
+  "identity": "FM-1_9010200",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/x0x_studio.c",
+  "glue_sha256": "963f44e83484cddc601e21eb585ea39d74cd02973a8896c133f97df4d3773253",
+  "source_url": "https://github.com/charlesvestal/fm1-x0x/archive/ca2d377e3b9522579245152a81781a575f4d2fea.tar.gz",
+  "tracks": 5,
+  "projects": 0,
+  "release_status": "previous stable"
+}

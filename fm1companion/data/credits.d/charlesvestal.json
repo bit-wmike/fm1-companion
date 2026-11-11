@@ -1,0 +1,9 @@
+{
+  "entries": [
+    {"name": "X0X", "authors": "Charles Vestal", "url": "https://github.com/charlesvestal/fm1-x0x", "license": "GPL-3.0", "kind": "Firmware", "use": "Felucca fork (909, 808, two 303s, a break slicer); its unmodified firmware code runs in the studio twin, with the engines it ports (the 909 and 808 after 9W9 and 8W8 by athousanddetails, the 303 after Open303 by Robin Schmidt, MIT)"},
+    {"name": "FoMni", "authors": "Charles Vestal", "url": "https://github.com/charlesvestal/fm1-fomni", "license": "GPL-3.0", "kind": "Firmware", "use": "chord harp on X0X's platform; its unmodified firmware code runs in the studio twin, with Chordian's rhythms and sounds by Jan125 (CC0)"},
+    {"name": "AMB-1", "authors": "Charles Vestal", "url": "https://github.com/charlesvestal/fm1-amb", "license": "MPL-2.0", "kind": "Firmware", "use": "generative ambient machine on fm1-base; its unmodified firmware code runs in the studio twin"},
+    {"name": "LOOM-8", "authors": "Charles Vestal", "url": "https://github.com/charlesvestal/fm1-loom", "license": "GPL-3.0 (MPL-2.0 file by file)", "kind": "Firmware", "use": "groovebox on fm1-base; its unmodified firmware code runs in the studio twin, with the parts it ports (its LICENSING.md)"},
+    {"name": "fm1-base / felucca-bsp", "authors": "Charles Vestal; Leo Kuroshita / Hügelton Instruments", "url": "https://github.com/charlesvestal/fm1-base", "license": "MPL-2.0", "kind": "Firmware", "use": "platform, host simulator and browser emulator of AMB-1 and LOOM-8, compiled into their studio twins"}
+  ]
+}

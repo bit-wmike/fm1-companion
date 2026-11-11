@@ -592,6 +592,9 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
         return "jiant-fm", tag
     if "coralflower" in v or family == "coralflower":   # CoralFlower answers INFO "CoralFlower 0.7.1" (the catalog's key)
         return "coralflower", tag
+    if "x0x" in v or family == "x0x":                   # X0X answers INFO "X0X 1.2.1 BETA" (the catalog's key; its
+                                                        # identity FM-1_9XXYYZZ is shared by other firmwares: TRIBE)
+        return "x0x", tag
     if "choralroot" in v or family.startswith("choralroot"):   # ChoralRoot answers INFO "ChoralRoot 0.39" (the catalog's
         return "choralroot-fm-1", tag                            # key "choralroot-fm-1")
     if re.fullmatch(r"FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)|FM-1_8\d{6}", identity or ""):

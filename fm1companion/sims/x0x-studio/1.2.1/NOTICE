@@ -1,0 +1,19 @@
+X0X 1.2.1 BETA – studio twin (firmware code for the host), built from https://github.com/charlesvestal/fm1-x0x tag v1.2.1
+(commit 502b2c28c14ab2bff31eb4f0777fdfd0efcf8bea; source: https://github.com/charlesvestal/fm1-x0x/archive/502b2c28c14ab2bff31eb4f0777fdfd0efcf8bea.tar.gz).
+GPL-3.0-only. X0X by Charles Vestal, a fork of Felucca: Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments (the platform parts).
+Ported parts keep their licences (the 909 after 9W9 / ER-99, the 808 after 8W8, the 303 after schwung-303: Open303 by Robin Schmidt, MIT; TB-3PO after the Phazerville Hemisphere Suite;
+the break generator after BB Gen by mestela, by permission; the screen reader's announce.c: MPL-2.0; the UI faces Barlow Semi Condensed and Terminus are rasterised in: OFL 1.1):
+X0X's LICENSING.md and the texts in THIRD_PARTY.txt beside this file. TR-808, TR-909 and TB-303 are trademarks of Roland Corporation. The JieLi SDK files of X0X's packages are not part of the twin.
+The firmware sources are unmodified. The glue tools/studio/x0x_studio.c (GPL-3.0-only, in FM-1 Companion's source) includes them as X0X's own browser emulator does (web/emu/x0x_web.c, host/x0x_host.c)
+and adds the device's storage.c on the flash image, the USB SysEx path (editor.c, ota.c's identity handshake, backup.c's backup and restore) and USB MIDI out; the hardware stand-ins are the emulator's:
+keys/LEDs/LCD, the MASTER pot, NOR flash = a 1 MiB RAM image, one core, USB = always configured, no USB audio, no TRS MIDI, no updater and no USB boot
+(ota.c answers the identity handshake only), the default panel map (no hardware calibration). Compiled with WASI SDK clang.
+
+Corresponding Source (GNU GPL 3.0, section 6)
+The complete corresponding source of this build is https://github.com/charlesvestal/fm1-x0x at commit 502b2c28c14ab2bff31eb4f0777fdfd0efcf8bea
+together with FM-1 Companion's build script tools/build_sims.py and the glue tools/studio/x0x_studio.c. A tarball of exactly this commit
+(fm1-x0x-502b2c28c14ab2bff31eb4f0777fdfd0efcf8bea.tar.gz, made with tools/make_source_tarballs.py) is attached to every
+FM-1 Companion release that ships this build: https://github.com/bit-wmike/fm1-companion/releases
+Written offer: for at least three years after the last release that ships this build, the maintainers of
+FM-1 Companion will give anyone a copy of that corresponding source on request (https://github.com/bit-wmike/fm1-companion/issues),
+free of charge apart from the cost of physically performing the distribution.

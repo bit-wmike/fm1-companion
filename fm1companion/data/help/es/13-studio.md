@@ -2,7 +2,7 @@
 
 El FM-1 es el instrumento para bocetar; la suite es el estudio. En la página [Studio](app://page/studio)
 se ejecuta un **gemelo digital** de tu FM-1: el mismo firmware que en el dispositivo (Melodee, Skiff, JIANT FM, SLOOP,
-CoralFlower, KARMA o FM1 Open de M-VAVE), con su estado completo (Melodee: los 32 proyectos; Skiff: los proyectos A–D y el banco de patrones;
+CoralFlower, KARMA, Felucca, ChoralRoot FM-1, X0X, FoMni, AMB-1, LOOM-8 o FM1 Open de M-VAVE), con su estado completo (Melodee: los 32 proyectos; Skiff: los proyectos A–D y el banco de patrones;
 JIANT FM: las secciones de cada canción y el índice de canciones; SLOOP: las secciones A–D, el banco FM6, los kits de
 batería SYN y las ranuras de muestras; CoralFlower: los patrones y la canción del secuenciador con sus sonidos; KARMA: las
 partes A–D de la canción, el orden de la canción, los kits de batería HEX y las ranuras de muestras; FM1 Open: sus 16
@@ -10,14 +10,16 @@ proyectos, la biblioteca DX7 y el banco de muestras; música en curso, presets d
 que por los altavoces del ordenador. (La excepción es FM1 Open: consulta más abajo “El firmware original y FM1 Open”.)
 También **Felucca**, la base de la familia, tiene su gemelo (los proyectos A–D, los presets de usuario con sus patches
 FM6 y las ranuras de muestras USR1–USR3); abre copias de seguridad de Felucca (también las del propio editor web de
-Felucca), lee de un FM-1 con Felucca y vuelve a escribir en él como los demás.
+Felucca), lee de un FM-1 con Felucca y vuelve a escribir en él como los demás. ChoralRoot FM-1, X0X, FoMni, AMB-1 y
+LOOM-8 también tienen gemelos; lo que cambia en ellos (ranuras de loop, una copia solo completa, sin copia por USB) está
+más abajo, en “Límites”.
 
 ## Cómo funciona: FM-1 → Studio → WAV o de vuelta
 
 1. **Traer del FM-1:** lee una copia de seguridad completa del FM-1 activo (su nombre aparece en el botón) y la carga en
    el gemelo. La copia también se guarda en [Copias de seguridad](app://page/backups) – no se pierde nada. No se cambia nada
    en el FM-1 (la reproducción se detiene brevemente).
-   Como alternativa, **Abrir desde copia de seguridad …** (cualquier copia de Melodee, Skiff, JIANT FM, SLOOP, CoralFlower, KARMA o FM1 Open; también copias de SLOOP y KARMA en el formato
+   Como alternativa, **Abrir desde copia de seguridad …** (cualquier copia de Melodee, Skiff, JIANT FM, SLOOP, CoralFlower, KARMA, Felucca, ChoralRoot, X0X, LOOM-8 o FM1 Open; también copias de SLOOP y KARMA en el formato
    del editor web de SLOOP – arranca el gemelo del firmware
    de la copia) o
    **Abrir el último estado del Studio**.
@@ -139,6 +141,23 @@ antigua aproximación en el ordenador solo se mantiene cuando no hay gemelo para
   0.21 y anteriores guardan los sonidos de usuario en objetos que el firmware nuevo ya no tiene: el Studio los omite y
   los nombra. El gemelo tiene un núcleo, sin audio USB, sin MIDI TRS y sin Bluetooth; el gesto de actualización no hace
   nada allí.
+* X0X (1.2.1, su versión más reciente, y 1.2.0): un proyecto – su sonido, los 32 patrones, la canción y el movimiento
+  de los mandos –, sin ranuras de proyecto: los patrones y la canción suenan desde el panel del gemelo o con Reproducir.
+  Las cinco pistas por separado son sus partes: la 909, la 808, 303 A, 303 B y BREAK. X0X tiene un formato de copia
+  propio: **Abrir desde copia de seguridad …** abre también los archivos `.x0b` del propio X0X, y X0X solo acepta una
+  copia entera. Al escribir de vuelta, X0X debe estar detenido y pregunta en su pantalla (RESTORE FROM USB?): pulsa
+  **SEL** en el FM-1. Los loops de break de las ranuras de samples no forman parte de una copia de X0X. El gemelo tiene
+  un núcleo, sin audio USB, sin MIDI TRS y sin calibración del hardware; el gesto de actualización no hace nada allí.
+  La vista de proyecto no lee los patrones de X0X.
+* FoMni (0.4.1 y 0.4) y AMB-1 (1.3.2 y 1.3.1) no tienen copia de seguridad por USB: sus gemelos arrancan vacíos (o
+  desde un estado del estudio) y nunca se cargan desde un FM-1 ni se escriben en uno – tócalos, expórtalos como WAV y
+  guarda sus estados en el estudio. Las cuatro pistas por separado de FoMni son sus voces de arpa 1 y 2, el acorde con
+  el bajo y el ritmo; AMB-1 suena solo desde el principio, sus cuatro pistas son sus capas: pad, campanas, bajo y pulso.
+* LOOM-8 (0.14 y 0.13.1): su copia es la de fm1-base (los presets de usuario y los tres proyectos, solo enteros;
+  **Abrir desde copia de seguridad …** abre también los archivos `.loom8` del propio LOOM-8). Al escribir de vuelta,
+  LOOM-8 debe estar detenido y pregunta en su pantalla: pulsa **SEL** en el FM-1. Su banco de samples no forma parte
+  de la copia. Las ocho pistas por separado son sus pistas. El gemelo tiene un núcleo, sin Bluetooth, sin host USB y
+  sin audio USB; la vista de proyecto no lee los proyectos de LOOM-8.
 * El gemelo no tiene límite de CPU: el dispositivo descarta voces cuando se sobrecarga, el gemelo nunca. Las partes en coma flotante
   pueden diferir en los últimos bits (inaudible). Sin Bluetooth, sin host USB, sin actualización de firmware en el
   gemelo.

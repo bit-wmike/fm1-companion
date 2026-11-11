@@ -92,7 +92,7 @@ def test_fm1open_versions_and_pick():
     from fm1companion import dx7, firmware
     from fm1companion.ui.studio_service import StudioService
     assert StudioService.firmware_for("fm1-open") == "fm1-open" == StudioService.firmware_for("stock-v15")
-    assert StudioService.firmware_for("stock-v16") == "fm1-open" and StudioService.firmware_for("x0x") == ""
+    assert StudioService.firmware_for("stock-v16") == "fm1-open" and StudioService.firmware_for("gr-mm") == ""
     assert firmware.guess_firmware("FM-1_8000014")[0] in ("fm1-open", "")   # ("" / other: remembered on this machine)
     assert firmware.guess_firmware("FM1_OFFICIAL_OPEN")[0] in ("fm1-open", "")
     assert dx7.send_plan("fm1-open") == dx7.send_plan("stock-v15") == "single"
