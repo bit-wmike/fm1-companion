@@ -50,6 +50,9 @@ def backend() -> sim.SimBackend:
             _BACKEND = sim.SimBackend([DemoDevice(p, i, pol) for p, (i, pol) in DEMO_DEVICES.items()])
             fi.DELAY.update(sim.fast_delays())
             fi.DELAY.update({"wait_loader": 10.0, "wait_reboot": 10.0})
+            from . import robust
+            robust.CAREFUL.update(sim.fast_careful_delays())
+            robust.CAREFUL.update({"wait_loader": 12.0, "wait_reboot": 12.0, "wait_resume": 12.0})
         return _BACKEND
 
 

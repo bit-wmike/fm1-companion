@@ -102,7 +102,20 @@ def device_state(ctx) -> "planner.DeviceState":
                                                                           else ""),
                                port=ctx.port.in_name if ctx.port else "", connected=ctx.port is not None,
                                ports=device_count(ctx), busy=journal.Journal.busy(),
-                               pinned=target_pin(ctx) is not None)
+                               pinned=target_pin(ctx) is not None, usb_notes=usb_notes(ctx))
+
+
+def usb_notes(ctx) -> list[str]:
+    """installation plan: is the FM-1 behind a USB hub (careful mode), is USB power saving on?"""
+    p = getattr(ctx, "port", None)
+    if p is None or not getattr(p, "usb_path", "") or getattr(ctx, "is_virtual", False):
+        return []
+    try:
+        from .. import devices
+        from ..flash import robust
+        return robust.plan_notes(devices.usb_link(p.usb_path), getattr(ctx.settings, "careful_usb", "auto"))
+    except Exception:  # noqa: BLE001 – a note only
+        return []
 
 
 from ..flash.planner import V16_WARNING as V16_WARNING_HTML  # noqa: E402

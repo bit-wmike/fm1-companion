@@ -530,6 +530,52 @@ def status_findings(folder: Path | None = None) -> list[Finding]:
     return out
 
 
+def usb_link_findings(fm1_paths: set[str] | None = None, sysroot: str = "/sys") -> list[Finding]:
+    """How is each connected FM-1 attached: directly or through hubs (speed, USB 2/3, power), and may the kernel put
+    it or its hubs to sleep (autosuspend)? Hubs are the most common reason why a firmware installation starts but
+    does not finish."""
+    from . import devices
+    paths = sorted(set(fm1_paths or ()) | set(devices.fm1_usb_paths(sysroot)))
+    out: list[Finding] = []
+    for path in paths:
+        ln = devices.usb_link(path, sysroot)
+        if not ln.found:
+            continue
+        name = ln.device.product or "FM-1"
+        speed = ln.device.speed or "?"
+        if ln.behind_hub:
+            hubs = "; ".join(h.describe() for h in ln.hubs)
+            fix = _("For installing firmware: connect the FM-1 directly to the computer (Raspberry Pi: preferably a "
+                    "black USB 2 port) with a short data cable. If a hub is needed: one with its own power supply. "
+                    "The app switches to careful USB mode automatically when it installs through a hub.")
+            if ln.bus_powered_hubs:
+                fix += " " + _("The hub reports that it has no own power supply.")
+            out.append(Finding(
+                f"usb-hub:{path}", "warn", ngettext("{name} is connected through {n} USB hub ({path})",
+                                                    "{name} is connected through {n} USB hubs ({path})",
+                                                    ln.depth).format(name=name, n=ln.depth, path=path),
+                _("FM-1: {speed} Mbit/s. Hubs: {hubs}").format(speed=speed, hubs=hubs), fix, ln.lines()))
+        else:
+            out.append(Finding(f"usb-direct:{path}", "ok", _("{name} is connected directly to the computer ({path}, "
+                                                             "{speed} Mbit/s)").format(name=name, path=path,
+                                                                                       speed=speed)))
+        sleepy = ln.autosuspend_nodes
+        if sleepy:
+            from .flash import robust
+            hint = robust.udev_hint()
+            out.append(Finding(
+                f"usb-autosuspend:{path}", "warn",
+                _("USB power saving (autosuspend) is on for the FM-1 or its hub ({devices})").format(
+                    devices=", ".join(n.name for n in sleepy)),
+                _("The kernel may put these devices to sleep while they are idle – for example while the FM-1 "
+                  "restarts during a firmware installation. Waking up through a hub does not always work."),
+                _("Install the optional udev rule of the app (keeps the FM-1 and the hubs in front of it awake): "
+                  "{command}").format(command=hint) if hint else
+                _("The udev rule of the app is installed; unplug the FM-1 and plug it in again."),
+                [f"{n.name}/power/control = {n.power_control}" for n in sleepy]))
+    return out
+
+
 def run_all(folder: Path | None = None, fm1_paths: set[str] | None = None) -> tuple[list[Finding], dict]:
     """complete check (call in a background thread!). Returns (findings, meta)."""
     text, source, problem = read_kernel_log()
@@ -546,6 +592,7 @@ def run_all(folder: Path | None = None, fm1_paths: set[str] | None = None) -> tu
         found += analyze_log(text, fm1_paths, read_user_journal())
     found += throttled_findings(get_throttled())
     found += pi5_power_findings()
+    found += usb_link_findings(fm1_paths)
     found += status_findings(folder)
     order = {"error": 0, "warn": 1, "unknown": 2, "info": 3, "ok": 4}
     found.sort(key=lambda f: order[f.level])

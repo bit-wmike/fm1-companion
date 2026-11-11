@@ -2840,3 +2840,129 @@ msgstr "Melodee 1.6.0 y posteriores: la grabación USB está antes de MASTER; el
 #: fm1companion/melodee16.py:134
 msgid "With this Melodee version the stereo recording over USB follows the MASTER knob: for a good level, turn MASTER up (from Melodee 1.6.0 on, the recording sits before MASTER)."
 msgstr "Con esta versión de Melodee, la grabación estéreo por USB sigue al mando MASTER: para un buen nivel, sube MASTER (a partir de Melodee 1.6.0, la grabación está antes de MASTER)."
+
+# USB hubs, careful mode, flash log (flash/robust.py, syscheck.py, settings)
+#, python-brace-format
+msgid "The FM-1 is connected through {n} USB hub(s): {hubs}"
+msgstr "El FM-1 está conectado a través de {n} hub(s) USB: {hubs}"
+
+#, python-brace-format
+msgid "USB power saving (autosuspend) is on for: {devices}"
+msgstr "El ahorro de energía USB (autosuspend) está activado para: {devices}"
+
+msgid "Careful USB mode: longer waits, slower answers, automatic resume after a dropout."
+msgstr "Modo USB cuidadoso: esperas más largas, respuestas más lentas, reanudación automática tras un corte."
+
+#, python-brace-format
+msgid "Flash log: {name}"
+msgstr "Registro de flasheo: {name}"
+
+#, python-brace-format
+msgid "USB connection interrupted in step 1 (nothing was written). Trying step 1 again ({n} of {max}) …"
+msgstr "Conexión USB interrumpida en el paso 1 (no se escribió nada). Repitiendo el paso 1 ({n} de {max}) …"
+
+#, python-brace-format
+msgid "The connection to the update loader dropped while writing (typical for USB hubs). Waiting for the FM-1 in update mode and starting the write again ({n} of {max}) …"
+msgstr "La conexión con el cargador de actualización se cortó durante la escritura (típico de los hubs USB). Esperando al FM-1 en modo de actualización y empezando de nuevo la escritura ({n} de {max}) …"
+
+msgid "The kernel reported a power problem (over-current or under-voltage) during the installation."
+msgstr "El kernel informó de un problema de alimentación (sobrecorriente o subtensión) durante la instalación."
+
+#, python-brace-format
+msgid "The FM-1 is connected through a USB hub ({path}). Hubs are the most common reason why an installation starts but does not finish."
+msgstr "El FM-1 está conectado a través de un hub USB ({path}). Los hubs son el motivo más habitual de que una instalación empiece pero no termine."
+
+#, python-brace-format
+msgid "{n} answers from the computer did not reach the FM-1 in time (it had to ask again)."
+msgstr "{n} respuestas del ordenador no llegaron a tiempo al FM-1 (tuvo que volver a pedirlas)."
+
+#, python-brace-format
+msgid "The FM-1 dropped off the USB bus {n}× during the installation."
+msgstr "El FM-1 desapareció del bus USB {n}× durante la instalación."
+
+msgid "USB power saving (autosuspend) is switched on for the FM-1 or its hub."
+msgstr "El ahorro de energía USB (autosuspend) está activado para el FM-1 o su hub."
+
+msgid "Connect the FM-1 directly to the computer – on a Raspberry Pi preferably to a black USB 2 port – with a short data cable."
+msgstr "Conecta el FM-1 directamente al ordenador con un cable de datos corto – en una Raspberry Pi mejor a un puerto USB 2 negro."
+
+msgid "Use a short USB data cable and a port directly on the computer – on a Raspberry Pi preferably a black USB 2 port."
+msgstr "Usa un cable de datos USB corto y un puerto directamente en el ordenador – en una Raspberry Pi mejor un puerto USB 2 negro."
+
+msgid "If you have to use a hub: one with its own power supply, and no other power-hungry devices on it."
+msgstr "Si tienes que usar un hub: uno con fuente de alimentación propia y sin otros dispositivos que consuman mucho."
+
+msgid "Install the optional udev rule that keeps the FM-1 and its hubs awake (see Help › “Switching firmware”, section “USB hubs”)."
+msgstr "Instala la regla udev opcional que mantiene despiertos el FM-1 y sus hubs (consulta Ayuda › «Cambiar de firmware», sección «Hubs USB»)."
+
+msgid "Switch on Settings › “Careful USB mode for flashing: always”."
+msgstr "Activa Ajustes › «Modo USB cuidadoso al flashear: siempre»."
+
+#, python-brace-format
+msgid "Next step: {steps}"
+msgstr "Siguiente paso: {steps}"
+
+msgid "The flash log is saved and included in the bug report (Help › Create bug report)."
+msgstr "El registro de flasheo se ha guardado y se incluye en el informe de errores (Ayuda › Crear informe de errores)."
+
+#, python-brace-format
+msgid "<b>Connected through a USB hub – careful mode.</b> The FM-1 ({path}) is behind {n} hub(s): {hubs}. The app waits longer, answers more slowly and resumes the write automatically if the connection drops. Safer still: connect the FM-1 directly to the computer."
+msgstr "<b>Conectado a través de un hub USB – modo cuidadoso.</b> El FM-1 ({path}) está detrás de {n} hub(s): {hubs}. La app espera más, responde más despacio y reanuda la escritura automáticamente si la conexión se corta. Más seguro aún: conecta el FM-1 directamente al ordenador."
+
+#, python-brace-format
+msgid "The FM-1 ({path}) is connected through a USB hub, careful mode is switched off in the settings. Hubs are the most common reason why an installation does not finish."
+msgstr "El FM-1 ({path}) está conectado a través de un hub USB y el modo cuidadoso está desactivado en los ajustes. Los hubs son el motivo más habitual de que una instalación no termine."
+
+msgid "The hub in front of the FM-1 says it is bus-powered (no own power supply). Use a hub with its own power supply or connect the FM-1 directly."
+msgstr "El hub delante del FM-1 indica que se alimenta del bus (sin fuente de alimentación propia). Usa un hub con fuente propia o conecta el FM-1 directamente."
+
+msgid "Careful USB mode is switched on (settings)."
+msgstr "El modo USB cuidadoso está activado (ajustes)."
+
+#, python-brace-format
+msgid "USB power saving (autosuspend) is on for: {devices}. It can put the FM-1 or its hub to sleep during the waits. The optional udev rule of the app switches it off (Help › “Switching firmware”, section “USB hubs”)."
+msgstr "El ahorro de energía USB (autosuspend) está activado para: {devices}. Puede dormir el FM-1 o su hub durante las esperas. La regla udev opcional de la app lo desactiva (Ayuda › «Cambiar de firmware», sección «Hubs USB»)."
+
+msgid "For installing firmware: connect the FM-1 directly to the computer (Raspberry Pi: preferably a black USB 2 port) with a short data cable. If a hub is needed: one with its own power supply. The app switches to careful USB mode automatically when it installs through a hub."
+msgstr "Para instalar firmware: conecta el FM-1 directamente al ordenador con un cable de datos corto (Raspberry Pi: mejor un puerto USB 2 negro). Si hace falta un hub: uno con fuente de alimentación propia. A través de un hub, la app pasa automáticamente al modo USB cuidadoso al instalar."
+
+msgid "The hub reports that it has no own power supply."
+msgstr "El hub indica que no tiene fuente de alimentación propia."
+
+#, python-brace-format
+msgid "{name} is connected through {n} USB hub ({path})"
+msgid_plural "{name} is connected through {n} USB hubs ({path})"
+msgstr[0] "{name} está conectado a través de {n} hub USB ({path})"
+msgstr[1] "{name} está conectado a través de {n} hubs USB ({path})"
+
+#, python-brace-format
+msgid "FM-1: {speed} Mbit/s. Hubs: {hubs}"
+msgstr "FM-1: {speed} Mbit/s. Hubs: {hubs}"
+
+#, python-brace-format
+msgid "{name} is connected directly to the computer ({path}, {speed} Mbit/s)"
+msgstr "{name} está conectado directamente al ordenador ({path}, {speed} Mbit/s)"
+
+#, python-brace-format
+msgid "USB power saving (autosuspend) is on for the FM-1 or its hub ({devices})"
+msgstr "El ahorro de energía USB (autosuspend) está activado para el FM-1 o su hub ({devices})"
+
+msgid "The kernel may put these devices to sleep while they are idle – for example while the FM-1 restarts during a firmware installation. Waking up through a hub does not always work."
+msgstr "El kernel puede dormir estos dispositivos mientras están inactivos – por ejemplo mientras el FM-1 se reinicia durante una instalación de firmware. Despertarlos a través de un hub no siempre funciona."
+
+#, python-brace-format
+msgid "Install the optional udev rule of the app (keeps the FM-1 and the hubs in front of it awake): {command}"
+msgstr "Instala la regla udev opcional de la app (mantiene despiertos el FM-1 y los hubs delante de él): {command}"
+
+msgid "The udev rule of the app is installed; unplug the FM-1 and plug it in again."
+msgstr "La regla udev de la app está instalada; desconecta el FM-1 y vuelve a conectarlo."
+
+msgid "automatic (when the FM-1 is connected through a USB hub)"
+msgstr "automático (cuando el FM-1 está conectado a través de un hub USB)"
+
+msgid "Careful USB mode waits longer for the FM-1 to restart, answers its requests more slowly and resumes the write automatically if the USB connection drops – the usual trouble with USB hubs. All safety checks stay the same."
+msgstr "El modo USB cuidadoso espera más al reinicio del FM-1, responde más despacio a sus peticiones y reanuda la escritura automáticamente si la conexión USB se corta – el problema habitual de los hubs USB. Todas las comprobaciones de seguridad siguen igual."
+
+msgid "Careful USB mode for flashing:"
+msgstr "Modo USB cuidadoso al flashear:"
+

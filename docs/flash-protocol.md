@@ -359,3 +359,39 @@ a) Does V16 really write 0x4000–0xA8FFF, does the boot head stay the same (A �
 (only visible with a deliberate abort – not recommended)? c) Staging of the original firmware (0xE0000–0xE4FFF
 before/after)? d) Do the leftovers in C and D remain, does rc.7 run with them? e) Does V16 also format on the second
 start? Afterwards correct `RUNTIME`, `STAGING` and `install_ota` in `flashmodel.py`.
+
+## 18. USB hubs: careful mode, automatic resume, flash log (`flash/robust.py`)
+
+User report (Pi 5): directly at the Pi the installation works; through an active USB hub the FM-1 is detected and
+step 1 starts, but the installation does not finish. Failure modes and what the app does:
+
+* [V melodee ota.c `ota_read`] the device repeats a read request after 5 s without a matching answer, 3 tries,
+  then the session ends (step 1: old firmware keeps running, nothing written; step 2: loader back in its main loop,
+  update mode stays [V loader.c `ldr_main`]). Step-1 session deadline 120 s. **App:** answers every repetition;
+  careful idle limits 16 s (step 1) and 20 s (Felucca loader in step 2: its session has certainly ended) instead of
+  8 s / 180 s.
+* [V usb.c] the device holds **one** received SysEx frame; frames arriving while one is pending are dropped. A
+  late, stale answer can therefore push out the next real one. **App:** copies of a request that piled up are
+  answered once; an already answered request followed by a newer one is skipped (the device has moved on);
+  careful mode keeps ≥ 30 ms between two responses (one in flight at a time).
+* [V usb.c `ota_wire_send`] the device aborts if its TX queue stays full > 200 ms. On Linux snd-usb-audio keeps
+  IN URBs queued while the ALSA input is open; the rtmidi callback (`MidoLink._rx`) only puts into a queue and
+  never blocks; nothing sleeps with a closed input while the device is sending (the input is opened before
+  UPGRADE/handshake). Not changed.
+* [V mido rtmidi backend] `get_input_names()` creates a fresh rtmidi client on every call – the port list is
+  current after re-enumeration; no extra client needed.
+* Re-enumeration (hub glitch, power dip): the port disappears – or reappears under the same ALSA name (card
+  number reused). **App:** `WatchedLink` also compares the USB device number (sysfs `devnum`); careful mode waits
+  up to 90 s for **the pinned device** in update mode with **its own loader** (package rule, same model) and sends
+  UPGRADE again – the same resume as Recovery › Finish installation, up to 3 times. Step 1 is repeated (max. 2)
+  only after a dropout or repeated requests, never after a plain stop (that is the device refusing the package).
+  Without a pin nothing is repeated.
+* Slower re-enumeration: waits for loader/restart 120 s in careful mode (30/40 s otherwise).
+* Autosuspend: hubs default to `power/control=auto` (kernel hub driver). Reported in plan and system check;
+  optional udev rule `packaging/udev/60-fm1-companion.rules` (FM-1 IDs + every hub on its path → `on`), installed
+  only on request.
+
+Careful mode: Settings › "Careful USB mode for flashing" = auto (FM-1 behind a hub, `devices.usb_link`) / always /
+never. Flash log: `DATA_DIR/flash/logs/flash-*.txt` (every request with gap, repetitions, duplicates, port
+events, resumes, kernel lines of the time window), last 3 in the bug report ZIP (`flash/`), redacted.
+Tests: `tests/test_usb_hub.py` (`sim.SimFaults`).

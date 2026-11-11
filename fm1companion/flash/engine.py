@@ -15,6 +15,7 @@ from typing import Callable
 from ..i18n import _
 from ..vendor import fm1_install as fi
 from . import package as pk
+from . import robust
 from .journal import Journal
 
 STEP_PHASE = {"start": "step1", "check": "step1", "loader": "loader", "write": "writing", "reboot": "reboot",
@@ -144,6 +145,27 @@ def default_port_filter(name: str) -> bool:
     return devices.install_candidate(name)
 
 
+def default_topology(pin: "Pin"):
+    """USB path of the pinned device: hubs, speeds, power management (devices.usb_link)"""
+    from .. import devices
+    path = pin.usb_path or devices.usb_path_for_serial(pin.serial)
+    return devices.usb_link(path) if path else None
+
+
+def default_kernel_log():
+    from .. import syscheck
+    return syscheck.read_kernel_log()
+
+
+def careful_setting() -> str:
+    try:
+        from .. import config
+        v = getattr(config.load(), "careful_usb", "auto")
+        return v if v in robust.MODES else "auto"
+    except Exception:  # noqa: BLE001
+        return "auto"
+
+
 def default_backend():
     if os.environ.get("FM1C_DEMO") == "1":
         from . import demo
@@ -160,7 +182,9 @@ def default_backend():
 class Engine:
     def __init__(self, backend=None, journal: Journal | None = None, port_filter: Callable[[str], bool] | None = None,
                  log: Callable[[str], None] = print, progress: Callable[[int, int], None] | None = None,
-                 cancel: threading.Event | None = None, details: Callable[[str], dict] | None = None):
+                 cancel: threading.Event | None = None, details: Callable[[str], dict] | None = None,
+                 careful: str | bool | None = None, topology: Callable | None = None,
+                 kernel_log: Callable | None = None):
         self.backend = backend if backend is not None else default_backend()
         self.journal = journal or Journal()
         self.port_filter = port_filter or default_port_filter
@@ -168,15 +192,41 @@ class Engine:
         self.log = log
         self.progress = progress or (lambda a, b: None)
         self.cancel = cancel or threading.Event()
+        # careful USB mode: True/False, or a setting "auto" | "always" | "never" (None: from the settings)
+        self.careful = careful
+        self.topology = topology or getattr(self.backend, "topology", None) or default_topology
+        self.kernel_log = kernel_log or getattr(self.backend, "kernel_log", None) or default_kernel_log
+        self.flight: robust.FlightLog | None = None      # flash log of the last write()
+        self.usb: object | None = None                   # devices.UsbLink of the last pinned target
 
     # ------------------------------------------------------------ search
-    def updater(self, port: str = "", pin: Pin | None = None) -> fi.Updater:
+    def updater(self, port: str = "", pin: Pin | None = None, careful: bool = False,
+                flight: robust.FlightLog | None = None, felucca: bool = False) -> fi.Updater:
         if pin is not None and pin.usable:
             # only ports of exactly this USB device (also after reboots, whatever name it appears under)
             def flt(name):
                 return pin.matches(self._details(name))
-            return fi.Updater(self.backend, None, port_filter=flt, cancelled=self.cancel.is_set)
-        return fi.Updater(self.backend, port or None, port_filter=self.port_filter, cancelled=self.cancel.is_set)
+            be = robust.WatchBackend(self.backend, self._details, flight, guard=flt)
+            return robust.RobustUpdater(be, None, port_filter=flt, cancelled=self.cancel.is_set, careful=careful,
+                                        flight=flight, pinned=True, felucca=felucca, log=self.log)
+        be = robust.WatchBackend(self.backend, self._details, flight)
+        return robust.RobustUpdater(be, port or None, port_filter=self.port_filter, cancelled=self.cancel.is_set,
+                                    careful=careful, flight=flight, pinned=False, felucca=felucca, log=self.log)
+
+    def usb_link(self, pin: Pin | None):
+        """devices.UsbLink of the pinned device (None if unknown)"""
+        if pin is None or not pin.usable:
+            return None
+        try:
+            return self.topology(pin)
+        except Exception:  # noqa: BLE001 – diagnostics only
+            return None
+
+    def careful_for(self, link) -> bool:
+        c = self.careful if self.careful is not None else careful_setting()
+        if isinstance(c, bool):
+            return c
+        return robust.resolve_mode(c, link)
 
     def _details(self, name: str) -> dict:
         try:
@@ -258,18 +308,34 @@ class Engine:
         label = label or info.product
         if pin is None or not pin.usable:
             pin = self.pin_for(port) if port else None
+        link = self.usb = self.usb_link(pin)
+        careful = self.careful_for(link)
+        flight = robust.FlightLog(None if dry_run else self.journal.dir / "logs", kernel=self.kernel_log)
+        self.flight = flight
         if pin is not None:
-            up = self.updater(pin=pin)
+            up = self.updater(pin=pin, careful=careful, flight=flight, felucca=info.family != "stock")
             dev = up.find(only_port=False)
             if dev is None:
                 raise FlashError("notfound", MESSAGES["pinned_lost"])
             self.log(_("Target device pinned: {pin}").format(pin=pin))
+            if link is not None and getattr(link, "behind_hub", False):
+                self.log(_("The FM-1 is connected through {n} USB hub(s): {hubs}").format(
+                    n=link.depth, hubs="; ".join(h.describe() for h in link.hubs)))
+            if link is not None and getattr(link, "autosuspend_nodes", []):
+                self.log(_("USB power saving (autosuspend) is on for: {devices}").format(
+                    devices=", ".join(n.name for n in link.autosuspend_nodes)))
+            if careful:
+                self.log(_("Careful USB mode: longer waits, slower answers, automatic resume after a dropout."))
         else:
             if len(self.candidate_ports()) > 1:
                 raise FlashError("ambiguous", _("Please leave only the FM-1 connected that you want to update. "
                                                 "Several FM-1 are connected, and the app cannot pin the target device "
                                                 "unambiguously – nothing was sent."))
             up, dev = self.find_device(port)
+            up.careful, up.d, up.flight = careful, robust.delays(careful), flight
+            if isinstance(up.backend, robust.WatchBackend):
+                up.backend.flight = flight
+            up.felucca = info.family != "stock"
             # after the reboots, ask ports of the same device first ("Melodee FM-1 Update" -> "Melodee FM-1")
             up.port = re.split(r"\s+update\b|:", dev.name, maxsplit=1, flags=re.I)[0].strip() or dev.name
         self.log(_("Device: {identity} at “{port}”").format(identity=dev.id.text, port=dev.name))
@@ -328,15 +394,26 @@ class Engine:
                     self.log(LOG_REBOOT)
                 elif k == "done":
                     self.log(_("Done: the FM-1 reports {identity}").format(identity=a))
+            header = [f"package: {info.product} ({info.family}), sha256 {info.sha256[:16]}…",
+                      f"device: {dev.id.text}, careful mode: {'on' if careful else 'off'}, "
+                      f"pinned: {'yes' if pin is not None else 'no'}",
+                      *(link.lines() if link is not None and getattr(link, "found", False) else ["USB path: unknown"])]
+            flight.ev("start", f"{dev.id.text} at {dev.name}")
             try:
                 ident = up.install(dev, info.image, info.product, step, rule)
             except fi.InstallError as e:
-                raise self._translate(e, phase["p"], up, info)
+                err = self._translate(e, phase["p"], up, info)
+                flight.ev("error", f"{e.code}: {e}")
+                self._finish_log(flight, f"failed ({e.code}, {err.state})", str(e), header)
+                raise self._advise(err, flight, link, careful)
             except FlashError:
                 raise
             except Exception as e:  # noqa: BLE001 – unexpected error (MIDI driver, program bug): journal
                 # must still be correct so that the rescue afterwards offers the right thing
+                flight.ev("error", f"{type(e).__name__}: {e}")
+                self._finish_log(flight, "failed (internal)", f"{type(e).__name__}: {e}", header)
                 raise self._unexpected(e, phase["p"])
+            self._finish_log(flight, "done", "", header)
             self.journal.finish("done")
             return Result(ident, port=getattr(up, "last_port", "") or "")
         except FlashError as e:
@@ -344,6 +421,24 @@ class Engine:
             raise
         finally:
             self.journal.release()
+
+    def _finish_log(self, flight: robust.FlightLog, outcome: str, error: str, header: list[str]):
+        path = flight.finish(outcome, error, header)
+        if path is not None:
+            self.journal.update(flash_log=path.name)
+            self.log(_("Flash log: {name}").format(name=path.name))
+
+    @staticmethod
+    def _advise(err: FlashError, flight: robust.FlightLog, link, careful: bool) -> FlashError:
+        """append the likely cause (hub, power, cable) and the next step to the message"""
+        if err.code in ("cancelled", "loader", "model", "badreq", "checkhead", "mismatch"):
+            return err
+        if err.code == "stopped" and err.state == SAFE and not (flight.resends or flight.vanished):
+            return err                  # step 1 stopped cleanly: most likely the firmware refused the package
+        hint = robust.diagnosis(flight, link, err.code, careful)
+        if hint:
+            return FlashError(err.code, f"{err} {hint}", err.state, err.detail)
+        return err
 
     @staticmethod
     def _unexpected(e: BaseException, phase: str) -> FlashError:

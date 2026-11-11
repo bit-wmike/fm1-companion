@@ -68,6 +68,11 @@ def build(out: Path = DIST, maintainer: str = "FM-1 Companion Suite <fm1-compani
         t = root / "usr/share/icons/hicolor/scalable/apps"
         t.mkdir(parents=True)
         shutil.copy2(ROOT / "data/fm1-companion.svg", t)
+        # optional udev rule (keeps the FM-1 and its USB hubs awake): shipped INACTIVE – the package never activates
+        # it by itself; the system check names the command (sudo install … /etc/udev/rules.d/)
+        udev = root / "usr/share/fm1-companion/udev"
+        udev.mkdir(parents=True)
+        shutil.copy2(ROOT / "packaging/udev/60-fm1-companion.rules", udev)
         (root / "usr/share/metainfo").mkdir(parents=True)
         shutil.copy2(ROOT / "packaging/fm1-companion.metainfo.xml", root / "usr/share/metainfo")
         man = root / "usr/share/man/man1"

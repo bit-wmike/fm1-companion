@@ -224,6 +224,7 @@ def usb_details(client: int | None) -> dict:
             out["product"] = _read(d / "product")
             out["manufacturer"] = _read(d / "manufacturer")
             out["speed"] = _read(d / "speed")
+            out["devnum"] = _read(d / "devnum")       # changes on every re-enumeration (careful mode)
             break
     return out
 
@@ -319,3 +320,156 @@ def alsa_card_for(port: PortInfo) -> str | None:
         if m and (PORT_RE.search(line) or FM1_NAME_RE.search(line)):
             return m.group(2)
     return None
+
+
+# ------------------------------------------------------- USB topology ---
+# Is the FM-1 behind one or more USB hubs? Hubs are the most common reason for an installation that starts but does
+# not finish (flash/robust.py "careful mode"). Everything from sysfs, without root.
+
+@dataclass
+class UsbNode:
+    """one USB device on the way from the computer to the FM-1 (the FM-1 itself, a hub or the root hub)"""
+    name: str                       # sysfs name: "1-1.2", root hub "usb1"
+    usb_id: str = ""
+    product: str = ""
+    manufacturer: str = ""
+    speed: str = ""                 # Mbit/s: 1.5, 12, 480, 5000 …
+    version: str = ""               # bcdUSB, e.g. "2.00", "2.10", "3.20"
+    hub: bool = False               # bDeviceClass 09
+    root: bool = False              # the computer's root hub
+    self_powered: bool | None = None   # configuration attribute bit 6 (the hub says so; not a measurement)
+    usb3: bool = False              # a hub with a SuperSpeed twin (USB 3 hub), USB 2 part seen here
+    max_power: str = ""             # bMaxPower, e.g. "100mA"
+    power_control: str = ""         # power/control: "on" or "auto" (autosuspend allowed)
+    autosuspend_ms: str = ""        # power/autosuspend_delay_ms
+    runtime_status: str = ""        # power/runtime_status: active | suspended …
+
+    @property
+    def autosuspend(self) -> bool:
+        return self.power_control == "auto"
+
+    def describe(self) -> str:
+        bits = [self.product or self.usb_id or self.name]
+        if self.usb_id and self.product:
+            bits.append(self.usb_id)
+        if self.speed:
+            bits.append(f"{self.speed} Mbit/s")
+        if self.hub and not self.root:
+            bits.append("USB 3" if self.usb3 else "USB 2")
+            if self.self_powered is not None:
+                bits.append("self-powered" if self.self_powered else "bus-powered")   # i18n: ignore (log/report)
+        if self.power_control:
+            bits.append(f"power/control={self.power_control}")
+        return f"{self.name}: " + ", ".join(bits)
+
+
+@dataclass
+class UsbLink:
+    """the USB path of one FM-1: the device and every hub in front of it (nearest first)"""
+    path: str
+    device: UsbNode | None = None
+    hubs: list[UsbNode] = field(default_factory=list)     # external hubs, nearest to the FM-1 first
+    root: UsbNode | None = None
+
+    @property
+    def found(self) -> bool:
+        return self.device is not None
+
+    @property
+    def behind_hub(self) -> bool:
+        return bool(self.hubs)
+
+    @property
+    def depth(self) -> int:
+        """number of external hubs between the computer and the FM-1"""
+        return len(self.hubs)
+
+    @property
+    def autosuspend_nodes(self) -> list[UsbNode]:
+        """the FM-1 and the external hubs that the kernel may put to sleep (power/control = auto)"""
+        return [n for n in ([self.device] if self.device else []) + self.hubs if n.autosuspend]
+
+    @property
+    def bus_powered_hubs(self) -> list[UsbNode]:
+        return [h for h in self.hubs if h.self_powered is False]
+
+    def lines(self) -> list[str]:
+        """for logs and reports (English, not shown as UI text)"""
+        out = [f"USB path {self.path}: " + (f"{self.depth} hub(s) in between" if self.hubs else "directly at the computer")]
+        for n in ([self.device] if self.device else []) + self.hubs + ([self.root] if self.root else []):
+            out.append("  " + n.describe())
+        return out
+
+
+def _usb_node(d: Path) -> UsbNode:
+    cls = _read(d / "bDeviceClass").lower()
+    attrs = _read(d / "bmAttributes")
+    try:
+        selfp = bool(int(attrs, 16) & 0x40) if attrs else None
+    except ValueError:
+        selfp = None
+    n = UsbNode(name=d.name, usb_id=f"{_read(d / 'idVendor')}:{_read(d / 'idProduct')}".strip(":"),
+                product=_read(d / "product"), manufacturer=_read(d / "manufacturer"), speed=_read(d / "speed"),
+                version=_read(d / "version"), hub=cls == "09", root=d.name.startswith("usb"),
+                self_powered=selfp, max_power=_read(d / "bMaxPower"),
+                power_control=_read(d / "power" / "control"),
+                autosuspend_ms=_read(d / "power" / "autosuspend_delay_ms"),
+                runtime_status=_read(d / "power" / "runtime_status"))
+    if n.hub and not n.root:
+        try:
+            v = float(n.version or 0)
+        except ValueError:
+            v = 0.0
+        # a USB 3 hub: SuperSpeed itself, or its USB 2 part has ports with a SuperSpeed peer
+        n.usb3 = v >= 3 or any(d.glob(f"{d.name}:*/{d.name}-port*/peer"))
+    return n
+
+
+def usb_parents(path: str) -> list[str]:
+    """"1-1.2.4" -> ["1-1.2", "1-1"] (external hubs, nearest first); the root hub is "usb1"."""
+    m = re.fullmatch(r"(\d+)-([\d.]+)", path or "")
+    if not m:
+        return []
+    ports = m.group(2).split(".")
+    return [f"{m.group(1)}-{'.'.join(ports[:k])}" for k in range(len(ports) - 1, 0, -1)]
+
+
+def usb_link(path: str, sysroot: str = "/sys") -> UsbLink:
+    """the USB topology of the device at `path` ("1-1.2"); an unknown path gives an empty UsbLink"""
+    base = Path(sysroot) / "bus" / "usb" / "devices"
+    link = UsbLink(path or "")
+    if not path or not (base / path).is_dir():
+        return link
+    link.device = _usb_node(base / path)
+    for p in usb_parents(path):
+        if (base / p).is_dir():
+            node = _usb_node(base / p)
+            node.hub = True                     # a parent in the path is always a hub
+            link.hubs.append(node)
+    m = re.match(r"(\d+)-", path)
+    if m and (base / f"usb{m.group(1)}").is_dir():
+        link.root = _usb_node(base / f"usb{m.group(1)}")
+    return link
+
+
+def usb_path_for_serial(serial: str, sysroot: str = "/sys") -> str:
+    """the sysfs path of the FM-1 with this serial number ("" if none or several)"""
+    base = Path(sysroot) / "bus" / "usb" / "devices"
+    hits = []
+    if serial and base.is_dir():
+        for d in base.iterdir():
+            if ":" not in d.name and _read(d / "serial") == serial and \
+                    f"{_read(d / 'idVendor')}:{_read(d / 'idProduct')}".lower() in FM1_USB_IDS:
+                hits.append(d.name)
+    return hits[0] if len(hits) == 1 else ""
+
+
+def fm1_usb_paths(sysroot: str = "/sys") -> list[str]:
+    """sysfs paths of all connected FM-1 by USB ID (running, update mode) – for the system check"""
+    base = Path(sysroot) / "bus" / "usb" / "devices"
+    out = []
+    if base.is_dir():
+        for d in sorted(base.iterdir()):
+            if ":" not in d.name and f"{_read(d / 'idVendor')}:{_read(d / 'idProduct')}".lower() in FM1_USB_IDS:
+                out.append(d.name)
+    return out

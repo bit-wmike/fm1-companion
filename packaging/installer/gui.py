@@ -4,7 +4,7 @@
 
   gui.py --source DIR                 interaktiv
   gui.py --source DIR --unattended [--prefix P] [--system] [--desktop] [--demo-data] [--no-menu]
-                                    [--no-fluidsynth-fix]
+                                    [--no-fluidsynth-fix] [--usb-power-rule]
 
 English, German when the system language is German (``core.language()``, ``core.tr()``). The risk notice is
 the app's own text (fm1companion/risk.py) and its German translation from fm1companion/locale/de/*.po, read
@@ -29,7 +29,7 @@ def unattended(args) -> int:
     prefix = Path(args.prefix).expanduser() if args.prefix else (core.SYSTEM_PREFIX if args.system else core.user_prefix())
     print(risk_title() + "\n\n" + "\n\n".join(risk_lines(Path(args.source))) + "\n")
     core.install(Path(args.source), prefix, args.system, not args.no_menu, args.desktop, args.demo_data, args.python,
-                 fluidsynth_fix=not args.no_fluidsynth_fix)
+                 fluidsynth_fix=not args.no_fluidsynth_fix, usb_power_rule=args.usb_power_rule)
     return 0
 
 
@@ -227,7 +227,13 @@ def interactive(args) -> int:
                            "HDMI-Soundkarte; FluidSynth bleibt installiert, die App startet es selbst)"))
     c_fluid.setChecked(True)
     c_fluid.setVisible(core.fluidsynth_service_enabled())   # only ask if the service is really active
-    for c in (c_menu, c_desk, c_demo, c_fluid):
+    c_udev = QCheckBox(tr("Keep the FM-1 and its USB hub awake while flashing (optional udev rule in "
+                          "/etc/udev/rules.d; helps with USB hubs; asks for the administrator password)",
+                          "FM-1 und seinen USB-Hub beim Flashen wach halten (optionale udev-Regel in "
+                          "/etc/udev/rules.d; hilft bei USB-Hubs; fragt nach dem Administrator-Passwort)"))
+    c_udev.setChecked(False)
+    c_udev.setVisible(core.udev_rule_source(src) is not None and not core.udev_rule_installed())
+    for c in (c_menu, c_desk, c_demo, c_fluid, c_udev):
         v.addWidget(c)
     v.addStretch(1)
     wz.addPage(p4)
@@ -276,6 +282,8 @@ def interactive(args) -> int:
             cmd += ["--demo-data"]
         if c_fluid.isHidden() or not c_fluid.isChecked() or system:
             cmd += ["--no-fluidsynth-fix"]
+        if not c_udev.isHidden() and c_udev.isChecked():
+            cmd += ["--usb-power-rule"]          # core.py asks for the password itself (pkexec)
         if system and os.geteuid() != 0:
             out.appendPlainText(tr("Please enter the administrator password …", "Bitte das Administrator-Passwort eingeben …"))
             cmd = ["pkexec"] + cmd
@@ -325,6 +333,7 @@ def main(argv=None) -> int:
     ap.add_argument("--demo-data", action="store_true")
     ap.add_argument("--no-menu", action="store_true")
     ap.add_argument("--no-fluidsynth-fix", action="store_true")
+    ap.add_argument("--usb-power-rule", action="store_true")
     ap.add_argument("--python", default="/usr/bin/python3" if Path("/usr/bin/python3").exists() else sys.executable)
     a, _ = ap.parse_known_args(argv)
     return unattended(a) if a.unattended else interactive(a)

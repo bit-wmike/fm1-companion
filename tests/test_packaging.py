@@ -53,8 +53,10 @@ def test_deb(dist):
               "./usr/lib/fm1-companion/fm1companion/data/deps.json", "./usr/lib/fm1-companion/fm1companion/icons/lucide/save.svg",
               "./usr/share/applications/fm1-companion.desktop", "./usr/share/metainfo/fm1-companion.metainfo.xml",
               "./usr/share/icons/hicolor/512x512/apps/fm1-companion.png", "./usr/share/icons/hicolor/scalable/apps/fm1-companion.svg",
-              "./usr/share/man/man1/fm1-companion.1.gz", "./usr/share/doc/fm1-companion/copyright"):
+              "./usr/share/man/man1/fm1-companion.1.gz", "./usr/share/doc/fm1-companion/copyright",
+              "./usr/share/fm1-companion/udev/60-fm1-companion.rules"):
         assert f in files, f
+    assert "./etc/udev" not in files and "./lib/udev" not in files and "./usr/lib/udev" not in files   # inactive
     assert "__pycache__" not in files and "root/root" in files
     # the Studio twin: shared host, every bundled version, page, service and help
     lib = "./usr/lib/fm1-companion/fm1companion/"

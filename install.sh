@@ -7,6 +7,9 @@
 #   ./install.sh --no-fluidsynth-fix
 #                           do NOT disable Debian's FluidSynth user service (default: disable it if active –
 #                           otherwise it grabs the HDMI sound card at every login; clearly reported)
+#   ./install.sh --usb-power-rule
+#                           also install the optional udev rule that keeps the FM-1 and its USB hubs awake while
+#                           flashing (asks for sudo; without the flag the script asks, --no-usb-power-rule: never)
 #   ./install.sh --help     show this help
 #
 # Graphical: FM-1-Companion-Suite-<version>.run, as a package: fm1-companion_<version>_all.deb
@@ -34,6 +37,9 @@ FM-1 Companion Suite installieren – für den eigenen Benutzer (App selbst brau
   ./install.sh --no-fluidsynth-fix
                           Debians FluidSynth-Benutzerdienst NICHT abschalten (Standard: abschalten, wenn aktiv –
                           er belegt sonst bei jeder Anmeldung die HDMI-Soundkarte; wird deutlich gemeldet)
+  ./install.sh --usb-power-rule
+                          zusätzlich die optionale udev-Regel installieren: hält das FM-1 und seine USB-Hubs beim
+                          Flashen wach (fragt nach sudo; ohne Schalter fragt das Skript, --no-usb-power-rule: nie)
 
 Wieder entfernen: ./uninstall.sh  (oder Startmenü › „FM-1 Companion deinstallieren“)
 HILFE
@@ -46,17 +52,22 @@ Install the FM-1 Companion Suite – for your own user (the app itself needs no 
   ./install.sh --no-fluidsynth-fix
                           do NOT disable Debian's FluidSynth user service (default: disable it if active –
                           otherwise it grabs the HDMI sound card at every login; clearly reported)
+  ./install.sh --usb-power-rule
+                          also install the optional udev rule: keeps the FM-1 and its USB hubs awake while
+                          flashing (asks for sudo; without the flag the script asks, --no-usb-power-rule: never)
 
 Remove again: ./uninstall.sh  (or start menu › "Uninstall FM-1 Companion")
 HELP
   fi
 }
 
-NO_APT=0; EXTRA=()
+NO_APT=0; EXTRA=(); UDEV=ask
 for a in "$@"; do
   case "$a" in
     --help|-h) usage; exit 0 ;;
     --no-apt) NO_APT=1 ;;
+    --usb-power-rule) UDEV=yes ;;
+    --no-usb-power-rule) UDEV=no ;;
     --desktop|--demo-data|--no-menu|--no-fluidsynth-fix) EXTRA+=("$a") ;;
   esac
 done
@@ -146,7 +157,34 @@ BIN="$HOME/.local/bin/fm1-companion"
 [[ " ${EXTRA[*]-} " == *" --no-menu "* ]] || ok "$(msg "Start menu entry 'FM-1 Companion' created (Multimedia)" \
                                                        "Startmenü-Eintrag 'FM-1 Companion' angelegt (Multimedia)")"
 
-# ---- 3. Check ----
+# ---- 3. Optional udev rule: USB power saving off for the FM-1 and the hubs in front of it ----
+RULE="$HERE/packaging/udev/60-fm1-companion.rules"
+if [[ -f "$RULE" && ! -f /etc/udev/rules.d/60-fm1-companion.rules && "$UDEV" != no ]]; then
+  if [[ "$UDEV" == ask ]]; then
+    UDEV=no
+    if [[ -t 0 ]]; then
+      info "$(msg "Optional: a udev rule keeps the FM-1 and its USB hub awake while flashing (helps when the FM-1 is
+    connected through a USB hub; it only switches USB power saving off for the FM-1 and the hubs in front of it)." \
+                  "Optional: Eine udev-Regel hält das FM-1 und seinen USB-Hub beim Flashen wach (hilft, wenn das FM-1
+    über einen USB-Hub angeschlossen ist; sie schaltet nur das USB-Stromsparen für das FM-1 und die Hubs davor ab).")"
+      read -r -p "$(msg "Install it to /etc/udev/rules.d (needs sudo)? [y/N] " \
+                        "Nach /etc/udev/rules.d installieren (braucht sudo)? [j/N] ")" ans || ans=""
+      case "$ans" in [yYjJ]*) UDEV=yes ;; esac
+    fi
+  fi
+  if [[ "$UDEV" == yes ]]; then
+    if sudo install -m 0644 "$RULE" /etc/udev/rules.d/60-fm1-companion.rules \
+       && sudo udevadm control --reload-rules && sudo udevadm trigger --subsystem-match=usb --action=change; then
+      ok "$(msg "udev rule installed: /etc/udev/rules.d/60-fm1-companion.rules" \
+                "udev-Regel installiert: /etc/udev/rules.d/60-fm1-companion.rules")"
+    else
+      warn "$(msg "The udev rule could not be installed – the app works without it." \
+                  "Die udev-Regel ließ sich nicht installieren – die App funktioniert auch ohne.")"
+    fi
+  fi
+fi
+
+# ---- 4. Check ----
 info "$(msg "Checking the installation" "Prüfe die Installation")"
 if "$BIN" --check; then
   ok "$(msg "Done. Start it from the start menu or with: fm1-companion" "Fertig. Starten über das Startmenü oder mit: fm1-companion")"

@@ -54,6 +54,8 @@ class Settings:
     check_on_start: bool = True
     auto_backup_before_update: bool = True
     keep_backups: int = 20                 # per device, 0 = keep all
+    # careful USB mode for flashing (flash/robust.py): "auto" (when the FM-1 is behind a USB hub), "always", "never"
+    careful_usb: str = "auto"
     # folders
     user_root: str = str(Path.home() / "FM-1")
     sample_roots: list[str] = field(default_factory=list)   # folders the sample library searches
