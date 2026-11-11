@@ -597,6 +597,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
         return "x0x", tag
     if "choralroot" in v or family.startswith("choralroot"):   # ChoralRoot answers INFO "ChoralRoot 0.39" (the catalog's
         return "choralroot-fm-1", tag                            # key "choralroot-fm-1")
+    if identity in _twin_identities():                  # FoMni, AMB-1, LOOM-8 (no INFO): their releases' identities;
+        return _twin_identities()[identity]             # FoMni's FM-1_8XXYYZZ lies inside FM1 Open's FM-1_8xxxxxx
     if re.fullmatch(r"FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)|FM-1_8\d{6}", identity or ""):
         # M-VAVE's FM1 Open (app/version.h FM1_UPDATE_PRODUCT, V14: FM-1_8000014; its SDK keeps FM-1_8xxxxxx)
         return "fm1-open", {"FM-1_8000014": "V14"}.get(identity, "")
@@ -624,6 +626,29 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
         if n in (15, 16):
             return f"stock-v{n}", f"V{n}"
     return "", ""
+
+
+_TWIN_IDS: dict[str, tuple[str, str]] | None = None
+
+
+def _twin_identities() -> dict[str, tuple[str, str]]:
+    """identity -> (key, tag) of the bundled studio twins of firmwares without an editor INFO (studio.FIRMWARES with no
+    backup over USB or "editor" False: FoMni, AMB-1, LOOM-8). Their release identities are their own (FoMni 0.4.1:
+    FM-1_8000401, AMB-1 1.3.2: FM-1_7010302, LOOM-8 0.14: FM-1_10001400) – nothing else would tell them from FM1 Open's
+    FM-1_8xxxxxx or an unknown firmware."""
+    global _TWIN_IDS
+    if _TWIN_IDS is None:
+        _TWIN_IDS = {}
+        try:
+            from . import studio
+            for fw, spec in studio.FIRMWARES.items():
+                if studio.no_backup(fw) or spec.get("editor") is False:
+                    for b in studio.builds(fw):
+                        if b.manifest.get("identity"):
+                            _TWIN_IDS[b.manifest["identity"]] = (fw, "v" + b.version.lstrip("vV"))
+        except Exception:                               # noqa: BLE001 – no twins: no such guess
+            pass
+    return _TWIN_IDS
 
 
 # firmwares whose INFO always names them (SLOOP "FELUCCA SLOOP 2.8.5", KARMA "FELUCCA KARMA 3.1", ...): a plain "FELUCCA

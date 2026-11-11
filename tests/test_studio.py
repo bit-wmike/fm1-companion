@@ -2097,3 +2097,20 @@ def test_loom_backup_round_trip_with_suite_code(node_studio, tmp_path):
         backup.restore(x.link, arch)
     s = b.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="live", stems=True)
     assert sorted(s.stems) == list(range(8)) and s.peak > 0.05
+
+
+def test_identities_without_info_name_their_twin(monkeypatch, tmp_path):
+    """the integration: FoMni's release identity FM-1_8XXYYZZ (0.4.1: FM-1_8000401) lies inside FM1 Open's FM-1_8xxxxxx;
+    FoMni, AMB-1 and LOOM-8 answer no INFO, so their bundled twins' identities name them before the FM1 Open pattern"""
+    from fm1companion import firmware
+    monkeypatch.setattr(firmware, "IDENT_FILE", tmp_path / "identities.json")
+    for fw in ("fomni", "amb-1", "loom-8"):
+        for b in studio.builds(fw):
+            assert firmware.guess_firmware(b.manifest["identity"]) == (fw, "v" + b.version), (fw, b.version)
+    assert firmware.guess_firmware("FM-1_8000014") == ("fm1-open", "V14")             # FM1 Open V14 itself
+    assert firmware.guess_firmware("FM-1_8123456")[0] == "fm1-open"                    # another build of its SDK
+    assert firmware.guess_firmware("FM-1_900", "FELUCCA ORBIT 1.0.0", "orbit")[0] == "orbit"
+    assert firmware.guess_firmware("FM-1_920", "FELUCCA v2.0", "felucca") == ("felucca", "v2.0")   # the INFO decides
+    assert firmware.guess_firmware("FM-1_920")[0] == "choralroot-fm-1"
+    firmware.remember_identity("FM-1_900", "orbit", "v1.0.0")                          # ORBIT names itself too
+    assert firmware.guess_firmware("FM-1_900", "FELUCCA v1.8.1", "felucca")[0] == "felucca"

@@ -13,6 +13,10 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 | 3b | **JIANT FM**, the public stable of its installer (V10.6z2), plus the earlier stable V10.60 and beta V10.61 | **done** (branch `studio-jiant`; same page, virtual device, backup ↔ twin, write back) |
 | 3c | **CoralFlower**, the stable of its installer (0.7.1), plus 0.7 | **done** (branch `studio-coralflower`; same page, virtual device, backup ↔ twin, write back) |
 | 3d | **KARMA**, the version its installer serves (3.1), plus 3.0.5 | **done** (branch `studio-karma`; same page, virtual device, backup ↔ twin through SLOOP's protocol, write back) |
+| 3e | **Felucca**, the stable of its installer (1.8.1), plus 1.8.0 | **done** (branch `w-felucca`; same page, virtual device, backup ↔ twin with the sample slots, write back; Felucca forks get its twin with a warning) |
+| 3f | **ChoralRoot FM-1**, the release its installer offers (0.39), plus 0.38 | **done** (branch `w-group4`; same page, virtual device, backup ↔ twin with RESTART, write back; loop slots on the panel) |
+| 3g | **X0X** (1.2.1, 1.2.0), **FoMni** (0.4.1, 0.4), **AMB-1** (1.3.2, 1.3.1), **LOOM-8** (0.14, 0.13.1) | **done** (branch `w-cv`; X0X and LOOM-8: backup ↔ twin as their own image, taken whole, write back; FoMni and AMB-1 have no backup over USB: play, export, studio states) |
+| – | **ORBIT**, **Hortator**, **GR!MM** | **no twin** (ORBIT: TE's CLUSTER tables are not relicensed; Hortator, GR!MM: their own editor protocols) – recognised, ORBIT's backups through SLOOP's protocol |
 | 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V15/V16 differ | **done** (branch `w-fm1open`; the FM1 Open twin for FM1 Open devices – backup ↔ twin over its own file protocol, write back – and as the stand-in for V15/V16 with a note; V15's factory voice restore) |
 | – | **Original V16** | **paused, not dropped** |
 | – | **Original V15: own voices into a bank A–D** (the same commands 33/34 as M-VAVE's factory restore, other data; the bank's current voices cannot be read back first) | **needs a hardware test** – not offered in the app; only the factory restore is |
