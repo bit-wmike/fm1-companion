@@ -13,14 +13,14 @@ from .common import confirm, german_buttons, icon, show_error
 
 
 class SettingsDialog(QDialog):
-    def __init__(self, ctx, parent=None):
+    def __init__(self, ctx, parent=None, tab: str = ""):
         super().__init__(parent)
         self.ctx = ctx
         s = ctx.settings
         self.setWindowTitle(_("Settings"))
         self.setMinimumSize(620, 460)
         lay = QVBoxLayout(self)
-        tabs = QTabWidget()
+        self.tabs = tabs = QTabWidget()
         lay.addWidget(tabs)
 
         # General
@@ -59,6 +59,11 @@ class SettingsDialog(QDialog):
         self.language_hint.setProperty("role", "small")
         f.addRow(_("Language:"), self.language)
         f.addRow("", self.language_hint)
+        reset = QPushButton(icon("edit-undo", "document-revert"), _("Default values"))
+        reset.setToolTip(_("Puts the options in this window back to their default values (also appearance and "
+                           "recording). Folders, devices and your firmware list stay. Only saved with OK."))
+        reset.clicked.connect(self.restore_defaults)
+        f.addRow("", reset)
         tabs.addTab(g, _("General"))
 
         # Appearance
@@ -96,9 +101,11 @@ class SettingsDialog(QDialog):
         af0.addRow(_("Theme:"), self.theme)
         af0.addRow(_("Accent color:"), self.accent)
         af0.addRow(_("Icons:"), self.icons)
+        self.icons.setToolTip(_("Icons already shown change completely after restarting the app."))
         af0.addRow(_("Interface size:"), self.zoom)
         af0.addRow(_("Desktop notifications:"), self.notify)
         af0.addRow("", self.splash)
+        self.splash.setToolTip(_("Applies from the next start."))
         wiz = QPushButton(icon("tools-wizard"), _("Run setup assistant again …"))
         wiz.clicked.connect(self._wizard)
         af0.addRow("", wiz)
@@ -116,7 +123,9 @@ class SettingsDialog(QDialog):
         h.addWidget(b)
         of.addRow(_("Main folder:"), h)
         ol.addLayout(of)
-        hint = QLabel(_("It holds backups, projects, kits, recordings, firmware and the sample folder “Samples”."))
+        hint = QLabel(_("It holds backups, projects, kits, recordings, firmware and the sample folder “Samples”.")
+                      + " " + _("Choosing another folder does not move existing files – move them yourself "
+                                "(with the app closed)."))
         hint.setWordWrap(True)
         ol.addWidget(hint)
         ol.addWidget(QLabel(_("More sample folders (e.g. your Pocket Operator samples):")))
@@ -174,11 +183,44 @@ class SettingsDialog(QDialog):
         tabs.addTab(d, _("Devices"))
         self._fill_devs()
 
+        # Storage: sizes, cleanup (measured when the tab is first shown)
+        from .storage_tab import StorageTab
+        self.storage = StorageTab(ctx, self)
+        self.storage_index = tabs.addTab(self.storage, _("Storage"))
+        tabs.currentChanged.connect(self._tab_changed)
+        if tab == "storage":
+            tabs.setCurrentIndex(self.storage_index)
+
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         german_buttons(bb)
         bb.accepted.connect(self._ok)
         bb.rejected.connect(self.reject)
         lay.addWidget(bb)
+
+    def _tab_changed(self, i):
+        if i == self.storage_index and not self.storage.cats:
+            self.storage.refresh()
+
+    def restore_defaults(self):
+        """default values into the widgets (General, Appearance, Recording, sample options); saved only with OK"""
+        from . import theme as th
+        d = config.Settings()
+        self.channel.setCurrentIndex(max(0, self.channel.findData(d.channel)))
+        self.check.setChecked(d.check_on_start)
+        self.autobk.setChecked(d.auto_backup_before_update)
+        self.keep.setValue(d.keep_backups)
+        self.language.setCurrentIndex(max(0, self.language.findData(i18n.SYSTEM)))
+        self.theme.setCurrentIndex(max(0, self.theme.findData(d.theme)))
+        if self.accent.findData(th.DEFAULT_ACCENT) >= 0:
+            self.accent.setCurrentIndex(self.accent.findData(th.DEFAULT_ACCENT))
+        self.icons.setCurrentIndex(max(0, self.icons.findData("app")))
+        self.zoom.setValue(100)
+        self.notify.setCurrentIndex(max(0, self.notify.findData("background")))
+        self.splash.setChecked(True)
+        self.norm.setChecked(d.sample_default_normalize)
+        self.trim.setChecked(d.sample_default_trim)
+        self.aud.setText(d.audacity_cmd)
+        self.open_aud.setChecked(d.record_open_audacity)
 
     @staticmethod
     def _swatch(col: str):
@@ -287,6 +329,7 @@ class SettingsDialog(QDialog):
         s.sample_default_trim = self.trim.isChecked()
         s.audacity_cmd = self.aud.text().strip() or "audacity"
         s.record_open_audacity = self.open_aud.isChecked()
+        self.storage.apply()
         lang = self.language.currentData() or i18n.SYSTEM
         self.language_changed = lang != getattr(s, "language", i18n.SYSTEM)
         s.language = lang
