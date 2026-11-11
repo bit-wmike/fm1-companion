@@ -23,10 +23,12 @@ and the official firmware. Everything around the device in one app – built for
 
 ## Screenshots
 
-Taken in demo mode (`fm1-companion --demo`, two simulated FM-1), English UI.
+Taken in demo mode (`fm1-companion --demo`, two simulated FM-1), English UI, version 2.5.0.
 
 | | |
 |---|---|
+| ![Studio with the SLOOP twin – the second demo FM-1 runs SLOOP 2.8.5](docs/screenshots/studio-sloop.png) | ![Overview – the active FM-1 at a glance](docs/screenshots/overview.png) |
+| **Studio** with another firmware – here SLOOP 2.8.5 (also Skiff, JIANT FM, CoralFlower, KARMA) | **Overview** – device, backup, firmware & updates, quick access |
 | ![Projects – view patterns and songs, play them on the FM-1, export MIDI](docs/screenshots/project-view.png) | ![Compose – generate rhythms, chords, bass and melodies, preview on the FM-1](docs/screenshots/compose.png) |
 | **Projects › View & Export** – patterns, songs, MIDI export, play on the FM-1 | **Compose** – generate parts, preview with the FM-1's own sounds, undo |
 | ![Backups – look inside every backup and restore parts](docs/screenshots/backups-browse.png) | ![Firmware+ – catalog of community firmwares](docs/screenshots/firmware-catalog.png) |
