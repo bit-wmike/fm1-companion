@@ -418,8 +418,12 @@ optionally `extra` (further licence files), `compile` and `license_file` (FM1 Op
 `2.8.5`, KARMA's "KARMA 3.1" → `3.1`), `objects` (further link inputs, KARMA's C++ built with clang++) and, for the
 Python side, `tracks` and `projects`.
 `build_studio()` is the same for all; a new firmware adds an entry, a glue file, and its key in
-`fm1companion/studio.py` `FIRMWARES`. Optional: `version_ref` (the version from the ref, CoralFlower), `cflags`
-(further compiler flags), `release_status`.
+`fm1companion/studio.py` `FIRMWARES`. Optional: `version_ref` (the version from the ref, CoralFlower, ChoralRoot, X0X),
+`cflags` (further compiler flags), `release_status`, `submodules` (Felucca: path → repository, put in at the tag's
+gitlinks, `_submodules()`) or `prepare` (fm1-base's AMB-1 and LOOM-8: their submodules and fm1-base's own host build
+before the compile); both record the submodules' commits as the manifest's `sources`, which
+`tools/make_source_tarballs.py` packs. `--repo NAME=…` clones go into one table (`REPOS`) for the firmwares and their
+submodules alike.
 
 If something in the firmware's interfaces changes between versions (names in `hostsim.c`, flash layout,
 project storage), the glue must be adapted; the manifest records the checksum of the glue layer (`glue_sha256`),
@@ -556,7 +560,13 @@ A further firmware follows the same pattern: its own entry in `STUDIOS`, its own
 `StudioService.firmware_for()` knows it; `"stand_in"` names device firmwares without a twin of their own that open it). The host
 (JS) and the rest of the Python side stay the same. A firmware with SLOOP's backup protocol and format (`sloopbk.py`)
 says so in its `FIRMWARES` entry (`"backup": "sloop"`, SLOOP and KARMA): the twin's tolerant load then goes through
-`sloopbk.restore_tolerant`. See `docs/ROADMAP.md`.
+`sloopbk.restore_tolerant`. The other `FIRMWARES` flags: `"samples": True` (Felucca's protocol with user sample slots
+the twin keeps – Skiff, Felucca: the tolerant load takes them, so writing back does not erase the device's samples;
+`tests/test_studio.py::test_sample_slot_twins_are_flagged` checks every bundled inventory against it),
+`"restart": True` (the firmware reads a restore at its next start: CoralFlower, ChoralRoot), `"backup"` "fm1open" /
+"x0x" / "loom-8" (their own protocol and file) or `None` (no backup over USB: FoMni, AMB-1 – `studio.no_backup`),
+`"editor": False` (no INFO to ask: LOOM-8), `"settings_id"` (the settings object left out on "write back without
+settings"; `None`: none), `"stand_in"`. See `docs/ROADMAP.md`.
 
 ### Firmwares checked without a twin (2026-11-11)
 
