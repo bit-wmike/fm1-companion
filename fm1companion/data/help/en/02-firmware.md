@@ -30,7 +30,8 @@ clean state and no leftovers of the old one (settings, projects, sample areas) s
 plan says so: “Switching from X to Y: the app installs the original firmware V15 first, then Y”.
 
 * **Update or downgrade within the same firmware** (e.g. SLOOP 2.8.5 → 2.8.6, KARMA 3.1 → 3.0.5): directly, without
-  the V15 step. A fork is a firmware of its own – SLOOP → KARMA is a switch.
+  the V15 step – also when the catalog says the firmware is installed from V15 (the FM-1 already runs it and its
+  own update loader). A fork is a firmware of its own – SLOOP → KARMA is a switch.
 * **Firmware not recognised** (the app cannot tell what runs on the FM-1): counts as a switch, so via V15.
 * **The FM-1 already runs the original V15**, or you go **back to the original V15**: directly.
 * **V16**: as before – to V16 from a community firmware and the way back from V16 always go via V15.

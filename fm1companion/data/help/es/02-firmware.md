@@ -30,7 +30,8 @@ arranca desde un estado limpio y no quedan restos del anterior (ajustes, proyect
 plan de instalación lo indica: “Cambio de X a Y: la app instala primero el firmware original V15 y después Y”.
 
 * **Actualización o vuelta atrás dentro del mismo firmware** (p. ej. SLOOP 2.8.5 → 2.8.6, KARMA 3.1 → 3.0.5):
-  directamente, sin el paso por V15. Un fork es un firmware propio: SLOOP → KARMA es un cambio.
+  directamente, sin el paso por V15, también cuando el catálogo indica que el firmware se instala desde V15 (el FM-1
+  ya funciona con él y con su cargador de actualización). Un fork es un firmware propio: SLOOP → KARMA es un cambio.
 * **Firmware no reconocido** (la app no sabe qué funciona en el FM-1): cuenta como cambio, así que pasa por V15.
 * **El FM-1 ya funciona con la V15 original**, o **vuelves a la V15 original**: directamente.
 * **V16**: como antes: a V16 desde un firmware de la comunidad y la vuelta desde V16 pasan siempre por V15.

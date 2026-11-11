@@ -233,8 +233,9 @@ def same_firmware(state: DeviceState, t: Target) -> bool:
 
 def v15_option(state: DeviceState, t: Target) -> str:
     """Intermediate step via stock V15 (policy: "always via V15 first – except updates within the same firmware"):
-    none (update/downgrade of the same firmware, the device already runs V15, the target is stock itself, update
-    mode), locked (V16 switch or the catalog requires V15) or default_on (every other switch: from another custom
+    none (update/downgrade of the same firmware – even when the catalog requires V15 –, the device already runs V15,
+    the target is stock itself, update mode), locked (V16 switch, or a switch to a firmware the catalog requires V15
+    for) or default_on (every other switch: from another custom
     firmware, from stock V13/V14/V16 or from an unknown firmware – the expert can opt out)."""
     if state.identity == "FM-1_015" or state.update_mode:
         return "none"
@@ -242,10 +243,10 @@ def v15_option(state: DeviceState, t: Target) -> str:
         return "locked"
     if t.is_stock:
         return "none"
+    if same_firmware(state, t):              # (also with the catalog's requiresStockV15: the device already runs this
+        return "none"                        # firmware and its own update loader)
     if t.requires_stock_v15:
         return "locked"
-    if same_firmware(state, t):
-        return "none"
     return "default_on"
 
 

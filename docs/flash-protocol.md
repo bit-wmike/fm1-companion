@@ -114,8 +114,8 @@ names on a non-FM-1 VID are never probed.
   because (a) installers/loaders assume V15's boot area and data layout, (b) another custom firmware's
   step 1 may refuse foreign loaders or its saved data may crash the next firmware, (c) V15 is the
   well-trodden path.
-* **App semantics (decision):** `requires_stock_v15` → the device must report `FM-1_015` when the
-  target install starts. Otherwise the plan first installs the hash-verified official V15
+* **App semantics (decision):** `requires_stock_v15` → on a switch, the device must report `FM-1_015` when the
+  target install starts (an update within the same firmware goes directly, §12). Otherwise the plan first installs the hash-verified official V15
   (`db1642b2…`, own stock loader), verifies `FM-1_015`, then installs the target. TransitFM1 also
   reports `FM-1_015`; that is its documented purpose, so it is accepted.
 * Builtin Melodee/Skiff/SLOOP/KARMA specs keep `requires_stock_v15 = False` (their own installers handle
@@ -161,11 +161,11 @@ Recovery's *Finish installation* is unchanged (it writes exactly the interrupted
 
 | Case (`planner.v15_option`) | V15 step |
 |---|---|
-| Update / downgrade / reinstall of the **same firmware** (`planner.same_firmware`) | `none` – directly |
+| Update / downgrade / reinstall of the **same firmware** (`planner.same_firmware`), also when the catalog sets `requires_stock_v15` (the device already runs that firmware and its own update loader) | `none` – directly |
 | Switch custom A → custom B (a fork is another firmware: SLOOP → KARMA), stock V13/V14 → custom, own file (key `eigene`) | `default_on` – V15 first, expert opt-out |
 | Running firmware **not recognised** (no key, "?", or the INFO answer names another firmware than the profile) | `default_on` – counts as a switch |
 | Device already runs `FM-1_015`, target is original V15 itself, device in update mode | `none` |
-| Target has `requires_stock_v15` (catalog) | `locked` |
+| **Switch** to a target with `requires_stock_v15` (catalog) | `locked` |
 | V16 switch (`planner.v16_switch`: to V16 from a non-stock firmware, from V16 to anything but V15) | `locked` (unchanged) |
 | Target stock V16 from stock | `none` (unchanged) |
 

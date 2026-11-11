@@ -30,7 +30,8 @@ einem sauberen Stand, und keine Reste der alten (Einstellungen, Projekte, Sample
 Installationsplan sagt es: „Wechsel von X zu Y: Die App spielt zuerst die Original-Firmware V15 auf, dann Y“.
 
 * **Update oder Downgrade innerhalb derselben Firmware** (z. B. SLOOP 2.8.5 → 2.8.6, KARMA 3.1 → 3.0.5): direkt, ohne
-  den V15-Schritt. Ein Fork ist eine eigene Firmware – SLOOP → KARMA ist ein Wechsel.
+  den V15-Schritt – auch wenn der Katalog sagt, dass die Firmware von V15 aus installiert wird (das FM-1 läuft schon
+  mit ihr und ihrem Update-Loader). Ein Fork ist eine eigene Firmware – SLOOP → KARMA ist ein Wechsel.
 * **Firmware nicht erkannt** (die App weiß nicht, was auf dem FM-1 läuft): gilt als Wechsel, also über V15.
 * **Das FM-1 läuft schon mit der Original-V15**, oder du gehst **zurück zur Original-V15**: direkt.
 * **V16**: wie bisher – zu V16 von einer Community-Firmware und der Rückweg von V16 gehen immer über V15.

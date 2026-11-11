@@ -237,6 +237,19 @@ def test_policy_same_firmware_update_and_downgrade_direct(env):
     assert plan_install(ks, Target.from_spec(karma, tag="v3.0.5")).v15_option == "none"     # KARMA downgrade
 
 
+def test_policy_catalog_flag_same_firmware_direct_switch_locked(env):
+    """requiresStockV15 (catalog): an update within that firmware goes directly, a switch to it stays locked via V15"""
+    from fm1companion.flash.planner import Target, plan_install, v15_option
+    orbit = _spec(key="orbit", name="ORBIT", requires_stock_v15=True, loader_family="sloopG3", product="FM-1_900")
+    on_orbit = _sloop_state(firmware_key="orbit", firmware_name="ORBIT", version="FELUCCA ORBIT 1.0.0")
+    upd = plan_install(on_orbit, Target.from_spec(orbit, tag="v1.0.1"), via_v15=True)
+    assert upd.ok and upd.v15_option == "none" and not upd.via_stock and "stock" not in upd.kinds()
+    assert v15_option(on_orbit, Target.from_spec(orbit)) == "none"
+    sw = plan_install(_sloop_state(), Target.from_spec(orbit), via_v15=False)        # SLOOP -> ORBIT: a switch
+    assert sw.v15_option == "locked" and sw.via_stock and not sw.direct
+    assert sw.kinds().index("stock") < sw.kinds().index("install")
+
+
 def test_policy_switch_goes_via_v15(env):
     from fm1companion import firmware
     from fm1companion.flash.planner import DeviceState, Target, plan_install
