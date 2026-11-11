@@ -15,6 +15,7 @@ fm1companion/sims/sloop-studio/<version>/     manifest.json, twin.wasm, LICENSE,
 fm1companion/sims/coralflower-studio/<version>/  manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md,
                                               LICENSING-choralroot.md, THIRD_PARTY.txt
 fm1companion/sims/karma-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/felucca-studio/<version>/   manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
 fm1companion/sims/_studio/                    shared host (page, worker, AudioWorklet, control surface)
 ```
 
@@ -22,7 +23,8 @@ When opening, `studio.pick_build()` picks the firmware and version of the device
 version (with a warning). Bundled: Melodee 1.6.0-rc.7, rc.8, 1.6.0, 1.6.1; Skiff 2.1.1, 2.2; JIANT FM V10.60, V10.61, V10.6z2 (its stable);
 SLOOP 2.8.4, 2.8.5 (its stable) (about 0.9–1.4 MB of wasm each);
 CoralFlower 0.7, 0.7.1 (its stable) (about 1.2–1.4 MB of wasm each, CoralFlower's 0.7 MB);
-KARMA 3.0.5, 3.1 (its stable) (about 0.9–1.4 MB of wasm each).
+KARMA 3.0.5, 3.1 (its stable) (about 0.9–1.4 MB of wasm each);
+Felucca 1.8.0, 1.8.1 (its stable) (about 0.9 MB of wasm each).
 
 ## Requirements (only on the build machine, not on the Pi)
 
@@ -178,6 +180,61 @@ own backups with `bkNewer`). A KARMA backup onto SLOOP is refused before anythin
 2.6) onto KARMA is allowed, as KARMA's editor allows it. Not in any backup: the three saved songs of SAVE on the SONG
 screen (FM6's two sectors and 0xFB000) – KARMA's own backup leaves them out too.
 
+Felucca (the base of the family) has release tags `vX.Y[.Z]`; its release workflow builds them with
+`tools/build.py --release X.Y.Z` (the identity FM-1_9XY, the version string `vX.Y.Z` = `felucca.c` FELUCCA_VERSION at the
+tag). Its hardware layer and six engines are **git submodules** (`firmware/bsp` = felucca-bsp, MPL-2.0;
+`firmware/engines` = Felucca-Engines, MIT): `git archive` leaves them empty, so the build puts each in at the commit the
+tag records (`STUDIOS["felucca-studio"]["submodules"]`, `_submodules()`; a clone from `--repo felucca-bsp=…` /
+`--repo Felucca-Engines=…`, else `/tmp/felucca-bsp`, `/tmp/felucca-engines`, else a bare clone into `--work`):
+
+```sh
+git clone https://github.com/hugelton/Felucca /path/to/felucca
+python3 tools/build_sims.py --target felucca-studio --ref v1.8.2 --repo felucca=/path/to/felucca \
+    --repo felucca-bsp=/path/to/felucca-bsp --repo Felucca-Engines=/path/to/Felucca-Engines
+```
+
+→ `fm1companion/sims/felucca-studio/<version>/` (the folder is the version without its "v", `1.8.1`), identity from the
+version as `tools/build.py --release` makes it (`felucca_release_identity`: v1.8.1 → FM-1_918), `tracks` 4,
+`projects` 4 (SAVE's PROJECT A–D), the include paths of Felucca's own emulator build (`cflags`: `firmware/hal`,
+`firmware/bsp/chip`, `firmware/bsp/boards/fm1`). The manifest names the submodules' commits (`sources`);
+`tools/make_source_tarballs.py` packs them beside Felucca's own tarball. The list is
+`STUDIOS["felucca-studio"]["refs"]`, the status `STUDIOS["felucca-studio"]["release_status"]`.
+
+| Felucca version | Tag / commit | Status (manifest `release_status`, 2026-11-11) | Reports (INFO / identity) | Backup objects | Folder |
+|---|---|---|---|---|---|
+| 1.8.1 | `v1.8.1` f4df2964649f301ba5abd0ec6000110068672f25 | **stable** – what its web installer installs (gh-pages `firmware/felucca-1.8.1.fwsc`, README "Stable release: 1.8.1") | `FELUCCA v1.8.1` / `FM-1_918` | 13 | `felucca-studio/1.8.1` |
+| 1.8.0 | `v1.8.0` 9f62297c2db627bbcb20d7ce896683a17318674c | previous stable | `FELUCCA v1.8.0` / `FM-1_918` | 13 | `felucca-studio/1.8.0` |
+
+Both pin felucca-bsp 5942e68b89ab9ccd23f2c541d712ca38fe635f11 and Felucca-Engines d0260074ce100a47675814b7f38d61f11176c926.
+`v1.8.2-beta` (only the recognition of a newer flash chip) is a beta and not bundled: a 1.8.2 FM-1 gets the 1.8.1 twin
+with a warning. Felucca's versions sort with the generic `studio.version_key`.
+
+A Felucca FM-1 answers INFO "FELUCCA v1.8.1" – no other name (`protocol.Info.firmware_name` "felucca", the catalog's key
+`felucca`; `firmware.guess_firmware` "felucca" for such an INFO). The identity alone does not tell Felucca: its releases
+are FM-1_9XY, which Felucca forks built the same way share (Jangada, Golana …: FM-1_910 … 913), and a plain
+`tools/build.py` build is FM-1_900 – SLOOP's (and 31 other firmwares') identity. SLOOP always names itself
+("FELUCCA SLOOP 2.8.5"), so the INFO decides: `backup.protocol()` asks INFO for the hint "felucca" too (before, that hint
+skipped INFO), and `guess_firmware` no longer takes what this machine remembered for FM-1_900 (e.g. "sloop") over a plain
+Felucca INFO. **Felucca forks** that answer INFO "FELUCCA v…" without a name of their own, or a fork chosen for the
+device from the catalog (`felucca-mpe`, `felucca-salt` …: `StudioService.firmware_for` takes the prefix), get the
+**Felucca twin with a warning** (`studio.felucca_fork_note`: the fork's key, or a package identity other than the
+twin's; the version check of `pick_build` / `check_versions` warns too and writing back needs the expert tick for
+another version). Their backup protocol and inventory are Felucca's, the device checks every object written back, and
+a safety backup comes first – a fork that reports exactly Felucca's version string and identity cannot be told apart.
+
+Felucca's backup (editor commands 65–67, `editor_backup.c` ED_BK_IDS, `web/fm1backup.js` BACKUP_IDS; file format
+"felucca-backup", `firmware` = the INFO string): 0 the running music (FUN10, 3840 bytes), 1 the settings (572), 2–5 the
+projects A–D, 6–7 the user preset banks (UPB1, 3080), 8 the FM6 patch bank of 1.0–1.0.2 (listed empty since 1.0.3; an
+older archive's bank goes into the user presets), 9 the user presets' FM6 patches (3728), 32–34 the sample slots
+USR1–USR3 (restored through SMP_BEGIN / WRITE / END). `backup.FELUCCA_IDS` / `KNOWN_ID_SETS[13]` (before, 13 objects were
+an unknown inventory: the inspector warned "unknown to the web editor", named object 9 "CZ-1 bank 1", knew no firmware
+for a backup of Felucca's own editor and refused to copy it), `backup.is_felucca()` (13 objects; the 12 and 11 of
+1.0–1.0.2 and before FM6 only with "felucca" in the name: they are Melodee's too). The twin's tolerant load takes the
+sample slots too (`FIRMWARES["felucca"]["samples"]`: the twin keeps them), so writing back after "Fetch from FM-1" keeps
+the device's samples. Skiff's entry has the flag as well: before, the tolerant load left a Skiff FM-1's sample slots out of
+the twin, and writing back then erased them on the device (SMP_ERASE of the empty slot;
+`tests/test_studio.py::test_fetch_and_write_back_keep_the_sample_slots`).
+
 Each `STUDIOS` entry names what differs between firmwares: `generate` (the header generators), `version_file` /
 `version_re` (where the version string lives), `identity` (the release identity from the version) or `identity_src`
 (read from the source tree: JIANT, SLOOP, CoralFlower, KARMA), `defines` (version and identity for the glue), `notice`,
@@ -252,6 +309,19 @@ single-core build), `FELUCCA_UAC` 0, `FELUCCA_CDC` 0, no TRS MIDI, no `recovery.
 `st_transport_set` (0 stop, 1 PLAY, 2 the song from the top: song mode when the song order's parts exist, 3 restart)
 and lets the audio ISR take the request at once.
 
+### The Felucca glue in short
+
+`felucca_studio.c` follows Felucca's own browser emulator (`web/emu/felucca_web.c`, the X0X design: its HAL stand-ins,
+`main.c`'s boot `web_power_on`, the power-on LED sweep and 1.2's idle animation, the clock driven by the audio,
+`audio.c`'s real ISR) and adds what the emulator leaves out: `FELUCCA_OTA` 1 (felucca-bsp's `usb.c` SysEx frames →
+`editor.c` `ed_service` → `ota_wire_send`; `chip/ota.c` answers the identity handshake, an update request is dropped;
+`ota_hw.c` is the device's and stays out), the user sample slots' flash hooks (`fl_erase4k` / `fl_write` on nor[]),
+USB = configured, MIDI out drained from usb.c's rings. `FELUCCA_CDC` 1 as the release (the MENU row; nothing behind it),
+one core (`FELUCCA_CPU2`'s stubs as the emulator's: MENU › 2ND CORE has no second core), no AFTERTOUCH key pressure
+(`keytouch.c` is not in the emulator either), no USB audio, no TRS MIDI. `st_boot` runs the splash's 430 ms (device time).
+`st_transport_set(how)`: 0 stop (`ed_flash_stop`), 1 PLAY, 2 the SONG chain from the top (editor SONG op 2,
+`chain_prepare`; no rows: as 1), 3 restart.
+
 ## Checking
 
 ```sh
@@ -261,11 +331,12 @@ QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 python3 tests/ui_studio_
 ```
 
 `tests/test_studio.py::test_builds_side_by_side` (Melodee), `test_skiff_builds_side_by_side`,
-`test_jiant_builds_side_by_side`, `test_sloop_builds_side_by_side`, `test_coralflower_builds_side_by_side` and
-`test_karma_builds_side_by_side` expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`,
+`test_jiant_builds_side_by_side`, `test_sloop_builds_side_by_side`, `test_coralflower_builds_side_by_side`,
+`test_karma_builds_side_by_side` and `test_felucca_builds_side_by_side` expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`,
 `tests/studio_twin_jiant.mjs`, `tests/studio_twin_sloop.mjs` and `tests/studio_twin_karma.mjs` are the Skiff, JIANT,
 SLOOP and KARMA core checks in node (editor, identity, backup GET/PUT round trip – SLOOP's and KARMA's with SLOOP's
-commands 34–36 –, flash persistence, PLAY, audio, fork, USB MIDI out, stop); `tests/studio_twin_coralflower.mjs` the
+commands 34–36 –, flash persistence, PLAY, audio, fork, USB MIDI out, stop); `tests/studio_twin_felucca.mjs` is Felucca's (INFO, identity FM-1_918, the 13-object round trip with a sample in USR1 through
+SMP_*, flash persistence, PLAY, audio, fork, transport, the editor's SONG stop); `tests/studio_twin_coralflower.mjs` the
 CoralFlower one (INFO, identity, a take recorded on the panel, the 26-object GET/PUT round trip with RESTART, the power
 cycle, PLAY, audio, fork, MIDI out, transport, mutes).
 The packages (.deb, .run) include everything under `fm1companion/` (`tools/build_common.app_files`);
@@ -280,6 +351,7 @@ says so in its `FIRMWARES` entry (`"backup": "sloop"`, SLOOP and KARMA): the twi
 `sloopbk.restore_tolerant`. See `docs/ROADMAP.md`.
 
 Source tarballs for a release: `python3 tools/make_source_tarballs.py --repo melodee=… --repo skiff=… --repo JIANT=…
---repo sloop-fm1=… --repo CoralFlower=… --repo karma-fm1=…` (without `--repo` it looks in `/tmp/<name>`, then in lower
+--repo sloop-fm1=… --repo CoralFlower=… --repo karma-fm1=… --repo Felucca=… --repo felucca-bsp=… --repo Felucca-Engines=…`
+(a manifest's `sources`, Felucca's submodules, are packed too; without `--repo` it looks in `/tmp/<name>`, then in lower
 case: `/tmp/jiant`, `/tmp/coralflower`, then the manifests' firmware key: `/tmp/sloop` for `sloop-fm1`, `/tmp/karma`
 for `karma-fm1`) packs every commit named in a manifest.

@@ -4347,3 +4347,17 @@ msgstr "Parte {n} cargada."
 
 msgid "Part {n} is empty."
 msgstr "La parte {n} está vacía."
+
+#: fm1companion/studio.py
+#, python-brace-format
+msgid "This FM-1 may run a fork of Felucca or another build of it ({detail}); the studio runs Felucca's own code – sound and functions may differ, and the FM-1 checks every part written back."
+msgstr "Puede que este FM-1 ejecute un fork de Felucca u otra compilación de él ({detail}); el Studio ejecuta el código propio de Felucca – el sonido y las funciones pueden diferir, y el FM-1 comprueba cada parte que se vuelve a escribir."
+
+#: fm1companion/studio.py
+#, python-brace-format
+msgid "identity {device}, the twin's {twin}"
+msgstr "identidad {device}, la del gemelo {twin}"
+
+#: fm1companion/ui/pages/studio.py
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the four projects A–D, the running music, the user presets with their FM6 patches and the sample slots USR1–USR3. Playback on the FM-1 stops in the process."
+msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo: los cuatro proyectos A–D, la música en curso, los presets de usuario con sus patches FM6 y los espacios de muestras USR1–USR3. La reproducción en el FM-1 se detiene durante el proceso."

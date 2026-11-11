@@ -11,7 +11,8 @@ the builds (see the simulators' NOTICE).
 
 Without --repo, /tmp/<name> is searched (then /tmp/<name in lower case>, e.g. /tmp/jiant for JIANT, then /tmp/<firmware key>
 of the manifests, e.g. /tmp/sloop for sloop-fm1, /tmp/karma for karma-fm1). If a clone or a commit is missing, the script reports it and
-exits with code 1 (the remaining tarballs are still written).
+exits with code 1 (the remaining tarballs are still written). A manifest's "sources" (the build's git submodules, Felucca's
+felucca-bsp and Felucca-Engines) are packed the same way: --repo felucca-bsp=…, else /tmp/felucca-bsp, /tmp/felucca-engines.
 """
 from __future__ import annotations
 
@@ -40,6 +41,10 @@ def wanted() -> dict[tuple[str, str], list[str]]:
             out.setdefault((name, commit), []).append(str(m.parent.relative_to(SIMS)))
             if d.get("firmware"):
                 FIRMWARE_OF.setdefault(name, d["firmware"])
+        for sub in d.get("sources", []):             # (git submodules of the build: Felucca's felucca-bsp, Felucca-Engines)
+            if sub.get("repo") and sub.get("commit"):
+                out.setdefault((sub["repo"].rstrip("/").rsplit("/", 1)[-1], sub["commit"]), []).append(
+                    f"{m.parent.relative_to(SIMS)} ({sub.get('path', '')})")
     return out
 
 

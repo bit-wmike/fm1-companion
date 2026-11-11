@@ -568,16 +568,19 @@ def remember_identity(identity: str, key: str, tag: str):
 
 
 def guess_firmware(identity: str, version_string: str = "", family: str = "") -> tuple[str, str]:
-    """(key, tag) for a device identity – first from own experience, then guessed."""
-    try:
-        table = json.loads(IDENT_FILE.read_text())
-        if identity in table:
-            return table[identity]["firmware"], table[identity]["tag"]
-    except (OSError, ValueError, KeyError):
-        pass
+    """(key, tag) for a device identity – first from own experience, then guessed. A plain Felucca INFO ("FELUCCA
+    v1.8.1", family "felucca") on an identity this machine remembers for a firmware that names itself in its INFO
+    (FM-1_900: SLOOP's and Felucca's own builds share it) is Felucca, not the remembered one."""
     v = version_string.lower()
     m = re.search(r"(\d+\.\d+(?:\.\d+)?(?:-rc\.?\d+)?)", version_string)
     tag = ("v" + m.group(1)) if m else ""
+    plain = family == "felucca" and "felucca" in v and not any(k in v for k in SELF_NAMING)
+    try:
+        table = json.loads(IDENT_FILE.read_text())
+        if identity in table and not (plain and table[identity]["firmware"] in SELF_NAMING):
+            return table[identity]["firmware"], table[identity]["tag"]
+    except (OSError, ValueError, KeyError):
+        pass
     if "karma" in v or family == "karma":              # KARMA (a SLOOP fork) answers INFO "FELUCCA KARMA 3.1"
         return "karma", tag
     for key in ("melodee", "sloop", "skiff"):
@@ -594,7 +597,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
             return "melodee", ""
         if 700 <= n < 800:
             return "skiff", ""
-        if n == 909:                                    # JIANT's tools/build.py PRODUCT (its web installer's builds)
+        if n == 909 and not plain:                      # JIANT's tools/build.py PRODUCT (its web installer's builds;
+                                                        # a plain FELUCCA INFO there: Felucca 0.9's release)
             return "jiant-fm", ""
         if n == 930:                                    # CoralFlower's tools/build.py PRODUCT (every release)
             return "coralflower", ""
@@ -602,7 +606,14 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
             return "karma", ""
         if n in (15, 16):
             return f"stock-v{n}", f"V{n}"
+    if plain:                                           # Felucca itself (INFO "FELUCCA v1.8.1"; its releases FM-1_9XY,
+        return "felucca", tag                           # shared with forks built the same way: the INFO decides)
     return "", ""
+
+
+# firmwares whose INFO always names them (SLOOP "FELUCCA SLOOP 2.8.5", KARMA "FELUCCA KARMA 3.1", ...): a plain "FELUCCA
+# v…" is none of them, whatever this machine remembered for the identity
+SELF_NAMING = ("sloop", "karma", "melodee", "jiant-fm", "coralflower")
 
 
 def query_identity(port_name: str = "", timeout=20) -> tuple[str, str]:

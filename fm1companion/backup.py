@@ -76,6 +76,26 @@ KNOWN_ID_SETS[26] = CORALFLOWER_IDS
 ALT_ID_SETS.setdefault(17, []).append(CORALFLOWER_IDS[:17])
 
 
+# Felucca (firmware/src/editor_backup.c ED_BK_IDS, web/fm1backup.js BACKUP_IDS): 0 the running music, 1 the settings, 2..5
+# the projects A..D, 6..7 the user preset banks (UPB1), 8 the FM6 patch bank of 1.0..1.0.2 (listed empty since 1.0.3; an
+# older archive's bank goes into the user presets), 9 the user presets' FM6 patches (1.0.3), 32..34 the sample slots
+# USR1..USR3. 1.0..1.0.2: without 9 (12 objects, Melodee's inventory), before FM6: without 8 and 9 (11).
+FELUCCA_IDS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 33, 34]
+KNOWN_ID_SETS[13] = FELUCCA_IDS
+FELUCCA_ID_SETS = [FELUCCA_IDS, [i for i in FELUCCA_IDS if i != 9], [i for i in FELUCCA_IDS if i not in (8, 9)]]
+
+
+def is_felucca(ids, firmware: str = "") -> bool:
+    """is this a backup of Felucca (or of a Felucca fork with its inventory)? Its 13 objects (1.0.3 on) tell; the 12 and
+    11 of 1.0..1.0.2 and before FM6 are Melodee's too: with "felucca" in the firmware name only (Skiff, SLOOP and KARMA
+    have their own inventories or file format)"""
+    try:
+        ids = [int(i) for i in ids]
+    except (TypeError, ValueError):
+        return False
+    return ids == FELUCCA_IDS or (ids in FELUCCA_ID_SETS and "felucca" in (firmware or "").lower())
+
+
 def is_coralflower(ids) -> bool:
     """is this inventory (IDs in order) CoralFlower's (any release's)?"""
     try:
@@ -170,13 +190,13 @@ def _check(rc: int):
         raise BackupError(rc_text(rc))
 
 
-def object_title(oid: int, sloop: bool = False, jiant: bool = False, coral: bool = False) -> str:
+def object_title(oid: int, sloop: bool = False, jiant: bool = False, coral: bool = False, felucca: bool = False) -> str:
     """Name of a backup object in plain language ("Preset bank U073–U090" instead of "Object 17"); jiant: in JIANT FM's
-    inventory (its songs' sections); coral: in CoralFlower's."""
+    inventory (its songs' sections); coral: in CoralFlower's; felucca: in Felucca's (13 objects)."""
     try:
         from . import backup_inspect as BI
-        return BI.describe(oid, b"", 0, 26 if coral else 43 if jiant else 57, "", sloop=sloop, jiant=jiant,
-                           coral=coral).title
+        return BI.describe(oid, b"", 0, 26 if coral else 43 if jiant else 13 if felucca else 57, "", sloop=sloop,
+                           jiant=jiant, coral=coral).title
     except Exception:                               # noqa: BLE001 – the name is just a bonus
         return _("object {id}").format(id=oid)
 
@@ -210,8 +230,8 @@ def protocol(link, hint: str = "") -> tuple[str, object]:
     """which backup protocol does the device speak? -> (FELUCCA|SLOOP, info or None).
     hint: firmware key (ctx.firmware_key), if known."""
     from . import sloopbk
-    if hint in ("melodee", "skiff", "felucca", "coralflower") or (hint or "").startswith("jiant"):
-        return FELUCCA, None
+    if hint in ("melodee", "skiff", "coralflower") or (hint or "").startswith("jiant"):
+        return FELUCCA, None                        # ("felucca": its INFO decides – SLOOP's builds share FM-1_900)
     try:
         info = sloopbk.read_info(link)
     except Exception:                               # noqa: BLE001 – then as before

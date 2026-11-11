@@ -404,6 +404,8 @@ class DeviceContext(QObject):
         if p:
             p.version_string = info.version
             key, tag = firmware.guess_firmware(p.identity, info.version, info.firmware_name)
+            if key == "felucca" and p.firmware.startswith("felucca-"):
+                key = ""                     # (a Felucca fork chosen for this device, "felucca-mpe": its INFO is Felucca's)
             if key and (not p.firmware or p.firmware != key):
                 p.firmware = key
                 if tag:

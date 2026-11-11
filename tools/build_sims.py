@@ -42,6 +42,10 @@ Simulators:
             python3 tools/build_sims.py --target coralflower-studio [--ref v0.7.1] --repo coralflower=<clone>
   karma-studio  (--target) the same for KARMA (tools/studio/karma_studio.c, with firmware/mi's C++):
             sims/karma-studio/<version>/   python3 tools/build_sims.py --target karma-studio [--ref v3.1] --repo karma=<clone>
+  felucca-studio  (--target) the same for Felucca (tools/studio/felucca_studio.c, on Felucca's own browser emulator
+            web/emu/felucca_web.c; its submodules felucca-bsp and Felucca-Engines at the commits the tag pins):
+            sims/felucca-studio/<version>/   python3 tools/build_sims.py --target felucca-studio [--ref v1.8.1]
+            --repo felucca=<clone> [--repo felucca-bsp=<clone>] [--repo Felucca-Engines=<clone>]
 """
 from __future__ import annotations
 
@@ -548,6 +552,84 @@ def _karma_notice(spec, version, ref, commit, source_url):
         + source_offer(spec["repo"], commit, f", the glue {spec['glue']} and the shim tools/wasm_shim"))
 
 
+# ---- Felucca (hugelton/Felucca): a release is a tag vX.Y[.Z]; its release workflow builds it with tools/build.py
+# --release X.Y[.Z]: the identity FM-1_9XY (one digit each), the version string "vX.Y[.Z]" (= felucca.c FELUCCA_VERSION
+# at the tag). Its hardware layer and six engines are git submodules (firmware/bsp, firmware/engines): git archive
+# leaves them empty, _submodules() puts each in at the commit the tag records.
+def felucca_release_identity(version: str) -> str:
+    """tools/build.py --release X.Y[.Z]: FM-1_9XY ("v1.8.1" -> FM-1_918; what the web installer's package answers)"""
+    m = re.match(r"v?(\d)\.(\d)", version)
+    return f"FM-1_9{m[1]}{m[2]}" if m else "FM-1_900"
+
+
+# the submodules of a firmware tree: path in the tree -> its repository (the commit is the tree's gitlink)
+FELUCCA_SUBMODULES = {"firmware/bsp": "https://github.com/hugelton/felucca-bsp",
+                      "firmware/engines": "https://github.com/hugelton/Felucca-Engines"}
+SUBMODULE_REPOS: dict[str, str] = {}             # --repo felucca-bsp=… / Felucca-Engines=… (main() fills it)
+
+
+def _submodules(spec, src: Path, repo: Path, commit: str, work: Path) -> list[dict]:
+    """put each submodule into the extracted tree at the commit the firmware's commit records (git ls-tree: the
+    gitlink); a local clone from --repo NAME=…, else /tmp/NAME (or lower case), else a bare clone into --work.
+    -> [{path, repo, commit}] for the manifest (the corresponding source names them)"""
+    out = []
+    for path, url in spec.get("submodules", {}).items():
+        line = subprocess.run(["git", "ls-tree", commit, path], cwd=repo, capture_output=True, text=True,
+                              check=True).stdout.split()
+        if len(line) < 3 or line[1] != "commit":
+            raise SystemExit(f"{path}: no submodule at {commit}")
+        sub = line[2]
+        name = url.rstrip("/").rsplit("/", 1)[-1]
+        local = SUBMODULE_REPOS.get(name) or SUBMODULE_REPOS.get(name.lower()) or next(
+            (str(p) for p in (Path("/tmp") / name, Path("/tmp") / name.lower()) if (p / ".git").exists()
+             and not subprocess.run(["git", "cat-file", "-e", sub + "^{commit}"], cwd=p, capture_output=True).returncode),
+            None)
+        tree, full = source(name, work, local, ref=sub, repo_url=url, tree_name=f"{name}-{sub[:12]}-src")
+        dest = src / path
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.move(str(tree), str(dest))
+        out.append({"path": path, "repo": url, "commit": full})
+    return out
+
+
+# Felucca's LICENSING.md: the licence texts of the parts compiled into the twin (Felucca-Engines: MIT; felucca-bsp:
+# MPL-2.0, its NOTICE; msfa in fm6_core.c: Apache-2.0; DaisySP and Rings in the PHYS engine: MIT; the UI face Inter Tight
+# and the Fukiai icons rasterised in: OFL 1.1, MIT; the CC0 instrument samples). (The ADPCM engine, snes_spc LGPL-2.1, is
+# not built: FELUCCA_ADPCM 0, the release's default; keytouch.c, MPL-2.0, is not in the twin: no key pressure here)
+FELUCCA_THIRD_PARTY = ["LICENSES/MIT-Felucca-Engines.txt", "LICENSES/MPL-2.0-felucca-bsp.txt", "firmware/bsp/NOTICE",
+                       "LICENSES/Apache-2.0-msfa.txt", "LICENSES/MIT-DaisySP.txt", "LICENSES/MIT-Rings.txt",
+                       "LICENSES/OFL-InterTight.txt", "LICENSES/MIT-Fukiai.txt", "assets/samples-cc0/ATTRIBUTION.txt"]
+
+
+def _felucca_extra(src: Path, out: Path):
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    (out / "THIRD_PARTY.txt").write_text("".join(f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n"
+                                                 for f in FELUCCA_THIRD_PARTY if (src / f).exists()), "utf-8")
+
+
+def _felucca_notice(spec, version, ref, commit, source_url):
+    subs = ", ".join(f"{s['repo']} at commit {s['commit']} ({s['path']})" for s in spec.get("_sources", []))
+    return (
+        f"Felucca {version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
+        f"(commit {commit}; source: {source_url}),\nwith its git submodules {subs}.\n"
+        "GPL-3.0-only as a whole. Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments.\n"
+        "Felucca-Engines (the ANALOG, LOFI, TRIO, WHEEL, NOISE and PHASE engines, dsp.c, felucca_engine.h): MIT; "
+        "felucca-bsp (the hardware layer: usb.c, ota.c, the board's headers): MPL-2.0, its authors in its NOTICE.\n"
+        "Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0; DaisySP and Rings in phys_dsp.c, "
+        "phys_symp.c: MIT; the UI face Inter Tight and the Fukiai icons are rasterised in: OFL 1.1, MIT), the "
+        "instrument samples are CC0\n(Versilian Studios): Felucca's LICENSING.md and the texts in THIRD_PARTY.txt "
+        "beside this file. The JieLi SDK files of Felucca's packages are not part of the twin.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
+        "includes them as Felucca's own browser emulator and host tests do (web/emu/felucca_web.c, tests/hostsim.c,\n"
+        "editor_test.c, backup_test.c) and replaces only the hardware: keys/LEDs/LCD, ADC (MASTER; battery full), "
+        "NOR flash = a 1 MiB RAM image, USB = always configured (SysEx and MIDI out through usb.c's rings),\none core "
+        "(MENU > 2ND CORE has no second core here), no key pressure (AFTERTOUCH), no USB audio, no TRS MIDI, no serial "
+        "console, no updater (ota.c answers the identity handshake only).\nCompiled with WASI SDK clang (include shim "
+        "tools/wasm_shim/sys/wait.h).\n" + source_offer(spec["repo"], commit, f", its submodules named above, the glue "
+                                                         f"{spec['glue']} and the shim tools/wasm_shim"))
+
+
 STUDIOS = {
     "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
                        "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
@@ -613,6 +695,19 @@ STUDIOS = {
                      "objects": _karma_objects,
                      "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
                      "notice": _karma_notice, "extra": _karma_extra, "tracks": 4, "projects": 4},
+    # Felucca (the base of the family): v1.8.1 is the stable its web installer installs (gh-pages
+    # firmware/felucca-1.8.1.fwsc, README "Stable release: 1.8.1"), v1.8.0 the stable before; v1.8.2-beta is a beta
+    # (newer flash chips only) and not bundled. Release builds: identity FM-1_9XY, INFO "FELUCCA v1.8.1"
+    "felucca-studio": {"firmware": "felucca", "repo": "https://github.com/hugelton/Felucca",
+                       "glue": "tools/studio/felucca_studio.c", "refs": ["v1.8.0", "v1.8.1"],
+                       "release_status": {"f4df2964649f301ba5abd0ec6000110068672f25": "stable",
+                                          "9f62297c2db627bbcb20d7ce896683a17318674c": "previous stable"},
+                       "title": "Felucca studio twin", "license": "GPL-3.0-only", "generate": _generate_skiff,
+                       "version_file": "firmware/src/felucca.c", "version_re": r'#define FELUCCA_VERSION "([^"]*)"',
+                       "identity": felucca_release_identity, "submodules": FELUCCA_SUBMODULES,
+                       "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
+                       "cflags": ["-Ifirmware/hal", "-Ifirmware/bsp/chip", "-Ifirmware/bsp/boards/fm1"],
+                       "notice": _felucca_notice, "extra": _felucca_extra, "tracks": 4, "projects": 4},
 }
 
 
@@ -620,6 +715,9 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
     spec = STUDIOS[name]
     src, commit = source(spec["firmware"], work, local, ref=ref, repo_url=spec["repo"],
                          tree_name=f"{name}-{ref[:12]}-src")
+    subs = _submodules(spec, src, Path(local) if local else work / f"{spec['firmware']}.git", commit, work) \
+        if spec.get("submodules") else []                 # (Felucca: felucca-bsp, Felucca-Engines)
+    spec["_sources"] = subs
     spec["generate"](src)
     version = (spec["version_ref"](src, ref) if spec.get("version_ref") else      # (CoralFlower: the release tag)
                re.search(spec["version_re"], (src / spec["version_file"]).read_text()).group(1))
@@ -650,6 +748,8 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
         extra.update(tracks=spec["tracks"], projects=spec["projects"])
     if commit in spec.get("release_status", {}):         # (JIANT: which build its installer calls stable)
         extra["release_status"] = spec["release_status"][commit]
+    if subs:                                              # (the submodules' commits: make_source_tarballs packs them)
+        extra["sources"] = subs
     return out, commit, clang_version(cc), extra
 
 
@@ -684,7 +784,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--only", default=",".join(BUILDERS), help="simulators (fm1-open, melodee) and/or studio twins")
     ap.add_argument("--target", help="a studio twin (melodee-studio, skiff-studio, jiant-studio, sloop-studio, "
-                    "coralflower-studio, karma-studio): with --ref one version, "
+                    "coralflower-studio, karma-studio, felucca-studio): with --ref one version, "
                     "else all in STUDIOS")
     ap.add_argument("--ref", action="append", default=[], help="firmware tag(s) or commit(s) for --target (repeatable)")
     ap.add_argument("--work", default="/tmp/fm1c-simbuild")
@@ -694,6 +794,7 @@ def main():
     work = Path(a.work)
     work.mkdir(parents=True, exist_ok=True)
     repos = dict(r.split("=", 1) for r in a.repo)
+    SUBMODULE_REPOS.update(repos)                         # (Felucca's submodules: --repo felucca-bsp=…)
     sdk = wasi_sdk(work, a.wasi_sdk)
     if a.target:
         if a.target not in STUDIOS:

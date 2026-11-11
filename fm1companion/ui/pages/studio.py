@@ -215,6 +215,10 @@ class WriteBackDialog(QDialog):
                   "presets, the HEX drum kits and the sample slots. Playback on the FM-1 stops in the process.")
                 if firmware == "karma" else
                 _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces on the device: the four projects A–D, the running music, the user presets with their "
+                  "FM6 patches and the sample slots USR1–USR3. Playback on the FM-1 stops in the process.")
+                if firmware == "felucca" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
                   "twin replaces on the device: all 32 project slots, the running music and the user presets. "
                   "Playback on the FM-1 stops in the process."))
         text = (_("Write the state of the studio twin ({twin}) to <b>“{device}”</b> ({firmware})?").format(
@@ -509,7 +513,7 @@ class StudioPage(QWidget):
         """project slot k as the firmware names it: Melodee 1..32, Skiff A..D, JIANT the current song's sections A..D,
         SLOOP its sections A..D, KARMA the song's parts A..D"""
         st = self.svc.st if self.svc is not None else None
-        if st is not None and st.build.firmware == "skiff":
+        if st is not None and st.build.firmware in ("skiff", "felucca"):      # (Felucca: SAVE's PROJECT A..D)
             return _("Project {n}").format(n="ABCD"[k] if 0 <= k < 4 else k + 1)
         if st is not None and st.build.firmware in ("jiant", "sloop"):
             return _("Section {n}").format(n="ABCD"[k] if 0 <= k < 4 else k + 1)
@@ -577,6 +581,10 @@ class StudioPage(QWidget):
             msgs = [vc.message] if vc.message else []
             if svc.st is not None and svc.st.warning:
                 msgs.append(svc.st.warning)
+            if dev and svc.firmware == "felucca":          # (a Felucca fork, or another build: Felucca's twin all the same)
+                note = S.felucca_fork_note(c.firmware_key, getattr(c, "identity", ""), svc.st.build.identity)
+                if note:
+                    msgs.append(note)
             if msgs:
                 text, level = "⚠ " + html.escape(" ".join(msgs)), "warning"
             elif dev:

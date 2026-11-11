@@ -8,6 +8,9 @@ SYN-Drumkits und die Sample-Slots; CoralFlower: die Patterns und der Song des Se
 Teile A–D des Songs, die Song-Reihenfolge, die HEX-Drumkits und die Sample-Slots;
 laufende Musik, User-Presets, Einstellungen). Er klingt identisch – nur eben über die
 Lautsprecher am Rechner.
+Auch **Felucca** selbst, die Grundlage der Familie, hat einen Zwilling (Projekte A–D, die User-Presets mit ihren
+FM6-Patches und die Sample-Slots USR1–USR3); er öffnet Felucca-Backups (auch die von Feluccas eigenem Web-Editor) und
+holt von einem Felucca-FM-1 und schreibt dorthin zurück wie die anderen.
 
 ## So geht's: FM-1 → Studio → WAV oder zurück
 
@@ -52,6 +55,8 @@ sowie 3.0.5). Die App wählt Firmware
 und Version deines FM-1 bzw. des Backups. Passt die Version nicht genau, zeigt ein Hinweis oben: „Studio läuft mit
 Melodee …, dein FM-1 hat … – Klang kann abweichen.“
 Zurückschreiben auf ein FM-1 mit anderer Version geht dann nur mit dem Experten-Haken.
+Felucca: 1.8.1 – die Version von Feluccas Installer – und 1.8.0 (eine 1.8.2-Beta läuft mit dem Hinweis auf dem
+1.8.1-Zwilling).
 
 ## Der Zwilling als Gerät
 
@@ -91,6 +96,12 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
   SLOOP-Backup (bis 2.6) lässt sich auf ein KARMA-FM-1 schreiben (die SYN-Kits von SLOOP 2.5 bleiben weg, wie in KARMAs
   Editor), ein KARMA-Backup nie auf SLOOP. KARMAs drei gespeicherte Songs (SAVE auf der SONG-Seite) gehören nicht zum
   Backup – auch KARMAs eigenes Backup lässt sie weg. Die Projektansicht liest KARMAs Teile noch nicht.
+* Felucca: Der Zwilling hat einen Kern (MENU › SYSTEM › 2ND CORE wirkt nicht), keinen Tastendruck für AFTERTOUCH (die
+  Tasten sind an oder aus), kein USB-Audio und kein TRS-MIDI. Ein **Felucca-Fork**, der sich nur als „FELUCCA v…“
+  meldet (oder den du für das Gerät gewählt hast, z. B. Felucca MPE), bekommt den Felucca-Zwilling – mit einem Hinweis
+  oben, dass er abweichen kann; ebenso ein Felucca-Build mit anderer Paket-Kennung (ein Entwicklungs-Build: FM-1_900).
+  Schreib nur zurück, wenn du weißt, dass der Fork Feluccas Daten liest – das FM-1 prüft jeden Teil, und das
+  Sicherheits-Backup kommt zuerst. Die Projektansicht liest Feluccas Projekte noch nicht.
 * Der Zwilling hat keine CPU-Grenze: das Gerät lässt bei Überlast Stimmen weg, der Zwilling nie. Fließkomma-Teile
   können in den letzten Bits abweichen (unhörbar). Kein Bluetooth, kein USB-Host, kein Firmware-Update im
   Zwilling.
