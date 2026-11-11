@@ -91,6 +91,14 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
   SLOOP-Backup (bis 2.6) lässt sich auf ein KARMA-FM-1 schreiben (die SYN-Kits von SLOOP 2.5 bleiben weg, wie in KARMAs
   Editor), ein KARMA-Backup nie auf SLOOP. KARMAs drei gespeicherte Songs (SAVE auf der SONG-Seite) gehören nicht zum
   Backup – auch KARMAs eigenes Backup lässt sie weg. Die Projektansicht liest KARMAs Teile noch nicht.
+* ChoralRoot FM-1 (Zwillinge von 0.39 – der Version, die sein Installer anbietet – und 0.38; ein FM-1, das
+  „ChoralRoot …“ meldet, oder ein Backup von ChoralRoots Installer öffnet ihn): keine Projektplätze – seine zehn
+  Loop-Plätze wählst du am Panel des Zwillings (PLAY gehalten, PRESETS), Abspielen spielt den Loop; Musik entsteht am
+  Panel (ChoralRoot hat keinen Editor), und nur SAVE gehalten schreibt Loops und Einstellungen, wie am Gerät. Die zwei
+  Stems sind seine Akkord- und Bass-Parts (ein Stem trägt keinen Metronom-Klick). Nach dem Laden eines Backups und nach
+  dem Zurückschreiben startet ChoralRoot neu (der Zwilling wie das FM-1). Backups von 0.21 und älter halten die
+  User-Sounds in Objekten, die die neuere Firmware nicht mehr kennt: das Studio lässt sie weg und nennt sie. Der
+  Zwilling hat einen Kern, kein USB-Audio, kein TRS-MIDI und kein Bluetooth; die Update-Geste tut dort nichts.
 * Der Zwilling hat keine CPU-Grenze: das Gerät lässt bei Überlast Stimmen weg, der Zwilling nie. Fließkomma-Teile
   können in den letzten Bits abweichen (unhörbar). Kein Bluetooth, kein USB-Host, kein Firmware-Update im
   Zwilling.

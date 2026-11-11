@@ -425,6 +425,42 @@ def flow():
           f"write back of the CoralFlower twin onto the Melodee FM-1 refused: {boxes[-1:]}")
     r = page.export_wav({"path": out / "CoralFlower.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
     check(r is not None and len(r.stems) == 4 and r.peak > 0.05, f"CoralFlower export: mix + {r and len(r.stems)} stems")
+    # ---- a ChoralRoot FM-1 backup: the page starts the ChoralRoot twin (no project slots: its loop slots, a note);
+    # writing it back onto the demo FM-1 (Melodee) is refused as well
+    cr = S.Studio.create(firmware="choralroot", backend="webengine", server=w.server)
+    cr.set_clock(False)                                 # REC, two chords, REC: the loop plays; stop, SAVE held
+    cr.press("REC")
+    cr.backend.call("run", ms=200)
+    for k in (7, 12):
+        cr.backend.call("keys", mask=1 << k)
+        cr.backend.call("run", ms=900)
+        cr.backend.call("keys", mask=0)
+        cr.backend.call("run", ms=100)
+    cr.press("REC")
+    cr.backend.call("run", ms=300)
+    cr.stop()
+    cr.backend.call("press", label=S.B["SAVE"], ms=1500)
+    cr.backend.call("run", ms=1500)
+    cr.set_clock(True)
+    rfile = bdir / "Studio-Test_choralroot.json"
+    backup.write_file(rfile, cr.backup().file)
+    rver = cr.build.version
+    cr.close()
+    check(page.open_backup(rfile) == rfile and svc.firmware == "choralroot" and not svc.st.rejected,
+          f"ChoralRoot backup opened: the ChoralRoot twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 1 and "ChoralRoot" in labels[0] and page.projects.item(0).data(Qt.ItemDataRole.UserRole) is None,
+          f"ChoralRoot: no project slots, a note: {labels}")
+    check("ChoralRoot" in page.src.text() and "ChoralRoot" in page.banner.text() and "Melodee" in page.banner.text(),
+          "banner names both firmwares: " + page.banner.text())
+    check(f"Studio-Zwilling (ChoralRoot {rver})" in [x.label for x in svc._virtual_ports()],
+          "virtual device: ChoralRoot twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("ChoralRoot" in b for b in boxes),
+          f"write back of the ChoralRoot twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    r = page.export_wav({"path": out / "ChoralRoot.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 2 and r.peak > 0.05, f"ChoralRoot export: mix + {r and len(r.stems)} stems")
     # ---- a KARMA backup (SLOOP's file format): the page starts the KARMA twin (the song's parts A–D); writing it back
     # onto the demo FM-1 (Melodee) is refused as well
     kt = S.Studio.create(firmware="karma", backend="webengine", server=w.server)

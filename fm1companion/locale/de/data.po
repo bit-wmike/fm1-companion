@@ -3607,10 +3607,40 @@ msgstr "Angepasster Pattern-Sound {n}"
 msgid "ChoralRoot FM-1 fork (chord instrument); its unmodified firmware code runs in the studio twin"
 msgstr "Fork von ChoralRoot FM-1 (Akkord-Instrument); sein unveränderter Firmware-Code läuft im Studio-Zwilling"
 
-msgid "Felucca fork; basis of CoralFlower"
-msgstr "Fork von Felucca; Grundlage von CoralFlower"
 
 #: fm1companion/backup.py
 #, python-brace-format
 msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
 msgstr "Dieses Backup stammt von {backup}, auf dem FM-1 läuft {device}, das KARMAs Projekte und Drumkits nicht lesen kann. Es wurde nichts geschrieben."
+
+#: fm1companion/diag.py
+msgid "Felucca fork (chord instrument), basis of CoralFlower; its unmodified firmware code runs in the studio twin"
+msgstr "Fork von Felucca (Akkord-Instrument), Grundlage von CoralFlower; sein unveränderter Firmware-Code läuft im Studio-Zwilling"
+
+#: fm1companion/backup_inspect.py
+msgid "Favorites"
+msgstr "Favoriten"
+
+#: fm1companion/backup_inspect.py
+msgid "FM TONE patches of the user sounds"
+msgstr "FM-TONE-Patches der User-Sounds"
+
+#: fm1companion/backup_inspect.py
+#, python-brace-format
+msgid "CZ-1 tones of the user sounds {first}–{last}"
+msgstr "CZ-1-Klänge der User-Sounds {first}–{last}"
+
+#: fm1companion/backup_inspect.py
+#, python-brace-format
+msgid "Loop slot {n}"
+msgstr "Loop-Platz {n}"
+
+#: fm1companion/backup_inspect.py
+#, python-brace-format
+msgid "CZ-1 bank {letter}"
+msgstr "CZ-1-Bank {letter}"
+
+#: fm1companion/backup.py
+#, python-brace-format
+msgid "This backup comes from {backup}, the FM-1 runs {device}: ORBIT and SLOOP store their projects and presets differently, neither reads the other's backups. Nothing was written."
+msgstr "Dieses Backup stammt von {backup}, auf dem FM-1 läuft {device}: ORBIT und SLOOP speichern ihre Projekte und Presets verschieden, keine liest die Backups der anderen. Es wurde nichts geschrieben."

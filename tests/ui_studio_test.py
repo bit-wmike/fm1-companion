@@ -285,6 +285,47 @@ try:
     check(kt2.play()["busy"] and not kt2.stop()["busy"], "KARMA: play and stop (st_transport_set)")
     kt2.close()
     kt.close()
+    # the ChoralRoot FM-1 twin (tools/studio/choralroot_studio.c): INFO and identity, a loop on its panel (no editor) saved
+    # with SAVE held, two stems, its 34-object backup round trip (the restore ends in a restart: a power cycle)
+    cr = studio.Studio.create(firmware="choralroot", backend="webengine", server=st.backend.server)
+    check(cr.build.firmware == "choralroot" and cr.info.get("version") == "ChoralRoot " + cr.build.version,
+          f"ChoralRoot twin started in QtWebEngine: {cr.info.get('version')}")
+    RL = cr.link
+    check(studio.device_version(RL) == studio.norm_version(cr.build.version), "ChoralRoot INFO via Link")
+    got.clear()
+    RL.add_listener(lambda d, direction: got.append(d) if direction == "in" and d[:2] == [0xF0, 0x00] else None)
+    RL.send_midi([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])
+    t1 = time.time()
+    while not got and time.time() - t1 < 3:
+        app.processEvents()
+    check(got and bytes(got[0]) == _identity_frame(cr.build.identity), f"ChoralRoot identity {cr.build.identity}")
+    cr.set_clock(False)                                 # REC, four chords, REC: the loop plays; stop, SAVE held
+    cr.press("REC")
+    cr.backend.call("run", ms=200)
+    for k in (7, 12, 14, 20):
+        cr.backend.call("keys", mask=1 << k)
+        cr.backend.call("run", ms=450)
+        cr.backend.call("keys", mask=0)
+        cr.backend.call("run", ms=50)
+    cr.press("REC")
+    cr.backend.call("run", ms=300)
+    cr.stop()
+    cr.backend.call("press", label=studio.B["SAVE"], ms=1500)
+    cr.backend.call("run", ms=1500)
+    cr.set_clock(True)
+    rarch = cr.backup()
+    check(studio.backup_firmware(rarch) == "choralroot" and [o["id"] for o in rarch.objects] == backup.CHORALROOT_IDS
+          and {o["id"] for o in rarch.objects if o["size"]} == {1, 40}, "ChoralRoot backup (34 objects, loop slot 1)")
+    r6 = cr.render_wav(out / "choralroot.wav", seconds=2, start="play", source="saved", stems=True, fmt="f32")
+    check(len(r6.stems) == 2 and r6.peak > 0.05, f"ChoralRoot: mix + two stems, peak {r6.peak:.3f}")
+    cr2 = studio.Studio.for_backup(rarch, backend="webengine", server=st.backend.server)
+    back = {o["id"]: o["bytes"] for o in cr2.backup().objects}
+    same = all(back[o["id"]] == o["bytes"] for o in rarch.objects if o["id"] == 40)
+    check(cr2.build.firmware == "choralroot" and cr2.projects() == [] and same,
+          "ChoralRoot backup into a second ChoralRoot twin: the loop byte-identical")
+    check(cr2.play()["busy"] and not cr2.stop()["busy"], "ChoralRoot: play and stop (st_transport_set)")
+    cr2.close()
+    cr.close()
     st.close()
     from fm1companion.ui import web
     web.shutdown_all()

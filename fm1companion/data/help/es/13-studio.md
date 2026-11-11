@@ -90,6 +90,15 @@ antigua aproximación en el ordenador solo se mantiene cuando no hay gemelo para
   SLOOP (hasta 2.6) se puede escribir en un FM-1 con KARMA (los kits SYN de SLOOP 2.5 se omiten, como hace el editor de
   KARMA), una copia de KARMA nunca en SLOOP. Las tres canciones guardadas de KARMA (SAVE en la pantalla SONG) no forman
   parte de una copia – la copia propia de KARMA tampoco las incluye. La vista de proyecto aún no lee las partes de KARMA.
+* ChoralRoot FM-1 (gemelos de 0.39 – la versión que ofrece su instalador – y 0.38; un FM-1 que responde
+  “ChoralRoot …” o una copia del instalador de ChoralRoot lo abre): sin ranuras de proyecto – sus diez ranuras de loop
+  se eligen en el panel del gemelo (PLAY mantenido, PRESETS), Play reproduce el loop; la música se hace en el panel
+  (ChoralRoot no tiene editor), y solo SAVE mantenido escribe los loops y los ajustes, como en el dispositivo. Las dos
+  pistas separadas son sus partes de acordes y de bajo (una pista separada no lleva el clic del metrónomo). Después de
+  cargar una copia y después de volver a escribir, ChoralRoot se reinicia (el gemelo y también el FM-1). Las copias de
+  0.21 y anteriores guardan los sonidos de usuario en objetos que el firmware nuevo ya no tiene: el Studio los omite y
+  los nombra. El gemelo tiene un núcleo, sin audio USB, sin MIDI TRS y sin Bluetooth; el gesto de actualización no hace
+  nada allí.
 * El gemelo no tiene límite de CPU: el dispositivo descarta voces cuando se sobrecarga, el gemelo nunca. Las partes en coma flotante
   pueden diferir en los últimos bits (inaudible). Sin Bluetooth, sin host USB, sin actualización de firmware en el
   gemelo.

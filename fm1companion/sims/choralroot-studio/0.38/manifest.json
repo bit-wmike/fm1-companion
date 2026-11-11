@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "name": "choralroot-studio",
+  "title": "ChoralRoot FM-1 studio twin",
+  "version": "0.38",
+  "source_repo": "https://github.com/Quixotic7/ChoralRootFM1",
+  "ref": "v0.38",
+  "commit": "3cb2e8fd25d3d4292cb5c66c2623589d7a2ba8e3",
+  "license": "GPL-3.0-only",
+  "build_date": "2026-11-11T07:52:47Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "LICENSING.md": {
+      "sha256": "f6e7ee711a003507304a4a2acd55b348c1d40a4be4d48a6e851ecbd3fb1aeed9",
+      "size": 25989
+    },
+    "NOTICE": {
+      "sha256": "f1741af348b1cb3c4e8b226f29f67872d37738963cb35d787f6a91bcc781b46f",
+      "size": 3014
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "4091818fbec1a196916d7590b4fb0a6a7e615e27482efaca83fbc077d8f70cf6",
+      "size": 46709
+    },
+    "twin.wasm": {
+      "sha256": "2d0dd71712d6a35d868718edc5e6118fb1d03f99db247d865bcc11fb49c80420",
+      "size": 1116226
+    }
+  },
+  "kind": "studio",
+  "firmware": "choralroot",
+  "firmware_version": "0.38",
+  "identity": "FM-1_920",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/choralroot_studio.c",
+  "glue_sha256": "28c2d1f2b0ae5f2940de6824e17b2a41c343c8ac2cd76dc3050ed2e840f1f7c9",
+  "source_url": "https://github.com/Quixotic7/ChoralRootFM1/archive/3cb2e8fd25d3d4292cb5c66c2623589d7a2ba8e3.tar.gz",
+  "tracks": 2,
+  "projects": 0,
+  "release_status": "previous stable"
+}

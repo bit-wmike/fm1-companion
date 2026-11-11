@@ -211,6 +211,10 @@ class WriteBackDialog(QDialog):
                   "sounds and the sounds' unsaved edits. Playback on the FM-1 stops, and the FM-1 restarts at the end "
                   "to load them.") if firmware == "coralflower" else
                 _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces on the device: the ten loop slots, the user sounds and the CZ-1 banks, the favorites "
+                  "and the settings. A loop playing on the FM-1 must be stopped, and the FM-1 restarts at the end to "
+                  "load them.") if firmware == "choralroot" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
                   "twin replaces on the device: the song's parts A–D, the running music, the song order, the user "
                   "presets, the HEX drum kits and the sample slots. Playback on the FM-1 stops in the process.")
                 if firmware == "karma" else
@@ -629,9 +633,12 @@ class StudioPage(QWidget):
             return
         cur = info.get("project", 255)
         slots = svc.st.project_slots
-        if not slots:                                   # (CoralFlower: its patterns and song, no project slots)
-            it = QListWidgetItem(_("{firmware} has no project slots: its patterns and the song play from the twin's "
-                                   "panel (SEQ) or with Play.").format(firmware=svc.firmware_name))
+        if not slots:                                   # (CoralFlower: its patterns and song, no project slots;
+            it = QListWidgetItem(                       # ChoralRoot: its ten loop slots, chosen on the panel)
+                _("{firmware} has no project slots: its ten loop slots are chosen on the twin's panel (PLAY held, "
+                  "PRESETS); Play plays the loop.").format(firmware=svc.firmware_name) if svc.firmware == "choralroot"
+                else _("{firmware} has no project slots: its patterns and the song play from the twin's "
+                       "panel (SEQ) or with Play.").format(firmware=svc.firmware_name))
             it.setFlags(Qt.ItemFlag.NoItemFlags)
             self.projects.addItem(it)
         for k in range(slots):
@@ -833,6 +840,11 @@ class StudioPage(QWidget):
             show_error(self, _("Open backup"), _("The backup cannot be read: {error}").format(error=e))
             return None
         fw = S.backup_firmware(arch)                    # (SLOOP's file format: the SLOOP or the KARMA twin loads it)
+        if fw and fw not in S.FIRMWARES and fw != "felucca":   # (ORBIT: SLOOP's format, but no twin reads it)
+            show_error(self, _("Open backup"), _("This backup comes from {firmware} – so far there is a studio twin only "
+                                                 "for {firmwares}.").format(firmware=arch.firmware or fw,
+                                                                            firmwares=S.firmware_names()))
+            return None
         try:
             st = svc.ensure(S.backup_version(arch), fw if fw in S.FIRMWARES else "melodee")
         except Exception as e:  # noqa: BLE001

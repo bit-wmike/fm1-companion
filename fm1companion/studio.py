@@ -112,6 +112,10 @@ FIRMWARES = {
     # three synth tracks and the drum track; its four projects are the song's parts A..D. It speaks SLOOP's backup
     # protocol (sloopbk.py)
     "karma": {"name": "KARMA", "info": "FELUCCA KARMA", "tracks": 4, "projects": 4, "backup": "sloop"},
+    # ChoralRoot FM-1 answers INFO "ChoralRoot 0.39" (a single-core package "ChoralRoot 0.39 1-core"); its parts (stems):
+    # the chord and the bass; no project slots (its ten loop slots, backup objects 40..49, are loaded on the panel); it
+    # reads a restore at its next start (RESTART, as CoralFlower)
+    "choralroot": {"name": "ChoralRoot", "info": "ChoralRoot", "tracks": 2, "projects": 0, "restart": True},
 }
 
 
@@ -333,11 +337,13 @@ def backup_firmware(archive) -> str:
     if getattr(archive, "sloop", False):              # (SLOOP's file format: SLOOP or its fork KARMA, "FELUCCA KARMA 3.1")
         c = archive.companion or {}
         text = " ".join(str(x) for x in (c.get("firmware", ""), c.get("version_string", ""), archive.firmware or ""))
+        if "orbit" in text.lower() or archive.file.get("product") == "ORBIT":
+            return "orbit"                          # (ORBIT, a SLOOP fork: no twin; the SLOOP twin cannot read it)
         return "karma" if "karma" in text.lower() else "sloop"
     c = archive.companion or {}
     key = (c.get("firmware") or "").lower()
     text = " ".join(str(x) for x in (key, c.get("version_string", ""), archive.firmware or "")).lower()
-    for name in ("melodee", "skiff", "jiant", "coralflower", "sloop"):
+    for name in ("melodee", "skiff", "jiant", "coralflower", "choralroot", "sloop"):
         if name in text:
             return name
     ids = [o["id"] for o in archive.objects]
@@ -346,6 +352,8 @@ def backup_firmware(archive) -> str:
     from . import backup
     if backup.is_coralflower(ids):                  # (CoralFlower's own page writes its INFO; the inventory tells too)
         return "coralflower"
+    if backup.is_choralroot(ids):                   # (ChoralRoot's installer writes its INFO; the loop slots tell too)
+        return "choralroot"
     if ids in (JIANT_BACKUP_IDS, JIANT_BACKUP_IDS_6):
         return "jiant"
     return "felucca" if "felucca" in text else ""
@@ -850,7 +858,8 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     order = objs[2:] + objs[1:2] + objs[0:1]
     jiant = backup.is_jiant(sup_order) or backup.is_jiant(o["id"] for o in objs)
     coral = backup.is_coralflower(sup_order) or archive.coralflower
-    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"], jiant, coral)]
+    choral = backup.is_choralroot(sup_order) or archive.choralroot
+    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"], jiant, coral, choral)]
     total = sum(o["size"] for o in todo) or 1
     done = 0
     rejected = [o["id"] for o in objs if o["id"] not in sup and o["size"]]

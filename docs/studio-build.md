@@ -178,6 +178,46 @@ own backups with `bkNewer`). A KARMA backup onto SLOOP is refused before anythin
 2.6) onto KARMA is allowed, as KARMA's editor allows it. Not in any backup: the three saved songs of SAVE on the SONG
 screen (FM6's two sectors and 0xFB000) – KARMA's own backup leaves them out too.
 
+ChoralRoot FM-1's FM-1 releases are tags `vX.Y[.Z]` (the `-smk37` tags are its SMK-37 builds, not the FM-1's:
+`choralroot_version` refuses them); its web installer offers the first entry of `web/releases.json`, built with
+`tools/build.py --release X.Y` (the INFO text "ChoralRoot X.Y", the identity `PRODUCT` FM-1_920 for every FM-1
+release):
+
+```sh
+git clone https://github.com/Quixotic7/ChoralRootFM1 /path/to/choralroot
+python3 tools/build_sims.py --target choralroot-studio --ref v0.40 --repo choralroot=/path/to/choralroot
+```
+
+→ `fm1companion/sims/choralroot-studio/0.40/`, the version from the tag (`version_ref`, as CoralFlower: `--release` sets
+the version string), identity read from the commit's `tools/build.py` (`PRODUCT`), `tracks` 2 (the chord part and the
+bass part; parts 3 and 4 are unused), `projects` 0. The list is `STUDIOS["choralroot-studio"]["refs"]`, the status
+`STUDIOS["choralroot-studio"]["release_status"]`; the build takes ChoralRoot's own emulator flags (`cflags`: gnu11 and
+its single-thread `<os/lock.h>`, `tools/emu/web/compat`).
+
+| ChoralRoot version | Tag / commit | Status (manifest `release_status`, 2026-11-11) | Reports (INFO / identity) | Backup objects | Folder |
+|---|---|---|---|---|---|
+| 0.39 | v0.39 / 36867e5c76fa1ecc02cba57102ee870695e1de10 | **stable** – the first entry of `web/releases.json`, what its installer offers | `ChoralRoot 0.39` / `FM-1_920` | 34 | `choralroot-studio/0.39` |
+| 0.38 | v0.38 / 3cb2e8fd25d3d4292cb5c66c2623589d7a2ba8e3 | previous stable (`web/releases.json`) | `ChoralRoot 0.38` / `FM-1_920` | 34 | `choralroot-studio/0.38` |
+
+A ChoralRoot device answers INFO "ChoralRoot 0.39" (its single-core package "ChoralRoot 0.39 1-core"; both pick the 0.39
+twin); `protocol.Info.firmware_name` is "choralroot", `firmware.guess_firmware` maps it and the identity FM-1_920 to
+the catalog's key "choralroot-fm-1" (`StudioService.firmware_for` takes it to the twin). Its versions sort with the
+generic key (0.22-beta4 < 0.22 < 0.29.2 < 0.39). ChoralRoot speaks only the backup part of Felucca's protocol (INFO,
+LIST 65, GET 66, PUT 67, RESTART 72; no editor, `cr_backup.c`) and writes `felucca-backup` files with its INFO string as
+`firmware`. Its inventory (`CRB_IDS`, `backup.CHORALROOT_IDS`): from 0.22, 34 objects – 1 the settings (PER5), 8 the FM6
+bank, 14..21 the CZ-1 banks A..H, 50..62 the sound pool's 13 banks (user sounds 001..128), 23 the favourites, 40..49 the
+ten loop slots; LIST names every one, an empty one with size 0 (a new unit lists all 34 empty: nothing is written before
+SAVE held). 0.14 .. 0.21: 1, 6 7 the user sound banks, 8, 9 the VA patches, 10 11 the FM6 patches, 12 13 the CZ-1
+tones, 14..21, 22 the FM TONE patches, 40..49 (28 objects; 27 without 22, 17 without the CZ-1 objects;
+`backup.CHORALROOT_ID_SETS`). No running music, no projects and no sample slots: before this twin `backup.py` read
+40..62 as Melodee's sample slots (a restore would have sent the loops and sound banks with SMP_BEGIN / WRITE / END),
+refused a 28-object archive ("unexpected object order": Felucca's `range(28)` has that length) and refused any archive
+whose FM6 bank (its second object) was empty. `backup.is_choralroot` tells the inventory (the loop slots, nothing of
+Felucca's music); a restore ends in RESTART as CoralFlower's (`backup.restart_coralflower`), and the studio power-cycles
+its twin after loading a backup (`FIRMWARES["choralroot"]["restart"]`). A 0.21 archive's sound objects (6, 7, 9..13,
+22) are refused by 0.22 and later: `backup.restore` stops before writing anything, the studio's tolerant load leaves
+them out and names them (ChoralRoot's own installer reports them skipped).
+
 Each `STUDIOS` entry names what differs between firmwares: `generate` (the header generators), `version_file` /
 `version_re` (where the version string lives), `identity` (the release identity from the version) or `identity_src`
 (read from the source tree: JIANT, SLOOP, CoralFlower, KARMA), `defines` (version and identity for the glue), `notice`,
@@ -252,6 +292,20 @@ single-core build), `FELUCCA_UAC` 0, `FELUCCA_CDC` 0, no TRS MIDI, no `recovery.
 `st_transport_set` (0 stop, 1 PLAY, 2 the song from the top: song mode when the song order's parts exist, 3 restart)
 and lets the audio ISR take the request at once.
 
+### The ChoralRoot glue in short
+
+`choralroot_studio.c` is the CoralFlower glue on ChoralRoot's own browser emulator (CoralFlower is a fork of ChoralRoot;
+`tools/emu/web/emu_web.c` with `tools/emu/emu_fw.c`, `emu_firmware.h`, `emu_hal_fw.h`), with `FELUCCA_OTA` 1 as
+`firmware/src/choralroot.c` builds the device (usb.c's SysEx frame and ring; `cr_backup.c`'s replies go out through
+`ota_wire_send`, `ota.c` answers the identity handshake; a short frame that usb.c also keeps in `usb.sysex` is taken so
+the emulator's frame does not answer it twice) and the `st_*` ABI. `CRB_REBOOT` is a no-op: RESTART replies, the host
+restarts the twin. The clock is the emulator's (tick, a UI frame every 15 ms or the input scan with GRAIN's render
+slice, the audio blocks due), the audio kept at 24 bits; a flash erase holds the audio 45 ms. `st_boot` runs the splash
+(`cr_ui.c` CR_SPLASH_MS, 1.5 s). Optional exports: `st_transport_set` (the looper: PLAY's event `LP_PLAY`, play / stop;
+2 has no song and plays the loop) and `st_track_mute_set` (the stems: the chord and the bass part; a muted part starts no
+note, voice.c `P_MUTE`, and the click is held silent in a stem). The ten loop slots are the panel's (PLAY held,
+PRESETS): `st_project_*` answer "none".
+
 ## Checking
 
 ```sh
@@ -262,7 +316,7 @@ QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 python3 tests/ui_studio_
 
 `tests/test_studio.py::test_builds_side_by_side` (Melodee), `test_skiff_builds_side_by_side`,
 `test_jiant_builds_side_by_side`, `test_sloop_builds_side_by_side`, `test_coralflower_builds_side_by_side` and
-`test_karma_builds_side_by_side` expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`,
+`test_karma_builds_side_by_side` (and `test_choralroot_builds_side_by_side`) expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`,
 `tests/studio_twin_jiant.mjs`, `tests/studio_twin_sloop.mjs` and `tests/studio_twin_karma.mjs` are the Skiff, JIANT,
 SLOOP and KARMA core checks in node (editor, identity, backup GET/PUT round trip – SLOOP's and KARMA's with SLOOP's
 commands 34–36 –, flash persistence, PLAY, audio, fork, USB MIDI out, stop); `tests/studio_twin_coralflower.mjs` the
@@ -278,6 +332,25 @@ with the same `st_*` ABI, and an entry in `studio.FIRMWARES` (then `StudioServic
 (JS) and the rest of the Python side stay the same. A firmware with SLOOP's backup protocol and format (`sloopbk.py`)
 says so in its `FIRMWARES` entry (`"backup": "sloop"`, SLOOP and KARMA): the twin's tolerant load then goes through
 `sloopbk.restore_tolerant`. See `docs/ROADMAP.md`.
+
+### Firmwares checked without a twin (2026-11-11)
+
+* **ORBIT** (dspaudio/orbit, a SLOOP fork, GPL-3.0; stable 1.0.0 `orbit.fwsc`, the Bluetooth build 1.0.1B
+  `orbit-ble.fwsc`, both INFO "FELUCCA ORBIT …" / FM-1_900): technically SLOOP's twin would carry over
+  (`tests/editor_host.c`, `hal/fm1_flash_map.h`), but every ORBIT build compiles its CLUSTER engine, a C translation of
+  Teenage Engineering's OP-1 #246 oscillator with TE's own tables (`assets/op1-cluster/`), which ORBIT's LICENSING.md
+  says remains TE's material, not relicensed – no twin is bundled. ORBIT speaks SLOOP's backup protocol (34–36,
+  `ED_BK_IDS` 0..10, 32..35, "sloop-backup" files with product "ORBIT"): `backup.SLOOP_PROTOCOL` includes it, an ORBIT
+  backup is refused on SLOOP / KARMA and a SLOOP backup on ORBIT before anything is written, as ORBIT's editor does;
+  `studio.backup_firmware` names it "orbit" (the studio page says there is no twin for it).
+* **Hortator** (DeadActive/hortator, releases are the tags `drum-vX.Y.Z`, "Hortator X.Y.Z" with
+  `hortator-X.Y.Z.fwsc`; the `frozen-base-N` tags are no releases): its own editor protocol (header 7D 48 54, sequence
+  numbers, backup by kinds and parts), none of Felucca's commands, so the Suite's Studio (which rides on 7D 46 4C) could
+  neither load nor read it without a new protocol layer. The device layer asks its own INFO (`ui/device.py`
+  `hortator_info`, from 1.0.0) to name it instead of asking the user (its identity is Felucca's FM-1_900).
+* **GR!MM** (GRiMMBIENT/grimm, v2.0.2): its own protocol (7D 47 52, commands 20..25) and a blocking main loop its
+  browser build runs only through Asyncify: no twin. Its identity FM-1_966 (every release) names it
+  (`firmware.guess_firmware` → the catalog's "gr-mm").
 
 Source tarballs for a release: `python3 tools/make_source_tarballs.py --repo melodee=… --repo skiff=… --repo JIANT=…
 --repo sloop-fm1=… --repo CoralFlower=… --repo karma-fm1=…` (without `--repo` it looks in `/tmp/<name>`, then in lower

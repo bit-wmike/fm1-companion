@@ -42,6 +42,9 @@ Simulators:
             python3 tools/build_sims.py --target coralflower-studio [--ref v0.7.1] --repo coralflower=<clone>
   karma-studio  (--target) the same for KARMA (tools/studio/karma_studio.c, with firmware/mi's C++):
             sims/karma-studio/<version>/   python3 tools/build_sims.py --target karma-studio [--ref v3.1] --repo karma=<clone>
+  choralroot-studio  (--target) the same for ChoralRoot FM-1 (tools/studio/choralroot_studio.c, on its own browser
+            emulator): sims/choralroot-studio/<version>/; a ref is an FM-1 release tag (not -smk37):
+            python3 tools/build_sims.py --target choralroot-studio [--ref v0.39] --repo choralroot=<clone>
 """
 from __future__ import annotations
 
@@ -548,6 +551,61 @@ def _karma_notice(spec, version, ref, commit, source_url):
         + source_offer(spec["repo"], commit, f", the glue {spec['glue']} and the shim tools/wasm_shim"))
 
 
+
+# ---- ChoralRoot FM-1 (Quixotic7/ChoralRootFM1): a release is a tag vX.Y[.Z] (the -smk37 tags are the SMK-37's builds,
+# not the FM-1's); tools/build.py --release X.Y sets the version string "ChoralRoot X.Y" (the INFO text) and keeps the
+# identity PRODUCT (FM-1_920 for every FM-1 release)
+def choralroot_version(src: Path, ref: str) -> str:
+    """the release version of an FM-1 tag (v0.39 -> 0.39), as ChoralRoot's release passes it to --release"""
+    m = re.fullmatch(r"v?(\d+\.\d+(?:\.\d+)?(?:-[A-Za-z0-9.]+)?)", ref)
+    if not m or "smk" in ref.lower():
+        raise SystemExit(f"choralroot-studio: {ref} is not an FM-1 release tag (vX.Y[.Z], not -smk37)")
+    return m[1].lower()
+
+
+def choralroot_identity(src: Path) -> str:
+    """ChoralRoot's tools/build.py PRODUCT: the FM-1 package identity its releases answer (ota.c, the installer)"""
+    m = re.search(r'^PRODUCT = "(FM-1_\d+)"', (src / "tools/build.py").read_text("utf-8"), re.M)
+    return m[1] if m else "FM-1_920"
+
+
+# ChoralRoot's LICENSING.md "Third-party material": the licence texts of the parts compiled into the twin (msfa through
+# Melodee's FM6 engine, the uPD933 model in cz_native.c, felucca-bsp's flash wait, the UI face Inter Tight and the
+# Fukiai icons rasterised in, the second core's bring-up after JieLi's SDK)
+CHORALROOT_THIRD_PARTY = ["LICENSES/Apache-2.0-msfa.txt", "LICENSES/BSD-3-Clause-uPD933.txt", "LICENSES/MPL-2.0.txt",
+                          "LICENSES/OFL-InterTight.txt", "LICENSES/MIT-Fukiai.txt", "LICENSES/Apache-2.0.txt"]
+
+
+def _choralroot_extra(src: Path, out: Path):
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    (out / "THIRD_PARTY.txt").write_text("".join(f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n"
+                                                 for f in CHORALROOT_THIRD_PARTY if (src / f).exists()), "utf-8")
+
+
+def _choralroot_notice(spec, version, ref, commit, source_url):
+    return (
+        f"ChoralRoot FM-1 {version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
+        f"(commit {commit}; source: {source_url}).\n"
+        "GPL-3.0-only. ChoralRoot FM-1 by Quixotic7 (ChoralRoot FM-1 contributors), a fork of Felucca: Copyright (C) 2026 "
+        "Leo Kuroshita (@kurogedelic), Hügelton Instruments (Felucca);\nthe FM6, CZ-1 and Prophet-5 engines Melodee's, "
+        "Copyright (C) 2026 Kerem Kilic (Ellic Studio); the others ChoralRoot's LICENSING.md names.\n"
+        "Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0, Dexed: GPL-3.0-or-later; MAME's uPD933 in "
+        "cz_native.c: BSD-3-Clause; felucca-bsp's fm1_flash_wait.h: MPL-2.0;\nthe UI face Inter Tight and the Fukiai "
+        "icons are rasterised in: OFL 1.1, MIT): ChoralRoot's LICENSING.md and the texts in THIRD_PARTY.txt beside this "
+        "file.\nCasio's 64 CZ-1 preset tones and the Sequential Prophet-5 factory programs ChoralRoot ships are sound "
+        "data, included as in ChoralRoot's own releases and browser emulator; their rights stay with Casio and "
+        "Sequential.\nThe JieLi SDK files of ChoralRoot's packages and its Bluetooth stack are not part of the twin.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
+        "includes them as ChoralRoot's own browser emulator and host tests do (tools/emu/web/emu_web.c,\n"
+        "tools/emu/emu_fw.c, tools/emu/emu_firmware.h, tests/cr_backup_test.c) and adds the USB SysEx path (usb.c, "
+        "cr_backup.c's backup protocol, ota.c's identity handshake); the hardware stand-ins are the emulator's:\n"
+        "keys/LEDs/LCD, the key sensing, the MASTER pot, NOR flash = a 1 MiB RAM image, one core (the bass part's job "
+        "runs inline), USB = always configured (SysEx and MIDI out through usb.c's rings),\nno USB audio, no TRS MIDI, "
+        "no Bluetooth, no serial console, no updater and no USB boot (ota.c answers the identity handshake only).\n"
+        "Compiled with WASI SDK clang (include shim tools/wasm_shim/sys/wait.h; tools/emu/web/compat from ChoralRoot's "
+        "tree).\n" + source_offer(spec["repo"], commit, f", the glue {spec['glue']} and the shim tools/wasm_shim"))
+
+
 STUDIOS = {
     "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
                        "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
@@ -613,6 +671,18 @@ STUDIOS = {
                      "objects": _karma_objects,
                      "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
                      "notice": _karma_notice, "extra": _karma_extra, "tracks": 4, "projects": 4},
+    # ChoralRoot FM-1: its FM-1 release tags; 0.39 is what its web installer offers (web/releases.json, the first entry,
+    # 2026-11-10), 0.38 the release before. The folder is the release version (v0.39 -> 0.39); INFO says
+    # "ChoralRoot 0.39". Its own browser emulator's flags (tools/emu/web/build_web.sh: gnu11, the single-thread lock)
+    "choralroot-studio": {"firmware": "choralroot", "repo": "https://github.com/Quixotic7/ChoralRootFM1",
+                          "glue": "tools/studio/choralroot_studio.c", "refs": ["v0.38", "v0.39"],
+                          "release_status": {"36867e5c76fa1ecc02cba57102ee870695e1de10": "stable",
+                                             "3cb2e8fd25d3d4292cb5c66c2623589d7a2ba8e3": "previous stable"},
+                          "title": "ChoralRoot FM-1 studio twin", "license": "GPL-3.0-only", "generate": _generate_skiff,
+                          "version_ref": choralroot_version, "identity_src": choralroot_identity,
+                          "defines": lambda v, i: [f'-DFELUCCA_VERSION="ChoralRoot {v}"', f'-DFELUCCA_ID="{i}"'],
+                          "cflags": ["-std=gnu11", "-Itools/emu/web/compat"],
+                          "notice": _choralroot_notice, "extra": _choralroot_extra, "tracks": 2, "projects": 0},
 }
 
 

@@ -4539,3 +4539,17 @@ msgstr "Teil {n} ist leer."
 #, python-brace-format
 msgid "The {firmware} twin cannot load SLOOP backups."
 msgstr "SLOOP-Backups kann der {firmware}-Zwilling nicht laden."
+
+#: fm1companion/ui/pages/studio.py
+#, python-brace-format
+msgid "{firmware} has no project slots: its ten loop slots are chosen on the twin's panel (PLAY held, PRESETS); Play plays the loop."
+msgstr "{firmware} hat keine Projektplätze: seine zehn Loop-Plätze wählst du am Panel des Zwillings (PLAY gehalten, PRESETS); Play spielt den Loop."
+
+#: fm1companion/ui/pages/studio.py
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the ten loop slots, the user sounds and the CZ-1 banks, the favorites and the settings. A loop playing on the FM-1 must be stopped, and the FM-1 restarts at the end to load them."
+msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät: die zehn Loop-Plätze, die User-Sounds und die CZ-1-Bänke, die Favoriten und die Einstellungen. Ein Loop, der am FM-1 spielt, muss gestoppt sein, und das FM-1 startet am Ende neu, um sie zu laden."
+
+#: fm1companion/ui/pages/studio.py
+#, python-brace-format
+msgid "This backup comes from {firmware} – so far there is a studio twin only for {firmwares}."
+msgstr "Dieses Backup stammt von {firmware} – einen Studio-Zwilling gibt es bisher nur für {firmwares}."

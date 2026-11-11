@@ -171,10 +171,12 @@ def read_meta(path: Path) -> Meta | None:
             c = f.get("companion") or {}
             objs = f.get("objects") or []
             fw = f.get("firmware", "")
-            key = c.get("firmware") or next((k for k in ("melodee", "karma", "sloop", "skiff", "jiant", "coralflower")
+            key = c.get("firmware") or next((k for k in ("melodee", "karma", "sloop", "skiff", "jiant", "coralflower",
+                                                       "choralroot")
                                              if k in fw.lower()), "")
             jiant = backup.is_jiant(o.get("id", -1) for o in objs if isinstance(o, dict))
             coral = backup.is_coralflower(o.get("id", -1) for o in objs if isinstance(o, dict))
+            choral = backup.is_choralroot(o.get("id", -1) for o in objs if isinstance(o, dict))
             try:                                   # count used presets once (stored in the index afterwards)
                 from . import backup_inspect as _BI
                 presets = len(_BI.inspect(f).used_presets)
@@ -185,7 +187,7 @@ def read_meta(path: Path) -> Meta | None:
                  "note": c.get("note", ""), "labels": list(c.get("labels") or []), "pinned": bool(c.get("pinned")),
                  "kind": c.get("kind") or _kind_from_name(path.stem), "objects": len(objs),
                  "projects": sum(1 for o in objs if isinstance(o, dict) and (o.get("size") or o.get("len"))
-                                 and backup.is_project(o.get("id", -1), jiant, coral) and o.get("id") != 0),
+                                 and backup.is_project(o.get("id", -1), jiant, coral, choral) and o.get("id") != 0),
                  "fmt": f.get("format")}
             idx[str(path)] = e
             _save_index()

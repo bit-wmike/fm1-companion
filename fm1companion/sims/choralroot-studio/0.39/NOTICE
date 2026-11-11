@@ -1,0 +1,22 @@
+ChoralRoot FM-1 0.39 – studio twin (firmware code for the host), built from https://github.com/Quixotic7/ChoralRootFM1 tag v0.39
+(commit 36867e5c76fa1ecc02cba57102ee870695e1de10; source: https://github.com/Quixotic7/ChoralRootFM1/archive/36867e5c76fa1ecc02cba57102ee870695e1de10.tar.gz).
+GPL-3.0-only. ChoralRoot FM-1 by Quixotic7 (ChoralRoot FM-1 contributors), a fork of Felucca: Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments (Felucca);
+the FM6, CZ-1 and Prophet-5 engines Melodee's, Copyright (C) 2026 Kerem Kilic (Ellic Studio); the others ChoralRoot's LICENSING.md names.
+Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0, Dexed: GPL-3.0-or-later; MAME's uPD933 in cz_native.c: BSD-3-Clause; felucca-bsp's fm1_flash_wait.h: MPL-2.0;
+the UI face Inter Tight and the Fukiai icons are rasterised in: OFL 1.1, MIT): ChoralRoot's LICENSING.md and the texts in THIRD_PARTY.txt beside this file.
+Casio's 64 CZ-1 preset tones and the Sequential Prophet-5 factory programs ChoralRoot ships are sound data, included as in ChoralRoot's own releases and browser emulator; their rights stay with Casio and Sequential.
+The JieLi SDK files of ChoralRoot's packages and its Bluetooth stack are not part of the twin.
+The firmware sources are unmodified. The glue tools/studio/choralroot_studio.c (GPL-3.0-only, in FM-1 Companion's source) includes them as ChoralRoot's own browser emulator and host tests do (tools/emu/web/emu_web.c,
+tools/emu/emu_fw.c, tools/emu/emu_firmware.h, tests/cr_backup_test.c) and adds the USB SysEx path (usb.c, cr_backup.c's backup protocol, ota.c's identity handshake); the hardware stand-ins are the emulator's:
+keys/LEDs/LCD, the key sensing, the MASTER pot, NOR flash = a 1 MiB RAM image, one core (the bass part's job runs inline), USB = always configured (SysEx and MIDI out through usb.c's rings),
+no USB audio, no TRS MIDI, no Bluetooth, no serial console, no updater and no USB boot (ota.c answers the identity handshake only).
+Compiled with WASI SDK clang (include shim tools/wasm_shim/sys/wait.h; tools/emu/web/compat from ChoralRoot's tree).
+
+Corresponding Source (GNU GPL 3.0, section 6)
+The complete corresponding source of this build is https://github.com/Quixotic7/ChoralRootFM1 at commit 36867e5c76fa1ecc02cba57102ee870695e1de10
+together with FM-1 Companion's build script tools/build_sims.py, the glue tools/studio/choralroot_studio.c and the shim tools/wasm_shim. A tarball of exactly this commit
+(ChoralRootFM1-36867e5c76fa1ecc02cba57102ee870695e1de10.tar.gz, made with tools/make_source_tarballs.py) is attached to every
+FM-1 Companion release that ships this build: https://github.com/bit-wmike/fm1-companion/releases
+Written offer: for at least three years after the last release that ships this build, the maintainers of
+FM-1 Companion will give anyone a copy of that corresponding source on request (https://github.com/bit-wmike/fm1-companion/issues),
+free of charge apart from the cost of physically performing the distribution.
