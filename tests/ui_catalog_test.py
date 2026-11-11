@@ -225,6 +225,38 @@ def flow():
     UC.confirm = real_confirm
     check(not page.clear_wishlist(), "empty remembered list: nothing to clear")
 
+    # ---- GitHub token: state shown (never the token), save, keep, remove
+    import fm1companion.ui.pages.discover as D
+    cat = config.module("catalog")
+    cat["github_token"] = ""
+    page._token_action_text()
+    check("kein Token" in page.a_token.text(), f"menu: no token set ({page.a_token.text()})")
+    plan = {"text": "ghp_abcdefghijklmn5678", "remove": False}
+
+    def token_exec(self):
+        d, edit, b_rm = page._token_widgets
+        if self is not d:
+            return 0
+        if plan["remove"]:
+            b_rm.click()
+            return 1
+        edit.setText(plan["text"])
+        return 1
+    QDialog.exec = token_exec
+    check(page.token_dialog() == "ghp_abcdefghijklmn5678" and cat["github_token"] == "ghp_abcdefghijklmn5678",
+          "token saved")
+    page._token_action_text()
+    check("••••5678" in page.a_token.text() and "abcdef" not in page.a_token.text(),
+          f"menu: token set, only the last 4 shown ({page.a_token.text()})")
+    plan["text"] = ""
+    check(page.token_dialog() == "ghp_abcdefghijklmn5678" and cat["github_token"], "empty field keeps the token")
+    check(page._token_widgets[2].isEnabled(), "Remove button enabled while a token is set")
+    plan["remove"] = True
+    check(page.token_dialog() == "" and cat["github_token"] == "", "token removed")
+    page._token_action_text()
+    check("kein Token" in page.a_token.text() and D.token_state("") in page.a_token.text(), "menu: no token again")
+    QDialog.exec = lambda self: 0
+
     # ---- link import dialog
     from fm1companion.ui.linkimport_dialog import LinkImportDialog, OwnFirmwaresDialog
     dlg = LinkImportDialog(page, "https://github.com/someone/cool-fm1-synth/releases/download/v1.2.0/cool-1.2.0.fwsc",

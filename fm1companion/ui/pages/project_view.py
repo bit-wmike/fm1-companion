@@ -384,10 +384,14 @@ class ProjectView(QWidget):
             w.log.emit(_("Reading {n} bytes …").format(n=o.size))
             done = [0]
 
-            def prog(n):
-                done[0] += n
+            def prog(n):                       # (between two chunks: each is one request and its answer –
+                done[0] += n                   # stopping there leaves the FM-1 as it was)
                 w.progress.emit(done[0], o.size)
+                if getattr(w, "cancelled", False) and done[0] < o.size:
+                    stopped[:] = [done[0], o.size]
+                    raise backup.BackupError(_("cancelled"))
             return backup.read_object(link, o, prog)
+        stopped: list = []
 
         from ..common import device_tag
         tag = device_tag(self.ctx)
@@ -404,6 +408,10 @@ class ProjectView(QWidget):
                 self.live_tag, self.live_slot = tag, slot
                 self.set_items([(title, PF.decode(data, fw))])
         self.ctx.job(self, _("Read project from “{device}”").format(device=dev), work, on_done=done,
+                     cancellable=True,
+                     fail_text=lambda m: (_("Cancelled after {done} of {n} bytes – nothing was opened, nothing was "
+                                            "changed on the FM-1.").format(done=stopped[0], n=stopped[1])
+                                          if stopped else m),
                      done_text=lambda d: _("{what} read from “{device}” ({n} bytes) and opened – only viewed, nothing "
                                            "was changed on the FM-1.").format(
                          what=_("Running music") if not slot else _("Project {n}").format(n=slot), device=dev, n=len(d)))

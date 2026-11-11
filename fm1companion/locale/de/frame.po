@@ -1325,10 +1325,6 @@ msgstr "Screenshots, Sterne und Release-Listen von GitHub. Der Katalog selbst un
 msgid "Sample pack downloads"
 msgstr "Sample-Pack-Downloads"
 
-#: fm1companion/storage.py:356
-msgid "Git copies of the sample packs. The samples you downloaded are already in your Samples folder and stay there."
-msgstr "Git-Kopien der Sample-Packs. Die heruntergeladenen Samples liegen schon in deinem Samples-Ordner und bleiben dort."
-
 #: fm1companion/storage.py:358
 msgid "Web cache"
 msgstr "Web-Cache"
@@ -1365,10 +1361,6 @@ msgstr "Deine Arbeit im Studio, ein Stand pro Gerät. Wird nur einzeln und auf W
 msgid "Web editor storage"
 msgstr "Speicher der Web-Editoren"
 
-#: fm1companion/storage.py:370
-msgid "Saved data of the built-in browser – web editors may keep your settings there. Kept."
-msgstr "Gespeicherte Daten des eingebauten Browsers – Web-Editoren können dort deine Einstellungen ablegen. Bleibt."
-
 #: fm1companion/storage.py:372
 msgid "Rescue tool and installation journal"
 msgstr "Rettungswerkzeug und Installations-Journal"
@@ -1380,10 +1372,6 @@ msgstr "Nötig für eine Rettung und zum Abschließen einer unterbrochenen Insta
 #: fm1companion/storage.py:375
 msgid "Your files in the main folder"
 msgstr "Deine Dateien im Hauptordner"
-
-#: fm1companion/storage.py:376
-msgid "Backups, projects, samples, kits, recordings, rescue dumps and downloads. The app never deletes them here – automatic backups follow the setting “Keep automatic backups”."
-msgstr "Backups, Projekte, Samples, Kits, Aufnahmen, Rettungs-Dumps und Downloads. Die App löscht sie hier nie – automatische Backups folgen der Einstellung „Automatische Backups behalten“."
 
 #: fm1companion/storage.py:482
 #: fm1companion/ui/storage_tab.py:169

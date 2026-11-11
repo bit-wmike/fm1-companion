@@ -289,21 +289,37 @@ class ProjectsPage(QWidget):
         dev = self.ctx.profile.name if self.ctx.profile else ""
         folder = self.ctx.settings.projects_dir
         got: list = []
+        stopped = [False]
 
         def work(w, link):
             man = backup.list_objects(link)              # one inventory for all (every LIST stops playback)
+
+            def stop(_n=0):                              # between chunks: every read is one request and answer –
+                if getattr(w, "cancelled", False):       # stopping in between leaves the FM-1 as it was
+                    stopped[0] = True
+                    raise backup.BackupError(_("cancelled"))
             for i, (slot, name) in enumerate(items):
+                stop()
                 w.log.emit(f"{self._slot_word()} {self._slot_name(slot)} → {name}")
-                got.append(projects.export_slot(link, slot, folder, name, fw, dev, manifest=man))
+                got.append(projects.export_slot(link, slot, folder, name, fw, dev, manifest=man, progress=stop))
                 w.progress.emit(i + 1, len(items))
             return list(got)
-        self.ctx.job(self, _("Fetch projects"), work, cancellable=False,
+
+        def failed(m):
+            if stopped[0]:
+                return ngettext("Cancelled – {done} of {n} project was fetched and is in the library; the one being "
+                                "read was not saved. Nothing was changed on the FM-1.",
+                                "Cancelled – {done} of {n} projects were fetched and are in the library; the one "
+                                "being read was not saved. Nothing was changed on the FM-1.", len(items)).format(
+                    done=len(got), n=len(items))
+            return _("Not all projects fetched: {error} – {done} of {n} are in the library, "
+                     "nothing was changed on the FM-1.").format(error=m, done=len(got), n=len(items))
+        self.ctx.job(self, _("Fetch projects"), work, cancellable=True,
                      done_text=lambda out: ngettext(
                          "{done} of {n} project fetched into the library ({folder}). Nothing was changed on the FM-1.",
                          "{done} of {n} projects fetched into the library ({folder}). Nothing was changed on the FM-1.",
                          len(items)).format(done=len(out), n=len(items), folder=folder),
-                     fail_text=lambda m: _("Not all projects fetched: {error} – {done} of {n} are in the library, "
-                                           "nothing was changed on the FM-1.").format(error=m, done=len(got), n=len(items)))
+                     fail_text=failed)
         self.refresh_library()
 
     def _slot_word(self) -> str:

@@ -55,6 +55,11 @@ def profile():
     if not HAVE_WEBENGINE:
         raise RuntimeError(_("Qt WebEngine is missing (sudo apt install python3-pyqt6.qtwebengine)"))
     if _profile is None:
+        try:                                   # "Clear web editor data" requested while it was open: now
+            from .. import storage
+            storage.apply_pending_webdata_clear()
+        except Exception:                      # noqa: BLE001 – never stop the browser from starting
+            pass
         prof = QWebEngineProfile("fm1-companion", QApplication.instance())
         prof.setPersistentStoragePath(str(config.DATA_DIR / "webengine"))
         prof.setCachePath(str(config.CACHE_DIR / "webengine"))
@@ -68,6 +73,31 @@ def profile():
         prof.scripts().insert(script)
         _profile = prof
     return _profile
+
+
+def profile_open() -> bool:
+    """has the built-in browser opened its storage in this process?"""
+    return _profile is not None
+
+
+def clear_site_data() -> bool:
+    """Clear the web editors' site data (cookies, local storage, IndexedDB, service workers …).
+    -> True: cleared now. False: the browser has its storage open (Chromium keeps the files open as long as the
+    profile lives, deleting them underneath is unsafe): cookies and visited links are cleared right away, the rest
+    at the next start, before the browser opens it (works the same with Qt 6.4 and 6.8)."""
+    from .. import storage
+    if _profile is None:
+        res = storage.clear_webdata_now()
+        if res.errors:
+            raise OSError(res.errors[0])
+        return True
+    try:
+        _profile.cookieStore().deleteAllCookies()
+        _profile.clearAllVisitedLinks()
+    except Exception:                          # noqa: BLE001 – the rest still happens at the next start
+        pass
+    storage.request_webdata_clear()
+    return False
 
 
 def track(*objs):

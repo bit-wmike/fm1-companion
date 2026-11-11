@@ -7,9 +7,11 @@ Categories (``scan()``):
   the installation journal's package copies, tool copies (git clones), editor copies, catalog images and
   GitHub data, sample-pack downloads (git checkouts – the samples themselves were copied to Samples),
   QtWebEngine cache, leftover temporary files, error reports and damaged settings copies;
-* your data (deleted only one by one, on request): Studio states;
-* kept (shown only): web editor storage, rescue tool, sample index, and your own folders in the main folder
-  (Backups, Projekte, Samples, Kits, Aufnahmen, Rettung, Downloads …) – the app never deletes those here.
+* your data (deleted only one by one, on request): Studio states, the rescue folder's flash dumps and tool logs
+  (``rescue_items``: the newest full dump of every device needs an extra confirmation), the web editors' site
+  data (``webdata``: all at once – while the built-in browser runs, at the next start);
+* kept (shown only): rescue tool, sample index, and your own folders in the main folder
+  (Backups, Projekte, Samples, Kits, Aufnahmen, Downloads …) – the app never deletes those here.
 
 Never deleted: anything an interrupted installation needs (the journal itself, the package copy and the
 source package of the active journal entry, the tool copies while an entry is active), the newest original
@@ -282,12 +284,174 @@ def studio_states() -> list[tuple[str, Path, int, float]]:
     return out
 
 
+def studio_state_in_use(folder_name: str, service=None) -> bool:
+    """the running Studio twin works on this state (deleting it now: the autosave writes it again)"""
+    return bool(service is not None and getattr(service, "st", None) is not None
+                and service.profile_folder() == folder_name)
+
+
 def delete_studio_state(folder_name: str) -> int:
     base = config.DATA_DIR / "studio"
     d = base / folder_name
     if d.parent != base or folder_name in ("", ".", "..") or not d.is_dir():
         raise FileNotFoundError(folder_name)
     return remove(d)
+
+
+# ------------------------------------------------------------ rescue folder ---
+
+FULL_DUMP_SIZE = 0x100000             # a complete flash dump of the FM-1 (1 MiB)
+KEY_AREA = (0xFF000, 0x100000)        # key_mac area: differs from device to device (fingerprint of the dump)
+SESSION_PREFIX = "fm1-recovery-"      # the rescue tool's session folders (full-flash-before.bin, backup.json …)
+SIM_PARTS = ("simulation", "Beispiel-Dumps")   # i18n: ignore (folder names on disk: simulation, example dumps)
+RESCUE_BUSY_AGE = 600.0               # younger items may still be written by a running tool
+
+
+def rescue_dir() -> Path:
+    return config.load().root / "Rettung"   # i18n: ignore (folder name on disk)
+
+
+@dataclass
+class RescueItem:
+    path: Path
+    kind: str                  # "session" (folder of a tool run), "dump" (.bin), "logs" (tool logs folder)
+    size: int
+    mtime: float
+    full: bool = False         # holds a complete flash dump (1 MiB)
+    device: str = ""           # fingerprint of the device from the dump ("" = not recognisable)
+    simulated: bool = False    # simulation / example dump (not from a real device)
+    newest: bool = False       # the newest (or only) full dump of its device – the safety net
+
+    @property
+    def name(self) -> str:
+        try:
+            return self.path.relative_to(rescue_dir()).as_posix()
+        except ValueError:
+            return self.path.name
+
+
+def dump_fingerprint(path: Path) -> str:
+    """short fingerprint of the device a 1 MiB dump comes from (its key_mac area) – "" if empty/unreadable"""
+    try:
+        with open(path, "rb") as f:
+            f.seek(KEY_AREA[0])
+            area = f.read(KEY_AREA[1] - KEY_AREA[0])
+    except OSError:
+        return ""
+    if len(area) != KEY_AREA[1] - KEY_AREA[0] or len(set(area)) <= 1:
+        return ""
+    import hashlib
+    return hashlib.sha256(area).hexdigest()[:12]
+
+
+def _full_dump(p: Path) -> bool:
+    try:
+        st = os.lstat(p)
+    except OSError:
+        return False
+    return stat.S_ISREG(st.st_mode) and st.st_size == FULL_DUMP_SIZE
+
+
+def _rescue_item(p: Path, kind: str, base: Path) -> RescueItem:
+    size, _n = tree_size(p)
+    it = RescueItem(p, kind, size, newest_mtime(p))
+    rel = p.relative_to(base).parts
+    it.simulated = "-dryrun" in p.name or any(x in SIM_PARTS for x in rel) or p.name.startswith("simulierter")  # i18n: ignore
+    dumps = [p] if kind == "dump" else (
+        [p / n for n in ("full-flash-before.bin", "full-flash-after.bin")] if kind == "session" else [])
+    for d in dumps:
+        if _full_dump(d):
+            it.full = True
+            it.device = it.device or dump_fingerprint(d)
+    return it
+
+
+def rescue_items(base: Path | None = None) -> list[RescueItem]:
+    """what the rescue folder holds, newest first: the tool's session folders, loose dump files (.bin) and the
+    tool logs. Marks the newest full dump of every device (unrecognisable devices count as one device)."""
+    base = Path(base) if base is not None else rescue_dir()
+    out: list[RescueItem] = []
+
+    def walk(d: Path, depth: int):
+        for c in _children(d):
+            if c.is_symlink():
+                continue
+            if c.is_dir():
+                if c.name.startswith(SESSION_PREFIX):
+                    out.append(_rescue_item(c, "session", base))
+                elif c.name == "logs":
+                    out.append(_rescue_item(c, "logs", base))
+                elif depth < 3:
+                    walk(c, depth + 1)
+            elif c.suffix.lower() == ".bin":
+                out.append(_rescue_item(c, "dump", base))
+    if base.is_dir():
+        walk(base, 0)
+    out.sort(key=lambda i: i.mtime, reverse=True)
+    seen: set[str] = set()
+    for it in out:                                  # newest first
+        if it.full and not it.simulated and it.device not in seen:
+            seen.add(it.device)
+            it.newest = True
+    return out
+
+
+def delete_rescue_item(path: Path, base: Path | None = None, now: float | None = None) -> int:
+    """delete ONE item of the rescue folder (never automatically – the UI asks, twice for the newest full dump
+    of a device). Refused while an installation runs and for items that are still being written. -> bytes"""
+    _guard()
+    base = _real(Path(base) if base is not None else rescue_dir())
+    p = Path(path)
+    if p.is_symlink() or _real(p) == base or base not in _real(p).parents:
+        raise FileNotFoundError(str(path))
+    if not p.exists():
+        raise FileNotFoundError(str(path))
+    if (now or time.time()) - newest_mtime(p) < RESCUE_BUSY_AGE:
+        raise Busy(_("“{name}” was written a moment ago – a rescue may still be running. Try again in a few "
+                     "minutes.").format(name=p.name))
+    return remove(p)
+
+
+# ------------------------------------------------------------ web editor data ---
+
+def webdata_dir() -> Path:
+    return config.DATA_DIR / "webengine"
+
+
+def _webdata_mark() -> Path:
+    return config.DATA_DIR / "webengine-clear-on-start"
+
+
+def webdata_clear_pending() -> bool:
+    return _webdata_mark().exists()
+
+
+def request_webdata_clear():
+    """the built-in browser is running: its storage is cleared at the next start, before it opens it"""
+    m = _webdata_mark()
+    m.parent.mkdir(parents=True, exist_ok=True)
+    m.write_text(str(time.time()), "utf-8")
+
+
+def cancel_webdata_clear():
+    _webdata_mark().unlink(missing_ok=True)
+
+
+def clear_webdata_now() -> Result:
+    """delete the web editors' site data (cookies, local storage, IndexedDB …). Only while the built-in browser
+    has not opened its storage in this process (ui/web.py takes care of that)."""
+    res = Result()
+    _remove_all(_children(webdata_dir()), res)
+    if not res.errors:
+        cancel_webdata_clear()
+    return res
+
+
+def apply_pending_webdata_clear() -> Result | None:
+    """at the start of the built-in browser: carry out a "Clear" that was requested while it was running"""
+    if not webdata_clear_pending():
+        return None
+    return clear_webdata_now()
 
 
 def candidates(key: str, now: float | None = None) -> list[Path]:
@@ -353,8 +517,9 @@ def categories() -> list[Category]:
              N_("Screenshots, stars and release lists from GitHub. The catalog itself and the News list stay."),
              "clean", config.CACHE_DIR / "catalog"),
         _cat("samplepacks", N_("Sample pack downloads"),
-             N_("Git copies of the sample packs. The samples you downloaded are already in your Samples "
-                "folder and stay there."), "clean", samplepacks_dir()),
+             N_("Contents lists of the sample packs (and git copies left by older versions or an interrupted "
+                "download – the app now deletes the copy right after copying). The samples you downloaded are in "
+                "your Samples folder and stay there."), "clean", samplepacks_dir()),
         _cat("webengine", N_("Web cache"), N_("Cache of the built-in browser (editors, catalog pages)."),
              "clean", webengine_cache_dir()),
         _cat("temp", N_("Temporary files"),
@@ -367,14 +532,20 @@ def categories() -> list[Category]:
              N_("Your work in the Studio, one state per device. Only deleted one by one, on request."),
              "data", config.DATA_DIR / "studio"),
         _cat("webdata", N_("Web editor storage"),
-             N_("Saved data of the built-in browser – web editors may keep your settings there. Kept."),
-             "keep", config.DATA_DIR / "webengine"),
+             N_("Saved data of the built-in browser (cookies, local storage) – web editors may keep your settings "
+                "there. Only cleared on request, all at once."),
+             "data", webdata_dir()),
+        _cat("rescuedumps", N_("Rescue dumps and tool logs"),
+             N_("Full flash backups and logs of the rescue tool in the main folder › Rettung – your safety net. "
+                "Only deleted one by one, on request; the newest full backup of a device needs an extra "
+                "confirmation."), "data", rescue_dir()),
         _cat("rescue", N_("Rescue tool and installation journal"),
              N_("Needed for a rescue and for finishing an interrupted installation. Kept."), "keep",
              journal.root()),
         _cat("userdata", N_("Your files in the main folder"),
              N_("Backups, projects, samples, kits, recordings, rescue dumps and downloads. The app never "
-                "deletes them here – automatic backups follow the setting “Keep automatic backups”."),
+                "deletes them here – automatic backups follow the setting “Keep automatic backups”, rescue dumps "
+                "have their own row."),
              "keep", s.root),
     ]
 
@@ -437,7 +608,7 @@ def scan(now: float | None = None, include_user: bool = True) -> list[Category]:
 def app_total(cats: list[Category] | None = None) -> tuple[int, int]:
     """(bytes the app keeps besides your own files, of which can be cleaned up)"""
     cats = cats if cats is not None else scan(include_user=False)
-    own = [c for c in cats if c.key != "userdata"]
+    own = [c for c in cats if c.key not in ("userdata", "rescuedumps")]   # (both in your main folder)
     return sum(c.size for c in own), sum(c.cleanable for c in own)
 
 

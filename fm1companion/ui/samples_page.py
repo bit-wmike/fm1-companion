@@ -1289,12 +1289,25 @@ def open_read(self):
             if st == 0:
                 return info, None, None
             w.log.emit(_("Reading the sample bank ({kib} KiB) …").format(kib=size // 1024))
-            bank = c.read_bank(lambda a, b: w.progress.emit(a, b))
+
+            def prog(a, b):
+                got[:] = [a, b]
+                w.progress.emit(a, b)
+            # cancel between two chunks (each one request and its answer: the FM-1 stays as it was)
+            bank = c.read_bank(prog, cancel=lambda: bool(getattr(w, "cancelled", False)))
         F.read_bank(bank)                 # checks the bank before it is backed up
         p = folder / time.strftime("FM1-Open-Samples %Y-%m-%d %H-%M-%S.fm1s")
         _write_bytes_atomic(p, bank)
         w.log.emit(_("Backed up: {path}").format(path=p))
         return info, bank, p
+
+    got: list = []
+
+    def failed(m):
+        if got and got[0] < got[1] and m == _("cancelled"):
+            return _("Cancelled after {done} of {n} KiB – nothing was saved, nothing was changed on the FM-1.").format(
+                done=got[0] // 1024, n=got[1] // 1024)
+        return m
 
     def done(res):
         info, bank, p = res
@@ -1307,11 +1320,13 @@ def open_read(self):
             self.open_info.setText(_("FM1 Open detected. Backup: {name}").format(name=p.name))
         self._open_show(self.open_entries)
         self._open_enable()
-    d = self.ctx.job(self, _("FM1 Open: read sample bank"), work, on_done=done,
+    d = self.ctx.job(self, _("FM1 Open: read sample bank"), work, on_done=done, cancellable=True, fail_text=failed,
                      done_text=lambda r: (_("Sample bank read and saved as backup: {name}. Nothing was changed on the FM-1.").format(
                                               name=r[2].name) if r[1] is not None
                                           else _("FM1 Open detected – no sample bank on the device yet. Nothing was changed on the FM-1.")))
-    if not d.ok:
+    if not d.ok and got and got[0] < got[1] and getattr(d, "error", "") == _("cancelled"):
+        self.open_info.setText(_("Reading the sample bank was cancelled – nothing was saved."))
+    elif not d.ok:
         self.open_info.setText(_("No FM1 Open found (or no answer). Is FM1 Open V13/V14 running on the FM-1?"))
 
 

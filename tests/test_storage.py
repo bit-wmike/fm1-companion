@@ -217,3 +217,121 @@ def test_syscheck_reports_app_storage(env):
     put(env / "cache" / "samplepacks" / "p" / "a.wav", 3000)
     f = syscheck.storage_finding()
     assert f.key == "storage" and f.level in ("ok", "info") and storage.human(3000) in f.title
+
+
+def _dump(p: Path, device: bytes, age_days: float) -> Path:
+    from fm1companion import storage
+    data = bytearray(b"\xff" * storage.FULL_DUMP_SIZE)
+    if device:
+        data[storage.KEY_AREA[0]:storage.KEY_AREA[0] + len(device)] = device
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(bytes(data))
+    t = time.time() - age_days * 86400
+    os.utime(p, (t, t))
+    os.utime(p.parent, (t, t))
+    return p
+
+
+def test_rescue_items_mark_newest_full_dump_per_device(env):
+    from fm1companion import storage
+    base = env / "FM-1" / "Rettung"
+    old_a = _dump(base / "Komplettsicherungen" / "fm1-recovery-20260101-100000" / "full-flash-before.bin", b"AAAA", 30)
+    new_a = _dump(base / "Komplettsicherungen" / "fm1-recovery-20260201-100000" / "full-flash-before.bin", b"AAAA", 10)
+    only_b = _dump(base / "fm1-transporter-dump-20260105.bin", b"BBBB", 25)
+    _dump(base / "simulation" / "simulierter-flash-rettung.bin", b"AAAA", 1)
+    put(base / "logs" / "unbrick.log", 500, 2)
+    put(base / "notes.txt", 10, 2)                               # not a dump: not listed
+    items = storage.rescue_items()
+    by = {i.path: i for i in items}
+    assert set(by) == {old_a.parent, new_a.parent, only_b, base / "simulation" / "simulierter-flash-rettung.bin",
+                       base / "logs"}
+    assert by[new_a.parent].newest and not by[old_a.parent].newest and by[only_b].newest
+    assert by[new_a.parent].device == by[old_a.parent].device != by[only_b].device
+    sim = by[base / "simulation" / "simulierter-flash-rettung.bin"]
+    assert sim.simulated and sim.full and not sim.newest
+    assert by[base / "logs"].kind == "logs" and not by[base / "logs"].full
+    assert items[0].mtime >= items[-1].mtime
+    # never automatic: auto_clean and "Delete" of the app categories leave the folder alone
+    storage.auto_clean(now=time.time() + 400 * 86400)
+    assert old_a.exists() and only_b.exists()
+    cat = next(c for c in storage.categories() if c.key == "rescuedumps")
+    assert cat.kind == "data" and not cat.deletable and storage.candidates("rescuedumps") == []
+    # one by one, only inside the folder, not while installing, not while just written
+    assert storage.delete_rescue_item(old_a.parent) >= storage.FULL_DUMP_SIZE and not old_a.parent.exists()
+    with pytest.raises(FileNotFoundError):
+        storage.delete_rescue_item(env / "FM-1" / "Backups")
+    with pytest.raises(FileNotFoundError):
+        storage.delete_rescue_item(base)
+    fresh = _dump(base / "fm1-transporter-dump-now.bin", b"CCCC", 0)
+    with pytest.raises(storage.Busy):
+        storage.delete_rescue_item(fresh)
+    assert fresh.exists()
+    # the app total does not count the rescue folder (it is your data in the main folder)
+    cats = storage.scan()
+    rd = next(c for c in cats if c.key == "rescuedumps")
+    assert rd.size > 0 and storage.app_total(cats)[0] < rd.size
+
+
+def test_rescue_delete_refused_while_installing(env, monkeypatch):
+    from fm1companion import storage
+    d = _dump(env / "FM-1" / "Rettung" / "x.bin", b"AAAA", 30)
+    monkeypatch.setattr(storage, "install_running", lambda: True)
+    with pytest.raises(storage.Busy):
+        storage.delete_rescue_item(d)
+    assert d.exists()
+
+
+def test_webdata_cleared_now_or_at_next_start(env):
+    from fm1companion import storage
+    put(env / "data" / "webengine" / "Local Storage" / "leveldb" / "000003.log", 400)
+    put(env / "data" / "webengine" / "Cookies", 100)
+    assert next(c for c in storage.categories() if c.key == "webdata").kind == "data"
+    assert storage.apply_pending_webdata_clear() is None              # nothing requested: nothing happens
+    assert (env / "data" / "webengine" / "Cookies").exists()
+    storage.request_webdata_clear()
+    assert storage.webdata_clear_pending()
+    res = storage.apply_pending_webdata_clear()
+    assert res.freed >= 500 and not list((env / "data" / "webengine").iterdir())
+    assert not storage.webdata_clear_pending()
+
+
+def test_studio_state_in_use():
+    from fm1companion import storage
+
+    class Svc:
+        st = object()
+
+        def profile_folder(self):
+            return "Mein_FM-1"
+    assert storage.studio_state_in_use("Mein_FM-1", Svc())
+    assert not storage.studio_state_in_use("Zweites", Svc()) and not storage.studio_state_in_use("Mein_FM-1", None)
+
+
+def test_reset_module_in_place_keeps_own_keys(env):
+    from fm1companion import config
+    d = config.module("catalog", {"sort": "az", "thumbnails": True})
+    d.update(sort="stars", thumbnails=False, github_token="ghp_x", wishlist=["a"], extra=1)
+    held = config.module("catalog")
+    config.reset_module("catalog", {"sort": "az", "thumbnails": True, "wishlist": []}, ("github_token", "wishlist"))
+    assert held is config.module("catalog")                         # pages keep their reference
+    assert held == {"sort": "az", "thumbnails": True, "wishlist": ["a"], "github_token": "ghp_x"}
+
+
+def test_page_settings_registry_has_defaults():
+    pytest.importorskip("PyQt6.QtWidgets")
+    from fm1companion.ui.settings_dialog import PAGE_SETTINGS
+    keys = [k for k, *_r in PAGE_SETTINGS]
+    assert len(keys) == len(set(keys)) and {"catalog", "studio", "midi", "recorder"} <= set(keys)
+    for key, _title, defaults, keep in PAGE_SETTINGS:
+        d = defaults()
+        assert isinstance(d, dict) and d and isinstance(keep, tuple), key
+        assert d is not defaults()                                   # a fresh copy every time
+    assert "github_token" in dict((k, kp) for k, _t, _d, kp in PAGE_SETTINGS)["catalog"]
+
+
+def test_token_state_never_shows_the_token():
+    pytest.importorskip("PyQt6.QtWidgets")
+    from fm1companion.ui.pages.discover import token_state
+    assert "••••" not in token_state("")
+    assert token_state("ghp_abcdefghijkl1234").endswith("(••••1234)")
+    assert "short" not in token_state("short") and "••••" in token_state("short")
