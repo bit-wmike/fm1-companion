@@ -598,6 +598,8 @@ class DiscoverPage(QWidget):
         m = QMenu(self.b_menu)
         m.addAction(icon("folder"), _("My firmwares …"), self.own_dialog)
         m.addAction(icon("dialog-password", "security-high"), _("GitHub token …"), self.token_dialog)
+        self.a_clear_wish = m.addAction(icon("edit-clear-all", "edit-clear"), _("Clear the remembered list …"),
+                                        self.clear_wishlist)
         m.addSeparator()
         # automatic network access of this page – both can be turned off (privacy, see README)
         self.a_auto = m.addAction(_("Update the catalog automatically when opening"))
@@ -1163,6 +1165,34 @@ class DiscoverPage(QWidget):
         config.save()
         self.view.viewport().update()
         self.fill_news()
+
+    def clear_wishlist(self) -> bool:
+        """forget all remembered firmwares (the tab “Remembered” and the News that came from it)"""
+        n = len(self.model.wish)
+        if not n:
+            notify(_("The remembered list is already empty."), "info")
+            return False
+        from ..common import confirm
+        if not confirm(self, _("Clear the remembered list"),
+                       ngettext("Forget {n} remembered firmware? Nothing is uninstalled or deleted.",
+                                "Forget {n} remembered firmwares? Nothing is uninstalled or deleted.", n).format(n=n),
+                       _("Clear")):
+            return False
+        self.model.wish = set()
+        settings()["wishlist"] = []
+        config.save()
+        b = getattr(self.detail, "b_wish", None)
+        try:
+            if b is not None:
+                b.blockSignals(True)
+                b.setChecked(False)
+                b.blockSignals(False)
+        except RuntimeError:                     # the detail view was rebuilt in the meantime
+            pass
+        self.apply_filter()
+        self.fill_news()
+        notify(_("Remembered list cleared."), "success")
+        return True
 
     # ------------------------------------------------------------ Link import
     def _paste(self):

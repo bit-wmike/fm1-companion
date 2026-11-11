@@ -215,6 +215,15 @@ def flow():
     check("ORBIT" in page.news_info.text() or page.news.topLevelItemCount() >= 0, "news tab knows the followed firmware")
     page.detail.back.emit()
     check(page.stack.currentIndex() == 0, "back to the overview")
+    import fm1companion.ui.common as UC
+    real_confirm, asked = UC.confirm, []
+    UC.confirm = lambda *a, **k: asked.append(a[2]) or True
+    check(page.a_clear_wish.text() == "Merkliste leeren …" and page.clear_wishlist()
+          and config.module("catalog")["wishlist"] == [] and not page.model.wish
+          and not page.detail.b_wish.isChecked() and "Nichts wird deinstalliert" in asked[0],
+          "More › Clear the remembered list (with confirmation)")
+    UC.confirm = real_confirm
+    check(not page.clear_wishlist(), "empty remembered list: nothing to clear")
 
     # ---- link import dialog
     from fm1companion.ui.linkimport_dialog import LinkImportDialog, OwnFirmwaresDialog

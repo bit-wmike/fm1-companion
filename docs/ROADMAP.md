@@ -213,3 +213,64 @@ V16 support is explicitly wanted. Blocker: the V16 source code is not open; M-VA
 - **New and most promising:** fm1-emu (see above) already runs V16. Open: M-VAVE's firmware drives
   USB via interrupts, which fm1-emu does not emulate yet – so a backup via USB does not work yet; sound,
   operation and flash do. Measure the tempo on the Pi.
+
+## Housekeeping: storage, cleanup, undo (2.5.x)
+
+User report: "How do I delete old logs and downloaded firmware files?" Done in 2.5.x: **Settings › Storage**
+(also Tools › *Storage and cleanup …*, logic in `fm1companion/storage.py`, tests `tests/test_storage.py`):
+per category size, *Open folder*, *Delete …* with a question; automatic cleanup at most once a day (rotated logs
+after 30 days, 2 downloads per firmware plus the versions on the known devices, 3 journal package copies, 2 editor
+versions per firmware, catalog images / GitHub answers / sample-pack checkouts / `fm1c-*` temp files after 30 days).
+Never deleted: the user's folders in `~/FM-1` (only `Firmware/<known firmware>/<version>` counts as a download),
+the journal, the package copy and source of an active (resumable) journal entry, the git tool copies while an
+entry is active, the newest original V15 download (offline rescue), the rescue tool, QtWebEngine site data –
+and nothing while an installation runs (in-process lock or a live `install.lock`). The system check shows the total.
+Also fixed: Studio states can be deleted one by one (orphans of forgotten devices are marked), the catalog's
+remembered list can be cleared (More › *Clear the remembered list …*), General › *Default values* (fills the dialog,
+saved only with OK), hints that the icon set and the splash screen apply after a restart and that changing the
+main folder does not move files.
+
+What grows and where (measured from the code):
+
+| What | Where | Growth | Cleanup |
+|---|---|---|---|
+| Log | `~/.local/state/fm1-companion/logs` | rotating, ≤ 5 × 1 MB | Storage (rotated parts by age) |
+| Firmware downloads | `~/FM-1/Firmware/<key>/<tag>` | ~1–2 MB per version, never deleted before | Storage, keep N |
+| Journal package copies | `DATA_DIR/flash/packages/<sha>.fwsc` | one per installed package, never deleted before | Storage, keep N, active kept |
+| Tool clones | `DATA_DIR/repos/<key>` | partial clone per firmware, a few MB | Storage (manual) |
+| Editor copies | `DATA_DIR/editor/<key>/<tag>` | one per opened version | Storage, keep N |
+| Catalog cache | `CACHE_DIR/catalog/{thumbs,github}`, `CACHE_DIR/releases-*.json` | images up to 6 MB each | Storage, max age |
+| Sample-pack checkouts | `CACHE_DIR/samplepacks/<id>/repo` | **a second copy** of every downloaded pack | Storage, max age |
+| QtWebEngine cache / site data | `CACHE_DIR/webengine`, `DATA_DIR/webengine` | Chromium-managed | cache: Storage (`clearHttpCache()` while running); site data: kept |
+| Temp files | `/tmp/fm1c-*` | normally removed at exit; stay after a crash | Storage (> 1 h), auto (> 1 day) |
+| Error / system check reports | `~/FM-1-Companion-Fehlerbericht-*.zip`, `~/systemcheck-*.txt` | per click | Storage (manual) |
+| Damaged settings copies | `CONFIG_DIR/config.json.kaputt-*` | per broken start | Storage (manual) |
+| Studio states | `DATA_DIR/studio/<profile>` | ~1 MB per device | Storage, one by one |
+| Automatic / safety backups | `~/FM-1/Backups/<device>` | per connect / install / restore / write back | existing retention (`keep_backups`) |
+| Recordings, projects, kits, samples, rescue dumps, downloads | `~/FM-1/…` | user's | never by the app (pages have their own delete) |
+
+Open (not done, found while checking):
+
+- **NAS mirror never prunes:** `autobackup.mirror_*` copies every backup but never removes the automatic ones the
+  local retention deleted – the mirror folder grows without limit. Option: apply the same retention to the mirror
+  (only files whose checksum matches a local file that was pruned).
+- **Backup index keeps stale entries:** `DATA_DIR/daten/index.json` keeps entries of deleted backup files (small,
+  but unbounded); drop entries whose path no longer exists when saving.
+- **Sample packs keep a full second copy** in the cache after copying to `Samples` (now cleanable/aged out). Better:
+  empty the sparse checkout right after copying (`git sparse-checkout set` with nothing, or delete the work tree and
+  keep only `.git` for the next index).
+- **Rescue folder** (`~/FM-1/Rettung`): flash dumps and tool logs accumulate; the Rescue page could list them with
+  date/size and delete old ones (with a strong warning – a dump may be the only copy of a device's state).
+- **Web editor site data** (`DATA_DIR/webengine`): no way to clear it; it may contain editor settings, so a
+  "Reset web editor data" button needs a clear warning (`QWebEngineProfile.clearAllVisitedLinks`/cookie store).
+- **Reset of page settings:** General › *Default values* covers the dialog only; per-page settings in
+  `modules` (catalog filters, studio export options, MIDI page) have no reset. A "Reset all settings" that keeps
+  folders, devices, firmware list, GitHub token and remembered list would need a list of preserved module keys.
+- **GitHub token:** removed by saving an empty token ("Leave empty to remove"); an explicit *Remove token* action
+  and a hint whether a token is set would be clearer.
+- **Forgetting a device** leaves its Studio state and backup folder (by design – backups are user data); the
+  forget dialog could offer to delete the Studio state too.
+- **Long reads without cancel:** reading sample slots/banks and projects (`samples_page`, `projects_page`) run
+  without a cancel button; writes are deliberately not cancellable.
+- **Theme assets** (`CACHE_DIR/theme`) and sound previews (`CACHE_DIR/klang`, 4 files) are tiny and bounded;
+  theme assets are in use by the running style sheet, so they are deliberately not offered for deletion.

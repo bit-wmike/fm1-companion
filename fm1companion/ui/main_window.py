@@ -396,6 +396,19 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(1200, lambda: self.notify(cfg_msg, "warning"))
         self.missing_deps: list[str] = []
         QTimer.singleShot(2500, self._check_required_deps)
+        QTimer.singleShot(60000, self._storage_autoclean)     # old logs, downloads, caches (once a day)
+
+    def _storage_autoclean(self):
+        from .. import storage
+        from .common import run_job
+        if not storage.auto_due():
+            return
+
+        def done(res):
+            if res is not None and res.freed:
+                log.info("automatic cleanup: %d items, %d bytes freed", res.removed, res.freed)
+        run_job(self, lambda w: storage.run_auto(), on_done=done, on_fail=lambda m, tb: log.warning(
+            "automatic cleanup failed: %s", m))
 
     def _warn_save_failed(self, text: str):
         """Settings couldn't be saved: say so once per session (not on every click)."""
@@ -493,6 +506,8 @@ class MainWindow(QMainWindow):
                   _("Find pages, actions and help"))
         self._act(w, _("System check …"), self.open_syscheck, None, ("utilities-system-monitor",),
                   _("Check USB, power and audio for problems"))
+        self._act(w, _("Storage and cleanup …"), lambda: self._settings("storage"), None,
+                  ("drive-harddisk", "edit-clear"), _("Logs, downloaded firmware and caches: sizes, delete"))
 
         hm = mb.addMenu(_("&Help"))
         self._act(hm, _("Help Center"), lambda: self.open_help(), "F1", ("help-contents",))
@@ -922,8 +937,8 @@ class MainWindow(QMainWindow):
                         (_("Open folder"), lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(Path(path).parent)))))
 
     # ------------------------------------------------------------ Miscellaneous
-    def _settings(self):
-        d = SettingsDialog(self.ctx, self)
+    def _settings(self, tab: str = ""):
+        d = SettingsDialog(self.ctx, self, tab=tab)
         if d.exec():
             self.apply_theme()
             self.backups.refresh()

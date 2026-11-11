@@ -1201,3 +1201,340 @@ msgstr "{summary} Fuente: {source}, comprobado a las {time}."
 #: fm1companion/ui/statusbar.py:237
 msgid "Save report"
 msgstr "Guardar informe"
+
+#: fm1companion/storage.py:335
+msgid "Logs"
+msgstr "Registros"
+
+#: fm1companion/storage.py:335
+msgid "The app's log (at most 5 × 1 MB, rotating). “Delete” removes the older parts and empties the current log."
+msgstr "El registro de la app (como máximo 5 × 1 MB, rotativo). «Borrar …» quita las partes antiguas y vacía el registro actual."
+
+#: fm1companion/storage.py:337
+msgid "Downloaded firmware"
+msgstr "Firmware descargado"
+
+#: fm1companion/storage.py:338
+msgid "Packages the app downloaded (main folder › Firmware). They are downloaded again when needed. Kept: the newest original firmware V15 (for a rescue without internet) and the package of an interrupted installation. Files you put there yourself stay."
+msgstr "Paquetes que la app descargó (carpeta principal › Firmware). Se vuelven a descargar cuando hace falta. Se conservan: el firmware original V15 más reciente (para un rescate sin internet) y el paquete de una instalación interrumpida. Los archivos que pusiste tú allí se quedan."
+
+#: fm1companion/storage.py:341
+msgid "Copies of installed packages"
+msgstr "Copias de paquetes instalados"
+
+#: fm1companion/storage.py:342
+msgid "The installation journal keeps a copy of every package it installs (for finishing an interrupted installation). The copy of an interrupted installation is kept."
+msgstr "El diario de instalación guarda una copia de cada paquete que instala (para terminar una instalación interrumpida). La copia de una instalación interrumpida se conserva."
+
+#: fm1companion/storage.py:345
+msgid "Firmware tools (git copies)"
+msgstr "Herramientas de firmware (copias git)"
+
+#: fm1companion/storage.py:346
+msgid "Installers and tools of the firmwares, fetched from GitHub. Fetched again on the next installation (needs internet). Kept while an interrupted installation can be finished."
+msgstr "Instaladores y herramientas de los firmwares, descargados de GitHub. Se vuelven a descargar en la próxima instalación (necesita internet). Se conservan mientras se pueda terminar una instalación interrumpida."
+
+#: fm1companion/storage.py:349
+msgid "Editor copies"
+msgstr "Copias del editor"
+
+#: fm1companion/storage.py:349
+msgid "Web editors of the firmware versions. Prepared again when the editor is opened – close the editor first."
+msgstr "Editores web de las versiones de firmware. Se preparan de nuevo al abrir el editor; cierra antes el editor."
+
+#: fm1companion/storage.py:352
+msgid "Catalog images and GitHub data"
+msgstr "Imágenes del catálogo y datos de GitHub"
+
+#: fm1companion/storage.py:353
+msgid "Screenshots, stars and release lists from GitHub. The catalog itself and the News list stay."
+msgstr "Capturas, estrellas y listas de versiones de GitHub. El catálogo y la lista de novedades se conservan."
+
+#: fm1companion/storage.py:355
+msgid "Sample pack downloads"
+msgstr "Descargas de paquetes de samples"
+
+#: fm1companion/storage.py:356
+msgid "Git copies of the sample packs. The samples you downloaded are already in your Samples folder and stay there."
+msgstr "Copias git de los paquetes de samples. Los samples que descargaste ya están en tu carpeta Samples y se quedan allí."
+
+#: fm1companion/storage.py:358
+msgid "Web cache"
+msgstr "Caché web"
+
+#: fm1companion/storage.py:358
+msgid "Cache of the built-in browser (editors, catalog pages)."
+msgstr "Caché del navegador integrado (editores, páginas del catálogo)."
+
+#: fm1companion/storage.py:360
+msgid "Temporary files"
+msgstr "Archivos temporales"
+
+#: fm1companion/storage.py:361
+msgid "Leftovers of previews and recordings in the temporary folder (only files older than an hour)."
+msgstr "Restos de previsualizaciones y grabaciones en la carpeta temporal (solo archivos con más de una hora)."
+
+#: fm1companion/storage.py:363
+msgid "Error reports"
+msgstr "Informes de errores"
+
+#: fm1companion/storage.py:364
+msgid "Error reports and system check reports in your home folder, damaged settings copies."
+msgstr "Informes de errores y de la comprobación del sistema en tu carpeta personal, copias dañadas de los ajustes."
+
+#: fm1companion/storage.py:366
+msgid "Studio states"
+msgstr "Estados del Studio"
+
+#: fm1companion/storage.py:367
+msgid "Your work in the Studio, one state per device. Only deleted one by one, on request."
+msgstr "Tu trabajo en el Studio, un estado por dispositivo. Solo se borra uno por uno, si lo pides."
+
+#: fm1companion/storage.py:369
+msgid "Web editor storage"
+msgstr "Almacenamiento de los editores web"
+
+#: fm1companion/storage.py:370
+msgid "Saved data of the built-in browser – web editors may keep your settings there. Kept."
+msgstr "Datos guardados del navegador integrado: los editores web pueden guardar ahí tus ajustes. Se conservan."
+
+#: fm1companion/storage.py:372
+msgid "Rescue tool and installation journal"
+msgstr "Herramienta de rescate y diario de instalación"
+
+#: fm1companion/storage.py:373
+msgid "Needed for a rescue and for finishing an interrupted installation. Kept."
+msgstr "Necesario para un rescate y para terminar una instalación interrumpida. Se conserva."
+
+#: fm1companion/storage.py:375
+msgid "Your files in the main folder"
+msgstr "Tus archivos en la carpeta principal"
+
+#: fm1companion/storage.py:376
+msgid "Backups, projects, samples, kits, recordings, rescue dumps and downloads. The app never deletes them here – automatic backups follow the setting “Keep automatic backups”."
+msgstr "Copias de seguridad, proyectos, samples, kits, grabaciones, volcados de rescate y descargas. La app nunca los borra aquí; las copias automáticas siguen el ajuste «Conservar copias automáticas»."
+
+#: fm1companion/storage.py:482
+#: fm1companion/ui/storage_tab.py:169
+#: fm1companion/ui/storage_tab.py:247
+msgid "An installation is running – nothing is deleted until it has finished."
+msgstr "Hay una instalación en curso: no se borra nada hasta que termine."
+
+#: fm1companion/syscheck.py:540
+msgid "App storage could not be measured"
+msgstr "No se pudo medir el almacenamiento de la app"
+
+#: fm1companion/syscheck.py:543
+#, python-brace-format
+msgid "App data: {size} (logs, downloads, caches), {free} of it can be deleted"
+msgstr "Datos de la app: {size} (registros, descargas, cachés), de ellos se pueden borrar {free}"
+
+#: fm1companion/syscheck.py:545
+msgid "Your backups, projects, samples and recordings are not included."
+msgstr "Tus copias de seguridad, proyectos, samples y grabaciones no están incluidos."
+
+#: fm1companion/syscheck.py:546
+msgid "Settings › Storage shows every category and deletes what is no longer needed."
+msgstr "Ajustes › Almacenamiento muestra cada categoría y borra lo que ya no hace falta."
+
+#: fm1companion/ui/main_window.py:509
+msgid "Storage and cleanup …"
+msgstr "Almacenamiento y limpieza …"
+
+#: fm1companion/ui/main_window.py:510
+msgid "Logs, downloaded firmware and caches: sizes, delete"
+msgstr "Registros, firmware descargado y cachés: tamaños, borrar"
+
+#: fm1companion/ui/pages/discover.py:601
+msgid "Clear the remembered list …"
+msgstr "Vaciar la lista de seguimiento …"
+
+#: fm1companion/ui/pages/discover.py:1173
+msgid "The remembered list is already empty."
+msgstr "La lista de seguimiento ya está vacía."
+
+#: fm1companion/ui/pages/discover.py:1176
+msgid "Clear the remembered list"
+msgstr "Vaciar la lista de seguimiento"
+
+#: fm1companion/ui/pages/discover.py:1177
+#, python-brace-format
+msgid "Forget {n} remembered firmware? Nothing is uninstalled or deleted."
+msgid_plural "Forget {n} remembered firmwares? Nothing is uninstalled or deleted."
+msgstr[0] "¿Olvidar {n} firmware guardado? No se desinstala ni se borra nada."
+msgstr[1] "¿Olvidar {n} firmwares guardados? No se desinstala ni se borra nada."
+
+#: fm1companion/ui/pages/discover.py:1194
+msgid "Remembered list cleared."
+msgstr "Lista de seguimiento vaciada."
+
+#: fm1companion/ui/settings_dialog.py:62
+msgid "Default values"
+msgstr "Valores predeterminados"
+
+#: fm1companion/ui/settings_dialog.py:63
+msgid "Puts the options in this window back to their default values (also appearance and recording). Folders, devices and your firmware list stay. Only saved with OK."
+msgstr "Devuelve las opciones de esta ventana a sus valores predeterminados (también apariencia y grabación). Las carpetas, los dispositivos y tu lista de firmwares se quedan. Solo se guarda con Aceptar."
+
+#: fm1companion/ui/settings_dialog.py:104
+msgid "Icons already shown change completely after restarting the app."
+msgstr "Los iconos ya mostrados cambian del todo solo al reiniciar la app."
+
+#: fm1companion/ui/settings_dialog.py:108
+msgid "Applies from the next start."
+msgstr "Se aplica a partir del próximo inicio."
+
+#: fm1companion/ui/settings_dialog.py:127
+msgid "Choosing another folder does not move existing files – move them yourself (with the app closed)."
+msgstr "Elegir otra carpeta no mueve los archivos existentes; muévelos tú (con la app cerrada)."
+
+#: fm1companion/ui/storage_tab.py:17
+msgid "your data"
+msgstr "tus datos"
+
+#: fm1companion/ui/storage_tab.py:17
+msgid "kept"
+msgstr "se conserva"
+
+#: fm1companion/ui/storage_tab.py:27
+msgid "What the app keeps on this computer. “Delete …” only removes data the app made itself and can fetch or create again – never your backups, projects, samples or recordings, and nothing an interrupted installation still needs."
+msgstr "Lo que la app guarda en este ordenador. «Borrar …» solo quita datos que la app creó y puede volver a descargar o generar; nunca tus copias de seguridad, proyectos, samples o grabaciones, ni nada que una instalación interrumpida aún necesite."
+
+#: fm1companion/ui/storage_tab.py:31
+msgid "Can be deleted"
+msgstr "Se puede borrar"
+
+#: fm1companion/ui/storage_tab.py:40
+#: fm1companion/ui/storage_tab.py:147
+msgid "Delete …"
+msgstr "Borrar …"
+
+#: fm1companion/ui/storage_tab.py:42
+msgid "Measure again"
+msgstr "Volver a medir"
+
+#: fm1companion/ui/storage_tab.py:52
+msgid "Automatic cleanup"
+msgstr "Limpieza automática"
+
+#: fm1companion/ui/storage_tab.py:54
+msgid "clean up automatically (at most once a day, a minute after the start)"
+msgstr "limpiar automáticamente (como máximo una vez al día, un minuto después del inicio)"
+
+#: fm1companion/ui/storage_tab.py:67
+#: fm1companion/ui/storage_tab.py:68
+msgid " days"
+msgstr " días"
+
+#: fm1companion/ui/storage_tab.py:72
+msgid "Delete older log parts after:"
+msgstr "Borrar partes antiguas del registro tras:"
+
+#: fm1companion/ui/storage_tab.py:73
+msgid "Delete catalog images, sample pack downloads and temporary files after:"
+msgstr "Borrar imágenes del catálogo, descargas de paquetes de samples y archivos temporales tras:"
+
+#: fm1companion/ui/storage_tab.py:74
+msgid "Downloaded versions to keep per firmware:"
+msgstr "Versiones descargadas que conservar por firmware:"
+
+#: fm1companion/ui/storage_tab.py:75
+msgid "The newest versions stay, as well as the versions on your devices and the package of an interrupted installation."
+msgstr "Se conservan las versiones más recientes, las versiones de tus dispositivos y el paquete de una instalación interrumpida."
+
+#: fm1companion/ui/storage_tab.py:77
+msgid "Copies of installed packages to keep:"
+msgstr "Copias de paquetes instalados que conservar:"
+
+#: fm1companion/ui/storage_tab.py:78
+msgid "Editor versions to keep per firmware:"
+msgstr "Versiones del editor que conservar por firmware:"
+
+#: fm1companion/ui/storage_tab.py:79
+msgid "Clean up now"
+msgstr "Limpiar ahora"
+
+#: fm1companion/ui/storage_tab.py:80
+msgid "Applies the rules above right away."
+msgstr "Aplica ya las reglas de arriba."
+
+#: fm1companion/ui/storage_tab.py:92
+msgid "Measuring …"
+msgstr "Midiendo …"
+
+#: fm1companion/ui/storage_tab.py:95
+#, python-brace-format
+msgid "Measuring failed: {error}"
+msgstr "La medición falló: {error}"
+
+#: fm1companion/ui/storage_tab.py:121
+#, python-brace-format
+msgid "App data: <b>{size}</b>, of it <b>{free}</b> can be deleted. Your own files in the main folder: {own}."
+msgstr "Datos de la app: <b>{size}</b>, de ellos se pueden borrar <b>{free}</b>. Tus propios archivos en la carpeta principal: {own}."
+
+#: fm1companion/ui/storage_tab.py:144
+msgid "Delete a state …"
+msgstr "Borrar un estado …"
+
+#: fm1companion/ui/storage_tab.py:169
+#: fm1companion/ui/storage_tab.py:247
+msgid "Not now"
+msgstr "Ahora no"
+
+#: fm1companion/ui/storage_tab.py:171
+#, python-brace-format
+msgid "Delete {what}"
+msgstr "Borrar: {what}"
+
+#: fm1companion/ui/storage_tab.py:172
+#, python-brace-format
+msgid "Delete <b>{what}</b> ({size})?<br><br>{detail}"
+msgstr "¿Borrar <b>{what}</b> ({size})?<br><br>{detail}"
+
+#: fm1companion/ui/storage_tab.py:190
+msgid "Web cache is being emptied."
+msgstr "Se está vaciando la caché web."
+
+#: fm1companion/ui/storage_tab.py:195
+#, python-brace-format
+msgid "{what}: {size} freed."
+msgstr "{what}: {size} liberados."
+
+#: fm1companion/ui/storage_tab.py:197
+#, python-brace-format
+msgid "{n} item could not be deleted: {first}"
+msgid_plural "{n} items could not be deleted: {first}"
+msgstr[0] "{n} elemento no se pudo borrar: {first}"
+msgstr[1] "{n} elementos no se pudieron borrar: {first}"
+
+#: fm1companion/ui/storage_tab.py:214
+msgid "(device forgotten)"
+msgstr "(dispositivo olvidado)"
+
+#: fm1companion/ui/storage_tab.py:215
+#, python-brace-format
+msgid "{name} – {size}, {date}"
+msgstr "{name} – {size}, {date}"
+
+#: fm1companion/ui/storage_tab.py:218
+#: fm1companion/ui/storage_tab.py:222
+msgid "Delete a Studio state"
+msgstr "Borrar un estado del Studio"
+
+#: fm1companion/ui/storage_tab.py:218
+msgid "Studio state:"
+msgstr "Estado del Studio:"
+
+#: fm1companion/ui/storage_tab.py:223
+#, python-brace-format
+msgid "Delete the Studio state of <b>{name}</b>? Your work in the Studio for this device is lost; backups and the FM-1 itself are not affected."
+msgstr "¿Borrar el estado del Studio de <b>{name}</b>? Se pierde tu trabajo en el Studio para este dispositivo; las copias de seguridad y el propio FM-1 no se ven afectados."
+
+#: fm1companion/ui/storage_tab.py:232
+#, python-brace-format
+msgid "Studio state of {name} deleted ({size})."
+msgstr "Estado del Studio de {name} borrado ({size})."
+
+#: fm1companion/ui/storage_tab.py:254
+msgid "Cleanup"
+msgstr "Limpieza"

@@ -21,6 +21,23 @@ Abschalten: Einstellungen › „beim Anstecken eines FM-1 nach Firmware-Updates
 **Wo sind meine Daten?**
 Alles, was dir gehört, liegt im Hauptordner (Standard `~/FM-1`). Der wird beim Deinstallieren **nie** gelöscht.
 
+**Wie lösche ich alte Protokolle und heruntergeladene Firmware?**
+Werkzeuge › *Speicher und Aufräumen …* (oder Einstellungen › Speicher) zeigt, was die App auf dem Computer
+aufbewahrt – Protokolle, heruntergeladene Firmware-Pakete, Kopien installierter Pakete, Firmware-Werkzeuge,
+Editor-Kopien, Katalogbilder, Sample-Pack-Downloads, Web-Cache, temporäre Dateien und Fehlerberichte – mit Größe,
+*Ordner öffnen* und *Löschen …* (immer mit Rückfrage). Deine Backups, Projekte, Samples, Kits und Aufnahmen werden dort
+nie gelöscht, ebenso wenig alles, was eine unterbrochene Installation noch braucht (das Paket aus dem Journal, die
+Firmware-Werkzeuge, die neueste Original-Firmware V15 für eine Rettung ohne Internet). Während einer Installation wird
+nichts gelöscht. Studio-Stände sind deine Arbeit: sie werden nur einzeln gelöscht (*Einen Stand löschen …*).
+
+Das **automatische Aufräumen** (gleicher Tab, standardmäßig an, höchstens einmal am Tag) löscht ältere
+Protokollteile nach 30 Tagen, behält die
+3 neuesten Paketkopien und je Firmware die 2 neuesten Editor-Versionen und löscht Katalogbilder, Sample-Pack-Downloads
+und temporäre Dateien nach 30 Tagen. Der [Systemcheck](app://action/syscheck) zeigt die Summe.
+
+Firmware-Downloads in `~/FM-1/Firmware` werden nie automatisch gelöscht (der Ordner gehört dir); im selben Tab kannst
+du „je Firmware die neuesten N Downloads behalten“ einschalten.
+
 **Etwas ist abgestürzt.**
 Die App zeigt dann einen Dialog mit *Fehlerbericht speichern*. Der Bericht enthält Protokolle, Versionen und
 Einstellungen ohne persönliche Pfade – du entscheidest, ob du ihn weitergibst. Selbst erstellen: Hilfe ›

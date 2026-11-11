@@ -21,6 +21,24 @@ Para desactivarlo: Ajustes › “buscar actualizaciones de firmware al conectar
 **¿Dónde están mis datos?**
 Todo lo que es tuyo está en la carpeta principal (por defecto `~/FM-1`). **Nunca** se borra al desinstalar.
 
+**¿Cómo borro registros antiguos y firmware descargado?**
+Herramientas › *Almacenamiento y limpieza …* (o Ajustes › Almacenamiento) muestra lo que la app guarda en el
+ordenador – registros, paquetes de firmware descargados, copias de paquetes instalados, herramientas de firmware,
+copias del editor, imágenes del catálogo, descargas de paquetes de samples, caché web, archivos temporales e informes
+de errores – con su tamaño, *Abrir carpeta* y *Borrar …* (siempre con confirmación). Tus copias de seguridad,
+proyectos, samples, kits y grabaciones nunca se borran ahí, ni nada que una instalación interrumpida aún necesite (el
+paquete del diario, las herramientas de firmware, el firmware original V15 más reciente para un rescate sin internet).
+Mientras hay una instalación en curso no se borra nada. Los estados del Studio son tu trabajo: solo se borran uno por
+uno (*Borrar un estado …*).
+
+La **limpieza automática** (misma pestaña, activada por defecto, como máximo una vez al día) borra las partes antiguas
+del registro tras 30 días, conserva las 3 copias de paquetes más recientes y las 2 versiones del editor más recientes por firmware, y borra
+imágenes del catálogo, descargas de paquetes de samples y archivos temporales tras 30 días. La
+[comprobación del sistema](app://action/syscheck) muestra el total.
+
+Las descargas de firmware en `~/FM-1/Firmware` nunca se borran automáticamente (esa carpeta es tuya); en la misma
+pestaña puedes activar «conservar las N descargas más recientes por firmware».
+
 **Algo se ha bloqueado.**
 La app muestra entonces un diálogo con *Guardar informe de errores*. El informe contiene registros, versiones y
 ajustes sin rutas personales – tú decides si lo compartes. Para crear uno tú mismo: Ayuda ›

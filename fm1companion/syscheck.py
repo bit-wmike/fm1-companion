@@ -527,6 +527,7 @@ def status_findings(folder: Path | None = None) -> list[Finding]:
                                                         "folder.")))
         except OSError:
             pass
+        out.append(storage_finding())
     return out
 
 
@@ -574,6 +575,21 @@ def usb_link_findings(fm1_paths: set[str] | None = None, sysroot: str = "/sys") 
                 _("The udev rule of the app is installed; unplug the FM-1 and plug it in again."),
                 [f"{n.name}/power/control = {n.power_control}" for n in sleepy]))
     return out
+
+
+def storage_finding() -> Finding:
+    """what the app keeps besides your own files (logs, downloads, caches) – Settings › Storage cleans it up"""
+    from . import storage
+    try:
+        total, cleanable = storage.app_total()
+    except OSError as e:
+        return Finding("storage", "unknown", _("App storage could not be measured"), str(e))
+    big = cleanable >= 1 << 30
+    return Finding("storage", "info" if big else "ok",
+                   _("App data: {size} (logs, downloads, caches), {free} of it can be deleted").format(
+                       size=storage.human(total), free=storage.human(cleanable)),
+                   _("Your backups, projects, samples and recordings are not included.") if big else "",
+                   _("Settings › Storage shows every category and deletes what is no longer needed.") if big else "")
 
 
 def run_all(folder: Path | None = None, fm1_paths: set[str] | None = None) -> tuple[list[Finding], dict]:
