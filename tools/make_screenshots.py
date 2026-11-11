@@ -194,6 +194,23 @@ tab(mp, "Keyboard")
 shot("09-midi.png")
 w.go("recovery")
 shot("10-recovery.png")
+
+# Settings › Storage
+try:
+    from fm1companion.ui.settings_dialog import SettingsDialog
+    d = SettingsDialog(ctx, w, tab="storage")
+    d.resize(980, 720)
+    d.show()
+    if hasattr(d, "storage_index"):
+        for tw in d.findChildren(__import__("PyQt6.QtWidgets", fromlist=["QTabWidget"]).QTabWidget):
+            if tw.indexOf(d.storage) >= 0:
+                tw.setCurrentIndex(tw.indexOf(d.storage))
+    wait(2500)
+    d.grab().save(str(OUT / "11-storage.png"))
+    print("saved 11-storage.png")
+    d.close()
+except Exception as e:  # noqa: BLE001
+    print("storage", e)
 w.close()
 wait(500)
 os._exit(0)

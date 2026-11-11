@@ -249,7 +249,7 @@ def temp_files(min_age: float = MIN_TEMP_AGE, now: float | None = None) -> list[
     now = now or time.time()
     out = []
     for p in _children(Path(tempfile.gettempdir())):
-        if not p.name.startswith(TEMP_PREFIX):
+        if not p.name.startswith(TEMP_PREFIX) or p.name.startswith("fm1c-simbuild"):   # (build tools' work dir)
             continue
         try:
             st = os.lstat(p)
