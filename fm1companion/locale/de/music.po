@@ -4539,3 +4539,15 @@ msgstr "Teil {n} ist leer."
 #, python-brace-format
 msgid "The {firmware} twin cannot load SLOOP backups."
 msgstr "SLOOP-Backups kann der {firmware}-Zwilling nicht laden."
+
+#: fm1companion/ui/pages/studio.py:218
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces X0X's project on the device, whole: the sound, the 32 patterns, the song, the knob motion and the settings (the break loops in the sample slots stay). X0X must be stopped, and it asks on its screen: press <b>SEL</b> on the FM-1 to confirm."
+msgstr "Zuerst macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Dann ersetzt der Zwilling X0Xs Projekt auf dem Gerät, als Ganzes: den Klang, die 32 Patterns, den Song, die Knopfbewegungen und die Einstellungen (die Break-Loops in den Sample-Plätzen bleiben). X0X muss gestoppt sein und fragt auf seinem Bildschirm: zum Bestätigen <b>SEL</b> am FM-1 drücken."
+
+#: fm1companion/ui/pages/studio.py:85
+msgid "FM-1 backup (*.json);;X0X backup (*.x0b);;LOOM-8 backup (*.loom8)"
+msgstr "FM-1-Backup (*.json);;X0X-Backup (*.x0b);;LOOM-8-Backup (*.loom8)"
+
+#: fm1companion/ui/pages/studio.py:222
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces LOOM-8's user presets and its three projects on the device, all of them (its sample bank stays). LOOM-8 must be stopped, and it asks on its screen: press <b>SEL</b> on the FM-1 to confirm."
+msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling LOOM-8s Benutzer-Presets und seine drei Projekte am Gerät, alle zusammen (seine Sample-Bank bleibt). LOOM-8 muss gestoppt sein und fragt auf seinem Bildschirm: zum Bestätigen <b>SEL</b> am FM-1 drücken."

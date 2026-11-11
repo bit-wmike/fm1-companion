@@ -91,6 +91,23 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
   SLOOP-Backup (bis 2.6) lässt sich auf ein KARMA-FM-1 schreiben (die SYN-Kits von SLOOP 2.5 bleiben weg, wie in KARMAs
   Editor), ein KARMA-Backup nie auf SLOOP. KARMAs drei gespeicherte Songs (SAVE auf der SONG-Seite) gehören nicht zum
   Backup – auch KARMAs eigenes Backup lässt sie weg. Die Projektansicht liest KARMAs Teile noch nicht.
+* X0X (1.2.1, seine neueste Version, und 1.2.0): ein Projekt – sein Klang, die 32 Patterns, der Song und die
+  Knopfbewegungen –, keine Projektplätze: Patterns und Song spielen vom Bedienfeld des Zwillings oder mit Abspielen. Die
+  fünf Einzelspuren sind seine Teile: die 909, die 808, 303 A, 303 B und BREAK. X0X hat ein eigenes Backup-Format:
+  **Aus Backup öffnen …** öffnet auch X0Xs eigene `.x0b`-Dateien, und X0X nimmt ein Backup nur ganz. Beim
+  Zurückschreiben muss X0X gestoppt sein und fragt auf seinem Bildschirm (RESTORE FROM USB?): **SEL** am FM-1 drücken.
+  Die Break-Loops in den Sample-Plätzen gehören nicht zu einem X0X-Backup. Der Zwilling hat einen Kern, kein USB-Audio,
+  kein TRS-MIDI und keine Hardware-Kalibrierung; die Update-Geste bewirkt dort nichts. Die Projektansicht liest X0Xs
+  Patterns nicht.
+* FoMni (0.4.1 und 0.4) und AMB-1 (1.3.2 und 1.3.1) haben kein Backup über USB: ihre Zwillinge starten leer (oder aus
+  einem Studio-Stand) und werden nie von einem FM-1 geladen oder auf eines geschrieben – spielen, als WAV exportieren
+  und die Stände im Studio behalten. FoMnis vier Einzelspuren sind seine Harfenstimmen 1 und 2, der Akkord mit dem Bass
+  und der Rhythmus; AMB-1 spielt von selbst, seine vier Einzelspuren sind seine Schichten: Pad, Glocken, Bass und Puls.
+* LOOM-8 (0.14 und 0.13.1): sein Backup ist das von fm1-base (die Benutzer-Presets und die drei Projekte, nur als
+  Ganzes; **Aus Backup öffnen …** öffnet auch LOOM-8s eigene `.loom8`-Dateien). Beim Zurückschreiben muss LOOM-8
+  gestoppt sein und fragt auf seinem Bildschirm: **SEL** am FM-1 drücken. Seine Sample-Bank gehört nicht zum Backup. Die
+  acht Einzelspuren sind seine Spuren. Der Zwilling hat einen Kern, kein Bluetooth, keinen USB-Host und kein USB-Audio;
+  die Projektansicht liest LOOM-8s Projekte nicht.
 * Der Zwilling hat keine CPU-Grenze: das Gerät lässt bei Überlast Stimmen weg, der Zwilling nie. Fließkomma-Teile
   können in den letzten Bits abweichen (unhörbar). Kein Bluetooth, kein USB-Host, kein Firmware-Update im
   Zwilling.

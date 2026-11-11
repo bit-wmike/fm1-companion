@@ -112,7 +112,33 @@ FIRMWARES = {
     # three synth tracks and the drum track; its four projects are the song's parts A..D. It speaks SLOOP's backup
     # protocol (sloopbk.py)
     "karma": {"name": "KARMA", "info": "FELUCCA KARMA", "tracks": 4, "projects": 4, "backup": "sloop"},
+    # X0X answers INFO "X0X 1.2.1 BETA" (the twin's version 1.2.1); its parts (stems): the 909, the 808, 303 A, 303 B,
+    # BREAK; one project (no slots); its own backup protocol and image (x0xbk.py), taken whole; its settings are object 0
+    "x0x": {"name": "X0X", "info": "X0X", "tracks": 5, "projects": 0, "backup": "x0x", "settings_id": 0},
+    # AMB-1 (on fm1-base) plays itself; the stems are its four layers (pad, bells, bass, pulse); no project slots. It has
+    # no editor (no INFO) and no backup over USB ("backup": None): the twin starts from its own flash or a studio
+    # state, never from or onto an FM-1
+    "amb-1": {"name": "AMB-1", "info": "AMB-1", "tracks": 4, "projects": 0, "backup": None},
+    # FoMni (FoMni-1, on X0X's platform): a chord harp; the stems are its harp voices 1 and 2, the chord with the bass and
+    # the rhythm; no project slots. Like AMB-1: no editor (no INFO) and no backup over USB
+    "fomni": {"name": "FoMni", "info": "FoMni-1", "tracks": 4, "projects": 0, "backup": None},
+    # LOOM-8 (on fm1-base): eight tracks (the stems); its three projects are no slots the twin loads (its own page);
+    # fm1-base has no editor (no INFO: "editor" False, the device's version is not asked for); its backup is fm1-base's
+    # image ("LM8B", x0xbk.py), taken whole: the user presets and the three projects
+    "loom-8": {"name": "LOOM-8", "info": "LOOM-8", "tracks": 8, "projects": 0, "backup": "loom-8", "editor": False,
+               "settings_id": None},
 }
+
+
+def no_backup(key: str) -> bool:
+    """a firmware without a backup over USB (AMB-1, FoMni): its twin is never loaded from an FM-1 nor written onto one"""
+    return key in FIRMWARES and "backup" in FIRMWARES[key] and FIRMWARES[key]["backup"] is None
+
+
+def _no_backup_error(key: str) -> StudioError:
+    return StudioError(_("{firmware} has no backup over USB: its twin cannot be loaded from an FM-1 or a backup, nor "
+                         "written onto one. Play it, export it as WAV and keep its states in the studio.").format(
+                             firmware=firmware_name(key)))
 
 
 def firmware_name(key: str) -> str:
@@ -330,6 +356,8 @@ def backup_firmware(archive) -> str:
     """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "coralflower", "karma", "sloop", "felucca" or "" (unknown). The app's
     companion block names it; otherwise the 'firmware' field (JIANT's editor writes its INFO, "JIANT V10.60"), and the
     inventory gives Skiff (the pattern bank) and JIANT (the songs) away."""
+    if getattr(archive, "image", ""):                 # (X0X's or LOOM-8's own image: x0xbk.py)
+        return archive.image
     if getattr(archive, "sloop", False):              # (SLOOP's file format: SLOOP or its fork KARMA, "FELUCCA KARMA 3.1")
         c = archive.companion or {}
         text = " ".join(str(x) for x in (c.get("firmware", ""), c.get("version_string", ""), archive.firmware or ""))
@@ -500,6 +528,8 @@ class StudioTransport(Transport):
     """``transport.Transport`` over a twin: send() feeds the message(s) in via the firmware's USB MIDI path;
     everything the twin sends goes to ``receiver`` – like a real FM-1 on USB."""
 
+    twin = True                                     # (x0xbk: the twin takes a restore's image on its side of the cable)
+
     def __init__(self, backend: TwinBackend):
         self.backend = backend
         self._closed = False
@@ -617,6 +647,8 @@ class Studio:
         tolerant=True: parts the firmware rejects (different version, damaged) are skipped instead of
         aborting; their IDs are then in ``self.rejected`` (the twin keeps its own state there)."""
         from . import backup
+        if no_backup(self.build.firmware):
+            raise _no_backup_error(self.build.firmware)
         archive = _archive(src)
         self.stop()
         self.rejected = []
@@ -634,7 +666,9 @@ class Studio:
                          tolerant: bool = False):
         """Read a backup from the real FM-1 and load it into the twin. -> (Archive, VersionCheck)"""
         from . import backup
-        dev = device_version(link)
+        if no_backup(self.build.firmware):
+            raise _no_backup_error(self.build.firmware)
+        dev = self._device_version(link)
         f = backup.capture(link, dev, progress, companion={"firmware": self.build.firmware, "firmware_version": dev,
                                                            "version_string": dev, "note": note, "kind": "studio",
                                                            "app": "FM-1 Companion"})
@@ -645,6 +679,8 @@ class Studio:
     def backup(self, progress=None):
         """Backup of the twin (web editor format) -> backup.Archive"""
         from . import backup
+        if no_backup(self.build.firmware):
+            raise _no_backup_error(self.build.firmware)
         self.stop()
         f = backup.capture(self.link, self.build.version, progress,
                            companion={"firmware": self.build.firmware, "firmware_version": self.build.version,
@@ -652,18 +688,32 @@ class Studio:
                                       "device": "Studio", "app": "FM-1 Companion"})
         return backup.read(f)
 
+    def _device_version(self, link) -> str:
+        """the device's version (INFO); "" for a firmware without an editor (LOOM-8: nothing to ask)"""
+        return device_version(link) if FIRMWARES.get(self.build.firmware, {}).get("editor", True) else ""
+
     def write_to_device(self, link, progress=None, force: bool = False, settings: bool = True,
                         exclude=()):
         """Write the twin's state to the real FM-1 (backup.restore). Different firmware version on the device:
         StudioError, unless force=True. settings=False: the "settings" object (1) stays on the device as it is;
         exclude: further object IDs that are not written (e.g. ``self.rejected``). -> Archive"""
         from . import backup
-        vc = self.check_versions(device=device_version(link))
+        if no_backup(self.build.firmware):
+            raise _no_backup_error(self.build.firmware)
+        vc = self.check_versions(device=self._device_version(link))
         if not vc.ok and not force:
             raise StudioError(_("{message} Nothing written.").format(message=vc.message))
         archive = self.backup()
-        skip = set(exclude) | (set() if settings else {FIRMWARES.get(self.build.firmware, {}).get("settings_id", 1)})
-        if skip:
+        sid = FIRMWARES.get(self.build.firmware, {}).get("settings_id", 1)    # (LOOM-8: None, no settings object)
+        skip = set(exclude) | (set() if settings or sid is None else {sid})
+        if skip and archive.image:                  # (X0X, LOOM-8 take an image whole: the device's own parts in it)
+            from . import x0xbk
+            dev = {o["id"]: o["bytes"] for o in backup.read(backup.capture(
+                link, self._device_version(link), firmware_key=archive.image)).objects}
+            image = x0xbk.build([(o["id"], dev.get(o["id"], b"") if o["id"] in skip else o["bytes"])
+                                 for o in archive.objects], profile=x0xbk.profile_of(archive.file))
+            backup.restore(link, backup.read(x0xbk.to_file(image, archive.firmware, archive.companion)), progress)
+        elif skip:
             ids = [o["id"] for o in archive.objects if o["id"] not in skip]
             backup.restore_selected(link, archive, ids, progress)
         else:                                       # (no hint: the device's INFO picks the protocol, so another
@@ -827,7 +877,7 @@ class Studio:
 
     def check_versions(self, device: str = "", backup: str = "", link=None, archive=None) -> VersionCheck:
         if link is not None and not device:
-            device = device_version(link)
+            device = self._device_version(link)
         if archive is not None and not backup:
             backup = backup_version(_archive(archive))
         return check_versions(self.build.version, device, backup, self.firmware_name)
@@ -838,6 +888,10 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     backup.restore); skip parts the firmware rejects. -> rejected object IDs"""
     from . import backup
     proto, info = backup._match(link, archive, firmware_key)
+    if archive.image:                                  # (X0X, LOOM-8 take the image whole: refused, nothing changes)
+        from . import x0xbk
+        x0xbk.restore(link, archive.file, progress)
+        return []
     if archive.sloop:
         if proto == backup.SLOOP and FIRMWARES.get(firmware_key, {}).get("backup") == "sloop":
             from . import sloopbk                      # (SLOOP and KARMA: SLOOP's protocol and file, part by part)

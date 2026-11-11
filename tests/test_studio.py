@@ -1248,3 +1248,355 @@ def test_karma_in_backup_layer():
         backup._match(FakeLink("FELUCCA SLOOP 2.6"), arch)
     assert backup._match(FakeLink("FELUCCA KARMA 3.1"), arch)[0] == backup.SLOOP
     assert Info("FELUCCA KARMA 3.1").firmware_name == "karma"
+
+
+# ------------------------------------------------------------------ X0X (tools/studio/x0x_studio.c)
+# X0X (charlesvestal/fm1-x0x): v1.2.1 is its latest release (2026-11-05), v1.2.0 the one before. Its release workflow
+# builds tools/build.py --release X.Y.Z: INFO "X0X X.Y.Z BETA", the identity FM-1_9XXYYZZ. Its own backup protocol
+# (backup.c: the project whole, in the update's framing) and image ("X0XB", six objects): x0xbk.py.
+X0X_COMMIT = {"1.2.0": "ca2d377e3b9522579245152a81781a575f4d2fea", "1.2.1": "502b2c28c14ab2bff31eb4f0777fdfd0efcf8bea"}
+X0X_STATUS = {"1.2.0": "previous stable", "1.2.1": "stable"}
+
+
+def test_x0x_builds_side_by_side():
+    bs = studio.builds("x0x")
+    vs = [b.version for b in bs]
+    assert vs == ["1.2.0", "1.2.1"] and [b.path.name for b in bs] == vs
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == []
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "x0x"
+        assert m["commit"] == X0X_COMMIT[b.version] and m["ref"] == "v" + b.version and m["version"] == b.version
+        assert m["firmware_version"] == b.version and m["release_status"] == X0X_STATUS[b.version]
+        assert m["identity"] == "FM-1_90102%02d" % int(b.version.split(".")[2]) and m["license"] == "GPL-3.0-only"
+        assert m["fs"] == 44100 and m["flash_size"] == 0x100000 and m["tracks"] == 5 and m["projects"] == 0
+        assert m["source_repo"] == "https://github.com/charlesvestal/fm1-x0x"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"fm1-x0x-{m['commit']}.tar.gz" in notice
+        assert "Charles Vestal" in notice and "Open303" in notice and m["glue"] == "tools/studio/x0x_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        assert "Barlow" in (b.path / "THIRD_PARTY.txt").read_text()
+        assert "9W9" in (b.path / "LICENSING.md").read_text()
+    assert not any(s.key == "x0x-studio" for s in sims.bundled())
+
+
+def test_x0x_versions_and_pick():
+    b, exact, warn = studio.pick_build("x0x", "X0X 1.2.1 BETA")             # X0X's INFO
+    assert exact and b.version == "1.2.1" and not warn
+    assert studio.pick_build("x0x", "X0X 1.2.0 BETA")[0].version == "1.2.0"
+    b, exact, warn = studio.pick_build("x0x", "X0X 1.1.0 BETA")             # older than everything: the oldest
+    assert not exact and b.version == "1.2.0" and "X0X" in warn
+    b, exact, warn = studio.pick_build("x0x", "X0X 1.3 BETA")               # newer: the next older one
+    assert not exact and b.version == "1.2.1"
+    assert studio.pick_build("x0x")[0].version == "1.2.1"
+    assert studio.check_versions("1.2.1", device="X0X 1.2.1 BETA", firmware="X0X").ok
+    assert studio.firmware_name("x0x") == "X0X" and studio.FIRMWARES["x0x"]["projects"] == 0
+    from fm1companion import firmware
+    from fm1companion.protocol import Info
+    from fm1companion.ui.studio_service import StudioService
+    assert Info("X0X 1.2.1 BETA").firmware_name == "x0x" and StudioService.firmware_for("x0x") == "x0x"
+    assert firmware.guess_firmware("", "X0X 1.2.1 BETA") == ("x0x", "v1.2.1")
+
+
+@need_node
+def test_x0x_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_x0x.mjs"), str(studio.SIMS_DIR / "x0x-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"1.2.0", "1.2.1"}
+    for x in res:
+        assert x["info"] == x["version_export"] == f"X0X {x['version']} BETA"
+        assert x["records"] == [[0, 36], [1, 1348], [2, 1800], [3, 4], [5, 4], [6, 4]] or \
+            [r[0] for r in x["records"]] == [0, 1, 2, 3, 5, 6]
+        assert x["restore_rc"] == 0 and x["identical"] and x["playing_rc"] == 10 and x["damaged_rc"] == 5
+        a, b = x["takes"]
+        assert a["playing"] and a["play_lit"] and a["peak"] > 0.1 and a["hash"] == b["hash"] and a["clocks"] > 150
+        assert x["fork_identical"] and x["stopped"] and x["song_play"] and x["restart_play"]
+        assert x["midi_in_peak"] > 0.1 and x["part_peak"][0] > 0.1 and x["part_peak"][1] == 0
+        print(f"{x['version']}: {a['realtime']:.1f}x real time")
+        assert a["realtime"] > 3
+
+
+def _x0x_pattern(st):
+    for k in (0, 7, 14, 21):                             # the 909's steps 1, 5, 9, 13 (white keys 1, 5, 9, 13)
+        st.backend.call("keys", mask=1 << k)
+        st.backend.call("run", ms=40)
+        st.backend.call("keys", mask=0)
+        st.backend.call("run", ms=40)
+
+
+def test_x0x_backup_round_trip_with_suite_code(node_studio, tmp_path):
+    from fm1companion import backup_inspect as BI, x0xbk
+    a = node_studio(firmware="x0x", version="X0X 1.2.0 BETA")
+    assert a.build.version == "1.2.0" and a.tracks == 5 and a.project_slots == 0 and a.info_name == "X0X"
+    assert studio.device_version(a.link) == "v1.2.0" and backup.protocol(a.link)[0] == backup.X0X
+    _x0x_pattern(a)
+    arch = a.backup()
+    assert arch.x0x and [o["id"] for o in arch.objects] == x0xbk.OBJ_IDS and arch.firmware == "X0X 1.2.0 BETA"
+    assert studio.backup_firmware(arch) == "x0x" and studio.backup_version(arch) == "v1.2.0"
+    assert all(o["size"] for o in arch.objects[:3]) and arch.project_objects() == []
+    rep = BI.inspect(arch)
+    assert rep.format == backup.X0X_FORMAT and rep.firmware_key == "x0x" and rep.obj(2).title.startswith("Patterns")
+    assert BI.compatibility(rep, "x0x", "X0X 1.2.1 BETA", x0xbk.OBJ_IDS).ok
+    assert not BI.compatibility(rep, "melodee", "MELODEE v1.6.1", None).ok
+    # the suite's JSON file and X0X's own .x0b file (tools/x0x_backup.py, web/backup) read the same
+    p = tmp_path / "x.json"
+    backup.write_file(p, arch.file)
+    raw = x0xbk.image_of(arch.file)
+    (tmp_path / "x.x0b").write_bytes(raw)
+    for src in (backup.load_file(p), backup.load_file(tmp_path / "x.x0b"), backup.read(raw)):
+        assert [o["bytes"] for o in src.objects] == [o["bytes"] for o in arch.objects] and src.x0x
+    assert studio.backup_firmware(backup.load_file(tmp_path / "x.x0b")) == "x0x"
+    assert BI.inspect(tmp_path / "x.x0b").firmware_key == "x0x"
+    # into a 1.2.1 twin (the image on its side of the cable, restore_rx checks and commits it), then back
+    b = node_studio(firmware="x0x", version="1.2.1")
+    b.open_from_backup(backup.load_file(tmp_path / "x.x0b"))
+    assert [o["bytes"] for o in b.backup().objects] == [o["bytes"] for o in arch.objects] and not b.rejected
+    c = studio.Studio.for_backup(arch, backend="node")
+    try:
+        assert c.build.version == "1.2.0" and not c.warning
+        assert c.play()["busy"] and not c.stop()["busy"]
+        assert c.play("song")["busy"] and not c.stop()["busy"]
+    finally:
+        c.close()
+    # refused: while X0X plays (nothing changes), a part only (X0X takes its image whole), a damaged image
+    d = node_studio(firmware="x0x")
+    d.play()
+    with pytest.raises(backup.BackupError):              # (STOP FIRST: RS_FAIL_ADDR | 10)
+        backup.restore(d.link, arch)
+    d.stop()
+    assert not d.backup().objects[2]["size"]
+    with pytest.raises(backup.BackupError, match="X0X"):  # (a part alone: X0X takes its image whole)
+        backup.restore_selected(d.link, arch, [1, 2])
+    assert backup.restore_selected(d.link, arch, x0xbk.OBJ_IDS) == x0xbk.OBJ_IDS
+    assert [o["bytes"] for o in d.backup().objects] == [o["bytes"] for o in arch.objects]
+    bad = bytearray(raw)
+    bad[30] ^= 1
+    with pytest.raises(backup.BackupError):
+        backup.read(bytes(bad))
+    # another firmware's backup onto X0X, X0X's onto another firmware: refused before anything is written
+    m = node_studio()
+    with pytest.raises(backup.BackupError, match="X0X"):
+        backup.restore(m.link, arch)
+    with pytest.raises(backup.BackupError, match="X0X"):
+        backup.restore(d.link, m.backup())
+
+
+def test_x0x_write_back_keeps_the_device_settings(node_studio):
+    """write_to_device(settings=False) onto an X0X: the image whole, with the device's own settings (object 0) in it"""
+    a = node_studio(firmware="x0x")
+    _x0x_pattern(a)
+    dev = node_studio(firmware="x0x")
+    for _i in range(4):                                 # HOME held, SEQ tapped: the tempo (200 BPM), a setting
+        dev.backend.call("buttons", mask=1 << 8 | 1 << 11)
+        dev.backend.call("run", ms=40)
+        dev.backend.call("buttons", mask=1 << 8)
+        dev.backend.call("run", ms=260)
+    dev.backend.call("buttons", mask=0)
+    dev.backend.call("run", ms=3000)
+    before = {o["id"]: o["bytes"] for o in dev.backup().objects}
+    a.write_to_device(dev.link, settings=False)
+    after = {o["id"]: o["bytes"] for o in dev.backup().objects}
+    mine = {o["id"]: o["bytes"] for o in a.backup().objects}
+    assert before[0] != mine[0] and after[0] == before[0] and after[2] == mine[2] and after[1] == mine[1]
+
+
+def test_x0x_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="x0x")
+    _x0x_pattern(st)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="live", stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3, 4] and s.peak > 0.1
+    peaks = []
+    for k, p in sorted(s.stems.items()):
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    assert peaks[0] > 0.1 and max(peaks[1:]) < 1e-3, peaks       # (the pattern is the 909's alone)
+
+
+# ------------------------------------------------------------------ AMB-1 (tools/studio/fm1base_studio.c)
+# AMB-1 (charlesvestal/fm1-amb, on fm1-base and felucca-bsp, its submodules): v1.3.2 is its latest release (2026-11-06),
+# v1.3.1 the one before. fm1-base's tools/build.py --release X.Y.Z: APP_VERSION "X.Y.Z", the identity FM-1_7XXYYZZ.
+# No editor (no INFO), no backup over USB.
+AMB_COMMIT = {"1.3.1": "285215af014b9c6a7c2b404c538d9261e8a9d29f", "1.3.2": "7c538516d6c52216ff4c8a4881cf2f0dcb07c44b"}
+AMB_BASE = {"1.3.1": "9bca7154c7db1fc4db7381502045dcc67fbf8d74", "1.3.2": "3ae2a65ddd02e15bf9ce925b5a7136d5d207ee25"}
+
+
+def test_amb_builds_side_by_side():
+    bs = studio.builds("amb-1")
+    vs = [b.version for b in bs]
+    assert vs == ["1.3.1", "1.3.2"] and [b.path.name for b in bs] == vs
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == [] and m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "amb-1"
+        assert m["commit"] == AMB_COMMIT[b.version] and m["ref"] == "v" + b.version and m["firmware_version"] == b.version
+        assert m["identity"] == "FM-1_70103%02d" % int(b.version.split(".")[2]) and m["license"] == "MPL-2.0"
+        assert m["tracks"] == 4 and m["projects"] == 0 and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert [s["path"] for s in m["sources"]] == ["base", "base/bsp"] and m["sources"][0]["commit"] == AMB_BASE[b.version]
+        assert m["release_status"] == ("stable" if b.version == "1.3.2" else "previous stable")
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "LICENSING-fm1-base.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and AMB_BASE[b.version] in notice
+        assert "Mozilla Public License" in (b.path / "LICENSE").read_text() and m["glue"] == "tools/studio/fm1base_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+
+
+def test_amb_versions_and_pick():
+    assert studio.pick_build("amb-1")[0].version == "1.3.2"
+    b, exact, warn = studio.pick_build("amb-1", "1.3")
+    assert not exact and b.version == "1.3.1" and "AMB-1" in warn
+    assert studio.pick_build("amb-1", "v1.3.1")[1]
+    from fm1companion.ui.studio_service import StudioService
+    assert StudioService.firmware_for("amb-1") == "amb-1" and StudioService.firmware_for("ambwave") == ""
+    assert studio.firmware_name("amb-1") == "AMB-1" and studio.no_backup("amb-1") and not studio.no_backup("x0x")
+
+
+@need_node
+def test_amb_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_amb.mjs"), str(studio.SIMS_DIR / "amb-1-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"1.3.1", "1.3.2"}
+    for x in res:
+        assert x["identity"] == "FM-1_701" and x["live"]["peak"] > 0.05 and x["flash_used"] > 0
+        assert x["fork_identical"] and x["resting"] and x["growing"]
+        print(f"{x['version']}: {x['takes'][0]['realtime']:.1f}x real time")
+        assert x["takes"][0]["realtime"] > 3
+
+
+def test_amb_studio_without_backup(node_studio, tmp_path):
+    st = node_studio(firmware="amb-1")
+    assert st.build.version == "1.3.2" and st.tracks == 4 and st.project_slots == 0 and st.transport_state()["busy"]
+    for call in (lambda: st.backup(), lambda: st.open_from_backup({"format": "felucca-backup"}),
+                 lambda: st.open_from_device(st.link), lambda: st.write_to_device(st.link)):
+        with pytest.raises(studio.StudioError, match="AMB-1"):
+            call()
+    s = st.render_wav(tmp_path / "mix.wav", seconds=3, start="none", source="live", stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3] and s.peak > 0.05
+    assert not st.stop()["busy"] and st.play()["busy"]
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "amb-1" and meta["firmware_version"] == "1.3.2" and len(flash) == 0x100000
+
+
+# ------------------------------------------------------------------ FoMni (tools/studio/fomni_studio.c)
+# FoMni (charlesvestal/fm1-fomni, FoMni-1, on X0X's platform): v0.4.1 is its latest release (2026-11-05), v0.4 the one
+# before; tools/build.py --release X.Y[.Z]: "X.Y.Z BETA", the identity FM-1_8XXYYZZ. No editor, no backup over USB.
+FOMNI_COMMIT = {"0.4": "6ecd227013cc18def0e89d035b3760eb268b342b", "0.4.1": "17a740b7b2d19615ffe19aa73f8eda67f60f223d"}
+
+
+def test_fomni_builds_side_by_side():
+    bs = studio.builds("fomni")
+    assert [b.version for b in bs] == ["0.4", "0.4.1"] and [b.path.name for b in bs] == ["0.4", "0.4.1"]
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == [] and m["kind"] == "studio" and m["firmware"] == "fomni" and m["abi"] == studio.STUDIO_ABI
+        assert m["commit"] == FOMNI_COMMIT[b.version] and m["ref"] == "v" + b.version and m["license"] == "GPL-3.0-only"
+        assert m["identity"] == {"0.4": "FM-1_8000400", "0.4.1": "FM-1_8000401"}[b.version]
+        assert m["tracks"] == 4 and m["projects"] == 0 and m["release_status"] == ("stable" if b.version == "0.4.1"
+                                                                                   else "previous stable")
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and "Chordian" in notice
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+    assert studio.pick_build("fomni")[0].version == "0.4.1" and studio.no_backup("fomni")
+    from fm1companion.ui.studio_service import StudioService
+    assert StudioService.firmware_for("fomni") == "fomni" and studio.firmware_name("fomni") == "FoMni"
+
+
+@need_node
+def test_fomni_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_fomni.mjs"), str(studio.SIMS_DIR / "fomni-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"0.4", "0.4.1"}
+    for x in res:
+        assert x["identity"] == ("FM-1_800" if x["version"] == "0.4.1" else "FM-1_8000400")   # (0.4.1: M-UPGRADE 3.11's)
+        assert x["notes"] > 0 and x["rhythm"] and x["flash_used"] > 0 and x["fork_identical"]
+        assert x["takes"][0]["realtime"] > 3
+
+
+def test_fomni_studio_without_backup(node_studio, tmp_path):
+    st = node_studio(firmware="fomni")
+    assert st.build.version == "0.4.1" and st.tracks == 4 and not st.transport_state()["busy"]
+    with pytest.raises(studio.StudioError, match="FoMni"):
+        st.backup()
+    assert st.play()["busy"]
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="live", stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3] and s.peak > 0.05
+
+
+# ------------------------------------------------------------------ LOOM-8 (tools/studio/fm1base_studio.c)
+# LOOM-8 (charlesvestal/fm1-loom, on fm1-base and felucca-bsp): v0.14 is its latest release (2026-11-06), v0.13.1 the
+# one before; the identity FM-1_10XXYYZZ. No editor (no INFO); fm1-base's backup (x0xbk.py's "LM8B" profile).
+LOOM_COMMIT = {"0.13.1": "a89a8fd23600705a51b928578b5464b4530f47bd", "0.14": "faf459d1f9cea3e634b6e2622a1c3e91d58b3452"}
+LOOM_BASE = {"0.13.1": "3ae2a65ddd02e15bf9ce925b5a7136d5d207ee25", "0.14": "317cb86cc60d6286fa80a02743e94e6a60ff842d"}
+
+
+def test_loom_builds_side_by_side():
+    bs = studio.builds("loom-8")
+    assert [b.version for b in bs] == ["0.13.1", "0.14"] and [b.path.name for b in bs] == ["0.13.1", "0.14"]
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == [] and m["kind"] == "studio" and m["firmware"] == "loom-8" and m["license"] == "GPL-3.0-only"
+        assert m["commit"] == LOOM_COMMIT[b.version] and m["sources"][0]["commit"] == LOOM_BASE[b.version]
+        assert m["identity"] == {"0.13.1": "FM-1_10001301", "0.14": "FM-1_10001400"}[b.version]
+        assert m["tracks"] == 8 and m["projects"] == 0 and {"COPYING", "LICENSE", "LICENSING.md"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "GPL-3.0-only as a whole" in notice and LOOM_BASE[b.version] in notice and "Written offer" in notice
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+    from fm1companion.ui.studio_service import StudioService
+    assert StudioService.firmware_for("loom-8") == "loom-8" and StudioService.firmware_for("loom-fm-1") == ""
+    assert studio.pick_build("loom-8")[0].version == "0.14"
+
+
+@need_node
+def test_loom_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_loom.mjs"), str(studio.SIMS_DIR / "loom-8-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"0.13.1", "0.14"}
+    for x in res:
+        assert x["restore_rc"] == 0 and x["identical"] and x["playing_rc"] == 10 and x["damaged_rc"] == 5
+        assert x["notes_out"] > 0 and x["fork_identical"] and x["takes"][0]["hash"] == x["takes"][1]["hash"]
+        assert x["takes"][0]["realtime"] > 3
+
+
+def _loom_steps(st):
+    for k in (0, 7, 14, 21):
+        st.backend.call("keys", mask=1 << k)
+        st.backend.call("run", ms=60)
+        st.backend.call("keys", mask=0)
+        st.backend.call("run", ms=60)
+    st.press("SAVE")
+    st.backend.call("run", ms=3000)
+
+
+def test_loom_backup_round_trip_with_suite_code(node_studio, tmp_path):
+    from fm1companion import backup_inspect as BI, x0xbk
+    a = node_studio(firmware="loom-8", version="0.13.1")
+    assert a.build.version == "0.13.1" and a.tracks == 8 and backup.protocol(a.link, "loom-8")[0] == backup.LOOM
+    _loom_steps(a)
+    arch = a.backup()
+    assert arch.image == "loom-8" and arch.format == backup.LOOM_FORMAT and not arch.x0x
+    assert [o["id"] for o in arch.objects] == list(x0xbk.LOOM_PROFILE.ids) and any(o["size"] for o in arch.objects)
+    assert studio.backup_firmware(arch) == "loom-8" and studio.backup_version(arch) == "v0.13.1"
+    rep = BI.inspect(arch)
+    assert rep.firmware_key == "loom-8" and rep.obj(1).title and rep.obj(2).title != rep.obj(3).title
+    raw = x0xbk.image_of(arch.file)
+    (tmp_path / "x.loom8").write_bytes(raw)                 # (LOOM-8's own backup page's file)
+    assert [o["bytes"] for o in backup.load_file(tmp_path / "x.loom8").objects] == [o["bytes"] for o in arch.objects]
+    b = node_studio(firmware="loom-8")
+    b.open_from_backup(backup.load_file(tmp_path / "x.loom8"))
+    assert [o["bytes"] for o in b.backup().objects] == [o["bytes"] for o in arch.objects] and not b.rejected
+    with pytest.raises(backup.BackupError, match="LOOM-8"):
+        backup.restore_selected(b.link, arch, [1])
+    x = node_studio(firmware="x0x")
+    with pytest.raises(backup.BackupError, match="LOOM-8"):   # (an X0X FM-1 refuses LOOM-8's image, nothing written)
+        backup.restore(x.link, arch)
+    s = b.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="live", stems=True)
+    assert sorted(s.stems) == list(range(8)) and s.peak > 0.05

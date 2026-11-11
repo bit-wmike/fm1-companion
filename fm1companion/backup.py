@@ -204,6 +204,14 @@ SLOOP_FORMAT = "sloop-backup"
 # firmwares that speak SLOOP's backup protocol (34–36) and write its "sloop-backup" files: SLOOP and its fork KARMA
 # (editor.c ED_BK_LIST / GET / PUT, web/editor.html BK: the same commands, objects 0..10 and 32..35, the same file)
 SLOOP_PROTOCOL = (SLOOP, "karma")
+# X0X (charlesvestal/fm1-x0x) and fm1-base's LOOM-8: their own protocol and image (backup.c, x0xbk.py: the saved
+# state whole, in the update's framing); the suite keeps it as an "x0x-backup" / "loom8-backup" file
+X0X = "x0x"
+X0X_FORMAT = "x0x-backup"
+LOOM = "loom-8"
+LOOM_FORMAT = "loom8-backup"
+IMAGE_FORMATS = {X0X_FORMAT: X0X, LOOM_FORMAT: LOOM}     # the suite's format -> the firmware (= the protocol's name)
+IMAGE_PROTOS = (X0X, LOOM)
 
 
 def protocol(link, hint: str = "") -> tuple[str, object]:
@@ -212,10 +220,14 @@ def protocol(link, hint: str = "") -> tuple[str, object]:
     from . import sloopbk
     if hint in ("melodee", "skiff", "felucca", "coralflower") or (hint or "").startswith("jiant"):
         return FELUCCA, None
+    if hint == LOOM:                                # (fm1-base has no editor: no INFO to ask)
+        return LOOM, None
     try:
         info = sloopbk.read_info(link)
     except Exception:                               # noqa: BLE001 – then as before
-        return (SLOOP if hint in SLOOP_PROTOCOL else FELUCCA), None
+        return (SLOOP if hint in SLOOP_PROTOCOL else hint if hint in IMAGE_PROTOS else FELUCCA), None
+    if info.firmware_name == X0X:
+        return X0X, info
     if info.firmware_name in SLOOP_PROTOCOL or hint in SLOOP_PROTOCOL:
         proto = sloopbk.info_proto(info.raw)
         if proto and proto < sloopbk.MIN_PROTO:
@@ -245,7 +257,11 @@ def parse_manifest(a) -> list[ObjInfo]:
 
 
 def list_objects(link, hint: str = "") -> list[ObjInfo]:
-    if protocol(link, hint)[0] == SLOOP:
+    proto = protocol(link, hint)[0]
+    if proto in IMAGE_PROTOS:                       # (X0X and LOOM-8 list nothing: the whole image, read and taken apart)
+        from . import x0xbk
+        return [ObjInfo(o["id"], o["size"], o["crc"], proto) for o in x0xbk.objects(x0xbk.capture(link, "", key=proto))[1]]
+    if proto == SLOOP:
         from . import sloopbk
         return sloopbk.list_objects(link)
     return parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))
@@ -275,6 +291,11 @@ def capture(link, firmware: str, progress: Callable[[int, int], None] | None = N
             companion: dict | None = None, firmware_key: str = "") -> dict:
     """read a complete backup – in the format that belongs to the firmware (Melodee/Felucca or SLOOP)."""
     proto, info = protocol(link, firmware_key or (companion or {}).get("firmware", ""))
+    if proto in IMAGE_PROTOS:
+        from . import x0xbk
+        f = x0xbk.capture(link, info.version if info is not None else firmware, progress, companion, key=proto)
+        read(f)
+        return f
     if proto == SLOOP:
         from . import sloopbk
         f = sloopbk.capture(link, firmware, progress, companion, info)
@@ -317,6 +338,16 @@ class Archive:
         return self.format == SLOOP_FORMAT
 
     @property
+    def x0x(self) -> bool:
+        """X0X's project image (x0xbk.py): restored whole only"""
+        return self.format == X0X_FORMAT
+
+    @property
+    def image(self) -> str:
+        """the firmware whose image this is (X0X's or LOOM-8's, x0xbk.py: restored whole only); empty otherwise"""
+        return IMAGE_FORMATS.get(self.format, "")
+
+    @property
     def firmware(self) -> str:
         return self.file.get("firmware", "")
 
@@ -334,12 +365,16 @@ class Archive:
         return not self.sloop and is_coralflower(o["id"] for o in self.objects)
 
     def project_objects(self):
-        if self.coralflower:
+        if self.coralflower or self.image:          # (X0X, LOOM-8: one image, its parts no project slots)
             return []
         return [o for o in self.objects if is_project(o["id"]) and o["id"] != 0 and o["size"]]
 
 
 def read(file) -> Archive:
+    if isinstance(file, (bytes, bytearray)):
+        from . import x0xbk                         # (X0X's own .x0b file, LOOM-8's .loom8)
+        if x0xbk.is_image(file):
+            file = x0xbk.from_bytes(bytes(file))
     if isinstance(file, (str, bytes)):
         try:
             file = json.loads(file)
@@ -351,6 +386,9 @@ def read(file) -> Archive:
         objs = [{**o, "id": int(o["id"]), "size": len(m[int(o["id"])]), "crc": int(o["crc"]) & 0xFFFFFFFF,
                  "bytes": m[int(o["id"])]} for o in file["objects"]]
         return Archive(file=file, objects=objs, known=True)
+    if isinstance(file, dict) and file.get("format") in IMAGE_FORMATS:
+        from . import x0xbk
+        return Archive(file=file, objects=x0xbk.objects(file)[1], known=True)
     if not isinstance(file, dict) or file.get("format") != FORMAT or file.get("version") != 1 \
             or not isinstance(file.get("objects"), list) or not file["objects"]:
         raise BackupError(_("Not a complete Felucca/Melodee backup"))
@@ -385,7 +423,14 @@ def read(file) -> Archive:
 
 
 def load_file(path: Path) -> Archive:
-    return read(Path(path).read_text("utf-8"))
+    raw = Path(path).read_bytes()
+    from . import x0xbk
+    if x0xbk.is_image(raw):                         # (X0X's own .x0b file, LOOM-8's .loom8)
+        return read(raw)
+    try:
+        return read(raw.decode("utf-8"))
+    except UnicodeDecodeError:
+        raise BackupError(_("Not a backup file (no JSON)"))
 
 
 def dumps(file: dict) -> str:
@@ -500,6 +545,13 @@ def preflight(link, oid: int, data: bytes, proto: str | None = None) -> int:
 
 def _match(link, archive: Archive, hint: str = "") -> tuple[str, object]:
     proto, info = protocol(link, hint)
+    dev_image = proto if proto in IMAGE_PROTOS else ""
+    if archive.image != dev_image:
+        from . import x0xbk
+        raise BackupError(_("This is a {firmware} backup, but the FM-1 runs a different firmware. Nothing was written.")
+                          .format(firmware=x0xbk.profile_of(archive.image).name) if archive.image else
+                          _("The FM-1 runs {firmware}, which takes only its own backups. Nothing was written.").format(
+                              firmware=x0xbk.profile_of(dev_image).name))
     if archive.sloop and proto != SLOOP:
         raise BackupError(_("This is a SLOOP backup, but the FM-1 runs a different firmware. "
                             "Nothing was written."))
@@ -531,6 +583,10 @@ def check_16(archive: Archive, supported, device_version: str = ""):
 def restore(link, archive: Archive, progress: Callable[[int, int], None] | None = None,
             firmware_key: str = ""):
     proto, info = _match(link, archive, firmware_key)
+    if proto in IMAGE_PROTOS:
+        from . import x0xbk
+        x0xbk.restore(link, archive.file, progress)
+        return archive
     if proto == SLOOP:
         from . import sloopbk
         sloopbk.restore(link, archive.file, progress, info=info)
@@ -643,6 +699,13 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
     if missing:
         raise BackupError(_("“{part}” is not in the backup").format(part=object_title(sorted(missing)[0], archive.sloop)))
     proto, info = _match(link, archive)
+    if proto in IMAGE_PROTOS:                       # (X0X, LOOM-8: the image whole, nothing but all of it)
+        from . import x0xbk
+        if want != {o["id"] for o in archive.objects}:
+            raise BackupError(_("{firmware} restores a backup only whole. Nothing was written.").format(
+                firmware=x0xbk.profile_of(proto).name))
+        x0xbk.restore(link, archive.file, progress)
+        return [o["id"] for o in archive.objects]
     if proto == SLOOP:
         return _restore_selected_sloop(link, archive, want, progress, expect, cancelled, info)
     supported = parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))

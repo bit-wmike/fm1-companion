@@ -4347,3 +4347,15 @@ msgstr "Parte {n} cargada."
 
 msgid "Part {n} is empty."
 msgstr "La parte {n} está vacía."
+
+#: fm1companion/ui/pages/studio.py:218
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces X0X's project on the device, whole: the sound, the 32 patterns, the song, the knob motion and the settings (the break loops in the sample slots stay). X0X must be stopped, and it asks on its screen: press <b>SEL</b> on the FM-1 to confirm."
+msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza el proyecto de X0X en el dispositivo, entero: el sonido, los 32 patrones, la canción, el movimiento de los mandos y los ajustes (los loops de break de las ranuras de samples se quedan). X0X debe estar detenido y pregunta en su pantalla: pulsa <b>SEL</b> en el FM-1 para confirmar."
+
+#: fm1companion/ui/pages/studio.py:85
+msgid "FM-1 backup (*.json);;X0X backup (*.x0b);;LOOM-8 backup (*.loom8)"
+msgstr "Copia de seguridad del FM-1 (*.json);;Copia de seguridad de X0X (*.x0b);;Copia de seguridad de LOOM-8 (*.loom8)"
+
+#: fm1companion/ui/pages/studio.py:222
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces LOOM-8's user presets and its three projects on the device, all of them (its sample bank stays). LOOM-8 must be stopped, and it asks on its screen: press <b>SEL</b> on the FM-1 to confirm."
+msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo los presets de usuario de LOOM-8 y sus tres proyectos, todos juntos (su banco de samples se queda). LOOM-8 debe estar detenido y pregunta en su pantalla: pulsa <b>SEL</b> en el FM-1 para confirmar."

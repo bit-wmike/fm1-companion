@@ -88,6 +88,21 @@ old approximation on the computer only remains when there is no twin for the fir
   2.6) can be written to a KARMA FM-1 (SLOOP 2.5's SYN kits are left out, as KARMA's editor does), a KARMA backup
   never to SLOOP. KARMA's three saved songs (SAVE on the SONG screen) are not part of a backup – KARMA's own backup
   leaves them out too. The project view does not read KARMA's parts yet.
+* X0X (1.2.1, its latest release, and 1.2.0): one project – its sound, the 32 patterns, the song and the knob motion –,
+  no project slots: the patterns and the song play from the twin's panel or with Play. The five stems are its parts:
+  the 909, the 808, 303 A, 303 B and BREAK. X0X has a backup format of its own: **Open from backup …** opens X0X's own
+  `.x0b` files too, and X0X only takes a backup whole. When writing back, X0X must be stopped and asks on its screen
+  (RESTORE FROM USB?): press **SEL** on the FM-1. The break loops in the sample slots are not part of an X0X backup.
+  The twin has one core, no USB audio, no TRS MIDI and no hardware calibration; the update gesture does nothing there.
+  The project view does not read X0X's patterns.
+* FoMni (0.4.1 and 0.4) and AMB-1 (1.3.2 and 1.3.1) have no backup over USB: their twins start empty (or from a
+  studio state) and are never loaded from an FM-1 or written onto one – play them, export them as WAV and keep their
+  states in the studio. FoMni's four stems are its harp voices 1 and 2, the chord with the bass and the rhythm; AMB-1
+  plays itself from the start, its four stems are its layers: pad, bells, bass and pulse.
+* LOOM-8 (0.14 and 0.13.1): its backup is fm1-base's (the user presets and the three projects, taken whole; **Open from
+  backup …** opens LOOM-8's own `.loom8` files too). When writing back, LOOM-8 must be stopped and asks on its screen:
+  press **SEL** on the FM-1. Its sample bank is not part of a backup. The eight stems are its tracks. The twin has one
+  core, no Bluetooth, no USB host and no USB audio; the project view does not read LOOM-8's projects.
 * The twin has no CPU limit: the device drops voices when overloaded, the twin never does. Floating-point parts
   can differ in the last bits (inaudible). No Bluetooth, no USB host, no firmware update in the
   twin.

@@ -15,6 +15,11 @@ fm1companion/sims/sloop-studio/<version>/     manifest.json, twin.wasm, LICENSE,
 fm1companion/sims/coralflower-studio/<version>/  manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md,
                                               LICENSING-choralroot.md, THIRD_PARTY.txt
 fm1companion/sims/karma-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/x0x-studio/<version>/       manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/fomni-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/amb-1-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING*.md, CREDITS-fm1-base.md,
+                                              THIRD_PARTY.txt
+fm1companion/sims/loom-8-studio/<version>/    the same, and COPYING (GPL-3.0)
 fm1companion/sims/_studio/                    shared host (page, worker, AudioWorklet, control surface)
 ```
 
@@ -23,6 +28,8 @@ version (with a warning). Bundled: Melodee 1.6.0-rc.7, rc.8, 1.6.0, 1.6.1; Skiff
 SLOOP 2.8.4, 2.8.5 (its stable) (about 0.9–1.4 MB of wasm each);
 CoralFlower 0.7, 0.7.1 (its stable) (about 1.2–1.4 MB of wasm each, CoralFlower's 0.7 MB);
 KARMA 3.0.5, 3.1 (its stable) (about 0.9–1.4 MB of wasm each).
+X0X 1.2.0, 1.2.1 (its stable) (about 0.64 MB of wasm each).
+FoMni 0.4, 0.4.1 (about 0.17 MB each); AMB-1 1.3.1, 1.3.2 (about 0.17 MB each); LOOM-8 0.13.1, 0.14 (about 1.26 MB each).
 
 ## Requirements (only on the build machine, not on the Pi)
 
@@ -178,6 +185,83 @@ own backups with `bkNewer`). A KARMA backup onto SLOOP is refused before anythin
 2.6) onto KARMA is allowed, as KARMA's editor allows it. Not in any backup: the three saved songs of SAVE on the SONG
 screen (FM6's two sectors and 0xFB000) – KARMA's own backup leaves them out too.
 
+X0X (Charles Vestal's groovebox: the 909, the 808, two 303s with TB-3PO, a break slicer) has release tags; its release
+workflow builds `tools/build.py --release X.Y.Z` (the version string "X.Y.Z BETA", the identity FM-1_9XXYYZZ):
+
+```sh
+git clone https://github.com/charlesvestal/fm1-x0x /path/to/x0x
+python3 tools/build_sims.py --target x0x-studio --ref v1.2.1 --repo x0x=/path/to/x0x
+```
+
+→ `fm1companion/sims/x0x-studio/1.2.1/` (`version_ref`: the version from the tag), the identity from the version as
+X0X's `tools/build.py` makes it, `tracks` 5 (its parts: the 909, the 808, 303 A, 303 B, BREAK), `projects` 0 (one
+project: the sound, 32 patterns, the song, the knob motion). The DSP units of `host/build_host.sh` (its `U` list) are
+compiled beside the glue (`objects`), with its flags (`cflags`: `-DX0X_HOST`, `-Ifirmware/src/dsp`); the break loops are
+rendered by X0X's own 909 code with the host's `cc` (`tools/gen_builtin_break.sh`). The list is
+`STUDIOS["x0x-studio"]["refs"]`, the status `STUDIOS["x0x-studio"]["release_status"]`.
+
+| X0X version | Tag / commit | Status (manifest `release_status`, 2026-11-11) | Reports (INFO / identity) | Backup objects | Folder |
+|---|---|---|---|---|---|
+| 1.2.1 | `v1.2.1` 502b2c28c14ab2bff31eb4f0777fdfd0efcf8bea | **stable** – its latest release (the identity handshake for M-UPGRADE 3.11) | `X0X 1.2.1 BETA` / `FM-1_9010201` (the plain handshake: `FM-1_901`) | 6 (one image) | `x0x-studio/1.2.1` |
+| 1.2.0 | `v1.2.0` ca2d377e3b9522579245152a81781a575f4d2fea | previous stable (the same app) | `X0X 1.2.0 BETA` / `FM-1_9010200` | 6 (one image) | `x0x-studio/1.2.0` |
+
+An X0X device answers INFO "X0X 1.2.1 BETA" (`editor.c`: INFO, PING and the sample slots only; `protocol.Info.firmware_name`
+"x0x", the catalog's key; `firmware.guess_firmware` by the INFO: FM-1_9XXYYZZ is no X0X-only identity, TRIBE uses it
+too). X0X has **its own backup protocol and image** (`firmware/src/backup.c`, `tools/x0x_backup.py`; `x0xbk.py`): in the
+update's SysEx framing (ota.c), cmd 0x42 streams the project's image ("X0XB": the settings 0, the sound 1, the packed
+stream's patterns 2 and 3, the song 5, the knob motion 6, each as stored; not the panel's calibration 4, not the break
+loops in the sample slots), cmd 0x41 has the device pull an image with read requests, check it whole, ask on its
+screen (RESTORE FROM USB? SEL yes) and commit it all or nothing; refused while playing. `backup.py` picks it by INFO
+(`backup.X0X`); the suite keeps such a backup as an `x0x-backup` file (the image in Base64, INFO, the companion block)
+and reads X0X's own `.x0b` files as well. A part alone cannot be restored (`restore_selected` refuses anything but all
+of it); writing the twin back without the settings puts the device's own settings object into the image. The twin
+cannot wait for its host inside a call, so the suite puts the image on the twin's side of the cable first (cmd 0x7E, the
+glue's own frame) and the twin answers the read requests and the question itself (`StudioTransport.twin`).
+
+FoMni (FoMni-1, Charles Vestal's chord harp, on X0X's platform) the same way, by its release tags (`tools/build.py
+--release X.Y[.Z]`: "X.Y.Z BETA", the identity FM-1_8XXYYZZ; the glue `tools/studio/fomni_studio.c` is X0X's without the
+editor and the backup, on `host/omni_host.c`):
+
+```sh
+python3 tools/build_sims.py --target fomni-studio --ref v0.4.1 --repo fomni=/path/to/fm1-fomni
+```
+
+AMB-1 and LOOM-8 are apps on **fm1-base** (`app/`, with fm1-base a submodule in `base/` and felucca-bsp in `base/bsp`, both
+pinned by the app's tag). `build_studio`'s `prepare` hook (`_fm1base_prepare`) extracts the submodules at the commits the
+tag pins (from `--repo fm1-base=… --repo felucca-bsp=…`, else clones in `--work`), runs fm1-base's own host build
+(`base/tools/build.py app --host --release X.Y[.Z]`: the generated headers, this machine's `cc`) and takes its compile
+lines (the defines from `fm1.toml`, the include paths, the o2 units) for the twin; the manifest names the submodules'
+commits under `sources` (`tools/make_source_tarballs.py` packs them too). One glue serves both:
+`tools/studio/fm1base_studio.c` (MPL-2.0, as fm1-base), on fm1-base's browser emulator (`web/emu/emu_web.c`: host/plat_host.c
+with PLAT_WEB), with the device's `storage.c` on the flash image (the data windows are the image itself: plat_host.c's
+`PLAT_DATA_AREA`), the USB SysEx path (the screen reader, the crash history and the stats, the app's frames,
+felucca-bsp's `ota.c`, and with `backup = true` fm1-base's `backup.c`), USB MIDI and SysEx out from the emulator's logs.
+The app's part (its transport and the parts of the stems) is the `TW_APP_*` block.
+
+```sh
+python3 tools/build_sims.py --target amb-1-studio --ref v1.3.2 --repo amb-1=/path/to/fm1-amb --repo fm1-base=… --repo felucca-bsp=…
+python3 tools/build_sims.py --target loom-8-studio --ref v0.14 --repo loom-8=/path/to/fm1-loom --repo fm1-base=… --repo felucca-bsp=…
+```
+
+| Firmware version | Tag / commit | Status (2026-11-11) | Reports (st_version / identity) | Backup | Folder |
+|---|---|---|---|---|---|
+| FoMni 0.4.1 | `v0.4.1` 17a740b7b2d19615ffe19aa73f8eda67f60f223d | latest release (the handshake for M-UPGRADE 3.11) | `FoMni-1 0.4.1 BETA` / `FM-1_8000401` (plain: `FM-1_800`) | none over USB | `fomni-studio/0.4.1` |
+| FoMni 0.4 | `v0.4` 6ecd227013cc18def0e89d035b3760eb268b342b | previous release | `FoMni-1 0.4 BETA` / `FM-1_8000400` | none | `fomni-studio/0.4` |
+| AMB-1 1.3.2 | `v1.3.2` 7c538516d6c52216ff4c8a4881cf2f0dcb07c44b (fm1-base 3ae2a65, felucca-bsp f878800) | latest release | `AMB-1 1.3.2` / `FM-1_7010302` (plain: `FM-1_701`) | none over USB | `amb-1-studio/1.3.2` |
+| AMB-1 1.3.1 | `v1.3.1` 285215af014b9c6a7c2b404c538d9261e8a9d29f (fm1-base 9bca715) | previous release | `AMB-1 1.3.1` / `FM-1_7010301` | none | `amb-1-studio/1.3.1` |
+| LOOM-8 0.14 | `v0.14` faf459d1f9cea3e634b6e2622a1c3e91d58b3452 (fm1-base 317cb86, felucca-bsp 5b0879b) | latest release | `LOOM-8 0.14` / `FM-1_10001400` (plain: `FM-1_100`) | fm1-base's image "LM8B": 22 objects | `loom-8-studio/0.14` |
+| LOOM-8 0.13.1 | `v0.13.1` a89a8fd23600705a51b928578b5464b4530f47bd (fm1-base 3ae2a65) | previous release | `LOOM-8 0.13.1` / `FM-1_10001301` | the same | `loom-8-studio/0.13.1` |
+
+None of the three has an editor: no INFO (the twin is picked by the catalog's key, `fomni`, `amb-1`, `loom-8`, or by a
+backup; `studio.FIRMWARES[…]["editor"]` False for LOOM-8: the device's version is not asked for). FoMni and AMB-1 have no
+backup over USB at all (`"backup": None`, `studio.no_backup`): their twins start empty or from a studio state and are
+never loaded from or written onto an FM-1. LOOM-8's backup is fm1-base's `backup.c`, X0X's protocol with the app's magic
+and objects (`x0xbk.LOOM_PROFILE`: "LM8B", the user presets 1 and the three projects' 21 objects 2..22; the suite's
+`loom8-backup` file, LOOM-8's own `.loom8` read as well), taken whole; it has no settings object, so "keep the device's
+settings" writes the image as it is. The stems: FoMni's harp voices 1 and 2, the chord with the bass, the rhythm (their
+levels held at 0); AMB-1's pad, bells, bass and pulse layers; LOOM-8's eight tracks (the sequencer's mutes). FM-1_7…,
+FM-1_8… and FM-1_9XXYYZZ are shared by other firmwares: none of them is guessed from the identity alone.
+
 Each `STUDIOS` entry names what differs between firmwares: `generate` (the header generators), `version_file` /
 `version_re` (where the version string lives), `identity` (the release identity from the version) or `identity_src`
 (read from the source tree: JIANT, SLOOP, CoralFlower, KARMA), `defines` (version and identity for the glue), `notice`,
@@ -252,6 +336,18 @@ single-core build), `FELUCCA_UAC` 0, `FELUCCA_CDC` 0, no TRS MIDI, no `recovery.
 `st_transport_set` (0 stop, 1 PLAY, 2 the song from the top: song mode when the song order's parts exist, 3 restart)
 and lets the audio ISR take the request at once.
 
+### The X0X glue in short
+
+`x0x_studio.c` includes X0X's own browser emulator whole (`web/emu/x0x_web.c`'s way: `host/x0x_host.c` with
+`X0X_WEB`, the whole app on a simulated FM-1) and adds what it leaves out: the device's `storage.c` on the flash image
+(every object the emulator saves is written through `st_save`, power-on reads them with `st_load` / `st_load_prev`; the
+sample slots are read in place from the image, the emulator's `slotimg` path), the USB SysEx path in `main_fm1.c`'s
+order (the screen reader, `editor.c`, `ota.c`'s identity handshake, `backup.c` with `main_fm1.c`'s `backup_service`
+and hooks) and USB MIDI out (the emulator's MIDI log line, taken as bytes; the clock it counts goes out at the end of its
+millisecond). A wait of the firmware for its host (`ota_idle`, the restore's question) runs the audio alone, as the
+device's ISR does. `st_boot` runs the splash's 330 ms. Optional exports: `st_transport_set` (0 stop, 1 PLAY as the panel
+does, 2 the song from its first bar, 3 restart) and `st_track_mute_set` (the sequencer's part mutes: the stems).
+
 ## Checking
 
 ```sh
@@ -262,12 +358,15 @@ QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 python3 tests/ui_studio_
 
 `tests/test_studio.py::test_builds_side_by_side` (Melodee), `test_skiff_builds_side_by_side`,
 `test_jiant_builds_side_by_side`, `test_sloop_builds_side_by_side`, `test_coralflower_builds_side_by_side` and
-`test_karma_builds_side_by_side` expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`,
+`test_karma_builds_side_by_side` (and `test_x0x_builds_side_by_side`) expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`,
 `tests/studio_twin_jiant.mjs`, `tests/studio_twin_sloop.mjs` and `tests/studio_twin_karma.mjs` are the Skiff, JIANT,
 SLOOP and KARMA core checks in node (editor, identity, backup GET/PUT round trip – SLOOP's and KARMA's with SLOOP's
 commands 34–36 –, flash persistence, PLAY, audio, fork, USB MIDI out, stop); `tests/studio_twin_coralflower.mjs` the
 CoralFlower one (INFO, identity, a take recorded on the panel, the 26-object GET/PUT round trip with RESTART, the power
-cycle, PLAY, audio, fork, MIDI out, transport, mutes).
+cycle, PLAY, audio, fork, MIDI out, transport, mutes); `tests/studio_twin_x0x.mjs` the X0X one (INFO, identity, a
+pattern on the panel, X0X's own backup and restore with its refusals, the power cycle, PLAY, MIDI in and out, fork,
+transport, mutes); `tests/studio_twin_fomni.mjs`, `studio_twin_amb.mjs` and `studio_twin_loom.mjs` the FoMni, AMB-1 and
+LOOM-8 ones (identity, playing, MIDI out, SAVE and the power cycle, fork, transport, stems; LOOM-8's backup and restore).
 The packages (.deb, .run) include everything under `fm1companion/` (`tools/build_common.app_files`);
 `tests/test_packaging.py` checks that the host files and every `twin.wasm` end up in the package.
 

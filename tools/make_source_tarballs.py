@@ -10,7 +10,8 @@ the builds (see the simulators' NOTICE).
                                         [--out dist/sources]
 
 Without --repo, /tmp/<name> is searched (then /tmp/<name in lower case>, e.g. /tmp/jiant for JIANT, then /tmp/<firmware key>
-of the manifests, e.g. /tmp/sloop for sloop-fm1, /tmp/karma for karma-fm1). If a clone or a commit is missing, the script reports it and
+of the manifests, e.g. /tmp/sloop for sloop-fm1, /tmp/karma for karma-fm1, then without "fm1-": /tmp/amb for fm1-amb; the
+submodules a manifest names under "sources", fm1-base and felucca-bsp, too). If a clone or a commit is missing, the script reports it and
 exits with code 1 (the remaining tarballs are still written).
 """
 from __future__ import annotations
@@ -40,6 +41,10 @@ def wanted() -> dict[tuple[str, str], list[str]]:
             out.setdefault((name, commit), []).append(str(m.parent.relative_to(SIMS)))
             if d.get("firmware"):
                 FIRMWARE_OF.setdefault(name, d["firmware"])
+        for sub in d.get("sources", []):                 # (fm1-base firmwares: the submodules their tag pins)
+            if sub.get("repo") and sub.get("commit"):
+                out.setdefault((sub["repo"].rstrip("/").rsplit("/", 1)[-1], sub["commit"]), []).append(
+                    str(m.parent.relative_to(SIMS)))
     return out
 
 
@@ -70,6 +75,8 @@ def main(argv=None) -> int:
             cands = [Path("/tmp") / name, Path("/tmp") / name.lower()]   # firmware key: karma-fm1's is /tmp/karma)
             if fw:
                 cands.append(Path("/tmp") / fw)
+            if name.startswith("fm1-"):                  # (charlesvestal/fm1-x0x's clone is usually /tmp/x0x)
+                cands.append(Path("/tmp") / name[4:])
             clone = next((p for p in cands if (p / ".git").exists() or (p / "HEAD").exists()), Path("/tmp") / name)
         dest = out / f"{name}-{commit}.tar.gz"
         if not (clone / ".git").exists() and not (clone / "HEAD").exists():

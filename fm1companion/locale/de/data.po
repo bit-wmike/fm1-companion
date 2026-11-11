@@ -3614,3 +3614,221 @@ msgstr "Fork von Felucca; Grundlage von CoralFlower"
 #, python-brace-format
 msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
 msgstr "Dieses Backup stammt von {backup}, auf dem FM-1 läuft {device}, das KARMAs Projekte und Drumkits nicht lesen kann. Es wurde nichts geschrieben."
+
+#: fm1companion/diag.py:169
+msgid "Felucca fork (909, 808, two 303s, a break slicer); its unmodified firmware code runs in the studio twin, with the engines it ports (the 909 and 808 after 9W9 and 8W8 by athousanddetails, the 303 after Open303 by Robin Schmidt, MIT)"
+msgstr "Fork von Felucca (909, 808, zwei 303, ein Break-Slicer); sein unveränderter Firmware-Code läuft im Studio-Zwilling, mit den Klangerzeugern, die es portiert (909 und 808 nach 9W9 und 8W8 von athousanddetails, die 303 nach Open303 von Robin Schmidt, MIT)"
+
+#: fm1companion/x0xbk.py:37
+msgid "the file's size"
+msgstr "die Größe der Datei"
+
+#: fm1companion/x0xbk.py:37
+msgid "the transfer (a read request unanswered)"
+msgstr "die Übertragung (eine Leseanfrage blieb unbeantwortet)"
+
+#: fm1companion/x0xbk.py:37
+msgid "the file's head"
+msgstr "der Kopf der Datei"
+
+#: fm1companion/x0xbk.py:38
+msgid "a part's header"
+msgstr "der Kopf eines Teils"
+
+#: fm1companion/x0xbk.py:38
+msgid "a part's checksum (a byte changed on the way)"
+msgstr "die Prüfsumme eines Teils (ein Byte hat sich unterwegs geändert)"
+
+#: fm1companion/x0xbk.py:39
+msgid "the whole file's checksum"
+msgstr "die Prüfsumme der ganzen Datei"
+
+#: fm1companion/x0xbk.py:39
+msgid "a flash erase"
+msgstr "ein Löschen des Flashs"
+
+#: fm1companion/x0xbk.py:39
+msgid "a flash write"
+msgstr "ein Schreiben in den Flash"
+
+#: fm1companion/x0xbk.py:40
+msgid "the read-back (the flash does not hold what was written)"
+msgstr "das Zurücklesen (der Flash enthält nicht, was geschrieben wurde)"
+
+#: fm1companion/x0xbk.py:41
+msgid "answered HOME (no) on the FM-1"
+msgstr "am FM-1 mit HOME (nein) beantwortet"
+
+#: fm1companion/x0xbk.py:42
+msgid "writing the headers (the FM-1 finishes it when switched on again)"
+msgstr "das Schreiben der Köpfe (das FM-1 beendet es beim nächsten Einschalten)"
+
+#: fm1companion/x0xbk.py:43
+msgid "Settings (tempo, MIDI, the options)"
+msgstr "Einstellungen (Tempo, MIDI, die Optionen)"
+
+#: fm1companion/x0xbk.py:43
+msgid "Sound (every part's knobs, the effects)"
+msgstr "Klang (die Regler aller Teile, die Effekte)"
+
+#: fm1companion/x0xbk.py:44
+msgid "Patterns (first part)"
+msgstr "Patterns (erster Teil)"
+
+#: fm1companion/x0xbk.py:44
+msgid "Patterns (second part)"
+msgstr "Patterns (zweiter Teil)"
+
+#: fm1companion/x0xbk.py:44
+msgid "Song"
+msgstr "Song"
+
+#: fm1companion/x0xbk.py:45
+msgid "Knob motion"
+msgstr "Knopfbewegungen"
+
+#: fm1companion/x0xbk.py:88
+#, python-brace-format
+msgid "“{part}”: damaged (checksum)."
+msgstr "„{part}“: beschädigt (Prüfsumme)."
+
+#: fm1companion/x0xbk.py:242
+msgid "A piece of the backup went missing – please try again."
+msgstr "Ein Stück des Backups ist verloren gegangen – bitte noch einmal versuchen."
+
+#: fm1companion/x0xbk.py:251
+msgid "The backup arrived damaged – please try again."
+msgstr "Das Backup ist beschädigt angekommen – bitte noch einmal versuchen."
+
+#: fm1companion/x0xbk.py:307
+msgid "Nothing was changed."
+msgstr "Es wurde nichts geändert."
+
+#: fm1companion/x0xbk.py:294
+#, python-brace-format
+msgid "{firmware} does not answer the backup request (an older version, without backup?)."
+msgstr "{firmware} antwortet nicht auf die Backup-Anfrage (eine ältere Version, ohne Backup?)."
+
+#: fm1companion/x0xbk.py:339
+#, python-brace-format
+msgid "{firmware} does not answer the restore request (an older version, without restore?) – nothing was changed."
+msgstr "{firmware} antwortet nicht auf die Wiederherstellen-Anfrage (eine ältere Version, ohne Wiederherstellen?) – es wurde nichts geändert."
+
+#: fm1companion/x0xbk.py:308
+#, python-brace-format
+msgid "{firmware} could not read its flash (status {code})."
+msgstr "{firmware} konnte seinen Flash nicht lesen (Status {code})."
+
+#: fm1companion/diag.py:178
+msgid "GPL-3.0 (MPL-2.0 file by file)"
+msgstr "GPL-3.0 (MPL-2.0 Datei für Datei)"
+
+#: fm1companion/diag.py:177
+msgid "platform, host simulator and browser emulator of AMB-1 and LOOM-8, compiled into their studio twins"
+msgstr "Plattform, Host-Simulator und Browser-Emulator von AMB-1 und LOOM-8, in ihre Studio-Zwillinge kompiliert"
+
+#: fm1companion/diag.py:175
+msgid "groovebox on fm1-base; its unmodified firmware code runs in the studio twin, with the parts it ports (its LICENSING.md)"
+msgstr "Groovebox auf fm1-base; sein unveränderter Firmware-Code läuft im Studio-Zwilling, mit den Teilen, die es portiert (seine LICENSING.md)"
+
+#: fm1companion/x0xbk.py:72
+#, python-brace-format
+msgid "Project {n} (part {k} of 7)"
+msgstr "Projekt {n} (Teil {k} von 7)"
+
+#: fm1companion/diag.py:174
+msgid "generative ambient machine on fm1-base; its unmodified firmware code runs in the studio twin"
+msgstr "generative Ambient-Maschine auf fm1-base; ihr unveränderter Firmware-Code läuft im Studio-Zwilling"
+
+#: fm1companion/x0xbk.py:369
+#, python-brace-format
+msgid "{firmware} did not restore the backup: {reason}."
+msgstr "{firmware} hat das Backup nicht wiederhergestellt: {reason}."
+
+#: fm1companion/x0xbk.py:338
+#, python-brace-format
+msgid "{firmware} stopped asking for the backup – nothing was changed."
+msgstr "{firmware} hat aufgehört, das Backup anzufordern – es wurde nichts geändert."
+
+#: fm1companion/x0xbk.py:359
+#, python-brace-format
+msgid "{firmware} asked for a part outside the backup – nothing was changed."
+msgstr "{firmware} hat einen Teil außerhalb des Backups angefordert – es wurde nichts geändert."
+
+#: fm1companion/x0xbk.py:124
+#, python-brace-format
+msgid "Not a {firmware} backup."
+msgstr "Kein {firmware}-Backup."
+
+#: fm1companion/diag.py:172
+msgid "chord harp on X0X's platform; its unmodified firmware code runs in the studio twin, with Chordian's rhythms and sounds by Jan125 (CC0)"
+msgstr "Akkordharfe auf der Plattform von X0X; ihr unveränderter Firmware-Code läuft im Studio-Zwilling, mit Chordians Rhythmen und Klängen von Jan125 (CC0)"
+
+#: fm1companion/x0xbk.py:126
+#, python-brace-format
+msgid "A backup from another version of {firmware} (version {version}, {n} parts): this {firmware} cannot restore it."
+msgstr "Ein Backup einer anderen {firmware}-Version (Version {version}, {n} Teile): dieses {firmware} kann es nicht wiederherstellen."
+
+#: fm1companion/backup.py:705
+#, python-brace-format
+msgid "{firmware} restores a backup only whole. Nothing was written."
+msgstr "{firmware} stellt ein Backup nur als Ganzes wieder her. Es wurde nichts geschrieben."
+
+#: fm1companion/backup.py:551
+#, python-brace-format
+msgid "This is a {firmware} backup, but the FM-1 runs a different firmware. Nothing was written."
+msgstr "Das ist ein {firmware}-Backup, aber auf dem FM-1 läuft eine andere Firmware. Es wurde nichts geschrieben."
+
+#: fm1companion/x0xbk.py:133
+#, python-brace-format
+msgid "The {firmware} backup is cut short."
+msgstr "Das {firmware}-Backup ist abgeschnitten."
+
+#: fm1companion/x0xbk.py:295
+#, python-brace-format
+msgid "{firmware} stopped sending the backup – please try again."
+msgstr "{firmware} hat aufgehört, das Backup zu senden – bitte noch einmal versuchen."
+
+#: fm1companion/x0xbk.py:129
+#, python-brace-format
+msgid "The {firmware} backup's head is damaged."
+msgstr "Der Kopf des {firmware}-Backups ist beschädigt."
+
+#: fm1companion/x0xbk.py:47
+msgid "the FM-1 is playing: stop it first"
+msgstr "das FM-1 spielt: zuerst stoppen"
+
+#: fm1companion/x0xbk.py:144
+#, python-brace-format
+msgid "The {firmware} backup is damaged (the whole file's checksum)."
+msgstr "Das {firmware}-Backup ist beschädigt (Prüfsumme der ganzen Datei)."
+
+#: fm1companion/x0xbk.py:121
+#, python-brace-format
+msgid "Too short for a {firmware} backup."
+msgstr "Zu kurz für ein {firmware}-Backup."
+
+#: fm1companion/x0xbk.py:137
+#, python-brace-format
+msgid "“{part}”: a wrong header in the {firmware} backup."
+msgstr "„{part}“: ein falscher Kopf im {firmware}-Backup."
+
+#: fm1companion/x0xbk.py:118
+#, python-brace-format
+msgid "This is a Polly backup, not {firmware}'s."
+msgstr "Das ist ein Polly-Backup, keines von {firmware}."
+
+#: fm1companion/studio.py:139
+#, python-brace-format
+msgid "{firmware} has no backup over USB: its twin cannot be loaded from an FM-1 or a backup, nor written onto one. Play it, export it as WAV and keep its states in the studio."
+msgstr "{firmware} hat kein Backup über USB: sein Zwilling kann weder von einem FM-1 oder Backup geladen noch auf eines geschrieben werden. Spiele ihn, exportiere ihn als WAV und behalte seine Stände im Studio."
+
+#: fm1companion/backup.py:553
+#, python-brace-format
+msgid "The FM-1 runs {firmware}, which takes only its own backups. Nothing was written."
+msgstr "Auf dem FM-1 läuft {firmware}, das nur seine eigenen Backups annimmt. Es wurde nichts geschrieben."
+
+#: fm1companion/backup_inspect.py:576
+#, python-brace-format
+msgid "{firmware} was playing during this backup: changes it had not saved yet are not in it."
+msgstr "{firmware} hat während dieses Backups gespielt: Änderungen, die es noch nicht gespeichert hatte, sind nicht darin."

@@ -90,6 +90,23 @@ antigua aproximación en el ordenador solo se mantiene cuando no hay gemelo para
   SLOOP (hasta 2.6) se puede escribir en un FM-1 con KARMA (los kits SYN de SLOOP 2.5 se omiten, como hace el editor de
   KARMA), una copia de KARMA nunca en SLOOP. Las tres canciones guardadas de KARMA (SAVE en la pantalla SONG) no forman
   parte de una copia – la copia propia de KARMA tampoco las incluye. La vista de proyecto aún no lee las partes de KARMA.
+* X0X (1.2.1, su versión más reciente, y 1.2.0): un proyecto – su sonido, los 32 patrones, la canción y el movimiento
+  de los mandos –, sin ranuras de proyecto: los patrones y la canción suenan desde el panel del gemelo o con Reproducir.
+  Las cinco pistas por separado son sus partes: la 909, la 808, 303 A, 303 B y BREAK. X0X tiene un formato de copia
+  propio: **Abrir desde copia de seguridad …** abre también los archivos `.x0b` del propio X0X, y X0X solo acepta una
+  copia entera. Al escribir de vuelta, X0X debe estar detenido y pregunta en su pantalla (RESTORE FROM USB?): pulsa
+  **SEL** en el FM-1. Los loops de break de las ranuras de samples no forman parte de una copia de X0X. El gemelo tiene
+  un núcleo, sin audio USB, sin MIDI TRS y sin calibración del hardware; el gesto de actualización no hace nada allí.
+  La vista de proyecto no lee los patrones de X0X.
+* FoMni (0.4.1 y 0.4) y AMB-1 (1.3.2 y 1.3.1) no tienen copia de seguridad por USB: sus gemelos arrancan vacíos (o
+  desde un estado del estudio) y nunca se cargan desde un FM-1 ni se escriben en uno – tócalos, expórtalos como WAV y
+  guarda sus estados en el estudio. Las cuatro pistas por separado de FoMni son sus voces de arpa 1 y 2, el acorde con
+  el bajo y el ritmo; AMB-1 suena solo desde el principio, sus cuatro pistas son sus capas: pad, campanas, bajo y pulso.
+* LOOM-8 (0.14 y 0.13.1): su copia es la de fm1-base (los presets de usuario y los tres proyectos, solo enteros;
+  **Abrir desde copia de seguridad …** abre también los archivos `.loom8` del propio LOOM-8). Al escribir de vuelta,
+  LOOM-8 debe estar detenido y pregunta en su pantalla: pulsa **SEL** en el FM-1. Su banco de samples no forma parte
+  de la copia. Las ocho pistas por separado son sus pistas. El gemelo tiene un núcleo, sin Bluetooth, sin host USB y
+  sin audio USB; la vista de proyecto no lee los proyectos de LOOM-8.
 * El gemelo no tiene límite de CPU: el dispositivo descarta voces cuando se sobrecarga, el gemelo nunca. Las partes en coma flotante
   pueden diferir en los últimos bits (inaudible). Sin Bluetooth, sin host USB, sin actualización de firmware en el
   gemelo.

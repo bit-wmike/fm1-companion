@@ -81,7 +81,8 @@ class BackupPicker(QDialog):
         lay.addWidget(bb)
 
     def _other(self, root):
-        p, _filter = QFileDialog.getOpenFileName(self, _("Choose backup file"), str(root), _("FM-1 backup (*.json)"))
+        p, _filter = QFileDialog.getOpenFileName(self, _("Choose backup file"), str(root),
+                                             _("FM-1 backup (*.json);;X0X backup (*.x0b);;LOOM-8 backup (*.loom8)"))
         if p:
             self.path = Path(p)
             super().accept()
@@ -214,6 +215,14 @@ class WriteBackDialog(QDialog):
                   "twin replaces on the device: the song's parts A–D, the running music, the song order, the user "
                   "presets, the HEX drum kits and the sample slots. Playback on the FM-1 stops in the process.")
                 if firmware == "karma" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces X0X's project on the device, whole: the sound, the 32 patterns, the song, the knob "
+                  "motion and the settings (the break loops in the sample slots stay). X0X must be stopped, and it "
+                  "asks on its screen: press <b>SEL</b> on the FM-1 to confirm.") if firmware == "x0x" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces LOOM-8's user presets and its three projects on the device, all of them (its sample "
+                  "bank stays). LOOM-8 must be stopped, and it asks on its screen: press <b>SEL</b> on the FM-1 to "
+                  "confirm.") if firmware == "loom-8" else
                 _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
                   "twin replaces on the device: all 32 project slots, the running music and the user presets. "
                   "Playback on the FM-1 stops in the process."))

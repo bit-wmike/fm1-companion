@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "name": "amb-1-studio",
+  "title": "AMB-1 studio twin",
+  "version": "1.3.1",
+  "source_repo": "https://github.com/charlesvestal/fm1-amb",
+  "ref": "v1.3.1",
+  "commit": "285215af014b9c6a7c2b404c538d9261e8a9d29f",
+  "license": "MPL-2.0",
+  "build_date": "2026-11-11T08:30:47Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "CREDITS-fm1-base.md": {
+      "sha256": "416d38756f2a9808635968927ee32abb8a5e20be44f0ed0e6b4c4c9b1e94253e",
+      "size": 2666
+    },
+    "LICENSE": {
+      "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85",
+      "size": 16726
+    },
+    "LICENSING-felucca-bsp.md": {
+      "sha256": "88c6a273e45d96d31732477d50f3ccc566c733248110086d44d9b0794501721c",
+      "size": 3668
+    },
+    "LICENSING-fm1-base.md": {
+      "sha256": "520db27a3c39774b48e54bc4f41ca3cfe3c3e01b87288a38c82ee07d335a8b99",
+      "size": 8853
+    },
+    "LICENSING.md": {
+      "sha256": "dec29286c701d838525b389bf27e46c9a85969e84daa4894f469a2396f5f38af",
+      "size": 2474
+    },
+    "NOTICE": {
+      "sha256": "a46918f56aa0b7a54e67a0cf27c7fe10b78d84dd5bf28f0e5e024aa7f0f476af",
+      "size": 2564
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "51bf83be1b600d6adc61ee8c976022c4cf19c96eca4c32a4e3cca2883ec88a76",
+      "size": 21676
+    },
+    "twin.wasm": {
+      "sha256": "87f6ec8ec2a37a297c6683a52348e7231c54b8b6a20ad1a7001c818c4ad7ee31",
+      "size": 168573
+    }
+  },
+  "kind": "studio",
+  "firmware": "amb-1",
+  "firmware_version": "1.3.1",
+  "identity": "FM-1_7010301",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/fm1base_studio.c",
+  "glue_sha256": "16c22d4cd705be5e7a5f592aab40207d3c8e9e37068e4a6f546d5c8de36d956c",
+  "source_url": "https://github.com/charlesvestal/fm1-amb/archive/285215af014b9c6a7c2b404c538d9261e8a9d29f.tar.gz",
+  "tracks": 4,
+  "projects": 0,
+  "sources": [
+    {
+      "path": "base",
+      "repo": "https://github.com/charlesvestal/fm1-base",
+      "commit": "9bca7154c7db1fc4db7381502045dcc67fbf8d74"
+    },
+    {
+      "path": "base/bsp",
+      "repo": "https://github.com/hugelton/felucca-bsp",
+      "commit": "f878800967e66e721dfbc9a4f5fe1835772ae8fc"
+    }
+  ],
+  "release_status": "previous stable"
+}

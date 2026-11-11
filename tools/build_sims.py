@@ -40,6 +40,8 @@ Simulators:
             browser emulator tools/emu/web/emu_web.c): sims/coralflower-studio/<version>/; a ref is a release tag
             (web/releases.json lists them, the installer offers the first):
             python3 tools/build_sims.py --target coralflower-studio [--ref v0.7.1] --repo coralflower=<clone>
+  x0x-studio  (--target) the same for X0X (tools/studio/x0x_studio.c, on X0X's own browser emulator web/emu/x0x_web.c):
+            sims/x0x-studio/<version>/   python3 tools/build_sims.py --target x0x-studio [--ref v1.2.1] --repo x0x=<clone>
   karma-studio  (--target) the same for KARMA (tools/studio/karma_studio.c, with firmware/mi's C++):
             sims/karma-studio/<version>/   python3 tools/build_sims.py --target karma-studio [--ref v3.1] --repo karma=<clone>
 """
@@ -548,6 +550,290 @@ def _karma_notice(spec, version, ref, commit, source_url):
         + source_offer(spec["repo"], commit, f", the glue {spec['glue']} and the shim tools/wasm_shim"))
 
 
+
+# ---- X0X (charlesvestal/fm1-x0x): a release is a tag vX.Y.Z; its release workflow builds tools/build.py --release X.Y.Z:
+# the version string "X.Y.Z BETA" (x0x.h X0X_VERSION; INFO "X0X 1.2.1 BETA") and the identity FM-1_9XXYYZZ
+def x0x_version(src: Path, ref: str) -> str:
+    """the release version of a tag (v1.2.1 -> 1.2.1), as X0X's release workflow passes it to --release"""
+    m = re.fullmatch(r"v?(\d{1,2}\.\d{1,2}(?:\.\d{1,2})?(?:-[A-Za-z0-9]+)?)", ref)
+    if not m:
+        raise SystemExit(f"x0x-studio: {ref} is not a release tag (vX.Y[.Z])")
+    return m[1]
+
+
+def x0x_release_identity(version: str) -> str:
+    """X0X's tools/build.py --release X.Y[.Z]: FM-1_9 + major, minor, patch as two digits each"""
+    m = re.fullmatch(r"(\d{1,2})\.(\d{1,2})(?:\.(\d{1,2}))?(?:-[A-Za-z0-9]+)?", version)
+    return "FM-1_9%02d%02d%02d" % (int(m[1]), int(m[2]), int(m[3] or 0)) if m else "FM-1_900"
+
+
+def x0x_version_string(version: str) -> str:
+    """tools/build.py --release: VERSION = X.Y.Z BETA (upper case; "BETA" once)"""
+    v = version.upper()
+    return v if "BETA" in v else v + " BETA"
+
+
+def _generate_x0x(src: Path):
+    """host/build_host.sh's headers: the font, the 909's samples and tables, the screen reader's words, the built-in
+    break loops (rendered by X0X's own 909 code with the host's cc, tools/gen_builtin_break.sh)"""
+    (src / "build" / "gen").mkdir(parents=True, exist_ok=True)
+    run([sys.executable, "tools/gen_font.py", "build/gen/felucca_font.h"], cwd=src, stdout=subprocess.DEVNULL)
+    run([sys.executable, "tools/gen_drum_samples.py", "build/gen/x0x_drum_samples.h"], cwd=src, stdout=subprocess.DEVNULL)
+    run([sys.executable, "tools/gen_words.py", "firmware/words.tsv", "web/words", "build/gen/ann_words.h"], cwd=src,
+        stdout=subprocess.DEVNULL)
+    run(["sh", "tools/gen_builtin_break.sh", "build/gen"], cwd=src, stdout=subprocess.DEVNULL)
+
+
+def _x0x_objects(src: Path, sdk: Path) -> list:
+    """the separately compiled units of host/build_host.sh (its U list: the DSP, the sequencer, engine.c), compiled
+    with the twin's flags"""
+    m = re.search(r'^U="([^"]*)"', (src / "host" / "build_host.sh").read_text("utf-8"), re.M)
+    return m[1].split()
+
+
+X0X_THIRD_PARTY = ["assets/fonts/Barlow-OFL.txt", "assets/fonts/Terminus-LICENSE.txt"]
+
+
+def _x0x_extra(src: Path, out: Path):
+    """X0X's licensing record (LICENSING.md: the ported engines' origins) and the licence texts of the UI faces
+    rasterised in"""
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    (out / "THIRD_PARTY.txt").write_text("".join(f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n"
+                                                 for f in X0X_THIRD_PARTY if (src / f).exists()), "utf-8")
+
+
+def _x0x_notice(spec, version, ref, commit, source_url):
+    return (
+        f"X0X {x0x_version_string(version)} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
+        f"(commit {commit}; source: {source_url}).\n"
+        "GPL-3.0-only. X0X by Charles Vestal, a fork of Felucca: Copyright (C) 2026 Leo Kuroshita (@kurogedelic), "
+        "Hügelton Instruments (the platform parts).\n"
+        "Ported parts keep their licences (the 909 after 9W9 / ER-99, the 808 after 8W8, the 303 after schwung-303: "
+        "Open303 by Robin Schmidt, MIT; TB-3PO after the Phazerville Hemisphere Suite;\nthe break generator after BB Gen "
+        "by mestela, by permission; the screen reader's announce.c: MPL-2.0; the UI faces Barlow Semi Condensed and "
+        "Terminus are rasterised in: OFL 1.1):\nX0X's LICENSING.md and the texts in THIRD_PARTY.txt beside this file. "
+        "TR-808, TR-909 and TB-303 are trademarks of Roland Corporation. The JieLi SDK files of X0X's packages are not "
+        "part of the twin.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
+        "includes them as X0X's own browser emulator does (web/emu/x0x_web.c, host/x0x_host.c)\nand adds the "
+        "device's storage.c on the flash image, the USB SysEx path (editor.c, ota.c's identity handshake, backup.c's "
+        "backup and restore) and USB MIDI out; the hardware stand-ins are the emulator's:\nkeys/LEDs/LCD, the MASTER "
+        "pot, NOR flash = a 1 MiB RAM image, one core, USB = always configured, no USB audio, no TRS MIDI, no updater "
+        "and no USB boot\n(ota.c answers the identity handshake only), the default panel map (no "
+        "hardware calibration). Compiled with WASI SDK clang.\n" +
+        source_offer(spec["repo"], commit, f" and the glue {spec['glue']}"))
+
+
+
+
+# ---- FoMni (charlesvestal/fm1-fomni, FoMni-1, built on X0X's platform): a release is a tag vX.Y[.Z]; tools/build.py
+# --release X.Y[.Z]: the version string "X.Y.Z BETA" (app.h OM_VERSION) and the identity FM-1_8XXYYZZ
+def fomni_release_identity(version: str) -> str:
+    m = re.fullmatch(r"(\d{1,2})\.(\d{1,2})(?:\.(\d{1,2}))?(?:-[A-Za-z0-9]+)?", version)
+    return "FM-1_8%02d%02d%02d" % (int(m[1]), int(m[2]), int(m[3] or 0)) if m else "FM-1_800"
+
+
+def _generate_fomni(src: Path):
+    """host/build_host.sh's headers: the font, the screen reader's words"""
+    (src / "build" / "gen").mkdir(parents=True, exist_ok=True)
+    run([sys.executable, "tools/gen_font.py", "build/gen/felucca_font.h"], cwd=src, stdout=subprocess.DEVNULL)
+    run([sys.executable, "tools/gen_words.py", "firmware/words.tsv", "web/words", "build/gen/ann_words.h"], cwd=src,
+        stdout=subprocess.DEVNULL)
+
+
+def _fomni_extra(src: Path, out: Path):
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    (out / "THIRD_PARTY.txt").write_text("".join(f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n"
+                                                 for f in X0X_THIRD_PARTY if (src / f).exists()), "utf-8")
+
+
+def _fomni_notice(spec, version, ref, commit, source_url):
+    return (
+        f"FoMni-1 {x0x_version_string(version)} – studio twin (firmware code for the host), built from {spec['repo']} tag "
+        f"{ref}\n(commit {commit}; source: {source_url}).\n"
+        "GPL-3.0-only. FoMni by Charles Vestal, on X0X's and Felucca's platform: Copyright (C) 2026 Leo Kuroshita "
+        "(@kurogedelic), Hügelton Instruments (the platform parts).\nIts rhythm patterns, waves, drum sounds and the "
+        "strum plate's voicing come from Chordian by Jan125 (CC0 1.0); the screen reader's announce.c: MPL-2.0; the UI "
+        "face Barlow Semi Condensed is\nrasterised in (OFL 1.1): FoMni's LICENSING.md and the texts in THIRD_PARTY.txt "
+        "beside this file. Omnichord is a trademark of Suzuki Musical Instrument Corporation. The JieLi SDK files of\n"
+        "FoMni's packages are not part of the twin.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
+        "includes them as FoMni's own browser emulator does (web/emu/omni_web.c, host/omni_host.c)\nand adds the device's "
+        "storage.c on the flash image, the USB SysEx path (the screen reader, ota.c's identity handshake) and USB MIDI "
+        "out; the hardware stand-ins are the emulator's:\nkeys/LEDs/LCD, the MASTER pot, NOR flash = a 1 MiB RAM image, "
+        "USB = always configured, no USB audio, no TRS MIDI, no updater and no USB boot (ota.c answers the identity\n"
+        "handshake only), the default panel map (no hardware calibration). Compiled with WASI SDK clang.\n" +
+        source_offer(spec["repo"], commit, f" and the glue {spec['glue']}"))
+
+
+# ---- fm1-base firmwares (charlesvestal/fm1-base: AMB-1, LOOM-8): an app in app/, fm1-base a submodule in base/ (with
+# felucca-bsp in base/bsp), each pinned by the app's tag. A release is a tag vX.Y[.Z]; fm1-base's tools/build.py
+# --release X.Y[.Z] sets APP_VERSION "X.Y[.Z]" and the identity id_prefix + XXYYZZ (fm1.toml)
+FM1BASE_REPOS = {"base": ("fm1-base", "https://github.com/charlesvestal/fm1-base"),
+                 "base/bsp": ("felucca-bsp", "https://github.com/hugelton/felucca-bsp")}
+REPOS: dict[str, str] = {}                                # (main: --repo name=path, for the submodules too)
+
+
+def _bare(name: str, url: str, work: Path) -> Path:
+    if REPOS.get(name):
+        return Path(REPOS[name])
+    repo = work / f"{name}.git"
+    if not repo.exists():
+        run(["git", "clone", "--bare", "--filter=blob:none", url + ".git", repo])
+    return repo
+
+
+def _gitlink(repo: Path, commit: str, path: str) -> str:
+    out = subprocess.run(["git", "ls-tree", commit, path], cwd=repo, capture_output=True, text=True, check=True).stdout
+    m = re.match(r"160000 commit ([0-9a-f]{40})\t", out)
+    if not m:
+        raise SystemExit(f"{repo}: no submodule {path} at {commit}")
+    return m[1]
+
+
+def fm1base_version(src: Path, ref: str) -> str:
+    """the release version of a tag (v1.3.2 -> 1.3.2), as the release workflow passes it to --release"""
+    m = re.fullmatch(r"v?(\d{1,2}\.\d{1,2}(?:\.\d{1,2})?(?:-[A-Za-z0-9]+)?)", ref)
+    if not m:
+        raise SystemExit(f"{ref} is not a release tag (vX.Y[.Z])")
+    return m[1]
+
+
+def fm1base_identity(src: Path, version: str) -> str:
+    """fm1.toml id_prefix + the release's XXYYZZ (fm1-base tools/build.py --release)"""
+    m = re.search(r'^id_prefix\s*=\s*"(FM-1_\d+)"', (src / "app" / "fm1.toml").read_text("utf-8"), re.M)
+    v = re.fullmatch(r"(\d{1,2})\.(\d{1,2})(?:\.(\d{1,2}))?(?:-[A-Za-z0-9]+)?", version)
+    return (m[1] if m else "FM-1_0") + ("%02d%02d%02d" % (int(v[1]), int(v[2]), int(v[3] or 0)) if v else "00")
+
+
+FM1BASE_BUILD: dict[str, dict] = {}                       # src -> {"sources": [...], "flags": [...], "units": [...]}
+
+
+def _fm1base_prepare(src: Path, ref: str, commit: str, local: str | None, work: Path) -> dict:
+    """the app's submodules at the commits its tag pins (fm1-base in base/, felucca-bsp in base/bsp), then fm1-base's
+    own host build (tools/build.py app --host --release X.Y: its generated headers, fonts and words; this machine's
+    cc), its compile lines kept (the defines, the include paths and the units of the twin's build)"""
+    app_repo = Path(local) if local else work / f"{src.name.split('-src')[0]}.git"
+    sources, at = [], commit
+    for path, (name, url) in FM1BASE_REPOS.items():
+        parent = app_repo if path == "base" else _bare(*FM1BASE_REPOS["base"], work)
+        sub = _gitlink(parent, at, path.rsplit("/", 1)[-1])
+        repo = _bare(name, url, work)
+        if subprocess.run(["git", "cat-file", "-e", sub + "^{commit}"], cwd=repo).returncode:
+            run(["git", "fetch", "origin", sub], cwd=repo)
+        dest = src / path
+        if dest.exists():
+            shutil.rmtree(dest)
+        dest.mkdir(parents=True)
+        data = subprocess.run(["git", "archive", "--format=tar", sub], cwd=repo, capture_output=True, check=True).stdout
+        with tarfile.open(fileobj=io.BytesIO(data)) as tf:
+            tf.extractall(dest, filter="data")
+        sources.append({"path": path, "repo": url, "commit": sub})
+        at = sub
+    version = fm1base_version(src, ref)
+    log = src / "build" / "cc.log"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    wrapper = src / "build" / "cc-log.py"
+    wrapper.write_text("import json, os, subprocess, sys\n"
+                       f"open({str(log)!r}, 'a').write(json.dumps(sys.argv[1:]) + '\\n')\n"
+                       "sys.exit(subprocess.call([os.environ.get('FM1C_CC', 'cc'), *sys.argv[1:]]))\n", "utf-8")
+    cc = src / "build" / "cc-log"
+    cc.write_text(f"#!/bin/sh\nexec {sys.executable} {wrapper} \"$@\"\n", "utf-8")
+    cc.chmod(0o755)
+    run([sys.executable, "base/tools/build.py", "app", "--host", "--release", version], cwd=src,
+        env={**os.environ, "CC": str(cc)}, stdout=subprocess.DEVNULL)
+    lines = [json.loads(x) for x in log.read_text("utf-8").splitlines()]
+    link = next(a for a in lines if "-c" not in a)
+    flags = [a for a in link if a.startswith(("-D", "-I")) and not a.startswith("-DFM1B_BUILD")]
+    units = [a[a.index("-c") + 1] for a in lines if "-c" in a]
+    FM1BASE_BUILD[str(src)] = {"sources": sources, "flags": flags, "units": units,
+                               "identity": fm1base_identity(src, version)}
+    return {"sources": sources}
+
+
+def _fm1base_objects(src: Path, sdk: Path) -> list:
+    """fm1-base's host build, as its tools/build.py made it: its defines and include paths (made relative), the o2
+    units (the DSP, compiled beside the glue); -DPLAT_WEB as its browser emulator (web/emu/emu_web.c)"""
+    b = FM1BASE_BUILD[str(src)]
+    rel = [f[:2] + os.path.relpath(f[2:], src) if f.startswith("-I") and os.path.isabs(f[2:]) else f for f in b["flags"]]
+    return ["-DPLAT_WEB", "-Ibase/host", *rel, *[os.path.relpath(u, src) if os.path.isabs(u) else u for u in b["units"]]]
+
+
+def _fm1base_sources_text(src_sources) -> str:
+    return "".join(f"  {s['path']}/: {s['repo']} commit {s['commit']}\n" for s in src_sources)
+
+
+AMB_THIRD_PARTY = ["base/LICENSES/OFL-Barlow.txt", "base/assets/fonts/Barlow-OFL.txt",
+                   "base/assets/fonts/Terminus-LICENSE.txt"]
+
+
+def _amb_extra(src: Path, out: Path):
+    """AMB-1's licensing record, fm1-base's (LICENSING-fm1-base.md, CREDITS-fm1-base.md) and felucca-bsp's
+    (LICENSING-felucca-bsp.md), the MPL-2.0 text, and the licence texts of the type faces rasterised in"""
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    shutil.copy(src / "base" / "LICENSING.md", out / "LICENSING-fm1-base.md")
+    if (src / "base" / "CREDITS.md").exists():
+        shutil.copy(src / "base" / "CREDITS.md", out / "CREDITS-fm1-base.md")
+    if (src / "base" / "bsp" / "LICENSING.md").exists():
+        shutil.copy(src / "base" / "bsp" / "LICENSING.md", out / "LICENSING-felucca-bsp.md")
+    texts = [f for f in AMB_THIRD_PARTY if (src / f).exists()]
+    texts += sorted(str(p.relative_to(src)) for p in (src / "base" / "LICENSES").glob("*") if p.is_file()
+                    and str(p.relative_to(src)) not in texts)
+    (out / "THIRD_PARTY.txt").write_text("".join(f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n"
+                                                 for f in texts), "utf-8")
+
+
+def _amb_notice(spec, version, ref, commit, source_url):
+    srcs = list(FM1BASE_BUILD.values())[-1]["sources"] if FM1BASE_BUILD else []   # (the build just made)
+    return (
+        f"AMB-1 {version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
+        f"(commit {commit}; source: {source_url}), with the submodules its tag pins:\n" + _fm1base_sources_text(srcs) +
+        "MPL-2.0 (AMB-1 by Charles Vestal; fm1-base, Copyright (C) 2026 Charles Vestal; felucca-bsp, from Felucca, "
+        "Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments).\nThe Source Code Form of every file is "
+        "at the commits above; the texts of the licences and of the parts compiled in (the type faces Barlow and "
+        "Terminus are rasterised in: OFL 1.1) are LICENSE,\nLICENSING.md, LICENSING-fm1-base.md, LICENSING-felucca-bsp.md "
+        "and THIRD_PARTY.txt beside this file. The JieLi SDK files of AMB-1's packages are not part of the twin.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (MPL-2.0, in FM-1 Companion's source) includes "
+        "them as fm1-base's own\nbrowser emulator does "
+        "(web/emu/emu_web.c, host/plat_host.c) and adds the device's storage.c on the flash image, the USB SysEx path "
+        "(the screen reader, felucca-bsp's ota.c\nidentity handshake) and USB MIDI out; the hardware stand-ins are the "
+        "emulator's: keys/LEDs/LCD, the MASTER pot, NOR flash = a 1 MiB RAM image, one core,\nUSB = always configured, "
+        "no USB audio, no TRS MIDI, no updater and no USB boot, the default panel map (no hardware calibration). "
+        "Compiled with WASI SDK clang.\n" +
+        source_offer(spec["repo"], commit, f", its submodules above and the glue {spec['glue']}"))
+
+
+def _loom_extra(src: Path, out: Path):
+    """LOOM-8's licensing record and both licence texts (COPYING: GPL-3.0, the acid engine and the 909 models; LICENSE:
+    MPL-2.0, the rest), fm1-base's and felucca-bsp's records and the third-party texts (as AMB-1's)"""
+    _amb_extra(src, out)
+    if (src / "COPYING").exists():
+        shutil.copy(src / "COPYING", out / "COPYING")
+
+
+def _loom_notice(spec, version, ref, commit, source_url):
+    srcs = list(FM1BASE_BUILD.values())[-1]["sources"] if FM1BASE_BUILD else []
+    return (
+        f"LOOM-8 {version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
+        f"(commit {commit}; source: {source_url}), with the submodules its tag pins:\n" + _fm1base_sources_text(srcs) +
+        "GPL-3.0-only as a whole (LOOM-8's LICENSING.md: its acid engine and 909 models are GPL-3.0-only, COPYING; its "
+        "other files, fm1-base's and felucca-bsp's are MPL-2.0 file by file, LICENSE, section 3.3).\nLOOM-8 by Charles "
+        "Vestal; fm1-base, Copyright (C) 2026 Charles Vestal; felucca-bsp, from Felucca, Copyright (C) 2026 Leo "
+        "Kuroshita (@kurogedelic), Hügelton Instruments. Ported parts keep\ntheir licences (Braids by Emilie Gillet, MIT; "
+        "Open303 by Robin Schmidt, MIT, through X0X; 9W9's 909, GPL-3.0; Sophie, digisophie, MACHINEDRUM, NuSaw, "
+        "PSXVerb: MIT; the type faces Barlow and Terminus\nare rasterised in: OFL 1.1): LOOM-8's LICENSING.md, "
+        "LICENSING-fm1-base.md, LICENSING-felucca-bsp.md and THIRD_PARTY.txt beside this file. Not affiliated with "
+        "teenage engineering.\nThe JieLi SDK files of LOOM-8's packages are not part of the twin.\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (MPL-2.0, in FM-1 Companion's source) includes "
+        "them as fm1-base's own\nbrowser emulator does (web/emu/emu_web.c, host/plat_host.c) and adds the device's "
+        "storage.c on the flash image, the USB SysEx path (the screen reader, the app's frames, felucca-bsp's\nota.c "
+        "identity handshake, fm1-base's backup.c) and USB MIDI out; the hardware stand-ins are the emulator's: "
+        "keys/LEDs/LCD, the MASTER pot, NOR flash = a 1 MiB RAM image,\none core, Bluetooth and the USB host as the "
+        "emulator stands them in (nothing connects), USB = always configured, no USB audio, no TRS MIDI, no updater "
+        "and no USB boot,\nthe default panel map (no hardware calibration). Compiled with WASI SDK clang.\n" +
+        source_offer(spec["repo"], commit, f", its submodules above and the glue {spec['glue']}"))
+
+
 STUDIOS = {
     "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
                        "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
@@ -613,6 +899,57 @@ STUDIOS = {
                      "objects": _karma_objects,
                      "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
                      "notice": _karma_notice, "extra": _karma_extra, "tracks": 4, "projects": 4},
+    # X0X (charlesvestal/fm1-x0x): release tags; v1.2.1 is its latest release (2026-11-05: the identity handshake for
+    # M-UPGRADE 3.11), v1.2.0 the one before (the same app). The folder is the release version (v1.2.1 -> 1.2.1);
+    # INFO says "X0X 1.2.1 BETA". host/build_host.sh's flags and units (-DX0X_HOST, the DSP compiled beside the glue)
+    "x0x-studio": {"firmware": "x0x", "repo": "https://github.com/charlesvestal/fm1-x0x",
+                   "glue": "tools/studio/x0x_studio.c", "refs": ["v1.2.0", "v1.2.1"],
+                   "release_status": {"502b2c28c14ab2bff31eb4f0777fdfd0efcf8bea": "stable",
+                                      "ca2d377e3b9522579245152a81781a575f4d2fea": "previous stable"},
+                   "title": "X0X studio twin", "license": "GPL-3.0-only", "generate": _generate_x0x,
+                   "version_ref": x0x_version, "identity": x0x_release_identity,
+                   "defines": lambda v, i: [f'-DX0X_VERSION="{x0x_version_string(v)}"', f'-DFELUCCA_ID="{i}"'],
+                   "cflags": ["-D_DEFAULT_SOURCE", "-DX0X_HOST", "-Ifirmware/src/dsp"], "objects": _x0x_objects,
+                   "notice": _x0x_notice, "extra": _x0x_extra, "tracks": 5, "projects": 0},
+    # AMB-1 (charlesvestal/fm1-amb, on fm1-base): release tags; v1.3.2 is its latest release (2026-11-06: fm1-base's
+    # identity reply for The Firmware Hub), v1.3.1 the one before. The folder is the release version; INFO: none
+    # (fm1-base has no editor), the twin reports "AMB-1 1.3.2"
+    "amb-1-studio": {"firmware": "amb-1", "repo": "https://github.com/charlesvestal/fm1-amb",
+                   "glue": "tools/studio/fm1base_studio.c", "refs": ["v1.3.1", "v1.3.2"],
+                   "release_status": {"7c538516d6c52216ff4c8a4881cf2f0dcb07c44b": "stable",
+                                      "285215af014b9c6a7c2b404c538d9261e8a9d29f": "previous stable"},
+                   "title": "AMB-1 studio twin", "license": "MPL-2.0", "generate": lambda src: None,
+                   "prepare": _fm1base_prepare, "version_ref": fm1base_version,
+                   "identity_src": lambda src: FM1BASE_BUILD[str(src)]["identity"],
+                   "defines": lambda v, i: [f'-DAPP_VERSION="{v}"', f'-DFELUCCA_ID="{i}"', "-DTW_APP_AMB"],
+                   "objects": _fm1base_objects, "notice": _amb_notice, "extra": _amb_extra,
+                   "tracks": 4, "projects": 0},
+    # FoMni (charlesvestal/fm1-fomni): release tags; v0.4.1 is its latest release (2026-11-05: the identity handshake for
+    # M-UPGRADE 3.11), v0.4 the one before. The folder is the release version; INFO: none (no editor), the twin reports
+    # "FoMni-1 0.4.1 BETA" (the screen reader's name)
+    "fomni-studio": {"firmware": "fomni", "repo": "https://github.com/charlesvestal/fm1-fomni",
+                     "glue": "tools/studio/fomni_studio.c", "refs": ["v0.4", "v0.4.1"],
+                     "release_status": {"17a740b7b2d19615ffe19aa73f8eda67f60f223d": "stable",
+                                        "6ecd227013cc18def0e89d035b3760eb268b342b": "previous stable"},
+                     "title": "FoMni studio twin", "license": "GPL-3.0-only", "generate": _generate_fomni,
+                     "version_ref": x0x_version, "identity": fomni_release_identity,
+                     "defines": lambda v, i: [f'-DOM_VERSION="{x0x_version_string(v)}"', f'-DFELUCCA_ID="{i}"'],
+                     "cflags": ["-D_DEFAULT_SOURCE", "-DOM_HOST", "-Ifirmware/src/dsp"],
+                     "objects": lambda src, sdk: ["firmware/src/dsp/omni.c"],
+                     "notice": _fomni_notice, "extra": _fomni_extra, "tracks": 4, "projects": 0},
+    # LOOM-8 (charlesvestal/fm1-loom, on fm1-base): release tags; v0.14 is its latest release (2026-11-06), v0.13.1 the
+    # one before. The folder is the release version; INFO: none (fm1-base has no editor), the twin reports "LOOM-8
+    # 0.14". Its backups are fm1-base's (backup.c: the presets and the three projects, "LM8B")
+    "loom-8-studio": {"firmware": "loom-8", "repo": "https://github.com/charlesvestal/fm1-loom",
+                      "glue": "tools/studio/fm1base_studio.c", "refs": ["v0.13.1", "v0.14"],
+                      "release_status": {"faf459d1f9cea3e634b6e2622a1c3e91d58b3452": "latest release",
+                                         "a89a8fd23600705a51b928578b5464b4530f47bd": "previous release"},
+                      "title": "LOOM-8 studio twin", "license": "GPL-3.0-only", "generate": lambda src: None,
+                      "prepare": _fm1base_prepare, "version_ref": fm1base_version,
+                      "identity_src": lambda src: FM1BASE_BUILD[str(src)]["identity"],
+                      "defines": lambda v, i: [f'-DAPP_VERSION="{v}"', f'-DFELUCCA_ID="{i}"', "-DTW_APP_LOOM"],
+                      "objects": _fm1base_objects, "notice": _loom_notice, "extra": _loom_extra,
+                      "tracks": 8, "projects": 0},
 }
 
 
@@ -620,6 +957,7 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
     spec = STUDIOS[name]
     src, commit = source(spec["firmware"], work, local, ref=ref, repo_url=spec["repo"],
                          tree_name=f"{name}-{ref[:12]}-src")
+    pre = spec["prepare"](src, ref, commit, local, work) if spec.get("prepare") else {}   # (fm1-base: its submodules)
     spec["generate"](src)
     version = (spec["version_ref"](src, ref) if spec.get("version_ref") else      # (CoralFlower: the release tag)
                re.search(spec["version_re"], (src / spec["version_file"]).read_text()).group(1))
@@ -648,6 +986,7 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
              "glue": spec["glue"], "glue_sha256": sha(glue), "source_url": source_url}
     if spec["firmware"] != "melodee":                     # (Melodee's manifests predate these: their defaults)
         extra.update(tracks=spec["tracks"], projects=spec["projects"])
+    extra.update(pre)
     if commit in spec.get("release_status", {}):         # (JIANT: which build its installer calls stable)
         extra["release_status"] = spec["release_status"][commit]
     return out, commit, clang_version(cc), extra
@@ -694,6 +1033,7 @@ def main():
     work = Path(a.work)
     work.mkdir(parents=True, exist_ok=True)
     repos = dict(r.split("=", 1) for r in a.repo)
+    REPOS.update(repos)
     sdk = wasi_sdk(work, a.wasi_sdk)
     if a.target:
         if a.target not in STUDIOS:
