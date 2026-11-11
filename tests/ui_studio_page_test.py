@@ -450,6 +450,34 @@ def flow():
           f"write back of the KARMA twin onto the Melodee FM-1 refused: {boxes[-1:]}")
     r = page.export_wav({"path": out / "KARMA.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
     check(r is not None and len(r.stems) == 4, f"KARMA export: mix + {r and len(r.stems)} stems")
+    # ---- a backup of Felucca's own web editor (no companion block, 'firmware' its INFO): the page starts the Felucca twin
+    # (projects A–D); writing it back onto the demo FM-1 (Melodee) is refused as well
+    ft = S.Studio.create(firmware="felucca", backend="webengine", server=w.server)
+    for k in range(4):
+        for i in range(0, 16, 4):
+            ft.link.request(Cmd.TRACK_STEP, [k, i, 1, 45 + 3 * k, 0, 0, 0, 0, 0, 100])
+    ft.link.request(Cmd.PROJECT, [1, 1])                # project B
+    ffile = bdir / "Studio-Test_felucca.json"
+    fplain = dict(ft.backup().file)
+    fplain.pop("companion", None)
+    fplain["firmware"] = "FELUCCA " + ft.build.version
+    backup.write_file(ffile, fplain)
+    fver = ft.build.version
+    ft.close()
+    check(page.open_backup(ffile) == ffile and svc.firmware == "felucca" and not svc.st.rejected,
+          f"Felucca backup opened: the Felucca twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 4 and labels[0].startswith("Projekt A") and "leer" in labels[0] and "leer" not in labels[1],
+          f"Felucca project list A–D: {labels}")
+    check("Felucca" in page.src.text() and "Felucca" in page.banner.text() and "Melodee" in page.banner.text(),
+          "banner names both firmwares: " + page.banner.text())
+    check(f"Studio-Zwilling (Felucca {fver.lstrip('v')})" in [x.label for x in svc._virtual_ports()], "virtual device: Felucca twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("Felucca" in b for b in boxes),
+          f"write back of the Felucca twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    r = page.export_wav({"path": out / "Felucca.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 4, f"Felucca export: mix + {r and len(r.stems)} stems")
     shot("studio-640.png", 640)
     if SHOTS:
         sb = w.page_scroll.verticalScrollBar()

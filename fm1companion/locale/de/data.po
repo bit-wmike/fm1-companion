@@ -3510,8 +3510,8 @@ msgid "firmware, web editor, installer and manual that the app embeds"
 msgstr "Firmware, Web-Editor, Installer und Handbuch, die die App einbindet"
 
 #: fm1companion/diag.py
-msgid "basis of Melodee, Skiff, SLOOP and JIANT FM; sampleio.py (vendor) comes from there"
-msgstr "Grundlage von Melodee, Skiff, SLOOP und JIANT FM; sampleio.py (vendor) stammt von dort"
+msgid "basis of Melodee, Skiff, SLOOP and JIANT FM; its unmodified firmware code runs in the studio twin; sampleio.py (vendor) comes from there"
+msgstr "Grundlage von Melodee, Skiff, SLOOP und JIANT FM; ihr unveränderter Firmware-Code läuft im Studio-Zwilling; sampleio.py (vendor) stammt von dort"
 
 #: fm1companion/diag.py
 msgid "firmware with sample slots"
@@ -3614,3 +3614,11 @@ msgstr "Fork von Felucca; Grundlage von CoralFlower"
 #, python-brace-format
 msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
 msgstr "Dieses Backup stammt von {backup}, auf dem FM-1 läuft {device}, das KARMAs Projekte und Drumkits nicht lesen kann. Es wurde nichts geschrieben."
+
+#: fm1companion/diag.py
+msgid "Felucca's ANALOG, LOFI, TRIO, WHEEL, NOISE and PHASE engines, part of the Felucca studio twin"
+msgstr "Feluccas Engines ANALOG, LOFI, TRIO, WHEEL, NOISE und PHASE, Teil des Felucca-Studio-Zwillings"
+
+#: fm1companion/diag.py
+msgid "Felucca's FM-1 hardware layer (USB, update handshake, board code), part of the Felucca studio twin"
+msgstr "Feluccas Hardware-Schicht für das FM-1 (USB, Update-Handshake, Board-Code), Teil des Felucca-Studio-Zwillings"

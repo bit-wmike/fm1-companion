@@ -285,6 +285,36 @@ try:
     check(kt2.play()["busy"] and not kt2.stop()["busy"], "KARMA: play and stop (st_transport_set)")
     kt2.close()
     kt.close()
+    # the Felucca twin (tools/studio/felucca_studio.c, with its submodules felucca-bsp and Felucca-Engines): editor,
+    # identity FM-1_918, four stems, the 13-object backup round trip
+    ft = studio.Studio.create(firmware="felucca", backend="webengine", server=st.backend.server)
+    check(ft.build.firmware == "felucca" and ft.info.get("version") == ft.build.version,
+          f"Felucca twin started in QtWebEngine: {ft.info.get('version')}")
+    FL = ft.link
+    check(studio.device_version(FL) == ft.build.version, "Felucca INFO via Link")
+    got.clear()
+    FL.add_listener(lambda d, direction: got.append(d) if direction == "in" and d[:2] == [0xF0, 0x00] else None)
+    FL.send_midi([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])
+    t1 = time.time()
+    while not got and time.time() - t1 < 3:
+        app.processEvents()
+    check(got and bytes(got[0]) == _identity_frame(ft.build.identity), f"Felucca identity {ft.build.identity}")
+    for k in range(4):
+        for i in range(0, 16, 2 + k % 3):
+            FL.request(Cmd.TRACK_STEP, [k, i, 1, 40 + 3 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    check(FL.request(Cmd.PROJECT, [1, 0])[2] == 1, "Felucca: project A saved in the twin")
+    r7 = ft.render_wav(out / "felucca.wav", seconds=2, start="play", source="saved", project=0, stems=True, fmt="f32")
+    check(len(r7.stems) == 4 and r7.peak > 0.05, f"Felucca: mix + four stems, peak {r7.peak:.3f}")
+    farch = ft.backup()
+    check(studio.backup_firmware(farch) == "felucca" and farch.known and len(farch.objects) == 13,
+          f"Felucca backup ({len(farch.objects)} objects, known inventory)")
+    ft2 = studio.Studio.for_backup(farch, backend="webengine", server=st.backend.server)
+    same = all(a["bytes"] == b["bytes"] for a, b in zip(farch.objects, ft2.backup().objects))
+    check(ft2.build.firmware == "felucca" and ft2.projects() == [0] and same,
+          "Felucca backup into a second Felucca twin: byte-identical")
+    check(ft2.play()["busy"] and not ft2.stop()["busy"], "Felucca: play and stop (st_transport_set)")
+    ft2.close()
+    ft.close()
     st.close()
     from fm1companion.ui import web
     web.shutdown_all()

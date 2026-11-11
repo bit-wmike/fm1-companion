@@ -7,6 +7,9 @@ JIANT FM: every song's sections and the song index; SLOOP: the sections A–D, t
 sample slots; CoralFlower: the sequencer's patterns and song with their sounds; KARMA: the song's parts A–D, the song
 order, the HEX drum kits and the sample slots; running music, user presets, settings). It sounds identical – just
 through the computer's speakers.
+**Felucca** itself, the base of the family, has a twin too (projects A–D, the user presets with their FM6 patches and
+the sample slots USR1–USR3); it opens Felucca backups (also those of Felucca's own web editor) and fetches from and
+writes back to a Felucca FM-1 like the others.
 
 ## How it works: FM-1 → Studio → WAV or back
 
@@ -50,6 +53,7 @@ chooses the firmware
 and version of your FM-1 or of the backup. If the version does not match exactly, a note at the top says: “The studio
 runs with Melodee …, your FM-1 has … – sound may differ.”
 Writing back to an FM-1 with a different version is then only possible with the expert box ticked.
+Felucca: 1.8.1 – the version of Felucca's installer – and 1.8.0 (a 1.8.2 beta runs on the 1.8.1 twin, with the note).
 
 ## The twin as a device
 
@@ -88,6 +92,12 @@ old approximation on the computer only remains when there is no twin for the fir
   2.6) can be written to a KARMA FM-1 (SLOOP 2.5's SYN kits are left out, as KARMA's editor does), a KARMA backup
   never to SLOOP. KARMA's three saved songs (SAVE on the SONG screen) are not part of a backup – KARMA's own backup
   leaves them out too. The project view does not read KARMA's parts yet.
+* Felucca: the twin has one core (MENU › SYSTEM › 2ND CORE has no effect), no AFTERTOUCH key pressure (the keys are
+  on or off), no USB audio and no TRS MIDI. A **Felucca fork** that reports itself only as “FELUCCA v…” (or that you
+  chose for the device, e.g. Felucca MPE) gets the Felucca twin – with a note at the top that it may differ; the same
+  for a Felucca build with another package identity (a development build: FM-1_900). Write back only when you know the
+  fork reads Felucca's data – the FM-1 checks each part, and the safety backup comes first. The project view does not
+  read Felucca's projects yet.
 * The twin has no CPU limit: the device drops voices when overloaded, the twin never does. Floating-point parts
   can differ in the last bits (inaudible). No Bluetooth, no USB host, no firmware update in the
   twin.

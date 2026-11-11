@@ -4539,3 +4539,17 @@ msgstr "Teil {n} ist leer."
 #, python-brace-format
 msgid "The {firmware} twin cannot load SLOOP backups."
 msgstr "SLOOP-Backups kann der {firmware}-Zwilling nicht laden."
+
+#: fm1companion/studio.py
+#, python-brace-format
+msgid "This FM-1 may run a fork of Felucca or another build of it ({detail}); the studio runs Felucca's own code – sound and functions may differ, and the FM-1 checks every part written back."
+msgstr "Auf diesem FM-1 läuft vielleicht ein Fork von Felucca oder ein anderer Build davon ({detail}); das Studio rechnet mit Feluccas eigenem Code – Klang und Funktionen können abweichen, und das FM-1 prüft jeden zurückgeschriebenen Teil."
+
+#: fm1companion/studio.py
+#, python-brace-format
+msgid "identity {device}, the twin's {twin}"
+msgstr "Kennung {device}, die des Zwillings {twin}"
+
+#: fm1companion/ui/pages/studio.py
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the four projects A–D, the running music, the user presets with their FM6 patches and the sample slots USR1–USR3. Playback on the FM-1 stops in the process."
+msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät: die vier Projekte A–D, die laufende Musik, die User-Presets mit ihren FM6-Patches und die Sample-Slots USR1–USR3. Die Wiedergabe am FM-1 stoppt dabei."

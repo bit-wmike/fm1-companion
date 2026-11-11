@@ -222,6 +222,8 @@ class Report:
             return "jiant"
         if self.format != "sloop-backup" and backup.is_coralflower(o.id for o in self.objects):
             return "coralflower"
+        if self.format != "sloop-backup" and backup.is_felucca([o.id for o in self.objects], v):
+            return "felucca"                                              # (Felucca's own editor: "FELUCCA v1.8.1")
         return "sloop" if self.format == "sloop-backup" else ""
 
     def summary(self) -> str:
@@ -463,7 +465,7 @@ def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = ""
     if oid == 8:
         v.title, v.group = _("Old FM6 bank (retired)"), G_OTHER
         return v
-    if (skiff or jiant) and oid == 9:            # (Skiff, JIANT: editor_backup.c, up_fm6.c)
+    if (skiff or jiant or n_objects == 13) and oid == 9:   # (Skiff, JIANT, Felucca 1.0.3+: editor_backup.c, up_fm6.c)
         v.title, v.group = _("FM6 patches of the user presets"), G_PRESETS
         return v
     if skiff and 16 <= oid < 32:                 # (Skiff: bank.c, 16 chunks of 4 patterns)

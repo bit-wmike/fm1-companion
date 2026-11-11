@@ -158,7 +158,10 @@ def install_kind() -> str:
 # the texts of data/credits.json (English) for the catalog: credits() translates use, kind, license and authors
 CREDIT_TEXTS = (
     N_("firmware, web editor, installer and manual that the app embeds"),
-    N_("basis of Melodee, Skiff, SLOOP and JIANT FM; sampleio.py (vendor) comes from there"),
+    N_("basis of Melodee, Skiff, SLOOP and JIANT FM; its unmodified firmware code runs in the studio twin; sampleio.py "
+       "(vendor) comes from there"),
+    N_("Felucca's ANALOG, LOFI, TRIO, WHEEL, NOISE and PHASE engines, part of the Felucca studio twin"),
+    N_("Felucca's FM-1 hardware layer (USB, update handshake, board code), part of the Felucca studio twin"),
     N_("firmware with sample slots"),
     N_("Felucca fork; its unmodified firmware code runs in the studio twin"),
     N_("Felucca descendant with sample slots and a song mode; its unmodified firmware code runs in the studio twin"),

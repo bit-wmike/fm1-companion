@@ -1,0 +1,20 @@
+Felucca v1.8.1 – studio twin (firmware code for the host), built from https://github.com/hugelton/Felucca tag v1.8.1
+(commit f4df2964649f301ba5abd0ec6000110068672f25; source: https://github.com/hugelton/Felucca/archive/f4df2964649f301ba5abd0ec6000110068672f25.tar.gz),
+with its git submodules https://github.com/hugelton/felucca-bsp at commit 5942e68b89ab9ccd23f2c541d712ca38fe635f11 (firmware/bsp), https://github.com/hugelton/Felucca-Engines at commit d0260074ce100a47675814b7f38d61f11176c926 (firmware/engines).
+GPL-3.0-only as a whole. Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments.
+Felucca-Engines (the ANALOG, LOFI, TRIO, WHEEL, NOISE and PHASE engines, dsp.c, felucca_engine.h): MIT; felucca-bsp (the hardware layer: usb.c, ota.c, the board's headers): MPL-2.0, its authors in its NOTICE.
+Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0; DaisySP and Rings in phys_dsp.c, phys_symp.c: MIT; the UI face Inter Tight and the Fukiai icons are rasterised in: OFL 1.1, MIT), the instrument samples are CC0
+(Versilian Studios): Felucca's LICENSING.md and the texts in THIRD_PARTY.txt beside this file. The JieLi SDK files of Felucca's packages are not part of the twin.
+The firmware sources are unmodified. The glue tools/studio/felucca_studio.c (GPL-3.0-only, in FM-1 Companion's source) includes them as Felucca's own browser emulator and host tests do (web/emu/felucca_web.c, tests/hostsim.c,
+editor_test.c, backup_test.c) and replaces only the hardware: keys/LEDs/LCD, ADC (MASTER; battery full), NOR flash = a 1 MiB RAM image, USB = always configured (SysEx and MIDI out through usb.c's rings),
+one core (MENU > 2ND CORE has no second core here), no key pressure (AFTERTOUCH), no USB audio, no TRS MIDI, no serial console, no updater (ota.c answers the identity handshake only).
+Compiled with WASI SDK clang (include shim tools/wasm_shim/sys/wait.h).
+
+Corresponding Source (GNU GPL 3.0, section 6)
+The complete corresponding source of this build is https://github.com/hugelton/Felucca at commit f4df2964649f301ba5abd0ec6000110068672f25
+together with FM-1 Companion's build script tools/build_sims.py, its submodules named above, the glue tools/studio/felucca_studio.c and the shim tools/wasm_shim. A tarball of exactly this commit
+(Felucca-f4df2964649f301ba5abd0ec6000110068672f25.tar.gz, made with tools/make_source_tarballs.py) is attached to every
+FM-1 Companion release that ships this build: https://github.com/bit-wmike/fm1-companion/releases
+Written offer: for at least three years after the last release that ships this build, the maintainers of
+FM-1 Companion will give anyone a copy of that corresponding source on request (https://github.com/bit-wmike/fm1-companion/issues),
+free of charge apart from the cost of physically performing the distribution.

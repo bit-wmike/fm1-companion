@@ -7,6 +7,9 @@ JIANT FM: las secciones de cada canción y el índice de canciones; SLOOP: las s
 batería SYN y las ranuras de muestras; CoralFlower: los patrones y la canción del secuenciador con sus sonidos; KARMA: las
 partes A–D de la canción, el orden de la canción, los kits de batería HEX y las ranuras de muestras; música en curso,
 presets de usuario, ajustes). Suena idéntico – solo que por los altavoces del ordenador.
+También **Felucca**, la base de la familia, tiene su gemelo (los proyectos A–D, los presets de usuario con sus patches
+FM6 y las ranuras de muestras USR1–USR3); abre copias de seguridad de Felucca (también las del propio editor web de
+Felucca), lee de un FM-1 con Felucca y vuelve a escribir en él como los demás.
 
 ## Cómo funciona: FM-1 → Studio → WAV o de vuelta
 
@@ -51,6 +54,8 @@ elige el firmware
 y la versión de tu FM-1 o de la copia de seguridad. Si la versión no coincide exactamente, un aviso arriba dice: “El Studio
 funciona con Melodee …, tu FM-1 tiene … – el sonido puede diferir.”
 Volver a escribir en un FM-1 con otra versión solo es posible entonces marcando la casilla de experto.
+Felucca: 1.8.1 – la versión del instalador de Felucca – y 1.8.0 (una beta 1.8.2 funciona con el gemelo 1.8.1, con el
+aviso).
 
 ## El gemelo como dispositivo
 
@@ -90,6 +95,13 @@ antigua aproximación en el ordenador solo se mantiene cuando no hay gemelo para
   SLOOP (hasta 2.6) se puede escribir en un FM-1 con KARMA (los kits SYN de SLOOP 2.5 se omiten, como hace el editor de
   KARMA), una copia de KARMA nunca en SLOOP. Las tres canciones guardadas de KARMA (SAVE en la pantalla SONG) no forman
   parte de una copia – la copia propia de KARMA tampoco las incluye. La vista de proyecto aún no lee las partes de KARMA.
+* Felucca: el gemelo tiene un núcleo (MENU › SYSTEM › 2ND CORE no tiene efecto), sin presión de teclas para
+  AFTERTOUCH (las teclas están pulsadas o no), sin audio USB y sin MIDI TRS. Un **fork de Felucca** que solo se
+  identifica como «FELUCCA v…» (o que elegiste para el dispositivo, p. ej. Felucca MPE) recibe el gemelo de Felucca –
+  con un aviso arriba de que puede diferir; lo mismo para una compilación de Felucca con otra identidad de paquete (una
+  compilación de desarrollo: FM-1_900). Vuelve a escribir solo si sabes que el fork lee los datos de Felucca – el FM-1
+  comprueba cada parte y antes se hace una copia de seguridad. La vista de proyecto aún no lee los proyectos de
+  Felucca.
 * El gemelo no tiene límite de CPU: el dispositivo descarta voces cuando se sobrecarga, el gemelo nunca. Las partes en coma flotante
   pueden diferir en los últimos bits (inaudible). Sin Bluetooth, sin host USB, sin actualización de firmware en el
   gemelo.

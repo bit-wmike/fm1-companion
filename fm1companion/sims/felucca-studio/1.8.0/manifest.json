@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "name": "felucca-studio",
+  "title": "Felucca studio twin",
+  "version": "1.8.0",
+  "source_repo": "https://github.com/hugelton/Felucca",
+  "ref": "v1.8.0",
+  "commit": "9f62297c2db627bbcb20d7ce896683a17318674c",
+  "license": "GPL-3.0-only",
+  "build_date": "2026-11-11T07:53:29Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "LICENSING.md": {
+      "sha256": "2d38c3ab56222abeb0fa3790741dba53739904f81a1b965e745767a5da395f01",
+      "size": 10221
+    },
+    "NOTICE": {
+      "sha256": "fb5530d1dc1398357ef6d7ddb816a5f036eef27680d23de9576fec966c1f6c62",
+      "size": 2812
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "ec1df58df8acf07985d7146e07103e6eb8b1b5b672b55fb89325ef0b7c7a7075",
+      "size": 45215
+    },
+    "twin.wasm": {
+      "sha256": "2a6bfe12ddcd4b827345429d9a496dcb86bcd3e4e09b5763520c8a56330ed8d8",
+      "size": 922227
+    }
+  },
+  "kind": "studio",
+  "firmware": "felucca",
+  "firmware_version": "v1.8.0",
+  "identity": "FM-1_918",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/felucca_studio.c",
+  "glue_sha256": "39ca4810d15f14bbaa12114f0836b25e65ab1c06cc34cd4a72b9fa6e2a2e2312",
+  "source_url": "https://github.com/hugelton/Felucca/archive/9f62297c2db627bbcb20d7ce896683a17318674c.tar.gz",
+  "tracks": 4,
+  "projects": 4,
+  "release_status": "previous stable",
+  "sources": [
+    {
+      "path": "firmware/bsp",
+      "repo": "https://github.com/hugelton/felucca-bsp",
+      "commit": "5942e68b89ab9ccd23f2c541d712ca38fe635f11"
+    },
+    {
+      "path": "firmware/engines",
+      "repo": "https://github.com/hugelton/Felucca-Engines",
+      "commit": "d0260074ce100a47675814b7f38d61f11176c926"
+    }
+  ]
+}

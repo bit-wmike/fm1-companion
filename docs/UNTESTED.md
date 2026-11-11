@@ -64,6 +64,8 @@ untested, even if it runs cleanly in the simulation.
 | CoralFlower backups in the backup layer (26 objects: 6–11, 30, 31, 50–67; 8, 14, 17 in 0.1–0.4.2) | only with backups of the CoralFlower twin; the restart after a restore (RESTART 72) and the device detection by INFO "CoralFlower …" and identity FM-1_930 only in tests |
 | **KARMA twin** (3.1, 3.0.5: fetch from a KARMA FM-1, open a KARMA backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real KARMA FM-1 or a backup made by a real device or KARMA's web editor |
 | KARMA backups in the backup layer (SLOOP's protocol and format, 14 objects; FUN7 projects; SLOOP backups onto KARMA) | only with backups of the KARMA twin; the device detection by INFO "FELUCCA KARMA …" and identity FM-1_926 only in tests |
+| **Felucca twin** (1.8.1, 1.8.0: fetch from a Felucca FM-1, open a Felucca backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real Felucca FM-1 or a backup made by Felucca's own web editor on a device |
+| Felucca recognition next to SLOOP (INFO "FELUCCA v…" vs "FELUCCA SLOOP …", FM-1_900 / FM-1_9XY) and the Felucca twin for Felucca forks (with a warning) | only in tests (fake INFO links, remembered identities); no fork device tried |
 
 ### Backups, presets, projects, samples
 - Restoring a backup to the device (full and partial).

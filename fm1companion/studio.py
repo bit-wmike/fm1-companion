@@ -98,7 +98,7 @@ class StudioError(Exception):
 # (protocol.Info.firmware_name; the catalog's "jiant-fm" starts with it)
 FIRMWARES = {
     "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32},
-    "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4},
+    "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4, "samples": True},
     "jiant": {"name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
     # SLOOP answers INFO "FELUCCA SLOOP 2.8.5" (its version string, the build's firmware_version, is "SLOOP 2.8.5": the
     # build's version is "2.8.5"); 4 tracks, the sections A..D; its own backup protocol and file format (sloopbk.py),
@@ -112,6 +112,11 @@ FIRMWARES = {
     # three synth tracks and the drum track; its four projects are the song's parts A..D. It speaks SLOOP's backup
     # protocol (sloopbk.py)
     "karma": {"name": "KARMA", "info": "FELUCCA KARMA", "tracks": 4, "projects": 4, "backup": "sloop"},
+    # Felucca itself answers INFO "FELUCCA v1.8.1" (no other name; protocol.Info.firmware_name "felucca"); 4 tracks, the
+    # projects A..D; its 13-object inventory (backup.FELUCCA_IDS). A fork that answers the same way, or one chosen for the
+    # device from the catalog ("felucca-mpe"), gets this twin with a warning (felucca_fork_note). "samples": the twin keeps
+    # the sample slots USR1..USR3 (its glue's flash hooks): the tolerant load takes them too, so writing back keeps them
+    "felucca": {"name": "Felucca", "info": "FELUCCA", "tracks": 4, "projects": 4, "samples": True},
 }
 
 
@@ -329,7 +334,7 @@ JIANT_BACKUP_IDS_6 = [*range(11), *range(40, 64)]   # (V10.6p on: 6 songs)
 def backup_firmware(archive) -> str:
     """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "coralflower", "karma", "sloop", "felucca" or "" (unknown). The app's
     companion block names it; otherwise the 'firmware' field (JIANT's editor writes its INFO, "JIANT V10.60"), and the
-    inventory gives Skiff (the pattern bank) and JIANT (the songs) away."""
+    inventory gives Skiff (the pattern bank), JIANT (the songs) and Felucca (its 13 objects) away."""
     if getattr(archive, "sloop", False):              # (SLOOP's file format: SLOOP or its fork KARMA, "FELUCCA KARMA 3.1")
         c = archive.companion or {}
         text = " ".join(str(x) for x in (c.get("firmware", ""), c.get("version_string", ""), archive.firmware or ""))
@@ -348,7 +353,24 @@ def backup_firmware(archive) -> str:
         return "coralflower"
     if ids in (JIANT_BACKUP_IDS, JIANT_BACKUP_IDS_6):
         return "jiant"
+    if backup.is_felucca(ids, text):                # (Felucca's own editor writes "FELUCCA v1.8.1"; 13 objects since 1.0.3)
+        return "felucca"
     return "felucca" if "felucca" in text else ""
+
+
+def felucca_fork_note(device_key: str, identity: str = "", twin_identity: str = "") -> str:
+    """the Felucca twin for an FM-1 that may not run Felucca's own release: a fork chosen for it ("felucca-mpe", the
+    catalog's keys), or a package identity other than the twin's (FM-1_900: a development build of Felucca – or a fork
+    that answers INFO like Felucca; Felucca's releases are FM-1_9XY). -> warning, '' when none"""
+    k = (device_key or "").lower()
+    ident = (identity or "").removeprefix("ota-")
+    fork = k.startswith("felucca") and k != "felucca"
+    other = bool(ident and twin_identity and ident != twin_identity)
+    if not fork and not other:
+        return ""
+    return _("This FM-1 may run a fork of Felucca or another build of it ({detail}); the studio runs Felucca's own "
+             "code – sound and functions may differ, and the FM-1 checks every part written back.").format(
+        detail=k if fork else _("identity {device}, the twin's {twin}").format(device=ident, twin=twin_identity))
 
 
 # ======================================================================= Backends
@@ -850,14 +872,18 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     order = objs[2:] + objs[1:2] + objs[0:1]
     jiant = backup.is_jiant(sup_order) or backup.is_jiant(o["id"] for o in objs)
     coral = backup.is_coralflower(sup_order) or archive.coralflower
-    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"], jiant, coral)]
+    samples = FIRMWARES.get(firmware_key, {}).get("samples", False)   # (a twin with the sample slots: Skiff, Felucca)
+    todo = [o for o in order if o["id"] in sup and (samples or not backup.is_sample(o["id"], jiant, coral))]
     total = sum(o["size"] for o in todo) or 1
     done = 0
     rejected = [o["id"] for o in objs if o["id"] not in sup and o["size"]]
     for o in todo:
         try:
-            backup.write_object(link, o["id"], o["bytes"], None, backup.FELUCCA)
-        except backup.BackupError:
+            if backup.is_sample(o["id"], jiant, coral):   # (SMP_BEGIN / WRITE / END, as backup.restore; an empty one erased)
+                backup._restore_sample(link, o["id"] - 32, o["bytes"], lambda n: None)
+            else:
+                backup.write_object(link, o["id"], o["bytes"], None, backup.FELUCCA)
+        except (backup.BackupError, LinkError):
             rejected.append(o["id"])
         done += o["size"]
         if progress:

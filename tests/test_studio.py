@@ -1248,3 +1248,262 @@ def test_karma_in_backup_layer():
         backup._match(FakeLink("FELUCCA SLOOP 2.6"), arch)
     assert backup._match(FakeLink("FELUCCA KARMA 3.1"), arch)[0] == backup.SLOOP
     assert Info("FELUCCA KARMA 3.1").firmware_name == "karma"
+
+
+# ------------------------------------------------------------------ Felucca (tools/studio/felucca_studio.c)
+# hugelton/Felucca, the base of the family: v1.8.1 is the stable its web installer installs (gh-pages
+# firmware/felucca-1.8.1.fwsc), v1.8.0 the stable before; its submodules felucca-bsp and Felucca-Engines at the commits
+# the tags pin. Release builds: INFO "FELUCCA v1.8.1", identity FM-1_918 (tools/build.py --release 1.8.1)
+FELUCCA_COMMIT = {"v1.8.0": "9f62297c2db627bbcb20d7ce896683a17318674c", "v1.8.1": "f4df2964649f301ba5abd0ec6000110068672f25"}
+FELUCCA_STATUS = {"v1.8.0": "previous stable", "v1.8.1": "stable"}
+FELUCCA_SOURCES = [
+    {"path": "firmware/bsp", "repo": "https://github.com/hugelton/felucca-bsp",
+     "commit": "5942e68b89ab9ccd23f2c541d712ca38fe635f11"},
+    {"path": "firmware/engines", "repo": "https://github.com/hugelton/Felucca-Engines",
+     "commit": "d0260074ce100a47675814b7f38d61f11176c926"}]
+
+
+def test_felucca_builds_side_by_side():
+    bs = studio.builds("felucca")
+    assert [b.version for b in bs] == ["v1.8.0", "v1.8.1"]
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == [] and b.path.name == b.version.lstrip("v") and m["firmware_version"] == b.version
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "felucca"
+        assert m["ref"] == b.version and m["commit"] == FELUCCA_COMMIT[b.version] and m["license"] == "GPL-3.0-only"
+        assert m["release_status"] == FELUCCA_STATUS[b.version] and m["sources"] == FELUCCA_SOURCES
+        assert m["identity"] == "FM-1_918" and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["tracks"] == 4 and m["projects"] == 4 and m["source_repo"] == "https://github.com/hugelton/Felucca"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"Felucca-{m['commit']}.tar.gz" in notice
+        assert all(s["commit"] in notice and s["repo"] in notice for s in FELUCCA_SOURCES)
+        assert "Hügelton" in notice and m["glue"] == "tools/studio/felucca_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        third = (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Mozilla Public License" in third and "Apache License" in third and "SIL OPEN FONT LICENSE" in third.upper()
+        assert "MIT" in third and "felucca-bsp" in third
+    assert not any(s.key.startswith("felucca") for s in sims.bundled())
+    # tools/make_source_tarballs.py packs the submodules' commits beside Felucca's own
+    sys.path.insert(0, str(ROOT / "tools"))
+    import make_source_tarballs as MST
+    want = MST.wanted()
+    assert ("Felucca", FELUCCA_COMMIT["v1.8.1"]) in want
+    assert ("felucca-bsp", FELUCCA_SOURCES[0]["commit"]) in want and ("Felucca-Engines", FELUCCA_SOURCES[1]["commit"]) in want
+
+
+def test_felucca_versions_and_pick(monkeypatch, tmp_path):
+    b, exact, warn = studio.pick_build("felucca", "FELUCCA v1.8.1")      # Felucca's INFO
+    assert exact and b.version == "v1.8.1" and not warn
+    b, exact, warn = studio.pick_build("felucca", "v1.8.0")
+    assert exact and b.version == "v1.8.0"
+    b, exact, warn = studio.pick_build("felucca", "FELUCCA v1.8.2-beta")  # the beta: the next older one, with a warning
+    assert not exact and b.version == "v1.8.1" and "Felucca" in warn
+    b, exact, warn = studio.pick_build("felucca", "FELUCCA v1.6.1")      # older than everything: the oldest
+    assert not exact and b.version == "v1.8.0" and "v1.6.1" in warn
+    assert studio.pick_build("felucca")[0].version == "v1.8.1"            # without a wish: the newest = the stable
+    assert studio.firmware_name("felucca") == "Felucca" and studio.FIRMWARES["felucca"]["projects"] == 4
+    assert "Felucca" in studio.firmware_names()
+    vc = studio.check_versions("v1.8.1", device="FELUCCA v1.8.0", firmware="Felucca")
+    assert not vc.ok and "Felucca" in vc.message and "CZ-1" not in vc.message
+    # the device layer: Felucca answers a plain INFO; SLOOP (the same identity FM-1_900 in its builds) names itself
+    from fm1companion.protocol import Info
+    from fm1companion.ui.studio_service import StudioService
+    from fm1companion.ui.common import fw_label
+    from fm1companion import firmware
+    monkeypatch.setattr(firmware, "IDENT_FILE", tmp_path / "identities.json")
+    assert Info("FELUCCA v1.8.1").firmware_name == "felucca" and Info("FELUCCA SLOOP 2.8.5").firmware_name == "sloop"
+    assert StudioService.firmware_for("felucca") == "felucca" and StudioService.firmware_for("sloop") == "sloop"
+    assert StudioService.firmware_for("felucca-mpe") == "felucca"         # a fork chosen from the catalog: with a warning
+    assert fw_label("FELUCCA v1.8.1") == "FELUCCA v1.8.1"
+    assert firmware.guess_firmware("FM-1_918", "FELUCCA v1.8.1", "felucca") == ("felucca", "v1.8.1")
+    assert firmware.guess_firmware("FM-1_900", "FELUCCA v1.8.1", "felucca") == ("felucca", "v1.8.1")
+    assert firmware.guess_firmware("FM-1_900", "FELUCCA SLOOP 2.8.5", "sloop") == ("sloop", "v2.8.5")
+    assert firmware.guess_firmware("FM-1_722", "FELUCCA v2.2", "skiff")[0] == "skiff"
+    assert firmware.guess_firmware("FM-1_909", "JIANT V10.6z2", "jiant")[0] == "jiant-fm"
+    assert firmware.guess_firmware("FM-1_900") == ("", "")                # the identity alone: no guess
+    # what this machine remembered for FM-1_900 (SLOOP, installed by the app) does not outweigh a plain Felucca INFO;
+    # a remembered fork key does
+    firmware.remember_identity("FM-1_900", "sloop", "v2.8.5")
+    assert firmware.guess_firmware("FM-1_900", "FELUCCA v1.8.1", "felucca") == ("felucca", "v1.8.1")
+    assert firmware.guess_firmware("FM-1_900", "FELUCCA SLOOP 2.8.5", "sloop")[0] == "sloop"
+    firmware.remember_identity("FM-1_918", "felucca-mpe", "v1.8.1")
+    assert firmware.guess_firmware("FM-1_918", "FELUCCA v1.8.1", "felucca")[0] == "felucca-mpe"
+    # the fork note: a fork's key, or another identity than the twin's (a development build, FM-1_900)
+    assert studio.felucca_fork_note("felucca", "FM-1_918", "FM-1_918") == ""
+    assert studio.felucca_fork_note("felucca", "", "FM-1_918") == ""
+    assert "felucca-mpe" in studio.felucca_fork_note("felucca-mpe", "", "FM-1_918")
+    assert "FM-1_900" in studio.felucca_fork_note("felucca", "ota-FM-1_900", "FM-1_918")
+
+
+@need_node
+def test_felucca_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_felucca.mjs"), str(studio.SIMS_DIR / "felucca-studio")],
+                       capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"1.8.0", "1.8.1"}
+    for x in res:
+        v = x["firmware_version"]
+        assert x["version_export"] == v and x["info"] == "FELUCCA " + v and x["ping"] == [0]
+        assert bytes(x["identity_reply"]) == _identity_frame("FM-1_918")   # ota.c, as demo_device expects
+        assert x["ids"] == backup.FELUCCA_IDS and x["screen_lit"] > 2000
+        assert {0, 1, 2, 9, 32} <= {int(k) for k in x["sizes"]} and x["sizes"]["32"] == 1512   # music, settings, A, FM6, USR1
+        assert all(rc == 0 for rc in x["put_rc"].values()) and all(rc == 0 for rc in x["smp_rc"])
+        assert all(x["identical"].values()) and x["persisted"] and x["projects_used"] == [0]
+        assert x["live_step0"] == {"note": 40, "vel": 100}
+        a, b = x["takes"]
+        assert a["playing"] and a["play_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
+        assert x["fork_identical"] and x["stopped"] and x["song_play"] and x["editor_stop"]
+        print(f"{v}: {a['realtime']:.1f}x real time (4 tracks)")
+        assert a["realtime"] > 3
+
+
+def _felucca_sample() -> bytes:
+    """a valid user sample slot (eng_sample.c smp_user_hdr_t "FSMP", one zone over 1000 bytes of IMA ADPCM)"""
+    import zlib
+    data = bytes(((i * 37 + 11) & 255) for i in range(1000))
+    h = bytearray(512)
+    struct.pack_into("<IHBB8sII", h, 0, 0x504D5346, 1, 1, 0, b"TWIN", len(data), zlib.crc32(data))
+    struct.pack_into("<IIIIIhhBBBB", h, 32, 0, 2000, 0, 1999, 65536, 60 * 16, 0, 0, 0, 127, 0)
+    return bytes(h) + data
+
+
+def _felucca_song(st):
+    L = st.link
+    for k in range(4):
+        for i in range(0, 16, 2 + k % 3):
+            L.request(Cmd.TRACK_STEP, [k, i, 1, 40 + 3 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    assert L.request(Cmd.PROJECT, [1, 0])[2] == 1                          # project A
+    backup._restore_sample(L, 0, _felucca_sample(), lambda n: None)        # USR1 as Felucca's editor uploads it
+
+
+def test_felucca_backup_round_trip_with_suite_code(node_studio):
+    a = node_studio(firmware="felucca", version="FELUCCA v1.8.0")
+    assert a.build.firmware == "felucca" and a.build.version == "v1.8.0" and a.tracks == 4 and a.project_slots == 4
+    assert studio.device_version(a.link) == "v1.8.0" and a.info_name == "FELUCCA"
+    assert backup.protocol(a.link, "felucca")[0] == backup.FELUCCA        # (the hint "felucca": its INFO decides)
+    _felucca_song(a)
+    arch = a.backup()
+    assert [o["id"] for o in arch.objects] == backup.FELUCCA_IDS and arch.known
+    by = {o["id"]: o["bytes"] for o in arch.objects}
+    smp = _felucca_sample()                              # (the header's last 32 bytes stay erased flash: SMP_END writes 480)
+    assert len(by[0]) == len(by[2]) == 3840 and len(by[9]) == 3728 and by[8] == b""
+    assert by[32][:480] == smp[:480] and by[32][512:] == smp[512:] and len(by[32]) == len(smp)
+    assert studio.backup_version(arch) == "v1.8.0" and studio.backup_firmware(arch) == "felucca"
+    assert arch.companion["version_string"] == "FELUCCA v1.8.0"
+    # a backup of Felucca's own web editor (no companion block; 'firmware' the INFO string) and one with an unknown
+    # name: the 13-object inventory tells
+    plain = json.loads(backup.dumps(arch.file))
+    plain.pop("companion")
+    plain["firmware"] = "FELUCCA v1.8.0"
+    assert studio.backup_firmware(backup.read(plain)) == "felucca" and backup.read(plain).known
+    plain["firmware"] = "?"
+    assert studio.backup_firmware(backup.read(plain)) == "felucca"
+    plain["firmware"] = "FELUCCA v1.8.0"
+    # into the 1.8.1 twin through the suite's restore: every object, the sample through SMP_*
+    b = node_studio(firmware="felucca", version="v1.8.1")
+    b.open_from_backup(backup.read(plain))
+    back = {o["id"]: o["bytes"] for o in b.backup().objects}
+    assert all(back[i] == by[i] for i in backup.FELUCCA_IDS if i != 1) and b.projects() == [0] and not b.rejected
+    vc = b.check_versions(archive=arch)
+    assert not vc.ok and "Felucca" in vc.message
+    c = studio.Studio.for_backup(arch, backend="node")                     # the backup's firmware and version
+    try:
+        assert c.build.firmware == "felucca" and c.build.version == "v1.8.0" and not c.warning and c.projects() == [0]
+        assert c.load_project(0) == 0 and c.load_project(1) == 1
+        assert c.play()["busy"] and not c.stop()["busy"]                   # st_transport_set
+        assert c.play("song")["busy"] and not c.stop()["busy"]
+    finally:
+        c.close()
+    # the tolerant load (the studio page's "Fetch from FM-1") takes the sample slots too: writing back keeps them
+    d = node_studio(firmware="felucca", version="v1.8.1")
+    d.open_from_backup(arch, tolerant=True)
+    assert d.rejected == [] and {o["id"]: o["bytes"] for o in d.backup().objects}[32] == by[32]
+    # writing back as the page does, without the settings, onto a "device" (another twin of the same version)
+    e = node_studio(firmware="felucca", version="v1.8.1")
+    e_settings = {o["id"]: o["bytes"] for o in e.backup().objects}[1]
+    out = d.write_to_device(e.link, settings=False, exclude=d.rejected)
+    now = {o["id"]: o["bytes"] for o in e.backup().objects}
+    assert now[1] == e_settings and now[2] == by[2] and now[32] == by[32] and e.projects() == [0]
+    assert [o["id"] for o in out.objects] == backup.FELUCCA_IDS
+    with pytest.raises(studio.StudioError):                                 # another version on the device: refused
+        d.write_to_device(a.link)
+    sl = node_studio(firmware="sloop")                                      # (FM-1_900 is SLOOP's identity too)
+    with pytest.raises(backup.BackupError, match="SLOOP"):                  # Felucca's data onto SLOOP: refused
+        d.write_to_device(sl.link, force=True)
+    # the inspector: Felucca's editor's inventory (no "unknown inventory" warning), object 9 its FM6 patches
+    from fm1companion import backup_inspect as BI
+    rep = BI.inspect(backup.read(plain))
+    assert rep.firmware_key == "felucca" and rep.known and not rep.warnings
+    assert rep.obj(9).group == BI.G_PRESETS and "FM6" in rep.obj(9).title and "CZ" not in rep.obj(9).title
+    assert rep.obj(32).group == BI.G_SAMPLES and rep.obj(2).group == BI.G_PROJECTS
+    assert BI.compatibility(rep, "felucca", "FELUCCA v1.8.1", backup.FELUCCA_IDS).ok
+    assert not BI.compatibility(rep, "sloop", "FELUCCA SLOOP 2.8.5", list(range(10)) + [32, 33, 34, 35]).ok
+    assert "FM6" in backup.object_title(9, felucca=True) and "CZ" not in backup.object_title(9, felucca=True)
+
+
+def test_felucca_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="felucca")
+    _felucca_song(st)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="saved", project=0, stems=True)
+    assert sorted(s.stems) == [0, 1, 2, 3] and s.peak > 0.05
+    peaks = []
+    for k, p in s.stems.items():
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    assert all(pk > 0.002 for pk in peaks), peaks         # every track plays something (T2's default sound is soft)
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "felucca" and meta["firmware_version"] == "v1.8.1" and len(flash) == 0x100000
+
+
+def test_felucca_in_backup_layer():
+    """Felucca's 13 objects (editor_backup.c ED_BK_IDS: 0..9, the sample slots 32..34); its backups and SLOOP's apart."""
+    from fm1companion.protocol import parse_info
+    ids = backup.FELUCCA_IDS
+    assert ids == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 33, 34] and backup.known_ids(ids) == ids
+    assert backup.known_ids(list(range(13))) == []
+    assert backup.is_felucca(ids) and backup.is_felucca(ids, "?") and not backup.is_felucca(list(range(13)))
+    old = [i for i in ids if i != 9]                                      # 1.0..1.0.2 (Melodee's inventory too)
+    assert backup.is_felucca(old, "FELUCCA v1.0.2") and not backup.is_felucca(old, "MELODEE v1.5")
+    assert not backup.is_felucca(backup.JIANT_IDS) and not backup.is_felucca(studio.SKIFF_BACKUP_IDS, "FELUCCA v2.2")
+    assert backup.is_sample(32) and backup.is_project(2) and not backup.is_project(9)
+    assert "U01–U16" in backup.object_title(6, felucca=True)
+
+    class FakeLink:                                     # an FM-1 that only answers INFO
+        def __init__(self, version):
+            self.raw = [*version.encode(), 0, 0, 71, 108, 64, 63, 4, 11]
+
+        def request(self, cmd, args=(), timeout=1.0, retries=0):
+            assert cmd == Cmd.INFO
+            return self.raw
+    assert parse_info(FakeLink("FELUCCA v1.8.1").raw).firmware_name == "felucca"
+    assert backup.protocol(FakeLink("FELUCCA v1.8.1"), "felucca")[0] == backup.FELUCCA
+    # a SLOOP FM-1 whose profile says "felucca" (FM-1_900 is both's): its INFO wins – SLOOP's commands
+    assert backup.protocol(FakeLink("FELUCCA SLOOP 2.8.5"), "felucca")[0] == backup.SLOOP
+    sloop = {"format": "sloop-backup", "version": 1, "firmware": "FELUCCA SLOOP 2.8.5", "date": "", "objects": []}
+    arch = backup.read({"format": backup.FORMAT, "version": 1, "firmware": "FELUCCA v1.8.1", "objects": [
+        {"id": i, "size": 0, "crc": 0, "data": ""} for i in ids]} | {"objects": [
+        {"id": i, "size": 4 if i < 2 else 0, "crc": backup.crc32(b"abcd") if i < 2 else 0,
+         "data": "YWJjZA==" if i < 2 else ""} for i in ids]})
+    with pytest.raises(backup.BackupError, match="SLOOP"):                 # a Felucca backup onto SLOOP: refused
+        backup._match(FakeLink("FELUCCA SLOOP 2.8.5"), arch, "felucca")
+    assert backup._match(FakeLink("FELUCCA v1.8.1"), arch, "felucca")[0] == backup.FELUCCA
+    assert sloop["format"] == backup.SLOOP_FORMAT
+
+
+@pytest.mark.parametrize("fw", ["skiff", "felucca"])
+def test_fetch_and_write_back_keep_the_sample_slots(node_studio, fw):
+    """"Fetch from FM-1" (the tolerant load) and "Write back" keep the device's user samples: before, the tolerant load left
+    the sample slots out of the twin, and writing back then erased them on the FM-1 (SMP_ERASE of the empty slot)."""
+    dev = node_studio(firmware=fw)                                           # the "device": a twin of the same version
+    backup._restore_sample(dev.link, 0, _felucca_sample(), lambda n: None)
+    usr1 = {o["id"]: o["bytes"] for o in dev.backup().objects}[32]
+    assert len(usr1) == len(_felucca_sample())
+    st = node_studio(firmware=fw)
+    st.open_from_device(dev.link, tolerant=True)
+    assert st.rejected == [] and {o["id"]: o["bytes"] for o in st.backup().objects}[32] == usr1
+    st.write_to_device(dev.link, settings=False, exclude=st.rejected)
+    assert {o["id"]: o["bytes"] for o in dev.backup().objects}[32] == usr1
