@@ -269,16 +269,20 @@ def flow():
     jobs = []
     saved = LD.run_job, C.search_repos, C.enrich
     LD.run_job = lambda parent, fn, on_done=None, on_fail=None, **k: (jobs.append(1), on_done(fn(None)))
-    C.search_repos = lambda text, limit=8: [{"repo": "me/karma-fm1", "description": "FM-1 groovebox", "stars": 1,
+    C.search_repos = lambda text, limit=8: [{"repo": "me/brisa-fm1", "description": "FM-1 groovebox", "stars": 1,
                                              "fork": False, "exact": True}]
     C.enrich = lambda repo, ttl=0: (_ for _ in ()).throw(C.Offline("im Test kein Netz"))
     try:
-        kd = LinkImportDialog(page, "KARMA", cat=page.cat, online=True)
-        check(jobs and kd.w["repo"].text() == "me/karma-fm1",
+        kd = LinkImportDialog(page, "KARMA", cat=page.cat, online=False)       # built in now: found without GitHub
+        check(not jobs and kd.w["repo"].text() == "eatyourgreensstudio-dotcom/karma-fm1",
+              f"KARMA (built in): the catalog's own entry ({kd.w['repo'].text()!r})")
+        kd.close()
+        kd = LinkImportDialog(page, "BRISA", cat=page.cat, online=True)
+        check(jobs and kd.w["repo"].text() == "me/brisa-fm1",
               f"name without catalog entry: GitHub search runs ({kd.w['repo'].text()!r})")
         kd.close()
         jobs.clear()
-        kd = LinkImportDialog(page, "KARMA", cat=page.cat, online=False)
+        kd = LinkImportDialog(page, "BRISA", cat=page.cat, online=False)
         check(not jobs and not kd.w["repo"].text(), "without the tick \"look on GitHub\" no search")
         kd.close()
         # several matches, none unique: chooser window; the choice fills the entry

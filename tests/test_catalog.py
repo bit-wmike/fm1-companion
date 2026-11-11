@@ -111,7 +111,8 @@ def test_merge_both_directions(real):
     matched = [e for e in cat.entries if e.packages and e.section not in ("mooring", "official")]
     assert len(matched) >= 60
     fams = {p.family for p in moor["packages"] if p.family}
-    covered = {p.family for e in cat.entries for p in e.packages if p.family}
+    covered = {p.family for e in cat.entries for p in e.packages if p.family
+               and not e.protocol_evidence.startswith("built-in firmware")}     # (KARMA: the app's own entry)
     assert fams == covered                      # every Mooring family lands in an entry
     assert sum(1 for e in cat.entries if not e.packages) >= 100   # pure link entries stay
     stock = cat.by_key("stock")
@@ -280,7 +281,7 @@ def test_catalog_cache_expiry(env, monkeypatch):
     snap.entries = snap.entries[:5]
     c.cached_file().write_text(json.dumps(snap.to_dict()))
     assert not c.needs_refresh()
-    assert len(c.load().entries) == 5 and c.load().source == "cache"
+    assert len(c.load().entries) == 6 and c.load().source == "cache"       # (+ the app's built-in KARMA)
     old = time.time() - 25 * 3600
     os.utime(c.cached_file(), (old, old))
     assert c.needs_refresh()
@@ -553,8 +554,12 @@ def test_resolve_name_via_github_search(env, monkeypatch):
             {"full_name": "copycat/karma-fm1", "description": None, "fork": True}]},
         api + "repos/me/karma-fm1": {}, api + "repos/me/karma-fm1/releases?per_page=15": [],
         "https://me.github.io/karma-fm1/webapp/installer/": INSTALLER_HTML}))
+    full = c.load()
+    assert L.resolve("karma", full, online=True).repo == "eatyourgreensstudio-dotcom/karma-fm1"   # the built-in one
+    cat = c.load()
+    cat.entries = [e for e in cat.entries if e.key != "karma"]                  # a firmware the catalog does not know
     for text in ("karma", "Karma FM1 Firmware"):
-        d = L.resolve(text, c.load(), online=True)
+        d = L.resolve(text, cat, online=True)
         assert d.repo == "me/karma-fm1" and d.confidence["repo"] == L.GUESS and d.exact, text
         assert d.download_url.endswith("karma-3.0.3.fwsc") and d.source == "name"
         repos = [x["repo"] for x in d.candidates]

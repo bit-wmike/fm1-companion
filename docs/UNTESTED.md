@@ -35,7 +35,8 @@ untested, even if it runs cleanly in the simulation.
 | Function | Status |
 |---|---|
 | Installing a different firmware (switch Melodee ↔ SLOOP ↔ Skiff …) | simulation only |
-| V15 intermediate step when switching firmware | simulation only |
+| V15 intermediate step when switching firmware (always, except updates within the same firmware), *Continue* after the V15 step | simulation only |
+| Installing KARMA (built-in, packages pinned from its GitHub Pages site) | simulation only; download URLs (commit-pinned raw files) not fetched in CI |
 | Back to the original (V15, V16) | simulation only |
 | Way back from V16 (via V15) | simulation only; whether a real V16 accepts a step back to V15 is unconfirmed |
 | Resuming after a power cut / aborted installation, CHECK HEAD detection | simulation only |

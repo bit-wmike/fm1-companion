@@ -86,9 +86,9 @@ def dialog_exec(self):
     """let JobDialogs run until they are done; confirm other dialogs immediately."""
     from fm1companion.ui.common import JobDialog
     from fm1companion.ui.firmware_page import PlanDialog
-    if isinstance(self, PlanDialog):            # installation plan: without the V15 detour, confirm everything
-        if not self.chk_v15.isHidden() and self.chk_v15.box.isEnabled():
-            self.chk_v15.setChecked(False)
+    if isinstance(self, PlanDialog):            # installation plan: without the V15 detour (expert), confirm all
+        if not self.chk_direct.isHidden():
+            self.chk_direct.setChecked(True)
         for cb in self.confirm_checks.values():
             cb.setChecked(True)
         return 1

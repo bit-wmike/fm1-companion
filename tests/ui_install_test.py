@@ -185,6 +185,29 @@ def flow():
     # ---- own file on Melodee (update of the same firmware: no V15 step)
     ctx.connect_port(next(p for p in ctx.ports if p.serial == "DEMO-1"))
     check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1"), "back on DEMO-1")
+    # ---- the plan dialog: a switch goes via V15 first, the expert opt-out is off and not remembered
+    stm = fp.device_state(ctx)
+    check(stm.firmware_name == "Melodee", f"the plan names the running firmware ({stm.firmware_name})")
+
+    def plan_for(spec):
+        return lambda via, b=True: planner.plan_install(stm, planner.Target.from_spec(spec, tag="v3.1"), via_v15=via,
+                                                        backup=b)
+    dlg = fp.PlanDialog(w, plan_for(firmware.spec("karma")), "KARMA", True)
+    check(not dlg.chk_direct.isHidden() and not dlg.chk_direct.isChecked() and dlg.plan.via_stock
+          and dlg.plan.kinds()[:3] == ["backup", "fetch", "stock"] and "Melodee" in dlg.v15_note.text()
+          and "KARMA" in dlg.v15_note.text(), f"switch Melodee → KARMA: V15 first, shown ({dlg.v15_note.text()[:80]})")
+    dlg.chk_direct.setChecked(True)
+    check(dlg.plan.direct and not dlg.plan.via_stock and "stock" not in dlg.plan.kinds()
+          and any("V15" in x and "KARMA" in x for x in dlg.plan.warnings), "expert opt-out: directly, with a warning")
+    dlg.chk_direct.setChecked(False)
+    check(dlg.plan.via_stock and not dlg.plan.direct, "opt-out undone: V15 again")
+    dlg2 = fp.PlanDialog(w, plan_for(firmware.spec("karma")), "KARMA", True)
+    check(dlg2.plan.via_stock and not dlg2.chk_direct.isChecked(), "a new plan does not remember the opt-out")
+    dlg3 = fp.PlanDialog(w, plan_for(firmware.spec("melodee")), "Melodee", True)
+    check(dlg3.chk_direct.isHidden() and dlg3.v15_note.isHidden() and "stock" not in dlg3.plan.kinds(),
+          "update of the same firmware: no V15 step, no option")
+    for d in (dlg, dlg2, dlg3):
+        d.deleteLater()
     pkg = home / "melodee-1.7.0.fwsc"
     pkg.write_bytes(fpk.build_package("FM-1_91070"))
     ok = fp.install_flow(w, ctx, firmware.spec("melodee"), None, pkg, "v1.7.0")
@@ -360,6 +383,34 @@ def flow():
         hist = journal.Journal().history()
         check(hist and "V15 V15" not in hist[-1].get("target", "") and hist[-1].get("target") ==
               "Original-Firmware V15", f"journal name without a doubled version ({hist[-1].get('target')})")
+        # ---- the two-step switch stopped after V15: the journal remembers SLOOP, the page continues with it
+        ch = journal.Journal().chain
+        check(ch is not None and ch.get("key") == "sloop" and ch.get("tag") == "v9.9.8",
+              f"journal: the second step is remembered ({ch})")
+        check(dev.identity == "FM-1_015", f"the FM-1 runs V15 ({dev.identity})")
+        check(until(lambda: ctx.connected, 10000), "connected again")
+        w.go("firmware")
+        page = w.firmware
+        page._show_chain()
+        check(page.chain_box.isHidden(), "“Continue” only while the FM-1 answers as V15")
+        ctx.identity = "FM-1_015"                 # (the demo's MIDI side keeps answering as Melodee: as V15 would)
+        page._show_chain()
+        check(page.pending_chain() is not None and not page.chain_box.isHidden() and "SLOOP" in page.b_chain.text(),
+              f"“Continue” offered ({page.b_chain.text()})")
+        real_fr = firmware.fetch_releases
+        firmware.fetch_releases = lambda sp, *a, **k: [rel2] if sp.key == "sloop" else real_fr(sp, *a, **k)
+        firmware.download = lambda sp, r, **k: firmware.Package(sp, r, good, None, False) if sp.key == "sloop" \
+            else real_dl(sp, r, **k)
+        try:
+            ok = page.continue_chain()
+        finally:
+            firmware.download, firmware.fetch_releases = real_dl, real_fr
+        pc = plan_ctl["plans"][-1]
+        check(ok and pc.chain_resume and pc.v15_option == "none" and "stock" not in pc.kinds()
+              and dev.identity == "FM-1_900", f"resume continues with SLOOP directly ({pc.kinds()}, {dev.identity})")
+        check(journal.Journal().chain is None, "chain done: cleared")
+        page._show_chain()
+        check(page.chain_box.isHidden(), "“Continue” gone")
 
         check(until(lambda: ctx.connected, 10000), "connected again")
         w.go("firmware")

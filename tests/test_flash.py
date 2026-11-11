@@ -193,29 +193,137 @@ def test_plan_melodee_to_sloop_builtin(env):
 
 def test_v15_option_cases(env):
     from fm1companion import firmware
-    from fm1companion.flash.planner import DeviceState, Target, plan_install, switch_key
+    from fm1companion.flash.planner import DeviceState, Target, plan_install
     mel = Target.from_spec(firmware.spec("melodee"), tag="v1.6.0")
     upd = plan_install(melodee_state(), mel)                                   # update of the same firmware
-    assert upd.v15_option == "default_off" and not upd.via_stock
-    assert plan_install(melodee_state(), mel, via_v15=True).via_stock           # offered option
+    assert upd.v15_option == "none" and not upd.via_stock and not upd.direct
+    assert not plan_install(melodee_state(), mel, via_v15=True).via_stock       # no V15 step offered for an update
     unknown = plan_install(DeviceState(identity="FM-1_900"), mel)               # current firmware unknown
     assert unknown.v15_option == "default_on" and unknown.via_stock and "no_backup" in unknown.confirmations
     orbit = _spec(key="orbit", name="ORBIT", requires_stock_v15=True, loader_family="sloopG3")
-    lk = plan_install(melodee_state(), Target.from_spec(orbit), via_v15=False)  # locked: deselecting has no effect
-    assert lk.v15_option == "locked" and lk.via_stock
+    lk = plan_install(melodee_state(), Target.from_spec(orbit), via_v15=False)  # locked: the opt-out has no effect
+    assert lk.v15_option == "locked" and lk.via_stock and not lk.direct
     st = plan_install(melodee_state(), Target.from_spec(firmware.spec("stock-v15")), via_v15=True)
     assert st.v15_option == "none" and "stock" not in st.kinds()
     for p in (plan_install(melodee_state(), Target.from_spec(firmware.spec("sloop"))), lk):
         k = p.kinds()
         assert k.index("backup") < k.index("stock") < k.index("install")
-    assert switch_key(melodee_state(), Target.from_spec(firmware.spec("sloop"))) == "melodee>sloop"
 
 
-def test_v15_choice_persisted_per_switch(env):
-    from fm1companion.flash import prefs
-    assert prefs.choice_for("melodee>sloop") is None
-    prefs.remember("melodee>sloop", False)
-    assert prefs.choice_for("melodee>sloop") is False and prefs.choice_for("sloop>melodee") is None
+def _sloop_state(**kw):
+    from fm1companion.flash.planner import DeviceState
+    d = dict(identity="FM-1_900", felucca=True, firmware_key="sloop", firmware_name="SLOOP",
+             version="FELUCCA SLOOP 2.8.5")
+    d.update(kw)
+    return DeviceState(**d)
+
+
+def test_policy_same_firmware_update_and_downgrade_direct(env):
+    """policy “always via V15 first – except updates within the same custom firmware”"""
+    from fm1companion import firmware
+    from fm1companion.flash.planner import Target, plan_install
+    for tag in ("v2.8.6", "v2.6"):                                             # update and downgrade within SLOOP
+        p = plan_install(_sloop_state(), Target.from_spec(firmware.spec("sloop"), tag=tag))
+        assert p.ok and p.v15_option == "none" and "stock" not in p.kinds() and not p.v15_reason, tag
+        assert p.kinds() == ["backup", "fetch", "install", "verify"]
+    # the device name and the catalog key are the same firmware ("jiant" = "jiant-fm")
+    jiant = _spec(key="jiant-fm", name="JIANT FM", loader_family="feluccaG2")
+    p = plan_install(_sloop_state(firmware_key="jiant", version="JIANT V10.60"), Target.from_spec(jiant))
+    assert p.v15_option == "none"
+    # the same package once more (e.g. after an install that failed safely): the same firmware, directly
+    karma = firmware.spec("karma")
+    ks = _sloop_state(identity="FM-1_926", firmware_key="karma", firmware_name="KARMA", version="FELUCCA KARMA 3.1")
+    assert plan_install(ks, Target.from_spec(karma, tag="v3.1")).v15_option == "none"
+    assert plan_install(ks, Target.from_spec(karma, tag="v3.0.5")).v15_option == "none"     # KARMA downgrade
+
+
+def test_policy_switch_goes_via_v15(env):
+    from fm1companion import firmware
+    from fm1companion.flash.planner import DeviceState, Target, plan_install
+    sloop, karma = firmware.spec("sloop"), firmware.spec("karma")
+    # custom A -> custom B: V15 first, then B; the backup before everything
+    p = plan_install(melodee_state(firmware_name="Melodee"), Target.from_spec(sloop, tag="v2.8.5"))
+    assert p.ok and p.v15_option == "default_on" and p.via_stock and not p.direct
+    assert p.kinds() == ["backup", "fetch", "stock", "install", "verify"]
+    assert "Melodee" in p.v15_reason and "SLOOP" in p.v15_reason
+    # a fork is another firmware: SLOOP -> KARMA and KARMA -> SLOOP
+    for st, tgt in ((_sloop_state(), karma), (_sloop_state(identity="FM-1_926", firmware_key="karma",
+                                                           version="FELUCCA KARMA 3.1"), sloop)):
+        q = plan_install(st, Target.from_spec(tgt))
+        assert q.v15_option == "default_on" and q.via_stock and q.kinds().index("stock") < q.kinds().index("install")
+    # a stale record is no proof: the profile says SLOOP, the INFO answer names KARMA -> unknown -> via V15
+    stale = _sloop_state(version="FELUCCA KARMA 3.1")
+    assert plan_install(stale, Target.from_spec(sloop)).v15_option == "default_on"
+    # unknown / unrecognised firmware -> via V15
+    for st in (DeviceState(identity="FM-1_900"), DeviceState(identity="FM-1_900", firmware_key="?"),
+               DeviceState(identity="FM-1_977", felucca=False, firmware_key="eigene")):
+        u = plan_install(st, Target.from_spec(karma))
+        assert u.v15_option == "default_on" and u.via_stock and u.v15_reason, st
+    # own file (in no catalog) -> via V15 even if the device ran an own file before
+    own = _spec(key="eigene", name="mine", repo="", builtin=False, protocol="none", product="FM-1_900")
+    assert plan_install(_sloop_state(firmware_key="eigene", version=""), Target.from_spec(own)).via_stock
+    # stock V14 -> custom: via V15 too
+    v14 = plan_install(DeviceState(identity="FM-1_014"), Target.from_spec(sloop))
+    assert v14.via_stock and "V14" in v14.v15_reason
+
+
+def test_policy_from_stock_and_back_to_v15(env):
+    from fm1companion import firmware
+    from fm1companion.flash.planner import DeviceState, Target, plan_install
+    # already on stock V15: directly
+    p = plan_install(DeviceState(identity="FM-1_015"), Target.from_spec(firmware.spec("karma")))
+    assert p.v15_option == "none" and "stock" not in p.kinds()
+    # back to stock V15 itself: directly (it is the V15 step)
+    for st in (melodee_state(), _sloop_state(), DeviceState(identity="FM-1_900")):
+        b = plan_install(st, Target.from_spec(firmware.spec("stock-v15")))
+        assert b.v15_option == "none" and "stock" not in b.kinds() and "install" in b.kinds()
+    # stock V16 -> custom: the existing rule (fixed, the way back from V16)
+    v16 = plan_install(DeviceState(identity="FM-1_016"), Target.from_spec(firmware.spec("sloop")), via_v15=False)
+    assert v16.v15_option == "locked" and v16.via_stock and not v16.direct
+    # target stock V16: unchanged (from a custom firmware fixed via V15, from stock V15 directly)
+    assert plan_install(melodee_state(), Target.from_spec(firmware.spec("stock-v16"))).v15_option == "locked"
+    assert plan_install(DeviceState(identity="FM-1_015"), Target.from_spec(firmware.spec("stock-v16"))).v15_option \
+        == "none"
+
+
+def test_policy_expert_opt_out(env):
+    from fm1companion import firmware
+    from fm1companion.flash.planner import Target, plan_install
+    t = Target.from_spec(firmware.spec("karma"))
+    off = plan_install(_sloop_state(), t, via_v15=False)
+    assert off.ok and off.direct and not off.via_stock and off.v15_option == "default_on"
+    assert off.kinds() == ["backup", "fetch", "install", "verify"]
+    assert "SLOOP" in off.warnings[0] and "V15" in off.warnings[0]               # warned, first in the notes
+    # nothing is remembered: the next plan follows the policy again
+    assert plan_install(_sloop_state(), t).via_stock
+    from fm1companion import config
+    assert "installer" not in (config.load().modules or {})                    # no setting, no per-switch memory
+
+
+def test_policy_resume_after_v15_step(env):
+    """interrupted after the V15 step: the device runs V15, the journal's chain names the target -> directly"""
+    from fm1companion import firmware
+    from fm1companion.flash import journal
+    from fm1companion.flash.planner import DeviceState, Target, plan_install
+    j = journal.Journal()
+    assert j.chain is None
+    j.begin_chain(key="karma", name="KARMA", tag="v3.1", file="", device_id="d1")
+    assert j.chain["key"] == "karma" and j.load()["active"] is None
+    on15 = DeviceState(identity="FM-1_015", firmware_key="sloop")              # (the profile still says SLOOP)
+    p = plan_install(on15, Target.from_spec(firmware.spec("karma"), tag="v3.1"), chain=j.chain)
+    assert p.ok and p.chain_resume and p.v15_option == "none" and "stock" not in p.kinds()
+    assert "KARMA" in p.warnings[0]
+    # another target from V15: no "continues" note, but still directly
+    q = plan_install(on15, Target.from_spec(firmware.spec("melodee")), chain=j.chain)
+    assert not q.chain_resume and "stock" not in q.kinds()
+    # the chain while the device still runs the old firmware (V15 step failed safely): no shortcut
+    r = plan_install(_sloop_state(), Target.from_spec(firmware.spec("karma")), chain=j.chain)
+    assert not r.chain_resume and r.via_stock
+    # interrupted during the V15 step: update mode of the original loader -> Recovery finishes V15 (unchanged)
+    w = plan_install(DeviceState(identity="ota-FM-1_015"), Target.from_spec(firmware.spec("stock-v15")))
+    assert w.resume and "resume" in w.kinds()
+    j.clear_chain()
+    assert j.chain is None
 
 
 def test_plan_melodee_to_orbit_goes_via_v15(env):

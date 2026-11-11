@@ -17,10 +17,6 @@ msgstr "Installationsplan"
 msgid "Intermediate step: install original V15"
 msgstr "Zwischenschritt: Original-V15 aufspielen"
 
-#: fm1companion/ui/firmware_page.py:185
-msgid "Via the unmodified original firmware V15 the new firmware starts from a clean, proven state. The intermediate step is itself an installation: power and cable then have to hold out twice instead of once."
-msgstr "Über die unveränderte Original-Firmware V15 startet die neue Firmware von einem sauberen, bewährten Stand. Der Zwischenschritt ist selbst eine Installation: Strom und Kabel müssen dann zweimal durchhalten statt einmal."
-
 #: fm1companion/ui/firmware_page.py:192 fm1companion/ui/firmware_page.py:257
 msgid "Make a backup first (recommended)"
 msgstr "Vorher ein Backup machen (empfohlen)"
@@ -49,14 +45,6 @@ msgstr "Probelauf starten"
 #: fm1companion/ui/firmware_page.py:246
 msgid "Mandatory: according to the catalog, this firmware is only installed from the original V15."
 msgstr "Pflicht: Diese Firmware wird laut Katalog nur von der Original-V15 aus installiert."
-
-#: fm1companion/ui/firmware_page.py:247
-msgid "Firmware switch (or running firmware unknown): the intermediate step is preset to avoid careless mistakes when switching back and forth quickly. But it is itself a write operation – two installations instead of one, so twice a period in which battery and cable must hold. It is only needed for V16 and for firmwares that according to the catalog only work from V15 (then it is fixed). Only untick it if you are sure."
-msgstr "Firmware-Wechsel (oder laufende Firmware unbekannt): Der Zwischenschritt ist voreingestellt, um Flüchtigkeitsfehler beim schnellen Hin- und Herwechseln zu vermeiden. Er ist aber selbst ein Schreibvorgang – zwei Installationen statt einer, also zweimal ein Zeitraum, in dem Akku und Kabel halten müssen. Nötig ist er nur bei V16 und bei Firmwares, die laut Katalog nur von V15 aus gehen (dann ist er fest). Nur abwählen, wenn du sicher bist."
-
-#: fm1companion/ui/firmware_page.py:252
-msgid "Update of the same firmware: normally not needed."
-msgstr "Update derselben Firmware: normalerweise nicht nötig."
 
 #: fm1companion/ui/firmware_page.py:255
 msgid "Make a backup first (mandatory when switching with V16)"
@@ -230,11 +218,6 @@ msgstr "Backup-Ordner nicht beschreibbar"
 #: fm1companion/ui/firmware_page.py:528
 msgid "Cancelled – nothing was changed on the FM-1."
 msgstr "Abgebrochen – am FM-1 wurde nichts geändert."
-
-#: fm1companion/ui/firmware_page.py:529
-#, python-brace-format
-msgid "Cancelled after the intermediate step: {written} was written to the FM-1 – it now runs the original firmware V15. {name} was NOT written. To continue, install {name} again (the intermediate step is then no longer needed)."
-msgstr "Abgebrochen nach dem Zwischenschritt: Auf das FM-1 wurde {written} geschrieben – es läuft jetzt die Original-Firmware V15. {name} wurde NICHT geschrieben. Zum Fortsetzen {name} erneut installieren (der Zwischenschritt ist dann nicht mehr nötig)."
 
 #: fm1companion/ui/firmware_page.py:540
 msgid "Step: load & check all packages (before any writing) …"
@@ -2085,10 +2068,6 @@ msgstr "Der Rückweg von V16 geht über die Original-V15 – sie nutzt denselben
 msgid "According to the catalog, this firmware is installed from the original firmware V15."
 msgstr "Diese Firmware wird laut Katalog von der Original-Firmware V15 aus installiert."
 
-#: fm1companion/flash/planner.py:411
-msgid "Firmware switch: via the original V15 the new firmware starts from a clean, proven state – this avoids careless mistakes when switching back and forth quickly."
-msgstr "Firmware-Wechsel: Über die Original-V15 startet die neue Firmware von einem sauberen, bewährten Stand – das vermeidet Flüchtigkeitsfehler beim schnellen Hin- und Herwechseln."
-
 #: fm1companion/flash/planner.py:414
 #, python-brace-format
 msgid "{why} The app installs the unmodified V15 (checksum db1642b2…) via M-VAVE's own loader and then checks whether the FM-1 reports “FM-1_015”."
@@ -2985,3 +2964,62 @@ msgstr "Der vorsichtige USB-Modus wartet länger auf den Neustart des FM-1, bean
 msgid "Careful USB mode for flashing:"
 msgstr "Vorsichtiger USB-Modus beim Flashen:"
 
+msgid "Four-track groovebox: an acid bass or a Juno-style poly, physical modelling, two dozen synthesis models and a drum synth; 64-step sequencer with song mode and generators. A SLOOP fork."
+msgstr "Groovebox mit vier Spuren: ein Acid-Bass oder ein Poly im Juno-Stil, Physical Modelling, zwei Dutzend Synthesemodelle und ein Drum-Synth; 64-Step-Sequencer mit Song-Modus und Generatoren. Ein SLOOP-Fork."
+
+msgid "The web installer of {name} names another checksum for {tag} than the app pins – the app keeps its own."
+msgstr "Der Web-Installer von {name} nennt für {tag} eine andere Prüfsumme, als die App festhält – die App bleibt bei ihrer eigenen."
+
+msgid "Switching from {current} to {target}: the app installs the original firmware V15 first, then {target} – recommended, so no leftovers of {current} stay on the FM-1."
+msgstr "Wechsel von {current} zu {target}: Die App spielt zuerst die Original-Firmware V15 auf, dann {target} – empfohlen, damit keine Reste von {current} auf dem FM-1 bleiben."
+
+msgid "The running firmware is not recognised, so this counts as a switch: the app installs the original firmware V15 first, then {target} – recommended, so no leftovers of the previous firmware stay on the FM-1."
+msgstr "Die laufende Firmware ist nicht erkannt, das gilt deshalb als Wechsel: Die App spielt zuerst die Original-Firmware V15 auf, dann {target} – empfohlen, damit keine Reste der bisherigen Firmware auf dem FM-1 bleiben."
+
+msgid "the previous firmware"
+msgstr "der bisherigen Firmware"
+
+msgid "<b>Expert option: installed directly, without the V15 step.</b> Leftovers of {current} (settings, projects, sample areas) can stay in the flash and confuse {target}. If {target} behaves strangely afterwards, install it again with the V15 step."
+msgstr "<b>Expertenoption: direkt installiert, ohne den V15-Schritt.</b> Reste von {current} (Einstellungen, Projekte, Sample-Bereiche) können im Flash bleiben und {target} durcheinanderbringen. Verhält sich {target} danach seltsam, installiere es noch einmal mit dem V15-Schritt."
+
+msgid "Continues the interrupted switch to {target}: the original firmware V15 is already installed (step 1 of 2 is done) – now {target} is installed directly."
+msgstr "Setzt den unterbrochenen Wechsel zu {target} fort: Die Original-Firmware V15 ist schon aufgespielt (Schritt 1 von 2 ist erledigt) – jetzt wird {target} direkt installiert."
+
+msgid "Expert: install directly without the V15 step"
+msgstr "Experte: direkt installieren, ohne den V15-Schritt"
+
+msgid "Skips the original V15 before the switch. Leftovers of the previous firmware can then stay in the flash. Only for experts – the choice is not remembered."
+msgstr "Lässt die Original-V15 vor dem Wechsel weg. Reste der bisherigen Firmware können dann im Flash bleiben. Nur für Experten – die Wahl wird nicht gespeichert."
+
+msgid "Without the V15 step: leftovers of the previous firmware can stay on the FM-1 (see Notes)."
+msgstr "Ohne den V15-Schritt: Reste der bisherigen Firmware können auf dem FM-1 bleiben (siehe Hinweise)."
+
+msgid "Cancelled after the intermediate step: {written} was written to the FM-1 – it now runs the original firmware V15. {name} was NOT written. To continue: Firmware+ › Install & Versions › “Continue: install {name}” (the V15 step is not repeated)."
+msgstr "Nach dem Zwischenschritt abgebrochen: {written} wurde auf das FM-1 geschrieben – es läuft jetzt die Original-Firmware V15. {name} wurde NICHT geschrieben. Zum Fortsetzen: Firmware+ › Installieren & Versionen › „Weiter: {name} installieren“ (der V15-Schritt wird nicht wiederholt)."
+
+msgid "Continue the switch …"
+msgstr "Wechsel fortsetzen …"
+
+msgid "<b>The switch to {name} stopped after its first step.</b> This FM-1 now runs the original firmware V15 – the second step installs {name} directly."
+msgstr "<b>Der Wechsel zu {name} ist nach dem ersten Schritt stehen geblieben.</b> Dieses FM-1 läuft jetzt mit der Original-Firmware V15 – der zweite Schritt installiert {name} direkt."
+
+msgid "Continue: install {name} …"
+msgstr "Weiter: {name} installieren …"
+
+msgid "Firmware not found"
+msgstr "Firmware nicht gefunden"
+
+msgid "{name} is no longer in the list of firmwares. Please choose it again – the FM-1 runs the original V15, every firmware can be installed directly from it."
+msgstr "{name} ist nicht mehr in der Liste der Firmwares. Bitte wähle sie neu – das FM-1 läuft mit der Original-V15, von dort lässt sich jede Firmware direkt installieren."
+
+msgid "Versions cannot be loaded"
+msgstr "Versionen können nicht geladen werden"
+
+msgid "No version found"
+msgstr "Keine Version gefunden"
+
+msgid "No version of {name} can be loaded right now."
+msgstr "Gerade lässt sich keine Version von {name} laden."
+
+msgid "Switch in two steps: after the original V15 the app still installs <b>{name}</b> – once the FM-1 runs V15: Firmware+ › Install & Versions › “Continue”."
+msgstr "Wechsel in zwei Schritten: Nach der Original-V15 installiert die App noch <b>{name}</b> – sobald das FM-1 mit V15 läuft: Firmware+ › Installieren & Versionen › „Weiter“."

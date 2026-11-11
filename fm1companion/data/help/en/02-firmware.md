@@ -1,6 +1,6 @@
 # Switching firmware & back to the original
 
-The FM-1 can run different firmwares, e.g. **Melodee**, **Skiff**, **SLOOP** or the official
+The FM-1 can run different firmwares, e.g. **Melodee**, **Skiff**, **SLOOP**, **KARMA** or the official
 firmware from M-VAVE. Everything for this is on **one** page: [Firmware+](app://page/discover) (sidebar ›
 *Data & Tools*).
 
@@ -21,6 +21,25 @@ Whether there is an update for your FM-1 is also shown on the [Overview](app://p
    FM-1*.
 3. **Do not disconnect power or USB** until the app reports “done”. Close other programs that send MIDI.
 4. If you later return to a firmware, the app offers you the matching backup.
+
+## Switching always goes via the original V15
+
+When you **switch** to another firmware, the app first installs M-VAVE's unmodified **original firmware V15**
+(checksum-checked), then the new firmware – two installations in one plan. That way the new firmware starts from a
+clean state and no leftovers of the old one (settings, projects, sample areas) stay in the flash. The installation
+plan says so: “Switching from X to Y: the app installs the original firmware V15 first, then Y”.
+
+* **Update or downgrade within the same firmware** (e.g. SLOOP 2.8.5 → 2.8.6, KARMA 3.1 → 3.0.5): directly, without
+  the V15 step. A fork is a firmware of its own – SLOOP → KARMA is a switch.
+* **Firmware not recognised** (the app cannot tell what runs on the FM-1): counts as a switch, so via V15.
+* **The FM-1 already runs the original V15**, or you go **back to the original V15**: directly.
+* **V16**: as before – to V16 from a community firmware and the way back from V16 always go via V15.
+* The **backup** is made before the first step, as with every installation.
+* If the switch stops after the V15 step (cable, power, cancel), the FM-1 runs the original V15. The app remembers
+  the target: [Firmware+ › Install & Versions](app://page/firmware) shows *Continue: install …* – the V15 step is not
+  repeated. If it stopped *during* a step, finish it first on the [Recovery](app://page/recovery) page.
+* Experts can tick *Expert: install directly without the V15 step* in the plan. It is off by default, is not
+  remembered and the plan warns that leftovers of the old firmware can stay. There is no setting for it.
 
 ## Back to the original firmware
 

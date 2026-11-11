@@ -151,7 +151,7 @@ def firmware_name(key: str) -> str:
             return e.name
     except Exception:  # noqa: BLE001
         pass
-    from ..studio import FIRMWARES                  # (a firmware known only by its studio twin, e.g. KARMA)
+    from ..studio import FIRMWARES                  # (a firmware known only by its studio twin, e.g. FoMni)
     return FIRMWARES.get(key, {}).get("name") or key
 
 
