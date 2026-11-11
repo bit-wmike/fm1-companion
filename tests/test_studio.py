@@ -1712,12 +1712,17 @@ def test_felucca_in_backup_layer():
     assert sloop["format"] == backup.SLOOP_FORMAT
 
 
-@pytest.mark.parametrize("fw", ["skiff", "felucca"])
+@pytest.mark.parametrize("fw", ["skiff", "felucca", "sloop", "karma"])
 def test_fetch_and_write_back_keep_the_sample_slots(node_studio, fw):
     """"Fetch from FM-1" (the tolerant load) and "Write back" keep the device's user samples: before, the tolerant load left
-    the sample slots out of the twin, and writing back then erased them on the FM-1 (SMP_ERASE of the empty slot)."""
+    the sample slots out of the twin, and writing back then erased them on the FM-1 (SMP_ERASE of the empty slot).
+    (SLOOP and KARMA: SLOOP's protocol, sloopbk.restore_tolerant takes the sample slots 32..35 too.)"""
     dev = node_studio(firmware=fw)                                           # the "device": a twin of the same version
-    backup._restore_sample(dev.link, 0, _felucca_sample(), lambda n: None)
+    if studio.FIRMWARES[fw].get("backup") == "sloop":
+        from fm1companion import sloopbk
+        sloopbk.write_sample(dev.link, 32, _felucca_sample())
+    else:
+        backup._restore_sample(dev.link, 0, _felucca_sample(), lambda n: None)
     usr1 = {o["id"]: o["bytes"] for o in dev.backup().objects}[32]
     assert len(usr1) == len(_felucca_sample())
     st = node_studio(firmware=fw)
@@ -1725,6 +1730,21 @@ def test_fetch_and_write_back_keep_the_sample_slots(node_studio, fw):
     assert st.rejected == [] and {o["id"]: o["bytes"] for o in st.backup().objects}[32] == usr1
     st.write_to_device(dev.link, settings=False, exclude=st.rejected)
     assert {o["id"]: o["bytes"] for o in dev.backup().objects}[32] == usr1
+
+
+def test_sample_slot_twins_are_flagged(node_studio):
+    """every twin whose backup (Felucca's protocol) has sample slots says so in FIRMWARES ("samples": the tolerant load
+    takes them, writing back keeps them); SLOOP's protocol always takes them (sloopbk.restore_tolerant); the firmwares
+    with their own backup format (FM1 Open, X0X, LOOM-8) or none (AMB-1, FoMni) keep or leave out their samples
+    themselves. Checked on every bundled version (Melodee 1.6, JIANT, CoralFlower, ChoralRoot: no sample slots)."""
+    for fw, spec in studio.FIRMWARES.items():
+        if studio.no_backup(fw) or spec.get("backup") in ("sloop", "fm1open", "x0x", "loom-8"):
+            continue
+        for b in studio.builds(fw):
+            arch = node_studio(firmware=fw, version=b.version).backup()
+            ids = [o["id"] for o in arch.objects]
+            has = any(backup.is_sample(i, backup.is_jiant(ids), arch.coralflower, arch.choralroot) for i in ids)
+            assert has == bool(spec.get("samples")), (fw, b.version, ids)
 
 
 # ------------------------------------------------------------------ X0X (tools/studio/x0x_studio.c)
