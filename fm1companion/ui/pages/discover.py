@@ -14,7 +14,7 @@ import time
 from PyQt6.QtCore import QAbstractListModel, QEvent, QModelIndex, QRect, QRectF, QSize, Qt, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import (QAction, QColor, QDesktopServices, QFont, QFontMetrics, QGuiApplication, QKeySequence,
                          QPainter, QPainterPath, QPalette, QPixmap, QShortcut)
-from PyQt6.QtWidgets import (QAbstractItemView, QComboBox, QFrame, QGridLayout, QHBoxLayout, QInputDialog, QLabel,
+from PyQt6.QtWidgets import (QAbstractItemView, QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel,
                              QLineEdit, QListView, QMenu, QMessageBox, QPushButton, QScrollArea, QStackedWidget,
                              QStyle, QStyledItemDelegate, QTabWidget, QTextBrowser, QToolButton, QTreeWidget,
                              QTreeWidgetItem, QVBoxLayout, QWidget)
@@ -41,6 +41,14 @@ CHIPS = [("installable", _("Directly installable"), _("Package with checksum in 
          ("wish", _("Remembered"), _("your wishlist"))]
 DEFAULTS = {"wishlist": [], "github_token": "", "last_visit": 0.0, "thumbnails": True, "sort": "az",
             "auto_refresh": True}
+
+
+def token_state(tok: str) -> str:
+    """“token set (••••1234)” / “no token set” – never more than the last four characters"""
+    tok = (tok or "").strip()
+    if not tok:
+        return _("no token set")
+    return _("token set ({hint})").format(hint="••••" + (tok[-4:] if len(tok) >= 12 else ""))
 
 
 def net_allowed() -> bool:
@@ -607,7 +615,8 @@ class DiscoverPage(QWidget):
         self.b_menu.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         m = QMenu(self.b_menu)
         m.addAction(icon("folder"), _("My firmwares …"), self.own_dialog)
-        m.addAction(icon("dialog-password", "security-high"), _("GitHub token …"), self.token_dialog)
+        self.a_token = m.addAction(icon("dialog-password", "security-high"), _("GitHub token …"), self.token_dialog)
+        m.aboutToShow.connect(self._token_action_text)
         self.a_clear_wish = m.addAction(icon("edit-clear-all", "edit-clear"), _("Clear the remembered list …"),
                                         self.clear_wishlist)
         m.addSeparator()
@@ -1226,16 +1235,58 @@ class DiscoverPage(QWidget):
         if d.changed:
             self.set_catalog(self.cat)
 
+    def _token_action_text(self):
+        self.a_token.setText(_("GitHub token … ({state})").format(state=token_state(settings().get("github_token", ""))))
+
     def token_dialog(self):
+        """enter, change or remove the GitHub token – with a hint whether one is set (never shown in full)"""
+        from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QLineEdit, QVBoxLayout
+        from ..common import german_buttons
         st = settings()
-        tok, ok = QInputDialog.getText(self, _("GitHub token"),
-                                       _("Optional: personal GitHub token (only read access to public "
-                                         "repos needed).\nWithout a token GitHub allows 60 requests per "
-                                         "hour, with a token 5000.\nLeave empty to remove."),
-                                       QLineEdit.EchoMode.Password, st.get("github_token", ""))
-        if ok:
-            st["github_token"] = tok.strip()
+        cur = (st.get("github_token") or "").strip()
+        d = QDialog(self)
+        d.setWindowTitle(_("GitHub token"))
+        v = QVBoxLayout(d)
+        expl = QLabel(_("Optional: personal GitHub token (only read access to public repos needed). Without a token "
+                        "GitHub allows 60 requests per hour, with a token 5000. It is kept in the settings file, "
+                        "readable only by you."))
+        expl.setWordWrap(True)
+        v.addWidget(expl)
+        state = QLabel(token_state(cur))
+        state.setProperty("role", "small")
+        v.addWidget(state)
+        edit = QLineEdit()
+        edit.setEchoMode(QLineEdit.EchoMode.Password)
+        edit.setPlaceholderText(_("new token (leave empty to keep the current one)") if cur else _("token"))
+        v.addWidget(edit)
+        bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        german_buttons(bb)
+        b_rm = bb.addButton(_("Remove token"), QDialogButtonBox.ButtonRole.DestructiveRole)
+        b_rm.setEnabled(bool(cur))
+        result = {"action": ""}
+
+        def remove():
+            result["action"] = "remove"
+            d.accept()
+        b_rm.clicked.connect(remove)
+        bb.accepted.connect(d.accept)
+        bb.rejected.connect(d.reject)
+        v.addWidget(bb)
+        self._token_widgets = (d, edit, b_rm)      # (tests)
+        if d.exec() != QDialog.DialogCode.Accepted:
+            return None
+        if result["action"] == "remove":
+            st["github_token"] = ""
             config.save()
+            notify(_("GitHub token removed."), "success")
+            return ""
+        tok = edit.text().strip()
+        if not tok:
+            return cur                             # nothing entered: the current token stays
+        st["github_token"] = tok
+        config.save()
+        notify(_("GitHub token saved ({state}).").format(state=token_state(tok)), "success")
+        return tok
 
     # ------------------------------------------------------------ News
     def followed(self) -> dict[str, str]:

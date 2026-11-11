@@ -346,6 +346,18 @@ def module(name: str, defaults: dict | None = None) -> dict:
     return d
 
 
+def reset_module(name: str, defaults: dict, keep=()) -> dict:
+    """Put the settings of a section back to `defaults` – IN PLACE (pages hold the dictionary), the keys in
+    `keep` stay (e.g. a token, a wishlist, MIDI learn assignments). Call config.save() afterwards."""
+    import copy
+    d = module(name)
+    kept = {k: d[k] for k in keep if k in d}
+    d.clear()
+    d.update(copy.deepcopy(defaults))
+    d.update(kept)
+    return d
+
+
 def folder(name: str) -> Path:
     """visible subfolder in the main folder (e.g. "DX7", "MIDI-Export"), gets created (OSError if not possible)."""
     return load().folder(name, strict=True)

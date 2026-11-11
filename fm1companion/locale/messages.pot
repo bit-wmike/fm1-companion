@@ -46,7 +46,7 @@ msgstr ""
 
 #: fm1companion/app.py:29 fm1companion/backup_inspect.py:1120
 #: fm1companion/ui/fm1_page.py:223 fm1companion/ui/fm1_page.py:271
-#: fm1companion/ui/pages/devices.py:236 fm1companion/ui/pages/discover.py:1297
+#: fm1companion/ui/pages/devices.py:236 fm1companion/ui/pages/discover.py:1348
 #: fm1companion/ui/pages/help.py:259 fm1companion/ui/pages/help.py:259
 #: fm1companion/ui/statusbar.py:123
 msgid "none"
@@ -135,100 +135,100 @@ msgid_plural "{n} parts"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/autobackup.py:216
+#: fm1companion/autobackup.py:264
 msgid "no valid JSON (truncated or damaged)"
 msgstr ""
 
-#: fm1companion/autobackup.py:216
+#: fm1companion/autobackup.py:264
 msgid "empty file"
 msgstr ""
 
-#: fm1companion/autobackup.py:246
+#: fm1companion/autobackup.py:295
 msgid "The file is not a readable backup (damaged) – note/labels cannot be saved."
 msgstr ""
 
-#: fm1companion/autobackup.py:249
+#: fm1companion/autobackup.py:298
 msgid "The file is not a backup of the app or the web editor."
 msgstr ""
 
-#: fm1companion/autobackup.py:313 fm1companion/ui/device.py:30
+#: fm1companion/autobackup.py:362 fm1companion/ui/device.py:30
 #: fm1companion/ui/device.py:30
 msgid "no write permission"
 msgstr ""
 
-#: fm1companion/autobackup.py:315 fm1companion/config.py:202
+#: fm1companion/autobackup.py:364 fm1companion/config.py:202
 #: fm1companion/ui/device.py:31
 msgid "the drive is full"
 msgstr ""
 
-#: fm1companion/autobackup.py:317
+#: fm1companion/autobackup.py:366
 msgid "folder or file not found"
 msgstr ""
 
-#: fm1companion/autobackup.py:319
+#: fm1companion/autobackup.py:368
 msgid "drive or network drive does not respond"
 msgstr ""
 
-#: fm1companion/autobackup.py:330
+#: fm1companion/autobackup.py:379
 #, python-brace-format
 msgid "Mirror folder {folder} is not reachable – is the drive (NAS) mounted?"
 msgstr ""
 
-#: fm1companion/autobackup.py:344
+#: fm1companion/autobackup.py:399
 #, python-brace-format
 msgid "Verifying the copy {name} failed – the copy in the mirror is not identical"
 msgstr ""
 
-#: fm1companion/autobackup.py:377
+#: fm1companion/autobackup.py:519
 msgid "Automatic backups: nothing has happened yet."
 msgstr ""
 
-#: fm1companion/autobackup.py:425
+#: fm1companion/autobackup.py:567
 #, python-brace-format
 msgid "{name} is not a readable zip file (damaged or truncated). Please copy the file again."
 msgstr ""
 
-#: fm1companion/autobackup.py:431
+#: fm1companion/autobackup.py:573
 #, python-brace-format
 msgid "{name} has no table of contents (manifest.json) – this is not a backup collection of this app. Single backup files (.json) are added with “Add file” in the tab “List”."
 msgstr ""
 
-#: fm1companion/autobackup.py:435
+#: fm1companion/autobackup.py:577
 #, python-brace-format
 msgid "The table of contents in {name} is damaged ({error}). Nothing was taken over."
 msgstr ""
 
-#: fm1companion/autobackup.py:438
+#: fm1companion/autobackup.py:580
 #, python-brace-format
 msgid "{name} is a zip file but not a backup collection of this app."
 msgstr ""
 
-#: fm1companion/autobackup.py:444
+#: fm1companion/autobackup.py:586
 #, python-brace-format
 msgid "{name}: invalid entry in the table of contents"
 msgstr ""
 
-#: fm1companion/autobackup.py:448
+#: fm1companion/autobackup.py:590
 #, python-brace-format
 msgid "{name}: invalid path"
 msgstr ""
 
-#: fm1companion/autobackup.py:453
+#: fm1companion/autobackup.py:595
 #, python-brace-format
 msgid "{name}: missing in the zip"
 msgstr ""
 
-#: fm1companion/autobackup.py:456
+#: fm1companion/autobackup.py:598
 #, python-brace-format
 msgid "{name}: damaged in the zip"
 msgstr ""
 
-#: fm1companion/autobackup.py:459 fm1companion/projects.py:101
+#: fm1companion/autobackup.py:601 fm1companion/projects.py:101
 #, python-brace-format
 msgid "{name}: checksum does not match"
 msgstr ""
 
-#: fm1companion/autobackup.py:468
+#: fm1companion/autobackup.py:610
 #, python-brace-format
 msgid "{name}: already there"
 msgstr ""
@@ -438,8 +438,10 @@ msgstr ""
 
 #: fm1companion/backup.py:1068 fm1companion/dx7_sources.py:95
 #: fm1companion/fm1open.py:545 fm1companion/presetlib.py:396
-#: fm1companion/samplepacks.py:179 fm1companion/samplepacks.py:241
-#: fm1companion/sloopbk.py:461 fm1companion/ui/samplepacks_tab.py:209
+#: fm1companion/samplepacks.py:179 fm1companion/samplepacks.py:269
+#: fm1companion/sloopbk.py:461 fm1companion/ui/pages/project_view.py:392
+#: fm1companion/ui/projects_page.py:300 fm1companion/ui/samplepacks_tab.py:209
+#: fm1companion/ui/samples_page.py:1307 fm1companion/ui/samples_page.py:1327
 msgid "cancelled"
 msgstr ""
 
@@ -476,7 +478,7 @@ msgstr ""
 #: fm1companion/backup_inspect.py:40 fm1companion/backup_inspect.py:399
 #: fm1companion/backup_inspect.py:421 fm1companion/backup_inspect.py:465
 #: fm1companion/ui/pages/backup_browser.py:413
-#: fm1companion/ui/settings_dialog.py:20
+#: fm1companion/ui/settings_dialog.py:62
 msgid "Settings"
 msgstr ""
 
@@ -488,7 +490,7 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
-#: fm1companion/backup_inspect.py:45 fm1companion/ui/pages/discover.py:1275
+#: fm1companion/backup_inspect.py:45 fm1companion/ui/pages/discover.py:1326
 msgid "new"
 msgstr ""
 
@@ -571,7 +573,7 @@ msgstr ""
 #: fm1companion/backup_inspect.py:329 fm1companion/flash/texts.py:49
 #: fm1companion/ui/pages/backup_browser.py:408
 #: fm1companion/ui/pages/backup_browser.py:409
-#: fm1companion/ui/pages/project_view.py:461
+#: fm1companion/ui/pages/project_view.py:469
 msgid "yes"
 msgstr ""
 
@@ -641,9 +643,9 @@ msgstr ""
 #: fm1companion/ui/fm1_page.py:325 fm1companion/ui/pages/backup_browser.py:380
 #: fm1companion/ui/pages/backup_browser.py:567
 #: fm1companion/ui/pages/backup_browser.py:568
-#: fm1companion/ui/pages/project_view.py:560
+#: fm1companion/ui/pages/project_view.py:568
 #: fm1companion/ui/pages/studio.py:686 fm1companion/ui/projects_page.py:197
-#: fm1companion/ui/samples_page.py:1370 fm1companion/ui/samples_page.py:1372
+#: fm1companion/ui/samples_page.py:1385 fm1companion/ui/samples_page.py:1387
 msgid "empty"
 msgstr ""
 
@@ -726,8 +728,8 @@ msgid "Object {id}"
 msgstr ""
 
 #: fm1companion/backup_inspect.py:459 fm1companion/projectfmt.py:804
-#: fm1companion/ui/pages/project_view.py:399
-#: fm1companion/ui/pages/project_view.py:409
+#: fm1companion/ui/pages/project_view.py:403
+#: fm1companion/ui/pages/project_view.py:417
 msgid "Running music"
 msgstr ""
 
@@ -737,8 +739,8 @@ msgid "Song section {letter}"
 msgstr ""
 
 #: fm1companion/backup_inspect.py:474 fm1companion/fm1openbk.py:60
-#: fm1companion/projectfmt.py:806 fm1companion/ui/pages/project_view.py:399
-#: fm1companion/ui/pages/project_view.py:409
+#: fm1companion/projectfmt.py:806 fm1companion/ui/pages/project_view.py:403
+#: fm1companion/ui/pages/project_view.py:417
 #: fm1companion/ui/pages/studio.py:549 fm1companion/ui/pages/studio.py:554
 #, python-brace-format
 msgid "Project {n}"
@@ -1128,10 +1130,10 @@ msgstr ""
 msgid "Same firmware family."
 msgstr ""
 
-#: fm1companion/backup_inspect.py:1121 fm1companion/ui/backups_page.py:307
+#: fm1companion/backup_inspect.py:1121 fm1companion/ui/backups_page.py:324
 #: fm1companion/ui/linkimport_dialog.py:321
-#: fm1companion/ui/pages/discover.py:738
-#: fm1companion/ui/settings_dialog.py:304
+#: fm1companion/ui/pages/discover.py:747
+#: fm1companion/ui/settings_dialog.py:400
 msgid "Firmware"
 msgstr ""
 
@@ -1626,7 +1628,7 @@ msgid "GPL-3.0 with exception (see project)"
 msgstr ""
 
 #: fm1companion/diag.py:188 fm1companion/linkimport.py:349
-#: fm1companion/ui/pages/discover.py:1261
+#: fm1companion/ui/pages/discover.py:1312
 msgid "Catalog"
 msgstr ""
 
@@ -3047,7 +3049,7 @@ msgstr ""
 msgid "unknown"
 msgstr ""
 
-#: fm1companion/flash/texts.py:77 fm1companion/ui/backups_page.py:489
+#: fm1companion/flash/texts.py:77 fm1companion/ui/backups_page.py:523
 msgid "damaged"
 msgstr ""
 
@@ -4482,9 +4484,9 @@ msgid "{n} possible firmwares found – please choose the right one."
 msgstr ""
 
 #: fm1companion/linkimport.py:453 fm1companion/linkimport.py:456
-#: fm1companion/ui/pages/discover.py:962
-#: fm1companion/ui/pages/discover.py:1097
-#: fm1companion/ui/pages/discover.py:1330
+#: fm1companion/ui/pages/discover.py:971
+#: fm1companion/ui/pages/discover.py:1106
+#: fm1companion/ui/pages/discover.py:1381
 #, python-brace-format
 msgid "GitHub: {message}"
 msgstr ""
@@ -4578,7 +4580,7 @@ msgstr ""
 
 #: fm1companion/linkimport.py:597 fm1companion/ui/fm1_page.py:162
 #: fm1companion/ui/pages/backup_browser.py:206
-#: fm1companion/ui/pages/discover.py:759 fm1companion/ui/pages/presets.py:97
+#: fm1companion/ui/pages/discover.py:768 fm1companion/ui/pages/presets.py:97
 #: fm1companion/ui/pages/presets.py:149 fm1companion/ui/projects_page.py:85
 #: fm1companion/ui/samples_page.py:105
 msgid "Name"
@@ -4601,7 +4603,7 @@ msgid "Author"
 msgstr ""
 
 #: fm1companion/linkimport.py:598 fm1companion/ui/about.py:76
-#: fm1companion/ui/pages/discover.py:665
+#: fm1companion/ui/pages/discover.py:674
 msgid "License"
 msgstr ""
 
@@ -4613,21 +4615,21 @@ msgstr ""
 msgid "Package identifier"
 msgstr ""
 
-#: fm1companion/linkimport.py:599 fm1companion/ui/pages/discover.py:664
-#: fm1companion/ui/storage_tab.py:31
+#: fm1companion/linkimport.py:599 fm1companion/ui/pages/discover.py:673
+#: fm1companion/ui/storage_tab.py:35
 msgid "Category"
 msgstr ""
 
-#: fm1companion/linkimport.py:599 fm1companion/ui/pages/discover.py:401
-#: fm1companion/ui/pages/discover.py:759
+#: fm1companion/linkimport.py:599 fm1companion/ui/pages/discover.py:409
+#: fm1companion/ui/pages/discover.py:768
 msgid "Description"
 msgstr ""
 
-#: fm1companion/linkimport.py:600 fm1companion/ui/pages/discover.py:447
+#: fm1companion/linkimport.py:600 fm1companion/ui/pages/discover.py:455
 msgid "Website"
 msgstr ""
 
-#: fm1companion/linkimport.py:600 fm1companion/ui/pages/discover.py:447
+#: fm1companion/linkimport.py:600 fm1companion/ui/pages/discover.py:455
 msgid "Online editor"
 msgstr ""
 
@@ -4635,7 +4637,7 @@ msgstr ""
 msgid "Online simulator"
 msgstr ""
 
-#: fm1companion/linkimport.py:601 fm1companion/ui/pages/discover.py:447
+#: fm1companion/linkimport.py:601 fm1companion/ui/pages/discover.py:455
 msgid "Manual"
 msgstr ""
 
@@ -5956,17 +5958,17 @@ msgstr ""
 msgid "Sample packs need git (sudo apt install git)"
 msgstr ""
 
-#: fm1companion/samplepacks.py:233
+#: fm1companion/samplepacks.py:261
 #, python-brace-format
 msgid "loading {n} audio files ({mb} MB) … (a few minutes depending on size)"
 msgstr ""
 
-#: fm1companion/samplepacks.py:235
+#: fm1companion/samplepacks.py:263
 #, python-brace-format
 msgid "loading {n} audio files … (a few minutes depending on size)"
 msgstr ""
 
-#: fm1companion/samplepacks.py:263
+#: fm1companion/samplepacks.py:291
 #, python-brace-format
 msgid ""
 "{name}\n"
@@ -5976,12 +5978,12 @@ msgid ""
 "Downloaded on {date} with FM-1 Companion.\n"
 msgstr ""
 
-#: fm1companion/samplepacks.py:270
+#: fm1companion/samplepacks.py:298
 #, python-brace-format
 msgid "Source: {name} – {url} · Licence: {licence}"
 msgstr ""
 
-#: fm1companion/samplepacks.py:271 fm1companion/ui/pages/voices.py:987
+#: fm1companion/samplepacks.py:299 fm1companion/ui/pages/voices.py:987
 msgid "unclear"
 msgstr ""
 
@@ -6363,120 +6365,133 @@ msgstr ""
 msgid "The FM-1 no longer answers as V15 after writing – please check it."
 msgstr ""
 
-#: fm1companion/storage.py:335
+#: fm1companion/storage.py:410
+#, python-brace-format
+msgid "“{name}” was written a moment ago – a rescue may still be running. Try again in a few minutes."
+msgstr ""
+
+#: fm1companion/storage.py:499
 msgid "Logs"
 msgstr ""
 
-#: fm1companion/storage.py:335
+#: fm1companion/storage.py:499
 msgid "The app's log (at most 5 × 1 MB, rotating). “Delete” removes the older parts and empties the current log."
 msgstr ""
 
-#: fm1companion/storage.py:337
+#: fm1companion/storage.py:501
 msgid "Downloaded firmware"
 msgstr ""
 
-#: fm1companion/storage.py:338
+#: fm1companion/storage.py:502
 msgid "Packages the app downloaded (main folder › Firmware). They are downloaded again when needed. Kept: the newest original firmware V15 (for a rescue without internet) and the package of an interrupted installation. Files you put there yourself stay."
 msgstr ""
 
-#: fm1companion/storage.py:341
+#: fm1companion/storage.py:505
 msgid "Copies of installed packages"
 msgstr ""
 
-#: fm1companion/storage.py:342
+#: fm1companion/storage.py:506
 msgid "The installation journal keeps a copy of every package it installs (for finishing an interrupted installation). The copy of an interrupted installation is kept."
 msgstr ""
 
-#: fm1companion/storage.py:345
+#: fm1companion/storage.py:509
 msgid "Firmware tools (git copies)"
 msgstr ""
 
-#: fm1companion/storage.py:346
+#: fm1companion/storage.py:510
 msgid "Installers and tools of the firmwares, fetched from GitHub. Fetched again on the next installation (needs internet). Kept while an interrupted installation can be finished."
 msgstr ""
 
-#: fm1companion/storage.py:349
+#: fm1companion/storage.py:513
 msgid "Editor copies"
 msgstr ""
 
-#: fm1companion/storage.py:349
+#: fm1companion/storage.py:513
 msgid "Web editors of the firmware versions. Prepared again when the editor is opened – close the editor first."
 msgstr ""
 
-#: fm1companion/storage.py:352
+#: fm1companion/storage.py:516
 msgid "Catalog images and GitHub data"
 msgstr ""
 
-#: fm1companion/storage.py:353
+#: fm1companion/storage.py:517
 msgid "Screenshots, stars and release lists from GitHub. The catalog itself and the News list stay."
 msgstr ""
 
-#: fm1companion/storage.py:355
+#: fm1companion/storage.py:519
 msgid "Sample pack downloads"
 msgstr ""
 
-#: fm1companion/storage.py:356
-msgid "Git copies of the sample packs. The samples you downloaded are already in your Samples folder and stay there."
+#: fm1companion/storage.py:520
+msgid "Contents lists of the sample packs (and git copies left by older versions or an interrupted download – the app now deletes the copy right after copying). The samples you downloaded are in your Samples folder and stay there."
 msgstr ""
 
-#: fm1companion/storage.py:358
+#: fm1companion/storage.py:523
 msgid "Web cache"
 msgstr ""
 
-#: fm1companion/storage.py:358
+#: fm1companion/storage.py:523
 msgid "Cache of the built-in browser (editors, catalog pages)."
 msgstr ""
 
-#: fm1companion/storage.py:360
+#: fm1companion/storage.py:525
 msgid "Temporary files"
 msgstr ""
 
-#: fm1companion/storage.py:361
+#: fm1companion/storage.py:526
 msgid "Leftovers of previews and recordings in the temporary folder (only files older than an hour)."
 msgstr ""
 
-#: fm1companion/storage.py:363
+#: fm1companion/storage.py:528
 msgid "Error reports"
 msgstr ""
 
-#: fm1companion/storage.py:364
+#: fm1companion/storage.py:529
 msgid "Error reports and system check reports in your home folder, damaged settings copies."
 msgstr ""
 
-#: fm1companion/storage.py:366
+#: fm1companion/storage.py:531
 msgid "Studio states"
 msgstr ""
 
-#: fm1companion/storage.py:367
+#: fm1companion/storage.py:532
 msgid "Your work in the Studio, one state per device. Only deleted one by one, on request."
 msgstr ""
 
-#: fm1companion/storage.py:369
+#: fm1companion/storage.py:534
 msgid "Web editor storage"
 msgstr ""
 
-#: fm1companion/storage.py:370
-msgid "Saved data of the built-in browser – web editors may keep your settings there. Kept."
+#: fm1companion/storage.py:535
+msgid "Saved data of the built-in browser (cookies, local storage) – web editors may keep your settings there. Only cleared on request, all at once."
 msgstr ""
 
-#: fm1companion/storage.py:372
+#: fm1companion/storage.py:538 fm1companion/ui/storage_tab.py:339
+msgid "Rescue dumps and tool logs"
+msgstr ""
+
+#: fm1companion/storage.py:539
+msgid "Full flash backups and logs of the rescue tool in the main folder › Rettung – your safety net. Only deleted one by one, on request; the newest full backup of a device needs an extra confirmation."
+msgstr ""
+
+#: fm1companion/storage.py:542
 msgid "Rescue tool and installation journal"
 msgstr ""
 
-#: fm1companion/storage.py:373
+#: fm1companion/storage.py:543
 msgid "Needed for a rescue and for finishing an interrupted installation. Kept."
 msgstr ""
 
-#: fm1companion/storage.py:375
+#: fm1companion/storage.py:545
 msgid "Your files in the main folder"
 msgstr ""
 
-#: fm1companion/storage.py:376
-msgid "Backups, projects, samples, kits, recordings, rescue dumps and downloads. The app never deletes them here – automatic backups follow the setting “Keep automatic backups”."
+#: fm1companion/storage.py:546
+msgid "Backups, projects, samples, kits, recordings, rescue dumps and downloads. The app never deletes them here – automatic backups follow the setting “Keep automatic backups”, rescue dumps have their own row."
 msgstr ""
 
-#: fm1companion/storage.py:485 fm1companion/ui/storage_tab.py:169
-#: fm1companion/ui/storage_tab.py:247
+#: fm1companion/storage.py:656 fm1companion/ui/storage_tab.py:180
+#: fm1companion/ui/storage_tab.py:257 fm1companion/ui/storage_tab.py:303
 msgid "An installation is running – nothing is deleted until it has finished."
 msgstr ""
 
@@ -7158,7 +7173,7 @@ msgstr ""
 msgid "Computer: {model}"
 msgstr ""
 
-#: fm1companion/syscheck.py:625 fm1companion/ui/pages/project_view.py:448
+#: fm1companion/syscheck.py:625 fm1companion/ui/pages/project_view.py:456
 #, python-brace-format
 msgid "Source: {source}"
 msgstr ""
@@ -7241,8 +7256,8 @@ msgstr ""
 #: fm1companion/ui/clean_check.py:166 fm1companion/ui/common.py:319
 #: fm1companion/ui/common.py:505 fm1companion/ui/linkimport_dialog.py:404
 #: fm1companion/ui/notify.py:106 fm1companion/ui/notify.py:317
-#: fm1companion/ui/pages/discover.py:1129 fm1companion/ui/slicer_dialog.py:145
-#: fm1companion/ui/statusbar.py:159
+#: fm1companion/ui/pages/discover.py:1138 fm1companion/ui/slicer_dialog.py:145
+#: fm1companion/ui/statusbar.py:159 fm1companion/ui/storage_tab.py:355
 msgid "Close"
 msgstr ""
 
@@ -7497,12 +7512,12 @@ msgstr ""
 msgid "Backup saved: {name} ({size}). Nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:109 fm1companion/ui/backups_page.py:560
-#: fm1companion/ui/backups_page.py:587
+#: fm1companion/ui/backups_page.py:109 fm1companion/ui/backups_page.py:594
+#: fm1companion/ui/backups_page.py:621
 msgid "Backup"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:120 fm1companion/ui/backups_page.py:251
+#: fm1companion/ui/backups_page.py:120 fm1companion/ui/backups_page.py:267
 #, python-brace-format
 msgid "Mirror up to date ({time})"
 msgstr ""
@@ -7512,176 +7527,188 @@ msgstr ""
 msgid "Mirrored and verified: {target}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:124 fm1companion/ui/backups_page.py:253
+#: fm1companion/ui/backups_page.py:125 fm1companion/ui/backups_page.py:270
 #, python-brace-format
 msgid "Mirror not possible: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:151 fm1companion/ui/backups_page.py:208
+#: fm1companion/ui/backups_page.py:136
+#, python-brace-format
+msgid "Old automatic backups in the mirror could not be deleted: {error}"
+msgstr ""
+
+#: fm1companion/ui/backups_page.py:139
+#, python-brace-format
+msgid "{n} old automatic backup deleted in the mirror as well (like here)."
+msgid_plural "{n} old automatic backups deleted in the mirror as well (like here)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/backups_page.py:167 fm1companion/ui/backups_page.py:224
 msgid "on connect"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:176 fm1companion/ui/backups_page.py:215
-#: fm1companion/ui/backups_page.py:216
+#: fm1companion/ui/backups_page.py:192 fm1companion/ui/backups_page.py:231
+#: fm1companion/ui/backups_page.py:232
 #, python-brace-format
 msgid "Automatic backup not possible: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:179
+#: fm1companion/ui/backups_page.py:195
 msgid "periodic"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:184
+#: fm1companion/ui/backups_page.py:200
 msgid "no device"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:186
+#: fm1companion/ui/backups_page.py:202
 msgid "Studio twin (not a real FM-1)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:188
+#: fm1companion/ui/backups_page.py:204
 msgid "firmware installation in progress"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:190
+#: fm1companion/ui/backups_page.py:206
 msgid "already running"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:192
+#: fm1companion/ui/backups_page.py:208
 msgid "device in use right now"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:199
+#: fm1companion/ui/backups_page.py:215
 msgid "editor/recording open"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:202
+#: fm1companion/ui/backups_page.py:218
 msgid "recording in progress"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:221
+#: fm1companion/ui/backups_page.py:237
 #, python-brace-format
 msgid "{device}: the last backup is up to date (younger than {n} day)."
 msgid_plural "{device}: the last backup is up to date (younger than {n} days)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:231
+#: fm1companion/ui/backups_page.py:247
 #, python-brace-format
 msgid "Automatic backup is waiting ({reason})."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:244
+#: fm1companion/ui/backups_page.py:260
 #, python-brace-format
 msgid "automatic, {reason}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:259
+#: fm1companion/ui/backups_page.py:276
 #, python-brace-format
 msgid "Automatic backup of {device} ({reason}) saved."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:260
+#: fm1companion/ui/backups_page.py:277
 #, python-brace-format
 msgid "Automatic backup of {device} saved."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:265 fm1companion/ui/backups_page.py:266
+#: fm1companion/ui/backups_page.py:282 fm1companion/ui/backups_page.py:283
 #, python-brace-format
 msgid "Automatic backup not made: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:269
+#: fm1companion/ui/backups_page.py:286
 #, python-brace-format
 msgid "Automatic backup of {device} running …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:271
+#: fm1companion/ui/backups_page.py:288
 msgid "Automatic backup"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:293 fm1companion/ui/main_window.py:46
+#: fm1companion/ui/backups_page.py:310 fm1companion/ui/main_window.py:46
 #: fm1companion/ui/pages/devices.py:248
 msgid "Backups"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:293
+#: fm1companion/ui/backups_page.py:310
 msgid "Complete backups (running music, all projects, user presets, settings). Same format as the web editor – files are interchangeable. Look inside, compare and restore parts: in the tab <b>Browse & Compare</b>."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:297
+#: fm1companion/ui/backups_page.py:314
 msgid "Show backups of all devices"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:300
+#: fm1companion/ui/backups_page.py:317
 msgid "pinned only"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:307 fm1companion/ui/firmware_page.py:845
-#: fm1companion/ui/pages/discover.py:406 fm1companion/ui/pages/discover.py:738
+#: fm1companion/ui/backups_page.py:324 fm1companion/ui/firmware_page.py:845
+#: fm1companion/ui/pages/discover.py:414 fm1companion/ui/pages/discover.py:747
 #: fm1companion/ui/pages/studio.py:54 fm1companion/ui/projects_page.py:85
 msgid "Date"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:307 fm1companion/ui/fm1_page.py:88
+#: fm1companion/ui/backups_page.py:324 fm1companion/ui/fm1_page.py:88
 #: fm1companion/ui/main_window.py:313 fm1companion/ui/overview.py:44
 #: fm1companion/ui/pages/__init__.py:30 fm1companion/ui/pages/presets.py:149
 #: fm1companion/ui/pages/studio.py:54 fm1companion/ui/projects_page.py:85
 msgid "Device"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:307
+#: fm1companion/ui/backups_page.py:324
 #: fm1companion/ui/pages/backup_browser.py:406
 #: fm1companion/ui/pages/presets.py:97 fm1companion/ui/pages/presets.py:149
 msgid "Kind"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:307
+#: fm1companion/ui/backups_page.py:324
 #: fm1companion/ui/pages/backup_browser.py:187
 #: fm1companion/ui/pages/backup_browser.py:191
 #: fm1companion/ui/pages/backup_browser.py:233
 msgid "Content"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:307
+#: fm1companion/ui/backups_page.py:324
 #: fm1companion/ui/pages/backup_browser.py:187
-#: fm1companion/ui/pages/discover.py:406 fm1companion/ui/projects_page.py:40
+#: fm1companion/ui/pages/discover.py:414 fm1companion/ui/projects_page.py:40
 #: fm1companion/ui/projects_page.py:85 fm1companion/ui/projects_page.py:194
-#: fm1companion/ui/recorder_page.py:156 fm1companion/ui/storage_tab.py:31
+#: fm1companion/ui/recorder_page.py:157 fm1companion/ui/storage_tab.py:35
 msgid "Size"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:308
+#: fm1companion/ui/backups_page.py:325
 msgid "Note / Labels"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:325 fm1companion/ui/main_window.py:339
+#: fm1companion/ui/backups_page.py:342 fm1companion/ui/main_window.py:339
 #: fm1companion/ui/main_window.py:471 fm1companion/ui/overview.py:85
 #: fm1companion/ui/overview.py:121
 msgid "Back up now"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:325
+#: fm1companion/ui/backups_page.py:342
 msgid "Ctrl+B"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:326
+#: fm1companion/ui/backups_page.py:343
 msgid "View content …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:327
+#: fm1companion/ui/backups_page.py:344
 msgid "Opens the backup in the tab “Browse & Compare”: view projects, presets, settings, compare with another state, restore single parts (also double-click)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:329
+#: fm1companion/ui/backups_page.py:346
 msgid "Restore everything …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:330
+#: fm1companion/ui/backups_page.py:347
 msgid "Extract projects"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:336 fm1companion/ui/backups_page.py:720
+#: fm1companion/ui/backups_page.py:353 fm1companion/ui/backups_page.py:754
 #: fm1companion/ui/pages/backup_browser.py:154
 #: fm1companion/ui/pages/backup_browser.py:407
 #: fm1companion/ui/pages/backup_browser.py:630
@@ -7689,7 +7716,7 @@ msgctxt "backup"
 msgid "Note"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:337 fm1companion/ui/backups_page.py:729
+#: fm1companion/ui/backups_page.py:354 fm1companion/ui/backups_page.py:763
 #: fm1companion/ui/pages/backup_browser.py:155
 #: fm1companion/ui/pages/backup_browser.py:407
 #: fm1companion/ui/pages/backup_browser.py:638
@@ -7699,461 +7726,474 @@ msgstr ""
 msgid "Labels"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:337
+#: fm1companion/ui/backups_page.py:354
 msgid "e.g. “before firmware change”, “live set October”"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:338
+#: fm1companion/ui/backups_page.py:355
 #: fm1companion/ui/pages/backup_browser.py:156
 msgid "Pin"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:339
+#: fm1companion/ui/backups_page.py:356
 msgid "Pinned backups are never deleted automatically"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:340 fm1companion/ui/projects_page.py:112
+#: fm1companion/ui/backups_page.py:357 fm1companion/ui/projects_page.py:112
 msgid "Add file …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:341 fm1companion/ui/backups_page.py:790
-#: fm1companion/ui/backups_page.py:790 fm1companion/ui/pages/midi.py:1141
+#: fm1companion/ui/backups_page.py:358 fm1companion/ui/backups_page.py:824
+#: fm1companion/ui/backups_page.py:824 fm1companion/ui/pages/midi.py:1141
 #: fm1companion/ui/pages/presets.py:666 fm1companion/ui/pages/presets.py:669
 #: fm1companion/ui/pages/presets.py:696 fm1companion/ui/pages/presets.py:921
-#: fm1companion/ui/projects_page.py:110 fm1companion/ui/projects_page.py:494
-#: fm1companion/ui/projects_page.py:496 fm1companion/ui/recorder_page.py:187
-#: fm1companion/ui/recorder_page.py:583 fm1companion/ui/recorder_page.py:585
-#: fm1companion/ui/recorder_page.py:590 fm1companion/ui/samples_page.py:153
-#: fm1companion/ui/samples_page.py:701 fm1companion/ui/storage_tab.py:174
-#: fm1companion/ui/storage_tab.py:225
+#: fm1companion/ui/projects_page.py:110 fm1companion/ui/projects_page.py:510
+#: fm1companion/ui/projects_page.py:512 fm1companion/ui/recorder_page.py:188
+#: fm1companion/ui/recorder_page.py:584 fm1companion/ui/recorder_page.py:586
+#: fm1companion/ui/recorder_page.py:591 fm1companion/ui/samples_page.py:153
+#: fm1companion/ui/samples_page.py:701 fm1companion/ui/storage_tab.py:185
+#: fm1companion/ui/storage_tab.py:242 fm1companion/ui/storage_tab.py:396
 msgid "Delete"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:344 fm1companion/ui/feedback.py:76
+#: fm1companion/ui/backups_page.py:361 fm1companion/ui/feedback.py:76
 #: fm1companion/ui/main_window.py:937 fm1companion/ui/pages/presets.py:168
-#: fm1companion/ui/pages/project_view.py:661
-#: fm1companion/ui/pages/project_view.py:671
+#: fm1companion/ui/pages/project_view.py:669
+#: fm1companion/ui/pages/project_view.py:679
 #: fm1companion/ui/pages/recovery.py:660 fm1companion/ui/pages/studio.py:1055
-#: fm1companion/ui/storage_tab.py:38
+#: fm1companion/ui/storage_tab.py:42 fm1companion/ui/storage_tab.py:350
 msgid "Open folder"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:356
+#: fm1companion/ui/backups_page.py:373
 msgid "Automatic backups"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:359
+#: fm1companion/ui/backups_page.py:376
 msgid "on connect, if the last backup is older than"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:363
+#: fm1companion/ui/backups_page.py:380
 msgid " day(s)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:367
+#: fm1companion/ui/backups_page.py:384
 msgid "periodically while connected, every"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:369
+#: fm1companion/ui/backups_page.py:386
 msgid "Note: a backup briefly stops playback on the FM-1. Never runs while the editor or a recording is open."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:373
+#: fm1companion/ui/backups_page.py:390
 msgid " hours"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:380
+#: fm1companion/ui/backups_page.py:397
 msgid "also keep the newest of each month"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:382
+#: fm1companion/ui/backups_page.py:399
 msgid "Keep automatic ones:"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:384
+#: fm1companion/ui/backups_page.py:401
 msgid "optional: e.g. /mnt/nas/FM-1-Backups – every backup is copied and verified"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:387
+#: fm1companion/ui/backups_page.py:404
 msgid "Mirror now"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:389
+#: fm1companion/ui/backups_page.py:406
 msgid "Mirror folder:"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:399
-msgid "Status:"
+#: fm1companion/ui/backups_page.py:407
+msgid "delete old automatic backups in the mirror too (like here)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:400
-msgid "A backup briefly stops playback on the FM-1. Automatic backups therefore only run when nothing else is happening with the device – never during an installation, in the editor or during a recording. Before every firmware installation the app backs up by default, labelled with the old firmware (no backup only after explicit confirmation in the installation plan)."
+#: fm1companion/ui/backups_page.py:409
+msgid "Keeps the mirror folder from growing without limit. Only automatic backups the app copied there itself, unchanged since, and that were already deleted here by “Keep automatic ones” are deleted there. Manual and pinned backups and all other files in the mirror folder are never touched."
+msgstr ""
+
+#: fm1companion/ui/backups_page.py:414
+msgid "In the mirror the app only deletes automatic backups it copied there itself and already deleted here – never manual or pinned ones, never other files. Off: the mirror keeps everything (and grows)."
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:431
+msgid "Status:"
+msgstr ""
+
+#: fm1companion/ui/backups_page.py:432
+msgid "A backup briefly stops playback on the FM-1. Automatic backups therefore only run when nothing else is happening with the device – never during an installation, in the editor or during a recording. Before every firmware installation the app backs up by default, labelled with the old firmware (no backup only after explicit confirmation in the installation plan)."
+msgstr ""
+
+#: fm1companion/ui/backups_page.py:463
 msgid "Choose mirror folder"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:440
+#: fm1companion/ui/backups_page.py:472
 msgid "No mirror folder"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:440
+#: fm1companion/ui/backups_page.py:472
 msgid "Please enter a mirror folder first (e.g. a NAS drive)."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:448
+#: fm1companion/ui/backups_page.py:482
 #, python-brace-format
 msgid "{ok} backups verified in the mirror, {bad} errors."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:449
+#: fm1companion/ui/backups_page.py:483
 #, python-brace-format
 msgid "Mirror: {ok} verified, {bad} errors ({time})"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:453
+#: fm1companion/ui/backups_page.py:487
 msgid "Mirror backups"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:454
+#: fm1companion/ui/backups_page.py:488
 #, python-brace-format
 msgid "Mirror updated: {ok} backups copied and verified, {bad} ERRORS (see log). Target: {target}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:456
+#: fm1companion/ui/backups_page.py:490
 #, python-brace-format
 msgid "Mirror updated: {ok} backups copied and verified, no errors. Target: {target}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:466
+#: fm1companion/ui/backups_page.py:500
 msgid "nothing yet"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:480 fm1companion/ui/overview.py:254
+#: fm1companion/ui/backups_page.py:514 fm1companion/ui/overview.py:254
 #, python-brace-format
 msgid "<b>Backup folder not reachable.</b> {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:490
+#: fm1companion/ui/backups_page.py:524
 msgid "file not readable"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:497
+#: fm1companion/ui/backups_page.py:531
 #, python-brace-format
 msgid ""
 "{path}\n"
 "Damaged: {problem}. Restoring is not possible – delete it or recover it from the mirror folder."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:511
+#: fm1companion/ui/backups_page.py:545
 msgid "Parts = separately storable building blocks of the backup (running music, settings, every project slot, every preset bank, every sample slot)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:517 fm1companion/ui/backups_page.py:746
+#: fm1companion/ui/backups_page.py:551 fm1companion/ui/backups_page.py:780
 #: fm1companion/ui/pages/backup_browser.py:653
 msgid "pinned – never deleted automatically"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:519
+#: fm1companion/ui/backups_page.py:553
 msgid "SLOOP backup (format of the SLOOP web editor) – interchangeable in both directions"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:530
+#: fm1companion/ui/backups_page.py:564
 #, python-brace-format
 msgid "{n} backup, {size} in {folder}"
 msgid_plural "{n} backups, {size} in {folder}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:532
+#: fm1companion/ui/backups_page.py:566
 #, python-brace-format
 msgid "{n} damaged"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:535
+#: fm1companion/ui/backups_page.py:569
 #, python-brace-format
 msgid "<b>No backups of this device yet.</b> {reason}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:537
+#: fm1companion/ui/backups_page.py:571
 msgid "No backups yet – here's how: connect the FM-1 and click “Back up now” (Ctrl+B). Automatic backups are set up below."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:544
+#: fm1companion/ui/backups_page.py:578
 msgid "Folder not reachable"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:554 fm1companion/ui/backups_page.py:581
-#: fm1companion/ui/backups_page.py:600 fm1companion/ui/backups_page.py:609
-#: fm1companion/ui/backups_page.py:682
+#: fm1companion/ui/backups_page.py:588 fm1companion/ui/backups_page.py:615
+#: fm1companion/ui/backups_page.py:634 fm1companion/ui/backups_page.py:643
+#: fm1companion/ui/backups_page.py:716
 msgid "Backup damaged"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:554
+#: fm1companion/ui/backups_page.py:588
 #, python-brace-format
 msgid "{name} cannot be read. Restoring and opening are not possible – deleting is."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:560
+#: fm1companion/ui/backups_page.py:594
 msgid "Note (optional):"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:583 fm1companion/ui/pages/devices.py:228
+#: fm1companion/ui/backups_page.py:617 fm1companion/ui/pages/devices.py:228
 #, python-brace-format
 msgid "Firmware: {firmware}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:584
+#: fm1companion/ui/backups_page.py:618
 #, python-brace-format
 msgid "Created: {date}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:595 fm1companion/ui/backups_page.py:612
+#: fm1companion/ui/backups_page.py:629 fm1companion/ui/backups_page.py:646
 #: fm1companion/ui/pages/backup_browser.py:70
 msgid "Restore not possible"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:614 fm1companion/ui/pages/devices.py:437
+#: fm1companion/ui/backups_page.py:648 fm1companion/ui/pages/devices.py:437
 msgid "What is possible:"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:619
+#: fm1companion/ui/backups_page.py:653
 #, python-brace-format
 msgid "The backup comes from another device ({device}). That is allowed."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:622
+#: fm1companion/ui/backups_page.py:656
 #, python-brace-format
 msgid "Everything on <b>{device}</b> will be replaced by the state of {date}: running music, all projects, presets and settings."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:626
+#: fm1companion/ui/backups_page.py:660
 #, python-brace-format
 msgid "Everything on <b>the FM-1</b> will be replaced by the state of {date}: running music, all projects, presets and settings."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:628 fm1companion/ui/backups_page.py:667
-#: fm1companion/ui/samples_page.py:1357
+#: fm1companion/ui/backups_page.py:662 fm1companion/ui/backups_page.py:701
+#: fm1companion/ui/samples_page.py:1372
 msgid "Restore backup"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:630
+#: fm1companion/ui/backups_page.py:664
 msgid "A safety backup of the current state is made automatically first."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:631
+#: fm1companion/ui/backups_page.py:665
 msgid "Restore only parts? Use the tab “Browse & Compare”."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:632
+#: fm1companion/ui/backups_page.py:666
 msgid "<b>SLOOP:</b> Please stop the song on the FM-1 first (STOP) – otherwise SLOOP refuses the restore."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:634
+#: fm1companion/ui/backups_page.py:668
 #: fm1companion/ui/pages/backup_browser.py:76
 msgid "Restore"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:636
+#: fm1companion/ui/backups_page.py:670
 #, python-brace-format
 msgid "automatic, before restoring {name}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:637
+#: fm1companion/ui/backups_page.py:671
 #: fm1companion/ui/pages/backup_browser.py:62
 msgid "No safety backup"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:638
+#: fm1companion/ui/backups_page.py:672
 msgid "The safety backup failed. Restore anyway?"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:639
+#: fm1companion/ui/backups_page.py:673
 msgid "Restore anyway"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:647
+#: fm1companion/ui/backups_page.py:681
 #: fm1companion/ui/pages/backup_browser.py:83
 msgid "Checking every object with the device before anything is replaced …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:648
+#: fm1companion/ui/backups_page.py:682
 msgid "Checking the backup and writing it in SLOOP's order: banks, projects, settings, samples …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:655
+#: fm1companion/ui/backups_page.py:689
 #: fm1companion/ui/pages/backup_browser.py:91
 #, python-brace-format
 msgid "✓ {part} written"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:657
+#: fm1companion/ui/backups_page.py:691
 msgid "Done. The FM-1 now plays the state from the backup."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:660
+#: fm1companion/ui/backups_page.py:694
 #, python-brace-format
 msgid "The previous state is in the safety backup {name}."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:661
+#: fm1companion/ui/backups_page.py:695
 msgid "There is NO safety backup of the previous state."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:666
+#: fm1companion/ui/backups_page.py:700
 #: fm1companion/ui/pages/backup_browser.py:102
 #, python-brace-format
 msgid "Restore failed: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:668
+#: fm1companion/ui/backups_page.py:702
 msgid "A complete restore cannot be cancelled safely – please wait. Single parts are restored in the tab “Browse & Compare”."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:670
+#: fm1companion/ui/backups_page.py:704
 #, python-brace-format
 msgid "Restore complete: {n} parts of the state of {date} written – running music, projects, presets and settings."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:686
+#: fm1companion/ui/backups_page.py:720
 #: fm1companion/ui/pages/project_view.py:333
 msgid "No projects"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:686
+#: fm1companion/ui/backups_page.py:720
 msgid "This backup contains no saved projects."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:690
+#: fm1companion/ui/backups_page.py:724
 msgid "Section"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:690 fm1companion/ui/fm1_page.py:162
+#: fm1companion/ui/backups_page.py:724 fm1companion/ui/fm1_page.py:162
 #: fm1companion/ui/pages/backup_browser.py:206
 #: fm1companion/ui/pages/presets.py:97 fm1companion/ui/pages/presets.py:149
 msgid "Slot"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:693
+#: fm1companion/ui/backups_page.py:727
 #, python-brace-format
 msgid "{device} {what} {slot}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:696
+#: fm1companion/ui/backups_page.py:730
 #, python-brace-format
 msgid "Backup {name}, {what} {slot}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:699 fm1companion/ui/backups_page.py:750
+#: fm1companion/ui/backups_page.py:733 fm1companion/ui/backups_page.py:784
 #: fm1companion/ui/linkimport_dialog.py:318
 #: fm1companion/ui/pages/backup_browser.py:657
-#: fm1companion/ui/pages/midi.py:333 fm1companion/ui/pages/project_view.py:621
-#: fm1companion/ui/pages/project_view.py:653
+#: fm1companion/ui/pages/midi.py:333 fm1companion/ui/pages/project_view.py:629
+#: fm1companion/ui/pages/project_view.py:661
 #: fm1companion/ui/pages/voices.py:802 fm1companion/ui/pages/voices.py:829
-#: fm1companion/ui/projects_page.py:489 fm1companion/ui/projects_page.py:531
-#: fm1companion/ui/samples_page.py:1327
+#: fm1companion/ui/projects_page.py:505 fm1companion/ui/projects_page.py:547
+#: fm1companion/ui/samples_page.py:1342
 msgid "Not saved"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:699
+#: fm1companion/ui/backups_page.py:733
 msgid "projects not written to the library"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:702
+#: fm1companion/ui/backups_page.py:736
 msgid "Projects extracted"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:703
+#: fm1companion/ui/backups_page.py:737
 #, python-brace-format
 msgid "{n} project is now in the project library ({folder}). There you can rename and load it. Nothing was changed on the FM-1."
 msgid_plural "{n} projects are now in the project library ({folder}). There you can rename and load them. Nothing was changed on the FM-1."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:720
+#: fm1companion/ui/backups_page.py:754
 #: fm1companion/ui/pages/backup_browser.py:630
 msgid "Note for the backup:"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:729
+#: fm1companion/ui/backups_page.py:763
 #: fm1companion/ui/pages/backup_browser.py:638
 msgid ""
 "Labels, separated by commas\n"
 "(e.g. before firmware change, live set October):"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:745
+#: fm1companion/ui/backups_page.py:779
 #: fm1companion/ui/pages/backup_browser.py:652
 msgid "note saved"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:745
+#: fm1companion/ui/backups_page.py:779
 #: fm1companion/ui/pages/backup_browser.py:652
 msgid "labels saved"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:746
+#: fm1companion/ui/backups_page.py:780
 #: fm1companion/ui/pages/backup_browser.py:653
 msgid "no longer pinned"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:750
+#: fm1companion/ui/backups_page.py:784
 #: fm1companion/ui/pages/backup_browser.py:657
-#: fm1companion/ui/projects_page.py:489
+#: fm1companion/ui/projects_page.py:505
 #, python-brace-format
 msgid "{name} cannot be changed"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:755
+#: fm1companion/ui/backups_page.py:789
 msgid "Add backup files"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:756
+#: fm1companion/ui/backups_page.py:790
 msgid "Backups (*.json)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:763
+#: fm1companion/ui/backups_page.py:797
 msgid "Not a valid file"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:770
+#: fm1companion/ui/backups_page.py:804
 #, python-brace-format
 msgid "{name} is already in the backup folder (identical) – nothing copied."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:778
+#: fm1companion/ui/backups_page.py:812
 #, python-brace-format
 msgid "Backup added: {name} (copy, the original stays)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:780
+#: fm1companion/ui/backups_page.py:814
 msgid "Not copied"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:780
+#: fm1companion/ui/backups_page.py:814
 #, python-brace-format
 msgid "{name} not copied"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:789
+#: fm1companion/ui/backups_page.py:823
 msgid "<b>This backup is pinned.</b>"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:790
+#: fm1companion/ui/backups_page.py:824
 #, python-brace-format
 msgid "Delete {name} permanently?"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:793
+#: fm1companion/ui/backups_page.py:827
 #, python-brace-format
 msgid "Deleted: {name}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:795 fm1companion/ui/pages/presets.py:927
-#: fm1companion/ui/projects_page.py:501 fm1companion/ui/samples_page.py:705
-#: fm1companion/ui/storage_tab.py:180 fm1companion/ui/storage_tab.py:230
-#: fm1companion/ui/storage_tab.py:256
+#: fm1companion/ui/backups_page.py:829 fm1companion/ui/pages/presets.py:927
+#: fm1companion/ui/projects_page.py:517 fm1companion/ui/samples_page.py:705
+#: fm1companion/ui/settings_dialog.py:443 fm1companion/ui/storage_tab.py:191
+#: fm1companion/ui/storage_tab.py:247 fm1companion/ui/storage_tab.py:270
+#: fm1companion/ui/storage_tab.py:312 fm1companion/ui/storage_tab.py:411
 msgid "Not deleted"
 msgstr ""
 
@@ -8601,8 +8641,9 @@ msgstr ""
 #: fm1companion/ui/linkimport_dialog.py:368
 #: fm1companion/ui/pages/presets.py:55 fm1companion/ui/pages/studio.py:76
 #: fm1companion/ui/pages/studio.py:158 fm1companion/ui/pages/studio.py:270
-#: fm1companion/ui/recorder_page.py:706 fm1companion/ui/risk_dialog.py:29
-#: fm1companion/ui/samplepacks_tab.py:74 fm1companion/ui/wizard.py:318
+#: fm1companion/ui/recorder_page.py:707 fm1companion/ui/risk_dialog.py:29
+#: fm1companion/ui/samplepacks_tab.py:74
+#: fm1companion/ui/settings_dialog.py:432 fm1companion/ui/wizard.py:318
 msgid "Cancel"
 msgstr ""
 
@@ -8929,7 +8970,7 @@ msgstr ""
 
 #: fm1companion/ui/device.py:650 fm1companion/ui/firmware_page.py:460
 #: fm1companion/ui/pages/recovery.py:629 fm1companion/ui/pages/voices.py:660
-#: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1336
+#: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1351
 msgid "No device"
 msgstr ""
 
@@ -8953,8 +8994,8 @@ msgid "Renamed to “{name}”."
 msgstr ""
 
 #: fm1companion/ui/editor_page.py:36 fm1companion/ui/editor_page.py:81
-#: fm1companion/ui/main_window.py:38 fm1companion/ui/pages/discover.py:486
-#: fm1companion/ui/pages/discover.py:1140
+#: fm1companion/ui/main_window.py:38 fm1companion/ui/pages/discover.py:494
+#: fm1companion/ui/pages/discover.py:1149
 msgid "Editor"
 msgstr ""
 
@@ -9132,8 +9173,8 @@ msgid "Dry run only: check everything, write nothing"
 msgstr ""
 
 #: fm1companion/ui/firmware_page.py:222 fm1companion/ui/firmware_page.py:240
-#: fm1companion/ui/pages/discover.py:485
-#: fm1companion/ui/pages/discover.py:1126
+#: fm1companion/ui/pages/discover.py:493
+#: fm1companion/ui/pages/discover.py:1135
 msgid "Install"
 msgstr ""
 
@@ -9175,7 +9216,7 @@ msgstr ""
 msgid "Not possible"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:290 fm1companion/ui/pages/discover.py:406
+#: fm1companion/ui/firmware_page.py:290 fm1companion/ui/pages/discover.py:414
 msgid "Notes"
 msgstr ""
 
@@ -9476,9 +9517,9 @@ msgstr ""
 
 #: fm1companion/ui/firmware_page.py:729 fm1companion/ui/overview.py:50
 #: fm1companion/ui/overview.py:311 fm1companion/ui/pages/devices.py:276
-#: fm1companion/ui/projects_page.py:472 fm1companion/ui/recorder_page.py:91
+#: fm1companion/ui/projects_page.py:488 fm1companion/ui/recorder_page.py:92
 #: fm1companion/ui/sample_recorder.py:137 fm1companion/ui/samples_page.py:170
-#: fm1companion/ui/settings_dialog.py:293 fm1companion/ui/wizard.py:198
+#: fm1companion/ui/settings_dialog.py:389 fm1companion/ui/wizard.py:198
 msgid "Name:"
 msgstr ""
 
@@ -9528,7 +9569,7 @@ msgstr ""
 #: fm1companion/ui/linkimport_dialog.py:450
 #: fm1companion/ui/pages/presets.py:167 fm1companion/ui/pages/presets.py:919
 #: fm1companion/ui/pages/presets.py:927 fm1companion/ui/pages/voices.py:402
-#: fm1companion/ui/samples_page.py:184 fm1companion/ui/settings_dialog.py:147
+#: fm1companion/ui/samples_page.py:184 fm1companion/ui/settings_dialog.py:194
 #: fm1companion/ui/wizard.py:119
 msgid "Remove"
 msgstr ""
@@ -9554,8 +9595,8 @@ msgstr ""
 msgid "Continue the switch …"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:845 fm1companion/ui/pages/discover.py:406
-#: fm1companion/ui/settings_dialog.py:307
+#: fm1companion/ui/firmware_page.py:845 fm1companion/ui/pages/discover.py:414
+#: fm1companion/ui/settings_dialog.py:403
 msgid "Version"
 msgstr ""
 
@@ -9611,7 +9652,7 @@ msgid "Versions are loaded as soon as you open this page."
 msgstr ""
 
 #: fm1companion/ui/firmware_page.py:968 fm1companion/ui/firmware_page.py:1011
-#: fm1companion/ui/pages/discover.py:541
+#: fm1companion/ui/pages/discover.py:549
 msgid "loading …"
 msgstr ""
 
@@ -9642,7 +9683,7 @@ msgstr ""
 msgid "Release candidate"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:1029 fm1companion/ui/pages/discover.py:663
+#: fm1companion/ui/firmware_page.py:1029 fm1companion/ui/pages/discover.py:672
 msgid "stable"
 msgstr ""
 
@@ -9943,7 +9984,7 @@ msgid "Profile:"
 msgstr ""
 
 #: fm1companion/ui/fm1_page.py:27 fm1companion/ui/fm1_page.py:222
-#: fm1companion/ui/overview.py:50 fm1companion/ui/settings_dialog.py:304
+#: fm1companion/ui/overview.py:50 fm1companion/ui/settings_dialog.py:400
 msgid "Firmware:"
 msgstr ""
 
@@ -9951,7 +9992,7 @@ msgstr ""
 msgid "Engines:"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:27 fm1companion/ui/recorder_page.py:86
+#: fm1companion/ui/fm1_page.py:27 fm1companion/ui/recorder_page.py:87
 msgid "Tracks:"
 msgstr ""
 
@@ -10070,7 +10111,7 @@ msgstr ""
 msgid "Cache RAM:"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:130 fm1companion/ui/settings_dialog.py:198
+#: fm1companion/ui/fm1_page.py:130 fm1companion/ui/settings_dialog.py:245
 msgid "Storage"
 msgstr ""
 
@@ -10263,7 +10304,7 @@ msgstr ""
 
 #: fm1companion/ui/fm1_page.py:406 fm1companion/ui/overview.py:236
 #: fm1companion/ui/pages/devices.py:225
-#: fm1companion/ui/pages/project_view.py:481
+#: fm1companion/ui/pages/project_view.py:489
 msgid "active"
 msgstr ""
 
@@ -10393,8 +10434,8 @@ msgid "Felucca protocol (backup, projects, editor)"
 msgstr ""
 
 #: fm1companion/ui/linkimport_dialog.py:151
-#: fm1companion/ui/pages/discover.py:357
-#: fm1companion/ui/pages/discover.py:1127
+#: fm1companion/ui/pages/discover.py:365
+#: fm1companion/ui/pages/discover.py:1136
 msgid "Add to my firmwares"
 msgstr ""
 
@@ -10500,7 +10541,7 @@ msgid "Firmwares you added yourself. They also appear in Firmware+ › “Instal
 msgstr ""
 
 #: fm1companion/ui/linkimport_dialog.py:398
-#: fm1companion/ui/pages/discover.py:593
+#: fm1companion/ui/pages/discover.py:601
 msgid "Paste link …"
 msgstr ""
 
@@ -10541,10 +10582,10 @@ msgstr ""
 msgid "fetch, collect and restore project slots – view them and export them as MIDI"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:44 fm1companion/ui/recorder_page.py:46
+#: fm1companion/ui/main_window.py:44 fm1companion/ui/recorder_page.py:47
 #: fm1companion/ui/sample_recorder.py:25
 #: fm1companion/ui/sample_recorder.py:396
-#: fm1companion/ui/settings_dialog.py:170
+#: fm1companion/ui/settings_dialog.py:217
 msgid "Recording"
 msgstr ""
 
@@ -10602,7 +10643,7 @@ msgstr ""
 msgid "Sound Module"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:64 fm1companion/ui/pages/discover.py:1140
+#: fm1companion/ui/main_window.py:64 fm1companion/ui/pages/discover.py:1149
 #: fm1companion/ui/pages/simulator.py:131
 #: fm1companion/ui/pages/simulator.py:819 fm1companion/ui/wizard.py:361
 msgid "Simulator"
@@ -10980,9 +11021,9 @@ msgstr ""
 #: fm1companion/ui/overview.py:58 fm1companion/ui/pages/devices.py:244
 #: fm1companion/ui/pages/presets.py:643 fm1companion/ui/pages/presets.py:659
 #: fm1companion/ui/pages/presets.py:873 fm1companion/ui/pages/presets.py:881
-#: fm1companion/ui/projects_page.py:106 fm1companion/ui/projects_page.py:472
-#: fm1companion/ui/settings_dialog.py:181
-#: fm1companion/ui/settings_dialog.py:293
+#: fm1companion/ui/projects_page.py:106 fm1companion/ui/projects_page.py:488
+#: fm1companion/ui/settings_dialog.py:228
+#: fm1companion/ui/settings_dialog.py:389
 msgid "Rename"
 msgstr ""
 
@@ -11094,7 +11135,7 @@ msgstr ""
 msgid "not plugged in"
 msgstr ""
 
-#: fm1companion/ui/overview.py:239 fm1companion/ui/settings_dialog.py:281
+#: fm1companion/ui/overview.py:239 fm1companion/ui/settings_dialog.py:377
 msgid "firmware unknown"
 msgstr ""
 
@@ -11460,7 +11501,7 @@ msgid "{part} – technically: object {id}, CRC {crc:08X}"
 msgstr ""
 
 #: fm1companion/ui/pages/backup_browser.py:403
-#: fm1companion/ui/recorder_page.py:156 fm1companion/ui/samples_page.py:532
+#: fm1companion/ui/recorder_page.py:157 fm1companion/ui/samples_page.py:532
 msgid "File"
 msgstr ""
 
@@ -12005,9 +12046,9 @@ msgid "Redo"
 msgstr ""
 
 #: fm1companion/ui/pages/compose.py:286 fm1companion/ui/pages/compose.py:508
-#: fm1companion/ui/pages/discover.py:1190 fm1companion/ui/pages/midi.py:123
-#: fm1companion/ui/pages/voices.py:402 fm1companion/ui/projects_page.py:332
-#: fm1companion/ui/samples_page.py:1118
+#: fm1companion/ui/pages/discover.py:1199 fm1companion/ui/pages/midi.py:123
+#: fm1companion/ui/pages/voices.py:402 fm1companion/ui/projects_page.py:348
+#: fm1companion/ui/samples_page.py:1118 fm1companion/ui/storage_tab.py:264
 msgid "Clear"
 msgstr ""
 
@@ -12363,7 +12404,7 @@ msgid "Next …"
 msgstr ""
 
 #: fm1companion/ui/pages/devices.py:115 fm1companion/ui/pages/devices.py:461
-#: fm1companion/ui/settings_dialog.py:192 fm1companion/ui/wizard.py:371
+#: fm1companion/ui/settings_dialog.py:239 fm1companion/ui/wizard.py:371
 msgid "Devices"
 msgstr ""
 
@@ -12471,8 +12512,8 @@ msgid "Merge …"
 msgstr ""
 
 #: fm1companion/ui/pages/devices.py:251 fm1companion/ui/pages/devices.py:322
-#: fm1companion/ui/settings_dialog.py:185
-#: fm1companion/ui/settings_dialog.py:318
+#: fm1companion/ui/settings_dialog.py:232
+#: fm1companion/ui/settings_dialog.py:431
 msgid "Forget"
 msgstr ""
 
@@ -12502,7 +12543,7 @@ msgstr ""
 msgid "Note on {device}:"
 msgstr ""
 
-#: fm1companion/ui/pages/devices.py:317 fm1companion/ui/settings_dialog.py:317
+#: fm1companion/ui/pages/devices.py:317 fm1companion/ui/settings_dialog.py:422
 msgid "Forget device"
 msgstr ""
 
@@ -12655,457 +12696,468 @@ msgstr ""
 msgid "your wishlist"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:113
+#: fm1companion/ui/pages/discover.py:50
+msgid "no token set"
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:51
+#, python-brace-format
+msgid "token set ({hint})"
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:121
 msgid "installable"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:115 fm1companion/ui/pages/discover.py:520
-#: fm1companion/ui/pages/discover.py:663
+#: fm1companion/ui/pages/discover.py:123 fm1companion/ui/pages/discover.py:528
+#: fm1companion/ui/pages/discover.py:672
 msgid "Beta"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:117 fm1companion/ui/pages/discover.py:662
+#: fm1companion/ui/pages/discover.py:125 fm1companion/ui/pages/discover.py:671
 msgctxt "license"
 msgid "closed"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:119
+#: fm1companion/ui/pages/discover.py:127
 msgid "paid"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:164
+#: fm1companion/ui/pages/discover.py:172
 msgid "Author's description"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:224
+#: fm1companion/ui/pages/discover.py:232
 #, python-brace-format
 msgid "by {author}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:290 fm1companion/ui/pages/discover.py:730
+#: fm1companion/ui/pages/discover.py:298 fm1companion/ui/pages/discover.py:739
 msgid "All firmwares"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:330
+#: fm1companion/ui/pages/discover.py:338
 #, python-brace-format
 msgid "by <b>{author}</b>"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:331
+#: fm1companion/ui/pages/discover.py:339
 #, python-brace-format
 msgid "License: {license}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:332
+#: fm1companion/ui/pages/discover.py:340
 #, python-brace-format
 msgid "Based on: {lineage}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:334
+#: fm1companion/ui/pages/discover.py:342
 #, python-brace-format
 msgid "★ {stars} on GitHub"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:343
+#: fm1companion/ui/pages/discover.py:351
 msgid "Install …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:344
+#: fm1companion/ui/pages/discover.py:352
 msgid "install on the active FM-1 (with confirmation and backup)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:347
+#: fm1companion/ui/pages/discover.py:355
 msgid "No verified package in the catalog – the app looks for the firmware file in the GitHub releases (you check it before saving)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:349
+#: fm1companion/ui/pages/discover.py:357
 msgid "No verified package in the catalog – see the author's website/installer"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:353
+#: fm1companion/ui/pages/discover.py:361
 msgid "Try in the simulator"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:354
+#: fm1companion/ui/pages/discover.py:362
 msgid "runs on the computer – nothing is written to the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:356
+#: fm1companion/ui/pages/discover.py:364
 msgid "Open online editor"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:358
+#: fm1companion/ui/pages/discover.py:366
 msgid "then also appears in the tab “Install & versions”"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:360
+#: fm1companion/ui/pages/discover.py:368
 msgid "Remember"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:366
+#: fm1companion/ui/pages/discover.py:374
 msgid "Links"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:386
+#: fm1companion/ui/pages/discover.py:394
 msgid "Good to know"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:396
+#: fm1companion/ui/pages/discover.py:404
 msgid "Author's description, from awesome-fm-1 – deliberately not translated"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:403
+#: fm1companion/ui/pages/discover.py:411
 msgid "What the app can do with it"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:417 fm1companion/ui/pages/help.py:239
+#: fm1companion/ui/pages/discover.py:425 fm1companion/ui/pages/help.py:239
 msgid "Versions"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:426
+#: fm1companion/ui/pages/discover.py:434
 msgid "Load the project's README"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:431
+#: fm1companion/ui/pages/discover.py:439
 msgid "From the author"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:446
+#: fm1companion/ui/pages/discover.py:454
 msgid "Author's web installer"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:446
+#: fm1companion/ui/pages/discover.py:454
 msgid "Simulator in the browser"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:447
+#: fm1companion/ui/pages/discover.py:455
 msgid "Source code"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:448
+#: fm1companion/ui/pages/discover.py:456
 msgid "Downloads (M-VAVE)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:448
+#: fm1companion/ui/pages/discover.py:456
 msgid "Release notes (M-VAVE)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:449
+#: fm1companion/ui/pages/discover.py:457
 msgid "MIDI reference (M-VAVE)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:452
+#: fm1companion/ui/pages/discover.py:460
 msgid "View on GitHub"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:456
+#: fm1companion/ui/pages/discover.py:464
 msgid "View on thefirmwarehub.com"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:457
+#: fm1companion/ui/pages/discover.py:465
 msgid "View in the FM1 firmware directory"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:465
+#: fm1companion/ui/pages/discover.py:473
 msgid "Install via M-VAVE's standard update protocol – the checksum is verified before installing"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:466
+#: fm1companion/ui/pages/discover.py:474
 msgid "Install via M-VAVE's standard update protocol"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:468
+#: fm1companion/ui/pages/discover.py:476
 msgid "Install only via the manufacturer's site"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:470
+#: fm1companion/ui/pages/discover.py:478
 msgid "No verified package in the catalog; enter a .fwsc address via “Paste link”"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:473
+#: fm1companion/ui/pages/discover.py:481
 #, python-brace-format
 msgid "Backups, projects and editor bridge (Felucca protocol; {evidence})"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:476
+#: fm1companion/ui/pages/discover.py:484
 #, python-brace-format
 msgid "Backups through the app ({protocol} backup protocol, from its source code)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:479
+#: fm1companion/ui/pages/discover.py:487
 msgid "Backups only with the firmware's own editor (a backup protocol of its own)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:481
+#: fm1companion/ui/pages/discover.py:489
 msgid "No backup over USB"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:483
+#: fm1companion/ui/pages/discover.py:491
 msgid "Backups/projects: unknown – checked when connecting"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:485
+#: fm1companion/ui/pages/discover.py:493
 msgid "Backup & projects"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:487
+#: fm1companion/ui/pages/discover.py:495
 msgid "Online editor in the app"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:487
+#: fm1companion/ui/pages/discover.py:495
 msgid "Editor from the repo"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:488
+#: fm1companion/ui/pages/discover.py:496
 msgid "no editor known"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:489
+#: fm1companion/ui/pages/discover.py:497
 msgid "Emulator"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:490
+#: fm1companion/ui/pages/discover.py:498
 msgid "try it out on the computer"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:490
+#: fm1companion/ui/pages/discover.py:498
 msgid "no browser emulator known"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:509
+#: fm1companion/ui/pages/discover.py:517
 msgid "no .fwsc package"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:509
+#: fm1companion/ui/pages/discover.py:517
 #, python-brace-format
 msgid "Package: {name}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:511
+#: fm1companion/ui/pages/discover.py:519
 #, python-brace-format
 msgid "Pre-release · {package}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:518
+#: fm1companion/ui/pages/discover.py:526
 msgid "in the Mooring catalog, checksum known"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:518
+#: fm1companion/ui/pages/discover.py:526
 msgid "known package (recognition only)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:520
+#: fm1companion/ui/pages/discover.py:528
 msgid "interruption not resumable"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:521
+#: fm1companion/ui/pages/discover.py:529
 msgid "projects not backward compatible"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:522
+#: fm1companion/ui/pages/discover.py:530
 msgid "needs MiniLab 3"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:527
+#: fm1companion/ui/pages/discover.py:535
 msgid "no versions known"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:536
+#: fm1companion/ui/pages/discover.py:544
 msgid "State from GitHub"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:552
+#: fm1companion/ui/pages/discover.py:560
 msgid "README not loaded – try again"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:594
+#: fm1companion/ui/pages/discover.py:602
 msgid "Paste a GitHub link, .fwsc package, installer or simulator page (Ctrl+V)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:599 fm1companion/ui/pages/discover.py:874
-#: fm1companion/ui/pages/discover.py:886 fm1companion/ui/pages/help.py:194
+#: fm1companion/ui/pages/discover.py:607 fm1companion/ui/pages/discover.py:883
+#: fm1companion/ui/pages/discover.py:895 fm1companion/ui/pages/help.py:194
 #: fm1companion/ui/pages/midi.py:1116
 msgid "Refresh"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:600
+#: fm1companion/ui/pages/discover.py:608
 msgid "Reload the catalog (awesome-fm-1 and Mooring)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:604 fm1companion/ui/pages/discover.py:606
+#: fm1companion/ui/pages/discover.py:612 fm1companion/ui/pages/discover.py:614
 msgid "More"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:609
+#: fm1companion/ui/pages/discover.py:617
 msgid "My firmwares …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:610
+#: fm1companion/ui/pages/discover.py:618
 msgid "GitHub token …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:611
+#: fm1companion/ui/pages/discover.py:620
 msgid "Clear the remembered list …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:615
+#: fm1companion/ui/pages/discover.py:624
 msgid "Update the catalog automatically when opening"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:619
+#: fm1companion/ui/pages/discover.py:628
 msgid "Load preview images from the internet"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:624
+#: fm1companion/ui/pages/discover.py:633
 msgid "awesome-fm-1 on GitHub"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:626
+#: fm1companion/ui/pages/discover.py:635
 msgid "FM1 firmware directory"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:644
+#: fm1companion/ui/pages/discover.py:653
 msgid "Search: name, author, description, keyword (e.g. “acid”, “drums”, “Vestal”)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:654
+#: fm1companion/ui/pages/discover.py:663
 msgid "Sort:"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:661
+#: fm1companion/ui/pages/discover.py:670
 msgctxt "license"
 msgid "open"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:664
+#: fm1companion/ui/pages/discover.py:673
 msgid "Based on"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:666
+#: fm1companion/ui/pages/discover.py:675
 msgctxt "release state"
 msgid "Status"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:691
+#: fm1companion/ui/pages/discover.py:700
+#: fm1companion/ui/settings_dialog.py:305
+#: fm1companion/ui/settings_dialog.py:321
 msgid "Reset"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:692
+#: fm1companion/ui/pages/discover.py:701
 msgid "Reset all filters"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:738
+#: fm1companion/ui/pages/discover.py:747
 msgid "What"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:743
+#: fm1companion/ui/pages/discover.py:752
 msgid "Check for new versions"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:744
+#: fm1companion/ui/pages/discover.py:753
 msgid "asks GitHub for the releases of the firmwares you follow (at most 12)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:749
+#: fm1companion/ui/pages/discover.py:758
 msgid "News"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:754
+#: fm1companion/ui/pages/discover.py:763
 msgid "Search tools, editors, recovery, guides, videos …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:763
+#: fm1companion/ui/pages/discover.py:772
 msgid "Double-click opens the page in the browser. Source: awesome-fm-1 (CC0)."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:764
+#: fm1companion/ui/pages/discover.py:773
 msgid "Tools && knowledge"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:786
+#: fm1companion/ui/pages/discover.py:795
 msgid "bundled state"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:786
+#: fm1companion/ui/pages/discover.py:795
 msgid "state of the last sync"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:786
+#: fm1companion/ui/pages/discover.py:795
 msgid "just updated"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:787
+#: fm1companion/ui/pages/discover.py:796
 msgid "no catalog"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:792
+#: fm1companion/ui/pages/discover.py:801
 #, python-brace-format
 msgid "{n} firmwares for the FM-1, {installable} of them directly installable. Catalog revision {revision} of {date} ({source}). Sources: <a href='{awesome}'>awesome-fm-1</a> and Mooring (cicloid). More directories: <a href='{hub}'>FM-1 Firmware Hub</a>, <a href='{directory}'>fm1-editor.com/firmware</a>."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:818
+#: fm1companion/ui/pages/discover.py:827
 msgid "Added by you."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:865
+#: fm1companion/ui/pages/discover.py:874
 msgid "Offline mode: the bundled catalog applies."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:869
+#: fm1companion/ui/pages/discover.py:878
 msgid "Loading …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:880
+#: fm1companion/ui/pages/discover.py:889
 #, python-brace-format
 msgid "Catalog updated – {n} entry."
 msgid_plural "Catalog updated – {n} entries."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/discover.py:881
+#: fm1companion/ui/pages/discover.py:890
 msgid "Catalog updated."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:890
+#: fm1companion/ui/pages/discover.py:899
 #, python-brace-format
 msgid "Catalog not updated: {error} You still see the saved state of {date}; everything here also works offline."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:894
+#: fm1companion/ui/pages/discover.py:903
 #, python-brace-format
 msgid "Catalog not updated: {error} You still see the saved state; everything here also works offline."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:949
+#: fm1companion/ui/pages/discover.py:958
 msgid "Loading stars from GitHub …"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:956
+#: fm1companion/ui/pages/discover.py:965
 #, python-brace-format
 msgid "Stars loaded for {n} firmwares."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:957
+#: fm1companion/ui/pages/discover.py:966
 #, python-brace-format
 msgid "Stars loaded for {n} firmwares – GitHub limit reached, the rest follows later. With your own GitHub token (“More”) it goes faster."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1009
+#: fm1companion/ui/pages/discover.py:1018
 #, python-brace-format
 msgid "{shown} of {total}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1014
+#: fm1companion/ui/pages/discover.py:1023
 msgid ""
 "No firmware matches the search and filters.\n"
 "Tip: “Reset all filters” (button to the right of the filters) or fewer search words."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1016
+#: fm1companion/ui/pages/discover.py:1025
 msgid "The catalog is empty – “Refresh” loads it from the internet."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1121
+#: fm1companion/ui/pages/discover.py:1130
 #, python-brace-format
 msgid ""
 "Installing directly from the catalog comes with the new installer.\n"
@@ -13113,7 +13165,7 @@ msgid ""
 "Until then: “Add to my firmwares” – then {name} is ready in the tab “Install & versions”, or open the author's web installer in the browser."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1124
+#: fm1companion/ui/pages/discover.py:1133
 #, python-brace-format
 msgid ""
 "Installing directly from the catalog comes with the new installer.\n"
@@ -13121,154 +13173,177 @@ msgid ""
 "Until then: “Add to my firmwares” – then {name} is ready in the tab “Install & versions”."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1128
+#: fm1companion/ui/pages/discover.py:1137
 msgid "Open web installer"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1145
+#: fm1companion/ui/pages/discover.py:1154
 #, python-brace-format
 msgid "{title} opened in the browser."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1158
+#: fm1companion/ui/pages/discover.py:1167
 #, python-brace-format
 msgid "{name} is already built in – you find it in the tab “Install & versions”."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1160
+#: fm1companion/ui/pages/discover.py:1169
 msgid "Already there"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1160
+#: fm1companion/ui/pages/discover.py:1169
 #, python-brace-format
 msgid "{name} is built into the app."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1167
+#: fm1companion/ui/pages/discover.py:1176
 msgid "In my firmwares ✓"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1168
+#: fm1companion/ui/pages/discover.py:1177
 #, python-brace-format
 msgid "{name} is now in the tab “Install & versions”."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1184
+#: fm1companion/ui/pages/discover.py:1193
 msgid "The remembered list is already empty."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1187
+#: fm1companion/ui/pages/discover.py:1196
 msgid "Clear the remembered list"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1188
+#: fm1companion/ui/pages/discover.py:1197
 #, python-brace-format
 msgid "Forget {n} remembered firmware? Nothing is uninstalled or deleted."
 msgid_plural "Forget {n} remembered firmwares? Nothing is uninstalled or deleted."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/discover.py:1205
+#: fm1companion/ui/pages/discover.py:1214
 msgid "Remembered list cleared."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1220
+#: fm1companion/ui/pages/discover.py:1229
 #, python-brace-format
 msgid "{name} saved – now in the tab “Install & versions”."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1231
+#: fm1companion/ui/pages/discover.py:1239
+#, python-brace-format
+msgid "GitHub token … ({state})"
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:1248
 msgid "GitHub token"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1232
-msgid ""
-"Optional: personal GitHub token (only read access to public repos needed).\n"
-"Without a token GitHub allows 60 requests per hour, with a token 5000.\n"
-"Leave empty to remove."
+#: fm1companion/ui/pages/discover.py:1250
+msgid "Optional: personal GitHub token (only read access to public repos needed). Without a token GitHub allows 60 requests per hour, with a token 5000. It is kept in the settings file, readable only by you."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1245
+#: fm1companion/ui/pages/discover.py:1260
+msgid "new token (leave empty to keep the current one)"
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:1260
+msgid "token"
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:1264
+msgid "Remove token"
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:1281
+msgid "GitHub token removed."
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:1288
+#, python-brace-format
+msgid "GitHub token saved ({state})."
+msgstr ""
+
+#: fm1companion/ui/pages/discover.py:1296
 msgid "remembered"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1247
+#: fm1companion/ui/pages/discover.py:1298
 msgid "your firmware"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1251
+#: fm1companion/ui/pages/discover.py:1302
 #, python-brace-format
 msgid "on {name}"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1268
+#: fm1companion/ui/pages/discover.py:1319
 #, python-brace-format
 msgid "{name} {version} (pre-release)"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1289
+#: fm1companion/ui/pages/discover.py:1340
 msgid "No news yet. How it works: mark firmwares with “Remember” or add them to your firmwares – then the app shows new versions here. It follows the firmwares on your FM-1 automatically."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1292
+#: fm1companion/ui/pages/discover.py:1343
 #, python-brace-format
 msgid "You follow: {names}."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1295
+#: fm1companion/ui/pages/discover.py:1346
 #, python-brace-format
 msgid "New versions of the firmwares you follow ({names}) and changes in the catalog. “new” = since your last visit. Double-click opens the firmware."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1301
+#: fm1companion/ui/pages/discover.py:1352
 msgid "Offline – news will come next time."
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1339
+#: fm1companion/ui/pages/discover.py:1390
 msgid "Editors, librarians and companion software"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1339
+#: fm1companion/ui/pages/discover.py:1390
 msgid "Firmware update and recovery"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1340
+#: fm1companion/ui/pages/discover.py:1391
 msgid "Patches and sound banks"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1340
+#: fm1companion/ui/pages/discover.py:1391
 msgid "Hardware add-ons"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1340
+#: fm1companion/ui/pages/discover.py:1391
 msgid "Documentation and guides"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1341
+#: fm1companion/ui/pages/discover.py:1392
 msgid "Articles and reviews"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1341
+#: fm1companion/ui/pages/discover.py:1392
 msgid "Videos"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1341
+#: fm1companion/ui/pages/discover.py:1392
 msgid "Communities"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1342
+#: fm1companion/ui/pages/discover.py:1393
 msgid "Reverse engineering and firmware development"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1342
+#: fm1companion/ui/pages/discover.py:1393
 msgid "Related M-VAVE projects"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1372 fm1companion/ui/wizard.py:357
+#: fm1companion/ui/pages/discover.py:1423 fm1companion/ui/wizard.py:357
 msgid "Firmware+"
 msgstr ""
 
-#: fm1companion/ui/pages/discover.py:1374
+#: fm1companion/ui/pages/discover.py:1425
 msgid "All FM-1 firmwares in one place: find, try out, install, switch versions, back to the original"
 msgstr ""
 
@@ -13598,7 +13673,7 @@ msgstr ""
 
 #: fm1companion/ui/pages/midi.py:664 fm1companion/ui/pages/simulator.py:699
 #: fm1companion/ui/pages/studio.py:360 fm1companion/ui/playback_bar.py:146
-#: fm1companion/ui/recorder_page.py:171 fm1companion/ui/sample_recorder.py:300
+#: fm1companion/ui/recorder_page.py:172 fm1companion/ui/sample_recorder.py:300
 #: fm1companion/ui/samples_page.py:116
 msgid "Stop"
 msgstr ""
@@ -13608,7 +13683,7 @@ msgid "sends MIDI Stop and ends the clock"
 msgstr ""
 
 #: fm1companion/ui/pages/midi.py:671 fm1companion/ui/pages/midi.py:765
-#: fm1companion/ui/pages/studio.py:718 fm1companion/ui/recorder_page.py:276
+#: fm1companion/ui/pages/studio.py:718 fm1companion/ui/recorder_page.py:277
 msgid "stopped"
 msgstr ""
 
@@ -13937,8 +14012,8 @@ msgid "Track on the FM-1 for listening / saving"
 msgstr ""
 
 #: fm1companion/ui/pages/presets.py:122 fm1companion/ui/pages/presets.py:760
-#: fm1companion/ui/pages/voices.py:308 fm1companion/ui/recorder_page.py:169
-#: fm1companion/ui/recorder_page.py:749 fm1companion/ui/sample_recorder.py:142
+#: fm1companion/ui/pages/voices.py:308 fm1companion/ui/recorder_page.py:170
+#: fm1companion/ui/recorder_page.py:750 fm1companion/ui/sample_recorder.py:142
 #: fm1companion/ui/samples_page.py:114 fm1companion/ui/samples_page.py:186
 #: fm1companion/ui/samples_page.py:891 fm1companion/ui/workshop_page.py:161
 msgid "Listen"
@@ -14230,7 +14305,7 @@ msgstr ""
 msgid "Write into the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/presets.py:567 fm1companion/ui/samples_page.py:1376
+#: fm1companion/ui/pages/presets.py:567 fm1companion/ui/samples_page.py:1391
 #: fm1companion/ui/workshop_page.py:406
 msgid "Write"
 msgstr ""
@@ -14571,7 +14646,7 @@ msgid "Renamed in the library: “{old}” → “{new}” ({file}). Nothing was
 msgstr ""
 
 #: fm1companion/ui/pages/presets.py:893 fm1companion/ui/pages/studio.py:157
-#: fm1companion/ui/recorder_page.py:180
+#: fm1companion/ui/recorder_page.py:181
 msgid "Export"
 msgstr ""
 
@@ -14644,7 +14719,7 @@ msgid "hold"
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:45
-#: fm1companion/ui/pages/project_view.py:680
+#: fm1companion/ui/pages/project_view.py:688
 msgid "Project View"
 msgstr ""
 
@@ -14956,7 +15031,7 @@ msgid "The project view only knows the Melodee format. SLOOP projects are built 
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:373
-#: fm1companion/ui/projects_page.py:408
+#: fm1companion/ui/projects_page.py:424
 msgid "Other firmware"
 msgstr ""
 
@@ -14979,185 +15054,190 @@ msgstr ""
 msgid "Reading {n} bytes …"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:400
+#: fm1companion/ui/pages/project_view.py:404
 #, python-brace-format
 msgid "{what} from “{device}”"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:402
+#: fm1companion/ui/pages/project_view.py:406
 #, python-brace-format
 msgid "read live from <b>“{device}”</b>"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:403
+#: fm1companion/ui/pages/project_view.py:407
 #, python-brace-format
 msgid "at {time} – {what}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:406
+#: fm1companion/ui/pages/project_view.py:410
 #, python-brace-format
 msgid "Read project from “{device}”"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:407
+#: fm1companion/ui/pages/project_view.py:412
+#, python-brace-format
+msgid "Cancelled after {done} of {n} bytes – nothing was opened, nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/pages/project_view.py:415
 #, python-brace-format
 msgid "{what} read from “{device}” ({n} bytes) and opened – only viewed, nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:416
+#: fm1companion/ui/pages/project_view.py:424
 msgid "(not readable)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:437
+#: fm1companion/ui/pages/project_view.py:445
 #, python-brace-format
 msgid "<b>This project could not be read.</b> Format: {format}. {warnings}<br>What works: the project stays in the backup and can be restored as usual – only the view is missing."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:446
+#: fm1companion/ui/pages/project_view.py:454
 #, python-brace-format
 msgid "Note: {warnings}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:449
+#: fm1companion/ui/pages/project_view.py:457
 #, python-brace-format
 msgid "{bpm} BPM · Swing {swing} · {n} track · Format {format}"
 msgid_plural "{bpm} BPM · Swing {swing} · {n} tracks · Format {format}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/project_view.py:460
+#: fm1companion/ui/pages/project_view.py:468
 #, python-brace-format
 msgid "(library U{slot:03d})"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:479
+#: fm1companion/ui/pages/project_view.py:487
 #, python-brace-format
 msgid "{track}, pattern {pattern}: {notes} notes/hits, {length} steps, {div}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:482
+#: fm1companion/ui/pages/project_view.py:490
 #, python-brace-format
 msgid "own preset: {name}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:485
+#: fm1companion/ui/pages/project_view.py:493
 msgid "active, empty"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:489
+#: fm1companion/ui/pages/project_view.py:497
 msgid "This track only has 8 patterns"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:496
+#: fm1companion/ui/pages/project_view.py:504
 msgctxt "song"
 msgid "Section"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:496
+#: fm1companion/ui/pages/project_view.py:504
 msgid "Rep."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:508
+#: fm1companion/ui/pages/project_view.py:516
 #, python-brace-format
 msgid "{kind}: {name} ({engine}) – sounds exact only in the studio or on the FM-1; MIDI export and preview use the track's sound."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:510
+#: fm1companion/ui/pages/project_view.py:518
 msgid "Song block preset"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:510
+#: fm1companion/ui/pages/project_view.py:518
 msgid "Pattern preset"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:515
+#: fm1companion/ui/pages/project_view.py:523
 msgid "Timed punch effects of this section (steps START–END, on every repeat) – only work on the FM-1 and in the studio, not in the MIDI export."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:520
+#: fm1companion/ui/pages/project_view.py:528
 msgid "No song set up – the active patterns are exported instead."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:536
+#: fm1companion/ui/pages/project_view.py:544
 #, python-brace-format
 msgid "{n} punch effect"
 msgid_plural "{n} punch effects"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/project_view.py:537
+#: fm1companion/ui/pages/project_view.py:545
 #, python-brace-format
 msgid "{n} song/pattern preset ({names})"
 msgid_plural "{n} song/pattern presets ({names})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/project_view.py:540
+#: fm1companion/ui/pages/project_view.py:548
 #, python-brace-format
 msgid "{items} (Melodee 1.6) are in the song table. Preview and MIDI export do not play them – they only sound exact in the studio (or on the FM-1)."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:542
+#: fm1companion/ui/pages/project_view.py:550
 msgid " and "
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:558
+#: fm1companion/ui/pages/project_view.py:566
 #, python-brace-format
 msgid ", {n} recorded note"
 msgid_plural ", {n} recorded notes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/project_view.py:595
+#: fm1companion/ui/pages/project_view.py:603
 msgid "Nothing to export"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:595
+#: fm1companion/ui/pages/project_view.py:603
 msgid "Please open a readable project first."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:602
+#: fm1companion/ui/pages/project_view.py:610
 msgid "Save MIDI file"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:608
+#: fm1companion/ui/pages/project_view.py:616
 msgid "No notes"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:608
+#: fm1companion/ui/pages/project_view.py:616
 msgid "There are no notes in the chosen selection."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:621
+#: fm1companion/ui/pages/project_view.py:629
 #, python-brace-format
 msgid "“{name}” not saved"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:627
+#: fm1companion/ui/pages/project_view.py:635
 msgid "Save CSV"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:639
+#: fm1companion/ui/pages/project_view.py:647
 msgid "Save JSON"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:649
+#: fm1companion/ui/pages/project_view.py:657
 msgid "Save image"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:653
+#: fm1companion/ui/pages/project_view.py:661
 #, python-brace-format
 msgid "“{name}” could not be written – folder write-protected?"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:661
-#: fm1companion/ui/pages/project_view.py:666
+#: fm1companion/ui/pages/project_view.py:669
+#: fm1companion/ui/pages/project_view.py:674
 #: fm1companion/ui/pages/studio.py:1049
 #, python-brace-format
 msgid "Saved: {file}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:682
+#: fm1companion/ui/pages/project_view.py:690
 msgid "view Melodee projects and export them as MIDI"
 msgstr ""
 
@@ -15924,7 +16004,7 @@ msgstr ""
 msgid "additional MIDI input, e.g. a USB keyboard"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:188 fm1companion/ui/recorder_page.py:64
+#: fm1companion/ui/pages/simulator.py:188 fm1companion/ui/recorder_page.py:65
 #: fm1companion/ui/sample_recorder.py:58
 msgid "Search"
 msgstr ""
@@ -15947,7 +16027,7 @@ msgid "Choose a simulator on the left."
 msgstr ""
 
 #: fm1companion/ui/pages/simulator.py:234
-#: fm1companion/ui/pages/simulator.py:713 fm1companion/ui/recorder_page.py:59
+#: fm1companion/ui/pages/simulator.py:713 fm1companion/ui/recorder_page.py:60
 #: fm1companion/ui/sample_recorder.py:70
 #: fm1companion/ui/sample_recorder.py:105
 #: fm1companion/ui/sample_recorder.py:312 fm1companion/ui/samples_page.py:293
@@ -16406,7 +16486,7 @@ msgid "Stop"
 msgstr ""
 
 #: fm1companion/ui/pages/soundmodule.py:389
-#: fm1companion/ui/recorder_page.py:277
+#: fm1companion/ui/recorder_page.py:278
 msgid "running"
 msgstr ""
 
@@ -16518,14 +16598,14 @@ msgid "Which backup should the twin load? {firmwares} backups of all devices, ne
 msgstr ""
 
 #: fm1companion/ui/pages/studio.py:54 fm1companion/ui/projects_page.py:85
-#: fm1companion/ui/projects_page.py:108 fm1companion/ui/projects_page.py:480
+#: fm1companion/ui/projects_page.py:108 fm1companion/ui/projects_page.py:496
 msgctxt "library"
 msgid "Note"
 msgstr ""
 
 #. Translators: date and time format (strftime)
-#: fm1companion/ui/pages/studio.py:65 fm1companion/ui/storage_tab.py:216
-#: fm1companion/ui/studio_service.py:602
+#: fm1companion/ui/pages/studio.py:65 fm1companion/ui/storage_tab.py:227
+#: fm1companion/ui/storage_tab.py:328 fm1companion/ui/studio_service.py:602
 #, python-format
 msgid "%Y-%m-%d %H:%M"
 msgstr ""
@@ -16593,7 +16673,7 @@ msgstr ""
 msgid "Single tracks (stems) as well"
 msgstr ""
 
-#: fm1companion/ui/pages/studio.py:150 fm1companion/ui/settings_dialog.py:268
+#: fm1companion/ui/pages/studio.py:150 fm1companion/ui/settings_dialog.py:364
 msgid "Choose folder"
 msgstr ""
 
@@ -17203,7 +17283,7 @@ msgstr ""
 msgid "Safety copy before writing back from the studio"
 msgstr ""
 
-#: fm1companion/ui/pages/studio.py:1101 fm1companion/ui/projects_page.py:347
+#: fm1companion/ui/pages/studio.py:1101 fm1companion/ui/projects_page.py:363
 #, python-brace-format
 msgid "Backed up: {name}"
 msgstr ""
@@ -17654,7 +17734,7 @@ msgid ""
 msgstr ""
 
 #: fm1companion/ui/pages/voices.py:738 fm1companion/ui/samples_page.py:150
-#: fm1companion/ui/web.py:119
+#: fm1companion/ui/web.py:149
 msgid "Save"
 msgstr ""
 
@@ -18106,7 +18186,7 @@ msgid "On the FM-1"
 msgstr ""
 
 #: fm1companion/ui/projects_page.py:40 fm1companion/ui/projects_page.py:194
-#: fm1companion/ui/projects_page.py:310
+#: fm1companion/ui/projects_page.py:326
 msgctxt "project slot"
 msgid "Slot"
 msgstr ""
@@ -18204,7 +18284,7 @@ msgstr ""
 msgid "View projects in older backups and fetch them one by one (Backups › Browse & Compare)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:117 fm1companion/ui/recorder_page.py:194
+#: fm1companion/ui/projects_page.py:117 fm1companion/ui/recorder_page.py:195
 #: fm1companion/ui/samplepacks_tab.py:65 fm1companion/ui/samples_page.py:105
 #: fm1companion/ui/samples_page.py:532
 msgid "Folder"
@@ -18245,7 +18325,7 @@ msgstr ""
 msgid "Reading the project slots …"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:183 fm1companion/ui/projects_page.py:416
+#: fm1companion/ui/projects_page.py:183 fm1companion/ui/projects_page.py:432
 msgid "Read slots"
 msgstr ""
 
@@ -18332,93 +18412,100 @@ msgstr ""
 msgid "No project slot is used on the FM-1 – or the slots have not been read yet (“Read again”, F5)."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:300
+#: fm1companion/ui/projects_page.py:310
+#, python-brace-format
+msgid "Cancelled – {done} of {n} project was fetched and is in the library; the one being read was not saved. Nothing was changed on the FM-1."
+msgid_plural "Cancelled – {done} of {n} projects were fetched and are in the library; the one being read was not saved. Nothing was changed on the FM-1."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/projects_page.py:315
+#, python-brace-format
+msgid "Not all projects fetched: {error} – {done} of {n} are in the library, nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:317
 msgid "Fetch projects"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:301
+#: fm1companion/ui/projects_page.py:318
 #, python-brace-format
 msgid "{done} of {n} project fetched into the library ({folder}). Nothing was changed on the FM-1."
 msgid_plural "{done} of {n} projects fetched into the library ({folder}). Nothing was changed on the FM-1."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/projects_page.py:305
-#, python-brace-format
-msgid "Not all projects fetched: {error} – {done} of {n} are in the library, nothing was changed on the FM-1."
-msgstr ""
-
-#: fm1companion/ui/projects_page.py:324
+#: fm1companion/ui/projects_page.py:340
 msgid "Already empty"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:324
+#: fm1companion/ui/projects_page.py:340
 #, python-brace-format
 msgid "{word} {name} is already empty."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:328
+#: fm1companion/ui/projects_page.py:344
 #, python-brace-format
 msgid "Clear {word}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:329
+#: fm1companion/ui/projects_page.py:345
 #, python-brace-format
 msgid "Clear {word} <b>{name}</b> on <b>{device}</b>{size}?<br><br>First the app puts a copy of the project into the library (“… before clearing”) – so you can play it back at any time. Everything else on the FM-1 stays unchanged."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:342
+#: fm1companion/ui/projects_page.py:358
 msgid "Saving the project into the library …"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:344
+#: fm1companion/ui/projects_page.py:360
 #, python-brace-format
 msgid "{device} {word} {name} (before clearing)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:346
+#: fm1companion/ui/projects_page.py:362
 msgid "Copy the app made before clearing."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:348
+#: fm1companion/ui/projects_page.py:364
 #, python-brace-format
 msgid "Clearing {word} {name} …"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:351
+#: fm1companion/ui/projects_page.py:367
 #, python-brace-format
 msgid "Clear {word} {name}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:352
+#: fm1companion/ui/projects_page.py:368
 #, python-brace-format
 msgid "{word} {name} on {device} is now empty."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:354
+#: fm1companion/ui/projects_page.py:370
 #, python-brace-format
 msgid "The project is in the library as “{name}” – from there you can play it back."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:356
+#: fm1companion/ui/projects_page.py:372
 #, python-brace-format
 msgid "Not cleared: {error}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:357
+#: fm1companion/ui/projects_page.py:373
 #, python-brace-format
 msgid "(The copy “{name}” is in the library anyway.)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:358
+#: fm1companion/ui/projects_page.py:374
 msgid "Clearing is a single step and cannot be cancelled."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:370
+#: fm1companion/ui/projects_page.py:386
 msgid "Project library not readable"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:380
+#: fm1companion/ui/projects_page.py:396
 #, python-brace-format
 msgid ""
 "{path}\n"
@@ -18426,547 +18513,547 @@ msgid ""
 "Format: {format}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:395
+#: fm1companion/ui/projects_page.py:411
 msgid "Project file damaged"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:409
+#: fm1companion/ui/projects_page.py:425
 #, python-brace-format
 msgid "<b>{name}</b> comes from <b>{source}</b>, the FM-1 runs <b>{target}</b>. The project formats do not match – nothing is written."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:423
+#: fm1companion/ui/projects_page.py:439
 #, python-brace-format
 msgid "Choose {word}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:424
+#: fm1companion/ui/projects_page.py:440
 #, python-brace-format
 msgid "Into which project slot (1–{n})?"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:428
+#: fm1companion/ui/projects_page.py:444
 msgid "No such slot"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:428
+#: fm1companion/ui/projects_page.py:444
 #, python-brace-format
 msgid "This firmware only has {n} project slot."
 msgid_plural "This firmware only has {n} project slots."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/projects_page.py:436
+#: fm1companion/ui/projects_page.py:452
 #, python-brace-format
 msgid "The project comes from <b>{source}</b>, the FM-1 runs <b>{target}</b> (same firmware, different version – the FM-1 checks whether it reads the format)."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:440
+#: fm1companion/ui/projects_page.py:456
 #, python-brace-format
 msgid "Play <b>{name}</b> into {word} <b>{slot}</b> on <b>{device}</b>?"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:443
+#: fm1companion/ui/projects_page.py:459
 #, python-brace-format
 msgid "Play <b>{name}</b> into {word} <b>{slot}</b> on <b>the FM-1</b>?"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:446
+#: fm1companion/ui/projects_page.py:462
 #, python-brace-format
 msgid "<b>{word} {slot} is in use ({size}) and will be overwritten.</b> Fetch it to the computer first if you want to keep it."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:448
+#: fm1companion/ui/projects_page.py:464
 #, python-brace-format
 msgid "{word} {slot} is empty."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:449
+#: fm1companion/ui/projects_page.py:465
 msgid "The device checks the project first – if it does not fit, nothing is written. Everything else on the FM-1 stays unchanged."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:451 fm1companion/ui/projects_page.py:459
+#: fm1companion/ui/projects_page.py:467 fm1companion/ui/projects_page.py:475
 msgid "Play in project"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:451
+#: fm1companion/ui/projects_page.py:467
 msgid "Play in"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:456
+#: fm1companion/ui/projects_page.py:472
 #, python-brace-format
 msgid "{word} {slot}: {name} written. Load it on the FM-1 under SAVE > PROJECT."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:460
+#: fm1companion/ui/projects_page.py:476
 #, python-brace-format
 msgid "“{name}” is now in {word} {slot}. Load it on the FM-1 under SAVE > PROJECT."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:462
+#: fm1companion/ui/projects_page.py:478
 #, python-brace-format
 msgid "Not played in: {error}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:463
+#: fm1companion/ui/projects_page.py:479
 msgid "nothing was written"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:463
+#: fm1companion/ui/projects_page.py:479
 msgid "the device wrote nothing."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:464
+#: fm1companion/ui/projects_page.py:480
 msgid "A single project is written in one go – please wait a moment."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:474
+#: fm1companion/ui/projects_page.py:490
 msgid "Renamed"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:480
+#: fm1companion/ui/projects_page.py:496
 msgid "Note:"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:482
+#: fm1companion/ui/projects_page.py:498
 msgid "Note saved"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:494
+#: fm1companion/ui/projects_page.py:510
 #, python-brace-format
 msgid "Delete <b>{name}</b> from the library? The file {file} is removed for good – nothing changes on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:499
+#: fm1companion/ui/projects_page.py:515
 #, python-brace-format
 msgid "Deleted from the library: {name}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:501
+#: fm1companion/ui/projects_page.py:517
 #, python-brace-format
 msgid "{name} not deleted"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:512
+#: fm1companion/ui/projects_page.py:528
 msgid "Project or backup files"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:513
+#: fm1companion/ui/projects_page.py:529
 msgid "Projects and backups (*.fm1proj *.json)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:527
+#: fm1companion/ui/projects_page.py:543
 #, python-brace-format
 msgid "{name} slot {n}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:528
+#: fm1companion/ui/projects_page.py:544
 #, python-brace-format
 msgid "{file}, slot {n}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:531
+#: fm1companion/ui/projects_page.py:547
 #, python-brace-format
 msgid "{name} not added to the library"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:534
+#: fm1companion/ui/projects_page.py:550
 msgid "File skipped"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:536
+#: fm1companion/ui/projects_page.py:552
 #, python-brace-format
 msgid "{n} project added to the library."
 msgid_plural "{n} projects added to the library."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/recorder_page.py:46
+#: fm1companion/ui/recorder_page.py:47
 msgid "Records the FM-1 via USB audio (or any other source). With Melodee you can choose stereo or four separate tracks on the device – the app splits them. Bar-accurate: start with the FM-1 and stop after N bars."
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:65
+#: fm1companion/ui/recorder_page.py:66
 msgid "Search for audio devices again"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:69
+#: fm1companion/ui/recorder_page.py:70
 msgid "Source:"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:75
+#: fm1companion/ui/recorder_page.py:76
 msgid "Automatic (what the source offers)"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:76
+#: fm1companion/ui/recorder_page.py:77
 msgid "Stereo (sum)"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:77
+#: fm1companion/ui/recorder_page.py:78
 msgid "All tracks separate"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:80
+#: fm1companion/ui/recorder_page.py:81
 msgid "Mode:"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:82
+#: fm1companion/ui/recorder_page.py:83
 msgid "Split multichannel into stereo pairs"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:83
+#: fm1companion/ui/recorder_page.py:84
 msgid "Split multichannel into single channels (mono)"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:88
+#: fm1companion/ui/recorder_page.py:89
 msgid "Sample rate:"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:90
+#: fm1companion/ui/recorder_page.py:91
 msgid "e.g. song idea 3 (optional)"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:95
+#: fm1companion/ui/recorder_page.py:96
 msgid "bar-accurate to the MIDI clock"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:96
+#: fm1companion/ui/recorder_page.py:97
 msgid "The recording starts exactly at the start (or next bar) of the FM-1 and ends after the chosen number of bars. The FM-1 must send MIDI clock (CLK OUT)."
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:101
+#: fm1companion/ui/recorder_page.py:102
 msgid "wait for start"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:102
+#: fm1companion/ui/recorder_page.py:103
 msgid "from the next bar"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:107
+#: fm1companion/ui/recorder_page.py:108
 msgid "until stop"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:108 fm1companion/ui/workshop_page.py:73
+#: fm1companion/ui/recorder_page.py:109 fm1companion/ui/workshop_page.py:73
 msgid " bars"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:115
+#: fm1companion/ui/recorder_page.py:116
 msgid "Compensation if the start sits a tick too early/late (positive = cut later)"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:118
+#: fm1companion/ui/recorder_page.py:119
 msgid "Compensation:"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:120
+#: fm1companion/ui/recorder_page.py:121
 msgid "Bar:"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:130
+#: fm1companion/ui/recorder_page.py:131
 msgid "Duration:"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:133 fm1companion/ui/sample_recorder.py:80
+#: fm1companion/ui/recorder_page.py:134 fm1companion/ui/sample_recorder.py:80
 msgid "Level:"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:141 fm1companion/ui/recorder_page.py:386
-#: fm1companion/ui/recorder_page.py:457
+#: fm1companion/ui/recorder_page.py:142 fm1companion/ui/recorder_page.py:387
+#: fm1companion/ui/recorder_page.py:458
 msgid "Start recording"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:143
+#: fm1companion/ui/recorder_page.py:144
 msgid "Start/stop recording (Ctrl+R)"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:153
+#: fm1companion/ui/recorder_page.py:154
 msgid "Recordings"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:156
+#: fm1companion/ui/recorder_page.py:157
 msgid "Duration"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:164
+#: fm1companion/ui/recorder_page.py:165
 #, python-brace-format
 msgid "No recordings yet – how it works: choose a source, “Start recording”, play on the FM-1, “Stop recording”. The file lands in {folder}."
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:173
+#: fm1companion/ui/recorder_page.py:174
 msgid "Cut …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:174
+#: fm1companion/ui/recorder_page.py:175
 msgid "Set start/end, fade in/out, normalise – as a new file"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:182 fm1companion/ui/recorder_page.py:633
+#: fm1companion/ui/recorder_page.py:183 fm1companion/ui/recorder_page.py:634
 msgid "Use as sample"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:183
+#: fm1companion/ui/recorder_page.py:184
 #, python-brace-format
 msgid "Copy to {folder} – shows up in the sample library"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:185
+#: fm1companion/ui/recorder_page.py:186
 msgid "Open in Audacity"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:190
+#: fm1companion/ui/recorder_page.py:191
 msgid "Delete the marked recordings (only possible with a selection)"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:274
+#: fm1companion/ui/recorder_page.py:275
 msgid "no clock"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:275
+#: fm1companion/ui/recorder_page.py:276
 #, python-brace-format
 msgid "bar {bar}.{beat}"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:276
+#: fm1companion/ui/recorder_page.py:277
 msgid "waiting for MIDI clock"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:277
+#: fm1companion/ui/recorder_page.py:278
 msgid "recording waits for the cue …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:278
+#: fm1companion/ui/recorder_page.py:279
 msgid "done"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:291
+#: fm1companion/ui/recorder_page.py:292
 msgid "Searching for audio devices …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:307
+#: fm1companion/ui/recorder_page.py:308
 #, python-brace-format
 msgid "Audio devices could not be searched: {error}"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:326
+#: fm1companion/ui/recorder_page.py:327
 msgid "No recording input found. Is the FM-1 connected via USB? (After a firmware update unplug it once and plug it in again.)"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:337
+#: fm1companion/ui/recorder_page.py:338
 #, python-brace-format
 msgid "{device} · channels: {channels} · {way}"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:371 fm1companion/ui/recorder_page.py:388
+#: fm1companion/ui/recorder_page.py:372 fm1companion/ui/recorder_page.py:389
 msgid "Recording not possible"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:371
+#: fm1companion/ui/recorder_page.py:372
 msgid "Recording folder not writable"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:375
+#: fm1companion/ui/recorder_page.py:376
 msgid "Opening the input …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:399
+#: fm1companion/ui/recorder_page.py:400
 msgid "Bar unknown (start not seen) – waiting for the FM-1 to start …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:410
+#: fm1companion/ui/recorder_page.py:411
 #, python-brace-format
 msgid "Channel {n}"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:414
+#: fm1companion/ui/recorder_page.py:415
 msgid "Stop recording"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:434
+#: fm1companion/ui/recorder_page.py:435
 msgid "Stopping the recording …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:436
+#: fm1companion/ui/recorder_page.py:437
 msgid "No MIDI start received – the whole recording is kept."
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:439
+#: fm1companion/ui/recorder_page.py:440
 msgid "Stopping the recording program …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:443
+#: fm1companion/ui/recorder_page.py:444
 msgid "Trimming to the bar range …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:448
+#: fm1companion/ui/recorder_page.py:449
 #, python-brace-format
 msgid "Splitting {n} channels …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:462
+#: fm1companion/ui/recorder_page.py:463
 msgid "Post-process recording"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:462
+#: fm1companion/ui/recorder_page.py:463
 #, python-brace-format
 msgid "The raw recording is in the recording folder: {name}"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:467 fm1companion/ui/recorder_page.py:572
+#: fm1companion/ui/recorder_page.py:468 fm1companion/ui/recorder_page.py:573
 msgid "Audacity not found"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:467
+#: fm1companion/ui/recorder_page.py:468
 msgid "Audacity is not installed – on the Pi: sudo apt install audacity (or as a Flatpak). The recording is ready in the recording folder anyway; “Open in Audacity” works any time later."
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:473
+#: fm1companion/ui/recorder_page.py:474
 msgid "Finish recording"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:474
+#: fm1companion/ui/recorder_page.py:475
 #, python-brace-format
 msgid "{n} file saved."
 msgid_plural "{n} files saved."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/recorder_page.py:498
+#: fm1companion/ui/recorder_page.py:499
 msgid "Recording ended"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:498
+#: fm1companion/ui/recorder_page.py:499
 msgid "The recording ended unexpectedly (USB disconnected?)."
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:512
+#: fm1companion/ui/recorder_page.py:513
 #, python-brace-format
 msgid "No MIDI clock from the FM-1 for {seconds} s – does it send clock (CLK OUT on) and is playback running? The recording runs anyway; “Stop recording” keeps everything."
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:525
+#: fm1companion/ui/recorder_page.py:526
 msgid "Recording folder not readable"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:572
+#: fm1companion/ui/recorder_page.py:573
 msgid "Audacity is not installed. On the Pi: sudo apt install audacity – or adjust the command in the settings (e.g. for a Flatpak)."
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:582
+#: fm1companion/ui/recorder_page.py:583
 #, python-brace-format
 msgid "… and {n} more"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:583
+#: fm1companion/ui/recorder_page.py:584
 #, python-brace-format
 msgid "Delete {n} recording for good?"
 msgid_plural "Delete {n} recordings for good?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/recorder_page.py:590
+#: fm1companion/ui/recorder_page.py:591
 msgid "Not all recordings deleted"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:592
+#: fm1companion/ui/recorder_page.py:593
 #, python-brace-format
 msgid "{n} recording deleted."
 msgid_plural "{n} recordings deleted."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/recorder_page.py:607
+#: fm1companion/ui/recorder_page.py:608
 #, python-brace-format
 msgid "{n} file exported as {format}."
 msgid_plural "{n} files exported as {format}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/recorder_page.py:609
+#: fm1companion/ui/recorder_page.py:610
 #, python-brace-format
 msgid "{done} of {n} recording exported as {format} (next to the original)."
 msgid_plural "{done} of {n} recordings exported as {format} (next to the original)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/recorder_page.py:613
+#: fm1companion/ui/recorder_page.py:614
 #, python-brace-format
 msgid "{n} skipped (not WAV)."
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:614
+#: fm1companion/ui/recorder_page.py:615
 msgid "Export failed"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:633
+#: fm1companion/ui/recorder_page.py:634
 #, python-brace-format
 msgid "{n} taken over, then aborted"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:635
+#: fm1companion/ui/recorder_page.py:636
 #, python-brace-format
 msgid "{n} file taken over into the sample library (Samples › Recordings)."
 msgid_plural "{n} files taken over into the sample library (Samples › Recordings)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/recorder_page.py:638
+#: fm1companion/ui/recorder_page.py:639
 #, python-brace-format
 msgid "{n} recording taken over as a sample (Samples › Recordings)."
 msgid_plural "{n} recordings taken over as samples (Samples › Recordings)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/recorder_page.py:681
+#: fm1companion/ui/recorder_page.py:682
 #, python-brace-format
 msgid "Cut – {name}"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:695
+#: fm1companion/ui/recorder_page.py:696
 msgid "Normalise (peak to −0.3 dB)"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:697
+#: fm1companion/ui/recorder_page.py:698
 msgid "Fade in:"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:698 fm1companion/ui/samples_page.py:211
+#: fm1companion/ui/recorder_page.py:699 fm1companion/ui/samples_page.py:211
 msgid "Fade out:"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:702
+#: fm1companion/ui/recorder_page.py:703
 msgid "Listen to selection"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:704 fm1companion/ui/recorder_page.py:777
+#: fm1companion/ui/recorder_page.py:705 fm1companion/ui/recorder_page.py:778
 msgid "Save as new file"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:711
+#: fm1companion/ui/recorder_page.py:712
 msgid "Loading the recording …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:726 fm1companion/ui/slicer_dialog.py:186
+#: fm1companion/ui/recorder_page.py:727 fm1companion/ui/slicer_dialog.py:186
 #, python-brace-format
 msgid "File not readable: {error}"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:749
+#: fm1companion/ui/recorder_page.py:750
 msgid "Preview not possible"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:766
+#: fm1companion/ui/recorder_page.py:767
 msgid "Saving …"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:771
+#: fm1companion/ui/recorder_page.py:772
 #, python-brace-format
 msgid "Cut and saved: {name} (the original stays unchanged)."
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:778
+#: fm1companion/ui/recorder_page.py:779
 msgid "Cut"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:778
+#: fm1companion/ui/recorder_page.py:779
 #, python-brace-format
 msgid ""
 "Not saved: {error}\n"
@@ -19846,11 +19933,11 @@ msgstr ""
 msgid "First “Read”, then choose a slot."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1068 fm1companion/ui/samples_page.py:1352
+#: fm1companion/ui/samples_page.py:1068 fm1companion/ui/samples_page.py:1367
 msgid "Empty kit"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1068 fm1companion/ui/samples_page.py:1352
+#: fm1companion/ui/samples_page.py:1068 fm1companion/ui/samples_page.py:1367
 msgid "Add sounds to the kit first."
 msgstr ""
 
@@ -20030,7 +20117,7 @@ msgstr ""
 msgid "{used} s of {cap} s used"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1336
+#: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1351
 msgid "Please connect an FM-1 with FM1 Open via USB."
 msgstr ""
 
@@ -20043,381 +20130,479 @@ msgstr ""
 msgid "Reading the sample bank ({kib} KiB) …"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1296
+#: fm1companion/ui/samples_page.py:1301
 #, python-brace-format
 msgid "Backed up: {path}"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1304
+#: fm1companion/ui/samples_page.py:1308
+#, python-brace-format
+msgid "Cancelled after {done} of {n} KiB – nothing was saved, nothing was changed on the FM-1."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1317
 msgid "FM1 Open detected, but without a valid sample bank. You can write a new bank."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1307
+#: fm1companion/ui/samples_page.py:1320
 #, python-brace-format
 msgid "FM1 Open detected. Backup: {name}"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1310
+#: fm1companion/ui/samples_page.py:1323
 msgid "FM1 Open: read sample bank"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1311
+#: fm1companion/ui/samples_page.py:1324
 #, python-brace-format
 msgid "Sample bank read and saved as backup: {name}. Nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1313
+#: fm1companion/ui/samples_page.py:1326
 msgid "FM1 Open detected – no sample bank on the device yet. Nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1315
+#: fm1companion/ui/samples_page.py:1328
+msgid "Reading the sample bank was cancelled – nothing was saved."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1330
 msgid "No FM1 Open found (or no answer). Is FM1 Open V13/V14 running on the FM-1?"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1321
+#: fm1companion/ui/samples_page.py:1336
 msgid "Save sample bank"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1322 fm1companion/ui/samples_page.py:1358
+#: fm1companion/ui/samples_page.py:1337 fm1companion/ui/samples_page.py:1373
 msgid "FM1 Open sample bank (*.fm1s)"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1327
+#: fm1companion/ui/samples_page.py:1342
 msgid "Save bank file"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1329
+#: fm1companion/ui/samples_page.py:1344
 #, python-brace-format
 msgid "Bank file saved: {path} – nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1339
+#: fm1companion/ui/samples_page.py:1354
 msgid "Read first"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1339
+#: fm1companion/ui/samples_page.py:1354
 msgid "Read the sample bank first (“Read & back up”) – that way a backup stays."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1347
+#: fm1companion/ui/samples_page.py:1362
 msgid "Choose zone"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1347
+#: fm1companion/ui/samples_page.py:1362
 msgid "Choose the sound in the kit builder that should go into the slot."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1364
+#: fm1companion/ui/samples_page.py:1379
 msgid "File invalid"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1368
+#: fm1companion/ui/samples_page.py:1383
 #, python-brace-format
 msgid "The complete sample bank (all 8 slots) will be replaced by {name}."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1370
+#: fm1companion/ui/samples_page.py:1385
 #, python-brace-format
 msgid "Slot {n} ({name}) will be cleared; the other 7 slots stay."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1372
+#: fm1companion/ui/samples_page.py:1387
 #, python-brace-format
 msgid "Slot {n} ({old}) ← {new}"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1373
+#: fm1companion/ui/samples_page.py:1388
 #, python-brace-format
 msgid "{list}. The other slots stay as they were just read."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1374 fm1companion/ui/samples_page.py:1421
+#: fm1companion/ui/samples_page.py:1389 fm1companion/ui/samples_page.py:1436
 msgid "FM1 Open: write sample bank"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1375
+#: fm1companion/ui/samples_page.py:1390
 msgid ""
 "\n"
 "\n"
 "The FM-1 rewrites the whole bank for this (playback pauses briefly). First the app backs up the current bank as a .fm1s file."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1384
+#: fm1companion/ui/samples_page.py:1399
 msgid "Checking whether the bank on the FM-1 still matches what was read …"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1389
+#: fm1companion/ui/samples_page.py:1404
 msgid "The bank on the FM-1 has changed since reading – please first “Read & back up”, then write again. Nothing was changed."
-msgstr ""
-
-#: fm1companion/ui/samples_page.py:1396
-#, python-brace-format
-msgid "Backup: {name}"
-msgstr ""
-
-#: fm1companion/ui/samples_page.py:1401
-#, python-brace-format
-msgid "Encoding {name} for slot {n} (32 kHz, SEA5) …"
-msgstr ""
-
-#: fm1companion/ui/samples_page.py:1405
-#, python-brace-format
-msgid "  too long – shortened to {secs} s"
-msgstr ""
-
-#: fm1companion/ui/samples_page.py:1408
-msgid "The sample bank is full (together ~19.5 s) – clear other slots first."
 msgstr ""
 
 #: fm1companion/ui/samples_page.py:1411
 #, python-brace-format
-msgid "Writing {kib} KiB and reading back to check …"
+msgid "Backup: {name}"
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1413
-msgid "Done – the bank on the FM-1 matches byte for byte."
+#: fm1companion/ui/samples_page.py:1416
+#, python-brace-format
+msgid "Encoding {name} for slot {n} (32 kHz, SEA5) …"
 msgstr ""
 
 #: fm1companion/ui/samples_page.py:1420
+#, python-brace-format
+msgid "  too long – shortened to {secs} s"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1423
+msgid "The sample bank is full (together ~19.5 s) – clear other slots first."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1426
+#, python-brace-format
+msgid "Writing {kib} KiB and reading back to check …"
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1428
+msgid "Done – the bank on the FM-1 matches byte for byte."
+msgstr ""
+
+#: fm1companion/ui/samples_page.py:1435
 msgid "Written and checked. Play the SAMPLER track again on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1422
+#: fm1companion/ui/samples_page.py:1437
 msgid "Sample bank written and checked byte for byte. The previous state is a .fm1s backup in the backup folder of the device."
 msgstr ""
 
-#: fm1companion/ui/samples_page.py:1424
+#: fm1companion/ui/samples_page.py:1439
 #, python-brace-format
 msgid "Not written: {error}"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:30
-msgid "stable versions (recommended)"
+#: fm1companion/ui/settings_dialog.py:24
+msgid "Catalog (filters, sorting, preview images, automatic update)"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:31
-msgid "also release candidates (pre-releases, newest features)"
+#: fm1companion/ui/settings_dialog.py:26
+msgid "Automatic backups (on connect, periodically, mirror options)"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:28
+msgid "Studio (inputs, export options)"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:29
+msgid "Recording (sync, bars, split, export format)"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:30
+msgid "MIDI (keyboard, clock, filters)"
 msgstr ""
 
 #: fm1companion/ui/settings_dialog.py:32
-msgid "Stable: finished versions only. Release candidates (RC): pre-releases with the newest features – well tested, but not final yet."
+msgid "View & Export (lanes, drum channel, loops)"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:33
+msgid "Simulator (latency, inputs)"
 msgstr ""
 
 #: fm1companion/ui/settings_dialog.py:35
-msgid "look for firmware updates when an FM-1 is plugged in (asks GitHub)"
+msgid "Sound module (driver, latency, gain, channels)"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:36
-msgid "Fetches the version list of the FM-1 firmware from GitHub. When switched off, the app only goes online for this when you click."
+#: fm1companion/ui/settings_dialog.py:37
+msgid "Audio output"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:38
+msgid "Rescue (expert mode)"
 msgstr ""
 
 #: fm1companion/ui/settings_dialog.py:39
+msgid "Installation (remembered answers)"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:40
+msgid "Automatic cleanup (Storage tab)"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:72
+msgid "stable versions (recommended)"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:73
+msgid "also release candidates (pre-releases, newest features)"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:74
+msgid "Stable: finished versions only. Release candidates (RC): pre-releases with the newest features – well tested, but not final yet."
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:77
+msgid "look for firmware updates when an FM-1 is plugged in (asks GitHub)"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:78
+msgid "Fetches the version list of the FM-1 firmware from GitHub. When switched off, the app only goes online for this when you click."
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:81
 msgid "back up automatically before every update"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:43 fm1companion/ui/storage_tab.py:66
+#: fm1companion/ui/settings_dialog.py:85 fm1companion/ui/storage_tab.py:70
 msgid "keep all"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:45
+#: fm1companion/ui/settings_dialog.py:87
 msgid "How many automatic backups are kept per device. Manual backups always stay."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:46
+#: fm1companion/ui/settings_dialog.py:88
 msgid "Update channel:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:49
+#: fm1companion/ui/settings_dialog.py:91
 msgid "Keep automatic backups:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:51
+#: fm1companion/ui/settings_dialog.py:93
 msgid "automatic (when the FM-1 is connected through a USB hub)"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:52
-#: fm1companion/ui/settings_dialog.py:105
+#: fm1companion/ui/settings_dialog.py:94
+#: fm1companion/ui/settings_dialog.py:152
 msgid "always"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:53
-#: fm1companion/ui/settings_dialog.py:105 fm1companion/ui/storage_tab.py:65
+#: fm1companion/ui/settings_dialog.py:95
+#: fm1companion/ui/settings_dialog.py:152 fm1companion/ui/storage_tab.py:69
 msgid "never"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:54
+#: fm1companion/ui/settings_dialog.py:96
 msgid "Careful USB mode waits longer for the FM-1 to restart, answers its requests more slowly and resumes the write automatically if the USB connection drops – the usual trouble with USB hubs. All safety checks stay the same."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:58
+#: fm1companion/ui/settings_dialog.py:100
 msgid "Careful USB mode for flashing:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:61
+#: fm1companion/ui/settings_dialog.py:103
 #, python-brace-format
 msgid "System language ({name})"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:66
+#: fm1companion/ui/settings_dialog.py:108
 msgid "Language of the user interface. Takes effect after restarting the app."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:67
+#: fm1companion/ui/settings_dialog.py:109
 msgid "Takes effect after restarting the app."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:69
+#: fm1companion/ui/settings_dialog.py:111
 msgid "Language:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:71
+#: fm1companion/ui/settings_dialog.py:113
 msgid "Default values"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:72
+#: fm1companion/ui/settings_dialog.py:114
 msgid "Puts the options in this window back to their default values (also appearance and recording). Folders, devices and your firmware list stay. Only saved with OK."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:76
+#: fm1companion/ui/settings_dialog.py:118
+#: fm1companion/ui/settings_dialog.py:285
+#: fm1companion/ui/settings_dialog.py:319
+msgid "Reset settings of …"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:119
+msgid "Puts the settings the pages keep themselves (catalog, Studio, MIDI, recording …) back to their default values – chosen one by one, applied at once."
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:123
 msgid "General"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:91
-#: fm1companion/ui/settings_dialog.py:255
+#: fm1companion/ui/settings_dialog.py:138
+#: fm1companion/ui/settings_dialog.py:351
 msgid "Custom color"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:92
+#: fm1companion/ui/settings_dialog.py:139
 msgid "Choose custom color …"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:96
+#: fm1companion/ui/settings_dialog.py:143
 msgid "App design (uniform)"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:97
+#: fm1companion/ui/settings_dialog.py:144
 msgid "System theme (Breeze/Papirus)"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:105
+#: fm1companion/ui/settings_dialog.py:152
 msgid "when the window is in the background"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:108
+#: fm1companion/ui/settings_dialog.py:155
 msgid "Show splash screen"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:110
+#: fm1companion/ui/settings_dialog.py:157
 msgid "Theme:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:111
+#: fm1companion/ui/settings_dialog.py:158
 msgid "Accent color:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:112
+#: fm1companion/ui/settings_dialog.py:159
 msgid "Icons:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:113
+#: fm1companion/ui/settings_dialog.py:160
 msgid "Icons already shown change completely after restarting the app."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:114
+#: fm1companion/ui/settings_dialog.py:161
 msgid "Interface size:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:115
+#: fm1companion/ui/settings_dialog.py:162
 msgid "Desktop notifications:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:117
+#: fm1companion/ui/settings_dialog.py:164
 msgid "Applies from the next start."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:118
+#: fm1companion/ui/settings_dialog.py:165
 msgid "Run setup assistant again …"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:121
+#: fm1companion/ui/settings_dialog.py:168
 msgid "Appearance"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:133
+#: fm1companion/ui/settings_dialog.py:180
 msgid "Main folder:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:135
+#: fm1companion/ui/settings_dialog.py:182
 msgid "It holds backups, projects, kits, recordings, firmware and the sample folder “Samples”."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:136
+#: fm1companion/ui/settings_dialog.py:183
 msgid "Choosing another folder does not move existing files – move them yourself (with the app closed)."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:140
+#: fm1companion/ui/settings_dialog.py:187
 msgid "More sample folders (e.g. your Pocket Operator samples):"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:145
+#: fm1companion/ui/settings_dialog.py:192
 msgid "Add …"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:154
+#: fm1companion/ui/settings_dialog.py:201
 msgid "normalize new kit sounds"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:156
+#: fm1companion/ui/settings_dialog.py:203
 msgid "trim silence at start/end"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:160
+#: fm1companion/ui/settings_dialog.py:207
 msgid "Folders && Samples"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:166
+#: fm1companion/ui/settings_dialog.py:213
 msgid "open in Audacity after recording"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:168
+#: fm1companion/ui/settings_dialog.py:215
 msgid "Audacity command:"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:175
+#: fm1companion/ui/settings_dialog.py:222
 msgid "Known FM-1. The app enters the firmware version itself when installing; for firmware installed before, you can set it here."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:183
+#: fm1companion/ui/settings_dialog.py:230
 msgid "Set firmware version"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:253
+#: fm1companion/ui/settings_dialog.py:287
+msgid "Tick the pages whose settings go back to their default values. What is yours stays: folders, devices, backups, your firmware list, the GitHub token, the catalog's remembered list, MIDI learn assignments and routing presets, chosen sound fonts."
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:300
+msgid "Pages that are already open may show the old values until the app is restarted."
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:320
+#, python-brace-format
+msgid "Put these settings back to their default values?<br>{list}"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:328
+#, python-brace-format
+msgid "Settings reset: {list}."
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:349
 msgid "Accent color"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:273 fm1companion/ui/wizard.py:127
+#: fm1companion/ui/settings_dialog.py:369 fm1companion/ui/wizard.py:127
 msgid "Sample folder"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:282
+#: fm1companion/ui/settings_dialog.py:378
 #, python-brace-format
 msgid "  · Serial no. {serial}"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:307
+#: fm1companion/ui/settings_dialog.py:403
 msgid "Version (as in the release, e.g. v1.6.0-rc.7):"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:318
+#: fm1companion/ui/settings_dialog.py:423
 #, python-brace-format
 msgid "Forget {name}? Backups and projects are kept."
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:348
+#: fm1companion/ui/settings_dialog.py:426
+msgid "also delete its Studio state (your work in the Studio for this device)"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:429
+msgid "The Studio is working on this state right now – open another state there first."
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:443
+#, python-brace-format
+msgid "The device was forgotten, but its Studio state could not be deleted: {error}"
+msgstr ""
+
+#: fm1companion/ui/settings_dialog.py:474
 msgid "Settings not saved"
 msgstr ""
 
-#: fm1companion/ui/settings_dialog.py:353
+#: fm1companion/ui/settings_dialog.py:479
 msgid "The new language is used after restarting the app."
 msgstr ""
 
@@ -20741,151 +20926,262 @@ msgstr ""
 msgid "Save report"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:17
+#: fm1companion/ui/storage_tab.py:19
 msgid "your data"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:17
+#: fm1companion/ui/storage_tab.py:19
 msgid "kept"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:27
-msgid "What the app keeps on this computer. “Delete …” only removes data the app made itself and can fetch or create again – never your backups, projects, samples or recordings, and nothing an interrupted installation still needs."
+#: fm1companion/ui/storage_tab.py:20
+msgid "Delete a state …"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:20
+msgid "Show and delete dumps …"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:21
+msgid "Clear web editor data …"
 msgstr ""
 
 #: fm1companion/ui/storage_tab.py:31
+msgid "What the app keeps on this computer. “Delete …” only removes data the app made itself and can fetch or create again – never your backups, projects, samples or recordings, and nothing an interrupted installation still needs."
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:35
 msgid "Can be deleted"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:40 fm1companion/ui/storage_tab.py:147
+#: fm1companion/ui/storage_tab.py:44 fm1companion/ui/storage_tab.py:151
+#: fm1companion/ui/storage_tab.py:154 fm1companion/ui/storage_tab.py:352
 msgid "Delete …"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:42
+#: fm1companion/ui/storage_tab.py:46
 msgid "Measure again"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:52
+#: fm1companion/ui/storage_tab.py:56
 msgid "Automatic cleanup"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:54
+#: fm1companion/ui/storage_tab.py:58
 msgid "clean up automatically (at most once a day, a minute after the start)"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:67 fm1companion/ui/storage_tab.py:68
+#: fm1companion/ui/storage_tab.py:71 fm1companion/ui/storage_tab.py:72
 msgid " days"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:72
+#: fm1companion/ui/storage_tab.py:76
 msgid "Delete older log parts after:"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:73
+#: fm1companion/ui/storage_tab.py:77
 msgid "Delete catalog images, sample pack downloads and temporary files after:"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:74
+#: fm1companion/ui/storage_tab.py:78
 msgid "Downloaded versions to keep per firmware:"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:75
+#: fm1companion/ui/storage_tab.py:79
 msgid "The newest versions stay, as well as the versions on your devices and the package of an interrupted installation."
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:77
+#: fm1companion/ui/storage_tab.py:81
 msgid "Copies of installed packages to keep:"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:78
+#: fm1companion/ui/storage_tab.py:82
 msgid "Editor versions to keep per firmware:"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:79
+#: fm1companion/ui/storage_tab.py:83
 msgid "Clean up now"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:80
+#: fm1companion/ui/storage_tab.py:84
 msgid "Applies the rules above right away."
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:92
+#: fm1companion/ui/storage_tab.py:96
 msgid "Measuring …"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:95
+#: fm1companion/ui/storage_tab.py:99
 #, python-brace-format
 msgid "Measuring failed: {error}"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:121
+#: fm1companion/ui/storage_tab.py:125
 #, python-brace-format
 msgid "App data: <b>{size}</b>, of it <b>{free}</b> can be deleted. Your own files in the main folder: {own}."
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:144
-msgid "Delete a state …"
+#: fm1companion/ui/storage_tab.py:147
+msgid "Clearing is pending – it happens when the app starts next time."
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:169 fm1companion/ui/storage_tab.py:247
+#: fm1companion/ui/storage_tab.py:180 fm1companion/ui/storage_tab.py:235
+#: fm1companion/ui/storage_tab.py:257 fm1companion/ui/storage_tab.py:303
+#: fm1companion/ui/storage_tab.py:408
 msgid "Not now"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:171
+#: fm1companion/ui/storage_tab.py:182
 #, python-brace-format
 msgid "Delete {what}"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:172
+#: fm1companion/ui/storage_tab.py:183
 #, python-brace-format
 msgid "Delete <b>{what}</b> ({size})?<br><br>{detail}"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:190
+#: fm1companion/ui/storage_tab.py:201
 msgid "Web cache is being emptied."
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:195
+#: fm1companion/ui/storage_tab.py:206
 #, python-brace-format
 msgid "{what}: {size} freed."
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:197
+#: fm1companion/ui/storage_tab.py:208
 #, python-brace-format
 msgid "{n} item could not be deleted: {first}"
 msgid_plural "{n} items could not be deleted: {first}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/storage_tab.py:214
+#: fm1companion/ui/storage_tab.py:225
 msgid "(device forgotten)"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:215
+#: fm1companion/ui/storage_tab.py:226
 #, python-brace-format
 msgid "{name} – {size}, {date}"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:218 fm1companion/ui/storage_tab.py:222
+#: fm1companion/ui/storage_tab.py:229 fm1companion/ui/storage_tab.py:239
 msgid "Delete a Studio state"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:218
+#: fm1companion/ui/storage_tab.py:229
 msgid "Studio state:"
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:223
+#: fm1companion/ui/storage_tab.py:235
+#, python-brace-format
+msgid "The Studio is working on the state of <b>{name}</b> right now – it would be saved again at once. Open another state in the Studio first (or quit the app and delete it at the next start)."
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:240
 #, python-brace-format
 msgid "Delete the Studio state of <b>{name}</b>? Your work in the Studio for this device is lost; backups and the FM-1 itself are not affected."
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:232
+#: fm1companion/ui/storage_tab.py:249
 #, python-brace-format
 msgid "Studio state of {name} deleted ({size})."
 msgstr ""
 
-#: fm1companion/ui/storage_tab.py:254
+#: fm1companion/ui/storage_tab.py:259
+msgid "Clear web editor data"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:260
+msgid "Clear the saved data of the built-in browser (cookies, local storage, databases of the web pages)?<br><br>Web editors and the simulator may keep <b>your settings</b> there (e.g. options of an editor, remembered choices) – they are lost and the pages start as on the first visit. Not affected: your backups, projects and samples, the FM-1 itself, and the app's own settings."
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:272
+msgid "Web editor data cleared."
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:273
+msgid "Web editor data: cookies cleared now, the rest when the app starts next time (the built-in browser has it open)."
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:310
 msgid "Cleanup"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:318
+msgid "rescue run"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:318
+msgid "flash dump"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:318
+msgid "tool logs"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:321
+msgid "full backup"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:323
+msgid "simulation/example"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:325
+msgid "NEWEST of this device"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:326
+#, python-brace-format
+msgid "{name} – {what}, {size}, {date}"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:342
+msgid "Full flash backups are your safety net: with one, a damaged FM-1 can be brought back exactly as it was. Delete only what you no longer need – one at a time. The newest full backup of each device is marked and needs an extra confirmation."
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:374
+#, python-brace-format
+msgid "{n} item, {size} together."
+msgid_plural "{n} items, {size} together."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/storage_tab.py:376
+msgid "The rescue folder holds no dumps or tool logs."
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:392
+#, python-brace-format
+msgid "Delete <b>{name}</b> ({size}) for good?"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:394
+msgid "It holds a complete backup of an FM-1's flash. Without it, that state of the device cannot be restored any more."
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:396
+msgid "Delete rescue data"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:399
+msgid "Delete the newest full backup?"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:400
+#, python-brace-format
+msgid "<b>{name}</b> is the newest (or the only) full flash backup of this device. If the FM-1 ever needs a rescue, this is the file that brings it back.<br><br>Make a new full backup on the Rescue page first, or keep a copy elsewhere. Really delete it?"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:403
+msgid "Delete anyway"
+msgstr ""
+
+#: fm1companion/ui/storage_tab.py:414
+#, python-brace-format
+msgid "{name} deleted ({size})."
 msgstr ""
 
 #: fm1companion/ui/studio_service.py:39 fm1companion/ui/studio_service.py:574

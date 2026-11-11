@@ -39,6 +39,30 @@ imágenes del catálogo, descargas de paquetes de samples y archivos temporales 
 Las descargas de firmware en `~/FM-1/Firmware` nunca se borran automáticamente (esa carpeta es tuya); en la misma
 pestaña puedes activar «conservar las N descargas más recientes por firmware».
 
+**Volcados de rescate, datos de los editores web, ajustes de las páginas, token de GitHub – ¿cómo los limpio?**
+* **Volcados de rescate y registros de la herramienta** (carpeta principal › `Rettung`): misma pestaña, *Mostrar y
+  borrar volcados …* lista las ejecuciones, los volcados de flash y los registros de la herramienta de rescate con fecha
+  y tamaño. Son tu red de seguridad, así que la app nunca los borra por su cuenta: de uno en uno, siempre con
+  confirmación – y la **copia completa más reciente de cada dispositivo** (marcada *LA MÁS RECIENTE*) pregunta una
+  segunda vez.
+* **Datos de los editores web** (cookies y almacenamiento local del navegador integrado): *Borrar datos de los
+  editores web …*. Los editores pueden guardar ahí tus ajustes; después empiezan como en la primera visita. Si el
+  navegador integrado está abierto, las cookies se borran al momento y el resto en el próximo inicio de la app.
+* **Ajustes de las páginas** (catálogo, Studio, MIDI, grabación …): Ajustes › General › *Restablecer ajustes de …* –
+  marca las páginas. Lo que es tuyo se queda (token de GitHub, lista de recordados, asignaciones de MIDI learn,
+  soundfonts, carpetas, dispositivos).
+* **Token de GitHub**: Firmware+ › Más › *Token de GitHub …* muestra si hay uno configurado (solo sus cuatro últimos
+  caracteres) y tiene *Quitar token*.
+* **Olvidar un dispositivo** (Ajustes › Dispositivos › *Olvidar*) también puede borrar su estado del Studio; las copias
+  de seguridad y los proyectos se quedan.
+* **Las descargas de paquetes de samples** ya no guardan una segunda copia: la copia git se borra en cuanto los samples
+  se han copiado a `Samples` (una nueva descarga la vuelve a obtener).
+* **Espejo NAS**: el espejo de copias de seguridad también borra las copias automáticas antiguas, como la carpeta de
+  copias – solo archivos que la propia app copió allí y que ya borró aquí; nunca las manuales, las fijadas ni archivos
+  ajenos (Copias de seguridad › Copias automáticas, *borrar también en el espejo las copias automáticas antiguas*).
+* **Las lecturas largas se pueden cancelar**: obtener proyectos, leer un proyecto en *Ver y exportar* y leer el banco
+  de samples de FM1 Open se detienen en el siguiente bloque – no se cambia nada en el FM-1 y lo ya guardado se queda.
+
 **Algo se ha bloqueado.**
 La app muestra entonces un diálogo con *Guardar informe de errores*. El informe contiene registros, versiones y
 ajustes sin rutas personales – tú decides si lo compartes. Para crear uno tú mismo: Ayuda ›

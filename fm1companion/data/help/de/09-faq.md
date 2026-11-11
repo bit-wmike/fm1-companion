@@ -38,6 +38,30 @@ und temporäre Dateien nach 30 Tagen. Der [Systemcheck](app://action/syscheck) z
 Firmware-Downloads in `~/FM-1/Firmware` werden nie automatisch gelöscht (der Ordner gehört dir); im selben Tab kannst
 du „je Firmware die neuesten N Downloads behalten“ einschalten.
 
+**Rettungs-Dumps, Web-Editor-Daten, Seiteneinstellungen, GitHub-Token – wie räume ich die auf?**
+* **Rettungs-Dumps und Werkzeug-Protokolle** (Hauptordner › `Rettung`): gleicher Tab, *Dumps anzeigen und löschen …*
+  listet Läufe, Flash-Dumps und Protokolle des Rettungswerkzeugs mit Datum und Größe. Sie sind dein Sicherheitsnetz,
+  deshalb löscht die App sie nie von selbst: einzeln, immer mit Rückfrage – und die **neueste Komplettsicherung jedes
+  Geräts** (markiert mit *NEUESTE*) fragt ein zweites Mal.
+* **Web-Editor-Daten** (Cookies und lokaler Speicher des eingebauten Browsers): *Web-Editor-Daten leeren …*. Editoren
+  können dort deine Einstellungen ablegen; danach starten sie wie beim ersten Besuch. Ist der eingebaute Browser
+  geöffnet, werden die Cookies sofort geleert und der Rest beim nächsten Start der App.
+* **Einstellungen der Seiten** (Katalog, Studio, MIDI, Aufnahme …): Einstellungen › Allgemein › *Einstellungen
+  zurücksetzen von …* – Seiten anhaken. Was dir gehört, bleibt (GitHub-Token, Merkliste, MIDI-Learn-Zuordnungen,
+  Soundfonts, Ordner, Geräte).
+* **GitHub-Token**: Firmware+ › Mehr › *GitHub-Token …* zeigt, ob einer gesetzt ist (nur die letzten vier Zeichen),
+  und hat *Token entfernen*.
+* **Gerät vergessen** (Einstellungen › Geräte › *Vergessen*) kann auch seinen Studio-Stand löschen; Backups und
+  Projekte bleiben.
+* **Sample-Pack-Downloads** behalten keine zweite Kopie mehr: Die Git-Kopie wird gelöscht, sobald die Samples nach
+  `Samples` kopiert sind (ein neuer Download holt sie wieder).
+* **NAS-Spiegel**: Der Backup-Spiegel löscht alte automatische Backups ebenfalls, wie der Backup-Ordner – nur Dateien,
+  die die App selbst dorthin kopiert und hier schon gelöscht hat; manuelle und angeheftete und fremde Dateien nie
+  (Backups › Automatische Backups, *alte automatische Backups auch im Spiegel löschen*).
+* **Lange Lesevorgänge lassen sich abbrechen**: Projekte holen, ein Projekt in *Ansehen & Export* lesen und die
+  Sample-Bank von FM1 Open lesen halten beim nächsten Block an – am FM-1 wird nichts geändert, schon Gespeichertes
+  bleibt.
+
 **Etwas ist abgestürzt.**
 Die App zeigt dann einen Dialog mit *Fehlerbericht speichern*. Der Bericht enthält Protokolle, Versionen und
 Einstellungen ohne persönliche Pfade – du entscheidest, ob du ihn weitergibst. Selbst erstellen: Hilfe ›

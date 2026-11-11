@@ -38,6 +38,27 @@ The [System check](app://action/syscheck) shows the total.
 Firmware downloads in `~/FM-1/Firmware` are never deleted automatically (that folder is yours); you can switch on
 “keep the newest N downloads per firmware” in the same tab.
 
+**Rescue dumps, web editor data, page settings, GitHub token – how do I clean those up?**
+* **Rescue dumps and tool logs** (the rescue folder in the main folder): same tab, *Show and delete dumps …* lists the rescue
+  tool's runs, flash dumps and logs with date and size. They are your safety net, so the app never deletes them on its
+  own: one at a time, always with a question – and the **newest full backup of each device** (marked *NEWEST*) asks a
+  second time.
+* **Web editor data** (cookies and local storage of the built-in browser): *Clear web editor data …*. Editors may keep
+  your settings there; they start as on the first visit afterwards. While the built-in browser is open, cookies are
+  cleared at once and the rest at the next start of the app.
+* **Settings of the pages** (catalog, Studio, MIDI, recording …): Settings › General › *Reset settings of …* – tick
+  the pages. What is yours stays (GitHub token, remembered list, MIDI learn assignments, sound fonts, folders, devices).
+* **GitHub token**: Firmware+ › More › *GitHub token …* shows whether one is set (only its last four characters) and
+  has *Remove token*.
+* **Forgetting a device** (Settings › Devices › *Forget*) can also delete its Studio state; backups and projects stay.
+* **Sample pack downloads** no longer keep a second copy: the git copy is deleted right after the samples were copied
+  to `Samples` (downloading again fetches it anew).
+* **NAS mirror**: the backup mirror deletes old automatic backups too, like the backup folder – only files the app
+  copied there itself and already deleted here; manual and pinned ones and other files never (Backups › Automatic
+  backups, *delete old automatic backups in the mirror too*).
+* **Long reads can be cancelled**: fetching projects, reading a project in *View & Export* and reading the FM1 Open
+  sample bank stop at the next chunk – nothing is changed on the FM-1, and what was already saved stays.
+
 **Something crashed.**
 The app then shows a dialog with *Save bug report*. The report contains logs, versions and
 settings without personal paths – you decide whether to pass it on. To create one yourself: Help ›

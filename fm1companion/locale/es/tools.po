@@ -581,16 +581,6 @@ msgstr "{name} guardado – ya está en la pestaña “Instalar y versiones”."
 msgid "GitHub token"
 msgstr "Token de GitHub"
 
-#: fm1companion/ui/pages/discover.py:1191
-msgid ""
-"Optional: personal GitHub token (only read access to public repos needed).\n"
-"Without a token GitHub allows 60 requests per hour, with a token 5000.\n"
-"Leave empty to remove."
-msgstr ""
-"Opcional: token personal de GitHub (solo hace falta acceso de lectura a repositorios públicos).\n"
-"Sin token GitHub permite 60 solicitudes por hora, con token 5000.\n"
-"Déjalo vacío para eliminarlo."
-
 #: fm1companion/ui/pages/discover.py:1204
 msgid "remembered"
 msgstr "guardado"

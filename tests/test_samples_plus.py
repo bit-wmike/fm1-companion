@@ -245,9 +245,13 @@ def test_pack_download_from_local_repo(tmp_path, monkeypatch):
     assert sorted(e.path for e in ents) == ["Bells/b1.wav", "Drums/Kick/k1.wav"]
     out = P.download(p, tmp_path / "dest", ["Drums/Kick"])
     assert [f.name for f in out] == ["k1.wav"] and out[0].exists()
+    # the git copy is gone right after copying (no second copy on the disk), the contents list stays
+    assert not (tmp_path / "cache" / "samplepacks" / "vcsl" / "repo").exists()
+    assert (tmp_path / "cache" / "samplepacks" / "vcsl" / "index.json").exists()
     note = (tmp_path / "dest" / "VCSL" / "QUELLE.txt").read_text()
     assert "CC0" in note and p.url in note
-    assert len(P.download(p, tmp_path / "dest", None)) == 2
+    assert len(P.download(p, tmp_path / "dest", None)) == 2       # downloading again works (cloned again)
+    assert not (tmp_path / "cache" / "samplepacks" / "vcsl" / "repo").exists()
 
 
 # --------------------------------------------------------------- FM1 Open

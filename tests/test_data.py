@@ -295,6 +295,56 @@ def test_mirror_copy_and_verify(isolated, monkeypatch):
     assert not d.exists()
 
 
+def test_mirror_retention_only_own_pruned_automatic_files(isolated, monkeypatch):
+    """the mirror follows the local retention – but only for automatic backups the app copied there itself,
+    unchanged, and already deleted here; manual ones, foreign files and changed files stay"""
+    from fm1companion import autobackup as AB, config
+    monkeypatch.setattr(config, "_settings", config.Settings())
+    root, nas = isolated / "Backups", isolated / "nas"
+    nas.mkdir()
+    dev = root / "A"
+    now = dt.datetime(2026, 10, 30, 12, tzinfo=dt.timezone.utc)
+    paths = [_fake_backup(dev, f"a{i}_auto.json", now - dt.timedelta(days=i)) for i in range(6)]
+    man = _fake_backup(dev, "manual.json", now - dt.timedelta(days=9), kind="manuell")
+    for q in paths + [man]:
+        AB.mirror_file(q, root, nas)
+    foreign = _fake_backup(nas / "A", "other_auto.json", now - dt.timedelta(days=20))   # not copied by the app
+    AB.settings()["keep_monthly"] = False
+    gone_local = AB.prune(dev, 2)
+    assert len(gone_local) == 4
+    changed = nas / "A" / "a5_auto.json"                     # someone edited this copy in the mirror
+    changed.write_text(changed.read_text("utf-8").replace('"v"', '"w"'), "utf-8")
+    AB.settings()["mirror_prune"] = False
+    assert AB.prune_mirror(root, nas, 2) == []               # switched off: nothing
+    AB.settings()["mirror_prune"] = True
+    gone = AB.prune_mirror(root, nas, 2)
+    left = {q.name for q in (nas / "A").glob("*.json")}
+    assert {q.name for q in gone} == {"a2_auto.json", "a3_auto.json", "a4_auto.json"}
+    assert {"a0_auto.json", "a1_auto.json", "manual.json", "other_auto.json", "a5_auto.json"} <= left
+    assert foreign.exists() and changed.exists()
+    assert "A/a2_auto.json" not in AB.mirror_written(nas) and "A/a0_auto.json" in AB.mirror_written(nas)
+    assert AB.prune_mirror(root, nas, 0) == []               # "keep all"
+    assert AB.prune_mirror(root, isolated / "missing", 2) == []   # NAS not mounted
+
+
+def test_index_forgets_deleted_backups(isolated):
+    from fm1companion import autobackup as AB
+    folder = isolated / "B"
+    a = _fake_backup(folder, "a_auto.json", dt.datetime(2026, 1, 1, tzinfo=dt.timezone.utc))
+    b = _fake_backup(folder, "b_auto.json", dt.datetime(2026, 1, 2, tzinfo=dt.timezone.utc))
+    assert len(AB.list_backups(folder)) == 2 and str(a) in AB._load_index()
+    a.unlink()
+    assert len(AB.list_backups(folder)) == 1
+    assert str(a) not in AB._load_index() and str(b) in AB._load_index()
+    saved = json.loads((isolated / "data" / "daten" / "index.json").read_text("utf-8"))
+    assert str(a) not in saved
+    # stale entries elsewhere are dropped when the index is loaded
+    saved[str(isolated / "gone" / "x.json")] = saved[str(b)]
+    (isolated / "data" / "daten" / "index.json").write_text(json.dumps(saved), "utf-8")
+    AB._cache = None
+    assert str(isolated / "gone" / "x.json") not in AB._load_index() and str(b) in AB._load_index()
+
+
 def test_companion_labels_firmware():
     from fm1companion import autobackup as AB
     from fm1companion.devices import Profile

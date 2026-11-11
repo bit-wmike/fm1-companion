@@ -219,7 +219,7 @@ V16 support is explicitly wanted. Blocker: the V16 source code is not open; M-VA
   USB via interrupts, which fm1-emu does not emulate yet – so a backup via USB does not work yet; sound,
   operation and flash do. Measure the tempo on the Pi.
 
-## Housekeeping: storage, cleanup, undo (2.5.x)
+## Housekeeping: storage, cleanup, undo (2.5.x, 2.6.x)
 
 User report: "How do I delete old logs and downloaded firmware files?" Done in 2.5.x: **Settings › Storage**
 (also Tools › *Storage and cleanup …*, logic in `fm1companion/storage.py`, tests `tests/test_storage.py`):
@@ -228,7 +228,7 @@ after 30 days, 2 downloads per firmware plus the versions on the known devices, 
 versions per firmware, catalog images / GitHub answers / sample-pack checkouts / `fm1c-*` temp files after 30 days).
 Never deleted: the user's folders in `~/FM-1` (only `Firmware/<known firmware>/<version>` counts as a download),
 the journal, the package copy and source of an active (resumable) journal entry, the git tool copies while an
-entry is active, the newest original V15 download (offline rescue), the rescue tool, QtWebEngine site data –
+entry is active, the newest original V15 download (offline rescue), the rescue tool, QtWebEngine site data (2.6.x: on request, see below) –
 and nothing while an installation runs (in-process lock or a live `install.lock`). The system check shows the total.
 Also fixed: Studio states can be deleted one by one (orphans of forgotten devices are marked), the catalog's
 remembered list can be cleared (More › *Clear the remembered list …*), General › *Default values* (fills the dialog,
@@ -245,37 +245,55 @@ What grows and where (measured from the code):
 | Tool clones | `DATA_DIR/repos/<key>` | partial clone per firmware, a few MB | Storage (manual) |
 | Editor copies | `DATA_DIR/editor/<key>/<tag>` | one per opened version | Storage, keep N |
 | Catalog cache | `CACHE_DIR/catalog/{thumbs,github}`, `CACHE_DIR/releases-*.json` | images up to 6 MB each | Storage, max age |
-| Sample-pack checkouts | `CACHE_DIR/samplepacks/<id>/repo` | **a second copy** of every downloaded pack | Storage, max age |
-| QtWebEngine cache / site data | `CACHE_DIR/webengine`, `DATA_DIR/webengine` | Chromium-managed | cache: Storage (`clearHttpCache()` while running); site data: kept |
+| Sample-pack checkouts | `CACHE_DIR/samplepacks/<id>/repo` | deleted right after copying (only `index.json` stays) | Storage, max age |
+| QtWebEngine cache / site data | `CACHE_DIR/webengine`, `DATA_DIR/webengine` | Chromium-managed | cache: Storage (`clearHttpCache()` while running); site data: Storage, on request (all origins) |
 | Temp files | `/tmp/fm1c-*` | normally removed at exit; stay after a crash | Storage (> 1 h), auto (> 1 day) |
 | Error / system check reports | `~/FM-1-Companion-Fehlerbericht-*.zip`, `~/systemcheck-*.txt` | per click | Storage (manual) |
 | Damaged settings copies | `CONFIG_DIR/config.json.kaputt-*` | per broken start | Storage (manual) |
 | Studio states | `DATA_DIR/studio/<profile>` | ~1 MB per device | Storage, one by one |
 | Automatic / safety backups | `~/FM-1/Backups/<device>` | per connect / install / restore / write back | existing retention (`keep_backups`) |
-| Recordings, projects, kits, samples, rescue dumps, downloads | `~/FM-1/…` | user's | never by the app (pages have their own delete) |
+| Rescue dumps, tool logs | `~/FM-1/Rettung` | per rescue run | Storage, one by one, never automatic |
+| Automatic backups in the mirror | mirror folder (NAS) | per mirrored backup | same retention, only files the app copied |
+| Recordings, projects, kits, samples, downloads | `~/FM-1/…` | user's | never by the app (pages have their own delete) |
 
-Open (not done, found while checking):
+Done in 2.6.x (the former open list, all built in):
 
-- **NAS mirror never prunes:** `autobackup.mirror_*` copies every backup but never removes the automatic ones the
-  local retention deleted – the mirror folder grows without limit. Option: apply the same retention to the mirror
-  (only files whose checksum matches a local file that was pruned).
-- **Backup index keeps stale entries:** `DATA_DIR/daten/index.json` keeps entries of deleted backup files (small,
-  but unbounded); drop entries whose path no longer exists when saving.
-- **Sample packs keep a full second copy** in the cache after copying to `Samples` (now cleanable/aged out). Better:
-  empty the sparse checkout right after copying (`git sparse-checkout set` with nothing, or delete the work tree and
-  keep only `.git` for the next index).
-- **Rescue folder** (`~/FM-1/Rettung`): flash dumps and tool logs accumulate; the Rescue page could list them with
-  date/size and delete old ones (with a strong warning – a dump may be the only copy of a device's state).
-- **Web editor site data** (`DATA_DIR/webengine`): no way to clear it; it may contain editor settings, so a
-  "Reset web editor data" button needs a clear warning (`QWebEngineProfile.clearAllVisitedLinks`/cookie store).
-- **Reset of page settings:** General › *Default values* covers the dialog only; per-page settings in
-  `modules` (catalog filters, studio export options, MIDI page) have no reset. A "Reset all settings" that keeps
-  folders, devices, firmware list, GitHub token and remembered list would need a list of preserved module keys.
-- **GitHub token:** removed by saving an empty token ("Leave empty to remove"); an explicit *Remove token* action
-  and a hint whether a token is set would be clearer.
-- **Forgetting a device** leaves its Studio state and backup folder (by design – backups are user data); the
-  forget dialog could offer to delete the Studio state too.
-- **Long reads without cancel:** reading sample slots/banks and projects (`samples_page`, `projects_page`) run
-  without a cancel button; writes are deliberately not cancellable.
+- **NAS mirror retention:** `autobackup.prune_mirror` applies `keep_backups` (and *newest of each month*) to the
+  mirror folder after every mirrored backup and after *Mirror now*. It only deletes files this app copied there
+  itself (remembered locally in `DATA_DIR/daten/mirror.json`, per mirror folder, with their SHA-256 – not in the
+  mirror, so a second computer mirroring into the same folder never deletes this one's files), that are still
+  unchanged, that are automatic backups and that the local retention already deleted. Manual, pinned and foreign
+  files are never touched. Setting *delete old automatic backups in the mirror too* (Backups › Automatic backups,
+  on by default) with a note. Also: a failed copy no longer leaves a `.part` file in the mirror.
+- **Backup index:** entries of deleted files are dropped when the index is loaded (`os.path.exists`) and on every
+  listing of a folder (`prune_index`, without touching the disk); mirror files are read without the index
+  (`read_meta(cached=False)`), so NAS paths never end up in it.
+- **Sample packs:** `samplepacks.download` deletes the git copy (work tree and fetched blobs in `.git`) right after
+  copying – also after a cancel or an error (`drop_checkout`); `index.json` stays, the next download clones the
+  structure again (a few hundred KiB) and refreshes the list if the pack changed.
+- **Rescue folder:** Storage › *Rescue dumps and tool logs* › *Show and delete dumps …* lists session folders
+  (`fm1-recovery-*`), loose `.bin` dumps and the tool logs with date/size (`storage.rescue_items`). Never automatic,
+  one at a time, a strong question each time; the newest full (1 MiB) dump of every device – grouped by the key_mac
+  area 0xFF000–0xFFFFF, unrecognisable dumps count as one device, simulations/examples excluded – asks a second time.
+  Refused while an installation runs and for items written in the last 10 minutes.
+- **Web editor site data:** Storage › *Clear web editor data …* (with a warning). Chromium keeps the storage files
+  open as long as the profile lives, and neither Qt 6.4 nor 6.8 offers a safe per-origin delete of local storage, so:
+  if the built-in browser has not been opened in this run, `DATA_DIR/webengine` is emptied at once; otherwise cookies
+  (`cookieStore().deleteAllCookies()`) and visited links are cleared right away and the rest is deleted at the next
+  start, before the profile is created (marker `DATA_DIR/webengine-clear-on-start`). All origins at once.
+- **Page settings:** Settings › General › *Reset settings of …* – a list of every section with its own
+  `config.module(...)` (catalog, automatic backups, Studio, recording, MIDI, View & Export, simulator, sound module,
+  audio output, rescue, installation, cleanup). Reset in place (`config.reset_module`, pages hold the dict); kept:
+  GitHub token, wishlist, MIDI learn and routing presets, chosen sound fonts, trusted simulator origins, mirror folder.
+- **GitHub token:** Firmware+ › More › *GitHub token … (token set (••••1234))*; the dialog shows the state, an empty
+  field keeps the token, *Remove token* removes it. Never more than the last four characters are shown.
+- **Forgetting a device** offers *also delete its Studio state* (disabled while the Studio works on that state);
+  deleting a Studio state in Storage is refused in that case too (the autosave would write it again).
+- **Long reads:** *Fetch projects* (one or all), reading a project in *View & Export* and reading the FM1 Open sample
+  bank can be cancelled – between chunks (each one request and its answer, read only), the dialog says what was
+  read/saved so far. Writes stay non-cancellable on purpose.
+
+Still open / by design:
+
 - **Theme assets** (`CACHE_DIR/theme`) and sound previews (`CACHE_DIR/klang`, 4 files) are tiny and bounded;
   theme assets are in use by the running style sheet, so they are deliberately not offered for deletion.

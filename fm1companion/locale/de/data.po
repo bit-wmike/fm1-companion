@@ -3922,3 +3922,292 @@ msgstr "Backups nur mit dem eigenen Editor der Firmware (ein eigenes Backup-Prot
 
 msgid "No backup over USB"
 msgstr "Kein Backup über USB"
+
+#: fm1companion/storage.py:410
+msgid "“{name}” was written a moment ago – a rescue may still be running. Try again in a few minutes."
+msgstr "„{name}“ wurde gerade erst geschrieben – vielleicht läuft noch eine Rettung. Versuch es in ein paar Minuten noch einmal."
+
+#: fm1companion/storage.py:520
+msgid "Contents lists of the sample packs (and git copies left by older versions or an interrupted download – the app now deletes the copy right after copying). The samples you downloaded are in your Samples folder and stay there."
+msgstr "Inhaltslisten der Sample-Packs (und Git-Kopien älterer Versionen oder eines abgebrochenen Downloads – die App löscht die Kopie jetzt direkt nach dem Kopieren). Die heruntergeladenen Samples liegen in deinem Ordner Samples und bleiben dort."
+
+#: fm1companion/storage.py:535
+msgid "Saved data of the built-in browser (cookies, local storage) – web editors may keep your settings there. Only cleared on request, all at once."
+msgstr "Gespeicherte Daten des eingebauten Browsers (Cookies, lokaler Speicher) – Web-Editoren können dort deine Einstellungen ablegen. Nur auf Wunsch geleert, alles auf einmal."
+
+#: fm1companion/storage.py:538
+#: fm1companion/ui/storage_tab.py:339
+msgid "Rescue dumps and tool logs"
+msgstr "Rettungs-Dumps und Werkzeug-Protokolle"
+
+#: fm1companion/storage.py:539
+msgid "Full flash backups and logs of the rescue tool in the main folder › Rettung – your safety net. Only deleted one by one, on request; the newest full backup of a device needs an extra confirmation."
+msgstr "Komplette Flash-Sicherungen und Protokolle des Rettungswerkzeugs im Hauptordner › Rettung – dein Sicherheitsnetz. Nur einzeln und auf Wunsch gelöscht; die neueste Komplettsicherung eines Geräts braucht eine zusätzliche Bestätigung."
+
+#: fm1companion/storage.py:546
+msgid "Backups, projects, samples, kits, recordings, rescue dumps and downloads. The app never deletes them here – automatic backups follow the setting “Keep automatic backups”, rescue dumps have their own row."
+msgstr "Backups, Projekte, Samples, Kits, Aufnahmen, Rettungs-Dumps und Downloads. Die App löscht sie hier nie – automatische Backups folgen der Einstellung „Automatische Backups behalten“, Rettungs-Dumps haben eine eigene Zeile."
+
+#: fm1companion/ui/backups_page.py:136
+msgid "Old automatic backups in the mirror could not be deleted: {error}"
+msgstr "Alte automatische Backups im Spiegel konnten nicht gelöscht werden: {error}"
+
+#: fm1companion/ui/backups_page.py:139
+msgid "{n} old automatic backup deleted in the mirror as well (like here)."
+msgid_plural "{n} old automatic backups deleted in the mirror as well (like here)."
+msgstr[0] "{n} altes automatisches Backup auch im Spiegel gelöscht (wie hier)."
+msgstr[1] "{n} alte automatische Backups auch im Spiegel gelöscht (wie hier)."
+
+#: fm1companion/ui/backups_page.py:407
+msgid "delete old automatic backups in the mirror too (like here)"
+msgstr "alte automatische Backups auch im Spiegel löschen (wie hier)"
+
+#: fm1companion/ui/backups_page.py:409
+msgid "Keeps the mirror folder from growing without limit. Only automatic backups the app copied there itself, unchanged since, and that were already deleted here by “Keep automatic ones” are deleted there. Manual and pinned backups and all other files in the mirror folder are never touched."
+msgstr "Verhindert, dass der Spiegelordner unbegrenzt wächst. Dort werden nur automatische Backups gelöscht, die die App selbst dorthin kopiert hat, die seitdem unverändert sind und die hier schon durch „Automatische behalten“ gelöscht wurden. Manuelle und angeheftete Backups und alle anderen Dateien im Spiegelordner werden nie angefasst."
+
+#: fm1companion/ui/backups_page.py:414
+msgid "In the mirror the app only deletes automatic backups it copied there itself and already deleted here – never manual or pinned ones, never other files. Off: the mirror keeps everything (and grows)."
+msgstr "Im Spiegel löscht die App nur automatische Backups, die sie selbst dorthin kopiert und hier schon gelöscht hat – nie manuelle oder angeheftete, nie andere Dateien. Aus: Der Spiegel behält alles (und wächst)."
+
+#: fm1companion/ui/pages/discover.py:50
+msgid "no token set"
+msgstr "kein Token gesetzt"
+
+#: fm1companion/ui/pages/discover.py:51
+msgid "token set ({hint})"
+msgstr "Token gesetzt ({hint})"
+
+#: fm1companion/ui/pages/discover.py:1239
+msgid "GitHub token … ({state})"
+msgstr "GitHub-Token … ({state})"
+
+#: fm1companion/ui/pages/discover.py:1250
+msgid "Optional: personal GitHub token (only read access to public repos needed). Without a token GitHub allows 60 requests per hour, with a token 5000. It is kept in the settings file, readable only by you."
+msgstr "Optional: persönlicher GitHub-Token (nur Lesezugriff auf öffentliche Repos nötig). Ohne Token erlaubt GitHub 60 Abfragen pro Stunde, mit Token 5000. Er liegt in der Einstellungsdatei, nur für dich lesbar."
+
+#: fm1companion/ui/pages/discover.py:1260
+msgid "new token (leave empty to keep the current one)"
+msgstr "neuer Token (leer lassen, um den bisherigen zu behalten)"
+
+#: fm1companion/ui/pages/discover.py:1260
+msgid "token"
+msgstr "Token"
+
+#: fm1companion/ui/pages/discover.py:1264
+msgid "Remove token"
+msgstr "Token entfernen"
+
+#: fm1companion/ui/pages/discover.py:1281
+msgid "GitHub token removed."
+msgstr "GitHub-Token entfernt."
+
+#: fm1companion/ui/pages/discover.py:1288
+msgid "GitHub token saved ({state})."
+msgstr "GitHub-Token gespeichert ({state})."
+
+#: fm1companion/ui/pages/project_view.py:412
+msgid "Cancelled after {done} of {n} bytes – nothing was opened, nothing was changed on the FM-1."
+msgstr "Abgebrochen nach {done} von {n} Bytes – nichts geöffnet, nichts am FM-1 geändert."
+
+#: fm1companion/ui/projects_page.py:310
+msgid "Cancelled – {done} of {n} project was fetched and is in the library; the one being read was not saved. Nothing was changed on the FM-1."
+msgid_plural "Cancelled – {done} of {n} projects were fetched and are in the library; the one being read was not saved. Nothing was changed on the FM-1."
+msgstr[0] "Abgebrochen – {done} von {n} Projekt wurde geholt und liegt in der Bibliothek; das gerade gelesene wurde nicht gespeichert. Am FM-1 wurde nichts geändert."
+msgstr[1] "Abgebrochen – {done} von {n} Projekten wurden geholt und liegen in der Bibliothek; das gerade gelesene wurde nicht gespeichert. Am FM-1 wurde nichts geändert."
+
+#: fm1companion/ui/samples_page.py:1308
+msgid "Cancelled after {done} of {n} KiB – nothing was saved, nothing was changed on the FM-1."
+msgstr "Abgebrochen nach {done} von {n} KiB – nichts gespeichert, nichts am FM-1 geändert."
+
+#: fm1companion/ui/samples_page.py:1328
+msgid "Reading the sample bank was cancelled – nothing was saved."
+msgstr "Das Lesen der Sample-Bank wurde abgebrochen – nichts gespeichert."
+
+#: fm1companion/ui/settings_dialog.py:24
+msgid "Catalog (filters, sorting, preview images, automatic update)"
+msgstr "Katalog (Filter, Sortierung, Vorschaubilder, automatisches Aktualisieren)"
+
+#: fm1companion/ui/settings_dialog.py:26
+msgid "Automatic backups (on connect, periodically, mirror options)"
+msgstr "Automatische Backups (beim Verbinden, regelmäßig, Spiegel-Optionen)"
+
+#: fm1companion/ui/settings_dialog.py:28
+msgid "Studio (inputs, export options)"
+msgstr "Studio (Eingänge, Export-Optionen)"
+
+#: fm1companion/ui/settings_dialog.py:29
+msgid "Recording (sync, bars, split, export format)"
+msgstr "Aufnahme (Sync, Takte, Aufteilung, Exportformat)"
+
+#: fm1companion/ui/settings_dialog.py:30
+msgid "MIDI (keyboard, clock, filters)"
+msgstr "MIDI (Tastatur, Clock, Filter)"
+
+#: fm1companion/ui/settings_dialog.py:32
+msgid "View & Export (lanes, drum channel, loops)"
+msgstr "Ansehen & Export (Spuren, Drum-Kanal, Schleifen)"
+
+#: fm1companion/ui/settings_dialog.py:33
+msgid "Simulator (latency, inputs)"
+msgstr "Simulator (Latenz, Eingänge)"
+
+#: fm1companion/ui/settings_dialog.py:35
+msgid "Sound module (driver, latency, gain, channels)"
+msgstr "Klangmodul (Treiber, Latenz, Lautstärke, Kanäle)"
+
+#: fm1companion/ui/settings_dialog.py:37
+msgid "Audio output"
+msgstr "Audioausgabe"
+
+#: fm1companion/ui/settings_dialog.py:38
+msgid "Rescue (expert mode)"
+msgstr "Rettung (Expertenmodus)"
+
+#: fm1companion/ui/settings_dialog.py:39
+msgid "Installation (remembered answers)"
+msgstr "Installation (gemerkte Antworten)"
+
+#: fm1companion/ui/settings_dialog.py:40
+msgid "Automatic cleanup (Storage tab)"
+msgstr "Automatisches Aufräumen (Reiter Speicher)"
+
+#: fm1companion/ui/settings_dialog.py:118
+#: fm1companion/ui/settings_dialog.py:285
+#: fm1companion/ui/settings_dialog.py:319
+msgid "Reset settings of …"
+msgstr "Einstellungen zurücksetzen von …"
+
+#: fm1companion/ui/settings_dialog.py:119
+msgid "Puts the settings the pages keep themselves (catalog, Studio, MIDI, recording …) back to their default values – chosen one by one, applied at once."
+msgstr "Setzt die Einstellungen, die die Seiten selbst speichern (Katalog, Studio, MIDI, Aufnahme …), auf ihre Standardwerte zurück – einzeln ausgewählt, sofort angewendet."
+
+#: fm1companion/ui/settings_dialog.py:287
+msgid "Tick the pages whose settings go back to their default values. What is yours stays: folders, devices, backups, your firmware list, the GitHub token, the catalog's remembered list, MIDI learn assignments and routing presets, chosen sound fonts."
+msgstr "Hake die Seiten an, deren Einstellungen auf die Standardwerte zurückgehen. Was dir gehört, bleibt: Ordner, Geräte, Backups, deine Firmware-Liste, das GitHub-Token, die Merkliste des Katalogs, MIDI-Learn-Zuordnungen und Routing-Vorlagen, gewählte Soundfonts."
+
+#: fm1companion/ui/settings_dialog.py:300
+msgid "Pages that are already open may show the old values until the app is restarted."
+msgstr "Bereits geöffnete Seiten zeigen eventuell bis zum Neustart der App noch die alten Werte."
+
+#: fm1companion/ui/settings_dialog.py:320
+msgid "Put these settings back to their default values?<br>{list}"
+msgstr "Diese Einstellungen auf ihre Standardwerte zurücksetzen?<br>{list}"
+
+#: fm1companion/ui/settings_dialog.py:328
+msgid "Settings reset: {list}."
+msgstr "Einstellungen zurückgesetzt: {list}."
+
+#: fm1companion/ui/settings_dialog.py:426
+msgid "also delete its Studio state (your work in the Studio for this device)"
+msgstr "auch seinen Studio-Stand löschen (deine Arbeit im Studio für dieses Gerät)"
+
+#: fm1companion/ui/settings_dialog.py:429
+msgid "The Studio is working on this state right now – open another state there first."
+msgstr "Das Studio arbeitet gerade mit diesem Stand – öffne dort zuerst einen anderen Stand."
+
+#: fm1companion/ui/settings_dialog.py:443
+msgid "The device was forgotten, but its Studio state could not be deleted: {error}"
+msgstr "Das Gerät wurde vergessen, aber sein Studio-Stand konnte nicht gelöscht werden: {error}"
+
+#: fm1companion/ui/storage_tab.py:20
+msgid "Show and delete dumps …"
+msgstr "Dumps anzeigen und löschen …"
+
+#: fm1companion/ui/storage_tab.py:21
+msgid "Clear web editor data …"
+msgstr "Web-Editor-Daten leeren …"
+
+#: fm1companion/ui/storage_tab.py:147
+msgid "Clearing is pending – it happens when the app starts next time."
+msgstr "Das Leeren ist vorgemerkt – es passiert beim nächsten Start der App."
+
+#: fm1companion/ui/storage_tab.py:235
+msgid "The Studio is working on the state of <b>{name}</b> right now – it would be saved again at once. Open another state in the Studio first (or quit the app and delete it at the next start)."
+msgstr "Das Studio arbeitet gerade mit dem Stand von <b>{name}</b> – er würde sofort wieder gespeichert. Öffne zuerst einen anderen Stand im Studio (oder beende die App und lösche ihn beim nächsten Start)."
+
+#: fm1companion/ui/storage_tab.py:259
+msgid "Clear web editor data"
+msgstr "Web-Editor-Daten leeren"
+
+#: fm1companion/ui/storage_tab.py:260
+msgid "Clear the saved data of the built-in browser (cookies, local storage, databases of the web pages)?<br><br>Web editors and the simulator may keep <b>your settings</b> there (e.g. options of an editor, remembered choices) – they are lost and the pages start as on the first visit. Not affected: your backups, projects and samples, the FM-1 itself, and the app's own settings."
+msgstr "Die gespeicherten Daten des eingebauten Browsers leeren (Cookies, lokaler Speicher, Datenbanken der Webseiten)?<br><br>Web-Editoren und der Simulator können dort <b>deine Einstellungen</b> ablegen (z. B. Optionen eines Editors, gemerkte Auswahlen) – sie gehen verloren und die Seiten starten wie beim ersten Besuch. Nicht betroffen: deine Backups, Projekte und Samples, das FM-1 selbst und die Einstellungen der App."
+
+#: fm1companion/ui/storage_tab.py:272
+msgid "Web editor data cleared."
+msgstr "Web-Editor-Daten geleert."
+
+#: fm1companion/ui/storage_tab.py:273
+msgid "Web editor data: cookies cleared now, the rest when the app starts next time (the built-in browser has it open)."
+msgstr "Web-Editor-Daten: Cookies jetzt geleert, der Rest beim nächsten Start der App (der eingebaute Browser hat sie geöffnet)."
+
+#: fm1companion/ui/storage_tab.py:318
+msgid "rescue run"
+msgstr "Rettungslauf"
+
+#: fm1companion/ui/storage_tab.py:318
+msgid "flash dump"
+msgstr "Flash-Dump"
+
+#: fm1companion/ui/storage_tab.py:318
+msgid "tool logs"
+msgstr "Werkzeug-Protokolle"
+
+#: fm1companion/ui/storage_tab.py:321
+msgid "full backup"
+msgstr "Komplettsicherung"
+
+#: fm1companion/ui/storage_tab.py:323
+msgid "simulation/example"
+msgstr "Simulation/Beispiel"
+
+#: fm1companion/ui/storage_tab.py:325
+msgid "NEWEST of this device"
+msgstr "NEUESTE dieses Geräts"
+
+#: fm1companion/ui/storage_tab.py:326
+msgid "{name} – {what}, {size}, {date}"
+msgstr "{name} – {what}, {size}, {date}"
+
+#: fm1companion/ui/storage_tab.py:342
+msgid "Full flash backups are your safety net: with one, a damaged FM-1 can be brought back exactly as it was. Delete only what you no longer need – one at a time. The newest full backup of each device is marked and needs an extra confirmation."
+msgstr "Komplette Flash-Sicherungen sind dein Sicherheitsnetz: Mit einer lässt sich ein beschädigtes FM-1 genau so zurückholen, wie es war. Lösche nur, was du nicht mehr brauchst – eins nach dem anderen. Die neueste Komplettsicherung jedes Geräts ist markiert und braucht eine zusätzliche Bestätigung."
+
+#: fm1companion/ui/storage_tab.py:374
+msgid "{n} item, {size} together."
+msgid_plural "{n} items, {size} together."
+msgstr[0] "{n} Eintrag, zusammen {size}."
+msgstr[1] "{n} Einträge, zusammen {size}."
+
+#: fm1companion/ui/storage_tab.py:376
+msgid "The rescue folder holds no dumps or tool logs."
+msgstr "Der Rettungsordner enthält keine Dumps oder Werkzeug-Protokolle."
+
+#: fm1companion/ui/storage_tab.py:392
+msgid "Delete <b>{name}</b> ({size}) for good?"
+msgstr "<b>{name}</b> ({size}) endgültig löschen?"
+
+#: fm1companion/ui/storage_tab.py:394
+msgid "It holds a complete backup of an FM-1's flash. Without it, that state of the device cannot be restored any more."
+msgstr "Es enthält eine vollständige Sicherung des Flash-Speichers eines FM-1. Ohne sie lässt sich dieser Zustand des Geräts nicht mehr wiederherstellen."
+
+#: fm1companion/ui/storage_tab.py:396
+msgid "Delete rescue data"
+msgstr "Rettungsdaten löschen"
+
+#: fm1companion/ui/storage_tab.py:399
+msgid "Delete the newest full backup?"
+msgstr "Die neueste Komplettsicherung löschen?"
+
+#: fm1companion/ui/storage_tab.py:400
+msgid "<b>{name}</b> is the newest (or the only) full flash backup of this device. If the FM-1 ever needs a rescue, this is the file that brings it back.<br><br>Make a new full backup on the Rescue page first, or keep a copy elsewhere. Really delete it?"
+msgstr "<b>{name}</b> ist die neueste (oder einzige) Komplettsicherung des Flash-Speichers dieses Geräts. Braucht das FM-1 je eine Rettung, ist das die Datei, die es zurückholt.<br><br>Mach zuerst auf der Seite Rettung eine neue Komplettsicherung oder bewahre eine Kopie woanders auf. Wirklich löschen?"
+
+#: fm1companion/ui/storage_tab.py:403
+msgid "Delete anyway"
+msgstr "Trotzdem löschen"
+
+#: fm1companion/ui/storage_tab.py:414
+msgid "{name} deleted ({size})."
+msgstr "{name} gelöscht ({size})."

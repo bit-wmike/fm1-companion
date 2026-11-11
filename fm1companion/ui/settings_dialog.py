@@ -3,13 +3,55 @@
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout,
-                             QInputDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSpinBox,
-                             QTabWidget, QVBoxLayout, QWidget)
+                             QInputDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QPushButton,
+                             QSpinBox, QTabWidget, QVBoxLayout, QWidget)
 from PyQt6.QtCore import Qt
 
 from .. import config, firmware, i18n
-from ..i18n import _
+from ..i18n import N_, _
 from .common import confirm, german_buttons, icon, show_error
+
+
+def _defaults(module: str, name: str):
+    import importlib
+    return lambda: dict(getattr(importlib.import_module(module, __package__), name))
+
+
+# Sections that keep their own settings (config.module): key, name (msgid), defaults, keys that stay.
+# Kept: what is yours rather than a setting – a token, the wishlist, MIDI learn assignments, routing presets,
+# chosen sound fonts, trusted simulator origins, the mirror folder, the Studio's last device.
+PAGE_SETTINGS = [
+    ("catalog", N_("Catalog (filters, sorting, preview images, automatic update)"),
+     _defaults("..ui.pages.discover", "DEFAULTS"), ("wishlist", "github_token", "last_visit")),
+    ("daten", N_("Automatic backups (on connect, periodically, mirror options)"),
+     _defaults("..autobackup", "DEFAULTS"), ("mirror",)),
+    ("studio", N_("Studio (inputs, export options)"), _defaults(".studio_service", "SETTINGS"), ("last_profile",)),
+    ("recorder", N_("Recording (sync, bars, split, export format)"), _defaults(".recorder_page", "SETTINGS"), ()),
+    ("midi", N_("MIDI (keyboard, clock, filters)"), _defaults("..ui.pages.midi", "SETTINGS"),
+     ("learn", "learn_port", "routing_presets")),
+    ("musik", N_("View & Export (lanes, drum channel, loops)"), _defaults("..ui.pages.project_view", "SETTINGS"), ()),
+    ("simulator", N_("Simulator (latency, inputs)"), _defaults("..ui.pages.simulator", "SETTINGS"),
+     ("device_origins",)),
+    ("soundmodule", N_("Sound module (driver, latency, gain, channels)"),
+     _defaults("..ui.pages.soundmodule", "SETTINGS"), ("soundfont", "custom")),
+    ("audio", N_("Audio output"), lambda: {"output": "", "keep_off_fm1": True}, ()),
+    ("rettung", N_("Rescue (expert mode)"), lambda: {"experte": False}, ()),
+    ("installer", N_("Installation (remembered answers)"), lambda: {"v15_choice": {}}, ()),
+    ("storage", N_("Automatic cleanup (Storage tab)"), _defaults("..storage", "DEFAULTS"), ("last_auto",)),
+]
+
+
+def reset_page_settings(keys) -> list[str]:
+    """put the chosen sections back to their defaults (what is yours stays, see PAGE_SETTINGS) and save.
+    -> the keys that were reset"""
+    done = []
+    for key, _title, defaults, keep in PAGE_SETTINGS:
+        if key in keys:
+            config.reset_module(key, defaults(), keep)
+            done.append(key)
+    if done:
+        config.save()
+    return done
 
 
 class SettingsDialog(QDialog):
@@ -73,6 +115,11 @@ class SettingsDialog(QDialog):
                            "recording). Folders, devices and your firmware list stay. Only saved with OK."))
         reset.clicked.connect(self.restore_defaults)
         f.addRow("", reset)
+        b_pages = QPushButton(icon("edit-clear-history", "edit-undo"), _("Reset settings of …"))
+        b_pages.setToolTip(_("Puts the settings the pages keep themselves (catalog, Studio, MIDI, recording …) back "
+                             "to their default values – chosen one by one, applied at once."))
+        b_pages.clicked.connect(self.reset_pages_dialog)
+        f.addRow("", b_pages)
         tabs.addTab(g, _("General"))
 
         # Appearance
@@ -232,6 +279,55 @@ class SettingsDialog(QDialog):
         self.aud.setText(d.audacity_cmd)
         self.open_aud.setChecked(d.record_open_audacity)
 
+    def reset_pages_dialog(self, preselect=()) -> list[str]:
+        """choose the sections whose own settings go back to the defaults (applied right away, after a question)"""
+        dlg = QDialog(self)
+        dlg.setWindowTitle(_("Reset settings of …"))
+        v = QVBoxLayout(dlg)
+        intro = QLabel(_("Tick the pages whose settings go back to their default values. What is yours stays: "
+                         "folders, devices, backups, your firmware list, the GitHub token, the catalog's remembered "
+                         "list, MIDI learn assignments and routing presets, chosen sound fonts."))
+        intro.setWordWrap(True)
+        v.addWidget(intro)
+        lst = QListWidget()
+        for key, title, _d, _k in PAGE_SETTINGS:
+            it = QListWidgetItem(_(title))
+            it.setData(Qt.ItemDataRole.UserRole, key)
+            it.setFlags(it.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            it.setCheckState(Qt.CheckState.Checked if key in preselect else Qt.CheckState.Unchecked)
+            lst.addItem(it)
+        v.addWidget(lst, 1)
+        note = QLabel(_("Pages that are already open may show the old values until the app is restarted."))
+        note.setWordWrap(True)
+        note.setProperty("role", "small")
+        v.addWidget(note)
+        bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
+        ok = bb.addButton(_("Reset"), QDialogButtonBox.ButtonRole.AcceptRole)
+        ok.setProperty("variant", "danger")
+        german_buttons(bb)
+        bb.accepted.connect(dlg.accept)
+        bb.rejected.connect(dlg.reject)
+        v.addWidget(bb)
+        self._reset_list = lst                 # (tests)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return []
+        keys = [lst.item(i).data(Qt.ItemDataRole.UserRole) for i in range(lst.count())
+                if lst.item(i).checkState() == Qt.CheckState.Checked]
+        if not keys:
+            return []
+        names = [_(t) for k, t, _d, _k in PAGE_SETTINGS if k in keys]
+        if not confirm(self, _("Reset settings of …"),
+                       _("Put these settings back to their default values?<br>{list}").format(
+                           list="<br>".join("• " + n for n in names)), _("Reset"), danger=True):
+            return []
+        done = reset_page_settings(keys)
+        if "storage" in done:
+            self.storage.load_values()
+        w = self.parent()
+        if done and w is not None and hasattr(w, "notify"):
+            w.notify(_("Settings reset: {list}.").format(list=", ".join(names)), "success")
+        return done
+
     @staticmethod
     def _swatch(col: str):
         from PyQt6.QtGui import QColor, QIcon, QPainter, QPixmap
@@ -313,11 +409,41 @@ class SettingsDialog(QDialog):
             self.ctx.changed.emit()
 
     def _dev_delete(self):
+        """forget a device – optionally with its Studio state (backups and projects always stay)"""
         p = self._cur()
-        if p and confirm(self, _("Forget device"),
-                         _("Forget {name}? Backups and projects are kept.").format(name=p.name), _("Forget")):
-            self.ctx.store.delete(p.id)
-            self._fill_devs()
+        if not p:
+            return False
+        from .. import storage
+        from .. import studio as S
+        folder = p.folder_name
+        has_state = S.state_path(folder).parent.is_dir()
+        service = getattr(getattr(self.ctx, "window", None), "studio", None)
+        in_use = has_state and storage.studio_state_in_use(folder, service)
+        box = QMessageBox(QMessageBox.Icon.Question, _("Forget device"),
+                          _("Forget {name}? Backups and projects are kept.").format(name=p.name), parent=self)
+        chk = None
+        if has_state:
+            chk = QCheckBox(_("also delete its Studio state (your work in the Studio for this device)"))
+            if in_use:
+                chk.setEnabled(False)
+                chk.setToolTip(_("The Studio is working on this state right now – open another state there first."))
+            box.setCheckBox(chk)
+        yes = box.addButton(_("Forget"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(_("Cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(yes)
+        self._forget_box = box                 # (tests)
+        box.exec()
+        if box.clickedButton() is not yes:
+            return False
+        self.ctx.store.delete(p.id)
+        if chk is not None and chk.isChecked() and chk.isEnabled():
+            try:
+                storage.delete_studio_state(folder)
+            except OSError as e:
+                show_error(self, _("Not deleted"), _("The device was forgotten, but its Studio state could not be "
+                                                     "deleted: {error}").format(error=e.strerror or e))
+        self._fill_devs()
+        return True
 
     def _ok(self):
         s = self.ctx.settings
