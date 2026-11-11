@@ -37,3 +37,31 @@ Whether there is an update for your FM-1 is also shown on the [Overview](app://p
 * Update to **Melodee 1.6.0**: your backup is your way back, projects may sound different – see
   [Melodee 1.6.0](help:14-melodee-1-6-0).
 * If something goes wrong: [Update mode & recovery](help:03-update-modus).
+
+## USB hubs
+
+With a good cable directly at the computer, installing is easiest. Through a **USB hub** the connection more
+often drops for a moment, or the FM-1 takes longer to come back after its restarts – then an installation starts
+but does not finish. The app therefore detects a hub in front of the FM-1 and switches to **careful USB mode** by
+itself (shown in the installation plan):
+
+* it waits longer for the update loader and for the restart, answers the FM-1's requests more slowly and keeps
+  only one answer on its way at a time;
+* if the connection drops while writing, it waits for **the same** FM-1 in update mode and starts the write again
+  (up to 3 times) – only with the loader that belongs to the package, exactly like *Finish installation* on the
+  [Recovery](app://page/recovery) page. All safety checks stay the same.
+
+Settings › *Careful USB mode for flashing*: automatic (default), always or never.
+
+If it still does not work:
+
+1. Connect the FM-1 **directly** to the computer with a short data cable – on a Raspberry Pi preferably to a
+   **black USB 2 port**. If you need a hub: one with its **own power supply**, without other power-hungry devices.
+2. The [system check](app://action/syscheck) shows how the FM-1 is connected (hubs, speed, USB 2/3) and whether **USB
+   power saving** (autosuspend) is on for the FM-1 or its hub. The optional **udev rule** of the app switches it
+   off: `./install.sh --usb-power-rule` (or the checkbox in the graphical installer), or by hand
+   `sudo install -m 0644 packaging/udev/60-fm1-companion.rules /etc/udev/rules.d/` and
+   `sudo udevadm control --reload-rules`. The Debian package ships it in `/usr/share/fm1-companion/udev/`.
+3. Every installation writes a **flash log** (every request of the FM-1, repeated requests, dropouts, kernel
+   messages of that time). It is part of the error report ([Help › Create bug report](app://action/report)) – please attach it when
+   you report a problem.

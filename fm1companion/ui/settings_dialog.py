@@ -47,6 +47,15 @@ class SettingsDialog(QDialog):
         f.addRow("", self.check)
         f.addRow("", self.autobk)
         f.addRow(_("Keep automatic backups:"), self.keep)
+        self.careful = QComboBox()
+        self.careful.addItem(_("automatic (when the FM-1 is connected through a USB hub)"), "auto")
+        self.careful.addItem(_("always"), "always")
+        self.careful.addItem(_("never"), "never")
+        self.careful.setToolTip(_("Careful USB mode waits longer for the FM-1 to restart, answers its requests more "
+                                  "slowly and resumes the write automatically if the USB connection drops – "
+                                  "the usual trouble with USB hubs. All safety checks stay the same."))
+        self.careful.setCurrentIndex(max(0, self.careful.findData(getattr(s, "careful_usb", "auto"))))
+        f.addRow(_("Careful USB mode for flashing:"), self.careful)
         # language of the user interface: applied at the next start (texts are translated when pages are built)
         self.language = QComboBox()
         self.language.addItem(_("System language ({name})").format(
@@ -273,6 +282,7 @@ class SettingsDialog(QDialog):
         s.check_on_start = self.check.isChecked()
         s.auto_backup_before_update = self.autobk.isChecked()
         s.keep_backups = self.keep.value()
+        s.careful_usb = self.careful.currentData() or "auto"
         s.theme = self.theme.currentData()
         from . import theme as th
         pr = th.prefs()

@@ -62,6 +62,7 @@ class DeviceState:
     ports: int = 1                # how many FM-1 (including in update mode) are connected
     busy: bool = False            # another installation is running
     pinned: bool = False          # target device unambiguously pinned by USB connection/serial number
+    usb_notes: list = field(default_factory=list)   # USB hub / careful mode / autosuspend (flash/robust.plan_notes)
 
     @property
     def update_mode(self) -> bool:
@@ -280,6 +281,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
     elif state.ports > 1:
         p.warnings.append(_("Several FM-1 are connected. The app pins the target device by its USB port – "
                             "please do not move any cable during the installation."))
+    p.warnings += [n for n in state.usb_notes or [] if n]     # USB hub, careful mode, autosuspend
 
     # ---- update mode: only continue if the waiting loader matches the package
     if state.update_mode:

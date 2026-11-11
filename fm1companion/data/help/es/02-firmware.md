@@ -37,3 +37,32 @@ Si hay una actualización para tu FM-1, también se muestra en el [Resumen](app:
 * Actualización a **Melodee 1.6.0**: tu copia de seguridad es tu camino de vuelta, los proyectos pueden sonar distinto – consulta
   [Melodee 1.6.0](help:14-melodee-1-6-0).
 * Si algo sale mal: [Modo de actualización y rescate](help:03-update-modus).
+
+## Hubs USB
+
+Con un buen cable conectado directamente al ordenador, instalar es lo más sencillo. A través de un **hub USB** la
+conexión se corta más a menudo por un momento, o el FM-1 tarda más en volver tras sus reinicios – entonces una
+instalación empieza pero no termina. Por eso la app detecta un hub delante del FM-1 y pasa por sí sola al
+**modo USB cuidadoso** (se indica en el plan de instalación):
+
+* espera más al cargador de actualización y al reinicio, responde más despacio a las peticiones del FM-1 y solo
+  tiene una respuesta en camino a la vez;
+* si la conexión se corta mientras escribe, espera al **mismo** FM-1 en modo de actualización y vuelve a empezar
+  la escritura (hasta 3 veces) – solo con el cargador que corresponde al paquete, igual que *Terminar la
+  instalación* en la página [Rescate](app://page/recovery). Todas las comprobaciones de seguridad siguen igual.
+
+Ajustes › *Modo USB cuidadoso al flashear*: automático (predeterminado), siempre o nunca.
+
+Si aun así no funciona:
+
+1. Conecta el FM-1 **directamente** al ordenador con un cable de datos corto – en una Raspberry Pi mejor a un
+   **puerto USB 2 negro**. Si necesitas un hub: uno con **fuente de alimentación propia**, sin otros dispositivos
+   que consuman mucho.
+2. La [comprobación del sistema](app://action/syscheck) muestra cómo está conectado el FM-1 (hubs, velocidad, USB 2/3) y si
+   el **ahorro de energía USB** (autosuspend) está activado para el FM-1 o su hub. La **regla udev** opcional de la
+   app lo desactiva: `./install.sh --usb-power-rule` (o la casilla del instalador gráfico), o a mano
+   `sudo install -m 0644 packaging/udev/60-fm1-companion.rules /etc/udev/rules.d/` y
+   `sudo udevadm control --reload-rules`. El paquete Debian la incluye en `/usr/share/fm1-companion/udev/`.
+3. Cada instalación escribe un **registro de flasheo** (cada petición del FM-1, peticiones repetidas, cortes,
+   mensajes del kernel de ese momento). Forma parte del informe de errores ([Ayuda › Crear informe de errores](app://action/report)) –
+   adjúntalo cuando informes de un problema.

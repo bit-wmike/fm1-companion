@@ -86,6 +86,15 @@ def build_report(path: Path, exc_text: str = "", extra: dict | None = None) -> P
                 z.writestr(f"logs/{f.name}", _clean(f.read_text("utf-8", errors="replace"), home))
             except OSError:
                 pass
+        try:                                   # firmware installations: flash logs and the journal (no packages)
+            from ..flash import journal as fj, robust
+            for f in robust.latest_logs(fj.root() / "logs", 3):
+                z.writestr(f"flash/{f.name}", _clean(f.read_text("utf-8", errors="replace"), home))
+            jd = fj.Journal().load()
+            jd["history"] = jd.get("history", [])[-10:]
+            z.writestr("flash/journal.json", json.dumps(_sanitize(jd, home), indent=2, ensure_ascii=False))
+        except Exception:  # noqa: BLE001
+            pass
         try:
             from .. import health
             mon = health.PiMonitor()

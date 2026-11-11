@@ -1,0 +1,18 @@
+# FM-1 Companion Suite – optional udev rule: keep the M-VAVE FM-1 and the USB hubs in front of it awake.
+#
+# Linux may suspend idle USB devices and hubs (USB autosuspend, power/control = auto). During a firmware
+# installation the FM-1 restarts twice (into its update loader and back); a hub that fell asleep in between does
+# not always wake up again, and the installation stops. This rule sets power/control = on
+#   * for the FM-1 in every mode (stock firmware, its update loader, Felucca family and their loaders –
+#     the USB IDs of fm1companion/devices.py FM1_USB_IDS; 1209:0001/0002 are pid.codes IDs that other
+#     hobby devices may share: for them it only switches power saving off, nothing else),
+#   * and for every hub on the path from the computer to the FM-1, when the FM-1 is plugged in.
+# Nothing else changes. Installed only on request (install.sh --usb-power-rule, the graphical installer's
+# checkbox or by hand):
+#   sudo install -m 0644 60-fm1-companion.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger --subsystem-match=usb --action=change
+# To take it out again, delete /etc/udev/rules.d/60-fm1-companion.rules and reload the rules.
+
+ACTION=="add|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="4c4a", ATTR{idProduct}=="c755|4155", TEST=="power/control", ATTR{power/control}="on", RUN+="/bin/sh -c 'd=/sys%p; while d=$${d%%/*}; [ -f $$d/bDeviceClass ]; do if [ $$(cat $$d/bDeviceClass) = 09 ] && [ -w $$d/power/control ]; then echo on > $$d/power/control; fi; done'"
+ACTION=="add|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="4d4a", ATTR{idProduct}=="4155", TEST=="power/control", ATTR{power/control}="on", RUN+="/bin/sh -c 'd=/sys%p; while d=$${d%%/*}; [ -f $$d/bDeviceClass ]; do if [ $$(cat $$d/bDeviceClass) = 09 ] && [ -w $$d/power/control ]; then echo on > $$d/power/control; fi; done'"
+ACTION=="add|change", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="1209", ATTR{idProduct}=="0001|0002", TEST=="power/control", ATTR{power/control}="on", RUN+="/bin/sh -c 'd=/sys%p; while d=$${d%%/*}; [ -f $$d/bDeviceClass ]; do if [ $$(cat $$d/bDeviceClass) = 09 ] && [ -w $$d/power/control ]; then echo on > $$d/power/control; fi; done'"
