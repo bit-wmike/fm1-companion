@@ -65,6 +65,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
+from . import fwfamily
 from .i18n import N_, _
 from .transport import Transport, Link, LinkError
 from .protocol import Cmd, parse_info, v14
@@ -416,10 +417,16 @@ def backup_firmware(archive) -> str:
         text = " ".join(str(x) for x in (c.get("firmware", ""), c.get("version_string", ""), archive.firmware or ""))
         if "orbit" in text.lower() or archive.file.get("product") == "ORBIT":
             return "orbit"                          # (ORBIT, a SLOOP fork: no twin; the SLOOP twin cannot read it)
+        fam = fwfamily.by_info(archive.firmware or "")
+        if fam is not None and fam.layout and fam.layout not in ("sloop", "karma"):
+            return fam.key                          # (sloopDX, Clipper …: objects of their own – no twin reads them)
         return "karma" if "karma" in text.lower() else "sloop"
     c = archive.companion or {}
     key = (c.get("firmware") or "").lower()
     text = " ".join(str(x) for x in (key, c.get("version_string", ""), archive.firmware or "")).lower()
+    fam = fwfamily.by_info(archive.firmware or c.get("version_string", "") or "")
+    if fam is not None and fam.layout:              # (Saadet, DUELL, Tessera …: a layout of their own, no twin)
+        return fam.key
     for name in ("melodee", "skiff", "jiant", "coralflower", "choralroot", "sloop"):
         if name in text:
             return name

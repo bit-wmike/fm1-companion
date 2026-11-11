@@ -20,13 +20,15 @@ from PyQt6.QtWidgets import (QAbstractItemView, QComboBox, QFrame, QGridLayout, 
                              QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from ... import catalog as catmod
-from ... import config, firmware
+from ... import config, firmware, fwfamily
 from ..common import notify, fmt_size, heading, icon, run_job
 from ..responsive import reflow
 from ..linkimport_dialog import LinkImportDialog, OwnFirmwaresDialog, _looks_like_link
 from . import PageSpec
 from ...i18n import N_, _, ngettext, pgettext
 
+# the backup protocols the app speaks (fwfamily: what the catalog audit found in a firmware's source code)
+BACKUP_PROTOCOL_NAMES = {"felucca": "Felucca", "sloop": "SLOOP", "x0x": "X0X"}
 CAT_COLORS = {"Original": "#8e44ad", "Synth": "#2a7ab8", "Groovebox": "#e67e22", "Sampler": "#16a085",  # i18n: ignore
               "Akkorde": "#c0398b", "Generativ": "#27ae60", "Werkzeug": "#7f8c8d", "Spiele & Spaß": "#d35400"}  # i18n: ignore
 SORTS = [("az", "A–Z"), ("updated", _("recently updated")), ("stars", _("popularity (stars)")),
@@ -466,9 +468,17 @@ class DetailView(QWidget):
             inst = ("–", _("Install only via the manufacturer's site"))
         else:
             inst = ("–", _("No verified package in the catalog; enter a .fwsc address via “Paste link”"))
+        fam = fwfamily.by_key(e.key)
         if e.protocol == "felucca":
             bk = ("✓", _("Backups, projects and editor bridge (Felucca protocol; {evidence})").format(
                 evidence=catmod.protocol_evidence_text(e)))
+        elif fam is not None and fam.backup in BACKUP_PROTOCOL_NAMES:
+            bk = ("✓", _("Backups through the app ({protocol} backup protocol, from its source code)").format(
+                protocol=BACKUP_PROTOCOL_NAMES[fam.backup]))
+        elif fam is not None and fam.backup == "own":
+            bk = ("✗", _("Backups only with the firmware's own editor (a backup protocol of its own)"))
+        elif fam is not None:
+            bk = ("✗", _("No backup over USB"))
         else:
             bk = ("?", _("Backups/projects: unknown – checked when connecting"))
         # (key for self.labels, title, mark, text)
@@ -972,7 +982,8 @@ class DiscoverPage(QWidget):
             return False
         if c["editor"] and not e.editor_url:
             return False
-        if c["backup"] and e.protocol != "felucca":
+        if c["backup"] and e.protocol != "felucca" and not (
+                fwfamily.by_key(e.key) is not None and fwfamily.by_key(e.key).backup in BACKUP_PROTOCOL_NAMES):
             return False
         if c["wish"] and e.key not in self.model.wish:
             return False

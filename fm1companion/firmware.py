@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
+from . import fwfamily
 from .config import CACHE_DIR, DATA_DIR, load as load_settings
 from .i18n import N_, _
 
@@ -574,13 +575,17 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
     v = version_string.lower()
     m = re.search(r"(\d+\.\d+(?:\.\d+)?(?:-rc\.?\d+)?)", version_string)
     tag = ("v" + m.group(1)) if m else ""
-    plain = family == "felucca" and "felucca" in v and not any(k in v for k in SELF_NAMING)
+    named = fwfamily.by_info(version_string)           # a firmware that names itself (the catalog audit's table)
+    plain = family == "felucca" and "felucca" in v and not any(k in v for k in SELF_NAMING) and named is None
     try:
         table = json.loads(IDENT_FILE.read_text())
-        if identity in table and not (plain and table[identity]["firmware"] in SELF_NAMING):
-            return table[identity]["firmware"], table[identity]["tag"]
+        if identity in table and not (plain and table[identity]["firmware"] in SELF_NAMING) and \
+                not (named is not None and table[identity]["firmware"] != named.key):
+            return table[identity]["firmware"], table[identity]["tag"]   # (what the INFO names wins over memory)
     except (OSError, ValueError, KeyError):
         pass
+    if named is not None and named.key not in ("x0x",):  # ("FELUCCA CLIPPER 1.3.1", "SAADET v1.0", "JANGADA 1.0.1": the
+        return named.key, tag                           # catalog's keys; X0X below: its identity may be another's)
     if "karma" in v or family == "karma":              # KARMA (a SLOOP fork) answers INFO "FELUCCA KARMA 3.1"
         return "karma", tag
     if "orbit" in v or family == "orbit":              # ORBIT (a SLOOP fork) answers INFO "FELUCCA ORBIT 1.0.0" (the
@@ -594,7 +599,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
         return "coralflower", tag
     if "x0x" in v or family == "x0x":                   # X0X answers INFO "X0X 1.2.1 BETA" (the catalog's key; its
                                                         # identity FM-1_9XXYYZZ is shared by other firmwares: TRIBE)
-        return "x0x", tag
+        other = _catalog_only_other(identity, "x0x")    # (X0X's forks answer its INFO unchanged, "X0X 0.3.0 BETA": an
+        return (other or "x0x"), tag                    # identity the catalog lists for one of them alone names it)
     if "choralroot" in v or family.startswith("choralroot"):   # ChoralRoot answers INFO "ChoralRoot 0.39" (the catalog's
         return "choralroot-fm-1", tag                            # key "choralroot-fm-1")
     if identity in _twin_identities():                  # FoMni, AMB-1, LOOM-8 (no INFO): their releases' identities;
@@ -602,6 +608,10 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
     if re.fullmatch(r"FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)|FM-1_8\d{6}", identity or ""):
         # M-VAVE's FM1 Open (app/version.h FM1_UPDATE_PRODUCT, V14: FM-1_8000014; its SDK keeps FM-1_8xxxxxx)
         return "fm1-open", {"FM-1_8000014": "V14"}.get(identity, "")
+    if plain and re.match(r"felucca \d", v):           # "FELUCCA 2.6 BETA": SLOOP's build.py --release (Felucca's
+        other = _catalog_only_other(identity, "felucca")   # writes "v2.6"), a SLOOP fork's release (sloopDX 2.6:
+        if other:                                       # FM-1_926): the catalog's one firmware with that identity
+            return other, tag
     if plain:                                           # Felucca itself (INFO "FELUCCA v1.8.1"; its releases FM-1_9XY,
         return "felucca", tag                           # shared with forks built the same way – and with the identities
                                                         # of 9XY firmwares below, FM-1_909, 920, 926 …: the INFO decides)
@@ -610,8 +620,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
         n = int(m.group(1))
         if 91000 <= n < 92000:
             return "melodee", ""
-        if 700 <= n < 800:
-            return "skiff", ""
+        if 700 <= n < 800:                              # (Skiff's FM-1_7XY – unless the catalog lists the exact
+            return (_catalog_only_other(identity, "skiff") or "skiff"), ""   # identity for another: TONITOR FM-1_700)
         if n == 909:                                    # JIANT's tools/build.py PRODUCT (its web installer's builds;
                                                         # a plain FELUCCA INFO there: Felucca 0.9's release, above)
             return "jiant-fm", ""
@@ -626,6 +636,21 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
         if n in (15, 16):
             return f"stock-v{n}", f"V{n}"
     return "", ""
+
+
+def _catalog_only_other(identity: str, parent: str) -> str:
+    """the one catalog firmware other than parent whose packages carry this identity ("" if none, several, or the
+    parent's own): X0X's forks (TRIBE 0.3.0: FM-1_9000300) answer X0X's INFO unchanged"""
+    if not identity:
+        return ""
+    try:
+        from . import catalog
+        keys = {e.key for e in catalog.by_product(identity)}
+    except Exception:                                   # noqa: BLE001 – no catalog: no such guess
+        return ""
+    if parent in keys or len(keys) != 1:
+        return ""
+    return next(iter(keys))
 
 
 _TWIN_IDS: dict[str, tuple[str, str]] | None = None
@@ -654,6 +679,7 @@ def _twin_identities() -> dict[str, tuple[str, str]]:
 # firmwares whose INFO always names them (SLOOP "FELUCCA SLOOP 2.8.5", KARMA "FELUCCA KARMA 3.1", ...): a plain "FELUCCA
 # v…" is none of them, whatever this machine remembered for the identity
 SELF_NAMING = ("sloop", "karma", "orbit", "melodee", "jiant-fm", "coralflower", "choralroot-fm-1")
+SELF_NAMING += tuple(f.key for f in fwfamily.FAMILIES if f.names and f.key not in SELF_NAMING)       # (and every fork the audit found naming itself)
 
 
 def query_identity(port_name: str = "", timeout=20) -> tuple[str, str]:

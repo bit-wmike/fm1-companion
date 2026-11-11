@@ -169,8 +169,13 @@ class Info:
     @property
     def firmware_name(self) -> str:
         """Melodee reports "MELODEE v…", SLOOP "FELUCCA SLOOP …", KARMA (a SLOOP fork) "FELUCCA KARMA 3.1", Skiff (like the
-        original) "FELUCCA v…"."""
+        original) "FELUCCA v…"; a fork that names itself is the catalog's key for it (fwfamily: "FELUCCA CLIPPER 1.3.1"
+        -> "clipper"), a plain "FELUCCA v…" (Felucca and the forks that answer as it does) "felucca"."""
         v = self.version.lower()
+        from . import fwfamily                  # the firmwares that name themselves (the catalog audit's table): the
+        fam = fwfamily.by_info(self.version)    # name first – "FELUCCA sloopDX" is no SLOOP, "FELUCCA CLIPPER" no Felucca
+        if fam is not None:
+            return fam.name
         if "karma" in v:
             return "karma"
         for name in ("melodee", "sloop", "skiff", "orbit", "x0x", "loom", "choralroot", "jiant", "coralflower"):

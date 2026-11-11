@@ -42,11 +42,6 @@ msgstr "El FM-1 está en modo de actualización – termina primero la instalaci
 msgid "The running firmware"
 msgstr "El firmware en uso"
 
-#: fm1companion/ui/backups_page.py:52
-#, python-brace-format
-msgid "{firmware} has no editor protocol – the app cannot make a backup of it. Backups are available for Melodee, Skiff and SLOOP. Please back up important projects with the firmware's own tool."
-msgstr "{firmware} no tiene protocolo de editor – la app no puede hacer una copia de seguridad. Hay copias de seguridad para Melodee, Skiff y SLOOP. Guarda los proyectos importantes con la herramienta propia del firmware."
-
 #: fm1companion/ui/backups_page.py:55
 msgid "The FM-1 does not respond. Check the cable and reconnect."
 msgstr "El FM-1 no responde. Revisa el cable y vuelve a conectarlo."
@@ -1919,10 +1914,6 @@ msgstr "inventario incompleto"
 msgid "object too large"
 msgstr "objeto demasiado grande"
 
-#: fm1companion/backup.py:216
-msgid "unexpected object order"
-msgstr "orden de objetos inesperado"
-
 #: fm1companion/backup.py:237 fm1companion/sloopbk.py:272
 msgid "unexpected answer while reading"
 msgstr "respuesta inesperada al leer"
@@ -1939,10 +1930,6 @@ msgstr "No es una copia completa de Felucca/Melodee"
 #: fm1companion/backup.py:337
 msgid "invalid object in the backup"
 msgstr "objeto no válido en la copia de seguridad"
-
-#: fm1companion/backup.py:334
-msgid "unexpected object order in the backup"
-msgstr "orden de objetos inesperado en la copia de seguridad"
 
 #: fm1companion/backup.py:341
 msgid "Backup damaged (Base64)"
@@ -3986,3 +3973,39 @@ msgstr "El FM-1 tiene {firmware}, que solo acepta sus propias copias. No se escr
 #, python-brace-format
 msgid "{firmware} was playing during this backup: changes it had not saved yet are not in it."
 msgstr "{firmware} estaba reproduciendo durante esta copia: los cambios que aún no había guardado no están en ella."
+
+#, python-brace-format
+msgid "{firmware} has no backup over USB. Nothing was read or written."
+msgstr "{firmware} no tiene copia de seguridad por USB. No se ha leído ni escrito nada."
+
+msgid "a different firmware"
+msgstr "otro firmware"
+
+#, python-brace-format
+msgid "Backups through the app ({protocol} backup protocol, from its source code)"
+msgstr "Copias de seguridad con la aplicación (protocolo de copia de {protocol}, según su código fuente)"
+
+#, python-brace-format
+msgid "{firmware} has no editor protocol – the app cannot make a backup of it. Backups go through the editor protocol of the Felucca family (Felucca's, SLOOP's or X0X's backup commands; docs/firmware-support.md lists every firmware). Please back up important projects with the firmware's own tool."
+msgstr "{firmware} no tiene protocolo de editor: la aplicación no puede hacer una copia de seguridad. Las copias pasan por el protocolo de editor de la familia Felucca (los comandos de copia de Felucca, SLOOP o X0X; docs/firmware-support.md enumera cada firmware). Guarda los proyectos importantes con la herramienta del propio firmware."
+
+#, python-brace-format
+msgid "{version} answers none of the backup requests the app knows (neither Felucca's nor SLOOP's). Nothing was read or written – please back up with the firmware's own editor or tool."
+msgstr "{version} no responde a ninguna de las peticiones de copia que conoce la aplicación (ni las de Felucca ni las de SLOOP). No se ha leído ni escrito nada: haz la copia con el editor o la herramienta del propio firmware."
+
+msgid "The firmware"
+msgstr "El firmware"
+
+#, python-brace-format
+msgid "This backup comes from {backup}, the FM-1 runs {device}: the two keep different things under the same backup objects, so its parts would land in the wrong places. Nothing was written."
+msgstr "Esta copia viene de {backup} y el FM-1 ejecuta {device}: los dos guardan cosas distintas bajo los mismos objetos de copia, así que sus partes acabarían en el sitio equivocado. No se ha escrito nada."
+
+#, python-brace-format
+msgid "{firmware} keeps its backups in a protocol of its own, which the app does not speak. Nothing was read or written – please use the firmware's own editor for backups."
+msgstr "{firmware} hace sus copias con un protocolo propio que la aplicación no habla. No se ha leído ni escrito nada: usa el editor del propio firmware para las copias."
+
+msgid "Backups only with the firmware's own editor (a backup protocol of its own)"
+msgstr "Copias solo con el editor del propio firmware (un protocolo de copia propio)"
+
+msgid "No backup over USB"
+msgstr "Sin copia de seguridad por USB"

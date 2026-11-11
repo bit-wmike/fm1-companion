@@ -49,9 +49,10 @@ def no_backup_reason(ctx) -> str:
     if getattr(ctx, "midi_connected", False):
         from .device import firmware_name
         fw = firmware_name(ctx.firmware_key) or _("The running firmware")
-        return _("{firmware} has no editor protocol – the app cannot make a backup of it. Backups are available "
-                 "for Melodee, Skiff and SLOOP. Please back up important projects with the firmware's own tool."
-                 ).format(firmware=fw)
+        return _("{firmware} has no editor protocol – the app cannot make a backup of it. Backups go through the "
+                 "editor protocol of the Felucca family (Felucca's, SLOOP's or X0X's backup commands; "
+                 "docs/firmware-support.md lists every firmware). Please back up important projects with the "
+                 "firmware's own tool.").format(firmware=fw)
     return _("The FM-1 does not respond. Check the cable and reconnect.")
 
 

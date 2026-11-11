@@ -1449,11 +1449,14 @@ def test_karma_in_backup_layer():
     assert sloopbk.dsu_old(b"DSU1....") and not sloopbk.dsu_old(b"HEX1....")
     assert backup.SLOOP_PROTOCOL[:2] == ("sloop", "karma") and all(i in sloopbk.RESTORE + sloopbk.SAMPLES for i in KARMA_IDS)
 
-    class FakeLink:                                     # an FM-1 that only answers INFO
-        def __init__(self, version):
+    class FakeLink:                                     # an FM-1 that answers INFO (and Felucca's LIST, when it is
+        def __init__(self, version):                    # asked: a plain "FELUCCA v…" INFO is no proof of Felucca)
             self.raw = [*version.encode(), 0, 0, 71, 108, 64, 63, 4, 11]
+            self.version = version
 
         def request(self, cmd, args=(), timeout=1.0, retries=0):
+            if cmd == Cmd.BACKUP_LIST and "SLOOP" not in self.version:
+                return [1, 0, 0]
             assert cmd == Cmd.INFO
             return self.raw
     assert parse_info(FakeLink("FELUCCA KARMA 3.1").raw).firmware_name == "karma"
@@ -1690,11 +1693,14 @@ def test_felucca_in_backup_layer():
     assert backup.is_sample(32) and backup.is_project(2) and not backup.is_project(9)
     assert "U01–U16" in backup.object_title(6, felucca=True)
 
-    class FakeLink:                                     # an FM-1 that only answers INFO
-        def __init__(self, version):
+    class FakeLink:                                     # an FM-1 that answers INFO (and Felucca's LIST, when it is
+        def __init__(self, version):                    # asked: a plain "FELUCCA v…" INFO is no proof of Felucca)
             self.raw = [*version.encode(), 0, 0, 71, 108, 64, 63, 4, 11]
+            self.version = version
 
         def request(self, cmd, args=(), timeout=1.0, retries=0):
+            if cmd == Cmd.BACKUP_LIST and "SLOOP" not in self.version:
+                return [1, 0, 0]
             assert cmd == Cmd.INFO
             return self.raw
     assert parse_info(FakeLink("FELUCCA v1.8.1").raw).firmware_name == "felucca"

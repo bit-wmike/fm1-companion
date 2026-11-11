@@ -183,13 +183,27 @@ def objects(file) -> dict[int, bytes]:
         oid = o.get("id")
         d = b64dec(o.get("data") or "")
         crc = o.get("crc")
-        if not _num(oid) or oid not in RESTORE + SAMPLES or not _num(o.get("len")) or len(d) != o["len"] \
+        if not _num(oid) or not 0 <= oid < 64 or oid != int(oid) or not _num(o.get("len")) or len(d) != o["len"] \
                 or not _num(crc) or crc32(d) != (int(crc) & 0xFFFFFFFF):
             raise _err("bkBad", _("SLOOP backup: object {id} damaged").format(id=oid))
         m[int(oid)] = d
     if 0 not in m or 1 not in m:
         raise _err("bkBad", _("SLOOP backup incomplete (running project or settings missing)"))
     return m
+
+
+def order(info, ids) -> list[int]:
+    """the order a firmware's editor writes these objects back in: SLOOP's (banks, projects, the running project, the
+    settings, then the samples), a fork's own (fwfamily: sloopDX, Clipper, …); objects SLOOP does not know (a fork's own:
+    Clipper's 12..14) after the banks, before the projects"""
+    from . import fwfamily
+    fam = fwfamily.by_info(getattr(info, "version", "") or "") if info is not None else None
+    samples = list(fam.samples) if fam is not None and fam.samples is not None else SAMPLES
+    base = list(fam.restore) if fam is not None and fam.restore else list(RESTORE)
+    extra = sorted(i for i in ids if i not in base and i not in samples and i not in SAMPLES)
+    k = base.index(2) if 2 in base else len(base)
+    full = base[:k] + extra + base[k:] + samples
+    return [i for i in full if i in ids]
 
 
 def _num(x) -> bool:
@@ -329,8 +343,8 @@ def write_object(link, oid: int, data: bytes, progress: Callable[[int], None] | 
     """begin, data, commit of one object. -> 0, or the rc of begin (1/5) for an optional
     object the firmware does not know (then nothing was written)."""
     r = parse_put(_rq(link, req_begin(oid, len(data), crc32(data)), 1.5, 1))
-    if r["rc"] in (1, 5) and oid in OPTIONAL:
-        return r["rc"]
+    if r["rc"] in (1, 5) and (oid in OPTIONAL or oid not in RESTORE + SAMPLES):
+        return r["rc"]                              # (a fork's own object, Clipper's 12..14: not on this firmware)
     if r["rc"]:
         raise _err("bkWrite", _("{part}: begin rejected ({error})").format(part=title(oid), error=_rc(r['rc'])), written)
     try:
@@ -430,7 +444,7 @@ def restore(link, file: dict, progress: Callable[[int, int], None] | None = None
     want = set(m) if ids is None else set(ids)
     if ids is not None and is_karma(info) and 9 in m and dsu_old(m[9]):
         want.discard(9)                             # (KARMA: SLOOP 2.5's SYN kits are left out, as its editor does)
-    todo = [i for i in RESTORE + SAMPLES if i in m and i in want]
+    todo = [i for i in order(info, m) if i in want]
     total = sum(len(m[i]) for i in todo) or 1
     done = 0
 
@@ -485,7 +499,7 @@ def restore_tolerant(link, file: dict, progress: Callable[[int, int], None] | No
     full = with_defaults(m, file, info)
     rejected = [i for i in m if i not in full]       # (KARMA: SLOOP 2.5's SYN kits)
     newest_ok = dev_format(info.p_count, info.version) if info is not None else 99
-    todo = [i for i in RESTORE + SAMPLES if i in full]
+    todo = order(info, full)
     total = sum(len(full[i]) for i in todo) or 1
     done = 0
     for oid in todo:
@@ -505,4 +519,5 @@ def restore_tolerant(link, file: dict, progress: Callable[[int, int], None] | No
         done += len(d)
         if progress:
             progress(done, total)
-    return sorted(set(rejected), key=(RESTORE + SAMPLES).index)
+    seq = order(info, set(full) | set(rejected))
+    return sorted(set(rejected), key=lambda i: seq.index(i) if i in seq else 99)

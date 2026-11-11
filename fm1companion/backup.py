@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from . import fwfamily
 from .i18n import N_, _
 from .protocol import Cmd, u32, r32, pack7, unpack7, crc32, ProtocolError
 
@@ -188,6 +189,9 @@ def max_size(oid: int) -> int:
     return 27936 if is_project(oid) else 81920 if oid >= 32 else 3840
 
 
+MAX_OBJECT = 0x20000            # an object of an inventory the app does not know (a fork's own: its sizes are its own)
+
+
 def project_slot(oid: int) -> int | None:
     """Object ID -> project slot 1..32 (0 = running music)."""
     if oid == 0:
@@ -269,6 +273,8 @@ IMAGE_PROTOS = (X0X, LOOM)
 # 32..35 (10, its MIDI settings, always listed), web/editor.html BK: "sloop-backup" files (version 2 with product
 # "ORBIT"); its INFO is "FELUCCA ORBIT 1.0.0" (protocol.Info.firmware_name "orbit"). It answers no command 65..67.
 SLOOP_PROTOCOL += ("orbit",)
+# … and every other fork with SLOOP's protocol the catalog audit found (fwfamily: sloopDX, Clipper, Jangada, …)
+SLOOP_PROTOCOL += tuple(k for k in fwfamily.sloop_keys() if k not in SLOOP_PROTOCOL)
 
 
 def is_orbit_backup(file) -> bool:
@@ -278,8 +284,11 @@ def is_orbit_backup(file) -> bool:
 
 
 def protocol(link, hint: str = "") -> tuple[str, object]:
-    """which backup protocol does the device speak? -> (FELUCCA|SLOOP, info or None).
-    hint: firmware key (ctx.firmware_key), if known."""
+    """which backup protocol does the device speak? -> (FELUCCA|SLOOP|X0X|LOOM, info or None).
+    hint: firmware key (ctx.firmware_key), if known. A firmware that names itself in its INFO gets its own protocol
+    (fwfamily: SLOOP's forks SLOOP's, whatever the hint says); one that answers a plain "FELUCCA v…" or an unknown
+    name is asked (a read-only LIST: Felucca's 65, then SLOOP's 34) – a protocol is never guessed for a write. A
+    firmware with a backup protocol of its own, or none, is refused with a clear message instead of a timeout."""
     from . import sloopbk
     if hint in ("melodee", "skiff", "coralflower", "choralroot") or (hint or "").startswith("jiant"):
         return FELUCCA, None                        # ("felucca": its INFO decides – SLOOP's builds share FM-1_900)
@@ -288,16 +297,83 @@ def protocol(link, hint: str = "") -> tuple[str, object]:
     try:
         info = sloopbk.read_info(link)
     except Exception:                               # noqa: BLE001 – then as before
+        fam = fwfamily.by_key(hint)
+        if fam is not None and fam.backup in ("own", "none"):
+            raise BackupError(no_backup_text(fam, ""))
         return (SLOOP if hint in SLOOP_PROTOCOL else hint if hint in IMAGE_PROTOS else FELUCCA), None
     if info.firmware_name == X0X:
         return X0X, info
-    if info.firmware_name in SLOOP_PROTOCOL or hint in SLOOP_PROTOCOL:
-        proto = sloopbk.info_proto(info.raw)
-        if proto and proto < sloopbk.MIN_PROTO:
+    fam = fwfamily.by_info(info.version)
+    if fam is not None and fam.backup in ("own", "none"):
+        raise BackupError(no_backup_text(fam, info.version))
+    if (fam is not None and fam.backup == SLOOP) or info.firmware_name in SLOOP_PROTOCOL:
+        proto = SLOOP
+    elif fam is not None and fam.backup == FELUCCA:
+        proto = FELUCCA
+    elif info.firmware_name == "skiff":             # (Skiff answers as Felucca does: its DRUM-X engine names it)
+        proto = FELUCCA
+    else:                                           # a plain "FELUCCA v…" or an unknown name: ask the device
+        proto = probe(link, info)
+    if proto == SLOOP:
+        v = sloopbk.info_proto(info.raw)
+        if v and v < sloopbk.MIN_PROTO:
             raise BackupError(_("{version} cannot make backups over USB yet – that needs SLOOP 2.3 or later. "
                                 "Please update SLOOP.").format(version=info.version))
-        return SLOOP, info
-    return FELUCCA, info
+    return proto, info
+
+
+PROBE_TIMEOUT = 1.5
+
+
+def probe(link, info) -> str:
+    """ask the device which backup protocol it answers – only read-only requests: Felucca's LIST (65; on SLOOP and its
+    forks no command), then SLOOP's LIST (34; Felucca's 34 is UI_STATE, a query, and every audited firmware's 34 reads
+    or does nothing without arguments). -> FELUCCA or SLOOP; BackupError if it answers neither (its own protocol, or
+    no backup over USB). The answer is kept with the link for this INFO."""
+    from . import sloopbk
+    from .transport import LinkError
+    cached = getattr(link, "_backup_probe", None)
+    if cached and cached[0] == info.version:
+        proto = cached[1]
+    else:
+        proto = ""
+        try:
+            a = link.request(Cmd.BACKUP_LIST, [], timeout=PROBE_TIMEOUT, retries=0)
+            if a and a[0] == 1 and len(a) >= 3:
+                proto = FELUCCA
+        except (LinkError, ProtocolError, OSError):
+            pass
+        if not proto:
+            try:
+                a = link.request(sloopbk.BK_LIST, [], timeout=PROBE_TIMEOUT, retries=0)
+                if len(a) >= 2 and a[0] in (0, 4) and len(a) == 2 + 11 * a[1]:
+                    proto = SLOOP
+            except (LinkError, ProtocolError, OSError):
+                pass
+        try:
+            link._backup_probe = (info.version, proto)
+        except AttributeError:
+            pass
+    if not proto:
+        raise BackupError(_("{version} answers none of the backup requests the app knows (neither Felucca's nor "
+                            "SLOOP's). Nothing was read or written – please back up with the firmware's own editor or "
+                            "tool.").format(version=info.version or _("The firmware")))
+    return proto
+
+
+def no_backup_text(fam, version: str = "") -> str:
+    """why a firmware of the audit's table (fwfamily) cannot be backed up through the app"""
+    from . import catalog
+    try:
+        e = catalog.load().by_key(fam.key)
+        name = e.name if e else ""
+    except Exception:                               # noqa: BLE001 – the catalog is a bonus here
+        name = ""
+    name = name or version or fam.key
+    if fam.backup == "own":
+        return _("{firmware} keeps its backups in a protocol of its own, which the app does not speak. Nothing was "
+                 "read or written – please use the firmware's own editor for backups.").format(firmware=name)
+    return _("{firmware} has no backup over USB. Nothing was read or written.").format(firmware=name)
 
 
 def parse_manifest(a) -> list[ObjInfo]:
@@ -308,14 +384,16 @@ def parse_manifest(a) -> list[ObjInfo]:
     if len(a) != 3 + n * 11:
         raise BackupError(_("incomplete inventory"))
     out = []
+    ids = [a[3 + i * 11] for i in range(n)]
+    known = bool(known_ids(ids)) or is_choralroot(ids) or is_coralflower(ids)
     for i in range(n):
         p = 3 + i * 11
         oid, size, crc = a[p], r32(a, p + 1), r32(a, p + 6)
-        if size > max_size(oid) or (not size and crc):
+        if size > (max_size(oid) if known else MAX_OBJECT) or (not size and crc):
             raise BackupError(_("object too large"))
         out.append(ObjInfo(oid, size, crc))
-    if known_ids([o.id for o in out]) == []:
-        raise BackupError(_("unexpected object order"))
+    # (an inventory the app does not know – a fork's, even one as long as a known one – is backed up generically:
+    # its objects are kept as they are; where they go back is decided by its layout when restoring)
     return out
 
 
@@ -489,9 +567,8 @@ def read(file) -> Archive:
             oid, size, crc, data = o["id"], o["size"], o["crc"], o["data"]
         except (KeyError, TypeError):
             raise BackupError(_("invalid object in the backup"))
-        if known == []:
-            raise BackupError(_("unexpected object order in the backup"))
-        if not isinstance(oid, int) or not isinstance(size, int) or not 0 <= size <= max_size(oid) or not isinstance(crc, int) \
+        if not isinstance(oid, int) or not isinstance(size, int) or \
+                not 0 <= size <= (max_size(oid) if known else MAX_OBJECT) or not isinstance(crc, int) \
                 or not 0 <= crc <= 0xFFFFFFFF or not isinstance(data, str) or len(data) != 4 * ((size + 2) // 3):
             raise BackupError(_("invalid object in the backup"))
         try:
@@ -508,8 +585,11 @@ def read(file) -> Archive:
     elif is_coralflower(o["id"] for o in objs):     # (no running music and no object 1: its sounds may be empty)
         if not any(o["size"] for o in objs):
             raise BackupError(_("The backup holds nothing"))
-    elif not objs[0]["size"] or (len(objs) > 1 and not objs[1]["size"]):
-        raise BackupError(_("The backup does not contain the running music or the settings"))
+    elif {o["id"] for o in objs} & {0, 1}:          # (the running music and the settings, where the inventory has them)
+        if any(not o["size"] for o in objs if o["id"] in (0, 1)):
+            raise BackupError(_("The backup does not contain the running music or the settings"))
+    elif not any(o["size"] for o in objs):          # (a fork's own inventory without either: Saadet's starts at 1 …)
+        raise BackupError(_("The backup holds nothing"))
     return Archive(file=file, objects=objs, known=bool(known))
 
 
@@ -637,6 +717,101 @@ def preflight(link, oid: int, data: bytes, proto: str | None = None) -> int:
     return a[2]
 
 
+# ------------------------------------------------- layouts (where a backup's objects go) ---
+# Felucca's places (0 the running music, 1 the settings, 2..5 the projects, 6..9 its banks, 32..34 the sample slots):
+# Melodee 1.x's 12 objects, Felucca's 13, and every fork the audit found that keeps them (or fewer: fmini-1, Switch
+# Blade); Melodee's own (its 57: 0..28, the projects 64..91)
+FELUCCA_PLACES = frozenset(range(10)) | {32, 33, 34}
+MELODEE_PLACES = frozenset(range(29)) | frozenset(range(64, 92)) | {32, 33, 34}
+SKIFF_IDS = ALT_ID_SETS[29][0]
+MELODEE_SETS = [KNOWN_ID_SETS[n] for n in (9, 17, 21, 23, 28, 29, 57)]    # (its inventories, release by release)
+
+
+def archive_name(archive) -> str:
+    """the firmware a backup comes from, as its INFO said (the file's 'firmware'; the companion block's otherwise)"""
+    c = getattr(archive, "companion", None) or {}
+    return str(getattr(archive, "firmware", "") or c.get("version_string") or "")
+
+
+def layout_of(ids, version: str = "", key: str = "") -> str:
+    """where the objects of this inventory live: a firmware's own layout (fwfamily: Saadet, DUELL, sloopDX …),
+    else by the inventory – "felucca" (Felucca's places), "melodee", "skiff", "jiant", "coralflower", "choralroot" –
+    else "own:<its INFO name>" (a fork's own inventory: its objects only fit itself)"""
+    fam = fwfamily.by_info(version) or (fwfamily.by_key(key) if key else None)
+    if fam is not None and fam.layout:
+        return fam.layout
+    try:
+        ids = [int(i) for i in ids]
+    except (TypeError, ValueError):
+        ids = []
+    s = set(ids)
+    name = fwfamily.info_name(version)
+    if is_jiant(ids):
+        return "jiant"
+    if is_coralflower(ids):
+        return "coralflower"
+    if is_choralroot(ids):
+        return "choralroot"
+    if ids == SKIFF_IDS:
+        return "skiff"
+    if s <= FELUCCA_PLACES:
+        return "felucca"
+    if (name == "melodee" and s <= MELODEE_PLACES) or ids in MELODEE_SETS:
+        return "melodee"
+    return "own:" + name
+
+
+def layouts_fit(backup_layout: str, device_layout: str, reads=()) -> bool:
+    """can a backup of this layout go onto a device of that one without objects landing in the wrong places?"""
+    a, d = backup_layout, device_layout
+    if a == d or a in reads:
+        return True
+    if {a, d} <= {"felucca", "melodee"}:           # (Melodee keeps Felucca's places: Felucca 1.0 took its backups)
+        return True
+    # a fork that answers as Felucca does and grew its own objects ("own:", no name): Felucca's keep their places
+    # (its extra objects are refused when the other side does not know them)
+    return {a, d} == {"felucca", "own:"}
+
+
+def check_layout(archive, device_ids, device_version: str = ""):
+    """refuse (before anything is written) a backup whose objects mean something else on the device's firmware"""
+    a = layout_of([o["id"] for o in archive.objects], archive_name(archive),
+                  (archive.companion or {}).get("firmware", ""))
+    d = layout_of(device_ids, device_version)
+    fam = fwfamily.by_info(device_version)
+    if not layouts_fit(a, d, fam.reads if fam else ()):
+        raise BackupError(_("This backup comes from {backup}, the FM-1 runs {device}: the two keep different things "
+                            "under the same backup objects, so its parts would land in the wrong places. Nothing was "
+                            "written.").format(backup=archive_name(archive) or _("another firmware"),
+                                               device=device_version or _("a different firmware")))
+
+
+def sample_slots(link, device_layout: str, device_version: str, ids) -> set[int]:
+    """the backup objects that are user sample slots on this device (restored with SMP_BEGIN/WRITE/END; an empty one
+    erases the slot). Its family's (fwfamily: Saadet has none, its 32..40 are its own); Felucca's and Melodee's 32..63;
+    for an inventory of its own the device is asked, without writing: an object it takes with Felucca's PUT is no
+    sample (begin + abort; Felucca refuses PUT for its sample slots, rc 1)"""
+    fam = fwfamily.by_info(device_version)
+    if fam is not None and fam.samples is not None:
+        return set(fam.samples) & set(ids)
+    cand = {i for i in ids if 32 <= i < 64}
+    if device_layout in ("jiant", "coralflower", "choralroot"):
+        return set()                                # (their 40.. are songs, loops and sound banks)
+    if not device_layout.startswith("own:") or not cand:
+        return cand
+    out = set()
+    for oid in sorted(cand):
+        try:
+            rc = _put(link, [0, oid, *u32(0), *u32(0)])[2]
+            if rc == 0:
+                _put(link, [3, oid])
+        except Exception:                           # noqa: BLE001 – no answer: as a sample slot
+            rc = 1
+        if rc == 1:
+            out.add(oid)
+    return out
+
+
 def _match(link, archive: Archive, hint: str = "") -> tuple[str, object]:
     proto, info = protocol(link, hint)
     dev_image = proto if proto in IMAGE_PROTOS else ""
@@ -663,6 +838,14 @@ def _match(link, archive: Archive, hint: str = "") -> tuple[str, object]:
         raise BackupError(_("This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's "
                             "projects and drum kits. Nothing was written.").format(backup=archive.firmware,
                                                                                    device=info.version))
+    if archive.sloop and info is not None:          # (SLOOP's forks: sloopDX's 10 and 11, Clipper's 12..14 are their own)
+        dfam, afam = fwfamily.by_info(info.version), fwfamily.by_info(archive.firmware)
+        d = dfam.layout if dfam is not None and dfam.layout else SLOOP
+        a = afam.layout if afam is not None and afam.layout else SLOOP
+        if not (a == d or a in (dfam.reads if dfam is not None else ())):
+            raise BackupError(_("This backup comes from {backup}, the FM-1 runs {device}: the two keep different "
+                                "things under the same backup objects, so its parts would land in the wrong places. "
+                                "Nothing was written.").format(backup=archive.firmware or "?", device=info.version))
     return proto, info
 
 
@@ -708,6 +891,8 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
     coral = is_coralflower(o.id for o in supported) or archive.coralflower
     choral = is_choralroot(o.id for o in supported) or archive.choralroot
     live = next((o.size for o in supported if o.id == 0), 0)
+    dev_version = info.version if info is not None else ""
+    check_layout(archive, [o.id for o in supported], dev_version)
     check_16(archive, supported)
     if len(supported) != 57:
         for o in archive.objects:
@@ -718,9 +903,11 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
             raise BackupError(_("The firmware on the FM-1 does not know “{part}” from the backup "
                                 "(different version). Nothing was written.").format(part=object_title(o['id'], jiant=jiant,
                                                                                          coral=coral, choral=choral)))
+    smp = set() if jiant or coral or choral else sample_slots(
+        link, layout_of(sup_ids, dev_version), dev_version, [o["id"] for o in archive.objects if o["id"] in sup_ids])
     # pre-check every object before anything is replaced
     for o in archive.objects:
-        if not is_sample(o["id"], jiant, coral, choral) and o["size"] and o["id"] in sup_ids:
+        if o["id"] not in smp and o["size"] and o["id"] in sup_ids:
             rc = preflight(link, o["id"], o["bytes"], FELUCCA)
             if rc == 1:
                 raise BackupError(_("The backup has an older format. Restore it with Melodee 1.2 first. "
@@ -740,7 +927,7 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
             oid, data = o["id"], o["bytes"]
             if oid not in sup_ids:
                 continue
-            if is_sample(oid, jiant, coral, choral):
+            if oid in smp:
                 _restore_sample(link, oid - 32, data, step)
             else:
                 write_object(link, oid, data, step, FELUCCA)
@@ -828,6 +1015,8 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
     if proto == SLOOP:
         return _restore_selected_sloop(link, archive, want, progress, expect, cancelled, info)
     supported = parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))
+    dev_version = info.version if info is not None else ""
+    check_layout(archive, [o.id for o in supported], dev_version)
     check_16(archive, supported)
     sup = {o.id: o for o in supported}
     jiant = is_jiant(o.id for o in supported) or is_jiant(o["id"] for o in archive.objects)
@@ -855,8 +1044,10 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
         if progress:
             progress(done, total)
 
+    smp = set() if jiant or coral or choral else sample_slots(link, layout_of(sup, dev_version), dev_version,
+                                                              [o["id"] for o in todo])
     for o in todo:
-        if not is_sample(o["id"], jiant, coral, choral) and o["size"]:
+        if o["id"] not in smp and o["size"]:
             rc = preflight(link, o["id"], o["bytes"], FELUCCA)
             if rc == 1:
                 raise BackupError(_("“{part}”: The device does not accept this format "
@@ -877,7 +1068,7 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
                 err = BackupError(_("cancelled"))
                 err.cancelled = True
                 raise err
-            if is_sample(o["id"], jiant, coral, choral):
+            if o["id"] in smp:
                 _restore_sample(link, o["id"] - 32, o["bytes"], step)
             else:
                 write_object(link, o["id"], o["bytes"], step, FELUCCA)

@@ -133,6 +133,10 @@ class StudioService(QObject):
         "jiant-fm" as the device layer's "jiant"), SLOOP, CoralFlower, KARMA, Felucca (also a Felucca fork the catalog
         names "felucca-…": Felucca's twin, with a warning, studio.felucca_fork_note)."""
         key = (key or "").lower()
+        from .. import fwfamily
+        fam = fwfamily.by_key(key)
+        if fam is not None and fam.twin is not None:  # (the audit's table: sloopDX's or Saadet's objects are their own)
+            return fam.twin if fam.twin and S.builds(fam.twin) else ""
         for fw in S.FIRMWARES:
             if key.startswith(fw) and S.builds(fw):
                 return fw
