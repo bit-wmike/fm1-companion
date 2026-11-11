@@ -30,9 +30,13 @@ def studio_for(ctx):
     if svc is None or not svc.available():
         return None
     key = getattr(ctx, "firmware_key", "") if getattr(ctx, "midi_connected", False) else "melodee"
+    from .. import studio as S
+    fw = svc.firmware if getattr(ctx, "is_virtual", False) else svc.firmware_for(key or "melodee")
+    if S.FIRMWARES.get(fw, {}).get("backup") == "fm1open":
+        return None                          # (FM1 Open, also standing in for V15/V16: no editor, no identical sound)
     if getattr(ctx, "is_virtual", False):
         return svc
-    return svc if svc.firmware_for(key or "melodee") else None
+    return svc if fw else None
 
 
 def device_name(ctx) -> str:

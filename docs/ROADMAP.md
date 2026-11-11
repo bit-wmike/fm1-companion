@@ -13,8 +13,9 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 | 3b | **JIANT FM**, the public stable of its installer (V10.6z2), plus the earlier stable V10.60 and beta V10.61 | **done** (branch `studio-jiant`; same page, virtual device, backup ↔ twin, write back) |
 | 3c | **CoralFlower**, the stable of its installer (0.7.1), plus 0.7 | **done** (branch `studio-coralflower`; same page, virtual device, backup ↔ twin, write back) |
 | 3d | **KARMA**, the version its installer serves (3.1), plus 3.0.5 | **done** (branch `studio-karma`; same page, virtual device, backup ↔ twin through SLOOP's protocol, write back) |
-| 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V16 may differ | after that |
+| 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V15/V16 differ | **done** (branch `w-fm1open`; the FM1 Open twin for FM1 Open devices – backup ↔ twin over its own file protocol, write back – and as the stand-in for V15/V16 with a note; V15's factory voice restore) |
 | – | **Original V16** | **paused, not dropped** |
+| – | **Original V15: own voices into a bank A–D** (the same commands 33/34 as M-VAVE's factory restore, other data; the bank's current voices cannot be read back first) | **needs a hardware test** – not offered in the app; only the factory restore is |
 
 ## Status 2.2.0 (Melodee)
 

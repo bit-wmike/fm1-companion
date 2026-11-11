@@ -455,7 +455,11 @@ class DeviceContext(QObject):
             p.identity = ident or p.identity
             p.last_seen = time.time()
             self.store.save()
-        if ident:
+        if ident and self.firmware_key == "fm1-open":   # (M-VAVE's FM1 Open: its own file protocol)
+            self.message.emit(_("FM-1 connected ({id}) – FM1 Open: MIDI, presets via SysEx, its sample bank (page "
+                                "“Samples”) and the Studio (fetch, write back) work; the other pages need the editor "
+                                "protocol.").format(id=ident))
+        elif ident:
             self.message.emit(_("FM-1 connected ({id}) – this firmware has no editor protocol: MIDI, presets via "
                                 "SysEx and firmware installation work, backups and projects do not.").format(id=ident))
         else:

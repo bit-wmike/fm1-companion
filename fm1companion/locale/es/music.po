@@ -4321,8 +4321,8 @@ msgstr "Este firmware no tiene protocolo de editor; el Studio necesita {firmware
 msgid "The FM-1 runs {firmware} – so far there is a studio twin only for {firmwares}."
 msgstr "El FM-1 ejecuta {firmware}; por ahora solo hay gemelo del Studio para {firmwares}."
 
-msgid "There is no studio twin for {firmware} yet. So far the studio can do {firmwares}; the original firmware (via FM1 Open) follows later – see Help › Studio. Backups of this device cannot be opened here; a {firmwares_or} backup can."
-msgstr "Todavía no hay gemelo del Studio para {firmware}. Por ahora el Studio funciona con {firmwares}; el firmware original (mediante FM1 Open) llegará más adelante, consulta Ayuda › Studio. Las copias de seguridad de este dispositivo no se pueden abrir aquí; una copia de {firmwares_or} sí."
+msgid "There is no studio twin for {firmware} yet. So far the studio can do {firmwares} – see Help › Studio. Backups of this device cannot be opened here; a {firmwares_or} backup can."
+msgstr "Todavía no hay gemelo del Studio para {firmware}. Por ahora el Studio funciona con {firmwares} – consulta Ayuda › Studio. Las copias de seguridad de este dispositivo no se pueden abrir aquí; una copia de {firmwares_or} sí."
 
 msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the sequencer's patterns and song, the patterns' sounds, the user sounds and the sounds' unsaved edits. Playback on the FM-1 stops, and the FM-1 restarts at the end to load them."
 msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo: los patrones y la canción del secuenciador, los sonidos de los patrones, los sonidos de usuario y los cambios sin guardar de los sonidos. La reproducción en el FM-1 se detiene y al final el FM-1 se reinicia para cargarlos."
@@ -4361,3 +4361,20 @@ msgstr "identidad {device}, la del gemelo {twin}"
 #: fm1companion/ui/pages/studio.py
 msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the four projects A–D, the running music, the user presets with their FM6 patches and the sample slots USR1–USR3. Playback on the FM-1 stops in the process."
 msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo: los cuatro proyectos A–D, la música en curso, los presets de usuario con sus patches FM6 y los espacios de muestras USR1–USR3. La reproducción en el FM-1 se detiene durante el proceso."
+
+#, python-brace-format
+msgid "Your FM-1 runs M-VAVE's original firmware {device}. Its code is not open, so there is no twin of it: the studio runs M-VAVE's open firmware FM1 Open {twin} instead – with the same 128 factory DX7 voices (taken from the V15 package), but a different firmware: its own operation, 8 tracks and 16 projects, its own sample bank, and the open engine of M-VAVE's browser simulator instead of the device's. Sound and functions may differ. The original firmware has no backup protocol: nothing can be fetched from it or written back to it."
+msgstr "Tu FM-1 usa el firmware original {device} de M-VAVE. Su código no es abierto, así que no hay gemelo de él: el Studio usa en su lugar el firmware abierto FM1 Open {twin} de M-VAVE – con las mismas 128 voces DX7 de fábrica (tomadas del paquete V15), pero es otro firmware: su propio manejo, 8 pistas y 16 proyectos, su propio banco de muestras y el motor abierto del simulador para navegador de M-VAVE en lugar del del dispositivo. El sonido y las funciones pueden diferir. El firmware original no tiene protocolo de copias de seguridad: no se puede traer nada de él ni volver a escribir en él."
+
+#, python-brace-format
+msgid "This backup does not fit the {firmware} twin."
+msgstr "Esta copia no encaja con el gemelo de {firmware}."
+
+msgid "The FM1 Open twin can only load FM1 Open backups."
+msgstr "El gemelo de FM1 Open solo puede cargar copias de FM1 Open."
+
+msgid "The original firmware has no backup protocol: nothing can be fetched from this FM-1 or written to it. The studio plays the FM1 Open twin instead (see the note above)."
+msgstr "El firmware original no tiene protocolo de copias de seguridad: no se puede traer nada de este FM-1 ni escribir en él. El Studio usa en su lugar el gemelo de FM1 Open (ver el aviso de arriba)."
+
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device, over FM1 Open's file protocol: the four DX7 library banks, every project slot the twin has (empty slots stay as they are on the FM-1), the working project and – if it differs – the sample bank. Playback on the FM-1 stops in the process."
+msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo sustituye en el dispositivo, con el protocolo de archivos de FM1 Open: los cuatro bancos de la biblioteca DX7, cada ranura de proyecto que tiene el gemelo (las ranuras vacías se quedan en el FM-1 como están), el proyecto de trabajo y – si es distinto – el banco de muestras. La reproducción en el FM-1 se detiene durante el proceso."

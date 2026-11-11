@@ -66,6 +66,10 @@ untested, even if it runs cleanly in the simulation.
 | KARMA backups in the backup layer (SLOOP's protocol and format, 14 objects; FUN7 projects; SLOOP backups onto KARMA) | only with backups of the KARMA twin; the device detection by INFO "FELUCCA KARMA …" and identity FM-1_926 only in tests |
 | **Felucca twin** (1.8.1, 1.8.0: fetch from a Felucca FM-1, open a Felucca backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real Felucca FM-1 or a backup made by Felucca's own web editor on a device |
 | Felucca recognition next to SLOOP (INFO "FELUCCA v…" vs "FELUCCA SLOOP …", FM-1_900 / FM-1_9XY) and the Felucca twin for Felucca forks (with a warning) | only in tests (fake INFO links, remembered identities); no fork device tried |
+| **FM1 Open twin** (V14, M-VAVE's simulator code: fetch from an FM1 Open FM-1, open an FM1 Open backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real FM-1 with FM1 Open. Its open engine stands in for the device's binary engine (M-VAVE's simulator does the same): sound may differ from the device |
+| FM1 Open backups (`fm1openbk.py`: its file protocol, the working project, 16 slots read by loading them, 4 DX7 library banks, the sample bank) | only with the twin; that a real FM1 Open answers the identity FM-1_8000014 to the update handshake in normal operation is taken from M-VAVE's workbench code (`sdk/WebUpdate.js`), not observed |
+| **The FM1 Open twin as the stand-in for the original V15/V16** (note in the Studio, no fetch / write back) | only the page logic, with a simulated device |
+| **Original V15: restore factory voices** (FM Voices › Original V15: restore factory voices …: all 128 voices in A–D overwritten, commands 33/34 on object 5 as M-VAVE's `sdk/WebUpdate.js` restoreFactory; the current voices cannot be saved first) | only against a simulated V15 built from that code; never on a real FM-1 |
 
 ### Backups, presets, projects, samples
 - Restoring a backup to the device (full and partial).

@@ -224,6 +224,23 @@ def flow():
     d.download(collection=dx7_sources.by_key("fm1-factory"), fetch=lambda u: data)
     check(until(lambda: "heruntergeladen" in d.info.text()), "collection loaded (simulated)")
     check(until(lambda: vp.bank_list.count() >= 6), f"collection appears as banks ({vp.bank_list.count()})")
+    # the original V15's factory voices (stockv15.py): only for FM-1_015, a confirmation that names all 128 voices in
+    # A–D and that nothing can be saved first; no way to write own voices into a bank
+    vp._dev_changed()
+    check(not vp.b_v15.isEnabled(), "Original V15 button off for the Melodee FM-1")
+    jobs = []
+    real_job, real_is = ctx.job, vp._is_v15
+    ctx.job = lambda *a, **k: jobs.append((a, k))
+    vp._is_v15 = lambda: True
+    try:
+        n = len(boxes)
+        vp.v15_factory()
+    finally:
+        ctx.job, vp._is_v15 = real_job, real_is
+    text = " ".join(boxes[n:])
+    check(jobs and "128" in text and "A–D" in text and "nicht" in text,
+          f"V15 factory restore: confirmed, names 128 voices in A–D: {text[:160]}")
+    check(not hasattr(vp, "v15_banks") and "eigene Bank" not in text, "no own-bank write for V15")
     app.quit()
 
 

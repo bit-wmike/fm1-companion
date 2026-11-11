@@ -169,7 +169,7 @@ CREDIT_TEXTS = (
     N_("Felucca fork; basis of CoralFlower"),
     N_("SLOOP fork; its unmodified firmware code runs in the studio twin, with the parts it ports (Mutable Instruments' "
        "Plaits, Elements and Clouds by Emilie Gillet, MIT; the LXR-02 drum voices by Erica Synths, GPL-3.0)"),
-    N_("official open firmware, simulator sources, update tools"),
+    N_("official open firmware: its unmodified code runs in the simulator and in the studio twin (also for the original V15/V16), its update tools and its V15 factory voices"),
     N_("firmware catalog and link collection"),
     N_("icons in the app's design (fm1companion/icons/lucide, licence in icons/LICENSE.lucide)"),
     N_("user interface (system package)"),

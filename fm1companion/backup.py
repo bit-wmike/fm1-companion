@@ -224,6 +224,8 @@ SLOOP_FORMAT = "sloop-backup"
 # firmwares that speak SLOOP's backup protocol (34–36) and write its "sloop-backup" files: SLOOP and its fork KARMA
 # (editor.c ED_BK_LIST / GET / PUT, web/editor.html BK: the same commands, objects 0..10 and 32..35, the same file)
 SLOOP_PROTOCOL = (SLOOP, "karma")
+# M-VAVE's FM1 Open: no editor protocol; its own file transfer protocol and file (fm1openbk.py), picked by the firmware key
+FM1OPEN_KEY, FM1OPEN_FORMAT = "fm1-open", "fm1open-backup"
 
 
 def protocol(link, hint: str = "") -> tuple[str, object]:
@@ -294,6 +296,11 @@ def read_object(link, o: ObjInfo, progress: Callable[[int], None] | None = None)
 def capture(link, firmware: str, progress: Callable[[int, int], None] | None = None,
             companion: dict | None = None, firmware_key: str = "") -> dict:
     """read a complete backup – in the format that belongs to the firmware (Melodee/Felucca or SLOOP)."""
+    if (firmware_key or (companion or {}).get("firmware", "")) == FM1OPEN_KEY:   # (M-VAVE's FM1 Open: fm1openbk)
+        from . import fm1openbk
+        f = fm1openbk.capture(link, firmware, progress, companion)
+        read(f)
+        return f
     proto, info = protocol(link, firmware_key or (companion or {}).get("firmware", ""))
     if proto == SLOOP:
         from . import sloopbk
@@ -337,6 +344,11 @@ class Archive:
         return self.format == SLOOP_FORMAT
 
     @property
+    def fm1open(self) -> bool:
+        """M-VAVE's FM1 Open (fm1openbk.py: its own protocol and file)"""
+        return self.format == FM1OPEN_FORMAT
+
+    @property
     def firmware(self) -> str:
         return self.file.get("firmware", "")
 
@@ -354,7 +366,7 @@ class Archive:
         return not self.sloop and is_coralflower(o["id"] for o in self.objects)
 
     def project_objects(self):
-        if self.coralflower:
+        if self.coralflower or self.fm1open:        # (FM1 Open's projects are no Felucca projects)
             return []
         return [o for o in self.objects if is_project(o["id"]) and o["id"] != 0 and o["size"]]
 
@@ -370,6 +382,14 @@ def read(file) -> Archive:
         m = sloopbk.objects(file)
         objs = [{**o, "id": int(o["id"]), "size": len(m[int(o["id"])]), "crc": int(o["crc"]) & 0xFFFFFFFF,
                  "bytes": m[int(o["id"])]} for o in file["objects"]]
+        return Archive(file=file, objects=objs, known=True)
+    if isinstance(file, dict) and file.get("format") == FM1OPEN_FORMAT:
+        from . import fm1openbk
+        try:
+            m = fm1openbk.objects(file)
+        except fm1openbk.FM1OpenBackupError as e:
+            raise BackupError(str(e))
+        objs = [{"id": o["id"], "size": o["size"], "crc": o["crc"], "bytes": m[o["id"]]} for o in file["objects"]]
         return Archive(file=file, objects=objs, known=True)
     if not isinstance(file, dict) or file.get("format") != FORMAT or file.get("version") != 1 \
             or not isinstance(file.get("objects"), list) or not file["objects"]:
@@ -413,6 +433,9 @@ def dumps(file: dict) -> str:
     if file.get("format") == SLOOP_FORMAT:
         from . import sloopbk
         return sloopbk.dumps(file)
+    if file.get("format") == FM1OPEN_FORMAT:
+        from . import fm1openbk
+        return fm1openbk.dumps(file)
     return json.dumps(file, separators=(",", ":"))
 
 
@@ -550,6 +573,8 @@ def check_16(archive: Archive, supported, device_version: str = ""):
 
 def restore(link, archive: Archive, progress: Callable[[int, int], None] | None = None,
             firmware_key: str = ""):
+    if archive.fm1open or firmware_key == FM1OPEN_KEY:
+        return _restore_fm1open(link, archive, progress)
     proto, info = _match(link, archive, firmware_key)
     if proto == SLOOP:
         from . import sloopbk
@@ -613,6 +638,19 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
     return archive
 
 
+def _restore_fm1open(link, archive: Archive, progress=None, ids=None) -> Archive:
+    """M-VAVE's FM1 Open: its own protocol and file (fm1openbk.py); a Felucca/SLOOP backup does not fit it"""
+    from . import fm1openbk
+    if not archive.fm1open:
+        raise BackupError(_("This backup is not from FM1 Open, but the FM-1 runs FM1 Open – the formats do not match. "
+                            "Nothing was written."))
+    try:
+        fm1openbk.restore(link, archive.file, progress, ids=ids)
+    except fm1openbk.FM1OpenBackupError as e:
+        raise BackupError(str(e))
+    return archive
+
+
 def restart_coralflower(link) -> bool:
     """CoralFlower reads what was restored at its next start (cf_backup.c: the restored settings and patterns wait for
     it, nothing in RAM is saved over them): RESTART (72), as its web installer does after a restore (fm1backup.js
@@ -662,6 +700,9 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
     missing = want - set(by_id)
     if missing:
         raise BackupError(_("“{part}” is not in the backup").format(part=object_title(sorted(missing)[0], archive.sloop)))
+    if archive.fm1open:                             # (M-VAVE's FM1 Open: fm1openbk.py)
+        _restore_fm1open(link, archive, progress, ids=want)
+        return [o["id"] for o in archive.objects if o["id"] in want]
     proto, info = _match(link, archive)
     if proto == SLOOP:
         return _restore_selected_sloop(link, archive, want, progress, expect, cancelled, info)

@@ -2,12 +2,12 @@
 
 Das FM-1 ist das Instrument zum Skizzieren, die Suite ist das Studio. Auf der Seite [Studio](app://page/studio)
 läuft ein **digitaler Zwilling** deines FM-1: dieselbe Firmware wie auf dem Gerät (Melodee, Skiff, JIANT FM, SLOOP,
-CoralFlower oder KARMA), mit seinem kompletten Zustand (Melodee: alle 32 Projekte; Skiff: Projekte A–D und die
+CoralFlower, KARMA oder M-VAVEs FM1 Open), mit seinem kompletten Zustand (Melodee: alle 32 Projekte; Skiff: Projekte A–D und die
 Pattern-Bank; JIANT FM: die Sections aller Songs und der Song-Index; SLOOP: die Sections A–D, die FM6-Bank, die
 SYN-Drumkits und die Sample-Slots; CoralFlower: die Patterns und der Song des Sequencers mit ihren Sounds; KARMA: die
-Teile A–D des Songs, die Song-Reihenfolge, die HEX-Drumkits und die Sample-Slots;
-laufende Musik, User-Presets, Einstellungen). Er klingt identisch – nur eben über die
-Lautsprecher am Rechner.
+Teile A–D des Songs, die Song-Reihenfolge, die HEX-Drumkits und die Sample-Slots; FM1 Open: seine 16 Projekte, die
+DX7-Bibliothek und die Sample-Bank; laufende Musik, User-Presets, Einstellungen). Er klingt identisch – nur eben über
+die Lautsprecher am Rechner. (Ausnahme FM1 Open: siehe unten „Die Original-Firmware und FM1 Open“.)
 Auch **Felucca** selbst, die Grundlage der Familie, hat einen Zwilling (Projekte A–D, die User-Presets mit ihren
 FM6-Patches und die Sample-Slots USR1–USR3); er öffnet Felucca-Backups (auch die von Feluccas eigenem Web-Editor) und
 holt von einem Felucca-FM-1 und schreibt dorthin zurück wie die anderen.
@@ -17,14 +17,15 @@ holt von einem Felucca-FM-1 und schreibt dorthin zurück wie die anderen.
 1. **Vom FM-1 holen:** liest ein komplettes Backup vom aktiven FM-1 (Name steht auf dem Knopf) und lädt es in
    den Zwilling. Das Backup landet zusätzlich in [Backups](app://page/backups) – es geht nichts verloren. Am FM-1
    wird nichts verändert (die Wiedergabe stoppt kurz).
-   Alternativ **Aus Backup öffnen …** (jedes Melodee-, Skiff-, JIANT-FM-, SLOOP-, CoralFlower- oder KARMA-Backup – es
+   Alternativ **Aus Backup öffnen …** (jedes Melodee-, Skiff-, JIANT-FM-, SLOOP-, CoralFlower-, KARMA- oder
+   FM1-Open-Backup – es
    startet der Zwilling der Firmware des Backups; SLOOP- und KARMA-Backups auch im Format von SLOOPs Web-Editor) oder
    **Letzten Studio-Stand öffnen**.
 2. **Spielen und verfeinern:** Das FM-1 auf dem Bildschirm reagiert auf Maus, Rechner-Tastatur (untere Reihe
    Z S X D C …, obere Q 2 W 3 E …), ein MIDI-Keyboard (Auswahl „MIDI-Eingang“) und auf Wunsch die Tasten des
    echten FM-1. Regler: ziehen, Mausrad oder Pfeiltasten. **Leertaste** startet/stoppt. Projekte (Melodee 1–32,
    Skiff A–D, JIANT FM: die Sections A–D des aktuellen Songs, SLOOP: seine Sections A–D, KARMA: die Teile A–D des
-   Songs) lädst du rechts in der
+   Songs, FM1 Open 1–16) lädst du rechts in der
    Liste.
 3. **Als WAV exportieren …:** ganzer Song bis zum Ende, eine feste Zahl Sekunden oder Durchläufe des Patterns.
    Standard ist WAV 24 bit (44,1 kHz Stereo), wahlweise 32 bit Fließkomma, gespeichert im Ordner
@@ -34,8 +35,8 @@ holt von einem Felucca-FM-1 und schreibt dorthin zurück wie die anderen.
    nicht bitgenau der Mix.
 4. **Aufs FM-1 zurückschreiben …:** fragt nach, nennt das Gerät, macht vorher automatisch ein
    **Sicherheits-Backup** und schreibt dann Projekte, laufende Musik und Presets. Die Einstellungen des Geräts
-   bleiben, außer du setzt den Haken. Geht nur mit vollem Zugriff (Melodee, Skiff, JIANT FM, SLOOP, CoralFlower oder
-   KARMA verbunden – dieselbe Firmware wie die des Zwillings) und nie auf den Zwilling selbst. SLOOP schreibt nur,
+   bleiben, außer du setzt den Haken. Geht nur mit vollem Zugriff (Melodee, Skiff, JIANT FM, SLOOP, CoralFlower,
+   KARMA oder FM1 Open verbunden – dieselbe Firmware wie die des Zwillings) und nie auf den Zwilling selbst. SLOOP schreibt nur,
    während sein Song gestoppt ist (STOP).
 
 ## Studio-Stand und Rückgängig
@@ -51,12 +52,36 @@ gehört nicht zum Stand.
 Den Zwilling gibt es in mehreren Versionen (Melodee 1.6.0-rc.7 … 1.6.1, Skiff 2.1.1 und 2.2, JIANT FM V10.6z2 – die
 stabile Version von JIANTs Installer – sowie V10.60 und V10.61, SLOOP 2.8.5 – die Version von SLOOPs Installer – und
 2.8.4, CoralFlower 0.7.1 – die seines Installers – und 0.7, KARMA 3.1 – die Version, die sein Installer ausliefert –
-sowie 3.0.5). Die App wählt Firmware
+sowie 3.0.5, FM1 Open V14). Die App wählt Firmware
 und Version deines FM-1 bzw. des Backups. Passt die Version nicht genau, zeigt ein Hinweis oben: „Studio läuft mit
 Melodee …, dein FM-1 hat … – Klang kann abweichen.“
 Zurückschreiben auf ein FM-1 mit anderer Version geht dann nur mit dem Experten-Haken.
 Felucca: 1.8.1 – die Version von Feluccas Installer – und 1.8.0 (eine 1.8.2-Beta läuft mit dem Hinweis auf dem
 1.8.1-Zwilling).
+
+## Die Original-Firmware und FM1 Open
+
+Die meisten FM-1 laufen mit M-VAVEs **Original-Firmware V15** (oder der neueren V16). Ihr Code ist nicht offen, darum
+gibt es keinen Zwilling von ihr. M-VAVE hat eine offene Firmware veröffentlicht, **FM1 Open** (V14,
+github.com/m-vave/fm1_open): eine eigene, neue Firmware – 8 Spuren, 16 Projekte, 8 Sample-Pads, eigene Bedienung –, die
+die **128 Werks-DX7-Stimmen der V15** in ihrer Reihenfolge (aus dem V15-Paket) und das Update-Protokoll übernimmt. Ihre
+Klangerzeugung auf dem Gerät ist ein geschlossenes Binärteil; M-VAVEs Browser-Simulator rechnet stattdessen mit einer
+offenen Engine, und der FM1-Open-Zwilling des Studios ist genau dieser Simulator-Code.
+
+* **FM-1 mit FM1 Open:** Der Zwilling ist seine eigene Firmware (V14). Holen, Zurückschreiben und Backups (in eigenem
+  Format: das Arbeitsprojekt, die 16 Projekte, die vier Bänke der DX7-Bibliothek, die Sample-Bank) laufen über FM1
+  Opens eigenes Dateiprotokoll. Zum Lesen eines Projekts lädt das FM-1 es kurz; danach zeigt es wieder das Projekt von
+  vorher, als geändert markiert. Projekte, die im Backup leer sind, bleiben auf dem FM-1, wie sie sind (FM1 Open kann
+  über USB keinen Platz löschen). Der Klang folgt M-VAVEs Simulator und kann leicht vom Gerät abweichen.
+* **FM-1 mit der Original-V15/V16:** Das Studio startet stattdessen den FM1-Open-Zwilling, mit einem Hinweis: dieselben
+  Werksstimmen, aber eine andere Firmware – Bedienung, Projekte, Effekte und Klang können abweichen (V16 hat außerdem
+  den Detune korrigiert). Die Original-Firmware hat **kein Backup-Protokoll**: Von ihr lässt sich nichts holen und
+  nichts zurückschreiben (einzige Sicherung ist ein Komplett-Dump unter [Rettung](app://page/recovery)). Was die App
+  für V15 kann, ist M-VAVEs eigene Stimmen-Wiederherstellung: Unter [FM-Voices](app://page/voices) überschreibt
+  **Original-V15: Werks-Voices wiederherstellen …** alle 128 Stimmen in den Bänken A–D mit den Werksstimmen (aus
+  M-VAVEs per Prüfsumme festgelegtem V15-Paket). Die Stimmen, die vorher auf dem FM-1 waren, **lassen sich vorher nicht
+  sichern** – selbst gespeicherte Stimmen gehen verloren. Eigene Stimmen in eine V15-Bank zu schreiben, bietet die App
+  nicht an (das bräuchte erst einen Test am Gerät).
 
 ## Der Zwilling als Gerät
 
@@ -70,8 +95,10 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
 
 ## Grenzen
 
-* Bisher **Melodee**, **Skiff**, **JIANT FM**, **SLOOP**, **CoralFlower** und **KARMA**. Die Original-Firmware (über
-  FM1 Open) folgt später.
+* Bisher **Melodee**, **Skiff**, **JIANT FM**, **SLOOP**, **CoralFlower**, **KARMA** und **FM1 Open** – der auch für
+  die Original-Firmware V15/V16 einspringt (siehe oben).
+* FM1 Open: Der Zwilling hat kein Bluetooth, kein USB-Audio, kein TRS-MIDI und keinen Updater; seine offene Engine
+  steht für die des Geräts. Die Projektansicht liest FM1 Opens Projekte nicht.
 * Skiff: „Ganzer Song bis zum Ende“ endet nur mit SONG ONCE (sonst läuft Skiff in Schleife); der Skiff-Zwilling hat
   einen Kern (MENU › CPU 2 CORES wirkt nicht), kein USB-Audio und kein TRS-MIDI. Die Projektansicht liest Skiffs
   Songs noch nicht.

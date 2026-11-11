@@ -166,13 +166,15 @@ def read_meta(path: Path) -> Meta | None:
                 f = json.loads(path.read_text("utf-8"))
             except (OSError, ValueError):
                 return None
-            if not isinstance(f, dict) or f.get("format") not in (backup.FORMAT, "sloop-backup"):
+            if not isinstance(f, dict) or f.get("format") not in (backup.FORMAT, "sloop-backup", backup.FM1OPEN_FORMAT):
                 return None
             c = f.get("companion") or {}
             objs = f.get("objects") or []
             fw = f.get("firmware", "")
             key = c.get("firmware") or next((k for k in ("melodee", "karma", "sloop", "skiff", "jiant", "coralflower")
                                              if k in fw.lower()), "")
+            if f.get("format") == backup.FM1OPEN_FORMAT:   # (M-VAVE's FM1 Open: its slots 1..16)
+                key = key or backup.FM1OPEN_KEY
             jiant = backup.is_jiant(o.get("id", -1) for o in objs if isinstance(o, dict))
             coral = backup.is_coralflower(o.get("id", -1) for o in objs if isinstance(o, dict))
             try:                                   # count used presets once (stored in the index afterwards)
@@ -185,7 +187,8 @@ def read_meta(path: Path) -> Meta | None:
                  "note": c.get("note", ""), "labels": list(c.get("labels") or []), "pinned": bool(c.get("pinned")),
                  "kind": c.get("kind") or _kind_from_name(path.stem), "objects": len(objs),
                  "projects": sum(1 for o in objs if isinstance(o, dict) and (o.get("size") or o.get("len"))
-                                 and backup.is_project(o.get("id", -1), jiant, coral) and o.get("id") != 0),
+                                 and (1 <= o.get("id", -1) <= 16 if f.get("format") == backup.FM1OPEN_FORMAT else
+                                      backup.is_project(o.get("id", -1), jiant, coral)) and o.get("id") != 0),
                  "fmt": f.get("format")}
             idx[str(path)] = e
             _save_index()

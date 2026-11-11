@@ -4151,3 +4151,65 @@ msgstr "FluidSynth hat sich sofort wieder beendet – ohne Meldung. Unter „Det
 #, python-brace-format
 msgid "Drums {n}"
 msgstr "Schlagzeug {n}"
+
+msgid "This is not M-VAVE's original V15 package (checksum)."
+msgstr "Das ist nicht M-VAVEs Original-V15-Paket (Prüfsumme)."
+
+msgid "The V15 package's header does not check out."
+msgstr "Der Kopf des V15-Pakets ist nicht stimmig."
+
+msgid "The V15 package's table does not check out."
+msgstr "Die Tabelle des V15-Pakets ist nicht stimmig."
+
+msgid "The V15 package's factory voices do not check out."
+msgstr "Die Werks-Voices des V15-Pakets sind nicht stimmig."
+
+msgid "protocol data too long"
+msgstr "Protokolldaten zu lang"
+
+msgid "The FM-1 did not confirm – the voices are not written completely. Connect the original V15 again and repeat."
+msgstr "Das FM-1 hat nicht bestätigt – die Voices sind nicht vollständig geschrieben. Verbinde die Original-V15 erneut und wiederhole es."
+
+msgid "The FM-1 refused to write the voices."
+msgstr "Das FM-1 hat das Schreiben der Voices abgelehnt."
+
+msgid "invalid voice data"
+msgstr "ungültige Voice-Daten"
+
+msgid "Only for the original firmware V15 (identity FM-1_015) – nothing was written."
+msgstr "Nur für die Original-Firmware V15 (Kennung FM-1_015) – es wurde nichts geschrieben."
+
+msgid "The FM-1 no longer answers as V15 after writing – please check it."
+msgstr "Das FM-1 meldet sich nach dem Schreiben nicht mehr als V15 – bitte prüf es."
+
+
+
+
+msgid "Only for an FM-1 with the original firmware V15 (identity FM-1_015)."
+msgstr "Nur für ein FM-1 mit der Original-Firmware V15 (Kennung FM-1_015)."
+
+
+
+
+
+
+
+msgid "The 128 factory voices are back on the FM-1."
+msgstr "Die 128 Werks-Voices sind wieder auf dem FM-1."
+
+
+
+msgid "Original V15: restore factory voices …"
+msgstr "Original-V15: Werks-Voices wiederherstellen …"
+
+msgid "Original V15: restore factory voices"
+msgstr "Original-V15: Werks-Voices wiederherstellen"
+
+msgid "Overwrite with the factory voices"
+msgstr "Mit den Werks-Voices überschreiben"
+
+msgid "Overwrite all 128 voices of the original firmware V15 with its factory voices – as M-VAVE's workbench does. The current voices cannot be saved first."
+msgstr "Überschreibt alle 128 Voices der Original-Firmware V15 mit ihren Werks-Voices – wie M-VAVEs Workbench. Die aktuellen Voices lassen sich vorher nicht sichern."
+
+msgid "This overwrites <b>all 128 voices in the banks A–D</b> of this FM-1 with M-VAVE's factory voices (from the checksum-checked V15 package). <b>The voices on the FM-1 now cannot be saved first</b> – the original firmware has no backup protocol – so voices you stored there yourself are lost."
+msgstr "Das überschreibt <b>alle 128 Voices in den Bänken A–D</b> dieses FM-1 mit M-VAVEs Werks-Voices (aus dem per Prüfsumme geprüften V15-Paket). <b>Die Voices, die jetzt auf dem FM-1 sind, lassen sich vorher nicht sichern</b> – die Original-Firmware hat kein Backup-Protokoll –, selbst gespeicherte Voices gehen also verloren."

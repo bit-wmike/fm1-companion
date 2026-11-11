@@ -315,6 +315,35 @@ try:
     check(ft2.play()["busy"] and not ft2.stop()["busy"], "Felucca: play and stop (st_transport_set)")
     ft2.close()
     ft.close()
+    # the FM1 Open twin (tools/studio/fm1open_studio.c on M-VAVE's simulator): identity, its file protocol through the
+    # Link (fm1openbk.py), eight stems, its backup round trip
+    from fm1companion import fm1open as F, fm1openbk
+    ot = studio.Studio.create(firmware="fm1-open", backend="webengine", server=st.backend.server)
+    check(ot.build.firmware == "fm1-open" and ot.info.get("version") == "FM1 OPEN " + ot.build.version,
+          f"FM1 Open twin started in QtWebEngine: {ot.info.get('version')}")
+    OL = ot.link
+    check(ot.device_version(OL) == ot.build.version == "V14", "FM1 Open identity via Link (FM-1_8000014)")
+    with F.Client(OL) as c:                              # a step on every fourth step of all eight tracks, in slot 3
+        w = bytearray(fm1openbk._working(c))
+        for t in range(8):
+            drum = w[2048 + t * 223] in (2, 5)              # (808 and the sampler: a drum bit, no note)
+            for i in range(0, 64, 4):
+                w[(t * 64 + i) * 4:(t * 64 + i) * 4 + 4] = bytes([0, 100, 1, 0] if drum else [48 + 3 * t + i % 12, 100, 0, 0])
+        fm1openbk._upload(c, 0, 0, bytes(w))
+        c.query(7, bytes([2]))
+    check(ot.projects() == [2], "FM1 Open: slot 3 saved in the twin")
+    r7 = ot.render_wav(out / "fm1open.wav", seconds=1.5, start="play", source="saved", project=2, stems=True, fmt="f32")
+    check(len(r7.stems) == 8 and r7.peak > 0.02, f"FM1 Open: mix + eight stems, peak {r7.peak:.3f}")
+    oarch = ot.backup()
+    check(studio.backup_firmware(oarch) == "fm1-open" and oarch.fm1open and len(oarch.objects) == len(fm1openbk.IDS),
+          f"FM1 Open backup (its own format, {len(oarch.objects)} objects)")
+    ot2 = studio.Studio.for_backup(oarch, backend="webengine", server=st.backend.server)
+    same = all(a["bytes"] == b["bytes"] for a, b in zip(oarch.objects, ot2.backup().objects))
+    check(ot2.build.firmware == "fm1-open" and ot2.projects() == [2] and same,
+          "FM1 Open backup into a second FM1 Open twin: byte-identical")
+    check(ot2.play()["busy"] and not ot2.stop()["busy"], "FM1 Open: play and stop (st_transport_set)")
+    ot2.close()
+    ot.close()
     st.close()
     from fm1companion.ui import web
     web.shutdown_all()
