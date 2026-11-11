@@ -124,6 +124,13 @@ old approximation on the computer only remains when there is no twin for the fir
   for a Felucca build with another package identity (a development build: FM-1_900). Write back only when you know the
   fork reads Felucca's data – the FM-1 checks each part, and the safety backup comes first. The project view does not
   read Felucca's projects yet.
+* ChoralRoot FM-1 (twins of 0.39 – the version its installer offers – and 0.38; an FM-1 answering “ChoralRoot …”
+  or a backup of ChoralRoot's installer opens it): no project slots – its ten loop slots are chosen on the twin's panel
+  (PLAY held, PRESETS), Play plays the loop; music is made on the panel (ChoralRoot has no editor), and only SAVE held
+  writes loops and settings, as on the device. The two stems are its chord and bass parts (a stem carries no metronome
+  click). After loading a backup and after writing back, ChoralRoot restarts (the twin as well as the FM-1). Backups of
+  0.21 and older keep the user sounds in objects the newer firmware no longer has: the studio leaves them out and names
+  them. The twin has one core, no USB audio, no TRS MIDI and no Bluetooth; the update gesture does nothing there.
 * The twin has no CPU limit: the device drops voices when overloaded, the twin never does. Floating-point parts
   can differ in the last bits (inaudible). No Bluetooth, no USB host, no firmware update in the
   twin.

@@ -70,6 +70,9 @@ def test_deb(dist):
             for f in b.manifest["files"]:
                 assert f"{lib}sims/{fw}-studio/{b.path.name}/{f}" in files, (b.version, f)
             assert f"{lib}sims/{fw}-studio/{b.path.name}/manifest.json" in files
+    for b in studio.builds("choralroot"):                                            # (ChoralRoot FM-1's twin)
+        for f in [*b.manifest["files"], "manifest.json"]:
+            assert f"{lib}sims/choralroot-studio/{b.path.name}/{f}" in files, (b.version, f)
     for f in ("studio.py", "studio_web.py", "ui/studio_service.py", "ui/pages/studio.py", "data/help/de/13-studio.md"):
         assert lib + f in files, f
     # translations (.po, read directly – no .mo build step) and the help pages per language
@@ -130,6 +133,8 @@ def test_run_installer(dist, tmp_path):
     for fw in ("melodee", "skiff", "jiant", "sloop", "coralflower", "karma", "felucca", "fm1-open"):
         assert sorted(p.parent.name for p in (app / f"fm1companion/sims/{fw}-studio").glob("*/twin.wasm")) == \
             sorted(p.parent.name for p in (ROOT / f"fm1companion/sims/{fw}-studio").glob("*/twin.wasm")) != []
+    assert sorted(p.parent.name for p in (app / "fm1companion/sims/choralroot-studio").glob("*/twin.wasm")) == \
+        sorted(p.parent.name for p in (ROOT / "fm1companion/sims/choralroot-studio").glob("*/twin.wasm")) != []
     assert "exec /usr/bin/python3 -m fm1companion" in launcher.read_text() or py in launcher.read_text()
     assert (home / ".local/share/applications/fm1-companion.desktop").exists()
     assert (home / ".local/share/applications/fm1-companion-uninstall.desktop").exists()

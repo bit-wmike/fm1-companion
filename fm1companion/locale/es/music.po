@@ -4378,3 +4378,17 @@ msgstr "El firmware original no tiene protocolo de copias de seguridad: no se pu
 
 msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device, over FM1 Open's file protocol: the four DX7 library banks, every project slot the twin has (empty slots stay as they are on the FM-1), the working project and – if it differs – the sample bank. Playback on the FM-1 stops in the process."
 msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo sustituye en el dispositivo, con el protocolo de archivos de FM1 Open: los cuatro bancos de la biblioteca DX7, cada ranura de proyecto que tiene el gemelo (las ranuras vacías se quedan en el FM-1 como están), el proyecto de trabajo y – si es distinto – el banco de muestras. La reproducción en el FM-1 se detiene durante el proceso."
+
+#: fm1companion/ui/pages/studio.py
+#, python-brace-format
+msgid "{firmware} has no project slots: its ten loop slots are chosen on the twin's panel (PLAY held, PRESETS); Play plays the loop."
+msgstr "{firmware} no tiene ranuras de proyecto: sus diez ranuras de loop se eligen en el panel del gemelo (PLAY mantenido, PRESETS); Play reproduce el loop."
+
+#: fm1companion/ui/pages/studio.py
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the ten loop slots, the user sounds and the CZ-1 banks, the favorites and the settings. A loop playing on the FM-1 must be stopped, and the FM-1 restarts at the end to load them."
+msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo: las diez ranuras de loop, los sonidos de usuario y los bancos CZ-1, los favoritos y los ajustes. Un loop que suene en el FM-1 debe estar detenido, y al final el FM-1 se reinicia para cargarlos."
+
+#: fm1companion/ui/pages/studio.py
+#, python-brace-format
+msgid "This backup comes from {firmware} – so far there is a studio twin only for {firmwares}."
+msgstr "Esta copia de seguridad viene de {firmware}; por ahora solo hay gemelo del Studio para {firmwares}."

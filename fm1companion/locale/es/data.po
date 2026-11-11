@@ -3696,8 +3696,6 @@ msgstr "Sonido de patrón modificado {n}"
 msgid "ChoralRoot FM-1 fork (chord instrument); its unmodified firmware code runs in the studio twin"
 msgstr "Fork de ChoralRoot FM-1 (instrumento de acordes); su código de firmware sin modificar se ejecuta en el gemelo del Studio"
 
-msgid "Felucca fork; basis of CoralFlower"
-msgstr "Fork de Felucca; base de CoralFlower"
 
 msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
 msgstr "Esta copia de seguridad viene de {backup}; el FM-1 ejecuta {device}, que no puede leer los proyectos ni los kits de batería de KARMA. No se ha escrito nada."
@@ -3739,3 +3737,34 @@ msgstr "Este FM1 Open no tiene biblioteca DX7 (una versión anterior) – no se 
 #, python-brace-format
 msgid "FM-1 connected ({id}) – FM1 Open: MIDI, presets via SysEx, its sample bank (page “Samples”) and the Studio (fetch, write back) work; the other pages need the editor protocol."
 msgstr "FM-1 conectado ({id}) – FM1 Open: MIDI, presets por SysEx, su banco de muestras (página “Muestras”) y el Studio (traer, volver a escribir) funcionan; las demás páginas necesitan el protocolo de editor."
+
+msgid "Felucca fork (chord instrument), basis of CoralFlower; its unmodified firmware code runs in the studio twin"
+msgstr "Fork de Felucca (instrumento de acordes), base de CoralFlower; su código de firmware sin modificar se ejecuta en el gemelo del Studio"
+
+#: fm1companion/backup_inspect.py
+msgid "Favorites"
+msgstr "Favoritos"
+
+#: fm1companion/backup_inspect.py
+msgid "FM TONE patches of the user sounds"
+msgstr "Patches FM TONE de los sonidos de usuario"
+
+#: fm1companion/backup_inspect.py
+#, python-brace-format
+msgid "CZ-1 tones of the user sounds {first}–{last}"
+msgstr "Tonos CZ-1 de los sonidos de usuario {first}–{last}"
+
+#: fm1companion/backup_inspect.py
+#, python-brace-format
+msgid "Loop slot {n}"
+msgstr "Ranura de loop {n}"
+
+#: fm1companion/backup_inspect.py
+#, python-brace-format
+msgid "CZ-1 bank {letter}"
+msgstr "Banco CZ-1 {letter}"
+
+#: fm1companion/backup.py
+#, python-brace-format
+msgid "This backup comes from {backup}, the FM-1 runs {device}: ORBIT and SLOOP store their projects and presets differently, neither reads the other's backups. Nothing was written."
+msgstr "Esta copia de seguridad viene de {backup}, el FM-1 ejecuta {device}: ORBIT y SLOOP guardan sus proyectos y presets de forma distinta, ninguno lee las copias del otro. No se ha escrito nada."

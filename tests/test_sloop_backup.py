@@ -358,3 +358,49 @@ def test_roundtrip_against_editor_mock(tmp_path):
     backup.write_file(p, back)
     again = json.loads(node("restore", p))
     assert strip(again) == strip(js)
+
+
+# ---------------------------------------------------- ORBIT (a SLOOP fork) ---
+
+def test_orbit_speaks_sloops_backup_protocol():
+    """ORBIT (dspaudio/orbit, firmware/src/editor.c ED_BK_*): INFO "FELUCCA ORBIT 1.0.0", backup over SLOOP's commands
+    34-36 (it answers no 65..67), "sloop-backup" files; no studio twin (its CLUSTER engine carries Teenage
+    Engineering's OP-1 material, which is not licensed for redistribution). ORBIT's editor refuses backups of other
+    firmwares and other targets (web/editor.html bkForeign): so does the app, before anything is written."""
+    from fm1companion import firmware, studio
+    from fm1companion.protocol import Info
+    from fm1companion.ui.studio_service import StudioService
+    dev, link, t = sloop()
+    dev.version = "FELUCCA ORBIT 1.0.0"
+    assert Info("FELUCCA ORBIT 1.0.0").firmware_name == "orbit" and "orbit" in backup.SLOOP_PROTOCOL
+    assert backup.protocol(link)[0] == "sloop" and backup.protocol(link, "orbit")[0] == "sloop"
+    assert firmware.guess_firmware("", "FELUCCA ORBIT 1.0.0") == ("orbit", "v1.0.0")
+    assert StudioService.firmware_for("orbit") == ""                        # (no twin: the studio says so)
+    f = backup.capture(link, "", firmware_key="orbit")
+    assert f["format"] == "sloop-backup" and f["firmware"] == "FELUCCA ORBIT 1.0.0"
+    assert all(fr[4] in (1, 34, 35) for fr in t.sent)                       # (INFO, BK_LIST, BK_GET: never 65..67)
+    arch = backup.read(f)
+    assert arch.sloop and backup.is_orbit_backup(arch.file) and studio.backup_firmware(arch) == "orbit"
+    assert BI.inspect(arch).firmware_key == "orbit"
+    assert backup.is_orbit_backup({"format": "sloop-backup", "product": "ORBIT", "firmware": ""})
+    dev.log.clear()
+    backup.restore(link, arch)                                              # onto ORBIT: as SLOOP's order
+    assert dev.log[-2:] == [0, 1]
+    # an ORBIT backup onto SLOOP, a SLOOP backup onto ORBIT: refused, nothing written
+    sdev, slink, _ = sloop()
+    slo = backup.read(backup.capture(slink, ""))
+    for lk, d, a in ((slink, sdev, arch), (link, dev, slo)):
+        d.log.clear()
+        with pytest.raises(backup.BackupError, match="ORBIT"):
+            backup.restore(lk, a)
+        with pytest.raises(backup.BackupError, match="ORBIT"):
+            backup.restore_selected(lk, a, [2])
+        assert d.log == []
+
+
+def test_grimm_and_hortator_recognised_without_felucca_protocol():
+    """GR!MM (GRiMMBIENT/grimm) and Hortator (DeadActive/hortator) speak their own SysEx protocols (7D 47 52, 7D 48 54),
+    none of Felucca's: no backup through the app, but the identity names them (GR!MM: FM-1_966 in every release;
+    Hortator shares Felucca's FM-1_900 and is asked over its own INFO, ui/device.py hortator_info)"""
+    from fm1companion import firmware
+    assert firmware.guess_firmware("FM-1_966")[0] in ("gr-mm", "")       # ("" if this machine remembered it otherwise)

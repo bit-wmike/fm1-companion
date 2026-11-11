@@ -583,6 +583,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
         pass
     if "karma" in v or family == "karma":              # KARMA (a SLOOP fork) answers INFO "FELUCCA KARMA 3.1"
         return "karma", tag
+    if "orbit" in v or family == "orbit":              # ORBIT (a SLOOP fork) answers INFO "FELUCCA ORBIT 1.0.0" (the
+        return "orbit", tag                            # catalog's key; its identity is Felucca's FM-1_900)
     for key in ("melodee", "sloop", "skiff"):
         if key in v or family == key:
             return key, tag
@@ -590,9 +592,14 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
         return "jiant-fm", tag
     if "coralflower" in v or family == "coralflower":   # CoralFlower answers INFO "CoralFlower 0.7.1" (the catalog's key)
         return "coralflower", tag
+    if "choralroot" in v or family.startswith("choralroot"):   # ChoralRoot answers INFO "ChoralRoot 0.39" (the catalog's
+        return "choralroot-fm-1", tag                            # key "choralroot-fm-1")
     if re.fullmatch(r"FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)|FM-1_8\d{6}", identity or ""):
         # M-VAVE's FM1 Open (app/version.h FM1_UPDATE_PRODUCT, V14: FM-1_8000014; its SDK keeps FM-1_8xxxxxx)
         return "fm1-open", {"FM-1_8000014": "V14"}.get(identity, "")
+    if plain:                                           # Felucca itself (INFO "FELUCCA v1.8.1"; its releases FM-1_9XY,
+        return "felucca", tag                           # shared with forks built the same way – and with the identities
+                                                        # of 9XY firmwares below, FM-1_909, 920, 926 …: the INFO decides)
     m = re.match(r"FM-1_(\d+)", identity or "")
     if m:
         n = int(m.group(1))
@@ -600,23 +607,25 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
             return "melodee", ""
         if 700 <= n < 800:
             return "skiff", ""
-        if n == 909 and not plain:                      # JIANT's tools/build.py PRODUCT (its web installer's builds;
-                                                        # a plain FELUCCA INFO there: Felucca 0.9's release)
+        if n == 909:                                    # JIANT's tools/build.py PRODUCT (its web installer's builds;
+                                                        # a plain FELUCCA INFO there: Felucca 0.9's release, above)
             return "jiant-fm", ""
         if n == 930:                                    # CoralFlower's tools/build.py PRODUCT (every release)
             return "coralflower", ""
+        if n == 920:                                    # ChoralRoot FM-1's tools/build.py PRODUCT (every FM-1 release)
+            return "choralroot-fm-1", ""
+        if n == 966:                                    # GR!MM's tools/build.py PRODUCT (every release; the catalog's key)
+            return "gr-mm", ""
         if n == 926:                                    # KARMA's own identity in every build (tools/build.py PRODUCT)
             return "karma", ""
         if n in (15, 16):
             return f"stock-v{n}", f"V{n}"
-    if plain:                                           # Felucca itself (INFO "FELUCCA v1.8.1"; its releases FM-1_9XY,
-        return "felucca", tag                           # shared with forks built the same way: the INFO decides)
     return "", ""
 
 
 # firmwares whose INFO always names them (SLOOP "FELUCCA SLOOP 2.8.5", KARMA "FELUCCA KARMA 3.1", ...): a plain "FELUCCA
 # v…" is none of them, whatever this machine remembered for the identity
-SELF_NAMING = ("sloop", "karma", "melodee", "jiant-fm", "coralflower")
+SELF_NAMING = ("sloop", "karma", "orbit", "melodee", "jiant-fm", "coralflower", "choralroot-fm-1")
 
 
 def query_identity(port_name: str = "", timeout=20) -> tuple[str, str]:

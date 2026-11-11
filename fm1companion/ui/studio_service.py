@@ -614,7 +614,7 @@ class StudioService(QObject):
             fw = self.st.build.firmware if self.st is not None else ""
             sloop = S.FIRMWARES.get(fw, {}).get("backup") == "sloop"          # (SLOOP and KARMA: SLOOP's objects)
             names = ", ".join(backup.object_title(i, sloop, jiant=fw == "jiant", coral=fw == "coralflower",
-                                                  felucca=fw == "felucca")
+                                                  choral=fw == "choralroot", felucca=fw == "felucca")
                               for i in rej[:4]) + (" …" if len(rej) > 4 else "")
             txt += _(". Not taken over ({n}): {names} – these parts do not fit {firmware} {version} and are left out "
                      "when writing back").format(n=len(rej), names=names, firmware=self.st.firmware_name,

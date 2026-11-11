@@ -130,6 +130,15 @@ antigua aproximación en el ordenador solo se mantiene cuando no hay gemelo para
   compilación de desarrollo: FM-1_900). Vuelve a escribir solo si sabes que el fork lee los datos de Felucca – el FM-1
   comprueba cada parte y antes se hace una copia de seguridad. La vista de proyecto aún no lee los proyectos de
   Felucca.
+* ChoralRoot FM-1 (gemelos de 0.39 – la versión que ofrece su instalador – y 0.38; un FM-1 que responde
+  “ChoralRoot …” o una copia del instalador de ChoralRoot lo abre): sin ranuras de proyecto – sus diez ranuras de loop
+  se eligen en el panel del gemelo (PLAY mantenido, PRESETS), Play reproduce el loop; la música se hace en el panel
+  (ChoralRoot no tiene editor), y solo SAVE mantenido escribe los loops y los ajustes, como en el dispositivo. Las dos
+  pistas separadas son sus partes de acordes y de bajo (una pista separada no lleva el clic del metrónomo). Después de
+  cargar una copia y después de volver a escribir, ChoralRoot se reinicia (el gemelo y también el FM-1). Las copias de
+  0.21 y anteriores guardan los sonidos de usuario en objetos que el firmware nuevo ya no tiene: el Studio los omite y
+  los nombra. El gemelo tiene un núcleo, sin audio USB, sin MIDI TRS y sin Bluetooth; el gesto de actualización no hace
+  nada allí.
 * El gemelo no tiene límite de CPU: el dispositivo descarta voces cuando se sobrecarga, el gemelo nunca. Las partes en coma flotante
   pueden diferir en los últimos bits (inaudible). Sin Bluetooth, sin host USB, sin actualización de firmware en el
   gemelo.

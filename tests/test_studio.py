@@ -1056,6 +1056,224 @@ def test_coralflower_inventory_in_backup_layer():
         backup.read({**f, "objects": [{**o, "size": 0, "crc": 0, "data": ""} for o in f["objects"]]})
 
 
+# ------------------------------------------------------------------ ChoralRoot FM-1 (tools/studio/choralroot_studio.c)
+# ChoralRoot's FM-1 releases are tags vX.Y (the -smk37 tags are the SMK-37's); its web installer offers the first entry of
+# web/releases.json (0.39, 2026-11-10), 0.38 is the release before. tools/build.py --release X.Y: INFO "ChoralRoot X.Y",
+# the identity PRODUCT FM-1_920
+CHORAL_COMMIT = {"0.38": "3cb2e8fd25d3d4292cb5c66c2623589d7a2ba8e3", "0.39": "36867e5c76fa1ecc02cba57102ee870695e1de10"}
+CHORAL_STATUS = {"0.38": "previous stable", "0.39": "stable"}
+
+
+def test_choralroot_builds_side_by_side():
+    bs = studio.builds("choralroot")
+    assert [b.version for b in bs] == ["0.38", "0.39"]
+    for b in bs:
+        m = b.manifest
+        assert b.verify() == [] and b.path.name == b.version
+        assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "choralroot"
+        assert m["ref"] == "v" + b.version and m["commit"] == CHORAL_COMMIT[b.version] and m["license"] == "GPL-3.0-only"
+        assert m["release_status"] == CHORAL_STATUS[b.version] and m["firmware_version"] == b.version
+        assert m["identity"] == "FM-1_920" and m["fs"] == 44100 and m["flash_size"] == 0x100000
+        assert m["tracks"] == 2 and m["projects"] == 0 and m["source_repo"] == "https://github.com/Quixotic7/ChoralRootFM1"
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} <= set(m["files"])
+        notice = (b.path / "NOTICE").read_text()
+        assert "unmodified" in notice and "Written offer" in notice and f"ChoralRootFM1-{m['commit']}.tar.gz" in notice
+        assert "Quixotic7" in notice and "Casio" in notice and m["glue"] == "tools/studio/choralroot_studio.c"
+        assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
+        third = (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Apache License" in third and "Mozilla Public License" in third and "Inter Project" in third
+        assert "Fukiai" in third and ("uPD933" in third or "Devin Acker" in third)
+    assert not any(s.key.startswith("choralroot") for s in sims.bundled())
+    for fw in ("melodee", "skiff", "jiant", "coralflower"):                  # the other twins are untouched
+        assert {b.firmware for b in studio.builds(fw)} == {fw}
+
+
+def test_choralroot_versions_and_pick():
+    b, exact, warn = studio.pick_build("choralroot", "ChoralRoot 0.39")      # ChoralRoot's INFO
+    assert exact and b.version == "0.39" and not warn
+    assert studio.pick_build("choralroot", "ChoralRoot 0.39 1-core")[0].version == "0.39"   # (the single-core package)
+    b, exact, warn = studio.pick_build("choralroot", "ChoralRoot 0.38")
+    assert exact and b.version == "0.38"
+    b, exact, warn = studio.pick_build("choralroot", "ChoralRoot 0.29.2")    # older than everything: the oldest
+    assert not exact and b.version == "0.38" and "ChoralRoot v0.29.2" in warn
+    b, exact, warn = studio.pick_build("choralroot", "ChoralRoot 0.40-beta1")   # newer: the next older one
+    assert not exact and b.version == "0.39"
+    assert studio.pick_build("choralroot")[0].version == "0.39"              # without a wish: the newest = the stable
+    order = ["0.22-beta4", "0.22", "0.29.2", "0.38", "0.39", "0.40"]
+    assert sorted(reversed(order), key=studio.version_key) == order
+    vc = studio.check_versions("0.39", device="ChoralRoot 0.38", firmware="ChoralRoot")
+    assert not vc.ok and "ChoralRoot" in vc.message
+    assert studio.firmware_name("choralroot") == "ChoralRoot" and studio.FIRMWARES["choralroot"]["projects"] == 0
+    assert "ChoralRoot" in studio.firmware_names() and "ChoralRoot" in studio.firmware_names("or")
+    # the device layer: INFO "ChoralRoot 0.39", the catalog's key "choralroot-fm-1" and the identity FM-1_920
+    from fm1companion.protocol import Info
+    from fm1companion.ui.studio_service import StudioService
+    from fm1companion import firmware
+    assert Info("ChoralRoot 0.39").firmware_name == "choralroot"
+    assert StudioService.firmware_for("choralroot-fm-1") == "choralroot" == StudioService.firmware_for("choralroot")
+    assert firmware.guess_firmware("", "ChoralRoot 0.39")[0] == "choralroot-fm-1"
+    assert firmware.guess_firmware("FM-1_920")[0] in ("choralroot-fm-1", "")   # ("" if this machine remembered it otherwise)
+    assert firmware.guess_firmware("", "CoralFlower 0.7.1")[0] == "coralflower"
+
+
+@need_node
+def test_choralroot_twin_core_headless():
+    r = subprocess.run([NODE, str(ROOT / "tests" / "studio_twin_choralroot.mjs"),
+                        str(studio.SIMS_DIR / "choralroot-studio")], capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-3000:]
+    res = json.loads(r.stdout)
+    assert {x["version"] for x in res} >= {"0.38", "0.39"}
+    for x in res:
+        v = x["firmware_version"]
+        assert x["version_export"] == x["info"] == "ChoralRoot " + v
+        assert x["info_tail"] == [0] * 7 + [0x42, 1, 3, 0x43, 1, 3]       # no editor; backup read + restore, RESTART
+        assert bytes(x["identity_reply"]) == _identity_frame("FM-1_920")   # ota.c, as demo_device expects
+        assert x["ids"] == backup.CHORALROOT_IDS and x["fresh_used"] == 0 and x["screen_lit"] > 1000
+        assert x["take"] and x["sizes"].keys() == {"1", "40"}
+        assert all(rc == 0 for rc in x["put_rc"].values()) and x["restart_rc"] == 0
+        assert all(x["identical"].values()) and x["persisted"] and x["bad_crc"] == 2 and x["unknown_id"] == [1, 1]
+        a, b = x["takes"]
+        assert a["playing"] and a["play_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
+        assert a["note_ons"] > 0 and a["project"] == 255 and not a["projects"]
+        assert x["fork_identical"] and x["stopped"] and x["song_play"] and x["restart_play"]
+        print(f"{v}: {a['realtime']:.1f}x real time")
+        assert a["realtime"] > 3
+
+
+def _choral_take(st):
+    """a loop taken on the twin's panel, as a player records one (no editor in ChoralRoot): REC, four chords, REC
+    (it plays), stop, SAVE held (the settings and loop slot 1); the clock held still meanwhile"""
+    be = st.backend
+    st.set_clock(False)
+    st.press("REC")
+    be.call("run", ms=200)
+    for k in (7, 12, 14, 20):
+        be.call("keys", mask=1 << k)
+        be.call("run", ms=450)
+        be.call("keys", mask=0)
+        be.call("run", ms=50)
+    st.press("REC")
+    be.call("run", ms=300)
+    st.stop()
+    be.call("run", ms=100)
+    be.call("press", label=studio.B["SAVE"], ms=1500)
+    be.call("run", ms=1500)
+    st.set_clock(True)
+
+
+def test_choralroot_backup_round_trip_with_suite_code(node_studio):
+    a = node_studio(firmware="choralroot", version="ChoralRoot 0.39")
+    assert a.build.firmware == "choralroot" and a.build.version == "0.39" and a.tracks == 2 and a.project_slots == 0
+    assert studio.device_version(a.link) == "v0.39.0" and a.info_name == "ChoralRoot" and a.projects() == []
+    fresh = a.backup()                                                      # a new device: nothing saved yet
+    assert not any(o["size"] for o in fresh.objects) and fresh.choralroot and fresh.project_objects() == []
+    _choral_take(a)
+    arch = a.backup()
+    assert [o["id"] for o in arch.objects] == backup.CHORALROOT_IDS and arch.known
+    assert studio.backup_version(arch) == "v0.39.0" and studio.backup_firmware(arch) == "choralroot"
+    assert arch.companion["version_string"] == "ChoralRoot 0.39"
+    used = {o["id"]: o["bytes"] for o in arch.objects if o["size"]}
+    assert set(used) == {1, 40}
+    # a backup of ChoralRoot's own web installer (no companion block; 'firmware' is the INFO string) and one with an
+    # unknown name: the inventory tells
+    plain = json.loads(backup.dumps(arch.file))
+    plain.pop("companion")
+    plain["firmware"] = "ChoralRoot 0.39"
+    assert studio.backup_firmware(backup.read(plain)) == "choralroot"
+    plain["firmware"] = "?"
+    assert studio.backup_firmware(backup.read(plain)) == "choralroot"
+    # into the 0.38 twin through backup.restore (the backup protocol, then RESTART): the twin restarts (a power cycle)
+    # and reads the loop in
+    b = node_studio(firmware="choralroot", version="0.38")
+    b.open_from_backup(arch)
+    back = {o["id"]: o["bytes"] for o in b.backup().objects}
+    assert back[40] == used[40] and back[1] and not b.rejected
+    vc = b.check_versions(archive=arch)
+    assert not vc.ok and "ChoralRoot" in vc.message
+    c = studio.Studio.for_backup(arch, backend="node")                     # the backup's firmware and version
+    try:
+        assert c.build.firmware == "choralroot" and c.build.version == "0.39" and not c.warning
+        assert c.projects() == [] and c.load_project(0) == 1
+        assert c.play()["busy"] and not c.stop()["busy"]                   # st_transport_set (PLAY: the loop)
+        assert c.play("song")["busy"] and not c.stop()["busy"]
+    finally:
+        c.close()
+    # the tolerant load (the studio page's) skips nothing of its own firmware; an old (0.21) archive's sound objects
+    # are named and left out
+    d = node_studio(firmware="choralroot", version="0.39")
+    d.open_from_backup(arch, tolerant=True)
+    assert d.rejected == [] and {o["id"]: o["bytes"] for o in d.backup().objects}[40] == used[40]
+    old = {"format": backup.FORMAT, "version": 1, "firmware": "ChoralRoot 0.21", "objects": [
+        {"id": i, "size": len(used.get(i, b"x" if i == 6 else b"")), "crc": backup.crc32(used.get(i, b"x" if i == 6 else b"")),
+         "data": base64.b64encode(used.get(i, b"x" if i == 6 else b"")).decode()} for i in backup.CHORALROOT_IDS_OLD]}
+    d.open_from_backup(old, tolerant=True)
+    assert d.rejected == [6] and {o["id"]: o["bytes"] for o in d.backup().objects}[40] == used[40]
+    with pytest.raises(backup.BackupError):                                 # the strict restore: nothing written
+        backup.restore(d.link, backup.read(old), firmware_key="choralroot")
+    # writing back (the studio's write_to_device; here onto another twin as the "FM-1"): every object but the
+    # settings (1) when asked, then RESTART
+    e = node_studio(firmware="choralroot", version="0.39")
+    a.write_to_device(e.link, settings=False)
+    e.backend.call("reset")
+    after = {o["id"]: o["bytes"] for o in e.backup().objects}
+    assert after[40] == used[40] and not after[1]
+    # the inspector names ChoralRoot's objects (no projects, no sample slots, 8 the FM6 bank in use)
+    from fm1companion import backup_inspect as BI
+    rep = BI.inspect(arch)
+    assert rep.firmware_key == "choralroot" and BI.inspect(backup.read(plain)).firmware_key == "choralroot"
+    for oid in (40, 49):
+        assert rep.obj(oid).group == BI.G_PROJECTS and "Loop" in rep.obj(oid).title and not rep.obj(oid).slot, oid
+    for oid in (50, 62):
+        assert rep.obj(oid).group == BI.G_PRESETS and "USR" not in rep.obj(oid).title, oid
+    assert rep.obj(62).title.endswith("121–128") and "CZ-1" in rep.obj(14).title and "FM6" in rep.obj(8).title
+    assert rep.obj(1).group == BI.G_SETTINGS and rep.projects == [] and BI.skip_ids(rep) == set()
+    comp = BI.compatibility(rep, "choralroot", "ChoralRoot 0.39", backup.CHORALROOT_IDS)
+    assert comp.ok and {8, 40} <= comp.allowed_ids
+
+
+def test_choralroot_render_stems(node_studio, tmp_path):
+    st = node_studio(firmware="choralroot")
+    _choral_take(st)
+    s = st.render_wav(tmp_path / "mix.wav", seconds=2, start="play", source="saved", stems=True)
+    assert sorted(s.stems) == [0, 1] and s.peak > 0.05
+    peaks = []
+    for k, p in s.stems.items():
+        raw = p.read_bytes()[len(studio.wav_header(s.frames)):]
+        fl = struct.unpack(f"<{len(raw) // 4}f", raw)
+        peaks.append(max(abs(x) for x in fl))
+    # the loop is the chord part's; the bass is off by default (and a stem carries no metronome click)
+    assert peaks[0] > 0.05 and peaks[1] < 0.01, peaks
+    path = st.save_state(tmp_path / "x" / studio.STATE_NAME)
+    meta, flash = studio.read_state(path)
+    assert meta["firmware"] == "choralroot" and meta["firmware_version"] == "0.39" and len(flash) == 0x100000
+
+
+def test_choralroot_inventory_in_backup_layer():
+    """ChoralRoot FM-1: 34 objects from 0.22 (1 the settings, 8 the FM6 bank, 14..21 the CZ-1 banks, 50..62 the sound
+    pool, 23 the favourites, 40..49 the loop slots), 28 / 27 / 17 in 0.14 .. 0.21; 40..62 are no sample slots, nothing
+    is a project, no object 0."""
+    ids = backup.CHORALROOT_IDS
+    assert len(ids) == 34 and backup.known_ids(ids) == ids and backup.is_choralroot(ids)
+    for old in backup.CHORALROOT_ID_SETS[1:]:                               # the older releases' inventories
+        assert backup.is_choralroot(old) and backup.known_ids(old) == old
+    assert backup.known_ids(list(range(17))) == list(range(17)) and backup.known_ids(list(range(28))) == list(range(28))
+    assert not backup.is_choralroot(list(range(34))) and not backup.is_choralroot(backup.CORALFLOWER_IDS)
+    assert not backup.is_coralflower(ids) and not backup.is_jiant(ids)
+    assert backup.is_sample(40) and not backup.is_sample(40, choral=True) and not backup.is_sample(62, choral=True)
+    assert not backup.is_project(0, choral=True)
+    assert "USR" not in backup.object_title(50, choral=True) and "Loop" in backup.object_title(41, choral=True)
+    # an archive with only the settings (the FM6 bank, its second object, empty) and an empty one are valid backups
+    f = {"format": backup.FORMAT, "version": 1, "firmware": "ChoralRoot 0.39", "objects": [
+        {"id": i, "size": 4 if i == 1 else 0, "crc": backup.crc32(b"abcd") if i == 1 else 0,
+         "data": base64.b64encode(b"abcd" if i == 1 else b"").decode()} for i in ids]}
+    arch = backup.read(f)
+    assert arch.choralroot and not arch.coralflower and arch.project_objects() == []
+    backup.check_16(arch, [backup.ObjInfo(i, 0, 0) for i in ids])
+    assert backup.read({**f, "objects": [{**o, "size": 0, "crc": 0, "data": ""} for o in f["objects"]]}).choralroot
+    from fm1companion import studio as S
+    assert S.backup_firmware(arch) == "choralroot"
+
+
 # ------------------------------------------------------------------ KARMA (tools/studio/karma_studio.c)
 # KARMA (eatyourgreensstudio-dotcom/karma-fm1, a SLOOP fork): v3.1 is what its web installer serves (docs/webapp/installer,
 # 2026-11-10), v3.0.5 the release before. Every build answers INFO "FELUCCA KARMA X.Y" and the identity FM-1_926
@@ -1229,7 +1447,7 @@ def test_karma_in_backup_layer():
     from fm1companion.protocol import Info, parse_info
     assert sloopbk.dev_format(71, "FELUCCA KARMA 3.1") == 7 and sloopbk.dev_format(71, "FELUCCA SLOOP 2.6") == 6
     assert sloopbk.dsu_old(b"DSU1....") and not sloopbk.dsu_old(b"HEX1....")
-    assert backup.SLOOP_PROTOCOL == ("sloop", "karma") and all(i in sloopbk.RESTORE + sloopbk.SAMPLES for i in KARMA_IDS)
+    assert backup.SLOOP_PROTOCOL[:2] == ("sloop", "karma") and all(i in sloopbk.RESTORE + sloopbk.SAMPLES for i in KARMA_IDS)
 
     class FakeLink:                                     # an FM-1 that only answers INFO
         def __init__(self, version):

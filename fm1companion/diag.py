@@ -166,7 +166,7 @@ CREDIT_TEXTS = (
     N_("Felucca fork; its unmodified firmware code runs in the studio twin"),
     N_("Felucca descendant with sample slots and a song mode; its unmodified firmware code runs in the studio twin"),
     N_("ChoralRoot FM-1 fork (chord instrument); its unmodified firmware code runs in the studio twin"),
-    N_("Felucca fork; basis of CoralFlower"),
+    N_("Felucca fork (chord instrument), basis of CoralFlower; its unmodified firmware code runs in the studio twin"),
     N_("SLOOP fork; its unmodified firmware code runs in the studio twin, with the parts it ports (Mutable Instruments' "
        "Plaits, Elements and Clouds by Emilie Gillet, MIT; the LXR-02 drum voices by Erica Synths, GPL-3.0)"),
     N_("official open firmware: its unmodified code runs in the simulator and in the studio twin (also for the original V15/V16), its update tools and its V15 factory voices"),
