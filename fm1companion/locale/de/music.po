@@ -4499,8 +4499,8 @@ msgid "The FM-1 runs {firmware} – so far there is a studio twin only for {firm
 msgstr "Auf dem FM-1 läuft {firmware} – einen Studio-Zwilling gibt es bisher nur für {firmwares}."
 
 #, python-brace-format
-msgid "There is no studio twin for {firmware} yet. So far the studio can do {firmwares}; the original firmware (via FM1 Open) follows later – see Help › Studio. Backups of this device cannot be opened here; a {firmwares_or} backup can."
-msgstr "Für {firmware} gibt es noch keinen Studio-Zwilling. Das Studio kann bisher {firmwares}; die Original-Firmware (über FM1 Open) folgt später – siehe Hilfe › Studio. Backups dieses Geräts lassen sich hier nicht öffnen; ein Backup von {firmwares_or} schon."
+msgid "There is no studio twin for {firmware} yet. So far the studio can do {firmwares} – see Help › Studio. Backups of this device cannot be opened here; a {firmwares_or} backup can."
+msgstr "Für {firmware} gibt es noch keinen Studio-Zwilling. Das Studio kann bisher {firmwares} – siehe Hilfe › Studio. Backups dieses Geräts lassen sich hier nicht öffnen; ein Backup von {firmwares_or} schon."
 
 msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the sequencer's patterns and song, the patterns' sounds, the user sounds and the sounds' unsaved edits. Playback on the FM-1 stops, and the FM-1 restarts at the end to load them."
 msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät: die Patterns und den Song des Sequencers, die Sounds der Patterns, die User-Sounds und die ungespeicherten Änderungen der Sounds. Die Wiedergabe am FM-1 stoppt, und das FM-1 startet am Ende neu, um sie zu laden."
@@ -4539,3 +4539,20 @@ msgstr "Teil {n} ist leer."
 #, python-brace-format
 msgid "The {firmware} twin cannot load SLOOP backups."
 msgstr "SLOOP-Backups kann der {firmware}-Zwilling nicht laden."
+
+#, python-brace-format
+msgid "Your FM-1 runs M-VAVE's original firmware {device}. Its code is not open, so there is no twin of it: the studio runs M-VAVE's open firmware FM1 Open {twin} instead – with the same 128 factory DX7 voices (taken from the V15 package), but a different firmware: its own operation, 8 tracks and 16 projects, its own sample bank, and the open engine of M-VAVE's browser simulator instead of the device's. Sound and functions may differ. The original firmware has no backup protocol: nothing can be fetched from it or written back to it."
+msgstr "Auf deinem FM-1 läuft M-VAVEs Original-Firmware {device}. Ihr Code ist nicht offen, darum gibt es keinen Zwilling von ihr: Das Studio läuft stattdessen mit M-VAVEs offener Firmware FM1 Open {twin} – mit denselben 128 Werks-DX7-Voices (aus dem V15-Paket), aber einer anderen Firmware: eigene Bedienung, 8 Spuren und 16 Projekte, eigene Sample-Bank und die offene Engine von M-VAVEs Browser-Simulator statt der des Geräts. Klang und Funktionen können abweichen. Die Original-Firmware hat kein Backup-Protokoll: Von ihr lässt sich nichts holen und nichts zurückschreiben."
+
+#, python-brace-format
+msgid "This backup does not fit the {firmware} twin."
+msgstr "Dieses Backup passt nicht zum {firmware}-Zwilling."
+
+msgid "The FM1 Open twin can only load FM1 Open backups."
+msgstr "Der FM1-Open-Zwilling kann nur FM1-Open-Backups laden."
+
+msgid "The original firmware has no backup protocol: nothing can be fetched from this FM-1 or written to it. The studio plays the FM1 Open twin instead (see the note above)."
+msgstr "Die Original-Firmware hat kein Backup-Protokoll: Von diesem FM-1 lässt sich nichts holen und nichts darauf schreiben. Das Studio spielt stattdessen den FM1-Open-Zwilling (siehe Hinweis oben)."
+
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device, over FM1 Open's file protocol: the four DX7 library banks, every project slot the twin has (empty slots stay as they are on the FM-1), the working project and – if it differs – the sample bank. Playback on the FM-1 stops in the process."
+msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät, über FM1 Opens Dateiprotokoll: die vier Bänke der DX7-Bibliothek, jeden Projektplatz, den der Zwilling hat (leere Plätze bleiben auf dem FM-1, wie sie sind), das Arbeitsprojekt und – wenn sie sich unterscheidet – die Sample-Bank. Die Wiedergabe am FM-1 stoppt dabei."

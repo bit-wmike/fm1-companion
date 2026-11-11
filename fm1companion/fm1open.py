@@ -479,6 +479,7 @@ class Client:
                 if not data:
                     raise FM1OpenError(_("Answer incomplete"))
                 code = data[0]
+                self.last_code = code                # (1 with empty_ok: the slot is empty)
                 if code and not (empty_ok and code == 1):
                     raise FM1OpenError(_(ERRORS[code]) if code in ERRORS else
                                        _("device reports error {code}").format(code=code), code)

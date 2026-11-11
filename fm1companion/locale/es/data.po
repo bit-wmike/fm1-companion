@@ -3615,8 +3615,8 @@ msgid "Felucca fork; its unmodified firmware code runs in the studio twin"
 msgstr "fork de Felucca; su código de firmware sin modificar se ejecuta en el gemelo del Studio"
 
 #: fm1companion/diag.py:164
-msgid "official open firmware, simulator sources, update tools"
-msgstr "firmware abierto oficial, fuentes del simulador, herramientas de actualización"
+msgid "official open firmware: its unmodified code runs in the simulator and in the studio twin (also for the original V15/V16), its update tools and its V15 factory voices"
+msgstr "firmware abierto oficial: su código sin modificar funciona en el simulador y en el gemelo del Studio (también para la V15/V16 original), sus herramientas de actualización y sus voces de fábrica de la V15"
 
 #: fm1companion/diag.py:165
 msgid "firmware catalog and link collection"
@@ -3701,3 +3701,33 @@ msgstr "Fork de Felucca; base de CoralFlower"
 
 msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
 msgstr "Esta copia de seguridad viene de {backup}; el FM-1 ejecuta {device}, que no puede leer los proyectos ni los kits de batería de KARMA. No se ha escrito nada."
+
+msgid "This backup is not from FM1 Open, but the FM-1 runs FM1 Open – the formats do not match. Nothing was written."
+msgstr "Esta copia no es de FM1 Open, pero el FM-1 usa FM1 Open – los formatos no coinciden. No se ha escrito nada."
+
+msgid "working project"
+msgstr "proyecto de trabajo"
+
+#, python-brace-format
+msgid "DX7 library {bank}"
+msgstr "biblioteca DX7 {bank}"
+
+msgid "sample bank"
+msgstr "banco de muestras"
+
+msgid "Not an FM1 Open backup"
+msgstr "No es una copia de seguridad de FM1 Open"
+
+#, python-brace-format
+msgid "sample bank: {error}"
+msgstr "banco de muestras: {error}"
+
+msgid "The backup does not contain the working project"
+msgstr "La copia no contiene el proyecto de trabajo"
+
+msgid "This FM1 Open has no DX7 library (an older version) – nothing was written."
+msgstr "Este FM1 Open no tiene biblioteca DX7 (una versión anterior) – no se ha escrito nada."
+
+#, python-brace-format
+msgid "FM-1 connected ({id}) – FM1 Open: MIDI, presets via SysEx, its sample bank (page “Samples”) and the Studio (fetch, write back) work; the other pages need the editor protocol."
+msgstr "FM-1 conectado ({id}) – FM1 Open: MIDI, presets por SysEx, su banco de muestras (página “Muestras”) y el Studio (traer, volver a escribir) funcionan; las demás páginas necesitan el protocolo de editor."

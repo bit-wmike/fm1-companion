@@ -64,6 +64,10 @@ untested, even if it runs cleanly in the simulation.
 | CoralFlower backups in the backup layer (26 objects: 6–11, 30, 31, 50–67; 8, 14, 17 in 0.1–0.4.2) | only with backups of the CoralFlower twin; the restart after a restore (RESTART 72) and the device detection by INFO "CoralFlower …" and identity FM-1_930 only in tests |
 | **KARMA twin** (3.1, 3.0.5: fetch from a KARMA FM-1, open a KARMA backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real KARMA FM-1 or a backup made by a real device or KARMA's web editor |
 | KARMA backups in the backup layer (SLOOP's protocol and format, 14 objects; FUN7 projects; SLOOP backups onto KARMA) | only with backups of the KARMA twin; the device detection by INFO "FELUCCA KARMA …" and identity FM-1_926 only in tests |
+| **FM1 Open twin** (V14, M-VAVE's simulator code: fetch from an FM1 Open FM-1, open an FM1 Open backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real FM-1 with FM1 Open. Its open engine stands in for the device's binary engine (M-VAVE's simulator does the same): sound may differ from the device |
+| FM1 Open backups (`fm1openbk.py`: its file protocol, the working project, 16 slots read by loading them, 4 DX7 library banks, the sample bank) | only with the twin; that a real FM1 Open answers the identity FM-1_8000014 to the update handshake in normal operation is taken from M-VAVE's workbench code (`sdk/WebUpdate.js`), not observed |
+| **The FM1 Open twin as the stand-in for the original V15/V16** (note in the Studio, no fetch / write back) | only the page logic, with a simulated device |
+| **Original V15: restore factory voices** (FM Voices › Original V15: restore factory voices …: all 128 voices in A–D overwritten, commands 33/34 on object 5 as M-VAVE's `sdk/WebUpdate.js` restoreFactory; the current voices cannot be saved first) | only against a simulated V15 built from that code; never on a real FM-1 |
 
 ### Backups, presets, projects, samples
 - Restoring a backup to the device (full and partial).

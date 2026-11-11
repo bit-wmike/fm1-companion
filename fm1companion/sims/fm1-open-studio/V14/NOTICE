@@ -1,0 +1,18 @@
+M-VAVE FM1 Open V14 – studio twin (firmware code for the host), built from https://github.com/m-vave/fm1_open commit 4c7496daac04a95ff10d1afdcc8f9ead2dbabc41
+(source: https://github.com/m-vave/fm1_open/archive/4c7496daac04a95ff10d1afdcc8f9ead2dbabc41.tar.gz; FM1 Open has no tags: V14 is what app/version.h FM1_RELEASE_VERSION reports).
+APP and web engine: GPL-3.0-only WITH the FM1 SDK linking exception (LICENSE beside this file: FM1 Open's LICENSE.md), Copyright (c) 2026 珠海笙科智能科技有限公司 (M-VAVE); sample_metadata.inc MIT.
+Ported parts keep their licences (Open303, DaisySP, stmlib, emu2149, SEA: MIT; the DX7 model after msfa/Dexed: Apache-2.0; the 128 factory voices extracted from M-VAVE's V15 recovery image: Apache-2.0):
+THIRD_PARTY.md beside this file. The twin contains none of the binary SDK (libfm1_engine.a, the device engine): like M-VAVE's own browser simulator it runs the open web engine (web/), so its sound may differ
+from an FM-1 running FM1 Open, and more so from the original firmware V15/V16 (a different firmware).
+The firmware sources are unmodified. The glue tools/studio/fm1open_studio.c (GPL-3.0-only, in FM-1 Companion's source) includes FM1 Open's own browser simulator web/engine/Simulator.c whole, built with the flags of its
+tools/Build-Web.ps1, and adds the twin ABI: the user flash partition inside a 1 MiB image, USB MIDI in/out through the APP's own MIDI and SysEx hooks, the update identity
+(app/version.h FM1_UPDATE_PRODUCT) for the handshake; no updater, no Bluetooth, no USB audio, no TRS MIDI. Compiled with WASI SDK clang.
+
+Corresponding Source (GNU GPL 3.0, section 6)
+The complete corresponding source of this build is https://github.com/m-vave/fm1_open at commit 4c7496daac04a95ff10d1afdcc8f9ead2dbabc41
+together with FM-1 Companion's build script tools/build_sims.py and the glue tools/studio/fm1open_studio.c. A tarball of exactly this commit
+(fm1_open-4c7496daac04a95ff10d1afdcc8f9ead2dbabc41.tar.gz, made with tools/make_source_tarballs.py) is attached to every
+FM-1 Companion release that ships this build: https://github.com/bit-wmike/fm1-companion/releases
+Written offer: for at least three years after the last release that ships this build, the maintainers of
+FM-1 Companion will give anyone a copy of that corresponding source on request (https://github.com/bit-wmike/fm1-companion/issues),
+free of charge apart from the cost of physically performing the distribution.

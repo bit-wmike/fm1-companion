@@ -3528,8 +3528,8 @@ msgid "SLOOP fork; its unmodified firmware code runs in the studio twin, with th
 msgstr "SLOOP-Fork; sein unveränderter Firmware-Code läuft im Studio-Zwilling, mit den Teilen, die er portiert (Plaits, Elements und Clouds von Mutable Instruments, von Emilie Gillet, MIT; die Drum-Stimmen des LXR-02 von Erica Synths, GPL-3.0)"
 
 #: fm1companion/diag.py
-msgid "official open firmware, simulator sources, update tools"
-msgstr "offizielle offene Firmware, Simulator-Quellen, Update-Werkzeuge"
+msgid "official open firmware: its unmodified code runs in the simulator and in the studio twin (also for the original V15/V16), its update tools and its V15 factory voices"
+msgstr "offizielle offene Firmware: ihr unveränderter Code läuft im Simulator und im Studio-Zwilling (auch für die Original-V15/V16), ihre Update-Werkzeuge und ihre V15-Werksstimmen"
 
 #: fm1companion/diag.py
 msgid "firmware catalog and link collection"
@@ -3614,3 +3614,33 @@ msgstr "Fork von Felucca; Grundlage von CoralFlower"
 #, python-brace-format
 msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
 msgstr "Dieses Backup stammt von {backup}, auf dem FM-1 läuft {device}, das KARMAs Projekte und Drumkits nicht lesen kann. Es wurde nichts geschrieben."
+
+msgid "This backup is not from FM1 Open, but the FM-1 runs FM1 Open – the formats do not match. Nothing was written."
+msgstr "Dieses Backup stammt nicht von FM1 Open, aber auf dem FM-1 läuft FM1 Open – die Formate passen nicht zusammen. Es wurde nichts geschrieben."
+
+msgid "working project"
+msgstr "Arbeitsprojekt"
+
+#, python-brace-format
+msgid "DX7 library {bank}"
+msgstr "DX7-Bibliothek {bank}"
+
+msgid "sample bank"
+msgstr "Sample-Bank"
+
+msgid "Not an FM1 Open backup"
+msgstr "Kein FM1-Open-Backup"
+
+#, python-brace-format
+msgid "sample bank: {error}"
+msgstr "Sample-Bank: {error}"
+
+msgid "The backup does not contain the working project"
+msgstr "Das Backup enthält das Arbeitsprojekt nicht"
+
+msgid "This FM1 Open has no DX7 library (an older version) – nothing was written."
+msgstr "Dieses FM1 Open hat keine DX7-Bibliothek (eine ältere Version) – es wurde nichts geschrieben."
+
+#, python-brace-format
+msgid "FM-1 connected ({id}) – FM1 Open: MIDI, presets via SysEx, its sample bank (page “Samples”) and the Studio (fetch, write back) work; the other pages need the editor protocol."
+msgstr "FM-1 verbunden ({id}) – FM1 Open: MIDI, Presets per SysEx, seine Sample-Bank (Seite „Samples“) und das Studio (Holen, Zurückschreiben) funktionieren; die übrigen Seiten brauchen das Editor-Protokoll."

@@ -450,6 +450,47 @@ def flow():
           f"write back of the KARMA twin onto the Melodee FM-1 refused: {boxes[-1:]}")
     r = page.export_wav({"path": out / "KARMA.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
     check(r is not None and len(r.stems) == 4, f"KARMA export: mix + {r and len(r.stems)} stems")
+    # ---- an FM1 Open backup (its own file, fm1openbk.py): the page starts the FM1 Open twin (16 project slots);
+    # writing it back onto the demo FM-1 (Melodee) is refused
+    from fm1companion import fm1open as F, fm1openbk
+    ot = S.Studio.create(firmware="fm1-open", backend="webengine", server=w.server)
+    with F.Client(ot.link) as c:
+        c.query(7, bytes([1]))                          # the working project into slot 2
+    ofile = bdir / "Studio-Test_fm1open.json"
+    backup.write_file(ofile, ot.backup().file)
+    over = ot.build.version
+    ot.close()
+    check(AB.read_meta(ofile) is not None and AB.read_meta(ofile).fw_key == "fm1-open", "FM1 Open backup in the list")
+    check(page.open_backup(ofile) == ofile and svc.firmware == "fm1-open" and not svc.st.rejected,
+          f"FM1 Open backup opened: the FM1 Open twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 16 and "leer" in labels[0] and "leer" not in labels[1], f"FM1 Open projects 1–16: {labels[:3]}")
+    check("FM1 Open" in page.src.text() and "FM1 Open" in page.banner.text(), "banner names FM1 Open: " + page.banner.text())
+    check(f"Studio-Zwilling (FM1 Open {over})" in [x.label for x in svc._virtual_ports()], "virtual device: FM1 Open twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("FM1 Open" in b for b in boxes),
+          f"write back of the FM1 Open twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    # an FM-1 with the original V15 (no editor, no backup protocol: identity FM-1_015) or with FM1 Open (FM-1_8000014),
+    # as the page sees them: the FM1 Open twin stands in for V15 with the note, fetch and write are refused; an FM1 Open
+    # FM-1 may be fetched
+    from types import SimpleNamespace
+    real = page.ctx
+    for key, version, may in (("stock-v15", "V15", False), ("fm1-open", "V14", True)):
+        page.ctx = SimpleNamespace(is_virtual=False, midi_connected=True, connected=False, info=None, port=object(),
+                                   protocol="generic", firmware_key=key, identity="",
+                                   profile=SimpleNamespace(name="Alt", firmware_version=version, folder_name="Alt"))
+        try:
+            ok, why = page._device_ok()
+            page._banner()
+            text = page.banner.text()
+        finally:
+            page.ctx = real
+        check(ok == may and (may or "V15" in text and "FM1 Open" in text and why),
+              f"{key}: fetch {'allowed' if ok else 'refused'}, banner: {text[:120]}")
+    check(svc.firmware_for("stock-v15") == "fm1-open" and svc.firmware_for("stock-v16") == "fm1-open",
+          "the original V15/V16 opens the FM1 Open twin")
+    page.refresh()
     shot("studio-640.png", 640)
     if SHOTS:
         sb = w.page_scroll.verticalScrollBar()

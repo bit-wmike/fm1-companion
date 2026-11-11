@@ -215,6 +215,11 @@ class WriteBackDialog(QDialog):
                   "presets, the HEX drum kits and the sample slots. Playback on the FM-1 stops in the process.")
                 if firmware == "karma" else
                 _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces on the device, over FM1 Open's file protocol: the four DX7 library banks, every project "
+                  "slot the twin has (empty slots stay as they are on the FM-1), the working project and – if it "
+                  "differs – the sample bank. Playback on the FM-1 stops in the process.")
+                if firmware == "fm1-open" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
                   "twin replaces on the device: all 32 project slots, the running music and the user presets. "
                   "Playback on the FM-1 stops in the process."))
         text = (_("Write the state of the studio twin ({twin}) to <b>“{device}”</b> ({firmware})?").format(
@@ -231,6 +236,7 @@ class WriteBackDialog(QDialog):
         lay.addWidget(lab)
         self.settings = QCheckBox(_("Also write the device settings (GLO › SYSTEM, MIDI channels, panel …)"))
         self.settings.setToolTip(_("Default: off – the settings on the FM-1 stay as they are."))
+        self.settings.setVisible(firmware != "fm1-open")     # (FM1 Open's backup has no settings object)
         lay.addWidget(self.settings)
         self.force = QCheckBox(_("Expert: write despite a different firmware version"))
         self.force.setVisible(bool(mismatch))
@@ -494,6 +500,11 @@ class StudioPage(QWidget):
         c = self.ctx
         if c.is_virtual:
             return False, _("The twin itself is active right now – choose a real FM-1 in the device selection at the top.")
+        if c.midi_connected and S.stand_in_for(c.firmware_key):
+            return False, _("The original firmware has no backup protocol: nothing can be fetched from this FM-1 or "
+                            "written to it. The studio plays the FM1 Open twin instead (see the note above).")
+        if not c.connected and c.midi_connected and self.svc.firmware_for(c.firmware_key) == "fm1-open":
+            return True, ""                             # (FM1 Open: no editor INFO, its own file protocol)
         if not c.connected:
             if c.port is not None and c.protocol == "generic":
                 return False, _("This firmware has no editor protocol – the studio needs {firmwares}.").format(
@@ -504,6 +515,14 @@ class StudioPage(QWidget):
                 firmware=html.escape(fw_label(c.info.version) if c.info else _('another firmware')),
                 firmwares=S.firmware_names())
         return True, ""
+
+    def _dev_version(self) -> str:
+        """the active device's firmware version: its editor INFO, else (FM1 Open, the original firmware) the profile's
+        version from the package identity ("V14")"""
+        c = self.ctx
+        if c.info:
+            return c.info.version
+        return c.profile.firmware_version if c.profile else ""
 
     def _project_label(self, k: int) -> str:
         """project slot k as the firmware names it: Melodee 1..32, Skiff A..D, JIANT the current song's sections A..D,
@@ -557,13 +576,17 @@ class StudioPage(QWidget):
     def _banner(self):
         svc, c = self.svc, self.ctx
         text, level = "", ""
-        dev_fw = svc.firmware_for(c.firmware_key) if (c.connected and not c.is_virtual) else ""
+        dev_fw = svc.firmware_for(c.firmware_key) if (c.midi_connected and not c.is_virtual) else ""
+        stand_in = bool(dev_fw) and S.stand_in_for(c.firmware_key) == dev_fw
         if c.connected and not c.is_virtual and not dev_fw:
-            text = _("There is no studio twin for {firmware} yet. So far the studio can do {firmwares}; the original "
-                     "firmware (via FM1 Open) follows later – see Help › Studio. Backups of this device cannot be "
-                     "opened here; a {firmwares_or} backup can.").format(
+            text = _("There is no studio twin for {firmware} yet. So far the studio can do {firmwares} – see Help › "
+                     "Studio. Backups of this device cannot be opened here; a {firmwares_or} backup can.").format(
                 firmware=html.escape(fw_label(c.info.version) if c.info else _('this firmware')),
                 firmwares=S.firmware_names(), firmwares_or=S.firmware_names("or"))
+            level = "warning"
+        elif stand_in:                                  # (the original V15/V16: the FM1 Open twin stands in)
+            text = "⚠ " + html.escape(_(S.STAND_IN_NOTE).format(
+                device=self._dev_version() or c.firmware_key, twin=svc.version if svc.running else "V14"))
             level = "warning"
         elif svc.running and dev_fw and dev_fw != svc.firmware:
             text = "⚠ " + _("The twin runs {twin}, your FM-1 runs {device} – “Fetch from FM-1” starts the {device} twin; "
@@ -571,7 +594,7 @@ class StudioPage(QWidget):
                 twin=html.escape(svc.firmware_name), device=html.escape(S.firmware_name(dev_fw)))
             level = "warning"
         elif svc.running:
-            dev = c.info.version if (dev_fw and c.info) else ""
+            dev = self._dev_version() if dev_fw else ""
             vc = S.check_versions(svc.version, device=dev, backup=svc.source.get("backup_version", ""),
                                   firmware=svc.firmware_name)
             msgs = [vc.message] if vc.message else []
@@ -780,9 +803,10 @@ class StudioPage(QWidget):
         except OSError as e:
             show_error(self, _("Fetch from FM-1"), str(e))
             return None
-        prof, fw, version = c.profile, c.firmware_key, c.info.version
+        prof, fw, version = c.profile, c.firmware_key, self._dev_version()
+        tw = svc.firmware_for(fw)
         try:
-            st = svc.ensure(S.norm_version(version), svc.firmware_for(fw))
+            st = svc.ensure(S.fw_version(tw, version) if tw == "fm1-open" else S.norm_version(version), tw)
         except Exception as e:  # noqa: BLE001
             show_error(self, _("Studio"), _("The twin does not start: {error}").format(error=e))
             return None
@@ -1009,7 +1033,7 @@ class StudioPage(QWidget):
         if not ok or svc is None or not svc.running:
             show_error(self, _("Write back to the FM-1"), why or _("The twin is not running."))
             return None
-        dev_v = c.info.version
+        dev_v = self._dev_version()
         if svc.firmware_for(c.firmware_key) != svc.firmware:
             show_error(self, _("Write back to the FM-1"), _(
                 "The twin runs {twin}, the FM-1 runs {device} – their data do not fit each other. Fetch from the FM-1 "

@@ -40,6 +40,9 @@ Simulators:
             browser emulator tools/emu/web/emu_web.c): sims/coralflower-studio/<version>/; a ref is a release tag
             (web/releases.json lists them, the installer offers the first):
             python3 tools/build_sims.py --target coralflower-studio [--ref v0.7.1] --repo coralflower=<clone>
+  fm1-open-studio  (--target) the same for M-VAVE's FM1 Open (tools/studio/fm1open_studio.c, on FM1 Open's own
+            browser simulator web/engine/Simulator.c): sims/fm1-open-studio/<version>/; a ref is a commit:
+            python3 tools/build_sims.py --target fm1-open-studio --repo fm1-open=<clone>
   karma-studio  (--target) the same for KARMA (tools/studio/karma_studio.c, with firmware/mi's C++):
             sims/karma-studio/<version>/   python3 tools/build_sims.py --target karma-studio [--ref v3.1] --repo karma=<clone>
 """
@@ -548,6 +551,64 @@ def _karma_notice(spec, version, ref, commit, source_url):
         + source_offer(spec["repo"], commit, f", the glue {spec['glue']} and the shim tools/wasm_shim"))
 
 
+def fm1open_identity(src: Path) -> str:
+    """FM1 Open's app/version.h FM1_UPDATE_PRODUCT: the package identity its build answers (V14: FM-1_8000014)"""
+    m = re.search(r'^#define FM1_UPDATE_PRODUCT "(FM-1_8\d{6})"', (src / "app/version.h").read_text("utf-8"), re.M)
+    return m[1] if m else "FM-1_8000014"
+
+
+def fm1open_folder(version: str) -> str:
+    """app/version.h FM1_RELEASE_VERSION "V14" -> the folder V14"""
+    return version
+
+
+def _generate_none(src: Path):
+    """(FM1 Open: no header generators; its tables are in the tree)"""
+
+
+def _fm1open_compile(src: Path, sdk: Path, wasm: Path, glue: Path, version: str, identity: str):
+    """the twin: the sources and flags of FM1 Open's own simulator build (tools/Build-Web.ps1 Build-Simulator, as
+    build_fm1_open does) with the glue in place of web/engine/Simulator.c (the glue includes it whole)"""
+    names = sorted(str(p.relative_to(src)).replace(os.sep, "/") for d in ("app", "web", "third_party/synth")
+                   for p in (src / d).rglob("*") if p.suffix == ".c" and p.is_file()
+                   and not str(p.relative_to(src)).startswith("app/board/"))
+    names = [n for n in names if n != "web/engine/Simulator.c"]
+    shutil.copy(glue, src / "web" / "engine" / "fm1c_studio.c")    # beside Simulator.c: it includes it
+    cc = sdk / "bin" / "clang"
+    opts = [f"--sysroot={sdk / 'share' / 'wasi-sysroot'}", "-std=c11", "-O2", "-fwrapv", "-fno-fast-math",
+            "-ffp-contract=off", "-DFM1_HOST_TEST", "-DFM1_OPEN_WEB", "-Wall", "-Wextra", "-Werror",
+            "-Wno-unused-function", "-Wno-array-parameter", "-mexec-model=reactor",
+            f'-DFM1C_VERSION="{version}"', f'-DFM1C_ID="{identity}"']
+    opts += ["-I" + str(src / d) for d in ("web/engine", "web/synth", "third_party/synth", "sdk/include", "app/synth", "app")]
+    run([cc, *opts, src / "web/engine/fm1c_studio.c", *[src / n for n in names], "-Wl,--strip-all",
+         "-Wl,-z,stack-size=1048576", "-Wl,--initial-memory=8388608", "-Wl,--max-memory=67108864", "-o", wasm])
+
+
+def _fm1open_extra(src: Path, out: Path):
+    """(the APP's licence, GPL-3.0 with the FM1 SDK linking exception, is LICENSE.md -> LICENSE) its notices (THIRD_PARTY.md: the
+    ported parts – Open303, DaisySP, stmlib, msfa/Dexed, emu2149, SEA – and the V15 factory voices)"""
+    shutil.copy(src / "THIRD_PARTY.md", out / "THIRD_PARTY.md")
+
+
+def _fm1open_notice(spec, version, ref, commit, source_url):
+    return (
+        f"M-VAVE FM1 Open {version} – studio twin (firmware code for the host), built from {spec['repo']} commit {commit}\n"
+        f"(source: {source_url}; FM1 Open has no tags: {version} is what app/version.h FM1_RELEASE_VERSION reports).\n"
+        "APP and web engine: GPL-3.0-only WITH the FM1 SDK linking exception (LICENSE beside this file: FM1 Open's LICENSE.md), Copyright (c) "
+        "2026 珠海笙科智能科技有限公司 (M-VAVE); sample_metadata.inc MIT.\n"
+        "Ported parts keep their licences (Open303, DaisySP, stmlib, emu2149, SEA: MIT; the DX7 model after msfa/Dexed: "
+        "Apache-2.0; the 128 factory voices extracted from M-VAVE's V15 recovery image: Apache-2.0):\n"
+        "THIRD_PARTY.md beside this file. The twin contains none of the binary SDK (libfm1_engine.a, the device "
+        "engine): like M-VAVE's own browser simulator it runs the open web engine (web/), so its sound may differ\n"
+        "from an FM-1 running FM1 Open, and more so from the original firmware V15/V16 (a different firmware).\n"
+        f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
+        "includes FM1 Open's own browser simulator web/engine/Simulator.c whole, built with the flags of its\n"
+        "tools/Build-Web.ps1, and adds the twin ABI: the user flash partition inside a 1 MiB image, USB MIDI in/out "
+        "through the APP's own MIDI and SysEx hooks, the update identity\n(app/version.h FM1_UPDATE_PRODUCT) for the "
+        "handshake; no updater, no Bluetooth, no USB audio, no TRS MIDI. Compiled with WASI SDK clang.\n"
+        + source_offer(spec["repo"], commit, f" and the glue {spec['glue']}"))
+
+
 STUDIOS = {
     "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
                        "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
@@ -613,11 +674,24 @@ STUDIOS = {
                      "objects": _karma_objects,
                      "defines": lambda v, i: [f'-DFELUCCA_VERSION="{v}"', f'-DFELUCCA_ID="{i}"'],
                      "notice": _karma_notice, "extra": _karma_extra, "tracks": 4, "projects": 4},
+    # FM1 Open: M-VAVE's open firmware (GPL-3.0 with the FM1 SDK linking exception); no tags, the ref is the commit its
+    # simulator (fm1-open) is built from, V14 (app/version.h). The open web engine stands in for the binary device
+    # engine, as in M-VAVE's own simulator. The original firmware V15/V16 (FM-1_015 / FM-1_016) opens this twin too.
+    "fm1-open-studio": {"firmware": "fm1-open", "repo": SIMS["fm1-open"]["repo"], "glue": "tools/studio/fm1open_studio.c",
+                        "refs": [SIMS["fm1-open"]["ref"]], "title": "FM1 Open studio twin",
+                        "license": "GPL-3.0-only WITH GPL-3.0-linking-exception (APP); see THIRD_PARTY.md",
+                        "generate": _generate_none, "license_file": "LICENSE.md",
+                        "version_file": "app/version.h", "version_re": r'#define FM1_RELEASE_VERSION "(V\d+)"',
+                        "identity_src": fm1open_identity, "folder": fm1open_folder, "compile": _fm1open_compile,
+                        "defines": lambda v, i: [], "release_status": {SIMS["fm1-open"]["ref"]: "current"},
+                        "notice": _fm1open_notice, "extra": _fm1open_extra, "tracks": 8, "projects": 16},
 }
 
 
 def build_studio(work, sdk, local, ref, name="melodee-studio"):
     spec = STUDIOS[name]
+    if spec.get("compile"):                               # (FM1 Open: its own simulator's sources and flags)
+        return build_studio_own(work, sdk, local, ref, name)
     src, commit = source(spec["firmware"], work, local, ref=ref, repo_url=spec["repo"],
                          tree_name=f"{name}-{ref[:12]}-src")
     spec["generate"](src)
@@ -653,6 +727,35 @@ def build_studio(work, sdk, local, ref, name="melodee-studio"):
     return out, commit, clang_version(cc), extra
 
 
+def build_studio_own(work, sdk, local, ref, name):
+    """build_studio for a firmware with its own compile step (STUDIOS "compile": FM1 Open's simulator sources and
+    flags) and licence file (STUDIOS "license_file"); the manifest's fields are build_studio's"""
+    spec = STUDIOS[name]
+    src, commit = source(spec["firmware"], work, local, ref=ref, repo_url=spec["repo"],
+                         tree_name=f"{name}-{ref[:12]}-src")
+    spec["generate"](src)
+    version = re.search(spec["version_re"], (src / spec["version_file"]).read_text()).group(1)
+    identity = spec["identity_src"](src)
+    glue = ROOT / spec["glue"]
+    out = OUT / name / spec["folder"](version)
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir(parents=True)
+    cc = sdk / "bin" / "clang"
+    spec["compile"](src, sdk, out / "twin.wasm", glue, version, identity)
+    shutil.copy(src / spec["license_file"], out / "LICENSE")
+    spec["extra"](src, out)
+    source_url = f"{spec['repo']}/archive/{commit}.tar.gz"
+    (out / "NOTICE").write_text(spec["notice"](spec, version, ref, commit, source_url), "utf-8")
+    extra = {"kind": "studio", "firmware": spec["firmware"], "firmware_version": version, "identity": identity,
+             "abi": STUDIO_ABI, "wasm": "twin.wasm", "fs": 44100, "flash_size": 0x100000,
+             "glue": spec["glue"], "glue_sha256": sha(glue), "source_url": source_url,
+             "tracks": spec["tracks"], "projects": spec["projects"]}
+    if commit in spec.get("release_status", {}):
+        extra["release_status"] = spec["release_status"][commit]
+    return out, commit, clang_version(cc), extra
+
+
 build_melodee_studio = build_studio                       # (the name of before)
 
 
@@ -684,7 +787,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--only", default=",".join(BUILDERS), help="simulators (fm1-open, melodee) and/or studio twins")
     ap.add_argument("--target", help="a studio twin (melodee-studio, skiff-studio, jiant-studio, sloop-studio, "
-                    "coralflower-studio, karma-studio): with --ref one version, "
+                    "coralflower-studio, karma-studio, fm1-open-studio): with --ref one version, "
                     "else all in STUDIOS")
     ap.add_argument("--ref", action="append", default=[], help="firmware tag(s) or commit(s) for --target (repeatable)")
     ap.add_argument("--work", default="/tmp/fm1c-simbuild")

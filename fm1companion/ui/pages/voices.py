@@ -341,6 +341,10 @@ class VoicesPage(QWidget):
         b_add = QPushButton(icon("list-add"), _("To own bank"))
         b_add.clicked.connect(self.add_to_own)
         sl.addWidget(flow_row(self.b_send, self.b_undo, b_exp, b_add))
+        # the original firmware V15: its voice library (M-VAVE's own commands, stockv15.py)
+        self.b_v15 = QPushButton(icon("edit-undo"), _("Original V15: restore factory voices …"))
+        self.b_v15.clicked.connect(self.v15_factory)
+        sl.addWidget(flow_row(self.b_v15))
         rl.addWidget(sd)
         # Generators
         gb = QGroupBox(_("Create new sounds"))
@@ -422,6 +426,38 @@ class VoicesPage(QWidget):
     def _dev_changed(self):
         self.b_undo.setEnabled(bool(self.undo))
         self.b_undo.setToolTip("" if not self.undo or self.undo.matches(self.ctx) else self.undo.refusal())
+        v15 = self._is_v15()
+        self.b_v15.setEnabled(v15)
+        self.b_v15.setToolTip(_("Overwrite all 128 voices of the original firmware V15 with its factory voices – as "
+                                "M-VAVE's workbench does. The current voices cannot be saved first.") if v15 else
+                              _("Only for an FM-1 with the original firmware V15 (identity FM-1_015)."))
+
+    def _is_v15(self) -> bool:
+        c = self.ctx
+        ident = getattr(c, "identity", "") or (c.profile.identity if getattr(c, "profile", None) else "")
+        return bool(getattr(c, "midi_connected", False) and not getattr(c, "is_virtual", False)
+                    and (ident == "FM-1_015" or c.firmware_key == "stock-v15"))
+
+    def v15_factory(self):
+        """the original V15's voice library: the 128 factory voices from M-VAVE's hash-pinned V15 package, written as
+        M-VAVE's workbench does (sdk/WebUpdate.js restoreFactory), see stockv15.py"""
+        from ... import firmware, stockv15
+        if not self._is_v15():
+            show_error(self, _("Original V15"), _("Only for an FM-1 with the original firmware V15 (identity FM-1_015)."))
+            return
+        if not confirm(self, _("Original V15: restore factory voices"), _(
+                "This overwrites <b>all 128 voices in the banks A–D</b> of this FM-1 with M-VAVE's factory voices (from "
+                "the checksum-checked V15 package). <b>The voices on the FM-1 now cannot be saved first</b> – the "
+                "original firmware has no backup protocol – so voices you stored there yourself are lost."),
+                       _("Overwrite with the factory voices"), danger=True):
+            return
+
+        def work(w, link):
+            spec = firmware.spec("stock-v15")
+            pkg = firmware.download(spec, firmware.fetch_releases(spec)[0], log=w.log.emit)
+            stockv15.restore_factory(link, pkg.fwsc.read_bytes(), progress=w.progress.emit)
+        self.ctx.job(self, _("Original V15: restore factory voices"), work,
+                     done=_("The 128 factory voices are back on the FM-1."))
 
     # ------------------------------------------------------------ Banks
     @property

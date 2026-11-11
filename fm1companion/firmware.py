@@ -587,6 +587,9 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
         return "jiant-fm", tag
     if "coralflower" in v or family == "coralflower":   # CoralFlower answers INFO "CoralFlower 0.7.1" (the catalog's key)
         return "coralflower", tag
+    if re.fullmatch(r"FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)|FM-1_8\d{6}", identity or ""):
+        # M-VAVE's FM1 Open (app/version.h FM1_UPDATE_PRODUCT, V14: FM-1_8000014; its SDK keeps FM-1_8xxxxxx)
+        return "fm1-open", {"FM-1_8000014": "V14"}.get(identity, "")
     m = re.match(r"FM-1_(\d+)", identity or "")
     if m:
         n = int(m.group(1))

@@ -135,7 +135,8 @@ class StudioService(QObject):
         for fw in S.FIRMWARES:
             if key.startswith(fw) and S.builds(fw):
                 return fw
-        return ""
+        fw = S.stand_in_for(key)              # (the original V15/V16: the FM1 Open twin stands in, with a note)
+        return fw if fw and S.builds(fw) else ""
 
     @property
     def firmware(self) -> str:
@@ -304,12 +305,14 @@ class StudioService(QObject):
                     return True
                 except Exception as e:  # noqa: BLE001 – broken state: start empty
                     self.last_error = _("Studio state “{name}” not readable: {error}").format(name=f, error=e)
-        fw = self.firmware_for(c.firmware_key) if (c.info and not c.is_virtual) else ""
-        dev = c.info.version if fw else ""
+        fw = self.firmware_for(c.firmware_key) if ((c.info or c.midi_connected) and not c.is_virtual) else ""
+        dev = (c.info.version if c.info else (c.profile.firmware_version if c.profile else "")) if fw else ""
+        if S.stand_in_for(c.firmware_key):      # (the original V15/V16: its version is no FM1 Open version)
+            dev = ""
         if c.profile is not None and not c.is_virtual and dev:
             self.source = {"kind": "new", "time": dt.datetime.now().isoformat(timespec="seconds"),
                            "profile_folder": c.profile.folder_name}
-        self.new_empty(S.norm_version(dev), fw or "melodee")
+        self.new_empty(S.fw_version(fw, dev) if fw else "", fw or "melodee")
         return self.st is not None
 
     def new_empty(self, version: str = "", firmware: str = "melodee"):
