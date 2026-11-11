@@ -1,6 +1,6 @@
 # Cambiar de firmware y volver al original
 
-El FM-1 puede ejecutar distintos firmwares, p. ej. **Melodee**, **Skiff**, **SLOOP** o el firmware
+El FM-1 puede ejecutar distintos firmwares, p. ej. **Melodee**, **Skiff**, **SLOOP**, **KARMA** o el firmware
 oficial de M-VAVE. Todo lo necesario está en **una sola** página: [Firmware+](app://page/discover) (barra lateral ›
 *Datos y herramientas*).
 
@@ -21,6 +21,28 @@ Si hay una actualización para tu FM-1, también se muestra en el [Resumen](app:
    activo*.
 3. **No desconectes la alimentación ni el USB** hasta que la app indique “listo”. Cierra otros programas que envíen MIDI.
 4. Si más tarde vuelves a un firmware, la app te ofrece la copia de seguridad correspondiente.
+
+## Un cambio pasa siempre por la V15 original
+
+Cuando **cambias** a otro firmware, la app instala primero el **firmware original V15** de M-VAVE sin modificar
+(con suma de comprobación) y después el nuevo firmware: dos instalaciones en un solo plan. Así el nuevo firmware
+arranca desde un estado limpio y no quedan restos del anterior (ajustes, proyectos, zonas de samples) en la flash. El
+plan de instalación lo indica: “Cambio de X a Y: la app instala primero el firmware original V15 y después Y”.
+
+* **Actualización o vuelta atrás dentro del mismo firmware** (p. ej. SLOOP 2.8.5 → 2.8.6, KARMA 3.1 → 3.0.5):
+  directamente, sin el paso por V15, también cuando el catálogo indica que el firmware se instala desde V15 (el FM-1
+  ya funciona con él y con su cargador de actualización). Un fork es un firmware propio: SLOOP → KARMA es un cambio.
+* **Firmware no reconocido** (la app no sabe qué funciona en el FM-1): cuenta como cambio, así que pasa por V15.
+* **El FM-1 ya funciona con la V15 original**, o **vuelves a la V15 original**: directamente.
+* **V16**: como antes: a V16 desde un firmware de la comunidad y la vuelta desde V16 pasan siempre por V15.
+* La **copia de seguridad** se hace antes del primer paso, como en toda instalación.
+* Si el cambio se detiene tras el paso por V15 (cable, alimentación, cancelación), el FM-1 funciona con la V15
+  original. La app recuerda el destino: [Firmware+ › Instalar y versiones](app://page/firmware) muestra
+  *Continuar: instalar …*; el paso por V15 no se repite. Si se detuvo *durante* un paso, termínalo primero en la página
+  [Rescate](app://page/recovery).
+* Los expertos pueden marcar en el plan *Experto: instalar directamente sin el paso por V15*. Está desactivado por
+  defecto, no se recuerda y el plan advierte de que pueden quedar restos del firmware anterior. No hay ningún ajuste
+  para ello.
 
 ## Volver al firmware original
 

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import flashmodel as fm, package as pk, texts as rescue_texts
-from .. import melodee16 as m16
+from .. import fwfamily, melodee16 as m16
 from ..i18n import _
 
 TRAP_TEXT = _("When switching to the original firmware, the running Felucca firmware compares the boot area "
@@ -56,6 +56,7 @@ class DeviceState:
     identity: str = ""            # handshake identity, e.g. "FM-1_91060", "ota-FM-1_900"
     felucca: bool = False         # Felucca protocol usable (backup possible)
     firmware_key: str = ""        # e.g. "melodee"
+    firmware_name: str = ""       # display name of the running firmware, e.g. "Melodee" ("" = unknown)
     version: str = ""             # e.g. "Melodee 1.6.0-rc.7"
     port: str = ""
     connected: bool = True
@@ -148,8 +149,10 @@ class InstallPlan:
     lost: list[str] = field(default_factory=list)    # what is gone afterwards
     via_stock: bool = False
     resume: bool = False
-    v15_option: str = "none"      # none | default_on | default_off | locked (intermediate step V15 in the dialog)
-    v15_reason: str = ""          # rationale when the intermediate step comes from V16 rather than the catalog
+    v15_option: str = "none"      # none | default_on | locked (intermediate step V15; see v15_option())
+    v15_reason: str = ""          # why the V15 step is in the plan (shown next to the expert option)
+    direct: bool = False          # expert opt-out: a firmware switch without the V15 step
+    chain_resume: bool = False    # continues a switch whose V15 step is already done (journal "chain")
 
     @property
     def ok(self) -> bool:
@@ -193,22 +196,66 @@ def check_package(t: Target, info: pk.PackageInfo) -> list[str]:
     return out
 
 
+NO_FIRMWARE_KEYS = ("", "eigene", "unknown", "?")   # own files and "don't know" name no firmware
+
+
+def fw_identity(key: str) -> str:
+    """the catalog key a firmware key stands for ("jiant" -> "jiant-fm"; own files and "unknown" -> "")"""
+    k = (key or "").strip().lower()
+    if k in NO_FIRMWARE_KEYS or k.startswith("__"):
+        return ""
+    f = fwfamily.by_key(k)
+    return f.key if f is not None else k
+
+
+def running_firmware(state: DeviceState) -> str:
+    """the firmware that runs on the device as a catalog key – "" when it is not known for sure. The recorded key
+    (profile, INFO, the user's choice) counts only if the INFO answer does not name another firmware: a fork that
+    names itself ("FELUCCA KARMA 3.1") is never its parent, and a stale profile is no proof."""
+    if pk.is_stock_identity(state.identity):
+        return "stock-v" + state.identity[-2:] if state.identity[-3:].isdigit() else ""
+    cur = fw_identity(state.firmware_key)
+    named = fwfamily.by_info(state.version) if state.version else None
+    if named is not None:
+        if cur and cur != named.key:
+            return ""
+        return named.key
+    return cur
+
+
+def same_firmware(state: DeviceState, t: Target) -> bool:
+    """an update (or downgrade) within the firmware that runs now – the only case without the V15 step"""
+    if t.is_stock:
+        return False
+    cur, tk = running_firmware(state), fw_identity(t.key)
+    return bool(cur and tk and cur == tk)
+
+
 def v15_option(state: DeviceState, t: Target) -> str:
-    """Intermediate step via stock V15: none (target is stock / device already runs V15 / not possible),
-    locked (catalog requires V15), default_on (firmware change or unknown firmware), default_off (update
-    of the same firmware)."""
+    """Intermediate step via stock V15 (policy: "always via V15 first – except updates within the same firmware"):
+    none (update/downgrade of the same firmware – even when the catalog requires V15 –, the device already runs V15,
+    the target is stock itself, update mode), locked (V16 switch, or a switch to a firmware the catalog requires V15
+    for) or default_on (every other switch: from another custom
+    firmware, from stock V13/V14/V16 or from an unknown firmware – the expert can opt out)."""
     if state.identity == "FM-1_015" or state.update_mode:
         return "none"
     if v16_switch(state, t):
         return "locked"
     if t.is_stock:
         return "none"
+    if same_firmware(state, t):              # (also with the catalog's requiresStockV15: the device already runs this
+        return "none"                        # firmware and its own update loader)
     if t.requires_stock_v15:
         return "locked"
-    cur = (state.firmware_key or "").lower()
-    if cur and t.key and cur == t.key.lower():
-        return "default_off"
     return "default_on"
+
+
+def current_name(state: DeviceState) -> str:
+    """what the plan calls the running firmware ("" = not recognised)"""
+    if not running_firmware(state):
+        return ""
+    stock = f"V{int(state.identity[-3:])}" if pk.is_stock_identity(state.identity) else ""
+    return stock or state.firmware_name or state.firmware_key or state.version
 
 
 def runs_v16(state: DeviceState) -> bool:
@@ -237,15 +284,12 @@ def layout_change(state: DeviceState, t: Target) -> bool:
     return v16_layout(t) != runs_v16(state)
 
 
-def switch_key(state: DeviceState, t: Target) -> str:
-    """Key under which the choice for exactly this switch is remembered"""
-    return f"{(state.firmware_key or state.identity or '?').lower()}>{(t.key or t.product or t.name).lower()}"
-
-
 def plan_install(state: DeviceState, target: Target, journal_active: dict | None = None,
                  stock_package: pk.PackageInfo | None = None, via_v15: bool | None = None,
-                 backup: bool | None = None) -> InstallPlan:
-    """backup: None/True = back up first (if the firmware supports it), False = explicitly without backup"""
+                 backup: bool | None = None, chain: dict | None = None) -> InstallPlan:
+    """backup: None/True = back up first (if the firmware supports it), False = explicitly without backup.
+    via_v15: None = the policy; False = the expert opt-out (only for a switch with v15_option "default_on").
+    chain: the journal's interrupted two-step switch ({"key": …}), if any."""
     p = InstallPlan(target=target, state=state)
     t = target
     info = t.package
@@ -354,17 +398,34 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
                           "V16 with “FAILED -5”.") if t.is_v16 else
                         _("Mandatory: the way back from V16 leads via the original V15 (the same update loader as "
                           "V16)."))
-    default = p.v15_option in ("locked", "default_on")
-    p.via_stock = p.v15_option == "locked" or (p.v15_option != "none" and (default if via_v15 is None else via_v15))
+    if p.v15_option == "default_on":
+        was = current_name(state)
+        p.v15_reason = (_("Switching from {current} to {target}: the app installs the original firmware V15 first, "
+                          "then {target} – recommended, so no leftovers of {current} stay on the FM-1.").format(
+                              current=was, target=t.name) if was else
+                        _("The running firmware is not recognised, so this counts as a switch: the app installs the "
+                          "original firmware V15 first, then {target} – recommended, so no leftovers of the previous "
+                          "firmware stay on the FM-1.").format(target=t.name))
+    p.via_stock = p.v15_option == "locked" or (p.v15_option == "default_on" and via_v15 is not False)
+    p.direct = p.v15_option == "default_on" and not p.via_stock
+    if p.direct:
+        was = current_name(state) or _("the previous firmware")
+        p.warnings.insert(0, _("<b>Expert option: installed directly, without the V15 step.</b> Leftovers of {current} "
+                               "(settings, projects, sample areas) can stay in the flash and confuse {target}. If "
+                               "{target} behaves strangely afterwards, install it again with the V15 step.").format(
+                                   current=was, target=t.name))
+    if chain and state.identity == "FM-1_015" and fw_identity(chain.get("key", "")) == fw_identity(t.key) and t.key:
+        p.chain_resume = True
+        p.warnings.insert(0, _("Continues the interrupted switch to {target}: the original firmware V15 is already "
+                               "installed (step 1 of 2 is done) – now {target} is installed directly.").format(
+                                   target=t.name))
     if p.via_stock:
         why = ((_("V16 can only be installed from the original firmware: your current firmware compares the boot "
                   "header before the original loader and would refuse V16 with “FAILED -5”.") if t.is_v16 else
                 _("The way back from V16 goes via the original V15 – it uses the same update loader as V16."))
                if p.v15_option == "locked" and v16_switch(state, t) else
                _("According to the catalog, this firmware is installed from the original firmware V15.")
-               if p.v15_option == "locked" else
-               _("Firmware switch: via the original V15 the new firmware starts from a clean, proven state – "
-                 "this avoids careless mistakes when switching back and forth quickly."))
+               if p.v15_option == "locked" else p.v15_reason)
         p.steps.append(Step("stock", _("Intermediate step: install original V15"), "hoch",
                             _("{why} The app installs the unmodified V15 (checksum db1642b2…) via M-VAVE's own "
                               "loader and then checks whether the FM-1 reports “FM-1_015”.").format(why=why),
@@ -393,8 +454,8 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
     _tail(p, t)
 
     # ---- warnings and confirmations
-    cur = (state.firmware_key or "").lower()
-    if cur and t.key and cur != t.key or (state.identity and t.product and state.identity != t.product
+    cur = fw_identity(state.firmware_key)
+    if cur and t.key and cur != fw_identity(t.key) or (state.identity and t.product and state.identity != t.product
                                           and not t.key):
         p.lost.append(_("Projects, sounds and settings of the current firmware can no longer be used afterwards "
                         "(the backup stays on the computer).") if state.felucca else

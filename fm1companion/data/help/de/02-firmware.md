@@ -1,6 +1,6 @@
 # Firmware wechseln & zurück zum Original
 
-Das FM-1 kann verschiedene Firmwares tragen, z. B. **Melodee**, **Skiff**, **SLOOP** oder die offizielle
+Das FM-1 kann verschiedene Firmwares tragen, z. B. **Melodee**, **Skiff**, **SLOOP**, **KARMA** oder die offizielle
 Firmware von M-VAVE. Alles dazu liegt auf **einer** Seite: [Firmware+](app://page/discover) (Seitenleiste ›
 *Daten & Werkzeuge*).
 
@@ -21,6 +21,28 @@ Ob es für dein FM-1 ein Update gibt, steht auch auf der [Übersicht](app://page
    installieren*.
 3. **Strom und USB nicht trennen**, bis die App „fertig“ meldet. Andere Programme, die MIDI senden, schließen.
 4. Kommst du später zu einer Firmware zurück, bietet dir die App das passende Backup an.
+
+## Ein Wechsel geht immer über die Original-V15
+
+Wenn du zu einer anderen Firmware **wechselst**, spielt die App zuerst M-VAVEs unveränderte **Original-Firmware V15**
+auf (mit Prüfsumme), dann die neue Firmware – zwei Installationen in einem Plan. So startet die neue Firmware von
+einem sauberen Stand, und keine Reste der alten (Einstellungen, Projekte, Sample-Bereiche) bleiben im Flash. Der
+Installationsplan sagt es: „Wechsel von X zu Y: Die App spielt zuerst die Original-Firmware V15 auf, dann Y“.
+
+* **Update oder Downgrade innerhalb derselben Firmware** (z. B. SLOOP 2.8.5 → 2.8.6, KARMA 3.1 → 3.0.5): direkt, ohne
+  den V15-Schritt – auch wenn der Katalog sagt, dass die Firmware von V15 aus installiert wird (das FM-1 läuft schon
+  mit ihr und ihrem Update-Loader). Ein Fork ist eine eigene Firmware – SLOOP → KARMA ist ein Wechsel.
+* **Firmware nicht erkannt** (die App weiß nicht, was auf dem FM-1 läuft): gilt als Wechsel, also über V15.
+* **Das FM-1 läuft schon mit der Original-V15**, oder du gehst **zurück zur Original-V15**: direkt.
+* **V16**: wie bisher – zu V16 von einer Community-Firmware und der Rückweg von V16 gehen immer über V15.
+* Das **Backup** entsteht vor dem ersten Schritt, wie bei jeder Installation.
+* Bleibt der Wechsel nach dem V15-Schritt stehen (Kabel, Strom, Abbruch), läuft das FM-1 mit der Original-V15. Die
+  App merkt sich das Ziel: [Firmware+ › Installieren & Versionen](app://page/firmware) zeigt *Weiter: … installieren*
+  – der V15-Schritt wird nicht wiederholt. Ist er *während* eines Schritts stehen geblieben, schließe diesen zuerst
+  auf der Seite [Rettung](app://page/recovery) ab.
+* Experten können im Plan *Experte: direkt installieren, ohne den V15-Schritt* ankreuzen. Das ist standardmäßig aus,
+  wird nicht gespeichert, und der Plan warnt, dass Reste der alten Firmware bleiben können. Eine Einstellung dafür
+  gibt es nicht.
 
 ## Zurück zur Original-Firmware
 
