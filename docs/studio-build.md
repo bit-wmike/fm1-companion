@@ -570,6 +570,9 @@ settings"; `None`: none), `"stand_in"`. See `docs/ROADMAP.md`.
 
 ### Firmwares checked without a twin (2026-11-11)
 
+The whole catalog – every firmware, its INFO, protocol, backup inventory and install – is in
+[firmware-support.md](firmware-support.md) (the catalog audit; the runtime table is `fm1companion/fwfamily.py`).
+
 * **ORBIT** (dspaudio/orbit, a SLOOP fork, GPL-3.0; stable 1.0.0 `orbit.fwsc`, the Bluetooth build 1.0.1B
   `orbit-ble.fwsc`, both INFO "FELUCCA ORBIT …" / FM-1_900): technically SLOOP's twin would carry over
   (`tests/editor_host.c`, `hal/fm1_flash_map.h`), but every ORBIT build compiles its CLUSTER engine, a C translation of

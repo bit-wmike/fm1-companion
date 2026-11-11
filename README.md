@@ -165,7 +165,8 @@ QT_QPA_PLATFORM=offscreen python3 tests/ui_smoke.py screenshots
 ```
 
 Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Code structure: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
-Translations: [docs/TRANSLATING.md](docs/TRANSLATING.md).
+Translations: [docs/TRANSLATING.md](docs/TRANSLATING.md) · Which firmware the app backs up, names and installs how
+(the catalog audit): [docs/firmware-support.md](docs/firmware-support.md).
 
 ## Legal
 
