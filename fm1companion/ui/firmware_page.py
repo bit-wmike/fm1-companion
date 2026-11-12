@@ -823,7 +823,7 @@ class FirmwarePage(QWidget):
         self.b_v16_back = QPushButton(icon("edit-undo", "go-previous"), _("Way back from V16 …"))
         self.b_v16_back.setProperty("variant", "primary")
         self.b_v16_back.setToolTip(_("Choose target firmware and version – then the installation plan shows every step"))
-        self.b_v16_back.clicked.connect(self.return_from_v16)
+        self.b_v16_back.clicked.connect(lambda: self.return_from_v16())
         vb.addWidget(flow_row(self.b_v16_back))
         self.v16_back.setVisible(False)
         rl.addWidget(self.v16_back)
