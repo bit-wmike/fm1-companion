@@ -108,11 +108,24 @@ def move_profile_folder(base: Path, old_name: str, new_name: str) -> Path:
         if f.is_dir():
             continue
         target = new / f.relative_to(old)
-        if target.exists():
-            target = target.with_name(f"{target.stem}_{old_name}{target.suffix}")
+        if target.exists() or target.is_symlink():
+            base_target, n = target, 2
+            target = base_target.with_name(f"{base_target.stem}_{old_name}{base_target.suffix}")
+            while target.exists() or target.is_symlink():      # (never overwrite, whatever is already there)
+                target = base_target.with_name(f"{base_target.stem}_{old_name} ({n}){base_target.suffix}")
+                n += 1
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(f), target)
-    shutil.rmtree(old, ignore_errors=True)
+    # only the now empty folders go: a file that could not be moved (or appeared meanwhile) is never deleted
+    for d in sorted((p for p in old.rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
+        try:
+            d.rmdir()
+        except OSError:
+            pass
+    try:
+        old.rmdir()
+    except OSError:
+        pass
     return new
 
 
