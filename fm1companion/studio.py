@@ -2,8 +2,9 @@
 """Studio: the FM-1's digital twin in the suite.
 
 The FM-1 is the instrument, the suite is the studio. The twin is **the same firmware** as on the device
-(Melodee's, Skiff's or JIANT FM's own C code, compiled to WebAssembly for the computer, see tools/build_sims.py
---target melodee-studio / skiff-studio / jiant-studio and tools/studio/<firmware>_studio.c): the same engines, effects,
+(Melodee's, Skiff's, JIANT FM's, SLOOP's, CoralFlower's or KARMA's own C code, compiled to WebAssembly for the
+computer, see tools/build_sims.py --target melodee-studio / skiff-studio / jiant-studio / sloop-studio /
+coralflower-studio / karma-studio and tools/studio/<firmware>_studio.c): the same engines, effects,
 the same mixer and sequencer, plus the NOR flash (settings, projects, user presets) and the editor SysEx protocol over
 the firmware's USB path.
 It runs in QtWebEngine (web worker; sound via AudioWorklet -> Chromium -> PipeWire = the Pi's speakers) and
@@ -27,7 +28,7 @@ API (``Studio``)::
     st.open_from_device(link)                           # read a backup from the real FM-1, then load it
     st.link                                             # link to the twin (as to a real FM-1)
     st.play(how="play"|"song") / st.stop()              # transport (PLAY key or song chain, editor stop)
-    st.load_project(slot)                               # load a project (Melodee 1..32, Skiff A..D, JIANT's sections A..D)
+    st.load_project(slot)                               # load a project (Melodee 1..32, Skiff A..D, JIANT's and SLOOP's sections A..D, KARMA's parts A..D)
     st.start_audio() / st.stop_audio()                  # real-time sound (WebEngine: default output)
     st.render_wav(path, seconds=None, until_end=False, stems=False, start="play", source="live", fmt="f32")
                                                         # offline, faster than real time -> RenderResult
@@ -99,11 +100,33 @@ FIRMWARES = {
     "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32},
     "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4},
     "jiant": {"name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
+    # SLOOP answers INFO "FELUCCA SLOOP 2.8.5" (its version string, the build's firmware_version, is "SLOOP 2.8.5": the
+    # build's version is "2.8.5"); 4 tracks, the sections A..D; its own backup protocol and file format (sloopbk.py),
+    # which backup.py picks by itself
+    "sloop": {"name": "SLOOP", "info": "FELUCCA SLOOP", "tracks": 4, "projects": 4, "backup": "sloop"},
+    # CoralFlower answers INFO "CoralFlower 0.7.1"; its parts (stems): chords, bass, the LAYER, drums; no project slots
+    # (the sequencer's eight patterns and song are one store, backup objects 50..55); its settings are object 30
+    "coralflower": {"name": "CoralFlower", "info": "CoralFlower", "tracks": 4, "projects": 0, "settings_id": 30,
+                    "restart": True},
+    # KARMA (a SLOOP fork) answers INFO "FELUCCA KARMA 3.1" (its version string "KARMA 3.1": the twin's version 3.1);
+    # three synth tracks and the drum track; its four projects are the song's parts A..D. It speaks SLOOP's backup
+    # protocol (sloopbk.py)
+    "karma": {"name": "KARMA", "info": "FELUCCA KARMA", "tracks": 4, "projects": 4, "backup": "sloop"},
 }
 
 
 def firmware_name(key: str) -> str:
     return FIRMWARES.get(key, {}).get("name") or (key or "").capitalize()
+
+
+def firmware_names(conj: str = "and") -> str:
+    """the firmwares with a studio twin, for the UI: "Melodee, Skiff, JIANT FM, SLOOP, CoralFlower and KARMA" (conj "or":
+    … or …), built from FIRMWARES"""
+    names = [f["name"] for f in FIRMWARES.values()]
+    if len(names) < 2:
+        return "".join(names)
+    return (_("{names} or {last}") if conj == "or" else _("{names} and {last}")).format(names=", ".join(names[:-1]),
+                                                                                       last=names[-1])
 
 
 # ======================================================================= versions and builds
@@ -223,7 +246,11 @@ def builds(firmware: str = "melodee") -> list[TwinBuild]:
             continue
         if m.get("abi") != STUDIO_ABI or m.get("kind") != "studio":
             continue
-        out.append(TwinBuild(m.get("firmware", firmware), m.get("firmware_version") or norm_version(sub.name), sub, m))
+        version = m.get("firmware_version") or norm_version(sub.name)
+        name = FIRMWARES.get(firmware, {}).get("name", "")
+        if name and version.upper().startswith(name.upper() + " "):
+            version = version[len(name) + 1:]          # (SLOOP's and KARMA's version strings: "SLOOP 2.8.5" -> 2.8.5)
+        out.append(TwinBuild(m.get("firmware", firmware), version, sub, m))
     return sorted(out, key=lambda b: fw_version_key(firmware, b.version))
 
 
@@ -300,20 +327,25 @@ JIANT_BACKUP_IDS_6 = [*range(11), *range(40, 64)]   # (V10.6p on: 6 songs)
 
 
 def backup_firmware(archive) -> str:
-    """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "sloop", "felucca" or "" (unknown). The app's
+    """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "coralflower", "karma", "sloop", "felucca" or "" (unknown). The app's
     companion block names it; otherwise the 'firmware' field (JIANT's editor writes its INFO, "JIANT V10.60"), and the
     inventory gives Skiff (the pattern bank) and JIANT (the songs) away."""
-    if getattr(archive, "sloop", False):
-        return "sloop"
+    if getattr(archive, "sloop", False):              # (SLOOP's file format: SLOOP or its fork KARMA, "FELUCCA KARMA 3.1")
+        c = archive.companion or {}
+        text = " ".join(str(x) for x in (c.get("firmware", ""), c.get("version_string", ""), archive.firmware or ""))
+        return "karma" if "karma" in text.lower() else "sloop"
     c = archive.companion or {}
     key = (c.get("firmware") or "").lower()
     text = " ".join(str(x) for x in (key, c.get("version_string", ""), archive.firmware or "")).lower()
-    for name in ("melodee", "skiff", "jiant", "sloop"):
+    for name in ("melodee", "skiff", "jiant", "coralflower", "sloop"):
         if name in text:
             return name
     ids = [o["id"] for o in archive.objects]
     if ids == SKIFF_BACKUP_IDS:
         return "skiff"
+    from . import backup
+    if backup.is_coralflower(ids):                  # (CoralFlower's own page writes its INFO; the inventory tells too)
+        return "coralflower"
     if ids in (JIANT_BACKUP_IDS, JIANT_BACKUP_IDS_6):
         return "jiant"
     return "felucca" if "felucca" in text else ""
@@ -592,7 +624,10 @@ class Studio:
             self.rejected = restore_tolerant(self.link, archive, progress, self.build.firmware)
         else:
             backup.restore(self.link, archive, progress, firmware_key=self.build.firmware)
-        self.info = self.backend.call("info")
+        if FIRMWARES.get(self.build.firmware, {}).get("restart"):
+            self.info = self.backend.call("reset")      # (CoralFlower reads a restore at its next start: a power cycle)
+        else:
+            self.info = self.backend.call("info")
         return archive
 
     def open_from_device(self, link, progress: Callable[[int, int], None] | None = None, note: str = "",
@@ -627,12 +662,12 @@ class Studio:
         if not vc.ok and not force:
             raise StudioError(_("{message} Nothing written.").format(message=vc.message))
         archive = self.backup()
-        skip = set(exclude) | (set() if settings else {1})
+        skip = set(exclude) | (set() if settings else {FIRMWARES.get(self.build.firmware, {}).get("settings_id", 1)})
         if skip:
             ids = [o["id"] for o in archive.objects if o["id"] not in skip]
             backup.restore_selected(link, archive, ids, progress)
-        else:
-            backup.restore(link, archive, progress, firmware_key=self.build.firmware)
+        else:                                       # (no hint: the device's INFO picks the protocol, so another
+            backup.restore(link, archive, progress)  # firmware's FM-1 refuses at once instead of timing out)
         return archive
 
     @property
@@ -802,8 +837,11 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     """Load a backup part by part (projects/banks, then settings, the running music last – like
     backup.restore); skip parts the firmware rejects. -> rejected object IDs"""
     from . import backup
-    backup._match(link, archive, firmware_key)
+    proto, info = backup._match(link, archive, firmware_key)
     if archive.sloop:
+        if proto == backup.SLOOP and FIRMWARES.get(firmware_key, {}).get("backup") == "sloop":
+            from . import sloopbk                      # (SLOOP and KARMA: SLOOP's protocol and file, part by part)
+            return sloopbk.restore_tolerant(link, archive.file, progress, info)
         raise StudioError(_("The {firmware} twin cannot load SLOOP backups.").format(
             firmware=firmware_name(firmware_key)))
     sup_order = [o.id for o in backup.parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))]
@@ -811,7 +849,8 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     objs = archive.objects
     order = objs[2:] + objs[1:2] + objs[0:1]
     jiant = backup.is_jiant(sup_order) or backup.is_jiant(o["id"] for o in objs)
-    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"], jiant)]
+    coral = backup.is_coralflower(sup_order) or archive.coralflower
+    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"], jiant, coral)]
     total = sum(o["size"] for o in todo) or 1
     done = 0
     rejected = [o["id"] for o in objs if o["id"] not in sup and o["size"]]

@@ -64,6 +64,26 @@ KNOWN_ID_SETS[43] = JIANT_IDS
 KNOWN_ID_SETS[35] = JIANT_IDS_6
 
 
+# CoralFlower (firmware/src/cf_backup.c CRB_IDS, web/fm1backup.js CF_BACKUP_IDS): ChoralRoot's sound objects 6..11 (the
+# user sound banks, the FM6 bank, the VA and FM6 patch stores), 30 its settings, 31 its loop (since 0.6 the rhythm
+# machine's record), 50..55 the sequencer's patterns and song (one store in six parts), 56..58 the sounds' unsaved
+# edits, 59 the patterns' own sounds, 60..67 the tweaked pattern sounds. 0.1 .. 0.3: the first 8, 0.3.1 .. 0.4.1: 14,
+# 0.4.2: 17, from 0.5: 26. No running music (0), no settings object 1, no projects, no sample slots: 32..67 are none of
+# Melodee's. (8 and 14 objects stay generic inventories; 17 is a known length: CoralFlower's is an alternative there.)
+CORALFLOWER_IDS = [6, 7, 8, 9, 10, 11, 30, 31, *range(50, 68)]
+CORALFLOWER_ID_SETS = [CORALFLOWER_IDS[:n] for n in (8, 14, 17, 26)]
+KNOWN_ID_SETS[26] = CORALFLOWER_IDS
+ALT_ID_SETS.setdefault(17, []).append(CORALFLOWER_IDS[:17])
+
+
+def is_coralflower(ids) -> bool:
+    """is this inventory (IDs in order) CoralFlower's (any release's)?"""
+    try:
+        return [int(i) for i in ids] in CORALFLOWER_ID_SETS
+    except (TypeError, ValueError):
+        return False
+
+
 def is_jiant(ids) -> bool:
     """is this inventory (IDs in order) JIANT FM's (8 or, from V10.6p, 6 songs)?"""
     try:
@@ -100,16 +120,19 @@ class BackupError(Exception):
     pass
 
 
-def is_project(oid: int, jiant: bool = False) -> bool:
-    """a project (music) object; jiant: in JIANT FM's inventory (its songs' sections 40..71)"""
+def is_project(oid: int, jiant: bool = False, coral: bool = False) -> bool:
+    """a project (music) object; jiant: in JIANT FM's inventory (its songs' sections 40..71); coral: in CoralFlower's
+    (none: its patterns and song are one store, 50..55)"""
+    if coral:
+        return False
     if jiant:
         return oid == 0 or 2 <= oid <= 5 or 40 <= oid < 72
     return oid == 0 or 2 <= oid <= 5 or 64 <= oid < 92
 
 
-def is_sample(oid: int, jiant: bool = False) -> bool:
-    """a user sample slot (32..63); JIANT FM has none"""
-    return not jiant and 32 <= oid < 64
+def is_sample(oid: int, jiant: bool = False, coral: bool = False) -> bool:
+    """a user sample slot (32..63); JIANT FM and CoralFlower have none"""
+    return not jiant and not coral and 32 <= oid < 64
 
 
 def max_size(oid: int) -> int:
@@ -147,12 +170,13 @@ def _check(rc: int):
         raise BackupError(rc_text(rc))
 
 
-def object_title(oid: int, sloop: bool = False, jiant: bool = False) -> str:
+def object_title(oid: int, sloop: bool = False, jiant: bool = False, coral: bool = False) -> str:
     """Name of a backup object in plain language ("Preset bank U073–U090" instead of "Object 17"); jiant: in JIANT FM's
-    inventory (its songs' sections)."""
+    inventory (its songs' sections); coral: in CoralFlower's."""
     try:
         from . import backup_inspect as BI
-        return BI.describe(oid, b"", 0, 43 if jiant else 57, "", sloop=sloop, jiant=jiant).title
+        return BI.describe(oid, b"", 0, 26 if coral else 43 if jiant else 57, "", sloop=sloop, jiant=jiant,
+                           coral=coral).title
     except Exception:                               # noqa: BLE001 – the name is just a bonus
         return _("object {id}").format(id=oid)
 
@@ -177,19 +201,22 @@ class ObjInfo:
 
 FELUCCA, SLOOP = "felucca", "sloop"
 SLOOP_FORMAT = "sloop-backup"
+# firmwares that speak SLOOP's backup protocol (34–36) and write its "sloop-backup" files: SLOOP and its fork KARMA
+# (editor.c ED_BK_LIST / GET / PUT, web/editor.html BK: the same commands, objects 0..10 and 32..35, the same file)
+SLOOP_PROTOCOL = (SLOOP, "karma")
 
 
 def protocol(link, hint: str = "") -> tuple[str, object]:
     """which backup protocol does the device speak? -> (FELUCCA|SLOOP, info or None).
     hint: firmware key (ctx.firmware_key), if known."""
     from . import sloopbk
-    if hint in ("melodee", "skiff", "felucca") or (hint or "").startswith("jiant"):
+    if hint in ("melodee", "skiff", "felucca", "coralflower") or (hint or "").startswith("jiant"):
         return FELUCCA, None
     try:
         info = sloopbk.read_info(link)
     except Exception:                               # noqa: BLE001 – then as before
-        return (SLOOP if hint == SLOOP else FELUCCA), None
-    if info.firmware_name == SLOOP or hint == SLOOP:
+        return (SLOOP if hint in SLOOP_PROTOCOL else FELUCCA), None
+    if info.firmware_name in SLOOP_PROTOCOL or hint in SLOOP_PROTOCOL:
         proto = sloopbk.info_proto(info.raw)
         if proto and proto < sloopbk.MIN_PROTO:
             raise BackupError(_("{version} cannot make backups over USB yet – that needs SLOOP 2.3 or later. "
@@ -301,7 +328,14 @@ class Archive:
     def companion(self) -> dict:
         return self.file.get("companion") or {}
 
+    @property
+    def coralflower(self) -> bool:
+        """CoralFlower's inventory (no projects, no running music: its patterns and song are objects 50..55)"""
+        return not self.sloop and is_coralflower(o["id"] for o in self.objects)
+
     def project_objects(self):
+        if self.coralflower:
+            return []
         return [o for o in self.objects if is_project(o["id"]) and o["id"] != 0 and o["size"]]
 
 
@@ -342,7 +376,10 @@ def read(file) -> Archive:
         if len(raw) != size or crc32(raw) != crc:
             raise BackupError(_("Checksum in the backup does not match"))
         objs.append({**o, "bytes": raw})
-    if not objs[0]["size"] or (len(objs) > 1 and not objs[1]["size"]):
+    if is_coralflower(o["id"] for o in objs):       # (no running music and no object 1: its sounds may be empty)
+        if not any(o["size"] for o in objs):
+            raise BackupError(_("The backup holds nothing"))
+    elif not objs[0]["size"] or (len(objs) > 1 and not objs[1]["size"]):
         raise BackupError(_("The backup does not contain the running music or the settings"))
     return Archive(file=file, objects=objs, known=bool(known))
 
@@ -469,6 +506,11 @@ def _match(link, archive: Archive, hint: str = "") -> tuple[str, object]:
     if not archive.sloop and proto == SLOOP:
         raise BackupError(_("This is a Melodee/Felucca backup, but the FM-1 runs SLOOP – the formats "
                             "do not match. Nothing was written."))
+    if archive.sloop and info is not None and info.firmware_name != "karma" and "karma" in archive.firmware.lower():
+        # (KARMA reads SLOOP's backups up to 2.6, as its own editor does; SLOOP cannot read KARMA's projects, format 7)
+        raise BackupError(_("This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's "
+                            "projects and drum kits. Nothing was written.").format(backup=archive.firmware,
+                                                                                   device=info.version))
     return proto, info
 
 
@@ -476,8 +518,9 @@ def check_16(archive: Archive, supported, device_version: str = ""):
     """Backup from Melodee 1.6 onto a firmware without the 1.6 inventory? -> BackupError with explanation (before any
     write; otherwise the device would only report "older format" or "does not know …")."""
     from . import melodee16 as M
-    if archive.sloop or is_jiant(o["id"] for o in archive.objects):
-        return                                      # (JIANT's song sections 64..71 are no Melodee 1.6 projects)
+    if archive.sloop or is_jiant(o["id"] for o in archive.objects) or archive.coralflower:
+        return                                      # (JIANT's song sections 64..71 and CoralFlower's pattern sounds
+                                                    # 64..67 are no Melodee 1.6 projects)
     if M.backup_is_16(archive.firmware, archive.companion, len(archive.objects), [o["id"] for o in archive.objects
                                                                                      if o["size"]]) \
             and M.device_before_16(device_version, len(supported)):
@@ -504,19 +547,21 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
     supported = parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))
     sup_ids = {o.id for o in supported}
     jiant = is_jiant(o.id for o in supported) or is_jiant(o["id"] for o in archive.objects)
+    coral = is_coralflower(o.id for o in supported) or archive.coralflower
     live = next((o.size for o in supported if o.id == 0), 0)
     check_16(archive, supported)
     if len(supported) != 57:
         for o in archive.objects:
-            if is_project(o["id"], jiant) and o["size"] > live and not (live >= 19008 and o["size"] in (19084, 19092, 20224)):
+            if is_project(o["id"], jiant, coral) and o["size"] > live and not (live >= 19008 and o["size"] in (19084, 19092, 20224)):
                 raise BackupError(_("This backup needs a firmware with a larger recording memory"))
     for o in archive.objects:
         if o["id"] not in sup_ids and o["size"]:
             raise BackupError(_("The firmware on the FM-1 does not know “{part}” from the backup "
-                                "(different version). Nothing was written.").format(part=object_title(o['id'], jiant=jiant)))
+                                "(different version). Nothing was written.").format(part=object_title(o['id'], jiant=jiant,
+                                                                                         coral=coral)))
     # pre-check every object before anything is replaced
     for o in archive.objects:
-        if not is_sample(o["id"], jiant) and o["size"] and o["id"] in sup_ids:
+        if not is_sample(o["id"], jiant, coral) and o["size"] and o["id"] in sup_ids:
             rc = preflight(link, o["id"], o["bytes"], FELUCCA)
             if rc == 1:
                 raise BackupError(_("The backup has an older format. Restore it with Melodee 1.2 first. "
@@ -524,8 +569,8 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
             if rc == 3:
                 raise BackupError(_("Please stop playback on the FM-1 first – nothing was written."))
             if rc:
-                raise BackupError(_("“{part}”: {error}. Nothing was written.").format(part=object_title(o['id'], jiant=jiant),
-                                                                                   error=rc_text(rc)))
+                raise BackupError(_("“{part}”: {error}. Nothing was written.").format(
+                    part=object_title(o['id'], jiant=jiant, coral=coral), error=rc_text(rc)))
     written: list[int] = []
     try:
         if len(archive.objects) == 28 and 28 in sup_ids:
@@ -536,14 +581,30 @@ def restore(link, archive: Archive, progress: Callable[[int, int], None] | None 
             oid, data = o["id"], o["bytes"]
             if oid not in sup_ids:
                 continue
-            if is_sample(oid, jiant):
+            if is_sample(oid, jiant, coral):
                 _restore_sample(link, oid - 32, data, step)
             else:
                 write_object(link, oid, data, step, FELUCCA)
             written.append(oid)
     except Exception as e:
         raise _with_written(e, written)
+    if coral:
+        restart_coralflower(link)
     return archive
+
+
+def restart_coralflower(link) -> bool:
+    """CoralFlower reads what was restored at its next start (cf_backup.c: the restored settings and patterns wait for
+    it, nothing in RAM is saved over them): RESTART (72), as its web installer does after a restore (fm1backup.js
+    restartDevice). The FM-1 restarts once it has sent the reply and reconnects. -> False: no reply (restart it by hand)"""
+    try:
+        _check(link.request(CORALFLOWER_RESTART, [], timeout=2.0, retries=0)[0])
+        return True
+    except Exception:                               # noqa: BLE001 – what was restored stays in flash either way
+        return False
+
+
+CORALFLOWER_RESTART = 72                            # (cf_backup.c CRB_RESTART; on Melodee 72 is AUDIO_STATS)
 
 
 def _restore_sample(link, slot: int, data: bytes, step):
@@ -588,10 +649,12 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
     check_16(archive, supported)
     sup = {o.id: o for o in supported}
     jiant = is_jiant(o.id for o in supported) or is_jiant(o["id"] for o in archive.objects)
+    coral = is_coralflower(o.id for o in supported) or archive.coralflower
     for oid in want:
         if oid not in sup and by_id[oid]["size"]:
             raise BackupError(_("The firmware on the FM-1 does not know “{part}” from the backup "
-                                "(different version). Nothing was written.").format(part=object_title(oid, jiant=jiant)))
+                                "(different version). Nothing was written.").format(
+                part=object_title(oid, jiant=jiant, coral=coral)))
     if expect:
         for oid, (size, crc) in expect.items():
             cur = sup.get(oid)
@@ -610,17 +673,17 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
             progress(done, total)
 
     for o in todo:
-        if not is_sample(o["id"], jiant) and o["size"]:
+        if not is_sample(o["id"], jiant, coral) and o["size"]:
             rc = preflight(link, o["id"], o["bytes"], FELUCCA)
             if rc == 1:
                 raise BackupError(_("“{part}”: The device does not accept this format "
                                     "(older or different firmware). Nothing was written.").format(
-                    part=object_title(o['id'], jiant=jiant)))
+                    part=object_title(o['id'], jiant=jiant, coral=coral)))
             if rc == 3:
                 raise BackupError(_("Please stop playback on the FM-1 first – nothing was written."))
             if rc:
-                raise BackupError(_("“{part}”: {error}. Nothing was written.").format(part=object_title(o['id'], jiant=jiant),
-                                                                                   error=rc_text(rc)))
+                raise BackupError(_("“{part}”: {error}. Nothing was written.").format(
+                    part=object_title(o['id'], jiant=jiant, coral=coral), error=rc_text(rc)))
     written: list[int] = []
     try:
         if clear_extension and 28 in sup and 28 not in want:
@@ -631,13 +694,15 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
                 err = BackupError(_("cancelled"))
                 err.cancelled = True
                 raise err
-            if is_sample(o["id"], jiant):
+            if is_sample(o["id"], jiant, coral):
                 _restore_sample(link, o["id"] - 32, o["bytes"], step)
             else:
                 write_object(link, o["id"], o["bytes"], step, FELUCCA)
             written.append(o["id"])
     except Exception as e:
         raise _with_written(e, written)
+    if coral and written:
+        restart_coralflower(link)
     return written
 
 

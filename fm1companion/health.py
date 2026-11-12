@@ -227,8 +227,8 @@ def fm1_report(link) -> dict:
             rep["audio"] = None
     try:
         man = backup.list_objects(link)
-        jiant = backup.is_jiant(o.id for o in man)
-        projects = [o for o in man if backup.is_project(o.id, jiant) and o.id != 0]
+        jiant, coral = backup.is_jiant(o.id for o in man), backup.is_coralflower(o.id for o in man)
+        projects = [o for o in man if backup.is_project(o.id, jiant, coral) and o.id != 0]
         rep["projects_total"] = len(projects)
         rep["projects_used"] = sum(1 for o in projects if o.size)
         rep["projects_bytes"] = sum(o.size for o in projects)

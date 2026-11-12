@@ -168,9 +168,12 @@ class Info:
 
     @property
     def firmware_name(self) -> str:
-        """Melodee reports "MELODEE v…", SLOOP "FELUCCA SLOOP …", Skiff (like the original) "FELUCCA v…"."""
+        """Melodee reports "MELODEE v…", SLOOP "FELUCCA SLOOP …", KARMA (a SLOOP fork) "FELUCCA KARMA 3.1", Skiff (like the
+        original) "FELUCCA v…"."""
         v = self.version.lower()
-        for name in ("melodee", "sloop", "skiff", "orbit", "x0x", "loom", "choralroot", "jiant"):
+        if "karma" in v:
+            return "karma"
+        for name in ("melodee", "sloop", "skiff", "orbit", "x0x", "loom", "choralroot", "jiant", "coralflower"):
             if name in v:
                 return name
         if "felucca" in v:

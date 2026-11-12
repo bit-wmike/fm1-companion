@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "name": "coralflower-studio",
+  "title": "CoralFlower studio twin",
+  "version": "0.7.1",
+  "source_repo": "https://github.com/FicusFicusov/CoralFlower",
+  "ref": "v0.7.1",
+  "commit": "46790b943bdb5e4143212d83dc495c832eefdbb8",
+  "license": "GPL-3.0-only",
+  "build_date": "2026-11-10T21:30:15Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "LICENSING-choralroot.md": {
+      "sha256": "87e1dd4445b431d16f8ad05d10d811820c696c4792630f161e9d9f2eb9fb0f54",
+      "size": 13961
+    },
+    "LICENSING.md": {
+      "sha256": "c00c3320a448af97044d619892ec807dc082b3dd3cb82bffe448ff1b11a353d9",
+      "size": 3659
+    },
+    "NOTICE": {
+      "sha256": "beda16fc1e563da61e41ce750e3532e2da59f780a8e81d051e82aa33796cc193",
+      "size": 2742
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "14df7ea82374a9d96f1e306270acced8a0697bf02802680cc649366b1065204f",
+      "size": 21094
+    },
+    "twin.wasm": {
+      "sha256": "5765155e65b5e3d36633be245b4a8655dae77f316d708065ddb0bfea1acd357e",
+      "size": 730384
+    }
+  },
+  "kind": "studio",
+  "firmware": "coralflower",
+  "firmware_version": "0.7.1",
+  "identity": "FM-1_930",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/coralflower_studio.c",
+  "glue_sha256": "aacb5cb6e5ffab4a3f67c687f70af9adcb556eaceaebff49e15a3278e4965333",
+  "source_url": "https://github.com/FicusFicusov/CoralFlower/archive/46790b943bdb5e4143212d83dc495c832eefdbb8.tar.gz",
+  "tracks": 4,
+  "projects": 0,
+  "release_status": "stable"
+}
