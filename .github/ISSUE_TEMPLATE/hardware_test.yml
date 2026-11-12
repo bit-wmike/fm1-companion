@@ -11,7 +11,7 @@ body:
     id: version
     attributes:
       label: Suite version
-      placeholder: "2.5.0"
+      placeholder: "2.6.0"
     validations:
       required: true
   - type: input

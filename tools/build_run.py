@@ -19,7 +19,7 @@ from build_common import DIST, ROOT, app_files, version  # noqa: E402
 sys.path.insert(0, str(ROOT))
 from fm1companion import diag  # noqa: E402
 
-EXTRA = ["LICENSE", "README.md", "install.sh", "uninstall.sh", "data", "packaging/installer",
+EXTRA = ["LICENSE", "README.md", "install.sh", "uninstall.sh", "data", "packaging/installer", "packaging/udev",
          "packaging/fm1-companion.metainfo.xml", "packaging/fm1-companion.1"]
 
 

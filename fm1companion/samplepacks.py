@@ -219,11 +219,39 @@ def index(p: Pack, refresh: bool = False, max_age: float = 7 * 86400) -> list[En
     return entries
 
 
+def drop_checkout(p: Pack) -> bool:
+    """Delete the git copy of a pack (work tree and the fetched audio in .git) – the samples are in the library
+    by then. The contents list (index.json) stays; the next download fetches the structure again (a few hundred
+    KiB) and then only the chosen folders. -> True if something was deleted."""
+    d = _cache(p) / "repo"
+    if not d.exists():
+        return False
+    shutil.rmtree(d, ignore_errors=True)
+    return not d.exists()
+
+
 def download(p: Pack, dest_root: Path, folder_list: list[str] | None = None,
-             log: Callable[[str], None] = lambda s: None, cancel: Callable[[], bool] = lambda: False) -> list[Path]:
-    """Download folders (or everything) and copy them to dest_root/<pack name>/…. -> new audio files."""
-    repo = _repo(p)
+             log: Callable[[str], None] = lambda s: None, cancel: Callable[[], bool] = lambda: False,
+             keep_checkout: bool = False) -> list[Path]:
+    """Download folders (or everything) and copy them to dest_root/<pack name>/…. -> new audio files.
+    Afterwards (also after a cancel or an error) the git copy in the cache is deleted again (drop_checkout) –
+    otherwise every pack would be on the disk twice. keep_checkout=True keeps it."""
+    try:
+        return _download(p, dest_root, folder_list, log, cancel)
+    finally:
+        if not keep_checkout:
+            drop_checkout(p)
+
+
+def _download(p: Pack, dest_root: Path, folder_list, log, cancel) -> list[Path]:
+    repo = _repo(p)                                  # (cloned again after drop_checkout: structure only)
     entries = index(p)
+    try:
+        rev = json.loads((_cache(p) / "index.json").read_text("utf-8")).get("rev", "")
+    except (OSError, ValueError, AttributeError):
+        rev = ""
+    if rev and rev != _git("rev-parse", "HEAD", cwd=repo).strip():
+        entries = index(p, max_age=0)                # the pack changed on GitHub since the list was made
     want = [f for f in (folder_list or [])]
     pats = [f"/{f}/*" if f else "/*" for f in want] if want else ["/*"]
     _git("sparse-checkout", "set", "--no-cone", *pats, cwd=repo)

@@ -19,11 +19,13 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
+from . import fwfamily
 from .config import CACHE_DIR, DATA_DIR, load as load_settings
 from .i18n import N_, _
 
@@ -67,6 +69,12 @@ class FirmwareSpec:
     catalog_id: str = ""            # key in the firmware catalog
     loader_family: str = ""         # loader family according to the catalog: stock | feluccaG1 | feluccaG2 | sloopG3
     release_tag: str = ""           # fixed version for download_url packages (e.g. "V15")
+    # packages the app pins itself, tag -> {"url", "sha256", "date"} (a firmware that ships its packages on its web
+    # site instead of in GitHub releases, e.g. KARMA); each is installed only with exactly that checksum
+    versions: dict[str, dict] = field(default_factory=dict)
+    # the author's web installer page naming the current package and its SHA-256 (``const meta = {…}``): a newer
+    # version than the pinned ones is offered with the checksum from there (as a release's SHA256SUMS)
+    pages_meta: str = ""
 
     @property
     def url(self) -> str:
@@ -90,6 +98,38 @@ BUILTIN = [
                  description=_("Live groovebox: 3 synths + drums, looping, punch-in effects, 4 song sections."),
                  samples=_("4 sample slots (USR1–4), also as a drum kit"),
                  family="sloop", author="isod89", license="GPL-3.0", category="Groovebox"),
+    # KARMA, a SLOOP fork: its packages live on its GitHub Pages site (docs/firmware/karma-{ver}.fwsc, only the
+    # current one stays there) – each version pinned here by the commit that published it and its SHA-256 (the
+    # same as its web installer's meta.sha256); the package identity FM-1_926 (tools/build.py PRODUCT, from 3.0)
+    FirmwareSpec("karma", "KARMA", "eatyourgreensstudio-dotcom/karma-fm1", "karma-{ver}.fwsc", sums="",
+                 description=_("Four-track groovebox: an acid bass or a Juno-style poly, physical modelling, two dozen "
+                               "synthesis models and a drum synth; 64-step sequencer with song mode and generators. "
+                               "A SLOOP fork."),
+                 samples=_("4 sample slots (USR1–4), also as a drum kit"),
+                 family="karma", product="FM-1_926", author="Ariel Muchnik", license="GPL-3.0", category="Groovebox",
+                 loader_family="sloopG3", homepage="https://eatyourgreensstudio-dotcom.github.io/karma-fm1/",
+                 editor_url="https://eatyourgreensstudio-dotcom.github.io/karma-fm1/webapp/editor/",
+                 emulator_url="https://eatyourgreensstudio-dotcom.github.io/karma-fm1/emu/",
+                 manual_url="https://github.com/eatyourgreensstudio-dotcom/karma-fm1/blob/main/GUIDE.md",
+                 installer_url="https://eatyourgreensstudio-dotcom.github.io/karma-fm1/webapp/installer/",
+                 pages_meta="https://eatyourgreensstudio-dotcom.github.io/karma-fm1/webapp/installer/index.html",
+                 versions={tag: {"url": "https://github.com/eatyourgreensstudio-dotcom/karma-fm1/raw/"
+                                        f"{commit}/docs/firmware/karma-{tag[1:]}.fwsc", "sha256": sha, "date": date}
+                           for tag, commit, sha, date in (
+                     ("v3.1", "718de454ee8ce0e5c6d12ec5fe5e0ba85d0cb4ba",
+                      "f1f28096a2e1a64c0ca0fe626b38818d96bb4950025b2e6d14db40df369eea1f", "2026-11-10"),
+                     ("v3.0.5", "23304e93d17d12a79546879d60d58c5c3421aac5",
+                      "2f288c04ddaca6c1911d8f2cfdfbdbc89d5c89d0b5ab80b2e3c0fb84bde38a11", "2026-11-09"),
+                     ("v3.0.4", "47b9b66333f578370aecb4a3e3112d4a2939734b",
+                      "cf9a9f6888ecc74610b7e73b6462979c607d7c1df8ed6d7b47d0119609c67fc1", "2026-11-06"),
+                     ("v3.0.3", "739b6c9c2e5df81885b88d4cdf97a3bb0ae329e8",
+                      "1468268b0ded229a27398633fb7142cc1b85709e50ddfbb31e8efadaf45bddd3", "2026-10-31"),
+                     ("v3.0.2", "81d45b7d026316f5d8b6340cd6568822c81885ca",
+                      "6b5f123974b1e49d82454e9a8c42527c727c8dfa7da78676ce52ef72f1657238", "2026-10-31"),
+                     ("v3.0.1", "21d31bf41b5393355d3bc7f71de96f5225e5a9d7",
+                      "94eff3d00705736e3dd349d71160860c5b6a01966c52f8ba93c715542ffabb62", "2026-10-31"),
+                     ("v3.0", "0b30317f8798fa837504358465b2d0888022f59d",
+                      "d88d6b48fa5d2a3a176a76936c770a0f9181707d93896b4d389ceaa68f916ce1", "2026-10-30"))}),
 ]
 
 
@@ -139,6 +179,7 @@ class Release:
     date: str = ""
     notes: str = ""
     assets: dict[str, str] = field(default_factory=dict)    # Name -> URL
+    sha256: str = ""                # the package's checksum when the app knows it per version (pinned / web installer)
 
     @property
     def version(self) -> str:
@@ -185,6 +226,8 @@ def fetch_releases(s: FirmwareSpec, use_cache_secs: int = 600) -> list[Release]:
         name = s.asset.format(ver=s.release_tag.lstrip("vV")) if "{ver}" in s.asset else s.asset
         return [Release(tag=s.release_tag or "fest", prerelease="beta" in (s.notes or []),
                         notes=s.description, assets={name: s.download_url})]
+    if s.versions:                           # versions pinned in the app (+ a newer one its web installer names)
+        return pinned_releases(s, use_cache_secs)
     cache = CACHE_DIR / f"releases-{s.key}.json"
     if use_cache_secs and cache.exists() and time.time() - cache.stat().st_mtime < use_cache_secs:
         try:
@@ -218,6 +261,70 @@ def fetch_releases(s: FirmwareSpec, use_cache_secs: int = 600) -> list[Release]:
     if out:
         cache.parent.mkdir(parents=True, exist_ok=True)
         cache.write_text(json.dumps([r.__dict__ for r in out]))
+    return out
+
+
+def pinned_sha(s: FirmwareSpec | None, tag: str) -> str:
+    """the SHA-256 the app pins for this version ("" = none)"""
+    if s is None or not tag:
+        return ""
+    return str((s.versions.get(tag) or {}).get("sha256") or "").lower()
+
+
+META_RE = re.compile(r"const\s+meta\s*=\s*(\{[^{}]*\})")
+
+
+def pages_release(s: FirmwareSpec, use_cache_secs: int = 600) -> Release | None:
+    """the current package the author's web installer offers (its meta: version, product, pkg, sha256) – None
+    offline, without a checksum or with another identity"""
+    if not s.pages_meta:
+        return None
+    cache = CACHE_DIR / f"pages-{s.key}.json"
+    meta = None
+    if use_cache_secs and cache.exists() and time.time() - cache.stat().st_mtime < use_cache_secs:
+        try:
+            meta = json.loads(cache.read_text())
+        except ValueError:
+            meta = None
+    if meta is None:
+        try:
+            req = urllib.request.Request(s.pages_meta, headers={"User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                m = META_RE.search(r.read().decode("utf-8", "replace"))
+            meta = json.loads(m.group(1)) if m else {}
+        except (OSError, ValueError, urllib.error.URLError):
+            return None                      # offline: the pinned versions are enough
+        try:
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            cache.write_text(json.dumps(meta))
+        except OSError:
+            pass
+    ver, sha, pkg = str(meta.get("version") or ""), str(meta.get("sha256") or "").lower(), str(meta.get("pkg") or "")
+    if not (ver and re.fullmatch(r"[0-9a-f]{64}", sha) and pkg.endswith(".fwsc")):
+        return None
+    if s.product and meta.get("product") and meta["product"] != s.product:
+        return None
+    url = urllib.parse.urljoin(s.pages_meta, pkg)
+    if not url.startswith("https://"):
+        return None
+    return Release(tag="v" + ver.lstrip("vV"), prerelease=is_prerelease(ver), notes=s.description,
+                   assets={url.rsplit("/", 1)[-1]: url}, sha256=sha)
+
+
+def pinned_releases(s: FirmwareSpec, use_cache_secs: int = 600, live: bool = True) -> list[Release]:
+    """the pinned versions, newest first; live=True also asks the web installer for a newer one"""
+    out = [Release(tag=tag, prerelease=is_prerelease(tag), date=v.get("date", ""), notes=s.description,
+                   assets={s.asset.format(ver=tag.lstrip("vV")): v["url"]}, sha256=str(v["sha256"]).lower())
+           for tag, v in s.versions.items()]
+    live = pages_release(s, use_cache_secs) if live else None
+    if live is not None:
+        same = next((r for r in out if r.tag == live.tag), None)
+        if same is None:
+            out.append(live)                 # newer than the app: the checksum from the author's installer page
+        elif same.sha256 != live.sha256:
+            LAST_ERROR[s.key] = _("The web installer of {name} names another checksum for {tag} than the app pins – "
+                                  "the app keeps its own.").format(name=s.name, tag=live.tag)
+    out.sort(key=lambda r: version_key(r.tag), reverse=True)
     return out
 
 
@@ -280,7 +387,7 @@ def _fetch(url: str, dest: Path, progress: Callable[[int, int], None] | None = N
 
 def download(s: FirmwareSpec, rel: Release, log: Callable[[str], None] = print,
              progress: Callable[[int, int], None] | None = None) -> Package:
-    if s.download_url:
+    if s.download_url or rel.sha256:
         return _download_fixed(s, rel, log, progress)
     ver = rel.version
     folder = load_settings().firmware_dir / s.key / rel.tag
@@ -331,23 +438,25 @@ def _download_fixed(s: FirmwareSpec, rel: Release, log, progress) -> Package:
     folder = load_settings().firmware_dir / s.key / rel.tag
     folder.mkdir(parents=True, exist_ok=True)
     name = next(iter(rel.assets), s.asset)
+    want = (rel.sha256 or s.sha256 or "").lower()
+    url = rel.assets.get(name) or s.download_url
     dest = folder / name
-    if dest.exists() and s.sha256 and _sha(dest) == s.sha256:
+    if dest.exists() and want and _sha(dest) == want:
         log(_("{name} is already there (checksum matches)").format(name=name))
         return Package(s, rel, dest, None, True)
     log(_("downloading {name} …").format(name=name))
     tmp = folder / (name + ".neu")  # i18n: ignore (file name)
-    _fetch(rel.assets.get(name) or s.download_url, tmp, progress)
-    if s.sha256:
+    _fetch(url, tmp, progress)
+    if want:
         h = _sha(tmp)
-        if h != s.sha256.lower():
+        if h != want:
             tmp.unlink(missing_ok=True)
             raise ChecksumError(_("The file at {url} does not have the expected checksum ({actual}… instead of "
                                   "{expected}…). The manufacturer has probably replaced it – it is not "
-                                  "installed.").format(url=s.download_url, actual=h[:12], expected=s.sha256[:12]))
+                                  "installed.").format(url=url, actual=h[:12], expected=want[:12]))
     tmp.replace(dest)
-    log(_("Checksum matches") if s.sha256 else _("Note: no checksum known"))
-    return Package(s, rel, dest, None, bool(s.sha256))
+    log(_("Checksum matches") if want else _("Note: no checksum known"))
+    return Package(s, rel, dest, None, bool(want))
 
 
 def _sha(p: Path) -> str:
@@ -568,18 +677,27 @@ def remember_identity(identity: str, key: str, tag: str):
 
 
 def guess_firmware(identity: str, version_string: str = "", family: str = "") -> tuple[str, str]:
-    """(key, tag) for a device identity – first from own experience, then guessed."""
-    try:
-        table = json.loads(IDENT_FILE.read_text())
-        if identity in table:
-            return table[identity]["firmware"], table[identity]["tag"]
-    except (OSError, ValueError, KeyError):
-        pass
+    """(key, tag) for a device identity – first from own experience, then guessed. A plain Felucca INFO ("FELUCCA
+    v1.8.1", family "felucca") on an identity this machine remembers for a firmware that names itself in its INFO
+    (FM-1_900: SLOOP's and Felucca's own builds share it) is Felucca, not the remembered one."""
     v = version_string.lower()
     m = re.search(r"(\d+\.\d+(?:\.\d+)?(?:-rc\.?\d+)?)", version_string)
     tag = ("v" + m.group(1)) if m else ""
+    named = fwfamily.by_info(version_string)           # a firmware that names itself (the catalog audit's table)
+    plain = family == "felucca" and "felucca" in v and not any(k in v for k in SELF_NAMING) and named is None
+    try:
+        table = json.loads(IDENT_FILE.read_text())
+        if identity in table and not (plain and table[identity]["firmware"] in SELF_NAMING) and \
+                not (named is not None and table[identity]["firmware"] != named.key):
+            return table[identity]["firmware"], table[identity]["tag"]   # (what the INFO names wins over memory)
+    except (OSError, ValueError, KeyError):
+        pass
+    if named is not None and named.key not in ("x0x",):  # ("FELUCCA CLIPPER 1.3.1", "SAADET v1.0", "JANGADA 1.0.1": the
+        return named.key, tag                           # catalog's keys; X0X below: its identity may be another's)
     if "karma" in v or family == "karma":              # KARMA (a SLOOP fork) answers INFO "FELUCCA KARMA 3.1"
         return "karma", tag
+    if "orbit" in v or family == "orbit":              # ORBIT (a SLOOP fork) answers INFO "FELUCCA ORBIT 1.0.0" (the
+        return "orbit", tag                            # catalog's key; its identity is Felucca's FM-1_900)
     for key in ("melodee", "sloop", "skiff"):
         if key in v or family == key:
             return key, tag
@@ -587,22 +705,97 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
         return "jiant-fm", tag
     if "coralflower" in v or family == "coralflower":   # CoralFlower answers INFO "CoralFlower 0.7.1" (the catalog's key)
         return "coralflower", tag
+    if "x0x" in v or family == "x0x":                   # X0X answers INFO "X0X 1.2.1 BETA" (the catalog's key; its
+                                                        # identity FM-1_9XXYYZZ is shared by other firmwares: TRIBE)
+        other = _catalog_only_other(identity, "x0x")    # (X0X's forks answer its INFO unchanged, "X0X 0.3.0 BETA": an
+        return (other or "x0x"), tag                    # identity the catalog lists for one of them alone names it)
+    if "choralroot" in v or family.startswith("choralroot"):   # ChoralRoot answers INFO "ChoralRoot 0.39" (the catalog's
+        return "choralroot-fm-1", tag                            # key "choralroot-fm-1")
+    if identity in _twin_identities():                  # FoMni, AMB-1, LOOM-8 (no INFO): their releases' identities;
+        return _twin_identities()[identity]             # FoMni's FM-1_8XXYYZZ lies inside FM1 Open's FM-1_8xxxxxx
+    if re.fullmatch(r"FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)|FM-1_8\d{6}", identity or ""):
+        # M-VAVE's FM1 Open (app/version.h FM1_UPDATE_PRODUCT, V14: FM-1_8000014; its SDK keeps FM-1_8xxxxxx)
+        return "fm1-open", {"FM-1_8000014": "V14"}.get(identity, "")
+    if plain and re.match(r"felucca \d", v):
+        # "FELUCCA 2.6 BETA": SLOOP's build.py --release (Felucca's writes "v2.6"), a SLOOP fork's release (sloopDX 2.6:
+        # FM-1_926): the catalog's one firmware with that identity (KARMA, FM-1_926 too, would have named itself)
+        other = _catalog_only_other(identity, "felucca", skip=INFO_ALWAYS_NAMED)
+        if other:
+            return other, tag
+    if plain:                                           # Felucca itself (INFO "FELUCCA v1.8.1"; its releases FM-1_9XY,
+        return "felucca", tag                           # shared with forks built the same way – and with the identities
+                                                        # of 9XY firmwares below, FM-1_909, 920, 926 …: the INFO decides)
     m = re.match(r"FM-1_(\d+)", identity or "")
     if m:
         n = int(m.group(1))
         if 91000 <= n < 92000:
             return "melodee", ""
-        if 700 <= n < 800:
-            return "skiff", ""
-        if n == 909:                                    # JIANT's tools/build.py PRODUCT (its web installer's builds)
+        if 700 <= n < 800:                              # (Skiff's FM-1_7XY – unless the catalog lists the exact
+            return (_catalog_only_other(identity, "skiff") or "skiff"), ""   # identity for another: TONITOR FM-1_700)
+        if n == 909:                                    # JIANT's tools/build.py PRODUCT (its web installer's builds;
+                                                        # a plain FELUCCA INFO there: Felucca 0.9's release, above)
             return "jiant-fm", ""
         if n == 930:                                    # CoralFlower's tools/build.py PRODUCT (every release)
             return "coralflower", ""
+        if n == 920:                                    # ChoralRoot FM-1's tools/build.py PRODUCT (every FM-1 release)
+            return "choralroot-fm-1", ""
+        if n == 966:                                    # GR!MM's tools/build.py PRODUCT (every release; the catalog's key)
+            return "gr-mm", ""
         if n == 926:                                    # KARMA's own identity in every build (tools/build.py PRODUCT)
             return "karma", ""
         if n in (15, 16):
             return f"stock-v{n}", f"V{n}"
     return "", ""
+
+
+# firmwares every build of which names itself in the INFO answer: a plain "FELUCCA …" on their identity is another
+# firmware (KARMA's FM-1_926 since 3.0, "FELUCCA KARMA 3.x" – sloopDX 2.6's release carries FM-1_926 too)
+INFO_ALWAYS_NAMED = ("karma",)
+
+
+def _catalog_only_other(identity: str, parent: str, skip: tuple = ()) -> str:
+    """the one catalog firmware other than parent whose packages carry this identity ("" if none, several, or the
+    parent's own): X0X's forks (TRIBE 0.3.0: FM-1_9000300) answer X0X's INFO unchanged. skip: firmwares that cannot
+    be meant (they would have named themselves)"""
+    if not identity:
+        return ""
+    try:
+        from . import catalog
+        keys = {e.key for e in catalog.by_product(identity)} - set(skip)
+    except Exception:                                   # noqa: BLE001 – no catalog: no such guess
+        return ""
+    if parent in keys or len(keys) != 1:
+        return ""
+    return next(iter(keys))
+
+
+_TWIN_IDS: dict[str, tuple[str, str]] | None = None
+
+
+def _twin_identities() -> dict[str, tuple[str, str]]:
+    """identity -> (key, tag) of the bundled studio twins of firmwares without an editor INFO (studio.FIRMWARES with no
+    backup over USB or "editor" False: FoMni, AMB-1, LOOM-8). Their release identities are their own (FoMni 0.4.1:
+    FM-1_8000401, AMB-1 1.3.2: FM-1_7010302, LOOM-8 0.14: FM-1_10001400) – nothing else would tell them from FM1 Open's
+    FM-1_8xxxxxx or an unknown firmware."""
+    global _TWIN_IDS
+    if _TWIN_IDS is None:
+        _TWIN_IDS = {}
+        try:
+            from . import studio
+            for fw, spec in studio.FIRMWARES.items():
+                if studio.no_backup(fw) or spec.get("editor") is False:
+                    for b in studio.builds(fw):
+                        if b.manifest.get("identity"):
+                            _TWIN_IDS[b.manifest["identity"]] = (fw, "v" + b.version.lstrip("vV"))
+        except Exception:                               # noqa: BLE001 – no twins: no such guess
+            pass
+    return _TWIN_IDS
+
+
+# firmwares whose INFO always names them (SLOOP "FELUCCA SLOOP 2.8.5", KARMA "FELUCCA KARMA 3.1", ...): a plain "FELUCCA
+# v…" is none of them, whatever this machine remembered for the identity
+SELF_NAMING = ("sloop", "karma", "orbit", "melodee", "jiant-fm", "coralflower", "choralroot-fm-1")
+SELF_NAMING += tuple(f.key for f in fwfamily.FAMILIES if f.names and f.key not in SELF_NAMING)       # (and every fork the audit found naming itself)
 
 
 def query_identity(port_name: str = "", timeout=20) -> tuple[str, str]:
@@ -649,7 +842,7 @@ def install(s: FirmwareSpec, pkg_path: Path, tag: str, port_name: str = "", res:
         info = fp.analyze(pkg_path, s.loader_family)
     except fp.PackageError as e:
         raise InstallError(str(e))
-    if s.sha256 and info.sha256 != s.sha256.lower():
+    if s.sha256 and info.sha256 != s.sha256.lower() or pinned_sha(s, tag) and info.sha256 != pinned_sha(s, tag):
         raise InstallError(_("The checksum of {name} does not match – nothing installed.").format(name=Path(pkg_path).name))
     if expect_sha and info.sha256 != expect_sha.lower():
         raise InstallError(_("{name} has changed since the check – nothing installed.").format(name=Path(pkg_path).name))
@@ -771,6 +964,17 @@ def explain(e: BaseException) -> str:
     code = getattr(e, "code", "")
     detail = getattr(e, "detail", "")
     return f"{type(e).__name__}{f' [{code}]' if code else ''}: {e}" + (f" ({detail})" if detail else "")
+
+
+def spec_by_pinned_sha(sha: str) -> FirmwareSpec | None:
+    """a firmware whose version the app pins with exactly this checksum (KARMA's site packages)"""
+    import dataclasses
+    sha = (sha or "").lower()
+    for sp in catalog():
+        for tag, v in sp.versions.items():
+            if sha and str(v.get("sha256", "")).lower() == sha:
+                return dataclasses.replace(sp, sha256=sha, release_tag=tag)
+    return None
 
 
 def spec_by_release_sha(sha: str) -> FirmwareSpec | None:

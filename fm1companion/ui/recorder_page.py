@@ -20,6 +20,8 @@ from .common import (FlowLayout, JobDialog, confirm, fs_error_text, notify, fmt_
 from ..i18n import _, decimal, ngettext
 
 REALTIME = (0xF8, 0xFA, 0xFB, 0xFC)
+SETTINGS = {"sync": False, "bars": 4, "sync_mode": "start", "latency_ms": 0.0, "split": "pairs", "export": "flac",
+            "source": "fm1"}
 
 
 class RecorderPage(QWidget):
@@ -29,8 +31,7 @@ class RecorderPage(QWidget):
     def __init__(self, ctx, parent=None):
         super().__init__(parent)
         self.ctx = ctx
-        self.opts = config.module("recorder", {"sync": False, "bars": 4, "sync_mode": "start", "latency_ms": 0.0,
-                                               "split": "pairs", "export": "flac", "source": "fm1"})
+        self.opts = config.module("recorder", dict(SETTINGS))
         self.dev: recorder.CaptureDevice | None = None
         self.sources: list[recorder.CaptureDevice] = []
         self.rec: recorder.Recording | None = None

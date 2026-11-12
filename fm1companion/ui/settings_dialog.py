@@ -3,24 +3,66 @@
 from __future__ import annotations
 
 from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout,
-                             QInputDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSpinBox,
-                             QTabWidget, QVBoxLayout, QWidget)
+                             QInputDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QPushButton,
+                             QSpinBox, QTabWidget, QVBoxLayout, QWidget)
 from PyQt6.QtCore import Qt
 
 from .. import config, firmware, i18n
-from ..i18n import _
+from ..i18n import N_, _
 from .common import confirm, german_buttons, icon, show_error
 
 
+def _defaults(module: str, name: str):
+    import importlib
+    return lambda: dict(getattr(importlib.import_module(module, __package__), name))
+
+
+# Sections that keep their own settings (config.module): key, name (msgid), defaults, keys that stay.
+# Kept: what is yours rather than a setting – a token, the wishlist, MIDI learn assignments, routing presets,
+# chosen sound fonts, trusted simulator origins, the mirror folder, the Studio's last device.
+PAGE_SETTINGS = [
+    ("catalog", N_("Catalog (filters, sorting, preview images, automatic update)"),
+     _defaults("..ui.pages.discover", "DEFAULTS"), ("wishlist", "github_token", "last_visit")),
+    ("daten", N_("Automatic backups (on connect, periodically, mirror options)"),
+     _defaults("..autobackup", "DEFAULTS"), ("mirror",)),
+    ("studio", N_("Studio (inputs, export options)"), _defaults(".studio_service", "SETTINGS"), ("last_profile",)),
+    ("recorder", N_("Recording (sync, bars, split, export format)"), _defaults(".recorder_page", "SETTINGS"), ()),
+    ("midi", N_("MIDI (keyboard, clock, filters)"), _defaults("..ui.pages.midi", "SETTINGS"),
+     ("learn", "learn_port", "routing_presets")),
+    ("musik", N_("View & Export (lanes, drum channel, loops)"), _defaults("..ui.pages.project_view", "SETTINGS"), ()),
+    ("simulator", N_("Simulator (latency, inputs)"), _defaults("..ui.pages.simulator", "SETTINGS"),
+     ("device_origins",)),
+    ("soundmodule", N_("Sound module (driver, latency, gain, channels)"),
+     _defaults("..ui.pages.soundmodule", "SETTINGS"), ("soundfont", "custom")),
+    ("audio", N_("Audio output"), lambda: {"output": "", "keep_off_fm1": True}, ()),
+    ("rettung", N_("Rescue (expert mode)"), lambda: {"experte": False}, ()),
+    ("installer", N_("Installation (remembered answers)"), lambda: {"v15_choice": {}}, ()),
+    ("storage", N_("Automatic cleanup (Storage tab)"), _defaults("..storage", "DEFAULTS"), ("last_auto",)),
+]
+
+
+def reset_page_settings(keys) -> list[str]:
+    """put the chosen sections back to their defaults (what is yours stays, see PAGE_SETTINGS) and save.
+    -> the keys that were reset"""
+    done = []
+    for key, _title, defaults, keep in PAGE_SETTINGS:
+        if key in keys:
+            config.reset_module(key, defaults(), keep)
+            done.append(key)
+    if done:
+        config.save()
+    return done
+
+
 class SettingsDialog(QDialog):
-    def __init__(self, ctx, parent=None):
+    def __init__(self, ctx, parent=None, tab: str = ""):
         super().__init__(parent)
         self.ctx = ctx
         s = ctx.settings
         self.setWindowTitle(_("Settings"))
         self.setMinimumSize(620, 460)
         lay = QVBoxLayout(self)
-        tabs = QTabWidget()
+        self.tabs = tabs = QTabWidget()
         lay.addWidget(tabs)
 
         # General
@@ -47,6 +89,15 @@ class SettingsDialog(QDialog):
         f.addRow("", self.check)
         f.addRow("", self.autobk)
         f.addRow(_("Keep automatic backups:"), self.keep)
+        self.careful = QComboBox()
+        self.careful.addItem(_("automatic (when the FM-1 is connected through a USB hub)"), "auto")
+        self.careful.addItem(_("always"), "always")
+        self.careful.addItem(_("never"), "never")
+        self.careful.setToolTip(_("Careful USB mode waits longer for the FM-1 to restart, answers its requests more "
+                                  "slowly and resumes the write automatically if the USB connection drops – "
+                                  "the usual trouble with USB hubs. All safety checks stay the same."))
+        self.careful.setCurrentIndex(max(0, self.careful.findData(getattr(s, "careful_usb", "auto"))))
+        f.addRow(_("Careful USB mode for flashing:"), self.careful)
         # language of the user interface: applied at the next start (texts are translated when pages are built)
         self.language = QComboBox()
         self.language.addItem(_("System language ({name})").format(
@@ -59,6 +110,16 @@ class SettingsDialog(QDialog):
         self.language_hint.setProperty("role", "small")
         f.addRow(_("Language:"), self.language)
         f.addRow("", self.language_hint)
+        reset = QPushButton(icon("edit-undo", "document-revert"), _("Default values"))
+        reset.setToolTip(_("Puts the options in this window back to their default values (also appearance and "
+                           "recording). Folders, devices and your firmware list stay. Only saved with OK."))
+        reset.clicked.connect(self.restore_defaults)
+        f.addRow("", reset)
+        b_pages = QPushButton(icon("edit-clear-history", "edit-undo"), _("Reset settings of …"))
+        b_pages.setToolTip(_("Puts the settings the pages keep themselves (catalog, Studio, MIDI, recording …) back "
+                             "to their default values – chosen one by one, applied at once."))
+        b_pages.clicked.connect(self.reset_pages_dialog)
+        f.addRow("", b_pages)
         tabs.addTab(g, _("General"))
 
         # Appearance
@@ -96,9 +157,11 @@ class SettingsDialog(QDialog):
         af0.addRow(_("Theme:"), self.theme)
         af0.addRow(_("Accent color:"), self.accent)
         af0.addRow(_("Icons:"), self.icons)
+        self.icons.setToolTip(_("Icons already shown change completely after restarting the app."))
         af0.addRow(_("Interface size:"), self.zoom)
         af0.addRow(_("Desktop notifications:"), self.notify)
         af0.addRow("", self.splash)
+        self.splash.setToolTip(_("Applies from the next start."))
         wiz = QPushButton(icon("tools-wizard"), _("Run setup assistant again …"))
         wiz.clicked.connect(self._wizard)
         af0.addRow("", wiz)
@@ -116,7 +179,9 @@ class SettingsDialog(QDialog):
         h.addWidget(b)
         of.addRow(_("Main folder:"), h)
         ol.addLayout(of)
-        hint = QLabel(_("It holds backups, projects, kits, recordings, firmware and the sample folder “Samples”."))
+        hint = QLabel(_("It holds backups, projects, kits, recordings, firmware and the sample folder “Samples”.")
+                      + " " + _("Choosing another folder does not move existing files – move them yourself "
+                                "(with the app closed)."))
         hint.setWordWrap(True)
         ol.addWidget(hint)
         ol.addWidget(QLabel(_("More sample folders (e.g. your Pocket Operator samples):")))
@@ -174,11 +239,94 @@ class SettingsDialog(QDialog):
         tabs.addTab(d, _("Devices"))
         self._fill_devs()
 
+        # Storage: sizes, cleanup (measured when the tab is first shown)
+        from .storage_tab import StorageTab
+        self.storage = StorageTab(ctx, self)
+        self.storage_index = tabs.addTab(self.storage, _("Storage"))
+        tabs.currentChanged.connect(self._tab_changed)
+        if tab == "storage":
+            tabs.setCurrentIndex(self.storage_index)
+
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         german_buttons(bb)
         bb.accepted.connect(self._ok)
         bb.rejected.connect(self.reject)
         lay.addWidget(bb)
+
+    def _tab_changed(self, i):
+        if i == self.storage_index and not self.storage.cats:
+            self.storage.refresh()
+
+    def restore_defaults(self):
+        """default values into the widgets (General, Appearance, Recording, sample options); saved only with OK"""
+        from . import theme as th
+        d = config.Settings()
+        self.channel.setCurrentIndex(max(0, self.channel.findData(d.channel)))
+        self.check.setChecked(d.check_on_start)
+        self.autobk.setChecked(d.auto_backup_before_update)
+        self.keep.setValue(d.keep_backups)
+        self.careful.setCurrentIndex(max(0, self.careful.findData(d.careful_usb)))
+        self.language.setCurrentIndex(max(0, self.language.findData(i18n.SYSTEM)))
+        self.theme.setCurrentIndex(max(0, self.theme.findData(d.theme)))
+        if self.accent.findData(th.DEFAULT_ACCENT) >= 0:
+            self.accent.setCurrentIndex(self.accent.findData(th.DEFAULT_ACCENT))
+        self.icons.setCurrentIndex(max(0, self.icons.findData("app")))
+        self.zoom.setValue(100)
+        self.notify.setCurrentIndex(max(0, self.notify.findData("background")))
+        self.splash.setChecked(True)
+        self.norm.setChecked(d.sample_default_normalize)
+        self.trim.setChecked(d.sample_default_trim)
+        self.aud.setText(d.audacity_cmd)
+        self.open_aud.setChecked(d.record_open_audacity)
+
+    def reset_pages_dialog(self, preselect=()) -> list[str]:
+        """choose the sections whose own settings go back to the defaults (applied right away, after a question)"""
+        dlg = QDialog(self)
+        dlg.setWindowTitle(_("Reset settings of …"))
+        v = QVBoxLayout(dlg)
+        intro = QLabel(_("Tick the pages whose settings go back to their default values. What is yours stays: "
+                         "folders, devices, backups, your firmware list, the GitHub token, the catalog's remembered "
+                         "list, MIDI learn assignments and routing presets, chosen sound fonts."))
+        intro.setWordWrap(True)
+        v.addWidget(intro)
+        lst = QListWidget()
+        for key, title, _d, _k in PAGE_SETTINGS:
+            it = QListWidgetItem(_(title))
+            it.setData(Qt.ItemDataRole.UserRole, key)
+            it.setFlags(it.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            it.setCheckState(Qt.CheckState.Checked if key in preselect else Qt.CheckState.Unchecked)
+            lst.addItem(it)
+        v.addWidget(lst, 1)
+        note = QLabel(_("Pages that are already open may show the old values until the app is restarted."))
+        note.setWordWrap(True)
+        note.setProperty("role", "small")
+        v.addWidget(note)
+        bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
+        ok = bb.addButton(_("Reset"), QDialogButtonBox.ButtonRole.AcceptRole)
+        ok.setProperty("variant", "danger")
+        german_buttons(bb)
+        bb.accepted.connect(dlg.accept)
+        bb.rejected.connect(dlg.reject)
+        v.addWidget(bb)
+        self._reset_list = lst                 # (tests)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return []
+        keys = [lst.item(i).data(Qt.ItemDataRole.UserRole) for i in range(lst.count())
+                if lst.item(i).checkState() == Qt.CheckState.Checked]
+        if not keys:
+            return []
+        names = [_(t) for k, t, _d, _k in PAGE_SETTINGS if k in keys]
+        if not confirm(self, _("Reset settings of …"),
+                       _("Put these settings back to their default values?<br>{list}").format(
+                           list="<br>".join("• " + n for n in names)), _("Reset"), danger=True):
+            return []
+        done = reset_page_settings(keys)
+        if "storage" in done:
+            self.storage.load_values()
+        w = self.parent()
+        if done and w is not None and hasattr(w, "notify"):
+            w.notify(_("Settings reset: {list}.").format(list=", ".join(names)), "success")
+        return done
 
     @staticmethod
     def _swatch(col: str):
@@ -261,11 +409,41 @@ class SettingsDialog(QDialog):
             self.ctx.changed.emit()
 
     def _dev_delete(self):
+        """forget a device – optionally with its Studio state (backups and projects always stay)"""
         p = self._cur()
-        if p and confirm(self, _("Forget device"),
-                         _("Forget {name}? Backups and projects are kept.").format(name=p.name), _("Forget")):
-            self.ctx.store.delete(p.id)
-            self._fill_devs()
+        if not p:
+            return False
+        from .. import storage
+        from .. import studio as S
+        folder = p.folder_name
+        has_state = S.state_path(folder).parent.is_dir()
+        service = getattr(getattr(self.ctx, "window", None), "studio", None)
+        in_use = has_state and storage.studio_state_in_use(folder, service)
+        box = QMessageBox(QMessageBox.Icon.Question, _("Forget device"),
+                          _("Forget {name}? Backups and projects are kept.").format(name=p.name), parent=self)
+        chk = None
+        if has_state:
+            chk = QCheckBox(_("also delete its Studio state (your work in the Studio for this device)"))
+            if in_use:
+                chk.setEnabled(False)
+                chk.setToolTip(_("The Studio is working on this state right now – open another state there first."))
+            box.setCheckBox(chk)
+        yes = box.addButton(_("Forget"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(_("Cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(yes)
+        self._forget_box = box                 # (tests)
+        box.exec()
+        if box.clickedButton() is not yes:
+            return False
+        self.ctx.store.delete(p.id)
+        if chk is not None and chk.isChecked() and chk.isEnabled():
+            try:
+                storage.delete_studio_state(folder)
+            except OSError as e:
+                show_error(self, _("Not deleted"), _("The device was forgotten, but its Studio state could not be "
+                                                     "deleted: {error}").format(error=e.strerror or e))
+        self._fill_devs()
+        return True
 
     def _ok(self):
         s = self.ctx.settings
@@ -273,6 +451,7 @@ class SettingsDialog(QDialog):
         s.check_on_start = self.check.isChecked()
         s.auto_backup_before_update = self.autobk.isChecked()
         s.keep_backups = self.keep.value()
+        s.careful_usb = self.careful.currentData() or "auto"
         s.theme = self.theme.currentData()
         from . import theme as th
         pr = th.prefs()
@@ -287,6 +466,7 @@ class SettingsDialog(QDialog):
         s.sample_default_trim = self.trim.isChecked()
         s.audacity_cmd = self.aud.text().strip() or "audacity"
         s.record_open_audacity = self.open_aud.isChecked()
+        self.storage.apply()
         lang = self.language.currentData() or i18n.SYSTEM
         self.language_changed = lang != getattr(s, "language", i18n.SYSTEM)
         s.language = lang

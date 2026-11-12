@@ -712,7 +712,7 @@ def merge(readme_text: str | None, mooring: dict | None, builtin_keys: dict | No
     _resolve_lineage(entries)
     # make keys unique; built-in firmwares keep their key
     builtin_keys = builtin_keys or {"melodee": "keremimo/melodee", "skiff": "illuminus5/skiff",
-                                    "sloop": "isod89/sloop-fm1"}
+                                    "sloop": "isod89/sloop-fm1", "karma": "eatyourgreensstudio-dotcom/karma-fm1"}
     seen: set[str] = set()
     for e in entries:
         for k, r in builtin_keys.items():
@@ -739,6 +739,35 @@ def merge(readme_text: str | None, mooring: dict | None, builtin_keys: dict | No
     for p in cat.unknown_packages:
         p.__dict__.pop("_name", None)
     cat.entries = entries
+    return with_builtins(cat)
+
+
+# the line each built-in firmware descends from, for an entry the catalog does not have (yet)
+BUILTIN_LINEAGE = {"karma": (["SLOOP"], "SLOOP; Felucca")}
+
+
+def with_builtins(cat: Catalog) -> Catalog:
+    """the app's built-in firmwares the catalog does not list (KARMA: on no awesome-fm-1 list yet) as entries of their
+    own, so the catalog view shows them and “Install …” works – an entry the catalog does have stays as it is (it is
+    marked built-in by its repository in merge())"""
+    from . import firmware
+    have = {e.key for e in cat.entries} | {e.repo.lower() for e in cat.entries if e.repo}
+    for sp in firmware.BUILTIN:
+        if sp.key in have or sp.repo.lower() in have or not sp.versions:
+            continue
+        lineage, text = BUILTIN_LINEAGE.get(sp.key, ([], ""))
+        links = {k: v for k, v in (("site", sp.homepage), ("installer", sp.installer_url), ("editor", sp.editor_url),
+                                   ("emulator", sp.emulator_url), ("manual", sp.manual_url)) if v}
+        pkgs = [Package(label=f"{sp.name} {r.tag.lstrip('v')} ({next(iter(r.assets), '')})",
+                        version=r.tag, product=sp.product, sha256=r.sha256, url=next(iter(r.assets.values()), ""),
+                        family=sp.family, license=sp.license, source_repo=f"https://github.com/{sp.repo}",
+                        loader_family=sp.loader_family)
+                for r in firmware.pinned_releases(sp, live=False) if r.sha256]
+        cat.entries.append(Entry(key=sp.key, name=sp.name, author=sp.author, description=sp.description,
+                                 section="open", categories=[sp.category] if sp.category else [], lineage=list(lineage),
+                                 lineage_text=text, license=sp.license, repo=sp.repo, links=links, packages=pkgs,
+                                 family=sp.family, protocol="felucca",
+                                 protocol_evidence=f"built-in firmware of the app ({sp.key})", builtin=True))
     return cat
 
 
@@ -835,10 +864,10 @@ def load(prefer_cache: bool = True) -> Catalog:
             live = Catalog.from_dict(json.loads(cached_file().read_text("utf-8")), "cache")
             if live.entries and (live.revision, live.built) >= (snap.revision, snap.built):
                 _carry_over(snap, live)
-                return live
+                return with_builtins(live)
         except (OSError, ValueError, TypeError):
             pass
-    return snap
+    return with_builtins(snap)
 
 
 def _carry_over(old: Catalog, new: Catalog):

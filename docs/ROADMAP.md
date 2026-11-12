@@ -13,8 +13,13 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 | 3b | **JIANT FM**, the public stable of its installer (V10.6z2), plus the earlier stable V10.60 and beta V10.61 | **done** (branch `studio-jiant`; same page, virtual device, backup ↔ twin, write back) |
 | 3c | **CoralFlower**, the stable of its installer (0.7.1), plus 0.7 | **done** (branch `studio-coralflower`; same page, virtual device, backup ↔ twin, write back) |
 | 3d | **KARMA**, the version its installer serves (3.1), plus 3.0.5 | **done** (branch `studio-karma`; same page, virtual device, backup ↔ twin through SLOOP's protocol, write back) |
-| 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V16 may differ | after that |
+| 3e | **Felucca**, the stable of its installer (1.8.1), plus 1.8.0 | **done** (branch `w-felucca`; same page, virtual device, backup ↔ twin with the sample slots, write back; Felucca forks get its twin with a warning) |
+| 3f | **ChoralRoot FM-1**, the release its installer offers (0.39), plus 0.38 | **done** (branch `w-group4`; same page, virtual device, backup ↔ twin with RESTART, write back; loop slots on the panel) |
+| 3g | **X0X** (1.2.1, 1.2.0), **FoMni** (0.4.1, 0.4), **AMB-1** (1.3.2, 1.3.1), **LOOM-8** (0.14, 0.13.1) | **done** (branch `w-cv`; X0X and LOOM-8: backup ↔ twin as their own image, taken whole, write back; FoMni and AMB-1 have no backup over USB: play, export, studio states) |
+| – | **ORBIT**, **Hortator**, **GR!MM** | **no twin** (ORBIT: TE's CLUSTER tables are not relicensed; Hortator, GR!MM: their own editor protocols) – recognised, ORBIT's backups through SLOOP's protocol |
+| 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V15/V16 differ | **done** (branch `w-fm1open`; the FM1 Open twin for FM1 Open devices – backup ↔ twin over its own file protocol, write back – and as the stand-in for V15/V16 with a note; V15's factory voice restore) |
 | – | **Original V16** | **paused, not dropped** |
+| – | **Original V15: own voices into a bank A–D** (the same commands 33/34 as M-VAVE's factory restore, other data; the bank's current voices cannot be read back first) | **needs a hardware test** – not offered in the app; only the factory restore is |
 
 ## Status 2.2.0 (Melodee)
 
@@ -213,3 +218,82 @@ V16 support is explicitly wanted. Blocker: the V16 source code is not open; M-VA
 - **New and most promising:** fm1-emu (see above) already runs V16. Open: M-VAVE's firmware drives
   USB via interrupts, which fm1-emu does not emulate yet – so a backup via USB does not work yet; sound,
   operation and flash do. Measure the tempo on the Pi.
+
+## Housekeeping: storage, cleanup, undo (2.5.x, 2.6.x)
+
+User report: "How do I delete old logs and downloaded firmware files?" Done in 2.5.x: **Settings › Storage**
+(also Tools › *Storage and cleanup …*, logic in `fm1companion/storage.py`, tests `tests/test_storage.py`):
+per category size, *Open folder*, *Delete …* with a question; automatic cleanup at most once a day (rotated logs
+after 30 days, 2 downloads per firmware plus the versions on the known devices, 3 journal package copies, 2 editor
+versions per firmware, catalog images / GitHub answers / sample-pack checkouts / `fm1c-*` temp files after 30 days).
+Never deleted: the user's folders in `~/FM-1` (only `Firmware/<known firmware>/<version>` counts as a download),
+the journal, the package copy and source of an active (resumable) journal entry, the git tool copies while an
+entry is active, the newest original V15 download (offline rescue), the rescue tool, QtWebEngine site data (2.6.x: on request, see below) –
+and nothing while an installation runs (in-process lock or a live `install.lock`). The system check shows the total.
+Also fixed: Studio states can be deleted one by one (orphans of forgotten devices are marked), the catalog's
+remembered list can be cleared (More › *Clear the remembered list …*), General › *Default values* (fills the dialog,
+saved only with OK), hints that the icon set and the splash screen apply after a restart and that changing the
+main folder does not move files.
+
+What grows and where (measured from the code):
+
+| What | Where | Growth | Cleanup |
+|---|---|---|---|
+| Log | `~/.local/state/fm1-companion/logs` | rotating, ≤ 5 × 1 MB | Storage (rotated parts by age) |
+| Firmware downloads | `~/FM-1/Firmware/<key>/<tag>` | ~1–2 MB per version, never deleted before | Storage, keep N |
+| Journal package copies | `DATA_DIR/flash/packages/<sha>.fwsc` | one per installed package, never deleted before | Storage, keep N, active kept |
+| Tool clones | `DATA_DIR/repos/<key>` | partial clone per firmware, a few MB | Storage (manual) |
+| Editor copies | `DATA_DIR/editor/<key>/<tag>` | one per opened version | Storage, keep N |
+| Catalog cache | `CACHE_DIR/catalog/{thumbs,github}`, `CACHE_DIR/releases-*.json` | images up to 6 MB each | Storage, max age |
+| Sample-pack checkouts | `CACHE_DIR/samplepacks/<id>/repo` | deleted right after copying (only `index.json` stays) | Storage, max age |
+| QtWebEngine cache / site data | `CACHE_DIR/webengine`, `DATA_DIR/webengine` | Chromium-managed | cache: Storage (`clearHttpCache()` while running); site data: Storage, on request (all origins) |
+| Temp files | `/tmp/fm1c-*` | normally removed at exit; stay after a crash | Storage (> 1 h), auto (> 1 day) |
+| Error / system check reports | `~/FM-1-Companion-Fehlerbericht-*.zip`, `~/systemcheck-*.txt` | per click | Storage (manual) |
+| Damaged settings copies | `CONFIG_DIR/config.json.kaputt-*` | per broken start | Storage (manual) |
+| Studio states | `DATA_DIR/studio/<profile>` | ~1 MB per device | Storage, one by one |
+| Automatic / safety backups | `~/FM-1/Backups/<device>` | per connect / install / restore / write back | existing retention (`keep_backups`) |
+| Rescue dumps, tool logs | `~/FM-1/Rettung` | per rescue run | Storage, one by one, never automatic |
+| Automatic backups in the mirror | mirror folder (NAS) | per mirrored backup | same retention, only files the app copied |
+| Recordings, projects, kits, samples, downloads | `~/FM-1/…` | user's | never by the app (pages have their own delete) |
+
+Done in 2.6.x (the former open list, all built in):
+
+- **NAS mirror retention:** `autobackup.prune_mirror` applies `keep_backups` (and *newest of each month*) to the
+  mirror folder after every mirrored backup and after *Mirror now*. It only deletes files this app copied there
+  itself (remembered locally in `DATA_DIR/daten/mirror.json`, per mirror folder, with their SHA-256 – not in the
+  mirror, so a second computer mirroring into the same folder never deletes this one's files), that are still
+  unchanged, that are automatic backups and that the local retention already deleted. Manual, pinned and foreign
+  files are never touched. Setting *delete old automatic backups in the mirror too* (Backups › Automatic backups,
+  on by default) with a note. Also: a failed copy no longer leaves a `.part` file in the mirror.
+- **Backup index:** entries of deleted files are dropped when the index is loaded (`os.path.exists`) and on every
+  listing of a folder (`prune_index`, without touching the disk); mirror files are read without the index
+  (`read_meta(cached=False)`), so NAS paths never end up in it.
+- **Sample packs:** `samplepacks.download` deletes the git copy (work tree and fetched blobs in `.git`) right after
+  copying – also after a cancel or an error (`drop_checkout`); `index.json` stays, the next download clones the
+  structure again (a few hundred KiB) and refreshes the list if the pack changed.
+- **Rescue folder:** Storage › *Rescue dumps and tool logs* › *Show and delete dumps …* lists session folders
+  (`fm1-recovery-*`), loose `.bin` dumps and the tool logs with date/size (`storage.rescue_items`). Never automatic,
+  one at a time, a strong question each time; the newest full (1 MiB) dump of every device – grouped by the key_mac
+  area 0xFF000–0xFFFFF, unrecognisable dumps count as one device, simulations/examples excluded – asks a second time.
+  Refused while an installation runs and for items written in the last 10 minutes.
+- **Web editor site data:** Storage › *Clear web editor data …* (with a warning). Chromium keeps the storage files
+  open as long as the profile lives, and neither Qt 6.4 nor 6.8 offers a safe per-origin delete of local storage, so:
+  if the built-in browser has not been opened in this run, `DATA_DIR/webengine` is emptied at once; otherwise cookies
+  (`cookieStore().deleteAllCookies()`) and visited links are cleared right away and the rest is deleted at the next
+  start, before the profile is created (marker `DATA_DIR/webengine-clear-on-start`). All origins at once.
+- **Page settings:** Settings › General › *Reset settings of …* – a list of every section with its own
+  `config.module(...)` (catalog, automatic backups, Studio, recording, MIDI, View & Export, simulator, sound module,
+  audio output, rescue, installation, cleanup). Reset in place (`config.reset_module`, pages hold the dict); kept:
+  GitHub token, wishlist, MIDI learn and routing presets, chosen sound fonts, trusted simulator origins, mirror folder.
+- **GitHub token:** Firmware+ › More › *GitHub token … (token set (••••1234))*; the dialog shows the state, an empty
+  field keeps the token, *Remove token* removes it. Never more than the last four characters are shown.
+- **Forgetting a device** offers *also delete its Studio state* (disabled while the Studio works on that state);
+  deleting a Studio state in Storage is refused in that case too (the autosave would write it again).
+- **Long reads:** *Fetch projects* (one or all), reading a project in *View & Export* and reading the FM1 Open sample
+  bank can be cancelled – between chunks (each one request and its answer, read only), the dialog says what was
+  read/saved so far. Writes stay non-cancellable on purpose.
+
+Still open / by design:
+
+- **Theme assets** (`CACHE_DIR/theme`) and sound previews (`CACHE_DIR/klang`, 4 files) are tiny and bounded;
+  theme assets are in use by the running style sheet, so they are deliberately not offered for deletion.

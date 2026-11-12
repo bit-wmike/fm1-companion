@@ -114,12 +114,13 @@ names on a non-FM-1 VID are never probed.
   because (a) installers/loaders assume V15's boot area and data layout, (b) another custom firmware's
   step 1 may refuse foreign loaders or its saved data may crash the next firmware, (c) V15 is the
   well-trodden path.
-* **App semantics (decision):** `requires_stock_v15` → the device must report `FM-1_015` when the
-  target install starts. Otherwise the plan first installs the hash-verified official V15
+* **App semantics (decision):** `requires_stock_v15` → on a switch, the device must report `FM-1_015` when the
+  target install starts (an update within the same firmware goes directly, §12). Otherwise the plan first installs the hash-verified official V15
   (`db1642b2…`, own stock loader), verifies `FM-1_015`, then installs the target. TransitFM1 also
   reports `FM-1_015`; that is its documented purpose, so it is accepted.
-* Builtin Melodee/Skiff/SLOOP specs keep `requires_stock_v15 = False` (their own installers handle
-  Felucca-family → Felucca-family switches; Melodee's own step 1 accepts Felucca-family loaders).
+* Builtin Melodee/Skiff/SLOOP/KARMA specs keep `requires_stock_v15 = False` (their own installers handle
+  Felucca-family → Felucca-family switches; Melodee's own step 1 accepts Felucca-family loaders). A switch to them
+  goes via V15 anyway by the policy of §12; an update within them does not.
 * Direct switches to/from stock V16: V16 uses the same stock loader [V catalog loaderSHA256]. Returning
   to V16 from Melodee goes through Melodee's CHECK HEAD (V16's boot area may differ → FAILED −5,
   nothing written) [A]; the app therefore recommends V15 as the way back and treats V16 as optional.
@@ -152,21 +153,42 @@ policy can be extended per family without patching subprocess output. Melodee pa
 region still get it written with Melodee's own repo tool (`firmware.write_resources`), because the
 resource format belongs to that firmware version.
 
-## 12. Intermediate step via original V15 (project requirement, implemented in `flash/planner.py`)
+## 12. Intermediate step via original V15 (owner's policy, implemented in `flash/planner.py`)
 
-| Case | Option in the plan dialog |
+**Policy: "always flash to V15 first – except updates within the same custom firmware".** It applies to every
+install path (Firmware+ › Install & Versions, the catalog's *Install …*, link import, own .fwsc, *Way back from V16*);
+Recovery's *Finish installation* is unchanged (it writes exactly the interrupted package).
+
+| Case (`planner.v15_option`) | V15 step |
 |---|---|
-| Firmware switch (different key) or current firmware unknown | **on** (checkbox ticked, can be unticked) – protection against careless mistakes |
-| Target has `requires_stock_v15` | **on and locked** (the catalog requires V15) |
-| Update of the same firmware (e.g. Melodee rc.6 → rc.7) | off, offered as an option |
-| Target is original V15/V16, device already runs `FM-1_015`, device in update mode | no option |
+| Update / downgrade / reinstall of the **same firmware** (`planner.same_firmware`), also when the catalog sets `requires_stock_v15` (the device already runs that firmware and its own update loader) | `none` – directly |
+| Switch custom A → custom B (a fork is another firmware: SLOOP → KARMA), stock V13/V14 → custom, own file (key `eigene`) | `default_on` – V15 first, expert opt-out |
+| Running firmware **not recognised** (no key, "?", or the INFO answer names another firmware than the profile) | `default_on` – counts as a switch |
+| Device already runs `FM-1_015`, target is original V15 itself, device in update mode | `none` |
+| **Switch** to a target with `requires_stock_v15` (catalog) | `locked` |
+| V16 switch (`planner.v16_switch`: to V16 from a non-stock firmware, from V16 to anything but V15) | `locked` (unchanged) |
+| Target stock V16 from stock | `none` (unchanged) |
 
-Order: **Backup (Felucca protocol) → load package → V15 → target → resources → check identity.**
+"Same firmware" uses the robust recognition: `planner.running_firmware` normalises the recorded key through
+`fwfamily.by_key` (device names such as `jiant` = catalog key `jiant-fm`) and checks it against what the INFO answer
+names (`fwfamily.by_info`); a conflict (stale profile) means "unknown" and so a switch.
+
+The plan says what happens: "Switching from X to Y: the app installs the original firmware V15 first, then Y –
+recommended, so no leftovers of X stay on the FM-1." The checkbox *Expert: install directly without the V15 step*
+(`plan_install(via_v15=False)`, only for `default_on`) is off by default, is **not remembered** (no per-switch memory,
+no setting) and adds a warning to the plan.
+
+Order: **Backup (Felucca protocol) → load and check every package → V15 → target → resources → check identity.**
 Reason [V Unbricker flash map]: Felucca data lives at 0x97000..0xDFFFF / 0xE0000 / 0xFC000 and overlaps
 the original firmware's settings storage 0x93000..0xE8FFF – V15 can overwrite it. The dialog says:
 "Your projects on the device can be lost during the intermediate step – the app backs them up first."
-The choice is only remembered per switch (`config.module("installer")["v15_choice"]["melodee>sloop"]`); there is
-no global switch-off. If you stay on V15 and the presets are garbled: System > Reset Patches.
+
+**Two-step chain in the journal.** Before the V15 step the journal records the target
+(`journal.json` `"chain": {"key", "name", "tag", "file", "device_id", "started"}`); it is cleared once the target is
+written (or when the V15 step failed safely, nothing written). Interrupted after V15 (cancel, failure of the target
+step, or the V15 step finished on the Recovery page): the FM-1 runs `FM-1_015`, Install & Versions shows *Continue:
+install Y* and the plan (`plan_install(chain=…)`, `InstallPlan.chain_resume`) installs Y directly – the V15 step is
+not repeated. If you stay on V15 and the presets are garbled: System > Reset Patches.
 
 ## 13. Rescue level 2 – ROM boot mode "WL82 UBOOT1.00" (4c4a:8057)
 
@@ -359,3 +381,39 @@ a) Does V16 really write 0x4000–0xA8FFF, does the boot head stay the same (A �
 (only visible with a deliberate abort – not recommended)? c) Staging of the original firmware (0xE0000–0xE4FFF
 before/after)? d) Do the leftovers in C and D remain, does rc.7 run with them? e) Does V16 also format on the second
 start? Afterwards correct `RUNTIME`, `STAGING` and `install_ota` in `flashmodel.py`.
+
+## 18. USB hubs: careful mode, automatic resume, flash log (`flash/robust.py`)
+
+User report (Pi 5): directly at the Pi the installation works; through an active USB hub the FM-1 is detected and
+step 1 starts, but the installation does not finish. Failure modes and what the app does:
+
+* [V melodee ota.c `ota_read`] the device repeats a read request after 5 s without a matching answer, 3 tries,
+  then the session ends (step 1: old firmware keeps running, nothing written; step 2: loader back in its main loop,
+  update mode stays [V loader.c `ldr_main`]). Step-1 session deadline 120 s. **App:** answers every repetition;
+  careful idle limits 16 s (step 1) and 20 s (Felucca loader in step 2: its session has certainly ended) instead of
+  8 s / 180 s.
+* [V usb.c] the device holds **one** received SysEx frame; frames arriving while one is pending are dropped. A
+  late, stale answer can therefore push out the next real one. **App:** copies of a request that piled up are
+  answered once; an already answered request followed by a newer one is skipped (the device has moved on);
+  careful mode keeps ≥ 30 ms between two responses (one in flight at a time).
+* [V usb.c `ota_wire_send`] the device aborts if its TX queue stays full > 200 ms. On Linux snd-usb-audio keeps
+  IN URBs queued while the ALSA input is open; the rtmidi callback (`MidoLink._rx`) only puts into a queue and
+  never blocks; nothing sleeps with a closed input while the device is sending (the input is opened before
+  UPGRADE/handshake). Not changed.
+* [V mido rtmidi backend] `get_input_names()` creates a fresh rtmidi client on every call – the port list is
+  current after re-enumeration; no extra client needed.
+* Re-enumeration (hub glitch, power dip): the port disappears – or reappears under the same ALSA name (card
+  number reused). **App:** `WatchedLink` also compares the USB device number (sysfs `devnum`); careful mode waits
+  up to 90 s for **the pinned device** in update mode with **its own loader** (package rule, same model) and sends
+  UPGRADE again – the same resume as Recovery › Finish installation, up to 3 times. Step 1 is repeated (max. 2)
+  only after a dropout or repeated requests, never after a plain stop (that is the device refusing the package).
+  Without a pin nothing is repeated.
+* Slower re-enumeration: waits for loader/restart 120 s in careful mode (30/40 s otherwise).
+* Autosuspend: hubs default to `power/control=auto` (kernel hub driver). Reported in plan and system check;
+  optional udev rule `packaging/udev/60-fm1-companion.rules` (FM-1 IDs + every hub on its path → `on`), installed
+  only on request.
+
+Careful mode: Settings › "Careful USB mode for flashing" = auto (FM-1 behind a hub, `devices.usb_link`) / always /
+never. Flash log: `DATA_DIR/flash/logs/flash-*.txt` (every request with gap, repetitions, duplicates, port
+events, resumes, kernel lines of the time window), last 3 in the bug report ZIP (`flash/`), redacted.
+Tests: `tests/test_usb_hub.py` (`sim.SimFaults`).

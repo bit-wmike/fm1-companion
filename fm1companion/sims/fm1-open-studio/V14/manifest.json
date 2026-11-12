@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "name": "fm1-open-studio",
+  "title": "FM1 Open studio twin",
+  "version": "V14",
+  "source_repo": "https://github.com/m-vave/fm1_open",
+  "ref": "4c7496daac04a95ff10d1afdcc8f9ead2dbabc41",
+  "commit": "4c7496daac04a95ff10d1afdcc8f9ead2dbabc41",
+  "license": "GPL-3.0-only WITH GPL-3.0-linking-exception (APP); see THIRD_PARTY.md",
+  "build_date": "2026-11-11T07:51:04Z",
+  "toolchain": "clang version 20.1.8-wasi-sdk (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)",
+  "builder": "tools/build_sims.py",
+  "files": {
+    "LICENSE": {
+      "sha256": "fe7344af68a6e65d0cf623e3eca1ff4a4d751ba538bffbc5248134b79d02f1fd",
+      "size": 38431
+    },
+    "NOTICE": {
+      "sha256": "da408a97041bac96f700e4db64bfdbc403437cb8063922b93c8f574bcc3bf18d",
+      "size": 2448
+    },
+    "THIRD_PARTY.md": {
+      "sha256": "c10451a1c0b368ec926e86b9296eb0c96c790d4d4768ad07e91b09ca9ea4bfa5",
+      "size": 142314
+    },
+    "twin.wasm": {
+      "sha256": "68a752f75a78a7cfb01480eb50e7db02a74cae0aa5de8b255c7b0417caea9446",
+      "size": 300655
+    }
+  },
+  "kind": "studio",
+  "firmware": "fm1-open",
+  "firmware_version": "V14",
+  "identity": "FM-1_8000014",
+  "abi": 1,
+  "wasm": "twin.wasm",
+  "fs": 44100,
+  "flash_size": 1048576,
+  "glue": "tools/studio/fm1open_studio.c",
+  "glue_sha256": "ae3375afb92c4a7238b6675dfd7c053110549f1b64fe47dd51b2f6b25ae8ecd2",
+  "source_url": "https://github.com/m-vave/fm1_open/archive/4c7496daac04a95ff10d1afdcc8f9ead2dbabc41.tar.gz",
+  "tracks": 8,
+  "projects": 16,
+  "release_status": "current"
+}

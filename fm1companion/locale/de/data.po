@@ -41,11 +41,6 @@ msgstr "Das FM-1 ist im Update-Modus – erst die Installation abschließen (Sei
 msgid "The running firmware"
 msgstr "Die laufende Firmware"
 
-#: fm1companion/ui/backups_page.py:52
-#, python-brace-format
-msgid "{firmware} has no editor protocol – the app cannot make a backup of it. Backups are available for Melodee, Skiff and SLOOP. Please back up important projects with the firmware's own tool."
-msgstr "{firmware} hat kein Editor-Protokoll – davon kann die App kein Backup machen. Backups gibt es bei Melodee, Skiff und SLOOP. Wichtige Projekte bitte mit dem Werkzeug der Firmware sichern."
-
 #: fm1companion/ui/backups_page.py:55
 msgid "The FM-1 does not respond. Check the cable and reconnect."
 msgstr "Das FM-1 antwortet nicht. Kabel prüfen und neu verbinden."
@@ -1854,10 +1849,6 @@ msgstr "unvollständiges Inventar"
 msgid "object too large"
 msgstr "Objekt zu groß"
 
-#: fm1companion/backup.py:182
-msgid "unexpected object order"
-msgstr "unerwartete Objekt-Reihenfolge"
-
 #: fm1companion/backup.py:203 fm1companion/sloopbk.py:272
 msgid "unexpected answer while reading"
 msgstr "unerwartete Antwort beim Lesen"
@@ -1873,10 +1864,6 @@ msgstr "Kein vollständiges Felucca-/Melodee-Backup"
 #: fm1companion/backup.py:295 fm1companion/backup.py:300
 msgid "invalid object in the backup"
 msgstr "ungültiges Objekt im Backup"
-
-#: fm1companion/backup.py:297
-msgid "unexpected object order in the backup"
-msgstr "unerwartete Objekt-Reihenfolge im Backup"
 
 #: fm1companion/backup.py:304
 msgid "Backup damaged (Base64)"
@@ -3510,8 +3497,8 @@ msgid "firmware, web editor, installer and manual that the app embeds"
 msgstr "Firmware, Web-Editor, Installer und Handbuch, die die App einbindet"
 
 #: fm1companion/diag.py
-msgid "basis of Melodee, Skiff, SLOOP and JIANT FM; sampleio.py (vendor) comes from there"
-msgstr "Grundlage von Melodee, Skiff, SLOOP und JIANT FM; sampleio.py (vendor) stammt von dort"
+msgid "basis of Melodee, Skiff, SLOOP and JIANT FM; its unmodified firmware code runs in the studio twin; sampleio.py (vendor) comes from there"
+msgstr "Grundlage von Melodee, Skiff, SLOOP und JIANT FM; ihr unveränderter Firmware-Code läuft im Studio-Zwilling; sampleio.py (vendor) stammt von dort"
 
 #: fm1companion/diag.py
 msgid "firmware with sample slots"
@@ -3528,8 +3515,8 @@ msgid "SLOOP fork; its unmodified firmware code runs in the studio twin, with th
 msgstr "SLOOP-Fork; sein unveränderter Firmware-Code läuft im Studio-Zwilling, mit den Teilen, die er portiert (Plaits, Elements und Clouds von Mutable Instruments, von Emilie Gillet, MIT; die Drum-Stimmen des LXR-02 von Erica Synths, GPL-3.0)"
 
 #: fm1companion/diag.py
-msgid "official open firmware, simulator sources, update tools"
-msgstr "offizielle offene Firmware, Simulator-Quellen, Update-Werkzeuge"
+msgid "official open firmware: its unmodified code runs in the simulator and in the studio twin (also for the original V15/V16), its update tools and its V15 factory voices"
+msgstr "offizielle offene Firmware: ihr unveränderter Code läuft im Simulator und im Studio-Zwilling (auch für die Original-V15/V16), ihre Update-Werkzeuge und ihre V15-Werksstimmen"
 
 #: fm1companion/diag.py
 msgid "firmware catalog and link collection"
@@ -3607,10 +3594,620 @@ msgstr "Angepasster Pattern-Sound {n}"
 msgid "ChoralRoot FM-1 fork (chord instrument); its unmodified firmware code runs in the studio twin"
 msgstr "Fork von ChoralRoot FM-1 (Akkord-Instrument); sein unveränderter Firmware-Code läuft im Studio-Zwilling"
 
-msgid "Felucca fork; basis of CoralFlower"
-msgstr "Fork von Felucca; Grundlage von CoralFlower"
 
 #: fm1companion/backup.py
 #, python-brace-format
 msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
 msgstr "Dieses Backup stammt von {backup}, auf dem FM-1 läuft {device}, das KARMAs Projekte und Drumkits nicht lesen kann. Es wurde nichts geschrieben."
+
+#: fm1companion/diag.py
+msgid "Felucca's ANALOG, LOFI, TRIO, WHEEL, NOISE and PHASE engines, part of the Felucca studio twin"
+msgstr "Feluccas Engines ANALOG, LOFI, TRIO, WHEEL, NOISE und PHASE, Teil des Felucca-Studio-Zwillings"
+
+#: fm1companion/diag.py
+msgid "Felucca's FM-1 hardware layer (USB, update handshake, board code), part of the Felucca studio twin"
+msgstr "Feluccas Hardware-Schicht für das FM-1 (USB, Update-Handshake, Board-Code), Teil des Felucca-Studio-Zwillings"
+
+msgid "This backup is not from FM1 Open, but the FM-1 runs FM1 Open – the formats do not match. Nothing was written."
+msgstr "Dieses Backup stammt nicht von FM1 Open, aber auf dem FM-1 läuft FM1 Open – die Formate passen nicht zusammen. Es wurde nichts geschrieben."
+
+msgid "working project"
+msgstr "Arbeitsprojekt"
+
+#, python-brace-format
+msgid "DX7 library {bank}"
+msgstr "DX7-Bibliothek {bank}"
+
+msgid "sample bank"
+msgstr "Sample-Bank"
+
+msgid "Not an FM1 Open backup"
+msgstr "Kein FM1-Open-Backup"
+
+#, python-brace-format
+msgid "sample bank: {error}"
+msgstr "Sample-Bank: {error}"
+
+msgid "The backup does not contain the working project"
+msgstr "Das Backup enthält das Arbeitsprojekt nicht"
+
+msgid "This FM1 Open has no DX7 library (an older version) – nothing was written."
+msgstr "Dieses FM1 Open hat keine DX7-Bibliothek (eine ältere Version) – es wurde nichts geschrieben."
+
+#, python-brace-format
+msgid "FM-1 connected ({id}) – FM1 Open: MIDI, presets via SysEx, its sample bank (page “Samples”) and the Studio (fetch, write back) work; the other pages need the editor protocol."
+msgstr "FM-1 verbunden ({id}) – FM1 Open: MIDI, Presets per SysEx, seine Sample-Bank (Seite „Samples“) und das Studio (Holen, Zurückschreiben) funktionieren; die übrigen Seiten brauchen das Editor-Protokoll."
+
+msgid "Felucca fork (chord instrument), basis of CoralFlower; its unmodified firmware code runs in the studio twin"
+msgstr "Fork von Felucca (Akkord-Instrument), Grundlage von CoralFlower; sein unveränderter Firmware-Code läuft im Studio-Zwilling"
+
+#: fm1companion/backup_inspect.py
+msgid "Favorites"
+msgstr "Favoriten"
+
+#: fm1companion/backup_inspect.py
+msgid "FM TONE patches of the user sounds"
+msgstr "FM-TONE-Patches der User-Sounds"
+
+#: fm1companion/backup_inspect.py
+#, python-brace-format
+msgid "CZ-1 tones of the user sounds {first}–{last}"
+msgstr "CZ-1-Klänge der User-Sounds {first}–{last}"
+
+#: fm1companion/backup_inspect.py
+#, python-brace-format
+msgid "Loop slot {n}"
+msgstr "Loop-Platz {n}"
+
+#: fm1companion/backup_inspect.py
+#, python-brace-format
+msgid "CZ-1 bank {letter}"
+msgstr "CZ-1-Bank {letter}"
+
+#: fm1companion/backup.py
+#, python-brace-format
+msgid "This backup comes from {backup}, the FM-1 runs {device}: ORBIT and SLOOP store their projects and presets differently, neither reads the other's backups. Nothing was written."
+msgstr "Dieses Backup stammt von {backup}, auf dem FM-1 läuft {device}: ORBIT und SLOOP speichern ihre Projekte und Presets verschieden, keine liest die Backups der anderen. Es wurde nichts geschrieben."
+
+#: fm1companion/diag.py:169
+msgid "Felucca fork (909, 808, two 303s, a break slicer); its unmodified firmware code runs in the studio twin, with the engines it ports (the 909 and 808 after 9W9 and 8W8 by athousanddetails, the 303 after Open303 by Robin Schmidt, MIT)"
+msgstr "Fork von Felucca (909, 808, zwei 303, ein Break-Slicer); sein unveränderter Firmware-Code läuft im Studio-Zwilling, mit den Klangerzeugern, die es portiert (909 und 808 nach 9W9 und 8W8 von athousanddetails, die 303 nach Open303 von Robin Schmidt, MIT)"
+
+#: fm1companion/x0xbk.py:37
+msgid "the file's size"
+msgstr "die Größe der Datei"
+
+#: fm1companion/x0xbk.py:37
+msgid "the transfer (a read request unanswered)"
+msgstr "die Übertragung (eine Leseanfrage blieb unbeantwortet)"
+
+#: fm1companion/x0xbk.py:37
+msgid "the file's head"
+msgstr "der Kopf der Datei"
+
+#: fm1companion/x0xbk.py:38
+msgid "a part's header"
+msgstr "der Kopf eines Teils"
+
+#: fm1companion/x0xbk.py:38
+msgid "a part's checksum (a byte changed on the way)"
+msgstr "die Prüfsumme eines Teils (ein Byte hat sich unterwegs geändert)"
+
+#: fm1companion/x0xbk.py:39
+msgid "the whole file's checksum"
+msgstr "die Prüfsumme der ganzen Datei"
+
+#: fm1companion/x0xbk.py:39
+msgid "a flash erase"
+msgstr "ein Löschen des Flashs"
+
+#: fm1companion/x0xbk.py:39
+msgid "a flash write"
+msgstr "ein Schreiben in den Flash"
+
+#: fm1companion/x0xbk.py:40
+msgid "the read-back (the flash does not hold what was written)"
+msgstr "das Zurücklesen (der Flash enthält nicht, was geschrieben wurde)"
+
+#: fm1companion/x0xbk.py:41
+msgid "answered HOME (no) on the FM-1"
+msgstr "am FM-1 mit HOME (nein) beantwortet"
+
+#: fm1companion/x0xbk.py:42
+msgid "writing the headers (the FM-1 finishes it when switched on again)"
+msgstr "das Schreiben der Köpfe (das FM-1 beendet es beim nächsten Einschalten)"
+
+#: fm1companion/x0xbk.py:43
+msgid "Settings (tempo, MIDI, the options)"
+msgstr "Einstellungen (Tempo, MIDI, die Optionen)"
+
+#: fm1companion/x0xbk.py:43
+msgid "Sound (every part's knobs, the effects)"
+msgstr "Klang (die Regler aller Teile, die Effekte)"
+
+#: fm1companion/x0xbk.py:44
+msgid "Patterns (first part)"
+msgstr "Patterns (erster Teil)"
+
+#: fm1companion/x0xbk.py:44
+msgid "Patterns (second part)"
+msgstr "Patterns (zweiter Teil)"
+
+#: fm1companion/x0xbk.py:44
+msgid "Song"
+msgstr "Song"
+
+#: fm1companion/x0xbk.py:45
+msgid "Knob motion"
+msgstr "Knopfbewegungen"
+
+#: fm1companion/x0xbk.py:88
+#, python-brace-format
+msgid "“{part}”: damaged (checksum)."
+msgstr "„{part}“: beschädigt (Prüfsumme)."
+
+#: fm1companion/x0xbk.py:242
+msgid "A piece of the backup went missing – please try again."
+msgstr "Ein Stück des Backups ist verloren gegangen – bitte noch einmal versuchen."
+
+#: fm1companion/x0xbk.py:251
+msgid "The backup arrived damaged – please try again."
+msgstr "Das Backup ist beschädigt angekommen – bitte noch einmal versuchen."
+
+#: fm1companion/x0xbk.py:307
+msgid "Nothing was changed."
+msgstr "Es wurde nichts geändert."
+
+#: fm1companion/x0xbk.py:294
+#, python-brace-format
+msgid "{firmware} does not answer the backup request (an older version, without backup?)."
+msgstr "{firmware} antwortet nicht auf die Backup-Anfrage (eine ältere Version, ohne Backup?)."
+
+#: fm1companion/x0xbk.py:339
+#, python-brace-format
+msgid "{firmware} does not answer the restore request (an older version, without restore?) – nothing was changed."
+msgstr "{firmware} antwortet nicht auf die Wiederherstellen-Anfrage (eine ältere Version, ohne Wiederherstellen?) – es wurde nichts geändert."
+
+#: fm1companion/x0xbk.py:308
+#, python-brace-format
+msgid "{firmware} could not read its flash (status {code})."
+msgstr "{firmware} konnte seinen Flash nicht lesen (Status {code})."
+
+#: fm1companion/diag.py:178
+msgid "GPL-3.0 (MPL-2.0 file by file)"
+msgstr "GPL-3.0 (MPL-2.0 Datei für Datei)"
+
+#: fm1companion/diag.py:177
+msgid "platform, host simulator and browser emulator of AMB-1 and LOOM-8, compiled into their studio twins"
+msgstr "Plattform, Host-Simulator und Browser-Emulator von AMB-1 und LOOM-8, in ihre Studio-Zwillinge kompiliert"
+
+#: fm1companion/diag.py:175
+msgid "groovebox on fm1-base; its unmodified firmware code runs in the studio twin, with the parts it ports (its LICENSING.md)"
+msgstr "Groovebox auf fm1-base; sein unveränderter Firmware-Code läuft im Studio-Zwilling, mit den Teilen, die es portiert (seine LICENSING.md)"
+
+#: fm1companion/x0xbk.py:72
+#, python-brace-format
+msgid "Project {n} (part {k} of 7)"
+msgstr "Projekt {n} (Teil {k} von 7)"
+
+#: fm1companion/diag.py:174
+msgid "generative ambient machine on fm1-base; its unmodified firmware code runs in the studio twin"
+msgstr "generative Ambient-Maschine auf fm1-base; ihr unveränderter Firmware-Code läuft im Studio-Zwilling"
+
+#: fm1companion/x0xbk.py:369
+#, python-brace-format
+msgid "{firmware} did not restore the backup: {reason}."
+msgstr "{firmware} hat das Backup nicht wiederhergestellt: {reason}."
+
+#: fm1companion/x0xbk.py:338
+#, python-brace-format
+msgid "{firmware} stopped asking for the backup – nothing was changed."
+msgstr "{firmware} hat aufgehört, das Backup anzufordern – es wurde nichts geändert."
+
+#: fm1companion/x0xbk.py:359
+#, python-brace-format
+msgid "{firmware} asked for a part outside the backup – nothing was changed."
+msgstr "{firmware} hat einen Teil außerhalb des Backups angefordert – es wurde nichts geändert."
+
+#: fm1companion/x0xbk.py:124
+#, python-brace-format
+msgid "Not a {firmware} backup."
+msgstr "Kein {firmware}-Backup."
+
+#: fm1companion/diag.py:172
+msgid "chord harp on X0X's platform; its unmodified firmware code runs in the studio twin, with Chordian's rhythms and sounds by Jan125 (CC0)"
+msgstr "Akkordharfe auf der Plattform von X0X; ihr unveränderter Firmware-Code läuft im Studio-Zwilling, mit Chordians Rhythmen und Klängen von Jan125 (CC0)"
+
+#: fm1companion/x0xbk.py:126
+#, python-brace-format
+msgid "A backup from another version of {firmware} (version {version}, {n} parts): this {firmware} cannot restore it."
+msgstr "Ein Backup einer anderen {firmware}-Version (Version {version}, {n} Teile): dieses {firmware} kann es nicht wiederherstellen."
+
+#: fm1companion/backup.py:705
+#, python-brace-format
+msgid "{firmware} restores a backup only whole. Nothing was written."
+msgstr "{firmware} stellt ein Backup nur als Ganzes wieder her. Es wurde nichts geschrieben."
+
+#: fm1companion/backup.py:551
+#, python-brace-format
+msgid "This is a {firmware} backup, but the FM-1 runs a different firmware. Nothing was written."
+msgstr "Das ist ein {firmware}-Backup, aber auf dem FM-1 läuft eine andere Firmware. Es wurde nichts geschrieben."
+
+#: fm1companion/x0xbk.py:133
+#, python-brace-format
+msgid "The {firmware} backup is cut short."
+msgstr "Das {firmware}-Backup ist abgeschnitten."
+
+#: fm1companion/x0xbk.py:295
+#, python-brace-format
+msgid "{firmware} stopped sending the backup – please try again."
+msgstr "{firmware} hat aufgehört, das Backup zu senden – bitte noch einmal versuchen."
+
+#: fm1companion/x0xbk.py:129
+#, python-brace-format
+msgid "The {firmware} backup's head is damaged."
+msgstr "Der Kopf des {firmware}-Backups ist beschädigt."
+
+#: fm1companion/x0xbk.py:47
+msgid "the FM-1 is playing: stop it first"
+msgstr "das FM-1 spielt: zuerst stoppen"
+
+#: fm1companion/x0xbk.py:144
+#, python-brace-format
+msgid "The {firmware} backup is damaged (the whole file's checksum)."
+msgstr "Das {firmware}-Backup ist beschädigt (Prüfsumme der ganzen Datei)."
+
+#: fm1companion/x0xbk.py:121
+#, python-brace-format
+msgid "Too short for a {firmware} backup."
+msgstr "Zu kurz für ein {firmware}-Backup."
+
+#: fm1companion/x0xbk.py:137
+#, python-brace-format
+msgid "“{part}”: a wrong header in the {firmware} backup."
+msgstr "„{part}“: ein falscher Kopf im {firmware}-Backup."
+
+#: fm1companion/x0xbk.py:118
+#, python-brace-format
+msgid "This is a Polly backup, not {firmware}'s."
+msgstr "Das ist ein Polly-Backup, keines von {firmware}."
+
+#: fm1companion/studio.py:139
+#, python-brace-format
+msgid "{firmware} has no backup over USB: its twin cannot be loaded from an FM-1 or a backup, nor written onto one. Play it, export it as WAV and keep its states in the studio."
+msgstr "{firmware} hat kein Backup über USB: sein Zwilling kann weder von einem FM-1 oder Backup geladen noch auf eines geschrieben werden. Spiele ihn, exportiere ihn als WAV und behalte seine Stände im Studio."
+
+#: fm1companion/backup.py:553
+#, python-brace-format
+msgid "The FM-1 runs {firmware}, which takes only its own backups. Nothing was written."
+msgstr "Auf dem FM-1 läuft {firmware}, das nur seine eigenen Backups annimmt. Es wurde nichts geschrieben."
+
+#: fm1companion/backup_inspect.py:576
+#, python-brace-format
+msgid "{firmware} was playing during this backup: changes it had not saved yet are not in it."
+msgstr "{firmware} hat während dieses Backups gespielt: Änderungen, die es noch nicht gespeichert hatte, sind nicht darin."
+
+#, python-brace-format
+msgid "{firmware} has no backup over USB. Nothing was read or written."
+msgstr "{firmware} hat kein Backup über USB. Es wurde nichts gelesen oder geschrieben."
+
+msgid "a different firmware"
+msgstr "eine andere Firmware"
+
+#, python-brace-format
+msgid "Backups through the app ({protocol} backup protocol, from its source code)"
+msgstr "Backups über die App ({protocol}-Backup-Protokoll, laut Quellcode)"
+
+#, python-brace-format
+msgid "{firmware} has no editor protocol – the app cannot make a backup of it. Backups go through the editor protocol of the Felucca family (Felucca's, SLOOP's or X0X's backup commands; docs/firmware-support.md lists every firmware). Please back up important projects with the firmware's own tool."
+msgstr "{firmware} hat kein Editor-Protokoll – davon kann die App kein Backup machen. Backups laufen über das Editor-Protokoll der Felucca-Familie (die Backup-Befehle von Felucca, SLOOP oder X0X; docs/firmware-support.md listet jede Firmware). Wichtige Projekte bitte mit dem Werkzeug der Firmware sichern."
+
+#, python-brace-format
+msgid "{version} answers none of the backup requests the app knows (neither Felucca's nor SLOOP's). Nothing was read or written – please back up with the firmware's own editor or tool."
+msgstr "{version} beantwortet keine der Backup-Anfragen, die die App kennt (weder die von Felucca noch die von SLOOP). Es wurde nichts gelesen oder geschrieben – bitte mit dem Editor oder Werkzeug der Firmware sichern."
+
+msgid "The firmware"
+msgstr "Die Firmware"
+
+#, python-brace-format
+msgid "This backup comes from {backup}, the FM-1 runs {device}: the two keep different things under the same backup objects, so its parts would land in the wrong places. Nothing was written."
+msgstr "Dieses Backup stammt von {backup}, auf dem FM-1 läuft {device}: Die beiden legen unter denselben Backup-Objekten Verschiedenes ab, seine Teile würden an falschen Stellen landen. Es wurde nichts geschrieben."
+
+#, python-brace-format
+msgid "{firmware} keeps its backups in a protocol of its own, which the app does not speak. Nothing was read or written – please use the firmware's own editor for backups."
+msgstr "{firmware} sichert über ein eigenes Protokoll, das die App nicht spricht. Es wurde nichts gelesen oder geschrieben – für Backups bitte den Editor der Firmware verwenden."
+
+msgid "Backups only with the firmware's own editor (a backup protocol of its own)"
+msgstr "Backups nur mit dem eigenen Editor der Firmware (ein eigenes Backup-Protokoll)"
+
+msgid "No backup over USB"
+msgstr "Kein Backup über USB"
+
+#: fm1companion/storage.py:410
+msgid "“{name}” was written a moment ago – a rescue may still be running. Try again in a few minutes."
+msgstr "„{name}“ wurde gerade erst geschrieben – vielleicht läuft noch eine Rettung. Versuch es in ein paar Minuten noch einmal."
+
+#: fm1companion/storage.py:520
+msgid "Contents lists of the sample packs (and git copies left by older versions or an interrupted download – the app now deletes the copy right after copying). The samples you downloaded are in your Samples folder and stay there."
+msgstr "Inhaltslisten der Sample-Packs (und Git-Kopien älterer Versionen oder eines abgebrochenen Downloads – die App löscht die Kopie jetzt direkt nach dem Kopieren). Die heruntergeladenen Samples liegen in deinem Ordner Samples und bleiben dort."
+
+#: fm1companion/storage.py:535
+msgid "Saved data of the built-in browser (cookies, local storage) – web editors may keep your settings there. Only cleared on request, all at once."
+msgstr "Gespeicherte Daten des eingebauten Browsers (Cookies, lokaler Speicher) – Web-Editoren können dort deine Einstellungen ablegen. Nur auf Wunsch geleert, alles auf einmal."
+
+#: fm1companion/storage.py:538
+#: fm1companion/ui/storage_tab.py:339
+msgid "Rescue dumps and tool logs"
+msgstr "Rettungs-Dumps und Werkzeug-Protokolle"
+
+#: fm1companion/storage.py:539
+msgid "Full flash backups and logs of the rescue tool in the main folder › Rettung – your safety net. Only deleted one by one, on request; the newest full backup of a device needs an extra confirmation."
+msgstr "Komplette Flash-Sicherungen und Protokolle des Rettungswerkzeugs im Hauptordner › Rettung – dein Sicherheitsnetz. Nur einzeln und auf Wunsch gelöscht; die neueste Komplettsicherung eines Geräts braucht eine zusätzliche Bestätigung."
+
+#: fm1companion/storage.py:546
+msgid "Backups, projects, samples, kits, recordings, rescue dumps and downloads. The app never deletes them here – automatic backups follow the setting “Keep automatic backups”, rescue dumps have their own row."
+msgstr "Backups, Projekte, Samples, Kits, Aufnahmen, Rettungs-Dumps und Downloads. Die App löscht sie hier nie – automatische Backups folgen der Einstellung „Automatische Backups behalten“, Rettungs-Dumps haben eine eigene Zeile."
+
+#: fm1companion/ui/backups_page.py:136
+msgid "Old automatic backups in the mirror could not be deleted: {error}"
+msgstr "Alte automatische Backups im Spiegel konnten nicht gelöscht werden: {error}"
+
+#: fm1companion/ui/backups_page.py:139
+msgid "{n} old automatic backup deleted in the mirror as well (like here)."
+msgid_plural "{n} old automatic backups deleted in the mirror as well (like here)."
+msgstr[0] "{n} altes automatisches Backup auch im Spiegel gelöscht (wie hier)."
+msgstr[1] "{n} alte automatische Backups auch im Spiegel gelöscht (wie hier)."
+
+#: fm1companion/ui/backups_page.py:407
+msgid "delete old automatic backups in the mirror too (like here)"
+msgstr "alte automatische Backups auch im Spiegel löschen (wie hier)"
+
+#: fm1companion/ui/backups_page.py:409
+msgid "Keeps the mirror folder from growing without limit. Only automatic backups the app copied there itself, unchanged since, and that were already deleted here by “Keep automatic ones” are deleted there. Manual and pinned backups and all other files in the mirror folder are never touched."
+msgstr "Verhindert, dass der Spiegelordner unbegrenzt wächst. Dort werden nur automatische Backups gelöscht, die die App selbst dorthin kopiert hat, die seitdem unverändert sind und die hier schon durch „Automatische behalten“ gelöscht wurden. Manuelle und angeheftete Backups und alle anderen Dateien im Spiegelordner werden nie angefasst."
+
+#: fm1companion/ui/backups_page.py:414
+msgid "In the mirror the app only deletes automatic backups it copied there itself and already deleted here – never manual or pinned ones, never other files. Off: the mirror keeps everything (and grows)."
+msgstr "Im Spiegel löscht die App nur automatische Backups, die sie selbst dorthin kopiert und hier schon gelöscht hat – nie manuelle oder angeheftete, nie andere Dateien. Aus: Der Spiegel behält alles (und wächst)."
+
+#: fm1companion/ui/pages/discover.py:50
+msgid "no token set"
+msgstr "kein Token gesetzt"
+
+#: fm1companion/ui/pages/discover.py:51
+msgid "token set ({hint})"
+msgstr "Token gesetzt ({hint})"
+
+#: fm1companion/ui/pages/discover.py:1239
+msgid "GitHub token … ({state})"
+msgstr "GitHub-Token … ({state})"
+
+#: fm1companion/ui/pages/discover.py:1250
+msgid "Optional: personal GitHub token (only read access to public repos needed). Without a token GitHub allows 60 requests per hour, with a token 5000. It is kept in the settings file, readable only by you."
+msgstr "Optional: persönlicher GitHub-Token (nur Lesezugriff auf öffentliche Repos nötig). Ohne Token erlaubt GitHub 60 Abfragen pro Stunde, mit Token 5000. Er liegt in der Einstellungsdatei, nur für dich lesbar."
+
+#: fm1companion/ui/pages/discover.py:1260
+msgid "new token (leave empty to keep the current one)"
+msgstr "neuer Token (leer lassen, um den bisherigen zu behalten)"
+
+#: fm1companion/ui/pages/discover.py:1260
+msgid "token"
+msgstr "Token"
+
+#: fm1companion/ui/pages/discover.py:1264
+msgid "Remove token"
+msgstr "Token entfernen"
+
+#: fm1companion/ui/pages/discover.py:1281
+msgid "GitHub token removed."
+msgstr "GitHub-Token entfernt."
+
+#: fm1companion/ui/pages/discover.py:1288
+msgid "GitHub token saved ({state})."
+msgstr "GitHub-Token gespeichert ({state})."
+
+#: fm1companion/ui/pages/project_view.py:412
+msgid "Cancelled after {done} of {n} bytes – nothing was opened, nothing was changed on the FM-1."
+msgstr "Abgebrochen nach {done} von {n} Bytes – nichts geöffnet, nichts am FM-1 geändert."
+
+#: fm1companion/ui/projects_page.py:310
+msgid "Cancelled – {done} of {n} project was fetched and is in the library; the one being read was not saved. Nothing was changed on the FM-1."
+msgid_plural "Cancelled – {done} of {n} projects were fetched and are in the library; the one being read was not saved. Nothing was changed on the FM-1."
+msgstr[0] "Abgebrochen – {done} von {n} Projekt wurde geholt und liegt in der Bibliothek; das gerade gelesene wurde nicht gespeichert. Am FM-1 wurde nichts geändert."
+msgstr[1] "Abgebrochen – {done} von {n} Projekten wurden geholt und liegen in der Bibliothek; das gerade gelesene wurde nicht gespeichert. Am FM-1 wurde nichts geändert."
+
+#: fm1companion/ui/samples_page.py:1308
+msgid "Cancelled after {done} of {n} KiB – nothing was saved, nothing was changed on the FM-1."
+msgstr "Abgebrochen nach {done} von {n} KiB – nichts gespeichert, nichts am FM-1 geändert."
+
+#: fm1companion/ui/samples_page.py:1328
+msgid "Reading the sample bank was cancelled – nothing was saved."
+msgstr "Das Lesen der Sample-Bank wurde abgebrochen – nichts gespeichert."
+
+#: fm1companion/ui/settings_dialog.py:24
+msgid "Catalog (filters, sorting, preview images, automatic update)"
+msgstr "Katalog (Filter, Sortierung, Vorschaubilder, automatisches Aktualisieren)"
+
+#: fm1companion/ui/settings_dialog.py:26
+msgid "Automatic backups (on connect, periodically, mirror options)"
+msgstr "Automatische Backups (beim Verbinden, regelmäßig, Spiegel-Optionen)"
+
+#: fm1companion/ui/settings_dialog.py:28
+msgid "Studio (inputs, export options)"
+msgstr "Studio (Eingänge, Export-Optionen)"
+
+#: fm1companion/ui/settings_dialog.py:29
+msgid "Recording (sync, bars, split, export format)"
+msgstr "Aufnahme (Sync, Takte, Aufteilung, Exportformat)"
+
+#: fm1companion/ui/settings_dialog.py:30
+msgid "MIDI (keyboard, clock, filters)"
+msgstr "MIDI (Tastatur, Clock, Filter)"
+
+#: fm1companion/ui/settings_dialog.py:32
+msgid "View & Export (lanes, drum channel, loops)"
+msgstr "Ansehen & Export (Spuren, Drum-Kanal, Schleifen)"
+
+#: fm1companion/ui/settings_dialog.py:33
+msgid "Simulator (latency, inputs)"
+msgstr "Simulator (Latenz, Eingänge)"
+
+#: fm1companion/ui/settings_dialog.py:35
+msgid "Sound module (driver, latency, gain, channels)"
+msgstr "Klangmodul (Treiber, Latenz, Lautstärke, Kanäle)"
+
+#: fm1companion/ui/settings_dialog.py:37
+msgid "Audio output"
+msgstr "Audioausgabe"
+
+#: fm1companion/ui/settings_dialog.py:38
+msgid "Rescue (expert mode)"
+msgstr "Rettung (Expertenmodus)"
+
+#: fm1companion/ui/settings_dialog.py:39
+msgid "Installation (remembered answers)"
+msgstr "Installation (gemerkte Antworten)"
+
+#: fm1companion/ui/settings_dialog.py:40
+msgid "Automatic cleanup (Storage tab)"
+msgstr "Automatisches Aufräumen (Reiter Speicher)"
+
+#: fm1companion/ui/settings_dialog.py:118
+#: fm1companion/ui/settings_dialog.py:285
+#: fm1companion/ui/settings_dialog.py:319
+msgid "Reset settings of …"
+msgstr "Einstellungen zurücksetzen von …"
+
+#: fm1companion/ui/settings_dialog.py:119
+msgid "Puts the settings the pages keep themselves (catalog, Studio, MIDI, recording …) back to their default values – chosen one by one, applied at once."
+msgstr "Setzt die Einstellungen, die die Seiten selbst speichern (Katalog, Studio, MIDI, Aufnahme …), auf ihre Standardwerte zurück – einzeln ausgewählt, sofort angewendet."
+
+#: fm1companion/ui/settings_dialog.py:287
+msgid "Tick the pages whose settings go back to their default values. What is yours stays: folders, devices, backups, your firmware list, the GitHub token, the catalog's remembered list, MIDI learn assignments and routing presets, chosen sound fonts."
+msgstr "Hake die Seiten an, deren Einstellungen auf die Standardwerte zurückgehen. Was dir gehört, bleibt: Ordner, Geräte, Backups, deine Firmware-Liste, das GitHub-Token, die Merkliste des Katalogs, MIDI-Learn-Zuordnungen und Routing-Vorlagen, gewählte Soundfonts."
+
+#: fm1companion/ui/settings_dialog.py:300
+msgid "Pages that are already open may show the old values until the app is restarted."
+msgstr "Bereits geöffnete Seiten zeigen eventuell bis zum Neustart der App noch die alten Werte."
+
+#: fm1companion/ui/settings_dialog.py:320
+msgid "Put these settings back to their default values?<br>{list}"
+msgstr "Diese Einstellungen auf ihre Standardwerte zurücksetzen?<br>{list}"
+
+#: fm1companion/ui/settings_dialog.py:328
+msgid "Settings reset: {list}."
+msgstr "Einstellungen zurückgesetzt: {list}."
+
+#: fm1companion/ui/settings_dialog.py:426
+msgid "also delete its Studio state (your work in the Studio for this device)"
+msgstr "auch seinen Studio-Stand löschen (deine Arbeit im Studio für dieses Gerät)"
+
+#: fm1companion/ui/settings_dialog.py:429
+msgid "The Studio is working on this state right now – open another state there first."
+msgstr "Das Studio arbeitet gerade mit diesem Stand – öffne dort zuerst einen anderen Stand."
+
+#: fm1companion/ui/settings_dialog.py:443
+msgid "The device was forgotten, but its Studio state could not be deleted: {error}"
+msgstr "Das Gerät wurde vergessen, aber sein Studio-Stand konnte nicht gelöscht werden: {error}"
+
+#: fm1companion/ui/storage_tab.py:20
+msgid "Show and delete dumps …"
+msgstr "Dumps anzeigen und löschen …"
+
+#: fm1companion/ui/storage_tab.py:21
+msgid "Clear web editor data …"
+msgstr "Web-Editor-Daten leeren …"
+
+#: fm1companion/ui/storage_tab.py:147
+msgid "Clearing is pending – it happens when the app starts next time."
+msgstr "Das Leeren ist vorgemerkt – es passiert beim nächsten Start der App."
+
+#: fm1companion/ui/storage_tab.py:235
+msgid "The Studio is working on the state of <b>{name}</b> right now – it would be saved again at once. Open another state in the Studio first (or quit the app and delete it at the next start)."
+msgstr "Das Studio arbeitet gerade mit dem Stand von <b>{name}</b> – er würde sofort wieder gespeichert. Öffne zuerst einen anderen Stand im Studio (oder beende die App und lösche ihn beim nächsten Start)."
+
+#: fm1companion/ui/storage_tab.py:259
+msgid "Clear web editor data"
+msgstr "Web-Editor-Daten leeren"
+
+#: fm1companion/ui/storage_tab.py:260
+msgid "Clear the saved data of the built-in browser (cookies, local storage, databases of the web pages)?<br><br>Web editors and the simulator may keep <b>your settings</b> there (e.g. options of an editor, remembered choices) – they are lost and the pages start as on the first visit. Not affected: your backups, projects and samples, the FM-1 itself, and the app's own settings."
+msgstr "Die gespeicherten Daten des eingebauten Browsers leeren (Cookies, lokaler Speicher, Datenbanken der Webseiten)?<br><br>Web-Editoren und der Simulator können dort <b>deine Einstellungen</b> ablegen (z. B. Optionen eines Editors, gemerkte Auswahlen) – sie gehen verloren und die Seiten starten wie beim ersten Besuch. Nicht betroffen: deine Backups, Projekte und Samples, das FM-1 selbst und die Einstellungen der App."
+
+#: fm1companion/ui/storage_tab.py:272
+msgid "Web editor data cleared."
+msgstr "Web-Editor-Daten geleert."
+
+#: fm1companion/ui/storage_tab.py:273
+msgid "Web editor data: cookies cleared now, the rest when the app starts next time (the built-in browser has it open)."
+msgstr "Web-Editor-Daten: Cookies jetzt geleert, der Rest beim nächsten Start der App (der eingebaute Browser hat sie geöffnet)."
+
+#: fm1companion/ui/storage_tab.py:318
+msgid "rescue run"
+msgstr "Rettungslauf"
+
+#: fm1companion/ui/storage_tab.py:318
+msgid "flash dump"
+msgstr "Flash-Dump"
+
+#: fm1companion/ui/storage_tab.py:318
+msgid "tool logs"
+msgstr "Werkzeug-Protokolle"
+
+#: fm1companion/ui/storage_tab.py:321
+msgid "full backup"
+msgstr "Komplettsicherung"
+
+#: fm1companion/ui/storage_tab.py:323
+msgid "simulation/example"
+msgstr "Simulation/Beispiel"
+
+#: fm1companion/ui/storage_tab.py:325
+msgid "NEWEST of this device"
+msgstr "NEUESTE dieses Geräts"
+
+#: fm1companion/ui/storage_tab.py:326
+msgid "{name} – {what}, {size}, {date}"
+msgstr "{name} – {what}, {size}, {date}"
+
+#: fm1companion/ui/storage_tab.py:342
+msgid "Full flash backups are your safety net: with one, a damaged FM-1 can be brought back exactly as it was. Delete only what you no longer need – one at a time. The newest full backup of each device is marked and needs an extra confirmation."
+msgstr "Komplette Flash-Sicherungen sind dein Sicherheitsnetz: Mit einer lässt sich ein beschädigtes FM-1 genau so zurückholen, wie es war. Lösche nur, was du nicht mehr brauchst – eins nach dem anderen. Die neueste Komplettsicherung jedes Geräts ist markiert und braucht eine zusätzliche Bestätigung."
+
+#: fm1companion/ui/storage_tab.py:374
+msgid "{n} item, {size} together."
+msgid_plural "{n} items, {size} together."
+msgstr[0] "{n} Eintrag, zusammen {size}."
+msgstr[1] "{n} Einträge, zusammen {size}."
+
+#: fm1companion/ui/storage_tab.py:376
+msgid "The rescue folder holds no dumps or tool logs."
+msgstr "Der Rettungsordner enthält keine Dumps oder Werkzeug-Protokolle."
+
+#: fm1companion/ui/storage_tab.py:392
+msgid "Delete <b>{name}</b> ({size}) for good?"
+msgstr "<b>{name}</b> ({size}) endgültig löschen?"
+
+#: fm1companion/ui/storage_tab.py:394
+msgid "It holds a complete backup of an FM-1's flash. Without it, that state of the device cannot be restored any more."
+msgstr "Es enthält eine vollständige Sicherung des Flash-Speichers eines FM-1. Ohne sie lässt sich dieser Zustand des Geräts nicht mehr wiederherstellen."
+
+#: fm1companion/ui/storage_tab.py:396
+msgid "Delete rescue data"
+msgstr "Rettungsdaten löschen"
+
+#: fm1companion/ui/storage_tab.py:399
+msgid "Delete the newest full backup?"
+msgstr "Die neueste Komplettsicherung löschen?"
+
+#: fm1companion/ui/storage_tab.py:400
+msgid "<b>{name}</b> is the newest (or the only) full flash backup of this device. If the FM-1 ever needs a rescue, this is the file that brings it back.<br><br>Make a new full backup on the Rescue page first, or keep a copy elsewhere. Really delete it?"
+msgstr "<b>{name}</b> ist die neueste (oder einzige) Komplettsicherung des Flash-Speichers dieses Geräts. Braucht das FM-1 je eine Rettung, ist das die Datei, die es zurückholt.<br><br>Mach zuerst auf der Seite Rettung eine neue Komplettsicherung oder bewahre eine Kopie woanders auf. Wirklich löschen?"
+
+#: fm1companion/ui/storage_tab.py:403
+msgid "Delete anyway"
+msgstr "Trotzdem löschen"
+
+#: fm1companion/ui/storage_tab.py:414
+msgid "{name} deleted ({size})."
+msgstr "{name} gelöscht ({size})."

@@ -21,7 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 os.environ.setdefault("FM1C_LANG", "de")      # these checks expect the German user interface
 home = Path(tempfile.mkdtemp(prefix="fm1c-data-"))
-for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache")):
+for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache"),
+               ("XDG_STATE_HOME", ".local/state")):
     os.environ[k] = str(home / sub)
 os.environ["FM1C_DEMO"] = "1"
 os.environ.pop("FM1C_DEMO_CMD", None)
@@ -147,8 +148,141 @@ def autos(folder):
     return [m for m in AB.list_backups(folder, recursive=False) if m.kind == "auto"]
 
 
+def storage_checks():
+    """Settings › Storage: measure, delete app downloads, user data stays, a Studio state one by one"""
+    from fm1companion import storage
+    from fm1companion.ui import storage_tab
+    from fm1companion.ui.settings_dialog import SettingsDialog
+    ctx = w.ctx
+    pk = config.CACHE_DIR / "samplepacks" / "pack1" / "repo"
+    pk.mkdir(parents=True, exist_ok=True)
+    (pk / "kick.wav").write_bytes(b"x" * 50000)
+    old = ctx.settings.firmware_dir / "melodee" / "v1.5.0"
+    old.mkdir(parents=True, exist_ok=True)
+    (old / "melodee-1.5.0.fwsc").write_bytes(b"y" * 30000)
+    own = ctx.settings.recordings_dir / "take.wav"
+    own.write_bytes(b"z" * 1000)
+    st = config.DATA_DIR / "studio" / "Altes_FM-1"
+    st.mkdir(parents=True, exist_ok=True)
+    (st / "Studio-Stand.fm1studio").write_bytes(b"s" * 2000)
+    resc = ctx.settings.root / "Rettung"
+    old_t = time.time() - 30 * 86400
+
+    def dump(path, key):
+        data = bytearray(b"\xff" * storage.FULL_DUMP_SIZE)
+        data[storage.KEY_AREA[0]:storage.KEY_AREA[0] + 4] = key
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(bytes(data))
+        os.utime(path, (old_t, old_t))
+        os.utime(path.parent, (old_t, old_t))
+        return path
+    d_old = dump(resc / "Komplettsicherungen" / "fm1-recovery-20260101-100000" / "full-flash-before.bin", b"AAAA")
+    old_t += 86400
+    d_new = dump(resc / "Komplettsicherungen" / "fm1-recovery-20260102-100000" / "full-flash-before.bin", b"AAAA")
+    acts = [a.text() for m in w.menuBar().actions() if m.menu() for a in m.menu().actions()]
+    check("Speicher und Aufräumen …" in acts, "Tools › Storage and cleanup …")
+    sd = SettingsDialog(ctx, w, tab="storage")
+    tab = sd.storage
+    check(sd.tabs.tabText(sd.tabs.currentIndex()) == "Speicher" and isinstance(tab, storage_tab.StorageTab),
+          "Settings opens on the Storage tab")
+    check(until(lambda: bool(tab.cats), 20000), "storage measured in the background")
+    names = [tab.tree.topLevelItem(i).text(0) for i in range(tab.tree.topLevelItemCount())]
+    check({"Protokolle", "Heruntergeladene Firmware", "Sample-Pack-Downloads", "Studio-Stände",
+           "Deine Dateien im Hauptordner"} <= set(names), f"categories in German ({names})")
+    check("App-Daten" in tab.total.text(), "total shown")
+    check(tab.select("userdata") and not tab.b_delete.isEnabled() and tab.b_open.isEnabled(),
+          "own files: open folder only, no delete")
+    check(tab.select("samplepacks") and tab.b_delete.isEnabled(), "sample pack downloads deletable")
+    n = len(log_boxes)
+    check(tab.delete_current() and until(lambda: not (config.CACHE_DIR / "samplepacks" / "pack1").exists(), 10000),
+          "sample pack downloads deleted")
+    check(len(log_boxes) > n and "Sample-Pack-Downloads" in log_boxes[-1], "asked before deleting")
+    check(until(lambda: not tab.scanning and tab.cats, 10000), "measured again")
+    check(tab.select("firmware") and tab.delete_current()
+          and until(lambda: not old.exists(), 10000) and own.exists(), "firmware downloads deleted, recording stays")
+    until(lambda: not tab.scanning, 10000)
+    QInputDialog.getItem = staticmethod(lambda *a, **k: (a[3][0], True))
+    check(tab.select("studio") and tab.b_delete.text() == "Einen Stand löschen …" and tab.delete_current()
+          and not st.exists(), "Studio state deleted one by one")
+    until(lambda: not tab.scanning, 10000)
+    # ---- rescue dumps: listed, deleted one at a time, the newest full dump of a device asks twice
+    check(tab.select("rescuedumps") and tab.b_delete.isEnabled() and "Dumps" in tab.b_delete.text(),
+          f"rescue dumps: own row with a button ({tab.b_delete.text()})")
+    dlg = storage_tab.RescueDumpsDialog(tab)
+    texts = [dlg.list.item(i).text() for i in range(dlg.list.count())]
+    check(len(texts) == 2 and "NEUESTE" in texts[0] and "NEUESTE" not in texts[1], f"dump list ({texts})")
+    n = len(log_boxes)
+    dlg.list.setCurrentRow(1)
+    check(dlg.delete_current() and not d_old.parent.exists() and len(log_boxes) == n + 1
+          and "vollständige Sicherung" in log_boxes[-1], "older dump: one strong question, deleted")
+    n = len(log_boxes)
+    decline_next.append(True)
+    dlg.list.setCurrentRow(0)
+    check(not dlg.delete_current() and d_new.exists() and len(log_boxes) == n + 1, "newest dump: declined, kept")
+    n = len(log_boxes)
+    check(dlg.delete_current() and not d_new.parent.exists() and len(log_boxes) == n + 2
+          and "neueste" in log_boxes[-1], "newest dump: asked twice, then deleted")
+    dlg.reject()
+    # ---- web editor data: cleared (at the next start while the browser runs)
+    from fm1companion.ui import web as _web
+    check(tab.select("webdata"), "web editor data row")
+    check(tab.clear_webdata() and ("Browser" in log_boxes[-1] or "Cookies" in log_boxes[-1]), "asked before clearing web data")
+    check(storage.webdata_clear_pending() if _web.profile_open() else not storage.webdata_clear_pending(),
+          "web data: cleared now or at the next start")
+    storage.cancel_webdata_clear()
+    tab.log_days.setValue(7)
+    tab.auto.setChecked(False)
+    sd._ok()
+    check(storage.settings()["log_days"] == 7 and storage.settings()["auto"] is False, "cleanup settings saved")
+    check(json.loads(config.CONFIG_FILE.read_text("utf-8"))["modules"]["storage"]["log_days"] == 7,
+          "… also in the settings file")
+    sd2 = SettingsDialog(ctx, w)
+    sd2.keep.setValue(3)
+    sd2.zoom.setValue(150)
+    sd2.restore_defaults()
+    check(sd2.keep.value() == config.Settings().keep_backups and sd2.zoom.value() == 100,
+          "General › Default values (only in the dialog)")
+    # ---- Reset settings of …: the page's own settings back to defaults, what is yours stays
+    cat = config.module("catalog", {})
+    cat.update(sort="stars", thumbnails=False, github_token="ghp_test1234567890", wishlist=["orbit"])
+    held = config.module("catalog")
+    done = sd2.reset_pages_dialog(preselect=("catalog",))
+    check(done == ["catalog"] and held["sort"] == "az" and held["thumbnails"] is True
+          and held["github_token"] == "ghp_test1234567890" and held["wishlist"] == ["orbit"],
+          f"reset catalog settings, token and wishlist kept ({done})")
+    check(sd2._reset_list.count() >= 10, "list of pages with own settings")
+    # ---- forget a device: optionally with its Studio state
+    from fm1companion.devices import Profile
+    prof = Profile(id="weg-1", name="Weg damit")
+    ctx.store.profiles[prof.id] = prof
+    ctx.store.save()
+    stw = config.DATA_DIR / "studio" / prof.folder_name
+    stw.mkdir(parents=True, exist_ok=True)
+    (stw / "Studio-Stand.fm1studio").write_bytes(b"s" * 100)
+    sd2._fill_devs()
+    for i in range(sd2.devs.count()):
+        if sd2.devs.item(i).data(Qt.ItemDataRole.UserRole) == prof.id:
+            sd2.devs.setCurrentRow(i)
+    _exec = QMessageBox.exec
+
+    def tick(self):
+        if self.checkBox() is not None:
+            self.checkBox().setChecked(True)
+        return _exec(self)
+    QMessageBox.exec = tick
+    try:
+        ok = sd2._dev_delete()
+    finally:
+        QMessageBox.exec = _exec
+    check(ok and prof.id not in ctx.store.profiles and not stw.exists(), "forget device with its Studio state")
+    sd2.reject()
+    until(lambda: not tab.scanning, 10000)
+    sd.reject()
+
+
 def flow():
     ctx = w.ctx
+    storage_checks()
     check(until(lambda: ctx.connected and ctx.firmware_key == "melodee"), "demo Melodee connected")
     folder = ctx.device_folder(ctx.settings.backups_dir)
     check(until(lambda: len(autos(folder)) == 1, 15000), "automatic backup on connecting")

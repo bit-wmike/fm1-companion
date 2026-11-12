@@ -81,7 +81,8 @@ class BackupPicker(QDialog):
         lay.addWidget(bb)
 
     def _other(self, root):
-        p, _filter = QFileDialog.getOpenFileName(self, _("Choose backup file"), str(root), _("FM-1 backup (*.json)"))
+        p, _filter = QFileDialog.getOpenFileName(self, _("Choose backup file"), str(root),
+                                             _("FM-1 backup (*.json);;X0X backup (*.x0b);;LOOM-8 backup (*.loom8)"))
         if p:
             self.path = Path(p)
             super().accept()
@@ -211,9 +212,30 @@ class WriteBackDialog(QDialog):
                   "sounds and the sounds' unsaved edits. Playback on the FM-1 stops, and the FM-1 restarts at the end "
                   "to load them.") if firmware == "coralflower" else
                 _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces on the device: the ten loop slots, the user sounds and the CZ-1 banks, the favorites "
+                  "and the settings. A loop playing on the FM-1 must be stopped, and the FM-1 restarts at the end to "
+                  "load them.") if firmware == "choralroot" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
                   "twin replaces on the device: the song's parts A–D, the running music, the song order, the user "
                   "presets, the HEX drum kits and the sample slots. Playback on the FM-1 stops in the process.")
                 if firmware == "karma" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces on the device: the four projects A–D, the running music, the user presets with their "
+                  "FM6 patches and the sample slots USR1–USR3. Playback on the FM-1 stops in the process.")
+                if firmware == "felucca" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces on the device, over FM1 Open's file protocol: the four DX7 library banks, every project "
+                  "slot the twin has (empty slots stay as they are on the FM-1), the working project and – if it "
+                  "differs – the sample bank. Playback on the FM-1 stops in the process.")
+                if firmware == "fm1-open" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces X0X's project on the device, whole: the sound, the 32 patterns, the song, the knob "
+                  "motion and the settings (the break loops in the sample slots stay). X0X must be stopped, and it "
+                  "asks on its screen: press <b>SEL</b> on the FM-1 to confirm.") if firmware == "x0x" else
+                _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
+                  "twin replaces LOOM-8's user presets and its three projects on the device, all of them (its sample "
+                  "bank stays). LOOM-8 must be stopped, and it asks on its screen: press <b>SEL</b> on the FM-1 to "
+                  "confirm.") if firmware == "loom-8" else
                 _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
                   "twin replaces on the device: all 32 project slots, the running music and the user presets. "
                   "Playback on the FM-1 stops in the process."))
@@ -231,6 +253,7 @@ class WriteBackDialog(QDialog):
         lay.addWidget(lab)
         self.settings = QCheckBox(_("Also write the device settings (GLO › SYSTEM, MIDI channels, panel …)"))
         self.settings.setToolTip(_("Default: off – the settings on the FM-1 stay as they are."))
+        self.settings.setVisible(firmware != "fm1-open")     # (FM1 Open's backup has no settings object)
         lay.addWidget(self.settings)
         self.force = QCheckBox(_("Expert: write despite a different firmware version"))
         self.force.setVisible(bool(mismatch))
@@ -494,6 +517,11 @@ class StudioPage(QWidget):
         c = self.ctx
         if c.is_virtual:
             return False, _("The twin itself is active right now – choose a real FM-1 in the device selection at the top.")
+        if c.midi_connected and S.stand_in_for(c.firmware_key):
+            return False, _("The original firmware has no backup protocol: nothing can be fetched from this FM-1 or "
+                            "written to it. The studio plays the FM1 Open twin instead (see the note above).")
+        if not c.connected and c.midi_connected and self.svc.firmware_for(c.firmware_key) == "fm1-open":
+            return True, ""                             # (FM1 Open: no editor INFO, its own file protocol)
         if not c.connected:
             if c.port is not None and c.protocol == "generic":
                 return False, _("This firmware has no editor protocol – the studio needs {firmwares}.").format(
@@ -505,11 +533,19 @@ class StudioPage(QWidget):
                 firmwares=S.firmware_names())
         return True, ""
 
+    def _dev_version(self) -> str:
+        """the active device's firmware version: its editor INFO, else (FM1 Open, the original firmware) the profile's
+        version from the package identity ("V14")"""
+        c = self.ctx
+        if c.info:
+            return c.info.version
+        return c.profile.firmware_version if c.profile else ""
+
     def _project_label(self, k: int) -> str:
         """project slot k as the firmware names it: Melodee 1..32, Skiff A..D, JIANT the current song's sections A..D,
         SLOOP its sections A..D, KARMA the song's parts A..D"""
         st = self.svc.st if self.svc is not None else None
-        if st is not None and st.build.firmware == "skiff":
+        if st is not None and st.build.firmware in ("skiff", "felucca"):      # (Felucca: SAVE's PROJECT A..D)
             return _("Project {n}").format(n="ABCD"[k] if 0 <= k < 4 else k + 1)
         if st is not None and st.build.firmware in ("jiant", "sloop"):
             return _("Section {n}").format(n="ABCD"[k] if 0 <= k < 4 else k + 1)
@@ -557,13 +593,17 @@ class StudioPage(QWidget):
     def _banner(self):
         svc, c = self.svc, self.ctx
         text, level = "", ""
-        dev_fw = svc.firmware_for(c.firmware_key) if (c.connected and not c.is_virtual) else ""
+        dev_fw = svc.firmware_for(c.firmware_key) if (c.midi_connected and not c.is_virtual) else ""
+        stand_in = bool(dev_fw) and S.stand_in_for(c.firmware_key) == dev_fw
         if c.connected and not c.is_virtual and not dev_fw:
-            text = _("There is no studio twin for {firmware} yet. So far the studio can do {firmwares}; the original "
-                     "firmware (via FM1 Open) follows later – see Help › Studio. Backups of this device cannot be "
-                     "opened here; a {firmwares_or} backup can.").format(
+            text = _("There is no studio twin for {firmware} yet. So far the studio can do {firmwares} – see Help › "
+                     "Studio. Backups of this device cannot be opened here; a {firmwares_or} backup can.").format(
                 firmware=html.escape(fw_label(c.info.version) if c.info else _('this firmware')),
                 firmwares=S.firmware_names(), firmwares_or=S.firmware_names("or"))
+            level = "warning"
+        elif stand_in:                                  # (the original V15/V16: the FM1 Open twin stands in)
+            text = "⚠ " + html.escape(_(S.STAND_IN_NOTE).format(
+                device=self._dev_version() or c.firmware_key, twin=svc.version if svc.running else "V14"))
             level = "warning"
         elif svc.running and dev_fw and dev_fw != svc.firmware:
             text = "⚠ " + _("The twin runs {twin}, your FM-1 runs {device} – “Fetch from FM-1” starts the {device} twin; "
@@ -571,12 +611,16 @@ class StudioPage(QWidget):
                 twin=html.escape(svc.firmware_name), device=html.escape(S.firmware_name(dev_fw)))
             level = "warning"
         elif svc.running:
-            dev = c.info.version if (dev_fw and c.info) else ""
+            dev = self._dev_version() if dev_fw else ""
             vc = S.check_versions(svc.version, device=dev, backup=svc.source.get("backup_version", ""),
                                   firmware=svc.firmware_name)
             msgs = [vc.message] if vc.message else []
             if svc.st is not None and svc.st.warning:
                 msgs.append(svc.st.warning)
+            if dev and svc.firmware == "felucca":          # (a Felucca fork, or another build: Felucca's twin all the same)
+                note = S.felucca_fork_note(c.firmware_key, getattr(c, "identity", ""), svc.st.build.identity)
+                if note:
+                    msgs.append(note)
             if msgs:
                 text, level = "⚠ " + html.escape(" ".join(msgs)), "warning"
             elif dev:
@@ -629,9 +673,12 @@ class StudioPage(QWidget):
             return
         cur = info.get("project", 255)
         slots = svc.st.project_slots
-        if not slots:                                   # (CoralFlower: its patterns and song, no project slots)
-            it = QListWidgetItem(_("{firmware} has no project slots: its patterns and the song play from the twin's "
-                                   "panel (SEQ) or with Play.").format(firmware=svc.firmware_name))
+        if not slots:                                   # (CoralFlower: its patterns and song, no project slots;
+            it = QListWidgetItem(                       # ChoralRoot: its ten loop slots, chosen on the panel)
+                _("{firmware} has no project slots: its ten loop slots are chosen on the twin's panel (PLAY held, "
+                  "PRESETS); Play plays the loop.").format(firmware=svc.firmware_name) if svc.firmware == "choralroot"
+                else _("{firmware} has no project slots: its patterns and the song play from the twin's "
+                       "panel (SEQ) or with Play.").format(firmware=svc.firmware_name))
             it.setFlags(Qt.ItemFlag.NoItemFlags)
             self.projects.addItem(it)
         for k in range(slots):
@@ -780,9 +827,10 @@ class StudioPage(QWidget):
         except OSError as e:
             show_error(self, _("Fetch from FM-1"), str(e))
             return None
-        prof, fw, version = c.profile, c.firmware_key, c.info.version
+        prof, fw, version = c.profile, c.firmware_key, self._dev_version()
+        tw = svc.firmware_for(fw)
         try:
-            st = svc.ensure(S.norm_version(version), svc.firmware_for(fw))
+            st = svc.ensure(S.fw_version(tw, version) if tw == "fm1-open" else S.norm_version(version), tw)
         except Exception as e:  # noqa: BLE001
             show_error(self, _("Studio"), _("The twin does not start: {error}").format(error=e))
             return None
@@ -833,6 +881,11 @@ class StudioPage(QWidget):
             show_error(self, _("Open backup"), _("The backup cannot be read: {error}").format(error=e))
             return None
         fw = S.backup_firmware(arch)                    # (SLOOP's file format: the SLOOP or the KARMA twin loads it)
+        if fw and fw not in S.FIRMWARES and fw != "felucca":   # (ORBIT: SLOOP's format, but no twin reads it)
+            show_error(self, _("Open backup"), _("This backup comes from {firmware} – so far there is a studio twin only "
+                                                 "for {firmwares}.").format(firmware=arch.firmware or fw,
+                                                                            firmwares=S.firmware_names()))
+            return None
         try:
             st = svc.ensure(S.backup_version(arch), fw if fw in S.FIRMWARES else "melodee")
         except Exception as e:  # noqa: BLE001
@@ -1009,7 +1062,7 @@ class StudioPage(QWidget):
         if not ok or svc is None or not svc.running:
             show_error(self, _("Write back to the FM-1"), why or _("The twin is not running."))
             return None
-        dev_v = c.info.version
+        dev_v = self._dev_version()
         if svc.firmware_for(c.firmware_key) != svc.firmware:
             show_error(self, _("Write back to the FM-1"), _(
                 "The twin runs {twin}, the FM-1 runs {device} – their data do not fit each other. Fetch from the FM-1 "

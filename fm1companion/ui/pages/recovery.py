@@ -281,6 +281,11 @@ class RecoveryPage(QWidget):
                            "({product}, phase “{phase}”).").format(target=act.get('target', '?'),
                                                                   product=act.get('product', ''),
                                                                   phase=act.get('phase', '')))
+        ch = self.journal.chain
+        if ch:
+            lines.append(_("Switch in two steps: after the original V15 the app still installs <b>{name}</b> – once "
+                           "the FM-1 runs V15: Firmware+ › Install & Versions › “Continue”.").format(
+                               name=ch.get("name") or ch.get("key", "?")))
         self.status.setText("<br>".join(lines))
         # level 1 buttons: only with a waiting device – and “Original V15” only if the loader accepts it
         wait_hint = _("Only possible once an FM-1 in update mode is detected (see status above).")

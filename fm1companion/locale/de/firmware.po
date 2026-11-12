@@ -17,10 +17,6 @@ msgstr "Installationsplan"
 msgid "Intermediate step: install original V15"
 msgstr "Zwischenschritt: Original-V15 aufspielen"
 
-#: fm1companion/ui/firmware_page.py:185
-msgid "Via the unmodified original firmware V15 the new firmware starts from a clean, proven state. The intermediate step is itself an installation: power and cable then have to hold out twice instead of once."
-msgstr "Über die unveränderte Original-Firmware V15 startet die neue Firmware von einem sauberen, bewährten Stand. Der Zwischenschritt ist selbst eine Installation: Strom und Kabel müssen dann zweimal durchhalten statt einmal."
-
 #: fm1companion/ui/firmware_page.py:192 fm1companion/ui/firmware_page.py:257
 msgid "Make a backup first (recommended)"
 msgstr "Vorher ein Backup machen (empfohlen)"
@@ -49,14 +45,6 @@ msgstr "Probelauf starten"
 #: fm1companion/ui/firmware_page.py:246
 msgid "Mandatory: according to the catalog, this firmware is only installed from the original V15."
 msgstr "Pflicht: Diese Firmware wird laut Katalog nur von der Original-V15 aus installiert."
-
-#: fm1companion/ui/firmware_page.py:247
-msgid "Firmware switch (or running firmware unknown): the intermediate step is preset to avoid careless mistakes when switching back and forth quickly. But it is itself a write operation – two installations instead of one, so twice a period in which battery and cable must hold. It is only needed for V16 and for firmwares that according to the catalog only work from V15 (then it is fixed). Only untick it if you are sure."
-msgstr "Firmware-Wechsel (oder laufende Firmware unbekannt): Der Zwischenschritt ist voreingestellt, um Flüchtigkeitsfehler beim schnellen Hin- und Herwechseln zu vermeiden. Er ist aber selbst ein Schreibvorgang – zwei Installationen statt einer, also zweimal ein Zeitraum, in dem Akku und Kabel halten müssen. Nötig ist er nur bei V16 und bei Firmwares, die laut Katalog nur von V15 aus gehen (dann ist er fest). Nur abwählen, wenn du sicher bist."
-
-#: fm1companion/ui/firmware_page.py:252
-msgid "Update of the same firmware: normally not needed."
-msgstr "Update derselben Firmware: normalerweise nicht nötig."
 
 #: fm1companion/ui/firmware_page.py:255
 msgid "Make a backup first (mandatory when switching with V16)"
@@ -230,11 +218,6 @@ msgstr "Backup-Ordner nicht beschreibbar"
 #: fm1companion/ui/firmware_page.py:528
 msgid "Cancelled – nothing was changed on the FM-1."
 msgstr "Abgebrochen – am FM-1 wurde nichts geändert."
-
-#: fm1companion/ui/firmware_page.py:529
-#, python-brace-format
-msgid "Cancelled after the intermediate step: {written} was written to the FM-1 – it now runs the original firmware V15. {name} was NOT written. To continue, install {name} again (the intermediate step is then no longer needed)."
-msgstr "Abgebrochen nach dem Zwischenschritt: Auf das FM-1 wurde {written} geschrieben – es läuft jetzt die Original-Firmware V15. {name} wurde NICHT geschrieben. Zum Fortsetzen {name} erneut installieren (der Zwischenschritt ist dann nicht mehr nötig)."
 
 #: fm1companion/ui/firmware_page.py:540
 msgid "Step: load & check all packages (before any writing) …"
@@ -2085,10 +2068,6 @@ msgstr "Der Rückweg von V16 geht über die Original-V15 – sie nutzt denselben
 msgid "According to the catalog, this firmware is installed from the original firmware V15."
 msgstr "Diese Firmware wird laut Katalog von der Original-Firmware V15 aus installiert."
 
-#: fm1companion/flash/planner.py:411
-msgid "Firmware switch: via the original V15 the new firmware starts from a clean, proven state – this avoids careless mistakes when switching back and forth quickly."
-msgstr "Firmware-Wechsel: Über die Original-V15 startet die neue Firmware von einem sauberen, bewährten Stand – das vermeidet Flüchtigkeitsfehler beim schnellen Hin- und Herwechseln."
-
 #: fm1companion/flash/planner.py:414
 #, python-brace-format
 msgid "{why} The app installs the unmodified V15 (checksum db1642b2…) via M-VAVE's own loader and then checks whether the FM-1 reports “FM-1_015”."
@@ -2859,3 +2838,188 @@ msgstr "Melodee ab 1.6.0: Die USB-Aufnahme liegt vor MASTER – der Lautstärker
 #: fm1companion/melodee16.py:134
 msgid "With this Melodee version the stereo recording over USB follows the MASTER knob: for a good level, turn MASTER up (from Melodee 1.6.0 on, the recording sits before MASTER)."
 msgstr "Bei dieser Melodee-Version folgt die Stereo-Aufnahme über USB dem MASTER-Regler: für einen guten Pegel MASTER aufdrehen (ab Melodee 1.6.0 liegt die Aufnahme vor MASTER)."
+
+# USB hubs, careful mode, flash log (flash/robust.py, syscheck.py, settings)
+#, python-brace-format
+msgid "The FM-1 is connected through {n} USB hub(s): {hubs}"
+msgstr "Das FM-1 hängt an {n} USB-Hub(s): {hubs}"
+
+#, python-brace-format
+msgid "USB power saving (autosuspend) is on for: {devices}"
+msgstr "USB-Stromsparen (Autosuspend) ist an für: {devices}"
+
+msgid "Careful USB mode: longer waits, slower answers, automatic resume after a dropout."
+msgstr "Vorsichtiger USB-Modus: längere Wartezeiten, langsamere Antworten, automatisches Fortsetzen nach einem Abbruch."
+
+#, python-brace-format
+msgid "Flash log: {name}"
+msgstr "Flash-Protokoll: {name}"
+
+#, python-brace-format
+msgid "USB connection interrupted in step 1 (nothing was written). Trying step 1 again ({n} of {max}) …"
+msgstr "USB-Verbindung in Schritt 1 unterbrochen (es wurde nichts geschrieben). Schritt 1 wird wiederholt ({n} von {max}) …"
+
+#, python-brace-format
+msgid "The connection to the update loader dropped while writing (typical for USB hubs). Waiting for the FM-1 in update mode and starting the write again ({n} of {max}) …"
+msgstr "Die Verbindung zum Update-Loader ist beim Schreiben abgerissen (typisch für USB-Hubs). Warte auf das FM-1 im Update-Modus und starte das Schreiben neu ({n} von {max}) …"
+
+msgid "The kernel reported a power problem (over-current or under-voltage) during the installation."
+msgstr "Der Kernel hat während der Installation ein Stromproblem gemeldet (Überstrom oder Unterspannung)."
+
+#, python-brace-format
+msgid "The FM-1 is connected through a USB hub ({path}). Hubs are the most common reason why an installation starts but does not finish."
+msgstr "Das FM-1 hängt an einem USB-Hub ({path}). Hubs sind der häufigste Grund, warum eine Installation beginnt, aber nicht fertig wird."
+
+#, python-brace-format
+msgid "{n} answers from the computer did not reach the FM-1 in time (it had to ask again)."
+msgstr "{n} Antworten des Computers kamen nicht rechtzeitig beim FM-1 an (es musste nachfragen)."
+
+#, python-brace-format
+msgid "The FM-1 dropped off the USB bus {n}× during the installation."
+msgstr "Das FM-1 ist während der Installation {n}× vom USB-Bus verschwunden."
+
+msgid "USB power saving (autosuspend) is switched on for the FM-1 or its hub."
+msgstr "USB-Stromsparen (Autosuspend) ist für das FM-1 oder seinen Hub eingeschaltet."
+
+msgid "Connect the FM-1 directly to the computer – on a Raspberry Pi preferably to a black USB 2 port – with a short data cable."
+msgstr "Schließ das FM-1 mit einem kurzen Datenkabel direkt an den Computer an – am Raspberry Pi am besten an eine schwarze USB-2-Buchse."
+
+msgid "Use a short USB data cable and a port directly on the computer – on a Raspberry Pi preferably a black USB 2 port."
+msgstr "Nimm ein kurzes USB-Datenkabel und eine Buchse direkt am Computer – am Raspberry Pi am besten eine schwarze USB-2-Buchse."
+
+msgid "If you have to use a hub: one with its own power supply, and no other power-hungry devices on it."
+msgstr "Wenn es ein Hub sein muss: einer mit eigenem Netzteil und ohne andere stromhungrige Geräte daran."
+
+msgid "Install the optional udev rule that keeps the FM-1 and its hubs awake (see Help › “Switching firmware”, section “USB hubs”)."
+msgstr "Installier die optionale udev-Regel, die das FM-1 und seine Hubs wach hält (siehe Hilfe › „Firmware wechseln“, Abschnitt „USB-Hubs“)."
+
+msgid "Switch on Settings › “Careful USB mode for flashing: always”."
+msgstr "Schalte Einstellungen › „Vorsichtiger USB-Modus beim Flashen: immer“ ein."
+
+#, python-brace-format
+msgid "Next step: {steps}"
+msgstr "Nächster Schritt: {steps}"
+
+msgid "The flash log is saved and included in the bug report (Help › Create bug report)."
+msgstr "Das Flash-Protokoll ist gespeichert und im Fehlerbericht enthalten (Hilfe › Fehlerbericht erstellen)."
+
+#, python-brace-format
+msgid "<b>Connected through a USB hub – careful mode.</b> The FM-1 ({path}) is behind {n} hub(s): {hubs}. The app waits longer, answers more slowly and resumes the write automatically if the connection drops. Safer still: connect the FM-1 directly to the computer."
+msgstr "<b>Über einen USB-Hub angeschlossen – vorsichtiger Modus.</b> Das FM-1 ({path}) hängt hinter {n} Hub(s): {hubs}. Die App wartet länger, antwortet langsamer und setzt das Schreiben automatisch fort, wenn die Verbindung abreißt. Noch sicherer: das FM-1 direkt an den Computer anschließen."
+
+#, python-brace-format
+msgid "The FM-1 ({path}) is connected through a USB hub, careful mode is switched off in the settings. Hubs are the most common reason why an installation does not finish."
+msgstr "Das FM-1 ({path}) hängt an einem USB-Hub, der vorsichtige Modus ist in den Einstellungen ausgeschaltet. Hubs sind der häufigste Grund, warum eine Installation nicht fertig wird."
+
+msgid "The hub in front of the FM-1 says it is bus-powered (no own power supply). Use a hub with its own power supply or connect the FM-1 directly."
+msgstr "Der Hub vor dem FM-1 meldet, dass er über den Bus versorgt wird (kein eigenes Netzteil). Nimm einen Hub mit eigenem Netzteil oder schließ das FM-1 direkt an."
+
+msgid "Careful USB mode is switched on (settings)."
+msgstr "Der vorsichtige USB-Modus ist eingeschaltet (Einstellungen)."
+
+#, python-brace-format
+msgid "USB power saving (autosuspend) is on for: {devices}. It can put the FM-1 or its hub to sleep during the waits. The optional udev rule of the app switches it off (Help › “Switching firmware”, section “USB hubs”)."
+msgstr "USB-Stromsparen (Autosuspend) ist an für: {devices}. Es kann das FM-1 oder seinen Hub während der Wartezeiten schlafen legen. Die optionale udev-Regel der App schaltet es ab (Hilfe › „Firmware wechseln“, Abschnitt „USB-Hubs“)."
+
+msgid "For installing firmware: connect the FM-1 directly to the computer (Raspberry Pi: preferably a black USB 2 port) with a short data cable. If a hub is needed: one with its own power supply. The app switches to careful USB mode automatically when it installs through a hub."
+msgstr "Zum Installieren von Firmware: das FM-1 mit einem kurzen Datenkabel direkt an den Computer anschließen (Raspberry Pi: am besten eine schwarze USB-2-Buchse). Wenn ein Hub nötig ist: einer mit eigenem Netzteil. Über einen Hub schaltet die App beim Installieren automatisch in den vorsichtigen USB-Modus."
+
+msgid "The hub reports that it has no own power supply."
+msgstr "Der Hub meldet, dass er kein eigenes Netzteil hat."
+
+#, python-brace-format
+msgid "{name} is connected through {n} USB hub ({path})"
+msgid_plural "{name} is connected through {n} USB hubs ({path})"
+msgstr[0] "{name} hängt an {n} USB-Hub ({path})"
+msgstr[1] "{name} hängt an {n} USB-Hubs ({path})"
+
+#, python-brace-format
+msgid "FM-1: {speed} Mbit/s. Hubs: {hubs}"
+msgstr "FM-1: {speed} Mbit/s. Hubs: {hubs}"
+
+#, python-brace-format
+msgid "{name} is connected directly to the computer ({path}, {speed} Mbit/s)"
+msgstr "{name} hängt direkt am Computer ({path}, {speed} Mbit/s)"
+
+#, python-brace-format
+msgid "USB power saving (autosuspend) is on for the FM-1 or its hub ({devices})"
+msgstr "USB-Stromsparen (Autosuspend) ist für das FM-1 oder seinen Hub an ({devices})"
+
+msgid "The kernel may put these devices to sleep while they are idle – for example while the FM-1 restarts during a firmware installation. Waking up through a hub does not always work."
+msgstr "Der Kernel darf diese Geräte schlafen legen, solange sie nichts tun – zum Beispiel während das FM-1 bei einer Firmware-Installation neu startet. Das Aufwecken über einen Hub klappt nicht immer."
+
+#, python-brace-format
+msgid "Install the optional udev rule of the app (keeps the FM-1 and the hubs in front of it awake): {command}"
+msgstr "Installier die optionale udev-Regel der App (hält das FM-1 und die Hubs davor wach): {command}"
+
+msgid "The udev rule of the app is installed; unplug the FM-1 and plug it in again."
+msgstr "Die udev-Regel der App ist installiert; steck das FM-1 einmal aus und wieder ein."
+
+msgid "automatic (when the FM-1 is connected through a USB hub)"
+msgstr "automatisch (wenn das FM-1 an einem USB-Hub hängt)"
+
+msgid "Careful USB mode waits longer for the FM-1 to restart, answers its requests more slowly and resumes the write automatically if the USB connection drops – the usual trouble with USB hubs. All safety checks stay the same."
+msgstr "Der vorsichtige USB-Modus wartet länger auf den Neustart des FM-1, beantwortet seine Anfragen langsamer und setzt das Schreiben automatisch fort, wenn die USB-Verbindung abreißt – das übliche Problem mit USB-Hubs. Alle Sicherheitsprüfungen bleiben gleich."
+
+msgid "Careful USB mode for flashing:"
+msgstr "Vorsichtiger USB-Modus beim Flashen:"
+
+msgid "Four-track groovebox: an acid bass or a Juno-style poly, physical modelling, two dozen synthesis models and a drum synth; 64-step sequencer with song mode and generators. A SLOOP fork."
+msgstr "Groovebox mit vier Spuren: ein Acid-Bass oder ein Poly im Juno-Stil, Physical Modelling, zwei Dutzend Synthesemodelle und ein Drum-Synth; 64-Step-Sequencer mit Song-Modus und Generatoren. Ein SLOOP-Fork."
+
+msgid "The web installer of {name} names another checksum for {tag} than the app pins – the app keeps its own."
+msgstr "Der Web-Installer von {name} nennt für {tag} eine andere Prüfsumme, als die App festhält – die App bleibt bei ihrer eigenen."
+
+msgid "Switching from {current} to {target}: the app installs the original firmware V15 first, then {target} – recommended, so no leftovers of {current} stay on the FM-1."
+msgstr "Wechsel von {current} zu {target}: Die App spielt zuerst die Original-Firmware V15 auf, dann {target} – empfohlen, damit keine Reste von {current} auf dem FM-1 bleiben."
+
+msgid "The running firmware is not recognised, so this counts as a switch: the app installs the original firmware V15 first, then {target} – recommended, so no leftovers of the previous firmware stay on the FM-1."
+msgstr "Die laufende Firmware ist nicht erkannt, das gilt deshalb als Wechsel: Die App spielt zuerst die Original-Firmware V15 auf, dann {target} – empfohlen, damit keine Reste der bisherigen Firmware auf dem FM-1 bleiben."
+
+msgid "the previous firmware"
+msgstr "der bisherigen Firmware"
+
+msgid "<b>Expert option: installed directly, without the V15 step.</b> Leftovers of {current} (settings, projects, sample areas) can stay in the flash and confuse {target}. If {target} behaves strangely afterwards, install it again with the V15 step."
+msgstr "<b>Expertenoption: direkt installiert, ohne den V15-Schritt.</b> Reste von {current} (Einstellungen, Projekte, Sample-Bereiche) können im Flash bleiben und {target} durcheinanderbringen. Verhält sich {target} danach seltsam, installiere es noch einmal mit dem V15-Schritt."
+
+msgid "Continues the interrupted switch to {target}: the original firmware V15 is already installed (step 1 of 2 is done) – now {target} is installed directly."
+msgstr "Setzt den unterbrochenen Wechsel zu {target} fort: Die Original-Firmware V15 ist schon aufgespielt (Schritt 1 von 2 ist erledigt) – jetzt wird {target} direkt installiert."
+
+msgid "Expert: install directly without the V15 step"
+msgstr "Experte: direkt installieren, ohne den V15-Schritt"
+
+msgid "Skips the original V15 before the switch. Leftovers of the previous firmware can then stay in the flash. Only for experts – the choice is not remembered."
+msgstr "Lässt die Original-V15 vor dem Wechsel weg. Reste der bisherigen Firmware können dann im Flash bleiben. Nur für Experten – die Wahl wird nicht gespeichert."
+
+msgid "Without the V15 step: leftovers of the previous firmware can stay on the FM-1 (see Notes)."
+msgstr "Ohne den V15-Schritt: Reste der bisherigen Firmware können auf dem FM-1 bleiben (siehe Hinweise)."
+
+msgid "Cancelled after the intermediate step: {written} was written to the FM-1 – it now runs the original firmware V15. {name} was NOT written. To continue: Firmware+ › Install & Versions › “Continue: install {name}” (the V15 step is not repeated)."
+msgstr "Nach dem Zwischenschritt abgebrochen: {written} wurde auf das FM-1 geschrieben – es läuft jetzt die Original-Firmware V15. {name} wurde NICHT geschrieben. Zum Fortsetzen: Firmware+ › Installieren & Versionen › „Weiter: {name} installieren“ (der V15-Schritt wird nicht wiederholt)."
+
+msgid "Continue the switch …"
+msgstr "Wechsel fortsetzen …"
+
+msgid "<b>The switch to {name} stopped after its first step.</b> This FM-1 now runs the original firmware V15 – the second step installs {name} directly."
+msgstr "<b>Der Wechsel zu {name} ist nach dem ersten Schritt stehen geblieben.</b> Dieses FM-1 läuft jetzt mit der Original-Firmware V15 – der zweite Schritt installiert {name} direkt."
+
+msgid "Continue: install {name} …"
+msgstr "Weiter: {name} installieren …"
+
+msgid "Firmware not found"
+msgstr "Firmware nicht gefunden"
+
+msgid "{name} is no longer in the list of firmwares. Please choose it again – the FM-1 runs the original V15, every firmware can be installed directly from it."
+msgstr "{name} ist nicht mehr in der Liste der Firmwares. Bitte wähle sie neu – das FM-1 läuft mit der Original-V15, von dort lässt sich jede Firmware direkt installieren."
+
+msgid "Versions cannot be loaded"
+msgstr "Versionen können nicht geladen werden"
+
+msgid "No version found"
+msgstr "Keine Version gefunden"
+
+msgid "No version of {name} can be loaded right now."
+msgstr "Gerade lässt sich keine Version von {name} laden."
+
+msgid "Switch in two steps: after the original V15 the app still installs <b>{name}</b> – once the FM-1 runs V15: Firmware+ › Install & Versions › “Continue”."
+msgstr "Wechsel in zwei Schritten: Nach der Original-V15 installiert die App noch <b>{name}</b> – sobald das FM-1 mit V15 läuft: Firmware+ › Installieren & Versionen › „Weiter“."

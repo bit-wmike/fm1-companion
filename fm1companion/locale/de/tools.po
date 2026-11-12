@@ -580,16 +580,6 @@ msgstr "{name} gespeichert – steht jetzt im Reiter „Installieren & Versionen
 msgid "GitHub token"
 msgstr "GitHub-Token"
 
-#: fm1companion/ui/pages/discover.py:1138
-msgid ""
-"Optional: personal GitHub token (only read access to public repos needed).\n"
-"Without a token GitHub allows 60 requests per hour, with a token 5000.\n"
-"Leave empty to remove."
-msgstr ""
-"Optional: persönlicher GitHub-Token (nur Lesezugriff auf öffentliche Repos nötig).\n"
-"Ohne Token erlaubt GitHub 60 Abfragen pro Stunde, mit Token 5000.\n"
-"Leer lassen zum Entfernen."
-
 #: fm1companion/ui/pages/discover.py:1151
 msgid "remembered"
 msgstr "gemerkt"

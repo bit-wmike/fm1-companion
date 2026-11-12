@@ -1,4 +1,4 @@
-# FM-1 Companion Suite 2.5.0
+# FM-1 Companion Suite 2.6.0
 
 > [!WARNING]
 > **Unofficial community project – not affiliated with M-VAVE.**
@@ -23,7 +23,7 @@ and the official firmware. Everything around the device in one app – built for
 
 ## Screenshots
 
-Taken in demo mode (`fm1-companion --demo`, two simulated FM-1), English UI, version 2.5.0.
+Taken in demo mode (`fm1-companion --demo`, two simulated FM-1), English UI, version 2.6.0.
 
 | | |
 |---|---|
@@ -35,6 +35,8 @@ Taken in demo mode (`fm1-companion --demo`, two simulated FM-1), English UI, ver
 | **Backups › Browse & Compare** – projects, presets, settings; restore only parts | **Firmware+** – 250+ community firmwares, install, versions, simulator |
 | ![Presets – the 384 user slots and your own library](docs/screenshots/presets.png) | ![Recovery – step by step back to a working FM-1](docs/screenshots/recovery.png) |
 | **Presets** – all 384 user slots, library, FM voices (DX7) | **Recovery** – update mode and ROM boot mode, with safety checks |
+| ![Settings › Storage – see and delete logs, downloads and caches](docs/screenshots/storage.png) | |
+| **Settings › Storage** – what the app keeps, delete per category, automatic cleanup | |
 
 ## What's inside
 
@@ -46,12 +48,13 @@ Section names as shown in the app's sidebar (Device, Sound, Music, Data & Tools,
 | **Editor** | the original web editor of the installed firmware, embedded and offline |
 | **Devices** | several FM-1 with their own profiles, firmware history, copy from device to device |
 | **Presets**, **Samples & Kits** (Sound) | presets (with tab "FM Voices (DX7)"), samples & kits (with tab "On the FM-1") |
-| **Studio** | the digital twin of your FM-1: the same firmware on the computer – Melodee (1.6.1, plus 1.6.0 and 1.6.0-rc.7/rc.8), Skiff (2.2, 2.1.1), JIANT FM (V10.6z2, plus V10.61 and V10.60), SLOOP (2.8.5, plus 2.8.4), CoralFlower (0.7.1, plus 0.7) or KARMA (3.1, plus 3.0.5) –, with the complete device state from the backup – play on screen, with the computer keyboard or a MIDI keyboard, play projects, export as WAV (24 bit or 32 bit float, optionally separate tracks) for Logic/Audacity, snapshots with undo, write back to the FM-1 with a safety backup; also usable as a virtual device for projects, composing, presets and backups |
+| **Studio** | the digital twin of your FM-1: the same firmware on the computer – Melodee (1.6.1, plus 1.6.0 and 1.6.0-rc.7/rc.8), Skiff (2.2, 2.1.1), JIANT FM (V10.6z2, plus V10.61 and V10.60), SLOOP (2.8.5, plus 2.8.4), CoralFlower (0.7.1, plus 0.7), KARMA (3.1, plus 3.0.5), Felucca (1.8.1, plus 1.8.0), ChoralRoot FM-1 (0.39, plus 0.38), X0X (1.2.1, plus 1.2.0), FoMni (0.4.1, plus 0.4), AMB-1 (1.3.2, plus 1.3.1), LOOM-8 (0.14, plus 0.13.1) or M-VAVE's FM1 Open (V14; also as the stand-in for the original V15/V16, with a note) –, with the complete device state from the backup – play on screen, with the computer keyboard or a MIDI keyboard, play projects, export as WAV (24 bit or 32 bit float, optionally separate tracks) for Logic/Audacity, snapshots with undo, write back to the FM-1 with a safety backup; also usable as a virtual device for projects, composing, presets and backups |
 | **Projects**, **Compose**, **Recording** (Music) | projects (slots & library / view & export), composing (generate / from MIDI file), recording with Audacity |
 | **Backups**, **MIDI** (Data & Tools) | backups (list / browse & compare), MIDI (monitor, keyboard, clock, controls, connections, sound module) |
-| **Firmware+** | all firmwares in one place: catalog (search, view, try in the simulator, import links, news) and tab "Install & Versions" (versions from GitHub, install, switch, download several versions, your own .fwsc, back to the original, way back from V16) |
+| **Firmware+** | all firmwares in one place: catalog (search, view, try in the simulator, import links, news) and tab "Install & Versions" (versions from GitHub, install, switch, download several versions, your own .fwsc, back to the original, way back from V16); a switch to another firmware always installs the original V15 first, an update within the same firmware goes directly; built in: Melodee, Skiff, SLOOP, KARMA |
 | **Recovery** | update mode, finish an interrupted installation, "Is my FM-1 clean?", rescue level 2 |
 | **Help** | help center (offline), FAQ, diagnostics, system check |
+| **Settings › Storage** | size of logs, firmware downloads, package copies, tool and editor copies, caches and Studio states; delete per category (never your own data in `~/FM-1`, nothing an interrupted installation needs) and an automatic cleanup |
 
 Plus the frame: light/dark/automatic theme with accent colour, consistent icons, command search
 (**Ctrl+K**), notifications with history, setup assistant, "What's new", crash dialog with error report and
@@ -81,24 +84,30 @@ login (on the Pi: HDMI). The installer then disables it and says so clearly (Flu
 starts it itself); with `--no-fluidsynth-fix` it is left unchanged. The graphical installer asks with a
 checkbox.
 
-**Packages (.deb/.run):** version 2.5.0 is available under
+**USB hubs:** flashing through a USB hub works with a *careful mode* (switched on automatically when the app sees a
+hub between the Pi and the FM-1, or always via Settings › General): slower pacing, longer waits for the restarts,
+automatic resume of an interrupted write on the same device, and a flight log for the error report. Linux' USB
+autosuspend can send the FM-1 or the hub to sleep during the restarts – `./install.sh --usb-power-rule` installs a
+udev rule that keeps them awake (the graphical installer offers it as a checkbox).
+
+**Packages (.deb/.run):** version 2.6.0 is available under
 [Releases](https://github.com/bit-wmike/fm1-companion/releases):
 
 ```bash
-sudo apt install ./fm1-companion_2.5.0_all.deb
-sh FM-1-Companion-Suite-2.5.0.run
+sudo apt install ./fm1-companion_2.6.0_all.deb
+sh FM-1-Companion-Suite-2.6.0.run
 ```
 
 You can also build them yourself (result in `dist/`):
 
 ```bash
-python3 tools/build_deb.py        # dist/fm1-companion_2.5.0_all.deb  → sudo apt install ./dist/fm1-companion_2.5.0_all.deb
-python3 tools/build_run.py        # dist/FM-1-Companion-Suite-2.5.0.run → sh dist/FM-1-Companion-Suite-2.5.0.run
+python3 tools/build_deb.py        # dist/fm1-companion_2.6.0_all.deb  → sudo apt install ./dist/fm1-companion_2.6.0_all.deb
+python3 tools/build_run.py        # dist/FM-1-Companion-Suite-2.6.0.run → sh dist/FM-1-Companion-Suite-2.6.0.run
 ```
 
 The `.run` installer is a graphical assistant (licence, notice, just for me or for all users, start menu,
 desktop shortcut, example samples); without a window:
-`sh FM-1-Companion-Suite-2.5.0.run --unattended [--prefix DIR] [--no-deps]`.
+`sh FM-1-Companion-Suite-2.6.0.run --unattended [--prefix DIR] [--no-deps]`.
 
 ## Requirements
 
@@ -147,7 +156,7 @@ catalog including thumbnails. Everything else happens only when you click. Error
 ## Where things are
 
 ```
-~/FM-1/                                   your data (NEVER deleted automatically)
+~/FM-1/                                   your data (NEVER deleted automatically; Settings › Storage shows what can go)
   Backups/<device>/  Projekte/  Samples/  Kits/  Aufnahmen/  Firmware/
 ~/.config/fm1-companion/config.json       settings
 ~/.local/share/fm1-companion/             device profiles, tool repos, editor copies (+ app/ for a per-user install)
@@ -165,7 +174,8 @@ QT_QPA_PLATFORM=offscreen python3 tests/ui_smoke.py screenshots
 ```
 
 Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Code structure: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
-Translations: [docs/TRANSLATING.md](docs/TRANSLATING.md).
+Translations: [docs/TRANSLATING.md](docs/TRANSLATING.md) · Which firmware the app backs up, names and installs how
+(the catalog audit): [docs/firmware-support.md](docs/firmware-support.md).
 
 ## Legal
 

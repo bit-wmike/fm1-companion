@@ -394,6 +394,7 @@ def is_mvave_stock(identity: str) -> bool:
 def send_plan(firmware_key: str, identity: str = "") -> str:
     """-> "single" (single-voice dump) or "params" (parameter changes)."""
     fw = (firmware_key or "").lower()
-    if fw in ("melodee", "fm1open", "fm1_open", "open", "stock", "mvave") or is_mvave_stock(identity):
+    if fw in ("melodee", "fm1-open", "fm1open", "fm1_open", "open", "stock", "mvave") or fw.startswith("stock-") \
+            or is_mvave_stock(identity):
         return "single"
     return "params"

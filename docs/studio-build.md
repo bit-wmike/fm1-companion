@@ -1,11 +1,13 @@
-# Studio twin: adding a new Melodee, Skiff, JIANT FM, SLOOP, CoralFlower or KARMA version
+# Studio twin: adding a new firmware version (Melodee, Skiff, JIANT FM, SLOOP, CoralFlower, KARMA, Felucca, ChoralRoot, X0X, FoMni, AMB-1, LOOM-8, FM1 Open)
 
-The Studio twin is the firmware's own code (Melodee's, Skiff's, JIANT FM's, SLOOP's, CoralFlower's or KARMA's), compiled
-for the computer as WebAssembly – together with a small glue layer (`tools/studio/melodee_studio.c`,
-`tools/studio/skiff_studio.c`, `tools/studio/jiant_studio.c`, `tools/studio/sloop_studio.c`,
-`tools/studio/coralflower_studio.c`, `tools/studio/karma_studio.c`) that exposes the
-NOR flash, the USB SysEx path (editor protocol), keys/knobs/LEDs, the screen and rendering (ABI `st_*`, see
-`fm1companion/sims/_studio/twin-core.js`). Several versions sit side by side:
+The Studio twin is the firmware's own code (Melodee's, Skiff's, JIANT FM's, SLOOP's, CoralFlower's, KARMA's, Felucca's,
+ChoralRoot's, X0X's, FoMni's, AMB-1's, LOOM-8's or FM1 Open's), compiled for the computer as WebAssembly – together with
+a small glue layer (`tools/studio/melodee_studio.c`, `tools/studio/skiff_studio.c`, `tools/studio/jiant_studio.c`,
+`tools/studio/sloop_studio.c`, `tools/studio/coralflower_studio.c`, `tools/studio/karma_studio.c`,
+`tools/studio/felucca_studio.c`, `tools/studio/choralroot_studio.c`, `tools/studio/x0x_studio.c`,
+`tools/studio/fomni_studio.c`, `tools/studio/fm1base_studio.c` for AMB-1 and LOOM-8, `tools/studio/fm1open_studio.c`)
+that exposes the NOR flash, the USB SysEx path (editor protocol), keys/knobs/LEDs, the screen and rendering (ABI `st_*`,
+see `fm1companion/sims/_studio/twin-core.js`). Several versions sit side by side:
 
 ```
 fm1companion/sims/melodee-studio/<version>/   manifest.json, twin.wasm, LICENSE, NOTICE
@@ -15,6 +17,14 @@ fm1companion/sims/sloop-studio/<version>/     manifest.json, twin.wasm, LICENSE,
 fm1companion/sims/coralflower-studio/<version>/  manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md,
                                               LICENSING-choralroot.md, THIRD_PARTY.txt
 fm1companion/sims/karma-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/choralroot-studio/<version>/  manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/felucca-studio/<version>/   manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/fm1-open-studio/<version>/  manifest.json, twin.wasm, LICENSE (FM1 Open's LICENSE.md), NOTICE, THIRD_PARTY.md
+fm1companion/sims/x0x-studio/<version>/       manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/fomni-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
+fm1companion/sims/amb-1-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING*.md, CREDITS-fm1-base.md,
+                                              THIRD_PARTY.txt
+fm1companion/sims/loom-8-studio/<version>/    the same, and COPYING (GPL-3.0)
 fm1companion/sims/_studio/                    shared host (page, worker, AudioWorklet, control surface)
 ```
 
@@ -22,7 +32,12 @@ When opening, `studio.pick_build()` picks the firmware and version of the device
 version (with a warning). Bundled: Melodee 1.6.0-rc.7, rc.8, 1.6.0, 1.6.1; Skiff 2.1.1, 2.2; JIANT FM V10.60, V10.61, V10.6z2 (its stable);
 SLOOP 2.8.4, 2.8.5 (its stable) (about 0.9–1.4 MB of wasm each);
 CoralFlower 0.7, 0.7.1 (its stable) (about 1.2–1.4 MB of wasm each, CoralFlower's 0.7 MB);
-KARMA 3.0.5, 3.1 (its stable) (about 0.9–1.4 MB of wasm each).
+KARMA 3.0.5, 3.1 (its stable) (about 0.9–1.4 MB of wasm each);
+Felucca 1.8.0, 1.8.1 (its stable) (about 0.9 MB of wasm each);
+ChoralRoot FM-1 0.38, 0.39 (its stable) (about 1.1 MB of wasm each);
+X0X 1.2.0, 1.2.1 (its stable) (about 0.64 MB of wasm each);
+FoMni 0.4, 0.4.1 (about 0.17 MB each); AMB-1 1.3.1, 1.3.2 (about 0.17 MB each); LOOM-8 0.13.1, 0.14 (about 1.26 MB each);
+M-VAVE's FM1 Open V14 (0.3 MB of wasm; also the stand-in for the original firmware V15/V16).
 
 ## Requirements (only on the build machine, not on the Pi)
 
@@ -178,15 +193,237 @@ own backups with `bkNewer`). A KARMA backup onto SLOOP is refused before anythin
 2.6) onto KARMA is allowed, as KARMA's editor allows it. Not in any backup: the three saved songs of SAVE on the SONG
 screen (FM6's two sectors and 0xFB000) – KARMA's own backup leaves them out too.
 
+Felucca (the base of the family) has release tags `vX.Y[.Z]`; its release workflow builds them with
+`tools/build.py --release X.Y.Z` (the identity FM-1_9XY, the version string `vX.Y.Z` = `felucca.c` FELUCCA_VERSION at the
+tag). Its hardware layer and six engines are **git submodules** (`firmware/bsp` = felucca-bsp, MPL-2.0;
+`firmware/engines` = Felucca-Engines, MIT): `git archive` leaves them empty, so the build puts each in at the commit the
+tag records (`STUDIOS["felucca-studio"]["submodules"]`, `_submodules()`; a clone from `--repo felucca-bsp=…` /
+`--repo Felucca-Engines=…`, else `/tmp/felucca-bsp`, `/tmp/felucca-engines`, else a bare clone into `--work`):
+
+```sh
+git clone https://github.com/hugelton/Felucca /path/to/felucca
+python3 tools/build_sims.py --target felucca-studio --ref v1.8.2 --repo felucca=/path/to/felucca \
+    --repo felucca-bsp=/path/to/felucca-bsp --repo Felucca-Engines=/path/to/Felucca-Engines
+```
+
+→ `fm1companion/sims/felucca-studio/<version>/` (the folder is the version without its "v", `1.8.1`), identity from the
+version as `tools/build.py --release` makes it (`felucca_release_identity`: v1.8.1 → FM-1_918), `tracks` 4,
+`projects` 4 (SAVE's PROJECT A–D), the include paths of Felucca's own emulator build (`cflags`: `firmware/hal`,
+`firmware/bsp/chip`, `firmware/bsp/boards/fm1`). The manifest names the submodules' commits (`sources`);
+`tools/make_source_tarballs.py` packs them beside Felucca's own tarball. The list is
+`STUDIOS["felucca-studio"]["refs"]`, the status `STUDIOS["felucca-studio"]["release_status"]`.
+
+| Felucca version | Tag / commit | Status (manifest `release_status`, 2026-11-11) | Reports (INFO / identity) | Backup objects | Folder |
+|---|---|---|---|---|---|
+| 1.8.1 | `v1.8.1` f4df2964649f301ba5abd0ec6000110068672f25 | **stable** – what its web installer installs (gh-pages `firmware/felucca-1.8.1.fwsc`, README "Stable release: 1.8.1") | `FELUCCA v1.8.1` / `FM-1_918` | 13 | `felucca-studio/1.8.1` |
+| 1.8.0 | `v1.8.0` 9f62297c2db627bbcb20d7ce896683a17318674c | previous stable | `FELUCCA v1.8.0` / `FM-1_918` | 13 | `felucca-studio/1.8.0` |
+
+Both pin felucca-bsp 5942e68b89ab9ccd23f2c541d712ca38fe635f11 and Felucca-Engines d0260074ce100a47675814b7f38d61f11176c926.
+`v1.8.2-beta` (only the recognition of a newer flash chip) is a beta and not bundled: a 1.8.2 FM-1 gets the 1.8.1 twin
+with a warning. Felucca's versions sort with the generic `studio.version_key`.
+
+A Felucca FM-1 answers INFO "FELUCCA v1.8.1" – no other name (`protocol.Info.firmware_name` "felucca", the catalog's key
+`felucca`; `firmware.guess_firmware` "felucca" for such an INFO). The identity alone does not tell Felucca: its releases
+are FM-1_9XY, which Felucca forks built the same way share (Jangada, Golana …: FM-1_910 … 913), and a plain
+`tools/build.py` build is FM-1_900 – SLOOP's (and 31 other firmwares') identity. SLOOP always names itself
+("FELUCCA SLOOP 2.8.5"), so the INFO decides: `backup.protocol()` asks INFO for the hint "felucca" too (before, that hint
+skipped INFO), and `guess_firmware` no longer takes what this machine remembered for FM-1_900 (e.g. "sloop") over a plain
+Felucca INFO. **Felucca forks** that answer INFO "FELUCCA v…" without a name of their own, or a fork chosen for the
+device from the catalog (`felucca-mpe`, `felucca-salt` …: `StudioService.firmware_for` takes the prefix), get the
+**Felucca twin with a warning** (`studio.felucca_fork_note`: the fork's key, or a package identity other than the
+twin's; the version check of `pick_build` / `check_versions` warns too and writing back needs the expert tick for
+another version). Their backup protocol and inventory are Felucca's, the device checks every object written back, and
+a safety backup comes first – a fork that reports exactly Felucca's version string and identity cannot be told apart.
+
+Felucca's backup (editor commands 65–67, `editor_backup.c` ED_BK_IDS, `web/fm1backup.js` BACKUP_IDS; file format
+"felucca-backup", `firmware` = the INFO string): 0 the running music (FUN10, 3840 bytes), 1 the settings (572), 2–5 the
+projects A–D, 6–7 the user preset banks (UPB1, 3080), 8 the FM6 patch bank of 1.0–1.0.2 (listed empty since 1.0.3; an
+older archive's bank goes into the user presets), 9 the user presets' FM6 patches (3728), 32–34 the sample slots
+USR1–USR3 (restored through SMP_BEGIN / WRITE / END). `backup.FELUCCA_IDS` / `KNOWN_ID_SETS[13]` (before, 13 objects were
+an unknown inventory: the inspector warned "unknown to the web editor", named object 9 "CZ-1 bank 1", knew no firmware
+for a backup of Felucca's own editor and refused to copy it), `backup.is_felucca()` (13 objects; the 12 and 11 of
+1.0–1.0.2 and before FM6 only with "felucca" in the name: they are Melodee's too). The twin's tolerant load takes the
+sample slots too (`FIRMWARES["felucca"]["samples"]`: the twin keeps them), so writing back after "Fetch from FM-1" keeps
+the device's samples. Skiff's entry has the flag as well: before, the tolerant load left a Skiff FM-1's sample slots out of
+the twin, and writing back then erased them on the device (SMP_ERASE of the empty slot;
+`tests/test_studio.py::test_fetch_and_write_back_keep_the_sample_slots`).
+FM1 Open (M-VAVE's open firmware, GPL-3.0 with the FM1 SDK linking exception) has no tags; a version is a commit, the
+one the bundled simulator `sims/fm1-open` is built from (`SIMS["fm1-open"]["ref"]`):
+
+```sh
+git clone https://github.com/m-vave/fm1_open /path/to/fm1_open
+python3 tools/build_sims.py --target fm1-open-studio --repo fm1-open=/path/to/fm1_open
+```
+
+→ `fm1companion/sims/fm1-open-studio/V14/` (the folder is `app/version.h` FM1_RELEASE_VERSION), identity from
+`app/version.h` FM1_UPDATE_PRODUCT (FM-1_8000014), `tracks` 8, `projects` 16. The build has its own compile step
+(`STUDIOS["fm1-open-studio"]["compile"]`, `build_studio_own`): the sources and flags of FM1 Open's own simulator build
+(`tools/Build-Web.ps1` Build-Simulator, as `build_fm1_open` does: app/ without app/board/, web/, third_party/synth/,
+`-DFM1_HOST_TEST -DFM1_OPEN_WEB`, C11, `-Werror`), with the glue in place of `web/engine/Simulator.c`.
+
+| FM1 Open version | Commit | Status (2026-11-11) | Reports (INFO / identity) | Backup objects (fm1openbk.py) | Folder |
+|---|---|---|---|---|---|
+| V14 | 4c7496daac04a95ff10d1afdcc8f9ead2dbabc41 | **current** – `main` of m-vave/fm1_open, the source of its workbench | no INFO / `FM-1_8000014` | 22: 0 the working project, 1–16 the slots, 20–23 the DX7 library banks A–D, 32 the sample bank | `fm1-open-studio/V14` |
+| (original V15 / V16) | – (closed) | the firmware most FM-1 run | no INFO / `FM-1_015` / `FM-1_016` | none: no backup protocol | the V14 twin as stand-in |
+
+How close FM1 Open is to the original V15 (from its sources): it is **not** V15 – a new APP (`app/`, GPL) on M-VAVE's
+binary engine SDK (`sdk/lib/libfm1_engine.a`), numbered V13, V14 (`FM1_RELEASE_VERSION`), package identity
+FM-1_8xxxxxx; 8 tracks (DX7, 303, 808, PSG, pluck, sampler), 16 project slots, 64 steps, 8 sample pads, its own flash
+format ("Firmware switching does not make project and sample formats interchangeable", its README). Shared with V15:
+the **128 factory DX7 voices** in their order (`app/fm_factory.inc`, extracted from `sdk/firmware/FM-1_015.fwsc`; the
+twin's library is byte-identical to the V15 package's USR voices, `tests/test_studio_fm1open.py`), the msfa-derived FM
+model and the update protocol (00 59 system commands). The twin runs the **open web engine** (`web/`, as M-VAVE's
+browser simulator), not the device engine; V16 in addition corrected the detune. So the studio opens the FM1 Open twin
+for a V15/V16 device with a note (`studio.STAND_IN_NOTE`, `FIRMWARES["fm1-open"]["stand_in"]`) and refuses fetch and
+write back there (the original firmware has no backup protocol).
+
+FM1 Open has no editor INFO and no backup command: the device is recognised by its identity (`firmware.guess_firmware`
+FM-1_8xxxxxx → "fm1-open"), the backup (`fm1openbk.py`, file format `fm1open-backup`) is made of its workbench's file
+transfer commands (app/transfer.c: 0 library, 22 capabilities, 9 slot name, 8 load, 7 save, 1/2 download, 3/4/5
+upload, 11/15 sample bank). A slot is read by loading it; the backup restores the working area afterwards. `backup.py`
+picks it by the firmware key (`FM1OPEN_KEY`) or the file's format (`Archive.fm1open`).
+
+### The FM1 Open glue in short
+
+`fm1open_studio.c` includes FM1 Open's browser simulator `web/engine/Simulator.c` whole (its `sim_*` exports stay) and
+adds the `st_*` ABI: the user partition (536576 bytes) at the start of a 1 MiB image (`st_flash`; on the device the SDK
+places it, its address is not in the sources), USB MIDI in through `sim_midi_from` (the APP's `fm1_app_midi_received`
+and `fm1_app_sysex`, so app/transfer.c answers), the SDK's identity request (00 59 17) answered with
+FM1_UPDATE_PRODUCT, other update commands dropped; the APP's USB output (`fm1_midi_send_port` USB) collected for
+`st_out` (Simulator.c's test capture renamed away); `sim_render` as the clock (a 128-frame block, the control work
+every 10 ms). `st_transport_set` posts MIDI Start / Stop into the instrument's own input, `st_track_mute_set` toggles
+MUTE (groove_mix_toggle) for the stems, `st_project_*` are the 16 slots. A blank image boots as a new device
+(Simulator.c `sim_boot(1)`: the factory sample bank).
+ChoralRoot FM-1's FM-1 releases are tags `vX.Y[.Z]` (the `-smk37` tags are its SMK-37 builds, not the FM-1's:
+`choralroot_version` refuses them); its web installer offers the first entry of `web/releases.json`, built with
+`tools/build.py --release X.Y` (the INFO text "ChoralRoot X.Y", the identity `PRODUCT` FM-1_920 for every FM-1
+release):
+
+```sh
+git clone https://github.com/Quixotic7/ChoralRootFM1 /path/to/choralroot
+python3 tools/build_sims.py --target choralroot-studio --ref v0.40 --repo choralroot=/path/to/choralroot
+```
+
+→ `fm1companion/sims/choralroot-studio/0.40/`, the version from the tag (`version_ref`, as CoralFlower: `--release` sets
+the version string), identity read from the commit's `tools/build.py` (`PRODUCT`), `tracks` 2 (the chord part and the
+bass part; parts 3 and 4 are unused), `projects` 0. The list is `STUDIOS["choralroot-studio"]["refs"]`, the status
+`STUDIOS["choralroot-studio"]["release_status"]`; the build takes ChoralRoot's own emulator flags (`cflags`: gnu11 and
+its single-thread `<os/lock.h>`, `tools/emu/web/compat`).
+
+| ChoralRoot version | Tag / commit | Status (manifest `release_status`, 2026-11-11) | Reports (INFO / identity) | Backup objects | Folder |
+|---|---|---|---|---|---|
+| 0.39 | v0.39 / 36867e5c76fa1ecc02cba57102ee870695e1de10 | **stable** – the first entry of `web/releases.json`, what its installer offers | `ChoralRoot 0.39` / `FM-1_920` | 34 | `choralroot-studio/0.39` |
+| 0.38 | v0.38 / 3cb2e8fd25d3d4292cb5c66c2623589d7a2ba8e3 | previous stable (`web/releases.json`) | `ChoralRoot 0.38` / `FM-1_920` | 34 | `choralroot-studio/0.38` |
+
+A ChoralRoot device answers INFO "ChoralRoot 0.39" (its single-core package "ChoralRoot 0.39 1-core"; both pick the 0.39
+twin); `protocol.Info.firmware_name` is "choralroot", `firmware.guess_firmware` maps it and the identity FM-1_920 to
+the catalog's key "choralroot-fm-1" (`StudioService.firmware_for` takes it to the twin). Its versions sort with the
+generic key (0.22-beta4 < 0.22 < 0.29.2 < 0.39). ChoralRoot speaks only the backup part of Felucca's protocol (INFO,
+LIST 65, GET 66, PUT 67, RESTART 72; no editor, `cr_backup.c`) and writes `felucca-backup` files with its INFO string as
+`firmware`. Its inventory (`CRB_IDS`, `backup.CHORALROOT_IDS`): from 0.22, 34 objects – 1 the settings (PER5), 8 the FM6
+bank, 14..21 the CZ-1 banks A..H, 50..62 the sound pool's 13 banks (user sounds 001..128), 23 the favourites, 40..49 the
+ten loop slots; LIST names every one, an empty one with size 0 (a new unit lists all 34 empty: nothing is written before
+SAVE held). 0.14 .. 0.21: 1, 6 7 the user sound banks, 8, 9 the VA patches, 10 11 the FM6 patches, 12 13 the CZ-1
+tones, 14..21, 22 the FM TONE patches, 40..49 (28 objects; 27 without 22, 17 without the CZ-1 objects;
+`backup.CHORALROOT_ID_SETS`). No running music, no projects and no sample slots: before this twin `backup.py` read
+40..62 as Melodee's sample slots (a restore would have sent the loops and sound banks with SMP_BEGIN / WRITE / END),
+refused a 28-object archive ("unexpected object order": Felucca's `range(28)` has that length) and refused any archive
+whose FM6 bank (its second object) was empty. `backup.is_choralroot` tells the inventory (the loop slots, nothing of
+Felucca's music); a restore ends in RESTART as CoralFlower's (`backup.restart_coralflower`), and the studio power-cycles
+its twin after loading a backup (`FIRMWARES["choralroot"]["restart"]`). A 0.21 archive's sound objects (6, 7, 9..13,
+22) are refused by 0.22 and later: `backup.restore` stops before writing anything, the studio's tolerant load leaves
+them out and names them (ChoralRoot's own installer reports them skipped).
+X0X (Charles Vestal's groovebox: the 909, the 808, two 303s with TB-3PO, a break slicer) has release tags; its release
+workflow builds `tools/build.py --release X.Y.Z` (the version string "X.Y.Z BETA", the identity FM-1_9XXYYZZ):
+
+```sh
+git clone https://github.com/charlesvestal/fm1-x0x /path/to/x0x
+python3 tools/build_sims.py --target x0x-studio --ref v1.2.1 --repo x0x=/path/to/x0x
+```
+
+→ `fm1companion/sims/x0x-studio/1.2.1/` (`version_ref`: the version from the tag), the identity from the version as
+X0X's `tools/build.py` makes it, `tracks` 5 (its parts: the 909, the 808, 303 A, 303 B, BREAK), `projects` 0 (one
+project: the sound, 32 patterns, the song, the knob motion). The DSP units of `host/build_host.sh` (its `U` list) are
+compiled beside the glue (`objects`), with its flags (`cflags`: `-DX0X_HOST`, `-Ifirmware/src/dsp`); the break loops are
+rendered by X0X's own 909 code with the host's `cc` (`tools/gen_builtin_break.sh`). The list is
+`STUDIOS["x0x-studio"]["refs"]`, the status `STUDIOS["x0x-studio"]["release_status"]`.
+
+| X0X version | Tag / commit | Status (manifest `release_status`, 2026-11-11) | Reports (INFO / identity) | Backup objects | Folder |
+|---|---|---|---|---|---|
+| 1.2.1 | `v1.2.1` 502b2c28c14ab2bff31eb4f0777fdfd0efcf8bea | **stable** – its latest release (the identity handshake for M-UPGRADE 3.11) | `X0X 1.2.1 BETA` / `FM-1_9010201` (the plain handshake: `FM-1_901`) | 6 (one image) | `x0x-studio/1.2.1` |
+| 1.2.0 | `v1.2.0` ca2d377e3b9522579245152a81781a575f4d2fea | previous stable (the same app) | `X0X 1.2.0 BETA` / `FM-1_9010200` | 6 (one image) | `x0x-studio/1.2.0` |
+
+An X0X device answers INFO "X0X 1.2.1 BETA" (`editor.c`: INFO, PING and the sample slots only; `protocol.Info.firmware_name`
+"x0x", the catalog's key; `firmware.guess_firmware` by the INFO: FM-1_9XXYYZZ is no X0X-only identity, TRIBE uses it
+too). X0X has **its own backup protocol and image** (`firmware/src/backup.c`, `tools/x0x_backup.py`; `x0xbk.py`): in the
+update's SysEx framing (ota.c), cmd 0x42 streams the project's image ("X0XB": the settings 0, the sound 1, the packed
+stream's patterns 2 and 3, the song 5, the knob motion 6, each as stored; not the panel's calibration 4, not the break
+loops in the sample slots), cmd 0x41 has the device pull an image with read requests, check it whole, ask on its
+screen (RESTORE FROM USB? SEL yes) and commit it all or nothing; refused while playing. `backup.py` picks it by INFO
+(`backup.X0X`); the suite keeps such a backup as an `x0x-backup` file (the image in Base64, INFO, the companion block)
+and reads X0X's own `.x0b` files as well. A part alone cannot be restored (`restore_selected` refuses anything but all
+of it); writing the twin back without the settings puts the device's own settings object into the image. The twin
+cannot wait for its host inside a call, so the suite puts the image on the twin's side of the cable first (cmd 0x7E, the
+glue's own frame) and the twin answers the read requests and the question itself (`StudioTransport.twin`).
+
+FoMni (FoMni-1, Charles Vestal's chord harp, on X0X's platform) the same way, by its release tags (`tools/build.py
+--release X.Y[.Z]`: "X.Y.Z BETA", the identity FM-1_8XXYYZZ; the glue `tools/studio/fomni_studio.c` is X0X's without the
+editor and the backup, on `host/omni_host.c`):
+
+```sh
+python3 tools/build_sims.py --target fomni-studio --ref v0.4.1 --repo fomni=/path/to/fm1-fomni
+```
+
+AMB-1 and LOOM-8 are apps on **fm1-base** (`app/`, with fm1-base a submodule in `base/` and felucca-bsp in `base/bsp`, both
+pinned by the app's tag). `build_studio`'s `prepare` hook (`_fm1base_prepare`) extracts the submodules at the commits the
+tag pins (from `--repo fm1-base=… --repo felucca-bsp=…`, else clones in `--work`), runs fm1-base's own host build
+(`base/tools/build.py app --host --release X.Y[.Z]`: the generated headers, this machine's `cc`) and takes its compile
+lines (the defines from `fm1.toml`, the include paths, the o2 units) for the twin; the manifest names the submodules'
+commits under `sources` (`tools/make_source_tarballs.py` packs them too). One glue serves both:
+`tools/studio/fm1base_studio.c` (MPL-2.0, as fm1-base), on fm1-base's browser emulator (`web/emu/emu_web.c`: host/plat_host.c
+with PLAT_WEB), with the device's `storage.c` on the flash image (the data windows are the image itself: plat_host.c's
+`PLAT_DATA_AREA`), the USB SysEx path (the screen reader, the crash history and the stats, the app's frames,
+felucca-bsp's `ota.c`, and with `backup = true` fm1-base's `backup.c`), USB MIDI and SysEx out from the emulator's logs.
+The app's part (its transport and the parts of the stems) is the `TW_APP_*` block.
+
+```sh
+python3 tools/build_sims.py --target amb-1-studio --ref v1.3.2 --repo amb-1=/path/to/fm1-amb --repo fm1-base=… --repo felucca-bsp=…
+python3 tools/build_sims.py --target loom-8-studio --ref v0.14 --repo loom-8=/path/to/fm1-loom --repo fm1-base=… --repo felucca-bsp=…
+```
+
+| Firmware version | Tag / commit | Status (2026-11-11) | Reports (st_version / identity) | Backup | Folder |
+|---|---|---|---|---|---|
+| FoMni 0.4.1 | `v0.4.1` 17a740b7b2d19615ffe19aa73f8eda67f60f223d | latest release (the handshake for M-UPGRADE 3.11) | `FoMni-1 0.4.1 BETA` / `FM-1_8000401` (plain: `FM-1_800`) | none over USB | `fomni-studio/0.4.1` |
+| FoMni 0.4 | `v0.4` 6ecd227013cc18def0e89d035b3760eb268b342b | previous release | `FoMni-1 0.4 BETA` / `FM-1_8000400` | none | `fomni-studio/0.4` |
+| AMB-1 1.3.2 | `v1.3.2` 7c538516d6c52216ff4c8a4881cf2f0dcb07c44b (fm1-base 3ae2a65, felucca-bsp f878800) | latest release | `AMB-1 1.3.2` / `FM-1_7010302` (plain: `FM-1_701`) | none over USB | `amb-1-studio/1.3.2` |
+| AMB-1 1.3.1 | `v1.3.1` 285215af014b9c6a7c2b404c538d9261e8a9d29f (fm1-base 9bca715) | previous release | `AMB-1 1.3.1` / `FM-1_7010301` | none | `amb-1-studio/1.3.1` |
+| LOOM-8 0.14 | `v0.14` faf459d1f9cea3e634b6e2622a1c3e91d58b3452 (fm1-base 317cb86, felucca-bsp 5b0879b) | latest release | `LOOM-8 0.14` / `FM-1_10001400` (plain: `FM-1_100`) | fm1-base's image "LM8B": 22 objects | `loom-8-studio/0.14` |
+| LOOM-8 0.13.1 | `v0.13.1` a89a8fd23600705a51b928578b5464b4530f47bd (fm1-base 3ae2a65) | previous release | `LOOM-8 0.13.1` / `FM-1_10001301` | the same | `loom-8-studio/0.13.1` |
+
+None of the three has an editor: no INFO (the twin is picked by the catalog's key, `fomni`, `amb-1`, `loom-8`, or by a
+backup; `studio.FIRMWARES[…]["editor"]` False for LOOM-8: the device's version is not asked for). FoMni and AMB-1 have no
+backup over USB at all (`"backup": None`, `studio.no_backup`): their twins start empty or from a studio state and are
+never loaded from or written onto an FM-1. LOOM-8's backup is fm1-base's `backup.c`, X0X's protocol with the app's magic
+and objects (`x0xbk.LOOM_PROFILE`: "LM8B", the user presets 1 and the three projects' 21 objects 2..22; the suite's
+`loom8-backup` file, LOOM-8's own `.loom8` read as well), taken whole; it has no settings object, so "keep the device's
+settings" writes the image as it is. The stems: FoMni's harp voices 1 and 2, the chord with the bass, the rhythm (their
+levels held at 0); AMB-1's pad, bells, bass and pulse layers; LOOM-8's eight tracks (the sequencer's mutes). FM-1_7…,
+FM-1_8… and FM-1_9XXYYZZ are shared by other firmwares: none of them is guessed from the identity alone.
+
 Each `STUDIOS` entry names what differs between firmwares: `generate` (the header generators), `version_file` /
 `version_re` (where the version string lives), `identity` (the release identity from the version) or `identity_src`
 (read from the source tree: JIANT, SLOOP, CoralFlower, KARMA), `defines` (version and identity for the glue), `notice`,
-optionally `extra` (further licence files), `folder` (the folder from the version string: SLOOP's "SLOOP 2.8.5" →
+optionally `extra` (further licence files), `compile` and `license_file` (FM1 Open: its own compile step,
+`build_studio_own`), `folder` (the folder from the version string: SLOOP's "SLOOP 2.8.5" →
 `2.8.5`, KARMA's "KARMA 3.1" → `3.1`), `objects` (further link inputs, KARMA's C++ built with clang++) and, for the
 Python side, `tracks` and `projects`.
 `build_studio()` is the same for all; a new firmware adds an entry, a glue file, and its key in
-`fm1companion/studio.py` `FIRMWARES`. Optional: `version_ref` (the version from the ref, CoralFlower), `cflags`
-(further compiler flags), `release_status`.
+`fm1companion/studio.py` `FIRMWARES`. Optional: `version_ref` (the version from the ref, CoralFlower, ChoralRoot, X0X),
+`cflags` (further compiler flags), `release_status`, `submodules` (Felucca: path → repository, put in at the tag's
+gitlinks, `_submodules()`) or `prepare` (fm1-base's AMB-1 and LOOM-8: their submodules and fm1-base's own host build
+before the compile); both record the submodules' commits as the manifest's `sources`, which
+`tools/make_source_tarballs.py` packs. `--repo NAME=…` clones go into one table (`REPOS`) for the firmwares and their
+submodules alike.
 
 If something in the firmware's interfaces changes between versions (names in `hostsim.c`, flash layout,
 project storage), the glue must be adapted; the manifest records the checksum of the glue layer (`glue_sha256`),
@@ -252,6 +489,43 @@ single-core build), `FELUCCA_UAC` 0, `FELUCCA_CDC` 0, no TRS MIDI, no `recovery.
 `st_transport_set` (0 stop, 1 PLAY, 2 the song from the top: song mode when the song order's parts exist, 3 restart)
 and lets the audio ISR take the request at once.
 
+### The Felucca glue in short
+
+`felucca_studio.c` follows Felucca's own browser emulator (`web/emu/felucca_web.c`, the X0X design: its HAL stand-ins,
+`main.c`'s boot `web_power_on`, the power-on LED sweep and 1.2's idle animation, the clock driven by the audio,
+`audio.c`'s real ISR) and adds what the emulator leaves out: `FELUCCA_OTA` 1 (felucca-bsp's `usb.c` SysEx frames →
+`editor.c` `ed_service` → `ota_wire_send`; `chip/ota.c` answers the identity handshake, an update request is dropped;
+`ota_hw.c` is the device's and stays out), the user sample slots' flash hooks (`fl_erase4k` / `fl_write` on nor[]),
+USB = configured, MIDI out drained from usb.c's rings. `FELUCCA_CDC` 1 as the release (the MENU row; nothing behind it),
+one core (`FELUCCA_CPU2`'s stubs as the emulator's: MENU › 2ND CORE has no second core), no AFTERTOUCH key pressure
+(`keytouch.c` is not in the emulator either), no USB audio, no TRS MIDI. `st_boot` runs the splash's 430 ms (device time).
+`st_transport_set(how)`: 0 stop (`ed_flash_stop`), 1 PLAY, 2 the SONG chain from the top (editor SONG op 2,
+`chain_prepare`; no rows: as 1), 3 restart.
+### The ChoralRoot glue in short
+
+`choralroot_studio.c` is the CoralFlower glue on ChoralRoot's own browser emulator (CoralFlower is a fork of ChoralRoot;
+`tools/emu/web/emu_web.c` with `tools/emu/emu_fw.c`, `emu_firmware.h`, `emu_hal_fw.h`), with `FELUCCA_OTA` 1 as
+`firmware/src/choralroot.c` builds the device (usb.c's SysEx frame and ring; `cr_backup.c`'s replies go out through
+`ota_wire_send`, `ota.c` answers the identity handshake; a short frame that usb.c also keeps in `usb.sysex` is taken so
+the emulator's frame does not answer it twice) and the `st_*` ABI. `CRB_REBOOT` is a no-op: RESTART replies, the host
+restarts the twin. The clock is the emulator's (tick, a UI frame every 15 ms or the input scan with GRAIN's render
+slice, the audio blocks due), the audio kept at 24 bits; a flash erase holds the audio 45 ms. `st_boot` runs the splash
+(`cr_ui.c` CR_SPLASH_MS, 1.5 s). Optional exports: `st_transport_set` (the looper: PLAY's event `LP_PLAY`, play / stop;
+2 has no song and plays the loop) and `st_track_mute_set` (the stems: the chord and the bass part; a muted part starts no
+note, voice.c `P_MUTE`, and the click is held silent in a stem). The ten loop slots are the panel's (PLAY held,
+PRESETS): `st_project_*` answer "none".
+### The X0X glue in short
+
+`x0x_studio.c` includes X0X's own browser emulator whole (`web/emu/x0x_web.c`'s way: `host/x0x_host.c` with
+`X0X_WEB`, the whole app on a simulated FM-1) and adds what it leaves out: the device's `storage.c` on the flash image
+(every object the emulator saves is written through `st_save`, power-on reads them with `st_load` / `st_load_prev`; the
+sample slots are read in place from the image, the emulator's `slotimg` path), the USB SysEx path in `main_fm1.c`'s
+order (the screen reader, `editor.c`, `ota.c`'s identity handshake, `backup.c` with `main_fm1.c`'s `backup_service`
+and hooks) and USB MIDI out (the emulator's MIDI log line, taken as bytes; the clock it counts goes out at the end of its
+millisecond). A wait of the firmware for its host (`ota_idle`, the restore's question) runs the audio alone, as the
+device's ISR does. `st_boot` runs the splash's 330 ms. Optional exports: `st_transport_set` (0 stop, 1 PLAY as the panel
+does, 2 the song from its first bar, 3 restart) and `st_track_mute_set` (the sequencer's part mutes: the stems).
+
 ## Checking
 
 ```sh
@@ -261,25 +535,63 @@ QT_QPA_PLATFORM=offscreen QTWEBENGINE_DISABLE_SANDBOX=1 python3 tests/ui_studio_
 ```
 
 `tests/test_studio.py::test_builds_side_by_side` (Melodee), `test_skiff_builds_side_by_side`,
-`test_jiant_builds_side_by_side`, `test_sloop_builds_side_by_side`, `test_coralflower_builds_side_by_side` and
-`test_karma_builds_side_by_side` expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`,
+`test_jiant_builds_side_by_side`, `test_sloop_builds_side_by_side`, `test_coralflower_builds_side_by_side`,
+`test_karma_builds_side_by_side`, `test_felucca_builds_side_by_side`, `test_choralroot_builds_side_by_side`,
+`test_x0x_builds_side_by_side`, `test_fomni_builds_side_by_side`, `test_amb_builds_side_by_side` and
+`test_loom_builds_side_by_side` expect the bundled versions – add the new version there. `tests/studio_twin_skiff.mjs`,
 `tests/studio_twin_jiant.mjs`, `tests/studio_twin_sloop.mjs` and `tests/studio_twin_karma.mjs` are the Skiff, JIANT,
 SLOOP and KARMA core checks in node (editor, identity, backup GET/PUT round trip – SLOOP's and KARMA's with SLOOP's
-commands 34–36 –, flash persistence, PLAY, audio, fork, USB MIDI out, stop); `tests/studio_twin_coralflower.mjs` the
+commands 34–36 –, flash persistence, PLAY, audio, fork, USB MIDI out, stop); `tests/studio_twin_felucca.mjs` is Felucca's (INFO, identity FM-1_918, the 13-object round trip with a sample in USR1 through
+SMP_*, flash persistence, PLAY, audio, fork, transport, the editor's SONG stop); `tests/studio_twin_fm1open.mjs` the FM1
+Open one (identity, its file protocol, slots, library banks, samples, PLAY, fork, transport, mutes; Python side
+`tests/test_studio_fm1open.py`), `tests/studio_twin_coralflower.mjs` the
 CoralFlower one (INFO, identity, a take recorded on the panel, the 26-object GET/PUT round trip with RESTART, the power
-cycle, PLAY, audio, fork, MIDI out, transport, mutes).
+cycle, PLAY, audio, fork, MIDI out, transport, mutes); `tests/studio_twin_x0x.mjs` the X0X one (INFO, identity, a
+pattern on the panel, X0X's own backup and restore with its refusals, the power cycle, PLAY, MIDI in and out, fork,
+transport, mutes); `tests/studio_twin_fomni.mjs`, `studio_twin_amb.mjs` and `studio_twin_loom.mjs` the FoMni, AMB-1 and
+LOOM-8 ones (identity, playing, MIDI out, SAVE and the power cycle, fork, transport, stems; LOOM-8's backup and restore).
 The packages (.deb, .run) include everything under `fm1companion/` (`tools/build_common.app_files`);
 `tests/test_packaging.py` checks that the host files and every `twin.wasm` end up in the package.
 
 ## Other firmwares
 
-FM1 Open follows the same pattern: its own entry in `STUDIOS`, its own glue layer `tools/studio/<firmware>_studio.c`
-with the same `st_*` ABI, and an entry in `studio.FIRMWARES` (then `StudioService.firmware_for()` knows it). The host
+A further firmware follows the same pattern: its own entry in `STUDIOS`, its own glue layer
+`tools/studio/<firmware>_studio.c` with the same `st_*` ABI, and an entry in `studio.FIRMWARES` (then
+`StudioService.firmware_for()` knows it; `"stand_in"` names device firmwares without a twin of their own that open it). The host
 (JS) and the rest of the Python side stay the same. A firmware with SLOOP's backup protocol and format (`sloopbk.py`)
 says so in its `FIRMWARES` entry (`"backup": "sloop"`, SLOOP and KARMA): the twin's tolerant load then goes through
-`sloopbk.restore_tolerant`. See `docs/ROADMAP.md`.
+`sloopbk.restore_tolerant`. The other `FIRMWARES` flags: `"samples": True` (Felucca's protocol with user sample slots
+the twin keeps – Skiff, Felucca: the tolerant load takes them, so writing back does not erase the device's samples;
+`tests/test_studio.py::test_sample_slot_twins_are_flagged` checks every bundled inventory against it),
+`"restart": True` (the firmware reads a restore at its next start: CoralFlower, ChoralRoot), `"backup"` "fm1open" /
+"x0x" / "loom-8" (their own protocol and file) or `None` (no backup over USB: FoMni, AMB-1 – `studio.no_backup`),
+`"editor": False` (no INFO to ask: LOOM-8), `"settings_id"` (the settings object left out on "write back without
+settings"; `None`: none), `"stand_in"`. See `docs/ROADMAP.md`.
+
+### Firmwares checked without a twin (2026-11-11)
+
+The whole catalog – every firmware, its INFO, protocol, backup inventory and install – is in
+[firmware-support.md](firmware-support.md) (the catalog audit; the runtime table is `fm1companion/fwfamily.py`).
+
+* **ORBIT** (dspaudio/orbit, a SLOOP fork, GPL-3.0; stable 1.0.0 `orbit.fwsc`, the Bluetooth build 1.0.1B
+  `orbit-ble.fwsc`, both INFO "FELUCCA ORBIT …" / FM-1_900): technically SLOOP's twin would carry over
+  (`tests/editor_host.c`, `hal/fm1_flash_map.h`), but every ORBIT build compiles its CLUSTER engine, a C translation of
+  Teenage Engineering's OP-1 #246 oscillator with TE's own tables (`assets/op1-cluster/`), which ORBIT's LICENSING.md
+  says remains TE's material, not relicensed – no twin is bundled. ORBIT speaks SLOOP's backup protocol (34–36,
+  `ED_BK_IDS` 0..10, 32..35, "sloop-backup" files with product "ORBIT"): `backup.SLOOP_PROTOCOL` includes it, an ORBIT
+  backup is refused on SLOOP / KARMA and a SLOOP backup on ORBIT before anything is written, as ORBIT's editor does;
+  `studio.backup_firmware` names it "orbit" (the studio page says there is no twin for it).
+* **Hortator** (DeadActive/hortator, releases are the tags `drum-vX.Y.Z`, "Hortator X.Y.Z" with
+  `hortator-X.Y.Z.fwsc`; the `frozen-base-N` tags are no releases): its own editor protocol (header 7D 48 54, sequence
+  numbers, backup by kinds and parts), none of Felucca's commands, so the Suite's Studio (which rides on 7D 46 4C) could
+  neither load nor read it without a new protocol layer. The device layer asks its own INFO (`ui/device.py`
+  `hortator_info`, from 1.0.0) to name it instead of asking the user (its identity is Felucca's FM-1_900).
+* **GR!MM** (GRiMMBIENT/grimm, v2.0.2): its own protocol (7D 47 52, commands 20..25) and a blocking main loop its
+  browser build runs only through Asyncify: no twin. Its identity FM-1_966 (every release) names it
+  (`firmware.guess_firmware` → the catalog's "gr-mm").
 
 Source tarballs for a release: `python3 tools/make_source_tarballs.py --repo melodee=… --repo skiff=… --repo JIANT=…
---repo sloop-fm1=… --repo CoralFlower=… --repo karma-fm1=…` (without `--repo` it looks in `/tmp/<name>`, then in lower
+--repo sloop-fm1=… --repo CoralFlower=… --repo karma-fm1=… --repo Felucca=… --repo felucca-bsp=… --repo Felucca-Engines=…`
+(a manifest's `sources`, Felucca's submodules, are packed too; without `--repo` it looks in `/tmp/<name>`, then in lower
 case: `/tmp/jiant`, `/tmp/coralflower`, then the manifests' firmware key: `/tmp/sloop` for `sloop-fm1`, `/tmp/karma`
-for `karma-fm1`) packs every commit named in a manifest.
+for `karma-fm1`; FM1 Open's is `/tmp/fm1_open`, shared with the simulator) packs every commit named in a manifest.

@@ -55,3 +55,31 @@ def test_late_probe_of_previous_device_is_ignored():
     DeviceContext._probe_failed(ctx, "x", old)
     DeviceContext._generic(ctx, "FM-1_900", old)
     assert ctx.info == "neu" and ctx.identity == "FM-1_91060" and not calls
+
+
+def test_hortator_answers_its_own_info():
+    """Hortator (DeadActive/hortator) answers no Felucca editor command, only its own protocol (header 7D 48 54): the
+    generic path asks its INFO and names the firmware instead of asking the user (identity FM-1_900 is shared)."""
+    from fm1companion.ui.device import HORTATOR_INFO, hortator_info
+
+    class FakeLink:
+        def __init__(self, reply):
+            self.reply, self.listeners, self.sent = reply, [], []
+
+        def add_listener(self, f):
+            self.listeners.append(f)
+
+        def remove_listener(self, f):
+            self.listeners.remove(f)
+
+        def send_midi(self, data, force=False):
+            self.sent.append(list(data))
+            if self.reply:
+                for f in list(self.listeners):
+                    f(self.reply, "in")
+            return True
+
+    ok = FakeLink([0xF0, 0x7D, 0x48, 0x54, 1, 0, 0, *b"HORTATOR", 0, *b"1.0.1", 0, 1, 3, 0x7F, 1, 8, 64, 0xF7])
+    assert hortator_info(ok) == "1.0.1" and ok.sent == [HORTATOR_INFO] and not ok.listeners
+    assert hortator_info(FakeLink(None), timeout=0.05) == ""                  # (an older Hortator, another firmware)
+    assert hortator_info(FakeLink([0xF0, 0x7D, 0x48, 0x54, 1, 0, 0, *b"OTHER", 0, *b"1", 0, 0xF7])) == ""

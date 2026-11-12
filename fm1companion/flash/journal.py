@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Installation journal: what is being written right now – survives crashes, reboots and power loss.
 
-DATA_DIR/flash/journal.json  {"active": {...} | null, "history": [...]}
+DATA_DIR/flash/journal.json  {"active": {...} | null, "history": [...], "chain": {...} | null}
+  "chain": a two-step switch (original V15 first, then the target) that has not reached its target yet –
+  {"key", "name", "tag", "file", "device_id", "started"}; set before the V15 step, cleared once the target is written.
 DATA_DIR/flash/packages/<sha256>.fwsc  copy of every package currently being installed (for the rescue)
 DATA_DIR/flash/install.lock  PID of the process currently installing (one installation at a time)
 """
@@ -46,10 +48,11 @@ class Journal:
             if isinstance(d, dict):
                 d.setdefault("active", None)
                 d.setdefault("history", [])
+                d.setdefault("chain", None)
                 return d
         except (OSError, ValueError):
             pass
-        return {"active": None, "history": []}
+        return {"active": None, "history": [], "chain": None}
 
     def _save(self, d: dict):
         self.dir.mkdir(parents=True, exist_ok=True)
@@ -133,6 +136,24 @@ class Journal:
         if not keep_active:
             d["active"] = None
         self._save(d)
+
+    # ------------------------------------------------------------ two-step switch (V15, then the target)
+    @property
+    def chain(self) -> dict | None:
+        c = self.load().get("chain")
+        return c if isinstance(c, dict) and c.get("key") else None
+
+    def begin_chain(self, **entry) -> dict:
+        d = self.load()
+        d["chain"] = {"started": time.time(), **entry}
+        self._save(d)
+        return d["chain"]
+
+    def clear_chain(self):
+        d = self.load()
+        if d.get("chain") is not None:
+            d["chain"] = None
+            self._save(d)
 
     def clear_active(self):
         d = self.load()

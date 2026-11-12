@@ -32,7 +32,7 @@ from . import backup, config
 from .i18n import _, ngettext
 
 DEFAULTS = {"on_connect": True, "days": 1, "periodic": False, "hours": 6, "keep_monthly": True,
-            "mirror": "", "delay_s": 20}
+            "mirror": "", "delay_s": 20, "mirror_prune": True}
 AUTO_KINDS = ("auto", "vor-Update", "sicherheit")
 _lock = threading.Lock()
 
@@ -131,6 +131,13 @@ def _load_index() -> dict:
             _cache = json.loads(_index_file().read_text("utf-8"))
         except (OSError, ValueError):
             _cache = {}
+        if not isinstance(_cache, dict):
+            _cache = {}
+        gone = [k for k in _cache if not os.path.exists(k)]   # entries of deleted backups (else: unbounded)
+        for k in gone:
+            _cache.pop(k, None)
+        if gone:
+            _save_index()
     return _cache
 
 
@@ -152,46 +159,92 @@ def _kind_from_name(stem: str) -> str:
     return "manuell"
 
 
-def read_meta(path: Path) -> Meta | None:
+def _entry(path: Path, st) -> dict | None:
+    """index entry (header data) of a backup file, read from the file – None if it is no backup"""
+    try:
+        f = json.loads(path.read_text("utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(f, dict) or f.get("format") not in (backup.FORMAT, "sloop-backup", backup.FM1OPEN_FORMAT):
+        return None
+    c = f.get("companion") or {}
+    objs = f.get("objects") or []
+    fw = f.get("firmware", "")
+    key = c.get("firmware") or next((k for k in ("melodee", "karma", "sloop", "skiff", "jiant", "coralflower",
+                                               "choralroot")
+                                     if k in fw.lower()), "")
+    if f.get("format") == backup.FM1OPEN_FORMAT:   # (M-VAVE's FM1 Open: its slots 1..16)
+        key = key or backup.FM1OPEN_KEY
+    jiant = backup.is_jiant(o.get("id", -1) for o in objs if isinstance(o, dict))
+    coral = backup.is_coralflower(o.get("id", -1) for o in objs if isinstance(o, dict))
+    choral = backup.is_choralroot(o.get("id", -1) for o in objs if isinstance(o, dict))
+    try:                                   # count used presets once (stored in the index afterwards)
+        from . import backup_inspect as _BI
+        presets = len(_BI.inspect(f).used_presets)
+    except Exception:                      # noqa: BLE001 – then without a number
+        presets = -1
+    return {"presets": presets, "mtime": st.st_mtime, "size": st.st_size, "created": f.get("created") or f.get("date", ""),
+            "firmware": fw, "fw_key": key, "device": c.get("device", ""), "device_id": c.get("device_id", ""),
+            "note": c.get("note", ""), "labels": list(c.get("labels") or []), "pinned": bool(c.get("pinned")),
+            "kind": c.get("kind") or _kind_from_name(path.stem), "objects": len(objs),
+            "projects": sum(1 for o in objs if isinstance(o, dict) and (o.get("size") or o.get("len"))
+                            and (1 <= o.get("id", -1) <= 16 if f.get("format") == backup.FM1OPEN_FORMAT else
+                                 backup.is_project(o.get("id", -1), jiant, coral, choral)) and o.get("id") != 0),
+            "fmt": f.get("format")}
+
+
+def _meta(path: Path, e: dict) -> Meta:
+    return Meta(path, e["created"], e["firmware"], e["fw_key"], e["device"], e["device_id"], e["note"], e["labels"],
+                e["pinned"], e["kind"], e["size"], e["mtime"], e["objects"], e["projects"], e.get("fmt", backup.FORMAT),
+                int(e.get("presets", -1)))
+
+
+def read_meta(path: Path, cached: bool = True) -> Meta | None:
+    """header data of a backup file. cached=False: read without the index (e.g. files in the mirror folder,
+    which must not end up in the local index)."""
     path = Path(path)
     try:
         st = path.stat()
     except OSError:
         return None
+    if not cached:
+        e = _entry(path, st)
+        return _meta(path, e) if e else None
     with _lock:
         idx = _load_index()
         e = idx.get(str(path))
         if not e or e.get("mtime") != st.st_mtime or e.get("size") != st.st_size or "presets" not in e:
-            try:
-                f = json.loads(path.read_text("utf-8"))
-            except (OSError, ValueError):
+            e = _entry(path, st)
+            if e is None:
+                if idx.pop(str(path), None) is not None:     # (no longer a backup: forget the old entry)
+                    _save_index()
                 return None
-            if not isinstance(f, dict) or f.get("format") not in (backup.FORMAT, "sloop-backup"):
-                return None
-            c = f.get("companion") or {}
-            objs = f.get("objects") or []
-            fw = f.get("firmware", "")
-            key = c.get("firmware") or next((k for k in ("melodee", "karma", "sloop", "skiff", "jiant", "coralflower")
-                                             if k in fw.lower()), "")
-            jiant = backup.is_jiant(o.get("id", -1) for o in objs if isinstance(o, dict))
-            coral = backup.is_coralflower(o.get("id", -1) for o in objs if isinstance(o, dict))
-            try:                                   # count used presets once (stored in the index afterwards)
-                from . import backup_inspect as _BI
-                presets = len(_BI.inspect(f).used_presets)
-            except Exception:                      # noqa: BLE001 – then without a number
-                presets = -1
-            e = {"presets": presets, "mtime": st.st_mtime, "size": st.st_size, "created": f.get("created") or f.get("date", ""),
-                 "firmware": fw, "fw_key": key, "device": c.get("device", ""), "device_id": c.get("device_id", ""),
-                 "note": c.get("note", ""), "labels": list(c.get("labels") or []), "pinned": bool(c.get("pinned")),
-                 "kind": c.get("kind") or _kind_from_name(path.stem), "objects": len(objs),
-                 "projects": sum(1 for o in objs if isinstance(o, dict) and (o.get("size") or o.get("len"))
-                                 and backup.is_project(o.get("id", -1), jiant, coral) and o.get("id") != 0),
-                 "fmt": f.get("format")}
             idx[str(path)] = e
             _save_index()
-    return Meta(path, e["created"], e["firmware"], e["fw_key"], e["device"], e["device_id"], e["note"], e["labels"],
-                e["pinned"], e["kind"], e["size"], e["mtime"], e["objects"], e["projects"], e.get("fmt", backup.FORMAT),
-                int(e.get("presets", -1)))
+    return _meta(path, e)
+
+
+def prune_index(folder: Path | None = None, present=None, recursive: bool = True) -> int:
+    """Drop index entries of files that no longer exist (deleted backups) -> number of dropped entries.
+    folder + present (the files just found there): only entries in that folder, without touching the disk;
+    otherwise every entry is checked with os.path.exists (once when the index is loaded)."""
+    with _lock:
+        idx = _load_index()
+        if folder is not None and present is not None:
+            base = str(Path(folder))
+            keep = {str(p) for p in present}
+
+            def inside(k: str) -> bool:
+                par = os.path.dirname(k)
+                return par == base or (recursive and par.startswith(base + os.sep))
+            gone = [k for k in idx if inside(k) and k not in keep]
+        else:
+            gone = [k for k in idx if not os.path.exists(k)]
+        for k in gone:
+            idx.pop(k, None)
+        if gone:
+            _save_index()
+    return len(gone)
 
 
 def damaged_meta(path: Path) -> Meta | None:
@@ -220,6 +273,7 @@ def list_backups(folder: Path, recursive: bool = True, include_damaged: bool = F
     if not folder.exists():
         return []
     files = list(folder.rglob("*.json") if recursive else folder.glob("*.json"))
+    prune_index(folder, files, recursive)              # forget entries of files deleted since
     out = []
     for f in files:
         m = read_meta(f)
@@ -330,11 +384,17 @@ def mirror_file(path: Path, root: Path, target: Path) -> Path:
     dest = target / rel
     try:
         if dest.exists() and dest.stat().st_size == path.stat().st_size and _sha(dest) == _sha(path):
+            _mirror_record(target, rel, _sha(dest))
             return dest
         dest.parent.mkdir(parents=True, exist_ok=True)
         tmp = dest.with_name(dest.name + ".part")
-        shutil.copyfile(path, tmp)
-        if _sha(tmp) != _sha(path):
+        try:
+            shutil.copyfile(path, tmp)
+        except OSError:
+            tmp.unlink(missing_ok=True)            # (a half copy, e.g. drive full, must not stay behind)
+            raise
+        sha = _sha(path)
+        if _sha(tmp) != sha:
             tmp.unlink(missing_ok=True)
             raise OSError(_("Verifying the copy {name} failed – the copy in the mirror is not identical").format(
                 name=dest.name))
@@ -347,7 +407,94 @@ def mirror_file(path: Path, root: Path, target: Path) -> Path:
         if getattr(e, "errno", None) is None:
             raise
         raise OSError(f"{dest.name}: {os_error_text(e)}") from e
+    _mirror_record(target, rel, sha)
     return dest
+
+
+# The mirror's own retention: the app only ever deletes files in the mirror folder that it copied there itself
+# (remembered locally, per mirror folder, with their checksum – not in the mirror, so a second computer that
+# mirrors into the same folder never deletes this computer's files), that are still unchanged, that are
+# automatic backups and that the local retention already deleted here. Manual backups, pinned ones, files of
+# others and files changed since are never touched.
+
+def _mirror_file() -> Path:
+    return config.DATA_DIR / "daten" / "mirror.json"
+
+
+_mlock = threading.Lock()
+
+
+def _mirror_key(target: Path) -> str:
+    try:
+        return str(Path(target).resolve())
+    except OSError:
+        return str(target)
+
+
+def _mirror_load() -> dict:
+    try:
+        d = json.loads(_mirror_file().read_text("utf-8"))
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _mirror_save(d: dict):
+    try:
+        backup.write_text_atomic(_mirror_file(), json.dumps(d))
+    except OSError:
+        pass
+
+
+def _mirror_record(target: Path, rel: Path, sha: str):
+    with _mlock:
+        d = _mirror_load()
+        d.setdefault(_mirror_key(target), {})[Path(rel).as_posix()] = sha
+        _mirror_save(d)
+
+
+def mirror_written(target: Path) -> dict[str, str]:
+    """relative path -> SHA-256 of the files this app copied into the mirror folder"""
+    with _mlock:
+        return dict(_mirror_load().get(_mirror_key(target)) or {})
+
+
+def prune_mirror(root: Path, target: Path, keep_last: int, keep_monthly: bool | None = None) -> list[Path]:
+    """Apply the retention (keep_backups) to the mirror folder -> deleted files. See above for what is never
+    deleted. Off with the setting "mirror_prune" or keep_last 0 ("keep all")."""
+    cfg = settings()
+    if keep_last <= 0 or not cfg.get("mirror_prune", True):
+        return []
+    target, root = Path(target), Path(root)
+    if not target.is_dir():
+        return []
+    mine = mirror_written(target)
+    monthly = cfg["keep_monthly"] if keep_monthly is None else keep_monthly
+    gone, stale = [], [r for r in mine if not (target / r).exists()]
+    for d in sorted({Path(r).parent for r in mine}):
+        folder = target / d
+        metas = [m for m in (read_meta(f, cached=False) for f in sorted(folder.glob("*.json"))) if m]
+        for m in retention(metas, keep_last, monthly):
+            rel = (d / m.path.name).as_posix()
+            if rel not in mine or (root / rel).exists():
+                continue                            # not ours, or still here (then the mirror keeps it too)
+            try:
+                if _sha(m.path) != mine[rel]:
+                    stale.append(rel)               # changed since we copied it: no longer ours to delete
+                    continue
+                m.path.unlink()
+            except OSError:
+                continue
+            gone.append(m.path)
+            stale.append(rel)
+    if stale:
+        with _mlock:
+            d = _mirror_load()
+            ours = d.get(_mirror_key(target)) or {}
+            for r in stale:
+                ours.pop(r, None)
+            _mirror_save(d)
+    return gone
 
 
 def mirror_all(root: Path, target: Path) -> tuple[int, int, list[str]]:

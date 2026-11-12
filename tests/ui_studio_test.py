@@ -285,6 +285,174 @@ try:
     check(kt2.play()["busy"] and not kt2.stop()["busy"], "KARMA: play and stop (st_transport_set)")
     kt2.close()
     kt.close()
+    # the Felucca twin (tools/studio/felucca_studio.c, with its submodules felucca-bsp and Felucca-Engines): editor,
+    # identity FM-1_918, four stems, the 13-object backup round trip
+    ft = studio.Studio.create(firmware="felucca", backend="webengine", server=st.backend.server)
+    check(ft.build.firmware == "felucca" and ft.info.get("version") == ft.build.version,
+          f"Felucca twin started in QtWebEngine: {ft.info.get('version')}")
+    FL = ft.link
+    check(studio.device_version(FL) == ft.build.version, "Felucca INFO via Link")
+    got.clear()
+    FL.add_listener(lambda d, direction: got.append(d) if direction == "in" and d[:2] == [0xF0, 0x00] else None)
+    FL.send_midi([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])
+    t1 = time.time()
+    while not got and time.time() - t1 < 3:
+        app.processEvents()
+    check(got and bytes(got[0]) == _identity_frame(ft.build.identity), f"Felucca identity {ft.build.identity}")
+    for k in range(4):
+        for i in range(0, 16, 2 + k % 3):
+            FL.request(Cmd.TRACK_STEP, [k, i, 1, 40 + 3 * k + (i % 5), 0, 0, 0, 0, 0, 100])
+    check(FL.request(Cmd.PROJECT, [1, 0])[2] == 1, "Felucca: project A saved in the twin")
+    r7 = ft.render_wav(out / "felucca.wav", seconds=2, start="play", source="saved", project=0, stems=True, fmt="f32")
+    check(len(r7.stems) == 4 and r7.peak > 0.05, f"Felucca: mix + four stems, peak {r7.peak:.3f}")
+    farch = ft.backup()
+    check(studio.backup_firmware(farch) == "felucca" and farch.known and len(farch.objects) == 13,
+          f"Felucca backup ({len(farch.objects)} objects, known inventory)")
+    ft2 = studio.Studio.for_backup(farch, backend="webengine", server=st.backend.server)
+    same = all(a["bytes"] == b["bytes"] for a, b in zip(farch.objects, ft2.backup().objects))
+    check(ft2.build.firmware == "felucca" and ft2.projects() == [0] and same,
+          "Felucca backup into a second Felucca twin: byte-identical")
+    check(ft2.play()["busy"] and not ft2.stop()["busy"], "Felucca: play and stop (st_transport_set)")
+    ft2.close()
+    ft.close()
+    # the FM1 Open twin (tools/studio/fm1open_studio.c on M-VAVE's simulator): identity, its file protocol through the
+    # Link (fm1openbk.py), eight stems, its backup round trip
+    from fm1companion import fm1open as F, fm1openbk
+    ot = studio.Studio.create(firmware="fm1-open", backend="webengine", server=st.backend.server)
+    check(ot.build.firmware == "fm1-open" and ot.info.get("version") == "FM1 OPEN " + ot.build.version,
+          f"FM1 Open twin started in QtWebEngine: {ot.info.get('version')}")
+    OL = ot.link
+    check(ot.device_version(OL) == ot.build.version == "V14", "FM1 Open identity via Link (FM-1_8000014)")
+    with F.Client(OL) as c:                              # a step on every fourth step of all eight tracks, in slot 3
+        w = bytearray(fm1openbk._working(c))
+        for t in range(8):
+            drum = w[2048 + t * 223] in (2, 5)              # (808 and the sampler: a drum bit, no note)
+            for i in range(0, 64, 4):
+                w[(t * 64 + i) * 4:(t * 64 + i) * 4 + 4] = bytes([0, 100, 1, 0] if drum else [48 + 3 * t + i % 12, 100, 0, 0])
+        fm1openbk._upload(c, 0, 0, bytes(w))
+        c.query(7, bytes([2]))
+    check(ot.projects() == [2], "FM1 Open: slot 3 saved in the twin")
+    r7 = ot.render_wav(out / "fm1open.wav", seconds=1.5, start="play", source="saved", project=2, stems=True, fmt="f32")
+    check(len(r7.stems) == 8 and r7.peak > 0.02, f"FM1 Open: mix + eight stems, peak {r7.peak:.3f}")
+    oarch = ot.backup()
+    check(studio.backup_firmware(oarch) == "fm1-open" and oarch.fm1open and len(oarch.objects) == len(fm1openbk.IDS),
+          f"FM1 Open backup (its own format, {len(oarch.objects)} objects)")
+    ot2 = studio.Studio.for_backup(oarch, backend="webengine", server=st.backend.server)
+    same = all(a["bytes"] == b["bytes"] for a, b in zip(oarch.objects, ot2.backup().objects))
+    check(ot2.build.firmware == "fm1-open" and ot2.projects() == [2] and same,
+          "FM1 Open backup into a second FM1 Open twin: byte-identical")
+    check(ot2.play()["busy"] and not ot2.stop()["busy"], "FM1 Open: play and stop (st_transport_set)")
+    ot2.close()
+    ot.close()
+    # the ChoralRoot FM-1 twin (tools/studio/choralroot_studio.c): INFO and identity, a loop on its panel (no editor) saved
+    # with SAVE held, two stems, its 34-object backup round trip (the restore ends in a restart: a power cycle)
+    cr = studio.Studio.create(firmware="choralroot", backend="webengine", server=st.backend.server)
+    check(cr.build.firmware == "choralroot" and cr.info.get("version") == "ChoralRoot " + cr.build.version,
+          f"ChoralRoot twin started in QtWebEngine: {cr.info.get('version')}")
+    RL = cr.link
+    check(studio.device_version(RL) == studio.norm_version(cr.build.version), "ChoralRoot INFO via Link")
+    got.clear()
+    RL.add_listener(lambda d, direction: got.append(d) if direction == "in" and d[:2] == [0xF0, 0x00] else None)
+    RL.send_midi([0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7])
+    t1 = time.time()
+    while not got and time.time() - t1 < 3:
+        app.processEvents()
+    check(got and bytes(got[0]) == _identity_frame(cr.build.identity), f"ChoralRoot identity {cr.build.identity}")
+    cr.set_clock(False)                                 # REC, four chords, REC: the loop plays; stop, SAVE held
+    cr.press("REC")
+    cr.backend.call("run", ms=200)
+    for k in (7, 12, 14, 20):
+        cr.backend.call("keys", mask=1 << k)
+        cr.backend.call("run", ms=450)
+        cr.backend.call("keys", mask=0)
+        cr.backend.call("run", ms=50)
+    cr.press("REC")
+    cr.backend.call("run", ms=300)
+    cr.stop()
+    cr.backend.call("press", label=studio.B["SAVE"], ms=1500)
+    cr.backend.call("run", ms=1500)
+    cr.set_clock(True)
+    rarch = cr.backup()
+    check(studio.backup_firmware(rarch) == "choralroot" and [o["id"] for o in rarch.objects] == backup.CHORALROOT_IDS
+          and {o["id"] for o in rarch.objects if o["size"]} == {1, 40}, "ChoralRoot backup (34 objects, loop slot 1)")
+    r6 = cr.render_wav(out / "choralroot.wav", seconds=2, start="play", source="saved", stems=True, fmt="f32")
+    check(len(r6.stems) == 2 and r6.peak > 0.05, f"ChoralRoot: mix + two stems, peak {r6.peak:.3f}")
+    cr2 = studio.Studio.for_backup(rarch, backend="webengine", server=st.backend.server)
+    back = {o["id"]: o["bytes"] for o in cr2.backup().objects}
+    same = all(back[o["id"]] == o["bytes"] for o in rarch.objects if o["id"] == 40)
+    check(cr2.build.firmware == "choralroot" and cr2.projects() == [] and same,
+          "ChoralRoot backup into a second ChoralRoot twin: the loop byte-identical")
+    check(cr2.play()["busy"] and not cr2.stop()["busy"], "ChoralRoot: play and stop (st_transport_set)")
+    cr2.close()
+    cr.close()
+    # the X0X twin (tools/studio/x0x_studio.c, on X0X's own browser emulator): INFO, the identity handshake (1.2.1: the
+    # whole identity for the query with the body 01), a pattern on the panel, five stems, its own backup protocol
+    # (x0xbk.py: the image whole) into a second X0X twin
+    xt = studio.Studio.create(firmware="x0x", backend="webengine", server=st.backend.server)
+    check(xt.build.firmware == "x0x" and xt.info.get("version") == f"X0X {xt.build.version} BETA",
+          f"X0X twin started in QtWebEngine: {xt.info.get('version')}")
+    XL = xt.link
+    check(studio.device_version(XL) == studio.norm_version(xt.build.version), "X0X INFO via Link")
+    from fm1companion import x0xbk
+    got.clear()
+    XL.add_listener(lambda d, direction: got.append(d) if direction == "in" and x0xbk.parse_frame(d) else None)
+    XL.send_midi(x0xbk.frame(0x11, b"\x01"))
+    t1 = time.time()
+    while not got and time.time() - t1 < 3:
+        app.processEvents()
+    ident = got and x0xbk.parse_frame(got[0])[1]
+    check(ident and ident.rstrip(b"\0").decode() == xt.build.identity, f"X0X identity {xt.build.identity}")
+    xt.set_clock(False)
+    for k in (0, 7, 14, 21):                            # the 909's steps 1, 5, 9, 13
+        xt.backend.call("keys", mask=1 << k)
+        xt.backend.call("run", ms=40)
+        xt.backend.call("keys", mask=0)
+        xt.backend.call("run", ms=40)
+    xt.set_clock(True)
+    xarch = xt.backup()
+    check(studio.backup_firmware(xarch) == "x0x" and xarch.x0x and [o["id"] for o in xarch.objects] == x0xbk.OBJ_IDS
+          and xarch.objects[2]["size"] > 0, "X0X backup (its image: six objects, the patterns)")
+    r7 = xt.render_wav(out / "x0x.wav", seconds=2, start="play", source="saved", stems=True, fmt="f32")
+    check(len(r7.stems) == 5 and r7.peak > 0.05, f"X0X: mix + five stems, peak {r7.peak:.3f}")
+    xt2 = studio.Studio.for_backup(xarch, backend="webengine", server=st.backend.server)
+    same = [o["bytes"] for o in xt2.backup().objects] == [o["bytes"] for o in xarch.objects]
+    check(xt2.build.firmware == "x0x" and xt2.projects() == [] and same,
+          "X0X backup into a second X0X twin: byte-identical")
+    check(xt2.play()["busy"] and not xt2.stop()["busy"], "X0X: play and stop (st_transport_set)")
+    xt2.close()
+    xt.close()
+    # AMB-1 and FoMni (no editor, no backup over USB: the twin alone) and LOOM-8 (fm1-base's backup, its "LM8B" image)
+    for fw, n, start in (("amb-1", 4, "none"), ("fomni", 4, "play"), ("loom-8", 8, "play")):
+        ft = studio.Studio.create(firmware=fw, backend="webengine", server=st.backend.server)
+        check(ft.build.firmware == fw and ft.info.get("version", "").startswith(studio.FIRMWARES[fw]["info"] + " "),
+              f"{fw} twin started in QtWebEngine: {ft.info.get('version')}")
+        ft.set_clock(False)
+        for k in (1, 0, 7, 14, 21):                     # (FoMni: a chord and a strum; LOOM-8: steps on its track)
+            ft.backend.call("keys", mask=1 << k | (2 if fw == "fomni" else 0))
+            ft.backend.call("run", ms=60)
+            ft.backend.call("keys", mask=0)
+            ft.backend.call("run", ms=60)
+        if fw == "loom-8":
+            ft.press("SAVE")
+            ft.backend.call("run", ms=3000)
+        ft.set_clock(True)
+        rf = ft.render_wav(out / f"{fw}.wav", seconds=2, start=start, source="live", stems=True, fmt="f32")
+        check(len(rf.stems) == n and rf.peak > 0.02, f"{fw}: mix + {n} stems, peak {rf.peak:.3f}")
+        if fw == "loom-8":
+            larch = ft.backup()
+            lt2 = studio.Studio.for_backup(larch, backend="webengine", server=st.backend.server)
+            check(lt2.build.firmware == "loom-8" and larch.image == "loom-8" and
+                  [o["bytes"] for o in lt2.backup().objects] == [o["bytes"] for o in larch.objects],
+                  "LOOM-8 backup (fm1-base's image) into a second LOOM-8 twin: byte-identical")
+            lt2.close()
+        else:
+            try:
+                ft.backup()
+                check(False, f"{fw}: no backup over USB")
+            except studio.StudioError:
+                check(True, f"{fw}: no backup over USB (the studio says so)")
+        check(ft.play()["busy"] and not ft.stop()["busy"], f"{fw}: play and stop (st_transport_set)")
+        ft.close()
     st.close()
     from fm1companion.ui import web
     web.shutdown_all()

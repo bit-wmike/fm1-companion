@@ -65,7 +65,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from .i18n import _
+from . import fwfamily
+from .i18n import N_, _
 from .transport import Transport, Link, LinkError
 from .protocol import Cmd, parse_info, v14
 
@@ -98,7 +99,7 @@ class StudioError(Exception):
 # (protocol.Info.firmware_name; the catalog's "jiant-fm" starts with it)
 FIRMWARES = {
     "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32},
-    "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4},
+    "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4, "samples": True},
     "jiant": {"name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
     # SLOOP answers INFO "FELUCCA SLOOP 2.8.5" (its version string, the build's firmware_version, is "SLOOP 2.8.5": the
     # build's version is "2.8.5"); 4 tracks, the sections A..D; its own backup protocol and file format (sloopbk.py),
@@ -112,7 +113,61 @@ FIRMWARES = {
     # three synth tracks and the drum track; its four projects are the song's parts A..D. It speaks SLOOP's backup
     # protocol (sloopbk.py)
     "karma": {"name": "KARMA", "info": "FELUCCA KARMA", "tracks": 4, "projects": 4, "backup": "sloop"},
+    # Felucca itself answers INFO "FELUCCA v1.8.1" (no other name; protocol.Info.firmware_name "felucca"); 4 tracks, the
+    # projects A..D; its 13-object inventory (backup.FELUCCA_IDS). A fork that answers the same way, or one chosen for the
+    # device from the catalog ("felucca-mpe"), gets this twin with a warning (felucca_fork_note). "samples": the twin keeps
+    # the sample slots USR1..USR3 (its glue's flash hooks): the tolerant load takes them too, so writing back keeps them
+    "felucca": {"name": "Felucca", "info": "FELUCCA", "tracks": 4, "projects": 4, "samples": True},
+    # M-VAVE's FM1 Open (V14) has no editor INFO: the device is known by its package identity (FM-1_8000014); 8 tracks,
+    # 16 project slots; its own file transfer protocol and backup file (fm1openbk.py). The original firmware V15/V16
+    # (closed source, no backup protocol) opens this twin as a stand-in, with a note (STAND_IN_NOTE)
+    "fm1-open": {"name": "FM1 Open", "info": "FM1 OPEN", "tracks": 8, "projects": 16, "backup": "fm1open",
+                 "stand_in": ("stock-v15", "stock-v16")},
+    # ChoralRoot FM-1 answers INFO "ChoralRoot 0.39" (a single-core package "ChoralRoot 0.39 1-core"); its parts (stems):
+    # the chord and the bass; no project slots (its ten loop slots, backup objects 40..49, are loaded on the panel); it
+    # reads a restore at its next start (RESTART, as CoralFlower)
+    "choralroot": {"name": "ChoralRoot", "info": "ChoralRoot", "tracks": 2, "projects": 0, "restart": True},
+    # X0X answers INFO "X0X 1.2.1 BETA" (the twin's version 1.2.1); its parts (stems): the 909, the 808, 303 A, 303 B,
+    # BREAK; one project (no slots); its own backup protocol and image (x0xbk.py), taken whole; its settings are object 0
+    "x0x": {"name": "X0X", "info": "X0X", "tracks": 5, "projects": 0, "backup": "x0x", "settings_id": 0},
+    # AMB-1 (on fm1-base) plays itself; the stems are its four layers (pad, bells, bass, pulse); no project slots. It has
+    # no editor (no INFO) and no backup over USB ("backup": None): the twin starts from its own flash or a studio
+    # state, never from or onto an FM-1
+    "amb-1": {"name": "AMB-1", "info": "AMB-1", "tracks": 4, "projects": 0, "backup": None},
+    # FoMni (FoMni-1, on X0X's platform): a chord harp; the stems are its harp voices 1 and 2, the chord with the bass and
+    # the rhythm; no project slots. Like AMB-1: no editor (no INFO) and no backup over USB
+    "fomni": {"name": "FoMni", "info": "FoMni-1", "tracks": 4, "projects": 0, "backup": None},
+    # LOOM-8 (on fm1-base): eight tracks (the stems); its three projects are no slots the twin loads (its own page);
+    # fm1-base has no editor (no INFO: "editor" False, the device's version is not asked for); its backup is fm1-base's
+    # image ("LM8B", x0xbk.py), taken whole: the user presets and the three projects
+    "loom-8": {"name": "LOOM-8", "info": "LOOM-8", "tracks": 8, "projects": 0, "backup": "loom-8", "editor": False,
+               "settings_id": None},
 }
+
+# the twin a device whose own firmware has none opens instead (the original V15/V16 -> FM1 Open), and why it differs
+STAND_IN_NOTE = N_(
+    "Your FM-1 runs M-VAVE's original firmware {device}. Its code is not open, so there is no twin of it: the studio "
+    "runs M-VAVE's open firmware FM1 Open {twin} instead – with the same 128 factory DX7 voices (taken from the V15 "
+    "package), but a different firmware: its own operation, 8 tracks and 16 projects, its own sample bank, and the "
+    "open engine of M-VAVE's browser simulator instead of the device's. Sound and functions may differ. The original "
+    "firmware has no backup protocol: nothing can be fetched from it or written back to it.")
+
+
+def stand_in_for(device_key: str) -> str:
+    """the twin firmware a device firmware without its own twin opens ("stock-v15" -> "fm1-open"; "" none)"""
+    k = (device_key or "").lower()
+    return next((fw for fw, spec in FIRMWARES.items() if k in spec.get("stand_in", ())), "")
+
+
+def no_backup(key: str) -> bool:
+    """a firmware without a backup over USB (AMB-1, FoMni): its twin is never loaded from an FM-1 nor written onto one"""
+    return key in FIRMWARES and "backup" in FIRMWARES[key] and FIRMWARES[key]["backup"] is None
+
+
+def _no_backup_error(key: str) -> StudioError:
+    return StudioError(_("{firmware} has no backup over USB: its twin cannot be loaded from an FM-1 or a backup, nor "
+                         "written onto one. Play it, export it as WAV and keep its states in the studio.").format(
+                             firmware=firmware_name(key)))
 
 
 def firmware_name(key: str) -> str:
@@ -188,19 +243,38 @@ def jiant_version_key(s: str) -> tuple:
 
 
 def _fw_key(firmware: str) -> str:
-    """a firmware key or display name -> the key ("JIANT FM", "jiant-fm" -> "jiant")"""
+    """a firmware key or display name -> the key ("JIANT FM", "jiant-fm" -> "jiant"; "FM1 Open" -> "fm1-open")"""
     k = (firmware or "").lower()
+    if k.replace(" ", "-") == "fm1-open":
+        return "fm1-open"
     return "jiant" if k.startswith("jiant") else k
 
 
+# FM1 Open's releases are "V13", "V14" (app/version.h FM1_RELEASE_VERSION; the original firmware: V15, V16)
+_FM1OPEN_V = re.compile(r"(?<![\w.])V(\d{2,3})(?![\w.])", re.I)
+
+
+def fm1open_version(s: str) -> str:
+    """'FM1 OPEN V14' / 'v14' -> 'V14' ('' if none)"""
+    m = _FM1OPEN_V.search(s or "")
+    return f"V{int(m[1])}" if m else ""
+
+
 def fw_version(firmware: str, s: str) -> str:
-    """the version as that firmware writes it (JIANT: 'V10.6z2'), else norm_version"""
-    return jiant_version(s) if _fw_key(firmware) == "jiant" else norm_version(s)
+    """the version as that firmware writes it (JIANT: 'V10.6z2', FM1 Open: 'V14'), else norm_version"""
+    k = _fw_key(firmware)
+    if k == "fm1-open":
+        return fm1open_version(s)
+    return jiant_version(s) if k == "jiant" else norm_version(s)
 
 
 def fw_version_key(firmware: str, s: str) -> tuple:
     """sortable in that firmware's release order (JIANT: jiant_version_key), else version_key"""
-    return jiant_version_key(s) if _fw_key(firmware) == "jiant" else version_key(s)
+    k = _fw_key(firmware)
+    if k == "fm1-open":
+        v = fm1open_version(s)
+        return (int(v[1:]),) if v else (0,)
+    return jiant_version_key(s) if k == "jiant" else version_key(s)
 
 
 @dataclass
@@ -318,6 +392,8 @@ def device_version(link) -> str:
 def backup_version(archive) -> str:
     """Firmware version a backup was made with (the app's companion block, otherwise the 'firmware' field)."""
     c = archive.companion or {}
+    if getattr(archive, "fm1open", False):            # (FM1 Open's "V14")
+        return fm1open_version(c.get("firmware_version") or archive.firmware or "")
     return norm_version(c.get("firmware_version") or c.get("version_string") or archive.firmware or "")
 
 
@@ -327,17 +403,31 @@ JIANT_BACKUP_IDS_6 = [*range(11), *range(40, 64)]   # (V10.6p on: 6 songs)
 
 
 def backup_firmware(archive) -> str:
-    """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "coralflower", "karma", "sloop", "felucca" or "" (unknown). The app's
-    companion block names it; otherwise the 'firmware' field (JIANT's editor writes its INFO, "JIANT V10.60"), and the
-    inventory gives Skiff (the pattern bank) and JIANT (the songs) away."""
+    """Which firmware a backup belongs to: "melodee", "skiff", "jiant", "coralflower", "choralroot", "karma", "sloop",
+    "orbit", "felucca", "fm1-open", "x0x", "loom-8" or "" (unknown). The app's companion block names it; otherwise the
+    'firmware' field (JIANT's editor writes its INFO, "JIANT V10.60"), and the inventory gives Skiff (the pattern bank),
+    JIANT (the songs), ChoralRoot (the loop slots) and Felucca (its 13 objects) away; FM1 Open, X0X and LOOM-8 have
+    their own files."""
+    if getattr(archive, "fm1open", False):            # (M-VAVE's FM1 Open: its own file, fm1openbk.py)
+        return "fm1-open"
+    if getattr(archive, "image", ""):                 # (X0X's or LOOM-8's own image: x0xbk.py)
+        return archive.image
     if getattr(archive, "sloop", False):              # (SLOOP's file format: SLOOP or its fork KARMA, "FELUCCA KARMA 3.1")
         c = archive.companion or {}
         text = " ".join(str(x) for x in (c.get("firmware", ""), c.get("version_string", ""), archive.firmware or ""))
+        if "orbit" in text.lower() or archive.file.get("product") == "ORBIT":
+            return "orbit"                          # (ORBIT, a SLOOP fork: no twin; the SLOOP twin cannot read it)
+        fam = fwfamily.by_info(archive.firmware or "")
+        if fam is not None and fam.layout and fam.layout not in ("sloop", "karma"):
+            return fam.key                          # (sloopDX, Clipper …: objects of their own – no twin reads them)
         return "karma" if "karma" in text.lower() else "sloop"
     c = archive.companion or {}
     key = (c.get("firmware") or "").lower()
     text = " ".join(str(x) for x in (key, c.get("version_string", ""), archive.firmware or "")).lower()
-    for name in ("melodee", "skiff", "jiant", "coralflower", "sloop"):
+    fam = fwfamily.by_info(archive.firmware or c.get("version_string", "") or "")
+    if fam is not None and fam.layout:              # (Saadet, DUELL, Tessera …: a layout of their own, no twin)
+        return fam.key
+    for name in ("melodee", "skiff", "jiant", "coralflower", "choralroot", "sloop"):
         if name in text:
             return name
     ids = [o["id"] for o in archive.objects]
@@ -346,9 +436,28 @@ def backup_firmware(archive) -> str:
     from . import backup
     if backup.is_coralflower(ids):                  # (CoralFlower's own page writes its INFO; the inventory tells too)
         return "coralflower"
+    if backup.is_choralroot(ids):                   # (ChoralRoot's installer writes its INFO; the loop slots tell too)
+        return "choralroot"
     if ids in (JIANT_BACKUP_IDS, JIANT_BACKUP_IDS_6):
         return "jiant"
+    if backup.is_felucca(ids, text):                # (Felucca's own editor writes "FELUCCA v1.8.1"; 13 objects since 1.0.3)
+        return "felucca"
     return "felucca" if "felucca" in text else ""
+
+
+def felucca_fork_note(device_key: str, identity: str = "", twin_identity: str = "") -> str:
+    """the Felucca twin for an FM-1 that may not run Felucca's own release: a fork chosen for it ("felucca-mpe", the
+    catalog's keys), or a package identity other than the twin's (FM-1_900: a development build of Felucca – or a fork
+    that answers INFO like Felucca; Felucca's releases are FM-1_9XY). -> warning, '' when none"""
+    k = (device_key or "").lower()
+    ident = (identity or "").removeprefix("ota-")
+    fork = k.startswith("felucca") and k != "felucca"
+    other = bool(ident and twin_identity and ident != twin_identity)
+    if not fork and not other:
+        return ""
+    return _("This FM-1 may run a fork of Felucca or another build of it ({detail}); the studio runs Felucca's own "
+             "code – sound and functions may differ, and the FM-1 checks every part written back.").format(
+        detail=k if fork else _("identity {device}, the twin's {twin}").format(device=ident, twin=twin_identity))
 
 
 # ======================================================================= Backends
@@ -500,6 +609,8 @@ class StudioTransport(Transport):
     """``transport.Transport`` over a twin: send() feeds the message(s) in via the firmware's USB MIDI path;
     everything the twin sends goes to ``receiver`` – like a real FM-1 on USB."""
 
+    twin = True                                     # (x0xbk: the twin takes a restore's image on its side of the cable)
+
     def __init__(self, backend: TwinBackend):
         self.backend = backend
         self._closed = False
@@ -617,9 +728,17 @@ class Studio:
         tolerant=True: parts the firmware rejects (different version, damaged) are skipped instead of
         aborting; their IDs are then in ``self.rejected`` (the twin keeps its own state there)."""
         from . import backup
+        if no_backup(self.build.firmware):
+            raise _no_backup_error(self.build.firmware)
         archive = _archive(src)
         self.stop()
         self.rejected = []
+        if self._fm1open or getattr(archive, "fm1open", False):
+            if self._fm1open != bool(getattr(archive, "fm1open", False)):
+                raise StudioError(_("This backup does not fit the {firmware} twin.").format(firmware=self.firmware_name))
+            self.rejected = self._fm1open_restore(self.link, archive, progress, tolerant)
+            self.info = self.backend.call("info")
+            return archive
         if tolerant:
             self.rejected = restore_tolerant(self.link, archive, progress, self.build.firmware)
         else:
@@ -634,7 +753,9 @@ class Studio:
                          tolerant: bool = False):
         """Read a backup from the real FM-1 and load it into the twin. -> (Archive, VersionCheck)"""
         from . import backup
-        dev = device_version(link)
+        if no_backup(self.build.firmware):
+            raise _no_backup_error(self.build.firmware)
+        dev = self.device_version(link)
         f = backup.capture(link, dev, progress, companion={"firmware": self.build.firmware, "firmware_version": dev,
                                                            "version_string": dev, "note": note, "kind": "studio",
                                                            "app": "FM-1 Companion"})
@@ -645,6 +766,8 @@ class Studio:
     def backup(self, progress=None):
         """Backup of the twin (web editor format) -> backup.Archive"""
         from . import backup
+        if no_backup(self.build.firmware):
+            raise _no_backup_error(self.build.firmware)
         self.stop()
         f = backup.capture(self.link, self.build.version, progress,
                            companion={"firmware": self.build.firmware, "firmware_version": self.build.version,
@@ -658,12 +781,30 @@ class Studio:
         StudioError, unless force=True. settings=False: the "settings" object (1) stays on the device as it is;
         exclude: further object IDs that are not written (e.g. ``self.rejected``). -> Archive"""
         from . import backup
-        vc = self.check_versions(device=device_version(link))
+        if no_backup(self.build.firmware):
+            raise _no_backup_error(self.build.firmware)
+        vc = self.check_versions(device=self.device_version(link))
         if not vc.ok and not force:
             raise StudioError(_("{message} Nothing written.").format(message=vc.message))
         archive = self.backup()
-        skip = set(exclude) | (set() if settings else {FIRMWARES.get(self.build.firmware, {}).get("settings_id", 1)})
-        if skip:
+        if self._fm1open:                           # (FM1 Open: its own protocol; no settings object)
+            from . import fm1openbk
+            ids = [o["id"] for o in archive.objects if o["id"] not in set(exclude)]
+            try:
+                fm1openbk.restore(link, archive.file, progress, ids=ids)
+            except fm1openbk.FM1OpenBackupError as e:
+                raise StudioError(str(e))
+            return archive
+        sid = FIRMWARES.get(self.build.firmware, {}).get("settings_id", 1)    # (LOOM-8: None, no settings object)
+        skip = set(exclude) | (set() if settings or sid is None else {sid})
+        if skip and archive.image:                  # (X0X, LOOM-8 take an image whole: the device's own parts in it)
+            from . import x0xbk
+            dev = {o["id"]: o["bytes"] for o in backup.read(backup.capture(
+                link, self.device_version(link), firmware_key=archive.image)).objects}
+            image = x0xbk.build([(o["id"], dev.get(o["id"], b"") if o["id"] in skip else o["bytes"])
+                                 for o in archive.objects], profile=x0xbk.profile_of(archive.file))
+            backup.restore(link, backup.read(x0xbk.to_file(image, archive.firmware, archive.companion)), progress)
+        elif skip:
             ids = [o["id"] for o in archive.objects if o["id"] not in skip]
             backup.restore_selected(link, archive, ids, progress)
         else:                                       # (no hint: the device's INFO picks the protocol, so another
@@ -674,6 +815,28 @@ class Studio:
     def firmware_name(self) -> str:
         """"Melodee", "Skiff" …"""
         return firmware_name(self.build.firmware)
+
+    @property
+    def _fm1open(self) -> bool:
+        return FIRMWARES.get(self.build.firmware, {}).get("backup") == "fm1open"
+
+    def device_version(self, link) -> str:
+        """the connected device's firmware version: editor INFO; FM1 Open (no INFO): its package identity's release;
+        "" for another firmware without an editor (FIRMWARES "editor" False, LOOM-8: nothing to ask)"""
+        if self._fm1open:
+            from . import fm1openbk
+            return fm1openbk.device_version(link)
+        return device_version(link) if FIRMWARES.get(self.build.firmware, {}).get("editor", True) else ""
+
+    @staticmethod
+    def _fm1open_restore(link, archive, progress, tolerant: bool) -> list[int]:
+        from . import fm1openbk
+        if not getattr(archive, "fm1open", False):
+            raise StudioError(_("The FM1 Open twin can only load FM1 Open backups."))
+        try:
+            return fm1openbk.restore(link, archive.file, progress, tolerant=tolerant)
+        except fm1openbk.FM1OpenBackupError as e:
+            raise StudioError(str(e))
 
     @property
     def info_name(self) -> str:
@@ -827,7 +990,7 @@ class Studio:
 
     def check_versions(self, device: str = "", backup: str = "", link=None, archive=None) -> VersionCheck:
         if link is not None and not device:
-            device = device_version(link)
+            device = self.device_version(link)
         if archive is not None and not backup:
             backup = backup_version(_archive(archive))
         return check_versions(self.build.version, device, backup, self.firmware_name)
@@ -837,7 +1000,13 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     """Load a backup part by part (projects/banks, then settings, the running music last – like
     backup.restore); skip parts the firmware rejects. -> rejected object IDs"""
     from . import backup
+    if FIRMWARES.get(firmware_key, {}).get("backup") == "fm1open" or archive.fm1open:
+        return Studio._fm1open_restore(link, archive, progress, True)
     proto, info = backup._match(link, archive, firmware_key)
+    if archive.image:                                  # (X0X, LOOM-8 take the image whole: refused, nothing changes)
+        from . import x0xbk
+        x0xbk.restore(link, archive.file, progress)
+        return []
     if archive.sloop:
         if proto == backup.SLOOP and FIRMWARES.get(firmware_key, {}).get("backup") == "sloop":
             from . import sloopbk                      # (SLOOP and KARMA: SLOOP's protocol and file, part by part)
@@ -850,14 +1019,19 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     order = objs[2:] + objs[1:2] + objs[0:1]
     jiant = backup.is_jiant(sup_order) or backup.is_jiant(o["id"] for o in objs)
     coral = backup.is_coralflower(sup_order) or archive.coralflower
-    todo = [o for o in order if o["id"] in sup and not backup.is_sample(o["id"], jiant, coral)]
+    choral = backup.is_choralroot(sup_order) or archive.choralroot
+    samples = FIRMWARES.get(firmware_key, {}).get("samples", False)   # (a twin with the sample slots: Skiff, Felucca)
+    todo = [o for o in order if o["id"] in sup and (samples or not backup.is_sample(o["id"], jiant, coral, choral))]
     total = sum(o["size"] for o in todo) or 1
     done = 0
     rejected = [o["id"] for o in objs if o["id"] not in sup and o["size"]]
     for o in todo:
         try:
-            backup.write_object(link, o["id"], o["bytes"], None, backup.FELUCCA)
-        except backup.BackupError:
+            if backup.is_sample(o["id"], jiant, coral, choral):   # (SMP_BEGIN / WRITE / END, as backup.restore; an empty one erased)
+                backup._restore_sample(link, o["id"] - 32, o["bytes"], lambda n: None)
+            else:
+                backup.write_object(link, o["id"], o["bytes"], None, backup.FELUCCA)
+        except (backup.BackupError, LinkError):
             rejected.append(o["id"])
         done += o["size"]
         if progress:

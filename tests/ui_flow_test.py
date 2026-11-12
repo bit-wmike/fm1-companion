@@ -80,20 +80,26 @@ QInputDialog.getMultiLineText = staticmethod(lambda *a, **k: ("Notiz", True))
 QInputDialog.getInt = staticmethod(lambda *a, **k: (answers["int"].pop(0) if answers["int"] else 1, True))
 
 _dialog_exec = QDialog.exec
+cancel_next_job: list = []
+last_job: list = []
 
 
 def dialog_exec(self):
     """let JobDialogs run until they are done; confirm other dialogs immediately."""
     from fm1companion.ui.common import JobDialog
     from fm1companion.ui.firmware_page import PlanDialog
-    if isinstance(self, PlanDialog):            # installation plan: without the V15 detour, confirm everything
-        if not self.chk_v15.isHidden() and self.chk_v15.box.isEnabled():
-            self.chk_v15.setChecked(False)
+    if isinstance(self, PlanDialog):            # installation plan: without the V15 detour (expert), confirm all
+        if not self.chk_direct.isHidden():
+            self.chk_direct.setChecked(True)
         for cb in self.confirm_checks.values():
             cb.setChecked(True)
         return 1
     if isinstance(self, JobDialog):
         self.show()
+        last_job[:] = [self]
+        if cancel_next_job:                    # the user clicks "Cancel" right away
+            cancel_next_job.pop()
+            self._cancel()
         t0 = time.time()
         while time.time() - t0 < 60:
             app.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
@@ -182,6 +188,17 @@ def flow():
     w.projects._export_all()
     w.projects.refresh_library()
     check(w.projects.lib.topLevelItemCount() == 4, f"fetch all ({w.projects.lib.topLevelItemCount()} in the library)")
+    # ---- fetching can be cancelled (between projects/chunks – read only, the FM-1 stays as it was)
+    from fm1companion import backup as _bk
+    _orig_list = _bk.list_objects
+    _bk.list_objects = lambda *a, **k: (time.sleep(0.5), _orig_list(*a, **k))[1]
+    cancel_next_job.append(True)
+    w.projects._export_all()
+    _bk.list_objects = _orig_list
+    w.projects.refresh_library()
+    summ = last_job[0].summary if last_job else ""
+    check("Abgebrochen" in summ and "0 von " in summ and w.projects.lib.topLevelItemCount() == 4,
+          f"fetching projects cancelled ({summ})")
 
     # ---- samples: switch to the second demo device (SLOOP with sample slots)
     w.samples.read_slots()

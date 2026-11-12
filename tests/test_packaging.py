@@ -41,7 +41,7 @@ def lang_env(env: dict, lang: str) -> dict:
 def test_deb(dist):
     import build_deb
     deb = build_deb.build(dist)
-    assert deb.name == "fm1-companion_2.5.0_all.deb"
+    assert deb.name == "fm1-companion_2.6.0_all.deb"
     info = subprocess.run(["dpkg-deb", "-f", str(deb)], capture_output=True, text=True, check=True).stdout
     assert "Package: fm1-companion" in info and "Architecture: all" in info
     for dep in ("python3 (>= 3.11)", "python3-pyqt6", "python3-pyqt6.qtwebengine", "python3-mido", "python3-rtmidi",
@@ -53,8 +53,10 @@ def test_deb(dist):
               "./usr/lib/fm1-companion/fm1companion/data/deps.json", "./usr/lib/fm1-companion/fm1companion/icons/lucide/save.svg",
               "./usr/share/applications/fm1-companion.desktop", "./usr/share/metainfo/fm1-companion.metainfo.xml",
               "./usr/share/icons/hicolor/512x512/apps/fm1-companion.png", "./usr/share/icons/hicolor/scalable/apps/fm1-companion.svg",
-              "./usr/share/man/man1/fm1-companion.1.gz", "./usr/share/doc/fm1-companion/copyright"):
+              "./usr/share/man/man1/fm1-companion.1.gz", "./usr/share/doc/fm1-companion/copyright",
+              "./usr/share/fm1-companion/udev/60-fm1-companion.rules"):
         assert f in files, f
+    assert "./etc/udev" not in files and "./lib/udev" not in files and "./usr/lib/udev" not in files   # inactive
     assert "__pycache__" not in files and "root/root" in files
     # the Studio twin: shared host, every bundled version, page, service and help
     lib = "./usr/lib/fm1-companion/fm1companion/"
@@ -62,12 +64,16 @@ def test_deb(dist):
               "studio-panel.js"):
         assert lib + "sims/_studio/" + f in files, f
     from fm1companion import studio
-    for fw in ("melodee", "skiff", "jiant", "sloop", "coralflower", "karma"):
+    for fw in ("melodee", "skiff", "jiant", "sloop", "coralflower", "karma", "felucca", "fm1-open", "choralroot", "x0x",
+               "fomni", "amb-1", "loom-8"):
         assert studio.builds(fw), fw
         for b in studio.builds(fw):
             for f in b.manifest["files"]:
                 assert f"{lib}sims/{fw}-studio/{b.path.name}/{f}" in files, (b.version, f)
             assert f"{lib}sims/{fw}-studio/{b.path.name}/manifest.json" in files
+    for b in studio.builds("choralroot"):                                            # (ChoralRoot FM-1's twin)
+        for f in [*b.manifest["files"], "manifest.json"]:
+            assert f"{lib}sims/choralroot-studio/{b.path.name}/{f}" in files, (b.version, f)
     for f in ("studio.py", "studio_web.py", "ui/studio_service.py", "ui/pages/studio.py", "data/help/de/13-studio.md"):
         assert lib + f in files, f
     # translations (.po, read directly – no .mo build step) and the help pages per language
@@ -82,7 +88,7 @@ def test_deb(dist):
     assert os.access(x / "usr/bin/fm1-companion", os.X_OK)
     out = subprocess.run([sys.executable, "-m", "fm1companion", "--version"], cwd=x,
                          env=dict(os.environ, PYTHONPATH=str(x / "usr/lib/fm1-companion")), capture_output=True, text=True)
-    assert out.stdout.strip() == "2.5.0"
+    assert out.stdout.strip() == "2.6.0"
     import xml.etree.ElementTree as ET
     meta = ET.parse(x / "usr/share/metainfo/fm1-companion.metainfo.xml").getroot()
     assert meta.findtext("id") == "fm1-companion" and meta.find("launchable").text == "fm1-companion.desktop"
@@ -125,7 +131,8 @@ def test_run_installer(dist, tmp_path):
         assert (app / po.relative_to(ROOT).as_posix()).exists(), po
     assert (app / "fm1companion/locale/messages.pot").exists()
     assert (app / "fm1companion/data/help/de/01-erste-schritte.md").exists()
-    for fw in ("melodee", "skiff", "jiant", "sloop", "coralflower", "karma"):
+    for fw in ("melodee", "skiff", "jiant", "sloop", "coralflower", "karma", "felucca", "fm1-open", "choralroot", "x0x",
+               "fomni", "amb-1", "loom-8"):
         assert sorted(p.parent.name for p in (app / f"fm1companion/sims/{fw}-studio").glob("*/twin.wasm")) == \
             sorted(p.parent.name for p in (ROOT / f"fm1companion/sims/{fw}-studio").glob("*/twin.wasm")) != []
     assert "exec /usr/bin/python3 -m fm1companion" in launcher.read_text() or py in launcher.read_text()
@@ -134,7 +141,7 @@ def test_run_installer(dist, tmp_path):
     assert (home / ".local/share/icons/hicolor/48x48/apps/fm1-companion.png").exists()
     assert len(list((home / "FM-1/Samples/Beispiele (Demo)").glob("*.wav"))) == 7
     out = subprocess.run([str(launcher), "--version"], env=env, capture_output=True, text=True)
-    assert out.stdout.strip() == "2.5.0", out.stderr
+    assert out.stdout.strip() == "2.6.0", out.stderr
     # update: settings are kept
     cfg = home / ".config/fm1-companion"
     cfg.mkdir(parents=True)

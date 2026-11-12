@@ -65,6 +65,34 @@ def handshake(link, tries: int = 2, timeout: float = 1.0) -> str:
         link.remove_listener(listen)
 
 
+HORTATOR_INFO = [0xF0, 0x7D, 0x48, 0x54, 1, 0, 0xF7]   # Hortator's own editor protocol (header 7D 48 54, "HT"): INFO
+
+
+def hortator_info(link, timeout: float = 0.6) -> str:
+    """Hortator (DeadActive/hortator, from 1.0.0) answers no Felucca editor command, but its own INFO (web/
+    EDITOR_PROTOCOL.md: rc 0, the magic "HORTATOR", the firmware "1.0.1", ...). -> its version, or "" """
+    import queue as _q
+    q: _q.Queue = _q.Queue()
+
+    def listen(data, direction):
+        if direction == "in" and len(data) > 7 and list(data[:5]) == HORTATOR_INFO[:5]:
+            q.put(bytes(data))
+    link.add_listener(listen)
+    try:
+        if not link.send_midi(list(HORTATOR_INFO), force=True):
+            return ""
+        try:
+            pkt = q.get(timeout=timeout)
+        except _q.Empty:
+            return ""
+        parts = pkt[7:-1].split(b"\0")
+        if pkt[6] != 0 or len(parts) < 2 or parts[0] != b"HORTATOR":
+            return ""
+        return parts[1].decode("ascii", "replace")
+    finally:
+        link.remove_listener(listen)
+
+
 def _probe_loader(port) -> str:
     from ..flash import engine
     try:
@@ -123,7 +151,7 @@ def firmware_name(key: str) -> str:
             return e.name
     except Exception:  # noqa: BLE001
         pass
-    from ..studio import FIRMWARES                  # (a firmware known only by its studio twin, e.g. KARMA)
+    from ..studio import FIRMWARES                  # (a firmware known only by its studio twin, e.g. FoMni)
     return FIRMWARES.get(key, {}).get("name") or key
 
 
@@ -404,6 +432,8 @@ class DeviceContext(QObject):
         if p:
             p.version_string = info.version
             key, tag = firmware.guess_firmware(p.identity, info.version, info.firmware_name)
+            if key == "felucca" and p.firmware.startswith("felucca-"):
+                key = ""                     # (a Felucca fork chosen for this device, "felucca-mpe": its INFO is Felucca's)
             if key and (not p.firmware or p.firmware != key):
                 p.firmware = key
                 if tag:
@@ -425,10 +455,10 @@ class DeviceContext(QObject):
         link = self.link
         if link is None or link.closed:
             return
-        run_job(self, lambda w: handshake(link), on_done=lambda ident: self._generic(ident, link),
-                on_fail=lambda m, tb: self._generic("", link))
+        run_job(self, lambda w: (handshake(link), hortator_info(link)),
+                on_done=lambda r: self._generic(r[0], link, r[1]), on_fail=lambda m, tb: self._generic("", link))
 
-    def _generic(self, ident: str, link=None):
+    def _generic(self, ident: str, link=None, hortator: str = ""):
         if self.link is None or (link is not None and link is not self.link):
             return
         self.identity = ident or ""
@@ -436,12 +466,20 @@ class DeviceContext(QObject):
         p = self.profile
         choice = p.firmware_choice.get(ident, "") if p and ident else ""
         cands = firmware_candidates(ident) if ident else []
-        if choice and choice != UNKNOWN_CHOICE:
+        if hortator:                                # (Hortator told its name over its own protocol: no choice needed)
+            guess = ["hortator"]
+            if p:
+                p.firmware, p.firmware_version = "hortator", "v" + hortator.lstrip("vV")
+        elif choice and choice != UNKNOWN_CHOICE:
             guess = [choice]
         else:
             guess = cands
         self.firmware_guess = guess
-        if p:
+        if p and hortator:
+            p.identity = ident or p.identity
+            p.last_seen = time.time()
+            self.store.save()
+        elif p:
             if choice and choice != UNKNOWN_CHOICE:
                 p.firmware = choice
             elif len(guess) == 1:
@@ -453,7 +491,11 @@ class DeviceContext(QObject):
             p.identity = ident or p.identity
             p.last_seen = time.time()
             self.store.save()
-        if ident:
+        if ident and self.firmware_key == "fm1-open":   # (M-VAVE's FM1 Open: its own file protocol)
+            self.message.emit(_("FM-1 connected ({id}) – FM1 Open: MIDI, presets via SysEx, its sample bank (page "
+                                "“Samples”) and the Studio (fetch, write back) work; the other pages need the editor "
+                                "protocol.").format(id=ident))
+        elif ident:
             self.message.emit(_("FM-1 connected ({id}) – this firmware has no editor protocol: MIDI, presets via "
                                 "SysEx and firmware installation work, backups and projects do not.").format(id=ident))
         else:

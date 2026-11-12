@@ -130,12 +130,18 @@ class StudioService(QObject):
     @staticmethod
     def firmware_for(key: str) -> str:
         """Device firmware key -> twin firmware ("" = doesn't exist (yet)): Melodee, Skiff, JIANT FM (the catalog's
-        "jiant-fm" as the device layer's "jiant"), SLOOP, CoralFlower, KARMA."""
+        "jiant-fm" as the device layer's "jiant"), SLOOP, CoralFlower, KARMA, Felucca (also a Felucca fork the catalog
+        names "felucca-…": Felucca's twin, with a warning, studio.felucca_fork_note)."""
         key = (key or "").lower()
+        from .. import fwfamily
+        fam = fwfamily.by_key(key)
+        if fam is not None and fam.twin is not None:  # (the audit's table: sloopDX's or Saadet's objects are their own)
+            return fam.twin if fam.twin and S.builds(fam.twin) else ""
         for fw in S.FIRMWARES:
             if key.startswith(fw) and S.builds(fw):
                 return fw
-        return ""
+        fw = S.stand_in_for(key)              # (the original V15/V16: the FM1 Open twin stands in, with a note)
+        return fw if fw and S.builds(fw) else ""
 
     @property
     def firmware(self) -> str:
@@ -304,12 +310,14 @@ class StudioService(QObject):
                     return True
                 except Exception as e:  # noqa: BLE001 – broken state: start empty
                     self.last_error = _("Studio state “{name}” not readable: {error}").format(name=f, error=e)
-        fw = self.firmware_for(c.firmware_key) if (c.info and not c.is_virtual) else ""
-        dev = c.info.version if fw else ""
+        fw = self.firmware_for(c.firmware_key) if ((c.info or c.midi_connected) and not c.is_virtual) else ""
+        dev = (c.info.version if c.info else (c.profile.firmware_version if c.profile else "")) if fw else ""
+        if S.stand_in_for(c.firmware_key):      # (the original V15/V16: its version is no FM1 Open version)
+            dev = ""
         if c.profile is not None and not c.is_virtual and dev:
             self.source = {"kind": "new", "time": dt.datetime.now().isoformat(timespec="seconds"),
                            "profile_folder": c.profile.folder_name}
-        self.new_empty(S.norm_version(dev), fw or "melodee")
+        self.new_empty(S.fw_version(fw, dev) if fw else "", fw or "melodee")
         return self.st is not None
 
     def new_empty(self, version: str = "", firmware: str = "melodee"):
@@ -609,7 +617,8 @@ class StudioService(QObject):
             from .. import backup
             fw = self.st.build.firmware if self.st is not None else ""
             sloop = S.FIRMWARES.get(fw, {}).get("backup") == "sloop"          # (SLOOP and KARMA: SLOOP's objects)
-            names = ", ".join(backup.object_title(i, sloop, jiant=fw == "jiant", coral=fw == "coralflower")
+            names = ", ".join(backup.object_title(i, sloop, jiant=fw == "jiant", coral=fw == "coralflower",
+                                                  choral=fw == "choralroot", felucca=fw == "felucca")
                               for i in rej[:4]) + (" …" if len(rej) > 4 else "")
             txt += _(". Not taken over ({n}): {names} – these parts do not fit {firmware} {version} and are left out "
                      "when writing back").format(n=len(rej), names=names, firmware=self.st.firmware_name,

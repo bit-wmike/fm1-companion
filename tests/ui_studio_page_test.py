@@ -425,6 +425,42 @@ def flow():
           f"write back of the CoralFlower twin onto the Melodee FM-1 refused: {boxes[-1:]}")
     r = page.export_wav({"path": out / "CoralFlower.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
     check(r is not None and len(r.stems) == 4 and r.peak > 0.05, f"CoralFlower export: mix + {r and len(r.stems)} stems")
+    # ---- a ChoralRoot FM-1 backup: the page starts the ChoralRoot twin (no project slots: its loop slots, a note);
+    # writing it back onto the demo FM-1 (Melodee) is refused as well
+    cr = S.Studio.create(firmware="choralroot", backend="webengine", server=w.server)
+    cr.set_clock(False)                                 # REC, two chords, REC: the loop plays; stop, SAVE held
+    cr.press("REC")
+    cr.backend.call("run", ms=200)
+    for k in (7, 12):
+        cr.backend.call("keys", mask=1 << k)
+        cr.backend.call("run", ms=900)
+        cr.backend.call("keys", mask=0)
+        cr.backend.call("run", ms=100)
+    cr.press("REC")
+    cr.backend.call("run", ms=300)
+    cr.stop()
+    cr.backend.call("press", label=S.B["SAVE"], ms=1500)
+    cr.backend.call("run", ms=1500)
+    cr.set_clock(True)
+    rfile = bdir / "Studio-Test_choralroot.json"
+    backup.write_file(rfile, cr.backup().file)
+    rver = cr.build.version
+    cr.close()
+    check(page.open_backup(rfile) == rfile and svc.firmware == "choralroot" and not svc.st.rejected,
+          f"ChoralRoot backup opened: the ChoralRoot twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 1 and "ChoralRoot" in labels[0] and page.projects.item(0).data(Qt.ItemDataRole.UserRole) is None,
+          f"ChoralRoot: no project slots, a note: {labels}")
+    check("ChoralRoot" in page.src.text() and "ChoralRoot" in page.banner.text() and "Melodee" in page.banner.text(),
+          "banner names both firmwares: " + page.banner.text())
+    check(f"Studio-Zwilling (ChoralRoot {rver})" in [x.label for x in svc._virtual_ports()],
+          "virtual device: ChoralRoot twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("ChoralRoot" in b for b in boxes),
+          f"write back of the ChoralRoot twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    r = page.export_wav({"path": out / "ChoralRoot.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 2 and r.peak > 0.05, f"ChoralRoot export: mix + {r and len(r.stems)} stems")
     # ---- a KARMA backup (SLOOP's file format): the page starts the KARMA twin (the song's parts A–D); writing it back
     # onto the demo FM-1 (Melodee) is refused as well
     kt = S.Studio.create(firmware="karma", backend="webengine", server=w.server)
@@ -450,6 +486,127 @@ def flow():
           f"write back of the KARMA twin onto the Melodee FM-1 refused: {boxes[-1:]}")
     r = page.export_wav({"path": out / "KARMA.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
     check(r is not None and len(r.stems) == 4, f"KARMA export: mix + {r and len(r.stems)} stems")
+    # ---- a backup of Felucca's own web editor (no companion block, 'firmware' its INFO): the page starts the Felucca twin
+    # (projects A–D); writing it back onto the demo FM-1 (Melodee) is refused as well
+    ft = S.Studio.create(firmware="felucca", backend="webengine", server=w.server)
+    for k in range(4):
+        for i in range(0, 16, 4):
+            ft.link.request(Cmd.TRACK_STEP, [k, i, 1, 45 + 3 * k, 0, 0, 0, 0, 0, 100])
+    ft.link.request(Cmd.PROJECT, [1, 1])                # project B
+    ffile = bdir / "Studio-Test_felucca.json"
+    fplain = dict(ft.backup().file)
+    fplain.pop("companion", None)
+    fplain["firmware"] = "FELUCCA " + ft.build.version
+    backup.write_file(ffile, fplain)
+    fver = ft.build.version
+    ft.close()
+    check(page.open_backup(ffile) == ffile and svc.firmware == "felucca" and not svc.st.rejected,
+          f"Felucca backup opened: the Felucca twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 4 and labels[0].startswith("Projekt A") and "leer" in labels[0] and "leer" not in labels[1],
+          f"Felucca project list A–D: {labels}")
+    check("Felucca" in page.src.text() and "Felucca" in page.banner.text() and "Melodee" in page.banner.text(),
+          "banner names both firmwares: " + page.banner.text())
+    check(f"Studio-Zwilling (Felucca {fver.lstrip('v')})" in [x.label for x in svc._virtual_ports()], "virtual device: Felucca twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("Felucca" in b for b in boxes),
+          f"write back of the Felucca twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    r = page.export_wav({"path": out / "Felucca.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 4, f"Felucca export: mix + {r and len(r.stems)} stems")
+    # ---- an FM1 Open backup (its own file, fm1openbk.py): the page starts the FM1 Open twin (16 project slots);
+    # writing it back onto the demo FM-1 (Melodee) is refused
+    from fm1companion import fm1open as F, fm1openbk
+    ot = S.Studio.create(firmware="fm1-open", backend="webengine", server=w.server)
+    with F.Client(ot.link) as c:
+        c.query(7, bytes([1]))                          # the working project into slot 2
+    ofile = bdir / "Studio-Test_fm1open.json"
+    backup.write_file(ofile, ot.backup().file)
+    over = ot.build.version
+    ot.close()
+    check(AB.read_meta(ofile) is not None and AB.read_meta(ofile).fw_key == "fm1-open", "FM1 Open backup in the list")
+    check(page.open_backup(ofile) == ofile and svc.firmware == "fm1-open" and not svc.st.rejected,
+          f"FM1 Open backup opened: the FM1 Open twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 16 and "leer" in labels[0] and "leer" not in labels[1], f"FM1 Open projects 1–16: {labels[:3]}")
+    check("FM1 Open" in page.src.text() and "FM1 Open" in page.banner.text(), "banner names FM1 Open: " + page.banner.text())
+    check(f"Studio-Zwilling (FM1 Open {over})" in [x.label for x in svc._virtual_ports()], "virtual device: FM1 Open twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("FM1 Open" in b for b in boxes),
+          f"write back of the FM1 Open twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    # an FM-1 with the original V15 (no editor, no backup protocol: identity FM-1_015) or with FM1 Open (FM-1_8000014),
+    # as the page sees them: the FM1 Open twin stands in for V15 with the note, fetch and write are refused; an FM1 Open
+    # FM-1 may be fetched
+    from types import SimpleNamespace
+    real = page.ctx
+    for key, version, may in (("stock-v15", "V15", False), ("fm1-open", "V14", True)):
+        page.ctx = SimpleNamespace(is_virtual=False, midi_connected=True, connected=False, info=None, port=object(),
+                                   protocol="generic", firmware_key=key, identity="",
+                                   profile=SimpleNamespace(name="Alt", firmware_version=version, folder_name="Alt"))
+        try:
+            ok, why = page._device_ok()
+            page._banner()
+            text = page.banner.text()
+        finally:
+            page.ctx = real
+        check(ok == may and (may or "V15" in text and "FM1 Open" in text and why),
+              f"{key}: fetch {'allowed' if ok else 'refused'}, banner: {text[:120]}")
+    check(svc.firmware_for("stock-v15") == "fm1-open" and svc.firmware_for("stock-v16") == "fm1-open",
+          "the original V15/V16 opens the FM1 Open twin")
+    page.refresh()
+    # ---- an X0X backup (its own image, x0xbk.py) and X0X's own .x0b file: the page starts the X0X twin (no project
+    # slots); writing it back onto the demo FM-1 (Melodee) is refused as well
+    from fm1companion import x0xbk
+    xt = S.Studio.create(firmware="x0x", backend="webengine", server=w.server)
+    xt.set_clock(False)
+    for k in (0, 7, 14, 21):
+        xt.backend.call("keys", mask=1 << k)
+        xt.backend.call("run", ms=40)
+        xt.backend.call("keys", mask=0)
+        xt.backend.call("run", ms=40)
+    xt.set_clock(True)
+    xfile = bdir / "Studio-Test_x0x.x0b"
+    xfile.write_bytes(x0xbk.image_of(xt.backup().file))
+    xver = xt.build.version
+    xt.close()
+    check(page.open_backup(xfile) == xfile and svc.firmware == "x0x" and not svc.st.rejected,
+          f"X0X's own backup file opened: the X0X twin {svc.version} (nothing rejected)")
+    page.refresh()
+    labels = [page.projects.item(i).text() for i in range(page.projects.count())]
+    check(len(labels) == 1 and "X0X" in labels[0], f"X0X: no project slots, a note: {labels}")
+    check("X0X" in page.src.text() and "X0X" in page.banner.text() and "Melodee" in page.banner.text(),
+          "banner names both firmwares: " + page.banner.text())
+    check(f"Studio-Zwilling (X0X {xver})" in [x.label for x in svc._virtual_ports()], "virtual device: X0X twin")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("X0X" in b for b in boxes),
+          f"write back of the X0X twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    r = page.export_wav({"path": out / "X0X.wav", "seconds": 2.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 5 and r.peak > 0.05, f"X0X export: mix + {r and len(r.stems)} stems")
+    # ---- LOOM-8's own backup file (.loom8, fm1-base's image) and an empty AMB-1 twin (no backup over USB)
+    lt = S.Studio.create(firmware="loom-8", backend="webengine", server=w.server)
+    lt.set_clock(False)
+    for k in (0, 7, 14, 21):
+        lt.backend.call("keys", mask=1 << k)
+        lt.backend.call("run", ms=60)
+        lt.backend.call("keys", mask=0)
+        lt.backend.call("run", ms=60)
+    lt.press("SAVE")
+    lt.backend.call("run", ms=3000)
+    lt.set_clock(True)
+    lfile = bdir / "Studio-Test_loom.loom8"
+    lfile.write_bytes(x0xbk.image_of(lt.backup().file))
+    lt.close()
+    check(page.open_backup(lfile) == lfile and svc.firmware == "loom-8" and not svc.st.rejected,
+          f"LOOM-8's own backup file opened: the LOOM-8 twin {svc.version}")
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": True}) is None and any("LOOM-8" in b for b in boxes),
+          f"write back of the LOOM-8 twin onto the Melodee FM-1 refused: {boxes[-1:]}")
+    svc.new_empty(firmware="amb-1")
+    page.refresh()
+    check(svc.firmware == "amb-1" and "AMB-1" in page.banner.text(), "an empty AMB-1 twin: " + page.banner.text())
+    r = page.export_wav({"path": out / "AMB-1.wav", "seconds": 2.0, "start": "none", "fmt": "s24", "stems": True})
+    check(r is not None and len(r.stems) == 4 and r.peak > 0.02, f"AMB-1 export: mix + {r and len(r.stems)} stems")
     shot("studio-640.png", 640)
     if SHOTS:
         sb = w.page_scroll.verticalScrollBar()

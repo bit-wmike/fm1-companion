@@ -215,6 +215,47 @@ def flow():
     check("ORBIT" in page.news_info.text() or page.news.topLevelItemCount() >= 0, "news tab knows the followed firmware")
     page.detail.back.emit()
     check(page.stack.currentIndex() == 0, "back to the overview")
+    import fm1companion.ui.common as UC
+    real_confirm, asked = UC.confirm, []
+    UC.confirm = lambda *a, **k: asked.append(a[2]) or True
+    check(page.a_clear_wish.text() == "Merkliste leeren …" and page.clear_wishlist()
+          and config.module("catalog")["wishlist"] == [] and not page.model.wish
+          and not page.detail.b_wish.isChecked() and "Nichts wird deinstalliert" in asked[0],
+          "More › Clear the remembered list (with confirmation)")
+    UC.confirm = real_confirm
+    check(not page.clear_wishlist(), "empty remembered list: nothing to clear")
+
+    # ---- GitHub token: state shown (never the token), save, keep, remove
+    import fm1companion.ui.pages.discover as D
+    cat = config.module("catalog")
+    cat["github_token"] = ""
+    page._token_action_text()
+    check("kein Token" in page.a_token.text(), f"menu: no token set ({page.a_token.text()})")
+    plan = {"text": "ghp_abcdefghijklmn5678", "remove": False}
+
+    def token_exec(self):
+        d, edit, b_rm = page._token_widgets
+        if self is not d:
+            return 0
+        if plan["remove"]:
+            b_rm.click()
+            return 1
+        edit.setText(plan["text"])
+        return 1
+    QDialog.exec = token_exec
+    check(page.token_dialog() == "ghp_abcdefghijklmn5678" and cat["github_token"] == "ghp_abcdefghijklmn5678",
+          "token saved")
+    page._token_action_text()
+    check("••••5678" in page.a_token.text() and "abcdef" not in page.a_token.text(),
+          f"menu: token set, only the last 4 shown ({page.a_token.text()})")
+    plan["text"] = ""
+    check(page.token_dialog() == "ghp_abcdefghijklmn5678" and cat["github_token"], "empty field keeps the token")
+    check(page._token_widgets[2].isEnabled(), "Remove button enabled while a token is set")
+    plan["remove"] = True
+    check(page.token_dialog() == "" and cat["github_token"] == "", "token removed")
+    page._token_action_text()
+    check("kein Token" in page.a_token.text() and D.token_state("") in page.a_token.text(), "menu: no token again")
+    QDialog.exec = lambda self: 0
 
     # ---- link import dialog
     from fm1companion.ui.linkimport_dialog import LinkImportDialog, OwnFirmwaresDialog
@@ -260,16 +301,20 @@ def flow():
     jobs = []
     saved = LD.run_job, C.search_repos, C.enrich
     LD.run_job = lambda parent, fn, on_done=None, on_fail=None, **k: (jobs.append(1), on_done(fn(None)))
-    C.search_repos = lambda text, limit=8: [{"repo": "me/karma-fm1", "description": "FM-1 groovebox", "stars": 1,
+    C.search_repos = lambda text, limit=8: [{"repo": "me/brisa-fm1", "description": "FM-1 groovebox", "stars": 1,
                                              "fork": False, "exact": True}]
     C.enrich = lambda repo, ttl=0: (_ for _ in ()).throw(C.Offline("im Test kein Netz"))
     try:
-        kd = LinkImportDialog(page, "KARMA", cat=page.cat, online=True)
-        check(jobs and kd.w["repo"].text() == "me/karma-fm1",
+        kd = LinkImportDialog(page, "KARMA", cat=page.cat, online=False)       # built in now: found without GitHub
+        check(not jobs and kd.w["repo"].text() == "eatyourgreensstudio-dotcom/karma-fm1",
+              f"KARMA (built in): the catalog's own entry ({kd.w['repo'].text()!r})")
+        kd.close()
+        kd = LinkImportDialog(page, "BRISA", cat=page.cat, online=True)
+        check(jobs and kd.w["repo"].text() == "me/brisa-fm1",
               f"name without catalog entry: GitHub search runs ({kd.w['repo'].text()!r})")
         kd.close()
         jobs.clear()
-        kd = LinkImportDialog(page, "KARMA", cat=page.cat, online=False)
+        kd = LinkImportDialog(page, "BRISA", cat=page.cat, online=False)
         check(not jobs and not kd.w["repo"].text(), "without the tick \"look on GitHub\" no search")
         kd.close()
         # several matches, none unique: chooser window; the choice fills the entry

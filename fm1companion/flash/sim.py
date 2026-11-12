@@ -9,6 +9,11 @@ and synchronous: the device answers directly in send(), reboots go through a sho
   SimFM1(identity, policy="felucca"|"stock"|"open", name=…, felucca_loader="ota-FM-1_900",
          resumable=True, power_loss_at=None, boot_matches_stock=True)
   SimBackend([devices]) -> input_names(), output_names(), open(in, out)   (like fm1_install.MidoBackend)
+
+Fault injection (USB hub failure modes, SimFaults): lost or late responses, lost requests, the device's
+single receive frame, dropouts with re-enumeration in step 1 and step 2 (also under the same port name),
+a loader that silently stops asking, slow re-enumeration. With faults the device behaves like ota.c:
+it repeats a request after `resend_s` (5 s on the device), three tries, then the session ends.
 """
 from __future__ import annotations
 
@@ -16,6 +21,7 @@ import hashlib
 import queue
 import threading
 import time
+from dataclasses import dataclass, field
 
 from ..i18n import _
 from ..vendor import fm1_install as fi
@@ -50,10 +56,33 @@ def parse_reply(pkt: bytes):
     return addr, u[14:14 + n]
 
 
+@dataclass
+class SimFaults:
+    """what a bad USB hub does (counts are 1-based over the device's life)"""
+    drop_replies: set = field(default_factory=set)      # n-th response from the host never reaches the device
+    late_replies: set = field(default_factory=set)      # n-th response arrives late_s later
+    late_s: float = 0.0
+    drop_requests: set = field(default_factory=set)     # n-th request of the device never reaches the host
+    in_delay: float = 0.0                               # every request reaches the host this much later (slow IN)
+    resend_s: float = 0.15                              # the device's 5 s per try (shortened)
+    tries: int = 3
+    frame_s: float = 0.0                                # a stale response occupies the single frame this long
+    glitches: list = field(default_factory=list)        # step-2 fractions: dropout + re-enumeration, session lost
+    glitch_s: float = 0.3                               # how long the port is gone
+    same_name: bool = False                             # the port comes back under the same name
+    silent_at: list = field(default_factory=list)       # step-2 fractions: the loader stops asking, stays connected
+    step1_glitch_at: int | None = None                  # step-1 request number at which the device drops off
+    loader_delay: float | None = None                   # slow re-enumeration of the loader after step 1
+    reboot_delay: float | None = None                   # slow restart after writing
+    drop_finish: bool = False                           # the loader's last request (0xF0000000) never reaches the
+                                                        # host; it restarts into the new firmware anyway (4 tries)
+
+
 class SimFM1:
     def __init__(self, identity="FM-1_91060", policy="felucca", name="Melodee FM-1",
                  felucca_loader="ota-FM-1_900", resumable=True, power_loss_at=None,
-                 boot_matches_stock=True, reboot_s=0.05, usb_id="1209:0001", serial="", usb_path=""):
+                 boot_matches_stock=True, reboot_s=0.05, usb_id="1209:0001", serial="", usb_path="",
+                 faults: SimFaults | dict | None = None, hubs=None, power_control="on"):
         self.identity = identity
         self.policy = policy                 # step-1 rules of the running firmware
         self.app_name = name
@@ -82,6 +111,19 @@ class SimFM1:
         self.bricked = ""                    # set if something dangerous would have happened
         self.sends: list[bytes] = []         # everything the host has sent
         self._lock = threading.RLock()
+        self.faults = SimFaults(**faults) if isinstance(faults, dict) else faults
+        self.hubs = list(hubs or [])         # [{"name": "1-1", "usb_id", "product", "speed", "self_powered", …}]
+        self.power_control = power_control
+        self.enum = 1                        # USB device number: changes on every (re-)enumeration
+        self.replies = 0                     # responses received
+        self.requests = 0                    # requests sent
+        self.step1_requests = 0
+        self.sessions = 0                    # UPGRADE sessions started (step 1 + step 2)
+        self.tries = 0
+        self.retry_at = 0.0
+        self.busy_until = 0.0
+        self.waiting_link = None
+        self.late: list = []                 # (time, data, link) responses on their way
 
     # -------------------------------------------------- registration
     def register(self, raw: bytes, product: str | None = None, stock: bool | None = None):
@@ -125,10 +167,15 @@ class SimFM1:
             return "4d4a:4155" if self.loader_kind == "stock" else "1209:0002"
         return self.app_usb_id
 
-    def _restart(self, state: str, ident: str | None = None, delay: float | None = None):
+    def _restart(self, state: str, ident: str | None = None, delay: float | None = None, stale: bool = False):
         for ln in self.links:
-            ln.dead = True
+            if stale:
+                ln.stale = True              # ALSA reused the port name: the old link just stops working
+            else:
+                ln.dead = True
         self.links.clear()
+        self.enum += 1
+        self.late.clear()
         self.session = None
         self.waiting = None
         self.online_at = time.monotonic() + (self.reboot_s if delay is None else delay)
@@ -144,6 +191,13 @@ class SimFM1:
         else:
             self._restart("app")
 
+    def glitch(self, state: str | None = None, secs: float | None = None):
+        """USB dropout and re-enumeration (hub, power dip): the port goes away and comes back"""
+        f = self.faults or SimFaults()
+        self.log.append("USB dropout")
+        self._restart(state or ("loader" if self.state == "loader" else "app"),
+                      delay=f.glitch_s if secs is None else secs, stale=f.same_name)
+
     # -------------------------------------------------- receiving
     def receive(self, data: bytes, link: "SimLink"):
         with self._lock:
@@ -155,13 +209,68 @@ class SimFM1:
                 return
             if data == UPGRADE:
                 if self.session is None and self.policy != "open":
+                    self.sessions += 1
+                    self.step1_requests = 0
                     self.session = self._step1() if self.state == "app" else self._step2()
                     self._advance(link, None)
                 return
             if self.waiting is not None and data[:1] == b"\xF0":
-                r = parse_reply(data)
-                if r and r[0] == self.waiting[0]:
-                    self._advance(link, r[1])
+                self.replies += 1
+                f = self.faults
+                if f is not None and self.replies in f.drop_replies:
+                    self.log.append(f"response {self.replies} lost")
+                    return
+                if f is not None and self.replies in f.late_replies:
+                    self.late.append((time.monotonic() + f.late_s, data, link))
+                    return
+                self._take(data, link)
+
+    def _take(self, data: bytes, link):
+        f = self.faults
+        if f is not None and time.monotonic() < self.busy_until:
+            self.log.append("frame busy: response dropped")
+            return
+        r = parse_reply(data)
+        if r and self.waiting is not None and r[0] == self.waiting[0]:
+            self._advance(link, r[1])
+        elif f is not None and f.frame_s:
+            self.busy_until = time.monotonic() + f.frame_s      # a stale frame occupies the single buffer
+
+    def poll(self):
+        """time passes on the device: late responses arrive, unanswered requests are repeated (ota.c)"""
+        if self.faults is None:
+            return
+        with self._lock:
+            now = time.monotonic()
+            due = [x for x in self.late if x[0] <= now]
+            self.late = [x for x in self.late if x[0] > now]
+            for _t, data, link in due:
+                self._take(data, link)
+            if self.waiting is not None and self.retry_at and now >= self.retry_at and self.online:
+                if self.tries < self.faults.tries:
+                    self.tries += 1
+                    self.log.append(f"request {self.waiting[0]:#x} repeated")
+                    self._emit(self.waiting_link, self.waiting)
+                elif self.waiting[0] == 0xF0000000 and self.faults.drop_finish:
+                    self.log.append("no confirmation – restarting into the new firmware anyway")
+                    self._advance(self.waiting_link, b"success\0" + bytes(0))
+                else:
+                    self.log.append("gave up: no answer after 3 tries")
+                    self.session = None
+                    self.waiting = None
+                    self.retry_at = 0.0
+
+    def _emit(self, link, want):
+        self.requests += 1
+        self.waiting_link = link
+        f = self.faults
+        if f is not None:
+            self.retry_at = time.monotonic() + f.resend_s
+            if self.requests in f.drop_requests or (f.drop_finish and want[0] == 0xF0000000):
+                self.log.append(f"request {self.requests} lost")
+                return
+        if link is not None:
+            link.emit(request_frame(*want), delay=f.in_delay if f is not None else 0.0)
 
     def _advance(self, link, got):
         try:
@@ -174,8 +283,16 @@ class SimFM1:
             self.session = None
             self.waiting = None
             return
+        f = self.faults
+        if self.state == "app" and f is not None and f.step1_glitch_at is not None:
+            self.step1_requests += 1
+            if self.step1_requests == f.step1_glitch_at:
+                f.step1_glitch_at = None
+                self.glitch("app")
+                return
         self.waiting = want
-        link.emit(request_frame(*want))
+        self.tries = 1
+        self._emit(link, want)
 
     # -------------------------------------------------- step 1: running firmware
     def _step1(self):
@@ -221,7 +338,7 @@ class SimFM1:
         self.loader_kind = "felucca" if own else "stock"
         self.loader_id = self.felucca_loader if own else "ota-FM-1_015"
         self.log.append(f"loader staged: {self.loader_id}")
-        self._restart("loader")
+        self._restart("loader", delay=self.faults.loader_delay if self.faults else None)
 
     # -------------------------------------------------- step 2: loader
     def _step2(self):
@@ -238,6 +355,18 @@ class SimFM1:
             n = min(BLOCK, size - a)
             buf[a:a + n] = yield (a, n)
             self.partial = a + n
+            f = self.faults
+            if f is not None and f.glitches and a >= size * f.glitches[0]:
+                f.glitches.pop(0)
+                self.glitch("loader")
+                return
+            if f is not None and f.silent_at and a >= size * f.silent_at[0]:
+                f.silent_at.pop(0)
+                self.log.append("loader stopped asking (session ended)")
+                self.session = None
+                self.waiting = None
+                self.retry_at = 0.0
+                return
             if self.power_loss_at is not None and a >= size * self.power_loss_at:
                 self.power_loss_at = None
                 self.log.append("power lost while writing")
@@ -271,7 +400,7 @@ class SimFM1:
             self.policy = "felucca"
             if self.app_name == "USB Composite Device":
                 self.app_name, self.app_usb_id = "Felucca", "1209:0001"
-        self._restart("app", after)
+        self._restart("app", after, delay=self.faults.reboot_delay if self.faults else None)
 
 
 class SimLink:
@@ -279,10 +408,16 @@ class SimLink:
         self.backend, self.dev, self.name = backend, dev, name
         self.q: queue.Queue = queue.Queue()
         self.dead = False
+        self.stale = False                   # the port name lives on, but this subscription is gone
+        self.later: list = []                # (time, packet): requests still on their way (slow IN)
         dev.links.append(self)
 
-    def emit(self, pkt: bytes):
-        if not self.dead:
+    def emit(self, pkt: bytes, delay: float = 0.0):
+        if self.dead or self.stale:
+            return
+        if delay:
+            self.later.append((time.monotonic() + delay, bytes(pkt)))
+        else:
             self.q.put(bytes(pkt))
 
     @property
@@ -292,14 +427,37 @@ class SimLink:
     def send(self, pkt) -> bool:
         if self.lost:
             return False
+        if self.stale:
+            return True                      # goes nowhere, like a write to a vanished ALSA subscription
         self.dev.receive(bytes(pkt), self)
         return True
 
+    def _due(self):
+        if self.later:
+            now = time.monotonic()
+            for t, p in [x for x in self.later if x[0] <= now]:
+                self.q.put(p)
+            self.later = [x for x in self.later if x[0] > now]
+
     def read(self, timeout):
-        try:
-            return self.q.get(timeout=max(min(timeout, 0.05) if self.dead else timeout, 0))
-        except queue.Empty:
-            return None
+        timeout = max(min(timeout, 0.05) if self.dead else timeout, 0)
+        if self.dev.faults is None and not self.later:
+            try:
+                return self.q.get(timeout=timeout)
+            except queue.Empty:
+                return None
+        end = time.monotonic() + timeout
+        while True:
+            self.dev.poll()
+            self._due()
+            try:
+                return self.q.get_nowait()
+            except queue.Empty:
+                pass
+            left = end - time.monotonic()
+            if left <= 0:
+                return None
+            time.sleep(min(0.005, left))
 
     def drain(self):
         while not self.q.empty():
@@ -347,7 +505,25 @@ class SimBackend:
         dev = self.device_for(name)
         if dev is None:
             return {}
-        return {"usb_path": dev.usb_path, "serial": dev.serial, "usb_id": dev.usb_id}
+        return {"usb_path": dev.usb_path, "serial": dev.serial, "usb_id": dev.usb_id, "devnum": str(dev.enum)}
+
+    def topology(self, pin):
+        """like devices.usb_link for the pinned simulated device (hubs from SimFM1.hubs)"""
+        from .. import devices
+        dev = next((d for d in self.devices if pin.matches({"usb_path": d.usb_path, "serial": d.serial})), None)
+        if dev is None:
+            return None
+        node = devices.UsbNode(name=dev.usb_path or "sim", usb_id=dev.usb_id, product=dev.app_name, speed="12",
+                               power_control=dev.power_control)
+        hubs = [devices.UsbNode(name=h.get("name", f"sim-hub{i}"), usb_id=h.get("usb_id", "05e3:0610"),
+                                product=h.get("product", "USB2.0 Hub"), speed=h.get("speed", "480"), hub=True,
+                                self_powered=h.get("self_powered"), usb3=bool(h.get("usb3")),
+                                power_control=h.get("power_control", "auto"))
+                for i, h in enumerate(dev.hubs)]
+        return devices.UsbLink(dev.usb_path or "sim", node, hubs)
+
+    def kernel_log(self):
+        return getattr(self, "kernel_text", ""), "simulation", ""
 
     def open(self, in_name, out_name):
         dev = self.device_for(in_name)
@@ -357,7 +533,13 @@ class SimBackend:
         return SimLink(self, dev, in_name)
 
 
+def fast_careful_delays():
+    """careful mode for the simulation: the same relations, shortened"""
+    return {"reply": 0.0, "gap": 0.0005, "start": 0.01, "loader": 0.02, "reboot": 0.02, "wait_loader": 4.0,
+            "wait_reboot": 4.0, "wait_resume": 4.0, "idle_check": 1.0, "loader_giveup": 0.8}
+
+
 def fast_delays():
     """short wait times for the simulation (values shortened as in Melodee's tests)"""
     return {"open": 0.0, "start": 0.01, "reply": 0.0, "loader": 0.02, "reboot": 0.02, "retry": 0.02,
-            "poll": 0.05, "hs": 0.1, "idle_check": 1.0, "idle_write": 2.0, "wait_loader": 3.0, "wait_reboot": 3.0}
+            "poll": 0.05, "hs": 0.1, "resend_min": 0.1, "idle_check": 1.0, "idle_write": 2.0, "wait_loader": 3.0, "wait_reboot": 3.0}

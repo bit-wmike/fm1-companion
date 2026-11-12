@@ -7,6 +7,7 @@ Used by install.sh/uninstall.sh, by the graphical .run installer and by the unin
   core.py install   --source DIR [--prefix ~/.local | --system] [--no-menu] [--desktop] [--demo-data]
   core.py uninstall [--prefix …|--system] [--settings] [--data] [--yes]
   core.py info      [--prefix …|--system]
+  core.py usb-power-rule [--remove]   optional udev rule: keep the FM-1 and its USB hubs awake (asks for sudo)
 
 User installation (default): app in <prefix>/share/fm1-companion/app, launcher <prefix>/bin/fm1-companion.
 System-wide (--system, as root): /usr/local/lib/fm1-companion, /usr/local/bin/fm1-companion.
@@ -171,9 +172,62 @@ def fluidsynth_service_enabled() -> bool:
         return False
 
 
+UDEV_RULE = "60-fm1-companion.rules"
+UDEV_DIR = Path("/etc/udev/rules.d")
+
+
+def udev_rule_source(src: Path) -> Path | None:
+    """the optional udev rule in a source tree (packaging/udev) or an installed app (udev/)"""
+    for p in (Path(src) / "packaging" / "udev" / UDEV_RULE, Path(src) / "udev" / UDEV_RULE):
+        if p.exists():
+            return p
+    return None
+
+
+def udev_rule_installed() -> bool:
+    return (UDEV_DIR / UDEV_RULE).exists()
+
+
+def _sudo() -> list[str]:
+    """how to become root: nothing as root, sudo in a terminal, pkexec in the graphical installer"""
+    if os.geteuid() == 0:
+        return []
+    if sys.stdin is not None and sys.stdin.isatty() and shutil.which("sudo"):
+        return ["sudo"]
+    return ["pkexec"] if shutil.which("pkexec") else ["sudo"]
+
+
+def install_udev_rule(rule: Path, log=print, sudo: list[str] | None = None, remove: bool = False) -> bool:
+    """copy the udev rule to /etc/udev/rules.d (or remove it) and reload udev – one root command.
+    Only on explicit request (install.sh --usb-power-rule / question, checkbox in the graphical installer)."""
+    target = UDEV_DIR / UDEV_RULE
+    sudo = _sudo() if sudo is None else sudo
+    if remove:
+        script = f"rm -f {shlex.quote(str(target))} && udevadm control --reload-rules"
+    else:
+        script = (f"install -m 0644 {shlex.quote(str(rule))} {shlex.quote(str(target))} && "
+                  "udevadm control --reload-rules && udevadm trigger --subsystem-match=usb --action=change")
+    try:
+        r = subprocess.run([*sudo, "sh", "-c", script], timeout=300)
+        ok = getattr(r, "returncode", 1) == 0
+    except (OSError, subprocess.SubprocessError):
+        ok = False
+    if ok and not remove:
+        log(tr(f"  udev rule installed: {target} (the FM-1 and the USB hubs in front of it stay awake)",
+               f"  udev-Regel installiert: {target} (das FM-1 und die USB-Hubs davor bleiben wach)"))
+    elif ok:
+        log(tr(f"  udev rule removed: {target}", f"  udev-Regel entfernt: {target}"))
+    else:
+        log(tr("NOTE: the udev rule could not be installed (no administrator rights?). By hand: "
+               f"sudo install -m 0644 {rule} {UDEV_DIR}/ && sudo udevadm control --reload-rules",
+               "HINWEIS: Die udev-Regel ließ sich nicht installieren (keine Administratorrechte?). Von Hand: "
+               f"sudo install -m 0644 {rule} {UDEV_DIR}/ && sudo udevadm control --reload-rules"))
+    return ok
+
+
 def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, desktop: bool = False,
             demo_data: bool = False, python: str = "/usr/bin/python3", log=print, progress=lambda a, b: None,
-            fluidsynth_fix: bool = True) -> dict:
+            fluidsynth_fix: bool = True, usb_power_rule: bool = False) -> dict:
     src = Path(src).resolve()
     L = layout(prefix, system)
     version = read_version(src)
@@ -197,6 +251,12 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
     shutil.copytree(inst_src, app / "installer", ignore=_ignore)
     if (src / "data").exists():
         shutil.copytree(src / "data", app / "data", ignore=_ignore)
+    rule = udev_rule_source(src)
+    if rule is not None:                    # shipped inactive; activated only on request (usb_power_rule)
+        if (app / "udev").exists():
+            shutil.rmtree(app / "udev")
+        (app / "udev").mkdir()
+        shutil.copy2(rule, app / "udev" / UDEV_RULE)
     for f in ("LICENSE", "README.md", "uninstall.sh"):
         if (src / f).exists():
             shutil.copy2(src / f, app / f)
@@ -303,6 +363,17 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
                    "Not changed (--no-fluidsynth-fix). Disable it: systemctl --user disable --now fluidsynth.service",
                    "HINWEIS: fluidsynth.service ist aktiv und kann die HDMI-Soundkarte belegen (kein Ton über HDMI). "
                    "Nicht verändert (--no-fluidsynth-fix). Abschalten: systemctl --user disable --now fluidsynth.service"))
+    # optional udev rule (USB power saving off for the FM-1 and its hubs): only when asked for
+    if usb_power_rule:
+        if rule is None:
+            log(tr("NOTE: the udev rule is missing in this package.", "HINWEIS: Die udev-Regel fehlt in diesem Paket."))
+        else:
+            install_udev_rule(app / "udev" / UDEV_RULE, log)
+    elif rule is not None and not udev_rule_installed():
+        log(tr("Optional: a udev rule keeps the FM-1 and its USB hub awake while flashing (helps with hubs): "
+               f"{app / 'installer' / 'core.py'} usb-power-rule",
+               "Optional: Eine udev-Regel hält das FM-1 und seinen USB-Hub beim Flashen wach (hilft bei Hubs): "
+               f"{app / 'installer' / 'core.py'} usb-power-rule"))
     # keep remembering files of an earlier installation that were not rewritten this time (e.g. the desktop
     # shortcut) – otherwise uninstalling no longer finds them
     files += [f for f in (old or {}).get("files", []) if f not in files and Path(f).exists()]
@@ -392,13 +463,18 @@ def uninstall(prefix: Path, system: bool = False, settings: bool = False, data: 
     for r in removed:
         log(tr(f"  removed: {r}", f"  entfernt: {r}"))
     log(tr(f"Your folder {root} is left untouched.", f"Dein Ordner {root} bleibt unangetastet."))
+    if udev_rule_installed():
+        log(tr(f"The optional udev rule stays (needs root to remove): sudo rm {UDEV_DIR / UDEV_RULE} && "
+               "sudo udevadm control --reload-rules",
+               f"Die optionale udev-Regel bleibt (Entfernen braucht root): sudo rm {UDEV_DIR / UDEV_RULE} && "
+               "sudo udevadm control --reload-rules"))
     return removed
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=tr("Install/remove the FM-1 Companion Suite",
                                                 "FM-1 Companion Suite installieren/entfernen"))
-    ap.add_argument("cmd", choices=["install", "uninstall", "info"])
+    ap.add_argument("cmd", choices=["install", "uninstall", "info", "usb-power-rule"])
     ap.add_argument("--source", default=str(Path(__file__).resolve().parents[2]))
     ap.add_argument("--prefix", default="")
     ap.add_argument("--system", action="store_true")
@@ -413,11 +489,23 @@ def main(argv=None) -> int:
     ap.add_argument("--no-fluidsynth-fix", action="store_true",
                     help=tr("do NOT disable the system's FluidSynth user service (only a note)",
                             "den FluidSynth-Benutzerdienst des Systems NICHT abschalten (nur Hinweis)"))
+    ap.add_argument("--usb-power-rule", action="store_true",
+                    help=tr("also install the optional udev rule (keeps the FM-1 and its USB hubs awake; asks for "
+                            "sudo)", "auch die optionale udev-Regel installieren (hält das FM-1 und seine USB-Hubs wach; "
+                            "fragt nach sudo)"))
+    ap.add_argument("--remove", action="store_true", help=tr("usb-power-rule: remove the rule again",
+                                                            "usb-power-rule: die Regel wieder entfernen"))
     a = ap.parse_args(argv)
+    if a.cmd == "usb-power-rule":
+        rule = udev_rule_source(Path(a.source)) or udev_rule_source(Path(__file__).resolve().parents[1])
+        if rule is None and not a.remove:
+            print(tr("udev rule not found", "udev-Regel nicht gefunden"))
+            return 1
+        return 0 if install_udev_rule(rule or Path(UDEV_RULE), remove=a.remove) else 1
     prefix = Path(a.prefix).expanduser() if a.prefix else (SYSTEM_PREFIX if a.system else user_prefix())
     if a.cmd == "install":
         install(Path(a.source), prefix, a.system, not a.no_menu, a.desktop, a.demo_data, a.python,
-                fluidsynth_fix=not a.no_fluidsynth_fix)
+                fluidsynth_fix=not a.no_fluidsynth_fix, usb_power_rule=a.usb_power_rule)
     elif a.cmd == "uninstall":
         uninstall(prefix, a.system, a.settings, a.data)
     else:

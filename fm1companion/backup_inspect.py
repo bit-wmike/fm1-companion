@@ -215,13 +215,21 @@ class Report:
         v = self.firmware.lower()
         if "karma" in v:                                                  # (KARMA: "FELUCCA KARMA 3.1", SLOOP's format)
             return "karma"
-        for name in ("melodee", "sloop", "skiff", "jiant", "coralflower"):
+        if "orbit" in v or (self.archive is not None and self.archive.file.get("product") == "ORBIT"):
+            return "orbit"                                                # (ORBIT: "FELUCCA ORBIT 1.0.0", SLOOP's format)
+        for name in ("melodee", "sloop", "skiff", "jiant", "coralflower", "choralroot"):
             if name in v:
                 return name
+        if self.format in backup.IMAGE_FORMATS:
+            return backup.IMAGE_FORMATS[self.format]
         if self.format != "sloop-backup" and backup.is_jiant(o.id for o in self.objects):
             return "jiant"
         if self.format != "sloop-backup" and backup.is_coralflower(o.id for o in self.objects):
             return "coralflower"
+        if self.format != "sloop-backup" and backup.is_felucca([o.id for o in self.objects], v):
+            return "felucca"                                              # (Felucca's own editor: "FELUCCA v1.8.1")
+        if self.format != "sloop-backup" and backup.is_choralroot(o.id for o in self.objects):
+            return "choralroot"
         return "sloop" if self.format == "sloop-backup" else ""
 
     def summary(self) -> str:
@@ -405,12 +413,48 @@ def _coral_object(v: ObjectView, oid: int, size: int) -> ObjectView:
     return v
 
 
+def _choral_object(v: ObjectView, oid: int, size: int) -> ObjectView:
+    """ChoralRoot FM-1's objects (cr_backup.c, web/fm1backup.js objectName): 1 its settings, 8 the FM6 bank, 14..21 the
+    CZ-1 banks A..H, 23 the favourites, 40..49 the loop slots, 50..62 the sound pool's banks (0.22); up to 0.21 the
+    user sounds 6, 7 with their patches 9..13 and 22. Their formats are not decoded here (no project or preset view)."""
+    if oid == 1:
+        v.title, v.group = _("Settings"), G_SETTINGS
+    elif oid in (6, 7):
+        v.title, v.group = _("User sounds {first}–{last}").format(first=1 + (oid - 6) * 16, last=16 + (oid - 6) * 16), G_PRESETS
+    elif oid == 8:
+        v.title, v.group = _("FM6 patch bank"), G_PRESETS
+    elif oid == 9:
+        v.title, v.group = _("VA patches of the user sounds"), G_PRESETS
+    elif oid in (10, 11):
+        v.title, v.group = _("FM6 patches of the user sounds {first}–{last}").format(
+            first=1 + (oid - 10) * 16, last=16 + (oid - 10) * 16), G_PRESETS
+    elif oid in (12, 13):
+        v.title, v.group = _("CZ-1 tones of the user sounds {first}–{last}").format(
+            first=1 + (oid - 12) * 16, last=16 + (oid - 12) * 16), G_PRESETS
+    elif 14 <= oid <= 21:
+        v.title, v.group = _("CZ-1 bank {letter}").format(letter="ABCDEFGH"[oid - 14]), G_PRESETS
+    elif oid == 22:
+        v.title, v.group = _("FM TONE patches of the user sounds"), G_PRESETS
+    elif oid == 23:
+        v.title, v.group = _("Favorites"), G_PRESETS
+    elif 40 <= oid <= 49:
+        v.title, v.group = _("Loop slot {n}").format(n=oid - 39), G_PROJECTS
+    elif 50 <= oid <= 62:
+        first = (oid - 50) * 10 + 1
+        v.title, v.group = _("User sounds {first}–{last}").format(first=f"{first:03d}", last=f"{min(first + 9, 128):03d}"), G_PRESETS
+    v.format = "" if size else _("empty")
+    return v
+
+
 def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = "",
-             sloop: bool = False, skiff: bool = False, jiant: bool = False, coral: bool = False) -> ObjectView:
+             sloop: bool = False, skiff: bool = False, jiant: bool = False, coral: bool = False,
+             choral: bool = False) -> ObjectView:
     size = len(data)
     v = ObjectView(oid, _("Object {id}").format(id=oid), G_OTHER, size, crc, data)
     if coral:
         return _coral_object(v, oid, size)
+    if choral:
+        return _choral_object(v, oid, size)
     if oid == 0:
         v.title, v.group, v.slot = _("Running music"), G_MUSIC, None
         if size:
@@ -463,7 +507,7 @@ def describe(oid: int, data: bytes, crc: int, n_objects: int, firmware: str = ""
     if oid == 8:
         v.title, v.group = _("Old FM6 bank (retired)"), G_OTHER
         return v
-    if (skiff or jiant) and oid == 9:            # (Skiff, JIANT: editor_backup.c, up_fm6.c)
+    if (skiff or jiant or n_objects == 13) and oid == 9:   # (Skiff, JIANT, Felucca 1.0.3+: editor_backup.c, up_fm6.c)
         v.title, v.group = _("FM6 patches of the user presets"), G_PRESETS
         return v
     if skiff and 16 <= oid < 32:                 # (Skiff: bank.c, 16 chunks of 4 patterns)
@@ -535,10 +579,18 @@ def inspect(source) -> Report:
     path = None
     if isinstance(source, backup.Archive):
         arch = source
-        return _from_sloop(arch.file, None) if arch.sloop else _from_archive(arch, None)
+        return _from_sloop(arch.file, None) if arch.sloop else _from_x0x(arch, None) if arch.image else \
+            _from_archive(arch, None)
     if isinstance(source, (str, Path)) and not (isinstance(source, str) and source.lstrip().startswith("{")):
         path = Path(source)
-        source = path.read_text("utf-8")
+        raw = path.read_bytes()
+        from . import x0xbk
+        if x0xbk.is_image(raw):                    # (X0X's own .x0b file, LOOM-8's .loom8)
+            return _from_x0x(backup.read(raw), path)
+        try:
+            source = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            raise backup.BackupError(_("Not a backup file (no JSON)"))
     if isinstance(source, (str, bytes)):
         try:
             source = json.loads(source)
@@ -547,17 +599,37 @@ def inspect(source) -> Report:
     if isinstance(source, dict) and source.get("format") == "sloop-backup":
         return _from_sloop(source, path)
     arch = backup.read(source)
-    return _from_archive(arch, path)
+    return _from_x0x(arch, path) if arch.image else _from_archive(arch, path)
+
+
+def _from_x0x(arch: backup.Archive, path: Path | None) -> Report:
+    """X0X's or LOOM-8's image (x0xbk.py): its parts, restored whole; their formats are not decoded here (no project
+    view)"""
+    from . import x0xbk
+    p = x0xbk.profile_of(arch.file)
+    objs = []
+    for o in arch.objects:
+        v = ObjectView(o["id"], p.title(o["id"]), G_SETTINGS if p.settings(o["id"]) else
+                       G_PRESETS if p.key == "loom-8" and o["id"] == 1 else G_PROJECTS, o["size"], o["crc"], o["bytes"])
+        v.format = "" if o["size"] else _("empty")
+        objs.append(v)
+    rep = Report(arch.format, arch.firmware, arch.created, arch.companion, objs, True, True, path, arch)
+    if x0xbk.parse(x0xbk.image_of(arch.file), p)[0] & 1:
+        rep.warnings.append(_("{firmware} was playing during this backup: changes it had not saved yet are not in "
+                              "it.").format(firmware=p.name))
+    return rep
 
 
 def _from_archive(arch: backup.Archive, path: Path | None) -> Report:
     n = len(arch.objects)
     ids = [o["id"] for o in arch.objects]
     skiff, jiant, coral = ids == SKIFF_IDS, backup.is_jiant(ids), backup.is_coralflower(ids)
-    objs = [describe(o["id"], o["bytes"], o["crc"], n, arch.firmware, skiff=skiff, jiant=jiant, coral=coral)
-            for o in arch.objects]
+    choral = backup.is_choralroot(ids)
+    objs = [describe(o["id"], o["bytes"], o["crc"], n, arch.firmware, skiff=skiff, jiant=jiant, coral=coral,
+                     choral=choral) for o in arch.objects]
     rep = Report(backup.FORMAT, arch.firmware, arch.created, arch.companion, objs, arch.known, True, path, arch)
-    s = rep.obj(1) if not coral else None          # (CoralFlower's settings, 30, are its own record: not decoded)
+    s = rep.obj(1) if not coral and not choral else None   # (CoralFlower's settings, 30, and ChoralRoot's PER5 are their
+                                                           # own records: not decoded)
     if s:
         rep.settings = decode_settings(s.data)
     if not arch.known:
@@ -781,8 +853,8 @@ def is_sloop(rep: Report) -> bool:
 
 def skip_ids(rep: Report) -> set[int]:
     """Objects that cannot be restored individually (SLOOP: none)."""
-    if is_sloop(rep) or backup.is_coralflower(o.id for o in rep.objects):
-        return set()                              # (CoralFlower: 8 is its FM6 patch bank, in use)
+    if is_sloop(rep) or backup.is_coralflower(o.id for o in rep.objects) or backup.is_choralroot(o.id for o in rep.objects):
+        return set()                              # (CoralFlower, ChoralRoot: 8 is their FM6 patch bank, in use)
     return SELECTABLE_SKIP
 
 

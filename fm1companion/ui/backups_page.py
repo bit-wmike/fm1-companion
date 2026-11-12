@@ -49,9 +49,10 @@ def no_backup_reason(ctx) -> str:
     if getattr(ctx, "midi_connected", False):
         from .device import firmware_name
         fw = firmware_name(ctx.firmware_key) or _("The running firmware")
-        return _("{firmware} has no editor protocol – the app cannot make a backup of it. Backups are available "
-                 "for Melodee, Skiff and SLOOP. Please back up important projects with the firmware's own tool."
-                 ).format(firmware=fw)
+        return _("{firmware} has no editor protocol – the app cannot make a backup of it. Backups go through the "
+                 "editor protocol of the Felucca family (Felucca's, SLOOP's or X0X's backup commands; "
+                 "docs/firmware-support.md lists every firmware). Please back up important projects with the "
+                 "firmware's own tool.").format(firmware=fw)
     return _("The FM-1 does not respond. Check the cable and reconnect.")
 
 
@@ -119,10 +120,26 @@ def _mirror_quiet(ctx, path: Path, log=None):
         AB.STATUS.mirror = _("Mirror up to date ({time})").format(time=time.strftime('%H:%M'))
         if log:
             log(_("Mirrored and verified: {target}").format(target=target))
+        _prune_mirror(ctx.settings.backups_dir, Path(target), ctx.settings.keep_backups, log)
     except OSError as e:
         AB.STATUS.mirror = _("Mirror not possible: {error}").format(error=e)
         if log:
             log(AB.STATUS.mirror)
+
+
+def _prune_mirror(root: Path, target: Path, keep: int, log=None) -> int:
+    """the mirror's retention (only automatic backups the app copied there and already deleted here)"""
+    try:
+        gone = AB.prune_mirror(root, target, keep)
+    except OSError as e:
+        if log:
+            log(_("Old automatic backups in the mirror could not be deleted: {error}").format(error=e.strerror or e))
+        return 0
+    if gone and log:
+        log(ngettext("{n} old automatic backup deleted in the mirror as well (like here).",
+                     "{n} old automatic backups deleted in the mirror as well (like here).", len(gone)).format(
+            n=len(gone)))
+    return len(gone)
 
 
 def prune(folder: Path, keep: int):
@@ -248,6 +265,7 @@ class AutoBackupService(QObject):
                 try:
                     AB.mirror_file(p, root, Path(target))
                     AB.STATUS.mirror = _("Mirror up to date ({time})").format(time=time.strftime('%H:%M'))
+                    _prune_mirror(root, Path(target), keep)
                 except OSError as e:
                     AB.STATUS.mirror = _("Mirror not possible: {error}").format(error=e)
             return p
@@ -386,7 +404,22 @@ class BackupsPage(QWidget):
         b_now = QPushButton(icon("folder-sync", "view-refresh"), _("Mirror now"))
         b_now.clicked.connect(self._mirror_now)
         f.addRow(_("Mirror folder:"), self._h(self.a_mirror, b_pick, b_now))
-        for wdg in (self.a_connect, self.a_periodic, self.a_monthly):
+        self.a_mprune = QCheckBox(_("delete old automatic backups in the mirror too (like here)"))
+        self.a_mprune.setChecked(bool(s.get("mirror_prune", True)))
+        self.a_mprune.setToolTip(_("Keeps the mirror folder from growing without limit. Only automatic backups the "
+                                   "app copied there itself, unchanged since, and that were already deleted here by "
+                                   "“Keep automatic ones” are deleted there. Manual and pinned backups and all other "
+                                   "files in the mirror folder are never touched."))
+        f.addRow("", self.a_mprune)
+        mnote = QLabel(_("In the mirror the app only deletes automatic backups it copied there itself and already "
+                         "deleted here – never manual or pinned ones, never other files. Off: the mirror keeps "
+                         "everything (and grows)."))
+        mnote.setWordWrap(True)
+        mnote.setMinimumWidth(0)
+        mnote.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        mnote.setStyleSheet("color: palette(mid);")
+        f.addRow("", mnote)
+        for wdg in (self.a_connect, self.a_periodic, self.a_monthly, self.a_mprune):
             wdg.toggled.connect(self._save_auto)
         for wdg in (self.a_days, self.a_hours, self.a_keep):
             wdg.valueChanged.connect(self._save_auto)
@@ -422,7 +455,7 @@ class BackupsPage(QWidget):
         s = AB.settings()
         s.update(on_connect=self.a_connect.isChecked(), days=self.a_days.value(), periodic=self.a_periodic.isChecked(),
                  hours=self.a_hours.value(), keep_monthly=self.a_monthly.isChecked(),
-                 mirror=self.a_mirror.text().strip())
+                 mirror=self.a_mirror.text().strip(), mirror_prune=self.a_mprune.isChecked())
         self.ctx.settings.keep_backups = self.a_keep.value()
         config.save(self.ctx.settings)
 
@@ -444,6 +477,8 @@ class BackupsPage(QWidget):
             ok, bad, msgs = AB.mirror_all(self.ctx.settings.backups_dir, Path(target))
             for m in msgs:
                 w.log.emit(m)
+            if not bad:
+                _prune_mirror(self.ctx.settings.backups_dir, Path(target), self.ctx.settings.keep_backups, w.log.emit)
             w.log.emit(_("{ok} backups verified in the mirror, {bad} errors.").format(ok=ok, bad=bad))
             AB.STATUS.mirror = _("Mirror: {ok} verified, {bad} errors ({time})").format(ok=ok, bad=bad,
                                                                                     time=time.strftime('%H:%M'))

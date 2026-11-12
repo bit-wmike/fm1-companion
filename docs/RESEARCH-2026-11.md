@@ -169,6 +169,12 @@ When restoring, factory data must be preserved, as M-Flasher does. For compariso
 * System commands of the original firmware (frame `00 59 cmd len24 … ~sum`): FM-1-RE warns that 33–36 and 48 must not
   be tried out (`docs/io/11-ota-protocol.md`, section syscmd). czietz uses 35 = 0x23 as a read command on object 5
   in production. Reading on object 5 thus counts as proven (V14/V15); 34 (write) and 48 remain taboo.
+  **Update (2.5.x):** M-VAVE's own workbench (`fm1_open/sdk/WebUpdate.js` `restoreFactory`, commit 4c7496d) writes the
+  four voice banks of a V15 with 33 (`05 00 bank·16 00 00`) and 34 (`05 <offset32> 00 02 00` + 512 bytes), each
+  acknowledged by command 0 status 0, the identity checked before and after; it also says that "stock reads expose the
+  current edit buffer, not this bank address space". The suite does exactly that (`stockv15.py`, FM Voices ›
+  Original V15: restore factory voices – the factory voices only); 48 and other uses of 34 (own voices into a bank)
+  stay out until a hardware test (docs/ROADMAP.md).
 * Partial-block framing: the length must be correct after packing (FM-1-RE `docs/io/12-v15-reflash-proof.md`). The
   vendored `fm1_install.py:104-110` does this correctly (`n + 8`). No bug in the suite.
 * `aroum/fm1_sysex_scanner.py` sends `F0 00 32 45 00 00 00 <id> 7F F7` for id 0–127. Unpacked, this is **always
