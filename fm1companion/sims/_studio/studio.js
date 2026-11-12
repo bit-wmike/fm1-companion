@@ -3,7 +3,7 @@
 //   Python -> command(json {id, op, ...}); bytes arrive as {blob: url} (fetched here), bytes in results go to
 //   c.sink (POST, ?k=<field>) and are replaced by {sink: field}. JS -> reply(json) with {id, ok, ...} or {ev, ...}.
 "use strict";
-let bridge = null, worker = null, wasmBytes = null, seq = 0, ctx = null, node = null;
+let bridge = null, worker = null, wasmBytes = null, seq = 0, ctx = null, node = null, rw = null, rwFail = null;
 const waits = new Map();
 
 function startWorker() {
@@ -54,28 +54,47 @@ async function audio(on) {
   return { on: true, state: ctx.state, rate: ctx.sampleRate, latency: ctx.baseLatency };
 }
 
-async function render(c) {                         // offline: a render worker from a snapshot of the live twin
+// Offline renders: a render worker holds ONE snapshot of the live twin (render_open); every pass of an export
+// (render: the mix, then each stem) starts from it, so they are aligned to the sample. render_close terminates the
+// worker – also in the middle of a pass (cancel): that pass then fails with "render cancelled".
+function renderClose() {
+  if (rw) rw.terminate();
+  rw = null;
+  const f = rwFail; rwFail = null;
+  if (f) f(new Error("render cancelled"));
+  return {};
+}
+function rwCall(msg, transfer, onChunk) {
+  const w = rw;
+  return new Promise((resolve, reject) => {
+    let posting = Promise.resolve();
+    rwFail = reject;
+    w.onerror = (e) => reject(new Error("render worker: " + (e && e.message || "error")));
+    w.onmessage = (e) => {
+      const m = e.data;
+      if (m.chunk) {
+        posting = posting.then(() => onChunk(m.chunk)).then(() => w.postMessage({ op: "ack" }), reject);
+        return;
+      }
+      if (m.ev) return;
+      posting.then(() => (m.ok ? resolve(m.r) : reject(new Error(m.error))));
+    };
+    w.postMessage(msg, transfer || []);
+  }).finally(() => { if (rw === w) rwFail = null; });
+}
+async function renderOpen(c) {
+  renderClose();
   const snap = await toWorker({ op: "snapshot", kind: c.source === "saved" ? "flash" : "memory" });
   if (!snap.ok) throw new Error(snap.error);
-  const rw = new Worker("studio-worker.js");
-  try {
-    return await new Promise((resolve, reject) => {
-      let posting = Promise.resolve();
-      rw.onmessage = (e) => {
-        const m = e.data;
-        if (m.chunk) {
-          posting = posting.then(() => fetch(c.sink, { method: "POST", body: m.chunk }))
-            .then(() => rw.postMessage({ op: "ack" }), reject);
-          return;
-        }
-        if (m.ev) return;
-        posting.then(() => (m.ok ? resolve(m.r) : reject(new Error(m.error))));
-      };
-      const state = snap.r.memory ? { memory: snap.r.memory } : { flash: snap.r.flash };
-      rw.postMessage({ op: "render_job", id: "render", wasm: wasmBytes, params: c, ...state },
-                     [Object.values(state)[0].buffer]);
-    });
-  } finally { rw.terminate(); }
+  rw = new Worker("studio-worker.js");
+  const state = snap.r.memory ? { memory: snap.r.memory } : { flash: snap.r.flash };
+  await rwCall({ op: "render_open", id: "open", wasm: wasmBytes, settle_ms: c.settle_ms, ...state },
+               [Object.values(state)[0].buffer]);
+  return {};
+}
+function render(c) {
+  if (!rw) throw new Error("no render session (render_open first)");
+  return rwCall({ op: "render_pass", id: "render", params: c }, [], (chunk) => fetch(c.sink, { method: "POST", body: chunk }));
 }
 
 async function onCommand(json) {
@@ -91,7 +110,9 @@ async function onCommand(json) {
       r = m.r;
     } else if (c.op === "audio") r = await audio(!!c.on);
     else if (c.op === "panel") r = self.studioPanel ? self.studioPanel(c) : { on: false };
+    else if (c.op === "render_open") r = await renderOpen(c);
     else if (c.op === "render") r = await render(c);
+    else if (c.op === "render_close") r = renderClose();
     else {
       const transfer = c.flash ? [c.flash.buffer] : [];
       const m = await toWorker(c, transfer);

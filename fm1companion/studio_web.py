@@ -20,7 +20,11 @@ from PyQt6.QtWidgets import QApplication
 
 
 from .i18n import _
-from .studio import StudioError
+from .studio import StudioError, _request
+
+
+def DEAD_TEXT() -> str:
+    return _("The twin has stopped: its process ended unexpectedly (often because memory ran out).")
 
 
 class StudioBridge(QObject):
@@ -62,6 +66,8 @@ class WebTwin(QObject):
         self._post.connect(self.bridge.command.emit)
         self.console: list[str] = []
         self.on_event: Callable | None = None      # {ev: "ui", ...} from the control surface (GUI thread)
+        self.on_dead: Callable | None = None       # the page's render process ended (GUI thread): (status, code)
+        self.dead = False                          # … then every call fails at once instead of waiting 60 s
 
     # ------------------------------------------------------------- loading
     def load(self, timeout: float = 30):
@@ -81,6 +87,7 @@ class WebTwin(QObject):
         self.channel = QWebChannel(self.page)
         self.channel.registerObject("studio", self.bridge)
         self.page.setWebChannel(self.channel)
+        self.page.renderProcessTerminated.connect(self._on_terminated)
         self.page.load(QUrl(self.server.sim_url("_studio", "studio.html")))
         if not self._wait(lambda: self._ready.is_set(), timeout):
             raise StudioError(_("Studio page does not load: {details}").format(details=" | ".join(self.console[-5:])))
@@ -117,6 +124,19 @@ class WebTwin(QObject):
     def _on_ready(self):
         self._ready.set()
 
+    def _on_terminated(self, status, code):
+        """Chromium's render process of the twin page is gone (killed for memory, crashed): the twin with it. Waiting
+        calls end now, later ones fail at once; the owner (ui/studio_service.py) tells the user."""
+        if self.dead:
+            return
+        self.dead = True
+        fn = self.on_dead
+        if fn:
+            try:
+                fn(getattr(status, "name", str(status)), int(code))
+            except Exception:                  # noqa: BLE001
+                pass
+
     def _on_reply(self, s: str):
         try:
             m = json.loads(s)
@@ -139,6 +159,8 @@ class WebTwin(QObject):
 
     # ------------------------------------------------------------- commands
     def call(self, op: str, timeout: float = 60, sink=None, **args) -> dict:
+        if self.dead:
+            raise StudioError(DEAD_TEXT())
         i = next(self._ids)
         got: dict[str, bytes] = {}
         keys = []
@@ -153,9 +175,11 @@ class WebTwin(QObject):
         w: dict = {}
         self._waits[i] = w
         try:
-            self._post.emit(json.dumps({"id": i, "op": op, "sink": url, **args}))
-            if not self._wait(lambda: "reply" in w, timeout):
+            self._post.emit(json.dumps({**_request(i, op, args), "sink": url}))
+            if not self._wait(lambda: "reply" in w or self.dead, timeout):
                 raise StudioError(_("Studio does not respond ({operation})").format(operation=op))
+            if "reply" not in w:
+                raise StudioError(DEAD_TEXT())
         finally:
             self._waits.pop(i, None)
             for k in keys:
@@ -167,7 +191,7 @@ class WebTwin(QObject):
 
     def post(self, op: str, **args):
         """Command without waiting for the reply (the reply is discarded) – from any thread."""
-        self._post.emit(json.dumps({"id": 0, "op": op, "nowait": True, **args}))
+        self._post.emit(json.dumps({**_request(0, op, args), "nowait": True}))
 
     def render(self, path: Path, params: dict) -> dict:
         path = Path(path)
