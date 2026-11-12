@@ -552,7 +552,7 @@ def flow():
     check(comp is not None and comp.ok and ok, f"Kopie Melodee → Melodee ({comp.reason if comp else '-'})")
     got = BI.decode_up_bank(device_read(6), 1, 6)
     check([x.name for x in got if x.used] == ["BASS ONE", "SID LEAD", "FM KEYS"], "presets arrived")
-    check(len(device_read(66)) == 2500, "project 7 arrived")
+    check(len(device_read(66)) == 7968, "project 7 arrived")       # (the demo device's real second project)
     os.environ.pop("FM1C_DEMO_CMD", None)
     app.quit()
 

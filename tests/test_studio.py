@@ -2350,3 +2350,24 @@ def test_state_file_sizes_are_checked_before_unpacking(tmp_path):
     with pytest.raises(studio.StudioError) as e:
         studio.read_state(junk)
     assert len(str(e.value)) < 400
+
+
+def test_demo_melodee_data_is_real(node_studio):
+    """the demo FM-1 (demo mode, the README's screenshots) says it runs Melodee 1.6.0-rc.7; its settings, user preset
+    bank and second project were random bytes, so "Fetch from FM-1" showed "Not taken over (3) … do not fit Melodee
+    v1.6.0-rc.7" on the same firmware. The tolerant load was right to refuse them; the demo data is real now."""
+    from fm1companion.demo_device import FakeFM1
+    from fm1companion.transport import Link
+    from test_core import LocalTransport
+    dev = FakeFM1()
+    arch = backup.read(backup.capture(Link(LocalTransport(dev)), dev.version))
+    assert all(o["size"] for o in arch.objects if o["id"] in (0, 1, 2, 6, 66))
+    for v in ("v1.6.0-rc.7", "v1.6.1"):
+        st = node_studio(v)
+        st.open_from_backup(arch, tolerant=True)
+        assert st.rejected == [], v
+    st = node_studio("v1.6.0-rc.7")
+    bad = backup.read(backup.capture(Link(LocalTransport(FakeFM1(ids=list(range(29)) + list(range(64, 92))))), "x"))
+    bad.objects[1]["bytes"] = bytes(reversed(bad.objects[1]["bytes"]))     # (garbage is still refused, part by part)
+    st.open_from_backup(bad, tolerant=True)
+    assert st.rejected == [1]
