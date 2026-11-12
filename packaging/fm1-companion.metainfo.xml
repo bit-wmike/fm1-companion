@@ -27,6 +27,9 @@
   <url type="homepage">https://github.com/bit-wmike/fm1-companion</url>
   <url type="bugtracker">https://github.com/bit-wmike/fm1-companion/issues</url>
   <releases>
+    <release version="2.5.0" date="2026-11-11">
+      <description><p>Five more Studio twins: Skiff (2.2, 2.1.1), JIANT FM (V10.6z2, V10.60, V10.61), SLOOP (2.8.5, 2.8.4), CoralFlower (0.7.1, 0.7) and KARMA (3.1, 3.0.5) – each firmware's own code on the computer, with backup load, stems, snapshots and write back. Backups of Skiff 2.x, JIANT FM, CoralFlower and KARMA fixed (rejected backups, song sections treated as sample slots, KARMA could not be backed up at all). Spanish user interface and help. Firmware+: install firmwares without a checked catalog package from their GitHub releases, real popularity sort, no simulator crash on Qt 6.4.</p></description>
+    </release>
     <release version="2.4.0" date="2026-11-04">
       <description><p>English user interface; German as translation; translator kit.</p></description>
     </release>

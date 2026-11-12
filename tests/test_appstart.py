@@ -156,7 +156,7 @@ def test_cli_flags():
     env = _env(Path("/nonexistent"))
     out = subprocess.run([sys.executable, "-m", "fm1companion", "--version"], cwd=str(ROOT), env=env,
                          capture_output=True, text=True, timeout=60)
-    assert out.stdout.strip() == "2.4.0"
+    assert out.stdout.strip() == "2.5.0"
     out = subprocess.run([sys.executable, "-m", "fm1companion", "--help"], cwd=str(ROOT), env=env,
                          capture_output=True, text=True, timeout=60)
     assert "--demo" in out.stdout and "--check" in out.stdout

@@ -96,7 +96,6 @@ def close_toasts():
     from fm1companion.ui.notify import Toast
     for t in w.findChildren(Toast):
         t.hide()
-        t.deleteLater()
     lane = getattr(w, "toast_lane", None)
     if lane is not None:
         lane.hide()
@@ -139,6 +138,26 @@ except Exception as e:  # noqa: BLE001
     print("fetch failed", e)
 wait(1500)
 shot("02-studio.png", 1500)
+
+# Studio with a second firmware: the demo's SLOOP FM-1 (DEMO-2) in its SLOOP twin
+port1 = next((x for x in ctx.ports if x.serial == "DEMO-1"), None)
+port2 = next((x for x in ctx.ports if x.serial == "DEMO-2"), None)
+if port2 is not None:
+    try:
+        ctx.connect_port(port2)
+        print("sloop connected", until(lambda: ctx.connected and ctx.firmware_key == "sloop", 20000), flush=True)
+        page.refresh()
+        wait(800)
+        page.fetch_from_device()
+        until(lambda: svc.running and svc.firmware == "sloop", 30000)
+        wait(2000)
+        shot("02b-studio-sloop.png", 1500)
+    except Exception as e:  # noqa: BLE001
+        print("sloop studio", e)
+    if port1 is not None:
+        ctx.connect_port(port1)
+        until(lambda: ctx.connected and ctx.firmware_key != "sloop", 20000)
+        wait(1000)
 
 # Projects › View & Export with the fetched backup
 w.go("projects")
