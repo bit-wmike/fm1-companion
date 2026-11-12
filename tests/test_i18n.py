@@ -276,6 +276,8 @@ def test_frame_in_english():
         en = help_page.help_files("en")
         de = help_page.help_files("de")
         assert [f.name for f in en] == [f.name for f in de] and de and all(f.parent.name == "de" for f in de)
+        es = help_page.help_files("es")
+        assert [f.name for f in es] == [f.name for f in de] and all(f.parent.name == "es" for f in es)
     finally:
         i18n.set_language(None)
 

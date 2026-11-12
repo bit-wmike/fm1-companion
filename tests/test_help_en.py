@@ -82,3 +82,26 @@ def test_english_help_is_english():
     words = re.compile(r"\b(und|oder|nicht|Gerät|Einstellungen|Rettung|Stufe|Installieren|Zurück|Seite)\b")
     left = [f"{f.name}: {m.group(0)}" for f in (HELP / "en").glob("*.md") for m in words.finditer(f.read_text("utf-8"))]
     assert not left, left
+
+
+def test_every_german_page_has_a_spanish_one_with_the_same_links():
+    """Spanish help pages: same file names, a title, and exactly the links of the German page"""
+    de = sorted(f.name for f in (HELP / "de").glob("*.md"))
+    es = sorted(f.name for f in (HELP / "es").glob("*.md"))
+    assert de and es == de
+    bad = []
+    for name in es:
+        md = (HELP / "es" / name).read_text("utf-8")
+        assert re.match(r"#\s+\S", md), f"{name}: no title"
+        if sorted(LINK.findall(md)) != sorted(LINK.findall((HELP / "de" / name).read_text("utf-8"))):
+            bad.append(f"{name}: links differ from the German page")
+    assert not bad, bad
+
+
+def test_spanish_help_is_loaded_for_es():
+    from fm1companion.ui.pages import help as help_page
+    files = help_page.help_files("es")
+    assert [f.name for f in files] == [f.name for f in help_page.help_files("de")]
+    assert all(f.parent.name == "es" for f in files)
+    titles = {k: t for k, t, _m in help_page.topics("es")}
+    assert titles["01-erste-schritte"] == "Primeros pasos" and titles["12-glossar"] == "Glosario"

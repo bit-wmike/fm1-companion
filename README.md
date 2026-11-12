@@ -13,7 +13,7 @@
 > The exact list: [docs/UNTESTED.md](docs/UNTESTED.md). No warranty (GPL-3.0, sections 15 and 16).
 
 > [!NOTE]
-> **Languages: English, German** – help translate: [docs/TRANSLATING.md](docs/TRANSLATING.md).
+> **Languages: English, German, Spanish** – help translate: [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
 The desktop suite for the **M-VAVE FM-1** with firmwares of the Felucca family (**Melodee**, **Skiff**, **SLOOP**)
 and the official firmware. Everything around the device in one app – built for the Raspberry Pi 5

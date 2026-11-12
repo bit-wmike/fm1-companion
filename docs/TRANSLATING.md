@@ -2,7 +2,8 @@
 
 FM-1 Companion is written with **English** as the source language. Every text the user sees is English in
 the code and wrapped in a translation function. Translations are plain gettext `.po` text files – one
-folder per language, several files per folder. German (`de`) is the first translation.
+folder per language, several files per folder. Available translations: German (`de`) and Spanish (`es`).
+The Spanish translation is new – corrections by native speakers are very welcome.
 
 No build step is needed: the app reads the `.po` files directly (`fm1companion/i18n.py`). There are no
 `.mo` files to compile and no extra packages to install.
@@ -34,6 +35,7 @@ fm1companion/
     en/README.md              # English is the source – nothing to translate
   data/help/
     de/*.md                   # help pages in German (complete set)
+    es/*.md                   # help pages in Spanish (complete set)
     en/*.md                   # English help pages (complete set; the reference for new languages)
 ```
 
