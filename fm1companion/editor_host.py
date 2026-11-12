@@ -116,7 +116,7 @@ def available(key: str) -> list[str]:
 
 
 class MidiRelay:
-    """MIDI from the app to pages outside the app (Firefox): server-sent events on /_fm1/midi."""
+    """MIDI from the app to pages outside the app (Firefox): server-sent events on /_fm1/midi/<key>."""
 
     def __init__(self):
         self._clients: list[queue.Queue] = []
@@ -159,8 +159,15 @@ class _Quiet(SimpleHTTPRequestHandler):
     relay: MidiRelay | None = None
     exchange: "Exchange | None" = None
 
+    relay_token: str = ""
+
     def log_message(self, *a):
         pass
+
+    def list_directory(self, path):
+        """no folder listings (a folder without index.html is simply “not found”)."""
+        self.send_error(404)
+        return None
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
@@ -192,7 +199,13 @@ class _Quiet(SimpleHTTPRequestHandler):
         if not self._host_ok():
             return
         path = urlsplit(self.path).path
-        if path == "/_fm1/midi" and self.relay is not None:
+        if path.startswith("/_fm1/midi"):
+            # what is played on the FM-1: only for the page the app itself opened (random key in the address)
+            import hmac
+            key = path[len("/_fm1/midi/"):]
+            if self.relay is None or not self.relay_token or not hmac.compare_digest(key.encode(), self.relay_token.encode()):
+                self.send_error(404)
+                return
             self.relay.serve(self)
             return
         if path.startswith("/_fm1/blob/") and self.exchange is not None:
@@ -277,7 +290,10 @@ class LocalServer:
         SITES.mkdir(parents=True, exist_ok=True)
         self.relay = MidiRelay()
         self.exchange = Exchange()
-        handler = functools.partial(type("_Handler", (_Quiet,), {"relay": self.relay, "exchange": self.exchange}),
+        import secrets
+        self.relay_token = secrets.token_urlsafe(16)
+        handler = functools.partial(type("_Handler", (_Quiet,), {"relay": self.relay, "exchange": self.exchange,
+                                                                 "relay_token": self.relay_token}),
                                     directory=str(SITES))
         _Quiet.extensions_map = {**SimpleHTTPRequestHandler.extensions_map, ".js": "text/javascript",
                                  ".mjs": "text/javascript", ".ttf": "font/ttf", ".json": "application/json",
@@ -293,6 +309,10 @@ class LocalServer:
 
     def sim_url(self, name: str, entry: str = "index.html") -> str:
         return f"http://127.0.0.1:{self.port}/sims/{name}/{entry}"
+
+    def relay_url(self) -> str:
+        """server-sent events with the MIDI of the FM-1 for a simulator opened in Firefox (random key per app start)."""
+        return f"http://127.0.0.1:{self.port}/_fm1/midi/{self.relay_token}"
 
     def blob_url(self, data: bytes) -> str:
         return f"http://127.0.0.1:{self.port}/_fm1/blob/{self.exchange.add_blob(data)}"

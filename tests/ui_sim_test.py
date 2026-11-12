@@ -233,22 +233,103 @@ def flow():
        "o.send([0xF0,0x22,0x24,0x35,0x7D,0xF7]);o.send([0xF0,0x00,0x32,0x45,0,0,0,0x40,0x7F,0xF7]);o.send([0xB0,1,2]);})")
     check(until(lambda: [0xB0, 1, 2] in sent, 5000) and sent == [[0x90, 60, 1], [0xB0, 1, 2]] and p.bridge.blocked >= 5,
           f"hidden/split update SysEx stay out ({sent}, {p.bridge.blocked} blocked)")
-    # opened as an online EDITOR, origin NOT confirmed: only notes, Felucca SysEx stays out
+    # SEC-01: an online simulator may not use the FM1 Open library protocol (cmd 12 erases the sample bank)
     from fm1companion import sims as _sims
+    lib = [0xF0, 0x7D, 0x46, 0x4D, 0x02, 0x0C, 0x01, 0x00, 0x68, 0x07, 0x00, 0x00, 0x00, 0x72, 0xF7]
+    sent.clear()
+    js(f"navigator.requestMIDIAccess({{sysex:true}}).then(a=>{{const o=[...a.outputs.values()].find(x=>x.name==='FM-1');"
+       f"o.send({json.dumps(lib)});o.send([0x90,66,1]);}})")
+    check(until(lambda: [0x90, 66, 1] in sent, 5000) and sent == [[0x90, 66, 1]],
+          f"online simulator: FM1 Open library command blocked ({sent})")
+    # SEC-04: a download of an online page is never saved silently and never replaces a recording
+    from PyQt6.QtWidgets import QFileDialog
+    rec_dir = Path(w.ctx.settings.recordings_dir)
+    rec_dir.mkdir(parents=True, exist_ok=True)
+    (rec_dir / "Meine Aufnahme.wav").write_bytes(b"PRECIOUS USER RECORDING")
+    before_files = sorted(f.name for f in rec_dir.iterdir())
+    dialogs = []
+    orig_save = QFileDialog.getSaveFileName
+    QFileDialog.getSaveFileName = staticmethod(lambda *a, **k: (dialogs.append(a[2] if len(a) > 2 else ""), ("", ""))[1])
+    js("(()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['overwrite']));"
+       "a.download='Meine Aufnahme.wav';document.body.appendChild(a);a.click();})()")
+    check(until(lambda: len(dialogs) >= 1, 8000), f"download of an online page: the save dialog asks ({dialogs})")
+    wait(500)
+    check((rec_dir / "Meine Aufnahme.wav").read_bytes() == b"PRECIOUS USER RECORDING"
+          and sorted(f.name for f in rec_dir.iterdir()) == before_files, "the existing recording is untouched")
+    QFileDialog.getSaveFileName = orig_save
+    # … also not when the app is waiting for a recording of that very name (the data must come from the app's server)
+    p._rec_pending = ("Meine Aufnahme.wav", time.time() + 30)
+
+    class _Item:
+        def __init__(self, src):
+            self.src, self.accepted, self.name, self.dir = src, False, "Meine Aufnahme.wav", ""
+        page = lambda self: p.page                                       # noqa: E731
+        downloadFileName = lambda self: self.name                        # noqa: E731
+        url = lambda self: __import__("PyQt6.QtCore").QtCore.QUrl(self.src)   # noqa: E731
+
+        def setDownloadDirectory(self, d):
+            self.dir = d
+
+        def setDownloadFileName(self, n):
+            self.name = n
+
+        def accept(self):
+            self.accepted = True
+    foreign = _Item("blob:" + _sims.origin_of(url) + "/1234")
+    check(p._download(foreign) is False and not foreign.accepted, "blob of a foreign page: not saved silently")
+    own = _Item("blob:" + _sims.origin_of(w.server.sim_url("melodee")) + "/1234")
+    check(p._download(own) is True and own.accepted and own.name == "Meine Aufnahme (2).wav"
+          and own.dir == str(rec_dir), f"expected recording: saved next to the existing file ({own.name})")
+    again = _Item("blob:" + _sims.origin_of(w.server.sim_url("melodee")) + "/1234")
+    check(p._download(again) is False, "the permission to save silently is used up after one file")
+    # SEC-01: the workbench asks for the library permission; without it notes only
     asked = []
-    p.ask_origin = lambda o, t="": asked.append(o) or False
+    p.ask_origin = lambda o, t="", level="editor": asked.append((o, level)) or False
+    sent.clear()
+    w.go("simulator", url=url, title="Test-Workbench", kind="workbench")
+    check(until(lambda: js("document.title") == "Test-Emu" and p.current is not None and p.current.kind == "workbench", 15000),
+          "page opened as workbench")
+    check(asked == [(_sims.origin_of(url), "library")], f"workbench: prompt for the library permission ({asked})")
+    js(f"navigator.requestMIDIAccess({{sysex:true}}).then(a=>{{const o=[...a.outputs.values()].find(x=>x.name==='FM-1');"
+       f"o.send({json.dumps(lib)});o.send([0x90,67,1]);}})")
+    check(until(lambda: [0x90, 67, 1] in sent, 5000) and sent == [[0x90, 67, 1]], f"workbench declined: notes only ({sent})")
+    p.ask_origin = lambda o, t="", level="editor": asked.append((o, level)) or True
+    sent.clear()
+    w.go("simulator", url=url, title="Test-Workbench", kind="workbench")
+    check(until(lambda: js("document.title") == "Test-Emu" and p.current is not None and p.current.kind == "workbench"
+                and _sims.origin_trusted(_sims.origin_of(url), "library"), 15000), "workbench allowed and stored")
+    js(f"navigator.requestMIDIAccess({{sysex:true}}).then(a=>{{const o=[...a.outputs.values()].find(x=>x.name==='FM-1');"
+       f"o.send({json.dumps(lib)});o.send([0xF0,0x7D,0x46,0x4C,14,0,0xF7]);o.send([0xF0,0x22,0x24,0x35,0x7F,0xF7]);"
+       f"o.send([0x90,68,1]);}})")
+    check(until(lambda: [0x90, 68, 1] in sent, 5000) and sent == [lib, [0x90, 68, 1]],
+          f"workbench allowed: library through, editor SysEx and update key not ({sent})")
+    check(not _sims.origin_trusted(_sims.origin_of(url)), "a library permission is not an editor permission")
+    _sims.forget_origin(_sims.origin_of(url))
+    # the consent dialogs say what is allowed (real dialog, answered with the default "notes only")
+    del p.ask_origin
+    texts = []
+    orig_exec = QMessageBox.exec
+    QMessageBox.exec = lambda self: texts.append(self.text() + " " + self.informativeText()) or 0
+    check(p.ask_origin("https://x.example", "X", "library") is False and "F0 7D 46 4D" in texts[-1]
+          and "löschen" in texts[-1] and "FM1 Open" in texts[-1], f"library dialog names protocol and risk ({texts[-1][:90]})")
+    check(p.ask_origin("https://x.example", "X", "editor") is False and "F0 7D" in texts[-1] and "löschen" in texts[-1]
+          and "Firmware-Update" in texts[-1], f"editor dialog names what is allowed ({texts[-1][:90]})")
+    QMessageBox.exec = orig_exec
+    # opened as an online EDITOR, origin NOT confirmed: only notes, Felucca SysEx stays out
+    asked = []
+    p.ask_origin = lambda o, t="", level="editor": asked.append((o, level)) or False
     sent.clear()
     w.go("simulator", url=url, title="Test-Editor", kind="editor")
     check(until(lambda: js("document.title") == "Test-Emu" and p.current is not None and p.current.kind == "editor", 15000),
           "page opened as online editor (without permission)")
-    check(asked == [_sims.origin_of(url)], f"one-time prompt for the origin ({asked})")
+    check(asked == [(_sims.origin_of(url), "editor")], f"one-time prompt for the origin ({asked})")
     js("navigator.requestMIDIAccess({sysex:true}).then(a=>{const o=[...a.outputs.values()].find(x=>x.name==='FM-1');"
        "o.send([0xF0,0x7D,0x46,0x4C,1,0xF7]);o.send([0x90,63,3]);})")
     check(until(lambda: [0x90, 63, 3] in sent, 5000) and not any(x[:1] == [0xF0] for x in sent),
           f"without permission: only notes to the FM-1 ({sent})")
     check(not _sims.origin_trusted(_sims.origin_of(url)), "declining is not stored as a permission")
     # now allow: it is stored, not asked again at the next opening
-    p.ask_origin = lambda o, t="": asked.append(o) or True
+    p.ask_origin = lambda o, t="", level="editor": asked.append((o, level)) or True
     sent.clear()
     w.go("simulator", url=url, title="Test-Editor", kind="editor")
     check(until(lambda: js("document.title") == "Test-Emu" and p.current is not None and p.current.kind == "editor", 15000),
@@ -300,6 +381,12 @@ def flow():
         shutil.which = orig_which
     exp = f"http://127.0.0.1:{w.server.port}/sims/melodee/index.html?fm1latency="
     check(calls and calls[0][0] == "/usr/bin/firefox" and calls[0][-1].startswith(exp), f"Firefox command {calls}")
+    check(f"&fm1relay={w.server.relay_token}" in calls[0][-1], "Firefox address carries the key of the MIDI relay")
+    try:
+        urllib.request.urlopen(f"http://127.0.0.1:{w.server.port}/_fm1/midi", timeout=5)
+        check(False, "MIDI relay without key refused")
+    except Exception:
+        check(True, "MIDI relay without key refused")
     # the Firefox URL really delivers the simulator
     body = urllib.request.urlopen(calls[0][-1], timeout=5).read()
     check(b"Melodee in the browser" in body and b"fm1sim-host.js" in body, "local server delivers /sims/melodee/")
@@ -316,7 +403,7 @@ def flow():
     got = []
 
     def sse():
-        r = urllib.request.urlopen(f"http://127.0.0.1:{w.server.port}/_fm1/midi", timeout=10)
+        r = urllib.request.urlopen(w.server.relay_url(), timeout=10)
         for line in r:
             if line.startswith(b"data:"):
                 got.append(json.loads(line[5:]))

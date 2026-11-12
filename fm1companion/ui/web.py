@@ -136,6 +136,17 @@ def remove_download_handler(fn: Callable):
         _download_handlers.remove(fn)
 
 
+def free_name(folder, name: str) -> str:
+    """a file name that does not exist in folder yet: "a.wav" -> "a (2).wav", "a (3).wav" …"""
+    folder = Path(folder)
+    stem, suffix = Path(name).stem, Path(name).suffix
+    out, n = name, 2
+    while (folder / out).exists():
+        out = f"{stem} ({n}){suffix}"
+        n += 1
+    return out
+
+
 def _download(item):
     for fn in list(_download_handlers):
         try:
@@ -218,8 +229,24 @@ def open_new_window_url(url) -> bool:
     return True
 
 
+def esc(value) -> str:
+    """text from outside (catalog, firmware lists, error messages, addresses) for use inside HTML."""
+    import html
+    return html.escape(str(value), quote=True)
+
+
+def link_html(url) -> str:
+    """clickable link for a placeholder page – only for http/https/mailto addresses, otherwise plain text."""
+    u = str(url)
+    if external_link_allowed(u):
+        return f'<a href="{esc(u)}">{esc(u)}</a>'
+    return esc(u)
+
+
 def placeholder_html(title: str, text: str) -> str:
-    return (f"<html><body style='font-family:sans-serif;padding:3em;color:#888'><h2>{title}</h2>"
+    """title is always text (escaped here). text is HTML written by the app: callers must pass every value that
+    comes from outside through ``esc()`` / ``link_html()`` before they put it into the text."""
+    return (f"<html><body style='font-family:sans-serif;padding:3em;color:#888'><h2>{esc(title)}</h2>"
             f"<p>{text}</p></body></html>")
 
 

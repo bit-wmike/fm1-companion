@@ -8,6 +8,7 @@ Data: catalog.py (bundled snapshot → live state every 24 h → GitHub cache).
 """
 from __future__ import annotations
 
+import html as _html
 import os
 import time
 
@@ -25,7 +26,14 @@ from ..common import notify, fmt_size, heading, icon, run_job
 from ..responsive import reflow
 from ..linkimport_dialog import LinkImportDialog, OwnFirmwaresDialog, _looks_like_link
 from . import PageSpec
+from .. import web as _webmod
 from ...i18n import N_, _, ngettext, pgettext
+
+
+def _open_link(url) -> bool:
+    """Open an address that comes from the catalog, a README or a firmware list in the default application –
+    only http/https/mailto (web.external_link_allowed); file:, custom schemes etc. are ignored."""
+    return _webmod.open_new_window_url(url)
 
 # the backup protocols the app speaks (fwfamily: what the catalog audit found in a firmware's source code)
 BACKUP_PROTOCOL_NAMES = {"felucca": "Felucca", "sloop": "SLOOP", "x0x": "X0X"}
@@ -94,8 +102,8 @@ class EntryModel(QAbstractListModel):
             return e
         if role == Qt.ItemDataRole.ToolTipRole:
             own = e.section == "own" or catmod.is_app_description(e)
-            return (f"<b>{e.name}</b><br>" + ("" if own else f"<i>{_(EN_LABEL)}:</i><br>")
-                    + catmod.description_text(e)[:300])
+            return (f"<b>{_html.escape(e.name)}</b><br>" + ("" if own else f"<i>{_(EN_LABEL)}:</i><br>")
+                    + _html.escape(catmod.description_text(e)[:300]))
         return None
 
     def thumb(self, e: catmod.Entry) -> QPixmap | None:
@@ -378,7 +386,7 @@ class DetailView(QWidget):
         m = QMenu(more)
         for text, url in self.link_list(e):
             a = m.addAction(text)
-            a.triggered.connect(lambda _c=False, u=url: QDesktopServices.openUrl(QUrl(u)))
+            a.triggered.connect(lambda _c=False, u=url: _open_link(u))
         more.setMenu(m)
         acts.addWidget(more)
         acts.addStretch(1)
@@ -425,7 +433,8 @@ class DetailView(QWidget):
         lay.addWidget(_section(_("Versions"), vb))
         # ---- README
         self.readme = QTextBrowser()
-        self.readme.setOpenExternalLinks(True)
+        self.readme.setOpenLinks(False)                  # links of a third-party README: http/https/mailto only
+        self.readme.anchorClicked.connect(_open_link)
         self.readme.setMinimumHeight(260)
         self.readme.setVisible(False)
         rb = QWidget()
@@ -1140,7 +1149,7 @@ class DiscoverPage(QWidget):
         if box.clickedButton() is add:
             self.add_own()
         elif web is not None and box.clickedButton() is web:
-            QDesktopServices.openUrl(QUrl(e.links["installer"]))
+            _open_link(e.links["installer"])
 
     def _web(self, url: str, kind: str):
         e = self.current
@@ -1150,7 +1159,7 @@ class DiscoverPage(QWidget):
         if self.window is not None and self.window.page("simulator") is not None:
             self.window.go("simulator", url=url, title=title, kind=kind)
         else:
-            QDesktopServices.openUrl(QUrl(url))
+            _open_link(url)
             self._note(_("{title} opened in the browser.").format(title=title))
 
     def emulator(self):
@@ -1413,7 +1422,7 @@ class DiscoverPage(QWidget):
     def _open_resource(self, it, _col):
         url = it.data(0, Qt.ItemDataRole.UserRole)
         if url:
-            QDesktopServices.openUrl(QUrl(url))
+            _open_link(url)
 
 
 def _make(ctx, window):
