@@ -13,7 +13,7 @@ import re
 import time
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QEvent, Qt, QTimer
 from PyQt6.QtGui import QKeySequence, QPalette, QShortcut
 from PyQt6.QtWidgets import (QBoxLayout, QButtonGroup, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog,
                              QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
@@ -28,9 +28,10 @@ from ...i18n import _, ngettext, pgettext
 
 STEMS_TIP = _("Single tracks (stems): one WAV file per track (Melodee, SLOOP and KARMA 1–4, Skiff and JIANT FM 1–6, "
                "CoralFlower's chords, bass, layer and drums), as long as the mix. Each "
-               "track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the "
-               "stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or "
-               "Audacity.")
+               "track is rendered on its own – with its share of the shared effects (reverb, delay, master) – from the "
+               "same starting point as the mix, so the files line up in time when you put them on top of each other in "
+               "Logic or Audacity. Their sum is not the mix: every stem passes the master section alone, so levels and "
+               "dynamics differ.")
 
 
 def _safe_name(s: str) -> str:
@@ -97,10 +98,11 @@ class BackupPicker(QDialog):
 class ExportDialog(QDialog):
     """“Export as WAV”: length, individual tracks, format, folder."""
 
-    def __init__(self, parent, cfg: dict, name: str, loop_seconds: float | None):
+    def __init__(self, parent, cfg: dict, name: str, loop_seconds: float | None, firmware: str = "melodee"):
         super().__init__(parent)
         self.setWindowTitle(_("Export as WAV"))
         self.cfg = cfg
+        self.song_ends = S.song_ends(firmware)
         self.name = name
         lay = QVBoxLayout(self)
         lay.addWidget(label(_("“{name}” is rendered from the current state of the twin – faster than real time, with "
@@ -131,8 +133,17 @@ class ExportDialog(QDialog):
             self.r_loops.setToolTip(_("The pattern length could not be read."))
         else:
             self.r_loops.setToolTip(_("One pass ≈ {seconds} s").format(seconds=f"{loop_seconds:.1f}"))
+        if not self.song_ends:                          # (only Melodee's twin stops at the end of its song chain)
+            self.r_song.setEnabled(False)
+            self.r_song.setToolTip(_("With {firmware} the twin does not tell when a song is over, so this export would "
+                                     "not stop by itself (it would run to the limit of 15 minutes). Choose a fixed "
+                                     "length.").format(firmware=S.firmware_name(firmware)))
+        else:
+            self.r_song.setToolTip(_("Plays the song chain from row 1 until it stops. Without a song chain nothing "
+                                     "starts, and the export ends after a few seconds."))
         mode = cfg.get("export_mode", "song")
-        {"secs": self.r_secs, "loops": self.r_loops if loop_seconds else self.r_song}.get(mode, self.r_song).setChecked(True)
+        first = self.r_song if self.song_ends else self.r_secs       # (no song end: a fixed length is the default)
+        {"secs": self.r_secs, "loops": self.r_loops if loop_seconds else first}.get(mode, first).setChecked(True)
         lay.addWidget(box)
         form = QFormLayout()
         self.fmt = QComboBox()
@@ -193,7 +204,11 @@ class WriteBackDialog(QDialog):
     """Confirmation for writing back – names the device, safety backup, options."""
 
     def __init__(self, parent, device: str, dev_version: str, twin_version: str, mismatch: str, rejected: list[int],
-                 firmware: str = "melodee"):
+                 firmware: str = "melodee", origin: str = "", origin_kind: str = "device", same_device: bool = True,
+                 refused: str = ""):
+        """origin: where the twin's content came from (StudioService.source_text); origin_kind: the source's kind
+        ("new" = started empty); same_device: it was fetched from exactly this FM-1 – otherwise a red warning and a
+        second tick; refused: a reason why this write back is not possible at all (no expert override)."""
         super().__init__(parent)
         self.setWindowTitle(_("Write back to the FM-1"))
         lay = QVBoxLayout(self)
@@ -217,7 +232,8 @@ class WriteBackDialog(QDialog):
                   "load them.") if firmware == "choralroot" else
                 _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
                   "twin replaces on the device: the song's parts A–D, the running music, the song order, the user "
-                  "presets, the HEX drum kits and the sample slots. Playback on the FM-1 stops in the process.")
+                  "presets, the HEX drum kits and the sample slots. Playback on the FM-1 must be stopped (STOP) – "
+                  "KARMA refuses otherwise, and nothing is written.")
                 if firmware == "karma" else
                 _("First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the "
                   "twin replaces on the device: the four projects A–D, the running music, the user presets with their "
@@ -251,13 +267,39 @@ class WriteBackDialog(QDialog):
         lab = label(text)
         lab.setTextFormat(Qt.TextFormat.RichText)
         lay.addWidget(lab)
+        if origin:                                      # where what is about to go onto the FM-1 came from
+            self.origin = label(_("The twin's content: {source}.").format(source=html.escape(origin)))
+            lay.addWidget(self.origin)
+        self.replace = QCheckBox(_("Yes, replace the FM-1's content with this twin"))
+        self.need_replace = not same_device
+        self.foreign = None
+        if same_device:
+            lay.addWidget(label(_("Parts you have not changed in the studio since fetching them from this FM-1 are not "
+                                  "written again – they stay as they are on the device."), "muted"))
+        else:
+            self.foreign = label("⚠ " + (
+                _("This twin was started empty – nothing in it was fetched from “{device}”. Everything listed above is "
+                  "replaced on the FM-1 by the twin's content: what you have there now will be gone from the device "
+                  "(the safety backup keeps a copy).") if origin_kind == "new" else
+                _("The twin's content was not fetched from “{device}” – it comes from somewhere else (see above). "
+                  "Everything listed above is replaced on the FM-1 by it: what you have there now will be gone from "
+                  "the device (the safety backup keeps a copy).")).format(device=html.escape(device)))
+            self.foreign.setProperty("role", "error")
+            self.foreign.setStyleSheet("color: #d93025; font-weight: 600;")
+            lay.addWidget(self.foreign)
+            lay.addWidget(self.replace)
         self.settings = QCheckBox(_("Also write the device settings (GLO › SYSTEM, MIDI channels, panel …)"))
         self.settings.setToolTip(_("Default: off – the settings on the FM-1 stay as they are."))
         self.settings.setVisible(firmware != "fm1-open")     # (FM1 Open's backup has no settings object)
         lay.addWidget(self.settings)
         self.force = QCheckBox(_("Expert: write despite a different firmware version"))
-        self.force.setVisible(bool(mismatch))
-        if mismatch:
+        self.force.setVisible(bool(mismatch) and not refused)
+        self.refused = refused
+        if refused:                                     # (JIANT FM across its 8-song/6-song change: no override)
+            warn = label("⚠ " + refused)
+            warn.setProperty("role", "warning")
+            lay.addWidget(warn)
+        elif mismatch:
             warn = label("⚠ " + mismatch + " " + _("The twin's data might not fit this version; without the tick the "
                                                    "app writes nothing."))
             warn.setProperty("role", "warning")
@@ -272,9 +314,15 @@ class WriteBackDialog(QDialog):
         bb.accepted.connect(self.accept)
         bb.rejected.connect(self.reject)
         lay.addWidget(bb)
-        if mismatch:
-            self.ok.setEnabled(False)
-            self.force.toggled.connect(self.ok.setEnabled)
+        self.mismatch = bool(mismatch)
+        self.force.toggled.connect(lambda _on: self._update_ok())
+        self.replace.toggled.connect(lambda _on: self._update_ok())
+        self._update_ok()
+
+    def _update_ok(self):
+        """the red button only when every required tick is set (expert override, replacing foreign content)"""
+        self.ok.setEnabled(not self.refused and (not self.mismatch or self.force.isChecked())
+                           and (not self.need_replace or self.replace.isChecked()))
 
 
 def _row(*widgets) -> QHBoxLayout:
@@ -297,6 +345,8 @@ class StudioPage(QWidget):
         self.view = None
         self._blank = None
         self._ran_restore = False
+        self._active = False                         # this page is the one shown (activate/deactivate)
+        self._win_hidden = False                     # … but the window is minimised or hidden
         self.last_export: Path | None = None
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -311,7 +361,13 @@ class StudioPage(QWidget):
         self.b_virtual = button(_("Use as device"), ("computer", "audio-card"), "", self.use_as_device,
                                 _("Choose the twin as a (virtual) device at the top: projects, compose, presets, "
                                   "backups and the editor then work with it instead of a real FM-1."))
-        lay.addWidget(flow_row(self.b_fetch, self.b_backup, self.b_last, self.b_virtual))
+        # (in the top row, so it is in view without scrolling – also at 1024×600; it was at the bottom of the tools)
+        self.b_export = button(_("Export as WAV …"), ("document-save", "media-record"), "primary",
+                               lambda: self.export_wav(), _("Song or pattern as WAV (24 bit) – optionally single tracks.") + " " + STEMS_TIP)
+        lay.addWidget(flow_row(self.b_fetch, self.b_backup, self.b_last, self.b_export, self.b_virtual))
+        self.export_state = label("", "muted")
+        self.export_state.setVisible(False)
+        lay.addWidget(self.export_state)
         self.src = label("", "muted")
         self.src.setTextFormat(Qt.TextFormat.RichText)
         lay.addWidget(self.src)
@@ -355,7 +411,7 @@ class StudioPage(QWidget):
         gl = QVBoxLayout(g)
         self.b_play = button(_("Play"), ("media-playback-start",), "primary", lambda: self.play("play"),
                              _("PLAY on the twin: the running pattern from the start (Space)"))
-        self.b_song = button("Song", ("media-seek-forward", "media-playback-start"), "", lambda: self.play("song"),
+        self.b_song = button(pgettext("play the song chain", "Song"), ("media-seek-forward", "media-playback-start"), "", lambda: self.play("song"),
                              _("Play the song chain from row 1"))
         self.b_stop = button(_("Stop"), ("media-playback-stop",), "", self.stop, _("Stop (Space)"))
         gl.addLayout(_row(self.b_play, self.b_song, self.b_stop))
@@ -380,6 +436,9 @@ class StudioPage(QWidget):
         gl.addWidget(self.cb_audio)
         self.out_label = label("", "muted")
         gl.addWidget(self.out_label)
+        self.audio_hint = label("", "muted")              # dropouts (studio-worklet.js), only when there were any
+        self.audio_hint.setVisible(False)
+        gl.addWidget(self.audio_hint)
         self.midi = QComboBox()
         self.midi.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
         self.midi.setMinimumContentsLength(10)
@@ -395,15 +454,6 @@ class StudioPage(QWidget):
         self.cb_fm1.setToolTip(_("What you play on the connected FM-1 also sounds in the twin (notes/knobs only)."))
         self.cb_fm1.toggled.connect(lambda on: self.svc and self.svc.set_fm1_keys(on))
         gl.addWidget(self.cb_fm1)
-        sl.addWidget(g)
-        # Export
-        g = QGroupBox(_("Output"))
-        gl = QVBoxLayout(g)
-        self.b_export = button(_("Export as WAV …"), ("document-save", "media-record"), "primary",
-                               lambda: self.export_wav(), _("Song or pattern as WAV (24 bit) – optionally single tracks.") + " " + STEMS_TIP)
-        self.export_state = label("", "muted")
-        gl.addWidget(self.b_export)
-        gl.addWidget(self.export_state)
         sl.addWidget(g)
         # State
         g = QGroupBox(_("Studio state"))
@@ -441,8 +491,11 @@ class StudioPage(QWidget):
             self.svc.history_changed.connect(self._update_history)
             self.svc.page_changed.connect(self._attach_page)
             self.svc.ui_event.connect(self._ui_event)
+            self.svc.crashed.connect(self._twin_crashed)
+            self.svc.audio_changed.connect(self._audio_hint)
             self.cb_audio.setChecked(bool(self.svc.cfg.get("audio", True)))
             self.cb_fm1.setChecked(bool(self.svc.cfg.get("fm1_keys", True)))
+        window.installEventFilter(self)              # minimised / hidden: pause what nothing needs (eventFilter)
         ctx.changed.connect(self.refresh)
         self.refresh_midi()
         self.refresh()
@@ -484,22 +537,62 @@ class StudioPage(QWidget):
 
     # ------------------------------------------------------------------ Visibility
     def activate(self):
+        self._active = True
         if self.svc is None:
             return
-        self.svc.set_visible(True)
+        self._win_hidden = self._window_hidden()
         if not self.svc.running and not self._ran_restore:
             self._ran_restore = True
+            self.svc.set_visible(True)
             self._auto_restore()
-        self._attach_page()
-        self.timer.start()
+        if self._win_hidden:                         # (shown while the window is minimised: stay paused)
+            self.refresh()
+            return
+        self._resume()
         self.refresh()
 
     def deactivate(self):
+        self._active = False
+        self._pause()
+
+    def _resume(self):
+        self.svc.set_visible(True)
+        self._attach_page()
+        self.timer.start()
+
+    def _pause(self):
+        """the page is not on screen (another page, or the window minimised/hidden): stop the panel's 30 pictures a
+        second and this page's polling, save, and let the service stop the twin's clock and sound – it keeps both
+        while the twin plays, an export or another job runs, or another page uses the twin."""
         self.timer.stop()
         if self.svc is not None:
             self.svc.show_panel(False)
             self.svc.autosave()
             self.svc.set_visible(False)
+
+    def _window_hidden(self) -> bool:
+        w = self.window
+        return bool(w.isMinimized() or not w.isVisible())
+
+    def eventFilter(self, obj, ev):
+        """the Studio used 9–13 % of a processor core while its page was merely open – also with the window
+        minimised. Minimised or hidden counts like "another page is shown" now."""
+        if obj is self.window and ev.type() in (QEvent.Type.WindowStateChange, QEvent.Type.Hide, QEvent.Type.Show):
+            QTimer.singleShot(0, self._window_state)
+        return False
+
+    def _window_state(self):
+        hidden = self._window_hidden()
+        if hidden == self._win_hidden:
+            return
+        self._win_hidden = hidden
+        if not self._active or self.svc is None:
+            return
+        if hidden:
+            self._pause()
+        else:
+            self._resume()
+            self.refresh()
 
     def shutdown(self):
         self.timer.stop()
@@ -565,9 +658,15 @@ class StudioPage(QWidget):
         ok, why = self._device_ok()
         self.b_fetch.setText(_("Fetch from FM-1 “{name}”").format(name=name) if name else _("Fetch from FM-1"))
         self.b_fetch.setEnabled(ok)
-        self.b_fetch.setToolTip(_("Read a complete backup from the active FM-1 (also lands in Backups › List) and load "
-                                  "it into the twin. Playback on the FM-1 stops briefly; nothing is written there.")
-                                if ok else why)
+        fetch_tip = (_("Read a complete backup from the active FM-1 (also lands in Backups › List) and load it into the "
+                       "twin. Playback on the FM-1 stops. FM1 Open has no command to read a saved project directly: the "
+                       "FM-1 loads each saved project into its working area in turn, and at the end the app puts your "
+                       "working project back. If the cable is pulled in between, unsaved work in the working area can "
+                       "be lost; the saved projects are not written.")
+                     if svc.firmware_for(c.firmware_key) == "fm1-open" and not S.stand_in_for(c.firmware_key) else
+                     _("Read a complete backup from the active FM-1 (also lands in Backups › List) and load "
+                       "it into the twin. Playback on the FM-1 stops briefly; nothing is written there."))
+        self.b_fetch.setToolTip(fetch_tip if ok else why)
         self.b_write.setEnabled(ok and svc.running)
         self.b_write.setToolTip(_("Write the state of the twin to the active FM-1 – with confirmation and a safety "
                                   "backup first.") if ok else why)
@@ -601,9 +700,16 @@ class StudioPage(QWidget):
                 firmware=html.escape(fw_label(c.info.version) if c.info else _('this firmware')),
                 firmwares=S.firmware_names(), firmwares_or=S.firmware_names("or"))
             level = "warning"
-        elif stand_in:                                  # (the original V15/V16: the FM1 Open twin stands in)
+        elif stand_in and (not svc.running or svc.firmware == "fm1-open"):
+            # (the original V15/V16: the FM1 Open twin stands in – said only while it is that twin which runs)
             text = "⚠ " + html.escape(_(S.STAND_IN_NOTE).format(
                 device=self._dev_version() or c.firmware_key, twin=svc.version if svc.running else "V14"))
+            level = "warning"
+        elif stand_in:                                  # (… and another twin runs, e.g. the last used Melodee state)
+            text = "⚠ " + _("The twin runs {twin}. Your FM-1 runs M-VAVE's original firmware {device}: it has no twin "
+                            "and no backup protocol, so nothing can be fetched from this FM-1 or written back to "
+                            "it.").format(twin=html.escape(f"{svc.firmware_name} {svc.version}"),
+                                          device=html.escape(self._dev_version() or c.firmware_key))
             level = "warning"
         elif svc.running and dev_fw and dev_fw != svc.firmware:
             text = "⚠ " + _("The twin runs {twin}, your FM-1 runs {device} – “Fetch from FM-1” starts the {device} twin; "
@@ -623,6 +729,13 @@ class StudioPage(QWidget):
                     msgs.append(note)
             if msgs:
                 text, level = "⚠ " + html.escape(" ".join(msgs)), "warning"
+            elif dev and svc.firmware == "fm1-open":
+                # (same version, but not the same engine: the device's is a closed binary, the twin runs the open
+                # engine of M-VAVE's browser simulator – the twin's NOTICE says so; never "identical sound" here)
+                text, level = _("Twin and FM-1 have the same firmware version ({firmware} {version}). The twin plays "
+                                "with the open engine of M-VAVE's simulator, the FM-1 with its own – the sound may "
+                                "differ.").format(firmware=html.escape(svc.firmware_name),
+                                                  version=html.escape(svc.version)), ""
             elif dev:
                 text, level = "✓ " + _("Twin and FM-1 have the same firmware ({firmware} {version}) – identical "
                                        "sound.").format(firmware=html.escape(svc.firmware_name),
@@ -707,6 +820,36 @@ class StudioPage(QWidget):
         if self.svc is not None and self.svc.audio_note:
             t += " " + self.svc.audio_note
         self.out_label.setText(t)
+        self._audio_hint()
+
+    def _audio_hint(self):
+        t = self.svc.audio_hint() if self.svc is not None else ""
+        self.audio_hint.setText(t)
+        self.audio_hint.setVisible(bool(t))
+
+    def _twin_crashed(self, text: str):
+        """the twin's process ended (StudioService.crashed): say so, and offer the automatically saved state"""
+        svc = self.svc
+        self.refresh()
+        if not svc.has_autosave():
+            self.window.notify(text, "error")
+            return
+        if self.isVisible() and not self._win_hidden:
+            if confirm(self, _("The twin has stopped"), text + "\n\n" + _("Open the automatically saved studio state "
+                                                                          "again?"), ok=_("Open saved state")):
+                self._reopen_autosave()
+        else:
+            self.window.notify(text, "error", (_("Open saved state"), lambda: self._reopen_autosave()))
+
+    def _reopen_autosave(self):
+        try:
+            self.svc.open_state()
+        except Exception as e:  # noqa: BLE001
+            show_error(self, _("Studio state"), str(e))
+            return
+        if self._active and not self._win_hidden:
+            self._resume()
+        self.refresh()
 
     def _tick(self):
         svc = self.svc
@@ -847,6 +990,10 @@ class StudioPage(QWidget):
             w.log.emit(_("Loading it into the twin …"))
             st.open_from_backup(arch, progress=lambda a, b: w.progress.emit(b + a, b * 2), tolerant=True)
             box["arch"] = arch
+            try:                                        # what the twin holds right after loading: write back later
+                box["baseline"] = st.object_digests()   # leaves alone whatever still looks exactly like this
+            except Exception:  # noqa: BLE001 – then write back writes everything, as before
+                box["baseline"] = {}
             return path
 
         def done(path):
@@ -860,7 +1007,8 @@ class StudioPage(QWidget):
             svc.busy -= 1
         if "arch" in box:
             svc.loaded_backup(box["arch"], "device", device=prof.name, profile_folder=prof.folder_name,
-                              backup=str(box.get("path", "")), device_version=version)
+                              backup=str(box.get("path", "")), device_version=version,
+                              baseline=box.get("baseline") or {})
             bp = getattr(self.window, "backups", None)
             if bp is not None and hasattr(bp, "refresh"):
                 bp.refresh()
@@ -993,31 +1141,48 @@ class StudioPage(QWidget):
             return None
         if params is None:
             name, loop = self._running_music()
-            dlg = ExportDialog(self, svc.cfg, name, loop)
+            dlg = ExportDialog(self, svc.cfg, name, loop, svc.firmware)
             if not dlg.exec():
                 return None
             params = dlg.params()
+        stems = bool(params.get("stems"))
+        tracks = svc.st.tracks
         path = Path(params.pop("path"))
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-        except OSError as e:
-            show_error(self, pgettext("dialog title", "Export"), _("The folder cannot be created: {error}").format(error=e.strerror or e))
+            # never over an existing file without asking: the next free number (the name carries only the minute)
+            path = S.free_export_path(path, tracks if stems else 0)
+        except (OSError, S.StudioError) as e:
+            show_error(self, pgettext("dialog title", "Export"), _("The folder cannot be created: {error}").format(
+                error=getattr(e, "strerror", None) or e))
             return None
-        stems = bool(params.get("stems"))
-        tracks = svc.st.tracks
-        prog = QProgressDialog(_("Rendering …"), "", 0, 1 + tracks if stems else 1, self)
+        prog = QProgressDialog(_("Rendering …"), _("Cancel"), 0, 1 + tracks if stems else 1, self)
         prog.setWindowTitle(_("Export as WAV"))
-        prog.setCancelButton(None)
+        prog.setAutoClose(False)
+        prog.setAutoReset(False)
         prog.setMinimumDuration(0)
         prog.setWindowModality(Qt.WindowModality.WindowModal)
         prog.setValue(0)
         res = {}
         st = svc.st
+        state = {"cancelled": False}
+
+        def cancel():                                   # really stops the render; its partial files are removed
+            if res or state["cancelled"]:
+                return
+            state["cancelled"] = True
+            prog.setLabelText(_("Cancelling …"))
+            prog.show()
+            st.cancel_render()
+        prog.canceled.connect(lambda: cancel())
+        self._export_cancel = cancel                    # (for tests)
 
         def work(w):
             return st.render_wav(path, progress=lambda a, b: w.progress.emit(a, b), **params)
 
         def step(a, b):
+            if state["cancelled"]:
+                return
             prog.setMaximum(b)
             prog.setValue(a)
             prog.setLabelText(_("Mix …") if a == 0 else _("Single track {n} of {total} …").format(n=a, total=tracks)
@@ -1039,21 +1204,37 @@ class StudioPage(QWidget):
                 time.sleep(0.005)
         finally:
             svc.busy -= 1
+            self._export_cancel = None
         del w
+        if state["cancelled"] and "err" in res:
+            self._export_note(_("Export cancelled – no file was written."))
+            return None
         if "err" in res:
             show_error(self, pgettext("dialog title", "Export"), _("Rendering failed: {error}").format(error=res['err']))
             return None
         r = res["r"]
         self.last_export = r.path
         extra = " + " + ngettext("{n} single track", "{n} single tracks", len(r.stems)).format(n=len(r.stems)) if r.stems else ""
-        self.export_state.setText(_("Saved: {file}").format(file=html.escape(r.path.name)) + f"{extra} ({r.seconds:.1f} s)"
-                                  + ("" if r.peak > 0.0005 else " – " + _("Attention: silent (is anything playing?)")))
-        self.export_state.setToolTip(str(r.path))
+        note = ""
+        if params.get("until_end") and not r.started:
+            note = " – " + _("nothing started playing: the twin has no song chain to play. Choose a fixed length instead.")
+        elif params.get("until_end") and not r.ended:
+            note = " – " + _("the song did not end by itself: the export stopped at the limit of {minutes} minutes."
+                             ).format(minutes=round(params.get("max_seconds", 900) / 60))
+        elif r.peak <= 0.0005:
+            note = " – " + _("Attention: silent (is anything playing?)")
+        self._export_note(_("Saved: {file}").format(file=html.escape(r.path.name)) + f"{extra} ({r.seconds:.1f} s)" + note,
+                          str(r.path))
         from PyQt6.QtCore import QUrl
         from PyQt6.QtGui import QDesktopServices
         self.window.notify(_("WAV saved: {name}").format(name=r.path.name) + extra, "success",
                            (_("Open folder"), lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(str(r.path.parent)))))
         return r
+
+    def _export_note(self, text: str, tip: str = ""):
+        self.export_state.setText(text)
+        self.export_state.setToolTip(tip)
+        self.export_state.setVisible(bool(text))
 
     # ------------------------------------------------------------------ Write back
     def write_back(self, confirmed: dict | None = None):
@@ -1070,17 +1251,30 @@ class StudioPage(QWidget):
                 twin=svc.firmware_name, device=S.firmware_name(svc.firmware_for(c.firmware_key))))
             return None
         vc = S.check_versions(svc.version, device=dev_v, firmware=svc.firmware_name)
+        refused = _(S.JIANT_SONGS_REFUSAL) if svc.firmware == "jiant" and S.jiant_songs_differ(svc.version, dev_v) else ""
+        same = svc.same_device(c.profile)               # fetched from exactly this FM-1?
         from ..risk_dialog import ensure_risk_ack
         if not ensure_risk_ack(self):
             return None
         if confirmed is None:
             dlg = WriteBackDialog(self, c.profile.name, dev_v, svc.version, "" if vc.ok else vc.message,
-                                  list(svc.st.rejected), svc.firmware)
+                                  list(svc.st.rejected), svc.firmware, origin=svc.source_text(),
+                                  origin_kind=svc.source.get("kind", ""), same_device=same, refused=refused)
             if not dlg.exec():
                 return None
-            confirmed = {"settings": dlg.settings.isChecked(), "force": dlg.force.isChecked()}
+            confirmed = {"settings": dlg.settings.isChecked(), "force": dlg.force.isChecked(),
+                         "replace": dlg.replace.isChecked()}
+        if refused:
+            show_error(self, _("Not written"), refused + " " + _("Nothing was written."))
+            return None
         if not vc.ok and not confirmed.get("force"):
             show_error(self, _("Not written"), vc.message + " " + _("Nothing was written."))
+            return None
+        if not same and not confirmed.get("replace"):   # (an empty or foreign twin never goes over without this tick)
+            show_error(self, _("Not written"), _(
+                "The twin's content was not fetched from “{device}”. Writing it back replaces what is on the FM-1 – "
+                "that needs the tick “Yes, replace the FM-1's content with this twin”. Nothing was written.").format(
+                device=c.profile.name))
             return None
         try:
             folder = c.device_folder(c.settings.backups_dir)
@@ -1089,6 +1283,7 @@ class StudioPage(QWidget):
             return None
         prof, fw = c.profile, c.firmware_key
         st = svc.st
+        unchanged = dict(svc.source.get("baseline") or {}) if same else None
         svc.autosave(force=True)
         svc.busy += 1
         box = {}
@@ -1097,24 +1292,53 @@ class StudioPage(QWidget):
             w.log.emit(_("Safety backup of “{name}” …").format(name=prof.name))
             safety = AB.capture_to_file(link, folder, prof, fw, dev_v, _("Safety copy before writing back from the studio"),
                                         "sicherheit", progress=lambda a, b: w.progress.emit(a, b * 2))
+            backup.load_file(safety)                    # read back from disk before the first write
             box["safety"] = safety
-            w.log.emit(_("Backed up: {name}").format(name=safety.name))
+            w.log.emit(_("Backed up and read back from disk: {name}").format(name=safety.name))
             w.log.emit(_("Writing the state of the twin …"))
-            st.write_to_device(link, progress=lambda a, b: w.progress.emit(b + a, b * 2),
-                               force=bool(confirmed.get("force")), settings=bool(confirmed.get("settings")),
-                               exclude=st.rejected)
+            try:
+                st.write_to_device(link, progress=lambda a, b: w.progress.emit(b + a, b * 2),
+                                   force=bool(confirmed.get("force")), settings=bool(confirmed.get("settings")),
+                                   exclude=st.rejected, unchanged=unchanged)
+            except Exception as e:  # noqa: BLE001 – say what is on the FM-1 now and where the safety backup is
+                raise S.StudioError(self._write_failed_text(e, safety)) from e
+            box["write"] = dict(st.last_write)
             return safety
 
+        def done_text(p):
+            wrote, kept = box.get("write", {}).get("written", []), box.get("write", {}).get("unchanged", [])
+            if not wrote:
+                return _("Nothing in the twin differs from what was fetched from “{name}” – nothing was written. "
+                         "Safety backup: {file} (Backups › List).").format(name=prof.name, file=Path(p).name)
+            if kept:
+                return ngettext(
+                    "{n} changed part of the studio is now on “{name}”; the parts you did not change were left as "
+                    "they are. Safety backup before: {file} (Backups › List).",
+                    "{n} changed parts of the studio are now on “{name}”; the parts you did not change were left as "
+                    "they are. Safety backup before: {file} (Backups › List).",
+                    len(wrote)).format(n=len(wrote), name=prof.name, file=Path(p).name)
+            return _("The state of the studio is now on “{name}”. Safety backup before: {file} (Backups › "
+                     "List).").format(name=prof.name, file=Path(p).name)
+
         try:
-            c.job(self, "Studio → FM-1", work,
-                  done=lambda p: _("The state of the studio is now on “{name}”. Safety backup before: {file} (Backups › "
-                                   "List).").format(name=prof.name, file=Path(p).name))
+            c.job(self, "Studio → FM-1", work, done=done_text)
         finally:
             svc.busy -= 1
         bp = getattr(self.window, "backups", None)
         if bp is not None and hasattr(bp, "refresh"):
             bp.refresh()
         return box.get("safety")
+
+    def _write_failed_text(self, e: BaseException, safety: Path) -> str:
+        """a write back that failed: the error, what is already on the FM-1 (where the backup layer knows it) and the
+        safety backup made just before"""
+        text = str(e)
+        if getattr(e, "written", None):                 # (object by object: Felucca's and SLOOP's protocols)
+            fw = self.svc.firmware if self.svc is not None else ""
+            text += " " + backup.written_text(e, list(e.written), S.FIRMWARES.get(fw, {}).get("backup") == "sloop")
+            text += " " + _("The FM-1 now holds a mix of old and new parts.")
+        return text + " " + _("The safety backup made just before is “{file}” (Backups › List), in case you "
+                              "need the FM-1's previous state back.").format(file=safety.name)
 
 
 def _make(ctx, window):

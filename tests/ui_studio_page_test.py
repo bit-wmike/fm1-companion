@@ -61,11 +61,13 @@ def fake_msg_exec(self):
 QMessageBox.exec = fake_msg_exec
 QMessageBox.clickedButton = lambda self: getattr(self, "_clicked", None)
 dialog_answer = {"accept": True}
+last_dialog: dict = {}
 
 
 def dialog_exec(self):
     from fm1companion.ui.common import JobDialog
     seen_dialogs.append(type(self).__name__)
+    last_dialog[type(self).__name__] = self
     if isinstance(self, JobDialog):
         self.show()
         t0 = time.time()
@@ -140,15 +142,73 @@ def flow():
                                    lambda v: got.setdefault("keys", v))
     check(until(lambda: "keys" in got) and got["keys"] == 27, f"control surface with 27 keys: {got}")
 
-    # ---- fetch from the FM-1
+    # ---- ST-14: the panel's sizes follow the device's width without container-query units (Qt 6.4 = Chromium 102)
+    got = {}
+    page.view.page().runJavaScript(
+        "(function(){const d=document.getElementById('device'),l=document.querySelector('.label');"
+        "return [d.getBoundingClientRect().width, parseFloat(getComputedStyle(l).fontSize),"
+        " d.style.getPropertyValue('--u'), document.querySelector('.knob').title,"
+        " getComputedStyle(document.querySelector('.knob')).boxShadow !== 'none']})()",
+        lambda v: got.setdefault("css", v))
+    check(until(lambda: "css" in got) and abs(got["css"][1] - got["css"][0] * 0.017) < 0.6 and got["css"][2]
+          and got["css"][4], f"panel labels scale with the device (--u, no cqw): {got}")
+    check("ziehen" in got["css"][3], f"ST-22: knob tooltip in the UI language: {got['css'][3]}")
+    src = (ROOT / "fm1companion" / "sims" / "_studio" / "studio-panel.js").read_text("utf-8")
+    check("cqw" not in src.split("const css = `")[1] and "container-type" not in src.split("const css = `")[1],
+          "no container-query units in the panel's CSS")
+
+    # ---- UX-09: "Export as WAV …" is in the top row, in view without scrolling – also at 1024×600
+    from PyQt6.QtCore import QPoint
+    w.resize(1024, 600)
+    wait(500)
+    y = page.b_export.mapTo(w, QPoint(0, 0)).y()
+    check(page.b_export.isVisible() and 0 < y and y + page.b_export.height() < 600
+          and not page.side.isAncestorOf(page.b_export), f"export button visible at 1024×600 (y={y})")
+    w.resize(1280, 800)
+    wait(300)
+
+    # ---- ST-05: the twin was started empty – writing it back needs the second tick, and the dialog says so
     bdir = ctx.device_folder(ctx.settings.backups_dir)
+    check(svc.source.get("kind") == "new" and not svc.same_device(ctx.profile), "the twin was started empty")
+    n0 = set(bdir.glob("*.json"))
+    boxes.clear()
+    check(page.write_back() is None and set(bdir.glob("*.json")) == n0, "empty twin: dialog accepted without the "
+          "second tick -> nothing written, no backup made")
+    dlg = last_dialog.get("WriteBackDialog")
+    check(dlg is not None and dlg.need_replace and not dlg.ok.isEnabled() and dlg.foreign is not None
+          and "leer gestartet" in dlg.foreign.text() and "leer gestartet" in dlg.origin.text(),
+          f"write-back dialog warns about the empty twin: {dlg and dlg.foreign and dlg.foreign.text()[:90]}")
+    dlg.replace.setChecked(True)
+    check(dlg.ok.isEnabled(), "… and the red button needs the tick")
+    check(any("Haken" in b for b in boxes), f"refusal names the tick: {boxes[-1:]}")
+
+    # ---- fetch from the FM-1
     before = set(bdir.glob("*.json"))
     p = page.fetch_from_device()
     check(p is not None and Path(p).exists() and Path(p) not in before, f"fetched from the FM-1, backup in the list: {p}")
     check(svc.source.get("kind") == "device" and svc.source.get("device") == ctx.profile.name,
           "source: " + svc.source_text())
     check(0 in svc.st.projects(), f"project 1 of the demo FM-1 in the twin: {svc.st.projects()}")
-    check(svc.st.rejected, f"rejected demo parts noted (demo data is not real Melodee): {svc.st.rejected}")
+    check(not svc.st.rejected and "Nicht übernommen" not in page.src.text(),
+          f"nothing rejected: the demo FM-1's data is real Melodee data ({svc.st.rejected})")
+    check(svc.same_device(ctx.profile) and len(svc.source.get("baseline") or {}) > 20,
+          "the twin's parts right after the fetch are remembered (write back leaves untouched parts alone)")
+    # ST-16: nothing changed in the studio -> nothing is written (the dialog says which parts stay)
+    n1 = set(bdir.glob("*.json"))
+    seen_dialogs.clear()
+    safety = page.write_back()
+    dlg = last_dialog.get("WriteBackDialog")
+    check(safety is not None and not dlg.need_replace and dlg.ok.isEnabled() and svc.st.last_write["written"] == []
+          and len(svc.st.last_write["unchanged"]) > 20,
+          f"write back of an unchanged twin: safety backup, nothing written ({svc.st.last_write['written']})")
+    check(len(set(bdir.glob("*.json")) - n1) == 1, "… one safety backup made")
+    # ST-06: Undo goes back to the state before the fetch – and says so (it kept saying "fetched from the FM-1")
+    page.undo()
+    check(svc.source.get("kind") == "new" and "leer gestartet" in page.src.text() and 0 not in svc.st.projects()
+          and not svc.same_device(ctx.profile), "undo: the empty twin again, and the page says so: " + svc.source_text())
+    page.redo()
+    check(svc.source.get("kind") == "device" and ctx.profile.name in page.src.text() and 0 in svc.st.projects(),
+          "redo: fetched from the FM-1 again")
     check(page.banner.isVisible() and "dieselbe Firmware" in page.banner.text(), "banner: " + page.banner.text())
     st_file = svc.state_file()
     check(st_file.exists() and st_file.parent.name == ctx.profile.folder_name, f"Studio state saved: {st_file}")
@@ -177,6 +237,32 @@ def flow():
     out = home / "export"
     r = page.export_wav({"path": out / "Test_2026.wav", "seconds": 3.0, "start": "play", "fmt": "s24", "stems": True})
     ok = r is not None and r.path.exists() and len(r.stems) == 4
+    check(ok and sorted(x.name for x in out.iterdir()) == ["Test_2026.wav"] + [f"Test_2026_track{k}.wav" for k in
+          range(1, 5)] and page.export_state.isVisible(), "mix + English stem names, nothing else left in the folder")
+    # ST-17: the same name again never overwrites
+    first = r.path.read_bytes()
+    r2 = page.export_wav({"path": out / "Test_2026.wav", "seconds": 1.0, "start": "play", "fmt": "s24"})
+    check(r2 is not None and r2.path.name == "Test_2026_2.wav" and r.path.read_bytes() == first,
+          f"second export of that name gets a number: {r2 and r2.path.name}")
+    # ST-03: a running export can be cancelled; nothing of it stays
+    names = sorted(x.name for x in out.iterdir())
+    QTimer.singleShot(1200, lambda: page._export_cancel and page._export_cancel())
+    t0 = time.time()
+    r3 = page.export_wav({"path": out / "Lang.wav", "seconds": 900.0, "start": "play", "fmt": "s24", "stems": True})
+    check(r3 is None and time.time() - t0 < 60 and sorted(x.name for x in out.iterdir()) == names
+          and "abgebrochen" in page.export_state.text(),
+          f"export cancelled after {time.time() - t0:.1f} s, no file left: {page.export_state.text()}")
+    r4 = page.export_wav({"path": out / "Danach.wav", "seconds": 1.0, "start": "play", "fmt": "s24"})
+    check(r4 is not None and r4.frames == 44100, "the next export works")
+    # ST-03: only Melodee's twin has a song that ends – elsewhere "whole song" is off and a fixed length the default
+    from fm1companion.ui.pages.studio import ExportDialog
+    cfg = dict(svc.cfg, export_mode="song")
+    d1, d2 = ExportDialog(page, dict(cfg), "x", None, "melodee"), ExportDialog(page, dict(cfg), "x", None, "skiff")
+    check(d1.r_song.isEnabled() and d1.r_song.isChecked() and not d2.r_song.isEnabled() and d2.r_secs.isChecked()
+          and "Skiff" in d2.r_song.toolTip(), "export dialog: whole song only where a song ends: " + d2.r_song.toolTip()[:70])
+    r5 = page.export_wav({"path": out / "Ohne.wav", "until_end": True, "start": "song", "fmt": "s24"})
+    check(r5 is not None and not r5.started and r5.seconds < 5 and "Song-Kette" in page.export_state.text(),
+          f"whole song without a song chain ends early and says so: {page.export_state.text()}")
     if ok:
         with wave.open(str(r.path)) as wf:
             ok = wf.getsampwidth() == 3 and wf.getframerate() == 44100 and wf.getnchannels() == 2
@@ -220,7 +306,10 @@ def flow():
     check(page.write_back() is None, "write back cancelled: nothing happens")
     dialog_answer["accept"] = True
     seen_dialogs.clear()
-    safety = page.write_back({"settings": False, "force": False})
+    boxes.clear()
+    check(page.write_back({"settings": False, "force": False}) is None and set(bdir.glob("*.json")) == n_before
+          and any("Haken" in b for b in boxes), "a twin loaded from a backup: not written without the second tick")
+    safety = page.write_back({"settings": False, "force": False, "replace": True})
     new = set(bdir.glob("*.json")) - n_before
     meta = AB.read_meta(safety) if safety else None
     check(safety is not None and safety in new and meta and meta.kind == "sicherheit",
@@ -231,7 +320,33 @@ def flow():
     slots = [x.slot for x in (d.result_value or ([], 0))[0] if x.used]
     check(4 in slots, f"the demo FM-1 now has project 4 from the Studio: {slots}")
     page.write_back()
-    check("WriteBackDialog" in seen_dialogs, "write back shows the confirmation dialog")
+    dlg = last_dialog.get("WriteBackDialog")
+    check("WriteBackDialog" in seen_dialogs and dlg.need_replace and "Backup" in dlg.origin.text()
+          and "woanders" in dlg.foreign.text(), "write back shows the confirmation dialog, with the twin's origin")
+    # ST-09: dropouts are reported and shown
+    was = svc._audio
+    svc._audio = True
+    svc._on_event({"ev": "audio", "underruns": 3, "target": 4096})
+    check(page.audio_hint.isVisible() and "3" in page.audio_hint.text() and "93 ms" in page.audio_hint.text(),
+          "dropout hint: " + page.audio_hint.text())
+    svc._audio = was
+    svc.audio_stats = {}
+    page._audio_hint()
+    # PERF-06: window minimised -> panel polling, page timer, clock and sound stop; playing music is never stopped
+    w.showMinimized()
+    check(until(lambda: svc._clock is False and not page.timer.isActive() and not svc.page_visible, 8000),
+          "minimised and nothing plays: the twin's clock and the page's polling are paused")
+    w.showNormal()
+    check(until(lambda: svc._clock is True and page.timer.isActive(), 8000), "restored: running again")
+    page.play("play")
+    until(lambda: svc.transport().get("busy"), 3000)
+    w.showMinimized()
+    wait(1500)
+    svc._tick()
+    check(svc._clock is True and svc.transport().get("busy"), "minimised while playing: the music plays on")
+    w.showNormal()
+    wait(300)
+    page.stop()
 
     # ---- virtual device
     page.use_as_device()
@@ -552,6 +667,8 @@ def flow():
             page.ctx = real
         check(ok == may and (may or "V15" in text and "FM1 Open" in text and why),
               f"{key}: fetch {'allowed' if ok else 'refused'}, banner: {text[:120]}")
+        if may:                                         # ST-04: same version, but never "identical sound" for FM1 Open
+            check("identisch" not in text and "abweichen" in text and "V14" in text, "FM1 Open banner is honest: " + text)
     check(svc.firmware_for("stock-v15") == "fm1-open" and svc.firmware_for("stock-v16") == "fm1-open",
           "the original V15/V16 opens the FM1 Open twin")
     page.refresh()
@@ -572,6 +689,15 @@ def flow():
     xt.close()
     check(page.open_backup(xfile) == xfile and svc.firmware == "x0x" and not svc.st.rejected,
           f"X0X's own backup file opened: the X0X twin {svc.version} (nothing rejected)")
+    page.ctx = SimpleNamespace(is_virtual=False, midi_connected=True, connected=False, info=None, port=object(),
+                               protocol="generic", firmware_key="stock-v15", identity="",
+                               profile=SimpleNamespace(name="Alt", firmware_version="V15", folder_name="Alt"))
+    try:                                                # ST-13: the stand-in note names the twin that really runs
+        page._banner()
+        text = page.banner.text()
+    finally:
+        page.ctx = real
+    check("X0X" in text and "V15" in text and "FM1 Open" not in text, "original firmware + another twin: " + text[:140])
     page.refresh()
     labels = [page.projects.item(i).text() for i in range(page.projects.count())]
     check(len(labels) == 1 and "X0X" in labels[0], f"X0X: no project slots, a note: {labels}")
@@ -607,6 +733,20 @@ def flow():
     check(svc.firmware == "amb-1" and "AMB-1" in page.banner.text(), "an empty AMB-1 twin: " + page.banner.text())
     r = page.export_wav({"path": out / "AMB-1.wav", "seconds": 2.0, "start": "none", "fmt": "s24", "stems": True})
     check(r is not None and len(r.stems) == 4 and r.peak > 0.02, f"AMB-1 export: mix + {r and len(r.stems)} stems")
+    # ST-08: the twin's render process dies -> the twin is closed, the user is told and gets the saved state back
+    import signal
+    svc.new_empty(firmware="melodee")
+    svc.source = {}
+    svc.new_empty(firmware="melodee")
+    svc.autosave(force=True)
+    pid = svc.page.renderProcessPid()
+    boxes.clear()
+    t0 = time.time()
+    os.kill(pid, signal.SIGKILL)
+    check(until(lambda: any("unerwartet" in b for b in boxes), 20000) and time.time() - t0 < 25,
+          f"twin process killed: message after {time.time() - t0:.1f} s: {boxes[-1:]}")
+    check(until(lambda: svc.running, 30000) and svc.page.renderProcessPid() not in (0, pid)
+          and svc.st.backend.call("info").get("version"), "… and the automatically saved state is open again")
     shot("studio-640.png", 640)
     if SHOTS:
         sb = w.page_scroll.verticalScrollBar()

@@ -44,7 +44,12 @@ def test_builds_side_by_side():
         assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "melodee"
         assert m["ref"] == b.version and len(m["commit"]) == 40 and m["license"] == "GPL-3.0-only"
         assert m["identity"] == IDENTITY[b.version] and m["fs"] == 44100 and m["flash_size"] == 0x100000
-        assert {"LICENSE", "NOTICE", "twin.wasm"} <= set(m["files"])
+        # ST-10: Melodee's licensing record and the licence texts of the parts compiled in, as every other family
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} == set(m["files"])
+        notice, third = (b.path / "NOTICE").read_text(), (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Casio" in notice and "Sequential" in notice and "no licence is granted" in notice
+        assert "Apache License" in third and "SIL OPEN FONT LICENSE" in third.upper() and "Casio" in (b.path / "LICENSING.md").read_text()
+        assert m["title"] == "Melodee studio twin"
         assert "unmodified" in (b.path / "NOTICE").read_text() and m["glue"] == "tools/studio/melodee_studio.c"
         assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
     # the Studio builds are not simulator pages
@@ -2371,3 +2376,40 @@ def test_demo_melodee_data_is_real(node_studio):
     bad.objects[1]["bytes"] = bytes(reversed(bad.objects[1]["bytes"]))     # (garbage is still refused, part by part)
     st.open_from_backup(bad, tolerant=True)
     assert st.rejected == [1]
+
+
+def test_melodee_simulator_ships_its_licence_texts():
+    """ST-10: the Melodee simulator page too (sims/melodee): LICENSING.md, THIRD_PARTY.txt, the Casio/Sequential
+    sentence – and its manifest lists exactly the files that are there, with their checksums"""
+    d = studio.SIMS_DIR / "melodee"
+    m = json.loads((d / "manifest.json").read_text("utf-8"))
+    assert {"LICENSING.md", "THIRD_PARTY.txt", "NOTICE", "LICENSE", "melodee.wasm"} <= set(m["files"])
+    assert set(m["files"]) == {p.name for p in d.iterdir()} - {"manifest.json"}
+    for name, info in m["files"].items():
+        data = (d / name).read_bytes()
+        assert (len(data), hashlib.sha256(data).hexdigest()) == (info["size"], info["sha256"]), name
+    assert "Casio" in (d / "NOTICE").read_text() and "Sequential" in (d / "NOTICE").read_text()
+
+
+def test_build_sets_source_date_epoch(tmp_path, monkeypatch):
+    """ST-20: builds take __DATE__ from the commit's time (SOURCE_DATE_EPOCH), so the same commit gives the same bytes
+    (five families differed in one or two bytes per rebuild)"""
+    if not shutil.which("git"):
+        pytest.skip("git missing")
+    import importlib.util
+    import os
+    spec = importlib.util.spec_from_file_location("build_sims", ROOT / "tools" / "build_sims.py")
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    env = {**os.environ, "GIT_AUTHOR_DATE": "2026-01-02T03:04:05Z", "GIT_COMMITTER_DATE": "2026-01-02T03:04:05Z",
+           "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.invalid", "GIT_COMMITTER_NAME": "t",
+           "GIT_COMMITTER_EMAIL": "t@example.invalid"}
+    (repo / "a.txt").write_text("x")
+    for cmd in (["git", "init", "-q"], ["git", "add", "a.txt"], ["git", "commit", "-q", "-m", "x"]):
+        subprocess.run(cmd, cwd=repo, env=env, check=True)
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    tree, commit = bs.source("melodee", tmp_path / "work", str(repo), ref="HEAD", repo_url="x")
+    assert (tree / "a.txt").exists() and os.environ["SOURCE_DATE_EPOCH"] == "1767323045"
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)

@@ -28,7 +28,7 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
 from .. import config, studio as S
-from ..i18n import _
+from ..i18n import _, ngettext
 from ..devices import PortInfo, Profile
 
 SETTINGS = {"last_profile": "", "inputs": [], "fm1_keys": True, "audio": True, "export_dir": "",
@@ -89,6 +89,8 @@ class StudioService(QObject):
     page_changed = pyqtSignal()            # new web page (different build): studio page re-attaches it
     ui_event = pyqtSignal(str)             # Space/Ctrl+Z from the control surface
     message = pyqtSignal(str)
+    crashed = pyqtSignal(str)              # the twin's process ended (text for the user); the twin is closed
+    audio_changed = pyqtSignal()           # dropouts counted / buffer enlarged (audio_stats)
 
     def __init__(self, window):
         super().__init__(window)
@@ -98,7 +100,7 @@ class StudioService(QObject):
         self.st: S.Studio | None = None
         self.page = None
         self.source: dict = {}             # where the twin came from (see _set_source)
-        self.history: list[dict] = []      # {label, time, flash (zlib)}
+        self.history: list[dict] = []      # {label, time, flash (zlib), source, rejected}
         self.pos = -1
         self._sum = None
         self.saved_at = 0.0
@@ -108,6 +110,7 @@ class StudioService(QObject):
         self._clock = None
         self._audio = False
         self.audio_note = ""
+        self.audio_stats: dict = {}        # {"underruns": dropouts since the sound started, "buffer_ms": …}
         self.last_error = ""
         self._inputs = None
         self._fm1_link = None
@@ -191,10 +194,11 @@ class StudioService(QObject):
         self.page.console = console
         web.track(self.page)
         self.st = S.Studio.create(firmware, version, backend="webengine", server=self.window.server,
-                                  page=self.page, on_event=self._on_event)
+                                  page=self.page, on_event=self._on_event, on_dead=self._on_dead)
         self.history, self.pos, self._sum = [], -1, None
         self._clock = None
         self._audio = False
+        self.audio_stats = {}
         self.page_changed.emit()
         self._update_clock()
         self.ctx.scan()                    # virtual device appears in the selection
@@ -213,6 +217,27 @@ class StudioService(QObject):
             with contextlib.suppress(Exception):
                 st.close()
         del page
+
+    def _on_dead(self, status: str = "", code: int = 0):
+        """the twin page's render process ended (studio_web.WebTwin): out of memory on a small computer, or a crash.
+        Not from inside the page's own signal: close the twin a moment later, then tell the user."""
+        st = self.st
+        QTimer.singleShot(0, lambda: self._twin_died(st, status, code))
+
+    def _twin_died(self, st, status: str, code: int):
+        if st is None or st is not self.st:
+            return
+        self._close_twin()
+        self.ctx.scan()                    # (the virtual device disappears from the selection)
+        self.last_error = _("The twin stopped unexpectedly: its process ended ({reason}). This often means the "
+                            "computer ran out of memory. What the twin had not yet saved to its flash is lost; the "
+                            "automatically saved studio state is still there.").format(
+                                reason=f"{status} {code}".strip())
+        self.changed.emit()
+        self.crashed.emit(self.last_error)
+
+    def has_autosave(self) -> bool:
+        return self.state_file().exists()
 
     def shutdown(self):
         self.timer.stop()
@@ -285,12 +310,20 @@ class StudioService(QObject):
         return meta
 
     def loaded_backup(self, archive, kind: str, **kw):
-        """after loading a backup (finished from a worker thread): remember the origin, save."""
+        """after loading a backup (finished from a worker thread): remember the origin, save. kw "baseline" (after a
+        fetch from the FM-1): the twin's object digests right after loading (studio.Studio.object_digests) – write
+        back then leaves alone what was not changed in the studio (same_device)."""
         self._set_source(kind, backup_version=S.backup_version(archive), **kw)
         self._sum = None
         self.snapshot(_("loaded from the FM-1") if kind == "device" else _("loaded from the backup"))
         self.autosave(force=True)
         self.changed.emit()
+
+    def same_device(self, profile) -> bool:
+        """was the twin's content fetched from exactly this FM-1 (device profile)? Only then is a write back the
+        expected "bring my changes back"; anything else replaces the FM-1's content with something from elsewhere."""
+        folder = getattr(profile, "folder_name", None)
+        return bool(folder) and self.source.get("kind") == "device" and self.source.get("profile_folder") == folder
 
     def auto_start(self) -> bool:
         """Provide the twin if it isn't running: studio state of the active device (otherwise the last used one),
@@ -344,12 +377,15 @@ class StudioService(QObject):
         if only_if_changed and self.history and 0 <= self.pos < len(self.history) \
                 and self.history[self.pos]["flash"] == z:
             return False
+        origin = {"source": dict(self.source), "rejected": list(self.st.rejected)}
         if self.history and 0 <= self.pos < len(self.history) and self.history[self.pos]["flash"] == z:
-            self.history[self.pos]["label"] = label
+            self.history[self.pos].update(label=label, **origin)
             self.history_changed.emit()
             return True
         del self.history[self.pos + 1:]
-        self.history.append({"label": label, "time": time.time(), "flash": z})
+        # the origin travels with every entry: after Undo the page said "fetched from the FM-1 …" while the twin held
+        # the state from before the fetch, and the fetch's "rejected" list was used for a write back of that state
+        self.history.append({"label": label, "time": time.time(), "flash": z, **origin})
         if len(self.history) > HISTORY_MAX:
             del self.history[:len(self.history) - HISTORY_MAX]
         self.pos = len(self.history) - 1
@@ -372,6 +408,10 @@ class StudioService(QObject):
         finally:
             self.busy -= 1
         self.pos = pos
+        entry = self.history[pos]
+        if "source" in entry:
+            self.source = dict(entry["source"])
+            self.st.rejected = list(entry.get("rejected", []))
         self._sum = None
         self._clock = None
         self._update_clock()
@@ -481,6 +521,8 @@ class StudioService(QObject):
             return self.audio_note
         self._audio = on
         self.audio_note = ""
+        if not on:
+            self.audio_stats = {}
         if on:
             from .audio import chosen_output
             from .. import audioout
@@ -505,12 +547,31 @@ class StudioService(QObject):
     def _on_event(self, m: dict):
         if m.get("ev") == "ui" and m.get("action"):
             self.ui_event.emit(str(m["action"]))
+        elif m.get("ev") == "audio":       # (studio-worklet.js: dropouts since the start, its buffer's target)
+            try:
+                stats = {"underruns": int(m.get("underruns", 0)),
+                         "buffer_ms": round(int(m.get("target", 0)) * 1000 / S.FS)}
+            except (TypeError, ValueError):
+                return
+            if stats != self.audio_stats:
+                self.audio_stats = stats
+                self.audio_changed.emit()
+
+    def audio_hint(self) -> str:
+        """a line for "Sound and MIDI" when the sound dropped out ("" = nothing to say)"""
+        n = self.audio_stats.get("underruns", 0)
+        if not n or not self._audio:
+            return ""
+        return ngettext("The sound dropped out {n} time (the computer was busy); the studio now buffers {ms} ms.",
+                        "The sound dropped out {n} times (the computer was busy); the studio now buffers {ms} ms.",
+                        n).format(n=n, ms=self.audio_stats.get("buffer_ms", 0))
 
     def show_panel(self, on: bool, bg: str = "", fg: str = ""):
         if self.st is None:
             return
         with contextlib.suppress(S.StudioError):
-            self.st.backend.call("panel", on=bool(on), bg=bg, fg=fg, timeout=10)
+            self.st.backend.call("panel", on=bool(on), bg=bg, fg=fg, timeout=10,
+                                 knob_tip=_("drag, mouse wheel or arrow keys"))
 
     def set_inputs(self, names: list[str]) -> list[str]:
         """Route the system's MIDI inputs (USB keyboard …) into the twin -> error messages"""
