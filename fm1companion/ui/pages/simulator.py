@@ -77,6 +77,7 @@ SIM_TEXTS = (
     N_("{name} missing"),
     N_("{name} damaged"),
 )
+REC_WAIT = 30           # seconds a bundled simulator has to hand over the recording the app asked for
 SLOW_RATIO = 0.93      # sound clock / real clock below: the computer can't run the simulator in real time
 SETTINGS = {"latency": "interactive", "recent": [], "inputs": [], "fm1_keys": True, "last": ""}
 
@@ -111,6 +112,7 @@ class SimulatorPage(QWidget):
         self.view = None
         self._listen_link = None
         self.rec_running = False
+        self._rec_pending = None                      # (file name, deadline) of the recording the app asked for
         self.last_recording: Path | None = None
         self.midi_count = 0
         self.inputs = sims.SystemInputs(lambda name, data: self._midi.emit("sys:" + name, data))
@@ -229,6 +231,7 @@ class SimulatorPage(QWidget):
         self.badge = QLabel()
         self.state = QLabel(_("Choose a simulator on the left."))
         self.state.setWordWrap(True)
+        self.state.setTextFormat(Qt.TextFormat.PlainText)   # shows titles/addresses from the catalog: never as HTML
         bar.addWidget(self.badge)
         bar.addWidget(self.state, 1)
         self.b_rec = QPushButton(icon("media-record"), _("Record"))
@@ -392,8 +395,9 @@ class SimulatorPage(QWidget):
             self.details.setText("")
             return
         if s.online:
-            self.details.setText(f"<b>{s.title}</b> <span style='color:#c80'>● online</span><br>{s.description}<br>"
-                                 f"<small>{_breakable(s.url)}<br>"
+            # title, description and address can come from the catalog or from the address field: text, not HTML
+            self.details.setText(f"<b>{html.escape(s.title)}</b> <span style='color:#c80'>● online</span><br>"
+                                 f"{html.escape(s.description)}<br><small>{_breakable(html.escape(s.url))}<br>"
                                  + _("Runs on the developer's site; needs internet. MIDI: choose the input “FM-1 "
                                      "(keys)” in the page.") + "</small>")
             self.b_ff.setEnabled(True)
@@ -414,6 +418,8 @@ class SimulatorPage(QWidget):
             return s.url
         lat = self.lat_combo.currentData() or "interactive"
         q = f"?fm1latency={lat}"
+        if firefox:                                    # outside the app the page gets the FM-1's notes from the relay
+            q += f"&fm1relay={self.server.relay_token}"
         return self.server.sim_url(s.key, s.entry) + q
 
     def start(self, s: sims.Sim | None = None):
@@ -438,12 +444,15 @@ class SimulatorPage(QWidget):
         config.save()
         self.page.messages.clear()
         self.bridge.blocked = 0
-        # editors may talk to the FM-1 (after one-time consent per origin), simulators may not
-        if s.online and s.kind == "editor":
+        # editors and the workbench may talk to the FM-1 after one-time consent per origin (https or this
+        # computer only); every other online page sends notes, controllers and clock, nothing else
+        level = sims.consent_level(s.kind) if s.online else ""
+        if level:
             origin = sims.origin_of(s.url)
-            if origin and not sims.origin_trusted(origin) and self.ask_origin(origin, s.title):
-                sims.trust_origin(origin)
-        self.gate = sims.OutGate(s.kind if s.online else "", self._url_for(s) if s.online else "")
+            if (origin and sims.origin_can_be_trusted(origin) and not sims.origin_trusted(origin, level)
+                    and self.ask_origin(origin, s.title, level)):
+                sims.trust_origin(origin, level)
+        self.gate = sims.OutGate(s.kind if s.online else "", self._url_for(s), local=not s.online)
         self.bridge.out_filter = self._out_allowed
         self.badge.setText("<b style='color:#c80'>● ONLINE</b>" if s.online else _("<b "
                                                                                      "style='color:#2a2'>● "
@@ -632,19 +641,33 @@ class SimulatorPage(QWidget):
         else:
             self.page.runJavaScript(f"window.__fm1sim&&__fm1sim.midi({json.dumps(data)})")
 
-    def ask_origin(self, origin: str, title: str = "") -> bool:
-        """one-time prompt: may this web page send editor data (SysEx) to the real FM-1?"""
+    def ask_origin(self, origin: str, title: str = "", level: str = "editor") -> bool:
+        """one-time prompt: may this web page send device data (SysEx) to the real FM-1?
+        level "editor": editor SysEx; level "library": only the FM1 Open library protocol (workbench)."""
         from PyQt6.QtWidgets import QMessageBox
-        box = QMessageBox(QMessageBox.Icon.Warning, _("Connect the online editor to the FM-1?"),
+        head = (_("Connect the online editor to the FM-1?") if level == "editor"
+                else _("Connect this web page to the FM-1?"))
+        box = QMessageBox(QMessageBox.Icon.Warning, head,
                           _("<b>{title}</b> is loaded from <b>{origin}</b> – a site on the internet that does not "
                             "belong to this app.").format(title=html.escape(title or origin), origin=html.escape(origin)),
                           parent=self)
+        if level == "editor":
+            what = _("If you allow it, this site may send editor commands to your FM-1: SysEx of the editor "
+                     "family (F0 7D …, this includes the FM1 Open library) and universal SysEx (F0 7E/7F). "
+                     "With these it can read, change and delete sounds, presets, projects, samples and settings "
+                     "on the device and restore backups. Still blocked: firmware update and boot mode, and "
+                     "every other SysEx.")
+        else:
+            what = _("If you allow it, this site may use the library commands of the FM1 Open firmware "
+                     "(SysEx F0 7D 46 4D …). With these it can read, overwrite and delete projects, sounds and "
+                     "the sample bank on an FM-1 that runs FM1 Open. Still blocked: firmware update, boot "
+                     "mode and every other SysEx.")
         box.setInformativeText(
-            _("If you allow it, this site may send editor commands (SysEx) to your FM-1 and thereby "
-              "change sounds, presets and settings on the device. Firmware update and boot mode always "
-              "stay blocked.\n\nWithout permission only notes, controllers and clock go to the FM-1. The "
-              "permission applies only to exactly this address; if the site switches to another address, "
-              "the safe filter applies again."))
+            what + "\n\n"
+            + _("Without permission only notes, controllers and clock go to the FM-1. The permission applies "
+                "only to exactly this address; if the site switches to another address, only notes, "
+                "controllers and clock get through again. The app cannot check what the site does with the "
+                "permission – allow it only for a site you trust."))
         yes = box.addButton(_("Allow (remember for this address)"), QMessageBox.ButtonRole.AcceptRole)
         no = box.addButton(_("Allow notes only"), QMessageBox.ButtonRole.RejectRole)
         box.setDefaultButton(no)
@@ -669,11 +692,24 @@ class SimulatorPage(QWidget):
         if n not in (1, 10, 100) and n % 1000:
             return
         s = self.current
-        if s is not None and s.kind == "editor" and self.gate.editor_access(self.page.url().toString()):
+        try:
+            cur = self.page.url().toString()
+        except RuntimeError:
+            cur = ""
+        level = sims.consent_level(s.kind) if s is not None and s.online else ""
+        if level == "editor" and self.gate.editor_access(cur):
             why = _("firmware update and boot mode are blocked for web pages")
-        elif s is not None and s.kind == "editor":
+        elif level == "editor":
             why = (_("this address has no permission for editor commands – only notes, controllers and "
                      "clock; the app asks for permission when opening the online editor"))
+        elif level == "library" and self.gate.library_access(cur):
+            why = _("this address may only use the FM1 Open library commands – everything else is blocked")
+        elif level == "library":
+            why = _("this address has no permission for the FM-1 – only notes, controllers and clock; the app "
+                    "asks for permission when the page is opened")
+        elif s is not None and not s.online:
+            why = _("the bundled simulators may only send notes, controllers, clock and FM1 Open library "
+                    "commands to the FM-1")
         else:
             why = _("simulators may only send notes, controllers and clock to the FM-1 – for device "
                     "access use the page “Editor”")
@@ -708,6 +744,9 @@ class SimulatorPage(QWidget):
             name = f"Simulator {self.current.title if self.current else ''} {dt.datetime.now():%Y-%m-%d %H-%M-%S}.wav"
             name = "".join(c for c in name if c not in '/\\:*?"<>|').replace("  ", " ")
             self.rec_running = False
+            # only this file, only for a short while, only from a bundled simulator is saved without a dialog
+            bundled = self.current is not None and not self.current.online
+            self._rec_pending = (name, dt.datetime.now().timestamp() + REC_WAIT) if bundled else None
             self.rec_timer.stop()
             self.b_rec.setChecked(False)
             self.b_rec.setText(_("Record"))
@@ -771,8 +810,23 @@ class SimulatorPage(QWidget):
                                           "(measured {percent} %).").format(
                                             percent=pct))
 
+    def _recording_expected(self, item, name: str) -> bool:
+        """True only for the WAV the app itself just asked a BUNDLED simulator to hand over (Record → stop):
+        same file name, within REC_WAIT seconds, and the data comes from a page on the app's own server."""
+        want = self._rec_pending
+        if not want or name != want[0] or dt.datetime.now().timestamp() > want[1] or self.server is None:
+            return False
+        try:
+            src = item.url().toString()
+        except Exception:                               # noqa: BLE001
+            return False
+        local = sims.origin_of(self.server.sim_url("x"))
+        return bool(local) and src.startswith("blob:" + local + "/")
+
     def _download(self, item) -> bool:
-        """WAV recordings of this page go directly to ~/FM-1/Aufnahmen (without a dialog)."""
+        """The recording of a bundled simulator goes directly to the recordings folder (without a dialog, never
+        over an existing file). Every other download of this page – in particular anything an online page offers
+        – is not handled here: the normal “Save” dialog asks (web._download)."""
         try:
             page = item.page()
         except Exception:
@@ -780,7 +834,15 @@ class SimulatorPage(QWidget):
         name = item.downloadFileName() or ""
         if page is not self.page or not name.lower().endswith(".wav"):
             return False
+        if not self._recording_expected(item, name):
+            return False
+        self._rec_pending = None
         folder = self.ctx.settings.recordings_dir
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            return False
+        name = web.free_name(folder, Path(name).name)
         item.setDownloadDirectory(str(folder))
         item.setDownloadFileName(name)
         self.last_recording = folder / name

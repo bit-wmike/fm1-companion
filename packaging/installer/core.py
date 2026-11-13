@@ -225,6 +225,29 @@ def install_udev_rule(rule: Path, log=print, sudo: list[str] | None = None, remo
     return ok
 
 
+def make_world_readable(app: Path, files=(), dirs=()) -> None:
+    """System-wide installation: every folder 0755, every file 0644 (0755 if it is executable for its owner) –
+    for the app folder and for everything else the installer wrote. Folders that existed before are not touched.
+    Symbolic links are skipped."""
+    def fix(p: Path):
+        try:
+            if p.is_symlink():
+                return
+            if p.is_dir():
+                p.chmod(0o755)
+            elif p.is_file():
+                p.chmod(0o755 if p.stat().st_mode & 0o100 else 0o644)
+        except OSError:
+            pass
+    app = Path(app)
+    if app.is_dir():
+        fix(app)
+        for p in app.rglob("*"):
+            fix(p)
+    for p in list(files) + list(dirs):
+        fix(Path(p))
+
+
 def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, desktop: bool = False,
             demo_data: bool = False, python: str = "/usr/bin/python3", log=print, progress=lambda a, b: None,
             fluidsynth_fix: bool = True, usb_power_rule: bool = False) -> dict:
@@ -308,7 +331,9 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
         (L["apps"] / f"{APP_ID}-uninstall.desktop").write_text(_desktop_entry(
             exec_quote(str(uninst)), "Uninstall FM-1 Companion", "Removes the FM-1 Companion Suite (your folder ~/FM-1 stays)",
             "Name[de]=FM-1 Companion deinstallieren\n"
-            "Comment[de]=Entfernt die FM-1 Companion Suite (dein Ordner ~/FM-1 bleibt)\nNoDisplay=false\n").replace("Categories=AudioVideo;Audio;Midi;Music;", "Categories=Settings;"))
+            "Comment[de]=Entfernt die FM-1 Companion Suite (dein Ordner ~/FM-1 bleibt)\nNoDisplay=false\n",
+            generic="Uninstaller", l10n="GenericName[de]=Deinstallationsprogramm\n"
+            ).replace("Categories=AudioVideo;Audio;Midi;Music;", "Categories=Settings;"))
         files.append(str(L["apps"] / f"{APP_ID}-uninstall.desktop"))
         meta = src / "packaging" / f"{APP_ID}.metainfo.xml"
         if meta.exists():
@@ -382,6 +407,8 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
             "time": time.strftime("%Y-%m-%d %H:%M:%S"),
             "components": {"menu": menu, "desktop": desktop, "demo_data": demo_data}}
     (app / "install-info.json").write_text(json.dumps(info, indent=2, ensure_ascii=False))
+    if system:                              # a strict umask (077) of the installing user must not lock others out
+        make_world_readable(app, files, created)
     progress(7, steps)
     log(tr("Done.", "Fertig."))
     return info

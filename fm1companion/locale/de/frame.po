@@ -33,30 +33,6 @@ msgstr "keine"
 msgid "  MIDI not usable: {error}"
 msgstr "  MIDI nicht nutzbar: {error}"
 
-#: fm1companion/app.py:103
-msgid ""
-"Usage: fm1-companion [OPTION]\n"
-"\n"
-"  --demo       start with three simulated FM-1 (separate settings, your data stays untouched)\n"
-"  --check      check system packages and show the apt command for anything missing\n"
-"  --syscheck   check USB, power and audio (like Tools › System check)\n"
-"  --lang LANG  user interface language for this start: en, de (default: setting/system)\n"
-"  --no-splash  start without splash screen\n"
-"  --debug      verbose log (~/.local/state/fm1-companion/logs)\n"
-"  --version    show version\n"
-"  -h, --help   this help"
-msgstr ""
-"Aufruf: fm1-companion [OPTION]\n"
-"\n"
-"  --demo       mit drei simulierten FM-1 starten (eigene Einstellungen, deine Daten bleiben unberührt)\n"
-"  --check      Systempakete prüfen und den apt-Befehl für Fehlendes zeigen\n"
-"  --syscheck   USB, Strom und Audio prüfen (wie Werkzeuge › Systemcheck)\n"
-"  --lang LANG  Sprache der Oberfläche für diesen Start: en, de (Standard: Einstellung/System)\n"
-"  --no-splash  ohne Startbildschirm starten\n"
-"  --debug      ausführliches Protokoll (~/.local/state/fm1-companion/logs)\n"
-"  --version    Version anzeigen\n"
-"  -h, --help   diese Hilfe"
-
 #: fm1companion/app.py:122
 #, python-brace-format
 msgid ""
@@ -207,10 +183,6 @@ msgstr "Unerwarteter Fehler"
 #: fm1companion/ui/crash.py:131
 msgid "Something went wrong"
 msgstr "Da ist etwas schiefgelaufen"
-
-#: fm1companion/ui/crash.py:135
-msgid "The app keeps running; your FM-1 was not changed. If the error comes back, save a bug report – it contains logs and versions, but no backups or personal paths."
-msgstr "Die App läuft weiter; dein FM-1 wurde dabei nicht verändert. Wenn der Fehler wiederkommt, speichere einen Fehlerbericht – er enthält Protokolle und Versionen, aber keine Backups oder persönlichen Pfade."
 
 #: fm1companion/ui/crash.py:145 fm1companion/ui/crash.py:148
 msgid "Show details"
@@ -1597,3 +1569,71 @@ msgstr "Studio-Stand von {name} gelöscht ({size})."
 #: fm1companion/ui/storage_tab.py:254
 msgid "Cleanup"
 msgstr "Aufräumen"
+
+#: fm1companion/app.py:25
+#, python-brace-format
+msgid "  (optional) {package}  (only needed when the user interface is not English: {why})"
+msgstr "  (optional) {package}  (nur nötig, wenn die Oberfläche nicht englisch ist: {why})"
+
+#: fm1companion/app.py:107
+msgid ""
+"Usage: fm1-companion [OPTION]\n"
+"\n"
+"  --demo       start with three simulated FM-1 (separate settings, your data stays untouched)\n"
+"  --check      check system packages and show the apt command for anything missing\n"
+"  --syscheck   check USB, power and audio (like Tools › System check)\n"
+"  --lang LANG  user interface language for this start: en, de, es (default: setting/system)\n"
+"  --no-splash  start without splash screen\n"
+"  --debug      verbose log (~/.local/state/fm1-companion/logs)\n"
+"  --version    show version\n"
+"  -h, --help   this help"
+msgstr ""
+"Aufruf: fm1-companion [OPTION]\n"
+"\n"
+"  --demo       mit drei simulierten FM-1 starten (eigene Einstellungen, deine Daten bleiben unberührt)\n"
+"  --check      Systempakete prüfen und den apt-Befehl für Fehlendes zeigen\n"
+"  --syscheck   USB, Strom und Audio prüfen (wie Werkzeuge › Systemcheck)\n"
+"  --lang LANG  Sprache der Oberfläche für diesen Start: en, de, es (Standard: Einstellung/System)\n"
+"  --no-splash  ohne Startbildschirm starten\n"
+"  --debug      ausführliches Protokoll (~/.local/state/fm1-companion/logs)\n"
+"  --version    Version anzeigen\n"
+"  -h, --help   diese Hilfe"
+
+#: fm1companion/ui/crash.py:26
+msgid "Removed automatically: credentials (tokens, passwords), your home folder, user and computer name, device names (replaced by “Device 1” …), notes, serial numbers except the last four characters, hardware addresses (MAC) and Wi-Fi names. It may still contain file names and other details – please look through it before you post it publicly."
+msgstr "Automatisch entfernt: Zugangsdaten (Token, Passwörter), dein Benutzerordner, Benutzer- und Rechnername, Gerätenamen (ersetzt durch „Device 1“ …), Notizen, Seriennummern bis auf die letzten vier Zeichen, Hardware-Adressen (MAC) und WLAN-Namen. Er kann noch Dateinamen und andere Details enthalten – bitte sieh ihn durch, bevor du ihn öffentlich postest."
+
+#. Translators: start of the file name of a saved bug report – only letters, digits and hyphens, no spaces
+#: fm1companion/ui/crash.py:207
+msgid "FM-1-Companion-bug-report"
+msgstr "FM-1-Companion-Fehlerbericht"
+
+#: fm1companion/ui/crash.py:233 fm1companion/ui/crash.py:235
+msgid "Bug report saved"
+msgstr "Fehlerbericht gespeichert"
+
+#: fm1companion/ui/crash.py:243
+#, python-brace-format
+msgid "To send it: open the project's issues page on GitHub ({url}), create a new issue, describe what you did and attach this file. A (free) GitHub account is needed. Nothing is sent automatically."
+msgstr "Zum Senden: Öffne die Issues-Seite des Projekts auf GitHub ({url}), lege ein neues Issue an, beschreibe, was du gemacht hast, und hänge diese Datei an. Dafür brauchst du ein (kostenloses) GitHub-Konto. Es wird nichts automatisch gesendet."
+
+#: fm1companion/ui/crash.py:254
+msgid "Open the issues page"
+msgstr "Issues-Seite öffnen"
+
+#: fm1companion/ui/crash.py:256
+msgid "Show file in folder"
+msgstr "Datei im Ordner zeigen"
+
+#: fm1companion/ui/crash.py:363
+msgid "The app keeps running. The error happened while the app was working with the FM-1 – it is not known whether the FM-1 was changed. Check the device; if it does not start or behaves oddly, see the page “Recovery”."
+msgstr "Die App läuft weiter. Der Fehler ist passiert, während die App mit dem FM-1 gearbeitet hat – es ist nicht bekannt, ob das FM-1 verändert wurde. Prüfe das Gerät; wenn es nicht startet oder sich seltsam verhält, sieh auf der Seite „Rettung“ nach."
+
+#: fm1companion/ui/crash.py:367
+msgid "The app keeps running. As far as the app can tell, it was not writing to your FM-1 at that moment."
+msgstr "Die App läuft weiter. Soweit die App es erkennen kann, hat sie in dem Moment nicht auf dein FM-1 geschrieben."
+
+#: fm1companion/ui/crash.py:369
+#, python-brace-format
+msgid "If the error comes back, save a bug report and attach it to a new issue on the project's GitHub issues page ({url}). The report contains logs, versions and settings, no backups, samples or projects. Personal paths, names and credentials are removed as far as the app can recognise them – please look through it before you post it publicly."
+msgstr "Wenn der Fehler wiederkommt, speichere einen Fehlerbericht und hänge ihn an ein neues Issue auf der GitHub-Issues-Seite des Projekts an ({url}). Der Bericht enthält Protokolle, Versionen und Einstellungen, keine Backups, Samples oder Projekte. Persönliche Pfade, Namen und Zugangsdaten werden entfernt, soweit die App sie erkennt – bitte sieh ihn durch, bevor du ihn öffentlich postest."

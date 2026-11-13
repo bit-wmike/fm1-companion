@@ -63,7 +63,9 @@ def _ffmpeg_to_wav(path: Path) -> Path:
     exe = shutil.which("ffmpeg")
     if not exe:
         raise ValueError(_("{name}: reading {ext} needs ffmpeg (sudo apt install ffmpeg)").format(name=path.name, ext=path.suffix))
-    tmp = Path(tempfile.mkstemp(suffix=".wav", prefix="fm1c-")[1])
+    fd, tmp_name = tempfile.mkstemp(suffix=".wav", prefix="fm1c-")
+    os.close(fd)                                       # ffmpeg writes the file itself; an open fd would leak per read
+    tmp = Path(tmp_name)
     try:
         r = subprocess.run([exe, "-v", "error", "-y", "-i", str(path), "-ac", "1", "-c:a", "pcm_s16le", str(tmp)],
                            capture_output=True, text=True, timeout=120)

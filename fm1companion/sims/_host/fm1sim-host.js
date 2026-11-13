@@ -5,7 +5,7 @@
 //   * window.__fm1sim.midi(bytes)   play MIDI into the simulator (worklet message, else computer keys)
 //   * window.__fm1sim.record        tap of everything the page sends to the speakers -> WAV download
 //   * ?fm1latency=interactive|balanced|playback   replaces the page's AudioContext latencyHint
-//   * outside the app (Firefox): MIDI from the app via server-sent events on /_fm1/midi
+//   * outside the app (Firefox): MIDI from the app via server-sent events on /_fm1/midi/<key> (?fm1relay=<key>)
 (function () {
   "use strict";
   if (window.__fm1sim) return;
@@ -243,7 +243,9 @@
   // outside the app: MIDI from FM-1 Companion's local server (Firefox)
   if (!(window.qt && window.qt.webChannelTransport) && /^(127\.0\.0\.1|localhost)$/.test(location.hostname) && window.EventSource) {
     addEventListener("load", () => {
-      const es = new EventSource("/_fm1/midi");
+      const key = q.get("fm1relay");                 // random key the app puts into the address it opens
+      if (!key) return;
+      const es = new EventSource("/_fm1/midi/" + encodeURIComponent(key));
       es.onmessage = (e) => { try { api.midi(JSON.parse(e.data)); } catch (_) { /* ignore */ } };
       api.relay = es;
     });

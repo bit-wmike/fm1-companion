@@ -27,7 +27,7 @@
   <url type="homepage">https://github.com/bit-wmike/fm1-companion</url>
   <url type="bugtracker">https://github.com/bit-wmike/fm1-companion/issues</url>
   <releases>
-    <release version="2.6.0" date="2026-11-17">
+    <release version="2.6.0" date="2026-11-12">
       <description><p>Seven more Studio twins: Felucca, M-VAVE's FM1 Open (also as a stand-in for the original firmware V15/V16), ChoralRoot FM-1, X0X, FoMni, AMB-1 and LOOM-8 – thirteen in all. Backups for FM1 Open, X0X and LOOM-8. Original V15: restore the factory voices. Flashing through USB hubs: careful mode, automatic resume, flight log, optional rule against USB autosuspend. Settings › Storage: see and delete logs, downloads and caches, automatic cleanup. All 252 catalog firmwares audited: the backup protocol is asked instead of guessed – backups of many SLOOP and Felucca forks that timed out or were rejected now work, misplaced restores are refused. Installs: switching to another firmware always goes through the original V15 first (updates within the same firmware go directly); KARMA can be installed. Housekeeping: NAS mirror retention, rescue dumps, web editor data, page settings reset, GitHub token removal, cancel for long reads.</p></description>
     </release>
     <release version="2.5.0" date="2026-11-11">

@@ -8,11 +8,11 @@ fm1-companion \- desktop suite for the M-VAVE FM-1
 Install and switch firmware, backups, projects, Studio twin (WAV export), presets, samples, MIDI, simulator and recording
 for the M-VAVE FM-1 pocket synthesizer with firmwares of the Felucca family (Melodee, Skiff, SLOOP).
 .PP
-The user interface is currently German; English is in progress.
+The user interface is available in English, German and Spanish (Settings, Appearance; or \-\-lang).
 .SH OPTIONS
 .TP
 .B \-\-demo
-start with two simulated FM-1 (without a device).
+start with three simulated FM-1 (without a device; separate settings, your data stays untouched).
 .TP
 .B \-\-check
 check the required system packages and show the apt command for missing ones.
@@ -30,14 +30,14 @@ start without the splash screen.
 verbose log.
 .TP
 .BI \-\-lang " LANG"
-user interface language for this start: en or de (default: the setting, otherwise the system language).
+user interface language for this start: en, de or es (default: the setting, otherwise the system language).
 .SH ENVIRONMENT
 .TP
 .B FM1C_NO_NET=1
 no automatic network access (update check when plugging in, catalog update, thumbnails);
 the catalog and the link import only use the bundled data.
 .TP
-.B FM1C_LANG=en|de
+.B FM1C_LANG=en|de|es
 user interface language, overrides the setting (like \-\-lang).
 .SH FILES
 .TP

@@ -65,8 +65,11 @@ pestaña puedes activar «conservar las N descargas más recientes por firmware�
 
 **Algo se ha bloqueado.**
 La app muestra entonces un diálogo con *Guardar informe de errores*. El informe contiene registros, versiones y
-ajustes sin rutas personales – tú decides si lo compartes. Para crear uno tú mismo: Ayuda ›
-Crear informe de errores.
+ajustes. Las credenciales, tu carpeta personal, el nombre de usuario y del ordenador, los nombres de los dispositivos y
+los números de serie se eliminan automáticamente, pero aún puede contener nombres de archivos y otros detalles – revísalo
+antes de publicarlo. Tú decides si lo compartes; nada se envía automáticamente. Para crear uno tú mismo: Ayuda ›
+Crear informe de errores. Para enviarlo, adjunta el archivo a una nueva incidencia (issue) en la página de incidencias
+del proyecto en GitHub: <https://github.com/bit-wmike/fm1-companion/issues>.
 
 **¿Cómo recupero el aspecto antiguo?**
 Ver › Tema › *Estilo del sistema (KDE/Breeze)*. Iconos: Ajustes › Apariencia › *Tema del sistema (Breeze/Papirus)*.

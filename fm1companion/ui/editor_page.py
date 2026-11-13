@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBox
 
 import os
 
-from .. import config, editor_host, firmware
+from .. import config, editor_host, firmware, sims
 from ..bridge import MidiBridge
 from . import web
 from .common import icon, run_job
@@ -63,6 +63,9 @@ class EditorPage(QWidget):
             self.view = None
             return
         self.bridge = MidiBridge(self)
+        # the editor may send everything except the update-mode / boot-mode keys (the app installs firmware itself)
+        self.bridge.out_filter = sims.builtin_editor_out_allowed
+        self.bridge.blockedChanged.connect(self._blocked)
         # redirect the editor's links the way they make sense in the app: installer -> firmware page,
         # manual -> local copy, editor -> editor, internet -> normal browser (web.RoutingPage)
         self.view, self.page, self.channel = web.make_view(self, bridge=self.bridge, router=self.route_local)
@@ -79,6 +82,11 @@ class EditorPage(QWidget):
     # --------------------------------------------------------------
     def _placeholder(self, text: str) -> str:
         return web.placeholder_html(_("Editor"), text)
+
+    def _blocked(self, n: int):
+        if n in (1, 10, 100) or n % 1000 == 0:
+            self.state.setText(_("The editor page tried to switch the FM-1 to update or boot mode – held back. "
+                                 "Install firmware via “Firmware+”."))
 
     def _zoom(self, d):
         """d = step, None = back to 100 %."""
@@ -127,11 +135,12 @@ class EditorPage(QWidget):
             self.loaded_for = ""
             self.state.setText(_("{name}: no built-in editor – presets via SysEx on the page “Presets”.").format(
                                    name=name))
-            extra = ("<br><br>" + _('Online editor of the author: <a href="{url}">{url}</a>').format(url=spec.editor_url)
+            # name and address can come from the catalog / a user-added firmware: text, never HTML
+            extra = ("<br><br>" + _("Online editor of the author: {link}").format(link=web.link_html(spec.editor_url))
                      if spec and spec.editor_url else "")
             self.view.setHtml(self._placeholder(
                 _("{name} does not come with an editor the app can embed.<br>Presets can be sent via SysEx on the page "
-                  "<b>Presets</b> (FM voices); MIDI works via the page <b>MIDI</b>.").format(name=name) + extra))
+                  "<b>Presets</b> (FM voices); MIDI works via the page <b>MIDI</b>.").format(name=web.esc(name)) + extra))
             return
         if not spec:
             self.state.setText(_("There is no known editor for this firmware."))
@@ -184,7 +193,8 @@ class EditorPage(QWidget):
             self.view.setHtml(self._placeholder(_("The editor for {name} {version} could not be "
                                                   "provided:<br><code>{error}</code><br><br>The first "
                                                   "time the app needs internet once, after that no more.").format(
-                                                    name=spec.name, version=want_tag, error=msg)))
+                                                    name=web.esc(spec.name), version=web.esc(want_tag),
+                                                    error=web.esc(msg))))
         run_job(self, work, on_done=done, on_fail=fail)
 
     # ------------------------------------------------------------ Links in the editor
@@ -214,7 +224,7 @@ class EditorPage(QWidget):
         idx = editor_host.manual_index(spec, tag)
         if not idx:
             if spec.manual_online:
-                QDesktopServices.openUrl(QUrl(spec.manual_online))
+                web.open_new_window_url(spec.manual_online)        # http/https/mailto only
             else:
                 self.state.setText(_("{name} {version} comes without a manual.").format(name=spec.name, version=tag))
             return

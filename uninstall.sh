@@ -43,13 +43,24 @@ CORE="$HERE/packaging/installer/core.py"
 [[ -n "${FM1C_NO_PKILL:-}" ]] || pkill -u "$(id -u)" -f "python3 -m fm1companion" 2>/dev/null || true
 ARGS=()
 if [[ "${1:-}" == "--all" ]]; then
-  msg "Also removed: settings, device profiles, firmware tools, editor copies, cache, logs." \
-      "Entfernt werden außerdem Einstellungen, Geräteprofile, Firmware-Werkzeuge, Editor-Kopien, Zwischenspeicher, Protokolle."
+  msg "--all would also remove: settings, device profiles, firmware tools, editor copies, cache, logs." \
+      "--all würde außerdem entfernen: Einstellungen, Geräteprofile, Firmware-Werkzeuge, Editor-Kopien, Zwischenspeicher, Protokolle."
   echo
   msg "Your main folder (default ~/FM-1) is left untouched." "Dein Hauptordner (Standard ~/FM-1) bleibt unangetastet."
   echo
-  if [[ "${2:-}" == "--yes" ]]; then a=y; else read -r -p "$(msg "Really remove? [y/N] " "Wirklich entfernen? [j/N] ")" a; fi
-  [[ "$a" =~ ^[jJyY]$ ]] && ARGS=(--settings --data)
+  # no answer (Enter, end of input, no terminal) means no: the app is removed, settings and data stay
+  if [[ "${2:-}" == "--yes" ]]; then a=y
+  else read -r -p "$(msg "Remove settings and internal data too? [y/N] " "Einstellungen und interne Daten auch entfernen? [j/N] ")" a || a=""; fi
+  a="$(printf '%s' "$a" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+  case "$a" in
+    y|yes|j|ja)
+      ARGS=(--settings --data)
+      msg "Removing the app, settings and internal data." "Entferne App, Einstellungen und interne Daten." ;;
+    *)
+      msg "Settings and internal data are kept; only the app is removed." \
+          "Einstellungen und interne Daten bleiben erhalten; nur die App wird entfernt." ;;
+  esac
+  echo
 fi
 "$PY" "$CORE" uninstall ${ARGS[@]+"${ARGS[@]}"}
 msg "System packages (PyQt6, mido …) were not touched." "Systempakete (PyQt6, mido …) wurden nicht angefasst."
