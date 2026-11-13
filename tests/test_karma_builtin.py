@@ -69,7 +69,7 @@ def test_web_installer_names_a_newer_version(env, monkeypatch):
 
         def __exit__(self, *a):
             return False
-    monkeypatch.setattr(firmware.urllib.request, "urlopen", lambda req, timeout=0: R(page.encode()))
+    monkeypatch.setattr(firmware, "urlopen", lambda req, timeout=0: R(page.encode()))
     sp = firmware.spec("karma")
     rels = firmware.fetch_releases(sp, use_cache_secs=0)
     assert rels[0].tag == "v3.2" and rels[0].sha256 == "ab" * 32

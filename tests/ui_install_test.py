@@ -101,6 +101,7 @@ def dialog_exec(self):
             for cb in self.confirm_checks.values():
                 cb.setChecked(True)
         plan_ctl["plans"].append(self.plan)
+        plan_ctl["note"], plan_ctl["html"] = self.tested_note, self.view.toPlainText()
         return 1 if plan_ctl["accept"] else 0
     if isinstance(self, JobDialog):
         self.show()
@@ -397,6 +398,49 @@ def flow():
         page._show_chain()
         check(page.pending_chain() is not None and not page.chain_box.isHidden() and "SLOOP" in page.b_chain.text(),
               f"“Continue” offered ({page.b_chain.text()})")
+        # audit F-05: the chain knows the USB port, can be dismissed, and is matched by port or profile
+        ch = journal.Journal().chain
+        check(ch.get("usb_path") == "demo-usb-1", f"chain remembers the USB port ({ch.get('usb_path')})")
+        jr_ = journal.Journal()
+        jr_.restore_chain(dict(ch, device_id="another-profile"))
+        check(page.pending_chain() is not None, "“Continue” found by the USB port when the profile changed")
+        jr_.restore_chain(dict(ch, device_id="another-profile", usb_path="9-9"))
+        check(page.pending_chain() is None, "“Continue” not offered to another FM-1 (other port, other profile)")
+        jr_.restore_chain(ch)
+        page._show_chain()
+        check(not page.b_chain_dismiss.isHidden() and page.b_chain_dismiss.text() == "Verwerfen",
+              f"“Dismiss” next to “Continue” ({page.b_chain_dismiss.text()})")
+        page.dismiss_chain()
+        check(journal.Journal().chain is None and page.chain_box.isHidden(), "“Dismiss” forgets the switch")
+        jr_.restore_chain(ch)
+        page._show_chain()
+        rec = w.page("recovery")
+        rec.refresh()
+        check(not rec.b_forget_chain.isHidden() and rec.b_forget.isHidden(),
+              "Recovery: “Forget the two-step switch” only while there is one")
+        # audit F-10: the plan says where the original V15 comes from; the download button knows it is there
+        check(firmware.stock_cached("stock-v15") and not page.b_v15_dl.isEnabled()
+              and "schon auf diesem Computer" in page.b_v15_dl.toolTip(), "V15 for offline use: already there")
+        # audit F-03: the Cancel button follows the engine's log – it never accepts a cancel that cannot happen
+        import threading as _th
+        from fm1companion.flash import engine as _fe
+        dlg = fp.InstallDialog(w, "t", lambda w_: None, _th.Event())
+        check(dlg.btn_cancel.isEnabled(), "Cancel on before anything is sent")
+        dlg.add(_fe.LOG_STEP1_CANCEL)
+        check(dlg.btn_cancel.isEnabled(), "Cancel stays on during a step 1 that can be stopped")
+        dlg.add(_fe.LOG_NO_CANCEL)
+        dlg._cancel()
+        check(not dlg.btn_cancel.isEnabled() and not dlg.cancel_event.is_set()
+              and "nicht mehr abbrechen" in dlg.btn_cancel.text(),
+              f"once the engine says so, Cancel is off and says so ({dlg.btn_cancel.text()})")
+        dlg.add(_fe.LOG_WRITING)
+        dlg.add(_fe.LOG_REBOOT)
+        check(not dlg.btn_cancel.isEnabled() and dlg.danger.isHidden(), "after writing: Cancel does not come back")
+        dlg.add(fp.LOG_BETWEEN)
+        check(dlg.btn_cancel.isEnabled(), "between the two steps of a switch Cancel works again")
+        dlg._cancel()
+        check(dlg.cancel_event.is_set() and not dlg.btn_cancel.isEnabled(), "… and is taken")
+        dlg.deleteLater()
         real_fr = firmware.fetch_releases
         firmware.fetch_releases = lambda sp, *a, **k: [rel2] if sp.key == "sloop" else real_fr(sp, *a, **k)
         firmware.download = lambda sp, r, **k: firmware.Package(sp, r, good, None, False) if sp.key == "sloop" \
@@ -409,6 +453,8 @@ def flow():
         check(ok and pc.chain_resume and pc.v15_option == "none" and "stock" not in pc.kinds()
               and dev.identity == "FM-1_900", f"resume continues with SLOOP directly ({pc.kinds()}, {dev.identity})")
         check(journal.Journal().chain is None, "chain done: cleared")
+        check("Bisher auf einem echten FM-1 getestet" in plan_ctl["note"] and "nur in der Simulation" in plan_ctl["note"]
+              and plan_ctl["note"] in plan_ctl["html"], f"plan carries the tested-on-hardware line ({plan_ctl['note'][:70]})")
         page._show_chain()
         check(page.chain_box.isHidden(), "“Continue” gone")
 
@@ -448,7 +494,14 @@ def flow():
     check(not page.finish_install(stock=True) and len(d2.sends) == n_before
           and any("Passt nicht" in b or "nimmt die Original-V15 nicht an" in b for b in log_boxes),
           "V15 to a Felucca loader: refused, nothing sent")
+    check(not page.b_forget.isHidden(), "Recovery: “Forget the interrupted installation” offered")
+    check("beim Schreiben" in page.status.text() and "„failed“" not in page.status.text(),
+          "Recovery says where it stopped, not “failed”")
+    journal.Journal().begin_chain(key="sloop", name="SLOOP", tag="v9.9", usb_path="demo-usb-2")
+    log_boxes.clear()
     ok = page.finish_install()
+    check(journal.Journal().chain is None, "Recovery finished the target: the two-step switch is no longer pending")
+    check(any("nur in der Simulation" in b for b in log_boxes), "Recovery confirmation says: simulation only")
     check(ok and d2.identity == "FM-1_901" and d2.flash == fpk.analyze(pkg2).image,
           f"recovery finished ({ok}, {d2.identity}, {d2.flash == fpk.analyze(pkg2).image}, {d2.log[-3:]})")
     check(journal.Journal().active is None, "journal empty again")

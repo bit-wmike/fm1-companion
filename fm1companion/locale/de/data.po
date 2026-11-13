@@ -3594,7 +3594,6 @@ msgstr "Angepasster Pattern-Sound {n}"
 msgid "ChoralRoot FM-1 fork (chord instrument); its unmodified firmware code runs in the studio twin"
 msgstr "Fork von ChoralRoot FM-1 (Akkord-Instrument); sein unveränderter Firmware-Code läuft im Studio-Zwilling"
 
-
 #: fm1companion/backup.py
 #, python-brace-format
 msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
