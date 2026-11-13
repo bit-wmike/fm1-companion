@@ -135,6 +135,7 @@ load_problems: list[Msg] = []
 broken_file: Path | None = None          # unreadable config.json was renamed to this
 read_error: str = ""                     # settings file not readable (permissions, folder missing/is a file)
 _read_exc: OSError | None = None         # (the reason for it, translated only in problems_text())
+extra_notices: list[Msg] = []            # notices of other stores read at start (devices.json), shown with these
 
 
 def _expected(f) -> str:
@@ -188,10 +189,27 @@ def from_dict(raw) -> tuple[Settings, list[Msg]]:
         for k in [k for k, v in s.modules.items() if not isinstance(v, dict)]:
             s.modules.pop(k)
             problems.append(Msg(N_("{name}: not a dictionary"), name=f"modules.{k}"))
+        for name, types in MODULE_TYPES.items():    # (values the app computes with: a wrong type gets the default)
+            d = s.modules.get(name)
+            for k, typ in types.items() if isinstance(d, dict) else ():
+                if k in d:
+                    ok = isinstance(d[k], typ) and (typ is bool or not isinstance(d[k], bool))
+                    if ok and typ is not bool and typ is not str and not 0 <= d[k] <= 1e6:
+                        ok = False
+                    if not ok:
+                        del d[k]                    # (config.module() fills the default in again)
+                        problems.append(Msg(N_("{name}: not a number") if typ not in (bool, str) else
+                                            N_("{name}: not a yes/no value") if typ is bool else
+                                            N_("{name}: not a text"), name=f"modules.{name}.{k}"))
     if not s.user_root.strip():
         s.user_root = Settings().user_root
         problems.append(Msg(N_("{name}: empty"), name="user_root"))
     return s, problems
+
+
+# value types of module settings that are used in arithmetic or as timer values right after loading
+MODULE_TYPES = {"daten": {"on_connect": bool, "days": (int, float), "periodic": bool, "hours": (int, float),
+                          "keep_monthly": bool, "mirror": str, "delay_s": (int, float), "mirror_prune": bool}}
 
 
 def _why(e: OSError) -> str:
@@ -217,6 +235,8 @@ def load() -> Settings:
             raw = None
             try:
                 raw = _read_json(CONFIG_FILE)
+                if not isinstance(raw, dict):       # ("null", "[]", "5": valid JSON, but no settings – damaged)
+                    raise ValueError("no JSON object")
             except FileNotFoundError:
                 pass
             except (IsADirectoryError, NotADirectoryError, PermissionError) as e:
@@ -235,6 +255,8 @@ def load() -> Settings:
                                          error=type(e).__name__))
                 try:
                     raw = _read_json(BACKUP_FILE)
+                    if not isinstance(raw, dict):
+                        raise ValueError("no JSON object")
                     load_problems.append(Msg(N_("The last backup (config.json.bak) was loaded."), "backup"))
                 except (OSError, ValueError, UnicodeDecodeError):
                     raw = None
@@ -266,6 +288,8 @@ def _write_private(path: Path, text: str) -> None:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             fd = -1
             f.write(text)
+            f.flush()
+            os.fsync(f.fileno())               # (on the disk before it replaces the old file: power loss)
     finally:
         if fd >= 0:
             os.close(fd)
@@ -286,20 +310,24 @@ def save(s: Settings | None = None) -> bool:
             _write_private(tmp, json.dumps(asdict(s), indent=2, ensure_ascii=False))
             if CONFIG_FILE.exists():
                 try:                           # keep the previous state (way back in case of a broken file)
-                    _read_json(CONFIG_FILE)
+                    if not isinstance(_read_json(CONFIG_FILE), dict):
+                        raise ValueError("no JSON object")     # (never a broken file over the good backup)
                     shutil.copy2(CONFIG_FILE, BACKUP_FILE)
                     os.chmod(BACKUP_FILE, 0o600)
                 except (OSError, ValueError, UnicodeDecodeError):
                     pass
             tmp.replace(CONFIG_FILE)
-        except OSError as e:
+        except (OSError, TypeError, ValueError, RuntimeError) as e:
+            # (TypeError/ValueError: a value JSON cannot hold; RuntimeError: a dictionary changed by another thread
+            # while it was copied – "never raises" holds for those too, the next save writes it)
             try:
                 tmp.unlink()
             except OSError:
                 pass
             from .i18n import _
             save_error = _("The settings could not be saved ({folder}: {reason}). They apply until you quit the "
-                           "app.").format(folder=CONFIG_FILE.parent, reason=_why(e))
+                           "app.").format(folder=CONFIG_FILE.parent,
+                                          reason=_why(e) if isinstance(e, OSError) else type(e).__name__)
             import logging
             logging.getLogger("fm1companion.config").warning(save_error)
             for fn in list(save_listeners):
@@ -316,8 +344,9 @@ def problems_text() -> str:
     """one-time notice for the UI ("" = all fine)"""
     from .i18n import _
     fields_ = [str(p) for p in load_problems if getattr(p, "kind", "") not in ("broken", "backup")]
+    extra = " ".join(str(m) for m in extra_notices)
     if broken_file is None and not fields_ and not read_error:
-        return ""
+        return extra
     if read_error and broken_file is None:
         where = f"{CONFIG_FILE}: {_why(_read_exc)}" if _read_exc is not None else read_error
         head = _("The settings file is not readable ({error}). The default settings apply; "
@@ -329,7 +358,8 @@ def problems_text() -> str:
                    else _("The default settings apply again.")))
     else:
         head = _("The settings contained invalid values; they were replaced by default values.")
-    return head + (" " + _("Affected: {fields}.").format(fields="; ".join(fields_[:6])) if fields_ else "")
+    return head + (" " + _("Affected: {fields}.").format(fields="; ".join(fields_[:6])) if fields_ else "") + \
+        (" " + extra if extra else "")
 
 
 def module(name: str, defaults: dict | None = None) -> dict:
