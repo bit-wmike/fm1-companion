@@ -14,6 +14,22 @@ Bleibt das FM-1 nach einem abgebrochenen Update dunkel oder startet nicht richti
 Melodee ab 1.3.5 mit Boot-Schutz geht nach einem unterbrochenen Schreibvorgang (auch Stromausfall) von selbst
 in den Update-Modus zurück – einfach wieder einschalten und neu installieren.
 
+## Nach einer unterbrochenen Installation
+
+Nach einer Unterbrechung sagt die Meldung der App, was *wahrscheinlich* ist – sie hat das FM-1 nicht noch einmal
+angesehen. Die Seite [Rettung](app://page/recovery) zeigt, was gerade wirklich erkannt wird:
+
+* **Ein FM-1 im Update-Modus wird erkannt:** *Installation abschließen* schreibt das unterbrochene Paket noch
+  einmal. Die App kennt es aus ihrem Journal und prüft, ob es zum wartenden Update-Loader gehört – sonst wird nichts
+  gesendet.
+* **Nichts wird erkannt und das FM-1 läuft normal:** Es wurde nichts geschrieben. *Unterbrochene Installation
+  vergessen* entfernt die Notiz der App.
+* **Nichts wird erkannt und das Display bleibt schwarz:** das FM-1 einmal aus- und einschalten und den Update-Modus
+  versuchen (oben). Klappt das nicht, hilft der nächste Abschnitt.
+
+Ehrlich: Das Abschließen einer unterbrochenen Installation ist bisher nur in der Simulation gelaufen, nicht auf
+einem echten FM-1.
+
 ## Wenn gar nichts mehr geht
 
 Zeigt der Rechner ein Laufwerk **„WL82 UBOOT1.00“** und das Display bleibt schwarz, steckt der Chip in seinem

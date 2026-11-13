@@ -1,4 +1,4 @@
-# What is tested and what is not – an honest list (as of 2.3.1)
+# What is tested and what is not – an honest list (as of 2.6.0)
 
 The suite was mostly built and tested in a development environment **without an FM-1**: against simulated
 FM-1 (Melodee, SLOOP, generic), against the test devices from the Melodee and SLOOP editors, against self-built
@@ -12,7 +12,7 @@ documented.
 UI names in this list are the English labels of the app (the German UI uses the translations from
 `fm1companion/locale/de/`).
 
-## Used on real hardware (as of 2.3.1)
+## Used on real hardware (as of 2.6.0)
 
 So far on **one** FM-1 with Melodee, on a Raspberry Pi 5:
 
@@ -28,6 +28,30 @@ So far on **one** FM-1 with Melodee, on a Raspberry Pi 5:
 That is **one** device, **one** firmware family and **one** update path. Everything else in this list counts as
 untested, even if it runs cleanly in the simulation.
 
+### Per step – what the app shows before the click
+
+Every installation plan and the confirmations of the recovery, the factory voices and "own file" carry one line:
+"Tested on a real FM-1 so far: an update within Melodee. This step (…): only in the simulation." It comes from this
+table, which exists a second time in the code (`fm1companion/flash/tested.py`); `tests/test_flash.py` fails when the
+two differ. Change a row only after a hardware test report, and change both.
+
+| Step (`tested.py` key) | Run on a real FM-1 by this app |
+|---|---|
+| `update_melodee` – an update within Melodee | yes |
+| `update_same` – an update within another firmware than Melodee | no |
+| `switch` – a switch to another firmware | no |
+| `v15_step` – the intermediate step via the original V15 | no |
+| `chain_continue` – continuing a switch after the V15 step | no |
+| `to_stock` – going back to the original firmware | no |
+| `v16` – the original firmware V16 | no |
+| `own_file` – installing your own .fwsc file | no |
+| `resume` – finishing an interrupted installation | no |
+| `resources` – rewriting font and factory sounds | no |
+| `two_devices` – several FM-1 connected at once | no |
+| `usb_hub` – installing through a USB hub (careful mode) | no |
+| `factory_voices` – restoring the factory voices of the original V15 | no |
+| `rom_restore` – writing in ROM boot mode (recovery stage 2) | no |
+
 ## Not tested on real hardware
 
 ### Flashing and rescue (highest risk)
@@ -35,15 +59,18 @@ untested, even if it runs cleanly in the simulation.
 | Function | Status |
 |---|---|
 | Installing a different firmware (switch Melodee ↔ SLOOP ↔ Skiff …) | simulation only |
-| V15 intermediate step when switching firmware (always, except updates within the same firmware), *Continue* after the V15 step | simulation only |
-| Installing KARMA (built-in, packages pinned from its GitHub Pages site) | simulation only; download URLs (commit-pinned raw files) not fetched in CI |
+| V15 intermediate step when switching firmware (always, except updates within the same firmware), *Continue* / *Dismiss* after the V15 step | simulation only. The policy follows what firmware authors ask for (start from V15); that the two-step path itself is safer than a direct switch between two Felucca-family firmwares is **not** shown by any test – the V15 step is a write without start protection, and it does not remove the old firmware's saved data |
+| Installing KARMA (built-in, packages pinned from its GitHub Pages site) | simulation only; the pinned checksums were compared with the files in a clone of KARMA's repository (all seven versions match), the download URLs themselves (commit-pinned raw files) are not fetched in CI |
+| Cancel during the check of the package (step 1) on a Felucca-family firmware; a lost last answer of step 1 (answered again, or reported as "nothing written") | simulation only, behaviour of the device taken from Melodee's `ota.c`. With the original firmware as the running firmware Cancel is switched off once the update has started – its step 1 is not known |
+| The start identity is compared with the plan when writing starts (`expect_identity`) | simulation only |
 | Back to the original (V15, V16) | simulation only |
 | Way back from V16 (via V15) | simulation only; whether a real V16 accepts a step back to V15 is unconfirmed |
-| Resuming after a power cut / aborted installation, CHECK HEAD detection | simulation only |
+| Resuming after a power cut / aborted installation, CHECK HEAD detection (FAILED −5) and the way out the app names | simulation only; after a dropout the app says where the FM-1 *probably* is – it does not look again by itself |
 | Finishing an interrupted installation (update mode, rescue level 1) | simulation only |
 | Rewriting font & factory sounds (Melodee's resource tool) | only against the demo and source code; with 1.6.0 the update loader reports the resources as complete by itself |
 | Installing your own `.fwsc` file | simulation only |
-| Pinning the target device via the USB path after the restart, two FM-1 at the same time | simulation only |
+| Pinning the target device via the USB path after the restart, two FM-1 at the same time | simulation only. Whether the original firmware and its loader keep the same USB path on every computer, and whether they expose a serial number, has never been seen on hardware |
+| Downloads: https only, size limit, a download that breaks off | only against fake servers in the tests |
 | **Rescue level 2** (ROM boot mode: write back V15, repair settings, full backup) | only with the Unbricker's mock; pkexec, kernel module `sg`, jl-uboot-tool and handing the files over to the user never on a device. The Unbricker itself has been used on real devices by its community, its embedding in the app has not |
 | **"Is my FM-1 clean?"** | quick check (command 82) only against the demo and the Melodee source code; dump check only with model dumps built from real packages, never with a real 1 MiB dump; reading in ROM boot mode only with the mock |
 | **Clean up leftovers** (erase V16 leftovers in 0x93000–0xA8FFF sector by sector, expert mode, `flash/restzone.py`) | only with the Unbricker's mock. That the WL82 loader really limits "erase sector" to 4 KiB is an assumption – otherwise the block check after each sector stops |

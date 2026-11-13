@@ -28,6 +28,7 @@ FELUCCA_LOADER_RE = re.compile(r"^ota-FM-1_9\d\d$")
 # sdk/WebUpdate.js, prepare → loaderIdentity). Only for recognising and explaining – the app sends nothing to this loader.
 OPEN_LOADER_RE = re.compile(r"^ota-FM1C_[0-9a-f]{16}$")
 OPEN_ID_RE = re.compile(r"^FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)$")
+OPEN_V14_ID = "FM-1_8000014"         # FM1 Open V14 in normal operation (m-vave/fm1_open app/version.h)
 
 # families as in the Mooring catalog (loaders[].family) -> our two protocol families
 FAMILY_OF_CATALOG = {"stock": "stock", "feluccaG1": "felucca", "feluccaG2": "felucca", "sloopG3": "felucca"}

@@ -26,6 +26,7 @@ need_v15 = pytest.mark.skipif(not V15.exists(), reason="original V15 missing")
 def env(tmp_path, monkeypatch):
     for k, sub in (("XDG_CONFIG_HOME", "c"), ("XDG_DATA_HOME", "d"), ("XDG_CACHE_HOME", "k")):
         monkeypatch.setenv(k, str(tmp_path / sub))
+    monkeypatch.setenv("HOME", str(tmp_path))    # ~/FM-1 (firmware folder) of the test, not the real one
     monkeypatch.delenv("FM1C_DEMO", raising=False)
     from fm1companion import config
     importlib.reload(config)

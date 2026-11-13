@@ -62,6 +62,10 @@ def delays(careful: bool) -> dict:
     d.setdefault("wait_resume", d.get("wait_loader", 30.0))
     d.setdefault("loader_giveup", 0.0)
     d.setdefault("resend_min", 2.0)     # a repeat after this long is the device's retry (5 s), not a legitimate re-read
+    # after the answer to the last request of step 1: stay on the port this long (or until the FM-1 leaves the bus)
+    # to answer a repeat – the device asks again after 5 s when the answer was lost (ota.c: 4 × 3 tries)
+    d.setdefault("linger", 6.0)
+    d.setdefault("settle", 3.0)         # unpinned only: how long a found loader is watched for a second FM-1
     if careful:
         for k, v in CAREFUL.items():
             d[k] = max(d.get(k, 0.0), v) if k not in ("reply", "gap") else v
@@ -307,8 +311,14 @@ class RobustUpdater(fi.Updater):
 
     def __init__(self, backend, port=None, port_filter=None, cancelled=None, *, careful: bool = False,
                  flight: FlightLog | None = None, pinned: bool = False, felucca: bool = False,
-                 log: Callable[[str], None] | None = None):
+                 log: Callable[[str], None] | None = None, cancel_step1: bool = False):
         super().__init__(backend, port, port_filter=port_filter, cancelled=cancelled)
+        # Cancel during step 1 (nothing is written there): the updater stops answering before the device's last
+        # request is confirmed; a Felucca-family firmware then erases its staging area and carries on (ota.c:
+        # "Nothing is committed before the host's success"). Only where the caller knows the running firmware
+        # behaves like that – never for the original firmware, whose step 1 nobody could read.
+        self.cancel_step1 = cancel_step1
+        self._aborted = False
         self.careful = careful
         self.flight = flight or FlightLog()
         self.pinned = pinned            # automatic repetitions only for a pinned device
@@ -348,15 +358,21 @@ class RobustUpdater(fi.Updater):
             self.flight.ev("sendfail")
         return ok
 
-    def serve(self, link, image, finish, idle, progress):
+    def serve(self, link, image, finish, idle, progress, abort=None):
         """answer read requests until the device asks for `finish`; -> (served, finished, lost).
         Every request is answered once; copies of a request that are still queued behind it (the device
-        repeated it because our answer was late) are skipped – the device keeps only one frame."""
+        repeated it because our answer was late) are skipped – the device keeps only one frame.
+        abort: asked before every answer (the final "success" too); True = stop answering (self._aborted)."""
         served, last = 0, time.monotonic()
         prev = None                       # last request answered: (fl, addr, n)
         pending: list = []
         self._evidence = False
+        self._aborted = False
         while True:
+            if abort is not None and abort():
+                self._aborted = True
+                self.flight.ev("cancel", f"stopped answering after {served} requests")
+                return served, False, False
             if not pending:
                 pkt = link.read(self.d["poll"])
                 if pkt is None:
@@ -422,24 +438,91 @@ class RobustUpdater(fi.Updater):
         time.sleep(self.d["start"])
         try:
             served, finished, lost = self.serve(dev.link, image, fi.FINISH_CHECK, self.d["idle_check"],
-                                                lambda k, end: step("check", k))
+                                                lambda k, end: step("check", k),
+                                                abort=self.cancelled if self.cancel_step1 else None)
+            lingered = self._linger(dev.link) if finished else 0.0
         finally:
             dev.link.close()
+        if self._aborted:
+            raise fi.InstallError("cancelled", f"cancelled in step 1 after {served} requests: the app stopped "
+                                               "answering before the FM-1 was told to go on; nothing was written")
         if not finished:
             raise fi.InstallError("lost" if lost else "stopped",
                                   f"the FM-1 {'was disconnected' if lost else 'stopped answering'} after "
                                   f"{served} requests; nothing was written")
         step("loader")
         self.flight.set_phase("loader")
-        time.sleep(self.d["loader"])
+        time.sleep(max(0.0, self.d["loader"] - lingered))
         self.flight.device_gone("restarting into the update loader", expected=True)
         ota = self.wait_for(lambda i: i.loader, self.d["wait_loader"])
         if not ota:
-            raise fi.InstallError("noloader", "the update loader did not appear. Replug the USB cable and "
-                                              "run the install again: the FM-1 stays in update mode until it is done")
+            # no update loader: is the FM-1 simply still running its firmware? Then step 1 never completed on the
+            # device (the answer to its last request did not arrive, it gave up and carried on) – nothing is staged
+            same = self.find(lambda i: not i.loader and i.text == dev.id.text, only_port=False)
+            if same is not None:
+                same.link.close()
+                self._evidence = True
+                self.flight.ev("unstaged", f"the FM-1 still answers as {same.id.text}")
+                raise fi.InstallError("notstaged", f"the FM-1 did not switch to update mode: it still answers as "
+                                                   f"{same.id.text}; nothing was written")
+            raise fi.InstallError("noloader", "the update loader did not appear and the FM-1 does not answer as "
+                                              "before either")
+        if not self.pinned:
+            # no USB details to pin the target: a second candidate port next to the loader means another FM-1
+            # appeared meanwhile – the app cannot tell which of the two it started
+            # (watched for a moment: the FM-1 that was started may still be on its way back while another one is
+            # already there – the loader waits for its UPGRADE as long as it takes)
+            end = time.monotonic() + self.d["settle"]
+            while True:
+                others = [n for n in self.candidates(False) if n != ota.name and self._answers(n)]
+                if others or time.monotonic() >= end:
+                    break
+                time.sleep(self.d["retry"])
+            if others:
+                ota.link.close()
+                self.flight.ev("second", f"another FM-1 answers next to the loader: {', '.join(others)}")
+                raise fi.InstallError("second", "a second FM-1 appeared while waiting for the update loader; "
+                                                "nothing was sent to the loader")
         if loader:
             fi.own_loader(ota, loader)
         return ota
+
+    def _answers(self, name: str) -> bool:
+        """does an FM-1 answer the handshake at this port? (a port name that merely lingers does not)"""
+        out = fi.pair_output(name, self.backend.output_names())
+        if not out:
+            return False
+        try:
+            link = self.backend.open(name, out)
+        except Exception:  # noqa: BLE001
+            return False
+        try:
+            return fi.handshake(link, 1) is not None
+        finally:
+            link.close()
+
+    def _linger(self, link) -> float:
+        """after the answer to the device's last step-1 request: keep the port open and answer a repeat of that
+        request (the device asks again after 5 s if the answer was lost). Ends as soon as the FM-1 leaves the bus –
+        normally at once, it restarts into the update loader. -> seconds spent here"""
+        t0 = time.monotonic()
+        end = t0 + self.d["linger"]
+        repeats = 0
+        while time.monotonic() < end:
+            pkt = link.read(self.d["poll"])
+            if pkt is None:
+                if link.lost:
+                    break
+                continue
+            r = fi.parse_request(pkt)
+            if r and r[1] == fi.FINISH_CHECK and repeats < 12:
+                repeats += 1
+                self._evidence = True
+                self.flight.ev("RESEND", f"{fi.FINISH_CHECK:#010x} asked again – answered again ({repeats})")
+                self.flight.resends += 1
+                self._send(link, fi.response(fi.FINISH_CHECK, b"success\0"))
+                end = time.monotonic() + self.d["linger"]
+        return time.monotonic() - t0
 
     def check(self, dev, image, step, loader):
         """step 1; in careful mode repeated after a USB dropout (step 1 writes nothing, the old firmware keeps
@@ -451,7 +534,8 @@ class RobustUpdater(fi.Updater):
             try:
                 return self._check_once(dev, image, step, loader)
             except fi.InstallError as e:
-                if not (self.careful and self.pinned) or e.code not in ("lost", "stopped") or tries >= STEP1_TRIES:
+                if not (self.careful and self.pinned) or e.code not in ("lost", "stopped", "notstaged") \
+                        or tries >= STEP1_TRIES:
                     raise
                 if e.code == "stopped" and not self._evidence:
                     raise
@@ -613,6 +697,10 @@ def plan_notes(link, setting: str = "auto") -> list[str]:
                          "its own power supply or connect the FM-1 directly."))
     elif careful:
         out.append(_("Careful USB mode is switched on (settings)."))
+    from . import tested
+    if careful and not tested.tested("usb_hub"):
+        out.append(_("Careful mode and its automatic resume have only been run in the simulation so far, not "
+                     "through a real USB hub."))
     if link.autosuspend_nodes:
         out.append(_("USB power saving (autosuspend) is on for: {devices}. It can put the FM-1 or its hub to sleep "
                      "during the waits. The optional udev rule of the app switches it off (Help › “Switching "

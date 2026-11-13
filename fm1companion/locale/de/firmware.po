@@ -83,10 +83,6 @@ msgstr "Was danach nicht mehr auf dem Gerät ist:"
 msgid "Not possible – see above"
 msgstr "Nicht möglich – siehe oben"
 
-#: fm1companion/ui/firmware_page.py:311
-msgid "Cancels before the next safe point. While writing, the installation runs to the end – cancelling there would leave the FM-1 in update mode."
-msgstr "Bricht vor dem nächsten sicheren Punkt ab. Während geschrieben wird, läuft die Installation zu Ende – ein Abbruch dort würde das FM-1 im Update-Modus lassen."
-
 #: fm1companion/ui/firmware_page.py:317
 msgid "<b>Do not unplug and do not switch off now.</b> The FM-1 is writing its firmware. This takes a few minutes – after that it restarts by itself."
 msgstr "<b>Jetzt nicht abstecken und nicht ausschalten.</b> Das FM-1 schreibt gerade seine Firmware. Das dauert ein paar Minuten – danach startet es von selbst neu."
@@ -94,10 +90,6 @@ msgstr "<b>Jetzt nicht abstecken und nicht ausschalten.</b> Das FM-1 schreibt ge
 #: fm1companion/ui/firmware_page.py:326
 msgid "Cancel (only before writing)"
 msgstr "Abbrechen (nur vor dem Schreiben)"
-
-#: fm1companion/ui/firmware_page.py:344
-msgid "While the FM-1 is writing, it cannot be cancelled safely – please wait."
-msgstr "Während das FM-1 schreibt, lässt sich nicht sicher abbrechen – bitte warten."
 
 #: fm1companion/ui/firmware_page.py:351
 msgid "Cancellation requested – takes effect at the next safe point."
@@ -278,11 +270,6 @@ msgstr "Original-V15 läuft. Weiter mit der Zielfirmware …"
 #, python-brace-format
 msgid "Step: install {name} …"
 msgstr "Schritt: {name} aufspielen …"
-
-#: fm1companion/ui/firmware_page.py:622
-#, python-brace-format
-msgid "The FM-1 is now waiting in update mode – {name} is not completely written. Do not unplug anything: continue on the “Recovery” page with “Finish installation”."
-msgstr "Das FM-1 wartet jetzt im Update-Modus – {name} ist nicht vollständig geschrieben. Nichts abziehen: auf der Seite „Rettung“ mit „Installation abschließen“ weitermachen."
 
 #: fm1companion/ui/firmware_page.py:626
 #, python-brace-format
@@ -628,10 +615,6 @@ msgstr "Weiter zum Plan"
 msgid "Back to the original"
 msgstr "Zurück zum Original"
 
-#: fm1companion/ui/firmware_page.py:1118
-msgid "<b>V15</b> is the proven way back: all installers know it, and almost all community firmwares are installed from it. <b>V16</b> (October 2026) is M-VAVE's newest version with eight voices and 64-step patterns. M-VAVE occasionally replaces the V16 file on the server – if the checksum does not match, the app installs nothing.<br><br>Afterwards, on the FM-1, run <i>System &gt; Reset Patches</i> once if presets look garbled."
-msgstr "<b>V15</b> ist der bewährte Rückweg: alle Installer kennen sie, und fast alle Community-Firmwares werden von ihr aus installiert. <b>V16</b> (Oktober 2026) ist M-VAVEs neueste Version mit acht Stimmen und 64-Step-Pattern. M-VAVE tauscht die V16-Datei auf dem Server gelegentlich aus – passt die Prüfsumme nicht, installiert die App nichts.<br><br>Danach am FM-1 einmal <i>System &gt; Reset Patches</i>, falls Presets verstümmelt aussehen."
-
 #: fm1companion/ui/firmware_page.py:1126
 msgid "Original firmware V15 (recommended)"
 msgstr "Original-Firmware V15 (empfohlen)"
@@ -969,11 +952,6 @@ msgstr "<span style='color:#f67400'>● Live erkannt: ein FM-1 wartet im Update-
 #: fm1companion/ui/pages/recovery.py:277
 msgid "<span style='color:#888'>○ Not detected: no FM-1 in update mode.</span> The display updates by itself."
 msgstr "<span style='color:#888'>○ Nicht erkannt: kein FM-1 im Update-Modus.</span> Die Anzeige aktualisiert sich von selbst."
-
-#: fm1companion/ui/pages/recovery.py:280
-#, python-brace-format
-msgid "Interrupted installation according to the journal: <b>{target}</b> ({product}, phase “{phase}”)."
-msgstr "Unterbrochene Installation laut Journal: <b>{target}</b> ({product}, Phase „{phase}“)."
 
 #: fm1companion/ui/pages/recovery.py:286
 msgid "Only possible once an FM-1 in update mode is detected (see status above)."
@@ -2238,10 +2216,6 @@ msgstr "Die USB-Verbindung ist abgerissen."
 msgid "The FM-1 stopped requesting data."
 msgstr "Das FM-1 hat aufgehört, Daten anzufordern."
 
-#: fm1companion/flash/engine.py:60
-msgid "The FM-1 in update mode was not found. Plug the cable in again and choose “Resume” – it stays in update mode until the installation is finished."
-msgstr "Das FM-1 im Update-Modus wurde nicht gefunden. Kabel neu einstecken und „Fortsetzen“ wählen – es bleibt im Update-Modus, bis die Installation fertig ist."
-
 #: fm1companion/flash/engine.py:62
 msgid "The FM-1 did not come back after writing. Switch it off and on again."
 msgstr "Das FM-1 ist nach dem Schreiben nicht zurückgekommen. Aus- und wieder einschalten."
@@ -2261,10 +2235,6 @@ msgstr "Das FM-1 wartet in einem Update-Modus, der nicht zu diesem Paket passt. 
 #: fm1companion/flash/engine.py:66
 msgid "Cancelled before anything was sent. Nothing has changed on the FM-1."
 msgstr "Abgebrochen, bevor etwas gesendet wurde. Am FM-1 hat sich nichts geändert."
-
-#: fm1companion/flash/engine.py:67
-msgid "The running firmware refused the original firmware (CHECK HEAD, “FAILED -5” on the FM-1): its boot area differs. Nothing was written, the current firmware keeps running. Please do not force another path. The cause is usually a changed boot area (m-bootloader, Open V12/V14). Way out: firmware with the new check, or download mode (recovery stage 2)."
-msgstr "Die laufende Firmware hat die Original-Firmware abgelehnt (CHECK HEAD, am FM-1 „FAILED -5“): Ihr Bootbereich weicht ab. Es wurde nichts geschrieben, die jetzige Firmware läuft weiter. Bitte keinen anderen Weg erzwingen. Ursache ist meist ein geänderter Bootbereich (m-bootloader, Open V12/V14). Ausweg: Firmware mit neuer Prüfung oder Download-Modus (Rettung Stufe 2)."
 
 #: fm1companion/flash/engine.py:71
 msgid "The FM-1 refused the package in step 1. Does the display show “FAILED <number>”? -3/-7: unknown loader, -5: boot area differs, -15: Felucca 1.6.1 check (see help)."
@@ -2376,11 +2346,6 @@ msgstr "Schritt 1 + Schritt 2"
 msgid "Dry run: {label} ({product}, {family}) would go to {identity} – {how}. Nothing sent."
 msgstr "Probelauf: {label} ({product}, {family}) würde an {identity} gehen – {how}. Nichts gesendet."
 
-#: fm1companion/flash/engine.py:320
-#, python-brace-format
-msgid "Starting the update to {target} …"
-msgstr "Starte das Update auf {target} …"
-
 #: fm1companion/flash/engine.py:330
 #, python-brace-format
 msgid "Done: the FM-1 reports {identity}"
@@ -2389,10 +2354,6 @@ msgstr "Fertig: das FM-1 meldet {identity}"
 #: fm1companion/flash/engine.py:352
 msgid "Unexpected error after writing. The FM-1 probably starts normally – plug the cable in again and check which firmware it reports."
 msgstr "Unerwarteter Fehler nach dem Schreiben. Das FM-1 startet vermutlich normal – Kabel neu einstecken und prüfen, welche Firmware es meldet."
-
-#: fm1companion/flash/engine.py:355
-msgid "Unexpected error while writing. The FM-1 is probably waiting in update mode: check the cable and resume with the same package on the “Recovery” page."
-msgstr "Unerwarteter Fehler während des Schreibens. Das FM-1 wartet vermutlich im Update-Modus: Kabel prüfen und auf der Seite „Rettung“ mit demselben Paket fortsetzen."
 
 #: fm1companion/flash/engine.py:358
 msgid "Unexpected error before writing. Nothing was written, the previous firmware keeps running."
@@ -2406,11 +2367,6 @@ msgstr "{message} Es wurde nichts geschrieben."
 #: fm1companion/flash/engine.py:380
 msgid "The FM-1 started an update loader that does not match this package. Nothing was written; the FM-1 is now waiting in update mode. On the “Recovery” page only a package that belongs to this loader is sent."
 msgstr "Das FM-1 hat einen Update-Loader gestartet, der nicht zu diesem Paket passt. Es wurde nichts geschrieben; das FM-1 wartet jetzt im Update-Modus. Auf der Seite „Rettung“ wird nur ein Paket gesendet, das zu diesem Loader gehört."
-
-#: fm1companion/flash/engine.py:384
-#, python-brace-format
-msgid "{message} The FM-1 is waiting in update mode: check the cable and resume with the same package (“Recovery” page)."
-msgstr "{message} Das FM-1 wartet im Update-Modus: Kabel prüfen und mit demselben Paket fortsetzen (Seite „Rettung“)."
 
 #: fm1companion/flash/package.py:50
 msgid "the original loader (ota-FM-1_015)"
@@ -2970,29 +2926,14 @@ msgstr "Groovebox mit vier Spuren: ein Acid-Bass oder ein Poly im Juno-Stil, Phy
 msgid "The web installer of {name} names another checksum for {tag} than the app pins – the app keeps its own."
 msgstr "Der Web-Installer von {name} nennt für {tag} eine andere Prüfsumme, als die App festhält – die App bleibt bei ihrer eigenen."
 
-msgid "Switching from {current} to {target}: the app installs the original firmware V15 first, then {target} – recommended, so no leftovers of {current} stay on the FM-1."
-msgstr "Wechsel von {current} zu {target}: Die App spielt zuerst die Original-Firmware V15 auf, dann {target} – empfohlen, damit keine Reste von {current} auf dem FM-1 bleiben."
-
-msgid "The running firmware is not recognised, so this counts as a switch: the app installs the original firmware V15 first, then {target} – recommended, so no leftovers of the previous firmware stay on the FM-1."
-msgstr "Die laufende Firmware ist nicht erkannt, das gilt deshalb als Wechsel: Die App spielt zuerst die Original-Firmware V15 auf, dann {target} – empfohlen, damit keine Reste der bisherigen Firmware auf dem FM-1 bleiben."
-
 msgid "the previous firmware"
 msgstr "der bisherigen Firmware"
-
-msgid "<b>Expert option: installed directly, without the V15 step.</b> Leftovers of {current} (settings, projects, sample areas) can stay in the flash and confuse {target}. If {target} behaves strangely afterwards, install it again with the V15 step."
-msgstr "<b>Expertenoption: direkt installiert, ohne den V15-Schritt.</b> Reste von {current} (Einstellungen, Projekte, Sample-Bereiche) können im Flash bleiben und {target} durcheinanderbringen. Verhält sich {target} danach seltsam, installiere es noch einmal mit dem V15-Schritt."
 
 msgid "Continues the interrupted switch to {target}: the original firmware V15 is already installed (step 1 of 2 is done) – now {target} is installed directly."
 msgstr "Setzt den unterbrochenen Wechsel zu {target} fort: Die Original-Firmware V15 ist schon aufgespielt (Schritt 1 von 2 ist erledigt) – jetzt wird {target} direkt installiert."
 
 msgid "Expert: install directly without the V15 step"
 msgstr "Experte: direkt installieren, ohne den V15-Schritt"
-
-msgid "Skips the original V15 before the switch. Leftovers of the previous firmware can then stay in the flash. Only for experts – the choice is not remembered."
-msgstr "Lässt die Original-V15 vor dem Wechsel weg. Reste der bisherigen Firmware können dann im Flash bleiben. Nur für Experten – die Wahl wird nicht gespeichert."
-
-msgid "Without the V15 step: leftovers of the previous firmware can stay on the FM-1 (see Notes)."
-msgstr "Ohne den V15-Schritt: Reste der bisherigen Firmware können auf dem FM-1 bleiben (siehe Hinweise)."
 
 msgid "Cancelled after the intermediate step: {written} was written to the FM-1 – it now runs the original firmware V15. {name} was NOT written. To continue: Firmware+ › Install & Versions › “Continue: install {name}” (the V15 step is not repeated)."
 msgstr "Nach dem Zwischenschritt abgebrochen: {written} wurde auf das FM-1 geschrieben – es läuft jetzt die Original-Firmware V15. {name} wurde NICHT geschrieben. Zum Fortsetzen: Firmware+ › Installieren & Versionen › „Weiter: {name} installieren“ (der V15-Schritt wird nicht wiederholt)."
@@ -3023,3 +2964,240 @@ msgstr "Gerade lässt sich keine Version von {name} laden."
 
 msgid "Switch in two steps: after the original V15 the app still installs <b>{name}</b> – once the FM-1 runs V15: Firmware+ › Install & Versions › “Continue”."
 msgstr "Wechsel in zwei Schritten: Nach der Original-V15 installiert die App noch <b>{name}</b> – sobald das FM-1 mit V15 läuft: Firmware+ › Installieren & Versionen › „Weiter“."
+
+msgid "{name} is larger than {limit} MB – that is no FM-1 package. Nothing was saved."
+msgstr "{name} ist größer als {limit} MB – das ist kein FM-1-Paket. Es wurde nichts gespeichert."
+
+msgid "The download of {name} broke off ({done} of {total} bytes arrived). Nothing was saved – please try again."
+msgstr "Der Download von {name} ist abgebrochen ({done} von {total} Bytes angekommen). Es wurde nichts gespeichert – bitte noch einmal versuchen."
+
+msgid "Refused: “{value}” is not a valid {what} – the download would not land in the firmware folder as an FM-1 package. Nothing was downloaded."
+msgstr "Abgelehnt: „{value}“ ist kein gültiger {what} – der Download würde nicht als FM-1-Paket im Firmware-Ordner landen. Es wurde nichts heruntergeladen."
+
+msgid "firmware key"
+msgstr "Firmware-Schlüssel"
+
+msgid "version name"
+msgstr "Versionsname"
+
+msgid "package name"
+msgstr "Paketname"
+
+msgid "file name"
+msgstr "Dateiname"
+
+msgid "{name} on this computer is damaged – downloading it again"
+msgstr "{name} auf diesem Computer ist beschädigt – wird neu heruntergeladen"
+
+msgid "The address was refused: {reason}. Nothing was downloaded."
+msgstr "Die Adresse wurde abgelehnt: {reason}. Es wurde nichts heruntergeladen."
+
+msgid "From here on the installation can no longer be cancelled."
+msgstr "Ab hier lässt sich die Installation nicht mehr abbrechen."
+
+msgid "Cancel still works during this check: nothing is written to the FM-1 yet."
+msgstr "Während dieser Prüfung geht Abbrechen noch: Auf das FM-1 wird noch nichts geschrieben."
+
+msgid "Cancel came too late: the FM-1 is already past the point where the app can stop it. The installation runs to the end."
+msgstr "Abbrechen kam zu spät: Das FM-1 ist schon über den Punkt hinaus, an dem die App es anhalten kann. Die Installation läuft bis zum Ende."
+
+msgid "After the check of the package the FM-1 neither showed up in update mode nor answered as before. It is probably waiting in update mode: plug the cable in again and look at the “Recovery” page – if it is detected there, use “Finish installation”. If it does not show up there: switch it off and on once; if the screen stays black, see Recovery, stage 2."
+msgstr "Nach der Prüfung des Pakets ist das FM-1 weder im Update-Modus aufgetaucht, noch hat es wie vorher geantwortet. Wahrscheinlich wartet es im Update-Modus: Steck das Kabel neu ein und schau auf die Seite „Rettung“ – wird es dort erkannt, nimm „Installation abschließen“. Taucht es dort nicht auf: einmal aus- und einschalten; bleibt das Display schwarz, siehe Rettung, Stufe 2."
+
+msgid "The FM-1 did not switch to update mode – it still answers with its current firmware ({identity}). Most likely the app's last answer of the check did not reach it (cable, hub). You can simply start the installation again."
+msgstr "Das FM-1 hat nicht in den Update-Modus gewechselt – es antwortet weiter mit seiner jetzigen Firmware ({identity}). Wahrscheinlich hat die letzte Antwort der App bei der Prüfung es nicht erreicht (Kabel, Hub). Du kannst die Installation einfach noch einmal starten."
+
+msgid "A second FM-1 answered while the app was waiting for the update mode, and on this computer the app cannot tell the two apart. Nothing was sent to the update loader. Please unplug the other FM-1."
+msgstr "Ein zweites FM-1 hat geantwortet, während die App auf den Update-Modus gewartet hat, und auf diesem Computer kann die App die beiden nicht auseinanderhalten. An den Update-Loader wurde nichts gesendet. Bitte das andere FM-1 abziehen."
+
+msgid "The FM-1 now reports {now}, but the plan was made for {planned}. Nothing was sent. Please open the installation plan again."
+msgstr "Das FM-1 meldet jetzt {now}, der Plan wurde aber für {planned} gemacht. Es wurde nichts gesendet. Bitte den Installationsplan noch einmal öffnen."
+
+msgid "Cancelled during the check of the package (step 1): the app stopped answering before the FM-1 was told to go on. Nothing was written, the current firmware stays. The FM-1 waits for the computer for up to a minute, then shows “FAILED” and carries on – that is expected here."
+msgstr "Abgebrochen während der Prüfung des Pakets (Schritt 1): Die App hat aufgehört zu antworten, bevor das FM-1 das Zeichen zum Weitermachen bekam. Es wurde nichts geschrieben, die jetzige Firmware bleibt. Das FM-1 wartet bis zu einer Minute auf den Computer, zeigt dann „FAILED“ und läuft weiter – das ist hier so zu erwarten."
+
+msgid "The running firmware refused the original firmware (CHECK HEAD, “FAILED -5” on the FM-1): its boot area differs. Nothing was written, the current firmware keeps running. Please do not force another path. The cause is usually a changed boot area (m-bootloader, Open V12/V14). Way out: a firmware with the newer check, or download mode with another tool (“Recovery” page, stage 2 › Details: M-Flasher)."
+msgstr "Die laufende Firmware hat die Original-Firmware abgelehnt (CHECK HEAD, „FAILED -5“ auf dem FM-1): Ihr Boot-Bereich weicht ab. Es wurde nichts geschrieben, die jetzige Firmware läuft weiter. Bitte keinen anderen Weg erzwingen. Ursache ist meist ein veränderter Boot-Bereich (m-bootloader, Open V12/V14). Ausweg: eine Firmware mit der neueren Prüfung oder der Download-Modus mit einem anderen Werkzeug (Seite „Rettung“, Stufe 2 › Details: M-Flasher)."
+
+msgid "The FM-1 is probably waiting in update mode: check the cable, then open the “Recovery” page – if the FM-1 is detected there, use “Finish installation” with the same package. If it does not show up there: switch it off and on once; if the screen stays black, see Recovery, stage 2."
+msgstr "Wahrscheinlich wartet das FM-1 im Update-Modus: Kabel prüfen, dann die Seite „Rettung“ öffnen – wird das FM-1 dort erkannt, nimm „Installation abschließen“ mit demselben Paket. Taucht es dort nicht auf: einmal aus- und einschalten; bleibt das Display schwarz, siehe Rettung, Stufe 2."
+
+msgid "Starting the installation of {target}: the FM-1 (it reports {identity}) checks the package …"
+msgstr "Installation von {target} beginnt: Das FM-1 (es meldet {identity}) prüft das Paket …"
+
+msgid "Unexpected error while writing."
+msgstr "Unerwarteter Fehler beim Schreiben."
+
+msgid "Why: firmware authors expect a start from the original V15, and a direct switch from another custom firmware has bricked a device at least once."
+msgstr "Warum: Die Autoren der Firmwares erwarten einen Start von der Original-V15, und ein direkter Wechsel von einer anderen Community-Firmware hat schon mindestens ein Gerät unbrauchbar gemacht."
+
+msgid "About the V15 step: the original firmware has no start protection – keep power and USB connected while it is written. Saved data of the old firmware can remain in the flash (the V15 step only writes the firmware area), and the original firmware may read it as its own: presets can look garbled until the target firmware is installed. This two-step path has not been run on a real FM-1 by this app yet."
+msgstr "Zum V15-Schritt: Die Original-Firmware hat keinen Startschutz – lass Strom und USB verbunden, während sie geschrieben wird. Gespeicherte Daten der alten Firmware können im Flash bleiben (der V15-Schritt schreibt nur den Firmware-Bereich), und die Original-Firmware liest sie womöglich als ihre eigenen: Presets können verstümmelt aussehen, bis die Ziel-Firmware installiert ist. Dieser Weg in zwei Schritten ist von dieser App noch nie auf einem echten FM-1 gelaufen."
+
+msgid "the original firmware {version}"
+msgstr "die Original-Firmware {version}"
+
+msgid "Switching from {current} to {target}: the app installs the original firmware V15 first, then {target}."
+msgstr "Wechsel von {current} zu {target}: Die App spielt zuerst die Original-Firmware V15 auf, dann {target}."
+
+msgid "The running firmware is not recognised, so this counts as a switch: the app installs the original firmware V15 first, then {target}."
+msgstr "Die laufende Firmware wird nicht erkannt, deshalb gilt das als Wechsel: Die App spielt zuerst die Original-Firmware V15 auf, dann {target}."
+
+msgid "<b>Expert option: installed directly, without the V15 step.</b> The authors of most firmwares expect a start from the original V15; a direct switch from another custom firmware has bricked a device at least once. Saved data of {current} (settings, projects, sample areas) stays in the flash either way and can confuse {target}."
+msgstr "<b>Experten-Option: direkt installiert, ohne den V15-Schritt.</b> Die Autoren der meisten Firmwares erwarten einen Start von der Original-V15; ein direkter Wechsel von einer anderen Community-Firmware hat schon mindestens ein Gerät unbrauchbar gemacht. Gespeicherte Daten von {current} (Einstellungen, Projekte, Sample-Bereiche) bleiben so oder so im Flash und können {target} durcheinanderbringen."
+
+msgid "Original V15: already on this computer ✓ (no download needed)."
+msgstr "Original-V15: liegt schon auf diesem Computer ✓ (kein Download nötig)."
+
+msgid "Original V15: will be downloaded first (≈ 0.9 MB, internet needed)."
+msgstr "Original-V15: wird zuerst heruntergeladen (≈ 0,9 MB, Internet nötig)."
+
+msgid "The app does not know the update loader of this package yet – it looks at the package after the download and sends nothing to a loader it does not know. Whether a power loss while writing could be resumed is therefore open: keep power and USB connected."
+msgstr "Die App kennt den Update-Loader dieses Pakets noch nicht – sie sieht sich das Paket nach dem Download an und sendet nichts an einen Loader, den sie nicht kennt. Ob sich ein Stromausfall beim Schreiben fortsetzen ließe, ist deshalb offen: Lass Strom und USB verbunden."
+
+msgid "Careful mode and its automatic resume have only been run in the simulation so far, not through a real USB hub."
+msgstr "Der vorsichtige Modus und sein automatisches Fortsetzen sind bisher nur in der Simulation gelaufen, nicht über einen echten USB-Hub."
+
+msgid "an update within Melodee"
+msgstr "ein Update innerhalb von Melodee"
+
+msgid "an update within another firmware than Melodee"
+msgstr "ein Update innerhalb einer anderen Firmware als Melodee"
+
+msgid "a switch to another firmware"
+msgstr "ein Wechsel zu einer anderen Firmware"
+
+msgid "the intermediate step via the original V15"
+msgstr "der Zwischenschritt über die Original-V15"
+
+msgid "continuing a switch after the V15 step"
+msgstr "das Fortsetzen eines Wechsels nach dem V15-Schritt"
+
+msgid "going back to the original firmware"
+msgstr "der Weg zurück zur Original-Firmware"
+
+msgid "the original firmware V16"
+msgstr "die Original-Firmware V16"
+
+msgid "installing your own .fwsc file"
+msgstr "das Installieren einer eigenen .fwsc-Datei"
+
+msgid "finishing an interrupted installation"
+msgstr "das Abschließen einer unterbrochenen Installation"
+
+msgid "rewriting font and factory sounds"
+msgstr "das Nachschreiben von Schrift und Werkssounds"
+
+msgid "several FM-1 connected at once"
+msgstr "mehrere FM-1 gleichzeitig angeschlossen"
+
+msgid "installing through a USB hub (careful mode)"
+msgstr "das Installieren über einen USB-Hub (vorsichtiger Modus)"
+
+msgid "restoring the factory voices of the original V15"
+msgstr "das Wiederherstellen der Werks-Voices der Original-V15"
+
+msgid "writing in ROM boot mode (recovery stage 2)"
+msgstr "das Schreiben im ROM-Bootmodus (Rettung Stufe 2)"
+
+msgid "Tested on a real FM-1: this kind of step ({what}) has been run on a real device with this app."
+msgstr "Auf einem echten FM-1 getestet: Diese Art von Schritt ({what}) ist mit dieser App schon auf einem echten Gerät gelaufen."
+
+msgid "Tested on a real FM-1 so far: {done}. This step: only in the simulation."
+msgstr "Bisher auf einem echten FM-1 getestet: {done}. Dieser Schritt: nur in der Simulation."
+
+msgid "Tested on a real FM-1 so far: {done}. This step ({what}): only in the simulation."
+msgstr "Bisher auf einem echten FM-1 getestet: {done}. Dieser Schritt ({what}): nur in der Simulation."
+
+msgid "Skips the original V15 before the switch – against what most firmware authors expect. Only for experts; the choice is not remembered."
+msgstr "Überspringt die Original-V15 vor dem Wechsel – anders, als es die meisten Firmware-Autoren erwarten. Nur für Experten; die Wahl wird nicht gespeichert."
+
+msgid "Without the V15 step: not the start most firmware authors expect (see Notes)."
+msgstr "Ohne den V15-Schritt: nicht der Start, den die meisten Firmware-Autoren erwarten (siehe Hinweise)."
+
+msgid "Stops the installation as long as nothing has been written to the FM-1. Once the FM-1 switches to update mode, the installation runs to the end – stopping there would leave the FM-1 in update mode."
+msgstr "Hält die Installation an, solange nichts auf das FM-1 geschrieben wurde. Sobald das FM-1 in den Update-Modus wechselt, läuft die Installation bis zum Ende – ein Halt dort ließe das FM-1 im Update-Modus zurück."
+
+msgid "The installation can no longer be cancelled – please wait until it is finished."
+msgstr "Die Installation lässt sich nicht mehr abbrechen – bitte warten, bis sie fertig ist."
+
+msgid "Can no longer be cancelled"
+msgstr "Lässt sich nicht mehr abbrechen"
+
+msgid "Cancellation requested – the app stops before anything is written to the FM-1. If it turns out to be too late for that, the next lines say so."
+msgstr "Abbruch angefordert – die App hält an, bevor etwas auf das FM-1 geschrieben wird. Falls es dafür schon zu spät ist, sagen es die nächsten Zeilen."
+
+msgid "The original V15 is needed for this switch, but it is not on this computer and could not be downloaded."
+msgstr "Für diesen Wechsel wird die Original-V15 gebraucht, sie liegt aber nicht auf diesem Computer und ließ sich nicht herunterladen."
+
+msgid "Reason: {error} Nothing has been changed on the FM-1. Once you are online: Firmware+ › Install & Versions › “Download the original V15 for offline use” – after that the switch also works without internet."
+msgstr "Grund: {error} Am FM-1 wurde nichts geändert. Sobald du online bist: Firmware+ › Installieren & Versionen › „Original-V15 für die Offline-Nutzung herunterladen“ – danach klappt der Wechsel auch ohne Internet."
+
+msgid "For experts there is also “Expert: install directly without the V15 step” in the plan."
+msgstr "Für Experten gibt es im Plan außerdem „Experte: direkt installieren, ohne den V15-Schritt“."
+
+msgid "What is left in this app: the plan's “Expert: install directly without the V15 step” (an update loader of the Felucca family writes only the firmware area and leaves the boot area as it is). Whether {name} runs with the changed boot area of this FM-1, the app cannot tell. The clean way is download mode with another tool: “Recovery” page, stage 2 › Details (M-Flasher)."
+msgstr "Was in dieser App bleibt: im Plan „Experte: direkt installieren, ohne den V15-Schritt“ (ein Update-Loader der Felucca-Familie schreibt nur den Firmware-Bereich und lässt den Boot-Bereich, wie er ist). Ob {name} mit dem veränderten Boot-Bereich dieses FM-1 läuft, kann die App nicht sagen. Der saubere Weg ist der Download-Modus mit einem anderen Werkzeug: Seite „Rettung“, Stufe 2 › Details (M-Flasher)."
+
+msgid "For {name} the V15 step is mandatory, so this app has no direct way. The way out is download mode with another tool: see the “Recovery” page, stage 2 › Details (M-Flasher; the app's own “Write back original V15” only writes under the factory boot area and would refuse here too)."
+msgstr "Für {name} ist der V15-Schritt Pflicht, deshalb hat diese App keinen direkten Weg. Der Ausweg ist der Download-Modus mit einem anderen Werkzeug: siehe Seite „Rettung“, Stufe 2 › Details (M-Flasher; das „Original-V15 zurückschreiben“ der App schreibt nur unter dem Werks-Boot-Bereich und würde hier ebenfalls ablehnen)."
+
+msgid "{name} is not completely written; the FM-1 is probably waiting in update mode now. Do not unplug anything and look at the “Recovery” page: if the FM-1 is detected there, continue with “Finish installation”."
+msgstr "{name} ist nicht vollständig geschrieben; wahrscheinlich wartet das FM-1 jetzt im Update-Modus. Nichts abziehen und auf die Seite „Rettung“ schauen: Wird das FM-1 dort erkannt, mit „Installation abschließen“ weitermachen."
+
+msgid "Dismiss"
+msgstr "Verwerfen"
+
+msgid "Forget this unfinished switch – only the note in the app is removed, nothing is sent to the FM-1. You can install any firmware as usual."
+msgstr "Diesen unvollendeten Wechsel vergessen – nur die Notiz in der App wird entfernt, an das FM-1 wird nichts gesendet. Du kannst jede Firmware wie gewohnt installieren."
+
+msgid "Download the original V15 for offline use"
+msgstr "Original-V15 für die Offline-Nutzung herunterladen"
+
+msgid "The original V15 is already on this computer (checksum checked) – a firmware switch and the recovery work without internet."
+msgstr "Die Original-V15 liegt schon auf diesem Computer (Prüfsumme geprüft) – ein Firmware-Wechsel und die Rettung gehen ohne Internet."
+
+msgid "A firmware switch and the recovery need M-VAVE's original firmware V15 (≈ 0.9 MB). The app only downloads it when it is needed – or now, with this button, so that it also works offline later. Nothing is installed."
+msgstr "Ein Firmware-Wechsel und die Rettung brauchen M-VAVEs Original-Firmware V15 (≈ 0,9 MB). Die App lädt sie erst, wenn sie gebraucht wird – oder jetzt, mit diesem Knopf, damit es später auch offline geht. Installiert wird nichts."
+
+msgid "Download the original V15"
+msgstr "Original-V15 herunterladen"
+
+msgid "The original V15 is on this computer now ({file}, checksum checked) – NOT installed. A firmware switch no longer needs internet for it."
+msgstr "Die Original-V15 liegt jetzt auf diesem Computer ({file}, Prüfsumme geprüft) – NICHT installiert. Ein Firmware-Wechsel braucht dafür kein Internet mehr."
+
+msgid "<b>V15</b> is the usual way back: the community's installers know it, and almost all community firmwares are installed from it. <b>V16</b> (October 2026) is M-VAVE's newest version with eight voices and 64-step patterns. M-VAVE occasionally replaces the V16 file on the server – if the checksum does not match, the app installs nothing.<br><br>Afterwards, on the FM-1, run <i>System &gt; Reset Patches</i> once if presets look garbled."
+msgstr "<b>V15</b> ist der übliche Rückweg: Die Installer der Community kennen sie, und fast alle Community-Firmwares werden von ihr aus installiert. <b>V16</b> (Oktober 2026) ist M-VAVEs neueste Version mit acht Stimmen und 64-Schritt-Patterns. M-VAVE tauscht die V16-Datei auf dem Server gelegentlich aus – stimmt die Prüfsumme nicht, installiert die App nichts.<br><br>Danach am FM-1 einmal <i>System &gt; Reset Patches</i> ausführen, falls Presets verstümmelt aussehen."
+
+msgid "before anything was sent"
+msgstr "bevor etwas gesendet wurde"
+
+msgid "while the FM-1 checked the package (step 1)"
+msgstr "während das FM-1 das Paket geprüft hat (Schritt 1)"
+
+msgid "while the FM-1 switched to update mode"
+msgstr "während das FM-1 in den Update-Modus gewechselt hat"
+
+msgid "while writing"
+msgstr "beim Schreiben"
+
+msgid "at the restart after writing"
+msgstr "beim Neustart nach dem Schreiben"
+
+msgid "while writing the resources"
+msgstr "beim Schreiben der Ressourcen"
+
+msgid "Forget the interrupted installation"
+msgstr "Unterbrochene Installation vergessen"
+
+msgid "Removes the app's note about the interrupted installation (and its copy of the package). Nothing is sent to the FM-1. Use it when the FM-1 runs normally again."
+msgstr "Entfernt die Notiz der App über die unterbrochene Installation (und ihre Kopie des Pakets). An das FM-1 wird nichts gesendet. Nimm das, wenn das FM-1 wieder normal läuft."
+
+msgid "Forget the two-step switch"
+msgstr "Zwei-Schritt-Wechsel vergessen"
+
+msgid "Removes the app's note that a second step is still to come. Nothing is sent to the FM-1."
+msgstr "Entfernt die Notiz der App, dass noch ein zweiter Schritt aussteht. An das FM-1 wird nichts gesendet."
+
+msgid "Interrupted installation according to the app's journal: <b>{target}</b> ({product}; it stopped {where}). The app has not looked at the FM-1 since – what is detected live is in the line above."
+msgstr "Unterbrochene Installation laut Journal der App: <b>{target}</b> ({product}; stehen geblieben {where}). Die App hat das FM-1 seitdem nicht angesehen – was gerade erkannt wird, steht in der Zeile darüber."

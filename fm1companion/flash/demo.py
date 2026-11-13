@@ -38,8 +38,8 @@ class DemoDevice(sim.SimFM1):
             return self.demo_port + " Update"
         return self.demo_port
 
-    def _restart(self, state, ident=None, delay=None):
-        super()._restart(state, ident, delay)
+    def _restart(self, state, ident=None, delay=None, stale=False):
+        super()._restart(state, ident, delay, stale)
         self.app_name = self.demo_port
 
 

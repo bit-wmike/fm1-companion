@@ -25,9 +25,22 @@ Whether there is an update for your FM-1 is also shown on the [Overview](app://p
 ## Switching always goes via the original V15
 
 When you **switch** to another firmware, the app first installs M-VAVE's unmodified **original firmware V15**
-(checksum-checked), then the new firmware – two installations in one plan. That way the new firmware starts from a
-clean state and no leftovers of the old one (settings, projects, sample areas) stay in the flash. The installation
-plan says so: “Switching from X to Y: the app installs the original firmware V15 first, then Y”.
+(checksum-checked), then the new firmware – two installations in one plan. The reason: firmware authors expect a
+start from the original V15, and a direct switch from another custom firmware has bricked a device at least once.
+The installation plan says so: “Switching from X to Y: the app installs the original firmware V15 first, then Y”.
+
+What you should know about the V15 step:
+
+* The original firmware has **no start protection** – keep power and USB connected while it is written.
+* Saved data of the old firmware **can remain** in the flash (the V15 step only writes the firmware area). The
+  original firmware may read it as its own: presets can look garbled until the target firmware is installed.
+* This two-step path **has not been run on a real FM-1 by this app yet** – only in the simulation. Run on a real
+  FM-1 so far: an update within Melodee. The plan repeats this for every installation.
+* The original V15 (≈ 0.9 MB) is downloaded when it is first needed; the plan says whether it is already on this
+  computer. *Download the original V15 for offline use* in [Firmware+ › Install & Versions](app://page/firmware)
+  fetches it beforehand.
+* If the running firmware refuses the original V15 (the FM-1 shows “FAILED -5”), nothing is written. The app then
+  says which way is left.
 
 * **Update or downgrade within the same firmware** (e.g. SLOOP 2.8.5 → 2.8.6, KARMA 3.1 → 3.0.5): directly, without
   the V15 step – also when the catalog says the firmware is installed from V15 (the FM-1 already runs it and its
@@ -40,7 +53,10 @@ plan says so: “Switching from X to Y: the app installs the original firmware V
   the target: [Firmware+ › Install & Versions](app://page/firmware) shows *Continue: install …* – the V15 step is not
   repeated. If it stopped *during* a step, finish it first on the [Recovery](app://page/recovery) page.
 * Experts can tick *Expert: install directly without the V15 step* in the plan. It is off by default, is not
-  remembered and the plan warns that leftovers of the old firmware can stay. There is no setting for it.
+  remembered and the plan warns that this is not the start most firmware authors expect. There is no setting
+  for it.
+* *Cancel* works as long as nothing has been written; with a Felucca-family firmware also while the FM-1 checks
+  the package. As soon as the installation can no longer be stopped, the button says so.
 
 ## Back to the original firmware
 

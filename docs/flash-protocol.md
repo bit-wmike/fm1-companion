@@ -1,6 +1,8 @@
 # FM-1 firmware installation – protocol, loaders, safety (installer workstream)
 
-Status: research notes for `fm1companion/flash/`. **Nothing here has touched a real FM-1.**
+Status: research notes for `fm1companion/flash/`. **Almost nothing here has touched a real FM-1** – the one
+exception is an update within Melodee (1.6.0-rc.8 → 1.6.0), see `docs/UNTESTED.md`; per kind of step the app keeps
+this in `fm1companion/flash/tested.py` and shows it before the click.
 Every statement is tagged **[V]** = verified from source code we read (file named), or
 **[A]** = assumed / taken from documentation or third-party text without code we could check.
 
@@ -137,7 +139,11 @@ names on a non-FM-1 VID are never probed.
 | interrupted step 2 | journal + recovery wizard resumes with the same package in its own loader |
 | non-resumable loader | explicit power/battery/cable confirmation |
 | two installs at once | process lock file + in-process lock |
-| several FM-1 attached | warning; the engine sticks to the selected port name, the loader is searched among FM-1 candidates only |
+| several FM-1 attached | the target is pinned by its USB path (sysfs; otherwise a unique serial number) for every step and across the re-enumerations; if it cannot be pinned and more than one candidate is connected, nothing is sent. Unpinned (no USB details at all): a second FM-1 that answers next to the freshly started loader stops the install before step 2 – a second device that *replaces* the target while it restarts cannot be told apart there |
+| plan made for another device state | `Engine.write(expect_identity=…)`: the identity the plan was made for (after the V15 step: `FM-1_015`) is compared with the handshake when writing starts; a difference sends nothing |
+| Cancel after the start | honoured until the first UPGRADE; with a running Felucca-family firmware also during step 1 (the host stops answering before it confirms `0xE0000000`; ota.c then erases the staging area and carries on – "Nothing is committed before the host's success", after up to 4 × 3 × 5 s). With the original firmware as the running firmware (its step 1 is unknown [A]) the button is switched off when UPGRADE is sent. The dialog never accepts a cancel the engine cannot honour |
+| the host's last answer of step 1 is lost | the port stays open after `0xE0000000` was answered until the device leaves the bus (at most 6 s more per repeat) and a repeat is answered again; if no loader appears and the FM-1 still answers with its start identity, the result is "nothing was written" (`notstaged`, safe) instead of "paused" |
+| a download breaks off | `firmware._fetch`: https only (redirects too), at most 16 MiB, kept only when `Content-Length` bytes arrived; a cached package no checksum vouches for is re-read (`ufw_check`) and fetched again when damaged |
 | data loss | auto-backup (Felucca protocol) before writes; plan lists what will be lost |
 | V16 URL changes content | hash check, refuse on mismatch |
 | CHECK HEAD refusal (stock return) | detected (step 1 stops in 0x…–0x4000 window) → explain, never retried another way |
@@ -173,8 +179,19 @@ Recovery's *Finish installation* is unchanged (it writes exactly the interrupted
 `fwfamily.by_key` (device names such as `jiant` = catalog key `jiant-fm`) and checks it against what the INFO answer
 names (`fwfamily.by_info`); a conflict (stale profile) means "unknown" and so a switch.
 
-The plan says what happens: "Switching from X to Y: the app installs the original firmware V15 first, then Y –
-recommended, so no leftovers of X stay on the FM-1." The checkbox *Expert: install directly without the V15 step*
+The plan says what happens and why, and nothing more than is known (`planner.V15_WHY`, `V15_STEP_FACTS`):
+"Switching from X to Y: the app installs the original firmware V15 first, then Y. Why: firmware authors expect a
+start from the original V15, and a direct switch from another custom firmware has bricked a device at least once."
+Sources: JIANT's README asks for V15 first when coming from another custom firmware ("a brick was reported going
+straight from one") [A]; Melodee's README recommends a stop between firmwares too (TransitFM1, not offered by this
+app) [A]. What the plan does **not** claim any more: that the V15 step removes leftovers. It does not – the stock
+loader's recorded step 2 requests exactly `flash.bin[0x4000:end)`, i.e. 0x4000–0x92FFF for V15 (§17.2); the data
+areas above stay as they are, and V15 may read them as its own settings (presets can look garbled until the target
+is installed). The plan also says that the V15 step itself has no start protection (Melodee RECOVERY.md: "Restoring
+stock also removes Melodee's application boot protection; keep power connected throughout the update") and that
+this two-step path has not been run on a real FM-1 by this app. If the running firmware refuses V15 (CHECK HEAD,
+FAILED −5, §16), nothing is written, the chain is cleared and the message names what is left: the expert option for
+`default_on`, download mode with another tool (M-Flasher) for `locked`. The checkbox *Expert: install directly without the V15 step*
 (`plan_install(via_v15=False)`, only for `default_on`) is off by default, is **not remembered** (no per-switch memory,
 no setting) and adds a warning to the plan.
 
@@ -184,8 +201,10 @@ the original firmware's settings storage 0x93000..0xE8FFF – V15 can overwrite 
 "Your projects on the device can be lost during the intermediate step – the app backs them up first."
 
 **Two-step chain in the journal.** Before the V15 step the journal records the target
-(`journal.json` `"chain": {"key", "name", "tag", "file", "device_id", "started"}`); it is cleared once the target is
-written (or when the V15 step failed safely, nothing written). Interrupted after V15 (cancel, failure of the target
+(`journal.json` `"chain": {"key", "name", "tag", "file", "device_id", "usb_path", "started"}`); it is cleared once
+the target is written – by the install flow or by Recovery's *Finish installation* –, when the V15 step failed
+safely (nothing written), or when the user presses *Dismiss*; it is ignored after 14 days and matched to the
+connected FM-1 by USB path or profile. Interrupted after V15 (cancel, failure of the target
 step, or the V15 step finished on the Recovery page): the FM-1 runs `FM-1_015`, Install & Versions shows *Continue:
 install Y* and the plan (`plan_install(chain=…)`, `InstallPlan.chain_resume`) installs Y directly – the V15 step is
 not repeated. If you stay on V15 and the presets are garbled: System > Reset Patches.
