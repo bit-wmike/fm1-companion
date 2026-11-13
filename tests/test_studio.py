@@ -2413,3 +2413,47 @@ def test_build_sets_source_date_epoch(tmp_path, monkeypatch):
     tree, commit = bs.source("melodee", tmp_path / "work", str(repo), ref="HEAD", repo_url="x")
     assert (tree / "a.txt").exists() and os.environ["SOURCE_DATE_EPOCH"] == "1767323045"
     monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+
+
+def test_preset_zip_sizes_are_checked_before_unpacking():
+    """SEC-07 (presetlib): a preset set (.zip) with an entry that unpacks to more than 1 MB is refused from the zip's
+    directory – nothing is unpacked; a normal set still reads"""
+    import io
+    import zipfile
+    from fm1companion import presetlib
+    p = presetlib.Preset(name="OK", engine=3, params=[1, 2, 3])
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("a.fm1preset", json.dumps(p.to_json()))
+    assert [x.name for x in presetlib.read_any(buf.getvalue(), "set.zip")] == ["OK"]
+    bomb = io.BytesIO()
+    with zipfile.ZipFile(bomb, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("a.fm1preset", json.dumps(p.to_json()))
+        z.writestr("big.fm1preset", b" " * (64 << 20))
+    assert len(bomb.getvalue()) < 200_000
+    opened = []
+    orig = zipfile.ZipFile.open
+
+    def spy(self, n, *a, _o=orig, **k):
+        opened.append(getattr(n, "filename", n))
+        return _o(self, n, *a, **k)
+    zipfile.ZipFile.open = spy
+    try:
+        with pytest.raises(presetlib.PresetError, match="too large") as e:
+            presetlib.read_any(bomb.getvalue(), "set.zip")
+    finally:
+        zipfile.ZipFile.open = orig
+    assert "big.fm1preset" not in opened and len(str(e.value)) < 300
+
+
+def test_twins_stay_small_in_memory(node_studio):
+    """ST-15: SLOOP's twin used 195 MB (about 600 MB during an export): the host's WASI stub did not answer
+    "no environment variables", and SLOOP's start then reserved ~160 MB for an environment that does not exist. Every
+    twin keeps the memory it was built with (32 MB, FM1 Open 8 MB) through its start and some playing."""
+    for fw in studio.FIRMWARES:
+        for b in studio.builds(fw):
+            st = node_studio(firmware=fw, version=b.version)
+            st.play()
+            st.backend.call("run", ms=500)
+            assert st.backend.call("info")["memory"] <= 32 << 20, (fw, b.version)
+            st.close()

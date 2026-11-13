@@ -136,7 +136,7 @@
     info() {
       const t = this.t;
       return { version: t.version(), fs: t.fs, flash_size: t.flashSize(), transport: t.transport(), now: t.ex.st_now(),
-               project: t.projectCurrent() };
+               project: t.projectCurrent(), memory: t.mem.byteLength };
     }
     out() { const o = this.t.takeOut(); if (o.length && this.env.emitMidi) this.env.emitMidi(o); return o; }
     // complete MIDI messages in -> the messages out (given to env.emitMidi, the twin's MIDI port). wait_ms: an editor request

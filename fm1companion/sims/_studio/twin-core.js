@@ -4,7 +4,18 @@
 //   const t = await TwinCore.create(wasmBytes, {flash, master});   t.midi([...]) -> [[msg], ...]
 (function (root) {
   "use strict";
-  const stub = new Proxy({}, { get: () => () => 0 });   // WASI: nothing is printed or opened
+  // WASI: nothing is printed or opened. environ_sizes_get must still write its two results (no variables, no bytes):
+  // a stub that only returned 0 left them as they happened to be in memory, and SLOOP's twin, the one that asks for an
+  // environment variable while it starts, then reserved ~160 MB for an environment that does not exist (195 MB of
+  // memory instead of 32; three times that during an export).
+  function wasi(owner) {
+    return new Proxy({}, {
+      get: (_, name) => name === "environ_sizes_get"
+        ? (count, size) => { const v = new DataView(owner.t.mem); v.setUint32(count, 0, true); v.setUint32(size, 0, true); return 0; }
+        : () => 0,
+    });
+  }
+  const stub = new Proxy({}, { get: () => () => 0 });
 
   function splitMidi(bytes) {                        // a raw MIDI byte stream -> complete messages
     const out = []; let i = 0;
@@ -35,7 +46,7 @@
     }
     constructor(module) {
       this.module = module;
-      this.instance = new WebAssembly.Instance(module, { env: stub, wasi_snapshot_preview1: stub });
+      this.instance = new WebAssembly.Instance(module, { env: stub, wasi_snapshot_preview1: wasi({ t: this }) });
       this.ex = this.instance.exports;
       this.ex._initialize();
       this.fs = this.ex.st_fs();
