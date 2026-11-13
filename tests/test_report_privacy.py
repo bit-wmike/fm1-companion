@@ -47,6 +47,7 @@ def test_redact_text_patterns():
     assert r("FM-1 serial 20240117000123 identity FM-1_91060") == "FM-1 serial …0123 identity FM-1_91060"
     assert r("/media/Michael/USB/kick.wav") == "/media/<benutzer>/USB/kick.wav"         # other capitalisation
     assert r("Michael Bauer's FM-1") == "<benutzer> Bauer's FM-1"
+    assert r("Bluetooth: Michaels AirPods") == "Bluetooth: <benutzer>s AirPods" and r("michaelson") == "michaelson"
     assert r("/home/anna/Musik/x.wav") == "/home/<benutzer>/Musik/x.wav"                 # another user's folder
     assert r("user pi: /home/pi/FM-1 /run/media/pi/STICK/a") == "user pi: /home/<benutzer>/FM-1 /run/media/<benutzer>/STICK/a"
     assert r("/home/michael/FM-1/x on STUDIO-PI") == "~/FM-1/x on <rechner>"

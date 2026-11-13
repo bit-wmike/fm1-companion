@@ -102,7 +102,8 @@ def redact_text(text: str, home: str | None = None, host: str | None = None, use
     if host and len(host) >= 2 and host.lower() not in ("localhost",):
         out = re.sub(rf"(?i)(?<![\w.-]){re.escape(host)}(?![\w-])", HOST_PLACEHOLDER, out)
     if user and len(user) >= 3 and user.lower() not in ("root", "user", "pi"):
-        out = re.sub(rf"(?i)(?<![\w.-]){re.escape(user)}(?![\w-])", USER_PLACEHOLDER, out)
+        # also the possessive form ("Michaels FM-1"): the name followed by a single s
+        out = re.sub(rf"(?i)(?<![\w.-]){re.escape(user)}(?=s?(?![\w-]))", USER_PLACEHOLDER, out)
     out = _MAC.sub(MAC_PLACEHOLDER, out)
     out = _SSID.sub(lambda m: m.group(1) + NET_PLACEHOLDER, out)
     out = _SERIAL.sub(lambda m: m.group(1) + "…" + m.group(2), out)
