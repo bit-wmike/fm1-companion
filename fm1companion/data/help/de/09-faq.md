@@ -64,8 +64,11 @@ du „je Firmware die neuesten N Downloads behalten“ einschalten.
 
 **Etwas ist abgestürzt.**
 Die App zeigt dann einen Dialog mit *Fehlerbericht speichern*. Der Bericht enthält Protokolle, Versionen und
-Einstellungen ohne persönliche Pfade – du entscheidest, ob du ihn weitergibst. Selbst erstellen: Hilfe ›
-Fehlerbericht erstellen.
+Einstellungen. Zugangsdaten, dein Benutzerordner, Benutzer- und Rechnername, Gerätenamen und Seriennummern werden
+automatisch entfernt, er kann aber noch Dateinamen und andere Details enthalten – bitte sieh ihn durch, bevor du ihn
+öffentlich postest. Du entscheidest, ob du ihn weitergibst; nichts wird automatisch gesendet. Selbst erstellen: Hilfe ›
+Fehlerbericht erstellen. Zum Senden hängst du die Datei an ein neues Issue auf der GitHub-Issues-Seite des Projekts an:
+<https://github.com/bit-wmike/fm1-companion/issues>.
 
 **Wie bekomme ich das alte Aussehen zurück?**
 Ansicht › Design › *Systemstil (KDE/Breeze)*. Symbole: Einstellungen › Aussehen › *System-Thema*.

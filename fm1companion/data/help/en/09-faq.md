@@ -61,8 +61,11 @@ Firmware downloads in `~/FM-1/Firmware` are never deleted automatically (that fo
 
 **Something crashed.**
 The app then shows a dialog with *Save bug report*. The report contains logs, versions and
-settings without personal paths – you decide whether to pass it on. To create one yourself: Help ›
-Create bug report.
+settings. Credentials, your home folder, user and computer name, device names and serial numbers are removed
+automatically, but it may still contain file names and other details – please look through it before you post it
+publicly. You decide whether to pass it on; nothing is sent automatically. To create one yourself: Help ›
+Create bug report. To send it, attach the file to a new issue on the project's GitHub issues page:
+<https://github.com/bit-wmike/fm1-companion/issues>.
 
 **How do I get the old look back?**
 View › Theme › *System style (KDE/Breeze)*. Icons: Settings › Appearance › *System theme (Breeze/Papirus)*.
