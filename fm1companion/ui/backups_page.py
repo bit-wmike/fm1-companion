@@ -242,7 +242,8 @@ class AutoBackupService(QObject):
             if nc is not None:
                 self._pending["note"] = nc.post(self._announce_text(), "info", action=(_("Skip today"), self.skip_today),
                                                 more=[(_("Back up now"), self.backup_now)],
-                                                lifetime=delay * 1000 + 1500)
+                                                lifetime=delay * 1000 + 1500, quiet=True)   # (gone once it
+                # starts: nothing to read up on later, so it does not count on the bell)
         except Exception:                          # noqa: BLE001 – the notice must never stop the backup
             pass
         AB.STATUS.add(self._announce_text())
