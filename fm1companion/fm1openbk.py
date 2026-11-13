@@ -231,57 +231,103 @@ def objects(file) -> dict[int, bytes]:
 
 def restore(link, file: dict, progress=None, tolerant: bool = False, ids=None) -> list[int]:
     """write an FM1 Open backup to the device (see the module text). tolerant: a part the firmware refuses is skipped
-    (-> its id in the returned list) instead of stopping. ids: only these objects."""
+    (-> its id in the returned list) instead of stopping. ids: only these objects.
+
+    Every project slot goes through the device's working area (upload, then "save to slot"). When the working
+    project itself is not among the parts to restore, it is read first and written back at the end – unsaved work
+    on the FM-1 stays (if the connection breaks in between it cannot be written back: the error then says so).
+    An error carries what was already written (.written) and the part that was being written (.unclear)."""
     m = objects(file)
     want = set(ids) if ids is not None else set(m)
     rejected: list[int] = []
-    with F.Client(link, timeout=1.0) as c:
-        link.send_midi(MMC_STOP, force=True)
-        info = _probe(c)
-        banks = [i for i in BANK_IDS if i in want and m.get(i)]
-        if banks and not info["library"]:
-            if not tolerant:
-                raise FM1OpenBackupError(_("This FM1 Open has no DX7 library (an older version) – nothing was "
-                                           "written."))
-            rejected += banks
-            banks = []
-        slots = [i for i in SLOT_IDS if i in want and m.get(i)]
-        work = m[WORKING] if WORKING in want else b""
-        smp = m.get(SAMPLES, b"") if SAMPLES in want else b""
-        total = len(banks) * BANK + (len(slots) + 1) * PROJECT_TUNED + len(smp) * 2 or 1
-        done = 0
-
-        def step(n):
-            nonlocal done
-            done += n
-            if progress:
-                progress(min(done, total), total)
-
-        def attempt(oid, fn):
-            try:
-                fn()
-            except F.FM1OpenError:
+    written: list[int] = []
+    state = {"current": None}
+    try:
+        with F.Client(link, timeout=1.0) as c:
+            link.send_midi(MMC_STOP, force=True)
+            info = _probe(c)
+            banks = [i for i in BANK_IDS if i in want and m.get(i)]
+            if banks and not info["library"]:
                 if not tolerant:
-                    raise
-                rejected.append(oid)
-        for i in banks:
-            attempt(i, lambda i=i: _upload(c, KIND_BANK, i - 20, m[i]))
-            step(BANK)
-        for i in slots:
-            attempt(i, lambda i=i: (_upload(c, KIND_PROJECT, 0, m[i]), c.query(7, bytes([i - 1]))))
+                    raise FM1OpenBackupError(_("This FM1 Open has no DX7 library (an older version) – nothing was "
+                                               "written."))
+                rejected += banks
+                banks = []
+            slots = [i for i in SLOT_IDS if i in want and m.get(i)]
+            work = m[WORKING] if WORKING in want else b""
+            smp = m.get(SAMPLES, b"") if SAMPLES in want else b""
+            total = len(banks) * BANK + (len(slots) + 1) * PROJECT_TUNED + len(smp) * 2 or 1
+            done = 0
+
+            def step(n):
+                nonlocal done
+                done += n
+                if progress:
+                    progress(min(done, total), total)
+
+            def attempt(oid, fn):
+                state["current"] = oid
+                try:
+                    fn()
+                    written.append(oid)
+                except F.FM1OpenError:
+                    if not tolerant:
+                        raise
+                    rejected.append(oid)
+                state["current"] = None
+            # (the working project is not to be replaced: keep it – read before the first slot passes through it)
+            keep = _working(c) if slots and not work else b""
+            for i in banks:
+                attempt(i, lambda i=i: _upload(c, KIND_BANK, i - 20, m[i]))
+                step(BANK)
+            try:
+                for i in slots:
+                    attempt(i, lambda i=i: (_upload(c, KIND_PROJECT, 0, m[i]), c.query(7, bytes([i - 1]))))
+                    step(PROJECT_TUNED)
+            except Exception:
+                if keep:                            # (a slot failed: still try to put the working project back)
+                    try:
+                        _upload(c, KIND_PROJECT, 0, keep)
+                    except Exception:               # noqa: BLE001 – the first error is the one to report
+                        state["work_lost"] = True
+                raise
+            if keep:
+                state["current"] = WORKING
+                _upload(c, KIND_PROJECT, 0, keep)
+                state["current"] = None
+            slot = file.get("slot")
+            if work and isinstance(slot, int) and not isinstance(slot, bool) and 0 <= slot < SLOTS and m.get(slot + 1) \
+                    and (slot + 1) not in rejected:
+                # (the backup's current slot becomes the device's – only together with the working project, which is
+                # written right after: loading a slot replaces the working area)
+                state["current"] = WORKING
+                try:
+                    c.query(8, bytes([slot]))
+                except F.FM1OpenError:
+                    if not tolerant:
+                        raise
+                    rejected.append(slot + 1)
+                state["current"] = None
+            if work:
+                attempt(WORKING, lambda: _upload(c, KIND_PROJECT, 0, work))
             step(PROJECT_TUNED)
-        slot = file.get("slot")
-        if isinstance(slot, int) and 0 <= slot < SLOTS and m.get(slot + 1) and (slot + 1) not in rejected:
-            attempt(slot + 1, lambda: c.query(8, bytes([slot])))
-        if work:
-            attempt(WORKING, lambda: _upload(c, KIND_PROJECT, 0, work))
-        step(PROJECT_TUNED)
-        if smp:
-            if c.unchanged(smp):
-                step(len(smp) * 2)
-            else:
-                attempt(SAMPLES, lambda: c.write_bank(smp, lambda a, b: progress(min(done + a, total), total)
-                                                      if progress else None))
+            if smp:
+                if c.unchanged(smp):
+                    step(len(smp) * 2)
+                else:
+                    attempt(SAMPLES, lambda: c.write_bank(smp, lambda a, b: progress(min(done + a, total), total)
+                                                          if progress else None))
+    except Exception as e:
+        try:
+            e.written = list(written)
+            cur = WORKING if state.get("work_lost") else state["current"]
+            if cur is not None:
+                # (FM1 Open has no "commit": a part that was on its way – or the working project, which every slot
+                # passes through and which could not be put back – is in an unknown state)
+                e.unclear, e.unclear_sample = cur, False
+        except Exception:                           # noqa: BLE001
+            pass
+        raise
     return rejected
 
 
