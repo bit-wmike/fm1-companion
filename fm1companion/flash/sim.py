@@ -536,10 +536,11 @@ class SimBackend:
 def fast_careful_delays():
     """careful mode for the simulation: the same relations, shortened"""
     return {"reply": 0.0, "gap": 0.0005, "start": 0.01, "loader": 0.02, "reboot": 0.02, "wait_loader": 4.0,
-            "wait_reboot": 4.0, "wait_resume": 4.0, "idle_check": 1.0, "loader_giveup": 0.8}
+            "wait_reboot": 4.0, "wait_resume": 4.0, "idle_check": 1.0, "loader_giveup": 0.8, "linger": 0.5, "settle": 0.3}
 
 
 def fast_delays():
     """short wait times for the simulation (values shortened as in Melodee's tests)"""
     return {"open": 0.0, "start": 0.01, "reply": 0.0, "loader": 0.02, "reboot": 0.02, "retry": 0.02,
-            "poll": 0.05, "hs": 0.1, "resend_min": 0.1, "idle_check": 1.0, "idle_write": 2.0, "wait_loader": 3.0, "wait_reboot": 3.0}
+            "poll": 0.05, "hs": 0.1, "resend_min": 0.1, "idle_check": 1.0, "idle_write": 2.0, "wait_loader": 3.0,
+            "wait_reboot": 3.0, "linger": 0.5, "settle": 0.3}

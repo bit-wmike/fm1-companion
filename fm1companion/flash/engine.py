@@ -24,6 +24,12 @@ STEP_PHASE = {"start": "step1", "check": "step1", "loader": "loader", "write": "
 # Log lines by which the UI recognises the dangerous section (InstallDialog: "Do not unplug now")
 LOG_WRITING = _("FM-1 is switching to update mode …")
 LOG_REBOOT = _("Written – the FM-1 is restarting …")
+# from this line on the Cancel button is off (InstallDialog): the installation runs to the end
+LOG_NO_CANCEL = _("From here on the installation can no longer be cancelled.")
+# the check of the package on the FM-1 (step 1) has started and Cancel still works there
+LOG_STEP1_CANCEL = _("Cancel still works during this check: nothing is written to the FM-1 yet.")
+LOG_TOO_LATE = _("Cancel came too late: the FM-1 is already past the point where the app can stop it. The "
+                 "installation runs to the end.")
 
 # what a failure leaves behind (like Melodee's progress.js afterFailure)
 SAFE, PAUSED, RESTART = "safe", "paused", "restart"
@@ -58,17 +64,31 @@ MESSAGES = {
     "model": _("The connected device is not an FM-1, or the package is for a different device."),
     "lost": _("The USB connection was lost."),
     "stopped": _("The FM-1 stopped requesting data."),
-    "noloader": _("The FM-1 in update mode was not found. Plug the cable in again and choose “Resume” – "
-                  "it stays in update mode until the installation is finished."),
+    "noloader": _("After the check of the package the FM-1 neither showed up in update mode nor answered as "
+                  "before. It is probably waiting in update mode: plug the cable in again and look at the "
+                  "“Recovery” page – if it is detected there, use “Finish installation”. If it does not show up "
+                  "there: switch it off and on once; if the screen stays black, see Recovery, stage 2."),
+    "notstaged": _("The FM-1 did not switch to update mode – it still answers with its current firmware "
+                   "({identity}). Most likely the app's last answer of the check did not reach it (cable, hub). "
+                   "You can simply start the installation again."),
+    "second": _("A second FM-1 answered while the app was waiting for the update mode, and on this computer the "
+                "app cannot tell the two apart. Nothing was sent to the update loader. Please unplug the other "
+                "FM-1."),
+    "changed": _("The FM-1 now reports {now}, but the plan was made for {planned}. Nothing was sent. Please open "
+                 "the installation plan again."),
     "noreturn": _("The FM-1 did not come back after writing. Switch it off and on again."),
     "mismatch": _("Written, but the FM-1 reports a different firmware."),
     "badreq": _("The FM-1 requested data outside the package – aborted."),
     "loader": _("The FM-1 is waiting in an update mode that does not match this package. Nothing was sent."),
     "cancelled": _("Cancelled before anything was sent. Nothing has changed on the FM-1."),
+    "cancelled1": _("Cancelled during the check of the package (step 1): the app stopped answering before the "
+                    "FM-1 was told to go on. Nothing was written, the current firmware stays. The FM-1 waits for the "
+                    "computer for up to a minute, then shows “FAILED” and carries on – that is expected here."),
     "checkhead": _("The running firmware refused the original firmware (CHECK HEAD, “FAILED -5” on the FM-1): "
                    "its boot area differs. Nothing was written, the current firmware keeps running. "
                    "Please do not force another path. The cause is usually a changed boot area (m-bootloader, "
-                   "Open V12/V14). Way out: firmware with the new check, or download mode (recovery stage 2)."),
+                   "Open V12/V14). Way out: a firmware with the newer check, or download mode with another tool "
+                   "(“Recovery” page, stage 2 › Details: M-Flasher)."),
     "stopped1": _("The FM-1 refused the package in step 1. Does the display show “FAILED <number>”? "
                   "-3/-7: unknown loader, -5: boot area differs, -15: Felucca 1.6.1 check (see help)."),
     "busy": _("An installation is already running."),
@@ -97,6 +117,11 @@ def loader_hint(text: str) -> str:
                      build=text[9:])
     return _("The app does not know this loader ({loader}).").format(loader=text)
 
+
+# after a failure in step 2 the app has NOT looked at the device again: say what is likely and what to do if not
+PAUSED_ADVICE = _("The FM-1 is probably waiting in update mode: check the cable, then open the “Recovery” page – if "
+                  "the FM-1 is detected there, use “Finish installation” with the same package. If it does not show "
+                  "up there: switch it off and on once; if the screen stays black, see Recovery, stage 2.")
 
 MESSAGES["pinned_lost"] = _("The target device can no longer be found at its USB port. Please leave only the FM-1 "
                              "connected that you want to update, and do not move any cable.")
@@ -201,17 +226,20 @@ class Engine:
 
     # ------------------------------------------------------------ search
     def updater(self, port: str = "", pin: Pin | None = None, careful: bool = False,
-                flight: robust.FlightLog | None = None, felucca: bool = False) -> fi.Updater:
+                flight: robust.FlightLog | None = None, felucca: bool = False,
+                cancel_step1: bool = False) -> fi.Updater:
         if pin is not None and pin.usable:
             # only ports of exactly this USB device (also after reboots, whatever name it appears under)
             def flt(name):
                 return pin.matches(self._details(name))
             be = robust.WatchBackend(self.backend, self._details, flight, guard=flt)
             return robust.RobustUpdater(be, None, port_filter=flt, cancelled=self.cancel.is_set, careful=careful,
-                                        flight=flight, pinned=True, felucca=felucca, log=self.log)
+                                        flight=flight, pinned=True, felucca=felucca, log=self.log,
+                                        cancel_step1=cancel_step1)
         be = robust.WatchBackend(self.backend, self._details, flight)
         return robust.RobustUpdater(be, port or None, port_filter=self.port_filter, cancelled=self.cancel.is_set,
-                                    careful=careful, flight=flight, pinned=False, felucca=felucca, log=self.log)
+                                    careful=careful, flight=flight, pinned=False, felucca=felucca, log=self.log,
+                                    cancel_step1=cancel_step1)
 
     def usb_link(self, pin: Pin | None):
         """devices.UsbLink of the pinned device (None if unknown)"""
@@ -293,11 +321,16 @@ class Engine:
 
     # ------------------------------------------------------------ writing
     def write(self, info: pk.PackageInfo, port: str = "", label: str = "", device_id: str = "",
-              dry_run: bool = False, expect_sha: str = "", allow_resume: bool = True, pin: Pin | None = None) -> Result:
+              dry_run: bool = False, expect_sha: str = "", allow_resume: bool = True, pin: Pin | None = None,
+              expect_identity: str = "", cancel_step1: bool = False) -> Result:
         """write a package to the FM-1 (or, in a dry run, only check everything).
 
         pin: pin the target device by USB connection/serial number (otherwise derived from `port`, if possible).
-        If several FM-1 are connected and the target cannot be pinned, nothing is sent."""
+        If several FM-1 are connected and the target cannot be pinned, nothing is sent.
+        expect_identity: what the FM-1 reported when the plan was made – if it answers something else now (another
+        firmware, update mode), nothing is sent.
+        cancel_step1: the running firmware is known to drop an unfinished step 1 cleanly (Felucca family): Cancel is
+        honoured until the end of step 1. Never for the original firmware (its step 1 is not known)."""
         rule = info.loader_rule
         if rule is None:
             raise FlashError("badpkg", _("The loader family of this package is unknown – it is not sent."))
@@ -313,7 +346,8 @@ class Engine:
         flight = robust.FlightLog(None if dry_run else self.journal.dir / "logs", kernel=self.kernel_log)
         self.flight = flight
         if pin is not None:
-            up = self.updater(pin=pin, careful=careful, flight=flight, felucca=info.family != "stock")
+            up = self.updater(pin=pin, careful=careful, flight=flight, felucca=info.family != "stock",
+                              cancel_step1=cancel_step1)
             dev = up.find(only_port=False)
             if dev is None:
                 raise FlashError("notfound", MESSAGES["pinned_lost"])
@@ -336,6 +370,7 @@ class Engine:
             if isinstance(up.backend, robust.WatchBackend):
                 up.backend.flight = flight
             up.felucca = info.family != "stock"
+            up.cancel_step1 = cancel_step1
             # after the reboots, ask ports of the same device first ("Melodee FM-1 Update" -> "Melodee FM-1")
             up.port = re.split(r"\s+update\b|:", dev.name, maxsplit=1, flags=re.I)[0].strip() or dev.name
         self.log(_("Device: {identity} at “{port}”").format(identity=dev.id.text, port=dev.name))
@@ -343,6 +378,12 @@ class Engine:
             dev.link.close()
             raise FlashError("model", _("The device reports {identity}, the package is for {product}.").format(
                 identity=dev.id.text, product=info.product))
+        if expect_identity and dev.id.text != expect_identity:
+            dev.link.close()
+            raise FlashError("changed", MESSAGES["changed"].format(now=dev.id.text, planned=expect_identity),
+                             detail=dev.id.text)
+        if pk.is_stock_identity(dev.id.text) or dev.id.loader:
+            up.cancel_step1 = False            # the original firmware's step 1 is unknown: never stop answering it
         if dev.id.loader:
             if not rule(dev.id.text):
                 dev.link.close()
@@ -383,12 +424,21 @@ class Engine:
                     phase["p"] = ph
                     self.journal.update(phase=ph)
                 if k == "start":
-                    self.log(_("Starting the update to {target} …").format(target=a))
+                    self.log(_("Starting the installation of {target}: the FM-1 (it reports {identity}) checks the "
+                               "package …").format(target=label, identity=a))
+                    self.log(LOG_STEP1_CANCEL if up.cancel_step1 else LOG_NO_CANCEL)
                 elif k == "check":
                     self.progress(min(int(a or 0), 100), 0)
                 elif k == "loader":
+                    if self.cancel.is_set():
+                        self.log(LOG_TOO_LATE)
+                    phase["said"] = True
                     self.log(LOG_WRITING)
                 elif k == "write":
+                    if not phase.get("said"):          # resume: the FM-1 already waits in update mode
+                        phase["said"] = True
+                        self.log(LOG_NO_CANCEL)
+                        self.log(LOG_WRITING)
                     self.progress(int(a or 0), 100)
                 elif k == "reboot":
                     self.log(LOG_REBOOT)
@@ -431,7 +481,7 @@ class Engine:
     @staticmethod
     def _advise(err: FlashError, flight: robust.FlightLog, link, careful: bool) -> FlashError:
         """append the likely cause (hub, power, cable) and the next step to the message"""
-        if err.code in ("cancelled", "loader", "model", "badreq", "checkhead", "mismatch"):
+        if err.code in ("cancelled", "loader", "model", "badreq", "checkhead", "mismatch", "second"):
             return err
         if err.code == "stopped" and err.state == SAFE and not (flight.resends or flight.vanished):
             return err                  # step 1 stopped cleanly: most likely the firmware refused the package
@@ -447,9 +497,7 @@ class Engine:
             return FlashError("internal", _("Unexpected error after writing. The FM-1 probably starts normally – "
                                             "plug the cable in again and check which firmware it reports."), RESTART, detail)
         if phase in ("loader", "writing"):
-            return FlashError("internal", _("Unexpected error while writing. The FM-1 is probably waiting in "
-                                            "update mode: check the cable and resume with the same package on the "
-                                            "“Recovery” page."), PAUSED, detail)
+            return FlashError("internal", _("Unexpected error while writing.") + " " + PAUSED_ADVICE, PAUSED, detail)
         return FlashError("internal", _("Unexpected error before writing. Nothing was written, the previous "
                                         "firmware keeps running."), SAFE, detail)
 
@@ -462,6 +510,8 @@ class Engine:
                 return FlashError("checkhead", MESSAGES["checkhead"], SAFE, str(e))
         if code in ("noreturn", "mismatch") or phase == "reboot":
             state = RESTART
+        elif code == "notstaged":
+            state = SAFE                       # the FM-1 answers with its old firmware: nothing is staged
         elif staged or code == "noloader":
             state = PAUSED
         else:
@@ -469,6 +519,10 @@ class Engine:
         msg = MESSAGES.get(code, str(e))
         if code == "stopped" and phase in ("prepared", "step1"):
             msg = MESSAGES["stopped1"]
+        if code == "cancelled" and phase == "step1":
+            msg = MESSAGES["cancelled1"]
+        if code == "notstaged":
+            msg = msg.format(identity=getattr(up, "_start", "") or "?")
         if state == SAFE and code not in ("cancelled", "loader"):
             msg = _("{message} Nothing was written.").format(message=msg)
         if state == PAUSED and code == "loader":
@@ -476,8 +530,7 @@ class Engine:
                     "written; the FM-1 is now waiting in update mode. On the “Recovery” page only a "
                     "package that belongs to this loader is sent.")
         elif state == PAUSED and code != "noloader":
-            msg = _("{message} The FM-1 is waiting in update mode: check the cable and resume with the same "
-                    "package (“Recovery” page).").format(message=msg)
+            msg = f"{msg} {PAUSED_ADVICE}"
         if code == "mismatch":
             msg += f" ({e})"
         return FlashError(code, msg, state, str(e))

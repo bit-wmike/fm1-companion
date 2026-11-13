@@ -10,7 +10,6 @@ INIT sounds in Melodee 1.6).
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import json
 import os
 import re
@@ -201,16 +200,27 @@ def is_prerelease(tag: str) -> bool:
     return bool(re.search(r"-(rc|beta|alpha|a|b)\.?\d", tag, re.I))
 
 
+MAX_DOWNLOAD = 16 * 1024 * 1024          # no FM-1 package comes near this (the whole flash is 1 MiB)
+MAX_TEXT = 4 * 1024 * 1024               # release lists, installer pages
+
+
+def urlopen(req, timeout: float = 20):
+    """every network request of this module: https only, redirects too (the guard of catalog.urlopen) – a package
+    address comes from a catalog, a release list or a firmware the user added"""
+    from . import catalog
+    return catalog.urlopen(req, timeout=timeout)
+
+
 def _http_json(url: str, timeout=15):
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/vnd.github+json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode())
+    with urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read(MAX_TEXT + 1)[:MAX_TEXT].decode())
 
 
 def _head_ok(url: str, timeout=15) -> bool:
     req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": UA})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with urlopen(req, timeout=timeout) as r:
             return r.status < 400
     except (urllib.error.URLError, OSError):
         return False
@@ -289,8 +299,8 @@ def pages_release(s: FirmwareSpec, use_cache_secs: int = 600) -> Release | None:
     if meta is None:
         try:
             req = urllib.request.Request(s.pages_meta, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=15) as r:
-                m = META_RE.search(r.read().decode("utf-8", "replace"))
+            with urlopen(req, timeout=15) as r:
+                m = META_RE.search(r.read(MAX_TEXT).decode("utf-8", "replace"))
             meta = json.loads(m.group(1)) if m else {}
         except (OSError, ValueError, urllib.error.URLError):
             return None                      # offline: the pinned versions are enough
@@ -368,21 +378,71 @@ class Package:
     verified: bool              # checksum verified
 
 
+class DownloadError(RuntimeError):
+    """a download that did not arrive completely or is no FM-1 file – nothing is kept"""
+
+
 def _fetch(url: str, dest: Path, progress: Callable[[int, int], None] | None = None):
+    """download to dest (via dest.part): https only, at most MAX_DOWNLOAD, and only kept when all announced
+    bytes arrived – a connection that breaks off never leaves a half file under the final name"""
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     tmp = dest.with_suffix(dest.suffix + ".part")
-    with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as f:
-        total = int(r.headers.get("Content-Length") or 0)
-        done = 0
-        while True:
-            b = r.read(65536)
-            if not b:
-                break
-            f.write(b)
-            done += len(b)
-            if progress:
-                progress(done, total)
+    too_big = _("{name} is larger than {limit} MB – that is no FM-1 package. Nothing was saved.").format(
+        name=dest.name, limit=MAX_DOWNLOAD >> 20)
+    try:
+        with urlopen(req, timeout=60) as r, open(tmp, "wb") as f:
+            try:
+                total = int(r.headers.get("Content-Length") or 0)
+            except (TypeError, ValueError):
+                total = 0
+            if total > MAX_DOWNLOAD:
+                raise DownloadError(too_big)
+            done = 0
+            while True:
+                b = r.read(65536)
+                if not b:
+                    break
+                done += len(b)
+                if done > MAX_DOWNLOAD:
+                    raise DownloadError(too_big)
+                f.write(b)
+                if progress:
+                    progress(done, total)
+        if total and done != total:
+            raise DownloadError(_("The download of {name} broke off ({done} of {total} bytes arrived). Nothing was "
+                                  "saved – please try again.").format(name=dest.name, done=done, total=total))
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
     tmp.replace(dest)
+
+
+_SAFE_NAME = re.compile(r"[\w.+-]+")
+
+
+def _safe_component(text: str, what: str, suffix: str = "") -> str:
+    """key, version and file name become folder and file names below the firmware folder: each must be ONE plain
+    path component (a catalog entry must never write anywhere else), the package itself a .fwsc"""
+    t = str(text or "")
+    if not _SAFE_NAME.fullmatch(t) or t in (".", "..") or (suffix and not t.lower().endswith(suffix)):
+        raise DownloadError(_("Refused: “{value}” is not a valid {what} – the download would not land in the "
+                              "firmware folder as an FM-1 package. Nothing was downloaded.").format(
+                                  value=t[:80], what=what))
+    return t
+
+
+def _package_folder(s: FirmwareSpec, rel: Release) -> Path:
+    return load_settings().firmware_dir / _safe_component(s.key, _("firmware key")) / \
+        _safe_component(rel.tag, _("version name"))
+
+
+def _cached_damage(path: Path) -> str:
+    """damage of a cached .fwsc no checksum vouches for ("" = header, file list and CRCs are fine)"""
+    try:
+        from .flash import package as fp
+        return fp.analyze(path).damage
+    except Exception as e:  # noqa: BLE001 – not even a package
+        return str(e) or type(e).__name__
 
 
 def download(s: FirmwareSpec, rel: Release, log: Callable[[str], None] = print,
@@ -390,21 +450,26 @@ def download(s: FirmwareSpec, rel: Release, log: Callable[[str], None] = print,
     if s.download_url or rel.sha256:
         return _download_fixed(s, rel, log, progress)
     ver = rel.version
-    folder = load_settings().firmware_dir / s.key / rel.tag
-    folder.mkdir(parents=True, exist_ok=True)
-    names = [s.asset.format(ver=ver)]
+    folder = _package_folder(s, rel)
+    names = [_safe_component(s.asset.format(ver=ver), _("package name"), ".fwsc")]
     res_name = s.resources.format(ver=ver) if s.resources else ""
     if res_name and (res_name in rel.assets or not rel.assets):
-        names.append(res_name)
+        names.append(_safe_component(res_name, _("file name")))
     sums_ok = s.sums and (s.sums in rel.assets)
     if sums_ok:
-        names.append(s.sums)
+        names.append(_safe_component(s.sums, _("file name")))
+    folder.mkdir(parents=True, exist_ok=True)
     for n in names:
         url = rel.assets.get(n) or _download_url(s, rel.tag, n)
         dest = folder / n
         if dest.exists() and dest.stat().st_size and n != s.sums:
-            log(_("{name} is already there").format(name=n))
-            continue
+            if not sums_ok and n == names[0] and _cached_damage(dest):
+                # no checksum will catch a half download from an earlier run: look at the package itself
+                log(_("{name} on this computer is damaged – downloading it again").format(name=n))
+                dest.unlink(missing_ok=True)
+            else:
+                log(_("{name} is already there").format(name=n))
+                continue
         log(_("downloading {name} …").format(name=n))
         _fetch(url, dest, progress)
     verified = False
@@ -435,9 +500,9 @@ class ChecksumError(RuntimeError):
 
 def _download_fixed(s: FirmwareSpec, rel: Release, log, progress) -> Package:
     """Package from a fixed address; only with a matching checksum (otherwise deleted, nothing installed)"""
-    folder = load_settings().firmware_dir / s.key / rel.tag
+    folder = _package_folder(s, rel)
+    name = _safe_component(next(iter(rel.assets), s.asset), _("package name"), ".fwsc")
     folder.mkdir(parents=True, exist_ok=True)
-    name = next(iter(rel.assets), s.asset)
     want = (rel.sha256 or s.sha256 or "").lower()
     url = rel.assets.get(name) or s.download_url
     dest = folder / name
@@ -465,6 +530,19 @@ def _sha(p: Path) -> str:
         for b in iter(lambda: f.read(1 << 16), b""):
             h.update(b)
     return h.hexdigest()
+
+
+def stock_cached(key: str = "stock-v15") -> bool:
+    """is the original firmware already on this computer with the right checksum (a switch then needs no network)?"""
+    s = spec(key)
+    if s is None or not s.sha256:
+        return False
+    try:
+        rel = fetch_releases(s)[0]
+        f = _package_folder(s, rel) / next(iter(rel.assets), s.asset)
+        return f.is_file() and _sha(f) == s.sha256.lower()
+    except (OSError, DownloadError, IndexError):
+        return False
 
 
 def fetch_stock(key: str = "stock-v15", log: Callable[[str], None] = print,
@@ -632,35 +710,13 @@ def tools_tag(key: str) -> str:
         return ""
 
 
-def any_installer() -> Path | None:
-    """any available Felucca installer (for --info)."""
-    for key in ("melodee", "skiff", "sloop"):
-        d = tools_dir(key)
-        if d and (d / "tools/fm1_install.py").exists():
-            return d / "tools/fm1_install.py"
-    return None
-
-
-def _load_module(path: Path, name: str):
-    sp = importlib.util.spec_from_file_location(name, path)
-    mod = importlib.util.module_from_spec(sp)
-    sys.path.insert(0, str(path.parent))
-    try:
-        sp.loader.exec_module(mod)
-    finally:
-        sys.path.remove(str(path.parent))
-    return mod
-
-
 def package_identity(fwsc: Path) -> str:
-    """Identity of a package (e.g. 'FM-1_91060'), using the family's installer code."""
-    inst = any_installer()
-    if not inst:
-        return ""
+    """Identity of a package (e.g. 'FM-1_91060') – read with the installer code that ships with the app
+    (vendor/fm1_install.py); code from a cloned firmware repo is never run for this."""
+    from .vendor import fm1_install as fi
     try:
-        mod = _load_module(inst, "_fm1c_install")
-        return mod.product_of(fwsc.read_bytes())
-    except Exception:
+        return fi.product_of(Path(fwsc).read_bytes())
+    except Exception:  # noqa: BLE001
         return ""
 
 
@@ -798,22 +854,6 @@ SELF_NAMING = ("sloop", "karma", "orbit", "melodee", "jiant-fm", "coralflower", 
 SELF_NAMING += tuple(f.key for f in fwfamily.FAMILIES if f.names and f.key not in SELF_NAMING)       # (and every fork the audit found naming itself)
 
 
-def query_identity(port_name: str = "", timeout=20) -> tuple[str, str]:
-    """-> (identity, state) via the installer (--info). Empty if there is no installer."""
-    inst = any_installer()
-    if not inst:
-        return "", ""
-    args = [sys.executable, "-u", str(inst), "--info"]
-    if port_name:
-        args += ["--port", port_name]
-    try:
-        r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, cwd=inst.parent.parent)
-    except (OSError, subprocess.TimeoutExpired):
-        return "", ""
-    m = re.search(r"(\S+_\d+)\s+\[([^\]]+)\]", r.stdout)
-    return (m.group(1), m.group(2)) if m else ("", "")
-
-
 # -------------------------------------------------------------- Install ---
 
 INSTALLER_ABORTED = N_("Installer aborted (code {code}): {error}")
@@ -833,7 +873,8 @@ def display_label(s: FirmwareSpec, tag: str) -> str:
 def install(s: FirmwareSpec, pkg_path: Path, tag: str, port_name: str = "", res: Path | None = None,
             log: Callable[[str], None] = print, progress: Callable[[int], None] | None = None,
             device_id: str = "", confirmed_unknown: bool = False, cancel=None, pin=None,
-            expect_sha: str = "", report: dict | None = None) -> str:
+            expect_sha: str = "", report: dict | None = None, expect_identity: str = "",
+            cancel_step1: bool = False) -> str:
     """Write a package – with the built-in installer (Melodee's fm1_install.py as a library, journal,
     loader rules; flash/engine.py). Afterwards, for Melodee, the resources with the firmware's tool.
     -> new identity. Errors: InstallError (with .state "safe" | "paused" | "restart")."""
@@ -861,7 +902,8 @@ def install(s: FirmwareSpec, pkg_path: Path, tag: str, port_name: str = "", res:
     log(_("Package: {product} ({family}), SHA-256 {sha256}…").format(product=info.product, family=info.family,
                                                                      sha256=info.sha256[:16]))
     try:
-        result = eng.write(info, port=port_name, label=display_label(s, tag), device_id=device_id, pin=pin)
+        result = eng.write(info, port=port_name, label=display_label(s, tag), device_id=device_id, pin=pin,
+                           expect_identity=expect_identity, cancel_step1=cancel_step1)
     except fe.FlashError as e:
         err = InstallError(str(e))
         err.state, err.code, err.detail = e.state, e.code, getattr(e, "detail", "")
@@ -938,6 +980,8 @@ def friendly_error(e: BaseException) -> str:
                        "withdrawn – please reload the list."),
                 429: _("Too many requests to the server (HTTP 429). Please wait a little and try again.")}.get(
             e.code, _("The server answered with an error (HTTP {code}). Try again later.").format(code=e.code))
+    if isinstance(e, urllib.error.URLError) and isinstance(getattr(e, "reason", None), str) and "http" in e.reason:
+        return _("The address was refused: {reason}. Nothing was downloaded.").format(reason=e.reason)
     if isinstance(e, urllib.error.URLError) or isinstance(e, TimeoutError) or \
             type(e).__name__ in ("RemoteDisconnected", "IncompleteRead"):
         return _("No connection to the server – are you online? (Check the network; downloaded packages "
