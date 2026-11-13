@@ -18,7 +18,10 @@ unten unter „Grenzen“.
 
 1. **Vom FM-1 holen:** liest ein komplettes Backup vom aktiven FM-1 (Name steht auf dem Knopf) und lädt es in
    den Zwilling. Das Backup landet zusätzlich in [Backups](app://page/backups) – es geht nichts verloren. Am FM-1
-   wird nichts verändert (die Wiedergabe stoppt kurz).
+   wird nichts verändert (die Wiedergabe stoppt kurz). Eine Ausnahme: FM1 Open kann ein gespeichertes Projekt nicht
+   direkt herausgeben – das FM-1 lädt jedes gespeicherte Projekt der Reihe nach in seinen Arbeitsbereich, und am Ende
+   legt die App dein Arbeitsprojekt zurück. Wird dazwischen das Kabel gezogen, kann ungespeicherte Arbeit im
+   Arbeitsbereich verloren gehen.
    Alternativ **Aus Backup öffnen …** (jedes Melodee-, Skiff-, JIANT-FM-, SLOOP-, CoralFlower-, KARMA-, Felucca-, ChoralRoot-, X0X-, LOOM-8- oder
    FM1-Open-Backup – es
    startet der Zwilling der Firmware des Backups; SLOOP- und KARMA-Backups auch im Format von SLOOPs Web-Editor) oder
@@ -29,17 +32,29 @@ unten unter „Grenzen“.
    Skiff A–D, JIANT FM: die Sections A–D des aktuellen Songs, SLOOP: seine Sections A–D, KARMA: die Teile A–D des
    Songs, FM1 Open 1–16) lädst du rechts in der
    Liste.
-3. **Als WAV exportieren …:** ganzer Song bis zum Ende, eine feste Zahl Sekunden oder Durchläufe des Patterns.
+3. **Als WAV exportieren …** (in der oberen Knopfreihe): eine feste Zahl Sekunden, Durchläufe des Patterns oder der
+   ganze Song bis zum Ende. „Ganzer Song“ ist nur bei Melodee voreingestellt, dessen Song-Kette am Ende stoppt. Skiff,
+   JIANT FM, SLOOP, KARMA, Felucca, CoralFlower und X0X stoppen nur, wenn ihr Song auf einmaliges Abspielen gestellt
+   ist – ein Song in Schleife läuft bis zur Grenze von 15 Minuten, und die App sagt das danach. Bei Zwillingen ohne
+   Song (FM1 Open, ChoralRoot, LOOM-8, FoMni, AMB-1) ist die Option aus. **Abbrechen** stoppt einen laufenden Export
+   und lässt keine Datei zurück.
    Standard ist WAV 24 bit (44,1 kHz Stereo), wahlweise 32 bit Fließkomma, gespeichert im Ordner
-   „FM-1 Studio“ in deinem Musik-Ordner, Dateiname mit Projektname und Datum. **Einzelspuren (Stems):** je Spur
-   eine eigene Datei, gleich lang wie der Mix – zum Weiterarbeiten in Logic oder Audacity. Jede Spur wird allein
+   „FM-1 Studio“ in deinem Musik-Ordner, Dateiname mit Projektname und Datum; eine vorhandene Datei wird nie
+   überschrieben (die neue bekommt eine Nummer). **Einzelspuren (Stems):** je Spur eine eigene Datei
+   (`…_track1.wav` …), gleich lang wie der Mix – zum Weiterarbeiten in Logic oder Audacity. Mix und alle Stems starten
+   vom selben Schnappschuss des Zwillings, sie liegen also zeitlich genau übereinander. Jede Spur wird allein
    gerendert, mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master); die Summe der Stems ist darum
-   nicht bitgenau der Mix.
+   nicht der Mix – Pegel und Dynamik weichen ab.
 4. **Aufs FM-1 zurückschreiben …:** fragt nach, nennt das Gerät, macht vorher automatisch ein
-   **Sicherheits-Backup** und schreibt dann Projekte, laufende Musik und Presets. Die Einstellungen des Geräts
+   **Sicherheits-Backup** und schreibt dann Projekte, laufende Musik und Presets. Der Dialog sagt, woher der Inhalt
+   des Zwillings stammt. Wurde er von genau diesem FM-1 geholt, werden nur die Teile geschrieben, die du im Studio
+   geändert hast; der Rest bleibt auf dem Gerät, wie er ist. Wurde der Zwilling leer gestartet oder stammt er aus
+   einem Backup, von einem anderen Gerät oder aus einem älteren Stand, sagt das eine rote Warnung, und es braucht
+   einen zweiten Haken – dann wird alles Aufgezählte auf dem FM-1 ersetzt. Die Einstellungen des Geräts
    bleiben, außer du setzt den Haken. Geht nur mit vollem Zugriff (Melodee, Skiff, JIANT FM, SLOOP, CoralFlower,
-   KARMA oder FM1 Open verbunden – dieselbe Firmware wie die des Zwillings) und nie auf den Zwilling selbst. SLOOP schreibt nur,
-   während sein Song gestoppt ist (STOP).
+   KARMA oder FM1 Open verbunden – dieselbe Firmware wie die des Zwillings) und nie auf den Zwilling selbst. SLOOP und KARMA schreiben nur,
+   während ihr Song gestoppt ist (STOP). JIANT FM: Zwilling und FM-1 auf verschiedenen Seiten von JIANTs Wechsel von
+   8 auf 6 Songs (V10.6p) lassen sich nicht aufeinander schreiben.
 
 ## Studio-Stand und Rückgängig
 
@@ -47,7 +62,9 @@ Der Zwilling merkt sich alles, was ein FM-1 nach dem Ausschalten noch hat (den F
 automatisch – je Gerät, sobald sich etwas geändert hat und beim Verlassen der Seite. **Zwischenstand merken**
 legt einen Punkt in die Liste, **Rückgängig** (Strg+Z) und **Wiederherstellen** (Strg+Umschalt+Z) springen
 zwischen den Ständen (bis zu 30). Wie am Gerät gilt: Was im laufenden Projekt noch nicht gespeichert ist (SAVE),
-gehört nicht zum Stand.
+gehört nicht zum Stand. Rückgängig bringt auch zurück, woher der Stand stammt (die Zeile unter den Knöpfen).
+
+Bleibt der Zwilling einmal von selbst stehen (sein Prozess wurde beendet, meist weil dem Rechner der Speicher ausging), sagt die App das und bietet an, den automatisch gespeicherten Stand wieder zu öffnen. Solange das Fenster minimiert ist oder eine andere Seite gezeigt wird, pausiert der Zwilling, um Rechenzeit zu sparen – außer er spielt oder exportiert gerade. Setzt der Ton auf einem ausgelasteten Rechner aus, zählt das Studio das unter „Ton und MIDI“ mit und vergrößert seinen Tonpuffer von selbst (etwas mehr Verzögerung, weniger Knackser).
 
 ## Versionen
 

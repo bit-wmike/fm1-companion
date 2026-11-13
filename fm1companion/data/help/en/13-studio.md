@@ -17,7 +17,9 @@ well; what differs for them (loop slots, a backup taken whole, no backup over US
 
 1. **Fetch from FM-1:** reads a complete backup from the active FM-1 (its name is on the button) and loads it into
    the twin. The backup is also stored in [Backups](app://page/backups) – nothing is lost. Nothing is changed
-   on the FM-1 (playback stops briefly).
+   on the FM-1 (playback stops briefly). One exception: FM1 Open cannot hand over a saved project directly – the FM-1
+   loads each saved project into its working area in turn, and at the end the app puts your working project back. If
+   the cable is pulled in between, unsaved work in the working area can be lost.
    Alternatively **Open from backup …** (any Melodee, Skiff, JIANT FM, SLOOP, CoralFlower, KARMA, Felucca, ChoralRoot, X0X, LOOM-8 or FM1 Open backup –
    the twin of the backup's firmware starts; SLOOP and KARMA backups in the format of SLOOP's web editor too) or
    **Open last studio state**.
@@ -26,17 +28,26 @@ well; what differs for them (loop slots, a backup taken whole, no backup over US
    real FM-1. Controls: drag, mouse wheel or arrow keys. **Space** starts/stops. You load projects (Melodee 1–32,
    Skiff A–D, JIANT FM: the current song's sections A–D, SLOOP: its sections A–D, KARMA: the song's parts A–D, FM1 Open
    1–16) from the list on the right.
-3. **Export as WAV …:** the whole song to the end, a fixed number of seconds or passes of the pattern.
+3. **Export as WAV …** (in the top row): a fixed number of seconds, passes of the pattern, or the whole song to
+   the end. “Whole song” is the default only for Melodee, whose song chain stops at its end. Skiff, JIANT FM, SLOOP,
+   KARMA, Felucca, CoralFlower and X0X stop only if their song is set to play once – a song that loops runs to the limit
+   of 15 minutes, and the app says so afterwards. For twins without a song (FM1 Open, ChoralRoot, LOOM-8, FoMni, AMB-1)
+   the option is off. **Cancel** stops a running export and leaves no file behind.
    The default is WAV 24 bit (44.1 kHz stereo), optionally 32 bit floating point, saved in the folder
-   “FM-1 Studio” in your music folder, file name with project name and date. **Single tracks (stems):** one
-   separate file per track, as long as the mix – for further work in Logic or Audacity. Each track is rendered on
-   its own, with its share of the shared effects (reverb, delay, master); the sum of the stems is therefore
-   not bit-identical to the mix.
+   “FM-1 Studio” in your music folder, file name with project name and date; an existing file is never overwritten
+   (the new one gets a number). **Single tracks (stems):** one separate file per track (`…_track1.wav` …), as long as
+   the mix – for further work in Logic or Audacity. The mix and all stems start from the same snapshot of the twin, so
+   they line up in time when you stack them. Each track is rendered on its own, with its share of the shared effects
+   (reverb, delay, master); the sum of the stems is therefore not the mix – levels and dynamics differ.
 4. **Write back to the FM-1 …:** asks first, names the device, automatically makes a
-   **safety backup** beforehand and then writes projects, running music and presets. The device's settings
-   stay as they are unless you tick the box. Only works with full access (Melodee, Skiff, JIANT FM, SLOOP, CoralFlower,
-   KARMA or FM1 Open connected – the same firmware as the twin's) and never on the twin itself. SLOOP only writes while its song
-   is stopped (STOP).
+   **safety backup** beforehand and then writes projects, running music and presets. The dialog says where the twin's
+   content came from. If it was fetched from this very FM-1, only the parts you changed in the studio are written; the
+   rest stays as it is on the device. If the twin was started empty or comes from a backup, another device or an older
+   state, a red warning says so and a second tick is needed – everything listed is then replaced on the FM-1. The
+   device's settings stay as they are unless you tick the box. Only works with full access (Melodee, Skiff, JIANT FM, SLOOP, CoralFlower,
+   KARMA or FM1 Open connected – the same firmware as the twin's) and never on the twin itself. SLOOP and KARMA only write while
+   their song is stopped (STOP). JIANT FM: a twin and an FM-1 on different sides of JIANT's change from 8 to 6 songs
+   (V10.6p) cannot be written to each other.
 
 ## Studio state and undo
 
@@ -44,7 +55,9 @@ The twin remembers everything an FM-1 still has after switching off (the flash),
 automatically – per device, as soon as something has changed and when you leave the page. **Remember intermediate state**
 adds a point to the list, **Undo** (Ctrl+Z) and **Redo** (Ctrl+Shift+Z) jump
 between the states (up to 30). As on the device: whatever has not yet been saved in the running project (SAVE)
-is not part of the state.
+is not part of the state. Undo also brings back where the state came from (the line under the buttons).
+
+If the twin ever stops by itself (its process ended, usually because the computer ran out of memory), the app says so and offers to open the automatically saved state again. While the window is minimised or another page is shown, the twin pauses to save processor time – unless it is playing or exporting. If the sound drops out on a busy computer, the studio counts it under “Sound and MIDI” and enlarges its sound buffer by itself (a little more delay, fewer crackles).
 
 ## Versions
 

@@ -32,8 +32,8 @@ from ..i18n import _, ngettext
 from ..devices import PortInfo, Profile
 
 SETTINGS = {"last_profile": "", "inputs": [], "fm1_keys": True, "audio": True, "export_dir": "",
-            "export_fmt": "s24", "export_stems": False, "export_mode": "song", "export_seconds": 30,
-            "export_loops": 2}
+            "export_fmt": "s24", "export_stems": False, "export_mode": "song", "export_mode_chosen": False,
+            "export_seconds": 30, "export_loops": 2}
 HISTORY_MAX = 30
 VIRTUAL_KEY = "studio-twin|STUDIO"
 VIRTUAL_PROFILE = Profile(id="studio-zwilling", name=_("Studio twin"), color="#a06cd5", notes=_("virtual"))

@@ -256,10 +256,15 @@ def flow():
     check(r4 is not None and r4.frames == 44100, "the next export works")
     # ST-03: only Melodee's twin has a song that ends – elsewhere "whole song" is off and a fixed length the default
     from fm1companion.ui.pages.studio import ExportDialog
-    cfg = dict(svc.cfg, export_mode="song")
-    d1, d2 = ExportDialog(page, dict(cfg), "x", None, "melodee"), ExportDialog(page, dict(cfg), "x", None, "skiff")
-    check(d1.r_song.isEnabled() and d1.r_song.isChecked() and not d2.r_song.isEnabled() and d2.r_secs.isChecked()
-          and "Skiff" in d2.r_song.toolTip(), "export dialog: whole song only where a song ends: " + d2.r_song.toolTip()[:70])
+    cfg = dict(svc.cfg, export_mode="song", export_mode_chosen=False)
+    d1, d2, d3 = (ExportDialog(page, dict(cfg), "x", None, fw) for fw in ("melodee", "skiff", "loom-8"))
+    check(d1.r_song.isEnabled() and d1.r_song.isChecked() and d2.r_song.isEnabled() and d2.r_secs.isChecked()
+          and "Skiff" in d2.r_song.toolTip() and not d3.r_song.isEnabled() and d3.r_secs.isChecked()
+          and "LOOM-8" in d3.r_song.toolTip(),
+          "export dialog: whole song is the default only for Melodee, off where there is no song: " + d3.r_song.toolTip()[:70])
+    d4 = ExportDialog(page, dict(cfg, export_mode_chosen=True), "x", None, "skiff")
+    d5 = ExportDialog(page, dict(cfg, export_mode_chosen=True), "x", None, "loom-8")
+    check(d4.r_song.isChecked() and d5.r_secs.isChecked(), "… the user's own choice of the whole song is kept where possible")
     r5 = page.export_wav({"path": out / "Ohne.wav", "until_end": True, "start": "song", "fmt": "s24"})
     check(r5 is not None and not r5.started and r5.seconds < 5 and "Song-Kette" in page.export_state.text(),
           f"whole song without a song chain ends early and says so: {page.export_state.text()}")

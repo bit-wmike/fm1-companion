@@ -18,7 +18,9 @@ más abajo, en “Límites”.
 
 1. **Traer del FM-1:** lee una copia de seguridad completa del FM-1 activo (su nombre aparece en el botón) y la carga en
    el gemelo. La copia también se guarda en [Copias de seguridad](app://page/backups) – no se pierde nada. No se cambia nada
-   en el FM-1 (la reproducción se detiene brevemente).
+   en el FM-1 (la reproducción se detiene brevemente). Una excepción: FM1 Open no puede entregar directamente un proyecto
+   guardado – el FM-1 carga cada proyecto guardado, uno tras otro, en su área de trabajo, y al final la app vuelve a poner
+   tu proyecto de trabajo. Si se desconecta el cable entre medias, puede perderse el trabajo sin guardar del área de trabajo.
    Como alternativa, **Abrir desde copia de seguridad …** (cualquier copia de Melodee, Skiff, JIANT FM, SLOOP, CoralFlower, KARMA, Felucca, ChoralRoot, X0X, LOOM-8 o FM1 Open; también copias de SLOOP y KARMA en el formato
    del editor web de SLOOP – arranca el gemelo del firmware
    de la copia) o
@@ -28,17 +30,29 @@ más abajo, en “Límites”.
    FM-1 real. Controles: arrastrar, rueda del ratón o teclas de flecha. **Espacio** inicia/detiene. Cargas los proyectos (Melodee 1–32,
    Skiff A–D, JIANT FM: las secciones A–D de la canción actual, SLOOP: sus secciones A–D, KARMA: las partes A–D de la
    canción, FM1 Open 1–16) desde la lista de la derecha.
-3. **Exportar como WAV …:** toda la canción hasta el final, un número fijo de segundos o de pasadas del patrón.
+3. **Exportar como WAV …** (en la fila superior de botones): un número fijo de segundos, pasadas del patrón o toda la
+   canción hasta el final. “Toda la canción” solo es la opción por defecto con Melodee, cuya cadena de canción se detiene
+   al final. Skiff, JIANT FM, SLOOP, KARMA, Felucca, CoralFlower y X0X solo se detienen si su canción está ajustada para
+   sonar una vez – una canción en bucle sigue hasta el límite de 15 minutos, y la app lo dice después. En los gemelos sin
+   canción (FM1 Open, ChoralRoot, LOOM-8, FoMni, AMB-1) la opción está desactivada. **Cancelar** detiene una exportación
+   en curso y no deja ningún archivo.
    Por defecto WAV de 24 bits (44,1 kHz estéreo), opcionalmente coma flotante de 32 bits, guardado en la carpeta
-   “FM-1 Studio” de tu carpeta de música, con el nombre del proyecto y la fecha en el nombre del archivo. **Pistas sueltas (pistas separadas):** un
-   archivo aparte por pista, tan largo como la mezcla – para seguir trabajando en Logic o Audacity. Cada pista se renderiza
-   por separado, con su parte de los efectos compartidos (reverb, delay, master); por eso la suma de las pistas separadas
-   no es idéntica bit a bit a la mezcla.
+   “FM-1 Studio” de tu carpeta de música, con el nombre del proyecto y la fecha en el nombre del archivo; nunca se
+   sobrescribe un archivo existente (el nuevo recibe un número). **Pistas sueltas (pistas separadas):** un
+   archivo aparte por pista (`…_track1.wav` …), tan largo como la mezcla – para seguir trabajando en Logic o Audacity. La
+   mezcla y todas las pistas parten de la misma instantánea del gemelo, así que coinciden en el tiempo al apilarlas. Cada
+   pista se renderiza por separado, con su parte de los efectos compartidos (reverb, delay, master); por eso la suma de
+   las pistas separadas no es la mezcla – los niveles y la dinámica difieren.
 4. **Volver a escribir en el FM-1 …:** pregunta primero, nombra el dispositivo, hace automáticamente una
-   **copia de seguridad previa** y luego escribe proyectos, música en curso y presets. Los ajustes del dispositivo
+   **copia de seguridad previa** y luego escribe proyectos, música en curso y presets. El diálogo dice de dónde viene el
+   contenido del gemelo. Si se trajo de este mismo FM-1, solo se escriben las partes que cambiaste en el Studio; el resto
+   se queda como está en el dispositivo. Si el gemelo se inició vacío o viene de una copia de seguridad, de otro
+   dispositivo o de un estado anterior, un aviso en rojo lo dice y hace falta una segunda casilla – entonces todo lo
+   enumerado se sustituye en el FM-1. Los ajustes del dispositivo
    se quedan como están, salvo que marques la casilla. Solo funciona con acceso completo (Melodee, Skiff, JIANT FM, SLOOP, CoralFlower,
-   KARMA o FM1 Open conectado – el mismo firmware que el del gemelo) y nunca en el propio gemelo. SLOOP solo escribe con su
-   canción detenida (STOP).
+   KARMA o FM1 Open conectado – el mismo firmware que el del gemelo) y nunca en el propio gemelo. SLOOP y KARMA solo escriben con su
+   canción detenida (STOP). JIANT FM: un gemelo y un FM-1 a distinto lado del cambio de JIANT de 8 a 6 canciones
+   (V10.6p) no se pueden escribir el uno en el otro.
 
 ## Estado del Studio y deshacer
 
@@ -46,7 +60,9 @@ El gemelo recuerda todo lo que un FM-1 conserva tras apagarse (la flash), y la a
 automáticamente – por dispositivo, en cuanto algo cambia y al salir de la página. **Recordar estado intermedio**
 añade un punto a la lista; **Deshacer** (Ctrl+Z) y **Rehacer** (Ctrl+Shift+Z) saltan
 entre los estados (hasta 30). Como en el dispositivo: lo que aún no se ha guardado en el proyecto en curso (SAVE)
-no forma parte del estado.
+no forma parte del estado. Deshacer también recupera de dónde venía el estado (la línea bajo los botones).
+
+Si alguna vez el gemelo se detiene solo (su proceso terminó, normalmente porque el ordenador se quedó sin memoria), la app lo dice y ofrece volver a abrir el estado guardado automáticamente. Mientras la ventana está minimizada o se muestra otra página, el gemelo se pausa para ahorrar procesador – salvo que esté sonando o exportando. Si el sonido se corta en un ordenador ocupado, el Studio lo cuenta en “Sonido y MIDI” y amplía por sí mismo su búfer de sonido (algo más de retardo, menos chasquidos).
 
 ## Versiones
 

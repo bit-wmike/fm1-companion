@@ -10,7 +10,7 @@ that exposes the NOR flash, the USB SysEx path (editor protocol), keys/knobs/LED
 see `fm1companion/sims/_studio/twin-core.js`). Several versions sit side by side:
 
 ```
-fm1companion/sims/melodee-studio/<version>/   manifest.json, twin.wasm, LICENSE, NOTICE
+fm1companion/sims/melodee-studio/<version>/   manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
 fm1companion/sims/skiff-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
 fm1companion/sims/jiant-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
 fm1companion/sims/sloop-studio/<version>/     manifest.json, twin.wasm, LICENSE, NOTICE, LICENSING.md, THIRD_PARTY.txt
@@ -58,6 +58,19 @@ This creates `fm1companion/sims/melodee-studio/1.6.0-rc.9/` (manifest with commi
 `firmware_version`, `identity`, `abi`). If the version should permanently belong to the list, add it in
 `tools/build_sims.py` under `STUDIOS["melodee-studio"]["refs"]` (then `--target melodee-studio` without `--ref`
 builds all of them).
+
+Reproducible: `build_sims.py` sets `SOURCE_DATE_EPOCH` to the built commit's time, so the `__DATE__` the firmwares
+compile in no longer changes from one build to the next (the bundled twins were built before that and are not rebuilt
+for it). A change to the licence files or the NOTICE alone needs no compiler:
+`python3 tools/build_sims.py --refresh-notices melodee-studio --repo melodee=/path/to/melodee` (or `melodee` for the
+simulator page) writes LICENSING.md, THIRD_PARTY.txt and the NOTICE of the builds in the tree again and updates the
+manifests' file lists; the `.wasm` files and every other manifest field stay untouched.
+
+Host rules (`fm1companion/sims/_studio/`): nothing there may need a browser newer than Chromium 102 (Qt 6.4 on
+Raspberry Pi OS Bookworm) – no container queries or `cq*` units, no `:has()`, no CSS nesting, no `structuredClone`.
+An export takes ONE snapshot of the running twin (`render_open`); the mix and every stem are passes from it
+(`render`), so they are aligned to the sample; `render_close` ends it (also in the middle of a pass: cancel). The WASI
+stub answers `environ_sizes_get` with “no variables” (SLOOP asks; unanswered, its start reserved ~160 MB).
 
 Skiff the same way (its clone read only; the CC0 samples are part of its tree):
 

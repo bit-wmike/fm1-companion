@@ -103,29 +103,30 @@ class StudioCancelled(StudioError):
 # project list; JIANT's four are the current song's sections A..D). The key is what the device layer calls the firmware
 # (protocol.Info.firmware_name; the catalog's "jiant-fm" starts with it)
 FIRMWARES = {
-    # "song_end": the twin's transport stops by itself at the end of the song chain, so an export "to the end of the
-    # song" ends (measured: only Melodee's does; every other twin's transport stays busy – their songs loop or the
-    # twin does not report an end – and such an export would run to the time limit)
+    # "song_end": can an export "whole song to the end" end by itself? True: the transport stops at the end of the
+    # song chain (Melodee). "maybe": the firmware has a song, and it stops only if that song is set to play once
+    # rather than loop (Skiff's SONG ONCE, SLOOP's song order …) – in the audit's runs none of them stopped, the
+    # export ran to its time limit. Missing: no song the twin could play to an end (a loop, a pattern, it plays itself)
     "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32, "song_end": True},
-    "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4, "samples": True},
-    "jiant": {"name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
+    "skiff": {"song_end": "maybe", "name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4, "samples": True},
+    "jiant": {"song_end": "maybe", "name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
     # SLOOP answers INFO "FELUCCA SLOOP 2.8.5" (its version string, the build's firmware_version, is "SLOOP 2.8.5": the
     # build's version is "2.8.5"); 4 tracks, the sections A..D; its own backup protocol and file format (sloopbk.py),
     # which backup.py picks by itself
-    "sloop": {"name": "SLOOP", "info": "FELUCCA SLOOP", "tracks": 4, "projects": 4, "backup": "sloop"},
+    "sloop": {"song_end": "maybe", "name": "SLOOP", "info": "FELUCCA SLOOP", "tracks": 4, "projects": 4, "backup": "sloop"},
     # CoralFlower answers INFO "CoralFlower 0.7.1"; its parts (stems): chords, bass, the LAYER, drums; no project slots
     # (the sequencer's eight patterns and song are one store, backup objects 50..55); its settings are object 30
-    "coralflower": {"name": "CoralFlower", "info": "CoralFlower", "tracks": 4, "projects": 0, "settings_id": 30,
+    "coralflower": {"song_end": "maybe", "name": "CoralFlower", "info": "CoralFlower", "tracks": 4, "projects": 0, "settings_id": 30,
                     "restart": True},
     # KARMA (a SLOOP fork) answers INFO "FELUCCA KARMA 3.1" (its version string "KARMA 3.1": the twin's version 3.1);
     # three synth tracks and the drum track; its four projects are the song's parts A..D. It speaks SLOOP's backup
     # protocol (sloopbk.py)
-    "karma": {"name": "KARMA", "info": "FELUCCA KARMA", "tracks": 4, "projects": 4, "backup": "sloop"},
+    "karma": {"song_end": "maybe", "name": "KARMA", "info": "FELUCCA KARMA", "tracks": 4, "projects": 4, "backup": "sloop"},
     # Felucca itself answers INFO "FELUCCA v1.8.1" (no other name; protocol.Info.firmware_name "felucca"); 4 tracks, the
     # projects A..D; its 13-object inventory (backup.FELUCCA_IDS). A fork that answers the same way, or one chosen for the
     # device from the catalog ("felucca-mpe"), gets this twin with a warning (felucca_fork_note). "samples": the twin keeps
     # the sample slots USR1..USR3 (its glue's flash hooks): the tolerant load takes them too, so writing back keeps them
-    "felucca": {"name": "Felucca", "info": "FELUCCA", "tracks": 4, "projects": 4, "samples": True},
+    "felucca": {"song_end": "maybe", "name": "Felucca", "info": "FELUCCA", "tracks": 4, "projects": 4, "samples": True},
     # M-VAVE's FM1 Open (V14) has no editor INFO: the device is known by its package identity (FM-1_8000014); 8 tracks,
     # 16 project slots; its own file transfer protocol and backup file (fm1openbk.py). The original firmware V15/V16
     # (closed source, no backup protocol) opens this twin as a stand-in, with a note (STAND_IN_NOTE)
@@ -137,7 +138,7 @@ FIRMWARES = {
     "choralroot": {"name": "ChoralRoot", "info": "ChoralRoot", "tracks": 2, "projects": 0, "restart": True},
     # X0X answers INFO "X0X 1.2.1 BETA" (the twin's version 1.2.1); its parts (stems): the 909, the 808, 303 A, 303 B,
     # BREAK; one project (no slots); its own backup protocol and image (x0xbk.py), taken whole; its settings are object 0
-    "x0x": {"name": "X0X", "info": "X0X", "tracks": 5, "projects": 0, "backup": "x0x", "settings_id": 0},
+    "x0x": {"song_end": "maybe", "name": "X0X", "info": "X0X", "tracks": 5, "projects": 0, "backup": "x0x", "settings_id": 0},
     # AMB-1 (on fm1-base) plays itself; the stems are its four layers (pad, bells, bass, pulse); no project slots. It has
     # no editor (no INFO) and no backup over USB ("backup": None): the twin starts from its own flash or a studio
     # state, never from or onto an FM-1
@@ -183,8 +184,13 @@ def firmware_name(key: str) -> str:
 
 
 def song_ends(key: str) -> bool:
-    """does this firmware's twin stop by itself at the end of its song (FIRMWARES "song_end")? Only then an export
-    "whole song to the end" can end by itself."""
+    """does this firmware's twin always stop by itself at the end of its song (FIRMWARES "song_end" True: Melodee)?
+    Only then "whole song to the end" is a safe default for an export."""
+    return FIRMWARES.get(key, {}).get("song_end") is True
+
+
+def has_song(key: str) -> bool:
+    """does this firmware have a song an export could play to its end at all (FIRMWARES "song_end" True or "maybe")?"""
     return bool(FIRMWARES.get(key, {}).get("song_end"))
 
 

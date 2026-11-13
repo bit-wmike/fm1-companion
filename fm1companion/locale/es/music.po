@@ -261,10 +261,6 @@ msgstr "Las teclas del FM-1 real también tocan"
 msgid "What you play on the connected FM-1 also sounds in the twin (notes/knobs only)."
 msgstr "Lo que tocas en el FM-1 conectado también suena en el gemelo (solo notas/perillas)."
 
-#: fm1companion/ui/pages/studio.py:364
-msgid "Output"
-msgstr "Salida"
-
 #: fm1companion/ui/pages/studio.py:366
 msgid "Export as WAV …"
 msgstr "Exportar como WAV …"
@@ -772,10 +768,6 @@ msgstr "origen desconocido"
 #, python-brace-format
 msgid ". Not taken over ({n}): {names} – these parts do not fit {firmware} {version} and are left out when writing back"
 msgstr ". No tomadas ({n}): {names}; estas partes no encajan con {firmware} {version} y se omiten al volver a escribir"
-
-#: fm1companion/studio.py:81
-msgid "The twin computes without a CPU limit: under overload the device drops voices (overload shedding), the twin never does. Floating-point parts (FM6 voice pairs, which CPU1 computes on the device, effect filters) may differ in the last bits (inaudible). No BLE, no USB host, no firmware update in the twin. The resource arena has the size of the host tests (at least that of the device). Stems come from several runs with muted tracks (track solo, with its share of the shared effects); because of the master dynamics the sum of the stems does not exactly match the mix."
-msgstr "El gemelo calcula sin límite de CPU: con sobrecarga, el dispositivo descarta voces (overload shedding); el gemelo nunca. Las partes en coma flotante (pares de voces FM6, que en el dispositivo calcula la CPU1, filtros de efectos) pueden diferir en los últimos bits (inaudible). Sin BLE, sin host USB, sin actualización de firmware en el gemelo. La arena de recursos tiene el tamaño de las pruebas en el host (al menos la del dispositivo). Las pistas separadas salen de varias pasadas con pistas silenciadas (pista en solo, con su parte de los efectos compartidos); por la dinámica del master, la suma de las pistas separadas no coincide exactamente con la mezcla."
 
 #: fm1companion/studio.py:208 fm1companion/ui/pages/simulator.py:77
 #, python-brace-format
@@ -4309,9 +4301,6 @@ msgstr "Section {n} vacía."
 msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device, in SLOOP's order: the user preset banks, the FM6 patch bank, the SYN drum kits, the sections A–D, the running project and the sample slots. Playback on the FM-1 must be stopped (STOP) – SLOOP refuses otherwise."
 msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo, en el orden de SLOOP: los bancos de presets de usuario, el banco de patches FM6, los kits de batería SYN, las secciones A–D, el proyecto en curso y las ranuras de muestras. La reproducción en el FM-1 debe estar detenida (STOP); si no, SLOOP lo rechaza."
 
-msgid "Single tracks (stems): one WAV file per track (Melodee, SLOOP and KARMA 1–4, Skiff and JIANT FM 1–6, CoralFlower's chords, bass, layer and drums), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
-msgstr "Pistas separadas (stems): un archivo WAV por pista (Melodee, SLOOP y KARMA 1–4, Skiff y JIANT FM 1–6, en CoralFlower acordes, bajo, capa y batería), tan largo como la mezcla. Cada pista se renderiza por separado, con su parte de los efectos compartidos (reverb, delay, master). Por eso la suma de las pistas no es idéntica bit a bit a la mezcla (dinámica del master), pero encajan una sobre otra en Logic o Audacity."
-
 msgid "Which backup should the twin load? {firmwares} backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
 msgstr "¿Qué copia de seguridad debe cargar el gemelo? Copias de {firmwares} de todos los dispositivos, la más reciente primero; se inicia el gemelo del firmware de la copia. En el FM-1 no cambia nada."
 
@@ -4335,9 +4324,6 @@ msgstr "{names} y {last}"
 
 msgid "{names} or {last}"
 msgstr "{names} o {last}"
-
-msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the song's parts A–D, the running music, the song order, the user presets, the HEX drum kits and the sample slots. Playback on the FM-1 stops in the process."
-msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo: las partes A–D de la canción, la música en curso, el orden de la canción, los presets de usuario, los kits de batería HEX y las ranuras de muestras. La reproducción en el FM-1 se detiene durante el proceso."
 
 msgid "Part {n}"
 msgstr "Parte {n}"
@@ -4404,3 +4390,174 @@ msgstr "Copia de seguridad del FM-1 (*.json);;Copia de seguridad de X0X (*.x0b);
 #: fm1companion/ui/pages/studio.py:222
 msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces LOOM-8's user presets and its three projects on the device, all of them (its sample bank stays). LOOM-8 must be stopped, and it asks on its screen: press <b>SEL</b> on the FM-1 to confirm."
 msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo los presets de usuario de LOOM-8 y sus tres proyectos, todos juntos (su banco de samples se queda). LOOM-8 debe estar detenido y pregunta en su pantalla: pulsa <b>SEL</b> en el FM-1 para confirmar."
+
+#: fm1companion/presetlib.py:648 fm1companion/presetlib.py:653
+#, python-brace-format
+msgid "“{name}” in the .zip file is too large to be a preset"
+msgstr "“{name}” en el archivo .zip es demasiado grande para ser un preset"
+
+#: fm1companion/studio.py:84
+msgid "The twin computes without a CPU limit: under overload the device drops voices (overload shedding), the twin never does. Floating-point parts (FM6 voice pairs, which CPU1 computes on the device, effect filters) may differ in the last bits (inaudible). No BLE, no USB host, no firmware update in the twin. The resource arena has the size of the host tests (at least that of the device). Stems come from several runs with muted tracks (track solo, with its share of the shared effects), all from the same starting point, so they line up in time; because of the master dynamics and shared effects the sum of the stems is not the mix."
+msgstr "El gemelo calcula sin límite de CPU: con sobrecarga, el dispositivo descarta voces (overload shedding); el gemelo nunca. Las partes en coma flotante (pares de voces FM6, que en el dispositivo calcula la CPU1, filtros de efectos) pueden diferir en los últimos bits (inaudible). Sin BLE, sin host USB, sin actualización de firmware en el gemelo. La arena de recursos tiene el tamaño de las pruebas en el host (al menos la del dispositivo). Las pistas separadas salen de varias pasadas con pistas silenciadas (pista en solo, con su parte de los efectos compartidos), todas desde el mismo punto de partida, así que coinciden en el tiempo; por la dinámica del master y los efectos compartidos, la suma de las pistas separadas no es la mezcla."
+
+#: fm1companion/studio.py:748
+#, python-brace-format
+msgid "No free file name found for {name}"
+msgstr "No se encontró un nombre de archivo libre para {name}"
+
+#: fm1companion/studio.py:876
+msgid "Nothing written."
+msgstr "No se escribió nada."
+
+#: fm1companion/studio.py:1003
+#, python-brace-format
+msgid "This studio state belongs to {state}, not to the {twin} twin."
+msgstr "Este estado del Studio pertenece a {state}, no al gemelo de {twin}."
+
+#: fm1companion/studio.py:1099 fm1companion/studio.py:1106 fm1companion/studio.py:1126
+msgid "Export cancelled."
+msgstr "Exportación cancelada."
+
+#: fm1companion/studio.py:1198
+msgid "The twin and your FM-1 run JIANT FM versions that store their songs differently (8 songs up to V10.6o, 6 songs from V10.6p on). The twin's music cannot be written to this FM-1 – not with the expert option either. Install the twin's JIANT FM version on the FM-1, or fetch from the FM-1 with a matching twin."
+msgstr "El gemelo y tu FM-1 usan versiones de JIANT FM que guardan sus canciones de forma distinta (8 canciones hasta V10.6o, 6 canciones desde V10.6p). La música del gemelo no se puede escribir en este FM-1 – tampoco con la opción de experto. Instala en el FM-1 la versión de JIANT FM del gemelo, o trae del FM-1 con un gemelo que coincida."
+
+#: fm1companion/studio_web.py:27
+msgid "The twin has stopped: its process ended unexpectedly (often because memory ran out)."
+msgstr "El gemelo se ha detenido: su proceso terminó de forma inesperada (a menudo por falta de memoria)."
+
+#: fm1companion/ui/pages/studio.py:29
+msgid "Single tracks (stems): one WAV file per track (Melodee, SLOOP and KARMA 1–4, Skiff and JIANT FM 1–6, CoralFlower's chords, bass, layer and drums), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master) – from the same starting point as the mix, so the files line up in time when you put them on top of each other in Logic or Audacity. Their sum is not the mix: every stem passes the master section alone, so levels and dynamics differ."
+msgstr "Pistas separadas (stems): un archivo WAV por pista (Melodee, SLOOP y KARMA 1–4, Skiff y JIANT FM 1–6, en CoralFlower acordes, bajo, capa y batería), tan largo como la mezcla. Cada pista se renderiza por separado – con su parte de los efectos compartidos (reverb, delay, master) – desde el mismo punto de partida que la mezcla, así que los archivos coinciden en el tiempo cuando los apilas en Logic o Audacity. Su suma no es la mezcla: cada pista pasa sola por la sección de master, por eso los niveles y la dinámica difieren."
+
+#: fm1companion/ui/pages/studio.py:139
+#, python-brace-format
+msgid "{firmware} has no song the twin could play to an end, so this export would not stop by itself. Choose a fixed length."
+msgstr "{firmware} no tiene una canción que el gemelo pueda tocar hasta un final, así que esta exportación no se detendría sola. Elige una duración fija."
+
+#: fm1companion/ui/pages/studio.py:142
+#, python-brace-format
+msgid "With {firmware} this ends only if the twin's song is set to play once and stop. A song that loops never ends: the export then runs to the limit of 15 minutes (you can cancel it). A fixed length is the safe choice."
+msgstr "Con {firmware} esto solo termina si la canción del gemelo está ajustada para sonar una vez y parar. Una canción en bucle no termina nunca: la exportación sigue entonces hasta el límite de 15 minutos (puedes cancelarla). Una duración fija es la opción segura."
+
+#: fm1companion/ui/pages/studio.py:146
+msgid "Plays the song chain from row 1 until it stops. Without a song chain nothing starts, and the export ends after a few seconds."
+msgstr "Reproduce la cadena de canción desde la fila 1 hasta que se detiene. Sin cadena de canción no arranca nada, y la exportación termina a los pocos segundos."
+
+#: fm1companion/ui/pages/studio.py:241
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the song's parts A–D, the running music, the song order, the user presets, the HEX drum kits and the sample slots. Playback on the FM-1 must be stopped (STOP) – KARMA refuses otherwise, and nothing is written."
+msgstr "Primero la app hace automáticamente una <b>copia de seguridad previa</b> de este FM-1 (Copias de seguridad › Lista). Después el gemelo reemplaza en el dispositivo: las partes A–D de la canción, la música en curso, el orden de la canción, los presets de usuario, los kits de batería HEX y las ranuras de muestras. La reproducción en el FM-1 tiene que estar detenida (STOP) – si no, KARMA se niega y no se escribe nada."
+
+#: fm1companion/ui/pages/studio.py:279
+#, python-brace-format
+msgid "The twin's content: {source}."
+msgstr "El contenido del gemelo: {source}."
+
+#: fm1companion/ui/pages/studio.py:281
+msgid "Yes, replace the FM-1's content with this twin"
+msgstr "Sí, sustituir el contenido del FM-1 por este gemelo"
+
+#: fm1companion/ui/pages/studio.py:285
+msgid "Parts you have not changed in the studio since fetching them from this FM-1 are not written again – they stay as they are on the device."
+msgstr "Las partes que no has cambiado en el Studio desde que las trajiste de este FM-1 no se vuelven a escribir – se quedan como están en el dispositivo."
+
+#: fm1companion/ui/pages/studio.py:289
+#, python-brace-format
+msgid "This twin was started empty – nothing in it was fetched from “{device}”. Everything listed above is replaced on the FM-1 by the twin's content: what you have there now will be gone from the device (the safety backup keeps a copy)."
+msgstr "Este gemelo se arrancó vacío – nada de lo que contiene se trajo de “{device}”. Todo lo enumerado arriba se sustituye en el FM-1 por el contenido del gemelo: lo que tienes ahora allí desaparecerá del dispositivo (la copia de seguridad previa guarda una copia)."
+
+#: fm1companion/ui/pages/studio.py:292
+#, python-brace-format
+msgid "The twin's content was not fetched from “{device}” – it comes from somewhere else (see above). Everything listed above is replaced on the FM-1 by it: what you have there now will be gone from the device (the safety backup keeps a copy)."
+msgstr "El contenido del gemelo no se trajo de “{device}” – viene de otro sitio (ver arriba). Todo lo enumerado arriba se sustituye con él en el FM-1: lo que tienes ahora allí desaparecerá del dispositivo (la copia de seguridad previa guarda una copia)."
+
+#: fm1companion/ui/pages/studio.py:422
+msgctxt "play the song chain"
+msgid "Song"
+msgstr "Canción"
+
+#: fm1companion/ui/pages/studio.py:669
+msgid "Read a complete backup from the active FM-1 (also lands in Backups › List) and load it into the twin. Playback on the FM-1 stops. FM1 Open has no command to read a saved project directly: the FM-1 loads each saved project into its working area in turn, and at the end the app puts your working project back. If the cable is pulled in between, unsaved work in the working area can be lost; the saved projects are not written."
+msgstr "Leer una copia de seguridad completa del FM-1 activo (también aparece en Copias de seguridad › Lista) y cargarla en el gemelo. La reproducción en el FM-1 se detiene. FM1 Open no tiene un comando para leer directamente un proyecto guardado: el FM-1 carga cada proyecto guardado, uno tras otro, en su área de trabajo, y al final la app vuelve a poner tu proyecto de trabajo. Si se desconecta el cable entre medias, puede perderse el trabajo sin guardar del área de trabajo; los proyectos guardados no se escriben."
+
+#: fm1companion/ui/pages/studio.py:717
+#, python-brace-format
+msgid "The twin runs {twin}. Your FM-1 runs M-VAVE's original firmware {device}: it has no twin and no backup protocol, so nothing can be fetched from this FM-1 or written back to it."
+msgstr "El gemelo funciona con {twin}. Tu FM-1 funciona con el firmware original {device} de M-VAVE: no tiene gemelo ni protocolo de copias de seguridad, así que no se puede traer nada de este FM-1 ni volver a escribir en él."
+
+#: fm1companion/ui/pages/studio.py:743
+#, python-brace-format
+msgid "Twin and FM-1 have the same firmware version ({firmware} {version}). The twin plays with the open engine of M-VAVE's simulator, the FM-1 with its own – the sound may differ."
+msgstr "El gemelo y el FM-1 tienen la misma versión de firmware ({firmware} {version}). El gemelo suena con el motor abierto del simulador de M-VAVE, el FM-1 con el suyo propio – el sonido puede diferir."
+
+#: fm1companion/ui/pages/studio.py:846
+msgid "The twin has stopped"
+msgstr "El gemelo se ha detenido"
+
+#: fm1companion/ui/pages/studio.py:846
+msgid "Open the automatically saved studio state again?"
+msgstr "¿Abrir de nuevo el estado del Studio guardado automáticamente?"
+
+#: fm1companion/ui/pages/studio.py:847 fm1companion/ui/pages/studio.py:850
+msgid "Open saved state"
+msgstr "Abrir estado guardado"
+
+#: fm1companion/ui/pages/studio.py:1218
+msgid "Export cancelled – no file was written."
+msgstr "Exportación cancelada – no se escribió ningún archivo."
+
+#: fm1companion/ui/pages/studio.py:1228
+msgid "nothing started playing: the twin has no song chain to play. Choose a fixed length instead."
+msgstr "no empezó a sonar nada: el gemelo no tiene cadena de canción que tocar. Elige en su lugar una duración fija."
+
+#: fm1companion/ui/pages/studio.py:1230
+#, python-brace-format
+msgid "the song did not end by itself: the export stopped at the limit of {minutes} minutes."
+msgstr "la canción no terminó por sí sola: la exportación se detuvo en el límite de {minutes} minutos."
+
+#: fm1companion/ui/pages/studio.py:1282
+#, python-brace-format
+msgid "The twin's content was not fetched from “{device}”. Writing it back replaces what is on the FM-1 – that needs the tick “Yes, replace the FM-1's content with this twin”. Nothing was written."
+msgstr "El contenido del gemelo no se trajo de “{device}”. Volver a escribirlo sustituye lo que hay en el FM-1 – para eso hace falta marcar la casilla “Sí, sustituir el contenido del FM-1 por este gemelo”. No se escribió nada."
+
+#: fm1companion/ui/pages/studio.py:1305
+#, python-brace-format
+msgid "Backed up and read back from disk: {name}"
+msgstr "Copia hecha y releída del disco: {name}"
+
+#: fm1companion/ui/pages/studio.py:1319
+#, python-brace-format
+msgid "Nothing in the twin differs from what was fetched from “{name}” – nothing was written. Safety backup: {file} (Backups › List)."
+msgstr "Nada en el gemelo difiere de lo que se trajo de “{name}” – no se escribió nada. Copia de seguridad previa: {file} (Copias de seguridad › Lista)."
+
+#: fm1companion/ui/pages/studio.py:1322
+#, python-brace-format
+msgid "{n} changed part of the studio is now on “{name}”; the parts you did not change were left as they are. Safety backup before: {file} (Backups › List)."
+msgid_plural "{n} changed parts of the studio are now on “{name}”; the parts you did not change were left as they are. Safety backup before: {file} (Backups › List)."
+msgstr[0] "{n} parte cambiada del Studio está ahora en “{name}”; las partes que no cambiaste se quedaron como estaban. Copia de seguridad previa: {file} (Copias de seguridad › Lista)."
+msgstr[1] "{n} partes cambiadas del Studio están ahora en “{name}”; las partes que no cambiaste se quedaron como estaban. Copia de seguridad previa: {file} (Copias de seguridad › Lista)."
+
+#: fm1companion/ui/pages/studio.py:1347
+msgid "The FM-1 now holds a mix of old and new parts."
+msgstr "El FM-1 tiene ahora una mezcla de partes antiguas y nuevas."
+
+#: fm1companion/ui/pages/studio.py:1348
+#, python-brace-format
+msgid "The safety backup made just before is “{file}” (Backups › List), in case you need the FM-1's previous state back."
+msgstr "La copia de seguridad previa que se acaba de hacer es “{file}” (Copias de seguridad › Lista), por si necesitas recuperar el estado anterior del FM-1."
+
+#: fm1companion/ui/studio_service.py:232
+#, python-brace-format
+msgid "The twin stopped unexpectedly: its process ended ({reason}). This often means the computer ran out of memory. What the twin had not yet saved to its flash is lost; the automatically saved studio state is still there."
+msgstr "El gemelo se detuvo de forma inesperada: su proceso terminó ({reason}). A menudo significa que el ordenador se quedó sin memoria. Lo que el gemelo aún no había guardado en su flash se ha perdido; el estado del Studio guardado automáticamente sigue ahí."
+
+#: fm1companion/ui/studio_service.py:565
+#, python-brace-format
+msgid "The sound dropped out {n} time (the computer was busy); the studio now buffers {ms} ms."
+msgid_plural "The sound dropped out {n} times (the computer was busy); the studio now buffers {ms} ms."
+msgstr[0] "El sonido se cortó {n} vez (el ordenador estaba ocupado); el Studio usa ahora un búfer de {ms} ms."
+msgstr[1] "El sonido se cortó {n} veces (el ordenador estaba ocupado); el Studio usa ahora un búfer de {ms} ms."
+
+#: fm1companion/ui/studio_service.py:574
+msgid "drag, mouse wheel or arrow keys"
+msgstr "arrastrar, rueda del ratón o teclas de flecha"

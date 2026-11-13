@@ -286,10 +286,6 @@ msgstr "Tasten des echten FM-1 spielen mit"
 msgid "What you play on the connected FM-1 also sounds in the twin (notes/knobs only)."
 msgstr "Was du am angeschlossenen FM-1 spielst, klingt auch im Zwilling (nur Noten/Regler)."
 
-#: fm1companion/ui/pages/studio.py:355
-msgid "Output"
-msgstr "Ausgeben"
-
 #: fm1companion/ui/pages/studio.py:357
 msgid "Export as WAV …"
 msgstr "Als WAV exportieren …"
@@ -825,10 +821,6 @@ msgstr "unbekannte Herkunft"
 #, python-brace-format
 msgid ". Not taken over ({n}): {names} – these parts do not fit {firmware} {version} and are left out when writing back"
 msgstr ". Nicht übernommen ({n}): {names} – diese Teile passen nicht zu {firmware} {version} und werden beim Zurückschreiben ausgelassen"
-
-#: fm1companion/studio.py:80
-msgid "The twin computes without a CPU limit: under overload the device drops voices (overload shedding), the twin never does. Floating-point parts (FM6 voice pairs, which CPU1 computes on the device, effect filters) may differ in the last bits (inaudible). No BLE, no USB host, no firmware update in the twin. The resource arena has the size of the host tests (at least that of the device). Stems come from several runs with muted tracks (track solo, with its share of the shared effects); because of the master dynamics the sum of the stems does not exactly match the mix."
-msgstr "Der Zwilling rechnet ohne CPU-Grenze: das Gerät nimmt bei Überlast Stimmen weg (Overload-Shedding), der Zwilling nie. Fließkomma-Teile (FM6-Stimmenpaare, die auf dem Gerät CPU1 rechnet, Effektfilter) können in den letzten Bits abweichen (unhörbar). Kein BLE, kein USB-Host, kein Firmware-Update im Zwilling. Die Ressourcen-Arena hat die Größe der Host-Tests (mindestens die des Geräts). Stems entstehen aus mehreren Durchläufen mit stummgeschalteten Spuren (Spur solo, mit ihrem Anteil an den gemeinsamen Effekten); die Summe der Stems entspricht wegen Master-Dynamik nicht exakt dem Mix."
 
 #: fm1companion/studio.py:141
 #, python-brace-format
@@ -4483,9 +4475,6 @@ msgstr "Section {n} geladen."
 msgid "Section {n} is empty."
 msgstr "Section {n} ist leer."
 
-msgid "Single tracks (stems): one WAV file per track (Melodee, SLOOP and KARMA 1–4, Skiff and JIANT FM 1–6, CoralFlower's chords, bass, layer and drums), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master). That is why the sum of the stems is not bit-exact the mix (master dynamics), but they fit on top of each other in Logic or Audacity."
-msgstr "Einzelspuren (Stems): je Spur eine eigene WAV-Datei (Melodee, SLOOP und KARMA 1–4, Skiff und JIANT FM 1–6, bei CoralFlower Akkorde, Bass, Layer und Drums), gleich lang wie der Mix. Jede Spur wird allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master). Darum ist die Summe der Stems nicht bitgenau der Mix (Master-Dynamik), passt in Logic oder Audacity aber übereinander."
-
 #, python-brace-format
 msgid "Which backup should the twin load? {firmwares} backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
 msgstr "Welches Backup soll der Zwilling laden? Backups von {firmwares} aller Geräte, neueste zuerst – es startet der Zwilling der Firmware des Backups. Am FM-1 ändert sich dadurch nichts."
@@ -4516,10 +4505,6 @@ msgstr "{names} und {last}"
 #, python-brace-format
 msgid "{names} or {last}"
 msgstr "{names} oder {last}"
-
-#: fm1companion/ui/pages/studio.py
-msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the song's parts A–D, the running music, the song order, the user presets, the HEX drum kits and the sample slots. Playback on the FM-1 stops in the process."
-msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät: die Teile A–D des Songs, die laufende Musik, die Song-Reihenfolge, die User-Presets, die HEX-Drumkits und die Sample-Slots. Die Wiedergabe am FM-1 stoppt dabei."
 
 #: fm1companion/ui/pages/studio.py
 #, python-brace-format
@@ -4596,3 +4581,174 @@ msgstr "FM-1-Backup (*.json);;X0X-Backup (*.x0b);;LOOM-8-Backup (*.loom8)"
 #: fm1companion/ui/pages/studio.py:222
 msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces LOOM-8's user presets and its three projects on the device, all of them (its sample bank stays). LOOM-8 must be stopped, and it asks on its screen: press <b>SEL</b> on the FM-1 to confirm."
 msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling LOOM-8s Benutzer-Presets und seine drei Projekte am Gerät, alle zusammen (seine Sample-Bank bleibt). LOOM-8 muss gestoppt sein und fragt auf seinem Bildschirm: zum Bestätigen <b>SEL</b> am FM-1 drücken."
+
+#: fm1companion/presetlib.py:648 fm1companion/presetlib.py:653
+#, python-brace-format
+msgid "“{name}” in the .zip file is too large to be a preset"
+msgstr "„{name}“ in der .zip-Datei ist zu groß für ein Preset"
+
+#: fm1companion/studio.py:84
+msgid "The twin computes without a CPU limit: under overload the device drops voices (overload shedding), the twin never does. Floating-point parts (FM6 voice pairs, which CPU1 computes on the device, effect filters) may differ in the last bits (inaudible). No BLE, no USB host, no firmware update in the twin. The resource arena has the size of the host tests (at least that of the device). Stems come from several runs with muted tracks (track solo, with its share of the shared effects), all from the same starting point, so they line up in time; because of the master dynamics and shared effects the sum of the stems is not the mix."
+msgstr "Der Zwilling rechnet ohne CPU-Grenze: das Gerät nimmt bei Überlast Stimmen weg (Overload-Shedding), der Zwilling nie. Fließkomma-Teile (FM6-Stimmenpaare, die auf dem Gerät CPU1 rechnet, Effektfilter) können in den letzten Bits abweichen (unhörbar). Kein BLE, kein USB-Host, kein Firmware-Update im Zwilling. Die Ressourcen-Arena hat die Größe der Host-Tests (mindestens die des Geräts). Stems entstehen aus mehreren Durchläufen mit stummgeschalteten Spuren (Spur solo, mit ihrem Anteil an den gemeinsamen Effekten), alle vom selben Startpunkt, sie liegen also zeitlich übereinander; wegen der Master-Dynamik und der gemeinsamen Effekte ist die Summe der Stems nicht der Mix."
+
+#: fm1companion/studio.py:748
+#, python-brace-format
+msgid "No free file name found for {name}"
+msgstr "Kein freier Dateiname für {name} gefunden"
+
+#: fm1companion/studio.py:876
+msgid "Nothing written."
+msgstr "Nichts geschrieben."
+
+#: fm1companion/studio.py:1003
+#, python-brace-format
+msgid "This studio state belongs to {state}, not to the {twin} twin."
+msgstr "Dieser Studio-Stand gehört zu {state}, nicht zum {twin}-Zwilling."
+
+#: fm1companion/studio.py:1099 fm1companion/studio.py:1106 fm1companion/studio.py:1126
+msgid "Export cancelled."
+msgstr "Export abgebrochen."
+
+#: fm1companion/studio.py:1198
+msgid "The twin and your FM-1 run JIANT FM versions that store their songs differently (8 songs up to V10.6o, 6 songs from V10.6p on). The twin's music cannot be written to this FM-1 – not with the expert option either. Install the twin's JIANT FM version on the FM-1, or fetch from the FM-1 with a matching twin."
+msgstr "Der Zwilling und dein FM-1 laufen mit JIANT-FM-Versionen, die ihre Songs unterschiedlich speichern (8 Songs bis V10.6o, 6 Songs ab V10.6p). Die Musik des Zwillings lässt sich nicht auf dieses FM-1 schreiben – auch nicht mit der Experten-Option. Installiere die JIANT-FM-Version des Zwillings auf dem FM-1, oder hole vom FM-1 mit einem passenden Zwilling."
+
+#: fm1companion/studio_web.py:27
+msgid "The twin has stopped: its process ended unexpectedly (often because memory ran out)."
+msgstr "Der Zwilling ist stehen geblieben: Sein Prozess wurde unerwartet beendet (oft, weil der Speicher ausging)."
+
+#: fm1companion/ui/pages/studio.py:29
+msgid "Single tracks (stems): one WAV file per track (Melodee, SLOOP and KARMA 1–4, Skiff and JIANT FM 1–6, CoralFlower's chords, bass, layer and drums), as long as the mix. Each track is rendered on its own – with its share of the shared effects (reverb, delay, master) – from the same starting point as the mix, so the files line up in time when you put them on top of each other in Logic or Audacity. Their sum is not the mix: every stem passes the master section alone, so levels and dynamics differ."
+msgstr "Einzelspuren (Stems): je Spur eine eigene WAV-Datei (Melodee, SLOOP und KARMA 1–4, Skiff und JIANT FM 1–6, bei CoralFlower Akkorde, Bass, Layer und Drums), gleich lang wie der Mix. Jede Spur wird allein gerendert – mit ihrem Anteil an den gemeinsamen Effekten (Hall, Delay, Master) – vom selben Startpunkt wie der Mix; die Dateien liegen also zeitlich übereinander, wenn du sie in Logic oder Audacity übereinanderlegst. Ihre Summe ist nicht der Mix: Jeder Stem durchläuft die Master-Sektion allein, Pegel und Dynamik weichen darum ab."
+
+#: fm1companion/ui/pages/studio.py:139
+#, python-brace-format
+msgid "{firmware} has no song the twin could play to an end, so this export would not stop by itself. Choose a fixed length."
+msgstr "{firmware} hat keinen Song, den der Zwilling bis zu einem Ende spielen könnte; dieser Export würde also nicht von selbst stoppen. Wähle eine feste Länge."
+
+#: fm1companion/ui/pages/studio.py:142
+#, python-brace-format
+msgid "With {firmware} this ends only if the twin's song is set to play once and stop. A song that loops never ends: the export then runs to the limit of 15 minutes (you can cancel it). A fixed length is the safe choice."
+msgstr "Bei {firmware} endet das nur, wenn der Song des Zwillings auf einmal abspielen und stoppen gestellt ist. Ein Song in Schleife endet nie: Der Export läuft dann bis zur Grenze von 15 Minuten (du kannst ihn abbrechen). Eine feste Länge ist die sichere Wahl."
+
+#: fm1companion/ui/pages/studio.py:146
+msgid "Plays the song chain from row 1 until it stops. Without a song chain nothing starts, and the export ends after a few seconds."
+msgstr "Spielt die Song-Kette ab Zeile 1, bis sie stoppt. Ohne Song-Kette startet nichts, und der Export endet nach wenigen Sekunden."
+
+#: fm1companion/ui/pages/studio.py:241
+msgid "First the app automatically makes a <b>safety backup</b> of this FM-1 (Backups › List). Then the twin replaces on the device: the song's parts A–D, the running music, the song order, the user presets, the HEX drum kits and the sample slots. Playback on the FM-1 must be stopped (STOP) – KARMA refuses otherwise, and nothing is written."
+msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM-1 (Backups › Liste). Danach ersetzt der Zwilling am Gerät: die Teile A–D des Songs, die laufende Musik, die Song-Reihenfolge, die User-Presets, die HEX-Drumkits und die Sample-Slots. Die Wiedergabe am FM-1 muss gestoppt sein (STOP) – sonst lehnt KARMA ab, und es wird nichts geschrieben."
+
+#: fm1companion/ui/pages/studio.py:279
+#, python-brace-format
+msgid "The twin's content: {source}."
+msgstr "Der Inhalt des Zwillings: {source}."
+
+#: fm1companion/ui/pages/studio.py:281
+msgid "Yes, replace the FM-1's content with this twin"
+msgstr "Ja, den Inhalt des FM-1 durch diesen Zwilling ersetzen"
+
+#: fm1companion/ui/pages/studio.py:285
+msgid "Parts you have not changed in the studio since fetching them from this FM-1 are not written again – they stay as they are on the device."
+msgstr "Teile, die du im Studio seit dem Holen von diesem FM-1 nicht geändert hast, werden nicht noch einmal geschrieben – sie bleiben auf dem Gerät, wie sie sind."
+
+#: fm1companion/ui/pages/studio.py:289
+#, python-brace-format
+msgid "This twin was started empty – nothing in it was fetched from “{device}”. Everything listed above is replaced on the FM-1 by the twin's content: what you have there now will be gone from the device (the safety backup keeps a copy)."
+msgstr "Dieser Zwilling wurde leer gestartet – nichts darin wurde von „{device}“ geholt. Alles oben Aufgezählte wird auf dem FM-1 durch den Inhalt des Zwillings ersetzt: Was du dort jetzt hast, ist danach vom Gerät weg (das Sicherheits-Backup behält eine Kopie)."
+
+#: fm1companion/ui/pages/studio.py:292
+#, python-brace-format
+msgid "The twin's content was not fetched from “{device}” – it comes from somewhere else (see above). Everything listed above is replaced on the FM-1 by it: what you have there now will be gone from the device (the safety backup keeps a copy)."
+msgstr "Der Inhalt des Zwillings wurde nicht von „{device}“ geholt – er stammt von woanders (siehe oben). Alles oben Aufgezählte wird auf dem FM-1 dadurch ersetzt: Was du dort jetzt hast, ist danach vom Gerät weg (das Sicherheits-Backup behält eine Kopie)."
+
+#: fm1companion/ui/pages/studio.py:422
+msgctxt "play the song chain"
+msgid "Song"
+msgstr "Song"
+
+#: fm1companion/ui/pages/studio.py:669
+msgid "Read a complete backup from the active FM-1 (also lands in Backups › List) and load it into the twin. Playback on the FM-1 stops. FM1 Open has no command to read a saved project directly: the FM-1 loads each saved project into its working area in turn, and at the end the app puts your working project back. If the cable is pulled in between, unsaved work in the working area can be lost; the saved projects are not written."
+msgstr "Komplettes Backup vom aktiven FM-1 lesen (landet auch in Backups › Liste) und in den Zwilling laden. Die Wiedergabe am FM-1 stoppt. FM1 Open hat keinen Befehl, ein gespeichertes Projekt direkt zu lesen: Das FM-1 lädt jedes gespeicherte Projekt der Reihe nach in seinen Arbeitsbereich, und am Ende legt die App dein Arbeitsprojekt zurück. Wird dazwischen das Kabel gezogen, kann ungespeicherte Arbeit im Arbeitsbereich verloren gehen; die gespeicherten Projekte werden nicht geschrieben."
+
+#: fm1companion/ui/pages/studio.py:717
+#, python-brace-format
+msgid "The twin runs {twin}. Your FM-1 runs M-VAVE's original firmware {device}: it has no twin and no backup protocol, so nothing can be fetched from this FM-1 or written back to it."
+msgstr "Der Zwilling läuft mit {twin}. Dein FM-1 läuft mit M-VAVEs Original-Firmware {device}: Für sie gibt es keinen Zwilling und kein Backup-Protokoll, von diesem FM-1 lässt sich also nichts holen und nichts darauf zurückschreiben."
+
+#: fm1companion/ui/pages/studio.py:743
+#, python-brace-format
+msgid "Twin and FM-1 have the same firmware version ({firmware} {version}). The twin plays with the open engine of M-VAVE's simulator, the FM-1 with its own – the sound may differ."
+msgstr "Zwilling und FM-1 haben dieselbe Firmware-Version ({firmware} {version}). Der Zwilling spielt mit der offenen Engine von M-VAVEs Simulator, das FM-1 mit seiner eigenen – der Klang kann abweichen."
+
+#: fm1companion/ui/pages/studio.py:846
+msgid "The twin has stopped"
+msgstr "Der Zwilling ist stehen geblieben"
+
+#: fm1companion/ui/pages/studio.py:846
+msgid "Open the automatically saved studio state again?"
+msgstr "Den automatisch gespeicherten Studio-Stand wieder öffnen?"
+
+#: fm1companion/ui/pages/studio.py:847 fm1companion/ui/pages/studio.py:850
+msgid "Open saved state"
+msgstr "Gespeicherten Stand öffnen"
+
+#: fm1companion/ui/pages/studio.py:1218
+msgid "Export cancelled – no file was written."
+msgstr "Export abgebrochen – es wurde keine Datei geschrieben."
+
+#: fm1companion/ui/pages/studio.py:1228
+msgid "nothing started playing: the twin has no song chain to play. Choose a fixed length instead."
+msgstr "es hat nichts zu spielen begonnen: Der Zwilling hat keine Song-Kette. Wähle stattdessen eine feste Länge."
+
+#: fm1companion/ui/pages/studio.py:1230
+#, python-brace-format
+msgid "the song did not end by itself: the export stopped at the limit of {minutes} minutes."
+msgstr "der Song ist nicht von selbst zu Ende gegangen: Der Export hat an der Grenze von {minutes} Minuten gestoppt."
+
+#: fm1companion/ui/pages/studio.py:1282
+#, python-brace-format
+msgid "The twin's content was not fetched from “{device}”. Writing it back replaces what is on the FM-1 – that needs the tick “Yes, replace the FM-1's content with this twin”. Nothing was written."
+msgstr "Der Inhalt des Zwillings wurde nicht von „{device}“ geholt. Zurückschreiben ersetzt, was auf dem FM-1 ist – dafür braucht es den Haken „Ja, den Inhalt des FM-1 durch diesen Zwilling ersetzen“. Es wurde nichts geschrieben."
+
+#: fm1companion/ui/pages/studio.py:1305
+#, python-brace-format
+msgid "Backed up and read back from disk: {name}"
+msgstr "Gesichert und von der Festplatte zurückgelesen: {name}"
+
+#: fm1companion/ui/pages/studio.py:1319
+#, python-brace-format
+msgid "Nothing in the twin differs from what was fetched from “{name}” – nothing was written. Safety backup: {file} (Backups › List)."
+msgstr "Im Zwilling weicht nichts von dem ab, was von „{name}“ geholt wurde – es wurde nichts geschrieben. Sicherheits-Backup: {file} (Backups › Liste)."
+
+#: fm1companion/ui/pages/studio.py:1322
+#, python-brace-format
+msgid "{n} changed part of the studio is now on “{name}”; the parts you did not change were left as they are. Safety backup before: {file} (Backups › List)."
+msgid_plural "{n} changed parts of the studio are now on “{name}”; the parts you did not change were left as they are. Safety backup before: {file} (Backups › List)."
+msgstr[0] "{n} geänderter Teil aus dem Studio ist jetzt auf „{name}“; die Teile, die du nicht geändert hast, blieben, wie sie sind. Sicherheits-Backup davor: {file} (Backups › Liste)."
+msgstr[1] "{n} geänderte Teile aus dem Studio sind jetzt auf „{name}“; die Teile, die du nicht geändert hast, blieben, wie sie sind. Sicherheits-Backup davor: {file} (Backups › Liste)."
+
+#: fm1companion/ui/pages/studio.py:1347
+msgid "The FM-1 now holds a mix of old and new parts."
+msgstr "Auf dem FM-1 liegt jetzt eine Mischung aus alten und neuen Teilen."
+
+#: fm1companion/ui/pages/studio.py:1348
+#, python-brace-format
+msgid "The safety backup made just before is “{file}” (Backups › List), in case you need the FM-1's previous state back."
+msgstr "Das Sicherheits-Backup von eben ist „{file}“ (Backups › Liste), falls du den vorherigen Zustand des FM-1 zurückbrauchst."
+
+#: fm1companion/ui/studio_service.py:232
+#, python-brace-format
+msgid "The twin stopped unexpectedly: its process ended ({reason}). This often means the computer ran out of memory. What the twin had not yet saved to its flash is lost; the automatically saved studio state is still there."
+msgstr "Der Zwilling ist unerwartet stehen geblieben: Sein Prozess wurde beendet ({reason}). Das heißt oft, dass dem Rechner der Speicher ausging. Was der Zwilling noch nicht in seinen Flash gespeichert hatte, ist verloren; der automatisch gespeicherte Studio-Stand ist noch da."
+
+#: fm1companion/ui/studio_service.py:565
+#, python-brace-format
+msgid "The sound dropped out {n} time (the computer was busy); the studio now buffers {ms} ms."
+msgid_plural "The sound dropped out {n} times (the computer was busy); the studio now buffers {ms} ms."
+msgstr[0] "Der Ton hat {n}-mal ausgesetzt (der Rechner war beschäftigt); das Studio puffert jetzt {ms} ms."
+msgstr[1] "Der Ton hat {n}-mal ausgesetzt (der Rechner war beschäftigt); das Studio puffert jetzt {ms} ms."
+
+#: fm1companion/ui/studio_service.py:574
+msgid "drag, mouse wheel or arrow keys"
+msgstr "ziehen, Mausrad oder Pfeiltasten"

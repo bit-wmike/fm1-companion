@@ -2208,10 +2208,11 @@ def test_mix_and_stems_start_aligned(node_studio, tmp_path):
 
 def test_export_without_a_song_ends_early_and_cancel_leaves_nothing(node_studio, tmp_path):
     """ST-03: "whole song" on a twin whose transport never starts no longer renders 15 minutes of silence (started
-    False after a few seconds); only Melodee is flagged as having a song that ends. A cancelled export stops the
+    False after a few seconds); only Melodee is flagged as having a song that always ends, five twins have none. A cancelled export stops the
     render, raises StudioCancelled, removes its partial files and leaves an existing file of that name untouched."""
     import threading
     assert [k for k in studio.FIRMWARES if studio.song_ends(k)] == ["melodee"]
+    assert [k for k in studio.FIRMWARES if not studio.has_song(k)] == ["fm1-open", "choralroot", "amb-1", "fomni", "loom-8"]
     st = node_studio()                                         # (an empty Melodee: no song chain)
     r = st.render_wav(tmp_path / "none.wav", until_end=True, start="song", max_seconds=60)
     assert not r.started and not r.ended and r.seconds <= 4

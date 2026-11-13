@@ -133,17 +133,24 @@ class ExportDialog(QDialog):
             self.r_loops.setToolTip(_("The pattern length could not be read."))
         else:
             self.r_loops.setToolTip(_("One pass ≈ {seconds} s").format(seconds=f"{loop_seconds:.1f}"))
-        if not self.song_ends:                          # (only Melodee's twin stops at the end of its song chain)
+        fw_name = S.firmware_name(firmware)
+        if not S.has_song(firmware):                    # (a loop, a pattern, a twin that plays itself: nothing ends)
             self.r_song.setEnabled(False)
-            self.r_song.setToolTip(_("With {firmware} the twin does not tell when a song is over, so this export would "
-                                     "not stop by itself (it would run to the limit of 15 minutes). Choose a fixed "
-                                     "length.").format(firmware=S.firmware_name(firmware)))
+            self.r_song.setToolTip(_("{firmware} has no song the twin could play to an end, so this export would not "
+                                     "stop by itself. Choose a fixed length.").format(firmware=fw_name))
+        elif not self.song_ends:                        # (Skiff's SONG ONCE, SLOOP's song order …: only if set so)
+            self.r_song.setToolTip(_("With {firmware} this ends only if the twin's song is set to play once and stop. "
+                                     "A song that loops never ends: the export then runs to the limit of 15 minutes "
+                                     "(you can cancel it). A fixed length is the safe choice.").format(firmware=fw_name))
         else:
             self.r_song.setToolTip(_("Plays the song chain from row 1 until it stops. Without a song chain nothing "
                                      "starts, and the export ends after a few seconds."))
-        mode = cfg.get("export_mode", "song")
-        first = self.r_song if self.song_ends else self.r_secs       # (no song end: a fixed length is the default)
-        {"secs": self.r_secs, "loops": self.r_loops if loop_seconds else first}.get(mode, first).setChecked(True)
+        # the default: the whole song only where a song always ends (Melodee), a fixed length everywhere else; the
+        # user's own last choice is kept where it is possible at all
+        mode = cfg.get("export_mode") or ("song" if self.song_ends else "secs")
+        if mode == "song" and (not S.has_song(firmware) or (not self.song_ends and not cfg.get("export_mode_chosen"))):
+            mode = "secs"
+        {"song": self.r_song, "loops": self.r_loops if loop_seconds else self.r_secs}.get(mode, self.r_secs).setChecked(True)
         lay.addWidget(box)
         form = QFormLayout()
         self.fmt = QComboBox()
@@ -178,7 +185,8 @@ class ExportDialog(QDialog):
 
     def params(self) -> dict:
         mode = "song" if self.r_song.isChecked() else "secs" if self.r_secs.isChecked() else "loops"
-        self.cfg.update(export_mode=mode, export_seconds=self.secs.value(), export_loops=self.loops.value(),
+        self.cfg.update(export_mode=mode, export_mode_chosen=True, export_seconds=self.secs.value(),
+                        export_loops=self.loops.value(),
                         export_fmt=self.fmt.currentData(), export_stems=self.stems.isChecked(),
                         export_dir=self.folder.text().strip())
         try:
