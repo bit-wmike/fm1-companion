@@ -102,7 +102,7 @@ class Toast(QFrame):
         if note.action:
             b = QPushButton(note.action[0])
             b.setProperty("variant", "flat")
-            b.clicked.connect(self._act)
+            b.clicked.connect(lambda _c=False: self._act())     # (never hand Qt's checked=False to fn)
             self.action_button = b
             if note.more:                        # several choices: side by side
                 row = QHBoxLayout()
