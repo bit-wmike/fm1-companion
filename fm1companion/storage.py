@@ -114,12 +114,8 @@ def install_running() -> bool:
     from .flash import journal
     if journal.Journal.busy():
         return True
-    j = _journal()
-    try:
-        pid = int(j.lockfile.read_text().strip() or 0)
-    except (OSError, ValueError):
-        return False
-    return bool(pid) and journal._alive(pid)
+    pid, born = journal._read_lock(_journal().lockfile)      # "PID start-time" (older versions: PID only)
+    return bool(pid) and journal._alive(pid, born)
 
 
 def resume_possible() -> bool:

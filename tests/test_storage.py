@@ -120,6 +120,11 @@ def test_nothing_deleted_while_installing(env):
     assert storage.install_running()
     j2.lockfile.write_text("999999999")                 # a dead process: no installation
     assert not storage.install_running()
+    # the lock as the installer writes it now: PID and start time of the process
+    j2.lockfile.write_text(f"{os.getpid()} {journal._started(os.getpid())}")
+    assert storage.install_running()
+    j2.lockfile.write_text(f"{os.getpid()} 1")          # same PID, another start time: a reused PID, no installation
+    assert not storage.install_running()
 
 
 def test_logs_rotated_deleted_current_emptied(env):
