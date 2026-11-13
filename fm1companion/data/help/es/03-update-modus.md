@@ -14,6 +14,22 @@ ayuda.
 Melodee a partir de 1.3.5, con protección de arranque, vuelve por sí solo al modo de actualización tras una escritura interrumpida (también
 un corte de corriente): basta con volver a encenderlo y reinstalar.
 
+## Tras una instalación interrumpida
+
+Tras una interrupción, el mensaje de la app dice lo que es *probable*: no ha vuelto a mirar el FM-1. La página
+[Recuperación](app://page/recovery) muestra lo que se detecta en ese momento:
+
+* **Se detecta un FM-1 en modo de actualización:** *Terminar instalación* vuelve a escribir el paquete
+  interrumpido. La app lo conoce por su diario y comprueba que corresponde al cargador de actualización que espera;
+  si no, no se envía nada.
+* **No se detecta nada y el FM-1 funciona con normalidad:** no se escribió nada. *Olvidar la instalación
+  interrumpida* elimina la nota de la app.
+* **No se detecta nada y la pantalla sigue en negro:** apaga y enciende el FM-1 una vez y prueba el modo de
+  actualización (arriba). Si no funciona, consulta la sección siguiente.
+
+Con sinceridad: terminar una instalación interrumpida solo se ha ejecutado hasta ahora en la simulación, no en un
+FM-1 real.
+
 ## Cuando no funciona nada
 
 Si el ordenador muestra una unidad **“WL82 UBOOT1.00”** y la pantalla sigue negra, el chip está en su

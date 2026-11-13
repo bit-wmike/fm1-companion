@@ -25,9 +25,25 @@ Ob es für dein FM-1 ein Update gibt, steht auch auf der [Übersicht](app://page
 ## Ein Wechsel geht immer über die Original-V15
 
 Wenn du zu einer anderen Firmware **wechselst**, spielt die App zuerst M-VAVEs unveränderte **Original-Firmware V15**
-auf (mit Prüfsumme), dann die neue Firmware – zwei Installationen in einem Plan. So startet die neue Firmware von
-einem sauberen Stand, und keine Reste der alten (Einstellungen, Projekte, Sample-Bereiche) bleiben im Flash. Der
-Installationsplan sagt es: „Wechsel von X zu Y: Die App spielt zuerst die Original-Firmware V15 auf, dann Y“.
+auf (mit Prüfsumme), dann die neue Firmware – zwei Installationen in einem Plan. Der Grund: Die Autoren der
+Firmwares erwarten einen Start von der Original-V15, und ein direkter Wechsel von einer anderen Community-Firmware
+hat schon mindestens ein Gerät unbrauchbar gemacht. Der Installationsplan sagt es: „Wechsel von X zu Y: Die App
+spielt zuerst die Original-Firmware V15 auf, dann Y“.
+
+Was du über den V15-Schritt wissen solltest:
+
+* Die Original-Firmware hat **keinen Startschutz** – lass Strom und USB verbunden, während sie geschrieben wird.
+* Gespeicherte Daten der alten Firmware **können im Flash bleiben** (der V15-Schritt schreibt nur den
+  Firmware-Bereich). Die Original-Firmware liest sie womöglich als ihre eigenen: Presets können verstümmelt
+  aussehen, bis die Ziel-Firmware installiert ist.
+* Dieser Weg in zwei Schritten ist **von dieser App noch nie auf einem echten FM-1 gelaufen** – nur in der
+  Simulation. Auf einem echten FM-1 gelaufen ist bisher: ein Update innerhalb von Melodee. Der Plan wiederholt das
+  bei jeder Installation.
+* Die Original-V15 (≈ 0,9 MB) wird geladen, wenn sie zum ersten Mal gebraucht wird; der Plan sagt, ob sie schon auf
+  diesem Computer liegt. *Original-V15 für die Offline-Nutzung herunterladen* in
+  [Firmware+ › Installieren & Versionen](app://page/firmware) holt sie vorab.
+* Lehnt die laufende Firmware die Original-V15 ab (das FM-1 zeigt „FAILED -5“), wird nichts geschrieben. Die App
+  sagt dann, welcher Weg bleibt.
 
 * **Update oder Downgrade innerhalb derselben Firmware** (z. B. SLOOP 2.8.5 → 2.8.6, KARMA 3.1 → 3.0.5): direkt, ohne
   den V15-Schritt – auch wenn der Katalog sagt, dass die Firmware von V15 aus installiert wird (das FM-1 läuft schon
@@ -41,8 +57,10 @@ Installationsplan sagt es: „Wechsel von X zu Y: Die App spielt zuerst die Orig
   – der V15-Schritt wird nicht wiederholt. Ist er *während* eines Schritts stehen geblieben, schließe diesen zuerst
   auf der Seite [Rettung](app://page/recovery) ab.
 * Experten können im Plan *Experte: direkt installieren, ohne den V15-Schritt* ankreuzen. Das ist standardmäßig aus,
-  wird nicht gespeichert, und der Plan warnt, dass Reste der alten Firmware bleiben können. Eine Einstellung dafür
-  gibt es nicht.
+  wird nicht gespeichert, und der Plan warnt, dass das nicht der Start ist, den die meisten Firmware-Autoren
+  erwarten. Eine Einstellung dafür gibt es nicht.
+* *Abbrechen* wirkt, solange nichts geschrieben wurde; bei einer Firmware der Felucca-Familie auch noch, während
+  das FM-1 das Paket prüft. Sobald sich die Installation nicht mehr anhalten lässt, sagt der Knopf das.
 
 ## Zurück zur Original-Firmware
 

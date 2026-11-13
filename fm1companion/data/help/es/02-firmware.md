@@ -25,9 +25,26 @@ Si hay una actualización para tu FM-1, también se muestra en el [Resumen](app:
 ## Un cambio pasa siempre por la V15 original
 
 Cuando **cambias** a otro firmware, la app instala primero el **firmware original V15** de M-VAVE sin modificar
-(con suma de comprobación) y después el nuevo firmware: dos instalaciones en un solo plan. Así el nuevo firmware
-arranca desde un estado limpio y no quedan restos del anterior (ajustes, proyectos, zonas de samples) en la flash. El
-plan de instalación lo indica: “Cambio de X a Y: la app instala primero el firmware original V15 y después Y”.
+(con suma de comprobación) y después el nuevo firmware: dos instalaciones en un solo plan. El motivo: los autores de
+los firmwares esperan que se parta de la V15 original, y un cambio directo desde otro firmware de la comunidad ya
+ha dejado inservible al menos un dispositivo. El plan de instalación lo indica: “Cambio de X a Y: la app instala
+primero el firmware original V15 y después Y”.
+
+Lo que conviene saber sobre el paso por V15:
+
+* El firmware original **no tiene protección de arranque**: mantén la alimentación y el USB conectados mientras se
+  escribe.
+* Los datos guardados del firmware anterior **pueden quedarse** en la flash (el paso por V15 solo escribe la zona
+  del firmware). El firmware original puede leerlos como propios: los presets pueden verse corruptos hasta que se
+  instale el firmware de destino.
+* Este camino en dos pasos **todavía no se ha ejecutado con esta app en un FM-1 real**, solo en la simulación. En
+  un FM-1 real se ha ejecutado hasta ahora: una actualización dentro de Melodee. El plan lo repite en cada
+  instalación.
+* La V15 original (≈ 0,9 MB) se descarga cuando hace falta por primera vez; el plan indica si ya está en este
+  ordenador. *Descargar la V15 original para usarla sin conexión* en
+  [Firmware+ › Instalar y versiones](app://page/firmware) la obtiene de antemano.
+* Si el firmware en ejecución rechaza la V15 original (el FM-1 muestra “FAILED -5”), no se escribe nada. La app
+  indica entonces qué camino queda.
 
 * **Actualización o vuelta atrás dentro del mismo firmware** (p. ej. SLOOP 2.8.5 → 2.8.6, KARMA 3.1 → 3.0.5):
   directamente, sin el paso por V15, también cuando el catálogo indica que el firmware se instala desde V15 (el FM-1
@@ -41,8 +58,10 @@ plan de instalación lo indica: “Cambio de X a Y: la app instala primero el fi
   *Continuar: instalar …*; el paso por V15 no se repite. Si se detuvo *durante* un paso, termínalo primero en la página
   [Rescate](app://page/recovery).
 * Los expertos pueden marcar en el plan *Experto: instalar directamente sin el paso por V15*. Está desactivado por
-  defecto, no se recuerda y el plan advierte de que pueden quedar restos del firmware anterior. No hay ningún ajuste
-  para ello.
+  defecto, no se recuerda y el plan advierte de que no es el punto de partida que esperan la mayoría de los autores
+  de firmware. No hay ningún ajuste para ello.
+* *Cancelar* funciona mientras no se haya escrito nada; con un firmware de la familia Felucca también mientras el
+  FM-1 comprueba el paquete. En cuanto la instalación ya no se puede detener, el botón lo indica.
 
 ## Volver al firmware original
 

@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (QCheckBox, QFileDialog, QHBoxLayout, QInputDialog, 
 
 from . import PageSpec
 from ... import firmware
-from ...flash import engine as fe, journal as fj, package as fpk, texts as rescue_texts, uboot
+from ...flash import engine as fe, journal as fj, package as fpk, tested, texts as rescue_texts, uboot
 from ..common import Card, Disclosure, confirm, heading, icon, show_error
 from ...i18n import _, pgettext
 
@@ -122,6 +122,12 @@ FAQ = _("<b>… an installation is aborted?</b> Do not unplug anything, check th
         "for firmwares that only work from V15.")
 
 
+# where an installation stopped (journal "stopped_in"), in words
+PHASE_TEXT = {"prepared": _("before anything was sent"), "step1": _("while the FM-1 checked the package (step 1)"),
+              "loader": _("while the FM-1 switched to update mode"), "writing": _("while writing"),
+              "reboot": _("at the restart after writing"), "resources": _("while writing the resources")}
+
+
 class RecoveryPage(QWidget):
     def __init__(self, ctx, window=None):
         super().__init__(window)
@@ -159,6 +165,15 @@ class RecoveryPage(QWidget):
         self.b_file = QPushButton(icon("document-open"), _("Choose another package …"))
         self.b_file.clicked.connect(lambda: self.finish_install(choose=True))
         c1.layout().addLayout(_row(self.b_finish, self.b_v15, self.b_file))
+        self.b_forget = QPushButton(icon("edit-clear", "dialog-close"), _("Forget the interrupted installation"))
+        self.b_forget.setToolTip(_("Removes the app's note about the interrupted installation (and its copy of the "
+                                   "package). Nothing is sent to the FM-1. Use it when the FM-1 runs normally again."))
+        self.b_forget.clicked.connect(self.forget_active)
+        self.b_forget_chain = QPushButton(icon("edit-clear", "dialog-close"), _("Forget the two-step switch"))
+        self.b_forget_chain.setToolTip(_("Removes the app's note that a second step is still to come. Nothing is "
+                                         "sent to the FM-1."))
+        self.b_forget_chain.clicked.connect(self.forget_chain)
+        c1.layout().addLayout(_row(self.b_forget, self.b_forget_chain))
         self.details["update"] = Disclosure(_("Details: key combinations, community notes, journal"), DETAILS_UPDATE)
         c1.layout().addWidget(self.details["update"])
         lay.addWidget(c1)
@@ -277,16 +292,20 @@ class RecoveryPage(QWidget):
             lines.append(_("<span style='color:#888'>○ Not detected: no FM-1 in update mode.</span> The display "
                            "updates by itself."))
         if act:
-            lines.append(_("Interrupted installation according to the journal: <b>{target}</b> "
-                           "({product}, phase “{phase}”).").format(target=act.get('target', '?'),
-                                                                  product=act.get('product', ''),
-                                                                  phase=act.get('phase', '')))
+            where = act.get("stopped_in") or act.get("phase", "")
+            lines.append(_("Interrupted installation according to the app's journal: <b>{target}</b> "
+                           "({product}; it stopped {where}). The app has not looked at the FM-1 since – what is "
+                           "detected live is in the line above.").format(
+                               target=act.get('target', '?'), product=act.get('product', ''),
+                               where=PHASE_TEXT.get(where, "“" + where + "”")))
         ch = self.journal.chain
         if ch:
             lines.append(_("Switch in two steps: after the original V15 the app still installs <b>{name}</b> – once "
                            "the FM-1 runs V15: Firmware+ › Install & Versions › “Continue”.").format(
                                name=ch.get("name") or ch.get("key", "?")))
         self.status.setText("<br>".join(lines))
+        self.b_forget.setVisible(bool(act))
+        self.b_forget_chain.setVisible(bool(ch))
         # level 1 buttons: only with a waiting device – and “Original V15” only if the loader accepts it
         wait_hint = _("Only possible once an FM-1 in update mode is detected (see status above).")
         self.b_finish.setEnabled(bool(port))
@@ -354,6 +373,15 @@ class RecoveryPage(QWidget):
             self.b_dump.setToolTip(self._dump_tip)
 
     # ------------------------------------------------------------ Level 1
+    def forget_active(self):
+        """the user says the interrupted installation is no longer pending: only the journal note goes"""
+        self.journal.clear_active()
+        self.refresh()
+
+    def forget_chain(self):
+        self.journal.clear_chain()
+        self.refresh()
+
     def _package_for(self, ident: str, stock: bool, choose: bool) -> Path | None:
         if stock:
             sp = firmware.spec("stock-v15")
@@ -432,7 +460,8 @@ class RecoveryPage(QWidget):
                        _("The waiting FM-1 receives {what}.<br><br>"
                          "The app checks checksum and loader once more beforehand – if anything does not match, nothing "
                          "is sent.<br>While writing, do not unplug the cable and do not switch the FM-1 off.").format(
-                           what=what), pgettext("button", "Finish")):
+                           what=what) + "<br><br><b>" + tested.note(["resume"]) + "</b>",
+                       pgettext("button", "Finish")):
             return False
         cancel = threading.Event()
         device_id = self.ctx.profile.id if self.ctx.profile else ""
@@ -459,6 +488,10 @@ class RecoveryPage(QWidget):
             r = eng.write(info, port=port.in_name, label=_("Recovery: {target}").format(target=act.get('target') or info.product),
                           device_id=device_id, pin=pin, expect_sha=expect_sha)
             w.log.emit(_("Done – the FM-1 reports {identity}.").format(identity=r.identity))
+            if r.identity != "FM-1_015":
+                # a two-step switch whose target is now written here is finished: no “Continue” any more
+                # (after the original V15 the second step is still to come – the chain stays)
+                self.journal.clear_chain()
             return r.identity
 
         def run(w):
@@ -519,7 +552,8 @@ class RecoveryPage(QWidget):
                        _("Procedure: read the whole flash twice and compare (mandatory, also contains your projects), "
                          "check the boot header on this backup (it only continues under the factory header – with a "
                          "V16 or unknown header nothing is written), write the firmware area 0x4000–0x92FFF from the "
-                         "original V15, read back."), _("Continue"),
+                         "original V15, read back.") + "<br><br><b>" + tested.note(["rom_restore"]) + "</b>",
+                       _("Continue"),
                        danger=True):
             return False
         word = pgettext("typed confirmation", "WRITE")
