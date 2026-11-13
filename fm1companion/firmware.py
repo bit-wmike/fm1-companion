@@ -671,9 +671,11 @@ def remember_identity(identity: str, key: str, tag: str):
         table = json.loads(IDENT_FILE.read_text())
     except (OSError, ValueError):
         table = {}
+    if not isinstance(table, dict):
+        table = {}
     table[identity] = {"firmware": key, "tag": tag, "seen": time.time()}
-    IDENT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    IDENT_FILE.write_text(json.dumps(table, indent=1))
+    from .backup import write_text_atomic        # (completely or not at all: a half-written table would be lost whole)
+    write_text_atomic(IDENT_FILE, json.dumps(table, indent=1))
 
 
 def guess_firmware(identity: str, version_string: str = "", family: str = "") -> tuple[str, str]:

@@ -553,6 +553,67 @@ def flow():
     got = BI.decode_up_bank(device_read(6), 1, 6)
     check([x.name for x in got if x.used] == ["BASS ONE", "SID LEAD", "FM KEYS"], "presets arrived")
     check(len(device_read(66)) == 2500, "project 7 arrived")
+
+    # ---- quality pass after 2.6.0 (audit core-data) ----
+    auto = w.backups.auto
+    cur_folder = ctx.device_folder(ctx.settings.backups_dir)
+    # CD-12: an automatic backup is announced with a countdown and two choices
+    AB.settings()["delay_s"] = 30
+    n_auto = len(autos(cur_folder))
+    check(auto.announce("Test", force=True) and auto._pending is not None, "automatic backup is announced, not started")
+    toast = getattr(auto._pending["note"], "toast", None)
+    check(toast is not None and "startet in 30 s" in toast.label.text() and "Wiedergabe" in toast.label.text()
+          and ctx.profile.name in toast.label.text(), "the notice names the device, the seconds and the playback stop")
+    check(toast.action_button.text() == "Heute überspringen" and [b.text() for b in toast.more_buttons] == ["Backup jetzt"],
+          "the notice offers “Skip today” and “Back up now”")
+    auto._count()
+    check("startet in 29 s" in toast.label.text(), "the seconds count down in the notice")
+    toast.action_button.click()
+    wait(300)
+    check(auto._pending is None and "übersprungen" in AB.STATUS.text and not auto.running
+          and len(autos(cur_folder)) == n_auto, "“Skip today”: no backup, said in the status")
+    check(not auto.announce("Test", force=True) and auto._pending is None, "skipped for today: not announced again")
+    AB.settings().pop("skip_day", None)
+    check(auto.announce("Test", force=True), "announced again once the skip is gone")
+    auto._pending["note"].toast.more_buttons[0].click()
+    check(until(lambda: not auto.running and len(autos(cur_folder)) == n_auto + 1, 20000),
+          "“Back up now” starts it without waiting for the countdown")
+    check("Wiedergabe" in w.backups.a_connect.toolTip(), "the “on connect” setting says that playback stops")
+    AB.settings()["delay_s"] = 1
+
+    # CD-03: a backup of this very firmware that carries another key (an older app version's) is restored
+    newest = AB.list_backups(cur_folder, recursive=False)[0].path
+    f = json.loads(newest.read_text())
+    f["companion"]["firmware"], f["companion"]["kind"] = "ein-alter-schluessel", "manuell"
+    old_key = cur_folder / "alter_schluessel.json"
+    old_key.write_text(json.dumps(f))
+    w.backups.refresh()
+    rows = [w.backups.tree.topLevelItem(i) for i in range(w.backups.tree.topLevelItemCount())]
+    w.backups.tree.setCurrentItem(next(r for r in rows if r.data(0, Qt.ItemDataRole.UserRole) == str(old_key)))
+    n_boxes = len(log_boxes)
+    device_write(66, bytes([7]) * 900)
+    w.backups._restore()
+    check(not any("nicht möglich" in b or "falschen Stellen" in b for b in log_boxes[n_boxes:])
+          and len(device_read(66)) == 2500, "Backups › Restore: decided by the layout, not by the key in the file")
+    br.open_path(old_key)
+    br.select_ids([66])
+    device_write(66, bytes([7]) * 900)
+    check(br.restore_selected() and len(device_read(66)) == 2500, "Browse & Compare restores parts of it too")
+    old_key.unlink()
+
+    # CD-01: merging two profiles keeps every file (same names, other files, sub-folders)
+    third = ctx.store.create("Altes Profil")
+    tf = ctx.settings.backups_dir / third.folder_name
+    (tf / "unter").mkdir(parents=True)
+    keep_name = newest.name
+    (tf / keep_name).write_text('{"which": "old profile"}')
+    (tf / "projekt.x0b").write_bytes(b"X0XB")
+    (tf / "unter" / "alt.json").write_text("{}")
+    mine = newest.read_text()
+    check(dv.merge(third.id, ctx.profile.id) and third.id not in ctx.store.profiles and not tf.exists(), "profiles merged")
+    check(newest.read_text() == mine and (cur_folder / "projekt.x0b").exists() and (cur_folder / "unter" / "alt.json").exists()
+          and (cur_folder / f"{Path(keep_name).stem}_{third.folder_name}.json").read_text() == '{"which": "old profile"}',
+          "merge: nothing overwritten, nothing left behind")
     os.environ.pop("FM1C_DEMO_CMD", None)
     app.quit()
 
@@ -566,7 +627,7 @@ def run():
 
 
 QTimer.singleShot(500, run)
-QTimer.singleShot(240000, app.quit)
+QTimer.singleShot(360000, app.quit)
 app.exec()
 fails = [r for r in results if not r[0]]
 for e in errors:

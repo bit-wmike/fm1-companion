@@ -392,10 +392,6 @@ msgstr "Carpeta espejo:"
 msgid "Status:"
 msgstr "Estado:"
 
-#: fm1companion/ui/backups_page.py:399
-msgid "A backup briefly stops playback on the FM-1. Automatic backups therefore only run when nothing else is happening with the device – never during an installation, in the editor or during a recording. Before every firmware installation the app backs up by default, labelled with the old firmware (no backup only after explicit confirmation in the installation plan)."
-msgstr "Una copia de seguridad detiene brevemente la reproducción en el FM-1. Por eso las copias automáticas solo se hacen cuando no pasa nada más con el dispositivo – nunca durante una instalación, en el editor ni durante una grabación. Antes de cada instalación de firmware la app hace una copia por defecto, etiquetada con el firmware anterior (sin copia solo tras confirmarlo expresamente en el plan de instalación)."
-
 #: fm1companion/ui/backups_page.py:430
 msgid "Choose mirror folder"
 msgstr "Elegir carpeta espejo"
@@ -582,11 +578,6 @@ msgstr "La copia de seguridad previa ha fallado. ¿Restaurar de todos modos?"
 #: fm1companion/ui/backups_page.py:638
 msgid "Restore anyway"
 msgstr "Restaurar igualmente"
-
-#: fm1companion/ui/backups_page.py:646
-#: fm1companion/ui/pages/backup_browser.py:83
-msgid "Checking every object with the device before anything is replaced …"
-msgstr "Comprobando cada objeto con el dispositivo antes de sustituir nada …"
 
 #: fm1companion/ui/backups_page.py:647
 msgid "Checking the backup and writing it in SLOOP's order: banks, projects, settings, samples …"
@@ -779,11 +770,6 @@ msgstr "La app no puede restaurar este formato de copia de seguridad."
 #: fm1companion/ui/pages/backup_browser.py:36
 msgid "Different firmware"
 msgstr "Firmware distinto"
-
-#: fm1companion/ui/pages/backup_browser.py:36
-#, python-brace-format
-msgid "The backup comes from <b>{source}</b>, the FM-1 runs <b>{target}</b>. Parts of it do not fit – nothing is written."
-msgstr "La copia procede de <b>{source}</b>, el FM-1 ejecuta <b>{target}</b>. Partes de ella no encajan – no se escribe nada."
 
 #: fm1companion/ui/pages/backup_browser.py:45
 msgid "No safety backup possible"
@@ -1694,10 +1680,6 @@ msgstr "Ahora se escribirá en <b>el FM-1</b>:"
 #, python-brace-format
 msgid "Already identical (not written): {parts}"
 msgstr "Ya idéntico (no se escribe): {parts}"
-
-#: fm1companion/backup_inspect.py:732
-msgid "Everything else on the device stays unchanged. The device checks every object first – if one does not fit, nothing at all is written."
-msgstr "Todo lo demás en el dispositivo queda sin cambios. El dispositivo comprueba antes cada objeto – si uno no encaja, no se escribe nada."
 
 #: fm1companion/backup_inspect.py:775
 msgid "Preset banks from an older firmware can only be restored together – the firmware converts them together at the next start. All banks were selected too."
@@ -3683,7 +3665,6 @@ msgstr "Sonido de patrón modificado {n}"
 msgid "ChoralRoot FM-1 fork (chord instrument); its unmodified firmware code runs in the studio twin"
 msgstr "Fork de ChoralRoot FM-1 (instrumento de acordes); su código de firmware sin modificar se ejecuta en el gemelo del Studio"
 
-
 msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
 msgstr "Esta copia de seguridad viene de {backup}; el FM-1 ejecuta {device}, que no puede leer los proyectos ni los kits de batería de KARMA. No se ha escrito nada."
 
@@ -4298,3 +4279,66 @@ msgstr "Borrar de todos modos"
 #: fm1companion/ui/storage_tab.py:414
 msgid "{name} deleted ({size})."
 msgstr "{name} borrado ({size})."
+
+msgid "the file says it is a backup but holds something else ({error})"
+msgstr "el archivo dice ser una copia de seguridad, pero contiene otra cosa ({error})"
+
+msgid "{name}: too large to be a backup"
+msgstr "{name}: demasiado grande para ser una copia de seguridad"
+
+msgid "{name}: not a backup file"
+msgstr "{name}: no es un archivo de copia de seguridad"
+
+msgid "invalid field “{name}” in the backup"
+msgstr "campo «{name}» no válido en la copia de seguridad"
+
+msgid "The FM-1 does not answer the question whether “{part}” is a sample slot. Nothing was written – check the cable and try again."
+msgstr "El FM-1 no responde a la pregunta de si «{part}» es una ranura de sample. No se ha escrito nada: revisa el cable e inténtalo de nuevo."
+
+msgid "This is an FM1 Open backup, but the FM-1 runs a different firmware. Nothing was written."
+msgstr "Esta es una copia de FM1 Open, pero en el FM-1 hay otro firmware. No se ha escrito nada."
+
+msgid "The FM-1 did not answer which firmware it runs, so the app cannot check that this backup fits it. Nothing was written – check the cable and try again."
+msgstr "El FM-1 no ha respondido qué firmware tiene, así que la app no puede comprobar que esta copia le corresponde. No se ha escrito nada: revisa el cable e inténtalo de nuevo."
+
+msgid "“{part}” was being written when it stopped – a sample slot is erased first, so it may be empty now. Check it on the FM-1."
+msgstr "«{part}» se estaba escribiendo cuando se detuvo; una ranura de sample se borra antes, así que ahora puede estar vacía. Compruébalo en el FM-1."
+
+msgid "Unclear: “{part}” was being written when the connection broke – it may be the old or the new state. Check it on the FM-1."
+msgstr "Sin confirmar: «{part}» se estaba escribiendo cuando se cortó la conexión; puede tener el estado antiguo o el nuevo. Compruébalo en el FM-1."
+
+msgid "Everything else on the device stays unchanged. Before writing, the app asks the device whether it takes each part; if it refuses one then, nothing is written. If the device only finds a problem while writing (or the connection breaks), the restore stops there and the message says which parts were already written."
+msgstr "Todo lo demás en el dispositivo queda sin cambios. Antes de escribir, la app pregunta al dispositivo si acepta cada parte; si entonces rechaza alguna, no se escribe nada. Si el dispositivo solo detecta un problema al escribir (o se corta la conexión), la restauración se detiene ahí y el mensaje dice qué partes ya se escribieron."
+
+msgid "The list of your FM-1 devices (names, colours, notes) was damaged and was put aside as “{name}”. The previous state was loaded."
+msgstr "La lista de tus dispositivos FM-1 (nombres, colores, notas) estaba dañada y se ha apartado como «{name}». Se ha cargado el estado anterior."
+
+msgid "The list of your FM-1 devices (names, colours, notes) was damaged and was put aside as “{name}”. The devices get new profiles when they are connected; their backups are still in the backup folder, under the old names."
+msgstr "La lista de tus dispositivos FM-1 (nombres, colores, notas) estaba dañada y se ha apartado como «{name}». Los dispositivos recibirán perfiles nuevos al conectarlos; sus copias de seguridad siguen en la carpeta de copias, con los nombres antiguos."
+
+msgid "{n} entries in the list of your FM-1 devices were unusable and were left out."
+msgstr "{n} entradas de la lista de tus dispositivos FM-1 no se podían usar y se han omitido."
+
+msgid "JIANT FM keeps the current song's four sections in the slots 1–4; the other objects are sections of its other songs – nothing was written."
+msgstr "JIANT FM guarda en las ranuras 1–4 las cuatro secciones de la canción actual; los demás objetos son secciones de sus otras canciones: no se ha escrito nada."
+
+msgid "Skip today"
+msgstr "Omitir hoy"
+
+msgid "Automatic backup of {device} starts in {n} s – playback on the FM-1 stops briefly"
+msgstr "La copia automática de {device} empieza en {n} s – la reproducción en el FM-1 se detiene un momento"
+
+msgid "Automatic backup of {device} skipped for today."
+msgstr "Copia automática de {device} omitida por hoy."
+
+msgid "Note: a backup briefly stops playback on the FM-1. The app announces it a few seconds before it starts – with “Skip today” you keep playing."
+msgstr "Nota: una copia de seguridad detiene brevemente la reproducción en el FM-1. La app la anuncia unos segundos antes de empezar; con «Omitir hoy» sigues tocando."
+
+msgid "A backup briefly stops playback on the FM-1. Automatic backups are therefore announced a few seconds before they start (“Skip today” / “Back up now”) and only run when nothing else is happening with the device – never during an installation, in the editor or during a recording. The app cannot see whether the FM-1 is playing. Before every firmware installation the app backs up by default, labelled with the old firmware (no backup only after explicit confirmation in the installation plan)."
+msgstr "Una copia de seguridad detiene brevemente la reproducción en el FM-1. Por eso las copias automáticas se anuncian unos segundos antes de empezar («Omitir hoy» / «Copiar ahora») y solo se hacen cuando no ocurre nada más con el dispositivo: nunca durante una instalación, en el editor ni durante una grabación. La app no puede ver si el FM-1 está reproduciendo. Antes de cada instalación de firmware la app hace una copia por defecto, etiquetada con el firmware antiguo (sin copia solo tras confirmarlo expresamente en el plan de instalación)."
+
+msgid "Asking the device whether it takes every part before anything is replaced …"
+msgstr "Preguntando al dispositivo si acepta cada parte antes de reemplazar nada …"
+
+msgid "The backups of “{device}” could not be moved completely: {error}. Nothing was deleted; both profiles stay."
+msgstr "Las copias de «{device}» no se pudieron mover por completo: {error}. No se ha borrado nada; ambos perfiles se conservan."

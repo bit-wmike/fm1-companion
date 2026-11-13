@@ -2,7 +2,6 @@
 """Devices: all known FM-1s, compare them and copy content from one FM-1 to another."""
 from __future__ import annotations
 
-import shutil
 import time
 from pathlib import Path
 
@@ -343,14 +342,17 @@ class DevicesPage(QWidget):
             show_error(self, _("Merge"), _("The active device cannot be merged into another one – "
                                                  "merge the other way round."))
             return False
-        sf, df = profile_folder(self.ctx, src), profile_folder(self.ctx, dst)
-        if sf.exists():
-            df.mkdir(parents=True, exist_ok=True)
-            for f in sf.rglob("*.json"):
-                target = df / f.name
-                if not target.exists():
-                    shutil.move(str(f), target)
-            shutil.rmtree(sf, ignore_errors=True)
+        # every file moves (never overwritten: a second file of the same name gets the old device's name appended),
+        # sub-folders and other files (.x0b, notes …) included – the same code as renaming a device
+        from ...devices import move_profile_folder
+        try:
+            move_profile_folder(profile_folder(self.ctx, src).parent, src.folder_name, dst.folder_name)
+        except OSError as e:
+            show_error(self, _("Merge"), _("The backups of “{device}” could not be moved completely: {error}. "
+                                           "Nothing was deleted; both profiles stay.").format(
+                                               device=src.name, error=e.strerror or e))
+            self.refresh()
+            return False
         dst.serial = dst.serial or src.serial
         dst.notes = "\n".join(x for x in (dst.notes, src.notes) if x)
         dst.last_seen = max(dst.last_seen, src.last_seen)
@@ -426,11 +428,13 @@ class DevicesPage(QWidget):
 
         def inv(w, link):
             from ... import backup
-            return [o.id for o in backup.list_objects(link)]
+            return backup.device_inventory(link, c.firmware_key or "")
         d = c.job(self, _("Check target"), inv)
         if not d.ok:
             return None, False
-        comp = BI.compatibility(rep, c.firmware_key, c.info.version if c.info else "", d.result_value)
+        proto, version, ids_dev = d.result_value
+        comp = BI.compatibility(rep, c.firmware_key, version or (c.info.version if c.info else ""), ids_dev,
+                                proto=proto)
         if not comp.ok:
             show_error(self, _("Copy not possible"),
                        f"<b>{src.name} → {c.profile.name}</b><br><br>{comp.reason}" +

@@ -839,8 +839,12 @@ class Plan:
                 parts=", ".join(i.title for i in self.skipped)) + "<br>")
         for n in self.notes:
             lines.append(n + "<br>")
-        lines.append(_("Everything else on the device stays unchanged. The device checks every object first – "
-                       "if one does not fit, nothing at all is written."))
+        # (honest about what is checked: sizes and formats are asked before the first write; what the device can
+        # only judge from the content, and SLOOP's "song is running", comes up while writing)
+        lines.append(_("Everything else on the device stays unchanged. Before writing, the app asks the device "
+                       "whether it takes each part; if it refuses one then, nothing is written. If the device only "
+                       "finds a problem while writing (or the connection breaks), the restore stops there and the "
+                       "message says which parts were already written."))
         return "".join(lines)
 
 
@@ -1028,7 +1032,9 @@ def comparable(a: Report, b: Report) -> str:
         return _("Not comparable: one is a Melodee/Felucca backup, the other a SLOOP backup. "
                   "The two firmwares store projects, presets and settings completely differently.")
     ka, kb = a.firmware_key, b.firmware_key
-    if ka and kb and ka != kb:
+    if ka and kb and ka != kb and _layout(a) != _layout(b):
+        # (the key alone is no reason: the app named some firmwares differently in earlier versions, and a web
+        # editor's file has no key at all – two states of one firmware keep the same things in the same places)
         return _("Not comparable: one state comes from <b>{a}</b>, the other from "
                  "<b>{b}</b>. Comparing only works within the same firmware.").format(a=fw_name(ka), b=fw_name(kb))
     return ""
@@ -1042,24 +1048,79 @@ class Compat:
     allowed_ids: set[int] = field(default_factory=set)
 
 
-def compatibility(src: Report, target_fw_key: str, target_version: str, target_ids: list[int] | None) -> Compat:
-    """Can the content of src go onto a device with this firmware?"""
+def _layout(rep: Report) -> str:
+    """where a backup's objects live (backup.layout_of; SLOOP's format: its fork's own layout or "sloop")"""
+    from . import fwfamily
+    if rep.format == backup.SLOOP_FORMAT:
+        fam = fwfamily.by_info(rep.firmware)
+        return "orbit" if rep.firmware_key == "orbit" else (fam.layout if fam is not None and fam.layout else "sloop")
+    if rep.format != backup.FORMAT:
+        return rep.format
+    return backup.layout_of([o.id for o in rep.objects], rep.firmware or rep.companion.get("version_string", ""),
+                            rep.companion.get("firmware", ""))
+
+
+def _target_layout(key: str, version: str) -> str:
+    """the layout of a Felucca-protocol device by its name alone (its inventory not known): "" = only its
+    inventory tells (a plain "FELUCCA v…" may be Felucca, Skiff or a fork with objects of its own)"""
+    from . import fwfamily
+    fam = fwfamily.by_info(version) or fwfamily.by_key(key)
+    if fam is not None and fam.layout:
+        return fam.layout
+    name = fwfamily.info_name(version) or (fam.name if fam is not None else key)
+    if name.startswith("jiant"):
+        return "jiant"
+    return name if name in ("coralflower", "choralroot") else ""
+
+
+_ELSE = [N_("transfer presets one by one via the preset library (once available)"),
+         N_("export projects as MIDI and rebuild them there"),
+         N_("or bring the target FM-1 to the same firmware")]
+
+
+def compatibility(src: Report, target_fw_key: str, target_version: str, target_ids: list[int] | None,
+                  proto: str = "") -> Compat:
+    """Can the content of src go onto a device with this firmware? Decided as the restore itself decides
+    (backup.match_reason, backup.layout_reason): by the backup protocol and by where the objects live – not by the
+    firmware key the app wrote into the file (keys were renamed between app versions, a web editor's file has
+    none). proto: the protocol the device answered (backup.device_inventory); otherwise taken from its name.
+    target_ids: its inventory, if it was read – without it only what the names tell is refused here, and the
+    restore checks the rest before it writes."""
+    from . import fwfamily
     sk = src.firmware_key
     tk = target_fw_key or ""
     if tk.lower().startswith("jiant"):
         tk = "jiant"                                # (the catalog's "jiant-fm": one family with the twin's "jiant")
-    if not src.restorable:
+    if not src.restorable or src.archive is None:
         return Compat(False, _("The app cannot load this backup format."))
-    if not sk or not tk:
+    if not tk and not target_version:
         return Compat(False, _("The firmware of one side is unknown – to be safe, nothing is copied."))
-    if sk != tk:
-        return Compat(False, _("The backup comes from <b>{source}</b>, the target runs <b>{target}</b>. "
-                               "Projects, presets and settings have different formats in different firmwares – "
-                               "the target would refuse them or read them wrongly. Nothing is written.").format(
-                                   source=fw_name(sk), target=fw_name(tk)),
-                      [_("transfer presets one by one via the preset library (once available)"),
-                       _("export projects as MIDI and rebuild them there"),
-                       _("or bring the target FM-1 to the same firmware")])
+    arch = src.archive
+    proto = proto or backup.guess_protocol(target_fw_key or "", target_version)
+    why = ""
+    if proto:
+        tfam = fwfamily.by_info(target_version)
+        tname = tfam.name if tfam is not None else next(
+            (n for n in ("karma", "orbit") if n in (target_version or "").lower()), "")
+        why = backup.match_reason(arch, proto, target_version, tname)
+    elif arch.fm1open or arch.image:
+        why = backup.match_reason(arch, backup.FELUCCA)           # (only its own firmware takes it)
+    if not why and proto == backup.FELUCCA and not arch.sloop:
+        if target_ids is not None:
+            why = backup.layout_reason(arch, target_ids, target_version)
+        else:
+            d = _target_layout(target_fw_key or "", target_version)
+            tfam = fwfamily.by_info(target_version) or fwfamily.by_key(target_fw_key or "")
+            if d and not backup.layouts_fit(_layout(src), d, tfam.reads if tfam is not None else ()):
+                why = backup.layout_text(arch, target_version or fw_name(tk))
+    if not why and not target_version and not proto and sk and tk and sk != tk:
+        # (nothing known of the target but a key the app does not know: the old rule, to be safe)
+        why = _("The backup comes from <b>{source}</b>, the target runs <b>{target}</b>. "
+                "Projects, presets and settings have different formats in different firmwares – "
+                "the target would refuse them or read them wrongly. Nothing is written.").format(
+                    source=fw_name(sk), target=fw_name(tk))
+    if why:
+        return Compat(False, why, [_(x) for x in _ELSE])
     ids = {o.id for o in src.objects}
     r16 = refuse_16(src, target_version, None if target_ids is None else len(target_ids))
     if r16:

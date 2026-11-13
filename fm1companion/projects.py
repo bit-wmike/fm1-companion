@@ -63,11 +63,14 @@ def list_slots(link) -> tuple[list[SlotInfo], int]:
     if backup.is_coralflower(o.id for o in man) or backup.is_choralroot(o.id for o in man):
         return slots, live                          # (CoralFlower: no project slots; 60..67 are pattern sounds;
                                                     # ChoralRoot: 40..49 are loop slots, 50..62 sound banks)
-    for o in man:
+    jiant = backup.is_jiant(o.id for o in man)      # (JIANT FM: 2..5 are the current song's sections; its 64..71 are
+    for o in man:                                   # sections of the songs 7 and 8, not Melodee's projects 5..12)
         if o.id == 0:
             live = o.size
             continue
         s = backup.project_slot(o.id)
+        if s and jiant and not 2 <= o.id <= 5:
+            continue
         if s:
             slots.append(SlotInfo(s, o.id, o.size, o.crc))
     slots.sort(key=lambda x: x.slot)
@@ -95,9 +98,13 @@ class ProjectFile:
 
     @property
     def data(self) -> bytes:
-        o = self.meta["object"]
-        raw = base64.b64decode(o["data"])
-        if len(raw) != o["size"] or crc32(raw) != o["crc"]:
+        try:
+            o = self.meta["object"]
+            raw = base64.b64decode(o["data"], validate=True)
+            ok = len(raw) == o["size"] and crc32(raw) == o["crc"]
+        except (KeyError, TypeError, ValueError, AttributeError):     # (a hand-edited or foreign file)
+            raise backup.BackupError(_("{name} is not an FM-1 Companion project file").format(name=self.path.name))
+        if not ok:
             raise backup.BackupError(_("{name}: checksum does not match").format(name=self.path.name))
         return raw
 
@@ -131,8 +138,11 @@ def save_project(folder: Path, name: str, data: bytes, firmware: str, device: st
 
 
 def load_project(path: Path) -> ProjectFile:
-    meta = json.loads(Path(path).read_text("utf-8"))
-    if meta.get("format") != FORMAT or "object" not in meta:
+    try:
+        meta = json.loads(Path(path).read_text("utf-8"))
+    except ValueError:
+        meta = None
+    if not isinstance(meta, dict) or meta.get("format") != FORMAT or "object" not in meta:
         raise backup.BackupError(_("{name} is not an FM-1 Companion project file").format(name=Path(path).name))
     pf = ProjectFile(Path(path), meta)
     pf.data  # verify
@@ -143,9 +153,14 @@ def library(folder: Path) -> list[ProjectFile]:
     out = []
     for p in sorted(folder.rglob(f"*{SUFFIX}")):
         try:
-            out.append(ProjectFile(p, json.loads(p.read_text("utf-8"))))
-        except (OSError, ValueError):
+            meta = json.loads(p.read_text("utf-8"))
+        except (OSError, ValueError, RecursionError):
             continue
+        if isinstance(meta, dict):                  # (a file that holds something else: not a project, skipped)
+            for k in ("name", "firmware", "device", "notes", "source", "kind", "created"):
+                if k in meta and not isinstance(meta[k], str):
+                    meta[k] = ""
+            out.append(ProjectFile(p, meta))
     return out
 
 
@@ -161,6 +176,32 @@ def family(firmware: str) -> str:
         if k in v:
             return k
     return ""
+
+
+def project_home(firmware: str) -> str:
+    """the firmware whose projects only fit itself, from an INFO string: a Felucca-protocol firmware with a layout
+    of its own (fwfamily: Tessera's TSP1 projects, DUELL, Saadet, Red Mass Vampire OS) or JIANT FM (its songs'
+    sections). "" for every other firmware (Melodee, Felucca, SLOOP and its forks: family() and the device decide)."""
+    from . import fwfamily
+    fam = fwfamily.by_info(firmware or "")
+    if fam is None or fam.backup != backup.FELUCCA:
+        return ""
+    if fam.name.startswith("jiant"):
+        return "jiant"
+    return fam.layout
+
+
+def foreign_reason(file_firmware: str, device_firmware: str) -> str:
+    """why a project file must not be written to this device ("" = no objection here): the device's firmware keeps
+    projects of its own kind in these slots, and the file does not say it comes from that firmware. The app does
+    not leave that to the device's check alone."""
+    home = project_home(device_firmware)
+    src = project_home(file_firmware)
+    if home == src:
+        return ""
+    return _("The project comes from {source}, the FM-1 runs {target} – the project formats "
+             "do not match. Nothing was written.").format(source=file_firmware or _("another firmware"),
+                                                          target=device_firmware or _("a different firmware"))
 
 
 def family_of_data(data: bytes) -> str:
@@ -180,6 +221,12 @@ def import_to_slot(link, pf: ProjectFile, slot: int, progress: Callable[[int], N
     proto = backup.protocol(link)[0]
     if proto == backup.SLOOP and not 1 <= slot <= 4:
         raise backup.BackupError(_("SLOOP only has project slots 1–4 (sections A–D) – nothing was written."))
+    why = foreign_reason(pf.meta.get("firmware", ""), device_firmware)
+    if why:
+        raise backup.BackupError(why)
+    if project_home(device_firmware) == "jiant" and not 1 <= slot <= 4:
+        raise backup.BackupError(_("JIANT FM keeps the current song's four sections in the slots 1–4; the other "
+                                   "objects are sections of its other songs – nothing was written."))
     src = family(pf.meta.get("firmware", "")) or family_of_data(data)
     dst = family(device_firmware) or ("sloop" if proto == backup.SLOOP else "")
     if src and dst and src != dst:

@@ -190,7 +190,7 @@ class ProjectsPage(QWidget):
         self.slots, live = res
         keep = self._slot()                          # keep the selection across re-reading
         self.dev_tree.clear()
-        sloop = getattr(self.ctx, "firmware_key", "") == "sloop"
+        sloop = self._sections()
         self.dev_tree.setHeaderLabels(["Section" if sloop else pgettext("project slot", "Slot"), _("Used"), _("Size")])
         for s in self.slots:
             it = QTreeWidgetItem([f"{s.slot:2d}" if not sloop else _("{name} (slot {n})").format(
@@ -322,11 +322,20 @@ class ProjectsPage(QWidget):
                      fail_text=failed)
         self.refresh_library()
 
+    def _sections(self) -> bool:
+        """SLOOP and every firmware with its backup protocol (KARMA, ORBIT, Clipper …): the four slots are the
+        song's sections A–D"""
+        key = (getattr(self.ctx, "firmware_key", "") or "").lower()
+        ver = self.ctx.info.version if getattr(self.ctx, "info", None) else ""
+        return backup.guess_protocol(key, ver) == backup.SLOOP
+
     def _slot_word(self) -> str:
-        return "Section" if getattr(self.ctx, "firmware_key", "") == "sloop" else pgettext("project slot", "Slot")
+        key = (getattr(self.ctx, "firmware_key", "") or "").lower()
+        # (JIANT FM: its slots 1–4 are the current song's sections too – numbered, not A–D)
+        return "Section" if self._sections() or key.startswith("jiant") else pgettext("project slot", "Slot")
 
     def _slot_name(self, slot: int) -> str:
-        if getattr(self.ctx, "firmware_key", "") == "sloop" and 1 <= slot <= 4:
+        if self._sections() and 1 <= slot <= 4:
             return "ABCD"[slot - 1]
         return str(slot)
 
@@ -420,6 +429,10 @@ class ProjectsPage(QWidget):
         src_fam = projects.family(pf.meta.get("firmware", "")) or projects.family_of_data(pf.data)
         dst_fam = projects.family(fw_dev) or projects.family(getattr(self.ctx, "firmware_key", "") or "")
         name_of = {"melodee": "Melodee", "sloop": "SLOOP", "skiff": "Skiff"}
+        foreign = projects.foreign_reason(pf.meta.get("firmware", ""), fw_dev)
+        if foreign:                                  # (Tessera, DUELL, JIANT …: projects of their own kind)
+            show_error(self, _("Other firmware"), f"<b>{pf.name}</b>: {foreign}")
+            return
         if src_fam and dst_fam and src_fam != dst_fam:
             show_error(self, _("Other firmware"),
                        _("<b>{name}</b> comes from <b>{source}</b>, the FM-1 runs <b>{target}</b>. The project formats "

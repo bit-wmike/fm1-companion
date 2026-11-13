@@ -17,6 +17,7 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 
 from .config import DATA_DIR
+from .i18n import N_
 
 PORT_RE = re.compile(r"melodee|felucca|\bfm-1\b|fm1|sloop|skiff|m-vave", re.I)
 # Suite 2.0 (installer): further names under which an FM-1 shows up (docs/flash-protocol.md, section 6)
@@ -108,11 +109,24 @@ def move_profile_folder(base: Path, old_name: str, new_name: str) -> Path:
         if f.is_dir():
             continue
         target = new / f.relative_to(old)
-        if target.exists():
-            target = target.with_name(f"{target.stem}_{old_name}{target.suffix}")
+        if target.exists() or target.is_symlink():
+            base_target, n = target, 2
+            target = base_target.with_name(f"{base_target.stem}_{old_name}{base_target.suffix}")
+            while target.exists() or target.is_symlink():      # (never overwrite, whatever is already there)
+                target = base_target.with_name(f"{base_target.stem}_{old_name} ({n}){base_target.suffix}")
+                n += 1
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(f), target)
-    shutil.rmtree(old, ignore_errors=True)
+    # only the now empty folders go: a file that could not be moved (or appeared meanwhile) is never deleted
+    for d in sorted((p for p in old.rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
+        try:
+            d.rmdir()
+        except OSError:
+            pass
+    try:
+        old.rmdir()
+    except OSError:
+        pass
     return new
 
 
@@ -126,20 +140,94 @@ class ProfileStore:
         self.load()
 
     def load(self):
+        """read the profiles – every profile on its own: an entry the app cannot use is left out, the others stay.
+        A file that is damaged as a whole (truncated, no JSON, no profile list) is never silently replaced by an
+        empty one: it is put aside as devices.json.kaputt-<date> and the previous state (devices.json.bak) is
+        loaded, if there is one. What happened goes into the one-time notice of the settings (config.extra_notices)."""
+        self.profiles = {}
         try:
-            raw = json.loads(self.path.read_text("utf-8"))
-            self.profiles = {p["id"]: Profile(**{k: v for k, v in p.items() if k in Profile.__dataclass_fields__})
-                             for p in raw.get("profiles", [])}
-        except (OSError, ValueError, TypeError):
-            self.profiles = {}
+            text = self.path.read_text("utf-8")
+        except FileNotFoundError:
+            return
+        except (OSError, UnicodeDecodeError) as e:
+            if isinstance(e, (PermissionError, IsADirectoryError, NotADirectoryError)):
+                return                              # (not readable is not "damaged": nothing is renamed)
+            text = None
+        entries = self._entries(text)
+        if entries is None:
+            from . import config as _config
+            aside = self.path.with_name(f"{self.path.name}.kaputt-{time.strftime('%Y-%m-%d_%H%M%S')}")
+            try:
+                self.path.replace(aside)
+            except OSError:
+                aside = self.path
+            try:
+                entries = self._entries(self.path.with_name(self.path.name + ".bak").read_text("utf-8"))
+            except (OSError, UnicodeDecodeError):
+                entries = None
+            _config.extra_notices.append(_config.Msg(
+                N_("The list of your FM-1 devices (names, colours, notes) was damaged and was put aside as “{name}”. "
+                   "The previous state was loaded.") if entries is not None else
+                N_("The list of your FM-1 devices (names, colours, notes) was damaged and was put aside as “{name}”. "
+                   "The devices get new profiles when they are connected; their backups are still in the backup "
+                   "folder, under the old names."), name=aside.name))
+            entries = entries or []
+        skipped = 0
+        for raw in entries:
+            p = self._profile(raw)
+            if p is None or p.id in self.profiles:
+                skipped += 1
+            else:
+                self.profiles[p.id] = p
+        if skipped:
+            from . import config as _config
+            _config.extra_notices.append(_config.Msg(
+                N_("{n} entries in the list of your FM-1 devices were unusable and were left out."), n=skipped))
+
+    @staticmethod
+    def _entries(text) -> list | None:
+        """the profile entries of the file's text – None if it is no profile list at all"""
+        try:
+            raw = json.loads(text)
+        except (ValueError, TypeError, RecursionError):
+            return None
+        if not isinstance(raw, dict) or not isinstance(raw.get("profiles"), list):
+            return None
+        return raw["profiles"]
+
+    @staticmethod
+    def _profile(raw) -> Profile | None:
+        """one entry -> Profile; a field of the wrong type gets its default. None: no usable id."""
+        if not isinstance(raw, dict) or not isinstance(raw.get("id"), str) or not raw["id"].strip():
+            return None
+        fields_ = Profile.__dataclass_fields__
+        kw = {}
+        for k, v in raw.items():
+            if k not in fields_:
+                continue
+            want = {"str": str, "list": list, "dict": dict, "float": (int, float)}.get(str(fields_[k].type))
+            if want is not None and isinstance(v, want) and not isinstance(v, bool):
+                kw[k] = v
+        kw.setdefault("name", kw["id"])
+        if not kw["name"].strip():
+            kw["name"] = kw["id"]
+        try:
+            return Profile(**kw)
+        except (TypeError, ValueError):
+            return None
 
     def save(self):
+        """write completely or not at all (temporary file, fsync, rename) and keep the previous state as .bak"""
+        import shutil
+        from .backup import write_text_atomic
         with self._lock:
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = self.path.with_suffix(".tmp")
-            tmp.write_text(json.dumps({"profiles": [asdict(p) for p in self.profiles.values()]}, indent=2,
-                                      ensure_ascii=False), "utf-8")
-            tmp.replace(self.path)
+            text = json.dumps({"profiles": [asdict(p) for p in self.profiles.values()]}, indent=2, ensure_ascii=False)
+            try:                                    # (only a readable state is worth keeping)
+                if self._entries(self.path.read_text("utf-8")) is not None:
+                    shutil.copy2(self.path, self.path.with_name(self.path.name + ".bak"))
+            except (OSError, UnicodeDecodeError):
+                pass
+            write_text_atomic(self.path, text)
 
     def create(self, name: str = "", serial: str = "") -> Profile:
         n = len(self.profiles)
