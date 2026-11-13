@@ -46,6 +46,9 @@ async function audio(on) {
   ctx = new AudioContext({ sampleRate: 44100, latencyHint: "interactive" });
   await ctx.audioWorklet.addModule("studio-worklet.js");
   node = new AudioWorkletNode(ctx, "studio-out", { numberOfInputs: 0, outputChannelCount: [2] });
+  node.port.onmessage = (e) => {                    // dropouts and the FIFO's size, for the page's hint
+    if (e.data && e.data.type === "stats") send({ ev: "audio", underruns: e.data.underruns, target: e.data.target });
+  };
   node.connect(ctx.destination);
   const mc = new MessageChannel();
   await toWorker({ op: "audio_port", port: mc.port1 }, [mc.port1]);

@@ -1,6 +1,11 @@
 Melodee v1.6.0-rc.7 – studio twin (firmware code for the host), built from https://github.com/keremimo/melodee tag v1.6.0-rc.7
 (commit 022bab7294d523fe0b4f48581c8afecc39fc4446; source: https://github.com/keremimo/melodee/archive/022bab7294d523fe0b4f48581c8afecc39fc4446.tar.gz).
 GPL-3.0-only. Copyright (C) 2026 Kerem Kilic (Ellic Studio); portions Copyright (C) 2026 Leo Kuroshita, Hügelton Instruments (Felucca).
+Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0, Dexed: GPL-3.0-or-later; MAME's uPD933 in cz_native.c: BSD-3-Clause; DaisySP and Rings in the PHYS engine: MIT;
+reSID's models and measured data in the SID engine: GPL-2.0-or-later, used under GPL-3.0; the UI face is rasterised in: OFL 1.1): Melodee's LICENSING.md and the texts in THIRD_PARTY.txt beside this file.
+Where this Melodee version has the CZ-1 and PROPHET engines, it contains Casio's 64 CZ-1 preset tones and the Sequential Prophet-5/10 factory programs as sound data, included as in Melodee's own releases;
+their rights stay with Casio and Sequential, and Melodee's LICENSING.md states that no licence is granted for them by that project (nor by FM-1 Companion).
+The JieLi SDK files of Melodee's packages are not part of this build.
 The firmware sources are unmodified. The glue tools/studio/melodee_studio.c (GPL-3.0-only, in FM-1 Companion's source) includes them as Melodee's own host tests do (tests/hostsim.c, ui_test.c, backup_test.c, editor_test.c)
 and replaces only the hardware: keys/LEDs/LCD, NOR flash = a 1 MiB RAM image, USB = always configured (SysEx in/out through usb.c's rings), CPU1 jobs run serially,
 no BLE, no USB host, no updater (ota.c answers the identity handshake only), no overload shedding. Compiled with WASI SDK clang (include shim tools/wasm_shim/sys/wait.h).

@@ -2,7 +2,7 @@
 // The visible FM-1 of the Studio page: screen, LEDs, keys, buttons and encoders of the twin, drawn like the
 // Melodee simulator (sims/melodee/index.html) and played with mouse, touch and the computer keyboard. It talks to
 // the twin worker directly (studio.js: toWorker) – no round trip through Python for keys or the screen.
-// Python switches it on with the command {op: "panel", on, bg, fg, dim}; Space / Ctrl+Z / Ctrl+Shift+Z go to
+// Python switches it on with the command {op: "panel", on, bg, fg, knob_tip}; Space / Ctrl+Z / Ctrl+Shift+Z go to
 // Python as {ev: "ui", action}.
 "use strict";
 (function () {
@@ -17,35 +17,39 @@
   const CAP = { Comma: ",", Period: ".", Semicolon: ";", Slash: "/" };
 
   let device = null, screen = null, g2d = null, img = null, on = false, lastGen = -1, polling = false, master = 1023;
+  let knobTip = "drag, mouse wheel or arrow keys";   // (translated text comes with the "panel" command)
   const keys = [], buttons = [], knobs = [];
   const heldKeys = new Map(), heldBtns = new Map();
   let keyMask = 0, btnMask = 0;
 
+  // Sizes that follow the device's width use --u (1 % of it, set in fit()). Not container-query units (cqw): Qt 6.4's
+  // Chromium 102 (Raspberry Pi OS Bookworm) does not know them and dropped these declarations – labels stayed 13 px,
+  // knob rings and LED glows were missing. Nothing in sims/_studio may need a browser newer than Chromium 102.
   const css = `
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); font: 13px sans-serif; }
   :root { --bg: #202124; --fg: #ddd; --body: #3a3d42; --tray: #26282c; --knob: #1f2124; --btn: #2e3135; --label: #e8e8ea;
           --key-w: #d9dadc; --key-b: #c9cacd; --lit: #ffb347; }
   #wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
   .device { position: relative; aspect-ratio: 1000 / 640; background: var(--body); border-radius: 4.4% / 6.9%;
-            user-select: none; -webkit-user-select: none; touch-action: manipulation; container-type: inline-size; }
+            user-select: none; -webkit-user-select: none; touch-action: manipulation; }
   .device > * { position: absolute; }
   .tray { background: var(--tray); border-radius: 14px; }
   .bezel { background: #111214; border-radius: 11%; }
   canvas { image-rendering: pixelated; background: #000; }
-  .label { color: var(--label); font-size: 1.7cqw; font-weight: 600; letter-spacing: .05em; text-align: center; pointer-events: none; white-space: nowrap; }
-  .knob { border-radius: 50%; background: var(--knob); box-shadow: 0 0 0 .5cqw var(--tray), inset 0 0 0 .2cqw #44474c;
+  .label { color: var(--label); font-size: calc(var(--u) * 1.7); font-weight: 600; letter-spacing: .05em; text-align: center; pointer-events: none; white-space: nowrap; }
+  .knob { border-radius: 50%; background: var(--knob); box-shadow: 0 0 0 calc(var(--u) * .5) var(--tray), inset 0 0 0 calc(var(--u) * .2) #44474c;
           cursor: ns-resize; touch-action: none; transform: rotate(var(--angle, 0deg)); outline: none; }
-  .knob:focus-visible { box-shadow: 0 0 0 .5cqw var(--lit); }
-  .knob::after { content: ""; position: absolute; left: 50%; top: 8%; width: .3cqw; height: 22%; margin-left: -.15cqw; background: var(--label); border-radius: 2px; }
-  .btn { background: var(--btn); border-radius: 9px; box-shadow: inset 0 0 0 1.5px #4a4d52; color: var(--label); font-size: 1.4cqw;
+  .knob:focus-visible { box-shadow: 0 0 0 calc(var(--u) * .5) var(--lit); }
+  .knob::after { content: ""; position: absolute; left: 50%; top: 8%; width: calc(var(--u) * .3); height: 22%; margin-left: calc(var(--u) * -.15); background: var(--label); border-radius: 2px; }
+  .btn { background: var(--btn); border-radius: 9px; box-shadow: inset 0 0 0 1.5px #4a4d52; color: var(--label); font-size: calc(var(--u) * 1.4);
          font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: none; }
   .btn.held { filter: brightness(1.5); }
-  .btn.lit { color: #1a1206; background: var(--lit); box-shadow: 0 0 1.4cqw var(--lit); }
+  .btn.lit { color: #1a1206; background: var(--lit); box-shadow: 0 0 calc(var(--u) * 1.4) var(--lit); }
   .key { border-radius: 999px; background: var(--key-w); cursor: pointer; touch-action: none; display: flex; align-items: flex-end;
-         justify-content: center; padding-bottom: .8cqw; color: #55575c; font-size: 1.3cqw; font-weight: 600; box-sizing: border-box; }
+         justify-content: center; padding-bottom: calc(var(--u) * .8); color: #55575c; font-size: calc(var(--u) * 1.3); font-weight: 600; box-sizing: border-box; }
   .key.black { background: var(--key-b); }
   .key.held { filter: brightness(.8); }
-  .key.lit { background: var(--lit); box-shadow: 0 0 1.4cqw var(--lit); }
+  .key.lit { background: var(--lit); box-shadow: 0 0 calc(var(--u) * 1.4) var(--lit); }
   #state { display: none; }`;
 
   function add(cls, x, y, w, h, text = "", tag = "div") {
@@ -62,6 +66,7 @@
     const W = innerWidth - 8, H = innerHeight - 8;
     const w = Math.max(200, Math.min(W, H * 1000 / 640));
     device.style.width = w + "px";
+    device.style.setProperty("--u", (w / 100) + "px");
   }
 
   function build() {
@@ -89,8 +94,8 @@
       el.tabIndex = 0;
       el.setAttribute("role", "slider");
       el.setAttribute("aria-label", label);
-      el.title = label + " – ziehen, Mausrad oder Pfeiltasten";
-      const k = { el, id, angle: id === "master" ? -135 + 270 * master / 1023 : 0 };
+      el.title = label + " – " + knobTip;
+      const k = { el, id, label, angle: id === "master" ? -135 + 270 * master / 1023 : 0 };
       el.style.setProperty("--angle", `${k.angle}deg`);
       knobs.push(k);
     };
@@ -233,7 +238,9 @@
 
   // {op: "panel", on, bg, fg} from studio.js
   self.studioPanel = function (c) {
+    if (c.knob_tip) knobTip = String(c.knob_tip);
     if (!device) build();
+    for (const k of knobs) k.el.title = k.label + " – " + knobTip;
     const root = document.documentElement.style;
     if (c.bg) { root.setProperty("--bg", c.bg); document.body.style.background = c.bg; }
     if (c.fg) root.setProperty("--fg", c.fg);

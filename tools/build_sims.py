@@ -148,6 +148,12 @@ def source(name: str, work: Path, local: str | None, ref: str | None = None, rep
         run(["git", "fetch", "--tags", "origin"], cwd=repo)
         commit = subprocess.run(["git", "rev-parse", ref + "^{commit}"], cwd=repo, capture_output=True,
                                 text=True, check=True).stdout.strip()
+    # reproducible builds: the firmwares compile __DATE__ / __TIME__ into their version screens, so two builds of the
+    # same commit differed in one or two bytes. clang takes them from SOURCE_DATE_EPOCH: the commit's own time.
+    stamp = subprocess.run(["git", "log", "-1", "--format=%ct", commit], cwd=repo, capture_output=True,
+                           text=True).stdout.strip()
+    if stamp.isdigit():
+        os.environ["SOURCE_DATE_EPOCH"] = stamp
     tree = work / (tree_name or f"{name}-src")
     if tree.exists():
         shutil.rmtree(tree)
@@ -249,16 +255,46 @@ def build_melodee(work, sdk, local):
     (out / "index.html").write_text(page, "utf-8")
     shutil.copy(src / "web/emu/worklet.js", out / "worklet.js")
     shutil.copy(src / "LICENSE", out / "LICENSE")
-    (out / "NOTICE").write_text(
+    _melodee_extra(src, out)
+    (out / "NOTICE").write_text(_melodee_sim_notice(version, commit), "utf-8")
+    return out, commit, clang_version(cc), {"entry": "index.html", "midi": "webmidi+inject", "kind": "emulator",
+                                             "start_button": "#power"}
+
+
+def _melodee_sim_notice(version: str, commit: str) -> str:
+    return (
         f"Melodee {version} – browser emulator (web/emu), built from {SIMS['melodee']['repo']} tag "
         f"{SIMS['melodee']['ref']} (commit {commit}).\nGPL-3.0-only. Copyright (C) 2026 Kerem Kilic (Ellic Studio); "
-        "portions Copyright (C) 2026 Leo Kuroshita, Hügelton Instruments (Felucca).\n"
+        "portions Copyright (C) 2026 Leo Kuroshita, Hügelton Instruments (Felucca).\n" + MELODEE_THIRD_NOTE +
         "Compiled with WASI SDK clang instead of Emscripten; include shim tools/wasm_shim/sys/wait.h (fork/pipe stubs "
         "for unused host-test helpers). Page: version filled in, installer link points to the official site, "
         "../_host/fm1sim-host.js is loaded.\n" + source_offer(SIMS["melodee"]["repo"], commit,
-                                                               " and the shim tools/wasm_shim"), "utf-8")
-    return out, commit, clang_version(cc), {"entry": "index.html", "midi": "webmidi+inject", "kind": "emulator",
-                                             "start_button": "#power"}
+                                                               " and the shim tools/wasm_shim"))
+
+
+# Melodee's LICENSING.md "Third-party material": the licence texts of the parts compiled into its builds (msfa in
+# fm6_core.c: Apache-2.0; MAME's uPD933 in cz_native.c: BSD-3-Clause; DaisySP and Rings in the PHYS engine: MIT; the UI
+# face Rubik, rasterised in: OFL 1.1). A file a version does not have yet is left out (Melodee's own LICENSING.md of
+# that version is always there and says what it contains).
+MELODEE_THIRD_PARTY = ["LICENSES/Apache-2.0-msfa.txt", "LICENSES/BSD-3-Clause-uPD933.txt", "LICENSES/MIT-DaisySP.txt",
+                       "LICENSES/MIT-Rings.txt", "LICENSES/OFL-Rubik.txt", "LICENSES/OFL-InterTight.txt"]
+MELODEE_THIRD_NOTE = (
+    "Ported parts keep their licences (msfa in fm6_core.c: Apache-2.0, Dexed: GPL-3.0-or-later; MAME's uPD933 in "
+    "cz_native.c: BSD-3-Clause; DaisySP and Rings in the PHYS engine: MIT;\nreSID's models and measured data in the SID "
+    "engine: GPL-2.0-or-later, used under GPL-3.0; the UI face is rasterised in: OFL 1.1): Melodee's LICENSING.md and "
+    "the texts in THIRD_PARTY.txt beside this file.\n"
+    "Where this Melodee version has the CZ-1 and PROPHET engines, it contains Casio's 64 CZ-1 preset tones and the "
+    "Sequential Prophet-5/10 factory programs as sound data, included as in Melodee's own releases;\ntheir rights stay "
+    "with Casio and Sequential, and Melodee's LICENSING.md states that no licence is granted for them by that project "
+    "(nor by FM-1 Companion).\nThe JieLi SDK files of Melodee's packages are not part of this build.\n")
+
+
+def _melodee_extra(src: Path, out: Path):
+    """Melodee's licensing record and the licence texts of the parts compiled in (as for every other family; the
+    Melodee builds shipped with LICENSE and NOTICE only)"""
+    shutil.copy(src / "LICENSING.md", out / "LICENSING.md")
+    (out / "THIRD_PARTY.txt").write_text("".join(f"===== {f} =====\n" + (src / f).read_text("utf-8").rstrip() + "\n\n"
+                                                 for f in MELODEE_THIRD_PARTY if (src / f).exists()), "utf-8")
 
 
 BUILDERS = {"fm1-open": build_fm1_open, "melodee": build_melodee}
@@ -319,7 +355,7 @@ def _melodee_notice(spec, version, ref, commit, source_url):
         f"Melodee {version} – studio twin (firmware code for the host), built from {spec['repo']} tag {ref}\n"
         f"(commit {commit}; source: {source_url}).\n"
         "GPL-3.0-only. Copyright (C) 2026 Kerem Kilic (Ellic Studio); portions Copyright (C) 2026 Leo Kuroshita, "
-        "Hügelton Instruments (Felucca).\n"
+        "Hügelton Instruments (Felucca).\n" + MELODEE_THIRD_NOTE +
         f"The firmware sources are unmodified. The glue {spec['glue']} (GPL-3.0-only, in FM-1 Companion's source) "
         "includes them as Melodee's own host tests do (tests/hostsim.c, ui_test.c, backup_test.c, editor_test.c)\n"
         "and replaces only the hardware: keys/LEDs/LCD, NOR flash = a 1 MiB RAM image, USB = always configured (SysEx "
@@ -1034,8 +1070,8 @@ def _loom_notice(spec, version, ref, commit, source_url):
 
 STUDIOS = {
     "melodee-studio": {"firmware": "melodee", "repo": SIMS["melodee"]["repo"], "glue": "tools/studio/melodee_studio.c",
-                       "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee Studio-Zwilling",
-                       "license": "GPL-3.0-only", "generate": _generate_melodee,
+                       "refs": ["v1.6.0-rc.7", "v1.6.0-rc.8", "v1.6.0", "v1.6.1"], "title": "Melodee studio twin",
+                       "license": "GPL-3.0-only", "generate": _generate_melodee, "extra": _melodee_extra,
                        "version_file": "firmware/src/melodee.c", "version_re": r'#define MELODEE_VERSION "([^"]*)"',
                        "identity": melodee_release_identity,
                        "defines": lambda v, i: [f'-DMELODEE_VERSION="{v}"', f'-DMELODEE_ID="{i}"'],
@@ -1289,6 +1325,46 @@ def manifest(name, out: Path, commit, toolchain, extra):
     return m
 
 
+def refresh_notices(work: Path, name: str, local: str | None) -> list[Path]:
+    """Write the licence files and the NOTICE of the builds that are already in the tree again, as this script would
+    write them today, and update the manifests' file lists – WITHOUT compiling: twin.wasm / melodee.wasm and every
+    other manifest field stay as they are. For a change to the notices only (Melodee's builds got LICENSING.md,
+    THIRD_PARTY.txt and the third-party paragraph this way). Targets: melodee-studio, melodee."""
+    done = []
+    if name == "melodee":
+        folders = [OUT / "melodee"]
+    elif name == "melodee-studio":
+        folders = sorted(p for p in (OUT / name).iterdir() if (p / "manifest.json").exists())
+    else:
+        raise SystemExit("--refresh-notices knows melodee-studio and melodee")
+    for out in folders:
+        mf = out / "manifest.json"
+        m = json.loads(mf.read_text("utf-8"))
+        wasm = out / m.get("wasm", "melodee.wasm")
+        before = sha(wasm)
+        src, commit = source("melodee", work, local, ref=m["commit"], repo_url=m["source_repo"],
+                             tree_name=f"{name}-{m['commit'][:12]}-notice")
+        if commit != m["commit"]:
+            raise SystemExit(f"{out}: commit {commit} is not the manifest's {m['commit']}")
+        _melodee_extra(src, out)
+        if name == "melodee":
+            version = re.search(r'#define MELODEE_VERSION "([^"]*)"', (src / "firmware/src/melodee.c").read_text()).group(1)
+            (out / "NOTICE").write_text(_melodee_sim_notice(version, commit), "utf-8")
+        else:
+            spec = STUDIOS[name]
+            (out / "NOTICE").write_text(spec["notice"](spec, m["firmware_version"], m["ref"], commit, m["source_url"]),
+                                        "utf-8")
+            m["title"] = spec["title"]
+        if sha(wasm) != before:
+            raise SystemExit(f"{wasm} changed")
+        m["files"] = {p.name: {"sha256": sha(p), "size": p.stat().st_size} for p in sorted(out.iterdir())
+                      if p.is_file() and p.name != "manifest.json"}
+        mf.write_text(json.dumps(m, indent=2, ensure_ascii=False) + "\n", "utf-8")
+        done.append(out)
+        print(f"   {out.relative_to(ROOT)}: " + ", ".join(m["files"]))
+    return done
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--only", default=",".join(BUILDERS), help="simulators (fm1-open, melodee) and/or studio twins")
@@ -1300,11 +1376,16 @@ def main():
     ap.add_argument("--work", default="/tmp/fm1c-simbuild")
     ap.add_argument("--wasi-sdk", default=os.environ.get("FM1_WASI_SDK"))
     ap.add_argument("--repo", action="append", default=[], help="name=/local/git/repo (read only)")
+    ap.add_argument("--refresh-notices", metavar="TARGET", help="melodee-studio | melodee: write the licence files, "
+                    "NOTICE and the manifest's file list of the existing builds again – nothing is compiled")
     a = ap.parse_args()
     work = Path(a.work)
     work.mkdir(parents=True, exist_ok=True)
     repos = dict(r.split("=", 1) for r in a.repo)
     REPOS.update(repos)
+    if a.refresh_notices:
+        refresh_notices(work, a.refresh_notices, repos.get("melodee"))
+        return
     sdk = wasi_sdk(work, a.wasi_sdk)
     if a.target:
         if a.target not in STUDIOS:
