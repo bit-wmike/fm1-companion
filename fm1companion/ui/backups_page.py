@@ -163,6 +163,7 @@ class AutoBackupService(QObject):
         self.running = False
         self._seen = ""
         self._retries = 0
+        self._waiting = False                  # a "look again" of announce() is on its way
         self._pending = None                   # the announced backup: {"reason", "force", "left", "note", "device"}
         self.connect_timer = QTimer(self)
         self.connect_timer.setSingleShot(True)
@@ -180,15 +181,16 @@ class AutoBackupService(QObject):
         key = f"{c.port.key if c.port else ''}|{c.profile.id if c.profile else ''}" if c.connected else ""
         if getattr(c, "is_virtual", False):
             key = ""                           # the studio twin: no automatic backups (its state lives in the studio)
-        if key and key != self._seen:
+        prev, self._seen = self._seen, key
+        if key and key != prev:
             self._retries = 0
+            self._waiting = False
             self._cancel_announcement()            # (one for another device, if any)
             if AB.settings()["on_connect"]:
                 self.announce(_("on connect"))
         if not key:
             self.connect_timer.stop()
             self._cancel_announcement()
-        self._seen = key
 
     # ---- announcement: a backup stops playback on the FM-1, so it never starts without a word (CD-12)
     def _skipped_today(self) -> bool:
@@ -204,8 +206,22 @@ class AutoBackupService(QObject):
             return False
         if not c.connected or not c.profile or getattr(c, "is_virtual", False) or self._skipped_today():
             return False
-        if self.busy_reason():                     # (waits and comes back here – announced only once it can start)
-            self.run(reason, force)
+        why = self.busy_reason()
+        if why:
+            # (the device is in use – often only for a moment right after connecting: look again soon; one notice,
+            # once it can really start, instead of one per attempt)
+            if not self._waiting and self._retries < 30:
+                self._retries += 1
+                self._waiting = True
+                key = self._seen
+
+                def again():
+                    self._waiting = False
+                    if key == self._seen:          # (still the same device)
+                        self.announce(reason, force)
+                QTimer.singleShot(2000 if self._retries <= 5 else 60_000, again)
+            AB.STATUS.add(_("Automatic backup is waiting ({reason}).").format(reason=why))
+            self.updated.emit()
             return False
         s = AB.settings()
         try:
