@@ -304,7 +304,7 @@ class StudioPage(QWidget):
                                              "here, output as WAV and write back to the FM-1.")))
         # ---- Source
         self.b_fetch = button(_("Fetch from FM-1"), ("go-down", "document-import"), "primary", self.fetch_from_device)
-        self.b_backup = button(_("Open from backup …"), ("document-open",), "", self.open_backup,
+        self.b_backup = button(_("Open from backup …"), ("document-open",), "", lambda: self.open_backup(),
                                _("Load a saved backup into the twin (nothing changes on the FM-1)"))
         self.b_last = button(_("Open last studio state"), ("document-open-recent", "view-history"), "",
                              self.open_last, _("Load the automatically saved state of the studio again"))
@@ -400,7 +400,7 @@ class StudioPage(QWidget):
         g = QGroupBox(_("Output"))
         gl = QVBoxLayout(g)
         self.b_export = button(_("Export as WAV …"), ("document-save", "media-record"), "primary",
-                               self.export_wav, _("Song or pattern as WAV (24 bit) – optionally single tracks.") + " " + STEMS_TIP)
+                               lambda: self.export_wav(), _("Song or pattern as WAV (24 bit) – optionally single tracks.") + " " + STEMS_TIP)
         self.export_state = label("", "muted")
         gl.addWidget(self.b_export)
         gl.addWidget(self.export_state)
@@ -418,7 +418,7 @@ class StudioPage(QWidget):
         gl.addLayout(_row(self.b_undo, self.b_redo))
         sl.addWidget(g)
         # write back
-        self.b_write = button(_("Write back to the FM-1 …"), ("go-up", "document-export"), "danger", self.write_back)
+        self.b_write = button(_("Write back to the FM-1 …"), ("go-up", "document-export"), "danger", lambda: self.write_back())
         sl.addWidget(self.b_write)
         self.side = side
         from PyQt6.QtWidgets import QFrame, QScrollArea

@@ -118,7 +118,7 @@ class SettingsDialog(QDialog):
         b_pages = QPushButton(icon("edit-clear-history", "edit-undo"), _("Reset settings of …"))
         b_pages.setToolTip(_("Puts the settings the pages keep themselves (catalog, Studio, MIDI, recording …) back "
                              "to their default values – chosen one by one, applied at once."))
-        b_pages.clicked.connect(self.reset_pages_dialog)
+        b_pages.clicked.connect(lambda: self.reset_pages_dialog())
         f.addRow("", b_pages)
         tabs.addTab(g, _("General"))
 
