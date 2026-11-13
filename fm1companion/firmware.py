@@ -417,14 +417,14 @@ def _fetch(url: str, dest: Path, progress: Callable[[int, int], None] | None = N
     tmp.replace(dest)
 
 
-_SAFE_NAME = re.compile(r"[\w.+-]+")
-
-
 def _safe_component(text: str, what: str, suffix: str = "") -> str:
     """key, version and file name become folder and file names below the firmware folder: each must be ONE plain
-    path component (a catalog entry must never write anywhere else), the package itself a .fwsc"""
+    path component (a catalog entry must never write anywhere else), the package itself a .fwsc.
+    The rule is catalog.safe_component – the same one the catalog uses to decide which entries it shows, so
+    what is offered there is never refused here for its name."""
+    from . import catalog
     t = str(text or "")
-    if not _SAFE_NAME.fullmatch(t) or t in (".", "..") or (suffix and not t.lower().endswith(suffix)):
+    if not catalog.safe_component(t) or (suffix and not t.lower().endswith(suffix)):
         raise DownloadError(_("Refused: “{value}” is not a valid {what} – the download would not land in the "
                               "firmware folder as an FM-1 package. Nothing was downloaded.").format(
                                   value=t[:80], what=what))

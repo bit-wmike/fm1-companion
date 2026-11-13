@@ -765,6 +765,20 @@ def test_normal_names_still_download(fw, env):
     assert fw._safe_component("JIANT-fm", "key") == "JIANT-fm"
 
 
+@pytest.mark.parametrize("text", ["melodee", "fm1-open", "v1.6.1-rc.7", "omni-0.4.fwsc", "My Synth (beta)", "Größe",
+                                  "a+b_c", "", ".", "..", "../x", "a/b", "a\\b", ".hidden", "~x", "-rf", "a\nb",
+                                  " lead", "trail ", "dot.", "x" * 121])
+def test_download_and_catalog_use_one_name_rule(fw, text):
+    """what the catalog shows must be downloadable, what it hides must be refused: one rule for both"""
+    from fm1companion import catalog
+    try:
+        fw._safe_component(text, "key")
+        ok = True
+    except fw.DownloadError:
+        ok = False
+    assert ok == catalog.safe_component(text)
+
+
 # ------------------------------------------------------------ SEC-10 / F-17: no repo code without the trust check
 
 def test_identity_helpers_run_no_repo_code(env, monkeypatch):
