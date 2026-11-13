@@ -6619,132 +6619,132 @@ msgstr ""
 msgid "The FM-1 no longer answers as V15 after writing – please check it."
 msgstr ""
 
-#: fm1companion/storage.py:412
+#: fm1companion/storage.py:408
 #, python-brace-format
 msgid "“{name}” was written a moment ago – a rescue may still be running. Try again in a few minutes."
 msgstr ""
 
-#: fm1companion/storage.py:501
+#: fm1companion/storage.py:497
 msgid "Logs"
 msgstr ""
 
-#: fm1companion/storage.py:501
+#: fm1companion/storage.py:497
 msgid "The app's log (at most 5 × 1 MB, rotating). “Delete” removes the older parts and empties the current log."
 msgstr ""
 
-#: fm1companion/storage.py:503
+#: fm1companion/storage.py:499
 msgid "Downloaded firmware"
 msgstr ""
 
-#: fm1companion/storage.py:504
+#: fm1companion/storage.py:500
 msgid "Packages the app downloaded (main folder › Firmware). They are downloaded again when needed. Kept: the newest original firmware V15 (for a rescue without internet) and the package of an interrupted installation. Files you put there yourself stay."
 msgstr ""
 
-#: fm1companion/storage.py:507
+#: fm1companion/storage.py:503
 msgid "Copies of installed packages"
 msgstr ""
 
-#: fm1companion/storage.py:508
+#: fm1companion/storage.py:504
 msgid "The installation journal keeps a copy of every package it installs (for finishing an interrupted installation). The copy of an interrupted installation is kept."
 msgstr ""
 
-#: fm1companion/storage.py:511
+#: fm1companion/storage.py:507
 msgid "Firmware tools (git copies)"
 msgstr ""
 
-#: fm1companion/storage.py:512
+#: fm1companion/storage.py:508
 msgid "Installers and tools of the firmwares, fetched from GitHub. Fetched again on the next installation (needs internet). Kept while an interrupted installation can be finished."
 msgstr ""
 
-#: fm1companion/storage.py:515
+#: fm1companion/storage.py:511
 msgid "Editor copies"
 msgstr ""
 
-#: fm1companion/storage.py:515
+#: fm1companion/storage.py:511
 msgid "Web editors of the firmware versions. Prepared again when the editor is opened – close the editor first."
 msgstr ""
 
-#: fm1companion/storage.py:518
+#: fm1companion/storage.py:514
 msgid "Catalog images and GitHub data"
 msgstr ""
 
-#: fm1companion/storage.py:519
+#: fm1companion/storage.py:515
 msgid "Screenshots, stars and release lists from GitHub. The catalog itself and the News list stay."
 msgstr ""
 
-#: fm1companion/storage.py:521
+#: fm1companion/storage.py:517
 msgid "Sample pack downloads"
 msgstr ""
 
-#: fm1companion/storage.py:522
+#: fm1companion/storage.py:518
 msgid "Contents lists of the sample packs (and git copies left by older versions or an interrupted download – the app now deletes the copy right after copying). The samples you downloaded are in your Samples folder and stay there."
 msgstr ""
 
-#: fm1companion/storage.py:525
+#: fm1companion/storage.py:521
 msgid "Web cache"
 msgstr ""
 
-#: fm1companion/storage.py:525
+#: fm1companion/storage.py:521
 msgid "Cache of the built-in browser (editors, catalog pages)."
 msgstr ""
 
-#: fm1companion/storage.py:527
+#: fm1companion/storage.py:523
 msgid "Temporary files"
 msgstr ""
 
-#: fm1companion/storage.py:528
+#: fm1companion/storage.py:524
 msgid "Leftovers of previews and recordings in the temporary folder (only files older than an hour)."
 msgstr ""
 
-#: fm1companion/storage.py:530
+#: fm1companion/storage.py:526
 msgid "Error reports"
 msgstr ""
 
-#: fm1companion/storage.py:531
+#: fm1companion/storage.py:527
 msgid "Error reports and system check reports in your home folder, damaged settings copies."
 msgstr ""
 
-#: fm1companion/storage.py:533
+#: fm1companion/storage.py:529
 msgid "Studio states"
 msgstr ""
 
-#: fm1companion/storage.py:534
+#: fm1companion/storage.py:530
 msgid "Your work in the Studio, one state per device. Only deleted one by one, on request."
 msgstr ""
 
-#: fm1companion/storage.py:536
+#: fm1companion/storage.py:532
 msgid "Web editor storage"
 msgstr ""
 
-#: fm1companion/storage.py:537
+#: fm1companion/storage.py:533
 msgid "Saved data of the built-in browser (cookies, local storage) – web editors may keep your settings there. Only cleared on request, all at once."
 msgstr ""
 
-#: fm1companion/storage.py:540 fm1companion/ui/storage_tab.py:339
+#: fm1companion/storage.py:536 fm1companion/ui/storage_tab.py:339
 msgid "Rescue dumps and tool logs"
 msgstr ""
 
-#: fm1companion/storage.py:541
+#: fm1companion/storage.py:537
 msgid "Full flash backups and logs of the rescue tool in the main folder › Rettung – your safety net. Only deleted one by one, on request; the newest full backup of a device needs an extra confirmation."
 msgstr ""
 
-#: fm1companion/storage.py:544
+#: fm1companion/storage.py:540
 msgid "Rescue tool and installation journal"
 msgstr ""
 
-#: fm1companion/storage.py:545
+#: fm1companion/storage.py:541
 msgid "Needed for a rescue and for finishing an interrupted installation. Kept."
 msgstr ""
 
-#: fm1companion/storage.py:547
+#: fm1companion/storage.py:543
 msgid "Your files in the main folder"
 msgstr ""
 
-#: fm1companion/storage.py:548
+#: fm1companion/storage.py:544
 msgid "Backups, projects, samples, kits, recordings, rescue dumps and downloads. The app never deletes them here – automatic backups follow the setting “Keep automatic backups”, rescue dumps have their own row."
 msgstr ""
 
-#: fm1companion/storage.py:658 fm1companion/ui/storage_tab.py:180
+#: fm1companion/storage.py:654 fm1companion/ui/storage_tab.py:180
 #: fm1companion/ui/storage_tab.py:257 fm1companion/ui/storage_tab.py:303
 msgid "An installation is running – nothing is deleted until it has finished."
 msgstr ""
