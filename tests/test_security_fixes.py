@@ -358,3 +358,25 @@ def test_sec14_relay_needs_the_key_and_no_listing(tmp_path, monkeypatch):
         srv.stop()
     js = (ROOT / "fm1companion" / "sims" / "_host" / "fm1sim-host.js").read_text("utf-8")
     assert 'q.get("fm1relay")' in js and 'new EventSource("/_fm1/midi")' not in js
+
+
+# ------------------------------------------------------------------ SEC-12 (editor_host part)
+def test_sec12_manual_images_https_only(tmp_path, monkeypatch):
+    from fm1companion import editor_host
+    idx = tmp_path / "index.html"
+    idx.write_text('<img src="a.png">')
+    secret = tmp_path / "srv" / "a.png"
+    secret.parent.mkdir()
+    secret.write_bytes(b"\x89PNG local file")
+    opened = []
+    monkeypatch.setattr(catalog, "_raw_urlopen", lambda req, timeout=0, **k: opened.append(req.full_url) or (_ for _ in ()).throw(OSError("x")))
+
+    class Spec:
+        manual_online = ""
+    for base in ("file://" + str(secret.parent), "http://manual.example/m", "ftp://manual.example/m"):
+        assert editor_host.fetch_manual_images(Spec(), idx, base=base) == 0
+        assert not (tmp_path / "a.png").exists()
+    assert opened == []                                  # refused before any connection
+    editor_host.fetch_manual_images(Spec(), idx, base="https://manual.example/m")
+    editor_host.fetch_manual_images(Spec(), idx, base="http://127.0.0.1:9/m")
+    assert opened == ["https://manual.example/m/a.png", "http://127.0.0.1:9/m/a.png"]

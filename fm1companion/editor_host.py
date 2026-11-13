@@ -85,6 +85,16 @@ def missing_manual_images(index: Path) -> list[str]:
     return [n for n in dict.fromkeys(names) if not (index.parent / n).exists()]
 
 
+def _https_open(req, timeout: float = 15):
+    """The manual address comes from a firmware list (also user-added): https only (or this computer), no other
+    http/file addresses and no redirect down to them (same guard as for the catalog)."""
+    from . import catalog
+    u = urlsplit(req.full_url)
+    if u.scheme == "http" and (u.hostname or "") in ("127.0.0.1", "localhost"):
+        return catalog._raw_urlopen(req, timeout=timeout)     # a copy on this computer (tests, own mirror)
+    return catalog.urlopen(req, timeout=timeout)
+
+
 def fetch_manual_images(spec: FirmwareSpec, index: Path, log=print, base: str = "") -> int:
     """The manual's screenshots are not in the repo; fetch them once from the online manual and
     put them next to the local copy. After that the manual works offline. Errors do not abort."""
@@ -95,7 +105,7 @@ def fetch_manual_images(spec: FirmwareSpec, index: Path, log=print, base: str = 
     for name in missing_manual_images(index):
         try:
             req = urllib.request.Request(base.rstrip("/") + "/" + name, headers={"User-Agent": "fm1-companion"})
-            with urllib.request.urlopen(req, timeout=15) as r:
+            with _https_open(req, timeout=15) as r:      # https only, redirects too
                 data = r.read(8 * 1024 * 1024)
             if not data.startswith(b"\x89PNG"):
                 continue
