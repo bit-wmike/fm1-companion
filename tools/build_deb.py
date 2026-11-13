@@ -19,7 +19,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_common import DIST, ROOT, app_files, version  # noqa: E402
+from build_common import DIST, EPOCH, MAINTAINER, ROOT, app_files, changelog_date, version  # noqa: E402
 
 sys.path.insert(0, str(ROOT))
 from fm1companion import diag  # noqa: E402
@@ -44,7 +44,7 @@ exit 0
 """
 
 
-def build(out: Path = DIST, maintainer: str = "FM-1 Companion Suite <fm1-companion@localhost>") -> Path:
+def build(out: Path = DIST, maintainer: str = MAINTAINER) -> Path:
     ver = version()
     with tempfile.TemporaryDirectory(prefix="fm1c-deb-") as tmp:
         root = Path(tmp) / "root"
@@ -83,7 +83,7 @@ def build(out: Path = DIST, maintainer: str = "FM-1 Companion Suite <fm1-compani
         doc.mkdir(parents=True)
         (doc / "copyright").write_text(
             "Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/\nUpstream-Name: FM-1 Companion Suite\n\n"
-            "Files: *\nCopyright: FM-1 Companion contributors\nLicense: GPL-3.0-only\n On Debian systems see "
+            "Files: *\nCopyright: 2026 bit-wmike and the FM-1 Companion contributors\nLicense: GPL-3.0-only\n On Debian systems see "
             "/usr/share/common-licenses/GPL-3.\n\nFiles: usr/lib/fm1-companion/fm1companion/icons/lucide/*\n"
             "Copyright: Lucide Contributors; Cole Bemis (Feather)\nLicense: ISC and MIT\n See "
             "/usr/lib/fm1-companion/fm1companion/icons/LICENSE.lucide\n\nFiles: usr/lib/fm1-companion/fm1companion/vendor/*\n"
@@ -94,15 +94,18 @@ def build(out: Path = DIST, maintainer: str = "FM-1 Companion Suite <fm1-compani
             "Copyright: kurogedelic (FM-1 Transporter); Raspberry Pi (Trading) Ltd. (pico-sdk); Ha Thach (TinyUSB); "
             "sekigon-gonnoc (Pico-PIO-USB)\nLicense: MIT and BSD-3-Clause\n See "
             "/usr/lib/fm1-companion/fm1companion/vendor/unbricker/transporter/THIRD_PARTY.md\n\n"
-            "Files: usr/lib/fm1-companion/fm1companion/sims/*\nCopyright: see the NOTICE file in each folder\n"
-            "License: GPL-3.0-only (Melodee); GPL-3.0-only WITH FM1 SDK linking exception (FM1 Open)\n Corresponding "
-            "source: see NOTICE (written offer, tarballs attached to the GitHub release).\n")
+            "Files: usr/lib/fm1-companion/fm1companion/sims/*\nCopyright: the authors of each firmware project; see "
+            "the NOTICE file in each folder\nLicense: GPL-3.0-only, or GPL-3.0-only WITH FM1 SDK linking "
+            "exception (FM1 Open); the exact licence of each build is in its folder (LICENSE*, NOTICE)\n "
+            "Corresponding source: see NOTICE (written offer, tarballs attached to the GitHub release).\n")
         with gzip.GzipFile(doc / "changelog.gz", "wb", mtime=0) as g:
             g.write(f"fm1-companion ({ver}) stable; urgency=low\n\n  * Release {ver}, see "
-                    "https://github.com/bit-wmike/fm1-companion/releases\n\n -- {maintainer}  "
-                    "Mon, 02 Nov 2026 12:00:00 +0100\n".encode())
+                    f"https://github.com/bit-wmike/fm1-companion/releases\n\n -- {maintainer}  "
+                    f"{changelog_date(ver)}\n".encode())
         for p in root.rglob("*"):
             p.chmod(0o755 if p.is_dir() or p == b else 0o644)
+        for p in [root, *root.rglob("*")]:             # same commit -> same package, whatever the checkout's file times
+            os.utime(p, (EPOCH, EPOCH))
         size = sum(p.stat().st_size for p in root.rglob("*") if p.is_file()) // 1024 + 1
         deb = root / "DEBIAN"
         deb.mkdir()
@@ -120,7 +123,9 @@ def build(out: Path = DIST, maintainer: str = "FM-1 Companion Suite <fm1-compani
             (deb / name).chmod(0o755)
         out.mkdir(parents=True, exist_ok=True)
         target = out / f"fm1-companion_{ver}_all.deb"
-        env = dict(os.environ, SOURCE_DATE_EPOCH="1793350800")
+        for p in [deb, *deb.iterdir()]:
+            os.utime(p, (EPOCH, EPOCH))
+        env = dict(os.environ, SOURCE_DATE_EPOCH=str(EPOCH))
         subprocess.run(["dpkg-deb", "--root-owner-group", "-Zxz", "--build", str(root), str(target)], check=True,
                        env=env, stdout=subprocess.DEVNULL)
     return target
@@ -129,6 +134,6 @@ def build(out: Path = DIST, maintainer: str = "FM-1 Companion Suite <fm1-compani
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(DIST))
-    ap.add_argument("--maintainer", default="FM-1 Companion Suite <fm1-companion@localhost>")
+    ap.add_argument("--maintainer", default=MAINTAINER)
     a = ap.parse_args()
     print(build(Path(a.out), a.maintainer))

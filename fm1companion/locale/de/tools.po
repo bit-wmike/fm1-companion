@@ -1951,16 +1951,6 @@ msgstr "Online-Editor mit dem FM-1 verbinden?"
 msgid "<b>{title}</b> is loaded from <b>{origin}</b> – a site on the internet that does not belong to this app."
 msgstr "<b>{title}</b> wird von <b>{origin}</b> geladen – einer Seite im Internet, die nicht zu dieser App gehört."
 
-#: fm1companion/ui/pages/simulator.py:639
-msgid ""
-"If you allow it, this site may send editor commands (SysEx) to your FM-1 and thereby change sounds, presets and settings on the device. Firmware update and boot mode always stay blocked.\n"
-"\n"
-"Without permission only notes, controllers and clock go to the FM-1. The permission applies only to exactly this address; if the site switches to another address, the safe filter applies again."
-msgstr ""
-"Erlaubst du es, darf diese Seite Editor-Befehle (SysEx) an dein FM-1 senden und damit Klänge, Presets und Einstellungen auf dem Gerät ändern. Firmware-Update und Bootmodus bleiben immer gesperrt.\n"
-"\n"
-"Ohne Erlaubnis gehen nur Noten, Controller und Takt ans FM-1. Die Erlaubnis gilt nur für genau diese Adresse; wechselt die Seite zu einer anderen Adresse, gilt wieder der sichere Filter."
-
 #: fm1companion/ui/pages/simulator.py:644
 msgid "Allow (remember for this address)"
 msgstr "Erlauben (für diese Adresse merken)"
@@ -3316,11 +3306,6 @@ msgstr "Kein FM-1 verbunden – der Editor wartet und verbindet sich von selbst,
 msgid "{name}: no built-in editor – presets via SysEx on the page “Presets”."
 msgstr "{name}: kein eingebauter Editor – Presets per SysEx über die Seite „Presets“."
 
-#: fm1companion/ui/editor_page.py:130
-#, python-brace-format
-msgid "Online editor of the author: <a href=\"{url}\">{url}</a>"
-msgstr "Online-Editor des Autors: <a href=\"{url}\">{url}</a>"
-
 #: fm1companion/ui/editor_page.py:133
 #, python-brace-format
 msgid "{name} does not come with an editor the app can embed.<br>Presets can be sent via SysEx on the page <b>Presets</b> (FM voices); MIDI works via the page <b>MIDI</b>."
@@ -4127,3 +4112,52 @@ msgstr "Sterne für {n} Firmwares geladen."
 #: fm1companion/ui/pages/discover.py:945
 msgid "Stars loaded for {n} firmwares – GitHub limit reached, the rest follows later. With your own GitHub token (“More”) it goes faster."
 msgstr "Sterne für {n} Firmwares geladen – GitHub-Limit erreicht, der Rest folgt später. Mit eigenem GitHub-Token („Mehr“) geht es schneller."
+
+#: fm1companion/diag.py:50
+msgid "rescue with the FM-1 Transporter (a Raspberry Pi Pico as flash adapter)"
+msgstr "Rettung mit dem FM-1 Transporter (ein Raspberry Pi Pico als Flash-Adapter)"
+
+#: fm1companion/diag.py:51
+msgid "password prompt for rescue via U-Boot, the USB power rule and removing a system-wide installation"
+msgstr "Passwortabfrage für die Rettung über U-Boot, die USB-Stromspar-Regel und das Entfernen einer systemweiten Installation"
+
+#: fm1companion/diag.py:52
+msgid "Studio: choosing the sound output with pactl"
+msgstr "Studio: Tonausgabe wählen mit pactl"
+
+#: fm1companion/ui/editor_page.py:88
+msgid "The editor page tried to switch the FM-1 to update or boot mode – held back. Install firmware via “Firmware+”."
+msgstr "Die Editor-Seite wollte das FM-1 in den Update- oder Boot-Modus schalten – zurückgehalten. Firmware installierst du über „Firmware+“."
+
+#: fm1companion/ui/editor_page.py:139
+#, python-brace-format
+msgid "Online editor of the author: {link}"
+msgstr "Online-Editor des Autors: {link}"
+
+#: fm1companion/ui/pages/simulator.py:649
+msgid "Connect this web page to the FM-1?"
+msgstr "Diese Webseite mit dem FM-1 verbinden?"
+
+#: fm1companion/ui/pages/simulator.py:655
+msgid "If you allow it, this site may send editor commands to your FM-1: SysEx of the editor family (F0 7D …, this includes the FM1 Open library) and universal SysEx (F0 7E/7F). With these it can read, change and delete sounds, presets, projects, samples and settings on the device and restore backups. Still blocked: firmware update and boot mode, and every other SysEx."
+msgstr "Wenn du es erlaubst, darf diese Seite Editor-Befehle an dein FM-1 senden: SysEx der Editor-Familie (F0 7D …, dazu gehört die FM1-Open-Bibliothek) und universelles SysEx (F0 7E/7F). Damit kann sie Klänge, Presets, Projekte, Samples und Einstellungen auf dem Gerät lesen, ändern und löschen und Backups zurückspielen. Weiterhin gesperrt: Firmware-Update und Boot-Modus sowie jedes andere SysEx."
+
+#: fm1companion/ui/pages/simulator.py:661
+msgid "If you allow it, this site may use the library commands of the FM1 Open firmware (SysEx F0 7D 46 4D …). With these it can read, overwrite and delete projects, sounds and the sample bank on an FM-1 that runs FM1 Open. Still blocked: firmware update, boot mode and every other SysEx."
+msgstr "Wenn du es erlaubst, darf diese Seite die Bibliotheks-Befehle der Firmware FM1 Open benutzen (SysEx F0 7D 46 4D …). Damit kann sie Projekte, Klänge und die Sample-Bank auf einem FM-1 mit FM1 Open lesen, überschreiben und löschen. Weiterhin gesperrt: Firmware-Update, Boot-Modus und jedes andere SysEx."
+
+#: fm1companion/ui/pages/simulator.py:667
+msgid "Without permission only notes, controllers and clock go to the FM-1. The permission applies only to exactly this address; if the site switches to another address, only notes, controllers and clock get through again. The app cannot check what the site does with the permission – allow it only for a site you trust."
+msgstr "Ohne Erlaubnis gehen nur Noten, Controller und Takt ans FM-1. Die Erlaubnis gilt nur für genau diese Adresse; wechselt die Seite auf eine andere Adresse, kommen wieder nur Noten, Controller und Takt durch. Die App kann nicht prüfen, was die Seite mit der Erlaubnis macht – erlaube es nur einer Seite, der du vertraust."
+
+#: fm1companion/ui/pages/simulator.py:706
+msgid "this address may only use the FM1 Open library commands – everything else is blocked"
+msgstr "diese Adresse darf nur die Bibliotheks-Befehle von FM1 Open benutzen – alles andere ist gesperrt"
+
+#: fm1companion/ui/pages/simulator.py:708
+msgid "this address has no permission for the FM-1 – only notes, controllers and clock; the app asks for permission when the page is opened"
+msgstr "diese Adresse hat keine Erlaubnis für das FM-1 – nur Noten, Controller und Takt; die Erlaubnis fragt die App beim Öffnen der Seite"
+
+#: fm1companion/ui/pages/simulator.py:711
+msgid "the bundled simulators may only send notes, controllers, clock and FM1 Open library commands to the FM-1"
+msgstr "die mitgelieferten Simulatoren dürfen nur Noten, Controller, Takt und Bibliotheks-Befehle von FM1 Open ans FM-1 senden"

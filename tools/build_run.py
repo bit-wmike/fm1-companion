@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import io
 import sys
@@ -14,7 +15,7 @@ import tarfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_common import DIST, ROOT, app_files, version  # noqa: E402
+from build_common import DIST, EPOCH, ROOT, app_files, tracked_files, version  # noqa: E402
 
 sys.path.insert(0, str(ROOT))
 from fm1companion import diag  # noqa: E402
@@ -24,22 +25,23 @@ EXTRA = ["LICENSE", "README.md", "install.sh", "uninstall.sh", "data", "packagin
 
 
 def payload() -> bytes:
-    buf = io.BytesIO()
-    files = list(app_files())
-    for e in EXTRA:
-        p = ROOT / e
-        files += [x for x in p.rglob("*") if x.is_file()] if p.is_dir() else ([p] if p.exists() else [])
-    with tarfile.open(fileobj=buf, mode="w:gz", compresslevel=9) as tar:
-        for f in sorted(set(files)):
-            if "__pycache__" in f.parts or f.suffix == ".pyc":
-                continue
-            ti = tar.gettarinfo(str(f), arcname="app/" + f.relative_to(ROOT).as_posix())
+    """tar.gz of the app – reproducible: tracked files only, sorted, fixed owner/time/modes, and no build time
+    in the gzip header."""
+    files = sorted(set(app_files()) | set(tracked_files(*EXTRA)), key=lambda f: f.relative_to(ROOT).as_posix())
+    raw = io.BytesIO()
+    with tarfile.open(fileobj=raw, mode="w", format=tarfile.GNU_FORMAT) as tar:
+        for f in files:
+            ti = tarfile.TarInfo("app/" + f.relative_to(ROOT).as_posix())
+            ti.size = f.stat().st_size
             ti.uid = ti.gid = 0
             ti.uname = ti.gname = "root"
-            ti.mtime = 1793350800
+            ti.mtime = EPOCH
             ti.mode = 0o755 if f.suffix in (".sh",) or f.name in ("install.sh", "uninstall.sh") else 0o644
             with open(f, "rb") as fh:
                 tar.addfile(ti, fh)
+    buf = io.BytesIO()
+    with gzip.GzipFile(filename="", fileobj=buf, mode="wb", compresslevel=9, mtime=EPOCH) as gz:
+        gz.write(raw.getvalue())
     return buf.getvalue()
 
 

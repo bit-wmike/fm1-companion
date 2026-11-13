@@ -20,6 +20,10 @@ def check() -> int:
         elif s.required:
             bad += 1
             print(_("  MISSING    {package}  ({why})").format(package=s.package, why=s.why))
+        elif s.package in diag.UI_LANGUAGE_PACKAGES:
+            # listed as required for the packages (so that switching the language works), not needed in English
+            print(_("  (optional) {package}  (only needed when the user interface is not English: {why})").format(
+                package=s.package, why=s.why))
         else:
             print(f"  (optional) {s.package}  ({s.why})")
     cmd = diag.apt_command(states)
@@ -104,7 +108,7 @@ def main() -> int:
                 "  --demo       start with three simulated FM-1 (separate settings, your data stays untouched)\n"
                 "  --check      check system packages and show the apt command for anything missing\n"
                 "  --syscheck   check USB, power and audio (like Tools › System check)\n"
-                "  --lang LANG  user interface language for this start: en, de (default: setting/system)\n"
+                "  --lang LANG  user interface language for this start: en, de, es (default: setting/system)\n"
                 "  --no-splash  start without splash screen\n"
                 "  --debug      verbose log (~/.local/state/fm1-companion/logs)\n"
                 "  --version    show version\n"

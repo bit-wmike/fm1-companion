@@ -47,6 +47,9 @@ DEP_WHY = (
     N_("recording (ALSA), MIDI connections"), N_("recording and previewing (pw-record, pw-play)"),
     N_("editing recordings"), N_("sound generator"), N_("General MIDI sounds"),
     N_("rescue via U-Boot (jl-uboot-tool)"),
+    N_("rescue with the FM-1 Transporter (a Raspberry Pi Pico as flash adapter)"),
+    N_("password prompt for rescue via U-Boot, the USB power rule and removing a system-wide installation"),
+    N_("Studio: choosing the sound output with pactl"),
 )
 # needed only when the UI is not English (Qt's own dialog texts) – otherwise just recommended
 UI_LANGUAGE_PACKAGES = {"qt6-translations-l10n"}

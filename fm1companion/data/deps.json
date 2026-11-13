@@ -25,6 +25,9 @@
     {"package": "python3-crcmod", "why": "rescue via U-Boot (jl-uboot-tool)"},
     {"package": "python3-yaml", "why": "rescue via U-Boot (jl-uboot-tool)"},
     {"package": "python3-pycryptodome", "why": "rescue via U-Boot (jl-uboot-tool)"},
-    {"package": "python3-tqdm", "why": "rescue via U-Boot (jl-uboot-tool)"}
+    {"package": "python3-tqdm", "why": "rescue via U-Boot (jl-uboot-tool)"},
+    {"package": "python3-serial", "why": "rescue with the FM-1 Transporter (a Raspberry Pi Pico as flash adapter)"},
+    {"package": "pkexec | policykit-1", "why": "password prompt for rescue via U-Boot, the USB power rule and removing a system-wide installation"},
+    {"package": "pulseaudio-utils", "why": "Studio: choosing the sound output with pactl"}
   ]
 }

@@ -57,7 +57,7 @@ PY=/usr/bin/python3
 ask() {  # ask graphically (kdialog/zenity) or in the terminal
   if [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && command -v kdialog >/dev/null; then kdialog --title "FM-1 Companion Suite" --yesno "$1"
   elif [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && command -v zenity >/dev/null; then zenity --question --title "FM-1 Companion Suite" --width 420 --text "$1"
-  elif [ -t 0 ]; then printf '%s %s ' "$1" "$(msg '[y/N]' '[j/N]')"; read -r r; case "$r" in j|J|y|Y) return 0 ;; *) return 1 ;; esac
+  elif [ -t 0 ]; then printf '%s %s ' "$1" "$(msg '[y/N]' '[j/N]')"; read -r r || r=""; case "$r" in [jJyY]|[yY][eE][sS]|[jJ][aA]) return 0 ;; *) return 1 ;; esac
   else return 1; fi
 }
 
