@@ -328,6 +328,15 @@ def flow():
     dlg = last_dialog.get("WriteBackDialog")
     check("WriteBackDialog" in seen_dialogs and dlg.need_replace and "Backup" in dlg.origin.text()
           and "woanders" in dlg.foreign.text(), "write back shows the confirmation dialog, with the twin's origin")
+    # ST-24: a failed write back says what is on the FM-1 now and names the safety backup
+    err = S.StudioError("Verbindung getrennt")
+    err.written = [2]
+    svc.st.last_write["planned"] = [2, 3, 0]
+    text = page._write_failed_text(err, Path("FM-1_A_sicher.json"))
+    check("Verbindung getrennt" in text and "FM-1_A_sicher.json" in text and "Schon" in text and "Mischung" in text,
+          "failed write back: " + text[:200])
+    text = page._write_failed_text(S.StudioError("Bitte stoppen. Nichts geschrieben."), Path("x.json"))
+    check("Mischung" not in text and "x.json" in text, "nothing written: only the error and the safety backup")
     # ST-09: dropouts are reported and shown
     was = svc._audio
     svc._audio = True

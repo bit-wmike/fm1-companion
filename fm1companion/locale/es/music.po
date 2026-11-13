@@ -4476,10 +4476,6 @@ msgctxt "play the song chain"
 msgid "Song"
 msgstr "Canción"
 
-#: fm1companion/ui/pages/studio.py:669
-msgid "Read a complete backup from the active FM-1 (also lands in Backups › List) and load it into the twin. Playback on the FM-1 stops. FM1 Open has no command to read a saved project directly: the FM-1 loads each saved project into its working area in turn, and at the end the app puts your working project back. If the cable is pulled in between, unsaved work in the working area can be lost; the saved projects are not written."
-msgstr "Leer una copia de seguridad completa del FM-1 activo (también aparece en Copias de seguridad › Lista) y cargarla en el gemelo. La reproducción en el FM-1 se detiene. FM1 Open no tiene un comando para leer directamente un proyecto guardado: el FM-1 carga cada proyecto guardado, uno tras otro, en su área de trabajo, y al final la app vuelve a poner tu proyecto de trabajo. Si se desconecta el cable entre medias, puede perderse el trabajo sin guardar del área de trabajo; los proyectos guardados no se escriben."
-
 #: fm1companion/ui/pages/studio.py:717
 #, python-brace-format
 msgid "The twin runs {twin}. Your FM-1 runs M-VAVE's original firmware {device}: it has no twin and no backup protocol, so nothing can be fetched from this FM-1 or written back to it."
@@ -4561,3 +4557,19 @@ msgstr[1] "El sonido se cortó {n} veces (el ordenador estaba ocupado); el Studi
 #: fm1companion/ui/studio_service.py:574
 msgid "drag, mouse wheel or arrow keys"
 msgstr "arrastrar, rueda del ratón o teclas de flecha"
+
+#: fm1companion/ui/pages/studio.py:670
+msgid "Read a complete backup from the active FM-1 (also lands in Backups › List) and load it into the twin. Playback on the FM-1 stops. FM1 Open has no command to read a saved project directly: the FM-1 loads each saved project into its working area in turn, and at the end the app puts your working project back. Save unsaved changes on the FM-1 first: if the cable is pulled in between, the working project cannot be put back. The saved projects are not written."
+msgstr "Leer una copia de seguridad completa del FM-1 activo (también aparece en Copias de seguridad › Lista) y cargarla en el gemelo. La reproducción en el FM-1 se detiene. FM1 Open no tiene un comando para leer directamente un proyecto guardado: el FM-1 carga cada proyecto guardado, uno tras otro, en su área de trabajo, y al final la app vuelve a poner tu proyecto de trabajo. Guarda antes en el FM-1 los cambios sin guardar: si se desconecta el cable entre medias, el proyecto de trabajo no se puede volver a poner. Los proyectos guardados no se escriben."
+
+#: fm1companion/ui/pages/studio.py:984
+msgid "Have you saved your changes on the FM-1? FM1 Open cannot hand over a saved project directly: while fetching, the FM-1 loads each saved project into its working area in turn, and the app puts your working project back at the end. If the cable is pulled in between, the working project cannot be put back – unsaved changes would be lost."
+msgstr "¿Has guardado tus cambios en el FM-1? FM1 Open no puede entregar directamente un proyecto guardado: al traer, el FM-1 carga cada proyecto guardado, uno tras otro, en su área de trabajo, y la app vuelve a poner tu proyecto de trabajo al final. Si se desconecta el cable entre medias, el proyecto de trabajo no se puede volver a poner – los cambios sin guardar se perderían."
+
+#: fm1companion/ui/pages/studio.py:988
+msgid "Fetch"
+msgstr "Traer"
+
+#: fm1companion/ui/pages/studio.py:1001
+msgid "FM1 Open: keep the cable connected. The FM-1 loads each saved project into its working area in turn; your working project is put back at the end."
+msgstr "FM1 Open: no desconectes el cable. El FM-1 carga cada proyecto guardado, uno tras otro, en su área de trabajo; tu proyecto de trabajo se vuelve a poner al final."

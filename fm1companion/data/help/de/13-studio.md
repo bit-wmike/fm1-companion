@@ -20,8 +20,8 @@ unten unter „Grenzen“.
    den Zwilling. Das Backup landet zusätzlich in [Backups](app://page/backups) – es geht nichts verloren. Am FM-1
    wird nichts verändert (die Wiedergabe stoppt kurz). Eine Ausnahme: FM1 Open kann ein gespeichertes Projekt nicht
    direkt herausgeben – das FM-1 lädt jedes gespeicherte Projekt der Reihe nach in seinen Arbeitsbereich, und am Ende
-   legt die App dein Arbeitsprojekt zurück. Wird dazwischen das Kabel gezogen, kann ungespeicherte Arbeit im
-   Arbeitsbereich verloren gehen.
+   legt die App dein Arbeitsprojekt zurück. Speichere ungespeicherte Änderungen vorher am FM-1 (die App fragt nach): Wird
+   dazwischen das Kabel gezogen, kann das Arbeitsprojekt nicht zurückgelegt werden.
    Alternativ **Aus Backup öffnen …** (jedes Melodee-, Skiff-, JIANT-FM-, SLOOP-, CoralFlower-, KARMA-, Felucca-, ChoralRoot-, X0X-, LOOM-8- oder
    FM1-Open-Backup – es
    startet der Zwilling der Firmware des Backups; SLOOP- und KARMA-Backups auch im Format von SLOOPs Web-Editor) oder

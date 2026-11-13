@@ -884,19 +884,25 @@ class Studio:
                     if unchanged.get(str(o["id"])) == _digest(o["bytes"])} - skip
         todo = [o["id"] for o in archive.objects if o["id"] not in skip | same]
         self.last_write["unchanged"] = sorted(same)
+        self.last_write["planned"] = list(todo)     # (for the text after a failure: backup.written_text)
         if self._fm1open:                           # (FM1 Open: its own protocol; no settings object)
             from . import fm1openbk
             if todo:
                 try:
                     fm1openbk.restore(link, archive.file, progress, ids=todo)
                 except fm1openbk.FM1OpenBackupError as e:
-                    raise StudioError(str(e))
+                    err = StudioError(str(e))
+                    for k in ("written", "unclear"):    # (what is on the FM-1 now, where the backup layer says so)
+                        if getattr(e, k, None) is not None:
+                            setattr(err, k, getattr(e, k))
+                    raise err from e
             self.last_write["written"] = todo
             return archive
         sid = FIRMWARES.get(self.build.firmware, {}).get("settings_id", 1)    # (LOOM-8: None, no settings object)
         if not settings and sid is not None:
             skip.add(sid)
             todo = [i for i in todo if i != sid]
+            self.last_write["planned"] = list(todo)
         skip |= same
         if not todo:                                # (nothing differs: the FM-1 is not touched – nor asked to confirm)
             return archive

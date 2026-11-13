@@ -7,6 +7,7 @@ twin, WAV export (also individual tracks), studio state with undo, writing back 
 """
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import html
 import re
@@ -669,8 +670,8 @@ class StudioPage(QWidget):
         fetch_tip = (_("Read a complete backup from the active FM-1 (also lands in Backups › List) and load it into the "
                        "twin. Playback on the FM-1 stops. FM1 Open has no command to read a saved project directly: the "
                        "FM-1 loads each saved project into its working area in turn, and at the end the app puts your "
-                       "working project back. If the cable is pulled in between, unsaved work in the working area can "
-                       "be lost; the saved projects are not written.")
+                       "working project back. Save unsaved changes on the FM-1 first: if the cable is pulled in "
+                       "between, the working project cannot be put back. The saved projects are not written.")
                      if svc.firmware_for(c.firmware_key) == "fm1-open" and not S.stand_in_for(c.firmware_key) else
                      _("Read a complete backup from the active FM-1 (also lands in Backups › List) and load "
                        "it into the twin. Playback on the FM-1 stops briefly; nothing is written there."))
@@ -980,6 +981,12 @@ class StudioPage(QWidget):
             return None
         prof, fw, version = c.profile, c.firmware_key, self._dev_version()
         tw = svc.firmware_for(fw)
+        if tw == "fm1-open" and not confirm(self, _("Fetch from FM-1"), _(
+                "Have you saved your changes on the FM-1? FM1 Open cannot hand over a saved project directly: while "
+                "fetching, the FM-1 loads each saved project into its working area in turn, and the app puts your "
+                "working project back at the end. If the cable is pulled in between, the working project cannot be put "
+                "back – unsaved changes would be lost."), ok=_("Fetch")):
+            return None
         try:
             st = svc.ensure(S.fw_version(tw, version) if tw == "fm1-open" else S.norm_version(version), tw)
         except Exception as e:  # noqa: BLE001
@@ -990,6 +997,9 @@ class StudioPage(QWidget):
         box = {}
 
         def work(w, link):
+            if tw == "fm1-open":                        # (said in the dialog too, not only in the tooltip)
+                w.log.emit(_("FM1 Open: keep the cable connected. The FM-1 loads each saved project into its working "
+                             "area in turn; your working project is put back at the end."))
             w.log.emit(_("Reading the complete backup of “{name}” …").format(name=prof.name))
             path = AB.capture_to_file(link, folder, prof, fw, version, _("fetched for the studio"), "manuell",
                                       progress=lambda a, b: w.progress.emit(a, b * 2))
@@ -1338,12 +1348,16 @@ class StudioPage(QWidget):
         return box.get("safety")
 
     def _write_failed_text(self, e: BaseException, safety: Path) -> str:
-        """a write back that failed: the error, what is already on the FM-1 (where the backup layer knows it) and the
-        safety backup made just before"""
+        """a write back that failed: the error, what is already on the FM-1 and which part is unclear (where the
+        backup layer knows: its errors carry ``written`` and ``unclear``) and the safety backup made just before"""
         text = str(e)
-        if getattr(e, "written", None):                 # (object by object: Felucca's and SLOOP's protocols)
-            fw = self.svc.firmware if self.svc is not None else ""
-            text += " " + backup.written_text(e, list(e.written), S.FIRMWARES.get(fw, {}).get("backup") == "sloop")
+        src = e if (getattr(e, "written", None) or getattr(e, "unclear", None)) else getattr(e, "__cause__", None)
+        if src is not None and (getattr(src, "written", None) or getattr(src, "unclear", None)):
+            st = self.svc.st if self.svc is not None else None
+            fw = st.build.firmware if st is not None else ""
+            planned = list((st.last_write.get("planned") if st is not None else None) or getattr(src, "written", None) or [])
+            with contextlib.suppress(Exception):
+                text += " " + backup.written_text(src, planned, S.FIRMWARES.get(fw, {}).get("backup") == "sloop")
             text += " " + _("The FM-1 now holds a mix of old and new parts.")
         return text + " " + _("The safety backup made just before is “{file}” (Backups › List), in case you "
                               "need the FM-1's previous state back.").format(file=safety.name)

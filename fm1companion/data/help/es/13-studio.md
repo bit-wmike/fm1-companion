@@ -20,7 +20,8 @@ más abajo, en “Límites”.
    el gemelo. La copia también se guarda en [Copias de seguridad](app://page/backups) – no se pierde nada. No se cambia nada
    en el FM-1 (la reproducción se detiene brevemente). Una excepción: FM1 Open no puede entregar directamente un proyecto
    guardado – el FM-1 carga cada proyecto guardado, uno tras otro, en su área de trabajo, y al final la app vuelve a poner
-   tu proyecto de trabajo. Si se desconecta el cable entre medias, puede perderse el trabajo sin guardar del área de trabajo.
+   tu proyecto de trabajo. Guarda antes en el FM-1 los cambios sin guardar (la app lo pregunta): si se desconecta el cable entre medias, el
+   proyecto de trabajo no se puede volver a poner.
    Como alternativa, **Abrir desde copia de seguridad …** (cualquier copia de Melodee, Skiff, JIANT FM, SLOOP, CoralFlower, KARMA, Felucca, ChoralRoot, X0X, LOOM-8 o FM1 Open; también copias de SLOOP y KARMA en el formato
    del editor web de SLOOP – arranca el gemelo del firmware
    de la copia) o

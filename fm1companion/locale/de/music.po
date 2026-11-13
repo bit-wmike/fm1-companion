@@ -4667,10 +4667,6 @@ msgctxt "play the song chain"
 msgid "Song"
 msgstr "Song"
 
-#: fm1companion/ui/pages/studio.py:669
-msgid "Read a complete backup from the active FM-1 (also lands in Backups › List) and load it into the twin. Playback on the FM-1 stops. FM1 Open has no command to read a saved project directly: the FM-1 loads each saved project into its working area in turn, and at the end the app puts your working project back. If the cable is pulled in between, unsaved work in the working area can be lost; the saved projects are not written."
-msgstr "Komplettes Backup vom aktiven FM-1 lesen (landet auch in Backups › Liste) und in den Zwilling laden. Die Wiedergabe am FM-1 stoppt. FM1 Open hat keinen Befehl, ein gespeichertes Projekt direkt zu lesen: Das FM-1 lädt jedes gespeicherte Projekt der Reihe nach in seinen Arbeitsbereich, und am Ende legt die App dein Arbeitsprojekt zurück. Wird dazwischen das Kabel gezogen, kann ungespeicherte Arbeit im Arbeitsbereich verloren gehen; die gespeicherten Projekte werden nicht geschrieben."
-
 #: fm1companion/ui/pages/studio.py:717
 #, python-brace-format
 msgid "The twin runs {twin}. Your FM-1 runs M-VAVE's original firmware {device}: it has no twin and no backup protocol, so nothing can be fetched from this FM-1 or written back to it."
@@ -4752,3 +4748,19 @@ msgstr[1] "Der Ton hat {n}-mal ausgesetzt (der Rechner war beschäftigt); das St
 #: fm1companion/ui/studio_service.py:574
 msgid "drag, mouse wheel or arrow keys"
 msgstr "ziehen, Mausrad oder Pfeiltasten"
+
+#: fm1companion/ui/pages/studio.py:670
+msgid "Read a complete backup from the active FM-1 (also lands in Backups › List) and load it into the twin. Playback on the FM-1 stops. FM1 Open has no command to read a saved project directly: the FM-1 loads each saved project into its working area in turn, and at the end the app puts your working project back. Save unsaved changes on the FM-1 first: if the cable is pulled in between, the working project cannot be put back. The saved projects are not written."
+msgstr "Komplettes Backup vom aktiven FM-1 lesen (landet auch in Backups › Liste) und in den Zwilling laden. Die Wiedergabe am FM-1 stoppt. FM1 Open hat keinen Befehl, ein gespeichertes Projekt direkt zu lesen: Das FM-1 lädt jedes gespeicherte Projekt der Reihe nach in seinen Arbeitsbereich, und am Ende legt die App dein Arbeitsprojekt zurück. Speichere ungespeicherte Änderungen vorher am FM-1: Wird dazwischen das Kabel gezogen, kann das Arbeitsprojekt nicht zurückgelegt werden. Die gespeicherten Projekte werden nicht geschrieben."
+
+#: fm1companion/ui/pages/studio.py:984
+msgid "Have you saved your changes on the FM-1? FM1 Open cannot hand over a saved project directly: while fetching, the FM-1 loads each saved project into its working area in turn, and the app puts your working project back at the end. If the cable is pulled in between, the working project cannot be put back – unsaved changes would be lost."
+msgstr "Hast du deine Änderungen am FM-1 gespeichert? FM1 Open kann ein gespeichertes Projekt nicht direkt herausgeben: Beim Holen lädt das FM-1 jedes gespeicherte Projekt der Reihe nach in seinen Arbeitsbereich, und die App legt dein Arbeitsprojekt am Ende zurück. Wird dazwischen das Kabel gezogen, kann das Arbeitsprojekt nicht zurückgelegt werden – ungespeicherte Änderungen wären verloren."
+
+#: fm1companion/ui/pages/studio.py:988
+msgid "Fetch"
+msgstr "Holen"
+
+#: fm1companion/ui/pages/studio.py:1001
+msgid "FM1 Open: keep the cable connected. The FM-1 loads each saved project into its working area in turn; your working project is put back at the end."
+msgstr "FM1 Open: Lass das Kabel stecken. Das FM-1 lädt jedes gespeicherte Projekt der Reihe nach in seinen Arbeitsbereich; dein Arbeitsprojekt wird am Ende zurückgelegt."

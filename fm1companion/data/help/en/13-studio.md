@@ -18,8 +18,9 @@ well; what differs for them (loop slots, a backup taken whole, no backup over US
 1. **Fetch from FM-1:** reads a complete backup from the active FM-1 (its name is on the button) and loads it into
    the twin. The backup is also stored in [Backups](app://page/backups) – nothing is lost. Nothing is changed
    on the FM-1 (playback stops briefly). One exception: FM1 Open cannot hand over a saved project directly – the FM-1
-   loads each saved project into its working area in turn, and at the end the app puts your working project back. If
-   the cable is pulled in between, unsaved work in the working area can be lost.
+   loads each saved project into its working area in turn, and at the end the app puts your working project back. Save
+   unsaved changes on the FM-1 first (the app asks): if the cable is pulled in between, the working project cannot be
+   put back.
    Alternatively **Open from backup …** (any Melodee, Skiff, JIANT FM, SLOOP, CoralFlower, KARMA, Felucca, ChoralRoot, X0X, LOOM-8 or FM1 Open backup –
    the twin of the backup's firmware starts; SLOOP and KARMA backups in the format of SLOOP's web editor too) or
    **Open last studio state**.
