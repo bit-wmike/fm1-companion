@@ -1007,6 +1007,7 @@ class FirmwarePage(QWidget):
 
     def activate(self):
         """Tab becomes visible: take over firmwares added/removed in the catalog tab (selection stays)."""
+        self._show_v15_cached()
         keys = [s.key for s in firmware.catalog() + firmware.STOCK]
         if keys == [self.cat.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.cat.count())]:
             return
@@ -1047,6 +1048,7 @@ class FirmwarePage(QWidget):
     def showEvent(self, e):
         super().showEvent(e)
         self._shown = True
+        self._show_v15_cached()
         if getattr(self, "_pending_load", False):         # only now (page visible) fetch the versions
             self._pending_load = False
             self.load_releases()

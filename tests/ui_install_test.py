@@ -419,6 +419,7 @@ def flow():
         check(not rec.b_forget_chain.isHidden() and rec.b_forget.isHidden(),
               "Recovery: “Forget the two-step switch” only while there is one")
         # audit F-10: the plan says where the original V15 comes from; the download button knows it is there
+        page.activate()
         check(firmware.stock_cached("stock-v15") and not page.b_v15_dl.isEnabled()
               and "schon auf diesem Computer" in page.b_v15_dl.toolTip(), "V15 for offline use: already there")
         # audit F-03: the Cancel button follows the engine's log – it never accepts a cancel that cannot happen

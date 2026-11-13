@@ -138,6 +138,8 @@ def flow():
     def offline(*a, **k):
         raise urllib.error.URLError("Network is unreachable")
     urllib.request.urlopen = offline
+    real_fw_open = firmware.urlopen                       # (the firmware module's guarded opener: https only)
+    firmware.urlopen = offline
     firmware._releases_from_tags = lambda sp: []          # git ls-remote would otherwise go to the network
     for c in list((home / ".cache").rglob("releases-*.json")):
         c.unlink()
@@ -167,6 +169,7 @@ def flow():
         check(until(lambda: ctx.connected and ctx.port.serial == "DEMO-1", 10000), "connected again")
     finally:
         urllib.request.urlopen = real_open
+        firmware.urlopen = real_fw_open
 
     # ---------------------------------------------------------------- two devices at the same time
     st = fp.device_state(ctx)
