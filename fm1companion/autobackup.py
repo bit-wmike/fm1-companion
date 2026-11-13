@@ -98,14 +98,16 @@ class Meta:
 
     @property
     def automatic(self) -> bool:
-        return self.kind in AUTO_KINDS or self.path.stem.endswith(("_auto", "_vor-Update"))
+        """may the retention delete it? By the kind stored in the file; a file without one gets its kind from its name
+        when it is indexed (_kind_from_name) – the name never overrides what the file itself says"""
+        return self.kind in AUTO_KINDS
 
     @property
     def when(self) -> dt.datetime:
         try:
-            t = dt.datetime.fromisoformat(self.created.replace("Z", "+00:00"))
+            t = dt.datetime.fromisoformat(str(self.created).replace("Z", "+00:00"))
             return t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)
-        except ValueError:
+        except (ValueError, TypeError, OverflowError):
             return dt.datetime.fromtimestamp(self.mtime, dt.timezone.utc)
 
 
@@ -159,49 +161,91 @@ def _kind_from_name(stem: str) -> str:
     return "manuell"
 
 
+# every backup file format the app writes or takes: Felucca's, SLOOP's, FM1 Open's, X0X's and LOOM-8's image
+BACKUP_FORMATS = (backup.FORMAT, backup.SLOOP_FORMAT, backup.FM1OPEN_FORMAT, *backup.IMAGE_FORMATS)
+
+
+def _str(v) -> str:
+    return v if isinstance(v, str) else ""
+
+
 def _entry(path: Path, st) -> dict | None:
-    """index entry (header data) of a backup file, read from the file – None if it is no backup"""
+    """index entry (header data) of a backup file, read from the file – None if it is no backup. A file that says it
+    is a backup but holds something else than a backup's fields (hand-edited, foreign) gets an entry with "damaged":
+    one odd file must never stop the list, the retention or the automatic backup."""
     try:
         f = json.loads(path.read_text("utf-8"))
-    except (OSError, ValueError):
+    except (OSError, ValueError, RecursionError):
         return None
-    if not isinstance(f, dict) or f.get("format") not in (backup.FORMAT, "sloop-backup", backup.FM1OPEN_FORMAT):
+    if not isinstance(f, dict) or not isinstance(f.get("format"), str) or f["format"] not in BACKUP_FORMATS:
         return None
+    try:
+        return _entry_of(path, st, f)
+    except (AttributeError, TypeError, ValueError, KeyError, IndexError, OverflowError, backup.BackupError) as e:
+        return {"presets": -1, "mtime": st.st_mtime, "size": st.st_size, "created": "", "firmware": "", "fw_key": "",
+                "device": path.parent.name, "device_id": "", "note": "", "labels": [], "pinned": False,
+                "kind": "beschädigt", "objects": 0, "projects": 0, "fmt": f["format"],        # i18n: ignore
+                "damaged": f"{type(e).__name__}"}
+
+
+def _entry_of(path: Path, st, f: dict) -> dict:
+    fmt = f["format"]
     c = f.get("companion") or {}
-    objs = f.get("objects") or []
+    if not isinstance(c, dict):
+        raise TypeError("companion")
     fw = f.get("firmware", "")
-    key = c.get("firmware") or next((k for k in ("melodee", "karma", "sloop", "skiff", "jiant", "coralflower",
-                                               "choralroot")
-                                     if k in fw.lower()), "")
-    if f.get("format") == backup.FM1OPEN_FORMAT:   # (M-VAVE's FM1 Open: its slots 1..16)
+    if not isinstance(fw, str):
+        raise TypeError("firmware")
+    if fmt in backup.IMAGE_FORMATS:                 # (X0X, LOOM-8: one image; its parts are the objects)
+        from . import x0xbk
+        objs = [{"id": o["id"], "size": o["size"]} for o in x0xbk.objects(f)[1]]
+    else:
+        objs = f.get("objects") or []
+        if not isinstance(objs, list):
+            raise TypeError("objects")
+    key = _str(c.get("firmware")) or next((k for k in ("melodee", "karma", "sloop", "skiff", "jiant", "coralflower",
+                                                         "choralroot")
+                                           if k in fw.lower()), "")
+    if fmt == backup.FM1OPEN_FORMAT:               # (M-VAVE's FM1 Open: its slots 1..16)
         key = key or backup.FM1OPEN_KEY
-    jiant = backup.is_jiant(o.get("id", -1) for o in objs if isinstance(o, dict))
-    coral = backup.is_coralflower(o.get("id", -1) for o in objs if isinstance(o, dict))
-    choral = backup.is_choralroot(o.get("id", -1) for o in objs if isinstance(o, dict))
+    if fmt in backup.IMAGE_FORMATS:
+        key = key or backup.IMAGE_FORMATS[fmt]
+    ids = [o.get("id", -1) for o in objs if isinstance(o, dict)]
+    jiant, coral, choral = backup.is_jiant(ids), backup.is_coralflower(ids), backup.is_choralroot(ids)
     try:                                   # count used presets once (stored in the index afterwards)
         from . import backup_inspect as _BI
         presets = len(_BI.inspect(f).used_presets)
     except Exception:                      # noqa: BLE001 – then without a number
         presets = -1
-    return {"presets": presets, "mtime": st.st_mtime, "size": st.st_size, "created": f.get("created") or f.get("date", ""),
-            "firmware": fw, "fw_key": key, "device": c.get("device", ""), "device_id": c.get("device_id", ""),
-            "note": c.get("note", ""), "labels": list(c.get("labels") or []), "pinned": bool(c.get("pinned")),
-            "kind": c.get("kind") or _kind_from_name(path.stem), "objects": len(objs),
-            "projects": sum(1 for o in objs if isinstance(o, dict) and (o.get("size") or o.get("len"))
-                            and (1 <= o.get("id", -1) <= 16 if f.get("format") == backup.FM1OPEN_FORMAT else
-                                 backup.is_project(o.get("id", -1), jiant, coral, choral)) and o.get("id") != 0),
-            "fmt": f.get("format")}
+
+    def is_proj(o) -> bool:
+        i = o.get("id", -1)
+        if not isinstance(i, int) or isinstance(i, bool) or not (o.get("size") or o.get("len")) or i == 0:
+            return False
+        if fmt in backup.IMAGE_FORMATS:
+            return False
+        return 1 <= i <= 16 if fmt == backup.FM1OPEN_FORMAT else backup.is_project(i, jiant, coral, choral)
+    labels = c.get("labels") or []
+    created = f.get("created") or f.get("date", "")
+    return {"presets": presets, "mtime": st.st_mtime, "size": st.st_size, "created": _str(created),
+            "firmware": fw, "fw_key": key, "device": _str(c.get("device")), "device_id": _str(c.get("device_id")),
+            "note": _str(c.get("note")), "labels": [x for x in labels if isinstance(x, str)] if isinstance(labels, list) else [],
+            "pinned": c.get("pinned") is True,
+            "kind": _str(c.get("kind")) or _kind_from_name(path.stem), "objects": len(objs),
+            "projects": sum(1 for o in objs if isinstance(o, dict) and is_proj(o)),
+            "fmt": fmt}
 
 
 def _meta(path: Path, e: dict) -> Meta:
     return Meta(path, e["created"], e["firmware"], e["fw_key"], e["device"], e["device_id"], e["note"], e["labels"],
                 e["pinned"], e["kind"], e["size"], e["mtime"], e["objects"], e["projects"], e.get("fmt", backup.FORMAT),
-                int(e.get("presets", -1)))
+                int(e.get("presets", -1)), damaged=e.get("damaged", ""))
 
 
-def read_meta(path: Path, cached: bool = True) -> Meta | None:
+def read_meta(path: Path, cached: bool = True, damaged: bool = False) -> Meta | None:
     """header data of a backup file. cached=False: read without the index (e.g. files in the mirror folder,
-    which must not end up in the local index)."""
+    which must not end up in the local index). damaged=True: a backup file with unusable content is returned as a
+    Meta with .damaged (otherwise None, like a file that is no backup)."""
     path = Path(path)
     try:
         st = path.stat()
@@ -209,7 +253,7 @@ def read_meta(path: Path, cached: bool = True) -> Meta | None:
         return None
     if not cached:
         e = _entry(path, st)
-        return _meta(path, e) if e else None
+        return _meta(path, e) if e and (damaged or not e.get("damaged")) else None
     with _lock:
         idx = _load_index()
         e = idx.get(str(path))
@@ -221,7 +265,11 @@ def read_meta(path: Path, cached: bool = True) -> Meta | None:
                 return None
             idx[str(path)] = e
             _save_index()
-    return _meta(path, e)
+    try:
+        return _meta(path, e) if damaged or not e.get("damaged") else None
+    except (KeyError, TypeError, ValueError, AttributeError):   # (an index entry of another version: read it again)
+        e = _entry(path, st)
+        return _meta(path, e) if e and (damaged or not e.get("damaged")) else None
 
 
 def prune_index(folder: Path | None = None, present=None, recursive: bool = True) -> int:
@@ -276,7 +324,9 @@ def list_backups(folder: Path, recursive: bool = True, include_damaged: bool = F
     prune_index(folder, files, recursive)              # forget entries of files deleted since
     out = []
     for f in files:
-        m = read_meta(f)
+        m = read_meta(f, damaged=include_damaged)
+        if m is not None and m.damaged:
+            m.damaged = _("the file says it is a backup but holds something else ({error})").format(error=m.damaged)
         if m is None and include_damaged:
             m = damaged_meta(f)
         if m:
@@ -294,9 +344,11 @@ def set_meta(path: Path, **changes):
     except ValueError:
         raise backup.BackupError(_("The file is not a readable backup (damaged) – note/labels cannot "
                                  "be saved."))
-    if not isinstance(f, dict) or f.get("format") not in (backup.FORMAT, "sloop-backup"):
+    if not isinstance(f, dict) or not isinstance(f.get("format"), str) or f["format"] not in BACKUP_FORMATS:
         raise backup.BackupError(_("The file is not a backup of the app or the web editor."))
-    c = f.setdefault("companion", {})
+    if not isinstance(f.get("companion"), dict):
+        f["companion"] = {}
+    c = f["companion"]
     c.update(changes)
     # (SLOOP backups stay in the SLOOP editor's format); modification time stays
     backup.write_text_atomic(path, backup.dumps(f), keep_times=(st.st_atime_ns, st.st_mtime_ns))
@@ -478,6 +530,9 @@ def prune_mirror(root: Path, target: Path, keep_last: int, keep_monthly: bool | 
             rel = (d / m.path.name).as_posix()
             if rel not in mine or (root / rel).exists():
                 continue                            # not ours, or still here (then the mirror keeps it too)
+            if not (root / d).is_dir():
+                continue                            # the whole folder is gone here (device renamed or merged, drive
+                                                    # not mounted): the retention deleted nothing – keep the copies
             try:
                 if _sha(m.path) != mine[rel]:
                     stale.append(rel)               # changed since we copied it: no longer ours to delete
@@ -495,6 +550,25 @@ def prune_mirror(root: Path, target: Path, keep_last: int, keep_monthly: bool | 
                 ours.pop(r, None)
             _mirror_save(d)
     return gone
+
+
+def mirror_missing(folder: Path, root: Path, target: Path) -> int:
+    """copy every backup of one device folder that the mirror does not hold yet (after renaming or merging a device,
+    after a time without the drive, files added by hand) -> number of copied files. Cheap: files this app already
+    copied there and that are still there are not read again. OSError as mirror_file."""
+    folder, root, target = Path(folder), Path(root), Path(target)
+    mine = mirror_written(target)
+    n = 0
+    for f in sorted(folder.glob("*.json")):
+        try:
+            rel = f.relative_to(root).as_posix()
+        except ValueError:
+            rel = f.name
+        if rel in mine and (target / rel).exists():
+            continue
+        mirror_file(f, root, target)
+        n += 1
+    return n
 
 
 def mirror_all(root: Path, target: Path) -> tuple[int, int, list[str]]:
@@ -555,6 +629,10 @@ def export_zip(paths, dest: Path, root: Path) -> int:
     return len(entries)
 
 
+MAX_ZIP_ENTRY = 64 << 20            # a backup file is a few MB at most (every object as Base64)
+MAX_ZIP_MANIFEST = 4 << 20
+
+
 def import_zip(src: Path, root: Path) -> tuple[list[Path], list[str]]:
     """Check a zip (manifest, SHA-256, backup content) and file it under root. Existing files stay."""
     import zipfile
@@ -568,12 +646,15 @@ def import_zip(src: Path, root: Path) -> tuple[list[Path], list[str]]:
                                    "Please copy the file again.").format(name=src.name))
     with z:
         try:
+            if z.getinfo("manifest.json").file_size > MAX_ZIP_MANIFEST:
+                raise backup.BackupError(_("The table of contents in {name} is damaged ({error}). "
+                                           "Nothing was taken over.").format(name=src.name, error="size"))
             man = json.loads(z.read("manifest.json"))
         except KeyError:
             raise backup.BackupError(_("{name} has no table of contents (manifest.json) – this is not a "
                                        "backup collection of this app. Single backup files (.json) are added with "
                                        "“Add file” in the tab “List”.").format(name=src.name))
-        except (ValueError, zipfile.BadZipFile) as e:
+        except (ValueError, zipfile.BadZipFile, RecursionError) as e:
             raise backup.BackupError(_("The table of contents in {name} is damaged ({error}). "
                                        "Nothing was taken over.").format(name=src.name, error=type(e).__name__))
         if not isinstance(man, dict) or man.get("format") != "fm1companion-backupset":
@@ -590,6 +671,9 @@ def import_zip(src: Path, root: Path) -> tuple[list[Path], list[str]]:
                 skipped.append(_("{name}: invalid path").format(name=name))
                 continue
             try:
+                if z.getinfo(name).file_size > MAX_ZIP_ENTRY:      # (before reading: a zip bomb is never unpacked)
+                    skipped.append(_("{name}: too large to be a backup").format(name=name))
+                    continue
                 data = z.read(name)
             except KeyError:
                 skipped.append(_("{name}: missing in the zip").format(name=name))
@@ -600,15 +684,23 @@ def import_zip(src: Path, root: Path) -> tuple[list[Path], list[str]]:
             if hashlib.sha256(data).hexdigest() != e.get("sha256"):
                 skipped.append(_("{name}: checksum does not match").format(name=name))
                 continue
+            try:                                   # (the content itself, parsed here: a text that is no JSON object
+                text = data.decode("utf-8")        # must never be taken for a path to read)
+                parsed = json.loads(text)
+                if not isinstance(parsed, dict):
+                    raise ValueError
+            except (ValueError, RecursionError):
+                skipped.append(_("{name}: not a backup file").format(name=name))
+                continue
             try:
-                backup_inspect.inspect(data.decode("utf-8"))
+                backup_inspect.inspect(parsed)
             except Exception as ex:  # noqa: BLE001
-                skipped.append(f"{name}: {ex}")
+                skipped.append(f"{name}: {str(ex)[:200] or type(ex).__name__}")
                 continue
             dest = Path(root) / rel
             if dest.exists():
                 skipped.append(_("{name}: already there").format(name=rel.name))
                 continue
-            backup.write_text_atomic(dest, data.decode("utf-8"))
+            backup.write_text_atomic(dest, text)
             got.append(dest)
     return got, skipped

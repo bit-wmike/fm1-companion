@@ -32,11 +32,11 @@ def selective_restore(ctx, parent, rep: BI.Report, ids, source_label: str) -> bo
     if not rep.restorable or rep.archive is None:
         show_error(parent, _("Not possible"), _("The app cannot restore this backup format."))
         return False
-    if rep.firmware_key and ctx.firmware_key and rep.firmware_key != ctx.firmware_key:
-        show_error(parent, _("Different firmware"), _("The backup comes from <b>{source}</b>, the FM-1 runs "
-                                                      "<b>{target}</b>. Parts of it do not fit – nothing is "
-                                                      "written.").format(source=BI.fw_name(rep.firmware_key),
-                                                                         target=BI.fw_name(ctx.firmware_key)))
+    # the same rule as the restore itself (by backup protocol and by where the objects live, not by the firmware key
+    # in the file); here by what the device's name tells, below – once its inventory is read – exactly
+    early = BI.compatibility(rep, ctx.firmware_key, ctx.info.version if ctx.info else "", None)
+    if not early.ok:
+        show_error(parent, _("Different firmware"), early.reason)
         return False
     prof = ctx.profile
     try:
@@ -65,6 +65,12 @@ def selective_restore(ctx, parent, rep: BI.Report, ids, source_label: str) -> bo
     safety = d.result_value
     cur = BI.inspect(safety)
     man = [backup.ObjInfo(o.id, o.size, o.crc) for o in cur.objects]
+    if cur.format == backup.FORMAT:                 # (the device's inventory is known now: the exact check)
+        exact = BI.compatibility(rep, ctx.firmware_key, cur.firmware or version, [o.id for o in cur.objects],
+                                 proto=backup.FELUCCA)
+        if not exact.ok:
+            show_error(parent, _("Different firmware"), exact.reason)
+            return False
     plan = BI.plan_restore(rep, ids, man, cur)
     if not plan.ok:
         show_error(parent, _("Restore not possible"), "<br>".join(plan.errors))
@@ -78,9 +84,12 @@ def selective_restore(ctx, parent, rep: BI.Report, ids, source_label: str) -> bo
     arch = rep.archive
     titles = {it.id: it.title for it in plan.items}
     state = {"error": None}
+    order = plan.ids()
 
     def work(w, link):
-        w.log.emit(_("Checking every object with the device before anything is replaced …"))
+        w.log.emit(_("Asking the device whether it takes every part before anything is replaced …") if not arch.sloop
+                   else _("Checking the backup and writing it in SLOOP's order: banks, projects, settings, "
+                          "samples …"))
         try:
             done = backup.restore_selected(link, arch, plan.ids(), progress=lambda a, b: w.progress.emit(a, b),
                                            expect=plan.expect, clear_extension=plan.clear_extension,
@@ -89,6 +98,7 @@ def selective_restore(ctx, parent, rep: BI.Report, ids, source_label: str) -> bo
             state["error"] = e
             for i in getattr(e, "written", None) or []:
                 w.log.emit(_("✓ {part} written").format(part=titles.get(i) or backup.object_title(i, arch.sloop)))
+            w.log.emit(backup.written_text(e, order, arch.sloop, titles, full=True))
             raise
         for it in plan.items:
             w.log.emit(f"✓ {it.title}")
@@ -97,7 +107,7 @@ def selective_restore(ctx, parent, rep: BI.Report, ids, source_label: str) -> bo
 
     def failed(m):
         e = state["error"]
-        where = backup.written_text(e, plan.ids(), arch.sloop, titles) if e is not None else ""
+        where = backup.written_text(e, order, arch.sloop, titles) if e is not None else ""
         cancelled = bool(getattr(e, "cancelled", False) or getattr(e, "code", "") == "cancel")
         head = _("Restore cancelled") if cancelled else _("Restore failed: {error}").format(error=m)
         return f"{head}<br>{where}<br>" + _("You have the state before in the safety backup {name}.").format(

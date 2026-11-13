@@ -33,6 +33,9 @@ class Note:
     action: tuple | None = None          # (label, function)
     time: float = field(default_factory=time.time)
     read: bool = False
+    more: list = field(default_factory=list)     # further (label, function) buttons next to `action`
+    lifetime: int = 0                    # ms the toast stays (0 = by level)
+    toast: object = None                 # the toast showing it (set_text / dismiss), None once it is gone
 
 
 def _norm_action(action):
@@ -93,13 +96,28 @@ class Toast(QFrame):
         t.setWordWrap(True)
         t.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         v.addWidget(t)
+        self.label = t
         self.action_button = None
+        self.more_buttons = []
         if note.action:
             b = QPushButton(note.action[0])
             b.setProperty("variant", "flat")
             b.clicked.connect(self._act)
-            v.addWidget(b, 0, Qt.AlignmentFlag.AlignLeft)
             self.action_button = b
+            if note.more:                        # several choices: side by side
+                row = QHBoxLayout()
+                row.setSpacing(6)
+                row.addWidget(b)
+                for label, fn in note.more:
+                    mb = QPushButton(str(label))
+                    mb.setProperty("variant", "flat")
+                    mb.clicked.connect(lambda _c=False, fn=fn: self._act(fn))
+                    row.addWidget(mb)
+                    self.more_buttons.append(mb)
+                row.addStretch(1)
+                v.addLayout(row)
+            else:
+                v.addWidget(b, 0, Qt.AlignmentFlag.AlignLeft)
         h.addLayout(v, 1)
         x = QToolButton()
         x.setIcon(icon("window-close"))
@@ -112,16 +130,24 @@ class Toast(QFrame):
         self.timer.timeout.connect(self.dismiss)
         # fixed lifetime – even under the mouse pointer (a toast should never permanently cover buttons);
         # everything stays readable in the history (bell)
-        self.lifetime = 12000 if note.level == "error" else 8000 if note.level == "warning" else 6000
+        self.lifetime = note.lifetime or (12000 if note.level == "error" else 8000 if note.level == "warning" else 6000)
         self.timer.start(self.lifetime)
+        note.toast = self
 
-    def _act(self):
+    def set_text(self, text: str):
+        """change the text while the toast is shown (a countdown)"""
+        self.note.text = text
+        self.label.setText(text)
+
+    def _act(self, fn=None):
         try:
-            self.note.action[1]()
+            (fn if callable(fn) else self.note.action[1])()
         finally:
             self.dismiss()
 
     def dismiss(self):
+        if self.note.toast is self:
+            self.note.toast = None
         self.timer.stop()
         self.hide()
         self.closed.emit(self)
@@ -148,9 +174,12 @@ class NotificationCenter(QObject):
         window.installEventFilter(self)
 
     # ------------------------------------------------------------------
-    def post(self, text: str, level: str = "info", action=None, quiet: bool = False):
-        """quiet=True: only show briefly, doesn't count as unread on the bell (e.g. “Active: FM-1 B”)."""
-        note = Note(text, level if level in LEVEL_ICON else "info", _norm_action(action), read=quiet)
+    def post(self, text: str, level: str = "info", action=None, quiet: bool = False, more=None, lifetime: int = 0):
+        """quiet=True: only show briefly, doesn't count as unread on the bell (e.g. “Active: FM-1 B”).
+        more: further (label, function) buttons next to `action`; lifetime: ms the toast stays (0 = by level).
+        -> the Note; while its toast is shown, note.toast.set_text() / .dismiss() change or close it."""
+        note = Note(text, level if level in LEVEL_ICON else "info", _norm_action(action), read=quiet,
+                    more=[a for a in (_norm_action(m) for m in (more or [])) if a], lifetime=int(lifetime or 0))
         _log_note(note.text, note.level)
         self.history.insert(0, note)
         del self.history[200:]

@@ -117,6 +117,7 @@ def _mirror_quiet(ctx, path: Path, log=None):
         return
     try:
         AB.mirror_file(path, ctx.settings.backups_dir, Path(target))
+        AB.mirror_missing(Path(path).parent, ctx.settings.backups_dir, Path(target))   # (e.g. after a rename)
         AB.STATUS.mirror = _("Mirror up to date ({time})").format(time=time.strftime('%H:%M'))
         if log:
             log(_("Mirrored and verified: {target}").format(target=target))
@@ -162,9 +163,13 @@ class AutoBackupService(QObject):
         self.running = False
         self._seen = ""
         self._retries = 0
+        self._pending = None                   # the announced backup: {"reason", "force", "left", "note", "device"}
         self.connect_timer = QTimer(self)
         self.connect_timer.setSingleShot(True)
         self.connect_timer.timeout.connect(lambda: self.run(_("on connect")))
+        self.count_timer = QTimer(self)        # the announcement's countdown, one tick per second
+        self.count_timer.setInterval(1000)
+        self.count_timer.timeout.connect(self._count)
         self.tick = QTimer(self)
         self.tick.timeout.connect(self._periodic)
         self.tick.start(60_000)
@@ -177,11 +182,117 @@ class AutoBackupService(QObject):
             key = ""                           # the studio twin: no automatic backups (its state lives in the studio)
         if key and key != self._seen:
             self._retries = 0
+            self._cancel_announcement()            # (one for another device, if any)
             if AB.settings()["on_connect"]:
-                self.connect_timer.start(int(AB.settings()["delay_s"] * 1000))
+                self.announce(_("on connect"))
         if not key:
             self.connect_timer.stop()
+            self._cancel_announcement()
         self._seen = key
+
+    # ---- announcement: a backup stops playback on the FM-1, so it never starts without a word (CD-12)
+    def _skipped_today(self) -> bool:
+        p = self.ctx.profile
+        skip = AB.settings().get("skip_day")
+        return bool(p and isinstance(skip, dict) and skip.get(p.id) == dt.date.today().isoformat())
+
+    def announce(self, reason: str, force: bool = False) -> bool:
+        """say that an automatic backup is about to start (with the seconds left and the choices “Skip today” /
+        “Back up now”), then start it. Nothing is announced when no backup is due. -> True if one was announced."""
+        c = self.ctx
+        if self._pending is not None or self.running:
+            return False
+        if not c.connected or not c.profile or getattr(c, "is_virtual", False) or self._skipped_today():
+            return False
+        if self.busy_reason():                     # (waits and comes back here – announced only once it can start)
+            self.run(reason, force)
+            return False
+        s = AB.settings()
+        try:
+            due = force or AB.needs_backup(c.device_folder(c.settings.backups_dir), s["days"])
+        except OSError:
+            due = True                             # (run() reports the folder problem)
+        try:
+            delay = max(0, int(float(s["delay_s"])))
+        except (TypeError, ValueError):
+            delay = AB.DEFAULTS["delay_s"]
+        if not due:                                # nothing will be read: no notice, only the status line (run)
+            self.connect_timer.start(delay * 1000)
+            return False
+        self._pending = {"reason": reason, "force": force, "left": delay, "note": None, "device": c.profile.name}
+        try:
+            from .notify import center
+            nc = center()
+            if nc is not None:
+                self._pending["note"] = nc.post(self._announce_text(), "info", action=(_("Skip today"), self.skip_today),
+                                                more=[(_("Back up now"), self.backup_now)],
+                                                lifetime=delay * 1000 + 1500)
+        except Exception:                          # noqa: BLE001 – the notice must never stop the backup
+            pass
+        AB.STATUS.add(self._announce_text())
+        self.updated.emit()
+        if delay <= 0:
+            self._start_pending()
+        else:
+            self.count_timer.start()
+        return True
+
+    def _announce_text(self) -> str:
+        p = self._pending
+        return _("Automatic backup of {device} starts in {n} s – playback on the FM-1 stops briefly").format(
+            device=p["device"], n=p["left"])
+
+    def _count(self):
+        p = self._pending
+        if p is None:
+            self.count_timer.stop()
+            return
+        p["left"] -= 1
+        if p["left"] <= 0:
+            self._start_pending()
+            return
+        toast = getattr(p["note"], "toast", None)
+        if toast is not None:
+            try:
+                toast.set_text(self._announce_text())
+            except RuntimeError:                   # (the toast was closed: the backup still runs as announced)
+                pass
+
+    def _cancel_announcement(self):
+        p, self._pending = self._pending, None
+        self.count_timer.stop()
+        toast = getattr(p["note"], "toast", None) if p else None
+        if toast is not None:
+            try:
+                toast.dismiss()
+            except RuntimeError:
+                pass
+        return p
+
+    def _start_pending(self):
+        p = self._cancel_announcement()
+        if p is not None:
+            self.run(p["reason"], p["force"])
+
+    def backup_now(self):
+        """the announcement's “Back up now”"""
+        self._start_pending()
+
+    def skip_today(self):
+        """the announcement's “Skip today”: no automatic backup of this device until tomorrow (a manual one, Ctrl+B,
+        is always possible)"""
+        p = self._cancel_announcement()
+        self.connect_timer.stop()
+        prof = self.ctx.profile
+        if prof is not None:
+            s = AB.settings()
+            today = dt.date.today().isoformat()
+            old = s.get("skip_day") if isinstance(s.get("skip_day"), dict) else {}
+            s["skip_day"] = {**{k: v for k, v in old.items() if v == today}, prof.id: today}
+            config.save(self.ctx.settings)
+        AB.STATUS.add(_("Automatic backup of {device} skipped for today.").format(
+            device=(p or {}).get("device") or (prof.name if prof else "FM-1")))
+        self.updated.emit()
 
     def _periodic(self):
         s = AB.settings()
@@ -192,7 +303,7 @@ class AutoBackupService(QObject):
                 AB.STATUS.add(_("Automatic backup not possible: {error}").format(error=e))
                 return
             if AB.needs_backup(folder, s["hours"] / 24):
-                self.run(_("periodic"), force=True)
+                self.announce(_("periodic"), force=True)
 
     def busy_reason(self) -> str:
         c = self.ctx
@@ -243,7 +354,7 @@ class AutoBackupService(QObject):
         if why:
             if self._retries < 30:
                 self._retries += 1
-                QTimer.singleShot(60_000, lambda: self.run(reason, force))
+                QTimer.singleShot(60_000, lambda: self.announce(reason, force))   # (announced once it can start)
             AB.STATUS.add(_("Automatic backup is waiting ({reason}).").format(reason=why))
             self.updated.emit()
             return False
@@ -264,6 +375,7 @@ class AutoBackupService(QObject):
             if target:
                 try:
                     AB.mirror_file(p, root, Path(target))
+                    AB.mirror_missing(folder, root, Path(target))      # (e.g. after renaming the device)
                     AB.STATUS.mirror = _("Mirror up to date ({time})").format(time=time.strftime('%H:%M'))
                     _prune_mirror(root, Path(target), keep)
                 except OSError as e:
@@ -375,6 +487,8 @@ class BackupsPage(QWidget):
         f.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)   # narrow: field below the long checkbox
         self.a_connect = QCheckBox(_("on connect, if the last backup is older than"))
         self.a_connect.setChecked(s["on_connect"])
+        self.a_connect.setToolTip(_("Note: a backup briefly stops playback on the FM-1. The app announces it a few "
+                                    "seconds before it starts – with “Skip today” you keep playing."))
         self.a_days = QSpinBox()
         self.a_days.setRange(1, 60)
         self.a_days.setSuffix(_(" day(s)"))
@@ -429,9 +543,11 @@ class BackupsPage(QWidget):
         self.a_status.setMinimumWidth(0)
         self.a_status.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         f.addRow(_("Status:"), self.a_status)
-        hint = QLabel(_("A backup briefly stops playback on the FM-1. Automatic backups therefore only run when "
+        hint = QLabel(_("A backup briefly stops playback on the FM-1. Automatic backups are therefore announced a few "
+                      "seconds before they start (“Skip today” / “Back up now”) and only run when "
                       "nothing else is happening with the device – never during an installation, in the editor or "
-                      "during a recording. Before every firmware installation the app backs up by default, labelled "
+                      "during a recording. The app cannot see whether the FM-1 is playing. Before every firmware "
+                      "installation the app backs up by default, labelled "
                       "with the old firmware (no backup only after explicit confirmation in the installation plan)."))
         hint.setWordWrap(True)
         hint.setMinimumWidth(0)
@@ -634,14 +750,25 @@ class BackupsPage(QWidget):
             show_error(self, _("Backup damaged"), str(e))
             return
         comp = a.companion
-        # same check as on the devices page: only within the same firmware family
+        # same check as on the devices page and as the restore itself: by backup protocol and by where the objects
+        # live on this firmware (the device's inventory is read for it – that stops playback, as the restore will)
         from .. import backup_inspect as BI
         try:
             rep = BI.inspect(p)
-            compat = BI.compatibility(rep, self.ctx.firmware_key, self.ctx.info.version if self.ctx.info else "", None)
         except Exception as e:  # noqa: BLE001
             show_error(self, _("Backup damaged"), str(e))
             return
+        key = self.ctx.firmware_key or ""
+        version = self.ctx.info.version if self.ctx.info else ""
+        proto, ids_dev = "", None
+        if key != backup.FM1OPEN_KEY and not a.fm1open:
+            d = self.ctx.job(self, _("Check target"), lambda w, link: backup.device_inventory(link, key),
+                             close_on_success=True)
+            if not d.ok:
+                return
+            proto, v, ids_dev = d.result_value
+            version = v or version
+        compat = BI.compatibility(rep, key, version, ids_dev, proto=proto)
         if not compat.ok:
             show_error(self, _("Restore not possible"),
                        f"<b>{p.name}</b><br><br>{compat.reason}" +
@@ -678,7 +805,7 @@ class BackupsPage(QWidget):
         planned = [o["id"] for o in a.objects]
 
         def work(w, link):
-            w.log.emit(_("Checking every object with the device before anything is replaced …") if not a.sloop else
+            w.log.emit(_("Asking the device whether it takes every part before anything is replaced …") if not a.sloop else
                        _("Checking the backup and writing it in SLOOP's order: banks, projects, settings, "
                          "samples …"))
             try:
@@ -687,6 +814,7 @@ class BackupsPage(QWidget):
                 state["error"] = e
                 for i in getattr(e, "written", None) or []:
                     w.log.emit(_("✓ {part} written").format(part=backup.object_title(i, a.sloop)))
+                w.log.emit(backup.written_text(e, planned, a.sloop, full=True))
                 raise
             w.log.emit(_("Done. The FM-1 now plays the state from the backup."))
             return len([o for o in a.objects if o.get("size")]) if not a.sloop else len(a.objects)

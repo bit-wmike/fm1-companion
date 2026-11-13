@@ -455,21 +455,26 @@ def restore(link, file: dict, progress: Callable[[int, int], None] | None = None
             progress(done, total)
 
     written: list[int] = []
+    cur = None
     try:
         for oid in todo:
             if cancelled and cancelled():
                 raise _err("cancel", _("cancelled"), written)
             d = m[oid]
+            cur = oid
             if oid in SAMPLES:
                 write_sample(link, oid, d, step, written)
             elif write_object(link, oid, d, step, written):
+                cur = None
                 continue                            # (firmware does not know the object)
             written.append(oid)
+            cur = None
     except Exception as e:
         # timeouts/connection errors (ProtocolError, LinkError …) should also report
-        # what has already been written – otherwise it would wrongly say "nothing changed"
+        # what has already been written – otherwise it would wrongly say "nothing changed"; and the object that was
+        # being written: unclear when no answer came, a sample possibly erased
         from .backup import _with_written
-        raise _with_written(e, written)
+        raise _with_written(e, written, cur, cur in SAMPLES)
     return written
 
 

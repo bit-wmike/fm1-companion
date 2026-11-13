@@ -9,11 +9,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-
 #: fm1companion/ui/pages/studio.py:45
 msgid "Open backup in the studio"
 msgstr "Backup ins Studio öffnen"
-
 
 #: fm1companion/ui/pages/studio.py:52 fm1companion/ui/projects_page.py:85
 msgid "Date"
@@ -357,11 +355,9 @@ msgstr "Der Zwilling ließ sich nicht starten: {error}"
 msgid "The twin itself is active right now – choose a real FM-1 in the device selection at the top."
 msgstr "Aktiv ist gerade der Zwilling selbst – oben in der Geräteauswahl ein echtes FM-1 wählen."
 
-
 #: fm1companion/ui/pages/studio.py:478
 msgid "No FM-1 connected."
 msgstr "Kein FM-1 verbunden."
-
 
 #: fm1companion/ui/pages/studio.py:481
 msgid "another firmware"
@@ -396,7 +392,6 @@ msgstr "<b>Zwilling:</b> {firmware} {version} · {source}"
 #: fm1companion/ui/pages/studio.py:513
 msgid "The twin is not running yet. Choose a source: from the FM-1, from a backup or the last studio state."
 msgstr "Der Zwilling läuft noch nicht. Wähle eine Quelle: vom FM-1, aus einem Backup oder den letzten Studio-Stand."
-
 
 #: fm1companion/ui/pages/studio.py:527
 msgid "this firmware"

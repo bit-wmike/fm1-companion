@@ -428,11 +428,13 @@ class DevicesPage(QWidget):
 
         def inv(w, link):
             from ... import backup
-            return [o.id for o in backup.list_objects(link)]
+            return backup.device_inventory(link, c.firmware_key or "")
         d = c.job(self, _("Check target"), inv)
         if not d.ok:
             return None, False
-        comp = BI.compatibility(rep, c.firmware_key, c.info.version if c.info else "", d.result_value)
+        proto, version, ids_dev = d.result_value
+        comp = BI.compatibility(rep, c.firmware_key, version or (c.info.version if c.info else ""), ids_dev,
+                                proto=proto)
         if not comp.ok:
             show_error(self, _("Copy not possible"),
                        f"<b>{src.name} → {c.profile.name}</b><br><br>{comp.reason}" +

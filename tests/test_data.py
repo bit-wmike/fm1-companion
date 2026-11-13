@@ -458,8 +458,13 @@ def test_comparable_refuses_other_firmware():
     why = BI.comparable(a, b)
     assert "Nicht vergleichbar" in why and "SLOOP" in why
     assert BI.comparable(a, a) == ""
-    c = BI.inspect(backup.capture(link, "Skiff 1.0", companion={"firmware": "skiff"}))
+    from test_backup_matrix import Fork, link_for                  # (Skiff: its own inventory, 0..9 and 16..34)
+    skiff = Fork("FELUCCA v2.0", backup.SKIFF_IDS, engines=["FM6", "DRUM-X"])
+    c = BI.inspect(backup.capture(link_for(skiff)[0], "FELUCCA v2.0", companion={"firmware": "skiff"}))
     assert "Skiff" in BI.comparable(a, c) and "Melodee" in BI.comparable(a, c)
+    # the key alone is no reason (the app named firmwares differently in earlier versions): the same places compare
+    d = BI.inspect(backup.capture(link, "Melodee 1.6.0-rc.7", companion={"firmware": "melodee-old-key"}))
+    assert BI.comparable(a, d) == ""
 
 
 def test_object_titles_in_errors_and_written_state():
