@@ -184,6 +184,26 @@ def flow():
     size(950, 1000)
     check(w.nav.compact and w.sidebar.width() == MW.SIDEBAR_COMPACT,
           f"sidebar narrow automatically at 950 px ({w.sidebar.width()} px)")
+    # notices: two side by side widen the size *hint* for as long as they show (the announced automatic backup and
+    # “connected” right after connecting) – the window itself must still go narrow, and the notice that asks
+    # something (“Skip today” / “Back up now”) must be the one that stays when only one fits
+    from fm1companion.ui import notify as N
+    nc = N.center()
+    for t in list(nc.toasts):
+        t.dismiss()
+    asked = nc.post("Frage mit Auswahl", "info", action=("Nein", lambda: None), more=[("Ja", lambda: None)],
+                    lifetime=60000, quiet=True)
+    nc.post("Nur ein Hinweis", "info", quiet=True)
+    wait(200)
+    check(len(nc.toasts) == 2, f"two notices side by side at 950 px ({len(nc.toasts)})")
+    size(760, 1000)
+    check(w.width() == 760, f"with notices showing the window still goes down to 760 px ({w.width()})")
+    check([t.note for t in nc.toasts] == [asked] and asked.toast is not None,
+          "only one notice fits: the one with the choices stays, the plain one goes")
+    for t in list(nc.toasts):
+        t.dismiss()
+    size(950, 1000)
+    wait(200)
     minw = max(w.minimumSize().width(), w.minimumSizeHint().width())
     check(minw <= 760, f"window minimum width ≤ 760 ({minw})")
     sc = w.page_scroll

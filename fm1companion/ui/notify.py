@@ -187,13 +187,20 @@ class NotificationCenter(QObject):
         t.closed.connect(self._closed)
         self.toasts.append(t)
         while len(self.toasts) > (self.MAX_LANE if self.lane_mode() else self.MAX_TOASTS):
-            self.toasts[0].dismiss()
+            self._drop_one()
         t.show()
         t.raise_()
         self._layout()
         self._desktop(note)
         self.changed.emit()
         return note
+
+    def _drop_one(self):
+        """make room: the oldest notice goes – but one that asks something (several buttons, e.g. the announced
+        automatic backup with “Skip today”) stays as long as a plain one can go instead; a later “connected”
+        notice must not take the choice away in a narrow window"""
+        plain = [t for t in self.toasts if not t.note.more]
+        (plain or self.toasts)[0].dismiss()
 
     def unread(self) -> int:
         return sum(1 for n in self.history if not n.read)
@@ -236,7 +243,7 @@ class NotificationCenter(QObject):
             # side by side, as many as fit in the width (newest on the right) – pushes the page only once
             fit = max(1, min(self.MAX_LANE, (max(lane.width(), w.width() - 120) + 8) // 368))
             while len(self.toasts) > fit:
-                self.toasts[0].dismiss()
+                self._drop_one()
             for t in list(self.toasts):
                 if t.parentWidget() is lane:
                     lay.removeWidget(t)
