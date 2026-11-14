@@ -2257,7 +2257,7 @@ def test_jiant_write_back_across_the_song_change_is_refused(node_studio):
         before = _objs(dev)
         st = node_studio(firmware="jiant", version=twin_v)
         st.open_from_device(dev.link, tolerant=True)
-        with pytest.raises(studio.StudioError, match="8 songs"):
+        with pytest.raises(studio.StudioError, match="V10.6p"):
             st.write_to_device(dev.link, force=True, settings=False, exclude=st.rejected)
         assert _objs(dev) == before
     dev = node_studio(firmware="jiant", version="V10.60")      # (the same side of the change: still possible)
@@ -2440,7 +2440,7 @@ def test_preset_zip_sizes_are_checked_before_unpacking():
         return _o(self, n, *a, **k)
     zipfile.ZipFile.open = spy
     try:
-        with pytest.raises(presetlib.PresetError, match="too large") as e:
+        with pytest.raises(presetlib.PresetError, match="big.fm1preset") as e:
             presetlib.read_any(bomb.getvalue(), "set.zip")
     finally:
         zipfile.ZipFile.open = orig
