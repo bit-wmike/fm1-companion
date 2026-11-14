@@ -892,7 +892,7 @@ class Studio:
                     fm1openbk.restore(link, archive.file, progress, ids=todo)
                 except fm1openbk.FM1OpenBackupError as e:
                     err = StudioError(str(e))
-                    for k in ("written", "unclear"):    # (what is on the FM-1 now, where the backup layer says so)
+                    for k in ("written", "unclear", "unclear_sample"):    # (what is on the FM-1 now, as the backup layer says)
                         if getattr(e, k, None) is not None:
                             setattr(err, k, getattr(e, k))
                     raise err from e

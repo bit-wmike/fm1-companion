@@ -335,6 +335,22 @@ def flow():
     text = page._write_failed_text(err, Path("FM-1_A_sicher.json"))
     check("Verbindung getrennt" in text and "FM-1_A_sicher.json" in text and "Schon" in text and "Mischung" in text,
           "failed write back: " + text[:200])
+    err = S.StudioError("Verbindung getrennt")      # nothing finished, object 0 was in flight (0 is not “nothing”)
+    err.written, err.unclear, err.unclear_sample = [], 0, False
+    text = page._write_failed_text(err, Path("x.json"))
+    check("Unklar" in text and "Mischung" in text and "Noch im alten Zustand" in text, "unclear part 0 is said: " + text[:260])
+    was_fw = svc.st.build.firmware                  # FM1 Open: its parts are named as FM1 Open names them
+    svc.st.build.firmware = "fm1-open"
+    try:
+        from fm1companion import fm1openbk
+        err = S.StudioError("Verbindung getrennt")
+        err.written, err.unclear, err.unclear_sample = [3], fm1openbk.WORKING, False
+        svc.st.last_write["planned"] = [3, 4, fm1openbk.WORKING]
+        text = page._write_failed_text(err, Path("x.json"))
+        check(fm1openbk.title(3) in text and fm1openbk.title(fm1openbk.WORKING) in text and fm1openbk.title(4) in text,
+              "FM1 Open parts carry their own names: " + text[:260])
+    finally:
+        svc.st.build.firmware = was_fw
     text = page._write_failed_text(S.StudioError("Bitte stoppen. Nichts geschrieben."), Path("x.json"))
     check("Mischung" not in text and "x.json" in text, "nothing written: only the error and the safety backup")
     # ST-09: dropouts are reported and shown

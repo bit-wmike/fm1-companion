@@ -1351,13 +1351,22 @@ class StudioPage(QWidget):
         """a write back that failed: the error, what is already on the FM-1 and which part is unclear (where the
         backup layer knows: its errors carry ``written`` and ``unclear``) and the safety backup made just before"""
         text = str(e)
-        src = e if (getattr(e, "written", None) or getattr(e, "unclear", None)) else getattr(e, "__cause__", None)
-        if src is not None and (getattr(src, "written", None) or getattr(src, "unclear", None)):
+
+        def knows(x) -> bool:                       # (an unclear part may be object 0: compare with None, not truth)
+            return bool(getattr(x, "written", None)) or getattr(x, "unclear", None) is not None
+        src = e if knows(e) else getattr(e, "__cause__", None)
+        if src is not None and knows(src):
             st = self.svc.st if self.svc is not None else None
             fw = st.build.firmware if st is not None else ""
             planned = list((st.last_write.get("planned") if st is not None else None) or getattr(src, "written", None) or [])
+            kind = S.FIRMWARES.get(fw, {}).get("backup")
+            titles = None
+            if kind == "fm1open":                   # (FM1 Open's parts have names of their own)
+                from ... import fm1openbk
+                ids = {*planned, *(getattr(src, "written", None) or []), getattr(src, "unclear", None)} - {None}
+                titles = {i: fm1openbk.title(i) for i in ids}
             with contextlib.suppress(Exception):
-                text += " " + backup.written_text(src, planned, S.FIRMWARES.get(fw, {}).get("backup") == "sloop")
+                text += " " + backup.written_text(src, planned, kind == "sloop", titles)
             text += " " + _("The FM-1 now holds a mix of old and new parts.")
         return text + " " + _("The safety backup made just before is “{file}” (Backups › List), in case you "
                               "need the FM-1's previous state back.").format(file=safety.name)
