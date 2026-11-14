@@ -24,6 +24,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 home = Path(tempfile.mkdtemp(prefix="fm1c-samples-"))
 for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache")):
     os.environ[k] = str(home / sub)
+os.environ["HOME"] = str(home)        # (~ itself too: nothing of this run may land in the real home)
 os.environ["FM1C_DEMO"] = "1"
 # both demo ports talk to the simulated FM1 Open (no Felucca protocol)
 os.environ["FM1C_DEMO_CMD"] = "\x1f".join([sys.executable, str(ROOT / "tests" / "fm1open_sim.py")])

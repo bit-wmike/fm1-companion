@@ -24,6 +24,7 @@ out = Path(sys.argv[1]) if len(sys.argv) > 1 else None
 home = Path(tempfile.mkdtemp(prefix="fm1c-layout-"))
 for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache")):
     os.environ[k] = str(home / sub)
+os.environ["HOME"] = str(home)        # (~ itself too: nothing of this run may land in the real home)
 os.environ["FM1C_DEMO"] = "1"
 os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
 

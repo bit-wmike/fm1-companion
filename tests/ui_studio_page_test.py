@@ -23,6 +23,7 @@ os.environ.setdefault("FM1C_LANG", "de")      # these checks expect the German u
 home = Path(tempfile.mkdtemp(prefix="fm1c-studiopage-"))
 for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache")):
     os.environ[k] = str(home / sub)
+os.environ["HOME"] = str(home)        # (~ itself too: nothing of this run may land in the real home)
 os.environ["FM1C_DEMO"] = "1"
 os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu --autoplay-policy=no-user-gesture-required")
 SHOTS = os.environ.get("FM1C_SHOTS", "")
