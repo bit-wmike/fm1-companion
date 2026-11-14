@@ -160,3 +160,15 @@ def test_cli_flags():
     out = subprocess.run([sys.executable, "-m", "fm1companion", "--help"], cwd=str(ROOT), env=env,
                          capture_output=True, text=True, timeout=60)
     assert "--demo" in out.stdout and "--check" in out.stdout
+
+
+def test_the_suite_never_uses_the_real_home():
+    """tests/conftest.py points HOME and the XDG folders at a temporary folder before the app is imported"""
+    import os
+    from pathlib import Path
+    from fm1companion import config
+    import conftest
+    home = Path(os.path.expanduser("~"))
+    assert conftest.TEST_HOME in (home, *home.parents) and conftest.REAL_HOME != conftest.TEST_HOME
+    for p in (config.CONFIG_DIR, config.DATA_DIR, config.CACHE_DIR, config.Settings().user_root):
+        assert conftest.REAL_HOME not in (Path(p), *Path(p).parents) or conftest.TEST_HOME in Path(p).parents, p
