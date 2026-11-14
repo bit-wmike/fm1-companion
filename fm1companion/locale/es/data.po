@@ -2051,10 +2051,6 @@ msgstr "error de flash"
 msgid "backup outdated or expired – please start again"
 msgstr "copia de seguridad obsoleta o caducada – vuelve a empezar"
 
-#: fm1companion/sloopbk.py:55
-msgid "Please stop the song on the FM-1 first (STOP) and then restore again. SLOOP only writes projects, preset banks and settings while nothing is playing."
-msgstr "Detén primero la canción en el FM-1 (STOP) y vuelve a restaurar. SLOOP solo escribe proyectos, bancos de presets y ajustes mientras no suena nada."
-
 #: fm1companion/sloopbk.py:114
 msgid "inventory too short"
 msgstr "inventario demasiado corto"
@@ -4342,3 +4338,12 @@ msgstr "Preguntando al dispositivo si acepta cada parte antes de reemplazar nada
 
 msgid "The backups of “{device}” could not be moved completely: {error}. Nothing was deleted; both profiles stay."
 msgstr "Las copias de «{device}» no se pudieron mover por completo: {error}. No se ha borrado nada; ambos perfiles se conservan."
+
+msgid "Please stop the song on the FM-1 first (STOP) and then restore again."
+msgstr "Detén primero la canción en el FM-1 (STOP) y vuelve a restaurar."
+
+msgid "{firmware} only writes projects, preset banks and settings while nothing is playing."
+msgstr "{firmware} solo escribe proyectos, bancos de presets y ajustes mientras no suena nada."
+
+msgid "The firmware on the FM-1 only writes projects, preset banks and settings while nothing is playing."
+msgstr "El firmware del FM-1 solo escribe proyectos, bancos de presets y ajustes mientras no suena nada."

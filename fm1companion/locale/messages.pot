@@ -278,215 +278,215 @@ msgstr ""
 msgid "error {code}"
 msgstr ""
 
-#: fm1companion/backup.py:239 fm1companion/sloopbk.py:74
+#: fm1companion/backup.py:239 fm1companion/sloopbk.py:88
 #: fm1companion/x0xbk.py:67 fm1companion/x0xbk.py:73
 #, python-brace-format
 msgid "object {id}"
 msgstr ""
 
-#: fm1companion/backup.py:335
+#: fm1companion/backup.py:337
 #, python-brace-format
 msgid "{version} cannot make backups over USB yet – that needs SLOOP 2.3 or later. Please update SLOOP."
 msgstr ""
 
-#: fm1companion/backup.py:375
+#: fm1companion/backup.py:377
 #, python-brace-format
 msgid "{version} answers none of the backup requests the app knows (neither Felucca's nor SLOOP's). Nothing was read or written – please back up with the firmware's own editor or tool."
 msgstr ""
 
-#: fm1companion/backup.py:377
+#: fm1companion/backup.py:379
 msgid "The firmware"
-msgstr ""
-
-#: fm1companion/backup.py:391
-#, python-brace-format
-msgid "{firmware} keeps its backups in a protocol of its own, which the app does not speak. Nothing was read or written – please use the firmware's own editor for backups."
 msgstr ""
 
 #: fm1companion/backup.py:393
 #, python-brace-format
+msgid "{firmware} keeps its backups in a protocol of its own, which the app does not speak. Nothing was read or written – please use the firmware's own editor for backups."
+msgstr ""
+
+#: fm1companion/backup.py:395
+#, python-brace-format
 msgid "{firmware} has no backup over USB. Nothing was read or written."
 msgstr ""
 
-#: fm1companion/backup.py:398
+#: fm1companion/backup.py:400
 msgid "the device does not know this backup protocol"
 msgstr ""
 
-#: fm1companion/backup.py:402
+#: fm1companion/backup.py:404
 msgid "incomplete inventory"
 msgstr ""
 
-#: fm1companion/backup.py:410
+#: fm1companion/backup.py:412
 msgid "object too large"
 msgstr ""
 
-#: fm1companion/backup.py:438 fm1companion/fm1openbk.py:97
-#: fm1companion/fm1openbk.py:104 fm1companion/sloopbk.py:300
+#: fm1companion/backup.py:440 fm1companion/fm1openbk.py:97
+#: fm1companion/fm1openbk.py:104 fm1companion/sloopbk.py:314
 msgid "unexpected answer while reading"
 msgstr ""
 
-#: fm1companion/backup.py:444
+#: fm1companion/backup.py:446
 msgid "The device changed during the backup. Please try again with playback stopped."
 msgstr ""
 
-#: fm1companion/backup.py:556 fm1companion/backup.py:642
+#: fm1companion/backup.py:558 fm1companion/backup.py:644
 #: fm1companion/backup_inspect.py:593 fm1companion/backup_inspect.py:598
-#: fm1companion/sloopbk.py:175
+#: fm1companion/sloopbk.py:189
 msgid "Not a backup file (no JSON)"
 msgstr ""
 
-#: fm1companion/backup.py:558 fm1companion/backup.py:592
+#: fm1companion/backup.py:560 fm1companion/backup.py:594
 msgid "Not a complete Felucca/Melodee backup"
 msgstr ""
 
-#: fm1companion/backup.py:562 fm1companion/backup.py:564
+#: fm1companion/backup.py:564 fm1companion/backup.py:566
 #, python-brace-format
 msgid "invalid field “{name}” in the backup"
 msgstr ""
 
-#: fm1companion/backup.py:572 fm1companion/backup.py:581
-#: fm1companion/backup.py:589 fm1companion/backup.py:596
-#: fm1companion/backup.py:600 fm1companion/backup.py:607
-#: fm1companion/backup.py:611 fm1companion/fm1openbk.py:216
+#: fm1companion/backup.py:574 fm1companion/backup.py:583
+#: fm1companion/backup.py:591 fm1companion/backup.py:598
+#: fm1companion/backup.py:602 fm1companion/backup.py:609
+#: fm1companion/backup.py:613 fm1companion/fm1openbk.py:216
 #: fm1companion/fm1openbk.py:218
 msgid "invalid object in the backup"
 msgstr ""
 
-#: fm1companion/backup.py:615 fm1companion/x0xbk.py:174
+#: fm1companion/backup.py:617 fm1companion/x0xbk.py:174
 msgid "Backup damaged (Base64)"
 msgstr ""
 
-#: fm1companion/backup.py:617 fm1companion/fm1openbk.py:220
+#: fm1companion/backup.py:619 fm1companion/fm1openbk.py:220
 msgid "Checksum in the backup does not match"
 msgstr ""
 
-#: fm1companion/backup.py:625 fm1companion/backup.py:630
+#: fm1companion/backup.py:627 fm1companion/backup.py:632
 msgid "The backup holds nothing"
 msgstr ""
 
-#: fm1companion/backup.py:628
+#: fm1companion/backup.py:630
 msgid "The backup does not contain the running music or the settings"
 msgstr ""
 
-#: fm1companion/backup.py:844 fm1companion/backup.py:949
+#: fm1companion/backup.py:846 fm1companion/backup.py:951
 #, python-brace-format
 msgid "This backup comes from {backup}, the FM-1 runs {device}: the two keep different things under the same backup objects, so its parts would land in the wrong places. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:846 fm1companion/projects.py:203
+#: fm1companion/backup.py:848 fm1companion/projects.py:203
 #: fm1companion/ui/pages/studio.py:634
 msgid "another firmware"
 msgstr ""
 
-#: fm1companion/backup.py:847 fm1companion/projects.py:204
+#: fm1companion/backup.py:849 fm1companion/projects.py:204
 msgid "a different firmware"
 msgstr ""
 
-#: fm1companion/backup.py:885
+#: fm1companion/backup.py:887
 #, python-brace-format
 msgid "The FM-1 does not answer the question whether “{part}” is a sample slot. Nothing was written – check the cable and try again."
 msgstr ""
 
-#: fm1companion/backup.py:918 fm1companion/backup.py:1085
+#: fm1companion/backup.py:920 fm1companion/backup.py:1087
 msgid "This backup is not from FM1 Open, but the FM-1 runs FM1 Open – the formats do not match. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:920
-msgid "This is an FM1 Open backup, but the FM-1 runs a different firmware. Nothing was written."
-msgstr ""
-
 #: fm1companion/backup.py:922
-#, python-brace-format
-msgid "This is a {firmware} backup, but the FM-1 runs a different firmware. Nothing was written."
+msgid "This is an FM1 Open backup, but the FM-1 runs a different firmware. Nothing was written."
 msgstr ""
 
 #: fm1companion/backup.py:924
 #, python-brace-format
+msgid "This is a {firmware} backup, but the FM-1 runs a different firmware. Nothing was written."
+msgstr ""
+
+#: fm1companion/backup.py:926
+#, python-brace-format
 msgid "The FM-1 runs {firmware}, which takes only its own backups. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:927
+#: fm1companion/backup.py:929
 msgid "This is a SLOOP backup, but the FM-1 runs a different firmware. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:930
+#: fm1companion/backup.py:932
 msgid "This is a Melodee/Felucca backup, but the FM-1 runs SLOOP – the formats do not match. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:937
+#: fm1companion/backup.py:939
 #, python-brace-format
 msgid "This backup comes from {backup}, the FM-1 runs {device}: ORBIT and SLOOP store their projects and presets differently, neither reads the other's backups. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:942
+#: fm1companion/backup.py:944
 #, python-brace-format
 msgid "This backup comes from {backup}, the FM-1 runs {device}, which cannot read KARMA's projects and drum kits. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:965
+#: fm1companion/backup.py:967
 msgid "The FM-1 did not answer which firmware it runs, so the app cannot check that this backup fits it. Nothing was written – check the cable and try again."
 msgstr ""
 
-#: fm1companion/backup.py:1036
+#: fm1companion/backup.py:1038
 msgid "This backup needs a firmware with a larger recording memory"
 msgstr ""
 
-#: fm1companion/backup.py:1039 fm1companion/backup.py:1170
+#: fm1companion/backup.py:1041 fm1companion/backup.py:1172
 #, python-brace-format
 msgid "The firmware on the FM-1 does not know “{part}” from the backup (different version). Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:1049
+#: fm1companion/backup.py:1051
 msgid "The backup has an older format. Restore it with Melodee 1.2 first. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:1052 fm1companion/backup.py:1200
+#: fm1companion/backup.py:1054 fm1companion/backup.py:1202
 #: fm1companion/projects.py:241 fm1companion/x0xbk.py:368
 msgid "Please stop playback on the FM-1 first – nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:1054 fm1companion/backup.py:1202
+#: fm1companion/backup.py:1056 fm1companion/backup.py:1204
 #, python-brace-format
 msgid "“{part}”: {error}. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:1115 fm1companion/sloopbk.py:380
+#: fm1companion/backup.py:1117 fm1companion/sloopbk.py:394
 msgid "unexpected sample answer"
 msgstr ""
 
-#: fm1companion/backup.py:1121
+#: fm1companion/backup.py:1123
 msgid "sample object too short"
 msgstr ""
 
-#: fm1companion/backup.py:1146
+#: fm1companion/backup.py:1148
 #, python-brace-format
 msgid "“{part}” is not in the backup"
 msgstr ""
 
-#: fm1companion/backup.py:1154
+#: fm1companion/backup.py:1156
 #, python-brace-format
 msgid "{firmware} restores a backup only whole. Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:1177 fm1companion/backup.py:1277
+#: fm1companion/backup.py:1179 fm1companion/backup.py:1279
 msgid "The device has changed since it was read. Please select and confirm again – nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:1196
+#: fm1companion/backup.py:1198
 #, python-brace-format
 msgid "“{part}”: The device does not accept this format (older or different firmware). Nothing was written."
 msgstr ""
 
-#: fm1companion/backup.py:1212 fm1companion/dx7_sources.py:95
+#: fm1companion/backup.py:1214 fm1companion/dx7_sources.py:95
 #: fm1companion/fm1open.py:545 fm1companion/presetlib.py:396
 #: fm1companion/samplepacks.py:181 fm1companion/samplepacks.py:271
-#: fm1companion/sloopbk.py:462 fm1companion/ui/pages/project_view.py:392
+#: fm1companion/sloopbk.py:476 fm1companion/ui/pages/project_view.py:392
 #: fm1companion/ui/projects_page.py:300 fm1companion/ui/samplepacks_tab.py:209
 #: fm1companion/ui/samples_page.py:1307 fm1companion/ui/samples_page.py:1327
 msgid "cancelled"
 msgstr ""
 
-#: fm1companion/backup.py:1237 fm1companion/backup_inspect.py:927
+#: fm1companion/backup.py:1239 fm1companion/backup_inspect.py:927
 #: fm1companion/backup_inspect.py:985
 #: fm1companion/ui/pages/backup_browser.py:628
 #: fm1companion/ui/pages/backup_browser.py:712
@@ -494,26 +494,26 @@ msgstr ""
 msgid "and {n} more"
 msgstr ""
 
-#: fm1companion/backup.py:1255
+#: fm1companion/backup.py:1257
 msgid "Nothing was changed on the FM-1."
-msgstr ""
-
-#: fm1companion/backup.py:1258
-#, python-brace-format
-msgid "Already written to the FM-1: {parts}."
 msgstr ""
 
 #: fm1companion/backup.py:1260
 #, python-brace-format
+msgid "Already written to the FM-1: {parts}."
+msgstr ""
+
+#: fm1companion/backup.py:1262
+#, python-brace-format
 msgid "“{part}” was being written when it stopped – a sample slot is erased first, so it may be empty now. Check it on the FM-1."
 msgstr ""
 
-#: fm1companion/backup.py:1263
+#: fm1companion/backup.py:1265
 #, python-brace-format
 msgid "Unclear: “{part}” was being written when the connection broke – it may be the old or the new state. Check it on the FM-1."
 msgstr ""
 
-#: fm1companion/backup.py:1266
+#: fm1companion/backup.py:1268
 #, python-brace-format
 msgid "Still in the old state: {parts}."
 msgstr ""
@@ -6065,8 +6065,8 @@ msgstr ""
 msgid "surplus bytes in the data block"
 msgstr ""
 
-#: fm1companion/protocol.py:135 fm1companion/sloopbk.py:123
-#: fm1companion/sloopbk.py:130
+#: fm1companion/protocol.py:135 fm1companion/sloopbk.py:137
+#: fm1companion/sloopbk.py:144
 msgid "answer too short"
 msgstr ""
 
@@ -6405,132 +6405,141 @@ msgstr ""
 msgid "backup outdated or expired – please start again"
 msgstr ""
 
-#: fm1companion/sloopbk.py:55
-msgid "Please stop the song on the FM-1 first (STOP) and then restore again. SLOOP only writes projects, preset banks and settings while nothing is playing."
+#: fm1companion/sloopbk.py:65
+msgid "Please stop the song on the FM-1 first (STOP) and then restore again."
 msgstr ""
 
-#: fm1companion/sloopbk.py:114
+#: fm1companion/sloopbk.py:67
+#, python-brace-format
+msgid "{firmware} only writes projects, preset banks and settings while nothing is playing."
+msgstr ""
+
+#: fm1companion/sloopbk.py:69
+msgid "The firmware on the FM-1 only writes projects, preset banks and settings while nothing is playing."
+msgstr ""
+
+#: fm1companion/sloopbk.py:128
 msgid "inventory too short"
 msgstr ""
 
-#: fm1companion/sloopbk.py:178
+#: fm1companion/sloopbk.py:192
 msgid "Not a SLOOP backup"
 msgstr ""
 
-#: fm1companion/sloopbk.py:182
+#: fm1companion/sloopbk.py:196
 msgid "SLOOP backup: invalid entry"
 msgstr ""
 
-#: fm1companion/sloopbk.py:188
+#: fm1companion/sloopbk.py:202
 #, python-brace-format
 msgid "SLOOP backup: object {id} damaged"
 msgstr ""
 
-#: fm1companion/sloopbk.py:191
+#: fm1companion/sloopbk.py:205
 msgid "SLOOP backup incomplete (running project or settings missing)"
 msgstr ""
 
-#: fm1companion/sloopbk.py:279
+#: fm1companion/sloopbk.py:293
 msgid "The FM-1 has no usable flash memory – backup not possible."
 msgstr ""
 
-#: fm1companion/sloopbk.py:280
+#: fm1companion/sloopbk.py:294
 #, python-brace-format
 msgid "inventory rejected ({error})"
 msgstr ""
 
-#: fm1companion/sloopbk.py:284
+#: fm1companion/sloopbk.py:298
 #, python-brace-format
 msgid "object {id} is implausibly large ({size} bytes)"
 msgstr ""
 
-#: fm1companion/sloopbk.py:296
+#: fm1companion/sloopbk.py:310
 msgid "The FM-1 changed during the backup – please try again."
 msgstr ""
 
-#: fm1companion/sloopbk.py:297
+#: fm1companion/sloopbk.py:311
 #, python-brace-format
 msgid "reading {part} rejected ({error})"
 msgstr ""
 
-#: fm1companion/sloopbk.py:304
+#: fm1companion/sloopbk.py:318
 #, python-brace-format
 msgid "{part}: {got} bytes instead of {want}"
 msgstr ""
 
-#: fm1companion/sloopbk.py:310
+#: fm1companion/sloopbk.py:324
 msgid "The FM-1 changed during the backup (checksum) – please try again, preferably with the song stopped."
 msgstr ""
 
-#: fm1companion/sloopbk.py:349
+#: fm1companion/sloopbk.py:363
 #, python-brace-format
 msgid "{part}: begin rejected ({error})"
 msgstr ""
 
-#: fm1companion/sloopbk.py:355
+#: fm1companion/sloopbk.py:369
 #, python-brace-format
 msgid "{part}: data at byte {offset} rejected ({error})"
 msgstr ""
 
-#: fm1companion/sloopbk.py:368
+#: fm1companion/sloopbk.py:382
 #, python-brace-format
 msgid "The song was running during the restore. Already written: {parts}. Not written: {part} and everything after it."
 msgstr ""
 
-#: fm1companion/sloopbk.py:371 fm1companion/ui/pages/studio.py:1286
+#: fm1companion/sloopbk.py:385 fm1companion/ui/pages/studio.py:1286
 #: fm1companion/ui/pages/studio.py:1289
 msgid "Nothing was written."
 msgstr ""
 
-#: fm1companion/sloopbk.py:373
+#: fm1companion/sloopbk.py:387
 #, python-brace-format
 msgid "{part}: rejected by the FM-1 ({error})"
 msgstr ""
 
-#: fm1companion/sloopbk.py:389
+#: fm1companion/sloopbk.py:403
 #, python-brace-format
 msgid "clearing USR{slot}: error {code}"
 msgstr ""
 
-#: fm1companion/sloopbk.py:392
+#: fm1companion/sloopbk.py:406
 #, python-brace-format
 msgid "USR{slot}: sample object too short"
 msgstr ""
 
-#: fm1companion/sloopbk.py:395
+#: fm1companion/sloopbk.py:409
 #, python-brace-format
 msgid "USR{slot}: begin rejected (error {code})"
 msgstr ""
 
-#: fm1companion/sloopbk.py:402
+#: fm1companion/sloopbk.py:416
 #, python-brace-format
 msgid "USR{slot}: writing rejected (error {code})"
 msgstr ""
 
-#: fm1companion/sloopbk.py:407
+#: fm1companion/sloopbk.py:421
 #, python-brace-format
 msgid "USR{slot}: completion rejected (error {code})"
 msgstr ""
 
-#: fm1companion/sloopbk.py:413 fm1companion/sloopbk.py:502
+#: fm1companion/sloopbk.py:427 fm1companion/sloopbk.py:516
 msgid "The running project or the settings are missing in the backup – nothing was written."
 msgstr ""
 
-#: fm1companion/sloopbk.py:417
+#: fm1companion/sloopbk.py:431
 #, python-brace-format
 msgid "The backup comes from a newer SLOOP version ({backup}) than the one on the FM-1 ({device}). Update SLOOP first – nothing was written."
 msgstr ""
 
-#: fm1companion/sloopbk.py:484
+#: fm1companion/sloopbk.py:498
 #, python-brace-format
 msgid "{part} is not in the backup"
 msgstr ""
 
-#: fm1companion/sloopbk.py:486
+#: fm1companion/sloopbk.py:500
 msgid "Running project/settings in the backup are empty – nothing was written."
 msgstr ""
 
-#: fm1companion/sloopbk.py:489
+#: fm1companion/sloopbk.py:503
 #, python-brace-format
 msgid "The FM-1 ({device}) cannot read projects from a newer SLOOP version ({backup}). Update SLOOP first – nothing was written."
 msgstr ""
@@ -17279,7 +17288,7 @@ msgid "Make safety backup and write back"
 msgstr ""
 
 #: fm1companion/ui/pages/studio.py:362 fm1companion/ui/pages/studio.py:993
-#: fm1companion/ui/pages/studio.py:1058 fm1companion/ui/pages/studio.py:1370
+#: fm1companion/ui/pages/studio.py:1058 fm1companion/ui/pages/studio.py:1379
 #: fm1companion/ui/wizard.py:355
 msgid "Studio"
 msgstr ""
@@ -17880,16 +17889,16 @@ msgstr[1] ""
 msgid "The state of the studio is now on “{name}”. Safety backup before: {file} (Backups › List)."
 msgstr ""
 
-#: fm1companion/ui/pages/studio.py:1361
+#: fm1companion/ui/pages/studio.py:1370
 msgid "The FM-1 now holds a mix of old and new parts."
 msgstr ""
 
-#: fm1companion/ui/pages/studio.py:1362
+#: fm1companion/ui/pages/studio.py:1371
 #, python-brace-format
 msgid "The safety backup made just before is “{file}” (Backups › List), in case you need the FM-1's previous state back."
 msgstr ""
 
-#: fm1companion/ui/pages/studio.py:1372
+#: fm1companion/ui/pages/studio.py:1381
 msgid "the digital twin of your FM-1: fetch, play, export as WAV, write back"
 msgstr ""
 
