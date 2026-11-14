@@ -7553,7 +7553,7 @@ msgstr ""
 #: fm1companion/ui/clean_check.py:166 fm1companion/ui/common.py:319
 #: fm1companion/ui/common.py:505 fm1companion/ui/crash.py:258
 #: fm1companion/ui/linkimport_dialog.py:404 fm1companion/ui/notify.py:124
-#: fm1companion/ui/notify.py:346 fm1companion/ui/pages/discover.py:1147
+#: fm1companion/ui/notify.py:353 fm1companion/ui/pages/discover.py:1147
 #: fm1companion/ui/slicer_dialog.py:145 fm1companion/ui/statusbar.py:159
 #: fm1companion/ui/storage_tab.py:355
 msgid "Close"
@@ -11116,7 +11116,7 @@ msgid "Create a full backup of the active FM-1 (Ctrl+B)"
 msgstr ""
 
 #: fm1companion/ui/main_window.py:345 fm1companion/ui/main_window.py:994
-#: fm1companion/ui/notify.py:329 fm1companion/ui/notify.py:332
+#: fm1companion/ui/notify.py:336 fm1companion/ui/notify.py:339
 msgid "Notifications"
 msgstr ""
 
@@ -11424,11 +11424,11 @@ msgstr ""
 msgid "Open"
 msgstr ""
 
-#: fm1companion/ui/notify.py:332
+#: fm1companion/ui/notify.py:339
 msgid "All notices since the app was started."
 msgstr ""
 
-#: fm1companion/ui/notify.py:341
+#: fm1companion/ui/notify.py:348
 msgid "No notifications yet."
 msgstr ""
 
