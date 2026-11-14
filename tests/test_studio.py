@@ -2150,6 +2150,25 @@ def test_loom_write_back_reaches_the_device(node_studio):
     assert after[1] == before[1] and all(after[i] == mine[i] for i in mine if i != 1)
 
 
+def test_loom_is_known_by_its_own_name_without_a_hint(node_studio):
+    """ST-01, the backup layer's half: a LOOM-8 that answers INFO ("LOOM-8 0.14") is LOOM-8 also when the caller
+    names no firmware – before, the app asked it for Felucca's and SLOOP's inventory and refused the restore"""
+    dev = node_studio(firmware="loom-8")
+    st = node_studio(firmware="loom-8")
+    _loom_steps(st)
+    proto, info = backup.protocol(dev.link, "")
+    assert proto == backup.LOOM and info is not None and info.firmware_name == "loom"
+    assert backup.device_inventory(dev.link, "")[0] == backup.LOOM
+    arch = st.backup()
+    backup.restore(dev.link, arch)                            # (no hint)
+    assert _objs(dev) == _objs(st)
+    x = node_studio(firmware="x0x")                           # the rules between the two image firmwares still hold
+    with pytest.raises(backup.BackupError, match="LOOM-8"):
+        backup.restore(x.link, arch)
+    with pytest.raises(backup.BackupError, match="X0X"):
+        backup.restore(dev.link, x.backup())
+
+
 def _pcm(path):
     data = Path(path).read_bytes()
     return data[data.index(b"data") + 8:] if data[:4] == b"RIFF" else data

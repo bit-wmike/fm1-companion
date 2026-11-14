@@ -307,7 +307,7 @@ def protocol(link, hint: str = "") -> tuple[str, object]:
     from . import sloopbk
     if hint in ("melodee", "skiff", "coralflower", "choralroot") or (hint or "").startswith("jiant"):
         return FELUCCA, None                        # ("felucca": its INFO decides – SLOOP's builds share FM-1_900)
-    if hint == LOOM:                                # (fm1-base has no editor: no INFO to ask)
+    if hint == LOOM:                                # (named by the caller: not asked)
         return LOOM, None
     try:
         info = sloopbk.read_info(link)
@@ -318,6 +318,8 @@ def protocol(link, hint: str = "") -> tuple[str, object]:
         return (SLOOP if hint in SLOOP_PROTOCOL else hint if hint in IMAGE_PROTOS else FELUCCA), None
     if info.firmware_name == X0X:
         return X0X, info
+    if info.firmware_name == "loom":               # (a LOOM-8 that answers INFO names itself "LOOM-8 0.14")
+        return LOOM, info
     fam = fwfamily.by_info(info.version)
     if fam is not None and fam.backup in ("own", "none"):
         raise BackupError(no_backup_text(fam, info.version))
