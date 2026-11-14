@@ -44,7 +44,12 @@ def test_builds_side_by_side():
         assert m["kind"] == "studio" and m["abi"] == studio.STUDIO_ABI and m["firmware"] == "melodee"
         assert m["ref"] == b.version and len(m["commit"]) == 40 and m["license"] == "GPL-3.0-only"
         assert m["identity"] == IDENTITY[b.version] and m["fs"] == 44100 and m["flash_size"] == 0x100000
-        assert {"LICENSE", "NOTICE", "twin.wasm"} <= set(m["files"])
+        # ST-10: Melodee's licensing record and the licence texts of the parts compiled in, as every other family
+        assert {"LICENSE", "NOTICE", "LICENSING.md", "THIRD_PARTY.txt", "twin.wasm"} == set(m["files"])
+        notice, third = (b.path / "NOTICE").read_text(), (b.path / "THIRD_PARTY.txt").read_text()
+        assert "Casio" in notice and "Sequential" in notice and "no licence is granted" in notice
+        assert "Apache License" in third and "SIL OPEN FONT LICENSE" in third.upper() and "Casio" in (b.path / "LICENSING.md").read_text()
+        assert m["title"] == "Melodee studio twin"
         assert "unmodified" in (b.path / "NOTICE").read_text() and m["glue"] == "tools/studio/melodee_studio.c"
         assert m["glue_sha256"] == hashlib.sha256((ROOT / m["glue"]).read_bytes()).hexdigest()
     # the Studio builds are not simulator pages
@@ -2120,3 +2125,336 @@ def test_identities_without_info_name_their_twin(monkeypatch, tmp_path):
     assert firmware.guess_firmware("FM-1_920")[0] == "choralroot-fm-1"
     firmware.remember_identity("FM-1_900", "orbit", "v1.0.0")                          # ORBIT names itself too
     assert firmware.guess_firmware("FM-1_900", "FELUCCA v1.8.1", "felucca")[0] == "felucca"
+
+
+# ------------------------------------------------------------------ audit fixes (ST-01 … ST-24, SEC-07)
+def _objs(st):
+    return {o["id"]: o["bytes"] for o in st.backup().objects}
+
+
+def test_loom_write_back_reaches_the_device(node_studio):
+    """ST-01: write back to a LOOM-8 was refused every time ("answers none of the backup requests"): the restore asked
+    the device's INFO for its protocol, and LOOM-8's name is not one the backup layer knows. The image's firmware is
+    passed as the hint now – with and without parts left out."""
+    dev = node_studio(firmware="loom-8")
+    st = node_studio(firmware="loom-8")
+    _loom_steps(st)
+    mine = _objs(st)
+    assert mine != _objs(dev)
+    st.write_to_device(dev.link)
+    assert _objs(dev) == mine and st.last_write["written"] == sorted(mine)
+    dev2 = node_studio(firmware="loom-8")
+    before = _objs(dev2)
+    st.write_to_device(dev2.link, exclude=[1])                # (the image whole, the device's own part 1 in it)
+    after = _objs(dev2)
+    assert after[1] == before[1] and all(after[i] == mine[i] for i in mine if i != 1)
+
+
+def _pcm(path):
+    data = Path(path).read_bytes()
+    return data[data.index(b"data") + 8:] if data[:4] == b"RIFF" else data
+
+
+def _onset(pcm: bytes) -> int:
+    """the first frame (f32 stereo) louder than -80 dB"""
+    fl = struct.unpack(f"<{len(pcm) // 4}f", pcm)
+    return next((i // 2 for i, x in enumerate(fl) if abs(x) > 1e-4), -1)
+
+
+@pytest.mark.parametrize("fw", sorted(studio.FIRMWARES))
+def test_one_snapshot_per_export(node_studio, tmp_path, fw):
+    """ST-02: every pass of an export starts from ONE snapshot of the running twin. Before, each pass took its own while
+    the twin's clock ran on, and the passes were shifted against each other by up to ~170 ms. The same pass twice within
+    one export is bit-identical (also on the instance the first pass used), with the live clock running in between."""
+    import time
+    st = node_studio(firmware=fw)
+    st.set_clock(True)
+    st.backend.call("run", ms=700)
+    p = {"seconds": 1.5, "start": "play", "format": "f32"}
+    st.backend.render_open({"source": "live", "settle_ms": 0})
+    try:
+        st.backend.render(tmp_path / "a.raw", p)
+        time.sleep(0.25)                                       # (the live twin runs on: a new snapshot would differ)
+        st.backend.call("run", ms=333)
+        st.backend.render(tmp_path / "b.raw", p)
+        st.backend.render(tmp_path / "c.raw", {**p, "mutes": [False] * st.tracks})
+    finally:
+        st.backend.render_close()
+    a = (tmp_path / "a.raw").read_bytes()
+    assert len(a) == int(1.5 * 44100) * 8 and a == (tmp_path / "b.raw").read_bytes()
+    assert a == (tmp_path / "c.raw").read_bytes()              # (nothing muted = the mix)
+    with pytest.raises(studio.StudioError):                    # (the snapshot is gone with the export)
+        st.backend.render(tmp_path / "d.raw", p)
+
+
+def test_mix_and_stems_start_aligned(node_studio, tmp_path):
+    """ST-02: the stems of a running twin line up with the mix. X0X with only its 909 playing: stem 1 IS the mix, to
+    the sample (it was the mix shifted by 2560–7680 frames). JIANT FM: the first sound of the mix is the first sound of
+    its earliest stem."""
+    x = node_studio(firmware="x0x")
+    _x0x_pattern(x)
+    x.set_clock(True)
+    r = x.render_wav(tmp_path / "x.wav", seconds=3, start="play", stems=True)
+    assert r.peak > 0.05 and [p.name for p in r.stems.values()][:2] == ["x_track1.wav", "x_track2.wav"]
+    assert _pcm(r.path) == _pcm(r.stems[0])
+    j = node_studio(firmware="jiant")
+    _jiant_song(j)
+    j.set_clock(True)
+    r = j.render_wav(tmp_path / "j.wav", seconds=2, start="play", stems=True)
+    onsets = [_onset(_pcm(p)) for p in r.stems.values()]
+    assert _onset(_pcm(r.path)) == min(o for o in onsets if o >= 0) >= 0
+    assert not list(tmp_path.glob("*.part")) and not list(tmp_path.glob("*.raw"))
+
+
+def test_export_without_a_song_ends_early_and_cancel_leaves_nothing(node_studio, tmp_path):
+    """ST-03: "whole song" on a twin whose transport never starts no longer renders 15 minutes of silence (started
+    False after a few seconds); only Melodee is flagged as having a song that always ends, five twins have none. A cancelled export stops the
+    render, raises StudioCancelled, removes its partial files and leaves an existing file of that name untouched."""
+    import threading
+    assert [k for k in studio.FIRMWARES if studio.song_ends(k)] == ["melodee"]
+    assert [k for k in studio.FIRMWARES if not studio.has_song(k)] == ["fm1-open", "choralroot", "amb-1", "fomni", "loom-8"]
+    st = node_studio()                                         # (an empty Melodee: no song chain)
+    r = st.render_wav(tmp_path / "none.wav", until_end=True, start="song", max_seconds=60)
+    assert not r.started and not r.ended and r.seconds <= 4
+    _song(st)
+    r = st.render_wav(tmp_path / "song.wav", until_end=True, start="song", max_seconds=60)
+    assert r.started and r.ended
+    old = tmp_path / "long.wav"
+    old.write_bytes(b"keep me")
+    t = threading.Timer(0.6, st.cancel_render)
+    t.start()
+    with pytest.raises(studio.StudioCancelled):
+        st.render_wav(old, seconds=600, start="play", stems=True)
+    t.join()
+    assert old.read_bytes() == b"keep me"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["long.wav", "none.wav", "song.wav"]
+    r = st.render_wav(tmp_path / "after.wav", seconds=1, start="play")     # (the twin is fine, the next export works)
+    assert r.frames == 44100
+
+
+def test_free_export_path(tmp_path):
+    """ST-17: an export never overwrites silently – the next free number, for the mix and all its stems; the stems'
+    names are English"""
+    p = tmp_path / "song.wav"
+    assert studio.free_export_path(p, 4) == p and studio.stem_path(p, 0).name == "song_track1.wav"
+    studio.stem_path(p, 3).write_bytes(b"x")                   # (only a stem of that name exists)
+    assert studio.free_export_path(p, 4).name == "song_2.wav" and studio.free_export_path(p, 0) == p
+    (tmp_path / "song_2.wav").write_bytes(b"x")
+    assert studio.free_export_path(p, 4).name == "song_3.wav"
+
+
+def test_jiant_write_back_across_the_song_change_is_refused(node_studio):
+    """ST-07: a V10.6z2 twin (6 songs) converts what it loads from a V10.60 FM-1 (8 songs); with the expert option
+    that went back onto the device (the running music, section A, the song index, song 1 rewritten). Refused now, in
+    both directions, also with force – nothing changes on the device."""
+    assert studio.jiant_songs_differ("V10.60", "V10.6z2") and studio.jiant_songs_differ("JIANT V10.6p", "v10.6o")
+    assert not studio.jiant_songs_differ("V10.60", "V10.61") and not studio.jiant_songs_differ("V10.6z2", "V10.6p")
+    assert not studio.jiant_songs_differ("", "V10.6z2")
+    for dev_v, twin_v in (("V10.60", "V10.6z2"), ("V10.6z2", "V10.60")):
+        dev = node_studio(firmware="jiant", version=dev_v)
+        _jiant_song(dev)
+        dev.set_clock(False)
+        before = _objs(dev)
+        st = node_studio(firmware="jiant", version=twin_v)
+        st.open_from_device(dev.link, tolerant=True)
+        with pytest.raises(studio.StudioError, match="V10.6p"):
+            st.write_to_device(dev.link, force=True, settings=False, exclude=st.rejected)
+        assert _objs(dev) == before
+    dev = node_studio(firmware="jiant", version="V10.60")      # (the same side of the change: still possible)
+    st = node_studio(firmware="jiant", version="V10.61")
+    st.open_from_device(dev.link, tolerant=True)
+    st.write_to_device(dev.link, force=True, settings=False, exclude=st.rejected)
+
+
+def test_write_back_leaves_untouched_parts_alone(node_studio):
+    """ST-16: with the twin's digests from right after the fetch, write back writes only what was changed in the
+    studio. CoralFlower's twin adds eleven "not tweaked" records when it loads; they went onto a device that had none
+    although the user had changed nothing."""
+    dev = node_studio(firmware="coralflower")
+    _coral_take(dev)
+    dev.set_clock(False)
+    before = _objs(dev)
+    st = node_studio(firmware="coralflower")
+    st.open_from_device(dev.link, tolerant=True)
+    base = st.object_digests()
+    assert any(_objs(st)[i] != before[i] for i in before)      # (the twin's own additions)
+    st.write_to_device(dev.link, settings=False, exclude=st.rejected, unchanged=base)
+    assert _objs(dev) == before and st.last_write["written"] == []
+    assert len(st.last_write["unchanged"]) >= len(before) - 1
+    # Melodee: a changed project goes over, everything else stays the device's
+    dev = node_studio()
+    _song(dev)
+    dev.set_clock(False)
+    before = _objs(dev)
+    st = node_studio()
+    st.open_from_device(dev.link, tolerant=True)
+    base = st.object_digests()
+    st.link.request(Cmd.TRACK_STEP, [0, 1, 1, 60, 0, 0, 0, 0, 0, 100])
+    assert st.link.request(Cmd.PROJECT, [1, 2])[2] == 1        # (saved as project 3)
+    st.write_to_device(dev.link, settings=False, exclude=st.rejected, unchanged=base)
+    after, mine = _objs(dev), _objs(st)
+    assert st.last_write["written"] and set(st.last_write["written"]) == {i for i in mine if after[i] != before[i]}
+    assert all(after[i] == mine[i] for i in st.last_write["written"])
+    assert st.last_write["written"] != sorted(mine)            # (not everything)
+
+
+def test_state_of_another_firmware_and_version_warning(node_studio, tmp_path):
+    """ST-21: the warning of a loaded state names the twin's firmware (it said "Melodee" for every twin and used
+    Melodee's version rules); a state of another firmware is refused instead of booting a foreign flash."""
+    a = node_studio(firmware="skiff", version="2.1.1")
+    path = a.save_state(tmp_path / "s" / studio.STATE_NAME)
+    b = node_studio(firmware="skiff", version="2.2")
+    w = b.load_state(path)["warning"]
+    assert "Skiff" in w and "Melodee" not in w and "2.1.1" in w
+    m = node_studio()
+    with pytest.raises(studio.StudioError, match="Skiff"):
+        m.load_state(path)
+
+
+def test_argument_named_id_does_not_break_the_call(node_studio):
+    """ST-23: an argument called "id" (the host's "encoder") overwrote the request number: no reply was ever matched
+    and the call ended in the 60 s timeout"""
+    assert studio._request(7, "encoder", {"id": 2, "n": 1}) == {"arg_id": 2, "n": 1, "id": 7, "op": "encoder"}
+    st = node_studio()
+    assert st.backend.call("encoder", timeout=5, id=2, n=1) == {"id": st.backend._id, "ok": True}
+
+
+def test_state_file_sizes_are_checked_before_unpacking(tmp_path):
+    """SEC-07: a prepared studio state (zip bomb: 1.6 MB on disk, gigabytes unpacked) is refused from the zip's
+    directory, nothing is unpacked; the error text stays short"""
+    import zipfile
+    meta = json.dumps({"format": "fm1-studio-state", "version": 1, "firmware": "melodee"})
+    good = tmp_path / "good.fm1studio"
+    with zipfile.ZipFile(good, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("studio.json", meta)
+        z.writestr("flash.bin", bytes(0x100000))
+    assert len(studio.read_state(good)[1]) == 0x100000
+    for name, m, flash in (("bigflash", meta, bytes(0x100000 + 1)), ("smallflash", meta, bytes(0x100000 - 1)),
+                           ("bigmeta", json.dumps({"format": "fm1-studio-state", "pad": "x" * (1 << 20)}),
+                            bytes(0x100000))):
+        bad = tmp_path / f"{name}.fm1studio"
+        with zipfile.ZipFile(bad, "w", zipfile.ZIP_DEFLATED) as z:
+            z.writestr("studio.json", m)
+            z.writestr("flash.bin", flash)
+        opened = []
+        orig = zipfile.ZipFile.open
+
+        def spy(self, n, *a, _o=orig, **k):
+            opened.append(getattr(n, "filename", n))
+            return _o(self, n, *a, **k)
+        zipfile.ZipFile.open = spy
+        try:
+            with pytest.raises(studio.StudioError):
+                studio.read_state(bad)
+        finally:
+            zipfile.ZipFile.open = orig
+        assert opened == [], name                              # (refused before a single byte was unpacked)
+    junk = tmp_path / "junk.fm1studio"
+    with zipfile.ZipFile(junk, "w") as z:
+        z.writestr("studio.json", "{" + "x" * 5000)
+        z.writestr("flash.bin", bytes(0x100000))
+    with pytest.raises(studio.StudioError) as e:
+        studio.read_state(junk)
+    assert len(str(e.value)) < 400
+
+
+def test_demo_melodee_data_is_real(node_studio):
+    """the demo FM-1 (demo mode, the README's screenshots) says it runs Melodee 1.6.0-rc.7; its settings, user preset
+    bank and second project were random bytes, so "Fetch from FM-1" showed "Not taken over (3) … do not fit Melodee
+    v1.6.0-rc.7" on the same firmware. The tolerant load was right to refuse them; the demo data is real now."""
+    from fm1companion.demo_device import FakeFM1
+    from fm1companion.transport import Link
+    from test_core import LocalTransport
+    dev = FakeFM1()
+    arch = backup.read(backup.capture(Link(LocalTransport(dev)), dev.version))
+    assert all(o["size"] for o in arch.objects if o["id"] in (0, 1, 2, 6, 66))
+    for v in ("v1.6.0-rc.7", "v1.6.1"):
+        st = node_studio(v)
+        st.open_from_backup(arch, tolerant=True)
+        assert st.rejected == [], v
+    st = node_studio("v1.6.0-rc.7")
+    bad = backup.read(backup.capture(Link(LocalTransport(FakeFM1(ids=list(range(29)) + list(range(64, 92))))), "x"))
+    bad.objects[1]["bytes"] = bytes(reversed(bad.objects[1]["bytes"]))     # (garbage is still refused, part by part)
+    st.open_from_backup(bad, tolerant=True)
+    assert st.rejected == [1]
+
+
+def test_melodee_simulator_ships_its_licence_texts():
+    """ST-10: the Melodee simulator page too (sims/melodee): LICENSING.md, THIRD_PARTY.txt, the Casio/Sequential
+    sentence – and its manifest lists exactly the files that are there, with their checksums"""
+    d = studio.SIMS_DIR / "melodee"
+    m = json.loads((d / "manifest.json").read_text("utf-8"))
+    assert {"LICENSING.md", "THIRD_PARTY.txt", "NOTICE", "LICENSE", "melodee.wasm"} <= set(m["files"])
+    assert set(m["files"]) == {p.name for p in d.iterdir()} - {"manifest.json"}
+    for name, info in m["files"].items():
+        data = (d / name).read_bytes()
+        assert (len(data), hashlib.sha256(data).hexdigest()) == (info["size"], info["sha256"]), name
+    assert "Casio" in (d / "NOTICE").read_text() and "Sequential" in (d / "NOTICE").read_text()
+
+
+def test_build_sets_source_date_epoch(tmp_path, monkeypatch):
+    """ST-20: builds take __DATE__ from the commit's time (SOURCE_DATE_EPOCH), so the same commit gives the same bytes
+    (five families differed in one or two bytes per rebuild)"""
+    if not shutil.which("git"):
+        pytest.skip("git missing")
+    import importlib.util
+    import os
+    spec = importlib.util.spec_from_file_location("build_sims", ROOT / "tools" / "build_sims.py")
+    bs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bs)
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    env = {**os.environ, "GIT_AUTHOR_DATE": "2026-01-02T03:04:05Z", "GIT_COMMITTER_DATE": "2026-01-02T03:04:05Z",
+           "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.invalid", "GIT_COMMITTER_NAME": "t",
+           "GIT_COMMITTER_EMAIL": "t@example.invalid"}
+    (repo / "a.txt").write_text("x")
+    for cmd in (["git", "init", "-q"], ["git", "add", "a.txt"], ["git", "commit", "-q", "-m", "x"]):
+        subprocess.run(cmd, cwd=repo, env=env, check=True)
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    tree, commit = bs.source("melodee", tmp_path / "work", str(repo), ref="HEAD", repo_url="x")
+    assert (tree / "a.txt").exists() and os.environ["SOURCE_DATE_EPOCH"] == "1767323045"
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+
+
+def test_preset_zip_sizes_are_checked_before_unpacking():
+    """SEC-07 (presetlib): a preset set (.zip) with an entry that unpacks to more than 1 MB is refused from the zip's
+    directory – nothing is unpacked; a normal set still reads"""
+    import io
+    import zipfile
+    from fm1companion import presetlib
+    p = presetlib.Preset(name="OK", engine=3, params=[1, 2, 3])
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("a.fm1preset", json.dumps(p.to_json()))
+    assert [x.name for x in presetlib.read_any(buf.getvalue(), "set.zip")] == ["OK"]
+    bomb = io.BytesIO()
+    with zipfile.ZipFile(bomb, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("a.fm1preset", json.dumps(p.to_json()))
+        z.writestr("big.fm1preset", b" " * (64 << 20))
+    assert len(bomb.getvalue()) < 200_000
+    opened = []
+    orig = zipfile.ZipFile.open
+
+    def spy(self, n, *a, _o=orig, **k):
+        opened.append(getattr(n, "filename", n))
+        return _o(self, n, *a, **k)
+    zipfile.ZipFile.open = spy
+    try:
+        with pytest.raises(presetlib.PresetError, match="big.fm1preset") as e:
+            presetlib.read_any(bomb.getvalue(), "set.zip")
+    finally:
+        zipfile.ZipFile.open = orig
+    assert "big.fm1preset" not in opened and len(str(e.value)) < 300
+
+
+def test_twins_stay_small_in_memory(node_studio):
+    """ST-15: SLOOP's twin used 195 MB (about 600 MB during an export): the host's WASI stub did not answer
+    "no environment variables", and SLOOP's start then reserved ~160 MB for an environment that does not exist. Every
+    twin keeps the memory it was built with (32 MB, FM1 Open 8 MB) through its start and some playing."""
+    for fw in studio.FIRMWARES:
+        for b in studio.builds(fw):
+            st = node_studio(firmware=fw, version=b.version)
+            st.play()
+            st.backend.call("run", ms=500)
+            assert st.backend.call("info")["memory"] <= 32 << 20, (fw, b.version)
+            st.close()

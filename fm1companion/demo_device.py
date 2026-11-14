@@ -19,6 +19,7 @@ import random
 import struct
 import sys
 import zlib
+from pathlib import Path
 
 from .protocol import frame, unframe, u32, r32, pack7, unpack7, v14
 
@@ -80,6 +81,13 @@ def sloop_bank(names) -> bytes:
     return bytes(b)
 
 
+def _demo_data(name: str) -> bytes:
+    try:
+        return (Path(__file__).parent / "data" / name).read_bytes()
+    except OSError:
+        return b""
+
+
 class FakeFM1:
     def __init__(self, samples: int = 0, version: str = "Melodee 1.6.0-rc.7", ids=None, identity: str = "",
                  generic: bool = False):
@@ -104,6 +112,14 @@ class FakeFM1:
             from .projectfmt import demo_project_bytes
             if demo_project_bytes():
                 self.objs[0] = self.objs[2] = demo_project_bytes()
+            # … and settings, a second project and a user preset bank the firmware itself accepts (written by Melodee
+            # 1.6.0-rc.7's own code / in its format). They were random bytes, and "Fetch from FM-1" in demo mode then
+            # reported them as "not taken over" by a twin of the very same firmware.
+            real = {1: _demo_data("melodee_demo_settings.bin"), 66: _demo_data("melodee_demo_project2.bin")}
+            for oid, data in real.items():
+                if data and oid in self.objs:
+                    self.objs[oid] = data
+            self.objs[6] = struct.pack("<IHH", 0x32425055, 206, 18) + bytes(18 * 206)   # "UPB2": 18 free slots
         self.song = {"rows": [], "running": False, "row": 0, "loop": 0}   # BANK_SONG (74)
         self.staged = None
         self.log: list = []

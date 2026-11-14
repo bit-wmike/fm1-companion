@@ -552,7 +552,7 @@ def flow():
     check(comp is not None and comp.ok and ok, f"Kopie Melodee → Melodee ({comp.reason if comp else '-'})")
     got = BI.decode_up_bank(device_read(6), 1, 6)
     check([x.name for x in got if x.used] == ["BASS ONE", "SID LEAD", "FM KEYS"], "presets arrived")
-    check(len(device_read(66)) == 2500, "project 7 arrived")
+    check(len(device_read(66)) == 7968, "project 7 arrived")       # (the demo device's real second project)
 
     # ---- quality pass after 2.6.0 (audit core-data) ----
     auto = w.backups.auto
@@ -594,11 +594,11 @@ def flow():
     device_write(66, bytes([7]) * 900)
     w.backups._restore()
     check(not any("nicht möglich" in b or "falschen Stellen" in b for b in log_boxes[n_boxes:])
-          and len(device_read(66)) == 2500, "Backups › Restore: decided by the layout, not by the key in the file")
+          and len(device_read(66)) == 7968, "Backups › Restore: decided by the layout, not by the key in the file")
     br.open_path(old_key)
     br.select_ids([66])
     device_write(66, bytes([7]) * 900)
-    check(br.restore_selected() and len(device_read(66)) == 2500, "Browse & Compare restores parts of it too")
+    check(br.restore_selected() and len(device_read(66)) == 7968, "Browse & Compare restores parts of it too")
     old_key.unlink()
 
     # CD-01: merging two profiles keeps every file (same names, other files, sub-folders)

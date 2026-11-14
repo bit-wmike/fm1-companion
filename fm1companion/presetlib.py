@@ -616,6 +616,9 @@ class Library:
         return [self.save(p, folder, known)[0] for p in presets]
 
 
+PRESET_FILE_MAX = 1 << 20          # one preset file (in a .zip set too): a few kB really
+
+
 def read_any(data: bytes, filename: str = "") -> list[Preset]:
     """like _read_any, but every read error is a PresetError with a German explanation."""
     try:
@@ -636,9 +639,20 @@ def _read_any(data: bytes, filename: str = "") -> list[Preset]:
     if low.endswith(".zip") or data[:2] == b"PK":
         out = []
         with zipfile.ZipFile(io.BytesIO(data)) as z:
-            for n in z.namelist():
-                if n.lower().endswith(".fm1preset"):
-                    out.append(Preset.from_json(json.loads(z.read(n).decode("utf-8"))))
+            for info in z.infolist():
+                if not info.filename.lower().endswith(".fm1preset"):
+                    continue
+                # the size from the zip's directory, before anything is unpacked (a prepared set could expand to
+                # gigabytes in memory); what is read is counted again
+                if info.file_size > PRESET_FILE_MAX:
+                    raise PresetError(_("“{name}” in the .zip file is too large to be a preset").format(
+                        name=info.filename[:80]))
+                with z.open(info) as f:
+                    raw = f.read(PRESET_FILE_MAX + 1)
+                if len(raw) > PRESET_FILE_MAX:
+                    raise PresetError(_("“{name}” in the .zip file is too large to be a preset").format(
+                        name=info.filename[:80]))
+                out.append(Preset.from_json(json.loads(raw.decode("utf-8"))))
         return out
     if low.endswith(".syx") or data[:1] == b"\xf0":
         from . import dx7
