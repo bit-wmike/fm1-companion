@@ -145,6 +145,8 @@ def flow():
             fx = ROOT / "tests" / "fixtures" / "musik"
             self.d.objs[0] = (fx / "obj_64.bin").read_bytes()
             self.d.objs[2] = (fx / "obj_2.bin").read_bytes()
+            from fm1companion.demo_device import rnd
+            self.d.objs[66] = rnd(2500, 4)             # a project the app cannot read (the demo's own is real now)
 
         def request(self, cmd, args, timeout=1.0, retries=0):
             return unframe(self.d.handle(frame(cmd, args)))[1]

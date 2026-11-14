@@ -115,11 +115,14 @@ class FakeFM1:
             # … and settings, a second project and a user preset bank the firmware itself accepts (written by Melodee
             # 1.6.0-rc.7's own code / in its format). They were random bytes, and "Fetch from FM-1" in demo mode then
             # reported them as "not taken over" by a twin of the very same firmware.
-            real = {1: _demo_data("melodee_demo_settings.bin"), 66: _demo_data("melodee_demo_project2.bin")}
-            for oid, data in real.items():
-                if data and oid in self.objs:
-                    self.objs[oid] = data
-            self.objs[6] = struct.pack("<IHH", 0x32425055, 206, 18) + bytes(18 * 206)   # "UPB2": 18 free slots
+            # Only for a device that says it is Melodee: on another firmware's inventory (the tests' JIANT, Tessera …)
+            # object 66 is something else, and Melodee's project does not fit there.
+            if "melodee" in self.version.lower():
+                real = {1: _demo_data("melodee_demo_settings.bin"), 66: _demo_data("melodee_demo_project2.bin")}
+                for oid, data in real.items():
+                    if data and oid in self.objs:
+                        self.objs[oid] = data
+                self.objs[6] = struct.pack("<IHH", 0x32425055, 206, 18) + bytes(18 * 206)   # "UPB2": 18 free slots
         self.song = {"rows": [], "running": False, "row": 0, "loop": 0}   # BANK_SONG (74)
         self.staged = None
         self.log: list = []
