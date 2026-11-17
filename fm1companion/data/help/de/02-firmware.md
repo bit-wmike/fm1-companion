@@ -69,6 +69,42 @@ Was du über den V15-Schritt wissen solltest:
 * Den aktuellen Stand der offiziellen Firmware und alternative Updater (auch für Linux) sammelt
   [awesome-fm-1](https://github.com/cicloid/awesome-fm-1).
 
+## Neueres FM-1 (Logo auf der Vorderseite)
+
+FM-1, die seit Ende 2026 verkauft werden – du erkennst sie am **aufgedruckten M-VAVE-Logo auf der Vorderseite** –,
+haben einen anderen Speicherbaustein (UCUN UC25HQ80 statt des Puya-Bausteins). An ihnen ist nichts kaputt, aber
+Firmware-Versionen von davor kennen den Baustein nicht. Auf so einem Gerät **speichern sie nichts**, und die meisten
+lassen sich **nicht mehr aktualisieren oder ersetzen**: Das FM-1 hängt dann auf dieser Version fest, bis im
+ROM-Bootmodus die Original-Firmware zurückgeschrieben wird
+([Update-Modus & Rettung](help:03-update-modus), Stufe 2).
+
+Was die App dagegen tut:
+
+* Sie fragt dich **einmal pro Gerät**: „Hat dein FM-1 das M-VAVE-Logo auf der Vorderseite?“ (Ja / Nein / Weiß ich
+  nicht). Über MIDI kann die App den Baustein nicht auslesen. Ändern kannst du die Antwort auf den Seiten *Geräte*
+  (Knopf *Gerät …*) und *Übersicht*.
+* Auf einem **neueren Gerät** installiert sie keine Version, die den Baustein nicht kennt – der Plan sagt das und
+  nennt die erste Version, die funktioniert. Einen Experten-Schalter gibt es dafür nicht.
+* **Weiß die App nicht**, welches Gerät du hast, wird so eine Version nur installiert, wenn du im Plan bestätigst,
+  dass dein FM-1 kein Logo auf der Vorderseite hat.
+* Auf einem **früheren Gerät** ändert sich nichts.
+
+Erste Versionen, die den neueren Baustein kennen (in den Quellen der Firmwares gelesen, Stand 17. November 2026):
+Melodee 1.6.0, Skiff 2.2, SLOOP 2.8.5, KARMA 3.0.4, JIANT FM V10.6z, Felucca 1.8.2, ChoralRoot 0.29.1,
+CoralFlower 0.7, X0X 1.2.1, FoMni 0.4.1, AMB-1 1.3.1, LOOM-8 0.13, Hortator 1.0.1, TransitFM1 0.1.4. Keine
+veröffentlichte Version bekannt: ORBIT, gr!mm. Laut ihren Autoren auf diesem Baustein nicht erprobt: m-bootloader
+(ein solches Gerät startete danach nicht mehr) und SLOOP 3, das ihn braucht. Bei allen anderen Firmwares des Katalogs
+weiß die App es nicht – ein neueres Gerät behandelt sie dann als „nicht unterstützt“.
+
+Andere Wege herauszufinden, welchen Baustein du hast: **M-Flasher** zeigt ihn unter *Device info* (FLASH CHIP:
+`0xB36014` ist der neuere, `0x856014` der frühere), **m-bootloader** zeigt ihn in seinem Menü, und die Rettung
+(Stufe 2) liest ihn im ROM-Bootmodus – die App merkt ihn sich dann von selbst für das Gerät.
+
+Ehrlich gesagt: **Nichts davon ist mit dieser App auf einem neueren FM-1 gelaufen.** Die Original-V15 ist der Weg
+zurück, den die Autoren von Felucca, ChoralRoot, TransitFM1 und des Rettungswerkzeugs für diese Geräte nennen; ob das
+V16-Paket auf ihnen funktioniert, hat niemand aufgeschrieben. Das mitgelieferte Rettungswerkzeug
+(MvaveFM1Unbricker 1.2.1) kennt beide Bausteine.
+
 ## Gut zu wissen
 
 * Projekte und Presets einer Firmware passen nicht automatisch zu einer anderen. Deshalb: Backups pro Firmware.

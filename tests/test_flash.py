@@ -149,7 +149,11 @@ def test_plan_melodee_16_upgrade_and_downgrade(env):
     p = plan_install(new, Target.from_spec(mel, tag="v1.5.1"))
     assert p.ok and "Zurück von Melodee 1.6" in p.warnings[0] and "Melodee v1.5.1" in p.warnings[0]
     assert "melodee16_down" in p.confirmations and M.DOWNGRADE_LOST in p.lost
-    assert p.missing(["power"]) == ["melodee16_down"]
+    # (Melodee before 1.6.0 does not know the newer FM-1's flash chip: with the unit unknown the plan also asks for
+    # "no logo on the front" – tests/test_hardware.py; on an earlier unit nothing is added)
+    assert p.missing(["power"]) == ["melodee16_down", "no_logo"]
+    assert plan_install(melodee_state(version="MELODEE v1.6.0", revision="old"),
+                        Target.from_spec(mel, tag="v1.5.1")).missing(["power"]) == ["melodee16_down"]
     p = plan_install(new, Target.from_spec(firmware.spec("sloop"), tag="v2.8.3"))
     assert "Zurück von Melodee 1.6" in p.warnings[0] and "SLOOP" in p.warnings[0] and "melodee16_down" in p.confirmations
     # unknown version on the device: no guess
@@ -647,21 +651,20 @@ def fake_sysfs(root: Path, vendor="WL82", model="UBOOT1.00", usb="4c4a:8057", sg
 
 
 def test_uboot_ucun_flash_message(tmp_path):
-    """UCUN flash (0xB36014): the ROM rescue stops (unchanged) – the suite says why (in the UI language)."""
+    """The newer units' flash (0xB36014): the bundled Unbricker (1.2.1) accepts it; the suite notes which chip the
+    tool read (in the UI language) and no longer calls it unsupported."""
     from fm1companion.flash import uboot
-    assert uboot.flash_hint("Flash ID    0xB36014 (expected 0x856014, 1 MiB), type 0x00") == uboot.UCUN_TEXT
-    assert uboot.flash_hint("this does not look like an FM-1: flash ID 0xB36014 is not 0x856014. Stopping")
+    assert uboot.flash_hint("Flash ID    0xB36014 (expected 0x856014 or 0xB36014, 1 MiB), type 0x00") == uboot.UCUN_TEXT
     assert uboot.flash_hint("key=980F id=b36014") and not uboot.flash_hint("key=980F id=856014")
-    assert not uboot.flash_hint("Flash ID    0x856014 (expected 0x856014, 1 MiB)")
-    assert "nicht" in uboot.UCUN_TEXT and "nichts geschrieben" in uboot.UCUN_TEXT
-    tool = tmp_path / "tool.py"                       # stands in for the Unbricker: reports the flash, stops
-    tool.write_text("print('Flash ID    0xB36014 (expected 0x856014, 1 MiB), type 0x00')\n"
-                    "print('ERROR: flash ID 0xB36014 is not 0x856014. Stopping; nothing was written')\n"
-                    "raise SystemExit(1)\n")
+    assert not uboot.flash_hint("Flash ID    0x856014 (expected 0x856014 or 0xB36014, 1 MiB)")
+    assert "beide" in uboot.UCUN_TEXT and "0x856014" in uboot.OTHER_FLASH_TEXT and "0xB36014" in uboot.OTHER_FLASH_TEXT
+    tool = tmp_path / "tool.py"                       # stands in for the Unbricker: reports the flash
+    tool.write_text("print('Flash ID    0xB36014 (expected 0x856014 or 0xB36014, 1 MiB), type 0x00')\n")
     logs = []
     r = uboot.Runner(dry_run=True, log=logs.append, cwd=tmp_path)
     rc = r.run("info", script=tool)
-    assert rc == 1 and r.hint == uboot.UCUN_TEXT and logs.count("HINWEIS: " + uboot.UCUN_TEXT) == 1
+    assert rc == 0 and r.hint == uboot.UCUN_TEXT and logs.count("HINWEIS: " + uboot.UCUN_TEXT) == 1
+    assert r.flash_id == 0xB36014
 
 
 def test_uboot_scan_strict(tmp_path):

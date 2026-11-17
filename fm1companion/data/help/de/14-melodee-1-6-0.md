@@ -64,9 +64,10 @@ Zwischen rc.x und 1.6.0 ist das die Lautstärke (siehe oben).
 
 ## FM-1 mit UCUN-Flash
 
-Manche FM-1 haben einen Flash-Baustein von UCUN (UC25HQ80, Kennung 0xB36014). Erst ab 1.6.0 speichert Melodee
-darauf richtig. Die **USB-ROM-Rettung (Rettung Stufe 2) kennt diesen Flash noch nicht** und hält an, ohne zu
-schreiben. Die App sagt dir das dann. Normale Installationen über Firmware+ sind davon nicht betroffen.
+Die neueren FM-1 (Logo auf der Vorderseite) haben einen Flash-Baustein von UCUN (UC25HQ80, Kennung 0xB36014). Erst
+ab 1.6.0 speichert Melodee darauf; ein älteres Melodee speichert auf so einem Gerät nichts. Die App installiert
+deshalb auf einem neueren Gerät kein Melodee vor 1.6.0, und das mitgelieferte Rettungswerkzeug (Stufe 2) kennt beide
+Bausteine – siehe [Neueres FM-1](help:02-firmware).
 
 ## Melodee 1.6.1: Clock und Sync
 
