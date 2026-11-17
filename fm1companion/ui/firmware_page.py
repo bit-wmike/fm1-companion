@@ -1116,16 +1116,17 @@ class FirmwarePage(QWidget):
         show_rc = self.chk_rc.isChecked()
         installed = self.ctx.firmware_tag if self.ctx.firmware_key == s.key else ""
         local = {p.parent.name for p in firmware.local_packages() if p.parent.parent.name == s.key}
+        s3 = s.key == "sloop3"                      # (SLOOP 3: a public beta the app does not install, ui/sloop3_ui.py)
         for r in rels:
-            if r.prerelease and not show_rc and r.tag != installed:
+            if r.prerelease and not show_rc and r.tag != installed and not s3:
                 continue
             state = []
             if r.tag == installed:
                 state.append(_("● installed"))
             if r.tag in local:
                 state.append(pgettext("release list", "downloaded"))
-            it = QTreeWidgetItem([r.tag, _date_text(r.date), _("Release candidate") if r.prerelease else _("stable"),
-                                  ", ".join(state)])
+            it = QTreeWidgetItem([r.tag, _date_text(r.date), _("public beta") if s3 else
+                                  _("Release candidate") if r.prerelease else _("stable"), ", ".join(state)])
             it.setData(0, Qt.ItemDataRole.UserRole, r.tag)
             if r.tag == installed:
                 f = it.font(0)
@@ -1158,6 +1159,15 @@ class FirmwarePage(QWidget):
             self.notes.setMarkdown(r.notes or "_" + _("{tag}: no release notes available.").format(tag=r.tag) + "_")
         s = self.current_spec()
         has = r is not None
+        if s is not None and s.key == "sloop3":     # no package, no installation by the app: what it needs, the links
+            from . import sloop3_ui
+            self.notes.setHtml(sloop3_ui.notes_html(self.ctx))
+            self.b_install.setEnabled(True)
+            self.b_install.setToolTip(_("SLOOP 3 is not installed by the app: this shows the way onto the FM-1 "
+                                        "(m-bootloader, flash backup, the author's installer page)."))
+            self.b_dl.setEnabled(False)
+            self.b_dl.setToolTip(_("SLOOP 3 has no package to download: its installer page carries the firmware."))
+            return
         self.b_install.setEnabled(has and self.ctx.port is not None and not getattr(self.ctx, "is_virtual", False))
         self.b_dl.setEnabled(has)
         if not has:
@@ -1201,6 +1211,10 @@ class FirmwarePage(QWidget):
     # ------------------------------------------------------- Actions
     def _install(self):
         s, r = self.current_spec(), self.selected_release()
+        if s and s.key == "sloop3":                 # (never the package installer: SLOOP 3 has no .fwsc)
+            from . import sloop3_ui
+            sloop3_ui.open_dialog(self, self.ctx)
+            return
         if s and r:
             install_flow(self, self.ctx, s, r)
 

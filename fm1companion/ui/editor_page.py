@@ -103,7 +103,16 @@ class EditorPage(QWidget):
     def _dev_changed(self):
         if not self.view:
             return
-        if self.ctx.connected and self.ctx.link:
+        if self._s3() is not None and self.ctx.link:
+            # SLOOP 3: its own editor looks for a port named "SLOOP 3"; it may send its own protocol only
+            from .. import sloop3 as S3
+            label = self.ctx.port.label if self.ctx.port else ""
+            self.bridge.out_filter = sims.sloop3_editor_out_allowed
+            self.bridge.attach(self.ctx.link, label if S3.PORT_RE.search(label) else "FM-1 SLOOP 3")
+            if self.visible_now:
+                self.load()
+        elif self.ctx.connected and self.ctx.link:
+            self.bridge.out_filter = sims.builtin_editor_out_allowed
             self.bridge.attach(self.ctx.link, self.ctx.port.label if self.ctx.port else "FM-1")
             if self.visible_now:
                 self.load()
@@ -123,8 +132,44 @@ class EditorPage(QWidget):
     def deactivate(self):
         self.visible_now = False
 
+    def _s3(self):
+        """SLOOP 3's INFO if the active FM-1 runs SLOOP 3 (ui/device.py ctx.sloop3), else None"""
+        return getattr(self.ctx, "sloop3", None) if getattr(self.ctx, "midi_connected", False) else None
+
+    def _load_sloop3(self, force=False):
+        """SLOOP 3: its own web editor, bundled with the app (sims/_editors/sloop3: the upstream file, unchanged) –
+        no download, works offline. MIDI goes through the app's bridge, which lets only SLOOP 3's own protocol out."""
+        from .. import sloop3 as S3
+        info = self._s3()
+        bad = S3.editor_problems()
+        if bad:
+            self.loaded_for = ""
+            self.state.setText(_("The bundled SLOOP 3 editor is not complete: {problems}").format(
+                problems=", ".join(bad)))
+            self.view.setHtml(self._placeholder(
+                _("The SLOOP 3 editor that comes with the app is missing or was changed ({problems}). Please install "
+                  "the app again.<br><br>The author's editor online: {link}").format(
+                      problems=web.esc(", ".join(bad)), link=web.link_html(S3.EDITOR_URL))))
+            return
+        fits = S3.editor_fits(info.version)
+        text = _("Editor: {name} (public beta) · the author's editor, bundled · MIDI via the app").format(
+            name=info.label)
+        if not fits:
+            text += " · " + _("this is the editor of SLOOP 3 {versions} – it may not fit your version").format(
+                versions=", ".join(str(v) for v in S3.editor_manifest().get("firmware_versions", [])))
+        self.state.setText(text)
+        want = f"{S3.KEY}/{info.version}"
+        if not force and self.loaded_for == want:
+            return
+        self.loaded_for = want
+        self.current = None                     # (no repository copy: the links in the page open in the browser)
+        self.view.load(QUrl(self.server.sim_url(S3.EDITOR_SERVED, S3.editor_manifest().get("entry", "editor.html"))))
+
     def load(self, force=False):
         if not self.view:
+            return
+        if self._s3() is not None:
+            self._load_sloop3(force)
             return
         key, tag = self.ctx.firmware_key, self.ctx.firmware_tag
         spec = firmware.spec(key)
@@ -257,6 +302,16 @@ class EditorPage(QWidget):
         self.view = None
 
     def _loaded(self, ok):
+        if ok and self._s3() is not None and self.loaded_for.startswith("sloop3/"):
+            # the app's own small addition for the Chromium of Qt 6.4 (see the file), then "Connect"
+            from .. import sloop3 as S3
+            try:
+                self.page.runJavaScript((S3.EDITOR_DIR / S3.editor_manifest().get("compat", "")).read_text("utf-8"))
+            except OSError:
+                pass
+            self.page.runJavaScript("setTimeout(()=>{const b=document.getElementById('con');"
+                                    "if(b && !b.disabled && /connect/i.test(b.textContent)) b.click();},400)")
+            return
         if not ok or not self.ctx.connected:
             return
         # connect automatically if the editor has a connect button

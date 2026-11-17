@@ -201,6 +201,20 @@ def builtin_editor_out_allowed(data) -> bool:
     return True
 
 
+SLOOP3_EDITOR = (0xF0, 0x7D, 0x53, 0x33)        # SLOOP 3's editor protocol (app/edproto.h: "S3")
+
+
+def sloop3_editor_out_allowed(data) -> bool:
+    """Editor view with SLOOP 3's bundled web editor: only whole messages of SLOOP 3's own editor protocol,
+    ``F0 7D 53 33 … F7`` – that is everything this editor sends (web/src/core.js ``frame``; it sends no notes, no
+    other SysEx). Narrower than builtin_editor_out_allowed on purpose: the FM-1 behind it may have m-bootloader,
+    and nothing but the firmware's own editor protocol has any business going out from this page."""
+    data = [int(x) & 0xFF for x in data]
+    if len(data) < 6 or tuple(data[:4]) != SLOOP3_EDITOR or data[-1] != 0xF7:
+        return False
+    return all(b < 0x80 for b in data[4:-1])
+
+
 def out_filter_for(kind: str):
     """Safety filter per page type: editors may talk to the device, simulators only notes/clock."""
     return editor_out_allowed if kind == "editor" else sim_out_allowed
