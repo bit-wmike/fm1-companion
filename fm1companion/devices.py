@@ -73,6 +73,11 @@ class Profile:
     usb_path: str = ""          # last used USB connection (helps matching without a serial number)
     firmware_history: list = field(default_factory=list)   # [{"time", "firmware", "version", "identity", "how"}]
     firmware_choice: dict = field(default_factory=dict)    # identity -> firmware key chosen by the user
+    # hardware revision (fm1companion/hardware.py): "new" = logo on the front, flash UC25HQ80 0xB36014 · "old" =
+    # Puya 0x856014 · "unsure" = asked, the owner does not know · "" = never asked
+    hw_revision: str = ""
+    hw_revision_source: str = ""  # "user" (answer) | "rom" (read in ROM boot mode) | "identity" (told by the firmware)
+    flash_id: str = ""            # the JEDEC ID when it was read, e.g. "B36014"
     last_seen: float = 0.0
     created: float = field(default_factory=time.time)
 

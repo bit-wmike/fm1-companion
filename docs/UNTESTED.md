@@ -51,6 +51,7 @@ two differ. Change a row only after a hardware test report, and change both.
 | `usb_hub` – installing through a USB hub (careful mode) | no |
 | `factory_voices` – restoring the factory voices of the original V15 | no |
 | `rom_restore` – writing in ROM boot mode (recovery stage 2) | no |
+| `new_chip` – anything on a newer FM-1 (logo on the front, flash UC25HQ80) | no |
 
 ## Not tested on real hardware
 
@@ -74,6 +75,9 @@ two differ. Change a row only after a hardware test report, and change both.
 | **Rescue level 2** (ROM boot mode: write back V15, repair settings, full backup) | only with the Unbricker's mock; pkexec, kernel module `sg`, jl-uboot-tool and handing the files over to the user never on a device. The Unbricker itself has been used on real devices by its community, its embedding in the app has not |
 | **"Is my FM-1 clean?"** | quick check (command 82) only against the demo and the Melodee source code; dump check only with model dumps built from real packages, never with a real 1 MiB dump; reading in ROM boot mode only with the mock |
 | **Clean up leftovers** (erase V16 leftovers in 0x93000–0xA8FFF sector by sector, expert mode, `flash/restzone.py`) | only with the Unbricker's mock. That the WL82 loader really limits "erase sector" to 4 KiB is an assumption – otherwise the block check after each sector stops |
+| **The newer FM-1** (logo on the front, flash UC25HQ80 0xB36014): the table of minimum versions (`data/hardware.json`), the question about the unit, the blocker / confirmation in the plan, the flash ID read in ROM boot mode or from a firmware's identity answer | **nothing was run on a newer unit.** The minimum versions are read from the firmwares' sources and release notes (commits named in the table), not measured; the plan's rule is tested as pure logic and in the UI test; that the original V15 works on these units is what other projects write (Felucca, ChoralRoot, TransitFM1, the Unbricker), not something this app has seen; about V16 on these units nothing is known. Whether a logo on the front always means the newer chip is the community's rule of thumb, not a fact from M-VAVE |
+| Rescue level 2 on the newer chip: the bundled Unbricker 1.2.1 (upstream a1eaf4d) accepts 0xB36014 | upstream's own tests with its mock only (they run in this suite); the app never wrote in ROM boot mode on either chip |
+| An identity answer that carries the flash ID (fm1-base builds of 2026-11-05/06: AMB-1 1.3.1, LOOM-8 0.13 …) is recognised as an FM-1 again and the ID is kept | only with answers built in the tests after felucca-bsp's `ota.c` |
 | Rescue level 3 (Transporter with XIAO RP2040) | instructions only; the Pico-instead-of-XIAO variant is unverified |
 | V16 specifics (first-start formatting, boot head with the original loader) | only in the emulator or open; test plan: help page "V16 – note" and docs/flash-protocol.md §17 |
 

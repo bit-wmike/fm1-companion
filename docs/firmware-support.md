@@ -350,3 +350,41 @@ loader families / `requiresStockV15`.
 | VNL-1 (`vnl-1`) | 0 | Felucca | – | no Felucca INFO | – | no INFO: backup off, named by identity | no package |  |  |
 | WitchBox (`witchbox`) | 0 | SLOOP | – | no Felucca INFO | – | no INFO: backup off, named by identity | no package |  |  |
 | Zen-Lite (`zen-lite`) | 0 | SLOOP | – | no Felucca INFO | – | no INFO: backup off, named by identity | no package |  |  |
+
+## The newer FM-1's flash chip (2026-11-17)
+
+FM-1s sold from late 2026 (the M-VAVE logo on the front) carry a UCUN UC25HQ80 flash (JEDEC ID 0xB36014) instead of
+the Puya P25Q80H (0x856014). A firmware that does not know the ID keeps nothing and usually cannot start an update any
+more. The minimum version per firmware is data (`fm1companion/data/hardware.json`, read by `fm1companion/hardware.py`);
+the installation plan uses it (`docs/flash-protocol.md` §19). Read in the firmwares' repositories as cloned on
+2026-11-17 (`git log -S B36014`, then the tag that first contains the commit); **nothing of this was run on a newer
+FM-1 by this app**.
+
+| Firmware (key) | First version that accepts 0xB36014 | Repository, commit | Read in |
+|---|---|---|---|
+| Melodee (`melodee`) | 1.6.0 | keremimo/melodee b8f9f9f | firmware/src/project.c persist_boot (PR #111, issue #110); docs/RELEASE_1.6.0.md. In v1.6.0 and v1.6.1, in no release candidate of 1.6.0. |
+| Skiff (`skiff`) | 2.2 | illuminus5/skiff 76b5f9c | release commit of 2.2: "Newer FM-1s with the UC25HQ80 flash save and update (#96)" |
+| SLOOP (2.x) (`sloop`) | 2.8.5 | isod89/sloop-fm1 bac9c05 | fm1_flash_id.h; README.md and SLOOP.md, note on 2.8.5 |
+| KARMA (`karma`) | 3.0.4 | eatyourgreensstudio-dotcom/karma-fm1 d1a7c94 | release commit "KARMA 3.0.4: steady with Ableton, and the new flash chip" (a SLOOP fork: FL_JEDEC_OK) |
+| JIANT FM (`jiant-fm`) | V10.6z | juanjiant-bit/JIANT ac455d65 | commit "V10.6z: accept the newer FM-1s' flash"; CHANGELOG.md V10.6z (2026-11-07); README.md |
+| Felucca (`felucca`) | 1.8.2 | hugelton/Felucca f4cbb6a | "fix(flash): recognize UC25HQ80 in newer FM-1 units (fixes #320)"; README.md "Newer FM-1 flash" |
+| ChoralRoot (`choralroot-fm-1`) | 0.29.1 | Quixotic7/ChoralRootFM1 9e4b0b7 | hal/fm1_flash_map.h FL_JEDEC_OK; docs/HISTORY.md 3y222/3y223; docs/INSTALL-COMPAT.md "A second flash chip"; docs/releases/0.29.1.md |
+| CoralFlower (`coralflower`) | 0.7 | FicusFicusov/CoralFlower 59fbdb1 | commit "Support both known FM-1 flash chips" (first tag: v0.7) |
+| X0X (`x0x`) | 1.2.1 | charlesvestal/fm1-x0x a02727b | firmware/hal/fm1_flash_ok.h (fm1-base#35); issue #46: 1.2.0 on a UC25HQ80 starts but cannot save or install |
+| FoMni (`fomni`) | 0.4.1 | charlesvestal/fm1-fomni 87ac7ad | firmware/hal/fm1_flash_ok.h (fm1-base#35) |
+| AMB-1 (`amb-1`) | 1.3.1 | charlesvestal/fm1-amb 285215a | v1.3.1 pins fm1-base 9bca7154, which contains fm1-base e75b072 (device/fm1_flash_ok.h); firmware.json hardware.flash names B36014 from v1.3.1. v1.3 pins fm1-base 15dff6de (2026-10-17), without it. |
+| LOOM-8 (`loom-8`) | 0.13 | charlesvestal/fm1-loom cbd6524 | v0.13 pins fm1-base 698e2cba, which contains fm1-base e75b072; firmware.json hardware.flash names B36014 from v0.13. v0.12.1 pins fm1-base 2e96d846, without it. |
+| Hortator (`hortator`) | 1.0.1 | DeadActive/hortator ac55f47 | tag drum-v1.0.1: "Flash: accept the UC25HQ80 (JEDEC 0xB36014) of newer FM-1s" |
+| TransitFM1 (`transitfm1`) | 0.1.4 | Quixotic7/TransitFM1 52daf9a | firmware/hal/fm1_flash_id.h; docs/SAFETY.md "The flash chip" |
+| ORBIT (`orbit`) | **none** (no released version) | dspaudio/orbit 1dbb77d | firmware/hal/fm1_flash_map.h at 1dbb77d (2026-11-04, after v1.0.1B): FL_JEDEC_OK accepts only 0x856014 on the FM-1; project.c stays RAM-only otherwise and loader.c asks the same check |
+| gr!mm (`grimm`) | **none** (no released version) | GRiMMBIENT/grimm f1b90ec | the fix exists only as commit f1b90ec (2026-11-08) on the branch v3, in no release; the latest release v2.0.2 (2026-11-03) does not have it |
+| SLOOP 3 (`sloop3`) | **risky** – accepted in the code, not proven | isod89/sloop3-fm1 915b54f | its installer page (index.html, "Good to know"): "SLOOP 3 accepts this chip, but it has not been tried on one yet"; it needs m-bootloader, see there |
+| m-bootloader (`m-bootloader`) | **risky** – accepted in the code, not proven | jvitkauskas/m-bootloader 3ac7651 | README.md "Little tested on the FM-1's newer flash chip": one such unit did not start after 1.1 or 1.2 was installed, cause not known; another runs 1.3 and 2.0 on one owner's report (M-Flasher #13); "install it at your own risk" |
+| FM1 Open (`fm1-open`) | **not known** | m-vave/fm1_open 4c7496d | no statement and no check of the flash ID found in the repository (2026-10-21) |
+| Original V15 (`stock-v15`) | no check; named as the way back | m-vave/fm1_open b178ac4 | No source read says which original version the newer units ship with. Named as the way back on exactly these units by: Felucca README (1.8.2), ChoralRoot docs/releases/0.29.1.md and docs/INSTALL-COMPAT.md, TransitFM1 docs/SAFETY.md, MvaveFM1Unbricker (README and site, "New memory chip & Firmware Lock"). ChoralRoot HISTORY 3y222: such a unit took a firmware through M-VAVE's own updater from the original firmware it shipped with. |
+| Original V16 (`stock-v16`) | **not known** | – | No source read says whether the V16 package (2026-10-21) was run on a newer unit, nor which version these units ship with. |
+
+Every other firmware of the catalog counts as **not known**: the Mooring catalog (awesome-fm-1 `mooring/catalog.json`)
+has no field for the flash chip. A firmware built on fm1-base may say it in its `firmware.json`
+(`hardware.flash`, fm1-base `docs/FIRMWARE-JSON.md`); the link import reads that file at the release's tag and keeps
+it with the firmware. `tests/test_hardware.py` fails when a built-in firmware or a studio twin has no row.
