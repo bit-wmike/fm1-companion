@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-only
 # FM-1 Companion Suite @VERSION@ – self-extracting installer
 #   sh FM-1-Companion-Suite-@VERSION@.run                     install graphically
 #   … --unattended [--prefix DIR] [--system] [--no-deps] [--desktop] [--demo-data] [--no-fluidsynth-fix]

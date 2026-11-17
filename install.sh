@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-only
 # Install the FM-1 Companion Suite – for your own user (the app itself needs no root).
 #
 #   ./install.sh            check/install system packages (asks for sudo), install the app
@@ -69,6 +70,9 @@ for a in "$@"; do
     --usb-power-rule) UDEV=yes ;;
     --no-usb-power-rule) UDEV=no ;;
     --desktop|--demo-data|--no-menu|--no-fluidsynth-fix) EXTRA+=("$a") ;;
+    *) printf '%s %s\n' "$(msg "Unknown option:" "Unbekannte Option:")" "$a" >&2
+       printf '%s\n' "$(msg "Nothing was changed. See ./install.sh --help" "Nichts wurde verändert. Siehe ./install.sh --help")" >&2
+       exit 2 ;;
   esac
 done
 

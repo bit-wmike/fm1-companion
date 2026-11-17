@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The simulated FM-1 of the SLOOP web editor (makeMockDevice from isod89/sloop-fm1 web/editor.html)
 // as a process – and tools with which tests/test_sloop_backup.py checks the app against the editor's code.
 //   node tests/mock_sloop.mjs <editor.html>                  mock device: one MIDI message per line as hex
