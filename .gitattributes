@@ -1,0 +1,25 @@
+# Line endings and binary files. Scripts must keep LF (a CRLF shebang does not start on Linux).
+* text=auto
+*.sh   text eol=lf
+*.py   text eol=lf
+*.mjs  text eol=lf
+*.js   text eol=lf
+*.po   text eol=lf
+*.pot  text eol=lf
+*.md   text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.in   text eol=lf
+*.1    text eol=lf
+
+*.wasm binary
+*.png  binary
+*.ico  binary
+*.fwsc binary
+*.uf2  binary
+*.bin  binary
+*.syx  binary
+*.wav  binary
+*.mid  binary
+*.zip  binary
+*.gz   binary

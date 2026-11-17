@@ -4,6 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FM-1 Companion\n"
 "Language: de\n"
+"X-Language-Name: Deutsch\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1582,7 +1583,7 @@ msgid ""
 "  --demo       start with three simulated FM-1 (separate settings, your data stays untouched)\n"
 "  --check      check system packages and show the apt command for anything missing\n"
 "  --syscheck   check USB, power and audio (like Tools › System check)\n"
-"  --lang LANG  user interface language for this start: en, de, es (default: setting/system)\n"
+"  --lang LANG  user interface language for this start: {languages} (default: setting/system)\n"
 "  --no-splash  start without splash screen\n"
 "  --debug      verbose log (~/.local/state/fm1-companion/logs)\n"
 "  --version    show version\n"
@@ -1593,7 +1594,7 @@ msgstr ""
 "  --demo       mit drei simulierten FM-1 starten (eigene Einstellungen, deine Daten bleiben unberührt)\n"
 "  --check      Systempakete prüfen und den apt-Befehl für Fehlendes zeigen\n"
 "  --syscheck   USB, Strom und Audio prüfen (wie Werkzeuge › Systemcheck)\n"
-"  --lang LANG  Sprache der Oberfläche für diesen Start: en, de, es (Standard: Einstellung/System)\n"
+"  --lang LANG  Sprache der Oberfläche für diesen Start: {languages} (Standard: Einstellung/System)\n"
 "  --no-splash  ohne Startbildschirm starten\n"
 "  --debug      ausführliches Protokoll (~/.local/state/fm1-companion/logs)\n"
 "  --version    Version anzeigen\n"
@@ -1637,3 +1638,15 @@ msgstr "Die App läuft weiter. Soweit die App es erkennen kann, hat sie in dem M
 #, python-brace-format
 msgid "If the error comes back, save a bug report and attach it to a new issue on the project's GitHub issues page ({url}). The report contains logs, versions and settings, no backups, samples or projects. Personal paths, names and credentials are removed as far as the app can recognise them – please look through it before you post it publicly."
 msgstr "Wenn der Fehler wiederkommt, speichere einen Fehlerbericht und hänge ihn an ein neues Issue auf der GitHub-Issues-Seite des Projekts an ({url}). Der Bericht enthält Protokolle, Versionen und Einstellungen, keine Backups, Samples oder Projekte. Persönliche Pfade, Namen und Zugangsdaten werden entfernt, soweit die App sie erkennt – bitte sieh ihn durch, bevor du ihn öffentlich postest."
+
+#: fm1companion/diag.py
+msgid "recovery tool for ROM boot mode (recovery stage 2) and for the Transporter (stage 3), bundled unchanged; the app runs it as a separate program"
+msgstr "Rettungswerkzeug für den ROM-Bootmodus (Rettung Stufe 2) und für den Transporter (Stufe 3), unverändert beigelegt; die App startet es als eigenes Programm"
+
+#: fm1companion/diag.py
+msgid "firmware for an RP2040 board that reaches an FM-1 that no longer answers over USB (recovery stage 3, done by hand); bundled as a prebuilt file together with the Raspberry Pi Pico SDK (BSD-3-Clause), TinyUSB by Ha Thach (MIT) and Pico-PIO-USB by sekigon-gonnoc (MIT)"
+msgstr "Firmware für ein RP2040-Board, die ein FM-1 erreicht, das über USB nicht mehr antwortet (Rettung Stufe 3, von Hand); als fertige Datei beigelegt, zusammen mit dem Raspberry Pi Pico SDK (BSD-3-Clause), TinyUSB von Ha Thach (MIT) und Pico-PIO-USB von sekigon-gonnoc (MIT)"
+
+#: fm1companion/diag.py
+msgid "talks to the chip's ROM boot mode for recovery stage 2; not bundled – the Unbricker downloads one fixed version, and only after you agree"
+msgstr "spricht mit dem ROM-Bootmodus des Chips für die Rettung Stufe 2; nicht beigelegt – der Unbricker lädt eine feste Version herunter, und nur nachdem du zugestimmt hast"

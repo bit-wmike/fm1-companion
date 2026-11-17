@@ -4,6 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FM-1 Companion\n"
 "Language: de\n"
+"X-Language-Name: Deutsch\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1764,7 +1765,7 @@ msgstr "{title} – Schritt 2 von 2"
 #, python-brace-format
 msgid "<b>{n} sector of 4 KiB will be erased: {ranges}</b> – only V16 leftovers, nothing of your firmware ({firmware})."
 msgid_plural "<b>{n} sectors of 4 KiB each will be erased: {ranges}</b> – only V16 leftovers, nothing of your firmware ({firmware})."
-msgstr[0] "<b>Gelöscht werden {n} Sektoren à 4 KiB: {ranges}</b> – nur V16-Reste, nichts von deiner Firmware ({firmware})."
+msgstr[0] "<b>Gelöscht wird {n} Sektor à 4 KiB: {ranges}</b> – nur V16-Reste, nichts von deiner Firmware ({firmware})."
 msgstr[1] "<b>Gelöscht werden {n} Sektoren à 4 KiB: {ranges}</b> – nur V16-Reste, nichts von deiner Firmware ({firmware})."
 
 #: fm1companion/ui/clean_check.py:487
@@ -1795,7 +1796,7 @@ msgstr "{title} – Bestätigen"
 #, python-brace-format
 msgid "To erase {n} sector, type {word}:"
 msgid_plural "To erase {n} sectors, type {word}:"
-msgstr[0] "Zum Löschen von {n} Sektoren {word} eintippen:"
+msgstr[0] "Zum Löschen von {n} Sektor {word} eintippen:"
 msgstr[1] "Zum Löschen von {n} Sektoren {word} eintippen:"
 
 #: fm1companion/ui/clean_check.py:503
@@ -1806,7 +1807,7 @@ msgstr "Aufräumen abgebrochen – es wurde nichts gelöscht."
 #, python-brace-format
 msgid "{level}: {n} sector erased and checked."
 msgid_plural "{level}: {n} sectors erased and checked."
-msgstr[0] "{level}: {n} Sektoren gelöscht und geprüft."
+msgstr[0] "{level}: {n} Sektor gelöscht und geprüft."
 msgstr[1] "{level}: {n} Sektoren gelöscht und geprüft."
 
 #: fm1companion/ui/clean_check.py:511

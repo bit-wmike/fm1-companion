@@ -104,15 +104,16 @@ def main() -> int:
     if "--syscheck" in sys.argv:
         return syscheck_cli()
     if "--help" in sys.argv or "-h" in sys.argv:
+        from .i18n import available_languages
         print(_("Usage: fm1-companion [OPTION]\n\n"
                 "  --demo       start with three simulated FM-1 (separate settings, your data stays untouched)\n"
                 "  --check      check system packages and show the apt command for anything missing\n"
                 "  --syscheck   check USB, power and audio (like Tools › System check)\n"
-                "  --lang LANG  user interface language for this start: en, de, es (default: setting/system)\n"
+                "  --lang LANG  user interface language for this start: {languages} (default: setting/system)\n"
                 "  --no-splash  start without splash screen\n"
                 "  --debug      verbose log (~/.local/state/fm1-companion/logs)\n"
                 "  --version    show version\n"
-                "  -h, --help   this help"))
+                "  -h, --help   this help").format(languages=", ".join(available_languages())))
         return 0
     if "--demo" in sys.argv:
         os.environ["FM1C_DEMO"] = "1"

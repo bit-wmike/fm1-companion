@@ -65,7 +65,7 @@ def test_inspect_melodee_backup():
     labels = {p.label: p for p in rep.used_presets}
     assert set(labels) == {"U001", "U005", "U018", "U075", "U379"}       # WIPE-PENDING lies outside
     assert labels["U005"].favorite and labels["U005"].engine_name == "SID" and labels["U018"].engine_name == "FM6"
-    assert "3 von 18 belegt, 1 Favoriten" in rep.obj(6).detail
+    assert "3 von 18 belegt, 1 Favorit" in rep.obj(6).detail
     assert len(rep.presets) == 384
     assert rep.firmware_key == "melodee" and "2 Projekte" in rep.summary()
 

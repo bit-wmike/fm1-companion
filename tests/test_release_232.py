@@ -26,7 +26,8 @@ COMMIT_161 = "165d177a425944f3d30b0b669255a6ed0050c3a5"
 def test_version_232():
     assert tuple(int(x) for x in __version__.split(".")) >= (2, 3, 2)
     meta = (ROOT / "packaging" / "fm1-companion.metainfo.xml").read_text("utf-8")
-    assert '<release version="2.3.2"' in meta and meta.index("2.3.2") < meta.index("2.3.1")
+    # (compare the release entries, not any mention: the 2.6.1 notes say "since 2.3.1")
+    assert meta.index('<release version="2.3.2"') < meta.index('<release version="2.3.1"')
     readme = (ROOT / "README.md").read_text("utf-8")
     assert "1.6.1" in readme
 

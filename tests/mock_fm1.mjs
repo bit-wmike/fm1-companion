@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // The simulated FM-1 from the Melodee editor itself (makeMockDevice) as a process:
 // one MIDI message per line as hex on stdin/stdout. With it the app tests its
 // Web MIDI bridge against exactly the device the editor's developer tests against.

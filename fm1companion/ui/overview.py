@@ -277,7 +277,7 @@ class OverviewPage(QWidget):
             self.up_text.setText(_("No device connected."))
             return
         if c.port and c.port.update_mode:
-            self.up_text.setText(_("The FM-1 is waiting in update mode – finish the installation first (page “Rescue”)."))
+            self.up_text.setText(_("The FM-1 is waiting in update mode – finish the installation first (page “Recovery”)."))
             return
         if i and i.get("firmware") and i.get("firmware") != c.firmware_key:
             i = {}                                   # a result from another device doesn't apply here

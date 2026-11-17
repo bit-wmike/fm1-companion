@@ -30,8 +30,8 @@ class _Welcome(QWizardPage):
     def __init__(self, wz):
         super().__init__()
         self.setTitle(_("Welcome to the {suite}").format(suite=SUITE_NAME))
-        self.setSubTitle(_("Everything is set up in a minute. You can open the wizard again later via "
-                           "Help › Setup wizard."))
+        self.setSubTitle(_("Everything is set up in a minute. You can open this assistant again later via "
+                           "Help › Setup assistant …"))
         lay = QVBoxLayout(self)
         lay.addWidget(_p(_("The suite takes care of everything around your M-VAVE FM-1: changing "
                            "firmware, backups, sounds and presets, samples, MIDI, simulator and "
@@ -227,7 +227,7 @@ class _Device(QWizardPage):
                 self.name.setText(c.profile.name)
             self.name.setEnabled(True)
         elif c.port and proto == "update":
-            self.state.setText(_("An FM-1 is waiting in <b>update mode</b>. After the wizard, continue on "
+            self.state.setText(_("An FM-1 is waiting in <b>update mode</b>. After this assistant, continue on "
                                  "the page “Recovery” – there the interrupted installation is completed."))
             self.name.setEnabled(c.profile is not None)
         elif c.port:

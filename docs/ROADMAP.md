@@ -1,4 +1,23 @@
-# Roadmap: Studio twin
+# Roadmap
+
+What is done, in which version, and what is planned. Versions 2.5.0 and 2.6.0 were published as source code only;
+the first package that contains their features is 2.6.1. What has run on a real FM-1 is a different question –
+see [UNTESTED.md](UNTESTED.md).
+
+## Planned
+
+Not promises, and in no fixed order. Nothing here exists in the app yet.
+
+| What | Why | Note |
+|---|---|---|
+| **TransitFM1 as an optional stop** between two firmwares, next to the original V15 | A switch always goes through the original V15 today, and the V15 step has no protection against an interrupted write. [TransitFM1](https://github.com/Quixotic7/TransitFM1) (GPL-3.0) is made for this stop and protects the write; Melodee recommends it. | An option, not a replacement: some firmwares need V15 as the start. Needs research per firmware and would be untested on hardware at first, like every flash path. |
+| **ORBIT twin** | ORBIT is recognised and backed up (through SLOOP's protocol), but it is the one bigger firmware without a Studio twin. | Open licence question: ORBIT contains material that its authors did not relicense. A twin is only bundled when its NOTICE can state the origin honestly. |
+| **Simple / Advanced view** | The app shows every function to everyone. A simple view would show what a musician needs on a normal day and keep recovery, expert options and protocol details one click away. | A separate release (2.7.0); nothing is removed. |
+| **Performance pass** | Start time, page switches and long lists on a Raspberry Pi 5; memory of the Studio twins. | Measured first, then changed. |
+| **Click-through tests** | The UI tests called functions directly and never clicked – that is how three Studio buttons could crash on click from 2.3.1 to 2.6.0. | A static check of every button connection exists since 2.6.1 (`tests/test_click_slots.py`); a test that really clicks through every page is the next step. |
+| **Hardware test reports** | Almost every flash and recovery path has only run against simulations. | Not code: needs people with an FM-1 – issue form "Hardware test report". |
+
+## Studio twin
 
 Guiding idea: the FM-1 is the instrument (sketching, trying things out), the suite is the studio. The suite has a
 digital twin of the FM-1: the same firmware, with the complete device state from the backup, identical
@@ -8,16 +27,16 @@ FM-1. The suite does not replace a DAW (Logic, Audacity), but it can do everythi
 | Step | Firmware | Status |
 |---|---|---|
 | 1 | **Melodee** (priority 1), matching the version on the device (1.6.1, 1.6.0, 1.6.0-rc.7 and rc.8 bundled) | **done in 2.2.0**, 1.6.0 since 2.3.0, 1.6.1 since 2.3.2 (page "Studio", virtual device, playback target "Im Studio" – in the Studio) |
-| 2 | **SLOOP**, the stable of its installer (2.8.5), plus the release before (2.8.4) | **done** (branch `studio-sloop`; same page, virtual device, backup ↔ twin in SLOOP's own format, write back) |
-| 3 | **Skiff**, matching the version on the device (2.2 and 2.1.1 bundled) | **done** (branch `studio-skiff`; same page, virtual device, backup ↔ twin, write back) |
-| 3b | **JIANT FM**, the public stable of its installer (V10.6z2), plus the earlier stable V10.60 and beta V10.61 | **done** (branch `studio-jiant`; same page, virtual device, backup ↔ twin, write back) |
-| 3c | **CoralFlower**, the stable of its installer (0.7.1), plus 0.7 | **done** (branch `studio-coralflower`; same page, virtual device, backup ↔ twin, write back) |
-| 3d | **KARMA**, the version its installer serves (3.1), plus 3.0.5 | **done** (branch `studio-karma`; same page, virtual device, backup ↔ twin through SLOOP's protocol, write back) |
-| 3e | **Felucca**, the stable of its installer (1.8.1), plus 1.8.0 | **done** (branch `w-felucca`; same page, virtual device, backup ↔ twin with the sample slots, write back; Felucca forks get its twin with a warning) |
-| 3f | **ChoralRoot FM-1**, the release its installer offers (0.39), plus 0.38 | **done** (branch `w-group4`; same page, virtual device, backup ↔ twin with RESTART, write back; loop slots on the panel) |
-| 3g | **X0X** (1.2.1, 1.2.0), **FoMni** (0.4.1, 0.4), **AMB-1** (1.3.2, 1.3.1), **LOOM-8** (0.14, 0.13.1) | **done** (branch `w-cv`; X0X and LOOM-8: backup ↔ twin as their own image, taken whole, write back; FoMni and AMB-1 have no backup over USB: play, export, studio states) |
+| 2 | **SLOOP**, the stable of its installer (2.8.5), plus the release before (2.8.4) | **done in 2.5.0** (same page, virtual device, backup ↔ twin in SLOOP's own format, write back) |
+| 3 | **Skiff**, matching the version on the device (2.2 and 2.1.1 bundled) | **done in 2.5.0** (same page, virtual device, backup ↔ twin, write back) |
+| 3b | **JIANT FM**, the public stable of its installer (V10.6z2), plus the earlier stable V10.60 and beta V10.61 | **done in 2.5.0** (same page, virtual device, backup ↔ twin, write back) |
+| 3c | **CoralFlower**, the stable of its installer (0.7.1), plus 0.7 | **done in 2.5.0** (same page, virtual device, backup ↔ twin, write back) |
+| 3d | **KARMA**, the version its installer serves (3.1), plus 3.0.5 | **done in 2.5.0** (same page, virtual device, backup ↔ twin through SLOOP's protocol, write back) |
+| 3e | **Felucca**, the stable of its installer (1.8.1), plus 1.8.0 | **done in 2.6.0** (same page, virtual device, backup ↔ twin with the sample slots, write back; Felucca forks get its twin with a warning) |
+| 3f | **ChoralRoot FM-1**, the release its installer offers (0.39), plus 0.38 | **done in 2.6.0** (same page, virtual device, backup ↔ twin with RESTART, write back; loop slots on the panel) |
+| 3g | **X0X** (1.2.1, 1.2.0), **FoMni** (0.4.1, 0.4), **AMB-1** (1.3.2, 1.3.1), **LOOM-8** (0.14, 0.13.1) | **done in 2.6.0** (X0X and LOOM-8: backup ↔ twin as their own image, taken whole, write back; FoMni and AMB-1 have no backup over USB: play, export, studio states) |
 | – | **ORBIT**, **Hortator**, **GR!MM** | **no twin** (ORBIT: TE's CLUSTER tables are not relicensed; Hortator, GR!MM: their own editor protocols) – recognised, ORBIT's backups through SLOOP's protocol |
-| 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V15/V16 differ | **done** (branch `w-fm1open`; the FM1 Open twin for FM1 Open devices – backup ↔ twin over its own file protocol, write back – and as the stand-in for V15/V16 with a note; V15's factory voice restore) |
+| 4 | **Original firmware:** for now via **FM1 Open** (M-VAVE's open V14 code), with a note that V15/V16 differ | **done in 2.6.0** (the FM1 Open twin for FM1 Open devices – backup ↔ twin over its own file protocol, write back – and as the stand-in for V15/V16 with a note; V15's factory voice restore) |
 | – | **Original V16** | **paused, not dropped** |
 | – | **Original V15: own voices into a bank A–D** (the same commands 33/34 as M-VAVE's factory restore, other data; the bank's current voices cannot be read back first) | **needs a hardware test** – not offered in the app; only the factory restore is |
 
@@ -187,9 +206,9 @@ backup refused onto SLOOP before anything is written.
 Open (KARMA): the project view and `projectfmt` do not read KARMA's FUN7 projects; the Projects page lists KARMA's
 parts by number, not as A–D (it checks for "sloop" only), and `projects.family` does not know KARMA (its FUN7 projects
 read as SLOOP's); KARMA's three saved songs (SAVE on the SONG screen) are in
-no backup (KARMA's own neither); no USB audio / STEMS, no TRS MIDI, one core in the twin; KARMA is not in the bundled
-catalog, so installing it from the app needs a built-in firmware entry (its packages are on its GitHub Pages,
-`docs/firmware/karma-<version>.fwsc`, checksum in `docs/webapp/installer/index.html`), not only the twin. Checked only
+no backup (KARMA's own neither); no USB audio / STEMS, no TRS MIDI, one core in the twin; KARMA can be installed from the app
+since 2.6.0 (a built-in firmware entry; its packages come from its GitHub Pages, checksums compared against a clone –
+the installation itself was never run on a real FM-1). Checked only
 against the twin itself, never a real KARMA FM-1 or a backup of KARMA's own web editor (docs/UNTESTED.md).
 
 ## Second route: fm1-emu (processor emulation)
@@ -219,16 +238,16 @@ V16 support is explicitly wanted. Blocker: the V16 source code is not open; M-VA
   USB via interrupts, which fm1-emu does not emulate yet – so a backup via USB does not work yet; sound,
   operation and flash do. Measure the tempo on the Pi.
 
-## Housekeeping: storage, cleanup, undo (2.5.x, 2.6.x)
+## Housekeeping: storage, cleanup, undo (2.6.0)
 
-User report: "How do I delete old logs and downloaded firmware files?" Done in 2.5.x: **Settings › Storage**
+User report: "How do I delete old logs and downloaded firmware files?" Done in 2.6.0: **Settings › Storage**
 (also Tools › *Storage and cleanup …*, logic in `fm1companion/storage.py`, tests `tests/test_storage.py`):
 per category size, *Open folder*, *Delete …* with a question; automatic cleanup at most once a day (rotated logs
 after 30 days, 2 downloads per firmware plus the versions on the known devices, 3 journal package copies, 2 editor
 versions per firmware, catalog images / GitHub answers / sample-pack checkouts / `fm1c-*` temp files after 30 days).
 Never deleted: the user's folders in `~/FM-1` (only `Firmware/<known firmware>/<version>` counts as a download),
 the journal, the package copy and source of an active (resumable) journal entry, the git tool copies while an
-entry is active, the newest original V15 download (offline rescue), the rescue tool, QtWebEngine site data (2.6.x: on request, see below) –
+entry is active, the newest original V15 download (offline rescue), the rescue tool, QtWebEngine site data (on request, see below) –
 and nothing while an installation runs (in-process lock or a live `install.lock`). The system check shows the total.
 Also fixed: Studio states can be deleted one by one (orphans of forgotten devices are marked), the catalog's
 remembered list can be cleared (More › *Clear the remembered list …*), General › *Default values* (fills the dialog,
@@ -256,7 +275,7 @@ What grows and where (measured from the code):
 | Automatic backups in the mirror | mirror folder (NAS) | per mirrored backup | same retention, only files the app copied |
 | Recordings, projects, kits, samples, downloads | `~/FM-1/…` | user's | never by the app (pages have their own delete) |
 
-Done in 2.6.x (the former open list, all built in):
+Also done in 2.6.0 (the former open list, all built in):
 
 - **NAS mirror retention:** `autobackup.prune_mirror` applies `keep_backups` (and *newest of each month*) to the
   mirror folder after every mirrored backup and after *Mirror now*. It only deletes files this app copied there
