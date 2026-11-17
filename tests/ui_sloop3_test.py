@@ -300,6 +300,53 @@ def main():
           f"older revision in MIDI MODE: installer page and flash backup offered ({state})")
     c.mboot = None
     QDialog.exec = _dialog_exec
+    # ---------------------------------------------------------------- m-bootloader's MIDI MODE
+    sys.path.insert(0, str(ROOT / "tests"))
+    from fake_mboot import FakeMboot
+    from fm1companion.devices import PortInfo
+    from fm1companion.ui import device as dev_mod
+    flash = bytes((i * 31 + (i >> 9)) & 255 for i in range(0x100000))
+    units: list = []
+
+    def opener(_port):
+        units.append(FakeMboot(flash, jedec=mboot.JEDEC_OLD, version="2.4-395e6cc"))
+        return units[-1]
+    mport = PortInfo("FM-1 Update in", "FM-1 Update out", "FM-1 Update", None, serial="DEMO-1", usb_id="1209:0002",
+                     usb_path="demo-usb-1", update_mode=True)
+    check(mboot.is_candidate(mport.label, mport.usb_id), "the “FM-1 Update” port is asked who it is")
+    real_open = mboot.open_port
+    mboot.open_port = opener
+    real_loader = dev_mod._probe_loader
+    dev_mod._probe_loader = lambda port: "ota-FM-1_900"
+    try:
+        res = dev_mod._probe_update_port(mport)
+    finally:
+        dev_mod._probe_loader = real_loader
+    check(res[0] == "ota-FM-1_900" and res[1] is not None and res[1].version == "2.4-395e6cc" and
+          units[-1].commands == [0x12], f"m-bootloader identified with the one question 0x12 ({res[1]})")
+    c.hold = True                                  # (the simulated device stays: no scan in between)
+    c.disconnect(None)
+    c.port = mport
+    c._assign_profile()
+    c._loader_probed(res, mport)
+    check(c.protocol == "update" and c.mboot is not None and "m-bootloader 2.4-395e6cc" in c.title()
+          and "MIDI" in c.status_text(), f"device state: {c.title()} · {c.status_text()[:50]}")
+    w.overview.refresh()
+    check("m-bootloader" in w.overview.lbl["Firmware"].text() and "Puya" in w.overview.lbl["Version"].text(),
+          f"overview: {w.overview.lbl['Firmware'].text()} / {w.overview.lbl['Version'].text()}")
+    check(BP.no_backup_reason(c) != "", "no data backup in MIDI MODE (no firmware runs)")
+    saved = sloop3_ui.flash_backup(w, c)
+    check(saved is not None and saved.read_bytes() == flash and saved.parent.name == "Flash",
+          f"flash backup saved: {saved.name if saved else '-'}")
+    u = units[-1]
+    check(set(u.commands) == {0x12, 0x23, 0x24} and not (u.writes or u.installs or u.restarts or u.downloads),
+          "the flash backup only read (0x12, 0x23, 0x24)")
+    check(saved is not None and mboot.check_backup(saved)["flash_chip"]["jedec"] == "0x856014", "its description fits")
+    w.backups.refresh()
+    wait(200)
+    check(not any("Flash" in (w.backups.tree.topLevelItem(i).text(0) or "") for i in range(w.backups.tree.topLevelItemCount())),
+          "the flash backup is not listed as a (damaged) data backup")
+    mboot.open_port = real_open
     check(not errors(), f"still no JavaScript error ({errors()[:3]})")
     finish()
 

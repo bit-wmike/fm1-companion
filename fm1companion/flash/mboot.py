@@ -253,10 +253,10 @@ def open_port(port):
     return MidoTransport(port.in_name, port.out_name)
 
 
-def identify_port(port, opener=open_port) -> Info | None:
+def identify_port(port, opener=None) -> Info | None:
     """open the port, ask 0x12, close. Never raises."""
     try:
-        t = opener(port)
+        t = (opener or open_port)(port)
     except Exception:  # noqa: BLE001
         return None
     try:
