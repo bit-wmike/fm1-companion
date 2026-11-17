@@ -52,7 +52,7 @@ Para cada afirmación, la app indica de dónde procede:
   lo reanuda. Se supone (sin comprobarlo) que el chip borra exactamente 4 KiB con la orden “borrar sector” – la
   app comprueba entonces cada bloque de 64 KiB y se detiene de inmediato si falta más. Según todo lo conocido hasta ahora
   (emulador, código fuente), los restos son inofensivos: dejarlos donde están también está bien.
-  Para practicar: marca “Simulación” en el Nivel 2 – entonces todo se ejecuta contra la flash de práctica del unbricker.
+  Para practicar: marca “Simulación” en la Etapa 2 – entonces todo se ejecuta contra la flash de práctica del unbricker.
 
 ## Plan de prueba para tu primera prueba real con V16 (preferiblemente con un FM-1 prescindible)
 
@@ -72,11 +72,11 @@ Por favor, **no** pruebes actualizaciones interrumpidas a propósito – ni siqu
 ## Si el camino de vuelta no funciona
 
 * Primero, el **modo de actualización** normal (mantén OCT− al encender, consulta “Modo de actualización y rescate”).
-* Si el FM-1 ya no acepta nada ahí o se queda a oscuras: [Recuperación › Nivel 2](app://page/recovery)
+* Si el FM-1 ya no acepta nada ahí o se queda a oscuras: [Recuperación › Etapa 2](app://page/recovery)
   (modo de arranque ROM “WL82 UBOOT1.00” con el unbricker integrado). Escribe la V15 original y se niega
   a escribir V16 (solo escribe hasta 0x92FFF – V16 quedaría truncada). Aún no lo hemos probado con
   V16 en el dispositivo.
-* Si, tras V16, la **cabecera de arranque de V16** está en el dispositivo (la copia de seguridad lo muestra), el Nivel 2 **no** escribe V15:
+* Si, tras V16, la **cabecera de arranque de V16** está en el dispositivo (la copia de seguridad lo muestra), la Etapa 2 **no** escribe V15:
   no está claro si V15 arranca bajo esta cabecera. En ese caso usa [M-Flasher](https://github.com/jvitkauskas/m-flasher) o
   `fm1_rescue.py` de [felucca-bsp](https://github.com/hugelton/felucca-bsp) (elige V15 o V16 según
   la cabecera). “Reparar ajustes” también está bloqueado con el diseño de memoria de V16 – ahí, 0x93000–0xA8FFF aún contiene

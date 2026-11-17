@@ -1240,7 +1240,7 @@ msgstr ""
 msgid "Generative"
 msgstr ""
 
-#: fm1companion/catalog.py:82
+#: fm1companion/catalog.py:82 fm1companion/diag.py:198
 msgid "Tool"
 msgstr ""
 
@@ -1689,47 +1689,59 @@ msgid "official open firmware: its unmodified code runs in the simulator and in 
 msgstr ""
 
 #: fm1companion/diag.py:186
-msgid "firmware catalog and link collection"
-msgstr ""
-
-#: fm1companion/diag.py:187
-msgid "icons in the app's design (fm1companion/icons/lucide, licence in icons/LICENSE.lucide)"
+msgid "recovery tool for ROM boot mode (recovery stage 2) and for the Transporter (stage 3), bundled unchanged; the app runs it as a separate program"
 msgstr ""
 
 #: fm1companion/diag.py:188
+msgid "firmware for an RP2040 board that reaches an FM-1 that no longer answers over USB (recovery stage 3, done by hand); bundled as a prebuilt file together with the Raspberry Pi Pico SDK (BSD-3-Clause), TinyUSB by Ha Thach (MIT) and Pico-PIO-USB by sekigon-gonnoc (MIT)"
+msgstr ""
+
+#: fm1companion/diag.py:191
+msgid "talks to the chip's ROM boot mode for recovery stage 2; not bundled – the Unbricker downloads one fixed version, and only after you agree"
+msgstr ""
+
+#: fm1companion/diag.py:193
+msgid "firmware catalog and link collection"
+msgstr ""
+
+#: fm1companion/diag.py:194
+msgid "icons in the app's design (fm1companion/icons/lucide, licence in icons/LICENSE.lucide)"
+msgstr ""
+
+#: fm1companion/diag.py:195
 msgid "user interface (system package)"
 msgstr ""
 
-#: fm1companion/diag.py:189
+#: fm1companion/diag.py:196
 msgid "MIDI and audio computations (system packages)"
 msgstr ""
 
-#: fm1companion/diag.py:190
+#: fm1companion/diag.py:197
 msgid "GPL-3.0 with exception (see project)"
 msgstr ""
 
-#: fm1companion/diag.py:191 fm1companion/linkimport.py:349
+#: fm1companion/diag.py:198 fm1companion/linkimport.py:349
 #: fm1companion/ui/pages/discover.py:1321
 msgid "Catalog"
 msgstr ""
 
-#: fm1companion/diag.py:191
+#: fm1companion/diag.py:198
 msgid "Graphics"
 msgstr ""
 
-#: fm1companion/diag.py:191 fm1companion/ui/pages/presets.py:97
+#: fm1companion/diag.py:198 fm1companion/ui/pages/presets.py:97
 msgid "Library"
 msgstr ""
 
-#: fm1companion/diag.py:192
+#: fm1companion/diag.py:199
 msgid "Lucide Contributors (partly Feather, Cole Bemis)"
 msgstr ""
 
-#: fm1companion/diag.py:193
+#: fm1companion/diag.py:200
 msgid "Ole Martin Bjørndalen et al.; Christopher Arndt et al.; NumPy Developers"
 msgstr ""
 
-#: fm1companion/diag.py:194
+#: fm1companion/diag.py:201
 msgid "ISC (Feather parts MIT)"
 msgstr ""
 

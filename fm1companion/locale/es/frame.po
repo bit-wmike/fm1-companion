@@ -1577,3 +1577,15 @@ msgstr "La app sigue funcionando. Por lo que la app puede saber, en ese momento 
 #, python-brace-format
 msgid "If the error comes back, save a bug report and attach it to a new issue on the project's GitHub issues page ({url}). The report contains logs, versions and settings, no backups, samples or projects. Personal paths, names and credentials are removed as far as the app can recognise them – please look through it before you post it publicly."
 msgstr "Si el error vuelve a aparecer, guarda un informe de errores y adjúntalo a una incidencia nueva en la página de incidencias del proyecto en GitHub ({url}). El informe contiene registros, versiones y ajustes, sin copias de seguridad, samples ni proyectos. Las rutas personales, los nombres y las credenciales se eliminan en la medida en que la app los reconoce – revísalo antes de publicarlo."
+
+#: fm1companion/diag.py
+msgid "recovery tool for ROM boot mode (recovery stage 2) and for the Transporter (stage 3), bundled unchanged; the app runs it as a separate program"
+msgstr "herramienta de recuperación para el modo de arranque ROM (recuperación, etapa 2) y para el Transporter (etapa 3), incluida sin cambios; la app la ejecuta como programa aparte"
+
+#: fm1companion/diag.py
+msgid "firmware for an RP2040 board that reaches an FM-1 that no longer answers over USB (recovery stage 3, done by hand); bundled as a prebuilt file together with the Raspberry Pi Pico SDK (BSD-3-Clause), TinyUSB by Ha Thach (MIT) and Pico-PIO-USB by sekigon-gonnoc (MIT)"
+msgstr "firmware para una placa RP2040 que llega a un FM-1 que ya no responde por USB (recuperación, etapa 3, a mano); se incluye como archivo ya compilado, junto con el Raspberry Pi Pico SDK (BSD-3-Clause), TinyUSB de Ha Thach (MIT) y Pico-PIO-USB de sekigon-gonnoc (MIT)"
+
+#: fm1companion/diag.py
+msgid "talks to the chip's ROM boot mode for recovery stage 2; not bundled – the Unbricker downloads one fixed version, and only after you agree"
+msgstr "habla con el modo de arranque ROM del chip para la recuperación de etapa 2; no se incluye – el Unbricker descarga una versión fija, y solo después de que aceptes"

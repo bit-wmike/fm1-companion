@@ -33,12 +33,12 @@ FM-1 real.
 ## Cuando no funciona nada
 
 Si el ordenador muestra una unidad **“WL82 UBOOT1.00”** y la pantalla sigue negra, el chip está en su
-modo de recuperación integrado. Entonces ayuda la página [Recuperación](app://page/recovery), **Nivel 2**: te guía
+modo de recuperación integrado. Entonces ayuda la página [Recuperación](app://page/recovery), **Etapa 2**: te guía
 paso a paso por el MvaveFM1Unbricker incluido (con una doble copia de seguridad obligatoria de la flash).
 Encontrarás información de fondo en la sección “Firmware update and recovery” de
 [awesome-fm-1](https://github.com/cicloid/awesome-fm-1).
 
-Lo que el Nivel 2 comprueba antes de escribir – en la copia de seguridad leída en la **misma** ejecución:
+Lo que la Etapa 2 comprueba antes de escribir – en la copia de seguridad leída en la **misma** ejecución:
 
 * **“Volver a escribir V15 original”** solo escribe bajo la cabecera de arranque de fábrica (V13–V15). Si la copia muestra la
   cabecera de arranque de V16 (el actualizador de M-VAVE la reescribe al instalar V16) o una cabecera desconocida
@@ -63,7 +63,7 @@ solución de problemas de MvaveFM1Unbricker), con el FM-1 conectado directamente
    hasta ahí; en Melodee es la calibración).
 3. **Tres reinicios rápidos:** encender, esperar 10 s, apagar; encender, 10 s, apagar; encender. Si cada arranque falla, el
    tercero acaba en modo de arranque ROM. (Así es también como un FM-1 puede llegar ahí por accidente.)
-4. Si nada de esto ayuda, solo queda el hardware: [Recuperación](app://page/recovery), **Nivel 3** (FM-1 Transporter).
+4. Si nada de esto ayuda, solo queda el hardware: [Recuperación](app://page/recovery), **Etapa 3** (FM-1 Transporter).
 
 ## Causas típicas de interrupciones
 
