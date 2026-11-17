@@ -19,14 +19,14 @@ from ..responsive import reflow
 from ...i18n import _, ngettext
 
 HELP_ROOT = Path(__file__).resolve().parents[2] / "data" / "help"   # one folder per language: help/<lang>/
-HELP_FALLBACK = "de"                     # the complete set of pages; other languages may have fewer
+HELP_FALLBACK = "en"                     # the source language: the complete set; translations may have fewer
 HELP_DIR = HELP_ROOT / HELP_FALLBACK     # (kept for code that expects the old name)
 ACTIONS = {"syscheck": "open_syscheck", "shortcuts": "show_shortcuts", "wizard": "open_wizard",
            "whatsnew": "open_whats_new", "report": "save_report", "palette": "open_palette", "about": "_about"}
 
 
 def help_files(lang: str | None = None) -> list[Path]:
-    """help pages for a language: help/<lang>/*.md, missing pages taken from help/de/ (same file name)."""
+    """help pages for a language: help/<lang>/*.md, missing pages taken from help/en/ (same file name)."""
     from ... import i18n
     lang = lang or i18n.current_language()
     pages: dict[str, Path] = {f.name: f for f in (HELP_ROOT / HELP_FALLBACK).glob("*.md")}
@@ -36,7 +36,7 @@ def help_files(lang: str | None = None) -> list[Path]:
 
 
 def topics(lang: str | None = None) -> list[tuple[str, str, str]]:
-    """(key, title, Markdown) of all help pages in the UI language (fallback: German)"""
+    """(key, title, Markdown) of all help pages in the UI language (fallback: English)"""
     out = []
     for f in help_files(lang):
         text = f.read_text("utf-8")

@@ -4,6 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FM-1 Companion\n"
 "Language: de\n"
+"X-Language-Name: Deutsch\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -34,7 +35,7 @@ msgid "No FM-1 connected. Please connect an FM-1 via USB."
 msgstr "Kein FM-1 verbunden. Bitte ein FM-1 per USB anschließen."
 
 #: fm1companion/ui/backups_page.py:48
-msgid "The FM-1 is in update mode – finish the installation first (page “Rescue”), then back up."
+msgid "The FM-1 is in update mode – finish the installation first (page “Recovery”), then back up."
 msgstr "Das FM-1 ist im Update-Modus – erst die Installation abschließen (Seite „Rettung“), dann sichern."
 
 #: fm1companion/ui/backups_page.py:51
@@ -1743,8 +1744,8 @@ msgid "use a backup from before the update to Melodee 1.6"
 msgstr "ein Backup von vor dem Update auf Melodee 1.6 nehmen"
 
 #: fm1companion/backup_inspect.py:921
-msgid "export projects as MIDI (Projects › MIDI export)"
-msgstr "Projekte als MIDI exportieren (Projekte › MIDI-Export)"
+msgid "export projects as MIDI (Projects › View & Export)"
+msgstr "Projekte als MIDI exportieren (Projekte › Ansicht & Export)"
 
 #: fm1companion/backup_inspect.py:927
 msgid "The target knows none of the objects from the source."
@@ -2630,7 +2631,7 @@ msgid "not connected"
 msgstr "nicht verbunden"
 
 #: fm1companion/ui/device.py:274
-msgid "in update mode – finish the installation (page “Rescue”)"
+msgid "in update mode – finish the installation (page “Recovery”)"
 msgstr "im Update-Modus – Installation abschließen (Seite „Rettung“)"
 
 #: fm1companion/ui/device.py:315
@@ -2642,7 +2643,7 @@ msgid "Connection lost"
 msgstr "Verbindung verloren"
 
 #: fm1companion/ui/device.py:331
-msgid "The FM-1 is in update mode. The page “Rescue” finishes the installation."
+msgid "The FM-1 is in update mode. The page “Recovery” finishes the installation."
 msgstr "Das FM-1 ist im Update-Modus. Die Seite „Rettung“ schließt die Installation ab."
 
 #: fm1companion/ui/device.py:346
@@ -2884,7 +2885,7 @@ msgid "No device connected."
 msgstr "Kein Gerät angeschlossen."
 
 #: fm1companion/ui/overview.py:280
-msgid "The FM-1 is waiting in update mode – finish the installation first (page “Rescue”)."
+msgid "The FM-1 is waiting in update mode – finish the installation first (page “Recovery”)."
 msgstr "Das FM-1 wartet im Update-Modus – erst die Installation abschließen (Seite „Rettung“)."
 
 #: fm1companion/ui/overview.py:285
@@ -3100,7 +3101,7 @@ msgid "not read yet"
 msgstr "noch nicht gelesen"
 
 #: fm1companion/ui/fm1_page.py:226
-msgid "The FM-1 is in update mode – the page “Rescue” finishes the installation."
+msgid "The FM-1 is in update mode – the page “Recovery” finishes the installation."
 msgstr "Das FM-1 ist im Update-Modus – die Seite „Rettung“ schließt die Installation ab."
 
 #: fm1companion/ui/fm1_page.py:228

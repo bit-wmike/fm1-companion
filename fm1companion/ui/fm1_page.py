@@ -223,7 +223,7 @@ class FM1Page(QWidget):
                 (_("Serial number:"), p.serial or _("none")),
                 (_("USB:"), usb),
                 (_("MIDI port:"), p.out_name)]
-        tail = (_("The FM-1 is in update mode – the page “Rescue” finishes the installation.")
+        tail = (_("The FM-1 is in update mode – the page “Recovery” finishes the installation.")
                 if mode == "update" else
                 _("Live values, storage and user presets are only provided by Melodee or M-VAVE FM1 Open (editor "
                   "protocol). The app can install this firmware and talk to it via MIDI, but cannot read it out."))

@@ -180,7 +180,7 @@ RULES: list[Rule] = [
     R("Die Ressourcen fehlen oder sind beschädigt – dann fehlen Werkssounds oder die Schrift sieht anders aus. "  # i18n: ignore
       "Abhilfe: Seite „Firmware“ › „Schrift & Werkssounds nachschreiben“.",
       N_("The resources are missing or damaged – then factory sounds are missing or the font looks different. "
-         "Remedy: page “Firmware” › “Rewrite font & factory sounds”.")),
+         "Remedy: Firmware+ › Install & Versions › “Rewrite font & factory sounds”.")),
     R("Befehl 82: installiert={installed}, Länge {length}, CRC-32 {crc} (bekannt: {known})",  # i18n: ignore
       N_("Command 82: installed={installed}, length {length}, CRC-32 {crc} (known: {known})"),
       pat={"installed": "ja|nein"}, kind={"installed": _YESNO, "length": "raw", "crc": "raw", "known": "raw"}),  # i18n: ignore
@@ -307,11 +307,11 @@ RULES: list[Rule] = [
     R("Die Melodee-Ressourcen sind in sich vollständig, gehören aber zu einem anderen Build. Abhilfe: „Schrift & "  # i18n: ignore
       "Werkssounds nachschreiben“ (Seite „Firmware“).",
       N_("The Melodee resources are complete in themselves, but belong to a different build. Remedy: “Rewrite font & "
-         "factory sounds” (page “Firmware”).")),
+         "factory sounds” (Firmware+ › Install & Versions).")),
     R("Die Melodee-Ressourcen bei 0xCB000 fehlen oder sind beschädigt – dann fehlen Werkssounds. Abhilfe: „Schrift & "  # i18n: ignore
       "Werkssounds nachschreiben“ (Seite „Firmware“).",
       N_("The Melodee resources at 0xCB000 are missing or damaged – then factory sounds are missing. Remedy: “Rewrite "
-         "font & factory sounds” (page “Firmware”).")),
+         "font & factory sounds” (Firmware+ › Install & Versions).")),
     R("Ressourcen 0xCB000: {head}, Nutzdaten {payload}", N_("Resources 0xCB000: {head}, payload {payload}"),  # i18n: ignore
       pat={"head": "Kopf ok|Kopf fehlt/defekt", "payload": "ok|nicht ok"},  # i18n: ignore
       kind={"head": _HEAD_OK, "payload": _PAYLOAD_OK}),

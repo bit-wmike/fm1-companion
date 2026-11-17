@@ -1126,7 +1126,7 @@ def compatibility(src: Report, target_fw_key: str, target_version: str, target_i
     if r16:
         return Compat(False, r16, [_("bring the FM-1 to Melodee 1.6 or newer (Firmware+), then restore"),
                                    _("use a backup from before the update to Melodee 1.6"),
-                                   _("export projects as MIDI (Projects › MIDI export)")])
+                                   _("export projects as MIDI (Projects › View & Export)")])
     if target_ids is not None and is_sloop(src):
         target_ids = list(target_ids) + [i for i in (10, 11) if i not in target_ids]   # only used ones in the inventory
     if target_ids is not None:

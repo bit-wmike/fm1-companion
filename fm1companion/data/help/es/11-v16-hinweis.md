@@ -35,7 +35,7 @@ Para cada afirmación, la app indica de dónde procede:
   eso solo es posible con un volcado).
 * **Vuelta:** si V16 está en marcha, Firmware+ › “Instalar y versiones” muestra “Camino de vuelta desde V16 …”. La app instala primero V15, luego tu
   firmware de destino y, en el caso de Melodee, después la fuente y los sonidos de fábrica (recursos). Luego restaura tu copia de seguridad.
-* **Comprobar:** [Rescate](app://page/recovery) › “¿Está limpio mi FM-1?”.
+* **Comprobar:** [Recuperación](app://page/recovery) › “¿Está limpio mi FM-1?”.
 
 ## ¿Está limpio mi FM-1?
 
@@ -72,7 +72,7 @@ Por favor, **no** pruebes actualizaciones interrumpidas a propósito – ni siqu
 ## Si el camino de vuelta no funciona
 
 * Primero, el **modo de actualización** normal (mantén OCT− al encender, consulta “Modo de actualización y rescate”).
-* Si el FM-1 ya no acepta nada ahí o se queda a oscuras: [Rescate › Nivel 2](app://page/recovery)
+* Si el FM-1 ya no acepta nada ahí o se queda a oscuras: [Recuperación › Nivel 2](app://page/recovery)
   (modo de arranque ROM “WL82 UBOOT1.00” con el unbricker integrado). Escribe la V15 original y se niega
   a escribir V16 (solo escribe hasta 0x92FFF – V16 quedaría truncada). Aún no lo hemos probado con
   V16 en el dispositivo.

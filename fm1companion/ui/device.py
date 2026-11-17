@@ -300,7 +300,7 @@ class DeviceContext(QObject):
         p = self.protocol
         return {"felucca": _("connected – full access"),
                 "generic": _("connected – MIDI only (firmware without editor protocol)"),
-                "update": _("in update mode – finish the installation (page “Rescue”)")}.get(p, _("not connected"))
+                "update": _("in update mode – finish the installation (page “Recovery”)")}.get(p, _("not connected"))
 
     def device_folder(self, base) -> "os.PathLike":
         """This device's folder under `base` (created). FolderError (ready message) if that isn't possible."""
@@ -357,7 +357,7 @@ class DeviceContext(QObject):
         self.disconnect(None)
         self.port = port
         if port.update_mode:
-            self.message.emit(_("The FM-1 is in update mode. The page “Rescue” finishes the installation."))
+            self.message.emit(_("The FM-1 is in update mode. The page “Recovery” finishes the installation."))
             self.identity = ""
             self._assign_profile()
             self.changed.emit()

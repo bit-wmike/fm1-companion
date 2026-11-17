@@ -272,12 +272,16 @@ def test_frame_in_english():
         assert i18n._("Overview") == "Übersicht" and i18n._("&File") == "&Datei"
         assert i18n.ngettext("{n} problem", "{n} problems", 1).format(n=1) == "1 Problem"
         assert i18n.ngettext("{n} problem", "{n} problems", 3).format(n=3) == "3 Probleme"
-        # help pages per language, German as fallback
+        # help pages per language; a language without (all) pages shows the English ones (DOC-7), not German
         en = help_page.help_files("en")
         de = help_page.help_files("de")
         assert [f.name for f in en] == [f.name for f in de] and de and all(f.parent.name == "de" for f in de)
+        assert all(f.parent.name == "en" for f in en)
         es = help_page.help_files("es")
         assert [f.name for f in es] == [f.name for f in de] and all(f.parent.name == "es" for f in es)
+        assert help_page.HELP_FALLBACK == i18n.SOURCE_LANGUAGE == "en"
+        fr = help_page.help_files("fr")                              # no help/fr/ folder
+        assert [f.name for f in fr] == [f.name for f in en] and all(f.parent.name == "en" for f in fr)
     finally:
         i18n.set_language(None)
 

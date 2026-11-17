@@ -65,7 +65,7 @@ Entre rc.x y 1.6.0 la diferencia es el volumen (ver arriba).
 ## FM-1 con flash UCUN
 
 Algunos FM-1 tienen un chip flash de UCUN (UC25HQ80, ID 0xB36014). Solo a partir de 1.6.0 Melodee guarda
-correctamente en él. La **recuperación USB ROM (Rescate Nivel 2) aún no conoce esta flash** y se detiene sin
+correctamente en él. La **recuperación USB ROM (Recuperación, Nivel 2) aún no conoce esta flash** y se detiene sin
 escribir. La app te lo indica entonces. Las instalaciones normales mediante Firmware+ no se ven afectadas.
 
 ## Melodee 1.6.1: reloj y sincronización

@@ -62,28 +62,29 @@ msgstr ""
 msgid "  MIDI not usable: {error}"
 msgstr ""
 
-#: fm1companion/app.py:107
+#: fm1companion/app.py:108
+#, python-brace-format
 msgid ""
 "Usage: fm1-companion [OPTION]\n"
 "\n"
 "  --demo       start with three simulated FM-1 (separate settings, your data stays untouched)\n"
 "  --check      check system packages and show the apt command for anything missing\n"
 "  --syscheck   check USB, power and audio (like Tools › System check)\n"
-"  --lang LANG  user interface language for this start: en, de, es (default: setting/system)\n"
+"  --lang LANG  user interface language for this start: {languages} (default: setting/system)\n"
 "  --no-splash  start without splash screen\n"
 "  --debug      verbose log (~/.local/state/fm1-companion/logs)\n"
 "  --version    show version\n"
 "  -h, --help   this help"
 msgstr ""
 
-#: fm1companion/app.py:126
+#: fm1companion/app.py:127
 #, python-brace-format
 msgid ""
 "PyQt6 is missing. Install it with:\n"
 "  {command}"
 msgstr ""
 
-#: fm1companion/app.py:168
+#: fm1companion/app.py:169
 msgid "Starting …"
 msgstr ""
 
@@ -1157,7 +1158,7 @@ msgid "use a backup from before the update to Melodee 1.6"
 msgstr ""
 
 #: fm1companion/backup_inspect.py:1129
-msgid "export projects as MIDI (Projects › MIDI export)"
+msgid "export projects as MIDI (Projects › View & Export)"
 msgstr ""
 
 #: fm1companion/backup_inspect.py:1135
@@ -3564,7 +3565,7 @@ msgid "Resources (factory sounds, font, Bluetooth program) are complete: the fir
 msgstr ""
 
 #: fm1companion/flash/texts.py:182
-msgid "The resources are missing or damaged – then factory sounds are missing or the font looks different. Remedy: page “Firmware” › “Rewrite font & factory sounds”."
+msgid "The resources are missing or damaged – then factory sounds are missing or the font looks different. Remedy: Firmware+ › Install & Versions › “Rewrite font & factory sounds”."
 msgstr ""
 
 #: fm1companion/flash/texts.py:185
@@ -3742,11 +3743,11 @@ msgid "The Melodee resources (factory sounds, font, Bluetooth program) at 0xCB00
 msgstr ""
 
 #: fm1companion/flash/texts.py:309
-msgid "The Melodee resources are complete in themselves, but belong to a different build. Remedy: “Rewrite font & factory sounds” (page “Firmware”)."
+msgid "The Melodee resources are complete in themselves, but belong to a different build. Remedy: “Rewrite font & factory sounds” (Firmware+ › Install & Versions)."
 msgstr ""
 
 #: fm1companion/flash/texts.py:313
-msgid "The Melodee resources at 0xCB000 are missing or damaged – then factory sounds are missing. Remedy: “Rewrite font & factory sounds” (page “Firmware”)."
+msgid "The Melodee resources at 0xCB000 are missing or damaged – then factory sounds are missing. Remedy: “Rewrite font & factory sounds” (Firmware+ › Install & Versions)."
 msgstr ""
 
 #: fm1companion/flash/texts.py:315
@@ -7742,7 +7743,7 @@ msgid "No FM-1 connected. Please connect an FM-1 via USB."
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:48
-msgid "The FM-1 is in update mode – finish the installation first (page “Rescue”), then back up."
+msgid "The FM-1 is in update mode – finish the installation first (page “Recovery”), then back up."
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:51
@@ -9244,7 +9245,7 @@ msgid "not connected"
 msgstr ""
 
 #: fm1companion/ui/device.py:303
-msgid "in update mode – finish the installation (page “Rescue”)"
+msgid "in update mode – finish the installation (page “Recovery”)"
 msgstr ""
 
 #: fm1companion/ui/device.py:344 fm1companion/ui/main_window.py:896
@@ -9257,7 +9258,7 @@ msgid "Connection lost"
 msgstr ""
 
 #: fm1companion/ui/device.py:360
-msgid "The FM-1 is in update mode. The page “Rescue” finishes the installation."
+msgid "The FM-1 is in update mode. The page “Recovery” finishes the installation."
 msgstr ""
 
 #: fm1companion/ui/device.py:375
@@ -10600,7 +10601,7 @@ msgid "USB:"
 msgstr ""
 
 #: fm1companion/ui/fm1_page.py:226
-msgid "The FM-1 is in update mode – the page “Rescue” finishes the installation."
+msgid "The FM-1 is in update mode – the page “Recovery” finishes the installation."
 msgstr ""
 
 #: fm1companion/ui/fm1_page.py:228
@@ -11579,7 +11580,7 @@ msgid "No device connected."
 msgstr ""
 
 #: fm1companion/ui/overview.py:280
-msgid "The FM-1 is waiting in update mode – finish the installation first (page “Rescue”)."
+msgid "The FM-1 is waiting in update mode – finish the installation first (page “Recovery”)."
 msgstr ""
 
 #: fm1companion/ui/overview.py:285
@@ -21970,7 +21971,7 @@ msgid "Welcome to the {suite}"
 msgstr ""
 
 #: fm1companion/ui/wizard.py:33
-msgid "Everything is set up in a minute. You can open the wizard again later via Help › Setup wizard."
+msgid "Everything is set up in a minute. You can open this assistant again later via Help › Setup assistant …"
 msgstr ""
 
 #: fm1companion/ui/wizard.py:36
@@ -22076,7 +22077,7 @@ msgid "<b>Found:</b> {port} – {firmware}"
 msgstr ""
 
 #: fm1companion/ui/wizard.py:230
-msgid "An FM-1 is waiting in <b>update mode</b>. After the wizard, continue on the page “Recovery” – there the interrupted installation is completed."
+msgid "An FM-1 is waiting in <b>update mode</b>. After this assistant, continue on the page “Recovery” – there the interrupted installation is completed."
 msgstr ""
 
 #: fm1companion/ui/wizard.py:234

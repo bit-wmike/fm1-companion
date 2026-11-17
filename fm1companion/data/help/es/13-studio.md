@@ -95,7 +95,7 @@ FM1 Open del Studio es exactamente ese código del simulador.
 * **FM-1 con la V15/V16 original:** el Studio arranca en su lugar el gemelo FM1 Open, con un aviso: las mismas voces de
   fábrica, pero otro firmware – el manejo, los proyectos, los efectos y el sonido pueden diferir (la V16 además corrigió
   el detune). El firmware original **no tiene protocolo de copias de seguridad**: no se puede traer nada de él ni volver
-  a escribirlo (la única copia es un volcado completo en [Rescate](app://page/recovery)). Lo que la app sí puede hacer
+  a escribirlo (la única copia es un volcado completo en [Recuperación](app://page/recovery)). Lo que la app sí puede hacer
   con la V15 es la restauración de voces de M-VAVE: en [Voces FM](app://page/voices), **V15 original:
   restaurar voces de fábrica …** sobrescribe las 128 voces de los bancos A–D con las voces de fábrica (del paquete V15
   de M-VAVE, fijado por suma de comprobación). Las voces que había antes en el FM-1 **no se pueden guardar primero** –

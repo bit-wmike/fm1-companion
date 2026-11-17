@@ -56,7 +56,7 @@ Lo que conviene saber sobre el paso por V15:
 * Si el cambio se detiene tras el paso por V15 (cable, alimentación, cancelación), el FM-1 funciona con la V15
   original. La app recuerda el destino: [Firmware+ › Instalar y versiones](app://page/firmware) muestra
   *Continuar: instalar …*; el paso por V15 no se repite. Si se detuvo *durante* un paso, termínalo primero en la página
-  [Rescate](app://page/recovery).
+  [Recuperación](app://page/recovery).
 * Los expertos pueden marcar en el plan *Experto: instalar directamente sin el paso por V15*. Está desactivado por
   defecto, no se recuerda y el plan advierte de que no es el punto de partida que esperan la mayoría de los autores
   de firmware. No hay ningún ajuste para ello.
@@ -90,7 +90,7 @@ instalación empieza pero no termina. Por eso la app detecta un hub delante del 
   tiene una respuesta en camino a la vez;
 * si la conexión se corta mientras escribe, espera al **mismo** FM-1 en modo de actualización y vuelve a empezar
   la escritura (hasta 3 veces) – solo con el cargador que corresponde al paquete, igual que *Terminar la
-  instalación* en la página [Rescate](app://page/recovery). Todas las comprobaciones de seguridad siguen igual.
+  instalación* en la página [Recuperación](app://page/recovery). Todas las comprobaciones de seguridad siguen igual.
 
 Ajustes › *Modo USB cuidadoso al flashear*: automático (predeterminado), siempre o nunca.
 
