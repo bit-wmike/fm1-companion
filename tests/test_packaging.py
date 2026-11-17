@@ -5,6 +5,7 @@ German when the system language is German."""
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -41,7 +42,7 @@ def lang_env(env: dict, lang: str) -> dict:
 def test_deb(dist):
     import build_deb
     deb = build_deb.build(dist)
-    assert deb.name == "fm1-companion_2.6.0_all.deb"
+    assert deb.name == "fm1-companion_2.6.1_all.deb"
     info = subprocess.run(["dpkg-deb", "-f", str(deb)], capture_output=True, text=True, check=True).stdout
     assert "Package: fm1-companion" in info and "Architecture: all" in info
     for dep in ("python3 (>= 3.11)", "python3-pyqt6", "python3-pyqt6.qtwebengine", "python3-mido", "python3-rtmidi",
@@ -88,7 +89,7 @@ def test_deb(dist):
     assert os.access(x / "usr/bin/fm1-companion", os.X_OK)
     out = subprocess.run([sys.executable, "-m", "fm1companion", "--version"], cwd=x,
                          env=dict(os.environ, PYTHONPATH=str(x / "usr/lib/fm1-companion")), capture_output=True, text=True)
-    assert out.stdout.strip() == "2.6.0"
+    assert out.stdout.strip() == "2.6.1"
     import xml.etree.ElementTree as ET
     meta = ET.parse(x / "usr/share/metainfo/fm1-companion.metainfo.xml").getroot()
     assert meta.findtext("id") == "fm1-companion" and meta.find("launchable").text == "fm1-companion.desktop"
@@ -141,7 +142,7 @@ def test_run_installer(dist, tmp_path):
     assert (home / ".local/share/icons/hicolor/48x48/apps/fm1-companion.png").exists()
     assert len(list((home / "FM-1/Samples/Beispiele (Demo)").glob("*.wav"))) == 7
     out = subprocess.run([str(launcher), "--version"], env=env, capture_output=True, text=True)
-    assert out.stdout.strip() == "2.6.0", out.stderr
+    assert out.stdout.strip() == "2.6.1", out.stderr
     # update: settings are kept
     cfg = home / ".config/fm1-companion"
     cfg.mkdir(parents=True)
@@ -332,8 +333,13 @@ def test_deb_reproducible_changelog_maintainer(tmp_path):
     subprocess.run(["dpkg-deb", "-x", str(d1), str(ex)], check=True)
     log = gzip.decompress((ex / "usr/share/doc/fm1-companion/changelog.gz").read_bytes()).decode()
     assert "{maintainer}" not in log and "{" not in log
-    assert log.startswith("fm1-companion (2.6.0) stable; urgency=low\n\n  * ")
-    assert log.rstrip("\n").endswith(" -- bit-wmike <295828+bit-wmike@users.noreply.github.com>  Thu, 12 Nov 2026 12:00:00 +0000")
+    ver = build_common.version()
+    assert log.startswith(f"fm1-companion ({ver}) stable; urgency=low\n\n  * ")
+    # (the date is the release date of this version in the metainfo – it may be corrected on release day)
+    assert log.rstrip("\n").endswith(" -- bit-wmike <295828+bit-wmike@users.noreply.github.com>  "
+                                     + build_common.changelog_date(ver))
+    assert re.fullmatch(r"(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d\d [A-Z][a-z]{2} \d{4} 12:00:00 \+0000",
+                        build_common.changelog_date(ver))
     info = subprocess.run(["dpkg-deb", "-f", str(d1)], capture_output=True, text=True, check=True).stdout
     assert "Maintainer: bit-wmike <295828+bit-wmike@users.noreply.github.com>" in info and "localhost" not in info
     assert build_common.MAINTAINER == "bit-wmike <295828+bit-wmike@users.noreply.github.com>"
@@ -448,3 +454,55 @@ def test_uninstall_all_confirmation(tmp_path, answer, removed):
     assert ("Removing the app, settings and internal data." in res.stdout) is removed
     assert ("Settings and internal data are kept" in res.stdout) is (not removed)
     assert (home / "FM-1/Backups/wichtig.json").exists()
+
+
+def test_install_sh_refuses_unknown_options(tmp_path):
+    """HYG-6: './install.sh --no-atp' (a typo) went straight on to 'sudo apt-get'. An unknown option now stops the
+    script before anything happens, in the user's language."""
+    for lang, word in (("C.UTF-8", "Unknown option: --no-atp"), ("de_DE.UTF-8", "Unbekannte Option: --no-atp")):
+        home = tmp_path / lang
+        home.mkdir()
+        env = lang_env(dict(os.environ, HOME=str(home), XDG_DATA_HOME=str(home / "d"),
+                            XDG_CONFIG_HOME=str(home / "c")), lang)
+        res = subprocess.run(["bash", str(ROOT / "install.sh"), "--no-atp"], env=env, capture_output=True, text=True)
+        assert res.returncode == 2 and word in res.stderr and "--help" in res.stderr, res.stderr
+        assert not res.stdout.strip() and list(home.iterdir()) == []          # nothing started, nothing written
+
+
+def test_own_files_carry_the_licence_line_and_sane_modes():
+    """HYG-2/3: every own script names its licence; a bundled twin is data, not a program."""
+    for rel in ("install.sh", "uninstall.sh", "packaging/run-stub.sh", "fm1companion/web/webmidi_polyfill.js",
+                "tests/mock_fm1.mjs", "tests/mock_fm1_shared.mjs", "tests/mock_sloop.mjs"):
+        assert "SPDX-License-Identifier: GPL-3.0-only" in "\n".join((ROOT / rel).read_text("utf-8").splitlines()[:2]), rel
+    modes = subprocess.run(["git", "ls-files", "-s"], cwd=ROOT, capture_output=True, text=True)
+    if modes.returncode or not modes.stdout:
+        pytest.skip("not a git checkout")
+    for line in modes.stdout.splitlines():
+        mode, path = line.split()[0], line.split("\t", 1)[1]
+        if path.endswith((".wasm", ".png", ".json", ".md", ".po")):
+            assert mode == "100644", path
+
+
+def test_release_261_metadata():
+    """2.6.1 is the first package since 2.4.0: one version everywhere (what the workflows check), the change list
+    keeps 2.6.0 and 2.5.0 and says they were source only."""
+    import re
+    import build_common
+    ver = build_common.version()
+    assert (ROOT / "README.md").read_text("utf-8").splitlines()[0] == f"# FM-1 Companion Suite {ver}"
+    assert f'"FM-1 Companion Suite {ver}"' in (ROOT / "packaging/fm1-companion.1").read_text("utf-8").splitlines()[0]
+    for form in ("bug_report.yml", "hardware_test.yml"):
+        assert f'placeholder: "{ver}"' in (ROOT / ".github/ISSUE_TEMPLATE" / form).read_text("utf-8"), form
+    meta = (ROOT / "packaging/fm1-companion.metainfo.xml").read_text("utf-8")
+    versions = re.findall(r'<release version="([^"]+)"', meta)
+    assert versions[0] == ver                                       # the newest entry is this version
+    older = [v for v in versions if v in ("2.6.1", "2.6.0", "2.5.0", "2.4.0")]
+    assert older == ["2.6.1", "2.6.0", "2.5.0", "2.4.0"]            # nothing dropped from the change list
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", build_common.release_date(ver))
+    for old in ("2.6.0", "2.5.0"):
+        entry = meta.split(f'<release version="{old}"')[1].split("</release>")[0]
+        assert "Source code only" in entry, old
+    # the README never names a package file of a fixed version (it was wrong for two releases)
+    readme = (ROOT / "README.md").read_text("utf-8")
+    assert not re.search(r"fm1-companion_\d+\.\d+\.\d+_all\.deb|FM-1-Companion-Suite-\d+\.\d+\.\d+\.run", readme)
+    assert "docs/UNTESTED.md" in readme and "three simulated FM-1" in readme and "git clone --depth 1" in readme

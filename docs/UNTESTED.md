@@ -1,4 +1,4 @@
-# What is tested and what is not – an honest list (as of 2.6.0)
+# What is tested and what is not – an honest list (as of 2.6.1)
 
 The suite was mostly built and tested in a development environment **without an FM-1**: against simulated
 FM-1 (Melodee, SLOOP, generic), against the test devices from the Melodee and SLOOP editors, against self-built
@@ -12,7 +12,7 @@ documented.
 UI names in this list are the English labels of the app (the German UI uses the translations from
 `fm1companion/locale/de/`).
 
-## Used on real hardware (as of 2.6.0)
+## Used on real hardware (as of 2.6.1)
 
 So far on **one** FM-1 with Melodee, on a Raspberry Pi 5:
 
