@@ -114,7 +114,7 @@ def test_melodee_160_song_project():
     # order as in the firmware: song block preset, then pattern preset, then the track's sound
     assert prj.resolved_sound(2, 0) == (1, "block") and prj.resolved_sound(0, 0) == (0, "")
     assert prj.resolved_sound(7, 1) == (1, "pattern")           # track 2 plays pattern 12 there
-    assert "6 Punch-Effekte" in prj.summary() and "1 Song-/Pattern-Presets" in prj.summary()
+    assert "6 Punch-Effekte" in prj.summary() and "1 Song-/Pattern-Preset" in prj.summary()
     j = json.loads(ME.to_json(prj))
     assert j["song"][0]["punches"][0]["name"] == "REVERSE" and j["presets"][0]["name"] == "BLOCK SOUND"
     ev = ME.events(prj)
