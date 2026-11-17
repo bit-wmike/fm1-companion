@@ -196,11 +196,12 @@ class NotificationCenter(QObject):
         return note
 
     def _drop_one(self):
-        """make room: the oldest notice goes – but one that asks something (several buttons, e.g. the announced
-        automatic backup with “Skip today”) stays as long as a plain one can go instead; a later “connected”
-        notice must not take the choice away in a narrow window"""
-        plain = [t for t in self.toasts if not t.note.more]
-        (plain or self.toasts)[0].dismiss()
+        """make room: the oldest plain notice goes first, then the oldest with one button; a notice that asks
+        something (several buttons, e.g. the announced automatic backup with “Skip today”) goes last – a later
+        “connected” notice must not take the choice, or another notice's button, away in a narrow window"""
+        plain = [t for t in self.toasts if not t.note.more and not t.note.action]
+        asking = [t for t in self.toasts if not t.note.more]
+        (plain or asking or self.toasts)[0].dismiss()
 
     def unread(self) -> int:
         return sum(1 for n in self.history if not n.read)
