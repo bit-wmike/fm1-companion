@@ -102,6 +102,17 @@ def _probe_loader(port) -> str:
         return ""
 
 
+def _probe_update_port(port):
+    """an update-mode port: the loader's identity and – only on the port m-bootloader's MIDI MODE shows – who it is
+    (flash/mboot.py, command 0x12: read only). -> (identity, mboot.Info | None)"""
+    ident = _probe_loader(port)
+    from ..flash import mboot
+    mb = None
+    if mboot.is_candidate(port.label, port.usb_id):
+        mb = mboot.identify_port(port)
+    return ident, mb
+
+
 def _demo_update_ports():
     """Demo: devices currently waiting in (simulated) update mode appear as a separate port"""
     try:
@@ -214,6 +225,8 @@ class DeviceContext(QObject):
         self.firmware_guess: list[str] = []  # possible firmware keys for the identifier
         self.uboot: list[str] = []         # USB paths of FM-1s in ROM boot mode (rescue level 2)
         self.pending_restore_check = ""    # after a firmware change: offer the old backup
+        self.sloop3 = None                 # SLOOP 3 answered its own INFO (sloop3.Info) – no Felucca protocol
+        self.mboot = None                  # the port is m-bootloader's MIDI MODE (flash/mboot.Info)
         self._asking = False
         self.window: QWidget | None = None
         # virtual devices (studio twin): list and line are provided by the service (ui/studio_service.py)
@@ -284,6 +297,10 @@ class DeviceContext(QObject):
             fw = fw_label(self.info.version)
         elif self.protocol == "update":
             fw = _("update mode ({id})").format(id=self.identity) if self.identity else _("update mode")
+            if self.mboot is not None:
+                fw = _("m-bootloader {version} – MIDI MODE").format(version=self.mboot.version)
+        elif self.sloop3 is not None and self.midi_connected:
+            fw = _("{firmware} (public beta)").format(firmware=self.sloop3.label)
         elif self.midi_connected:
             name = firmware_name(self.firmware_key)
             fw = (name or (_("unknown – please choose") if self.firmware_ambiguous else _("unknown firmware"))) + \
@@ -298,6 +315,11 @@ class DeviceContext(QObject):
             return (_("virtual – the twin in the Studio, not a real FM-1") if self.connected
                     else _("virtual – twin is starting …"))
         p = self.protocol
+        if p == "update" and self.mboot is not None:
+            return _("in m-bootloader's MIDI MODE – no firmware is running (“Firmware+” › SLOOP 3 explains what is "
+                     "possible from here)")
+        if p == "generic" and self.sloop3 is not None:
+            return _("connected – SLOOP 3: its own editor and backups (pages “Editor” and “Backups”)")
         return {"felucca": _("connected – full access"),
                 "generic": _("connected – MIDI only (firmware without editor protocol)"),
                 "update": _("in update mode – finish the installation (page “Rescue”)")}.get(p, _("not connected"))
@@ -362,7 +384,8 @@ class DeviceContext(QObject):
             self._assign_profile()
             self.changed.emit()
             if not DEMO:      # loader identifier: handshake without an open link (doesn't disturb anything)
-                run_job(self, lambda w: _probe_loader(port), on_done=self._loader_probed, on_fail=lambda *a: None)
+                run_job(self, lambda w: _probe_update_port(port), on_done=lambda r: self._loader_probed(r, port),
+                        on_fail=lambda *a: None)
             else:
                 from ..flash import demo
                 d = demo.device(port.in_name.replace(" Update", ""))
@@ -406,6 +429,13 @@ class DeviceContext(QObject):
     def _probe(self, w, link=None):
         last = None
         link = link or self.link
+        from .. import sloop3 as S3
+        if self.port is not None and S3.PORT_RE.search(self.port.label or ""):
+            # "FM-1 SLOOP 3": ask its own INFO first (read only) – it answers no Felucca command, and waiting for
+            # those first would cost several seconds
+            link.s3info = S3.probe(link)
+            if link.s3info is not None:
+                raise LinkError("SLOOP 3")
         wait_started = getattr(link.t, "wait_started", None)
         for _try in range(4):       # the first packet after opening sometimes gets lost
             try:
@@ -455,11 +485,49 @@ class DeviceContext(QObject):
         link = self.link
         if link is None or link.closed:
             return
-        run_job(self, lambda w: (handshake(link), hortator_info(link)),
-                on_done=lambda r: self._generic(r[0], link, r[1]), on_fail=lambda m, tb: self._generic("", link))
+        if getattr(link, "s3info", None) is not None:       # (SLOOP 3 already answered: nothing else is asked)
+            self._sloop3(link.s3info, link)
+            return
+        from .. import sloop3 as S3
+        # none of these changes anything on the device: the update handshake, Hortator's INFO, SLOOP 3's INFO
+        run_job(self, lambda w: (handshake(link), hortator_info(link), S3.probe(link)),
+                on_done=lambda r: self._generic(r[0], link, r[1], r[2]), on_fail=lambda m, tb: self._generic("", link))
 
-    def _generic(self, ident: str, link=None, hortator: str = ""):
+    def _sloop3(self, s3, link=None, ident: str = ""):
+        """SLOOP 3 answered its own INFO: its own firmware key (never SLOOP 2.x's), MIDI stays open. The Felucca
+        pages keep treating it as a firmware without their protocol; the Editor and Backups pages look at
+        ``ctx.sloop3``."""
         if self.link is None or (link is not None and link is not self.link):
+            return
+        from .. import sloop3 as S3
+        self.info = None
+        self.sloop3 = s3
+        self.identity = ident or ""
+        self.firmware_guess = [S3.KEY]
+        self._assign_profile()
+        p = self.profile
+        if p:
+            p.firmware, p.firmware_version, p.version_string = S3.KEY, s3.tag, s3.label
+            p.identity = ident or ""                # (SLOOP 3 answers no update handshake: an older ID no longer holds)
+            p.last_seen = time.time()
+            self.store.save()
+            self.settings.last_device = p.id
+            config.save(self.settings)
+        self.message.emit(
+            _("FM-1 connected – {firmware} (public beta). Its own web editor is on the page “Editor”, backups of "
+              "its project, sounds and banks on the page “Backups”; the other device pages need the Felucca editor "
+              "protocol, which SLOOP 3 does not speak.").format(firmware=s3.label)
+            if S3.version_checked(s3.version) else
+            _("FM-1 connected – {firmware} (public beta). The app was checked with SLOOP 3 {versions}, not with this "
+              "version: the editor and backups may not fit it.").format(
+                firmware=s3.label, versions=", ".join(S3.CHECKED_VERSIONS)))
+        self.changed.emit()
+
+    def _generic(self, ident: str, link=None, hortator: str = "", s3=None):
+        if self.link is None or (link is not None and link is not self.link):
+            return
+        if s3 is not None:
+            self._sloop3(s3, link, ident)
             return
         self.identity = ident or ""
         self._assign_profile()
@@ -553,9 +621,18 @@ class DeviceContext(QObject):
                                 "V15 intermediate step)."))
         self.changed.emit()
 
-    def _loader_probed(self, ident):
-        if ident and self.port and self.port.update_mode:
-            self.identity = ident
+    def _loader_probed(self, res, port=None):
+        ident, mb = res if isinstance(res, tuple) else (res, None)
+        if port is not None and self.port is not port:
+            return                          # outdated: another device by now
+        if self.port and self.port.update_mode and (ident or mb is not None):
+            self.identity = ident or self.identity
+            self.mboot = mb
+            if mb is not None:
+                self.message.emit(
+                    _("This FM-1 is in m-bootloader's MIDI MODE (m-bootloader {version}, flash chip {chip}): no "
+                      "firmware is running. “Firmware+” › SLOOP 3 explains what is possible from here; OCT−, OCT+, "
+                      "PLAY or REC on the FM-1 go back to its menu.").format(version=mb.version, chip=mb.chip))
             self.changed.emit()
 
     def _assign_profile(self):
@@ -635,6 +712,8 @@ class DeviceContext(QObject):
         self.profile = None
         self.identity = ""
         self.firmware_guess = []
+        self.sloop3 = None
+        self.mboot = None
         if had:
             if reason:
                 self.message.emit(reason)

@@ -81,6 +81,10 @@ FAMILIES: tuple[Family, ...] = (
     Family("orbit", ("orbit",), "sloop", "orbit", evidence="ORP8 projects; its editor refuses foreign backups"),
     Family("x0x", ("x0x",), "x0x", evidence="firmware/src/backup.c (from 1.0.9)"),
     Family("hortator", ("hortator",), "own", evidence="its own protocol 7D 48 54"),
+    # SLOOP 3 (isod89/sloop3-fm1, a rewrite): answers NO Felucca INFO, so by_info never names it; the device layer
+    # finds it by its own INFO (sloop3.py, 7D 53 33). Listed so the table is whole: its backups are "sloop3-backup"
+    # files over its own protocol (sloop3bk.py), never SLOOP 2's commands 34–36
+    Family("sloop3", (), "own", twin="", evidence="app/edproto.h: its own protocol 7D 53 33; INFO \"3.3.7\""),
     # ---- SLOOP's forks (commands 34–36, "sloop-backup" files)
     Family("sloopdx", ("sloopdx",), "sloop", "sloopdx", samples=(), restore=(6, 7, 8, 9, 2, 3, 4, 5, 0, 1, 10, 11),
            twin="", evidence="INFO \"FELUCCA sloopDX 4.0.1\"; ED_BK_IDS 0..11, no samples; 10/11 its own objects"),

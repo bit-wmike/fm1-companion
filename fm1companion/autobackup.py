@@ -162,7 +162,8 @@ def _kind_from_name(stem: str) -> str:
 
 
 # every backup file format the app writes or takes: Felucca's, SLOOP's, FM1 Open's, X0X's and LOOM-8's image
-BACKUP_FORMATS = (backup.FORMAT, backup.SLOOP_FORMAT, backup.FM1OPEN_FORMAT, *backup.IMAGE_FORMATS)
+BACKUP_FORMATS = (backup.FORMAT, backup.SLOOP_FORMAT, backup.FM1OPEN_FORMAT, backup.SLOOP3_FORMAT,
+                  *backup.IMAGE_FORMATS)
 
 
 def _str(v) -> str:
@@ -208,6 +209,8 @@ def _entry_of(path: Path, st, f: dict) -> dict:
                                            if k in fw.lower()), "")
     if fmt == backup.FM1OPEN_FORMAT:               # (M-VAVE's FM1 Open: its slots 1..16)
         key = key or backup.FM1OPEN_KEY
+    if fmt == backup.SLOOP3_FORMAT:                # (SLOOP 3: its own objects, sloop3bk.py – no Felucca inventory)
+        key = backup.SLOOP3_KEY
     if fmt in backup.IMAGE_FORMATS:
         key = key or backup.IMAGE_FORMATS[fmt]
     ids = [o.get("id", -1) for o in objs if isinstance(o, dict)]
@@ -224,6 +227,8 @@ def _entry_of(path: Path, st, f: dict) -> dict:
             return False
         if fmt in backup.IMAGE_FORMATS:
             return False
+        if fmt == backup.SLOOP3_FORMAT:            # (one project: the state at that moment, always there)
+            return i == 2
         return 1 <= i <= 16 if fmt == backup.FM1OPEN_FORMAT else backup.is_project(i, jiant, coral, choral)
     labels = c.get("labels") or []
     created = f.get("created") or f.get("date", "")
