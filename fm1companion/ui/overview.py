@@ -49,11 +49,14 @@ class OverviewPage(QWidget):
         # keys are identifiers (also used by the tests), the row titles are translated
         for k, title in (("Name", _("Name:")), ("Firmware", _("Firmware:")), ("Version", _("Version:")),
                          ("Verbindung", _("Connection:")), ("Seriennummer", _("Serial number:")),  # i18n: ignore
-                         ("USB", _("USB:"))):
+                         ("USB", _("USB:")), ("Unit", _("Unit:"))):
             self.lbl[k] = QLabel("–")
             self.lbl[k].setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.lbl[k].setWordWrap(True)
             self.dev_form.addRow(title, self.lbl[k])
+        # hardware revision (logo on the front = the newer flash chip): shown, and changeable with the link
+        self.lbl["Unit"].setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.lbl["Unit"].linkActivated.connect(lambda _href: self.set_unit())
         row = QHBoxLayout()
         self.b_rename = QPushButton(icon("edit-rename"), _("Rename"))
         self.b_color = QPushButton(icon("color-management", "preferences-desktop-color"), _("Colour"))
@@ -214,6 +217,7 @@ class OverviewPage(QWidget):
         self.lbl["Verbindung"].setText(state)
         self.lbl["Seriennummer"].setText((port.serial or _("none (the device is recognised by choosing the profile)")) if port else "–")
         self.lbl["USB"].setText(_("{id} · port {path}").format(id=port.usb_id, path=port.usb_path) if port and port.usb_id else "–")
+        self.lbl["Unit"].setText(self._unit_text(p))
         for b in (self.b_rename, self.b_color, self.notes):
             b.setEnabled(p is not None)
         can_backup = bool(c.connected)
@@ -305,6 +309,36 @@ class OverviewPage(QWidget):
             self.up_text.setText(_("Up to date: {current} ({channel})").format(current=cur, channel=chan))
         else:
             self.up_text.setText(_("No versions found – are you online?"))
+
+    def _unit_text(self, p) -> str:
+        """hardware revision of the active device; a warning when a newer unit runs a version that does not know its
+        flash chip"""
+        if p is None or getattr(self.ctx, "is_virtual", False):
+            return "–"
+        from .. import hardware
+        text = html.escape(hardware.label(p)) + " · <a href='#unit'>" + (
+            _("change") if hardware.asked(p) else _("logo on the front?")) + "</a>"
+        key = self.ctx.firmware_key
+        if hardware.revision(p) == hardware.NEW and key and self.ctx.port is not None:
+            ver = self.ctx.info.version if self.ctx.info else (p.firmware_version or "")
+            sup = hardware.support(key, ver)
+            if sup.status == hardware.NO:
+                from .device import firmware_name
+                text += "<br><span style='color:#da4453'>" + hardware.running_warning(
+                    firmware_name(key) or key, sup, key) + "</span>"
+        return text
+
+    def set_unit(self, rev: str | None = None):
+        p = self.ctx.profile
+        if p is None:
+            return None
+        from . import hw_revision
+        if rev is None:
+            rev = hw_revision.ask(self, self.ctx, p)
+        else:
+            hw_revision.record(self.ctx, p, rev)
+        self.refresh()
+        return rev
 
     def _rename(self):
         p = self.ctx.profile

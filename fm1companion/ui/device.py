@@ -59,6 +59,11 @@ def handshake(link, tries: int = 2, timeout: float = 1.0) -> str:
                     break
                 ident = fi.parse_identity(pkt)
                 if ident:
+                    if getattr(ident, "flash", 0):        # a firmware that tells its flash chip (fm1-base 19bf320)
+                        try:
+                            link.hs_flash = ident.flash
+                        except AttributeError:
+                            pass
                     return ident.text
         return ""
     finally:
@@ -588,6 +593,11 @@ class DeviceContext(QObject):
         if port.usb_path and p.usb_path != port.usb_path:
             p.usb_path = port.usb_path
             self.store.save()
+        flash = getattr(self.link, "hs_flash", 0) if self.link is not None else 0
+        if flash and not getattr(port, "virtual", False):      # the firmware told the flash chip: keep it (hardware.py)
+            from .. import hardware
+            if hardware.note_flash_id(p, flash, "identity"):
+                self.store.save()
         self.profile = p
 
     def profile_for_port(self, port: PortInfo) -> Profile | None:

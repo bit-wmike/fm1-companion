@@ -24,6 +24,7 @@ STEPS: dict[str, tuple[bool, str]] = {
     "usb_hub": (False, N_("installing through a USB hub (careful mode)")),
     "factory_voices": (False, N_("restoring the factory voices of the original V15")),
     "rom_restore": (False, N_("writing in ROM boot mode (recovery stage 2)")),
+    "new_chip": (False, N_("anything on a newer FM-1 (logo on the front, flash UC25HQ80)")),
 }
 
 
@@ -69,4 +70,6 @@ def plan_kinds(plan) -> list[str]:
         out.append("own_file")
     if st.ports > 1:
         out.append("two_devices")
+    if getattr(st, "revision", "") == "new":      # the unit is a newer one (logo on the front)
+        out.append("new_chip")
     return out

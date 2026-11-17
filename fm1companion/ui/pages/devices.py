@@ -233,6 +233,8 @@ class DevicesPage(QWidget):
                      date=metas[0].when.astimezone().strftime('%d.%m.%Y %H:%M')) if metas else
                   _("Backups: {n} ({size})").format(n=len(metas), size=fmt_size(0))),
                  _("Serial number: {serial} · USB port: {usb}").format(serial=p.serial or _("none"), usb=p.usb_path or '–')]
+        from ... import hardware
+        lines.append(_("Unit: {revision}").format(revision=hardware.label(p)))
         if p.notes:
             lines.append(f"<i>{p.notes}</i>")
         lab = QLabel("<br>".join(lines))
@@ -244,6 +246,7 @@ class DevicesPage(QWidget):
                                  ("color", ("color-management", "preferences-desktop-color"), _("Colour"),
                                   lambda _c=False, x=p: self._color(x)),
                                  ("note", ("document-edit",), pgettext("device", "Note"), lambda _c=False, x=p: self._notes(x)),
+                                 ("unit", ("cpu", "audio-card"), _("Unit …"), lambda _c=False, x=p: self.set_unit(x)),
                                  ("backups", ("document-preview", "backup"), _("Backups"),
                                   lambda _c=False, x=p: self._backups(x)),
                                  ("merge", ("merge", "edit-copy"), _("Merge …"), lambda _c=False, x=p: self._merge(x)),
@@ -259,6 +262,9 @@ class DevicesPage(QWidget):
                                "forget this profile."))
             elif key == "backups":
                 b.setToolTip(_("Browse and compare the backups of this device."))
+            elif key == "unit":
+                b.setToolTip(_("Does this FM-1 have the M-VAVE logo on the front? The newer units have another "
+                               "flash chip; the app then only installs firmware versions that know it."))
             row.addWidget(b)
         card.lay.addLayout(row)
         card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
@@ -298,6 +304,16 @@ class DevicesPage(QWidget):
             p.notes = txt
             self.ctx.store.save()
             self.refresh()
+
+    def set_unit(self, p, rev: str | None = None):
+        """the hardware revision of a device (logo on the front = the newer flash chip); rev given: without the dialog"""
+        from .. import hw_revision
+        if rev is None:
+            rev = hw_revision.ask(self, self.ctx, p)
+        else:
+            hw_revision.record(self.ctx, p, rev)
+        self.refresh()
+        return rev
 
     def _backups(self, p):
         win = self.window_
