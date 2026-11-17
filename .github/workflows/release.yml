@@ -1,0 +1,270 @@
+# Builds everything a release needs and puts it into a DRAFT release.
+# Nothing is public until someone opens the draft under "Releases" and presses "Publish release".
+# The steps for people are in docs/RELEASING.md.
+#
+# Two ways to start it:
+#   A) (no git needed) GitHub › Actions › "Release" › "Run workflow", branch main.
+#      The version is read from fm1companion/__init__.py; the tag v<version> is created by GitHub at the moment
+#      the draft is published.
+#   B) push a tag v<version>.
+#
+# What it does:
+#   1. checks that the version is the same everywhere and that this version is not published yet
+#   2. runs the complete test workflow (tests.yml)
+#   3. builds the .deb and the .run from the clean checkout – twice, they must be identical
+#   4. fetches exactly the firmware commits named in fm1companion/sims/**/manifest.json (also their submodules) and
+#      packs them as source archives (GPL-3.0 section 6 – every NOTICE promises them with each release);
+#      stops if one is missing
+#   5. writes SHA256SUMS and the release notes (from packaging/fm1-companion.metainfo.xml)
+#   6. creates the draft release v<version> for this commit with all files (an older draft is replaced)
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  plan:
+    name: Which version?
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+      go: ${{ steps.v.outputs.go }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Version and consistency
+        id: v
+        run: |
+          v=$(python3 -c "import re;print(re.search(r'__version__ = \"([^\"]+)\"', open('fm1companion/__init__.py').read()).group(1))")
+          tag="v$v"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          # "true" only for a release that exists and is not a draft
+          published=$(gh release view "$tag" --json isDraft --jq '.isDraft|not' 2>/dev/null || echo false)
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            if [ "$GITHUB_REF_NAME" != "$tag" ]; then
+              echo "::error::The tag is $GITHUB_REF_NAME, but fm1companion/__init__.py says $v (expected tag $tag)."; exit 1
+            fi
+            if [ "$published" = true ]; then
+              # the tag was created by publishing the draft (way A): everything is already there
+              echo "Release $tag is already published – nothing to do." | tee -a "$GITHUB_STEP_SUMMARY"
+              echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+          else
+            if [ "$GITHUB_REF_NAME" != "${DEFAULT_BRANCH:-main}" ]; then
+              echo "::error::Start the release from ${DEFAULT_BRANCH:-main}, not from $GITHUB_REF_NAME."; exit 1
+            fi
+            if [ "$published" = true ]; then
+              echo "::error::Release $tag is already published. A published release is never replaced: raise the version (docs/RELEASING.md) and start again."; exit 1
+            fi
+          fi
+          grep -q "^# FM-1 Companion Suite $v\$" README.md || { echo "::error::README.md title does not say $v"; exit 1; }
+          grep -q "<release version=\"$v\" date=\"" packaging/fm1-companion.metainfo.xml || { echo "::error::no <release version=\"$v\"> with a date in packaging/fm1-companion.metainfo.xml"; exit 1; }
+          grep -q "FM-1 Companion Suite $v\"" packaging/fm1-companion.1 || { echo "::error::packaging/fm1-companion.1 does not say $v"; exit 1; }
+          echo "go=true" >> "$GITHUB_OUTPUT"
+          echo "Preparing the draft release $tag from commit $GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  tests:
+    needs: plan
+    if: needs.plan.outputs.go == 'true'
+    uses: ./.github/workflows/tests.yml
+
+  draft:
+    name: Build and draft the release
+    needs: [plan, tests]
+    if: needs.plan.outputs.go == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write            # create the draft release and upload its files
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONDONTWRITEBYTECODE: "1"
+      VERSION: ${{ needs.plan.outputs.version }}
+      TAG: ${{ needs.plan.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Build .deb and .run (twice – the same commit must give the same files)
+        run: |
+          python3 tools/build_deb.py --out dist
+          python3 tools/build_run.py --out dist
+          python3 tools/build_deb.py --out "$RUNNER_TEMP/dist2"
+          python3 tools/build_run.py --out "$RUNNER_TEMP/dist2"
+          for f in "fm1-companion_${VERSION}_all.deb" "FM-1-Companion-Suite-${VERSION}.run"; do
+            [ -s "dist/$f" ] || { echo "::error::dist/$f was not built"; exit 1; }
+            cmp "dist/$f" "$RUNNER_TEMP/dist2/$f" || { echo "::error::$f is not reproducible (two builds differ)"; exit 1; }
+          done
+          ls -l dist
+
+      - name: Fetch the firmware sources (exactly the commits of the bundled builds)
+        run: |
+          python3 - <<'PY' > "$RUNNER_TEMP/repo-args"
+          import json, os, subprocess, sys, time
+          from pathlib import Path
+          dest = Path(os.environ["RUNNER_TEMP"]) / "firmware-src"
+          want = {}
+          for m in sorted(Path("fm1companion/sims").rglob("manifest.json")):
+              d = json.loads(m.read_text("utf-8"))
+              pairs = [(d.get("source_repo", ""), d.get("commit", ""))]
+              pairs += [(s.get("repo", ""), s.get("commit", "")) for s in d.get("sources", [])]
+              for url, commit in pairs:
+                  if url and commit:
+                      want.setdefault(url.rstrip("/").rsplit("/", 1)[-1], (url, set()))[1].add(commit)
+          failed = 0
+          for name, (url, commits) in sorted(want.items()):
+              repo = dest / name
+              repo.mkdir(parents=True, exist_ok=True)
+              subprocess.run(["git", "init", "-q", "--bare", str(repo)], check=True)
+              for c in sorted(commits):
+                  for attempt in (1, 2, 3):
+                      if subprocess.run(["git", "-C", str(repo), "fetch", "-q", "--depth", "1", url, c]).returncode == 0:
+                          break
+                      time.sleep(5 * attempt)
+                  else:
+                      print(f"::error::could not fetch {url} at commit {c} – is the repository or the commit gone? "
+                            "Do NOT publish without its source archive (GPL-3.0 section 6).", file=sys.stderr)
+                      failed += 1
+              print(f"--repo\n{name}={repo}")
+          print(f"{sum(len(c) for _u, c in want.values())} commits from {len(want)} repositories, {failed} failed",
+                file=sys.stderr)
+          sys.exit(1 if failed else 0)
+          PY
+
+      - name: Source archives
+        run: |
+          xargs -d '\n' python3 tools/make_source_tarballs.py --out dist/sources < "$RUNNER_TEMP/repo-args"
+          # every commit named in a manifest must be there
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+          need = set()
+          for m in Path("fm1companion/sims").rglob("manifest.json"):
+              d = json.loads(m.read_text("utf-8"))
+              for url, c in [(d.get("source_repo", ""), d.get("commit", ""))] + [(s.get("repo", ""), s.get("commit", "")) for s in d.get("sources", [])]:
+                  if url and c:
+                      need.add(f"{url.rstrip('/').rsplit('/', 1)[-1]}-{c}.tar.gz")
+          missing = sorted(n for n in need if not (Path("dist/sources") / n).is_file())
+          print(len(need), "source archives expected,", len(missing), "missing")
+          sys.exit("::error::source archives missing: " + ", ".join(missing) if missing else 0)
+          PY
+
+      - name: Checksums
+        run: |
+          cd dist
+          rm -f SHA256SUMS sources/SHA256SUMS
+          mv sources/*.tar.gz .
+          rmdir sources 2>/dev/null || true
+          sha256sum "fm1-companion_${VERSION}_all.deb" "FM-1-Companion-Suite-${VERSION}.run" *.tar.gz > SHA256SUMS
+          sha256sum -c --quiet SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Release notes (from packaging/fm1-companion.metainfo.xml)
+        run: |
+          python3 - <<'PY' > "$RUNNER_TEMP/notes.md"
+          import ast, os, datetime, sys
+          import xml.etree.ElementTree as ET
+          v = os.environ["VERSION"]
+          repo = os.environ["GITHUB_REPOSITORY"]
+          rel = next((r for r in ET.parse("packaging/fm1-companion.metainfo.xml").iter("release") if r.get("version") == v), None)
+          if rel is None or rel.find("description") is None:
+              sys.exit(f"::error::no <release version=\"{v}\"> with a description in the metainfo")
+          today = datetime.date.today().isoformat()
+          if rel.get("date") != today:
+              print(f"::warning::The metainfo dates {v} on {rel.get('date')}, today is {today} – correct the date in "
+                    "packaging/fm1-companion.metainfo.xml (and start again) or publish as it is.", file=sys.stderr)
+          text = lambda e: " ".join("".join(e.itertext()).split())
+          desc = list(rel.find("description"))
+          print(f"## FM-1 Companion Suite {v}\n")
+          for e in desc:
+              if e.tag == "p" and len(desc) == 1:
+                  # an old-style entry, one long paragraph: one sentence per line reads better here
+                  for s in text(e).replace("; ", ". ").split(". "):
+                      if s.strip():
+                          print(f"- {s.strip().rstrip('.')}.")
+                  print()
+              elif e.tag == "p":
+                  print(text(e) + "\n")
+              elif e.tag in ("ul", "ol"):
+                  for li in e.iter("li"):
+                      print(f"- {text(li)}")
+                  print()
+          # "tested on a real FM-1": the table the app itself shows before every installation
+          # (fm1companion/flash/tested.py, STEPS), read without starting the app
+          yes, no = [], []
+          for node in ast.walk(ast.parse(open("fm1companion/flash/tested.py", encoding="utf-8").read())):
+              if isinstance(node, ast.AnnAssign) and getattr(node.target, "id", "") == "STEPS":
+                  for val in node.value.values:
+                      ok, what = val.elts[0].value, val.elts[1].args[0].value
+                      (yes if ok is True else no).append(what)
+          if not no or len(yes) + len(no) < 10:
+              sys.exit("::error::could not read STEPS from fm1companion/flash/tested.py")
+          yes_text = ", ".join(yes) if yes else "nothing"
+          no_text = "; ".join(no)
+          print(f"""### Install
+
+          ```bash
+          sudo apt install ./fm1-companion_{v}_all.deb      # Debian, Raspberry Pi OS (Bookworm, Trixie), Ubuntu
+          sh FM-1-Companion-Suite-{v}.run                   # graphical installer, any of the above
+          ```
+
+          Check a download with `sha256sum -c SHA256SUMS --ignore-missing`.
+          The `*.tar.gz` files are the source code of the bundled firmware builds (GPL-3.0, section 6) – you do not need them to use the app.
+
+          ### Tested on real hardware?
+
+          > [!WARNING]
+          > Unofficial community project – not affiliated with M-VAVE. No warranty. Installing or switching firmware,
+          > recovery, writing back from the Studio and restoring to the device change your FM-1 and are done at your
+          > own risk. Make a backup first.
+
+          - **Tested on a real FM-1 so far:** {yes_text} – once, on one device.
+          - **Only in the simulation so far:** {no_text}.
+
+          The app shows the matching line before every such step. The complete list: [docs/UNTESTED.md](https://github.com/{repo}/blob/v{v}/docs/UNTESTED.md).
+          If you try something on a real FM-1, please write a [hardware test report](https://github.com/{repo}/issues/new/choose).
+          """.replace("\n          ", "\n"))
+          PY
+          cat "$RUNNER_TEMP/notes.md"
+
+      - name: Create the draft release (an older draft of this version is replaced)
+        run: |
+          state=$(gh release view "$TAG" --json isDraft --jq 'if .isDraft then "draft" else "published" end' 2>/dev/null || echo none)
+          if [ "$state" = published ]; then
+            echo "::error::Release $TAG was published in the meantime – nothing is changed."; exit 1
+          fi
+          if [ "$state" = draft ]; then
+            gh release delete "$TAG" --yes          # only the draft; a draft has no tag of its own to lose
+          fi
+          gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "FM-1 Companion Suite $VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            "dist/fm1-companion_${VERSION}_all.deb" "dist/FM-1-Companion-Suite-${VERSION}.run" dist/*.tar.gz dist/SHA256SUMS
+          {
+            echo "### The draft release $TAG is ready"
+            echo
+            echo "Open **Releases** (https://github.com/$GITHUB_REPOSITORY/releases), read the draft, then press **Publish release**."
+            echo "Until then nothing is public."
+            echo
+            echo '```'; cat dist/SHA256SUMS; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
