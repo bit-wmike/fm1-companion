@@ -84,6 +84,7 @@ jobs:
           echo "Preparing the draft release $tag from commit $GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"
 
   tests:
+    name: Tests
     needs: plan
     if: needs.plan.outputs.go == 'true'
     uses: ./.github/workflows/tests.yml

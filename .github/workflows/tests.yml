@@ -71,7 +71,9 @@ jobs:
           $APT install -y --no-install-recommends desktop-file-utils appstream
           sed 's/@EXEC@/fm1-companion/' data/fm1-companion.desktop.in > "$RUNNER_TEMP/fm1-companion.desktop"
           desktop-file-validate "$RUNNER_TEMP/fm1-companion.desktop"
-          appstreamcli validate --no-net packaging/fm1-companion.metainfo.xml
+          # the component id "fm1-companion" is not in reverse-DNS form; changing it now would break updates of
+          # installed packages, so that one hint is not an error here (every other warning still fails)
+          appstreamcli validate --no-net --override=cid-desktopapp-is-not-rdns=info packaging/fm1-companion.metainfo.xml
       - name: The version is the same everywhere
         run: |
           v=$(python3 -c "import re;print(re.search(r'__version__ = \"([^\"]+)\"', open('fm1companion/__init__.py').read()).group(1))")
