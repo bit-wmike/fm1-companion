@@ -3,14 +3,16 @@
 
 Before every start as root, the pkexec command copies exactly these files into a root-owned temp directory,
 checks each against this list and runs only the verified copy (never code from writable folders).
-  * unbricker: vendor/unbricker (MvaveFM1Unbricker 707470a, MIT)
+  * unbricker: vendor/unbricker (MvaveFM1Unbricker a1eaf4d = tool version 1.2.1, MIT). 2026-11: re-pinned from
+    707470a (1.2.0) to upstream's a1eaf4d, whose only change is that the flash ID 0xB36014 (the UC25HQ80 of the
+    FM-1s with the logo on the front) is accepted beside 0x856014 – files copied unchanged from upstream
   * jl: kagaimiq's jl-uboot-tool at the fixed revision adb3f18 (MIT), without docs/README/LICENSE
 """
 JL_COMMIT = "adb3f18889e88ac512ce0a3c4d8cc3d3cb30696a"
 
 UNBRICKER = {
-    "fm1_unbrick.py": "24c313181927199bb6abcbdb4fe5f20815a32aa1fe0ce85ccc5c2b0217dd613a",
-    "fm1_transporter_recover.py": "cd09c78c1acc6b03747d2890734443a76ad3618c9d29ebb6d285334750568a4f",
+    "fm1_unbrick.py": "9aecf2403be6651c53e03cbf9cbfcbe3d1c845830ae2742fcbad74dfa9a3cba5",
+    "fm1_transporter_recover.py": "4850aa12a46a4f55ae4b8eda77dfe3db4370d7ddf625bad04a0e71d57e3daf71",
 }
 
 JL = {
