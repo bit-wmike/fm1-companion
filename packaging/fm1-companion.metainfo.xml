@@ -33,7 +33,7 @@
         <ul>
           <li>Studio: “Export”, “Open backup” and “Write back” crashed on click since 2.3.1 (so did “Reset page settings” in the settings) – fixed.</li>
           <li>Studio export: separate tracks now line up in time with the mix (their sum is still not the mix – each track passes the master section alone, and the app says so). “Whole song” no longer runs for ever on firmwares whose song does not end; Cancel really stops the export.</li>
-          <li>Studio write back: a failed write back says what was already written and names the safety backup; a LOOM-8 twin can be written back.</li>
+          <li>Studio write back: a failed write back says what was already written and names the safety backup; a LOOM-8 twin can be written back. The SLOOP twin needs 32 MB of memory instead of 195 MB.</li>
           <li>Devices: merging two device profiles could lose backups with the same file name – every file is moved now, none overwritten.</li>
           <li>Backups of X0X and LOOM-8 were invisible in the backup list and were never thinned out – they are listed now. From now on the retention rule also applies to them.</li>
           <li>Backups of firmware forks taken with 2.5 or 2.6 were refused on restore although they fit: restore, device copy and “Browse &amp; Compare” use one rule, the one the backup core itself uses.</li>
@@ -41,10 +41,10 @@
           <li>Settings, device list and device identities: a damaged file is set aside instead of being silently replaced; files are written atomically.</li>
           <li>Firmware install: the plan no longer calls the detour via the original V15 “recommended” or “without leftovers” – it says what is known and what is not. Every plan and confirmation carries one line that says whether this kind of step has ever run on a real FM-1 (so far: only an update within Melodee).</li>
           <li>Firmware install: “Cancel” is honoured where the device can still back out and is switched off where it cannot; the app no longer loses the device's answer to the first step; the second step of a switch checks that the FM-1 really runs the original V15; the app stops when a second FM-1 answers during an installation; an incomplete download is recognised and thrown away.</li>
-          <li>Web pages (online editors, simulators): every MIDI message a page sends is checked against the page's current address; pages that were not allowed can only send notes, controllers and clock; firmware-update and boot-mode commands are blocked from every web page, also from the built-in editor view. Permissions only for https addresses. Files from web pages are saved only through the normal “Save” dialog.</li>
+          <li>Web pages (online editors, simulators): every MIDI message a page sends is checked against the page's current address; pages that were not allowed can only send notes, controllers and clock; firmware-update and boot-mode commands are blocked from every web page, also from the built-in editor view. A permission can only be given to an https address or a page on this computer. Files from web pages are saved only through the normal “Save” dialog.</li>
           <li>Catalog: release tags and file names from the internet are validated before they are used as folder or file names.</li>
           <li>Bug report: removes more personal details (user name in all forms, device names, serial numbers, MAC addresses, Wi-Fi names), says honestly what can remain, and says where to send it. The crash dialog no longer promises that the FM-1 is untouched.</li>
-          <li>Packages: the .deb and the .run are built from tracked files only and are bit-for-bit reproducible; correct changelog and maintainer; the SLOOP twin needs 32 MB of memory instead of 195 MB.</li>
+          <li>Packages: the .deb and the .run are built from tracked files only and are bit-for-bit reproducible; correct changelog and maintainer.</li>
           <li>Languages: Spanish is listed as “Español”; German singular forms (“1 Teil” instead of “1 Teile”); messages name the pages as the app does (Recovery, Firmware+ › Install &amp; Versions); a new language shows the English help instead of the German one.</li>
           <li>Credits name the bundled Unbricker (Michael P Jones), the FM-1 Transporter (kurogedelic) and jl-uboot-tool (kagaimiq).</li>
         </ul>

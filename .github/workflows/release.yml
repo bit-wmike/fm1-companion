@@ -242,7 +242,7 @@ jobs:
           - **Tested on a real FM-1 so far:** {yes_text} – once, on one device.
           - **Only in the simulation so far:** {no_text}.
 
-          The app shows the matching line before every such step. The complete list: [docs/UNTESTED.md](https://github.com/{repo}/blob/v{v}/docs/UNTESTED.md).
+          The app shows this line in the installation plan and in the recovery confirmations. The complete list: [docs/UNTESTED.md](https://github.com/{repo}/blob/v{v}/docs/UNTESTED.md).
           If you try something on a real FM-1, please write a [hardware test report](https://github.com/{repo}/issues/new/choose).
           """.replace("\n          ", "\n"))
           PY
