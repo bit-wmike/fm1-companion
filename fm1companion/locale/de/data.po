@@ -163,8 +163,8 @@ msgstr "Aufnahme läuft"
 #, python-brace-format
 msgid "{device}: the last backup is up to date (younger than {n} day)."
 msgid_plural "{device}: the last backup is up to date (younger than {n} days)."
-msgstr[0] "{device}: letztes Backup ist aktuell (jünger als {n} Tag(e))."
-msgstr[1] "{device}: letztes Backup ist aktuell (jünger als {n} Tag(e))."
+msgstr[0] "{device}: letztes Backup ist aktuell (jünger als {n} Tag)."
+msgstr[1] "{device}: letztes Backup ist aktuell (jünger als {n} Tage)."
 
 #: fm1companion/ui/backups_page.py:230
 #, python-brace-format
@@ -634,8 +634,8 @@ msgstr "Projekte entnommen"
 #, python-brace-format
 msgid "{n} project is now in the project library ({folder}). There you can rename and load it. Nothing was changed on the FM-1."
 msgid_plural "{n} projects are now in the project library ({folder}). There you can rename and load them. Nothing was changed on the FM-1."
-msgstr[0] "{n} Projekt(e) liegen jetzt in der Projekt-Bibliothek ({folder}). Dort kannst du sie umbenennen und einspielen. Am FM-1 wurde nichts verändert."
-msgstr[1] "{n} Projekt(e) liegen jetzt in der Projekt-Bibliothek ({folder}). Dort kannst du sie umbenennen und einspielen. Am FM-1 wurde nichts verändert."
+msgstr[0] "{n} Projekt liegt jetzt in der Projekt-Bibliothek ({folder}). Dort kannst du es umbenennen und einspielen. Am FM-1 wurde nichts verändert."
+msgstr[1] "{n} Projekte liegen jetzt in der Projekt-Bibliothek ({folder}). Dort kannst du sie umbenennen und einspielen. Am FM-1 wurde nichts verändert."
 
 #: fm1companion/ui/backups_page.py:719
 #: fm1companion/ui/pages/backup_browser.py:628
@@ -801,28 +801,28 @@ msgstr "Den Stand davor hast du im Sicherheits-Backup {name}."
 #, python-brace-format
 msgid "{n} part restored to {device}: {parts}. The previous state is in the safety backup {name}."
 msgid_plural "{n} parts restored to {device}: {parts}. The previous state is in the safety backup {name}."
-msgstr[0] "{n} Teil(e) auf {device} zurückgespielt: {parts}. Der vorherige Stand liegt im Sicherheits-Backup {name}."
-msgstr[1] "{n} Teil(e) auf {device} zurückgespielt: {parts}. Der vorherige Stand liegt im Sicherheits-Backup {name}."
+msgstr[0] "{n} Teil auf {device} zurückgespielt: {parts}. Der vorherige Stand liegt im Sicherheits-Backup {name}."
+msgstr[1] "{n} Teile auf {device} zurückgespielt: {parts}. Der vorherige Stand liegt im Sicherheits-Backup {name}."
 
 #: fm1companion/ui/pages/backup_browser.py:112
 #, python-brace-format
 msgid "{n} part restored to the FM-1: {parts}. The previous state is in the safety backup {name}."
 msgid_plural "{n} parts restored to the FM-1: {parts}. The previous state is in the safety backup {name}."
-msgstr[0] "{n} Teil(e) auf dem FM-1 zurückgespielt: {parts}. Der vorherige Stand liegt im Sicherheits-Backup {name}."
-msgstr[1] "{n} Teil(e) auf dem FM-1 zurückgespielt: {parts}. Der vorherige Stand liegt im Sicherheits-Backup {name}."
+msgstr[0] "{n} Teil auf dem FM-1 zurückgespielt: {parts}. Der vorherige Stand liegt im Sicherheits-Backup {name}."
+msgstr[1] "{n} Teile auf dem FM-1 zurückgespielt: {parts}. Der vorherige Stand liegt im Sicherheits-Backup {name}."
 
 #: fm1companion/ui/pages/backup_browser.py:117
 #, python-brace-format
 msgid "{n} part restored to {device}."
 msgid_plural "{n} parts restored to {device}."
-msgstr[0] "{n} Teile auf {device} zurückgespielt."
+msgstr[0] "{n} Teil auf {device} zurückgespielt."
 msgstr[1] "{n} Teile auf {device} zurückgespielt."
 
 #: fm1companion/ui/pages/backup_browser.py:119
 #, python-brace-format
 msgid "{n} part restored to the FM-1."
 msgid_plural "{n} parts restored to the FM-1."
-msgstr[0] "{n} Teile auf dem FM-1 zurückgespielt."
+msgstr[0] "{n} Teil auf dem FM-1 zurückgespielt."
 msgstr[1] "{n} Teile auf dem FM-1 zurückgespielt."
 
 #: fm1companion/ui/pages/backup_browser.py:134
@@ -1160,8 +1160,8 @@ msgstr "Die angehakten Teile sind leer – es gibt nichts zu exportieren."
 #, python-brace-format
 msgid "{n} file exported to {folder}"
 msgid_plural "{n} files exported to {folder}"
-msgstr[0] "{n} Datei(en) exportiert nach {folder}"
-msgstr[1] "{n} Datei(en) exportiert nach {folder}"
+msgstr[0] "{n} Datei exportiert nach {folder}"
+msgstr[1] "{n} Dateien exportiert nach {folder}"
 
 #: fm1companion/ui/pages/backup_browser.py:613
 msgid "Exported"
@@ -1171,8 +1171,8 @@ msgstr "Exportiert"
 #, python-brace-format
 msgid "{n} file is in {folder}:"
 msgid_plural "{n} files are in {folder}:"
-msgstr[0] "{n} Datei(en) liegen in {folder}:"
-msgstr[1] "{n} Datei(en) liegen in {folder}:"
+msgstr[0] "{n} Datei liegt in {folder}:"
+msgstr[1] "{n} Dateien liegen in {folder}:"
 
 #: fm1companion/ui/pages/backup_browser.py:616
 #: fm1companion/ui/pages/backup_browser.py:700
@@ -1237,8 +1237,8 @@ msgstr "Es wurde nichts übernommen."
 #, python-brace-format
 msgid "{n} backup taken over into the backup folder."
 msgid_plural "{n} backups taken over into the backup folder."
-msgstr[0] "{n} Backup(s) in den Backup-Ordner übernommen."
-msgstr[1] "{n} Backup(s) in den Backup-Ordner übernommen."
+msgstr[0] "{n} Backup in den Backup-Ordner übernommen."
+msgstr[1] "{n} Backups in den Backup-Ordner übernommen."
 
 #: fm1companion/ui/pages/backup_browser.py:697
 msgid "No backup taken over."
@@ -1337,7 +1337,7 @@ msgstr "Zusatzplätze"
 #, python-brace-format
 msgid "{n} sample"
 msgid_plural "{n} samples"
-msgstr[0] "{n} Samples"
+msgstr[0] "{n} Sample"
 msgstr[1] "{n} Samples"
 
 #: fm1companion/backup_inspect.py:288
@@ -1420,7 +1420,7 @@ msgstr "Sample-Slot USR{n}"
 #, python-brace-format
 msgid "{n} zone, name {name}"
 msgid_plural "{n} zones, name {name}"
-msgstr[0] "{n} Zonen, Name {name}"
+msgstr[0] "{n} Zone, Name {name}"
 msgstr[1] "{n} Zonen, Name {name}"
 
 #: fm1companion/backup_inspect.py:393 fm1companion/backup_inspect.py:418
@@ -1484,7 +1484,7 @@ msgstr "Prophet-Bank {n} (Programme {first}–{last})"
 #, python-brace-format
 msgid "{n} favourite"
 msgid_plural "{n} favourites"
-msgstr[0] "{n} Favoriten"
+msgstr[0] "{n} Favorit"
 msgstr[1] "{n} Favoriten"
 
 #: fm1companion/backup_inspect.py:461
@@ -1562,7 +1562,7 @@ msgstr[1] "{n} Presets gelöscht"
 #, python-brace-format
 msgid "{n} preset object changed"
 msgid_plural "{n} preset objects changed"
-msgstr[0] "{n} Preset-Objekte geändert"
+msgstr[0] "{n} Preset-Objekt geändert"
 msgstr[1] "{n} Preset-Objekte geändert"
 
 #: fm1companion/backup_inspect.py:578 fm1companion/backup_inspect.py:579
@@ -1601,7 +1601,7 @@ msgstr "Einstellungen gleich"
 #, python-brace-format
 msgid "{n} more object changed"
 msgid_plural "{n} more objects changed"
-msgstr[0] "{n} weitere Objekte geändert"
+msgstr[0] "{n} weiteres Objekt geändert"
 msgstr[1] "{n} weitere Objekte geändert"
 
 #: fm1companion/backup_inspect.py:687
@@ -2134,7 +2134,7 @@ msgstr[1] "{n} Presets"
 #, python-brace-format
 msgid "{n} part"
 msgid_plural "{n} parts"
-msgstr[0] "{n} Teile"
+msgstr[0] "{n} Teil"
 msgstr[1] "{n} Teile"
 
 #: fm1companion/autobackup.py:208
@@ -2253,7 +2253,7 @@ msgstr "Aus dem Stand vom {date} ({firmware}):"
 #, python-brace-format
 msgid "Projects ({n} used slot; the slots on the target are replaced)"
 msgid_plural "Projects ({n} used slots; the slots on the target are replaced)"
-msgstr[0] "Projekte ({n} belegte Plätze; die Plätze am Ziel werden ersetzt)"
+msgstr[0] "Projekte ({n} belegter Platz; die Plätze am Ziel werden ersetzt)"
 msgstr[1] "Projekte ({n} belegte Plätze; die Plätze am Ziel werden ersetzt)"
 
 #: fm1companion/ui/pages/devices.py:76
@@ -2538,7 +2538,7 @@ msgstr "Es wurde nichts zum Kopieren ausgewählt."
 #, python-brace-format
 msgid "Copied from {device}: {n} part."
 msgid_plural "Copied from {device}: {n} parts."
-msgstr[0] "Kopiert von {device}: {n} Teile."
+msgstr[0] "Kopiert von {device}: {n} Teil."
 msgstr[1] "Kopiert von {device}: {n} Teile."
 
 #: fm1companion/ui/device.py:31 fm1companion/config.py:200
@@ -3154,7 +3154,7 @@ msgstr "{used} von {total} Plätzen belegt ({size})"
 #, python-brace-format
 msgid "{size} in {n} object"
 msgid_plural "{size} in {n} objects"
-msgstr[0] "{size} in {n} Objekten"
+msgstr[0] "{size} in {n} Objekt"
 msgstr[1] "{size} in {n} Objekten"
 
 #: fm1companion/ui/fm1_page.py:324

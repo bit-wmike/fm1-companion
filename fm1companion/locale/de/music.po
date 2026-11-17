@@ -144,8 +144,8 @@ msgstr "Vorher macht die App automatisch ein <b>Sicherheits-Backup</b> dieses FM
 #, python-brace-format
 msgid "{n} part was not taken over by the twin when loading – it stays unchanged on the FM-1."
 msgid_plural "{n} parts were not taken over by the twin when loading – they stay unchanged on the FM-1."
-msgstr[0] "{n} Teil(e) hatte der Zwilling beim Laden nicht übernommen – sie bleiben am FM-1 unverändert."
-msgstr[1] "{n} Teil(e) hatte der Zwilling beim Laden nicht übernommen – sie bleiben am FM-1 unverändert."
+msgstr[0] "{n} Teil hatte der Zwilling beim Laden nicht übernommen – er bleibt am FM-1 unverändert."
+msgstr[1] "{n} Teile hatte der Zwilling beim Laden nicht übernommen – sie bleiben am FM-1 unverändert."
 
 #: fm1companion/ui/pages/studio.py:210
 msgid "Also write the device settings (GLO › SYSTEM, MIDI channels, panel …)"
@@ -422,7 +422,7 @@ msgstr "noch nicht"
 #, python-brace-format
 msgid "Saved automatically: {time} · with the profile “{profile}” · {n} intermediate state"
 msgid_plural "Saved automatically: {time} · with the profile “{profile}” · {n} intermediate states"
-msgstr[0] "Automatisch gespeichert: {time} · beim Profil „{profile}“ · {n} Zwischenstände"
+msgstr[0] "Automatisch gespeichert: {time} · beim Profil „{profile}“ · {n} Zwischenstand"
 msgstr[1] "Automatisch gespeichert: {time} · beim Profil „{profile}“ · {n} Zwischenstände"
 
 #: fm1companion/ui/pages/studio.py:567
@@ -640,7 +640,7 @@ msgstr "Rendern fehlgeschlagen: {error}"
 #, python-brace-format
 msgid "{n} single track"
 msgid_plural "{n} single tracks"
-msgstr[0] "{n} Einzelspuren"
+msgstr[0] "{n} Einzelspur"
 msgstr[1] "{n} Einzelspuren"
 
 #: fm1companion/ui/pages/studio.py:935
@@ -1112,14 +1112,14 @@ msgstr "Diese Firmware meldet keine einzeln lesbaren Projektplätze. Backups geh
 #, python-brace-format
 msgid "{used} of {n} section used, running project {size}. SLOOP projects can be fetched, collected and played back – viewing only works in the SLOOP web editor."
 msgid_plural "{used} of {n} sections used, running project {size}. SLOOP projects can be fetched, collected and played back – viewing only works in the SLOOP web editor."
-msgstr[0] "{used} von {n} Sections belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln und zurückspielen – ansehen geht nur im SLOOP-Web-Editor."
+msgstr[0] "{used} von {n} Section belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln und zurückspielen – ansehen geht nur im SLOOP-Web-Editor."
 msgstr[1] "{used} von {n} Sections belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln und zurückspielen – ansehen geht nur im SLOOP-Web-Editor."
 
 #: fm1companion/ui/projects_page.py:213
 #, python-brace-format
 msgid "{used} of {n} slot used, running music {size}. You give names in the library (the protocol provides none)."
 msgid_plural "{used} of {n} slots used, running music {size}. You give names in the library (the protocol provides none)."
-msgstr[0] "{used} von {n} Plätzen belegt, laufende Musik {size}. Namen vergibst du in der Bibliothek (das Protokoll liefert keine)."
+msgstr[0] "{used} von {n} Platz belegt, laufende Musik {size}. Namen vergibst du in der Bibliothek (das Protokoll liefert keine)."
 msgstr[1] "{used} von {n} Plätzen belegt, laufende Musik {size}. Namen vergibst du in der Bibliothek (das Protokoll liefert keine)."
 
 #: fm1companion/ui/projects_page.py:219
@@ -1190,8 +1190,8 @@ msgstr "Projekte holen"
 #, python-brace-format
 msgid "{done} of {n} project fetched into the library ({folder}). Nothing was changed on the FM-1."
 msgid_plural "{done} of {n} projects fetched into the library ({folder}). Nothing was changed on the FM-1."
-msgstr[0] "{done} von {n} Projekt(en) in die Bibliothek geholt ({folder}). Am FM-1 wurde nichts geändert."
-msgstr[1] "{done} von {n} Projekt(en) in die Bibliothek geholt ({folder}). Am FM-1 wurde nichts geändert."
+msgstr[0] "{done} von {n} Projekt in die Bibliothek geholt ({folder}). Am FM-1 wurde nichts geändert."
+msgstr[1] "{done} von {n} Projekten in die Bibliothek geholt ({folder}). Am FM-1 wurde nichts geändert."
 
 #: fm1companion/ui/projects_page.py:304
 #, python-brace-format
@@ -1316,7 +1316,7 @@ msgstr "Kein solcher Platz"
 #, python-brace-format
 msgid "This firmware only has {n} project slot."
 msgid_plural "This firmware only has {n} project slots."
-msgstr[0] "Diese Firmware hat nur {n} Projektplätze."
+msgstr[0] "Diese Firmware hat nur {n} Projektplatz."
 msgstr[1] "Diese Firmware hat nur {n} Projektplätze."
 
 #: fm1companion/ui/projects_page.py:435
@@ -1460,8 +1460,8 @@ msgstr "Datei übersprungen"
 #, python-brace-format
 msgid "{n} project added to the library."
 msgid_plural "{n} projects added to the library."
-msgstr[0] "{n} Projekt(e) in die Bibliothek übernommen."
-msgstr[1] "{n} Projekt(e) in die Bibliothek übernommen."
+msgstr[0] "{n} Projekt in die Bibliothek übernommen."
+msgstr[1] "{n} Projekte in die Bibliothek übernommen."
 
 #: fm1companion/ui/pages/compose.py:44 fm1companion/ui/pages/compose.py:558
 #: fm1companion/ui/pages/compose.py:693
@@ -1948,7 +1948,7 @@ msgstr "lerne {name} …"
 #, python-brace-format
 msgid "learned: {name} ({n} state)"
 msgid_plural "learned: {name} ({n} states)"
-msgstr[0] "gelernt: {name} ({n} Zustände)"
+msgstr[0] "gelernt: {name} ({n} Zustand)"
 msgstr[1] "gelernt: {name} ({n} Zustände)"
 
 #: fm1companion/ui/pages/compose.py:538
@@ -2279,14 +2279,14 @@ msgstr "„{name}“ hat den Start abgelehnt (Code {code}) – ist ein Song ange
 #, python-brace-format
 msgid "“{name}” plays its song itself from section {section} ({n} section) – exactly its sound. “Stop FM-1” stops it."
 msgid_plural "“{name}” plays its song itself from section {section} ({n} sections) – exactly its sound. “Stop FM-1” stops it."
-msgstr[0] "„{name}“ spielt seinen Song selbst ab Abschnitt {section} ({n} Abschnitte) – exakt sein Klang. „FM-1 stoppen“ hält an."
+msgstr[0] "„{name}“ spielt seinen Song selbst ab Abschnitt {section} ({n} Abschnitt) – exakt sein Klang. „FM-1 stoppen“ hält an."
 msgstr[1] "„{name}“ spielt seinen Song selbst ab Abschnitt {section} ({n} Abschnitte) – exakt sein Klang. „FM-1 stoppen“ hält an."
 
 #: fm1companion/ui/pages/project_view.py:254
 #, python-brace-format
 msgid "“{name}” plays its song itself ({n} section) – exactly its sound. “Stop FM-1” stops it."
 msgid_plural "“{name}” plays its song itself ({n} sections) – exactly its sound. “Stop FM-1” stops it."
-msgstr[0] "„{name}“ spielt seinen Song selbst ({n} Abschnitte) – exakt sein Klang. „FM-1 stoppen“ hält an."
+msgstr[0] "„{name}“ spielt seinen Song selbst ({n} Abschnitt) – exakt sein Klang. „FM-1 stoppen“ hält an."
 msgstr[1] "„{name}“ spielt seinen Song selbst ({n} Abschnitte) – exakt sein Klang. „FM-1 stoppen“ hält an."
 
 #: fm1companion/ui/pages/project_view.py:258
@@ -2500,7 +2500,7 @@ msgstr "Quelle: {source}"
 #, python-brace-format
 msgid "{bpm} BPM · Swing {swing} · {n} track · Format {format}"
 msgid_plural "{bpm} BPM · Swing {swing} · {n} tracks · Format {format}"
-msgstr[0] "{bpm} BPM · Swing {swing} · {n} Spuren · Format {format}"
+msgstr[0] "{bpm} BPM · Swing {swing} · {n} Spur · Format {format}"
 msgstr[1] "{bpm} BPM · Swing {swing} · {n} Spuren · Format {format}"
 
 #: fm1companion/ui/pages/project_view.py:460
@@ -2568,14 +2568,14 @@ msgstr "Kein Song angelegt – exportiert werden dann die aktiven Patterns."
 #, python-brace-format
 msgid "{n} punch effect"
 msgid_plural "{n} punch effects"
-msgstr[0] "{n} Punch-Effekte"
+msgstr[0] "{n} Punch-Effekt"
 msgstr[1] "{n} Punch-Effekte"
 
 #: fm1companion/ui/pages/project_view.py:537
 #, python-brace-format
 msgid "{n} song/pattern preset ({names})"
 msgid_plural "{n} song/pattern presets ({names})"
-msgstr[0] "{n} Song-/Pattern-Presets ({names})"
+msgstr[0] "{n} Song-/Pattern-Preset ({names})"
 msgstr[1] "{n} Song-/Pattern-Presets ({names})"
 
 #: fm1companion/ui/pages/project_view.py:540
@@ -2591,7 +2591,7 @@ msgstr " und "
 #, python-brace-format
 msgid ", {n} recorded note"
 msgid_plural ", {n} recorded notes"
-msgstr[0] ", {n} aufgenommene Noten"
+msgstr[0] ", {n} aufgenommene Note"
 msgstr[1] ", {n} aufgenommene Noten"
 
 #: fm1companion/ui/pages/project_view.py:595
@@ -3327,22 +3327,22 @@ msgstr "Nicht alle Aufnahmen gelöscht"
 #, python-brace-format
 msgid "{n} recording deleted."
 msgid_plural "{n} recordings deleted."
-msgstr[0] "{n} Aufnahme(n) gelöscht."
-msgstr[1] "{n} Aufnahme(n) gelöscht."
+msgstr[0] "{n} Aufnahme gelöscht."
+msgstr[1] "{n} Aufnahmen gelöscht."
 
 #: fm1companion/ui/recorder_page.py:607
 #, python-brace-format
 msgid "{n} file exported as {format}."
 msgid_plural "{n} files exported as {format}."
-msgstr[0] "{n} Datei(en) als {format} exportiert."
-msgstr[1] "{n} Datei(en) als {format} exportiert."
+msgstr[0] "{n} Datei als {format} exportiert."
+msgstr[1] "{n} Dateien als {format} exportiert."
 
 #: fm1companion/ui/recorder_page.py:609
 #, python-brace-format
 msgid "{done} of {n} recording exported as {format} (next to the original)."
 msgid_plural "{done} of {n} recordings exported as {format} (next to the original)."
-msgstr[0] "{done} von {n} Aufnahme(n) als {format} exportiert (neben dem Original)."
-msgstr[1] "{done} von {n} Aufnahme(n) als {format} exportiert (neben dem Original)."
+msgstr[0] "{done} von {n} Aufnahme als {format} exportiert (neben dem Original)."
+msgstr[1] "{done} von {n} Aufnahmen als {format} exportiert (neben dem Original)."
 
 #: fm1companion/ui/recorder_page.py:613
 #, python-brace-format
@@ -3362,15 +3362,15 @@ msgstr "{n} übernommen, dann abgebrochen"
 #, python-brace-format
 msgid "{n} file taken over into the sample library (Samples › Recordings)."
 msgid_plural "{n} files taken over into the sample library (Samples › Recordings)."
-msgstr[0] "{n} Datei(en) in die Sample-Bibliothek übernommen (Samples › Aufnahmen)."
-msgstr[1] "{n} Datei(en) in die Sample-Bibliothek übernommen (Samples › Aufnahmen)."
+msgstr[0] "{n} Datei in die Sample-Bibliothek übernommen (Samples › Aufnahmen)."
+msgstr[1] "{n} Dateien in die Sample-Bibliothek übernommen (Samples › Aufnahmen)."
 
 #: fm1companion/ui/recorder_page.py:638
 #, python-brace-format
 msgid "{n} recording taken over as a sample (Samples › Recordings)."
 msgid_plural "{n} recordings taken over as samples (Samples › Recordings)."
-msgstr[0] "{n} Aufnahme(n) als Sample übernommen (Samples › Aufnahmen)."
-msgstr[1] "{n} Aufnahme(n) als Sample übernommen (Samples › Aufnahmen)."
+msgstr[0] "{n} Aufnahme als Sample übernommen (Samples › Aufnahmen)."
+msgstr[1] "{n} Aufnahmen als Sample übernommen (Samples › Aufnahmen)."
 
 #: fm1companion/ui/recorder_page.py:681
 #, python-brace-format
@@ -3544,7 +3544,7 @@ msgstr "Lese die Spuren von „{name}“ …"
 msgid "<b>Not started:</b> track {tracks} is armed for recording (REC) on “{name}” – the FM-1 would record the notes and change the project. Please switch REC off on the FM-1, then play again."
 msgid_plural "<b>Not started:</b> tracks {tracks} are armed for recording (REC) on “{name}” – the FM-1 would record the notes and change the project. Please switch REC off on the FM-1, then play again."
 msgstr[0] "<b>Nicht gestartet:</b> Spur {tracks} ist auf „{name}“ zur Aufnahme scharf geschaltet (REC) – das FM-1 würde die Noten aufnehmen und das Projekt verändern. Bitte REC am FM-1 ausschalten, dann erneut abspielen."
-msgstr[1] "<b>Nicht gestartet:</b> Spur {tracks} ist auf „{name}“ zur Aufnahme scharf geschaltet (REC) – das FM-1 würde die Noten aufnehmen und das Projekt verändern. Bitte REC am FM-1 ausschalten, dann erneut abspielen."
+msgstr[1] "<b>Nicht gestartet:</b> Die Spuren {tracks} sind auf „{name}“ zur Aufnahme scharf geschaltet (REC) – das FM-1 würde die Noten aufnehmen und das Projekt verändern. Bitte REC am FM-1 ausschalten, dann erneut abspielen."
 
 #: fm1companion/ui/playback_bar.py:270 fm1companion/ui/playback_bar.py:332
 #, python-brace-format
@@ -3592,7 +3592,7 @@ msgstr "Lese die Spuren des Studio-Zwillings …"
 msgid "<b>Not started:</b> track {tracks} is armed for recording (REC) in the studio twin – please switch it off there (page “Studio”)."
 msgid_plural "<b>Not started:</b> tracks {tracks} are armed for recording (REC) in the studio twin – please switch it off there (page “Studio”)."
 msgstr[0] "<b>Nicht gestartet:</b> Spur {tracks} ist im Studio-Zwilling zur Aufnahme scharf geschaltet (REC) – bitte dort ausschalten (Seite „Studio“)."
-msgstr[1] "<b>Nicht gestartet:</b> Spur {tracks} ist im Studio-Zwilling zur Aufnahme scharf geschaltet (REC) – bitte dort ausschalten (Seite „Studio“)."
+msgstr[1] "<b>Nicht gestartet:</b> Die Spuren {tracks} sind im Studio-Zwilling zur Aufnahme scharf geschaltet (REC) – bitte dort ausschalten (Seite „Studio“)."
 
 #: fm1companion/ui/playback_bar.py:339
 #, python-brace-format
@@ -3629,14 +3629,14 @@ msgstr "Gestoppt."
 #, python-brace-format
 msgid "Done – {n} MIDI message sent to the studio twin, all notes off{error}."
 msgid_plural "Done – {n} MIDI messages sent to the studio twin, all notes off{error}."
-msgstr[0] "Fertig – {n} MIDI-Nachrichten an den Studio-Zwilling gesendet, alle Noten aus{error}."
+msgstr[0] "Fertig – {n} MIDI-Nachricht an den Studio-Zwilling gesendet, alle Noten aus{error}."
 msgstr[1] "Fertig – {n} MIDI-Nachrichten an den Studio-Zwilling gesendet, alle Noten aus{error}."
 
 #: fm1companion/ui/playback_bar.py:465
 #, python-brace-format
 msgid "Done – {n} MIDI message sent to “{name}”, all notes off{error}."
 msgid_plural "Done – {n} MIDI messages sent to “{name}”, all notes off{error}."
-msgstr[0] "Fertig – {n} MIDI-Nachrichten an „{name}“ gesendet, alle Noten aus{error}."
+msgstr[0] "Fertig – {n} MIDI-Nachricht an „{name}“ gesendet, alle Noten aus{error}."
 msgstr[1] "Fertig – {n} MIDI-Nachrichten an „{name}“ gesendet, alle Noten aus{error}."
 
 #: fm1companion/ui/playback_bar.py:471
@@ -3648,7 +3648,7 @@ msgstr ", Durchlauf {n}"
 #, python-brace-format
 msgid "{n} note skipped (FM-1 busy right now)"
 msgid_plural "{n} notes skipped (FM-1 busy right now)"
-msgstr[0] "{n} Noten übersprungen (FM-1 gerade belegt)"
+msgstr[0] "{n} Note übersprungen (FM-1 gerade belegt)"
 msgstr[1] "{n} Noten übersprungen (FM-1 gerade belegt)"
 
 #: fm1companion/ui/playback_bar.py:475
@@ -3783,7 +3783,7 @@ msgstr "keine Datei geladen"
 #, python-brace-format
 msgid "{seconds} s · {n} piece"
 msgid_plural "{seconds} s · {n} pieces"
-msgstr[0] "{seconds} s · {n} Stücke"
+msgstr[0] "{seconds} s · {n} Stück"
 msgstr[1] "{seconds} s · {n} Stücke"
 
 #: fm1companion/ui/audio.py:731
@@ -3843,21 +3843,21 @@ msgstr "„{name}“, "
 #, python-brace-format
 msgid ", song with {n} section"
 msgid_plural ", song with {n} sections"
-msgstr[0] ", Song mit {n} Abschnitten"
+msgstr[0] ", Song mit {n} Abschnitt"
 msgstr[1] ", Song mit {n} Abschnitten"
 
 #: fm1companion/projectfmt.py:345
 #, python-brace-format
 msgid ", {n} punch effect"
 msgid_plural ", {n} punch effects"
-msgstr[0] ", {n} Punch-Effekte"
+msgstr[0] ", {n} Punch-Effekt"
 msgstr[1] ", {n} Punch-Effekte"
 
 #: fm1companion/projectfmt.py:346
 #, python-brace-format
 msgid ", {n} song/pattern preset"
 msgid_plural ", {n} song/pattern presets"
-msgstr[0] ", {n} Song-/Pattern-Presets"
+msgstr[0] ", {n} Song-/Pattern-Preset"
 msgstr[1] ", {n} Song-/Pattern-Presets"
 
 #: fm1companion/projectfmt.py:348
@@ -4052,7 +4052,7 @@ msgstr "Die Pattern-Länge bitte am FM-1 einstellen."
 #, python-brace-format
 msgid "This track only has {n} pattern"
 msgid_plural "This track only has {n} patterns"
-msgstr[0] "Diese Spur hat nur {n} Patterns"
+msgstr[0] "Diese Spur hat nur {n} Pattern"
 msgstr[1] "Diese Spur hat nur {n} Patterns"
 
 #: fm1companion/midi_import.py:229
@@ -4089,35 +4089,35 @@ msgstr "Keine Noten in der Spur."
 #, python-brace-format
 msgid "{used} of {n} note will be transferred."
 msgid_plural "{used} of {n} notes will be transferred."
-msgstr[0] "{used} von {n} Noten werden übertragen."
+msgstr[0] "{used} von {n} Note wird übertragen."
 msgstr[1] "{used} von {n} Noten werden übertragen."
 
 #: fm1companion/midi_import.py:329
 #, python-brace-format
 msgid "{n} is outside the range."
 msgid_plural "{n} are outside the range."
-msgstr[0] "{n} liegen außerhalb des Bereichs."
+msgstr[0] "{n} liegt außerhalb des Bereichs."
 msgstr[1] "{n} liegen außerhalb des Bereichs."
 
 #: fm1companion/midi_import.py:332
 #, python-brace-format
 msgid "{n} is dropped (more than 4 notes per step)."
 msgid_plural "{n} are dropped (more than 4 notes per step)."
-msgstr[0] "{n} fallen weg (mehr als 4 Noten pro Step)."
+msgstr[0] "{n} fällt weg (mehr als 4 Noten pro Step)."
 msgstr[1] "{n} fallen weg (mehr als 4 Noten pro Step)."
 
 #: fm1companion/midi_import.py:336
 #, python-brace-format
 msgid "{n} drum note has no lane."
 msgid_plural "{n} drum notes have no lane."
-msgstr[0] "{n} Drum-Noten haben keine Lane."
+msgstr[0] "{n} Drum-Note hat keine Lane."
 msgstr[1] "{n} Drum-Noten haben keine Lane."
 
 #: fm1companion/midi_import.py:339
 #, python-brace-format
 msgid "{n} duplicate note merged."
 msgid_plural "{n} duplicate notes merged."
-msgstr[0] "{n} doppelte Noten zusammengelegt."
+msgstr[0] "{n} doppelte Note zusammengelegt."
 msgstr[1] "{n} doppelte Noten zusammengelegt."
 
 #: fm1companion/midi_import.py:452
@@ -4412,21 +4412,21 @@ msgstr "Zufall ±"
 #, python-brace-format
 msgid "{n} step"
 msgid_plural "{n} steps"
-msgstr[0] "{n} Steps"
+msgstr[0] "{n} Step"
 msgstr[1] "{n} Steps"
 
 #: fm1companion/generators.py:516
 #, python-brace-format
 msgid "{n} note step"
 msgid_plural "{n} note steps"
-msgstr[0] "{n} Noten-Steps"
+msgstr[0] "{n} Noten-Step"
 msgstr[1] "{n} Noten-Steps"
 
 #: fm1companion/generators.py:518
 #, python-brace-format
 msgid "{n} drum hit"
 msgid_plural "{n} drum hits"
-msgstr[0] "{n} Drum-Schläge"
+msgstr[0] "{n} Drum-Schlag"
 msgstr[1] "{n} Drum-Schläge"
 
 #: fm1companion/ui/pages/compose.py:91 fm1companion/ui/pages/compose.py:207
@@ -4738,7 +4738,7 @@ msgstr "Der Zwilling ist unerwartet stehen geblieben: Sein Prozess wurde beendet
 #, python-brace-format
 msgid "The sound dropped out {n} time (the computer was busy); the studio now buffers {ms} ms."
 msgid_plural "The sound dropped out {n} times (the computer was busy); the studio now buffers {ms} ms."
-msgstr[0] "Der Ton hat {n}-mal ausgesetzt (der Rechner war beschäftigt); das Studio puffert jetzt {ms} ms."
+msgstr[0] "Der Ton hat einmal ausgesetzt (der Rechner war beschäftigt); das Studio puffert jetzt {ms} ms."
 msgstr[1] "Der Ton hat {n}-mal ausgesetzt (der Rechner war beschäftigt); das Studio puffert jetzt {ms} ms."
 
 #: fm1companion/ui/studio_service.py:574

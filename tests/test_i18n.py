@@ -211,6 +211,49 @@ def test_duplicate_msgids_across_files(tmp_path, monkeypatch):
     assert len(errors) == 1 and "different msgstr" in errors[0]
 
 
+def test_plural_entry_with_the_same_text_twice_is_an_error(tmp_path, monkeypatch):
+    """I18N-01: 77 German plural messages said "1 Teile", "1 Datei(en)" – the check now refuses a plural entry that
+    shows {n} and has one text for all forms, except allow-listed words that do not change ("1 Ordner")."""
+    import i18n_check
+    loc = tmp_path / "locale"
+    (loc / "de").mkdir(parents=True)
+    po = ('msgid "{n} part restored."\nmsgid_plural "{n} parts restored."\n'
+          'msgstr[0] "{n} Teile zurückgespielt."\nmsgstr[1] "{n} Teile zurückgespielt."\n\n'
+          'msgid "{n} file"\nmsgid_plural "{n} files"\nmsgstr[0] "{n} Datei"\nmsgstr[1] "{n} Dateien"\n\n'
+          'msgid "{n} folder"\nmsgid_plural "{n} folders"\nmsgstr[0] "{n} Ordner"\nmsgstr[1] "{n} Ordner"\n\n'
+          'msgid "one more"\nmsgid_plural "some more"\nmsgstr[0] "mehr"\nmsgstr[1] "mehr"\n\n'
+          'msgid "{n} new"\nmsgid_plural "{n} new"\nmsgstr[0] ""\nmsgstr[1] ""\n')
+    (loc / "de" / "a.po").write_text(po, "utf-8")
+    (loc / "de" / "rescue.po").write_text(
+        'msgid "{n} sector erased."\nmsgid_plural "{n} sectors erased."\n'
+        'msgstr[0] "{n} Sektoren gelöscht."\nmsgstr[1] "{n} Sektoren gelöscht."\n', "utf-8")
+    monkeypatch.setattr(i18n_check, "LOCALE", loc)
+    monkeypatch.setattr(i18n_check, "ROOT", tmp_path)
+    known = {(None, m) for m in ("{n} part restored.", "{n} file", "{n} folder", "one more", "{n} new",
+                                 "{n} sector erased.")}
+    errors, _st = i18n_check.check_language("de", known)
+    assert len(errors) == 1 and "same text for every form" in errors[0] and "part restored" in errors[0], errors
+    # the shipped catalogs: no "(e)", "(en)", "(s)" crutch in any plural form
+    import re
+    for lang in i18n_check.languages():
+        for f in sorted((i18n.LOCALE_DIR / lang).glob("*.po")):
+            for e in i18n.parse_po(f.read_text("utf-8"), f.name):
+                if e.msgid_plural is not None:
+                    assert not any(re.search(r"\w\((e|en|n|s|es)\)", m) for m in e.msgstr), (f.name, e.msgstr)
+    # and the sentences the audit quoted
+    i18n.set_language("de")
+    try:
+        assert i18n.ngettext("{n} part restored to {device}.", "{n} parts restored to {device}.", 1).format(
+            n=1, device="FM-1 A") == "1 Teil auf FM-1 A zurückgespielt."
+        assert i18n.ngettext("{n} file exported to {folder}", "{n} files exported to {folder}", 1).format(
+            n=1, folder="x") == "1 Datei exportiert nach x"
+        assert i18n.ngettext("{n} is outside the range.", "{n} are outside the range.", 1).format(n=1) == \
+            "1 liegt außerhalb des Bereichs."
+        assert i18n.ngettext("{n} sample", "{n} samples", 2).format(n=2) == "2 Samples"
+    finally:
+        i18n.set_language(None)
+
+
 def test_extractor(tmp_path):
     from i18n_extract import extract_source, format_entry, Message
     src = '''from x import _, N_, ngettext, pgettext

@@ -360,7 +360,7 @@ msgstr "Ressourcen (Werkssounds, Schrift, Bluetooth-Programm) sind vollständig:
 
 #: fm1companion/flash/texts.py:182
 msgid "The resources are missing or damaged – then factory sounds are missing or the font looks different. Remedy: Firmware+ › Install & Versions › “Rewrite font & factory sounds”."
-msgstr "Die Ressourcen fehlen oder sind beschädigt – dann fehlen Werkssounds oder die Schrift sieht anders aus. Abhilfe: Firmware+ › Installieren & Versionen › „Schrift & Werkssounds nachschreiben“."
+msgstr "Die Ressourcen fehlen oder sind beschädigt – dann fehlen Werkssounds oder die Schrift sieht anders aus. Abhilfe: Seite „Firmware“ › „Schrift & Werkssounds nachschreiben“."
 
 #: fm1companion/flash/texts.py:185
 #, python-brace-format
@@ -538,11 +538,11 @@ msgstr "Die Melodee-Ressourcen (Werkssounds, Schrift, Bluetooth-Programm) bei 0x
 
 #: fm1companion/flash/texts.py:309
 msgid "The Melodee resources are complete in themselves, but belong to a different build. Remedy: “Rewrite font & factory sounds” (Firmware+ › Install & Versions)."
-msgstr "Die Melodee-Ressourcen sind in sich vollständig, gehören aber zu einem anderen Build. Abhilfe: „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen)."
+msgstr "Die Melodee-Ressourcen sind in sich vollständig, gehören aber zu einem anderen Build. Abhilfe: „Schrift & Werkssounds nachschreiben“ (Seite „Firmware“)."
 
 #: fm1companion/flash/texts.py:313
 msgid "The Melodee resources at 0xCB000 are missing or damaged – then factory sounds are missing. Remedy: “Rewrite font & factory sounds” (Firmware+ › Install & Versions)."
-msgstr "Die Melodee-Ressourcen bei 0xCB000 fehlen oder sind beschädigt – dann fehlen Werkssounds. Abhilfe: „Schrift & Werkssounds nachschreiben“ (Firmware+ › Installieren & Versionen)."
+msgstr "Die Melodee-Ressourcen bei 0xCB000 fehlen oder sind beschädigt – dann fehlen Werkssounds. Abhilfe: „Schrift & Werkssounds nachschreiben“ (Seite „Firmware“)."
 
 #: fm1companion/flash/texts.py:315
 #, python-brace-format
