@@ -145,6 +145,17 @@ def support(firmware_key: str, version: str = "", flash=(), flash_tag: str = "")
     return Support(UNKNOWN, "", note)
 
 
+def running_support(firmware_key: str, info_version: str) -> Support | None:
+    """the same for the firmware that runs on the device, from what its INFO answers – only when the INFO names that
+    firmware itself ("MELODEE v1.5.1", "FELUCCA SLOOP 2.8.4"). Skiff and Felucca's forks answer "FELUCCA vX.Y" with
+    Felucca's number, not their own: None (no statement)."""
+    from . import fwfamily
+    named = fwfamily.by_info(info_version) if info_version else None
+    if named is None or named.key != canonical(firmware_key):
+        return None
+    return support(firmware_key, info_version)
+
+
 def documented_only(firmware_key: str) -> bool:
     """"yes" only because other projects name it as the way back (the original V15) – not read in its code"""
     return (table()["firmwares"].get(canonical(firmware_key)) or {}).get("status") == "documented"

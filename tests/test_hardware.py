@@ -277,6 +277,12 @@ def test_running_version_without_support_is_explained():
     new = dict(old, version="MELODEE v1.6.1")
     assert not any(w.startswith("<b>") and "ROM" in w
                    for w in P.plan_install(state("new", **new), target("melodee", "v1.6.1")).warnings)
+    # Skiff answers Felucca's INFO with Felucca's number: no statement about the running version
+    assert H.running_support("skiff", "FELUCCA v1.8.1") is None and H.running_support("felucca", "FELUCCA v1.8.1") is None
+    assert H.running_support("sloop", "FELUCCA SLOOP 2.8.4").status == H.NO and H.running_support("sloop", "") is None
+    assert H.running_support("jiant", "JIANT V10.60").status == H.NO and H.running_support("karma", "FELUCCA KARMA 3.1").status == H.YES
+    skiff = dict(identity="FM-1_712", felucca=True, firmware_key="skiff", firmware_name="Skiff", version="FELUCCA v1.8.1")
+    assert not any(x.startswith("<b>") and "ROM" in x for x in P.plan_install(state("new", **skiff), target("skiff", "v2.5.1")).warnings)
     w = H.running_warning("ORBIT", H.support("orbit", "1.0"), "orbit")
     assert "ORBIT" in w and "V15" in w
 

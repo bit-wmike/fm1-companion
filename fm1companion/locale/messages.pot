@@ -4644,64 +4644,64 @@ msgid_plural "{n} drum hits"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/hardware.py:204
+#: fm1companion/hardware.py:215
 msgid "Does your FM-1 have the M-VAVE logo on the front?"
 msgstr ""
 
-#: fm1companion/hardware.py:205
+#: fm1companion/hardware.py:216
 msgid "FM-1s sold from late 2026 – the ones with the M-VAVE logo printed on the front – have a different memory chip (UCUN UC25HQ80) than the earlier ones. Firmware versions that do not know this chip save nothing on such a unit and cannot be updated or replaced any more, except through the recovery in ROM boot mode. The app cannot read the chip over MIDI, so it asks you once per device. You can change the answer on the page “Devices”. To be sure: M-Flasher shows the chip under “Device info” (FLASH CHIP), m-bootloader in its menu, and the recovery (stage 2) reads it in ROM boot mode."
 msgstr ""
 
-#: fm1companion/hardware.py:212
+#: fm1companion/hardware.py:223
 msgid "Yes – newer unit (UC25HQ80 flash)"
 msgstr ""
 
-#: fm1companion/hardware.py:212
+#: fm1companion/hardware.py:223
 msgid "No – earlier unit"
 msgstr ""
 
-#: fm1companion/hardware.py:212
+#: fm1companion/hardware.py:223
 msgid "I don't know"
 msgstr ""
 
-#: fm1companion/hardware.py:213
+#: fm1companion/hardware.py:224
 msgid "newer unit, logo on the front (flash UC25HQ80, 0xB36014)"
 msgstr ""
 
-#: fm1companion/hardware.py:214
+#: fm1companion/hardware.py:225
 msgid "earlier unit, no logo on the front (flash Puya, 0x856014)"
 msgstr ""
 
-#: fm1companion/hardware.py:215
+#: fm1companion/hardware.py:226
 msgid "not known yet"
 msgstr ""
 
-#: fm1companion/hardware.py:216
+#: fm1companion/hardware.py:227
 msgid "your answer"
 msgstr ""
 
-#: fm1companion/hardware.py:216
+#: fm1companion/hardware.py:227
 msgid "read in ROM boot mode"
 msgstr ""
 
-#: fm1companion/hardware.py:216
+#: fm1companion/hardware.py:227
 msgid "reported by the firmware"
 msgstr ""
 
-#: fm1companion/hardware.py:225
+#: fm1companion/hardware.py:236
 msgid "not known (you answered “I don't know”)"
 msgstr ""
 
-#: fm1companion/hardware.py:237
+#: fm1companion/hardware.py:248
 #, python-brace-format
 msgid "The first version that knows this chip is {version}."
 msgstr ""
 
-#: fm1companion/hardware.py:239
+#: fm1companion/hardware.py:250
 msgid "No version of this firmware is known to support this chip."
 msgstr ""
 
-#: fm1companion/hardware.py:240
+#: fm1companion/hardware.py:251
 #, python-brace-format
 msgid "<b>This FM-1 is a newer unit (logo on the front), and {name} in the version that runs on it does not know its flash chip.</b> It cannot save anything, and by what its author writes it usually cannot start an update either – so an installation from here may simply not begin (nothing is written then). {first} The way out: bring the FM-1 into ROM boot mode and write the original V15 back with the recovery (stage 2), then install a version that knows the chip."
 msgstr ""
@@ -10048,7 +10048,7 @@ msgid "optional: resource file, e.g. name-{{ver}}-res.bin"
 msgstr ""
 
 #: fm1companion/ui/firmware_page.py:838 fm1companion/ui/overview.py:50
-#: fm1companion/ui/overview.py:345 fm1companion/ui/pages/devices.py:281
+#: fm1companion/ui/overview.py:344 fm1companion/ui/pages/devices.py:281
 #: fm1companion/ui/projects_page.py:501 fm1companion/ui/recorder_page.py:92
 #: fm1companion/ui/sample_recorder.py:137 fm1companion/ui/samples_page.py:170
 #: fm1companion/ui/settings_dialog.py:389 fm1companion/ui/wizard.py:198
@@ -11788,15 +11788,15 @@ msgstr ""
 msgid "logo on the front?"
 msgstr ""
 
-#: fm1companion/ui/overview.py:345 fm1companion/ui/pages/devices.py:281
+#: fm1companion/ui/overview.py:344 fm1companion/ui/pages/devices.py:281
 msgid "Rename device"
 msgstr ""
 
-#: fm1companion/ui/overview.py:351 fm1companion/ui/pages/devices.py:291
+#: fm1companion/ui/overview.py:350 fm1companion/ui/pages/devices.py:291
 msgid "Rename not possible"
 msgstr ""
 
-#: fm1companion/ui/overview.py:355
+#: fm1companion/ui/overview.py:354
 msgid "Colour for this device"
 msgstr ""
 

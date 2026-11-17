@@ -585,8 +585,8 @@ def _new_chip(p: InstallPlan, state: DeviceState, t: Target):
     if new and not state.update_mode:
         run = running_firmware(state)
         if run and not run.startswith("stock"):
-            rs = hardware.support(run, state.version)
-            if rs.status == hardware.NO:
+            rs = hardware.running_support(run, state.version)
+            if rs is not None and rs.status == hardware.NO:
                 p.warnings.insert(0, hardware.running_warning(current_name(state) or run, rs, run))
     if new and (p.via_stock or (t.is_stock and not t.is_v16)):
         p.warnings.append(NEWCHIP_V15)

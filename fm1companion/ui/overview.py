@@ -320,9 +320,8 @@ class OverviewPage(QWidget):
             _("change") if hardware.asked(p) else _("logo on the front?")) + "</a>"
         key = self.ctx.firmware_key
         if hardware.revision(p) == hardware.NEW and key and self.ctx.port is not None:
-            ver = self.ctx.info.version if self.ctx.info else (p.firmware_version or "")
-            sup = hardware.support(key, ver)
-            if sup.status == hardware.NO:
+            sup = hardware.running_support(key, self.ctx.info.version if self.ctx.info else "")
+            if sup is not None and sup.status == hardware.NO:
                 from .device import firmware_name
                 text += "<br><span style='color:#da4453'>" + hardware.running_warning(
                     firmware_name(key) or key, sup, key) + "</span>"
