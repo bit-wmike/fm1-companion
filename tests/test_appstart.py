@@ -24,14 +24,14 @@ NOISE = ("QRhi", "GPUInfo", "propagateSizeHints", "dbus", "RHI for backend", "XD
 
 # bootstrap that makes selected modules unreachable before the start (simulates a missing Debian package)
 BLOCKER = """
-import builtins, runpy, sys
+import runpy, sys
 blocked = tuple(x for x in {blocked!r})
-real = builtins.__import__
-def fake(name, *a, **k):
-    if blocked and name.startswith(blocked):
-        raise ImportError(name + " fehlt (Test)")
-    return real(name, *a, **k)
-builtins.__import__ = fake
+class Block:                      # first on sys.meta_path: stops "import x" and importlib.import_module("x") alike
+    def find_spec(self, name, path=None, target=None):
+        if blocked and name.startswith(blocked):
+            raise ImportError(name + " fehlt (Test)")
+        return None
+sys.meta_path.insert(0, Block())
 sys.argv = ["fm1-companion"] + {args!r}
 runpy.run_module("fm1companion", run_name="__main__")
 """
