@@ -77,6 +77,29 @@ two differ. Change a row only after a hardware test report, and change both.
 | Rescue level 3 (Transporter with XIAO RP2040) | instructions only; the Pico-instead-of-XIAO variant is unverified |
 | V16 specifics (first-start formatting, boot head with the original loader) | only in the emulator or open; test plan: help page "V16 – note" and docs/flash-protocol.md §17 |
 
+### SLOOP 3 and m-bootloader
+
+Nothing of this has run on a real FM-1 with this app. The stand-ins: **the PC twin** = SLOOP 3's own `host/twin.c`
+("serve": `fw/main.c` 3.3.7 on a simulated FM-1 with the published application area, built from the tag) and
+**m-bootloader's code** = its `src/midi_update.c` and `src/core.c` of 2.4, compiled for the PC with a flash file behind
+it. Neither is in the repository; the tests in the repository use `tests/fake_sloop3.py` (which replays the twin's
+recorded answers) and `tests/fake_mboot.py` (written from m-bootloader's specification).
+
+| Function | Status |
+|---|---|
+| Recognising SLOOP 3 (its INFO; the Felucca probes stay unanswered and change nothing) | PC twin: all five probes unanswered, INFO before and after the same. A real FM-1's USB name "FM-1 SLOOP 3" is from the source (`hal/fm1/usb.c`), not seen |
+| SLOOP 3's bundled web editor on the Editor page (connect, lists, LIVE state, all 13 tabs, no JavaScript error, only its own protocol goes out) | PC twin, in the app's window on Qt 6.11 (`tests/ui_sloop3_test.py` with `SLOOP3_DEVICE_CMD`); in the repository with the fake. **Not run on Qt 6.4 / Chromium 102**: checked by reading (script parses as ES2020, one newer CSS function with the app's fallback) |
+| Editing in the editor beyond opening the tabs (drawing notes, writing samples, kits, the FM6 bank, projects) | not driven by the app's tests; the author's own `tests/editor_e2e.js` does that in Chromium against the same twin |
+| Recording a sample with the microphone in the bundled editor | not available (the web view grants no microphone); a file can be dropped |
+| `sloop3-backup`: read, restore of sounds, FM6 bank, SYN kits and project, read back and compared | PC twin (`tests/test_sloop3.py` with `SLOOP3_TWIN_CMD`: back up, change, restore, back up again); in the repository with the fake. Reading while SLOOP 3 plays on a real FM-1: unknown – stop playback |
+| Samples of SLOOP 3 in a backup | not possible over its protocol (no read command); only in a flash backup |
+| Recognising m-bootloader's MIDI MODE (0x12) and the flash chip (JEDEC ID → hardware revision) | m-bootloader's code on the PC, with both JEDEC IDs. That a real unit's port is named "FM-1 Update" is from its source (`src/usb_midi.c`) and specification |
+| Flash backup in MIDI MODE (0x23 reads, compared with the chip's CRC-32 from 0x24) | m-bootloader's code on the PC: 1 MiB read, identical to the flash file. Speed and reliability over real USB: unknown. m-bootloader versions before the read commands (the installer page mentions some that do not answer reads): the app then reports “does not answer” and saves nothing |
+| 0x12 sent to an update loader that is not m-bootloader | not sent by design: only a port named exactly "FM-1 Update" is asked (Felucca-family loaders are "<Name> Update"). What M-VAVE's or a Felucca loader would do with 0x12 was not tried |
+| Installing SLOOP 3, installing m-bootloader | **not done by the app** (the author's installer page; M-Flasher / M-UPGRADE) |
+| The blocker for the newer hardware revision (no installer page offered; explicit confirmation when unknown) | page logic only (`tests/ui_sloop3_test.py`) |
+| Installing another firmware onto an FM-1 that has m-bootloader, from MIDI MODE, with the app's installer (m-bootloader answers the update protocol as a loader does) | not tried, not changed by this work. m-bootloader's README lists the browser installers it was tested with |
+
 ### Studio
 
 | Function | Status |

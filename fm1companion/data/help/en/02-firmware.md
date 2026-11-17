@@ -72,6 +72,8 @@ What you should know about the V15 step:
   along by itself; if it is still missing (e.g. on the first update from 1.5.1), the app writes it afterwards.
 * Update to **Melodee 1.6.0**: your backup is your way back, projects may sound different – see
   [Melodee 1.6.0](help:14-melodee-1-6-0).
+* **SLOOP 3** (public beta) is a different case: it needs m-bootloader and is not installed by the app – see
+  [SLOOP 3](help:15-sloop3).
 * If something goes wrong: [Update mode & recovery](help:03-update-modus).
 
 ## USB hubs

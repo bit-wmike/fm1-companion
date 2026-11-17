@@ -82,8 +82,10 @@ def test_recognised_by_its_own_info_and_never_as_sloop2(dev):
     sp = firmware.spec("sloop3")
     assert sp is not None and sp.name == "SLOOP 3" and sp.protocol == "sloop3" and not sp.asset and not sp.editor
     assert "beta" in sp.notes and firmware.spec("sloop").key == "sloop"
-    fam = fwfamily.by_key("sloop3")
-    assert fam is not None and fam.backup == "own" and "sloop3" not in fwfamily.sloop_keys()
+    # not in the Felucca family's table at all (fwfamily: firmwares by their Felucca INFO – SLOOP 3 has none)
+    assert fwfamily.by_key("sloop3") is None and "sloop3" not in fwfamily.sloop_keys()
+    # (a FELUCCA-style INFO text "SLOOP 3 …" would read as SLOOP there: the reason the device layer never builds a
+    # protocol.Info for SLOOP 3 – ctx.info stays None, ctx.sloop3 holds its own INFO)
     assert "sloop3" not in backup.SLOOP_PROTOCOL
     # a Felucca INFO text never names SLOOP 3 (it answers none), and SLOOP 2's stays SLOOP 2
     assert protocol.Info("FELUCCA SLOOP 2.8.5").firmware_name == "sloop"
