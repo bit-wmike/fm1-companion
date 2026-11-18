@@ -27,10 +27,16 @@
   <url type="homepage">https://github.com/bit-wmike/fm1-companion</url>
   <url type="bugtracker">https://github.com/bit-wmike/fm1-companion/issues</url>
   <releases>
-    <release version="2.6.1" date="2026-11-17">
+    <release version="2.6.1" date="2026-11-18">
       <description>
-        <p>A quality pass over the whole app after 2.6.0: bugs found by a code audit, fixed and covered by tests. No new features. Versions 2.5.0 and 2.6.0 were published as source code only; 2.6.1 is the first package since 2.4.0 and contains everything listed under them.</p>
+        <p>Support for the newer FM-1 (logo on the front), SLOOP 3, the fixes from the first test run on real hardware, and a quality pass over the whole app after 2.6.0. Versions 2.5.0 and 2.6.0 were published as source code only; 2.6.1 is the first package since 2.4.0 and contains everything listed under them.</p>
         <ul>
+          <li>Newer FM-1 (logo on the front, flash chip UC25HQ80): a table of the first firmware versions that know this chip, each with its source; the app never installs a firmware without support for it on such a unit. The app asks once whether your FM-1 has the logo on the front, or reads the chip itself in ROM boot mode. The bundled recovery tool knows both chips.</li>
+          <li>SLOOP 3 (public beta): recognised, its own web editor is bundled (3.3.7 and 3.4.0), backups of project, sounds, banks and settings. m-bootloader's MIDI MODE is recognised and never taken for an update mode; in MIDI MODE the app can copy the whole flash. The app does not install SLOOP 3 itself – Firmware+ explains the steps and opens the author's installer page. Not on the newer FM-1.</li>
+          <li>Device profiles: an FM-1 is no longer filed under a second, made-up profile after switching to or from the original firmware, and no longer under another unit's profile after an install. When the app cannot tell which FM-1 is connected, it asks – and changes nothing before your answer. “Back to your data?” is only offered for a backup of this very unit. The answer to “Which firmware is running here?” can be changed later (Overview).</li>
+          <li>Raspberry Pi OS Bookworm: simulators and online editors failed to load with Qt 6.4; the app no longer crashes when the home folder is not writable; the installer really switches FluidSynth's service off (and says so honestly); duplicate MIDI ports and false “disconnected” notices are gone; the Overview fits at 1280×720 with the system font; the packages for the recovery tool are installed by default.</li>
+          <li>Install plan: honest about a USB hub, no confirmations for a dry run, GitHub's checksum for release files is used, and every writing plan asks that the FM-1 and the computer stay on power.</li>
+          <li>Simulator: JIANT FM's emulator opens at the right address; hints for pages that need their own “Switch on” and have their own keys; a note for emulators that are too heavy for the built-in browser.</li>
           <li>Studio: “Export”, “Open backup” and “Write back” crashed on click since 2.3.1 (so did “Reset page settings” in the settings) – fixed.</li>
           <li>Studio export: separate tracks now line up in time with the mix (their sum is still not the mix – each track passes the master section alone, and the app says so). “Whole song” no longer runs for ever on firmwares whose song does not end; Cancel really stops the export.</li>
           <li>Studio write back: a failed write back says what was already written and names the safety backup; a LOOM-8 twin can be written back. The SLOOP twin needs 32 MB of memory instead of 195 MB.</li>
@@ -39,7 +45,7 @@
           <li>Backups of firmware forks taken with 2.5 or 2.6 were refused on restore although they fit: restore, device copy and “Browse &amp; Compare” use one rule, the one the backup core itself uses.</li>
           <li>Automatic backups announce themselves a few seconds before they start (“Skip today” / “Back up now”), because a backup briefly stops playback on the FM-1.</li>
           <li>Settings, device list and device identities: a damaged file is set aside instead of being silently replaced; files are written atomically.</li>
-          <li>Firmware install: the plan no longer calls the detour via the original V15 “recommended” or “without leftovers” – it says what is known and what is not. Every plan and confirmation carries one line that says whether this kind of step has ever run on a real FM-1 (so far: only an update within Melodee).</li>
+          <li>Firmware install: the plan no longer calls the detour via the original V15 “recommended” or “without leftovers” – it says what is known and what is not. Every plan and confirmation carries one line that says whether this kind of step has ever run on a real FM-1.</li>
           <li>Firmware install: “Cancel” is honoured where the device can still back out and is switched off where it cannot; the app no longer loses the device's answer to the first step; the second step of a switch checks that the FM-1 really runs the original V15; the app stops when a second FM-1 answers during an installation; an incomplete download is recognised and thrown away.</li>
           <li>Web pages (online editors, simulators): every MIDI message a page sends is checked against the page's current address; pages that were not allowed can only send notes, controllers and clock; firmware-update and boot-mode commands are blocked from every web page, also from the built-in editor view. A permission can only be given to an https address or a page on this computer. Files from web pages are saved only through the normal “Save” dialog.</li>
           <li>Catalog: release tags and file names from the internet are validated before they are used as folder or file names.</li>
@@ -48,7 +54,7 @@
           <li>Languages: Spanish is listed as “Español”; German singular forms (“1 Teil” instead of “1 Teile”); messages name the pages as the app does (Recovery, Firmware+ › Install &amp; Versions); a new language shows the English help instead of the German one.</li>
           <li>Credits name the bundled Unbricker (Michael P Jones), the FM-1 Transporter (kurogedelic) and jl-uboot-tool (kagaimiq).</li>
         </ul>
-        <p>Still true: apart from one Melodee update, backups, MIDI and the basics of the Studio, nothing in this app has been tested on real hardware – see docs/UNTESTED.md.</p>
+        <p>Tested on real hardware so far – one Raspberry Pi 5 with Bookworm and two units, one run each: a switch from KARMA through the original V15 to Skiff 2.7 over two USB hubs; Skiff 2.7 installed on a newer FM-1, which then saves; KARMA, Skiff and SLOOP 3 backups; SLOOP 3 and m-bootloader recognised. Not tested: restoring a backup, writing back from the Studio, anything else on the newer FM-1 – see docs/UNTESTED.md.</p>
       </description>
     </release>
     <release version="2.6.0" date="2026-11-12">
