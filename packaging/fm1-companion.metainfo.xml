@@ -7,17 +7,17 @@
   <summary>Companion suite for the M-VAVE FM-1 pocket synth</summary>
   <summary xml:lang="de">Alles fürs M-VAVE FM-1: Firmware, Backups, Klänge, MIDI, Simulator</summary>
   <description>
-    <p>Desktop suite for the M-VAVE FM-1 pocket synthesizer with firmwares of the Felucca family (Melodee, Skiff, SLOOP).</p>
+    <p>Desktop suite for the M-VAVE FM-1 pocket synthesizer: backups, firmware install and recovery, a Studio with digital twins of 13 firmwares (Melodee, Skiff, SLOOP, JIANT FM, KARMA and more), presets, samples, MIDI tools and a catalog of more than 250 community firmwares.</p>
     <ul>
       <li>Install and switch firmware, and go back to the original</li>
       <li>Full backups and single projects, several devices with their own profiles</li>
       <li>Presets, FM voices, samples and kits</li>
-      <li>Studio: digital twin of the FM-1 (Melodee) – play, export as WAV, write back</li>
+      <li>Studio: digital twins of the FM-1 – the firmware's own code on the computer – play, export as WAV, write back</li>
       <li>MIDI tools, sound module, simulator and recording with Audacity</li>
       <li>Help center and system check for USB, power and audio</li>
     </ul>
-    <p>The user interface is English, with a German translation.</p>
-    <p>No telemetry. Unofficial community project, not affiliated with M-VAVE.</p>
+    <p>The user interface is English, with German and Spanish translations.</p>
+    <p>No telemetry. Unofficial community project, not affiliated with M-VAVE. Installing firmware and recovery change the device and are done at your own risk; most of these paths have only run against simulations so far.</p>
   </description>
   <launchable type="desktop-id">fm1-companion.desktop</launchable>
   <categories><category>AudioVideo</category><category>Audio</category><category>Music</category></categories>
@@ -27,11 +27,35 @@
   <url type="homepage">https://github.com/bit-wmike/fm1-companion</url>
   <url type="bugtracker">https://github.com/bit-wmike/fm1-companion/issues</url>
   <releases>
-    <release version="2.6.0" date="2026-11-17">
-      <description><p>Seven more Studio twins: Felucca, M-VAVE's FM1 Open (also as a stand-in for the original firmware V15/V16), ChoralRoot FM-1, X0X, FoMni, AMB-1 and LOOM-8 – thirteen in all. Backups for FM1 Open, X0X and LOOM-8. Original V15: restore the factory voices. Flashing through USB hubs: careful mode, automatic resume, flight log, optional rule against USB autosuspend. Settings › Storage: see and delete logs, downloads and caches, automatic cleanup. All 252 catalog firmwares audited: the backup protocol is asked instead of guessed – backups of many SLOOP and Felucca forks that timed out or were rejected now work, misplaced restores are refused. Installs: switching to another firmware always goes through the original V15 first (updates within the same firmware go directly); KARMA can be installed. Housekeeping: NAS mirror retention, rescue dumps, web editor data, page settings reset, GitHub token removal, cancel for long reads.</p></description>
+    <release version="2.6.1" date="2026-11-17">
+      <description>
+        <p>A quality pass over the whole app after 2.6.0: bugs found by a code audit, fixed and covered by tests. No new features. Versions 2.5.0 and 2.6.0 were published as source code only; 2.6.1 is the first package since 2.4.0 and contains everything listed under them.</p>
+        <ul>
+          <li>Studio: “Export”, “Open backup” and “Write back” crashed on click since 2.3.1 (so did “Reset page settings” in the settings) – fixed.</li>
+          <li>Studio export: separate tracks now line up in time with the mix (their sum is still not the mix – each track passes the master section alone, and the app says so). “Whole song” no longer runs for ever on firmwares whose song does not end; Cancel really stops the export.</li>
+          <li>Studio write back: a failed write back says what was already written and names the safety backup; a LOOM-8 twin can be written back. The SLOOP twin needs 32 MB of memory instead of 195 MB.</li>
+          <li>Devices: merging two device profiles could lose backups with the same file name – every file is moved now, none overwritten.</li>
+          <li>Backups of X0X and LOOM-8 were invisible in the backup list and were never thinned out – they are listed now. From now on the retention rule also applies to them.</li>
+          <li>Backups of firmware forks taken with 2.5 or 2.6 were refused on restore although they fit: restore, device copy and “Browse &amp; Compare” use one rule, the one the backup core itself uses.</li>
+          <li>Automatic backups announce themselves a few seconds before they start (“Skip today” / “Back up now”), because a backup briefly stops playback on the FM-1.</li>
+          <li>Settings, device list and device identities: a damaged file is set aside instead of being silently replaced; files are written atomically.</li>
+          <li>Firmware install: the plan no longer calls the detour via the original V15 “recommended” or “without leftovers” – it says what is known and what is not. Every plan and confirmation carries one line that says whether this kind of step has ever run on a real FM-1 (so far: only an update within Melodee).</li>
+          <li>Firmware install: “Cancel” is honoured where the device can still back out and is switched off where it cannot; the app no longer loses the device's answer to the first step; the second step of a switch checks that the FM-1 really runs the original V15; the app stops when a second FM-1 answers during an installation; an incomplete download is recognised and thrown away.</li>
+          <li>Web pages (online editors, simulators): every MIDI message a page sends is checked against the page's current address; pages that were not allowed can only send notes, controllers and clock; firmware-update and boot-mode commands are blocked from every web page, also from the built-in editor view. A permission can only be given to an https address or a page on this computer. Files from web pages are saved only through the normal “Save” dialog.</li>
+          <li>Catalog: release tags and file names from the internet are validated before they are used as folder or file names.</li>
+          <li>Bug report: removes more personal details (user name in all forms, device names, serial numbers, MAC addresses, Wi-Fi names), says honestly what can remain, and says where to send it. The crash dialog no longer promises that the FM-1 is untouched.</li>
+          <li>Packages: the .deb and the .run are built from tracked files only and are bit-for-bit reproducible; correct changelog and maintainer.</li>
+          <li>Languages: Spanish is listed as “Español”; German singular forms (“1 Teil” instead of “1 Teile”); messages name the pages as the app does (Recovery, Firmware+ › Install &amp; Versions); a new language shows the English help instead of the German one.</li>
+          <li>Credits name the bundled Unbricker (Michael P Jones), the FM-1 Transporter (kurogedelic) and jl-uboot-tool (kagaimiq).</li>
+        </ul>
+        <p>Still true: apart from one Melodee update, backups, MIDI and the basics of the Studio, nothing in this app has been tested on real hardware – see docs/UNTESTED.md.</p>
+      </description>
+    </release>
+    <release version="2.6.0" date="2026-11-12">
+      <description><p>(Source code only – no package was published for 2.6.0.) Seven more Studio twins: Felucca, M-VAVE's FM1 Open (also as a stand-in for the original firmware V15/V16), ChoralRoot FM-1, X0X, FoMni, AMB-1 and LOOM-8 – thirteen in all. Backups for FM1 Open, X0X and LOOM-8. Original V15: restore the factory voices. Flashing through USB hubs: careful mode, automatic resume, flight log, optional rule against USB autosuspend. Settings › Storage: see and delete logs, downloads and caches, automatic cleanup. All 252 catalog firmwares audited: the backup protocol is asked instead of guessed – backups of many SLOOP and Felucca forks that timed out or were rejected now work, misplaced restores are refused. Installs: switching to another firmware always goes through the original V15 first (updates within the same firmware go directly); KARMA can be installed. Housekeeping: NAS mirror retention, rescue dumps, web editor data, page settings reset, GitHub token removal, cancel for long reads.</p></description>
     </release>
     <release version="2.5.0" date="2026-11-11">
-      <description><p>Five more Studio twins: Skiff (2.2, 2.1.1), JIANT FM (V10.6z2, V10.60, V10.61), SLOOP (2.8.5, 2.8.4), CoralFlower (0.7.1, 0.7) and KARMA (3.1, 3.0.5) – each firmware's own code on the computer, with backup load, stems, snapshots and write back. Backups of Skiff 2.x, JIANT FM, CoralFlower and KARMA fixed (rejected backups, song sections treated as sample slots, KARMA could not be backed up at all). Spanish user interface and help. Firmware+: install firmwares without a checked catalog package from their GitHub releases, real popularity sort, no simulator crash on Qt 6.4.</p></description>
+      <description><p>(Source code only – no package was published for 2.5.0.) Five more Studio twins: Skiff (2.2, 2.1.1), JIANT FM (V10.6z2, V10.60, V10.61), SLOOP (2.8.5, 2.8.4), CoralFlower (0.7.1, 0.7) and KARMA (3.1, 3.0.5) – each firmware's own code on the computer, with backup load, stems, snapshots and write back. Backups of Skiff 2.x, JIANT FM, CoralFlower and KARMA fixed (rejected backups, song sections treated as sample slots, KARMA could not be backed up at all). Spanish user interface and help. Firmware+: install firmwares without a checked catalog package from their GitHub releases, real popularity sort, no simulator crash on Qt 6.4.</p></description>
     </release>
     <release version="2.4.0" date="2026-11-04">
       <description><p>English user interface; German as translation; translator kit.</p></description>

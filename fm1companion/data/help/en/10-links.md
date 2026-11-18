@@ -9,6 +9,9 @@
 * **Melodee:** <https://github.com/keremimo/melodee> · **SLOOP:** <https://github.com/isod89/sloop-fm1> ·
   **Skiff:** <https://github.com/illuminus5/skiff> · **Felucca:** <https://github.com/hugelton/Felucca>
 * **M-VAVE FM1 Open:** <https://github.com/m-vave/fm1_open>
+* **SLOOP 3** (isod89, GPL-3.0, public beta): <https://github.com/isod89/sloop3-fm1> – its web editor comes with
+  the app, unchanged. **m-bootloader** and **M-Flasher** (Julius Vitkauskas, MIT; not part of the app):
+  <https://github.com/jvitkauskas/m-bootloader> · <https://github.com/jvitkauskas/m-flasher>
 
 ## Community tools
 

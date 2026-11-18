@@ -52,7 +52,7 @@ def mido_names(output: bool) -> tuple[list[str], str]:
     try:
         import mido
         names = mido.get_output_names() if output else mido.get_input_names()
-        return [n for n in names if "rtmidi" not in n.lower()], ""
+        return [n for n in dict.fromkeys(names) if "rtmidi" not in n.lower()], ""   # Bookworm lists each twice
     except Exception as e:                                 # noqa: BLE001
         return [], _("More MIDI ports need python3-rtmidi ({error}).").format(error=type(e).__name__)
 

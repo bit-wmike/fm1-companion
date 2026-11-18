@@ -31,7 +31,8 @@ API (``Studio``)::
     st.load_project(slot)                               # load a project (Melodee 1..32, Skiff A..D, JIANT's and SLOOP's sections A..D, KARMA's parts A..D)
     st.start_audio() / st.stop_audio()                  # real-time sound (WebEngine: default output)
     st.render_wav(path, seconds=None, until_end=False, stems=False, start="play", source="live", fmt="f32")
-                                                        # offline, faster than real time -> RenderResult
+                                                        # offline, faster than real time -> RenderResult; every pass
+                                                        # (mix, stems) starts from ONE snapshot; st.cancel_render()
     st.save_state(path=None, profile=None) / st.load_state(path=None, profile=None)
                                                         # the whole flash (= everything the device keeps)
     st.backup() -> Archive                              # backup OF THE TWIN (e.g. back onto the FM-1)
@@ -51,7 +52,7 @@ from __future__ import annotations
 import base64
 import contextlib
 import datetime as dt
-import io
+import hashlib
 import json
 import queue
 import re
@@ -85,12 +86,16 @@ LIMITS = _(
     "twin never does. Floating-point parts (FM6 voice pairs, which CPU1 computes on the device, effect filters) "
     "may differ in the last bits (inaudible). No BLE, no USB host, no firmware update in the twin. The resource "
     "arena has the size of the host tests (at least that of the device). Stems come from several runs with muted "
-    "tracks (track solo, with its share of the shared effects); because of the master dynamics the sum of the "
-    "stems does not exactly match the mix.")
+    "tracks (track solo, with its share of the shared effects), all from the same starting point, so they line up "
+    "in time; because of the master dynamics and shared effects the sum of the stems is not the mix.")
 
 
 class StudioError(Exception):
     pass
+
+
+class StudioCancelled(StudioError):
+    """an export the user cancelled (render_wav after cancel_render): nothing of it is left on disk"""
 
 
 # the firmwares with a studio twin: key -> display name, the name its editor INFO reports before the version
@@ -98,26 +103,30 @@ class StudioError(Exception):
 # project list; JIANT's four are the current song's sections A..D). The key is what the device layer calls the firmware
 # (protocol.Info.firmware_name; the catalog's "jiant-fm" starts with it)
 FIRMWARES = {
-    "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32},
-    "skiff": {"name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4, "samples": True},
-    "jiant": {"name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
+    # "song_end": can an export "whole song to the end" end by itself? True: the transport stops at the end of the
+    # song chain (Melodee). "maybe": the firmware has a song, and it stops only if that song is set to play once
+    # rather than loop (Skiff's SONG ONCE, SLOOP's song order …) – in the audit's runs none of them stopped, the
+    # export ran to its time limit. Missing: no song the twin could play to an end (a loop, a pattern, it plays itself)
+    "melodee": {"name": "Melodee", "info": "MELODEE", "tracks": 4, "projects": 32, "song_end": True},
+    "skiff": {"song_end": "maybe", "name": "Skiff", "info": "FELUCCA", "tracks": 6, "projects": 4, "samples": True},
+    "jiant": {"song_end": "maybe", "name": "JIANT FM", "info": "JIANT", "tracks": 6, "projects": 4},
     # SLOOP answers INFO "FELUCCA SLOOP 2.8.5" (its version string, the build's firmware_version, is "SLOOP 2.8.5": the
     # build's version is "2.8.5"); 4 tracks, the sections A..D; its own backup protocol and file format (sloopbk.py),
     # which backup.py picks by itself
-    "sloop": {"name": "SLOOP", "info": "FELUCCA SLOOP", "tracks": 4, "projects": 4, "backup": "sloop"},
+    "sloop": {"song_end": "maybe", "name": "SLOOP", "info": "FELUCCA SLOOP", "tracks": 4, "projects": 4, "backup": "sloop"},
     # CoralFlower answers INFO "CoralFlower 0.7.1"; its parts (stems): chords, bass, the LAYER, drums; no project slots
     # (the sequencer's eight patterns and song are one store, backup objects 50..55); its settings are object 30
-    "coralflower": {"name": "CoralFlower", "info": "CoralFlower", "tracks": 4, "projects": 0, "settings_id": 30,
+    "coralflower": {"song_end": "maybe", "name": "CoralFlower", "info": "CoralFlower", "tracks": 4, "projects": 0, "settings_id": 30,
                     "restart": True},
     # KARMA (a SLOOP fork) answers INFO "FELUCCA KARMA 3.1" (its version string "KARMA 3.1": the twin's version 3.1);
     # three synth tracks and the drum track; its four projects are the song's parts A..D. It speaks SLOOP's backup
     # protocol (sloopbk.py)
-    "karma": {"name": "KARMA", "info": "FELUCCA KARMA", "tracks": 4, "projects": 4, "backup": "sloop"},
+    "karma": {"song_end": "maybe", "name": "KARMA", "info": "FELUCCA KARMA", "tracks": 4, "projects": 4, "backup": "sloop"},
     # Felucca itself answers INFO "FELUCCA v1.8.1" (no other name; protocol.Info.firmware_name "felucca"); 4 tracks, the
     # projects A..D; its 13-object inventory (backup.FELUCCA_IDS). A fork that answers the same way, or one chosen for the
     # device from the catalog ("felucca-mpe"), gets this twin with a warning (felucca_fork_note). "samples": the twin keeps
     # the sample slots USR1..USR3 (its glue's flash hooks): the tolerant load takes them too, so writing back keeps them
-    "felucca": {"name": "Felucca", "info": "FELUCCA", "tracks": 4, "projects": 4, "samples": True},
+    "felucca": {"song_end": "maybe", "name": "Felucca", "info": "FELUCCA", "tracks": 4, "projects": 4, "samples": True},
     # M-VAVE's FM1 Open (V14) has no editor INFO: the device is known by its package identity (FM-1_8000014); 8 tracks,
     # 16 project slots; its own file transfer protocol and backup file (fm1openbk.py). The original firmware V15/V16
     # (closed source, no backup protocol) opens this twin as a stand-in, with a note (STAND_IN_NOTE)
@@ -129,7 +138,7 @@ FIRMWARES = {
     "choralroot": {"name": "ChoralRoot", "info": "ChoralRoot", "tracks": 2, "projects": 0, "restart": True},
     # X0X answers INFO "X0X 1.2.1 BETA" (the twin's version 1.2.1); its parts (stems): the 909, the 808, 303 A, 303 B,
     # BREAK; one project (no slots); its own backup protocol and image (x0xbk.py), taken whole; its settings are object 0
-    "x0x": {"name": "X0X", "info": "X0X", "tracks": 5, "projects": 0, "backup": "x0x", "settings_id": 0},
+    "x0x": {"song_end": "maybe", "name": "X0X", "info": "X0X", "tracks": 5, "projects": 0, "backup": "x0x", "settings_id": 0},
     # AMB-1 (on fm1-base) plays itself; the stems are its four layers (pad, bells, bass, pulse); no project slots. It has
     # no editor (no INFO) and no backup over USB ("backup": None): the twin starts from its own flash or a studio
     # state, never from or onto an FM-1
@@ -172,6 +181,17 @@ def _no_backup_error(key: str) -> StudioError:
 
 def firmware_name(key: str) -> str:
     return FIRMWARES.get(key, {}).get("name") or (key or "").capitalize()
+
+
+def song_ends(key: str) -> bool:
+    """does this firmware's twin always stop by itself at the end of its song (FIRMWARES "song_end" True: Melodee)?
+    Only then "whole song to the end" is a safe default for an export."""
+    return FIRMWARES.get(key, {}).get("song_end") is True
+
+
+def has_song(key: str) -> bool:
+    """does this firmware have a song an export could play to its end at all (FIRMWARES "song_end" True or "maybe")?"""
+    return bool(FIRMWARES.get(key, {}).get("song_end"))
 
 
 def firmware_names(conj: str = "and") -> str:
@@ -357,19 +377,29 @@ class VersionCheck:
     message: str = ""
 
 
-def check_versions(twin: str, device: str = "", backup: str = "", firmware: str = "Melodee") -> VersionCheck:
-    """Compares the twin's firmware with the device's (INFO) and the backup's -> warning."""
+def check_versions(twin: str, device: str = "", backup: str = "", firmware: str = "Melodee",
+                   missing: str = "") -> VersionCheck:
+    """Compares the twin's firmware with the device's (INFO) and the backup's -> warning.
+
+    Each difference is said once: device and backup of the same version share one sentence, and a version for which
+    pick_build already said "there is no studio twin" (missing = Studio.wanted) is not named again – the studio
+    banner said the same thing three times after "Fetch from the FM-1" with a Skiff 2.7 (twin 2.2)."""
     t, d, b = fw_version(firmware, twin), fw_version(firmware, device), fw_version(firmware, backup)
+    said = fw_version(firmware, missing) if missing else ""
     msgs = []
-    if d and d != t:
+    if d and d != t and d == b and d != said:
+        msgs.append(_("The studio runs with {firmware} {twin}, your FM-1 and the backup have {device} – sound may "
+                      "differ.").format(firmware=firmware, twin=t, device=d))
+    elif d and d != t and d != said:
         msgs.append(_("The studio runs with {firmware} {twin}, your FM-1 has {device} – sound may differ.").format(
             firmware=firmware, twin=t, device=d))
-    if b and b != t:
+    if b and b != t and b != d and b != said:
         msgs.append(_("The backup comes from {firmware} {backup}, the studio runs with {twin} – sound may differ.").format(
             firmware=firmware, backup=b, twin=t))
     if firmware.lower() == "melodee" and any(levels_changed(t, x) for x in (d, b) if x and x != t):
         msgs.append(LEVELS_1_6_0)
-    return VersionCheck(t, d, b, not msgs, " ".join(msgs))
+    differs = bool((d and d != t) or (b and b != t))      # (ok stays "no difference", whatever was left unsaid)
+    return VersionCheck(t, d, b, not differs, " ".join(msgs))
 
 
 # Melodee 1.6.0 (docs/RELEASE_1.6.0.md "Sound and levels"): the mix sounds different than up to 1.6.0-rc.8
@@ -469,7 +499,9 @@ class TwinBackend:
       call(op, **args) -> dict     commands of twin-host.js: midi(data), press(label), transport_start(how),
                                    project_load(slot), project_used, transport, info, frame, run(ms), reset
       get_flash() -> bytes / set_flash(bytes)    (power on with new flash)
-      render(path, params) -> dict              (offline, in a separate instance; writes PCM to path)
+      render_open(params) / render(path, params) -> dict / render_close() / render_cancel()
+                                                 (offline, in a separate instance; one snapshot per render_open,
+                                                 every render pass starts from it; writes PCM to path)
       set_audio(on)                              (real-time sound)
       on_midi: Callable[[list[int]], None]       (everything the device sends over USB MIDI)
       close()
@@ -489,8 +521,20 @@ class TwinBackend:
     def set_flash(self, flash: bytes) -> dict:
         return self.call("flash_set", flash=flash)
 
-    def render(self, path: Path, params: dict) -> dict:
+    def render_open(self, params: dict) -> None:
+        """take ONE snapshot of the twin (params "source": "live" = its RAM as it is now, "saved" = powered on from
+        its flash; "settle_ms"): every following render() pass starts from exactly this state, until render_close()"""
         raise NotImplementedError
+
+    def render(self, path: Path, params: dict) -> dict:
+        """one pass from the snapshot of render_open (PCM to path)"""
+        raise NotImplementedError
+
+    def render_close(self) -> None:
+        """drop the snapshot (and the render instance)"""
+
+    def render_cancel(self) -> None:
+        """stop a running render pass at once (from any thread): its render() raises StudioError"""
 
     def set_audio(self, on: bool) -> None:
         raise NotImplementedError
@@ -515,6 +559,16 @@ class TwinBackend:
                     fn([int(x) & 0xFF for x in m])
                 except Exception:                    # noqa: BLE001 – never kill the reader thread
                     pass
+
+
+def _request(i: int, op: str, args: dict) -> dict:
+    """a command for the twin host: {"id": request number, "op": …, arguments}. An argument that is itself called
+    "id" (the host's "encoder" needs one) travels as "arg_id" – it used to overwrite the request number, and the call
+    then waited 60 s for an answer that could not be matched."""
+    args = dict(args)
+    if "id" in args:
+        args["arg_id"] = args.pop("id")
+    return {**args, "id": i, "op": op}
 
 
 def _b64(b: bytes) -> dict:
@@ -576,7 +630,7 @@ class NodeBackend(TwinBackend):
             i = self._id
             q: queue.Queue = queue.Queue()
             self._wait[i] = q
-            self.p.stdin.write(json.dumps({"id": i, "op": op, **args}) + "\n")
+            self.p.stdin.write(json.dumps(_request(i, op, args)) + "\n")
             self.p.stdin.flush()
         try:
             r = q.get(timeout=timeout)
@@ -588,8 +642,20 @@ class NodeBackend(TwinBackend):
             raise StudioError(r.get("error", _("Error in the twin")))
         return {k: _unb64(v) for k, v in r.items()}
 
+    def render_open(self, params: dict) -> None:
+        self.call("render_open", timeout=120, **params)
+
     def render(self, path: Path, params: dict) -> dict:
         return self.call("render", timeout=3600, path=str(path), **params)
+
+    def render_close(self) -> None:
+        with contextlib.suppress(StudioError):
+            self.call("render_close")
+
+    def render_cancel(self) -> None:
+        with contextlib.suppress(Exception), self._lock:      # (handled at once, not queued behind the render)
+            self.p.stdin.write(json.dumps({"id": 0, "op": "render_cancel"}) + "\n")
+            self.p.stdin.flush()
 
     def set_audio(self, on: bool) -> None:
         if on:
@@ -661,13 +727,35 @@ def wav_header(frames: int, fmt: str = "f32", fs: int = FS, channels: int = 2) -
 
 
 def finish_wav(raw: Path, out: Path, frames: int, fmt: str, fs: int = FS):
-    """raw PCM data (raw) -> WAV file out (atomic)."""
-    tmp = out.with_suffix(out.suffix + ".part")
+    """raw PCM data (raw) -> WAV file out (written whole, then renamed)."""
+    tmp = out.with_suffix(out.suffix + ".tmp")
     with open(tmp, "wb") as f, open(raw, "rb") as r:
         f.write(wav_header(frames, fmt, fs))
         shutil.copyfileobj(r, f, 1 << 20)
     tmp.replace(out)
     raw.unlink(missing_ok=True)
+
+
+def stem_path(path: Path, k: int) -> Path:
+    """the WAV of track k (0-based) next to the mix: song.wav -> song_track1.wav"""
+    path = Path(path)
+    return path.with_name(f"{path.stem}_track{k + 1}{path.suffix}")
+
+
+def free_export_path(path: Path, stems: int = 0) -> Path:
+    """a name for an export that overwrites nothing: path itself if neither it nor any of its stems' files exists,
+    else song_2.wav, song_3.wav … (the first number that is free for the mix and all stems)"""
+    path = Path(path)
+
+    def taken(p):
+        return p.exists() or any(stem_path(p, k).exists() for k in range(stems))
+    if not taken(path):
+        return path
+    for i in range(2, 10000):
+        q = path.with_name(f"{path.stem}_{i}{path.suffix}")
+        if not taken(q):
+            return q
+    raise StudioError(_("No free file name found for {name}").format(name=path.name))
 
 
 @dataclass
@@ -678,6 +766,7 @@ class RenderResult:
     ended: bool                      # until_end: the song has played to the end
     peak: float
     stems: dict[int, Path] = field(default_factory=dict)   # track (0..3, Skiff 0..5) -> WAV
+    started: bool = True             # until_end: the transport did start (False: nothing to play, ended early)
 
 
 # ======================================================================= Studio
@@ -686,8 +775,11 @@ class Studio:
         self.backend = backend
         self.build = backend.build
         self.warning = warning                       # the chosen build does not match exactly (pick_build)
+        self.wanted = ""                             # … and the version that was asked for (the warning names it)
         self.info: dict = {}
         self.rejected: list[int] = []                # backup parts the twin rejected while loading
+        self.last_write: dict = {"written": [], "unchanged": []}   # what the last write_to_device did
+        self._render_cancelled = False
         self.transport = StudioTransport(backend)
         self.link = Link(self.transport)
 
@@ -704,6 +796,7 @@ class Studio:
         else:
             be = backend(build, **kw)
         st = cls(be, warning)
+        st.wanted = fw_version(firmware, version) if warning else ""
         st.info = be.start(flash)
         return st
 
@@ -776,40 +869,76 @@ class Studio:
         return backup.read(f)
 
     def write_to_device(self, link, progress=None, force: bool = False, settings: bool = True,
-                        exclude=()):
+                        exclude=(), unchanged: dict | None = None):
         """Write the twin's state to the real FM-1 (backup.restore). Different firmware version on the device:
-        StudioError, unless force=True. settings=False: the "settings" object (1) stays on the device as it is;
-        exclude: further object IDs that are not written (e.g. ``self.rejected``). -> Archive"""
+        StudioError, unless force=True (JIANT across its 8-song/6-song change: always refused). settings=False: the
+        "settings" object (1) stays on the device as it is; exclude: further object IDs that are not written (e.g.
+        ``self.rejected``). unchanged: ``object_digests()`` of this twin right after it was loaded from this very FM-1 –
+        parts the twin still holds exactly like that were not touched in the studio and are not written again (the
+        FM-1 keeps its own). What happened is in ``self.last_write`` ({"written": [ids], "unchanged": [ids]}).
+        -> Archive"""
         from . import backup
         if no_backup(self.build.firmware):
             raise _no_backup_error(self.build.firmware)
+        self.last_write = {"written": [], "unchanged": []}
         vc = self.check_versions(device=self.device_version(link))
         if not vc.ok and not force:
             raise StudioError(_("{message} Nothing written.").format(message=vc.message))
+        if self.build.firmware == "jiant" and _jiant_songs(link) != _jiant_songs(self.link):
+            raise StudioError(JIANT_SONGS_REFUSAL + " " + _("Nothing written."))
         archive = self.backup()
+        skip = set(exclude)
+        if self.build.firmware == "jiant" and any(64 <= i <= 71 for i in skip):
+            skip.add(10)                            # (songs 7/8 stay the device's: so does the index that lists them)
+        same = set()
+        if unchanged:
+            same = {o["id"] for o in archive.objects
+                    if unchanged.get(str(o["id"])) == _digest(o["bytes"])} - skip
+        todo = [o["id"] for o in archive.objects if o["id"] not in skip | same]
+        self.last_write["unchanged"] = sorted(same)
+        self.last_write["planned"] = list(todo)     # (for the text after a failure: backup.written_text)
         if self._fm1open:                           # (FM1 Open: its own protocol; no settings object)
             from . import fm1openbk
-            ids = [o["id"] for o in archive.objects if o["id"] not in set(exclude)]
-            try:
-                fm1openbk.restore(link, archive.file, progress, ids=ids)
-            except fm1openbk.FM1OpenBackupError as e:
-                raise StudioError(str(e))
+            if todo:
+                try:
+                    fm1openbk.restore(link, archive.file, progress, ids=todo)
+                except fm1openbk.FM1OpenBackupError as e:
+                    err = StudioError(str(e))
+                    for k in ("written", "unclear", "unclear_sample"):    # (what is on the FM-1 now, as the backup layer says)
+                        if getattr(e, k, None) is not None:
+                            setattr(err, k, getattr(e, k))
+                    raise err from e
+            self.last_write["written"] = todo
             return archive
         sid = FIRMWARES.get(self.build.firmware, {}).get("settings_id", 1)    # (LOOM-8: None, no settings object)
-        skip = set(exclude) | (set() if settings or sid is None else {sid})
+        if not settings and sid is not None:
+            skip.add(sid)
+            todo = [i for i in todo if i != sid]
+            self.last_write["planned"] = list(todo)
+        skip |= same
+        if not todo:                                # (nothing differs: the FM-1 is not touched – nor asked to confirm)
+            return archive
         if skip and archive.image:                  # (X0X, LOOM-8 take an image whole: the device's own parts in it)
             from . import x0xbk
             dev = {o["id"]: o["bytes"] for o in backup.read(backup.capture(
                 link, self.device_version(link), firmware_key=archive.image)).objects}
             image = x0xbk.build([(o["id"], dev.get(o["id"], b"") if o["id"] in skip else o["bytes"])
                                  for o in archive.objects], profile=x0xbk.profile_of(archive.file))
-            backup.restore(link, backup.read(x0xbk.to_file(image, archive.firmware, archive.companion)), progress)
+            backup.restore(link, backup.read(x0xbk.to_file(image, archive.firmware, archive.companion)), progress,
+                           firmware_key=archive.image)
         elif skip:
-            ids = [o["id"] for o in archive.objects if o["id"] not in skip]
-            backup.restore_selected(link, archive, ids, progress)
+            backup.restore_selected(link, archive, todo, progress)
         else:                                       # (no hint: the device's INFO picks the protocol, so another
-            backup.restore(link, archive, progress)  # firmware's FM-1 refuses at once instead of timing out)
+            # firmware's FM-1 refuses at once instead of timing out. An image firmware is named: LOOM-8 has no INFO
+            # name the backup layer knows, and without the hint every write back to a LOOM-8 was refused)
+            backup.restore(link, archive, progress, firmware_key=archive.image)
+        self.last_write["written"] = todo
         return archive
+
+    def object_digests(self) -> dict[str, str]:
+        """{object id (as text): SHA-256} of the twin's backup objects as they are now – taken right after a fetch
+        from the FM-1, it lets write_to_device(unchanged=…) leave alone what was not touched in the studio"""
+        return {str(o["id"]): _digest(o["bytes"]) for o in self.backup().objects}
 
     @property
     def firmware_name(self) -> str:
@@ -888,8 +1017,11 @@ class Studio:
     def load_state(self, path: Path | None = None, profile=None) -> dict:
         """Load a saved state: the twin restarts with this flash. -> metadata (with warning)"""
         meta, flash = read_state(Path(path) if path else state_path(profile))
+        if meta.get("firmware", self.build.firmware) != self.build.firmware:
+            raise StudioError(_("This studio state belongs to {state}, not to the {twin} twin.").format(
+                state=firmware_name(meta.get("firmware", "")), twin=self.firmware_name))
         self.info = self.backend.set_flash(flash)
-        vc = check_versions(self.build.version, backup=meta.get("firmware_version", ""))
+        vc = check_versions(self.build.version, backup=meta.get("firmware_version", ""), firmware=self.firmware_name)
         meta["warning"] = vc.message
         return meta
 
@@ -941,45 +1073,80 @@ class Studio:
         """Render offline (separate instance, faster than real time; the running twin stays untouched).
         source "live": from the current RAM state (including unsaved), "saved": freshly powered on from the flash.
         start "play" (PLAY from the start) | "song" (song chain) | "none" (as it is currently running).
-        seconds OR until_end (until the transport stops, plus tail_seconds; at most max_seconds).
-        stems=True: additionally one WAV per track (Melodee 1..4, Skiff 1..6; <name>_spur1.wav …): the same playback
-        with all other
-        tracks muted (TRACK_MIX), i.e. the track with its share of the shared effects.
+        seconds OR until_end (until the transport stops, plus tail_seconds; at most max_seconds; a twin whose
+        transport never starts ends after a few seconds: RenderResult.started False).
+        stems=True: additionally one WAV per track (Melodee 1..4, Skiff 1..6; <name>_track1.wav …, stem_path): the
+        same playback with all other tracks muted (TRACK_MIX), i.e. the track with its share of the shared effects.
+        ONE snapshot of the twin is taken for the whole export; the mix and every stem start from exactly this state,
+        so they are aligned to the sample (before, each pass took its own snapshot of the running twin).
         fmt "f32" (32-bit float) or "s24" (24-bit PCM). 44.1 kHz stereo like the device.
-        progress(finished passes, all passes): one pass for the mix and one per stem."""
+        progress(finished passes, all passes): one pass for the mix and one per stem.
+        The files appear under their names only when every pass is done (before that: <name>.part); a failed or
+        cancelled export (cancel_render -> StudioCancelled) leaves nothing behind and no existing file changed."""
         if not seconds and not until_end:
             raise StudioError(_("Duration missing (seconds or until_end)"))
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         params = {"seconds": seconds or 0, "until_end": bool(until_end), "max_seconds": max_seconds,
-                  "tail_seconds": tail_seconds, "start": start, "source": source, "format": fmt}
+                  "tail_seconds": tail_seconds, "start": start, "format": fmt}
         if project is not None:
             params["project"] = int(project)
-        if source == "live" and project is None:
-            params["settle_ms"] = 0
         n = self.tracks
         passes = 1 + n if stems else 1
-        if progress:
-            progress(0, passes)
-        r = self._render_one(path, params, None)
-        res = RenderResult(path, r["seconds"], r["frames"], bool(r.get("ended")), r.get("peak", 0.0))
-        if progress:
-            progress(1, passes)
-        if stems:
-            if until_end:                                  # all stems as long as the mix
-                params.update(until_end=False, seconds=r["frames"] / FS)
-            for k in range(n):
-                p = path.with_name(f"{path.stem}_spur{k + 1}{path.suffix}")
-                self._render_one(p, {**params, "mutes": [j != k for j in range(n)]}, None)
-                res.stems[k] = p
-                if progress:
-                    progress(2 + k, passes)
-        return res
+        self._render_cancelled = False
+        made: list[tuple[Path, Path]] = []                 # (finished .part, final name)
+        try:
+            self.backend.render_open({"source": source, "settle_ms": 0 if source == "live" and project is None else 300})
+            if progress:
+                progress(0, passes)
+            r = self._render_one(path, params, made)
+            res = RenderResult(path, r["seconds"], r["frames"], bool(r.get("ended")), r.get("peak", 0.0),
+                               started=bool(r.get("started", True)))
+            if progress:
+                progress(1, passes)
+            if stems:
+                if until_end:                                  # all stems as long as the mix
+                    params.update(until_end=False, seconds=r["frames"] / FS)
+                for k in range(n):
+                    p = stem_path(path, k)
+                    self._render_one(p, {**params, "mutes": [j != k for j in range(n)]}, made)
+                    res.stems[k] = p
+                    if progress:
+                        progress(2 + k, passes)
+            if self._render_cancelled:
+                raise StudioCancelled(_("Export cancelled."))
+            for part, final in made:
+                part.replace(final)
+            made.clear()
+            return res
+        except StudioError as e:
+            if self._render_cancelled and not isinstance(e, StudioCancelled):
+                raise StudioCancelled(_("Export cancelled.")) from e
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                self.backend.render_close()
+            for part, final in made:                           # failed or cancelled: nothing of it stays
+                part.unlink(missing_ok=True)
+            for q in [path] + [stem_path(path, k) for k in range(n)]:
+                q.with_suffix(q.suffix + ".raw").unlink(missing_ok=True)
+                if made:
+                    q.with_suffix(q.suffix + ".part").unlink(missing_ok=True)
 
-    def _render_one(self, path: Path, params: dict, progress) -> dict:
+    def cancel_render(self) -> None:
+        """stop a running render_wav (from any thread): it raises StudioCancelled and removes what it had written"""
+        self._render_cancelled = True
+        with contextlib.suppress(Exception):
+            self.backend.render_cancel()
+
+    def _render_one(self, path: Path, params: dict, made: list) -> dict:
+        if self._render_cancelled:
+            raise StudioCancelled(_("Export cancelled."))
         raw = path.with_suffix(path.suffix + ".raw")
+        part = path.with_suffix(path.suffix + ".part")
+        made.append((part, path))
         r = self.backend.render(raw, params)
-        finish_wav(raw, path, int(r["frames"]), params["format"], int(r.get("fs", FS)))
+        finish_wav(raw, part, int(r["frames"]), params["format"], int(r.get("fs", FS)))
         return r
 
     # ------------------------------------------------------------- versions
@@ -1039,6 +1206,35 @@ def restore_tolerant(link, archive, progress=None, firmware_key: str = "melodee"
     return rejected
 
 
+def _digest(data: bytes) -> str:
+    return hashlib.sha256(bytes(data)).hexdigest()
+
+
+# JIANT FM kept 8 songs up to V10.6o and keeps 6 from V10.6p on (JIANT_BACKUP_IDS / _6): a newer twin converts the song
+# index and the running music when it loads an 8-song backup, and writing that back would rewrite an older FM-1's
+# music in a form nobody has confirmed it reads (and the other way round) – refused, also for experts
+JIANT_SONGS_REFUSAL = N_(
+    "The twin and your FM-1 run JIANT FM versions that store their songs differently (8 songs up to V10.6o, 6 songs "
+    "from V10.6p on). The twin's music cannot be written to this FM-1 – not with the expert option either. Install the "
+    "twin's JIANT FM version on the FM-1, or fetch from the FM-1 with a matching twin.")
+
+
+def _jiant_songs(link) -> int:
+    """how many songs this JIANT FM keeps (its backup inventory: the sections 40..71 = 8 songs, 40..63 = 6)"""
+    from . import backup
+    ids = {o.id for o in backup.parse_manifest(link.request(Cmd.BACKUP_LIST, [], timeout=3.0, retries=0))}
+    return 8 if 64 in ids else 6
+
+
+def jiant_songs_differ(a: str, b: str) -> bool:
+    """do two JIANT FM version strings lie on different sides of the 8-song/6-song change (V10.6p)? For the dialog,
+    before anything is asked of the device; write_to_device asks the FM-1 itself (_jiant_songs)."""
+    if not jiant_version(a) or not jiant_version(b):
+        return False
+    edge = jiant_version_key("V10.6p")
+    return (jiant_version_key(a) >= edge) != (jiant_version_key(b) >= edge)
+
+
 def _archive(src):
     from . import backup
     if isinstance(src, backup.Archive):
@@ -1056,14 +1252,29 @@ def state_path(profile=None) -> Path:
     return config.DATA_DIR / "studio" / name / STATE_NAME
 
 
+FLASH_SIZE = 0x100000
+STATE_META_MAX = 1 << 20
+
+
 def read_state(path: Path) -> tuple[dict, bytes]:
+    """a studio state file -> (metadata, flash). The sizes are checked in the zip's directory before anything is
+    unpacked (a prepared file of 1.6 MB could otherwise expand to gigabytes in memory): flash.bin must have exactly
+    the flash's size, studio.json at most 1 MB; what is read is counted again."""
     try:
         with zipfile.ZipFile(path) as z:
-            meta = json.loads(z.read("studio.json"))
-            flash = z.read("flash.bin")
+            mi, fi = z.getinfo("studio.json"), z.getinfo("flash.bin")
+            if mi.file_size > STATE_META_MAX or fi.file_size != FLASH_SIZE:
+                raise StudioError(_("{name} is not a valid studio state").format(name=path.name))
+            with z.open(mi) as f:
+                raw = f.read(STATE_META_MAX + 1)
+            with z.open(fi) as f:
+                flash = f.read(FLASH_SIZE + 1)
+            if len(raw) > STATE_META_MAX:
+                raise StudioError(_("{name} is not a valid studio state").format(name=path.name))
+            meta = json.loads(raw)
     except (OSError, KeyError, ValueError, zipfile.BadZipFile) as e:
-        raise StudioError(_("Not a studio state: {name} ({error})").format(name=path.name, error=e))
-    if meta.get("format") != "fm1-studio-state" or len(flash) != 0x100000:
+        raise StudioError(_("Not a studio state: {name} ({error})").format(name=path.name, error=str(e)[:200]))
+    if not isinstance(meta, dict) or meta.get("format") != "fm1-studio-state" or len(flash) != FLASH_SIZE:
         raise StudioError(_("{name} is not a valid studio state").format(name=path.name))
     return meta, flash
 
@@ -1075,9 +1286,10 @@ class WebEngineBackend(TwinBackend):
     flash go to Python via the local server (POST). Needs a running QApplication; calls from the GUI
     thread wait with a local event loop, from other threads they block."""
 
-    def __init__(self, build: TwinBuild, server=None, page=None, clock: bool = True, on_event=None):
+    def __init__(self, build: TwinBuild, server=None, page=None, clock: bool = True, on_event=None, on_dead=None):
         self.build = build
         self.on_event = on_event                     # events of the visible control surface (key, undo …)
+        self.on_dead = on_dead                       # the page's render process ended (GUI thread)
         self.server = server
         self._own_server = server is None
         self.page = page
@@ -1091,14 +1303,24 @@ class WebEngineBackend(TwinBackend):
             self.server = LocalServer()
         self.web = WebTwin(self.server, self.build, on_midi=self._midi_out, page=self.page)
         self.web.on_event = self.on_event
+        self.web.on_dead = self.on_dead
         self.web.load()
         return self.web.call("boot", wasm=self.build.url_path, flash=flash, clock=self.clock, timeout=60)
 
     def call(self, op: str, timeout: float = 60, **args) -> dict:
         return self.web.call(op, timeout=timeout, **args)
 
+    def render_open(self, params: dict) -> None:
+        self.web.call("render_open", timeout=120, **params)
+
     def render(self, path: Path, params: dict) -> dict:
         return self.web.render(path, params)
+
+    def render_close(self) -> None:
+        self.web.post("render_close")
+
+    def render_cancel(self) -> None:
+        self.web.post("render_close")
 
     def set_audio(self, on: bool) -> None:
         self.web.call("audio", on=bool(on), timeout=20)

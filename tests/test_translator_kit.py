@@ -70,3 +70,35 @@ def test_refuses_existing_or_bad_codes(locale):
     nl.build("es", locale=locale)
     with pytest.raises(ValueError):
         nl.build("es", locale=locale)
+
+
+def test_language_names_itself_in_the_po_header(locale):
+    """I18N-05: Settings › Language showed Spanish as "es". The name is the header line X-Language-Name of the
+    language's own .po files, which the new-language tool writes – no table in the code to forget."""
+    assert i18n.language_name("en") == "English" and i18n.language_name("de") == "Deutsch"
+    nl.build("fr", "Français", locale=locale)
+    assert i18n.language_name("fr") == "Français"
+    nl.build("pt_BR", "Português (Brasil)", locale=locale)
+    assert i18n.language_name("pt_BR") == "Português (Brasil)"
+    nl.build("it", locale=locale)                                   # no name given: the code, as before
+    assert i18n.language_name("it") == "it"
+    assert i18n.language_name("xx") == "xx"                         # no such folder
+
+
+def test_shipped_languages_have_their_names():
+    names = {c: i18n.language_name(c) for c in i18n.available_languages()}
+    assert names["en"] == "English" and names["de"] == "Deutsch" and names["es"] == "Español"
+    assert all(n != c for c, n in names.items()), names             # none shows up as a bare code
+    for c in names:
+        if c != "en":
+            for f in (i18n.LOCALE_DIR / c).glob("*.po"):
+                assert i18n.parse_header(i18n.parse_po(f.read_text("utf-8"), f.name)).get("X-Language-Name") == names[c], f
+
+
+def test_help_lists_every_language():
+    import os
+    import subprocess
+    env = {k: v for k, v in os.environ.items() if k != "FM1C_LANG"}
+    out = subprocess.run([sys.executable, "-m", "fm1companion", "--lang", "en", "--help"], cwd=str(ROOT), env=env,
+                         capture_output=True, text=True).stdout
+    assert ": " + ", ".join(i18n.available_languages()) + " (" in out, out

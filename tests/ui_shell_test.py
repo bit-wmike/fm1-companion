@@ -24,6 +24,7 @@ home = Path(tempfile.mkdtemp(prefix="fm1c-shell-"))
 for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache"),
                ("XDG_STATE_HOME", ".local/state")):
     os.environ[k] = str(home / sub)
+os.environ["HOME"] = str(home)        # (~ itself too: nothing of this run may land in the real home)
 os.environ["FM1C_DEMO"] = "1"
 os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
 
@@ -136,7 +137,7 @@ def flow():
     check(until(lambda: ctx.connected), "demo device connected")
     check(w.page("help") is not None, "help page registered")
     from fm1companion import __version__
-    check(__version__ == "2.6.0", "Version 2.6.0")
+    check(__version__ == "2.6.1", "Version 2.6.1")
 
     # ---- command search
     pal = w.open_palette()

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "name": "melodee-studio",
-  "title": "Melodee Studio-Zwilling",
+  "title": "Melodee studio twin",
   "version": "1.6.0-rc.7",
   "source_repo": "https://github.com/keremimo/melodee",
   "ref": "v1.6.0-rc.7",
@@ -15,9 +15,17 @@
       "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
       "size": 35149
     },
+    "LICENSING.md": {
+      "sha256": "02e1abe387f5c5c2de7f51da9d1a64bda9d8448f6942713c39f5f51261ea2b1e",
+      "size": 13262
+    },
     "NOTICE": {
-      "sha256": "e311efc5720d964ef6fb392fee06bc2335ef321d4e64910fa802ba54e62080c0",
-      "size": 1861
+      "sha256": "081e31532a15bf5ffdbd185a25a78ba6c9ebb9d6a2e1f07f3b3f9d5a66ac8060",
+      "size": 2674
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "61af827dde8dc700a28cd2436c23efbb2123d35e425f81a14f579b5fd0319e61",
+      "size": 26776
     },
     "twin.wasm": {
       "sha256": "66ee1e6fb6421a7055f190442b0df7e21d14d115641de189cf0c9a697eb8364a",

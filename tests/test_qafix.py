@@ -10,6 +10,8 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
@@ -66,3 +68,74 @@ def test_library_on_readonly_root(tmp_path, monkeypatch):
     monkeypatch.setattr(os, "mkdir", deny)
     lib = pl.Library(root)                       # must not raise
     assert lib.all() == []
+
+
+# ================= Pi hardware test 2.6.1, finding 7: what the app shows after an installation =================
+def test_firmware_is_shown_under_its_own_name():
+    """Skiff answers INFO with "FELUCCA v2.7" (the family's name): the overview's version, the title and the
+    "connected" notice showed that raw text. With the recognised firmware it reads "Skiff 2.7"; everything else
+    stays as fw_label showed it."""
+    pytest.importorskip("PyQt6.QtWidgets")
+    from fm1companion.ui.common import device_title, fw_label
+    assert fw_label("FELUCCA v2.7", "skiff") == "Skiff 2.7"
+    assert fw_label("FELUCCA v2.7") == "FELUCCA v2.7"                       # no key: as reported
+    assert fw_label("FELUCCA v2.1.1", "felucca") == "FELUCCA v2.1.1"        # Felucca itself
+    assert fw_label("FELUCCA v2.7", "no-such-firmware") == "FELUCCA v2.7"
+    assert fw_label("FELUCCA SLOOP 2.8.3", "sloop") == fw_label("FELUCCA SLOOP 2.8.3") == "SLOOP 2.8.3"
+    assert fw_label("FELUCCA KARMA 3.0.5", "karma") == "KARMA 3.0.5"
+    assert fw_label("MELODEE v1.6.1", "melodee") == "MELODEE v1.6.1"
+    assert fw_label("", "skiff") == ""
+
+    class Ctx:
+        firmware_key = "skiff"
+        info = type("I", (), {"version": "FELUCCA v2.7"})()
+
+        def title(self):
+            return "FM-1 Schwarz/Grün – FELUCCA v2.7"
+    assert device_title(Ctx()) == "FM-1 Schwarz/Grün – Skiff 2.7"
+    Ctx.firmware_key = ""
+    assert device_title(Ctx()) == "FM-1 Schwarz/Grün – FELUCCA v2.7"
+    src = (ROOT / "fm1companion/ui/overview.py").read_text("utf-8") + (ROOT / "fm1companion/ui/main_window.py").read_text("utf-8")
+    assert "fw_label(c.info.version)" not in src, "overview/main window: the recognised firmware belongs to the label"
+
+
+def test_device_selection_names_the_firmware_not_the_usb_port():
+    """The selection said "<profile> · <USB port name>": still "FM-1 KARMA" after Skiff was installed, later
+    "Felucca" (Skiff's USB name)."""
+    pytest.importorskip("PyQt6.QtWidgets")
+    from fm1companion.ui.main_window import MainWindow
+
+    def port(label, key, update=False):
+        return type("P", (), {"label": label, "key": key, "update_mode": update})()
+
+    def prof(fw):
+        return type("Pr", (), {"firmware": fw})()
+    active = port("FM-1 KARMA", "a")
+    win = type("W", (), {"ctx": type("C", (), {"port": active, "firmware_key": "skiff"})()})()
+    f = MainWindow._port_firmware
+    assert f(win, active, prof("karma")) == "Skiff"                 # the active device: what runs now, not the port's name
+    win.ctx.firmware_key = "karma"
+    assert f(win, active, prof("karma")) == "KARMA"
+    assert f(win, port("Felucca", "b"), prof("skiff")) == "Skiff"   # another device: what its profile knows
+    assert f(win, port("Felucca", "b"), None) == "Felucca"          # nothing known: the USB name, as before
+    assert f(win, port("FM-1 update", "c", update=True), prof("skiff")) == "FM-1 update"
+    assert f(win, port("Melodee (Demo)", "d"), prof("melodee")) == "Melodee (Demo)"
+    src = (ROOT / "fm1companion/ui/main_window.py").read_text("utf-8")
+    dev_changed = src.split("def _dev_changed", 1)[1].split("\n    def ", 1)[0]
+    assert "self._fill_devices()" in dev_changed                    # … and it is filled again when the device changes
+
+
+def test_splash_has_a_title_of_its_own():
+    """Qt gives a window without a title the application's name; the main window has the same title and appears
+    while the splash is still shown – KWin then calls the main window "FM-1 Companion <2>"."""
+    pytest.importorskip("PyQt6.QtWidgets")
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PyQt6.QtWidgets import QApplication
+    app = QApplication.instance() or QApplication([])  # noqa: F841
+    from fm1companion import APP_NAME
+    from fm1companion.ui.splash import Splash
+    s = Splash()
+    try:
+        assert s.windowTitle() and s.windowTitle() != APP_NAME and s.windowTitle().startswith(APP_NAME)
+    finally:
+        s.deleteLater()

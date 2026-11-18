@@ -23,6 +23,7 @@ os.environ.setdefault("FM1C_LANG", "de")      # these checks expect the German u
 home = Path(tempfile.mkdtemp(prefix="fm1c-music-"))
 for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache")):
     os.environ[k] = str(home / sub)
+os.environ["HOME"] = str(home)        # (~ itself too: nothing of this run may land in the real home)
 os.environ["FM1C_DEMO"] = "1"
 os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
 
@@ -144,6 +145,8 @@ def flow():
             fx = ROOT / "tests" / "fixtures" / "musik"
             self.d.objs[0] = (fx / "obj_64.bin").read_bytes()
             self.d.objs[2] = (fx / "obj_2.bin").read_bytes()
+            from fm1companion.demo_device import rnd
+            self.d.objs[66] = rnd(2500, 4)             # a project the app cannot read (the demo's own is real now)
 
         def request(self, cmd, args, timeout=1.0, retries=0):
             return unframe(self.d.handle(frame(cmd, args)))[1]

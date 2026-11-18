@@ -1,15 +1,16 @@
 # Español (es)
 
-Translation of FM-1 Companion into Español, started with `tools/i18n_new_language.py es`.
+Spanish translation of FM-1 Companion (neutral Spanish, informal "tú"). It is complete: every message of the app
+and all help pages (`fm1companion/data/help/es/`) are translated. It was started with
+`tools/i18n_new_language.py es` and is new – **corrections by native speakers are very welcome**.
 
-Each `.po` file is one area of the app (the same split as `../de/`). Every `msgstr` is still empty – the app shows
-the English text for those. Translate with any gettext editor (Poedit, Lokalize, GNOME Translation Editor) or a text
-editor:
+Each `.po` file is one area of the app (the same split as `../de/`). Edit with any gettext editor (Poedit, Lokalize,
+GNOME Translation Editor) or a text editor:
 
-1. Check the header of every file: `Plural-Forms` must match Español
-   (see https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html).
-2. Translate the `msgstr` entries. Keep placeholders such as `{name}` and `%s` exactly, keep HTML tags,
-   choose your own accelerator letter after `&`.
+1. Keep placeholders such as `{name}` and `%s` exactly, keep HTML tags, choose your own accelerator letter after
+   `&`. A plural entry needs a real singular and a real plural.
+2. Use the names the app itself shows: the page is "Recuperación" (stages: "Etapa 1–3"), the button
+   "Hacer copia ahora". When you rename a button or page, change every message and help page that quotes it.
 3. Check and look at it:
 
    ```
@@ -17,9 +18,7 @@ editor:
    FM1C_LANG=es python3 -m fm1companion --demo
    ```
 
-4. Optional: add the name of the language in its own language to `LANGUAGE_NAMES` in `fm1companion/i18n.py`
-   (otherwise the language list shows the code `es`), and translate the help pages
-   (`fm1companion/data/help/en/*.md` → `fm1companion/data/help/es/`).
+The name in the language list of the app ("Español") is the header line `X-Language-Name` of these files.
 
 The entries in `rescue.po` (used by `flash/texts.py`) are safety messages of the recovery tools – translate them
 with the same meaning and strength, nothing softer, nothing stronger.

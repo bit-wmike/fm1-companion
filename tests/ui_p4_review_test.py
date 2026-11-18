@@ -22,6 +22,7 @@ os.environ.setdefault("FM1C_LANG", "de")      # these checks expect the German u
 home = Path(tempfile.mkdtemp(prefix="fm1c-p4-"))
 for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache")):
     os.environ[k] = str(home / sub)
+os.environ["HOME"] = str(home)        # (~ itself too: nothing of this run may land in the real home)
 os.environ["FM1C_DEMO"] = "1"
 for k in ("HTTPS_PROXY", "HTTP_PROXY", "https_proxy", "http_proxy", "ALL_PROXY", "all_proxy"):
     os.environ.pop(k, None)           # a proxy on 127.0.0.1 would otherwise undermine "offline"

@@ -1,5 +1,5 @@
 {
-  "_comment": "Einzige Liste der Systempakete. Benutzt von .deb (Depends/Recommends), .run-Installer, install.sh und 'fm1-companion --check'. Neue Pakete hier eintragen. Die why-Texte sind englisch und werden in diag.py übersetzt (DEP_WHY).",
+  "_comment": "Rettung (ROM-Boot-Modus, Stufe 2) muss VOR dem Notfall bereit sein: python3-crcmod und python3-yaml sind deshalb 'recommended' (das sind die zwei Module, die der mitgelieferte Unbricker und die von ihm geladenen jl-uboot-tool-Module jltech/uboot, cipher, crc wirklich importieren, Stand adb3f18). python3-pycryptodome und python3-tqdm stehen nur in jl-uboot-tools requirements.txt: Cryptodome wird dort nirgends importiert, tqdm nur von dessen Kommandozeile jluboottool.py, die die App nicht startet. Einzige Liste der Systempakete. Benutzt von .deb (Depends/Recommends), .run-Installer, install.sh und 'fm1-companion --check'. Neue Pakete hier eintragen. Die why-Texte sind englisch und werden in diag.py übersetzt (DEP_WHY).",
   "required": [
     {"package": "python3", "version": ">= 3.11", "check": {"python": "3.11"}, "why": "Python 3.11 or newer"},
     {"package": "python3-pyqt6", "check": {"module": "PyQt6.QtWidgets"}, "why": "user interface"},
@@ -19,12 +19,15 @@
     {"package": "pipewire-bin", "check": {"exe": "pw-record"}, "why": "recording and previewing (pw-record, pw-play)"},
     {"package": "audacity", "check": {"exe": "audacity"}, "why": "editing recordings"},
     {"package": "fluidsynth", "check": {"exe": "fluidsynth"}, "why": "sound generator"},
-    {"package": "fluid-soundfont-gm", "check": {"file": "/usr/share/sounds/sf2/FluidR3_GM.sf2"}, "why": "General MIDI sounds"}
+    {"package": "fluid-soundfont-gm", "check": {"file": "/usr/share/sounds/sf2/FluidR3_GM.sf2"}, "why": "General MIDI sounds"},
+    {"package": "python3-crcmod", "check": {"module": "crcmod"}, "why": "rescue via U-Boot (jl-uboot-tool)"},
+    {"package": "python3-yaml", "check": {"module": "yaml"}, "why": "rescue via U-Boot (jl-uboot-tool)"}
   ],
   "suggested": [
-    {"package": "python3-crcmod", "why": "rescue via U-Boot (jl-uboot-tool)"},
-    {"package": "python3-yaml", "why": "rescue via U-Boot (jl-uboot-tool)"},
     {"package": "python3-pycryptodome", "why": "rescue via U-Boot (jl-uboot-tool)"},
-    {"package": "python3-tqdm", "why": "rescue via U-Boot (jl-uboot-tool)"}
+    {"package": "python3-tqdm", "why": "rescue via U-Boot (jl-uboot-tool)"},
+    {"package": "python3-serial", "why": "rescue with the FM-1 Transporter (a Raspberry Pi Pico as flash adapter)"},
+    {"package": "pkexec | policykit-1", "why": "password prompt for rescue via U-Boot, the USB power rule and removing a system-wide installation"},
+    {"package": "pulseaudio-utils", "why": "Studio: choosing the sound output with pactl"}
   ]
 }

@@ -23,8 +23,9 @@ from pathlib import Path
 LOCALE_DIR = Path(__file__).resolve().parent / "locale"
 SOURCE_LANGUAGE = "en"
 SYSTEM = "system"
-# names shown in the language selection (each in its own language)
-LANGUAGE_NAMES = {"en": "English", "de": "Deutsch"}
+# names shown in the language selection (each in its own language). A translation names itself in the header of
+# its .po files ("X-Language-Name: Español"); this table is only the start (the source language has no .po file).
+LANGUAGE_NAMES = {"en": "English", "de": "Deutsch", "es": "Español"}
 
 _lock = threading.RLock()
 _lang: str | None = None                      # resolved language code
@@ -383,6 +384,22 @@ def available_languages() -> list[str]:
 
 
 def language_name(code: str) -> str:
+    """the language's own name: from the header of its .po files (X-Language-Name), else the table, else the code"""
+    if code == SOURCE_LANGUAGE:
+        return LANGUAGE_NAMES[SOURCE_LANGUAGE]
+    d = LOCALE_DIR / code
+    try:
+        for f in sorted(d.glob("*.po")) if d.is_dir() else ():
+            with f.open(encoding="utf-8") as fh:
+                for i, line in enumerate(fh):
+                    if i > 40 or (line.startswith("msgid ") and line.strip() != 'msgid ""'):
+                        break                     # the header is over
+                    if line.startswith('"X-Language-Name:'):
+                        name = line.split(":", 1)[1].strip().rstrip('"').removesuffix("\\n").strip()
+                        if name:
+                            return name
+    except (OSError, UnicodeDecodeError):
+        pass
     return LANGUAGE_NAMES.get(code, code)
 
 

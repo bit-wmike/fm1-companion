@@ -38,7 +38,9 @@ DEFAULTS = {"auto": True, "log_days": 30, "firmware_keep": 0, "packages_keep": 3
             "cache_days": 30, "last_auto": 0.0}
 DAY = 86400.0
 TEMP_PREFIX = "fm1c-"
-REPORT_GLOBS = ("FM-1-Companion-Fehlerbericht-*.zip", "systemcheck-*.txt")   # i18n: ignore (file names)
+# bug reports are named in the UI language (ui/crash.default_report_name): en, de, es
+REPORT_GLOBS = ("FM-1-Companion-Fehlerbericht-*.zip", "FM-1-Companion-bug-report-*.zip",   # i18n: ignore (file names)
+                "FM-1-Companion-informe-de-errores-*.zip", "systemcheck-*.txt")   # i18n: ignore (file names)
 RESCUE_RESERVE = "stock-v15"          # the newest download of the original firmware stays (offline rescue)
 MIN_TEMP_AGE = 3600.0                 # temporary files younger than this may still be in use
 
@@ -112,12 +114,8 @@ def install_running() -> bool:
     from .flash import journal
     if journal.Journal.busy():
         return True
-    j = _journal()
-    try:
-        pid = int(j.lockfile.read_text().strip() or 0)
-    except (OSError, ValueError):
-        return False
-    return bool(pid) and journal._alive(pid)
+    pid, born = journal._read_lock(_journal().lockfile)      # "PID start-time" (older versions: PID only)
+    return bool(pid) and journal._alive(pid, born)
 
 
 def resume_possible() -> bool:

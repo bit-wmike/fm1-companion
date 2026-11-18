@@ -15,9 +15,17 @@
       "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
       "size": 35149
     },
+    "LICENSING.md": {
+      "sha256": "02e1abe387f5c5c2de7f51da9d1a64bda9d8448f6942713c39f5f51261ea2b1e",
+      "size": 13262
+    },
     "NOTICE": {
-      "sha256": "e2bbff9b13ee2c28273fa9f2e7acddf5e4fd78becffc9cd12563fc3bf02ea9ec",
-      "size": 1382
+      "sha256": "413d1dff1a2c535668cb2ae621f7fa8be4f882b20cbd9bfcf8844c674d95d4a6",
+      "size": 2195
+    },
+    "THIRD_PARTY.txt": {
+      "sha256": "61af827dde8dc700a28cd2436c23efbb2123d35e425f81a14f579b5fd0319e61",
+      "size": 26776
     },
     "index.html": {
       "sha256": "066ec7a8792ba602dc909c5e4c963d99318e8751f643f3262df5f230f93dacff",

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import html
-import json
 import re
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
@@ -44,28 +43,37 @@ class OverviewPage(QWidget):
         self.dev_card = Card(_("Device"), icon="audio-card")
         self.dev_form = QFormLayout()
         self.dev_form.setHorizontalSpacing(12)
+        self.dev_form.setVerticalSpacing(4)         # seven rows: with a tall font (Noto Sans) every pixel counts
         self.dev_card.lay.addLayout(self.dev_form)
         self.lbl = {}
         # keys are identifiers (also used by the tests), the row titles are translated
         for k, title in (("Name", _("Name:")), ("Firmware", _("Firmware:")), ("Version", _("Version:")),
                          ("Verbindung", _("Connection:")), ("Seriennummer", _("Serial number:")),  # i18n: ignore
-                         ("USB", _("USB:"))):
+                         ("USB", _("USB:")), ("Unit", _("Unit:"))):
             self.lbl[k] = QLabel("–")
             self.lbl[k].setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.lbl[k].setWordWrap(True)
             self.dev_form.addRow(title, self.lbl[k])
-        row = QHBoxLayout()
+        # which firmware runs here (asked once on connecting, when the ID fits several): changeable with the link
+        self.lbl["Firmware"].setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.lbl["Firmware"].linkActivated.connect(lambda _href: self.change_firmware())
+        # hardware revision (logo on the front = the newer flash chip): shown, and changeable with the link
+        self.lbl["Unit"].setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.lbl["Unit"].linkActivated.connect(lambda _href: self.set_unit())
+        # "Rename" and "Colour" sit in the card's title row (not in a row of their own below the form): the card is
+        # the tallest of the page and has to fit at 1280×720 without scrolling, also with a tall font
         self.b_rename = QPushButton(icon("edit-rename"), _("Rename"))
         self.b_color = QPushButton(icon("color-management", "preferences-desktop-color"), _("Colour"))
         self.b_rename.clicked.connect(self._rename)
         self.b_color.clicked.connect(self._color)
-        row.addWidget(self.b_rename)
-        row.addWidget(self.b_color)
-        row.addStretch(1)
-        self.dev_card.lay.addLayout(row)
+        self.dev_card.head.addWidget(self.b_rename)
+        self.dev_card.head.addWidget(self.b_color)
         self.notes = QPlainTextEdit()
         self.notes.setPlaceholderText(_("Notes on this device (e.g. “the one with the scratch, for live sets”)"))
         self.notes.setMaximumHeight(56)
+        # may shrink to one line when the window is short: at 1280×720 with the Raspberry Pi OS default font
+        # (Noto Sans, taller lines) the card otherwise ends below the window's edge
+        self.notes.setMinimumHeight(min(56, self.notes.fontMetrics().lineSpacing() + 14))
         self._notes_pid = ""
         self._notes_timer = QTimer(self, interval=700, singleShot=True)   # don't save on every keystroke
         self._notes_timer.timeout.connect(self._notes)
@@ -186,18 +194,27 @@ class OverviewPage(QWidget):
         self._notes_pid = p.id if p else ""
         self.lbl["Name"].setText(f"<b style='color:{p.color}'>●</b> {html.escape(p.name)}" if p else "–")
         from .device import firmware_name
-        if port and port.update_mode:
+        if port and port.update_mode and getattr(c, "mboot", None) is not None:
+            fw_text = _("m-bootloader – MIDI MODE (no firmware running)")
+        elif port and port.update_mode:
             fw_text = _("update mode")
         elif getattr(c, "firmware_ambiguous", False):
             fw_text = _("unknown – please choose")
         else:
             fw_text = firmware_name(c.firmware_key) or (_("unknown") if port else "–")
+        from .common import firmware_changeable
+        if firmware_changeable(c):                  # (the question of the first connection, again – also to correct it)
+            fw_text = html.escape(fw_text) + " · <a href='#firmware'>" + _("change") + "</a>"
         self.lbl["Firmware"].setText(fw_text)
         from .common import fw_label
         if c.info:
-            ver = fw_label(c.info.version)
+            ver = fw_label(c.info.version, c.firmware_key)
+        elif port and port.update_mode and getattr(c, "mboot", None) is not None:
+            ver = _("m-bootloader {version} · flash chip {chip}").format(version=c.mboot.version, chip=c.mboot.chip)
         elif port and port.update_mode:
             ver = c.identity or "–"
+        elif port and getattr(c, "sloop3", None) is not None:
+            ver = _("{version} (public beta)").format(version=c.sloop3.version)
         elif port and getattr(c, "identity", ""):
             ver = _("ID {id}").format(id=c.identity) + (f"  ({p.firmware_version})" if p and p.firmware_version else "")
         else:
@@ -214,12 +231,13 @@ class OverviewPage(QWidget):
         self.lbl["Verbindung"].setText(state)
         self.lbl["Seriennummer"].setText((port.serial or _("none (the device is recognised by choosing the profile)")) if port else "–")
         self.lbl["USB"].setText(_("{id} · port {path}").format(id=port.usb_id, path=port.usb_path) if port and port.usb_id else "–")
+        self.lbl["Unit"].setText(self._unit_text(p))
         for b in (self.b_rename, self.b_color, self.notes):
             b.setEnabled(p is not None)
-        can_backup = bool(c.connected)
+        from .backups_page import can_back_up, no_backup_reason   # (the same rule as the page “Backups”: SLOOP 3 too)
+        can_backup = can_back_up(c)
         why = (_("Make a complete backup of the active FM-1 (Ctrl+B)") if can_backup else
-               (_("Backup only works with firmwares with editor protocol (Melodee, Skiff, SLOOP).") if port else
-                _("Connect an FM-1 first.")))
+               (no_backup_reason(c) if port else _("Connect an FM-1 first.")))
         for b in (self.b_backup, self.quick_buttons.get("Backup jetzt")):  # i18n: ignore
             if b is not None:
                 b.setEnabled(can_backup)
@@ -249,22 +267,33 @@ class OverviewPage(QWidget):
         try:
             folder = c.device_folder(c.settings.backups_dir)
             from .. import autobackup as AB
-            files = [m.path for m in AB.list_backups(folder, recursive=False)]   # readable only, newest first
+            metas = AB.list_backups(folder, recursive=False)                     # readable only, newest first
         except OSError as e:
             self.bk_text.setText(_("<b>Backup folder not reachable.</b> {error}").format(error=getattr(e, 'strerror', '') or e))
             return
-        if not files:
-            self.bk_text.setText(_("No backup of this device yet. <b>Best make one now.</b>"))
+        # a firmware without the editor protocol (the original one, for example) offers no backup over USB: say that,
+        # instead of "best make one now" above a greyed-out button
+        no_usb = ""
+        if c.port is not None and not c.connected and getattr(c, "midi_connected", False) \
+                and getattr(c, "protocol", "") != "update":
+            from .backups_page import no_backup_reason
+            no_usb = no_backup_reason(c)
+        if not metas:
+            self.bk_text.setText(html.escape(no_usb) if no_usb
+                                 else _("No backup of this device yet. <b>Best make one now.</b>"))
             return
-        f = files[0]
-        try:
-            meta = json.loads(f.read_text("utf-8"))
-            when = fmt_date(meta.get("created", ""))
-            fw = meta.get("firmware", "")
-        except (OSError, ValueError):
-            when, fw = "?", ""
+        # date and firmware from the index every backup kind goes through (autobackup.read_meta): the formats
+        # name their date differently ("created", SLOOP/KARMA "date") – reading the file here missed the latter
+        m = metas[0]
         self.bk_text.setText(_("Last backup: <b>{date}</b> ({firmware}), {n} in total, {size}.").format(
-            date=when, firmware=fw, n=len(files), size=fmt_size(sum(x.stat().st_size for x in files))))
+            date=fmt_date(m.created or m.when.isoformat()), firmware=m.firmware or "?", n=len(metas),
+            size=fmt_size(sum(x.size for x in metas))) + (f"<br>{html.escape(no_usb)}" if no_usb else ""))
+
+    def showEvent(self, e):
+        """backups are made in several places (Backups, Studio, before an installation, automatically): the
+        card is brought up to date whenever the page comes into view"""
+        super().showEvent(e)
+        self._backup_text()
 
     def set_update_info(self, info: dict):
         self.update_info = info
@@ -277,12 +306,13 @@ class OverviewPage(QWidget):
             self.up_text.setText(_("No device connected."))
             return
         if c.port and c.port.update_mode:
-            self.up_text.setText(_("The FM-1 is waiting in update mode – finish the installation first (page “Rescue”)."))
+            self.up_text.setText(_("The FM-1 is waiting in update mode – finish the installation first (page “Recovery”)."))
             return
         if i and i.get("firmware") and i.get("firmware") != c.firmware_key:
             i = {}                                   # a result from another device doesn't apply here
         if not c.firmware_key and not i:
-            self.up_text.setText(_("Firmware unknown – please choose (note above) or “To the firmwares” (Firmware+).")
+            self.up_text.setText(_("Firmware unknown – please choose it under “Device” (Firmware: “change”) or go “To the firmwares” "
+                                   "(Firmware+).")
                                  if getattr(c, "firmware_ambiguous", False) else
                                  _("Firmware unknown – a version check is not possible like this."))
             return
@@ -305,6 +335,40 @@ class OverviewPage(QWidget):
             self.up_text.setText(_("Up to date: {current} ({channel})").format(current=cur, channel=chan))
         else:
             self.up_text.setText(_("No versions found – are you online?"))
+
+    def _unit_text(self, p) -> str:
+        """hardware revision of the active device; a warning when a newer unit runs a version that does not know its
+        flash chip"""
+        if p is None or getattr(self.ctx, "is_virtual", False):
+            return "–"
+        from .. import hardware
+        text = html.escape(hardware.label(p)) + " · <a href='#unit'>" + (
+            _("change") if hardware.asked(p) else _("logo on the front?")) + "</a>"
+        key = self.ctx.firmware_key
+        if hardware.revision(p) == hardware.NEW and key and self.ctx.port is not None:
+            sup = hardware.running_support(key, self.ctx.info.version if self.ctx.info else "")
+            if sup is not None and sup.status == hardware.NO:
+                from .device import firmware_name
+                text += "<br><span style='color:#da4453'>" + hardware.running_warning(
+                    firmware_name(key) or key, sup, key) + "</span>"
+        return text
+
+    def change_firmware(self) -> str:
+        """“Which firmware is running here?” again (the link in the Firmware row) -> the answer, "" if closed"""
+        ask = getattr(self.ctx, "ask_firmware", None)
+        return ask(force=True) if callable(ask) else ""
+
+    def set_unit(self, rev: str | None = None):
+        p = self.ctx.profile
+        if p is None:
+            return None
+        from . import hw_revision
+        if rev is None:
+            rev = hw_revision.ask(self, self.ctx, p)
+        else:
+            hw_revision.record(self.ctx, p, rev, self)
+        self.refresh()
+        return rev
 
     def _rename(self):
         p = self.ctx.profile

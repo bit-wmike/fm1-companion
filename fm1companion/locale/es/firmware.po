@@ -4,6 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FM-1 Companion\n"
 "Language: es\n"
+"X-Language-Name: Español\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -86,10 +87,6 @@ msgstr "Lo que ya no estará en el dispositivo después:"
 msgid "Not possible – see above"
 msgstr "No es posible: ver arriba"
 
-#: fm1companion/ui/firmware_page.py:311
-msgid "Cancels before the next safe point. While writing, the installation runs to the end – cancelling there would leave the FM-1 in update mode."
-msgstr "Cancela antes del siguiente punto seguro. Mientras se escribe, la instalación llega hasta el final; cancelar ahí dejaría el FM-1 en modo de actualización."
-
 #: fm1companion/ui/firmware_page.py:317
 msgid "<b>Do not unplug and do not switch off now.</b> The FM-1 is writing its firmware. This takes a few minutes – after that it restarts by itself."
 msgstr "<b>No desconectes ni apagues nada ahora.</b> El FM-1 está escribiendo su firmware. Tarda unos minutos; después se reinicia solo."
@@ -97,10 +94,6 @@ msgstr "<b>No desconectes ni apagues nada ahora.</b> El FM-1 está escribiendo s
 #: fm1companion/ui/firmware_page.py:326
 msgid "Cancel (only before writing)"
 msgstr "Cancelar (solo antes de escribir)"
-
-#: fm1companion/ui/firmware_page.py:344
-msgid "While the FM-1 is writing, it cannot be cancelled safely – please wait."
-msgstr "Mientras el FM-1 escribe, no se puede cancelar de forma segura: espera, por favor."
 
 #: fm1companion/ui/common.py:476 fm1companion/ui/firmware_page.py:351
 msgid "Cancellation requested – takes effect at the next safe point."
@@ -273,11 +266,6 @@ msgstr "La V15 original está funcionando. Continuando con el firmware de destin
 #, python-brace-format
 msgid "Step: install {name} …"
 msgstr "Paso: instalar {name} …"
-
-#: fm1companion/ui/firmware_page.py:622
-#, python-brace-format
-msgid "The FM-1 is now waiting in update mode – {name} is not completely written. Do not unplug anything: continue on the “Recovery” page with “Finish installation”."
-msgstr "El FM-1 espera ahora en modo de actualización: {name} no está escrito por completo. No desconectes nada: continúa en la página “Recuperación” con “Terminar instalación”."
 
 #: fm1companion/ui/firmware_page.py:626
 #, python-brace-format
@@ -611,10 +599,6 @@ msgstr "Ir al plan"
 msgid "Back to the original"
 msgstr "Volver al original"
 
-#: fm1companion/ui/firmware_page.py:1120
-msgid "<b>V15</b> is the proven way back: all installers know it, and almost all community firmwares are installed from it. <b>V16</b> (October 2026) is M-VAVE's newest version with eight voices and 64-step patterns. M-VAVE occasionally replaces the V16 file on the server – if the checksum does not match, the app installs nothing.<br><br>Afterwards, on the FM-1, run <i>System &gt; Reset Patches</i> once if presets look garbled."
-msgstr "<b>V15</b> es el camino de vuelta probado: todos los instaladores la conocen y casi todos los firmwares de la comunidad se instalan desde ella. <b>V16</b> (octubre de 2026) es la versión más nueva de M-VAVE, con ocho voces y patrones de 64 pasos. M-VAVE sustituye de vez en cuando el archivo V16 en el servidor; si la suma de comprobación no coincide, la app no instala nada.<br><br>Después, en el FM-1, ejecuta una vez <i>System &gt; Reset Patches</i> si los presets se ven alterados."
-
 #: fm1companion/ui/firmware_page.py:1128
 msgid "Original firmware V15 (recommended)"
 msgstr "Firmware original V15 (recomendado)"
@@ -791,8 +775,8 @@ msgid "<ol><li>Once: “Fetch tool” (jl-uboot-tool, is checked).</li><li>Conne
 msgstr "<ol><li>Una vez: “Obtener herramienta” (jl-uboot-tool, se comprueba).</li><li>Conecta el FM-1 completamente cargado directamente al ordenador: abajo debe poner “Encontrado”.</li><li>“Volver a escribir la V15 original”: la app primero hace dos copias de seguridad de toda la flash y comprueba la cabecera de arranque en esa copia; solo escribe bajo la cabecera de fábrica.</li><li>Apaga el FM-1 y vuelve a encenderlo.</li></ol><small>Una sesión en modo de arranque ROM suele durar solo <b>una</b> ejecución de la herramienta. Después (también tras un rechazo) apaga y enciende el FM-1 y vuelve a ponerlo en modo de arranque ROM.</small>"
 
 #: fm1companion/ui/pages/recovery.py:61
-msgid "The app uses the bundled <a href='https://github.com/Quixotic7/MvaveFM1Unbricker'>MvaveFM1Unbricker</a> (MIT) with kagaimiq's jl-uboot-tool. It backs up the whole flash twice and compares, checks chip key 0x980F and flash ID 0x856014, writes <b>only 0x4000–0x92FFF</b> from the original V15 and reads everything back. Below 0x4000 it never writes, nothing is erased completely. <br><b>Boot header:</b> before writing, the app checks the boot header (0x0000–0x3FFF) on the backup from the same run. Only under the factory header (V13–V15) is V15 written. If the device has the header of V16 (M-VAVE's updater rewrites it for V16) or an unknown one (e.g. m-bootloader), nothing is written: whether V15 starts under it has not been established, and this tool cannot write the V16 app (0x4000–0xA8FFF). Then use M-Flasher (below) or <a href='https://github.com/hugelton/felucca-bsp'>fm1_rescue.py</a> from felucca-bsp – it chooses the package to match the header. The app never writes the header.<br>Needs administrator rights (pkexec) and the kernel module <tt>sg</tt> (USB 4c4a:8057).<br><b>Honestly:</b> in this app only tested in the simulation; the tool itself has been used by the community on real devices.<br><br><b>Alternative: <a href='https://github.com/jvitkauskas/m-flasher'>M-Flasher</a></b> (MIT, separate program with a flash map; writes only what changes, and checks everything). Download mode: running original or Felucca FM-1 via the “DOWNLOAD MODE” button; Felucca/SLOOP: hold OCT− and OCT+ for 5 s; with m-bootloader: REC while switching on. For the Pi there is an ARM64 package (<tt>sudo apt install ./m-flasher_…_arm64.deb</tt>).<br><br><small>Felucca 0.9 → 1.0.x (known): 1.0.x does not start because of old 0.9 data. Remedy according to the instructions: erase the data areas 0x97000 (32 KiB) and 0xFC000 (8 KiB) – this erases songs and settings. For this the app does “Repair settings” with a factory dump (a backup is mandatory here). This only works if the backup from the same run shows the V15 layout (firmware ends at 0x93000) – with V16 there is still firmware in 0x93000–0xA8FFF, then nothing is written.</small><br><br><b>If the FM-1 does not appear as “WL82 UBOOT1.00” at all</b> (after MvaveFM1Unbricker, Troubleshooting): 1. <b>Leave it switched on for two minutes</b> – Felucca firmwares have a watchdog and start protection that switches to ROM boot mode by itself after two failed starts. 2. Hold OCT− and OCT+ for 10 s while switching on (update mode). 3. <b>Three quick restarts:</b> on, wait 10 s, off; on, 10 s, off; on – if every start crashes, the third ends up in ROM boot mode. Only if none of this helps: stage 3 (hardware)."
-msgstr "La app usa el <a href='https://github.com/Quixotic7/MvaveFM1Unbricker'>MvaveFM1Unbricker</a> (MIT) incluido, con el jl-uboot-tool de kagaimiq. Hace dos copias de seguridad de toda la flash y las compara, comprueba la clave del chip 0x980F y el ID de flash 0x856014, escribe <b>solo 0x4000–0x92FFF</b> de la V15 original y lo relee todo. Por debajo de 0x4000 nunca escribe y no se borra nada por completo. <br><b>Cabecera de arranque:</b> antes de escribir, la app comprueba la cabecera de arranque (0x0000–0x3FFF) en la copia de seguridad de la misma ejecución. Solo bajo la cabecera de fábrica (V13–V15) se escribe la V15. Si el dispositivo tiene la cabecera de V16 (el actualizador de M-VAVE la reescribe para V16) o una desconocida (p. ej. m-bootloader), no se escribe nada: no se ha comprobado si la V15 arranca con ella, y esta herramienta no puede escribir la app de V16 (0x4000–0xA8FFF). En ese caso usa M-Flasher (abajo) o <a href='https://github.com/hugelton/felucca-bsp'>fm1_rescue.py</a> de felucca-bsp, que elige el paquete según la cabecera. La app nunca escribe la cabecera.<br>Necesita permisos de administrador (pkexec) y el módulo del kernel <tt>sg</tt> (USB 4c4a:8057).<br><b>Sinceramente:</b> en esta app solo se ha probado en la simulación; la herramienta en sí la ha usado la comunidad en dispositivos reales.<br><br><b>Alternativa: <a href='https://github.com/jvitkauskas/m-flasher'>M-Flasher</a></b> (MIT, programa aparte con mapa de la flash; solo escribe lo que cambia y lo comprueba todo). Modo de descarga: FM-1 original o Felucca en funcionamiento mediante el botón “DOWNLOAD MODE”; Felucca/SLOOP: mantén OCT− y OCT+ durante 5 s; con m-bootloader: REC al encender. Para la Pi hay un paquete ARM64 (<tt>sudo apt install ./m-flasher_…_arm64.deb</tt>).<br><br><small>Felucca 0.9 → 1.0.x (conocido): 1.0.x no arranca por datos antiguos de 0.9. Solución según las instrucciones: borrar las áreas de datos 0x97000 (32 KiB) y 0xFC000 (8 KiB); esto borra canciones y ajustes. Para ello la app hace “Reparar ajustes” con un volcado de fábrica (aquí la copia de seguridad es obligatoria). Solo funciona si la copia de seguridad de la misma ejecución muestra la disposición V15 (el firmware termina en 0x93000); con V16 todavía hay firmware en 0x93000–0xA8FFF y entonces no se escribe nada.</small><br><br><b>Si el FM-1 no aparece en absoluto como “WL82 UBOOT1.00”</b> (según MvaveFM1Unbricker, Troubleshooting): 1. <b>Déjalo encendido dos minutos</b>: los firmwares Felucca tienen un watchdog y una protección de arranque que pasa sola a modo de arranque ROM tras dos arranques fallidos. 2. Mantén OCT− y OCT+ durante 10 s al encender (modo de actualización). 3. <b>Tres reinicios rápidos:</b> encender, esperar 10 s, apagar; encender, 10 s, apagar; encender: si cada arranque falla, el tercero acaba en modo de arranque ROM. Solo si nada de esto ayuda: etapa 3 (hardware)."
+msgid "The app uses the bundled <a href='https://github.com/Quixotic7/MvaveFM1Unbricker'>MvaveFM1Unbricker</a> (MIT) with kagaimiq's jl-uboot-tool. It backs up the whole flash twice and compares, checks chip key 0x980F and flash ID 0x856014 or 0xB36014 (the newer FM-1s with the logo on the front), writes <b>only 0x4000–0x92FFF</b> from the original V15 and reads everything back. Below 0x4000 it never writes, nothing is erased completely. <br><b>Boot header:</b> before writing, the app checks the boot header (0x0000–0x3FFF) on the backup from the same run. Only under the factory header (V13–V15) is V15 written. If the device has the header of V16 (M-VAVE's updater rewrites it for V16) or an unknown one (e.g. m-bootloader), nothing is written: whether V15 starts under it has not been established, and this tool cannot write the V16 app (0x4000–0xA8FFF). Then use M-Flasher (below) or <a href='https://github.com/hugelton/felucca-bsp'>fm1_rescue.py</a> from felucca-bsp – it chooses the package to match the header. The app never writes the header.<br>Needs administrator rights (pkexec) and the kernel module <tt>sg</tt> (USB 4c4a:8057).<br><b>Honestly:</b> in this app only tested in the simulation; the tool itself has been used by the community on real devices.<br><br><b>Alternative: <a href='https://github.com/jvitkauskas/m-flasher'>M-Flasher</a></b> (MIT, separate program with a flash map; writes only what changes, and checks everything). Download mode: running original or Felucca FM-1 via the “DOWNLOAD MODE” button; Felucca/SLOOP: hold OCT− and OCT+ for 5 s; with m-bootloader: REC while switching on. For the Pi there is an ARM64 package (<tt>sudo apt install ./m-flasher_…_arm64.deb</tt>).<br><br><small>Felucca 0.9 → 1.0.x (known): 1.0.x does not start because of old 0.9 data. Remedy according to the instructions: erase the data areas 0x97000 (32 KiB) and 0xFC000 (8 KiB) – this erases songs and settings. For this the app does “Repair settings” with a factory dump (a backup is mandatory here). This only works if the backup from the same run shows the V15 layout (firmware ends at 0x93000) – with V16 there is still firmware in 0x93000–0xA8FFF, then nothing is written.</small><br><br><b>If the FM-1 does not appear as “WL82 UBOOT1.00” at all</b> (after MvaveFM1Unbricker, Troubleshooting): 1. <b>Leave it switched on for two minutes</b> – Felucca firmwares have a watchdog and start protection that switches to ROM boot mode by itself after two failed starts. 2. Hold OCT− and OCT+ for 10 s while switching on (update mode). 3. <b>Three quick restarts:</b> on, wait 10 s, off; on, 10 s, off; on – if every start crashes, the third ends up in ROM boot mode. Only if none of this helps: stage 3 (hardware)."
+msgstr "La app usa el <a href='https://github.com/Quixotic7/MvaveFM1Unbricker'>MvaveFM1Unbricker</a> (MIT) incluido, con el jl-uboot-tool de kagaimiq. Hace dos copias de seguridad de toda la flash y las compara, comprueba la clave del chip 0x980F y el ID de flash 0x856014 o 0xB36014 (los FM-1 más recientes con el logo en el frontal), escribe <b>solo 0x4000–0x92FFF</b> de la V15 original y lo relee todo. Por debajo de 0x4000 nunca escribe y no se borra nada por completo. <br><b>Cabecera de arranque:</b> antes de escribir, la app comprueba la cabecera de arranque (0x0000–0x3FFF) en la copia de seguridad de la misma ejecución. Solo bajo la cabecera de fábrica (V13–V15) se escribe la V15. Si el dispositivo tiene la cabecera de V16 (el actualizador de M-VAVE la reescribe para V16) o una desconocida (p. ej. m-bootloader), no se escribe nada: no se ha comprobado si la V15 arranca con ella, y esta herramienta no puede escribir la app de V16 (0x4000–0xA8FFF). En ese caso usa M-Flasher (abajo) o <a href='https://github.com/hugelton/felucca-bsp'>fm1_rescue.py</a> de felucca-bsp, que elige el paquete según la cabecera. La app nunca escribe la cabecera.<br>Necesita permisos de administrador (pkexec) y el módulo del kernel <tt>sg</tt> (USB 4c4a:8057).<br><b>Sinceramente:</b> en esta app solo se ha probado en la simulación; la herramienta en sí la ha usado la comunidad en dispositivos reales.<br><br><b>Alternativa: <a href='https://github.com/jvitkauskas/m-flasher'>M-Flasher</a></b> (MIT, programa aparte con mapa de la flash; solo escribe lo que cambia y lo comprueba todo). Modo de descarga: FM-1 original o Felucca en funcionamiento mediante el botón “DOWNLOAD MODE”; Felucca/SLOOP: mantén OCT− y OCT+ durante 5 s; con m-bootloader: REC al encender. Para la Pi hay un paquete ARM64 (<tt>sudo apt install ./m-flasher_…_arm64.deb</tt>).<br><br><small>Felucca 0.9 → 1.0.x (conocido): 1.0.x no arranca por datos antiguos de 0.9. Solución según las instrucciones: borrar las áreas de datos 0x97000 (32 KiB) y 0xFC000 (8 KiB); esto borra canciones y ajustes. Para ello la app hace “Reparar ajustes” con un volcado de fábrica (aquí la copia de seguridad es obligatoria). Solo funciona si la copia de seguridad de la misma ejecución muestra la disposición V15 (el firmware termina en 0x93000); con V16 todavía hay firmware en 0x93000–0xA8FFF y entonces no se escribe nada.</small><br><br><b>Si el FM-1 no aparece en absoluto como “WL82 UBOOT1.00”</b> (según MvaveFM1Unbricker, Troubleshooting): 1. <b>Déjalo encendido dos minutos</b>: los firmwares Felucca tienen un watchdog y una protección de arranque que pasa sola a modo de arranque ROM tras dos arranques fallidos. 2. Mantén OCT− y OCT+ durante 10 s al encender (modo de actualización). 3. <b>Tres reinicios rápidos:</b> encender, esperar 10 s, apagar; encender, 10 s, apagar; encender: si cada arranque falla, el tercero acaba en modo de arranque ROM. Solo si nada de esto ayuda: etapa 3 (hardware)."
 
 #: fm1companion/ui/pages/recovery.py:93
 msgid "<b>Symptom:</b> the FM-1 appears neither in update mode nor as “WL82 UBOOT1.00” – not even after <b>two minutes switched on</b> (watchdog) and <b>three quick restarts</b> (on, 10 s, off; on, 10 s, off; on). Then only hardware helps: a <b>Seeed XIAO RP2040</b> on the USB data lines forces ROM boot mode (<a href='https://github.com/kurogedelic/FM-1-transporter'>FM-1 Transporter</a>)."
@@ -803,8 +787,8 @@ msgid "<ol><li>Connect the XIAO RP2040 to D+, D− and GND of the FM-1 as instru
 msgstr "<ol><li>Conecta el XIAO RP2040 a D+, D− y GND del FM-1 según las instrucciones (VBUS libre).</li><li>Graba el firmware del Transporter con la herramienta unbricker en el terminal.</li><li>En el terminal: rekey → info → dump → restore (la app no ejecuta la etapa 3 por sí misma).</li></ol>"
 
 #: fm1companion/ui/pages/recovery.py:101
-msgid "<b>Wiring (tested, TRANSPORTER-GUIDE):</b> XIAO <b>D6 (GP0) → D+ (green)</b>, <b>D7 (GP1) → D− (white)</b>, <b>GND → GND (black)</b>, <b>do not connect VBUS (red)</b> (tape it off). Flash the UF2: hold the BOOT button and plug in. <b>Honestly:</b> the bundled UF2 is only a placeholder – the real Transporter firmware is only created with <tt>python3 fm1_transporter_recover.py setup</tt> from the unbricker repo (MvaveFM1Unbricker). After that, also with this tool in the terminal: rekey → info (must show <tt>key=980F id=856014</tt>) → dump (read twice, compare, keep) → restore --write. The app itself does not run stage 3.<br><br><b>RP2040 only! No RP2350 boards</b> (GPIO erratum and D+ pull-up make the Transporter unusable).<br><br><b>Untested, not confirmed by the community:</b> with a <b>Raspberry Pi Pico (RP2040)</b> instead of the XIAO – pin 1 = GP0 → D+, pin 2 = GP1 → D−, any GND, VBUS free. Either try the XIAO UF2 or rebuild kurogedelic/FM-1-transporter with <tt>-DPICO_BOARD=pico</tt> and the same loader (pico-sdk). The XIAO remains the documented way."
-msgstr "<b>Cableado (probado, TRANSPORTER-GUIDE):</b> XIAO <b>D6 (GP0) → D+ (verde)</b>, <b>D7 (GP1) → D− (blanco)</b>, <b>GND → GND (negro)</b>, <b>no conectes VBUS (rojo)</b> (aíslalo con cinta). Graba el UF2: mantén pulsado el botón BOOT y conecta. <b>Sinceramente:</b> el UF2 incluido es solo un marcador de posición; el firmware real del Transporter solo se crea con <tt>python3 fm1_transporter_recover.py setup</tt> del repositorio del unbricker (MvaveFM1Unbricker). Después, también con esta herramienta en el terminal: rekey → info (debe mostrar <tt>key=980F id=856014</tt>) → dump (leer dos veces, comparar, conservar) → restore --write. La app no ejecuta la etapa 3 por sí misma.<br><br><b>¡Solo RP2040! Ninguna placa RP2350</b> (la errata de GPIO y el pull-up de D+ inutilizan el Transporter).<br><br><b>Sin probar, no confirmado por la comunidad:</b> con una <b>Raspberry Pi Pico (RP2040)</b> en lugar del XIAO: pin 1 = GP0 → D+, pin 2 = GP1 → D−, cualquier GND, VBUS libre. Prueba el UF2 del XIAO o recompila kurogedelic/FM-1-transporter con <tt>-DPICO_BOARD=pico</tt> y el mismo cargador (pico-sdk). El XIAO sigue siendo el camino documentado."
+msgid "<b>Wiring (tested, TRANSPORTER-GUIDE):</b> XIAO <b>D6 (GP0) → D+ (green)</b>, <b>D7 (GP1) → D− (white)</b>, <b>GND → GND (black)</b>, <b>do not connect VBUS (red)</b> (tape it off). Flash the UF2: hold the BOOT button and plug in. <b>Honestly:</b> the bundled UF2 is only a placeholder – the real Transporter firmware is only created with <tt>python3 fm1_transporter_recover.py setup</tt> from the unbricker repo (MvaveFM1Unbricker). After that, also with this tool in the terminal: rekey → info (must show <tt>key=980F id=856014</tt>, on a newer FM-1 <tt>id=B36014</tt>) → dump (read twice, compare, keep) → restore --write. The app itself does not run stage 3.<br><br><b>RP2040 only! No RP2350 boards</b> (GPIO erratum and D+ pull-up make the Transporter unusable).<br><br><b>Untested, not confirmed by the community:</b> with a <b>Raspberry Pi Pico (RP2040)</b> instead of the XIAO – pin 1 = GP0 → D+, pin 2 = GP1 → D−, any GND, VBUS free. Either try the XIAO UF2 or rebuild kurogedelic/FM-1-transporter with <tt>-DPICO_BOARD=pico</tt> and the same loader (pico-sdk). The XIAO remains the documented way."
+msgstr "<b>Cableado (probado, TRANSPORTER-GUIDE):</b> XIAO <b>D6 (GP0) → D+ (verde)</b>, <b>D7 (GP1) → D− (blanco)</b>, <b>GND → GND (negro)</b>, <b>no conectes VBUS (rojo)</b> (aíslalo con cinta). Graba el UF2: mantén pulsado el botón BOOT y conecta. <b>Sinceramente:</b> el UF2 incluido es solo un marcador de posición; el firmware real del Transporter solo se crea con <tt>python3 fm1_transporter_recover.py setup</tt> del repositorio del unbricker (MvaveFM1Unbricker). Después, también con esta herramienta en el terminal: rekey → info (debe mostrar <tt>key=980F id=856014</tt>, en un FM-1 más reciente <tt>id=B36014</tt>) → dump (leer dos veces, comparar, conservar) → restore --write. La app no ejecuta la etapa 3 por sí misma.<br><br><b>¡Solo RP2040! Ninguna placa RP2350</b> (la errata de GPIO y el pull-up de D+ inutilizan el Transporter).<br><br><b>Sin probar, no confirmado por la comunidad:</b> con una <b>Raspberry Pi Pico (RP2040)</b> en lugar del XIAO: pin 1 = GP0 → D+, pin 2 = GP1 → D−, cualquier GND, VBUS libre. Prueba el UF2 del XIAO o recompila kurogedelic/FM-1-transporter con <tt>-DPICO_BOARD=pico</tt> y el mismo cargador (pico-sdk). El XIAO sigue siendo el camino documentado."
 
 #: fm1companion/ui/pages/recovery.py:114
 msgid "<b>… an installation is aborted?</b> Do not unplug anything, check the cable, then “Finish installation” here – the app knows the interrupted package from its journal.<br><b>… the FM-1 shows “FAILED -5”?</b> The running firmware refused the original firmware (CHECK HEAD). Nothing was written; the FM-1 keeps running. Report the problem to the firmware author.<br><b>… presets are garbled after returning to the original firmware?</b> System &gt; Reset Patches.<br><b>Prevention:</b> battery full, keep a backup after every successful flash. The detour via the original V15 before third-party firmware is preset, but is itself a write operation: two installations instead of one, so twice a period in which battery and cable must hold. It is mandatory only for V16 and for firmwares that only work from V15."
@@ -948,11 +932,6 @@ msgstr "<span style='color:#f67400'>● Detectado en vivo: un FM-1 espera en mod
 #: fm1companion/ui/pages/recovery.py:277
 msgid "<span style='color:#888'>○ Not detected: no FM-1 in update mode.</span> The display updates by itself."
 msgstr "<span style='color:#888'>○ No detectado: ningún FM-1 en modo de actualización.</span> La pantalla se actualiza sola."
-
-#: fm1companion/ui/pages/recovery.py:280
-#, python-brace-format
-msgid "Interrupted installation according to the journal: <b>{target}</b> ({product}, phase “{phase}”)."
-msgstr "Instalación interrumpida según el diario: <b>{target}</b> ({product}, fase “{phase}”)."
 
 #: fm1companion/ui/pages/recovery.py:286
 msgid "Only possible once an FM-1 in update mode is detected (see status above)."
@@ -2127,10 +2106,6 @@ msgstr "Cambio de Felucca 0.9 a 1.x: se sabe que los datos antiguos de 0.9 impid
 msgid "For Felucca 0.9 → 1.x a backup is mandatory – without a backup it is not possible here."
 msgstr "Para Felucca 0.9 → 1.x es obligatoria una copia de seguridad; sin ella no es posible aquí."
 
-#: fm1companion/flash/planner.py:430
-msgid "Checksum not available: this release has no SHA256SUMS file, and the catalog does not know the checksum. The app cannot check whether the file is unmodified."
-msgstr "Suma de comprobación no disponible: esta publicación no tiene archivo SHA256SUMS y el catálogo no conoce la suma de comprobación. La app no puede comprobar si el archivo está sin modificar."
-
 #: fm1companion/flash/planner.py:434
 #, python-brace-format
 msgid "Own file: identity {identity}, SHA-256 {sha256} – in no catalog."
@@ -2218,10 +2193,6 @@ msgstr "Se perdió la conexión USB."
 msgid "The FM-1 stopped requesting data."
 msgstr "El FM-1 dejó de solicitar datos."
 
-#: fm1companion/flash/engine.py:60
-msgid "The FM-1 in update mode was not found. Plug the cable in again and choose “Resume” – it stays in update mode until the installation is finished."
-msgstr "No se encontró el FM-1 en modo de actualización. Vuelve a conectar el cable y elige “Reanudar”: se queda en modo de actualización hasta que termine la instalación."
-
 #: fm1companion/flash/engine.py:62
 msgid "The FM-1 did not come back after writing. Switch it off and on again."
 msgstr "El FM-1 no volvió tras la escritura. Apágalo y vuelve a encenderlo."
@@ -2241,10 +2212,6 @@ msgstr "El FM-1 espera en un modo de actualización que no corresponde a este pa
 #: fm1companion/flash/engine.py:66
 msgid "Cancelled before anything was sent. Nothing has changed on the FM-1."
 msgstr "Cancelado antes de enviar nada. No ha cambiado nada en el FM-1."
-
-#: fm1companion/flash/engine.py:67
-msgid "The running firmware refused the original firmware (CHECK HEAD, “FAILED -5” on the FM-1): its boot area differs. Nothing was written, the current firmware keeps running. Please do not force another path. The cause is usually a changed boot area (m-bootloader, Open V12/V14). Way out: firmware with the new check, or download mode (recovery stage 2)."
-msgstr "El firmware en ejecución rechazó el firmware original (CHECK HEAD, “FAILED -5” en el FM-1): su área de arranque difiere. No se ha escrito nada y el firmware actual sigue funcionando. No fuerces otro camino. La causa suele ser un área de arranque modificada (m-bootloader, Open V12/V14). Salida: un firmware con la nueva comprobación, o el modo de descarga (recuperación etapa 2)."
 
 #: fm1companion/flash/engine.py:71
 msgid "The FM-1 refused the package in step 1. Does the display show “FAILED <number>”? -3/-7: unknown loader, -5: boot area differs, -15: Felucca 1.6.1 check (see help)."
@@ -2356,11 +2323,6 @@ msgstr "paso 1 + paso 2"
 msgid "Dry run: {label} ({product}, {family}) would go to {identity} – {how}. Nothing sent."
 msgstr "Simulacro: {label} ({product}, {family}) iría a {identity}: {how}. No se ha enviado nada."
 
-#: fm1companion/flash/engine.py:320
-#, python-brace-format
-msgid "Starting the update to {target} …"
-msgstr "Iniciando la actualización a {target} …"
-
 #: fm1companion/flash/engine.py:330
 #, python-brace-format
 msgid "Done: the FM-1 reports {identity}"
@@ -2369,10 +2331,6 @@ msgstr "Hecho: el FM-1 indica {identity}"
 #: fm1companion/flash/engine.py:352
 msgid "Unexpected error after writing. The FM-1 probably starts normally – plug the cable in again and check which firmware it reports."
 msgstr "Error inesperado tras la escritura. Probablemente el FM-1 arranca con normalidad: vuelve a conectar el cable y comprueba qué firmware indica."
-
-#: fm1companion/flash/engine.py:355
-msgid "Unexpected error while writing. The FM-1 is probably waiting in update mode: check the cable and resume with the same package on the “Recovery” page."
-msgstr "Error inesperado durante la escritura. Probablemente el FM-1 espera en modo de actualización: revisa el cable y reanuda con el mismo paquete en la página “Recuperación”."
 
 #: fm1companion/flash/engine.py:358
 msgid "Unexpected error before writing. Nothing was written, the previous firmware keeps running."
@@ -2386,11 +2344,6 @@ msgstr "{message} No se ha escrito nada."
 #: fm1companion/flash/engine.py:380
 msgid "The FM-1 started an update loader that does not match this package. Nothing was written; the FM-1 is now waiting in update mode. On the “Recovery” page only a package that belongs to this loader is sent."
 msgstr "El FM-1 inició un cargador de actualización que no corresponde a este paquete. No se ha escrito nada; el FM-1 espera ahora en modo de actualización. En la página “Recuperación” solo se envía un paquete que corresponda a este cargador."
-
-#: fm1companion/flash/engine.py:384
-#, python-brace-format
-msgid "{message} The FM-1 is waiting in update mode: check the cable and resume with the same package (“Recovery” page)."
-msgstr "{message} El FM-1 espera en modo de actualización: revisa el cable y reanuda con el mismo paquete (página “Recuperación”)."
 
 #: fm1companion/flash/package.py:50
 msgid "the original loader (ota-FM-1_015)"
@@ -2455,10 +2408,6 @@ msgstr "{name} no es un paquete del FM-1 (demasiado corto)"
 #, python-brace-format
 msgid "{name} is not an FM-1 package (identity {identity})"
 msgstr "{name} no es un paquete del FM-1 (identidad {identity})"
-
-#: fm1companion/flash/uboot.py:51
-msgid "This FM-1 has a flash chip from UCUN (UC25HQ80, ID 0xB36014) instead of the usual Puya (0x856014). The USB ROM recovery (stage 2) does not support this flash yet and therefore stops – nothing was written. The firmware itself runs on it (Melodee 1.6.0 and later also saves correctly); normal installations via “Firmware+” work. For a ROM recovery, please wait for a version of the recovery tool that knows 0xB36014."
-msgstr "Este FM-1 tiene un chip de flash de UCUN (UC25HQ80, ID 0xB36014) en lugar del habitual de Puya (0x856014). La recuperación USB por ROM (etapa 2) aún no admite esta flash y por eso se detiene: no se ha escrito nada. El firmware en sí funciona en él (Melodee 1.6.0 y posteriores también guardan correctamente); las instalaciones normales mediante “Firmware+” funcionan. Para una recuperación por ROM, espera a una versión de la herramienta de recuperación que conozca 0xB36014."
 
 #: fm1companion/flash/uboot.py:81
 msgid "size unknown"
@@ -2951,29 +2900,14 @@ msgstr "Groovebox de cuatro pistas: un bajo acid o un poly al estilo Juno, model
 msgid "The web installer of {name} names another checksum for {tag} than the app pins – the app keeps its own."
 msgstr "El instalador web de {name} indica otra suma de comprobación para {tag} que la que fija la app; la app mantiene la suya."
 
-msgid "Switching from {current} to {target}: the app installs the original firmware V15 first, then {target} – recommended, so no leftovers of {current} stay on the FM-1."
-msgstr "Cambio de {current} a {target}: la app instala primero el firmware original V15 y después {target}; recomendado, para que no queden restos de {current} en el FM-1."
-
-msgid "The running firmware is not recognised, so this counts as a switch: the app installs the original firmware V15 first, then {target} – recommended, so no leftovers of the previous firmware stay on the FM-1."
-msgstr "No se reconoce el firmware actual, así que cuenta como un cambio: la app instala primero el firmware original V15 y después {target}; recomendado, para que no queden restos del firmware anterior en el FM-1."
-
 msgid "the previous firmware"
 msgstr "el firmware anterior"
-
-msgid "<b>Expert option: installed directly, without the V15 step.</b> Leftovers of {current} (settings, projects, sample areas) can stay in the flash and confuse {target}. If {target} behaves strangely afterwards, install it again with the V15 step."
-msgstr "<b>Opción experta: instalado directamente, sin el paso por V15.</b> Pueden quedar restos de {current} (ajustes, proyectos, zonas de samples) en la flash y confundir a {target}. Si {target} se comporta de forma extraña después, instálalo de nuevo con el paso por V15."
 
 msgid "Continues the interrupted switch to {target}: the original firmware V15 is already installed (step 1 of 2 is done) – now {target} is installed directly."
 msgstr "Continúa el cambio interrumpido a {target}: el firmware original V15 ya está instalado (el paso 1 de 2 está hecho); ahora se instala {target} directamente."
 
 msgid "Expert: install directly without the V15 step"
 msgstr "Experto: instalar directamente sin el paso por V15"
-
-msgid "Skips the original V15 before the switch. Leftovers of the previous firmware can then stay in the flash. Only for experts – the choice is not remembered."
-msgstr "Omite la V15 original antes del cambio. Pueden quedar restos del firmware anterior en la flash. Solo para expertos: la elección no se recuerda."
-
-msgid "Without the V15 step: leftovers of the previous firmware can stay on the FM-1 (see Notes)."
-msgstr "Sin el paso por V15: pueden quedar restos del firmware anterior en el FM-1 (ver Notas)."
 
 msgid "Cancelled after the intermediate step: {written} was written to the FM-1 – it now runs the original firmware V15. {name} was NOT written. To continue: Firmware+ › Install & Versions › “Continue: install {name}” (the V15 step is not repeated)."
 msgstr "Cancelado tras el paso intermedio: se escribió {written} en el FM-1; ahora funciona con el firmware original V15. {name} NO se escribió. Para continuar: Firmware+ › Instalar y versiones › “Continuar: instalar {name}” (el paso por V15 no se repite)."
@@ -3004,3 +2938,450 @@ msgstr "Ahora mismo no se puede cargar ninguna versión de {name}."
 
 msgid "Switch in two steps: after the original V15 the app still installs <b>{name}</b> – once the FM-1 runs V15: Firmware+ › Install & Versions › “Continue”."
 msgstr "Cambio en dos pasos: después de la V15 original la app aún instala <b>{name}</b>; en cuanto el FM-1 funcione con V15: Firmware+ › Instalar y versiones › “Continuar”."
+
+msgid "{name} is larger than {limit} MB – that is no FM-1 package. Nothing was saved."
+msgstr "{name} ocupa más de {limit} MB: no es un paquete para el FM-1. No se ha guardado nada."
+
+msgid "The download of {name} broke off ({done} of {total} bytes arrived). Nothing was saved – please try again."
+msgstr "La descarga de {name} se interrumpió (llegaron {done} de {total} bytes). No se ha guardado nada; inténtalo de nuevo."
+
+msgid "Refused: “{value}” is not a valid {what} – the download would not land in the firmware folder as an FM-1 package. Nothing was downloaded."
+msgstr "Rechazado: “{value}” no es un {what} válido; la descarga no acabaría como paquete del FM-1 en la carpeta de firmware. No se ha descargado nada."
+
+msgid "firmware key"
+msgstr "identificador de firmware"
+
+msgid "version name"
+msgstr "nombre de versión"
+
+msgid "package name"
+msgstr "nombre de paquete"
+
+msgid "file name"
+msgstr "nombre de archivo"
+
+msgid "{name} on this computer is damaged – downloading it again"
+msgstr "{name} está dañado en este ordenador; se descarga de nuevo"
+
+msgid "The address was refused: {reason}. Nothing was downloaded."
+msgstr "La dirección fue rechazada: {reason}. No se ha descargado nada."
+
+msgid "From here on the installation can no longer be cancelled."
+msgstr "A partir de aquí la instalación ya no se puede cancelar."
+
+msgid "Cancel still works during this check: nothing is written to the FM-1 yet."
+msgstr "Durante esta comprobación todavía se puede cancelar: aún no se escribe nada en el FM-1."
+
+msgid "Cancel came too late: the FM-1 is already past the point where the app can stop it. The installation runs to the end."
+msgstr "La cancelación llegó demasiado tarde: el FM-1 ya ha pasado el punto en el que la app puede detenerlo. La instalación sigue hasta el final."
+
+msgid "After the check of the package the FM-1 neither showed up in update mode nor answered as before. It is probably waiting in update mode: plug the cable in again and look at the “Recovery” page – if it is detected there, use “Finish installation”. If it does not show up there: switch it off and on once; if the screen stays black, see Recovery, stage 2."
+msgstr "Tras la comprobación del paquete, el FM-1 no apareció en modo de actualización ni respondió como antes. Probablemente espera en modo de actualización: vuelve a conectar el cable y mira la página “Recuperación”; si se detecta allí, usa “Terminar instalación”. Si no aparece allí: apágalo y enciéndelo una vez; si la pantalla sigue en negro, consulta Recuperación, etapa 2."
+
+msgid "The FM-1 did not switch to update mode – it still answers with its current firmware ({identity}). Most likely the app's last answer of the check did not reach it (cable, hub). You can simply start the installation again."
+msgstr "El FM-1 no pasó al modo de actualización: sigue respondiendo con su firmware actual ({identity}). Lo más probable es que la última respuesta de la app en la comprobación no le llegara (cable, hub). Puedes iniciar la instalación de nuevo sin más."
+
+msgid "A second FM-1 answered while the app was waiting for the update mode, and on this computer the app cannot tell the two apart. Nothing was sent to the update loader. Please unplug the other FM-1."
+msgstr "Un segundo FM-1 respondió mientras la app esperaba el modo de actualización, y en este ordenador la app no puede distinguirlos. No se envió nada al cargador de actualización. Desconecta el otro FM-1."
+
+msgid "The FM-1 now reports {now}, but the plan was made for {planned}. Nothing was sent. Please open the installation plan again."
+msgstr "El FM-1 indica ahora {now}, pero el plan se hizo para {planned}. No se envió nada. Abre de nuevo el plan de instalación."
+
+msgid "Cancelled during the check of the package (step 1): the app stopped answering before the FM-1 was told to go on. Nothing was written, the current firmware stays. The FM-1 waits for the computer for up to a minute, then shows “FAILED” and carries on – that is expected here."
+msgstr "Cancelado durante la comprobación del paquete (paso 1): la app dejó de responder antes de que el FM-1 recibiera la orden de continuar. No se escribió nada, el firmware actual se queda. El FM-1 espera al ordenador hasta un minuto, luego muestra “FAILED” y sigue funcionando; aquí es lo esperado."
+
+msgid "The running firmware refused the original firmware (CHECK HEAD, “FAILED -5” on the FM-1): its boot area differs. Nothing was written, the current firmware keeps running. Please do not force another path. The cause is usually a changed boot area (m-bootloader, Open V12/V14). Way out: a firmware with the newer check, or download mode with another tool (“Recovery” page, stage 2 › Details: M-Flasher)."
+msgstr "El firmware en ejecución rechazó el firmware original (CHECK HEAD, “FAILED -5” en el FM-1): su zona de arranque es distinta. No se escribió nada, el firmware actual sigue funcionando. No fuerces otro camino. La causa suele ser una zona de arranque modificada (m-bootloader, Open V12/V14). Salida: un firmware con la comprobación más reciente, o el modo de descarga con otra herramienta (página “Recuperación”, etapa 2 › Detalles: M-Flasher)."
+
+msgid "The FM-1 is probably waiting in update mode: check the cable, then open the “Recovery” page – if the FM-1 is detected there, use “Finish installation” with the same package. If it does not show up there: switch it off and on once; if the screen stays black, see Recovery, stage 2."
+msgstr "Probablemente el FM-1 espera en modo de actualización: revisa el cable y abre la página “Recuperación”; si el FM-1 se detecta allí, usa “Terminar instalación” con el mismo paquete. Si no aparece allí: apágalo y enciéndelo una vez; si la pantalla sigue en negro, consulta Recuperación, etapa 2."
+
+msgid "Starting the installation of {target}: the FM-1 (it reports {identity}) checks the package …"
+msgstr "Empieza la instalación de {target}: el FM-1 (indica {identity}) comprueba el paquete …"
+
+msgid "Unexpected error while writing."
+msgstr "Error inesperado al escribir."
+
+msgid "Why: firmware authors expect a start from the original V15, and a direct switch from another custom firmware has bricked a device at least once."
+msgstr "Por qué: los autores de los firmwares esperan que se parta de la V15 original, y un cambio directo desde otro firmware de la comunidad ya ha dejado inservible al menos un dispositivo."
+
+msgid "About the V15 step: the original firmware has no start protection – keep power and USB connected while it is written. Saved data of the old firmware can remain in the flash (the V15 step only writes the firmware area), and the original firmware may read it as its own: presets can look garbled until the target firmware is installed. This two-step path has not been run on a real FM-1 by this app yet."
+msgstr "Sobre el paso por V15: el firmware original no tiene protección de arranque; mantén la alimentación y el USB conectados mientras se escribe. Los datos guardados del firmware anterior pueden quedarse en la flash (el paso por V15 solo escribe la zona del firmware), y el firmware original puede leerlos como propios: los presets pueden verse corruptos hasta que se instale el firmware de destino. Este camino en dos pasos todavía no se ha ejecutado con esta app en un FM-1 real."
+
+msgid "the original firmware {version}"
+msgstr "el firmware original {version}"
+
+msgid "Switching from {current} to {target}: the app installs the original firmware V15 first, then {target}."
+msgstr "Cambio de {current} a {target}: la app instala primero el firmware original V15 y después {target}."
+
+msgid "The running firmware is not recognised, so this counts as a switch: the app installs the original firmware V15 first, then {target}."
+msgstr "No se reconoce el firmware en ejecución, así que cuenta como un cambio: la app instala primero el firmware original V15 y después {target}."
+
+msgid "<b>Expert option: installed directly, without the V15 step.</b> The authors of most firmwares expect a start from the original V15; a direct switch from another custom firmware has bricked a device at least once. Saved data of {current} (settings, projects, sample areas) stays in the flash either way and can confuse {target}."
+msgstr "<b>Opción para expertos: instalado directamente, sin el paso por V15.</b> Los autores de la mayoría de los firmwares esperan que se parta de la V15 original; un cambio directo desde otro firmware de la comunidad ya ha dejado inservible al menos un dispositivo. Los datos guardados de {current} (ajustes, proyectos, zonas de samples) se quedan en la flash de todos modos y pueden confundir a {target}."
+
+msgid "Original V15: already on this computer ✓ (no download needed)."
+msgstr "V15 original: ya está en este ordenador ✓ (no hace falta descargarla)."
+
+msgid "Original V15: will be downloaded first (≈ 0.9 MB, internet needed)."
+msgstr "V15 original: se descargará primero (≈ 0,9 MB, hace falta internet)."
+
+msgid "The app does not know the update loader of this package yet – it looks at the package after the download and sends nothing to a loader it does not know. Whether a power loss while writing could be resumed is therefore open: keep power and USB connected."
+msgstr "La app todavía no conoce el cargador de actualización de este paquete: examina el paquete tras la descarga y no envía nada a un cargador que no conoce. Por eso no se sabe si un corte de corriente durante la escritura se podría reanudar: mantén la alimentación y el USB conectados."
+
+msgid "Careful mode and its automatic resume have only been run in the simulation so far, not through a real USB hub."
+msgstr "El modo cuidadoso y su reanudación automática solo se han ejecutado hasta ahora en la simulación, no a través de un hub USB real."
+
+msgid "an update within Melodee"
+msgstr "una actualización dentro de Melodee"
+
+msgid "an update within another firmware than Melodee"
+msgstr "una actualización dentro de otro firmware que no es Melodee"
+
+msgid "a switch to another firmware"
+msgstr "un cambio a otro firmware"
+
+msgid "the intermediate step via the original V15"
+msgstr "el paso intermedio por la V15 original"
+
+msgid "continuing a switch after the V15 step"
+msgstr "continuar un cambio tras el paso por V15"
+
+msgid "going back to the original firmware"
+msgstr "la vuelta al firmware original"
+
+msgid "the original firmware V16"
+msgstr "el firmware original V16"
+
+msgid "installing your own .fwsc file"
+msgstr "instalar un archivo .fwsc propio"
+
+msgid "finishing an interrupted installation"
+msgstr "terminar una instalación interrumpida"
+
+msgid "rewriting font and factory sounds"
+msgstr "volver a escribir la fuente y los sonidos de fábrica"
+
+msgid "several FM-1 connected at once"
+msgstr "varios FM-1 conectados a la vez"
+
+msgid "installing through a USB hub (careful mode)"
+msgstr "instalar a través de un hub USB (modo cuidadoso)"
+
+msgid "restoring the factory voices of the original V15"
+msgstr "restaurar las voces de fábrica de la V15 original"
+
+msgid "writing in ROM boot mode (recovery stage 2)"
+msgstr "escribir en modo de arranque ROM (recuperación, etapa 2)"
+
+msgid "Tested on a real FM-1: this kind of step ({what}) has been run on a real device with this app."
+msgstr "Probado en un FM-1 real: este tipo de paso ({what}) ya se ha ejecutado con esta app en un dispositivo real."
+
+msgid "Tested on a real FM-1 so far: {done}. This step: only in the simulation."
+msgstr "Probado hasta ahora en un FM-1 real: {done}. Este paso: solo en la simulación."
+
+msgid "Tested on a real FM-1 so far: {done}. This step ({what}): only in the simulation."
+msgstr "Probado hasta ahora en un FM-1 real: {done}. Este paso ({what}): solo en la simulación."
+
+msgid "Skips the original V15 before the switch – against what most firmware authors expect. Only for experts; the choice is not remembered."
+msgstr "Omite la V15 original antes del cambio, en contra de lo que esperan la mayoría de los autores de firmware. Solo para expertos; la elección no se recuerda."
+
+msgid "Without the V15 step: not the start most firmware authors expect (see Notes)."
+msgstr "Sin el paso por V15: no es el punto de partida que esperan la mayoría de los autores de firmware (ver Notas)."
+
+msgid "Stops the installation as long as nothing has been written to the FM-1. Once the FM-1 switches to update mode, the installation runs to the end – stopping there would leave the FM-1 in update mode."
+msgstr "Detiene la instalación mientras no se haya escrito nada en el FM-1. En cuanto el FM-1 pasa al modo de actualización, la instalación sigue hasta el final: detenerla ahí dejaría el FM-1 en modo de actualización."
+
+msgid "The installation can no longer be cancelled – please wait until it is finished."
+msgstr "La instalación ya no se puede cancelar; espera a que termine."
+
+msgid "Can no longer be cancelled"
+msgstr "Ya no se puede cancelar"
+
+msgid "Cancellation requested – the app stops before anything is written to the FM-1. If it turns out to be too late for that, the next lines say so."
+msgstr "Cancelación solicitada: la app se detiene antes de que se escriba nada en el FM-1. Si ya es demasiado tarde para eso, lo dirán las líneas siguientes."
+
+msgid "The original V15 is needed for this switch, but it is not on this computer and could not be downloaded."
+msgstr "Para este cambio hace falta la V15 original, pero no está en este ordenador y no se pudo descargar."
+
+msgid "Reason: {error} Nothing has been changed on the FM-1. Once you are online: Firmware+ › Install & Versions › “Download the original V15 for offline use” – after that the switch also works without internet."
+msgstr "Motivo: {error} No se ha cambiado nada en el FM-1. Cuando tengas conexión: Firmware+ › Instalar y versiones › “Descargar la V15 original para usarla sin conexión”; después el cambio también funciona sin internet."
+
+msgid "For experts there is also “Expert: install directly without the V15 step” in the plan."
+msgstr "Para expertos existe además en el plan “Experto: instalar directamente sin el paso por V15”."
+
+msgid "What is left in this app: the plan's “Expert: install directly without the V15 step” (an update loader of the Felucca family writes only the firmware area and leaves the boot area as it is). Whether {name} runs with the changed boot area of this FM-1, the app cannot tell. The clean way is download mode with another tool: “Recovery” page, stage 2 › Details (M-Flasher)."
+msgstr "Lo que queda en esta app: en el plan, “Experto: instalar directamente sin el paso por V15” (un cargador de actualización de la familia Felucca solo escribe la zona del firmware y deja la zona de arranque como está). La app no puede saber si {name} funciona con la zona de arranque modificada de este FM-1. El camino limpio es el modo de descarga con otra herramienta: página “Recuperación”, etapa 2 › Detalles (M-Flasher)."
+
+msgid "For {name} the V15 step is mandatory, so this app has no direct way. The way out is download mode with another tool: see the “Recovery” page, stage 2 › Details (M-Flasher; the app's own “Write back original V15” only writes under the factory boot area and would refuse here too)."
+msgstr "Para {name} el paso por V15 es obligatorio, así que esta app no tiene un camino directo. La salida es el modo de descarga con otra herramienta: consulta la página “Recuperación”, etapa 2 › Detalles (M-Flasher; el “Volver a escribir la V15 original” de la app solo escribe bajo la zona de arranque de fábrica y aquí también se negaría)."
+
+msgid "{name} is not completely written; the FM-1 is probably waiting in update mode now. Do not unplug anything and look at the “Recovery” page: if the FM-1 is detected there, continue with “Finish installation”."
+msgstr "{name} no está escrito por completo; probablemente el FM-1 espera ahora en modo de actualización. No desconectes nada y mira la página “Recuperación”: si el FM-1 se detecta allí, continúa con “Terminar instalación”."
+
+msgid "Dismiss"
+msgstr "Descartar"
+
+msgid "Forget this unfinished switch – only the note in the app is removed, nothing is sent to the FM-1. You can install any firmware as usual."
+msgstr "Olvidar este cambio sin terminar: solo se elimina la nota de la app, no se envía nada al FM-1. Puedes instalar cualquier firmware como siempre."
+
+msgid "Download the original V15 for offline use"
+msgstr "Descargar la V15 original para usarla sin conexión"
+
+msgid "The original V15 is already on this computer (checksum checked) – a firmware switch and the recovery work without internet."
+msgstr "La V15 original ya está en este ordenador (suma de comprobación verificada): un cambio de firmware y la recuperación funcionan sin internet."
+
+msgid "A firmware switch and the recovery need M-VAVE's original firmware V15 (≈ 0.9 MB). The app only downloads it when it is needed – or now, with this button, so that it also works offline later. Nothing is installed."
+msgstr "Un cambio de firmware y la recuperación necesitan el firmware original V15 de M-VAVE (≈ 0,9 MB). La app solo lo descarga cuando hace falta, o ahora, con este botón, para que más adelante también funcione sin conexión. No se instala nada."
+
+msgid "Download the original V15"
+msgstr "Descargar la V15 original"
+
+msgid "The original V15 is on this computer now ({file}, checksum checked) – NOT installed. A firmware switch no longer needs internet for it."
+msgstr "La V15 original está ahora en este ordenador ({file}, suma de comprobación verificada); NO está instalada. Un cambio de firmware ya no necesita internet para ello."
+
+msgid "<b>V15</b> is the usual way back: the community's installers know it, and almost all community firmwares are installed from it. <b>V16</b> (October 2026) is M-VAVE's newest version with eight voices and 64-step patterns. M-VAVE occasionally replaces the V16 file on the server – if the checksum does not match, the app installs nothing.<br><br>Afterwards, on the FM-1, run <i>System &gt; Reset Patches</i> once if presets look garbled."
+msgstr "<b>V15</b> es el camino de vuelta habitual: los instaladores de la comunidad la conocen, y casi todos los firmwares de la comunidad se instalan desde ella. <b>V16</b> (octubre de 2026) es la versión más reciente de M-VAVE, con ocho voces y patrones de 64 pasos. M-VAVE sustituye de vez en cuando el archivo de V16 en el servidor; si la suma de comprobación no coincide, la app no instala nada.<br><br>Después, en el FM-1, ejecuta una vez <i>System &gt; Reset Patches</i> si los presets se ven corruptos."
+
+msgid "before anything was sent"
+msgstr "antes de que se enviara nada"
+
+msgid "while the FM-1 checked the package (step 1)"
+msgstr "mientras el FM-1 comprobaba el paquete (paso 1)"
+
+msgid "while the FM-1 switched to update mode"
+msgstr "mientras el FM-1 pasaba al modo de actualización"
+
+msgid "while writing"
+msgstr "durante la escritura"
+
+msgid "at the restart after writing"
+msgstr "en el reinicio tras la escritura"
+
+msgid "while writing the resources"
+msgstr "durante la escritura de los recursos"
+
+msgid "Forget the interrupted installation"
+msgstr "Olvidar la instalación interrumpida"
+
+msgid "Removes the app's note about the interrupted installation (and its copy of the package). Nothing is sent to the FM-1. Use it when the FM-1 runs normally again."
+msgstr "Elimina la nota de la app sobre la instalación interrumpida (y su copia del paquete). No se envía nada al FM-1. Úsalo cuando el FM-1 vuelva a funcionar con normalidad."
+
+msgid "Forget the two-step switch"
+msgstr "Olvidar el cambio en dos pasos"
+
+msgid "Removes the app's note that a second step is still to come. Nothing is sent to the FM-1."
+msgstr "Elimina la nota de la app de que aún falta un segundo paso. No se envía nada al FM-1."
+
+msgid "Interrupted installation according to the app's journal: <b>{target}</b> ({product}; it stopped {where}). The app has not looked at the FM-1 since – what is detected live is in the line above."
+msgstr "Instalación interrumpida según el diario de la app: <b>{target}</b> ({product}; se detuvo {where}). La app no ha vuelto a mirar el FM-1 desde entonces; lo que se detecta ahora está en la línea de arriba."
+
+msgid "<b>Only for an FM-1 without the logo on the front.</b> The newer FM-1s (M-VAVE logo on the front, sold from late 2026) have another flash chip (UC25HQ80). {why} {strands} The app does not know which unit this is – please confirm below, or say it on the page “Devices”."
+msgstr "<b>Solo para un FM-1 sin logo en el frontal.</b> Los FM-1 más recientes (logo de M-VAVE en el frontal, vendidos desde finales de 2026) llevan otro chip flash (UC25HQ80). {why} {strands} La app no sabe qué unidad es esta – confírmalo abajo o indícalo en la página «Dispositivos»."
+
+msgid "<b>This FM-1 is a newer unit (logo on the front), and {name} in the version that runs on it does not know its flash chip.</b> It cannot save anything, and by what its author writes it usually cannot start an update either – so an installation from here may simply not begin (nothing is written then). {first} The way out: bring the FM-1 into ROM boot mode and write the original V15 back with the recovery (stage 2), then install a version that knows the chip."
+msgstr "<b>Este FM-1 es una unidad más reciente (logo en el frontal), y {name}, en la versión que tiene instalada, no conoce su chip flash.</b> No puede guardar nada y, según escribe su autor, normalmente tampoco puede iniciar una actualización – así que una instalación desde aquí puede simplemente no empezar (entonces no se escribe nada). {first} La salida: pon el FM-1 en modo de arranque ROM y vuelve a escribir la V15 original con la recuperación (etapa 2); después instala una versión que conozca el chip."
+
+msgid "A firmware that does not know this chip saves nothing on such a unit and cannot be updated or replaced any more – the only way back is then the recovery in ROM boot mode (stage 2)."
+msgstr "Un firmware que no conoce este chip no guarda nada en una unidad así y ya no se puede actualizar ni sustituir – el único camino de vuelta es entonces la recuperación en modo de arranque ROM (etapa 2)."
+
+msgid "Device: {device}."
+msgstr "Dispositivo: {device}."
+
+msgid "Does this FM-1 have the M-VAVE logo on the front? The newer units have another flash chip; the app then only installs firmware versions that know it."
+msgstr "¿Tiene este FM-1 el logo de M-VAVE en el frontal? Las unidades más recientes llevan otro chip flash; la app solo instala entonces versiones de firmware que lo conocen."
+
+msgid "Does your FM-1 have the M-VAVE logo on the front?"
+msgstr "¿Tu FM-1 tiene el logo de M-VAVE en el frontal?"
+
+msgid "FM-1s sold from late 2026 – the ones with the M-VAVE logo printed on the front – have a different memory chip (UCUN UC25HQ80) than the earlier ones. Firmware versions that do not know this chip save nothing on such a unit and cannot be updated or replaced any more, except through the recovery in ROM boot mode. The app cannot read the chip over MIDI, so it asks you once per device. You can change the answer on the page “Devices”. To be sure: M-Flasher shows the chip under “Device info” (FLASH CHIP), m-bootloader in its menu, and the recovery (stage 2) reads it in ROM boot mode."
+msgstr "Los FM-1 vendidos desde finales de 2026 – los que llevan el logo de M-VAVE impreso en el frontal – tienen un chip de memoria distinto (UCUN UC25HQ80) al de los anteriores. Las versiones de firmware que no conocen este chip no guardan nada en una unidad así y ya no se pueden actualizar ni sustituir, salvo mediante la recuperación en modo de arranque ROM. La app no puede leer el chip por MIDI, por eso te lo pregunta una vez por dispositivo. Puedes cambiar la respuesta en la página «Dispositivos». Para estar seguro: M-Flasher muestra el chip en «Device info» (FLASH CHIP), m-bootloader en su menú, y la recuperación (etapa 2) lo lee en modo de arranque ROM."
+
+msgid "I don't know"
+msgstr "No lo sé"
+
+msgid "I understand: nobody has confirmed that this package works on a newer FM-1 (logo on the front). If mine is one and the package does not know its flash chip, the FM-1 can afterwards only be brought back through the recovery in ROM boot mode."
+msgstr "Entiendo: nadie ha confirmado que este paquete funcione en un FM-1 más reciente (logo en el frontal). Si el mío lo es y el paquete no conoce su chip flash, después el FM-1 solo se podrá recuperar mediante la recuperación en modo de arranque ROM."
+
+msgid "My FM-1 has NO M-VAVE logo on the front – it is an earlier unit. (On a newer unit with the logo this installation could leave the FM-1 unable to save and unable to be updated.)"
+msgstr "Mi FM-1 NO tiene el logo de M-VAVE en el frontal – es una unidad anterior. (En una unidad más reciente con logo, esta instalación podría dejar el FM-1 sin poder guardar ni actualizarse.)"
+
+msgid "Newer FM-1 (logo on the front): the original V15 is the way back that the authors of Felucca, ChoralRoot, TransitFM1 and the MvaveFM1Unbricker name for these units. This app has not run it on such a unit, and no source says which original version these units are delivered with."
+msgstr "FM-1 más reciente (logo en el frontal): la V15 original es el camino de vuelta que nombran los autores de Felucca, ChoralRoot, TransitFM1 y de MvaveFM1Unbricker para estas unidades. Esta app no lo ha ejecutado en una unidad así, y ninguna fuente dice con qué versión original se entregan estas unidades."
+
+msgid "No released version of {name} is known to support this chip (checked {date})."
+msgstr "No se conoce ninguna versión publicada de {name} que admita este chip (comprobado el {date})."
+
+msgid "No version of this firmware is known to support this chip."
+msgstr "No se conoce ninguna versión de este firmware que admita este chip."
+
+msgid "No – earlier unit"
+msgstr "No – unidad anterior"
+
+msgid "Not for this FM-1"
+msgstr "No para este FM-1"
+
+msgid "Nothing is known about the original V16 on the newer FM-1s (logo on the front, flash chip UC25HQ80): no source says whether it was run on one, nor which version these units are delivered with."
+msgstr "No se sabe nada sobre la V16 original en los FM-1 más recientes (logo en el frontal, chip flash UC25HQ80): ninguna fuente dice si se ha ejecutado en uno ni con qué versión se entregan estas unidades."
+
+msgid "Nothing was sent. The FM-1 keeps waiting in update mode – finish the installation with a version that knows its flash chip."
+msgstr "No se ha enviado nada. El FM-1 sigue esperando en modo de actualización – termina la instalación con una versión que conozca su chip flash."
+
+msgid "Own file: the app cannot tell whether it knows the flash chip of the newer FM-1s (logo on the front, UC25HQ80)."
+msgstr "Archivo propio: la app no puede saber si conoce el chip flash de los FM-1 más recientes (logo en el frontal, UC25HQ80)."
+
+msgid "Recorded so far: {state}."
+msgstr "Guardado hasta ahora: {state}."
+
+msgid "The app does not know whether {name} supports this chip (the first version that does is {first}, and the version of this package is not known)."
+msgstr "La app no sabe si {name} admite este chip (la primera versión que lo hace es {first}, y no se conoce la versión de este paquete)."
+
+msgid "The app does not know whether {name} supports this chip: it is not in the app's table, and the firmware does not say."
+msgstr "La app no sabe si {name} admite este chip: no está en la tabla de la app y el firmware no lo indica."
+
+msgid "The first version that knows this chip is {version}."
+msgstr "La primera versión que conoce este chip es {version}."
+
+msgid "The recovery tool only works with the two flash chips known in the FM-1 (ID 0x856014 or 0xB36014) and stops on any other – nothing was written."
+msgstr "La herramienta de recuperación solo funciona con los dos chips flash conocidos en el FM-1 (ID 0x856014 o 0xB36014) y se detiene con cualquier otro – no se ha escrito nada."
+
+msgid "This FM-1 has the flash chip of the newer units (UCUN UC25HQ80, ID 0xB36014 – the FM-1s with the logo on the front) instead of the Puya chip (0x856014). The recovery tool knows both chips. Writing in ROM boot mode has not been run on such a unit with this app. Afterwards, install only firmware versions that know this chip (help page “Firmware”)."
+msgstr "Este FM-1 tiene el chip flash de las unidades más recientes (UCUN UC25HQ80, ID 0xB36014 – los FM-1 con el logo en el frontal) en lugar del chip Puya (0x856014). La herramienta de recuperación conoce ambos chips. La escritura en modo de arranque ROM no se ha ejecutado con esta app en una unidad así. Después, instala solo versiones de firmware que conozcan este chip (página de ayuda «Firmware»)."
+
+msgid "This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80)."
+msgstr "Este FM-1 es una unidad más reciente (logo en el frontal, chip flash UC25HQ80)."
+
+msgid "Unit …"
+msgstr "Unidad …"
+
+msgid "Unit:"
+msgstr "Unidad:"
+
+msgid "Unit: {revision}"
+msgstr "Unidad: {revision}"
+
+msgid "Yes – newer unit (UC25HQ80 flash)"
+msgstr "Sí – unidad más reciente (flash UC25HQ80)"
+
+msgid "Yes, continue"
+msgstr "Sí, continuar"
+
+msgid "change"
+msgstr "cambiar"
+
+msgid "earlier unit, no logo on the front (flash Puya, 0x856014)"
+msgstr "unidad anterior, sin logo en el frontal (flash Puya, 0x856014)"
+
+msgid "firmware.json of {tag} names the flash chips it supports: {ids}."
+msgstr "El firmware.json de {tag} nombra los chips flash que admite: {ids}."
+
+msgid "logo on the front?"
+msgstr "¿logo en el frontal?"
+
+msgid "newer unit, logo on the front (flash UC25HQ80, 0xB36014)"
+msgstr "unidad más reciente, logo en el frontal (flash UC25HQ80, 0xB36014)"
+
+msgid "not known (you answered “I don't know”)"
+msgstr "no se sabe (respondiste «No lo sé»)"
+
+msgid "not known yet"
+msgstr "aún no se sabe"
+
+msgid "read in ROM boot mode"
+msgstr "leído en modo de arranque ROM"
+
+msgid "reported by the firmware"
+msgstr "indicado por el firmware"
+
+msgid "your answer"
+msgstr "tu respuesta"
+
+msgid "{name} does not know this chip; the first version that does is {first}."
+msgstr "{name} no conoce este chip; la primera versión que lo conoce es {first}."
+
+msgid "{name}: its authors write that it is untested or little tested on this chip, and that one such unit did not start after m-bootloader was installed."
+msgstr "{name}: sus autores escriben que no está probado, o lo está poco, en este chip, y que una unidad así no arrancó después de instalar m-bootloader."
+
+msgid "{unit} {why} {strands} It is not installed on this FM-1. If the unit is an earlier one after all, change this on the page “Devices”."
+msgstr "{unit} {why} {strands} No se instala en este FM-1. Si la unidad resulta ser una anterior, cámbialo en la página «Dispositivos»."
+
+msgid "{name} (0x{id:06X})"
+msgstr "{name} (0x{id:06X})"
+
+msgid "Forget what is recorded"
+msgstr "Olvidar lo guardado"
+
+msgid "earlier unit"
+msgstr "unidad anterior"
+
+msgid "Yes, change it"
+msgstr "Sí, cambiarlo"
+
+msgid "nothing (the app will ask again)"
+msgstr "nada (la app volverá a preguntar)"
+
+msgid "Flash chip read: {chip}. Device “{device}” is now: {state}."
+msgstr "Chip flash leído: {chip}. El dispositivo «{device}» es ahora: {state}."
+
+msgid "Flash chip read: {chip}. The app cannot tell for sure which of your devices this is, so it is not stored for any of them; until the app is closed it counts for the FM-1 at this USB port. Please set it on the page “Devices” (button “Unit …”)."
+msgstr "Chip flash leído: {chip}. La app no puede saber con seguridad cuál de tus dispositivos es, así que no se guarda para ninguno; hasta que se cierre la app cuenta para el FM-1 de este puerto USB. Indícalo en la página «Dispositivos» (botón «Unidad …»)."
+
+msgid "The app's table of firmware versions for the newer FM-1 (flash chip UC25HQ80) cannot be read ({error}). Without it the app cannot tell whether this installation is safe on your FM-1 – nothing is installed. Please install the app again; if your FM-1 is an earlier unit (no logo on the front), you can say so on the page “Devices”."
+msgstr "No se puede leer la tabla de la app con las versiones de firmware para el FM-1 más reciente (chip flash UC25HQ80) ({error}). Sin ella la app no puede saber si esta instalación es segura en tu FM-1 – no se instala nada. Vuelve a instalar la app; si tu FM-1 es una unidad anterior (sin logo en el frontal), puedes indicarlo en la página «Dispositivos»."
+
+msgid "Recorded for “{device}”: <b>{state}</b>.<br><br>You are about to change this to: <b>{to}</b>.<br><br>If this FM-1 is a newer unit after all (M-VAVE logo on the front), the app will then no longer stop firmware versions that do not know its flash chip – such a version saves nothing and cannot be updated or replaced any more, except through the recovery in ROM boot mode. Change it only if you are sure (M-Flasher shows the chip under “Device info”)."
+msgstr "Guardado para «{device}»: <b>{state}</b>.<br><br>Vas a cambiarlo a: <b>{to}</b>.<br><br>Si este FM-1 resulta ser una unidad más reciente (logo de M-VAVE en el frontal), la app ya no detendrá las versiones de firmware que no conocen su chip flash – una versión así no guarda nada y ya no se puede actualizar ni sustituir, salvo mediante la recuperación en modo de arranque ROM. Cámbialo solo si estás seguro (M-Flasher muestra el chip en «Device info»)."
+
+msgid "counted as a newer unit: an earlier chip was also seen under this profile ({what}) – two devices under one profile?"
+msgstr "cuenta como unidad más reciente: con este perfil también se vio un chip anterior ({what}) – ¿dos dispositivos en un mismo perfil?"
+
+msgid "(found when connecting – installed outside the app)"
+msgstr "(encontrado al conectar: instalado fuera de la app)"
+
+msgid "The checksum comes from the SHA256SUMS file of the release."
+msgstr "La suma de comprobación procede del archivo SHA256SUMS de la versión publicada."
+
+msgid "The checksum is GitHub's digest for the release file (GitHub computes it when the author uploads the file; the release has no SHA256SUMS file)."
+msgstr "La suma de comprobación es el digest que GitHub indica para el archivo de la versión (GitHub lo calcula cuando el autor sube el archivo; la versión no tiene archivo SHA256SUMS)."
+
+msgid "Checksum matches GitHub's digest for the release file (the release has no SHA256SUMS file)"
+msgstr "La suma de comprobación coincide con el digest que GitHub indica para el archivo de la versión (la versión no tiene archivo SHA256SUMS)"
+
+msgid "Checksum not available: this release has no SHA256SUMS file, GitHub gives no digest for the release file, and the catalog does not know the checksum. The app cannot check whether the file is unmodified."
+msgstr "Suma de comprobación no disponible: esta versión no tiene archivo SHA256SUMS, GitHub no indica ningún digest para el archivo y el catálogo no conoce la suma. La app no puede comprobar si el archivo está intacto."
+
+msgid "Log of the dry run: {name}"
+msgstr "Registro del simulacro: {name}"
+
+msgid "The FM-1 is charged or on power, and the computer does not go to sleep during the installation. I know that the FM-1 is connected through a USB hub; a port directly on the computer is safer."
+msgstr "El FM-1 está cargado o enchufado, y el equipo no entra en reposo durante la instalación. Sé que el FM-1 está conectado a través de un hub USB; un puerto directamente en el equipo es más seguro."
+
+msgid "it shows the USB ID {usb}, which the Felucca-family firmwares use – the original firmware shows 4c4a:c755"
+msgstr "muestra el ID USB {usb}, que usan los firmwares de la familia Felucca; el firmware original muestra 4c4a:c755"
+
+msgid "the same identity is known for: {names}, and nobody has said which firmware runs on this FM-1"
+msgstr "la misma identidad también se conoce para: {names}, y nadie ha dicho qué firmware funciona en este FM-1"
+
+msgid "This FM-1 answers “FM-1_015” like the original V15, but it may be another firmware: {why}. (TransitFM1 answers “FM-1_015” on purpose.) So the plan does not assume the original V15 and keeps the V15 step. If it is the original V15: connect it so that it shows the USB ID 4c4a:c755 (page “Overview”) and answer “Which firmware is running here?” with the original firmware – then the plan has no V15 step. TransitFM1 shows the USB ID 1209:0001 and its name as serial number (“TransitFM1-…”)."
+msgstr "Este FM-1 responde «FM-1_015» como el V15 original, pero podría ser otro firmware: {why}. (TransitFM1 responde «FM-1_015» a propósito.) Por eso el plan no da por hecho el V15 original y mantiene el paso por V15. Si es el V15 original: conéctalo de modo que muestre el ID USB 4c4a:c755 (página «Resumen») y responde a «¿Qué firmware se ejecuta aquí?» con el firmware original; entonces el plan no tiene paso por V15. TransitFM1 muestra el ID USB 1209:0001 y su nombre como número de serie («TransitFM1-…»)."
+
+msgid "Careful mode has run once through real USB hubs, without a dropout. Its automatic resume after a dropout has only been run in the simulation so far."
+msgstr "El modo cuidadoso ha funcionado una vez a través de hubs USB reales, sin cortes. Su reanudación automática tras un corte solo se ha ejecutado hasta ahora en la simulación."
+
+msgid "Run with this app once: Skiff 2.7 on one newer FM-1 (2026-11-18); saving worked there."
+msgstr "Ejecutado una vez con esta app: Skiff 2.7 en un FM-1 más reciente (18-11-2026); guardar funcionó allí."
+
+msgid "installing Skiff on a newer FM-1 (logo on the front, flash UC25HQ80)"
+msgstr "la instalación de Skiff en un FM-1 más reciente (logo en el frontal, flash UC25HQ80)"
+
+msgid "{unit} {name} knows this chip from version {first} on – read in the firmware's own source (docs/firmware-support.md), not measured by this app."
+msgstr "{unit} {name} conoce este chip a partir de la versión {first}: leído en el código fuente del propio firmware (docs/firmware-support.md), no medido por esta app."
+
+msgid "{unit} {name} says in its own package information that it knows this chip – not measured by this app."
+msgstr "{unit} {name} indica en la información de su propio paquete que conoce este chip; no medido por esta app."
+
+msgid "anything else on a newer FM-1 (logo on the front, flash UC25HQ80)"
+msgstr "cualquier otra cosa en un FM-1 más reciente (logo en el frontal, flash UC25HQ80)"
+
+msgid "This app has not installed this firmware on a newer FM-1 yet."
+msgstr "Esta app aún no ha instalado este firmware en un FM-1 más reciente."

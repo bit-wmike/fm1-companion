@@ -63,35 +63,77 @@
     return new Uint8Array(f.buffer);
   }
 
-  // an offline render on its own instance. params: seconds | until_end (+ max_seconds, tail_seconds), start
-  // ("none" | "play" | "song"), mutes [bool x 4], format ("f32" | "s24"), chunk (frames). sink(bytes) may return
-  // a promise (the next chunk waits). -> {frames, ended, seconds, peak, fs}
-  async function renderJob(module, state, p, sink, progress) {
-    const t = await TwinCore.create(module, state.memory ? { memory: state.memory } : { flash: state.flash });
-    if (!state.memory) t.runMs(p.settle_ms ?? 300);
-    if (p.project != null) t.projectLoad(p.project);
-    if (p.mutes) applyMutes(t, p.mutes);
-    startTransport(t, p.start || "none");
-    const fs = t.fs, chunk = p.chunk || fs;
-    const maxFrames = Math.round((p.until_end ? (p.max_seconds || 600) : (p.seconds || 10)) * fs);
-    const tail = Math.round((p.tail_seconds ?? 2) * fs);
-    let frames = 0, ended = false, endAt = -1, peak = 0, wasBusy = t.transport().busy;
-    while (frames < maxFrames) {
-      let n = Math.min(chunk, maxFrames - frames);
-      if (endAt >= 0) n = Math.min(n, endAt - frames);
-      if (n <= 0) break;
-      const a = t.render(n);
-      for (let i = 0; i < n; i++) { const x = Math.max(Math.abs(a.l[i]), Math.abs(a.r[i])); if (x > peak) peak = x; }
-      frames += n;
-      await sink(encode(a.l, a.r, n, p.format || "f32"));
-      if (progress) progress(frames, maxFrames);
-      if (p.until_end && endAt < 0) {
-        const busy = t.transport().busy;
-        if (wasBusy && !busy) { endAt = frames + tail; ended = true; }
-        wasBusy = wasBusy || busy;
+  // Offline renders, each on an instance of its own state (the live twin is untouched). A session holds ONE snapshot
+  // (the live twin's whole RAM, or the RAM after a power-on from its flash and settle_ms of device time); every pass
+  // starts from exactly that state, so the mix and all stems of an export are aligned to the sample.
+  //   const s = await RenderSession.open(module, {memory | flash}, settle_ms);  await s.pass(params, sink);  s.cancel()
+  // pass params: seconds | until_end (+ max_seconds, tail_seconds), start ("none" | "play" | "song"), mutes [bool x n],
+  // project, format ("f32" | "s24"), chunk (frames). sink(bytes) may return a promise (the next chunk waits).
+  // -> {frames, ended, started, seconds, peak, fs}. until_end on a twin whose transport never starts ends after
+  // IDLE_SECONDS (started false) instead of running to max_seconds in silence.
+  const IDLE_SECONDS = 3;
+  class RenderSession {
+    static async open(module, state, settle_ms) {
+      const s = new RenderSession();
+      s.module = module; s.t = null; s.cancelled = false;
+      if (state.memory) s.memory = state.memory;
+      else {
+        s.t = await TwinCore.create(module, { flash: state.flash });
+        s.t.runMs(settle_ms == null ? 300 : settle_ms);
+        s.memory = s.t.snapshotMemory();
       }
+      return s;
     }
-    return { frames, ended, seconds: frames / fs, peak, fs };
+    cancel() { this.cancelled = true; }
+    async pass(p, sink, progress) {
+      // the instance of the pass before is reused when its memory still has the snapshot's size (the whole RAM is
+      // written over it: no second copy of a large twin); otherwise a fresh one
+      let t = this.t;
+      if (t && t.mem.byteLength === this.memory.byteLength) t.restoreMemory(this.memory);
+      else t = this.t = await TwinCore.create(this.module, { memory: this.memory });
+      if (p.project != null) t.projectLoad(p.project);
+      if (p.mutes) applyMutes(t, p.mutes);
+      startTransport(t, p.start || "none");
+      const fs = t.fs, chunk = p.chunk || fs;
+      const maxFrames = Math.round((p.until_end ? (p.max_seconds || 600) : (p.seconds || 10)) * fs);
+      const tail = Math.round((p.tail_seconds == null ? 2 : p.tail_seconds) * fs);
+      // until_end: the transport is looked at every 10 ms of device time, not once per chunk – the tail counts from
+      // where the song really stopped. (Once per 1 s chunk made the same song 6.0 or 7.0 s long, depending on whether
+      // it stopped just before or just after a chunk's end, and that depends on the moment of the snapshot.)
+      const step = Math.max(1, Math.round(fs / 100));
+      let frames = 0, ended = false, endAt = -1, peak = 0, wasBusy = t.transport().busy;
+      while (frames < maxFrames) {
+        if (this.cancelled) throw new Error("render cancelled");
+        let n = Math.min(chunk, maxFrames - frames);
+        if (endAt >= 0) n = Math.min(n, endAt - frames);
+        if (n <= 0) break;
+        const l = new Float32Array(n), r = new Float32Array(n);
+        let got = 0;
+        while (got < n) {
+          const watch = p.until_end && endAt < 0;
+          const m = watch ? Math.min(step, n - got) : n - got;
+          const a = t.render(m);
+          l.set(a.l, got); r.set(a.r, got); got += m;
+          if (watch) {
+            const busy = t.transport().busy;
+            if (wasBusy && !busy) { endAt = frames + got + tail; ended = true; n = Math.min(n, endAt - frames); }
+            wasBusy = wasBusy || busy;
+          }
+        }
+        for (let i = 0; i < n; i++) { const x = Math.max(Math.abs(l[i]), Math.abs(r[i])); if (x > peak) peak = x; }
+        frames += n;
+        await sink(encode(l, r, n, p.format || "f32"));
+        if (progress) progress(frames, maxFrames);
+        if (p.until_end && !wasBusy && frames >= IDLE_SECONDS * fs) break;   // nothing ever started: no song to wait for
+      }
+      return { frames, ended, started: !p.until_end || wasBusy, seconds: frames / fs, peak, fs };
+    }
+  }
+
+  // one render on its own (a session of one pass)
+  async function renderJob(module, state, p, sink, progress) {
+    const s = await RenderSession.open(module, state, p.settle_ms);
+    return s.pass(p, sink, progress);
   }
 
   class TwinHost {
@@ -105,7 +147,7 @@
     info() {
       const t = this.t;
       return { version: t.version(), fs: t.fs, flash_size: t.flashSize(), transport: t.transport(), now: t.ex.st_now(),
-               project: t.projectCurrent() };
+               project: t.projectCurrent(), memory: t.mem.byteLength };
     }
     out() { const o = this.t.takeOut(); if (o.length && this.env.emitMidi) this.env.emitMidi(o); return o; }
     // complete MIDI messages in -> the messages out (given to env.emitMidi, the twin's MIDI port). wait_ms: an editor request
@@ -127,7 +169,7 @@
         case "midi": return { n: this.midi(c.data, c.wait_ms ?? 0).length };   // (the messages: env.emitMidi)
         case "keys": t.keys(c.mask); return {};
         case "buttons": t.buttons(c.mask); return {};
-        case "encoder": t.encoder(c.id, c.n); return {};
+        case "encoder": t.encoder(c.arg_id != null ? c.arg_id : c.id, c.n); return {};   // (arg_id: from Python, whose "id" is the request's)
         case "master": t.master(c.value); return {};
         case "press": t.press(c.label, c.ms ?? 40); this.out(); return { transport: t.transport() };
         case "transport_start": startTransport(t, c.how || "play"); this.out(); return { transport: t.transport() };
@@ -152,6 +194,7 @@
     }
   }
   TwinHost.renderJob = renderJob;
+  TwinHost.RenderSession = RenderSession;
   TwinHost.edRequest = edRequest;
   if (typeof module !== "undefined" && module.exports) module.exports = TwinHost;
   else root.TwinHost = TwinHost;

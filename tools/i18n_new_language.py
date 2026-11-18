@@ -35,6 +35,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FM-1 Companion\\n"
 "Language: {code}\\n"
+"X-Language-Name: {name}\\n"
 "MIME-Version: 1.0\\n"
 "Content-Type: text/plain; charset=UTF-8\\n"
 "Content-Transfer-Encoding: 8bit\\n"
@@ -60,9 +61,10 @@ editor:
    FM1C_LANG={code} python3 -m fm1companion --demo
    ```
 
-4. Optional: add the name of the language in its own language to `LANGUAGE_NAMES` in `fm1companion/i18n.py`
-   (otherwise the language list shows the code `{code}`), and translate the help pages
-   (`fm1companion/data/help/en/*.md` → `fm1companion/data/help/{code}/`).
+4. The language list of the app (Settings › General) shows the header line `X-Language-Name` of the `.po` files:
+   write the name of the language in its own language there (e.g. `Français`), in every file.
+5. Optional: translate the help pages (`fm1companion/data/help/en/*.md` → `fm1companion/data/help/{code}/`);
+   pages you have not translated yet are shown in English.
 
 The entries in `rescue.po` (used by `flash/texts.py`) are safety messages of the recovery tools – translate them
 with the same meaning and strength, nothing softer, nothing stronger.
@@ -123,7 +125,8 @@ def build(code: str, name: str = "", plural: str = "nplurals=2; plural=(n != 1);
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("lang", help="language code, e.g. fr, es, pt_BR")
-    ap.add_argument("--name", default="", help="name of the language (for the file headers), e.g. Français")
+    ap.add_argument("--name", default="", help="name of the language in its own language, e.g. Français – the app "
+                                                 "shows it in the language list (header X-Language-Name)")
     ap.add_argument("--plural", default="nplurals=2; plural=(n != 1);",
                     help="Plural-Forms of the language (default: like English/German)")
     a = ap.parse_args(argv)

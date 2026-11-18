@@ -26,6 +26,7 @@ need_v15 = pytest.mark.skipif(not V15.exists(), reason="original V15 missing")
 def env(tmp_path, monkeypatch):
     for k, sub in (("XDG_CONFIG_HOME", "c"), ("XDG_DATA_HOME", "d"), ("XDG_CACHE_HOME", "k")):
         monkeypatch.setenv(k, str(tmp_path / sub))
+    monkeypatch.setenv("HOME", str(tmp_path))    # ~/FM-1 (firmware folder) of the test, not the real one
     monkeypatch.delenv("FM1C_DEMO", raising=False)
     from fm1companion import config
     importlib.reload(config)
@@ -121,7 +122,9 @@ def test_plan_melodee_to_melodee(env):
     from fm1companion.flash.planner import Target, plan_install
     p = plan_install(melodee_state(), Target.from_spec(firmware.spec("melodee"), tag="v1.6.0"))
     assert p.ok and p.kinds() == ["backup", "fetch", "install", "resources", "verify"]
-    assert not p.via_stock and "power" not in p.confirmations and not p.lost
+    # (the power confirmation belongs to every plan that writes – hardware run 2026-11-18; no power *warning* here)
+    assert not p.via_stock and p.confirmations == ["power"] and not p.lost
+    assert not any("Strom" in w or "power" in w for w in p.warnings)
 
 
 def test_plan_melodee_16_upgrade_and_downgrade(env):
@@ -144,11 +147,15 @@ def test_plan_melodee_16_upgrade_and_downgrade(env):
     assert plan_install(rc, Target.from_spec(mel, tag="v1.6.0"), backup=False).ok          # already 1.6: no obligation
     new = melodee_state(version="MELODEE v1.6.0")
     p = plan_install(new, Target.from_spec(mel, tag="v1.6.0"))
-    assert p.ok and not any("1.6" in w for w in p.warnings) and not p.confirmations
+    assert p.ok and not any("1.6" in w for w in p.warnings) and p.confirmations == ["power"]
     p = plan_install(new, Target.from_spec(mel, tag="v1.5.1"))
     assert p.ok and "Zurück von Melodee 1.6" in p.warnings[0] and "Melodee v1.5.1" in p.warnings[0]
     assert "melodee16_down" in p.confirmations and M.DOWNGRADE_LOST in p.lost
-    assert p.missing(["power"]) == ["melodee16_down"]
+    # (Melodee before 1.6.0 does not know the newer FM-1's flash chip: with the unit unknown the plan also asks for
+    # "no logo on the front" – tests/test_hardware.py; on an earlier unit nothing is added)
+    assert p.missing(["power"]) == ["melodee16_down", "no_logo"]
+    assert plan_install(melodee_state(version="MELODEE v1.6.0", revision="old"),
+                        Target.from_spec(mel, tag="v1.5.1")).missing(["power"]) == ["melodee16_down"]
     p = plan_install(new, Target.from_spec(firmware.spec("sloop"), tag="v2.8.3"))
     assert "Zurück von Melodee 1.6" in p.warnings[0] and "SLOOP" in p.warnings[0] and "melodee16_down" in p.confirmations
     # unknown version on the device: no guess
@@ -167,7 +174,7 @@ def test_plan_melodee_161_is_a_normal_update(env):
         st = melodee_state(version=dev)
         p = plan_install(st, t161)
         assert melodee_change(st, t161) == "within"
-        assert p.ok and not any("1.6" in w for w in p.warnings) and not p.confirmations, (dev, p.warnings)
+        assert p.ok and not any("1.6" in w for w in p.warnings) and p.confirmations == ["power"], (dev, p.warnings)
     back = melodee_state(version="MELODEE v1.6.1")
     p = plan_install(back, Target.from_spec(mel, tag="v1.6.0"))
     assert p.ok and not any("Zurück von Melodee 1.6" in w for w in p.warnings) and "melodee16_down" not in p.confirmations
@@ -646,21 +653,20 @@ def fake_sysfs(root: Path, vendor="WL82", model="UBOOT1.00", usb="4c4a:8057", sg
 
 
 def test_uboot_ucun_flash_message(tmp_path):
-    """UCUN flash (0xB36014): the ROM rescue stops (unchanged) – the suite says why (in the UI language)."""
+    """The newer units' flash (0xB36014): the bundled Unbricker (1.2.1) accepts it; the suite notes which chip the
+    tool read (in the UI language) and no longer calls it unsupported."""
     from fm1companion.flash import uboot
-    assert uboot.flash_hint("Flash ID    0xB36014 (expected 0x856014, 1 MiB), type 0x00") == uboot.UCUN_TEXT
-    assert uboot.flash_hint("this does not look like an FM-1: flash ID 0xB36014 is not 0x856014. Stopping")
+    assert uboot.flash_hint("Flash ID    0xB36014 (expected 0x856014 or 0xB36014, 1 MiB), type 0x00") == uboot.UCUN_TEXT
     assert uboot.flash_hint("key=980F id=b36014") and not uboot.flash_hint("key=980F id=856014")
-    assert not uboot.flash_hint("Flash ID    0x856014 (expected 0x856014, 1 MiB)")
-    assert "nicht" in uboot.UCUN_TEXT and "nichts geschrieben" in uboot.UCUN_TEXT
-    tool = tmp_path / "tool.py"                       # stands in for the Unbricker: reports the flash, stops
-    tool.write_text("print('Flash ID    0xB36014 (expected 0x856014, 1 MiB), type 0x00')\n"
-                    "print('ERROR: flash ID 0xB36014 is not 0x856014. Stopping; nothing was written')\n"
-                    "raise SystemExit(1)\n")
+    assert not uboot.flash_hint("Flash ID    0x856014 (expected 0x856014 or 0xB36014, 1 MiB)")
+    assert "beide" in uboot.UCUN_TEXT and "0x856014" in uboot.OTHER_FLASH_TEXT and "0xB36014" in uboot.OTHER_FLASH_TEXT
+    tool = tmp_path / "tool.py"                       # stands in for the Unbricker: reports the flash
+    tool.write_text("print('Flash ID    0xB36014 (expected 0x856014 or 0xB36014, 1 MiB), type 0x00')\n")
     logs = []
     r = uboot.Runner(dry_run=True, log=logs.append, cwd=tmp_path)
     rc = r.run("info", script=tool)
-    assert rc == 1 and r.hint == uboot.UCUN_TEXT and logs.count("HINWEIS: " + uboot.UCUN_TEXT) == 1
+    assert rc == 0 and r.hint == uboot.UCUN_TEXT and logs.count("HINWEIS: " + uboot.UCUN_TEXT) == 1
+    assert r.flash_id == 0xB36014
 
 
 def test_uboot_scan_strict(tmp_path):

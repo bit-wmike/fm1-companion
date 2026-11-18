@@ -14,6 +14,20 @@ helps.
 Melodee from 1.3.5 on with boot protection returns to update mode by itself after an interrupted write (also
 a power cut) – just switch it on again and reinstall.
 
+## After an interrupted installation
+
+After an interruption the app's message says what is *likely* – it has not looked at the FM-1 again. The
+[Recovery](app://page/recovery) page shows what is detected live:
+
+* **An FM-1 in update mode is detected:** *Finish installation* writes the interrupted package again. The app knows
+  it from its journal and checks that it belongs to the waiting update loader – otherwise nothing is sent.
+* **Nothing is detected and the FM-1 runs normally:** nothing was written. *Forget the interrupted installation*
+  removes the app's note.
+* **Nothing is detected and the screen stays black:** switch the FM-1 off and on once and try update mode (above).
+  If that does not work, see the next section.
+
+Honestly: finishing an interrupted installation has only been run in the simulation so far, not on a real FM-1.
+
 ## When nothing works at all
 
 If the computer shows a drive **“WL82 UBOOT1.00”** and the display stays black, the chip is in its

@@ -20,6 +20,10 @@ def check() -> int:
         elif s.required:
             bad += 1
             print(_("  MISSING    {package}  ({why})").format(package=s.package, why=s.why))
+        elif s.package in diag.UI_LANGUAGE_PACKAGES:
+            # listed as required for the packages (so that switching the language works), not needed in English
+            print(_("  (optional) {package}  (only needed when the user interface is not English: {why})").format(
+                package=s.package, why=s.why))
         else:
             print(f"  (optional) {s.package}  ({s.why})")
     cmd = diag.apt_command(states)
@@ -73,6 +77,42 @@ def isolate_demo(env=None, home=None) -> dict:
     return out
 
 
+def _creatable(folder: Path) -> bool:
+    """Could ``folder`` be created and written to? Looks only – creates nothing."""
+    p = folder
+    while True:
+        try:
+            if p.exists():
+                return p.is_dir() and os.access(p, os.W_OK | os.X_OK)
+        except OSError:
+            pass
+        if p.parent == p:
+            return False
+        p = p.parent
+
+
+def fallback_dirs(env=None, home=None) -> list[str]:
+    """Data or cache folder out of reach (HOME read-only, ~/.cache is a file …): point them to a temporary
+    folder for this run, so that the app starts instead of ending with a traceback at the first mkdir.
+
+    Like isolate_demo() this must run BEFORE the first import of config. The settings folder is left alone:
+    config.save() reports that case itself. -> the folders that were replaced (for the note in the log)"""
+    from . import APP_ID
+    env = os.environ if env is None else env
+    home = Path(home) if home else Path.home()
+    lost = [(var, Path(env.get(var) or home / default) / APP_ID) for var, default, _sub in XDG_VARS[1:]]
+    lost = [(var, folder) for var, folder in lost if not _creatable(folder)]
+    if lost:
+        import atexit
+        import shutil
+        import tempfile
+        tmp = Path(tempfile.mkdtemp(prefix=f"{APP_ID}-"))
+        atexit.register(shutil.rmtree, tmp, ignore_errors=True)
+        for var, _folder in lost:
+            env[var] = str(tmp / var.split("_")[1].lower())
+    return [str(folder) for _var, folder in lost]
+
+
 def take_lang_option(argv: list[str]) -> str | None:
     """remove ``--lang X`` / ``--lang=X`` from argv -> X (None if not given)"""
     for i, a in enumerate(list(argv)):
@@ -100,21 +140,23 @@ def main() -> int:
     if "--syscheck" in sys.argv:
         return syscheck_cli()
     if "--help" in sys.argv or "-h" in sys.argv:
+        from .i18n import available_languages
         print(_("Usage: fm1-companion [OPTION]\n\n"
                 "  --demo       start with three simulated FM-1 (separate settings, your data stays untouched)\n"
                 "  --check      check system packages and show the apt command for anything missing\n"
                 "  --syscheck   check USB, power and audio (like Tools › System check)\n"
-                "  --lang LANG  user interface language for this start: en, de (default: setting/system)\n"
+                "  --lang LANG  user interface language for this start: {languages} (default: setting/system)\n"
                 "  --no-splash  start without splash screen\n"
                 "  --debug      verbose log (~/.local/state/fm1-companion/logs)\n"
                 "  --version    show version\n"
-                "  -h, --help   this help"))
+                "  -h, --help   this help").format(languages=", ".join(available_languages())))
         return 0
     if "--demo" in sys.argv:
         os.environ["FM1C_DEMO"] = "1"
         sys.argv.remove("--demo")
     if os.environ.get("FM1C_DEMO") == "1":
         isolate_demo()
+    lost_dirs = fallback_dirs()
     try:
         from PyQt6.QtCore import Qt, QCoreApplication
         from PyQt6.QtWidgets import QApplication
@@ -129,6 +171,14 @@ def main() -> int:
     from . import APP_ID, APP_NAME, __version__, applog, config
     import logging
     applog.setup(logging.DEBUG if "--debug" in sys.argv else logging.INFO)
+    note = ""
+    if lost_dirs:
+        note = _("The app cannot write to {folders}. It uses a temporary folder for this run: what it stores "
+                 "there (your device profiles, downloaded editors and tools, the sample index, the record of "
+                 "firmware installations) is gone when you quit. Better not install firmware like this.").format(
+                     folders=", ".join(lost_dirs))
+        logging.getLogger("fm1companion").warning(note)
+        print(note, file=sys.stderr)
     existed = config.CONFIG_FILE.exists()
     app = QApplication(sys.argv)
     from PyQt6.QtCore import QLocale
@@ -172,6 +222,8 @@ def main() -> int:
         splash.finish(w)
     from PyQt6.QtCore import QTimer
     QTimer.singleShot(400, w.maybe_first_run)
+    if note:
+        QTimer.singleShot(1600, lambda: w.notify(note, "warning"))
     auto_quit = os.environ.get("FM1C_AUTOQUIT_MS", "")
     if auto_quit.isdigit():                    # tests only: close the app after n ms as if via "Quit"
         def _auto_close():

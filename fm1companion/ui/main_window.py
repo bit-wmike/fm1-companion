@@ -356,6 +356,7 @@ class MainWindow(QMainWindow):
         self._menus()
         self.overview.navigate.connect(self.go)
         self.overview.backup_now.connect(self._backup_now)
+        self.backups.auto.updated.connect(self.overview._backup_text)   # automatic backup while it is in view
         self.overview.check_updates.connect(lambda: self.firmware.check_for_device())
         self.firmware.updates_checked.connect(self._updates)
         disc = self.pages.get("discover")         # Firmware+: list changed in the “Install & versions” tab
@@ -628,6 +629,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, "nav") and hasattr(self, "brand_texts"):
             self._update_sidebar()
             self._update_toolbar()
+            self._apply_dev_text()
 
     def _update_toolbar(self):
         """narrow window: more compact toolbar (search and backup as icons only, shorter device state),
@@ -640,13 +642,33 @@ class MainWindow(QMainWindow):
         beside = Qt.ToolButtonStyle.ToolButtonTextBesideIcon
         self.toolbar.setToolButtonStyle(icon_only if compact else beside)
         self.search_button.setToolButtonStyle(icon_only if compact else beside)
-        self.dev_combo.setMinimumWidth(260 if compact else 320)
+        self._fit_dev_combo()
         self._apply_dev_text()
 
     def _apply_dev_text(self):
         texts = getattr(self, "_dev_texts", None)
-        if texts:
-            self.dev_state.setText(texts[1] if getattr(self, "_toolbar_compact", False) else texts[0])
+        if not texts:
+            return
+        col, full, short = texts
+        import html
+        plain = short if getattr(self, "_toolbar_compact", False) else full
+        # a long state (m-bootloader's MIDI MODE: well over half of 1280 px) would push search, “Back up now” and the
+        # bell into the toolbar's overflow menu: it is shortened at the end with “…” to the room that is left (the
+        # full text is the tooltip). Room = the toolbar minus everything else in it.
+        room = self.toolbar.contentsRect().width() - 12
+        for a in self.toolbar.actions():
+            wd = self.toolbar.widgetForAction(a)
+            if wd is None or wd is self.dev_state or wd.sizePolicy().horizontalPolicy() == QSizePolicy.Policy.Expanding:
+                continue
+            if wd is self.dev_combo:
+                room -= max(wd.minimumWidth(), wd.sizeHint().width()) + 6
+            elif a.isVisible():
+                room -= wd.sizeHint().width() + 6
+        fm = self.dev_state.fontMetrics()
+        lead = fm.horizontalAdvance("  ●   ") + 8
+        if room > 120 and fm.horizontalAdvance(plain) + lead > room:
+            plain = fm.elidedText(plain, Qt.TextElideMode.ElideRight, room - lead)
+        self.dev_state.setText(f"  <b style='color:{col}'>●</b> {html.escape(plain)}  ")
 
     # ------------------------------------------------------------ Pages
     def _build_nav(self, specs: list[PageSpec]):
@@ -792,8 +814,15 @@ class MainWindow(QMainWindow):
         for p in self.ctx.ports:
             prof = self.ctx.profile_for_port(p)
             name = prof.name if prof else _("new FM-1")
-            self.dev_combo.addItem(icon("audio-midi", "media-flash"), f"{name}  ·  {p.label}"
-                                   + (_("  (update mode)") if p.update_mode else ""), p.key)
+            c = self.ctx
+            if p.update_mode and c.port is not None and c.port.key == p.key and getattr(c, "mboot", None) is not None:
+                # m-bootloader's MIDI MODE: what it is, not its USB name ("FM-1 Update") plus "(update mode)"
+                text = f"{name}  ·  " + _("m-bootloader MIDI MODE")
+            else:
+                text = f"{name}  ·  {self._port_firmware(p, prof)}" + (_("  (update mode)") if p.update_mode else "")
+            self.dev_combo.addItem(icon("audio-midi", "media-flash"), text, p.key)
+            self.dev_combo.setItemData(self.dev_combo.count() - 1, text, Qt.ItemDataRole.ToolTipRole)
+            self.dev_combo.setItemData(self.dev_combo.count() - 1, text, self.DEV_FULL_TEXT)
         vports = list(getattr(self.ctx, "vports", []) or [])
         if vports:
             self.dev_combo.insertSeparator(self.dev_combo.count())
@@ -807,6 +836,49 @@ class MainWindow(QMainWindow):
         if self.ctx.port:
             self.dev_combo.setCurrentIndex(max(0, self.dev_combo.findData(self.ctx.port.key)))
         self.dev_combo.blockSignals(False)
+        self._fit_dev_combo()
+
+    DEV_FULL_TEXT = Qt.ItemDataRole.UserRole + 1    # an entry's whole text (the shown one may be shortened)
+    DEV_COMBO_GROW = 160            # px the device selection may grow beyond its usual width for a long entry
+
+    def _fit_dev_combo(self):
+        """the device selection is as wide as its current entry needs (name · state), within its usual width plus
+        DEV_COMBO_GROW; an entry that is longer still is shortened in the middle with “…” – the name's start and the
+        state stay readable (the full text is the entry's tooltip). Before, a long entry was cut off at the right
+        edge: “FM-1 Update (Upda”."""
+        cb = self.dev_combo
+        base = 260 if getattr(self, "_toolbar_compact", False) else 320
+        i = cb.currentIndex()
+        full = cb.itemData(i, self.DEV_FULL_TEXT) if i >= 0 else None
+        if not isinstance(full, str) or not full:
+            cb.setMinimumWidth(base)
+            return
+        chrome = 44                     # (frame, padding and the drop-down arrow – about the same in every style)
+        icon_w = cb.iconSize().width() + 8
+        fm = cb.fontMetrics()
+        need = fm.horizontalAdvance(full) + icon_w + chrome + 8
+        width = max(base, min(need, base + self.DEV_COMBO_GROW))
+        cb.setMinimumWidth(width)
+        room = width - icon_w - chrome - 8
+        shown = full if fm.horizontalAdvance(full) <= room else fm.elidedText(full, Qt.TextElideMode.ElideMiddle, room)
+        if cb.itemText(i) != shown:
+            cb.setItemText(i, shown)
+
+    def _port_firmware(self, p, prof) -> str:
+        """What the device selection says after the profile's name: the firmware the app recognised (of the active
+        device: as it is now; of the others: as their profile knows it). Before, the USB port's name stood here –
+        still "FM-1 KARMA" for a while after another firmware was installed, and "Felucca" for Skiff. The USB name
+        remains only where no firmware is known (and in update mode, where it says what is waiting)."""
+        from .device import firmware_name
+        c = self.ctx
+        key = ""
+        if not p.update_mode:
+            active = c.port is not None and c.port.key == p.key
+            key = (getattr(c, "firmware_key", "") if active else "") or (prof.firmware if prof else "")
+        name = firmware_name(key) if key else ""
+        if name and "(Demo)" in p.label:
+            name += " (Demo)"
+        return name or p.label
 
     def _choose_device(self, i):
         key = self.dev_combo.itemData(i)
@@ -870,11 +942,12 @@ class MainWindow(QMainWindow):
             state = _("connected") if c.connected else (_("not responding") if c.port else _("not connected"))
         import html
         # without a device only “No FM-1 connected” (previously duplicated: “No FM-1 connected – not connected”)
-        text = html.escape(c.title()) + (f" – {html.escape(state)}" if c.port else "")
-        self._dev_texts = (f"  <b style='color:{col}'>●</b> {text}  ",
-                           # narrow window: only the state – name and firmware are already in the selection
-                           f"  <b style='color:{col}'>●</b> {html.escape(state) if c.port else text}  ")
-        self.dev_state.setToolTip(c.title() + (f" – {state}" if c.port else ""))
+        from .common import device_title
+        title = device_title(c)                  # (the firmware under its own name: "Skiff 2.7", not "FELUCCA v2.7")
+        text = title + (f" – {state}" if c.port else "")
+        # (narrow window: only the state – name and firmware are already in the selection)
+        self._dev_texts = (col, text, state if c.port else text)
+        self.dev_state.setToolTip(title + (f" – {state}" if c.port else ""))
         self._apply_dev_text()
         conn = (c.profile.id if c.profile else "", c.connected)
         switching = getattr(self, "_switching", False)
@@ -883,15 +956,15 @@ class MainWindow(QMainWindow):
             if switching:
                 self._switching = False
                 self.notifications.post(_("Active: {name} – {firmware}").format(
-                    name=c.profile.name, firmware=fw_label(c.info.version) if c.info else ""),
+                    name=c.profile.name, firmware=fw_label(c.info.version, c.firmware_key) if c.info else ""),
                                         "info", quiet=True)
             else:
                 self.notify(_("{name} connected – {firmware}").format(
-                    name=c.profile.name, firmware=fw_label(c.info.version) if c.info else ""), "success")
+                    name=c.profile.name, firmware=fw_label(c.info.version, c.firmware_key) if c.info else ""), "success")
         elif c.port and switching and getattr(c, "protocol", "") == "generic" and c.profile and conn != self._last_conn:
             self._switching = False
             self.notifications.post(_("Active: {name} – {firmware}").format(
-                name=c.profile.name, firmware=c.title().split(" – ", 1)[-1]), "info", quiet=True)
+                name=c.profile.name, firmware=title.split(" – ", 1)[-1]), "info", quiet=True)
         elif self._last_conn and self._last_conn[1] and not c.port and not switching:
             self.notify(_("FM-1 disconnected"), "warning")
         self._last_conn = conn

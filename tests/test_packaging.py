@@ -5,6 +5,7 @@ German when the system language is German."""
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -41,7 +42,7 @@ def lang_env(env: dict, lang: str) -> dict:
 def test_deb(dist):
     import build_deb
     deb = build_deb.build(dist)
-    assert deb.name == "fm1-companion_2.6.0_all.deb"
+    assert deb.name == "fm1-companion_2.6.1_all.deb"
     info = subprocess.run(["dpkg-deb", "-f", str(deb)], capture_output=True, text=True, check=True).stdout
     assert "Package: fm1-companion" in info and "Architecture: all" in info
     for dep in ("python3 (>= 3.11)", "python3-pyqt6", "python3-pyqt6.qtwebengine", "python3-mido", "python3-rtmidi",
@@ -88,7 +89,7 @@ def test_deb(dist):
     assert os.access(x / "usr/bin/fm1-companion", os.X_OK)
     out = subprocess.run([sys.executable, "-m", "fm1companion", "--version"], cwd=x,
                          env=dict(os.environ, PYTHONPATH=str(x / "usr/lib/fm1-companion")), capture_output=True, text=True)
-    assert out.stdout.strip() == "2.6.0"
+    assert out.stdout.strip() == "2.6.1"
     import xml.etree.ElementTree as ET
     meta = ET.parse(x / "usr/share/metainfo/fm1-companion.metainfo.xml").getroot()
     assert meta.findtext("id") == "fm1-companion" and meta.find("launchable").text == "fm1-companion.desktop"
@@ -141,7 +142,7 @@ def test_run_installer(dist, tmp_path):
     assert (home / ".local/share/icons/hicolor/48x48/apps/fm1-companion.png").exists()
     assert len(list((home / "FM-1/Samples/Beispiele (Demo)").glob("*.wav"))) == 7
     out = subprocess.run([str(launcher), "--version"], env=env, capture_output=True, text=True)
-    assert out.stdout.strip() == "2.6.0", out.stderr
+    assert out.stdout.strip() == "2.6.1", out.stderr
     # update: settings are kept
     cfg = home / ".config/fm1-companion"
     cfg.mkdir(parents=True)
@@ -246,3 +247,264 @@ def test_gui_risk_notice_both_languages(monkeypatch):
     assert gui.risk_title() == "Important notice" and gui.understood_text() == "I understand"
     monkeypatch.setenv("FM1C_LANG", "de")
     assert gui.risk_title() == "Wichtiger Hinweis" and gui.understood_text() == "Ich habe verstanden"
+
+
+# ------------------------------------------------------------------ quality pass after 2.6.0 (PKG-01 … PKG-08)
+def test_run_is_reproducible(tmp_path):
+    """PKG-01: same commit -> the same bytes, also when built at another time (no clock in the gzip header)."""
+    import gzip
+    import io
+    import tarfile
+    import time
+    import build_run
+    a = build_run.payload()
+    real = time.time
+    time.time = lambda: real() + 86400 * 400                       # "another day"
+    try:
+        b = build_run.payload()
+    finally:
+        time.time = real
+    assert a == b
+    assert a[4:8] == build_run.EPOCH.to_bytes(4, "little")         # gzip MTIME field is the fixed stamp
+    tar = tarfile.open(fileobj=io.BytesIO(gzip.decompress(a)))
+    members = tar.getmembers()
+    names = [m.name for m in members]
+    assert names == sorted(names) and len(names) == len(set(names)) and "app/fm1companion/__init__.py" in names
+    assert all(m.mtime == build_run.EPOCH and m.uid == 0 and m.gid == 0 and m.uname == "root" and m.gname == "root"
+               for m in members)
+    assert all(m.mode == (0o755 if m.name.endswith(".sh") else 0o644) for m in members)
+    r1, r2 = build_run.build(tmp_path / "a"), build_run.build(tmp_path / "b")
+    assert r1.read_bytes() == r2.read_bytes()
+
+
+def _git_clean_checkout() -> bool:
+    try:
+        return subprocess.run(["git", "ls-files", "--error-unmatch", "tools/build_common.py"], cwd=ROOT,
+                              capture_output=True).returncode == 0
+    except OSError:
+        return False
+
+
+@pytest.mark.skipif(not _git_clean_checkout(), reason="not a git checkout")
+def test_packages_take_tracked_files_only(tmp_path):
+    """PKG-3 (github-docs audit): a stray, untracked file in the checkout never ends up in a package."""
+    import build_common
+    import build_run
+    strays = [ROOT / "fm1companion" / "zz_stray_audit_note.json", ROOT / "data" / "zz_stray.txt",
+              ROOT / "packaging" / "installer" / "zz_stray.py"]
+    try:
+        for s in strays:
+            s.write_text("stray")
+        files = {p.relative_to(ROOT).as_posix() for p in build_common.app_files()}
+        assert "fm1companion/zz_stray_audit_note.json" not in files and "fm1companion/__init__.py" in files
+        import gzip
+        import io
+        import tarfile
+        names = tarfile.open(fileobj=io.BytesIO(gzip.decompress(build_run.payload()))).getnames()
+        assert not [n for n in names if "zz_stray" in n]
+        assert "app/data/fm1-companion.desktop.in" in names and "app/packaging/installer/core.py" in names
+        assert "app/packaging/udev/60-fm1-companion.rules" in names and "app/LICENSE" in names
+        if shutil.which("dpkg-deb"):
+            import build_deb
+            deb = build_deb.build(tmp_path)
+            listing = subprocess.run(["dpkg-deb", "-c", str(deb)], capture_output=True, text=True, check=True).stdout
+            assert "zz_stray" not in listing
+    finally:
+        for s in strays:
+            s.unlink(missing_ok=True)
+
+
+@pytest.mark.skipif(not shutil.which("dpkg-deb"), reason="dpkg-deb missing")
+def test_deb_reproducible_changelog_maintainer(tmp_path):
+    """PKG-03/04 and the .deb twice: identical; file times of the checkout do not matter."""
+    import gzip
+    import build_common
+    import build_deb
+    d1 = build_deb.build(tmp_path / "a")
+    probe = ROOT / "fm1companion" / "__init__.py"
+    st = probe.stat()
+    try:
+        os.utime(probe, (1, 1))                                     # an old file time in the checkout
+        d2 = build_deb.build(tmp_path / "b")
+    finally:
+        os.utime(probe, (st.st_atime, st.st_mtime))
+    assert d1.read_bytes() == d2.read_bytes()
+    ex = tmp_path / "x"
+    subprocess.run(["dpkg-deb", "-x", str(d1), str(ex)], check=True)
+    log = gzip.decompress((ex / "usr/share/doc/fm1-companion/changelog.gz").read_bytes()).decode()
+    assert "{maintainer}" not in log and "{" not in log
+    ver = build_common.version()
+    assert log.startswith(f"fm1-companion ({ver}) stable; urgency=low\n\n  * ")
+    # (the date is the release date of this version in the metainfo – it may be corrected on release day)
+    assert log.rstrip("\n").endswith(" -- bit-wmike <295828+bit-wmike@users.noreply.github.com>  "
+                                     + build_common.changelog_date(ver))
+    assert re.fullmatch(r"(Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d\d [A-Z][a-z]{2} \d{4} 12:00:00 \+0000",
+                        build_common.changelog_date(ver))
+    info = subprocess.run(["dpkg-deb", "-f", str(d1)], capture_output=True, text=True, check=True).stdout
+    assert "Maintainer: bit-wmike <295828+bit-wmike@users.noreply.github.com>" in info and "localhost" not in info
+    assert build_common.MAINTAINER == "bit-wmike <295828+bit-wmike@users.noreply.github.com>"
+    cp = (ex / "usr/share/doc/fm1-companion/copyright").read_text()
+    assert "Copyright: 2026 bit-wmike and the FM-1 Companion contributors" in cp
+    sug = info.split("Suggests:")[1].split("\n")[0]
+    for p in ("python3-serial", "pkexec | policykit-1", "pulseaudio-utils", "python3-tqdm"):       # PKG-07
+        assert p in sug, p
+    rec = info.split("Recommends:")[1].split("\n")[0]
+    # the rescue in ROM boot mode must be ready before an emergency: what it imports is installed by default
+    assert "audacity" in rec and "python3-crcmod" in rec and "python3-yaml" in rec and "python3-crcmod" not in sug
+
+
+def test_metainfo_release_date_is_real():
+    """PKG-2: 2.6.0 was merged to main on 2026-11-12 (commit 74e797f) – not a date in the future."""
+    import build_common
+    assert build_common.release_date("2.6.0") == "2026-11-12"
+    assert build_common.changelog_date("2.6.0") == "Thu, 12 Nov 2026 12:00:00 +0000"
+    with pytest.raises(SystemExit):
+        build_common.release_date("0.0.1")
+
+
+def test_deps_json_names_the_feature_of_every_suggested_package():
+    import json
+    d = json.loads((ROOT / "fm1companion/data/deps.json").read_text("utf-8"))
+    assert all(x.get("why") for kind in ("required", "recommended", "suggested") for x in d[kind])
+    from fm1companion import diag
+    whys = {x["why"] for kind in ("required", "recommended", "suggested") for x in d[kind]}
+    assert whys <= set(diag.DEP_WHY)                                # every text is marked for translation
+
+
+def test_man_page_and_help_are_current():
+    """PKG-05"""
+    man = (ROOT / "packaging/fm1-companion.1").read_text()
+    assert "currently German" not in man and "English, German and Spanish" in man
+    assert "three simulated FM-1" in man and "two simulated" not in man
+    assert "en, de or es" in man and "FM1C_LANG=en|de|es" in man
+    env = {k: v for k, v in os.environ.items() if k not in ("FM1C_LANG", "LC_ALL", "LC_MESSAGES", "LANGUAGE")}
+    env.update(LANG="C.UTF-8", PYTHONPATH=str(ROOT))
+    out = subprocess.run([sys.executable, "-m", "fm1companion", "--help"], env=env, capture_output=True, text=True,
+                         cwd=ROOT).stdout
+    assert "en, de, es" in out and "three simulated FM-1" in out
+    from fm1companion import i18n
+    assert set(i18n.available_languages()) >= {"en", "de", "es"}
+
+
+def test_check_explains_the_language_package(monkeypatch, capsys):
+    """PKG-06: the Qt translation package is a hard dependency of the packages but not needed in English –
+    `--check` says why it calls it optional."""
+    from fm1companion import app, diag, i18n
+    old = i18n.current_language()
+    i18n.set_language("en")
+    try:
+        monkeypatch.setattr(diag, "check_deps", lambda: [diag.DepState("qt6-translations-l10n", False, False, "Qt dialogs"),
+                                                        diag.DepState("ffmpeg", False, False, "MP3")])
+        monkeypatch.setattr(diag, "midi_ports", lambda: ([], [], "x"))
+        app.check()
+        out = capsys.readouterr().out
+    finally:
+        i18n.set_language(old)
+    assert "(optional) qt6-translations-l10n  (only needed when the user interface is not English: Qt dialogs)" in out
+    assert "(optional) ffmpeg  (MP3)" in out
+
+
+def test_system_install_is_readable_for_everyone(tmp_path):
+    """PKG-02: installing for all users under umask 077 must not produce folders only root can enter."""
+    sys.path.insert(0, str(ROOT / "packaging/installer"))
+    import core
+    src = tmp_path / "src"
+    old = os.umask(0o077)
+    try:
+        (src / "fm1companion" / "ui").mkdir(parents=True)
+        (src / "fm1companion" / "__init__.py").write_text('__version__ = "9.9.9"\n')
+        (src / "fm1companion" / "ui" / "x.py").write_text("x = 1\n")
+        (src / "packaging" / "installer").mkdir(parents=True)
+        shutil.copy(ROOT / "packaging/installer/core.py", src / "packaging/installer/core.py")
+        (src / "uninstall.sh").write_text("#!/bin/sh\n")
+        (src / "data").mkdir()
+        shutil.copy(ROOT / "data/fm1-companion.desktop.in", src / "data/fm1-companion.desktop.in")
+        prefix = tmp_path / "sysprefix"
+        core.install(src, prefix, system=True, log=lambda *_a: None, fluidsynth_fix=False)
+    finally:
+        os.umask(old)
+    L = core.layout(prefix, True)
+    bad = [(oct(p.stat().st_mode & 0o777), str(p.relative_to(prefix))) for p in [L["app"], *L["app"].rglob("*")]
+           if (p.stat().st_mode & 0o777) not in ((0o755,) if p.is_dir() else (0o644, 0o755))]
+    assert not bad, bad[:5]
+    assert (L["app"] / "uninstall.sh").stat().st_mode & 0o777 == 0o755
+    assert (L["app"] / "fm1companion" / "ui").stat().st_mode & 0o777 == 0o755
+    for f in (L["bin"] / "fm1-companion", L["apps"] / "fm1-companion.desktop"):
+        assert f.stat().st_mode & 0o044 == 0o044, f
+    un = (L["apps"] / "fm1-companion-uninstall.desktop").read_text()
+    assert "GenericName=Uninstaller" in un and "FM-1 manager" not in un                 # PKG-08
+    assert "GenericName=FM-1 manager" in (L["apps"] / "fm1-companion.desktop").read_text()
+
+
+@pytest.mark.parametrize("answer,removed", [("yes\n", True), ("ja\n", True), ("Y\n", True), ("j\n", True),
+                                             ("JA \n", True), ("n\n", False), ("\n", False), ("", False),
+                                             ("yep\n", False)])
+def test_uninstall_all_confirmation(tmp_path, answer, removed):
+    """PKG-08: yes/ja/y/j are accepted; no answer or end of input keeps settings and still removes the app."""
+    home = tmp_path / "home"
+    env = fake_env(home)
+    res = subprocess.run(["bash", str(ROOT / "install.sh"), "--no-apt"], env=env, capture_output=True, text=True)
+    assert (home / ".local/bin/fm1-companion").exists(), res.stdout + res.stderr
+    cfg = home / ".config/fm1-companion"
+    cfg.mkdir(parents=True, exist_ok=True)
+    (cfg / "config.json").write_text("{}")
+    res = subprocess.run(["bash", str(home / ".local/share/fm1-companion/app/uninstall.sh"), "--all"],
+                         env=lang_env(env, "C.UTF-8"), input=answer, capture_output=True, text=True)
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert not (home / ".local/bin/fm1-companion").exists()               # the app goes in every case
+    assert (cfg / "config.json").exists() is (not removed), res.stdout
+    assert ("Removing the app, settings and internal data." in res.stdout) is removed
+    assert ("Settings and internal data are kept" in res.stdout) is (not removed)
+    assert (home / "FM-1/Backups/wichtig.json").exists()
+
+
+def test_install_sh_refuses_unknown_options(tmp_path):
+    """HYG-6: './install.sh --no-atp' (a typo) went straight on to 'sudo apt-get'. An unknown option now stops the
+    script before anything happens, in the user's language."""
+    for lang, word in (("C.UTF-8", "Unknown option: --no-atp"), ("de_DE.UTF-8", "Unbekannte Option: --no-atp")):
+        home = tmp_path / lang
+        home.mkdir()
+        env = lang_env(dict(os.environ, HOME=str(home), XDG_DATA_HOME=str(home / "d"),
+                            XDG_CONFIG_HOME=str(home / "c")), lang)
+        res = subprocess.run(["bash", str(ROOT / "install.sh"), "--no-atp"], env=env, capture_output=True, text=True)
+        assert res.returncode == 2 and word in res.stderr and "--help" in res.stderr, res.stderr
+        assert not res.stdout.strip() and list(home.iterdir()) == []          # nothing started, nothing written
+
+
+def test_own_files_carry_the_licence_line_and_sane_modes():
+    """HYG-2/3: every own script names its licence; a bundled twin is data, not a program."""
+    for rel in ("install.sh", "uninstall.sh", "packaging/run-stub.sh", "fm1companion/web/webmidi_polyfill.js",
+                "tests/mock_fm1.mjs", "tests/mock_fm1_shared.mjs", "tests/mock_sloop.mjs"):
+        assert "SPDX-License-Identifier: GPL-3.0-only" in "\n".join((ROOT / rel).read_text("utf-8").splitlines()[:2]), rel
+    modes = subprocess.run(["git", "ls-files", "-s"], cwd=ROOT, capture_output=True, text=True)
+    if modes.returncode or not modes.stdout:
+        pytest.skip("not a git checkout")
+    for line in modes.stdout.splitlines():
+        mode, path = line.split()[0], line.split("\t", 1)[1]
+        if path.endswith((".wasm", ".png", ".json", ".md", ".po")):
+            assert mode == "100644", path
+
+
+def test_release_261_metadata():
+    """2.6.1 is the first package since 2.4.0: one version everywhere (what the workflows check), the change list
+    keeps 2.6.0 and 2.5.0 and says they were source only."""
+    import re
+    import build_common
+    ver = build_common.version()
+    assert (ROOT / "README.md").read_text("utf-8").splitlines()[0] == f"# FM-1 Companion Suite {ver}"
+    assert f'"FM-1 Companion Suite {ver}"' in (ROOT / "packaging/fm1-companion.1").read_text("utf-8").splitlines()[0]
+    for form in ("bug_report.yml", "hardware_test.yml"):
+        assert f'placeholder: "{ver}"' in (ROOT / ".github/ISSUE_TEMPLATE" / form).read_text("utf-8"), form
+    meta = (ROOT / "packaging/fm1-companion.metainfo.xml").read_text("utf-8")
+    versions = re.findall(r'<release version="([^"]+)"', meta)
+    assert versions[0] == ver                                       # the newest entry is this version
+    older = [v for v in versions if v in ("2.6.1", "2.6.0", "2.5.0", "2.4.0")]
+    assert older == ["2.6.1", "2.6.0", "2.5.0", "2.4.0"]            # nothing dropped from the change list
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", build_common.release_date(ver))
+    for old in ("2.6.0", "2.5.0"):
+        entry = meta.split(f'<release version="{old}"')[1].split("</release>")[0]
+        assert "Source code only" in entry, old
+    # the README never names a package file of a fixed version (it was wrong for two releases)
+    readme = (ROOT / "README.md").read_text("utf-8")
+    assert not re.search(r"fm1-companion_\d+\.\d+\.\d+_all\.deb|FM-1-Companion-Suite-\d+\.\d+\.\d+\.run", readme)
+    assert "docs/UNTESTED.md" in readme and "three simulated FM-1" in readme and "git clone --depth 1" in readme

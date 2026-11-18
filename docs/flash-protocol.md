@@ -1,6 +1,8 @@
 # FM-1 firmware installation – protocol, loaders, safety (installer workstream)
 
-Status: research notes for `fm1companion/flash/`. **Nothing here has touched a real FM-1.**
+Status: research notes for `fm1companion/flash/`. **Almost nothing here has touched a real FM-1** – the one
+exception is an update within Melodee (1.6.0-rc.8 → 1.6.0), see `docs/UNTESTED.md`; per kind of step the app keeps
+this in `fm1companion/flash/tested.py` and shows it before the click.
 Every statement is tagged **[V]** = verified from source code we read (file named), or
 **[A]** = assumed / taken from documentation or third-party text without code we could check.
 
@@ -137,7 +139,11 @@ names on a non-FM-1 VID are never probed.
 | interrupted step 2 | journal + recovery wizard resumes with the same package in its own loader |
 | non-resumable loader | explicit power/battery/cable confirmation |
 | two installs at once | process lock file + in-process lock |
-| several FM-1 attached | warning; the engine sticks to the selected port name, the loader is searched among FM-1 candidates only |
+| several FM-1 attached | the target is pinned by its USB path (sysfs; otherwise a unique serial number) for every step and across the re-enumerations; if it cannot be pinned and more than one candidate is connected, nothing is sent. Unpinned (no USB details at all): a second FM-1 that answers next to the freshly started loader stops the install before step 2 – a second device that *replaces* the target while it restarts cannot be told apart there |
+| plan made for another device state | `Engine.write(expect_identity=…)`: the identity the plan was made for (after the V15 step: `FM-1_015`) is compared with the handshake when writing starts; a difference sends nothing |
+| Cancel after the start | honoured until the first UPGRADE; with a running Felucca-family firmware also during step 1 (the host stops answering before it confirms `0xE0000000`; ota.c then erases the staging area and carries on – "Nothing is committed before the host's success", after up to 4 × 3 × 5 s). With the original firmware as the running firmware (its step 1 is unknown [A]) the button is switched off when UPGRADE is sent. The dialog never accepts a cancel the engine cannot honour |
+| the host's last answer of step 1 is lost | the port stays open after `0xE0000000` was answered until the device leaves the bus (at most 6 s more per repeat) and a repeat is answered again; if no loader appears and the FM-1 still answers with its start identity, the result is "nothing was written" (`notstaged`, safe) instead of "paused" |
+| a download breaks off | `firmware._fetch`: https only (redirects too), at most 16 MiB, kept only when `Content-Length` bytes arrived; a cached package no checksum vouches for is re-read (`ufw_check`) and fetched again when damaged |
 | data loss | auto-backup (Felucca protocol) before writes; plan lists what will be lost |
 | V16 URL changes content | hash check, refuse on mismatch |
 | CHECK HEAD refusal (stock return) | detected (step 1 stops in 0x…–0x4000 window) → explain, never retried another way |
@@ -173,8 +179,19 @@ Recovery's *Finish installation* is unchanged (it writes exactly the interrupted
 `fwfamily.by_key` (device names such as `jiant` = catalog key `jiant-fm`) and checks it against what the INFO answer
 names (`fwfamily.by_info`); a conflict (stale profile) means "unknown" and so a switch.
 
-The plan says what happens: "Switching from X to Y: the app installs the original firmware V15 first, then Y –
-recommended, so no leftovers of X stay on the FM-1." The checkbox *Expert: install directly without the V15 step*
+The plan says what happens and why, and nothing more than is known (`planner.V15_WHY`, `V15_STEP_FACTS`):
+"Switching from X to Y: the app installs the original firmware V15 first, then Y. Why: firmware authors expect a
+start from the original V15, and a direct switch from another custom firmware has bricked a device at least once."
+Sources: JIANT's README asks for V15 first when coming from another custom firmware ("a brick was reported going
+straight from one") [A]; Melodee's README recommends a stop between firmwares too (TransitFM1, not offered by this
+app) [A]. What the plan does **not** claim any more: that the V15 step removes leftovers. It does not – the stock
+loader's recorded step 2 requests exactly `flash.bin[0x4000:end)`, i.e. 0x4000–0x92FFF for V15 (§17.2); the data
+areas above stay as they are, and V15 may read them as its own settings (presets can look garbled until the target
+is installed). The plan also says that the V15 step itself has no start protection (Melodee RECOVERY.md: "Restoring
+stock also removes Melodee's application boot protection; keep power connected throughout the update") and that
+this two-step path has not been run on a real FM-1 by this app. If the running firmware refuses V15 (CHECK HEAD,
+FAILED −5, §16), nothing is written, the chain is cleared and the message names what is left: the expert option for
+`default_on`, download mode with another tool (M-Flasher) for `locked`. The checkbox *Expert: install directly without the V15 step*
 (`plan_install(via_v15=False)`, only for `default_on`) is off by default, is **not remembered** (no per-switch memory,
 no setting) and adds a warning to the plan.
 
@@ -184,20 +201,22 @@ the original firmware's settings storage 0x93000..0xE8FFF – V15 can overwrite 
 "Your projects on the device can be lost during the intermediate step – the app backs them up first."
 
 **Two-step chain in the journal.** Before the V15 step the journal records the target
-(`journal.json` `"chain": {"key", "name", "tag", "file", "device_id", "started"}`); it is cleared once the target is
-written (or when the V15 step failed safely, nothing written). Interrupted after V15 (cancel, failure of the target
+(`journal.json` `"chain": {"key", "name", "tag", "file", "device_id", "usb_path", "started"}`); it is cleared once
+the target is written – by the install flow or by Recovery's *Finish installation* –, when the V15 step failed
+safely (nothing written), or when the user presses *Dismiss*; it is ignored after 14 days and matched to the
+connected FM-1 by USB path or profile. Interrupted after V15 (cancel, failure of the target
 step, or the V15 step finished on the Recovery page): the FM-1 runs `FM-1_015`, Install & Versions shows *Continue:
 install Y* and the plan (`plan_install(chain=…)`, `InstallPlan.chain_resume`) installs Y directly – the V15 step is
 not repeated. If you stay on V15 and the presets are garbled: System > Reset Patches.
 
 ## 13. Rescue level 2 – ROM boot mode "WL82 UBOOT1.00" (4c4a:8057)
 
-* [V MvaveFM1Unbricker 1.2.0, MIT, Michael P Jones; Reddit guide u/acrawf1] An FM-1 whose firmware does not
+* [V MvaveFM1Unbricker 1.2.0 (bundled since 2.6.1: 1.2.1, see §19), MIT, Michael P Jones; Reddit guide u/acrawf1] An FM-1 whose firmware does not
   start appears as the USB mass storage device "WL82 UBOOT1.00". MIDI installers then report "FM-1 not found".
   kagaimiq's jl-uboot-tool (MIT) loads a RAM loader (JieLi `wl82loader.bin`, sha256 d41da612…) and can
   read/erase/write the 1 MiB flash (SCSI via `/dev/sgN`, on Linux root + module `sg`).
 * Procedure (all in the unmodified `vendor/unbricker/fm1_unbrick.py`): exactly one WL82 device; chip key **0x980F**
-  and flash ID **0x856014** (no override); read the whole flash twice, compare, save;
+  and flash ID **0x856014** or, from the bundled 1.2.1, **0xB36014** (§19; no override); read the whole flash twice, compare, save;
   extract the firmware area from the .fwsc (`flash.bin[0x4000:0x93000]`; V15 → sha256 **6edf3c37…** [V own
   test]); write only **0x4000..0x92FFF**; read back and compare; switch off and on.
   Never below 0x4000, never 0xE9000..0xFBFFF (Bluetooth, factory sounds) and 0xFF000..; no chip/block erase.
@@ -216,7 +235,7 @@ not repeated. If you stay on V15 and the presets are garbled: System > Reset Pat
 [V TRANSPORTER-GUIDE.md] If the FM-1 never appears as WL82: a Seeed XIAO RP2040 on the USB data lines;
 it sends the USB_KEY at power-on and forces ROM boot mode. Wiring: **D6 (GP0) → D+ (green),
 D7 (GP1) → D− (white), GND → GND (black), do not connect VBUS (red).** Flash the UF2 with the BOOT button held;
-then `fm1_transporter_recover.py` (rekey → info: `key=980F id=856014` → dump → restore --write).
+then `fm1_transporter_recover.py` (rekey → info: `key=980F id=856014`, on a newer FM-1 `id=B36014` → dump → restore --write).
 **RP2040 required, explicitly not RP2350** (GPIO erratum, D+ pull-up). [A, untested] Raspberry Pi Pico
 (RP2040) instead of XIAO: pin 1 = GP0 → D+, pin 2 = GP1 → D−, any GND, VBUS unconnected; try the XIAO UF2 or
 rebuild kurogedelic/FM-1-transporter with `-DPICO_BOARD=pico` and the same loader.
@@ -417,3 +436,81 @@ Careful mode: Settings › "Careful USB mode for flashing" = auto (FM-1 behind a
 never. Flash log: `DATA_DIR/flash/logs/flash-*.txt` (every request with gap, repetitions, duplicates, port
 events, resumes, kernel lines of the time window), last 3 in the bug report ZIP (`flash/`), redacted.
 Tests: `tests/test_usb_hub.py` (`sim.SimFaults`).
+
+## 19. The newer FM-1: flash chip UC25HQ80, JEDEC 0xB36014 (2026-11-17)
+
+**Facts, with their sources** (repositories as cloned on 2026-11-17; nothing here was run on such a unit by this app):
+
+* FM-1s sold from late 2026 – "the ones with the logo on the front" – carry another maker's 1 MiB SPI NOR: the JEDEC
+  ID reads `B3 60 14` (UCUN UC25HQ80) instead of Puya's `85 60 14`; the type and capacity bytes are the same
+  [V ChoralRoot `docs/INSTALL-COMPAT.md` "A second flash chip", HISTORY 3y222; MvaveFM1Unbricker a1eaf4d;
+  fm1-base 6d6ae6d; Melodee PR #111].
+* The Felucca family reads the ID once at power-on and, on an ID it does not know, runs **RAM-only**: nothing is read
+  from or written to the flash, and most of them skip the update session too – an installer sends UPGRADE and the unit
+  never asks for the first block ("stopped answering after 0 requests") [V ChoralRoot as above; Felucca README 1.8.2;
+  SLOOP 2.8.5 notes; TransitFM1 `docs/SAFETY.md` "The flash chip": 0.1.3 shows UNKNOWN FLASH CHIP and its loader
+  refuses too]. So a too-old version on a newer unit **strands** it: the only way back is the chip's ROM boot
+  (§13) and writing the original V15 from there.
+* What the firmwares do on the chip once they know it: only generic SPI NOR commands (9F, 05/35, 06, 20, 02, 0B, 4B)
+  [V ChoralRoot, Hortator ac55f47]. The part can be slower to erase or program than the Puya part [V ChoralRoot
+  HISTORY 3y264, felucca-bsp #12] – "not tried on hardware" there.
+* **The original firmware.** No source read says which original version the newer units are delivered with. The
+  original V15 is named as the way back on exactly these units by Felucca (README), ChoralRoot (releases/0.29.1.md),
+  TransitFM1 (SAFETY.md) and the Unbricker (README, site); one such unit took a community firmware through M-VAVE's own
+  updater from the original firmware it came with (ChoralRoot HISTORY 3y222). About the V16 package on these units
+  nothing was found. m-vave/fm1_open says nothing on the chip.
+* **m-bootloader** [V jvitkauskas/m-bootloader README "Little tested on the FM-1's newer flash chip"]: one such unit
+  did not start after 1.1 or 1.2 was installed, cause unknown; another runs 1.3 and 2.0 on one owner's report.
+  **SLOOP 3** [V its installer page]: "accepts this chip, but it has not been tried on one yet".
+* **How to find out which chip a unit has.** Over MIDI the original firmware and most firmwares do not say. Ways that
+  exist: (a) ROM boot mode – the Unbricker's `info`/`backup`/`restore` print `Flash ID 0x…`, the Transporter
+  `id=…`; (b) the update identity answer (`00 59 11`, 27 text bytes) of fm1-base firmwares built between fm1-base
+  19bf320 (2026-11-05) and 3ae2a65 (2026-11-06) carries the ID in text bytes 24..26 (felucca-bsp#29: AMB-1 1.3.1,
+  LOOM-8 0.13 …; taken out again because installers that strip only trailing zeros took the answer for no FM-1 – this
+  app did so too until 2.6.1); (c) M-Flasher shows it under Device info (FLASH CHIP), m-bootloader in its menu;
+  (d) ChoralRoot before 0.29.1 shows `no unit ID` on such a unit, TransitFM1 before 0.1.4 `UNKNOWN FLASH CHIP`.
+  No source documents a difference in the USB descriptors or the serial number.
+
+**What the app does** (`fm1companion/hardware.py`, `flash/planner.py` `_new_chip`, `ui/hw_revision.py`):
+
+* The table `fm1companion/data/hardware.json` holds, per firmware, the first version that accepts 0xB36014, with the
+  commit it was read in (`docs/firmware-support.md` shows it). `hardware.support(key, version)` answers yes / no /
+  risky / unknown; versions are compared in each firmware's own order (JIANT: V10.6z before V10.7.N; a bare "V10.7"
+  is two different builds and counts as unknown).
+* The unit's revision lives in the device profile (`hw_revision`, `hw_revision_source`, `flash_id`). It is set by
+  (a) and (b) above when the app sees the ID, otherwise by the owner's answer to one question – "Does your FM-1 have
+  the M-VAVE logo on the front?" – asked once per device when an installation depends on it, changeable on the pages
+  Devices and Overview.
+* **"Newer unit" is sticky, the strictest reading wins** (`hardware.set_revision`). Profiles are matched to devices
+  loosely (FM-1s have no reliable serial number), so a second FM-1 can appear under a profile: a read or answered
+  "earlier" never replaces a recorded "newer" – it is kept as `hw_revision_conflict` and shown ("two devices under one
+  profile?"). "Newer" always counts, whoever says it. Only the owner takes "newer" or a read ID away: *Unit …* with
+  an explicit confirmation (logged). Merging two profiles keeps the strictest statement.
+* A flash ID read in ROM boot mode is stored on a profile only when that profile is unambiguously the unit in ROM
+  mode – the device the Recovery page itself sent there (softkey, same USB port), or the only profile seen at that
+  USB port in this session. Otherwise it counts for this session's checks at that USB port (`hardware.SESSION_READS`)
+  and nothing is stored. Recovery › finish installation judges the FM-1 that waits in update mode, not the active
+  device: certain only by a serial number; otherwise unknown at best, and newer if any candidate profile is.
+* What feeds the rule: the version is the release tag, the catalog's version or the version a checksum vouches for –
+  never a file name or display name; a pre-release or variant of a minimum version ("1.6.0-rc", "-beta", "_rc1") is
+  not that version unless the row lists it (`also`: Felucca 1.8.2-beta); a table row applies only to its own
+  repository (a fork added under the same key is unknown); only M-VAVE's two original packages count as "the
+  original" – another target of the stock loader family is unknown. An unreadable table blocks every plan for a unit
+  that is not known to be an earlier one.
+* The plan (every way to install goes through it: releases, catalog, link import, own files, the V15 step, "back to
+  the original", continuing a switch, finishing an interrupted installation):
+
+  | unit | target accepts the chip | target does not / risky / not known (catalog firmware) | own file, original V16 |
+  |---|---|---|---|
+  | earlier (no logo) | – | – | – |
+  | newer (logo) | – (original V15: a note that this app has not run it there) | **blocked**, no override; names the first version that works | warning + confirmation |
+  | not known | – | warning + the confirmation "My FM-1 has NO logo on the front" | warning + confirmation |
+
+  On a newer unit that runs a version without support the plan and the Overview say why saving and updating fail and
+  name the way out (ROM boot, original V15, then a version that knows the chip).
+* **Recovery.** The bundled MvaveFM1Unbricker is upstream's a1eaf4d (tool version 1.2.1), whose only change against
+  the 1.2.0 bundled before is that 0xB36014 is accepted beside 0x856014 (`FLASH_IDS_OK`; the Transporter script the
+  same). The files are copied unchanged; the checksums in `flash/uboot_manifest.py` were replaced with theirs. The
+  app's own gates (`rescuegate.py`, `restzone.py`, `flashmodel.py`) do not look at the flash ID themselves – they call
+  the Unbricker's `check_identity` – and are unchanged. Upstream's later 1.3.0 (full-restore) and 1.4.0 (macOS) are
+  not taken over. Writing in ROM boot mode was never run by this app on either chip (`docs/UNTESTED.md`).

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import flashmodel as fm, package as pk, texts as rescue_texts
-from .. import fwfamily, melodee16 as m16
+from .. import fwfamily, hardware, melodee16 as m16
 from ..i18n import _
 
 TRAP_TEXT = _("When switching to the original firmware, the running Felucca firmware compares the boot area "
@@ -29,6 +29,9 @@ CONFIRM_TEXT = {
                       "checksum myself."),
     "power": _("The FM-1 is charged or on power, the cable is plugged directly into the computer, and the "
                "computer does not go to sleep during the installation."),
+    # the same, when the FM-1 is behind a USB hub: the sentence must not claim a direct connection
+    "power_hub": _("The FM-1 is charged or on power, and the computer does not go to sleep during the installation. "
+                   "I know that the FM-1 is connected through a USB hub; a port directly on the computer is safer."),
     "no_backup": _("I am not making a backup and accept that projects and sounds may be lost."),
     "beta": _("I understand that this is a test version (beta)."),
     "felucca09": _("I know that Felucca 0.9 data can prevent the start when switching to 1.x "
@@ -37,8 +40,20 @@ CONFIRM_TEXT = {
                      "against any checksum (the release has no SHA256SUMS file)."),
     "melodee16_down": _("I understand: the older firmware cannot read projects, presets and backups from "
                         "Melodee 1.6. My way back is a backup from before the update to 1.6."),
+    "no_logo": _("My FM-1 has NO M-VAVE logo on the front – it is an earlier unit. (On a newer unit with the logo "
+                 "this installation could leave the FM-1 unable to save and unable to be updated.)"),
+    "newchip_unverified": _("I understand: nobody has confirmed that this package works on a newer FM-1 (logo on the "
+                            "front). If mine is one and the package does not know its flash chip, the FM-1 can "
+                            "afterwards only be brought back through the recovery in ROM boot mode."),
     "v16": _("I understand: V16 is experimental and meant only with a backup. The way back from V16 to V15 has not "
              "yet been confirmed with real V16 – in the worst case only ROM boot mode helps (recovery stage 2)."),
+}
+
+# where the expected checksum of a release package comes from (said in the plan's "load & check" step)
+CHECKSUM_SOURCE = {
+    "sums": _("The checksum comes from the SHA256SUMS file of the release."),
+    "digest": _("The checksum is GitHub's digest for the release file (GitHub computes it when the author uploads "
+                "the file; the release has no SHA256SUMS file)."),
 }
 
 V16_WARNING = _("Experimental – only with a backup. V16 uses a different flash layout than V15 and all community "
@@ -48,6 +63,14 @@ V16_WARNING = _("Experimental – only with a backup. V16 uses a different flash
                 "If the way back does not work, ROM boot mode helps (recovery stage 2). "
                 "Recommendation: not on your main FM-1.")
 MULTI_DEVICE_TEXT = _("Please leave only the FM-1 connected that you want to update.")
+# why the V15 step is in the plan – what is known, nothing more (sources: docs/flash-protocol.md §12)
+V15_WHY = _("Why: firmware authors expect a start from the original V15, and a direct switch from another custom "
+            "firmware has bricked a device at least once.")
+V15_STEP_FACTS = _("About the V15 step: the original firmware has no start protection – keep power and USB connected "
+                   "while it is written. Saved data of the old firmware can remain in the flash (the V15 step only "
+                   "writes the firmware area), and the original firmware may read it as its own: presets can look "
+                   "garbled until the target firmware is installed. This two-step path has not been run on a real "
+                   "FM-1 by this app yet.")
 
 
 @dataclass
@@ -64,6 +87,10 @@ class DeviceState:
     busy: bool = False            # another installation is running
     pinned: bool = False          # target device unambiguously pinned by USB connection/serial number
     usb_notes: list = field(default_factory=list)   # USB hub / careful mode / autosuspend (flash/robust.plan_notes)
+    revision: str = ""            # hardware revision: "new" (logo on the front, flash 0xB36014) | "old" | "" unknown
+    hubs: int = 0                 # external USB hubs between the computer and the FM-1 (devices.usb_link)
+    candidates: list = field(default_factory=list)   # firmware keys known for this identity (catalog, experience)
+    usb_id: str = ""              # USB ID of the running device, "4c4a:c755" – "" = not known
 
     @property
     def update_mode(self) -> bool:
@@ -71,7 +98,12 @@ class DeviceState:
 
     @property
     def open_firmware(self) -> bool:
-        return bool(pk.OPEN_ID_RE.match(self.identity))
+        """M-VAVE's FM1 Open: its own update protocol (armed with command 50 and a build tag – a bare UPGRADE is
+        not what its updater sends). FM1_OFFICIAL_OPEN / FM1_COMMUNITY_n, the V14 build's FM-1_8000014
+        (app/version.h FM1_UPDATE_PRODUCT) and a device recorded as FM1 Open – not the whole FM-1_8xxxxxx range,
+        other firmwares live there (FoMni)."""
+        return bool(pk.OPEN_ID_RE.match(self.identity)) or self.identity == pk.OPEN_V14_ID or \
+            fw_identity(self.firmware_key) == "fm1-open"
 
 
 @dataclass
@@ -91,13 +123,21 @@ class Target:
     known: bool = True            # from catalog/builtin; False = own file
     prerelease: bool = False
     checksum: bool = True         # False: package cannot be checked against any checksum (confirmation needed)
+    checksum_source: str = ""     # where the expected checksum comes from: "sums" (SHA256SUMS of the release) |
+    #                               "digest" (GitHub's digest for the release file) | "" (catalog / pinned / not said)
+    flash: list = field(default_factory=list)   # JEDEC IDs the firmware's firmware.json names (hardware.support)
+    flash_tag: str = ""           # … and the version that was read at
+    repo: str | None = None       # "owner/name" the firmware comes from (None: not from a spec) – a table row of
+    #                               hardware.json only applies to its own repository
 
     @classmethod
     def from_spec(cls, spec, tag: str = "", file: Path | None = None, package=None, prerelease=False):
         return cls(name=spec.name, product=spec.product, sha256=(spec.sha256 or "").lower(),
                    family=_family(spec), requires_stock_v15=bool(spec.requires_stock_v15),
                    notes=list(spec.notes or []), resources=bool(spec.resources), key=spec.key, tag=tag,
-                   file=file, package=package, known=True, prerelease=prerelease)
+                   file=file, package=package, known=True, prerelease=prerelease,
+                   flash=list(getattr(spec, "flash", None) or []), flash_tag=getattr(spec, "flash_tag", "") or "",
+                   repo=getattr(spec, "repo", "") or "")
 
     @classmethod
     def from_file(cls, info: pk.PackageInfo, catalog_entry=None):
@@ -124,9 +164,9 @@ def _family(spec) -> str:
     lf = getattr(spec, "loader_family", "")
     if lf:
         return pk.FAMILY_OF_CATALOG.get(lf, lf)
-    if spec.protocol == "felucca" or spec.installer:
-        return "felucca"
-    return ""
+    if getattr(spec, "builtin", False) and spec.protocol == "felucca":
+        return "felucca"                 # Melodee, Skiff, SLOOP: their packages carry the Felucca loader
+    return ""                            # a firmware the user added: only its package tells (analyze)
 
 
 @dataclass
@@ -208,10 +248,47 @@ def fw_identity(key: str) -> str:
     return f.key if f is not None else k
 
 
+# custom firmwares known to answer the update handshake as "FM-1_015" (TransitFM1 docs/SAFETY.md, table "what it
+# answers": the running app and its USB rescue)
+V15_LOOKALIKES = {"transitfm1"}
+
+
+def _is_stock_key(key: str) -> bool:
+    return (key or "").strip().lower().startswith("stock")
+
+
+def v15_lookalike(state: DeviceState) -> tuple[str, str]:
+    """Does something say that the FM-1 answering "FM-1_015" is NOT M-VAVE's original V15? A custom firmware may
+    answer with that identity on purpose (TransitFM1 does, docs/SAFETY.md: "the official V15's: every installer
+    that guards against other firmwares lets an install over V15 through").
+    -> ("", "") nothing does – or what does:
+       ("key", firmware key)   the device is recorded as another firmware (profile, the owner's answer)
+       ("usb", USB ID)         it shows the Felucca family's USB ID 1209:… – the original firmware shows 4c4a:…
+       ("maybe", "a, b")       the firmware is not recorded, and the identity is also known for these firmwares
+    The owner's answer "original V15" settles "maybe", never "usb"."""
+    if state.identity != "FM-1_015":
+        return "", ""
+    key = fw_identity(state.firmware_key)
+    cands = [fw_identity(c) for c in state.candidates or []]
+    # a recorded firmware only counts if it is one that answers "FM-1_015" at all: after the app's own V15 step the
+    # profile still names the firmware that ran before (Melodee never answers FM-1_015 – that is no evidence)
+    if key and not _is_stock_key(key) and (key in V15_LOOKALIKES or key in cands):
+        return "key", key
+    if (state.usb_id or "").lower().startswith("1209:"):
+        return "usb", state.usb_id.lower()
+    others = [k for k in dict.fromkeys(cands) if k and not _is_stock_key(k)]
+    if others and not _is_stock_key(key):
+        return "maybe", ", ".join(others)
+    return "", ""
+
+
 def running_firmware(state: DeviceState) -> str:
     """the firmware that runs on the device as a catalog key – "" when it is not known for sure. The recorded key
     (profile, INFO, the user's choice) counts only if the INFO answer does not name another firmware: a fork that
     names itself ("FELUCCA KARMA 3.1") is never its parent, and a stale profile is no proof."""
+    kind, what = v15_lookalike(state)
+    if kind:                                 # answers FM-1_015, but is (or may be) another firmware
+        return what if kind == "key" else ""
     if pk.is_stock_identity(state.identity):
         return "stock-v" + state.identity[-2:] if state.identity[-3:].isdigit() else ""
     cur = fw_identity(state.firmware_key)
@@ -237,7 +314,10 @@ def v15_option(state: DeviceState, t: Target) -> str:
     the target is stock itself, update mode), locked (V16 switch, or a switch to a firmware the catalog requires V15
     for) or default_on (every other switch: from another custom
     firmware, from stock V13/V14/V16 or from an unknown firmware – the expert can opt out)."""
-    if state.identity == "FM-1_015" or state.update_mode:
+    # the V15 step exists to start from a known base: an FM-1 that already runs the original V15 never gets another
+    # write of it. Only if nothing says that "FM-1_015" is another firmware here (v15_lookalike) – a safety step is
+    # never dropped on ambiguous evidence.
+    if (state.identity == "FM-1_015" and not v15_lookalike(state)[0]) or state.update_mode:
         return "none"
     if v16_switch(state, t):
         return "locked"
@@ -250,11 +330,18 @@ def v15_option(state: DeviceState, t: Target) -> str:
     return "default_on"
 
 
+# what the original firmware reports and what M-VAVE calls it: V13 answers FM-1_009 (docs/flash-protocol.md §17.1)
+STOCK_VERSION_NAME = {9: "V13"}
+
+
 def current_name(state: DeviceState) -> str:
     """what the plan calls the running firmware ("" = not recognised)"""
     if not running_firmware(state):
         return ""
-    stock = f"V{int(state.identity[-3:])}" if pk.is_stock_identity(state.identity) else ""
+    stock = ""
+    if pk.is_stock_identity(state.identity) and not v15_lookalike(state)[0]:
+        n = int(state.identity[-3:])
+        stock = _("the original firmware {version}").format(version=STOCK_VERSION_NAME.get(n, f"V{n}"))
     return stock or state.firmware_name or state.firmware_key or state.version
 
 
@@ -270,7 +357,7 @@ def v16_switch(state: DeviceState, t: Target) -> bool:
     - From V16 to anything other than V15: whether V16 accepts the loader of a community firmware is unknown; the path
       via V15 uses the same stock loader in both directions. [Assumption, cautious]"""
     if t.is_v16:
-        return not runs_v16(state) and not pk.is_stock_identity(state.identity)
+        return not runs_v16(state) and not (pk.is_stock_identity(state.identity) and not v15_lookalike(state)[0])
     return runs_v16(state) and t.product != "FM-1_015" and t.key != "stock-v15"
 
 
@@ -286,10 +373,13 @@ def layout_change(state: DeviceState, t: Target) -> bool:
 
 def plan_install(state: DeviceState, target: Target, journal_active: dict | None = None,
                  stock_package: pk.PackageInfo | None = None, via_v15: bool | None = None,
-                 backup: bool | None = None, chain: dict | None = None) -> InstallPlan:
+                 backup: bool | None = None, chain: dict | None = None,
+                 stock_cached: bool | None = None) -> InstallPlan:
     """backup: None/True = back up first (if the firmware supports it), False = explicitly without backup.
     via_v15: None = the policy; False = the expert opt-out (only for a switch with v15_option "default_on").
-    chain: the journal's interrupted two-step switch ({"key": …}), if any."""
+    chain: the journal's interrupted two-step switch ({"key": …}), if any.
+    stock_cached: is the original V15 already on this computer (True) or must it be downloaded (False)? None =
+    not known (the plan then does not say)."""
     p = InstallPlan(target=target, state=state)
     t = target
     info = t.package
@@ -301,8 +391,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
     fam = t.family if t.family in ("stock", "felucca") else (info.family if info else "")
 
     # ---- locks
-    if state.busy or (journal_active and journal_active.get("phase") not in ("done", "failed", "safe")
-                      and not state.update_mode and journal_active.get("pid_alive")):
+    if state.busy:                         # (another program window: the lock file, checked when writing starts)
         p.blockers.append(_("An installation is already running. Please wait until it is finished."))
     if not state.connected:
         p.blockers.append(_("No FM-1 connected. Please connect it with a USB data cable and switch it on."))
@@ -351,6 +440,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
                             _("The waiting update loader reads the whole package once more and writes it. "
                               "Areas that are already correct are skipped."), writes=True))
         _tail(p, t)
+        _new_chip(p, state, t)
         _confirm_power(p, t, fam)
         return p
 
@@ -391,7 +481,9 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
                             "up anything from it. Back up important projects first with the firmware's own tool."))
         p.confirmations.append("no_backup")
     p.steps.append(Step("fetch", _("Load package & check checksum"), "keins",
-                        _("Download the package (or take the existing file) and check it against the checksum.")))
+                        _("Download the package (or take the existing file) and check it against the checksum.")
+                        + (" " + CHECKSUM_SOURCE[t.checksum_source] if t.checksum_source in CHECKSUM_SOURCE and t.checksum
+                           else "")))
     p.v15_option = v15_option(state, t)
     if p.v15_option == "locked" and v16_switch(state, t):
         p.v15_reason = (_("Mandatory: V16 only works from the original firmware – your current firmware would refuse "
@@ -401,19 +493,30 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
     if p.v15_option == "default_on":
         was = current_name(state)
         p.v15_reason = (_("Switching from {current} to {target}: the app installs the original firmware V15 first, "
-                          "then {target} – recommended, so no leftovers of {current} stay on the FM-1.").format(
-                              current=was, target=t.name) if was else
+                          "then {target}.").format(current=was, target=t.name) if was else
                         _("The running firmware is not recognised, so this counts as a switch: the app installs the "
-                          "original firmware V15 first, then {target} – recommended, so no leftovers of the previous "
-                          "firmware stay on the FM-1.").format(target=t.name))
+                          "original firmware V15 first, then {target}.").format(target=t.name)) + " " + V15_WHY
+    look = v15_lookalike(state)
+    if look[0] in ("usb", "maybe") and p.v15_option != "none":
+        why = (_("it shows the USB ID {usb}, which the Felucca-family firmwares use – the original firmware shows "
+                 "4c4a:c755").format(usb=look[1]) if look[0] == "usb" else
+               _("the same identity is known for: {names}, and nobody has said which firmware runs on this "
+                 "FM-1").format(names=look[1]))
+        p.warnings.append(_("This FM-1 answers “FM-1_015” like the original V15, but it may be another firmware: "
+                            "{why}. (TransitFM1 answers “FM-1_015” on purpose.) So the plan does not assume the "
+                            "original V15 and keeps the V15 step. If it is the original V15: connect it so that it "
+                            "shows the USB ID 4c4a:c755 (page “Overview”) and answer “Which firmware is running "
+                            "here?” with the original firmware – then the plan has no V15 step. TransitFM1 shows "
+                            "the USB ID 1209:0001 and its name as serial number (“TransitFM1-…”).").format(why=why))
     p.via_stock = p.v15_option == "locked" or (p.v15_option == "default_on" and via_v15 is not False)
     p.direct = p.v15_option == "default_on" and not p.via_stock
     if p.direct:
         was = current_name(state) or _("the previous firmware")
-        p.warnings.insert(0, _("<b>Expert option: installed directly, without the V15 step.</b> Leftovers of {current} "
-                               "(settings, projects, sample areas) can stay in the flash and confuse {target}. If "
-                               "{target} behaves strangely afterwards, install it again with the V15 step.").format(
-                                   current=was, target=t.name))
+        p.warnings.insert(0, _("<b>Expert option: installed directly, without the V15 step.</b> The authors of most "
+                               "firmwares expect a start from the original V15; a direct switch from another custom "
+                               "firmware has bricked a device at least once. Saved data of {current} (settings, "
+                               "projects, sample areas) stays in the flash either way and can confuse "
+                               "{target}.").format(current=was, target=t.name))
     if chain and state.identity == "FM-1_015" and fw_identity(chain.get("key", "")) == fw_identity(t.key) and t.key:
         p.chain_resume = True
         p.warnings.insert(0, _("Continues the interrupted switch to {target}: the original firmware V15 is already "
@@ -424,12 +527,16 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
                   "header before the original loader and would refuse V16 with “FAILED -5”.") if t.is_v16 else
                 _("The way back from V16 goes via the original V15 – it uses the same update loader as V16."))
                if p.v15_option == "locked" and v16_switch(state, t) else
-               _("According to the catalog, this firmware is installed from the original firmware V15.")
-               if p.v15_option == "locked" else p.v15_reason)
+               _("According to the catalog, this firmware is installed from the original firmware V15.") + " "
+               + V15_WHY if p.v15_option == "locked" else p.v15_reason)
+        have = "" if stock_cached is None else " " + (
+            _("Original V15: already on this computer ✓ (no download needed).") if stock_cached else
+            _("Original V15: will be downloaded first (≈ 0.9 MB, internet needed)."))
         p.steps.append(Step("stock", _("Intermediate step: install original V15"), "hoch",
                             _("{why} The app installs the unmodified V15 (checksum db1642b2…) via M-VAVE's own "
-                              "loader and then checks whether the FM-1 reports “FM-1_015”.").format(why=why),
+                              "loader and then checks whether the FM-1 reports “FM-1_015”.").format(why=why) + have,
                             writes=True))
+        p.warnings.append(V15_STEP_FACTS)
         if stock_package is not None and not stock_package.official == "FM-1_015":
             p.blockers.append(_("The prepared V15 file is not the unmodified original firmware."))
         p.warnings.append(_("Your projects on the device can be lost in the intermediate step – the app backs them "
@@ -490,15 +597,141 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
         if "no_backup" in p.confirmations:
             p.blockers.append(_("For Felucca 0.9 → 1.x a backup is mandatory – without a backup it is not possible here."))
     if not t.checksum and t.known:
-        p.warnings.append(_("Checksum not available: this release has no SHA256SUMS file, and the catalog does not "
-                            "know the checksum. The app cannot check whether the file is unmodified."))
+        p.warnings.append(_("Checksum not available: this release has no SHA256SUMS file, GitHub gives no digest "
+                            "for the release file, and the catalog does not know the checksum. The app cannot "
+                            "check whether the file is unmodified."))
         p.confirmations.append("no_checksum")
     if not t.known:
         p.warnings.append(_("Own file: identity {identity}, SHA-256 {sha256} – in no catalog.").format(
             identity=info.product if info else '?', sha256=info.sha256 if info else '?'))
         p.confirmations.append("unknown_file")
+    _new_chip(p, state, t)
     _confirm_power(p, t, fam)
     return p
+
+
+# ---- the newer FM-1 (logo on the front, flash UC25HQ80 0xB36014): fm1companion/hardware.py, docs/flash-protocol.md §18
+NEW_UNIT = _("This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80).")
+STRANDS = _("A firmware that does not know this chip saves nothing on such a unit and cannot be updated or replaced "
+            "any more – the only way back is then the recovery in ROM boot mode (stage 2).")
+NEWCHIP_V15 = _("Newer FM-1 (logo on the front): the original V15 is the way back that the authors of Felucca, "
+                "ChoralRoot, TransitFM1 and the MvaveFM1Unbricker name for these units. This app has not run it on "
+                "such a unit, and no source says which original version these units are delivered with.")
+
+
+def official_stock(t: Target) -> str:
+    """"FM-1_015" / "FM-1_016" when the target is exactly M-VAVE's original package: the app's own two entries
+    (their checksum is compared before anything is written) or a file whose content is the official one. Anything
+    else of the stock loader family (a key that merely starts with "stock", a community build with that loader) is
+    not: ""."""
+    if t.package is not None:
+        return t.package.official if t.package.official in ("FM-1_015", "FM-1_016") else ""
+    if t.repo not in (None, "m-vave/fm1_open"):
+        return ""
+    return {"stock-v15": "FM-1_015", "stock-v16": "FM-1_016"}.get(t.key, "")
+
+
+def chip_support(t: Target) -> hardware.Support:
+    """does the target accept the newer FM-1's flash chip (hardware.support)? An own file that is in no catalog and
+    no checked release is "unknown" whatever it is called; the version is the target's tag only – never read from a
+    name."""
+    off = official_stock(t)
+    if off:
+        return hardware.support("stock-v16" if off == "FM-1_016" else "stock-v15")
+    if not t.known or t.is_stock:
+        return hardware.Support(hardware.UNKNOWN, "", "")
+    return hardware.support(t.key, t.tag, t.flash, t.flash_tag, repo=t.repo)
+
+
+def chip_matters(state: DeviceState, t: Target) -> bool:
+    """does the plan depend on the unit's hardware revision (so that the owner is asked when it is not known)?"""
+    return state.revision != hardware.OLD and chip_support(t).status != hardware.YES
+
+
+def chip_check(revision: str, t: Target) -> InstallPlan:
+    """only the newer-FM-1 part of a plan (blockers, warnings, confirmations) – for a writing path that has no plan
+    dialog (Recovery › finish installation: the FM-1 waits in update mode)"""
+    st = DeviceState(identity="ota-", revision=revision)
+    p = InstallPlan(target=t, state=st)
+    _new_chip(p, st, t)
+    return p
+
+
+def _new_chip(p: InstallPlan, state: DeviceState, t: Target):
+    """The newer unit's flash chip: never install a version that does not know it on a unit that has it (blocker, no
+    override); with the revision unknown the owner must say that the unit is an earlier one; an own file or the
+    original V16 (nothing known) needs an explicit confirmation on a newer or unknown unit."""
+    rev = state.revision if state.revision in (hardware.NEW, hardware.OLD) else ""
+    if rev == hardware.OLD:
+        return
+    problem = hardware.table_problem()
+    if problem:                                   # no table, no judgement: nothing is installed on a unit that may be new
+        p.blockers.append(_("The app's table of firmware versions for the newer FM-1 (flash chip UC25HQ80) cannot be "
+                            "read ({error}). Without it the app cannot tell whether this installation is safe on "
+                            "your FM-1 – nothing is installed. Please install the app again; if your FM-1 is an "
+                            "earlier unit (no logo on the front), you can say so on the page “Devices”.").format(
+                                error=problem))
+        return
+    new = rev == hardware.NEW
+    if new and not state.update_mode:
+        run = running_firmware(state)
+        if run and not run.startswith("stock"):
+            rs = hardware.running_support(run, state.version)
+            if rs is not None and rs.status == hardware.NO:
+                p.warnings.insert(0, hardware.running_warning(current_name(state) or run, rs, run))
+    off = official_stock(t)
+    if new and (p.via_stock or off == "FM-1_015"):
+        p.warnings.append(NEWCHIP_V15)
+    sup = chip_support(t)
+    if sup.status == hardware.YES:
+        if new and not off and (sup.first_version or t.flash):   # why the plan lets this through, and what that is worth
+            first = hardware.first_version_text(t.key, sup.first_version) if sup.first_version else ""
+            p.warnings.append(
+                (_("{unit} {name} knows this chip from version {first} on – read in the firmware's own source "
+                   "(docs/firmware-support.md), not measured by this app.").format(unit=NEW_UNIT, name=t.name, first=first)
+                 if first else
+                 _("{unit} {name} says in its own package information that it knows this chip – not measured by "
+                   "this app.").format(unit=NEW_UNIT, name=t.name))
+                + " " + (_("Run with this app once: Skiff 2.7 on one newer FM-1 (2026-11-18); saving worked there.")
+                         if fw_identity(t.key) == "skiff" else
+                         _("This app has not installed this firmware on a newer FM-1 yet.")))
+        return
+    tv = t.tag
+    shown = hardware.first_version_text(t.key, tv)
+    name = t.name if not shown or shown.lower() in t.name.lower() else f"{t.name} {shown}"
+    first = hardware.first_version_text(t.key, sup.first_version) if sup.first_version else ""
+    if not t.known or off == "FM-1_016":
+        what = (_("Nothing is known about the original V16 on the newer FM-1s (logo on the front, flash chip "
+                  "UC25HQ80): no source says whether it was run on one, nor which version these units are "
+                  "delivered with.") if off == "FM-1_016" else
+                _("Own file: the app cannot tell whether it knows the flash chip of the newer FM-1s (logo on the "
+                  "front, UC25HQ80)."))
+        p.warnings.append(what + " " + STRANDS)
+        p.confirmations.append("newchip_unverified")
+        return
+    if sup.status == hardware.NO:
+        why = (_("{name} does not know this chip; the first version that does is {first}.").format(
+                   name=name, first=first) if first else
+               _("No released version of {name} is known to support this chip (checked {date}).").format(
+                   name=name, date=hardware.table()["checked"]))
+    elif sup.status == hardware.RISKY:
+        why = _("{name}: its authors write that it is untested or little tested on this chip, and that one such unit "
+                "did not start after m-bootloader was installed.").format(name=name)
+    else:
+        why = (_("The app does not know whether {name} supports this chip (the first version that does is {first}, "
+                 "and the version of this package is not known).").format(name=name, first=first) if first else
+               _("The app does not know whether {name} supports this chip: it is not in the app's table, and the "
+                 "firmware does not say.").format(name=name))
+    if new:
+        p.blockers.append(_("{unit} {why} {strands} It is not installed on this FM-1. If the unit is an earlier one "
+                            "after all, change this on the page “Devices”.").format(
+                                unit=NEW_UNIT, why=why, strands=STRANDS))
+    else:
+        p.warnings.append(_("<b>Only for an FM-1 without the logo on the front.</b> The newer FM-1s (M-VAVE logo "
+                               "on the front, sold from late 2026) have another flash chip (UC25HQ80). {why} "
+                               "{strands} The app does not know which unit this is – please confirm below, or say "
+                               "it on the page “Devices”.").format(why=why, strands=STRANDS))
+        p.confirmations.append("no_logo")
 
 
 def target_version(t: Target) -> str:
@@ -556,12 +789,21 @@ def _not_resumable(t: Target, fam: str) -> bool:
 
 def _confirm_power(p: InstallPlan, t: Target, fam: str):
     if _not_resumable(t, fam) or p.via_stock or t.is_stock:
-        p.warnings.append(_("A power loss while writing can NOT be resumed here – the FM-1 would then stay black "
+        unknown = fam not in ("stock", "felucca") and "powerLossNotResumable" not in t.notes
+        p.warnings.append(_("The app does not know the update loader of this package yet – it looks at the package "
+                            "after the download and sends nothing to a loader it does not know. Whether a power "
+                            "loss while writing could be resumed is therefore open: keep power and USB connected.")
+                          if unknown else
+                          _("A power loss while writing can NOT be resumed here – the FM-1 would then stay black "
                             "(only recovery stage 2 helps).") if _not_resumable(t, fam) else
                           _("The original firmware has no start protection: the power must not fail while "
                             "writing."))
-        if "power" not in p.confirmations:
-            p.confirmations.append("power")
+    # every plan that writes asks for power and an awake computer – also the resumable ones (the hardware run of
+    # 2026-11-18 had the question in one plan and not in the next)
+    if any(s.writes for s in p.steps):
+        key = "power_hub" if getattr(p.state, "hubs", 0) else "power"
+        if key not in p.confirmations:
+            p.confirmations.append(key)
 
 
 def _felucca09_risk(state: DeviceState, t: Target) -> bool:

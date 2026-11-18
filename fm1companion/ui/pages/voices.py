@@ -433,22 +433,26 @@ class VoicesPage(QWidget):
                               _("Only for an FM-1 with the original firmware V15 (identity FM-1_015)."))
 
     def _is_v15(self) -> bool:
+        """the FM-1 answers FM-1_015 right now (not: the profile once said so) and has no editor protocol: a
+        firmware that answers the editor protocol is not the original, whatever identity it reports. (A firmware
+        that only borrows the identity, like TransitFM1, cannot be told apart here.)"""
         c = self.ctx
-        ident = getattr(c, "identity", "") or (c.profile.identity if getattr(c, "profile", None) else "")
         return bool(getattr(c, "midi_connected", False) and not getattr(c, "is_virtual", False)
-                    and (ident == "FM-1_015" or c.firmware_key == "stock-v15"))
+                    and getattr(c, "identity", "") == "FM-1_015" and not getattr(c, "connected", False))
 
     def v15_factory(self):
         """the original V15's voice library: the 128 factory voices from M-VAVE's hash-pinned V15 package, written as
         M-VAVE's workbench does (sdk/WebUpdate.js restoreFactory), see stockv15.py"""
         from ... import firmware, stockv15
+        from ...flash import tested
         if not self._is_v15():
             show_error(self, _("Original V15"), _("Only for an FM-1 with the original firmware V15 (identity FM-1_015)."))
             return
         if not confirm(self, _("Original V15: restore factory voices"), _(
                 "This overwrites <b>all 128 voices in the banks A–D</b> of this FM-1 with M-VAVE's factory voices (from "
                 "the checksum-checked V15 package). <b>The voices on the FM-1 now cannot be saved first</b> – the "
-                "original firmware has no backup protocol – so voices you stored there yourself are lost."),
+                "original firmware has no backup protocol – so voices you stored there yourself are lost.")
+                + "<br><br><b>" + tested.note(["factory_voices"]) + "</b>",
                        _("Overwrite with the factory voices"), danger=True):
             return
 

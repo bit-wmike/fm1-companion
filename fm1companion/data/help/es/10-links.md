@@ -9,6 +9,9 @@
 * **Melodee:** <https://github.com/keremimo/melodee> · **SLOOP:** <https://github.com/isod89/sloop-fm1> ·
   **Skiff:** <https://github.com/illuminus5/skiff> · **Felucca:** <https://github.com/hugelton/Felucca>
 * **M-VAVE FM1 Open:** <https://github.com/m-vave/fm1_open>
+* **SLOOP 3** (isod89, GPL-3.0, beta pública): <https://github.com/isod89/sloop3-fm1> – su editor web viene con la
+  app, sin cambios. **m-bootloader** y **M-Flasher** (Julius Vitkauskas, MIT; no forman parte de la app):
+  <https://github.com/jvitkauskas/m-bootloader> · <https://github.com/jvitkauskas/m-flasher>
 
 ## Herramientas de la comunidad
 
@@ -17,7 +20,7 @@ haz siempre antes una copia de seguridad.
 
 * **M-Flasher** – escribe archivos de firmware en el FM-1 (no revisado por nosotros).
 * **MvaveFM1Unbricker** – recupera un FM-1 del modo de arranque ROM “WL82 UBOOT1.00”. Una copia sin
-  modificar está integrada en la app y se ejecuta desde [Rescate › Nivel 2](app://page/recovery) – con las
+  modificar está integrada en la app y se ejecuta desde [Recuperación › Etapa 2](app://page/recovery) – con las
   reglas de seguridad del original (doble copia de seguridad, nunca escribir por debajo de 0x4000). Aún no hemos probado este camino con un FM-1 real
   atascado.
 * **FM-1 Transporter** – lee y escribe la flash mediante un RP2040 en las líneas de datos USB; recuperación cuando

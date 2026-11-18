@@ -65,7 +65,7 @@ def test_inspect_melodee_backup():
     labels = {p.label: p for p in rep.used_presets}
     assert set(labels) == {"U001", "U005", "U018", "U075", "U379"}       # WIPE-PENDING lies outside
     assert labels["U005"].favorite and labels["U005"].engine_name == "SID" and labels["U018"].engine_name == "FM6"
-    assert "3 von 18 belegt, 1 Favoriten" in rep.obj(6).detail
+    assert "3 von 18 belegt, 1 Favorit" in rep.obj(6).detail
     assert len(rep.presets) == 384
     assert rep.firmware_key == "melodee" and "2 Projekte" in rep.summary()
 
@@ -458,8 +458,13 @@ def test_comparable_refuses_other_firmware():
     why = BI.comparable(a, b)
     assert "Nicht vergleichbar" in why and "SLOOP" in why
     assert BI.comparable(a, a) == ""
-    c = BI.inspect(backup.capture(link, "Skiff 1.0", companion={"firmware": "skiff"}))
+    from test_backup_matrix import Fork, link_for                  # (Skiff: its own inventory, 0..9 and 16..34)
+    skiff = Fork("FELUCCA v2.0", backup.SKIFF_IDS, engines=["FM6", "DRUM-X"])
+    c = BI.inspect(backup.capture(link_for(skiff)[0], "FELUCCA v2.0", companion={"firmware": "skiff"}))
     assert "Skiff" in BI.comparable(a, c) and "Melodee" in BI.comparable(a, c)
+    # the key alone is no reason (the app named firmwares differently in earlier versions): the same places compare
+    d = BI.inspect(backup.capture(link, "Melodee 1.6.0-rc.7", companion={"firmware": "melodee-old-key"}))
+    assert BI.comparable(a, d) == ""
 
 
 def test_object_titles_in_errors_and_written_state():

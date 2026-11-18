@@ -26,6 +26,7 @@ os.environ.setdefault("FM1C_LANG", "de")      # these checks expect the German u
 home = Path(tempfile.mkdtemp(prefix="fm1c-qafix-"))
 for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache")):
     os.environ[k] = str(home / sub)
+os.environ["HOME"] = str(home)        # (~ itself too: nothing of this run may land in the real home)
 os.environ["FM1C_DEMO"] = "1"
 os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
 
@@ -382,8 +383,9 @@ def flow():
     # toast at the top right, fixed lifetime
     from fm1companion.ui.notify import center
     nc = center()
-    nc.post("Testhinweis", "info")
-    t = nc.toasts[-1]
+    for old in list(nc.toasts):                 # (a row full of notices with buttons would make this one wait)
+        old.dismiss()
+    t = nc.post("Testhinweis", "info").toast
     top = w.centralWidget().geometry().top()
     pos = t.mapTo(w, t.rect().topLeft())        # floating or (small window) in the notification row
     check(pos.y() < top + 40 and pos.x() + t.width() > w.width() - 60, f"toast at the top right ({pos.x()},{pos.y()})")

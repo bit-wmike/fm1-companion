@@ -33,6 +33,9 @@ class Note:
     action: tuple | None = None          # (label, function)
     time: float = field(default_factory=time.time)
     read: bool = False
+    more: list = field(default_factory=list)     # further (label, function) buttons next to `action`
+    lifetime: int = 0                    # ms the toast stays (0 = by level)
+    toast: object = None                 # the toast showing it (set_text / dismiss), None once it is gone
 
 
 def _norm_action(action):
@@ -93,13 +96,28 @@ class Toast(QFrame):
         t.setWordWrap(True)
         t.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         v.addWidget(t)
+        self.label = t
         self.action_button = None
+        self.more_buttons = []
         if note.action:
             b = QPushButton(note.action[0])
             b.setProperty("variant", "flat")
-            b.clicked.connect(self._act)
-            v.addWidget(b, 0, Qt.AlignmentFlag.AlignLeft)
+            b.clicked.connect(lambda _c=False: self._act())     # (never hand Qt's checked=False to fn)
             self.action_button = b
+            if note.more:                        # several choices: side by side
+                row = QHBoxLayout()
+                row.setSpacing(6)
+                row.addWidget(b)
+                for label, fn in note.more:
+                    mb = QPushButton(str(label))
+                    mb.setProperty("variant", "flat")
+                    mb.clicked.connect(lambda _c=False, fn=fn: self._act(fn))
+                    row.addWidget(mb)
+                    self.more_buttons.append(mb)
+                row.addStretch(1)
+                v.addLayout(row)
+            else:
+                v.addWidget(b, 0, Qt.AlignmentFlag.AlignLeft)
         h.addLayout(v, 1)
         x = QToolButton()
         x.setIcon(icon("window-close"))
@@ -112,16 +130,24 @@ class Toast(QFrame):
         self.timer.timeout.connect(self.dismiss)
         # fixed lifetime – even under the mouse pointer (a toast should never permanently cover buttons);
         # everything stays readable in the history (bell)
-        self.lifetime = 12000 if note.level == "error" else 8000 if note.level == "warning" else 6000
+        self.lifetime = note.lifetime or (12000 if note.level == "error" else 8000 if note.level == "warning" else 6000)
         self.timer.start(self.lifetime)
+        note.toast = self
 
-    def _act(self):
+    def set_text(self, text: str):
+        """change the text while the toast is shown (a countdown)"""
+        self.note.text = text
+        self.label.setText(text)
+
+    def _act(self, fn=None):
         try:
-            self.note.action[1]()
+            (fn if callable(fn) else self.note.action[1])()
         finally:
             self.dismiss()
 
     def dismiss(self):
+        if self.note.toast is self:
+            self.note.toast = None
         self.timer.stop()
         self.hide()
         self.closed.emit(self)
@@ -140,6 +166,8 @@ class NotificationCenter(QObject):
         self.window = window
         self.history: list[Note] = []
         self.toasts: list[Toast] = []
+        self.waiting: list[Toast] = []     # plain notices that wait for a place (the row is full of questions)
+        self._arriving = None
         self.tray = None
         if _bus is None:
             _bus = _Bus()
@@ -148,23 +176,62 @@ class NotificationCenter(QObject):
         window.installEventFilter(self)
 
     # ------------------------------------------------------------------
-    def post(self, text: str, level: str = "info", action=None, quiet: bool = False):
-        """quiet=True: only show briefly, doesn't count as unread on the bell (e.g. “Active: FM-1 B”)."""
-        note = Note(text, level if level in LEVEL_ICON else "info", _norm_action(action), read=quiet)
+    def post(self, text: str, level: str = "info", action=None, quiet: bool = False, more=None, lifetime: int = 0):
+        """quiet=True: only show briefly, doesn't count as unread on the bell (e.g. “Active: FM-1 B”).
+        more: further (label, function) buttons next to `action`; lifetime: ms the toast stays (0 = by level).
+        -> the Note; while its toast is shown, note.toast.set_text() / .dismiss() change or close it."""
+        note = Note(text, level if level in LEVEL_ICON else "info", _norm_action(action), read=quiet,
+                    more=[a for a in (_norm_action(m) for m in (more or [])) if a], lifetime=int(lifetime or 0))
         _log_note(note.text, note.level)
         self.history.insert(0, note)
         del self.history[200:]
         t = Toast(note, self.window)
         t.closed.connect(self._closed)
-        self.toasts.append(t)
-        while len(self.toasts) > (self.MAX_LANE if self.lane_mode() else self.MAX_TOASTS):
-            self.toasts[0].dismiss()
-        t.show()
-        t.raise_()
-        self._layout()
+        if (not note.action and not note.more and len(self.toasts) >= self._room()
+                and all(x.note.action or x.note.more for x in self.toasts)):
+            # every place is taken by a notice with a button: this plain one neither pushes a button away nor
+            # vanishes unseen – it waits and shows as soon as a place is free
+            t.timer.stop()
+            t.hide()
+            self.waiting.append(t)
+            for old in self.waiting[:-3]:
+                self.waiting.remove(old)
+                old.dismiss()
+        else:
+            self._show(t)
         self._desktop(note)
         self.changed.emit()
         return note
+
+    def _room(self) -> int:
+        """how many notices show at once right now"""
+        if not self.lane_mode():
+            return self.MAX_TOASTS
+        w, lane = self.window, self.window.toast_lane
+        return max(1, min(self.MAX_LANE, (max(lane.width(), w.width() - 120) + 8) // 368))
+
+    def _show(self, t):
+        self.toasts.append(t)
+        self._arriving = t             # (closing another notice lays out again: the new one stays through that too)
+        try:
+            while len(self.toasts) > self._room():
+                self._drop_one(keep=t)
+            t.show()
+            t.raise_()
+            self._layout()
+        finally:
+            self._arriving = None
+
+    def _drop_one(self, keep=None):
+        """make room: the oldest plain notice goes first, then the oldest with one button; a notice that asks
+        something (several buttons, e.g. the announced automatic backup with “Skip today”) goes last – a later
+        “connected” notice must not take the choice, or another notice's button, away in a narrow window.
+        keep: the notice that just arrived – it is never the one to go (it would not be shown at all); every
+        notice stays in the list behind the bell, with its button."""
+        older = [t for t in self.toasts if t is not keep] or self.toasts
+        plain = [t for t in older if not t.note.more and not t.note.action]
+        asking = [t for t in older if not t.note.more]
+        (plain or asking or older)[0].dismiss()
 
     def unread(self) -> int:
         return sum(1 for n in self.history if not n.read)
@@ -179,8 +246,16 @@ class NotificationCenter(QObject):
         self.changed.emit()
 
     def _closed(self, t):
+        if t in self.waiting:
+            self.waiting.remove(t)
+            return
         if t in self.toasts:
             self.toasts.remove(t)
+        if self.waiting and self._arriving is None and len(self.toasts) < self._room():
+            nxt = self.waiting.pop(0)
+            nxt.timer.start(nxt.lifetime)
+            self._show(nxt)
+            return
         self._layout()
 
     def _top(self) -> int:
@@ -205,9 +280,8 @@ class NotificationCenter(QObject):
         if self.lane_mode():
             lay = lane.layout()
             # side by side, as many as fit in the width (newest on the right) – pushes the page only once
-            fit = max(1, min(self.MAX_LANE, (max(lane.width(), w.width() - 120) + 8) // 368))
-            while len(self.toasts) > fit:
-                self.toasts[0].dismiss()
+            while len(self.toasts) > self._room():
+                self._drop_one(keep=self._arriving)
             for t in list(self.toasts):
                 if t.parentWidget() is lane:
                     lay.removeWidget(t)

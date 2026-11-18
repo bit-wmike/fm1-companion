@@ -51,9 +51,23 @@ RC_TEXT = {1: N_("invalid request"), 2: N_("object invalid (checksum, ID or size
            5: N_("backup outdated or expired – please start again")}
 
 
-def stop_hint() -> str:
-    return _("Please stop the song on the FM-1 first (STOP) and then restore again. "
-             "SLOOP only writes projects, preset banks and settings while nothing is playing.")
+def device_name(info) -> str:
+    """the name the firmware gives itself in its INFO, without the family prefix and the version: "FELUCCA KARMA 3.1"
+    -> "KARMA", "FELUCCA SLOOP 2.6" -> "SLOOP"; "" when it is not known"""
+    v = (getattr(info, "version", "") or "").strip()
+    v = re.sub(r"^FELUCCA\s+", "", v, flags=re.I)
+    word = v.split()[0] if v.split() else ""
+    return "" if not word or re.fullmatch(r"v?\d[\w.+-]*", word, re.I) else word[:24]
+
+
+def stop_hint(device: str = "") -> str:
+    """device: the firmware's own name (device_name) – SLOOP's forks (KARMA, ORBIT …) are not called SLOOP"""
+    first = _("Please stop the song on the FM-1 first (STOP) and then restore again.")
+    if device:
+        return first + " " + _("{firmware} only writes projects, preset banks and settings while nothing is "
+                               "playing.").format(firmware=device)
+    return first + " " + _("The firmware on the FM-1 only writes projects, preset banks and settings while nothing "
+                           "is playing.")
 
 
 def _rc(rc) -> str:
@@ -339,9 +353,9 @@ def capture(link, firmware: str = "", progress: Callable[[int, int], None] | Non
 
 
 def write_object(link, oid: int, data: bytes, progress: Callable[[int], None] | None = None,
-                 written=None) -> int:
+                 written=None, device: str = "") -> int:
     """begin, data, commit of one object. -> 0, or the rc of begin (1/5) for an optional
-    object the firmware does not know (then nothing was written)."""
+    object the firmware does not know (then nothing was written). device: the firmware's name for messages."""
     r = parse_put(_rq(link, req_begin(oid, len(data), crc32(data)), 1.5, 1))
     if r["rc"] in (1, 5) and (oid in OPTIONAL or oid not in RESTORE + SAMPLES):
         return r["rc"]                              # (a fork's own object, Clipper's 12..14: not on this firmware)
@@ -367,8 +381,8 @@ def write_object(link, oid: int, data: bytes, progress: Callable[[int], None] | 
         if written:
             raise _err("bkStop", _("The song was running during the restore. Already written: {parts}. Not written: "
                                    "{part} and everything after it.").format(
-                parts=", ".join(title(i) for i in written), part=title(oid)) + " " + stop_hint(), written)
-        raise _err("bkStop", stop_hint() + " " + _("Nothing was written."), written)
+                parts=", ".join(title(i) for i in written), part=title(oid)) + " " + stop_hint(device), written)
+        raise _err("bkStop", stop_hint(device) + " " + _("Nothing was written."), written)
     if r["rc"]:
         raise _err("bkWrite", _("{part}: rejected by the FM-1 ({error})").format(part=title(oid), error=_rc(r['rc'])), written)
     return 0
@@ -455,21 +469,26 @@ def restore(link, file: dict, progress: Callable[[int, int], None] | None = None
             progress(done, total)
 
     written: list[int] = []
+    cur = None
     try:
         for oid in todo:
             if cancelled and cancelled():
                 raise _err("cancel", _("cancelled"), written)
             d = m[oid]
+            cur = oid
             if oid in SAMPLES:
                 write_sample(link, oid, d, step, written)
-            elif write_object(link, oid, d, step, written):
+            elif write_object(link, oid, d, step, written, device_name(info)):
+                cur = None
                 continue                            # (firmware does not know the object)
             written.append(oid)
+            cur = None
     except Exception as e:
         # timeouts/connection errors (ProtocolError, LinkError …) should also report
-        # what has already been written – otherwise it would wrongly say "nothing changed"
+        # what has already been written – otherwise it would wrongly say "nothing changed"; and the object that was
+        # being written: unclear when no answer came, a sample possibly erased
         from .backup import _with_written
-        raise _with_written(e, written)
+        raise _with_written(e, written, cur, cur in SAMPLES)
     return written
 
 

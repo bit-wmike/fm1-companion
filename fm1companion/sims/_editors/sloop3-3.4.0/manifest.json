@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "name": "sloop3-editor",
+  "title": "SLOOP 3 web editor",
+  "kind": "editor",
+  "firmware": "sloop3",
+  "firmware_versions": [
+    "3.4.0"
+  ],
+  "version": "3.4.0",
+  "source_repo": "https://github.com/isod89/sloop3-fm1",
+  "ref": "v3.4.0-beta",
+  "commit": "2228313f3abe0ad6c8f28ef0cd9b9d8167c01330",
+  "license": "GPL-3.0",
+  "build_date": "2026-11-17T17:23:06-05:00",
+  "builder": "upstream tools/mkeditor.py (unchanged file); tools/bundle_sloop3_editor.py",
+  "entry": "editor.html",
+  "midi": "webmidi",
+  "compat": "compat-chromium102.js",
+  "files": {
+    "LICENSE": {
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "size": 35149
+    },
+    "NOTICE": {
+      "sha256": "e2a50b2e2d7940f1688703279e9da3134f85cae037ab0e66d5a58509be9cd2c6",
+      "size": 1694
+    },
+    "compat-chromium102.js": {
+      "sha256": "0bf435b87aefcac382327173b6bc9cbac3be41fb46901aad750437dde0e42e65",
+      "size": 1293
+    },
+    "editor.html": {
+      "sha256": "00f1024b6d60e3d2f0d7e6c022be35a62bf3a1fe6994211dcb08ef917c43f821",
+      "size": 233127
+    }
+  }
+}

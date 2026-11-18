@@ -172,6 +172,33 @@ def fluidsynth_service_enabled() -> bool:
         return False
 
 
+def _fluidsynth_state() -> str:
+    """what `systemctl --user is-enabled fluidsynth.service` says: enabled, disabled, masked … ("" = no answer)"""
+    try:
+        r = subprocess.run(["systemctl", "--user", "is-enabled", "fluidsynth.service"], capture_output=True,
+                           text=True, timeout=5)
+        return ((getattr(r, "stdout", "") or "").strip().splitlines() or [""])[0]
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def stop_fluidsynth_service() -> str:
+    """Stop Debian's FluidSynth user service and keep it from starting at the next login.
+    -> "disabled" (switched off the normal way) | "masked" (it is enabled for all users under /etc/systemd/user,
+    where `systemctl --user disable` changes nothing: masked for this user, reversible with `unmask`) |
+    "failed" (still enabled). The result is checked, never assumed."""
+    def run(*args):
+        try:
+            subprocess.run(["systemctl", "--user", *args, "fluidsynth.service"], capture_output=True, timeout=15)
+        except (OSError, subprocess.SubprocessError):
+            pass
+    run("disable", "--now")
+    if _fluidsynth_state() != "enabled":
+        return "disabled"
+    run("mask", "--now")
+    return "masked" if _fluidsynth_state() == "masked" else "failed"
+
+
 UDEV_RULE = "60-fm1-companion.rules"
 UDEV_DIR = Path("/etc/udev/rules.d")
 
@@ -225,9 +252,33 @@ def install_udev_rule(rule: Path, log=print, sudo: list[str] | None = None, remo
     return ok
 
 
+def make_world_readable(app: Path, files=(), dirs=()) -> None:
+    """System-wide installation: every folder 0755, every file 0644 (0755 if it is executable for its owner) –
+    for the app folder and for everything else the installer wrote. Folders that existed before are not touched.
+    Symbolic links are skipped."""
+    def fix(p: Path):
+        try:
+            if p.is_symlink():
+                return
+            if p.is_dir():
+                p.chmod(0o755)
+            elif p.is_file():
+                p.chmod(0o755 if p.stat().st_mode & 0o100 else 0o644)
+        except OSError:
+            pass
+    app = Path(app)
+    if app.is_dir():
+        fix(app)
+        for p in app.rglob("*"):
+            fix(p)
+    for p in list(files) + list(dirs):
+        fix(Path(p))
+
+
 def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, desktop: bool = False,
             demo_data: bool = False, python: str = "/usr/bin/python3", log=print, progress=lambda a, b: None,
-            fluidsynth_fix: bool = True, usb_power_rule: bool = False) -> dict:
+            fluidsynth_fix: bool = True, usb_power_rule: bool = False, udev_hint: bool = True) -> dict:
+    # udev_hint=False: the caller (install.sh) asks about the udev rule or installs it itself right afterwards
     src = Path(src).resolve()
     L = layout(prefix, system)
     version = read_version(src)
@@ -308,7 +359,9 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
         (L["apps"] / f"{APP_ID}-uninstall.desktop").write_text(_desktop_entry(
             exec_quote(str(uninst)), "Uninstall FM-1 Companion", "Removes the FM-1 Companion Suite (your folder ~/FM-1 stays)",
             "Name[de]=FM-1 Companion deinstallieren\n"
-            "Comment[de]=Entfernt die FM-1 Companion Suite (dein Ordner ~/FM-1 bleibt)\nNoDisplay=false\n").replace("Categories=AudioVideo;Audio;Midi;Music;", "Categories=Settings;"))
+            "Comment[de]=Entfernt die FM-1 Companion Suite (dein Ordner ~/FM-1 bleibt)\nNoDisplay=false\n",
+            generic="Uninstaller", l10n="GenericName[de]=Deinstallationsprogramm\n"
+            ).replace("Categories=AudioVideo;Audio;Midi;Music;", "Categories=Settings;"))
         files.append(str(L["apps"] / f"{APP_ID}-uninstall.desktop"))
         meta = src / "packaging" / f"{APP_ID}.metainfo.xml"
         if meta.exists():
@@ -345,19 +398,37 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
     # Otherwise Debian's fluidsynth user service grabs the first sound card (Pi: HDMI) at every login, bypassing
     # PipeWire – no more HDMI sound. The app starts FluidSynth itself; only for "just for me" installations and only
     # if not deselected (graphical installer: checkbox, otherwise --no-fluidsynth-fix). Always clearly reported.
+    fluidsynth_masked = bool((old or {}).get("fluidsynth_masked"))   # (masked by an earlier installation: remembered)
     if not system and fluidsynth_service_enabled():
         if fluidsynth_fix:
-            try:
-                subprocess.run(["systemctl", "--user", "disable", "--now", "fluidsynth.service"],
-                               capture_output=True, timeout=15)
+            how = stop_fluidsynth_service()
+            if how == "disabled":
                 log(tr("NOTE: I disabled the system's FluidSynth user service (fluidsynth.service) – otherwise it "
                        "grabbed the HDMI sound card at every login. FluidSynth stays installed; the app starts it "
                        "itself. Re-enable it: systemctl --user enable --now fluidsynth.service",
                        "HINWEIS: Den FluidSynth-Benutzerdienst des Systems (fluidsynth.service) habe ich abgeschaltet – "
                        "er belegte sonst bei jeder Anmeldung die HDMI-Soundkarte. FluidSynth bleibt installiert; die App "
                        "startet es selbst. Wieder einschalten: systemctl --user enable --now fluidsynth.service"))
-            except (OSError, subprocess.SubprocessError):
-                pass
+            elif how == "masked":
+                fluidsynth_masked = True
+                log(tr("NOTE: The system's FluidSynth user service (fluidsynth.service) is switched on for all users "
+                       "of this computer, so it cannot simply be disabled for you. I stopped it and masked it for "
+                       "your user – otherwise it grabbed the HDMI sound card at every login. FluidSynth stays "
+                       "installed; the app starts it itself. Undo: systemctl --user unmask fluidsynth.service "
+                       "(uninstalling the app does that too).",
+                       "HINWEIS: Der FluidSynth-Benutzerdienst des Systems (fluidsynth.service) ist für alle Benutzer "
+                       "dieses Rechners eingeschaltet und lässt sich deshalb nicht einfach für dich abschalten. Ich "
+                       "habe ihn gestoppt und für deinen Benutzer maskiert – er belegte sonst bei jeder Anmeldung die "
+                       "HDMI-Soundkarte. FluidSynth bleibt installiert; die App startet es selbst. Rückgängig: "
+                       "systemctl --user unmask fluidsynth.service (die Deinstallation der App macht das auch)."))
+            else:
+                log(tr("NOTE: The system's FluidSynth user service (fluidsynth.service) could NOT be switched off – "
+                       "it is still enabled and can grab the HDMI sound card at the next login (no sound over HDMI). "
+                       "By hand: systemctl --user mask --now fluidsynth.service",
+                       "HINWEIS: Der FluidSynth-Benutzerdienst des Systems (fluidsynth.service) ließ sich NICHT "
+                       "abschalten – er ist weiter eingeschaltet und kann bei der nächsten Anmeldung die "
+                       "HDMI-Soundkarte belegen (kein Ton über HDMI). Von Hand: "
+                       "systemctl --user mask --now fluidsynth.service"))
         else:
             log(tr("NOTE: fluidsynth.service is active and can grab the HDMI sound card (no sound over HDMI). "
                    "Not changed (--no-fluidsynth-fix). Disable it: systemctl --user disable --now fluidsynth.service",
@@ -369,7 +440,7 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
             log(tr("NOTE: the udev rule is missing in this package.", "HINWEIS: Die udev-Regel fehlt in diesem Paket."))
         else:
             install_udev_rule(app / "udev" / UDEV_RULE, log)
-    elif rule is not None and not udev_rule_installed():
+    elif rule is not None and udev_hint and not udev_rule_installed():
         log(tr("Optional: a udev rule keeps the FM-1 and its USB hub awake while flashing (helps with hubs): "
                f"{app / 'installer' / 'core.py'} usb-power-rule",
                "Optional: Eine udev-Regel hält das FM-1 und seinen USB-Hub beim Flashen wach (hilft bei Hubs): "
@@ -381,7 +452,11 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
             "prefix": str(prefix), "app": str(app), "files": files, "dirs": created,
             "time": time.strftime("%Y-%m-%d %H:%M:%S"),
             "components": {"menu": menu, "desktop": desktop, "demo_data": demo_data}}
+    if fluidsynth_masked:                   # uninstalling takes the mask away again
+        info["fluidsynth_masked"] = True
     (app / "install-info.json").write_text(json.dumps(info, indent=2, ensure_ascii=False))
+    if system:                              # a strict umask (077) of the installing user must not lock others out
+        make_world_readable(app, files, created)
     progress(7, steps)
     log(tr("Done.", "Fertig."))
     return info
@@ -460,6 +535,22 @@ def uninstall(prefix: Path, system: bool = False, settings: bool = False, data: 
         except OSError:
             pass
     refresh_menus(L)
+    if info.get("fluidsynth_masked") and not system and _fluidsynth_state() == "masked":
+        # the installation masked Debian's FluidSynth user service for this user: put it back as it was
+        try:
+            subprocess.run(["systemctl", "--user", "unmask", "fluidsynth.service"], capture_output=True, timeout=15)
+        except (OSError, subprocess.SubprocessError):
+            pass
+        if _fluidsynth_state() != "masked":
+            log(tr("The FluidSynth user service (fluidsynth.service) is no longer masked – it is as it was before "
+                   "the installation and starts again at the next login.",
+                   "Der FluidSynth-Benutzerdienst (fluidsynth.service) ist nicht mehr maskiert – er ist wieder wie "
+                   "vor der Installation und startet bei der nächsten Anmeldung wieder."))
+        else:
+            log(tr("The FluidSynth user service is still masked. Undo by hand: "
+                   "systemctl --user unmask fluidsynth.service",
+                   "Der FluidSynth-Benutzerdienst ist weiter maskiert. Von Hand rückgängig: "
+                   "systemctl --user unmask fluidsynth.service"))
     for r in removed:
         log(tr(f"  removed: {r}", f"  entfernt: {r}"))
     log(tr(f"Your folder {root} is left untouched.", f"Dein Ordner {root} bleibt unangetastet."))
@@ -489,6 +580,9 @@ def main(argv=None) -> int:
     ap.add_argument("--no-fluidsynth-fix", action="store_true",
                     help=tr("do NOT disable the system's FluidSynth user service (only a note)",
                             "den FluidSynth-Benutzerdienst des Systems NICHT abschalten (nur Hinweis)"))
+    ap.add_argument("--no-udev-hint", action="store_true",
+                    help=tr("do not mention the optional udev rule (the caller takes care of it)",
+                            "die optionale udev-Regel nicht erwähnen (der Aufrufer kümmert sich darum)"))
     ap.add_argument("--usb-power-rule", action="store_true",
                     help=tr("also install the optional udev rule (keeps the FM-1 and its USB hubs awake; asks for "
                             "sudo)", "auch die optionale udev-Regel installieren (hält das FM-1 und seine USB-Hubs wach; "
@@ -505,7 +599,8 @@ def main(argv=None) -> int:
     prefix = Path(a.prefix).expanduser() if a.prefix else (SYSTEM_PREFIX if a.system else user_prefix())
     if a.cmd == "install":
         install(Path(a.source), prefix, a.system, not a.no_menu, a.desktop, a.demo_data, a.python,
-                fluidsynth_fix=not a.no_fluidsynth_fix, usb_power_rule=a.usb_power_rule)
+                fluidsynth_fix=not a.no_fluidsynth_fix, usb_power_rule=a.usb_power_rule,
+                udev_hint=not a.no_udev_hint)
     elif a.cmd == "uninstall":
         uninstall(prefix, a.system, a.settings, a.data)
     else:

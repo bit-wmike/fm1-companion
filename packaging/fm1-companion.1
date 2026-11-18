@@ -1,18 +1,22 @@
-.TH FM1-COMPANION 1 "November 2026" "FM-1 Companion Suite 2.6.0" "User Commands"
+.TH FM1-COMPANION 1 "November 2026" "FM-1 Companion Suite 2.6.1" "User Commands"
 .SH NAME
 fm1-companion \- desktop suite for the M-VAVE FM-1
 .SH SYNOPSIS
 .B fm1-companion
-[\fB\-\-demo\fR] [\fB\-\-check\fR] [\fB\-\-syscheck\fR] [\fB\-\-version\fR] [\fB\-\-no\-splash\fR] [\fB\-\-debug\fR]
+[\fB\-\-demo\fR] [\fB\-\-check\fR] [\fB\-\-syscheck\fR] [\fB\-\-lang\fR \fILANG\fR] [\fB\-\-version\fR] [\fB\-\-no\-splash\fR] [\fB\-\-debug\fR]
 .SH DESCRIPTION
-Install and switch firmware, backups, projects, Studio twin (WAV export), presets, samples, MIDI, simulator and recording
-for the M-VAVE FM-1 pocket synthesizer with firmwares of the Felucca family (Melodee, Skiff, SLOOP).
+Desktop suite for the M-VAVE FM-1 pocket synthesizer: backups, firmware install and recovery, a Studio with digital
+twins of 13 firmwares (Melodee, Skiff, SLOOP, JIANT FM, KARMA and more), presets, samples, MIDI tools and a catalog of
+more than 250 community firmwares.
 .PP
-The user interface is currently German; English is in progress.
+The user interface is available in English, German and Spanish (Settings, General, Language; or \-\-lang).
+.PP
+Installing firmware and recovery change the device and are done at your own risk; most of these paths have only run
+against simulations so far. The list of what was tested on real hardware is docs/UNTESTED.md in the source repository.
 .SH OPTIONS
 .TP
 .B \-\-demo
-start with two simulated FM-1 (without a device).
+start with three simulated FM-1 (without a device; separate settings, your data stays untouched).
 .TP
 .B \-\-check
 check the required system packages and show the apt command for missing ones.
@@ -30,14 +34,14 @@ start without the splash screen.
 verbose log.
 .TP
 .BI \-\-lang " LANG"
-user interface language for this start: en or de (default: the setting, otherwise the system language).
+user interface language for this start: en, de or es (default: the setting, otherwise the system language).
 .SH ENVIRONMENT
 .TP
 .B FM1C_NO_NET=1
 no automatic network access (update check when plugging in, catalog update, thumbnails);
 the catalog and the link import only use the bundled data.
 .TP
-.B FM1C_LANG=en|de
+.B FM1C_LANG=en|de|es
 user interface language, overrides the setting (like \-\-lang).
 .SH FILES
 .TP

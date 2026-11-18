@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBox
 
 import os
 
-from .. import config, editor_host, firmware
+from .. import config, editor_host, firmware, sims
 from ..bridge import MidiBridge
 from . import web
 from .common import icon, run_job
@@ -63,6 +63,9 @@ class EditorPage(QWidget):
             self.view = None
             return
         self.bridge = MidiBridge(self)
+        # the editor may send everything except the update-mode / boot-mode keys (the app installs firmware itself)
+        self.bridge.out_filter = sims.builtin_editor_out_allowed
+        self.bridge.blockedChanged.connect(self._blocked)
         # redirect the editor's links the way they make sense in the app: installer -> firmware page,
         # manual -> local copy, editor -> editor, internet -> normal browser (web.RoutingPage)
         self.view, self.page, self.channel = web.make_view(self, bridge=self.bridge, router=self.route_local)
@@ -80,6 +83,16 @@ class EditorPage(QWidget):
     def _placeholder(self, text: str) -> str:
         return web.placeholder_html(_("Editor"), text)
 
+    def _blocked(self, n: int):
+        if self.bridge.out_filter is sims.sloop3_editor_out_allowed:
+            if n in (1, 10, 100) or n % 1000 == 0:
+                self.state.setText(_("The editor page sent something that is not SLOOP 3's editor protocol and not a "
+                                     "note or controller – held back, the FM-1 did not get it."))
+            return
+        if n in (1, 10, 100) or n % 1000 == 0:
+            self.state.setText(_("The editor page tried to switch the FM-1 to update or boot mode – held back. "
+                                 "Install firmware via “Firmware+”."))
+
     def _zoom(self, d):
         """d = step, None = back to 100 %."""
         if self.view:
@@ -95,7 +108,16 @@ class EditorPage(QWidget):
     def _dev_changed(self):
         if not self.view:
             return
-        if self.ctx.connected and self.ctx.link:
+        if self._s3() is not None and self.ctx.link:
+            # SLOOP 3: its own editor looks for a port named "SLOOP 3"; it may send its own protocol only
+            from .. import sloop3 as S3
+            label = self.ctx.port.label if self.ctx.port else ""
+            self.bridge.out_filter = sims.sloop3_editor_out_allowed
+            self.bridge.attach(self.ctx.link, label if S3.PORT_RE.search(label) else "FM-1 SLOOP 3")
+            if self.visible_now:
+                self.load()
+        elif self.ctx.connected and self.ctx.link:
+            self.bridge.out_filter = sims.builtin_editor_out_allowed
             self.bridge.attach(self.ctx.link, self.ctx.port.label if self.ctx.port else "FM-1")
             if self.visible_now:
                 self.load()
@@ -115,8 +137,45 @@ class EditorPage(QWidget):
     def deactivate(self):
         self.visible_now = False
 
+    def _s3(self):
+        """SLOOP 3's INFO if the active FM-1 runs SLOOP 3 (ui/device.py ctx.sloop3), else None"""
+        return getattr(self.ctx, "sloop3", None) if getattr(self.ctx, "midi_connected", False) else None
+
+    def _load_sloop3(self, force=False):
+        """SLOOP 3: its own web editor, bundled with the app (sims/_editors/sloop3: the upstream file, unchanged) –
+        no download, works offline. MIDI goes through the app's bridge, which lets only SLOOP 3's own protocol out."""
+        from .. import sloop3 as S3
+        info = self._s3()
+        bad = S3.editor_problems(info.version)
+        if bad:
+            self.loaded_for = ""
+            self.state.setText(_("The bundled SLOOP 3 editor is not complete: {problems}").format(
+                problems=", ".join(bad)))
+            self.view.setHtml(self._placeholder(
+                _("The SLOOP 3 editor that comes with the app is missing or was changed ({problems}). Please install "
+                  "the app again.<br><br>The author's editor online: {link}").format(
+                      problems=web.esc(", ".join(bad)), link=web.link_html(S3.EDITOR_URL))))
+            return
+        fits = S3.editor_fits(info.version)
+        text = _("Editor: {name} (public beta) · the author's editor, bundled · MIDI via the app").format(
+            name=info.label)
+        if not fits:
+            text += " · " + _("this is the editor of SLOOP 3 {versions} – it may not fit your version").format(
+                versions=", ".join(str(v) for v in S3.editor_manifest(info.version).get("firmware_versions", [])))
+        self.state.setText(text)
+        want = f"{S3.KEY}/{info.version}"
+        if not force and self.loaded_for == want:
+            return
+        self.loaded_for = want
+        self.current = None                     # (no repository copy: the links in the page open in the browser)
+        self.view.load(QUrl(self.server.sim_url(S3.editor_served(info.version),
+                                                S3.editor_manifest(info.version).get("entry", "editor.html"))))
+
     def load(self, force=False):
         if not self.view:
+            return
+        if self._s3() is not None:
+            self._load_sloop3(force)
             return
         key, tag = self.ctx.firmware_key, self.ctx.firmware_tag
         spec = firmware.spec(key)
@@ -127,11 +186,12 @@ class EditorPage(QWidget):
             self.loaded_for = ""
             self.state.setText(_("{name}: no built-in editor – presets via SysEx on the page “Presets”.").format(
                                    name=name))
-            extra = ("<br><br>" + _('Online editor of the author: <a href="{url}">{url}</a>').format(url=spec.editor_url)
+            # name and address can come from the catalog / a user-added firmware: text, never HTML
+            extra = ("<br><br>" + _("Online editor of the author: {link}").format(link=web.link_html(spec.editor_url))
                      if spec and spec.editor_url else "")
             self.view.setHtml(self._placeholder(
                 _("{name} does not come with an editor the app can embed.<br>Presets can be sent via SysEx on the page "
-                  "<b>Presets</b> (FM voices); MIDI works via the page <b>MIDI</b>.").format(name=name) + extra))
+                  "<b>Presets</b> (FM voices); MIDI works via the page <b>MIDI</b>.").format(name=web.esc(name)) + extra))
             return
         if not spec:
             self.state.setText(_("There is no known editor for this firmware."))
@@ -184,7 +244,8 @@ class EditorPage(QWidget):
             self.view.setHtml(self._placeholder(_("The editor for {name} {version} could not be "
                                                   "provided:<br><code>{error}</code><br><br>The first "
                                                   "time the app needs internet once, after that no more.").format(
-                                                    name=spec.name, version=want_tag, error=msg)))
+                                                    name=web.esc(spec.name), version=web.esc(want_tag),
+                                                    error=web.esc(msg))))
         run_job(self, work, on_done=done, on_fail=fail)
 
     # ------------------------------------------------------------ Links in the editor
@@ -214,7 +275,7 @@ class EditorPage(QWidget):
         idx = editor_host.manual_index(spec, tag)
         if not idx:
             if spec.manual_online:
-                QDesktopServices.openUrl(QUrl(spec.manual_online))
+                web.open_new_window_url(spec.manual_online)        # http/https/mailto only
             else:
                 self.state.setText(_("{name} {version} comes without a manual.").format(name=spec.name, version=tag))
             return
@@ -247,6 +308,18 @@ class EditorPage(QWidget):
         self.view = None
 
     def _loaded(self, ok):
+        if ok and self._s3() is not None and self.loaded_for.startswith("sloop3/"):
+            # the app's own small addition for the Chromium of Qt 6.4 (see the file), then "Connect"
+            from .. import sloop3 as S3
+            try:
+                ver = self.loaded_for.split("/", 1)[1]
+                self.page.runJavaScript((S3.editor_dir_for(ver) / S3.editor_manifest(ver).get("compat", "")
+                                         ).read_text("utf-8"))
+            except OSError:
+                pass
+            self.page.runJavaScript("setTimeout(()=>{const b=document.getElementById('con');"
+                                    "if(b && !b.disabled && /connect/i.test(b.textContent)) b.click();},400)")
+            return
         if not ok or not self.ctx.connected:
             return
         # connect automatically if the editor has a connect button

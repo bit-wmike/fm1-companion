@@ -5,7 +5,7 @@
 //   * window.__fm1sim.midi(bytes)   play MIDI into the simulator (worklet message, else computer keys)
 //   * window.__fm1sim.record        tap of everything the page sends to the speakers -> WAV download
 //   * ?fm1latency=interactive|balanced|playback   replaces the page's AudioContext latencyHint
-//   * outside the app (Firefox): MIDI from the app via server-sent events on /_fm1/midi
+//   * outside the app (Firefox): MIDI from the app via server-sent events on /_fm1/midi/<key> (?fm1relay=<key>)
 (function () {
   "use strict";
   if (window.__fm1sim) return;
@@ -96,12 +96,22 @@
       }
     };
   }
+  // Everything a page connects to the speakers is also connected to one silent collecting point per AudioContext
+  // (a GainNode with no output: costs nothing). The recorder itself – a ScriptProcessorNode, which Chromium
+  // announces as deprecated in the console – is only created and attached when a recording starts.
   const taps = new WeakMap();
   let rec = null;
   function tap(ctx) {
     let t = taps.get(ctx);
-    if (t) return t;
-    const input = ctx.createGain();
+    if (!t) {
+      t = { input: ctx.createGain(), sp: null };
+      taps.set(ctx, t);
+    }
+    return t;
+  }
+  function recorder(ctx) {
+    const t = tap(ctx);
+    if (t.sp) return t;
     const sp = ctx.createScriptProcessor(4096, 2, 2);
     sp.onaudioprocess = (e) => {
       const b = e.inputBuffer;
@@ -111,10 +121,9 @@
       rec.l.push(l.slice()); rec.r.push(r.slice()); rec.frames += l.length;
       for (let i = 0; i < l.length; i++) { const a = Math.abs(l[i]), c = Math.abs(r[i]); if (a > rec.peak) rec.peak = a; if (c > rec.peak) rec.peak = c; }
     };
-    nativeConnect.call(input, sp);
+    nativeConnect.call(t.input, sp);
     nativeConnect.call(sp, ctx.destination);
-    t = { input, sp };
-    taps.set(ctx, t);
+    t.sp = sp;
     return t;
   }
   const nativeConnect = AudioNode.prototype.connect;
@@ -147,7 +156,7 @@
     start() {
       const ctx = contexts.find((c) => c.state === "running") || contexts[contexts.length - 1];
       if (!ctx) return { ok: false, error: "noaudio" };
-      tap(ctx);
+      try { recorder(ctx); } catch (err) { api.errors.push("recorder: " + err); return { ok: false, error: "norecorder" }; }
       rec = { ctx, l: [], r: [], frames: 0, peak: 0, t0: performance.now() };
       return { ok: true, rate: ctx.sampleRate };
     },
@@ -243,7 +252,9 @@
   // outside the app: MIDI from FM-1 Companion's local server (Firefox)
   if (!(window.qt && window.qt.webChannelTransport) && /^(127\.0\.0\.1|localhost)$/.test(location.hostname) && window.EventSource) {
     addEventListener("load", () => {
-      const es = new EventSource("/_fm1/midi");
+      const key = q.get("fm1relay");                 // random key the app puts into the address it opens
+      if (!key) return;
+      const es = new EventSource("/_fm1/midi/" + encodeURIComponent(key));
       es.onmessage = (e) => { try { api.midi(JSON.parse(e.data)); } catch (_) { /* ignore */ } };
       api.relay = es;
     });

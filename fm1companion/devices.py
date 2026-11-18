@@ -2,9 +2,10 @@
 """Find connected FM-1, tell them apart and remember them as profiles.
 
 Each device gets a profile (name, colour, notes, last known firmware).
-A device is recognised – if possible – by its USB serial number. If it has none
-(or the firmware does not report it), the user decides once which
-profile is meant; with only one matching profile this happens automatically.
+A device is recognised by its USB serial number where it has one of its own (identifying_serial): the original
+firmware reports one per unit, the Felucca-family firmwares report none. So the same FM-1 shows a serial number
+under one firmware and none under the next – the profile learns the number (ui/device.py) instead of a second
+profile being made, and where the app cannot tell, the user says once which profile is meant.
 """
 from __future__ import annotations
 
@@ -17,6 +18,7 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 
 from .config import DATA_DIR
+from .i18n import N_
 
 PORT_RE = re.compile(r"melodee|felucca|\bfm-1\b|fm1|sloop|skiff|m-vave", re.I)
 # Suite 2.0 (installer): further names under which an FM-1 shows up (docs/flash-protocol.md, section 6)
@@ -50,6 +52,7 @@ class PortInfo:
     product: str = ""
     manufacturer: str = ""
     speed: str = ""          # Mbit/s according to sysfs
+    bcd_device: str = ""     # bcdDevice according to sysfs ("0200" = 2.00); "" = not told
     virtual: bool = False    # not a real device: the suite's studio twin (never flash, never rescue)
 
     @property
@@ -63,15 +66,23 @@ class Profile:
     id: str
     name: str
     color: str = "#3daee9"
-    serial: str = ""
+    serial: str = ""            # the unit's own USB serial number, as the original firmware reports it ("" = not seen yet)
     notes: str = ""
     firmware: str = ""          # e.g. "melodee"
     firmware_version: str = ""  # e.g. "v1.6.0-rc.7"
     version_string: str = ""    # what INFO reports
     identity: str = ""          # e.g. "FM-1_91060"
     usb_path: str = ""          # last used USB connection (helps matching without a serial number)
+    usb_product: str = ""       # the USB product name the unit showed there while its firmware ran ("FM-1 SLOOP 3")
+    unit_id: str = ""           # the flash chip's unique ID (hex), where something told it: m-bootloader's MIDI MODE
     firmware_history: list = field(default_factory=list)   # [{"time", "firmware", "version", "identity", "how"}]
     firmware_choice: dict = field(default_factory=dict)    # identity -> firmware key chosen by the user
+    # hardware revision (fm1companion/hardware.py): "new" = logo on the front, flash UC25HQ80 0xB36014 · "old" =
+    # Puya 0x856014 · "unsure" = asked, the owner does not know · "" = never asked
+    hw_revision: str = ""
+    hw_revision_source: str = ""  # "user" (answer) | "rom" (read in ROM boot mode) | "identity" (told by the firmware)
+    flash_id: str = ""            # the JEDEC ID when it was read, e.g. "B36014"
+    hw_revision_conflict: str = ""   # a contradicting statement that was seen ("856014 identity"): stays "new"
     last_seen: float = 0.0
     created: float = field(default_factory=time.time)
 
@@ -108,11 +119,24 @@ def move_profile_folder(base: Path, old_name: str, new_name: str) -> Path:
         if f.is_dir():
             continue
         target = new / f.relative_to(old)
-        if target.exists():
-            target = target.with_name(f"{target.stem}_{old_name}{target.suffix}")
+        if target.exists() or target.is_symlink():
+            base_target, n = target, 2
+            target = base_target.with_name(f"{base_target.stem}_{old_name}{base_target.suffix}")
+            while target.exists() or target.is_symlink():      # (never overwrite, whatever is already there)
+                target = base_target.with_name(f"{base_target.stem}_{old_name} ({n}){base_target.suffix}")
+                n += 1
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(f), target)
-    shutil.rmtree(old, ignore_errors=True)
+    # only the now empty folders go: a file that could not be moved (or appeared meanwhile) is never deleted
+    for d in sorted((p for p in old.rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
+        try:
+            d.rmdir()
+        except OSError:
+            pass
+    try:
+        old.rmdir()
+    except OSError:
+        pass
     return new
 
 
@@ -126,27 +150,106 @@ class ProfileStore:
         self.load()
 
     def load(self):
+        """read the profiles – every profile on its own: an entry the app cannot use is left out, the others stay.
+        A file that is damaged as a whole (truncated, no JSON, no profile list) is never silently replaced by an
+        empty one: it is put aside as devices.json.kaputt-<date> and the previous state (devices.json.bak) is
+        loaded, if there is one. What happened goes into the one-time notice of the settings (config.extra_notices)."""
+        self.profiles = {}
         try:
-            raw = json.loads(self.path.read_text("utf-8"))
-            self.profiles = {p["id"]: Profile(**{k: v for k, v in p.items() if k in Profile.__dataclass_fields__})
-                             for p in raw.get("profiles", [])}
-        except (OSError, ValueError, TypeError):
-            self.profiles = {}
+            text = self.path.read_text("utf-8")
+        except FileNotFoundError:
+            return
+        except (OSError, UnicodeDecodeError) as e:
+            if isinstance(e, (PermissionError, IsADirectoryError, NotADirectoryError)):
+                return                              # (not readable is not "damaged": nothing is renamed)
+            text = None
+        entries = self._entries(text)
+        if entries is None:
+            from . import config as _config
+            aside = self.path.with_name(f"{self.path.name}.kaputt-{time.strftime('%Y-%m-%d_%H%M%S')}")
+            try:
+                self.path.replace(aside)
+            except OSError:
+                aside = self.path
+            try:
+                entries = self._entries(self.path.with_name(self.path.name + ".bak").read_text("utf-8"))
+            except (OSError, UnicodeDecodeError):
+                entries = None
+            _config.extra_notices.append(_config.Msg(
+                N_("The list of your FM-1 devices (names, colours, notes) was damaged and was put aside as “{name}”. "
+                   "The previous state was loaded.") if entries is not None else
+                N_("The list of your FM-1 devices (names, colours, notes) was damaged and was put aside as “{name}”. "
+                   "The devices get new profiles when they are connected; their backups are still in the backup "
+                   "folder, under the old names."), name=aside.name))
+            entries = entries or []
+        skipped = 0
+        for raw in entries:
+            p = self._profile(raw)
+            if p is None or p.id in self.profiles:
+                skipped += 1
+            else:
+                if p.serial and not serial_plausible(p.serial):
+                    p.serial = ""           # (a constant some firmware reports, stored by an earlier version)
+                self.profiles[p.id] = p
+        if skipped:
+            from . import config as _config
+            _config.extra_notices.append(_config.Msg(
+                N_("{n} entries in the list of your FM-1 devices were unusable and were left out."), n=skipped))
+
+    @staticmethod
+    def _entries(text) -> list | None:
+        """the profile entries of the file's text – None if it is no profile list at all"""
+        try:
+            raw = json.loads(text)
+        except (ValueError, TypeError, RecursionError):
+            return None
+        if not isinstance(raw, dict) or not isinstance(raw.get("profiles"), list):
+            return None
+        return raw["profiles"]
+
+    @staticmethod
+    def _profile(raw) -> Profile | None:
+        """one entry -> Profile; a field of the wrong type gets its default. None: no usable id."""
+        if not isinstance(raw, dict) or not isinstance(raw.get("id"), str) or not raw["id"].strip():
+            return None
+        fields_ = Profile.__dataclass_fields__
+        kw = {}
+        for k, v in raw.items():
+            if k not in fields_:
+                continue
+            want = {"str": str, "list": list, "dict": dict, "float": (int, float)}.get(str(fields_[k].type))
+            if want is not None and isinstance(v, want) and not isinstance(v, bool):
+                kw[k] = v
+        kw.setdefault("name", kw["id"])
+        if not kw["name"].strip():
+            kw["name"] = kw["id"]
+        try:
+            return Profile(**kw)
+        except (TypeError, ValueError):
+            return None
 
     def save(self):
+        """write completely or not at all (temporary file, fsync, rename) and keep the previous state as .bak"""
+        import shutil
+        from .backup import write_text_atomic
         with self._lock:
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = self.path.with_suffix(".tmp")
-            tmp.write_text(json.dumps({"profiles": [asdict(p) for p in self.profiles.values()]}, indent=2,
-                                      ensure_ascii=False), "utf-8")
-            tmp.replace(self.path)
+            text = json.dumps({"profiles": [asdict(p) for p in self.profiles.values()]}, indent=2, ensure_ascii=False)
+            try:                                    # (only a readable state is worth keeping)
+                if self._entries(self.path.read_text("utf-8")) is not None:
+                    shutil.copy2(self.path, self.path.with_name(self.path.name + ".bak"))
+            except (OSError, UnicodeDecodeError):
+                pass
+            write_text_atomic(self.path, text)
 
-    def create(self, name: str = "", serial: str = "") -> Profile:
+    def create(self, name: str = "", serial: str = "", folders=()) -> Profile:
+        """a new profile. Without a name: the first free "FM-1 A", "FM-1 B" … – free means no profile has it AND
+        none of `folders` (the names in the backup folder) has it: the backups of a forgotten device must not
+        become the backups of a new one."""
         n = len(self.profiles)
         if not name:                              # first free letter – after "Forget" no second "FM-1 B"
-            taken = {p.name for p in self.profiles.values()}
-            name = next((f"FM-1 {chr(65 + i)}" for i in range(26) if f"FM-1 {chr(65 + i)}" not in taken),
-                        f"FM-1 {n + 1}")
+            taken = {p.name.lower() for p in self.profiles.values()} | {str(f).lower() for f in folders or ()}
+            name = next((f"FM-1 {chr(65 + i)}" for i in range(26) if f"FM-1 {chr(65 + i)}".lower() not in taken),
+                        next(f"FM-1 {k}" for k in range(n + 1, n + 1000) if f"FM-1 {k}".lower() not in taken))
         name = self.unique_name(name)
         p = Profile(id=uuid.uuid4().hex[:10], name=name, color=PROFILE_COLORS[n % len(PROFILE_COLORS)], serial=serial)
         self.profiles[p.id] = p
@@ -182,16 +285,71 @@ class ProfileStore:
 
 
 BOGUS_SERIAL = re.compile(r"^(.)\1*$|^0?123456789(0|abcdef)?$|^0+1?$", re.I)
+# Constants that a firmware reports as "serial number" on every unit (read in the sources, 2026-11-18):
+#   0000FM1DISK1     disk mode of the Felucca family (felucca-bsp chip/usb.c STR3_MSC)
+#   TransitFM1 …     TransitFM1 reports its name and version (firmware/src/usb.c USB_ISERIAL / STR3)
+CONSTANT_SERIAL_RE = re.compile(r"^(0000FM1DISK1$|TransitFM1\b)", re.I)
+# Which firmwares report a serial number of the unit's own:
+#   original firmware (USB 4c4a:c755 / 4c4a:4155): yes, per unit – measured on two FM-1 on 2026-11-18
+#       (4150354433333610 and 550B515AA1CA0037); its source is not public
+#   M-VAVE's update loader (4d4a:4155): not known – a number seen there may confirm a profile that already has it,
+#       but is never learned into a profile
+#   Felucca family (1209:0001 and its loader 1209:0002: Felucca, Melodee, Skiff, SLOOP, KARMA, JIANT, ORBIT, X0X,
+#       gr!mm, Hortator, ChoralRoot, CoralFlower, fm1-base …): none at all (iSerialNumber 0), or a constant (above) –
+#       a number seen there never identifies a unit
+OWN_SERIAL_KINDS = ("stock", "stock-update")
 
 
-def usable_serial(port: PortInfo, all_ports: list[PortInfo]) -> str:
-    """Use the serial number only if it looks genuine and is unique among the connected devices."""
+def serial_plausible(serial: str) -> bool:
+    """can this text be a unit's own serial number at all? (not empty, not a constant-looking or known constant one)"""
+    s = (serial or "").strip()
+    return len(s) >= 4 and not BOGUS_SERIAL.match(s) and not CONSTANT_SERIAL_RE.match(s)
+
+
+def identifying_serial(port: PortInfo, all_ports: list[PortInfo], identity: str = "") -> str:
+    """The serial number of `port` if it tells this one FM-1 from every other, else "".
+
+    Never: an empty, constant-looking or known constant number; a number seen twice among the connected devices; a
+    number reported by a firmware that is not known to report the unit's own (see OWN_SERIAL_KINDS – by USB ID; a
+    device with an unknown USB ID is not trusted either). A port without a kernel client and without USB ID is one
+    of the app's own simulated devices (sysfs gives a serial number only for a kernel client): its number counts."""
     s = (port.serial or "").strip()
-    if len(s) < 4 or BOGUS_SERIAL.match(s):
+    if not serial_plausible(s):
         return ""
     if sum(1 for p in all_ports if (p.serial or "").strip() == s) > 1:
         return ""
-    return s
+    uid = (port.usb_id or "").lower()
+    if port.client is None and not uid:
+        return s
+    return s if FM1_USB_IDS.get(uid, "") in OWN_SERIAL_KINDS else ""
+
+
+def serial_learnable(port: PortInfo, all_ports: list[PortInfo], identity: str = "") -> str:
+    """the serial number a profile may LEARN from this sighting: an identifying one, seen while the firmware itself
+    runs – not in update mode and not from an update loader, whose number is not known to be the unit's own"""
+    ident = (identity or "").strip().lower()
+    if port.update_mode or ident.startswith("ota-") or FM1_USB_IDS.get((port.usb_id or "").lower(), "").endswith("update"):
+        return ""
+    return identifying_serial(port, all_ports, identity)
+
+
+def usable_serial(port: PortInfo, all_ports: list[PortInfo]) -> str:
+    """(older name) the serial number only if it identifies the unit – see identifying_serial"""
+    return identifying_serial(port, all_ports)
+
+
+def possible_duplicate(store: "ProfileStore", prof: Profile) -> Profile | None:
+    """another profile that may be the very same FM-1 as `prof`: one of the two has a serial number, the other has
+    none, and both were last seen at the same USB port. That is how an earlier version of the app split one FM-1
+    into two profiles when the original firmware was installed (it reports a serial number, the firmware before
+    did not). Two real FM-1 used at one port look the same in these data – so this is only ever a hint for the
+    owner, never a reason to merge anything by itself."""
+    if prof is None or not prof.usb_path:
+        return None
+    for other in store.profiles.values():
+        if other.id != prof.id and other.usb_path == prof.usb_path and bool(other.serial) != bool(prof.serial):
+            return other
+    return None
 
 
 # ------------------------------------------------------------ detection ---
@@ -225,6 +383,7 @@ def usb_details(client: int | None) -> dict:
             out["manufacturer"] = _read(d / "manufacturer")
             out["speed"] = _read(d / "speed")
             out["devnum"] = _read(d / "devnum")       # changes on every re-enumeration (careful mode)
+            out["bcd_device"] = _read(d / "bcdDevice")    # the device's own version number, e.g. "0200"
             break
     return out
 
@@ -268,6 +427,7 @@ def scan_ports() -> list[PortInfo]:
         info.product = d.get("product", "")
         info.manufacturer = d.get("manufacturer", "")
         info.speed = d.get("speed", "")
+        info.bcd_device = d.get("bcd_device", "")
         found[info.key] = info
     return list(found.values())
 

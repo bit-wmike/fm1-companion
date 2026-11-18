@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Rescue stage 2: FM-1 in ROM boot mode ("WL82 UBOOT1.00", USB 4c4a:8057).
 
-The actual work is done by the bundled, unmodified MvaveFM1Unbricker (MIT, vendor/unbricker/),
+The actual work is done by the bundled, unmodified MvaveFM1Unbricker (MIT, vendor/unbricker/, 1.2.1),
 which talks to the chip via kagaimiq's jl-uboot-tool (MIT, fetched at a fixed revision only after consent).
 Its safety rules apply unchanged: never write below 0x4000, no chip/block erase,
-mandatory double backup with comparison, chip key 0x980F and flash ID 0x856014 without override.
+mandatory double backup with comparison, chip key 0x980F and flash ID 0x856014 or 0xB36014 (the newer units,
+from Unbricker 1.2.1) without override.
 
 This file only adds: strict device detection via sysfs (VID:PID + vendor/model, size),
 launch with root privileges via pkexec, dependency check, line-by-line output to the UI.
@@ -41,25 +42,42 @@ EXPECTED_SIZE = 0x100000            # 1 MiB Flash
 TRANSPORTER_URL = "https://github.com/kurogedelic/FM-1-transporter"
 UNBRICKER_URL = "https://github.com/Quixotic7/MvaveFM1Unbricker"
 JLUB_URL = "https://github.com/kagaimiq/jl-uboot-tool"
-DEPS = {"crcmod": "python3-crcmod", "yaml": "python3-yaml", "Cryptodome": "python3-pycryptodome",
-        "tqdm": "python3-tqdm"}
+# What the rescue in ROM boot mode really imports (read in the bundled Unbricker and in jl-uboot-tool adb3f18):
+# fm1_unbrick.load_jlub imports yaml and jltech.uboot / jltech.cipher, which import jltech.crc -> crcmod.
+# jl-uboot-tool's requirements.txt also names pycryptodomex and tqdm: Cryptodome is imported nowhere in that
+# revision, tqdm only by its command line jluboottool.py, which the app never runs – so they are not asked for.
+# Both packages are "recommended" in data/deps.json (installed by install.sh and the .deb by default): the rescue
+# must be ready before it is needed.
+DEPS = {"crcmod": "python3-crcmod", "yaml": "python3-yaml"}
 
 
-# FM-1 with UCUN-UC25HQ80 flash (JEDEC 0xB36014): Melodee 1.6.0 runs on it (#110), but the ROM rescue checks for
-# 0x856014 (Unbricker, upstream tools/fm1_recover.py) and stops. Only an understandable message, no other behaviour.
+# FM-1 with the UCUN UC25HQ80 flash (JEDEC 0xB36014, the units with the logo on the front): the bundled Unbricker
+# accepts it from 1.2.1 (upstream a1eaf4d), as 0x856014. The rescue reads the ID in ROM boot mode – the one place
+# where the app sees it for sure; ui/pages/recovery.py keeps it in the device profile (fm1companion/hardware.py).
 UCUN_FLASH_ID = 0xB36014
-UCUN_TEXT = _("This FM-1 has a flash chip from UCUN (UC25HQ80, ID 0xB36014) instead of the usual Puya "
-              "(0x856014). The USB ROM recovery (stage 2) does not support this flash yet and therefore stops – "
-              "nothing was written. The firmware itself runs on it (Melodee 1.6.0 and later also saves correctly); "
-              "normal installations via “Firmware+” work. For a ROM recovery, please wait for a version of the "
-              "recovery tool that knows 0xB36014.")
-_FLASH_ID_RE = re.compile(r"(?:flash[ _-]?id|jedec|\bid=)\D{0,12}(?:0x)?([0-9a-f]{6})\b", re.I)
+UCUN_TEXT = _("This FM-1 has the flash chip of the newer units (UCUN UC25HQ80, ID 0xB36014 – the FM-1s with the logo "
+              "on the front) instead of the Puya chip (0x856014). The recovery tool knows both chips. Writing in "
+              "ROM boot mode has not been run on such a unit with this app. Afterwards, install only firmware "
+              "versions that know this chip (help page “Firmware”).")
+OTHER_FLASH_TEXT = _("The recovery tool only works with the two flash chips known in the FM-1 (ID 0x856014 or "
+                     "0xB36014) and stops on any other – nothing was written.")
+
+
+# the two lines in which the tools report the ID they read from the chip: fm1_unbrick.py check_identity ("Flash ID
+# 0xB36014 (expected …") and the Transporter's info reply ("OK key=980F type=3 id=B36014")
+_READ_ID_RE = re.compile(r"Flash ID\s+0x([0-9A-Fa-f]{6}) \(expected|\bkey=[0-9A-Fa-f]{4} type=\d+ id=([0-9A-Fa-f]{6})\b")
+KNOWN_FLASH_IDS = (0x856014, UCUN_FLASH_ID)
+
+
+def flash_id_of(line: str) -> int:
+    """the flash ID an output line of the rescue tool names (0 = none)"""
+    from .. import hardware
+    return hardware.flash_id_in(line)
 
 
 def flash_hint(line: str) -> str:
-    """Output line of the rescue tool -> German hint (UCUN flash), otherwise ''"""
-    m = _FLASH_ID_RE.search(line or "")
-    return UCUN_TEXT if m and int(m.group(1), 16) == UCUN_FLASH_ID else ""
+    """Output line of the rescue tool -> hint in the UI language (newer unit's flash), otherwise ''"""
+    return UCUN_TEXT if flash_id_of(line) == UCUN_FLASH_ID else ""
 
 
 @dataclass
@@ -267,14 +285,16 @@ class Runner:
     """runs fm1_unbrick.py / fm1_transporter_recover.py; dry_run = with its built-in mock FM-1"""
 
     def __init__(self, dry_run: bool = False, log: Callable[[str], None] = print, cwd: Path | None = None,
-                 root_cmd: list[str] | None = None):
+                 root_cmd: list[str] | None = None, on_flash: Callable[[int], None] | None = None):
         self.dry_run = dry_run
         self.log = log
         self.cwd = Path(cwd) if cwd else work_dir()
         self.root_cmd = root_cmd if root_cmd is not None else (["pkexec"] if shutil.which("pkexec") else ["sudo"])
         self.proc: subprocess.Popen | None = None
         self.last_result: Path | None = None
-        self.hint = ""                  # German hint from the output (e.g. UCUN flash), otherwise ""
+        self.hint = ""                  # a note from the output (the newer unit's flash chip), otherwise ""
+        self.flash_id = 0               # the flash ID the tool read in this run (0 = none seen)
+        self.on_flash = on_flash        # called once with it (never in a simulation: that chip is made up)
 
     def argv(self, cmd: str, *args: str, script: Path = SCRIPT, root: bool = True) -> list[str]:
         common = ["--jl-dir", str(jl_dir()), "--log-dir", str(self.cwd / "logs")]
@@ -309,6 +329,11 @@ class Runner:
             line = line.rstrip()
             if line:
                 self.log(helper_line(line))
+                m = _READ_ID_RE.search(line)
+                if m and not self.flash_id:
+                    self.flash_id = int(m.group(1) or m.group(2), 16)
+                    if self.on_flash is not None and not self.dry_run:
+                        self.on_flash(self.flash_id)
                 if not hinted and flash_hint(line):
                     hinted = True
                     self.hint = UCUN_TEXT

@@ -14,14 +14,14 @@ import subprocess
 import threading
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QTimer, QUrl
+from PyQt6.QtCore import Qt, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (QCheckBox, QFileDialog, QHBoxLayout, QInputDialog, QLabel, QPushButton,
                              QScrollArea, QVBoxLayout, QWidget)
 
 from . import PageSpec
 from ... import firmware
-from ...flash import engine as fe, journal as fj, package as fpk, texts as rescue_texts, uboot
+from ...flash import engine as fe, journal as fj, package as fpk, tested, texts as rescue_texts, uboot
 from ..common import Card, Disclosure, confirm, heading, icon, show_error
 from ...i18n import _, pgettext
 
@@ -60,7 +60,7 @@ STEPS_UBOOT = _("<ol><li>Once: “Fetch tool” (jl-uboot-tool, is checked).</li
                 "a refusal) switch the FM-1 off and on and bring it into ROM boot mode again.</small>")
 DETAILS_UBOOT = _("The app uses the bundled <a href='https://github.com/Quixotic7/MvaveFM1Unbricker'>"
                   "MvaveFM1Unbricker</a> (MIT) with kagaimiq's jl-uboot-tool. It backs up the whole flash twice and "
-                  "compares, checks chip key 0x980F and flash ID 0x856014, writes <b>only 0x4000–0x92FFF</b> from the "
+                  "compares, checks chip key 0x980F and flash ID 0x856014 or 0xB36014 (the newer FM-1s with the logo on the front), writes <b>only 0x4000–0x92FFF</b> from the "
                   "original V15 and reads everything back. Below 0x4000 it never writes, nothing is erased completely. "
                   "<br><b>Boot header:</b> before writing, the app checks the boot header (0x0000–0x3FFF) on the backup "
                   "from the same run. Only under the factory header (V13–V15) is V15 written. If the device has the "
@@ -103,7 +103,7 @@ TIER3 = _("<b>Wiring (tested, TRANSPORTER-GUIDE):</b> XIAO <b>D6 (GP0) → D+ (g
           "Flash the UF2: hold the BOOT button and plug in. <b>Honestly:</b> the bundled UF2 is only a "
           "placeholder – the real Transporter firmware is only created with <tt>python3 fm1_transporter_recover.py "
           "setup</tt> from the unbricker repo (MvaveFM1Unbricker). After that, also with this tool in the terminal: "
-          "rekey → info (must show <tt>key=980F id=856014</tt>) → dump (read twice, compare, keep) → "
+          "rekey → info (must show <tt>key=980F id=856014</tt>, on a newer FM-1 <tt>id=B36014</tt>) → dump (read twice, compare, keep) → "
           "restore --write. The app itself does not run stage 3.<br><br>"
           "<b>RP2040 only! No RP2350 boards</b> (GPIO erratum and D+ pull-up make the Transporter unusable).<br><br>"
           "<b>Untested, not confirmed by the community:</b> with a <b>Raspberry Pi Pico (RP2040)</b> instead of the "
@@ -122,10 +122,23 @@ FAQ = _("<b>… an installation is aborted?</b> Do not unplug anything, check th
         "for firmwares that only work from V15.")
 
 
+# where an installation stopped (journal "stopped_in"), in words
+PHASE_TEXT = {"prepared": _("before anything was sent"), "step1": _("while the FM-1 checked the package (step 1)"),
+              "loader": _("while the FM-1 switched to update mode"), "writing": _("while writing"),
+              "reboot": _("at the restart after writing"), "resources": _("while writing the resources")}
+
+
 class RecoveryPage(QWidget):
+    flash_seen = pyqtSignal(int)           # the rescue tool read the flash ID in ROM boot mode (from its thread)
+
     def __init__(self, ctx, window=None):
         super().__init__(window)
         self.ctx, self.window = ctx, window
+        self.last_flash_id, self.flash_note = 0, ""
+        import time
+        self._session_start = time.time()      # profiles seen at a USB port since then: "in this session"
+        self._rom_sent = None                  # (profile id, USB port) of the FM-1 this page sent into ROM boot mode
+        self.flash_seen.connect(self._flash_seen)
         self.journal = fj.Journal()
         outer = QVBoxLayout(self)
         outer.addWidget(heading(_("Recovery"), _("FM-1 does not start, is stuck in update mode, or an installation was "
@@ -159,6 +172,15 @@ class RecoveryPage(QWidget):
         self.b_file = QPushButton(icon("document-open"), _("Choose another package …"))
         self.b_file.clicked.connect(lambda: self.finish_install(choose=True))
         c1.layout().addLayout(_row(self.b_finish, self.b_v15, self.b_file))
+        self.b_forget = QPushButton(icon("edit-clear", "dialog-close"), _("Forget the interrupted installation"))
+        self.b_forget.setToolTip(_("Removes the app's note about the interrupted installation (and its copy of the "
+                                   "package). Nothing is sent to the FM-1. Use it when the FM-1 runs normally again."))
+        self.b_forget.clicked.connect(self.forget_active)
+        self.b_forget_chain = QPushButton(icon("edit-clear", "dialog-close"), _("Forget the two-step switch"))
+        self.b_forget_chain.setToolTip(_("Removes the app's note that a second step is still to come. Nothing is "
+                                         "sent to the FM-1."))
+        self.b_forget_chain.clicked.connect(self.forget_chain)
+        c1.layout().addLayout(_row(self.b_forget, self.b_forget_chain))
         self.details["update"] = Disclosure(_("Details: key combinations, community notes, journal"), DETAILS_UPDATE)
         c1.layout().addWidget(self.details["update"])
         lay.addWidget(c1)
@@ -277,16 +299,20 @@ class RecoveryPage(QWidget):
             lines.append(_("<span style='color:#888'>○ Not detected: no FM-1 in update mode.</span> The display "
                            "updates by itself."))
         if act:
-            lines.append(_("Interrupted installation according to the journal: <b>{target}</b> "
-                           "({product}, phase “{phase}”).").format(target=act.get('target', '?'),
-                                                                  product=act.get('product', ''),
-                                                                  phase=act.get('phase', '')))
+            where = act.get("stopped_in") or act.get("phase", "")
+            lines.append(_("Interrupted installation according to the app's journal: <b>{target}</b> "
+                           "({product}; it stopped {where}). The app has not looked at the FM-1 since – what is "
+                           "detected live is in the line above.").format(
+                               target=act.get('target', '?'), product=act.get('product', ''),
+                               where=PHASE_TEXT.get(where, "“" + where + "”")))
         ch = self.journal.chain
         if ch:
             lines.append(_("Switch in two steps: after the original V15 the app still installs <b>{name}</b> – once "
                            "the FM-1 runs V15: Firmware+ › Install & Versions › “Continue”.").format(
                                name=ch.get("name") or ch.get("key", "?")))
         self.status.setText("<br>".join(lines))
+        self.b_forget.setVisible(bool(act))
+        self.b_forget_chain.setVisible(bool(ch))
         # level 1 buttons: only with a waiting device – and “Original V15” only if the loader accepts it
         wait_hint = _("Only possible once an FM-1 in update mode is detected (see status above).")
         self.b_finish.setEnabled(bool(port))
@@ -354,6 +380,15 @@ class RecoveryPage(QWidget):
             self.b_dump.setToolTip(self._dump_tip)
 
     # ------------------------------------------------------------ Level 1
+    def forget_active(self):
+        """the user says the interrupted installation is no longer pending: only the journal note goes"""
+        self.journal.clear_active()
+        self.refresh()
+
+    def forget_chain(self):
+        self.journal.clear_chain()
+        self.refresh()
+
     def _package_for(self, ident: str, stock: bool, choose: bool) -> Path | None:
         if stock:
             sp = firmware.spec("stock-v15")
@@ -370,6 +405,9 @@ class RecoveryPage(QWidget):
         if port is None:
             show_error(self, _("No device in update mode"), _("Please bring the FM-1 into update mode as described "
                                                               "and connect it."))
+            return False
+        from .. import sloop3_ui                  # (m-bootloader's MIDI MODE is no update loader: nothing is sent)
+        if sloop3_ui.refuse_in_midi_mode(self, self.ctx, port):
             return False
         src = self._package_for("", stock, choose)
         if src is None:
@@ -425,6 +463,8 @@ class RecoveryPage(QWidget):
                     what += "<br>" + _("<b>Caution:</b> “{target}” was interrupted – that is a different package. The "
                                        "safest thing is to write exactly the interrupted package again.").format(
                                            target=act.get('target', '?'))
+        if not self._chip_gate(src, stock, act, port):
+            return False
         from ..risk_dialog import ensure_risk_ack
         if not ensure_risk_ack(self):
             return False
@@ -432,10 +472,12 @@ class RecoveryPage(QWidget):
                        _("The waiting FM-1 receives {what}.<br><br>"
                          "The app checks checksum and loader once more beforehand – if anything does not match, nothing "
                          "is sent.<br>While writing, do not unplug the cable and do not switch the FM-1 off.").format(
-                           what=what), pgettext("button", "Finish")):
+                           what=what) + "<br><br><b>" + tested.note(["resume"]) + "</b>",
+                       pgettext("button", "Finish")):
             return False
         cancel = threading.Event()
-        device_id = self.ctx.profile.id if self.ctx.profile else ""
+        wprof, wcertain, _rev = self.waiting_unit(port, act)       # the device that waits, not the active one
+        device_id = wprof.id if wprof is not None and (wcertain or self.ctx.port is port) else ""
         self.ctx.hold = True
         if self.ctx.port is port:
             self.ctx.disconnect(None)
@@ -459,6 +501,10 @@ class RecoveryPage(QWidget):
             r = eng.write(info, port=port.in_name, label=_("Recovery: {target}").format(target=act.get('target') or info.product),
                           device_id=device_id, pin=pin, expect_sha=expect_sha)
             w.log.emit(_("Done – the FM-1 reports {identity}.").format(identity=r.identity))
+            if r.identity != "FM-1_015":
+                # a two-step switch whose target is now written here is finished: no “Continue” any more
+                # (after the original V15 the second step is still to come – the chain stays)
+                self.journal.clear_chain()
             return r.identity
 
         def run(w):
@@ -480,8 +526,124 @@ class RecoveryPage(QWidget):
         return d.ok
 
     # ------------------------------------------------------------ Level 2
+    def waiting_unit(self, port, act: dict | None = None):
+        """the FM-1 that waits in update mode at `port`: (profile or None, is that certain?, revision "new"|"old"|"").
+        Certain only by a usable serial number. Otherwise every profile that may be this device is looked at (the one
+        the app guesses for the port, the ones last seen at this USB port, the device of the interrupted
+        installation): "new" if any of them is, never "old". A chip ID read in ROM boot mode at this USB port in this
+        session counts too."""
+        import os
+        from ... import hardware
+        from ...devices import usable_serial
+        ctx = self.ctx
+        usb = getattr(port, "usb_path", "") or ""
+        session = hardware.session_revision(usb)
+        serial = usable_serial(port, ctx.ports or [port]) if port is not None else ""
+        prof = ctx.store.by_serial(serial) if serial else None
+        if prof is not None:
+            rev = hardware.revision(prof) if session != hardware.NEW else hardware.NEW
+            if rev == hardware.UNKNOWN and os.environ.get("FM1C_DEMO") == "1" and not hardware.asked(prof):
+                rev = hardware.OLD                 # the demo's simulated FM-1s are earlier units (nothing to ask)
+            return prof, True, "" if rev == hardware.UNKNOWN else rev
+        cands = []
+        for p in ([ctx.profile_for_port(port)] if port is not None else []) + \
+                [x for x in ctx.store.profiles.values() if usb and x.usb_path == usb] + \
+                [ctx.store.profiles.get((act or {}).get("device_id") or "")]:
+            if p is not None and p not in cands:
+                cands.append(p)
+        if session == hardware.NEW or any(hardware.revision(p) == hardware.NEW for p in cands):
+            return (cands[0] if len(cands) == 1 else None), False, hardware.NEW
+        if os.environ.get("FM1C_DEMO") == "1":
+            return (cands[0] if len(cands) == 1 else None), False, hardware.OLD     # simulated FM-1s: earlier units
+        return (cands[0] if len(cands) == 1 else None), False, ""
+
+    def _chip_gate(self, src, stock: bool, act: dict, port=None) -> bool:
+        """the newer FM-1 (logo on the front): the same rule as in the installation plan, for the package that is
+        about to be sent to the loader waiting at `port` – judged by that device, not by the active one.
+        False: nothing is sent (the reason was shown)."""
+        from ... import hardware
+        from ...flash import planner
+        from ..firmware_page import match_by_sha
+        if stock:
+            tgt = planner.Target.from_spec(firmware.spec("stock-v15"), tag="V15")
+        else:
+            info = fpk.analyze(Path(src))
+            sp = match_by_sha(info.sha256)
+            if sp is not None:
+                # the version the checksum vouches for; the label of the interrupted installation only for exactly
+                # that package – never the file name
+                same = act.get("sha256") and act["sha256"] == info.sha256
+                tgt = planner.Target.from_spec(sp, tag=sp.release_tag or (act.get("target") if same else "") or "",
+                                               file=Path(src), package=info)
+            else:
+                tgt = planner.Target.from_file(info)
+                tgt.known = False
+        port = port if port is not None else self.update_port()
+        prof, certain, rev = self.waiting_unit(port, act)
+        first = planner.chip_check(rev, tgt)
+        if (first.blockers or first.confirmations) and certain and not hardware.asked(prof):
+            from .. import hw_revision
+            if hw_revision.ask(self, self.ctx, prof) is None:
+                return False
+            rev = self.waiting_unit(port, act)[2]
+        chk = planner.chip_check(rev, tgt)
+        strip = lambda t: __import__("re").sub("<[^>]+>", "", t)       # noqa: E731
+        if chk.blockers:
+            show_error(self, _("Not for this FM-1"), "\n\n".join(strip(b) for b in chk.blockers)
+                       + "\n\n" + _("Nothing was sent. The FM-1 keeps waiting in update mode – finish the "
+                                      "installation with a version that knows its flash chip."))
+            return False
+        if chk.confirmations:
+            return confirm(self, _("Which FM-1 is this?"),
+                           "<br><br>".join(chk.warnings) + "<br><br><b>"
+                           + "<br>".join(planner.CONFIRM_TEXT[c] for c in chk.confirmations) + "</b>",
+                           _("Yes, continue"), danger=True)
+        return True
+
     def _runner(self, log):
-        return uboot.Runner(dry_run=self.chk_sim.isChecked(), log=log)
+        return uboot.Runner(dry_run=self.chk_sim.isChecked(), log=log, on_flash=self.flash_seen.emit)
+
+    def _flash_seen(self, flash_id: int, usb_path: str | None = None):
+        """the rescue tool read the flash chip in ROM boot mode – the one place where the app sees for sure which
+        chip a unit has (fm1companion/hardware.py). A unit in ROM boot mode is a USB disk, not a MIDI device, so the
+        active device is by construction another FM-1: the ID is stored on a profile only when that profile is
+        unambiguously this unit – the device this page sent into ROM boot mode, or the only profile seen at this USB
+        port in this session. Otherwise it is used for this session's checks at that USB port and nothing is stored."""
+        from ... import hardware
+        ctx = self.ctx
+        if hardware.revision_of_id(flash_id) == hardware.UNKNOWN:
+            return
+        if usb_path is None:
+            try:
+                devs = uboot.scan()
+            except OSError:
+                devs = []
+            usb_path = devs[0].usb_path if len(devs) == 1 else ""
+        prof = None
+        sent = self._rom_sent
+        if usb_path and sent and sent[1] == usb_path:
+            prof = ctx.store.profiles.get(sent[0])
+        elif usb_path:
+            here = [p for p in ctx.store.profiles.values()
+                    if p.usb_path == usb_path and p.last_seen >= self._session_start]
+            prof = here[0] if len(here) == 1 else None
+        self.last_flash_id = flash_id
+        chip = _("{name} (0x{id:06X})").format(
+            name=hardware.NEW_CHIP if flash_id == hardware.NEW_ID else hardware.OLD_CHIP, id=flash_id)
+        if prof is None:
+            if usb_path:
+                hardware.SESSION_READS[usb_path] = flash_id
+            self.flash_note = _("Flash chip read: {chip}. The app cannot tell for sure which of your devices this is, "
+                                "so it is not stored for any of them; until the app is closed it counts for the FM-1 "
+                                "at this USB port. Please set it on the page “Devices” (button “Unit …”).").format(
+                                    chip=chip)
+        else:
+            if hardware.note_flash_id(prof, flash_id, "rom"):
+                ctx.store.save()
+                ctx.changed.emit()
+            self.flash_note = _("Flash chip read: {chip}. Device “{device}” is now: {state}.").format(
+                chip=chip, device=prof.name, state=hardware.label(prof))
+        ctx.message.emit(self.flash_note)
 
     def uboot_setup(self):
         if not confirm(self, _("Fetch tool"),
@@ -519,7 +681,8 @@ class RecoveryPage(QWidget):
                        _("Procedure: read the whole flash twice and compare (mandatory, also contains your projects), "
                          "check the boot header on this backup (it only continues under the factory header – with a "
                          "V16 or unknown header nothing is written), write the firmware area 0x4000–0x92FFF from the "
-                         "original V15, read back."), _("Continue"),
+                         "original V15, read back.") + "<br><br><b>" + tested.note(["rom_restore"]) + "</b>",
+                       _("Continue"),
                        danger=True):
             return False
         word = pgettext("typed confirmation", "WRITE")
@@ -628,6 +791,10 @@ class RecoveryPage(QWidget):
         if softkey and port is None:
             show_error(self, _("No device"), _("Please connect the FM-1 with the original firmware."))
             return False
+        # the FM-1 this run sends into ROM boot mode: a chip ID read at its USB port in this run is this device's
+        prof_sent = self.ctx.profile if softkey and port is self.ctx.port and not getattr(self.ctx, "is_virtual", False) \
+            else None
+        self._rom_sent = (prof_sent.id, port.usb_path) if prof_sent is not None and port.usb_path else None
 
         def work(w):
             r = self._runner(w.log.emit)
@@ -658,6 +825,7 @@ class RecoveryPage(QWidget):
                    done=_("Full backup read (twice, compared) and saved in {folder}. Nothing was written on the "
                           "FM-1 – now switch it off and on again.").format(folder=folder),
                    actions=[(_("Open folder"), lambda _r: QDesktopServices.openUrl(QUrl.fromLocalFile(folder)))])
+        self._rom_sent = None
         return d.ok
 
 
@@ -695,17 +863,23 @@ def _gate_check(runner, rc: int):
                              "folder. The FM-1 usually leaves ROM boot mode after one tool run – for another attempt "
                              "switch it off and on and bring it into ROM boot mode again.").format(
             reason=rescue_texts.tr(res.get("refused")) or _("The check of the backup did not pass (details in the log).")))
-    if rc != 0 and getattr(runner, "hint", ""):
-        raise RuntimeError(runner.hint)
+    if rc != 0 and _other_flash(runner):
+        raise RuntimeError(uboot.OTHER_FLASH_TEXT)
     if rc == 0 and not res.get("checked"):
         raise RuntimeError(_("The tool ended without checking the backup – the app cannot say what happened. "
                              "Please look at the log."))
     return _check(rc)
 
 
+def _other_flash(runner) -> bool:
+    """the tool read a flash chip that is neither of the FM-1's two"""
+    fid = getattr(runner, "flash_id", 0)
+    return bool(fid) and fid not in uboot.KNOWN_FLASH_IDS
+
+
 def _check(rc: int, runner=None):
-    if rc != 0 and getattr(runner, "hint", ""):      # e.g. UCUN flash (0xB36014): rescue doesn't know it yet
-        raise RuntimeError(runner.hint)
+    if rc != 0 and _other_flash(runner):
+        raise RuntimeError(uboot.OTHER_FLASH_TEXT)
     if rc != 0:
         raise RuntimeError(_("The tool reports an error (code {code}) – details in the log. {hint}").format(
             code=rc, hint=_("Code 3: firmware area possibly incomplete – do NOT switch off, try again.") if rc == 3

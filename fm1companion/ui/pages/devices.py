@@ -2,7 +2,6 @@
 """Devices: all known FM-1s, compare them and copy content from one FM-1 to another."""
 from __future__ import annotations
 
-import shutil
 import time
 from pathlib import Path
 
@@ -234,6 +233,17 @@ class DevicesPage(QWidget):
                      date=metas[0].when.astimezone().strftime('%d.%m.%Y %H:%M')) if metas else
                   _("Backups: {n} ({size})").format(n=len(metas), size=fmt_size(0))),
                  _("Serial number: {serial} · USB port: {usb}").format(serial=p.serial or _("none"), usb=p.usb_path or '–')]
+        from ... import hardware
+        lines.append(_("Unit: {revision}").format(revision=hardware.label(p)))
+        from ...devices import possible_duplicate
+        twin = possible_duplicate(c.store, p)
+        if twin is not None:           # (a hint only: nothing is merged by itself, no backup folder is touched)
+            lines.append("<span style='color:#f67400'>" + _(
+                "Possibly the same FM-1 as “{other}”: both were last seen at the same USB port, one with a serial "
+                "number and one without. An FM-1 only reports a serial number under the original firmware, and "
+                "earlier versions of this app then made a second profile. If it is one FM-1: “Merge …” joins the "
+                "two (backups are moved, nothing is deleted). If you own two FM-1, leave them as they are."
+            ).format(other=twin.name) + "</span>")
         if p.notes:
             lines.append(f"<i>{p.notes}</i>")
         lab = QLabel("<br>".join(lines))
@@ -245,6 +255,7 @@ class DevicesPage(QWidget):
                                  ("color", ("color-management", "preferences-desktop-color"), _("Colour"),
                                   lambda _c=False, x=p: self._color(x)),
                                  ("note", ("document-edit",), pgettext("device", "Note"), lambda _c=False, x=p: self._notes(x)),
+                                 ("unit", ("cpu", "audio-card"), _("Unit …"), lambda _c=False, x=p: self.set_unit(x)),
                                  ("backups", ("document-preview", "backup"), _("Backups"),
                                   lambda _c=False, x=p: self._backups(x)),
                                  ("merge", ("merge", "edit-copy"), _("Merge …"), lambda _c=False, x=p: self._merge(x)),
@@ -260,6 +271,9 @@ class DevicesPage(QWidget):
                                "forget this profile."))
             elif key == "backups":
                 b.setToolTip(_("Browse and compare the backups of this device."))
+            elif key == "unit":
+                b.setToolTip(_("Does this FM-1 have the M-VAVE logo on the front? The newer units have another "
+                               "flash chip; the app then only installs firmware versions that know it."))
             row.addWidget(b)
         card.lay.addLayout(row)
         card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
@@ -299,6 +313,16 @@ class DevicesPage(QWidget):
             p.notes = txt
             self.ctx.store.save()
             self.refresh()
+
+    def set_unit(self, p, rev: str | None = None):
+        """the hardware revision of a device (logo on the front = the newer flash chip); rev given: without the dialog"""
+        from .. import hw_revision
+        if rev is None:
+            rev = hw_revision.ask(self, self.ctx, p)
+        else:
+            hw_revision.record(self.ctx, p, rev, self)
+        self.refresh()
+        return rev
 
     def _backups(self, p):
         win = self.window_
@@ -343,17 +367,22 @@ class DevicesPage(QWidget):
             show_error(self, _("Merge"), _("The active device cannot be merged into another one – "
                                                  "merge the other way round."))
             return False
-        sf, df = profile_folder(self.ctx, src), profile_folder(self.ctx, dst)
-        if sf.exists():
-            df.mkdir(parents=True, exist_ok=True)
-            for f in sf.rglob("*.json"):
-                target = df / f.name
-                if not target.exists():
-                    shutil.move(str(f), target)
-            shutil.rmtree(sf, ignore_errors=True)
+        # every file moves (never overwritten: a second file of the same name gets the old device's name appended),
+        # sub-folders and other files (.x0b, notes …) included – the same code as renaming a device
+        from ...devices import move_profile_folder
+        try:
+            move_profile_folder(profile_folder(self.ctx, src).parent, src.folder_name, dst.folder_name)
+        except OSError as e:
+            show_error(self, _("Merge"), _("The backups of “{device}” could not be moved completely: {error}. "
+                                           "Nothing was deleted; both profiles stay.").format(
+                                               device=src.name, error=e.strerror or e))
+            self.refresh()
+            return False
         dst.serial = dst.serial or src.serial
         dst.notes = "\n".join(x for x in (dst.notes, src.notes) if x)
         dst.last_seen = max(dst.last_seen, src.last_seen)
+        from ... import hardware
+        hardware.merge_revision(dst, src)        # the strictest statement about the unit stays (new beats old)
         st.delete(src_id)
         self.ctx.changed.emit()
         self.refresh()
@@ -426,11 +455,13 @@ class DevicesPage(QWidget):
 
         def inv(w, link):
             from ... import backup
-            return [o.id for o in backup.list_objects(link)]
+            return backup.device_inventory(link, c.firmware_key or "")
         d = c.job(self, _("Check target"), inv)
         if not d.ok:
             return None, False
-        comp = BI.compatibility(rep, c.firmware_key, c.info.version if c.info else "", d.result_value)
+        proto, version, ids_dev = d.result_value
+        comp = BI.compatibility(rep, c.firmware_key, version or (c.info.version if c.info else ""), ids_dev,
+                                proto=proto)
         if not comp.ok:
             show_error(self, _("Copy not possible"),
                        f"<b>{src.name} → {c.profile.name}</b><br><br>{comp.reason}" +

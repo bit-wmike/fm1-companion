@@ -1085,9 +1085,48 @@ def start_dir(name: str) -> Path:
     return p if not err and p.is_dir() else Path.home()
 
 
-def fw_label(version: str) -> str:
+def fw_label(version: str, key: str = "") -> str:
     """Firmware identifier for display: SLOOP reports itself (like all Felucca derivatives) as “FELUCCA SLOOP 2.8.3” –
-    “SLOOP 2.8.3” is displayed. Stored data stays unchanged."""
+    “SLOOP 2.8.3” is displayed. Stored data stays unchanged.
+
+    key (the firmware the app recognised, e.g. the profile's): a derivative that reports only the family name
+    (Skiff: “FELUCCA v2.7”) is shown under its own name, “Skiff 2.7”. Without a key, or when the firmware names
+    itself, the text stays as reported."""
     import re as _re
     v = (version or "").strip()
+    m = _re.fullmatch(r"FELUCCA\s+[vV]?(\d\S*)", v) if key and key != "felucca" else None
+    if m:
+        try:
+            from .device import firmware_name
+            name = firmware_name(key)
+        except Exception:  # noqa: BLE001 – a label must never fail
+            name = ""
+        if name and name != key and name.lower() != "felucca":
+            return f"{name} {m.group(1)}"
     return _re.sub(r"\bFELUCCA\s+(?=(?:SLOOP|KARMA)\b)", "", v, flags=_re.IGNORECASE)
+
+
+def firmware_changeable(ctx) -> bool:
+    """Can the user (re)answer “Which firmware is running here?” for the active device? Only where the app cannot
+    ask the firmware itself, and the identifier fits several firmwares or an answer is already stored."""
+    port, ident = getattr(ctx, "port", None), getattr(ctx, "identity", "")
+    if (port is None or not ident or getattr(ctx, "info", None) is not None or getattr(port, "update_mode", False)
+            or getattr(ctx, "is_virtual", False) or getattr(ctx, "protocol", "") != "generic"):
+        return False
+    prof = getattr(ctx, "profile", None)
+    if prof is not None and (getattr(prof, "firmware_choice", None) or {}).get(ident):
+        return True
+    from .device import firmware_candidates
+    return len(firmware_candidates(ident)) > 1
+
+
+def device_title(ctx) -> str:
+    """ctx.title() with the firmware under its own name (fw_label with the recognised firmware): “FM-1 – Skiff 2.7”
+    instead of “FM-1 – FELUCCA v2.7”."""
+    t = ctx.title()
+    info, key = getattr(ctx, "info", None), getattr(ctx, "firmware_key", "")
+    if info is not None and key:
+        raw, nice = fw_label(info.version), fw_label(info.version, key)
+        if raw and raw != nice:
+            t = t.replace(raw, nice)
+    return t

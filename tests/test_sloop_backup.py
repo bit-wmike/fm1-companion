@@ -176,6 +176,25 @@ def test_song_playing_rc3_writes_nothing():
     assert backup.restore_selected(link, backup.read(f2), [1]) == [1] and dev.objs[1] == bytes(s)
 
 
+@pytest.mark.parametrize("version,name", [("SLOOP 2.8.3", "SLOOP"), ("KARMA 3.1", "KARMA")])
+def test_stop_hint_names_the_firmware_on_the_device(version, name):
+    """a KARMA FM-1 that refuses while its song runs was told "SLOOP only writes …" (Studio audit ST-18)"""
+    dev = FakeFM1(4, "SLOOP 2.8.3")
+    dev.version = "FELUCCA " + version                 # (KARMA answers "FELUCCA KARMA 3.1" over SLOOP's protocol)
+    link = Link(LocalTransport(dev))
+    arch = backup.read(backup.capture(link, ""))
+    assert sloopbk.device_name(sloopbk.read_info(link)) == name
+    dev.playing = True
+    with pytest.raises(backup.BackupError) as e:
+        backup.restore(link, arch)
+    assert e.value.code == "bkStop" and f"{name} schreibt" in str(e.value)
+    assert name == "SLOOP" or "SLOOP" not in str(e.value)
+    for plain in ("FELUCCA v1.0.3", "", "v2"):
+        info = type("I", (), {"version": plain})()
+        assert sloopbk.device_name(info) == ""
+    assert "Die Firmware auf dem FM-1 schreibt" in sloopbk.stop_hint()
+
+
 def test_rc3_in_the_middle_names_what_was_written():
     dev, link, _ = sloop()
     arch = backup.read(backup.capture(link, ""))
@@ -404,3 +423,19 @@ def test_grimm_and_hortator_recognised_without_felucca_protocol():
     Hortator shares Felucca's FM-1_900 and is asked over its own INFO, ui/device.py hortator_info)"""
     from fm1companion import firmware
     assert firmware.guess_firmware("FM-1_966")[0] in ("gr-mm", "")       # ("" if this machine remembered it otherwise)
+
+
+def test_every_saved_backup_is_in_the_app_log(tmp_path, caplog):
+    """A backup made by Studio › "Fetch from FM-1" left no line in the app's log (only "Back up now" did, through
+    its notice). The line is written where every backup is saved."""
+    import logging
+    dev, link, _ = sloop()
+    with caplog.at_level(logging.INFO, logger="fm1companion.backup"):
+        p = autobackup.capture_to_file(link, tmp_path, None, "sloop", "FELUCCA SLOOP 2.8.3", "fetched for the studio",
+                                       "manuell")
+    lines = [r.getMessage() for r in caplog.records if r.name == "fm1companion.backup"]
+    assert len(lines) == 1 and lines[0].startswith(f"Backup saved: {p.name} (manuell, firmware sloop FELUCCA SLOOP 2.8.3, ")
+    assert "parts" in lines[0]
+    src = (Path(autobackup.__file__).parent / "ui/pages/studio.py").read_text("utf-8")
+    fetch = src.split("def fetch_from_device", 1)[1].split("\n    def ", 1)[0]
+    assert "AB.capture_to_file(" in fetch              # the Studio's fetch goes through it

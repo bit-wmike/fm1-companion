@@ -25,6 +25,7 @@ home = Path(tempfile.mkdtemp(prefix="fm1c-resp-"))
 for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache"),
                ("XDG_STATE_HOME", ".local/state")):
     os.environ[k] = str(home / sub)
+os.environ["HOME"] = str(home)        # (~ itself too: nothing of this run may land in the real home)
 os.environ["FM1C_DEMO"] = "1"
 os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
 
@@ -183,6 +184,43 @@ def flow():
     size(950, 1000)
     check(w.nav.compact and w.sidebar.width() == MW.SIDEBAR_COMPACT,
           f"sidebar narrow automatically at 950 px ({w.sidebar.width()} px)")
+    # notices: two side by side widen the size *hint* for as long as they show (the announced automatic backup and
+    # “connected” right after connecting) – the window itself must still go narrow, and the notice that asks
+    # something (“Skip today” / “Back up now”) must be the one that stays when only one fits
+    from fm1companion.ui import notify as N
+    nc = N.center()
+    for t in list(nc.toasts):
+        t.dismiss()
+    # a row full of notices with buttons: a plain notice that arrives is still shown (it was dismissed unseen)
+    b1 = nc.post("Mit Knopf 1", "warning", action=("Ok", lambda: None), lifetime=60000, quiet=True)
+    b2 = nc.post("Frage", "info", action=("Nein", lambda: None), more=[("Ja", lambda: None)], lifetime=60000,
+                 quiet=True)
+    full = len(nc.toasts)
+    late = nc.post("Kam danach", "info", quiet=True)
+    wait(100)
+    shown = [t.note for t in nc.toasts]
+    check(b1 in shown and b2 in shown and late not in shown and late.toast is not None and len(shown) == full,
+          f"row full of notices with buttons: a plain notice that arrives waits, no button is pushed away ({full})")
+    b1.toast.dismiss()
+    wait(100)
+    shown = [t.note for t in nc.toasts]
+    check(late in shown and b2 in shown and late.toast.isVisible() and late.toast.timer.isActive(),
+          "… and shows as soon as a place is free (its time starts then)")
+    for t in list(nc.toasts):
+        t.dismiss()
+    asked = nc.post("Frage mit Auswahl", "info", action=("Nein", lambda: None), more=[("Ja", lambda: None)],
+                    lifetime=60000, quiet=True)
+    nc.post("Nur ein Hinweis", "info", quiet=True)
+    wait(200)
+    check(len(nc.toasts) == 2, f"two notices side by side at 950 px ({len(nc.toasts)})")
+    size(760, 1000)
+    check(w.width() == 760, f"with notices showing the window still goes down to 760 px ({w.width()})")
+    check([t.note for t in nc.toasts] == [asked] and asked.toast is not None,
+          "only one notice fits: the one with the choices stays, the plain one goes")
+    for t in list(nc.toasts):
+        t.dismiss()
+    size(950, 1000)
+    wait(200)
     minw = max(w.minimumSize().width(), w.minimumSizeHint().width())
     check(minw <= 760, f"window minimum width ≤ 760 ({minw})")
     sc = w.page_scroll

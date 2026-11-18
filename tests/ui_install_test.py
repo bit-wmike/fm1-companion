@@ -27,6 +27,7 @@ os.environ.setdefault("FM1C_LANG", "de")      # these checks expect the German u
 home = Path(tempfile.mkdtemp(prefix="fm1c-inst-"))
 for k, sub in (("XDG_CONFIG_HOME", ".config"), ("XDG_DATA_HOME", ".local/share"), ("XDG_CACHE_HOME", ".cache")):
     os.environ[k] = str(home / sub)
+os.environ["HOME"] = str(home)        # (~ itself too: nothing of this run may land in the real home)
 os.environ["FM1C_DEMO"] = "1"
 os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox --disable-gpu")
 
@@ -101,6 +102,9 @@ def dialog_exec(self):
             for cb in self.confirm_checks.values():
                 cb.setChecked(True)
         plan_ctl["plans"].append(self.plan)
+        plan_ctl["note"], plan_ctl["html"] = self.tested_note, self.view.toPlainText()
+        plan_ctl["checks"] = {c: cb.text() for c, cb in self.confirm_checks.items()}
+        plan_ctl["ok_enabled"] = self.ok_btn.isEnabled()
         return 1 if plan_ctl["accept"] else 0
     if isinstance(self, JobDialog):
         self.show()
@@ -206,7 +210,26 @@ def flow():
     dlg3 = fp.PlanDialog(w, plan_for(firmware.spec("melodee")), "Melodee", True)
     check(dlg3.chk_direct.isHidden() and dlg3.v15_note.isHidden() and "stock" not in dlg3.plan.kinds(),
           "update of the same firmware: no V15 step, no option")
-    for d in (dlg, dlg2, dlg3):
+    # ---- hardware test 2026-11-18: behind a USB hub the mandatory confirmation must not claim a direct cable, and a
+    #      dry run (writes nothing) needs no confirmation at all
+    import dataclasses as _dc
+    sth = _dc.replace(stm, hubs=2)
+    dlg4 = fp.PlanDialog(w, lambda via, b=True: planner.plan_install(
+        sth, planner.Target.from_spec(firmware.spec("karma"), tag="v3.1"), via_v15=via, backup=b), "KARMA", True)
+    txt4 = dlg4.confirm_checks["power_hub"].text() if "power_hub" in dlg4.confirm_checks else ""
+    check("power" not in dlg4.confirm_checks and "USB-Hub" in txt4 and "steckt direkt" not in txt4
+          and "steckt direkt am Rechner" in dlg.confirm_checks["power"].text(),
+          f"behind a hub the power confirmation says so ({txt4[:60]})")
+    check(not dlg4.ok_btn.isEnabled() and dlg4.missing() == dlg4.plan.confirmations,
+          "installation: the confirmations are required")
+    dlg4.chk_dry.setChecked(True)
+    check(dlg4.ok_btn.isEnabled() and dlg4.missing() == [] and dlg4.ok_hint.isHidden()
+          and not any(cb.isEnabled() for cb in dlg4.confirm_checks.values()),
+          "dry run: no confirmation needed, the button is free")
+    dlg4.chk_dry.setChecked(False)
+    check(not dlg4.ok_btn.isEnabled() and all(cb.isEnabled() for cb in dlg4.confirm_checks.values()),
+          "dry run unticked: the confirmations are required again")
+    for d in (dlg, dlg2, dlg3, dlg4):
         d.deleteLater()
     pkg = home / "melodee-1.7.0.fwsc"
     pkg.write_bytes(fpk.build_package("FM-1_91070"))
@@ -226,8 +249,15 @@ def flow():
     # ---- a dry run writes nothing
     check(until(lambda: ctx.connected, 10000), "connected again after the installation")
     before = len(dev.sends)
+    plan_ctl["confirm"] = False                 # (nothing ticked: a dry run needs no confirmation)
+    hist_n = len(journal.Journal().history())
     ok = fp.install_flow(w, ctx, firmware.spec("melodee"), None, pkg, "v1.7.0", dry_run=True)
-    check(ok and bytes(fi.UPGRADE) not in dev.sends[before:], "dry run sends no UPGRADE")
+    plan_ctl["confirm"] = True
+    check(ok and bytes(fi.UPGRADE) not in dev.sends[before:], "dry run sends no UPGRADE (and needs no confirmation)")
+    dry_logs = sorted((journal.Journal().dir / "logs").glob("dryrun-*.txt"))
+    check(dry_logs and "DRY RUN" in dry_logs[-1].read_text("utf-8") and "Protokoll des Probelaufs" in plan_ctl["last_log"]
+          and len(journal.Journal().history()) == hist_n,
+          "dry run leaves its own marked log, and no entry in the journal")
 
     # ---- backup wanted, but failed: always abort, nothing sent
     from fm1companion import autobackup
@@ -276,6 +306,96 @@ def flow():
     check(p3.target.key == "eigene" and not p3.target.known and "unknown_file" in p3.confirmations
           and any("unbekannt" in b for b in log_boxes),
           f"renamed foreign file stays unknown ({p3.target.key}, {p3.confirmations})")
+
+    # ---- the newer FM-1 (logo on the front, flash UC25HQ80): blocker / confirmation in the plan, the question
+    from fm1companion import hardware
+    from fm1companion.ui import hw_revision
+    check(until(lambda: ctx.connected, 10000), "connected")
+    prof = ctx.profile
+    old_rel, new_rel = firmware.Release("v1.5.1", False), firmware.Release("v1.6.1", False)
+    check(fp.device_revision(ctx) == "old" and not hardware.asked(prof),
+          "demo: the simulated FM-1 counts as an earlier unit, nothing is asked")
+    w.overview.set_unit("new")
+    check(hardware.revision(prof) == "new" and prof.hw_revision_source == "user" and fp.device_revision(ctx) == "new"
+          and "neueres Gerät" in w.overview.lbl["Unit"].text() and "ändern" in w.overview.lbl["Unit"].text(),
+          f"Overview: the unit can be set and is shown ({w.overview.lbl['Unit'].text()[:60]})")
+    before = len(dev.sends)
+    log_boxes.clear()
+    ok = fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel)
+    pn = plan_ctl["plans"][-1]
+    check(not ok and not pn.ok and not plan_ctl["ok_enabled"] and "UC25HQ80" in plan_ctl["html"]
+          and "Melodee 1.5.1" in plan_ctl["html"] and "1.6.0" in plan_ctl["html"] and "Nicht möglich" in plan_ctl["html"]
+          and "no_logo" not in plan_ctl["checks"] and bytes(fi.UPGRADE) not in dev.sends[before:],
+          "newer unit + Melodee 1.5.1: the plan blocks, names 1.6.0, has no override; nothing is sent")
+    check("neueren FM-1" in plan_ctl["note"] or "neueren" in plan_ctl["note"], f"… and says nothing ran on a newer unit ({plan_ctl['note'][-90:]})")
+    plan_ctl["accept"] = False
+    fp.install_flow(w, ctx, firmware.spec("melodee"), new_rel)
+    pn = plan_ctl["plans"][-1]
+    check(not any("UC25HQ80" in b for b in pn.blockers) and "no_logo" not in pn.confirmations,
+          "newer unit + Melodee 1.6.1: no blocker, no extra confirmation")
+    fp.install_flow(w, ctx, firmware.spec("stock-v16"), firmware.Release("V16", False))
+    pn = plan_ctl["plans"][-1]
+    check("newchip_unverified" in pn.confirmations and "bestätigt" in plan_ctl["checks"].get("newchip_unverified", ""),
+          "newer unit + original V16: nothing known – a warning and an explicit confirmation")
+    w.overview.set_unit("unsure")
+    check(fp.device_revision(ctx) == "" and hardware.asked(prof) and "Weiß ich nicht" in w.overview.lbl["Unit"].text(),
+          "“I don't know” is kept (not asked again)")
+    plan_ctl["accept"], plan_ctl["confirm"] = True, False
+    before = len(dev.sends)
+    ok = fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel)
+    pn = plan_ctl["plans"][-1]
+    check(not ok and pn.ok and "no_logo" in pn.confirmations and "KEIN M-VAVE-Logo" in plan_ctl["checks"].get("no_logo", "")
+          and not plan_ctl["ok_enabled"] and bytes(fi.UPGRADE) not in dev.sends[before:],
+          "unit not known + Melodee 1.5.1: only with the confirmation “no logo on the front”")
+    plan_ctl["confirm"], plan_ctl["accept"] = True, False
+    # never asked on a real device: the question comes before the plan, the answer is kept
+    hardware.forget(prof)
+    asked = []
+    real_choose, demo_env = hw_revision.choose, os.environ.pop("FM1C_DEMO")
+    try:
+        hw_revision.choose = lambda parent, name, current="", **k: (asked.append(name), "new")[1]
+        n_plans = len(plan_ctl["plans"])
+        fp.install_flow(w, ctx, firmware.spec("melodee"), new_rel)
+        check(not asked and len(plan_ctl["plans"]) == n_plans + 1, "a version that knows the chip: no question")
+        fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel)
+        pn = plan_ctl["plans"][-1]
+        check(asked == [prof.name] and hardware.revision(prof) == "new" and any("UC25HQ80" in b for b in pn.blockers),
+              "never asked + a version without the chip: asked once, answer kept, plan blocks")
+        fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel)
+        check(len(asked) == 1, "… and not asked a second time")
+        hardware.forget(prof)
+        hw_revision.choose = lambda *a, **k: None
+        n_plans = len(plan_ctl["plans"])
+        check(not fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel) and len(plan_ctl["plans"]) == n_plans,
+              "question closed without an answer: no plan, nothing installed")
+    finally:
+        hw_revision.choose = real_choose
+        os.environ["FM1C_DEMO"] = demo_env
+    # "newer unit" only goes away deliberately: an explicit confirmation, also for a chip ID that was read
+    hardware.note_flash_id(prof, 0xB36014, "rom")
+    real_confirm, seen = hw_revision.confirm_change, []
+    try:
+        hw_revision.confirm_change = lambda parent, p, rev: (seen.append(rev), False)[1]
+        w.overview.set_unit("old")
+        check(seen == ["old"] and hardware.revision(prof) == "new" and "ROM-Bootmodus" in hardware.label(prof),
+              f"“earlier unit” against a recorded newer unit: asked to confirm, not confirmed → stays ({hardware.label(prof)})")
+        hardware.note_flash_id(prof, 0x856014, "identity")
+        w.overview.refresh()
+        check(hardware.revision(prof) == "new" and "0x856014" in w.overview.lbl["Unit"].text()
+              and "zwei Geräte" in w.overview.lbl["Unit"].text(),
+              "an earlier chip read under the same profile: still a newer unit, and the Overview says why")
+        hw_revision.confirm_change = lambda parent, p, rev: (seen.append(rev), True)[1]
+        w.overview.set_unit("old")
+        check(seen == ["old", "old"] and hardware.revision(prof) == "old" and prof.hw_revision_source == "user"
+              and not prof.hw_revision_conflict, "… confirmed: changed to “earlier unit” by the owner")
+        check(hw_revision.record(ctx, prof, hw_revision.FORGET, w) and not hardware.asked(prof),
+              "“Forget what is recorded” (confirmed) clears the unit")
+    finally:
+        hw_revision.confirm_change = real_confirm
+    hardware.forget(prof)
+    ctx.store.save()
+    w.overview.refresh()
+    plan_ctl["accept"] = True
 
     # ---- several FM-1, target cannot be pinned: lock
     real_pin = fp.target_pin
@@ -397,6 +517,50 @@ def flow():
         page._show_chain()
         check(page.pending_chain() is not None and not page.chain_box.isHidden() and "SLOOP" in page.b_chain.text(),
               f"“Continue” offered ({page.b_chain.text()})")
+        # audit F-05: the chain knows the USB port, can be dismissed, and is matched by port or profile
+        ch = journal.Journal().chain
+        check(ch.get("usb_path") == "demo-usb-1", f"chain remembers the USB port ({ch.get('usb_path')})")
+        jr_ = journal.Journal()
+        jr_.restore_chain(dict(ch, device_id="another-profile"))
+        check(page.pending_chain() is not None, "“Continue” found by the USB port when the profile changed")
+        jr_.restore_chain(dict(ch, device_id="another-profile", usb_path="9-9"))
+        check(page.pending_chain() is None, "“Continue” not offered to another FM-1 (other port, other profile)")
+        jr_.restore_chain(ch)
+        page._show_chain()
+        check(not page.b_chain_dismiss.isHidden() and page.b_chain_dismiss.text() == "Verwerfen",
+              f"“Dismiss” next to “Continue” ({page.b_chain_dismiss.text()})")
+        page.dismiss_chain()
+        check(journal.Journal().chain is None and page.chain_box.isHidden(), "“Dismiss” forgets the switch")
+        jr_.restore_chain(ch)
+        page._show_chain()
+        rec = w.page("recovery")
+        rec.refresh()
+        check(not rec.b_forget_chain.isHidden() and rec.b_forget.isHidden(),
+              "Recovery: “Forget the two-step switch” only while there is one")
+        # audit F-10: the plan says where the original V15 comes from; the download button knows it is there
+        page.activate()
+        check(firmware.stock_cached("stock-v15") and not page.b_v15_dl.isEnabled()
+              and "schon auf diesem Computer" in page.b_v15_dl.toolTip(), "V15 for offline use: already there")
+        # audit F-03: the Cancel button follows the engine's log – it never accepts a cancel that cannot happen
+        import threading as _th
+        from fm1companion.flash import engine as _fe
+        dlg = fp.InstallDialog(w, "t", lambda w_: None, _th.Event())
+        check(dlg.btn_cancel.isEnabled(), "Cancel on before anything is sent")
+        dlg.add(_fe.LOG_STEP1_CANCEL)
+        check(dlg.btn_cancel.isEnabled(), "Cancel stays on during a step 1 that can be stopped")
+        dlg.add(_fe.LOG_NO_CANCEL)
+        dlg._cancel()
+        check(not dlg.btn_cancel.isEnabled() and not dlg.cancel_event.is_set()
+              and "nicht mehr abbrechen" in dlg.btn_cancel.text(),
+              f"once the engine says so, Cancel is off and says so ({dlg.btn_cancel.text()})")
+        dlg.add(_fe.LOG_WRITING)
+        dlg.add(_fe.LOG_REBOOT)
+        check(not dlg.btn_cancel.isEnabled() and dlg.danger.isHidden(), "after writing: Cancel does not come back")
+        dlg.add(fp.LOG_BETWEEN)
+        check(dlg.btn_cancel.isEnabled(), "between the two steps of a switch Cancel works again")
+        dlg._cancel()
+        check(dlg.cancel_event.is_set() and not dlg.btn_cancel.isEnabled(), "… and is taken")
+        dlg.deleteLater()
         real_fr = firmware.fetch_releases
         firmware.fetch_releases = lambda sp, *a, **k: [rel2] if sp.key == "sloop" else real_fr(sp, *a, **k)
         firmware.download = lambda sp, r, **k: firmware.Package(sp, r, good, None, False) if sp.key == "sloop" \
@@ -409,6 +573,8 @@ def flow():
         check(ok and pc.chain_resume and pc.v15_option == "none" and "stock" not in pc.kinds()
               and dev.identity == "FM-1_900", f"resume continues with SLOOP directly ({pc.kinds()}, {dev.identity})")
         check(journal.Journal().chain is None, "chain done: cleared")
+        check("Bisher auf einem echten FM-1 getestet" in plan_ctl["note"] and "nur in der Simulation" in plan_ctl["note"]
+              and plan_ctl["note"] in plan_ctl["html"], f"plan carries the tested-on-hardware line ({plan_ctl['note'][:70]})")
         page._show_chain()
         check(page.chain_box.isHidden(), "“Continue” gone")
 
@@ -448,7 +614,14 @@ def flow():
     check(not page.finish_install(stock=True) and len(d2.sends) == n_before
           and any("Passt nicht" in b or "nimmt die Original-V15 nicht an" in b for b in log_boxes),
           "V15 to a Felucca loader: refused, nothing sent")
+    check(not page.b_forget.isHidden(), "Recovery: “Forget the interrupted installation” offered")
+    check("beim Schreiben" in page.status.text() and "„failed“" not in page.status.text(),
+          "Recovery says where it stopped, not “failed”")
+    journal.Journal().begin_chain(key="sloop", name="SLOOP", tag="v9.9", usb_path="demo-usb-2")
+    log_boxes.clear()
     ok = page.finish_install()
+    check(journal.Journal().chain is None, "Recovery finished the target: the two-step switch is no longer pending")
+    check(any("nur in der Simulation" in b for b in log_boxes), "Recovery confirmation says: simulation only")
     check(ok and d2.identity == "FM-1_901" and d2.flash == fpk.analyze(pkg2).image,
           f"recovery finished ({ok}, {d2.identity}, {d2.flash == fpk.analyze(pkg2).image}, {d2.log[-3:]})")
     check(journal.Journal().active is None, "journal empty again")

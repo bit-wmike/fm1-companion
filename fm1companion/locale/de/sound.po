@@ -4,6 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FM-1 Companion\n"
 "Language: de\n"
+"X-Language-Name: Deutsch\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -356,8 +357,8 @@ msgstr "nicht lesbar: {error}"
 #, python-brace-format
 msgid "{n} file skipped – not an audio file: {names}"
 msgid_plural "{n} files skipped – not audio files: {names}"
-msgstr[0] "{n} Datei(en) übersprungen – keine Audiodatei: {names}"
-msgstr[1] "{n} Datei(en) übersprungen – keine Audiodatei: {names}"
+msgstr[0] "{n} Datei übersprungen – keine Audiodatei: {names}"
+msgstr[1] "{n} Dateien übersprungen – keine Audiodateien: {names}"
 
 #: fm1companion/ui/samples_page.py:486
 #, python-brace-format
@@ -413,7 +414,7 @@ msgstr "Doppelte Samples"
 #, python-brace-format
 msgid "{n} group with the same content."
 msgid_plural "{n} groups with the same content."
-msgstr[0] "{n} Gruppen mit gleichem Inhalt."
+msgstr[0] "{n} Gruppe mit gleichem Inhalt."
 msgstr[1] "{n} Gruppen mit gleichem Inhalt."
 
 #: fm1companion/ui/samples_page.py:530
@@ -600,7 +601,7 @@ msgstr "Wohin exportieren?"
 #, python-brace-format
 msgid "{n} WAV file exported to {folder}"
 msgid_plural "{n} WAV files exported to {folder}"
-msgstr[0] "{n} WAV-Dateien exportiert nach {folder}"
+msgstr[0] "{n} WAV-Datei exportiert nach {folder}"
 msgstr[1] "{n} WAV-Dateien exportiert nach {folder}"
 
 #: fm1companion/ui/samples_page.py:908
@@ -1835,13 +1836,13 @@ msgid_plural ""
 "\n"
 "The library was not changed by this; readable files are taken over."
 msgstr[0] ""
-"{n} Datei(en) konnten nicht gelesen werden:\n"
+"{n} Datei konnte nicht gelesen werden:\n"
 "\n"
 "{list}\n"
 "\n"
 "Die Bibliothek wurde dadurch nicht verändert; lesbare Dateien sind übernommen."
 msgstr[1] ""
-"{n} Datei(en) konnten nicht gelesen werden:\n"
+"{n} Dateien konnten nicht gelesen werden:\n"
 "\n"
 "{list}\n"
 "\n"
@@ -2215,8 +2216,8 @@ msgstr "{name}: keine DX7-Voices"
 #, python-brace-format
 msgid "{n} file taken over."
 msgid_plural "{n} files taken over."
-msgstr[0] "{n} Datei(en) übernommen."
-msgstr[1] "{n} Datei(en) übernommen."
+msgstr[0] "{n} Datei übernommen."
+msgstr[1] "{n} Dateien übernommen."
 
 #: fm1companion/ui/pages/voices.py:568
 #, python-brace-format
@@ -2400,8 +2401,8 @@ msgstr "Senden"
 #, python-brace-format
 msgid "{n} SysEx message sent."
 msgid_plural "{n} SysEx messages sent."
-msgstr[0] "{n} SysEx-Nachricht(en) gesendet."
-msgstr[1] "{n} SysEx-Nachricht(en) gesendet."
+msgstr[0] "{n} SysEx-Nachricht gesendet."
+msgstr[1] "{n} SysEx-Nachrichten gesendet."
 
 #: fm1companion/ui/pages/voices.py:753
 msgid "Sending not possible – the device is busy right now."
@@ -2424,8 +2425,8 @@ msgstr "Gespeichert: {name}"
 #, python-brace-format
 msgid "{n} voice added to your own bank – “Save bank” creates the .syx."
 msgid_plural "{n} voices added to your own bank – “Save bank” creates the .syx."
-msgstr[0] "{n} Voice(s) zur eigenen Bank hinzugefügt – „Bank speichern“ legt die .syx an."
-msgstr[1] "{n} Voice(s) zur eigenen Bank hinzugefügt – „Bank speichern“ legt die .syx an."
+msgstr[0] "{n} Voice zur eigenen Bank hinzugefügt – „Bank speichern“ legt die .syx an."
+msgstr[1] "{n} Voices zur eigenen Bank hinzugefügt – „Bank speichern“ legt die .syx an."
 
 #: fm1companion/ui/pages/voices.py:780
 msgid "Own bank"

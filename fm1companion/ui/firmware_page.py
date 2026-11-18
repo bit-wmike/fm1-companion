@@ -107,7 +107,50 @@ def device_state(ctx) -> "planner.DeviceState":
                                                                           else ""),
                                port=ctx.port.in_name if ctx.port else "", connected=ctx.port is not None,
                                ports=device_count(ctx), busy=journal.Journal.busy(),
-                               pinned=target_pin(ctx) is not None, usb_notes=usb_notes(ctx))
+                               pinned=target_pin(ctx) is not None, usb_notes=usb_notes(ctx),
+                               revision=device_revision(ctx), hubs=usb_hubs(ctx),
+                               candidates=_identity_candidates(ctx),
+                               usb_id=(getattr(ctx.port, "usb_id", "") or "") if ctx.port else "")
+
+
+def _identity_candidates(ctx) -> list[str]:
+    """the firmware keys known for the identity the FM-1 reports (planner.v15_lookalike)"""
+    ident = getattr(ctx, "identity", "") or ""
+    if not ident:
+        return []
+    try:
+        from .device import firmware_candidates
+        return list(firmware_candidates(ident))
+    except Exception:  # noqa: BLE001 – a missing catalog must not stop the plan
+        return []
+
+
+def device_revision(ctx) -> str:
+    """the hardware revision recorded for the active device: "new" | "old" | "" (not known)"""
+    import os
+    from .. import hardware
+    prof = getattr(ctx, "profile", None)
+    rev = hardware.revision(prof)
+    port = getattr(ctx, "port", None)
+    if prof is None and any(hardware.revision(c) == hardware.NEW for c in getattr(ctx, "unit_candidates", None) or []):
+        return hardware.NEW                      # "which FM-1 is this?" not answered: new if it may be a newer unit
+    if hardware.session_revision(getattr(port, "usb_path", "") or "") == hardware.NEW:
+        return hardware.NEW                      # read in ROM boot mode at this USB port in this session
+    if rev == hardware.UNKNOWN and os.environ.get("FM1C_DEMO") == "1" and not hardware.asked(prof):
+        return hardware.OLD                      # the demo's simulated FM-1s are earlier units (nothing to ask)
+    return "" if rev == hardware.UNKNOWN else rev
+
+
+def usb_hubs(ctx) -> int:
+    """how many external USB hubs are between the computer and the active FM-1 (0: direct, or not known)"""
+    p = getattr(ctx, "port", None)
+    if p is None or not getattr(p, "usb_path", "") or getattr(ctx, "is_virtual", False):
+        return 0
+    try:
+        from .. import devices
+        return devices.usb_link(p.usb_path).depth
+    except Exception:  # noqa: BLE001 – only chooses the wording of a confirmation
+        return 0
 
 
 def usb_notes(ctx) -> list[str]:
@@ -121,6 +164,16 @@ def usb_notes(ctx) -> list[str]:
         return robust.plan_notes(devices.usb_link(p.usb_path), getattr(ctx.settings, "careful_usb", "auto"))
     except Exception:  # noqa: BLE001 – a note only
         return []
+
+
+def plan_identity(state) -> str:
+    """the identity the engine must find when writing starts ("" = no expectation). In demo mode the device the UI
+    talks to and the simulated FM-1 of the installer are two separate things whose identities drift apart after the
+    first installation – there is nothing real to protect, so no expectation there."""
+    import os
+    if os.environ.get("FM1C_DEMO") == "1":
+        return ""
+    return state.identity or ""
 
 
 from ..flash.planner import V16_WARNING as V16_WARNING_HTML  # noqa: E402
@@ -204,8 +257,8 @@ class PlanDialog(QDialog):
         self.v15_note.setWordWrap(True)
         self.v15_note.setTextFormat(Qt.TextFormat.RichText)
         self.chk_direct = WrapCheck(_("Expert: install directly without the V15 step"))
-        self.chk_direct.setToolTip(_("Skips the original V15 before the switch. Leftovers of the previous firmware can "
-                                     "then stay in the flash. Only for experts – the choice is not remembered."))
+        self.chk_direct.setToolTip(_("Skips the original V15 before the switch – against what most firmware authors "
+                                     "expect. Only for experts; the choice is not remembered."))
         lay.addWidget(self.v15_note)
         lay.addWidget(self.chk_direct)
         self.chk_backup = WrapCheck(_("Make a backup first (recommended)"))
@@ -263,8 +316,8 @@ class PlanDialog(QDialog):
         note = p.v15_reason or (_("Mandatory: according to the catalog, this firmware is only installed from the "
                                   "original V15.") if opt == "locked" else "")
         if p.direct:
-            note = "<span style='color:#da4453'>" + _("Without the V15 step: leftovers of the previous firmware can "
-                                                      "stay on the FM-1 (see Notes).") + "</span>"
+            note = "<span style='color:#da4453'>" + _("Without the V15 step: not the start most firmware authors "
+                                                      "expect (see Notes).") + "</span>"
         self.v15_note.setText(note)
         can_backup = p.state.felucca and not p.resume
         self.chk_backup.setVisible(can_backup)
@@ -288,6 +341,9 @@ class PlanDialog(QDialog):
                      + "".join(f"<li>{b}</li>" for b in p.blockers) + "</ul>")
         if p.warnings:
             html += "<h4>" + _("Notes") + "</h4><ul>" + "".join(f"<li>{w}</li>" for w in p.warnings) + "</ul>"
+        from ..flash import tested
+        self.tested_note = tested.note(tested.plan_kinds(p))      # what has been run on a real FM-1, per step
+        html += f"<p><b>{self.tested_note}</b></p>"
         html += ("<p><small>" + _("While writing, do not unplug the USB cable and do not switch the FM-1 off.")
                  + "</small></p>")
         self.view.setHtml(html)
@@ -311,21 +367,33 @@ class PlanDialog(QDialog):
         return [c for c, cb in self.confirm_checks.items() if cb.isChecked()]
 
     def missing(self) -> list[str]:
-        return [c for c in self.plan.missing(self.confirmed()) if not (c == "no_backup" and self.chk_dry.isChecked())]
+        if self.chk_dry.isChecked():
+            return []                              # a dry run writes nothing: there is nothing to confirm
+        return self.plan.missing(self.confirmed())
 
     def _update_ok(self):
         ok = self.plan.ok and not self.missing()
         self.ok_btn.setEnabled(ok)
+        for cb in self.confirm_checks.values():    # (dry run: the confirmations are not needed, so not offered)
+            cb.setEnabled(not self.chk_dry.isChecked())
         self.ok_hint.setVisible(not ok)
         self.ok_hint.setText(_("Not possible – see above") if not self.plan.ok else _("Please confirm above"))
 
 
-class InstallDialog(JobDialog):
-    """Progress with log; cancel only as long as nothing has been sent yet. While the FM-1 writes in update mode:
-    red notice “Don't unplug now”, cancel disabled."""
+# log line between the two steps of a switch: from here Cancel works again (the target is not started yet)
+LOG_BETWEEN = _("Original V15 is running. Continuing with the target firmware …")
 
-    CANCEL_TIP = _("Cancels before the next safe point. While writing, the installation runs to the end – "
-                   "cancelling there would leave the FM-1 in update mode.")
+
+class InstallDialog(JobDialog):
+    """Progress with log. Cancel works while nothing has been sent – and, where the engine says so in the log,
+    during the check of the package on the FM-1 (step 1). The button is switched off as soon as the engine reports
+    that the installation can no longer be stopped; it never promises a cancel that will not happen. While the FM-1
+    writes in update mode: red notice “Don't unplug now”."""
+
+    CANCEL_TIP = _("Stops the installation as long as nothing has been written to the FM-1. Once the FM-1 "
+                   "switches to update mode, the installation runs to the end – stopping there would leave the "
+                   "FM-1 in update mode.")
+    LOCKED_TIP = _("The installation can no longer be cancelled – please wait until it is finished.")
 
     def __init__(self, parent, title, fn, cancel_event, **kw):
         self.cancel_event = cancel_event
@@ -350,21 +418,33 @@ class InstallDialog(JobDialog):
         if line.startswith(fe.LOG_WRITING):
             self._set_writing(True)
         elif line.startswith(fe.LOG_REBOOT):
-            self._set_writing(False)
+            self._set_writing(False)            # the notice goes; Cancel stays off until a new safe stretch begins
+        elif line.startswith(fe.LOG_NO_CANCEL):
+            self._lock_cancel(True)
+        elif line.startswith(LOG_BETWEEN):
+            self._lock_cancel(False)
 
     def _set_writing(self, on: bool):
         self.writing = on
         self.danger.setVisible(on)
+        if on:
+            self._lock_cancel(True)
+
+    def _lock_cancel(self, on: bool):
+        """on: the engine is past the last point where it can stop (button off, says so); off: a stretch where
+        Cancel works again (between the two steps of a switch)"""
+        self.locked = on
         if hasattr(self, "btn_cancel"):
             self.btn_cancel.setEnabled(not on and not self.cancel_event.is_set())
-            self.btn_cancel.setToolTip(_("While the FM-1 is writing, it cannot be cancelled safely – please wait.")
-                                       if on else self.CANCEL_TIP)
+            self.btn_cancel.setText(_("Can no longer be cancelled") if on else _("Cancel (only before writing)"))
+            self.btn_cancel.setToolTip(self.LOCKED_TIP if on else self.CANCEL_TIP)
 
     def _cancel(self):
-        if self.writing:
+        if self.writing or getattr(self, "locked", False):
             return
         self.cancel_event.set()
-        self.add(_("Cancellation requested – takes effect at the next safe point."))
+        self.add(_("Cancellation requested – the app stops before anything is written to the FM-1. If it turns out "
+                   "to be too late for that, the next lines say so."))
         self.btn_cancel.setEnabled(False)
 
     def _done(self, res):
@@ -414,6 +494,33 @@ class PackageRefused(RuntimeError):
     pass
 
 
+V15_MISSING = _("The original V15 is needed for this switch, but it is not on this computer and could not be "
+                "downloaded.")
+
+
+def v15_missing_text(error: str, v15_option: str) -> str:
+    """the switch needs the original V15 and it cannot be fetched (offline): what to do – the expert option is only
+    named where the plan offers it"""
+    text = V15_MISSING + " " + _("Reason: {error} Nothing has been changed on the FM-1. Once you are online: Firmware+ "
+                                 "› Install & Versions › “Download the original V15 for offline use” – after that the "
+                                 "switch also works without internet.").format(error=error)
+    if v15_option == "default_on":
+        text += " " + _("For experts there is also “Expert: install directly without the V15 step” in the plan.")
+    return text
+
+
+def checkhead_way_out(v15_option: str, name: str) -> str:
+    """the running firmware refused the original V15 (FAILED -5): which way is left in this app"""
+    if v15_option == "default_on":
+        return _("What is left in this app: the plan's “Expert: install directly without the V15 step” (an update "
+                 "loader of the Felucca family writes only the firmware area and leaves the boot area as it is). "
+                 "Whether {name} runs with the changed boot area of this FM-1, the app cannot tell. The clean way is "
+                 "download mode with another tool: “Recovery” page, stage 2 › Details (M-Flasher).").format(name=name)
+    return _("For {name} the V15 step is mandatory, so this app has no direct way. The way out is download mode with "
+             "another tool: see the “Recovery” page, stage 2 › Details (M-Flasher; the app's own “Write back original "
+             "V15” only writes under the factory boot area and would refuse here too).").format(name=name)
+
+
 def validate_package(path, spec, known: bool, label: str, expect_sha: str = "", official: str = "", log=None):
     """fully check a package BEFORE anything is written: identifier, checksum, model, integrity,
     loader family and rule. -> PackageInfo; PackageRefused with a readable reason."""
@@ -459,6 +566,18 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     if not ctx.port:
         show_error(parent, _("No device"), _("Please connect the FM-1 via USB."))
         return False
+    if spec.key == "sloop3":                     # (no package: never through this flow, whoever calls it)
+        from . import sloop3_ui
+        sloop3_ui.open_dialog(parent, ctx)
+        return False
+    from . import sloop3_ui as _s3ui
+    if getattr(ctx, "sloop3", None) is not None and not ctx.port.update_mode:
+        # SLOOP 3 has no update mode a host can ask for (it ignores the update key): say so instead of failing later
+        show_error(parent, *_s3ui.running_sloop3_refusal())
+        return False
+    # (m-bootloader's MIDI MODE answers like an update loader: never sent)
+    if _s3ui.refuse_in_midi_mode(parent, ctx):
+        return False
     from .risk_dialog import ensure_risk_ack
     if not ensure_risk_ack(parent):              # one-time risk notice before the first installation
         return False
@@ -479,16 +598,30 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         # own file: known only if the checksum matches (catalog, release SHA256SUMS, original) – never by name
         tgt.known = file_matches(spec, info)
     else:
-        tgt.checksum = bool(spec.sha256) or bool(rel and spec.sums and spec.sums in rel.assets)
+        has_sums = bool(rel and spec.sums and spec.sums in rel.assets)
+        has_digest = bool(rel and (getattr(rel, "digests", None) or {}).get(spec.asset.format(ver=rel.version)))
+        tgt.checksum = bool(spec.sha256) or has_sums or has_digest
+        # (same order as firmware.download: the SHA256SUMS file first, GitHub's digest only without one)
+        tgt.checksum_source = "sums" if has_sums else "digest" if has_digest else ""
     pinned = (rel.sha256 if rel else "") or firmware.pinned_sha(spec, rel.tag if rel else tag)
     if pinned and local_pkg is None:
         tgt.sha256, tgt.checksum = pinned, True        # versions pinned in the app (KARMA's site packages)
+    # the newer FM-1 (logo on the front): if this installation depends on the unit's flash chip and the owner was
+    # never asked for this device, ask once – the answer is kept in the device profile
+    from .. import hardware
+    if planner.chip_matters(state, tgt) and ctx.profile is not None and not hardware.asked(ctx.profile):
+        from . import hw_revision
+        if hw_revision.ask(parent, ctx, ctx.profile) is None:
+            return False
+        state.revision = device_revision(ctx)
     from ..flash import journal as fj
     jr = fj.Journal()
     chain = jr.chain
 
+    v15_here = firmware.stock_cached("stock-v15")     # a switch needs the original V15: is it on this computer?
+
     def make(via, backup=True):
-        return planner.plan_install(state, tgt, via_v15=via, backup=backup, chain=chain)
+        return planner.plan_install(state, tgt, via_v15=via, backup=backup, chain=chain, stock_cached=v15_here)
     dlg = PlanDialog(parent, make, _("{firmware} on {device}").format(
                          firmware=firmware.display_label(spec, target if rel or tag else ''),
                          device=ctx.profile.name if ctx.profile else _("this FM-1")),
@@ -499,11 +632,12 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     if not plan.ok:
         show_error(parent, _("Installation not possible"), "\n".join(re.sub("<[^>]+>", "", b) for b in plan.blockers))
         return False
-    if dlg.missing():
-        show_error(parent, _("Confirmation missing"), _("Please confirm all points in bold in the plan explicitly:")
-                   + "\n\n" + "\n".join("• " + planner.CONFIRM_TEXT.get(c, c) for c in dlg.missing()))
-        return False
     do_dry = dlg.chk_dry.isChecked() if dry_run is None else dry_run
+    if not do_dry and dlg.plan.missing(dlg.confirmed()):
+        show_error(parent, _("Confirmation missing"), _("Please confirm all points in bold in the plan explicitly:")
+                   + "\n\n" + "\n".join("• " + planner.CONFIRM_TEXT.get(c, c)
+                                       for c in dlg.plan.missing(dlg.confirmed())))
+        return False
     # while the plan was open, device detection kept running: is it still the same FM-1 in the same state?
     if ctx.port is None or planned_port is None or ctx.port.key != planned_port.key:
         show_error(parent, _("Device has changed"),
@@ -534,6 +668,13 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
             return False
         bk_folder = None
     via_stock = plan.via_stock
+    v15_option = plan.v15_option
+    # the identity the plan was made for: the engine sends nothing if the FM-1 answers something else when writing
+    # starts (a stale profile, another firmware meanwhile). After the V15 step the FM-1 must report FM-1_015.
+    planned_identity = plan_identity(state)
+    # Cancel during the check of the package (step 1) is only honoured where the running firmware is known to drop
+    # an unfinished step 1 cleanly: a Felucca-family firmware (it answers the editor protocol). Not the original.
+    step1_cancel = bool(state.felucca) and not fpk.is_stock_identity(state.identity) and not state.update_mode
     known = tgt.known
     local_sha = info.sha256 if info is not None else ""
     label = firmware.display_label(spec, tag if not rel else rel.tag)
@@ -561,7 +702,11 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         stock_info = None
         try:
             if via_stock:
-                st_pkg = firmware.download(stock_spec, firmware.fetch_releases(stock_spec)[0], log=w.log.emit)
+                try:
+                    st_pkg = firmware.download(stock_spec, firmware.fetch_releases(stock_spec)[0], log=w.log.emit)
+                except Exception as e:  # noqa: BLE001 – the original V15 is not on this computer and cannot be fetched
+                    w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
+                    raise RuntimeError(v15_missing_text(firmware.friendly_error(e), v15_option)) from e
                 stock_info = validate_package(st_pkg.fwsc, stock_spec, True, _("Original V15"), official="FM-1_015",
                                               log=w.log.emit)
             if rel:
@@ -578,6 +723,11 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
                                         log=w.log.emit)
         except PackageRefused:
             raise
+        except RuntimeError as e:
+            if e.__cause__ is not None and str(e).startswith(V15_MISSING):
+                raise                          # the original V15 could not be fetched: already a complete sentence
+            w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
+            raise RuntimeError(_("{error} Nothing has been changed on the FM-1.").format(error=firmware.friendly_error(e))) from e
         except Exception as e:  # noqa: BLE001 – network/file: before any writing, so we say so too
             w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
             raise RuntimeError(_("{error} Nothing has been changed on the FM-1.").format(error=firmware.friendly_error(e))) from e
@@ -609,27 +759,36 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         if do_dry:
             from ..flash import engine as fe
             e = fe.Engine(log=w.log.emit)
-            e.write(stock_info or tgt_info, port=port_name, dry_run=True, pin=pin)
+            e.write(stock_info or tgt_info, port=port_name, dry_run=True, pin=pin, expect_identity=planned_identity)
             w.log.emit(_("Dry run finished – nothing was written."))
             return {"dry": True}
         check_cancel()
         # ---- 4. Write
         if stock_info is not None:
             # two-step switch: the journal remembers the target, so an interruption after V15 continues with it
+            before = jr.chain                  # (another window's switch, if any: put back if we never start)
             jr.begin_chain(key=spec.key, name=spec.name, tag=t or "", file=str(local_pkg) if local_pkg else "",
-                           device_id=profile.id if profile else "")
+                           device_id=profile.id if profile else "",
+                           usb_path=getattr(planned_port, "usb_path", "") or "")
             w.log.emit(_("Step: intermediate step original V15 …"))
             w.progress.emit(0, 100)
             try:
                 _install(stock_spec, stock_info.path, "V15", port_name=port_name, log=w.log.emit,
                          progress=lambda pct: w.progress.emit(pct, 100),
-                         device_id=profile.id if profile else "", cancel=cancel, pin=pin, expect_sha=stock_info.sha256)
+                         device_id=profile.id if profile else "", cancel=cancel, pin=pin, expect_sha=stock_info.sha256,
+                         expect_identity=planned_identity, cancel_step1=step1_cancel)
             except Exception as e:  # noqa: BLE001
-                if getattr(e, "state", "safe") == "safe":
+                if getattr(e, "code", "") == "busy":
+                    jr.restore_chain(before)   # another program window is installing: its chain is not ours to clear
+                elif getattr(e, "state", "safe") == "safe":
                     jr.clear_chain()           # nothing written, the old firmware keeps running: no chain to continue
+                if getattr(e, "code", "") == "checkhead":
+                    w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
+                    raise RuntimeError(firmware.friendly_error(e) + " " + checkhead_way_out(
+                        v15_option, spec.name)) from e
                 raise
             written.append(_("the original firmware V15"))
-            w.log.emit(_("Original V15 is running. Continuing with the target firmware …"))
+            w.log.emit(LOG_BETWEEN)
             check_cancel()
         w.log.emit(_("Step: install {name} …").format(name=spec.name))
         w.progress.emit(0, 100)
@@ -638,7 +797,9 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
             ident = _install(spec, tgt_info.path, t, port_name=port_name, res=res, log=w.log.emit,
                              progress=lambda pct: w.progress.emit(pct, 100),
                              device_id=profile.id if profile else "", confirmed_unknown=True,
-                             cancel=cancel, pin=pin, expect_sha=tgt_info.sha256, report=report)
+                             cancel=cancel, pin=pin, expect_sha=tgt_info.sha256, report=report,
+                             expect_identity="FM-1_015" if written else planned_identity,
+                             cancel_step1=step1_cancel and not written)
         except Exception as e:  # noqa: BLE001
             if written:
                 w.log.emit(_("Technical details: {details}").format(details=firmware.explain(e)))
@@ -646,9 +807,9 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
                     raise RuntimeError(cancel_text()) from e
                 st = getattr(e, "state", "safe")
                 if st == "paused":
-                    now = _("The FM-1 is now waiting in update mode – {name} is not completely written. "
-                            "Do not unplug anything: continue on the “Recovery” page with “Finish installation”.").format(
-                                name=spec.name)
+                    now = _("{name} is not completely written; the FM-1 is probably waiting in update mode now. "
+                            "Do not unplug anything and look at the “Recovery” page: if the FM-1 is detected there, "
+                            "continue with “Finish installation”.").format(name=spec.name)
                 elif st == "restart":
                     now = _("{name} was written, but the FM-1 did not report as expected afterwards. "
                             "Switch it off and on again and check which firmware it shows.").format(name=spec.name)
@@ -699,7 +860,8 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
                 hist.append({"time": time.time(), "firmware": spec.key, "name": spec.name, "version": res["tag"],
                              "identity": res["ident"], "via_v15": via_stock})
             ctx.store.save()
-        ctx.pending_restore_check = spec.key if switching else ""
+        ctx.pending_restore_check = spec.key if switching and profile else ""
+        ctx.pending_restore_profile = profile.id if profile else ""
 
     from . import feedback
     try:
@@ -707,6 +869,10 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         d = feedback.run(parent, title, german_errors(work),
                          cancel, dialog_cls=InstallDialog, on_done=done, done=summary)
     finally:
+        if not do_dry and hasattr(ctx, "note_installed"):
+            # whatever the FM-1 reports when it re-appears at this USB port (another identity, the original
+            # firmware's serial number): it is this unit, never a new profile
+            ctx.note_installed(profile, getattr(planned_port, "usb_path", "") or "")
         ctx.disconnect(None)
         ctx.reconnect_soon(2500)      # also releases ctx.hold
     return d.ok
@@ -838,7 +1004,11 @@ class FirmwarePage(QWidget):
         self.b_chain = QPushButton(icon("go-next", "media-playback-start"), _("Continue the switch …"))
         self.b_chain.setProperty("variant", "primary")
         self.b_chain.clicked.connect(self.continue_chain)
-        cb.addWidget(flow_row(self.b_chain))
+        self.b_chain_dismiss = QPushButton(icon("dialog-close", "edit-delete"), _("Dismiss"))
+        self.b_chain_dismiss.setToolTip(_("Forget this unfinished switch – only the note in the app is removed, "
+                                          "nothing is sent to the FM-1. You can install any firmware as usual."))
+        self.b_chain_dismiss.clicked.connect(self.dismiss_chain)
+        cb.addWidget(flow_row(self.b_chain, self.b_chain_dismiss))
         self.chain_box.setVisible(False)
         rl.addWidget(self.chain_box)
         self.tree = QTreeWidget()
@@ -874,7 +1044,10 @@ class FirmwarePage(QWidget):
         self.b_stock = QPushButton(icon("edit-undo", "go-previous"), _("Back to the original …"))
         self.b_stock.setToolTip(_("Install M-VAVE's original firmware V15 or V16 (the checksum is always checked)"))
         self.b_stock.clicked.connect(self.return_to_original)
-        rl.addWidget(fit_height(flow_row(self.b_local, self.b_stock, self.b_res)))
+        self.b_v15_dl = QPushButton(icon("download", "go-down"), _("Download the original V15 for offline use"))
+        self.b_v15_dl.clicked.connect(self.download_v15)
+        rl.addWidget(fit_height(flow_row(self.b_local, self.b_stock, self.b_res, self.b_v15_dl)))
+        self._show_v15_cached()
         self.history = QLabel()
         self.history.setWordWrap(True)
         self.history.setTextFormat(Qt.TextFormat.RichText)
@@ -911,6 +1084,7 @@ class FirmwarePage(QWidget):
 
     def activate(self):
         """Tab becomes visible: take over firmwares added/removed in the catalog tab (selection stays)."""
+        self._show_v15_cached()
         keys = [s.key for s in firmware.catalog() + firmware.STOCK]
         if keys == [self.cat.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.cat.count())]:
             return
@@ -951,6 +1125,7 @@ class FirmwarePage(QWidget):
     def showEvent(self, e):
         super().showEvent(e)
         self._shown = True
+        self._show_v15_cached()
         if getattr(self, "_pending_load", False):         # only now (page visible) fetch the versions
             self._pending_load = False
             self.load_releases()
@@ -1018,16 +1193,17 @@ class FirmwarePage(QWidget):
         show_rc = self.chk_rc.isChecked()
         installed = self.ctx.firmware_tag if self.ctx.firmware_key == s.key else ""
         local = {p.parent.name for p in firmware.local_packages() if p.parent.parent.name == s.key}
+        s3 = s.key == "sloop3"                      # (SLOOP 3: a public beta the app does not install, ui/sloop3_ui.py)
         for r in rels:
-            if r.prerelease and not show_rc and r.tag != installed:
+            if r.prerelease and not show_rc and r.tag != installed and not s3:
                 continue
             state = []
             if r.tag == installed:
                 state.append(_("● installed"))
             if r.tag in local:
                 state.append(pgettext("release list", "downloaded"))
-            it = QTreeWidgetItem([r.tag, _date_text(r.date), _("Release candidate") if r.prerelease else _("stable"),
-                                  ", ".join(state)])
+            it = QTreeWidgetItem([r.tag, _date_text(r.date), _("public beta") if s3 else
+                                  _("Release candidate") if r.prerelease else _("stable"), ", ".join(state)])
             it.setData(0, Qt.ItemDataRole.UserRole, r.tag)
             if r.tag == installed:
                 f = it.font(0)
@@ -1060,9 +1236,30 @@ class FirmwarePage(QWidget):
             self.notes.setMarkdown(r.notes or "_" + _("{tag}: no release notes available.").format(tag=r.tag) + "_")
         s = self.current_spec()
         has = r is not None
-        self.b_install.setEnabled(has and self.ctx.port is not None and not getattr(self.ctx, "is_virtual", False))
+        if s is not None and s.key == "sloop3":     # no package, no installation by the app: what it needs, the links
+            from . import sloop3_ui
+            self.notes.setHtml(sloop3_ui.notes_html(self.ctx))
+            # (not "Install on active FM-1": the app never installs SLOOP 3 – this opens the guide, which also holds
+            # the flash backup in MIDI MODE; nothing is written from it)
+            self.b_install.setText(_("SLOOP 3: the way onto the FM-1 …"))
+            self.b_install.setEnabled(True)
+            self.b_install.setToolTip(_("SLOOP 3 is not installed by the app: this shows the way onto the FM-1 "
+                                        "(m-bootloader, flash backup, the author's installer page)."))
+            self.b_dl.setEnabled(False)
+            self.b_dl.setToolTip(_("SLOOP 3 has no package to download: its installer page carries the firmware."))
+            return
+        self.b_install.setText(_("Install on active FM-1"))
+        from . import sloop3_ui
+        blocked = sloop3_ui.install_blocker(self.ctx)   # (SLOOP 3 running, MIDI MODE: install_flow refuses them too)
+        self.b_install.setEnabled(has and self.ctx.port is not None and not getattr(self.ctx, "is_virtual", False)
+                                  and blocked is None)
         self.b_dl.setEnabled(has)
-        if not has:
+        if blocked is not None:
+            self.b_install.setToolTip(f"<b>{blocked[0]}</b><br>{blocked[1]}")
+            if has:
+                self.b_dl.setToolTip(_("Only download {name} {tag} into the firmware folder (installs nothing)").format(
+                    name=s.name, tag=r.tag))
+        elif not has:
             tip = _("First choose a version in the list.") if s and self.releases.get(s.key) else \
                   _("No version loaded – try “Reload” (internet needed) or choose your own .fwsc file.")
             self.b_install.setToolTip(tip)
@@ -1084,6 +1281,8 @@ class FirmwarePage(QWidget):
             return {"error": _("Firmware of the device unknown")} if key else {}
         rel = firmware.latest(self.releases.get(key, []), self.ctx.settings.channel)
         cur, new = self.ctx.firmware_tag, rel.tag if rel else ""
+        if not cur and key == "stock-v15" and getattr(self.ctx, "identity", "") == "FM-1_015":
+            cur = new or "V15"                 # the FM-1 itself says it runs original version 15: V15 is no update
         if cur and new and new != cur:
             try:                               # “stable” channel with an installed RC: no “update” to an older version
                 if firmware.version_key(new) <= firmware.version_key(cur):
@@ -1103,6 +1302,10 @@ class FirmwarePage(QWidget):
     # ------------------------------------------------------- Actions
     def _install(self):
         s, r = self.current_spec(), self.selected_release()
+        if s and s.key == "sloop3":                 # (never the package installer: SLOOP 3 has no .fwsc)
+            from . import sloop3_ui
+            sloop3_ui.open_dialog(self, self.ctx)
+            return
         if s and r:
             install_flow(self, self.ctx, s, r)
 
@@ -1147,25 +1350,52 @@ class FirmwarePage(QWidget):
                    if match else _("This checksum is in no catalog and in no checked release – the file is "
                                    "<b>unknown</b>, no matter what it is called. You must confirm explicitly in the "
                                    "plan that you know what you are doing.")))
+        from ..flash import tested
+        text += "<br><br><b>" + tested.note(["own_file"]) + "</b>"
         if not confirm(self, _("Own firmware file"), text, _("On to the plan")):
             return
         sp = match or firmware.FirmwareSpec(key="eigene", name=Path(path).stem, repo="", asset="", sums="", installer="",
                                             editor="", builtin=False, protocol="none", product=info.product,
                                             resources="")
-        m = re.search(r"(\d+\.\d+(?:\.\d+)?(?:-rc\.\d+)?)", Path(path).name)
-        tag = ("v" + m.group(1)) if m and sp.repo else (sp.release_tag or "")
+        # the version is the one the checksum vouches for (a pinned or checked release) – never the file name: a
+        # file can be called anything, and the plan judges the version (the newer FM-1's flash chip, Melodee 1.6)
+        tag = sp.release_tag or ""
         install_flow(self, self.ctx, sp, None, Path(path), tag)
+
+    def _show_v15_cached(self):
+        here = firmware.stock_cached("stock-v15")
+        self.b_v15_dl.setEnabled(not here)
+        self.b_v15_dl.setToolTip(
+            _("The original V15 is already on this computer (checksum checked) – a firmware switch and the recovery "
+              "work without internet.") if here else
+            _("A firmware switch and the recovery need M-VAVE's original firmware V15 (≈ 0.9 MB). The app only "
+              "downloads it when it is needed – or now, with this button, so that it also works offline later. "
+              "Nothing is installed."))
+
+    def download_v15(self):
+        """fetch the original V15 into the firmware folder now (checksum-checked), for a later switch without internet"""
+        from . import feedback
+        sp = firmware.spec("stock-v15")
+        feedback.run(self, _("Download the original V15"),
+                     german_errors(lambda w: firmware.download(sp, firmware.fetch_releases(sp)[0], log=w.log.emit,
+                                                               progress=lambda a, b: w.progress.emit(a, b))),
+                     on_done=lambda _pkg: (self._show_v15_cached(), self._fill()),
+                     done=lambda pkg: _("The original V15 is on this computer now ({file}, checksum checked) – NOT "
+                                        "installed. A firmware switch no longer needs internet for it.").format(
+                                            file=pkg.fwsc.name))
 
     def return_to_original(self):
         """Back to the original firmware – V15 (recommended) or V16"""
         dlg = QDialog(self)
         dlg.setWindowTitle(_("Back to the original"))
         lay = QVBoxLayout(dlg)
-        lab = QLabel(_("<b>V15</b> is the proven way back: all installers know it, and almost all community firmwares "
-                       "are installed from it. <b>V16</b> (October 2026) is M-VAVE's newest version with eight "
+        from ..flash import tested
+        lab = QLabel(_("<b>V15</b> is the usual way back: the community's installers know it, and almost all community "
+                       "firmwares are installed from it. <b>V16</b> (October 2026) is M-VAVE's newest version with eight "
                        "voices and 64-step patterns. M-VAVE occasionally replaces the V16 file on the server – "
                        "if the checksum does not match, the app installs nothing.<br><br>Afterwards, on the FM-1, run "
-                       "<i>System &gt; Reset Patches</i> once if presets look garbled."))
+                       "<i>System &gt; Reset Patches</i> once if presets look garbled.")
+                     + "<br><br><b>" + tested.note(["to_stock"]) + "</b>")
         lab.setWordWrap(True)
         lay.addWidget(lab)
         combo = QComboBox()
@@ -1269,9 +1499,23 @@ class FirmwarePage(QWidget):
         c = self.ctx
         if not ch or getattr(c, "is_virtual", False) or getattr(c, "identity", "") != "FM-1_015":
             return None
-        if ch.get("device_id") and c.profile and c.profile.id and ch["device_id"] != c.profile.id:
+        # the same FM-1: by its USB port (survives the change of firmware) or by its profile – an FM-1 without a
+        # USB serial number can get another profile after the V15 step, and two such devices can share one
+        port_path = getattr(getattr(c, "port", None), "usb_path", "") or ""
+        same_port = bool(ch.get("usb_path")) and ch["usb_path"] == port_path
+        same_profile = bool(ch.get("device_id")) and bool(c.profile) and ch["device_id"] == c.profile.id
+        if (ch.get("usb_path") or ch.get("device_id")) and not (same_port or same_profile):
             return None
         return ch
+
+    def dismiss_chain(self):
+        """forget the unfinished two-step switch (the user's choice; nothing is sent)"""
+        from ..flash import journal as fj
+        try:
+            fj.Journal().clear_chain()
+        except OSError:
+            pass
+        self._show_chain()
 
     def _show_chain(self):
         ch = self.pending_chain()
@@ -1321,8 +1565,10 @@ class FirmwarePage(QWidget):
                                  + "</small>")
             return
         via = " " + _("(via V15)")
+        found = " " + _("(found when connecting – installed outside the app)")
         rows = [f"{time.strftime(DATE_FORMAT, time.localtime(h.get('time', 0)))}: {h.get('name', h.get('firmware'))} {h.get('version', '')}"
-                + (via if h.get("via_v15") else "") for h in hist[-5:]][::-1]
+                + (via if h.get("via_v15") else "") + (found if h.get("how") == "found" else "")
+                for h in hist[-5:]][::-1]
         self.history.setText("<small><b>" + _("Firmware history:") + "</b> " + " · ".join(rows) + "</small>")
 
     def open_with(self, install=None, file=None, **_kw):

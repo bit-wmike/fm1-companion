@@ -78,6 +78,8 @@ class FM1Page(QWidget):
         self.none = QLabel(_("No FM-1 connected."))
         self.none.setWordWrap(True)
         self.none.setTextFormat(Qt.TextFormat.RichText)
+        self.none.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.none.linkActivated.connect(self._link)
         lay.addWidget(self.none)
         self.content = QWidget()
         grid = QGridLayout(self.content)
@@ -201,6 +203,10 @@ class FM1Page(QWidget):
                 self.held_link.release()
             self.held_link = None
 
+    def _link(self, href: str):
+        if href == "#firmware" and callable(getattr(self.ctx, "ask_firmware", None)):
+            self.ctx.ask_firmware(force=True)
+
     def _generic_text(self) -> str:
         """what is known about an FM-1 without the editor protocol (or in update mode)"""
         c = self.ctx
@@ -212,6 +218,9 @@ class FM1Page(QWidget):
             fw = firmware_name(c.firmware_key) or _("unknown")
             if c.firmware_key and not (prof and prof.firmware_choice.get(c.identity)) and not c.info:
                 fw += _(" (guessed from the ID)") if c.firmware_guess else ""
+        from .common import firmware_changeable
+        if firmware_changeable(c):                  # (the question of the first connection, again)
+            fw += " · <a href='#firmware'>" + _("change") + "</a>"
         usb = " · ".join(x for x in (" ".join(y for y in (p.manufacturer, p.product) if y), p.usb_id,
                                       pgettext("device", "USB port {path}").format(path=p.usb_path) if p.usb_path else "",
                                       f"{p.speed} Mbit/s" if p.speed else "") if x) or "–"
@@ -223,7 +232,7 @@ class FM1Page(QWidget):
                 (_("Serial number:"), p.serial or _("none")),
                 (_("USB:"), usb),
                 (_("MIDI port:"), p.out_name)]
-        tail = (_("The FM-1 is in update mode – the page “Rescue” finishes the installation.")
+        tail = (_("The FM-1 is in update mode – the page “Recovery” finishes the installation.")
                 if mode == "update" else
                 _("Live values, storage and user presets are only provided by Melodee or M-VAVE FM1 Open (editor "
                   "protocol). The app can install this firmware and talk to it via MIDI, but cannot read it out."))

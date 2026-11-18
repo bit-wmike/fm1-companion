@@ -12,8 +12,9 @@ Please read [SECURITY.md](SECURITY.md) first (do not report security vulnerabili
 
 * **Everything public is in English:** commit messages, pull requests, issues, review comments and the
   documentation in this repository.
-* **UI texts go through the translation system.** The app's UI is currently German; English is in progress.
-  Do not hard-code new UI strings in either language outside that system.
+* **UI texts go through the translation system.** English is the source language of the UI; German and Spanish
+  are translations. A new or changed text needs its German and Spanish translation in the same pull request
+  (`python3 tools/i18n_extract.py`, then the `.po` files, then `python3 tools/i18n_check.py`).
 * **Translations:** see [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
 ## Development environment
@@ -21,14 +22,14 @@ Please read [SECURITY.md](SECURITY.md) first (do not report security vulnerabili
 The app runs with Debian/Ubuntu packages, without pip and without a compiler on the target machine.
 
 ```bash
-git clone https://github.com/bit-wmike/fm1-companion.git
+git clone https://github.com/bit-wmike/fm1-companion.git     # for a quick look: add --depth 1
 cd fm1-companion
 # System packages (the list is in fm1companion/data/deps.json):
 sudo apt install python3 python3-pyqt6 python3-pyqt6.qtsvg python3-pyqt6.qtwebengine \
   python3-pyqt6.qtwebchannel python3-mido python3-rtmidi python3-numpy git qt6-translations-l10n
 # recommended: python3-pyqt6.qtmultimedia ffmpeg alsa-utils pipewire-bin fluidsynth fluid-soundfont-gm
 python3 -m fm1companion --check        # anything missing?
-python3 -m fm1companion --demo         # without an FM-1: two simulated devices
+python3 -m fm1companion --demo         # without an FM-1: three simulated devices
 ```
 
 For tests you also need `python3-pytest`. Target versions: Python ≥ 3.11, PyQt6 ≥ 6.4, NumPy ≥ 1.24 (Debian
@@ -41,8 +42,14 @@ Bookworm). Please do not use language features or APIs that came later (e.g. PEP
 QT_QPA_PLATFORM=offscreen python3 -m pytest tests/test_*.py fm1companion/vendor/unbricker/tests -q
 # UI tests: each script on its own, no display, in demo mode with its own temporary HOME
 QT_QPA_PLATFORM=offscreen python3 tests/ui_flow_test.py
-QT_QPA_PLATFORM=offscreen python3 tests/ui_smoke.py screenshots   # screenshots of all pages
+QT_QPA_PLATFORM=offscreen tests/run_ui.sh                         # all of them, with a summary (about 20 minutes)
+QT_QPA_PLATFORM=offscreen tests/run_ui.sh ui_flow ui_shell        # only the scripts whose name contains one of these
+QT_QPA_PLATFORM=offscreen python3 tests/ui_smoke.py screenshots   # walk through all pages, with screenshots
 ```
+
+GitHub runs all of this for every pull request, in containers of Debian Bookworm (Python 3.11, Qt 6.4 – the
+Raspberry Pi OS most users have) and Debian Trixie (Python 3.13, Qt 6.8), and then builds the packages and installs
+the `.deb` there (`.github/workflows/tests.yml`).
 
 As root (e.g. in a container) Qt WebEngine needs `QTWEBENGINE_DISABLE_SANDBOX=1`. The UI scripts print
 `N/M passed` at the end and exit with code 0 only if everything passed. New features get a
@@ -50,10 +57,12 @@ test; you test device access against the simulation (`fm1companion/demo_device.p
 
 ## Code style
 
-* UI: short and clear, consistent terms ("FM-1", "Firmware", "Backup", "Preset", "Projekt"/project, "Sample").
-  The German UI addresses the user informally ("du"). No "TODO"s in the UI. All UI texts go through the
+* UI: short and clear, consistent terms ("FM-1", "firmware", "backup", "preset", "project", "sample") and the page
+  names the app shows ("Recovery", "Firmware+ › Install & Versions"). The German UI addresses the user informally
+  ("du"), the Spanish one with "tú". No "TODO"s in the UI. All UI texts go through the
   translation system (see above).
-* Every Python file starts with `# SPDX-License-Identifier: GPL-3.0-only`.
+* Every own source file (Python, shell, JavaScript) carries `SPDX-License-Identifier: GPL-3.0-only` in its first
+  two lines.
 * Lines up to 120 characters. `ruff check --select E9,F63,F7 .` must be clean; please do not add new
   unused imports.
 * Never block the GUI thread (no network, no `sleep`, no device requests) – use `run_job`
@@ -92,7 +101,10 @@ python3 tools/build_sims.py --target melodee-studio --ref v1.6.0 --repo melodee=
 
 Requires git, WASI SDK 27 (the script downloads it if needed) and, for Melodee, Python with Pillow and fontTools.
 Every build writes `manifest.json` (checksums, commit) and a `NOTICE` with attribution and
-GPL offer. For a release, create the source tarballs and attach them:
+GPL offer. Every NOTICE promises the source code of exactly that commit with each release. The release workflow
+(`.github/workflows/release.yml`, see [docs/RELEASING.md](docs/RELEASING.md)) fetches all of these commits – more
+than 30, from 16 repositories – and attaches the archives; it stops if one is missing. By hand, for single
+repositories:
 
 ```bash
 python3 tools/make_source_tarballs.py --repo melodee=/path/to/melodee --repo fm1_open=/path/to/fm1_open
@@ -104,6 +116,9 @@ python3 tools/make_source_tarballs.py --repo melodee=/path/to/melodee --repo fm1
 python3 tools/build_deb.py     # dist/fm1-companion_<version>_all.deb
 python3 tools/build_run.py     # dist/FM-1-Companion-Suite-<version>.run
 ```
+
+Both take tracked files only and give the same file for the same commit. Released packages are built by the
+release workflow from a clean checkout, never on a working machine: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Hardware tests
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // FM-1 Companion: Web-MIDI für den eingebetteten Editor.
 // Qt WebEngine hat kein Web-MIDI. Dieses Skript stellt navigator.requestMIDIAccess
 // bereit und leitet alle Nachrichten über QWebChannel an die App weiter, die den

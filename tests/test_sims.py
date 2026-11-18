@@ -77,7 +77,11 @@ def test_wasm_renders_audio_headless():
 def test_out_filter_blocks_update_sysex():
     ok = sims.sim_out_allowed
     assert ok([0x90, 60, 100]) and ok([0xB0, 7, 100]) and ok([0xF8])
-    assert ok([0xF0, 0x7D, 0x46, 0x4D, 2, 0, 0, 0, 0xF7])            # FM1 Open library
+    lib = [0xF0, 0x7D, 0x46, 0x4D, 2, 0, 0, 0, 0xF7]                 # FM1 Open library (cmd 12 erases samples)
+    assert not ok(lib)                                               # SEC-01: not for pages without permission
+    assert sims.library_out_allowed(lib) and sims.library_out_allowed([0x90, 60, 100])
+    for bad in ([0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7], [0xF0, 0x7D, 0x46, 0x4C, 1, 0xF7], [0xF0, 0x7D, 0x46, 0x4D, 2]):
+        assert not sims.library_out_allowed(bad), bad
     for bad in ([0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7], [0xF0, 0x22, 0x24, 0x35, 0x7D, 0xF7],
                 [0xF0, 0x7D, 0x46, 0x4C, 1, 0xF7], [0xF0, 0x43, 0, 9, 0xF7], []):
         assert not ok(bad), bad
@@ -94,7 +98,9 @@ def test_out_filter_is_gapless():
     # in pieces: rest without status byte / only the end
     assert not ok([0x22, 0x24, 0x35, 0x7F, 0xF7]) and not ok([0xF7]) and not ok([0x7F])
     # library SysEx of FM1 Open without termination (could stay "open") or with a status byte in the content
-    assert not ok([0xF0, 0x7D, 0x46, 0x4D, 2]) and not ok([0xF0, 0x7D, 0x46, 0x4D, 2, 0xF0, 0x22, 0xF7])
+    lib = sims.library_out_allowed
+    assert not lib([0xF0, 0x7D, 0x46, 0x4D, 2]) and not lib([0xF0, 0x7D, 0x46, 0x4D, 2, 0xF0, 0x22, 0xF7])
+    assert not lib([0x90, 60, 100] + soft) and not lib([0x90, 60, 100, 0xF0, 0x7D, 0x46, 0x4D, 2, 0xF7])
     # handshake of the update protocol, 7-bit data stream, Universal, Yamaha, Felucca
     for bad in ([0xF0, 0x00, 0x32, 0x45, 0, 0, 0, 0x40, 0x7F, 0xF7], [0xF0, 0x00, 0x59, 0x30, 1, 2, 0xF7],
                 [0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7], [0xF0, 0x7D, 0x46, 0x4C, 67, 1, 0xF7]):
@@ -206,7 +212,7 @@ def test_local_server_sims_and_relay(tmp_path, monkeypatch):
         got = []
 
         def sse():
-            for line in urllib.request.urlopen(f"http://127.0.0.1:{srv.port}/_fm1/midi", timeout=10):
+            for line in urllib.request.urlopen(srv.relay_url(), timeout=10):
                 if line.startswith(b"data:"):
                     got.append(json.loads(line[5:]))
                     return
@@ -221,3 +227,85 @@ def test_local_server_sims_and_relay(tmp_path, monkeypatch):
         assert got == [[0x90, 60, 100]]
     finally:
         srv.stop()
+
+
+# ---- page load result: Qt 6.4 (Raspberry Pi OS Bookworm) reports a good load as "HTTP status 200" ----
+@pytest.mark.parametrize("status, domain, code, want", [
+    (2, 7, 200, True),       # Qt 6.4: http 200 and file:// – "LoadSucceededStatus 7 200"
+    (3, 7, 404, False),      # Qt 6.4: 404 – "LoadFailedStatus 7 404"
+    (2, 0, 0, True),         # newer Qt: no error domain
+    (2, 7, 304, True),
+    (2, 7, 404, False),      # newer Qt: the server's error page was "loaded"
+    (2, 7, 500, False),
+    (3, 2, -105, False),     # connection error
+    (3, 6, -105, False),     # DNS
+    (3, 0, 0, False),        # failed always counts, whatever the domain says
+    (2, 2, -105, False),     # an error domain on a "succeeded" page (Chromium's own error page)
+    (0, 0, 0, None),         # started: nothing to report yet
+    (1, 0, 0, None),         # stopped without an error (next load replaced it)
+    (1, 7, 200, None),
+    (1, 2, -3, False),
+])
+def test_load_outcome(status, domain, code, want):
+    assert sims.load_outcome(status, domain, code) is want
+
+
+def test_enum_int_also_for_values_without_a_name():
+    import enum
+
+    class Dom(enum.Enum):
+        NoErrorDomain = 0
+
+    class Nameless:                      # what PyQt6 6.4 hands out for domain 7: no member of the enum
+        value = 7
+
+    class OnlyRepr:
+        def __repr__(self):
+            return "<ErrorDomain.7: 7>"
+    assert sims.enum_int(Dom.NoErrorDomain) == 0
+    assert sims.enum_int(Nameless()) == 7
+    assert sims.enum_int(7) == 7
+    assert sims.enum_int(OnlyRepr()) == 7
+
+
+def test_simulator_page_accepts_qt64_success():
+    """The page's own handler, fed with what Qt 6.4 reports (domain 7 has no name in PyQt6 6.4)."""
+    pytest.importorskip("PyQt6.QtWebEngineCore")
+    from PyQt6.QtCore import QUrl
+    from PyQt6.QtWebEngineCore import QWebEngineLoadingInfo as LI
+    from fm1companion.ui.pages import simulator
+
+    class Unnamed:
+        def __init__(self, v):
+            self.value = v
+
+    class Info:
+        def __init__(self, status, domain, code, url="http://127.0.0.1:1/sims/x/"):
+            self._s, self._d, self._c, self._u = status, domain, code, url
+
+        def status(self):
+            return self._s
+
+        def errorDomain(self):
+            return Unnamed(self._d)
+
+        def errorCode(self):
+            return self._c
+
+        def url(self):
+            return QUrl(self._u)
+
+    class Page:
+        def __init__(self):
+            self.got = []
+
+        def _loaded(self, ok):
+            self.got.append(ok)
+    p = Page()
+    S = LI.LoadStatus
+    simulator.SimulatorPage._loading(p, Info(S.LoadStartedStatus, 0, 0))
+    simulator.SimulatorPage._loading(p, Info(S.LoadSucceededStatus, 7, 200))
+    simulator.SimulatorPage._loading(p, Info(S.LoadSucceededStatus, 7, 200, "file:///x/index.html"))
+    simulator.SimulatorPage._loading(p, Info(S.LoadFailedStatus, 7, 404))
+    simulator.SimulatorPage._loading(p, Info(S.LoadSucceededStatus, 7, 200, "data:text/html,x"))
+    assert p.got == [True, True, False]

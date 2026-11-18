@@ -14,15 +14,31 @@ ayuda.
 Melodee a partir de 1.3.5, con protección de arranque, vuelve por sí solo al modo de actualización tras una escritura interrumpida (también
 un corte de corriente): basta con volver a encenderlo y reinstalar.
 
+## Tras una instalación interrumpida
+
+Tras una interrupción, el mensaje de la app dice lo que es *probable*: no ha vuelto a mirar el FM-1. La página
+[Recuperación](app://page/recovery) muestra lo que se detecta en ese momento:
+
+* **Se detecta un FM-1 en modo de actualización:** *Terminar instalación* vuelve a escribir el paquete
+  interrumpido. La app lo conoce por su diario y comprueba que corresponde al cargador de actualización que espera;
+  si no, no se envía nada.
+* **No se detecta nada y el FM-1 funciona con normalidad:** no se escribió nada. *Olvidar la instalación
+  interrumpida* elimina la nota de la app.
+* **No se detecta nada y la pantalla sigue en negro:** apaga y enciende el FM-1 una vez y prueba el modo de
+  actualización (arriba). Si no funciona, consulta la sección siguiente.
+
+Con sinceridad: terminar una instalación interrumpida solo se ha ejecutado hasta ahora en la simulación, no en un
+FM-1 real.
+
 ## Cuando no funciona nada
 
 Si el ordenador muestra una unidad **“WL82 UBOOT1.00”** y la pantalla sigue negra, el chip está en su
-modo de recuperación integrado. Entonces ayuda la página [Rescate](app://page/recovery), **Nivel 2**: te guía
+modo de recuperación integrado. Entonces ayuda la página [Recuperación](app://page/recovery), **Etapa 2**: te guía
 paso a paso por el MvaveFM1Unbricker incluido (con una doble copia de seguridad obligatoria de la flash).
 Encontrarás información de fondo en la sección “Firmware update and recovery” de
 [awesome-fm-1](https://github.com/cicloid/awesome-fm-1).
 
-Lo que el Nivel 2 comprueba antes de escribir – en la copia de seguridad leída en la **misma** ejecución:
+Lo que la Etapa 2 comprueba antes de escribir – en la copia de seguridad leída en la **misma** ejecución:
 
 * **“Volver a escribir V15 original”** solo escribe bajo la cabecera de arranque de fábrica (V13–V15). Si la copia muestra la
   cabecera de arranque de V16 (el actualizador de M-VAVE la reescribe al instalar V16) o una cabecera desconocida
@@ -47,7 +63,7 @@ solución de problemas de MvaveFM1Unbricker), con el FM-1 conectado directamente
    hasta ahí; en Melodee es la calibración).
 3. **Tres reinicios rápidos:** encender, esperar 10 s, apagar; encender, 10 s, apagar; encender. Si cada arranque falla, el
    tercero acaba en modo de arranque ROM. (Así es también como un FM-1 puede llegar ahí por accidente.)
-4. Si nada de esto ayuda, solo queda el hardware: [Rescate](app://page/recovery), **Nivel 3** (FM-1 Transporter).
+4. Si nada de esto ayuda, solo queda el hardware: [Recuperación](app://page/recovery), **Etapa 3** (FM-1 Transporter).
 
 ## Causas típicas de interrupciones
 

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // The studio twin's Web Worker (studio.html starts it). Live: the twin (TwinHost), its clock in real time while no
-// audio pulls it, and audio for the AudioWorklet on a MessagePort. Render job: a second worker of this file renders
-// offline from a snapshot (the live twin is untouched); its chunks wait for the page's acknowledgement.
+// audio pulls it, and audio for the AudioWorklet on a MessagePort. Render session: a second worker of this file holds
+// ONE snapshot (render_open) and renders every pass of an export from it (render_pass; the live twin is untouched);
+// its chunks wait for the page's acknowledgement. The page ends it by terminating the worker.
 importScripts("twin-core.js", "twin-host.js");
 const host = new TwinHost({ emitMidi: (m) => postMessage({ ev: "midi", data: m }) });
-let clockOn = true, audioPort = null, last = performance.now(), ack = null;
+let clockOn = true, audioPort = null, last = performance.now(), ack = null, session = null;
 
 setInterval(() => {                                   // the device clock while no audio drives it
   const now = performance.now(), ms = Math.floor(now - last);
@@ -37,9 +38,13 @@ onmessage = async (e) => {
       };
       r = {};
     } else if (c.op === "audio_off") { if (audioPort) audioPort.close(); audioPort = null; last = performance.now(); r = {}; }
-    else if (c.op === "render_job") {
+    else if (c.op === "render_open") {
       const state = c.memory ? { memory: c.memory } : { flash: c.flash };
-      r = await TwinHost.renderJob(await WebAssembly.compile(c.wasm), state, c.params, (b) => new Promise((res) => {
+      session = await TwinHost.RenderSession.open(await WebAssembly.compile(c.wasm), state, c.settle_ms);
+      r = {};
+    } else if (c.op === "render_pass") {
+      if (!session) throw new Error("no render session");
+      r = await session.pass(c.params, (b) => new Promise((res) => {
         ack = res;
         postMessage({ id: c.id, chunk: b }, [b.buffer]);
       }));

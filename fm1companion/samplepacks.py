@@ -110,6 +110,8 @@ def parse_tree(text: str) -> list[Entry]:
                 path = path[1:-1].encode("latin-1").decode("unicode_escape").encode("latin-1").decode("utf-8")
             except (UnicodeError, ValueError):
                 continue
+        if parts[0] == "120000" or not safe_rel_path(path):   # symbolic link / path that leaves the pack folder
+            continue
         if Path(path).suffix.lower() in AUDIO:
             out.append(Entry(path, int(parts[3]) if len(parts) > 3 and parts[3].isdigit() else 0))
     return out
@@ -267,9 +269,11 @@ def _download(p: Pack, dest_root: Path, folder_list, log, cancel) -> list[Path]:
     for i, e in enumerate(sel):
         if cancel():
             raise Cancelled(_("cancelled"))
-        src = repo / e.path
-        if not src.exists():
+        if not safe_rel_path(e.path):                  # "..", absolute paths: never outside the pack folder
             continue
+        src = repo / e.path
+        if _has_symlink(repo, e.path) or not src.is_file():
+            continue                                   # a link in the pack could point at any file of this computer
         dst = target / e.path
         dst.parent.mkdir(parents=True, exist_ok=True)
         if not dst.exists() or dst.stat().st_size != src.stat().st_size:
@@ -279,6 +283,23 @@ def _download(p: Pack, dest_root: Path, folder_list, log, cancel) -> list[Path]:
             log(f"{i + 1}/{len(sel)} {Path(e.path).name}")
     write_source_note(p, target)
     return out
+
+
+def safe_rel_path(path: str) -> bool:
+    """relative path of a pack file: no empty parts, no ``.``/``..``, not absolute, no backslashes."""
+    if not isinstance(path, str) or not path or "\\" in path or "\x00" in path:
+        return False
+    return all(part not in ("", ".", "..") for part in path.split("/"))
+
+
+def _has_symlink(root: Path, rel: str) -> bool:
+    """is the file or one of its parent folders (below root) a symbolic link?"""
+    cur = Path(root)
+    for part in rel.split("/"):
+        cur = cur / part
+        if cur.is_symlink():
+            return True
+    return False
 
 
 def folder_name(p: Pack) -> str:

@@ -10,11 +10,11 @@ No build step is needed: the app reads the `.po` files directly (`fm1companion/i
 
 ## Choosing the language
 
-* **Settings › General › Language**: *System language* (default), *Deutsch*, *English*, … – takes effect
+* **Settings › General › Language**: *System language* (default), *English*, *Deutsch*, *Español*, … – takes effect
   after restarting the app.
 * *System language* uses the system locale (`LANGUAGE`, `LC_ALL`, `LC_MESSAGES`, `LANG`) if a
   translation exists for it, otherwise English. A German system gets German.
-* For one start: `fm1-companion --lang en` (or `--lang de`).
+* For one start: `fm1-companion --lang en` (or `--lang de`, `--lang es`, …).
 * For tests and debugging: environment variable `FM1C_LANG=en|de|…` (overrides the setting).
 
 Qt's own texts (file dialogs, standard buttons, context menus) follow the chosen language when Qt's
@@ -98,15 +98,16 @@ Rules:
 
    Without the tool: copy `fm1companion/locale/messages.pot` to `fm1companion/locale/<code>/<area>.po` (one file
    is fine – `messages.po`; several files help when several people translate), and fill in the header
-   (`Language: <code>`, `Plural-Forms: …`). Any gettext editor (Poedit, Lokalize, GNOME Translation Editor) can also
+   (`Language: <code>`, `X-Language-Name: …`, `Plural-Forms: …`). Any gettext editor (Poedit, Lokalize, GNOME Translation Editor) can also
    create a new catalog from `messages.pot`.
 
 2. Set `Plural-Forms` in the header of every file to the rule of your language
    ([list](https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html)) and translate the `msgstr`
    entries. The msgids stay English.
 
-3. Optional: add the name of the language, written in the language itself, to `LANGUAGE_NAMES` in
-   `fm1companion/i18n.py` (e.g. `"fr": "Français"`); without it the language list shows the code.
+3. The name of the language, written in the language itself, is the header line `X-Language-Name: Français` of the
+   `.po` files (the tool writes it from `--name`). The language list of the app shows it; without it the list
+   shows the code.
 
 4. Test it:
 
@@ -120,7 +121,7 @@ Rules:
    wording.
 
 5. Help pages: copy `fm1companion/data/help/en/*.md` to `fm1companion/data/help/<code>/` and translate them. Keep
-   the file names (they are the links between pages); missing pages fall back to German.
+   the file names (they are the links between pages); pages you have not translated yet are shown in English.
 
 Open an issue with the template “Translation – I want to translate into …” so that two people do not translate the
 same language at the same time.

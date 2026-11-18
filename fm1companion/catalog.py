@@ -21,6 +21,7 @@ import base64
 import difflib
 import hashlib
 import json
+import logging
 import re
 import time
 import urllib.error
@@ -39,6 +40,7 @@ HUB_URL = "https://thefirmwarehub.com/"
 DIRECTORY_URL = "https://fm1-editor.com/firmware/"
 SNAPSHOT_FILE = Path(__file__).resolve().parent / "data" / "catalog_snapshot.json"
 UA = "fm1-companion"
+log = logging.getLogger("fm1companion.catalog")
 MAX_AGE = 24 * 3600
 class _HttpsOnlyRedirect(urllib.request.HTTPRedirectHandler):
     """Redirects only to https – never silently down to http (or file:, ftp: …)."""
@@ -46,7 +48,14 @@ class _HttpsOnlyRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if urllib.parse.urlsplit(newurl).scheme.lower() != "https":
             raise urllib.error.URLError(_("Redirect to an insecure address refused: {url}").format(url=newurl))
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and (urllib.parse.urlsplit(newurl).hostname or "").lower() != \
+                (urllib.parse.urlsplit(req.full_url).hostname or "").lower():
+            # another host must never see the GitHub token (urllib would pass the header on)
+            for store in (new.headers, new.unredirected_hdrs):
+                for k in [k for k in store if k.lower() == "authorization"]:
+                    del store[k]
+        return new
 
 
 _opener = urllib.request.build_opener(_HttpsOnlyRedirect())
@@ -140,6 +149,31 @@ def slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-") or "firmware"
 
 
+_UNSAFE_NAME = re.compile(r"[\x00-\x1f\x7f/\\\\]")
+
+
+def safe_component(s) -> bool:
+    """May this text from a catalog be used as ONE folder or file name below the firmware folder?
+    Not empty, no path separators or control characters, not ``.``/``..``, no leading dot (hidden files,
+    ``..``), no leading ``~`` or ``-``, at most 120 characters. The text is only checked, never changed – keys
+    are also stored in the settings (wishlist, firmware choice)."""
+    return (isinstance(s, str) and 0 < len(s) <= 120 and not _UNSAFE_NAME.search(s)
+            and s[0] not in ".~-" and s == s.strip() and not s.endswith("."))
+
+
+def package_problem(p) -> str:
+    """'' if the package's download can be stored safely, otherwise which part of it is not a plain name."""
+    if not p.url:
+        return ""
+    if not safe_component(p.filename):
+        return "file name"
+    if p.version and not safe_component(p.version):
+        return "version"
+    if p.family and not safe_component(p.family):
+        return "family"
+    return ""
+
+
 def norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", (s or "").lower())
 
@@ -186,6 +220,26 @@ class Package:
     @property
     def filename(self) -> str:
         return self.url.rsplit("/", 1)[-1] if self.url else ""
+
+
+# Corrections of single links the lists get wrong: (repository, link role, address as listed, right address).
+# A correction only applies while the list still has exactly the listed address (a missing or extra "/" at the end
+# does not matter), so it stops doing anything the day the list is fixed – then the entry can go.
+#  * JIANT FM: awesome-fm-1 links "Browser emulator" to the project's start page; the emulator is under emu/
+#    (the project's own README links it there; seen running with sound in the app on a Pi 5, 2026-11-18).
+LINK_CORRECTIONS = [
+    ("juanjiant-bit/JIANT", "emulator", "https://juanjiant-bit.github.io/JIANT/",
+     "https://juanjiant-bit.github.io/JIANT/emu/"),
+]
+
+
+def correct_links(e: "Entry") -> "Entry":
+    """apply LINK_CORRECTIONS to one entry (fresh from the lists, from the cache or from the snapshot)"""
+    for repo, role, listed, right in LINK_CORRECTIONS:
+        if (e.repo or "").lower() == repo.lower() and \
+                (e.links.get(role) or "").rstrip("/").lower() == listed.rstrip("/").lower():
+            e.links[role] = right
+    return e
 
 
 @dataclass
@@ -287,8 +341,10 @@ class Entry:
         pk = [Package(**{k: v for k, v in p.items() if k in Package.__dataclass_fields__})
               for p in d.pop("packages", [])]
         e = cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
-        e.packages = pk
-        return e
+        if not safe_component(e.key):                  # cache/snapshot are files on disk: same rule as for the live list
+            raise ValueError(f"catalog entry with an unsafe key: {str(e.key)[:60]!r}")
+        e.packages = [p for p in pk if not package_problem(p)]
+        return correct_links(e)
 
     def to_spec(self, package: Package | None = None):
         """FirmwareSpec for the installer / "My firmwares"."""
@@ -311,7 +367,8 @@ class Entry:
             installer_url=self.links.get("installer", ""), download_url=p.url if p else "",
             sha256=p.sha256 if p else "", requires_stock_v15=bool(p and p.requires_stock_v15),
             notes=list(p.notes) if p else [], category=(self.categories or [""])[0], catalog_id=self.key,
-            loader_family=p.loader_family if p else "")
+            loader_family=p.loader_family if p else "",
+            release_tag=(p.version or "") if p else "")      # the version the catalog names for this package
 
 
 @dataclass
@@ -383,7 +440,13 @@ class Catalog:
 
     @classmethod
     def from_dict(cls, d: dict, source: str = "snapshot") -> "Catalog":
-        return cls(entries=[Entry.from_dict(x) for x in d.get("entries", [])],
+        entries = []
+        for x in d.get("entries", []):
+            try:
+                entries.append(Entry.from_dict(x))
+            except ValueError as ex:                   # one bad entry must not take the catalog down
+                log.warning("%s – skipped", ex)
+        return cls(entries=entries,
                    resources=[Resource(**r) for r in d.get("resources", [])],
                    revision=d.get("revision", 0), issued=d.get("issued", ""), built=d.get("built", ""),
                    source=source,
@@ -418,6 +481,10 @@ def parse_mooring(data: dict) -> dict:
                     stock=bool(e.get("stock")), source_repo=dl.get("sourceRepo", ""),
                     loader_family=loaders.get(dl.get("loaderSHA256", ""), ""))
         p._name = name   # type: ignore[attr-defined]  (only needed when merging)
+        bad = package_problem(p)
+        if bad:                                        # would become a folder/file name on disk: never "../x"
+            log.warning("Mooring catalog: package %r skipped – %s is not a plain name", p.label[:80], bad)
+            continue
         pkgs.append(p)
     return {"revision": data.get("revision", 0), "issued": data.get("issued", ""), "packages": pkgs,
             "loaders": loaders}
@@ -621,7 +688,7 @@ def _readme_entry(it: dict) -> Entry:
     e.lineage_text = "; ".join(x for x in lineage_mentions(desc) if x != "__own__")
     e._mentions = lineage_mentions(desc)   # type: ignore[attr-defined]
     e.categories = categorize(name, desc, it["section"])
-    return e
+    return correct_links(e)
 
 
 # ================================================================ Merge ===
@@ -680,6 +747,9 @@ def merge(readme_text: str | None, mooring: dict | None, builtin_keys: dict | No
                 if e is None:
                     gh = repo_of(p.source_repo).lower()
                     e = by_repo.get(gh) or by_name.get(norm(p.family)) or by_name.get(norm(p._name))
+                    if e is None and not safe_component(p.family):
+                        orphans.append(p)              # the family would become the key = a folder name on disk
+                        continue
                     if e is None:
                         e = Entry(key=p.family, name=p._name or p.family, section="mooring",
                                   repo=repo_of(p.source_repo), license=p.license,
@@ -1012,7 +1082,8 @@ def spec_by_sha256(sha: str, cat: Catalog | None = None):
     if p is not None and not sp.sha256:          # built-in firmware: pin exactly this package
         import dataclasses
         sp = dataclasses.replace(sp, sha256=p.sha256, product=p.product or sp.product,
-                                 loader_family=p.loader_family or sp.loader_family)
+                                 loader_family=p.loader_family or sp.loader_family,
+                                 release_tag=sp.release_tag or p.version or "")
     return sp
 
 

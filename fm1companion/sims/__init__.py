@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -60,7 +61,7 @@ ONLINE = [
      "the WASM simulators – on the Pi 5 ORBIT is well playable, Skiff 2 just about, Stock V15 hardly. Best use "
      "“Open in Firefox”."),
     ("FM-1 Workbench (Community)", "https://fm1-workbench.web.app",
-     "Community workbench by thegiantsnail (GPL-3.0) with a software FM-1."),
+     "Community workbench by thegiantsnail (GPL-3.0) with a software FM-1.", "workbench"),
     ("Felucca (try)", "https://hugelton.github.io/Felucca/webapp/try/", "Felucca – the base of most firmwares"),
     ("ORBIT", "https://dspaudio.github.io/orbit-web-emu/", "SLOOP-based groovebox with event tape"),
     ("X0X", "https://charlesvestal.github.io/fm1-x0x/emu/", "909, 808, two 303s"),
@@ -68,6 +69,60 @@ ONLINE = [
     ("ChoralRoot FM-1", "https://quixotic7.github.io/ChoralRootFM1/emu/", "Chord instrument à la Orchid"),
     ("MONK-1", "https://charlesvestal.github.io/fm1-monk/emu/", "Formant vocal synth"),
 ]
+
+
+# ---- hints for online pages (English source; translated at run time, listed again in SIM_TEXTS) ----------------
+# Most online simulators stay silent until their own start button is pressed, and each one has its own computer
+# keys – the app cannot press or know either, so the status line says it.
+ONLINE_HINT = ("If you hear nothing: press the page's own “Switch on” / “Start” button (you may have to scroll). "
+               "Each page has its own computer-keyboard layout.")
+ONLINE_KEYS_HINT = "Each page has its own computer-keyboard layout – see the page itself."
+# an emulator that needs more computing power than the built-in view may have (Qt 6.4 on a Pi 5: fm1-emu ran at
+# 0.6 times real time without sound, the Chromium of the same Pi at 1.1 times, 2026-11-18)
+HEAVY_NOTE = ("This emulator needs a lot of computing power; the built-in view may be too slow for it (no sound, or "
+              "stutter) – “Open in Firefox” opens it in the regular browser, which is often faster.")
+HEAVY_NOTE_OLD_QT = ("This emulator needs a lot of computing power; the built-in view of this system (Qt {version}) "
+                     "is an older one and may be too slow for it – on a Raspberry Pi 5 it stayed silent there. “Open "
+                     "in Firefox” opens it in the regular browser, which is often faster.")
+X0X_KEYS = ("X0X has its own keys: white keys on Q–I and A–K, black keys on 1–0 and -, Space is PLAY, Z / X are "
+            "OCT− / OCT+ (Z S X D C … do not play notes here).")
+# per page, by the start of its address (so the same page from the catalog or from “recently opened” gets it too):
+#   "heavy": True   needs a lot of computing power -> HEAVY_NOTE next to “Open in Firefox” and in the status line
+#   "note":  text   something the user must know about this page (its keys …)
+ONLINE_NOTES = [
+    ("https://joakimeriksson.github.io/fm1-emu/", {"heavy": True}),
+    ("https://charlesvestal.github.io/fm1-x0x/emu/", {"note": X0X_KEYS}),
+]
+
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    return tuple(int(x) for x in re.findall(r"\d+", version or "")[:2])
+
+
+def online_notes(url: str, qt_version: str = "") -> list[str]:
+    """translated notes for the online page at ``url`` (empty for most pages). ``qt_version``: the Qt of the built-in
+    view ("6.4.2"); below 6.5 the note about heavy emulators says so."""
+    u = (url or "").strip().lower()
+    out = []
+    for prefix, info in ONLINE_NOTES:
+        if not u.startswith(prefix.lower()):
+            continue
+        if info.get("heavy"):
+            v = _version_tuple(qt_version)
+            out.append(_(HEAVY_NOTE_OLD_QT).format(version=qt_version) if v and v < (6, 5) else _(HEAVY_NOTE))
+        if info.get("note"):
+            out.append(_(info["note"]))
+    return out
+
+
+def online_keys_hint() -> str:
+    return _(ONLINE_KEYS_HINT)
+
+
+def online_hint(kind: str = "emulator") -> str:
+    """what the status line adds for a running online page: simulators often wait for their own start button and
+    have their own keys; editors and the workbench make no sound by themselves."""
+    return _(ONLINE_HINT) if (kind or "emulator") == "emulator" else ""
 
 
 def bundled() -> list[Sim]:
@@ -103,7 +158,7 @@ LINKS = [
 
 
 def online_list() -> list[Sim]:
-    return [online(u, _(t), description=_(d)) for t, u, d in ONLINE] + \
+    return [online(e[1], _(e[0]), kind=e[3] if len(e) > 3 else "emulator", description=_(e[2])) for e in ONLINE] + \
         [online(u, _(t), kind="link", description=_(d)) for t, u, d in LINKS]
 
 
@@ -142,26 +197,88 @@ def _one_message(data: list[int]) -> bool:
 
 
 def sim_out_allowed(data) -> bool:
-    """What a simulator/online page may send to real ports: normal MIDI messages and the
-    FM1 Open library protocol. Any other SysEx is dropped – in particular the update key
+    """What EVERY page may send to real ports without any permission: single normal MIDI messages (notes,
+    controllers, program change, clock/start/stop …). Every SysEx is dropped – in particular the update key
     ``F0 22 24 35 7F`` (update mode), the soft key ``F0 22 24 35 7D`` (ROM boot mode), the identity query
-    ``F0 00 32 45`` and the 7-bit-packed data stream of the M-VAVE update (starts with ``F0 00 …``)."""
+    ``F0 00 32 45``, the 7-bit-packed data stream of the M-VAVE update (starts with ``F0 00 …``) and the
+    FM1 Open library protocol (it can erase samples and overwrite projects)."""
     data = [int(x) & 0xFF for x in data]
     if not data or not _one_message(data):
         return False
-    if data[0] != 0xF0:
+    return data[0] != 0xF0
+
+
+def library_out_allowed(data) -> bool:
+    """Bundled local simulators and confirmed origins: additionally the FM1 Open library protocol
+    (``F0 7D 46 4D …``: read, write and delete projects, sounds and the sample bank of an FM-1 that runs FM1 Open)."""
+    data = [int(x) & 0xFF for x in data]
+    if sim_out_allowed(data):
         return True
-    return tuple(data[:4]) == FM1_OPEN_LIBRARY
+    return bool(data) and _one_message(data) and tuple(data[:4]) == FM1_OPEN_LIBRARY
 
 
 def editor_out_allowed(data) -> bool:
     """Online editors (catalog link "Online editor"): additionally the SysEx of the Felucca family (``F0 7D …``:
-    Melodee/SLOOP/Skiff editor protocol and preset files) and universal SysEx (``F0 7E/7F``, Identity).
-    Still blocked: anything that can trigger an update or boot mode."""
+    Melodee/SLOOP/Skiff editor protocol and preset files, this includes the FM1 Open library) and universal
+    SysEx (``F0 7E/7F``, Identity). Still blocked: anything that can trigger an update or boot mode."""
     data = [int(x) & 0xFF for x in data]
     if sim_out_allowed(data):
         return True
     return bool(data) and _one_message(data) and data[0] == 0xF0 and len(data) >= 3 and data[1] in (0x7D, 0x7E, 0x7F)
+
+
+MVAVE_UPDATE_HEADER = (0x22, 0x24, 0x35)       # F0 22 24 35 7F = update mode, F0 22 24 35 7D = ROM boot mode
+
+
+def builtin_editor_out_allowed(data) -> bool:
+    """Editor view (the firmware's own web editor, served by the app): everything a web page can properly send
+    with Web MIDI, except SysEx that starts with ``F0 22 24 35`` – the M-VAVE update-mode and boot-mode keys.
+    None of the known editors sends them from the editor page (their separate web installers do; in the app
+    all installing goes through “Firmware+”). Also refused, because the key could be hidden that way: data
+    that starts in the middle of a message and SysEx that is not closed in the same call (Web MIDI itself
+    does not permit either)."""
+    data = [int(x) & 0xFF for x in data]
+    if not data or data[0] < 0x80 or data[0] == 0xF7:
+        return False
+    i, n = 0, len(data)
+    while i < n:
+        if data[i] != 0xF0:
+            i += 1
+            continue
+        j = i + 1
+        while j < n and data[j] < 0x80:
+            j += 1
+        if j >= n or data[j] != 0xF7:                  # open SysEx, or another status byte inside it
+            return False
+        if tuple(data[i + 1:i + 4]) == MVAVE_UPDATE_HEADER:
+            return False
+        i = j + 1
+    return True
+
+
+SLOOP3_EDITOR = (0xF0, 0x7D, 0x53, 0x33)        # SLOOP 3's editor protocol (app/edproto.h: "S3")
+
+
+def sloop3_editor_out_allowed(data) -> bool:
+    """Editor view with SLOOP 3's bundled web editor: exactly what this editor sends (web/src/core.js) –
+
+    * one whole message of SLOOP 3's own editor protocol, ``F0 7D 53 33 … F7`` (``frame``), or
+    * one channel message of the right length: note on / off (``noteOut``: the "Hear" keyboard, the drum pads, the
+      piano roll) and control change (``allNotesOff``: CC 123 on every channel) – as every page may send notes.
+
+    Narrower than builtin_editor_out_allowed on purpose: no other SysEx at all (the FM-1 behind it has m-bootloader:
+    no update / boot / restart key, no Felucca command, no m-bootloader frame), nothing that starts in the middle of
+    a message, no second message behind the first, no status byte inside a SysEx."""
+    data = [int(x) & 0xFF for x in data]
+    if not data:
+        return False
+    if data[0] == 0xF0:
+        if len(data) < 6 or tuple(data[:4]) != SLOOP3_EDITOR or data[-1] != 0xF7:
+            return False
+        return all(b < 0x80 for b in data[4:-1])
+    if data[0] & 0xF0 in (0x80, 0x90, 0xB0):
+        return len(data) == 3 and data[1] < 0x80 and data[2] < 0x80
+    return False
 
 
 def out_filter_for(kind: str):
@@ -181,61 +298,128 @@ def origin_of(url) -> str:
     scheme = (u.scheme or "").lower()
     if not scheme or not host:
         return ""
+    if ":" in host:                                   # IPv6 literal
+        host = f"[{host}]"
     if port is None or (scheme, port) in (("http", 80), ("https", 443)):
         return f"{scheme}://{host}"
     return f"{scheme}://{host}:{port}"
 
 
+def origin_can_be_trusted(origin: str) -> bool:
+    """Device access can only be granted to ``https://`` origins (nobody on the network can change such a page
+    on its way) or to pages on this computer (loopback). Plain ``http://`` sites never get it."""
+    from urllib.parse import urlsplit
+    try:
+        u = urlsplit(origin or "")
+        host = (u.hostname or "").lower()
+    except ValueError:
+        return False
+    if not host or u.username or u.password:
+        return False
+    if u.scheme == "https":
+        return True
+    if u.scheme != "http":
+        return False
+    if host == "localhost" or host == "::1":
+        return True
+    parts = host.split(".")
+    return len(parts) == 4 and parts[0] == "127" and all(x.isdigit() and int(x) < 256 for x in parts)
+
+
 SIM_CONFIG = "simulator"
 TRUST_KEY = "device_origins"            # origins that may send editor SysEx to the FM-1 after confirmation
+LIBRARY_KEY = "library_origins"         # origins that may only use the FM1 Open library protocol (workbench)
+_LEVEL_KEYS = {"editor": TRUST_KEY, "library": LIBRARY_KEY}
 
 
-def origin_trusted(origin: str) -> bool:
+def consent_level(kind: str) -> str:
+    """which permission a page of this kind can ask for: "editor", "library" or "" (none – notes only)."""
+    return {"editor": "editor", "workbench": "library"}.get(kind or "", "")
+
+
+def _stored(level: str) -> list[str]:
     from .. import config
-    return bool(origin) and origin in (config.module(SIM_CONFIG, {}).get(TRUST_KEY) or [])
+    return [o for o in (config.module(SIM_CONFIG, {}).get(_LEVEL_KEYS[level]) or []) if isinstance(o, str)]
 
 
-def trust_origin(origin: str) -> None:
+def origin_trusted(origin: str, level: str = "editor") -> bool:
+    """did the user confirm this origin? ``level="library"`` is also covered by an "editor" permission
+    (editor SysEx includes the library protocol), not the other way round."""
+    if not origin or not origin_can_be_trusted(origin):
+        return False
+    if origin in _stored("editor"):
+        return True
+    return level == "library" and origin in _stored("library")
+
+
+def trust_origin(origin: str, level: str = "editor") -> None:
     """store the user's one-time consent for this origin."""
     from .. import config
-    if not origin:
+    if not origin or not origin_can_be_trusted(origin):
         return
-    cfg = config.module(SIM_CONFIG, {})
-    lst = [o for o in (cfg.get(TRUST_KEY) or []) if isinstance(o, str)]
+    lst = _stored(level)
     if origin not in lst:
-        cfg[TRUST_KEY] = lst + [origin]
+        config.module(SIM_CONFIG, {})[_LEVEL_KEYS[level]] = lst + [origin]
         config.save()
 
 
 def forget_origin(origin: str) -> None:
     from .. import config
     cfg = config.module(SIM_CONFIG, {})
-    cfg[TRUST_KEY] = [o for o in (cfg.get(TRUST_KEY) or []) if o != origin]
+    for key in _LEVEL_KEYS.values():
+        if key in cfg or key == TRUST_KEY:
+            cfg[key] = [o for o in (cfg.get(key) or []) if o != origin]
     config.save()
 
 
 class OutGate:
     """What a loaded page may send to the real FM-1 – decided anew for EVERY message.
 
-    * Simulators/emulators and all unconfirmed origins: only ``sim_out_allowed`` (notes, controllers,
-      clock, FM1 Open library).
-    * Online editor whose origin the user has confirmed once (``trust_origin``): ``editor_out_allowed``
-      (Felucca/universal SysEx). Update and boot mode SysEx stay blocked in every case.
+    * Every page without permission (online simulators/emulators, typed addresses, unconfirmed origins):
+      only ``sim_out_allowed`` – notes, controllers, clock. No SysEx at all.
+    * Bundled simulators served by the app itself (``local=True``) while the page is still on the app's own
+      address: additionally the FM1 Open library protocol (``library_out_allowed``).
+    * Online page of kind "workbench" whose origin the user has confirmed: ``library_out_allowed``.
+    * Online editor (kind "editor") whose origin the user has confirmed once (``trust_origin``):
+      ``editor_out_allowed`` (Felucca/universal SysEx). Update and boot mode SysEx stay blocked in every case.
     * If the page has meanwhile got a different origin (navigation, redirect), the safe filter applies again.
     """
 
-    def __init__(self, kind: str = "", start_url: str = "", trusted=None):
+    def __init__(self, kind: str = "", start_url: str = "", trusted=None, local: bool = False):
         self.kind = kind or ""
         self.origin = origin_of(start_url)
+        self.local = bool(local) and bool(self.origin)
         self._trusted = trusted if trusted is not None else origin_trusted
 
-    def editor_access(self, current_url) -> bool:
+    def _same(self, current_url) -> str:
         cur = origin_of(current_url)
-        return self.kind == "editor" and bool(cur) and cur == self.origin and bool(self._trusted(cur))
+        return cur if cur and cur == self.origin else ""
+
+    def _confirmed(self, cur: str, level: str) -> bool:
+        if not origin_can_be_trusted(cur):
+            return False
+        try:
+            return bool(self._trusted(cur, level))
+        except TypeError:                              # simple callables in tests: trusted(origin)
+            return bool(self._trusted(cur))
+
+    def editor_access(self, current_url) -> bool:
+        cur = self._same(current_url)
+        return self.kind == "editor" and not self.local and bool(cur) and self._confirmed(cur, "editor")
+
+    def library_access(self, current_url) -> bool:
+        cur = self._same(current_url)
+        if not cur:
+            return False
+        if self.local:
+            return True
+        return consent_level(self.kind) != "" and self._confirmed(cur, "library")
 
     def allowed(self, data, current_url) -> bool:
         if self.editor_access(current_url):
             return editor_out_allowed(data)
+        if self.library_access(current_url):
+            return library_out_allowed(data)
         return sim_out_allowed(data)
 
 
@@ -305,3 +489,40 @@ class SystemInputs:
     def close(self):
         for n in list(self.open):
             self._close(n)
+
+
+# ---- page load result (QWebEngineLoadingInfo, as plain numbers) ----------------------------------
+LOAD_STARTED, LOAD_STOPPED, LOAD_SUCCEEDED, LOAD_FAILED = 0, 1, 2, 3     # QWebEngineLoadingInfo.LoadStatus
+DOMAIN_NONE, DOMAIN_HTTP_STATUS = 0, 7                                   # QWebEngineLoadingInfo.ErrorDomain
+
+
+def enum_int(value, default: int = -1) -> int:
+    """Number behind a Qt enum value – also for one the installed PyQt6 has no name for (Qt 6.4 hands out
+    the HTTP status domain, PyQt6 6.4 does not list it)."""
+    for get in (lambda v: v.value, int):
+        try:
+            return int(get(value))
+        except (AttributeError, TypeError, ValueError):
+            continue
+    m = re.search(r"-?\d+", str(value))
+    return int(m.group()) if m else default
+
+
+def load_outcome(status: int, domain: int, code: int) -> bool | None:
+    """Did a page load work? True/False, or None while there is nothing to report (started, or stopped
+    without an error).
+
+    Qt 6.4 reports a good load as "succeeded, HTTP status domain (7), code 200" (also for file://), newer Qt
+    as "succeeded, no error domain (0), code 0" or likewise with the HTTP status. A page the server
+    answered with an error (404 …) can come as "succeeded" (the error page was loaded) or as "failed"."""
+    if status == LOAD_STARTED:
+        return None
+    if status == LOAD_FAILED:
+        return False
+    if domain == DOMAIN_HTTP_STATUS:
+        bad = code >= 400
+    else:
+        bad = domain != DOMAIN_NONE
+    if status == LOAD_STOPPED and not bad:
+        return None
+    return not bad

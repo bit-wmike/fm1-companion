@@ -47,6 +47,9 @@ DEP_WHY = (
     N_("recording (ALSA), MIDI connections"), N_("recording and previewing (pw-record, pw-play)"),
     N_("editing recordings"), N_("sound generator"), N_("General MIDI sounds"),
     N_("rescue via U-Boot (jl-uboot-tool)"),
+    N_("rescue with the FM-1 Transporter (a Raspberry Pi Pico as flash adapter)"),
+    N_("password prompt for rescue via U-Boot, the USB power rule and removing a system-wide installation"),
+    N_("Studio: choosing the sound output with pactl"),
 )
 # needed only when the UI is not English (Qt's own dialog texts) – otherwise just recommended
 UI_LANGUAGE_PACKAGES = {"qt6-translations-l10n"}
@@ -180,12 +183,19 @@ CREDIT_TEXTS = (
     N_("platform, host simulator and browser emulator of AMB-1 and LOOM-8, compiled into their studio twins"),
     N_("GPL-3.0 (MPL-2.0 file by file)"),
     N_("official open firmware: its unmodified code runs in the simulator and in the studio twin (also for the original V15/V16), its update tools and its V15 factory voices"),
+    N_("recovery tool for ROM boot mode (recovery stage 2) and for the Transporter (stage 3), bundled "
+       "unchanged; the app runs it as a separate program"),
+    N_("firmware for an RP2040 board that reaches an FM-1 that no longer answers over USB (recovery "
+       "stage 3, done by hand); bundled as a prebuilt file together with the Raspberry Pi Pico SDK "
+       "(BSD-3-Clause), TinyUSB by Ha Thach (MIT) and Pico-PIO-USB by sekigon-gonnoc (MIT)"),
+    N_("talks to the chip's ROM boot mode for recovery stage 2; not bundled – the Unbricker downloads one "
+       "fixed version, and only after you agree"),
     N_("firmware catalog and link collection"),
     N_("icons in the app's design (fm1companion/icons/lucide, licence in icons/LICENSE.lucide)"),
     N_("user interface (system package)"),
     N_("MIDI and audio computations (system packages)"),
     N_("GPL-3.0 with exception (see project)"),
-    N_("Catalog"), N_("Graphics"), N_("Library"),
+    N_("Catalog"), N_("Graphics"), N_("Library"), N_("Tool"),
     N_("Lucide Contributors (partly Feather, Cole Bemis)"),
     N_("Ole Martin Bjørndalen et al.; Christopher Arndt et al.; NumPy Developers"),
     N_("ISC (Feather parts MIT)"),
@@ -212,6 +222,7 @@ def credits() -> list[dict]:
 def midi_ports() -> tuple[list[str], list[str], str]:
     try:
         import mido
-        return list(mido.get_input_names()), list(mido.get_output_names()), ""
+        # each name once, order kept: under Raspberry Pi OS Bookworm mido lists every port twice
+        return list(dict.fromkeys(mido.get_input_names())), list(dict.fromkeys(mido.get_output_names())), ""
     except Exception as e:  # noqa: BLE001
         return [], [], str(e) or type(e).__name__
