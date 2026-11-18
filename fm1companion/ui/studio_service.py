@@ -597,10 +597,34 @@ class StudioService(QObject):
         with contextlib.suppress(Exception):
             st.play_midi(data)
 
+    def fm1_keys_fit(self) -> bool:
+        """does the active FM-1 run the firmware the twin runs (or the one the twin stands in for)? Only then do its
+        keys play along by themselves: the twin stays loaded when another FM-1 becomes active, and that one's keys
+        played a twin that is not its own (an FM-1 on the original firmware played the Skiff twin of another unit)."""
+        return self.st is not None and self.firmware_for(getattr(self.ctx, "firmware_key", "")) == self.firmware
+
+    def _fm1_key(self) -> str:
+        port = getattr(self.ctx, "port", None)
+        return getattr(port, "key", "") if port is not None else ""
+
+    def fm1_keys_on(self) -> bool:
+        """do the keys of the active FM-1 play the twin right now? The setting counts where device and twin fit;
+        for another firmware only when the user switched it on for exactly this device (not remembered)."""
+        c = self.ctx
+        if self.st is None or not c.midi_connected or c.is_virtual:
+            return False
+        if self.fm1_keys_fit():
+            return bool(self.cfg.get("fm1_keys", True))
+        return bool(self._fm1_key()) and getattr(self, "_fm1_keys_other", "") == self._fm1_key()
+
     def set_fm1_keys(self, on: bool):
-        self.cfg["fm1_keys"] = bool(on)
-        with contextlib.suppress(OSError):
-            config.save()
+        c = self.ctx
+        if self.st is not None and c.midi_connected and not c.is_virtual and not self.fm1_keys_fit():
+            self._fm1_keys_other = self._fm1_key() if on else ""     # this device, this session; the setting stays
+        else:
+            self.cfg["fm1_keys"] = bool(on)
+            with contextlib.suppress(OSError):
+                config.save()
         self._dev_changed()
 
     def _fm1_listener(self, data, direction):
@@ -616,7 +640,9 @@ class StudioService(QObject):
     def _dev_changed(self):
         """Keys of the real FM-1 play along in the twin (never those of the twin itself)."""
         link = self.ctx.link if (self.ctx.midi_connected and not self.ctx.is_virtual) else None
-        if not self.cfg.get("fm1_keys", True) or self.st is None:
+        if getattr(self, "_fm1_keys_other", "") and self._fm1_keys_other != self._fm1_key():
+            self._fm1_keys_other = ""                # another device is active: its keys are not switched on by that
+        if not self.fm1_keys_on():
             link = None
         if link is self._fm1_link:
             return
