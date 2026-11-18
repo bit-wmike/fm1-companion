@@ -125,6 +125,36 @@ def _identity_candidates(ctx) -> list[str]:
         return []
 
 
+def unit_seen_at(usb_path: str) -> str:
+    """the unit ID the FM-1 at this USB port shows right now (its own serial number under the original firmware)"""
+    import os
+    if not usb_path or os.environ.get("FM1C_DEMO") == "1":
+        return ""
+    try:
+        from .. import devices
+        return devices.own_serial_at(usb_path)
+    except Exception:  # noqa: BLE001 – only a check on top
+        return ""
+
+
+def unit_clash(ctx, profile, uid: str) -> str:
+    """the V15 step of a switch showed unit ID `uid`: "" if that fits the profile the plan was made for, else the
+    reason (English source, translated) why the second step is not written"""
+    from .. import devices
+    if not uid or profile is None:
+        return ""
+    forms = devices.unit_id_forms(uid)
+    mine = devices.profile_unit_ids(profile)
+    other = next((p for p in ctx.store.by_unit_id(uid) if p is not profile), None)
+    if (mine and not forms & mine) or other is not None:
+        return _("The FM-1 now runs the original firmware V15 and shows its unit ID – it is not “{name}”{other}. The "
+                 "target firmware was NOT written: it was planned for “{name}”, and this unit may have the other flash "
+                 "chip. The FM-1 keeps running V15. Connect it again, check which FM-1 it is, and plan the "
+                 "installation anew.").format(name=profile.name,
+                                             other=_(" but “{other}”").format(other=other.name) if other else "")
+    return ""
+
+
 def device_revision(ctx) -> str:
     """the hardware revision recorded for the active device: "new" | "old" | "" (not known)"""
     import os
@@ -132,8 +162,14 @@ def device_revision(ctx) -> str:
     prof = getattr(ctx, "profile", None)
     rev = hardware.revision(prof)
     port = getattr(ctx, "port", None)
-    if prof is None and any(hardware.revision(c) == hardware.NEW for c in getattr(ctx, "unit_candidates", None) or []):
-        return hardware.NEW                      # "which FM-1 is this?" not answered: new if it may be a newer unit
+    cands = getattr(ctx, "unit_candidates", None) or []
+    if prof is None and cands:
+        # "which FM-1 is this?" not answered: the strictest of what it may be – the known candidates AND a unit the
+        # app does not know yet (the question always offers "a new FM-1"): new if any candidate is, else not known
+        # (never "old", even if every known candidate is an earlier unit)
+        rev = hardware.strictest(hardware.UNKNOWN, *(hardware.revision(c) for c in cands))
+        if rev == hardware.NEW:
+            return rev
     if hardware.session_revision(getattr(port, "usb_path", "") or "") == hardware.NEW:
         return hardware.NEW                      # read in ROM boot mode at this USB port in this session
     if rev == hardware.UNKNOWN and os.environ.get("FM1C_DEMO") == "1" and not hardware.asked(prof):
@@ -578,6 +614,9 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     # (m-bootloader's MIDI MODE answers like an update loader: never sent)
     if _s3ui.refuse_in_midi_mode(parent, ctx):
         return False
+    # which unit is it? Not said yet: nothing is written; said only by an answer: the owner checks its front first
+    if hasattr(ctx, "confirm_unit") and not ctx.confirm_unit(parent):
+        return False
     from .risk_dialog import ensure_risk_ack
     if not ensure_risk_ack(parent):              # one-time risk notice before the first installation
         return False
@@ -680,6 +719,7 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     label = firmware.display_label(spec, tag if not rel else rel.tag)
     cancel = threading.Event()
     written: list[str] = []
+    seen_uid: list[str] = []                      # the unit ID the V15 step showed (learned into the profile at the end)
     ctx.hold = True
 
     def cancel_text() -> str:
@@ -789,6 +829,16 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
                 raise
             written.append(_("the original firmware V15"))
             w.log.emit(LOG_BETWEEN)
+            # the original firmware shows the unit's own ID (its USB serial number) now: is it the unit the plan was
+            # made for? Another unit ID means another FM-1 – the target is not written to it (it may be a newer unit
+            # whose chip the target does not know); the FM-1 keeps running V15
+            uid = unit_seen_at(getattr(planned_port, "usb_path", "") or "")
+            clash = unit_clash(ctx, profile, uid)
+            if clash:
+                jr.clear_chain()               # (the chain names the other profile: no "Continue" for this unit)
+                raise RuntimeError(clash)
+            if uid:
+                seen_uid.append(uid)
             check_cancel()
         w.log.emit(_("Step: install {name} …").format(name=spec.name))
         w.progress.emit(0, 100)
@@ -850,6 +900,8 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         if res.get("dry"):
             return
         if profile:
+            if seen_uid and not profile.serial and not ctx.store.by_unit_id(seen_uid[0]):
+                profile.serial = seen_uid[0]   # (the V15 step showed it: from now on the unit is told by it)
             profile.firmware = spec.key
             profile.firmware_version = res["tag"] if rel or tag else ""
             profile.identity = res["ident"] or profile.identity

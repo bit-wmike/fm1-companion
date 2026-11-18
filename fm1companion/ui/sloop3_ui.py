@@ -433,6 +433,8 @@ def handles_restore(parent, ctx, path: Path) -> bool:
 def restore_flow(parent, ctx, path: Path):
     from .. import backup, sloop3bk as B
     from .backups_page import make_backup
+    if hasattr(ctx, "confirm_unit") and not ctx.confirm_unit(parent):     # (which FM-1 is it?)
+        return
     try:
         a = backup.load_file(path)
         plan = B.restore_plan(a.file)

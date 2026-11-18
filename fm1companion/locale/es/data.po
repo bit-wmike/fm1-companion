@@ -4345,3 +4345,72 @@ msgstr "¿Es un FM-1 que ya has usado con esta app? La app no puede saberlo por 
 
 msgid "Possibly the same FM-1 as “{other}”: both were last seen at the same USB port, one with a serial number and one without. An FM-1 only reports a serial number under the original firmware, and earlier versions of this app then made a second profile. If it is one FM-1: “Merge …” joins the two (backups are moved, nothing is deleted). If you own two FM-1, leave them as they are."
 msgstr "Posiblemente el mismo FM-1 que «{other}»: ambos se vieron por última vez en el mismo puerto USB, uno con número de serie y otro sin él. Un FM-1 solo comunica un número de serie con el firmware original, y las versiones anteriores de esta app creaban entonces un segundo perfil. Si es un solo FM-1: «Fusionar …» une los dos (las copias de seguridad se mueven, no se borra nada). Si tienes dos FM-1, déjalos como están."
+
+msgid "recognised by its unit ID"
+msgstr "reconocido por su ID de unidad"
+
+msgid "recognised by its flash chip"
+msgstr "reconocido por su chip flash"
+
+msgid "recognised as the only FM-1 it can be (no unit ID seen)"
+msgstr "reconocido como el único FM-1 que puede ser (no se vio ninguna ID de unidad)"
+
+msgid "new to the app"
+msgstr "nuevo para la app"
+
+msgid "recognised by your answer – not checked by the app"
+msgstr "reconocido por tu respuesta – la app no lo comprobó"
+
+msgid "recognised as the FM-1 the app has just installed on at this USB port – not checked by the app"
+msgstr "reconocido como el FM-1 en el que la app acaba de instalar en este puerto USB – la app no lo comprobó"
+
+msgid "recognised by USB port only – not certain"
+msgstr "reconocido solo por el puerto USB – no es seguro"
+
+msgid "the newer FM-1 with the M-VAVE logo on the front"
+msgstr "el FM-1 más nuevo, con el logo de M-VAVE en la parte delantera"
+
+msgid "the earlier FM-1 without the logo on the front"
+msgstr "el FM-1 anterior, sin logo en la parte delantera"
+
+msgid "the app has no record whether it has the logo on the front"
+msgstr "la app no tiene registrado si tiene el logo en la parte delantera"
+
+msgid "The app knows this only as the FM-1 it has just installed on at this USB port."
+msgstr "La app solo lo sabe porque acaba de instalar en este FM-1 en este puerto USB."
+
+msgid "The app knows this only from the USB port."
+msgstr "La app solo lo sabe por el puerto USB."
+
+msgid "The app knows this only from your answer to “Which FM-1 is this?” – the unit reports no unit ID and no flash chip it could check."
+msgstr "La app solo lo sabe por tu respuesta a «¿Qué FM-1 es este?»: la unidad no informa ninguna ID de unidad ni ningún chip flash que pueda comprobar."
+
+msgid "This is “{name}” – {revision}."
+msgstr "Este es «{name}»: {revision}."
+
+msgid "<b>Check the front of the FM-1 you have connected.</b> If it is another one, cancel: nothing is written, and you can say which FM-1 it is on the Overview."
+msgstr "<b>Mira la parte delantera del FM-1 que tienes conectado.</b> Si es otro, cancela: no se escribe nada y en el Resumen puedes indicar qué FM-1 es."
+
+msgid "The app does not know yet which of your FM-1 this is – it reports no unit ID, and more than one of your devices can be this one. Nothing is written before you say which one it is."
+msgstr "La app todavía no sabe cuál de tus FM-1 es este: no informa ninguna ID de unidad y puede ser más de uno de tus dispositivos. No se escribe nada hasta que digas cuál es."
+
+msgid "The connected FM-1 reports {chip}, but “{name}” is recorded as {revision}. Either this is another FM-1, or the record is wrong. Nothing is written. Say again which FM-1 this is – if it is “{name}”, correct its unit on the page “Devices” first."
+msgstr "El FM-1 conectado informa {chip}, pero «{name}» está registrado como {revision}. O es otro FM-1, o el registro es incorrecto. No se escribe nada. Di otra vez qué FM-1 es; si es «{name}», corrige primero su unidad en la página «Dispositivos» (botón «Unidad …»)."
+
+msgid "Yes, it is “{name}”"
+msgstr "Sí, es «{name}»"
+
+msgid "Say which FM-1 it is …"
+msgstr "Decir qué FM-1 es …"
+
+msgid "Ask now? (Then start what you wanted to do again.)"
+msgstr "¿Preguntar ahora? (Después vuelve a iniciar lo que querías hacer.)"
+
+msgid "The FM-1 now runs the original firmware V15 and shows its unit ID – it is not “{name}”{other}. The target firmware was NOT written: it was planned for “{name}”, and this unit may have the other flash chip. The FM-1 keeps running V15. Connect it again, check which FM-1 it is, and plan the installation anew."
+msgstr "El FM-1 ahora ejecuta el firmware original V15 y muestra su ID de unidad: no es «{name}»{other}. El firmware de destino NO se escribió: estaba previsto para «{name}», y esta unidad puede tener el otro chip flash. El FM-1 sigue con V15. Vuelve a conectarlo, comprueba qué FM-1 es y planifica la instalación de nuevo."
+
+msgid " but “{other}”"
+msgstr ", sino «{other}»"
+
+msgid "not said yet"
+msgstr "todavía sin indicar"

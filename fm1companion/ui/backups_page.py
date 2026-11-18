@@ -780,6 +780,8 @@ class BackupsPage(QWidget):
         if why:
             show_error(self, _("Restore not possible"), why)
             return
+        if hasattr(self.ctx, "confirm_unit") and not self.ctx.confirm_unit(self):    # (which FM-1 is it?)
+            return
         try:
             a = backup.load_file(p)
         except Exception as e:  # noqa: BLE001

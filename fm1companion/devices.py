@@ -283,6 +283,12 @@ class ProfileStore:
     def without_serial(self) -> list[Profile]:
         return [p for p in self.profiles.values() if not p.serial]
 
+    def by_unit_id(self, uid: str) -> list[Profile]:
+        """the profiles that know this unit ID (as serial number under the original firmware or as m-bootloader's
+        unit ID, in either byte order) – normally one; two means two profiles of the same unit"""
+        forms = unit_id_forms(uid)
+        return [p for p in self.profiles.values() if forms & profile_unit_ids(p)] if forms else []
+
 
 BOGUS_SERIAL = re.compile(r"^(.)\1*$|^0?123456789(0|abcdef)?$|^0+1?$", re.I)
 # Constants that a firmware reports as "serial number" on every unit (read in the sources, 2026-11-18):
@@ -298,6 +304,42 @@ CONSTANT_SERIAL_RE = re.compile(r"^(0000FM1DISK1$|TransitFM1\b)", re.I)
 #       gr!mm, Hortator, ChoralRoot, CoralFlower, fm1-base …): none at all (iSerialNumber 0), or a constant (above) –
 #       a number seen there never identifies a unit
 OWN_SERIAL_KINDS = ("stock", "stock-update")
+
+
+def unit_id_forms(value: str) -> set[str]:
+    """the forms under which one unit ID can show up: as told and – for 16 hex digits – in the other byte order.
+    The original firmware reports the unit ID as its USB serial number (the very number M-Flasher reads as “unit id”
+    in download mode; measured on two FM-1, 2026-11-18); m-bootloader's 0x12 answer carries the same 8 bytes, whose
+    byte order relative to the serial number was not checked. Empty or constant-looking: no form at all."""
+    s = (value or "").strip().lower()
+    if not serial_plausible(s):
+        return set()
+    out = {s}
+    if re.fullmatch(r"[0-9a-f]{16}", s):
+        out.add(bytes.fromhex(s)[::-1].hex())
+    return out
+
+
+def profile_unit_ids(p) -> set[str]:
+    """every form of the unit ID a profile knows (its serial number under the original firmware, m-bootloader's
+    unit ID) – empty: the profile has never seen one"""
+    if p is None:
+        return set()
+    return unit_id_forms(getattr(p, "serial", "")) | unit_id_forms(getattr(p, "unit_id", ""))
+
+
+def own_serial_at(usb_path: str, sysroot: str = "/sys") -> str:
+    """the unit's own serial number of the FM-1 at this USB port, read from sysfs – only while it runs the original
+    firmware (OWN_SERIAL_KINDS without the update loader); "" otherwise. Used during the V15 step of a switch, when the
+    app's device detection is paused."""
+    if not usb_path or "/" in usb_path or usb_path.startswith("."):
+        return ""
+    d = Path(sysroot) / "bus" / "usb" / "devices" / usb_path
+    uid = f"{_read(d / 'idVendor')}:{_read(d / 'idProduct')}".lower()
+    if FM1_USB_IDS.get(uid, "") != "stock":
+        return ""
+    s = _read(d / "serial")
+    return s if serial_plausible(s) else ""
 
 
 def serial_plausible(serial: str) -> bool:

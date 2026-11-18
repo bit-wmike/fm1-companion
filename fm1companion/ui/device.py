@@ -12,9 +12,9 @@ from PyQt6.QtWidgets import (QDialog, QDialogButtonBox, QInputDialog, QLabel, QL
                              QVBoxLayout, QWidget)
 
 from .. import config, firmware
-from ..i18n import _
-from ..devices import (PortInfo, Profile, ProfileStore, identifying_serial, scan_ports, serial_learnable,
-                       usable_serial)
+from ..i18n import N_, _
+from ..devices import (PortInfo, Profile, ProfileStore, identifying_serial, profile_unit_ids, scan_ports,
+                       serial_learnable, usable_serial)
 from ..protocol import Cmd, Info, parse_info
 from ..transport import Link, LinkError, MidoTransport, SubprocessTransport
 from .common import JobDialog, run_job, show_error
@@ -175,6 +175,48 @@ def firmware_name(key: str) -> str:
 
 log = logging.getLogger("fm1companion.device")
 
+# How the app knows which profile the connected FM-1 is (DeviceContext.identified_by), for the Overview and the
+# header. Only "unit_id" and "flash" are checks by the app; "only" means no other known profile can be this unit.
+IDENTIFIED = {
+    "unit_id": N_("recognised by its unit ID"),
+    "flash": N_("recognised by its flash chip"),
+    "only": N_("recognised as the only FM-1 it can be (no unit ID seen)"),
+    "new": N_("new to the app"),
+    "answer": N_("recognised by your answer – not checked by the app"),
+    "install": N_("recognised as the FM-1 the app has just installed on at this USB port – not checked by the app"),
+    "port": N_("recognised by USB port only – not certain"),
+}
+# identified this way, a write first names the unit and asks the owner to check its front (DeviceContext.unit_check)
+UNCHECKED = ("answer", "install", "port")
+
+
+def revision_words(profile) -> str:
+    """the unit's hardware revision in words a musician can check on the device itself"""
+    from .. import hardware
+    rev = hardware.revision(profile)
+    if rev == hardware.NEW:
+        return _("the newer FM-1 with the M-VAVE logo on the front")
+    if rev == hardware.OLD:
+        return _("the earlier FM-1 without the logo on the front")
+    return _("the app has no record whether it has the logo on the front")
+
+
+def unit_confirm_text(profile, how: str = "answer") -> str:
+    """the mandatory question before a write to a unit that the app did not recognise by itself"""
+    why = (_("The app knows this only as the FM-1 it has just installed on at this USB port.") if how == "install"
+           else _("The app knows this only from the USB port.") if how == "port"
+           else _("The app knows this only from your answer to “Which FM-1 is this?” – the unit reports no unit ID "
+                  "and no flash chip it could check."))
+    return (_("This is “{name}” – {revision}.").format(name=html_escape(profile.name), revision=revision_words(profile))
+            + "<br><br>" + why + " " +
+            _("<b>Check the front of the FM-1 you have connected.</b> If it is another one, cancel: nothing is written, "
+              "and you can say which FM-1 it is on the Overview."))
+
+
+def html_escape(text: str) -> str:
+    import html
+    return html.escape(text or "")
+
 
 class FirmwareChoiceDialog(QDialog):
     """“Which firmware is running on this FM-1?” – candidates from the catalog plus “don't know”."""
@@ -256,6 +298,8 @@ class DeviceContext(QObject):
         self.unit_candidates: list[Profile] = []  # asked "which FM-1 is this?" and not answered: what it may be
         self.port_answers: dict[str, str] = {}    # port key -> profile id the owner named; holds while the port stays
         self.pending_restore_profile = ""         # the profile the restore offer (pending_restore_check) is meant for
+        self.identified_by = ""                   # how the active profile was found: a key of IDENTIFIED ("" = none)
+        self._ask_next = ""                       # port key: on the next connection there, ask "which FM-1?" again
         self.window: QWidget | None = None
         # virtual devices (studio twin): list and line are provided by the service (ui/studio_service.py)
         self.virtual_ports = None          # () -> list[PortInfo]
@@ -747,7 +791,10 @@ class DeviceContext(QObject):
             if mb is not None:
                 self._unit_by_id(mb.uid)
                 from .. import hardware             # the flash chip m-bootloader read: kept with the device
-                if self.profile is not None and hardware.note_flash_id(self.profile, mb.jedec & 0xFFFFFF, "identity"):
+                seen, rec = mb.revision, hardware.revision(self.profile)
+                if self.profile is not None and (getattr(self, "identified_by", "") not in UNCHECKED or hardware.UNKNOWN in (seen, rec)
+                                                 or seen == rec) \
+                        and hardware.note_flash_id(self.profile, mb.jedec & 0xFFFFFF, "identity"):
                     self.store.save()
                 self.message.emit(
                     _("This FM-1 is in m-bootloader's MIDI MODE (m-bootloader {version}, flash chip {chip}): no "
@@ -757,7 +804,8 @@ class DeviceContext(QObject):
 
     def _assign_profile(self):
         """Find the profile for the device (devices.identifying_serial, _match_profile): by its own serial number,
-        by what the app itself just did at this USB port, by USB port and identity – otherwise ask, never guess."""
+        by what the app itself just did at this USB port, by USB port and identity only when no other profile can be
+        this unit – otherwise ask, never guess."""
         port = self.port
         if not port:
             return
@@ -774,7 +822,7 @@ class DeviceContext(QObject):
             self.profile = None
             return
         learn = serial_learnable(port, self.ports or [port], self.identity)
-        if learn and not p.serial and self.store.by_serial(learn) is None:
+        if learn and not p.serial and not self.store.by_unit_id(learn):
             # the same FM-1 shows a serial number under the original firmware and none under a Felucca-family
             # firmware: the profile learns it (as it learns the USB port) – no second profile for the same unit
             p.serial = learn
@@ -789,7 +837,13 @@ class DeviceContext(QObject):
         flash = getattr(self.link, "hs_flash", 0) if self.link is not None else 0
         if flash and not getattr(port, "virtual", False):      # the firmware told the flash chip: keep it (hardware.py)
             from .. import hardware
-            if hardware.note_flash_id(p, flash, "identity"):
+            seen, rec = hardware.revision_of_id(flash), hardware.revision(p)
+            if getattr(self, "identified_by", "") in UNCHECKED and hardware.UNKNOWN not in (seen, rec) and seen != rec:
+                # the chip contradicts the profile that only an answer (or the USB port) named: probably the wrong
+                # profile – nothing is recorded on it, and every write is blocked until it is settled (unit_check)
+                log.warning("flash chip %06X contradicts profile %s (%s, %s): not recorded", flash, p.id, rec,
+                            self.identified_by)
+            elif hardware.note_flash_id(p, flash, "identity"):
                 self.store.save()
         self.profile = p
 
@@ -797,25 +851,39 @@ class DeviceContext(QObject):
         """m-bootloader's MIDI MODE told the flash chip's unique ID (8 bytes) – the one thing about a unit that no
         firmware changes. A profile that has this ID (or whose serial number under the original firmware is this
         ID, in either byte order: M-Flasher shows the unit ID that the original V15 uses as USB serial number) is
-        this unit, whatever USB port it is at; a profile found another way learns the ID."""
+        this unit, whatever USB port it is at. A profile found another way learns the ID – unless it knows another
+        unit ID: then it is another FM-1, and the device stays without a profile."""
+        from ..devices import unit_id_forms
         uid = (uid or "").lower()
-        if len(uid) != 16 or uid in ("0" * 16, "f" * 16):
+        if len(uid) != 16 or not unit_id_forms(uid) or uid in ("0" * 16, "f" * 16):
             return
-        forms = {uid, bytes.fromhex(uid)[::-1].hex()}
-        hit = [p for p in self.store.profiles.values()
-               if (p.unit_id or "").lower() in forms or (p.serial or "").lower() in forms]
-        if len(hit) == 1:
+        hit = self.store.by_unit_id(uid)
+        if len(hit) > 1:
+            return                              # (two profiles of one unit: the owner merges them on "Devices")
+        if hit:
             if self.profile is not hit[0]:
                 self.profile = hit[0]
                 self.unit_candidates = []
-        elif hit:
-            return
+            self.identified_by = "unit_id"
         p = self.profile
-        if p is not None and (not p.unit_id or p.unit_id.lower() in forms) and p.unit_id != uid:
-            others = [q for q in self.store.profiles.values() if q is not p and (q.unit_id or "").lower() in forms]
-            if not others:
-                p.unit_id = uid
-                self.store.save()
+        if p is None:
+            return
+        # (only a number of the same kind can contradict: 16 hex digits, as the original firmware and m-bootloader
+        # report it – the app's simulated devices have other serial numbers)
+        if not hit and any(len(f) == 16 and all(ch in "0123456789abcdef" for ch in f) for f in profile_unit_ids(p)):
+            if getattr(self, "identified_by", "") == "unit_id":
+                # (the port's own number named the profile in this very sighting – two IDs that disagree: nothing is
+                # learned, nothing dropped; seen only with the app's simulated devices)
+                log.warning("unit ID seen in MIDI MODE differs from the port's serial number (profile %s)", p.id)
+                return
+            log.warning("unit ID seen in MIDI MODE is not the one of profile %s: not that unit", p.id)
+            self.unit_candidates = [c for c in self.store.profiles.values() if not profile_unit_ids(c)]
+            self.profile = None
+            self.identified_by = ""
+            return
+        if (p.unit_id or "").lower() != uid:      # (kept as m-bootloader reads it)
+            p.unit_id = uid
+            self.store.save()
 
     SESSION_UNIT_SECS = 600.0       # how long "the app has just installed on the unit at this USB port" holds
 
@@ -834,28 +902,54 @@ class DeviceContext(QObject):
             folders = []
         return self.store.create(name, folders=folders)
 
-    def _match_profile(self, port: PortInfo) -> Profile | None:
-        """the profile of the FM-1 at `port`. In this order:
-        1. its own serial number is in a profile: that one.
-        2. the app itself has just installed on a unit at this USB port (this session, or the journal's unfinished
-           two-step switch): that unit – whatever it reports now. (Not if it shows another serial number than the
-           profile has: then it is another FM-1.)
-        3. no profile can be this unit (none exists, or all have another serial number): a new one.
-        4. it shows no serial number (Felucca-family firmware, update mode) and exactly one profile was last seen at
-           this USB port with an identity that does not contradict: that one.
-        5. everything else is asked ("Is this an FM-1 you have used before?"), never guessed – also a serial number
-           no profile has while a profile without one exists: it may be that unit, now on the original firmware,
-           or a second FM-1. None: not answered (unit_candidates then says what it may be). In update mode nothing
-           is asked: no profile then."""
+    def _match_profile(self, port: PortInfo, ask_again: bool = False) -> Profile | None:
+        """the profile of the FM-1 at `port`; sets self.identified_by (IDENTIFIED). In this order:
+        1. its unit ID (the original firmware's own serial number) is in a profile: that one ("unit_id").
+        2. which profiles can it be? Every profile, except those that positive evidence rules out:
+           * it shows its own unit ID and the profile knows another one;
+           * a flash ID was read for this sighting (a firmware's identity answer, ROM boot mode at this USB port in
+             this session) and the profile's chip was READ as the other one;
+           * the profile's unit is connected at another USB port right now, recognised there by its unit ID.
+           Not evidence: the firmware, the identity, the USB port, an answer given at an earlier plug-in – a unit's
+           firmware changes outside the app (M-Flasher, a firmware's own updater), and two units can run the same
+           one. A profile WITH a unit ID stays a candidate for a sighting without one: the number disappears with
+           the original firmware.
+        3. the app itself has just installed on a unit at this USB port (this session, or the journal's unfinished
+           two-step switch) and it is a candidate: that unit ("install").
+        4. no candidate: a new profile ("new").
+        5. the owner already said which one it is for this port, and the port has not been away since ("answer").
+        6. exactly one candidate, it shows no unit ID, and nothing contradicts that profile (same USB port, identity,
+           product name, SLOOP 3 or not, flash chip): that one ("only", or "flash" when a read flash ID ruled out
+           the others).
+        7. everything else is asked ("Which FM-1 is this?") – with two or more candidates EVERY time, never guessed
+           by port. None: not answered (unit_candidates says what it may be; the strictest of them counts for the
+           hardware rule). In update mode nothing is asked: no profile then.
+        ask_again: the owner asked to be asked (Overview), or a read flash ID contradicted the answer: only a unit ID
+        decides without the question."""
+        from .. import hardware
+        from ..devices import unit_id_forms
         store, usb, ident = self.store, port.usb_path or "", self.identity or ""
+        self.identified_by = ""
+        if getattr(self, "_ask_next", "") == port.key:
+            ask_again, self._ask_next = True, ""
         serial = identifying_serial(port, self.ports or [port], ident)
-        p = store.by_serial(serial)
-        if p is not None:
-            return p
-        # a serial number the unit shows while its firmware runs rules out every profile that has another one; a
-        # number only seen in update mode rules out nothing (it is not known to be the unit's own)
+        hits = store.by_unit_id(serial) if serial else []
+        if len(hits) == 1:
+            self.identified_by = "unit_id"
+            return hits[0]
         own = serial_learnable(port, self.ports or [port], ident)
-        cands = [c for c in store.profiles.values() if not (own and c.serial)]
+        flash_rev = DeviceContext._sighting_revision(self, port)
+        elsewhere = DeviceContext._units_elsewhere(self, port)
+        by_flash = []
+
+        def excluded(c):
+            if c in elsewhere or (own and profile_unit_ids(c) and not unit_id_forms(own) & profile_unit_ids(c)):
+                return True
+            if flash_rev != hardware.UNKNOWN and hardware.was_read(c) and hardware.revision(c) != flash_rev:
+                by_flash.append(c)
+                return True
+            return False
+        cands = hits if hits else [c for c in store.profiles.values() if not excluded(c)]
         pid = None
         if usb and usb in self.session_units:
             pid, when = self.session_units[usb]
@@ -871,24 +965,30 @@ class DeviceContext(QObject):
                     pid = ch.get("device_id")
             except Exception:  # noqa: BLE001
                 pid = None
-        if pid and pid in store.profiles and store.profiles[pid] in cands:
+        if not ask_again and pid and pid in store.profiles and store.profiles[pid] in cands:
+            self.identified_by = "install"
             return store.profiles[pid]
         if not cands or (own and port.client is None and not port.usb_id):
             # (the second case: one of the app's own simulated devices with a number no profile has – a new
             # simulated device, there is nothing to ask)
+            self.identified_by = "new"
             return self._new_profile()
         said = store.profiles.get(self.port_answers.get(port.key, ""))
-        if said is not None and said in cands:  # the owner said so for this port, and it has not been away since
+        if not ask_again and said is not None and said in cands:
+            # the owner said so for this port during this plug-in (the answer ends when the port goes away)
+            self.identified_by = "answer"
             return said
         here = [c for c in cands if usb and c.usb_path == usb]
-        if not own:
+        if not own and not ask_again and len(cands) == 1:
             unknown = not ident or ident.lower().startswith("ota-")
-            # The USB port alone is no proof. What the unit shows now must not contradict what the profile last
-            # was – and no installation by the app explains a difference (that case was settled above):
+            # The USB port alone is no proof, not even for the only candidate. What the unit shows now must not
+            # contradict what the profile last was – and no installation by the app explains a difference (that
+            # case was settled above):
             # * it runs SLOOP 3 (its own INFO) and the profile last ran something else, or the other way round
             #   (it answers the Felucca editor or an update identity, which SLOOP 3 never does);
             # * another USB product name than the profile last showed while its firmware ran;
-            # * another identity.
+            # * another identity;
+            # * a flash chip was read that is not the one recorded for the profile.
             # Then it may be another FM-1, or this one with a firmware installed outside the app: asked.
             product = "" if port.update_mode else (port.product or port.label or "")
             # (SLOOP 3 names itself "FM-1 SLOOP 3" on USB: that counts even when its INFO answer got lost – a unit
@@ -896,26 +996,15 @@ class DeviceContext(QObject):
             from .. import sloop3 as S3
             s3 = getattr(self, "sloop3", None) is not None or bool(product and S3.PORT_RE.search(product))
             felucca = getattr(self, "info", None) is not None or not unknown
-
-            def contradicts(c):
-                return bool((s3 and c.firmware and c.firmware != "sloop3") or (felucca and c.firmware == "sloop3")
-                            or (product and c.usb_product and c.usb_product != product)
-                            or (not unknown and c.identity and c.identity != ident))
-
-            def confirms(c):
-                return bool((s3 and c.firmware == "sloop3") or (product and c.usb_product == product)
-                            or (not unknown and c.identity == ident))
-            same = [c for c in here if not contradicts(c)]
-            if len(here) > 1:                  # several profiles were last seen here: only one that positively fits
-                same = [c for c in same if confirms(c)]
-            # another profile reports this very identity (or is the SLOOP 3 unit): without a serial number the two
-            # cannot be told apart, and the USB port alone is no proof (two FM-1 on one cable) – asked, not assumed
-            twins = [c for c in cands if c not in here and ((not unknown and c.identity == ident)
-                                                            or (s3 and c.firmware == "sloop3"))]
-            if len(same) == 1 and not twins:
-                return same[0]
-            if not usb and len(cands) == 1:    # no USB information at all (not Linux): as before
-                return cands[0]
+            c = cands[0]
+            contradicts = bool((s3 and c.firmware and c.firmware != "sloop3") or (felucca and c.firmware == "sloop3")
+                               or (product and c.usb_product and c.usb_product != product)
+                               or (not unknown and c.identity and c.identity != ident)
+                               or (flash_rev != hardware.UNKNOWN and hardware.revision(c) not in
+                                   (hardware.UNKNOWN, flash_rev)))
+            if (c in here or not usb) and not contradicts:
+                self.identified_by = "flash" if by_flash else "only"
+                return c
         self.unit_candidates = list(cands)
         if port.update_mode:
             # an FM-1 waiting in update mode is not the moment for a question: no profile is assumed; the Recovery
@@ -928,7 +1017,30 @@ class DeviceContext(QObject):
         if p is not None:
             self.unit_candidates = []
             self.port_answers[port.key] = p.id
+            self.identified_by = "answer" if p in cands else "new"
         return p
+
+    def _sighting_revision(self, port) -> str:
+        """the flash chip read for the unit at this port right now: told in this connection's identity answer
+        (fm1-base builds), or read in ROM boot mode at this USB port in this session -> "new" | "old" | "unknown" """
+        from .. import hardware
+        flash = getattr(getattr(self, "link", None), "hs_flash", 0) or 0
+        rev = hardware.revision_of_id(flash) if flash and not getattr(port, "virtual", False) else hardware.UNKNOWN
+        if rev == hardware.UNKNOWN:
+            rev = hardware.session_revision(getattr(port, "usb_path", "") or "")
+        return rev
+
+    def _units_elsewhere(self, port) -> list:
+        """profiles whose unit is connected at ANOTHER port right now and recognised there by its unit ID"""
+        out = []
+        for q in self.ports or []:
+            if q is port or q.key == port.key:
+                continue
+            s = identifying_serial(q, self.ports)
+            hits = self.store.by_unit_id(s) if s else []
+            if len(hits) == 1 and hits[0] not in out:
+                out.append(hits[0])
+        return out
 
     def profile_for_port(self, port: PortInfo) -> Profile | None:
         """without asking: which profile (probably) belongs to this port?"""
@@ -965,6 +1077,81 @@ class DeviceContext(QObject):
         finally:
             self._asking = False
 
+    # ------------------------------------------------------- which unit is it (before a write)
+    def identified_text(self) -> str:
+        """how the app knows which profile the connected FM-1 is – for the Overview and the header ("" = no profile)"""
+        how = getattr(self, "identified_by", "") or ""
+        if self.profile is None or self.is_virtual or how not in IDENTIFIED:
+            return ""
+        return _(IDENTIFIED[how])
+
+    def session_revision(self) -> str:
+        """the flash chip read for the connected unit in this session ("new" | "old" | "unknown"): its firmware's
+        identity answer, m-bootloader's answer, or ROM boot mode at its USB port"""
+        from .. import hardware
+        port = self.port
+        if port is None or getattr(port, "virtual", False):
+            return hardware.UNKNOWN
+        mb = getattr(self, "mboot", None)
+        if mb is not None and mb.revision != hardware.UNKNOWN:
+            return mb.revision
+        return DeviceContext._sighting_revision(self, port)
+
+    def unit_check(self) -> tuple[str, str]:
+        """before anything is written to the connected FM-1 (installation, finishing one, restore, the Studio's write
+        back): does the app know which unit it is? -> (kind, text):
+          ""        known well enough: by its unit ID or flash chip, the only one it can be, or a new profile
+          "ask"     nobody said yet which FM-1 it is (several are possible): nothing is written
+          "block"   a flash chip read in this session contradicts the profile an answer named: nothing is written
+          "confirm" named only by an answer (or the app's own installation at this USB port): the owner checks the
+                    unit's front first (unit_confirm_text)"""
+        from .. import hardware
+        port, p = self.port, self.profile
+        if port is None or self.is_virtual:
+            return "", ""
+        if p is None:
+            if self.unit_candidates and not port.update_mode:
+                return "ask", _("The app does not know yet which of your FM-1 this is – it reports no unit ID, and "
+                                "more than one of your devices can be this one. Nothing is written before you say "
+                                "which one it is.")
+            return "", ""
+        how = getattr(self, "identified_by", "") or ""
+        if how not in UNCHECKED:
+            return "", ""
+        seen, rec = DeviceContext.session_revision(self), hardware.revision(p)
+        if hardware.UNKNOWN not in (seen, rec) and seen != rec:
+            return "block", _("The connected FM-1 reports {chip}, but “{name}” is recorded as {revision}. Either this is "
+                              "another FM-1, or the record is wrong. Nothing is written. Say again which FM-1 this "
+                              "is – if it is “{name}”, correct its unit on the page “Devices” first.").format(
+                chip=_(hardware.LABEL[seen]), name=p.name, revision=revision_words(p))
+        if seen != hardware.UNKNOWN or len(self.store.profiles) <= 1:
+            return "", ""
+        return "confirm", unit_confirm_text(p, how)
+
+    def confirm_unit(self, parent) -> bool:
+        """the gate in front of every write (see unit_check). False: nothing may be written (the reason was shown)."""
+        kind, text = DeviceContext.unit_check(self)
+        if not kind:
+            return True
+        from .common import confirm
+        if kind == "confirm":
+            return confirm(parent, _("Which FM-1 is this?"), text,
+                           _("Yes, it is “{name}”").format(name=self.profile.name), danger=True)
+        if confirm(parent, _("Which FM-1 is this?"), html_escape(text) + "<br><br>" +
+                   _("Ask now? (Then start what you wanted to do again.)"), _("Say which FM-1 it is …")):
+            self.ask_which()
+        return False
+
+    def ask_which(self):
+        """ask "Which FM-1 is this?" again for the connected unit (Overview, or a write that needs it): the device
+        is connected anew and the question is asked whatever was answered before"""
+        port = self.port
+        if port is None or self.is_virtual or port.update_mode:
+            return
+        self.port_answers.pop(port.key, None)
+        self._ask_next = port.key
+        self.connect_port(port)
+
     def disconnect(self, reason: str | None = ""):
         if reason == "":
             reason = _("disconnected")
@@ -980,6 +1167,7 @@ class DeviceContext(QObject):
         self.info = None
         self.port = None
         self.profile = None
+        self.identified_by = ""
         self.identity = ""
         self.firmware_guess = []
         self.sloop3 = None
