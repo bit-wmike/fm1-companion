@@ -17,11 +17,12 @@ NOT in the file, because SLOOP 3's protocol has no command to read them: **your 
 kits made from them). The file lists what the slots held (names, sizes); the samples themselves are only in a backup
 of the whole flash (m-bootloader's MIDI MODE: flash/mboot.py, or M-Flasher) – or in the files you sent them from.
 
-Objects 0 and 1 are exactly what the web editor's own "Backup all" writes (.s3b: "S3BK", 1, count; then kind, place,
-length, bytes): ``to_s3b`` gives that file, so a backup made here can also be put back with SLOOP 3's editor.
+Objects 0 and 1 hold the same bytes the web editor's own "Backup all" puts into its .s3b file; the app does not write
+.s3b files (use the editor's own button on the Editor page for one).
 
 Reading sends read-only commands only. Restoring is what the editor's own "Restore" does (project and sounds) plus its
-bank pages' write – the FM-1 checks every file (CRC-32, format) before it keeps it. Checked against the author's PC
+bank pages' write – the FM-1 checks every file (CRC-32, format) before it keeps it, and the app reads every part
+back afterwards (``restore``). Checked against the author's PC
 twin (fw/main.c of 3.3.6 and 3.3.7 on a simulated FM-1), never on a real FM-1 by this app.
 """
 from __future__ import annotations
@@ -131,12 +132,13 @@ def objects(file) -> dict[int, bytes]:
 
 
 def bank_sources(file) -> tuple[int, int]:
-    """(FM6 bank's source, SYN kits' source) at backup time: 0 none / the defaults, 1 SLOOP 2.8's, 2 yours"""
+    """(FM6 bank's source, SYN kits' source) at backup time: 0 none / the defaults, 1 SLOOP 2.8's, 2 yours. Anything
+    else in a hand-edited file counts as 0 (the bank is then not written)."""
     b = file.get("bank") if isinstance(file.get("bank"), dict) else {}
-    try:
-        return int(b.get("fm6_source", 0)), int(b.get("syn_source", 0))
-    except (TypeError, ValueError):
-        return 0, 0
+
+    def one(v):
+        return v if isinstance(v, int) and not isinstance(v, bool) and v in (0, 1, 2) else 0
+    return one(b.get("fm6_source")), one(b.get("syn_source"))
 
 
 def restore_plan(file, project: str = "saved") -> list[int]:
@@ -159,57 +161,72 @@ def restore_plan(file, project: str = "saved") -> list[int]:
     return plan
 
 
-def restore(link, file: dict, progress=None, project: str = "saved") -> list[int]:
-    """write a backup back (see the module text) -> the ids written. The FM-1 must run SLOOP 3; every part is read
-    back afterwards where the protocol allows it and compared."""
+class Restored(list):
+    """the ids written, in order. ``unverified``: those of them that were written and accepted by the FM-1 but could
+    not be compared afterwards (the others were read back and are byte for byte what the backup holds)"""
+    unverified: list
+
+
+def restore(link, file: dict, progress=None, project: str = "saved") -> Restored:
+    """write a backup back (see the module text) -> Restored. The FM-1 must run SLOOP 3. Every part is read back
+    and compared: the project and your sounds whole (READ), the bank images by their contents. Your sounds are the
+    one part that may come back in another shape – SLOOP 3 takes older layouts of that file and keeps its own; a
+    read-back of another length is then noted as "written, not compared", the same length with other bytes is an
+    error.
+    On an error the exception says what state each part is in: ``written`` (written and compared), ``unclear`` (the
+    part that was being written: it may be the old one, the new one or – a bank or your sounds – damaged),
+    ``untouched`` (not reached: as before)."""
     m = objects(file)
     plan = restore_plan(file, project)
     total = sum(len(m[i]) for i in plan) or 1
     done = 0
-    written: list[int] = []
+    written = Restored()
+    written.unverified = []
+    current = None
 
     def step(n):
         nonlocal done
         done += n
         if progress:
             progress(min(done, total), total)
+
+    def differs(oid):
+        return S3.Sloop3Error(_("{part}: the FM-1 holds something else than was written.").format(part=title(oid)))
     try:
         with S3.Client(link) as c:
             c.info()                                          # (SLOOP 3 answers: only then is anything written)
             for oid in plan:
                 data = m[oid]
+                current = oid
                 if oid == SOUNDS:
                     c.write_file(S3.KIND_SOUNDS, data, step)
                     c.wait_idle()
+                    back = c.read_file(S3.KIND_SOUNDS)
+                    if back != data:
+                        if len(back) == len(data):
+                            raise differs(oid)
+                        written.unverified.append(oid)        # (kept in SLOOP 3's own layout: nothing to compare)
                 elif oid in (FM6, SYN):
                     which = S3.FM6 if oid == FM6 else S3.SYN
                     c.bank_write(which, data, step)
                     c.wait_idle()
                     if c.bank_read(which)[16:] != data[16:]:
-                        raise S3.Sloop3Error(_("{part}: the FM-1 holds something else than was written.").format(
-                            part=title(oid)))
+                        raise differs(oid)
                 else:
                     c.write_file(S3.KIND_PROJECT, data, step)
                     c.wait_idle()
                     if c.read_file(S3.KIND_PROJECT) != data:
-                        raise S3.Sloop3Error(_("{part}: the FM-1 holds something else than was written.").format(
-                            part=title(oid)))
+                        raise differs(oid)
                 written.append(oid)
+                current = None
     except S3.Sloop3Error as e:
         err = Sloop3BackupError(str(e))
-        err.written = written
+        err.written = list(written)
+        err.unverified = list(written.unverified)
+        err.unclear = [current] if current is not None else []
+        err.untouched = [i for i in plan if i not in written and i != current]
         raise err from e
     return written
-
-
-def to_s3b(file) -> bytes:
-    """the saved project and your sounds as the web editor's own "Backup all" file (.s3b) – its "Restore" takes it"""
-    m = objects(file)
-    parts = [(k, m[i]) for k, i in ((0, PROJECT), (1, SOUNDS)) if m.get(i)]
-    out = bytearray(b"S3BK" + bytes([1, len(parts), 0, 0]))
-    for kind, data in parts:
-        out += bytes([kind, 0]) + S3.w32(len(data)) + data
-    return bytes(out)
 
 
 def dumps(file: dict) -> str:

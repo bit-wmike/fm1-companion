@@ -539,10 +539,12 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         # SLOOP 3 has no update mode a host can ask for (it ignores the update key): say so instead of failing later
         show_error(parent, _("Not from the running SLOOP 3"),
                    _("This FM-1 runs SLOOP 3, which cannot be switched to an update mode over USB – the installation "
-                     "would stop at its first step, with nothing written. An FM-1 with SLOOP 3 has m-bootloader: "
-                     "firmware goes onto it from m-bootloader's MIDI MODE (hold PLAY at power-on) or with M-Flasher. "
-                     "Going back to SLOOP 2.8 or M-VAVE's firmware means writing your flash backup back with "
+                     "would stop at its first step, with nothing written. The app cannot install firmware on this "
+                     "FM-1. Going back to SLOOP 2.8 or M-VAVE's firmware means writing your flash backup back with "
                      "M-Flasher. “Firmware+” › SLOOP 3 explains the way."))
+        return False
+    from . import sloop3_ui as _s3ui             # (m-bootloader's MIDI MODE answers like an update loader: never sent)
+    if _s3ui.refuse_in_midi_mode(parent, ctx):
         return False
     from .risk_dialog import ensure_risk_ack
     if not ensure_risk_ack(parent):              # one-time risk notice before the first installation

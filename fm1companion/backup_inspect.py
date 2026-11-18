@@ -619,7 +619,8 @@ def _from_sloop3(arch: backup.Archive, path: Path | None) -> Report:
         v.format = "" if o["size"] else _("empty")
         objs.append(v)
     rep = Report(arch.format, arch.firmware, arch.created, arch.companion, objs, True, False, path, arch)
-    held = [x for x in (arch.file.get("samples_not_included") or []) if isinstance(x, dict) and x.get("zones")]
+    listed = arch.file.get("samples_not_included")
+    held = [x for x in (listed if isinstance(listed, list) else []) if isinstance(x, dict) and x.get("zones")]
     rep.warnings.append(
         _("Your samples (USR1–USR4) are not in this backup: SLOOP 3 has no command to read them. {n} of the slots "
           "held a sample at that moment. They are only in a backup of the whole flash, or in the files you sent "

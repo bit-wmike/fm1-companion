@@ -9,7 +9,7 @@ do not rely on it on stage yet. It is not SLOOP 2.x with a new number – the ap
 * **It recognises it.** An FM-1 that runs SLOOP 3 shows up as “SLOOP 3 3.3.7 (public beta)”. An FM-1 that waits in
   m-bootloader's MIDI MODE shows up as “m-bootloader – MIDI MODE”, with the flash chip it found.
 * **Its editor.** The page [Editor](app://page/editor) shows SLOOP 3's own web editor – the author's file, unchanged,
-  bundled with the app, so it works without internet. From that page only SLOOP 3's own editor commands reach the FM-1.
+  bundled with the app, so it works without internet. From that page only SLOOP 3's own editor commands, notes and controllers reach the FM-1.
 * **Backups.** [Backups](app://page/backups) › “Back up now” saves the project (as saved and as it is at that moment),
   your sounds with favourites and theme, your FM6 bank and your SYN kits into a `sloop3-backup` file. “Restore” puts
   them back onto an FM-1 that runs SLOOP 3. Stop playback first.

@@ -113,7 +113,7 @@ def _probe_update_port(port):
     ident = _probe_loader(port)
     from ..flash import mboot
     mb = None
-    if mboot.is_candidate(port.label, port.usb_id):
+    if mboot.is_candidate(port.label, port.usb_id, ident):
         mb = mboot.identify_port(port)
     return ident, mb
 
@@ -439,7 +439,7 @@ class DeviceContext(QObject):
         if port is not None and S3.PORT_RE.search(getattr(port, "label", "") or ""):
             # "FM-1 SLOOP 3": ask its own INFO first (read only) – it answers no Felucca command, and waiting for
             # those first would cost several seconds
-            link.s3info = S3.probe(link)
+            link.s3info = S3.probe(link, timeout=0.7, tries=2)
             if link.s3info is not None:
                 raise LinkError("SLOOP 3")
         wait_started = getattr(link.t, "wait_started", None)
@@ -496,8 +496,15 @@ class DeviceContext(QObject):
             return
         from .. import sloop3 as S3
         # none of these changes anything on the device: the update handshake, Hortator's INFO, SLOOP 3's INFO
-        run_job(self, lambda w: (handshake(link), hortator_info(link), S3.probe(link)),
-                on_done=lambda r: self._generic(r[0], link, r[1], r[2]), on_fail=lambda m, tb: self._generic("", link))
+        def ask(w):
+            ident = handshake(link)
+            hort = hortator_info(link)
+            # SLOOP 3 answers neither of the two: asked only when both stayed unanswered (so a firmware that told its
+            # identity – M-VAVE's too – never sees this frame), once, briefly
+            s3 = None if ident or hort else S3.probe(link)
+            return ident, hort, s3
+        run_job(self, ask, on_done=lambda r: self._generic(r[0], link, r[1], r[2]),
+                on_fail=lambda m, tb: self._generic("", link))
 
     def _sloop3(self, s3, link=None, ident: str = ""):
         """SLOOP 3 answered its own INFO: its own firmware key (never SLOOP 2.x's), MIDI stays open. The Felucca
@@ -636,7 +643,7 @@ class DeviceContext(QObject):
             self.mboot = mb
             if mb is not None:
                 from .. import hardware             # the flash chip m-bootloader read: kept with the device
-                if self.profile is not None and hardware.note_flash_id(self.profile, mb.jedec, "identity"):
+                if self.profile is not None and hardware.note_flash_id(self.profile, mb.jedec & 0xFFFFFF, "identity"):
                     self.store.save()
                 self.message.emit(
                     _("This FM-1 is in m-bootloader's MIDI MODE (m-bootloader {version}, flash chip {chip}): no "

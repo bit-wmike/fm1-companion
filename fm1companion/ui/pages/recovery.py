@@ -403,6 +403,9 @@ class RecoveryPage(QWidget):
             show_error(self, _("No device in update mode"), _("Please bring the FM-1 into update mode as described "
                                                               "and connect it."))
             return False
+        from .. import sloop3_ui                  # (m-bootloader's MIDI MODE is no update loader: nothing is sent)
+        if sloop3_ui.refuse_in_midi_mode(self, self.ctx, port):
+            return False
         src = self._package_for("", stock, choose)
         if src is None:
             return False

@@ -687,7 +687,10 @@ class BackupsPage(QWidget):
             if m.pinned:
                 it.setIcon(0, icon("pin", "window-pin", "emblem-favorite"))
                 it.setToolTip(6, _("pinned – never deleted automatically"))
-            if m.fmt != backup.FORMAT:
+            if m.fmt == backup.SLOOP3_FORMAT:
+                it.setToolTip(4, _("SLOOP 3 backup (the app's own file: project, sounds, banks – not the samples). "
+                                   "It goes back only onto an FM-1 that runs SLOOP 3."))
+            elif m.fmt != backup.FORMAT:
                 it.setToolTip(4, _("SLOOP backup (format of the SLOOP web editor) – interchangeable in both directions"))
             self.tree.addTopLevelItem(it)
             total += m.size

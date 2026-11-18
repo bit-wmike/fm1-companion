@@ -194,6 +194,25 @@ def main():
     check(w.editor.bridge.blocked == 0 and w.editor.bridge.traffic > 20,
           f"everything the editor sent was its own protocol ({w.editor.bridge.traffic} messages, "
           f"{w.editor.bridge.blocked} held back)")
+    # what the editor sends besides its SysEx: notes ("Hear", pads) and CC 123 (Panic) – they must arrive, without
+    # the "held back" notice; a foreign SysEx from the page is held back, with a text that fits
+    if not REAL:
+        n0 = len(seen())
+        js("noteOut(0, 60, 100, true); noteOut(0, 60, 0, false); allNotesOff(); 1")
+        wait(600)
+        got = [m for m in seen()[n0:] if m[0] != 0xF0]
+        check(bytes([0x90, 60, 100]) in got and bytes([0x80, 60, 0]) in got and
+              sum(1 for m in got if m[0] & 0xF0 == 0xB0 and m[1] == 123) == 16,
+              f"the editor's notes and its Panic reach the FM-1 ({len(got)} channel messages)")
+        check(w.editor.bridge.blocked == 0, "… and nothing is reported as held back")
+        n0 = len(seen())
+        js("out.send([0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7]); out.send([0xF0, 0x7D, 0x46, 0x4C, 67, 0xF7]); 1")
+        wait(500)
+        check(w.editor.bridge.blocked == 2 and not [m for m in seen()[n0:] if m[:4] != bytes([0xF0, 0x7D, 0x53, 0x33])],
+              f"a foreign SysEx from the page never reaches the FM-1 ({w.editor.bridge.blocked} held back)")
+        txt = w.editor.state.text()
+        check("SLOOP 3" in txt and "Update" not in txt, f"the notice says what was held back ({txt[:70]})")
+        w.editor.bridge.blocked = 0
     from fm1companion import sims
     check(w.editor.bridge.out_filter is sims.sloop3_editor_out_allowed, "the bridge lets only SLOOP 3's protocol out")
     w.grab().save(str(home / "sloop3_editor.png"))
@@ -270,6 +289,7 @@ def main():
     check("m-bootloader" in notes and "beta" in notes.lower() and "M-Flasher" in notes, "its entry names what it needs")
     check(inst.b_install.isEnabled() and not inst.b_dl.isEnabled(), "no download, no package installation")
     state = {}
+    from fm1companion.flash import mboot
 
     def dialog_exec(self):
         if isinstance(self, sloop3_ui.Sloop3Dialog):
@@ -279,6 +299,25 @@ def main():
             self.chk.setChecked(True)
             state["installer1"] = self.b_installer.isEnabled()
             state["backup"] = self.b_backup.isEnabled()
+            if state.get("live"):
+                # the dialog is still open while the FM-1 arrives in MIDI MODE and its chip is read: a newer unit
+                c.mboot = mboot.Info("2.4-test", 1, 0x980F, 0x100000, mboot.JEDEC_NEW, "00" * 8)
+                c.changed.emit()
+                state["live_level"] = self.level
+                state["live_installer"] = self.b_installer.isEnabled()
+                state["live_backup"] = self.b_backup.isEnabled()
+                state["live_checked"] = self.chk.isChecked()
+                opened = []
+                real = web.open_external
+                web.open_external = lambda u: opened.append(u)
+                self._open(S3.INSTALLER_URL)
+                web.open_external = real
+                state["live_opened"] = opened
+                c.mboot = None
+                c.changed.emit()
+                state["back_level"], state["back_checked"] = self.level, self.chk.isChecked()
+                self.done(0)
+                c.changed.emit()                 # (after closing: the dialog no longer listens)
             return 0
         return _dialog_exec(self)
     QDialog.exec = dialog_exec
@@ -286,6 +325,15 @@ def main():
     check(state.get("level") == "warn" and state.get("installer0") is False and state.get("installer1") is True,
           f"unknown hardware revision: the installer page only after the explicit confirmation ({state})")
     check(state.get("backup") is False, "the flash backup is offered only in MIDI MODE")
+    state.clear()
+    state["live"] = True
+    inst._install()
+    check(state.get("installer1") is True and state.get("live_level") == "bad" and state.get("live_installer") is False
+          and state.get("live_backup") is True and state.get("live_checked") is False and state.get("live_opened") == [],
+          f"the open dialog follows the device: chip 0xB36014 read → installer page off, flash backup on ({state})")
+    check(state.get("back_level") == "warn" and state.get("back_checked") is False,
+          "… and the confirmation has to be given again afterwards")
+    state.clear()
     # the newer revision, read from the chip in MIDI MODE: blocked
     from fm1companion.flash import mboot
     c.mboot = mboot.Info("2.4-test", 1, 0x980F, 0x100000, mboot.JEDEC_NEW, "00" * 8)

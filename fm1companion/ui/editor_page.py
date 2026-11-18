@@ -84,6 +84,11 @@ class EditorPage(QWidget):
         return web.placeholder_html(_("Editor"), text)
 
     def _blocked(self, n: int):
+        if self.bridge.out_filter is sims.sloop3_editor_out_allowed:
+            if n in (1, 10, 100) or n % 1000 == 0:
+                self.state.setText(_("The editor page sent something that is not SLOOP 3's editor protocol and not a "
+                                     "note or controller – held back, the FM-1 did not get it."))
+            return
         if n in (1, 10, 100) or n % 1000 == 0:
             self.state.setText(_("The editor page tried to switch the FM-1 to update or boot mode – held back. "
                                  "Install firmware via “Firmware+”."))

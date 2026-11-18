@@ -247,6 +247,8 @@ FM-1 Companion is GPL-3.0-only. It stands on the work of the people who write fi
   Felucca-Engines and felucca-bsp (Leo Kuroshita / Hügelton Instruments) · Skiff (illuminus5) · SLOOP (isod89) ·
   JIANT FM (juanjiant-bit) · KARMA (Ariel Muchnik) · ChoralRoot FM-1 (Quixotic7) · CoralFlower (FicusFicusov) ·
   X0X, FoMni, AMB-1, LOOM-8 and fm1-base (Charles Vestal) · FM1 Open (M-VAVE).
+* **SLOOP 3** (isod89, GPL-3.0; its web editor is bundled unchanged) · **m-bootloader** and **M-Flasher** (Julius
+  Vitkauskas, MIT; not bundled).
 * **Recovery tools:** MvaveFM1Unbricker (Michael P Jones, MIT; bundled unchanged) · FM-1 Transporter (kurogedelic,
   MIT; bundled as a prebuilt file together with pico-sdk, TinyUSB and Pico-PIO-USB) · jl-uboot-tool (kagaimiq, MIT;
   not bundled, downloaded on request).

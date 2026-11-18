@@ -223,10 +223,6 @@ msgstr "das ist der Editor von SLOOP 3 {versions} – er passt vielleicht nicht 
 msgid "Not from the running SLOOP 3"
 msgstr "Nicht aus dem laufenden SLOOP 3"
 
-#: fm1companion/ui/firmware_page.py:529
-msgid "This FM-1 runs SLOOP 3, which cannot be switched to an update mode over USB – the installation would stop at its first step, with nothing written. An FM-1 with SLOOP 3 has m-bootloader: firmware goes onto it from m-bootloader's MIDI MODE (hold PLAY at power-on) or with M-Flasher. Going back to SLOOP 2.8 or M-VAVE's firmware means writing your flash backup back with M-Flasher. “Firmware+” › SLOOP 3 explains the way."
-msgstr "Auf diesem FM-1 läuft SLOOP 3, das sich über USB nicht in einen Update-Modus schalten lässt – die Installation würde beim ersten Schritt stehen bleiben, ohne dass etwas geschrieben wird. Ein FM-1 mit SLOOP 3 hat m-bootloader: Firmware kommt aus dem MIDI MODE von m-bootloader darauf (PLAY beim Einschalten halten) oder mit M-Flasher. Zurück zu SLOOP 2.8 oder zur Firmware von M-VAVE heißt: dein Flash-Backup mit M-Flasher zurückschreiben. „Firmware+“ › SLOOP 3 erklärt den Weg."
-
 #: fm1companion/ui/firmware_page.py:1141
 msgid "public beta"
 msgstr "öffentliche Beta"
@@ -303,10 +299,6 @@ msgstr "Sie zeigt den eigenen Web-Editor von SLOOP 3 auf der Seite „Editor“ 
 #: fm1companion/ui/sloop3_ui.py:91
 msgid "In MIDI MODE it can copy the whole flash into your backup folder – reading only."
 msgstr "Im MIDI MODE kann sie den ganzen Flash-Speicher in deinen Backup-Ordner kopieren – sie liest dabei nur."
-
-#: fm1companion/ui/sloop3_ui.py:92
-msgid "<b>It does not install SLOOP 3 and it does not install m-bootloader.</b> The button below opens the author's installer page in your browser (Chromium or Chrome), which guides through it."
-msgstr "<b>Sie installiert SLOOP 3 nicht, und sie installiert m-bootloader nicht.</b> Der Knopf unten öffnet die Installer-Seite des Autors in deinem Browser (Chromium oder Chrome), die dich hindurchführt."
 
 #: fm1companion/ui/sloop3_ui.py:95
 #, python-brace-format
@@ -457,20 +449,6 @@ msgstr "Deine Samples sind nicht im Backup und bleiben auf dem FM-1, wie sie sin
 msgid "<b>Stop playback on the FM-1 first.</b> A safety backup of the current state is made automatically. SLOOP 3 is a beta, and this restore was checked on its PC twin, never on a real FM-1 by this app."
 msgstr "<b>Halte zuerst die Wiedergabe am FM-1 an.</b> Vom jetzigen Stand wird automatisch ein Sicherheits-Backup gemacht. SLOOP 3 ist eine Beta, und dieses Zurückspielen wurde an seinem PC-Zwilling geprüft, von dieser App nie auf einem echten FM-1."
 
-#: fm1companion/ui/sloop3_ui.py:353
-#, python-brace-format
-msgid "{n} part was already written; the others are as they were."
-msgid_plural "{n} parts were already written; the others are as they were."
-msgstr[0] "{n} Teil war schon geschrieben; die anderen sind, wie sie waren."
-msgstr[1] "{n} Teile waren schon geschrieben; die anderen sind, wie sie waren."
-
-#: fm1companion/ui/sloop3_ui.py:357
-#, python-brace-format
-msgid "Restore complete: {n} part written and read back. Check the project on the FM-1."
-msgid_plural "Restore complete: {n} parts written and read back. Check the project on the FM-1."
-msgstr[0] "Zurückspielen fertig: {n} Teil geschrieben und zurückgelesen. Prüfe das Projekt am FM-1."
-msgstr[1] "Zurückspielen fertig: {n} Teile geschrieben und zurückgelesen. Prüfe das Projekt am FM-1."
-
 #: fm1companion/ui/sloop3_ui.py:64
 msgid "Sure sign: M-Flasher shows the FLASH CHIP – <code>0x856014</code> is the earlier one, <code>0xB36014</code> the newer."
 msgstr "Sicheres Zeichen: M-Flasher zeigt den FLASH CHIP – <code>0x856014</code> ist der frühere, <code>0xB36014</code> der neuere."
@@ -491,3 +469,74 @@ msgstr "<b>Installiere darauf vorerst weder m-bootloader noch SLOOP 3.</b> Die A
 #: fm1companion/ui/sloop3_ui.py:153
 msgid "My FM-1 has no M-VAVE logo on the front (an earlier unit)"
 msgstr "Mein FM-1 hat kein M-VAVE-Logo auf der Vorderseite (ein früheres Gerät)"
+
+#: fm1companion/ui/backups_page.py:691
+msgid "SLOOP 3 backup (the app's own file: project, sounds, banks – not the samples). It goes back only onto an FM-1 that runs SLOOP 3."
+msgstr "SLOOP-3-Backup (eigene Datei der App: Projekt, Sounds, Bänke – nicht die Samples). Es geht nur auf einen FM-1 zurück, auf dem SLOOP 3 läuft."
+
+#: fm1companion/ui/editor_page.py:89
+msgid "The editor page sent something that is not SLOOP 3's editor protocol and not a note or controller – held back, the FM-1 did not get it."
+msgstr "Die Editor-Seite hat etwas gesendet, das weder das Editor-Protokoll von SLOOP 3 noch eine Note oder ein Controller ist – zurückgehalten, der FM-1 hat es nicht bekommen."
+
+#: fm1companion/ui/firmware_page.py:541
+msgid "This FM-1 runs SLOOP 3, which cannot be switched to an update mode over USB – the installation would stop at its first step, with nothing written. The app cannot install firmware on this FM-1. Going back to SLOOP 2.8 or M-VAVE's firmware means writing your flash backup back with M-Flasher. “Firmware+” › SLOOP 3 explains the way."
+msgstr "Auf diesem FM-1 läuft SLOOP 3, das sich über USB nicht in einen Update-Modus schalten lässt – die Installation würde beim ersten Schritt stehen bleiben, ohne dass etwas geschrieben wird. Die App kann auf diesem FM-1 keine Firmware installieren. Zurück zu SLOOP 2.8 oder zur Firmware von M-VAVE heißt: dein Flash-Backup mit M-Flasher zurückschreiben. „Firmware+“ › SLOOP 3 erklärt den Weg."
+
+#: fm1companion/ui/sloop3_ui.py:61
+msgid "m-bootloader's MIDI MODE, not an update mode"
+msgstr "MIDI MODE von m-bootloader, kein Update-Modus"
+
+#: fm1companion/ui/sloop3_ui.py:62
+msgid "This FM-1 waits in m-bootloader's MIDI MODE. That is not the update mode of an FM-1 firmware: m-bootloader answers the same way, but it writes a package differently, and the app has never been tried with it. The app sends it no firmware. Nothing was written.<br><br>From MIDI MODE, firmware is installed with the installer page of that firmware's author; the whole flash goes back with M-Flasher. OCT−, OCT+, PLAY or REC on the FM-1 leave MIDI MODE. “Firmware+” › SLOOP 3 explains more."
+msgstr "Dieser FM-1 wartet im MIDI MODE von m-bootloader. Das ist nicht der Update-Modus einer FM-1-Firmware: m-bootloader antwortet genauso, schreibt ein Paket aber anders, und die App wurde nie damit ausprobiert. Die App schickt ihm keine Firmware. Es wurde nichts geschrieben.<br><br>Aus dem MIDI MODE wird Firmware mit der Installer-Seite ihres Autors installiert; der ganze Flash-Speicher geht mit M-Flasher zurück. OCT−, OCT+, PLAY oder REC am FM-1 verlassen den MIDI MODE. „Firmware+“ › SLOOP 3 erklärt mehr."
+
+#: fm1companion/ui/sloop3_ui.py:131
+msgid "<b>It does not install SLOOP 3 and it does not install m-bootloader.</b> The button below shows the way; for an FM-1 the rule above lets through, it opens the author's installer page in your browser (Chromium or Chrome)."
+msgstr "<b>Sie installiert SLOOP 3 nicht, und sie installiert m-bootloader nicht.</b> Der Knopf unten zeigt den Weg; für einen FM-1, den die Regel oben durchlässt, öffnet er die Installer-Seite des Autors in deinem Browser (Chromium oder Chrome)."
+
+#: fm1companion/ui/sloop3_ui.py:229
+msgid "The app could not work out this FM-1's hardware revision. The installer page is not offered."
+msgstr "Die App konnte die Hardware-Revision dieses FM-1 nicht bestimmen. Die Installer-Seite wird nicht angeboten."
+
+#: fm1companion/ui/sloop3_ui.py:417
+#: fm1companion/ui/sloop3_ui.py:449
+#, python-brace-format
+msgid "✓ {part}: written, but not compared (SLOOP 3 keeps it in its own layout)"
+msgstr "✓ {part}: geschrieben, aber nicht verglichen (SLOOP 3 legt es in seiner eigenen Form ab)"
+
+#: fm1companion/ui/sloop3_ui.py:419
+#: fm1companion/ui/sloop3_ui.py:450
+#, python-brace-format
+msgid "✓ {part}: written, read back and identical"
+msgstr "✓ {part}: geschrieben, zurückgelesen und identisch"
+
+#: fm1companion/ui/sloop3_ui.py:425
+#, python-brace-format
+msgid "Restore complete: {n} part written."
+msgid_plural "Restore complete: {n} parts written."
+msgstr[0] "Zurückspielen fertig: {n} Teil geschrieben."
+msgstr[1] "Zurückspielen fertig: {n} Teile geschrieben."
+
+#: fm1companion/ui/sloop3_ui.py:428
+#, python-brace-format
+msgid "Read back and identical: {parts}."
+msgstr "Zurückgelesen und identisch: {parts}."
+
+#: fm1companion/ui/sloop3_ui.py:430
+#, python-brace-format
+msgid "Written and accepted by the FM-1, but not compared: {parts}."
+msgstr "Geschrieben und vom FM-1 angenommen, aber nicht verglichen: {parts}."
+
+#: fm1companion/ui/sloop3_ui.py:432
+msgid "Check the project on the FM-1."
+msgstr "Prüfe das Projekt am FM-1."
+
+#: fm1companion/ui/sloop3_ui.py:452
+#, python-brace-format
+msgid "? {part}: this is where it stopped. It may be as before, as in the backup, or incomplete – check it on the FM-1."
+msgstr "? {part}: Hier ist es stehen geblieben. Es kann wie vorher sein, wie im Backup oder unvollständig – prüfe es am FM-1."
+
+#: fm1companion/ui/sloop3_ui.py:455
+#, python-brace-format
+msgid "– {part}: not reached, nothing was sent for it."
+msgstr "– {part}: nicht erreicht, dafür wurde nichts gesendet."

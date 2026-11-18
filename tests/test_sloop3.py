@@ -163,10 +163,6 @@ def test_backup_file_and_registration(dev, tmp_path):
         with pytest.raises(backup.BackupError) as e:
             fn()
         assert "SLOOP 3" in str(e.value)
-    # the web editor's own backup file out of it: "S3BK", 1, the count, then kind, place, length, bytes
-    s3b = BK.to_s3b(f)
-    assert s3b[:5] == b"S3BK\x01" and s3b[5] == 1 and s3b[8:10] == bytes([1, 0])
-    assert S3.u32(s3b, 10) == len(m[BK.SOUNDS]) and s3b[14:] == m[BK.SOUNDS]
 
 
 def test_damaged_backup_files_are_refused(dev):
@@ -316,10 +312,19 @@ def test_editor_gate_lets_only_sloop3s_protocol_out():
     assert ok(S3.frame(S3.Cmd.INFO)) and ok(S3.frame(S3.Cmd.WDATA, bytes(range(200))))
     for bad in ([0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7], [0xF0, 0x22, 0x24, 0x35, 0x7D, 0xF7],        # update / boot keys
                 [0xF0, 0x7D, 0x46, 0x4C, 67, 0xF7],                                               # Felucca's BACKUP_PUT
-                [0x90, 60, 100], [0xF0, 0x7D, 0x53, 0x33, 1], [0xF0, 0x7D, 0x53, 0x33, 1, 0xF7, 0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7],
+                [0xF0, 0x7D, 0x53, 0x33, 1], [0xF0, 0x7D, 0x53, 0x33, 1, 0xF7, 0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7],
+                [0xF0, 0x22, 0x24, 0x35, 0x7E, 0xF7], [0xF0, 0x00, 0x32, 0x45, 0x00, 0x00, 0x00, 0x40, 0x7F, 0xF7],
+                [0x90, 60, 100, 0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7], [0x90, 60], [0x90, 60, 100, 60], [0x90, 0x80, 1],
+                [0xC0, 5], [0xE0, 0, 64], [0xF8], [0xFF], [60, 100], [0xF7], [0xB0, 123, 0, 0xB1, 123, 0],
                 [0xF0, 0x7D, 0x53, 0x33, 1, 0x90, 0xF7], [], [0xF0, 0x00, 0x59, 0x21, 0xF7]):
         assert not ok(bad), bad
     assert not sims.builtin_editor_out_allowed([0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7])
+    # what the bundled editor itself sends besides its SysEx (web/src/core.js noteOut, allNotesOff)
+    html = (S3.EDITOR_DIR / "editor.html").read_text("utf-8")
+    assert "out.send(on ? [0x90 | ch, k & 127, clamp(vel, 1, 127)] : [0x80 | ch, k & 127, 0]);" in html
+    assert "out.send([0xB0 | c, 123, 0]);" in html and html.count("out.send(") == 3     # (+ the SysEx frame)
+    for good in ([0x90, 60, 100], [0x99, 36, 1], [0x80, 60, 0], [0x8F, 127, 0], *[[0xB0 | c, 123, 0] for c in range(16)]):
+        assert ok(good), good
 
 
 # -------------------------------------------- m-bootloader's MIDI MODE ---
@@ -421,3 +426,169 @@ def test_newer_unit_rule_is_the_hardware_modules():
     assert planner.chip_check("new", t).blockers and not planner.chip_check("old", t).blockers
     unknown = planner.chip_check("", t)
     assert not unknown.blockers and "no_logo" in unknown.confirmations
+
+
+# ------------------------------------------------- after the review ---
+
+from fake_sloop3 import Fake, InProcess  # noqa: E402
+
+
+def test_probe_is_one_short_question_and_honours_its_timeout():
+    import time
+    silent = Link(InProcess(silent=True))
+    t0 = time.monotonic()
+    assert S3.probe(silent) is None
+    took = time.monotonic() - t0
+    assert took < 0.6 and len(silent.t.seen) == 1, took           # (was 2.0 s and two frames)
+    t0 = time.monotonic()
+    assert S3.probe(silent, timeout=0.1, tries=1) is None
+    assert time.monotonic() - t0 < 0.3
+    assert S3.probe(Link(InProcess())).version == "3.3.7"
+    # the connect chain asks it only when the handshake and Hortator's INFO both stayed unanswered
+    src = (ROOT / "fm1companion" / "ui" / "device.py").read_text("utf-8")
+    assert "s3 = None if ident or hort else S3.probe(link)" in src
+
+
+def test_0x12_is_asked_only_on_the_exact_port_and_never_after_another_identity():
+    ok = mboot.is_candidate
+    assert ok("FM-1 Update", "1209:0002", "ota-FM-1_900") and ok("FM-1 Update", "", "") and ok("FM-1 Update", "1209:0002")
+    for label, uid, ident in (("FM-1 Update", "1209:0002", "ota-FM-1_015"), ("FM-1 Update", "", "ota-FM-1_016"),
+                              ("FM-1 Update 2", "1209:0002", ""), ("FM-1 Updater", "", ""), ("My FM-1 Update", "", ""),
+                              ("FM-1 Update", "4c4a:4155", "ota-FM-1_900"), ("", "", "ota-FM-1_900")):
+        assert not ok(label, uid, ident), (label, uid, ident)
+
+
+def test_mboot_range_and_capacity_limits():
+    h = mboot.Host(FakeMboot(FLASH))
+    h.identify()
+    for fn in (lambda: h.crc(0, 0x1000000), lambda: h.crc(0, 0), lambda: h.read(0, 513), lambda: h.read(0x100000, 1)):
+        with pytest.raises(mboot.MbootError):
+            fn()
+    body = b"MBOOT" + bytes([1, 1, 1, 0x0F, 0x98]) + (0x1000000).to_bytes(4, "little") + bytes(4) + bytes(8) + b"\0\0v\0"
+    assert mboot.parse_info(body) is None             # a 16 MiB chip: its size does not fit a request's 24 bits
+
+
+class _Ctx:
+    def __init__(self, hw="", jedec=None):
+        self.profile = type("P", (), {"hw_revision": hw, "name": "T"})()
+        self.mboot = None if jedec is None else mboot.Info("2.4", 1, 0x980F, 0x100000, jedec, "00" * 8)
+        self.port = None
+
+
+def test_hardware_verdict_strictest_reading_and_no_installer_link_unless_ok():
+    from fm1companion.ui import sloop3_ui as U
+    cases = [("", None, "unknown", "warn"), ("old", None, "old", "ok"), ("new", None, "new", "bad"),
+             ("", 0x856014, "old", "ok"), ("old", 0xB36014, "new", "bad"), ("", 0xB36014, "new", "bad"),
+             ("old", 0xC84014, "unknown", "warn"),     # an unknown chip never loses to the owner's "old"
+             ("new", 0x856014, "new", "bad"),          # "new" is sticky
+             ("old", 0x01B36014, "new", "bad"), ("old", 0x01856014, "old", "ok")]       # (the ID is 24 bits)
+    for hw, jedec, rev, level in cases:
+        c = _Ctx(hw, jedec)
+        assert U.revision(c)[0] == rev, (hw, jedec)
+        assert U.revision_text(c)[0] == level, (hw, jedec)
+        notes = U.notes_html(c)
+        assert (S3.INSTALLER_URL + '"' in notes) == (level == "ok"), (hw, jedec)
+        assert S3.GUIDE_URL in notes and "m-bootloader" in notes
+
+
+def test_installer_refuses_m_bootloaders_midi_mode(monkeypatch):
+    from fm1companion.devices import PortInfo
+    from fm1companion.ui import sloop3_ui as U
+    said = []
+    monkeypatch.setattr(U, "show_error", lambda parent, title, text, *a: said.append(title + " " + text))
+    port = PortInfo("i", "o", "FM-1 Update", None, usb_id="1209:0002", update_mode=True)
+    c = _Ctx("old", 0x856014)
+    c.port = port
+    assert U.refuse_in_midi_mode(None, c) and "m-bootloader" in said[0]
+    c.mboot = None                                    # an update loader that is not m-bootloader: not refused here
+    assert not U.refuse_in_midi_mode(None, c)
+    # another port in the list (Recovery): asked on the spot, with the one read-only question
+    units = []
+    monkeypatch.setattr(mboot, "open_port", lambda p: units.append(FakeMboot(FLASH)) or units[-1])
+    other = PortInfo("i2", "o2", "FM-1 Update", None, usb_id="1209:0002", update_mode=True)
+    assert U.refuse_in_midi_mode(None, c, other) and units[-1].commands == [0x12]
+    loader = PortInfo("i3", "o3", "Melodee FM-1 Update", None, usb_id="1209:0002", update_mode=True)
+    n = len(units)
+    assert not U.refuse_in_midi_mode(None, c, loader) and len(units) == n       # (not even asked)
+    for f, needle in (("ui/firmware_page.py", "_s3ui.refuse_in_midi_mode(parent, ctx)"),
+                      ("ui/pages/recovery.py", "sloop3_ui.refuse_in_midi_mode(self, self.ctx, port)")):
+        assert needle in (ROOT / "fm1companion" / f).read_text("utf-8"), f
+    fw = (ROOT / "fm1companion" / "ui" / "firmware_page.py").read_text("utf-8")
+    assert "firmware goes onto it from m-bootloader" not in fw      # (the text that sent users into MIDI MODE)
+
+
+def _restorable(link) -> dict:
+    with S3.Client(link) as c:
+        c.write_file(S3.KIND_PROJECT, c.read_file(S3.KIND_NOW))
+    return BK.capture(link)
+
+
+def test_restore_reads_your_sounds_back_and_says_what_state_each_part_is_in():
+    from fm1companion.ui import sloop3_ui as U
+    f = _restorable(Link(InProcess()))
+    plan = BK.restore_plan(f)
+    assert plan == [BK.SOUNDS, BK.PROJECT]
+    done = BK.restore(Link(InProcess()), f)
+    assert list(done) == plan and done.unverified == []           # both read back and identical
+    # the FM-1 acknowledges your sounds but keeps its old ones: noticed, nothing claimed
+    changed = json.loads(json.dumps(f))
+    snd = bytearray(BK.objects(f)[BK.SOUNDS])
+    snd[-1] ^= 1
+    changed["objects"][1] = BK._obj(BK.SOUNDS, bytes(snd))
+    with pytest.raises(BK.Sloop3BackupError) as e:
+        BK.restore(Link(InProcess(Fake(fault="sounds_dropped"))), changed)
+    assert (e.value.written, e.value.unclear, e.value.untouched) == ([], [BK.SOUNDS], [BK.PROJECT])
+    lines = U.state_lines(e.value)
+    assert len(lines) == 2 and lines[0].startswith("?") and lines[1].startswith("–")
+    # the project was replaced but reads back differently: it is "unclear", never "as it was"
+    with pytest.raises(BK.Sloop3BackupError) as e:
+        BK.restore(Link(InProcess(Fake(fault="project_differs"))), f)
+    assert (e.value.written, e.value.unclear, e.value.untouched) == ([BK.SOUNDS], [BK.PROJECT], [])
+    lines = U.state_lines(e.value)
+    assert lines[0].startswith("✓") and lines[1].startswith("?") and not any("as they were" in x for x in lines)
+    src = (ROOT / "fm1companion" / "ui" / "sloop3_ui.py").read_text("utf-8")
+    assert "the others are as they were" not in src and "written and read back." not in src
+
+
+def test_odd_backup_files_are_refused_cleanly(tmp_path):
+    f = _restorable(Link(InProcess()))
+    g = json.loads(json.dumps(f))
+    for bad in (5, "x", {"a": 1}, None, [5, "x", None]):
+        g["samples_not_included"] = bad
+        rep = backup_inspect.inspect(json.loads(json.dumps(g)))
+        assert rep.warnings and not rep.restorable
+    for bad in (float("inf"), 1e308, "2", True, [2], -1, 7, None):
+        g["bank"] = {"fm6_source": bad, "syn_source": bad}
+        assert BK.bank_sources(g) == (0, 0), bad
+        assert BK.restore_plan(g) == [BK.SOUNDS, BK.PROJECT]
+    g["bank"] = [1, 2]
+    assert BK.bank_sources(g) == (0, 0)
+    assert not hasattr(BK, "to_s3b")                  # (had no caller; the editor writes .s3b itself)
+
+
+def test_mirror_takes_a_flash_backup_whole_or_not_at_all(tmp_path):
+    from fm1companion import autobackup as AB
+    root, target = tmp_path / "Backups", tmp_path / "mirror"
+    target.mkdir()
+    h = mboot.Host(FakeMboot(FLASH[:0x10000]))
+    info = h.identify()
+    p = mboot.save_backup(root / "FM-1 A" / "Flash", "FM-1 A", info, h.read_flash())
+    lone = root / "FM-1 B" / "Flash" / "B_flash_x.json"       # a description whose image is gone
+    lone.parent.mkdir(parents=True)
+    lone.write_text(json.dumps({"format": "fm1-flash-backup", "version": 1, "file": "B_flash_x.bin"}))
+    ok, bad, msgs = AB.mirror_all(root, target)
+    assert bad == 0, msgs
+    rel = p.relative_to(root)
+    assert (target / rel).read_bytes() == p.read_bytes() and (target / rel.with_suffix(".json")).exists()
+    assert not (target / "FM-1 B").exists()
+    again = mboot.save_backup(root / "FM-1 A" / "Flash", "FM-1 A", info, FLASH[:0x10000])
+    assert " (2)" in again.name or again.name != p.name
+
+
+def test_credits_name_sloop3_and_m_bootloader():
+    from fm1companion import diag
+    names = " ".join(str(e.get("name")) for e in diag.credits()) if hasattr(diag, "credits") else \
+        (ROOT / "fm1companion" / "data" / "credits.d" / "sloop3.json").read_text("utf-8")
+    assert "SLOOP 3" in names and "m-bootloader" in names
+    readme = (ROOT / "README.md").read_text("utf-8")
+    assert "**SLOOP 3** (isod89" in readme and "m-bootloader" in readme and "Julius" in readme

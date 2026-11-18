@@ -72,7 +72,10 @@ def w32(v):
 
 
 class Fake:
-    def __init__(self, version: str, samples: bool = False):
+    def __init__(self, version: str = "3.3.7", samples: bool = False, fault: str = ""):
+        # fault (tests of the restore's honesty): "sounds_dropped" = WEND of your sounds is acknowledged but the old
+        # ones stay; "project_differs" = the project that was written reads back with another byte
+        self.fault = fault
         fx = json.loads(FIX.read_text("utf-8"))
         self.replay = {bytes.fromhex(k): bytes.fromhex(v) for k, v in fx["replay"].items()}
         o = {k: base64.b64decode(v) for k, v in fx["objects"].items()}
@@ -131,9 +134,12 @@ class Fake:
                 self.err(FILE)
             else:
                 if kind == 1:
-                    self.sounds = bytes(data)
+                    if self.fault != "sounds_dropped":
+                        self.sounds = bytes(data)
                 else:
                     self.saved = self.now = bytes(data)
+                    if self.fault == "project_differs":
+                        self.saved = self.saved[:-1] + bytes([self.saved[-1] ^ 1])
                 self.send(8, r[:4])
         elif cmd == 14:
             self.bank(r, n)
@@ -234,3 +240,29 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+class InProcess:
+    """the fake as a transport in the test's own process (transport.Transport: send / receiver), every message it
+    received in ``seen``; silent=True: a device that answers nothing at all"""
+
+    def __init__(self, fake: Fake | None = None, silent: bool = False):
+        self.fake, self.silent = fake or Fake(), silent
+        self.receiver = None
+        self.seen: list[bytes] = []
+        self.closed = False
+
+    def send(self, data):
+        self.seen.append(bytes(data))
+        if self.silent:
+            return
+        for out in self.fake.handle(bytes(data)):
+            if self.receiver:
+                self.receiver(list(out))
+
+    def close(self):
+        self.closed = True
+
+    @property
+    def alive(self):
+        return not self.closed

@@ -576,11 +576,31 @@ def mirror_missing(folder: Path, root: Path, target: Path) -> int:
     return n
 
 
+def flash_image_of(sidecar: Path):
+    """for the description of a flash backup (flash/mboot.py: "fm1-flash-backup", beside its .bin): the image's path,
+    or False if the image is missing; None for every other .json"""
+    try:
+        if sidecar.stat().st_size > 16384:
+            return None
+        d = json.loads(sidecar.read_text("utf-8"))
+    except (OSError, ValueError, RecursionError, UnicodeDecodeError):
+        return None
+    if not isinstance(d, dict) or d.get("format") != "fm1-flash-backup":
+        return None
+    image = sidecar.with_suffix(".bin")
+    return image if image.is_file() else False
+
+
 def mirror_all(root: Path, target: Path) -> tuple[int, int, list[str]]:
     """mirror all backups under root -> (copied/verified, errors, messages)."""
     ok, bad, msgs = 0, 0, []
     for f in sorted(Path(root).rglob("*.json")):
         try:
+            image = flash_image_of(f)
+            if image is False:                      # (a flash backup's description without its image: neither)
+                continue
+            if image:                               # (a flash backup, flash/mboot.py: the image first, then its
+                mirror_file(image, root, target)    # description – never the description alone)
             mirror_file(f, root, target)
             ok += 1
         except OSError as e:

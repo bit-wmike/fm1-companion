@@ -245,6 +245,8 @@ class Client:
                 except queue.Empty:
                     raise Sloop3Error(_("SLOOP 3 does not answer (command {cmd})").format(cmd=cmd))
                 if f is None:
+                    if time.monotonic() >= end:         # (other frames keep arriving: the deadline still holds)
+                        raise Sloop3Error(_("SLOOP 3 does not answer (command {cmd})").format(cmd=cmd))
                     continue
                 if f[0] == 0:
                     code = f[1][0] if f[1] else 0
@@ -256,8 +258,8 @@ class Client:
                     raise Sloop3Error(_("SLOOP 3 does not answer (command {cmd})").format(cmd=cmd))
 
     # ---- read only
-    def info(self) -> Info:
-        return parse_info(self.ask(Cmd.INFO, timeout=1.0))
+    def info(self, timeout: float | None = None) -> Info:
+        return parse_info(self.ask(Cmd.INFO, timeout=timeout or min(self.timeout, 1.0)))
 
     def read_file(self, kind: int, slot: int = 0, progress=None) -> bytes:
         """READ: kind 0 the saved project, 1 your sounds, 2 the project as it is now; checked with the CRC-32 the
@@ -370,13 +372,14 @@ def check_image(img: bytes, which: int):
         raise Sloop3Error(_("The FM6 bank image is damaged.") if not which else _("The SYN kits image is damaged."))
 
 
-def probe(link, timeout: float = 0.7, tries: int = 2) -> Info | None:
-    """ask SLOOP 3's INFO (read only) -> Info, or None: no SLOOP 3. Never raises."""
+def probe(link, timeout: float = 0.35, tries: int = 1) -> Info | None:
+    """ask SLOOP 3's INFO (read only) -> Info, or None: no SLOOP 3. Never raises. Takes at most timeout × tries:
+    one short question by default (the device layer asks longer only when the port's name says "SLOOP 3")."""
     try:
         with Client(link, timeout=timeout) as c:
             for _try in range(tries):
                 try:
-                    return c.info()
+                    return c.info(timeout)
                 except Sloop3Error as e:
                     if e.code:              # (it answered, but refused INFO: no SLOOP 3 the app knows)
                         return None

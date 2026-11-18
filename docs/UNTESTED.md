@@ -102,7 +102,7 @@ recorded answers) and `tests/fake_mboot.py` (written from m-bootloader's specifi
 | 0x12 sent to an update loader that is not m-bootloader | not sent by design: only a port named exactly "FM-1 Update" is asked (Felucca-family loaders are "<Name> Update"). What M-VAVE's or a Felucca loader would do with 0x12 was not tried |
 | Installing SLOOP 3, installing m-bootloader | **not done by the app** (the author's installer page; M-Flasher / M-UPGRADE) |
 | The blocker for the newer hardware revision (no installer page offered; explicit confirmation when unknown) | page logic only (`tests/ui_sloop3_test.py`) |
-| Installing another firmware onto an FM-1 that has m-bootloader, from MIDI MODE, with the app's installer (m-bootloader answers the update protocol as a loader does) | not tried, not changed by this work. m-bootloader's README lists the browser installers it was tested with |
+| Installing another firmware from m-bootloader's MIDI MODE with the app's installer | **refused by the app** (it tells MIDI MODE from an update loader by 0x12); page logic and unit test only. m-bootloader's README lists the browser installers it was tested with |
 
 ### Studio
 

@@ -27,13 +27,45 @@ MBOOT_RELEASES = S3.MBOOT_URL + "/releases/latest"
 
 def revision(ctx) -> tuple[str, str]:
     """-> ("new" | "old" | "unknown", where the answer comes from: "chip" = read from the flash chip in MIDI MODE,
-    "profile" = what is recorded for this device (hardware.py), "" = nothing)"""
+    "profile" = what is recorded for this device (hardware.py), "" = nothing). The strictest reading wins: "new"
+    from either source is "new"; a chip ID that was read and is neither of the two known ones is "unknown" – it
+    never loses to a recorded "old"."""
     from .. import hardware
     mb = getattr(ctx, "mboot", None)
-    if mb is not None and hardware.revision_of_id(mb.jedec) != hardware.UNKNOWN:
-        return hardware.revision_of_id(mb.jedec), "chip"
-    r = S3.revision_of(getattr(ctx, "profile", None))
-    return r, ("profile" if r != hardware.UNKNOWN else "")
+    prof = S3.revision_of(getattr(ctx, "profile", None))
+    if mb is not None:
+        chip = hardware.revision_of_id(mb.jedec & 0xFFFFFF)
+        if chip == hardware.NEW or prof != hardware.NEW:
+            return chip, "chip"
+    return prof, ("profile" if prof != hardware.UNKNOWN else "")
+
+
+def is_mboot(ctx, port=None) -> bool:
+    """is this update-mode port m-bootloader's MIDI MODE (not an FM-1 update loader)? The active device: what was
+    read when it connected; another port: asked now (0x12, only where flash/mboot.is_candidate allows it)."""
+    from ..flash import mboot
+    port = port or getattr(ctx, "port", None)
+    if port is None or not getattr(port, "update_mode", False):
+        return False
+    if getattr(ctx, "port", None) is port:
+        return getattr(ctx, "mboot", None) is not None
+    return mboot.is_candidate(port.label, port.usb_id) and mboot.identify_port(port) is not None
+
+
+def refuse_in_midi_mode(parent, ctx, port=None) -> bool:
+    """the app's installer must not treat m-bootloader's MIDI MODE as an FM-1 update loader: it answers the same
+    handshake, but writes a package from 0x4000 to the package's end – not a loader's application range – and so
+    over what SLOOP 3 keeps there. True: it is MIDI MODE, the reason was shown, nothing is sent."""
+    if not is_mboot(ctx, port):
+        return False
+    show_error(parent, _("m-bootloader's MIDI MODE, not an update mode"),
+               _("This FM-1 waits in m-bootloader's MIDI MODE. That is not the update mode of an FM-1 firmware: "
+                 "m-bootloader answers the same way, but it writes a package differently, and the app has never "
+                 "been tried with it. The app sends it no firmware. Nothing was written.<br><br>From MIDI MODE, "
+                 "firmware is installed with the installer page of that firmware's author; the whole flash goes back "
+                 "with M-Flasher. OCT−, OCT+, PLAY or REC on the FM-1 leave MIDI MODE. “Firmware+” › SLOOP 3 "
+                 "explains more."))
+    return True
 
 
 def chip_plan(ctx):
@@ -96,14 +128,18 @@ def notes_html(ctx) -> str:
         "<li>" + _("It shows SLOOP 3's own web editor on the page “Editor” and makes backups of its project, sounds "
                    "and banks on the page “Backups” (not of its samples: SLOOP 3 cannot hand them out).") + "</li>"
         "<li>" + _("In MIDI MODE it can copy the whole flash into your backup folder – reading only.") + "</li>"
-        "<li>" + _("<b>It does not install SLOOP 3 and it does not install m-bootloader.</b> The button below opens "
-                   "the author's installer page in your browser (Chromium or Chrome), which guides through it.")
+        "<li>" + _("<b>It does not install SLOOP 3 and it does not install m-bootloader.</b> The button below shows "
+                   "the way; for an FM-1 the rule above lets through, it opens the author's installer page in your "
+                   "browser (Chromium or Chrome).")
         + "</li></ul>"
         "<p>" + _("Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). "
                   "<b>Never run on a real FM-1 by this app.</b>").format(versions=", ".join(S3.CHECKED_VERSIONS))
-        + "</p><p>" + " · ".join([a(S3.GUIDE_URL, _("Guide")), a(S3.INSTALLER_URL, _("Installer page")),
-                                   a(S3.EDITOR_URL, _("Editor online")), a(S3.REPO, _("Project")),
-                                   a(S3.MBOOT_URL, "m-bootloader"), a(S3.MFLASHER_URL, "M-Flasher")]) + "</p>")
+        + "</p><p>" + " · ".join(
+            [a(S3.GUIDE_URL, _("Guide"))] +
+            # (the installer page only where the hardware rule has no objection; else the dialog decides)
+            ([a(S3.INSTALLER_URL, _("Installer page"))] if level == "ok" else []) +
+            [a(S3.EDITOR_URL, _("Editor online")), a(S3.REPO, _("Project")), a(S3.MBOOT_URL, "m-bootloader"),
+             a(S3.MFLASHER_URL, "M-Flasher")]) + "</p>")
 
 
 class Sloop3Dialog(QDialog):
@@ -115,14 +151,11 @@ class Sloop3Dialog(QDialog):
         self.setWindowTitle(_("SLOOP 3 (public beta) – the way onto the FM-1"))
         self.setMinimumWidth(620)
         lay = QVBoxLayout(self)
-        level, rev = revision_text(ctx)
-        self.level = level
-        self.rev = QLabel(rev)
+        self.level = "bad"                       # (until the first reading: nothing is offered)
+        self.rev = QLabel("")
         self.rev.setObjectName("sloop3_revision")
         self.rev.setWordWrap(True)
         self.rev.setTextFormat(Qt.TextFormat.RichText)
-        color = {"bad": "#da4453", "warn": "#f67400", "ok": "#27ae60"}[level]
-        self.rev.setStyleSheet(f"border-left: 4px solid {color}; padding-left: 8px;")
         lay.addWidget(self.rev)
         steps = QLabel(
             "<ol>"
@@ -152,7 +185,6 @@ class Sloop3Dialog(QDialog):
         lay.addWidget(honest)
         self.chk = QCheckBox(_("My FM-1 has no M-VAVE logo on the front (an earlier unit)"))
         self.chk.setObjectName("sloop3_confirm_old")
-        self.chk.setVisible(level == "warn")
         self.chk.toggled.connect(lambda _on: self._update())
         lay.addWidget(self.chk)
         self.b_installer = QPushButton(icon("internet-web-browser", "applications-internet"),
@@ -177,6 +209,34 @@ class Sloop3Dialog(QDialog):
         bb.rejected.connect(self.reject)
         bb.accepted.connect(self.accept)
         lay.addWidget(bb)
+        self._verdict()
+        # the verdict is live: MIDI MODE appearing, the flash chip being read, another device – all arrive here
+        self._on_ctx = lambda: self._verdict()
+        ctx.changed.connect(self._on_ctx)
+        self.finished.connect(lambda _r: self._unhook())
+
+    def _unhook(self):
+        try:
+            self.ctx.changed.disconnect(self._on_ctx)
+        except (TypeError, RuntimeError):
+            pass
+
+    def _verdict(self):
+        """read the hardware rule for the device as it is now. A changed verdict takes the confirmation back."""
+        try:
+            level, text = revision_text(self.ctx)
+        except Exception:  # noqa: BLE001 – no verdict is "not offered", never "fine"
+            level, text = "bad", _("The app could not work out this FM-1's hardware revision. The installer page is "
+                                   "not offered.")
+        if level != self.level and self.chk.isChecked():
+            self.chk.blockSignals(True)
+            self.chk.setChecked(False)
+            self.chk.blockSignals(False)
+        self.level = level
+        self.rev.setText(text)
+        color = {"bad": "#da4453", "warn": "#f67400", "ok": "#27ae60"}[level]
+        self.rev.setStyleSheet(f"border-left: 4px solid {color}; padding-left: 8px;")
+        self.chk.setVisible(level == "warn")
         self._update()
 
     def installer_allowed(self) -> bool:
@@ -203,6 +263,10 @@ class Sloop3Dialog(QDialog):
 
     def _open(self, url: str):
         from . import web
+        if url == S3.INSTALLER_URL:
+            self._verdict()                      # (once more, at the click: the device may have changed)
+            if not self.installer_allowed():
+                return
         web.open_external(url)
 
     def _backup(self):
@@ -346,21 +410,49 @@ def restore_flow(parent, ctx, path: Path):
             done = B.restore(link, a.file, progress=lambda x, y: w.progress.emit(x, y))
         except B.Sloop3BackupError as e:
             state["error"] = e
-            for i in getattr(e, "written", None) or []:
-                w.log.emit(_("✓ {part} written").format(part=B.title(i)))
+            for line in state_lines(e):
+                w.log.emit(line)
             raise
         for i in done:
-            w.log.emit(_("✓ {part} written").format(part=B.title(i)))
-        return len(done)
+            w.log.emit(_("✓ {part}: written, but not compared (SLOOP 3 keeps it in its own layout)").format(
+                part=B.title(i)) if i in done.unverified else
+                _("✓ {part}: written, read back and identical").format(part=B.title(i)))
+        return done
+
+    def said(done) -> str:
+        checked = [B.title(i) for i in done if i not in done.unverified]
+        loose = [B.title(i) for i in done.unverified]
+        text = ngettext("Restore complete: {n} part written.", "Restore complete: {n} parts written.",
+                        len(done)).format(n=len(done))
+        if checked:
+            text += " " + _("Read back and identical: {parts}.").format(parts=html.escape(", ".join(checked)))
+        if loose:
+            text += " " + _("Written and accepted by the FM-1, but not compared: {parts}.").format(
+                parts=html.escape(", ".join(loose)))
+        return text + " " + _("Check the project on the FM-1.") + after
 
     def failed(m):
         e = state["error"]
-        n = len(getattr(e, "written", None) or []) if e is not None else 0
-        return (_("Restore failed: {error}").format(error=m) + "<br>" +
-                (ngettext("{n} part was already written; the others are as they were.",
-                          "{n} parts were already written; the others are as they were.", n).format(n=n) if n else
-                 _("Nothing was written.")) + after)
-    ctx.job(parent, _("Restore SLOOP 3 backup"), work,
-            done=lambda n: ngettext("Restore complete: {n} part written and read back. Check the project on the "
-                                    "FM-1.", "Restore complete: {n} parts written and read back. Check the project "
-                                    "on the FM-1.", n).format(n=n) + after, fail_text=failed)
+        lines = state_lines(e) if e is not None else [_("Nothing was written.")]
+        return _("Restore failed: {error}").format(error=m) + "<br>" + "<br>".join(html.escape(x) for x in lines) + after
+    ctx.job(parent, _("Restore SLOOP 3 backup"), work, done=said, fail_text=failed)
+
+
+def state_lines(e) -> list[str]:
+    """after a restore that failed: what state each part is in, as far as the app knows (sloop3bk.restore)"""
+    from .. import sloop3bk as B
+    written, unclear = list(getattr(e, "written", None) or []), list(getattr(e, "unclear", None) or [])
+    untouched = list(getattr(e, "untouched", None) or [])
+    loose = set(getattr(e, "unverified", None) or [])
+    out = []
+    for i in written:
+        out.append(_("✓ {part}: written, but not compared (SLOOP 3 keeps it in its own layout)").format(
+            part=B.title(i)) if i in loose else _("✓ {part}: written, read back and identical").format(part=B.title(i)))
+    for i in unclear:
+        out.append(_("? {part}: this is where it stopped. It may be as before, as in the backup, or incomplete – "
+                     "check it on the FM-1.").format(part=B.title(i)))
+    for i in untouched:
+        out.append(_("– {part}: not reached, nothing was sent for it.").format(part=B.title(i)))
+    if not written and not unclear:
+        out.insert(0, _("Nothing was written."))
+    return out

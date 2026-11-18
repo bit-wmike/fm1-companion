@@ -1,0 +1,20 @@
+{
+ "entries": [
+  {
+   "name": "SLOOP 3",
+   "authors": "isod89",
+   "url": "https://github.com/isod89/sloop3-fm1",
+   "license": "GPL-3.0",
+   "kind": "Firmware",
+   "use": "its web editor (web/editor.html) is bundled unchanged and shown on the Editor page; the firmware itself and its installer page are not bundled"
+  },
+  {
+   "name": "m-bootloader, M-Flasher",
+   "authors": "Julius Vitkauskas",
+   "url": "https://github.com/jvitkauskas/m-bootloader",
+   "license": "MIT",
+   "kind": "Tool",
+   "use": "not bundled: the app reads an FM-1 in m-bootloader's MIDI MODE as its specification describes, and points to both for installing SLOOP 3 and for flash backups"
+  }
+ ]
+}

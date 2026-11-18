@@ -11,7 +11,7 @@ Nummer – die App behandelt es als eigene Firmware.
   MIDI MODE von m-bootloader wartet, erscheint als „m-bootloader – MIDI MODE“, mit dem gefundenen Flash-Chip.
 * **Sein Editor.** Die Seite [Editor](app://page/editor) zeigt den eigenen Web-Editor von SLOOP 3 – die Datei des
   Autors, unverändert, in der App enthalten; er läuft also ohne Internet. Von dieser Seite erreichen nur die
-  Editor-Befehle von SLOOP 3 den FM-1.
+  Editor-Befehle von SLOOP 3, Noten und Controller den FM-1.
 * **Backups.** [Backups](app://page/backups) › „Backup jetzt“ speichert das Projekt (wie gespeichert und wie es in
   dem Moment ist), deine Sounds mit Favoriten und Theme, deine FM6-Bank und deine SYN-Kits in eine
   `sloop3-backup`-Datei. „Zurückspielen“ spielt sie auf einen FM-1 mit SLOOP 3 zurück. Halte vorher die

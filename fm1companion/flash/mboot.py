@@ -45,7 +45,7 @@ CMD_CRC = 0x24
 _ALLOWED = (CMD_IDENTIFY, CMD_READ, CMD_CRC)
 READ_MAX = 512
 SECTOR = 0x1000
-NAME_RE = re.compile(r"^FM-1 Update\b", re.I)      # the USB name of MIDI MODE (and of nothing else the app knows)
+NAME_RE = re.compile(r"FM-1 Update", re.I)      # the USB name of MIDI MODE (and of nothing else the app knows)
 IDENTITY = "ota-FM-1_900"                          # its answer to the update handshake (from m-bootloader 2.3)
 JEDEC_OLD, JEDEC_NEW = 0x856014, 0xB36014          # Puya P25Q80H · UCUN UC25HQ80 (FM-1s sold from late 2026)
 JEDEC_NAMES = {JEDEC_OLD: "Puya P25Q80H", JEDEC_NEW: "UCUN UC25HQ80"}
@@ -133,7 +133,7 @@ def parse_info(body: bytes) -> Info | None:
         return None
     ver = body[28:].split(b"\0")[0].decode("ascii", "replace")
     cap = int.from_bytes(body[10:14], "little")
-    if body[5] != 1 or not 0x10000 <= cap <= 0x1000000 or cap % SECTOR:
+    if body[5] != 1 or not 0x10000 <= cap < 0x1000000 or cap % SECTOR:      # (a count is 24 bits on the wire)
         return None
     return Info(version=ver, kind=body[6], key=body[8] | body[9] << 8, capacity=cap,
                 jedec=int.from_bytes(body[14:18], "little"), uid=body[18:26].hex(), proto=body[5])
@@ -165,6 +165,8 @@ class Host:
             except queue.Empty:
                 raise MbootError(_("The FM-1 does not answer. Is it still in MIDI MODE and connected?"))
             if f is None:
+                if time.monotonic() >= end:             # (other frames keep arriving: the deadline still holds)
+                    raise MbootError(_("The FM-1 does not answer. Is it still in MIDI MODE and connected?"))
                 continue
             if f[0] == 0:
                 raise MbootError(_("The FM-1 refused the request."))
@@ -203,7 +205,7 @@ class Host:
     def crc(self, address: int, count: int) -> int:
         """the CRC-32 the chip itself computes of the range (takes a moment for the whole flash)"""
         info = self._need()
-        if count <= 0 or address < 0 or address + count > info.capacity:
+        if count <= 0 or count > 0xFFFFFF or address < 0 or address + count > info.capacity:
             raise MbootError("range")
         head = bytes([0]) + address.to_bytes(4, "little") + count.to_bytes(3, "little")
         b = self._ask(CMD_CRC, head, timeout=max(self.timeout, 5.0 + count / 100_000))
@@ -239,13 +241,20 @@ class Host:
         return bytes(out)
 
 
-def is_candidate(label: str, usb_id: str = "") -> bool:
-    """may the app ask this update-mode port who it is (0x12)? Only the port MIDI MODE shows: USB name "FM-1 Update"
-    (Felucca-family update loaders are "<Name> Update": "Melodee FM-1 Update", "Felucca Update" – they are not
-    asked) and, where the system tells the USB ID, 1209:0002."""
+def is_candidate(label: str, usb_id: str = "", identity: str = "") -> bool:
+    """may the app ask this update-mode port who it is (0x12)? All of these must hold:
+
+    * the USB name is exactly "FM-1 Update" (Felucca-family update loaders are "<Name> Update": "Melodee FM-1
+      Update", "Felucca Update" – never asked);
+    * the USB ID is 1209:0002, or the system does not tell it (no sysfs entry; a known other ID: never asked);
+    * the update handshake was answered with ``ota-FM-1_900`` or not at all (m-bootloader up to 2.2 does not answer
+      it). A loader that answered with another identity (M-VAVE's own: ``ota-FM-1_015``) is never asked – what it
+      does with 0x12 is not known."""
     if usb_id and usb_id.lower() != "1209:0002":
         return False
-    return bool(NAME_RE.search((label or "").strip()))
+    if identity and identity != IDENTITY:
+        return False
+    return bool(NAME_RE.fullmatch((label or "").strip()))
 
 
 def open_port(port):
@@ -283,10 +292,10 @@ def save_backup(folder: Path, device: str, info: Info, image: bytes, note: str =
     from ..backup import write_text_atomic
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
-    path = folder / backup_name(device)
-    n = 2
+    first = folder / backup_name(device)
+    path, n = first, 2
     while path.exists():
-        path = path.with_name(f"{path.stem} ({n}).bin")
+        path = first.with_name(f"{first.stem} ({n}).bin")
         n += 1
     tmp = path.with_name("." + path.name + ".tmp")
     try:
