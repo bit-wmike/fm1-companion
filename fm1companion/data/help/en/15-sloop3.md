@@ -48,6 +48,6 @@ do not rely on it on stage yet. It is not SLOOP 2.x with a new number – the ap
 * Only one program can talk to the FM-1 in MIDI MODE at a time: quit the app (or unplug and replug) before you use the
   installer page in the browser.
 * If SLOOP 3 does not start: hold OCT− at power-on for its RESCUE, or hold PLAY for m-bootloader's menu.
-* All of this was checked on the author's PC twin of SLOOP 3 3.3.6 and 3.3.7 (the firmware's code on a simulated
+* All of this was checked on the author's PC twin of SLOOP 3 3.3.6, 3.3.7 and 3.4.0 (the firmware's code on a simulated
   FM-1) and against m-bootloader 2.4's own MIDI MODE code on a PC – **never on a real FM-1 by this app**.
 * More: [Switching firmware](help:02-firmware) · [Backups](help:04-backups) · [Links](help:10-links)

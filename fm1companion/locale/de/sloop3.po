@@ -540,3 +540,11 @@ msgstr "? {part}: Hier ist es stehen geblieben. Es kann wie vorher sein, wie im 
 #, python-brace-format
 msgid "– {part}: not reached, nothing was sent for it."
 msgstr "– {part}: nicht erreicht, dafür wurde nichts gesendet."
+
+#: fm1companion/ui/sloop3_ui.py:69
+msgid "Cannot tell what is waiting here"
+msgstr "Unklar, was hier wartet"
+
+#: fm1companion/ui/sloop3_ui.py:70
+msgid "This FM-1 shows up as “FM-1 Update” – the name of m-bootloader's MIDI MODE –, but it did not answer the question who it is. The app cannot tell it apart from MIDI MODE and sends it no firmware. Nothing was written.<br><br>If the FM-1 shows m-bootloader's menu or MIDI MODE: firmware is installed from there with the installer page of that firmware's author. Otherwise unplug the FM-1, switch it off and on, and try again."
+msgstr "Dieser FM-1 meldet sich als „FM-1 Update“ – der Name des MIDI MODE von m-bootloader –, hat aber die Frage, wer er ist, nicht beantwortet. Die App kann ihn nicht vom MIDI MODE unterscheiden und schickt ihm keine Firmware. Es wurde nichts geschrieben.<br><br>Zeigt der FM-1 das Menü von m-bootloader oder MIDI MODE: Von dort wird Firmware mit der Installer-Seite ihres Autors installiert. Sonst steck den FM-1 ab, schalte ihn aus und wieder ein und versuch es noch einmal."

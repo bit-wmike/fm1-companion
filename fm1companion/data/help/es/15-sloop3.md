@@ -52,6 +52,6 @@ con otro número: la app lo trata como un firmware propio.
 * En MIDI MODE solo un programa puede hablar con el FM-1 a la vez: cierra la app (o desconecta y vuelve a conectar)
   antes de usar la página del instalador en el navegador.
 * Si SLOOP 3 no arranca: mantén OCT− al encender para su RESCUE, o PLAY para el menú de m-bootloader.
-* Todo esto se comprobó en el gemelo de PC del autor para SLOOP 3 3.3.6 y 3.3.7 (el código del firmware en un FM-1
+* Todo esto se comprobó en el gemelo de PC del autor para SLOOP 3 3.3.6, 3.3.7 y 3.4.0 (el código del firmware en un FM-1
   simulado) y contra el código del MIDI MODE de m-bootloader 2.4 en un PC: **nunca en un FM-1 real con esta app**.
 * Más: [Cambiar de firmware](help:02-firmware) · [Copias de seguridad](help:04-backups) · [Enlaces](help:10-links)

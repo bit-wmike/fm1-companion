@@ -115,7 +115,7 @@ def _probe_update_port(port):
     ident = _probe_loader(port)
     from ..flash import mboot
     mb = None
-    if mboot.is_candidate(port.label, port.usb_id, ident):
+    if mboot.port_candidate(port, ident):
         mb = mboot.identify_port(port)
     return ident, mb
 
@@ -577,6 +577,7 @@ class DeviceContext(QObject):
             p.firmware, p.firmware_version, p.version_string = S3.KEY, s3.tag, s3.label
             p.identity = ident or ""                # (SLOOP 3 answers no update handshake: an older ID no longer holds)
             p.last_seen = time.time()
+            self._note_found(p)                     # (installed outside the app: the history says so)
             self.store.save()
             self.settings.last_device = p.id
             config.save(self.settings)
@@ -842,6 +843,10 @@ class DeviceContext(QObject):
             # another profile reports this very identity: without a serial number the two cannot be told apart, and
             # the USB port alone is no proof (two FM-1 on one cable) – asked, not assumed
             twins = [c for c in cands if not unknown and c.identity == ident and c not in here]
+            if getattr(self, "sloop3", None) is not None and len(cands) > 1:
+                # SLOOP 3 shows no serial number and no identity: with several FM-1 known, a profile that last ran
+                # another firmware at this USB port may just as well be the other unit – asked, not assumed
+                same = [c for c in same if c.firmware == "sloop3"]
             if len(here) == 1 and len(same) == 1 and not twins:
                 return same[0]
             if not usb and len(cands) == 1:    # no USB information at all (not Linux): as before

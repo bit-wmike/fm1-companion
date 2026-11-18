@@ -106,8 +106,18 @@ Nothing of this has run on a real FM-1 with this app. The stand-ins: **the PC tw
 it. Neither is in the repository; the tests in the repository use `tests/fake_sloop3.py` (which replays the twin's
 recorded answers) and `tests/fake_mboot.py` (written from m-bootloader's specification).
 
+**Seen on one real FM-1, outside the app (2026-11-18, the owner's earlier unit, flash 0x856014):** m-bootloader 2.4
+installed with M-Flasher 0.12.1, SLOOP 3 3.4.0-beta with the author's installer page in Chromium. MIDI MODE is USB
+`1209:0002`, product "FM-1 Update", bcdDevice 2.00 – the same USB ID as the Felucca family's update loaders, only name
+and device version differ. SLOOP 3 is `1209:0001`, "FM-1 SLOOP 3", bcdDevice 3.10, MIDI port "FM-1 SLOOP 3 MIDI 1". So
+the names the app relies on are confirmed. **The app itself has not yet talked to that unit** – everything below stays
+"stand-in only" until it has.
+
 | Function | Status |
 |---|---|
+| Telling MIDI MODE from a Felucca update loader (same USB ID): product name exactly "FM-1 Update", bcdDevice 2.00 where the system tells it, the handshake answer, and the answer to 0x12; a port that looks like MIDI MODE and does not answer 0x12 gets nothing sent either | unit tests with the values seen on the real unit; not run against it |
+| A SLOOP 3 unit beside another FM-1 (no USB serial number, no identity): the owner is asked which unit it is when the profile at that USB port last ran another firmware | unit test only |
+| SLOOP 3 3.4.0: its own editor (bundled beside the one of 3.3.x), backup round trip | PC twin of 3.4.0, in the app's window on Qt 6.11 |
 | Recognising SLOOP 3 (its INFO; the Felucca probes stay unanswered and change nothing) | PC twin: all five probes unanswered, INFO before and after the same. A real FM-1's USB name "FM-1 SLOOP 3" is from the source (`hal/fm1/usb.c`), not seen |
 | SLOOP 3's bundled web editor on the Editor page (connect, lists, LIVE state, all 13 tabs, no JavaScript error, only its own protocol goes out) | PC twin, in the app's window on Qt 6.11 (`tests/ui_sloop3_test.py` with `SLOOP3_DEVICE_CMD`); in the repository with the fake. **Not run on Qt 6.4 / Chromium 102**: checked by reading (script parses as ES2020, one newer CSS function with the app's fallback) |
 | Editing in the editor beyond opening the tabs (drawing notes, writing samples, kits, the FM6 bank, projects) | not driven by the app's tests; the author's own `tests/editor_e2e.js` does that in Chromium against the same twin |

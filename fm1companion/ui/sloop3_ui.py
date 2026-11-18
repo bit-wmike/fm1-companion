@@ -40,24 +40,39 @@ def revision(ctx) -> tuple[str, str]:
     return prof, ("profile" if prof != hardware.UNKNOWN else "")
 
 
-def is_mboot(ctx, port=None) -> bool:
-    """is this update-mode port m-bootloader's MIDI MODE (not an FM-1 update loader)? The active device: what was
-    read when it connected; another port: asked now (0x12, only where flash/mboot.is_candidate allows it)."""
+def midi_mode_state(ctx, port=None) -> str:
+    """is this update-mode port m-bootloader's MIDI MODE and not an FM-1 update loader? "yes" (it answered 0x12 with
+    MBOOT), "no" (its name, USB ID, device version or handshake answer rule it out – flash/mboot.is_candidate), or
+    "unclear": it looks exactly like MIDI MODE but did not answer the question. The active device: what was read
+    when it connected, asked once more if that gave nothing; another port: asked now."""
     from ..flash import mboot
     port = port or getattr(ctx, "port", None)
     if port is None or not getattr(port, "update_mode", False):
-        return False
-    if getattr(ctx, "port", None) is port:
-        return getattr(ctx, "mboot", None) is not None
-    return mboot.is_candidate(port.label, port.usb_id) and mboot.identify_port(port) is not None
+        return "no"
+    active = getattr(ctx, "port", None) is port
+    if active and getattr(ctx, "mboot", None) is not None:
+        return "yes"
+    if not mboot.port_candidate(port, getattr(ctx, "identity", "") if active else ""):
+        return "no"
+    return "yes" if mboot.identify_port(port) is not None else "unclear"
 
 
 def refuse_in_midi_mode(parent, ctx, port=None) -> bool:
     """the app's installer must not treat m-bootloader's MIDI MODE as an FM-1 update loader: it answers the same
-    handshake, but writes a package from 0x4000 to the package's end – not a loader's application range – and so
-    over what SLOOP 3 keeps there. True: it is MIDI MODE, the reason was shown, nothing is sent."""
-    if not is_mboot(ctx, port):
+    handshake and has the same USB ID, but writes a package from 0x4000 to the package's end – not a loader's
+    application range – and so over what SLOOP 3 keeps there. True: it is MIDI MODE, or cannot be told apart from
+    it; the reason was shown, nothing is sent."""
+    st = midi_mode_state(ctx, port)
+    if st == "no":
         return False
+    if st == "unclear":
+        show_error(parent, _("Cannot tell what is waiting here"),
+                   _("This FM-1 shows up as “FM-1 Update” – the name of m-bootloader's MIDI MODE –, but it did not "
+                     "answer the question who it is. The app cannot tell it apart from MIDI MODE and sends it no "
+                     "firmware. Nothing was written.<br><br>If the FM-1 shows m-bootloader's menu or MIDI MODE: "
+                     "firmware is installed from there with the installer page of that firmware's author. Otherwise "
+                     "unplug the FM-1, switch it off and on, and try again."))
+        return True
     show_error(parent, _("m-bootloader's MIDI MODE, not an update mode"),
                _("This FM-1 waits in m-bootloader's MIDI MODE. That is not the update mode of an FM-1 firmware: "
                  "m-bootloader answers the same way, but it writes a package differently, and the app has never "

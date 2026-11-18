@@ -241,20 +241,39 @@ class Host:
         return bytes(out)
 
 
-def is_candidate(label: str, usb_id: str = "", identity: str = "") -> bool:
-    """may the app ask this update-mode port who it is (0x12)? All of these must hold:
+BCD_DEVICE = "0200"                                # MIDI MODE's bcdDevice (src/usb_midi.c: device 2.00)
 
-    * the USB name is exactly "FM-1 Update" (Felucca-family update loaders are "<Name> Update": "Melodee FM-1
-      Update", "Felucca Update" – never asked);
-    * the USB ID is 1209:0002, or the system does not tell it (no sysfs entry; a known other ID: never asked);
+
+def is_candidate(label: str, usb_id: str = "", identity: str = "", bcd_device: str = "", product: str = "") -> bool:
+    """can this update-mode port be m-bootloader's MIDI MODE – may the app ask it who it is (0x12)? MIDI MODE has
+    the same USB ID as the Felucca family's update loaders (1209:0002); what differs is the product name and the
+    device version (seen on one FM-1 with m-bootloader 2.4: "FM-1 Update", bcdDevice 2.00). All of these must hold:
+
+    * the name is exactly "FM-1 Update" – the port's name and, where the system tells it, the USB product name
+      (Felucca-family update loaders are "<Name> Update": "Melodee FM-1 Update", "Felucca Update" – never asked);
+    * the USB ID is 1209:0002, or the system does not tell it (a known other ID: never asked);
+    * bcdDevice is 2.00, or the system does not tell it;
     * the update handshake was answered with ``ota-FM-1_900`` or not at all (m-bootloader up to 2.2 does not answer
       it). A loader that answered with another identity (M-VAVE's own: ``ota-FM-1_015``) is never asked – what it
-      does with 0x12 is not known."""
+      does with 0x12 is not known.
+
+    This is also the app's test for "may be MIDI MODE": a port for which it holds and that did not answer 0x12 cannot
+    be told apart from MIDI MODE, and the app's installer sends it nothing (ui/sloop3_ui.midi_mode_state)."""
     if usb_id and usb_id.lower() != "1209:0002":
+        return False
+    if bcd_device and bcd_device.strip().lower().lstrip("0") != BCD_DEVICE.lstrip("0"):
         return False
     if identity and identity != IDENTITY:
         return False
+    if product and not NAME_RE.fullmatch(product.strip()):
+        return False
     return bool(NAME_RE.fullmatch((label or "").strip()))
+
+
+def port_candidate(port, identity: str = "") -> bool:
+    """is_candidate for a devices.PortInfo"""
+    return is_candidate(getattr(port, "label", ""), getattr(port, "usb_id", ""), identity,
+                        getattr(port, "bcd_device", ""), getattr(port, "product", ""))
 
 
 def open_port(port):

@@ -471,6 +471,9 @@ def test_probe_is_one_short_question_and_honours_its_timeout():
 
 def test_0x12_is_asked_only_on_the_exact_port_and_never_after_another_identity():
     ok = mboot.is_candidate
+    assert ok("FM-1 Update", "1209:0002", "ota-FM-1_900", "0200", "FM-1 Update")      # as seen on a real FM-1
+    assert not ok("FM-1 Update", "1209:0002", "", "0100") and not ok("FM-1 Update", "1209:0002", "", "0310")
+    assert not ok("FM-1 Update", "1209:0002", "", "0200", "Melodee FM-1 Update")
     assert ok("FM-1 Update", "1209:0002", "ota-FM-1_900") and ok("FM-1 Update", "", "") and ok("FM-1 Update", "1209:0002")
     for label, uid, ident in (("FM-1 Update", "1209:0002", "ota-FM-1_015"), ("FM-1 Update", "", "ota-FM-1_016"),
                               ("FM-1 Update 2", "1209:0002", ""), ("FM-1 Updater", "", ""), ("My FM-1 Update", "", ""),
@@ -520,16 +523,32 @@ def test_installer_refuses_m_bootloaders_midi_mode(monkeypatch):
     c = _Ctx("old", 0x856014)
     c.port = port
     assert U.refuse_in_midi_mode(None, c) and "m-bootloader" in said[0]
-    c.mboot = None                                    # an update loader that is not m-bootloader: not refused here
-    assert not U.refuse_in_midi_mode(None, c)
-    # another port in the list (Recovery): asked on the spot, with the one read-only question
+    # the same USB ID as a Felucca update loader (seen on a real unit: 1209:0002, "FM-1 Update", bcdDevice 2.00):
+    # told apart by name, device version, handshake answer – and by the answer to 0x12
     units = []
     monkeypatch.setattr(mboot, "open_port", lambda p: units.append(FakeMboot(FLASH)) or units[-1])
+    c.mboot = None
+    c.identity = "ota-FM-1_900"
+    port.bcd_device, port.product = "0200", "FM-1 Update"
+    assert U.midi_mode_state(c) == "yes" and units[-1].commands == [0x12]       # (asked once more)
     other = PortInfo("i2", "o2", "FM-1 Update", None, usb_id="1209:0002", update_mode=True)
     assert U.refuse_in_midi_mode(None, c, other) and units[-1].commands == [0x12]
-    loader = PortInfo("i3", "o3", "Melodee FM-1 Update", None, usb_id="1209:0002", update_mode=True)
     n = len(units)
-    assert not U.refuse_in_midi_mode(None, c, loader) and len(units) == n       # (not even asked)
+    for label, kw in (("Melodee FM-1 Update", {}), ("Felucca Update", {}), ("FM-1 Update", {"bcd_device": "0100"}),
+                      ("FM-1 Update", {"product": "Felucca Update"}), ("FM-1 Update", {"usb_id": "4d4a:4155"})):
+        loader = PortInfo("i3", "o3", label, None, update_mode=True, **{"usb_id": "1209:0002", **kw})
+        assert U.midi_mode_state(c, loader) == "no" and not U.refuse_in_midi_mode(None, c, loader), (label, kw)
+    assert len(units) == n                            # (not even asked)
+    c.identity = "ota-FM-1_015"                       # the active port answered as M-VAVE's loader: no MIDI MODE
+    assert U.midi_mode_state(c) == "no"
+    # looks exactly like MIDI MODE but does not answer 0x12: cannot be told apart → nothing is sent either
+    c.identity = ""
+    monkeypatch.setattr(mboot, "open_port", lambda p: FakeMboot(FLASH, answer_0x12=False))
+    monkeypatch.setattr(mboot.Host, "identify", lambda self, tries=1, timeout=0.1: None)
+    said.clear()
+    assert U.midi_mode_state(c) == "unclear" and U.refuse_in_midi_mode(None, c) and "FM-1 Update" in said[0]
+    running = PortInfo("i4", "o4", "FM-1 SLOOP 3", None, usb_id="1209:0001")
+    assert U.midi_mode_state(c, running) == "no"
     for f, needle in (("ui/firmware_page.py", "_s3ui.refuse_in_midi_mode(parent, ctx)"),
                       ("ui/pages/recovery.py", "sloop3_ui.refuse_in_midi_mode(self, self.ctx, port)")):
         assert needle in (ROOT / "fm1companion" / f).read_text("utf-8"), f
@@ -612,3 +631,47 @@ def test_credits_name_sloop3_and_m_bootloader():
     assert "SLOOP 3" in names and "m-bootloader" in names
     readme = (ROOT / "README.md").read_text("utf-8")
     assert "**SLOOP 3** (isod89" in readme and "m-bootloader" in readme and "Julius" in readme
+
+
+def test_sloop3_unit_is_not_mixed_up_with_the_owners_other_fm1(tmp_path, monkeypatch):
+    """SLOOP 3 shows no USB serial number (hal/fm1/usb.c: the device descriptor's serial index is 0) and answers no
+    update handshake: with two FM-1 known, the profile last seen at this USB port may be the other unit – the owner
+    is asked; nothing is taken over silently. (Seen on the owner's Pi: both units ran Skiff before.)"""
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "d"))
+    monkeypatch.setattr("fm1companion.ui.device.config.save", lambda s: None)
+    from test_pi_hardware import fake_ctx, store_with
+    from types import SimpleNamespace
+    from fm1companion import devices
+    from fm1companion.ui.device import DeviceContext
+    two = [{"id": "a", "name": "FM-1 A", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
+            "usb_path": "3-1.3.1", "hw_revision": "old"},
+           {"id": "b", "name": "FM-1 B", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
+            "usb_path": "3-1.4", "hw_revision": "new"}]
+    port = devices.PortInfo("FM-1 SLOOP 3 32:0", "FM-1 SLOOP 3 32:0", "FM-1 SLOOP 3", 32, usb_id="1209:0001",
+                            usb_path="3-1.3.1", product="FM-1 SLOOP 3", bcd_device="0310")
+    info = S3.Info(2, 5, 48, 0, 0, 0, "3.4.0")
+
+    def run(profiles, answer):
+        store = store_with(tmp_path, profiles)
+        link = SimpleNamespace(hs_identity="", hs_flash=0, closed=False)
+        ctx = fake_ctx(store, port, link=link, answer=answer, changed=SimpleNamespace(emit=lambda: None),
+                       message=SimpleNamespace(emit=lambda m: None), firmware_guess=[], sloop3=None)
+        ctx._assign_profile = lambda: DeviceContext._assign_profile(ctx)
+        DeviceContext._sloop3(ctx, info, link)
+        return ctx, store
+    # two units known, the one at this port last ran Skiff: asked – and without an answer no profile at all
+    ctx, store = run(two, None)
+    assert ctx.asked and ctx.profile is None and store.profiles["a"].firmware == "skiff"
+    assert store.profiles["b"].firmware == "skiff"
+    # the owner says it is B (the unit moved to this port): B becomes SLOOP 3, A stays what it was
+    ctx, store = run(two, lambda cands: next(c for c in cands if c.id == "b"))
+    a, b = store.profiles["a"], store.profiles["b"]
+    assert ctx.profile is b and (b.firmware, b.firmware_version, b.identity) == ("sloop3", "v3.4.0", "")
+    assert a.firmware == "skiff" and b.firmware_history[-1]["how"] == "found" and b.hw_revision == "new"
+    # the profile at this port already is the SLOOP 3 unit: taken without a question
+    known = [dict(two[0], firmware="sloop3", firmware_version="v3.3.7", identity=""), two[1]]
+    ctx, store = run(known, None)
+    assert not ctx.asked and ctx.profile is store.profiles["a"] and store.profiles["a"].firmware_version == "v3.4.0"
+    # only one FM-1 known: it is that one (as for every firmware without a serial number)
+    ctx, store = run([two[0]], None)
+    assert not ctx.asked and ctx.profile is store.profiles["a"] and store.profiles["a"].firmware == "sloop3"
