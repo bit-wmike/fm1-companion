@@ -61,6 +61,52 @@ def midi_mode_state(ctx, port=None) -> str:
     return "yes" if mboot.identify_port(port) is not None else "unclear"
 
 
+def _midi_mode_refusal(st: str) -> tuple[str, str]:
+    """(title, text) of the refusal for MIDI MODE ("yes") or a port that cannot be told apart from it ("unclear")"""
+    if st == "unclear":
+        return (_("Cannot tell what is waiting here"),
+                _("This FM-1 shows up as “FM-1 Update” – the name of m-bootloader's MIDI MODE –, but it did not "
+                  "answer the question who it is. The app cannot tell it apart from MIDI MODE and sends it no "
+                  "firmware. Nothing was written.<br><br>If the FM-1 shows m-bootloader's menu or MIDI MODE: "
+                  "firmware is installed from there with the installer page of that firmware's author. Otherwise "
+                  "unplug the FM-1, switch it off and on, and try again."))
+    return (_("m-bootloader's MIDI MODE, not an update mode"),
+            _("This FM-1 waits in m-bootloader's MIDI MODE. That is not the update mode of an FM-1 firmware: "
+              "m-bootloader answers the same way, but it writes a package differently, and the app has never "
+              "been tried with it. The app sends it no firmware. Nothing was written.<br><br>From MIDI MODE, "
+              "firmware is installed with the installer page of that firmware's author; the whole flash goes back "
+              "with M-Flasher. OCT−, OCT+, PLAY or REC on the FM-1 leave MIDI MODE. “Firmware+” › SLOOP 3 "
+              "explains more."))
+
+
+def running_sloop3_refusal() -> tuple[str, str]:
+    """(title, text): the app's installer cannot start from a running SLOOP 3"""
+    # SLOOP 3 has no update mode a host can ask for (it ignores the update key): said instead of failing later
+    return (_("Not from the running SLOOP 3"),
+            _("This FM-1 runs SLOOP 3, which cannot be switched to an update mode over USB – the installation "
+              "would stop at its first step, with nothing written. The app cannot install firmware on this "
+              "FM-1. Going back to SLOOP 2.8 or M-VAVE's firmware means writing your flash backup back with "
+              "M-Flasher. “Firmware+” › SLOOP 3 explains the way."))
+
+
+def install_blocker(ctx) -> tuple[str, str] | None:
+    """(title, text) when the app's installer cannot install anything on the active device – it runs SLOOP 3, or it
+    waits in m-bootloader's MIDI MODE (or cannot be told apart from it) –, else None. For the state of “Install on
+    active FM-1”: sends nothing and asks nothing (what was read when it connected). install_flow refuses the same
+    cases again (running_sloop3_refusal, refuse_in_midi_mode) – the button is the first line, not the only one."""
+    from ..flash import mboot
+    port = getattr(ctx, "port", None)
+    if port is None:
+        return None
+    if not getattr(port, "update_mode", False):
+        return running_sloop3_refusal() if getattr(ctx, "sloop3", None) is not None else None
+    if getattr(ctx, "mboot", None) is not None:
+        return _midi_mode_refusal("yes")
+    if mboot.port_candidate(port, getattr(ctx, "identity", "")):
+        return _midi_mode_refusal("unclear")      # (the installer would ask it once more – and refuse either way)
+    return None
+
+
 def refuse_in_midi_mode(parent, ctx, port=None) -> bool:
     """the app's installer must not treat m-bootloader's MIDI MODE as an FM-1 update loader: it answers the same
     handshake and has the same USB ID, but writes a package from 0x4000 to the package's end – not a loader's
@@ -69,21 +115,7 @@ def refuse_in_midi_mode(parent, ctx, port=None) -> bool:
     st = midi_mode_state(ctx, port)
     if st == "no":
         return False
-    if st == "unclear":
-        show_error(parent, _("Cannot tell what is waiting here"),
-                   _("This FM-1 shows up as “FM-1 Update” – the name of m-bootloader's MIDI MODE –, but it did not "
-                     "answer the question who it is. The app cannot tell it apart from MIDI MODE and sends it no "
-                     "firmware. Nothing was written.<br><br>If the FM-1 shows m-bootloader's menu or MIDI MODE: "
-                     "firmware is installed from there with the installer page of that firmware's author. Otherwise "
-                     "unplug the FM-1, switch it off and on, and try again."))
-        return True
-    show_error(parent, _("m-bootloader's MIDI MODE, not an update mode"),
-               _("This FM-1 waits in m-bootloader's MIDI MODE. That is not the update mode of an FM-1 firmware: "
-                 "m-bootloader answers the same way, but it writes a package differently, and the app has never "
-                 "been tried with it. The app sends it no firmware. Nothing was written.<br><br>From MIDI MODE, "
-                 "firmware is installed with the installer page of that firmware's author; the whole flash goes back "
-                 "with M-Flasher. OCT−, OCT+, PLAY or REC on the FM-1 leave MIDI MODE. “Firmware+” › SLOOP 3 "
-                 "explains more."))
+    show_error(parent, *_midi_mode_refusal(st))
     return True
 
 
@@ -152,7 +184,10 @@ def notes_html(ctx) -> str:
                    "browser (Chromium or Chrome).")
         + "</li></ul>"
         "<p>" + _("Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). "
-                  "<b>Never run on a real FM-1 by this app.</b>").format(versions=", ".join(S3.CHECKED_VERSIONS))
+                  "<b>On a real FM-1 once, reading only</b> (SLOOP 3 3.4.0, one earlier unit): recognised, its "
+                  "editor connected, a backup read, MIDI MODE recognised. <b>Never on a real FM-1:</b> restoring a "
+                  "backup, the flash backup, anything that writes, a newer unit.").format(
+                      versions=", ".join(S3.CHECKED_VERSIONS))
         + "</p><p>" + " · ".join(
             [a(S3.GUIDE_URL, _("Guide"))] +
             # (the installer page only where the hardware rule has no objection; else the dialog decides)
@@ -197,8 +232,8 @@ class Sloop3Dialog(QDialog):
         steps.setWordWrap(True)
         steps.setTextFormat(Qt.TextFormat.RichText)
         lay.addWidget(steps)
-        honest = QLabel(_("None of this was run on a real FM-1 by this app. The app only reads here; installing is "
-                          "done by the author's page and by M-Flasher."))
+        honest = QLabel(_("The app has run none of these steps on a real FM-1, nor its flash backup below. The app "
+                          "only reads here; installing is done by the author's page and by M-Flasher."))
         honest.setWordWrap(True)
         honest.setProperty("role", "muted")
         lay.addWidget(honest)

@@ -2935,10 +2935,6 @@ msgstr "ninguno (el dispositivo se reconoce al elegir el perfil)"
 msgid "{id} · port {path}"
 msgstr "{id} · puerto {path}"
 
-#: fm1companion/ui/overview.py:221
-msgid "Backup only works with firmwares with editor protocol (Melodee, Skiff, SLOOP)."
-msgstr "La copia de seguridad solo funciona con firmwares con protocolo de editor (Melodee, Skiff, SLOOP)."
-
 #: fm1companion/ui/overview.py:222
 msgid "Connect an FM-1 first."
 msgstr "Conecta primero un FM-1."

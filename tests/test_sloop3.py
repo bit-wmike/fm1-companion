@@ -723,3 +723,125 @@ def test_m_bootloaders_unit_id_names_the_unit(tmp_path, monkeypatch):
         ctx = fake_ctx(store, None, profile=None)
         DeviceContext._unit_by_id(ctx, bad)
         assert ctx.profile is None
+
+
+# ---- the owner's Pi, 2026-11-18 (pi findings 28): "Which FM-1 is this?" answered, the other profile lost its firmware
+
+_TWO_UNITS = [
+    {"id": "o", "name": "FM-1 Orange", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
+     "usb_path": "1-2", "hw_revision": "new", "hw_revision_source": "user", "version_string": "FELUCCA v2.7",
+     "firmware_choice": {"FM-1_900": "skiff"}, "color": "#f67400",
+     "firmware_history": [{"time": 1.0, "firmware": "skiff", "name": "Skiff", "version": "v2.7",
+                           "identity": "FM-1_900", "via_v15": True}]},
+    {"id": "g", "name": "FM-1 Schwarz/Grün", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
+     "usb_path": "3-1.3.1", "hw_revision": "old", "hw_revision_source": "user", "version_string": "FELUCCA v2.7",
+     "firmware_choice": {"FM-1_900": "skiff"}, "color": "#27ae60",
+     "firmware_history": [{"time": 1.0, "firmware": "skiff", "name": "Skiff", "version": "v2.7",
+                           "identity": "FM-1_900"}]}]
+
+
+class _Deaf(InProcess):
+    """the fake SLOOP 3, but its first `drop` INFO answers get lost (a unit that has just come up on the USB bus)"""
+    def __init__(self, drop: int):
+        super().__init__(Fake(version="3.4.0"))
+        self.drop = drop
+
+    def send(self, data):
+        if self.drop and bytes(data) == bytes([0xF0, 0x7D, 0x53, 0x33, 0x01, 0xF7]):
+            self.drop -= 1
+            self.seen.append(bytes(data))
+            return
+        super().send(data)
+
+
+def _plug_in(tmp_path, monkeypatch, usb: str, drop: int = 0, answer: str = "g"):
+    """the real DeviceContext: the SLOOP 3 unit appears at `usb`, the owner answers the question with `answer`.
+    -> (devices.json before, after, the items the question listed, the app log lines, the context)"""
+    pytest.importorskip("PyQt6.QtWidgets")
+    import logging
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PyQt6.QtCore import QEventLoop, QTimer
+    from PyQt6.QtWidgets import QApplication, QInputDialog
+    app = QApplication.instance() or QApplication([])  # noqa: F841
+    from fm1companion import devices
+    from fm1companion.ui import device as D
+    f = tmp_path / f"devices-{usb}-{drop}.json"
+    f.write_text(json.dumps({"profiles": _TWO_UNITS}), "utf-8")
+    devices.ProfileStore(f).save()                      # (as the app writes it: every field)
+    before = f.read_text("utf-8")
+    port = devices.PortInfo("FM-1 SLOOP 3 MIDI 1 32:0", "FM-1 SLOOP 3 MIDI 1 32:0", "FM-1 SLOOP 3", 32,
+                            usb_id="1209:0001", usb_path=usb, product="FM-1 SLOOP 3", bcd_device="0310")
+    monkeypatch.setattr(D, "DEMO", False)
+    monkeypatch.setattr(D, "scan_ports", lambda: [port])
+    monkeypatch.setattr("fm1companion.devices.uboot_present", lambda *a: [])
+    monkeypatch.setattr(D, "MidoTransport", lambda i, o: _Deaf(drop))
+    monkeypatch.setattr(D.config, "save", lambda s: None)
+    items = []
+
+    def get_item(parent, title, text, names, cur, editable):
+        items.append(list(names))
+        return next(n for n in names if n.startswith(dict(o="FM-1 Orange", g="FM-1 Schwarz")[answer])), True
+    monkeypatch.setattr(QInputDialog, "getItem", staticmethod(get_item))
+    lines = []
+
+    class H(logging.Handler):
+        def emit(self, rec):
+            lines.append(rec.getMessage())
+    h = H()
+    logging.getLogger("fm1companion.device").addHandler(h)
+    logging.getLogger("fm1companion.device").setLevel(logging.INFO)
+    ctx = D.DeviceContext()
+    ctx.store = devices.ProfileStore(f)
+    ctx.settings.last_device = ""
+    msgs = []
+    ctx.message.connect(msgs.append)
+    try:
+        import time as _t
+        t0 = _t.time()
+        while _t.time() - t0 < 30 and not any("connected" in m.lower() or "verbunden" in m.lower()
+                                               or "neither" in m or "weder" in m for m in msgs):
+            loop = QEventLoop()
+            QTimer.singleShot(100, loop.quit)
+            loop.exec()
+        ctx.timer.stop()
+    finally:
+        logging.getLogger("fm1companion.device").removeHandler(h)
+    return before, f.read_text("utf-8"), items, lines, ctx
+
+
+def _entry(text: str, pid: str) -> str:
+    return json.dumps(next(p for p in json.loads(text)["profiles"] if p["id"] == pid), sort_keys=True,
+                      ensure_ascii=False)
+
+
+@pytest.mark.parametrize("usb,drop", [("3-1.3.1", 0), ("1-2", 0), ("3-1.3.1", 3), ("1-2", 3)])
+def test_answering_which_fm1_changes_only_the_chosen_profile(tmp_path, monkeypatch, usb, drop):
+    """Seen on the Pi: the SLOOP 3 unit ("FM-1 Schwarz/Grün") was asked about and the owner chose it – afterwards the
+    profile of the unit that was NOT plugged in, "FM-1 Orange", had lost its firmware (`firmware: ""`) although its
+    history says Skiff v2.7. The path: a unit whose first SLOOP 3 INFO answers got lost (drop=3: it has just come
+    up) answers nothing at all – the profile was taken by its USB port alone (the product name "FM-1 SLOOP 3" was
+    not counted as SLOOP 3), and "answers nothing" wiped that profile's firmware. Now: the product name counts, the
+    owner is asked, and an answer of nothing changes no firmware. Orange stays byte for byte as it was."""
+    before, after, items, lines, ctx = _plug_in(tmp_path, monkeypatch, usb, drop)
+    assert _entry(after, "o") == _entry(before, "o")
+    assert items, "the unit contradicts both profiles (SLOOP 3 vs. Skiff): asked"
+    # the question names the firmware by its name and says it is what the unit LAST ran (pi finding 28)
+    from fm1companion.i18n import _
+    assert items[0][:2] == ["FM-1 Orange " + _("(last seen: {firmware})").format(firmware="Skiff 2.7"),
+                            "FM-1 Schwarz/Grün " + _("(last seen: {firmware})").format(firmware="Skiff 2.7")]
+    assert not any("skiff v2.7" in x for x in items[0])
+    g0, g1 = json.loads(_entry(before, "g")), json.loads(_entry(after, "g"))
+    assert ctx.profile is not None and ctx.profile.id == "g"
+    changed = {k for k in g1 if g1[k] != g0.get(k)}
+    assert changed <= {"usb_path", "usb_product", "firmware", "firmware_version", "version_string", "identity",
+                       "firmware_history", "last_seen"}, changed
+    assert g1["usb_path"] == usb and g1["usb_product"] == "FM-1 SLOOP 3"
+    if drop:
+        # it answered nothing: nothing is known about its firmware – nothing is changed (not "unknown")
+        assert (g1["firmware"], g1["firmware_version"], g1["firmware_history"]) == \
+            (g0["firmware"], g0["firmware_version"], g0["firmware_history"])
+    else:
+        assert (g1["firmware"], g1["firmware_version"]) == ("sloop3", "v3.4.0")
+        assert g1["firmware_history"][:-1] == g0["firmware_history"] and g1["firmware_history"][-1]["how"] == "found"
+    # pi finding 28: the pick leaves a "connected" line in the app log, like any other connection
+    assert any(x.startswith("connected:") and "profile g" in x for x in lines), lines
