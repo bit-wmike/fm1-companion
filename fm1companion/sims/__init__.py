@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -409,3 +410,40 @@ class SystemInputs:
     def close(self):
         for n in list(self.open):
             self._close(n)
+
+
+# ---- page load result (QWebEngineLoadingInfo, as plain numbers) ----------------------------------
+LOAD_STARTED, LOAD_STOPPED, LOAD_SUCCEEDED, LOAD_FAILED = 0, 1, 2, 3     # QWebEngineLoadingInfo.LoadStatus
+DOMAIN_NONE, DOMAIN_HTTP_STATUS = 0, 7                                   # QWebEngineLoadingInfo.ErrorDomain
+
+
+def enum_int(value, default: int = -1) -> int:
+    """Number behind a Qt enum value – also for one the installed PyQt6 has no name for (Qt 6.4 hands out
+    the HTTP status domain, PyQt6 6.4 does not list it)."""
+    for get in (lambda v: v.value, int):
+        try:
+            return int(get(value))
+        except (AttributeError, TypeError, ValueError):
+            continue
+    m = re.search(r"-?\d+", str(value))
+    return int(m.group()) if m else default
+
+
+def load_outcome(status: int, domain: int, code: int) -> bool | None:
+    """Did a page load work? True/False, or None while there is nothing to report (started, or stopped
+    without an error).
+
+    Qt 6.4 reports a good load as "succeeded, HTTP status domain (7), code 200" (also for file://), newer Qt
+    as "succeeded, no error domain (0), code 0" or likewise with the HTTP status. A page the server
+    answered with an error (404 …) can come as "succeeded" (the error page was loaded) or as "failed"."""
+    if status == LOAD_STARTED:
+        return None
+    if status == LOAD_FAILED:
+        return False
+    if domain == DOMAIN_HTTP_STATUS:
+        bad = code >= 400
+    else:
+        bad = domain != DOMAIN_NONE
+    if status == LOAD_STOPPED and not bad:
+        return None
+    return not bad

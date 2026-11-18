@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QFileDialog, QHBoxLayout, QIn
 
 from ... import presetlib as pl
 from ..common import (DeviceUndo, confirm, notify, device_tag, flow_row, fs_error_text, heading, icon,
-                      fw_label, safe_folder, same_device, show_error)
+                      device_title, safe_folder, same_device, show_error)
 from . import PageSpec
 from ...i18n import _, ngettext, pgettext
 
@@ -254,10 +254,10 @@ class PresetsPage(QWidget):
         """Status line without a read list (after a device change)."""
         c = self.ctx
         if c.connected:
-            return _("{firmware}: slots not read yet – “Read in” (F5).").format(firmware=fw_label(c.title()))
+            return _("{firmware}: slots not read yet – “Read in” (F5).").format(firmware=device_title(c))
         if getattr(c, "midi_connected", False):
             return _("{firmware}: This firmware has no preset library via USB (MIDI only). "
-                     "You can still search and export your library on the right.").format(firmware=fw_label(c.title()))
+                     "You can still search and export your library on the right.").format(firmware=device_title(c))
         return _("No FM-1 connected – the library on the right can be used anyway.")
 
     def _job(self, title, fn, done, dialog=False, partial=None, cancellable=False, unit=None):
@@ -312,7 +312,7 @@ class PresetsPage(QWidget):
             if self.caps and not self.caps.shared:       # not an error but a property of the firmware
                 self.state.setText(_("{firmware}: no user presets via USB – "
                                      "you can still use the library on the right. Nothing was changed on the FM-1.").format(
-                    firmware=fw_label(self.ctx.title())))
+                    firmware=device_title(self.ctx)))
                 self.empty.setText(pl.refusal_text(self.caps))
                 return
             text = _("<b>{title} failed:</b> {error}").format(title=title, error=msg)
@@ -355,7 +355,7 @@ class PresetsPage(QWidget):
             used = sum(s["used"] for s in slots)
             fav = sum(s["favorite"] for s in slots)
             note, self._note = self._note, ""
-            fw = fw_label(self.ctx.title())
+            fw = device_title(self.ctx)
             summary = (_("{firmware}: {used} of {total} slots used, {fav} favourites.").format(
                            firmware=fw, used=used, total=len(slots), fav=fav) if fav
                        else _("{firmware}: {used} of {total} slots used.").format(firmware=fw, used=used, total=len(slots)))

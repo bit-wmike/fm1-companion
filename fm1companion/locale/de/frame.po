@@ -1650,3 +1650,7 @@ msgstr "Firmware für ein RP2040-Board, die ein FM-1 erreicht, das über USB nic
 #: fm1companion/diag.py
 msgid "talks to the chip's ROM boot mode for recovery stage 2; not bundled – the Unbricker downloads one fixed version, and only after you agree"
 msgstr "spricht mit dem ROM-Bootmodus des Chips für die Rettung Stufe 2; nicht beigelegt – der Unbricker lädt eine feste Version herunter, und nur nachdem du zugestimmt hast"
+
+#, python-brace-format
+msgid "The app cannot write to {folders}. It uses a temporary folder for this run: what it stores there (your device profiles, downloaded editors and tools, the sample index, the record of firmware installations) is gone when you quit. Better not install firmware like this."
+msgstr "Die App kann nicht in {folders} schreiben. Für diesen Lauf nimmt sie einen temporären Ordner: Was sie dort ablegt (deine Geräteprofile, geladene Editoren und Werkzeuge, das Sample-Verzeichnis, das Protokoll der Firmware-Installationen), ist nach dem Beenden weg. Installiere so besser keine Firmware."

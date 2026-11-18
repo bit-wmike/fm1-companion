@@ -2881,8 +2881,8 @@ msgid "The FM-1 is waiting in update mode – finish the installation first (pag
 msgstr "Das FM-1 wartet im Update-Modus – erst die Installation abschließen (Seite „Rettung“)."
 
 #: fm1companion/ui/overview.py:285
-msgid "Firmware unknown – please choose (note above) or “To the firmwares” (Firmware+)."
-msgstr "Firmware unbekannt – bitte wählen (Hinweis oben) oder „Zu den Firmwares“ (Firmware+)."
+msgid "Firmware unknown – please choose it under “Device” (Firmware: “change”) or go “To the firmwares” (Firmware+)."
+msgstr "Firmware unbekannt – bitte unter „Gerät“ wählen (Firmware: „ändern“) oder „Zu den Firmwares“ (Firmware+) gehen."
 
 #: fm1companion/ui/overview.py:287
 msgid "Firmware unknown – a version check is not possible like this."

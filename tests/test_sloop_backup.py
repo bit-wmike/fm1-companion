@@ -423,3 +423,19 @@ def test_grimm_and_hortator_recognised_without_felucca_protocol():
     Hortator shares Felucca's FM-1_900 and is asked over its own INFO, ui/device.py hortator_info)"""
     from fm1companion import firmware
     assert firmware.guess_firmware("FM-1_966")[0] in ("gr-mm", "")       # ("" if this machine remembered it otherwise)
+
+
+def test_every_saved_backup_is_in_the_app_log(tmp_path, caplog):
+    """A backup made by Studio › "Fetch from FM-1" left no line in the app's log (only "Back up now" did, through
+    its notice). The line is written where every backup is saved."""
+    import logging
+    dev, link, _ = sloop()
+    with caplog.at_level(logging.INFO, logger="fm1companion.backup"):
+        p = autobackup.capture_to_file(link, tmp_path, None, "sloop", "FELUCCA SLOOP 2.8.3", "fetched for the studio",
+                                       "manuell")
+    lines = [r.getMessage() for r in caplog.records if r.name == "fm1companion.backup"]
+    assert len(lines) == 1 and lines[0].startswith(f"Backup saved: {p.name} (manuell, firmware sloop FELUCCA SLOOP 2.8.3, ")
+    assert "parts" in lines[0]
+    src = (Path(autobackup.__file__).parent / "ui/pages/studio.py").read_text("utf-8")
+    fetch = src.split("def fetch_from_device", 1)[1].split("\n    def ", 1)[0]
+    assert "AB.capture_to_file(" in fetch              # the Studio's fetch goes through it

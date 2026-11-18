@@ -377,19 +377,29 @@ class VersionCheck:
     message: str = ""
 
 
-def check_versions(twin: str, device: str = "", backup: str = "", firmware: str = "Melodee") -> VersionCheck:
-    """Compares the twin's firmware with the device's (INFO) and the backup's -> warning."""
+def check_versions(twin: str, device: str = "", backup: str = "", firmware: str = "Melodee",
+                   missing: str = "") -> VersionCheck:
+    """Compares the twin's firmware with the device's (INFO) and the backup's -> warning.
+
+    Each difference is said once: device and backup of the same version share one sentence, and a version for which
+    pick_build already said "there is no studio twin" (missing = Studio.wanted) is not named again – the studio
+    banner said the same thing three times after "Fetch from the FM-1" with a Skiff 2.7 (twin 2.2)."""
     t, d, b = fw_version(firmware, twin), fw_version(firmware, device), fw_version(firmware, backup)
+    said = fw_version(firmware, missing) if missing else ""
     msgs = []
-    if d and d != t:
+    if d and d != t and d == b and d != said:
+        msgs.append(_("The studio runs with {firmware} {twin}, your FM-1 and the backup have {device} – sound may "
+                      "differ.").format(firmware=firmware, twin=t, device=d))
+    elif d and d != t and d != said:
         msgs.append(_("The studio runs with {firmware} {twin}, your FM-1 has {device} – sound may differ.").format(
             firmware=firmware, twin=t, device=d))
-    if b and b != t:
+    if b and b != t and b != d and b != said:
         msgs.append(_("The backup comes from {firmware} {backup}, the studio runs with {twin} – sound may differ.").format(
             firmware=firmware, backup=b, twin=t))
     if firmware.lower() == "melodee" and any(levels_changed(t, x) for x in (d, b) if x and x != t):
         msgs.append(LEVELS_1_6_0)
-    return VersionCheck(t, d, b, not msgs, " ".join(msgs))
+    differs = bool((d and d != t) or (b and b != t))      # (ok stays "no difference", whatever was left unsaid)
+    return VersionCheck(t, d, b, not differs, " ".join(msgs))
 
 
 # Melodee 1.6.0 (docs/RELEASE_1.6.0.md "Sound and levels"): the mix sounds different than up to 1.6.0-rc.8
@@ -765,6 +775,7 @@ class Studio:
         self.backend = backend
         self.build = backend.build
         self.warning = warning                       # the chosen build does not match exactly (pick_build)
+        self.wanted = ""                             # … and the version that was asked for (the warning names it)
         self.info: dict = {}
         self.rejected: list[int] = []                # backup parts the twin rejected while loading
         self.last_write: dict = {"written": [], "unchanged": []}   # what the last write_to_device did
@@ -785,6 +796,7 @@ class Studio:
         else:
             be = backend(build, **kw)
         st = cls(be, warning)
+        st.wanted = fw_version(firmware, version) if warning else ""
         st.info = be.start(flash)
         return st
 

@@ -4763,3 +4763,29 @@ msgstr "FM1 Open: Lass das Kabel stecken. Das FM-1 lädt jedes gespeicherte Proj
 
 msgid "The automatic FluidSynth service is switched on for all users of this computer, so it was stopped and masked for your user, and the sound restarted – HDMI/speakers should show up as outputs again. FluidSynth stays installed; the app's sound module starts it by itself when you use it. Undo: {command}"
 msgstr "Der automatische FluidSynth-Dienst ist für alle Benutzer dieses Rechners eingeschaltet. Deshalb wurde er gestoppt und für deinen Benutzer maskiert, und der Ton wurde neu gestartet – HDMI/Lautsprecher sollten wieder als Ausgänge erscheinen. FluidSynth bleibt installiert; das Klangmodul der App startet es selbst, wenn du es benutzt. Rückgängig: {command}"
+
+#, python-brace-format
+msgid "The studio runs with {firmware} {twin}, your FM-1 and the backup have {device} – sound may differ."
+msgstr "Studio läuft mit {firmware} {twin}, dein FM-1 und das Backup haben {device} – Klang kann abweichen."
+
+#, python-brace-format
+msgid "{name} (no profile with this name)"
+msgstr "{name} (kein Profil mit diesem Namen)"
+
+msgid "Its keys do not play the twin."
+msgstr "Seine Tasten spielen den Zwilling nicht."
+
+msgid "Its keys play the twin because you switched that on."
+msgstr "Seine Tasten spielen den Zwilling, weil du das eingeschaltet hast."
+
+#, python-brace-format
+msgid "{firmware} has no editor protocol – the app can neither read its projects nor write projects to this FM-1."
+msgstr "{firmware} hat kein Editor-Protokoll – die App kann weder ihre Projekte lesen noch Projekte auf dieses FM-1 schreiben."
+
+#, python-brace-format
+msgid "The twin runs {twin} – it does not belong to the active FM-1 “{name}” ({firmware}). Nothing can be fetched from this FM-1 or written back to it."
+msgstr "Der Zwilling läuft mit {twin} – er gehört nicht zum aktiven FM-1 „{name}“ ({firmware}). Von diesem FM-1 lässt sich nichts holen und nichts darauf zurückschreiben."
+
+#, python-brace-format
+msgid "The active FM-1 does not run the twin's firmware ({twin}), so its keys do not play the twin by themselves. Tick the box if you want that anyway – it holds for this device until you quit."
+msgstr "Auf dem aktiven FM-1 läuft nicht die Firmware des Zwillings ({twin}), deshalb spielen seine Tasten den Zwilling nicht von selbst. Setz den Haken, wenn du das trotzdem willst – er gilt für dieses Gerät, bis du die App beendest."

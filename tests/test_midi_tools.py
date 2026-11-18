@@ -392,3 +392,39 @@ def test_fluid_process_protocol():
     assert procs[0].closed_with.endswith("quit\n") and not fs.running
     time.sleep(0.05)
     assert any("warning" in x for x in fs.log)
+
+
+# ---- MIDI port lists: Raspberry Pi OS Bookworm (mido/rtmidi) lists every port twice ----
+class _DoubledMido:
+    INS = ["Midi Through:Midi Through Port-0 14:0", "FM-1 KARMA:FM-1 KARMA MIDI 1 32:0", "Keys:Keys MIDI 1 28:0"]
+
+    @classmethod
+    def get_input_names(cls):
+        return [n for n in cls.INS for _ in (0, 1)]
+
+    @classmethod
+    def get_output_names(cls):
+        return [n for n in reversed(cls.INS) for _ in (0, 1)]
+
+
+def test_port_lists_name_each_port_once(monkeypatch, capsys):
+    monkeypatch.setitem(sys.modules, "mido", _DoubledMido)
+    from fm1companion import app, diag, syscheck
+    ins, outs, err = diag.midi_ports()
+    assert (ins, outs, err) == (_DoubledMido.INS, list(reversed(_DoubledMido.INS)), "")      # once, order kept
+    assert syscheck.midi_ports() == sorted(_DoubledMido.INS)
+    monkeypatch.setattr(diag, "check_deps", lambda: [])
+    app.check()                                         # fm1-companion --check (also the end of install.sh)
+    out = capsys.readouterr().out
+    assert out.count("FM-1 KARMA MIDI 1") == 1, out
+
+
+def test_midi_page_port_list_names_each_port_once(monkeypatch):
+    pytest.importorskip("PyQt6.QtWidgets")
+    monkeypatch.setitem(sys.modules, "mido", _DoubledMido)
+    from fm1companion.ui.pages import midi
+    assert midi.mido_names(False)[0] == _DoubledMido.INS
+    assert midi.mido_names(True)[0] == list(reversed(_DoubledMido.INS))
+    from fm1companion import sims
+    names = sims.MidiInputs.available() if hasattr(sims, "MidiInputs") else None
+    assert names is None or len(names) == len(set(names))
