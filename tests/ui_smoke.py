@@ -136,5 +136,8 @@ if errors:
     print(f"{len(errors)} ERRORS:")
     for e in errors:
         print(e)
-    sys.exit(1)
-print("no errors")
+else:
+    print("no errors")
+sys.stdout.flush()
+sys.stderr.flush()
+os._exit(1 if errors else 0)      # without Qt cleanup: WebEngine crashes at interpreter exit otherwise (exit code 139)

@@ -6,7 +6,7 @@ la barra lateral, ordenado en *Dispositivo*, *Sonido*, *Música*, *Datos y herra
 Todo lo que tiene que ver con el firmware – buscarlo, probarlo, instalarlo, cambiar de versión, volver al original – está en
 un solo lugar: [Firmware+](app://page/discover) en *Datos y herramientas*. Si hay una actualización, ya se muestra en el
 [Resumen](app://page/overview). Si el FM-1 se queda atascado en el modo de actualización, te ayuda la página
-[Rescate](app://page/recovery) (también en *Datos y herramientas*).
+[Recuperación](app://page/recovery) (también en *Datos y herramientas*).
 
 ## 1. Conecta el FM-1
 

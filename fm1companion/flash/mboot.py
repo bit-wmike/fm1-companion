@@ -120,7 +120,8 @@ class Info:
     @property
     def revision(self) -> str:
         """"new" (UCUN UC25HQ80), "old" (Puya P25Q80H) or "unknown" – read from the chip, not guessed"""
-        return {JEDEC_NEW: "new", JEDEC_OLD: "old"}.get(self.jedec & 0xFFFFFF, "unknown")
+        from .. import hardware
+        return hardware.revision_of_id(self.jedec & 0xFFFFFF)
 
     @property
     def chip(self) -> str:

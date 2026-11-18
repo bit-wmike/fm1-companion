@@ -10,6 +10,9 @@
 #   * Updater.cancelled(): checked only before the first UPGRADE is sent (the one safe cancel point)
 #   * parse_identity() also accepts M-VAVE Open identities (FM1_OFFICIAL_OPEN, FM1_COMMUNITY_n), as web/fm1ota.js
 #   * Updater.verify() records the port the device came back on (last_port), so resources go to the same device
+#   * parse_identity() reads the identity text up to its first zero and the flash's JEDEC ID from bytes 24..26
+#     (felucca-bsp#29, fm1-base 19bf320: AMB-1 1.3.1, LOOM-8 0.13 … send it) into Identity.flash – before, such an
+#     answer was taken for no FM-1 at all
 """Install a Melodee package (.fwsc) on an FM-1 over USB-MIDI.
 
 The same update as the web installer (web/fm1ota.js): step 1, the
@@ -120,8 +123,9 @@ def parse_request(pkt):
 
 
 class Identity:
-    def __init__(self, text, model, version):
+    def __init__(self, text, model, version, flash=0):
         self.text, self.model, self.version = text, model, version
+        self.flash = flash          # FM1C: the flash's JEDEC ID from bytes 24..26 of the answer, 0 = not sent
 
     @property
     def loader(self):
@@ -134,11 +138,19 @@ def parse_identity(pkt):
     d = unpack7(pkt[1:-1])
     if len(d) != 34 or d[:3] != b"\x00\x59\x11":
         return None
-    txt = d[6:33].rstrip(b"\0").decode("latin-1")
+    # FM1C: the text ends at its first zero; bytes 24..26 may then carry the flash's JEDEC ID (zeros between)
+    raw = d[6:33]
+    txt = raw.split(b"\0", 1)[0].decode("latin-1")
+    tail = raw[len(txt):]
+    flash = 0
+    if len(txt) < 24 and any(tail[:24 - len(txt)]):
+        return None                                                  # (something else than zeros before byte 24)
+    if len(txt) < 24:
+        flash = int.from_bytes(raw[24:27], "big")
     if re.fullmatch(r"FM1_(OFFICIAL_OPEN|COMMUNITY_\d+)", txt):      # FM1C: M-VAVE Open (web/fm1ota.js)
-        return Identity(txt, "FM-1-OPEN", 0)
+        return Identity(txt, "FM-1-OPEN", 0, flash)
     m = re.fullmatch(r"([^_]+)_(\d+)", txt)
-    return Identity(txt, m[1], int(m[2])) if m else None
+    return Identity(txt, m[1], int(m[2]), flash) if m else None
 
 
 # --------------------------------------------------------------- package ---

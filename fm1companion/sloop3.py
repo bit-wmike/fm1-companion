@@ -417,29 +417,14 @@ def editor_fits(version: str) -> bool:
 
 
 # ------------------------------------------------------ hardware revision ---
-# FM-1s sold from late 2026 have another flash chip (UCUN UC25HQ80, JEDEC 0xB36014; the M-VAVE logo on the front).
-# SLOOP 3 takes the chip's ID in its code but was not tried on it, and m-bootloader – the only way to install
-# SLOOP 3 – is little tested there: one such unit did not start after m-bootloader was installed (m-bootloader's
-# README, SLOOP 3's installer page).
-JEDEC_OLD, JEDEC_NEW = 0x856014, 0xB36014
-
+# The newer FM-1 (flash UCUN UC25HQ80, JEDEC 0xB36014, logo on the front): everything about it is the hardware
+# module's business (hardware.py, data/hardware.json: the rows "sloop3" and "m-bootloader" are "risky"); the plan's
+# rule is flash/planner.chip_check. ui/sloop3_ui.py asks those – there is no check of its own here.
 
 def revision_of(profile) -> str:
-    """"new" | "old" | "unknown" for a device profile – from the app's hardware module if it is there
-    (fm1companion/hardware.py: revision(profile)), else from the profile's own field, else unknown."""
+    """"new" | "old" | "unknown" for a device profile (hardware.revision)"""
+    from . import hardware
     try:
-        from . import hardware  # type: ignore[attr-defined]
-        r = hardware.revision(profile)
-        if r in ("new", "old", "unknown"):
-            return r
-    except Exception:  # noqa: BLE001 – no such module (yet), or it could not tell
-        pass
-    for field in ("hardware_revision", "revision", "hardware"):
-        v = str(getattr(profile, field, "") or "").lower()
-        if v in ("new", "old"):
-            return v
-    return "unknown"
-
-
-def revision_of_jedec(jedec: int) -> str:
-    return {JEDEC_NEW: "new", JEDEC_OLD: "old"}.get(jedec & 0xFFFFFF, "unknown")
+        return hardware.revision(profile)
+    except Exception:  # noqa: BLE001 – a profile of an unexpected kind: unknown, never "old"
+        return hardware.UNKNOWN

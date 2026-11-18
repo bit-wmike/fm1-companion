@@ -47,7 +47,7 @@ def no_backup_reason(ctx) -> str:
     if ctx.port is None:
         return _("No FM-1 connected. Please connect an FM-1 via USB.")
     if getattr(ctx, "protocol", "") == "update":
-        return _("The FM-1 is in update mode – finish the installation first (page “Rescue”), then back up.")
+        return _("The FM-1 is in update mode – finish the installation first (page “Recovery”), then back up.")
     if getattr(ctx, "midi_connected", False):
         from .device import firmware_name
         fw = firmware_name(ctx.firmware_key) or _("The running firmware")

@@ -56,7 +56,7 @@ Lo que conviene saber sobre el paso por V15:
 * Si el cambio se detiene tras el paso por V15 (cable, alimentación, cancelación), el FM-1 funciona con la V15
   original. La app recuerda el destino: [Firmware+ › Instalar y versiones](app://page/firmware) muestra
   *Continuar: instalar …*; el paso por V15 no se repite. Si se detuvo *durante* un paso, termínalo primero en la página
-  [Rescate](app://page/recovery).
+  [Recuperación](app://page/recovery).
 * Los expertos pueden marcar en el plan *Experto: instalar directamente sin el paso por V15*. Está desactivado por
   defecto, no se recuerda y el plan advierte de que no es el punto de partida que esperan la mayoría de los autores
   de firmware. No hay ningún ajuste para ello.
@@ -69,6 +69,41 @@ Lo que conviene saber sobre el paso por V15:
 * Los archivos y actualizadores oficiales están disponibles en M-VAVE: <https://www.m-vave.com/download>.
 * El estado actual del firmware oficial y actualizadores alternativos (también para Linux) se recopilan en
   [awesome-fm-1](https://github.com/cicloid/awesome-fm-1).
+
+## FM-1 más reciente (logo en el frontal)
+
+Los FM-1 vendidos desde finales de 2026 – los reconoces por el **logo de M-VAVE impreso en el frontal** – llevan otro
+chip de memoria (UCUN UC25HQ80 en lugar del chip Puya). No tienen ningún defecto, pero las versiones de firmware
+anteriores no conocen el chip. En una unidad así **no guardan nada**, y la mayoría **ya no se pueden actualizar ni
+sustituir**: el FM-1 se queda atascado en esa versión hasta que se vuelve a escribir el firmware original en modo de
+arranque ROM ([Modo de actualización y rescate](help:03-update-modus), Etapa 2).
+
+Lo que hace la app:
+
+* Te pregunta **una vez por dispositivo**: «¿Tu FM-1 tiene el logo de M-VAVE en el frontal?» (Sí / No / No lo sé).
+  La app no puede leer el chip por MIDI. Puedes cambiar la respuesta en las páginas *Dispositivos* (botón
+  *Unidad …*) y *Resumen*.
+* En una **unidad más reciente** no instala ninguna versión que no conozca el chip: el plan lo dice y nombra la
+  primera versión que funciona. No hay ninguna opción de experto para esto.
+* Si la app **no sabe** qué unidad tienes, una versión así solo se instala si confirmas en el plan que tu FM-1 no
+  tiene logo en el frontal.
+* En una **unidad anterior** no cambia nada.
+
+Primeras versiones que conocen el chip más reciente (leído en el código de los firmwares, a 17 de noviembre de 2026):
+Melodee 1.6.0, Skiff 2.2, SLOOP 2.8.5, KARMA 3.0.4, JIANT FM V10.6z, Felucca 1.8.2, ChoralRoot 0.29.1,
+CoralFlower 0.7, X0X 1.2.1, FoMni 0.4.1, AMB-1 1.3.1, LOOM-8 0.13, Hortator 1.0.1, TransitFM1 0.1.4. Sin ninguna
+versión publicada conocida: ORBIT, gr!mm. No probados en este chip según sus autores: m-bootloader (una unidad así no
+arrancó después) y SLOOP 3, que lo necesita. Para el resto de firmwares del catálogo la app no lo sabe – entonces
+trata una unidad más reciente como «no compatible».
+
+Otras formas de saber qué chip tienes: **M-Flasher** lo muestra en *Device info* (FLASH CHIP: `0xB36014` es el más
+reciente, `0x856014` el anterior), **m-bootloader** lo muestra en su menú, y la recuperación (Etapa 2) lo lee en modo de
+arranque ROM – la app lo guarda entonces por sí sola para el dispositivo.
+
+Sinceramente: **nada de esto se ha ejecutado con esta app en un FM-1 más reciente.** El V15 original es el camino de
+vuelta que nombran los autores de Felucca, ChoralRoot, TransitFM1 y de la herramienta de rescate para estas unidades;
+nadie ha dejado escrito si el paquete V16 funciona en ellas. La herramienta de rescate incluida
+(MvaveFM1Unbricker 1.2.1) conoce ambos chips.
 
 ## Conviene saber
 
@@ -92,7 +127,7 @@ instalación empieza pero no termina. Por eso la app detecta un hub delante del 
   tiene una respuesta en camino a la vez;
 * si la conexión se corta mientras escribe, espera al **mismo** FM-1 en modo de actualización y vuelve a empezar
   la escritura (hasta 3 veces) – solo con el cargador que corresponde al paquete, igual que *Terminar la
-  instalación* en la página [Rescate](app://page/recovery). Todas las comprobaciones de seguridad siguen igual.
+  instalación* en la página [Recuperación](app://page/recovery). Todas las comprobaciones de seguridad siguen igual.
 
 Ajustes › *Modo USB cuidadoso al flashear*: automático (predeterminado), siempre o nunca.
 

@@ -74,6 +74,10 @@ class FirmwareSpec:
     # the author's web installer page naming the current package and its SHA-256 (``const meta = {…}``): a newer
     # version than the pinned ones is offered with the checksum from there (as a release's SHA256SUMS)
     pages_meta: str = ""
+    # the flash chips the firmware's own firmware.json names (fm1-base docs/FIRMWARE-JSON.md `hardware.flash`, JEDEC
+    # IDs in upper-case hex) and the version it was read at – for a firmware outside data/hardware.json
+    flash: list[str] = field(default_factory=list)
+    flash_tag: str = ""
 
     @property
     def url(self) -> str:

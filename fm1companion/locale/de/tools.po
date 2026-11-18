@@ -4,6 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FM-1 Companion\n"
 "Language: de\n"
+"X-Language-Name: Deutsch\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -2040,8 +2041,8 @@ msgid "Welcome to the {suite}"
 msgstr "Willkommen in der {suite}"
 
 #: fm1companion/ui/wizard.py:33
-msgid "Everything is set up in a minute. You can open the wizard again later via Help › Setup wizard."
-msgstr "In einer Minute ist alles eingerichtet. Du kannst den Assistenten später über Hilfe › Einrichtungs-Assistent wieder öffnen."
+msgid "Everything is set up in a minute. You can open this assistant again later via Help › Setup assistant …"
+msgstr "In einer Minute ist alles eingerichtet. Du kannst den Assistenten später über Hilfe › Einrichtungs-Assistent … wieder öffnen."
 
 #: fm1companion/ui/wizard.py:36
 msgid "The suite takes care of everything around your M-VAVE FM-1: changing firmware, backups, sounds and presets, samples, MIDI, simulator and recording."
@@ -2151,7 +2152,7 @@ msgid "<b>Found:</b> {port} – {firmware}"
 msgstr "<b>Gefunden:</b> {port} – {firmware}"
 
 #: fm1companion/ui/wizard.py:230
-msgid "An FM-1 is waiting in <b>update mode</b>. After the wizard, continue on the page “Recovery” – there the interrupted installation is completed."
+msgid "An FM-1 is waiting in <b>update mode</b>. After this assistant, continue on the page “Recovery” – there the interrupted installation is completed."
 msgstr "Ein FM-1 wartet im <b>Update-Modus</b>. Nach dem Assistenten geht es auf der Seite „Rettung“ weiter – dort wird die unterbrochene Installation abgeschlossen."
 
 #: fm1companion/ui/wizard.py:234

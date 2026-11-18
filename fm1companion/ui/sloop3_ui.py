@@ -27,38 +27,45 @@ MBOOT_RELEASES = S3.MBOOT_URL + "/releases/latest"
 
 def revision(ctx) -> tuple[str, str]:
     """-> ("new" | "old" | "unknown", where the answer comes from: "chip" = read from the flash chip in MIDI MODE,
-    "profile" = what the app knows about this device, "" = nothing)"""
+    "profile" = what is recorded for this device (hardware.py), "" = nothing)"""
+    from .. import hardware
     mb = getattr(ctx, "mboot", None)
-    if mb is not None and mb.revision != "unknown":
-        return mb.revision, "chip"
-    prof = getattr(ctx, "profile", None)
-    r = S3.revision_of(prof) if prof is not None else "unknown"
-    return r, ("profile" if r != "unknown" else "")
+    if mb is not None and hardware.revision_of_id(mb.jedec) != hardware.UNKNOWN:
+        return hardware.revision_of_id(mb.jedec), "chip"
+    r = S3.revision_of(getattr(ctx, "profile", None))
+    return r, ("profile" if r != hardware.UNKNOWN else "")
+
+
+def chip_plan(ctx):
+    """the newer-FM-1 part of an installation plan for SLOOP 3 on this device – the app's one rule for it
+    (flash/planner.chip_check with hardware.json's rows; blockers for a newer unit, the confirmation "no_logo" when
+    the revision is not known)"""
+    from .. import firmware
+    from ..flash import planner
+    rev, _src = revision(ctx)
+    t = planner.Target.from_spec(firmware.spec(S3.KEY), tag="v" + S3.CHECKED_VERSIONS[-1])
+    return planner.chip_check(rev if rev in ("new", "old") else "", t)
 
 
 def revision_text(ctx) -> tuple[str, str]:
     """-> (level "bad" | "warn" | "ok", the sentence about this FM-1's hardware revision and SLOOP 3)"""
+    from .. import hardware
     rev, src = revision(ctx)
     mb = getattr(ctx, "mboot", None)
-    if rev == "new":
-        how = (_("Its flash chip says so itself ({chip}).").format(chip=mb.chip) if src == "chip" and mb is not None
-               else _("That is what the app knows about this device."))
-        return "bad", _(
-            "<b>This FM-1 is the newer hardware revision</b> (flash chip UCUN UC25HQ80, M-VAVE logo on the front). "
-            "{how} <b>Do not install m-bootloader or SLOOP 3 on it for now:</b> SLOOP 3 has not been tried on this "
-            "revision, m-bootloader is little tested on it, and its author reports one such FM-1 that did not start "
-            "any more after m-bootloader was installed. The app does not help with this installation on this "
-            "device.").format(how=how)
-    if rev == "old":
-        how = (_("Its flash chip says so itself ({chip}).").format(chip=mb.chip) if src == "chip" and mb is not None
-               else _("That is what the app knows about this device."))
-        return "ok", _("This FM-1 is the older hardware revision (flash chip Puya P25Q80H), the one m-bootloader and "
-                       "SLOOP 3 were tried on by their authors. {how}").format(how=how)
-    return "warn", _(
-        "<b>The app does not know this FM-1's hardware revision.</b> FM-1s sold from late 2026 (flash chip UCUN "
-        "UC25HQ80, <b>M-VAVE logo on the front</b>) are a risk: SLOOP 3 has not been tried on them, and one such FM-1 "
-        "did not start any more after m-bootloader was installed. Look at your FM-1 before you go on. Sure sign: "
-        "M-Flasher shows the FLASH CHIP – <code>0x856014</code> is the older one, <code>0xB36014</code> the newer.")
+    how = (_("Its flash chip says so itself ({chip}).").format(chip=mb.chip) if src == "chip" and mb is not None
+           else _("That is what the app knows about this device.") if src else "")
+    plan = chip_plan(ctx)
+    m_boot = hardware.support("m-bootloader").status
+    if plan.blockers or (rev == "new" and m_boot != hardware.YES):
+        return "bad", " ".join(plan.blockers) + " " + how + " " + _(
+            "<b>Do not install m-bootloader or SLOOP 3 on it for now.</b> The app does not offer the installer page "
+            "for this device.")
+    if "no_logo" in plan.confirmations or (rev != "old" and m_boot != hardware.YES):
+        return "warn", " ".join(plan.warnings) + " " + _(
+            "Sure sign: M-Flasher shows the FLASH CHIP – <code>0x856014</code> is the earlier one, "
+            "<code>0xB36014</code> the newer.")
+    return "ok", _("This FM-1 is an earlier unit (flash chip Puya P25Q80H), the one m-bootloader and SLOOP 3 were "
+                   "tried on by their authors. {how}").format(how=how)
 
 
 # --------------------------------------------------------- Firmware+ entry ---
@@ -143,7 +150,7 @@ class Sloop3Dialog(QDialog):
         honest.setWordWrap(True)
         honest.setProperty("role", "muted")
         lay.addWidget(honest)
-        self.chk = QCheckBox(_("My FM-1 has no M-VAVE logo on the front (older hardware revision)"))
+        self.chk = QCheckBox(_("My FM-1 has no M-VAVE logo on the front (an earlier unit)"))
         self.chk.setObjectName("sloop3_confirm_old")
         self.chk.setVisible(level == "warn")
         self.chk.toggled.connect(lambda _on: self._update())
@@ -182,7 +189,7 @@ class Sloop3Dialog(QDialog):
         self.b_installer.setEnabled(ok)
         self.b_installer.setToolTip(
             _("Opens {url} in your browser. The app itself installs nothing.").format(url=S3.INSTALLER_URL) if ok else
-            _("Not offered for the newer hardware revision.") if self.level == "bad" else
+            _("Not offered for the newer FM-1 (logo on the front).") if self.level == "bad" else
             _("First confirm above which FM-1 this is."))
         in_midi = getattr(self.ctx, "mboot", None) is not None
         self.b_backup.setEnabled(in_midi)

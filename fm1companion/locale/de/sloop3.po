@@ -263,20 +263,6 @@ msgstr "Das sagt sein Flash-Chip selbst ({chip})."
 msgid "That is what the app knows about this device."
 msgstr "Das ist, was die App über dieses Gerät weiß."
 
-#: fm1companion/ui/sloop3_ui.py:46
-#, python-brace-format
-msgid "<b>This FM-1 is the newer hardware revision</b> (flash chip UCUN UC25HQ80, M-VAVE logo on the front). {how} <b>Do not install m-bootloader or SLOOP 3 on it for now:</b> SLOOP 3 has not been tried on this revision, m-bootloader is little tested on it, and its author reports one such FM-1 that did not start any more after m-bootloader was installed. The app does not help with this installation on this device."
-msgstr "<b>Dieser FM-1 ist die neuere Hardware-Revision</b> (Flash-Chip UCUN UC25HQ80, M-VAVE-Logo auf der Vorderseite). {how} <b>Installiere darauf vorerst weder m-bootloader noch SLOOP 3:</b> SLOOP 3 wurde auf dieser Revision nicht ausprobiert, m-bootloader ist dort wenig getestet, und sein Autor berichtet von einem solchen FM-1, der nach der Installation von m-bootloader nicht mehr startete. Die App hilft bei dieser Installation auf diesem Gerät nicht."
-
-#: fm1companion/ui/sloop3_ui.py:55
-#, python-brace-format
-msgid "This FM-1 is the older hardware revision (flash chip Puya P25Q80H), the one m-bootloader and SLOOP 3 were tried on by their authors. {how}"
-msgstr "Dieser FM-1 ist die ältere Hardware-Revision (Flash-Chip Puya P25Q80H) – die, auf der m-bootloader und SLOOP 3 von ihren Autoren ausprobiert wurden. {how}"
-
-#: fm1companion/ui/sloop3_ui.py:57
-msgid "<b>The app does not know this FM-1's hardware revision.</b> FM-1s sold from late 2026 (flash chip UCUN UC25HQ80, <b>M-VAVE logo on the front</b>) are a risk: SLOOP 3 has not been tried on them, and one such FM-1 did not start any more after m-bootloader was installed. Look at your FM-1 before you go on. Sure sign: M-Flasher shows the FLASH CHIP – <code>0x856014</code> is the older one, <code>0xB36014</code> the newer."
-msgstr "<b>Die App kennt die Hardware-Revision dieses FM-1 nicht.</b> FM-1, die ab Ende 2026 verkauft wurden (Flash-Chip UCUN UC25HQ80, <b>M-VAVE-Logo auf der Vorderseite</b>), sind ein Risiko: SLOOP 3 wurde darauf nicht ausprobiert, und ein solcher FM-1 startete nach der Installation von m-bootloader nicht mehr. Sieh dir deinen FM-1 an, bevor du weitermachst. Sicheres Zeichen: M-Flasher zeigt den FLASH CHIP – <code>0x856014</code> ist der ältere, <code>0xB36014</code> der neuere."
-
 #: fm1companion/ui/sloop3_ui.py:72
 msgid "SLOOP 3 – public beta"
 msgstr "SLOOP 3 – öffentliche Beta"
@@ -371,10 +357,6 @@ msgstr "<b>Zurück zu SLOOP 2.8 oder zur Firmware von M-VAVE:</b> das Flash-Back
 msgid "None of this was run on a real FM-1 by this app. The app only reads here; installing is done by the author's page and by M-Flasher."
 msgstr "Nichts davon wurde von dieser App auf einem echten FM-1 ausgeführt. Die App liest hier nur; installiert wird von der Seite des Autors und von M-Flasher."
 
-#: fm1companion/ui/sloop3_ui.py:146
-msgid "My FM-1 has no M-VAVE logo on the front (older hardware revision)"
-msgstr "Mein FM-1 hat kein M-VAVE-Logo auf der Vorderseite (ältere Hardware-Revision)"
-
 #: fm1companion/ui/sloop3_ui.py:152
 msgid "Open the installer page in the browser"
 msgstr "Installer-Seite im Browser öffnen"
@@ -391,10 +373,6 @@ msgstr "m-bootloader (Download)"
 #, python-brace-format
 msgid "Opens {url} in your browser. The app itself installs nothing."
 msgstr "Öffnet {url} in deinem Browser. Die App selbst installiert nichts."
-
-#: fm1companion/ui/sloop3_ui.py:185
-msgid "Not offered for the newer hardware revision."
-msgstr "Für die neuere Hardware-Revision nicht angeboten."
 
 #: fm1companion/ui/sloop3_ui.py:186
 msgid "First confirm above which FM-1 this is."
@@ -491,3 +469,24 @@ msgid "Restore complete: {n} part written and read back. Check the project on th
 msgid_plural "Restore complete: {n} parts written and read back. Check the project on the FM-1."
 msgstr[0] "Zurückspielen fertig: {n} Teil geschrieben und zurückgelesen. Prüfe das Projekt am FM-1."
 msgstr[1] "Zurückspielen fertig: {n} Teile geschrieben und zurückgelesen. Prüfe das Projekt am FM-1."
+
+#: fm1companion/ui/sloop3_ui.py:64
+msgid "Sure sign: M-Flasher shows the FLASH CHIP – <code>0x856014</code> is the earlier one, <code>0xB36014</code> the newer."
+msgstr "Sicheres Zeichen: M-Flasher zeigt den FLASH CHIP – <code>0x856014</code> ist der frühere, <code>0xB36014</code> der neuere."
+
+#: fm1companion/ui/sloop3_ui.py:67
+#, python-brace-format
+msgid "This FM-1 is an earlier unit (flash chip Puya P25Q80H), the one m-bootloader and SLOOP 3 were tried on by their authors. {how}"
+msgstr "Dieser FM-1 ist ein früheres Gerät (Flash-Chip Puya P25Q80H) – das, auf dem m-bootloader und SLOOP 3 von ihren Autoren ausprobiert wurden. {how}"
+
+#: fm1companion/ui/sloop3_ui.py:192
+msgid "Not offered for the newer FM-1 (logo on the front)."
+msgstr "Für den neueren FM-1 (Logo auf der Vorderseite) nicht angeboten."
+
+#: fm1companion/ui/sloop3_ui.py:60
+msgid "<b>Do not install m-bootloader or SLOOP 3 on it for now.</b> The app does not offer the installer page for this device."
+msgstr "<b>Installiere darauf vorerst weder m-bootloader noch SLOOP 3.</b> Die App bietet die Installer-Seite für dieses Gerät nicht an."
+
+#: fm1companion/ui/sloop3_ui.py:153
+msgid "My FM-1 has no M-VAVE logo on the front (an earlier unit)"
+msgstr "Mein FM-1 hat kein M-VAVE-Logo auf der Vorderseite (ein früheres Gerät)"

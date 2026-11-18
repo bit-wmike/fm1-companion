@@ -24,7 +24,7 @@ opciones:
 
 * **Omitir hoy**: ninguna copia automática de este dispositivo hasta mañana. Una copia manual (Ctrl+B) siempre es
   posible.
-* **Copiar ahora**: no esperar a la cuenta atrás.
+* **Hacer copia ahora**: no esperar a la cuenta atrás.
 
 La app no puede ver si el FM-1 está reproduciendo, así que no puede esperar por sí sola a un momento tranquilo. Si
 no lo quieres nunca, desactiva *al conectar* en [Copias de seguridad](app://page/backups) › *Copias de seguridad automáticas*.

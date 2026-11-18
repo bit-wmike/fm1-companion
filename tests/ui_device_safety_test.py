@@ -232,6 +232,34 @@ def flow():
     check(not dv.b_copy.isEnabled() or dv.a.currentData() != prof.id, "copying: A = target is locked")
     comp, ok = dv.copy(other.id)
     check(not ok and any("kein Backup" in b for b in log_boxes[-1:]), "copying without a backup of the source: clear message")
+    # the hardware revision (logo on the front = the newer flash chip): shown and changeable per device, kept in the file
+    from PyQt6.QtWidgets import QLabel, QPushButton
+    from fm1companion import devices as devmod, hardware
+    card_text = lambda: " ".join(x.text() for x in dv.findChildren(QLabel))            # noqa: E731
+    check("noch nicht bekannt" in card_text() and any(b.text() == "Gerät …" for b in dv.findChildren(QPushButton)),
+          "Devices: the unit is shown as not known yet, with a button to say it")
+    dv.set_unit(other, "new")
+    check(hardware.revision(other) == "new" and "neueres Gerät, Logo auf der Vorderseite" in card_text()
+          and "deine Antwort" in card_text(), "Devices: “newer unit” set and shown with its source")
+    saved = devmod.ProfileStore(ctx.store.path).profiles[other.id]
+    check((saved.hw_revision, saved.hw_revision_source) == ("new", "user"), "… and written to the device file")
+    dv.set_unit(other, "old")
+    check(hardware.revision(other) == "old" and "früheres Gerät" in card_text(), "Devices: changed to “earlier unit”")
+    hardware.note_flash_id(other, 0xB36014, "rom")
+    dv.set_unit(other, "old")
+    check(hardware.revision(other) == "new" and other.flash_id == "B36014",
+          "a flash ID read in ROM boot mode is not overwritten by an answer")
+    # the rescue read the flash chip in ROM boot mode: kept for the active device, and said
+    rec = w.page("recovery")
+    rec._flash_seen(0xB36014)
+    check(hardware.revision(prof) == "new" and prof.hw_revision_source == "rom" and "FM-1 A" in rec.flash_note
+          and "neueres Gerät" in rec.flash_note, f"Recovery: the flash ID read in ROM boot mode is kept ({rec.flash_note[:70]})")
+    w.go("overview") if hasattr(w, "go") else None
+    w.overview.refresh()
+    check("im ROM-Bootmodus ausgelesen" in w.overview.lbl["Unit"].text(), "Overview shows the unit and where it is known from")
+    hardware.set_revision(prof, "", "")
+    ctx.store.save()
+    w.go("devices")
     check(dv.forget(other.id, ask=False) and other.id not in ctx.store.profiles, "another profile forgotten")
 
     # ---------------------------------------------------------------- setup wizard

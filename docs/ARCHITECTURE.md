@@ -26,7 +26,7 @@ fm1companion/
   ui/
     main_window.py   window, grouped navigation (built-in pages + auto-discovered pages), COMPOSITES/ALIASES
     tabbed.py        TabbedPage (several pages as tabs of ONE page) and TabAdopter (extra tabs in an existing
-                     QTabWidget of a page) – how the navigation is kept at 13 entries
+                     QTabWidget of a page) – how the navigation is kept at 14 entries
     pages/__init__.py  PageSpec + discover()  <-- NEW PAGES GO HERE (one file per page/area)
     web.py           shared QWebEngineProfile (only ONE per process!), RoutingPage, make_view()
     device.py        DeviceContext (ctx): current port, link, info, profile; scan; job()
@@ -41,8 +41,8 @@ docs/                design notes and research per area (docs/<area>.md)
 
 ## 2. Architecture rules
 
-### Navigation (13 entries) and merged pages
-Since the usability pass the sidebar has 13 entries in 5 groups (Firmware and Discover were merged into **Firmware+** in 2.1; Firmware+ and Recovery live under Data & Tools). Group, entry and tab names below are the English UI labels (German translation in `fm1companion/locale/de/`):
+### Navigation (14 entries) and merged pages
+The sidebar has 14 entries in 5 groups (the Studio joined the Music group in 2.2; Firmware and Discover were merged into **Firmware+** in 2.1; Firmware+ and Recovery live under Data & Tools). Group, entry and tab names below are the English UI labels (German translation in `fm1companion/locale/de/`):
 
 | Group | Entry | Tabs (old page key → tab) |
 |---|---|---|
@@ -52,6 +52,7 @@ Since the usability pass the sidebar has 13 entries in 5 groups (Firmware and Di
 | | Samples & Kits | Library & Kits, On the FM-1 (sample slots + FM1 Open), Record, Sample packs |
 | Music | Projects | Slots & Library (`projects`), View & Export (`project_view`) |
 | | Compose | Generate (`compose`), From MIDI File (`workshop`) |
+| | Studio (`studio`, `ui/pages/studio.py`) | – (the twin's firmware and version are chosen on the page) |
 | | Recording | – |
 | Data & Tools | Backups | List (`backups`), Browse & Compare (`backup_browser`) |
 | | Firmware+ (`discover`) | All firmwares, Install & Versions (`firmware`), News, Tools & knowledge, Simulator (`simulator`) |

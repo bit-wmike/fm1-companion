@@ -21,7 +21,7 @@ Los términos que usa la app – explicados brevemente. Puedes encontrar cada un
 | **Patrón** | Una secuencia de notas en una pista del FM-1. En Componer › Desde archivo MIDI, un archivo MIDI se convierte en un patrón. |
 | **Preset** | Un sonido guardado. Los *presets de usuario* son tus propios sonidos en el FM-1. |
 | **Proyecto** | Una canción en el FM-1 con sus pistas y patrones. La app trae los proyectos uno a uno desde sus ranuras y los vuelve a escribir. |
-| **Rescate** | Ayuda cuando el FM-1 ya no arranca: primero el modo de actualización y luego – si hace falta – el modo de recuperación integrado del chip. Consulta [Rescate](app://page/recovery). |
+| **Recuperación** | Ayuda cuando el FM-1 ya no arranca: primero el modo de actualización y luego – si hace falta – el modo de recuperación integrado del chip. Consulta [Recuperación](app://page/recovery). |
 | **Muestra** | Una grabación de sonido corta (WAV), p. ej. un bombo. |
 | **Ranura de muestras** | Un lugar de almacenamiento para un kit de muestras en Skiff, SLOOP y FM1 Open (USR1, USR2 … en el dispositivo). Melodee a partir de 1.5 no tiene ninguna. |
 | **Simulador** | Un FM-1 en el ordenador: prueba un firmware sin tocar el dispositivo. En [Firmware+ › Simulador](app://page/simulator). |

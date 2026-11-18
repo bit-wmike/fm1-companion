@@ -59,6 +59,11 @@ def handshake(link, tries: int = 2, timeout: float = 1.0) -> str:
                     break
                 ident = fi.parse_identity(pkt)
                 if ident:
+                    if getattr(ident, "flash", 0):        # a firmware that tells its flash chip (fm1-base 19bf320)
+                        try:
+                            link.hs_flash = ident.flash
+                        except AttributeError:
+                            pass
                     return ident.text
         return ""
     finally:
@@ -322,7 +327,7 @@ class DeviceContext(QObject):
             return _("connected – SLOOP 3: its own editor and backups (pages “Editor” and “Backups”)")
         return {"felucca": _("connected – full access"),
                 "generic": _("connected – MIDI only (firmware without editor protocol)"),
-                "update": _("in update mode – finish the installation (page “Rescue”)")}.get(p, _("not connected"))
+                "update": _("in update mode – finish the installation (page “Recovery”)")}.get(p, _("not connected"))
 
     def device_folder(self, base) -> "os.PathLike":
         """This device's folder under `base` (created). FolderError (ready message) if that isn't possible."""
@@ -379,7 +384,7 @@ class DeviceContext(QObject):
         self.disconnect(None)
         self.port = port
         if port.update_mode:
-            self.message.emit(_("The FM-1 is in update mode. The page “Rescue” finishes the installation."))
+            self.message.emit(_("The FM-1 is in update mode. The page “Recovery” finishes the installation."))
             self.identity = ""
             self._assign_profile()
             self.changed.emit()
@@ -630,6 +635,9 @@ class DeviceContext(QObject):
             self.identity = ident or self.identity
             self.mboot = mb
             if mb is not None:
+                from .. import hardware             # the flash chip m-bootloader read: kept with the device
+                if self.profile is not None and hardware.note_flash_id(self.profile, mb.jedec, "identity"):
+                    self.store.save()
                 self.message.emit(
                     _("This FM-1 is in m-bootloader's MIDI MODE (m-bootloader {version}, flash chip {chip}): no "
                       "firmware is running. “Firmware+” › SLOOP 3 explains what is possible from here; OCT−, OCT+, "
@@ -666,6 +674,11 @@ class DeviceContext(QObject):
         if port.usb_path and p.usb_path != port.usb_path:
             p.usb_path = port.usb_path
             self.store.save()
+        flash = getattr(self.link, "hs_flash", 0) if self.link is not None else 0
+        if flash and not getattr(port, "virtual", False):      # the firmware told the flash chip: keep it (hardware.py)
+            from .. import hardware
+            if hardware.note_flash_id(p, flash, "identity"):
+                self.store.save()
         self.profile = p
 
     def profile_for_port(self, port: PortInfo) -> Profile | None:

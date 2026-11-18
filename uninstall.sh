@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-only
 # Remove the FM-1 Companion Suite (user installation from install.sh or the .run installer).
 #
 #   ./uninstall.sh              remove app, launcher, start menu entries, icons

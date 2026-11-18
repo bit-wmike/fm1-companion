@@ -335,7 +335,6 @@ def test_mboot_identify_and_revision():
     assert info.revision == "new" and info.chip == "UCUN UC25HQ80" and info.uid == "a0a1a2a3a4a5a6a7"
     assert mboot.Host(FakeMboot(FLASH, jedec=mboot.JEDEC_OLD)).identify().revision == "old"
     assert mboot.Host(FakeMboot(FLASH, jedec=0x123456)).identify().revision == "unknown"
-    assert S3.revision_of_jedec(0xB36014) == "new" and S3.revision_of_jedec(0x856014) == "old"
     assert t.commands == [0x12] and not (t.writes or t.installs or t.restarts or t.downloads)
 
 
@@ -404,19 +403,21 @@ def test_mboot_a_wrong_byte_on_the_way_is_never_saved():
         h2.read_flash(abort=lambda: True)
 
 
-def test_revision_adapter_without_and_with_a_hardware_module(monkeypatch):
+def test_newer_unit_rule_is_the_hardware_modules():
+    """no check of its own: the revision comes from hardware.py, the rule from planner.chip_check with hardware.json's
+    rows (SLOOP 3 and m-bootloader: risky) – blocked on a newer unit, a confirmation when the unit is not known"""
+    from fm1companion import hardware
+    from fm1companion.flash import planner
+
     class P:
-        pass
-    p = P()
-    assert S3.revision_of(p) == "unknown"             # no module, no field: unknown – never "old"
-    p.hardware_revision = "new"
-    assert S3.revision_of(p) in ("new", "unknown")    # (a hardware module, once there, decides; the field else)
-    import types
-    mod = types.ModuleType("fm1companion.hardware")
-    mod.revision = lambda prof: "new"
-    monkeypatch.setitem(sys.modules, "fm1companion.hardware", mod)
-    import fm1companion
-    monkeypatch.setattr(fm1companion, "hardware", mod, raising=False)
+        hw_revision = ""
+    assert S3.revision_of(P()) == "unknown" and S3.revision_of(None) == "unknown"
+    P.hw_revision = "new"
     assert S3.revision_of(P()) == "new"
-    mod.revision = lambda prof: 1 / 0
-    assert S3.revision_of(P()) == "unknown"
+    assert hardware.support("sloop3", "v3.3.7").status == hardware.RISKY
+    assert hardware.support("m-bootloader").status == hardware.RISKY
+    assert hardware.support("sloop", "v3.3.7").status == hardware.RISKY      # (asked as SLOOP: redirected to SLOOP 3)
+    t = planner.Target.from_spec(firmware.spec("sloop3"), tag="v3.3.7")
+    assert planner.chip_check("new", t).blockers and not planner.chip_check("old", t).blockers
+    unknown = planner.chip_check("", t)
+    assert not unknown.blockers and "no_logo" in unknown.confirmations

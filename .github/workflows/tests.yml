@@ -1,34 +1,169 @@
+# Tests for every pull request and every change on main.
+#
+#   Lint and metadata   quick checks: syntax, translations complete, desktop entry, AppStream data, one version everywhere
+#   Debian bookworm     Python 3.11, Qt 6.4, NumPy 1.24 – what Raspberry Pi OS Bookworm has (most users)
+#   Debian trixie       Python 3.13, Qt 6.8, NumPy 2.2 – Raspberry Pi OS Trixie
+#
+# The two Debian jobs run in a container of that release with the distro's own PyQt6 (no pip), exactly what users
+# install: all unit tests, every UI script (tests/run_ui.sh), then they build the .deb and the .run, install the
+# .deb with apt and start the installed app.
+#
+# The three names above are the status checks to require for main (Settings › Rules).
+# The release workflow calls this file too (workflow_call).
 name: Tests
 
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash          # with "-eo pipefail"; in the containers the default would be sh
+
 jobs:
-  tests:
+  lint:
+    name: Lint and metadata
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: System packages
+      - name: ruff (syntax errors, broken comparisons, misplaced statements)
+        run: pipx run ruff==0.17.4 check --isolated --target-version py311 --select E9,F63,F7 .
+      - name: Shell syntax
+        run: bash -n install.sh && bash -n uninstall.sh && bash -n tests/run_ui.sh && sh -n packaging/run-stub.sh
+      - name: Workflow files are valid YAML
         run: |
-          sudo apt-get update -q
-          sudo apt-get install -y --no-install-recommends python3 python3-pytest python3-numpy python3-mido \
-            python3-rtmidi python3-pyqt6 python3-pyqt6.qtsvg git ruff || \
-          sudo apt-get install -y --no-install-recommends python3 python3-pytest python3-numpy python3-mido \
-            python3-rtmidi python3-pyqt6 python3-pyqt6.qtsvg git
-      - name: ruff (syntax errors and undefined names in the core)
+          python3 - <<'PY'
+          import glob, sys
+          try:
+              import yaml
+          except ImportError:
+              sys.exit(print("PyYAML is not installed on this runner – skipped"))
+          for f in sorted(glob.glob(".github/**/*.yml", recursive=True)):
+              yaml.safe_load(open(f, encoding="utf-8"))
+              print("ok", f)
+          PY
+      - name: Translations (template up to date, placeholders, plural forms, nothing missing)
         run: |
-          if command -v ruff >/dev/null; then ruff check --isolated --select E9,F63,F7 .; else python3 -m compileall -q fm1companion tools tests packaging; fi
-      - name: pytest (without Qt WebEngine and without a device)
+          python3 tools/i18n_extract.py --check
+          python3 tools/i18n_check.py | tee "$RUNNER_TEMP/i18n.txt"
+          # complete translations: a new English text must come with its German and Spanish
+          if grep -E '^\[(de|es)\]' "$RUNNER_TEMP/i18n.txt" | grep -vqE ' 0 untranslated/fuzzy, 0 missing, 0 obsolete$'; then
+            echo "::error::A translation (de or es) is incomplete or has obsolete entries – see the lines above."; exit 1
+          fi
+      - name: Desktop entry and AppStream metadata
+        timeout-minutes: 5
+        run: |
+          APT="sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20"
+          $APT update -q
+          $APT install -y --no-install-recommends desktop-file-utils appstream
+          sed 's/@EXEC@/fm1-companion/' data/fm1-companion.desktop.in > "$RUNNER_TEMP/fm1-companion.desktop"
+          desktop-file-validate "$RUNNER_TEMP/fm1-companion.desktop"
+          # the component id "fm1-companion" is not in reverse-DNS form; changing it now would break updates of
+          # installed packages, so that one hint is not an error here (every other warning still fails)
+          appstreamcli validate --no-net --override=cid-desktopapp-is-not-rdns=info packaging/fm1-companion.metainfo.xml
+      - name: The version is the same everywhere
+        run: |
+          v=$(python3 -c "import re;print(re.search(r'__version__ = \"([^\"]+)\"', open('fm1companion/__init__.py').read()).group(1))")
+          echo "version $v"
+          grep -q "^# FM-1 Companion Suite $v\$" README.md || { echo "::error::README.md title does not say $v"; exit 1; }
+          grep -q "<release version=\"$v\" date=\"" packaging/fm1-companion.metainfo.xml || { echo "::error::no <release version=\"$v\"> in packaging/fm1-companion.metainfo.xml"; exit 1; }
+          grep -q "FM-1 Companion Suite $v\"" packaging/fm1-companion.1 || { echo "::error::packaging/fm1-companion.1 does not say $v"; exit 1; }
+          for f in .github/ISSUE_TEMPLATE/bug_report.yml .github/ISSUE_TEMPLATE/hardware_test.yml; do
+            grep -q "placeholder: \"$v\"" "$f" || { echo "::error::$f: the version placeholder is not $v"; exit 1; }
+          done
+
+  tests:
+    name: Debian ${{ matrix.release }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - release: bookworm        # Python 3.11, Qt 6.4, NumPy 1.24 – Raspberry Pi OS Bookworm
+          - release: trixie          # Python 3.13, Qt 6.8, NumPy 2.2 – Raspberry Pi OS Trixie
+    container:
+      image: debian:${{ matrix.release }}
+      options: --shm-size=1g          # Chromium (Qt WebEngine) needs more than Docker's 64 MB /dev/shm
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      QT_QPA_PLATFORM: offscreen
+      QTWEBENGINE_DISABLE_SANDBOX: "1"   # the container runs as root
+      FM1C_NO_NET: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      LANG: C.UTF-8
+    steps:
+      - name: System packages (the distro's own PyQt6 – no pip)
+        timeout-minutes: 15
+        run: |
+          APT="apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20"
+          $APT update -q
+          $APT install -y --no-install-recommends ca-certificates git python3 python3-pytest python3-numpy \
+            python3-mido python3-rtmidi python3-pyqt6 python3-pyqt6.qtsvg python3-pyqt6.qtwebengine \
+            python3-pyqt6.qtwebchannel python3-pyqt6.qtmultimedia qt6-translations-l10n \
+            nodejs ffmpeg xz-utils procps fonts-dejavu-core
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Git may read the checkout (the container user is root, the files are not)
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Versions
+        run: |
+          python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
+          import sys, numpy
+          from PyQt6.QtCore import QT_VERSION_STR, PYQT_VERSION_STR
+          print("Python", sys.version.split()[0], "· Qt", QT_VERSION_STR, "· PyQt", PYQT_VERSION_STR, "· NumPy", numpy.__version__)
+          PY
+          node --version
+      - name: Every Python file compiles on this Python
+        run: PYTHONPYCACHEPREFIX="$RUNNER_TEMP/pyc" python3 -m compileall -q fm1companion tools tests packaging
+      - name: pytest (all unit tests)
+        timeout-minutes: 30
+        run: |
+          python3 -m pytest -q -p no:cacheprovider -rs tests/test_*.py fm1companion/vendor/unbricker/tests
+      # The UI scripts have never run on these two systems before this workflow existed. Until they have passed
+      # here once on both, a failure is shown (yellow note in the run summary) but does not fail the job.
+      # WHEN BOTH ARE GREEN: delete the line "continue-on-error: true" – from then on a UI failure blocks.
+      - name: UI scripts (tests/run_ui.sh – every tests/ui_*_test.py and editor_*_test.py)
+        id: ui
+        continue-on-error: true
+        timeout-minutes: 45
         env:
-          QT_QPA_PLATFORM: offscreen
-          FM1C_NO_NET: "1"
+          FM1_UI_LABEL: Debian ${{ matrix.release }}
+        run: tests/run_ui.sh --timeout 900
+      - name: UI scripts failed (shown, not blocking yet)
+        if: steps.ui.outcome == 'failure'
         run: |
-          python3 -m pytest -q tests/test_release_231.py tests/test_core.py tests/test_syscheck.py \
-            tests/test_safety.py tests/test_frame.py fm1companion/vendor/unbricker/tests
+          echo "::warning title=UI scripts failed on Debian ${{ matrix.release }}::Not blocking yet (first runs on this system) – see the table in the run summary and the log of the step 'UI scripts'."
+          {
+            echo "> [!WARNING]"
+            echo "> **UI scripts failed on Debian ${{ matrix.release }}.** This does not fail the job yet"
+            echo "> (see the comment in .github/workflows/tests.yml). The unit tests above are required and passed."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Build the packages twice (must be identical), install the .deb with apt, start the installed app
+        timeout-minutes: 15
+        run: |
+          python3 tools/build_deb.py --out "$RUNNER_TEMP/dist"
+          python3 tools/build_run.py --out "$RUNNER_TEMP/dist"
+          python3 tools/build_deb.py --out "$RUNNER_TEMP/dist2"
+          python3 tools/build_run.py --out "$RUNNER_TEMP/dist2"
+          for f in "$RUNNER_TEMP"/dist/*; do
+            cmp "$f" "$RUNNER_TEMP/dist2/$(basename "$f")" || { echo "::error::$(basename "$f") is not reproducible"; exit 1; }
+          done
+          ( cd "$RUNNER_TEMP/dist" && sha256sum * )
+          apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 install -y --no-install-recommends \
+            "$RUNNER_TEMP"/dist/fm1-companion_*_all.deb
+          cd / && fm1-companion --version && fm1-companion --check

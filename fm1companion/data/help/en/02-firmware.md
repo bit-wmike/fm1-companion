@@ -65,6 +65,40 @@ What you should know about the V15 step:
 * The current state of the official firmware and alternative updaters (also for Linux) are collected by
   [awesome-fm-1](https://github.com/cicloid/awesome-fm-1).
 
+## Newer FM-1 (logo on the front)
+
+FM-1s sold from late 2026 – you recognise them by the **M-VAVE logo printed on the front** – have a different memory
+chip inside (UCUN UC25HQ80 instead of the Puya chip). Nothing is wrong with them, but firmware versions written before
+that do not know the chip. On such a unit they **save nothing**, and most of them **can no longer be updated or
+replaced**: the FM-1 is then stuck on that version until the original firmware is written back in ROM boot mode
+([Update mode & recovery](help:03-update-modus), stage 2).
+
+What the app does about it:
+
+* It asks you **once per device**: “Does your FM-1 have the M-VAVE logo on the front?” (Yes / No / I don't know). The
+  app cannot read the chip over MIDI. You can change the answer on the pages *Devices* (button *Unit …*) and
+  *Overview*.
+* On a **newer unit** it does not install a version that does not know the chip – the plan says so and names the
+  first version that works. There is no expert switch for this.
+* If the app **does not know** which unit you have, such a version is only installed after you confirm in the plan
+  that your FM-1 has no logo on the front.
+* On an **earlier unit** nothing changes.
+
+First versions that know the newer chip (read in the firmwares' sources, as of 17 November 2026): Melodee 1.6.0,
+Skiff 2.2, SLOOP 2.8.5, KARMA 3.0.4, JIANT FM V10.6z, Felucca 1.8.2, ChoralRoot 0.29.1, CoralFlower 0.7, X0X 1.2.1,
+FoMni 0.4.1, AMB-1 1.3.1, LOOM-8 0.13, Hortator 1.0.1, TransitFM1 0.1.4. No released version known: ORBIT, gr!mm.
+Not proven on this chip according to their authors: m-bootloader (one such unit did not start afterwards) and
+SLOOP 3, which needs it. For all other firmwares of the catalog the app does not know – it then treats a newer unit
+as “not supported”.
+
+Other ways to find out which chip you have: **M-Flasher** shows it under *Device info* (FLASH CHIP: `0xB36014` is the
+newer one, `0x856014` the earlier one), **m-bootloader** shows it in its menu, and the recovery (stage 2) reads it in
+ROM boot mode – the app then keeps it for the device by itself.
+
+Honestly: **nothing of this has been run on a newer FM-1 with this app.** The original V15 is the way back that the
+authors of Felucca, ChoralRoot, TransitFM1 and the recovery tool name for these units; whether the V16 package works
+on them, nobody has written down. The recovery tool bundled with the app (MvaveFM1Unbricker 1.2.1) knows both chips.
+
 ## Good to know
 
 * Projects and presets of one firmware do not automatically fit another. That is why: backups per firmware.

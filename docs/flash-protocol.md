@@ -211,12 +211,12 @@ not repeated. If you stay on V15 and the presets are garbled: System > Reset Pat
 
 ## 13. Rescue level 2 – ROM boot mode "WL82 UBOOT1.00" (4c4a:8057)
 
-* [V MvaveFM1Unbricker 1.2.0, MIT, Michael P Jones; Reddit guide u/acrawf1] An FM-1 whose firmware does not
+* [V MvaveFM1Unbricker 1.2.0 (bundled since 2.6.1: 1.2.1, see §19), MIT, Michael P Jones; Reddit guide u/acrawf1] An FM-1 whose firmware does not
   start appears as the USB mass storage device "WL82 UBOOT1.00". MIDI installers then report "FM-1 not found".
   kagaimiq's jl-uboot-tool (MIT) loads a RAM loader (JieLi `wl82loader.bin`, sha256 d41da612…) and can
   read/erase/write the 1 MiB flash (SCSI via `/dev/sgN`, on Linux root + module `sg`).
 * Procedure (all in the unmodified `vendor/unbricker/fm1_unbrick.py`): exactly one WL82 device; chip key **0x980F**
-  and flash ID **0x856014** (no override); read the whole flash twice, compare, save;
+  and flash ID **0x856014** or, from the bundled 1.2.1, **0xB36014** (§19; no override); read the whole flash twice, compare, save;
   extract the firmware area from the .fwsc (`flash.bin[0x4000:0x93000]`; V15 → sha256 **6edf3c37…** [V own
   test]); write only **0x4000..0x92FFF**; read back and compare; switch off and on.
   Never below 0x4000, never 0xE9000..0xFBFFF (Bluetooth, factory sounds) and 0xFF000..; no chip/block erase.
@@ -235,7 +235,7 @@ not repeated. If you stay on V15 and the presets are garbled: System > Reset Pat
 [V TRANSPORTER-GUIDE.md] If the FM-1 never appears as WL82: a Seeed XIAO RP2040 on the USB data lines;
 it sends the USB_KEY at power-on and forces ROM boot mode. Wiring: **D6 (GP0) → D+ (green),
 D7 (GP1) → D− (white), GND → GND (black), do not connect VBUS (red).** Flash the UF2 with the BOOT button held;
-then `fm1_transporter_recover.py` (rekey → info: `key=980F id=856014` → dump → restore --write).
+then `fm1_transporter_recover.py` (rekey → info: `key=980F id=856014`, on a newer FM-1 `id=B36014` → dump → restore --write).
 **RP2040 required, explicitly not RP2350** (GPIO erratum, D+ pull-up). [A, untested] Raspberry Pi Pico
 (RP2040) instead of XIAO: pin 1 = GP0 → D+, pin 2 = GP1 → D−, any GND, VBUS unconnected; try the XIAO UF2 or
 rebuild kurogedelic/FM-1-transporter with `-DPICO_BOARD=pico` and the same loader.
@@ -436,3 +436,65 @@ Careful mode: Settings › "Careful USB mode for flashing" = auto (FM-1 behind a
 never. Flash log: `DATA_DIR/flash/logs/flash-*.txt` (every request with gap, repetitions, duplicates, port
 events, resumes, kernel lines of the time window), last 3 in the bug report ZIP (`flash/`), redacted.
 Tests: `tests/test_usb_hub.py` (`sim.SimFaults`).
+
+## 19. The newer FM-1: flash chip UC25HQ80, JEDEC 0xB36014 (2026-11-17)
+
+**Facts, with their sources** (repositories as cloned on 2026-11-17; nothing here was run on such a unit by this app):
+
+* FM-1s sold from late 2026 – "the ones with the logo on the front" – carry another maker's 1 MiB SPI NOR: the JEDEC
+  ID reads `B3 60 14` (UCUN UC25HQ80) instead of Puya's `85 60 14`; the type and capacity bytes are the same
+  [V ChoralRoot `docs/INSTALL-COMPAT.md` "A second flash chip", HISTORY 3y222; MvaveFM1Unbricker a1eaf4d;
+  fm1-base 6d6ae6d; Melodee PR #111].
+* The Felucca family reads the ID once at power-on and, on an ID it does not know, runs **RAM-only**: nothing is read
+  from or written to the flash, and most of them skip the update session too – an installer sends UPGRADE and the unit
+  never asks for the first block ("stopped answering after 0 requests") [V ChoralRoot as above; Felucca README 1.8.2;
+  SLOOP 2.8.5 notes; TransitFM1 `docs/SAFETY.md` "The flash chip": 0.1.3 shows UNKNOWN FLASH CHIP and its loader
+  refuses too]. So a too-old version on a newer unit **strands** it: the only way back is the chip's ROM boot
+  (§13) and writing the original V15 from there.
+* What the firmwares do on the chip once they know it: only generic SPI NOR commands (9F, 05/35, 06, 20, 02, 0B, 4B)
+  [V ChoralRoot, Hortator ac55f47]. The part can be slower to erase or program than the Puya part [V ChoralRoot
+  HISTORY 3y264, felucca-bsp #12] – "not tried on hardware" there.
+* **The original firmware.** No source read says which original version the newer units are delivered with. The
+  original V15 is named as the way back on exactly these units by Felucca (README), ChoralRoot (releases/0.29.1.md),
+  TransitFM1 (SAFETY.md) and the Unbricker (README, site); one such unit took a community firmware through M-VAVE's own
+  updater from the original firmware it came with (ChoralRoot HISTORY 3y222). About the V16 package on these units
+  nothing was found. m-vave/fm1_open says nothing on the chip.
+* **m-bootloader** [V jvitkauskas/m-bootloader README "Little tested on the FM-1's newer flash chip"]: one such unit
+  did not start after 1.1 or 1.2 was installed, cause unknown; another runs 1.3 and 2.0 on one owner's report.
+  **SLOOP 3** [V its installer page]: "accepts this chip, but it has not been tried on one yet".
+* **How to find out which chip a unit has.** Over MIDI the original firmware and most firmwares do not say. Ways that
+  exist: (a) ROM boot mode – the Unbricker's `info`/`backup`/`restore` print `Flash ID 0x…`, the Transporter
+  `id=…`; (b) the update identity answer (`00 59 11`, 27 text bytes) of fm1-base firmwares built between fm1-base
+  19bf320 (2026-11-05) and 3ae2a65 (2026-11-06) carries the ID in text bytes 24..26 (felucca-bsp#29: AMB-1 1.3.1,
+  LOOM-8 0.13 …; taken out again because installers that strip only trailing zeros took the answer for no FM-1 – this
+  app did so too until 2.6.1); (c) M-Flasher shows it under Device info (FLASH CHIP), m-bootloader in its menu;
+  (d) ChoralRoot before 0.29.1 shows `no unit ID` on such a unit, TransitFM1 before 0.1.4 `UNKNOWN FLASH CHIP`.
+  No source documents a difference in the USB descriptors or the serial number.
+
+**What the app does** (`fm1companion/hardware.py`, `flash/planner.py` `_new_chip`, `ui/hw_revision.py`):
+
+* The table `fm1companion/data/hardware.json` holds, per firmware, the first version that accepts 0xB36014, with the
+  commit it was read in (`docs/firmware-support.md` shows it). `hardware.support(key, version)` answers yes / no /
+  risky / unknown; versions are compared in each firmware's own order (JIANT: V10.6z before V10.7.N; a bare "V10.7"
+  is two different builds and counts as unknown).
+* The unit's revision lives in the device profile (`hw_revision`, `hw_revision_source`, `flash_id`). It is set by
+  (a) and (b) above when the app sees the ID, otherwise by the owner's answer to one question – "Does your FM-1 have
+  the M-VAVE logo on the front?" – asked once per device when an installation depends on it, changeable on the pages
+  Devices and Overview. An ID that was read is not overwritten by an answer.
+* The plan (every way to install goes through it: releases, catalog, link import, own files, the V15 step, "back to
+  the original", continuing a switch, finishing an interrupted installation):
+
+  | unit | target accepts the chip | target does not / risky / not known (catalog firmware) | own file, original V16 |
+  |---|---|---|---|
+  | earlier (no logo) | – | – | – |
+  | newer (logo) | – (original V15: a note that this app has not run it there) | **blocked**, no override; names the first version that works | warning + confirmation |
+  | not known | – | warning + the confirmation "My FM-1 has NO logo on the front" | warning + confirmation |
+
+  On a newer unit that runs a version without support the plan and the Overview say why saving and updating fail and
+  name the way out (ROM boot, original V15, then a version that knows the chip).
+* **Recovery.** The bundled MvaveFM1Unbricker is upstream's a1eaf4d (tool version 1.2.1), whose only change against
+  the 1.2.0 bundled before is that 0xB36014 is accepted beside 0x856014 (`FLASH_IDS_OK`; the Transporter script the
+  same). The files are copied unchanged; the checksums in `flash/uboot_manifest.py` were replaced with theirs. The
+  app's own gates (`rescuegate.py`, `restzone.py`, `flashmodel.py`) do not look at the flash ID themselves – they call
+  the Unbricker's `check_identity` – and are unchanged. Upstream's later 1.3.0 (full-restore) and 1.4.0 (macOS) are
+  not taken over. Writing in ROM boot mode was never run by this app on either chip (`docs/UNTESTED.md`).

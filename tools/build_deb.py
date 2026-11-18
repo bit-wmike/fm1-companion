@@ -115,9 +115,13 @@ def build(out: Path = DIST, maintainer: str = MAINTAINER) -> Path:
             f"Recommends: {diag.debian_field('recommended')}\nSuggests: {diag.debian_field('suggested')}\n"
             "Section: sound\nPriority: optional\nHomepage: https://github.com/bit-wmike/fm1-companion\n"
             "Description: Desktop suite for the M-VAVE FM-1\n"
-            " Install and switch firmware, backups, projects, presets, samples, MIDI,\n"
-            " simulator and recording for the M-VAVE FM-1 pocket synthesizer with firmwares\n"
-            " of the Felucca family (Melodee, Skiff, SLOOP). No telemetry.\n")
+            " Desktop suite for the M-VAVE FM-1 pocket synthesizer: backups, firmware\n"
+            " install and recovery, a Studio with digital twins of 13 firmwares (Melodee,\n"
+            " Skiff, SLOOP, JIANT FM, KARMA and more), presets, samples, MIDI tools and a\n"
+            " catalog of more than 250 community firmwares. No telemetry.\n"
+            " .\n"
+            " Unofficial community project, not affiliated with M-VAVE. Installing firmware\n"
+            " and recovery change the device and are done at your own risk.\n")
         for name, body in (("postinst", POSTINST), ("prerm", PRERM)):
             (deb / name).write_text(body)
             (deb / name).chmod(0o755)

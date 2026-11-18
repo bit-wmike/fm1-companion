@@ -12,6 +12,8 @@ Errors (exit code 1):
   * placeholders differ: every ``{name}`` / ``%s`` / ``%(name)s`` of the msgid must appear in the msgstr,
     and the msgstr must not use a placeholder the msgid does not have (that would crash ``.format()``)
   * the same msgid (and msgctxt) appears in two .po files of one language with different msgstr
+  * a plural entry that shows the number (``{n}``) has the same text for all its forms ("1 Teile", "1 Datei(en)"):
+    write a real singular. Words that do not change go on the allow-list PLURAL_SAME_OK below, with the language.
 A line with the comment ``# i18n: ignore`` is left out of the German-left scan (for German text that must
 stay as it is, e.g. names of files on the device). Reported, not errors: untranslated (empty or fuzzy) entries, msgids missing from a language,
 obsolete entries (no longer in the code), and the German-left heuristic.
@@ -74,6 +76,30 @@ def check_placeholders(e: i18n.POEntry) -> list[str]:
     return probs
 
 
+# plural entries whose forms are rightly the same: (language, msgid) – nouns that do not change in that language
+PLURAL_SAME_OK = {
+    ("de", "{n} folder"),                                              # 1 Ordner, 2 Ordner
+    ("de", "{n} folder added to the library – being read."),
+    ("de", "{n} match"),                                               # 1 Treffer, 2 Treffer
+    ("de", "Track {track}: {n} parameter. Changes go to the FM-1 immediately (the embedded editor pauses while this "
+           "tab is open and resumes by itself when you leave it)."),   # 1 Parameter, 2 Parameter
+}
+# whole files that are exempt: de/rescue.po repeats the German messages of the SHA-pinned recovery tools character
+# for character (docs/TRANSLATING.md, "Recovery texts"); those tools have one form only ("{n} Sektoren").
+PLURAL_SAME_OK_FILES = {("de", "rescue.po")}
+
+
+def plural_forms_identical(e: i18n.POEntry, lang: str, filename: str = "") -> bool:
+    """True for a translated plural entry with {n} whose forms are all the same text and that is not allow-listed"""
+    if e.msgid_plural is None or len(e.msgstr) < 2 or not all(e.msgstr):
+        return False
+    if "{n}" not in e.msgid and "{n}" not in e.msgid_plural:
+        return False
+    if len(set(e.msgstr)) != 1:
+        return False
+    return (lang, e.msgid) not in PLURAL_SAME_OK and (lang, filename) not in PLURAL_SAME_OK_FILES
+
+
 def languages() -> list[str]:
     return sorted(d.name for d in LOCALE.iterdir() if d.is_dir() and any(d.glob("*.po"))) if LOCALE.is_dir() else []
 
@@ -94,6 +120,10 @@ def check_language(lang: str, known: set, verbose: bool = False) -> tuple[list[s
                 continue
             for p in check_placeholders(e):
                 errors.append(f"{rel}:{e.line}: {p}: {e.msgid[:60]!r}")
+            if plural_forms_identical(e, lang, f.name):
+                errors.append(f"{rel}:{e.line}: plural entry with {{n}} has the same text for every form "
+                              f"({e.msgstr[0][:50]!r}) – write a singular, or add it to PLURAL_SAME_OK in "
+                              f"tools/i18n_check.py if the word does not change: {e.msgid[:60]!r}")
             if e.key in seen and seen[e.key][1] != e.msgstr:
                 errors.append(f"{rel}:{e.line}: {e.msgid[:60]!r} also in {seen[e.key][0]} with a different msgstr")
             seen.setdefault(e.key, (rel, e.msgstr))

@@ -107,7 +107,19 @@ def device_state(ctx) -> "planner.DeviceState":
                                                                           else ""),
                                port=ctx.port.in_name if ctx.port else "", connected=ctx.port is not None,
                                ports=device_count(ctx), busy=journal.Journal.busy(),
-                               pinned=target_pin(ctx) is not None, usb_notes=usb_notes(ctx))
+                               pinned=target_pin(ctx) is not None, usb_notes=usb_notes(ctx),
+                               revision=device_revision(ctx))
+
+
+def device_revision(ctx) -> str:
+    """the hardware revision recorded for the active device: "new" | "old" | "" (not known)"""
+    import os
+    from .. import hardware
+    prof = getattr(ctx, "profile", None)
+    rev = hardware.revision(prof)
+    if rev == hardware.UNKNOWN and os.environ.get("FM1C_DEMO") == "1" and not hardware.asked(prof):
+        return hardware.OLD                      # the demo's simulated FM-1s are earlier units (nothing to ask)
+    return "" if rev == hardware.UNKNOWN else rev
 
 
 def usb_notes(ctx) -> list[str]:
@@ -556,6 +568,14 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     pinned = (rel.sha256 if rel else "") or firmware.pinned_sha(spec, rel.tag if rel else tag)
     if pinned and local_pkg is None:
         tgt.sha256, tgt.checksum = pinned, True        # versions pinned in the app (KARMA's site packages)
+    # the newer FM-1 (logo on the front): if this installation depends on the unit's flash chip and the owner was
+    # never asked for this device, ask once – the answer is kept in the device profile
+    from .. import hardware
+    if planner.chip_matters(state, tgt) and ctx.profile is not None and not hardware.asked(ctx.profile):
+        from . import hw_revision
+        if hw_revision.ask(parent, ctx, ctx.profile) is None:
+            return False
+        state.revision = device_revision(ctx)
     from ..flash import journal as fj
     jr = fj.Journal()
     chain = jr.chain

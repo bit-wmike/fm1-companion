@@ -103,6 +103,8 @@ def dialog_exec(self):
                 cb.setChecked(True)
         plan_ctl["plans"].append(self.plan)
         plan_ctl["note"], plan_ctl["html"] = self.tested_note, self.view.toPlainText()
+        plan_ctl["checks"] = {c: cb.text() for c, cb in self.confirm_checks.items()}
+        plan_ctl["ok_enabled"] = self.ok_btn.isEnabled()
         return 1 if plan_ctl["accept"] else 0
     if isinstance(self, JobDialog):
         self.show()
@@ -278,6 +280,80 @@ def flow():
     check(p3.target.key == "eigene" and not p3.target.known and "unknown_file" in p3.confirmations
           and any("unbekannt" in b for b in log_boxes),
           f"renamed foreign file stays unknown ({p3.target.key}, {p3.confirmations})")
+
+    # ---- the newer FM-1 (logo on the front, flash UC25HQ80): blocker / confirmation in the plan, the question
+    from fm1companion import hardware
+    from fm1companion.ui import hw_revision
+    check(until(lambda: ctx.connected, 10000), "connected")
+    prof = ctx.profile
+    old_rel, new_rel = firmware.Release("v1.5.1", False), firmware.Release("v1.6.1", False)
+    check(fp.device_revision(ctx) == "old" and not hardware.asked(prof),
+          "demo: the simulated FM-1 counts as an earlier unit, nothing is asked")
+    w.overview.set_unit("new")
+    check(hardware.revision(prof) == "new" and prof.hw_revision_source == "user" and fp.device_revision(ctx) == "new"
+          and "neueres Gerät" in w.overview.lbl["Unit"].text() and "ändern" in w.overview.lbl["Unit"].text(),
+          f"Overview: the unit can be set and is shown ({w.overview.lbl['Unit'].text()[:60]})")
+    before = len(dev.sends)
+    log_boxes.clear()
+    ok = fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel)
+    pn = plan_ctl["plans"][-1]
+    check(not ok and not pn.ok and not plan_ctl["ok_enabled"] and "UC25HQ80" in plan_ctl["html"]
+          and "Melodee 1.5.1" in plan_ctl["html"] and "1.6.0" in plan_ctl["html"] and "Nicht möglich" in plan_ctl["html"]
+          and "no_logo" not in plan_ctl["checks"] and bytes(fi.UPGRADE) not in dev.sends[before:],
+          "newer unit + Melodee 1.5.1: the plan blocks, names 1.6.0, has no override; nothing is sent")
+    check("neueren FM-1" in plan_ctl["note"] or "neueren" in plan_ctl["note"], f"… and says nothing ran on a newer unit ({plan_ctl['note'][-90:]})")
+    plan_ctl["accept"] = False
+    fp.install_flow(w, ctx, firmware.spec("melodee"), new_rel)
+    pn = plan_ctl["plans"][-1]
+    check(not any("UC25HQ80" in b for b in pn.blockers) and "no_logo" not in pn.confirmations,
+          "newer unit + Melodee 1.6.1: no blocker, no extra confirmation")
+    fp.install_flow(w, ctx, firmware.spec("stock-v16"), firmware.Release("V16", False))
+    pn = plan_ctl["plans"][-1]
+    check("newchip_unverified" in pn.confirmations and "bestätigt" in plan_ctl["checks"].get("newchip_unverified", ""),
+          "newer unit + original V16: nothing known – a warning and an explicit confirmation")
+    w.overview.set_unit("unsure")
+    check(fp.device_revision(ctx) == "" and hardware.asked(prof) and "Weiß ich nicht" in w.overview.lbl["Unit"].text(),
+          "“I don't know” is kept (not asked again)")
+    plan_ctl["accept"], plan_ctl["confirm"] = True, False
+    before = len(dev.sends)
+    ok = fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel)
+    pn = plan_ctl["plans"][-1]
+    check(not ok and pn.ok and "no_logo" in pn.confirmations and "KEIN M-VAVE-Logo" in plan_ctl["checks"].get("no_logo", "")
+          and not plan_ctl["ok_enabled"] and bytes(fi.UPGRADE) not in dev.sends[before:],
+          "unit not known + Melodee 1.5.1: only with the confirmation “no logo on the front”")
+    plan_ctl["confirm"], plan_ctl["accept"] = True, False
+    # never asked on a real device: the question comes before the plan, the answer is kept
+    hardware.set_revision(prof, "", "")
+    asked = []
+    real_choose, demo_env = hw_revision.choose, os.environ.pop("FM1C_DEMO")
+    try:
+        hw_revision.choose = lambda parent, name, current="": (asked.append(name), "new")[1]
+        n_plans = len(plan_ctl["plans"])
+        fp.install_flow(w, ctx, firmware.spec("melodee"), new_rel)
+        check(not asked and len(plan_ctl["plans"]) == n_plans + 1, "a version that knows the chip: no question")
+        fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel)
+        pn = plan_ctl["plans"][-1]
+        check(asked == [prof.name] and hardware.revision(prof) == "new" and any("UC25HQ80" in b for b in pn.blockers),
+              "never asked + a version without the chip: asked once, answer kept, plan blocks")
+        fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel)
+        check(len(asked) == 1, "… and not asked a second time")
+        hardware.set_revision(prof, "", "")
+        hw_revision.choose = lambda *a, **k: None
+        n_plans = len(plan_ctl["plans"])
+        check(not fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel) and len(plan_ctl["plans"]) == n_plans,
+              "question closed without an answer: no plan, nothing installed")
+    finally:
+        hw_revision.choose = real_choose
+        os.environ["FM1C_DEMO"] = demo_env
+    # a chip ID that was read (ROM boot) wins over an answer
+    hardware.note_flash_id(prof, 0xB36014, "rom")
+    w.overview.set_unit("old")
+    check(hardware.revision(prof) == "new" and "ROM-Bootmodus" in hardware.label(prof),
+          f"a flash ID read in ROM boot mode is not overwritten by an answer ({hardware.label(prof)})")
+    hardware.set_revision(prof, "", "")
+    ctx.store.save()
+    w.overview.refresh()
+    plan_ctl["accept"] = True
 
     # ---- several FM-1, target cannot be pinned: lock
     real_pin = fp.target_pin

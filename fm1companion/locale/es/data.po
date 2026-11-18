@@ -4,6 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FM-1 Companion\n"
 "Language: es\n"
+"X-Language-Name: Español\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -35,8 +36,8 @@ msgid "No FM-1 connected. Please connect an FM-1 via USB."
 msgstr "No hay ningún FM-1 conectado. Conecta un FM-1 por USB."
 
 #: fm1companion/ui/backups_page.py:48
-msgid "The FM-1 is in update mode – finish the installation first (page “Rescue”), then back up."
-msgstr "El FM-1 está en modo de actualización – termina primero la instalación (página “Rescate”) y luego haz la copia."
+msgid "The FM-1 is in update mode – finish the installation first (page “Recovery”), then back up."
+msgstr "El FM-1 está en modo de actualización – termina primero la instalación (página “Recuperación”) y luego haz la copia."
 
 #: fm1companion/ui/backups_page.py:51
 msgid "The running firmware"
@@ -267,7 +268,7 @@ msgstr "Nota / Etiquetas"
 #: fm1companion/ui/main_window.py:458 fm1companion/ui/overview.py:85
 #: fm1companion/ui/overview.py:121
 msgid "Back up now"
-msgstr "Copiar ahora"
+msgstr "Hacer copia ahora"
 
 #: fm1companion/ui/backups_page.py:324
 msgid "Ctrl+B"
@@ -484,7 +485,7 @@ msgstr "<b>Aún no hay copias de seguridad de este dispositivo.</b> {reason}"
 
 #: fm1companion/ui/backups_page.py:536
 msgid "No backups yet – here's how: connect the FM-1 and click “Back up now” (Ctrl+B). Automatic backups are set up below."
-msgstr "Aún no hay copias de seguridad – así se hace: conecta el FM-1 y haz clic en “Copiar ahora” (Ctrl+B). Las copias automáticas se configuran abajo."
+msgstr "Aún no hay copias de seguridad – así se hace: conecta el FM-1 y haz clic en “Hacer copia ahora” (Ctrl+B). Las copias automáticas se configuran abajo."
 
 #: fm1companion/ui/backups_page.py:543
 msgid "Folder not reachable"
@@ -1022,11 +1023,11 @@ msgid ""
 "No backups yet.\n"
 "Here's how: connect the FM-1,\n"
 "then Ctrl+B (Back up now)."
-msgstr "Aún no hay copias de seguridad.\nAsí se hace: conecta el FM-1\ny pulsa Ctrl+B (Copiar ahora)."
+msgstr "Aún no hay copias de seguridad.\nAsí se hace: conecta el FM-1\ny pulsa Ctrl+B (Hacer copia ahora)."
 
 #: fm1companion/ui/pages/backup_browser.py:319
 msgid "No backups yet – here's how: connect the FM-1, then Ctrl+B (Back up now)."
-msgstr "Aún no hay copias de seguridad – así se hace: conecta el FM-1 y pulsa Ctrl+B (Copiar ahora)."
+msgstr "Aún no hay copias de seguridad – así se hace: conecta el FM-1 y pulsa Ctrl+B (Hacer copia ahora)."
 
 #: fm1companion/ui/pages/backup_browser.py:324
 msgid "Live state of the connected FM-1"
@@ -1808,8 +1809,8 @@ msgid "use a backup from before the update to Melodee 1.6"
 msgstr "usar una copia de antes de la actualización a Melodee 1.6"
 
 #: fm1companion/backup_inspect.py:956
-msgid "export projects as MIDI (Projects › MIDI export)"
-msgstr "exportar los proyectos como MIDI (Proyectos › Exportación MIDI)"
+msgid "export projects as MIDI (Projects › View & Export)"
+msgstr "exportar los proyectos como MIDI (Proyectos › Ver y exportar)"
 
 #: fm1companion/backup_inspect.py:962
 msgid "The target knows none of the objects from the source."
@@ -2715,8 +2716,8 @@ msgid "not connected"
 msgstr "no conectado"
 
 #: fm1companion/ui/device.py:274
-msgid "in update mode – finish the installation (page “Rescue”)"
-msgstr "en modo de actualización – termina la instalación (página “Rescate”)"
+msgid "in update mode – finish the installation (page “Recovery”)"
+msgstr "en modo de actualización – termina la instalación (página “Recuperación”)"
 
 #: fm1companion/ui/device.py:315 fm1companion/ui/main_window.py:881
 #: fm1companion/ui/pages/midi.py:1363
@@ -2728,8 +2729,8 @@ msgid "Connection lost"
 msgstr "Conexión perdida"
 
 #: fm1companion/ui/device.py:331
-msgid "The FM-1 is in update mode. The page “Rescue” finishes the installation."
-msgstr "El FM-1 está en modo de actualización. La página “Rescate” termina la instalación."
+msgid "The FM-1 is in update mode. The page “Recovery” finishes the installation."
+msgstr "El FM-1 está en modo de actualización. La página “Recuperación” termina la instalación."
 
 #: fm1companion/ui/device.py:346
 msgid "Studio not available"
@@ -2972,8 +2973,8 @@ msgid "No device connected."
 msgstr "Ningún dispositivo conectado."
 
 #: fm1companion/ui/overview.py:280
-msgid "The FM-1 is waiting in update mode – finish the installation first (page “Rescue”)."
-msgstr "El FM-1 está esperando en modo de actualización – termina primero la instalación (página “Rescate”)."
+msgid "The FM-1 is waiting in update mode – finish the installation first (page “Recovery”)."
+msgstr "El FM-1 está esperando en modo de actualización – termina primero la instalación (página “Recuperación”)."
 
 #: fm1companion/ui/overview.py:285
 msgid "Firmware unknown – please choose (note above) or “To the firmwares” (Firmware+)."
@@ -3190,8 +3191,8 @@ msgid "not read yet"
 msgstr "aún no leído"
 
 #: fm1companion/ui/fm1_page.py:226
-msgid "The FM-1 is in update mode – the page “Rescue” finishes the installation."
-msgstr "El FM-1 está en modo de actualización – la página “Rescate” termina la instalación."
+msgid "The FM-1 is in update mode – the page “Recovery” finishes the installation."
+msgstr "El FM-1 está en modo de actualización – la página “Recuperación” termina la instalación."
 
 #: fm1companion/ui/fm1_page.py:228
 msgid "Live values, storage and user presets are only provided by Melodee or M-VAVE FM1 Open (editor protocol). The app can install this firmware and talk to it via MIDI, but cannot read it out."
@@ -4331,7 +4332,7 @@ msgid "Note: a backup briefly stops playback on the FM-1. The app announces it a
 msgstr "Nota: una copia de seguridad detiene brevemente la reproducción en el FM-1. La app la anuncia unos segundos antes de empezar; con «Omitir hoy» sigues tocando."
 
 msgid "A backup briefly stops playback on the FM-1. Automatic backups are therefore announced a few seconds before they start (“Skip today” / “Back up now”) and only run when nothing else is happening with the device – never during an installation, in the editor or during a recording. The app cannot see whether the FM-1 is playing. Before every firmware installation the app backs up by default, labelled with the old firmware (no backup only after explicit confirmation in the installation plan)."
-msgstr "Una copia de seguridad detiene brevemente la reproducción en el FM-1. Por eso las copias automáticas se anuncian unos segundos antes de empezar («Omitir hoy» / «Copiar ahora») y solo se hacen cuando no ocurre nada más con el dispositivo: nunca durante una instalación, en el editor ni durante una grabación. La app no puede ver si el FM-1 está reproduciendo. Antes de cada instalación de firmware la app hace una copia por defecto, etiquetada con el firmware antiguo (sin copia solo tras confirmarlo expresamente en el plan de instalación)."
+msgstr "Una copia de seguridad detiene brevemente la reproducción en el FM-1. Por eso las copias automáticas se anuncian unos segundos antes de empezar («Omitir hoy» / «Hacer copia ahora») y solo se hacen cuando no ocurre nada más con el dispositivo: nunca durante una instalación, en el editor ni durante una grabación. La app no puede ver si el FM-1 está reproduciendo. Antes de cada instalación de firmware la app hace una copia por defecto, etiquetada con el firmware antiguo (sin copia solo tras confirmarlo expresamente en el plan de instalación)."
 
 msgid "Asking the device whether it takes every part before anything is replaced …"
 msgstr "Preguntando al dispositivo si acepta cada parte antes de reemplazar nada …"
