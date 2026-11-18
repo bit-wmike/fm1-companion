@@ -96,12 +96,22 @@
       }
     };
   }
+  // Everything a page connects to the speakers is also connected to one silent collecting point per AudioContext
+  // (a GainNode with no output: costs nothing). The recorder itself – a ScriptProcessorNode, which Chromium
+  // announces as deprecated in the console – is only created and attached when a recording starts.
   const taps = new WeakMap();
   let rec = null;
   function tap(ctx) {
     let t = taps.get(ctx);
-    if (t) return t;
-    const input = ctx.createGain();
+    if (!t) {
+      t = { input: ctx.createGain(), sp: null };
+      taps.set(ctx, t);
+    }
+    return t;
+  }
+  function recorder(ctx) {
+    const t = tap(ctx);
+    if (t.sp) return t;
     const sp = ctx.createScriptProcessor(4096, 2, 2);
     sp.onaudioprocess = (e) => {
       const b = e.inputBuffer;
@@ -111,10 +121,9 @@
       rec.l.push(l.slice()); rec.r.push(r.slice()); rec.frames += l.length;
       for (let i = 0; i < l.length; i++) { const a = Math.abs(l[i]), c = Math.abs(r[i]); if (a > rec.peak) rec.peak = a; if (c > rec.peak) rec.peak = c; }
     };
-    nativeConnect.call(input, sp);
+    nativeConnect.call(t.input, sp);
     nativeConnect.call(sp, ctx.destination);
-    t = { input, sp };
-    taps.set(ctx, t);
+    t.sp = sp;
     return t;
   }
   const nativeConnect = AudioNode.prototype.connect;
@@ -147,7 +156,7 @@
     start() {
       const ctx = contexts.find((c) => c.state === "running") || contexts[contexts.length - 1];
       if (!ctx) return { ok: false, error: "noaudio" };
-      tap(ctx);
+      try { recorder(ctx); } catch (err) { api.errors.push("recorder: " + err); return { ok: false, error: "norecorder" }; }
       rec = { ctx, l: [], r: [], frames: 0, peak: 0, t0: performance.now() };
       return { ok: true, rate: ctx.sampleRate };
     },

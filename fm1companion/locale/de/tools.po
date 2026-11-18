@@ -4162,3 +4162,24 @@ msgstr "diese Adresse hat keine Erlaubnis für das FM-1 – nur Noten, Controlle
 #: fm1companion/ui/pages/simulator.py:711
 msgid "the bundled simulators may only send notes, controllers, clock and FM1 Open library commands to the FM-1"
 msgstr "die mitgelieferten Simulatoren dürfen nur Noten, Controller, Takt und Bibliotheks-Befehle von FM1 Open ans FM-1 senden"
+
+#: fm1companion/ui/pages/simulator.py:77
+msgid "If you hear nothing: press the page's own “Switch on” / “Start” button (you may have to scroll). Each page has its own computer-keyboard layout."
+msgstr "Wenn du nichts hörst: Drück in der Seite selbst deren Knopf „Switch on“ / „Start“ (eventuell musst du scrollen). Jede Seite hat ihre eigene Tastenbelegung für die Computertastatur."
+
+#: fm1companion/ui/pages/simulator.py:79
+msgid "Each page has its own computer-keyboard layout – see the page itself."
+msgstr "Jede Seite hat ihre eigene Tastenbelegung für die Computertastatur – sieh in der Seite selbst nach."
+
+#: fm1companion/ui/pages/simulator.py:80
+msgid "This emulator needs a lot of computing power; the built-in view may be too slow for it (no sound, or stutter) – “Open in Firefox” opens it in the regular browser, which is often faster."
+msgstr "Dieser Emulator braucht viel Rechenleistung; die eingebaute Ansicht kann dafür zu langsam sein (kein Ton oder Stottern) – „In Firefox öffnen“ öffnet ihn im normalen Browser, der oft schneller ist."
+
+#: fm1companion/ui/pages/simulator.py:82
+#, python-brace-format
+msgid "This emulator needs a lot of computing power; the built-in view of this system (Qt {version}) is an older one and may be too slow for it – on a Raspberry Pi 5 it stayed silent there. “Open in Firefox” opens it in the regular browser, which is often faster."
+msgstr "Dieser Emulator braucht viel Rechenleistung; die eingebaute Ansicht dieses Systems (Qt {version}) ist eine ältere und kann dafür zu langsam sein – auf einem Raspberry Pi 5 blieb er dort stumm. „In Firefox öffnen“ öffnet ihn im normalen Browser, der oft schneller ist."
+
+#: fm1companion/ui/pages/simulator.py:85
+msgid "X0X has its own keys: white keys on Q–I and A–K, black keys on 1–0 and -, Space is PLAY, Z / X are OCT− / OCT+ (Z S X D C … do not play notes here)."
+msgstr "X0X hat eigene Tasten: weiße Tasten auf Q–I und A–K, schwarze Tasten auf 1–0 und -, die Leertaste ist PLAY, Z / X sind OCT− / OCT+ (Z S X D C … spielen hier keine Noten)."

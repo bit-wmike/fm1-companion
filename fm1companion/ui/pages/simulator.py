@@ -16,7 +16,7 @@ from pathlib import Path
 import html
 import re
 
-from PyQt6.QtCore import QSize, QTimer, QUrl, Qt, pyqtSignal
+from PyQt6.QtCore import QT_VERSION_STR, QSize, QTimer, QUrl, Qt, pyqtSignal
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import (QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget,
                              QListWidgetItem, QPushButton, QScrollArea, QSizePolicy, QSplitter, QVBoxLayout, QWidget)
@@ -74,6 +74,16 @@ SIM_TEXTS = (
     N_("RemoteFM1 (link only)"),
     N_("Quixotic7, GPL-3.0: the real FM-1 as a USB control panel for an emulated firmware. Ran badly on the Pi – "
        "therefore only as a reference; opens the project page in the browser."),
+    N_("If you hear nothing: press the page's own “Switch on” / “Start” button (you may have to scroll). Each page "
+       "has its own computer-keyboard layout."),
+    N_("Each page has its own computer-keyboard layout – see the page itself."),
+    N_("This emulator needs a lot of computing power; the built-in view may be too slow for it (no sound, or "
+       "stutter) – “Open in Firefox” opens it in the regular browser, which is often faster."),
+    N_("This emulator needs a lot of computing power; the built-in view of this system (Qt {version}) is an older "
+       "one and may be too slow for it – on a Raspberry Pi 5 it stayed silent there. “Open in Firefox” opens it in "
+       "the regular browser, which is often faster."),
+    N_("X0X has its own keys: white keys on Q–I and A–K, black keys on 1–0 and -, Space is PLAY, Z / X are OCT− / "
+       "OCT+ (Z S X D C … do not play notes here)."),
     N_("{name} missing"),
     N_("{name} damaged"),
 )
@@ -396,10 +406,14 @@ class SimulatorPage(QWidget):
             return
         if s.online:
             # title, description and address can come from the catalog or from the address field: text, not HTML
+            notes = "".join(f"<br>{html.escape(n)}" for n in sims.online_notes(s.url, QT_VERSION_STR))
+            keys = " " + html.escape(sims.online_keys_hint()) if s.kind == "emulator" else ""
             self.details.setText(f"<b>{html.escape(s.title)}</b> <span style='color:#c80'>● online</span><br>"
-                                 f"{html.escape(s.description)}<br><small>{_breakable(html.escape(s.url))}<br>"
+                                 f"{html.escape(s.description)}{notes}<br>"
+                                 f"<small>{_breakable(html.escape(s.url))}<br>"
                                  + _("Runs on the developer's site; needs internet. MIDI: choose the input “FM-1 "
-                                     "(keys)” in the page.") + "</small>")
+                                     "(keys)” in the page.") + keys + "</small>")
+            self.details.setToolTip("")
             self.b_ff.setEnabled(True)
             return
         src = f"{s.source_repo}/tree/{s.commit}" if s.commit else s.source_repo
@@ -505,6 +519,8 @@ class SimulatorPage(QWidget):
         hint = {"melodee": _("Press “Switch on” or play a key on the FM-1. Computer keyboard: Z S X D C …"),
                 "fm1-open": _("Just play a key (mouse, computer keyboard Z S X …, or on the FM-1).")}.get(s.key, "")
         text = (_("{title} is running (online).") if s.online else _("{title} is running.")).format(title=s.title)
+        if s.online:                                   # the page's own start button, its own keys, per-page notes
+            hint = " ".join([sims.online_hint(s.kind)] + sims.online_notes(s.url, QT_VERSION_STR)).strip()
         self.state.setText(f"{text} {hint}".strip())
         # Melodee waits for “Switch on”: once switched on, remove the hint from the status line
         self._await_power = s.key == "melodee"

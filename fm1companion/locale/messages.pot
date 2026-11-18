@@ -1327,98 +1327,98 @@ msgstr ""
 msgid "Can only be installed from the original firmware V15 – the app takes the detour automatically."
 msgstr ""
 
-#: fm1companion/catalog.py:303
+#: fm1companion/catalog.py:323
 msgid "Paid – purchase and installation go through the manufacturer's site."
 msgstr ""
 
-#: fm1companion/catalog.py:305
+#: fm1companion/catalog.py:325
 msgid "Closed source."
 msgstr ""
 
-#: fm1companion/catalog.py:307
+#: fm1companion/catalog.py:327
 msgid "No ready-made package – only for building yourself from the source code."
 msgstr ""
 
-#: fm1companion/catalog.py:451
+#: fm1companion/catalog.py:471
 msgid "not a Mooring catalog"
 msgstr ""
 
-#: fm1companion/catalog.py:478
+#: fm1companion/catalog.py:498
 msgid "no signature"
 msgstr ""
 
-#: fm1companion/catalog.py:484
+#: fm1companion/catalog.py:504
 msgid "signature unreadable"
 msgstr ""
 
-#: fm1companion/catalog.py:486
+#: fm1companion/catalog.py:506
 msgid "checksum does not match"
 msgstr ""
 
-#: fm1companion/catalog.py:487
+#: fm1companion/catalog.py:507
 msgid "checksum matches, key unknown"
 msgstr ""
 
-#: fm1companion/catalog.py:959
+#: fm1companion/catalog.py:979
 #, python-brace-format
 msgid "HTTP {code} at {url}"
 msgstr ""
 
-#: fm1companion/catalog.py:970
+#: fm1companion/catalog.py:990
 #, python-brace-format
 msgid "loading {name} …"
 msgstr ""
 
-#: fm1companion/catalog.py:1010
+#: fm1companion/catalog.py:1030
 #, python-brace-format
 msgid "{name} is new in the catalog"
 msgstr ""
 
-#: fm1companion/catalog.py:1014
+#: fm1companion/catalog.py:1034
 #, python-brace-format
 msgid "{name} {version} is available"
 msgstr ""
 
-#: fm1companion/catalog.py:1112
+#: fm1companion/catalog.py:1132
 #, python-brace-format
 msgid "GitHub limit reached – try again later (from {time}). With your own GitHub token (settings of “Firmware+”) you get more requests."
 msgstr ""
 
-#: fm1companion/catalog.py:1114
+#: fm1companion/catalog.py:1134
 msgid "GitHub limit reached – try again later. With your own GitHub token (settings of “Firmware+”) you get more requests."
 msgstr ""
 
-#: fm1companion/catalog.py:1147
+#: fm1companion/catalog.py:1167
 msgid "GitHub is refusing access right now (403) – try again later."
 msgstr ""
 
-#: fm1companion/catalog.py:1152
+#: fm1companion/catalog.py:1172
 msgid "Repository not found on GitHub (deleted, renamed or private)"
 msgstr ""
 
-#: fm1companion/catalog.py:1154
+#: fm1companion/catalog.py:1174
 #, python-brace-format
 msgid "GitHub answers with error {code} – showing the saved state"
 msgstr ""
 
-#: fm1companion/catalog.py:1155
+#: fm1companion/catalog.py:1175
 #, python-brace-format
 msgid "GitHub error {code}"
 msgstr ""
 
-#: fm1companion/catalog.py:1158
+#: fm1companion/catalog.py:1178
 msgid "offline – showing the saved state"
 msgstr ""
 
-#: fm1companion/catalog.py:1159
+#: fm1companion/catalog.py:1179
 msgid "no connection to GitHub"
 msgstr ""
 
-#: fm1companion/catalog.py:1450
+#: fm1companion/catalog.py:1470
 msgid "README not reachable"
 msgstr ""
 
-#: fm1companion/catalog.py:1467
+#: fm1companion/catalog.py:1487
 msgid "Image too large"
 msgstr ""
 
@@ -6736,13 +6736,13 @@ msgid "the bundled SLOOP 3 editor is missing"
 msgstr ""
 
 #: fm1companion/sloop3.py:446 fm1companion/studio.py:325
-#: fm1companion/ui/pages/simulator.py:77
+#: fm1companion/ui/pages/simulator.py:87
 #, python-brace-format
 msgid "{name} missing"
 msgstr ""
 
 #: fm1companion/sloop3.py:448 fm1companion/studio.py:327
-#: fm1companion/ui/pages/simulator.py:78
+#: fm1companion/ui/pages/simulator.py:88
 #, python-brace-format
 msgid "{name} damaged"
 msgstr ""
@@ -11594,8 +11594,8 @@ msgid "Sound Module"
 msgstr ""
 
 #: fm1companion/ui/main_window.py:64 fm1companion/ui/pages/discover.py:1158
-#: fm1companion/ui/pages/simulator.py:133
-#: fm1companion/ui/pages/simulator.py:876 fm1companion/ui/wizard.py:361
+#: fm1companion/ui/pages/simulator.py:143
+#: fm1companion/ui/pages/simulator.py:892 fm1companion/ui/wizard.py:361
 msgid "Simulator"
 msgstr ""
 
@@ -11947,7 +11947,7 @@ msgstr ""
 msgid "Attention"
 msgstr ""
 
-#: fm1companion/ui/notify.py:45 fm1companion/ui/pages/simulator.py:172
+#: fm1companion/ui/notify.py:45 fm1companion/ui/pages/simulator.py:182
 #: fm1companion/ui/pages/studio.py:78 fm1companion/ui/wizard.py:428
 msgid "Open"
 msgstr ""
@@ -14489,7 +14489,7 @@ msgstr ""
 msgid "also show this MIDI input (e.g. controller, sound generator)"
 msgstr ""
 
-#: fm1companion/ui/pages/midi.py:196 fm1companion/ui/pages/simulator.py:595
+#: fm1companion/ui/pages/midi.py:196 fm1companion/ui/pages/simulator.py:611
 msgid "no additional MIDI input found"
 msgstr ""
 
@@ -14659,7 +14659,7 @@ msgstr ""
 msgid "sends MIDI Continue: continues where it was stopped"
 msgstr ""
 
-#: fm1companion/ui/pages/midi.py:664 fm1companion/ui/pages/simulator.py:730
+#: fm1companion/ui/pages/midi.py:664 fm1companion/ui/pages/simulator.py:746
 #: fm1companion/ui/pages/studio.py:426 fm1companion/ui/playback_bar.py:146
 #: fm1companion/ui/recorder_page.py:172 fm1companion/ui/sample_recorder.py:300
 #: fm1companion/ui/samples_page.py:116
@@ -17010,133 +17010,154 @@ msgstr ""
 msgid "Quixotic7, GPL-3.0: the real FM-1 as a USB control panel for an emulated firmware. Ran badly on the Pi – therefore only as a reference; opens the project page in the browser."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:133
+#: fm1companion/ui/pages/simulator.py:77
+msgid "If you hear nothing: press the page's own “Switch on” / “Start” button (you may have to scroll). Each page has its own computer-keyboard layout."
+msgstr ""
+
+#: fm1companion/ui/pages/simulator.py:79
+msgid "Each page has its own computer-keyboard layout – see the page itself."
+msgstr ""
+
+#: fm1companion/ui/pages/simulator.py:80
+msgid "This emulator needs a lot of computing power; the built-in view may be too slow for it (no sound, or stutter) – “Open in Firefox” opens it in the regular browser, which is often faster."
+msgstr ""
+
+#: fm1companion/ui/pages/simulator.py:82
+#, python-brace-format
+msgid "This emulator needs a lot of computing power; the built-in view of this system (Qt {version}) is an older one and may be too slow for it – on a Raspberry Pi 5 it stayed silent there. “Open in Firefox” opens it in the regular browser, which is often faster."
+msgstr ""
+
+#: fm1companion/ui/pages/simulator.py:85
+msgid "X0X has its own keys: white keys on Q–I and A–K, black keys on 1–0 and -, Space is PLAY, Z / X are OCT− / OCT+ (Z S X D C … do not play notes here)."
+msgstr ""
+
+#: fm1companion/ui/pages/simulator.py:143
 msgid "Play FM-1 firmwares on the computer – the real code of the firmware as WebAssembly. On the Pi it often runs more smoothly in Firefox."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:138
+#: fm1companion/ui/pages/simulator.py:148
 msgid "Launch"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:141
+#: fm1companion/ui/pages/simulator.py:151
 msgid "Load the selected simulator here in the app (Enter or double-click in the list)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:144
+#: fm1companion/ui/pages/simulator.py:154
 msgctxt "simulator"
 msgid "Stop"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:145
+#: fm1companion/ui/pages/simulator.py:155
 msgid "Stop the simulator – frees computing power and sound. Without stopping it keeps running, even when you change the page (like a switched-on instrument)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:163
+#: fm1companion/ui/pages/simulator.py:173
 msgid "Open in Firefox"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:164
+#: fm1companion/ui/pages/simulator.py:174
 msgid "Open in a separate Firefox window (often smoother on the Pi). MIDI from the FM-1 also arrives there as long as the app is running."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:170
+#: fm1companion/ui/pages/simulator.py:180
 msgid "Address of an online simulator (https://…)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:179
+#: fm1companion/ui/pages/simulator.py:189
 msgid "<b>MIDI into the simulator</b>"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:180
+#: fm1companion/ui/pages/simulator.py:190
 msgid "Keys and knobs of the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:182
+#: fm1companion/ui/pages/simulator.py:192
 msgid "What you play on the connected FM-1 plays along in the simulator (channel messages and clock)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:188
+#: fm1companion/ui/pages/simulator.py:198
 msgid "additional MIDI input, e.g. a USB keyboard"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:190 fm1companion/ui/recorder_page.py:65
+#: fm1companion/ui/pages/simulator.py:200 fm1companion/ui/recorder_page.py:65
 #: fm1companion/ui/sample_recorder.py:58
 msgid "Search"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:191
+#: fm1companion/ui/pages/simulator.py:201
 msgid "Search MIDI inputs again"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:197
+#: fm1companion/ui/pages/simulator.py:207
 #: fm1companion/ui/pages/soundmodule.py:137
 msgid "Latency:"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:202
+#: fm1companion/ui/pages/simulator.py:212
 msgid "Crackling? Choose “stable” – the sound then comes a little later. Applies at the next start (also in Firefox)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:232
+#: fm1companion/ui/pages/simulator.py:242
 msgid "Choose a simulator on the left."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:237
-#: fm1companion/ui/pages/simulator.py:747 fm1companion/ui/recorder_page.py:60
+#: fm1companion/ui/pages/simulator.py:247
+#: fm1companion/ui/pages/simulator.py:763 fm1companion/ui/recorder_page.py:60
 #: fm1companion/ui/sample_recorder.py:70
 #: fm1companion/ui/sample_recorder.py:105
 #: fm1companion/ui/sample_recorder.py:312 fm1companion/ui/samples_page.py:293
 msgid "Record"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:238
+#: fm1companion/ui/pages/simulator.py:248
 msgid "Record the simulator's sound as WAV to ~/FM-1/Aufnahmen (Ctrl+R)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:251
+#: fm1companion/ui/pages/simulator.py:261
 msgid "Qt WebEngine is missing for the built-in simulator (sudo apt install python3-pyqt6.qtwebengine). “Open in Firefox” still works."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:279
-#: fm1companion/ui/pages/simulator.py:341
+#: fm1companion/ui/pages/simulator.py:289
+#: fm1companion/ui/pages/simulator.py:351
 msgid "No simulator started yet"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:280
+#: fm1companion/ui/pages/simulator.py:290
 msgid "Choose a simulator on the left and press “Launch”. With a connected FM-1 its keys play along in the simulator."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:342
-#: fm1companion/ui/pages/simulator.py:478
+#: fm1companion/ui/pages/simulator.py:352
+#: fm1companion/ui/pages/simulator.py:492
 msgid "Choose a simulator on the left and press “Launch”."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:358
+#: fm1companion/ui/pages/simulator.py:368
 msgid "BUNDLED (offline)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:360
+#: fm1companion/ui/pages/simulator.py:370
 msgid "No simulators bundled – installation incomplete?"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:365
+#: fm1companion/ui/pages/simulator.py:375
 msgid "RECENTLY OPENED (online)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:369
+#: fm1companion/ui/pages/simulator.py:379
 msgid "ONLINE SIMULATORS (need internet)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:401
+#: fm1companion/ui/pages/simulator.py:414
 msgid "Runs on the developer's site; needs internet. MIDI: choose the input “FM-1 (keys)” in the page."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:406
+#: fm1companion/ui/pages/simulator.py:420
 #, python-brace-format
 msgid "<b>{title}</b> · version {version}<br>{description}<br><small>Source: <a href='{url}'>{repo}</a> · License: {license} · {size}</small>"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:411
+#: fm1companion/ui/pages/simulator.py:425
 #, python-brace-format
 msgid ""
 "State: {ref} ({commit})\n"
@@ -17144,229 +17165,229 @@ msgid ""
 "License: {license}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:431
+#: fm1companion/ui/pages/simulator.py:445
 #, python-brace-format
 msgid "{title}: project page opened in the browser."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:438
+#: fm1companion/ui/pages/simulator.py:452
 #, python-brace-format
 msgid "Simulator damaged: {files} – please reinstall the app."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:457
+#: fm1companion/ui/pages/simulator.py:471
 msgid "<b style='color:#2a2'>● local</b>"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:460 fm1companion/ui/pages/voices.py:1014
+#: fm1companion/ui/pages/simulator.py:474 fm1companion/ui/pages/voices.py:1014
 #, python-brace-format
 msgid "Loading {title} …"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:471
+#: fm1companion/ui/pages/simulator.py:485
 #, python-brace-format
 msgid "{title} stopped."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:478
+#: fm1companion/ui/pages/simulator.py:492
 msgid "Simulator stopped"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:497
+#: fm1companion/ui/pages/simulator.py:511
 msgid "No connection"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:497
+#: fm1companion/ui/pages/simulator.py:511
 #, python-brace-format
 msgid "{title} is on the internet ({url}) and cannot be reached right now. The bundled simulators also work offline."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:501
+#: fm1companion/ui/pages/simulator.py:515
 msgid "Online simulator not reachable – offline?"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:503
+#: fm1companion/ui/pages/simulator.py:517
 msgid "Simulator could not be loaded."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:505
+#: fm1companion/ui/pages/simulator.py:519
 msgid "Press “Switch on” or play a key on the FM-1. Computer keyboard: Z S X D C …"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:506
+#: fm1companion/ui/pages/simulator.py:520
 msgid "Just play a key (mouse, computer keyboard Z S X …, or on the FM-1)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:507
+#: fm1companion/ui/pages/simulator.py:521
 #, python-brace-format
 msgid "{title} is running (online)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:507
+#: fm1companion/ui/pages/simulator.py:521
 #, python-brace-format
 msgid "{title} is running."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:519
+#: fm1companion/ui/pages/simulator.py:535
 #, python-brace-format
 msgid "Invalid address: {url}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:546
+#: fm1companion/ui/pages/simulator.py:562
 msgid "Firefox not found – sudo apt install firefox-esr"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:551
+#: fm1companion/ui/pages/simulator.py:567
 #, python-brace-format
 msgid "Firefox could not be started: {error}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:554
+#: fm1companion/ui/pages/simulator.py:570
 #, python-brace-format
 msgid "{title} opened in Firefox. MIDI from the FM-1 arrives there as long as the app is running – the simulator here can be stopped."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:591
+#: fm1companion/ui/pages/simulator.py:607
 msgid "no additional MIDI input"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:609
+#: fm1companion/ui/pages/simulator.py:625
 #, python-brace-format
 msgid "MIDI input cannot be opened: {errors}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:615
+#: fm1companion/ui/pages/simulator.py:631
 msgid "FM-1 (keys)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:622
+#: fm1companion/ui/pages/simulator.py:638
 #, python-brace-format
 msgid "MIDI active from: {sources}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:623
+#: fm1companion/ui/pages/simulator.py:639
 msgid "No MIDI input active – connect the FM-1 or choose a keyboard. Playing also works with the mouse and the computer keyboard."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:643
+#: fm1companion/ui/pages/simulator.py:659
 msgid "Connect the online editor to the FM-1?"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:644
+#: fm1companion/ui/pages/simulator.py:660
 msgid "Connect this web page to the FM-1?"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:646
+#: fm1companion/ui/pages/simulator.py:662
 #, python-brace-format
 msgid "<b>{title}</b> is loaded from <b>{origin}</b> – a site on the internet that does not belong to this app."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:650
+#: fm1companion/ui/pages/simulator.py:666
 msgid "If you allow it, this site may send editor commands to your FM-1: SysEx of the editor family (F0 7D …, this includes the FM1 Open library) and universal SysEx (F0 7E/7F). With these it can read, change and delete sounds, presets, projects, samples and settings on the device and restore backups. Still blocked: firmware update and boot mode, and every other SysEx."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:656
+#: fm1companion/ui/pages/simulator.py:672
 msgid "If you allow it, this site may use the library commands of the FM1 Open firmware (SysEx F0 7D 46 4D …). With these it can read, overwrite and delete projects, sounds and the sample bank on an FM-1 that runs FM1 Open. Still blocked: firmware update, boot mode and every other SysEx."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:662
+#: fm1companion/ui/pages/simulator.py:678
 msgid "Without permission only notes, controllers and clock go to the FM-1. The permission applies only to exactly this address; if the site switches to another address, only notes, controllers and clock get through again. The app cannot check what the site does with the permission – allow it only for a site you trust."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:666
+#: fm1companion/ui/pages/simulator.py:682
 msgid "Allow (remember for this address)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:667
+#: fm1companion/ui/pages/simulator.py:683
 msgid "Allow notes only"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:696
+#: fm1companion/ui/pages/simulator.py:712
 msgid "firmware update and boot mode are blocked for web pages"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:698
+#: fm1companion/ui/pages/simulator.py:714
 msgid "this address has no permission for editor commands – only notes, controllers and clock; the app asks for permission when opening the online editor"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:701
+#: fm1companion/ui/pages/simulator.py:717
 msgid "this address may only use the FM1 Open library commands – everything else is blocked"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:703
+#: fm1companion/ui/pages/simulator.py:719
 msgid "this address has no permission for the FM-1 – only notes, controllers and clock; the app asks for permission when the page is opened"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:706
+#: fm1companion/ui/pages/simulator.py:722
 msgid "the bundled simulators may only send notes, controllers, clock and FM1 Open library commands to the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:709
+#: fm1companion/ui/pages/simulator.py:725
 msgid "simulators may only send notes, controllers and clock to the FM-1 – for device access use the page “Editor”"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:711
+#: fm1companion/ui/pages/simulator.py:727
 #, python-brace-format
 msgid "{n} message of the page to the FM-1 held back ({reason})."
 msgid_plural "{n} messages of the page to the FM-1 held back ({reason})."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/simulator.py:723
+#: fm1companion/ui/pages/simulator.py:739
 msgid "Start a simulator first."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:735
+#: fm1companion/ui/pages/simulator.py:751
 msgid "Recording only works once the simulator makes sound – play a key once."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:751
+#: fm1companion/ui/pages/simulator.py:767
 #, python-brace-format
 msgid "{duration} saved (silent!)"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:752
+#: fm1companion/ui/pages/simulator.py:768
 #, python-brace-format
 msgid "{duration} saved"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:754
+#: fm1companion/ui/pages/simulator.py:770
 msgid "Recording failed"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:774
+#: fm1companion/ui/pages/simulator.py:790
 #, python-brace-format
 msgid "{title} is running and switched on. Play: on the FM-1 or with the computer keyboard (Z S X D C …)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:793
+#: fm1companion/ui/pages/simulator.py:809
 #, python-brace-format
 msgid "⚠ too slow: {percent} % tempo"
 msgstr ""
 
 #. Translators: {percent} includes the percent sign ("43 %")
-#: fm1companion/ui/pages/simulator.py:797
+#: fm1companion/ui/pages/simulator.py:813
 #, python-brace-format
 msgid ""
 "The computer manages only {percent} of the required computing power – the simulator plays slower, the sound stutters and crackles. This is not the firmware's fault.\n"
 "Remedy: close other programs, “Open in Firefox” (often faster on the Pi) or choose latency “stable” and restart."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:802
+#: fm1companion/ui/pages/simulator.py:818
 msgid "Real time"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:804
+#: fm1companion/ui/pages/simulator.py:820
 #, python-brace-format
 msgid "The computer keeps up: the simulator plays at normal tempo (measured {percent} %)."
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:845
+#: fm1companion/ui/pages/simulator.py:861
 #, python-brace-format
 msgid "Recording saved: {path}"
 msgstr ""
 
-#: fm1companion/ui/pages/simulator.py:878
+#: fm1companion/ui/pages/simulator.py:894
 msgid "play FM-1 simulators on the computer (FM1 Open built from the official source code, Melodee, online)"
 msgstr ""
 
