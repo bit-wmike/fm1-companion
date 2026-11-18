@@ -488,7 +488,19 @@ class DeviceContext(QObject):
                 self.store.save()
                 self.settings.last_device = p.id
                 config.save(self.settings)
+        self._log_connected()
         self.changed.emit()
+
+    def _log_connected(self):
+        """one line in the app log for every FM-1 that was recognised – also one without editor protocol (the
+        original firmware), which the log did not mention before. No serial number, no name of the owner's choosing."""
+        port, p = self.port, self.profile
+        if port is None or getattr(port, "virtual", False):
+            return
+        log.info("connected: identity %s, firmware %s%s, protocol %s, USB %s at %s, profile %s",
+                 self.identity or "-", self.firmware_key or "unknown",
+                 f" ({self.info.version})" if self.info else "", self.protocol or "-", port.usb_id or "-",
+                 port.usb_path or "-", p.id if p else "none (not said which FM-1 this is)")
 
     def _probe_failed(self, msg, link=None):
         """no Felucca INFO: try the handshake (doesn't disturb), keep the MIDI connection open"""
@@ -545,6 +557,7 @@ class DeviceContext(QObject):
         else:
             self.message.emit(_("The device answers neither editor commands nor the update ID. The "
                                 "MIDI connection stays open."))
+        self._log_connected()
         self.changed.emit()
         if self.firmware_ambiguous and p and ident and not choice:
             QTimer.singleShot(300, lambda port=self.port: self.ask_firmware(port))

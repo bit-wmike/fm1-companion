@@ -54,6 +54,8 @@ def fake_ctx(store, port=None, identity="", **kw):
     ctx._new_profile = lambda name="": DeviceContext._new_profile(ctx, name)
     ctx.note_installed = lambda prof, usb: DeviceContext.note_installed(ctx, prof, usb)
     ctx._note_found = DeviceContext._note_found
+    ctx.firmware_key, ctx.protocol = "", ""
+    ctx._log_connected = lambda: DeviceContext._log_connected(ctx)
     for k, v in kw.items():
         setattr(ctx, k, v)
     return ctx
@@ -488,3 +490,149 @@ def test_firmware_found_on_connecting_is_booked_and_the_identity_refreshed(tmp_p
     assert len(b.firmware_history) == 2
     assert not DeviceContext._installed_here(b, "FM-1_926")                  # "found" is not "installed by the app"
     assert json.loads(store.path.read_text("utf-8"))["profiles"][0]["firmware_history"][-1]["how"] == "found"
+
+
+def test_every_recognised_fm1_leaves_a_line_in_the_app_log(home, caplog):
+    """an FM-1 on the original firmware (no editor protocol) was not mentioned in the app log at all"""
+    import logging
+    from fm1companion.ui.device import DeviceContext
+    store = store_with(home, [])
+    port = stock_port(NEW_SERIAL)
+    ctx = fake_ctx(store, port, identity="", link=SimpleNamespace(closed=False, hs_flash=0), firmware_guess=[],
+                   message=SimpleNamespace(emit=lambda *_a: None), changed=SimpleNamespace(emit=lambda: None),
+                   firmware_ambiguous=False, protocol="generic")
+    ctx._assign_profile = lambda: DeviceContext._assign_profile(ctx)
+    ctx._installed_here = DeviceContext._installed_here
+    with caplog.at_level(logging.INFO, logger="fm1companion.device"):
+        DeviceContext._generic(ctx, "FM-1_015", ctx.link)
+    line = next(r.getMessage() for r in caplog.records if r.getMessage().startswith("connected:"))
+    assert "FM-1_015" in line and "4c4a:c755" in line and "3-1.3.1" in line and ctx.profile.id in line
+    assert NEW_SERIAL not in line and ctx.profile.name not in line           # no serial number, no chosen name
+
+
+# ---------------------------------------------------------------- finding 3: fluidsynth.service enabled for all users
+
+class FakeSystemd:
+    """`systemctl --user` for a unit that is enabled under /etc/systemd/user (for all users): `disable` succeeds
+    and changes nothing, `mask` works, `unmask` puts it back"""
+
+    def __init__(self, global_unit=True):
+        self.global_unit, self.user_enabled, self.masked, self.running, self.calls = global_unit, not global_unit, False, True, []
+
+    def state(self):
+        return "masked" if self.masked else "enabled" if (self.global_unit or self.user_enabled) else "disabled"
+
+    def run(self, cmd, **kw):
+        import subprocess
+        out = ""
+        if list(cmd[:2]) == ["systemctl", "--user"]:
+            verb = cmd[2]
+            self.calls.append([c for c in cmd[2:] if c != "fluidsynth.service"])
+            if verb == "is-enabled":
+                out = self.state() + "\n"
+            elif verb == "is-active":
+                out = "active\n" if self.running else "inactive\n"
+            elif verb == "disable":
+                self.user_enabled = False
+            elif verb == "mask":
+                self.masked = True
+            elif verb == "unmask":
+                self.masked = False
+            if "--now" in cmd:
+                self.running = False
+        return subprocess.CompletedProcess(cmd, 0, out, "")
+
+
+@pytest.fixture()
+def installer(tmp_path, monkeypatch):
+    import importlib
+    sys.path.insert(0, str(ROOT / "packaging" / "installer"))
+    import core
+    importlib.reload(core)
+    home = tmp_path / "h"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("LANG", "en_US.UTF-8")
+    monkeypatch.setenv("FM1C_LANG", "en")
+    for k in ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME", "LC_ALL", "LC_MESSAGES"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setattr(core, "_desktop_dir", lambda: str(home / "Desktop"))
+    monkeypatch.setattr(core, "refresh_menus", lambda L: None)
+    monkeypatch.setattr(core.shutil, "which", lambda name: "/usr/bin/" + name)
+    monkeypatch.setattr(core.os, "geteuid", lambda: 1000)
+    monkeypatch.setattr(core, "udev_rule_installed", lambda: False)
+    return core, home
+
+
+def test_installer_masks_a_globally_enabled_fluidsynth_service_and_says_so(installer, monkeypatch):
+    core, home = installer
+    sd = FakeSystemd(global_unit=True)
+    monkeypatch.setattr(core.subprocess, "run", sd.run)
+    logs = []
+    prefix = home / ".local"
+    core.install(ROOT, prefix, log=logs.append)
+    text = " ".join(logs)
+    assert sd.state() == "masked" and not sd.running                 # stopped now and not started at the next login
+    assert ["disable", "--now"] in sd.calls and ["mask", "--now"] in sd.calls
+    assert "masked" in text and "unmask" in text and "I disabled the system" not in text
+    info = json.loads((prefix / "share/fm1-companion/app/install-info.json").read_text())
+    assert info["fluidsynth_masked"] is True
+    # an update keeps the note (the service is no longer "enabled", so nothing is done – but it must stay recorded)
+    core.install(ROOT, prefix, log=logs.append)
+    assert json.loads((prefix / "share/fm1-companion/app/install-info.json").read_text())["fluidsynth_masked"] is True
+    # uninstalling takes our mask away again
+    out = []
+    core.uninstall(prefix, log=out.append)
+    assert sd.state() == "enabled" and any("no longer masked" in x for x in out)
+
+
+def test_installer_reports_the_plain_disable_and_a_failure_honestly(installer, monkeypatch):
+    core, home = installer
+    sd = FakeSystemd(global_unit=False)                              # enabled by the user: `disable` is enough
+    monkeypatch.setattr(core.subprocess, "run", sd.run)
+    logs = []
+    core.install(ROOT, home / ".local", log=logs.append)
+    assert sd.state() == "disabled" and ["mask", "--now"] not in sd.calls
+    assert any("I disabled the system" in x for x in logs)
+    assert "fluidsynth_masked" not in json.loads((home / ".local/share/fm1-companion/app/install-info.json").read_text())
+    out = []
+    core.uninstall(home / ".local", log=out.append)
+    assert ["unmask"] not in sd.calls                                # never unmask what we did not mask
+    stuck = FakeSystemd(global_unit=True)
+    stuck_run = stuck.run
+
+    def run(cmd, **kw):                                              # neither disable nor mask has any effect
+        r = stuck_run(cmd, **kw)
+        stuck.masked = False
+        return r
+    monkeypatch.setattr(core.subprocess, "run", run)
+    logs = []
+    core.install(ROOT, home / ".local", log=logs.append)
+    assert any("could NOT be switched off" in x for x in logs) and not any("I disabled" in x for x in logs)
+
+
+def test_app_side_fix_checks_the_result_too(monkeypatch):
+    from fm1companion import audiofix
+    sd = FakeSystemd(global_unit=True)
+    monkeypatch.setattr(audiofix.shutil, "which", lambda n: "/usr/bin/" + n)
+    monkeypatch.setattr(audiofix.subprocess, "run", sd.run)
+    ok, msg = audiofix.disable_fluidsynth_service(restart_audio=False)
+    assert ok and sd.state() == "masked" and "unmask" in msg
+    assert audiofix.fluidsynth_service() == (False, False)           # so the start-up warning stops
+
+
+# ---------------------------------------------------------------- finding 12: the "Optional: a udev rule" hint
+
+def test_udev_hint_is_not_printed_when_the_caller_handles_the_rule(installer, monkeypatch):
+    core, home = installer
+    monkeypatch.setattr(core.subprocess, "run", FakeSystemd(global_unit=False).run)
+    monkeypatch.setattr(core, "fluidsynth_service_enabled", lambda: False)
+    logs = []
+    core.install(ROOT, home / ".local", log=logs.append)
+    assert any(x.startswith("Optional: a udev rule") for x in logs)                  # the graphical installer's hint
+    logs = []
+    core.install(ROOT, home / ".local", log=logs.append, udev_hint=False)
+    assert not any("Optional" in x for x in logs)
+    sh = (ROOT / "install.sh").read_text()
+    call = sh.index('core.py" install')
+    assert "--no-udev-hint" in sh[:call] and '"$UDEV" != ask || -t 0' in sh[:call]
+    assert '"--no-udev-hint"' in (ROOT / "packaging/installer/core.py").read_text()

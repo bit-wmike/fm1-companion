@@ -156,6 +156,9 @@ fi
 
 # ---- 2. Install the app (same core as the graphical installer) ----
 info "$(msg "Installing the app" "Installiere die App")"
+# (the udev rule is this script's step 3: it installs it, asks, or was told not to – so the core must not print its
+# own "Optional: a udev rule …" hint; only when nobody can be asked (no terminal) the hint is the only mention)
+if [[ "$UDEV" != ask || -t 0 ]]; then EXTRA+=("--no-udev-hint"); fi
 "$PY" "$HERE/packaging/installer/core.py" install --source "$HERE" --python "$PY" ${EXTRA[@]+"${EXTRA[@]}"}
 BIN="$HOME/.local/bin/fm1-companion"
 [[ " ${EXTRA[*]-} " == *" --no-menu "* ]] || ok "$(msg "Start menu entry 'FM-1 Companion' created (Multimedia)" \

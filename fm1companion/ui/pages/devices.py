@@ -235,6 +235,15 @@ class DevicesPage(QWidget):
                  _("Serial number: {serial} · USB port: {usb}").format(serial=p.serial or _("none"), usb=p.usb_path or '–')]
         from ... import hardware
         lines.append(_("Unit: {revision}").format(revision=hardware.label(p)))
+        from ...devices import possible_duplicate
+        twin = possible_duplicate(c.store, p)
+        if twin is not None:           # (a hint only: nothing is merged by itself, no backup folder is touched)
+            lines.append("<span style='color:#f67400'>" + _(
+                "Possibly the same FM-1 as “{other}”: both were last seen at the same USB port, one with a serial "
+                "number and one without. An FM-1 only reports a serial number under the original firmware, and "
+                "earlier versions of this app then made a second profile. If it is one FM-1: “Merge …” joins the "
+                "two (backups are moved, nothing is deleted). If you own two FM-1, leave them as they are."
+            ).format(other=twin.name) + "</span>")
         if p.notes:
             lines.append(f"<i>{p.notes}</i>")
         lab = QLabel("<br>".join(lines))
