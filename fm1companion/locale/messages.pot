@@ -3518,7 +3518,7 @@ msgstr ""
 
 #: fm1companion/flash/texts.py:76 fm1companion/ui/firmware_page.py:821
 #: fm1companion/ui/firmware_page.py:1119 fm1companion/ui/firmware_page.py:1344
-#: fm1companion/ui/fm1_page.py:218 fm1companion/ui/main_window.py:983
+#: fm1companion/ui/fm1_page.py:218 fm1companion/ui/main_window.py:985
 #: fm1companion/ui/overview.py:204 fm1companion/ui/pages/devices.py:30
 #: fm1companion/ui/pages/recovery.py:433 fm1companion/ui/statusbar.py:24
 msgid "unknown"
@@ -8477,7 +8477,7 @@ msgid "Delete"
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:502 fm1companion/ui/feedback.py:76
-#: fm1companion/ui/main_window.py:1008 fm1companion/ui/pages/presets.py:168
+#: fm1companion/ui/main_window.py:1010 fm1companion/ui/pages/presets.py:168
 #: fm1companion/ui/pages/project_view.py:669
 #: fm1companion/ui/pages/project_view.py:679
 #: fm1companion/ui/pages/recovery.py:827 fm1companion/ui/pages/studio.py:1281
@@ -9671,7 +9671,7 @@ msgstr ""
 msgid "connected – MIDI only (firmware without editor protocol)"
 msgstr ""
 
-#: fm1companion/ui/device.py:353 fm1companion/ui/main_window.py:940
+#: fm1companion/ui/device.py:353 fm1companion/ui/main_window.py:942
 msgid "not connected"
 msgstr ""
 
@@ -9679,7 +9679,7 @@ msgstr ""
 msgid "in update mode – finish the installation (page “Recovery”)"
 msgstr ""
 
-#: fm1companion/ui/device.py:406 fm1companion/ui/main_window.py:967
+#: fm1companion/ui/device.py:406 fm1companion/ui/main_window.py:969
 #: fm1companion/ui/pages/midi.py:1363
 msgid "FM-1 disconnected"
 msgstr ""
@@ -10269,7 +10269,7 @@ msgstr ""
 msgid "automatically before installing {label}"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:749 fm1companion/ui/main_window.py:1007
+#: fm1companion/ui/firmware_page.py:749 fm1companion/ui/main_window.py:1009
 #, python-brace-format
 msgid "Backup saved: {name}"
 msgstr ""
@@ -11084,7 +11084,7 @@ msgstr ""
 msgid "State:"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:229 fm1companion/ui/main_window.py:940
+#: fm1companion/ui/fm1_page.py:229 fm1companion/ui/main_window.py:942
 msgid "connected"
 msgstr ""
 
@@ -11645,7 +11645,7 @@ msgstr ""
 msgid "Create a full backup of the active FM-1 (Ctrl+B)"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:345 fm1companion/ui/main_window.py:1065
+#: fm1companion/ui/main_window.py:345 fm1companion/ui/main_window.py:1067
 #: fm1companion/ui/notify.py:374 fm1companion/ui/notify.py:377
 msgid "Notifications"
 msgstr ""
@@ -11829,75 +11829,75 @@ msgstr ""
 msgid "  (update mode)"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:829
+#: fm1companion/ui/main_window.py:830
 #, python-brace-format
 msgid "{label}  ·  virtual (not a real FM-1)"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:832
+#: fm1companion/ui/main_window.py:833
 msgid "The twin in the Studio: Projects, Compose, Presets, Backups and Editor then work with it instead of a real FM-1. Firmware, Recovery and USB audio are not available for it."
 msgstr ""
 
-#: fm1companion/ui/main_window.py:893
+#: fm1companion/ui/main_window.py:895
 #, python-brace-format
 msgid "Reconnecting to “{port}” …"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:897
+#: fm1companion/ui/main_window.py:899
 #, python-brace-format
 msgid "Searched again: {result}"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:898
+#: fm1companion/ui/main_window.py:900
 #, python-brace-format
 msgid "{n} FM-1 found."
 msgstr ""
 
-#: fm1companion/ui/main_window.py:899
+#: fm1companion/ui/main_window.py:901
 msgid "no FM-1 found – check the USB data cable."
 msgstr ""
 
-#: fm1companion/ui/main_window.py:915
+#: fm1companion/ui/main_window.py:917
 #, python-brace-format
 msgid "Could not disable it: {error}"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:916
+#: fm1companion/ui/main_window.py:918
 msgid "The system's FluidSynth service starts at every login and takes the first sound card (on the Pi: HDMI) – then your speaker/HDMI output is missing. The app does not need the service (the sound module starts FluidSynth itself)."
 msgstr ""
 
-#: fm1companion/ui/main_window.py:919
+#: fm1companion/ui/main_window.py:921
 msgid "Disable service"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:940
+#: fm1companion/ui/main_window.py:942
 msgid "not responding"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:956 fm1companion/ui/main_window.py:964
+#: fm1companion/ui/main_window.py:958 fm1companion/ui/main_window.py:966
 #, python-brace-format
 msgid "Active: {name} – {firmware}"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:960
+#: fm1companion/ui/main_window.py:962
 #, python-brace-format
 msgid "{name} connected – {firmware}"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:983
+#: fm1companion/ui/main_window.py:985
 #, python-brace-format
 msgid "New firmware available: {new} (installed: {current})"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:986
+#: fm1companion/ui/main_window.py:988
 msgid "View"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:992
+#: fm1companion/ui/main_window.py:994
 msgid "Back to your data?"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:993
+#: fm1companion/ui/main_window.py:995
 #, python-brace-format
 msgid ""
 "There is a backup from this device for this firmware:\n"
@@ -11906,29 +11906,29 @@ msgid ""
 "Restore it now? (Projects, presets and settings from back then.)"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:996
+#: fm1companion/ui/main_window.py:998
 msgid "Go to backups"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:997
+#: fm1companion/ui/main_window.py:999
 msgid "No, thanks"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:1039
+#: fm1companion/ui/main_window.py:1041
 #, python-brace-format
 msgid "Zoom {percent}%"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:1065
+#: fm1companion/ui/main_window.py:1067
 #, python-brace-format
 msgid "Notifications ({n} new)"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:1153
+#: fm1companion/ui/main_window.py:1155
 msgid "Recording in progress"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:1153
+#: fm1companion/ui/main_window.py:1155
 msgid "A recording is running. Stop and save it?"
 msgstr ""
 
