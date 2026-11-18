@@ -947,7 +947,8 @@ class MainWindow(QMainWindow):
         text = title + (f" – {state}" if c.port else "")
         # (narrow window: only the state – name and firmware are already in the selection)
         self._dev_texts = (col, text, state if c.port else text)
-        self.dev_state.setToolTip(title + (f" – {state}" if c.port else ""))
+        how = c.identified_text() if c.port and hasattr(c, "identified_text") else ""
+        self.dev_state.setToolTip((f"{how}\n" if how else "") + title + (f" – {state}" if c.port else ""))
         self._apply_dev_text()
         conn = (c.profile.id if c.profile else "", c.connected)
         switching = getattr(self, "_switching", False)

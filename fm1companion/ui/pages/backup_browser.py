@@ -29,6 +29,8 @@ def selective_restore(ctx, parent, rep: BI.Report, ids, source_label: str) -> bo
     """Read a safety backup → list exactly what will be overwritten → confirm → write."""
     if not ctx.require(parent):
         return False
+    if hasattr(ctx, "confirm_unit") and not ctx.confirm_unit(parent):     # (which FM-1 is it?)
+        return False
     if not rep.restorable or rep.archive is None:
         show_error(parent, _("Not possible"), _("The app cannot restore this backup format."))
         return False

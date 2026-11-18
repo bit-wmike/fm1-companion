@@ -1293,6 +1293,8 @@ class StudioPage(QWidget):
         if not ok or svc is None or not svc.running:
             show_error(self, _("Write back to the FM-1"), why or _("The twin is not running."))
             return None
+        if hasattr(c, "confirm_unit") and not c.confirm_unit(self):      # (which FM-1 is it?)
+            return None
         dev_v = self._dev_version()
         if svc.firmware_for(c.firmware_key) != svc.firmware:
             show_error(self, _("Write back to the FM-1"), _(

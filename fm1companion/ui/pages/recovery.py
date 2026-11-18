@@ -465,6 +465,8 @@ class RecoveryPage(QWidget):
                                            target=act.get('target', '?'))
         if not self._chip_gate(src, stock, act, port):
             return False
+        if not self._unit_gate(port, act):
+            return False
         from ..risk_dialog import ensure_risk_ack
         if not ensure_risk_ack(self):
             return False
@@ -556,6 +558,17 @@ class RecoveryPage(QWidget):
         if os.environ.get("FM1C_DEMO") == "1":
             return (cands[0] if len(cands) == 1 else None), False, hardware.OLD     # simulated FM-1s: earlier units
         return (cands[0] if len(cands) == 1 else None), False, ""
+
+    def _unit_gate(self, port, act: dict) -> bool:
+        """the waiting FM-1 is taken for one profile without being sure (no unit ID): the owner checks its front
+        before anything is written – a wrong unit could get a package its flash chip does not know"""
+        from ..device import unit_confirm_text
+        port = port if port is not None else self.update_port()
+        prof, certain, _rev = self.waiting_unit(port, act)
+        if certain or prof is None or len(self.ctx.store.profiles) <= 1:
+            return True
+        return confirm(self, _("Which FM-1 is this?"), unit_confirm_text(prof, "port"),
+                       _("Yes, it is “{name}”").format(name=prof.name), danger=True)
 
     def _chip_gate(self, src, stock: bool, act: dict, port=None) -> bool:
         """the newer FM-1 (logo on the front): the same rule as in the installation plan, for the package that is

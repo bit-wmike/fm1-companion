@@ -684,15 +684,18 @@ def test_sloop3_unit_is_not_mixed_up_with_the_owners_other_fm1(tmp_path, monkeyp
     assert g.usb_product == "FM-1 SLOOP 3" and g.hw_revision == "old" and g.firmware_history[-1]["how"] == "found"
     assert (o.firmware, o.firmware_version, o.usb_path, o.hw_revision, o.usb_product) == ("skiff", "v2.7", "1-2", "new", "")
     assert U.revision(ctx)[0] == "old"
-    # 3. the same unit at the same port again: remembered, no question (two profiles know this port now)
+    # 3. the same unit at the same port again, at a later plug-in: neither shows a unit ID, both can be it – asked
+    #    again (pi finding 35: never by the USB port or an earlier answer); the SLOOP 3 profile preselected
     ctx = connect(store, s3port, None)
-    assert not ctx.asked and ctx.profile is store.profiles["g"]
-    # 4. Orange itself comes back to its port (Skiff: it answers the update identity): Orange, no question – and
-    #    never the SLOOP 3 profile
+    assert ctx.asked == [(["o", "g"], "g")] and ctx.profile is None
+    # 4. Orange itself comes back to its port (Skiff: it answers the update identity): asked as well – and the
+    #    SLOOP 3 profile is not touched while unanswered
     skiff = devices.PortInfo("Felucca 32:0", "Felucca 32:0", "Felucca", 32, usb_id="1209:0001", usb_path="1-2",
                              product="Felucca")
     ctx = connect(store, skiff, None, s3=None, ident="FM-1_900")
-    assert not ctx.asked and ctx.profile is store.profiles["o"] and store.profiles["g"].firmware == "sloop3"
+    assert ctx.asked and ctx.profile is None and store.profiles["g"].firmware == "sloop3"
+    ctx = connect(store, skiff, lambda cands: next(c for c in cands if c.id == "o"), s3=None, ident="FM-1_900")
+    assert ctx.profile is store.profiles["o"] and store.profiles["g"].firmware == "sloop3"
     # 5. a single known FM-1 that last ran Skiff: SLOOP 3 at its port still contradicts – asked, not taken over
     one = store_with(tmp_path, [two[0]])
     ctx = connect(one, s3port, None)

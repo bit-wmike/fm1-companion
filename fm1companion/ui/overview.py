@@ -55,6 +55,8 @@ class OverviewPage(QWidget):
             self.lbl[k].setWordWrap(True)
             self.dev_form.addRow(title, self.lbl[k])
         # which firmware runs here (asked once on connecting, when the ID fits several): changeable with the link
+        self.lbl["Name"].setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.lbl["Name"].linkActivated.connect(lambda _href: getattr(self.ctx, "ask_which", lambda: None)())
         self.lbl["Firmware"].setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         self.lbl["Firmware"].linkActivated.connect(lambda _href: self.change_firmware())
         # hardware revision (logo on the front = the newer flash chip): shown, and changeable with the link
@@ -192,7 +194,16 @@ class OverviewPage(QWidget):
             self._notes_timer.stop()
             self._notes()
         self._notes_pid = p.id if p else ""
-        self.lbl["Name"].setText(f"<b style='color:{p.color}'>●</b> {html.escape(p.name)}" if p else "–")
+        # (and how the app knows it is this unit: its unit ID, its flash chip – or only an answer, which it cannot check)
+        how = c.identified_text() if p and hasattr(c, "identified_text") else ""
+        if p:
+            name = f"<b style='color:{p.color}'>●</b> {html.escape(p.name)}" + (
+                f" <small>· {html.escape(how)}</small>" if how else "")
+        elif port and getattr(c, "unit_candidates", None) and not port.update_mode:
+            name = _("not said yet") + " · <a href='#which'>" + _("Which FM-1 is this?") + "</a>"
+        else:
+            name = "–"
+        self.lbl["Name"].setText(name)
         from .device import firmware_name
         if port and port.update_mode and getattr(c, "mboot", None) is not None:
             fw_text = _("m-bootloader – MIDI MODE (no firmware running)")

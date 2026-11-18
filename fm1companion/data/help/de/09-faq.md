@@ -8,6 +8,22 @@ er zeigt, ob der Rechner das Gerät überhaupt sieht.
 Fast immer Kabel, Hub oder Netzteil. Der Systemcheck erkennt solche Schleifen im Kernel-Protokoll und sagt, was
 zu tun ist.
 
+**Ich habe zwei FM-1 – warum fragt die App jedes Mal „Welches FM-1 ist das?“**
+Die App unterscheidet deine Geräte an ihrer *Unit-ID*: Die Original-Firmware meldet sie als USB-Seriennummer, und
+der MIDI MODE von m-bootloader meldet sie auch. Die App merkt sie sich im Geräteprofil, wann immer sie sie sieht –
+auch beim V15-Schritt eines Firmware-Wechsels. Die Felucca-Familie (Skiff, Melodee, SLOOP, KARMA, X0X …) meldet
+keine Unit-ID und meist auch keinen Flash-Chip. Dann sehen zwei FM-1 genau gleich aus: gleiche Firmware, keine
+Nummer – und eine Firmware kann sich außerhalb der App ändern (M-Flasher, der eigene Updater einer Firmware).
+Deshalb fragt die App bei zwei oder mehr möglichen Geräten bei **jedem** Einstecken und rät nie über den USB-Port.
+Vor deiner Antwort ändert sie kein Profil und schreibt nichts, und es gilt die strengste Regel der Geräte, die es
+sein könnten (ist ein neueres darunter: die Regel des neueren). Nach einer Antwort nennt jeder Schreibvorgang
+zuerst das Gerät und bittet dich, seine Vorderseite zu prüfen (Logo oder nicht) – eine Antwort kann die App nicht
+prüfen. Die Übersicht sagt, woran das Gerät erkannt wurde. Die Frage kommt nicht, wenn die App nur ein FM-1 kennt
+oder das Gerät seine Unit-ID zeigt (oder einen Flash-Chip, der die anderen Geräte
+ausschließt). Damit sie seltener kommt: Schließ jedes Gerät einmal mit
+der Original-Firmware an (oder lass einen Wechsel über V15 laufen), dann kennt jedes Profil seine Unit-ID – das
+hilft immer dann, wenn eine Firmware sie meldet.
+
 **Darf ich während eines Updates etwas anderes machen?**
 Ja, aber nichts, was mit dem FM-1 spricht (Browser-Editor, DAW), und USB nicht abziehen.
 

@@ -8,6 +8,22 @@ muestra si el ordenador ve el dispositivo.
 Casi siempre es el cable, el hub o la fuente de alimentación. La comprobación del sistema detecta estos bucles en el registro del kernel y te dice
 qué hacer.
 
+**Tengo dos FM-1: ¿por qué la app pregunta «¿Qué FM-1 es este?» cada vez?**
+La app distingue tus unidades por su *ID de unidad*: el firmware original la informa como número de serie USB, y
+el MIDI MODE de m-bootloader también. La app la guarda en el perfil del dispositivo siempre que la ve, también
+durante el paso por V15 de un cambio de firmware. La familia Felucca (Skiff, Melodee, SLOOP, KARMA, X0X …) no
+informa ninguna ID de unidad y casi nunca el chip flash. Entonces dos FM-1 se ven exactamente iguales: el mismo
+firmware, ningún número, y un firmware puede cambiar fuera de la app (M-Flasher, el actualizador propio de un
+firmware). Por eso, con dos o más dispositivos posibles, la app pregunta **cada vez** que conectas uno y nunca
+adivina por el puerto USB. Antes de tu respuesta no cambia ningún perfil ni escribe nada, y aplica la regla más
+estricta de los dispositivos que podría ser (si hay uno más nuevo entre ellos: la regla del más nuevo). Después de
+una respuesta, cada escritura nombra primero el dispositivo y te pide que mires su parte delantera (logo o no),
+porque la app no puede comprobar una respuesta. El Resumen dice cómo se reconoció el dispositivo. La pregunta
+no aparece si la app solo conoce un FM-1 o si la unidad muestra su ID de unidad (o un chip flash que descarta los
+otros dispositivos). Para que pregunte
+menos: conecta cada unidad una vez con el firmware original (o deja que un cambio pase por V15); así cada perfil
+aprende su ID de unidad, lo que ayuda siempre que un firmware la informe.
+
 **¿Puedo hacer otra cosa durante una actualización?**
 Sí, pero nada que se comunique con el FM-1 (editor en el navegador, DAW), y no desenchufes el USB.
 

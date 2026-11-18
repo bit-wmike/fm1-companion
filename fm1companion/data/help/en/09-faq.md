@@ -8,6 +8,21 @@ it shows whether the computer sees the device at all.
 Almost always the cable, hub or power supply. The system check detects such loops in the kernel log and tells you
 what to do.
 
+**I have two FM-1 – why does the app ask “Which FM-1 is this?” every time?**
+The app tells your units apart by their *unit ID*: the original firmware reports it as USB serial number, and
+m-bootloader's MIDI MODE reports it too. The app remembers it in the device profile whenever it sees it – also
+during the V15 step of a firmware switch. The Felucca family (Skiff, Melodee, SLOOP, KARMA, X0X …) reports no
+unit ID and usually no flash chip either. Then two FM-1 look exactly alike: same firmware, no number – and a
+firmware can change outside the app (M-Flasher, a firmware's own updater). So with two or more possible devices
+the app asks at **every** plug-in and never guesses by USB port. Before your answer it changes no profile and
+writes nothing, and it applies the strictest rule of the devices it could be (a newer unit among them: the newer
+unit's rule). After an answer, every write first names the device and asks you to check its front (logo or not),
+because the app cannot check an answer. The Overview says how the device was recognised. The question does not
+come with only one known FM-1, or when the unit shows its unit ID (or a flash chip that rules out the other
+devices). To ask less often: connect each
+unit once with the original firmware (or let a switch run through V15), so each profile learns its unit ID – that
+helps whenever a firmware reports it.
+
 **May I do something else during an update?**
 Yes, but nothing that talks to the FM-1 (browser editor, DAW), and do not unplug USB.
 
