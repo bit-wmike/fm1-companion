@@ -60,6 +60,11 @@ class Splash(QSplashScreen):
         app = QApplication.instance()
         super().__init__(_pixmap(app.devicePixelRatio() if app else 1.0))
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+        # a title of its own: a window without one gets the application's name from Qt ("FM-1 Companion"), the same
+        # as the main window that appears while the splash is still up – KWin (Plasma/Wayland on the Pi) then numbers
+        # the second one and the main window keeps "FM-1 Companion <2>" although only one instance runs
+        from .. import APP_NAME
+        self.setWindowTitle(f"{APP_NAME} – " + _("Starting …"))
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.steps = []
 

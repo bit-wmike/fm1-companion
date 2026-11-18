@@ -14,6 +14,7 @@ see ``common.set_variant``. Colors for custom drawings: ``theme.color("accent")`
 from __future__ import annotations
 
 import hashlib
+import os
 from dataclasses import dataclass, replace
 
 from PyQt6.QtCore import QPointF, QRectF, Qt
@@ -167,11 +168,26 @@ def prefs() -> dict:
 
 
 # ------------------------------------------------------------ Graphics ---
+_asset_fallback = None
+
+
 def _asset_dir():
+    """Folder for the drawn stylesheet graphics. The cache folder may be out of reach (HOME read-only,
+    disk full, ~/.cache not a folder): then a temporary folder – the app must start all the same."""
+    global _asset_fallback
     from .. import config
     d = config.CACHE_DIR / "theme"
-    d.mkdir(parents=True, exist_ok=True)
-    return d
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+        if os.access(d, os.W_OK):
+            return d
+    except OSError:
+        pass
+    if _asset_fallback is None:
+        import tempfile
+        from pathlib import Path
+        _asset_fallback = Path(tempfile.mkdtemp(prefix="fm1-companion-theme-"))
+    return _asset_fallback
 
 
 def _draw(name: str, col: str, size: int = 32) -> str:

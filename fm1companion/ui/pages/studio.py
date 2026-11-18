@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (QBoxLayout, QButtonGroup, QCheckBox, QComboBox, QDi
 
 from ... import autobackup as AB, backup, config, studio as S
 from .. import web
+from ..device import firmware_name as _device_firmware_name
 from ..common import button, confirm, flow_row, fw_label, heading, icon, label, run_job, show_error
 from . import PageSpec
 from ...i18n import _, ngettext, pgettext
@@ -693,10 +694,26 @@ class StudioPage(QWidget):
         else:
             self.src.setText(_("The twin is not running yet. Choose a source: from the FM-1, from a backup or the last "
                                "studio state."))
+        self._keys_box()
         self._banner()
         self._update_history()
         self.refresh_projects()
         self._out_text()
+
+    def _keys_box(self):
+        """"Keys of the real FM-1 play along": shows what is the case for the active device – off by itself when
+        that FM-1 does not run the twin's firmware (the box can still be ticked for it)"""
+        svc, c = self.svc, self.ctx
+        real = svc.running and c.midi_connected and not c.is_virtual
+        other = real and not svc.fm1_keys_fit()
+        self.cb_fm1.blockSignals(True)
+        self.cb_fm1.setChecked(svc.fm1_keys_on() if real else bool(svc.cfg.get("fm1_keys", True)))
+        self.cb_fm1.blockSignals(False)
+        self.cb_fm1.setToolTip(
+            _("The active FM-1 does not run the twin's firmware ({twin}), so its keys do not play the twin by "
+              "themselves. Tick the box if you want that anyway – it holds for this device until you quit.").format(
+                twin=svc.firmware_name) if other else
+            _("What you play on the connected FM-1 also sounds in the twin (notes/knobs only)."))
 
     def _banner(self):
         svc, c = self.svc, self.ctx
@@ -720,18 +737,33 @@ class StudioPage(QWidget):
                             "it.").format(twin=html.escape(f"{svc.firmware_name} {svc.version}"),
                                           device=html.escape(self._dev_version() or c.firmware_key))
             level = "warning"
+        elif svc.running and c.midi_connected and not c.is_virtual and not dev_fw:
+            # (MIDI only, firmware unknown or without a twin – c.connected is False there, the first branch did not see it)
+            keys = (_("Its keys play the twin because you switched that on.") if svc.fm1_keys_on()
+                    else _("Its keys do not play the twin."))
+            text = "⚠ " + _("The twin runs {twin} – it does not belong to the active FM-1 “{name}” ({firmware}). "
+                            "Nothing can be fetched from this FM-1 or written back to it.").format(
+                twin=html.escape(f"{svc.firmware_name} {svc.version}"),
+                name=html.escape(c.profile.name if c.profile else c.port.label),
+                firmware=html.escape(_device_firmware_name(c.firmware_key) or _("firmware unknown"))
+            ) + " " + keys
+            level = "warning"
         elif svc.running and dev_fw and dev_fw != svc.firmware:
             text = "⚠ " + _("The twin runs {twin}, your FM-1 runs {device} – “Fetch from FM-1” starts the {device} twin; "
                             "writing back is not possible like this.").format(
                 twin=html.escape(svc.firmware_name), device=html.escape(S.firmware_name(dev_fw)))
+            text += " " + (_("Its keys play the twin because you switched that on.") if svc.fm1_keys_on()
+                           else _("Its keys do not play the twin."))
             level = "warning"
         elif svc.running:
             dev = self._dev_version() if dev_fw else ""
+            # one sentence per difference: "no twin for this version" (pick_build) first, and what it already
+            # says is not repeated by the comparison with the device and the backup
+            no_twin = svc.st.warning if svc.st is not None else ""
             vc = S.check_versions(svc.version, device=dev, backup=svc.source.get("backup_version", ""),
-                                  firmware=svc.firmware_name)
-            msgs = [vc.message] if vc.message else []
-            if svc.st is not None and svc.st.warning:
-                msgs.append(svc.st.warning)
+                                  firmware=svc.firmware_name,
+                                  missing=getattr(svc.st, "wanted", "") if no_twin else "")
+            msgs = ([no_twin] if no_twin else []) + ([vc.message] if vc.message else [])
             if dev and svc.firmware == "felucca":          # (a Felucca fork, or another build: Felucca's twin all the same)
                 note = S.felucca_fork_note(c.firmware_key, getattr(c, "identity", ""), svc.st.build.identity)
                 if note:

@@ -121,6 +121,64 @@ def test_readonly_home(tmp_path):
         home.chmod(0o755)
 
 
+@pytest.mark.parametrize("demo", [True, False])
+def test_home_folders_out_of_reach(tmp_path, demo):
+    """~/.cache, ~/.local, ~/.config and ~/FM-1 are files: what a read-only HOME looks like to the app, and
+    reproducible as root too (test_readonly_home skips there). Before: PermissionError/NotADirectoryError from
+    the first mkdir (ui/theme.py _asset_dir, then editor_host, samples) -> exit 1."""
+    home = tmp_path / "home"
+    home.mkdir()
+    for name in (".cache", ".local", ".config", "FM-1"):
+        (home / name).write_text("no folder here")
+    res = _run(home, "--no-splash", demo=demo)
+    _assert_clean_exit(res, "HOME-Ordner nicht erreichbar")
+    assert "temporären Ordner" in res.stderr, res.stderr[-2000:]
+    assert all((home / name).is_file() for name in (".cache", ".local", ".config", "FM-1"))
+
+
+def test_fallback_dirs_only_when_needed(tmp_path):
+    """app.fallback_dirs(): leaves usable folders alone and creates nothing; replaces the ones out of reach."""
+    sys.path.insert(0, str(ROOT))
+    from fm1companion import app
+    home = tmp_path / "home"
+    home.mkdir()
+    env = {}
+    assert app.fallback_dirs(env, home) == [] and env == {}
+    assert list(home.iterdir()) == [], "the check itself must not create folders"
+    (home / ".cache").write_text("x")
+    env = {}
+    lost = app.fallback_dirs(env, home)
+    assert lost == [str(home / ".cache" / "fm1-companion")]
+    assert set(env) == {"XDG_CACHE_HOME"} and Path(env["XDG_CACHE_HOME"]).parent.is_dir()
+    assert not env["XDG_CACHE_HOME"].startswith(str(home))
+    env = {"XDG_DATA_HOME": str(home / ".cache" / "data"), "XDG_CACHE_HOME": str(tmp_path / "ok")}
+    assert app.fallback_dirs(env, home) == [str(home / ".cache" / "data" / "fm1-companion")]
+    assert env["XDG_CACHE_HOME"] == str(tmp_path / "ok")
+    if os.geteuid() != 0:
+        ro = tmp_path / "ro"
+        ro.mkdir()
+        ro.chmod(stat.S_IRUSR | stat.S_IXUSR)
+        try:
+            assert not app._creatable(ro / "a" / "b")
+        finally:
+            ro.chmod(0o755)
+
+
+def test_theme_assets_fall_back_to_temp(tmp_path, monkeypatch):
+    """ui/theme.py: the cache folder cannot be created -> a temporary folder instead of an exception."""
+    pytest.importorskip("PyQt6.QtWidgets")
+    sys.path.insert(0, str(ROOT))
+    from fm1companion import config
+    from fm1companion.ui import theme
+    blocker = tmp_path / "file"
+    blocker.write_text("x")
+    monkeypatch.setattr(config, "CACHE_DIR", blocker / "fm1-companion")
+    monkeypatch.setattr(theme, "_asset_fallback", None)
+    d = theme._asset_dir()
+    assert d.is_dir() and blocker.is_file() and d == theme._asset_dir()
+    shutil.rmtree(d, ignore_errors=True)
+
+
 def test_config_not_writable(tmp_path):
     """~/.config is a file (reproducible as root too; like a full disk/missing permissions): the app starts,
     quits cleanly and says once that the settings are not saved – before: traceback at start."""

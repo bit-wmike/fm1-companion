@@ -4574,3 +4574,29 @@ msgstr "Traer"
 #: fm1companion/ui/pages/studio.py:1001
 msgid "FM1 Open: keep the cable connected. The FM-1 loads each saved project into its working area in turn; your working project is put back at the end."
 msgstr "FM1 Open: no desconectes el cable. El FM-1 carga cada proyecto guardado, uno tras otro, en su área de trabajo; tu proyecto de trabajo se vuelve a poner al final."
+
+#, python-brace-format
+msgid "The studio runs with {firmware} {twin}, your FM-1 and the backup have {device} – sound may differ."
+msgstr "El Studio funciona con {firmware} {twin}, tu FM-1 y la copia de seguridad tienen {device}; el sonido puede diferir."
+
+#, python-brace-format
+msgid "{name} (no profile with this name)"
+msgstr "{name} (ningún perfil con este nombre)"
+
+msgid "Its keys do not play the twin."
+msgstr "Sus teclas no tocan el gemelo."
+
+msgid "Its keys play the twin because you switched that on."
+msgstr "Sus teclas tocan el gemelo porque lo activaste."
+
+#, python-brace-format
+msgid "{firmware} has no editor protocol – the app can neither read its projects nor write projects to this FM-1."
+msgstr "{firmware} no tiene protocolo de editor: la aplicación no puede leer sus proyectos ni escribir proyectos en este FM-1."
+
+#, python-brace-format
+msgid "The twin runs {twin} – it does not belong to the active FM-1 “{name}” ({firmware}). Nothing can be fetched from this FM-1 or written back to it."
+msgstr "El gemelo ejecuta {twin}: no pertenece al FM-1 activo “{name}” ({firmware}). No se puede traer nada de este FM-1 ni volver a escribir en él."
+
+#, python-brace-format
+msgid "The active FM-1 does not run the twin's firmware ({twin}), so its keys do not play the twin by themselves. Tick the box if you want that anyway – it holds for this device until you quit."
+msgstr "El FM-1 activo no ejecuta el firmware del gemelo ({twin}), por eso sus teclas no tocan el gemelo por sí solas. Marca la casilla si lo quieres de todos modos: vale para este dispositivo hasta que salgas."
