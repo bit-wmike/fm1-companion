@@ -137,6 +137,24 @@ class ProjectsPage(QWidget):
         self.dev_box.setTitle(_("On the FM-1 “{name}”").format(name=name) if name else _("On the FM-1 (none connected)"))
         self.b_imp.setText(_("To “{name}” into the chosen slot …").format(name=name) if name
                            else _("To the FM-1 into the chosen slot …"))
+        # a firmware without the editor protocol takes no projects over USB: the button says so instead of
+        # looking usable (it was enabled for an FM-1 on the original firmware)
+        why = self._no_projects_reason()
+        if not hasattr(self, "_imp_tip"):
+            self._imp_tip = self.b_imp.toolTip()
+        self.b_imp.setEnabled(not why)
+        self.b_imp.setToolTip(why or self._imp_tip)
+
+    def _no_projects_reason(self) -> str:
+        """an FM-1 is connected, but its firmware offers no projects over USB ("" otherwise)"""
+        c = self.ctx
+        if c.port is None or c.connected or not getattr(c, "midi_connected", False):
+            return ""
+        if getattr(c, "protocol", "") == "update":
+            return _("The FM-1 is waiting in update mode – finish the installation first (page “Recovery”).")
+        from .device import firmware_name
+        return _("{firmware} has no editor protocol – the app can neither read its projects nor write projects to "
+                 "this FM-1.").format(firmware=firmware_name(getattr(c, "firmware_key", "")) or _("The running firmware"))
 
     def _dev_changed(self):
         self._titles()
@@ -145,7 +163,8 @@ class ProjectsPage(QWidget):
         self.dev_tree.clear()
         self.slots = []
         self._read_for = None
-        self.dev_info.setText(_("Not read yet.") if self.ctx.connected else _("No device is connected."))
+        self.dev_info.setText(_("Not read yet.") if self.ctx.connected
+                              else self._no_projects_reason() or _("No device is connected."))
         if self.active and self.ctx.connected:
             self.read_slots(auto=True)
 
@@ -399,7 +418,8 @@ class ProjectsPage(QWidget):
             hay = " ".join(str(m.get(k, "")) for k in ("name", "notes", "firmware", "device", "source")).lower()
             if any(w not in hay for w in q):
                 continue
-            it = QTreeWidgetItem([pf.name, m.get("firmware", ""), m.get("device", ""), fmt_date(m.get("created", "")),
+            it = QTreeWidgetItem([pf.name, m.get("firmware", ""), self._origin(m.get("device", "")),
+                                  fmt_date(m.get("created", "")),
                                   fmt_size(m.get("object", {}).get("size", 0)), m.get("notes", "")])
             it.setData(0, Qt.ItemDataRole.UserRole, str(pf.path))
             it.setToolTip(0, _("{path}\nOrigin: {source}\nFormat: {format}").format(
@@ -419,6 +439,17 @@ class ProjectsPage(QWidget):
         except Exception as e:  # noqa: BLE001
             show_error(self, _("Project file damaged"), str(e))
             return None
+
+    def _origin(self, device) -> str:
+        """the device a library project came from; a name no profile has (renamed or deleted since) is marked"""
+        device = str(device or "")
+        try:
+            known = {p.name for p in self.ctx.store.profiles.values()}
+        except AttributeError:
+            return device
+        if not device or device in known:
+            return device
+        return _("{name} (no profile with this name)").format(name=device)
 
     def _import(self):
         pf = self._pf()
