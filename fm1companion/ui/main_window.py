@@ -356,6 +356,7 @@ class MainWindow(QMainWindow):
         self._menus()
         self.overview.navigate.connect(self.go)
         self.overview.backup_now.connect(self._backup_now)
+        self.backups.auto.updated.connect(self.overview._backup_text)   # automatic backup while it is in view
         self.overview.check_updates.connect(lambda: self.firmware.check_for_device())
         self.firmware.updates_checked.connect(self._updates)
         disc = self.pages.get("discover")         # Firmware+: list changed in the “Install & versions” tab

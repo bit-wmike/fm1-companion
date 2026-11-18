@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import html
-import json
 import re
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
@@ -253,22 +252,25 @@ class OverviewPage(QWidget):
         try:
             folder = c.device_folder(c.settings.backups_dir)
             from .. import autobackup as AB
-            files = [m.path for m in AB.list_backups(folder, recursive=False)]   # readable only, newest first
+            metas = AB.list_backups(folder, recursive=False)                     # readable only, newest first
         except OSError as e:
             self.bk_text.setText(_("<b>Backup folder not reachable.</b> {error}").format(error=getattr(e, 'strerror', '') or e))
             return
-        if not files:
+        if not metas:
             self.bk_text.setText(_("No backup of this device yet. <b>Best make one now.</b>"))
             return
-        f = files[0]
-        try:
-            meta = json.loads(f.read_text("utf-8"))
-            when = fmt_date(meta.get("created", ""))
-            fw = meta.get("firmware", "")
-        except (OSError, ValueError):
-            when, fw = "?", ""
+        # date and firmware from the index every backup kind goes through (autobackup.read_meta): the formats
+        # name their date differently ("created", SLOOP/KARMA "date") – reading the file here missed the latter
+        m = metas[0]
         self.bk_text.setText(_("Last backup: <b>{date}</b> ({firmware}), {n} in total, {size}.").format(
-            date=when, firmware=fw, n=len(files), size=fmt_size(sum(x.stat().st_size for x in files))))
+            date=fmt_date(m.created or m.when.isoformat()), firmware=m.firmware or "?", n=len(metas),
+            size=fmt_size(sum(x.size for x in metas))))
+
+    def showEvent(self, e):
+        """backups are made in several places (Backups, Studio, before an installation, automatically): the
+        card is brought up to date whenever the page comes into view"""
+        super().showEvent(e)
+        self._backup_text()
 
     def set_update_info(self, info: dict):
         self.update_info = info

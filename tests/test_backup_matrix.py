@@ -225,3 +225,53 @@ def test_the_pages_gate_decides_like_the_restore(archives, facts, backup_of):
     assert not wrong, "\n".join(wrong)
 
 
+
+
+# ---- Overview › Backup card: date of every backup kind, and up to date after a new backup ----
+def test_overview_backup_card_date_of_every_kind(tmp_path, monkeypatch):
+    """SLOOP/KARMA backups name their date "date", the others "created": the card showed "Last backup: –"
+    for the former (Pi hardware test, KARMA 3.0.5). And the newest backup and the count are read again each
+    time (the card kept "15 in total" after the 16th)."""
+    import json
+    import os
+    pytest.importorskip("PyQt6.QtWidgets")
+    monkeypatch.setenv("FM1C_LANG", "en")
+    from fm1companion.ui.overview import OverviewPage
+
+    class Text:
+        def setText(self, t):
+            self.t = t
+
+    class Ctx:
+        profile = object()
+        settings = type("S", (), {"backups_dir": tmp_path})()
+
+        def device_folder(self, base):
+            return Path(base)
+
+    class Page:
+        ctx, bk_text = Ctx(), Text()
+
+    def card() -> str:
+        OverviewPage._backup_text(Page)
+        return Page.bk_text.t
+    (tmp_path / "a.json").write_text(json.dumps({"format": "sloop-backup", "version": 1,
+                                                 "firmware": "FELUCCA KARMA 3.0.5",
+                                                 "date": "2026-11-18T10:59:01.123Z", "objects": []}))
+    t = card()
+    assert "18.11.2026" in t and "KARMA 3.0.5" in t and "–" not in t, t
+    assert "<b>1</b>" in t or " 1 " in t, t
+    (tmp_path / "b.json").write_text(json.dumps({"format": "felucca-backup", "version": 1, "firmware": "FELUCCA v2.7",
+                                                 "created": "2026-11-19T11:15:48Z", "objects": []}))
+    t = card()
+    assert "19.11.2026" in t and "FELUCCA v2.7" in t and " 2 " in t, t
+    (tmp_path / "c.json").write_text(json.dumps({"format": "sloop-backup", "version": 1, "firmware": "SLOOP 3.0",
+                                                 "objects": []}))            # no date at all: the file's time
+    os.utime(tmp_path / "c.json", (1900000000, 1900000000))
+    t = card()
+    assert "2030" in t and "SLOOP 3.0" in t and " 3 " in t, t
+
+
+def test_overview_refreshes_backup_card_when_shown():
+    src = (ROOT / "fm1companion/ui/overview.py").read_text("utf-8")
+    assert "def showEvent" in src and "self._backup_text()" in src.split("def showEvent", 1)[1][:400]
