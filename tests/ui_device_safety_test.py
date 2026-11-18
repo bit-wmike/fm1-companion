@@ -243,21 +243,88 @@ def flow():
           and "deine Antwort" in card_text(), "Devices: “newer unit” set and shown with its source")
     saved = devmod.ProfileStore(ctx.store.path).profiles[other.id]
     check((saved.hw_revision, saved.hw_revision_source) == ("new", "user"), "… and written to the device file")
+    from fm1companion.ui import hw_revision
+    real_confirm, asked_c = hw_revision.confirm_change, []
+    hw_revision.confirm_change = lambda parent, p, rev: (asked_c.append(rev), False)[1]
     dv.set_unit(other, "old")
-    check(hardware.revision(other) == "old" and "früheres Gerät" in card_text(), "Devices: changed to “earlier unit”")
-    hardware.note_flash_id(other, 0xB36014, "rom")
+    check(asked_c == ["old"] and hardware.revision(other) == "new",
+          "Devices: “earlier unit” against a recorded newer unit needs a confirmation – without it nothing changes")
+    hw_revision.confirm_change = lambda parent, p, rev: True
     dv.set_unit(other, "old")
-    check(hardware.revision(other) == "new" and other.flash_id == "B36014",
-          "a flash ID read in ROM boot mode is not overwritten by an answer")
-    # the rescue read the flash chip in ROM boot mode: kept for the active device, and said
+    check(hardware.revision(other) == "old" and "früheres Gerät" in card_text(), "… with it: changed to “earlier unit”")
+    hw_revision.confirm_change = real_confirm
+    # ---- a flash ID read in ROM boot mode: stored only for the device that is unambiguously the one in ROM mode
+    import time as _time
+    from fm1companion import devices as _dm
     rec = w.page("recovery")
-    rec._flash_seen(0xB36014)
-    check(hardware.revision(prof) == "new" and prof.hw_revision_source == "rom" and "FM-1 A" in rec.flash_note
-          and "neueres Gerät" in rec.flash_note, f"Recovery: the flash ID read in ROM boot mode is kept ({rec.flash_note[:70]})")
-    w.go("overview") if hasattr(w, "go") else None
-    w.overview.refresh()
-    check("im ROM-Bootmodus ausgelesen" in w.overview.lbl["Unit"].text(), "Overview shows the unit and where it is known from")
-    hardware.set_revision(prof, "", "")
+    hardware.SESSION_READS.clear()
+    hardware.set_revision(prof, "new", "user")
+    rec._flash_seen(0x856014, usb_path="")                    # another FM-1 is rescued while this one is active
+    check(hardware.revision(prof) == "new" and not prof.flash_id and not prof.hw_revision_conflict
+          and "nicht" in rec.flash_note and prof.name not in rec.flash_note,
+          f"Recovery: a chip ID read in ROM boot mode is not put on the active device ({rec.flash_note[:60]})")
+    rec._flash_seen(0x856014, usb_path="usb-rom-7")           # a USB port no profile was seen at in this session
+    check(hardware.revision(prof) == "new" and hardware.SESSION_READS == {"usb-rom-7": 0x856014}
+          and all(not x.flash_id for x in ctx.store.profiles.values()),
+          "… at an unknown USB port: kept for this session only, stored on no profile")
+    other.usb_path, other.last_seen = "usb-rom-8", _time.time() - 10 * 86400
+    hardware.forget(other)
+    rec._flash_seen(0xB36014, usb_path="usb-rom-8")           # a profile was there once, but not in this session
+    check(not hardware.asked(other) and hardware.session_revision("usb-rom-8") == "new",
+          "… a profile last seen at that port in an earlier session is not enough")
+    other.last_seen = _time.time()
+    rec._flash_seen(0xB36014, usb_path="usb-rom-8")
+    check((other.hw_revision, other.hw_revision_source, other.flash_id) == ("new", "rom", "B36014")
+          and other.name in rec.flash_note and "UC25HQ80" in rec.flash_note,
+          "… the only profile seen at that USB port in this session: stored, and said")
+    hardware.forget(other)
+    rec._rom_sent = (other.id, "usb-rom-9")                   # the device this page sent into ROM boot mode
+    rec._flash_seen(0x856014, usb_path="usb-rom-9")
+    check((other.hw_revision, other.hw_revision_source) == ("old", "rom"), "… the device that was sent there: stored")
+    rec._flash_seen(0xB36014, usb_path="usb-rom-1")
+    check(hardware.revision(other) == "old", "… and not for another USB port than the one it was sent from")
+    rec._rom_sent = None
+    # ---- Recovery › finish installation judges the FM-1 that waits, not the active device
+    hardware.SESSION_READS.clear()
+    hardware.set_revision(prof, "old", "user", force=True)                    # active device A: an earlier unit
+    hardware.set_revision(other, "new", "user", force=True)                   # B, a newer unit, last seen at usb-b
+    other.usb_path, other.serial = "usb-b", ""
+    waiting = _dm.PortInfo("B in", "B out", "FM-1 Update", None, serial="", usb_path="usb-b", update_mode=True)
+    p_w, certain, rev_w = rec.waiting_unit(waiting, {})
+    check(ctx.profile is prof and rev_w == "new" and not certain,
+          f"waiting unit at B's USB port while A is active: counts as a newer unit ({rev_w}, certain={certain})")
+    demo_env = os.environ.pop("FM1C_DEMO")
+    try:
+        nowhere = _dm.PortInfo("C in", "C out", "FM-1 Update", None, serial="", usb_path="usb-c", update_mode=True)
+        check(rec.waiting_unit(nowhere, {})[1:] == (False, ""),
+              "a waiting FM-1 the app cannot identify: revision unknown (never “earlier”), although A is active")
+        check(rec.waiting_unit(nowhere, {"device_id": other.id})[2] == "new",
+              "… and newer if the interrupted installation was on a newer unit")
+        hardware.SESSION_READS["usb-c"] = 0xB36014
+        check(rec.waiting_unit(nowhere, {})[2] == "new", "… or if its chip was read at that port in this session")
+        hardware.SESSION_READS.clear()
+        other.serial = "SER-B-0001"
+        byser = _dm.PortInfo("B in", "B out", "FM-1 Update", None, serial="SER-B-0001", usb_path="usb-z", update_mode=True)
+        check(rec.waiting_unit(byser, {}) == (other, True, "new"), "a waiting FM-1 with a serial number: its own profile, certain")
+        log_boxes.clear()
+        melodee_old = home / "melodee-old.fwsc"
+        from fm1companion.flash import package as _fpk
+        melodee_old.write_bytes(_fpk.build_package("FM-1_906", seed=3))
+        ok_gate = rec._chip_gate(melodee_old, False, {}, nowhere)
+        check(ok_gate and any("Logo auf der Vorderseite" in b for b in log_boxes),
+              f"gate for an unidentified waiting FM-1 and an own file: only after a confirmation ({len(log_boxes)} boxes)")
+        check(rec._chip_gate(None, True, {}, byser), "original V15 for the waiting newer unit: allowed")
+    finally:
+        os.environ["FM1C_DEMO"] = demo_env
+    other.serial = "DEMO-X"
+    # ---- merging two profiles keeps the strictest statement
+    third = ctx.store.create("Drittes Gerät", serial="DEMO-Y")
+    hardware.note_flash_id(third, 0xB36014, "rom")
+    hardware.set_revision(other, "old", "user", force=True)
+    check(dv.merge(third.id, other.id) and (other.hw_revision, other.hw_revision_source, other.flash_id) == ("new", "rom", "B36014")
+          and other.hw_revision_conflict == "old user" and "zwei Geräte" in hardware.label(other),
+          f"merge: “newer unit, read” survives the merge into an “earlier” profile ({hardware.label(other)[:70]})")
+    hardware.forget(prof)
     ctx.store.save()
     w.go("devices")
     check(dv.forget(other.id, ask=False) and other.id not in ctx.store.profiles, "another profile forgotten")

@@ -3201,12 +3201,6 @@ msgstr "¿Tu FM-1 tiene el logo de M-VAVE en el frontal?"
 msgid "FM-1s sold from late 2026 – the ones with the M-VAVE logo printed on the front – have a different memory chip (UCUN UC25HQ80) than the earlier ones. Firmware versions that do not know this chip save nothing on such a unit and cannot be updated or replaced any more, except through the recovery in ROM boot mode. The app cannot read the chip over MIDI, so it asks you once per device. You can change the answer on the page “Devices”. To be sure: M-Flasher shows the chip under “Device info” (FLASH CHIP), m-bootloader in its menu, and the recovery (stage 2) reads it in ROM boot mode."
 msgstr "Los FM-1 vendidos desde finales de 2026 – los que llevan el logo de M-VAVE impreso en el frontal – tienen un chip de memoria distinto (UCUN UC25HQ80) al de los anteriores. Las versiones de firmware que no conocen este chip no guardan nada en una unidad así y ya no se pueden actualizar ni sustituir, salvo mediante la recuperación en modo de arranque ROM. La app no puede leer el chip por MIDI, por eso te lo pregunta una vez por dispositivo. Puedes cambiar la respuesta en la página «Dispositivos». Para estar seguro: M-Flasher muestra el chip en «Device info» (FLASH CHIP), m-bootloader en su menú, y la recuperación (etapa 2) lo lee en modo de arranque ROM."
 
-msgid "Flash chip read: 0x{id:06X}. The app cannot tell which of your devices this is – please set it on the page “Devices”."
-msgstr "Chip flash leído: 0x{id:06X}. La app no puede saber cuál de tus dispositivos es – indícalo en la página «Dispositivos»."
-
-msgid "Flash chip read: {state}. Recorded for the device “{device}”."
-msgstr "Chip flash leído: {state}. Guardado para el dispositivo «{device}»."
-
 msgid "I don't know"
 msgstr "No lo sé"
 
@@ -3251,9 +3245,6 @@ msgstr "La app no sabe si {name} admite este chip: no está en la tabla de la ap
 
 msgid "The first version that knows this chip is {version}."
 msgstr "La primera versión que conoce este chip es {version}."
-
-msgid "The flash chip of this FM-1 was read: {state}. That is more reliable than an answer, so it is not changed here."
-msgstr "El chip flash de este FM-1 se ha leído: {state}. Eso es más fiable que una respuesta, así que aquí no se cambia."
 
 msgid "The recovery tool only works with the two flash chips known in the FM-1 (ID 0x856014 or 0xB36014) and stops on any other – nothing was written."
 msgstr "La herramienta de recuperación solo funciona con los dos chips flash conocidos en el FM-1 (ID 0x856014 o 0xB36014) y se detiene con cualquier otro – no se ha escrito nada."
@@ -3320,3 +3311,33 @@ msgstr "{name}: sus autores escriben que no está probado, o lo está poco, en e
 
 msgid "{unit} {why} {strands} It is not installed on this FM-1. If the unit is an earlier one after all, change this on the page “Devices”."
 msgstr "{unit} {why} {strands} No se instala en este FM-1. Si la unidad resulta ser una anterior, cámbialo en la página «Dispositivos»."
+
+msgid "{name} (0x{id:06X})"
+msgstr "{name} (0x{id:06X})"
+
+msgid "Forget what is recorded"
+msgstr "Olvidar lo guardado"
+
+msgid "earlier unit"
+msgstr "unidad anterior"
+
+msgid "Yes, change it"
+msgstr "Sí, cambiarlo"
+
+msgid "nothing (the app will ask again)"
+msgstr "nada (la app volverá a preguntar)"
+
+msgid "Flash chip read: {chip}. Device “{device}” is now: {state}."
+msgstr "Chip flash leído: {chip}. El dispositivo «{device}» es ahora: {state}."
+
+msgid "Flash chip read: {chip}. The app cannot tell for sure which of your devices this is, so it is not stored for any of them; until the app is closed it counts for the FM-1 at this USB port. Please set it on the page “Devices” (button “Unit …”)."
+msgstr "Chip flash leído: {chip}. La app no puede saber con seguridad cuál de tus dispositivos es, así que no se guarda para ninguno; hasta que se cierre la app cuenta para el FM-1 de este puerto USB. Indícalo en la página «Dispositivos» (botón «Unidad …»)."
+
+msgid "The app's table of firmware versions for the newer FM-1 (flash chip UC25HQ80) cannot be read ({error}). Without it the app cannot tell whether this installation is safe on your FM-1 – nothing is installed. Please install the app again; if your FM-1 is an earlier unit (no logo on the front), you can say so on the page “Devices”."
+msgstr "No se puede leer la tabla de la app con las versiones de firmware para el FM-1 más reciente (chip flash UC25HQ80) ({error}). Sin ella la app no puede saber si esta instalación es segura en tu FM-1 – no se instala nada. Vuelve a instalar la app; si tu FM-1 es una unidad anterior (sin logo en el frontal), puedes indicarlo en la página «Dispositivos»."
+
+msgid "Recorded for “{device}”: <b>{state}</b>.<br><br>You are about to change this to: <b>{to}</b>.<br><br>If this FM-1 is a newer unit after all (M-VAVE logo on the front), the app will then no longer stop firmware versions that do not know its flash chip – such a version saves nothing and cannot be updated or replaced any more, except through the recovery in ROM boot mode. Change it only if you are sure (M-Flasher shows the chip under “Device info”)."
+msgstr "Guardado para «{device}»: <b>{state}</b>.<br><br>Vas a cambiarlo a: <b>{to}</b>.<br><br>Si este FM-1 resulta ser una unidad más reciente (logo de M-VAVE en el frontal), la app ya no detendrá las versiones de firmware que no conocen su chip flash – una versión así no guarda nada y ya no se puede actualizar ni sustituir, salvo mediante la recuperación en modo de arranque ROM. Cámbialo solo si estás seguro (M-Flasher muestra el chip en «Device info»)."
+
+msgid "counted as a newer unit: an earlier chip was also seen under this profile ({what}) – two devices under one profile?"
+msgstr "cuenta como unidad más reciente: con este perfil también se vio un chip anterior ({what}) – ¿dos dispositivos en un mismo perfil?"

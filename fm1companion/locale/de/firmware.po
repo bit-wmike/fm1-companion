@@ -3220,12 +3220,6 @@ msgstr "Hat dein FM-1 das M-VAVE-Logo auf der Vorderseite?"
 msgid "FM-1s sold from late 2026 – the ones with the M-VAVE logo printed on the front – have a different memory chip (UCUN UC25HQ80) than the earlier ones. Firmware versions that do not know this chip save nothing on such a unit and cannot be updated or replaced any more, except through the recovery in ROM boot mode. The app cannot read the chip over MIDI, so it asks you once per device. You can change the answer on the page “Devices”. To be sure: M-Flasher shows the chip under “Device info” (FLASH CHIP), m-bootloader in its menu, and the recovery (stage 2) reads it in ROM boot mode."
 msgstr "FM-1, die seit Ende 2026 verkauft werden – die mit dem aufgedruckten M-VAVE-Logo auf der Vorderseite –, haben einen anderen Speicherbaustein (UCUN UC25HQ80) als die früheren. Firmware-Versionen, die diesen Baustein nicht kennen, speichern auf so einem Gerät nichts und lassen sich nicht mehr aktualisieren oder ersetzen, außer über die Rettung im ROM-Bootmodus. Über MIDI kann die App den Baustein nicht auslesen, deshalb fragt sie dich einmal pro Gerät. Ändern kannst du die Antwort auf der Seite „Geräte“. Um sicherzugehen: M-Flasher zeigt den Baustein unter „Device info“ (FLASH CHIP), m-bootloader in seinem Menü, und die Rettung (Stufe 2) liest ihn im ROM-Bootmodus."
 
-msgid "Flash chip read: 0x{id:06X}. The app cannot tell which of your devices this is – please set it on the page “Devices”."
-msgstr "Flash-Baustein gelesen: 0x{id:06X}. Die App kann nicht sagen, welches deiner Geräte das ist – bitte gib es auf der Seite „Geräte“ an."
-
-msgid "Flash chip read: {state}. Recorded for the device “{device}”."
-msgstr "Flash-Baustein gelesen: {state}. Für das Gerät „{device}“ gemerkt."
-
 msgid "I don't know"
 msgstr "Weiß ich nicht"
 
@@ -3270,9 +3264,6 @@ msgstr "Die App weiß nicht, ob {name} diesen Baustein unterstützt: Es steht ni
 
 msgid "The first version that knows this chip is {version}."
 msgstr "Die erste Version, die diesen Baustein kennt, ist {version}."
-
-msgid "The flash chip of this FM-1 was read: {state}. That is more reliable than an answer, so it is not changed here."
-msgstr "Der Flash-Baustein dieses FM-1 wurde ausgelesen: {state}. Das ist verlässlicher als eine Antwort und wird deshalb hier nicht geändert."
 
 msgid "The recovery tool only works with the two flash chips known in the FM-1 (ID 0x856014 or 0xB36014) and stops on any other – nothing was written."
 msgstr "Das Rettungswerkzeug arbeitet nur mit den beiden Flash-Bausteinen, die im FM-1 bekannt sind (Kennung 0x856014 oder 0xB36014), und hält bei jedem anderen an – es wurde nichts geschrieben."
@@ -3339,3 +3330,33 @@ msgstr "{name}: Seine Autoren schreiben, dass es auf diesem Baustein nicht oder 
 
 msgid "{unit} {why} {strands} It is not installed on this FM-1. If the unit is an earlier one after all, change this on the page “Devices”."
 msgstr "{unit} {why} {strands} Auf diesem FM-1 wird es nicht installiert. Ist das Gerät doch ein früheres, ändere das auf der Seite „Geräte“."
+
+msgid "{name} (0x{id:06X})"
+msgstr "{name} (0x{id:06X})"
+
+msgid "Forget what is recorded"
+msgstr "Gemerktes vergessen"
+
+msgid "earlier unit"
+msgstr "früheres Gerät"
+
+msgid "Yes, change it"
+msgstr "Ja, ändern"
+
+msgid "nothing (the app will ask again)"
+msgstr "nichts (die App fragt dann wieder)"
+
+msgid "Flash chip read: {chip}. Device “{device}” is now: {state}."
+msgstr "Flash-Baustein gelesen: {chip}. Gerät „{device}“ ist jetzt: {state}."
+
+msgid "Flash chip read: {chip}. The app cannot tell for sure which of your devices this is, so it is not stored for any of them; until the app is closed it counts for the FM-1 at this USB port. Please set it on the page “Devices” (button “Unit …”)."
+msgstr "Flash-Baustein gelesen: {chip}. Die App kann nicht sicher sagen, welches deiner Geräte das ist, deshalb wird es für keines gespeichert; bis die App geschlossen wird, gilt es für das FM-1 an diesem USB-Anschluss. Bitte gib es auf der Seite „Geräte“ an (Knopf „Gerät …“)."
+
+msgid "The app's table of firmware versions for the newer FM-1 (flash chip UC25HQ80) cannot be read ({error}). Without it the app cannot tell whether this installation is safe on your FM-1 – nothing is installed. Please install the app again; if your FM-1 is an earlier unit (no logo on the front), you can say so on the page “Devices”."
+msgstr "Die Tabelle der App mit den Firmware-Versionen für das neuere FM-1 (Flash-Baustein UC25HQ80) lässt sich nicht lesen ({error}). Ohne sie kann die App nicht sagen, ob diese Installation auf deinem FM-1 sicher ist – es wird nichts installiert. Bitte installiere die App neu; ist dein FM-1 ein früheres Gerät (kein Logo auf der Vorderseite), kannst du das auf der Seite „Geräte“ angeben."
+
+msgid "Recorded for “{device}”: <b>{state}</b>.<br><br>You are about to change this to: <b>{to}</b>.<br><br>If this FM-1 is a newer unit after all (M-VAVE logo on the front), the app will then no longer stop firmware versions that do not know its flash chip – such a version saves nothing and cannot be updated or replaced any more, except through the recovery in ROM boot mode. Change it only if you are sure (M-Flasher shows the chip under “Device info”)."
+msgstr "Für „{device}“ gemerkt: <b>{state}</b>.<br><br>Du bist dabei, das zu ändern in: <b>{to}</b>.<br><br>Ist dieses FM-1 doch ein neueres Gerät (M-VAVE-Logo auf der Vorderseite), hält die App danach Firmware-Versionen nicht mehr auf, die seinen Flash-Baustein nicht kennen – so eine Version speichert nichts und lässt sich nicht mehr aktualisieren oder ersetzen, außer über die Rettung im ROM-Bootmodus. Ändere es nur, wenn du sicher bist (M-Flasher zeigt den Baustein unter „Device info“)."
+
+msgid "counted as a newer unit: an earlier chip was also seen under this profile ({what}) – two devices under one profile?"
+msgstr "zählt als neueres Gerät: unter diesem Profil wurde auch ein früherer Baustein gesehen ({what}) – zwei Geräte unter einem Profil?"
