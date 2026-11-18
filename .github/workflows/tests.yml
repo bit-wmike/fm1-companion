@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: ruff (syntax errors, broken comparisons, misplaced statements)
@@ -116,7 +116,7 @@ jobs:
             python3-pyqt6.qtwebchannel python3-pyqt6.qtmultimedia qt6-translations-l10n \
             python3-crcmod python3-yaml \
             nodejs ffmpeg xz-utils procps fonts-dejavu-core
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Git may read the checkout (the container user is root, the files are not)
