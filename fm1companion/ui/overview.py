@@ -43,6 +43,7 @@ class OverviewPage(QWidget):
         self.dev_card = Card(_("Device"), icon="audio-card")
         self.dev_form = QFormLayout()
         self.dev_form.setHorizontalSpacing(12)
+        self.dev_form.setVerticalSpacing(4)         # seven rows: with a tall font (Noto Sans) every pixel counts
         self.dev_card.lay.addLayout(self.dev_form)
         self.lbl = {}
         # keys are identifiers (also used by the tests), the row titles are translated
@@ -56,18 +57,20 @@ class OverviewPage(QWidget):
         # hardware revision (logo on the front = the newer flash chip): shown, and changeable with the link
         self.lbl["Unit"].setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         self.lbl["Unit"].linkActivated.connect(lambda _href: self.set_unit())
-        row = QHBoxLayout()
+        # "Rename" and "Colour" sit in the card's title row (not in a row of their own below the form): the card is
+        # the tallest of the page and has to fit at 1280×720 without scrolling, also with a tall font
         self.b_rename = QPushButton(icon("edit-rename"), _("Rename"))
         self.b_color = QPushButton(icon("color-management", "preferences-desktop-color"), _("Colour"))
         self.b_rename.clicked.connect(self._rename)
         self.b_color.clicked.connect(self._color)
-        row.addWidget(self.b_rename)
-        row.addWidget(self.b_color)
-        row.addStretch(1)
-        self.dev_card.lay.addLayout(row)
+        self.dev_card.head.addWidget(self.b_rename)
+        self.dev_card.head.addWidget(self.b_color)
         self.notes = QPlainTextEdit()
         self.notes.setPlaceholderText(_("Notes on this device (e.g. “the one with the scratch, for live sets”)"))
         self.notes.setMaximumHeight(56)
+        # may shrink to one line when the window is short: at 1280×720 with the Raspberry Pi OS default font
+        # (Noto Sans, taller lines) the card otherwise ends below the window's edge
+        self.notes.setMinimumHeight(min(56, self.notes.fontMetrics().lineSpacing() + 14))
         self._notes_pid = ""
         self._notes_timer = QTimer(self, interval=700, singleShot=True)   # don't save on every keystroke
         self._notes_timer.timeout.connect(self._notes)
