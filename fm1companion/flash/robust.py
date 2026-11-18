@@ -707,6 +707,9 @@ def plan_notes(link, setting: str = "auto") -> list[str]:
     if careful and not tested.tested("usb_hub"):
         out.append(_("Careful mode and its automatic resume have only been run in the simulation so far, not "
                      "through a real USB hub."))
+    elif careful:
+        out.append(_("Careful mode has run once through real USB hubs, without a dropout. Its automatic resume after "
+                     "a dropout has only been run in the simulation so far."))
     if link.autosuspend_nodes:
         out.append(_("USB power saving (autosuspend) is on for: {devices}. It can put the FM-1 or its hub to sleep "
                      "during the waits. The optional udev rule of the app switches it off (Help › “Switching "

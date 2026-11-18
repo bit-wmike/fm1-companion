@@ -2836,366 +2836,366 @@ msgstr ""
 msgid "The package contains the original loader, but is not an unmodified original firmware (V15/V16). Modified original packages are not installed."
 msgstr ""
 
-#: fm1companion/flash/planner.py:336
+#: fm1companion/flash/planner.py:344
 #, python-brace-format
 msgid "the original firmware {version}"
 msgstr ""
 
-#: fm1companion/flash/planner.py:387
+#: fm1companion/flash/planner.py:395
 msgid "An installation is already running. Please wait until it is finished."
 msgstr ""
 
-#: fm1companion/flash/planner.py:389
+#: fm1companion/flash/planner.py:397
 msgid "No FM-1 connected. Please connect it with a USB data cable and switch it on."
 msgstr ""
 
-#: fm1companion/flash/planner.py:391
+#: fm1companion/flash/planner.py:399
 msgid "This FM-1 runs the M-VAVE Open firmware. First return to the original firmware with M-VAVE's own tool (FM1 Workbench), then install here."
 msgstr ""
 
-#: fm1companion/flash/planner.py:395
+#: fm1companion/flash/planner.py:403
 #, python-brace-format
 msgid "The connected device reports “{identity}” – that is not an FM-1."
 msgstr ""
 
-#: fm1companion/flash/planner.py:400
+#: fm1companion/flash/planner.py:408
 msgid "Unknown loader family."
 msgstr ""
 
-#: fm1companion/flash/planner.py:402
+#: fm1companion/flash/planner.py:410
 #, python-brace-format
 msgid "{please} Several FM-1 (or devices in update mode) are connected, and the app cannot identify the target device unambiguously by USB port or serial number. After the restart into update mode it could otherwise write to the wrong device."
 msgstr ""
 
-#: fm1companion/flash/planner.py:407
+#: fm1companion/flash/planner.py:415
 msgid "Several FM-1 are connected. The app pins the target device by its USB port – please do not move any cable during the installation."
 msgstr ""
 
-#: fm1companion/flash/planner.py:415
+#: fm1companion/flash/planner.py:423
 msgid "It is waiting for a package of the Felucca family (e.g. Melodee) – ideally exactly the one whose installation was interrupted."
 msgstr ""
 
-#: fm1companion/flash/planner.py:417
+#: fm1companion/flash/planner.py:425
 msgid "It is waiting for the unmodified original firmware V15."
 msgstr ""
 
-#: fm1companion/flash/planner.py:418
+#: fm1companion/flash/planner.py:426
 msgid "It is waiting for the package whose installation was interrupted."
 msgstr ""
 
-#: fm1companion/flash/planner.py:421
+#: fm1companion/flash/planner.py:429
 msgid "The app does not know this loader."
 msgstr ""
 
-#: fm1companion/flash/planner.py:422
+#: fm1companion/flash/planner.py:430
 #, python-brace-format
 msgid "The FM-1 is waiting in update mode ({identity}). This package does not belong to this loader – nothing is sent. {hint}"
 msgstr ""
 
-#: fm1companion/flash/planner.py:425 fm1companion/flash/planner.py:475
+#: fm1companion/flash/planner.py:433 fm1companion/flash/planner.py:483
 msgid "Load package & check checksum"
 msgstr ""
 
-#: fm1companion/flash/planner.py:426
+#: fm1companion/flash/planner.py:434
 msgid "Fetch the package and check it against the known checksum."
 msgstr ""
 
-#: fm1companion/flash/planner.py:429
+#: fm1companion/flash/planner.py:437
 #, python-brace-format
 msgid "“{target}” was interrupted. The safest thing is to write exactly this package again."
 msgstr ""
 
-#: fm1companion/flash/planner.py:431
+#: fm1companion/flash/planner.py:439
 msgid "Finish the interrupted installation"
 msgstr ""
 
-#: fm1companion/flash/planner.py:432
+#: fm1companion/flash/planner.py:440
 msgid "The waiting update loader reads the whole package once more and writes it. Areas that are already correct are skipped."
 msgstr ""
 
-#: fm1companion/flash/planner.py:443
+#: fm1companion/flash/planner.py:451
 #, python-brace-format
 msgid "The file name “{name}” says V{name_version}, but the package itself is {product} (V{version}). The app goes only by the content – this file is not installed. Please name the file correctly or download it again."
 msgstr ""
 
-#: fm1companion/flash/planner.py:451
+#: fm1companion/flash/planner.py:459
 msgid "The running firmware is not recognized (yet). For the switch between V16 and the V15 layout the app must know what is running – please wait until the FM-1 is recognized at the top, and open the plan again. Without recognition: install the original V15 first."
 msgstr ""
 
-#: fm1companion/flash/planner.py:455
+#: fm1companion/flash/planner.py:463
 msgid "A backup is mandatory for the switch between V16 and the V15 layout: it overwrites areas where your projects and sounds are stored. Please tick “Make a backup first”."
 msgstr ""
 
-#: fm1companion/flash/planner.py:464
+#: fm1companion/flash/planner.py:472
 msgid "Backup of the device"
 msgstr ""
 
-#: fm1companion/flash/planner.py:465
+#: fm1companion/flash/planner.py:473
 msgid "All projects, sounds and settings are backed up first (read only). If the backup fails, the installation is aborted."
 msgstr ""
 
-#: fm1companion/flash/planner.py:468
+#: fm1companion/flash/planner.py:476
 msgid "Without backup: projects, sounds and settings on the device are NOT backed up first."
 msgstr ""
 
-#: fm1companion/flash/planner.py:472
+#: fm1companion/flash/planner.py:480
 msgid "No backup possible: the running firmware has no editor protocol, the app cannot back up anything from it. Back up important projects first with the firmware's own tool."
 msgstr ""
 
-#: fm1companion/flash/planner.py:476
+#: fm1companion/flash/planner.py:484
 msgid "Download the package (or take the existing file) and check it against the checksum."
 msgstr ""
 
-#: fm1companion/flash/planner.py:481
+#: fm1companion/flash/planner.py:489
 msgid "Mandatory: V16 only works from the original firmware – your current firmware would refuse V16 with “FAILED -5”."
 msgstr ""
 
-#: fm1companion/flash/planner.py:483
+#: fm1companion/flash/planner.py:491
 msgid "Mandatory: the way back from V16 leads via the original V15 (the same update loader as V16)."
-msgstr ""
-
-#: fm1companion/flash/planner.py:487
-#, python-brace-format
-msgid "Switching from {current} to {target}: the app installs the original firmware V15 first, then {target}."
-msgstr ""
-
-#: fm1companion/flash/planner.py:489
-#, python-brace-format
-msgid "The running firmware is not recognised, so this counts as a switch: the app installs the original firmware V15 first, then {target}."
-msgstr ""
-
-#: fm1companion/flash/planner.py:493
-#, python-brace-format
-msgid "it shows the USB ID {usb}, which the Felucca-family firmwares use – the original firmware shows 4c4a:c755"
 msgstr ""
 
 #: fm1companion/flash/planner.py:495
 #, python-brace-format
-msgid "the same identity is known for: {names}, and nobody has said which firmware runs on this FM-1"
+msgid "Switching from {current} to {target}: the app installs the original firmware V15 first, then {target}."
 msgstr ""
 
 #: fm1companion/flash/planner.py:497
 #, python-brace-format
+msgid "The running firmware is not recognised, so this counts as a switch: the app installs the original firmware V15 first, then {target}."
+msgstr ""
+
+#: fm1companion/flash/planner.py:501
+#, python-brace-format
+msgid "it shows the USB ID {usb}, which the Felucca-family firmwares use – the original firmware shows 4c4a:c755"
+msgstr ""
+
+#: fm1companion/flash/planner.py:503
+#, python-brace-format
+msgid "the same identity is known for: {names}, and nobody has said which firmware runs on this FM-1"
+msgstr ""
+
+#: fm1companion/flash/planner.py:505
+#, python-brace-format
 msgid "This FM-1 answers “FM-1_015” like the original V15, but it may be another firmware: {why}. (TransitFM1 answers “FM-1_015” on purpose.) So the plan does not assume the original V15 and keeps the V15 step. If it is the original V15: connect it so that it shows the USB ID 4c4a:c755 (page “Overview”) and answer “Which firmware is running here?” with the original firmware – then the plan has no V15 step. TransitFM1 shows the USB ID 1209:0001 and its name as serial number (“TransitFM1-…”)."
 msgstr ""
 
-#: fm1companion/flash/planner.py:506
+#: fm1companion/flash/planner.py:514
 msgid "the previous firmware"
 msgstr ""
 
-#: fm1companion/flash/planner.py:507
+#: fm1companion/flash/planner.py:515
 #, python-brace-format
 msgid "<b>Expert option: installed directly, without the V15 step.</b> The authors of most firmwares expect a start from the original V15; a direct switch from another custom firmware has bricked a device at least once. Saved data of {current} (settings, projects, sample areas) stays in the flash either way and can confuse {target}."
 msgstr ""
 
-#: fm1companion/flash/planner.py:514
+#: fm1companion/flash/planner.py:522
 #, python-brace-format
 msgid "Continues the interrupted switch to {target}: the original firmware V15 is already installed (step 1 of 2 is done) – now {target} is installed directly."
 msgstr ""
 
-#: fm1companion/flash/planner.py:518
+#: fm1companion/flash/planner.py:526
 msgid "V16 can only be installed from the original firmware: your current firmware compares the boot header before the original loader and would refuse V16 with “FAILED -5”."
 msgstr ""
 
-#: fm1companion/flash/planner.py:520
+#: fm1companion/flash/planner.py:528
 msgid "The way back from V16 goes via the original V15 – it uses the same update loader as V16."
 msgstr ""
 
-#: fm1companion/flash/planner.py:522
+#: fm1companion/flash/planner.py:530
 msgid "According to the catalog, this firmware is installed from the original firmware V15."
 msgstr ""
 
-#: fm1companion/flash/planner.py:525
+#: fm1companion/flash/planner.py:533
 msgid "Original V15: already on this computer ✓ (no download needed)."
 msgstr ""
 
-#: fm1companion/flash/planner.py:526
+#: fm1companion/flash/planner.py:534
 msgid "Original V15: will be downloaded first (≈ 0.9 MB, internet needed)."
 msgstr ""
 
-#: fm1companion/flash/planner.py:527
+#: fm1companion/flash/planner.py:535
 msgid "Intermediate step: install original V15"
 msgstr ""
 
-#: fm1companion/flash/planner.py:528
+#: fm1companion/flash/planner.py:536
 #, python-brace-format
 msgid "{why} The app installs the unmodified V15 (checksum db1642b2…) via M-VAVE's own loader and then checks whether the FM-1 reports “FM-1_015”."
 msgstr ""
 
-#: fm1companion/flash/planner.py:533
+#: fm1companion/flash/planner.py:541
 msgid "The prepared V15 file is not the unmodified original firmware."
 msgstr ""
 
-#: fm1companion/flash/planner.py:534
+#: fm1companion/flash/planner.py:542
 msgid "Your projects on the device can be lost in the intermediate step – the app backs them up first."
 msgstr ""
 
-#: fm1companion/flash/planner.py:536
+#: fm1companion/flash/planner.py:544
 msgid "Your projects on the device can be lost in the intermediate step – the app cannot back them up from this firmware."
 msgstr ""
 
-#: fm1companion/flash/planner.py:543
+#: fm1companion/flash/planner.py:551
 #, python-brace-format
 msgid "<b>V16 (experimental):</b> {warning}"
 msgstr ""
 
-#: fm1companion/flash/planner.py:548
+#: fm1companion/flash/planner.py:556
 #, python-brace-format
 msgid "This package writes up to {end} – beyond 0x92FFF, where the firmwares with the V15 layout (Melodee too) store songs, presets and sounds."
 msgstr ""
 
-#: fm1companion/flash/planner.py:550
+#: fm1companion/flash/planner.py:558
 #, python-brace-format
 msgid "Install {name}"
 msgstr ""
 
-#: fm1companion/flash/planner.py:551
+#: fm1companion/flash/planner.py:559
 msgid "The running firmware starts the update loader from the package, the loader writes the firmware. Do not unplug, do not switch off."
 msgstr ""
 
-#: fm1companion/flash/planner.py:559
+#: fm1companion/flash/planner.py:567
 msgid "Projects, sounds and settings of the current firmware can no longer be used afterwards (the backup stays on the computer)."
 msgstr ""
 
-#: fm1companion/flash/planner.py:561
+#: fm1companion/flash/planner.py:569
 msgid "Projects, sounds and settings of the current firmware can no longer be used afterwards."
 msgstr ""
 
-#: fm1companion/flash/planner.py:563
+#: fm1companion/flash/planner.py:571
 msgid "Which firmware is running right now is unknown – if it is a different one than the new one, its projects, sounds and settings can no longer be used afterwards."
 msgstr ""
 
-#: fm1companion/flash/planner.py:566
+#: fm1companion/flash/planner.py:574
 msgid "The original firmware can overwrite data of the previous firmware."
 msgstr ""
 
-#: fm1companion/flash/planner.py:568
+#: fm1companion/flash/planner.py:576
 msgid "After a Felucca firmware, the original firmware reads its leftovers as its own settings: presets can be garbled. First try System > Reset Patches on the FM-1; if that does not help: Recovery > “Repair settings after return”."
 msgstr ""
 
-#: fm1companion/flash/planner.py:572
+#: fm1companion/flash/planner.py:580
 msgid "Test version (beta / release candidate): projects may not load in older versions."
 msgstr ""
 
-#: fm1companion/flash/planner.py:576
+#: fm1companion/flash/planner.py:584
 msgid "Projects of this version cannot be loaded back into older versions."
 msgstr ""
 
-#: fm1companion/flash/planner.py:579
+#: fm1companion/flash/planner.py:587
 msgid "This installation changes the boot area of the FM-1. Afterwards many Felucca firmwares (Melodee and SLOOP too) refuse the return to the original V15 (“FAILED -5”). The way back then only goes via download mode (recovery stage 2 / M-Flasher)."
 msgstr ""
 
-#: fm1companion/flash/planner.py:583
+#: fm1companion/flash/planner.py:591
 msgid "This firmware is meant to be operated with an Arturia MiniLab 3."
 msgstr ""
 
-#: fm1companion/flash/planner.py:585
+#: fm1companion/flash/planner.py:593
 msgid "Switch from Felucca 0.9 to 1.x: old 0.9 data is known to prevent 1.0.x from starting (black screen, ROM-UBOOT). Backup is mandatory. Remedy in recovery (stage 2): erase the data areas 0x97000 and 0xFC000 – this erases songs and settings."
 msgstr ""
 
-#: fm1companion/flash/planner.py:590
+#: fm1companion/flash/planner.py:598
 msgid "For Felucca 0.9 → 1.x a backup is mandatory – without a backup it is not possible here."
 msgstr ""
 
-#: fm1companion/flash/planner.py:592
+#: fm1companion/flash/planner.py:600
 msgid "Checksum not available: this release has no SHA256SUMS file, GitHub gives no digest for the release file, and the catalog does not know the checksum. The app cannot check whether the file is unmodified."
 msgstr ""
 
-#: fm1companion/flash/planner.py:597
+#: fm1companion/flash/planner.py:605
 #, python-brace-format
 msgid "Own file: identity {identity}, SHA-256 {sha256} – in no catalog."
 msgstr ""
 
-#: fm1companion/flash/planner.py:606
+#: fm1companion/flash/planner.py:614
 msgid "This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80)."
 msgstr ""
 
-#: fm1companion/flash/planner.py:607
+#: fm1companion/flash/planner.py:615
 msgid "A firmware that does not know this chip saves nothing on such a unit and cannot be updated or replaced any more – the only way back is then the recovery in ROM boot mode (stage 2)."
 msgstr ""
 
-#: fm1companion/flash/planner.py:609
+#: fm1companion/flash/planner.py:617
 msgid "Newer FM-1 (logo on the front): the original V15 is the way back that the authors of Felucca, ChoralRoot, TransitFM1 and the MvaveFM1Unbricker name for these units. This app has not run it on such a unit, and no source says which original version these units are delivered with."
 msgstr ""
 
-#: fm1companion/flash/planner.py:661
+#: fm1companion/flash/planner.py:669
 #, python-brace-format
 msgid "The app's table of firmware versions for the newer FM-1 (flash chip UC25HQ80) cannot be read ({error}). Without it the app cannot tell whether this installation is safe on your FM-1 – nothing is installed. Please install the app again; if your FM-1 is an earlier unit (no logo on the front), you can say so on the page “Devices”."
 msgstr ""
 
-#: fm1companion/flash/planner.py:685
+#: fm1companion/flash/planner.py:693
 msgid "Nothing is known about the original V16 on the newer FM-1s (logo on the front, flash chip UC25HQ80): no source says whether it was run on one, nor which version these units are delivered with."
 msgstr ""
 
-#: fm1companion/flash/planner.py:688
-msgid "Own file: the app cannot tell whether it knows the flash chip of the newer FM-1s (logo on the front, UC25HQ80)."
-msgstr ""
-
-#: fm1companion/flash/planner.py:694
-#, python-brace-format
-msgid "{name} does not know this chip; the first version that does is {first}."
-msgstr ""
-
 #: fm1companion/flash/planner.py:696
-#, python-brace-format
-msgid "No released version of {name} is known to support this chip (checked {date})."
-msgstr ""
-
-#: fm1companion/flash/planner.py:699
-#, python-brace-format
-msgid "{name}: its authors write that it is untested or little tested on this chip, and that one such unit did not start after m-bootloader was installed."
+msgid "Own file: the app cannot tell whether it knows the flash chip of the newer FM-1s (logo on the front, UC25HQ80)."
 msgstr ""
 
 #: fm1companion/flash/planner.py:702
 #, python-brace-format
-msgid "The app does not know whether {name} supports this chip (the first version that does is {first}, and the version of this package is not known)."
+msgid "{name} does not know this chip; the first version that does is {first}."
 msgstr ""
 
 #: fm1companion/flash/planner.py:704
 #, python-brace-format
-msgid "The app does not know whether {name} supports this chip: it is not in the app's table, and the firmware does not say."
+msgid "No released version of {name} is known to support this chip (checked {date})."
 msgstr ""
 
 #: fm1companion/flash/planner.py:707
 #, python-brace-format
+msgid "{name}: its authors write that it is untested or little tested on this chip, and that one such unit did not start after m-bootloader was installed."
+msgstr ""
+
+#: fm1companion/flash/planner.py:710
+#, python-brace-format
+msgid "The app does not know whether {name} supports this chip (the first version that does is {first}, and the version of this package is not known)."
+msgstr ""
+
+#: fm1companion/flash/planner.py:712
+#, python-brace-format
+msgid "The app does not know whether {name} supports this chip: it is not in the app's table, and the firmware does not say."
+msgstr ""
+
+#: fm1companion/flash/planner.py:715
+#, python-brace-format
 msgid "{unit} {why} {strands} It is not installed on this FM-1. If the unit is an earlier one after all, change this on the page “Devices”."
 msgstr ""
 
-#: fm1companion/flash/planner.py:711
+#: fm1companion/flash/planner.py:719
 #, python-brace-format
 msgid "<b>Only for an FM-1 without the logo on the front.</b> The newer FM-1s (M-VAVE logo on the front, sold from late 2026) have another flash chip (UC25HQ80). {why} {strands} The app does not know which unit this is – please confirm below, or say it on the page “Devices”."
 msgstr ""
 
-#: fm1companion/flash/planner.py:759 fm1companion/ui/firmware_page.py:1603
+#: fm1companion/flash/planner.py:767 fm1companion/ui/firmware_page.py:1603
 msgid "Write resources"
 msgstr ""
 
-#: fm1companion/flash/planner.py:760
+#: fm1companion/flash/planner.py:768
 msgid "Fonts, factory sounds and Bluetooth program (Melodee 1.6 and later). If this fails, the firmware still runs – it can be done later."
 msgstr ""
 
-#: fm1companion/flash/planner.py:762
+#: fm1companion/flash/planner.py:770
 msgid "Wait for restart & check identity"
 msgstr ""
 
-#: fm1companion/flash/planner.py:763
+#: fm1companion/flash/planner.py:771
 #, python-brace-format
 msgid "The FM-1 restarts and must then report “{product}”."
 msgstr ""
 
-#: fm1companion/flash/planner.py:764
+#: fm1companion/flash/planner.py:772
 msgid "The FM-1 restarts and must then report with the new firmware."
 msgstr ""
 
-#: fm1companion/flash/planner.py:774
+#: fm1companion/flash/planner.py:782
 msgid "The app does not know the update loader of this package yet – it looks at the package after the download and sends nothing to a loader it does not know. Whether a power loss while writing could be resumed is therefore open: keep power and USB connected."
 msgstr ""
 
-#: fm1companion/flash/planner.py:778
+#: fm1companion/flash/planner.py:786
 msgid "A power loss while writing can NOT be resumed here – the FM-1 would then stay black (only recovery stage 2 helps)."
 msgstr ""
 
-#: fm1companion/flash/planner.py:780
+#: fm1companion/flash/planner.py:788
 msgid "The original firmware has no start protection: the power must not fail while writing."
 msgstr ""
 
@@ -3284,6 +3284,10 @@ msgid "Careful mode and its automatic resume have only been run in the simulatio
 msgstr ""
 
 #: fm1companion/flash/robust.py:711
+msgid "Careful mode has run once through real USB hubs, without a dropout. Its automatic resume after a dropout has only been run in the simulation so far."
+msgstr ""
+
+#: fm1companion/flash/robust.py:714
 #, python-brace-format
 msgid "USB power saving (autosuspend) is on for: {devices}. It can put the FM-1 or its hub to sleep during the waits. The optional udev rule of the app switches it off (Help › “Switching firmware”, section “USB hubs”)."
 msgstr ""

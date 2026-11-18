@@ -624,7 +624,9 @@ def test_careful_mode_note_says_it_is_simulation_only(env):
     dev = device(hubs=[{"name": "1-1", "usb_id": "05e3:0610", "product": "USB2.0 Hub", "self_powered": True}])
     be = sim.SimBackend([dev])
     notes = robust.plan_notes(be.topology(pin()), "auto")
-    assert any("only been run in the simulation" in n for n in notes)
+    # (2026-11-18: one installation through two real hubs, no dropout – the resume itself is still simulation only)
+    assert any("automatic resume after a dropout has only been run in the simulation" in n for n in notes)
+    assert not any("not through a real USB hub" in n for n in notes)
     assert not any("only been run in the simulation" in n for n in robust.plan_notes(be.topology(pin()), "never"))
 
 
