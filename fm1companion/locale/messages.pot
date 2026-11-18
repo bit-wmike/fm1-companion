@@ -8238,7 +8238,7 @@ msgstr ""
 #: fm1companion/ui/main_window.py:937 fm1companion/ui/pages/presets.py:168
 #: fm1companion/ui/pages/project_view.py:669
 #: fm1companion/ui/pages/project_view.py:679
-#: fm1companion/ui/pages/recovery.py:822 fm1companion/ui/pages/studio.py:1249
+#: fm1companion/ui/pages/recovery.py:824 fm1companion/ui/pages/studio.py:1249
 #: fm1companion/ui/storage_tab.py:42 fm1companion/ui/storage_tab.py:350
 msgid "Open folder"
 msgstr ""
@@ -8901,8 +8901,8 @@ msgstr ""
 msgid "Exactly one device “WL82 UBOOT1.00” (USB 4c4a:8057) must be connected. How the FM-1 gets there: see stage 2. The app never chooses a drive by itself."
 msgstr ""
 
-#: fm1companion/ui/clean_check.py:358 fm1companion/ui/pages/recovery.py:661
-#: fm1companion/ui/pages/recovery.py:715
+#: fm1companion/ui/clean_check.py:358 fm1companion/ui/pages/recovery.py:663
+#: fm1companion/ui/pages/recovery.py:717
 #, python-brace-format
 msgid "{message} Found: {devices}"
 msgstr ""
@@ -9052,7 +9052,7 @@ msgstr ""
 
 #: fm1companion/ui/clean_check.py:498 fm1companion/ui/crash.py:349
 #: fm1companion/ui/pages/midi.py:309 fm1companion/ui/pages/midi.py:662
-#: fm1companion/ui/pages/recovery.py:680 fm1companion/ui/risk_dialog.py:28
+#: fm1companion/ui/pages/recovery.py:682 fm1companion/ui/risk_dialog.py:28
 msgid "Continue"
 msgstr ""
 
@@ -9471,7 +9471,7 @@ msgid "Create new device …"
 msgstr ""
 
 #: fm1companion/ui/device.py:622 fm1companion/ui/hw_revision.py:22
-#: fm1companion/ui/hw_revision.py:44 fm1companion/ui/pages/recovery.py:592
+#: fm1companion/ui/hw_revision.py:44 fm1companion/ui/pages/recovery.py:594
 msgid "Which FM-1 is this?"
 msgstr ""
 
@@ -9492,7 +9492,7 @@ msgid "disconnected"
 msgstr ""
 
 #: fm1companion/ui/device.py:660 fm1companion/ui/firmware_page.py:535
-#: fm1companion/ui/pages/recovery.py:787 fm1companion/ui/pages/voices.py:664
+#: fm1companion/ui/pages/recovery.py:789 fm1companion/ui/pages/voices.py:664
 #: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1351
 msgid "No device"
 msgstr ""
@@ -9857,7 +9857,7 @@ msgid "{label} is not installed: {problems}"
 msgstr ""
 
 #: fm1companion/ui/firmware_page.py:531 fm1companion/ui/firmware_page.py:1509
-#: fm1companion/ui/pages/recovery.py:769
+#: fm1companion/ui/pages/recovery.py:771
 msgid "Not a real FM-1"
 msgstr ""
 
@@ -15946,7 +15946,7 @@ msgstr ""
 msgid "while writing the resources"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:144 fm1companion/ui/pages/recovery.py:897
+#: fm1companion/ui/pages/recovery.py:144 fm1companion/ui/pages/recovery.py:899
 #: fm1companion/ui/wizard.py:359
 msgid "Recovery"
 msgstr ""
@@ -16316,278 +16316,278 @@ msgstr ""
 msgid "Installation finished – the FM-1 now reports {identity} and starts normally."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:587
+#: fm1companion/ui/pages/recovery.py:589
 msgid "Not for this FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:588
+#: fm1companion/ui/pages/recovery.py:590
 msgid "Nothing was sent. The FM-1 keeps waiting in update mode – finish the installation with a version that knows its flash chip."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:595
+#: fm1companion/ui/pages/recovery.py:597
 msgid "Yes, continue"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:626
+#: fm1companion/ui/pages/recovery.py:628
 #, python-brace-format
 msgid "{name} (0x{id:06X})"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:631
+#: fm1companion/ui/pages/recovery.py:633
 #, python-brace-format
 msgid "Flash chip read: {chip}. The app cannot tell for sure which of your devices this is, so it is not stored for any of them; until the app is closed it counts for the FM-1 at this USB port. Please set it on the page “Devices” (button “Unit …”)."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:639
+#: fm1companion/ui/pages/recovery.py:641
 #, python-brace-format
 msgid "Flash chip read: {chip}. Device “{device}” is now: {state}."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:644
+#: fm1companion/ui/pages/recovery.py:646
 msgid "Fetch tool"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:645
+#: fm1companion/ui/pages/recovery.py:647
 msgid "The app downloads kagaimiq's <b>jl-uboot-tool</b> (MIT) from GitHub at the checked state adb3f18 and checks the checksum of the WL82 loader (d41da612…). Nothing is installed, it is only copied into the app data folder. Continue?"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:647 fm1companion/ui/pages/voices.py:976
+#: fm1companion/ui/pages/recovery.py:649 fm1companion/ui/pages/voices.py:976
 #: fm1companion/ui/pages/voices.py:1011 fm1companion/ui/samplepacks_tab.py:183
 #: fm1companion/ui/samplepacks_tab.py:186
 msgid "Download"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:650
+#: fm1companion/ui/pages/recovery.py:652
 msgid "Fetch jl-uboot-tool"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:651
+#: fm1companion/ui/pages/recovery.py:653
 msgid "jl-uboot-tool fetched and checked (state adb3f18). Nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:662
+#: fm1companion/ui/pages/recovery.py:664
 msgid "No unambiguous device"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:665
+#: fm1companion/ui/pages/recovery.py:667
 msgid "Size does not match"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:665 fm1companion/ui/pages/recovery.py:719
+#: fm1companion/ui/pages/recovery.py:667 fm1companion/ui/pages/recovery.py:721
 #, python-brace-format
 msgid "{device} – that is not an FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:671
+#: fm1companion/ui/pages/recovery.py:673
 msgid "Recovery stage 2 – step 1 of 3"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:672
+#: fm1companion/ui/pages/recovery.py:674
 msgid "The FM-1 must be <b>fully charged</b> and connected directly to the computer."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:674
+#: fm1companion/ui/pages/recovery.py:676
 #, python-brace-format
 msgid "Device: <b>{device}</b>"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:674
+#: fm1companion/ui/pages/recovery.py:676
 msgid "Simulation"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:676
+#: fm1companion/ui/pages/recovery.py:678
 msgid "Procedure: read the whole flash twice and compare (mandatory, also contains your projects), check the boot header on this backup (it only continues under the factory header – with a V16 or unknown header nothing is written), write the firmware area 0x4000–0x92FFF from the original V15, read back."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:683 fm1companion/ui/pages/recovery.py:744
+#: fm1companion/ui/pages/recovery.py:685 fm1companion/ui/pages/recovery.py:746
 msgctxt "typed confirmation"
 msgid "WRITE"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:684
+#: fm1companion/ui/pages/recovery.py:686
 msgid "Recovery stage 2 – step 2 of 3"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:685
+#: fm1companion/ui/pages/recovery.py:687
 #, python-brace-format
 msgid "To confirm, type {word} (writes to the flash of the FM-1):"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:688
+#: fm1companion/ui/pages/recovery.py:690
 msgid "Recovery stage 2 – step 3 of 3"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:689
+#: fm1companion/ui/pages/recovery.py:691
 msgid "Now the system asks for your password (pkexec): the tool needs administrator rights for direct USB access. After that do not unplug anything until “Done” appears."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:691
+#: fm1companion/ui/pages/recovery.py:693
 #: fm1companion/ui/pages/soundmodule.py:156
 #: fm1companion/ui/pages/soundmodule.py:385
 msgctxt "button"
 msgid "Start"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:700
+#: fm1companion/ui/pages/recovery.py:702
 msgid "Write original V15 in ROM boot mode"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:701
+#: fm1companion/ui/pages/recovery.py:703
 msgid "Simulation finished – nothing was written."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:702
+#: fm1companion/ui/pages/recovery.py:704
 msgid "Original V15 written (0x4000–0x92FFF) and read back. The double backup of the whole flash is in the recovery folder. Now switch the FM-1 off and on again."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:704
+#: fm1companion/ui/pages/recovery.py:706
 msgid "Open recovery folder"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:716
+#: fm1companion/ui/pages/recovery.py:718
 #, python-brace-format
 msgid "{message} Found: none."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:724 fm1companion/ui/pages/recovery.py:734
-#: fm1companion/ui/pages/recovery.py:753
+#: fm1companion/ui/pages/recovery.py:726 fm1companion/ui/pages/recovery.py:736
+#: fm1companion/ui/pages/recovery.py:755
 msgid "Repair settings"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:727
+#: fm1companion/ui/pages/recovery.py:729
 msgid "Factory dump (1 MiB) of a fresh original FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:728
+#: fm1companion/ui/pages/recovery.py:730
 msgid "Flash dump (*.bin)"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:735
+#: fm1companion/ui/pages/recovery.py:737
 msgid "<b>Upstream only tested with a mock.</b> First try <i>System &gt; Reset Patches</i> on the FM-1.<br>The tool backs up the flash twice and then resets only the settings areas (0x93000–0xE8FFF, 0xFC000–0xFEFFF) to the factory dump. Songs and settings of the previous firmware are lost in the process (they stay in the backup), with Melodee also factory sounds and font (0xCB000).<br>These areas are pure data only with the <b>V15 layout</b>. That is why the app checks on the backup from the same run where the firmware ends – with V16 (there is still firmware in 0x93000–0xA8FFF), an unknown or a damaged layout nothing is written."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:742
+#: fm1companion/ui/pages/recovery.py:744
 msgid "Repair"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:745
+#: fm1companion/ui/pages/recovery.py:747
 msgid "Confirm"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:745
+#: fm1companion/ui/pages/recovery.py:747
 #, python-brace-format
 msgid "To confirm, type {word}:"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:761
+#: fm1companion/ui/pages/recovery.py:763
 msgid "Emergency full backup (optional)"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:762
+#: fm1companion/ui/pages/recovery.py:764
 msgid "For advanced users: an FM-1 with the <b>original firmware</b> is sent into ROM boot mode via softkey, then the whole flash is only read twice and compared. Needs administrator rights. Afterwards switch the FM-1 off and on."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:764
+#: fm1companion/ui/pages/recovery.py:766
 msgid "Back up"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:769
+#: fm1companion/ui/pages/recovery.py:771
 msgid "The Studio twin is not a real FM-1 – a full backup only works from a connected device. Please choose a real FM-1 at the top."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:777
+#: fm1companion/ui/pages/recovery.py:779
 msgid "Already a device in ROM boot mode"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:778
+#: fm1companion/ui/pages/recovery.py:780
 msgid "A device “WL82 UBOOT1.00” is already connected. So that the backup surely comes from the right FM-1: unplug this device first, or – if it is the one you want – back it up without softkey (disconnect the FM-1 first, then try again)."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:783 fm1companion/ui/pages/recovery.py:819
+#: fm1companion/ui/pages/recovery.py:785 fm1companion/ui/pages/recovery.py:821
 msgid "Emergency full backup"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:787
+#: fm1companion/ui/pages/recovery.py:789
 msgid "Please connect the FM-1 with the original firmware."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:799
+#: fm1companion/ui/pages/recovery.py:801
 msgid "Waiting for the FM-1 in ROM boot mode (USB 4c4a:8057) …"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:806
+#: fm1companion/ui/pages/recovery.py:808
 msgid "Several devices in ROM boot mode – please leave only the FM-1 connected that you want to back up."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:810
+#: fm1companion/ui/pages/recovery.py:812
 msgid "The FM-1 did not appear in ROM boot mode (USB 4c4a:8057). Switch it off and on again and try again."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:815
+#: fm1companion/ui/pages/recovery.py:817
 msgid "Exactly one device “WL82 UBOOT1.00” must be connected."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:820
+#: fm1companion/ui/pages/recovery.py:822
 #, python-brace-format
 msgid "Full backup read (twice, compared) and saved in {folder}. Nothing was written on the FM-1 – now switch it off and on again."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:830
+#: fm1companion/ui/pages/recovery.py:832
 msgid "the update loader of the M-VAVE FM1 Open (only accepts the package of exactly its build)"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:832
+#: fm1companion/ui/pages/recovery.py:834
 msgid "a Felucca loader (Melodee, SLOOP, Skiff …)"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:833
+#: fm1companion/ui/pages/recovery.py:835
 msgid "an update loader the app does not know"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:840
+#: fm1companion/ui/pages/recovery.py:842
 msgid "Simulation finished – nothing was written on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:842
+#: fm1companion/ui/pages/recovery.py:844
 msgid "the firmware in the flash"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:843
+#: fm1companion/ui/pages/recovery.py:845
 msgid "V15 layout"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:844
+#: fm1companion/ui/pages/recovery.py:846
 #, python-brace-format
 msgid "The settings areas 0x93000–0xE8FFF and 0xFC000–0xFEFFF are now in factory state (rewritten and read back where necessary). Beforehand the app checked on the backup from this run that {firmware} has the V15 layout and ends before 0x93000 ({basis}); that is why the tool did not write the boot header and the firmware area 0x0000–0x92FFF. Songs, sounds and settings from these areas – with Melodee also factory sounds and font – are now only in the backup in the recovery folder. Now switch the FM-1 off and on again."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:857
+#: fm1companion/ui/pages/recovery.py:859
 #, python-brace-format
 msgid "Refused – nothing was written. {reason} The backup from this run is in the recovery folder. The FM-1 usually leaves ROM boot mode after one tool run – for another attempt switch it off and on and bring it into ROM boot mode again."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:860
+#: fm1companion/ui/pages/recovery.py:862
 msgid "The check of the backup did not pass (details in the log)."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:864
+#: fm1companion/ui/pages/recovery.py:866
 msgid "The tool ended without checking the backup – the app cannot say what happened. Please look at the log."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:879
+#: fm1companion/ui/pages/recovery.py:881
 #, python-brace-format
 msgid "The tool reports an error (code {code}) – details in the log. {hint}"
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:880
+#: fm1companion/ui/pages/recovery.py:882
 msgid "Code 3: firmware area possibly incomplete – do NOT switch off, try again."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:881
+#: fm1companion/ui/pages/recovery.py:883
 msgid "Nothing was written, unless the log says otherwise."
 msgstr ""
 
-#: fm1companion/ui/pages/recovery.py:899
+#: fm1companion/ui/pages/recovery.py:901
 msgid "FM-1 does not start or is stuck in update mode – rescue it step by step"
 msgstr ""
 
