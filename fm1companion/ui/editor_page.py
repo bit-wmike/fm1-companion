@@ -146,7 +146,7 @@ class EditorPage(QWidget):
         no download, works offline. MIDI goes through the app's bridge, which lets only SLOOP 3's own protocol out."""
         from .. import sloop3 as S3
         info = self._s3()
-        bad = S3.editor_problems()
+        bad = S3.editor_problems(info.version)
         if bad:
             self.loaded_for = ""
             self.state.setText(_("The bundled SLOOP 3 editor is not complete: {problems}").format(
@@ -161,14 +161,15 @@ class EditorPage(QWidget):
             name=info.label)
         if not fits:
             text += " · " + _("this is the editor of SLOOP 3 {versions} – it may not fit your version").format(
-                versions=", ".join(str(v) for v in S3.editor_manifest().get("firmware_versions", [])))
+                versions=", ".join(str(v) for v in S3.editor_manifest(info.version).get("firmware_versions", [])))
         self.state.setText(text)
         want = f"{S3.KEY}/{info.version}"
         if not force and self.loaded_for == want:
             return
         self.loaded_for = want
         self.current = None                     # (no repository copy: the links in the page open in the browser)
-        self.view.load(QUrl(self.server.sim_url(S3.EDITOR_SERVED, S3.editor_manifest().get("entry", "editor.html"))))
+        self.view.load(QUrl(self.server.sim_url(S3.editor_served(info.version),
+                                                S3.editor_manifest(info.version).get("entry", "editor.html"))))
 
     def load(self, force=False):
         if not self.view:
@@ -311,7 +312,9 @@ class EditorPage(QWidget):
             # the app's own small addition for the Chromium of Qt 6.4 (see the file), then "Connect"
             from .. import sloop3 as S3
             try:
-                self.page.runJavaScript((S3.EDITOR_DIR / S3.editor_manifest().get("compat", "")).read_text("utf-8"))
+                ver = self.loaded_for.split("/", 1)[1]
+                self.page.runJavaScript((S3.editor_dir_for(ver) / S3.editor_manifest(ver).get("compat", "")
+                                         ).read_text("utf-8"))
             except OSError:
                 pass
             self.page.runJavaScript("setTimeout(()=>{const b=document.getElementById('con');"

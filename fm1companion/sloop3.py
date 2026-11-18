@@ -47,8 +47,8 @@ ISSUES_URL = REPO + "/issues"
 MBOOT_URL = "https://github.com/jvitkauskas/m-bootloader"
 MFLASHER_URL = "https://github.com/jvitkauskas/m-flasher"
 # the bundled web editor (identical in both tags; sims/_editors/sloop3/manifest.json)
-EDITOR_DIR = Path(__file__).resolve().parent / "sims" / "_editors" / "sloop3"
-EDITOR_SERVED = "_editors/sloop3"    # under the local server's /sims/
+EDITORS_ROOT = Path(__file__).resolve().parent / "sims" / "_editors"
+EDITOR_DIR = EDITORS_ROOT / "sloop3"  # the editor file of 3.3.6 / 3.3.7 (further ones: editor_dirs)
 
 
 class Cmd:
@@ -186,8 +186,8 @@ def parse_info(raw: bytes) -> Info:
 
 
 # the versions the app was checked with (the PC twin of each tag; never on a real FM-1 by this app)
-CHECKED_VERSIONS = ("3.3.6", "3.3.7")
-VERSION_DATES = {"3.3.6": "2026-11-15", "3.3.7": "2026-11-15"}      # the tags' commit dates
+CHECKED_VERSIONS = ("3.3.6", "3.3.7", "3.4.0")
+VERSION_DATES = {"3.3.6": "2026-11-15", "3.3.7": "2026-11-15", "3.4.0": "2026-11-17"}      # the tags' commit dates
 
 
 def version_checked(version: str) -> bool:
@@ -389,24 +389,59 @@ def probe(link, timeout: float = 0.35, tries: int = 1) -> Info | None:
 
 
 # ------------------------------------------------------- the bundled editor ---
+# One folder per editor file under sims/_editors/: "sloop3" (the file of 3.3.6 and 3.3.7), "sloop3-3.4.0", … Each has
+# a manifest naming the firmware versions whose tag carries exactly that file (tools/bundle_sloop3_editor.py).
 
-def editor_manifest() -> dict:
+def editor_dirs() -> list[Path]:
+    return sorted(d for d in EDITORS_ROOT.glob("sloop3*") if (d / "manifest.json").is_file())
+
+
+def _manifest(d: Path) -> dict:
     try:
-        m = json.loads((EDITOR_DIR / "manifest.json").read_text("utf-8"))
+        m = json.loads((d / "manifest.json").read_text("utf-8"))
         return m if isinstance(m, dict) else {}
     except (OSError, ValueError):
         return {}
 
 
-def editor_problems() -> list[str]:
+def _vkey(v: str) -> tuple:
+    return tuple(int(x) for x in re.findall(r"\d+", v or "")[:3])
+
+
+def editor_dir_for(version: str = "") -> Path:
+    """the bundled editor for a firmware version: the one whose tag is that version; else the newest one that is not
+    newer than the firmware; else the oldest. (editor_fits tells whether it is the first case.)"""
+    v = (version or "").lstrip("vV")
+    dirs = editor_dirs()
+    for d in dirs:
+        if v and v in [str(x) for x in _manifest(d).get("firmware_versions", [])]:
+            return d
+    ranked = sorted(dirs, key=lambda d: _vkey(str(_manifest(d).get("version", ""))))
+    if not ranked:
+        return EDITOR_DIR
+    older = [d for d in ranked if v and _vkey(str(_manifest(d).get("version", ""))) <= _vkey(v)]
+    return older[-1] if older else (ranked[-1] if not v else ranked[0])
+
+
+def editor_manifest(version: str = "") -> dict:
+    return _manifest(editor_dir_for(version))
+
+
+def editor_served(version: str = "") -> str:
+    """the bundle's folder under the local server's /sims/"""
+    return "_editors/" + editor_dir_for(version).name
+
+
+def editor_problems(version: str = "") -> list[str]:
     """the bundled editor's files against its manifest -> problems (empty = as shipped)"""
     import hashlib
-    m = editor_manifest()
+    d = editor_dir_for(version)
+    m = _manifest(d)
     if not m.get("files"):
         return [_("the bundled SLOOP 3 editor is missing")]
     out = []
     for name, info in m["files"].items():
-        p = EDITOR_DIR / name
+        p = d / name
         if not p.is_file():
             out.append(_("{name} missing").format(name=name))
         elif hashlib.sha256(p.read_bytes()).hexdigest() != info.get("sha256"):
@@ -415,8 +450,8 @@ def editor_problems() -> list[str]:
 
 
 def editor_fits(version: str) -> bool:
-    """is the bundled editor the one of this firmware version? (the same file in every tag listed in the manifest)"""
-    return (version or "").lstrip("vV") in [str(v) for v in editor_manifest().get("firmware_versions", [])]
+    """is there a bundled editor from exactly this firmware version's tag?"""
+    return (version or "").lstrip("vV") in [str(v) for v in editor_manifest(version).get("firmware_versions", [])]
 
 
 # ------------------------------------------------------ hardware revision ---

@@ -163,7 +163,8 @@ def main():
           "the bundled editor loads with the Web MIDI polyfill")
     until(lambda: "editor.html" in w.editor.view.url().toString(), 10000)
     url = w.editor.view.url().toString()
-    check("/sims/_editors/sloop3/editor.html" in url and url.startswith("http://127.0.0.1:"), f"served locally: {url}")
+    check(f"/sims/{S3.editor_served(c.sloop3.version)}/editor.html" in url and url.startswith("http://127.0.0.1:"),
+          f"served locally, the editor of this firmware version: {url}")
     check(until(lambda: js("typeof info !== 'undefined' && !!info && info.proto === 2"), 30000),
           "the editor connects through the bridge (protocol 2)")
     ver = js("info && info.ver")

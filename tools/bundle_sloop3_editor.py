@@ -53,8 +53,10 @@ def main(argv=None) -> int:
     ap.add_argument("--repo", required=True)
     ap.add_argument("--tag", required=True)
     ap.add_argument("--also", action="append", default=[], help="another tag with the very same editor")
+    ap.add_argument("--name", default="sloop3", help="folder under sims/_editors (one per editor file: \"sloop3\" = 3.3.x, \"sloop3-3.4.0\" …)")
     a = ap.parse_args(argv)
     repo = Path(a.repo)
+    out_dir = OUT.parent / a.name
     commit = git(repo, "rev-parse", f"{a.tag}^{{commit}}").decode().strip()
     date = git(repo, "log", "-1", "--format=%cI", a.tag).decode().strip()
     editor = git(repo, "show", f"{a.tag}:web/editor.html")
@@ -65,10 +67,10 @@ def main(argv=None) -> int:
         if git(repo, "show", f"{t}:web/editor.html") != editor:
             raise SystemExit(f"{t}: another editor – bundle it separately")
         versions.append(firmware_version(repo, t))
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "editor.html").write_bytes(editor)
-    (OUT / "LICENSE").write_bytes(git(repo, "show", f"{a.tag}:LICENSE"))
-    (OUT / "NOTICE").write_text(
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "editor.html").write_bytes(editor)
+    (out_dir / "LICENSE").write_bytes(git(repo, "show", f"{a.tag}:LICENSE"))
+    (out_dir / "NOTICE").write_text(
         f"SLOOP 3 web editor (web/editor.html), from {REPO_URL} tag {a.tag} (commit {commit}).\n"
         "GPL-3.0 (LICENSE beside this file). SLOOP 3 is by isod89 (the SLOOP project); its README says: new code,\n"
         "written for this project; the values of its factory sounds, kits and presets are SLOOP 2.8.5's\n"
@@ -88,11 +90,11 @@ def main(argv=None) -> int:
         "FM-1 Companion will give anyone a copy of that corresponding source on request\n"
         "(https://github.com/bit-wmike/fm1-companion/issues), free of charge apart from the cost of physically\n"
         "performing the distribution.\n", "utf-8")
-    if not (OUT / COMPAT).is_file():
-        raise SystemExit(f"{OUT / COMPAT} is missing (the app's own file)")
+    if not (out_dir / COMPAT).is_file():              # (the app's own file: the same for every editor so far)
+        (out_dir / COMPAT).write_bytes((OUT / COMPAT).read_bytes())
     files = {}
     for name in ("LICENSE", "NOTICE", COMPAT, "editor.html"):
-        raw = (OUT / name).read_bytes()
+        raw = (out_dir / name).read_bytes()
         files[name] = {"sha256": hashlib.sha256(raw).hexdigest(), "size": len(raw)}
     manifest = {"schema": 1, "name": "sloop3-editor", "title": "SLOOP 3 web editor", "kind": "editor",
                 "firmware": "sloop3", "firmware_versions": sorted(versions), "version": versions[0],
@@ -100,8 +102,8 @@ def main(argv=None) -> int:
                 "build_date": date, "builder": "upstream tools/mkeditor.py (unchanged file); "
                                                "tools/bundle_sloop3_editor.py",
                 "entry": "editor.html", "midi": "webmidi", "compat": COMPAT, "files": files}
-    (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", "utf-8")
-    print(f"{OUT}: SLOOP 3 editor of {', '.join(sorted(versions))} ({commit[:7]}), {len(editor)} bytes")
+    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", "utf-8")
+    print(f"{out_dir}: SLOOP 3 editor of {', '.join(sorted(versions))} ({commit[:7]}), {len(editor)} bytes")
     return 0
 
 

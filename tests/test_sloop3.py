@@ -66,7 +66,7 @@ def test_recorded_info_parses():
     info = S3.parse_info(raw)
     assert cmd == 1 and info.version == "3.3.7" and info.proto == 2 and info.tracks == 5 and info.values == 48
     assert info.tag == "v3.3.7" and info.label == "SLOOP 3 3.3.7" and S3.version_checked(info.version)
-    assert not S3.version_checked("3.4.0")
+    assert S3.version_checked("3.4.0") and not S3.version_checked("3.5.0")
     with pytest.raises(S3.Sloop3Error):
         S3.parse_info(b"\x02\x05")
 
@@ -90,7 +90,7 @@ def test_recognised_by_its_own_info_and_never_as_sloop2(dev):
     # a Felucca INFO text never names SLOOP 3 (it answers none), and SLOOP 2's stays SLOOP 2
     assert protocol.Info("FELUCCA SLOOP 2.8.5").firmware_name == "sloop"
     rel = firmware.fetch_releases(sp)
-    assert [r.tag for r in rel] == ["v3.3.7", "v3.3.6"] and all(r.prerelease and not r.assets for r in rel)
+    assert [r.tag for r in rel] == ["v3.4.0", "v3.3.7", "v3.3.6"] and all(r.prerelease and not r.assets for r in rel)
 
 
 def test_it_answers_no_foreign_command_and_none_is_needed(dev):
@@ -258,53 +258,76 @@ def test_restore_stops_when_the_device_is_no_sloop3(tmp_path, dev):
 
 # ------------------------------------------------------ the bundled editor ---
 
-def test_bundled_editor_is_upstreams_file_with_notice_and_manifest():
-    d = S3.EDITOR_DIR
-    m = S3.editor_manifest()
-    assert set(m["files"]) == {p.name for p in d.iterdir()} - {"manifest.json"}
-    assert S3.editor_problems() == []
-    for name, info in m["files"].items():
-        raw = (d / name).read_bytes()
-        assert hashlib.sha256(raw).hexdigest() == info["sha256"] and len(raw) == info["size"], name
-    # the upstream file of the tag (web/editor.html, v3.3.7-beta = commit 915b54f; the same file in v3.3.6-beta)
-    assert m["files"]["editor.html"]["sha256"] == "a60c4ea84dc4b9d9ea36c33b24be8ac4d351764031c9368ac41d6b31b6b5ff53"
-    assert m["commit"] == "915b54f6780564cb486b4de8a518aabbea1503a0" and m["firmware_versions"] == ["3.3.6", "3.3.7"]
-    assert tuple(m["firmware_versions"]) == S3.CHECKED_VERSIONS
-    assert S3.editor_fits("3.3.7") and S3.editor_fits("v3.3.6") and not S3.editor_fits("3.4.0")
-    notice = (d / "NOTICE").read_text("utf-8")
-    for needle in (m["commit"], "isod89", "Corresponding Source", "Written offer", "compat-chromium102.js", "GPL-3.0"):
-        assert needle in notice, needle
-    assert "GNU GENERAL PUBLIC LICENSE" in (d / "LICENSE").read_text("utf-8")
-    html = (d / "editor.html").read_text("utf-8")
-    assert "<title>SLOOP 3 editor</title>" in html and "fm1c" not in html.lower()     # nothing of ours inside it
-    # it never sends the M-VAVE update / boot keys, and finds its port by the name "SLOOP 3"
-    assert "0x22, 0x24, 0x35" not in html and "/SLOOP 3/i.test(p.name)" in html
-    # not shown as a simulator, but found by the source tarball tool (GPL: corresponding source)
-    assert all(s.key != "sloop3-editor" for s in sims.bundled())
+BUNDLES = {  # folder -> (upstream commit, sha256 of web/editor.html at that tag, firmware versions with that file)
+    "sloop3": ("915b54f6780564cb486b4de8a518aabbea1503a0",
+               "a60c4ea84dc4b9d9ea36c33b24be8ac4d351764031c9368ac41d6b31b6b5ff53", ["3.3.6", "3.3.7"]),
+    "sloop3-3.4.0": ("2228313f3abe0ad6c8f28ef0cd9b9d8167c01330",
+                     "00f1024b6d60e3d2f0d7e6c022be35a62bf3a1fe6994211dcb08ef917c43f821", ["3.4.0"]),
+}
+
+
+def test_bundled_editors_are_upstreams_files_with_notice_and_manifest():
+    assert {d.name for d in S3.editor_dirs()} == set(BUNDLES)
     sys.path.insert(0, str(ROOT / "tools"))
     import make_source_tarballs as T
-    assert ("sloop3-fm1", m["commit"]) in T.wanted()
+    listed = []
+    for d in S3.editor_dirs():
+        commit, sha, versions = BUNDLES[d.name]
+        m = json.loads((d / "manifest.json").read_text("utf-8"))
+        assert set(m["files"]) == {p.name for p in d.iterdir()} - {"manifest.json"}
+        for name, info in m["files"].items():
+            raw = (d / name).read_bytes()
+            assert hashlib.sha256(raw).hexdigest() == info["sha256"] and len(raw) == info["size"], name
+        assert m["files"]["editor.html"]["sha256"] == sha and m["commit"] == commit
+        assert m["firmware_versions"] == versions
+        listed += versions
+        notice = (d / "NOTICE").read_text("utf-8")
+        for needle in (commit, "isod89", "Corresponding Source", "Written offer", "compat-chromium102.js", "GPL-3.0"):
+            assert needle in notice, needle
+        assert "GNU GENERAL PUBLIC LICENSE" in (d / "LICENSE").read_text("utf-8")
+        html = (d / "editor.html").read_text("utf-8")
+        assert "<title>SLOOP 3 editor</title>" in html and "fm1c" not in html.lower()     # nothing of ours inside it
+        # it never sends the M-VAVE update / boot keys, and finds its port by the name "SLOOP 3"
+        assert "0x22, 0x24, 0x35" not in html and "/SLOOP 3/i.test(" in html
+        # everything it sends: its SysEx frame, note on/off, CC 123 – what the gate lets through (see the gate's test)
+        assert html.count("out.send(") == 3 and "out.send(frame(cmd, raw));" in html
+        assert "out.send(on ? [0x90 | ch, k & 127, clamp(vel, 1, 127)] : [0x80 | ch, k & 127, 0]);" in html
+        assert "out.send([0xB0 | c, 123, 0]);" in html
+        assert (commit and ("sloop3-fm1", commit) in T.wanted())     # GPL: the corresponding source of each
+    assert tuple(sorted(listed)) == S3.CHECKED_VERSIONS
+    # each firmware version gets the editor of its own tag; an unknown newer one the newest editor – and is told so
+    assert S3.editor_dir_for("3.3.7").name == "sloop3" and S3.editor_dir_for("v3.3.6").name == "sloop3"
+    assert S3.editor_dir_for("3.4.0").name == "sloop3-3.4.0" and S3.editor_served("3.4.0") == "_editors/sloop3-3.4.0"
+    assert S3.editor_dir_for("3.5.1").name == "sloop3-3.4.0" and not S3.editor_fits("3.5.1")
+    assert S3.editor_dir_for("3.3.9").name == "sloop3" and not S3.editor_fits("3.3.9")
+    assert S3.editor_dir_for("3.1.0").name == "sloop3" and S3.editor_fits("3.4.0") and S3.editor_fits("v3.3.6")
+    for v in ("3.3.7", "3.4.0", "9.9"):
+        assert S3.editor_problems(v) == []
+    assert all(s.key != "sloop3-editor" for s in sims.bundled())     # not shown as a simulator
 
 
-def test_editor_uses_nothing_newer_than_chromium_102_but_color_mix():
-    """Qt 6.4 (Raspberry Pi OS Bookworm) is Chromium 102. The one newer thing in SLOOP 3's editor is CSS color-mix()
+def test_editors_use_nothing_newer_than_chromium_102_but_color_mix():
+    """Qt 6.4 (Raspberry Pi OS Bookworm) is Chromium 102. The one newer thing in SLOOP 3's editors is CSS color-mix()
     (Chromium 111), once – a pad's tint, which compat-chromium102.js gives back. A new editor version that brings
     another such feature must be looked at: this list is what was checked for."""
-    html = (S3.EDITOR_DIR / "editor.html").read_text("utf-8")
-    css = html[html.index("<style>"):html.index("</style>")]
-    js = html[html.index("<script>"):html.rindex("</script>")]
-    assert css.count("color-mix(") == 1 and ".pad.has{background:color-mix(in srgb,var(--c,#888) 30%,var(--panel2))}" in css
-    for newer in ("@container", "container-type", ":has(", "dvh", "svh", "lvh", "@layer", "@scope", "oklch", "oklab",
-                  "light-dark(", "text-wrap", "subgrid", "@starting-style", "anchor-name", "popover", "&:hover", "& ."):
-        assert newer not in css, newer
-    for newer in (".toSorted(", ".toReversed(", ".toSpliced(", ".with(", "Object.groupBy", "Map.groupBy",
-                  "Array.fromAsync", "Promise.withResolvers", ".findLastIndex(", "structuredClone", ".isWellFormed(",
-                  "showOpenFilePicker", "showSaveFilePicker", "import(", "navigator.wakeLock", "Iterator.", ".at(-",
-                  "setHTMLUnsafe", "getHTML(", "Temporal.", "using "):
-        assert newer not in js, newer
-    compat = (S3.EDITOR_DIR / "compat-chromium102.js").read_text("utf-8")
-    assert "NOT part of SLOOP 3" in compat and "linear-gradient(#1f1b2bb3,#1f1b2bb3),var(--c,#888)" in compat
-    assert "--panel2:#1f1b2b" in css                   # (the colour the addition relies on)
+    for d in S3.editor_dirs():
+        html = (d / "editor.html").read_text("utf-8")
+        css = html[html.index("<style>"):html.index("</style>")]
+        js = html[html.index("<script>"):html.rindex("</script>")]
+        assert css.count("color-mix(") == 1 and \
+            ".pad.has{background:color-mix(in srgb,var(--c,#888) 30%,var(--panel2))}" in css, d.name
+        for newer in ("@container", "container-type", ":has(", "dvh", "svh", "lvh", "@layer", "@scope", "oklch", "oklab",
+                      "light-dark(", "text-wrap", "subgrid", "@starting-style", "anchor-name", "popover", "&:hover", "& ."):
+            assert newer not in css, (d.name, newer)
+        for newer in (".toSorted(", ".toReversed(", ".toSpliced(", ".with(", "Object.groupBy", "Map.groupBy",
+                      "Array.fromAsync", "Promise.withResolvers", ".findLastIndex(", "structuredClone", ".isWellFormed(",
+                      "showOpenFilePicker", "showSaveFilePicker", "import(", "navigator.wakeLock", "Iterator.", ".at(-",
+                      "setHTMLUnsafe", "getHTML(", "Temporal.", "using ", ".findLast(", "Object.hasOwn", ".replaceAll(",
+                      "??=", "||=", "&&="):
+            assert newer not in js, (d.name, newer)
+        compat = (d / "compat-chromium102.js").read_text("utf-8")
+        assert "NOT part of SLOOP 3" in compat and "linear-gradient(#1f1b2bb3,#1f1b2bb3),var(--c,#888)" in compat
+        assert "--panel2:#1f1b2b" in css               # (the colour the addition relies on)
 
 
 def test_editor_gate_lets_only_sloop3s_protocol_out():
@@ -319,10 +342,7 @@ def test_editor_gate_lets_only_sloop3s_protocol_out():
                 [0xF0, 0x7D, 0x53, 0x33, 1, 0x90, 0xF7], [], [0xF0, 0x00, 0x59, 0x21, 0xF7]):
         assert not ok(bad), bad
     assert not sims.builtin_editor_out_allowed([0xF0, 0x22, 0x24, 0x35, 0x7F, 0xF7])
-    # what the bundled editor itself sends besides its SysEx (web/src/core.js noteOut, allNotesOff)
-    html = (S3.EDITOR_DIR / "editor.html").read_text("utf-8")
-    assert "out.send(on ? [0x90 | ch, k & 127, clamp(vel, 1, 127)] : [0x80 | ch, k & 127, 0]);" in html
-    assert "out.send([0xB0 | c, 123, 0]);" in html and html.count("out.send(") == 3     # (+ the SysEx frame)
+    # what the bundled editors themselves send besides their SysEx (web/src/core.js noteOut, allNotesOff)
     for good in ([0x90, 60, 100], [0x99, 36, 1], [0x80, 60, 0], [0x8F, 127, 0], *[[0xB0 | c, 123, 0] for c in range(16)]):
         assert ok(good), good
 
