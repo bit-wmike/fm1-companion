@@ -42,6 +42,8 @@ def no_backup_reason(ctx) -> str:
     """why a backup isn't possible right now ("" = it is possible)"""
     if ctx.connected:
         return ""
+    if getattr(ctx, "sloop3", None) is not None and getattr(ctx, "midi_connected", False):
+        return ""                                   # (SLOOP 3: its own protocol and file, sloop3bk.py)
     if ctx.port is None:
         return _("No FM-1 connected. Please connect an FM-1 via USB.")
     if getattr(ctx, "protocol", "") == "update":
@@ -71,6 +73,9 @@ def make_backup(ctx, parent, note: str = "", kind: str = "") -> Path | None:
         return None
     version = ctx.info.version if ctx.info else ""
     fw = ctx.firmware_key
+    if not ctx.connected and getattr(ctx, "sloop3", None) is not None:
+        from .. import sloop3 as _S3                # (SLOOP 3: never another key – it decides which commands are sent)
+        version, fw = ctx.sloop3.label, _S3.KEY
     akind = {"auto": "sicherheit", "": "manuell"}.get(kind, kind)
 
     def work(w, link):
@@ -682,7 +687,10 @@ class BackupsPage(QWidget):
             if m.pinned:
                 it.setIcon(0, icon("pin", "window-pin", "emblem-favorite"))
                 it.setToolTip(6, _("pinned – never deleted automatically"))
-            if m.fmt != backup.FORMAT:
+            if m.fmt == backup.SLOOP3_FORMAT:
+                it.setToolTip(4, _("SLOOP 3 backup (the app's own file: project, sounds, banks – not the samples). "
+                                   "It goes back only onto an FM-1 that runs SLOOP 3."))
+            elif m.fmt != backup.FORMAT:
                 it.setToolTip(4, _("SLOOP backup (format of the SLOOP web editor) – interchangeable in both directions"))
             self.tree.addTopLevelItem(it)
             total += m.size
@@ -756,6 +764,10 @@ class BackupsPage(QWidget):
     def _restore(self):
         p = self._sel_ok()
         if not p:
+            return
+        from . import sloop3_ui                     # (SLOOP 3 and its backups: their own way, none of the commands
+        if sloop3_ui.handles_restore(self, self.ctx, p):     # below is sent to it)
+            self.refresh()
             return
         why = no_backup_reason(self.ctx)
         if why:

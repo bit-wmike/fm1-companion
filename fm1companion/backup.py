@@ -275,6 +275,9 @@ SLOOP_FORMAT = "sloop-backup"
 SLOOP_PROTOCOL = (SLOOP, "karma")
 # M-VAVE's FM1 Open: no editor protocol; its own file transfer protocol and file (fm1openbk.py), picked by the firmware key
 FM1OPEN_KEY, FM1OPEN_FORMAT = "fm1-open", "fm1open-backup"
+# SLOOP 3 (isod89/sloop3-fm1, a rewrite): its own editor protocol and file (sloop3bk.py), picked by the firmware key –
+# it answers none of the commands below, and none of them is ever sent to it
+SLOOP3_KEY, SLOOP3_FORMAT = "sloop3", "sloop3-backup"
 # X0X (charlesvestal/fm1-x0x) and fm1-base's LOOM-8: their own protocol and image (backup.c, x0xbk.py: the saved
 # state whole, in the update's framing); the suite keeps it as an "x0x-backup" / "loom8-backup" file
 X0X = "x0x"
@@ -297,6 +300,12 @@ def is_orbit_backup(file) -> bool:
     return f.get("format") == SLOOP_FORMAT and (f.get("product") == "ORBIT" or "orbit" in str(f.get("firmware", "")).lower())
 
 
+def sloop3_only_text() -> str:
+    return _("The FM-1 runs SLOOP 3, which has its own backups (“sloop3-backup” files, page “Backups”). Backups of "
+             "other firmwares – SLOOP 2.x's too – do not fit it, and the app sends it none of their commands. "
+             "Nothing was read or written.")
+
+
 def protocol(link, hint: str = "") -> tuple[str, object]:
     """which backup protocol does the device speak? -> (FELUCCA|SLOOP|X0X|LOOM, info or None).
     hint: firmware key (ctx.firmware_key), if known. A firmware that names itself in its INFO gets its own protocol
@@ -305,6 +314,8 @@ def protocol(link, hint: str = "") -> tuple[str, object]:
     playback for it, as for every backup) – a protocol is never guessed for a write. A
     firmware with a backup protocol of its own, or none, is refused with a clear message instead of a timeout."""
     from . import sloopbk
+    if hint == SLOOP3_KEY:                          # (nothing is asked: SLOOP 3 answers no Felucca command)
+        raise BackupError(sloop3_only_text())
     if hint in ("melodee", "skiff", "coralflower", "choralroot") or (hint or "").startswith("jiant"):
         return FELUCCA, None                        # ("felucca": its INFO decides – SLOOP's builds share FM-1_900)
     if hint == LOOM:                                # (named by the caller: not asked)
@@ -455,6 +466,14 @@ def capture(link, firmware: str, progress: Callable[[int, int], None] | None = N
         f = fm1openbk.capture(link, firmware, progress, companion)
         read(f)
         return f
+    if (firmware_key or (companion or {}).get("firmware", "")) == SLOOP3_KEY:    # (SLOOP 3: sloop3bk, its own protocol)
+        from . import sloop3bk
+        try:
+            f = sloop3bk.capture(link, firmware, progress, companion)
+        except sloop3bk.Sloop3BackupError as e:
+            raise BackupError(str(e))
+        read(f)
+        return f
     proto, info = protocol(link, firmware_key or (companion or {}).get("firmware", ""))
     if proto in IMAGE_PROTOS:
         from . import x0xbk
@@ -508,6 +527,11 @@ class Archive:
         return self.format == FM1OPEN_FORMAT
 
     @property
+    def sloop3(self) -> bool:
+        """SLOOP 3 (sloop3bk.py: its own protocol and file; restored by ui/sloop3_ui.py, not by restore())"""
+        return self.format == SLOOP3_FORMAT
+
+    @property
     def x0x(self) -> bool:
         """X0X's project image (x0xbk.py): restored whole only"""
         return self.format == X0X_FORMAT
@@ -540,7 +564,7 @@ class Archive:
         return not self.sloop and is_choralroot(o["id"] for o in self.objects)
 
     def project_objects(self):
-        if self.coralflower or self.choralroot or self.fm1open or self.image:
+        if self.coralflower or self.choralroot or self.fm1open or self.image or self.sloop3:
             return []                               # (FM1 Open's projects are no Felucca projects; X0X, LOOM-8: one
                                                     # image, its parts no project slots)
         return [o for o in self.objects if is_project(o["id"]) and o["id"] != 0 and o["size"]]
@@ -578,6 +602,16 @@ def read(file) -> Archive:
         try:
             m = fm1openbk.objects(file)
         except fm1openbk.FM1OpenBackupError as e:
+            raise BackupError(str(e))
+        except (ValueError, OverflowError, TypeError, KeyError, AttributeError):
+            raise BackupError(_("invalid object in the backup"))
+        objs = [{"id": o["id"], "size": o["size"], "crc": o["crc"], "bytes": m[o["id"]]} for o in file["objects"]]
+        return Archive(file=file, objects=objs, known=True)
+    if isinstance(file, dict) and file.get("format") == SLOOP3_FORMAT:
+        from . import sloop3bk
+        try:
+            m = sloop3bk.objects(file)
+        except sloop3bk.Sloop3BackupError as e:
             raise BackupError(str(e))
         except (ValueError, OverflowError, TypeError, KeyError, AttributeError):
             raise BackupError(_("invalid object in the backup"))
@@ -652,6 +686,9 @@ def dumps(file: dict) -> str:
     if file.get("format") == FM1OPEN_FORMAT:
         from . import fm1openbk
         return fm1openbk.dumps(file)
+    if file.get("format") == SLOOP3_FORMAT:
+        from . import sloop3bk
+        return sloop3bk.dumps(file)
     return json.dumps(file, separators=(",", ":"))
 
 
@@ -915,6 +952,8 @@ def match_reason(archive: Archive, proto: str, version: str = "", name: str = ""
     objection here (the Felucca protocol's layouts: layout_reason). The one rule for the restore itself (_match)
     and for the pages that say so before a restore is planned."""
     from . import x0xbk
+    if archive.sloop3:                              # (a device with any of these protocols is not SLOOP 3)
+        return _("This is a SLOOP 3 backup, but the FM-1 runs a different firmware. Nothing was written.")
     dev_image = proto if proto in IMAGE_PROTOS else ""
     if archive.fm1open != (proto == FM1OPEN_KEY):
         return (_("This backup is not from FM1 Open, but the FM-1 runs FM1 Open – the formats do not match. "
@@ -1001,10 +1040,21 @@ def check_16(archive: Archive, supported, device_version: str = ""):
         raise BackupError(M.restore_refusal(c.get("firmware_version") or archive.firmware, device_version))
 
 
+def _refuse_sloop3(archive: Archive, firmware_key: str = ""):
+    """SLOOP 3 and its backups never go through the Felucca family's restore (nothing is sent): the device takes only
+    its own file, and its file goes back through sloop3bk.restore (page “Backups”)"""
+    if firmware_key == SLOOP3_KEY and not archive.sloop3:
+        raise BackupError(sloop3_only_text())
+    if archive.sloop3:
+        raise BackupError(_("This is a SLOOP 3 backup. It goes back onto an FM-1 that runs SLOOP 3, with “Restore” "
+                            "on the page “Backups”. Nothing was written."))
+
+
 def restore(link, archive: Archive, progress: Callable[[int, int], None] | None = None,
             firmware_key: str = ""):
     if archive.fm1open or firmware_key == FM1OPEN_KEY:
         return _restore_fm1open(link, archive, progress)
+    _refuse_sloop3(archive, firmware_key)
     proto, info = _match(link, archive, firmware_key)
     if proto in IMAGE_PROTOS:
         from . import x0xbk
@@ -1149,6 +1199,7 @@ def restore_selected(link, archive: Archive, ids, progress: Callable[[int, int],
     if archive.fm1open:                             # (M-VAVE's FM1 Open: fm1openbk.py)
         _restore_fm1open(link, archive, progress, ids=want)
         return [o["id"] for o in archive.objects if o["id"] in want]
+    _refuse_sloop3(archive)
     proto, info = _match(link, archive)
     if proto in IMAGE_PROTOS:                       # (X0X, LOOM-8: the image whole, nothing but all of it)
         from . import x0xbk

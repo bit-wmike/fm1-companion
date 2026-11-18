@@ -351,6 +351,30 @@ loader families / `requiresStockV15`.
 | WitchBox (`witchbox`) | 0 | SLOOP | – | no Felucca INFO | – | no INFO: backup off, named by identity | no package |  |  |
 | Zen-Lite (`zen-lite`) | 0 | SLOOP | – | no Felucca INFO | – | no INFO: backup off, named by identity | no package |  |  |
 
+## SLOOP 3 (not in the table above)
+
+The table lists the Felucca family by what each firmware answers to the Felucca editor's INFO. **SLOOP 3**
+(isod89/sloop3-fm1, GPL-3.0, a public beta; looked at: tags `v3.3.6-beta`, `v3.3.7-beta` (commit 915b54f) and `v3.4.0-beta` (2228313)) is a
+rewrite and answers none of it, so it has no row there. What the app does with it, and where each fact comes from:
+
+| | |
+|---|---|
+| Firmware key | `sloop3` – never `sloop` (SLOOP 2.x). `firmware.guess_firmware`, `ui/device.py` |
+| On USB | "FM-1 SLOOP 3", `1209:0001` (`hal/fm1/usb.c`) – the ID the Felucca family uses too; only its INFO tells it |
+| What it answers | its own editor protocol `F0 7D 53 33 cmd … F7`, 8-to-7 packed (`app/edproto.h`, `fw/main.c ed_request`). INFO (1) gives protocol 2, 5 tracks, the version text "3.3.7" |
+| What it does not answer | Felucca's INFO (`7D 46 4C` 1), SLOOP 2's backup LIST (34), Felucca's (65), Hortator's INFO, the update handshake: `ed_parse` drops every frame that is not its own. Sent to the author's PC twin (`host/twin.c`, `fw/main.c` on a simulated FM-1): no answer, and the next INFO as before. Kept in `tests/fixtures/sloop3/twin-3.3.7.json` ("silent") |
+| What the app sends it | to recognise it: the probes every unknown device gets (Felucca INFO, update handshake, Hortator INFO) and SLOOP 3's INFO – all read only. With a port named "… SLOOP 3" its INFO is asked first. Afterwards only SLOOP 3's own commands: for a backup INFO, READ (5), SAMPLE 0 (13), BANK 0/1 (14), HOME without arguments (19); for a restore WBEGIN/WDATA/WEND (6–8) and BANK 2–4. `backup.protocol`, `device_inventory`, `restore` refuse the key `sloop3` before anything is sent |
+| Backups | `sloop3-backup` files (`sloop3bk.py`): the saved project, the project at that moment, your sounds (favourites, theme), FM6 bank, SYN kits, the settings (kept, not restored). **Not the samples** – the protocol has no command to read them (SAMPLE: info, begin, data, end, erase). Restore: sounds, banks (if the FM-1 had its own), project; read back and compared where the protocol reads. No automatic backup |
+| Editor | the author's `web/editor.html`, byte for byte, one folder per editor file: `sloop3/` (the same file in 3.3.6 and 3.3.7) and `sloop3-3.4.0/`, chosen by the version the FM-1 reports (an unknown newer version gets the newest and is told so; `tools/bundle_sloop3_editor.py` checks that the tag's `tools/mkeditor.py` builds it), under `fm1companion/sims/_editors/sloop3/` with LICENSE, NOTICE (commit, source offer) and a manifest. Shown on the Editor page; the bridge lets out what this editor sends and nothing else: `F0 7D 53 33 … F7`, and single note on / note off / control change messages (`sims.sloop3_editor_out_allowed`) – no other SysEx |
+| Chromium 102 (Qt 6.4, Bookworm) | the script parses as ES2020; no API newer than Chromium 102 was found. One CSS feature is newer: `color-mix()` (Chromium 111), `web/src/editor.css:58` (`.pad.has`): without it a pattern pad that holds notes is not tinted, nothing else. `compat-chromium102.js` (the app's own file, run after the page loaded) gives the tint back. Run for real only on Qt 6.11 here |
+| Installing | **not by the app.** SLOOP 3 has no `.fwsc`; it installs only through m-bootloader's MIDI MODE from its author's installer page, which builds the package for the unit's chip key. Firmware+ › SLOOP 3 explains the steps and opens that page in the system browser. Installing m-bootloader (it replaces the boot area) is never done by the app |
+| m-bootloader's MIDI MODE | "FM-1 Update", `1209:0002`, handshake `ota-FM-1_900` – as a Felucca-family loader; only command 0x12 tells it (`MBOOT`, version, chip key, capacity, JEDEC ID). `flash/mboot.py` asks 0x12 only on a port named exactly "FM-1 Update" whose USB ID is 1209:0002 or not told by the system and whose handshake answer was `ota-FM-1_900` or none (`is_candidate`), and reads (0x23, CRC 0x24) only after `MBOOT` was answered; it frames no other command. Written from m-bootloader's `docs/SPEC.md` §11.6; none of its code is in the app |
+| Hardware revision | the app's one rule (`hardware.py`, `flash/planner.chip_check`; rows `sloop3` and `m-bootloader` are "risky", see the next section). In MIDI MODE the JEDEC ID from 0x12 is kept with the device (`hardware.note_flash_id`). For a newer unit the app does not offer the installer page; if the unit is not known, only after the user confirms “no M-VAVE logo on the front” |
+| The app's own installer and MIDI MODE | refused on the sending side: `install_flow` and Recovery › finish installation call `sloop3_ui.refuse_in_midi_mode` – m-bootloader answers the update protocol like a loader but writes `[0x4000, package end)`, and the app was never tried with it |
+| Going back | the full-flash backup written back with M-Flasher (SLOOP 3's README). An official M-VAVE update puts M-VAVE's bootloader back |
+| Studio | no twin. It would take: `host/twin.c` + `host/hal.c` (SLOOP 3's own PC twin: screen, panel, both cores, flash, USB MIDI) compiled to WASM with the twin ABI of `fm1companion/sims/_studio/twin-core.js` (`st_*`), audio out of its block renderer, its flash as the state, and backups through `sloop3bk` |
+
+
 ## The newer FM-1's flash chip (2026-11-17)
 
 FM-1s sold from late 2026 (the M-VAVE logo on the front) carry a UCUN UC25HQ80 flash (JEDEC ID 0xB36014) instead of

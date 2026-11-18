@@ -209,6 +209,8 @@ class Report:
 
     @property
     def firmware_key(self) -> str:
+        if self.format == backup.SLOOP3_FORMAT:                           # (SLOOP 3: never "sloop", whatever is written)
+            return backup.SLOOP3_KEY
         k = self.companion.get("firmware", "")
         if k:
             return "jiant" if k.lower().startswith("jiant") else k       # (the catalog's "jiant-fm" and the twin's "jiant")
@@ -580,7 +582,7 @@ def inspect(source) -> Report:
     if isinstance(source, backup.Archive):
         arch = source
         return _from_sloop(arch.file, None) if arch.sloop else _from_x0x(arch, None) if arch.image else \
-            _from_archive(arch, None)
+            _from_sloop3(arch, None) if arch.sloop3 else _from_archive(arch, None)
     if isinstance(source, (str, Path)) and not (isinstance(source, str) and source.lstrip().startswith("{")):
         path = Path(source)
         raw = path.read_bytes()
@@ -599,7 +601,31 @@ def inspect(source) -> Report:
     if isinstance(source, dict) and source.get("format") == "sloop-backup":
         return _from_sloop(source, path)
     arch = backup.read(source)
+    if arch.sloop3:
+        return _from_sloop3(arch, path)
     return _from_x0x(arch, path) if arch.image else _from_archive(arch, path)
+
+
+def _from_sloop3(arch: backup.Archive, path: Path | None) -> Report:
+    """SLOOP 3's backup (sloop3bk.py): its parts by name; their formats are SLOOP 3's own and are not decoded here.
+    Not "restorable" in this module's sense (the Felucca family's part-by-part restore): it goes back whole, with
+    “Restore” on the Backups page, onto an FM-1 that runs SLOOP 3."""
+    from . import sloop3bk as B
+    groups = {B.PROJECT: G_PROJECTS, B.NOW: G_PROJECTS, B.SOUNDS: G_PRESETS, B.FM6: G_PRESETS, B.SYN: G_PRESETS,
+              B.SETTINGS: G_SETTINGS}
+    objs = []
+    for o in arch.objects:
+        v = ObjectView(o["id"], B.title(o["id"]), groups.get(o["id"], G_PROJECTS), o["size"], o["crc"], o["bytes"])
+        v.format = "" if o["size"] else _("empty")
+        objs.append(v)
+    rep = Report(arch.format, arch.firmware, arch.created, arch.companion, objs, True, False, path, arch)
+    listed = arch.file.get("samples_not_included")
+    held = [x for x in (listed if isinstance(listed, list) else []) if isinstance(x, dict) and x.get("zones")]
+    rep.warnings.append(
+        _("Your samples (USR1–USR4) are not in this backup: SLOOP 3 has no command to read them. {n} of the slots "
+          "held a sample at that moment. They are only in a backup of the whole flash, or in the files you sent "
+          "them from.").format(n=len(held)))
+    return rep
 
 
 def _from_x0x(arch: backup.Archive, path: Path | None) -> Report:

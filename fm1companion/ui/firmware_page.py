@@ -566,6 +566,21 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     if not ctx.port:
         show_error(parent, _("No device"), _("Please connect the FM-1 via USB."))
         return False
+    if spec.key == "sloop3":                     # (no package: never through this flow, whoever calls it)
+        from . import sloop3_ui
+        sloop3_ui.open_dialog(parent, ctx)
+        return False
+    if getattr(ctx, "sloop3", None) is not None and not ctx.port.update_mode:
+        # SLOOP 3 has no update mode a host can ask for (it ignores the update key): say so instead of failing later
+        show_error(parent, _("Not from the running SLOOP 3"),
+                   _("This FM-1 runs SLOOP 3, which cannot be switched to an update mode over USB – the installation "
+                     "would stop at its first step, with nothing written. The app cannot install firmware on this "
+                     "FM-1. Going back to SLOOP 2.8 or M-VAVE's firmware means writing your flash backup back with "
+                     "M-Flasher. “Firmware+” › SLOOP 3 explains the way."))
+        return False
+    from . import sloop3_ui as _s3ui             # (m-bootloader's MIDI MODE answers like an update loader: never sent)
+    if _s3ui.refuse_in_midi_mode(parent, ctx):
+        return False
     from .risk_dialog import ensure_risk_ack
     if not ensure_risk_ack(parent):              # one-time risk notice before the first installation
         return False
@@ -1181,16 +1196,17 @@ class FirmwarePage(QWidget):
         show_rc = self.chk_rc.isChecked()
         installed = self.ctx.firmware_tag if self.ctx.firmware_key == s.key else ""
         local = {p.parent.name for p in firmware.local_packages() if p.parent.parent.name == s.key}
+        s3 = s.key == "sloop3"                      # (SLOOP 3: a public beta the app does not install, ui/sloop3_ui.py)
         for r in rels:
-            if r.prerelease and not show_rc and r.tag != installed:
+            if r.prerelease and not show_rc and r.tag != installed and not s3:
                 continue
             state = []
             if r.tag == installed:
                 state.append(_("● installed"))
             if r.tag in local:
                 state.append(pgettext("release list", "downloaded"))
-            it = QTreeWidgetItem([r.tag, _date_text(r.date), _("Release candidate") if r.prerelease else _("stable"),
-                                  ", ".join(state)])
+            it = QTreeWidgetItem([r.tag, _date_text(r.date), _("public beta") if s3 else
+                                  _("Release candidate") if r.prerelease else _("stable"), ", ".join(state)])
             it.setData(0, Qt.ItemDataRole.UserRole, r.tag)
             if r.tag == installed:
                 f = it.font(0)
@@ -1223,6 +1239,15 @@ class FirmwarePage(QWidget):
             self.notes.setMarkdown(r.notes or "_" + _("{tag}: no release notes available.").format(tag=r.tag) + "_")
         s = self.current_spec()
         has = r is not None
+        if s is not None and s.key == "sloop3":     # no package, no installation by the app: what it needs, the links
+            from . import sloop3_ui
+            self.notes.setHtml(sloop3_ui.notes_html(self.ctx))
+            self.b_install.setEnabled(True)
+            self.b_install.setToolTip(_("SLOOP 3 is not installed by the app: this shows the way onto the FM-1 "
+                                        "(m-bootloader, flash backup, the author's installer page)."))
+            self.b_dl.setEnabled(False)
+            self.b_dl.setToolTip(_("SLOOP 3 has no package to download: its installer page carries the firmware."))
+            return
         self.b_install.setEnabled(has and self.ctx.port is not None and not getattr(self.ctx, "is_virtual", False))
         self.b_dl.setEnabled(has)
         if not has:
@@ -1268,6 +1293,10 @@ class FirmwarePage(QWidget):
     # ------------------------------------------------------- Actions
     def _install(self):
         s, r = self.current_spec(), self.selected_release()
+        if s and s.key == "sloop3":                 # (never the package installer: SLOOP 3 has no .fwsc)
+            from . import sloop3_ui
+            sloop3_ui.open_dialog(self, self.ctx)
+            return
         if s and r:
             install_flow(self, self.ctx, s, r)
 

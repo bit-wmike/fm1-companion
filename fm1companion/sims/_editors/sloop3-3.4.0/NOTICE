@@ -1,0 +1,20 @@
+SLOOP 3 web editor (web/editor.html), from https://github.com/isod89/sloop3-fm1 tag v3.4.0-beta (commit 2228313f3abe0ad6c8f28ef0cd9b9d8167c01330).
+GPL-3.0 (LICENSE beside this file). SLOOP 3 is by isod89 (the SLOOP project); its README says: new code,
+written for this project; the values of its factory sounds, kits and presets are SLOOP 2.8.5's
+(https://github.com/isod89/sloop-fm1, GPL-3.0), whose earlier versions were based on Felucca by Leo Kuroshita
+(Hügelton Instruments).
+editor.html is the upstream file, byte for byte: FM-1 Companion's tools/bundle_sloop3_editor.py checks that
+the tag's own tools/mkeditor.py builds exactly this file from the tag's web/src. Nothing in it is changed.
+compat-chromium102.js is NOT part of SLOOP 3: it is FM-1 Companion's own small addition (GPL-3.0-only), run by the
+app after the editor has loaded, for the older Chromium of Qt 6.4 (see the file).
+The firmware itself, m-bootloader and the installer page are not bundled.
+
+Corresponding Source (GNU GPL 3.0, section 6)
+The complete corresponding source of this file is https://github.com/isod89/sloop3-fm1 at commit 2228313f3abe0ad6c8f28ef0cd9b9d8167c01330
+(web/src/ and tools/mkeditor.py). A tarball of exactly this commit, made with tools/make_source_tarballs.py,
+is attached to every FM-1 Companion release that ships this file:
+https://github.com/bit-wmike/fm1-companion/releases
+Written offer: for at least three years after the last release that ships this file, the maintainers of
+FM-1 Companion will give anyone a copy of that corresponding source on request
+(https://github.com/bit-wmike/fm1-companion/issues), free of charge apart from the cost of physically
+performing the distribution.

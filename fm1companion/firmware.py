@@ -101,6 +101,20 @@ BUILTIN = [
                  description=_("Live groovebox: 3 synths + drums, looping, punch-in effects, 4 song sections."),
                  samples=_("4 sample slots (USR1–4), also as a drum kit"),
                  family="sloop", author="isod89", license="GPL-3.0", category="Groovebox"),
+    # SLOOP 3 (isod89/sloop3-fm1): a rewrite from scratch, a PUBLIC BETA – not SLOOP 2.x: its own key, its own editor
+    # protocol (sloop3.py; protocol "sloop3": none of the Felucca pages apply), no .fwsc package. It installs only
+    # through m-bootloader's MIDI MODE, from its author's installer page; the app installs nothing here (asset "":
+    # ui/sloop3_ui.py explains the way and opens the page). Its web editor is bundled (sims/_editors/sloop3).
+    FirmwareSpec("sloop3", "SLOOP 3", "isod89/sloop3-fm1", "", sums="", installer="", editor="",
+                 description=_("Public beta – a groovebox rewritten from scratch: 4 synth tracks + drums, 13 engines, "
+                               "8 patterns per track, song, slices, its own web editor. Installs only through "
+                               "m-bootloader; going back means restoring a flash backup."),
+                 samples=_("4 sample slots (USR1–4), slices and your own kits"),
+                 protocol="sloop3", family="sloop3", author="isod89", license="GPL-3.0", category="Groovebox",
+                 notes=["beta"], homepage="https://github.com/isod89/sloop3-fm1",
+                 editor_url="https://isod89.github.io/sloop3-fm1/editor.html",
+                 manual_url="https://github.com/isod89/sloop3-fm1/blob/main/docs/GUIDE.md",
+                 installer_url="https://isod89.github.io/sloop3-fm1/"),
     # KARMA, a SLOOP fork: its packages live on its GitHub Pages site (docs/firmware/karma-{ver}.fwsc, only the
     # current one stays there) – each version pinned here by the commit that published it and its SHA-256 (the
     # same as its web installer's meta.sha256); the package identity FM-1_926 (tools/build.py PRODUCT, from 3.0)
@@ -239,6 +253,11 @@ def _download_url(s: FirmwareSpec, tag: str, name: str) -> str:
 
 def fetch_releases(s: FirmwareSpec, use_cache_secs: int = 600) -> list[Release]:
     """via the GitHub API; if that does not work (rate limit, proxy), via git tags."""
+    if s.key == "sloop3":                    # no package the app installs: the versions the app was checked with
+        from . import sloop3
+        return [Release(tag="v" + v, prerelease=True, date=sloop3.VERSION_DATES.get(v, ""), notes=_(
+            "SLOOP 3 is a public beta. The app does not install it: it goes onto the FM-1 from its author's "
+            "installer page, through m-bootloader.")) for v in reversed(sloop3.CHECKED_VERSIONS)]
     if s.download_url:                       # fixed address: exactly one version, no network needed
         name = s.asset.format(ver=s.release_tag.lstrip("vV")) if "{ver}" in s.asset else s.asset
         return [Release(tag=s.release_tag or "fest", prerelease="beta" in (s.notes or []),
@@ -777,6 +796,8 @@ def guess_firmware(identity: str, version_string: str = "", family: str = "") ->
     v = version_string.lower()
     m = re.search(r"(\d+\.\d+(?:\.\d+)?(?:-rc\.?\d+)?)", version_string)
     tag = ("v" + m.group(1)) if m else ""
+    if family == "sloop3" or re.match(r"sloop 3(\s|$)", v):    # SLOOP 3 ("SLOOP 3 3.3.7", from its own INFO): never
+        return "sloop3", tag                                  # SLOOP 2.x, whatever identity the device once had
     named = fwfamily.by_info(version_string)           # a firmware that names itself (the catalog audit's table)
     plain = family == "felucca" and "felucca" in v and not any(k in v for k in SELF_NAMING) and named is None
     try:

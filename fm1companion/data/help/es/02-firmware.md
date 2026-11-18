@@ -116,6 +116,8 @@ nadie ha dejado escrito si el paquete V16 funciona en ellas. La herramienta de r
   por sí solo; si aún falta (p. ej. en la primera actualización desde 1.5.1), la app lo escribe después.
 * Actualización a **Melodee 1.6.0**: tu copia de seguridad es tu camino de vuelta, los proyectos pueden sonar distinto – consulta
   [Melodee 1.6.0](help:14-melodee-1-6-0).
+* **SLOOP 3** (beta pública) es un caso aparte: necesita m-bootloader y la app no lo instala; consulta
+  [SLOOP 3](help:15-sloop3).
 * Si algo sale mal: [Modo de actualización y rescate](help:03-update-modus).
 
 ## Hubs USB

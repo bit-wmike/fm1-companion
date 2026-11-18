@@ -169,7 +169,8 @@ def _kind_from_name(stem: str) -> str:
 
 
 # every backup file format the app writes or takes: Felucca's, SLOOP's, FM1 Open's, X0X's and LOOM-8's image
-BACKUP_FORMATS = (backup.FORMAT, backup.SLOOP_FORMAT, backup.FM1OPEN_FORMAT, *backup.IMAGE_FORMATS)
+BACKUP_FORMATS = (backup.FORMAT, backup.SLOOP_FORMAT, backup.FM1OPEN_FORMAT, backup.SLOOP3_FORMAT,
+                  *backup.IMAGE_FORMATS)
 
 
 def _str(v) -> str:
@@ -215,6 +216,8 @@ def _entry_of(path: Path, st, f: dict) -> dict:
                                            if k in fw.lower()), "")
     if fmt == backup.FM1OPEN_FORMAT:               # (M-VAVE's FM1 Open: its slots 1..16)
         key = key or backup.FM1OPEN_KEY
+    if fmt == backup.SLOOP3_FORMAT:                # (SLOOP 3: its own objects, sloop3bk.py – no Felucca inventory)
+        key = backup.SLOOP3_KEY
     if fmt in backup.IMAGE_FORMATS:
         key = key or backup.IMAGE_FORMATS[fmt]
     ids = [o.get("id", -1) for o in objs if isinstance(o, dict)]
@@ -231,6 +234,8 @@ def _entry_of(path: Path, st, f: dict) -> dict:
             return False
         if fmt in backup.IMAGE_FORMATS:
             return False
+        if fmt == backup.SLOOP3_FORMAT:            # (one project: the state at that moment, always there)
+            return i == 2
         return 1 <= i <= 16 if fmt == backup.FM1OPEN_FORMAT else backup.is_project(i, jiant, coral, choral)
     labels = c.get("labels") or []
     created = f.get("created") or f.get("date", "")
@@ -578,11 +583,31 @@ def mirror_missing(folder: Path, root: Path, target: Path) -> int:
     return n
 
 
+def flash_image_of(sidecar: Path):
+    """for the description of a flash backup (flash/mboot.py: "fm1-flash-backup", beside its .bin): the image's path,
+    or False if the image is missing; None for every other .json"""
+    try:
+        if sidecar.stat().st_size > 16384:
+            return None
+        d = json.loads(sidecar.read_text("utf-8"))
+    except (OSError, ValueError, RecursionError, UnicodeDecodeError):
+        return None
+    if not isinstance(d, dict) or d.get("format") != "fm1-flash-backup":
+        return None
+    image = sidecar.with_suffix(".bin")
+    return image if image.is_file() else False
+
+
 def mirror_all(root: Path, target: Path) -> tuple[int, int, list[str]]:
     """mirror all backups under root -> (copied/verified, errors, messages)."""
     ok, bad, msgs = 0, 0, []
     for f in sorted(Path(root).rglob("*.json")):
         try:
+            image = flash_image_of(f)
+            if image is False:                      # (a flash backup's description without its image: neither)
+                continue
+            if image:                               # (a flash backup, flash/mboot.py: the image first, then its
+                mirror_file(image, root, target)    # description – never the description alone)
             mirror_file(f, root, target)
             ok += 1
         except OSError as e:

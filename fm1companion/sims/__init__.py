@@ -202,6 +202,31 @@ def builtin_editor_out_allowed(data) -> bool:
     return True
 
 
+SLOOP3_EDITOR = (0xF0, 0x7D, 0x53, 0x33)        # SLOOP 3's editor protocol (app/edproto.h: "S3")
+
+
+def sloop3_editor_out_allowed(data) -> bool:
+    """Editor view with SLOOP 3's bundled web editor: exactly what this editor sends (web/src/core.js) –
+
+    * one whole message of SLOOP 3's own editor protocol, ``F0 7D 53 33 … F7`` (``frame``), or
+    * one channel message of the right length: note on / off (``noteOut``: the "Hear" keyboard, the drum pads, the
+      piano roll) and control change (``allNotesOff``: CC 123 on every channel) – as every page may send notes.
+
+    Narrower than builtin_editor_out_allowed on purpose: no other SysEx at all (the FM-1 behind it has m-bootloader:
+    no update / boot / restart key, no Felucca command, no m-bootloader frame), nothing that starts in the middle of
+    a message, no second message behind the first, no status byte inside a SysEx."""
+    data = [int(x) & 0xFF for x in data]
+    if not data:
+        return False
+    if data[0] == 0xF0:
+        if len(data) < 6 or tuple(data[:4]) != SLOOP3_EDITOR or data[-1] != 0xF7:
+            return False
+        return all(b < 0x80 for b in data[4:-1])
+    if data[0] & 0xF0 in (0x80, 0x90, 0xB0):
+        return len(data) == 3 and data[1] < 0x80 and data[2] < 0x80
+    return False
+
+
 def out_filter_for(kind: str):
     """Safety filter per page type: editors may talk to the device, simulators only notes/clock."""
     return editor_out_allowed if kind == "editor" else sim_out_allowed

@@ -116,6 +116,8 @@ V16-Paket auf ihnen funktioniert, hat niemand aufgeschrieben. Das mitgelieferte 
   selbst mit; fehlt sie trotzdem (z. B. beim ersten Update von 1.5.1), schreibt die App sie nach.
 * Update auf **Melodee 1.6.0**: Backup ist dein Rückweg, Projekte können anders klingen – siehe
   [Melodee 1.6.0](help:14-melodee-1-6-0).
+* **SLOOP 3** (öffentliche Beta) ist ein anderer Fall: Es braucht m-bootloader und wird nicht von der App
+  installiert – siehe [SLOOP 3](help:15-sloop3).
 * Wenn etwas schiefgeht: [Update-Modus & Rettung](help:03-update-modus).
 
 ## USB-Hubs

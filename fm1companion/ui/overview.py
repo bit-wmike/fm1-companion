@@ -194,7 +194,9 @@ class OverviewPage(QWidget):
         self._notes_pid = p.id if p else ""
         self.lbl["Name"].setText(f"<b style='color:{p.color}'>●</b> {html.escape(p.name)}" if p else "–")
         from .device import firmware_name
-        if port and port.update_mode:
+        if port and port.update_mode and getattr(c, "mboot", None) is not None:
+            fw_text = _("m-bootloader – MIDI MODE (no firmware running)")
+        elif port and port.update_mode:
             fw_text = _("update mode")
         elif getattr(c, "firmware_ambiguous", False):
             fw_text = _("unknown – please choose")
@@ -207,8 +209,12 @@ class OverviewPage(QWidget):
         from .common import fw_label
         if c.info:
             ver = fw_label(c.info.version, c.firmware_key)
+        elif port and port.update_mode and getattr(c, "mboot", None) is not None:
+            ver = _("m-bootloader {version} · flash chip {chip}").format(version=c.mboot.version, chip=c.mboot.chip)
         elif port and port.update_mode:
             ver = c.identity or "–"
+        elif port and getattr(c, "sloop3", None) is not None:
+            ver = _("{version} (public beta)").format(version=c.sloop3.version)
         elif port and getattr(c, "identity", ""):
             ver = _("ID {id}").format(id=c.identity) + (f"  ({p.firmware_version})" if p and p.firmware_version else "")
         else:

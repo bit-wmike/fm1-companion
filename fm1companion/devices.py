@@ -52,6 +52,7 @@ class PortInfo:
     product: str = ""
     manufacturer: str = ""
     speed: str = ""          # Mbit/s according to sysfs
+    bcd_device: str = ""     # bcdDevice according to sysfs ("0200" = 2.00); "" = not told
     virtual: bool = False    # not a real device: the suite's studio twin (never flash, never rescue)
 
     @property
@@ -72,6 +73,8 @@ class Profile:
     version_string: str = ""    # what INFO reports
     identity: str = ""          # e.g. "FM-1_91060"
     usb_path: str = ""          # last used USB connection (helps matching without a serial number)
+    usb_product: str = ""       # the USB product name the unit showed there while its firmware ran ("FM-1 SLOOP 3")
+    unit_id: str = ""           # the flash chip's unique ID (hex), where something told it: m-bootloader's MIDI MODE
     firmware_history: list = field(default_factory=list)   # [{"time", "firmware", "version", "identity", "how"}]
     firmware_choice: dict = field(default_factory=dict)    # identity -> firmware key chosen by the user
     # hardware revision (fm1companion/hardware.py): "new" = logo on the front, flash UC25HQ80 0xB36014 · "old" =
@@ -380,6 +383,7 @@ def usb_details(client: int | None) -> dict:
             out["manufacturer"] = _read(d / "manufacturer")
             out["speed"] = _read(d / "speed")
             out["devnum"] = _read(d / "devnum")       # changes on every re-enumeration (careful mode)
+            out["bcd_device"] = _read(d / "bcdDevice")    # the device's own version number, e.g. "0200"
             break
     return out
 
@@ -423,6 +427,7 @@ def scan_ports() -> list[PortInfo]:
         info.product = d.get("product", "")
         info.manufacturer = d.get("manufacturer", "")
         info.speed = d.get("speed", "")
+        info.bcd_device = d.get("bcd_device", "")
         found[info.key] = info
     return list(found.values())
 
