@@ -197,6 +197,9 @@ class Release:
     notes: str = ""
     assets: dict[str, str] = field(default_factory=dict)    # Name -> URL
     sha256: str = ""                # the package's checksum when the app knows it per version (pinned / web installer)
+    # file name -> SHA-256 that GitHub's release API reports for the file ("digest": "sha256:…"; GitHub computes it
+    # at upload, files uploaded before mid-2025 have none)
+    digests: dict[str, str] = field(default_factory=dict)
 
     @property
     def version(self) -> str:
@@ -282,7 +285,8 @@ def fetch_releases(s: FirmwareSpec, use_cache_secs: int = 600) -> list[Release]:
                 continue                     # release without our package (e.g. only orbit-ble.fwsc instead of orbit.fwsc)
             out.append(Release(tag=r["tag_name"], prerelease=bool(r.get("prerelease")) or is_prerelease(r["tag_name"]),
                                date=(r.get("published_at") or "")[:10], notes=r.get("body") or "",
-                               assets={a["name"]: a["browser_download_url"] for a in r.get("assets", [])}))
+                               assets={a["name"]: a["browser_download_url"] for a in r.get("assets", [])},
+                               digests=asset_digests(r.get("assets", []))))
     except Exception as e:                  # API rate limit, proxy, offline …
         LAST_ERROR[s.key] = friendly_error(e)
         out = []
@@ -294,6 +298,20 @@ def fetch_releases(s: FirmwareSpec, use_cache_secs: int = 600) -> list[Release]:
     if out:
         cache.parent.mkdir(parents=True, exist_ok=True)
         cache.write_text(json.dumps([r.__dict__ for r in out]))
+    return out
+
+
+_DIGEST_RE = re.compile(r"sha256:([0-9a-f]{64})", re.I)
+
+
+def asset_digests(assets) -> dict[str, str]:
+    """{file name: sha256} from the assets of a GitHub release (field "digest": "sha256:<64 hex>"); a file without
+    a digest, with another algorithm or with a malformed value is left out"""
+    out = {}
+    for a in assets or []:
+        m = _DIGEST_RE.fullmatch(str((a or {}).get("digest") or "").strip()) if isinstance(a, dict) else None
+        if m and isinstance(a.get("name"), str):
+            out[a["name"]] = m.group(1).lower()
     return out
 
 
@@ -399,6 +417,8 @@ class Package:
     fwsc: Path
     res: Path | None
     verified: bool              # checksum verified
+    source: str = ""            # … against what: "sums" (SHA256SUMS of the release) | "digest" (GitHub's digest for
+    #                             the release file) | "pinned" (known to the app / catalog) | ""
 
 
 class DownloadError(RuntimeError):
@@ -496,6 +516,7 @@ def download(s: FirmwareSpec, rel: Release, log: Callable[[str], None] = print,
         log(_("downloading {name} …").format(name=n))
         _fetch(url, dest, progress)
     verified = False
+    source = ""
     if sums_ok:
         sums = {}
         for line in (folder / s.sums).read_text().splitlines():
@@ -512,9 +533,20 @@ def download(s: FirmwareSpec, rel: Release, log: Callable[[str], None] = print,
                 (folder / n).unlink(missing_ok=True)
                 raise RuntimeError(_("Checksum of {name} does not match – file deleted, please download again").format(name=n))
         verified = True
+        source = "sums"
         log(_("Checksums match"))
+    elif (rel.digests or {}).get(names[0]):
+        # no SHA256SUMS in the release, but GitHub reports a digest for the file: check every file that has one
+        for n in names:
+            want = rel.digests.get(n)
+            if want and _sha(folder / n) != want.lower():
+                (folder / n).unlink(missing_ok=True)
+                raise RuntimeError(_("Checksum of {name} does not match – file deleted, please download again").format(name=n))
+        verified = True
+        source = "digest"
+        log(_("Checksum matches GitHub's digest for the release file (the release has no SHA256SUMS file)"))
     res = folder / res_name if res_name and (folder / res_name).exists() else None
-    return Package(s, rel, folder / names[0], res, verified)
+    return Package(s, rel, folder / names[0], res, verified, source)
 
 
 class ChecksumError(RuntimeError):
@@ -531,7 +563,7 @@ def _download_fixed(s: FirmwareSpec, rel: Release, log, progress) -> Package:
     dest = folder / name
     if dest.exists() and want and _sha(dest) == want:
         log(_("{name} is already there (checksum matches)").format(name=name))
-        return Package(s, rel, dest, None, True)
+        return Package(s, rel, dest, None, True, "pinned")
     log(_("downloading {name} …").format(name=name))
     tmp = folder / (name + ".neu")  # i18n: ignore (file name)
     _fetch(url, tmp, progress)
@@ -544,7 +576,7 @@ def _download_fixed(s: FirmwareSpec, rel: Release, log, progress) -> Package:
                                   "installed.").format(url=url, actual=h[:12], expected=want[:12]))
     tmp.replace(dest)
     log(_("Checksum matches") if want else _("Note: no checksum known"))
-    return Package(s, rel, dest, None, bool(want))
+    return Package(s, rel, dest, None, bool(want), "pinned" if want else "")
 
 
 def _sha(p: Path) -> str:

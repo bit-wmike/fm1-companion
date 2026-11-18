@@ -2127,10 +2127,6 @@ msgstr "Wechsel von Felucca 0.9 auf 1.x: Bekannt ist, dass alte 0.9-Daten den St
 msgid "For Felucca 0.9 → 1.x a backup is mandatory – without a backup it is not possible here."
 msgstr "Für Felucca 0.9 → 1.x ist ein Backup Pflicht – ohne Backup geht es hier nicht."
 
-#: fm1companion/flash/planner.py:477
-msgid "Checksum not available: this release has no SHA256SUMS file, and the catalog does not know the checksum. The app cannot check whether the file is unmodified."
-msgstr "Prüfsumme nicht verfügbar: Dieses Release hat keine SHA256SUMS-Datei, und der Katalog kennt die Prüfsumme nicht. Die App kann nicht prüfen, ob die Datei unverändert ist."
-
 #: fm1companion/flash/planner.py:481
 #, python-brace-format
 msgid "Own file: identity {identity}, SHA-256 {sha256} – in no catalog."
@@ -3220,12 +3216,6 @@ msgstr "Hat dein FM-1 das M-VAVE-Logo auf der Vorderseite?"
 msgid "FM-1s sold from late 2026 – the ones with the M-VAVE logo printed on the front – have a different memory chip (UCUN UC25HQ80) than the earlier ones. Firmware versions that do not know this chip save nothing on such a unit and cannot be updated or replaced any more, except through the recovery in ROM boot mode. The app cannot read the chip over MIDI, so it asks you once per device. You can change the answer on the page “Devices”. To be sure: M-Flasher shows the chip under “Device info” (FLASH CHIP), m-bootloader in its menu, and the recovery (stage 2) reads it in ROM boot mode."
 msgstr "FM-1, die seit Ende 2026 verkauft werden – die mit dem aufgedruckten M-VAVE-Logo auf der Vorderseite –, haben einen anderen Speicherbaustein (UCUN UC25HQ80) als die früheren. Firmware-Versionen, die diesen Baustein nicht kennen, speichern auf so einem Gerät nichts und lassen sich nicht mehr aktualisieren oder ersetzen, außer über die Rettung im ROM-Bootmodus. Über MIDI kann die App den Baustein nicht auslesen, deshalb fragt sie dich einmal pro Gerät. Ändern kannst du die Antwort auf der Seite „Geräte“. Um sicherzugehen: M-Flasher zeigt den Baustein unter „Device info“ (FLASH CHIP), m-bootloader in seinem Menü, und die Rettung (Stufe 2) liest ihn im ROM-Bootmodus."
 
-msgid "Flash chip read: 0x{id:06X}. The app cannot tell which of your devices this is – please set it on the page “Devices”."
-msgstr "Flash-Baustein gelesen: 0x{id:06X}. Die App kann nicht sagen, welches deiner Geräte das ist – bitte gib es auf der Seite „Geräte“ an."
-
-msgid "Flash chip read: {state}. Recorded for the device “{device}”."
-msgstr "Flash-Baustein gelesen: {state}. Für das Gerät „{device}“ gemerkt."
-
 msgid "I don't know"
 msgstr "Weiß ich nicht"
 
@@ -3271,9 +3261,6 @@ msgstr "Die App weiß nicht, ob {name} diesen Baustein unterstützt: Es steht ni
 msgid "The first version that knows this chip is {version}."
 msgstr "Die erste Version, die diesen Baustein kennt, ist {version}."
 
-msgid "The flash chip of this FM-1 was read: {state}. That is more reliable than an answer, so it is not changed here."
-msgstr "Der Flash-Baustein dieses FM-1 wurde ausgelesen: {state}. Das ist verlässlicher als eine Antwort und wird deshalb hier nicht geändert."
-
 msgid "The recovery tool only works with the two flash chips known in the FM-1 (ID 0x856014 or 0xB36014) and stops on any other – nothing was written."
 msgstr "Das Rettungswerkzeug arbeitet nur mit den beiden Flash-Bausteinen, die im FM-1 bekannt sind (Kennung 0x856014 oder 0xB36014), und hält bei jedem anderen an – es wurde nichts geschrieben."
 
@@ -3297,9 +3284,6 @@ msgstr "Ja – neueres Gerät (UC25HQ80-Flash)"
 
 msgid "Yes, continue"
 msgstr "Ja, weiter"
-
-msgid "anything on a newer FM-1 (logo on the front, flash UC25HQ80)"
-msgstr "irgendetwas auf einem neueren FM-1 (Logo auf der Vorderseite, Flash UC25HQ80)"
 
 msgid "change"
 msgstr "ändern"
@@ -3339,3 +3323,84 @@ msgstr "{name}: Seine Autoren schreiben, dass es auf diesem Baustein nicht oder 
 
 msgid "{unit} {why} {strands} It is not installed on this FM-1. If the unit is an earlier one after all, change this on the page “Devices”."
 msgstr "{unit} {why} {strands} Auf diesem FM-1 wird es nicht installiert. Ist das Gerät doch ein früheres, ändere das auf der Seite „Geräte“."
+
+msgid "{name} (0x{id:06X})"
+msgstr "{name} (0x{id:06X})"
+
+msgid "Forget what is recorded"
+msgstr "Gemerktes vergessen"
+
+msgid "earlier unit"
+msgstr "früheres Gerät"
+
+msgid "Yes, change it"
+msgstr "Ja, ändern"
+
+msgid "nothing (the app will ask again)"
+msgstr "nichts (die App fragt dann wieder)"
+
+msgid "Flash chip read: {chip}. Device “{device}” is now: {state}."
+msgstr "Flash-Baustein gelesen: {chip}. Gerät „{device}“ ist jetzt: {state}."
+
+msgid "Flash chip read: {chip}. The app cannot tell for sure which of your devices this is, so it is not stored for any of them; until the app is closed it counts for the FM-1 at this USB port. Please set it on the page “Devices” (button “Unit …”)."
+msgstr "Flash-Baustein gelesen: {chip}. Die App kann nicht sicher sagen, welches deiner Geräte das ist, deshalb wird es für keines gespeichert; bis die App geschlossen wird, gilt es für das FM-1 an diesem USB-Anschluss. Bitte gib es auf der Seite „Geräte“ an (Knopf „Gerät …“)."
+
+msgid "The app's table of firmware versions for the newer FM-1 (flash chip UC25HQ80) cannot be read ({error}). Without it the app cannot tell whether this installation is safe on your FM-1 – nothing is installed. Please install the app again; if your FM-1 is an earlier unit (no logo on the front), you can say so on the page “Devices”."
+msgstr "Die Tabelle der App mit den Firmware-Versionen für das neuere FM-1 (Flash-Baustein UC25HQ80) lässt sich nicht lesen ({error}). Ohne sie kann die App nicht sagen, ob diese Installation auf deinem FM-1 sicher ist – es wird nichts installiert. Bitte installiere die App neu; ist dein FM-1 ein früheres Gerät (kein Logo auf der Vorderseite), kannst du das auf der Seite „Geräte“ angeben."
+
+msgid "Recorded for “{device}”: <b>{state}</b>.<br><br>You are about to change this to: <b>{to}</b>.<br><br>If this FM-1 is a newer unit after all (M-VAVE logo on the front), the app will then no longer stop firmware versions that do not know its flash chip – such a version saves nothing and cannot be updated or replaced any more, except through the recovery in ROM boot mode. Change it only if you are sure (M-Flasher shows the chip under “Device info”)."
+msgstr "Für „{device}“ gemerkt: <b>{state}</b>.<br><br>Du bist dabei, das zu ändern in: <b>{to}</b>.<br><br>Ist dieses FM-1 doch ein neueres Gerät (M-VAVE-Logo auf der Vorderseite), hält die App danach Firmware-Versionen nicht mehr auf, die seinen Flash-Baustein nicht kennen – so eine Version speichert nichts und lässt sich nicht mehr aktualisieren oder ersetzen, außer über die Rettung im ROM-Bootmodus. Ändere es nur, wenn du sicher bist (M-Flasher zeigt den Baustein unter „Device info“)."
+
+msgid "counted as a newer unit: an earlier chip was also seen under this profile ({what}) – two devices under one profile?"
+msgstr "zählt als neueres Gerät: unter diesem Profil wurde auch ein früherer Baustein gesehen ({what}) – zwei Geräte unter einem Profil?"
+
+msgid "(found when connecting – installed outside the app)"
+msgstr "(beim Verbinden vorgefunden – außerhalb der App installiert)"
+
+msgid "The checksum comes from the SHA256SUMS file of the release."
+msgstr "Die Prüfsumme stammt aus der SHA256SUMS-Datei des Releases."
+
+msgid "The checksum is GitHub's digest for the release file (GitHub computes it when the author uploads the file; the release has no SHA256SUMS file)."
+msgstr "Die Prüfsumme ist der Digest, den GitHub für die Release-Datei angibt (GitHub berechnet ihn, wenn der Autor die Datei hochlädt; das Release hat keine SHA256SUMS-Datei)."
+
+msgid "Checksum matches GitHub's digest for the release file (the release has no SHA256SUMS file)"
+msgstr "Prüfsumme stimmt mit dem Digest überein, den GitHub für die Release-Datei angibt (das Release hat keine SHA256SUMS-Datei)"
+
+msgid "Checksum not available: this release has no SHA256SUMS file, GitHub gives no digest for the release file, and the catalog does not know the checksum. The app cannot check whether the file is unmodified."
+msgstr "Prüfsumme nicht verfügbar: Dieses Release hat keine SHA256SUMS-Datei, GitHub gibt für die Release-Datei keinen Digest an, und der Katalog kennt die Prüfsumme nicht. Die App kann nicht prüfen, ob die Datei unverändert ist."
+
+msgid "Log of the dry run: {name}"
+msgstr "Protokoll des Probelaufs: {name}"
+
+msgid "The FM-1 is charged or on power, and the computer does not go to sleep during the installation. I know that the FM-1 is connected through a USB hub; a port directly on the computer is safer."
+msgstr "Das FM-1 ist geladen bzw. am Strom, und der Rechner geht während der Installation nicht schlafen. Ich weiß, dass das FM-1 über einen USB-Hub angeschlossen ist; ein Anschluss direkt am Rechner ist sicherer."
+
+msgid "it shows the USB ID {usb}, which the Felucca-family firmwares use – the original firmware shows 4c4a:c755"
+msgstr "es zeigt die USB-ID {usb}, die die Firmwares der Felucca-Familie benutzen – die Original-Firmware zeigt 4c4a:c755"
+
+msgid "the same identity is known for: {names}, and nobody has said which firmware runs on this FM-1"
+msgstr "dieselbe Kennung ist auch bekannt für: {names}, und niemand hat gesagt, welche Firmware auf diesem FM-1 läuft"
+
+msgid "This FM-1 answers “FM-1_015” like the original V15, but it may be another firmware: {why}. (TransitFM1 answers “FM-1_015” on purpose.) So the plan does not assume the original V15 and keeps the V15 step. If it is the original V15: connect it so that it shows the USB ID 4c4a:c755 (page “Overview”) and answer “Which firmware is running here?” with the original firmware – then the plan has no V15 step. TransitFM1 shows the USB ID 1209:0001 and its name as serial number (“TransitFM1-…”)."
+msgstr "Dieses FM-1 antwortet mit „FM-1_015“ wie die Original-V15, es könnte aber eine andere Firmware sein: {why}. (TransitFM1 antwortet absichtlich mit „FM-1_015“.) Der Plan geht deshalb nicht von der Original-V15 aus und behält den V15-Schritt. Wenn es die Original-V15 ist: Schließ es so an, dass es die USB-ID 4c4a:c755 zeigt (Seite „Übersicht“), und beantworte „Welche Firmware läuft hier?“ mit der Original-Firmware – dann hat der Plan keinen V15-Schritt. TransitFM1 zeigt die USB-ID 1209:0001 und seinen Namen als Seriennummer („TransitFM1-…“)."
+
+msgid "Careful mode has run once through real USB hubs, without a dropout. Its automatic resume after a dropout has only been run in the simulation so far."
+msgstr "Der vorsichtige Modus lief einmal über echte USB-Hubs, ohne Aussetzer. Das automatische Fortsetzen nach einem Aussetzer lief bisher nur in der Simulation."
+
+msgid "Run with this app once: Skiff 2.7 on one newer FM-1 (2026-11-18); saving worked there."
+msgstr "Mit dieser App einmal gelaufen: Skiff 2.7 auf einem neueren FM-1 (18.11.2026); das Speichern hat dort funktioniert."
+
+msgid "installing Skiff on a newer FM-1 (logo on the front, flash UC25HQ80)"
+msgstr "die Installation von Skiff auf einem neueren FM-1 (Logo auf der Vorderseite, Flash UC25HQ80)"
+
+msgid "{unit} {name} knows this chip from version {first} on – read in the firmware's own source (docs/firmware-support.md), not measured by this app."
+msgstr "{unit} {name} kennt diesen Chip ab Version {first} – gelesen im Quelltext der Firmware (docs/firmware-support.md), von dieser App nicht gemessen."
+
+msgid "{unit} {name} says in its own package information that it knows this chip – not measured by this app."
+msgstr "{unit} {name} sagt in seinen eigenen Paketangaben, dass es diesen Chip kennt – von dieser App nicht gemessen."
+
+msgid "anything else on a newer FM-1 (logo on the front, flash UC25HQ80)"
+msgstr "alles andere auf einem neueren FM-1 (Logo auf der Vorderseite, Flash UC25HQ80)"
+
+msgid "This app has not installed this firmware on a newer FM-1 yet."
+msgstr "Diese App hat diese Firmware noch nicht auf einem neueren FM-1 installiert."

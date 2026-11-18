@@ -84,10 +84,14 @@ Was die App dagegen tut:
   nicht). Über MIDI kann die App den Baustein nicht auslesen. Ändern kannst du die Antwort auf den Seiten *Geräte*
   (Knopf *Gerät …*) und *Übersicht*.
 * Auf einem **neueren Gerät** installiert sie keine Version, die den Baustein nicht kennt – der Plan sagt das und
-  nennt die erste Version, die funktioniert. Einen Experten-Schalter gibt es dafür nicht.
+  nennt die erste Version, die den Baustein kennt (von dieser App nicht getestet). Einen Experten-Schalter gibt es dafür nicht.
 * **Weiß die App nicht**, welches Gerät du hast, wird so eine Version nur installiert, wenn du im Plan bestätigst,
   dass dein FM-1 kein Logo auf der Vorderseite hat.
 * Auf einem **früheren Gerät** ändert sich nichts.
+* „Neueres Gerät“ bleibt haften: Ist es für ein Gerät einmal gemerkt – durch deine Antwort oder weil der Baustein
+  ausgelesen wurde –, bleibt es so, bis du es selbst änderst (*Gerät …*, mit Bestätigung). Wird später unter demselben
+  Gerät ein früherer Baustein gelesen, behandelt die App es weiter als neueres Gerät und sagt dir das; vielleicht
+  sind es zwei FM-1 unter einem Profil.
 
 Erste Versionen, die den neueren Baustein kennen (in den Quellen der Firmwares gelesen, Stand 17. November 2026):
 Melodee 1.6.0, Skiff 2.2, SLOOP 2.8.5, KARMA 3.0.4, JIANT FM V10.6z, Felucca 1.8.2, ChoralRoot 0.29.1,

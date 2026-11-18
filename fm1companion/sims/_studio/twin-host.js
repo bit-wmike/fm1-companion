@@ -97,23 +97,34 @@
       const fs = t.fs, chunk = p.chunk || fs;
       const maxFrames = Math.round((p.until_end ? (p.max_seconds || 600) : (p.seconds || 10)) * fs);
       const tail = Math.round((p.tail_seconds == null ? 2 : p.tail_seconds) * fs);
+      // until_end: the transport is looked at every 10 ms of device time, not once per chunk – the tail counts from
+      // where the song really stopped. (Once per 1 s chunk made the same song 6.0 or 7.0 s long, depending on whether
+      // it stopped just before or just after a chunk's end, and that depends on the moment of the snapshot.)
+      const step = Math.max(1, Math.round(fs / 100));
       let frames = 0, ended = false, endAt = -1, peak = 0, wasBusy = t.transport().busy;
       while (frames < maxFrames) {
         if (this.cancelled) throw new Error("render cancelled");
         let n = Math.min(chunk, maxFrames - frames);
         if (endAt >= 0) n = Math.min(n, endAt - frames);
         if (n <= 0) break;
-        const a = t.render(n);
-        for (let i = 0; i < n; i++) { const x = Math.max(Math.abs(a.l[i]), Math.abs(a.r[i])); if (x > peak) peak = x; }
-        frames += n;
-        await sink(encode(a.l, a.r, n, p.format || "f32"));
-        if (progress) progress(frames, maxFrames);
-        if (p.until_end && endAt < 0) {
-          const busy = t.transport().busy;
-          if (wasBusy && !busy) { endAt = frames + tail; ended = true; }
-          wasBusy = wasBusy || busy;
-          if (!wasBusy && frames >= IDLE_SECONDS * fs) break;       // nothing ever started: no song to wait for
+        const l = new Float32Array(n), r = new Float32Array(n);
+        let got = 0;
+        while (got < n) {
+          const watch = p.until_end && endAt < 0;
+          const m = watch ? Math.min(step, n - got) : n - got;
+          const a = t.render(m);
+          l.set(a.l, got); r.set(a.r, got); got += m;
+          if (watch) {
+            const busy = t.transport().busy;
+            if (wasBusy && !busy) { endAt = frames + got + tail; ended = true; n = Math.min(n, endAt - frames); }
+            wasBusy = wasBusy || busy;
+          }
         }
+        for (let i = 0; i < n; i++) { const x = Math.max(Math.abs(l[i]), Math.abs(r[i])); if (x > peak) peak = x; }
+        frames += n;
+        await sink(encode(l, r, n, p.format || "f32"));
+        if (progress) progress(frames, maxFrames);
+        if (p.until_end && !wasBusy && frames >= IDLE_SECONDS * fs) break;   // nothing ever started: no song to wait for
       }
       return { frames, ended, started: !p.until_end || wasBusy, seconds: frames / fs, peak, fs };
     }

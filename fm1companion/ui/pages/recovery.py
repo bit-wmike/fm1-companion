@@ -135,6 +135,9 @@ class RecoveryPage(QWidget):
         super().__init__(window)
         self.ctx, self.window = ctx, window
         self.last_flash_id, self.flash_note = 0, ""
+        import time
+        self._session_start = time.time()      # profiles seen at a USB port since then: "in this session"
+        self._rom_sent = None                  # (profile id, USB port) of the FM-1 this page sent into ROM boot mode
         self.flash_seen.connect(self._flash_seen)
         self.journal = fj.Journal()
         outer = QVBoxLayout(self)
@@ -460,7 +463,7 @@ class RecoveryPage(QWidget):
                     what += "<br>" + _("<b>Caution:</b> “{target}” was interrupted – that is a different package. The "
                                        "safest thing is to write exactly the interrupted package again.").format(
                                            target=act.get('target', '?'))
-        if not self._chip_gate(src, stock, act):
+        if not self._chip_gate(src, stock, act, port):
             return False
         from ..risk_dialog import ensure_risk_ack
         if not ensure_risk_ack(self):
@@ -473,7 +476,8 @@ class RecoveryPage(QWidget):
                        pgettext("button", "Finish")):
             return False
         cancel = threading.Event()
-        device_id = self.ctx.profile.id if self.ctx.profile else ""
+        wprof, wcertain, _rev = self.waiting_unit(port, act)       # the device that waits, not the active one
+        device_id = wprof.id if wprof is not None and (wcertain or self.ctx.port is port) else ""
         self.ctx.hold = True
         if self.ctx.port is port:
             self.ctx.disconnect(None)
@@ -522,32 +526,66 @@ class RecoveryPage(QWidget):
         return d.ok
 
     # ------------------------------------------------------------ Level 2
-    def _chip_gate(self, src, stock: bool, act: dict) -> bool:
+    def waiting_unit(self, port, act: dict | None = None):
+        """the FM-1 that waits in update mode at `port`: (profile or None, is that certain?, revision "new"|"old"|"").
+        Certain only by a usable serial number. Otherwise every profile that may be this device is looked at (the one
+        the app guesses for the port, the ones last seen at this USB port, the device of the interrupted
+        installation): "new" if any of them is, never "old". A chip ID read in ROM boot mode at this USB port in this
+        session counts too."""
+        import os
+        from ... import hardware
+        from ...devices import usable_serial
+        ctx = self.ctx
+        usb = getattr(port, "usb_path", "") or ""
+        session = hardware.session_revision(usb)
+        serial = usable_serial(port, ctx.ports or [port]) if port is not None else ""
+        prof = ctx.store.by_serial(serial) if serial else None
+        if prof is not None:
+            rev = hardware.revision(prof) if session != hardware.NEW else hardware.NEW
+            if rev == hardware.UNKNOWN and os.environ.get("FM1C_DEMO") == "1" and not hardware.asked(prof):
+                rev = hardware.OLD                 # the demo's simulated FM-1s are earlier units (nothing to ask)
+            return prof, True, "" if rev == hardware.UNKNOWN else rev
+        cands = []
+        for p in ([ctx.profile_for_port(port)] if port is not None else []) + \
+                [x for x in ctx.store.profiles.values() if usb and x.usb_path == usb] + \
+                [ctx.store.profiles.get((act or {}).get("device_id") or "")]:
+            if p is not None and p not in cands:
+                cands.append(p)
+        if session == hardware.NEW or any(hardware.revision(p) == hardware.NEW for p in cands):
+            return (cands[0] if len(cands) == 1 else None), False, hardware.NEW
+        if os.environ.get("FM1C_DEMO") == "1":
+            return (cands[0] if len(cands) == 1 else None), False, hardware.OLD     # simulated FM-1s: earlier units
+        return (cands[0] if len(cands) == 1 else None), False, ""
+
+    def _chip_gate(self, src, stock: bool, act: dict, port=None) -> bool:
         """the newer FM-1 (logo on the front): the same rule as in the installation plan, for the package that is
-        about to be sent to the waiting loader. False: nothing is sent (the reason was shown)."""
+        about to be sent to the loader waiting at `port` – judged by that device, not by the active one.
+        False: nothing is sent (the reason was shown)."""
         from ... import hardware
         from ...flash import planner
-        from ..firmware_page import device_revision, match_by_sha
+        from ..firmware_page import match_by_sha
         if stock:
             tgt = planner.Target.from_spec(firmware.spec("stock-v15"), tag="V15")
         else:
             info = fpk.analyze(Path(src))
             sp = match_by_sha(info.sha256)
             if sp is not None:
-                same = act.get("package") and Path(act["package"]) == Path(src)
-                tgt = planner.Target.from_spec(sp, tag=sp.release_tag or (act.get("target") if same else "")
-                                               or Path(src).name, file=Path(src), package=info)
+                # the version the checksum vouches for; the label of the interrupted installation only for exactly
+                # that package – never the file name
+                same = act.get("sha256") and act["sha256"] == info.sha256
+                tgt = planner.Target.from_spec(sp, tag=sp.release_tag or (act.get("target") if same else "") or "",
+                                               file=Path(src), package=info)
             else:
                 tgt = planner.Target.from_file(info)
                 tgt.known = False
-        rev = device_revision(self.ctx)
-        prof = self.ctx.profile
-        if planner.chip_check(rev, tgt).blockers + planner.chip_check(rev, tgt).confirmations and prof is not None \
-                and not hardware.asked(prof):
+        port = port if port is not None else self.update_port()
+        prof, certain, rev = self.waiting_unit(port, act)
+        first = planner.chip_check(rev, tgt)
+        if (first.blockers or first.confirmations) and certain and not hardware.asked(prof):
             from .. import hw_revision
             if hw_revision.ask(self, self.ctx, prof) is None:
                 return False
-            rev = device_revision(self.ctx)
+            rev = self.waiting_unit(port, act)[2]
         chk = planner.chip_check(rev, tgt)
         strip = lambda t: __import__("re").sub("<[^>]+>", "", t)       # noqa: E731
         if chk.blockers:
@@ -565,28 +603,46 @@ class RecoveryPage(QWidget):
     def _runner(self, log):
         return uboot.Runner(dry_run=self.chk_sim.isChecked(), log=log, on_flash=self.flash_seen.emit)
 
-    def _flash_seen(self, flash_id: int):
-        """the rescue tool read the flash chip in ROM boot mode: keep it in the device profile – the one place where
-        the app sees for sure whether this is a newer FM-1 (fm1companion/hardware.py)"""
+    def _flash_seen(self, flash_id: int, usb_path: str | None = None):
+        """the rescue tool read the flash chip in ROM boot mode – the one place where the app sees for sure which
+        chip a unit has (fm1companion/hardware.py). A unit in ROM boot mode is a USB disk, not a MIDI device, so the
+        active device is by construction another FM-1: the ID is stored on a profile only when that profile is
+        unambiguously this unit – the device this page sent into ROM boot mode, or the only profile seen at this USB
+        port in this session. Otherwise it is used for this session's checks at that USB port and nothing is stored."""
         from ... import hardware
         ctx = self.ctx
         if hardware.revision_of_id(flash_id) == hardware.UNKNOWN:
             return
-        prof = ctx.profile if not getattr(ctx, "is_virtual", False) else None
-        if prof is None:
-            profs = list(ctx.store.profiles.values())
-            last = ctx.store.profiles.get(getattr(ctx.settings, "last_device", "") or "")
-            prof = last or (profs[0] if len(profs) == 1 else None)
+        if usb_path is None:
+            try:
+                devs = uboot.scan()
+            except OSError:
+                devs = []
+            usb_path = devs[0].usb_path if len(devs) == 1 else ""
+        prof = None
+        sent = self._rom_sent
+        if usb_path and sent and sent[1] == usb_path:
+            prof = ctx.store.profiles.get(sent[0])
+        elif usb_path:
+            here = [p for p in ctx.store.profiles.values()
+                    if p.usb_path == usb_path and p.last_seen >= self._session_start]
+            prof = here[0] if len(here) == 1 else None
         self.last_flash_id = flash_id
+        chip = _("{name} (0x{id:06X})").format(
+            name=hardware.NEW_CHIP if flash_id == hardware.NEW_ID else hardware.OLD_CHIP, id=flash_id)
         if prof is None:
-            self.flash_note = _("Flash chip read: 0x{id:06X}. The app cannot tell which of your devices this is – "
-                                "please set it on the page “Devices”.").format(id=flash_id)
+            if usb_path:
+                hardware.SESSION_READS[usb_path] = flash_id
+            self.flash_note = _("Flash chip read: {chip}. The app cannot tell for sure which of your devices this is, "
+                                "so it is not stored for any of them; until the app is closed it counts for the FM-1 "
+                                "at this USB port. Please set it on the page “Devices” (button “Unit …”).").format(
+                                    chip=chip)
         else:
             if hardware.note_flash_id(prof, flash_id, "rom"):
                 ctx.store.save()
                 ctx.changed.emit()
-            self.flash_note = _("Flash chip read: {state}. Recorded for the device “{device}”.").format(
-                state=hardware.label(prof), device=prof.name)
+            self.flash_note = _("Flash chip read: {chip}. Device “{device}” is now: {state}.").format(
+                chip=chip, device=prof.name, state=hardware.label(prof))
         ctx.message.emit(self.flash_note)
 
     def uboot_setup(self):
@@ -735,6 +791,10 @@ class RecoveryPage(QWidget):
         if softkey and port is None:
             show_error(self, _("No device"), _("Please connect the FM-1 with the original firmware."))
             return False
+        # the FM-1 this run sends into ROM boot mode: a chip ID read at its USB port in this run is this device's
+        prof_sent = self.ctx.profile if softkey and port is self.ctx.port and not getattr(self.ctx, "is_virtual", False) \
+            else None
+        self._rom_sent = (prof_sent.id, port.usb_path) if prof_sent is not None and port.usb_path else None
 
         def work(w):
             r = self._runner(w.log.emit)
@@ -765,6 +825,7 @@ class RecoveryPage(QWidget):
                    done=_("Full backup read (twice, compared) and saved in {folder}. Nothing was written on the "
                           "FM-1 – now switch it off and on again.").format(folder=folder),
                    actions=[(_("Open folder"), lambda _r: QDesktopServices.openUrl(QUrl.fromLocalFile(folder)))])
+        self._rom_sent = None
         return d.ok
 
 

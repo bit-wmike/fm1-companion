@@ -356,6 +356,7 @@ class MainWindow(QMainWindow):
         self._menus()
         self.overview.navigate.connect(self.go)
         self.overview.backup_now.connect(self._backup_now)
+        self.backups.auto.updated.connect(self.overview._backup_text)   # automatic backup while it is in view
         self.overview.check_updates.connect(lambda: self.firmware.check_for_device())
         self.firmware.updates_checked.connect(self._updates)
         disc = self.pages.get("discover")         # Firmware+: list changed in the “Install & versions” tab
@@ -792,7 +793,7 @@ class MainWindow(QMainWindow):
         for p in self.ctx.ports:
             prof = self.ctx.profile_for_port(p)
             name = prof.name if prof else _("new FM-1")
-            self.dev_combo.addItem(icon("audio-midi", "media-flash"), f"{name}  ·  {p.label}"
+            self.dev_combo.addItem(icon("audio-midi", "media-flash"), f"{name}  ·  {self._port_firmware(p, prof)}"
                                    + (_("  (update mode)") if p.update_mode else ""), p.key)
         vports = list(getattr(self.ctx, "vports", []) or [])
         if vports:
@@ -807,6 +808,22 @@ class MainWindow(QMainWindow):
         if self.ctx.port:
             self.dev_combo.setCurrentIndex(max(0, self.dev_combo.findData(self.ctx.port.key)))
         self.dev_combo.blockSignals(False)
+
+    def _port_firmware(self, p, prof) -> str:
+        """What the device selection says after the profile's name: the firmware the app recognised (of the active
+        device: as it is now; of the others: as their profile knows it). Before, the USB port's name stood here –
+        still "FM-1 KARMA" for a while after another firmware was installed, and "Felucca" for Skiff. The USB name
+        remains only where no firmware is known (and in update mode, where it says what is waiting)."""
+        from .device import firmware_name
+        c = self.ctx
+        key = ""
+        if not p.update_mode:
+            active = c.port is not None and c.port.key == p.key
+            key = (getattr(c, "firmware_key", "") if active else "") or (prof.firmware if prof else "")
+        name = firmware_name(key) if key else ""
+        if name and "(Demo)" in p.label:
+            name += " (Demo)"
+        return name or p.label
 
     def _choose_device(self, i):
         key = self.dev_combo.itemData(i)
@@ -870,11 +887,13 @@ class MainWindow(QMainWindow):
             state = _("connected") if c.connected else (_("not responding") if c.port else _("not connected"))
         import html
         # without a device only “No FM-1 connected” (previously duplicated: “No FM-1 connected – not connected”)
-        text = html.escape(c.title()) + (f" – {html.escape(state)}" if c.port else "")
+        from .common import device_title
+        title = device_title(c)                  # (the firmware under its own name: "Skiff 2.7", not "FELUCCA v2.7")
+        text = html.escape(title) + (f" – {html.escape(state)}" if c.port else "")
         self._dev_texts = (f"  <b style='color:{col}'>●</b> {text}  ",
                            # narrow window: only the state – name and firmware are already in the selection
                            f"  <b style='color:{col}'>●</b> {html.escape(state) if c.port else text}  ")
-        self.dev_state.setToolTip(c.title() + (f" – {state}" if c.port else ""))
+        self.dev_state.setToolTip(title + (f" – {state}" if c.port else ""))
         self._apply_dev_text()
         conn = (c.profile.id if c.profile else "", c.connected)
         switching = getattr(self, "_switching", False)
@@ -883,15 +902,15 @@ class MainWindow(QMainWindow):
             if switching:
                 self._switching = False
                 self.notifications.post(_("Active: {name} – {firmware}").format(
-                    name=c.profile.name, firmware=fw_label(c.info.version) if c.info else ""),
+                    name=c.profile.name, firmware=fw_label(c.info.version, c.firmware_key) if c.info else ""),
                                         "info", quiet=True)
             else:
                 self.notify(_("{name} connected – {firmware}").format(
-                    name=c.profile.name, firmware=fw_label(c.info.version) if c.info else ""), "success")
+                    name=c.profile.name, firmware=fw_label(c.info.version, c.firmware_key) if c.info else ""), "success")
         elif c.port and switching and getattr(c, "protocol", "") == "generic" and c.profile and conn != self._last_conn:
             self._switching = False
             self.notifications.post(_("Active: {name} – {firmware}").format(
-                name=c.profile.name, firmware=c.title().split(" – ", 1)[-1]), "info", quiet=True)
+                name=c.profile.name, firmware=title.split(" – ", 1)[-1]), "info", quiet=True)
         elif self._last_conn and self._last_conn[1] and not c.port and not switching:
             self.notify(_("FM-1 disconnected"), "warning")
         self._last_conn = conn

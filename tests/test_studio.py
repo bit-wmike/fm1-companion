@@ -84,6 +84,27 @@ def test_versions_and_pick():
     assert not vc.ok and "dein FM-1 hat v1.6.0-rc.8" in vc.message and "CZ-1" in vc.message
     vc = studio.check_versions("v1.6.0-rc.8", backup="MELODEE v1.6.0")
     assert not vc.ok and "CZ-1" in vc.message
+    # every difference is said once (Pi hardware test: Skiff 2.7 on the FM-1, twin 2.2 – the banner said it three times)
+    vc = studio.check_versions("v2.2.0", device="FELUCCA v2.7", backup="FELUCCA v2.7", firmware="Skiff")
+    assert not vc.ok and vc.message.count("v2.7.0") == 1 and vc.message.count("abweichen") == 1, vc.message
+    assert "dein FM-1 und das Backup haben v2.7.0" in vc.message
+    b, exact, warn = studio.pick_build("skiff", "FELUCCA v2.7")
+    assert not exact and "v2.7.0" in warn
+    vc = studio.check_versions(b.version, device="FELUCCA v2.7", backup="FELUCCA v2.7", firmware="Skiff", missing="v2.7")
+    assert not vc.ok and vc.message == "", vc.message          # the "no twin for 2.7" sentence is the only one
+    vc = studio.check_versions(b.version, device="FELUCCA v2.6", backup="FELUCCA v2.7", firmware="Skiff", missing="v2.7")
+    assert "dein FM-1 hat v2.6.0" in vc.message and "v2.7.0" not in vc.message     # another device: still said
+    vc = studio.check_versions("v2.2.0", device="FELUCCA v2.6", backup="FELUCCA v2.7", firmware="Skiff")
+    assert "dein FM-1 hat v2.6.0" in vc.message and "Das Backup stammt von Skiff v2.7.0" in vc.message
+
+
+def test_studio_remembers_the_version_without_a_twin(node_studio):
+    st = node_studio("FELUCCA v2.7", firmware="skiff")
+    assert st.warning and st.wanted == "v2.7.0" and st.build.version != "v2.7.0"
+    assert node_studio(st.build.version, firmware="skiff").wanted == ""
+    src = (Path(studio.__file__).parent / "ui/pages/studio.py").read_text("utf-8")
+    banner = src.split("def _banner", 1)[1].split("\n    def ", 1)[0]
+    assert "missing=" in banner and banner.count("svc.st.warning") == 1      # the banner passes it on, says it once
 
 
 def test_wav_header():
@@ -233,7 +254,21 @@ def test_render_stems_and_state(node_studio, tmp_path):
     st = node_studio()
     _song(st)
     r = st.render_wav(tmp_path / "song.wav", until_end=True, start="song", fmt="s24", max_seconds=60)
-    assert r.ended and 6.5 < r.seconds < 7.5 and r.peak > 0.05      # 2 bars at 120 BPM + 2 s release
+    # 2 bars at 120 BPM (4 s, plus the few 10 ms the song takes to start) + 2 s release, counted from where the song
+    # really stops. Before, the stop was only noticed at the end of a 1 s chunk: 7.0 s as a rule, 6.0 s when the song
+    # happened to stop just before a chunk's end (Pi under load) – and this check wanted 6.5..7.5.
+    assert r.ended and 6.0 <= r.seconds < 6.3 and r.peak > 0.05
+    lengths = []
+    for chunk in (44100, 4410, 1000):                     # the length does not depend on the size of the chunks
+        st.backend.render_open({"source": "live", "settle_ms": 0})
+        try:
+            one = st._render_one(tmp_path / f"chunk{chunk}.wav", {"seconds": 0, "until_end": True, "max_seconds": 60,
+                                                                 "tail_seconds": 2.0, "start": "song", "format": "s24",
+                                                                 "chunk": chunk}, [])
+        finally:
+            st.backend.render_close()
+        lengths.append(one["seconds"])
+    assert max(lengths) - min(lengths) < 0.15 and 6.0 <= min(lengths) and max(lengths) < 6.3, lengths
     with wave.open(str(r.path)) as w:
         assert (w.getframerate(), w.getnchannels(), w.getsampwidth(), w.getnframes()) == (44100, 2, 3, r.frames)
     a = st.render_wav(tmp_path / "a.wav", seconds=2, start="play", source="saved", project=0)
@@ -2477,3 +2512,69 @@ def test_twins_stay_small_in_memory(node_studio):
             st.backend.call("run", ms=500)
             assert st.backend.call("info")["memory"] <= 32 << 20, (fw, b.version)
             st.close()
+
+
+# ---- Pi hardware test, 19b: the twin of one FM-1 is not played by the keys of another with a different firmware ----
+def test_fm1_keys_play_along_only_for_a_fitting_device(monkeypatch):
+    pytest.importorskip("PyQt6.QtWidgets")
+    from fm1companion import config
+    from fm1companion.ui.studio_service import StudioService
+    monkeypatch.setattr(config, "save", lambda *a, **k: None)
+
+    class Link:
+        def __init__(self):
+            self.listeners = []
+
+        def add_listener(self, f):
+            self.listeners.append(f)
+
+        def remove_listener(self, f):
+            self.listeners.remove(f)
+
+    class Ctx:
+        midi_connected, is_virtual, firmware_key = True, False, "skiff"
+
+        def __init__(self):
+            self.link, self.port = Link(), type("P", (), {"key": "black"})()
+
+    class Svc:                                   # the service's own code on a stand-in (no twin process needed)
+        for _n in ("fm1_keys_fit", "_fm1_key", "fm1_keys_on", "set_fm1_keys", "_dev_changed", "_unhook_fm1",
+                   "_fm1_listener"):
+            locals()[_n] = getattr(StudioService, _n)
+        firmware_for = staticmethod(lambda key: key if key in ("skiff", "melodee") else "")
+        firmware = "skiff"
+        st = object()
+        _fm1_link = None
+
+        def __init__(self):
+            self.ctx, self.cfg = Ctx(), {"fm1_keys": True}
+    svc = Svc()
+    black = svc.ctx.link
+    svc._dev_changed()
+    assert svc.fm1_keys_fit() and svc.fm1_keys_on() and len(black.listeners) == 1     # its own FM-1: as before
+    # the orange FM-1 on the original firmware (unknown: no twin) becomes active – the Skiff twin stays loaded
+    orange = Link()
+    svc.ctx.link, svc.ctx.port, svc.ctx.firmware_key = orange, type("P", (), {"key": "orange"})(), ""
+    svc._dev_changed()
+    assert not svc.fm1_keys_fit() and not svc.fm1_keys_on()
+    assert black.listeners == [] and orange.listeners == [], "the other FM-1's keys must not play the twin"
+    assert svc.cfg["fm1_keys"] is True, "the user's setting is not thrown away"
+    svc.set_fm1_keys(True)                       # the user wants it for this device all the same
+    assert svc.fm1_keys_on() and len(orange.listeners) == 1 and svc.cfg["fm1_keys"] is True
+    svc.set_fm1_keys(False)
+    assert not svc.fm1_keys_on() and orange.listeners == [] and svc.cfg["fm1_keys"] is True
+    svc.set_fm1_keys(True)
+    # a third device with another firmware: not switched on by the tick for the orange one
+    third = Link()
+    svc.ctx.link, svc.ctx.port, svc.ctx.firmware_key = third, type("P", (), {"key": "third"})(), "melodee"
+    svc._dev_changed()
+    assert not svc.fm1_keys_on() and third.listeners == [] and orange.listeners == []
+    # back on the Skiff unit: on again by the setting
+    svc.ctx.link, svc.ctx.port, svc.ctx.firmware_key = black, type("P", (), {"key": "black"})(), "skiff"
+    svc._dev_changed()
+    assert svc.fm1_keys_on() and len(black.listeners) == 1
+    svc.set_fm1_keys(False)                      # … where the box changes the setting, as before
+    assert svc.cfg["fm1_keys"] is False and black.listeners == []
+    src = (Path(studio.__file__).parent / "ui/pages/studio.py").read_text("utf-8")
+    assert "does not belong to the active FM-1" in src.split("def _banner", 1)[1].split("\n    def ", 1)[0]
+    assert "svc.fm1_keys_on()" in src.split("def _keys_box", 1)[1].split("\n    def ", 1)[0]

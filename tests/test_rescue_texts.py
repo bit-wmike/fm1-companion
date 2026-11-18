@@ -255,8 +255,34 @@ def _english_ok(src: str, out: str) -> bool:
     return not i18n_check.looks_german(out)
 
 
+@contextlib.contextmanager
+def os_messages_in_english():
+    """The system's own error texts (strerror) in English for the block. The rescue files put them into their
+    messages as they come ("… lässt sich nicht lesen (No such file or directory)"), and they follow the
+    system's language, not the app's: once an earlier test has created a QApplication (Qt calls
+    setlocale(LC_ALL, "")) on a German system, the "English" output held "Datei oder Verzeichnis nicht
+    gefunden" – only in a full run, only where de_DE is installed (seen on the Pi, never in CI)."""
+    import locale
+    old = locale.setlocale(locale.LC_MESSAGES)
+    locale.setlocale(locale.LC_MESSAGES, "C")
+    try:
+        yield
+    finally:
+        locale.setlocale(locale.LC_MESSAGES, old)
+
+
+def test_os_messages_pinned_and_restored():
+    import locale
+    import os
+    before = locale.setlocale(locale.LC_MESSAGES)
+    with os_messages_in_english():
+        assert locale.setlocale(locale.LC_MESSAGES) == "C"
+        assert os.strerror(2) == "No such file or directory"
+    assert locale.setlocale(locale.LC_MESSAGES) == before
+
+
 def test_c_english_output_is_english_with_numbers_intact(tmp_path):
-    with lang("de"):
+    with lang("de"), os_messages_in_english():
         msgs = produce(tmp_path)
     with lang("en"):
         left = []

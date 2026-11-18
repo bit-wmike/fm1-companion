@@ -20,6 +20,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
+import logging
 import os
 import re
 import shutil
@@ -71,6 +72,12 @@ def capture_to_file(link, folder: Path, profile, fw_key: str, version: str, note
     suffix = {"sicherheit": "auto"}.get(kind, kind if kind != "manuell" else "")
     path = Path(folder) / backup_filename(profile.name if profile else "FM-1", fw_key, suffix)
     backup.write_file(path, f)
+    # every backup that is made leaves a line in the app's log, whichever page asked for it (the one from Studio ›
+    # "Fetch from FM-1" did not: only "Back up now" was logged, through its notice)
+    objs = f.get("objects") if isinstance(f, dict) else None
+    logging.getLogger("fm1companion.backup").info(
+        "Backup saved: %s (%s, firmware %s %s, %s)", path.name, kind or "manuell", fw_key or "?", version or "?",   # i18n: ignore
+        f"{len(objs)} parts" if isinstance(objs, list) else f.get("format", "?") if isinstance(f, dict) else "?")
     return path
 
 

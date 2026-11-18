@@ -14,7 +14,7 @@
     },
     "skiff": {
       "status": "min", "min": "v2.2", "repo": "illuminus5/skiff", "commit": "76b5f9c",
-      "source": "release commit of 2.2: \"Newer FM-1s with the UC25HQ80 flash save and update (#96)\"",
+      "source": "release commit of 2.2: \"Newer FM-1s with the UC25HQ80 flash save and update (#96)\". Run once by this project (2026-11-18): Skiff 2.7 installed on one newer unit from its factory firmware, saving survived a power cycle – one unit, one version.",
       "before": "No saving and no update."
     },
     "sloop": {
@@ -36,6 +36,7 @@
     },
     "felucca": {
       "status": "min", "min": "v1.8.2", "repo": "hugelton/Felucca", "commit": "f4cbb6a",
+      "also": ["v1.8.2-beta"],
       "source": "\"fix(flash): recognize UC25HQ80 in newer FM-1 units (fixes #320)\"; README.md \"Newer FM-1 flash\"",
       "before": "1.8.1 and earlier cannot start an update on such a unit (README); the way back is the official V15 through the chip's ROM boot."
     },
@@ -106,7 +107,7 @@
     },
     "stock-v15": {
       "status": "documented", "min": "", "repo": "m-vave/fm1_open", "commit": "b178ac4",
-      "source": "No source read says which original version the newer units ship with. Named as the way back on exactly these units by: Felucca README (1.8.2), ChoralRoot docs/releases/0.29.1.md and docs/INSTALL-COMPAT.md, TransitFM1 docs/SAFETY.md, MvaveFM1Unbricker (README and site, \"New memory chip & Firmware Lock\"). ChoralRoot HISTORY 3y222: such a unit took a firmware through M-VAVE's own updater from the original firmware it shipped with.",
+      "source": "No source read says which original version the newer units ship with. Named as the way back on exactly these units by: Felucca README (1.8.2), ChoralRoot docs/releases/0.29.1.md and docs/INSTALL-COMPAT.md, TransitFM1 docs/SAFETY.md, MvaveFM1Unbricker (README and site, \"New memory chip & Firmware Lock\"). ChoralRoot HISTORY 3y222: such a unit took a firmware through M-VAVE's own updater from the original firmware it shipped with. Seen once by this project (2026-11-18, read-only): one newer unit as delivered answers the update handshake as FM-1_015 (USB 4c4a:c755, product \"FM-1\") – a factory build that calls itself version 15 runs there; that is not a test of the public V15 package on such a unit; that package was never written to one.",
       "before": ""
     },
     "stock-v16": {
@@ -116,7 +117,7 @@
     }
   },
   "aliases": {
-    "jiant": "jiant-fm", "choralroot": "choralroot-fm-1", "transit": "transitfm1", "amb": "amb-1", "loom": "loom-8",
+    "jiant": "jiant-fm", "choralroot": "choralroot-fm-1",
     "mbootloader": "m-bootloader", "sloop-3": "sloop3"
   }
 }

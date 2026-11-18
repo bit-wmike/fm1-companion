@@ -122,7 +122,9 @@ def test_plan_melodee_to_melodee(env):
     from fm1companion.flash.planner import Target, plan_install
     p = plan_install(melodee_state(), Target.from_spec(firmware.spec("melodee"), tag="v1.6.0"))
     assert p.ok and p.kinds() == ["backup", "fetch", "install", "resources", "verify"]
-    assert not p.via_stock and "power" not in p.confirmations and not p.lost
+    # (the power confirmation belongs to every plan that writes – hardware run 2026-11-18; no power *warning* here)
+    assert not p.via_stock and p.confirmations == ["power"] and not p.lost
+    assert not any("Strom" in w or "power" in w for w in p.warnings)
 
 
 def test_plan_melodee_16_upgrade_and_downgrade(env):
@@ -145,7 +147,7 @@ def test_plan_melodee_16_upgrade_and_downgrade(env):
     assert plan_install(rc, Target.from_spec(mel, tag="v1.6.0"), backup=False).ok          # already 1.6: no obligation
     new = melodee_state(version="MELODEE v1.6.0")
     p = plan_install(new, Target.from_spec(mel, tag="v1.6.0"))
-    assert p.ok and not any("1.6" in w for w in p.warnings) and not p.confirmations
+    assert p.ok and not any("1.6" in w for w in p.warnings) and p.confirmations == ["power"]
     p = plan_install(new, Target.from_spec(mel, tag="v1.5.1"))
     assert p.ok and "Zurück von Melodee 1.6" in p.warnings[0] and "Melodee v1.5.1" in p.warnings[0]
     assert "melodee16_down" in p.confirmations and M.DOWNGRADE_LOST in p.lost
@@ -172,7 +174,7 @@ def test_plan_melodee_161_is_a_normal_update(env):
         st = melodee_state(version=dev)
         p = plan_install(st, t161)
         assert melodee_change(st, t161) == "within"
-        assert p.ok and not any("1.6" in w for w in p.warnings) and not p.confirmations, (dev, p.warnings)
+        assert p.ok and not any("1.6" in w for w in p.warnings) and p.confirmations == ["power"], (dev, p.warnings)
     back = melodee_state(version="MELODEE v1.6.1")
     p = plan_install(back, Target.from_spec(mel, tag="v1.6.0"))
     assert p.ok and not any("Zurück von Melodee 1.6" in w for w in p.warnings) and "melodee16_down" not in p.confirmations

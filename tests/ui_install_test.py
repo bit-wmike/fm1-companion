@@ -210,7 +210,26 @@ def flow():
     dlg3 = fp.PlanDialog(w, plan_for(firmware.spec("melodee")), "Melodee", True)
     check(dlg3.chk_direct.isHidden() and dlg3.v15_note.isHidden() and "stock" not in dlg3.plan.kinds(),
           "update of the same firmware: no V15 step, no option")
-    for d in (dlg, dlg2, dlg3):
+    # ---- hardware test 2026-11-18: behind a USB hub the mandatory confirmation must not claim a direct cable, and a
+    #      dry run (writes nothing) needs no confirmation at all
+    import dataclasses as _dc
+    sth = _dc.replace(stm, hubs=2)
+    dlg4 = fp.PlanDialog(w, lambda via, b=True: planner.plan_install(
+        sth, planner.Target.from_spec(firmware.spec("karma"), tag="v3.1"), via_v15=via, backup=b), "KARMA", True)
+    txt4 = dlg4.confirm_checks["power_hub"].text() if "power_hub" in dlg4.confirm_checks else ""
+    check("power" not in dlg4.confirm_checks and "USB-Hub" in txt4 and "steckt direkt" not in txt4
+          and "steckt direkt am Rechner" in dlg.confirm_checks["power"].text(),
+          f"behind a hub the power confirmation says so ({txt4[:60]})")
+    check(not dlg4.ok_btn.isEnabled() and dlg4.missing() == dlg4.plan.confirmations,
+          "installation: the confirmations are required")
+    dlg4.chk_dry.setChecked(True)
+    check(dlg4.ok_btn.isEnabled() and dlg4.missing() == [] and dlg4.ok_hint.isHidden()
+          and not any(cb.isEnabled() for cb in dlg4.confirm_checks.values()),
+          "dry run: no confirmation needed, the button is free")
+    dlg4.chk_dry.setChecked(False)
+    check(not dlg4.ok_btn.isEnabled() and all(cb.isEnabled() for cb in dlg4.confirm_checks.values()),
+          "dry run unticked: the confirmations are required again")
+    for d in (dlg, dlg2, dlg3, dlg4):
         d.deleteLater()
     pkg = home / "melodee-1.7.0.fwsc"
     pkg.write_bytes(fpk.build_package("FM-1_91070"))
@@ -230,8 +249,15 @@ def flow():
     # ---- a dry run writes nothing
     check(until(lambda: ctx.connected, 10000), "connected again after the installation")
     before = len(dev.sends)
+    plan_ctl["confirm"] = False                 # (nothing ticked: a dry run needs no confirmation)
+    hist_n = len(journal.Journal().history())
     ok = fp.install_flow(w, ctx, firmware.spec("melodee"), None, pkg, "v1.7.0", dry_run=True)
-    check(ok and bytes(fi.UPGRADE) not in dev.sends[before:], "dry run sends no UPGRADE")
+    plan_ctl["confirm"] = True
+    check(ok and bytes(fi.UPGRADE) not in dev.sends[before:], "dry run sends no UPGRADE (and needs no confirmation)")
+    dry_logs = sorted((journal.Journal().dir / "logs").glob("dryrun-*.txt"))
+    check(dry_logs and "DRY RUN" in dry_logs[-1].read_text("utf-8") and "Protokoll des Probelaufs" in plan_ctl["last_log"]
+          and len(journal.Journal().history()) == hist_n,
+          "dry run leaves its own marked log, and no entry in the journal")
 
     # ---- backup wanted, but failed: always abort, nothing sent
     from fm1companion import autobackup
@@ -323,11 +349,11 @@ def flow():
           "unit not known + Melodee 1.5.1: only with the confirmation “no logo on the front”")
     plan_ctl["confirm"], plan_ctl["accept"] = True, False
     # never asked on a real device: the question comes before the plan, the answer is kept
-    hardware.set_revision(prof, "", "")
+    hardware.forget(prof)
     asked = []
     real_choose, demo_env = hw_revision.choose, os.environ.pop("FM1C_DEMO")
     try:
-        hw_revision.choose = lambda parent, name, current="": (asked.append(name), "new")[1]
+        hw_revision.choose = lambda parent, name, current="", **k: (asked.append(name), "new")[1]
         n_plans = len(plan_ctl["plans"])
         fp.install_flow(w, ctx, firmware.spec("melodee"), new_rel)
         check(not asked and len(plan_ctl["plans"]) == n_plans + 1, "a version that knows the chip: no question")
@@ -337,7 +363,7 @@ def flow():
               "never asked + a version without the chip: asked once, answer kept, plan blocks")
         fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel)
         check(len(asked) == 1, "… and not asked a second time")
-        hardware.set_revision(prof, "", "")
+        hardware.forget(prof)
         hw_revision.choose = lambda *a, **k: None
         n_plans = len(plan_ctl["plans"])
         check(not fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel) and len(plan_ctl["plans"]) == n_plans,
@@ -345,12 +371,28 @@ def flow():
     finally:
         hw_revision.choose = real_choose
         os.environ["FM1C_DEMO"] = demo_env
-    # a chip ID that was read (ROM boot) wins over an answer
+    # "newer unit" only goes away deliberately: an explicit confirmation, also for a chip ID that was read
     hardware.note_flash_id(prof, 0xB36014, "rom")
-    w.overview.set_unit("old")
-    check(hardware.revision(prof) == "new" and "ROM-Bootmodus" in hardware.label(prof),
-          f"a flash ID read in ROM boot mode is not overwritten by an answer ({hardware.label(prof)})")
-    hardware.set_revision(prof, "", "")
+    real_confirm, seen = hw_revision.confirm_change, []
+    try:
+        hw_revision.confirm_change = lambda parent, p, rev: (seen.append(rev), False)[1]
+        w.overview.set_unit("old")
+        check(seen == ["old"] and hardware.revision(prof) == "new" and "ROM-Bootmodus" in hardware.label(prof),
+              f"“earlier unit” against a recorded newer unit: asked to confirm, not confirmed → stays ({hardware.label(prof)})")
+        hardware.note_flash_id(prof, 0x856014, "identity")
+        w.overview.refresh()
+        check(hardware.revision(prof) == "new" and "0x856014" in w.overview.lbl["Unit"].text()
+              and "zwei Geräte" in w.overview.lbl["Unit"].text(),
+              "an earlier chip read under the same profile: still a newer unit, and the Overview says why")
+        hw_revision.confirm_change = lambda parent, p, rev: (seen.append(rev), True)[1]
+        w.overview.set_unit("old")
+        check(seen == ["old", "old"] and hardware.revision(prof) == "old" and prof.hw_revision_source == "user"
+              and not prof.hw_revision_conflict, "… confirmed: changed to “earlier unit” by the owner")
+        check(hw_revision.record(ctx, prof, hw_revision.FORGET, w) and not hardware.asked(prof),
+              "“Forget what is recorded” (confirmed) clears the unit")
+    finally:
+        hw_revision.confirm_change = real_confirm
+    hardware.forget(prof)
     ctx.store.save()
     w.overview.refresh()
     plan_ctl["accept"] = True

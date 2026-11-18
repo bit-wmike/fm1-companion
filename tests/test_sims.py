@@ -227,3 +227,85 @@ def test_local_server_sims_and_relay(tmp_path, monkeypatch):
         assert got == [[0x90, 60, 100]]
     finally:
         srv.stop()
+
+
+# ---- page load result: Qt 6.4 (Raspberry Pi OS Bookworm) reports a good load as "HTTP status 200" ----
+@pytest.mark.parametrize("status, domain, code, want", [
+    (2, 7, 200, True),       # Qt 6.4: http 200 and file:// – "LoadSucceededStatus 7 200"
+    (3, 7, 404, False),      # Qt 6.4: 404 – "LoadFailedStatus 7 404"
+    (2, 0, 0, True),         # newer Qt: no error domain
+    (2, 7, 304, True),
+    (2, 7, 404, False),      # newer Qt: the server's error page was "loaded"
+    (2, 7, 500, False),
+    (3, 2, -105, False),     # connection error
+    (3, 6, -105, False),     # DNS
+    (3, 0, 0, False),        # failed always counts, whatever the domain says
+    (2, 2, -105, False),     # an error domain on a "succeeded" page (Chromium's own error page)
+    (0, 0, 0, None),         # started: nothing to report yet
+    (1, 0, 0, None),         # stopped without an error (next load replaced it)
+    (1, 7, 200, None),
+    (1, 2, -3, False),
+])
+def test_load_outcome(status, domain, code, want):
+    assert sims.load_outcome(status, domain, code) is want
+
+
+def test_enum_int_also_for_values_without_a_name():
+    import enum
+
+    class Dom(enum.Enum):
+        NoErrorDomain = 0
+
+    class Nameless:                      # what PyQt6 6.4 hands out for domain 7: no member of the enum
+        value = 7
+
+    class OnlyRepr:
+        def __repr__(self):
+            return "<ErrorDomain.7: 7>"
+    assert sims.enum_int(Dom.NoErrorDomain) == 0
+    assert sims.enum_int(Nameless()) == 7
+    assert sims.enum_int(7) == 7
+    assert sims.enum_int(OnlyRepr()) == 7
+
+
+def test_simulator_page_accepts_qt64_success():
+    """The page's own handler, fed with what Qt 6.4 reports (domain 7 has no name in PyQt6 6.4)."""
+    pytest.importorskip("PyQt6.QtWebEngineCore")
+    from PyQt6.QtCore import QUrl
+    from PyQt6.QtWebEngineCore import QWebEngineLoadingInfo as LI
+    from fm1companion.ui.pages import simulator
+
+    class Unnamed:
+        def __init__(self, v):
+            self.value = v
+
+    class Info:
+        def __init__(self, status, domain, code, url="http://127.0.0.1:1/sims/x/"):
+            self._s, self._d, self._c, self._u = status, domain, code, url
+
+        def status(self):
+            return self._s
+
+        def errorDomain(self):
+            return Unnamed(self._d)
+
+        def errorCode(self):
+            return self._c
+
+        def url(self):
+            return QUrl(self._u)
+
+    class Page:
+        def __init__(self):
+            self.got = []
+
+        def _loaded(self, ok):
+            self.got.append(ok)
+    p = Page()
+    S = LI.LoadStatus
+    simulator.SimulatorPage._loading(p, Info(S.LoadStartedStatus, 0, 0))
+    simulator.SimulatorPage._loading(p, Info(S.LoadSucceededStatus, 7, 200))
+    simulator.SimulatorPage._loading(p, Info(S.LoadSucceededStatus, 7, 200, "file:///x/index.html"))
+    simulator.SimulatorPage._loading(p, Info(S.LoadFailedStatus, 7, 404))
+    simulator.SimulatorPage._loading(p, Info(S.LoadSucceededStatus, 7, 200, "data:text/html,x"))
+    assert p.got == [True, True, False]
