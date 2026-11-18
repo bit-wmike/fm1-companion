@@ -29,6 +29,9 @@ CONFIRM_TEXT = {
                       "checksum myself."),
     "power": _("The FM-1 is charged or on power, the cable is plugged directly into the computer, and the "
                "computer does not go to sleep during the installation."),
+    # the same, when the FM-1 is behind a USB hub: the sentence must not claim a direct connection
+    "power_hub": _("The FM-1 is charged or on power, and the computer does not go to sleep during the installation. "
+                   "I know that the FM-1 is connected through a USB hub; a port directly on the computer is safer."),
     "no_backup": _("I am not making a backup and accept that projects and sounds may be lost."),
     "beta": _("I understand that this is a test version (beta)."),
     "felucca09": _("I know that Felucca 0.9 data can prevent the start when switching to 1.x "
@@ -44,6 +47,13 @@ CONFIRM_TEXT = {
                             "afterwards only be brought back through the recovery in ROM boot mode."),
     "v16": _("I understand: V16 is experimental and meant only with a backup. The way back from V16 to V15 has not "
              "yet been confirmed with real V16 – in the worst case only ROM boot mode helps (recovery stage 2)."),
+}
+
+# where the expected checksum of a release package comes from (said in the plan's "load & check" step)
+CHECKSUM_SOURCE = {
+    "sums": _("The checksum comes from the SHA256SUMS file of the release."),
+    "digest": _("The checksum is GitHub's digest for the release file (GitHub computes it when the author uploads "
+                "the file; the release has no SHA256SUMS file)."),
 }
 
 V16_WARNING = _("Experimental – only with a backup. V16 uses a different flash layout than V15 and all community "
@@ -78,6 +88,7 @@ class DeviceState:
     pinned: bool = False          # target device unambiguously pinned by USB connection/serial number
     usb_notes: list = field(default_factory=list)   # USB hub / careful mode / autosuspend (flash/robust.plan_notes)
     revision: str = ""            # hardware revision: "new" (logo on the front, flash 0xB36014) | "old" | "" unknown
+    hubs: int = 0                 # external USB hubs between the computer and the FM-1 (devices.usb_link)
 
     @property
     def update_mode(self) -> bool:
@@ -110,6 +121,8 @@ class Target:
     known: bool = True            # from catalog/builtin; False = own file
     prerelease: bool = False
     checksum: bool = True         # False: package cannot be checked against any checksum (confirmation needed)
+    checksum_source: str = ""     # where the expected checksum comes from: "sums" (SHA256SUMS of the release) |
+    #                               "digest" (GitHub's digest for the release file) | "" (catalog / pinned / not said)
     flash: list = field(default_factory=list)   # JEDEC IDs the firmware's firmware.json names (hardware.support)
     flash_tag: str = ""           # … and the version that was read at
     repo: str | None = None       # "owner/name" the firmware comes from (None: not from a spec) – a table row of
@@ -426,7 +439,9 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
                             "up anything from it. Back up important projects first with the firmware's own tool."))
         p.confirmations.append("no_backup")
     p.steps.append(Step("fetch", _("Load package & check checksum"), "keins",
-                        _("Download the package (or take the existing file) and check it against the checksum.")))
+                        _("Download the package (or take the existing file) and check it against the checksum.")
+                        + (" " + CHECKSUM_SOURCE[t.checksum_source] if t.checksum_source in CHECKSUM_SOURCE and t.checksum
+                           else "")))
     p.v15_option = v15_option(state, t)
     if p.v15_option == "locked" and v16_switch(state, t):
         p.v15_reason = (_("Mandatory: V16 only works from the original firmware – your current firmware would refuse "
@@ -528,8 +543,9 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
         if "no_backup" in p.confirmations:
             p.blockers.append(_("For Felucca 0.9 → 1.x a backup is mandatory – without a backup it is not possible here."))
     if not t.checksum and t.known:
-        p.warnings.append(_("Checksum not available: this release has no SHA256SUMS file, and the catalog does not "
-                            "know the checksum. The app cannot check whether the file is unmodified."))
+        p.warnings.append(_("Checksum not available: this release has no SHA256SUMS file, GitHub gives no digest "
+                            "for the release file, and the catalog does not know the checksum. The app cannot "
+                            "check whether the file is unmodified."))
         p.confirmations.append("no_checksum")
     if not t.known:
         p.warnings.append(_("Own file: identity {identity}, SHA-256 {sha256} – in no catalog.").format(
@@ -717,8 +733,9 @@ def _confirm_power(p: InstallPlan, t: Target, fam: str):
                             "(only recovery stage 2 helps).") if _not_resumable(t, fam) else
                           _("The original firmware has no start protection: the power must not fail while "
                             "writing."))
-        if "power" not in p.confirmations:
-            p.confirmations.append("power")
+        key = "power_hub" if getattr(p.state, "hubs", 0) else "power"
+        if key not in p.confirmations:
+            p.confirmations.append(key)
 
 
 def _felucca09_risk(state: DeviceState, t: Target) -> bool:

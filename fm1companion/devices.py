@@ -2,9 +2,10 @@
 """Find connected FM-1, tell them apart and remember them as profiles.
 
 Each device gets a profile (name, colour, notes, last known firmware).
-A USB serial number recognises a device only if it is known to be this unit's own (identifying_serial): the
-original firmware reports one fixed number for every FM-1, and no open firmware reports one at all. Otherwise the
-user decides once which profile is meant; with only one matching profile this happens automatically.
+A device is recognised by its USB serial number where it has one of its own (identifying_serial): the original
+firmware reports one per unit, the Felucca-family firmwares report none. So the same FM-1 shows a serial number
+under one firmware and none under the next – the profile learns the number (ui/device.py) instead of a second
+profile being made, and where the app cannot tell, the user says once which profile is meant.
 """
 from __future__ import annotations
 
@@ -64,8 +65,7 @@ class Profile:
     id: str
     name: str
     color: str = "#3daee9"
-    serial: str = ""            # only a serial number that identifies this unit (identifying_serial), else ""
-    serial_seen: str = ""       # a serial number that was once stored but is shared by many FM-1 (never used for matching)
+    serial: str = ""            # the unit's own USB serial number, as the original firmware reports it ("" = not seen yet)
     notes: str = ""
     firmware: str = ""          # e.g. "melodee"
     firmware_version: str = ""  # e.g. "v1.6.0-rc.7"
@@ -185,10 +185,8 @@ class ProfileStore:
             if p is None or p.id in self.profiles:
                 skipped += 1
             else:
-                if p.serial and not serial_identifies(p.serial):
-                    # stored by an earlier version: the number is not this unit's own (the original V15 reports the
-                    # same one for every FM-1). It no longer recognises the device; kept for the record only.
-                    p.serial_seen, p.serial = p.serial, ""
+                if p.serial and not serial_plausible(p.serial):
+                    p.serial = ""           # (a constant some firmware reports, stored by an earlier version)
                 self.profiles[p.id] = p
         if skipped:
             from . import config as _config
@@ -240,12 +238,15 @@ class ProfileStore:
                 pass
             write_text_atomic(self.path, text)
 
-    def create(self, name: str = "", serial: str = "") -> Profile:
+    def create(self, name: str = "", serial: str = "", folders=()) -> Profile:
+        """a new profile. Without a name: the first free "FM-1 A", "FM-1 B" … – free means no profile has it AND
+        none of `folders` (the names in the backup folder) has it: the backups of a forgotten device must not
+        become the backups of a new one."""
         n = len(self.profiles)
         if not name:                              # first free letter – after "Forget" no second "FM-1 B"
-            taken = {p.name for p in self.profiles.values()}
-            name = next((f"FM-1 {chr(65 + i)}" for i in range(26) if f"FM-1 {chr(65 + i)}" not in taken),
-                        f"FM-1 {n + 1}")
+            taken = {p.name.lower() for p in self.profiles.values()} | {str(f).lower() for f in folders or ()}
+            name = next((f"FM-1 {chr(65 + i)}" for i in range(26) if f"FM-1 {chr(65 + i)}".lower() not in taken),
+                        next(f"FM-1 {k}" for k in range(n + 1, n + 1000) if f"FM-1 {k}".lower() not in taken))
         name = self.unique_name(name)
         p = Profile(id=uuid.uuid4().hex[:10], name=name, color=PROFILE_COLORS[n % len(PROFILE_COLORS)], serial=serial)
         self.profiles[p.id] = p
@@ -281,59 +282,71 @@ class ProfileStore:
 
 
 BOGUS_SERIAL = re.compile(r"^(.)\1*$|^0?123456789(0|abcdef)?$|^0+1?$", re.I)
-# Serial numbers that every unit running that firmware reports – they say nothing about which FM-1 it is:
-#   4150354433333610  the original V15 ("AP5D336\x10" as hex), seen on real hardware on two different units
-#   0000FM1DISK1      disk mode of the Felucca family (felucca-bsp chip/usb.c STR3_MSC)
-SHARED_SERIALS = frozenset({"4150354433333610", "0000fm1disk1"})
-# (USB ID, pattern for the USB product name) of firmwares that are KNOWN to build the serial number from the chip's
-# unique ID. None so far (sources read 2026-11-18): the Felucca family (Felucca, Melodee, Skiff, SLOOP, KARMA,
-# JIANT, ORBIT, X0X, gr!mm, Hortator, ChoralRoot, CoralFlower, fm1-base and their loaders) reports no serial number
-# at all (iSerialNumber 0), TransitFM1 reports its name and version, the original firmware a fixed number.
-# A firmware only belongs here after its source was read.
-UNIQUE_SERIAL_FIRMWARE: tuple[tuple[str, re.Pattern], ...] = ()
-STOCK_IDENTITY_RE = re.compile(r"^(ota-)?FM-1_0?1[56]$", re.I)
-SYNTHETIC_SERIAL_RE = re.compile(r"^(DEMO-|STUDIO$)")
+# Constants that a firmware reports as "serial number" on every unit (read in the sources, 2026-11-18):
+#   0000FM1DISK1     disk mode of the Felucca family (felucca-bsp chip/usb.c STR3_MSC)
+#   TransitFM1 …     TransitFM1 reports its name and version (firmware/src/usb.c USB_ISERIAL / STR3)
+CONSTANT_SERIAL_RE = re.compile(r"^(0000FM1DISK1$|TransitFM1\b)", re.I)
+# Which firmwares report a serial number of the unit's own:
+#   original firmware (USB 4c4a:c755 / 4c4a:4155): yes, per unit – measured on two FM-1 on 2026-11-18
+#       (4150354433333610 and 550B515AA1CA0037); its source is not public
+#   M-VAVE's update loader (4d4a:4155): not known – a number seen there may confirm a profile that already has it,
+#       but is never learned into a profile
+#   Felucca family (1209:0001 and its loader 1209:0002: Felucca, Melodee, Skiff, SLOOP, KARMA, JIANT, ORBIT, X0X,
+#       gr!mm, Hortator, ChoralRoot, CoralFlower, fm1-base …): none at all (iSerialNumber 0), or a constant (above) –
+#       a number seen there never identifies a unit
+OWN_SERIAL_KINDS = ("stock", "stock-update")
 
 
-def serial_identifies(serial: str) -> bool:
-    """may a STORED serial number still recognise a device? Only the app's own simulated devices, until a firmware
-    with a serial number of its own is known (UNIQUE_SERIAL_FIRMWARE)."""
+def serial_plausible(serial: str) -> bool:
+    """can this text be a unit's own serial number at all? (not empty, not a constant-looking or known constant one)"""
     s = (serial or "").strip()
-    if len(s) < 4 or BOGUS_SERIAL.match(s) or s.lower() in SHARED_SERIALS:
-        return False
-    return bool(SYNTHETIC_SERIAL_RE.match(s)) or bool(UNIQUE_SERIAL_FIRMWARE)
+    return len(s) >= 4 and not BOGUS_SERIAL.match(s) and not CONSTANT_SERIAL_RE.match(s)
 
 
 def identifying_serial(port: PortInfo, all_ports: list[PortInfo], identity: str = "") -> str:
-    """The serial number of `port` if – and only if – it tells this one FM-1 from every other, else "".
+    """The serial number of `port` if it tells this one FM-1 from every other, else "".
 
-    Never: an empty, constant-looking or known shared number; a number seen twice among the connected devices; a
-    number reported by the original firmware, by an update loader or in update mode (by USB ID, port flag or
-    `identity`); a number of a firmware that is not known to build it from the chip's unique ID
-    (UNIQUE_SERIAL_FIRMWARE). A port without a kernel client is one of the app's own simulated devices (sysfs gives
-    a serial number only for a kernel client): its number counts."""
+    Never: an empty, constant-looking or known constant number; a number seen twice among the connected devices; a
+    number reported by a firmware that is not known to report the unit's own (see OWN_SERIAL_KINDS – by USB ID; a
+    device with an unknown USB ID is not trusted either). A port without a kernel client and without USB ID is one
+    of the app's own simulated devices (sysfs gives a serial number only for a kernel client): its number counts."""
     s = (port.serial or "").strip()
-    if len(s) < 4 or BOGUS_SERIAL.match(s) or s.lower() in SHARED_SERIALS:
+    if not serial_plausible(s):
         return ""
     if sum(1 for p in all_ports if (p.serial or "").strip() == s) > 1:
         return ""
     uid = (port.usb_id or "").lower()
-    kind = FM1_USB_IDS.get(uid, "")
-    ident = (identity or "").strip()
-    if port.update_mode or kind.startswith("stock") or kind.endswith("update") \
-            or ident.lower().startswith("ota-") or STOCK_IDENTITY_RE.match(ident):
-        return ""
     if port.client is None and not uid:
         return s
-    name = port.product or port.label or ""
-    if any(uid == u and rx.search(name) for u, rx in UNIQUE_SERIAL_FIRMWARE):
-        return s
-    return ""
+    return s if FM1_USB_IDS.get(uid, "") in OWN_SERIAL_KINDS else ""
+
+
+def serial_learnable(port: PortInfo, all_ports: list[PortInfo], identity: str = "") -> str:
+    """the serial number a profile may LEARN from this sighting: an identifying one, seen while the firmware itself
+    runs – not in update mode and not from an update loader, whose number is not known to be the unit's own"""
+    ident = (identity or "").strip().lower()
+    if port.update_mode or ident.startswith("ota-") or FM1_USB_IDS.get((port.usb_id or "").lower(), "").endswith("update"):
+        return ""
+    return identifying_serial(port, all_ports, identity)
 
 
 def usable_serial(port: PortInfo, all_ports: list[PortInfo]) -> str:
     """(older name) the serial number only if it identifies the unit – see identifying_serial"""
     return identifying_serial(port, all_ports)
+
+
+def possible_duplicate(store: "ProfileStore", prof: Profile) -> Profile | None:
+    """another profile that may be the very same FM-1 as `prof`: one of the two has a serial number, the other has
+    none, and both were last seen at the same USB port. That is how an earlier version of the app split one FM-1
+    into two profiles when the original firmware was installed (it reports a serial number, the firmware before
+    did not). Two real FM-1 used at one port look the same in these data – so this is only ever a hint for the
+    owner, never a reason to merge anything by itself."""
+    if prof is None or not prof.usb_path:
+        return None
+    for other in store.profiles.values():
+        if other.id != prof.id and other.usb_path == prof.usb_path and bool(other.serial) != bool(prof.serial):
+            return other
+    return None
 
 
 # ------------------------------------------------------------ detection ---

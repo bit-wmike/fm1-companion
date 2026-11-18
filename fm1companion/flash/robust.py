@@ -194,7 +194,12 @@ class FlightLog:
             out.add("disconnect")
         return out
 
-    def finish(self, outcome: str, error: str = "", header: list[str] | None = None) -> Path | None:
+    KEEP_DRY = 3
+
+    def finish(self, outcome: str, error: str = "", header: list[str] | None = None,
+               dry_run: bool = False) -> Path | None:
+        """write the log. dry_run: as dryrun-<time>.txt – beside the flash-<time>.txt logs of real installations,
+        never among them (latest_logs, the error report and KEEP only count installations)"""
         self.outcome = outcome
         self._collect_kernel()
         if self.folder is None:
@@ -207,13 +212,14 @@ class FlightLog:
                                     *self.kernel_lines]
         try:
             self.folder.mkdir(parents=True, exist_ok=True)
-            p = self.folder / f"flash-{time.strftime('%Y%m%d-%H%M%S', time.localtime(self.wall0))}.txt"
+            kind = "dryrun" if dry_run else "flash"
+            p = self.folder / f"{kind}-{time.strftime('%Y%m%d-%H%M%S', time.localtime(self.wall0))}.txt"
             k = 2
             while p.exists():
                 p = p.with_name(f"{p.stem.split('_')[0]}_{k}.txt")
                 k += 1
             p.write_text(redact_text("\n".join(body) + "\n"), "utf-8")
-            for old in sorted(self.folder.glob("flash-*.txt"))[:-self.KEEP]:
+            for old in sorted(self.folder.glob(f"{kind}-*.txt"))[:-(self.KEEP_DRY if dry_run else self.KEEP)]:
                 old.unlink(missing_ok=True)
             self.path = p
             return p

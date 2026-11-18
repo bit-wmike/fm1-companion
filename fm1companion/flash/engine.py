@@ -343,7 +343,7 @@ class Engine:
             pin = self.pin_for(port) if port else None
         link = self.usb = self.usb_link(pin)
         careful = self.careful_for(link)
-        flight = robust.FlightLog(None if dry_run else self.journal.dir / "logs", kernel=self.kernel_log)
+        flight = robust.FlightLog(self.journal.dir / "logs", kernel=self.kernel_log)
         self.flight = flight
         if pin is not None:
             up = self.updater(pin=pin, careful=careful, flight=flight, felucca=info.family != "stock",
@@ -399,6 +399,21 @@ class Engine:
             how = _("resume in update mode") if dev.id.loader else _("step 1 + step 2")
             self.log(_("Dry run: {label} ({product}, {family}) would go to {identity} – {how}. Nothing sent.").format(
                 label=label, product=info.product, family=info.family, identity=dev.id.text, how=how))
+            # a trace of the dry run: one line in the app log and its own log file (dryrun-….txt, never counted as
+            # an installation: the journal and the flash-….txt logs stay as they are)
+            import logging
+            logging.getLogger("fm1companion.flash").info(
+                "dry run: %s (%s, %s, sha256 %s) would go to %s at %s – nothing sent", label, info.product,
+                info.family, info.sha256[:16], dev.id.text, dev.name)
+            flight.ev("dry-run", f"{dev.id.text} at {dev.name}: nothing sent")
+            path = flight.finish("DRY RUN – nothing was sent to the FM-1", "", [
+                f"package: {info.product} ({info.family}), sha256 {info.sha256[:16]}…",
+                f"device: {dev.id.text}, careful mode: {'on' if careful else 'off'}, "
+                f"pinned: {'yes' if pin is not None else 'no'}",
+                *(link.lines() if link is not None and getattr(link, "found", False) else ["USB path: unknown"])],
+                dry_run=True)
+            if path is not None:
+                self.log(_("Log of the dry run: {name}").format(name=path.name))
             return Result(dev.id.text, dry_run=True)
         try:
             self.journal.acquire()
