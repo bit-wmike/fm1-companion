@@ -582,7 +582,13 @@ def test_tested_table_matches_untested_md():
         assert f"`{key}` – {label} |" in doc, key
     ver = ".".join(__version__.split(".")[:2])
     assert f"(as of {ver}" in doc.splitlines()[0] and "2.3.1" not in doc
-    assert [k for k, (ok, _l) in tested.STEPS.items() if ok] == ["update_melodee"]      # one hardware report so far
+    # two hardware reports so far: the Melodee update, and one switch via V15 through two USB hubs (2026-11-18, one
+    # earlier unit, one Pi 5). "Continue", back to the original, V16 and the newer chip have no report with logs.
+    assert [k for k, (ok, _l) in tested.STEPS.items() if ok] == ["update_melodee", "switch", "v15_step", "usb_hub"]
+    for k in ("chain_continue", "to_stock", "v16", "new_chip", "resume", "rom_restore", "own_file"):
+        assert not tested.tested(k), k
+    assert "one Raspberry Pi 5" in doc and "2026-11-18" in doc and "run **once**" in doc
+    assert "writing back\nfrom the Studio, restoring a backup, anything that writes to a newer FM-1" in doc
 
 
 def test_tested_note_per_plan(env):
@@ -594,9 +600,12 @@ def test_tested_note_per_plan(env):
     assert "has been run on a real device" in tested.note(tested.plan_kinds(update))
     switch = _switch_plan()
     assert tested.plan_kinds(switch) == ["switch", "v15_step"]
-    n = tested.note(tested.plan_kinds(switch))
-    assert n.startswith("Tested on a real FM-1 so far: an update within Melodee.") and "only in the simulation" in n
-    assert "a switch to another firmware" in n and "the original V15" in n
+    n = tested.note(tested.plan_kinds(switch))        # (run once on hardware, 2026-11-18: named, not the Melodee update)
+    assert n.startswith("Tested on a real FM-1: this kind of step (a switch to another firmware, the intermediate "
+                        "step via the original V15)") and "Melodee" not in n
+    cont = tested.note(["chain_continue"])
+    assert cont.startswith("Tested on a real FM-1 so far: an update within Melodee, a switch to another firmware, ")
+    assert "This step (continuing a switch after the V15 step): only in the simulation." in cont
     slo = DeviceState(identity="FM-1_900", felucca=True, firmware_key="sloop", ports=2, pinned=True)
     same = plan_install(slo, Target(name="SLOOP", product="FM-1_900", family="felucca", key="sloop"))
     assert tested.plan_kinds(same) == ["update_same", "two_devices"] and "only in the simulation" in tested.note(

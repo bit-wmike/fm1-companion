@@ -210,7 +210,26 @@ def flow():
     dlg3 = fp.PlanDialog(w, plan_for(firmware.spec("melodee")), "Melodee", True)
     check(dlg3.chk_direct.isHidden() and dlg3.v15_note.isHidden() and "stock" not in dlg3.plan.kinds(),
           "update of the same firmware: no V15 step, no option")
-    for d in (dlg, dlg2, dlg3):
+    # ---- hardware test 2026-11-18: behind a USB hub the mandatory confirmation must not claim a direct cable, and a
+    #      dry run (writes nothing) needs no confirmation at all
+    import dataclasses as _dc
+    sth = _dc.replace(stm, hubs=2)
+    dlg4 = fp.PlanDialog(w, lambda via, b=True: planner.plan_install(
+        sth, planner.Target.from_spec(firmware.spec("karma"), tag="v3.1"), via_v15=via, backup=b), "KARMA", True)
+    txt4 = dlg4.confirm_checks["power_hub"].text() if "power_hub" in dlg4.confirm_checks else ""
+    check("power" not in dlg4.confirm_checks and "USB-Hub" in txt4 and "steckt direkt" not in txt4
+          and "steckt direkt am Rechner" in dlg.confirm_checks["power"].text(),
+          f"behind a hub the power confirmation says so ({txt4[:60]})")
+    check(not dlg4.ok_btn.isEnabled() and dlg4.missing() == dlg4.plan.confirmations,
+          "installation: the confirmations are required")
+    dlg4.chk_dry.setChecked(True)
+    check(dlg4.ok_btn.isEnabled() and dlg4.missing() == [] and dlg4.ok_hint.isHidden()
+          and not any(cb.isEnabled() for cb in dlg4.confirm_checks.values()),
+          "dry run: no confirmation needed, the button is free")
+    dlg4.chk_dry.setChecked(False)
+    check(not dlg4.ok_btn.isEnabled() and all(cb.isEnabled() for cb in dlg4.confirm_checks.values()),
+          "dry run unticked: the confirmations are required again")
+    for d in (dlg, dlg2, dlg3, dlg4):
         d.deleteLater()
     pkg = home / "melodee-1.7.0.fwsc"
     pkg.write_bytes(fpk.build_package("FM-1_91070"))
@@ -230,8 +249,15 @@ def flow():
     # ---- a dry run writes nothing
     check(until(lambda: ctx.connected, 10000), "connected again after the installation")
     before = len(dev.sends)
+    plan_ctl["confirm"] = False                 # (nothing ticked: a dry run needs no confirmation)
+    hist_n = len(journal.Journal().history())
     ok = fp.install_flow(w, ctx, firmware.spec("melodee"), None, pkg, "v1.7.0", dry_run=True)
-    check(ok and bytes(fi.UPGRADE) not in dev.sends[before:], "dry run sends no UPGRADE")
+    plan_ctl["confirm"] = True
+    check(ok and bytes(fi.UPGRADE) not in dev.sends[before:], "dry run sends no UPGRADE (and needs no confirmation)")
+    dry_logs = sorted((journal.Journal().dir / "logs").glob("dryrun-*.txt"))
+    check(dry_logs and "DRY RUN" in dry_logs[-1].read_text("utf-8") and "Protokoll des Probelaufs" in plan_ctl["last_log"]
+          and len(journal.Journal().history()) == hist_n,
+          "dry run leaves its own marked log, and no entry in the journal")
 
     # ---- backup wanted, but failed: always abort, nothing sent
     from fm1companion import autobackup

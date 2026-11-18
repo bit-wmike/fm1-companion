@@ -2768,17 +2768,9 @@ msgstr "Recordado: este FM-1 ejecuta {firmware} (ID {id})."
 msgid "Remembered: firmware unknown – installations count as a firmware change (with V15 intermediate step)."
 msgstr "Recordado: firmware desconocido – las instalaciones cuentan como cambio de firmware (con paso intermedio por V15)."
 
-#: fm1companion/ui/device.py:566
-msgid "Create new device …"
-msgstr "Crear dispositivo nuevo …"
-
 #: fm1companion/ui/device.py:568
 msgid "Which FM-1 is this?"
 msgstr "¿Qué FM-1 es este?"
-
-#: fm1companion/ui/device.py:569
-msgid "This FM-1 has no serial number. Which of your devices is it?"
-msgstr "Este FM-1 no tiene número de serie. ¿Cuál de tus dispositivos es?"
 
 #: fm1companion/ui/device.py:572
 msgid "New device"
@@ -4348,3 +4340,12 @@ msgstr "{firmware} solo escribe proyectos, bancos de presets y ajustes mientras 
 
 msgid "The firmware on the FM-1 only writes projects, preset banks and settings while nothing is playing."
 msgstr "El firmware del FM-1 solo escribe proyectos, bancos de presets y ajustes mientras no suena nada."
+
+msgid "A new FM-1 that I have not used with this app before …"
+msgstr "Un FM-1 nuevo que aún no he usado con esta app …"
+
+msgid "Is this an FM-1 you have used with this app before? The app cannot tell by itself: an FM-1 only reports a serial number while it runs the original firmware. Please choose:"
+msgstr "¿Es un FM-1 que ya has usado con esta app? La app no puede saberlo por sí sola: un FM-1 solo comunica un número de serie mientras funciona con el firmware original. Elige:"
+
+msgid "Possibly the same FM-1 as “{other}”: both were last seen at the same USB port, one with a serial number and one without. An FM-1 only reports a serial number under the original firmware, and earlier versions of this app then made a second profile. If it is one FM-1: “Merge …” joins the two (backups are moved, nothing is deleted). If you own two FM-1, leave them as they are."
+msgstr "Posiblemente el mismo FM-1 que «{other}»: ambos se vieron por última vez en el mismo puerto USB, uno con número de serie y otro sin él. Un FM-1 solo comunica un número de serie con el firmware original, y las versiones anteriores de esta app creaban entonces un segundo perfil. Si es un solo FM-1: «Fusionar …» une los dos (las copias de seguridad se mueven, no se borra nada). Si tienes dos FM-1, déjalos como están."

@@ -689,7 +689,8 @@ class DeviceContext(QObject):
            this USB port with an identity that does not contradict: that one.
         5. everything else is asked ("Is this an FM-1 you have used before?"), never guessed – also a serial number
            no profile has while a profile without one exists: it may be that unit, now on the original firmware,
-           or a second FM-1. None: not answered (unit_candidates then says what it may be)."""
+           or a second FM-1. None: not answered (unit_candidates then says what it may be). In update mode nothing
+           is asked: no profile then."""
         store, usb, ident = self.store, port.usb_path or "", self.identity or ""
         serial = identifying_serial(port, self.ports or [port], ident)
         p = store.by_serial(serial)
@@ -716,7 +717,9 @@ class DeviceContext(QObject):
                 pid = None
         if pid and pid in store.profiles and store.profiles[pid] in cands:
             return store.profiles[pid]
-        if not cands:
+        if not cands or (own and port.client is None and not port.usb_id):
+            # (the second case: one of the app's own simulated devices with a number no profile has – a new
+            # simulated device, there is nothing to ask)
             return self._new_profile()
         here = [c for c in cands if usb and c.usb_path == usb]
         if not own:
@@ -727,6 +730,10 @@ class DeviceContext(QObject):
             if not usb and len(cands) == 1:    # no USB information at all (not Linux): as before
                 return cands[0]
         self.unit_candidates = list(cands)
+        if port.update_mode:
+            # an FM-1 waiting in update mode is not the moment for a question: no profile is assumed; the Recovery
+            # page judges the waiting unit by itself (strictest candidate, RecoveryPage.waiting_unit)
+            return None
         guess = (here or [c for c in cands if ident and c.identity == ident]
                  or [c for c in cands if c.id == self.settings.last_device] or cands)[0]
         p = self._ask_profile(cands, guess)

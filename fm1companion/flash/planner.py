@@ -89,6 +89,8 @@ class DeviceState:
     usb_notes: list = field(default_factory=list)   # USB hub / careful mode / autosuspend (flash/robust.plan_notes)
     revision: str = ""            # hardware revision: "new" (logo on the front, flash 0xB36014) | "old" | "" unknown
     hubs: int = 0                 # external USB hubs between the computer and the FM-1 (devices.usb_link)
+    candidates: list = field(default_factory=list)   # firmware keys known for this identity (catalog, experience)
+    usb_id: str = ""              # USB ID of the running device, "4c4a:c755" – "" = not known
 
     @property
     def update_mode(self) -> bool:
@@ -246,10 +248,47 @@ def fw_identity(key: str) -> str:
     return f.key if f is not None else k
 
 
+# custom firmwares known to answer the update handshake as "FM-1_015" (TransitFM1 docs/SAFETY.md, table "what it
+# answers": the running app and its USB rescue)
+V15_LOOKALIKES = {"transitfm1"}
+
+
+def _is_stock_key(key: str) -> bool:
+    return (key or "").strip().lower().startswith("stock")
+
+
+def v15_lookalike(state: DeviceState) -> tuple[str, str]:
+    """Does something say that the FM-1 answering "FM-1_015" is NOT M-VAVE's original V15? A custom firmware may
+    answer with that identity on purpose (TransitFM1 does, docs/SAFETY.md: "the official V15's: every installer
+    that guards against other firmwares lets an install over V15 through").
+    -> ("", "") nothing does – or what does:
+       ("key", firmware key)   the device is recorded as another firmware (profile, the owner's answer)
+       ("usb", USB ID)         it shows the Felucca family's USB ID 1209:… – the original firmware shows 4c4a:…
+       ("maybe", "a, b")       the firmware is not recorded, and the identity is also known for these firmwares
+    The owner's answer "original V15" settles "maybe", never "usb"."""
+    if state.identity != "FM-1_015":
+        return "", ""
+    key = fw_identity(state.firmware_key)
+    cands = [fw_identity(c) for c in state.candidates or []]
+    # a recorded firmware only counts if it is one that answers "FM-1_015" at all: after the app's own V15 step the
+    # profile still names the firmware that ran before (Melodee never answers FM-1_015 – that is no evidence)
+    if key and not _is_stock_key(key) and (key in V15_LOOKALIKES or key in cands):
+        return "key", key
+    if (state.usb_id or "").lower().startswith("1209:"):
+        return "usb", state.usb_id.lower()
+    others = [k for k in dict.fromkeys(cands) if k and not _is_stock_key(k)]
+    if others and not _is_stock_key(key):
+        return "maybe", ", ".join(others)
+    return "", ""
+
+
 def running_firmware(state: DeviceState) -> str:
     """the firmware that runs on the device as a catalog key – "" when it is not known for sure. The recorded key
     (profile, INFO, the user's choice) counts only if the INFO answer does not name another firmware: a fork that
     names itself ("FELUCCA KARMA 3.1") is never its parent, and a stale profile is no proof."""
+    kind, what = v15_lookalike(state)
+    if kind:                                 # answers FM-1_015, but is (or may be) another firmware
+        return what if kind == "key" else ""
     if pk.is_stock_identity(state.identity):
         return "stock-v" + state.identity[-2:] if state.identity[-3:].isdigit() else ""
     cur = fw_identity(state.firmware_key)
@@ -275,7 +314,10 @@ def v15_option(state: DeviceState, t: Target) -> str:
     the target is stock itself, update mode), locked (V16 switch, or a switch to a firmware the catalog requires V15
     for) or default_on (every other switch: from another custom
     firmware, from stock V13/V14/V16 or from an unknown firmware – the expert can opt out)."""
-    if state.identity == "FM-1_015" or state.update_mode:
+    # the V15 step exists to start from a known base: an FM-1 that already runs the original V15 never gets another
+    # write of it. Only if nothing says that "FM-1_015" is another firmware here (v15_lookalike) – a safety step is
+    # never dropped on ambiguous evidence.
+    if (state.identity == "FM-1_015" and not v15_lookalike(state)[0]) or state.update_mode:
         return "none"
     if v16_switch(state, t):
         return "locked"
@@ -297,7 +339,7 @@ def current_name(state: DeviceState) -> str:
     if not running_firmware(state):
         return ""
     stock = ""
-    if pk.is_stock_identity(state.identity):
+    if pk.is_stock_identity(state.identity) and not v15_lookalike(state)[0]:
         n = int(state.identity[-3:])
         stock = _("the original firmware {version}").format(version=STOCK_VERSION_NAME.get(n, f"V{n}"))
     return stock or state.firmware_name or state.firmware_key or state.version
@@ -315,7 +357,7 @@ def v16_switch(state: DeviceState, t: Target) -> bool:
     - From V16 to anything other than V15: whether V16 accepts the loader of a community firmware is unknown; the path
       via V15 uses the same stock loader in both directions. [Assumption, cautious]"""
     if t.is_v16:
-        return not runs_v16(state) and not pk.is_stock_identity(state.identity)
+        return not runs_v16(state) and not (pk.is_stock_identity(state.identity) and not v15_lookalike(state)[0])
     return runs_v16(state) and t.product != "FM-1_015" and t.key != "stock-v15"
 
 
@@ -454,6 +496,18 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
                           "then {target}.").format(current=was, target=t.name) if was else
                         _("The running firmware is not recognised, so this counts as a switch: the app installs the "
                           "original firmware V15 first, then {target}.").format(target=t.name)) + " " + V15_WHY
+    look = v15_lookalike(state)
+    if look[0] in ("usb", "maybe") and p.v15_option != "none":
+        why = (_("it shows the USB ID {usb}, which the Felucca-family firmwares use – the original firmware shows "
+                 "4c4a:c755").format(usb=look[1]) if look[0] == "usb" else
+               _("the same identity is known for: {names}, and nobody has said which firmware runs on this "
+                 "FM-1").format(names=look[1]))
+        p.warnings.append(_("This FM-1 answers “FM-1_015” like the original V15, but it may be another firmware: "
+                            "{why}. (TransitFM1 answers “FM-1_015” on purpose.) So the plan does not assume the "
+                            "original V15 and keeps the V15 step. If it is the original V15: connect it so that it "
+                            "shows the USB ID 4c4a:c755 (page “Overview”) and answer “Which firmware is running "
+                            "here?” with the original firmware – then the plan has no V15 step. TransitFM1 shows "
+                            "the USB ID 1209:0001 and its name as serial number (“TransitFM1-…”).").format(why=why))
     p.via_stock = p.v15_option == "locked" or (p.v15_option == "default_on" and via_v15 is not False)
     p.direct = p.v15_option == "default_on" and not p.via_stock
     if p.direct:

@@ -2106,10 +2106,6 @@ msgstr "Cambio de Felucca 0.9 a 1.x: se sabe que los datos antiguos de 0.9 impid
 msgid "For Felucca 0.9 → 1.x a backup is mandatory – without a backup it is not possible here."
 msgstr "Para Felucca 0.9 → 1.x es obligatoria una copia de seguridad; sin ella no es posible aquí."
 
-#: fm1companion/flash/planner.py:430
-msgid "Checksum not available: this release has no SHA256SUMS file, and the catalog does not know the checksum. The app cannot check whether the file is unmodified."
-msgstr "Suma de comprobación no disponible: esta publicación no tiene archivo SHA256SUMS y el catálogo no conoce la suma de comprobación. La app no puede comprobar si el archivo está sin modificar."
-
 #: fm1companion/flash/planner.py:434
 #, python-brace-format
 msgid "Own file: identity {identity}, SHA-256 {sha256} – in no catalog."
@@ -3341,3 +3337,33 @@ msgstr "Guardado para «{device}»: <b>{state}</b>.<br><br>Vas a cambiarlo a: <b
 
 msgid "counted as a newer unit: an earlier chip was also seen under this profile ({what}) – two devices under one profile?"
 msgstr "cuenta como unidad más reciente: con este perfil también se vio un chip anterior ({what}) – ¿dos dispositivos en un mismo perfil?"
+
+msgid "(found when connecting – installed outside the app)"
+msgstr "(encontrado al conectar: instalado fuera de la app)"
+
+msgid "The checksum comes from the SHA256SUMS file of the release."
+msgstr "La suma de comprobación procede del archivo SHA256SUMS de la versión publicada."
+
+msgid "The checksum is GitHub's digest for the release file (GitHub computes it when the author uploads the file; the release has no SHA256SUMS file)."
+msgstr "La suma de comprobación es el digest que GitHub indica para el archivo de la versión (GitHub lo calcula cuando el autor sube el archivo; la versión no tiene archivo SHA256SUMS)."
+
+msgid "Checksum matches GitHub's digest for the release file (the release has no SHA256SUMS file)"
+msgstr "La suma de comprobación coincide con el digest que GitHub indica para el archivo de la versión (la versión no tiene archivo SHA256SUMS)"
+
+msgid "Checksum not available: this release has no SHA256SUMS file, GitHub gives no digest for the release file, and the catalog does not know the checksum. The app cannot check whether the file is unmodified."
+msgstr "Suma de comprobación no disponible: esta versión no tiene archivo SHA256SUMS, GitHub no indica ningún digest para el archivo y el catálogo no conoce la suma. La app no puede comprobar si el archivo está intacto."
+
+msgid "Log of the dry run: {name}"
+msgstr "Registro del simulacro: {name}"
+
+msgid "The FM-1 is charged or on power, and the computer does not go to sleep during the installation. I know that the FM-1 is connected through a USB hub; a port directly on the computer is safer."
+msgstr "El FM-1 está cargado o enchufado, y el equipo no entra en reposo durante la instalación. Sé que el FM-1 está conectado a través de un hub USB; un puerto directamente en el equipo es más seguro."
+
+msgid "it shows the USB ID {usb}, which the Felucca-family firmwares use – the original firmware shows 4c4a:c755"
+msgstr "muestra el ID USB {usb}, que usan los firmwares de la familia Felucca; el firmware original muestra 4c4a:c755"
+
+msgid "the same identity is known for: {names}, and nobody has said which firmware runs on this FM-1"
+msgstr "la misma identidad también se conoce para: {names}, y nadie ha dicho qué firmware funciona en este FM-1"
+
+msgid "This FM-1 answers “FM-1_015” like the original V15, but it may be another firmware: {why}. (TransitFM1 answers “FM-1_015” on purpose.) So the plan does not assume the original V15 and keeps the V15 step. If it is the original V15: connect it so that it shows the USB ID 4c4a:c755 (page “Overview”) and answer “Which firmware is running here?” with the original firmware – then the plan has no V15 step. TransitFM1 shows the USB ID 1209:0001 and its name as serial number (“TransitFM1-…”)."
+msgstr "Este FM-1 responde «FM-1_015» como el V15 original, pero podría ser otro firmware: {why}. (TransitFM1 responde «FM-1_015» a propósito.) Por eso el plan no da por hecho el V15 original y mantiene el paso por V15. Si es el V15 original: conéctalo de modo que muestre el ID USB 4c4a:c755 (página «Resumen») y responde a «¿Qué firmware se ejecuta aquí?» con el firmware original; entonces el plan no tiene paso por V15. TransitFM1 muestra el ID USB 1209:0001 y su nombre como número de serie («TransitFM1-…»)."

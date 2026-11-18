@@ -362,7 +362,8 @@ def test_rescue_reads_the_flash_id(tmp_path):
 def test_tested_table_says_nothing_ran_on_a_newer_unit():
     assert tested.STEPS["new_chip"][0] is False
     text = (ROOT / "docs" / "UNTESTED.md").read_text("utf-8")
-    assert "`new_chip`" in text and "nothing was run on a newer unit" in text
+    assert "`new_chip`" in text and "nothing was written to a newer unit" in text
+    assert "**not** a test of the public V15 package" in text          # the one unit that was only looked at
 
 
 # ================================================================================================ review fixes

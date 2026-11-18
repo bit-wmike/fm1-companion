@@ -636,3 +636,78 @@ def test_udev_hint_is_not_printed_when_the_caller_handles_the_rule(installer, mo
     call = sh.index('core.py" install')
     assert "--no-udev-hint" in sh[:call] and '"$UDEV" != ask || -t 0' in sh[:call]
     assert '"--no-udev-hint"' in (ROOT / "packaging/installer/core.py").read_text()
+
+
+# ---------------------------------------------------------------- finding 20: the rescue tool's packages
+
+def test_rescue_packages_are_installed_by_default_and_named_together(monkeypatch):
+    from fm1companion import diag
+    from fm1companion.flash import uboot
+    d = json.loads((ROOT / "fm1companion/data/deps.json").read_text("utf-8"))
+    rec = {x["package"]: x for x in d["recommended"]}
+    sug = {x["package"] for x in d["suggested"]}
+    # what the rescue in ROM boot mode imports is "recommended" (install.sh and the .deb install it by default) …
+    assert set(uboot.DEPS.values()) == {"python3-crcmod", "python3-yaml"} <= set(rec)
+    assert [rec[p]["check"]["module"] for p in ("python3-crcmod", "python3-yaml")] == ["crcmod", "yaml"]
+    assert not set(uboot.DEPS.values()) & sug and {"python3-pycryptodome", "python3-tqdm"} <= sug
+    # … which is what the bundled tool really imports (its loader function, and its own test's skip condition)
+    src = (ROOT / "fm1companion/vendor/unbricker/fm1_unbrick.py").read_text("utf-8")
+    body = src[src.index("def load_jlub"):src.index("def ", src.index("def load_jlub") + 10)]
+    assert "import yaml" in body and "jltech.uboot" in body
+    assert not __import__("re").search(r"^\s*(import|from)\s+(Cryptodome|Crypto|tqdm)\b", src, __import__("re").M)
+    # every missing one is named in ONE apt command: on the Recovery page and in `fm1-companion --check`
+    monkeypatch.setattr(uboot.importlib.util, "find_spec", lambda name: None)
+    assert uboot.missing_deps() == ["python3-crcmod", "python3-yaml"]
+    states = [diag.DepState(p, False, False, "x") for p in ("python3-crcmod", "python3-yaml")]
+    assert diag.apt_command(states) == "sudo apt install python3-crcmod python3-yaml"
+    assert diag.apt_command(states, include_optional=False) == ""    # a recommendation, not an error at start-up
+    assert "python3-crcmod python3-yaml" in (ROOT / ".github/workflows/tests.yml").read_text("utf-8")
+
+
+# ---------------------------------------------------------------- finding 21: no needless V15 step on a unit on V15
+
+def v15_plan(**kw):
+    from fm1companion import firmware
+    from fm1companion.flash import planner as P
+    st = P.DeviceState(identity="FM-1_015", pinned=True, revision="old", **kw)
+    return P, P.plan_install(st, P.Target.from_spec(firmware.spec("skiff"), tag="v2.7"), backup=False)
+
+
+def test_a_unit_on_the_original_v15_gets_no_second_v15_write():
+    # the owner's orange unit: identity FM-1_015, USB 4c4a:c755, candidates "stock-v15" and "stock", choice "?"
+    for key in ("", "stock-v15", "stock"):
+        P, p = v15_plan(firmware_key=key, candidates=["stock-v15", "stock"], usb_id="4c4a:c755")
+        assert p.v15_option == "none" and not p.via_stock and "stock" not in p.kinds(), key
+        assert sum(1 for s in p.steps if s.writes) == 1 and not any("TransitFM1" in w for w in p.warnings)
+    P, p = v15_plan()                                   # nothing known beyond the identity: as before
+    assert p.v15_option == "none" and not p.via_stock
+
+
+def test_an_fm1_015_that_may_be_another_firmware_keeps_the_v15_step_and_says_why():
+    # the identity is also known for a custom firmware, and nobody said which one runs: nothing is skipped
+    P, p = v15_plan(candidates=["stock-v15", "stock", "transitfm1"], usb_id="")
+    assert p.v15_option == "default_on" and p.via_stock and p.kinds().count("stock") == 1
+    why = next(w for w in p.warnings if "TransitFM1" in w)
+    assert "FM-1_015" in why and "transitfm1" in why and "4c4a:c755" in why and "1209:0001" in why
+    # the Felucca family's USB ID under the identity FM-1_015 is not the original firmware, whatever was answered
+    for key in ("", "stock-v15"):
+        P, p = v15_plan(firmware_key=key, candidates=["stock-v15", "stock"], usb_id="1209:0001")
+        assert p.v15_option == "default_on" and p.via_stock and any("1209:0001" in w for w in p.warnings), key
+        assert P.running_firmware(p.state) == "" and P.current_name(p.state) == ""
+
+
+def test_the_plan_follows_the_answer_to_which_firmware_runs():
+    cands = ["stock-v15", "stock", "transitfm1"]
+    P, p = v15_plan(firmware_key="stock-v15", candidates=cands, usb_id="4c4a:c755")     # answered: the original
+    assert p.v15_option == "none" and not p.via_stock and not any("TransitFM1" in w for w in p.warnings)
+    P, p = v15_plan(firmware_key="transitfm1", candidates=cands, usb_id="1209:0001")    # answered: TransitFM1
+    assert p.v15_option == "default_on" and p.via_stock and P.running_firmware(p.state) == "transitfm1"
+    assert not any("may be another firmware" in w or "andere Firmware sein" in w for w in p.warnings)
+    # a stale record is no evidence: after the app's own V15 step the profile still says "melodee"
+    P, p = v15_plan(firmware_key="melodee", candidates=["stock-v15", "stock"], usb_id="4c4a:c755")
+    assert p.v15_option == "none" and not p.via_stock
+    # an update within that firmware stays an update (no V15 step), as for every other firmware
+    st = P.DeviceState(identity="FM-1_015", firmware_key="transitfm1", pinned=True, revision="old", usb_id="1209:0001")
+    same = P.plan_install(st, P.Target(name="TransitFM1", product="FM-1_015", family="felucca", key="transitfm1"),
+                          backup=False)
+    assert same.v15_option == "none"

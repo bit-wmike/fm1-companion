@@ -108,7 +108,21 @@ def device_state(ctx) -> "planner.DeviceState":
                                port=ctx.port.in_name if ctx.port else "", connected=ctx.port is not None,
                                ports=device_count(ctx), busy=journal.Journal.busy(),
                                pinned=target_pin(ctx) is not None, usb_notes=usb_notes(ctx),
-                               revision=device_revision(ctx), hubs=usb_hubs(ctx))
+                               revision=device_revision(ctx), hubs=usb_hubs(ctx),
+                               candidates=_identity_candidates(ctx),
+                               usb_id=(getattr(ctx.port, "usb_id", "") or "") if ctx.port else "")
+
+
+def _identity_candidates(ctx) -> list[str]:
+    """the firmware keys known for the identity the FM-1 reports (planner.v15_lookalike)"""
+    ident = getattr(ctx, "identity", "") or ""
+    if not ident:
+        return []
+    try:
+        from .device import firmware_candidates
+        return list(firmware_candidates(ident))
+    except Exception:  # noqa: BLE001 – a missing catalog must not stop the plan
+        return []
 
 
 def device_revision(ctx) -> str:

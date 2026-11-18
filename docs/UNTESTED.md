@@ -14,33 +14,40 @@ UI names in this list are the English labels of the app (the German UI uses the 
 
 ## Used on real hardware (as of 2.6.1)
 
-So far on **one** FM-1 with Melodee, on a Raspberry Pi 5:
+So far on **one** FM-1 (an earlier unit, flash chip 0x856014), on **one** Raspberry Pi 5 (Raspberry Pi OS Bookworm):
 
 | Function | Status |
 |---|---|
 | Connecting, detecting Melodee, editor protocol | used, works |
 | **Firmware update Melodee 1.6.0-rc.8 → 1.6.0 through the suite** (Firmware+ › Install) | done once, worked |
-| Full backup (read-only) | in use |
+| **Firmware switch KARMA 3.0.5 → original V15 → Skiff 2.7** through two self-powered USB hubs, careful mode (2026-11-18) | done once, worked; flight logs of both steps: 1244 and 2348 requests, no repeated request, no send failure, the FM-1 was back at the same USB path after every restart (update loader of the original firmware, V15, Felucca loader, Skiff). The kernel reported one `device descriptor read/64, error -71` at one re-connection and recovered by itself. The switch went on by itself after the V15 step |
+| Earlier switches on the same unit, directly at the Pi (2026-11-05): KARMA 3.0.3 and Melodee 1.6.1 via V15, V16 via V15, V15, JIANT V10.6c | known only from the device profile's history, which the app writes when an installation ends with the expected identity. No flight log, and nobody wrote down how the FM-1 behaved – so these do not count as a test report (in that session the app also split the one FM-1 into two profiles; fixed in 2.6.1) |
+| Detecting KARMA 3.0.5 (INFO "FELUCCA KARMA 3.0.5") and Skiff 2.7 (FM-1_727, INFO "FELUCCA v2.7") | seen once each, 2026-11-18 |
+| Full backup (read-only): Melodee; **KARMA 3.0.5** (14 objects, 0–9 and 32–35, twice, identical); **Skiff 2.7** (29 objects, 0–9 and 16–34, commands 34–36, twice, identical; on a freshly installed Skiff, so only three objects had content) | Melodee in use; KARMA and Skiff once each, 2026-11-18 |
 | MIDI (monitor, keyboard, connections) | basic functions in use |
-| Studio (fetch backup, play on screen) | basic functions in use |
+| Studio (fetch backup, play on screen) | basic functions in use; **fetch from a Skiff 2.7 FM-1 with the Skiff 2.2 twin** once (2026-11-18: opens with the version warning, projects empty on the fresh firmware) |
+| USB: the same path on every re-enumeration; the original firmware reports a serial number of the unit's own (two units: two different numbers), the Felucca-family firmwares none | seen on this one Pi (through the hubs and directly) on 2026-11-18. Other computers, hubs and USB controllers: not known |
+| A newer FM-1 (logo on the front) **as delivered**, read-only (2026-11-18) | one unit seen: USB 4c4a:c755, product "FM-1", it answers the update handshake as `FM-1_015`. So a factory build that calls itself version 15 runs on a newer unit. That is **not** a test of the public V15 package on such a unit: nothing was written to it |
 | System check | detects patterns taken from real Pi 5 logs (USB controller crash at the FM-1's audio start, fluidsynth.service occupies the HDMI sound card) |
 
-That is **one** device, **one** firmware family and **one** update path. Everything else in this list counts as
+That is **one** device, **two** updates/switches with logs, **one** computer. **Not** run on hardware: writing back
+from the Studio, restoring a backup, anything that writes to a newer FM-1. Everything else in this list counts as
 untested, even if it runs cleanly in the simulation.
 
 ### Per step – what the app shows before the click
 
 Every installation plan and the confirmations of the recovery, the factory voices and "own file" carry one line:
-"Tested on a real FM-1 so far: an update within Melodee. This step (…): only in the simulation." It comes from this
-table, which exists a second time in the code (`fm1companion/flash/tested.py`); `tests/test_flash.py` fails when the
-two differ. Change a row only after a hardware test report, and change both.
+"Tested on a real FM-1 so far: … . This step (…): only in the simulation." It comes from this
+table, which exists a second time in the code (`fm1companion/flash/tested.py`); `tests/test_flash_audit.py` fails
+when the two differ. Change a row only after a hardware test report, and change both. "yes" means: run **once**, on
+one earlier FM-1 at one Raspberry Pi 5, with logs – not "proven".
 
 | Step (`tested.py` key) | Run on a real FM-1 by this app |
 |---|---|
 | `update_melodee` – an update within Melodee | yes |
 | `update_same` – an update within another firmware than Melodee | no |
-| `switch` – a switch to another firmware | no |
-| `v15_step` – the intermediate step via the original V15 | no |
+| `switch` – a switch to another firmware | yes |
+| `v15_step` – the intermediate step via the original V15 | yes |
 | `chain_continue` – continuing a switch after the V15 step | no |
 | `to_stock` – going back to the original firmware | no |
 | `v16` – the original firmware V16 | no |
@@ -48,10 +55,16 @@ two differ. Change a row only after a hardware test report, and change both.
 | `resume` – finishing an interrupted installation | no |
 | `resources` – rewriting font and factory sounds | no |
 | `two_devices` – several FM-1 connected at once | no |
-| `usb_hub` – installing through a USB hub (careful mode) | no |
+| `usb_hub` – installing through a USB hub (careful mode) | yes |
 | `factory_voices` – restoring the factory voices of the original V15 | no |
 | `rom_restore` – writing in ROM boot mode (recovery stage 2) | no |
 | `new_chip` – anything on a newer FM-1 (logo on the front, flash UC25HQ80) | no |
+
+Why three rows stay "no" although something happened: `chain_continue` is the separate *Continue* after an
+interruption – in the run of 2026-11-18 the switch went on by itself after the V15 step, *Continue* was not used.
+`to_stock` and `v16`: the profile history of 2026-11-05 records a V16 and a V15 installation as finished, but
+without a log or a report. `usb_hub`: the run had no dropout, so careful mode's automatic resume never had to act –
+that part is still simulation only.
 
 ## Not tested on real hardware
 
@@ -59,23 +72,23 @@ two differ. Change a row only after a hardware test report, and change both.
 
 | Function | Status |
 |---|---|
-| Installing a different firmware (switch Melodee ↔ SLOOP ↔ Skiff …) | simulation only |
-| V15 intermediate step when switching firmware (always, except updates within the same firmware), *Continue* / *Dismiss* after the V15 step | simulation only. The policy follows what firmware authors ask for (start from V15); that the two-step path itself is safer than a direct switch between two Felucca-family firmwares is **not** shown by any test – the V15 step is a write without start protection, and it does not remove the old firmware's saved data |
+| Installing a different firmware (switch Melodee ↔ SLOOP ↔ Skiff …) | one switch on hardware (KARMA 3.0.5 → Skiff 2.7 via V15, see above); every other pair: simulation only |
+| V15 intermediate step when switching firmware (always, except updates within the same firmware), *Continue* / *Dismiss* after the V15 step | the V15 step ran once on hardware as part of that switch; *Continue* / *Dismiss*: simulation only. The policy follows what firmware authors ask for (start from V15); that the two-step path itself is safer than a direct switch between two Felucca-family firmwares is **not** shown by any test – the V15 step is a write without start protection, and it does not remove the old firmware's saved data |
 | Installing KARMA (built-in, packages pinned from its GitHub Pages site) | simulation only; the pinned checksums were compared with the files in a clone of KARMA's repository (all seven versions match), the download URLs themselves (commit-pinned raw files) are not fetched in CI |
 | Cancel during the check of the package (step 1) on a Felucca-family firmware; a lost last answer of step 1 (answered again, or reported as "nothing written") | simulation only, behaviour of the device taken from Melodee's `ota.c`. With the original firmware as the running firmware Cancel is switched off once the update has started – its step 1 is not known |
 | The start identity is compared with the plan when writing starts (`expect_identity`) | simulation only |
-| Back to the original (V15, V16) | simulation only |
-| Way back from V16 (via V15) | simulation only; whether a real V16 accepts a step back to V15 is unconfirmed |
+| Back to the original (V15, V16) | simulation only as a tested step. The device profile's history of 2026-11-05 records a V16 and a V15 installation on the owner's FM-1 as finished – no log, no report |
+| Way back from V16 (via V15) | simulation only; whether a real V16 accepts a step back to V15 is unconfirmed (the same history shows V15 installed four minutes after V16, which fits, but nobody recorded what the FM-1 did) |
 | Resuming after a power cut / aborted installation, CHECK HEAD detection (FAILED −5) and the way out the app names | simulation only; after a dropout the app says where the FM-1 *probably* is – it does not look again by itself |
 | Finishing an interrupted installation (update mode, rescue level 1) | simulation only |
 | Rewriting font & factory sounds (Melodee's resource tool) | only against the demo and source code; with 1.6.0 the update loader reports the resources as complete by itself |
 | Installing your own `.fwsc` file | simulation only |
-| Pinning the target device via the USB path after the restart, two FM-1 at the same time | simulation only. Whether the original firmware and its loader keep the same USB path on every computer, and whether they expose a serial number, has never been seen on hardware |
+| Pinning the target device via the USB path after the restart, two FM-1 at the same time | pinning by USB path: held in the one switch on hardware (same path at every restart, one Pi 5, through two hubs). Two FM-1 at the same time: simulation only. Telling two FM-1 apart by the original firmware's serial number: two units showed two different numbers; the matching rules of the app (a profile learns the number, the app asks instead of guessing) are tested as logic only. Whether the update loaders report the unit's own number is not known |
 | Downloads: https only, size limit, a download that breaks off | only against fake servers in the tests |
 | **Rescue level 2** (ROM boot mode: write back V15, repair settings, full backup) | only with the Unbricker's mock; pkexec, kernel module `sg`, jl-uboot-tool and handing the files over to the user never on a device. The Unbricker itself has been used on real devices by its community, its embedding in the app has not |
 | **"Is my FM-1 clean?"** | quick check (command 82) only against the demo and the Melodee source code; dump check only with model dumps built from real packages, never with a real 1 MiB dump; reading in ROM boot mode only with the mock |
 | **Clean up leftovers** (erase V16 leftovers in 0x93000–0xA8FFF sector by sector, expert mode, `flash/restzone.py`) | only with the Unbricker's mock. That the WL82 loader really limits "erase sector" to 4 KiB is an assumption – otherwise the block check after each sector stops |
-| **The newer FM-1** (logo on the front, flash UC25HQ80 0xB36014): the table of minimum versions (`data/hardware.json`), the question about the unit, the blocker / confirmation in the plan, the flash ID read in ROM boot mode or from a firmware's identity answer | **nothing was run on a newer unit.** The minimum versions are read from the firmwares' sources and release notes (commits named in the table), not measured; the plan's rule is tested as pure logic and in the UI test; that the original V15 works on these units is what other projects write (Felucca, ChoralRoot, TransitFM1, the Unbricker), not something this app has seen; about V16 on these units nothing is known. Whether a logo on the front always means the newer chip is the community's rule of thumb, not a fact from M-VAVE |
+| **The newer FM-1** (logo on the front, flash UC25HQ80 0xB36014): the table of minimum versions (`data/hardware.json`), the question about the unit, the blocker / confirmation in the plan, the flash ID read in ROM boot mode or from a firmware's identity answer | **nothing was written to a newer unit.** One newer unit was looked at read-only as delivered (2026-11-18): it identifies as `FM-1_015`, see "Used on real hardware" – that says nothing about the public V15 package on such a unit. The minimum versions are read from the firmwares' sources and release notes (commits named in the table), not measured; the plan's rule is tested as pure logic and in the UI test; that the original V15 works on these units is what other projects write (Felucca, ChoralRoot, TransitFM1, the Unbricker), not something this app has seen; about V16 on these units nothing is known. Whether a logo on the front always means the newer chip is the community's rule of thumb, not a fact from M-VAVE |
 | Rescue level 2 on the newer chip: the bundled Unbricker 1.2.1 (upstream a1eaf4d) accepts 0xB36014 | upstream's own tests with its mock only (they run in this suite); the app never wrote in ROM boot mode on either chip |
 | An identity answer that carries the flash ID (fm1-base builds of 2026-11-05/06: AMB-1 1.3.1, LOOM-8 0.13 …) is recognised as an FM-1 again and the ID is kept | only with answers built in the tests after felucca-bsp's `ota.c` |
 | Rescue level 3 (Transporter with XIAO RP2040) | instructions only; the Pico-instead-of-XIAO variant is unverified |
@@ -87,15 +100,15 @@ two differ. Change a row only after a hardware test report, and change both.
 |---|---|
 | **Writing back to the FM-1** (Studio › Write back to the FM-1) | simulation only (safety backup first, version check) |
 | Sound fidelity of the twin compared with the device | firmware code identical, timing and overload behaviour not |
-| **Skiff twin** (2.2, 2.1.1: fetch from a Skiff FM-1, open a Skiff backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real Skiff FM-1 or a backup made by a real device or Skiff's web editor |
-| Skiff 2.x backups in the backup layer (29 objects with the pattern bank) | only with backups of the Skiff twin |
+| **Skiff twin** (2.2, 2.1.1: fetch from a Skiff FM-1, open a Skiff backup, write back) | only against the twin itself and the suite's own code (simulation); never a write-back to a real Skiff FM-1. *Fetch* ran once against a real Skiff 2.7 FM-1 with the 2.2 twin (freshly installed firmware, empty projects) |
+| Skiff 2.x backups in the backup layer (29 objects with the pattern bank) | backups of the Skiff twin, and two backups of a real Skiff 2.7 FM-1 (2026-11-18, nearly empty: fresh firmware). Restoring one to a device: never |
 | **JIANT FM twin** (V10.6z2, V10.60, V10.61: fetch from a JIANT FM-1, open a JIANT backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real JIANT FM-1 or a backup made by a real device or JIANT's web editor |
 | JIANT backups in the backup layer (43 objects: 0–10, the songs' sections 40–71; 35 objects from V10.6p) | only with backups of the JIANT twin; the device detection by INFO "JIANT …" and identity FM-1_909 only in tests |
 | **SLOOP twin** (2.8.5, 2.8.4: fetch from a SLOOP FM-1, open a SLOOP backup, write back) | only against the twin itself, the demo device and the suite's own code (simulation); never against a real SLOOP FM-1 or a backup made by SLOOP's web editor on a real device |
 | **CoralFlower twin** (0.7.1, 0.7: fetch from a CoralFlower FM-1, open a CoralFlower backup, write back with RESTART) | only against the twin itself and the suite's own code (simulation); never against a real CoralFlower FM-1 or a backup made by a real device or CoralFlower's web installer |
 | CoralFlower backups in the backup layer (26 objects: 6–11, 30, 31, 50–67; 8, 14, 17 in 0.1–0.4.2) | only with backups of the CoralFlower twin; the restart after a restore (RESTART 72) and the device detection by INFO "CoralFlower …" and identity FM-1_930 only in tests |
-| **KARMA twin** (3.1, 3.0.5: fetch from a KARMA FM-1, open a KARMA backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real KARMA FM-1 or a backup made by a real device or KARMA's web editor |
-| KARMA backups in the backup layer (SLOOP's protocol and format, 14 objects; FUN7 projects; SLOOP backups onto KARMA) | only with backups of the KARMA twin; the device detection by INFO "FELUCCA KARMA …" and identity FM-1_926 only in tests |
+| **KARMA twin** (3.1, 3.0.5: fetch from a KARMA FM-1, open a KARMA backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real KARMA FM-1 (the backup of a real KARMA 3.0.5 was made, not opened in the twin as a test) |
+| KARMA backups in the backup layer (SLOOP's protocol and format, 14 objects; FUN7 projects; SLOOP backups onto KARMA) | backups of the KARMA twin, and two backups of a real KARMA 3.0.5 FM-1 (2026-11-18, 14 objects each, identical); the detection by INFO "FELUCCA KARMA 3.0.5" was seen on that device. Restoring, FUN7 projects, SLOOP backups onto KARMA: only in tests |
 | **Felucca twin** (1.8.1, 1.8.0: fetch from a Felucca FM-1, open a Felucca backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real Felucca FM-1 or a backup made by Felucca's own web editor on a device |
 | Felucca recognition next to SLOOP (INFO "FELUCCA v…" vs "FELUCCA SLOOP …", FM-1_900 / FM-1_9XY) and the Felucca twin for Felucca forks (with a warning) | only in tests (fake INFO links, remembered identities); no fork device tried |
 | **ChoralRoot FM-1 twin** (0.39, 0.38: fetch from a ChoralRoot FM-1, open a ChoralRoot backup, write back with RESTART) | only against the twin itself and the suite's own code (simulation); never against a real ChoralRoot FM-1 or a backup made by ChoralRoot's installer on a device |
@@ -111,7 +124,8 @@ two differ. Change a row only after a hardware test report, and change both.
 
 ### Backups, presets, projects, samples
 - Restoring a backup to the device (full and partial).
-- Real SLOOP and Skiff: backup (commands 34–36), sample upload, "stop song" behaviour.
+- Real SLOOP: backup (commands 34–36). Real SLOOP and Skiff: sample upload, "stop song" behaviour. (The backup of a
+  real Skiff 2.7 ran once, see above.)
 - Writing, renaming, deleting a preset and loading it onto a track on real Melodee; FM6_PUT and DX7 SysEx to the
   original firmware.
 - Writing a pattern/song (Compose, From MIDI File) on a real device.

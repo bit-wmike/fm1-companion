@@ -2682,17 +2682,9 @@ msgstr "Gemerkt: Auf diesem FM-1 läuft {firmware} (Kennung {id})."
 msgid "Remembered: firmware unknown – installations count as a firmware change (with V15 intermediate step)."
 msgstr "Gemerkt: Firmware unbekannt – Installationen gelten als Firmware-Wechsel (mit V15-Zwischenschritt)."
 
-#: fm1companion/ui/device.py:566
-msgid "Create new device …"
-msgstr "Neues Gerät anlegen …"
-
 #: fm1companion/ui/device.py:568
 msgid "Which FM-1 is this?"
 msgstr "Welches FM-1 ist das?"
-
-#: fm1companion/ui/device.py:569
-msgid "This FM-1 has no serial number. Which of your devices is it?"
-msgstr "Dieses FM-1 hat keine Seriennummer. Welches deiner Geräte ist es?"
 
 #: fm1companion/ui/device.py:572
 msgid "New device"
@@ -4261,3 +4253,12 @@ msgstr "{firmware} schreibt Projekte, Preset-Banken und Einstellungen nur, solan
 
 msgid "The firmware on the FM-1 only writes projects, preset banks and settings while nothing is playing."
 msgstr "Die Firmware auf dem FM-1 schreibt Projekte, Preset-Banken und Einstellungen nur, solange nichts läuft."
+
+msgid "A new FM-1 that I have not used with this app before …"
+msgstr "Ein neues FM-1, das ich mit dieser App noch nicht benutzt habe …"
+
+msgid "Is this an FM-1 you have used with this app before? The app cannot tell by itself: an FM-1 only reports a serial number while it runs the original firmware. Please choose:"
+msgstr "Ist das ein FM-1, das du schon mit dieser App benutzt hast? Die App kann das nicht selbst erkennen: Ein FM-1 meldet nur dann eine Seriennummer, wenn die Original-Firmware läuft. Bitte wähle:"
+
+msgid "Possibly the same FM-1 as “{other}”: both were last seen at the same USB port, one with a serial number and one without. An FM-1 only reports a serial number under the original firmware, and earlier versions of this app then made a second profile. If it is one FM-1: “Merge …” joins the two (backups are moved, nothing is deleted). If you own two FM-1, leave them as they are."
+msgstr "Möglicherweise dasselbe FM-1 wie „{other}“: Beide wurden zuletzt am selben USB-Anschluss gesehen, eines mit Seriennummer und eines ohne. Ein FM-1 meldet nur unter der Original-Firmware eine Seriennummer, und frühere Versionen dieser App haben dann ein zweites Profil angelegt. Wenn es ein FM-1 ist: „Zusammenführen …“ verbindet die beiden (Backups werden verschoben, nichts wird gelöscht). Wenn du zwei FM-1 besitzt, lass sie, wie sie sind."
