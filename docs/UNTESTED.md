@@ -30,6 +30,7 @@ So far on **two** FM-1 of one owner – an earlier unit (flash chip 0x856014) an
 | USB: the same path on every re-enumeration; the original firmware reports a serial number of the unit's own (two units: two different numbers), the Felucca-family firmwares none | seen on this one Pi (through the hubs and directly) on 2026-11-18. Other computers, hubs and USB controllers: not known |
 | A newer FM-1 (logo on the front) **as delivered**, read-only (2026-11-18) | one unit seen: USB 4c4a:c755, product "FM-1", it answers the update handshake as `FM-1_015`. So a factory build that calls itself version 15 runs on a newer unit. That is **not** a test of the public V15 package on such a unit: that package was never written to one |
 | **First installation on a newer FM-1** (2026-11-18): that unit, from its factory firmware (identity `FM-1_015`) to **Skiff 2.7**, directly at the Pi, careful mode off, no V15 step | done once, worked; flight log: 2348 requests, no repeated request, no send failure, writing 53 s, `FM-1_727` back after 8.5 s. Saving works on the chip: backup → a change on the unit, SAVE, power off and on → the next backup differs in objects 0, 1 and 6, all with a valid CRC32. **Scope: one unit, one firmware (Skiff 2.7), one computer.** Says nothing about any other firmware or version on this chip, about writing the public V15 package to such a unit, about the recovery in ROM boot mode there, or about m-bootloader. In that session the app afterwards took the unit for the owner's other FM-1 (fixed in 2.6.1: profiles) |
+| SLOOP 3 3.4.0 (installed outside the app) and m-bootloader 2.4's MIDI MODE on the earlier unit (2026-11-18), **read only** | seen once: recognition, the bundled editor connected, one SLOOP 3 backup, the installation refused – see “SLOOP 3 and m-bootloader” below. Nothing written |
 | System check | detects patterns taken from real Pi 5 logs (USB controller crash at the FM-1's audio start, fluidsynth.service occupies the HDMI sound card) |
 
 That is **two** devices of one owner, **three** installations with logs, **one** computer. **Not** run on hardware:
@@ -100,36 +101,55 @@ that part is still simulation only.
 
 ### SLOOP 3 and m-bootloader
 
-Nothing of this has run on a real FM-1 with this app. The stand-ins: **the PC twin** = SLOOP 3's own `host/twin.c`
+**With the app on a real FM-1, once (2026-11-18):** the owner's earlier unit (flash 0x856014), SLOOP 3 3.4.0-beta and
+m-bootloader 2.4 installed on it outside the app, at one Raspberry Pi 5 (Raspberry Pi OS Bookworm, Qt 6.4.2), **read
+only**. This table exists a second time in the code (`SLOOP3_HARDWARE` in `fm1companion/flash/tested.py`);
+`tests/test_flash_audit.py` fails when the two differ.
+
+| What (`tested.py` key) | On a real FM-1 with this app |
+|---|---|
+| `sloop3_connect` – recognising SLOOP 3 3.4.0 and connecting its bundled editor (3.4.0) | seen once: recognised by its own INFO (USB `1209:0001` "FM-1 SLOOP 3"); the bundled 3.4.0 editor showed "Connected: SLOOP 3.4.0, protocol 2" with live values, on Qt 6.4.2 (Chromium 102). Its tabs and editing were not gone through |
+| `sloop3_backup` – a SLOOP 3 backup (read only) | seen once: `sloop3-backup` with 6 parts (objects 0–5), every CRC-32 valid, the empty sample slots listed as not included; nothing on the FM-1 changed |
+| `mboot_recognise` – recognising m-bootloader 2.4's MIDI MODE (not as a Felucca update loader) | seen once: USB `1209:0002` "FM-1 Update" (bcdDevice 2.00) – the same USB ID as a Felucca update loader – taken as MIDI MODE by its answer to 0x12, which also gave the flash ID 0x856014 (stored with the device) |
+| `sloop3_refusal` – refusing an installation under a running SLOOP 3 | seen once: "Install on active FM-1" (Skiff 2.7 chosen) refused at once, nothing was sent. (The button is now off in that state, the refusal stays as a second check) |
+| `sloop3_restore` – restoring a SLOOP 3 backup | not run (writes) – stand-in only, see below |
+| `mboot_flash_copy` – the flash backup in MIDI MODE | not run – stand-in only, see below |
+| `sloop3_writing` – anything that writes to a SLOOP 3 or m-bootloader unit | not run |
+| `sloop3_new_chip` – SLOOP 3 or m-bootloader on a newer FM-1 (logo on the front) | not run |
+
+The run also showed a profile mix-up: after the owner answered "Which FM-1 is this?" for the SLOOP 3 unit, the profile
+of the other FM-1 (not plugged in) had lost its firmware. Fixed afterwards (2.6.1: a unit that answers nothing changes
+no profile's firmware, and the USB name "FM-1 SLOOP 3" counts as SLOOP 3); the fix itself was not run on hardware.
+
+Everything else below ran **only against stand-ins**: **the PC twin** = SLOOP 3's own `host/twin.c`
 ("serve": `fw/main.c` 3.3.7 on a simulated FM-1 with the published application area, built from the tag) and
 **m-bootloader's code** = its `src/midi_update.c` and `src/core.c` of 2.4, compiled for the PC with a flash file behind
 it. Neither is in the repository; the tests in the repository use `tests/fake_sloop3.py` (which replays the twin's
 recorded answers) and `tests/fake_mboot.py` (written from m-bootloader's specification).
 
-**Seen on one real FM-1, outside the app (2026-11-18, the owner's earlier unit, flash 0x856014):** m-bootloader 2.4
-installed with M-Flasher 0.12.1, SLOOP 3 3.4.0-beta with the author's installer page in Chromium. MIDI MODE is USB
-`1209:0002`, product "FM-1 Update", bcdDevice 2.00 – the same USB ID as the Felucca family's update loaders, only name
-and device version differ. SLOOP 3 is `1209:0001`, "FM-1 SLOOP 3", bcdDevice 3.10, MIDI port "FM-1 SLOOP 3 MIDI 1". So
-the names the app relies on are confirmed. **The app itself has not yet talked to that unit** – everything below stays
-"stand-in only" until it has.
+**Seen on the same FM-1, outside the app (2026-11-18):** m-bootloader 2.4 installed with M-Flasher 0.12.1, SLOOP 3
+3.4.0-beta with the author's installer page in Chromium. MIDI MODE is USB `1209:0002`, product "FM-1 Update",
+bcdDevice 2.00 – the same USB ID as the Felucca family's update loaders, only name and device version differ. SLOOP 3
+is `1209:0001`, "FM-1 SLOOP 3", bcdDevice 3.10, MIDI port "FM-1 SLOOP 3 MIDI 1". So the names the app relies on are
+confirmed.
 
 | Function | Status |
 |---|---|
-| Telling MIDI MODE from a Felucca update loader (same USB ID): product name exactly "FM-1 Update", bcdDevice 2.00 where the system tells it, the handshake answer, and the answer to 0x12; a port that looks like MIDI MODE and does not answer 0x12 gets nothing sent either | unit tests with the values seen on the real unit; not run against it |
-| A SLOOP 3 unit beside another FM-1 (no USB serial number, no identity): the owner is asked which unit it is when the profile at that USB port last ran another firmware | unit test only |
+| Telling MIDI MODE from a Felucca update loader (same USB ID): product name exactly "FM-1 Update", bcdDevice 2.00 where the system tells it, the handshake answer, and the answer to 0x12; a port that looks like MIDI MODE and does not answer 0x12 gets nothing sent either | the real unit in MIDI MODE was told apart once (`mboot_recognise` above); a port that does not answer 0x12, and other loaders: unit tests only |
+| A SLOOP 3 unit beside another FM-1 (no USB serial number, no identity): the owner is asked which unit it is when the profile at that USB port last ran another firmware | the question came once on the real unit (2026-11-18) and named the right profile; the other profile lost its firmware then (see above, fixed afterwards: unit test and replay with the real device layer only) |
 | SLOOP 3 3.4.0: its own editor (bundled beside the one of 3.3.x), backup round trip | PC twin of 3.4.0, in the app's window on Qt 6.11 |
-| Recognising SLOOP 3 (its INFO; the Felucca probes stay unanswered and change nothing) | PC twin: all five probes unanswered, INFO before and after the same. A real FM-1's USB name "FM-1 SLOOP 3" is from the source (`hal/fm1/usb.c`), not seen |
-| SLOOP 3's bundled web editor on the Editor page (connect, lists, LIVE state, all 13 tabs, no JavaScript error, only its own protocol goes out) | PC twin, in the app's window on Qt 6.11 (`tests/ui_sloop3_test.py` with `SLOOP3_DEVICE_CMD`); in the repository with the fake. **Not run on Qt 6.4 / Chromium 102**: checked by reading (script parses as ES2020, one newer CSS function with the app's fallback) |
+| Recognising SLOOP 3 (its INFO; the Felucca probes stay unanswered and change nothing) | seen once on the real unit (`sloop3_connect` above); that the probes change nothing: PC twin only (all five probes unanswered, INFO before and after the same) |
+| SLOOP 3's bundled web editor on the Editor page (connect, lists, LIVE state, all 13 tabs, no JavaScript error, only its own protocol goes out) | PC twin, in the app's window on Qt 6.11 (`tests/ui_sloop3_test.py` with `SLOOP3_DEVICE_CMD`); in the repository with the fake. On the real unit with Qt 6.4.2 / Chromium 102 once: connected, live values (`sloop3_connect` above) – the tabs one by one, and the CSS fallback, were not checked there |
 | Editing in the editor beyond opening the tabs (drawing notes, writing samples, kits, the FM6 bank, projects) | not driven by the app's tests; the author's own `tests/editor_e2e.js` does that in Chromium against the same twin |
 | Recording a sample with the microphone in the bundled editor | not available (the web view grants no microphone); a file can be dropped |
-| `sloop3-backup`: read, restore of sounds, FM6 bank, SYN kits and project, read back and compared | PC twin (`tests/test_sloop3.py` with `SLOOP3_TWIN_CMD`: back up, change, restore, back up again); in the repository with the fake. Reading while SLOOP 3 plays on a real FM-1: unknown – stop playback |
+| `sloop3-backup`: read, restore of sounds, FM6 bank, SYN kits and project, read back and compared | reading: once on the real unit (`sloop3_backup` above). The restore: PC twin only (`tests/test_sloop3.py` with `SLOOP3_TWIN_CMD`: back up, change, restore, back up again); in the repository with the fake. Reading while SLOOP 3 plays on a real FM-1: unknown – stop playback |
 | Samples of SLOOP 3 in a backup | not possible over its protocol (no read command); only in a flash backup |
-| Recognising m-bootloader's MIDI MODE (0x12) and the flash chip (JEDEC ID → hardware revision) | m-bootloader's code on the PC, with both JEDEC IDs. That a real unit's port is named "FM-1 Update" is from its source (`src/usb_midi.c`) and specification |
-| Flash backup in MIDI MODE (0x23 reads, compared with the chip's CRC-32 from 0x24) | m-bootloader's code on the PC: 1 MiB read, identical to the flash file. Speed and reliability over real USB: unknown. m-bootloader versions before the read commands (the installer page mentions some that do not answer reads): the app then reports “does not answer” and saves nothing |
+| Recognising m-bootloader's MIDI MODE (0x12) and the flash chip (JEDEC ID → hardware revision) | the earlier chip (0x856014) once on the real unit (`mboot_recognise` above); the newer chip's ID: m-bootloader's code on the PC only |
+| Flash backup in MIDI MODE (0x23 reads, compared with the chip's CRC-32 from 0x24) | not run on the real unit (`mboot_flash_copy`); m-bootloader's code on the PC: 1 MiB read, identical to the flash file. Speed and reliability over real USB: unknown. m-bootloader versions before the read commands (the installer page mentions some that do not answer reads): the app then reports “does not answer” and saves nothing |
 | 0x12 sent to an update loader that is not m-bootloader | not sent by design: only a port named exactly "FM-1 Update" is asked (Felucca-family loaders are "<Name> Update"). What M-VAVE's or a Felucca loader would do with 0x12 was not tried |
 | Installing SLOOP 3, installing m-bootloader | **not done by the app** (the author's installer page; M-Flasher / M-UPGRADE) |
 | The blocker for the newer hardware revision (no installer page offered; explicit confirmation when unknown) | page logic only (`tests/ui_sloop3_test.py`) |
-| Installing another firmware from m-bootloader's MIDI MODE with the app's installer | **refused by the app** (it tells MIDI MODE from an update loader by 0x12); page logic and unit test only. m-bootloader's README lists the browser installers it was tested with |
+| Installing another firmware from m-bootloader's MIDI MODE with the app's installer | **refused by the app** (it tells MIDI MODE from an update loader by 0x12; “Install on active FM-1” is off there, and the installer and Recovery › “Finish installation” refuse it again); page logic, UI test and unit test only – not pressed on the real unit. m-bootloader's README lists the browser installers it was tested with |
 
 ### Studio
 

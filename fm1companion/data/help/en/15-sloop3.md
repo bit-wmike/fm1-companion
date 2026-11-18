@@ -49,5 +49,10 @@ do not rely on it on stage yet. It is not SLOOP 2.x with a new number – the ap
   installer page in the browser.
 * If SLOOP 3 does not start: hold OCT− at power-on for its RESCUE, or hold PLAY for m-bootloader's menu.
 * All of this was checked on the author's PC twin of SLOOP 3 3.3.6, 3.3.7 and 3.4.0 (the firmware's code on a simulated
-  FM-1) and against m-bootloader 2.4's own MIDI MODE code on a PC – **never on a real FM-1 by this app**.
+  FM-1) and against m-bootloader 2.4's own MIDI MODE code on a PC.
+* **On a real FM-1, once, read only** (2026-11-18: one earlier unit, one Raspberry Pi 5): the app recognised SLOOP 3
+  3.4.0, its bundled editor connected, a SLOOP 3 backup was read (6 parts, all checksums valid), m-bootloader 2.4's
+  MIDI MODE was recognised (not mistaken for an update mode), and an installation under the running SLOOP 3 was
+  refused with nothing sent. **Not tried on a real FM-1:** restoring a SLOOP 3 backup, the flash backup in MIDI MODE,
+  anything that writes, and anything on a newer FM-1 (logo on the front).
 * More: [Switching firmware](help:02-firmware) · [Backups](help:04-backups) · [Links](help:10-links)

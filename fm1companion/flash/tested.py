@@ -38,6 +38,21 @@ STEPS: dict[str, tuple[bool, str]] = {
     "new_chip": (False, N_("anything else on a newer FM-1 (logo on the front, flash UC25HQ80)")),
 }
 
+# SLOOP 3 and m-bootloader on a real FM-1 – nothing of it is a writing step of the app's installer, so it is not in
+# STEPS (and not in the plans' line). As of 2026-11-18: ONE earlier unit (flash 0x856014, SLOOP 3 3.4.0 and
+# m-bootloader 2.4 installed outside the app), ONE Raspberry Pi 5 (Qt 6.4.2), read only. docs/UNTESTED.md ("SLOOP 3 and
+# m-bootloader") repeats this table; tests/test_flash_audit.py keeps the two in sync.
+SLOOP3_HARDWARE: dict[str, tuple[bool, str]] = {
+    "sloop3_connect": (True, "recognising SLOOP 3 3.4.0 and connecting its bundled editor (3.4.0)"),
+    "sloop3_backup": (True, "a SLOOP 3 backup (read only)"),
+    "mboot_recognise": (True, "recognising m-bootloader 2.4's MIDI MODE (not as a Felucca update loader)"),
+    "sloop3_refusal": (True, "refusing an installation under a running SLOOP 3"),
+    "sloop3_restore": (False, "restoring a SLOOP 3 backup"),
+    "mboot_flash_copy": (False, "the flash backup in MIDI MODE"),
+    "sloop3_writing": (False, "anything that writes to a SLOOP 3 or m-bootloader unit"),
+    "sloop3_new_chip": (False, "SLOOP 3 or m-bootloader on a newer FM-1 (logo on the front)"),
+}
+
 
 def tested(kind: str) -> bool:
     return bool(STEPS.get(kind, (False, ""))[0])
