@@ -54,6 +54,9 @@ class OverviewPage(QWidget):
             self.lbl[k].setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.lbl[k].setWordWrap(True)
             self.dev_form.addRow(title, self.lbl[k])
+        # which firmware runs here (asked once on connecting, when the ID fits several): changeable with the link
+        self.lbl["Firmware"].setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.lbl["Firmware"].linkActivated.connect(lambda _href: self.change_firmware())
         # hardware revision (logo on the front = the newer flash chip): shown, and changeable with the link
         self.lbl["Unit"].setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         self.lbl["Unit"].linkActivated.connect(lambda _href: self.set_unit())
@@ -197,6 +200,9 @@ class OverviewPage(QWidget):
             fw_text = _("unknown – please choose")
         else:
             fw_text = firmware_name(c.firmware_key) or (_("unknown") if port else "–")
+        from .common import firmware_changeable
+        if firmware_changeable(c):                  # (the question of the first connection, again – also to correct it)
+            fw_text = html.escape(fw_text) + " · <a href='#firmware'>" + _("change") + "</a>"
         self.lbl["Firmware"].setText(fw_text)
         from .common import fw_label
         if c.info:
@@ -259,15 +265,23 @@ class OverviewPage(QWidget):
         except OSError as e:
             self.bk_text.setText(_("<b>Backup folder not reachable.</b> {error}").format(error=getattr(e, 'strerror', '') or e))
             return
+        # a firmware without the editor protocol (the original one, for example) offers no backup over USB: say that,
+        # instead of "best make one now" above a greyed-out button
+        no_usb = ""
+        if c.port is not None and not c.connected and getattr(c, "midi_connected", False) \
+                and getattr(c, "protocol", "") != "update":
+            from .backups_page import no_backup_reason
+            no_usb = no_backup_reason(c)
         if not metas:
-            self.bk_text.setText(_("No backup of this device yet. <b>Best make one now.</b>"))
+            self.bk_text.setText(html.escape(no_usb) if no_usb
+                                 else _("No backup of this device yet. <b>Best make one now.</b>"))
             return
         # date and firmware from the index every backup kind goes through (autobackup.read_meta): the formats
         # name their date differently ("created", SLOOP/KARMA "date") – reading the file here missed the latter
         m = metas[0]
         self.bk_text.setText(_("Last backup: <b>{date}</b> ({firmware}), {n} in total, {size}.").format(
             date=fmt_date(m.created or m.when.isoformat()), firmware=m.firmware or "?", n=len(metas),
-            size=fmt_size(sum(x.size for x in metas))))
+            size=fmt_size(sum(x.size for x in metas))) + (f"<br>{html.escape(no_usb)}" if no_usb else ""))
 
     def showEvent(self, e):
         """backups are made in several places (Backups, Studio, before an installation, automatically): the
@@ -291,7 +305,8 @@ class OverviewPage(QWidget):
         if i and i.get("firmware") and i.get("firmware") != c.firmware_key:
             i = {}                                   # a result from another device doesn't apply here
         if not c.firmware_key and not i:
-            self.up_text.setText(_("Firmware unknown – please choose (note above) or “To the firmwares” (Firmware+).")
+            self.up_text.setText(_("Firmware unknown – please choose it under “Device” (Firmware: “change”) or go “To the firmwares” "
+                                   "(Firmware+).")
                                  if getattr(c, "firmware_ambiguous", False) else
                                  _("Firmware unknown – a version check is not possible like this."))
             return
@@ -331,6 +346,11 @@ class OverviewPage(QWidget):
                 text += "<br><span style='color:#da4453'>" + hardware.running_warning(
                     firmware_name(key) or key, sup, key) + "</span>"
         return text
+
+    def change_firmware(self) -> str:
+        """“Which firmware is running here?” again (the link in the Firmware row) -> the answer, "" if closed"""
+        ask = getattr(self.ctx, "ask_firmware", None)
+        return ask(force=True) if callable(ask) else ""
 
     def set_unit(self, rev: str | None = None):
         p = self.ctx.profile

@@ -1106,6 +1106,20 @@ def fw_label(version: str, key: str = "") -> str:
     return _re.sub(r"\bFELUCCA\s+(?=(?:SLOOP|KARMA)\b)", "", v, flags=_re.IGNORECASE)
 
 
+def firmware_changeable(ctx) -> bool:
+    """Can the user (re)answer “Which firmware is running here?” for the active device? Only where the app cannot
+    ask the firmware itself, and the identifier fits several firmwares or an answer is already stored."""
+    port, ident = getattr(ctx, "port", None), getattr(ctx, "identity", "")
+    if (port is None or not ident or getattr(ctx, "info", None) is not None or getattr(port, "update_mode", False)
+            or getattr(ctx, "is_virtual", False) or getattr(ctx, "protocol", "") != "generic"):
+        return False
+    prof = getattr(ctx, "profile", None)
+    if prof is not None and (getattr(prof, "firmware_choice", None) or {}).get(ident):
+        return True
+    from .device import firmware_candidates
+    return len(firmware_candidates(ident)) > 1
+
+
 def device_title(ctx) -> str:
     """ctx.title() with the firmware under its own name (fw_label with the recognised firmware): “FM-1 – Skiff 2.7”
     instead of “FM-1 – FELUCCA v2.7”."""

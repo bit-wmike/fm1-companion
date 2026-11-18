@@ -517,21 +517,34 @@ class DeviceContext(QObject):
         return bool(p.firmware and hist and hist[-1].get("firmware") == p.firmware
                     and hist[-1].get("identity") == ident)
 
-    def ask_firmware(self, port=None) -> str:
-        """ask once which firmware is behind an ambiguous identifier (remembered per device)"""
+    def ask_firmware(self, port=None, force: bool = False) -> str:
+        """ask once which firmware is behind an ambiguous identifier (remembered per device).
+        force=True (Overview › Firmware: “change”): ask again although an answer is stored – all candidates of the
+        identifier, the stored answer preselected; closing the dialog changes nothing (-> "")."""
         if port is not None and self.port is not port:
             return ""
-        if self._asking or not self.identity or not self.firmware_ambiguous:
+        cands, current = list(self.firmware_guess), ""
+        if force:
+            cands = firmware_candidates(self.identity) if self.identity else []
+            current = self.profile.firmware_choice.get(self.identity, "") if self.profile else ""
+            if current and current != UNKNOWN_CHOICE and current not in cands:
+                cands.append(current)
+        if self._asking or not self.identity or not (cands if force else self.firmware_ambiguous):
             return ""
         self._asking = True
         try:
-            dlg = FirmwareChoiceDialog(self.window, self.identity, list(self.firmware_guess),
+            dlg = FirmwareChoiceDialog(self.window, self.identity, cands,
                                        self.profile.name if self.profile else "")
+            for i in range(dlg.list.count() if current else 0):
+                if dlg.list.item(i).data(Qt.ItemDataRole.UserRole) == current:
+                    dlg.list.setCurrentRow(i)
             ok = bool(dlg.exec())
             key = dlg.choice() if ok else UNKNOWN_CHOICE
         finally:
             self._asking = False
         if port is not None and self.port is not port:
+            return ""
+        if force and not ok:
             return ""
         self.choose_firmware(key)
         return key
@@ -554,6 +567,8 @@ class DeviceContext(QObject):
                 self.message.emit(_("Remembered: this FM-1 runs {firmware} (ID {id}).").format(
                     firmware=firmware_name(key), id=self.identity))
         else:
+            if self.identity:                        # (after "change" from a firmware back to "don't know")
+                self.firmware_guess = firmware_candidates(self.identity)
             self.message.emit(_("Remembered: firmware unknown – installations count as a firmware change (with "
                                 "V15 intermediate step)."))
         self.changed.emit()
