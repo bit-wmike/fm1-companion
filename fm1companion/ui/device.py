@@ -430,7 +430,8 @@ class DeviceContext(QObject):
         last = None
         link = link or self.link
         from .. import sloop3 as S3
-        if self.port is not None and S3.PORT_RE.search(self.port.label or ""):
+        port = getattr(self, "port", None)
+        if port is not None and S3.PORT_RE.search(getattr(port, "label", "") or ""):
             # "FM-1 SLOOP 3": ask its own INFO first (read only) – it answers no Felucca command, and waiting for
             # those first would cost several seconds
             link.s3info = S3.probe(link)

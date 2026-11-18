@@ -6463,7 +6463,7 @@ msgid "SLOOP 3's answer names no version"
 msgstr ""
 
 #: fm1companion/sloop3.py:240 fm1companion/transport.py:257
-#: fm1companion/ui/device.py:739
+#: fm1companion/ui/device.py:740
 msgid "device not connected"
 msgstr ""
 
@@ -9453,98 +9453,98 @@ msgstr ""
 msgid "The MIDI port cannot be opened: {error}"
 msgstr ""
 
-#: fm1companion/ui/device.py:452
+#: fm1companion/ui/device.py:453
 msgid "no answer"
 msgstr ""
 
-#: fm1companion/ui/device.py:517
+#: fm1companion/ui/device.py:518
 #, python-brace-format
 msgid "FM-1 connected – {firmware} (public beta). Its own web editor is on the page “Editor”, backups of its project, sounds and banks on the page “Backups”; the other device pages need the Felucca editor protocol, which SLOOP 3 does not speak."
 msgstr ""
 
-#: fm1companion/ui/device.py:521
+#: fm1companion/ui/device.py:522
 #, python-brace-format
 msgid "FM-1 connected – {firmware} (public beta). The app was checked with SLOOP 3 {versions}, not with this version: the editor and backups may not fit it."
 msgstr ""
 
-#: fm1companion/ui/device.py:563
+#: fm1companion/ui/device.py:564
 #, python-brace-format
 msgid "FM-1 connected ({id}) – FM1 Open: MIDI, presets via SysEx, its sample bank (page “Samples”) and the Studio (fetch, write back) work; the other pages need the editor protocol."
 msgstr ""
 
-#: fm1companion/ui/device.py:567
+#: fm1companion/ui/device.py:568
 #, python-brace-format
 msgid "FM-1 connected ({id}) – this firmware has no editor protocol: MIDI, presets via SysEx and firmware installation work, backups and projects do not."
 msgstr ""
 
-#: fm1companion/ui/device.py:570
+#: fm1companion/ui/device.py:571
 msgid "The device answers neither editor commands nor the update ID. The MIDI connection stays open."
 msgstr ""
 
-#: fm1companion/ui/device.py:614
+#: fm1companion/ui/device.py:615
 #, python-brace-format
 msgid "Remembered: {device} runs {firmware} (ID {id})."
 msgstr ""
 
-#: fm1companion/ui/device.py:617
+#: fm1companion/ui/device.py:618
 #, python-brace-format
 msgid "Remembered: this FM-1 runs {firmware} (ID {id})."
 msgstr ""
 
-#: fm1companion/ui/device.py:620
+#: fm1companion/ui/device.py:621
 msgid "Remembered: firmware unknown – installations count as a firmware change (with V15 intermediate step)."
 msgstr ""
 
-#: fm1companion/ui/device.py:633
+#: fm1companion/ui/device.py:634
 #, python-brace-format
 msgid "This FM-1 is in m-bootloader's MIDI MODE (m-bootloader {version}, flash chip {chip}): no firmware is running. “Firmware+” › SLOOP 3 explains what is possible from here; OCT−, OCT+, PLAY or REC on the FM-1 go back to its menu."
 msgstr ""
 
-#: fm1companion/ui/device.py:687
+#: fm1companion/ui/device.py:688
 msgid "Create new device …"
 msgstr ""
 
-#: fm1companion/ui/device.py:689
+#: fm1companion/ui/device.py:690
 msgid "Which FM-1 is this?"
 msgstr ""
 
-#: fm1companion/ui/device.py:690
+#: fm1companion/ui/device.py:691
 msgid "This FM-1 has no serial number. Which of your devices is it?"
 msgstr ""
 
-#: fm1companion/ui/device.py:693
+#: fm1companion/ui/device.py:694
 msgid "New device"
 msgstr ""
 
-#: fm1companion/ui/device.py:693
+#: fm1companion/ui/device.py:694
 msgid "Name for this FM-1:"
 msgstr ""
 
-#: fm1companion/ui/device.py:701 fm1companion/ui/pages/midi.py:1200
+#: fm1companion/ui/device.py:702 fm1companion/ui/pages/midi.py:1200
 msgid "disconnected"
 msgstr ""
 
-#: fm1companion/ui/device.py:729 fm1companion/ui/firmware_page.py:520
+#: fm1companion/ui/device.py:730 fm1companion/ui/firmware_page.py:520
 #: fm1companion/ui/pages/recovery.py:663 fm1companion/ui/pages/voices.py:664
 #: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1351
 msgid "No device"
 msgstr ""
 
-#: fm1companion/ui/device.py:729
+#: fm1companion/ui/device.py:730
 msgid "Please connect an FM-1 with Melodee, Skiff or SLOOP via USB."
 msgstr ""
 
-#: fm1companion/ui/device.py:763
+#: fm1companion/ui/device.py:764
 #, python-brace-format
 msgid "The name “{name}” is already taken (device “{device}”) – otherwise the backups of both devices would end up in the same folder. Please choose another name."
 msgstr ""
 
-#: fm1companion/ui/device.py:775
+#: fm1companion/ui/device.py:776
 #, python-brace-format
 msgid "Renamed to “{name}” – backups are now in “{folder}”."
 msgstr ""
 
-#: fm1companion/ui/device.py:776
+#: fm1companion/ui/device.py:777
 #, python-brace-format
 msgid "Renamed to “{name}”."
 msgstr ""
