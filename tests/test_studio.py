@@ -233,7 +233,21 @@ def test_render_stems_and_state(node_studio, tmp_path):
     st = node_studio()
     _song(st)
     r = st.render_wav(tmp_path / "song.wav", until_end=True, start="song", fmt="s24", max_seconds=60)
-    assert r.ended and 6.5 < r.seconds < 7.5 and r.peak > 0.05      # 2 bars at 120 BPM + 2 s release
+    # 2 bars at 120 BPM (4 s, plus the few 10 ms the song takes to start) + 2 s release, counted from where the song
+    # really stops. Before, the stop was only noticed at the end of a 1 s chunk: 7.0 s as a rule, 6.0 s when the song
+    # happened to stop just before a chunk's end (Pi under load) – and this check wanted 6.5..7.5.
+    assert r.ended and 6.0 <= r.seconds < 6.3 and r.peak > 0.05
+    lengths = []
+    for chunk in (44100, 4410, 1000):                     # the length does not depend on the size of the chunks
+        st.backend.render_open({"source": "live", "settle_ms": 0})
+        try:
+            one = st._render_one(tmp_path / f"chunk{chunk}.wav", {"seconds": 0, "until_end": True, "max_seconds": 60,
+                                                                 "tail_seconds": 2.0, "start": "song", "format": "s24",
+                                                                 "chunk": chunk}, [])
+        finally:
+            st.backend.render_close()
+        lengths.append(one["seconds"])
+    assert max(lengths) - min(lengths) < 0.15 and 6.0 <= min(lengths) and max(lengths) < 6.3, lengths
     with wave.open(str(r.path)) as w:
         assert (w.getframerate(), w.getnchannels(), w.getsampwidth(), w.getnframes()) == (44100, 2, 3, r.frames)
     a = st.render_wav(tmp_path / "a.wav", seconds=2, start="play", source="saved", project=0)
