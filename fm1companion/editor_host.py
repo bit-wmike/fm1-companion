@@ -297,7 +297,10 @@ class LocalServer:
     """serves SITES (editors) and, under /sims/, the bundled simulators – only on 127.0.0.1."""
 
     def __init__(self):
-        SITES.mkdir(parents=True, exist_ok=True)
+        try:
+            SITES.mkdir(parents=True, exist_ok=True)
+        except OSError:       # data folder out of reach (HOME read-only): no editors, the bundled simulators
+            pass              # are served from the program folder all the same – and the app starts
         self.relay = MidiRelay()
         self.exchange = Exchange()
         import secrets

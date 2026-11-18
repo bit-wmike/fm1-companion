@@ -1589,3 +1589,7 @@ msgstr "firmware para una placa RP2040 que llega a un FM-1 que ya no responde po
 #: fm1companion/diag.py
 msgid "talks to the chip's ROM boot mode for recovery stage 2; not bundled – the Unbricker downloads one fixed version, and only after you agree"
 msgstr "habla con el modo de arranque ROM del chip para la recuperación de etapa 2; no se incluye – el Unbricker descarga una versión fija, y solo después de que aceptes"
+
+#, python-brace-format
+msgid "The app cannot write to {folders}. It uses a temporary folder for this run: what it stores there (your device profiles, downloaded editors and tools, the sample index, the record of firmware installations) is gone when you quit. Better not install firmware like this."
+msgstr "La app no puede escribir en {folders}. Para esta sesión usa una carpeta temporal: lo que guarda allí (tus perfiles de dispositivo, editores y herramientas descargados, el índice de samples, el registro de instalaciones de firmware) se pierde al salir. Mejor no instales firmware así."
