@@ -73,6 +73,8 @@ class Profile:
     version_string: str = ""    # what INFO reports
     identity: str = ""          # e.g. "FM-1_91060"
     usb_path: str = ""          # last used USB connection (helps matching without a serial number)
+    usb_product: str = ""       # the USB product name the unit showed there while its firmware ran ("FM-1 SLOOP 3")
+    unit_id: str = ""           # the flash chip's unique ID (hex), where something told it: m-bootloader's MIDI MODE
     firmware_history: list = field(default_factory=list)   # [{"time", "firmware", "version", "identity", "how"}]
     firmware_choice: dict = field(default_factory=dict)    # identity -> firmware key chosen by the user
     # hardware revision (fm1companion/hardware.py): "new" = logo on the front, flash UC25HQ80 0xB36014 · "old" =

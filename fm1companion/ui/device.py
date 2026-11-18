@@ -312,9 +312,9 @@ class DeviceContext(QObject):
             fw = fw_label(self.info.version, self.firmware_key)
         elif self.protocol == "update":
             fw = _("update mode ({id})").format(id=self.identity) if self.identity else _("update mode")
-            if self.mboot is not None:
+            if getattr(self, "mboot", None) is not None:
                 fw = _("m-bootloader {version} – MIDI MODE").format(version=self.mboot.version)
-        elif self.sloop3 is not None and self.midi_connected:
+        elif getattr(self, "sloop3", None) is not None and self.midi_connected:
             fw = _("{firmware} (public beta)").format(firmware=self.sloop3.label)
         elif self.midi_connected:
             fw_name = firmware_name(self.firmware_key)
@@ -330,10 +330,10 @@ class DeviceContext(QObject):
             return (_("virtual – the twin in the Studio, not a real FM-1") if self.connected
                     else _("virtual – twin is starting …"))
         p = self.protocol
-        if p == "update" and self.mboot is not None:
+        if p == "update" and getattr(self, "mboot", None) is not None:
             return _("in m-bootloader's MIDI MODE – no firmware is running (“Firmware+” › SLOOP 3 explains what is "
                      "possible from here)")
-        if p == "generic" and self.sloop3 is not None:
+        if p == "generic" and getattr(self, "sloop3", None) is not None:
             return _("connected – SLOOP 3: its own editor and backups (pages “Editor” and “Backups”)")
         return {"felucca": _("connected – full access"),
                 "generic": _("connected – MIDI only (firmware without editor protocol)"),
@@ -730,6 +730,7 @@ class DeviceContext(QObject):
             self.identity = ident or self.identity
             self.mboot = mb
             if mb is not None:
+                self._unit_by_id(mb.uid)
                 from .. import hardware             # the flash chip m-bootloader read: kept with the device
                 if self.profile is not None and hardware.note_flash_id(self.profile, mb.jedec & 0xFFFFFF, "identity"):
                     self.store.save()
@@ -766,12 +767,40 @@ class DeviceContext(QObject):
         if port.usb_path and p.usb_path != port.usb_path:
             p.usb_path = port.usb_path
             self.store.save()
+        product = "" if port.update_mode or getattr(port, "virtual", False) else (port.product or port.label or "")
+        if product and getattr(p, "usb_product", "") != product:
+            p.usb_product = product            # (what this unit shows here: the next match is judged against it)
+            self.store.save()
         flash = getattr(self.link, "hs_flash", 0) if self.link is not None else 0
         if flash and not getattr(port, "virtual", False):      # the firmware told the flash chip: keep it (hardware.py)
             from .. import hardware
             if hardware.note_flash_id(p, flash, "identity"):
                 self.store.save()
         self.profile = p
+
+    def _unit_by_id(self, uid: str):
+        """m-bootloader's MIDI MODE told the flash chip's unique ID (8 bytes) – the one thing about a unit that no
+        firmware changes. A profile that has this ID (or whose serial number under the original firmware is this
+        ID, in either byte order: M-Flasher shows the unit ID that the original V15 uses as USB serial number) is
+        this unit, whatever USB port it is at; a profile found another way learns the ID."""
+        uid = (uid or "").lower()
+        if len(uid) != 16 or uid in ("0" * 16, "f" * 16):
+            return
+        forms = {uid, bytes.fromhex(uid)[::-1].hex()}
+        hit = [p for p in self.store.profiles.values()
+               if (p.unit_id or "").lower() in forms or (p.serial or "").lower() in forms]
+        if len(hit) == 1:
+            if self.profile is not hit[0]:
+                self.profile = hit[0]
+                self.unit_candidates = []
+        elif hit:
+            return
+        p = self.profile
+        if p is not None and (not p.unit_id or p.unit_id.lower() in forms) and p.unit_id != uid:
+            others = [q for q in self.store.profiles.values() if q is not p and (q.unit_id or "").lower() in forms]
+            if not others:
+                p.unit_id = uid
+                self.store.save()
 
     SESSION_UNIT_SECS = 600.0       # how long "the app has just installed on the unit at this USB port" holds
 
@@ -839,15 +868,33 @@ class DeviceContext(QObject):
         here = [c for c in cands if usb and c.usb_path == usb]
         if not own:
             unknown = not ident or ident.lower().startswith("ota-")
-            same = [c for c in here if unknown or not c.identity or c.identity == ident]
-            # another profile reports this very identity: without a serial number the two cannot be told apart, and
-            # the USB port alone is no proof (two FM-1 on one cable) – asked, not assumed
-            twins = [c for c in cands if not unknown and c.identity == ident and c not in here]
-            if getattr(self, "sloop3", None) is not None and len(cands) > 1:
-                # SLOOP 3 shows no serial number and no identity: with several FM-1 known, a profile that last ran
-                # another firmware at this USB port may just as well be the other unit – asked, not assumed
-                same = [c for c in same if c.firmware == "sloop3"]
-            if len(here) == 1 and len(same) == 1 and not twins:
+            # The USB port alone is no proof. What the unit shows now must not contradict what the profile last
+            # was – and no installation by the app explains a difference (that case was settled above):
+            # * it runs SLOOP 3 (its own INFO) and the profile last ran something else, or the other way round
+            #   (it answers the Felucca editor or an update identity, which SLOOP 3 never does);
+            # * another USB product name than the profile last showed while its firmware ran;
+            # * another identity.
+            # Then it may be another FM-1, or this one with a firmware installed outside the app: asked.
+            s3 = getattr(self, "sloop3", None) is not None
+            felucca = getattr(self, "info", None) is not None or not unknown
+            product = "" if port.update_mode else (port.product or port.label or "")
+
+            def contradicts(c):
+                return bool((s3 and c.firmware and c.firmware != "sloop3") or (felucca and c.firmware == "sloop3")
+                            or (product and c.usb_product and c.usb_product != product)
+                            or (not unknown and c.identity and c.identity != ident))
+
+            def confirms(c):
+                return bool((s3 and c.firmware == "sloop3") or (product and c.usb_product == product)
+                            or (not unknown and c.identity == ident))
+            same = [c for c in here if not contradicts(c)]
+            if len(here) > 1:                  # several profiles were last seen here: only one that positively fits
+                same = [c for c in same if confirms(c)]
+            # another profile reports this very identity (or is the SLOOP 3 unit): without a serial number the two
+            # cannot be told apart, and the USB port alone is no proof (two FM-1 on one cable) – asked, not assumed
+            twins = [c for c in cands if c not in here and ((not unknown and c.identity == ident)
+                                                            or (s3 and c.firmware == "sloop3"))]
+            if len(same) == 1 and not twins:
                 return same[0]
             if not usb and len(cands) == 1:    # no USB information at all (not Linux): as before
                 return cands[0]
@@ -856,7 +903,8 @@ class DeviceContext(QObject):
             # an FM-1 waiting in update mode is not the moment for a question: no profile is assumed; the Recovery
             # page judges the waiting unit by itself (strictest candidate, RecoveryPage.waiting_unit)
             return None
-        guess = (here or [c for c in cands if ident and c.identity == ident]
+        fits = [c for c in cands if getattr(self, "sloop3", None) is not None and c.firmware == "sloop3"]
+        guess = (fits or here or [c for c in cands if ident and c.identity == ident]
                  or [c for c in cands if c.id == self.settings.last_device] or cands)[0]
         p = self._ask_profile(cands, guess)
         if p is not None:

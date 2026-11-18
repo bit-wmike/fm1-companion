@@ -634,44 +634,92 @@ def test_credits_name_sloop3_and_m_bootloader():
 
 
 def test_sloop3_unit_is_not_mixed_up_with_the_owners_other_fm1(tmp_path, monkeypatch):
-    """SLOOP 3 shows no USB serial number (hal/fm1/usb.c: the device descriptor's serial index is 0) and answers no
-    update handshake: with two FM-1 known, the profile last seen at this USB port may be the other unit – the owner
-    is asked; nothing is taken over silently. (Seen on the owner's Pi: both units ran Skiff before.)"""
+    """Seen on the owner's Pi: "FM-1 Schwarz/Grün" (earlier unit, last Skiff 2.7 at USB 3-1.3.1) got SLOOP 3 outside
+    the app and was plugged into port 1-2, where "FM-1 Orange" (newer unit, Skiff 2.7, no serial number) was last
+    seen. The app took it for Orange. SLOOP 3 shows no USB serial number (hal/fm1/usb.c: serial index 0) and no
+    identity – the USB port alone is no proof when what the unit shows contradicts the profile: asked, and nothing
+    is written to any profile before the answer."""
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "d"))
     monkeypatch.setattr("fm1companion.ui.device.config.save", lambda s: None)
     from test_pi_hardware import fake_ctx, store_with
     from types import SimpleNamespace
     from fm1companion import devices
+    from fm1companion.ui import sloop3_ui as U
     from fm1companion.ui.device import DeviceContext
-    two = [{"id": "a", "name": "FM-1 A", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
-            "usb_path": "3-1.3.1", "hw_revision": "old"},
-           {"id": "b", "name": "FM-1 B", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
-            "usb_path": "3-1.4", "hw_revision": "new"}]
-    port = devices.PortInfo("FM-1 SLOOP 3 32:0", "FM-1 SLOOP 3 32:0", "FM-1 SLOOP 3", 32, usb_id="1209:0001",
-                            usb_path="3-1.3.1", product="FM-1 SLOOP 3", bcd_device="0310")
+    two = [{"id": "o", "name": "FM-1 Orange", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
+            "usb_path": "1-2", "hw_revision": "new", "version_string": "FELUCCA v2.7"},
+           {"id": "g", "name": "FM-1 Schwarz/Grün", "firmware": "skiff", "firmware_version": "v2.7",
+            "identity": "FM-1_900", "usb_path": "3-1.3.1", "hw_revision": "old", "version_string": "FELUCCA v2.7"}]
+    s3port = devices.PortInfo("FM-1 SLOOP 3 32:0", "FM-1 SLOOP 3 32:0", "FM-1 SLOOP 3", 32, usb_id="1209:0001",
+                              usb_path="1-2", product="FM-1 SLOOP 3", bcd_device="0310")
     info = S3.Info(2, 5, 48, 0, 0, 0, "3.4.0")
 
-    def run(profiles, answer):
-        store = store_with(tmp_path, profiles)
-        link = SimpleNamespace(hs_identity="", hs_flash=0, closed=False)
+    def connect(store, port, answer, s3=info, ident=""):
+        link = SimpleNamespace(hs_identity=ident, hs_flash=0, closed=False)
         ctx = fake_ctx(store, port, link=link, answer=answer, changed=SimpleNamespace(emit=lambda: None),
-                       message=SimpleNamespace(emit=lambda m: None), firmware_guess=[], sloop3=None)
+                       message=SimpleNamespace(emit=lambda m: None), firmware_guess=[], sloop3=None, identity=ident)
         ctx._assign_profile = lambda: DeviceContext._assign_profile(ctx)
-        DeviceContext._sloop3(ctx, info, link)
-        return ctx, store
-    # two units known, the one at this port last ran Skiff: asked – and without an answer no profile at all
-    ctx, store = run(two, None)
-    assert ctx.asked and ctx.profile is None and store.profiles["a"].firmware == "skiff"
-    assert store.profiles["b"].firmware == "skiff"
-    # the owner says it is B (the unit moved to this port): B becomes SLOOP 3, A stays what it was
-    ctx, store = run(two, lambda cands: next(c for c in cands if c.id == "b"))
-    a, b = store.profiles["a"], store.profiles["b"]
-    assert ctx.profile is b and (b.firmware, b.firmware_version, b.identity) == ("sloop3", "v3.4.0", "")
-    assert a.firmware == "skiff" and b.firmware_history[-1]["how"] == "found" and b.hw_revision == "new"
-    # the profile at this port already is the SLOOP 3 unit: taken without a question
-    known = [dict(two[0], firmware="sloop3", firmware_version="v3.3.7", identity=""), two[1]]
-    ctx, store = run(known, None)
-    assert not ctx.asked and ctx.profile is store.profiles["a"] and store.profiles["a"].firmware_version == "v3.4.0"
-    # only one FM-1 known: it is that one (as for every firmware without a serial number)
-    ctx, store = run([two[0]], None)
-    assert not ctx.asked and ctx.profile is store.profiles["a"] and store.profiles["a"].firmware == "sloop3"
+        if s3 is not None:
+            DeviceContext._sloop3(ctx, s3, link)
+        else:
+            DeviceContext._assign_profile(ctx)
+        return ctx
+    # 1. the unit appears at Orange's port: a question – unanswered, no profile, and no profile was touched
+    store = store_with(tmp_path, two)
+    before = json.dumps([vars(p) for p in store.profiles.values()], sort_keys=True, default=str)
+    ctx = connect(store, s3port, None)
+    assert ctx.asked == [(["o", "g"], "o")] and ctx.profile is None
+    assert json.dumps([vars(p) for p in store.profiles.values()], sort_keys=True, default=str) == before
+    assert [c.id for c in ctx.unit_candidates] == ["o", "g"]
+    # … while unanswered: the strictest reading of what it may be (Orange is a newer unit), nothing is restored
+    ctx.midi_connected, ctx.mboot = True, None
+    assert U.revision(ctx)[0] == "new" and U.revision_text(ctx)[0] == "bad"
+    said = []
+    monkeypatch.setattr(U, "show_error", lambda parent, title, text, *a: said.append(text))
+    assert U.handles_restore(None, ctx, tmp_path / "x.json") and said
+    # 2. the owner says "Schwarz/Grün": that profile is SLOOP 3 now and remembers this port; Orange is unchanged
+    ctx = connect(store, s3port, lambda cands: next(c for c in cands if c.id == "g"))
+    o, g = store.profiles["o"], store.profiles["g"]
+    assert ctx.profile is g and (g.firmware, g.firmware_version, g.usb_path) == ("sloop3", "v3.4.0", "1-2")
+    assert g.usb_product == "FM-1 SLOOP 3" and g.hw_revision == "old" and g.firmware_history[-1]["how"] == "found"
+    assert (o.firmware, o.firmware_version, o.usb_path, o.hw_revision, o.usb_product) == ("skiff", "v2.7", "1-2", "new", "")
+    assert U.revision(ctx)[0] == "old"
+    # 3. the same unit at the same port again: remembered, no question (two profiles know this port now)
+    ctx = connect(store, s3port, None)
+    assert not ctx.asked and ctx.profile is store.profiles["g"]
+    # 4. Orange itself comes back to its port (Skiff: it answers the update identity): Orange, no question – and
+    #    never the SLOOP 3 profile
+    skiff = devices.PortInfo("Felucca 32:0", "Felucca 32:0", "Felucca", 32, usb_id="1209:0001", usb_path="1-2",
+                             product="Felucca")
+    ctx = connect(store, skiff, None, s3=None, ident="FM-1_900")
+    assert not ctx.asked and ctx.profile is store.profiles["o"] and store.profiles["g"].firmware == "sloop3"
+    # 5. a single known FM-1 that last ran Skiff: SLOOP 3 at its port still contradicts – asked, not taken over
+    one = store_with(tmp_path, [two[0]])
+    ctx = connect(one, s3port, None)
+    assert ctx.asked and ctx.profile is None and one.profiles["o"].firmware == "skiff"
+    # 6. a profile that already is the SLOOP 3 unit at this port: taken without a question
+    known = store_with(tmp_path, [dict(two[0], firmware="sloop3", firmware_version="v3.3.7", identity="")])
+    ctx = connect(known, s3port, None)
+    assert not ctx.asked and ctx.profile is known.profiles["o"] and known.profiles["o"].firmware_version == "v3.4.0"
+
+
+def test_m_bootloaders_unit_id_names_the_unit(tmp_path, monkeypatch):
+    """the flash chip's unique ID from m-bootloader's 0x12 answer: a profile whose serial number under the original
+    firmware is that ID (M-Flasher's "unit id"; either byte order) is this unit, at whatever port; it is kept"""
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "d"))
+    from test_pi_hardware import fake_ctx, store_with
+    from fm1companion.ui.device import DeviceContext
+    store = store_with(tmp_path, [{"id": "o", "name": "FM-1 Orange", "usb_path": "1-2"},
+                                  {"id": "g", "name": "FM-1 Schwarz/Grün", "serial": "4150354433333610"}])
+    for uid in ("4150354433333610", "1036333344355041"):
+        ctx = fake_ctx(store, None, profile=store.profiles["o"])
+        DeviceContext._unit_by_id(ctx, uid)
+        assert ctx.profile is store.profiles["g"] and store.profiles["o"].unit_id == ""
+    assert store.profiles["g"].unit_id == "1036333344355041"         # (learnt as read)
+    ctx = fake_ctx(store, None, profile=store.profiles["o"])
+    DeviceContext._unit_by_id(ctx, "aabbccddeeff0011")                # no profile has it: the assigned one learns it
+    assert ctx.profile is store.profiles["o"] and store.profiles["o"].unit_id == "aabbccddeeff0011"
+    for bad in ("", "0" * 16, "f" * 16, "abcd"):
+        ctx = fake_ctx(store, None, profile=None)
+        DeviceContext._unit_by_id(ctx, bad)
+        assert ctx.profile is None

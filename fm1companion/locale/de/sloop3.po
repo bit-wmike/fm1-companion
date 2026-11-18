@@ -548,3 +548,7 @@ msgstr "Unklar, was hier wartet"
 #: fm1companion/ui/sloop3_ui.py:70
 msgid "This FM-1 shows up as “FM-1 Update” – the name of m-bootloader's MIDI MODE –, but it did not answer the question who it is. The app cannot tell it apart from MIDI MODE and sends it no firmware. Nothing was written.<br><br>If the FM-1 shows m-bootloader's menu or MIDI MODE: firmware is installed from there with the installer page of that firmware's author. Otherwise unplug the FM-1, switch it off and on, and try again."
 msgstr "Dieser FM-1 meldet sich als „FM-1 Update“ – der Name des MIDI MODE von m-bootloader –, hat aber die Frage, wer er ist, nicht beantwortet. Die App kann ihn nicht vom MIDI MODE unterscheiden und schickt ihm keine Firmware. Es wurde nichts geschrieben.<br><br>Zeigt der FM-1 das Menü von m-bootloader oder MIDI MODE: Von dort wird Firmware mit der Installer-Seite ihres Autors installiert. Sonst steck den FM-1 ab, schalte ihn aus und wieder ein und versuch es noch einmal."
+
+#: fm1companion/ui/sloop3_ui.py:383
+msgid "The app does not know yet which of your FM-1 this is. Choose the device at the top first; nothing is written to an FM-1 the app cannot name. Nothing was written."
+msgstr "Die App weiß noch nicht, welcher deiner FM-1 das ist. Wähle zuerst oben das Gerät; auf einen FM-1, den die App nicht benennen kann, wird nichts geschrieben. Es wurde nichts geschrieben."

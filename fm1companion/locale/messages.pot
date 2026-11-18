@@ -1527,17 +1527,17 @@ msgstr ""
 msgid "Example samples of the FM-1 Companion Suite (generated synthetically, free to use). Can be deleted at any time."
 msgstr ""
 
-#: fm1companion/devices.py:177
+#: fm1companion/devices.py:179
 #, python-brace-format
 msgid "The list of your FM-1 devices (names, colours, notes) was damaged and was put aside as “{name}”. The previous state was loaded."
 msgstr ""
 
-#: fm1companion/devices.py:179
+#: fm1companion/devices.py:181
 #, python-brace-format
 msgid "The list of your FM-1 devices (names, colours, notes) was damaged and was put aside as “{name}”. The devices get new profiles when they are connected; their backups are still in the backup folder, under the old names."
 msgstr ""
 
-#: fm1companion/devices.py:195
+#: fm1companion/devices.py:197
 #, python-brace-format
 msgid "{n} entries in the list of your FM-1 devices were unusable and were left out."
 msgstr ""
@@ -2700,7 +2700,7 @@ msgstr ""
 msgid "The FM-1 refused the request."
 msgstr ""
 
-#: fm1companion/flash/mboot.py:192 fm1companion/ui/sloop3_ui.py:327
+#: fm1companion/flash/mboot.py:192 fm1companion/ui/sloop3_ui.py:331
 msgid "This is not m-bootloader's MIDI MODE – nothing was read."
 msgstr ""
 
@@ -6700,7 +6700,7 @@ msgid "SLOOP 3's answer names no version"
 msgstr ""
 
 #: fm1companion/sloop3.py:240 fm1companion/transport.py:257
-#: fm1companion/ui/device.py:942
+#: fm1companion/ui/device.py:990
 msgid "device not connected"
 msgstr ""
 
@@ -6906,8 +6906,8 @@ msgid "The song was running during the restore. Already written: {parts}. Not wr
 msgstr ""
 
 #: fm1companion/sloopbk.py:385 fm1companion/ui/pages/studio.py:1318
-#: fm1companion/ui/pages/studio.py:1321 fm1companion/ui/sloop3_ui.py:451
-#: fm1companion/ui/sloop3_ui.py:472
+#: fm1companion/ui/pages/studio.py:1321 fm1companion/ui/sloop3_ui.py:460
+#: fm1companion/ui/sloop3_ui.py:481
 msgid "Nothing was written."
 msgstr ""
 
@@ -7944,7 +7944,7 @@ msgstr ""
 
 #: fm1companion/ui/about.py:74 fm1companion/ui/pages/project_view.py:347
 #: fm1companion/ui/pages/project_view.py:348
-#: fm1companion/ui/pages/project_view.py:350 fm1companion/ui/sloop3_ui.py:156
+#: fm1companion/ui/pages/project_view.py:350 fm1companion/ui/sloop3_ui.py:160
 msgid "Project"
 msgstr ""
 
@@ -8174,7 +8174,7 @@ msgstr ""
 msgid "Backup not possible"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:72 fm1companion/ui/sloop3_ui.py:315
+#: fm1companion/ui/backups_page.py:72 fm1companion/ui/sloop3_ui.py:319
 #, python-brace-format
 msgid "The backup folder cannot be created: {error}"
 msgstr ""
@@ -8197,7 +8197,7 @@ msgstr ""
 msgid "Saved: {size} – firmware {firmware} {version}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:97 fm1companion/ui/sloop3_ui.py:336
+#: fm1companion/ui/backups_page.py:97 fm1companion/ui/sloop3_ui.py:340
 #, python-brace-format
 msgid "File: {path}"
 msgstr ""
@@ -8653,7 +8653,7 @@ msgstr ""
 
 #: fm1companion/ui/backups_page.py:729 fm1companion/ui/backups_page.py:756
 #: fm1companion/ui/backups_page.py:779 fm1companion/ui/backups_page.py:788
-#: fm1companion/ui/backups_page.py:873 fm1companion/ui/sloop3_ui.py:396
+#: fm1companion/ui/backups_page.py:873 fm1companion/ui/sloop3_ui.py:405
 msgid "Backup damaged"
 msgstr ""
 
@@ -8677,8 +8677,9 @@ msgid "Created: {date}"
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:774 fm1companion/ui/backups_page.py:802
-#: fm1companion/ui/pages/backup_browser.py:76 fm1companion/ui/sloop3_ui.py:378
-#: fm1companion/ui/sloop3_ui.py:383 fm1companion/ui/sloop3_ui.py:399
+#: fm1companion/ui/pages/backup_browser.py:76 fm1companion/ui/sloop3_ui.py:382
+#: fm1companion/ui/sloop3_ui.py:387 fm1companion/ui/sloop3_ui.py:392
+#: fm1companion/ui/sloop3_ui.py:408
 msgid "Restore not possible"
 msgstr ""
 
@@ -8723,25 +8724,25 @@ msgid "<b>SLOOP:</b> Please stop the song on the FM-1 first (STOP) – otherwise
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:824
-#: fm1companion/ui/pages/backup_browser.py:82 fm1companion/ui/sloop3_ui.py:412
+#: fm1companion/ui/pages/backup_browser.py:82 fm1companion/ui/sloop3_ui.py:421
 msgid "Restore"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:826 fm1companion/ui/sloop3_ui.py:414
+#: fm1companion/ui/backups_page.py:826 fm1companion/ui/sloop3_ui.py:423
 #, python-brace-format
 msgid "automatic, before restoring {name}"
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:827
-#: fm1companion/ui/pages/backup_browser.py:62 fm1companion/ui/sloop3_ui.py:415
+#: fm1companion/ui/pages/backup_browser.py:62 fm1companion/ui/sloop3_ui.py:424
 msgid "No safety backup"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:828 fm1companion/ui/sloop3_ui.py:416
+#: fm1companion/ui/backups_page.py:828 fm1companion/ui/sloop3_ui.py:425
 msgid "The safety backup failed. Restore anyway?"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:829 fm1companion/ui/sloop3_ui.py:416
+#: fm1companion/ui/backups_page.py:829 fm1companion/ui/sloop3_ui.py:425
 msgid "Restore anyway"
 msgstr ""
 
@@ -8765,18 +8766,18 @@ msgstr ""
 msgid "Done. The FM-1 now plays the state from the backup."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:851 fm1companion/ui/sloop3_ui.py:420
+#: fm1companion/ui/backups_page.py:851 fm1companion/ui/sloop3_ui.py:429
 #, python-brace-format
 msgid "The previous state is in the safety backup {name}."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:852 fm1companion/ui/sloop3_ui.py:421
+#: fm1companion/ui/backups_page.py:852 fm1companion/ui/sloop3_ui.py:430
 msgid "There is NO safety backup of the previous state."
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:857
 #: fm1companion/ui/pages/backup_browser.py:112
-#: fm1companion/ui/sloop3_ui.py:452
+#: fm1companion/ui/sloop3_ui.py:461
 #, python-brace-format
 msgid "Restore failed: {error}"
 msgstr ""
@@ -9742,57 +9743,57 @@ msgstr ""
 msgid "Remembered: firmware unknown – installations count as a firmware change (with V15 intermediate step)."
 msgstr ""
 
-#: fm1companion/ui/device.py:737
+#: fm1companion/ui/device.py:738
 #, python-brace-format
 msgid "This FM-1 is in m-bootloader's MIDI MODE (m-bootloader {version}, flash chip {chip}): no firmware is running. “Firmware+” › SLOOP 3 explains what is possible from here; OCT−, OCT+, PLAY or REC on the FM-1 go back to its menu."
 msgstr ""
 
-#: fm1companion/ui/device.py:887
+#: fm1companion/ui/device.py:935
 msgid "A new FM-1 that I have not used with this app before …"
 msgstr ""
 
-#: fm1companion/ui/device.py:891 fm1companion/ui/hw_revision.py:22
+#: fm1companion/ui/device.py:939 fm1companion/ui/hw_revision.py:22
 #: fm1companion/ui/hw_revision.py:44 fm1companion/ui/pages/recovery.py:597
 msgid "Which FM-1 is this?"
 msgstr ""
 
-#: fm1companion/ui/device.py:892
+#: fm1companion/ui/device.py:940
 msgid "Is this an FM-1 you have used with this app before? The app cannot tell by itself: an FM-1 only reports a serial number while it runs the original firmware. Please choose:"
 msgstr ""
 
-#: fm1companion/ui/device.py:895
+#: fm1companion/ui/device.py:943
 msgid "New device"
 msgstr ""
 
-#: fm1companion/ui/device.py:895
+#: fm1companion/ui/device.py:943
 msgid "Name for this FM-1:"
 msgstr ""
 
-#: fm1companion/ui/device.py:903 fm1companion/ui/pages/midi.py:1200
+#: fm1companion/ui/device.py:951 fm1companion/ui/pages/midi.py:1200
 msgid "disconnected"
 msgstr ""
 
-#: fm1companion/ui/device.py:932 fm1companion/ui/firmware_page.py:567
+#: fm1companion/ui/device.py:980 fm1companion/ui/firmware_page.py:567
 #: fm1companion/ui/pages/recovery.py:792 fm1companion/ui/pages/voices.py:664
 #: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1351
 msgid "No device"
 msgstr ""
 
-#: fm1companion/ui/device.py:932
+#: fm1companion/ui/device.py:980
 msgid "Please connect an FM-1 with Melodee, Skiff or SLOOP via USB."
 msgstr ""
 
-#: fm1companion/ui/device.py:966
+#: fm1companion/ui/device.py:1014
 #, python-brace-format
 msgid "The name “{name}” is already taken (device “{device}”) – otherwise the backups of both devices would end up in the same folder. Please choose another name."
 msgstr ""
 
-#: fm1companion/ui/device.py:978
+#: fm1companion/ui/device.py:1026
 #, python-brace-format
 msgid "Renamed to “{name}” – backups are now in “{folder}”."
 msgstr ""
 
-#: fm1companion/ui/device.py:979
+#: fm1companion/ui/device.py:1027
 #, python-brace-format
 msgid "Renamed to “{name}”."
 msgstr ""
@@ -21983,283 +21984,287 @@ msgstr ""
 msgid "Kit not possible"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:69
+#: fm1companion/ui/sloop3_ui.py:73
 msgid "Cannot tell what is waiting here"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:70
+#: fm1companion/ui/sloop3_ui.py:74
 msgid "This FM-1 shows up as “FM-1 Update” – the name of m-bootloader's MIDI MODE –, but it did not answer the question who it is. The app cannot tell it apart from MIDI MODE and sends it no firmware. Nothing was written.<br><br>If the FM-1 shows m-bootloader's menu or MIDI MODE: firmware is installed from there with the installer page of that firmware's author. Otherwise unplug the FM-1, switch it off and on, and try again."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:76
+#: fm1companion/ui/sloop3_ui.py:80
 msgid "m-bootloader's MIDI MODE, not an update mode"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:77
+#: fm1companion/ui/sloop3_ui.py:81
 msgid "This FM-1 waits in m-bootloader's MIDI MODE. That is not the update mode of an FM-1 firmware: m-bootloader answers the same way, but it writes a package differently, and the app has never been tried with it. The app sends it no firmware. Nothing was written.<br><br>From MIDI MODE, firmware is installed with the installer page of that firmware's author; the whole flash goes back with M-Flasher. OCT−, OCT+, PLAY or REC on the FM-1 leave MIDI MODE. “Firmware+” › SLOOP 3 explains more."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:102
+#: fm1companion/ui/sloop3_ui.py:106
 #, python-brace-format
 msgid "Its flash chip says so itself ({chip})."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:103
+#: fm1companion/ui/sloop3_ui.py:107
 msgid "That is what the app knows about this device."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:107
+#: fm1companion/ui/sloop3_ui.py:111
 msgid "<b>Do not install m-bootloader or SLOOP 3 on it for now.</b> The app does not offer the installer page for this device."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:111
+#: fm1companion/ui/sloop3_ui.py:115
 msgid "Sure sign: M-Flasher shows the FLASH CHIP – <code>0x856014</code> is the earlier one, <code>0xB36014</code> the newer."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:114
+#: fm1companion/ui/sloop3_ui.py:118
 #, python-brace-format
 msgid "This FM-1 is an earlier unit (flash chip Puya P25Q80H), the one m-bootloader and SLOOP 3 were tried on by their authors. {how}"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:126
+#: fm1companion/ui/sloop3_ui.py:130
 msgid "SLOOP 3 – public beta"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:127
+#: fm1companion/ui/sloop3_ui.py:131
 msgid "A rewrite of SLOOP from scratch by isod89: five tracks (four synths and the drums), 13 engines, 8 patterns per track, a song, samples and slices, its own web editor. Its author calls it a beta: expect bugs, keep backups, do not rely on it on stage yet."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:131
+#: fm1companion/ui/sloop3_ui.py:135
 msgid "What it needs"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:132
+#: fm1companion/ui/sloop3_ui.py:136
 msgid "<b>m-bootloader</b> on the FM-1 (an open-source bootloader by Julius Vitkauskas). SLOOP 3 installs only through its MIDI MODE. Installing m-bootloader replaces the FM-1's boot area – the app never does that; it is done once with M-Flasher (USB download mode) or, from M-VAVE's firmware, with M-VAVE's M-UPGRADE and the file fm1-uboot.fwsc."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:136
+#: fm1companion/ui/sloop3_ui.py:140
 msgid "<b>A backup of the whole flash first</b> (1 MB), made with M-Flasher or in MIDI MODE. It is the only way back: SLOOP 2.8 or M-VAVE's firmware return by writing that backup back with M-Flasher."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:139
+#: fm1companion/ui/sloop3_ui.py:143
 msgid "An official M-VAVE update puts M-VAVE's own bootloader back; m-bootloader then has to be installed again."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:141
+#: fm1companion/ui/sloop3_ui.py:145
 msgid "What the app does – and what it does not"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:142
+#: fm1companion/ui/sloop3_ui.py:146
 msgid "It recognises an FM-1 that runs SLOOP 3 and one that waits in m-bootloader's MIDI MODE."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:143
+#: fm1companion/ui/sloop3_ui.py:147
 msgid "It shows SLOOP 3's own web editor on the page “Editor” and makes backups of its project, sounds and banks on the page “Backups” (not of its samples: SLOOP 3 cannot hand them out)."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:145
+#: fm1companion/ui/sloop3_ui.py:149
 msgid "In MIDI MODE it can copy the whole flash into your backup folder – reading only."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:146
+#: fm1companion/ui/sloop3_ui.py:150
 msgid "<b>It does not install SLOOP 3 and it does not install m-bootloader.</b> The button below shows the way; for an FM-1 the rule above lets through, it opens the author's installer page in your browser (Chromium or Chrome)."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:150
+#: fm1companion/ui/sloop3_ui.py:154
 #, python-brace-format
 msgid "Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). <b>Never run on a real FM-1 by this app.</b>"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:153 fm1companion/ui/sloop3_ui.py:212
+#: fm1companion/ui/sloop3_ui.py:157 fm1companion/ui/sloop3_ui.py:216
 msgid "Guide"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:155
+#: fm1companion/ui/sloop3_ui.py:159
 msgid "Installer page"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:156
+#: fm1companion/ui/sloop3_ui.py:160
 msgid "Editor online"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:166
+#: fm1companion/ui/sloop3_ui.py:170
 msgid "SLOOP 3 (public beta) – the way onto the FM-1"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:177
+#: fm1companion/ui/sloop3_ui.py:181
 msgid "<b>Check for m-bootloader:</b> switch the FM-1 off, hold PLAY and switch it on. A menu with BOOT APP, DOWNLOAD MODE and MIDI MODE? Then it is there."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:179
+#: fm1companion/ui/sloop3_ui.py:183
 msgid "<b>If not: install m-bootloader – outside this app.</b> With M-Flasher: USB download mode, <b>back up the whole flash</b>, then install fm1-uboot.boot. Or, on M-VAVE's firmware, fm1-uboot.fwsc with M-VAVE's M-UPGRADE. Keep the power on while the boot area is written."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:183
+#: fm1companion/ui/sloop3_ui.py:187
 msgid "<b>MIDI MODE:</b> hold PLAY at power-on, choose MIDI MODE with OCT−/OCT+, press PLAY, plug in the USB cable. The app then shows “m-bootloader – MIDI MODE”."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:185
+#: fm1companion/ui/sloop3_ui.py:189
 msgid "<b>Back up the whole flash</b> (button below, or with M-Flasher) – unless you already have such a backup of exactly this FM-1."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:187
+#: fm1companion/ui/sloop3_ui.py:191
 msgid "<b>Install SLOOP 3 with the author's installer page</b> in Chromium or Chrome (about a minute). Close this app's connection first: quit the app or unplug and replug – only one program can talk to the FM-1 in MIDI MODE at a time."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:190
+#: fm1companion/ui/sloop3_ui.py:194
 msgid "<b>Back to SLOOP 2.8 or M-VAVE's firmware:</b> write the flash backup back with M-Flasher (hold REC at power-on for download mode). Save your SLOOP 3 projects as files first."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:196
+#: fm1companion/ui/sloop3_ui.py:200
 msgid "None of this was run on a real FM-1 by this app. The app only reads here; installing is done by the author's page and by M-Flasher."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:201
+#: fm1companion/ui/sloop3_ui.py:205
 msgid "My FM-1 has no M-VAVE logo on the front (an earlier unit)"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:206
+#: fm1companion/ui/sloop3_ui.py:210
 msgid "Open the installer page in the browser"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:209
+#: fm1companion/ui/sloop3_ui.py:213
 msgid "Back up the whole flash now (MIDI MODE) …"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:214
+#: fm1companion/ui/sloop3_ui.py:218
 msgid "m-bootloader (download)"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:244
+#: fm1companion/ui/sloop3_ui.py:248
 msgid "The app could not work out this FM-1's hardware revision. The installer page is not offered."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:266
+#: fm1companion/ui/sloop3_ui.py:270
 #, python-brace-format
 msgid "Opens {url} in your browser. The app itself installs nothing."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:267
+#: fm1companion/ui/sloop3_ui.py:271
 msgid "Not offered for the newer FM-1 (logo on the front)."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:268
+#: fm1companion/ui/sloop3_ui.py:272
 msgid "First confirm above which FM-1 this is."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:272
+#: fm1companion/ui/sloop3_ui.py:276
 msgid "Copies the whole flash (1 MB) into your backup folder and compares it with the checksum the FM-1's flash chip computes. Reading only."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:274
+#: fm1companion/ui/sloop3_ui.py:278
 msgid "Only in m-bootloader's MIDI MODE (step 3): the app must see “m-bootloader – MIDI MODE”."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:276
+#: fm1companion/ui/sloop3_ui.py:280
 msgid "The flash backup becomes available as soon as an FM-1 in MIDI MODE is the active device."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:306 fm1companion/ui/sloop3_ui.py:314
+#: fm1companion/ui/sloop3_ui.py:310 fm1companion/ui/sloop3_ui.py:318
 msgid "Flash backup not possible"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:307
+#: fm1companion/ui/sloop3_ui.py:311
 msgid "This works only while the FM-1 is in m-bootloader's MIDI MODE: hold PLAY at power-on, choose MIDI MODE, plug in the USB cable."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:321
+#: fm1companion/ui/sloop3_ui.py:325
 msgid "Asking who answers …"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:328
+#: fm1companion/ui/sloop3_ui.py:332
 #, python-brace-format
 msgid "m-bootloader {version}, flash chip {chip}, {size}"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:330
+#: fm1companion/ui/sloop3_ui.py:334
 msgid "Reading the whole flash (nothing is written) …"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:333
+#: fm1companion/ui/sloop3_ui.py:337
 msgid "The copy matches the checksum the flash chip computed."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:346
+#: fm1companion/ui/sloop3_ui.py:350
 #, python-brace-format
 msgid "Flash backup saved and checked: {name} ({size}). Nothing was changed on the FM-1. It is the flash of this one FM-1 – M-Flasher writes it back; keep a copy somewhere else too."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:352
+#: fm1companion/ui/sloop3_ui.py:356
 msgid "Flash backup (MIDI MODE)"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:379
+#: fm1companion/ui/sloop3_ui.py:383
+msgid "The app does not know yet which of your FM-1 this is. Choose the device at the top first; nothing is written to an FM-1 the app cannot name. Nothing was written."
+msgstr ""
+
+#: fm1companion/ui/sloop3_ui.py:388
 msgid "This is a SLOOP 3 backup. It goes back only onto an FM-1 that runs SLOOP 3 and is connected. Nothing was written."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:399
+#: fm1companion/ui/sloop3_ui.py:408
 msgid "This backup holds nothing the app can write back."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:404 fm1companion/ui/sloop3_ui.py:453
+#: fm1companion/ui/sloop3_ui.py:413 fm1companion/ui/sloop3_ui.py:462
 msgid "Restore SLOOP 3 backup"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:405
+#: fm1companion/ui/sloop3_ui.py:414
 #, python-brace-format
 msgid "These parts on <b>{device}</b> are replaced by the state of {date}:"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:407
+#: fm1companion/ui/sloop3_ui.py:416
 #, python-brace-format
 msgid "Not written (the FM-1 had none of its own then): {parts}."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:409
+#: fm1companion/ui/sloop3_ui.py:418
 msgid "Your samples are not in the backup and stay as they are on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:410
+#: fm1companion/ui/sloop3_ui.py:419
 msgid "<b>Stop playback on the FM-1 first.</b> A safety backup of the current state is made automatically. SLOOP 3 is a beta, and this restore was checked on its PC twin, never on a real FM-1 by this app."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:432 fm1companion/ui/sloop3_ui.py:464
+#: fm1companion/ui/sloop3_ui.py:441 fm1companion/ui/sloop3_ui.py:473
 #, python-brace-format
 msgid "✓ {part}: written, but not compared (SLOOP 3 keeps it in its own layout)"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:434 fm1companion/ui/sloop3_ui.py:465
+#: fm1companion/ui/sloop3_ui.py:443 fm1companion/ui/sloop3_ui.py:474
 #, python-brace-format
 msgid "✓ {part}: written, read back and identical"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:440
+#: fm1companion/ui/sloop3_ui.py:449
 #, python-brace-format
 msgid "Restore complete: {n} part written."
 msgid_plural "Restore complete: {n} parts written."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/sloop3_ui.py:443
+#: fm1companion/ui/sloop3_ui.py:452
 #, python-brace-format
 msgid "Read back and identical: {parts}."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:445
+#: fm1companion/ui/sloop3_ui.py:454
 #, python-brace-format
 msgid "Written and accepted by the FM-1, but not compared: {parts}."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:447
+#: fm1companion/ui/sloop3_ui.py:456
 msgid "Check the project on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:467
+#: fm1companion/ui/sloop3_ui.py:476
 #, python-brace-format
 msgid "? {part}: this is where it stopped. It may be as before, as in the backup, or incomplete – check it on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:470
+#: fm1companion/ui/sloop3_ui.py:479
 #, python-brace-format
 msgid "– {part}: not reached, nothing was sent for it."
 msgstr ""

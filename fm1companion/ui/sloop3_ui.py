@@ -33,6 +33,10 @@ def revision(ctx) -> tuple[str, str]:
     from .. import hardware
     mb = getattr(ctx, "mboot", None)
     prof = S3.revision_of(getattr(ctx, "profile", None))
+    if getattr(ctx, "profile", None) is None:
+        # nobody said yet which FM-1 this is: the strictest of the units it may be (a newer one among them: newer)
+        revs = [S3.revision_of(c) for c in (getattr(ctx, "unit_candidates", None) or [])]
+        prof = hardware.NEW if hardware.NEW in revs else hardware.UNKNOWN
     if mb is not None:
         chip = hardware.revision_of_id(mb.jedec & 0xFFFFFF)
         if chip == hardware.NEW or prof != hardware.NEW:
@@ -374,6 +378,11 @@ def handles_restore(parent, ctx, path: Path) -> bool:
     s3 = getattr(ctx, "sloop3", None) if getattr(ctx, "midi_connected", False) else None
     if not is_s3_file and s3 is None:
         return False
+    if s3 is not None and getattr(ctx, "profile", None) is None:
+        show_error(parent, _("Restore not possible"),
+                   _("The app does not know yet which of your FM-1 this is. Choose the device at the top first; "
+                     "nothing is written to an FM-1 the app cannot name. Nothing was written."))
+        return True
     if is_s3_file and s3 is None:
         show_error(parent, _("Restore not possible"),
                    _("This is a SLOOP 3 backup. It goes back only onto an FM-1 that runs SLOOP 3 and is connected. "
