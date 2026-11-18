@@ -228,6 +228,8 @@ class DeviceContext(QObject):
         # USB path -> (profile id, time): the unit this app has just installed on there (ui/firmware_page.install_flow)
         self.session_units: dict[str, tuple[str, float]] = {}
         self.unit_candidates: list[Profile] = []  # asked "which FM-1 is this?" and not answered: what it may be
+        self.port_answers: dict[str, str] = {}    # port key -> profile id the owner named; holds while the port stays
+        self.pending_restore_profile = ""         # the profile the restore offer (pending_restore_check) is meant for
         self.window: QWidget | None = None
         # virtual devices (studio twin): list and line are provided by the service (ui/studio_service.py)
         self.virtual_ports = None          # () -> list[PortInfo]
@@ -291,15 +293,15 @@ class DeviceContext(QObject):
         if self.is_virtual:
             from .common import fw_label
             return _("{device} – virtual").format(device=self.port.label) + (f" ({fw_label(self.info.version)})" if self.info else "")
-        name = self.profile.name if self.profile else self.port.label
+        name = self.profile.name if self.profile else self.port.label      # always the device first, then the firmware
         if self.info:
             from .common import fw_label
-            fw = fw_label(self.info.version)
+            fw = fw_label(self.info.version, self.firmware_key)
         elif self.protocol == "update":
             fw = _("update mode ({id})").format(id=self.identity) if self.identity else _("update mode")
         elif self.midi_connected:
-            name = firmware_name(self.firmware_key)
-            fw = (name or (_("unknown – please choose") if self.firmware_ambiguous else _("unknown firmware"))) + \
+            fw_name = firmware_name(self.firmware_key)
+            fw = (fw_name or (_("unknown – please choose") if self.firmware_ambiguous else _("unknown firmware"))) + \
                 (f" ({self.identity})" if self.identity else "")
         else:
             fw = "…"
@@ -349,6 +351,8 @@ class DeviceContext(QObject):
                 vports = []
         keys = [p.key for p in ports]
         vkeys = [p.key for p in vports]
+        for k in [k for k in self.port_answers if k not in keys]:
+            del self.port_answers[k]     # the port was away: what the owner said about it no longer holds
         if keys != [p.key for p in self.ports] or vkeys != [p.key for p in self.vports]:
             self.ports = ports           # real devices only (firmware, rescue, counting several FM-1s …)
             self.vports = vports         # virtual devices are kept separately (device selection at the top only)
@@ -657,6 +661,10 @@ class DeviceContext(QObject):
             return
         self.unit_candidates = []
         p = self._match_profile(port)
+        if self.pending_restore_check and (p is None or p.id != self.pending_restore_profile):
+            # "Back to your data?" is only for the very device the firmware was installed on: this is another profile,
+            # or nobody said which one it is – no backup of one FM-1 is offered to another
+            self.pending_restore_check = ""
         if p is None:                          # the owner did not say which unit this is: no profile, nothing guessed
             self.profile = None
             return
@@ -736,11 +744,17 @@ class DeviceContext(QObject):
             # (the second case: one of the app's own simulated devices with a number no profile has – a new
             # simulated device, there is nothing to ask)
             return self._new_profile()
+        said = store.profiles.get(self.port_answers.get(port.key, ""))
+        if said is not None and said in cands:  # the owner said so for this port, and it has not been away since
+            return said
         here = [c for c in cands if usb and c.usb_path == usb]
         if not own:
-            same = [c for c in here if not ident or ident.lower().startswith("ota-") or not c.identity
-                    or c.identity == ident]
-            if len(here) == 1 and len(same) == 1:
+            unknown = not ident or ident.lower().startswith("ota-")
+            same = [c for c in here if unknown or not c.identity or c.identity == ident]
+            # another profile reports this very identity: without a serial number the two cannot be told apart, and
+            # the USB port alone is no proof (two FM-1 on one cable) – asked, not assumed
+            twins = [c for c in cands if not unknown and c.identity == ident and c not in here]
+            if len(here) == 1 and len(same) == 1 and not twins:
                 return same[0]
             if not usb and len(cands) == 1:    # no USB information at all (not Linux): as before
                 return cands[0]
@@ -754,6 +768,7 @@ class DeviceContext(QObject):
         p = self._ask_profile(cands, guess)
         if p is not None:
             self.unit_candidates = []
+            self.port_answers[port.key] = p.id
         return p
 
     def profile_for_port(self, port: PortInfo) -> Profile | None:

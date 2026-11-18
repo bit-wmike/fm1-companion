@@ -584,11 +584,12 @@ def test_tested_table_matches_untested_md():
     assert f"(as of {ver}" in doc.splitlines()[0] and "2.3.1" not in doc
     # two hardware reports so far: the Melodee update, and one switch via V15 through two USB hubs (2026-11-18, one
     # earlier unit, one Pi 5). "Continue", back to the original, V16 and the newer chip have no report with logs.
-    assert [k for k, (ok, _l) in tested.STEPS.items() if ok] == ["update_melodee", "switch", "v15_step", "usb_hub"]
+    assert [k for k, (ok, _l) in tested.STEPS.items() if ok] == ["update_melodee", "switch", "v15_step", "usb_hub",
+                                                                 "new_chip_skiff"]
     for k in ("chain_continue", "to_stock", "v16", "new_chip", "resume", "rom_restore", "own_file"):
         assert not tested.tested(k), k
     assert "one Raspberry Pi 5" in doc and "2026-11-18" in doc and "run **once**" in doc
-    assert "writing back\nfrom the Studio, restoring a backup, anything that writes to a newer FM-1" in doc
+    assert "writing back from the Studio, restoring a backup, and on a newer FM-1 anything but that one Skiff" in doc
 
 
 def test_tested_note_per_plan(env):

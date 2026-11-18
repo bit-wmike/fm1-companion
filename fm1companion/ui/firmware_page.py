@@ -848,7 +848,8 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
                 hist.append({"time": time.time(), "firmware": spec.key, "name": spec.name, "version": res["tag"],
                              "identity": res["ident"], "via_v15": via_stock})
             ctx.store.save()
-        ctx.pending_restore_check = spec.key if switching else ""
+        ctx.pending_restore_check = spec.key if switching and profile else ""
+        ctx.pending_restore_profile = profile.id if profile else ""
 
     from . import feedback
     try:
@@ -1246,6 +1247,8 @@ class FirmwarePage(QWidget):
             return {"error": _("Firmware of the device unknown")} if key else {}
         rel = firmware.latest(self.releases.get(key, []), self.ctx.settings.channel)
         cur, new = self.ctx.firmware_tag, rel.tag if rel else ""
+        if not cur and key == "stock-v15" and getattr(self.ctx, "identity", "") == "FM-1_015":
+            cur = new or "V15"                 # the FM-1 itself says it runs original version 15: V15 is no update
         if cur and new and new != cur:
             try:                               # “stable” channel with an installed RC: no “update” to an older version
                 if firmware.version_key(new) <= firmware.version_key(cur):

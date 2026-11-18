@@ -208,7 +208,7 @@ def test_plan_rule(n):
     assert P.chip_matters(state(rev), make()) == (blocked or bool(confirm))
     if blocked:
         assert not p.ok and "no_logo" not in p.confirmations
-    assert ("new_chip" in tested.plan_kinds(p)) == (rev == "new")
+    assert bool({"new_chip", "new_chip_skiff"} & set(tested.plan_kinds(p))) == (rev == "new")
 
 
 def test_plan_names_the_first_version_and_has_no_override():
@@ -362,8 +362,9 @@ def test_rescue_reads_the_flash_id(tmp_path):
 def test_tested_table_says_nothing_ran_on_a_newer_unit():
     assert tested.STEPS["new_chip"][0] is False
     text = (ROOT / "docs" / "UNTESTED.md").read_text("utf-8")
-    assert "`new_chip`" in text and "nothing was written to a newer unit" in text
-    assert "**not** a test of the public V15 package" in text          # the one unit that was only looked at
+    assert "`new_chip`" in text and "one installation ran on one newer unit" in text
+    assert "**not** a test of the public V15 package" in text          # the unit as delivered was only looked at
+    assert tested.STEPS["new_chip_skiff"][0] is True                   # one run: Skiff 2.7, one unit (2026-11-18)
 
 
 # ================================================================================================ review fixes

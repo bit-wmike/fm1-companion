@@ -3285,9 +3285,6 @@ msgstr "Ja – neueres Gerät (UC25HQ80-Flash)"
 msgid "Yes, continue"
 msgstr "Ja, weiter"
 
-msgid "anything on a newer FM-1 (logo on the front, flash UC25HQ80)"
-msgstr "irgendetwas auf einem neueren FM-1 (Logo auf der Vorderseite, Flash UC25HQ80)"
-
 msgid "change"
 msgstr "ändern"
 
@@ -3389,3 +3386,21 @@ msgstr "Dieses FM-1 antwortet mit „FM-1_015“ wie die Original-V15, es könnt
 
 msgid "Careful mode has run once through real USB hubs, without a dropout. Its automatic resume after a dropout has only been run in the simulation so far."
 msgstr "Der vorsichtige Modus lief einmal über echte USB-Hubs, ohne Aussetzer. Das automatische Fortsetzen nach einem Aussetzer lief bisher nur in der Simulation."
+
+msgid "Run with this app once: Skiff 2.7 on one newer FM-1 (2026-11-18); saving worked there."
+msgstr "Mit dieser App einmal gelaufen: Skiff 2.7 auf einem neueren FM-1 (18.11.2026); das Speichern hat dort funktioniert."
+
+msgid "installing Skiff on a newer FM-1 (logo on the front, flash UC25HQ80)"
+msgstr "die Installation von Skiff auf einem neueren FM-1 (Logo auf der Vorderseite, Flash UC25HQ80)"
+
+msgid "{unit} {name} knows this chip from version {first} on – read in the firmware's own source (docs/firmware-support.md), not measured by this app."
+msgstr "{unit} {name} kennt diesen Chip ab Version {first} – gelesen im Quelltext der Firmware (docs/firmware-support.md), von dieser App nicht gemessen."
+
+msgid "{unit} {name} says in its own package information that it knows this chip – not measured by this app."
+msgstr "{unit} {name} sagt in seinen eigenen Paketangaben, dass es diesen Chip kennt – von dieser App nicht gemessen."
+
+msgid "anything else on a newer FM-1 (logo on the front, flash UC25HQ80)"
+msgstr "alles andere auf einem neueren FM-1 (Logo auf der Vorderseite, Flash UC25HQ80)"
+
+msgid "This app has not installed this firmware on a newer FM-1 yet."
+msgstr "Diese App hat diese Firmware noch nicht auf einem neueren FM-1 installiert."

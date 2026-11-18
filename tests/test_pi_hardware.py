@@ -44,7 +44,7 @@ def fake_ctx(store, port=None, identity="", **kw):
                           link=None, profile=None, virtual_profile=None, session_units={}, unit_candidates=[],
                           settings=SimpleNamespace(last_device="", backups_dir=store.path.parent / "Backups"),
                           asked=asked, answer=None, SESSION_UNIT_SECS=DeviceContext.SESSION_UNIT_SECS,
-                          is_virtual=False)
+                          is_virtual=False, port_answers={}, pending_restore_check="", pending_restore_profile="")
 
     def _ask(cands, guess=None):
         asked.append(([c.id for c in cands], guess.id if guess else None))
@@ -418,7 +418,7 @@ def test_one_scan_without_the_port_is_not_a_disconnect(monkeypatch):
     monkeypatch.setattr(devices, "uboot_present", lambda: [])
     link = SimpleNamespace(t=SimpleNamespace(alive=True))
     ctx = SimpleNamespace(hold=False, virtual_ports=None, ports=[port], vports=[], port=port, link=link, uboot=[],
-                          ports_changed=SimpleNamespace(emit=lambda: None), _gone_since=None,
+                          ports_changed=SimpleNamespace(emit=lambda: None), _gone_since=None, port_answers={},
                           GONE_GRACE=D.DeviceContext.GONE_GRACE, GONE_RESCAN=D.DeviceContext.GONE_RESCAN)
     ctx._port_present = lambda ports: D.DeviceContext._port_present(ctx, ports)
     ctx.scan = lambda: D.DeviceContext.scan(ctx)
@@ -711,3 +711,165 @@ def test_the_plan_follows_the_answer_to_which_firmware_runs():
     same = P.plan_install(st, P.Target(name="TransitFM1", product="FM-1_015", family="felucca", key="transitfm1"),
                           backup=False)
     assert same.v15_option == "none"
+
+
+# ---------------------------------------------------------------- finding 24: the newer unit booked on the other profile
+
+def two_units(home, new_port="1-2"):
+    """devices.json as it was on the Pi: the earlier unit without a serial number, the newer one with its own"""
+    return store_with(home, [
+        {"id": "old", "name": "FM-1 Schwarz/Grün", "firmware": "skiff", "firmware_version": "v2.7",
+         "identity": "FM-1_727", "usb_path": "3-1.3.1", "hw_revision": "old", "hw_revision_source": "user"},
+        {"id": "2039b2a6a5", "name": "FM-1 A", "serial": NEW_SERIAL, "firmware": "stock-v15", "identity": "FM-1_015",
+         "usb_path": new_port, "hw_revision": "new", "hw_revision_source": "user"}])
+
+
+def test_after_the_install_the_unit_stays_its_own_profile(home):
+    """Skiff 2.7 installed on "FM-1 A" (newer chip, stock serial) at port 1-2. Skiff reports no serial number: the
+    app took the only profile without one – the OTHER unit's – wrote port 1-2 into it and offered its backup."""
+    store = two_units(home)
+    new, old = store.profiles["2039b2a6a5"], store.profiles["old"]
+    ctx = fake_ctx(store, pending_restore_check="skiff", pending_restore_profile=new.id)
+    ctx.note_installed(new, "1-2")                     # install_flow, in its finally
+    new.firmware, new.identity = "skiff", "FM-1_727"   # install_flow done(): profile updated
+    prof, asked = assign(store, felucca_port("Felucca", "1-2"), identity="FM-1_727", ctx=ctx)
+    assert prof is new and not asked                   # (a) the profile the app installed on, at that port
+    assert old.usb_path == "3-1.3.1"                   # (e) the other profile's USB port is not touched
+    assert ctx.pending_restore_check == "skiff"        # (d) the offer is for this profile: stays
+    from fm1companion.ui.firmware_page import device_revision
+    ctx.profile = prof
+    assert device_revision(ctx) == "new"
+
+
+def test_two_profiles_one_identity_without_serial_is_asked_never_the_old_one(home):
+    """the persisted state after that installation, app restarted: both units run Skiff 2.7 (FM-1_727), neither
+    shows a serial number"""
+    from fm1companion.ui.firmware_page import device_revision
+    store = two_units(home)
+    new, old = store.profiles["2039b2a6a5"], store.profiles["old"]
+    new.firmware, new.identity = "skiff", "FM-1_727"
+    for path, guess in (("1-2", new.id), ("3-1.3.1", "old"), ("7-7", None)):
+        ctx = fake_ctx(store, pending_restore_check="skiff", pending_restore_profile=new.id)
+        prof, asked = assign(store, felucca_port("Felucca", path), identity="FM-1_727", ctx=ctx)
+        assert prof is None and len(asked) == 1, path  # (c) asked – the USB port alone is no proof
+        assert set(asked[0][0]) == {"old", new.id}     # (b) the profile WITH a serial number is a candidate
+        assert guess is None or asked[0][1] == guess   # the profile of that port is only the preselection
+        assert device_revision(ctx) == "new"           # unanswered: the strictest candidate
+        assert ctx.pending_restore_check == ""         # (d) no restore offer while nobody said which unit it is
+        assert (old.usb_path, new.usb_path) == ("3-1.3.1", "1-2")           # (e)
+    # answered: that profile, its port learned, and not asked again while the port stays
+    ctx = fake_ctx(store)
+    port = felucca_port("Felucca", "3-1.3.1")
+    prof, asked = assign(store, port, identity="FM-1_727", ctx=ctx, ask=lambda c: new)
+    assert prof is new and new.usb_path == "3-1.3.1"
+    prof, asked = assign(store, port, identity="FM-1_727", ctx=ctx)
+    assert prof is new and not asked
+    ctx.port_answers.clear()                           # (scan() does this when the port was away)
+    prof, asked = assign(store, port, identity="FM-1_727", ctx=ctx)
+    assert prof is None and asked
+    # a restore offer meant for one profile is dropped when the unit turns out to be the other
+    ctx = fake_ctx(store, pending_restore_check="skiff", pending_restore_profile=new.id)
+    prof, asked = assign(store, port, identity="FM-1_727", ctx=ctx, ask=lambda c: old)
+    assert prof is old and ctx.pending_restore_check == ""
+
+
+def test_felucca_firmware_at_the_new_profiles_port_is_the_new_profile(home):
+    """persisted state, the identities differ (the earlier unit runs KARMA): port and identity name the newer one"""
+    store = two_units(home)
+    new, old = store.profiles["2039b2a6a5"], store.profiles["old"]
+    old.firmware, old.identity = "karma", "FM-1_926"
+    new.firmware, new.identity = "skiff", "FM-1_727"
+    prof, asked = assign(store, felucca_port("Felucca", "1-2"), identity="FM-1_727")
+    assert prof is new and not asked and old.usb_path == "3-1.3.1"
+    # the very case of the report without the app's own bookkeeping: the profile still says "stock-v15 / FM-1_015"
+    new.firmware, new.identity = "stock-v15", "FM-1_015"
+    prof, asked = assign(store, felucca_port("Felucca", "1-2"), identity="FM-1_727")
+    assert prof is None and asked and asked[0][1] == new.id and old.usb_path == "3-1.3.1"
+
+
+def test_port_answers_end_when_the_port_goes_away(monkeypatch):
+    from fm1companion.ui import device as D
+    port = felucca_port()
+    monkeypatch.setattr(D, "DEMO", False)
+    monkeypatch.setattr(D, "scan_ports", lambda: [])
+    monkeypatch.setattr(devices, "uboot_present", lambda: [])
+    ctx = SimpleNamespace(hold=False, virtual_ports=None, ports=[port], vports=[], port=None, link=None, uboot=[],
+                          ports_changed=SimpleNamespace(emit=lambda: None), _gone_since=None,
+                          port_answers={port.key: "x"}, settings=SimpleNamespace(last_device=""))
+    D.DeviceContext.scan(ctx)
+    assert ctx.port_answers == {}
+
+
+# ---------------------------------------------------------------- finding 22: the header line
+
+def test_title_names_the_device_first(monkeypatch):
+    from fm1companion.ui import device as D
+    prof = devices.Profile(id="a", name="FM-1 A", firmware="stock-v15")
+    ctx = SimpleNamespace(port=stock_port(NEW_SERIAL), is_virtual=False, profile=prof, info=None, protocol="generic",
+                          midi_connected=True, identity="FM-1_015", firmware_key="stock-v15", firmware_ambiguous=False)
+    t = D.DeviceContext.title(ctx)
+    assert t.startswith("FM-1 A – ") and t.endswith("(FM-1_015)") and t.count("V15") == 1
+    ctx.firmware_key, ctx.firmware_ambiguous = "", True
+    assert D.DeviceContext.title(ctx).startswith("FM-1 A – ")                # never an empty name in front
+    ctx.profile = None
+    assert D.DeviceContext.title(ctx).startswith("FM-1 – ")                  # no profile: the port's name
+    # with editor protocol: the firmware under its own name (Skiff reports "FELUCCA v2.7")
+    ctx.profile, ctx.info, ctx.firmware_key = prof, SimpleNamespace(version="FELUCCA v2.7"), "skiff"
+    assert D.DeviceContext.title(ctx) == "FM-1 A – Skiff 2.7"
+
+
+# ---------------------------------------------------------------- finding 25: the first run on the newer chip
+
+def test_new_chip_run_is_recorded_in_its_exact_scope():
+    from fm1companion import firmware
+    from fm1companion.flash import planner as P, tested
+    assert tested.tested("new_chip_skiff") and not tested.tested("new_chip")
+    st = P.DeviceState(identity="FM-1_015", firmware_key="stock-v15", pinned=True, revision="new", usb_id="4c4a:c755")
+
+    def kinds(key, tag, state=st):
+        return tested.plan_kinds(P.plan_install(state, P.Target.from_spec(firmware.spec(key), tag=tag), backup=False))
+    assert "new_chip_skiff" in kinds("skiff", "v2.7") and "new_chip" not in kinds("skiff", "v2.7")
+    for key, tag in (("melodee", "v1.6.1"), ("karma", "v3.1"), ("stock-v15", "V15")):
+        assert "new_chip" in kinds(key, tag) and "new_chip_skiff" not in kinds(key, tag), key
+    via = P.DeviceState(identity="FM-1_91061", firmware_key="melodee", felucca=True, pinned=True, revision="new")
+    assert "new_chip" in kinds("skiff", "v2.7", via)                         # with a V15 step: not what ran
+    doc = (ROOT / "docs" / "UNTESTED.md").read_text("utf-8")
+    assert "Scope: one unit, one firmware (Skiff 2.7), one computer." in doc and "m-bootloader" in doc
+    assert "that package was never written to one" in doc
+
+
+def test_plan_on_a_newer_unit_says_why_the_target_is_let_through_and_asks_for_power():
+    from fm1companion import firmware
+    from fm1companion.flash import planner as P
+    st = P.DeviceState(identity="FM-1_015", firmware_key="stock-v15", pinned=True, revision="new", usb_id="4c4a:c755")
+    p = P.plan_install(st, P.Target.from_spec(firmware.spec("skiff"), tag="v2.7"), backup=False)
+    assert p.ok and not p.via_stock
+    note = next(w for w in p.warnings if "2.2" in w and "UC25HQ80" in w)
+    assert "Skiff 2.7" in note                         # Skiff: ran once – said, nothing more
+    mel = P.plan_install(st, P.Target.from_spec(firmware.spec("melodee"), tag="v1.6.1"), backup=False)
+    note = next(w for w in mel.warnings if "1.6.0" in w and "UC25HQ80" in w)
+    assert "Skiff 2.7" not in note
+    v15 = P.plan_install(st, P.Target.from_spec(firmware.spec("stock-v15"), tag="V15"), backup=False)
+    assert not any("nicht gemessen" in w or "not measured" in w for w in v15.warnings)   # V15 keeps its own note only
+    assert any(w == P.NEWCHIP_V15 for w in v15.warnings)
+    old = P.DeviceState(identity="FM-1_015", firmware_key="stock-v15", pinned=True, revision="old")
+    assert not any("UC25HQ80" in w for w in P.plan_install(
+        old, P.Target.from_spec(firmware.spec("skiff"), tag="v2.7"), backup=False).warnings)
+    # the power confirmation is part of every plan that writes – this one had none
+    assert "power" in p.confirmations and "power" in mel.confirmations
+    hub = P.DeviceState(identity="FM-1_015", firmware_key="stock-v15", pinned=True, revision="new", hubs=1)
+    assert "power_hub" in P.plan_install(hub, P.Target.from_spec(firmware.spec("skiff"), tag="v2.7"),
+                                         backup=False).confirmations
+
+
+def test_v15_is_not_offered_as_an_update_to_a_unit_that_reports_version_15():
+    from fm1companion import firmware
+    from fm1companion.ui.firmware_page import FirmwarePage
+    rel = firmware.Release(tag="V15", prerelease=False)
+    page = SimpleNamespace(ctx=SimpleNamespace(firmware_key="stock-v15", firmware_tag="", identity="FM-1_015",
+                                               settings=SimpleNamespace(channel="stable")),
+                           releases={"stock-v15": [rel]})
+    st = FirmwarePage.update_status(page)
+    assert st["current"] == st["latest"] == "V15"
+    page.ctx.identity = "FM-1_016"                     # (another original version: V15 stays what it is)
+    assert FirmwarePage.update_status(page)["current"] == ""

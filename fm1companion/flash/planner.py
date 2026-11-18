@@ -684,6 +684,17 @@ def _new_chip(p: InstallPlan, state: DeviceState, t: Target):
         p.warnings.append(NEWCHIP_V15)
     sup = chip_support(t)
     if sup.status == hardware.YES:
+        if new and not off and (sup.first_version or t.flash):   # why the plan lets this through, and what that is worth
+            first = hardware.first_version_text(t.key, sup.first_version) if sup.first_version else ""
+            p.warnings.append(
+                (_("{unit} {name} knows this chip from version {first} on – read in the firmware's own source "
+                   "(docs/firmware-support.md), not measured by this app.").format(unit=NEW_UNIT, name=t.name, first=first)
+                 if first else
+                 _("{unit} {name} says in its own package information that it knows this chip – not measured by "
+                   "this app.").format(unit=NEW_UNIT, name=t.name))
+                + " " + (_("Run with this app once: Skiff 2.7 on one newer FM-1 (2026-11-18); saving worked there.")
+                         if fw_identity(t.key) == "skiff" else
+                         _("This app has not installed this firmware on a newer FM-1 yet.")))
         return
     tv = t.tag
     shown = hardware.first_version_text(t.key, tv)
@@ -787,6 +798,9 @@ def _confirm_power(p: InstallPlan, t: Target, fam: str):
                             "(only recovery stage 2 helps).") if _not_resumable(t, fam) else
                           _("The original firmware has no start protection: the power must not fail while "
                             "writing."))
+    # every plan that writes asks for power and an awake computer – also the resumable ones (the hardware run of
+    # 2026-11-18 had the question in one plan and not in the next)
+    if any(s.writes for s in p.steps):
         key = "power_hub" if getattr(p.state, "hubs", 0) else "power"
         if key not in p.confirmations:
             p.confirmations.append(key)
