@@ -480,7 +480,23 @@ Tests: `tests/test_usb_hub.py` (`sim.SimFaults`).
 * The unit's revision lives in the device profile (`hw_revision`, `hw_revision_source`, `flash_id`). It is set by
   (a) and (b) above when the app sees the ID, otherwise by the owner's answer to one question – "Does your FM-1 have
   the M-VAVE logo on the front?" – asked once per device when an installation depends on it, changeable on the pages
-  Devices and Overview. An ID that was read is not overwritten by an answer.
+  Devices and Overview.
+* **"Newer unit" is sticky, the strictest reading wins** (`hardware.set_revision`). Profiles are matched to devices
+  loosely (FM-1s have no reliable serial number), so a second FM-1 can appear under a profile: a read or answered
+  "earlier" never replaces a recorded "newer" – it is kept as `hw_revision_conflict` and shown ("two devices under one
+  profile?"). "Newer" always counts, whoever says it. Only the owner takes "newer" or a read ID away: *Unit …* with
+  an explicit confirmation (logged). Merging two profiles keeps the strictest statement.
+* A flash ID read in ROM boot mode is stored on a profile only when that profile is unambiguously the unit in ROM
+  mode – the device the Recovery page itself sent there (softkey, same USB port), or the only profile seen at that
+  USB port in this session. Otherwise it counts for this session's checks at that USB port (`hardware.SESSION_READS`)
+  and nothing is stored. Recovery › finish installation judges the FM-1 that waits in update mode, not the active
+  device: certain only by a serial number; otherwise unknown at best, and newer if any candidate profile is.
+* What feeds the rule: the version is the release tag, the catalog's version or the version a checksum vouches for –
+  never a file name or display name; a pre-release or variant of a minimum version ("1.6.0-rc", "-beta", "_rc1") is
+  not that version unless the row lists it (`also`: Felucca 1.8.2-beta); a table row applies only to its own
+  repository (a fork added under the same key is unknown); only M-VAVE's two original packages count as "the
+  original" – another target of the stock loader family is unknown. An unreadable table blocks every plan for a unit
+  that is not known to be an earlier one.
 * The plan (every way to install goes through it: releases, catalog, link import, own files, the V15 step, "back to
   the original", continuing a switch, finishing an interrupted installation):
 
