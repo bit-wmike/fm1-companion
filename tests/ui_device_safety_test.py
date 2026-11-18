@@ -305,7 +305,10 @@ def flow():
         hardware.SESSION_READS.clear()
         other.serial = "SER-B-0001"
         byser = _dm.PortInfo("B in", "B out", "FM-1 Update", None, serial="SER-B-0001", usb_path="usb-z", update_mode=True)
-        check(rec.waiting_unit(byser, {}) == (other, True, "new"), "a waiting FM-1 with a serial number: its own profile, certain")
+        check(rec.waiting_unit(byser, {})[1:] == (False, ""),
+              "a serial number shown in update mode identifies no profile (loaders and V15 share theirs): not certain")
+        check(rec.waiting_unit(byser, {"device_id": other.id})[1:] == (False, "new"),
+              "… and the strictest reading still holds for it")
         log_boxes.clear()
         melodee_old = home / "melodee-old.fwsc"
         from fm1companion.flash import package as _fpk
@@ -313,7 +316,7 @@ def flow():
         ok_gate = rec._chip_gate(melodee_old, False, {}, nowhere)
         check(ok_gate and any("Logo auf der Vorderseite" in b for b in log_boxes),
               f"gate for an unidentified waiting FM-1 and an own file: only after a confirmation ({len(log_boxes)} boxes)")
-        check(rec._chip_gate(None, True, {}, byser), "original V15 for the waiting newer unit: allowed")
+        check(rec._chip_gate(None, True, {"device_id": other.id}, byser), "original V15 for the waiting newer unit: allowed")
     finally:
         os.environ["FM1C_DEMO"] = demo_env
     other.serial = "DEMO-X"

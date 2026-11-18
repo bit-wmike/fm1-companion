@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (QDialog, QDialogButtonBox, QInputDialog, QLabel, QL
 
 from .. import config, firmware
 from ..i18n import _
-from ..devices import PortInfo, Profile, ProfileStore, scan_ports, usable_serial
+from ..devices import PortInfo, Profile, ProfileStore, identifying_serial, scan_ports, usable_serial
 from ..protocol import Cmd, Info, parse_info
 from ..transport import Link, LinkError, MidoTransport, SubprocessTransport
 from .common import JobDialog, run_job, show_error
@@ -564,14 +564,16 @@ class DeviceContext(QObject):
             self.changed.emit()
 
     def _assign_profile(self):
-        """Find the profile for the device: serial number, otherwise firmware and USB port, otherwise ask."""
+        """Find the profile for the device: a serial number that identifies the unit (devices.identifying_serial –
+        never the original firmware's, which is the same on every FM-1), otherwise firmware and USB port,
+        otherwise ask."""
         port = self.port
         if not port:
             return
         if getattr(port, "virtual", False) and self.virtual_profile is not None:
             self.profile = self.virtual_profile(port)      # own profile, never in the device store
             return
-        serial = usable_serial(port, self.ports or [port])
+        serial = identifying_serial(port, self.ports or [port], self.identity)
         if serial:
             p = self.store.by_serial(serial) or self.store.create(serial=serial)
         else:
