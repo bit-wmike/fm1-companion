@@ -84,6 +84,27 @@ def test_versions_and_pick():
     assert not vc.ok and "dein FM-1 hat v1.6.0-rc.8" in vc.message and "CZ-1" in vc.message
     vc = studio.check_versions("v1.6.0-rc.8", backup="MELODEE v1.6.0")
     assert not vc.ok and "CZ-1" in vc.message
+    # every difference is said once (Pi hardware test: Skiff 2.7 on the FM-1, twin 2.2 – the banner said it three times)
+    vc = studio.check_versions("v2.2.0", device="FELUCCA v2.7", backup="FELUCCA v2.7", firmware="Skiff")
+    assert not vc.ok and vc.message.count("v2.7.0") == 1 and vc.message.count("abweichen") == 1, vc.message
+    assert "dein FM-1 und das Backup haben v2.7.0" in vc.message
+    b, exact, warn = studio.pick_build("skiff", "FELUCCA v2.7")
+    assert not exact and "v2.7.0" in warn
+    vc = studio.check_versions(b.version, device="FELUCCA v2.7", backup="FELUCCA v2.7", firmware="Skiff", missing="v2.7")
+    assert not vc.ok and vc.message == "", vc.message          # the "no twin for 2.7" sentence is the only one
+    vc = studio.check_versions(b.version, device="FELUCCA v2.6", backup="FELUCCA v2.7", firmware="Skiff", missing="v2.7")
+    assert "dein FM-1 hat v2.6.0" in vc.message and "v2.7.0" not in vc.message     # another device: still said
+    vc = studio.check_versions("v2.2.0", device="FELUCCA v2.6", backup="FELUCCA v2.7", firmware="Skiff")
+    assert "dein FM-1 hat v2.6.0" in vc.message and "Das Backup stammt von Skiff v2.7.0" in vc.message
+
+
+def test_studio_remembers_the_version_without_a_twin(node_studio):
+    st = node_studio("FELUCCA v2.7", firmware="skiff")
+    assert st.warning and st.wanted == "v2.7.0" and st.build.version != "v2.7.0"
+    assert node_studio(st.build.version, firmware="skiff").wanted == ""
+    src = (Path(studio.__file__).parent / "ui/pages/studio.py").read_text("utf-8")
+    banner = src.split("def _banner", 1)[1].split("\n    def ", 1)[0]
+    assert "missing=" in banner and banner.count("svc.st.warning") == 1      # the banner passes it on, says it once
 
 
 def test_wav_header():

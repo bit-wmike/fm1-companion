@@ -4574,3 +4574,7 @@ msgstr "Traer"
 #: fm1companion/ui/pages/studio.py:1001
 msgid "FM1 Open: keep the cable connected. The FM-1 loads each saved project into its working area in turn; your working project is put back at the end."
 msgstr "FM1 Open: no desconectes el cable. El FM-1 carga cada proyecto guardado, uno tras otro, en su área de trabajo; tu proyecto de trabajo se vuelve a poner al final."
+
+#, python-brace-format
+msgid "The studio runs with {firmware} {twin}, your FM-1 and the backup have {device} – sound may differ."
+msgstr "El Studio funciona con {firmware} {twin}, tu FM-1 y la copia de seguridad tienen {device}; el sonido puede diferir."

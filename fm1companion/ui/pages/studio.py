@@ -727,11 +727,13 @@ class StudioPage(QWidget):
             level = "warning"
         elif svc.running:
             dev = self._dev_version() if dev_fw else ""
+            # one sentence per difference: "no twin for this version" (pick_build) first, and what it already
+            # says is not repeated by the comparison with the device and the backup
+            no_twin = svc.st.warning if svc.st is not None else ""
             vc = S.check_versions(svc.version, device=dev, backup=svc.source.get("backup_version", ""),
-                                  firmware=svc.firmware_name)
-            msgs = [vc.message] if vc.message else []
-            if svc.st is not None and svc.st.warning:
-                msgs.append(svc.st.warning)
+                                  firmware=svc.firmware_name,
+                                  missing=getattr(svc.st, "wanted", "") if no_twin else "")
+            msgs = ([no_twin] if no_twin else []) + ([vc.message] if vc.message else [])
             if dev and svc.firmware == "felucca":          # (a Felucca fork, or another build: Felucca's twin all the same)
                 note = S.felucca_fork_note(c.firmware_key, getattr(c, "identity", ""), svc.st.build.identity)
                 if note:
