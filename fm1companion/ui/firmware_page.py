@@ -570,15 +570,12 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         from . import sloop3_ui
         sloop3_ui.open_dialog(parent, ctx)
         return False
+    from . import sloop3_ui as _s3ui
     if getattr(ctx, "sloop3", None) is not None and not ctx.port.update_mode:
         # SLOOP 3 has no update mode a host can ask for (it ignores the update key): say so instead of failing later
-        show_error(parent, _("Not from the running SLOOP 3"),
-                   _("This FM-1 runs SLOOP 3, which cannot be switched to an update mode over USB – the installation "
-                     "would stop at its first step, with nothing written. The app cannot install firmware on this "
-                     "FM-1. Going back to SLOOP 2.8 or M-VAVE's firmware means writing your flash backup back with "
-                     "M-Flasher. “Firmware+” › SLOOP 3 explains the way."))
+        show_error(parent, *_s3ui.running_sloop3_refusal())
         return False
-    from . import sloop3_ui as _s3ui             # (m-bootloader's MIDI MODE answers like an update loader: never sent)
+    # (m-bootloader's MIDI MODE answers like an update loader: never sent)
     if _s3ui.refuse_in_midi_mode(parent, ctx):
         return False
     from .risk_dialog import ensure_risk_ack
@@ -1242,15 +1239,27 @@ class FirmwarePage(QWidget):
         if s is not None and s.key == "sloop3":     # no package, no installation by the app: what it needs, the links
             from . import sloop3_ui
             self.notes.setHtml(sloop3_ui.notes_html(self.ctx))
+            # (not "Install on active FM-1": the app never installs SLOOP 3 – this opens the guide, which also holds
+            # the flash backup in MIDI MODE; nothing is written from it)
+            self.b_install.setText(_("SLOOP 3: the way onto the FM-1 …"))
             self.b_install.setEnabled(True)
             self.b_install.setToolTip(_("SLOOP 3 is not installed by the app: this shows the way onto the FM-1 "
                                         "(m-bootloader, flash backup, the author's installer page)."))
             self.b_dl.setEnabled(False)
             self.b_dl.setToolTip(_("SLOOP 3 has no package to download: its installer page carries the firmware."))
             return
-        self.b_install.setEnabled(has and self.ctx.port is not None and not getattr(self.ctx, "is_virtual", False))
+        self.b_install.setText(_("Install on active FM-1"))
+        from . import sloop3_ui
+        blocked = sloop3_ui.install_blocker(self.ctx)   # (SLOOP 3 running, MIDI MODE: install_flow refuses them too)
+        self.b_install.setEnabled(has and self.ctx.port is not None and not getattr(self.ctx, "is_virtual", False)
+                                  and blocked is None)
         self.b_dl.setEnabled(has)
-        if not has:
+        if blocked is not None:
+            self.b_install.setToolTip(f"<b>{blocked[0]}</b><br>{blocked[1]}")
+            if has:
+                self.b_dl.setToolTip(_("Only download {name} {tag} into the firmware folder (installs nothing)").format(
+                    name=s.name, tag=r.tag))
+        elif not has:
             tip = _("First choose a version in the list.") if s and self.releases.get(s.key) else \
                   _("No version loaded – try “Reload” (internet needed) or choose your own .fwsc file.")
             self.b_install.setToolTip(tip)

@@ -234,10 +234,10 @@ class OverviewPage(QWidget):
         self.lbl["Unit"].setText(self._unit_text(p))
         for b in (self.b_rename, self.b_color, self.notes):
             b.setEnabled(p is not None)
-        can_backup = bool(c.connected)
+        from .backups_page import can_back_up, no_backup_reason   # (the same rule as the page “Backups”: SLOOP 3 too)
+        can_backup = can_back_up(c)
         why = (_("Make a complete backup of the active FM-1 (Ctrl+B)") if can_backup else
-               (_("Backup only works with firmwares with editor protocol (Melodee, Skiff, SLOOP).") if port else
-                _("Connect an FM-1 first.")))
+               (no_backup_reason(c) if port else _("Connect an FM-1 first.")))
         for b in (self.b_backup, self.quick_buttons.get("Backup jetzt")):  # i18n: ignore
             if b is not None:
                 b.setEnabled(can_backup)

@@ -148,6 +148,12 @@ def main():
     ov = w.overview
     check(ov.lbl["Firmware"].text() == "SLOOP 3" and c.sloop3.version in ov.lbl["Version"].text(),
           f"overview: {ov.lbl['Firmware'].text()} / {ov.lbl['Version'].text()} / {ov.lbl['Verbindung'].text()[:60]}")
+    quick = ov.quick_buttons.get("Backup jetzt")
+    check(ov.b_backup.isEnabled() and quick is not None and quick.isEnabled(),
+          f"overview: “Back up now” on the backup card and in the quick access works for SLOOP 3 (pi finding 29: "
+          f"{ov.b_backup.isEnabled()}, {quick is not None and quick.isEnabled()}, {ov.b_backup.toolTip()[:50]})")
+    from fm1companion.ui import backups_page as _BP
+    check(_BP.can_back_up(c), "… by the same rule as the page “Backups” (backups_page.can_back_up)")
     if not REAL:
         foreign = [m for m in seen() if not (len(m) > 4 and m[:4] == bytes([0xF0, 0x7D, 0x53, 0x33]))]
         probes = {m.hex() for m in foreign}
@@ -289,6 +295,30 @@ def main():
     notes = inst.notes.toPlainText()
     check("m-bootloader" in notes and "beta" in notes.lower() and "M-Flasher" in notes, "its entry names what it needs")
     check(inst.b_install.isEnabled() and not inst.b_dl.isEnabled(), "no download, no package installation")
+    check(inst.b_install.text() == "SLOOP 3: der Weg aufs FM-1 …",
+          f"for SLOOP 3 the button says what it does – the guide, never an installation ({inst.b_install.text()})")
+
+    def other_target(key="skiff"):
+        """Firmware+ with another firmware and a version chosen (offline: the version list is put in)"""
+        inst.cat.setCurrentRow(keys.index(key))
+        wait(800)
+        from fm1companion import firmware as _fw
+        inst.releases[key] = [_fw.Release("v2.7", False)]
+        inst.loading.discard(key)
+        inst._fill()
+        return _fw.spec(key), inst.releases[key][0]
+    spec_o, rel_o = other_target()
+    check(not inst.b_install.isEnabled() and "SLOOP 3" in inst.b_install.toolTip()
+          and "Nicht aus dem laufenden SLOOP 3" in inst.b_install.toolTip()
+          and inst.b_install.text() == "Auf aktives FM-1 installieren",
+          f"under a running SLOOP 3 “Install on active FM-1” is off, the tooltip says why (pi finding 32: "
+          f"{inst.b_install.toolTip()[:70]})")
+    n0, boxes_before = len(seen()), len(boxes)
+    from fm1companion.ui import firmware_page as _fp
+    check(_fp.install_flow(w, c, spec_o, rel_o) is False and any("SLOOP 3" in b for b in boxes[boxes_before:])
+          and len(seen()) == n0, "… and the installer itself still refuses it, without sending anything")
+    inst.cat.setCurrentRow(keys.index("sloop3"))
+    wait(400)
     state = {}
     from fm1companion.flash import mboot
 
@@ -395,6 +425,53 @@ def main():
     wait(200)
     check(not any("Flash" in (w.backups.tree.topLevelItem(i).text(0) or "") for i in range(w.backups.tree.topLevelItemCount())),
           "the flash backup is not listed as a (damaged) data backup")
+    # Firmware+ in MIDI MODE (pi finding 33): nothing can be installed from here with the app – any target, SLOOP 3 too
+    w.go("firmware")
+    n_units, n_cmds = len(units), list(units[-1].commands)
+    spec_o, rel_o = other_target()
+    check(not inst.b_install.isEnabled() and "MIDI MODE" in inst.b_install.toolTip(),
+          f"MIDI MODE: “Install on active FM-1” is off for another firmware ({inst.b_install.toolTip()[:70]})")
+    boxes.clear()
+    check(_fp.install_flow(w, c, spec_o, rel_o) is False and any("MIDI MODE" in b for b in boxes),
+          "… and the installer refuses it again")
+    from fm1companion import firmware as _fw
+    s3spec = _fw.spec("sloop3")
+    if s3spec is not None:
+        QDialog.exec = lambda self: 0
+        check(_fp.install_flow(w, c, s3spec, None) is False, "SLOOP 3 as the target: only the guide, no installation")
+        QDialog.exec = _dialog_exec
+    inst.cat.setCurrentRow(keys.index("sloop3"))
+    wait(400)
+    check(inst.b_install.text() == "SLOOP 3: der Weg aufs FM-1 …", "… the SLOOP 3 entry's button opens the guide")
+    rec = w.page("recovery")
+    boxes.clear()
+    check(rec is not None and rec.finish_install() is False and rec.finish_install(stock=True) is False
+          and sum("MIDI MODE" in b for b in boxes) == 2,
+          f"Recovery › “Finish installation” (also with V15) refuses MIDI MODE ({len(boxes)} notices)")
+    check(len(units) == n_units and units[-1].commands == n_cmds and not (units[-1].writes or units[-1].installs),
+          "nothing at all was sent to m-bootloader by any of these")
+    # the device selection says what is waiting there, in full, at 1280×720 (pi finding 33: “FM-1 Update (Upda”)
+    w.resize(1280, 720)
+    wait(400)
+    c.ports = [mport]                              # (the port list as a scan would give it: only this FM-1)
+    c.profile.name = "FM-1 Schwarz/Grün"           # (the owner's name for it: the longer case)
+    w._dev_changed()
+    wait(300)
+    cb = w.dev_combo
+    full = cb.itemData(cb.currentIndex(), w.DEV_FULL_TEXT) or ""
+    shown = cb.currentText()
+    room = cb.width() - cb.iconSize().width() - 44
+    check(full.endswith("·  m-bootloader MIDI MODE") and c.profile is not None and full.startswith(c.profile.name)
+          and "(Upda" not in full, f"device selection: “{full}”")
+    check(cb.fontMetrics().horizontalAdvance(shown) <= room and (shown == full or "…" in shown),
+          f"… readable at 1280×720 ({cb.width()} px, “{shown}”)")
+    a_bk = next(a for a in w.toolbar.actions() if a.text() == "Backup jetzt")
+    bk = w.toolbar.widgetForAction(a_bk)
+    check(bk is not None and bk.isVisible() and w.bell.isVisible() and w.search_button.isVisible()
+          and w.dev_state.toolTip().endswith(c.status_text()),
+          f"… and the long MIDI MODE state leaves search, “Back up now” and the bell in the toolbar "
+          f"(“{w.dev_state.text()[-60:]}”)")
+    w.grab().save(str(home / "sloop3_midimode_1280.png"))
     mboot.open_port = real_open
     check(not errors(), f"still no JavaScript error ({errors()[:3]})")
     finish()

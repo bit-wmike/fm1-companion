@@ -300,11 +300,6 @@ msgstr "Sie zeigt den eigenen Web-Editor von SLOOP 3 auf der Seite „Editor“ 
 msgid "In MIDI MODE it can copy the whole flash into your backup folder – reading only."
 msgstr "Im MIDI MODE kann sie den ganzen Flash-Speicher in deinen Backup-Ordner kopieren – sie liest dabei nur."
 
-#: fm1companion/ui/sloop3_ui.py:95
-#, python-brace-format
-msgid "Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). <b>Never run on a real FM-1 by this app.</b>"
-msgstr "Geprüft mit SLOOP 3 {versions} am PC-Zwilling des Autors (der Code der Firmware auf einem simulierten FM-1). <b>Von dieser App nie auf einem echten FM-1 ausgeführt.</b>"
-
 #: fm1companion/ui/sloop3_ui.py:97
 #: fm1companion/ui/sloop3_ui.py:158
 msgid "Guide"
@@ -345,10 +340,6 @@ msgstr "<b>SLOOP 3 mit der Installer-Seite des Autors installieren</b>, in Chrom
 #: fm1companion/ui/sloop3_ui.py:135
 msgid "<b>Back to SLOOP 2.8 or M-VAVE's firmware:</b> write the flash backup back with M-Flasher (hold REC at power-on for download mode). Save your SLOOP 3 projects as files first."
 msgstr "<b>Zurück zu SLOOP 2.8 oder zur Firmware von M-VAVE:</b> das Flash-Backup mit M-Flasher zurückschreiben (für den Download-Modus REC beim Einschalten halten). Speichere deine SLOOP-3-Projekte vorher als Dateien."
-
-#: fm1companion/ui/sloop3_ui.py:141
-msgid "None of this was run on a real FM-1 by this app. The app only reads here; installing is done by the author's page and by M-Flasher."
-msgstr "Nichts davon wurde von dieser App auf einem echten FM-1 ausgeführt. Die App liest hier nur; installiert wird von der Seite des Autors und von M-Flasher."
 
 #: fm1companion/ui/sloop3_ui.py:152
 msgid "Open the installer page in the browser"
@@ -552,3 +543,20 @@ msgstr "Dieser FM-1 meldet sich als „FM-1 Update“ – der Name des MIDI MODE
 #: fm1companion/ui/sloop3_ui.py:383
 msgid "The app does not know yet which of your FM-1 this is. Choose the device at the top first; nothing is written to an FM-1 the app cannot name. Nothing was written."
 msgstr "Die App weiß noch nicht, welcher deiner FM-1 das ist. Wähle zuerst oben das Gerät; auf einen FM-1, den die App nicht benennen kann, wird nichts geschrieben. Es wurde nichts geschrieben."
+
+#, python-brace-format
+msgid "Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). <b>On a real FM-1 once, reading only</b> (SLOOP 3 3.4.0, one earlier unit): recognised, its editor connected, a backup read, MIDI MODE recognised. <b>Never on a real FM-1:</b> restoring a backup, the flash backup, anything that writes, a newer unit."
+msgstr "Geprüft mit SLOOP 3 {versions} am PC-Zwilling des Autors (der Code der Firmware auf einem simulierten FM-1). <b>An einem echten FM-1 einmal, nur lesend</b> (SLOOP 3 3.4.0, ein früheres Gerät): erkannt, sein Editor verbunden, ein Backup gelesen, MIDI MODE erkannt. <b>Nie an einem echten FM-1:</b> ein Backup zurückspielen, das Flash-Backup, alles, was schreibt, ein neueres Gerät."
+
+msgid "The app has run none of these steps on a real FM-1, nor its flash backup below. The app only reads here; installing is done by the author's page and by M-Flasher."
+msgstr "Keinen dieser Schritte hat die App an einem echten FM-1 ausgeführt, auch nicht ihr Flash-Backup unten. Die App liest hier nur; installiert wird mit der Seite des Autors und mit M-Flasher."
+
+msgid "m-bootloader MIDI MODE"
+msgstr "m-bootloader MIDI MODE"
+
+#, python-brace-format
+msgid "(last seen: {firmware})"
+msgstr "(zuletzt: {firmware})"
+
+msgid "SLOOP 3: the way onto the FM-1 …"
+msgstr "SLOOP 3: der Weg aufs FM-1 …"

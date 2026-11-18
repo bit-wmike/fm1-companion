@@ -53,5 +53,10 @@ con otro número: la app lo trata como un firmware propio.
   antes de usar la página del instalador en el navegador.
 * Si SLOOP 3 no arranca: mantén OCT− al encender para su RESCUE, o PLAY para el menú de m-bootloader.
 * Todo esto se comprobó en el gemelo de PC del autor para SLOOP 3 3.3.6, 3.3.7 y 3.4.0 (el código del firmware en un FM-1
-  simulado) y contra el código del MIDI MODE de m-bootloader 2.4 en un PC: **nunca en un FM-1 real con esta app**.
+  simulado) y contra el código del MIDI MODE de m-bootloader 2.4 en un PC.
+* **En un FM-1 real, una vez, solo lectura** (18-11-2026: un equipo anterior, una Raspberry Pi 5): la app reconoció
+  SLOOP 3 3.4.0, su editor incluido se conectó, se leyó una copia de seguridad de SLOOP 3 (6 partes, todas las sumas de
+  verificación válidas), se reconoció el MIDI MODE de m-bootloader 2.4 (sin confundirlo con un modo de actualización) y
+  se rechazó una instalación con SLOOP 3 en marcha sin enviar nada. **No probado en un FM-1 real:** restaurar una copia
+  de seguridad de SLOOP 3, la copia del flash en MIDI MODE, nada que escriba y nada en un FM-1 más nuevo (logo delante).
 * Más: [Cambiar de firmware](help:02-firmware) · [Copias de seguridad](help:04-backups) · [Enlaces](help:10-links)

@@ -213,6 +213,19 @@ class FirmwareChoiceDialog(QDialog):
         return it.data(Qt.ItemDataRole.UserRole) if it else UNKNOWN_CHOICE
 
 
+def last_firmware_text(p) -> str:
+    """what a profile last ran, for display: “Skiff 2.7”, “SLOOP 3 3.4.0” – the firmware's name, not its key, and the
+    version without the leading “v”. "" when the profile knows no firmware. (What the unit runs NOW may differ: the
+    texts that use this say “last seen”.)"""
+    import re as _re
+    key = getattr(p, "firmware", "") or ""
+    name = firmware_name(key) or ("" if key == UNKNOWN_CHOICE else key)
+    if not name:
+        return ""
+    ver = _re.sub(r"^[vV](?=\d)", "", (getattr(p, "firmware_version", "") or "").strip())
+    return f"{name} {ver}".strip()
+
+
 class DeviceContext(QObject):
     changed = pyqtSignal()                 # device/profile/connection changed
     ports_changed = pyqtSignal()
@@ -589,6 +602,7 @@ class DeviceContext(QObject):
             _("FM-1 connected – {firmware} (public beta). The app was checked with SLOOP 3 {versions}, not with this "
               "version: the editor and backups may not fit it.").format(
                 firmware=s3.label, versions=", ".join(S3.CHECKED_VERSIONS)))
+        self._log_connected()
         self.changed.emit()
 
     def _generic(self, ident: str, link=None, hortator: str = "", s3=None):
@@ -621,8 +635,9 @@ class DeviceContext(QObject):
             elif len(guess) == 1:
                 if p.firmware != guess[0]:
                     p.firmware, p.firmware_version = guess[0], firmware.guess_firmware(ident)[1] or p.firmware_version
-            elif not self._installed_here(p, ident):
-                # ambiguous: guess nothing (an earlier Felucca firmware of this device no longer applies)
+            elif ident and not self._installed_here(p, ident):
+                # ambiguous: guess nothing (an earlier Felucca firmware of this device no longer applies). A unit that
+                # answered nothing at all tells nothing about its firmware: then the profile keeps what it knows
                 p.firmware, p.firmware_version = "", ""
             p.identity = ident or p.identity
             p.last_seen = time.time()
@@ -875,9 +890,12 @@ class DeviceContext(QObject):
             # * another USB product name than the profile last showed while its firmware ran;
             # * another identity.
             # Then it may be another FM-1, or this one with a firmware installed outside the app: asked.
-            s3 = getattr(self, "sloop3", None) is not None
-            felucca = getattr(self, "info", None) is not None or not unknown
             product = "" if port.update_mode else (port.product or port.label or "")
+            # (SLOOP 3 names itself "FM-1 SLOOP 3" on USB: that counts even when its INFO answer got lost – a unit
+            # that has just come up may not answer at once, and then it must not be taken by its USB port alone)
+            from .. import sloop3 as S3
+            s3 = getattr(self, "sloop3", None) is not None or bool(product and S3.PORT_RE.search(product))
+            felucca = getattr(self, "info", None) is not None or not unknown
 
             def contradicts(c):
                 return bool((s3 and c.firmware and c.firmware != "sloop3") or (felucca and c.firmware == "sloop3")
@@ -931,7 +949,8 @@ class DeviceContext(QObject):
             return None
         self._asking = True
         try:
-            names = [c.name + (f" ({c.firmware} {c.firmware_version})" if c.firmware else "") for c in cands]
+            names = [c.name + (" " + _("(last seen: {firmware})").format(firmware=last_firmware_text(c))
+                               if last_firmware_text(c) else "") for c in cands]
             names.append(_("A new FM-1 that I have not used with this app before …"))
             last = cands.index(guess) if guess in cands else \
                 next((i for i, c in enumerate(cands) if c.id == self.settings.last_device), 0)

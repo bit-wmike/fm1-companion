@@ -592,6 +592,29 @@ def test_tested_table_matches_untested_md():
     assert "writing back from the Studio, restoring a backup, and on a newer FM-1 anything but that one Skiff" in doc
 
 
+
+def test_sloop3_hardware_table_matches_untested_md():
+    """pi findings 28–33 (2026-11-18): what of SLOOP 3 and m-bootloader ran on a real FM-1 – read only, one earlier
+    unit, one Pi 5. tested.SLOOP3_HARDWARE and the table in docs/UNTESTED.md say the same, and nothing that writes
+    counts as run."""
+    from fm1companion.flash import tested
+    doc = (ROOT / "docs" / "UNTESTED.md").read_text("utf-8")
+    sec = doc[doc.index("### SLOOP 3 and m-bootloader"):doc.index("### Studio")]
+    rows = dict(re.findall(r"^\| `(\w+)` – [^|]+\| (seen once|not run)\b[^|]*\|$", sec, re.M))
+    assert rows == {k: ("seen once" if ok else "not run") for k, (ok, _l) in tested.SLOOP3_HARDWARE.items()}
+    for key, (_ok, label) in tested.SLOOP3_HARDWARE.items():
+        assert f"| `{key}` – {label} |" in sec, key
+        assert key not in tested.STEPS                       # (read only: not a step of the installer's plans)
+    assert [k for k, (ok, _l) in tested.SLOOP3_HARDWARE.items() if ok] == [
+        "sloop3_connect", "sloop3_backup", "mboot_recognise", "sloop3_refusal"]
+    assert "read\nonly" in sec or "read only" in sec
+    assert "Qt 6.4.2" in sec and "0x856014" in sec and "6 parts" in sec and "Connected: SLOOP 3.4.0, protocol 2" in sec
+    for lang, needle in (("en", "On a real FM-1, once, read only"), ("de", "An einem echten FM-1, einmal, nur lesend"),
+                         ("es", "En un FM-1 real, una vez, solo lectura")):
+        page = (ROOT / "fm1companion" / "data" / "help" / lang / "15-sloop3.md").read_text("utf-8")
+        assert needle in page and "never on a real FM-1 by this app" not in page, lang
+
+
 def test_tested_note_per_plan(env):
     from fm1companion.flash import tested
     from fm1companion.flash.planner import DeviceState, Target, plan_install

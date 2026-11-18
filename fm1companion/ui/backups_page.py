@@ -58,6 +58,13 @@ def no_backup_reason(ctx) -> str:
     return _("The FM-1 does not respond. Check the cable and reconnect.")
 
 
+def can_back_up(ctx) -> bool:
+    """can the active device be backed up from the app right now? The one rule for every “Back up now” (Overview:
+    the backup card and the quick access; the page “Backups”; make_backup): a firmware with the Felucca editor
+    protocol, or SLOOP 3 with its own (sloop3bk.py). no_backup_reason says why not."""
+    return not no_backup_reason(ctx)
+
+
 def make_backup(ctx, parent, note: str = "", kind: str = "") -> Path | None:
     from .device import FolderError
     why = no_backup_reason(ctx)
