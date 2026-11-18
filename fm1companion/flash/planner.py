@@ -112,6 +112,8 @@ class Target:
     checksum: bool = True         # False: package cannot be checked against any checksum (confirmation needed)
     flash: list = field(default_factory=list)   # JEDEC IDs the firmware's firmware.json names (hardware.support)
     flash_tag: str = ""           # … and the version that was read at
+    repo: str | None = None       # "owner/name" the firmware comes from (None: not from a spec) – a table row of
+    #                               hardware.json only applies to its own repository
 
     @classmethod
     def from_spec(cls, spec, tag: str = "", file: Path | None = None, package=None, prerelease=False):
@@ -119,7 +121,8 @@ class Target:
                    family=_family(spec), requires_stock_v15=bool(spec.requires_stock_v15),
                    notes=list(spec.notes or []), resources=bool(spec.resources), key=spec.key, tag=tag,
                    file=file, package=package, known=True, prerelease=prerelease,
-                   flash=list(getattr(spec, "flash", None) or []), flash_tag=getattr(spec, "flash_tag", "") or "")
+                   flash=list(getattr(spec, "flash", None) or []), flash_tag=getattr(spec, "flash_tag", "") or "",
+                   repo=getattr(spec, "repo", "") or "")
 
     @classmethod
     def from_file(cls, info: pk.PackageInfo, catalog_entry=None):
@@ -546,18 +549,28 @@ NEWCHIP_V15 = _("Newer FM-1 (logo on the front): the original V15 is the way bac
                 "such a unit, and no source says which original version these units are delivered with.")
 
 
+def official_stock(t: Target) -> str:
+    """"FM-1_015" / "FM-1_016" when the target is exactly M-VAVE's original package: the app's own two entries
+    (their checksum is compared before anything is written) or a file whose content is the official one. Anything
+    else of the stock loader family (a key that merely starts with "stock", a community build with that loader) is
+    not: ""."""
+    if t.package is not None:
+        return t.package.official if t.package.official in ("FM-1_015", "FM-1_016") else ""
+    if t.repo not in (None, "m-vave/fm1_open"):
+        return ""
+    return {"stock-v15": "FM-1_015", "stock-v16": "FM-1_016"}.get(t.key, "")
+
+
 def chip_support(t: Target) -> hardware.Support:
     """does the target accept the newer FM-1's flash chip (hardware.support)? An own file that is in no catalog and
-    no checked release is "unknown" whatever it is called."""
-    if t.is_v16:
-        return hardware.support("stock-v16")
-    if t.is_stock:
-        v15 = t.product == "FM-1_015" or t.key == "stock-v15" or bool(
-            t.package is not None and t.package.official == "FM-1_015")
-        return hardware.support("stock-v15") if v15 else hardware.Support(hardware.UNKNOWN, "", "")
-    if not t.known:
+    no checked release is "unknown" whatever it is called; the version is the target's tag only – never read from a
+    name."""
+    off = official_stock(t)
+    if off:
+        return hardware.support("stock-v16" if off == "FM-1_016" else "stock-v15")
+    if not t.known or t.is_stock:
         return hardware.Support(hardware.UNKNOWN, "", "")
-    return hardware.support(t.key, target_version(t), t.flash, t.flash_tag)
+    return hardware.support(t.key, t.tag, t.flash, t.flash_tag, repo=t.repo)
 
 
 def chip_matters(state: DeviceState, t: Target) -> bool:
@@ -581,6 +594,14 @@ def _new_chip(p: InstallPlan, state: DeviceState, t: Target):
     rev = state.revision if state.revision in (hardware.NEW, hardware.OLD) else ""
     if rev == hardware.OLD:
         return
+    problem = hardware.table_problem()
+    if problem:                                   # no table, no judgement: nothing is installed on a unit that may be new
+        p.blockers.append(_("The app's table of firmware versions for the newer FM-1 (flash chip UC25HQ80) cannot be "
+                            "read ({error}). Without it the app cannot tell whether this installation is safe on "
+                            "your FM-1 – nothing is installed. Please install the app again; if your FM-1 is an "
+                            "earlier unit (no logo on the front), you can say so on the page “Devices”.").format(
+                                error=problem))
+        return
     new = rev == hardware.NEW
     if new and not state.update_mode:
         run = running_firmware(state)
@@ -588,19 +609,20 @@ def _new_chip(p: InstallPlan, state: DeviceState, t: Target):
             rs = hardware.running_support(run, state.version)
             if rs is not None and rs.status == hardware.NO:
                 p.warnings.insert(0, hardware.running_warning(current_name(state) or run, rs, run))
-    if new and (p.via_stock or (t.is_stock and not t.is_v16)):
+    off = official_stock(t)
+    if new and (p.via_stock or off == "FM-1_015"):
         p.warnings.append(NEWCHIP_V15)
     sup = chip_support(t)
     if sup.status == hardware.YES:
         return
-    tv = target_version(t)
+    tv = t.tag
     shown = hardware.first_version_text(t.key, tv)
     name = t.name if not shown or shown.lower() in t.name.lower() else f"{t.name} {shown}"
     first = hardware.first_version_text(t.key, sup.first_version) if sup.first_version else ""
-    if not t.known or (t.is_stock and sup.status == hardware.UNKNOWN):
+    if not t.known or off == "FM-1_016":
         what = (_("Nothing is known about the original V16 on the newer FM-1s (logo on the front, flash chip "
                   "UC25HQ80): no source says whether it was run on one, nor which version these units are "
-                  "delivered with.") if t.is_v16 else
+                  "delivered with.") if off == "FM-1_016" else
                 _("Own file: the app cannot tell whether it knows the flash chip of the newer FM-1s (logo on the "
                   "front, UC25HQ80)."))
         p.warnings.append(what + " " + STRANDS)

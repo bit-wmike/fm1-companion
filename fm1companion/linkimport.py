@@ -509,8 +509,9 @@ def _flash_chips(d: FirmwareDraft):
     flash chips the firmware can save to and update on – kept with the version it was read at, for the plan's check
     of the newer FM-1 (fm1companion/hardware.py). Only for a firmware outside the app's own table."""
     from . import hardware
-    if not d.repo or not d.tag or hardware.source(d.key or ""):
-        return
+    row = hardware.source(d.key or "")
+    if not d.repo or not d.tag or (row and (row.get("repo") or "").lower() == d.repo.lower()):
+        return                                     # (the table's own firmware; a fork under its name is not)
     ids = hardware.flash_ids(catmod.fetch_text(
         f"https://raw.githubusercontent.com/{d.repo}/{d.tag}/firmware.json", 256 << 10) or "")
     if ids:
