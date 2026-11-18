@@ -191,6 +191,23 @@ def flow():
     nc = N.center()
     for t in list(nc.toasts):
         t.dismiss()
+    # a row full of notices with buttons: a plain notice that arrives is still shown (it was dismissed unseen)
+    b1 = nc.post("Mit Knopf 1", "warning", action=("Ok", lambda: None), lifetime=60000, quiet=True)
+    b2 = nc.post("Frage", "info", action=("Nein", lambda: None), more=[("Ja", lambda: None)], lifetime=60000,
+                 quiet=True)
+    full = len(nc.toasts)
+    late = nc.post("Kam danach", "info", quiet=True)
+    wait(100)
+    shown = [t.note for t in nc.toasts]
+    check(b1 in shown and b2 in shown and late not in shown and late.toast is not None and len(shown) == full,
+          f"row full of notices with buttons: a plain notice that arrives waits, no button is pushed away ({full})")
+    b1.toast.dismiss()
+    wait(100)
+    shown = [t.note for t in nc.toasts]
+    check(late in shown and b2 in shown and late.toast.isVisible() and late.toast.timer.isActive(),
+          "… and shows as soon as a place is free (its time starts then)")
+    for t in list(nc.toasts):
+        t.dismiss()
     asked = nc.post("Frage mit Auswahl", "info", action=("Nein", lambda: None), more=[("Ja", lambda: None)],
                     lifetime=60000, quiet=True)
     nc.post("Nur ein Hinweis", "info", quiet=True)
