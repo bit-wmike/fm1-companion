@@ -482,16 +482,11 @@ class SimulatorPage(QWidget):
         st = info.status()
         if st == QWebEngineLoadingInfo.LoadStatus.LoadStartedStatus or info.url().scheme() in ("data", "about"):
             return
-        dom, E = info.errorDomain(), QWebEngineLoadingInfo.ErrorDomain
-        # HttpStatusCodeDomain does not exist in every Qt version (e.g. Qt 6.4 of Debian Bookworm)
-        http = getattr(E, "HttpStatusCodeDomain", None)
-        ok_domains = {d for d in (getattr(E, "NoErrorDomain", None), http) if d is not None}
-        failed = (st == QWebEngineLoadingInfo.LoadStatus.LoadFailedStatus
-                  or (bool(ok_domains) and dom not in ok_domains)
-                  or (http is not None and dom == http and info.errorCode() >= 400))
-        if st == QWebEngineLoadingInfo.LoadStatus.LoadStoppedStatus and not failed:
-            return
-        self._loaded(not failed)
+        # Decided by plain numbers: Qt 6.4 (Debian Bookworm) reports the HTTP status domain (7) on every
+        # successful load, but PyQt6 6.4 has no name for it – see sims.load_outcome().
+        ok = sims.load_outcome(sims.enum_int(st), sims.enum_int(info.errorDomain()), info.errorCode())
+        if ok is not None:
+            self._loaded(ok)
 
     def _loaded(self, ok: bool):
         s = self.current
