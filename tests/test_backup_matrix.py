@@ -244,6 +244,7 @@ def test_overview_backup_card_date_of_every_kind(tmp_path, monkeypatch):
 
     class Ctx:
         profile = object()
+        port, connected, midi_connected, protocol = object(), True, True, "felucca"
         settings = type("S", (), {"backups_dir": tmp_path})()
 
         def device_folder(self, base):
