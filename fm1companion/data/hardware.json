@@ -36,6 +36,7 @@
     },
     "felucca": {
       "status": "min", "min": "v1.8.2", "repo": "hugelton/Felucca", "commit": "f4cbb6a",
+      "also": ["v1.8.2-beta"],
       "source": "\"fix(flash): recognize UC25HQ80 in newer FM-1 units (fixes #320)\"; README.md \"Newer FM-1 flash\"",
       "before": "1.8.1 and earlier cannot start an update on such a unit (README); the way back is the official V15 through the chip's ROM boot."
     },
@@ -116,7 +117,7 @@
     }
   },
   "aliases": {
-    "jiant": "jiant-fm", "choralroot": "choralroot-fm-1", "transit": "transitfm1", "amb": "amb-1", "loom": "loom-8",
+    "jiant": "jiant-fm", "choralroot": "choralroot-fm-1",
     "mbootloader": "m-bootloader", "sloop-3": "sloop3"
   }
 }

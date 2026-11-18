@@ -335,7 +335,7 @@ class OverviewPage(QWidget):
         if rev is None:
             rev = hw_revision.ask(self, self.ctx, p)
         else:
-            hw_revision.record(self.ctx, p, rev)
+            hw_revision.record(self.ctx, p, rev, self)
         self.refresh()
         return rev
 

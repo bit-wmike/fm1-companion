@@ -311,7 +311,7 @@ class DevicesPage(QWidget):
         if rev is None:
             rev = hw_revision.ask(self, self.ctx, p)
         else:
-            hw_revision.record(self.ctx, p, rev)
+            hw_revision.record(self.ctx, p, rev, self)
         self.refresh()
         return rev
 
@@ -372,6 +372,8 @@ class DevicesPage(QWidget):
         dst.serial = dst.serial or src.serial
         dst.notes = "\n".join(x for x in (dst.notes, src.notes) if x)
         dst.last_seen = max(dst.last_seen, src.last_seen)
+        from ... import hardware
+        hardware.merge_revision(dst, src)        # the strictest statement about the unit stays (new beats old)
         st.delete(src_id)
         self.ctx.changed.emit()
         self.refresh()
