@@ -4761,6 +4761,9 @@ msgstr "Holen"
 msgid "FM1 Open: keep the cable connected. The FM-1 loads each saved project into its working area in turn; your working project is put back at the end."
 msgstr "FM1 Open: Lass das Kabel stecken. Das FM-1 lädt jedes gespeicherte Projekt der Reihe nach in seinen Arbeitsbereich; dein Arbeitsprojekt wird am Ende zurückgelegt."
 
+msgid "The automatic FluidSynth service is switched on for all users of this computer, so it was stopped and masked for your user, and the sound restarted – HDMI/speakers should show up as outputs again. FluidSynth stays installed; the app's sound module starts it by itself when you use it. Undo: {command}"
+msgstr "Der automatische FluidSynth-Dienst ist für alle Benutzer dieses Rechners eingeschaltet. Deshalb wurde er gestoppt und für deinen Benutzer maskiert, und der Ton wurde neu gestartet – HDMI/Lautsprecher sollten wieder als Ausgänge erscheinen. FluidSynth bleibt installiert; das Klangmodul der App startet es selbst, wenn du es benutzt. Rückgängig: {command}"
+
 #, python-brace-format
 msgid "The studio runs with {firmware} {twin}, your FM-1 and the backup have {device} – sound may differ."
 msgstr "Studio läuft mit {firmware} {twin}, dein FM-1 und das Backup haben {device} – Klang kann abweichen."

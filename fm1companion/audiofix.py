@@ -87,11 +87,22 @@ def disable_fluidsynth_service(restart_audio: bool = True) -> tuple[bool, str]:
     """Disable the user service (FluidSynth stays installed) and let PipeWire rescan for the card.
     -> (ok, German message)"""
     rc, _out = _systemctl_user("disable", "--now", SERVICE, timeout=15)
-    if rc != 0:
+    masked = False
+    if fluidsynth_service()[0]:
+        # still enabled: the service is switched on for all users (/etc/systemd/user), where "disable" for one user
+        # changes nothing. Masking it for this user does (reversible: systemctl --user unmask fluidsynth.service).
+        rc, _out = _systemctl_user("mask", "--now", SERVICE, timeout=15)
+        masked = True
+    if rc != 0 or fluidsynth_service()[0]:
         return False, _("The service could not be disabled. In a terminal: {command}").format(
-            command="systemctl --user disable --now fluidsynth")
+            command="systemctl --user mask --now fluidsynth.service")
     if restart_audio:
         _systemctl_user("restart", "wireplumber", "pipewire", "pipewire-pulse", timeout=20)
+    if masked:
+        return True, _("The automatic FluidSynth service is switched on for all users of this computer, so it was "
+                       "stopped and masked for your user, and the sound restarted – HDMI/speakers should show up as "
+                       "outputs again. FluidSynth stays installed; the app's sound module starts it by itself when "
+                       "you use it. Undo: {command}").format(command="systemctl --user unmask fluidsynth.service")
     return True, _("The automatic FluidSynth service is disabled and the sound restarted – HDMI/speakers "
                    "should show up as outputs again. FluidSynth stays installed; the app's sound module "
                    "starts it by itself when you use it.")

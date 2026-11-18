@@ -108,7 +108,21 @@ def device_state(ctx) -> "planner.DeviceState":
                                port=ctx.port.in_name if ctx.port else "", connected=ctx.port is not None,
                                ports=device_count(ctx), busy=journal.Journal.busy(),
                                pinned=target_pin(ctx) is not None, usb_notes=usb_notes(ctx),
-                               revision=device_revision(ctx))
+                               revision=device_revision(ctx), hubs=usb_hubs(ctx),
+                               candidates=_identity_candidates(ctx),
+                               usb_id=(getattr(ctx.port, "usb_id", "") or "") if ctx.port else "")
+
+
+def _identity_candidates(ctx) -> list[str]:
+    """the firmware keys known for the identity the FM-1 reports (planner.v15_lookalike)"""
+    ident = getattr(ctx, "identity", "") or ""
+    if not ident:
+        return []
+    try:
+        from .device import firmware_candidates
+        return list(firmware_candidates(ident))
+    except Exception:  # noqa: BLE001 – a missing catalog must not stop the plan
+        return []
 
 
 def device_revision(ctx) -> str:
@@ -118,11 +132,25 @@ def device_revision(ctx) -> str:
     prof = getattr(ctx, "profile", None)
     rev = hardware.revision(prof)
     port = getattr(ctx, "port", None)
+    if prof is None and any(hardware.revision(c) == hardware.NEW for c in getattr(ctx, "unit_candidates", None) or []):
+        return hardware.NEW                      # "which FM-1 is this?" not answered: new if it may be a newer unit
     if hardware.session_revision(getattr(port, "usb_path", "") or "") == hardware.NEW:
         return hardware.NEW                      # read in ROM boot mode at this USB port in this session
     if rev == hardware.UNKNOWN and os.environ.get("FM1C_DEMO") == "1" and not hardware.asked(prof):
         return hardware.OLD                      # the demo's simulated FM-1s are earlier units (nothing to ask)
     return "" if rev == hardware.UNKNOWN else rev
+
+
+def usb_hubs(ctx) -> int:
+    """how many external USB hubs are between the computer and the active FM-1 (0: direct, or not known)"""
+    p = getattr(ctx, "port", None)
+    if p is None or not getattr(p, "usb_path", "") or getattr(ctx, "is_virtual", False):
+        return 0
+    try:
+        from .. import devices
+        return devices.usb_link(p.usb_path).depth
+    except Exception:  # noqa: BLE001 – only chooses the wording of a confirmation
+        return 0
 
 
 def usb_notes(ctx) -> list[str]:
@@ -339,11 +367,15 @@ class PlanDialog(QDialog):
         return [c for c, cb in self.confirm_checks.items() if cb.isChecked()]
 
     def missing(self) -> list[str]:
-        return [c for c in self.plan.missing(self.confirmed()) if not (c == "no_backup" and self.chk_dry.isChecked())]
+        if self.chk_dry.isChecked():
+            return []                              # a dry run writes nothing: there is nothing to confirm
+        return self.plan.missing(self.confirmed())
 
     def _update_ok(self):
         ok = self.plan.ok and not self.missing()
         self.ok_btn.setEnabled(ok)
+        for cb in self.confirm_checks.values():    # (dry run: the confirmations are not needed, so not offered)
+            cb.setEnabled(not self.chk_dry.isChecked())
         self.ok_hint.setVisible(not ok)
         self.ok_hint.setText(_("Not possible – see above") if not self.plan.ok else _("Please confirm above"))
 
@@ -554,7 +586,11 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         # own file: known only if the checksum matches (catalog, release SHA256SUMS, original) – never by name
         tgt.known = file_matches(spec, info)
     else:
-        tgt.checksum = bool(spec.sha256) or bool(rel and spec.sums and spec.sums in rel.assets)
+        has_sums = bool(rel and spec.sums and spec.sums in rel.assets)
+        has_digest = bool(rel and (getattr(rel, "digests", None) or {}).get(spec.asset.format(ver=rel.version)))
+        tgt.checksum = bool(spec.sha256) or has_sums or has_digest
+        # (same order as firmware.download: the SHA256SUMS file first, GitHub's digest only without one)
+        tgt.checksum_source = "sums" if has_sums else "digest" if has_digest else ""
     pinned = (rel.sha256 if rel else "") or firmware.pinned_sha(spec, rel.tag if rel else tag)
     if pinned and local_pkg is None:
         tgt.sha256, tgt.checksum = pinned, True        # versions pinned in the app (KARMA's site packages)
@@ -584,11 +620,12 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     if not plan.ok:
         show_error(parent, _("Installation not possible"), "\n".join(re.sub("<[^>]+>", "", b) for b in plan.blockers))
         return False
-    if dlg.missing():
-        show_error(parent, _("Confirmation missing"), _("Please confirm all points in bold in the plan explicitly:")
-                   + "\n\n" + "\n".join("• " + planner.CONFIRM_TEXT.get(c, c) for c in dlg.missing()))
-        return False
     do_dry = dlg.chk_dry.isChecked() if dry_run is None else dry_run
+    if not do_dry and dlg.plan.missing(dlg.confirmed()):
+        show_error(parent, _("Confirmation missing"), _("Please confirm all points in bold in the plan explicitly:")
+                   + "\n\n" + "\n".join("• " + planner.CONFIRM_TEXT.get(c, c)
+                                       for c in dlg.plan.missing(dlg.confirmed())))
+        return False
     # while the plan was open, device detection kept running: is it still the same FM-1 in the same state?
     if ctx.port is None or planned_port is None or ctx.port.key != planned_port.key:
         show_error(parent, _("Device has changed"),
@@ -811,7 +848,8 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
                 hist.append({"time": time.time(), "firmware": spec.key, "name": spec.name, "version": res["tag"],
                              "identity": res["ident"], "via_v15": via_stock})
             ctx.store.save()
-        ctx.pending_restore_check = spec.key if switching else ""
+        ctx.pending_restore_check = spec.key if switching and profile else ""
+        ctx.pending_restore_profile = profile.id if profile else ""
 
     from . import feedback
     try:
@@ -819,6 +857,10 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         d = feedback.run(parent, title, german_errors(work),
                          cancel, dialog_cls=InstallDialog, on_done=done, done=summary)
     finally:
+        if not do_dry and hasattr(ctx, "note_installed"):
+            # whatever the FM-1 reports when it re-appears at this USB port (another identity, the original
+            # firmware's serial number): it is this unit, never a new profile
+            ctx.note_installed(profile, getattr(planned_port, "usb_path", "") or "")
         ctx.disconnect(None)
         ctx.reconnect_soon(2500)      # also releases ctx.hold
     return d.ok
@@ -1205,6 +1247,8 @@ class FirmwarePage(QWidget):
             return {"error": _("Firmware of the device unknown")} if key else {}
         rel = firmware.latest(self.releases.get(key, []), self.ctx.settings.channel)
         cur, new = self.ctx.firmware_tag, rel.tag if rel else ""
+        if not cur and key == "stock-v15" and getattr(self.ctx, "identity", "") == "FM-1_015":
+            cur = new or "V15"                 # the FM-1 itself says it runs original version 15: V15 is no update
         if cur and new and new != cur:
             try:                               # “stable” channel with an installed RC: no “update” to an older version
                 if firmware.version_key(new) <= firmware.version_key(cur):
@@ -1483,8 +1527,10 @@ class FirmwarePage(QWidget):
                                  + "</small>")
             return
         via = " " + _("(via V15)")
+        found = " " + _("(found when connecting – installed outside the app)")
         rows = [f"{time.strftime(DATE_FORMAT, time.localtime(h.get('time', 0)))}: {h.get('name', h.get('firmware'))} {h.get('version', '')}"
-                + (via if h.get("via_v15") else "") for h in hist[-5:]][::-1]
+                + (via if h.get("via_v15") else "") + (found if h.get("how") == "found" else "")
+                for h in hist[-5:]][::-1]
         self.history.setText("<small><b>" + _("Firmware history:") + "</b> " + " · ".join(rows) + "</small>")
 
     def open_with(self, install=None, file=None, **_kw):

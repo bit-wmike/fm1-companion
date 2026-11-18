@@ -346,9 +346,11 @@ def test_deb_reproducible_changelog_maintainer(tmp_path):
     cp = (ex / "usr/share/doc/fm1-companion/copyright").read_text()
     assert "Copyright: 2026 bit-wmike and the FM-1 Companion contributors" in cp
     sug = info.split("Suggests:")[1].split("\n")[0]
-    for p in ("python3-serial", "pkexec | policykit-1", "pulseaudio-utils", "python3-crcmod"):     # PKG-07
+    for p in ("python3-serial", "pkexec | policykit-1", "pulseaudio-utils", "python3-tqdm"):       # PKG-07
         assert p in sug, p
-    assert "audacity" in info.split("Recommends:")[1].split("\n")[0]
+    rec = info.split("Recommends:")[1].split("\n")[0]
+    # the rescue in ROM boot mode must be ready before an emergency: what it imports is installed by default
+    assert "audacity" in rec and "python3-crcmod" in rec and "python3-yaml" in rec and "python3-crcmod" not in sug
 
 
 def test_metainfo_release_date_is_real():

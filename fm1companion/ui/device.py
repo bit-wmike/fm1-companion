@@ -2,6 +2,7 @@
 """The active FM-1: detection, connection, profile and safe device access."""
 from __future__ import annotations
 
+import logging
 import os
 import sys
 import time
@@ -12,7 +13,8 @@ from PyQt6.QtWidgets import (QDialog, QDialogButtonBox, QInputDialog, QLabel, QL
 
 from .. import config, firmware
 from ..i18n import _
-from ..devices import PortInfo, Profile, ProfileStore, scan_ports, usable_serial
+from ..devices import (PortInfo, Profile, ProfileStore, identifying_serial, scan_ports, serial_learnable,
+                       usable_serial)
 from ..protocol import Cmd, Info, parse_info
 from ..transport import Link, LinkError, MidoTransport, SubprocessTransport
 from .common import JobDialog, run_job, show_error
@@ -160,6 +162,9 @@ def firmware_name(key: str) -> str:
     return FIRMWARES.get(key, {}).get("name") or key
 
 
+log = logging.getLogger("fm1companion.device")
+
+
 class FirmwareChoiceDialog(QDialog):
     """“Which firmware is running on this FM-1?” – candidates from the catalog plus “don't know”."""
 
@@ -220,6 +225,11 @@ class DeviceContext(QObject):
         self.uboot: list[str] = []         # USB paths of FM-1s in ROM boot mode (rescue level 2)
         self.pending_restore_check = ""    # after a firmware change: offer the old backup
         self._asking = False
+        # USB path -> (profile id, time): the unit this app has just installed on there (ui/firmware_page.install_flow)
+        self.session_units: dict[str, tuple[str, float]] = {}
+        self.unit_candidates: list[Profile] = []  # asked "which FM-1 is this?" and not answered: what it may be
+        self.port_answers: dict[str, str] = {}    # port key -> profile id the owner named; holds while the port stays
+        self.pending_restore_profile = ""         # the profile the restore offer (pending_restore_check) is meant for
         self.window: QWidget | None = None
         # virtual devices (studio twin): list and line are provided by the service (ui/studio_service.py)
         self.virtual_ports = None          # () -> list[PortInfo]
@@ -283,15 +293,15 @@ class DeviceContext(QObject):
         if self.is_virtual:
             from .common import fw_label
             return _("{device} – virtual").format(device=self.port.label) + (f" ({fw_label(self.info.version)})" if self.info else "")
-        name = self.profile.name if self.profile else self.port.label
+        name = self.profile.name if self.profile else self.port.label      # always the device first, then the firmware
         if self.info:
             from .common import fw_label
-            fw = fw_label(self.info.version)
+            fw = fw_label(self.info.version, self.firmware_key)
         elif self.protocol == "update":
             fw = _("update mode ({id})").format(id=self.identity) if self.identity else _("update mode")
         elif self.midi_connected:
-            name = firmware_name(self.firmware_key)
-            fw = (name or (_("unknown – please choose") if self.firmware_ambiguous else _("unknown firmware"))) + \
+            fw_name = firmware_name(self.firmware_key)
+            fw = (fw_name or (_("unknown – please choose") if self.firmware_ambiguous else _("unknown firmware"))) + \
                 (f" ({self.identity})" if self.identity else "")
         else:
             fw = "…"
@@ -341,12 +351,30 @@ class DeviceContext(QObject):
                 vports = []
         keys = [p.key for p in ports]
         vkeys = [p.key for p in vports]
+        for k in [k for k in self.port_answers if k not in keys]:
+            del self.port_answers[k]     # the port was away: what the owner said about it no longer holds
         if keys != [p.key for p in self.ports] or vkeys != [p.key for p in self.vports]:
             self.ports = ports           # real devices only (firmware, rescue, counting several FM-1s …)
             self.vports = vports         # virtual devices are kept separately (device selection at the top only)
             self.ports_changed.emit()
-        if self.port and self.port.key not in keys + vkeys:
-            self.disconnect(_("FM-1 disconnected"))
+        if self.port and not self._port_present(ports + vports):
+            # One scan without the port is not a disconnect yet: on a Raspberry Pi the port list was seen to miss the
+            # FM-1 for a moment without any USB event. The warning comes when the port stays away (or the link is
+            # dead). During an installation nothing is delayed: the scan is on hold then, the engine watches itself.
+            now = time.monotonic()
+            if self._gone_since is None:
+                self._gone_since = now
+                log.debug("port %s missing in the scan (seen: %s)", self.port.key, keys + vkeys)
+            dead = self.link is not None and not self.link.t.alive
+            if dead or now - self._gone_since >= self.GONE_GRACE:
+                self._gone_since = None
+                self.disconnect(_("FM-1 disconnected"))
+            else:
+                QTimer.singleShot(int(self.GONE_RESCAN * 1000), self.scan)
+                return
+        elif self._gone_since is not None:
+            log.debug("port back after %.1f s – no disconnect", time.monotonic() - self._gone_since)
+            self._gone_since = None
         if self.link and not self.link.t.alive:
             self.disconnect(_("Connection lost"))
         if not self.port and ports:         # never connect to a virtual device by itself
@@ -357,6 +385,16 @@ class DeviceContext(QObject):
                     last in self.store.profiles and p.usb_path and self.store.profiles[last].usb_path == p.usb_path)
             pick = next((p for p in ports if is_last(p)), ports[0])
             self.connect_port(pick)
+
+    GONE_GRACE = 1.5                # s a port may be missing from the scans before “FM-1 disconnected”
+    GONE_RESCAN = 0.4               # s until the next look while it is missing
+    _gone_since: float | None = None
+
+    def _port_present(self, ports) -> bool:
+        """is the active port still in the scan? By its key, or – when the USB details were read differently this
+        time (the key holds USB path and serial number) – by the very same MIDI port name."""
+        port = self.port
+        return any(p.key == port.key or (p.out_name == port.out_name and p.in_name == port.in_name) for p in ports)
 
     def connect_port(self, port: PortInfo):
         self.disconnect(None)
@@ -436,6 +474,8 @@ class DeviceContext(QObject):
         p = self.profile
         if p:
             p.version_string = info.version
+            if self.identity and not self.identity.lower().startswith("ota-") and not self.is_virtual:
+                p.identity = self.identity              # what the FM-1 reports now, not what the last install left
             key, tag = firmware.guess_firmware(p.identity, info.version, info.firmware_name)
             if key == "felucca" and p.firmware.startswith("felucca-"):
                 key = ""                     # (a Felucca fork chosen for this device, "felucca-mpe": its INFO is Felucca's)
@@ -446,11 +486,25 @@ class DeviceContext(QObject):
             elif key and tag and not p.firmware_version:
                 p.firmware_version = tag
             p.last_seen = time.time()
+            if not self.is_virtual:
+                self._note_found(p)
             if not self.is_virtual:          # the twin is never “the last used FM-1”
                 self.store.save()
                 self.settings.last_device = p.id
                 config.save(self.settings)
+        self._log_connected()
         self.changed.emit()
+
+    def _log_connected(self):
+        """one line in the app log for every FM-1 that was recognised – also one without editor protocol (the
+        original firmware), which the log did not mention before. No serial number, no name of the owner's choosing."""
+        port, p = self.port, self.profile
+        if port is None or getattr(port, "virtual", False):
+            return
+        log.info("connected: identity %s, firmware %s%s, protocol %s, USB %s at %s, profile %s",
+                 self.identity or "-", self.firmware_key or "unknown",
+                 f" ({self.info.version})" if self.info else "", self.protocol or "-", port.usb_id or "-",
+                 port.usb_path or "-", p.id if p else "none (not said which FM-1 this is)")
 
     def _probe_failed(self, msg, link=None):
         """no Felucca INFO: try the handshake (doesn't disturb), keep the MIDI connection open"""
@@ -495,6 +549,7 @@ class DeviceContext(QObject):
                 p.firmware, p.firmware_version = "", ""
             p.identity = ident or p.identity
             p.last_seen = time.time()
+            self._note_found(p)
             self.store.save()
         if ident and self.firmware_key == "fm1-open":   # (M-VAVE's FM1 Open: its own file protocol)
             self.message.emit(_("FM-1 connected ({id}) – FM1 Open: MIDI, presets via SysEx, its sample bank (page "
@@ -506,6 +561,7 @@ class DeviceContext(QObject):
         else:
             self.message.emit(_("The device answers neither editor commands nor the update ID. The "
                                 "MIDI connection stays open."))
+        self._log_connected()
         self.changed.emit()
         if self.firmware_ambiguous and p and ident and not choice:
             QTimer.singleShot(300, lambda port=self.port: self.ask_firmware(port))
@@ -515,7 +571,23 @@ class DeviceContext(QObject):
         """did the app itself last install this firmware with exactly this identifier?"""
         hist = [h for h in (p.firmware_history or []) if isinstance(h, dict)]
         return bool(p.firmware and hist and hist[-1].get("firmware") == p.firmware
-                    and hist[-1].get("identity") == ident)
+                    and hist[-1].get("identity") == ident and hist[-1].get("how") != "found")
+
+    @staticmethod
+    def _note_found(p):
+        """the FM-1 runs another firmware than the device's history ends with – it was installed outside the app
+        (or before the app knew the device): the history gets an entry "found", so it does not keep telling the
+        old story until the next installation. Only a recognised firmware, and only when it changed."""
+        key = p.firmware if p.firmware and p.firmware != UNKNOWN_CHOICE else ""
+        hist = p.firmware_history if isinstance(p.firmware_history, list) else None
+        if not key or hist is None:
+            return False
+        last = next((h for h in reversed(hist) if isinstance(h, dict)), None)
+        if last is not None and last.get("firmware") == key:
+            return False
+        hist.append({"time": time.time(), "firmware": key, "name": firmware_name(key), "version": p.firmware_version,
+                     "identity": p.identity, "how": "found"})
+        return True
 
     def ask_firmware(self, port=None, force: bool = False) -> str:
         """ask once which firmware is behind an ambiguous identifier (remembered per device).
@@ -579,32 +651,29 @@ class DeviceContext(QObject):
             self.changed.emit()
 
     def _assign_profile(self):
-        """Find the profile for the device: serial number, otherwise firmware and USB port, otherwise ask."""
+        """Find the profile for the device (devices.identifying_serial, _match_profile): by its own serial number,
+        by what the app itself just did at this USB port, by USB port and identity – otherwise ask, never guess."""
         port = self.port
         if not port:
             return
         if getattr(port, "virtual", False) and self.virtual_profile is not None:
             self.profile = self.virtual_profile(port)      # own profile, never in the device store
             return
-        serial = usable_serial(port, self.ports or [port])
-        if serial:
-            p = self.store.by_serial(serial) or self.store.create(serial=serial)
-        else:
-            cands = self.store.without_serial()
-            fw = self.info.firmware_name if self.info else ""
-            if not cands:
-                p = self.store.create()
-            elif len(cands) == 1:
-                p = cands[0]
-            else:
-                pick = None
-                for narrow in ([c for c in cands if fw and c.firmware == fw],
-                               [c for c in cands if port.usb_path and c.usb_path == port.usb_path],
-                               [c for c in cands if port.usb_path and c.usb_path == port.usb_path and fw and c.firmware == fw]):
-                    if len(narrow) == 1:
-                        pick = narrow[0]
-                        break
-                p = pick or self._ask_profile(cands)
+        self.unit_candidates = []
+        p = self._match_profile(port)
+        if self.pending_restore_check and (p is None or p.id != self.pending_restore_profile):
+            # "Back to your data?" is only for the very device the firmware was installed on: this is another profile,
+            # or nobody said which one it is – no backup of one FM-1 is offered to another
+            self.pending_restore_check = ""
+        if p is None:                          # the owner did not say which unit this is: no profile, nothing guessed
+            self.profile = None
+            return
+        learn = serial_learnable(port, self.ports or [port], self.identity)
+        if learn and not p.serial and self.store.by_serial(learn) is None:
+            # the same FM-1 shows a serial number under the original firmware and none under a Felucca-family
+            # firmware: the profile learns it (as it learns the USB port) – no second profile for the same unit
+            p.serial = learn
+            self.store.save()
         if port.usb_path and p.usb_path != port.usb_path:
             p.usb_path = port.usb_path
             self.store.save()
@@ -615,6 +684,93 @@ class DeviceContext(QObject):
                 self.store.save()
         self.profile = p
 
+    SESSION_UNIT_SECS = 600.0       # how long "the app has just installed on the unit at this USB port" holds
+
+    def note_installed(self, profile, usb_path: str):
+        """the app has just written a firmware to `profile`'s unit at this USB port: when it re-appears there (other
+        identity, other serial number, other name), it is still this unit – never a new profile"""
+        if profile is not None and usb_path:
+            self.session_units[usb_path] = (profile.id, time.time())
+
+    def _new_profile(self, name: str = "") -> Profile:
+        """a new profile whose default name is neither a profile's nor a folder's in the backup folder (the backups
+        of a forgotten device – "FM-1 A" – must not become this device's)"""
+        try:
+            folders = [d.name for d in self.settings.backups_dir.iterdir() if d.is_dir()]
+        except (OSError, AttributeError):
+            folders = []
+        return self.store.create(name, folders=folders)
+
+    def _match_profile(self, port: PortInfo) -> Profile | None:
+        """the profile of the FM-1 at `port`. In this order:
+        1. its own serial number is in a profile: that one.
+        2. the app itself has just installed on a unit at this USB port (this session, or the journal's unfinished
+           two-step switch): that unit – whatever it reports now. (Not if it shows another serial number than the
+           profile has: then it is another FM-1.)
+        3. no profile can be this unit (none exists, or all have another serial number): a new one.
+        4. it shows no serial number (Felucca-family firmware, update mode) and exactly one profile was last seen at
+           this USB port with an identity that does not contradict: that one.
+        5. everything else is asked ("Is this an FM-1 you have used before?"), never guessed – also a serial number
+           no profile has while a profile without one exists: it may be that unit, now on the original firmware,
+           or a second FM-1. None: not answered (unit_candidates then says what it may be). In update mode nothing
+           is asked: no profile then."""
+        store, usb, ident = self.store, port.usb_path or "", self.identity or ""
+        serial = identifying_serial(port, self.ports or [port], ident)
+        p = store.by_serial(serial)
+        if p is not None:
+            return p
+        # a serial number the unit shows while its firmware runs rules out every profile that has another one; a
+        # number only seen in update mode rules out nothing (it is not known to be the unit's own)
+        own = serial_learnable(port, self.ports or [port], ident)
+        cands = [c for c in store.profiles.values() if not (own and c.serial)]
+        pid = None
+        if usb and usb in self.session_units:
+            pid, when = self.session_units[usb]
+            if time.time() - when > self.SESSION_UNIT_SECS:
+                pid = None
+            if pid is None or not port.update_mode:
+                del self.session_units[usb]    # holds for the first appearance after the installation only
+        if pid is None and usb and not getattr(port, "virtual", False):
+            try:
+                from ..flash import journal as fj
+                ch = fj.Journal().chain or {}
+                if ch.get("usb_path") == usb:
+                    pid = ch.get("device_id")
+            except Exception:  # noqa: BLE001
+                pid = None
+        if pid and pid in store.profiles and store.profiles[pid] in cands:
+            return store.profiles[pid]
+        if not cands or (own and port.client is None and not port.usb_id):
+            # (the second case: one of the app's own simulated devices with a number no profile has – a new
+            # simulated device, there is nothing to ask)
+            return self._new_profile()
+        said = store.profiles.get(self.port_answers.get(port.key, ""))
+        if said is not None and said in cands:  # the owner said so for this port, and it has not been away since
+            return said
+        here = [c for c in cands if usb and c.usb_path == usb]
+        if not own:
+            unknown = not ident or ident.lower().startswith("ota-")
+            same = [c for c in here if unknown or not c.identity or c.identity == ident]
+            # another profile reports this very identity: without a serial number the two cannot be told apart, and
+            # the USB port alone is no proof (two FM-1 on one cable) – asked, not assumed
+            twins = [c for c in cands if not unknown and c.identity == ident and c not in here]
+            if len(here) == 1 and len(same) == 1 and not twins:
+                return same[0]
+            if not usb and len(cands) == 1:    # no USB information at all (not Linux): as before
+                return cands[0]
+        self.unit_candidates = list(cands)
+        if port.update_mode:
+            # an FM-1 waiting in update mode is not the moment for a question: no profile is assumed; the Recovery
+            # page judges the waiting unit by itself (strictest candidate, RecoveryPage.waiting_unit)
+            return None
+        guess = (here or [c for c in cands if ident and c.identity == ident]
+                 or [c for c in cands if c.id == self.settings.last_device] or cands)[0]
+        p = self._ask_profile(cands, guess)
+        if p is not None:
+            self.unit_candidates = []
+            self.port_answers[port.key] = p.id
+        return p
+
     def profile_for_port(self, port: PortInfo) -> Profile | None:
         """without asking: which profile (probably) belongs to this port?"""
         if self.port and port.key == self.port.key and self.profile:
@@ -622,25 +778,30 @@ class DeviceContext(QObject):
         if getattr(port, "virtual", False):
             return self.virtual_profile(port) if self.virtual_profile is not None else None
         serial = usable_serial(port, self.ports)
-        if serial:
+        if serial and self.store.by_serial(serial) is not None:
             return self.store.by_serial(serial)
-        return next((p for p in self.store.without_serial() if port.usb_path and p.usb_path == port.usb_path), None)
+        # (a profile with another serial number is another FM-1; one without may be this unit)
+        return next((p for p in self.store.profiles.values()
+                     if port.usb_path and p.usb_path == port.usb_path and not (serial and p.serial)), None)
 
-    def _ask_profile(self, cands: list[Profile]) -> Profile:
+    def _ask_profile(self, cands: list[Profile], guess: Profile | None = None) -> Profile | None:
+        """ask which of the known devices this FM-1 is (or a new one). None: not answered – nothing is assumed."""
         if self._asking:
-            return cands[0]
+            return None
         self._asking = True
         try:
             names = [c.name + (f" ({c.firmware} {c.firmware_version})" if c.firmware else "") for c in cands]
-            names.append(_("Create new device …"))
-            last = next((i for i, c in enumerate(cands) if c.id == self.settings.last_device), 0)
-            item, ok = QInputDialog.getItem(self.window, _("Which FM-1 is this?"),
-                                            _("This FM-1 has no serial number. Which of your devices is it?"),
-                                            names, last, False)
+            names.append(_("A new FM-1 that I have not used with this app before …"))
+            last = cands.index(guess) if guess in cands else \
+                next((i for i, c in enumerate(cands) if c.id == self.settings.last_device), 0)
+            item, ok = QInputDialog.getItem(
+                self.window, _("Which FM-1 is this?"),
+                _("Is this an FM-1 you have used with this app before? The app cannot tell by itself: an FM-1 only "
+                  "reports a serial number while it runs the original firmware. Please choose:"), names, last, False)
             if ok and item == names[-1]:
                 name, ok2 = QInputDialog.getText(self.window, _("New device"), _("Name for this FM-1:"))
-                return self.store.create(name if ok2 else "")
-            return cands[names.index(item)] if ok and item in names[:-1] else cands[last]
+                return self._new_profile(name if ok2 else "")
+            return cands[names.index(item)] if ok and item in names[:-1] else None
         finally:
             self._asking = False
 
@@ -654,6 +815,7 @@ class DeviceContext(QObject):
                 pass
             self.link.close()
         had = self.port is not None
+        self._gone_since = None
         self.link = None
         self.info = None
         self.port = None

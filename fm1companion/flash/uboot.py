@@ -42,8 +42,13 @@ EXPECTED_SIZE = 0x100000            # 1 MiB Flash
 TRANSPORTER_URL = "https://github.com/kurogedelic/FM-1-transporter"
 UNBRICKER_URL = "https://github.com/Quixotic7/MvaveFM1Unbricker"
 JLUB_URL = "https://github.com/kagaimiq/jl-uboot-tool"
-DEPS = {"crcmod": "python3-crcmod", "yaml": "python3-yaml", "Cryptodome": "python3-pycryptodome",
-        "tqdm": "python3-tqdm"}
+# What the rescue in ROM boot mode really imports (read in the bundled Unbricker and in jl-uboot-tool adb3f18):
+# fm1_unbrick.load_jlub imports yaml and jltech.uboot / jltech.cipher, which import jltech.crc -> crcmod.
+# jl-uboot-tool's requirements.txt also names pycryptodomex and tqdm: Cryptodome is imported nowhere in that
+# revision, tqdm only by its command line jluboottool.py, which the app never runs – so they are not asked for.
+# Both packages are "recommended" in data/deps.json (installed by install.sh and the .deb by default): the rescue
+# must be ready before it is needed.
+DEPS = {"crcmod": "python3-crcmod", "yaml": "python3-yaml"}
 
 
 # FM-1 with the UCUN UC25HQ80 flash (JEDEC 0xB36014, the units with the logo on the front): the bundled Unbricker

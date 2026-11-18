@@ -100,7 +100,7 @@ def test_deb_suggests(tmp_path):
     import build_deb
     deb = build_deb.build(tmp_path)
     info = subprocess.run(["dpkg-deb", "-f", str(deb)], capture_output=True, text=True, check=True).stdout
-    assert "Suggests: python3-crcmod" in info
+    assert "Suggests: python3-pycryptodome" in info and "python3-crcmod" in info.split("Recommends:")[1].split("\n")[0]
     assert "Depends: python3 (>= 3.11), python3-pyqt6, python3-pyqt6.qtsvg" in info
     files = subprocess.run(["dpkg-deb", "-c", str(deb)], capture_output=True, text=True, check=True).stdout
     assert "fm1companion/data/help/de/12-glossar.md" in files
