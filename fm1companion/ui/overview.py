@@ -200,7 +200,7 @@ class OverviewPage(QWidget):
         self.lbl["Firmware"].setText(fw_text)
         from .common import fw_label
         if c.info:
-            ver = fw_label(c.info.version)
+            ver = fw_label(c.info.version, c.firmware_key)
         elif port and port.update_mode:
             ver = c.identity or "–"
         elif port and getattr(c, "identity", ""):
