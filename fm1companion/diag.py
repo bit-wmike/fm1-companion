@@ -222,6 +222,7 @@ def credits() -> list[dict]:
 def midi_ports() -> tuple[list[str], list[str], str]:
     try:
         import mido
-        return list(mido.get_input_names()), list(mido.get_output_names()), ""
+        # each name once, order kept: under Raspberry Pi OS Bookworm mido lists every port twice
+        return list(dict.fromkeys(mido.get_input_names())), list(dict.fromkeys(mido.get_output_names())), ""
     except Exception as e:  # noqa: BLE001
         return [], [], str(e) or type(e).__name__
