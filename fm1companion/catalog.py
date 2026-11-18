@@ -347,7 +347,8 @@ class Entry:
             installer_url=self.links.get("installer", ""), download_url=p.url if p else "",
             sha256=p.sha256 if p else "", requires_stock_v15=bool(p and p.requires_stock_v15),
             notes=list(p.notes) if p else [], category=(self.categories or [""])[0], catalog_id=self.key,
-            loader_family=p.loader_family if p else "")
+            loader_family=p.loader_family if p else "",
+            release_tag=(p.version or "") if p else "")      # the version the catalog names for this package
 
 
 @dataclass
@@ -1061,7 +1062,8 @@ def spec_by_sha256(sha: str, cat: Catalog | None = None):
     if p is not None and not sp.sha256:          # built-in firmware: pin exactly this package
         import dataclasses
         sp = dataclasses.replace(sp, sha256=p.sha256, product=p.product or sp.product,
-                                 loader_family=p.loader_family or sp.loader_family)
+                                 loader_family=p.loader_family or sp.loader_family,
+                                 release_tag=sp.release_tag or p.version or "")
     return sp
 
 

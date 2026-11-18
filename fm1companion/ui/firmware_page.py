@@ -117,6 +117,9 @@ def device_revision(ctx) -> str:
     from .. import hardware
     prof = getattr(ctx, "profile", None)
     rev = hardware.revision(prof)
+    port = getattr(ctx, "port", None)
+    if hardware.session_revision(getattr(port, "usb_path", "") or "") == hardware.NEW:
+        return hardware.NEW                      # read in ROM boot mode at this USB port in this session
     if rev == hardware.UNKNOWN and os.environ.get("FM1C_DEMO") == "1" and not hardware.asked(prof):
         return hardware.OLD                      # the demo's simulated FM-1s are earlier units (nothing to ask)
     return "" if rev == hardware.UNKNOWN else rev
@@ -1272,8 +1275,9 @@ class FirmwarePage(QWidget):
         sp = match or firmware.FirmwareSpec(key="eigene", name=Path(path).stem, repo="", asset="", sums="", installer="",
                                             editor="", builtin=False, protocol="none", product=info.product,
                                             resources="")
-        m = re.search(r"(\d+\.\d+(?:\.\d+)?(?:-rc\.\d+)?)", Path(path).name)
-        tag = ("v" + m.group(1)) if m and sp.repo else (sp.release_tag or "")
+        # the version is the one the checksum vouches for (a pinned or checked release) – never the file name: a
+        # file can be called anything, and the plan judges the version (the newer FM-1's flash chip, Melodee 1.6)
+        tag = sp.release_tag or ""
         install_flow(self, self.ctx, sp, None, Path(path), tag)
 
     def _show_v15_cached(self):

@@ -78,6 +78,7 @@ class Profile:
     hw_revision: str = ""
     hw_revision_source: str = ""  # "user" (answer) | "rom" (read in ROM boot mode) | "identity" (told by the firmware)
     flash_id: str = ""            # the JEDEC ID when it was read, e.g. "B36014"
+    hw_revision_conflict: str = ""   # a contradicting statement that was seen ("856014 identity"): stays "new"
     last_seen: float = 0.0
     created: float = field(default_factory=time.time)
 

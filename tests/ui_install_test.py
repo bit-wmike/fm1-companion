@@ -323,11 +323,11 @@ def flow():
           "unit not known + Melodee 1.5.1: only with the confirmation “no logo on the front”")
     plan_ctl["confirm"], plan_ctl["accept"] = True, False
     # never asked on a real device: the question comes before the plan, the answer is kept
-    hardware.set_revision(prof, "", "")
+    hardware.forget(prof)
     asked = []
     real_choose, demo_env = hw_revision.choose, os.environ.pop("FM1C_DEMO")
     try:
-        hw_revision.choose = lambda parent, name, current="": (asked.append(name), "new")[1]
+        hw_revision.choose = lambda parent, name, current="", **k: (asked.append(name), "new")[1]
         n_plans = len(plan_ctl["plans"])
         fp.install_flow(w, ctx, firmware.spec("melodee"), new_rel)
         check(not asked and len(plan_ctl["plans"]) == n_plans + 1, "a version that knows the chip: no question")
@@ -337,7 +337,7 @@ def flow():
               "never asked + a version without the chip: asked once, answer kept, plan blocks")
         fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel)
         check(len(asked) == 1, "… and not asked a second time")
-        hardware.set_revision(prof, "", "")
+        hardware.forget(prof)
         hw_revision.choose = lambda *a, **k: None
         n_plans = len(plan_ctl["plans"])
         check(not fp.install_flow(w, ctx, firmware.spec("melodee"), old_rel) and len(plan_ctl["plans"]) == n_plans,
@@ -345,12 +345,28 @@ def flow():
     finally:
         hw_revision.choose = real_choose
         os.environ["FM1C_DEMO"] = demo_env
-    # a chip ID that was read (ROM boot) wins over an answer
+    # "newer unit" only goes away deliberately: an explicit confirmation, also for a chip ID that was read
     hardware.note_flash_id(prof, 0xB36014, "rom")
-    w.overview.set_unit("old")
-    check(hardware.revision(prof) == "new" and "ROM-Bootmodus" in hardware.label(prof),
-          f"a flash ID read in ROM boot mode is not overwritten by an answer ({hardware.label(prof)})")
-    hardware.set_revision(prof, "", "")
+    real_confirm, seen = hw_revision.confirm_change, []
+    try:
+        hw_revision.confirm_change = lambda parent, p, rev: (seen.append(rev), False)[1]
+        w.overview.set_unit("old")
+        check(seen == ["old"] and hardware.revision(prof) == "new" and "ROM-Bootmodus" in hardware.label(prof),
+              f"“earlier unit” against a recorded newer unit: asked to confirm, not confirmed → stays ({hardware.label(prof)})")
+        hardware.note_flash_id(prof, 0x856014, "identity")
+        w.overview.refresh()
+        check(hardware.revision(prof) == "new" and "0x856014" in w.overview.lbl["Unit"].text()
+              and "zwei Geräte" in w.overview.lbl["Unit"].text(),
+              "an earlier chip read under the same profile: still a newer unit, and the Overview says why")
+        hw_revision.confirm_change = lambda parent, p, rev: (seen.append(rev), True)[1]
+        w.overview.set_unit("old")
+        check(seen == ["old", "old"] and hardware.revision(prof) == "old" and prof.hw_revision_source == "user"
+              and not prof.hw_revision_conflict, "… confirmed: changed to “earlier unit” by the owner")
+        check(hw_revision.record(ctx, prof, hw_revision.FORGET, w) and not hardware.asked(prof),
+              "“Forget what is recorded” (confirmed) clears the unit")
+    finally:
+        hw_revision.confirm_change = real_confirm
+    hardware.forget(prof)
     ctx.store.save()
     w.overview.refresh()
     plan_ctl["accept"] = True

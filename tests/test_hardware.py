@@ -75,7 +75,9 @@ def test_version_styles():
     # JIANT: letters after V10.61, then the three-part V10.7.N; a bare V10.7 is two different builds
     for v, want in (("V10.60", H.NO), ("V10.61", H.NO), ("V10.6c", H.NO), ("V10.6y", H.NO), ("V10.6z", H.YES),
                     ("V10.6z2", H.YES), ("V10.6z10", H.YES), ("JIANT V10.7.16", H.YES), ("V10.7.48", H.YES),
-                    ("V10.7", H.UNKNOWN), ("V10.10", H.NO), ("V11.0", H.YES), ("", H.UNKNOWN)):
+                    ("V10.7", H.UNKNOWN), ("V10.10", H.NO), ("V11.0", H.YES), ("", H.UNKNOWN),
+                    ("v10.60.0", H.NO), ("v10.61.0", H.NO), ("10.60.1", H.NO), ("10.6.1", H.UNKNOWN),
+                    ("V10.6z-rc1", H.UNKNOWN), ("V10.9.1", H.YES)):
         assert H.support("jiant", v).status == want, v
         assert H.support("jiant-fm", v).status == want, v
     # the app's own ordering of JIANT's versions agrees where both can read the version
@@ -127,11 +129,14 @@ def test_profile_keeps_the_revision(tmp_path):
     st.save()
     q = devices.ProfileStore(tmp_path / "devices.json").profiles[p.id]
     assert (q.hw_revision, q.hw_revision_source, q.flash_id) == ("new", "user", "")
-    assert H.set_revision(q, H.UNSURE, "user") and H.revision(q) == "unknown" and H.asked(q)
+    assert not H.set_revision(q, H.UNSURE, "user")                             # "new" only goes away deliberately
+    assert H.set_revision(q, H.UNSURE, "user", force=True) and H.revision(q) == "unknown" and H.asked(q)
     assert H.note_flash_id(q, 0xB36014, "rom") and (q.hw_revision, q.hw_revision_source, q.flash_id) == ("new", "rom", "B36014")
     assert not H.set_revision(q, H.OLD, "user") and H.revision(q) == "new"     # an ID that was read stays
-    assert H.note_flash_id(q, 0x856014, "identity") and H.revision(q) == "old" and q.flash_id == "856014"
-    assert not H.note_flash_id(q, 0xEB6014, "rom") and H.revision(q) == "old"  # another chip: not one of the two
+    # "new" is sticky: an earlier chip read under the same profile is kept as a conflict, the profile stays new
+    assert H.note_flash_id(q, 0x856014, "identity") and H.revision(q) == "new" and q.flash_id == "B36014"
+    assert q.hw_revision_conflict == "856014 identity" and "0x856014" in H.label(q)
+    assert not H.note_flash_id(q, 0xEB6014, "rom") and H.revision(q) == "new"  # another chip: not one of the two
     assert not H.set_revision(q, "newest", "user")
     # an old profile file without the fields, and one with a wrong type
     (tmp_path / "old.json").write_text(json.dumps({"profiles": [{"id": "a", "name": "A"},
@@ -151,7 +156,8 @@ def target(key, tag):
 
 
 def cat_target(key="some-firmware", tag="v1.0", **kw):
-    sp = firmware.FirmwareSpec(key=key, name="Some Firmware", repo="a/b", asset="x-{ver}.fwsc", builtin=False,
+    kw.setdefault("repo", H.source(key).get("repo") or "a/b")      # (a table row only applies to its own repository)
+    sp = firmware.FirmwareSpec(key=key, name="Some Firmware", asset="x-{ver}.fwsc", builtin=False,
                                loader_family="feluccaG1", **kw)
     return P.Target.from_spec(sp, tag=tag)
 
@@ -357,3 +363,200 @@ def test_tested_table_says_nothing_ran_on_a_newer_unit():
     assert tested.STEPS["new_chip"][0] is False
     text = (ROOT / "docs" / "UNTESTED.md").read_text("utf-8")
     assert "`new_chip`" in text and "nothing was run on a newer unit" in text
+
+
+# ================================================================================================ review fixes
+# (audit/review-newrev.md A1–A10, B1–B3: the revision state and the inputs of the rule)
+def prof(**kw):
+    p = devices.Profile(id=kw.pop("id", "p1"), name=kw.pop("name", "P"))
+    for k, v in kw.items():
+        setattr(p, k, v)
+    return p
+
+
+def test_new_is_sticky_and_the_strictest_reading_wins():                       # A1, A2
+    p = prof()
+    assert H.set_revision(p, H.NEW, "user")
+    # a read "old" (another FM-1 under this profile) never replaces "new": kept as a conflict, shown
+    assert H.note_flash_id(p, 0x856014, "rom") and H.revision(p) == "new" and p.hw_revision_source == "user"
+    assert p.hw_revision_conflict == "856014 rom" and "0x856014" in H.label(p)
+    assert H.note_flash_id(p, 0x856014, "identity") and H.revision(p) == "new"
+    assert not H.set_revision(p, H.OLD, "user") and not H.set_revision(p, H.UNSURE, "user")
+    assert not H.set_revision(p, "", "user") and H.revision(p) == "new"
+    # rom NEW, then identity OLD
+    p = prof()
+    assert H.note_flash_id(p, 0xB36014, "rom") and H.note_flash_id(p, 0x856014, "identity")
+    assert (p.hw_revision, p.hw_revision_source, p.flash_id) == ("new", "rom", "B36014")
+    # a read "old", then anything "new": new wins, the old statement is kept as the conflict
+    p = prof()
+    assert H.note_flash_id(p, 0x856014, "rom") and H.revision(p) == "old"
+    assert not H.set_revision(p, H.UNSURE, "user")                              # an answer does not replace a read …
+    assert H.set_revision(p, H.NEW, "user") and H.revision(p) == "new"          # … except "newer unit"
+    assert p.hw_revision_conflict == "856014 rom"
+    p = prof()
+    H.note_flash_id(p, 0x856014, "identity")
+    assert H.note_flash_id(p, 0xB36014, "rom") and (p.hw_revision, p.flash_id) == ("new", "B36014")
+    # the deliberate way out: only with force (the UI asks for a confirmation), also for a read value
+    assert H.set_revision(p, H.OLD, "user", force=True) and H.revision(p) == "old" and not p.hw_revision_conflict
+    assert H.note_flash_id(p, 0xB36014, "identity") and H.forget(p)
+    assert (p.hw_revision, p.hw_revision_source, p.flash_id, p.hw_revision_conflict) == ("", "", "", "")
+    assert H.strictest("old", "new") == "new" and H.strictest("old", "unknown") == "unknown"
+    assert H.strictest("old", "old") == "old" and H.strictest() == "unknown" and H.strictest("old", "") == "unknown"
+
+
+def test_merge_keeps_the_strictest_revision():                                  # A8
+    src, dst = prof(id="s"), prof(id="d")
+    H.note_flash_id(src, 0xB36014, "rom")
+    H.set_revision(dst, H.OLD, "user")
+    assert H.merge_revision(dst, src)
+    assert (dst.hw_revision, dst.hw_revision_source, dst.flash_id) == ("new", "rom", "B36014")
+    assert dst.hw_revision_conflict == "old user"
+    src, dst = prof(id="s"), prof(id="d")
+    H.set_revision(src, H.NEW, "user")
+    assert H.merge_revision(dst, src) and H.revision(dst) == "new" and H.asked(dst)
+    src, dst = prof(id="s"), prof(id="d")
+    H.set_revision(src, H.OLD, "user")
+    H.note_flash_id(dst, 0xB36014, "identity")
+    H.merge_revision(dst, src)
+    assert H.revision(dst) == "new" and dst.flash_id == "B36014" and dst.hw_revision_conflict == "old user"
+    src, dst = prof(id="s"), prof(id="d")
+    H.note_flash_id(src, 0x856014, "rom")
+    H.set_revision(dst, H.UNSURE, "user")
+    H.merge_revision(dst, src)
+    assert (dst.hw_revision, dst.hw_revision_source, dst.flash_id) == ("old", "rom", "856014")
+    src, dst = prof(id="s"), prof(id="d")
+    assert not H.merge_revision(dst, src) and not H.asked(dst)
+
+
+PRE = ["v1.6.0-rc", "v1.6.0-beta", "v1.6.0-pre", "v1.6.0-dev", "v1.6.0-nightly", "v1.6.0-preview.2", "v1.6.0_rc1",
+       "v1.6.0~rc1", "1.6.0b1", "v1.6.0-rc.8", "v1.6.0rc8", "Melodee 1.6.0 rc7", "v1.6.0+build5", "v1.6.0.dev1"]
+
+
+@pytest.mark.parametrize("tag", PRE)
+def test_a_prerelease_of_the_minimum_is_not_the_minimum(tag):                   # A5
+    assert H.support("melodee", tag).status == H.NO, tag
+
+
+def test_version_suffixes():                                                    # A5
+    assert H.support("melodee", "v1.6.0").status == H.YES and H.support("melodee", "v1.6.1-rc.1").status == H.YES
+    assert H.support("felucca", "v1.8.2-beta").status == H.YES                  # listed in the row ("also")
+    assert H.support("felucca", "v1.8.2-rc1").status == H.NO and H.support("felucca", "v1.8.2-BETA").status == H.YES
+    assert H.support("x0x", "X0X 1.2.1 BETA").status == H.YES                   # the release's INFO: a name, no suffix
+    assert H.support("choralroot-fm-1", "v0.29.1-smk37").status == H.NO         # a variant of the minimum: not it
+    assert H.support("sloop", "v3.0-beta").status == H.RISKY and H.support("sloop", "v3.0.0-rc.1").status == H.RISKY
+    assert H.parse_version("drum-v1.0.1") == ((1, 0, 1), "") and H.parse_version("v1.6.0-rc.7") == ((1, 6, 0), "-rc.7")
+    assert H.parse_version("nightly") is None
+
+
+def test_a_table_row_only_applies_to_its_own_repository():                      # A6
+    assert H.support("felucca", "v2.0", repo="someone/Felucca").status == H.UNKNOWN
+    assert H.support("felucca", "v2.0", repo="Hugelton/felucca").status == H.YES
+    assert H.support("felucca", "v2.0", repo="").status == H.UNKNOWN
+    assert H.support("felucca", "v2.0").status == H.YES                         # repo None: the caller vouches
+    assert H.support("orbit", "v1.0", repo="x/orbit").status == H.UNKNOWN       # (not "no" either: not that firmware)
+    # a fork's firmware.json is not believed under a table key either
+    assert H.support("felucca", "v2.0", ["B36014"], "v2.0", repo="someone/Felucca").status == H.UNKNOWN
+    for alias in ("amb", "loom", "transit"):
+        assert not H.source(alias), alias
+    fork = firmware.FirmwareSpec(key="felucca", name="Felucca", repo="someone/Felucca", asset="f-{ver}.fwsc",
+                                 builtin=False, loader_family="feluccaG1")
+    p = P.plan_install(state("new"), P.Target.from_spec(fork, tag="v2.0"))
+    assert any("UC25HQ80" in b for b in p.blockers)
+    real = firmware.FirmwareSpec(key="felucca", name="Felucca", repo="hugelton/Felucca", asset="f-{ver}.fwsc",
+                                 builtin=False, loader_family="feluccaG1")
+    assert not any("UC25HQ80" in b for b in P.plan_install(state("new"), P.Target.from_spec(real, tag="v1.8.2")).blockers)
+    for s in firmware.BUILTIN:                                                  # the built-in specs are the rows' own
+        assert H.source(s.key)["repo"].lower() == s.repo.lower(), s.key
+
+
+def test_firmware_json_needs_readable_versions_of_one_series():                 # A7
+    ids = ["856014", "B36014"]
+    assert H.support("fw", "drum-v0.5.0", ids, "drum-v1.0.1").status == H.UNKNOWN
+    assert H.support("fw", "v0.5.0", ids, "drum-v1.0.1").status == H.UNKNOWN
+    assert H.support("fw", "build-7", ids, "build-9").status == H.UNKNOWN
+    assert H.support("fw", "nightly", ids, "release-2").status == H.UNKNOWN
+    assert H.support("fw", "v1.1", ids, "drum-v1.0.1").status == H.UNKNOWN      # another tag series
+    assert H.support("fw", "drum-v1.0.1", ids, "drum-v1.0.1").status == H.YES
+    assert H.support("fw", "drum-v1.1.0", ids, "drum-v1.0.1").status == H.YES
+    assert H.support("fw", "v1.1.0-rc1", ids, "v1.1.0").status == H.UNKNOWN     # a pre-release of that version
+
+
+def test_the_version_never_comes_from_a_name():                                 # A4, B1
+    t = target("melodee", "")
+    t.name = "melodee-1.6.1.fwsc"
+    assert P.chip_support(t).status == H.UNKNOWN
+    assert any("UC25HQ80" in b for b in P.plan_install(state("new"), t).blockers)
+    sp = firmware.FirmwareSpec(key="x0x", name="X0X 2.0", repo="charlesvestal/fm1-x0x", asset="x.fwsc", builtin=False,
+                               loader_family="feluccaG1")
+    assert P.chip_support(P.Target.from_spec(sp)).status == H.UNKNOWN
+    src = (ROOT / "fm1companion" / "ui" / "firmware_page.py").read_text("utf-8")
+    body = src[src.index("def _install_local"):src.index("def _show_v15_cached")]
+    assert "tag = sp.release_tag or \"\"" in body and "re.search" not in body
+    rec = (ROOT / "fm1companion" / "ui" / "pages" / "recovery.py").read_text("utf-8")
+    gate = rec[rec.index("def _chip_gate"):rec.index("def _runner")]
+    assert "Path(src).name" not in gate
+
+
+def test_stock_family_targets_other_than_the_two_originals_are_blocked():       # A9
+    for key, fam, lf in (("stockholm", "", ""), ("fm1-open-community", "stock", ""), ("some-build", "", "stock")):
+        sp = firmware.FirmwareSpec(key=key, name=key, repo="a/b", asset="x.fwsc", builtin=False, family=fam,
+                                   loader_family=lf, product="FM-1_950")
+        t = P.Target.from_spec(sp, tag="v1.0")
+        p = P.plan_install(state("new"), t)
+        assert any("UC25HQ80" in b for b in p.blockers) and "newchip_unverified" not in p.confirmations, key
+        assert "no_logo" in P.plan_install(state(""), P.Target.from_spec(sp, tag="v1.0")).confirmations
+    # a spec that only calls itself stock-v16 / carries its product is not M-VAVE's package
+    fake = firmware.FirmwareSpec(key="stock-v16", name="V16", repo="x/y", asset="x.fwsc", builtin=False,
+                                 family="stock", product="FM-1_016")
+    assert any("UC25HQ80" in b for b in P.plan_install(state("new"), P.Target.from_spec(fake, tag="V16")).blockers)
+    assert P.official_stock(target("stock-v16", "V16")) == "FM-1_016" and P.official_stock(own_target("FM-1_015")) == "FM-1_015"
+    assert "newchip_unverified" in P.plan_install(state("new"), target("stock-v16", "V16")).confirmations
+
+
+def test_catalog_specs_carry_the_catalog_version():                             # A10
+    from fm1companion import catalog
+    cat = catalog.load()
+    e = cat.by_key("x0x")
+    sp = e.to_spec()
+    assert sp.release_tag == e.latest.version and sp.release_tag
+    rel = firmware.fetch_releases(sp)[0]
+    assert rel.tag == sp.release_tag != "fest"
+    t = P.Target.from_spec(sp, tag=rel.tag)
+    assert P.chip_support(t).status in (H.YES, H.NO)                            # judged by its version, not "unknown"
+    assert P.chip_support(t).status == H.support("x0x", e.latest.version).status
+    # a catalog package of a supporting version installs on a newer unit; without a version it stays blocked
+    import dataclasses
+    ok = dataclasses.replace(sp, release_tag="v1.2.1")
+    assert not any("UC25HQ80" in b for b in P.plan_install(state("new"), P.Target.from_spec(ok, tag="v1.2.1")).blockers)
+    assert any("UC25HQ80" in b for b in P.plan_install(state("new"), P.Target.from_spec(sp, tag="")).blockers)
+
+
+def test_table_errors_fail_closed(tmp_path, monkeypatch):                       # B2, B3
+    def use(text):
+        f = tmp_path / "hardware.json"
+        f.write_text(text) if text is not None else f.unlink(missing_ok=True)
+        monkeypatch.setattr(H, "TABLE", f)
+        H.table.cache_clear()
+    try:
+        good = json.loads((ROOT / "fm1companion" / "data" / "hardware.json").read_text("utf-8"))
+        bad = json.loads(json.dumps(good))
+        bad["firmwares"]["melodee"]["min"] = ""
+        use(json.dumps(bad))
+        assert H.support("melodee", "v9.9").status == H.UNKNOWN                 # a row without its minimum: never yes
+        assert any("UC25HQ80" in b for b in P.plan_install(state("new"), target("melodee", "v9.9")).blockers)
+        for text in (None, "{not json", "[]", '{"firmwares": 5}', '{"firmwares": {"melodee": 1}, "aliases": {}, "checked": ""}'):
+            use(text)
+            assert H.table_problem()
+            with pytest.raises(H.TableError):
+                H.table()
+            assert H.support("melodee", "v1.6.1") == H.Support(H.UNKNOWN, "", "") and H.source("melodee") == {}
+            assert H.running_support("melodee", "MELODEE v1.5.1").status == H.UNKNOWN
+            for rev in ("new", ""):
+                p = P.plan_install(state(rev), target("melodee", "v1.6.1"))
+                assert not p.ok and any("hardware.json" in b for b in p.blockers), (text, rev)
+            assert P.plan_install(state("old"), target("melodee", "v1.6.1")).ok  # an earlier unit needs no table
+            assert P.chip_matters(state("new"), target("melodee", "v1.6.1"))
+    finally:
+        monkeypatch.undo()
+        H.table.cache_clear()
+    assert not H.table_problem() and H.support("melodee", "v1.6.1").status == H.YES

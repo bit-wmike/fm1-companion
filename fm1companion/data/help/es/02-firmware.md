@@ -84,10 +84,14 @@ Lo que hace la app:
   La app no puede leer el chip por MIDI. Puedes cambiar la respuesta en las páginas *Dispositivos* (botón
   *Unidad …*) y *Resumen*.
 * En una **unidad más reciente** no instala ninguna versión que no conozca el chip: el plan lo dice y nombra la
-  primera versión que funciona. No hay ninguna opción de experto para esto.
+  primera versión que conoce el chip (no probada por esta app). No hay ninguna opción de experto para esto.
 * Si la app **no sabe** qué unidad tienes, una versión así solo se instala si confirmas en el plan que tu FM-1 no
   tiene logo en el frontal.
 * En una **unidad anterior** no cambia nada.
+* «Unidad más reciente» se mantiene: una vez guardado para un dispositivo – por tu respuesta o porque se leyó el
+  chip –, sigue así hasta que lo cambies tú (*Unidad …*, con confirmación). Si más tarde se lee un chip anterior
+  con el mismo dispositivo, la app lo sigue tratando como unidad más reciente y te lo dice; puede que sean dos FM-1
+  en un mismo perfil.
 
 Primeras versiones que conocen el chip más reciente (leído en el código de los firmwares, a 17 de noviembre de 2026):
 Melodee 1.6.0, Skiff 2.2, SLOOP 2.8.5, KARMA 3.0.4, JIANT FM V10.6z, Felucca 1.8.2, ChoralRoot 0.29.1,
