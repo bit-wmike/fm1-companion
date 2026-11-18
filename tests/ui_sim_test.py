@@ -213,6 +213,37 @@ def flow():
     w.go("simulator", url=url, title="Test-Emu", kind="emulator")
     check(until(lambda: js("document.title") == "Test-Emu", 15000), "open_with(url) loads the page")
     check("ONLINE" in p.badge.text(), "online badge visible")
+    # an online page often waits for its own start button and has its own keys: the status line says so
+    st = p.state.text()
+    check("läuft (online)" in st and "Switch on" in st and "Start" in st and "scrollen" in st and "Z S X" not in st,
+          f"online status: the page's own start button, no key layout promised ({st})")
+    # per-page notes (data in sims.ONLINE_NOTES): X0X's own keys; fm1-emu is heavy -> "Open in Firefox"
+    from fm1companion import sims as _s
+    keep = p.current
+    p.current = _s.online("https://charlesvestal.github.io/fm1-x0x/emu/", "X0X – Simulator")
+    p._loaded(True)
+    check("Q–I" in p.state.text() and "OCT" in p.state.text() and "Switch on" in p.state.text(),
+          f"X0X: status names its keys ({p.state.text()[-90:]})")
+    p.current = _s.online("https://juanjiant-bit.github.io/JIANT/webapp/editor/#sound", "JIANT FM – Editor", "editor")
+    p._loaded(True)
+    check(p.state.text().endswith("läuft (online).") and "Switch on" not in p.state.text(),
+          f"online editor: no switch-on hint ({p.state.text()})")
+    p.current = keep
+    p._loaded(True)
+    for i in range(p.list.count()):
+        if "fm1-emu" in str(p.list.item(i).data(Qt.ItemDataRole.UserRole)):
+            p.list.setCurrentRow(i)
+    d = p.details.text()
+    check("fm1-emu" in d and "Rechenleistung" in d and "In Firefox öffnen" in d and p.b_ff.isEnabled()
+          and p.b_ff.isVisibleTo(p), f"fm1-emu: note about computing power beside 'In Firefox öffnen' ({d[:60]})")
+    for i in range(p.list.count()):
+        if str(p.list.item(i).data(Qt.ItemDataRole.UserRole)) == "url:https://charlesvestal.github.io/fm1-x0x/emu/":
+            p.list.setCurrentRow(i)
+    d = p.details.text()
+    check("Q–I" in d and "eigene Tastenbelegung" in d and "Rechenleistung" not in d, f"X0X details: its keys ({d[:60]})")
+    for i in range(p.list.count()):
+        if p.list.item(i).data(Qt.ItemDataRole.UserRole) == keep.key:
+            p.list.setCurrentRow(i)
     check(any(r.get("url") == url for r in config.module("simulator")["recent"]), "remembered under 'recently opened'")
     check(until(lambda: "FM-1 (Tasten)" in (js("window.names") or []), 8000),
           f"the page's Web MIDI sees 'FM-1 (Tasten)' ({js('window.names')})")

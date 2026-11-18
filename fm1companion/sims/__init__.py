@@ -71,6 +71,60 @@ ONLINE = [
 ]
 
 
+# ---- hints for online pages (English source; translated at run time, listed again in SIM_TEXTS) ----------------
+# Most online simulators stay silent until their own start button is pressed, and each one has its own computer
+# keys – the app cannot press or know either, so the status line says it.
+ONLINE_HINT = ("If you hear nothing: press the page's own “Switch on” / “Start” button (you may have to scroll). "
+               "Each page has its own computer-keyboard layout.")
+ONLINE_KEYS_HINT = "Each page has its own computer-keyboard layout – see the page itself."
+# an emulator that needs more computing power than the built-in view may have (Qt 6.4 on a Pi 5: fm1-emu ran at
+# 0.6 times real time without sound, the Chromium of the same Pi at 1.1 times, 2026-11-18)
+HEAVY_NOTE = ("This emulator needs a lot of computing power; the built-in view may be too slow for it (no sound, or "
+              "stutter) – “Open in Firefox” opens it in the regular browser, which is often faster.")
+HEAVY_NOTE_OLD_QT = ("This emulator needs a lot of computing power; the built-in view of this system (Qt {version}) "
+                     "is an older one and may be too slow for it – on a Raspberry Pi 5 it stayed silent there. “Open "
+                     "in Firefox” opens it in the regular browser, which is often faster.")
+X0X_KEYS = ("X0X has its own keys: white keys on Q–I and A–K, black keys on 1–0 and -, Space is PLAY, Z / X are "
+            "OCT− / OCT+ (Z S X D C … do not play notes here).")
+# per page, by the start of its address (so the same page from the catalog or from “recently opened” gets it too):
+#   "heavy": True   needs a lot of computing power -> HEAVY_NOTE next to “Open in Firefox” and in the status line
+#   "note":  text   something the user must know about this page (its keys …)
+ONLINE_NOTES = [
+    ("https://joakimeriksson.github.io/fm1-emu/", {"heavy": True}),
+    ("https://charlesvestal.github.io/fm1-x0x/emu/", {"note": X0X_KEYS}),
+]
+
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    return tuple(int(x) for x in re.findall(r"\d+", version or "")[:2])
+
+
+def online_notes(url: str, qt_version: str = "") -> list[str]:
+    """translated notes for the online page at ``url`` (empty for most pages). ``qt_version``: the Qt of the built-in
+    view ("6.4.2"); below 6.5 the note about heavy emulators says so."""
+    u = (url or "").strip().lower()
+    out = []
+    for prefix, info in ONLINE_NOTES:
+        if not u.startswith(prefix.lower()):
+            continue
+        if info.get("heavy"):
+            v = _version_tuple(qt_version)
+            out.append(_(HEAVY_NOTE_OLD_QT).format(version=qt_version) if v and v < (6, 5) else _(HEAVY_NOTE))
+        if info.get("note"):
+            out.append(_(info["note"]))
+    return out
+
+
+def online_keys_hint() -> str:
+    return _(ONLINE_KEYS_HINT)
+
+
+def online_hint(kind: str = "emulator") -> str:
+    """what the status line adds for a running online page: simulators often wait for their own start button and
+    have their own keys; editors and the workbench make no sound by themselves."""
+    return _(ONLINE_HINT) if (kind or "emulator") == "emulator" else ""
+
+
 def bundled() -> list[Sim]:
     out = []
     for d in sorted(DIR.iterdir()):

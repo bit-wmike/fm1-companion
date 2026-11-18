@@ -222,6 +222,26 @@ class Package:
         return self.url.rsplit("/", 1)[-1] if self.url else ""
 
 
+# Corrections of single links the lists get wrong: (repository, link role, address as listed, right address).
+# A correction only applies while the list still has exactly the listed address (a missing or extra "/" at the end
+# does not matter), so it stops doing anything the day the list is fixed – then the entry can go.
+#  * JIANT FM: awesome-fm-1 links "Browser emulator" to the project's start page; the emulator is under emu/
+#    (the project's own README links it there; seen running with sound in the app on a Pi 5, 2026-11-18).
+LINK_CORRECTIONS = [
+    ("juanjiant-bit/JIANT", "emulator", "https://juanjiant-bit.github.io/JIANT/",
+     "https://juanjiant-bit.github.io/JIANT/emu/"),
+]
+
+
+def correct_links(e: "Entry") -> "Entry":
+    """apply LINK_CORRECTIONS to one entry (fresh from the lists, from the cache or from the snapshot)"""
+    for repo, role, listed, right in LINK_CORRECTIONS:
+        if (e.repo or "").lower() == repo.lower() and \
+                (e.links.get(role) or "").rstrip("/").lower() == listed.rstrip("/").lower():
+            e.links[role] = right
+    return e
+
+
 @dataclass
 class Entry:
     key: str
@@ -324,7 +344,7 @@ class Entry:
         if not safe_component(e.key):                  # cache/snapshot are files on disk: same rule as for the live list
             raise ValueError(f"catalog entry with an unsafe key: {str(e.key)[:60]!r}")
         e.packages = [p for p in pk if not package_problem(p)]
-        return e
+        return correct_links(e)
 
     def to_spec(self, package: Package | None = None):
         """FirmwareSpec for the installer / "My firmwares"."""
@@ -668,7 +688,7 @@ def _readme_entry(it: dict) -> Entry:
     e.lineage_text = "; ".join(x for x in lineage_mentions(desc) if x != "__own__")
     e._mentions = lineage_mentions(desc)   # type: ignore[attr-defined]
     e.categories = categorize(name, desc, it["section"])
-    return e
+    return correct_links(e)
 
 
 # ================================================================ Merge ===
