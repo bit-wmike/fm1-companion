@@ -525,9 +525,10 @@ def test_download_mode_rule_is_uaccess_for_4c4a_8057_only():
     rule = (ROOT / "packaging/udev/70-fm1-companion-download-mode.rules").read_text("utf-8")
     lines = [ln for ln in rule.splitlines() if ln.strip() and not ln.startswith("#")]
     assert lines == ['SUBSYSTEM=="scsi_generic", ATTRS{idVendor}=="4c4a", ATTRS{idProduct}=="8057", TAG+="uaccess"',
-                     'SUBSYSTEM=="usb", ATTR{idVendor}=="4c4a", ATTR{idProduct}=="8057", TAG+="uaccess"']
+                     'SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="4c4a", ATTR{idProduct}=="8057", '
+                     'TAG+="uaccess"']                    # (review L4: the usb line only for the device itself)
     upstream = (ROOT / "fm1companion/tools/bundled/m-flasher/70-m-flasher.rules").read_text("utf-8")
-    assert lines == [ln for ln in upstream.splitlines() if ln.strip() and not ln.startswith("#")]   # same as M-Flasher's
+    assert lines[0] in upstream.splitlines()                         # the sg line is M-Flasher's own
     assert "MODE=" not in rule and "RUN+=" not in rule and "GROUP=" not in rule
     # (70 < 73: uaccess is applied by systemd's 73-seat-late.rules)
     assert [ln.strip() for ln in (ROOT / "packaging/udev/fm1-companion-sg.conf").read_text().splitlines()
@@ -559,12 +560,13 @@ def test_install_sh_and_uninstall_install_and_remove_the_download_rule(tmp_path,
     rule = core.UDEV_DIR / core.DL_RULE
     assert rule.read_text() == (ROOT / "packaging/udev" / core.DL_RULE).read_text()
     assert (core.MODULES_DIR / core.SG_CONF).read_text().strip().endswith("sg")
-    assert info["download_mode_rule"] is True and any(str(rule) in m for m in msgs)
+    assert info["download_mode_rule"] == sorted([str(rule), str(core.MODULES_DIR / core.SG_CONF)])
+    assert any(str(rule) in m for m in msgs)
     app = Path(info["app"])
     assert (app / "udev" / core.DL_RULE).exists() and (app / "udev" / core.SG_CONF).exists()
     # an update without the flag keeps knowing that the rule is ours
     assert core.install(ROOT, home / ".local", menu=False, log=lambda *_: None,
-                        fluidsynth_fix=False)["download_mode_rule"] is True
+                        fluidsynth_fix=False)["download_mode_rule"] == info["download_mode_rule"]
     core.uninstall(home / ".local", log=msgs.append)
     assert not rule.exists() and not (core.MODULES_DIR / core.SG_CONF).exists()
 
@@ -622,6 +624,7 @@ def test_installer_copies_only_this_computers_m_flasher_after_the_checksum(tmp_p
         [f"m-flasher/{ver}/aarch64/m-flasher"]
     f = app / "tools-bin" / f"m-flasher/{ver}/aarch64/m-flasher"
     assert f.read_bytes() == b"arm binary" and os.access(f, os.X_OK)
+    assert (app / "tools-bin/m-flasher/THIRD-PARTY-LICENSES.txt").is_file()
     assert not (app / "tools-bin" / f"m-flasher/{ver}/x86_64").exists()
     msgs = []
     assert core.install_tool_binaries(src, app, log=msgs.append, machine="armv7l") == []   # 32-bit Pi OS
@@ -654,6 +657,8 @@ def test_deb_with_bundled_m_flasher_stays_architecture_all(tmp_path, monkeypatch
     sums = (x / "usr/lib/fm1-companion/tools-bin/SHA256SUMS").read_text()
     for rel, f in fakes:
         assert f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {rel}" in sums
+    for name in ("LICENSE", "NOTICE.md", "THIRD-PARTY-LICENSES.txt"):     # the licences travel with the binary
+        assert (x / "usr/lib/fm1-companion/tools-bin/m-flasher" / name).is_file(), name
     post = (x / "DEBIAN/postinst").read_text()
     assert "sha256sum --quiet -c SHA256SUMS" in post and "modprobe sg" in post and 'DPKG_ROOT' in post
     assert (x / "DEBIAN/postrm").exists()
@@ -676,3 +681,57 @@ def test_release_workflow_fetches_and_requires_the_tools():
     wf = (ROOT / ".github/workflows/release.yml").read_text("utf-8")
     assert "python3 tools/fetch_tools.py" in wf and "--require-tools" in wf
     assert wf.index("tools/fetch_tools.py") < wf.index("tools/build_deb.py")
+
+
+def test_uninstall_removes_only_the_rule_files_this_installation_added(tmp_path, monkeypatch):
+    """review L2: a rule that was there before (system-wide install, by hand) stays after uninstalling"""
+    core = _core(monkeypatch, tmp_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    for k in ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"):
+        monkeypatch.delenv(k, raising=False)
+    core.UDEV_DIR.mkdir(parents=True)
+    (core.UDEV_DIR / core.DL_RULE).write_text("# put there by someone else\n")
+    info = core.install(ROOT, home / ".local", menu=False, download_mode_rule=True, log=lambda *_: None,
+                        fluidsynth_fix=False)
+    assert info["download_mode_rule"] == [str(core.MODULES_DIR / core.SG_CONF)]     # only what it added
+    core.uninstall(home / ".local", log=lambda *_: None)
+    assert (core.UDEV_DIR / core.DL_RULE).read_text() == "# put there by someone else\n"
+    assert not (core.MODULES_DIR / core.SG_CONF).exists()
+    # both already there: the installation owns nothing and removes nothing
+    (core.MODULES_DIR / core.SG_CONF).write_text("sg\n")
+    info = core.install(ROOT, home / ".local", menu=False, download_mode_rule=True, log=lambda *_: None,
+                        fluidsynth_fix=False)
+    assert "download_mode_rule" not in info
+    core.uninstall(home / ".local", log=lambda *_: None)
+    assert (core.UDEV_DIR / core.DL_RULE).exists() and (core.MODULES_DIR / core.SG_CONF).exists()
+
+
+def test_udev_trigger_only_for_the_fm1_in_download_mode():
+    """review L3: no `--action=add` replay for every scsi_generic device or every 4c4a device"""
+    sys.path.insert(0, str(ROOT / "packaging/installer"))
+    import build_deb
+    import core
+    for script in (core.DL_ACTIVATE, build_deb.POSTINST):
+        triggers = [ln for ln in script.replace(";", "\n").splitlines() if "udevadm trigger" in ln]
+        assert triggers and all("--parent-match" in ln and "--action=change" in ln for ln in triggers), triggers
+        assert "8057" in script and "--subsystem-match=scsi_generic" not in script
+
+
+def test_no_m_flasher_without_its_licences(tmp_path, monkeypatch):
+    """review M4: the packages never carry the binaries without THIRD-PARTY-LICENSES.txt"""
+    import build_common
+    lic = ROOT / "fm1companion/tools/bundled/m-flasher/THIRD-PARTY-LICENSES.txt"
+    text = lic.read_text("utf-8")
+    for needle in ("epaint_default_fonts", "UFL.txt", "Hack-Regular.txt", "Bitstream Vera",
+                   "emoji-icon-font-mit-license.txt", "Apache License", "Permission is hereby granted"):
+        assert needle in text, needle
+    import json
+    lock_names = json.loads((ROOT / "fm1companion/tools/manifest.json").read_text())["tools"]["m-flasher"]
+    assert lock_names["cargo_lock_sha256"] and "THIRD-PARTY-LICENSES.txt" in lock_names["licence_files"]
+    monkeypatch.setattr(build_common, "ROOT", tmp_path)            # (a tree without the licence file)
+    import fetch_tools
+    monkeypatch.setattr(fetch_tools, "verify_tree", lambda *a, **k: ({"m-flasher/x/x86_64/m-flasher": lic}, []))
+    assert build_common.tool_binaries() == []
+    with pytest.raises(SystemExit):
+        build_common.tool_binaries(require=True)

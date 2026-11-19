@@ -2524,7 +2524,7 @@ msgstr ""
 msgid "The FM-1 refused the package in step 1. Does the display show “FAILED <number>”? -3/-7: unknown loader, -5: boot area differs, -15: Felucca 1.6.1 check (see help)."
 msgstr ""
 
-#: fm1companion/flash/engine.py:94 fm1companion/flash/journal.py:80
+#: fm1companion/flash/engine.py:94 fm1companion/flash/journal.py:83
 msgid "An installation is already running."
 msgstr ""
 
@@ -2689,8 +2689,12 @@ msgstr ""
 msgid "The FM-1 started an update loader that does not match this package. Nothing was written; the FM-1 is now waiting in update mode. On the “Recovery” page only a package that belongs to this loader is sent."
 msgstr ""
 
-#: fm1companion/flash/journal.py:88
+#: fm1companion/flash/journal.py:91
 msgid "Another program window is installing a firmware right now."
+msgstr ""
+
+#: fm1companion/flash/journal.py:93
+msgid "M-Flasher, started by a program window that has closed, is still running. Wait a minute; if it stays, switch the FM-1 off and on."
 msgstr ""
 
 #: fm1companion/flash/mboot.py:166 fm1companion/flash/mboot.py:169
@@ -7055,132 +7059,132 @@ msgstr ""
 msgid "The FM-1 no longer answers as V15 after writing – please check it."
 msgstr ""
 
-#: fm1companion/storage.py:408
+#: fm1companion/storage.py:410
 #, python-brace-format
 msgid "“{name}” was written a moment ago – a rescue may still be running. Try again in a few minutes."
 msgstr ""
 
-#: fm1companion/storage.py:497
+#: fm1companion/storage.py:499
 msgid "Logs"
 msgstr ""
 
-#: fm1companion/storage.py:497
+#: fm1companion/storage.py:499
 msgid "The app's log (at most 5 × 1 MB, rotating). “Delete” removes the older parts and empties the current log."
 msgstr ""
 
-#: fm1companion/storage.py:499
+#: fm1companion/storage.py:501
 msgid "Downloaded firmware"
 msgstr ""
 
-#: fm1companion/storage.py:500
+#: fm1companion/storage.py:502
 msgid "Packages the app downloaded (main folder › Firmware). They are downloaded again when needed. Kept: the newest original firmware V15 (for a rescue without internet) and the package of an interrupted installation. Files you put there yourself stay."
 msgstr ""
 
-#: fm1companion/storage.py:503
+#: fm1companion/storage.py:505
 msgid "Copies of installed packages"
 msgstr ""
 
-#: fm1companion/storage.py:504
+#: fm1companion/storage.py:506
 msgid "The installation journal keeps a copy of every package it installs (for finishing an interrupted installation). The copy of an interrupted installation is kept."
 msgstr ""
 
-#: fm1companion/storage.py:507
+#: fm1companion/storage.py:509
 msgid "Firmware tools (git copies)"
 msgstr ""
 
-#: fm1companion/storage.py:508
+#: fm1companion/storage.py:510
 msgid "Installers and tools of the firmwares, fetched from GitHub. Fetched again on the next installation (needs internet). Kept while an interrupted installation can be finished."
 msgstr ""
 
-#: fm1companion/storage.py:511
+#: fm1companion/storage.py:513
 msgid "Editor copies"
 msgstr ""
 
-#: fm1companion/storage.py:511
+#: fm1companion/storage.py:513
 msgid "Web editors of the firmware versions. Prepared again when the editor is opened – close the editor first."
 msgstr ""
 
-#: fm1companion/storage.py:514
+#: fm1companion/storage.py:516
 msgid "Catalog images and GitHub data"
 msgstr ""
 
-#: fm1companion/storage.py:515
+#: fm1companion/storage.py:517
 msgid "Screenshots, stars and release lists from GitHub. The catalog itself and the News list stay."
 msgstr ""
 
-#: fm1companion/storage.py:517
+#: fm1companion/storage.py:519
 msgid "Sample pack downloads"
 msgstr ""
 
-#: fm1companion/storage.py:518
+#: fm1companion/storage.py:520
 msgid "Contents lists of the sample packs (and git copies left by older versions or an interrupted download – the app now deletes the copy right after copying). The samples you downloaded are in your Samples folder and stay there."
 msgstr ""
 
-#: fm1companion/storage.py:521
+#: fm1companion/storage.py:523
 msgid "Web cache"
 msgstr ""
 
-#: fm1companion/storage.py:521
+#: fm1companion/storage.py:523
 msgid "Cache of the built-in browser (editors, catalog pages)."
 msgstr ""
 
-#: fm1companion/storage.py:523
+#: fm1companion/storage.py:525
 msgid "Temporary files"
 msgstr ""
 
-#: fm1companion/storage.py:524
+#: fm1companion/storage.py:526
 msgid "Leftovers of previews and recordings in the temporary folder (only files older than an hour)."
 msgstr ""
 
-#: fm1companion/storage.py:526
+#: fm1companion/storage.py:528
 msgid "Error reports"
 msgstr ""
 
-#: fm1companion/storage.py:527
+#: fm1companion/storage.py:529
 msgid "Error reports and system check reports in your home folder, damaged settings copies."
 msgstr ""
 
-#: fm1companion/storage.py:529
+#: fm1companion/storage.py:531
 msgid "Studio states"
 msgstr ""
 
-#: fm1companion/storage.py:530
+#: fm1companion/storage.py:532
 msgid "Your work in the Studio, one state per device. Only deleted one by one, on request."
 msgstr ""
 
-#: fm1companion/storage.py:532
+#: fm1companion/storage.py:534
 msgid "Web editor storage"
 msgstr ""
 
-#: fm1companion/storage.py:533
+#: fm1companion/storage.py:535
 msgid "Saved data of the built-in browser (cookies, local storage) – web editors may keep your settings there. Only cleared on request, all at once."
 msgstr ""
 
-#: fm1companion/storage.py:536 fm1companion/ui/storage_tab.py:339
+#: fm1companion/storage.py:538 fm1companion/ui/storage_tab.py:339
 msgid "Rescue dumps and tool logs"
 msgstr ""
 
-#: fm1companion/storage.py:537
+#: fm1companion/storage.py:539
 msgid "Full flash backups and logs of the rescue tool in the main folder › Rettung – your safety net. Only deleted one by one, on request; the newest full backup of a device needs an extra confirmation."
 msgstr ""
 
-#: fm1companion/storage.py:540
+#: fm1companion/storage.py:542
 msgid "Rescue tool and installation journal"
 msgstr ""
 
-#: fm1companion/storage.py:541
+#: fm1companion/storage.py:543
 msgid "Needed for a rescue and for finishing an interrupted installation. Kept."
 msgstr ""
 
-#: fm1companion/storage.py:543
+#: fm1companion/storage.py:545
 msgid "Your files in the main folder"
 msgstr ""
 
-#: fm1companion/storage.py:544
+#: fm1companion/storage.py:546
 msgid "Backups, projects, samples, kits, recordings, rescue dumps and downloads. The app never deletes them here – automatic backups follow the setting “Keep automatic backups”, rescue dumps have their own row."
 msgstr ""
 
-#: fm1companion/storage.py:654 fm1companion/ui/storage_tab.py:180
+#: fm1companion/storage.py:656 fm1companion/ui/storage_tab.py:180
 #: fm1companion/ui/storage_tab.py:257 fm1companion/ui/storage_tab.py:303
 msgid "An installation is running – nothing is deleted until it has finished."
 msgstr ""
@@ -7895,94 +7899,102 @@ msgstr ""
 msgid "no kernel log"
 msgstr ""
 
-#: fm1companion/tools/runner.py:75
+#: fm1companion/tools/runner.py:79
 #, python-brace-format
 msgid "M-Flasher is not available for this computer ({machine}): it is built for 64-bit ARM (Raspberry Pi OS 64-bit) and for x86-64 PCs only. On a Raspberry Pi with the 32-bit system the recovery tools on this page still work."
 msgstr ""
 
-#: fm1companion/tools/runner.py:82
+#: fm1companion/tools/runner.py:86
 msgid "M-Flasher is not bundled with this installation (a source checkout?). Run tools/fetch_tools.py once, or install the app from its .deb or .run package."
 msgstr ""
 
-#: fm1companion/tools/runner.py:84 fm1companion/tools/runner.py:117
-#: fm1companion/tools/runner.py:150
+#: fm1companion/tools/runner.py:88 fm1companion/tools/runner.py:121
+#: fm1companion/tools/runner.py:174 fm1companion/tools/runner.py:205
 msgid "The bundled M-Flasher did not pass its checksum test, so the app does not run it. Reinstall the app."
 msgstr ""
 
-#: fm1companion/tools/runner.py:91 fm1companion/tools/runner.py:94
-#: fm1companion/tools/runner.py:96
+#: fm1companion/tools/runner.py:95 fm1companion/tools/runner.py:98
+#: fm1companion/tools/runner.py:100
 msgid "This M-Flasher command is not available in the app."
 msgstr ""
 
-#: fm1companion/tools/runner.py:126
+#: fm1companion/tools/runner.py:130
 #, python-brace-format
 msgid "M-Flasher waits: {reason}"
 msgstr ""
 
-#: fm1companion/tools/updates.py:180 fm1companion/tools/updates.py:283
+#: fm1companion/tools/runner.py:143
+msgid "M-Flasher does not stop. Unplug the FM-1 (or switch it off); the app starts no other installation or tool until M-Flasher has ended."
+msgstr ""
+
+#: fm1companion/tools/updates.py:179 fm1companion/tools/updates.py:280
 msgid "The app is not allowed to go online (FM1C_NO_NET is set)."
 msgstr ""
 
-#: fm1companion/tools/updates.py:255
+#: fm1companion/tools/updates.py:254
 msgid "The release file has no secure (https) address. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:285
+#: fm1companion/tools/updates.py:282
 msgid "An installation or recovery is running. Tools are not updated meanwhile – try again when it has finished."
 msgstr ""
 
-#: fm1companion/tools/updates.py:289
+#: fm1companion/tools/updates.py:286
 msgid "The release has an unexpected version number. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:291
+#: fm1companion/tools/updates.py:288
+msgid "The release file has an unexpected name. Nothing was kept."
+msgstr ""
+
+#: fm1companion/tools/updates.py:290
 #, python-brace-format
 msgid "GitHub publishes no checksum for {file}, so the app cannot check the download. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:296
+#: fm1companion/tools/updates.py:295
 #, python-brace-format
 msgid "Version {version} is already on this computer."
 msgstr ""
 
-#: fm1companion/tools/updates.py:306
+#: fm1companion/tools/updates.py:307
 #, python-brace-format
 msgid "The downloaded {file} does not match the checksum GitHub publishes for it. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:329
+#: fm1companion/tools/updates.py:330
 msgid "The new version could not be stored."
 msgstr ""
 
-#: fm1companion/tools/updates.py:339
+#: fm1companion/tools/updates.py:340
 msgid "The M-Flasher download does not contain the expected program. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:345
+#: fm1companion/tools/updates.py:346
 msgid "The M-Flasher download is damaged. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:356
+#: fm1companion/tools/updates.py:357
 msgid "The downloaded M-Flasher does not start or reports another version. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:366
+#: fm1companion/tools/updates.py:367
 msgid "The m-bootloader release has no SHA256SUMS file. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:371
+#: fm1companion/tools/updates.py:372
 msgid "The release's SHA256SUMS does not match the checksum GitHub publishes for it. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:374
+#: fm1companion/tools/updates.py:375
 msgid "fm1-uboot.boot does not match the release's SHA256SUMS. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:376
+#: fm1companion/tools/updates.py:377
 msgid "fm1-uboot.boot has an unexpected size. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/updates.py:385
+#: fm1companion/tools/updates.py:386
 msgid "The SLOOP 3 file has an unexpected size. Nothing was kept."
 msgstr ""
 
@@ -23197,66 +23209,71 @@ msgstr ""
 msgid "Show licence"
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:125 fm1companion/ui/tools_card.py:176
+#: fm1companion/ui/tools_card.py:125 fm1companion/ui/tools_card.py:185
 msgid "Update"
 msgstr ""
 
 #: fm1companion/ui/tools_card.py:135
 #, python-brace-format
+msgid "{tool} {version} was downloaded, but its commands differ from the ones this app knows, so the app does not use it and keeps using {active}. An update of this app can take it into use."
+msgstr ""
+
+#: fm1companion/ui/tools_card.py:139
+#, python-brace-format
 msgid "{tool}: the last check did not get an answer ({error})."
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:161
+#: fm1companion/ui/tools_card.py:165
 #, python-brace-format
 msgid "Not checked: {error}"
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:169
+#: fm1companion/ui/tools_card.py:175
 msgid "The app downloads it, checks it against the checksum GitHub publishes for the file and keeps the version you have now as the fallback until the new one has worked once. It does not install anything on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:173
-msgid "A new M-Flasher is used for reading only (device info, backups) until an update of this app has checked it for writing."
+#: fm1companion/ui/tools_card.py:179
+msgid "To check it, the app starts the new M-Flasher once on this computer (it asks only for its version and its list of commands). Afterwards it runs on this computer for reading (device info); writing stays with the version this app was reviewed with. The new version is trusted as its author published it on GitHub. If its commands differ from the ones this app knows, it is kept but not used."
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:175
+#: fm1companion/ui/tools_card.py:184
 #, python-brace-format
 msgid "Update {tool}?"
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:181
+#: fm1companion/ui/tools_card.py:195
 #, python-brace-format
 msgid "{tool} {version} is ready. Until it has worked once, the previous version stays as the fallback."
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:187
+#: fm1companion/ui/tools_card.py:202
 msgid "Not updated"
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:200
+#: fm1companion/ui/tools_card.py:215
 #, python-brace-format
 msgid "M-Flasher did not answer as expected: {reason}"
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:201
+#: fm1companion/ui/tools_card.py:216
 msgid "no answer within the time limit"
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:203
+#: fm1companion/ui/tools_card.py:218
 #, python-brace-format
 msgid "In ROM download mode: {device}"
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:204
+#: fm1companion/ui/tools_card.py:219
 #, python-brace-format
 msgid "Running on USB MIDI: {name}"
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:206
+#: fm1companion/ui/tools_card.py:221
 msgid "An FM-1 is in download mode, but the Linux driver “sg” is not loaded. The app's installer sets it up; by hand: sudo modprobe sg"
 msgstr ""
 
-#: fm1companion/ui/tools_card.py:208
+#: fm1companion/ui/tools_card.py:223
 msgid "M-Flasher sees no FM-1."
 msgstr ""
 

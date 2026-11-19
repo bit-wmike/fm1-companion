@@ -60,7 +60,8 @@ before every use and never runs a changed file), and when it last looked for a n
 * **New versions:** by default the app asks GitHub once a day (Settings › General: daily, weekly, only at the start
   or never; only while the firmware update check is on). A new version is only shown. **Update** downloads it,
   checks it against GitHub's checksum and keeps your current version as the fallback until the new one has worked
-  once. A new M-Flasher is first used only for reading.
+  once. A new M-Flasher runs on this computer only for reading; one whose commands have changed is kept but not
+  used.
 * **Download mode without a password:** the installer sets up a rule that lets you reach the FM-1 in ROM download
   mode (USB 4c4a:8057) and loads the Linux driver `sg` at start.
 * **Honestly:** in this version the app only shows, checks and updates the tools and asks M-Flasher which FM-1 it

@@ -64,7 +64,7 @@ nueva.
   semana, solo al iniciar o nunca; solo mientras la búsqueda de actualizaciones de firmware esté activada). Una
   versión nueva solo se muestra. **Actualizar** la descarga, la comprueba con la suma de verificación de GitHub y
   conserva tu versión actual como respaldo hasta que la nueva haya funcionado una vez. Un M-Flasher nuevo se usa
-  primero solo para leer.
+  solo para leer; uno con comandos cambiados se conserva pero no se usa.
 * **Modo de descarga sin contraseña:** el instalador configura una regla que te permite acceder al FM-1 en modo de
   descarga ROM (USB 4c4a:8057) y carga el controlador de Linux `sg` al arrancar.
 * **Con sinceridad:** en esta versión la app solo muestra, comprueba y actualiza las herramientas y pregunta a

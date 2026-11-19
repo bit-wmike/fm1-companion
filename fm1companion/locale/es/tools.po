@@ -4218,10 +4218,6 @@ msgstr "La app la descarga, la comprueba con la suma de verificación que GitHub
 msgid "{version} (not in this installation)"
 msgstr "{version} (no está en esta instalación)"
 
-#: fm1companion/ui/tools_card.py:173
-msgid "A new M-Flasher is used for reading only (device info, backups) until an update of this app has checked it for writing."
-msgstr "Un M-Flasher nuevo solo se usa para leer (información del equipo, copias) hasta que una actualización de esta app lo haya comprobado para escribir."
-
 #: fm1companion/tools/updates.py:180 fm1companion/tools/updates.py:283
 msgid "The app is not allowed to go online (FM1C_NO_NET is set)."
 msgstr "La app no puede conectarse a internet (FM1C_NO_NET está definido)."
@@ -4449,3 +4445,24 @@ msgstr "M-Flasher no ve ningún FM-1."
 #, python-brace-format
 msgid "Update {tool}?"
 msgstr "¿Actualizar {tool}?"
+
+#: fm1companion/ui/tools_card.py:179
+msgid "To check it, the app starts the new M-Flasher once on this computer (it asks only for its version and its list of commands). Afterwards it runs on this computer for reading (device info); writing stays with the version this app was reviewed with. The new version is trusted as its author published it on GitHub. If its commands differ from the ones this app knows, it is kept but not used."
+msgstr "Para comprobarlo, la app inicia el nuevo M-Flasher una vez en este ordenador (solo le pregunta su versión y su lista de comandos). Después se ejecuta en este ordenador para leer (información del equipo); para escribir se sigue usando la versión con la que se revisó esta app. La versión nueva se acepta tal como su autor la publicó en GitHub. Si sus comandos son distintos de los que conoce esta app, se conserva pero no se usa."
+
+#: fm1companion/tools/updates.py:288
+msgid "The release file has an unexpected name. Nothing was kept."
+msgstr "El archivo de la publicación tiene un nombre inesperado. No se ha guardado nada."
+
+#: fm1companion/ui/tools_card.py:135
+#, python-brace-format
+msgid "{tool} {version} was downloaded, but its commands differ from the ones this app knows, so the app does not use it and keeps using {active}. An update of this app can take it into use."
+msgstr "{tool} {version} se ha descargado, pero sus comandos son distintos de los que conoce esta app, así que la app no lo usa y sigue con {active}. Una actualización de esta app puede ponerlo en uso."
+
+#: fm1companion/tools/runner.py:143
+msgid "M-Flasher does not stop. Unplug the FM-1 (or switch it off); the app starts no other installation or tool until M-Flasher has ended."
+msgstr "M-Flasher no se detiene. Desconecta el FM-1 (o apágalo); la app no inicia ninguna otra instalación ni herramienta hasta que M-Flasher haya terminado."
+
+#: fm1companion/flash/journal.py:93
+msgid "M-Flasher, started by a program window that has closed, is still running. Wait a minute; if it stays, switch the FM-1 off and on."
+msgstr "M-Flasher, iniciado por una ventana del programa que ya se cerró, sigue en marcha. Espera un minuto; si continúa, apaga y vuelve a encender el FM-1."

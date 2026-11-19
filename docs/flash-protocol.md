@@ -287,10 +287,16 @@ Melodee OCT−+OCT+ is the calibration!).
     `.deb` (active, `/usr/lib/udev/rules.d`, `/usr/lib/modules-load.d`), by `install.sh` (asks, default yes) and the
     graphical installer (checkbox, ticked), removed again by `apt remove` / the uninstaller. `uaccess` covers the
     user at the local, active seat only (not SSH).
-  * **Running it** (`fm1companion/tools/runner.py`): the binary's SHA-256 is checked before every run; no shell,
-    a fixed argument list, stdin closed, `LANG=C`, a time limit and a cancel button (SIGTERM, then SIGKILL after
-    2 s); commands that talk to a unit take the one-installation-at-a-time lock (`flash/journal.py`); every line
-    goes into a flight log `tool-<time>.txt` with unit ids masked (last four hex digits). **In this version only
+  * **Running it** (`fm1companion/tools/runner.py`, `tools/proc.py`): the binary's SHA-256 is checked before
+    every run – hashed in place only where nobody but root can change it (the .deb's `/usr/lib`), otherwise
+    copied once into a private 0700 folder, and the copy is hashed and run; no shell, a fixed argument list, stdin
+    closed, `LANG=C`, a time limit and a cancel button. M-Flasher never outlives the app: `PR_SET_PDEATHSIG`
+    (SIGTERM), its own process group (stop = SIGTERM to the group, SIGKILL after 2 s, every wait bounded),
+    stopped at app exit; its PID is recorded beside the lock (`tool.pid`), so a lock whose window died is not free
+    while that M-Flasher still runs, and a process that does not stop even after SIGKILL keeps the lock until it
+    ends ("unplug the FM-1"). Commands that talk to a unit take the one-installation-at-a-time lock
+    (`flash/journal.py`); every line goes into a flight log `tool-<time>.txt` with unit ids masked (last four hex
+    digits; also with 0x, as spaced or colon-separated bytes and inside file names). **In this version only
     `find`, `info --device /dev/sgN`, `--version` and `--help` can run**; everything that writes or switches
     modes (backup, restore, firmware, bootloader, download-mode, restart, run-ram, `--yes`) is refused before
     the process starts. The parser (`tools/mflasher_parse.py`) reads `find` and the `info` block (model,
@@ -302,12 +308,23 @@ Melodee OCT−+OCT+ is the calibration!).
     on, never with `FM1C_NO_NET=1`, never while an installation or tool run holds the lock. A newer version is
     only announced (version + release text); **Update** downloads it into a staging folder, checks it against
     GitHub's per-file digest (m-bootloader: also its `SHA256SUMS`; no digest → refused), checks M-Flasher's
-    tarball member, `--version` and the `--help` text (contract `mflasher-0.12`), then stores it under
+    tarball member, `--version` and the `--help` text (contract `mflasher-0.12`; these two run once, in the staging
+    folder, in their own session, with no environment and no stdin), then stores it under
     `DATA_DIR/tools/<tool>/<version>/`. The previous version stays the fallback until the new one has once run
     successfully (a clean `info`); a new version that crashes or prints an unknown format is marked failed and
-    the previous one is used again. **A new M-Flasher is used for read-only commands only; writes stay on a
-    version an app release lists in `write_verified` (owner decision).** An update is vouched for by HTTPS plus
-    GitHub's digest only (trust on first use); a bundled version by the app's own release review.
+    the previous one is used again. **A new M-Flasher is used for read-only commands only (owner decision); one
+    whose `--help` differs from the known contract is kept but not used at all – the bundled one runs and the Tools
+    view says so. Writes only ever run a binary whose SHA-256 an app release lists in `write_verified`
+    ({version: {arch: sha256}} – by bytes, not by version number).** An update is vouched for by HTTPS plus
+    GitHub's digest only (trust on first use): it runs on this computer for reading; a bundled version is vouched
+    for by the app's own release review.
+  * **Licences:** `bundled/m-flasher/THIRD-PARTY-LICENSES.txt`, made by `tools/gen_mflasher_licences.py` from
+    M-Flasher's Cargo.lock at the pinned commit (every crate from crates.io, checked against Cargo.lock's
+    checksums: name, version, declared licence, every licence/copyright/notice text) – including the fonts egui
+    compiles in (epaint_default_fonts: Ubuntu Light under the Ubuntu Font Licence 1.0, Hack under MIT + the
+    Bitstream Vera licence, Noto Emoji under the OFL 1.1, the emoji icon font by John Slegers under MIT) and
+    M-Flasher's own OFL fonts. Shipped next to the binary in the .deb/.run and shown by "Show licence"; the release
+    workflow regenerates it and stops when it differs.
   * **Later steps** (not in this version): "Into download mode" (soft key `F0 22 24 35 7D F7`, answered by stock
     015/016, Felucca/Skiff 2.7, SLOOP 2.8.5 [hw], SLOOP 3 [src] and m-bootloader's MIDI MODE [SPEC]; otherwise a
     guided card: Felucca/SLOOP OCT−+OCT+ 5 s, m-bootloader REC at power-on or PLAY → DOWNLOAD MODE), full flash

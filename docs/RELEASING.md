@@ -93,15 +93,21 @@ file with its release tag and commit, URL, size, SHA-256 and licence.
   both builds; the `.run` carries both and installs the one for the computer. A build without `tools-bin/`
   (a developer's checkout, the test workflow) works, the app then says M-Flasher is not bundled.
 * `python3 tools/update_tool_pins.py --check [--download]` compares every pin with GitHub's per-file digest (and
-  m-bootloader's `SHA256SUMS`). It needs GitHub's API, so it runs in the workflow.
+  m-bootloader's `SHA256SUMS`); a file that neither confirms is a failure. It needs GitHub's API, so it runs in
+  the workflow.
+* M-Flasher's `THIRD-PARTY-LICENSES.txt` (every crate's and every embedded font's licence text) is made by
+  `python3 tools/gen_mflasher_licences.py <its Cargo.lock>` (downloads the crates from crates.io). The workflow
+  fetches the Cargo.lock of the pinned commit, checks its SHA-256 (`cargo_lock_sha256` in the manifest),
+  regenerates the file and stops if it differs or is missing; the packages are never built with the binaries but
+  without it.
 
 **A new tool version in the app** (not the user's own "Update" button, which never changes the app): in one pull
 request change the tool's entry in `manifest.json` (version, tag, commit, URLs, sizes, SHA-256 – never a value you
 did not measure or read from upstream), replace the files in `fm1companion/tools/bundled/<tool>/` (for M-Flasher:
-the licence files and `THIRD-PARTY.md`, made with `tools/update_tool_pins.py --crates <its Cargo.lock>`), run
-`tools/update_tool_pins.py --check`, and for M-Flasher check that its command line and output still match
-`fm1companion/tools/mflasher_parse.py` (the `--help` hash in the manifest) before adding the version to
-`write_verified`. Only versions listed there are used for writing.
+the licence files, `cargo_lock_sha256` and `THIRD-PARTY-LICENSES.txt` made with `tools/gen_mflasher_licences.py`),
+run `tools/update_tool_pins.py --check`, and for M-Flasher check that its command line and output still match
+`fm1companion/tools/mflasher_parse.py` (the `--help` hash in the manifest) before adding the version's binaries
+to `write_verified` as `{version: {arch: sha256}}`. Only binaries with exactly those SHA-256 are used for writing.
 
 ## Never
 

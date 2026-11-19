@@ -49,6 +49,7 @@ def env(tmp_path, monkeypatch):
     binp = tmp_path / "tools-bin" / mf.mflasher_relpath(ver, ARCH)
     b = fake_binary(binp)
     data["tools"]["m-flasher"]["arch"][ARCH].update(binary_sha256=sha(b), binary_size=len(b))
+    data["tools"]["m-flasher"]["write_verified"][ver][ARCH] = sha(b)          # (the reviewed bytes = the fake)
     state = tmp_path / "fake-state.json"
     state.write_text("{}")
     monkeypatch.setenv("FAKE_MFLASHER_STATE", str(state))
@@ -254,7 +255,9 @@ def stage_update(e, version: str, binary: bytes | None = None, contract_known=Tr
     d = e.store.updates_dir / "m-flasher" / version / ARCH
     b = fake_binary(d / "m-flasher") if binary is None else binary
     if binary is not None:
+        d.mkdir(parents=True, exist_ok=True)
         (d / "m-flasher").write_bytes(binary)
+        (d / "m-flasher").chmod(0o755)
     meta = {"version": version, "main": f"{ARCH}/m-flasher", "contract_known": contract_known,
             "files": {f"{ARCH}/m-flasher": {"sha256": sha(b), "size": len(b)}}}
     (d.parent / "meta.json").write_text(json.dumps(meta))
@@ -280,13 +283,49 @@ def test_new_version_read_only_until_proven_and_fallback_when_broken(env):
     assert c.version == "0.13.0" and any("0.14.0" in p for p in problems)
 
 
-def test_write_verified_needs_manifest_entry_and_known_contract(env):
-    env.data["tools"]["m-flasher"]["write_verified"].append("0.13.0")
-    stage_update(env, "0.13.0", contract_known=False)
+def test_write_gate_is_by_bytes_not_version(env):
+    """review M1 (probe P4): an update copy of a listed version with OTHER bytes is never the write tool, even when
+    the bundled copy is missing and the copy has run cleanly; only the listed SHA-256 qualifies"""
+    env.bin.unlink()
+    other = fake_binary(env.tmp / "x" / "m-flasher") + b"\n# different bytes, never reviewed\n"
+    stage_update(env, "0.12.1", binary=other)
+    (env.store.updates_dir / "m-flasher" / "0.12.1" / ARCH / "m-flasher").chmod(0o755)
+    r, info = runner.info("/dev/sg1", store=env.store, log_dir=env.logs, journal=env.journal)
+    assert info is not None and r.source == "update"                 # read-only use is allowed (owner rule)
+    assert env.store.select("m-flasher", write=True)[0] is None
+    # an app release that lists exactly these bytes for 0.13.0: then (and only after a clean run) for writing
+    stage_update(env, "0.13.0")
+    same = (env.store.updates_dir / "m-flasher" / "0.13.0" / ARCH / "m-flasher").read_bytes()
+    env.data["tools"]["m-flasher"]["write_verified"]["0.13.0"] = {ARCH: sha(same)}
+    assert env.store.select("m-flasher", write=True)[0] is None      # not proven yet
     env.store.mark("m-flasher", "0.13.0", ok=True)
-    assert env.store.select("m-flasher", write=True)[0].version == "0.12.1"
-    stage_update(env, "0.13.0", contract_known=True)
     assert env.store.select("m-flasher", write=True)[0].version == "0.13.0"
+    env.data["tools"]["m-flasher"]["write_verified"]["0.13.0"] = {ARCH: "0" * 64}
+    assert env.store.select("m-flasher", write=True)[0] is None
+
+
+def test_meta_without_contract_known_is_unknown(env):
+    """review M1b (probe P4b): a meta.json without the key fails closed"""
+    stage_update(env, "0.13.0")
+    meta_p = env.store.updates_dir / "m-flasher" / "0.13.0" / "meta.json"
+    meta = json.loads(meta_p.read_text())
+    meta.pop("contract_known")
+    meta_p.write_text(json.dumps(meta))
+    c = next(c for c in env.store.updates("m-flasher") if c.version == "0.13.0")
+    assert c.contract_known is False
+    assert env.store.select("m-flasher")[0].version == "0.12.1"
+
+
+def test_unknown_command_line_is_not_used_at_all(env):
+    """review M2 (probe P5): a new version whose --help differs is not given even `info`; the bundled one runs and
+    the Tools view says why"""
+    stage_update(env, "0.13.0", contract_known=False)
+    c, problems = env.store.select("m-flasher")
+    assert c.version == "0.12.1" and any("0.13.0" in p and "command line" in p for p in problems)
+    r = run(env, ["info", "--device", "/dev/sg1"])
+    assert r.version == "0.12.1" and r.source == "bundled"
+    rows = {s.key: s for s in updates.status(env.store)}
+    assert rows["m-flasher"].unknown_cli == ["0.13.0"] and rows["m-flasher"].active == "0.12.1"
 
 
 # ------------------------------------------------------------ update check
@@ -386,6 +425,12 @@ def tarball(binary: bytes, version: str, extra=None) -> bytes:
     return buf.getvalue()
 
 
+def fake_of(e, version: str, extra: str = "") -> bytes:
+    """the fake binary reporting `version` by itself (the update probe gives it no environment)"""
+    return e.bin.read_text().replace('st.get("version", "0.12.1")', f'st.get("version", "{version}")') \
+        .replace("--board fm1|smk37", "--board fm1|smk37" + extra).encode()
+
+
 def offer_for(data: bytes, version="0.13.0", digest=None) -> updates.Offer:
     name = f"m-flasher-{version}-linux-{ARCH}.tar.gz"
     return updates.Offer("m-flasher", "v" + version, version, asset=name, url=f"https://example.invalid/{name}",
@@ -394,9 +439,7 @@ def offer_for(data: bytes, version="0.13.0", digest=None) -> updates.Offer:
 
 def test_update_download_is_verified_staged_and_keeps_the_previous(env, monkeypatch):
     monkeypatch.setattr(updates, "busy", lambda: False)
-    env.set(version="0.13.0")                                        # the fake reports the new version
-    binary = (env.bin.read_bytes())
-    blob = tarball(binary, "0.13.0")
+    blob = tarball(fake_of(env, "0.13.0"), "0.13.0")
     fetch = lambda url, dest: dest.write_bytes(blob)                 # noqa: E731
     c = updates.download_update(offer_for(blob), env.store, fetch)
     assert (c.version, c.source, c.proven, c.contract_known) == ("0.13.0", "update", False, True)
@@ -413,8 +456,7 @@ def test_update_download_refusals_keep_nothing(env, monkeypatch, case):
     monkeypatch.setattr(updates, "busy", lambda: case == "busy")
     if case == "nonet":
         monkeypatch.setenv("FM1C_NO_NET", "1")
-    env.set(version="0.13.0" if case != "version" else "0.99.0")
-    blob = tarball(env.bin.read_bytes(), "0.13.0")
+    blob = tarball(fake_of(env, "0.13.0" if case != "version" else "0.99.0"), "0.13.0")
     if case == "member":
         buf = io.BytesIO()
         with tarfile.open(fileobj=buf, mode="w:gz") as tar:
@@ -430,16 +472,40 @@ def test_update_download_refusals_keep_nothing(env, monkeypatch, case):
         else True
 
 
-def test_changed_command_line_is_read_only(env, monkeypatch):
+def test_changed_command_line_is_kept_but_not_used(env, monkeypatch):
     monkeypatch.setattr(updates, "busy", lambda: False)
-    env.set(version="0.13.0")
-    changed = env.bin.read_text().replace("--board fm1|smk37", "--board fm1|smk37|new")
-    blob = tarball(changed.encode(), "0.13.0")
+    blob = tarball(fake_of(env, "0.13.0", "|new"), "0.13.0")
     c = updates.download_update(offer_for(blob), env.store, lambda url, dest: dest.write_bytes(blob))
     assert c.contract_known is False
-    env.data["tools"]["m-flasher"]["write_verified"].append("0.13.0")
+    assert env.store.select("m-flasher")[0].version == "0.12.1"
+    env.data["tools"]["m-flasher"]["write_verified"]["0.13.0"] = {ARCH: c.sha256}
     env.store.mark("m-flasher", "0.13.0", ok=True)
     assert env.store.select("m-flasher", write=True)[0].version == "0.12.1"
+
+
+def test_update_probe_runs_isolated(tmp_path):
+    """--version/--help of a fresh download: no stdin, its own session, the staging folder as cwd and HOME, a
+    minimal environment, bounded"""
+    from fm1companion.tools import proc
+    spy = tmp_path / "spy"
+    spy.write_text(f"#!{sys.executable}\nimport os, sys, json\n"
+                   "print(json.dumps([os.getcwd(), os.environ.get('HOME'), sorted(os.environ), "
+                   "os.getsid(0) == os.getpid(), sys.stdin.read()]))\n")
+    spy.chmod(0o755)
+    os.environ["FM1C_SECRET_TEST"] = "x"
+    try:
+        rc, out = proc.run_probe([str(spy), "--help"], cwd=str(tmp_path))
+    finally:
+        del os.environ["FM1C_SECRET_TEST"]
+    cwd, home, keys, own_session, stdin = json.loads(out)
+    assert rc == 0 and cwd == home == str(tmp_path) and own_session and stdin == ""
+    assert "FM1C_SECRET_TEST" not in keys and set(keys) <= {"PATH", "LANG", "LC_ALL", "HOME", "LC_CTYPE"}
+    hang = tmp_path / "hang"
+    hang.write_text(f"#!{sys.executable}\nimport time\ntime.sleep(60)\n")
+    hang.chmod(0o755)
+    t0 = time.monotonic()
+    assert proc.run_probe([str(hang)], cwd=str(tmp_path), timeout=1.0) == (None, b"")
+    assert time.monotonic() - t0 < 8
 
 
 def test_m_bootloader_update_needs_sha256sums(env, monkeypatch):
@@ -469,3 +535,196 @@ def test_status_and_licence(env):
     env.bin.unlink()
     rows = {r.key: r for r in updates.status(env.store)}
     assert not rows["m-flasher"].verified and rows["m-flasher"].unavailable
+
+
+# ------------------------------------------------------------ review M3: M-Flasher never outlives the app
+
+def test_m_flasher_dies_with_the_app_and_blocks_the_lock_while_alive(env, tmp_path):
+    """probe P7: a window that is killed during `find` must not leave M-Flasher running – and while such a child
+    lives, a lock whose owner is dead is not free"""
+    import signal
+    import subprocess
+    env.set(fault="hang")
+    (tmp_path / "data.json").write_text(json.dumps(env.data))
+    jdir = tmp_path / "j2"
+    code = (f"import json, sys; sys.path.insert(0, {str(ROOT)!r})\n"
+            "from fm1companion.tools import runner, store as st\nfrom fm1companion.flash import journal\n"
+            f"data = json.load(open({str(tmp_path / 'data.json')!r}))\n"
+            f"s = st.Store(bin_dir={str(env.tmp / 'tools-bin')!r}, updates_dir={str(env.tmp / 'upd')!r}, data=data, "
+            f"machine={ARCH!r})\n"
+            f"runner.run_mflasher(['find'], store=s, log_dir={str(env.logs)!r}, journal=journal.Journal({str(jdir)!r}))\n")
+    app = subprocess.Popen([sys.executable, "-c", code], env=dict(os.environ))
+    tool_pid = 0
+    for _ in range(100):
+        try:
+            tool_pid = int((jdir / "tool.pid").read_text().split()[0])
+            break
+        except (OSError, ValueError, IndexError):
+            time.sleep(0.1)
+    assert tool_pid, "the runner records the tool's PID in the lock folder"
+    from fm1companion.flash import journal as fj
+    assert fj.tool_child_alive(jdir)
+    app.kill()
+    app.wait()
+    gone = False
+    for _ in range(50):
+        try:
+            os.kill(tool_pid, 0)
+            if Path(f"/proc/{tool_pid}/stat").read_text().split(") ")[1][0] == "Z":
+                gone = True
+                break
+        except ProcessLookupError:
+            gone = True
+            break
+        time.sleep(0.1)
+    if not gone:
+        os.kill(tool_pid, signal.SIGKILL)
+    assert gone, "M-Flasher outlived the app"
+    assert not fj.tool_child_alive(jdir)
+    j = fj.Journal(jdir)
+    j.acquire()                                                      # stale lock of the dead window: free again
+    j.release()
+
+
+def test_live_tool_of_a_dead_window_keeps_the_lock(tmp_path):
+    import subprocess
+    from fm1companion.flash import journal as fj
+    j = fj.Journal(tmp_path)
+    tmp_path.mkdir(exist_ok=True)
+    (tmp_path / "install.lock").write_text("999999999 1")             # its window is gone
+    child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        j.set_tool(child.pid)
+        with pytest.raises(fj.Busy):
+            fj.Journal(tmp_path).acquire()
+        assert fj.tool_child_alive(tmp_path)
+    finally:
+        child.kill()
+        child.wait()
+    j2 = fj.Journal(tmp_path)
+    j2.acquire()
+    j2.release()
+
+
+def test_a_process_that_does_not_stop_keeps_the_lock_until_it_ends(env, monkeypatch):
+    from fm1companion.tools import proc
+    env.set(fault="hang")
+    real_stop = proc.stop
+    holder = {}
+
+    def no_stop(p, *a, **k):
+        holder["p"] = p
+        return False                                                  # as if it hung in the kernel
+    monkeypatch.setattr(proc, "stop", no_stop)
+    with pytest.raises(runner.ToolError):
+        run(env, ["find"], timeout=0.5)
+    from fm1companion.flash import journal as fj
+    with pytest.raises((fj.Busy, runner.ToolBusy)):
+        run(env, ["find"], journal=fj.Journal(env.tmp / "journal"))
+    real_stop(holder["p"])
+    for _ in range(50):
+        if not fj.Journal.busy():
+            break
+        time.sleep(0.1)
+    assert not fj.Journal.busy()
+
+
+# ------------------------------------------------------------ review lows
+
+def test_masking_covers_the_other_id_forms():
+    """L10 / probe P2"""
+    from fm1companion.flash import robust
+    for text in (f"  unit id     {UID}", f"UNIT ID {UID.upper()}", f"id 0x{UID}", f"backup_{UID}_x.bin",
+                 "01 23 45 67 89 ab cd ef", "01:23:45:67:89:AB:CD:EF", f"{UID}.json"):
+        m = runner.mask_ids(text)
+        assert "0123456789" not in m.lower().replace(" ", "").replace(":", "") and "…" in m, (text, m)
+        assert m.lower().endswith(("cdef", "cdef_x.bin", "cdef.json")), m
+    sha64 = "a" * 64
+    assert runner.mask_ids(f"sha256 {sha64}") == f"sha256 {sha64}"      # a hash is not an id
+    assert UID not in robust._mask_serial(f"unit ID 0x{UID}")
+
+
+def test_device_must_match_exactly():
+    """L1 / probe P3: no trailing newline or anything else after the device"""
+    for dev in ("/dev/sg1\n", "/dev/sg1 ", "/dev/sg1\x00", " /dev/sg1", "/dev/sg1/../sda"):
+        with pytest.raises(runner.ToolError):
+            runner._check_args(["info", "--device", dev])
+    runner._check_args(["info", "--device", "/dev/sg12"])
+
+
+@pytest.mark.parametrize("asset", ["../../../escaped.area", "a/b.area", ".hidden.area", "", "x\n.area"])
+def test_cached_offer_paths_stay_inside_the_staging_folder(env, monkeypatch, asset):
+    """L5 / probe P8"""
+    monkeypatch.setattr(updates, "busy", lambda: False)
+    data = b"A" * 0x200
+    o = updates.Offer("sloop3", "v3.5.0-beta", "3.5.0", asset=asset, url="https://x.invalid/a", digest=sha(data))
+    with pytest.raises(updates.UpdateError):
+        updates.download_update(o, env.store, lambda url, dest: (dest.parent.mkdir(parents=True, exist_ok=True),
+                                                                  dest.write_bytes(data)))
+    assert not list(env.tmp.rglob("escaped.area"))
+    # a meta.json whose "main" leaves the version folder is ignored
+    d = env.store.updates_dir / "sloop3" / "3.6.0"
+    d.mkdir(parents=True)
+    (env.tmp / "outside.area").write_bytes(data)
+    (d / "meta.json").write_text(json.dumps({"version": "3.6.0", "main": "../../../outside.area",
+                                             "files": {"../../../outside.area": {"sha256": sha(data), "size": 512}}}))
+    assert [c.version for c in env.store.candidates("sloop3")] == ["3.4.0"]
+
+
+def test_hash_and_exec_see_the_same_bytes(env, monkeypatch):
+    """L6: a binary in a folder this user can write is copied into a private folder, and the copy is run"""
+    seen = {}
+    from fm1companion.tools import proc
+    real = proc.popen
+
+    def spy(argv, **kw):
+        seen["argv0"] = argv[0]
+        st_ = os.stat(Path(argv[0]).parent)
+        seen["mode"] = st_.st_mode & 0o777
+        return real(argv, **kw)
+    monkeypatch.setattr(proc, "popen", spy)
+    assert run(env, ["find"]).ok
+    assert seen["argv0"] != str(env.bin) and seen["mode"] == 0o700
+    assert not Path(seen["argv0"]).exists()                            # removed afterwards
+    assert runner._protected(Path("/usr/bin/env")) or os.geteuid() == 0   # root-owned: hashed in place
+
+
+def test_pin_check_fails_without_digest_or_sums_line():
+    """review L7: "GitHub publishes no digest" is a failure unless the release's SHA256SUMS confirms the file"""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import update_tool_pins as utp
+    e = {"sha256": "a" * 64, "size": 10}
+    ok = lambda res: all(r[0] for r in res)                          # noqa: E731
+    assert not ok(utp.judge("t", "f.bin", e, {"name": "f.bin", "size": 10}, ""))
+    assert ok(utp.judge("t", "f.bin", e, {"name": "f.bin", "size": 10}, f"{'a' * 64}  f.bin\n"))
+    assert ok(utp.judge("t", "f.bin", e, {"name": "f.bin", "size": 10, "digest": "sha256:" + "a" * 64}, ""))
+    assert not ok(utp.judge("t", "f.bin", e, {"name": "f.bin", "size": 10, "digest": "sha256:" + "b" * 64}, ""))
+    assert not ok(utp.judge("t", "f.bin", e, None, ""))
+    assert not ok(utp.judge("t", "f.bin", e, {"name": "f.bin", "size": 11, "digest": "sha256:" + "a" * 64}, ""))
+
+
+def test_licence_tool_reads_every_licence_and_font_file(tmp_path, monkeypatch):
+    """review M4: the generator takes licence, copyright and notice files and font licence notes from each crate,
+    and refuses a download that does not match Cargo.lock"""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import gen_mflasher_licences as g
+    buf = io.BytesIO()
+    files = {"x-1.0/Cargo.toml": b'[package]\nname = "x"\nlicense = "MIT OR Apache-2.0"\nauthors = ["A B"]\n',
+             "x-1.0/LICENSE-MIT": b"Copyright (c) A B\nPermission is hereby granted, free of charge",
+             "x-1.0/LICENSE-APACHE": b"Apache License 2.0", "x-1.0/fonts/Hack-Regular.txt": b"Bitstream Vera",
+             "x-1.0/src/license.rs": b"code", "x-1.0/README.md": b"readme"}
+    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        for n, b in files.items():
+            ti = tarfile.TarInfo(n)
+            ti.size = len(b)
+            tar.addfile(ti, io.BytesIO(b))
+    expr, authors, found = g.crate_licences(buf.getvalue())
+    assert expr == "MIT OR Apache-2.0" and authors == "A B"
+    assert [r for r, _t in found] == ["LICENSE-APACHE", "LICENSE-MIT", "fonts/Hack-Regular.txt"]
+    lock = ('[[package]]\nname = "x"\nversion = "1.0"\nsource = "registry+https://github.com/rust-lang/crates.io-index"\n'
+            'checksum = "' + "0" * 64 + '"\n\n[[package]]\nname = "m-flasher"\nversion = "0.12.1"\n')
+    assert [d["name"] for d in g.lock_packages(lock)] == ["x"]
+    (tmp_path / "x-1.0.crate").write_bytes(buf.getvalue())           # cached, but the checksum does not match:
+    monkeypatch.setattr(g.urllib.request, "urlopen", lambda *a, **k: (_ for _ in ()).throw(OSError("offline")))
+    with pytest.raises((SystemExit, OSError)):
+        g.fetch_crate("x", "1.0", "0" * 64, tmp_path)
