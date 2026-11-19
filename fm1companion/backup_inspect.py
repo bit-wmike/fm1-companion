@@ -132,17 +132,22 @@ class PresetSlot:
 
     @property
     def label(self) -> str:
+        if self.fw == "sloop3":                       # (SLOOP 3: your sounds S01–S32, the FM6 bank's voices B01–B27)
+            return f"{self.prefix}{self.slot:02d}"
         return f"{self.prefix}{self.slot:03d}"
 
     @property
     def engine_name(self) -> str:
+        if self.fw == "sloop3":
+            from .sloop3bk import ENGINES as S3E
+            return "FM6" if self.prefix == "B" else S3E[self.engine] if self.engine < len(S3E) else f"Engine {self.engine}"
         if self.fw == "sloop":
             return SLOOP_ENGINES[self.engine] if self.engine < len(SLOOP_ENGINES) else f"Engine {self.engine}"
         return engine_name(self.engine) if self.prefix == "U" else {"F": "FM6", "CZ": "CZ-1", "P5": "PROPHET"}.get(self.prefix, "")
 
     @property
     def known_format(self) -> bool:
-        return self.version in KNOWN_RECORD_VERSIONS or self.prefix != "U" or self.fw == "sloop"
+        return self.version in KNOWN_RECORD_VERSIONS or self.prefix != "U" or self.fw in ("sloop", "sloop3")
 
 
 @dataclass
@@ -237,6 +242,9 @@ class Report:
     def summary(self) -> str:
         from .autobackup import content_text
         n_s = sum(1 for o in self.objects if o.group == G_SAMPLES and o.used)
+        if self.format == backup.SLOOP3_FORMAT:         # (one project – saved, or as it was then –, as the list says)
+            n_p = 1 if any(o.used for o in self.objects if o.id in (0, 2)) else 0
+            return content_text(n_p, len(self.used_presets), len(self.objects))
         txt = content_text(len(self.used_projects), len(self.used_presets), len(self.objects))
         if not n_s:
             return txt
@@ -607,18 +615,69 @@ def inspect(source) -> Report:
 
 
 def _from_sloop3(arch: backup.Archive, path: Path | None) -> Report:
-    """SLOOP 3's backup (sloop3bk.py): its parts by name; their formats are SLOOP 3's own and are not decoded here.
-    Not "restorable" in this module's sense (the Felucca family's part-by-part restore): it goes back whole, with
-    “Restore” on the Backups page, onto an FM-1 that runs SLOOP 3."""
+    """SLOOP 3's backup (sloop3bk.py): its parts, looked into as far as their formats are documented in SLOOP 3's
+    sources (sloop3bk.decode_*): the project's header, your 32 sounds with the favourites, the FM6 bank's 27 voices,
+    the 4 SYN kits, the settings. Your sounds and the FM6 voices are listed as presets (S01–S32, B01–B27), so two
+    backups compare place by place. Not "restorable" in this module's sense (the Felucca family's part-by-part
+    restore): it goes back whole, with “Restore” on the Backups page, onto an FM-1 that runs SLOOP 3."""
     from . import sloop3bk as B
     groups = {B.PROJECT: G_PROJECTS, B.NOW: G_PROJECTS, B.SOUNDS: G_PRESETS, B.FM6: G_PRESETS, B.SYN: G_PRESETS,
               B.SETTINGS: G_SETTINGS}
     objs = []
+    settings: dict = {}
+    all_sounds = B.decode_sounds(next((x["bytes"] for x in arch.objects if x["id"] == B.SOUNDS), b""))
     for o in arch.objects:
         v = ObjectView(o["id"], B.title(o["id"]), groups.get(o["id"], G_PROJECTS), o["size"], o["crc"], o["bytes"])
         v.format = "" if o["size"] else _("empty")
+        data = o["bytes"]
+        if data and o["id"] in (B.PROJECT, B.NOW):
+            v.format = "GBPJ" if data[:4] == b"GBPJ" else v.format
+            v.detail = B.project_head(data)
+        elif data and o["id"] == B.SOUNDS:
+            snd = B.decode_sounds(data)
+            if snd is None:
+                v.warnings.append(_("not in the layout the app knows (S3US)"))
+            else:
+                v.format = "S3US"
+                fav = set(snd["favourites"])
+                for p in snd["places"]:
+                    v.presets.append(PresetSlot(p["place"], p["used"], p["place"] - 1 + B.FAV_BASE_USER in fav,
+                                                p["engine"], p["name"] or ("USER" if p["used"] else ""), 0, v.id,
+                                                _digest(p["raw"]), p["raw"], "S", "sloop3"))
+                used = sum(1 for p in snd["places"] if p["used"])
+                v.detail = _("{used} of 32 places used, {fav} favourites").format(used=used, fav=len(fav)) + \
+                    (", " + _("your colour theme") if snd["theme"] else "")
+        elif data and o["id"] == B.FM6:
+            voices = B.decode_fm6(data)
+            if voices is not None:
+                v.format = "S3F6"
+                fav = set(all_sounds["favourites"]) if all_sounds else set()
+                for x in voices:
+                    v.presets.append(PresetSlot(x["slot"], x["used"], x["slot"] - 1 + B.FAV_BASE_FM6 in fav, 12,
+                                                x["name"] if x["used"] else "", 0, v.id, _digest(x["raw"]), x["raw"],
+                                                "B", "sloop3"))
+                v.detail = _("{used} of 27 voices used").format(used=sum(1 for x in voices if x["used"]))
+        elif data and o["id"] == B.SYN:
+            kits = B.decode_syn(data)
+            if kits is not None:
+                v.format = "S3SY"
+                v.detail = _("4 kits of 16 drum sounds")
+        elif data and o["id"] == B.SETTINGS:
+            settings = B.decode_settings(data)
+            v.detail = ngettext("{n} setting", "{n} settings", len(settings)).format(n=len(settings)) if settings else ""
         objs.append(v)
     rep = Report(arch.format, arch.firmware, arch.created, arch.companion, objs, True, False, path, arch)
+    rep.settings = settings
+    src_fm6, src_syn = B.bank_sources(arch.file)
+    if not src_fm6 and rep.obj(B.FM6) is not None and rep.obj(B.FM6).used:
+        rep.obj(B.FM6).detail = (rep.obj(B.FM6).detail + " · " if rep.obj(B.FM6).detail else "") + \
+            _("not your own bank at that moment (SLOOP 2.8's or none) – kept to look at")
+    if not src_syn and rep.obj(B.SYN) is not None and rep.obj(B.SYN).used:
+        rep.obj(B.SYN).detail = (rep.obj(B.SYN).detail + " · " if rep.obj(B.SYN).detail else "") + \
+            _("the defaults or SLOOP 2.8's at that moment – kept to look at")
+    if arch.file.get("from_s3b"):
+        rep.warnings.append(_("Made from the SLOOP 3 editor's own backup file (.s3b): it holds the project and your "
+                              "sounds only – no FM6 bank, SYN kits or settings."))
     listed = arch.file.get("samples_not_included")
     held = [x for x in (listed if isinstance(listed, list) else []) if isinstance(x, dict) and x.get("zones")]
     rep.warnings.append(
@@ -730,6 +789,8 @@ class Diff:
     def summary(self) -> str:
         if self.identical:
             return _("No differences – both states are the same.")
+        if self.a.format == backup.SLOOP3_FORMAT:       # (SLOOP 3: its own parts – no running music, no slots)
+            return self._summary_sloop3()
         parts = []
         pc = {k: sum(1 for p in self.presets if p.kind == k) for k in (K_NEW, K_CHANGED, K_DELETED)}
         if pc[K_CHANGED]:
@@ -754,6 +815,18 @@ class Diff:
         rest = [c for c in self.objects if c.id not in (0, 1) and not self._is_project(c.id) and not self._is_bank(c.id)]
         if rest:
             parts.append(ngettext("{n} more object changed", "{n} more objects changed", len(rest)).format(n=len(rest)))
+        return ", ".join(parts)
+
+    def _summary_sloop3(self) -> str:
+        parts = []
+        for c in self.objects:
+            word = {K_NEW: _("{part} new"), K_CLEARED: _("{part} cleared"), K_CHANGED: _("{part} changed"),
+                    K_ADDED: _("{part} new"), K_MISSING: _("{part} missing")}[c.kind]
+            parts.append(word.format(part=c.title))
+        pc = {k: sum(1 for p in self.presets if p.kind == k) for k in (K_NEW, K_CHANGED, K_DELETED)}
+        if any(pc.values()):
+            parts.append(ngettext("{n} sound or voice differs", "{n} sounds or voices differ", sum(pc.values())).format(
+                n=sum(pc.values())))
         return ", ".join(parts)
 
     def _view(self, oid: int):
@@ -818,6 +891,8 @@ def diff(a: Report, b: Report) -> Diff:
 
 def _payload(p: PresetSlot) -> bytes:
     r = p.raw
+    if p.fw == "sloop3":                             # (without the name: S3US places' 4..15, a DX7 voice's 118..127)
+        return r[1:4] + r[16:] if p.prefix == "S" else r[:118]
     if p.prefix == "U" and len(r) >= 16:
         return r[1:2] + r[3:4] + r[16:]            # without used/engine/name
     return r
@@ -1055,6 +1130,9 @@ def comparable(a: Report, b: Report) -> str:
     Different firmware families (Melodee ↔ SLOOP) have different objects and formats –
     a diff would be nonsense ("Project 5 missing")."""
     if a.format != b.format:
+        if backup.SLOOP3_FORMAT in (a.format, b.format):
+            return _("Not comparable: one is a SLOOP 3 backup, the other one of another firmware. They store "
+                     "projects, sounds and settings completely differently.")
         return _("Not comparable: one is a Melodee/Felucca backup, the other a SLOOP backup. "
                   "The two firmwares store projects, presets and settings completely differently.")
     ka, kb = a.firmware_key, b.firmware_key

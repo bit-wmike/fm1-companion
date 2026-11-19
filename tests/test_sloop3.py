@@ -602,7 +602,8 @@ def test_odd_backup_files_are_refused_cleanly(tmp_path):
         assert BK.restore_plan(g) == [BK.SOUNDS, BK.PROJECT]
     g["bank"] = [1, 2]
     assert BK.bank_sources(g) == (0, 0)
-    assert not hasattr(BK, "to_s3b")                  # (had no caller; the editor writes .s3b itself)
+    # (.s3b export now has a caller – the Backups page; its round trip is in tests/test_sloop_wave_b.py)
+    assert BK.s3b_parts(BK.to_s3b(g))[0][0] == 0
 
 
 def test_mirror_takes_a_flash_backup_whole_or_not_at_all(tmp_path):
