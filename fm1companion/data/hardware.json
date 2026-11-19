@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "checked": "2026-11-17",
-  "about": "Which firmware version knows the flash chip of the newer FM-1 (the units with the M-VAVE logo on the front, sold from late 2026): UCUN UC25HQ80, JEDEC ID 0xB36014, instead of the Puya P25Q80H, 0x856014. Read by fm1companion/hardware.py; the rules are in docs/flash-protocol.md. Every row names where it was read. status: 'min' = from this version on the firmware accepts the chip (read in its source); 'none' = no released version accepts it; 'risky' = the code accepts the chip but it is not proven on one, or a unit did not start; 'documented' = no check in the firmware, other projects name it as the way back for these units; 'unverified' = nothing found. Nothing in this table was run on a newer FM-1 by FM-1 Companion.",
+  "about": "Which firmware version knows the flash chip of the newer FM-1 (the units with the M-VAVE logo on the front, sold from late 2026): UCUN UC25HQ80, JEDEC ID 0xB36014, instead of the Puya P25Q80H, 0x856014. Read by fm1companion/hardware.py; the rules are in docs/flash-protocol.md. Every row names where it was read. status: 'min' = from this version on the firmware accepts the chip (read in its source; with 'evidence': 'owner-report' instead: it ran on one newer unit by an owner's report, outside this app – then 'below': 'risky' says that older versions are risky, not 'none'); 'none' = no released version accepts it; 'risky' = the code accepts the chip but it is not proven on one, or a unit did not start; 'documented' = no check in the firmware, other projects name it as the way back for these units; 'unverified' = nothing found. Nothing in this table was run on a newer FM-1 by FM-1 Companion.",
   "chips": {
     "856014": {"name": "Puya P25Q80H", "revision": "old"},
     "B36014": {"name": "UCUN UC25HQ80", "revision": "new"}
@@ -91,14 +91,16 @@
       "before": ""
     },
     "sloop3": {
-      "status": "risky", "min": "", "repo": "isod89/sloop3-fm1", "commit": "915b54f",
-      "source": "its installer page (index.html, \"Good to know\"): \"SLOOP 3 accepts this chip, but it has not been tried on one yet\"; it needs m-bootloader, see there",
-      "before": ""
+      "status": "min", "min": "v3.4.0", "also": ["v3.4.0-beta"], "below": "risky", "evidence": "owner-report",
+      "repo": "isod89/sloop3-fm1", "commit": "2228313",
+      "source": "owner report 2026-11-19, outside this app: SLOOP 3 3.4.0 ran and saved on one newer unit (flash 0xB36014; a saved change survived a power cycle). Its installer page (index.html, \"Good to know\") says SLOOP 3 accepts this chip but had not been tried on one; older versions were not tried on one. It needs m-bootloader, see there",
+      "before": "Not tried on a newer unit."
     },
     "m-bootloader": {
-      "status": "risky", "min": "", "repo": "jvitkauskas/m-bootloader", "commit": "3ac7651",
-      "source": "README.md \"Little tested on the FM-1's newer flash chip\": one such unit did not start after 1.1 or 1.2 was installed, cause not known; another runs 1.3 and 2.0 on one owner's report (M-Flasher #13); \"install it at your own risk\"",
-      "before": ""
+      "status": "min", "min": "v2.4", "also": ["v2.4-395e6cc"], "below": "risky", "evidence": "owner-report",
+      "repo": "jvitkauskas/m-bootloader", "commit": "3ac7651",
+      "source": "owner report 2026-11-19, outside this app: m-bootloader 2.4-395e6cc ran on one newer unit (its menu showed FLASH B36014). README.md \"Little tested on the FM-1's newer flash chip\": one such unit did not start after 1.1 or 1.2 was installed, cause not known; another runs 1.3 and 2.0 on one owner's report (M-Flasher #13); \"install it at your own risk\"",
+      "before": "1.1 and 1.2 left one newer unit unable to start (README)."
     },
     "fm1-open": {
       "status": "unverified", "min": "", "repo": "m-vave/fm1_open", "commit": "4c7496d",

@@ -53,6 +53,14 @@ SLOOP3_HARDWARE: dict[str, tuple[bool, str]] = {
     "sloop3_new_chip": (False, "SLOOP 3 or m-bootloader on a newer FM-1 (logo on the front)"),
 }
 
+# Reports by the owner of what ran OUTSIDE this app (his own tools: M-Flasher, the authors' installer pages) – not runs
+# of this app, so none of it counts as "tested" above. hardware.json cites the same report for its rows.
+OWNER_REPORTS: dict[str, str] = {
+    "newer_unit_mboot_sloop3": "2026-11-19, one newer FM-1 (flash 0xB36014): m-bootloader 2.4-395e6cc installed with "
+                               "M-Flasher, it boots and its menu shows FLASH B36014; SLOOP 3 v3.4.0 installed with its "
+                               "author's installer page; a change saved in SLOOP 3 survived a power cycle",
+}
+
 
 def tested(kind: str) -> bool:
     return bool(STEPS.get(kind, (False, ""))[0])

@@ -695,6 +695,10 @@ def _new_chip(p: InstallPlan, state: DeviceState, t: Target):
                 + " " + (_("Run with this app once: Skiff 2.7 on one newer FM-1 (2026-11-18); saving worked there.")
                          if fw_identity(t.key) == "skiff" else
                          _("This app has not installed this firmware on a newer FM-1 yet.")))
+            if hardware.owner_report(t.key):            # (the "yes" is one owner's report, not the firmware's source)
+                p.warnings[-1] = _("{unit} {name} from version {first} on ran on one newer FM-1 by its owner's report "
+                                   "(outside this app) – not read in its source and not measured by this app.").format(
+                                       unit=NEW_UNIT, name=t.name, first=first or sup.first_version)
         return
     tv = t.tag
     shown = hardware.first_version_text(t.key, tv)

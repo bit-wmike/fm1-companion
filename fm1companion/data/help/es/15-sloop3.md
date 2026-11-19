@@ -61,11 +61,13 @@ con otro número: la app lo trata como un firmware propio.
 2. **Copia primero toda la flash.** Es el único camino de vuelta: SLOOP 2.8 o el firmware de M-VAVE vuelven al
    escribir esa copia con M-Flasher. SLOOP 3 lee los proyectos, presets, samples y ajustes de SLOOP 2.8 una vez, en
    su primer arranque, y nunca los escribe.
-3. **FM-1 más nuevos (vendidos desde finales de 2026, logo de M-VAVE en el frontal, chip flash UCUN UC25HQ80): no lo
-   instales por ahora.** SLOOP 3 no se ha probado en esa revisión, m-bootloader está poco probado en ella y su autor
-   informa de un FM-1 así que dejó de arrancar tras instalar m-bootloader. En MIDI MODE la app lee el chip y dice cuál
-   es; para el más nuevo no ofrece la página del instalador. M-Flasher muestra lo mismo en FLASH CHIP: `0x856014` es
-   el chip antiguo, `0xB36014` el nuevo.
+3. **FM-1 más nuevos (vendidos desde finales de 2026, logo de M-VAVE en el frontal, chip flash UCUN UC25HQ80): solo
+   m-bootloader 2.4 y SLOOP 3 3.4.0 o posteriores, bajo tu propio riesgo.** Su dueño informa de un FM-1 así en el que
+   m-bootloader 2.4 y SLOOP 3 3.4.0 funcionan y guardar funciona (2026-11-19) – fuera de esta app, un solo equipo. Las
+   versiones anteriores de m-bootloader son arriesgadas ahí: su autor informa de un FM-1 así que dejó de arrancar tras
+   1.1 o 1.2. En MIDI MODE la app lee el chip y la versión de m-bootloader; para un equipo nuevo ofrece la página del
+   instalador y su copia de la flash solo con m-bootloader 2.4 o posterior. M-Flasher muestra el chip en FLASH CHIP:
+   `0x856014` es el chip antiguo, `0xB36014` el nuevo.
 4. Una actualización oficial de M-VAVE vuelve a poner el bootloader de M-VAVE. Después hay que instalar m-bootloader
    de nuevo.
 
@@ -80,5 +82,6 @@ con otro número: la app lo trata como un firmware propio.
   SLOOP 3 3.4.0, su editor incluido se conectó, se leyó una copia de seguridad de SLOOP 3 (6 partes, todas las sumas de
   verificación válidas), se reconoció el MIDI MODE de m-bootloader 2.4 (sin confundirlo con un modo de actualización) y
   se rechazó una instalación con SLOOP 3 en marcha sin enviar nada. **No probado en un FM-1 real:** restaurar una copia
-  de seguridad de SLOOP 3, la copia del flash en MIDI MODE, nada que escriba y nada en un FM-1 más nuevo (logo delante).
+  de seguridad de SLOOP 3, la copia del flash en MIDI MODE, nada que escriba y nada en un FM-1 más nuevo (logo delante) – lo que su dueño
+  informa desde fuera de la app está arriba, en el punto 3.
 * Más: [Cambiar de firmware](help:02-firmware) · [Copias de seguridad](help:04-backups) · [Enlaces](help:10-links)

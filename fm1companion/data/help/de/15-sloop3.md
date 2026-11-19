@@ -63,11 +63,13 @@ Nummer – die App behandelt es als eigene Firmware.
 2. **Sichere zuerst den ganzen Flash-Speicher.** Das ist der einzige Weg zurück: SLOOP 2.8 oder die Firmware von
    M-VAVE kommen zurück, indem du dieses Backup mit M-Flasher zurückschreibst. SLOOP 3 liest die Projekte, Presets,
    Samples und Einstellungen von SLOOP 2.8 einmal, beim ersten Start, und schreibt sie nie.
-3. **Neuere FM-1 (verkauft ab Ende 2026, M-VAVE-Logo auf der Vorderseite, Flash-Chip UCUN UC25HQ80): vorerst nicht
-   installieren.** SLOOP 3 wurde auf dieser Revision nicht ausprobiert, m-bootloader ist dort wenig getestet, und sein
-   Autor berichtet von einem solchen FM-1, der nach der Installation von m-bootloader nicht mehr startete. Im MIDI
-   MODE liest die App den Chip aus und sagt, welcher es ist; für den neueren bietet sie die Installer-Seite nicht an.
-   M-Flasher zeigt dasselbe unter FLASH CHIP: `0x856014` ist der ältere Chip, `0xB36014` der neuere.
+3. **Neuere FM-1 (verkauft ab Ende 2026, M-VAVE-Logo auf der Vorderseite, Flash-Chip UCUN UC25HQ80): nur m-bootloader
+   2.4 und SLOOP 3 3.4.0 oder neuer, auf eigenes Risiko.** Ihr Besitzer berichtet von einem solchen FM-1, auf dem
+   m-bootloader 2.4 und SLOOP 3 3.4.0 laufen und Speichern klappt (2026-11-19) – außerhalb dieser App, ein Gerät.
+   Ältere m-bootloader-Versionen sind dort riskant: Sein Autor berichtet von einem solchen FM-1, der nach 1.1 oder 1.2
+   nicht mehr startete. Im MIDI MODE liest die App den Chip und die Version von m-bootloader aus; für ein neueres
+   Gerät bietet sie die Installer-Seite und ihre Flash-Kopie nur mit m-bootloader 2.4 oder neuer an. M-Flasher zeigt
+   den Chip unter FLASH CHIP: `0x856014` ist der ältere Chip, `0xB36014` der neuere.
 4. Ein offizielles Update von M-VAVE spielt den Bootloader von M-VAVE zurück. m-bootloader muss danach neu
    installiert werden.
 
@@ -83,5 +85,6 @@ Nummer – die App behandelt es als eigene Firmware.
   Prüfsummen gültig), der MIDI MODE von m-bootloader 2.4 wurde erkannt (nicht mit einem Update-Modus verwechselt), und
   eine Installation unter dem laufenden SLOOP 3 wurde abgelehnt, ohne dass etwas gesendet wurde. **Nicht an einem
   echten FM-1 ausprobiert:** das Zurückspielen eines SLOOP-3-Backups, das Flash-Backup im MIDI MODE, alles, was
-  schreibt, und alles an einem neueren FM-1 (Logo vorn).
+  schreibt, und alles an einem neueren FM-1 (Logo vorn) – was dessen Besitzer von außerhalb der App berichtet,
+  steht oben unter 3.
 * Mehr: [Firmware wechseln](help:02-firmware) · [Backups](help:04-backups) · [Links](help:10-links)

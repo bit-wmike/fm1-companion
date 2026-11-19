@@ -458,8 +458,8 @@ def editor_fits(version: str) -> bool:
 
 # ------------------------------------------------------ hardware revision ---
 # The newer FM-1 (flash UCUN UC25HQ80, JEDEC 0xB36014, logo on the front): everything about it is the hardware
-# module's business (hardware.py, data/hardware.json: the rows "sloop3" and "m-bootloader" are "risky"); the plan's
-# rule is flash/planner.chip_check. ui/sloop3_ui.py asks those – there is no check of its own here.
+# module's business (hardware.py, data/hardware.json: the rows "sloop3" and "m-bootloader" – from 3.4.0 / 2.4 by one
+# owner's report, older "risky"); the plan's rule is flash/planner.chip_check. ui/sloop3_ui.py asks those – there is no check of its own here.
 
 def revision_of(profile) -> str:
     """"new" | "old" | "unknown" for a device profile (hardware.revision)"""

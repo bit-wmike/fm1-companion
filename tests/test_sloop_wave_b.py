@@ -438,3 +438,47 @@ def test_sloop3_auto_backup_service(tmp_path, monkeypatch):
     svc._changed()
     assert svc._target_ok() and len(jobs) == 1, "switched on: it runs (announced first, here without delay)"
     svc.tick.stop()
+
+
+# --------------------------------------------- the newer unit (owner report 2026-11-19) ---
+
+def _unit(rev, mboot_version=None, jedec=0xB36014):
+    from fm1companion.flash import mboot
+
+    class Prof:
+        hw_revision = rev
+    ctx = type("C", (), {})()
+    ctx.profile = Prof()
+    ctx.mboot = mboot.Info(mboot_version, 1, 0, FD.FLASH_SIZE, jedec, "00" * 8) if mboot_version else None
+    return ctx
+
+
+def test_flash_copy_on_a_newer_unit_follows_the_m_bootloader_version():
+    from fm1companion.ui import sloop3_ui as U
+    assert U.flash_copy_refusal(_unit("new", "2.4-395e6cc")) == ""                  # the reported build
+    assert U.flash_copy_refusal(_unit("new", "2.5-abcdef0")) == ""                  # a later version
+    for v in ("2.0", "1.2", "2.4-other", "?"):                                      # older, another build, unreadable
+        assert "M-Flasher" in U.flash_copy_refusal(_unit("new", v)), v
+    assert U.flash_copy_refusal(_unit("old", "2.0", 0x856014)) == ""                # the earlier unit: as before
+    assert U.flash_copy_refusal(_unit("", "1.3", 0x856014)) == ""
+    assert "MIDI MODE" in U.flash_copy_refusal(_unit("new"))                        # not in MIDI MODE: nothing to read
+
+
+def test_installer_page_on_a_newer_unit():
+    from fm1companion.ui import sloop3_ui as U
+    level, text = U.revision_text(_unit("new", "2.4-395e6cc"))
+    assert level == "ok" and "owner's report" in text and "2026-11-19" in text
+    assert U.revision_text(_unit("new", "2.0"))[0] == "bad"
+    assert U.revision_text(_unit("new"))[0] == "bad"                                 # (version not known outside MIDI MODE)
+    assert U.revision_text(_unit("", "2.4-395e6cc", 0x856014))[0] == "ok"           # the chip says: earlier unit
+    assert U.revision_text(type("C", (), {"profile": None, "mboot": None})())[0] == "warn"   # unknown: confirm first
+
+
+def test_sloop3_340_on_a_newer_unit_and_337_not():
+    from fm1companion import hardware as H
+    from fm1companion.flash import tested
+    assert H.support("sloop3", "3.4.0").status == H.YES and H.support("sloop3", "v3.4.0-beta").status == H.YES
+    assert H.support("sloop3", "v3.3.7-beta").status == H.RISKY
+    assert "owner report 2026-11-19" in H.source("sloop3")["source"]
+    assert tested.SLOOP3_HARDWARE["sloop3_new_chip"][0] is False                    # (not run by this app)
+    assert "newer_unit_mboot_sloop3" in tested.OWNER_REPORTS

@@ -56,11 +56,13 @@ do not rely on it on stage yet. It is not SLOOP 2.x with a new number – the ap
 2. **Back up the whole flash first.** It is the only way back: SLOOP 2.8 or M-VAVE's firmware return by writing that
    backup back with M-Flasher. SLOOP 3 reads SLOOP 2.8's projects, presets, samples and settings once, at its first
    start, and never writes them.
-3. **Newer FM-1s (sold from late 2026, M-VAVE logo on the front, flash chip UCUN UC25HQ80): do not install it for
-   now.** SLOOP 3 has not been tried on that revision, m-bootloader is little tested on it, and its author reports one
-   such FM-1 that did not start any more after m-bootloader was installed. In MIDI MODE the app reads the chip and
-   says which one it is; for the newer one it does not offer the installer page. M-Flasher shows the same under
-   FLASH CHIP: `0x856014` is the older chip, `0xB36014` the newer.
+3. **Newer FM-1s (sold from late 2026, M-VAVE logo on the front, flash chip UCUN UC25HQ80): only m-bootloader 2.4
+   and SLOOP 3 3.4.0 or later, at your own risk.** Their owner reports one such FM-1 on which m-bootloader 2.4 and SLOOP
+   3 3.4.0 run and saving works (2026-11-19) – done outside this app, one unit. Older m-bootloader versions are risky
+   there: its author reports one such FM-1 that did not start any more after 1.1 or 1.2. In MIDI MODE the app reads
+   the chip and m-bootloader's version; for a newer unit it offers the installer page and its flash copy only with
+   m-bootloader 2.4 or later. M-Flasher shows the chip under FLASH CHIP: `0x856014` is the older chip, `0xB36014` the
+   newer.
 4. An official M-VAVE update puts M-VAVE's bootloader back. m-bootloader then has to be installed again.
 
 ## Good to know
@@ -74,5 +76,6 @@ do not rely on it on stage yet. It is not SLOOP 2.x with a new number – the ap
   3.4.0, its bundled editor connected, a SLOOP 3 backup was read (6 parts, all checksums valid), m-bootloader 2.4's
   MIDI MODE was recognised (not mistaken for an update mode), and an installation under the running SLOOP 3 was
   refused with nothing sent. **Not tried on a real FM-1:** restoring a SLOOP 3 backup, the flash backup in MIDI MODE,
-  anything that writes, and anything on a newer FM-1 (logo on the front).
+  anything that writes, and anything on a newer FM-1 (logo on the front) – see 3. above for what its owner
+  reports from outside the app.
 * More: [Switching firmware](help:02-firmware) · [Backups](help:04-backups) · [Links](help:10-links)

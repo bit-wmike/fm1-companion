@@ -64,6 +64,11 @@ msgstr[1] "{n} Sounds oder Stimmen unterscheiden sich"
 msgid "Not comparable: one is a SLOOP 3 backup, the other one of another firmware. They store projects, sounds and settings completely differently."
 msgstr "Nicht vergleichbar: Das eine ist ein SLOOP-3-Backup, das andere eins einer anderen Firmware. Sie speichern Projekte, Sounds und Einstellungen völlig verschieden."
 
+#: fm1companion/flash/planner.py:699
+#, python-brace-format
+msgid "{unit} {name} from version {first} on ran on one newer FM-1 by its owner's report (outside this app) – not read in its source and not measured by this app."
+msgstr "{unit} {name} lief ab Version {first} auf einem neueren FM-1, nach dem Bericht seines Besitzers (außerhalb dieser App) – nicht im Quelltext gelesen und nicht von dieser App gemessen."
+
 #: fm1companion/flashdump.py:108
 msgid "the flash copy is too short for this slot"
 msgstr "die Flash-Kopie ist für diesen Platz zu kurz"
@@ -406,3 +411,21 @@ msgstr "gelesen"
 #, python-brace-format
 msgid "{firmware}'s LIVE state (read only)"
 msgstr "LIVE-Zustand von {firmware} (nur gelesen)"
+
+#: fm1companion/ui/sloop3_ui.py:149
+#, python-brace-format
+msgid "This is a newer FM-1 (flash chip UC25HQ80), and m-bootloader {version} is not known to run on one (2.4 ran on one such unit, by its owner's report). Copy the flash with M-Flasher in USB download mode instead."
+msgstr "Das ist ein neueres FM-1 (Flash-Chip UC25HQ80), und von m-bootloader {version} ist nicht bekannt, dass es darauf läuft (2.4 lief auf einem solchen Gerät, nach dem Bericht seines Besitzers). Kopiere den Flash-Speicher stattdessen mit M-Flasher im USB-Download-Modus."
+
+#: fm1companion/ui/sloop3_ui.py:165
+#, python-brace-format
+msgid "This FM-1 is a newer unit (flash chip UC25HQ80) with m-bootloader {version}. m-bootloader 2.4 and SLOOP 3 3.4.0 ran on one such unit, saving included – by its owner's report (2026-11-19), outside this app; the app itself has not installed anything on one. Older versions of either were not, or not safely, tried on one. {how}"
+msgstr "Dieses FM-1 ist ein neueres Gerät (Flash-Chip UC25HQ80) mit m-bootloader {version}. m-bootloader 2.4 und SLOOP 3 3.4.0 liefen auf einem solchen Gerät, Speichern inklusive – nach dem Bericht seines Besitzers (2026-11-19), außerhalb dieser App; die App selbst hat auf einem solchen nichts installiert. Ältere Versionen von beiden wurden darauf nicht oder nicht sicher ausprobiert. {how}"
+
+#: fm1companion/ui/sloop3_ui.py:171
+msgid "<b>This is a newer FM-1.</b> The app offers the installer page and the flash copy for it only in m-bootloader's MIDI MODE, where it can read m-bootloader's version: 2.4 ran on one such unit (owner's report), older versions are risky there."
+msgstr "<b>Das ist ein neueres FM-1.</b> Die Installer-Seite und die Flash-Kopie bietet die App dafür nur im MIDI MODE von m-bootloader an, wo sie dessen Version lesen kann: 2.4 lief auf einem solchen Gerät (Bericht des Besitzers), ältere Versionen sind dort riskant."
+
+#: fm1companion/ui/sloop3_ui.py:386
+msgid "Nothing was read."
+msgstr "Es wurde nichts gelesen."
