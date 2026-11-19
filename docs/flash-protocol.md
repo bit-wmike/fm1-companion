@@ -368,6 +368,23 @@ Melodee OCT−+OCT+ is the calibration!).
       automatic backup (`Backup saved:` in the staging folder) is compared with the double-read backup (kept only if
       it differs), a fresh `backup` must equal the image, then `restart`. A failed write leaves the unit in
       download mode and names the backup made just before.
+    * *Review fixes (2026-11-19):* the `restore` process gets **no death signal**, is not stopped at the app's exit
+      and writes its stdout/stderr into files in the private staging folder (`proc.popen(survive=True)`, the app tails
+      them) – once "yes" is sent nothing the app does (crash, kill, logout, quit) stops M-Flasher; before "yes" the
+      app's death is safe anyway (stdin EOF → "Nothing written."). Right before "yes" an fsync'd record
+      `<journal>/mflasher-write.json` (device, masked unit id, image path and SHA-256, the pre-backup, the staging
+      folder, M-Flasher's pid and output files) and the job log so far are written; the record ends "verified",
+      "failed", or is removed when nothing was erased. At the next start an unfinished record opens a question
+      (write the image back again / the state before / later / forget) – never anything automatic. While writing,
+      the window does not close, SIGTERM is ignored, a session logout is cancelled and `systemd-inhibit` blocks
+      shutdown/suspend for exactly as long as the M-Flasher process lives. The app's own **factory guard**: an image
+      whose 0xFF000–0xFFFFF differs from the unit's is refused unless the unit's is blank (then only M-Flasher's
+      exact factory WARNING is accepted by the gate). M-Flasher gets a **private copy** of the image (0700 staging
+      folder, re-hashed, its own two-key .json), not the user's file. The gate also refuses unknown notes, a second
+      plan line and stray lines. The soft key goes only to the FM-1 the app recognised itself (original firmware,
+      Felucca family by its editor protocol, SLOOP 3) at its own port (`softkey_target_ok`: M-Flasher's card name
+      is an FM-1 spelling and starts that port's name; never SMK-37, update loaders or MIDI MODE); a refusal after
+      the app's own download-mode restarts the unit. Output is decoded as a stream.
     * *Logs:* one flight log per job (`mflasher-backup-…` / `mflasher-restore-…` beside the installation logs, not
       counted as installation logs) with every command, every output line (unit ids masked), the gate's decision and
       each check. The one-installation-at-a-time lock is held for the whole job (M-Flasher's PID beside it).

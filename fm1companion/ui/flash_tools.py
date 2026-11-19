@@ -21,11 +21,112 @@ class _Cancel:
         return bool(getattr(self.w, "cancelled", False))
 
 
-def _job(ctx, store, worker):
+def softkey_port(ctx) -> str:
+    """the app's own connected FM-1 that may get M-Flasher's soft key (its MIDI port name), "" for none: only a real
+    FM-1 the app recognised itself, running the original firmware (USB 4c4a:c755/4155), a Felucca-family firmware
+    (it answered the editor protocol) or SLOOP 3 – never in update mode, m-bootloader's MIDI MODE, FM1 Open, an
+    unknown firmware or the Studio twin"""
+    from ..devices import FM1_USB_IDS
+    port = getattr(ctx, "port", None)
+    if port is None or getattr(ctx, "is_virtual", False) or getattr(port, "virtual", False):
+        return ""
+    if getattr(port, "update_mode", False) or getattr(ctx, "mboot", None) is not None or \
+            getattr(ctx, "protocol", "") == "update":
+        return ""
+    kind = FM1_USB_IDS.get((getattr(port, "usb_id", "") or "").lower(), "")
+    if kind in ("fm1-open", "stock-update", "felucca-update"):
+        return ""
+    ok = kind == "stock" or getattr(ctx, "protocol", "") == "felucca" or getattr(ctx, "sloop3", None) is not None
+    return (getattr(port, "label", "") or getattr(port, "product", "") or "") if ok else ""
+
+
+def _disable_cancel(text: str):
+    """the job dialog's Cancel button off: from "yes" on M-Flasher writes to its end"""
+    from PyQt6.QtWidgets import QApplication
+    w = QApplication.activeModalWidget()
+    b = getattr(w, "cancel_button", None)
+    if b is not None:
+        b.setEnabled(False)
+        b.setToolTip(text)
+
+
+def _inhibit(pid: int):
+    """ask the system not to shut down or suspend while M-Flasher (pid) writes – for exactly as long as that
+    process lives, even if the app itself ends (systemd-inhibit + tail --pid; nothing happens where they are
+    missing)"""
+    import shutil
+    import subprocess
+    if not pid or not shutil.which("systemd-inhibit") or not shutil.which("tail"):
+        return None
+    try:
+        return subprocess.Popen(["systemd-inhibit", "--what=shutdown:sleep:idle:handle-power-key:handle-suspend-key",
+                                 "--who=FM-1 Companion", "--why=M-Flasher is writing the FM-1's flash",
+                                 "--mode=block", "tail", f"--pid={pid}", "-f", "/dev/null"],
+                                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                start_new_session=True)
+    except OSError:
+        return None
+
+
+def _job(ctx, store, worker, writing: bool = False):
     from ..tools import flashjob as FJ
     prof = None if getattr(ctx, "is_virtual", False) else getattr(ctx, "profile", None)
+
+    def on_writing(record):
+        text = _("M-Flasher is writing: this cannot be cancelled.")
+        try:
+            call_in_gui(lambda: _disable_cancel(text))
+        except Exception:  # noqa: BLE001 – never stops the write
+            pass
+        _inhibit(int(record.get("pid") or 0))
     return FJ.Job(backups_dir=Path(ctx.settings.backups_dir), profiles=getattr(ctx, "store", None), profile=prof,
-                  store=store, cancel=_Cancel(worker), say=worker.log.emit)
+                  store=store, cancel=_Cancel(worker), say=worker.log.emit, softkey_for=softkey_port(ctx),
+                  on_writing=on_writing if writing else None)
+
+
+class write_guard:
+    """while a write-back runs: the app ignores SIGTERM (logout, `kill`) and cancels a session-manager logout – once
+    M-Flasher writes, it must not be left alone half-way by the app's own end"""
+
+    def __enter__(self):
+        import signal
+        import threading
+        from PyQt6.QtWidgets import QApplication
+        self.old = None
+        if threading.current_thread() is threading.main_thread():
+            try:
+                self.old = signal.signal(signal.SIGTERM, signal.SIG_IGN)
+            except (ValueError, OSError):
+                self.old = None
+        self.app = QApplication.instance()
+        if self.app is not None:
+            try:
+                self.app.commitDataRequest.connect(_refuse_logout)
+            except (AttributeError, TypeError):
+                pass
+        return self
+
+    def __exit__(self, *exc):
+        import signal
+        if self.old is not None:
+            try:
+                signal.signal(signal.SIGTERM, self.old)
+            except (ValueError, OSError):
+                pass
+        if self.app is not None:
+            try:
+                self.app.commitDataRequest.disconnect(_refuse_logout)
+            except (TypeError, RuntimeError):
+                pass
+        return False
+
+
+def _refuse_logout(manager):
+    try:
+        if manager.allowsInteraction():
+            manager.cancel()
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _not_here(parent, ctx, store=None) -> bool:
@@ -156,7 +257,7 @@ def restore_flow(parent, ctx, path: Path | None = None, store=None) -> bool:
                                                 _("Write back"), danger=True)))
 
     def work(w):
-        job = _job(ctx, store, w)
+        job = _job(ctx, store, w, writing=True)
         try:
             res = FJ.restore(job, path, ask)
         except FJ.WriteFailed as e:
@@ -175,9 +276,10 @@ def restore_flow(parent, ctx, path: Path | None = None, store=None) -> bool:
     was_hold = getattr(ctx, "hold", False)
     ctx.hold = True
     try:
-        d = feedback.run(parent, _("Write flash back"), work, done=said,
-                         actions=[feedback.open_folder_action(lambda r: Path(path).parent)], cancellable=True,
-                         cancel_tip=_("Cancels until M-Flasher starts writing; from then on it runs to its end."))
+        with write_guard():
+            d = feedback.run(parent, _("Write flash back"), work, done=said,
+                             actions=[feedback.open_folder_action(lambda r: Path(path).parent)], cancellable=True,
+                             cancel_tip=_("Cancels until M-Flasher starts writing; from then on it runs to its end."))
     finally:
         ctx.hold = was_hold
     if hasattr(ctx, "changed"):
@@ -187,3 +289,65 @@ def restore_flow(parent, ctx, path: Path | None = None, store=None) -> bool:
             pass
     res = result.get("res")
     return bool(getattr(d, "ok", False) and res is not None and res.written)
+
+
+# ------------------------------------------------------- an interrupted write-back (the app ended while writing)
+
+def _choice(parent, title: str, text: str, buttons: list[str]) -> int:
+    """a question with these buttons -> the index clicked (-1: closed)"""
+    from PyQt6.QtWidgets import QMessageBox
+    box = QMessageBox(QMessageBox.Icon.Warning, title, text, parent=parent)
+    bs = [box.addButton(b, QMessageBox.ButtonRole.ActionRole) for b in buttons]
+    box.exec()
+    return bs.index(box.clickedButton()) if box.clickedButton() in bs else -1
+
+
+def interrupted_text(rec: dict) -> str:
+    import time as _t
+    when = _t.strftime("%d.%m.%Y %H:%M", _t.localtime(float(rec.get("started") or 0)))
+    what = (_("M-Flasher's own output ends with “everything written is verified”, but the app did not check it "
+              "afterwards.") if rec.get("done") else
+            _("M-Flasher had started erasing and writing; its output does not say it finished.")
+            if rec.get("started_writing") else _("It is not known how far M-Flasher got."))
+    if rec.get("state") == "failed":
+        what = _("The write did not end verified: {reason}").format(reason=html.escape(str(rec.get("reason") or "?")))
+    return "<br><br>".join([
+        _("A flash write-back onto “{device}” (unit ID {uid}) started on {when} did not end verified – the app was "
+          "closed or ended while M-Flasher wrote, or the write failed.").format(
+            device=html.escape(str(rec.get("device") or "?")), uid=html.escape(str(rec.get("unit") or "–")),
+            when=when),
+        what,
+        _("The FM-1 may be in download mode now. Nothing is done automatically. Writing back again goes through all "
+          "the usual checks (M-Flasher reads the unit first, unit ID and flash chip must match)."),
+        _("The image: {image}<br>Its state before the write: {pre}").format(
+            image=html.escape(Path(str(rec.get("image") or "?")).name),
+            pre=html.escape(Path(str(rec.get("pre_backup") or "?")).name))])
+
+
+def check_interrupted_write(parent, ctx, root=None, store=None) -> str:
+    """at start: an unfinished write-back record -> ask what to do (never automatic).
+    -> "" nothing open, "running" M-Flasher still writes, "image" / "before" / "later" / "forget" the choice"""
+    from ..tools import flashjob as FJ
+    rec = FJ.unfinished_write(root)
+    if rec is None:
+        return ""
+    if rec.get("alive"):
+        show_error(parent, _("M-Flasher is still writing"),
+                   _("M-Flasher is still writing the flash of “{device}” (started by an earlier run of the app). Do "
+                     "not unplug the FM-1 or switch it off. Look again on Recovery › Tools once it has ended.").format(
+                         device=html.escape(str(rec.get("device") or "?"))))
+        return "running"
+    i = _choice(parent, _("Interrupted flash write-back"), interrupted_text(rec),
+                [_("Write the image back again …"), _("Write the state before back …"), _("Later"), _("Forget this")])
+    if i == 0:
+        restore_flow(parent, ctx, Path(str(rec.get("image"))), store=store)
+        return "image"
+    if i == 1:
+        restore_flow(parent, ctx, Path(str(rec.get("pre_backup"))), store=store)
+        return "before"
+    if i == 3 and confirm(parent, _("Forget this"), _("Forget the interrupted write-back? Do this only when the FM-1 "
+                                                      "works again or you have written it back yourself."),
+                          _("Forget"), danger=True):
+        FJ.forget_write(root)
+        return "forget"
+    return "later"

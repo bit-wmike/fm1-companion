@@ -82,7 +82,7 @@ before every use and never runs a changed file), and when it last looked for a n
   ID, the flash chip and the sectors it will write and waits for “yes”; the app answers only when all of it matches
   its own check, otherwise M-Flasher writes nothing. Afterwards M-Flasher's own check (the chip's CRC-32) and a fresh
   read must equal the copy; then the FM-1 is restarted. Once writing has started it cannot be cancelled – do not
-  unplug the FM-1 then. If something goes wrong, the FM-1 stays in download mode and the backup made just before
+  unplug the FM-1 then; even if the app is closed or crashes, M-Flasher finishes the write, and at the next start the app says what happened and asks what to do. A copy whose factory data (calibration, Bluetooth address) differs from the unit's is refused. If something goes wrong, the FM-1 stays in download mode and the backup made just before
   goes back the same way.
 * **Honestly:** these two buttons have not run on a real FM-1 through the app yet – only against a stand-in for
   M-Flasher. M-Flasher itself was used exactly this way by hand (backup twice, restore onto the same unit,

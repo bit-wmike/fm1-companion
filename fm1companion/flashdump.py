@@ -292,6 +292,14 @@ def write_backup(folder: Path, name: str, image: bytes, *, device: str, read_thr
                        "factory data. Do not write it to another unit.",
             "note": note, "app": "FM-1 Companion"}
     write_text_atomic(path.with_suffix(".json"), json.dumps(side, indent=2, ensure_ascii=False))
+    try:                                         # the two new names are on the disk too, not only the contents
+        fd = os.open(folder, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    except OSError:
+        pass
     return path
 
 

@@ -8,6 +8,10 @@
 * Every live child is remembered and stopped when the app exits normally (atexit).
 * tools/runner.py writes the child's PID into the lock folder (journal.TOOL_PID) while it runs, so another program
   window never takes a lock whose owner died while its M-Flasher is still alive.
+* The one exception: a WRITING run (`restore`, `survive=True`) gets no death signal and is not stopped at exit. Once
+  it has been answered "yes" it may be erasing the flash; killing it then is the worst outcome, so it must outlive
+  even a crashed app. Before "yes" the app's death is safe anyway: its stdin is a pipe from the app, M-Flasher reads
+  EOF and writes nothing. Its output goes to files, not pipes (a print to a pipe without a reader would abort it).
 """
 from __future__ import annotations
 
@@ -48,15 +52,17 @@ def _preexec(parent: int):
     return fn
 
 
-def popen(argv: list[str], **kw) -> subprocess.Popen:
-    """subprocess.Popen in its own session, with the death signal set; remembered until it has exited"""
+def popen(argv: list[str], survive: bool = False, **kw) -> subprocess.Popen:
+    """subprocess.Popen in its own session, with the death signal set; remembered until it has exited.
+    survive: no death signal, not stopped at the app's exit (a writing run, see above)"""
     _libc()                                  # (load libc before fork, not in the child)
     kw.setdefault("start_new_session", True)
-    if os.name == "posix":
+    if os.name == "posix" and not survive:
         kw["preexec_fn"] = _preexec(os.getpid())
     p = subprocess.Popen(argv, **kw)
-    with _LIVE_LOCK:
-        _LIVE.add(p)
+    if not survive:
+        with _LIVE_LOCK:
+            _LIVE.add(p)
     return p
 
 

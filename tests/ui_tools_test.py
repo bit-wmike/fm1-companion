@@ -207,6 +207,9 @@ def flash_flow(card):
     asked, errors_shown = [], []
     flash_tools.confirm = lambda parent, title, text, ok=None, danger=False: asked.append((title, text, danger)) or True
     flash_tools.show_error = lambda parent, title, msg, details="": errors_shown.append(msg)
+    check(flash_tools.softkey_port(w.ctx) == w.ctx.port.label and w.ctx.protocol == "felucca",
+          "the demo Melodee (editor protocol) counts as a Felucca-family FM-1 for the soft key")
+    flash_tools.softkey_port = lambda ctx: "FM-1 MIDI 1"      # (the fake stands for a recognised FM-1 at this port)
     c = w.ctx
     prof = c.profile
     check(prof is not None, f"demo device has a profile ({getattr(prof, 'name', '-')})")
@@ -251,6 +254,31 @@ def flash_flow(card):
     st_ = json.loads(state.read_text())
     check(not st_.get("answers") and not st_.get("written") and Path(str(state) + ".flash").read_bytes() == before and
           not [a for a in asked if a[2]], "another unit's image: no danger question, no yes, nothing written")
+    # an interrupted write-back (the app died after "yes"): the next start asks, nothing happens by itself
+    from fm1companion.tools import flashjob as FJ
+    rec = {"state": "writing", "started": time.time(), "pid": 0, "device": prof.name, "unit": "…8ace",
+           "image": str(bins[0]), "pre_backup": str(bins[0]), "out": "", "staging": ""}
+    FJ._save_record(FJ.record_file(), rec)
+    shown = []
+    flash_tools._choice = lambda parent, title, text, buttons: shown.append((title, text, buttons)) or 2
+    n_calls = len(json.loads(state.read_text()).get("calls", []))
+    check(w.check_interrupted_write() == "later" and shown and prof.name in shown[0][1] and len(shown[0][2]) == 4,
+          "next start: the interrupted write-back is shown with its choices")
+    check(len(json.loads(state.read_text()).get("calls", [])) == n_calls and FJ.unfinished_write() is not None,
+          "… and “Later” runs nothing and keeps the record")
+    FJ.forget_write()
+    check(w.check_interrupted_write() == "", "nothing open: no question")
+    FJ.WRITING.set()
+    from PyQt6.QtGui import QCloseEvent
+    ev = QCloseEvent()
+    orig_warn = QMessageBox.warning
+    QMessageBox.warning = staticmethod(lambda *a, **k: 0)
+    try:
+        w.closeEvent(ev)
+    finally:
+        QMessageBox.warning = orig_warn
+        FJ.WRITING.clear()
+    check(not ev.isAccepted(), "while M-Flasher writes the window does not close")
 
 
 def run():

@@ -86,7 +86,7 @@ nueva.
   aquel día. Justo antes de escribir, M-Flasher muestra la ID de unidad, el chip y los sectores que va a escribir y espera
   un «yes»; la app solo responde si todo coincide con su propia comprobación; si no, M-Flasher no escribe nada.
   Después, la comprobación de M-Flasher (el CRC-32 del chip) y una lectura nueva deben ser iguales a la copia; luego
-  se reinicia el FM-1. Una vez empezada la escritura no se puede cancelar – no desconectes el FM-1 entonces. Si algo
+  se reinicia el FM-1. Una vez empezada la escritura no se puede cancelar – no desconectes el FM-1 entonces; aunque la app se cierre o falle, M-Flasher termina la escritura, y en el siguiente inicio la app dice qué pasó y pregunta qué hacer. Una copia con otros datos de fábrica (calibración, dirección Bluetooth) que la unidad se rechaza. Si algo
   sale mal, el FM-1 se queda en modo de descarga y la copia hecha justo antes vuelve por el mismo camino.
 * **Con sinceridad:** estos dos botones aún no se han usado con un FM-1 real a través de la app – solo con un
   sustituto de M-Flasher. M-Flasher mismo se usó exactamente así a mano (copiar dos veces, volver a escribir en la

@@ -243,6 +243,8 @@ evidence for the tool and for the line formats the app parses – not for the ap
 the app never does (it answers M-Flasher's question itself, after its own checks), and the prompt and the "Nothing
 written." path were not seen on hardware.
 
+Added after the review (2026-11-19), against the stand-in only: the app is killed (SIGKILL) right after "yes" and the fake still writes to its end; the write record is on disk before "yes" and the next start asks; the foreign factory sector is refused; an image swapped during the dialog is not what is written; no soft key to an SMK-37, an update loader or a unit the app did not recognise. Not tried: logout, `systemd-inhibit` and SIGTERM during a real write.
+
 What the tests prove against the stand-in: the double read (one image kept, the description's keys, staging removed,
 restart only when the app sent the unit into download mode); every refusal writes nothing – reads that differ, a read
 M-Flasher did not confirm against the chip's CRC-32, several units, a unit beside another one, no unit (guide), `sg`

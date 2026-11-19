@@ -146,6 +146,9 @@ NOTHING_WRITTEN = "Nothing written."
 WHOLE_FLASH_NOTE = "The whole flash is restored, the bootloader included."
 RESTORE_TITLE = "Restore a backup"
 CRC_CHECKED = "Checked: the chip's CRC32 of the flash matches the read"
+# ops.rs plan_restore, same unit, factory bytes differ (the text says "blank"; the code compares bytes)
+FACTORY_WARNING = ("This unit's factory data at 0xFF000-0xFFFFF is blank; the backup's is restored. Use only a "
+                   "backup of this unit.")
 _SAVED_RE = re.compile(r"^Backup saved: (.+?)\s*$")
 _WRITES_RE = re.compile(r"^Writes (\d+) sectors \((\d+) KiB\): (.+?)\s*$")
 _RANGE_RE = re.compile(r"^0x([0-9A-Fa-f]{5,8})-0x([0-9A-Fa-f]{5,8})$")
@@ -164,6 +167,8 @@ class Plan:
     nothing: bool = False             # "Nothing to write: …"
     notes: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    plan_lines: int = 0               # how many "Writes …" / "Nothing to write" lines the whole output has
+    stray: list[str] = field(default_factory=list)   # non-empty lines between the info block and the title
 
 
 def _lines(stdout: str) -> list[str]:
@@ -196,8 +201,13 @@ def parse_plan(stdout: str) -> Plan:
     at = next((i for i, ln in enumerate(lines) if _WRITES_RE.match(ln) or ln.startswith("Nothing to write:")), None)
     if at is None:
         raise ParseError("no plan in M-Flasher's output")
-    title = next((lines[i].strip() for i in range(at - 1, -1, -1) if lines[i].strip()), "")
+    ti = next((i for i in range(at - 1, -1, -1) if lines[i].strip()), -1)
+    title = lines[ti].strip() if ti >= 0 else ""
     p = Plan(title=title)
+    p.plan_lines = sum(1 for ln in lines if _WRITES_RE.match(ln.strip()) or ln.strip().startswith("Nothing to write"))
+    last_block = max((i for i, ln in enumerate(lines[:max(ti, 0)]) if _INFO_RE.match(ln) or _EVIDENCE_RE.match(ln)),
+                     default=-1)
+    p.stray = [ln.strip() for ln in lines[last_block + 1:max(ti, 0)] if ln.strip()]
     m = _WRITES_RE.match(lines[at])
     if m:
         p.sectors, p.kib, p.runs = int(m.group(1)), int(m.group(2)), parse_ranges(m.group(3))

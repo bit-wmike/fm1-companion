@@ -26,8 +26,12 @@ State: the JSON file named by FAKE_MFLASHER_STATE (all keys optional):
                      "write-fail" (second write does not read back) | "killed-in-write" (SIGKILL during the write) |
                      "no-done" (writes, but no "Done" line) | "other-unit-plan" (as M-Flasher plans another unit's
                      backup: factory range left out, with its warning) | "drift" (one byte in sector 0 changed
-                     since the app's backup: same plan, but M-Flasher's own backup differs)
+                     since the app's backup: same plan, but M-Flasher's own backup differs) | "slow-write" (0.7 s per
+                     run) | "backup-fails" (its own backup before the first erase fails: exit 1, nothing erased)
+            the same-unit plan carries M-Flasher's factory WARNING whenever the image's 0xFF000-0xFFFFF differs
+  midi_name the ALSA card name `find` prints for a running unit (default "FM-1")
             download-mode: "never" (the unit does not come back within 20 s)
+            info:    "split-utf8" (no unit id; the "–" is written in two pieces)
   version   what --version prints (default "0.12.1")
 Every call is appended to the state's "calls" list; what came on stdin at a prompt goes to "answers"; every sector
 range written goes to "written" (the tests prove with these that nothing was written).
@@ -192,6 +196,8 @@ def session(st: dict, cmd: str, dev: str, fault: str):
         print("  something else entirely")
         return 0
     uid = st.get("unit_id", "0123456789abcdef")
+    if fault == "split-utf8":
+        uid = ""
     if cmd in ("backup", "restore") and "session_unit_id" in st:
         uid = st["session_unit_id"]
     if cmd == "restore" and fault == "other-unit":
@@ -201,6 +207,16 @@ def session(st: dict, cmd: str, dev: str, fault: str):
             ("chip key", f"0x{int(st.get('chip_key', 0x980F)):04X}"), ("flash", f"0x{flash:06X}"),
             ("unit id", uid or "–"), ("loader", "M-Flasher 1.3, CPU at 96 MHz")]
     for k, v in rows:
+        if k == "unit id" and fault == "split-utf8":       # "–" arrives in two reads (L8)
+            sys.stdout.write(f"  {k:11} ")
+            sys.stdout.flush()
+            b = "–\n".encode()
+            sys.stdout.buffer.write(b[:1])
+            sys.stdout.buffer.flush()
+            time.sleep(0.3)
+            sys.stdout.buffer.write(b[1:])
+            sys.stdout.buffer.flush()
+            continue
         print(f"  {k:11} {v}")
     print("    - the firmware uses the FM-1 flash layout")
     print(f"    - flash chip 0x{flash:06X} ({'old' if flash == 0x856014 else 'new'})")
@@ -280,6 +296,9 @@ def restore(st: dict, args, fault: str) -> int:
         print(f"Writes {n} sectors ({n * 4} KiB): {ranges_text(shown)}")
     if same:
         print("The whole flash is restored, the bootloader included.")
+        if data[FACTORY[0]:] != current[FACTORY[0]:]:          # (ops.rs: any difference, "blank" or not)
+            print("WARNING: This unit's factory data at 0xFF000-0xFFFFF is blank; the backup's is restored. "
+                  "Use only a backup of this unit.")
     else:
         print("WARNING: This backup seems to come from another unit: its factory data (0xFF000-0xFFFFF: "
               "calibration, Bluetooth address) is not restored, this unit keeps its own.")
@@ -298,6 +317,9 @@ def restore(st: dict, args, fault: str) -> int:
         print("Nothing written.")
         return 0
     folder = opt(args, "--backup-dir") or os.path.expanduser("~/Documents/M-Flasher/backups")
+    if fault == "backup-fails":
+        print(f"cannot write {folder}/fm1-x.bin: No space left on device (os error 28)", file=sys.stderr)
+        return 1
     print(f"Backup saved: {save_backup(st, folder, current, uid, rows)}")
     img = bytearray(current)
     for i, (a, b) in enumerate(runs):
@@ -306,6 +328,8 @@ def restore(st: dict, args, fault: str) -> int:
         st = state()
         st.setdefault("written", []).append([a, b])
         save(st)
+        if fault == "slow-write":
+            time.sleep(0.7)
         if fault == "killed-in-write":
             img[a:a + SECTOR] = b"\xff" * SECTOR            # erased, not yet programmed
             store_image(st, bytes(img))
@@ -350,7 +374,7 @@ def main(args) -> int:
         for p in sgs:
             print(f"{p}\tWL82 UBOOT1.00 ({p})")
         if mode == "midi":
-            print("midi\tFM-1 (running; download-mode switches it)")
+            print(f"midi\t{st.get('midi_name', 'FM-1')} (running; download-mode switches it)")
         if mode == "two-midi":
             print("midi\tFM-1 (running; download-mode switches it)")
             print("midi\tFM-1 (running; download-mode switches it)")

@@ -87,7 +87,7 @@ gesucht hat.
   wartet auf „yes“; die App antwortet nur, wenn alles zu ihrer eigenen Prüfung passt, sonst schreibt M-Flasher
   nichts. Danach müssen M-Flashers eigene Prüfung (die CRC-32 des Chips) und ein frisches Lesen der Kopie gleichen;
   dann wird das FM-1 neu gestartet. Hat das Schreiben begonnen, lässt es sich nicht mehr abbrechen – dann das FM-1
-  nicht abstecken. Geht etwas schief, bleibt das FM-1 im Download-Modus, und die eben gemachte Sicherung geht auf
+  nicht abstecken; auch wenn die App geschlossen wird oder abstürzt, schreibt M-Flasher zu Ende, und beim nächsten Start sagt die App, was passiert ist, und fragt, was geschehen soll. Eine Kopie mit anderen Werksdaten (Kalibrierung, Bluetooth-Adresse) als das Gerät wird abgelehnt. Geht etwas schief, bleibt das FM-1 im Download-Modus, und die eben gemachte Sicherung geht auf
   demselben Weg zurück.
 * **Ehrlich gesagt:** Diese beiden Knöpfe liefen über die App noch nicht an einem echten FM-1 – nur gegen einen
   Stellvertreter für M-Flasher. M-Flasher selbst wurde genau so von Hand benutzt (zweimal sichern, auf dasselbe Gerät

@@ -77,6 +77,7 @@ def env(tmp_path, monkeypatch):
     e.set(mode="midi")
 
     def job(profile="default", **kw):
+        kw.setdefault("softkey_for", "FM-1 MIDI 1")            # (the app's own FM-1 port: the fake's card is "FM-1")
         return FJ.Job(backups_dir=e.backups, profiles=e.profiles, profile=e.prof if profile == "default" else profile,
                       store=e.store, log_dir=e.logs, journal=e.journal, **kw)
     e.job = job
@@ -157,7 +158,7 @@ def test_restore_command_needs_a_write_verified_binary(env):
     env.data["tools"]["m-flasher"]["write_verified"] = {}
     with pytest.raises(runner.ToolUnavailable):
         runner.run_mflasher(["restore", "/x/a.bin", "--device", "/dev/sg1", "--backup-dir", "/x"], store=env.store,
-                            log_dir=env.logs, journal=env.journal, gate=lambda out: "")
+                            log_dir=env.logs, journal=env.journal, gate=lambda out: "", out_dir=env.tmp / "o")
     assert "calls" not in env.get()
 
 
@@ -568,3 +569,286 @@ def test_tools_hardware_table_matches_untested_md():
                          ("es", "aún no se han usado con un FM-1 real a través de la app")):
         page = (ROOT / "fm1companion" / "data" / "help" / lang / "03-update-modus.md").read_text("utf-8")
         assert needle in page and ("PLAY" in page and "REC" in page and "DOWNLOAD MODE" in page), lang
+
+
+# ------------------------------------------------------------------------------------------------ review fixes
+
+CHILD = r'''
+import json, sys
+sys.path.insert(0, sys.argv[1])
+from pathlib import Path
+from fm1companion import devices
+from fm1companion.flash import journal as fj
+from fm1companion.tools import flashjob as FJ, store as st
+a = json.loads(Path(sys.argv[2]).read_text())
+store = st.Store(bin_dir=a["bin"], updates_dir=a["upd"], data=a["data"], machine=a["arch"])
+profiles = devices.ProfileStore(Path(a["profiles"]))
+job = FJ.Job(backups_dir=Path(a["backups"]), profiles=profiles, profile=profiles.profiles[a["prof"]], store=store,
+             log_dir=Path(a["logs"]), journal=fj.Journal(Path(a["journal"])), softkey_for="FM-1 MIDI 1")
+FJ.restore(job, Path(a["image"]), lambda plan: True)
+'''
+
+
+def test_h1_the_write_finishes_when_the_app_dies_after_yes(env):
+    """H1: the app is killed (SIGKILL) right after "yes": M-Flasher is no child that dies with it – it writes to its
+    end; the fsync'd record is there, and the next start finds the unfinished write-back"""
+    import os
+    import signal
+    import subprocess
+    old = make_backup(env)
+    changed = change_flash(env)
+    env.profiles.save()
+    env.set(mode="midi", fault_restore="slow-write")
+    args = env.tmp / "child.json"
+    args.write_text(json.dumps({"bin": str(env.tmp / "tools-bin"), "upd": str(env.tmp / "upd"), "data": env.data,
+                                "arch": ARCH, "profiles": str(env.tmp / "devices.json"), "prof": env.prof.id,
+                                "backups": str(env.backups), "logs": str(env.logs), "journal": str(env.journal.dir),
+                                "image": str(old.path)}))
+    child = subprocess.Popen([sys.executable, "-c", CHILD, str(ROOT), str(args)])
+    rec_path = FJ.record_file(env.journal.dir)
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < 60 and not (rec_path.exists() and json.loads(rec_path.read_text()).get("pid")):
+        time.sleep(0.05)
+    rec = json.loads(rec_path.read_text())
+    assert rec["state"] == "writing" and rec["image_sha256"] == sha(old.path.read_bytes())
+    time.sleep(0.3)                                          # ("yes" is sent, the first run is being written)
+    child.kill()
+    child.wait(10)
+    pid = rec["pid"]
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < 30 and fj._alive(pid):
+        time.sleep(0.1)
+    assert not fj._alive(pid)
+    assert env.flash() == old.path.read_bytes() != changed          # written completely, after the app's death
+    assert len(env.get()["written"]) == 3
+    left = FJ.unfinished_write(env.journal.dir)
+    assert left is not None and left["state"] == "writing" and left["done"] and not left["alive"]
+    assert Path(left["pre_backup"]).read_bytes() == changed and Path(left["out"]).is_file()
+    assert (Path(left["staging"]) / "app-log-so-far.txt").is_file()
+    assert UID not in rec_path.read_text()                         # (masked there too)
+    FJ.forget_write(env.journal.dir)
+    assert FJ.unfinished_write(env.journal.dir) is None
+    del os, signal
+
+
+def test_h1_restore_runs_without_death_signal_and_into_files(env, monkeypatch):
+    from fm1companion.tools import proc
+    seen = []
+    orig = proc.popen
+
+    def spy(argv, survive=False, **kw):
+        seen.append((argv[1], survive, kw.get("stdout"), "preexec_fn" in kw))
+        p = orig(argv, survive=survive, **kw)
+        seen[-1] += (p in proc._LIVE,)
+        return p
+    monkeypatch.setattr(proc, "popen", spy)
+    old = make_backup(env)
+    change_flash(env)
+    env.set(mode="download")
+    restore(env, old.path)
+    r = [x for x in seen if x[0] == "restore"]
+    assert r and r[0][1] is True and hasattr(r[0][2], "fileno") and r[0][3] is False and r[0][4] is False
+    assert all(x[1] is False for x in seen if x[0] != "restore")
+
+
+def test_h1_record_and_on_writing_come_before_yes_and_the_record_ends_verified(env):
+    old = make_backup(env)
+    change_flash(env)
+    env.set(mode="download")
+    at = []
+
+    def on_writing(rec):
+        at.append((FJ.WRITING.is_set(), env.get().get("answers", []), json.loads(
+            FJ.record_file(env.journal.dir).read_text())["state"]))
+    FJ.restore(env.job(on_writing=on_writing), old.path, lambda plan: True)
+    assert at == [(True, [], "writing")]                           # before M-Flasher had its answer
+    assert json.loads(FJ.record_file(env.journal.dir).read_text())["state"] == "verified"
+    assert not FJ.WRITING.is_set() and FJ.unfinished_write(env.journal.dir) is None
+
+
+def test_m1_a_foreign_image_under_this_units_id_is_refused_by_its_factory_sector(env):
+    old = make_backup(env)
+    img = bytearray(old.path.read_bytes())
+    img[0xFF100:0xFF110] = b"\x11" * 16                            # another unit's calibration / Bluetooth address
+    foreign = old.path.with_name("foreign.bin")
+    foreign.write_bytes(bytes(img))
+    side = json.loads(old.path.with_suffix(".json").read_text())
+    side.update(sha256=sha(bytes(img)), file=foreign.name, crc32=f"{__import__('zlib').crc32(bytes(img)):08x}")
+    foreign.with_suffix(".json").write_text(json.dumps(side))
+    before = change_flash(env)
+    env.set(mode="download", calls=[])
+    with pytest.raises(FJ.Refused) as e:
+        restore(env, foreign)
+    assert e.value.kind == "factory" and not calls(env, "restore")
+    nothing_written(env, before)
+
+
+def test_m1_a_blank_factory_sector_takes_the_images_with_exactly_that_warning(env):
+    old = make_backup(env)
+    img = bytearray(env.flash())
+    img[0xFF000:] = b"\xff" * 0x1000                               # this unit's factory data is blank
+    img[0x5000] ^= 1
+    Path(str(env.state) + ".flash").write_bytes(bytes(img))
+    env.set(mode="download")
+    plans = []
+    res = FJ.restore(env.job(), old.path, lambda plan: plans.append(plan) or True)
+    assert res.written and plans[0].factory_blank and env.flash() == old.path.read_bytes()
+    # M-Flasher's factory WARNING is accepted only where the app expects it
+    gate = FJ.restore_gate({"unit_id": UID, "flash_id": 0x856014, "chip_key": 0x980F, "runs": [(0xFF000, 0x100000)],
+                            "factory_blank": False})
+    out = (INFO.format(uid=UID) + "\nRestore a backup\nWrites 1 sectors (4 KiB): 0xFF000-0xFFFFF\n" + mp.WHOLE_FLASH_NOTE
+           + "\nWARNING: " + mp.FACTORY_WARNING + "\n" + mp.PROMPT)
+    assert gate(out).startswith("M-Flasher warns")
+
+
+def test_m1_the_fake_prints_m_flashers_factory_warning_for_the_same_unit(env):
+    old = make_backup(env)
+    img = bytearray(env.flash())
+    img[0xFF200] ^= 0xFF                                           # (not blank, just different)
+    Path(str(env.state) + ".flash").write_bytes(bytes(img))
+    env.set(mode="download")
+    gate_out = []
+    orig = FJ.restore_gate
+
+    def spy(expect):
+        g = orig(expect)
+        return lambda out: gate_out.append(out) or g(out)
+    FJ.restore_gate = spy
+    try:
+        with pytest.raises(FJ.Refused) as e:                        # (the app's own guard is first)
+            restore(env, old.path)
+    finally:
+        FJ.restore_gate = orig
+    assert e.value.kind == "factory" and not gate_out
+    import subprocess
+    out = subprocess.run([str(env.tmp / "tools-bin" / mf.mflasher_relpath(env.data["tools"]["m-flasher"]["version"],
+                                                                           ARCH)),
+                          "restore", str(old.path), "--device", "/dev/sg1", "--backup-dir", str(env.tmp / "x")],
+                         input="", capture_output=True, text=True, timeout=30).stdout
+    assert "WARNING: " + mp.FACTORY_WARNING in out and "Nothing written." in out
+
+
+def test_m2_the_image_swapped_during_the_dialog_is_not_what_is_written(env):
+    old = make_backup(env)
+    original = old.path.read_bytes()
+    change_flash(env)
+    env.set(mode="download")
+
+    def swap(plan):
+        b = bytearray(original)
+        b[0x5000:0x5010] = b"\x77" * 16                            # a sector that differs anyway
+        old.path.write_bytes(bytes(b))
+        side = json.loads(old.path.with_suffix(".json").read_text())
+        side["sha256"] = sha(bytes(b))
+        old.path.with_suffix(".json").write_text(json.dumps(side))
+        return True
+    res = FJ.restore(env.job(), old.path, swap)
+    assert res.written and res.verified and env.flash() == original
+    rc = calls(env, "restore")[-1]
+    assert rc[1] != str(old.path) and Path(rc[1]).name == "image.bin"
+
+
+@pytest.mark.parametrize("card,own,ok", [("FM-1", "FM-1 MIDI 1", True), ("Felucca", "Felucca MIDI 1", True),
+                                          ("FM-1 SLOOP 3", "FM-1 SLOOP 3 MIDI 1", True),
+                                          ("SMK-37 Elite", "SMK-37 Elite MIDI 1", False),
+                                          ("FM-1 Update", "FM-1 Update MIDI 1", False), ("FM-1", "", False),
+                                          ("FM-1", "Felucca MIDI 1", False), ("Some Synth", "Some Synth", False)])
+def test_m4_soft_key_target(card, own, ok):
+    assert FJ.softkey_target_ok(card, own) is ok
+
+
+@pytest.mark.parametrize("name,own", [("SMK-37 Elite", "SMK-37 Elite MIDI 1"), ("FM-1", ""),
+                                      ("FM-1 Update", "FM-1 Update MIDI 1")])
+def test_m4_no_soft_key_to_a_unit_the_app_did_not_recognise(env, name, own):
+    env.set(mode="midi", midi_name=name)
+    with pytest.raises(FJ.Refused) as e:
+        FJ.backup(env.job(softkey_for=own))
+    assert e.value.kind == "guide" and not calls(env, "download-mode") and env.get()["mode"] == "midi"
+
+
+def test_m4_softkey_port_from_the_apps_device_state():
+    from types import SimpleNamespace as NS
+    from fm1companion.ui.flash_tools import softkey_port
+    port = lambda **kw: NS(**{"label": "FM-1 MIDI 1", "usb_id": "4c4a:c755", "update_mode": False, **kw})  # noqa: E731
+    ctx = lambda p, **kw: NS(**{"port": p, "is_virtual": False, "mboot": None, "protocol": "generic",  # noqa: E731
+                                "sloop3": None, **kw})
+    assert softkey_port(ctx(port())) == "FM-1 MIDI 1"                              # original firmware
+    assert softkey_port(ctx(port(usb_id="1209:0001", label="Felucca"), protocol="felucca")) == "Felucca"
+    assert softkey_port(ctx(port(usb_id="1209:0001", label="FM-1 SLOOP 3"), sloop3=object())) == "FM-1 SLOOP 3"
+    assert softkey_port(ctx(port(usb_id="1209:0001", label="X"))) == ""            # unknown firmware
+    assert softkey_port(ctx(port(usb_id="3654:7756"), protocol="felucca")) == ""   # FM1 Open
+    assert softkey_port(ctx(port(update_mode=True))) == ""
+    assert softkey_port(ctx(port(usb_id="1209:0002", label="FM-1 Update"), mboot=object())) == ""
+    assert softkey_port(ctx(port(), is_virtual=True)) == "" and softkey_port(ctx(None)) == ""
+
+
+def test_m4_a_refusal_after_the_apps_download_mode_restarts_the_unit(env):
+    env.prof.unit_id = OTHER_UID                                   # refused after download-mode (another unit)
+    with pytest.raises(FJ.Refused) as e:
+        FJ.backup(env.job())
+    assert e.value.kind == "other-profile" and calls(env, "download-mode") and calls(env, "restart")
+    assert env.get()["mode"] == "midi"
+
+
+INFO = ("  model       FM-1\n  bootloader  stock (M-VAVE)\n  firmware    Felucca\n  app         OK\n"
+        "  chip key    0x980F\n  flash       0x856014\n  unit id     {uid}\n  loader      M-Flasher 1.3\n"
+        "    - the firmware uses the FM-1 flash layout\n")
+
+
+def test_l1_gate_rejects_unknown_notes_a_second_plan_line_and_stray_lines():
+    expect = {"unit_id": UID, "flash_id": 0x856014, "chip_key": 0x980F, "runs": [(0, 0x1000)]}
+    gate = FJ.restore_gate(expect)
+    plan = "\nRestore a backup\nWrites 1 sectors (4 KiB): 0x00000-0x00FFF\n" + mp.WHOLE_FLASH_NOTE + "\n"
+    good = INFO.format(uid=UID) + plan + mp.PROMPT
+    assert gate(good) == ""
+    for bad in (good.replace(mp.WHOLE_FLASH_NOTE, mp.WHOLE_FLASH_NOTE + "\nThis unit keeps its bootloader (x)."),
+                good.replace(mp.WHOLE_FLASH_NOTE, mp.WHOLE_FLASH_NOTE + "\nSomething new."),
+                good.replace(mp.WHOLE_FLASH_NOTE, mp.WHOLE_FLASH_NOTE + "\nWrites 1 sectors (4 KiB): 0xFF000-0xFFFFF"),
+                good.replace("\nRestore a backup", "\nSomething before the title\nRestore a backup")):
+        assert gate(bad) != "", bad
+
+
+def test_l3_m_flasher_failing_before_any_erase_is_reported_as_nothing_written(env):
+    old = make_backup(env)
+    before = change_flash(env)
+    env.set(mode="download", fault_restore="backup-fails")
+    with pytest.raises(FJ.Refused) as e:
+        restore(env, old.path)
+    assert e.value.kind == "not-started" and not e.value.written and not isinstance(e.value, FJ.WriteFailed)
+    assert env.flash() == before and FJ.unfinished_write(env.journal.dir) is None
+
+
+def test_l4_a_profile_learns_nothing_from_a_unit_it_did_not_send_into_download_mode(env):
+    env.set(mode="download")
+    res = FJ.backup(env.job())                                     # (profile "Unit 1" active, unit already there)
+    assert env.prof.unit_id == "" and env.prof.flash_id == "" and res.path.parent.parent.name == FJ.UNKNOWN_FOLDER
+
+
+def test_l5_the_backup_folder_is_synced(tmp_path, monkeypatch):
+    import os
+    import stat
+    synced = []
+    real = os.fsync
+
+    def spy(fd):
+        synced.append(stat.S_ISDIR(os.fstat(fd).st_mode))
+        return real(fd)
+    monkeypatch.setattr(os, "fsync", spy)
+    flashdump.write_backup(tmp_path / "Flash", "x.bin", b"\0" * 4096, device="d", read_through="t", jedec=0x856014)
+    assert True in synced
+
+
+def test_l7_a_killed_restore_does_not_mark_an_update_failed(env):
+    marked = []
+    c = st.Candidate("m-flasher", "0.13.0", "update", None, "0" * 64)
+    env.store.mark = lambda *a, **k: marked.append((a, k))
+    runner._judge(env.store, c, runner.RunResult("0.13.0", "update", ["restore", "/x/a.bin"], -9))
+    assert marked == []
+    runner._judge(env.store, c, runner.RunResult("0.13.0", "update", ["info", "--device", "/dev/sg1"], -9))
+    assert marked and marked[0][1].get("failed")
+
+
+def test_l8_output_is_decoded_as_a_stream(env):
+    env.set(mode="download", fault_info="split-utf8")
+    r, info = runner.info("/dev/sg1", store=env.store, log_dir=env.logs, journal=env.journal)
+    assert r.ok and info is not None and info.unit_id == "" and "�" not in r.out

@@ -86,6 +86,7 @@ class RunResult:
     answered_yes: bool = False      # … and the gate let the runner send "yes"
     gate_reason: str = ""           # why the gate closed stdin instead (English, for the log)
     binary_sha256: str = ""
+    out_files: tuple | None = None  # a writing run: (stdout file, stderr file) in its private folder
 
     @property
     def ok(self) -> bool:
@@ -147,14 +148,16 @@ def _flight(folder: Path | None):
 
 def run_mflasher(args: list[str], *, store: Store | None = None, cancel: threading.Event | None = None,
                  timeout: float | None = None, log_dir: Path | None = None, journal=None,
-                 on_line=None, gate=None, flight=None) -> RunResult:
+                 on_line=None, gate=None, flight=None, out_dir: Path | None = None) -> RunResult:
     """run one M-Flasher command; raises ToolError when it cannot run at all.
     gate (restore only, required there): fn(stdout so far) -> "" to send "yes", or the reason (English) to close
     stdin instead – called once, when M-Flasher asks.
-    flight: a job's flight log (tools/flashjob.py) to write into instead of this run's own "tool-…" log."""
+    flight: a job's flight log (tools/flashjob.py) to write into instead of this run's own "tool-…" log.
+    out_dir (restore only, required there): a private folder for M-Flasher's stdout/stderr files – a writing run
+    writes into files, not pipes, and outlives the app (tools/proc.py)."""
     _check_args(args)
     writes = args[0] in WRITES
-    if writes and gate is None:
+    if writes and (gate is None or out_dir is None):
         raise ToolError(_("This M-Flasher command is not available in the app."))
     store = store or Store()
     why = unavailable_reason(store)
@@ -183,7 +186,7 @@ def run_mflasher(args: list[str], *, store: Store | None = None, cancel: threadi
     res = None
     try:
         res = _run(cand, args, timeout if timeout is not None else TIMEOUTS[args[0]], cancel, flight, on_line, lock,
-                   gate if writes else None)
+                   gate if writes else None, Path(out_dir) if writes else None)
         res.problems = problems
         res.binary_sha256 = cand.sha256
     finally:
@@ -249,7 +252,7 @@ def _exec_path(cand: Candidate, flight) -> tuple[Path, str | None]:
 
 
 def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_line, lock=None,
-         gate=None) -> RunResult:
+         gate=None, out_dir: Path | None = None) -> RunResult:
     import shutil
     from . import proc
     try:
@@ -262,9 +265,21 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
     env.pop("LANGUAGE", None)
     flight.ev("exec", f"m-flasher {' '.join(args)} (version {cand.version}, {cand.source}, sha256 {cand.sha256[:12]}…)")
     t0 = time.monotonic()
+    files = None
     try:
-        p = proc.popen([str(exe), *args], stdin=subprocess.PIPE if gate is not None else subprocess.DEVNULL,
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, cwd=str(Path.home()))
+        if gate is not None:                   # a writing run: output into files, no death signal (tools/proc.py)
+            out_dir.mkdir(parents=True, exist_ok=True)
+            files = (out_dir / "m-flasher.out", out_dir / "m-flasher.err")
+            fo, fe = (open(f, "wb") for f in files)
+            try:
+                p = proc.popen([str(exe), *args], survive=True, stdin=subprocess.PIPE, stdout=fo, stderr=fe,
+                               env=env, cwd=str(Path.home()))
+            finally:
+                fo.close()
+                fe.close()
+        else:
+            p = proc.popen([str(exe), *args], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE, env=env, cwd=str(Path.home()))
     except OSError as e:
         if tmp:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -309,10 +324,31 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
             except OSError:
                 pass
 
+    def tail(path: Path):
+        """the next bytes M-Flasher wrote into its output file (b"" once it has ended and all is read)"""
+        f = open(path, "rb")
+
+        def nxt() -> bytes:
+            while True:
+                b = f.read(4096)
+                if b:
+                    return b
+                if p.poll() is not None:
+                    b = f.read(4096)
+                    if not b:
+                        f.close()
+                    return b
+                time.sleep(0.03)
+        return nxt
+
     def reader(stream, kind):
+        import codecs
+        dec = codecs.getincrementaldecoder("utf-8")("replace")      # (a character split across two reads)
         buf = ""
-        for raw in iter(lambda: stream.read1(4096) if hasattr(stream, "read1") else stream.read(4096), b""):
-            text = raw.decode("utf-8", "replace")
+        read = stream if callable(stream) else (lambda: stream.read1(4096) if hasattr(stream, "read1")
+                                                 else stream.read(4096))
+        for raw in iter(read, b""):
+            text = dec.decode(raw)
             chunks[kind].append(text)
             buf += text
             if gate is not None and kind == "out" and not answer["asked"] and buf.endswith(mp.PROMPT):
@@ -331,8 +367,9 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
                             pass
         if buf.strip():
             flight.ev(kind, mask_ids(buf))
-    threads = [threading.Thread(target=reader, args=(p.stdout, "out"), daemon=True),
-               threading.Thread(target=reader, args=(p.stderr, "err"), daemon=True)]
+    srcs = (tail(files[0]), tail(files[1])) if files else (p.stdout, p.stderr)
+    threads = [threading.Thread(target=reader, args=(srcs[0], "out"), daemon=True),
+               threading.Thread(target=reader, args=(srcs[1], "err"), daemon=True)]
     for t in threads:
         t.start()
     timed_out = cancelled = False
@@ -348,6 +385,12 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
             if not warned and time.monotonic() - answer["at"] > WRITE_SOFT_LIMIT:
                 warned = True
                 flight.ev("wait", f"still writing after {WRITE_SOFT_LIMIT:.0f} s – not stopped (do not unplug)")
+                if on_line:
+                    try:
+                        on_line("note", _("M-Flasher is still writing after {s} minutes. It is not stopped – do not "
+                                          "unplug the FM-1 or switch it off.").format(s=int(WRITE_SOFT_LIMIT // 60)))
+                    except Exception:  # noqa: BLE001
+                        pass
             continue
         if cancel is not None and cancel.is_set():
             cancelled = True
@@ -385,7 +428,8 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
     flight.ev("exit", f"{p.returncode} after {seconds:.1f}s")
     return RunResult(cand.version, cand.source, list(args), p.returncode, "".join(chunks["out"]),
                      "".join(chunks["err"]), timed_out, cancelled, stuck=stuck, seconds=seconds,
-                     prompted=answer["asked"], answered_yes=answer["yes"], gate_reason=answer["why"])
+                     prompted=answer["asked"], answered_yes=answer["yes"], gate_reason=answer["why"],
+                     out_files=files)
 
 
 def _reap_later(p, lock, tmp):
@@ -408,8 +452,8 @@ def _reap_later(p, lock, tmp):
 def _judge(store: Store, cand: Candidate, res: RunResult):
     """an update proves itself with a clean `info` run; it counts as broken when it crashes, cannot start or its
     output no longer has the known form – then the previous version is used again"""
-    if cand.source != "update" or res.cancelled:
-        return
+    if cand.source != "update" or res.cancelled or res.args[0] in WRITES:
+        return                     # (a writing run ended by the outside – killed, unplugged – says nothing about it)
     broken = res.rc is None or (res.rc not in (0, 1)) or res.timed_out
     proven = False
     if res.args[0] == "info" and res.rc == 0:

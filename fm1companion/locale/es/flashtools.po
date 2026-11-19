@@ -297,3 +297,72 @@ msgstr "Vuelve a escribir una copia de toda la flash en el FM-1 del que viene (m
 
 msgid "Flash backup kept: {path}"
 msgstr "Copia de la flash guardada: {path}"
+
+msgid "The app sends the switch to download mode only to an FM-1 it has recognised itself, with the original firmware, a Felucca-family firmware or SLOOP 3, at the port it is connected to."
+msgstr "La app solo envía el cambio al modo de descarga a un FM-1 que ella misma ha reconocido – con el firmware original, un firmware de la familia Felucca o SLOOP 3, en el puerto al que está conectado."
+
+msgid "This flash backup holds other factory data (calibration, Bluetooth address, 0xFF000–0xFFFFF) than the connected FM-1. A backup of this unit always has the same, so it is not this unit's backup, whatever its description says. Nothing was written."
+msgstr "Esta copia de la flash contiene otros datos de fábrica (calibración, dirección Bluetooth, 0xFF000–0xFFFFF) que el FM-1 conectado. Una copia de esta unidad siempre tiene los mismos, así que no es una copia de esta unidad, diga lo que diga su descripción. No se escribió nada."
+
+msgid "M-Flasher is writing now. This cannot be cancelled – do not unplug the FM-1 or switch it off."
+msgstr "M-Flasher está escribiendo ahora. No se puede cancelar – no desconectes ni apagues el FM-1."
+
+msgid "M-Flasher stopped before it erased anything ({reason}). Nothing was written; the FM-1 is unchanged."
+msgstr "M-Flasher se detuvo antes de borrar nada ({reason}). No se escribió nada; el FM-1 no ha cambiado."
+
+msgid "M-Flasher is still writing after {s} minutes. It is not stopped – do not unplug the FM-1 or switch it off."
+msgstr "M-Flasher sigue escribiendo después de {s} minutos. No se detiene – no desconectes ni apagues el FM-1."
+
+msgid "M-Flasher is writing: this cannot be cancelled."
+msgstr "M-Flasher está escribiendo: no se puede cancelar."
+
+msgid "M-Flasher's own output ends with “everything written is verified”, but the app did not check it afterwards."
+msgstr "La salida de M-Flasher termina con «everything written is verified», pero la app no lo comprobó después."
+
+msgid "M-Flasher had started erasing and writing; its output does not say it finished."
+msgstr "M-Flasher había empezado a borrar y escribir; su salida no dice que terminara."
+
+msgid "It is not known how far M-Flasher got."
+msgstr "No se sabe hasta dónde llegó M-Flasher."
+
+msgid "The write did not end verified: {reason}"
+msgstr "La escritura no terminó verificada: {reason}"
+
+msgid "A flash write-back onto “{device}” (unit ID {uid}) started on {when} did not end verified – the app was closed or ended while M-Flasher wrote, or the write failed."
+msgstr "Una escritura de la flash en «{device}» (ID de unidad {uid}) iniciada el {when} no terminó verificada – la app se cerró o terminó mientras M-Flasher escribía, o la escritura falló."
+
+msgid "The FM-1 may be in download mode now. Nothing is done automatically. Writing back again goes through all the usual checks (M-Flasher reads the unit first, unit ID and flash chip must match)."
+msgstr "Puede que el FM-1 esté ahora en modo de descarga. No se hace nada automáticamente. Volver a escribir pasa por todas las comprobaciones habituales (M-Flasher lee primero la unidad; la ID de unidad y el chip de flash deben coincidir)."
+
+msgid "The image: {image}<br>Its state before the write: {pre}"
+msgstr "La imagen: {image}<br>Su estado antes de escribir: {pre}"
+
+msgid "M-Flasher is still writing"
+msgstr "M-Flasher sigue escribiendo"
+
+msgid "M-Flasher is still writing the flash of “{device}” (started by an earlier run of the app). Do not unplug the FM-1 or switch it off. Look again on Recovery › Tools once it has ended."
+msgstr "M-Flasher sigue escribiendo la flash de «{device}» (iniciado por una ejecución anterior de la app). No desconectes ni apagues el FM-1. Vuelve a mirar en Recuperación › Herramientas cuando haya terminado."
+
+msgid "Interrupted flash write-back"
+msgstr "Escritura de la flash interrumpida"
+
+msgid "Write the image back again …"
+msgstr "Volver a escribir la imagen …"
+
+msgid "Write the state before back …"
+msgstr "Volver a escribir el estado anterior …"
+
+msgid "Later"
+msgstr "Más tarde"
+
+msgid "Forget this"
+msgstr "Olvidar"
+
+msgid "Forget the interrupted write-back? Do this only when the FM-1 works again or you have written it back yourself."
+msgstr "¿Olvidar la escritura interrumpida? Hazlo solo si el FM-1 vuelve a funcionar o si la has vuelto a escribir tú mismo."
+
+msgid "M-Flasher is writing"
+msgstr "M-Flasher está escribiendo"
+
+msgid "M-Flasher is writing the FM-1's flash. The app stays open until it has finished – do not unplug the FM-1 or switch it off."
+msgstr "M-Flasher está escribiendo la flash del FM-1. La app sigue abierta hasta que termine – no desconectes ni apagues el FM-1."
