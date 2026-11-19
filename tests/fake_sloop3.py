@@ -4,9 +4,10 @@
 SubprocessTransport).
 
 It is not SLOOP 3: it replays what SLOOP 3's PC twin answered (tests/fixtures/sloop3/twin-3.3.7.json – INFO, the
-lists, the LIVE state, a sound, an engine's description, a pattern, the song, the settings) and keeps the files and
+lists, a sound, an engine's description, a pattern, the song, the settings) and keeps the files and
 bank images the way fw/main.c's ed_request does (READ, WBEGIN/WDATA/WEND, BANK 0–4: lengths, offsets, CRC-32, the
-"busy" and "bad" refusals that matter to a host). Like SLOOP 3 it answers nothing that is not its own protocol
+"busy" and "bad" refusals that matter to a host). LIVE (15) is not replayed but built as ed_request's ED_LIVE of
+3.4.0 lays the state out (op, 45 bytes, 22 per track, 16 pads) from ``Fake.live``; the ops it got are in ``live_ops``. Like SLOOP 3 it answers nothing that is not its own protocol
 (app/edproto.c ed_parse) – the twin left the Felucca INFO, SLOOP 2's and Felucca's backup LIST, Hortator's INFO and the
 update handshake unanswered (the fixture's "silent").
 
@@ -87,6 +88,37 @@ class Fake:
         self.wr = None                         # a file being written: [kind, total, bytearray]
         self.bk = None                         # a bank image being written: [which, total, bytearray]
         self.out = []
+        # LIVE (15): the state its op 0 reports, laid out as fw/main.c ed_request ED_LIVE (3.4.0) writes it; every op
+        # received is kept in live_ops (the app may only ever send op 0)
+        self.live = {"playing": False, "bpm10": 920, "bar": 0, "beat": 0, "cpu": 13, "peak": 21, "voices": 0,
+                     "meters": [0, 0, 0, 0, 0], "patterns": [0, 0, 0, 0, 0], "mute": [0, 0, 0, 0, 0]}
+        self.live_ops: list[int] = []
+
+    def live_state(self, op: int) -> bytes:
+        v = self.live
+        o = bytearray(45)
+        o[0] = 1 if v["playing"] else 0
+        o[1:3] = w16(v["bpm10"])
+        o[3:5] = w16(v["bar"])
+        o[5], o[6], o[7], o[8] = v["beat"], 0, 0, 1 if self.saved else 0
+        o[9], o[10], o[11] = v["cpu"], v["peak"], v["voices"]
+        o[12], o[13] = 255, 255
+        o[14], o[15], o[16] = 0, 0, 100
+        for t in range(5):
+            q = bytearray(22)
+            q[0] = q[1] = v["patterns"][t]
+            q[2] = v["mute"][t]
+            q[4], q[5] = 100, 64
+            q[9] = 64
+            q[11:13] = b"\xff\xff"
+            q[13] = v["meters"][t]
+            q[14:16] = w16(1)
+            q[16] = 3 if v["playing"] else 255
+            q[17] = 16
+            q[18], q[19] = 2, 100
+            o += q
+        o += bytes([0x84]) * 16
+        return bytes([op]) + bytes(o)
 
     def send(self, cmd: int, raw: bytes = b""):
         self.out.append(HDR + bytes([cmd]) + pack(raw) + b"\xF7")
@@ -143,6 +175,10 @@ class Fake:
                 self.send(8, r[:4])
         elif cmd == 14:
             self.bank(r, n)
+        elif cmd == 15:
+            op = r[0] if n else 0
+            self.live_ops.append(op)
+            self.send(15, self.live_state(op))
         elif cmd == 13 and n and r[0] == 0:
             body = bytearray([0, 4, 64])
             for i in range(4):

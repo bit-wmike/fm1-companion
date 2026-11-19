@@ -136,6 +136,8 @@ class FakeFM1:
         self.sounding: set[tuple[int, int]] = set()
         self.globals = {2: 0, 13: 10, 14: 0}          # CLK INT, DRUM 10, ROUT CH1-4
         self.track_sounds = [[19, 1, 0], [12, 0, 0], [15, 2, 0], [10, 0, 0]]   # engine, preset, armed (REC)
+        self.live_ops: list[int] = []      # SLOOP: the LIVE (77) ops received
+        self.live_cpu = 11
         if self.sloop:
             self._sloop_init()
 
@@ -168,6 +170,15 @@ class FakeFM1:
                 *[b for r in sg["rows"] for b in r]]
 
     # --------------------------------------------------------- SLOOP v6 ---
+    def _sloop_live(self, op: int) -> list[int]:
+        """the 50 bytes of editor_live.c's state (7-bit each, BPM as v14), from self.playing and self.live_cpu"""
+        bpm = 120 + 8192
+        out = [op & 127, 1 if self.playing else 0, 0, bpm & 127, bpm >> 7, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+               min(127, self.live_cpu), 0, 0, 0, 0, 1]
+        for t in range(NTRK):
+            out += [3 if self.playing else 0, 16, (96 if self.playing else 0) - 8 * t if self.playing else 0]
+        return out + [0, 0] + [8 | 4 << 4] * 16
+
     def _sloop_init(self):
         self.ids = SLOOP_IDS
         self.objs = {0: sloop_project(1), 1: sloop_settings(), 2: sloop_project(3), 3: b"", 4: b"", 5: b"",
@@ -321,6 +332,9 @@ class FakeFM1:
                 return None   # SLOOP does not know Melodee's backup commands
             if cmd == 72:
                 return None   # on SLOOP, 72 is DSYN_LIST, not AUDIO_STATS – the demo does not answer it
+            if cmd == 77 and a:   # LIVE (SLOOP 2.7, editor_live.c): op 0 only reports the state; other ops not simulated
+                self.live_ops.append(a[0])
+                return self._sloop_live(a[0])
             if cmd == 9 and len(a) >= 2:     # PROJECT: op 0 load, 1 save, 2 query (section A..D)
                 op, slot = a[0], a[1] & 3
                 if op == 1:

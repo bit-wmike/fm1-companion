@@ -286,3 +286,81 @@ def fm1_presets(link, log=None) -> list:
         if log:
             log(start, total)
     return out
+
+
+# ------------------------------------------------- SLOOP 3 / SLOOP 2 live ---
+# Both SLOOPs answer a LIVE request whose op 0 only reports the state – CPU load, voices, transport, per-track meters –
+# and changes nothing (their web editors poll it several times a second). The FM-1 page shows it in the same "Live"
+# box as Melodee's AUDIO_STATS. The shape of the returned dict is shared: "source", "cpu_percent", "cpu_peak" (None
+# when the firmware does not report it), "voices" (None …), "playing", "bpm", "bar", "beat", "tracks" (a list of
+# {"name", "pattern", "mute", "solo", "meter" 0..127, "step", "steps"}).
+
+SLOOP3_SHOWN = ((0, "1"), (1, "2"), (2, "3"), (4, "4"), (3, "DR"))   # SLOOP 3's tracks as the FM-1 shows them: on
+                                                    # the wire the drums are index 3, shown fifth (web/src/core.js SHOWN)
+SLOOP2_TRACKS = ("1", "2", "3", "DR")               # SLOOP 2.8: three synth tracks and the drum track (core.h NTRK)
+SLOOP2_LIVE = 77                                    # SLOOP 2.7+ (protocol 12): LIVE, editor_live.c
+
+
+def parse_sloop3_live(raw: bytes) -> dict:
+    """SLOOP 3's LIVE answer (fw/main.c ed_request ED_LIVE; web/src/core.js parseLive): op, 45 bytes of global state,
+    22 bytes per track (5 tracks), the drum pads. ValueError if it is too short."""
+    b = bytes(raw)
+    if len(b) < 1 + 45 + 22 * 5:
+        raise ValueError("short LIVE answer")
+    o = b[1:]
+    out = {"source": "sloop3", "playing": bool(o[0] & 1), "bpm": (o[1] | o[2] << 8) / 10,
+           "bar": o[3] | o[4] << 8, "beat": o[5], "cpu_percent": o[9], "cpu_peak": o[10], "voices": o[11],
+           "tracks": []}
+    for t, name in SLOOP3_SHOWN:
+        q = 45 + 22 * t
+        out["tracks"].append({"name": name, "pattern": o[q] + 1, "mute": bool(o[q + 2]),
+                              "solo": bool(o[q + 3]), "meter": min(127, o[q + 13]),
+                              "step": None if o[q + 16] == 255 else o[q + 16], "steps": o[q + 17]})
+    return out
+
+
+def sloop3_live(link) -> dict:
+    """ask SLOOP 3's LIVE op 0 (read only: the state, nothing is pressed or set). sloop3.Sloop3Error / ValueError"""
+    from . import sloop3 as S3
+    with S3.Client(link, timeout=1.0) as c:
+        return parse_sloop3_live(c.ask(S3.Cmd.LIVE, bytes([0, 0, 0, 0])))
+
+
+def sloop2_live_supported(info) -> bool:
+    """SLOOP 2.7 or later (INFO says "FELUCCA SLOOP …" and protocol 12+): only then is command 77 its LIVE. On
+    other Felucca firmwares 77 is something else, and forks of SLOOP (KARMA, ORBIT …) are not asked."""
+    if info is None:
+        return False
+    try:
+        if info.firmware_name != "sloop":
+            return False
+    except Exception:  # noqa: BLE001
+        return False
+    from .sloopbk import info_proto
+    return info_proto(getattr(info, "raw", []) or []) >= 12
+
+
+def parse_sloop2_live(a) -> dict:
+    """SLOOP 2's LIVE answer (firmware editor_live.c; 7-bit bytes, BPM as v14): op, flags, flags 2, BPM, sections,
+    chain, mutes, solos, REC tracks, selected track, punch-in, CPU %, the song, then per track step, length, meter."""
+    a = list(a)
+    if len(a) < 32:
+        raise ValueError("short LIVE answer")
+    bpm = (a[3] | a[4] << 7) - 8192
+    mutes, solo = a[9], a[10]
+    out = {"source": "sloop", "playing": bool(a[1] & 1), "bpm": float(bpm), "bar": None, "beat": None,
+           "cpu_percent": a[14], "cpu_peak": None, "voices": None, "tracks": []}
+    for t in range(4):
+        q = 20 + 3 * t
+        out["tracks"].append({"name": SLOOP2_TRACKS[t], "pattern": None, "mute": bool(mutes >> t & 1),
+                              "solo": bool(solo >> t & 1), "meter": a[q + 2], "step": a[q] if out["playing"] else None,
+                              "steps": a[q + 1]})
+    return out
+
+
+def sloop2_live(link, info) -> dict | None:
+    """SLOOP 2's LIVE op 0 (read only; as the editor's LIVE page asks it: op 0, arg 0). None: not SLOOP 2.7+ (then
+    nothing is sent)."""
+    if not sloop2_live_supported(info):
+        return None
+    return parse_sloop2_live(link.request(SLOOP2_LIVE, [0, 0], timeout=1.0, retries=0))
