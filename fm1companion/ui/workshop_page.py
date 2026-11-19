@@ -372,12 +372,9 @@ class WorkshopPage(QWidget):
         # a firmware that reads the step another way (SLOOP 2: TRACK_STEP 30 with its own layout, 73/74 its drum synth
         # kits) gets nothing written; the song chain (BANK_SONG 74) only goes to Melodee
         gate_button(self.song, self.ctx, "song_chain", SONG_TIP)
-        if gate_button(self.b_send, self.ctx, "pattern_write", ""):
-            self.b_undo.setEnabled(False)
-            self.b_undo.setToolTip(unsupported(self.ctx, "pattern_write"))
-            return
-        self.b_undo.setEnabled(bool(self.undo))
-        self.b_undo.setToolTip("" if not self.undo or self.undo.matches(self.ctx) else self.undo.refusal())
+        why = gate_button(self.b_send, self.ctx, "pattern_write", "")
+        self.b_undo.setEnabled(bool(self.undo))       # (an undo of another FM-1 says so first: "belongs to …")
+        self.b_undo.setToolTip(self.undo.refusal() if self.undo and not self.undo.matches(self.ctx) else why)
 
     def _send(self):
         if not self.chunks:
@@ -478,8 +475,11 @@ class WorkshopPage(QWidget):
         self._dev_changed()
 
     def _undo(self):
-        if not self.undo or not self.ctx.require(self) or unsupported(self.ctx, "pattern_write") or \
-                not self.undo.check(self.ctx, self):
+        if not self.undo or not self.ctx.require(self) or not self.undo.check(self.ctx, self):
+            return
+        why = unsupported(self.ctx, "pattern_write")
+        if why:
+            show_error(self, _("Undo"), why)
             return
         entry = self.undo.peek()
         snaps, song = entry["patterns"], entry["song"]

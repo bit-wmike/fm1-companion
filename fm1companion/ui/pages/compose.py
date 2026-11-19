@@ -75,13 +75,10 @@ class ComposePage(QWidget):
         self.dev_card_title(_("To the FM-1 “{name}”").format(name=name) if name else _("To the FM-1 (none connected)"))
         ok = self.undo.matches(self.ctx)
         # a firmware that reads the step another way (SLOOP 2: TRACK_STEP 30 with its own layout) gets nothing written
-        if gate_button(self.b_write, self.ctx, "pattern_write", WRITE_TIP):
-            self.b_undo.setEnabled(False)
-            self.b_undo.setToolTip(unsupported(self.ctx, "pattern_write"))
-            return
-        self.b_undo.setEnabled(bool(self.undo))
-        self.b_undo.setToolTip(_("Restore the pattern that was overwritten last") if ok or not self.undo
-                               else self.undo.refusal())
+        why = gate_button(self.b_write, self.ctx, "pattern_write", WRITE_TIP)
+        self.b_undo.setEnabled(bool(self.undo))       # (an undo of another FM-1 says so first: "belongs to …")
+        self.b_undo.setToolTip(self.undo.refusal() if self.undo and not ok else
+                               why or _("Restore the pattern that was overwritten last"))
 
     # ------------------------------------------------------------------------------------- Layout
     def _build_left(self) -> QWidget:
@@ -671,8 +668,11 @@ class ComposePage(QWidget):
                      fail_text=lambda m: _("Not read: {error}. Nothing was changed on the FM-1.").format(error=m))
 
     def undo_last(self):
-        if not self.undo or not self.ctx.require(self) or unsupported(self.ctx, "pattern_write") or \
-                not self.undo.check(self.ctx, self):
+        if not self.undo or not self.ctx.require(self) or not self.undo.check(self.ctx, self):
+            return
+        why = unsupported(self.ctx, "pattern_write")
+        if why:
+            show_error(self, _("Undo"), why)
             return
         snap = self.undo.peek()
         if not confirm(self, _("Undo"), _("Set track {track}, pattern {pattern} back to the state before writing?").format(
