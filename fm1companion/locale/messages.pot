@@ -8398,24 +8398,24 @@ msgstr ""
 msgid "M-Flasher did not get to writing: {reason} Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:721
+#: fm1companion/tools/flashjob.py:727
 #, python-brace-format
 msgid "The write did not end verified ({reason}). Do not switch the FM-1 off: it stays in download mode, and writing the flash back again works from there. The backup made just before is {name} – it is this unit's state before the write."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:726
+#: fm1companion/tools/flashjob.py:732
 msgid "M-Flasher was interrupted"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:727
+#: fm1companion/tools/flashjob.py:733
 msgid "M-Flasher did not confirm the write"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:729
+#: fm1companion/tools/flashjob.py:735
 msgid "Written; reading the flash once more to compare …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:739
+#: fm1companion/tools/flashjob.py:745
 msgid "the fresh read differs from the image"
 msgstr ""
 
