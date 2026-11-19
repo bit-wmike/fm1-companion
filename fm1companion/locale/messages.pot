@@ -8585,7 +8585,7 @@ msgstr ""
 
 #: fm1companion/ui/about.py:91 fm1companion/ui/about.py:143
 #: fm1companion/ui/clean_check.py:166 fm1companion/ui/common.py:319
-#: fm1companion/ui/common.py:505 fm1companion/ui/crash.py:258
+#: fm1companion/ui/common.py:505 fm1companion/ui/crash.py:263
 #: fm1companion/ui/linkimport_dialog.py:404 fm1companion/ui/notify.py:124
 #: fm1companion/ui/notify.py:391 fm1companion/ui/pages/discover.py:1147
 #: fm1companion/ui/slicer_dialog.py:145 fm1companion/ui/statusbar.py:159
@@ -10173,7 +10173,7 @@ msgstr ""
 msgid "<b>Untested on a real device.</b> Do not unplug anything while erasing. An aborted run can be resumed with this button."
 msgstr ""
 
-#: fm1companion/ui/clean_check.py:498 fm1companion/ui/crash.py:349
+#: fm1companion/ui/clean_check.py:498 fm1companion/ui/crash.py:354
 #: fm1companion/ui/flash_tools.py:149 fm1companion/ui/pages/midi.py:309
 #: fm1companion/ui/pages/midi.py:662 fm1companion/ui/pages/recovery.py:706
 #: fm1companion/ui/risk_dialog.py:28
@@ -10264,7 +10264,7 @@ msgid "{title} – running …"
 msgstr ""
 
 #: fm1companion/ui/common.py:432 fm1companion/ui/common.py:480
-#: fm1companion/ui/crash.py:343 fm1companion/ui/crash.py:346
+#: fm1companion/ui/crash.py:348 fm1companion/ui/crash.py:351
 msgid "Show details"
 msgstr ""
 
@@ -10280,7 +10280,7 @@ msgstr ""
 msgid "Cancellation requested – takes effect at the next safe point."
 msgstr ""
 
-#: fm1companion/ui/common.py:480 fm1companion/ui/crash.py:346
+#: fm1companion/ui/common.py:480 fm1companion/ui/crash.py:351
 msgid "Hide details"
 msgstr ""
 
@@ -10384,66 +10384,66 @@ msgid "Removed automatically: credentials (tokens, passwords), your home folder,
 msgstr ""
 
 #. Translators: start of the file name of a saved bug report – only letters, digits and hyphens, no spaces
-#: fm1companion/ui/crash.py:207
+#: fm1companion/ui/crash.py:212
 msgid "FM-1-Companion-bug-report"
 msgstr ""
 
-#: fm1companion/ui/crash.py:233 fm1companion/ui/crash.py:235
+#: fm1companion/ui/crash.py:238 fm1companion/ui/crash.py:240
 msgid "Bug report saved"
 msgstr ""
 
-#: fm1companion/ui/crash.py:243
+#: fm1companion/ui/crash.py:248
 #, python-brace-format
 msgid "To send it: open the project's issues page on GitHub ({url}), create a new issue, describe what you did and attach this file. A (free) GitHub account is needed. Nothing is sent automatically."
 msgstr ""
 
-#: fm1companion/ui/crash.py:254
+#: fm1companion/ui/crash.py:259
 msgid "Open the issues page"
 msgstr ""
 
-#: fm1companion/ui/crash.py:256
+#: fm1companion/ui/crash.py:261
 msgid "Show file in folder"
 msgstr ""
 
-#: fm1companion/ui/crash.py:275
+#: fm1companion/ui/crash.py:280
 msgid "Save bug report"
 msgstr ""
 
-#: fm1companion/ui/crash.py:276
+#: fm1companion/ui/crash.py:281
 msgid "ZIP archive (*.zip)"
 msgstr ""
 
-#: fm1companion/ui/crash.py:282
+#: fm1companion/ui/crash.py:287
 #, python-brace-format
 msgid "Bug report saved: {name}"
 msgstr ""
 
-#: fm1companion/ui/crash.py:328
+#: fm1companion/ui/crash.py:333
 msgid "Unexpected error"
 msgstr ""
 
-#: fm1companion/ui/crash.py:331
+#: fm1companion/ui/crash.py:336
 msgid "Something went wrong"
 msgstr ""
 
-#: fm1companion/ui/crash.py:347 fm1companion/ui/pages/help.py:198
+#: fm1companion/ui/crash.py:352 fm1companion/ui/pages/help.py:198
 msgid "Save bug report …"
 msgstr ""
 
-#: fm1companion/ui/crash.py:363
+#: fm1companion/ui/crash.py:368
 msgid "The app keeps running. The error happened while the app was working with the FM-1 – it is not known whether the FM-1 was changed. Check the device; if it does not start or behaves oddly, see the page “Recovery”."
 msgstr ""
 
-#: fm1companion/ui/crash.py:367
+#: fm1companion/ui/crash.py:372
 msgid "The app keeps running. As far as the app can tell, it was not writing to your FM-1 at that moment."
 msgstr ""
 
-#: fm1companion/ui/crash.py:369
+#: fm1companion/ui/crash.py:374
 #, python-brace-format
 msgid "If the error comes back, save a bug report and attach it to a new issue on the project's GitHub issues page ({url}). The report contains logs, versions and settings, no backups, samples or projects. Personal paths, names and credentials are removed as far as the app can recognise them – please look through it before you post it publicly."
 msgstr ""
 
-#: fm1companion/ui/crash.py:386
+#: fm1companion/ui/crash.py:391
 msgid "Saved ✓"
 msgstr ""
 

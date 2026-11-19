@@ -10,7 +10,11 @@
 * The home directory becomes ``~``, the host name ``<rechner>``, the user name ``<benutzer>`` (any
   capitalisation); the folder name after ``/home/``, ``/media/``, ``/run/media/`` is replaced as well.
 * Hardware addresses (MAC, also Bluetooth) become ``<mac>``, Wi-Fi names after ``SSID`` ``<netz>``, and numbers
-  that follow the word "serial" keep only their last four characters.
+  that follow the word "serial" keep only their last four characters. So does every unit ID – the flash chip's
+  16-hex-digit unique ID (M-Flasher's "unit id", m-bootloader's uid, also written with 0x) – wherever it appears in
+  text; SHA-256 values and other longer hex runs stay readable.
+* Keys that name a device's identity (``serial…``, ``unit_id``/``unit id``/``unit_ids``, ``unique_id``, ``uid``,
+  ``chip key``/``chip_key``) keep only the last four characters of their value, at any nesting depth.
 * ``extra`` (literal text -> placeholder) lets a caller remove texts only it knows, e.g. device names.
 
 This is pattern matching, not understanding: file names, project names and free text a user typed can still
@@ -52,8 +56,21 @@ def is_secret_key(key) -> bool:
     return isinstance(key, str) and bool(SECRET_KEY.search(key))
 
 
+_ID_KEY = re.compile(r"serial|unit[\s_-]?ids?$|unique[\s_-]?ids?$|^uids?$|chip[\s_-]?key", re.IGNORECASE)
+# a unit id in text: 16 hex digits, also with 0x, not inside a longer hex run (SHA-256 values stay readable). The
+# spaced/colon byte forms are masked where the app writes them (flight logs: robust._mask_serial, tools/runner); in
+# reports they are left alone, so that SysEx hex dumps in the app log stay readable.
+_UNIT_ID = re.compile(r"(?<![0-9A-Za-z])(?:0[xX])?[0-9A-Fa-f]{16}(?![0-9A-Za-z])")
+
+
 def is_serial_key(key) -> bool:
-    return isinstance(key, str) and "serial" in key.lower()
+    """a key whose value identifies one unit: serial numbers, unit ids, the chip's unique id, the chip key"""
+    return isinstance(key, str) and bool(_ID_KEY.search(key.strip()))
+
+
+def mask_unit_ids(text: str) -> str:
+    """every unit id in a text -> "…" + its last four hex digits"""
+    return _UNIT_ID.sub(lambda m: "…" + re.sub(r"[^0-9A-Fa-f]", "", m.group(0))[-4:], text)
 
 
 def mask_serial(value):
@@ -107,7 +124,7 @@ def redact_text(text: str, home: str | None = None, host: str | None = None, use
     out = _MAC.sub(MAC_PLACEHOLDER, out)
     out = _SSID.sub(lambda m: m.group(1) + NET_PLACEHOLDER, out)
     out = _SERIAL.sub(lambda m: m.group(1) + "…" + m.group(2), out)
-    return out
+    return mask_unit_ids(out)
 
 
 def redact(obj, home: str | None = None, host: str | None = None, user: str | None = None,
@@ -129,5 +146,5 @@ def redact(obj, home: str | None = None, host: str | None = None, user: str | No
 
 
 __all__ = ["REDACTED", "HOST_PLACEHOLDER", "USER_PLACEHOLDER", "MAC_PLACEHOLDER", "NET_PLACEHOLDER",
-           "PATH_PLACEHOLDER", "is_secret_key", "is_serial_key", "mask_serial", "strip_url_secrets", "redact",
+           "PATH_PLACEHOLDER", "is_secret_key", "is_serial_key", "mask_serial", "mask_unit_ids", "strip_url_secrets", "redact",
            "redact_text"]
