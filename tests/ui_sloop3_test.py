@@ -433,9 +433,9 @@ def main():
     state["live"] = True
     inst._install()
     check(state.get("installer1") is True and state.get("live_level") == "bad" and state.get("live_installer") is False
-          and state.get("live_backup") is False and state.get("live_checked") is False and state.get("live_opened") == [],
+          and state.get("live_backup") is True and state.get("live_checked") is False and state.get("live_opened") == [],
           f"the open dialog follows the device: chip 0xB36014 read with an m-bootloader not known on it → installer "
-          f"page and flash copy off ({state})")
+          f"page off, the read-only flash copy on ({state})")
     check(state.get("back_level") == "warn" and state.get("back_checked") is False,
           "… and the confirmation has to be given again afterwards")
     state.clear()
@@ -445,8 +445,8 @@ def main():
     state.clear()
     inst._install()
     check(state.get("level") == "bad" and state.get("installer0") is False and state.get("installer1") is False
-          and state.get("backup") is False,
-          f"newer hardware revision (UCUN chip), m-bootloader not 2.4: no installer page, no flash copy ({state})")
+          and state.get("backup") is True,
+          f"newer hardware revision (UCUN chip), m-bootloader not 2.4: no installer page, the flash copy offered ({state})")
     c.mboot = mboot.Info("2.4-395e6cc", 1, 0x980F, 0x100000, mboot.JEDEC_NEW, "00" * 8)
     state.clear()
     inst._install()

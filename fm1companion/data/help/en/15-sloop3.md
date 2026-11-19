@@ -60,8 +60,8 @@ do not rely on it on stage yet. It is not SLOOP 2.x with a new number – the ap
    and SLOOP 3 3.4.0 or later, at your own risk.** Their owner reports one such FM-1 on which m-bootloader 2.4 and SLOOP
    3 3.4.0 run and saving works (2026-11-19) – done outside this app, one unit. Older m-bootloader versions are risky
    there: its author reports one such FM-1 that did not start any more after 1.1 or 1.2. In MIDI MODE the app reads
-   the chip and m-bootloader's version; for a newer unit it offers the installer page and its flash copy only with
-   m-bootloader 2.4 or later. M-Flasher shows the chip under FLASH CHIP: `0x856014` is the older chip, `0xB36014` the
+   the chip and m-bootloader's version; for a newer unit it offers the installer page only with m-bootloader 2.4 or
+   later (the read-only flash copy always, in MIDI MODE). M-Flasher shows the chip under FLASH CHIP: `0x856014` is the older chip, `0xB36014` the
    newer.
 4. An official M-VAVE update puts M-VAVE's bootloader back. m-bootloader then has to be installed again.
 

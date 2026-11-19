@@ -68,7 +68,8 @@ Nummer – die App behandelt es als eigene Firmware.
    m-bootloader 2.4 und SLOOP 3 3.4.0 laufen und Speichern klappt (2026-11-19) – außerhalb dieser App, ein Gerät.
    Ältere m-bootloader-Versionen sind dort riskant: Sein Autor berichtet von einem solchen FM-1, der nach 1.1 oder 1.2
    nicht mehr startete. Im MIDI MODE liest die App den Chip und die Version von m-bootloader aus; für ein neueres
-   Gerät bietet sie die Installer-Seite und ihre Flash-Kopie nur mit m-bootloader 2.4 oder neuer an. M-Flasher zeigt
+   Gerät bietet sie die Installer-Seite nur mit m-bootloader 2.4 oder neuer an (die
+   Flash-Kopie, die nur liest, im MIDI MODE immer). M-Flasher zeigt
    den Chip unter FLASH CHIP: `0x856014` ist der ältere Chip, `0xB36014` der neuere.
 4. Ein offizielles Update von M-VAVE spielt den Bootloader von M-VAVE zurück. m-bootloader muss danach neu
    installiert werden.

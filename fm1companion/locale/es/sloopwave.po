@@ -412,20 +412,11 @@ msgstr "leído"
 msgid "{firmware}'s LIVE state (read only)"
 msgstr "estado LIVE de {firmware} (solo lectura)"
 
-#: fm1companion/ui/sloop3_ui.py:149
-#, python-brace-format
-msgid "This is a newer FM-1 (flash chip UC25HQ80), and m-bootloader {version} is not known to run on one (2.4 ran on one such unit, by its owner's report). Copy the flash with M-Flasher in USB download mode instead."
-msgstr "Este es un FM-1 más nuevo (chip flash UC25HQ80) y no se sabe que m-bootloader {version} funcione en él (la 2.4 funcionó en un equipo así, según el informe de su dueño). Copia la flash con M-Flasher en modo de descarga USB."
-
-#: fm1companion/ui/sloop3_ui.py:165
+#: fm1companion/ui/sloop3_ui.py:160
 #, python-brace-format
 msgid "This FM-1 is a newer unit (flash chip UC25HQ80) with m-bootloader {version}. m-bootloader 2.4 and SLOOP 3 3.4.0 ran on one such unit, saving included – by its owner's report (2026-11-19), outside this app; the app itself has not installed anything on one. Older versions of either were not, or not safely, tried on one. {how}"
 msgstr "Este FM-1 es un equipo más nuevo (chip flash UC25HQ80) con m-bootloader {version}. m-bootloader 2.4 y SLOOP 3 3.4.0 funcionaron en un equipo así, guardar incluido – según el informe de su dueño (2026-11-19), fuera de esta app; la propia app no ha instalado nada en uno así. Las versiones anteriores de ambos no se probaron en él, o no con éxito. {how}"
 
-#: fm1companion/ui/sloop3_ui.py:171
-msgid "<b>This is a newer FM-1.</b> The app offers the installer page and the flash copy for it only in m-bootloader's MIDI MODE, where it can read m-bootloader's version: 2.4 ran on one such unit (owner's report), older versions are risky there."
-msgstr "<b>Este es un FM-1 más nuevo.</b> La app ofrece la página del instalador y la copia de la flash solo en el MIDI MODE de m-bootloader, donde puede leer su versión: la 2.4 funcionó en un equipo así (informe de su dueño); las versiones anteriores son arriesgadas ahí."
-
-#: fm1companion/ui/sloop3_ui.py:386
-msgid "Nothing was read."
-msgstr "No se leyó nada."
+#: fm1companion/ui/sloop3_ui.py:166
+msgid "<b>This is a newer FM-1.</b> The app offers the installer page for it only in m-bootloader's MIDI MODE, where it can read m-bootloader's version: 2.4 ran on one such unit (owner's report), older versions are risky there. The read-only flash copy is offered in MIDI MODE whatever the version."
+msgstr "<b>Este es un FM-1 más nuevo.</b> La app ofrece la página del instalador solo en el MIDI MODE de m-bootloader, donde puede leer su versión: la 2.4 funcionó en un equipo así (informe de su dueño); las versiones anteriores son arriesgadas ahí. La copia de la flash, que solo lee, se ofrece en MIDI MODE con cualquier versión."

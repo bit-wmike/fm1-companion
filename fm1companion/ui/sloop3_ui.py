@@ -139,16 +139,11 @@ def mboot_support(ctx) -> str:
 
 
 def flash_copy_refusal(ctx) -> str:
-    """why the read-only flash copy is not offered on this device ("" = it is): only in MIDI MODE; on a newer unit
-    only with an m-bootloader version that is known to run on one (2.4: one owner's report)"""
-    from .. import hardware
-    mb = getattr(ctx, "mboot", None)
-    if mb is None:
+    """why the read-only flash copy is not offered on this device ("" = it is): only in m-bootloader's MIDI MODE
+    (0x12 answered). Never by hardware revision or m-bootloader version: reading is harmless, and a whole copy is what
+    a user needs before any repair – the newer-unit rule only guards the installer page (which writes)."""
+    if getattr(ctx, "mboot", None) is None:
         return _("Only in m-bootloader's MIDI MODE (step 3): the app must see “m-bootloader – MIDI MODE”.")
-    if revision(ctx)[0] == hardware.NEW and mboot_support(ctx) != hardware.YES:
-        return _("This is a newer FM-1 (flash chip UC25HQ80), and m-bootloader {version} is not known to run on "
-                 "one (2.4 ran on one such unit, by its owner's report). Copy the flash with M-Flasher in USB "
-                 "download mode instead.").format(version=mb.version)
     return ""
 
 
@@ -169,9 +164,9 @@ def revision_text(ctx) -> tuple[str, str]:
                            version=mb.version, how=how)
     if not plan.blockers and rev == "new" and mb is None:
         return "bad", how + " " + _(
-            "<b>This is a newer FM-1.</b> The app offers the installer page and the flash copy for it only in "
-            "m-bootloader's MIDI MODE, where it can read m-bootloader's version: 2.4 ran on one such unit (owner's "
-            "report), older versions are risky there.")
+            "<b>This is a newer FM-1.</b> The app offers the installer page for it only in m-bootloader's MIDI "
+            "MODE, where it can read m-bootloader's version: 2.4 ran on one such unit (owner's report), older "
+            "versions are risky there. The read-only flash copy is offered in MIDI MODE whatever the version.")
     if plan.blockers or (rev == "new" and m_boot != hardware.YES):
         return "bad", " ".join(plan.blockers) + " " + how + " " + _(
             "<b>Do not install m-bootloader or SLOOP 3 on it for now.</b> The app does not offer the installer page "
@@ -380,10 +375,6 @@ def flash_backup(parent, ctx, opener=None) -> Path | None:
         show_error(parent, _("Flash backup not possible"),
                    _("This works only while the FM-1 is in m-bootloader's MIDI MODE: hold PLAY at power-on, choose "
                      "MIDI MODE, plug in the USB cable."))
-        return None
-    why = flash_copy_refusal(ctx)
-    if why:                                          # (a newer unit with an m-bootloader not known to run on one)
-        show_error(parent, _("Flash backup not possible"), why + " " + _("Nothing was read."))
         return None
     try:
         folder = ctx.device_folder(ctx.settings.backups_dir) / "Flash"

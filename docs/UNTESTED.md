@@ -122,8 +122,8 @@ only**. This table exists a second time in the code (`SLOOP3_HARDWARE` in `fm1co
 FM-1 (flash 0xB36014) m-bootloader 2.4-395e6cc was installed with M-Flasher and boots (its menu shows FLASH B36014),
 SLOOP 3 v3.4.0 was installed with the author's installer page, and a change saved in SLOOP 3 survived a power cycle.
 On that report `data/hardware.json` now counts m-bootloader from 2.4 and SLOOP 3 from 3.4.0 as knowing the newer chip
-(older versions stay risky). So on a known newer unit the app offers its read-only flash copy and the installer page
-in MIDI MODE when m-bootloader answers 2.4 (or later); with an older or unread m-bootloader version both stay off.
+(older versions stay risky). So on a known newer unit the app offers the installer page in MIDI MODE only when m-bootloader
+answers 2.4 (or later); its read-only flash copy is offered in MIDI MODE whatever the revision or version.
 None of this was run by the app on that unit.
 
 The run also showed a profile mix-up: after the owner answered "Which FM-1 is this?" for the SLOOP 3 unit, the profile

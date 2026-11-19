@@ -453,15 +453,15 @@ def _unit(rev, mboot_version=None, jedec=0xB36014):
     return ctx
 
 
-def test_flash_copy_on_a_newer_unit_follows_the_m_bootloader_version():
+def test_flash_copy_is_never_blocked_by_revision_or_version():
+    """reading is harmless: the copy is offered whenever MIDI MODE answered 0x12 – the newer-unit rule only guards the
+    installer page"""
     from fm1companion.ui import sloop3_ui as U
-    assert U.flash_copy_refusal(_unit("new", "2.4-395e6cc")) == ""                  # the reported build
-    assert U.flash_copy_refusal(_unit("new", "2.5-abcdef0")) == ""                  # a later version
-    for v in ("2.0", "1.2", "2.4-other", "?"):                                      # older, another build, unreadable
-        assert "M-Flasher" in U.flash_copy_refusal(_unit("new", v)), v
-    assert U.flash_copy_refusal(_unit("old", "2.0", 0x856014)) == ""                # the earlier unit: as before
-    assert U.flash_copy_refusal(_unit("", "1.3", 0x856014)) == ""
+    for rev, v, jedec in (("new", "2.4-395e6cc", 0xB36014), ("new", "2.0", 0xB36014), ("new", "?", 0xB36014),
+                          ("new", "2.4-other", 0xB36014), ("old", "2.0", 0x856014), ("", "1.3", 0x856014)):
+        assert U.flash_copy_refusal(_unit(rev, v, jedec)) == "", (rev, v)
     assert "MIDI MODE" in U.flash_copy_refusal(_unit("new"))                        # not in MIDI MODE: nothing to read
+    assert U.revision_text(_unit("new", "2.0"))[0] == "bad"                         # … while the installer page stays off
 
 
 def test_installer_page_on_a_newer_unit():
