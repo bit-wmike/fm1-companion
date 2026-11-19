@@ -118,7 +118,7 @@ class FM1Page(QWidget):
         self.live_state = QLabel("")
         top.addWidget(self.live_state)
         ll.addLayout(top)
-        lf = QFormLayout()
+        lf = self.live_form = QFormLayout()
         ll.addLayout(lf)
         self.cpu = _bar()
         lf.addRow(_("Audio CPU:"), self.cpu)
@@ -475,6 +475,21 @@ class FM1Page(QWidget):
         if self.meters_title is not None:
             self.meters_title.setVisible(on)
 
+    MELODEE_ONLY = ("Überlast", "Zweiter Kern", "Rechenzeit", "USB-Audio-Fehler", "Speichertest")  # i18n: ignore
+
+    def _rows_for(self, sloop: bool, voices: bool = True):
+        """SLOOP's LIVE state has no memory, cache or audio-block values (Melodee's AUDIO_STATS has no transport):
+        rows that cannot be filled are hidden instead of showing “–”"""
+        def show(field, on):
+            field.setVisible(on)
+            lab = self.live_form.labelForField(field)
+            if lab is not None:
+                lab.setVisible(on)
+        for w in (self.ram, self.cache, *(self.f["L" + k] for k in self.MELODEE_ONLY)):
+            show(w, not sloop)
+        show(self.f["LTransport"], sloop)
+        show(self.f["LStimmen"], not sloop or voices)
+
     def _show_sloop_live(self, a: dict):
         """SLOOP 3's or SLOOP 2's LIVE state in the same box (what they do not report stays “–”)"""
         cpu, peak = a.get("cpu_percent") or 0, a.get("cpu_peak")
@@ -491,6 +506,7 @@ class FM1Page(QWidget):
             pos = " · " + _("bar {bar}.{beat}").format(bar=a["bar"] + 1, beat=(a.get("beat") or 0) + 1)
         self.f["LTransport"].setText((_("playing") if a.get("playing") else _("stopped")) + " · " +
                                      _("{bpm} BPM").format(bpm=f"{a.get('bpm', 0):g}") + pos)
+        self._rows_for(True, a.get("voices") is not None)
         tracks = a.get("tracks") or []
         self.f["LPro Spur"].setText(" · ".join(  # i18n: ignore
             f"{t['name']}: " + ", ".join(x for x in (
@@ -519,6 +535,7 @@ class FM1Page(QWidget):
             self._show_sloop_live(a)
             return
         self._meters_visible(False)
+        self._rows_for(False)
         if not a:
             empty_text = empty_text or _("no audio values with this firmware")
             for k in LIVE_ROWS:

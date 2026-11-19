@@ -1105,13 +1105,14 @@ class BackupsPage(QWidget):
 
     # ------------------------------------------------- flash backups
     def _flash_box(self) -> QWidget:
-        g = QGroupBox(_("Flash backups (m-bootloader's MIDI MODE)"))
+        g = self.flash_box = QGroupBox(_("Flash backups (m-bootloader's MIDI MODE)"))
         v = QVBoxLayout(g)
         self.flash_tree = QTreeWidget()
         self.flash_tree.setHeaderLabels([_("Date"), _("Device"), _("Size"), _("Flash chip"), _("Check"), _("File")])
         self.flash_tree.setRootIsDecorated(False)
         self.flash_tree.setSortingEnabled(True)
         self.flash_tree.setMinimumHeight(90)
+        self.flash_tree.setMaximumHeight(170)            # (a few rows; the data backups above keep the room)
         v.addWidget(self.flash_tree)
         row = QHBoxLayout()
         b = QPushButton(icon("folder-open"), _("Show in folder"))
