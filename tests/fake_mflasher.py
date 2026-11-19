@@ -25,7 +25,8 @@ State: the JSON file named by FAKE_MFLASHER_STATE (all keys optional):
                      the plan) | "warning" (a WARNING line) | "slow" (3 s before the prompt) | "hang" |
                      "write-fail" (second write does not read back) | "killed-in-write" (SIGKILL during the write) |
                      "no-done" (writes, but no "Done" line) | "other-unit-plan" (as M-Flasher plans another unit's
-                     backup: factory range left out, with its warning)
+                     backup: factory range left out, with its warning) | "drift" (one byte in sector 0 changed
+                     since the app's backup: same plan, but M-Flasher's own backup differs)
             download-mode: "never" (the unit does not come back within 20 s)
   version   what --version prints (default "0.12.1")
 Every call is appended to the state's "calls" list; what came on stdin at a prompt goes to "answers"; every sector
@@ -163,6 +164,8 @@ def session(st: dict, cmd: str, dev: str, fault: str):
     if cmd == "restore" and fault == "other-chip":
         flash = 0xB36014 if flash == 0x856014 else 0x856014
     img = load_image(st)
+    if cmd == "restore" and fault == "drift":         # the flash changed since the app's backup, inside sector 0
+        img[0x10] ^= 0xFF
     print(f"Connecting to {dev}")
     print("Starting the M-Flasher loader 1.3")
     print(f"Flash chip 0x{flash:06X} ({'old' if flash == 0x856014 else 'new'})")

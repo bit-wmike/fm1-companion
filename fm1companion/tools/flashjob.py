@@ -714,9 +714,15 @@ def _restore_locked(job: Job, image: Path, side: dict, data: bytes, confirm) -> 
             same = hashlib.sha256(q.read_bytes()).hexdigest() == saved.sha256
             job.ev("auto-backup", f"M-Flasher's own backup {'equals' if same else 'DIFFERS from'} the one made "
                                   f"before")
-            if not same:
-                auto = q                          # (kept: the flash changed in between – should never happen)
-    if auto is None:
+            if not same:                          # (the flash changed in between – should never happen): kept
+                try:
+                    auto = job.folder / f"m-flasher-auto-{q.name}"
+                    q.replace(auto)
+                    if q.with_suffix(".json").exists():
+                        q.with_suffix(".json").replace(auto.with_suffix(".json"))
+                except OSError:
+                    auto = q
+    if auto is None or auto.parent != staging:
         shutil.rmtree(staging, ignore_errors=True)
     failed = _("The write did not end verified ({reason}). Do not switch the FM-1 off: it stays in download "
                "mode, and writing the flash back again works from there. The backup made just before is {name} "

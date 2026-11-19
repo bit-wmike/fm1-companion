@@ -326,6 +326,17 @@ def test_restore_writes_back_after_backup_gate_and_verify(env):
     assert not list(env.backups.rglob(".m-flasher-*"))
 
 
+def test_m_flashers_own_backup_is_kept_when_it_differs(env):
+    old = make_backup(env)
+    change_flash(env)
+    env.set(mode="download", fault_restore="drift")
+    res, _seen = restore(env, old.path)
+    assert res.written and res.verified and res.mflasher_backup is not None
+    assert res.mflasher_backup.parent == old.path.parent and res.mflasher_backup.name.startswith("m-flasher-auto-")
+    log = sorted(env.logs.glob("mflasher-restore-*.txt"))[-1].read_text()
+    assert "DIFFERS from the one made before" in log and not list(env.backups.rglob(".m-flasher-*"))
+
+
 def test_restore_of_an_identical_image_writes_nothing(env):
     old = make_backup(env)
     env.set(mode="midi", calls=[])
