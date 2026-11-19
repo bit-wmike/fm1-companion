@@ -49,17 +49,51 @@ class ProtocolError(Exception):
 # The Felucca family shares the frame and the low command numbers, but not every number means the same everywhere
 # (checked in the firmwares' sources, firmware/src/editor*.c):
 #   30 TRACK_STEP with a step: Felucca's 12-byte step (n, 4 notes, time, flags, vel, hit, acc, high bits, chance) in
-#      Felucca (ed_step_put), Skiff (the same, plus its FLAM / COND / NUDGE bytes after it) and Melodee. SLOOP 2 and
-#      its forks (KARMA …) read bytes 8–10 as lvl / hi / rat (editor.c ed_step_in, protocol v5) once a step has 11
-#      bytes or more: another step. (A step of up to 10 bytes – the first 8 the same everywhere – is not refused.)
+#      Felucca (ed_step_put), Skiff (the same, plus its FLAM / COND / NUDGE bytes after it), JIANT (the same, plus its
+#      ratchet and lane modes) and Melodee. SLOOP 2 and its forks (KARMA …) read bytes 8–10 as lvl / hi / rat
+#      (editor.c ed_step_in, protocol v5) once a step has 11 bytes or more: another step. (A step of up to 10 bytes –
+#      the first 8 the same everywhere – is not refused.)
 #   73 PATTERN and 74 BANK_SONG: Melodee only. On SLOOP 2.5+ and KARMA they are DSYN_GET / DSYN_PUT (the drum synth
-#      kits, editor_dsyn.c), on Felucca 74 is FM6B_BEGIN (the FM6 bank), on Skiff 74 is KIT_GET (the DRUM-X kit).
+#      kits, editor_dsyn.c); on Felucca and JIANT 73 is MENU_SET (a display setting, editor_menu.c) and on Felucca 74 is
+#      FM6B_BEGIN (the FM6 bank); on Skiff 74 is KIT_GET (the DRUM-X kit).
 # SLOOP 3 speaks no Felucca command at all (its own frame, 7D 53 33). Unknown firmwares get none of these.
-STEP12_FIRMWARES = frozenset({"melodee", "felucca", "skiff"})
+#
+# A plain "FELUCCA v…" INFO does not prove Felucca: SLOOP's forks built with --release answer "FELUCCA 0.9 BETA" too
+# (fwfamily). What does: the tags Felucca's INFO carries after NTRK and CHAIN_ROWS (editor.c ED_INFO) – "motion +
+# chance" (4D 01 …, Melodee 4D 02 …), the step's chance byte the 12-byte step ends with. Felucca has sent it since 1.0,
+# Skiff and JIANT send it too; SLOOP's INFO ends with NTRK and its protocol byte and has no tags. So "felucca", "skiff"
+# and "jiant" count only with that tag (gate_name); without it they are an unknown fork: refused.
+STEP12_FIRMWARES = frozenset({"melodee", "felucca", "skiff", "jiant"})
 STEP12_FROM = 11                  # step bytes from which SLOOP 2 (editor.c ed_step_in: na >= 11) reads them its own way
 MELODEE_FIRMWARES = frozenset({"melodee"})
 FEATURE_FIRMWARES = {"pattern_write": STEP12_FIRMWARES, "pattern_banks": MELODEE_FIRMWARES,
                      "song_chain": MELODEE_FIRMWARES}
+NEEDS_TAG = frozenset({"felucca", "skiff", "jiant"})
+UNPROVEN = "unproven-felucca"     # a gate name: answers as Felucca, but without Felucca's INFO tags
+
+
+def has_chance_tag(info) -> bool:
+    """INFO carries Felucca's "motion + chance" tag (4D 01/02 …) after its track count"""
+    raw = list(getattr(info, "raw", []) or [])
+    try:
+        r = Reader(raw)
+        r.s()
+        ne = r.b()
+        r.i += 4
+        for _i in range(ne):
+            r.s()
+        tail = raw[r.i + 1:]                           # (after NTRK)
+    except ProtocolError:
+        return False
+    return any(tail[i] == 0x4D and tail[i + 1] in (1, 2) for i in range(len(tail) - 3))
+
+
+def gate_name(info) -> str:
+    """the name the command gate goes by: Info.firmware_name, but a Felucca-like name only with Felucca's tags"""
+    name = info.firmware_name
+    if name in NEEDS_TAG and not has_chance_tag(info):
+        return UNPROVEN
+    return name
 
 
 def supports(firmware: str | None, feature: str) -> bool:
@@ -82,7 +116,8 @@ def command_refusal(firmware: str | None, cmd: int, args=()) -> str:
 def unsupported_text(feature: str) -> str:
     """the tooltip / message for a button whose command this firmware does not have"""
     if feature == "pattern_write":
-        return _("This firmware does not support writing patterns from the app (Melodee, Felucca and Skiff do).")
+        return _("This firmware does not support writing patterns from the app (Melodee, Felucca, Skiff and JIANT "
+                 "do).")
     if feature == "pattern_banks":
         return _("This firmware does not support choosing a pattern from the app (only Melodee does).")
     return _("This firmware does not support the song chain from the app (only Melodee does).")

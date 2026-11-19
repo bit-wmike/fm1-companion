@@ -353,7 +353,8 @@ class DeviceContext(QObject):
         """the running firmware as the device itself names it (protocol.Info.firmware_name, "sloop3", "" unknown) –
         what decides which commands the app may send (protocol.supports), never a profile's or the user's choice"""
         if self.info:
-            return self.info.firmware_name
+            from ..protocol import gate_name
+            return gate_name(self.info)
         return "sloop3" if getattr(self, "sloop3", None) is not None else ""
 
     def unsupported(self, feature: str) -> str:
@@ -572,7 +573,8 @@ class DeviceContext(QObject):
             return                          # outdated: a different device by now (or reconnected)
         self.info = info
         if self.link is not None:
-            self.link.firmware = info.firmware_name     # (what the link may send: transport.Link.request)
+            from ..protocol import gate_name
+            self.link.firmware = gate_name(info)        # (what the link may send: transport.Link.request)
         self.identity = (getattr(link, "hs_identity", "") if link is not None else getattr(self, "_hs_identity", "")) \
             or self.identity
         self._assign_profile()
