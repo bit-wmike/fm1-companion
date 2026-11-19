@@ -7895,26 +7895,26 @@ msgstr ""
 msgid "no kernel log"
 msgstr ""
 
-#: fm1companion/tools/runner.py:76
+#: fm1companion/tools/runner.py:75
 #, python-brace-format
 msgid "M-Flasher is not available for this computer ({machine}): it is built for 64-bit ARM (Raspberry Pi OS 64-bit) and for x86-64 PCs only. On a Raspberry Pi with the 32-bit system the recovery tools on this page still work."
 msgstr ""
 
-#: fm1companion/tools/runner.py:83
+#: fm1companion/tools/runner.py:82
 msgid "M-Flasher is not bundled with this installation (a source checkout?). Run tools/fetch_tools.py once, or install the app from its .deb or .run package."
 msgstr ""
 
-#: fm1companion/tools/runner.py:85 fm1companion/tools/runner.py:118
-#: fm1companion/tools/runner.py:151
+#: fm1companion/tools/runner.py:84 fm1companion/tools/runner.py:117
+#: fm1companion/tools/runner.py:150
 msgid "The bundled M-Flasher did not pass its checksum test, so the app does not run it. Reinstall the app."
 msgstr ""
 
-#: fm1companion/tools/runner.py:92 fm1companion/tools/runner.py:95
-#: fm1companion/tools/runner.py:97
+#: fm1companion/tools/runner.py:91 fm1companion/tools/runner.py:94
+#: fm1companion/tools/runner.py:96
 msgid "This M-Flasher command is not available in the app."
 msgstr ""
 
-#: fm1companion/tools/runner.py:127
+#: fm1companion/tools/runner.py:126
 #, python-brace-format
 msgid "M-Flasher waits: {reason}"
 msgstr ""
