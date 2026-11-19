@@ -237,16 +237,39 @@ def main() -> int:
     # If this is left to the cleanup when leaving the function, Python destroys the QApplication
     # before the window -> crash (signal 11) on exit, reliably with QtWebEngine.
     holder.clear()
+    teardown(app, w)
+    del w
+    return rc
+
+
+def teardown(app, w) -> None:
+    """After app.exec(): delete the window for real, then the QApplication – before main() returns.
+
+    deleteLater() alone is not enough here: outside the event loop Qt dispatches DeferredDelete only when it is
+    asked for by type (sendPostedEvents(None, 0) skips it), so the window with its ~1900 widgets used to survive
+    until Python's exit. PyQt's own atexit handler then walks every wrapper while the QApplication still lives
+    (a closure – here the FM1C_AUTOQUIT_MS timer – is enough to keep it alive) and deletes the Python-owned
+    objects one by one; their destructors change the wrapper map it is walking -> sip_api_get_address() on a
+    stale wrapper, signal 11 in about 1 of 5 quits (test_appstart). Deleting both here leaves that handler
+    nothing to do."""
+    from PyQt6 import sip
+    from PyQt6.QtCore import QEvent
     try:
         w.shutdown()
         w.deleteLater()
-        del w
         app.processEvents()
-        app.sendPostedEvents(None, 0)
+        app.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
+        if not sip.isdeleted(w):
+            sip.delete(w)
         app.processEvents()
+        app.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
     except Exception:  # noqa: BLE001 – quitting must never fail on an exception
         pass
-    return rc
+    try:                                       # (the web profile is a child of the app: its pages are gone by now)
+        if not sip.isdeleted(app):
+            sip.delete(app)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 if __name__ == "__main__":
