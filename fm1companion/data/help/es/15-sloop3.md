@@ -19,6 +19,23 @@ con otro número: la app lo trata como un firmware propio.
   [Firmware+](app://page/firmware) › SLOOP 3 › «Copiar ahora toda la flash». La app solo lee y compara su copia con
   la suma de comprobación que calcula el propio chip flash.
 
+## Su proyecto en la app
+
+SLOOP 3 guarda **un proyecto** en el FM-1. La app lo lee igual que la copia de seguridad, solo lectura:
+
+* [Vista de proyecto](app://page/project_view) › «Leer del FM-1» lo muestra con «música en curso» (tal como suena
+  ahora, también los cambios sin guardar) o el proyecto 1 (el guardado en el FM-1): pistas, los 8 patrones por pista
+  con sus notas, la canción, el tempo y el swing. Ahí puedes escucharlo y exportarlo como archivo MIDI (la batería en
+  el canal 10), como CSV o como JSON. «Abrir archivo de proyecto …» también abre un `.s3p` del editor de SLOOP 3, una
+  copia `.s3b` del editor o un `sloop3-backup`.
+* [Proyectos](app://page/projects) lo trae a la biblioteca como archivo `.s3p`, el mismo archivo que guarda y abre la
+  pestaña Projects del editor. La biblioteca muestra su tempo y su duración; «Añadir archivo …» admite archivos `.s3p`
+  y `.s3b`, «Guardar como archivo …» deja una copia donde quieras.
+* **Llevar un proyecto al FM-1 aún no está en la app.** Usa para ello la pestaña Projects del editor.
+* No suenan en la escucha previa ni en la exportación MIDI: los fills, el arpegiador, la armonía y el strum, los
+  bloqueos de parámetro (aparecen en el JSON) y los sonidos propios de los patrones. Un proyecto de un SLOOP 3 más
+  nuevo que 3.4.0 no se abre: la app lo dice en vez de adivinar.
+
 ## Qué no hace
 
 * **Tus samples no están en un `sloop3-backup`.** SLOOP 3 no tiene ningún comando para entregarlos. Están en una
@@ -26,7 +43,7 @@ con otro número: la app lo trata como un firmware propio.
 * **La app no instala SLOOP 3 ni instala m-bootloader.** Explica el camino y abre la página del instalador del autor
   en tu navegador.
 * **Sin copia automática** para SLOOP 3: con una beta, la app solo lee cuando tú lo pides.
-* El Studio no tiene gemelo de SLOOP 3. Las demás páginas del dispositivo (proyectos, presets, samples) hablan el
+* El Studio no tiene gemelo de SLOOP 3. Las demás páginas del dispositivo (presets, samples) hablan el
   protocolo de editor de Felucca, que SLOOP 3 no tiene: usa su editor.
 * Grabar un sample con el micrófono no está disponible en el editor incluido; arrastra un archivo en su lugar.
 

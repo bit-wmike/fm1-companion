@@ -849,6 +849,21 @@ def device_tag(ctx) -> tuple[str, str, str]:
     return (prof.id if prof else "", port.key if port else "", name)
 
 
+def unsupported(ctx, feature: str) -> str:
+    """"" if the connected FM-1's firmware does this (protocol.supports) or nothing is connected, else the tooltip
+    for the disabled button ("This firmware does not support …")"""
+    fn = getattr(ctx, "unsupported", None)
+    return fn(feature) if callable(fn) else ""
+
+
+def gate_button(btn, ctx, feature: str, tooltip: str, enabled: bool = True) -> str:
+    """enable btn only where the firmware has the feature; the tooltip says why not. -> the refusal ("" = fine)"""
+    why = unsupported(ctx, feature)
+    btn.setEnabled(enabled and not why)
+    btn.setToolTip(why or tooltip)
+    return why
+
+
 def same_device(a: tuple, b: tuple) -> bool:
     if a[0] or b[0]:
         return a[0] == b[0]

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Project view: view and export Melodee projects from backups, project files or directly from the FM-1."""
+"""Project view: view and export Melodee and SLOOP 3 projects from backups, project files or directly from the FM-1."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -42,9 +42,9 @@ class ProjectView(QWidget):
         self.source = ""
         self.source_note = ""
         lay = QVBoxLayout(self)
-        lay.addWidget(heading(_("Project View"), _("View and listen to Melodee projects (on the FM-1 with its own "
-                                                   "sounds or on the computer) and export them as a MIDI file for "
-                                                   "Audacity, LMMS, Ardour or MuseScore.")))
+        lay.addWidget(heading(_("Project View"), _("View and listen to Melodee, SLOOP and SLOOP 3 projects (on the FM-1 "
+                                                   "with its own sounds or on the computer) and export them as a MIDI "
+                                                   "file for Audacity, LMMS, Ardour or MuseScore.")))
         self.live_tag = None                       # (profile ID, port, name) when a device's running music is open
         self.live_slot = None
         open_card = Card(_("1 · Open project"))
@@ -52,7 +52,8 @@ class ProjectView(QWidget):
         top.addWidget(button(_("Open backup …"), ("document-open",), slot=self.open_backup,
                              tooltip=_("Open a backup from ~/FM-1/Backups (all projects in it) – Ctrl+O")))
         top.addWidget(button(_("Open project file …"), ("document-open-folder", "folder"), slot=self.open_project,
-                             tooltip=_("Open a .fm1proj file from the project library")))
+                             tooltip=_("Open a project file: .fm1proj from the project library, or a SLOOP 3 "
+                                       "project (.s3p) or editor backup (.s3b)")))
         sep = QLabel("  " + _("or live from the FM-1:"))
         sep.setProperty("role", "muted")
         top.addWidget(sep)
@@ -218,9 +219,10 @@ class ProjectView(QWidget):
                       live_tag=self.live_tag)
 
     def _update_song_row(self):
-        from ..common import device_tag, same_device
+        from ..common import device_tag, same_device, unsupported
         live = bool(self.live_tag and self.live_slot == 0 and self.prj and self.prj.ok and self.prj.song and
-                    getattr(self.ctx, "connected", False) and same_device(self.live_tag, device_tag(self.ctx)))
+                    getattr(self.ctx, "connected", False) and same_device(self.live_tag, device_tag(self.ctx)) and
+                    not unsupported(self.ctx, "song_chain"))     # (BANK_SONG 74: Melodee's; SLOOP 2's DSYN_PUT)
         self.song_row.setVisible(live)
         if live:
             self.song_from.setMaximum(max(1, len(self.prj.song)))
@@ -228,6 +230,11 @@ class ProjectView(QWidget):
     def device_song(self):
         """running music: the FM-1 plays its own song (BANK_SONG start) – no flash access."""
         if not self.ctx.require(self):
+            return
+        from ..common import unsupported
+        why = unsupported(self.ctx, "song_chain")
+        if why:
+            self.player_bar.status.setText(why)
             return
         from ... import playback as P
         self.player_bar.stop(quiet=True)
@@ -260,6 +267,11 @@ class ProjectView(QWidget):
 
     def device_stop(self):
         if not self.ctx.require(self):
+            return
+        from ..common import unsupported
+        why = unsupported(self.ctx, "song_chain")
+        if why:
+            self.player_bar.status.setText(why)
             return
         from ... import playback as P
         self.ctx.job(self, _("Stop FM-1"), lambda w, link: P.transport_stop(link), dialog=False,
@@ -318,7 +330,7 @@ class ProjectView(QWidget):
     def open_project(self, path: str | None = None):
         if not path:
             path, _filter = QFileDialog.getOpenFileName(self, _("Open project file"), str(start_dir("Projekte")),  # i18n: ignore
-                                                        _("FM-1 project (*.fm1proj)"))
+                                                        _("FM-1 projects (*.fm1proj *.s3p *.s3b)"))
             if not path:
                 return
         self._load_path(Path(path))
@@ -352,6 +364,9 @@ class ProjectView(QWidget):
             self._load_path(Path(path))
 
     def read_device(self):
+        if getattr(self.ctx, "sloop3", None) is not None and getattr(self.ctx, "midi_connected", False):
+            self._read_sloop3()
+            return
         if not self.ctx.require(self):
             return
         from ... import backup
@@ -364,14 +379,10 @@ class ProjectView(QWidget):
                 show_error(self, _("SLOOP only has 4 slots"), _("SLOOP saves projects as sections A–D (slots 1–4). "
                                                                 "Please choose 0 (running project) or 1–4."))
                 return
-            show_error(self, _("SLOOP projects"), _("The project view only knows the Melodee format. SLOOP projects are "
-                                                    "built differently – to view them use the SLOOP web editor (page "
-                                                    "“Editor”). Backing up works as usual via backups."))
-            return
-        if key and key not in ("melodee", "skiff", "felucca"):
+        if key and key not in ("melodee", "skiff", "felucca", "sloop"):
             from ..device import firmware_name
             show_error(self, _("Other firmware"), _("{firmware} has no projects the app can read. The project view shows "
-                                                    "Melodee projects.").format(
+                                                    "projects of Melodee, SLOOP 2.6 and later, and SLOOP 3.").format(
                 firmware=firmware_name(key) or _("This firmware")))
             return
 
@@ -416,6 +427,37 @@ class ProjectView(QWidget):
                                            "was changed on the FM-1.").format(
                          what=_("Running music") if not slot else _("Project {n}").format(n=slot), device=dev, n=len(d)))
 
+    def _read_sloop3(self):
+        """SLOOP 3: its one project, read with the same READ the backup uses (read only) – the running music (as it
+        plays, unsaved changes too) or, with a slot of 1 or more, the project saved on the FM-1"""
+        from ... import projects, sloop3 as S3
+        slot = self.slot.value()
+        kind = S3.KIND_NOW if slot == 0 else S3.KIND_PROJECT
+        if slot > 1:
+            show_error(self, _("SLOOP 3 keeps one project"), _("SLOOP 3 keeps one project on the FM-1. Choose "
+                                                                 "“running music” (as it plays now) or project 1 (the "
+                                                                 "one saved on the FM-1)."))
+            return
+        from ..common import device_tag
+        dev = device_name(self.ctx) or "FM-1"
+        what = _("Running music") if kind == S3.KIND_NOW else _("Project saved on the FM-1")
+
+        def work(w, link):
+            w.log.emit(_("Reading …"))
+            return projects.fetch_sloop3(link, kind)
+
+        def done(data):
+            title = _("{what} from “{device}”").format(what=what, device=dev)
+            self.source = title
+            self.source_note = (_("read live from <b>“{device}”</b>").format(device=dev) + f" ({self.ctx.sloop3.label})"
+                                + " " + _("at {time} – {what}").format(time=time.strftime('%H:%M'), what=what))
+            self.live_tag, self.live_slot = device_tag(self.ctx), None      # (no song start from the app: Melodee's)
+            self.set_items([(title, PF.decode(data, "sloop3"))])
+        self.ctx.job(self, _("Read project from “{device}”").format(device=dev), work, on_done=done,
+                     done_text=lambda d: _("{what} read from “{device}” ({n} bytes) and opened – only viewed, nothing "
+                                           "was changed on the FM-1.").format(what=what, device=dev, n=len(d)),
+                     fail_text=lambda m: _("Not read: {error}. Nothing was changed on the FM-1.").format(error=m))
+
     def set_items(self, items):
         self.items = items
         self.choice.blockSignals(True)
@@ -454,6 +496,8 @@ class ProjectView(QWidget):
         warn = ("<br><i>" + _("Note: {warnings}").format(warnings='; '.join(prj.warnings)) + "</i>") if prj.warnings else ""
         name = f"<b>{prj.name}</b> · " if prj.name else ""
         src = ("<br>" + _("Source: {source}").format(source=self.source_note)) if getattr(self, "source_note", "") else ""
+        if getattr(prj, "note", ""):
+            warn += "<br><i>" + _("Note: {warnings}").format(warnings=prj.note) + "</i>"
         self.info.setText(name + ngettext("{bpm} BPM · Swing {swing} · {n} track · Format {format}",
                                           "{bpm} BPM · Swing {swing} · {n} tracks · Format {format}",
                                           len(prj.used_tracks)).format(bpm=prj.bpm, swing=prj.swing,
@@ -486,7 +530,7 @@ class ProjectView(QWidget):
                         sid = prj.pattern_sounds.get((t.index, b), 0)
                         it.setToolTip(_("{track}, pattern {pattern}: {notes} notes/hits, {length} steps, {div}").format(
                             track=t.name, pattern=b + 1, notes=p.note_count, length=p.length,
-                            div=PF.enum_name(PF.P_SDIV, p.div)) + (" – " + _("active") if b == t.active else "")
+                            div=p.div_name) + (" – " + _("active") if b == t.active else "")
                                       + (" – " + _("own preset: {name}").format(name=prj.sound_name(sid)) if sid else ""))
                     elif b == t.active:
                         it.setText("●")
@@ -541,6 +585,14 @@ class ProjectView(QWidget):
         n_p = sum(len(r.punches) for r in prj.song)
         if not (n_p or prj.sounds):
             return ""
+        if prj.format.startswith("SLOOP 3"):
+            return "<br><i>" + ngettext(
+                "{n} pattern has a sound of its own ({names}) – shown in the pattern overview; preview and MIDI export "
+                "use the track's sound.",
+                "{n} patterns have a sound of their own ({names}) – shown in the pattern overview; preview and MIDI "
+                "export use the track's sound.", len(prj.sounds)).format(
+                n=len(prj.sounds), names=", ".join(x.name for x in prj.sounds[:4]) + (" …" if len(prj.sounds) > 4
+                                                                                       else "")) + "</i>"
         parts = ([ngettext("{n} punch effect", "{n} punch effects", n_p).format(n=n_p)] if n_p else []) + \
                 ([ngettext("{n} song/pattern preset ({names})", "{n} song/pattern presets ({names})",
                            len(prj.sounds)).format(n=len(prj.sounds), names=', '.join(x.name for x in prj.sounds[:4])
@@ -567,7 +619,7 @@ class ProjectView(QWidget):
             n=len(p.recorded)) if p.recorded else ""
         state = "" if p.used else " – " + _("empty")
         self.roll_title.setText(f"{t.name} · Pattern {b + 1}{state} · {p.length} Steps · "
-                                f"{PF.enum_name(PF.P_SDIV, p.div)} · Swing {p.swing}{extra}")
+                                f"{p.div_name} · Swing {p.swing}{extra}")
 
     # ---------------------------------------------------------------------------------------- Export
     def options(self) -> ME.Options:
@@ -687,6 +739,6 @@ def _make(ctx, window):
 
 PAGE = PageSpec(key="project_view", title=_("Project View"), group="musik", factory=_make,
                 icons=("view-media-playlist", "audio-midi", "document-preview"), order=20,
-                description=_("view Melodee projects and export them as MIDI"),
+                description=_("view Melodee, SLOOP and SLOOP 3 projects and export them as MIDI"),
                 keywords=("projekt", "midi", "export", "piano roll", "song", "pattern", "daw", "audacity",
                           "project", "view"))

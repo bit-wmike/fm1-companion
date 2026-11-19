@@ -17,6 +17,22 @@ do not rely on it on stage yet. It is not SLOOP 2.x with a new number – the ap
   [Firmware+](app://page/firmware) › SLOOP 3 › “Back up the whole flash now”. The app only reads, and compares its copy
   with the checksum the flash chip itself computes.
 
+## Its project in the app
+
+SLOOP 3 keeps **one project** on the FM-1. The app reads it the way the backup does – read only:
+
+* [Project View](app://page/project_view) › “Read from FM-1” shows it with “running music” (as it plays now, unsaved
+  changes too) or project 1 (the one saved on the FM-1): tracks, the 8 patterns per track with their notes, the song,
+  tempo and swing. Listen to it there and export it as a MIDI file (the drums on channel 10), as CSV or as JSON.
+  “Open project file …” also opens a `.s3p` from SLOOP 3's editor, an `.s3b` editor backup or a `sloop3-backup`.
+* [Projects](app://page/projects) fetches it into the library as a `.s3p` file – the same file the editor's
+  Projects tab saves and opens. The library lists it with its tempo and length; “Add file …” takes `.s3p` and `.s3b`
+  files, “Save as file …” puts a copy wherever you like.
+* **Putting a project onto the FM-1 is not in the app yet.** Use the editor's Projects tab for that.
+* Not played in the preview and the MIDI export: fills, the arpeggiator, harmony and strum, the parameter locks
+  (they are listed in the JSON) and the patterns' own sounds. A project from a newer SLOOP 3 than 3.4.0 is not opened
+  – the app says so instead of guessing.
+
 ## What it does not do
 
 * **Your samples are not in a `sloop3-backup`.** SLOOP 3 has no command to hand them out. They are in a copy of the
@@ -24,7 +40,7 @@ do not rely on it on stage yet. It is not SLOOP 2.x with a new number – the ap
 * **The app does not install SLOOP 3, and it does not install m-bootloader.** It explains the way and opens the
   author's installer page in your browser.
 * **No automatic backup** for SLOOP 3: on a beta the app reads only when you ask.
-* The Studio has no SLOOP 3 twin. The other device pages (projects, presets, samples) speak the Felucca editor
+* The Studio has no SLOOP 3 twin. The other device pages (presets, samples) speak the Felucca editor
   protocol, which SLOOP 3 does not have – use its editor.
 * Recording a sample from the microphone inside the bundled editor is not available; drop a file instead.
 

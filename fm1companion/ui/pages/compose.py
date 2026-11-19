@@ -12,8 +12,8 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QSizePolicy, QFileDialog, QFo
                              QGridLayout)
 
 from ... import generators as G, midi_import as MI, midiexport as ME, projectfmt as PF
-from ..common import (Card, DeviceUndo, Disclosure, button, confirm, device_tag, flow_row, fs_error_text, heading,
-                      label, notify, run_job, safe_folder, show_error)
+from ..common import (Card, DeviceUndo, Disclosure, button, confirm, device_tag, flow_row, fs_error_text, gate_button,
+                      heading, label, notify, run_job, safe_folder, show_error, unsupported)
 from ..musik_widgets import EditHistory, StepRoll
 from ..playback_bar import PlaybackBar, Source, device_name
 from ..responsive import adaptive_splitter, fit_height, on_narrow
@@ -30,6 +30,9 @@ def _spin(lo, hi, val, suffix="", tip=""):
     if tip:
         s.setToolTip(tip)
     return s
+
+
+WRITE_TIP = _("Reads the pattern first (for undo), then writes and checks by reading back")
 
 
 class ComposePage(QWidget):
@@ -71,9 +74,11 @@ class ComposePage(QWidget):
         name = device_name(self.ctx)
         self.dev_card_title(_("To the FM-1 “{name}”").format(name=name) if name else _("To the FM-1 (none connected)"))
         ok = self.undo.matches(self.ctx)
-        self.b_undo.setEnabled(bool(self.undo))
-        self.b_undo.setToolTip(_("Restore the pattern that was overwritten last") if ok or not self.undo
-                               else self.undo.refusal())
+        # a firmware that reads the step another way (SLOOP 2: TRACK_STEP 30 with its own layout) gets nothing written
+        why = gate_button(self.b_write, self.ctx, "pattern_write", WRITE_TIP)
+        self.b_undo.setEnabled(bool(self.undo))       # (an undo of another FM-1 says so first: "belongs to …")
+        self.b_undo.setToolTip(self.undo.refusal() if self.undo and not ok else
+                               why or _("Restore the pattern that was overwritten last"))
 
     # ------------------------------------------------------------------------------------- Layout
     def _build_left(self) -> QWidget:
@@ -341,8 +346,7 @@ class ComposePage(QWidget):
         self.track.currentIndexChanged.connect(self._fill_patterns)
         self.pattern = QComboBox()
         self._fill_patterns()
-        self.b_write = button(_("Write to pattern"), ("go-up", "document-send"), "primary", self.write,
-                              _("Reads the pattern first (for undo), then writes and checks by reading back"))
+        self.b_write = button(_("Write to pattern"), ("go-up", "document-send"), "primary", self.write, WRITE_TIP)
         self.b_undo = button(_("Undo on the FM-1"), ("edit-undo",), slot=self.undo_last,
                              tooltip=_("Restore the pattern that was overwritten last"))
         self.b_undo.setEnabled(False)
@@ -598,6 +602,10 @@ class ComposePage(QWidget):
         """Read first (for undo and to say whether the pattern is occupied), then confirm, then write."""
         if not self.ctx.require(self):
             return
+        why = unsupported(self.ctx, "pattern_write")
+        if why:
+            show_error(self, _("Write to pattern"), why)
+            return
         k, b = self.track.currentData(), self.pattern.currentData()
         n = self.roll.length
         steps = list(self.roll.steps)
@@ -661,6 +669,10 @@ class ComposePage(QWidget):
 
     def undo_last(self):
         if not self.undo or not self.ctx.require(self) or not self.undo.check(self.ctx, self):
+            return
+        why = unsupported(self.ctx, "pattern_write")
+        if why:
+            show_error(self, _("Undo"), why)
             return
         snap = self.undo.peek()
         if not confirm(self, _("Undo"), _("Set track {track}, pattern {pattern} back to the state before writing?").format(

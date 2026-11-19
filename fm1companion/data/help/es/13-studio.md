@@ -128,8 +128,9 @@ antigua aproximación en el ordenador solo se mantiene cuando no hay gemelo para
 * SLOOP: “Toda la canción hasta el final” reproduce el orden de canción de SLOOP (capa SAVE › SONG MODE; el orden forma parte
   de los ajustes) – si nombra una sección vacía, se reproduce el bucle (hasta el límite de la exportación, como con una
   canción en LOOP). El gemelo tiene un núcleo (MENU › 2ND CORE no tiene efecto), sin audio USB, sin MIDI TRS y sin rescate
-  USB. Un SLOOP más antiguo (p. ej. 2.8.3) funciona con el gemelo 2.8.4, con un aviso. La vista de proyecto aún no lee las
-  secciones de SLOOP (el editor web de SLOOP las muestra).
+  USB. Un SLOOP más antiguo (p. ej. 2.8.3) funciona con el gemelo 2.8.4, con un aviso. La vista de proyecto lee el
+  proyecto en curso de SLOOP y sus secciones A–D (SLOOP 2.6 y posteriores), una a una: sin nudges, ratchets ni orden
+  de secciones.
 * CoralFlower: sin ranuras de proyecto – sus ocho patrones y la canción se reproducen desde el panel del gemelo (SEQ, PLAY)
   o con Play; la música se hace en el panel (CoralFlower no tiene editor). Las cuatro pistas separadas son sus partes:
   acordes, bajo, capa, batería (una pista separada no lleva ni el clic del metrónomo ni el sonido de encendido; la mezcla

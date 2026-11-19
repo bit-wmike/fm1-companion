@@ -10,9 +10,14 @@ from PyQt6.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, 
                              QVBoxLayout, QWidget)
 
 from .. import midi_import as MI, projectfmt as PF
-from .common import DeviceUndo, confirm, device_tag, fmt_size, fs_error_text, heading, icon, run_job, show_error
+from .common import (DeviceUndo, confirm, device_tag, fmt_size, fs_error_text, gate_button, heading, icon, run_job,
+                     show_error, unsupported)
 from .musik_widgets import StepRoll
 from ..i18n import _, ngettext, pgettext
+
+
+SONG_TIP = _("Creates a song on the FM-1 that plays the patterns one after another. The old song chain is read "
+             "first and can be brought back with “Undo”.")
 
 
 class PianoRoll(StepRoll):
@@ -95,8 +100,7 @@ class WorkshopPage(QWidget):
         self.npat.valueChanged.connect(self._npat_suffix)
         self.npat.setToolTip(_("Spread longer files over several consecutive patterns"))
         self.song = QCheckBox(_("Create a song chain for it"))
-        self.song.setToolTip(_("Creates a song on the FM-1 that plays the patterns one after another. The old song "
-                               "chain is read first and can be brought back with “Undo”."))
+        self.song.setToolTip(SONG_TIP)
         self.swing = QSpinBox()
         self.swing.setRange(-1, 100)
         self.swing.setValue(-1)
@@ -191,6 +195,7 @@ class WorkshopPage(QWidget):
         note.setWordWrap(True)
         lay.addWidget(note)
         ctx.changed.connect(self._dev_changed)
+        self._dev_changed()
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
@@ -364,8 +369,12 @@ class WorkshopPage(QWidget):
         self.npat.setSuffix(ngettext(" pattern", " patterns", v))
 
     def _dev_changed(self):
-        self.b_undo.setEnabled(bool(self.undo))
-        self.b_undo.setToolTip("" if not self.undo or self.undo.matches(self.ctx) else self.undo.refusal())
+        # a firmware that reads the step another way (SLOOP 2: TRACK_STEP 30 with its own layout, 73/74 its drum synth
+        # kits) gets nothing written; the song chain (BANK_SONG 74) only goes to Melodee
+        gate_button(self.song, self.ctx, "song_chain", SONG_TIP)
+        why = gate_button(self.b_send, self.ctx, "pattern_write", "")
+        self.b_undo.setEnabled(bool(self.undo))       # (an undo of another FM-1 says so first: "belongs to …")
+        self.b_undo.setToolTip(self.undo.refusal() if self.undo and not self.undo.matches(self.ctx) else why)
 
     def _send(self):
         if not self.chunks:
@@ -377,6 +386,10 @@ class WorkshopPage(QWidget):
                 show_error(self, _("No track chosen"), _("Choose a track of the MIDI file on the left that contains notes."))
             return
         if not self.ctx.require(self):
+            return
+        why = unsupported(self.ctx, "pattern_write")
+        if why:
+            show_error(self, _("Write patterns"), why)
             return
         tr, first, length = self.track.currentData(), self.pattern.currentData(), self.length.value()
         npat = PF.NPAT if tr < PF.NPART else PF.NPAT_MIDI
@@ -393,7 +406,7 @@ class WorkshopPage(QWidget):
         targets = [None] if first is None else list(range(first, first + len(chunks)))
         what = _("the current pattern") if first is None else \
             ", ".join(f"Pattern {b + 1}" for b in targets)
-        song = self.song.isChecked() and first is not None and tr < PF.NPART
+        song = self.song.isChecked() and self.song.isEnabled() and first is not None and tr < PF.NPART
         if song:
             text = _("On the FM-1, <b>track {track}: {what}</b> will be overwritten with {n} steps each and the song "
                      "chain replaced by a chain of these patterns.<br>First the app reads the patterns and the old song "
@@ -463,6 +476,10 @@ class WorkshopPage(QWidget):
 
     def _undo(self):
         if not self.undo or not self.ctx.require(self) or not self.undo.check(self.ctx, self):
+            return
+        why = unsupported(self.ctx, "pattern_write")
+        if why:
+            show_error(self, _("Undo"), why)
             return
         entry = self.undo.peek()
         snaps, song = entry["patterns"], entry["song"]

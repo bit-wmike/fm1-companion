@@ -486,15 +486,18 @@ def flow():
     br.cmp_with.setCurrentIndex(0)
     br.compare()                                      # live state (SLOOP) against a Melodee backup
     check("Nicht vergleichbar" in br.cmp_sum.text(), "live comparison with another firmware refused")
-    # project view: the SLOOP project is explained, reading from the SLOOP device refused without device access
+    # project view: SLOOP 2.6+ projects are read (sloop2proj); the demo's are random bytes with a valid sum, so the
+    # view says why it cannot show them – and reading from the SLOOP device is read only (the backup's commands)
     pv = w.page("project_view")
     w.go("project_view")
     pv.open_backup(str(sp0))
-    check(pv.prj is not None and not pv.prj.ok and "SLOOP-Web-Editor" in pv.info.text(), "SLOOP project: clear explanation")
+    check(pv.prj is not None and not pv.prj.ok and "SLOOP" in pv.info.text() and "beschädigt" in pv.info.text(),
+          "SLOOP project: what is wrong with it, not a crash")
     n_boxes = len(log_boxes)
     pv.slot.setValue(0)
     pv.read_device()
-    check(len(log_boxes) == n_boxes + 1 and "SLOOP" in log_boxes[-1], "read from the SLOOP FM-1: a hint instead of an error")
+    check(until(lambda: "live" in (pv.source_note or "")) and len(log_boxes) == n_boxes and pv.prj is not None,
+          "read from the SLOOP FM-1: opened in the view (read only)")
     w.go("projects")
     check(until(lambda: pp.slots and not pp.reading, 10000) and pp.dev_tree.headerItem().text(0) == "Section"
           and "Section" in pp.dev_info.text(), "Projects page names SLOOP sections")

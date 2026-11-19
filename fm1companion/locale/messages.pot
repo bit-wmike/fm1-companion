@@ -509,8 +509,8 @@ msgstr ""
 #: fm1companion/backup.py:1265 fm1companion/dx7_sources.py:95
 #: fm1companion/fm1open.py:545 fm1companion/presetlib.py:396
 #: fm1companion/samplepacks.py:181 fm1companion/samplepacks.py:271
-#: fm1companion/sloopbk.py:476 fm1companion/ui/pages/project_view.py:392
-#: fm1companion/ui/projects_page.py:319 fm1companion/ui/samplepacks_tab.py:209
+#: fm1companion/sloopbk.py:476 fm1companion/ui/pages/project_view.py:403
+#: fm1companion/ui/projects_page.py:357 fm1companion/ui/samplepacks_tab.py:209
 #: fm1companion/ui/samples_page.py:1307 fm1companion/ui/samples_page.py:1327
 msgid "cancelled"
 msgstr ""
@@ -552,7 +552,7 @@ msgid "Music"
 msgstr ""
 
 #: fm1companion/backup_inspect.py:40 fm1companion/ui/main_window.py:42
-#: fm1companion/ui/projects_page.py:27
+#: fm1companion/ui/projects_page.py:28
 msgid "Projects"
 msgstr ""
 
@@ -661,7 +661,7 @@ msgstr ""
 #: fm1companion/backup_inspect.py:331 fm1companion/flash/texts.py:49
 #: fm1companion/ui/pages/backup_browser.py:420
 #: fm1companion/ui/pages/backup_browser.py:421
-#: fm1companion/ui/pages/project_view.py:469
+#: fm1companion/ui/pages/project_view.py:513
 msgid "yes"
 msgstr ""
 
@@ -727,14 +727,15 @@ msgstr ""
 #: fm1companion/backup_inspect.py:447 fm1companion/backup_inspect.py:503
 #: fm1companion/backup_inspect.py:518 fm1companion/backup_inspect.py:538
 #: fm1companion/backup_inspect.py:619 fm1companion/backup_inspect.py:640
-#: fm1companion/miditools.py:252 fm1companion/projectfmt.py:735
+#: fm1companion/miditools.py:252 fm1companion/projectfmt.py:753
 #: fm1companion/projects.py:43 fm1companion/ui/fm1_page.py:334
 #: fm1companion/ui/pages/backup_browser.py:392
 #: fm1companion/ui/pages/backup_browser.py:579
 #: fm1companion/ui/pages/backup_browser.py:580
-#: fm1companion/ui/pages/project_view.py:568
-#: fm1companion/ui/pages/studio.py:840 fm1companion/ui/projects_page.py:216
-#: fm1companion/ui/samples_page.py:1385 fm1companion/ui/samples_page.py:1387
+#: fm1companion/ui/pages/project_view.py:620
+#: fm1companion/ui/pages/studio.py:840 fm1companion/ui/projects_page.py:237
+#: fm1companion/ui/projects_page.py:396 fm1companion/ui/samples_page.py:1385
+#: fm1companion/ui/samples_page.py:1387
 msgid "empty"
 msgstr ""
 
@@ -816,9 +817,10 @@ msgstr ""
 msgid "Object {id}"
 msgstr ""
 
-#: fm1companion/backup_inspect.py:461 fm1companion/projectfmt.py:804
-#: fm1companion/ui/pages/project_view.py:403
-#: fm1companion/ui/pages/project_view.py:417
+#: fm1companion/backup_inspect.py:461 fm1companion/projectfmt.py:826
+#: fm1companion/ui/pages/project_view.py:414
+#: fm1companion/ui/pages/project_view.py:428
+#: fm1companion/ui/pages/project_view.py:443
 msgid "Running music"
 msgstr ""
 
@@ -828,8 +830,8 @@ msgid "Song section {letter}"
 msgstr ""
 
 #: fm1companion/backup_inspect.py:476 fm1companion/fm1openbk.py:60
-#: fm1companion/projectfmt.py:806 fm1companion/ui/pages/project_view.py:403
-#: fm1companion/ui/pages/project_view.py:417
+#: fm1companion/projectfmt.py:828 fm1companion/ui/pages/project_view.py:414
+#: fm1companion/ui/pages/project_view.py:428
 #: fm1companion/ui/pages/studio.py:652 fm1companion/ui/pages/studio.py:657
 #, python-brace-format
 msgid "Project {n}"
@@ -848,7 +850,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: fm1companion/backup_inspect.py:499 fm1companion/backup_inspect.py:532
-#: fm1companion/backup_inspect.py:567 fm1companion/projectfmt.py:771
+#: fm1companion/backup_inspect.py:567 fm1companion/projectfmt.py:791
 msgid "unknown format"
 msgstr ""
 
@@ -1145,7 +1147,7 @@ msgstr ""
 msgid "The running project is loaded immediately."
 msgstr ""
 
-#: fm1companion/backup_inspect.py:1042 fm1companion/ui/device.py:378
+#: fm1companion/backup_inspect.py:1042 fm1companion/ui/device.py:393
 msgid "unknown firmware"
 msgstr ""
 
@@ -1266,7 +1268,7 @@ msgstr ""
 msgid "Sampler"
 msgstr ""
 
-#: fm1companion/catalog.py:81 fm1companion/ui/pages/compose.py:106
+#: fm1companion/catalog.py:81 fm1companion/ui/pages/compose.py:111
 msgid "Chords"
 msgstr ""
 
@@ -2734,7 +2736,7 @@ msgid "the Felucca loader (ota-FM-1_900 or ota-{product})"
 msgstr ""
 
 #: fm1companion/flash/package.py:116 fm1companion/flash/texts.py:133
-#: fm1companion/projectfmt.py:739
+#: fm1companion/projectfmt.py:757
 msgid "too short"
 msgstr ""
 
@@ -5137,7 +5139,7 @@ msgstr ""
 #: fm1companion/linkimport.py:614 fm1companion/ui/fm1_page.py:164
 #: fm1companion/ui/pages/backup_browser.py:218
 #: fm1companion/ui/pages/discover.py:777 fm1companion/ui/pages/presets.py:97
-#: fm1companion/ui/pages/presets.py:149 fm1companion/ui/projects_page.py:85
+#: fm1companion/ui/pages/presets.py:149 fm1companion/ui/projects_page.py:86
 #: fm1companion/ui/samples_page.py:105
 msgid "Name"
 msgstr ""
@@ -5268,11 +5270,12 @@ msgstr ""
 msgid "{n} notes, range {low}–{high}, about {bars} bars"
 msgstr ""
 
-#: fm1companion/midi_import.py:62 fm1companion/midiexport.py:198
-#: fm1companion/projectfmt.py:240 fm1companion/ui/pages/compose.py:340
+#: fm1companion/midi_import.py:62 fm1companion/midiexport.py:201
+#: fm1companion/projectfmt.py:253 fm1companion/sloop2proj.py:64
+#: fm1companion/sloop3proj.py:459 fm1companion/ui/pages/compose.py:345
 #: fm1companion/ui/pages/soundmodule.py:60
 #: fm1companion/ui/pages/soundmodule.py:470
-#: fm1companion/ui/workshop_page.py:107
+#: fm1companion/ui/workshop_page.py:111
 #, python-brace-format
 msgid "Track {n}"
 msgstr ""
@@ -5378,31 +5381,31 @@ msgid "incomplete song answer"
 msgstr ""
 
 #. Translators: column headers of the CSV export
-#: fm1companion/midiexport.py:231 fm1companion/ui/pages/project_view.py:103
+#: fm1companion/midiexport.py:234 fm1companion/ui/pages/project_view.py:104
 #: fm1companion/ui/pages/voices.py:679
 msgid "Track"
 msgstr ""
 
 #. Translators: column headers of the CSV export
-#: fm1companion/midiexport.py:231
+#: fm1companion/midiexport.py:234
 msgid "Start (quarters)"
 msgstr ""
 
 #. Translators: column headers of the CSV export
-#: fm1companion/midiexport.py:231
+#: fm1companion/midiexport.py:234
 msgid "Length (quarters)"
 msgstr ""
 
-#: fm1companion/midiexport.py:232 fm1companion/ui/pages/compose.py:515
+#: fm1companion/midiexport.py:235 fm1companion/ui/pages/compose.py:519
 msgid "Velocity"
 msgstr ""
 
-#: fm1companion/midiexport.py:232 fm1companion/miditools.py:383
+#: fm1companion/midiexport.py:235 fm1companion/miditools.py:383
 #: fm1companion/ui/pages/midi.py:140 fm1companion/ui/pages/soundmodule.py:183
 msgid "Channel"
 msgstr ""
 
-#: fm1companion/midiexport.py:235
+#: fm1companion/midiexport.py:238
 msgctxt "csv"
 msgid "yes"
 msgstr ""
@@ -6181,132 +6184,132 @@ msgstr ""
 msgid "invalid step"
 msgstr ""
 
-#: fm1companion/projectfmt.py:249
+#: fm1companion/projectfmt.py:262
 msgid "Basic sound"
 msgstr ""
 
-#: fm1companion/projectfmt.py:339
+#: fm1companion/projectfmt.py:354 fm1companion/ui/projects_page.py:562
 msgid "not readable"
 msgstr ""
 
-#: fm1companion/projectfmt.py:341
+#: fm1companion/projectfmt.py:356
 #, python-brace-format
 msgid "“{name}”, "
 msgstr ""
 
-#: fm1companion/projectfmt.py:342
+#: fm1companion/projectfmt.py:357
 #, python-brace-format
 msgid ", song with {n} section"
 msgid_plural ", song with {n} sections"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/projectfmt.py:345
+#: fm1companion/projectfmt.py:360
 #, python-brace-format
 msgid ", {n} punch effect"
 msgid_plural ", {n} punch effects"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/projectfmt.py:346
+#: fm1companion/projectfmt.py:361
 #, python-brace-format
 msgid ", {n} song/pattern preset"
 msgid_plural ", {n} song/pattern presets"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/projectfmt.py:348
+#: fm1companion/projectfmt.py:363
 #, python-brace-format
 msgid "{bpm} BPM, {tracks} tracks, {patterns} patterns used"
 msgstr ""
 
-#: fm1companion/projectfmt.py:414
+#: fm1companion/projectfmt.py:429
 msgid "not an HPJ1 image"
 msgstr ""
 
-#: fm1companion/projectfmt.py:423 fm1companion/projectfmt.py:431
+#: fm1companion/projectfmt.py:438 fm1companion/projectfmt.py:446
 msgid "HPJ1 image too short"
 msgstr ""
 
-#: fm1companion/projectfmt.py:471
+#: fm1companion/projectfmt.py:486
 msgid "active pattern out of range"
 msgstr ""
 
-#: fm1companion/projectfmt.py:513
+#: fm1companion/projectfmt.py:528
 msgid "too many recorded notes"
 msgstr ""
 
-#: fm1companion/projectfmt.py:542
+#: fm1companion/projectfmt.py:557
 msgid "size in the header does not match"
 msgstr ""
 
-#: fm1companion/projectfmt.py:546
+#: fm1companion/projectfmt.py:561
 msgid "Project checksum does not match – data may be damaged"
 msgstr ""
 
-#: fm1companion/projectfmt.py:550
+#: fm1companion/projectfmt.py:565
 #, python-brace-format
 msgid "unknown part: sound record {magic}"
 msgstr ""
 
-#: fm1companion/projectfmt.py:574
+#: fm1companion/projectfmt.py:589
 #, python-brace-format
 msgid "recorded notes not readable ({error})"
 msgstr ""
 
-#: fm1companion/projectfmt.py:628
+#: fm1companion/projectfmt.py:643
 msgid "unknown part: song sounds of a different size"
 msgstr ""
 
-#: fm1companion/projectfmt.py:676
+#: fm1companion/projectfmt.py:691
 msgid "bank tail overflowed"
 msgstr ""
 
-#: fm1companion/projectfmt.py:683
+#: fm1companion/projectfmt.py:698
 #, python-brace-format
 msgid "{format} (older format)"
 msgstr ""
 
-#: fm1companion/projectfmt.py:687
+#: fm1companion/projectfmt.py:702
 msgid "implausible number of parameters"
 msgstr ""
 
-#: fm1companion/projectfmt.py:736
+#: fm1companion/projectfmt.py:754
 msgid "Project slot is empty"
 msgstr ""
 
-#: fm1companion/projectfmt.py:748
+#: fm1companion/projectfmt.py:766
 msgid "bank container with wrong size"
 msgstr ""
 
 #. Translators: must start with "SLOOP" (the project view checks it)
-#: fm1companion/projectfmt.py:765
+#: fm1companion/projectfmt.py:786
 #, python-brace-format
 msgid "SLOOP project (FUN{n})"
 msgstr ""
 
-#: fm1companion/projectfmt.py:766
-msgid "This is a SLOOP project. The project view only knows the Melodee format – SLOOP projects are built differently (sections, own sequencer). To view and edit it, use the SLOOP web editor (page “Editor”); backing up and restoring works as usual via backups."
+#: fm1companion/projectfmt.py:787
+msgid "This project format is not one the project view reads (it reads Melodee's, SLOOP 2.6+'s and SLOOP 3's). Backing up and restoring works as usual via backups."
 msgstr ""
 
-#: fm1companion/projectfmt.py:771
+#: fm1companion/projectfmt.py:791
 msgid "other firmware"
 msgstr ""
 
-#: fm1companion/projectfmt.py:773
+#: fm1companion/projectfmt.py:793
 #, python-brace-format
 msgid "unknown part (ID {magic}, {size} bytes) – {reason}"
 msgstr ""
 
-#: fm1companion/projectfmt.py:778
+#: fm1companion/projectfmt.py:798
 msgid "unknown part"
 msgstr ""
 
-#: fm1companion/projectfmt.py:804
+#: fm1companion/projectfmt.py:826
 msgid "Running project"
 msgstr ""
 
-#: fm1companion/projectfmt.py:805
+#: fm1companion/projectfmt.py:827
 #, python-brace-format
 msgid "Section {letter}"
 msgstr ""
@@ -6351,40 +6354,52 @@ msgstr ""
 msgid "The device rejects the project ({reason}) – nothing was written."
 msgstr ""
 
-#: fm1companion/protocol.py:53
+#: fm1companion/protocol.py:85
+msgid "This firmware does not support writing patterns from the app (Melodee, Felucca and Skiff do)."
+msgstr ""
+
+#: fm1companion/protocol.py:87
+msgid "This firmware does not support choosing a pattern from the app (only Melodee does)."
+msgstr ""
+
+#: fm1companion/protocol.py:88
+msgid "This firmware does not support the song chain from the app (only Melodee does)."
+msgstr ""
+
+#: fm1companion/protocol.py:96
 msgid "SysEx data must be 7-bit"
 msgstr ""
 
-#: fm1companion/protocol.py:74
+#: fm1companion/protocol.py:117
 msgid "invalid number in the data stream"
 msgstr ""
 
-#: fm1companion/protocol.py:104 fm1companion/protocol.py:111
+#: fm1companion/protocol.py:147 fm1companion/protocol.py:154
 msgid "short data block"
 msgstr ""
 
-#: fm1companion/protocol.py:108
+#: fm1companion/protocol.py:151
 msgid "invalid bytes in the data block"
 msgstr ""
 
-#: fm1companion/protocol.py:115
+#: fm1companion/protocol.py:158
 msgid "surplus bytes in the data block"
 msgstr ""
 
-#: fm1companion/protocol.py:135 fm1companion/sloopbk.py:137
+#: fm1companion/protocol.py:178 fm1companion/sloopbk.py:137
 #: fm1companion/sloopbk.py:144
 msgid "answer too short"
 msgstr ""
 
-#: fm1companion/protocol.py:145
+#: fm1companion/protocol.py:188
 msgid "string without end"
 msgstr ""
 
-#: fm1companion/protocol.py:260
+#: fm1companion/protocol.py:303
 msgid "unknown format of the audio statistics"
 msgstr ""
 
-#: fm1companion/protocol.py:298
+#: fm1companion/protocol.py:341
 #, python-brace-format
 msgid "preset list rejected (rc {code})"
 msgstr ""
@@ -6671,6 +6686,39 @@ msgstr ""
 msgid "There are no audio files in “{folder}”."
 msgstr ""
 
+#: fm1companion/sloop2proj.py:64 fm1companion/sloop3proj.py:459
+msgid "Drums"
+msgstr ""
+
+#: fm1companion/sloop2proj.py:96
+#, python-brace-format
+msgid "SLOOP project in the older format {format}: SLOOP converts it when it loads it; the project view reads the format of SLOOP 2.6 and later (FUN6). Load it on the FM-1 and save it again, then read it again."
+msgstr ""
+
+#: fm1companion/sloop2proj.py:100
+msgid "not a SLOOP project"
+msgstr ""
+
+#: fm1companion/sloop2proj.py:102 fm1companion/sloop3proj.py:191
+#: fm1companion/sloop3proj.py:615 fm1companion/sloop3proj.py:619
+msgid "the file ends too early (cut off or damaged)"
+msgstr ""
+
+#: fm1companion/sloop2proj.py:104
+msgid "the checksum does not match – the project is damaged (SLOOP would not load it either)"
+msgstr ""
+
+#: fm1companion/sloop2proj.py:142
+msgid "a step that cannot be (damaged project)"
+msgstr ""
+
+#: fm1companion/sloop2proj.py:159 fm1companion/sloop3proj.py:575
+#, python-brace-format
+msgid "{n} parameter lock (listed in the JSON export, not played)"
+msgid_plural "{n} parameter locks (listed in the JSON export, not played)"
+msgstr[0] ""
+msgstr[1] ""
+
 #: fm1companion/sloop3.py:78
 msgid "bad request"
 msgstr ""
@@ -6699,8 +6747,8 @@ msgstr ""
 msgid "SLOOP 3's answer names no version"
 msgstr ""
 
-#: fm1companion/sloop3.py:240 fm1companion/transport.py:257
-#: fm1companion/ui/device.py:1197
+#: fm1companion/sloop3.py:240 fm1companion/transport.py:278
+#: fm1companion/ui/device.py:1216
 msgid "device not connected"
 msgstr ""
 
@@ -6747,7 +6795,9 @@ msgstr ""
 msgid "{name} damaged"
 msgstr ""
 
-#: fm1companion/sloop3bk.py:42
+#: fm1companion/sloop3bk.py:42 fm1companion/sloop3proj.py:653
+#: fm1companion/ui/pages/project_view.py:443
+#: fm1companion/ui/projects_page.py:394
 msgid "Project saved on the FM-1"
 msgstr ""
 
@@ -6782,6 +6832,59 @@ msgstr ""
 #: fm1companion/sloop3bk.py:194
 #, python-brace-format
 msgid "{part}: the FM-1 holds something else than was written."
+msgstr ""
+
+#: fm1companion/sloop3proj.py:96
+#, python-brace-format
+msgid "your sound {n}"
+msgstr ""
+
+#: fm1companion/sloop3proj.py:225 fm1companion/sloop3proj.py:247
+#: fm1companion/sloop3proj.py:290
+msgid "damaged note data"
+msgstr ""
+
+#: fm1companion/sloop3proj.py:280 fm1companion/sloop3proj.py:284
+#: fm1companion/sloop3proj.py:322
+msgid "a pattern with impossible sizes (damaged file)"
+msgstr ""
+
+#: fm1companion/sloop3proj.py:298
+msgid "a song with too many entries (damaged file)"
+msgstr ""
+
+#: fm1companion/sloop3proj.py:332 fm1companion/sloop3proj.py:335
+#: fm1companion/sloop3proj.py:645
+msgid "not a SLOOP 3 project"
+msgstr ""
+
+#: fm1companion/sloop3proj.py:337
+#, python-brace-format
+msgid "project format {found} – made by a newer SLOOP 3 than the app knows (up to format {known}, SLOOP 3 3.4.0). The app does not guess at it; the file itself is fine and stays as it is."
+msgstr ""
+
+#: fm1companion/sloop3proj.py:578
+#, python-brace-format
+msgid "tracks {tracks}: the playing pattern has changes that are not saved into the pattern yet – shown as it plays"
+msgstr ""
+
+#: fm1companion/sloop3proj.py:582
+#, python-brace-format
+msgid "{n} byte after the end of the project was ignored"
+msgid_plural "{n} bytes after the end of the project were ignored"
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/sloop3proj.py:611
+msgid "not a SLOOP 3 backup file (.s3b)"
+msgstr ""
+
+#: fm1companion/sloop3proj.py:638
+msgid "Project in the editor backup"
+msgstr ""
+
+#: fm1companion/sloop3proj.py:655
+msgid "Project as it was at that moment"
 msgstr ""
 
 #: fm1companion/sloopbk.py:44
@@ -7885,7 +7988,7 @@ msgstr ""
 msgid "Computer: {model}"
 msgstr ""
 
-#: fm1companion/syscheck.py:625 fm1companion/ui/pages/project_view.py:456
+#: fm1companion/syscheck.py:625 fm1companion/ui/pages/project_view.py:498
 #, python-brace-format
 msgid "Source: {source}"
 msgstr ""
@@ -7894,15 +7997,15 @@ msgstr ""
 msgid "no kernel log"
 msgstr ""
 
-#: fm1companion/transport.py:73
+#: fm1companion/transport.py:82
 msgid "connection closed"
 msgstr ""
 
-#: fm1companion/transport.py:127
+#: fm1companion/transport.py:136
 msgid "simulation ended"
 msgstr ""
 
-#: fm1companion/transport.py:267
+#: fm1companion/transport.py:294
 #, python-brace-format
 msgid "no answer to command {cmd}"
 msgstr ""
@@ -7942,9 +8045,10 @@ msgstr ""
 msgid "<p>The suite stands on the shoulders of these projects – thank you!</p>"
 msgstr ""
 
-#: fm1companion/ui/about.py:74 fm1companion/ui/pages/project_view.py:347
-#: fm1companion/ui/pages/project_view.py:348
-#: fm1companion/ui/pages/project_view.py:350 fm1companion/ui/sloop3_ui.py:195
+#: fm1companion/ui/about.py:74 fm1companion/ui/pages/project_view.py:359
+#: fm1companion/ui/pages/project_view.py:360
+#: fm1companion/ui/pages/project_view.py:362
+#: fm1companion/ui/projects_page.py:393 fm1companion/ui/sloop3_ui.py:195
 msgid "Project"
 msgstr ""
 
@@ -8156,7 +8260,7 @@ msgstr ""
 msgid "The FM-1 is in update mode – finish the installation first (page “Recovery”), then back up."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:53 fm1companion/ui/projects_page.py:157
+#: fm1companion/ui/backups_page.py:53 fm1companion/ui/projects_page.py:165
 msgid "The running firmware"
 msgstr ""
 
@@ -8372,14 +8476,14 @@ msgstr ""
 
 #: fm1companion/ui/backups_page.py:465 fm1companion/ui/firmware_page.py:1067
 #: fm1companion/ui/pages/discover.py:422 fm1companion/ui/pages/discover.py:756
-#: fm1companion/ui/pages/studio.py:57 fm1companion/ui/projects_page.py:85
+#: fm1companion/ui/pages/studio.py:57 fm1companion/ui/projects_page.py:86
 msgid "Date"
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:465 fm1companion/ui/fm1_page.py:90
 #: fm1companion/ui/main_window.py:313 fm1companion/ui/overview.py:43
 #: fm1companion/ui/pages/__init__.py:30 fm1companion/ui/pages/presets.py:149
-#: fm1companion/ui/pages/studio.py:57 fm1companion/ui/projects_page.py:85
+#: fm1companion/ui/pages/studio.py:57 fm1companion/ui/projects_page.py:86
 msgid "Device"
 msgstr ""
 
@@ -8398,9 +8502,10 @@ msgstr ""
 
 #: fm1companion/ui/backups_page.py:465
 #: fm1companion/ui/pages/backup_browser.py:199
-#: fm1companion/ui/pages/discover.py:422 fm1companion/ui/projects_page.py:40
-#: fm1companion/ui/projects_page.py:85 fm1companion/ui/projects_page.py:213
-#: fm1companion/ui/recorder_page.py:157 fm1companion/ui/storage_tab.py:35
+#: fm1companion/ui/pages/discover.py:422 fm1companion/ui/projects_page.py:41
+#: fm1companion/ui/projects_page.py:86 fm1companion/ui/projects_page.py:234
+#: fm1companion/ui/projects_page.py:393 fm1companion/ui/recorder_page.py:157
+#: fm1companion/ui/storage_tab.py:35
 msgid "Size"
 msgstr ""
 
@@ -8459,7 +8564,7 @@ msgstr ""
 msgid "Pinned backups are never deleted automatically"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:498 fm1companion/ui/projects_page.py:112
+#: fm1companion/ui/backups_page.py:498 fm1companion/ui/projects_page.py:114
 msgid "Add file …"
 msgstr ""
 
@@ -8467,8 +8572,9 @@ msgstr ""
 #: fm1companion/ui/backups_page.py:990 fm1companion/ui/pages/midi.py:1141
 #: fm1companion/ui/pages/presets.py:666 fm1companion/ui/pages/presets.py:669
 #: fm1companion/ui/pages/presets.py:696 fm1companion/ui/pages/presets.py:921
-#: fm1companion/ui/projects_page.py:110 fm1companion/ui/projects_page.py:554
-#: fm1companion/ui/projects_page.py:556 fm1companion/ui/recorder_page.py:188
+#: fm1companion/ui/projects_page.py:112 fm1companion/ui/projects_page.py:741
+#: fm1companion/ui/projects_page.py:743 fm1companion/ui/projects_page.py:752
+#: fm1companion/ui/projects_page.py:754 fm1companion/ui/recorder_page.py:188
 #: fm1companion/ui/recorder_page.py:584 fm1companion/ui/recorder_page.py:586
 #: fm1companion/ui/recorder_page.py:591 fm1companion/ui/samples_page.py:153
 #: fm1companion/ui/samples_page.py:701 fm1companion/ui/storage_tab.py:185
@@ -8478,8 +8584,8 @@ msgstr ""
 
 #: fm1companion/ui/backups_page.py:502 fm1companion/ui/feedback.py:76
 #: fm1companion/ui/main_window.py:1011 fm1companion/ui/pages/presets.py:168
-#: fm1companion/ui/pages/project_view.py:669
-#: fm1companion/ui/pages/project_view.py:679
+#: fm1companion/ui/pages/project_view.py:721
+#: fm1companion/ui/pages/project_view.py:731
 #: fm1companion/ui/pages/recovery.py:840 fm1companion/ui/pages/studio.py:1281
 #: fm1companion/ui/storage_tab.py:42 fm1companion/ui/storage_tab.py:350
 msgid "Open folder"
@@ -8792,7 +8898,7 @@ msgid "Restore complete: {n} parts of the state of {date} written – running mu
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:886
-#: fm1companion/ui/pages/project_view.py:333
+#: fm1companion/ui/pages/project_view.py:345
 msgid "No projects"
 msgstr ""
 
@@ -8823,10 +8929,11 @@ msgstr ""
 #: fm1companion/ui/backups_page.py:899 fm1companion/ui/backups_page.py:950
 #: fm1companion/ui/linkimport_dialog.py:318
 #: fm1companion/ui/pages/backup_browser.py:669
-#: fm1companion/ui/pages/midi.py:333 fm1companion/ui/pages/project_view.py:629
-#: fm1companion/ui/pages/project_view.py:661
+#: fm1companion/ui/pages/midi.py:333 fm1companion/ui/pages/project_view.py:681
+#: fm1companion/ui/pages/project_view.py:713
 #: fm1companion/ui/pages/voices.py:806 fm1companion/ui/pages/voices.py:833
-#: fm1companion/ui/projects_page.py:549 fm1companion/ui/projects_page.py:591
+#: fm1companion/ui/projects_page.py:477 fm1companion/ui/projects_page.py:706
+#: fm1companion/ui/projects_page.py:735 fm1companion/ui/projects_page.py:800
 #: fm1companion/ui/samples_page.py:1342
 msgid "Not saved"
 msgstr ""
@@ -8875,7 +8982,7 @@ msgstr ""
 
 #: fm1companion/ui/backups_page.py:950
 #: fm1companion/ui/pages/backup_browser.py:669
-#: fm1companion/ui/projects_page.py:549
+#: fm1companion/ui/projects_page.py:706 fm1companion/ui/projects_page.py:735
 #, python-brace-format
 msgid "{name} cannot be changed"
 msgstr ""
@@ -8926,10 +9033,11 @@ msgid "Deleted: {name}"
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:995 fm1companion/ui/pages/presets.py:927
-#: fm1companion/ui/projects_page.py:561 fm1companion/ui/samples_page.py:705
-#: fm1companion/ui/settings_dialog.py:443 fm1companion/ui/storage_tab.py:191
-#: fm1companion/ui/storage_tab.py:247 fm1companion/ui/storage_tab.py:270
-#: fm1companion/ui/storage_tab.py:312 fm1companion/ui/storage_tab.py:411
+#: fm1companion/ui/projects_page.py:748 fm1companion/ui/projects_page.py:759
+#: fm1companion/ui/samples_page.py:705 fm1companion/ui/settings_dialog.py:443
+#: fm1companion/ui/storage_tab.py:191 fm1companion/ui/storage_tab.py:247
+#: fm1companion/ui/storage_tab.py:270 fm1companion/ui/storage_tab.py:312
+#: fm1companion/ui/storage_tab.py:411
 msgid "Not deleted"
 msgstr ""
 
@@ -9430,76 +9538,76 @@ msgstr ""
 msgid "another FM-1"
 msgstr ""
 
-#: fm1companion/ui/common.py:898
+#: fm1companion/ui/common.py:913
 #, python-brace-format
 msgid "This undo belongs to {device} – please connect that device again. (Otherwise the old content would end up on the wrong FM-1.)"
 msgstr ""
 
-#: fm1companion/ui/common.py:908
+#: fm1companion/ui/common.py:923
 msgid "Undo not possible"
-msgstr ""
-
-#: fm1companion/ui/common.py:922
-#, python-brace-format
-msgid "No write permission ({path}) – please check the folder's permissions or choose a different main folder in the settings."
-msgstr ""
-
-#: fm1companion/ui/common.py:924
-msgid "No write permission – please check the folder's permissions or choose a different main folder in the settings."
-msgstr ""
-
-#: fm1companion/ui/common.py:927
-#, python-brace-format
-msgid "The storage device is full ({path})."
-msgstr ""
-
-#: fm1companion/ui/common.py:927
-msgid "The storage device is full."
-msgstr ""
-
-#: fm1companion/ui/common.py:929
-#, python-brace-format
-msgid "File or folder not found ({path})."
-msgstr ""
-
-#: fm1companion/ui/common.py:929
-msgid "File or folder not found."
-msgstr ""
-
-#: fm1companion/ui/common.py:931
-#, python-brace-format
-msgid "This is a folder, not a file ({path})."
-msgstr ""
-
-#: fm1companion/ui/common.py:931
-msgid "This is a folder, not a file."
-msgstr ""
-
-#: fm1companion/ui/common.py:933
-#, python-brace-format
-msgid "Part of the path is not a folder ({path})."
-msgstr ""
-
-#: fm1companion/ui/common.py:933
-msgid "Part of the path is not a folder."
-msgstr ""
-
-#: fm1companion/ui/common.py:936
-#, python-brace-format
-msgid "File error ({path}): {error}"
 msgstr ""
 
 #: fm1companion/ui/common.py:937
 #, python-brace-format
+msgid "No write permission ({path}) – please check the folder's permissions or choose a different main folder in the settings."
+msgstr ""
+
+#: fm1companion/ui/common.py:939
+msgid "No write permission – please check the folder's permissions or choose a different main folder in the settings."
+msgstr ""
+
+#: fm1companion/ui/common.py:942
+#, python-brace-format
+msgid "The storage device is full ({path})."
+msgstr ""
+
+#: fm1companion/ui/common.py:942
+msgid "The storage device is full."
+msgstr ""
+
+#: fm1companion/ui/common.py:944
+#, python-brace-format
+msgid "File or folder not found ({path})."
+msgstr ""
+
+#: fm1companion/ui/common.py:944
+msgid "File or folder not found."
+msgstr ""
+
+#: fm1companion/ui/common.py:946
+#, python-brace-format
+msgid "This is a folder, not a file ({path})."
+msgstr ""
+
+#: fm1companion/ui/common.py:946
+msgid "This is a folder, not a file."
+msgstr ""
+
+#: fm1companion/ui/common.py:948
+#, python-brace-format
+msgid "Part of the path is not a folder ({path})."
+msgstr ""
+
+#: fm1companion/ui/common.py:948
+msgid "Part of the path is not a folder."
+msgstr ""
+
+#: fm1companion/ui/common.py:951
+#, python-brace-format
+msgid "File error ({path}): {error}"
+msgstr ""
+
+#: fm1companion/ui/common.py:952
+#, python-brace-format
 msgid "File error: {error}"
 msgstr ""
 
-#: fm1companion/ui/common.py:940
+#: fm1companion/ui/common.py:955
 #, python-brace-format
 msgid "{what}: {error}"
 msgstr ""
 
-#: fm1companion/ui/common.py:953
+#: fm1companion/ui/common.py:968
 #, python-brace-format
 msgid "Folder “{name}” cannot be created"
 msgstr ""
@@ -9676,214 +9784,214 @@ msgstr ""
 msgid "don't know"
 msgstr ""
 
-#: fm1companion/ui/device.py:362 fm1companion/ui/playback_bar.py:57
+#: fm1companion/ui/device.py:377 fm1companion/ui/playback_bar.py:57
 msgid "No FM-1 connected"
 msgstr ""
 
-#: fm1companion/ui/device.py:365
+#: fm1companion/ui/device.py:380
 #, python-brace-format
 msgid "{device} – virtual"
 msgstr ""
 
-#: fm1companion/ui/device.py:371 fm1companion/ui/overview.py:211
+#: fm1companion/ui/device.py:386 fm1companion/ui/overview.py:211
 msgid "update mode"
 msgstr ""
 
-#: fm1companion/ui/device.py:371
+#: fm1companion/ui/device.py:386
 #, python-brace-format
 msgid "update mode ({id})"
 msgstr ""
 
-#: fm1companion/ui/device.py:373
+#: fm1companion/ui/device.py:388
 #, python-brace-format
 msgid "m-bootloader {version} – MIDI MODE"
 msgstr ""
 
-#: fm1companion/ui/device.py:375
+#: fm1companion/ui/device.py:390
 #, python-brace-format
 msgid "{firmware} (public beta)"
 msgstr ""
 
-#: fm1companion/ui/device.py:378 fm1companion/ui/overview.py:213
+#: fm1companion/ui/device.py:393 fm1companion/ui/overview.py:213
 msgid "unknown – please choose"
 msgstr ""
 
-#: fm1companion/ui/device.py:387
+#: fm1companion/ui/device.py:402
 msgid "virtual – the twin in the Studio, not a real FM-1"
 msgstr ""
 
-#: fm1companion/ui/device.py:388
+#: fm1companion/ui/device.py:403
 msgid "virtual – twin is starting …"
 msgstr ""
 
-#: fm1companion/ui/device.py:391
+#: fm1companion/ui/device.py:406
 msgid "in m-bootloader's MIDI MODE – no firmware is running (“Firmware+” › SLOOP 3 explains what is possible from here)"
 msgstr ""
 
-#: fm1companion/ui/device.py:394
+#: fm1companion/ui/device.py:409
 msgid "connected – SLOOP 3: its own editor and backups (pages “Editor” and “Backups”)"
 msgstr ""
 
-#: fm1companion/ui/device.py:395
+#: fm1companion/ui/device.py:410
 msgid "connected – full access"
 msgstr ""
 
-#: fm1companion/ui/device.py:396
+#: fm1companion/ui/device.py:411
 msgid "connected – MIDI only (firmware without editor protocol)"
 msgstr ""
 
-#: fm1companion/ui/device.py:397 fm1companion/ui/main_window.py:942
+#: fm1companion/ui/device.py:412 fm1companion/ui/main_window.py:942
 msgid "not connected"
 msgstr ""
 
-#: fm1companion/ui/device.py:397
+#: fm1companion/ui/device.py:412
 msgid "in update mode – finish the installation (page “Recovery”)"
 msgstr ""
 
-#: fm1companion/ui/device.py:450 fm1companion/ui/main_window.py:970
+#: fm1companion/ui/device.py:465 fm1companion/ui/main_window.py:970
 #: fm1companion/ui/pages/midi.py:1363
 msgid "FM-1 disconnected"
 msgstr ""
 
-#: fm1companion/ui/device.py:458
+#: fm1companion/ui/device.py:473
 msgid "Connection lost"
 msgstr ""
 
-#: fm1companion/ui/device.py:482
+#: fm1companion/ui/device.py:497
 msgid "The FM-1 is in update mode. The page “Recovery” finishes the installation."
 msgstr ""
 
-#: fm1companion/ui/device.py:498
+#: fm1companion/ui/device.py:513
 msgid "Studio not available"
 msgstr ""
 
-#: fm1companion/ui/device.py:515
+#: fm1companion/ui/device.py:530
 #, python-brace-format
 msgid "The MIDI port cannot be opened: {error}"
 msgstr ""
 
-#: fm1companion/ui/device.py:553
+#: fm1companion/ui/device.py:568
 msgid "no answer"
 msgstr ""
 
-#: fm1companion/ui/device.py:642
+#: fm1companion/ui/device.py:660
 #, python-brace-format
 msgid "FM-1 connected – {firmware} (public beta). Its own web editor is on the page “Editor”, backups of its project, sounds and banks on the page “Backups”; the other device pages need the Felucca editor protocol, which SLOOP 3 does not speak."
 msgstr ""
 
-#: fm1companion/ui/device.py:646
+#: fm1companion/ui/device.py:664
 #, python-brace-format
 msgid "FM-1 connected – {firmware} (public beta). The app was checked with SLOOP 3 {versions}, not with this version: the editor and backups may not fit it."
 msgstr ""
 
-#: fm1companion/ui/device.py:691
+#: fm1companion/ui/device.py:710
 #, python-brace-format
 msgid "FM-1 connected ({id}) – FM1 Open: MIDI, presets via SysEx, its sample bank (page “Samples”) and the Studio (fetch, write back) work; the other pages need the editor protocol."
 msgstr ""
 
-#: fm1companion/ui/device.py:695
+#: fm1companion/ui/device.py:714
 #, python-brace-format
 msgid "FM-1 connected ({id}) – this firmware has no editor protocol: MIDI, presets via SysEx and firmware installation work, backups and projects do not."
 msgstr ""
 
-#: fm1companion/ui/device.py:698
+#: fm1companion/ui/device.py:717
 msgid "The device answers neither editor commands nor the update ID. The MIDI connection stays open."
 msgstr ""
 
-#: fm1companion/ui/device.py:772
+#: fm1companion/ui/device.py:791
 #, python-brace-format
 msgid "Remembered: {device} runs {firmware} (ID {id})."
 msgstr ""
 
-#: fm1companion/ui/device.py:775
+#: fm1companion/ui/device.py:794
 #, python-brace-format
 msgid "Remembered: this FM-1 runs {firmware} (ID {id})."
 msgstr ""
 
-#: fm1companion/ui/device.py:780
+#: fm1companion/ui/device.py:799
 msgid "Remembered: firmware unknown – installations count as a firmware change (with V15 intermediate step)."
 msgstr ""
 
-#: fm1companion/ui/device.py:800
+#: fm1companion/ui/device.py:819
 #, python-brace-format
 msgid "This FM-1 is in m-bootloader's MIDI MODE (m-bootloader {version}, flash chip {chip}): no firmware is running. “Firmware+” › SLOOP 3 explains what is possible from here; OCT−, OCT+, PLAY or REC on the FM-1 go back to its menu."
 msgstr ""
 
-#: fm1companion/ui/device.py:1064
+#: fm1companion/ui/device.py:1083
 #, python-brace-format
 msgid "(last seen: {firmware})"
 msgstr ""
 
-#: fm1companion/ui/device.py:1066
+#: fm1companion/ui/device.py:1085
 msgid "A new FM-1 that I have not used with this app before …"
 msgstr ""
 
-#: fm1companion/ui/device.py:1070 fm1companion/ui/device.py:1138
-#: fm1companion/ui/device.py:1140 fm1companion/ui/hw_revision.py:22
+#: fm1companion/ui/device.py:1089 fm1companion/ui/device.py:1157
+#: fm1companion/ui/device.py:1159 fm1companion/ui/hw_revision.py:22
 #: fm1companion/ui/hw_revision.py:44 fm1companion/ui/overview.py:203
 #: fm1companion/ui/pages/recovery.py:570 fm1companion/ui/pages/recovery.py:610
 msgid "Which FM-1 is this?"
 msgstr ""
 
-#: fm1companion/ui/device.py:1071
+#: fm1companion/ui/device.py:1090
 msgid "Is this an FM-1 you have used with this app before? The app cannot tell by itself: an FM-1 only reports a serial number while it runs the original firmware. Please choose:"
 msgstr ""
 
-#: fm1companion/ui/device.py:1074
+#: fm1companion/ui/device.py:1093
 msgid "New device"
 msgstr ""
 
-#: fm1companion/ui/device.py:1074
+#: fm1companion/ui/device.py:1093
 msgid "Name for this FM-1:"
 msgstr ""
 
-#: fm1companion/ui/device.py:1114
+#: fm1companion/ui/device.py:1133
 msgid "The app does not know yet which of your FM-1 this is – it reports no unit ID, and more than one of your devices can be this one. Nothing is written before you say which one it is."
 msgstr ""
 
-#: fm1companion/ui/device.py:1123
+#: fm1companion/ui/device.py:1142
 #, python-brace-format
 msgid "The connected FM-1 reports {chip}, but “{name}” is recorded as {revision}. Either this is another FM-1, or the record is wrong. Nothing is written. Say again which FM-1 this is – if it is “{name}”, correct its unit on the page “Devices” first."
 msgstr ""
 
-#: fm1companion/ui/device.py:1139 fm1companion/ui/pages/recovery.py:571
+#: fm1companion/ui/device.py:1158 fm1companion/ui/pages/recovery.py:571
 #, python-brace-format
 msgid "Yes, it is “{name}”"
 msgstr ""
 
-#: fm1companion/ui/device.py:1141
+#: fm1companion/ui/device.py:1160
 msgid "Say which FM-1 it is …"
 msgstr ""
 
-#: fm1companion/ui/device.py:1141
+#: fm1companion/ui/device.py:1160
 msgid "Ask now? (Then start what you wanted to do again.)"
 msgstr ""
 
-#: fm1companion/ui/device.py:1157 fm1companion/ui/pages/midi.py:1200
+#: fm1companion/ui/device.py:1176 fm1companion/ui/pages/midi.py:1200
 msgid "disconnected"
 msgstr ""
 
-#: fm1companion/ui/device.py:1187 fm1companion/ui/firmware_page.py:603
+#: fm1companion/ui/device.py:1206 fm1companion/ui/firmware_page.py:603
 #: fm1companion/ui/pages/recovery.py:805 fm1companion/ui/pages/voices.py:664
 #: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1351
 msgid "No device"
 msgstr ""
 
-#: fm1companion/ui/device.py:1187
+#: fm1companion/ui/device.py:1206
 msgid "Please connect an FM-1 with Melodee, Skiff or SLOOP via USB."
 msgstr ""
 
-#: fm1companion/ui/device.py:1221
+#: fm1companion/ui/device.py:1240
 #, python-brace-format
 msgid "The name “{name}” is already taken (device “{device}”) – otherwise the backups of both devices would end up in the same folder. Please choose another name."
 msgstr ""
 
-#: fm1companion/ui/device.py:1233
+#: fm1companion/ui/device.py:1252
 #, python-brace-format
 msgid "Renamed to “{name}” – backups are now in “{folder}”."
 msgstr ""
 
-#: fm1companion/ui/device.py:1234
+#: fm1companion/ui/device.py:1253
 #, python-brace-format
 msgid "Renamed to “{name}”."
 msgstr ""
@@ -9958,7 +10066,7 @@ msgid "this is the editor of SLOOP 3 {versions} – it may not fit your version"
 msgstr ""
 
 #: fm1companion/ui/editor_page.py:185
-#: fm1companion/ui/pages/project_view.py:375
+#: fm1companion/ui/pages/project_view.py:386
 #: fm1companion/ui/samples_page.py:1036
 msgid "This firmware"
 msgstr ""
@@ -10482,9 +10590,10 @@ msgstr ""
 
 #: fm1companion/ui/firmware_page.py:947 fm1companion/ui/overview.py:50
 #: fm1companion/ui/overview.py:386 fm1companion/ui/pages/devices.py:290
-#: fm1companion/ui/projects_page.py:532 fm1companion/ui/recorder_page.py:92
-#: fm1companion/ui/sample_recorder.py:137 fm1companion/ui/samples_page.py:170
-#: fm1companion/ui/settings_dialog.py:389 fm1companion/ui/wizard.py:198
+#: fm1companion/ui/projects_page.py:695 fm1companion/ui/projects_page.py:712
+#: fm1companion/ui/recorder_page.py:92 fm1companion/ui/sample_recorder.py:137
+#: fm1companion/ui/samples_page.py:170 fm1companion/ui/settings_dialog.py:389
+#: fm1companion/ui/wizard.py:198
 msgid "Name:"
 msgstr ""
 
@@ -11324,7 +11433,7 @@ msgstr ""
 
 #: fm1companion/ui/fm1_page.py:415 fm1companion/ui/overview.py:265
 #: fm1companion/ui/pages/devices.py:224
-#: fm1companion/ui/pages/project_view.py:489
+#: fm1companion/ui/pages/project_view.py:533
 msgid "active"
 msgstr ""
 
@@ -11660,7 +11769,7 @@ msgstr ""
 msgid "View & Export"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:55 fm1companion/ui/pages/compose.py:127
+#: fm1companion/ui/main_window.py:55 fm1companion/ui/pages/compose.py:132
 msgid "Generate"
 msgstr ""
 
@@ -12076,8 +12185,8 @@ msgstr ""
 #: fm1companion/ui/overview.py:67 fm1companion/ui/pages/devices.py:254
 #: fm1companion/ui/pages/presets.py:643 fm1companion/ui/pages/presets.py:659
 #: fm1companion/ui/pages/presets.py:873 fm1companion/ui/pages/presets.py:881
-#: fm1companion/ui/projects_page.py:106 fm1companion/ui/projects_page.py:532
-#: fm1companion/ui/settings_dialog.py:228
+#: fm1companion/ui/projects_page.py:108 fm1companion/ui/projects_page.py:695
+#: fm1companion/ui/projects_page.py:712 fm1companion/ui/settings_dialog.py:228
 #: fm1companion/ui/settings_dialog.py:389
 msgid "Rename"
 msgstr ""
@@ -12226,7 +12335,7 @@ msgstr ""
 msgid "No device connected."
 msgstr ""
 
-#: fm1companion/ui/overview.py:320 fm1companion/ui/projects_page.py:154
+#: fm1companion/ui/overview.py:320 fm1companion/ui/projects_page.py:162
 msgid "The FM-1 is waiting in update mode – finish the installation first (page “Recovery”)."
 msgstr ""
 
@@ -12786,7 +12895,7 @@ msgstr ""
 
 #: fm1companion/ui/pages/backup_browser.py:741
 #: fm1companion/ui/pages/devices.py:80
-#: fm1companion/ui/pages/project_view.py:61
+#: fm1companion/ui/pages/project_view.py:62
 msgid "running music"
 msgstr ""
 
@@ -12794,649 +12903,652 @@ msgstr ""
 msgid "look inside backups, compare them, restore single parts"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:44 fm1companion/ui/pages/compose.py:558
-#: fm1companion/ui/pages/compose.py:693 fm1companion/ui/wizard.py:368
+#: fm1companion/ui/pages/compose.py:35
+msgid "Reads the pattern first (for undo), then writes and checks by reading back"
+msgstr ""
+
+#: fm1companion/ui/pages/compose.py:47 fm1companion/ui/pages/compose.py:562
+#: fm1companion/ui/pages/compose.py:705 fm1companion/ui/wizard.py:368
 msgid "Compose"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:44
+#: fm1companion/ui/pages/compose.py:47
 msgid "Generate ideas instead of typing steps: Euclidean rhythms, chord progressions, bass, arpeggios and melodies. Preview – directly on the FM-1 with the sound of the target track –, adjust in the piano roll (Ctrl+Z / Ctrl+Shift+Z), then write into a pattern on the FM-1 – it is read first so you can undo it."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:72
+#: fm1companion/ui/pages/compose.py:75
 msgid "To the FM-1 (none connected)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:72
+#: fm1companion/ui/pages/compose.py:75
 #, python-brace-format
 msgid "To the FM-1 “{name}”"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:75 fm1companion/ui/pages/compose.py:347
+#: fm1companion/ui/pages/compose.py:81 fm1companion/ui/pages/compose.py:351
 msgid "Restore the pattern that was overwritten last"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:83
+#: fm1companion/ui/pages/compose.py:88
 msgid "Basics"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:87
+#: fm1companion/ui/pages/compose.py:92
 msgid "Root note of the key"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:91 fm1companion/ui/pages/compose.py:207
-#: fm1companion/ui/workshop_page.py:78
+#: fm1companion/ui/pages/compose.py:96 fm1companion/ui/pages/compose.py:212
+#: fm1companion/ui/workshop_page.py:83
 msgid " steps"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:91
+#: fm1companion/ui/pages/compose.py:96
 msgid "Length of the pattern (LEN on the FM-1)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:92
+#: fm1companion/ui/pages/compose.py:97
 msgid "Tempo for the preview (the FM-1 keeps its own)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:93
+#: fm1companion/ui/pages/compose.py:98
 msgid "Random seed: same value = same result"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:96
+#: fm1companion/ui/pages/compose.py:101
 msgid "Roll dice"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:97
+#: fm1companion/ui/pages/compose.py:102
 msgid "draw a new seed and generate again"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:98
+#: fm1companion/ui/pages/compose.py:103
 msgid "Key:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:99
+#: fm1companion/ui/pages/compose.py:104
 msgid "Scale:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:100 fm1companion/ui/workshop_page.py:118
+#: fm1companion/ui/pages/compose.py:105 fm1companion/ui/workshop_page.py:122
 msgid "Length:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:101 fm1companion/ui/pages/midi.py:636
+#: fm1companion/ui/pages/compose.py:106 fm1companion/ui/pages/midi.py:636
 #: fm1companion/ui/slicer_dialog.py:90
 msgid "Tempo:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:102
+#: fm1companion/ui/pages/compose.py:107
 msgid "Seed:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:105 fm1companion/ui/pages/compose.py:410
+#: fm1companion/ui/pages/compose.py:110 fm1companion/ui/pages/compose.py:414
 msgid "Rhythm"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:107
+#: fm1companion/ui/pages/compose.py:112
 msgid "Bass/Arp"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:108
+#: fm1companion/ui/pages/compose.py:113
 msgid "Melody"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:128
+#: fm1companion/ui/pages/compose.py:133
 msgid "Generate again with the settings of the open tab (Ctrl+G) – changes nothing on the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:165
+#: fm1companion/ui/pages/compose.py:170
 msgid "Hits"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:165
+#: fm1companion/ui/pages/compose.py:170
 msgid "Offset"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:165
+#: fm1companion/ui/pages/compose.py:170
 msgid "Accent"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:173
+#: fm1companion/ui/pages/compose.py:178
 msgid "Cycle length"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:173
+#: fm1companion/ui/pages/compose.py:178
 msgid "Number of hits, evenly spread"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:174
+#: fm1companion/ui/pages/compose.py:179
 msgid "Shift to the right"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:174
+#: fm1companion/ui/pages/compose.py:179
 msgid "every n-th hit accented (0 = none)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:180
+#: fm1companion/ui/pages/compose.py:185
 msgid "Euclidean rhythms spread n hits as evenly as possible – E(3,8) is the tresillo. The result lands in the drum grid (for the DRUM engine or any other track)."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:192
+#: fm1companion/ui/pages/compose.py:197
 msgid "Degrees in Roman numerals: upper case = major, lower case = minor, 7 / maj7 / ° / sus4, b/# in front"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:199
+#: fm1companion/ui/pages/compose.py:204
 msgid "Inversion of the first chord"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:200
+#: fm1companion/ui/pages/compose.py:205
 msgid "Smooth voice leading"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:202
+#: fm1companion/ui/pages/compose.py:207
 msgid "Choose inversions so that the voices move as little as possible"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:203
+#: fm1companion/ui/pages/compose.py:208
 msgid "Octave of the chords"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:207
+#: fm1companion/ui/pages/compose.py:212
 msgid "Duration of one chord"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:208
+#: fm1companion/ui/pages/compose.py:213
 msgid "Preset:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:209
+#: fm1companion/ui/pages/compose.py:214
 msgid "Progression:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:210
+#: fm1companion/ui/pages/compose.py:215
 msgid "Voicing:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:211
+#: fm1companion/ui/pages/compose.py:216
 msgid "Inversion:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:213
+#: fm1companion/ui/pages/compose.py:218
 msgid "Octave:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:214
+#: fm1companion/ui/pages/compose.py:219
 msgid "Rhythm:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:215
+#: fm1companion/ui/pages/compose.py:220
 msgid "per chord:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:216
+#: fm1companion/ui/pages/compose.py:221
 msgid "The FM-1 plays up to 4 notes per step – chords are limited to that."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:224
+#: fm1companion/ui/pages/compose.py:229
 #, python-brace-format
 msgid "Bass: {style}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:226
+#: fm1companion/ui/pages/compose.py:231
 #, python-brace-format
 msgid "Arp: {mode}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:227
+#: fm1companion/ui/pages/compose.py:232
 msgid " octaves"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:227
+#: fm1companion/ui/pages/compose.py:232
 msgid "Range of the arpeggio"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:228 fm1companion/ui/pages/compose.py:251
+#: fm1companion/ui/pages/compose.py:233 fm1companion/ui/pages/compose.py:256
 msgid "Type:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:229
+#: fm1companion/ui/pages/compose.py:234
 msgid "Arp range:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:230
+#: fm1companion/ui/pages/compose.py:235
 msgid "Bass and arpeggio follow the chord progression from the tab “Chords”."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:237
+#: fm1companion/ui/pages/compose.py:242
 msgid "Random melody with rules"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:237
+#: fm1companion/ui/pages/compose.py:242
 msgid "Markov (learned from a MIDI file)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:238 fm1companion/ui/pages/compose.py:444
+#: fm1companion/ui/pages/compose.py:243 fm1companion/ui/pages/compose.py:448
 msgid "Question and answer"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:239
+#: fm1companion/ui/pages/compose.py:244
 msgid "lowest note"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:240
+#: fm1companion/ui/pages/compose.py:245
 msgid "highest note"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:241
+#: fm1companion/ui/pages/compose.py:246
 msgid " degrees"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:241
+#: fm1companion/ui/pages/compose.py:246
 msgid "largest leap in scale degrees"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:242
+#: fm1companion/ui/pages/compose.py:247
 msgid "Probability of a rest"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:243
+#: fm1companion/ui/pages/compose.py:248
 msgid "Probability of repeating the note"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:244
+#: fm1companion/ui/pages/compose.py:249
 msgid "Probability of holding a note"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:245
+#: fm1companion/ui/pages/compose.py:250
 msgid "1 = only the last note, 2 = the last two notes"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:246
+#: fm1companion/ui/pages/compose.py:251
 msgid "nothing learned yet"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:248
+#: fm1companion/ui/pages/compose.py:253
 msgid "Learn MIDI file …"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:249
+#: fm1companion/ui/pages/compose.py:254
 msgid "Learn note sequences and rhythms from a MIDI file"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:252
+#: fm1companion/ui/pages/compose.py:257
 msgid "Range from:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:253
+#: fm1companion/ui/pages/compose.py:258
 msgid "to:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:254
+#: fm1companion/ui/pages/compose.py:259
 msgid "Leaps up to:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:255
+#: fm1companion/ui/pages/compose.py:260
 msgid "Rests:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:256
+#: fm1companion/ui/pages/compose.py:261
 msgid "Repetition:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:257
+#: fm1companion/ui/pages/compose.py:262
 msgid "Hold:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:258
+#: fm1companion/ui/pages/compose.py:263
 msgid "Markov order:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:269
+#: fm1companion/ui/pages/compose.py:274
 msgid "Show or hide the settings – more room for the piano roll"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:280
+#: fm1companion/ui/pages/compose.py:285
 msgid "Undo the last edit (Ctrl+Z) – piano roll, generate, fine-tuning"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:282
+#: fm1companion/ui/pages/compose.py:287
 msgid "Redo the undone edit (Ctrl+Shift+Z or Ctrl+Y)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:284 fm1companion/ui/pages/compose.py:502
-#: fm1companion/ui/pages/compose.py:666 fm1companion/ui/pages/presets.py:135
-#: fm1companion/ui/pages/presets.py:453 fm1companion/ui/pages/presets.py:607
-#: fm1companion/ui/pages/presets.py:619 fm1companion/ui/pages/studio.py:475
-#: fm1companion/ui/pages/voices.py:335 fm1companion/ui/pages/voices.py:764
-#: fm1companion/ui/pages/voices.py:771 fm1companion/ui/samples_page.py:251
-#: fm1companion/ui/samples_page.py:1141 fm1companion/ui/workshop_page.py:131
-#: fm1companion/ui/workshop_page.py:476 fm1companion/ui/workshop_page.py:497
+#: fm1companion/ui/pages/compose.py:289 fm1companion/ui/pages/compose.py:506
+#: fm1companion/ui/pages/compose.py:675 fm1companion/ui/pages/compose.py:678
+#: fm1companion/ui/pages/presets.py:135 fm1companion/ui/pages/presets.py:453
+#: fm1companion/ui/pages/presets.py:607 fm1companion/ui/pages/presets.py:619
+#: fm1companion/ui/pages/studio.py:475 fm1companion/ui/pages/voices.py:335
+#: fm1companion/ui/pages/voices.py:764 fm1companion/ui/pages/voices.py:771
+#: fm1companion/ui/samples_page.py:251 fm1companion/ui/samples_page.py:1141
+#: fm1companion/ui/workshop_page.py:135 fm1companion/ui/workshop_page.py:482
+#: fm1companion/ui/workshop_page.py:493 fm1companion/ui/workshop_page.py:514
 msgid "Undo"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:284
+#: fm1companion/ui/pages/compose.py:289
 msgid "Redo"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:286 fm1companion/ui/pages/compose.py:508
+#: fm1companion/ui/pages/compose.py:291 fm1companion/ui/pages/compose.py:512
 #: fm1companion/ui/pages/discover.py:1208 fm1companion/ui/pages/midi.py:123
-#: fm1companion/ui/pages/voices.py:402 fm1companion/ui/projects_page.py:376
+#: fm1companion/ui/pages/voices.py:402 fm1companion/ui/projects_page.py:517
 #: fm1companion/ui/samples_page.py:1118 fm1companion/ui/storage_tab.py:264
 msgid "Clear"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:286
+#: fm1companion/ui/pages/compose.py:291
 msgid "delete all steps"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:288
+#: fm1companion/ui/pages/compose.py:293
 msgid "Preview"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:289
-#: fm1companion/ui/pages/project_view.py:180
+#: fm1companion/ui/pages/compose.py:294
+#: fm1companion/ui/pages/project_view.py:181
 msgid "Space"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:295
+#: fm1companion/ui/pages/compose.py:300
 msgid "Piano roll"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:301
-#: fm1companion/ui/pages/project_view.py:133
+#: fm1companion/ui/pages/compose.py:306
+#: fm1companion/ui/pages/project_view.py:134
 msgid "Zoom:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:319
+#: fm1companion/ui/pages/compose.py:324
 msgid "Strength of the velocity change"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:320
+#: fm1companion/ui/pages/compose.py:325
 msgid "Probability with which steps play (Melodee chance)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:321
+#: fm1companion/ui/pages/compose.py:326
 msgid "only on offbeats"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:323 fm1companion/ui/pages/midi.py:478
-#: fm1companion/ui/workshop_page.py:121
+#: fm1companion/ui/pages/compose.py:328 fm1companion/ui/pages/midi.py:478
+#: fm1companion/ui/workshop_page.py:125
 msgid "Velocity:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:326 fm1companion/ui/pages/midi.py:1139
+#: fm1companion/ui/pages/compose.py:331 fm1companion/ui/pages/midi.py:1139
 msgid "Apply"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:327
+#: fm1companion/ui/pages/compose.py:332
 msgid "Chance:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:330
+#: fm1companion/ui/pages/compose.py:335
 msgid "Variations:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:331
+#: fm1companion/ui/pages/compose.py:336
 msgid "Variation B"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:331
+#: fm1companion/ui/pages/compose.py:336
 msgid "ending with other notes"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:332
+#: fm1companion/ui/pages/compose.py:337
 msgid "Variation C"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:332
+#: fm1companion/ui/pages/compose.py:337
 msgid "thinned out, with octave jumps"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:333
+#: fm1companion/ui/pages/compose.py:338
 msgid "Fine-tuning: velocity, chance, variations"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:334
+#: fm1companion/ui/pages/compose.py:339
 msgid "Apply velocity curves, Melodee chance and variations B/C to the generated pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:336
+#: fm1companion/ui/pages/compose.py:341
 msgid "Onto the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:344
+#: fm1companion/ui/pages/compose.py:349 fm1companion/ui/pages/compose.py:607
 msgid "Write to pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:345
-msgid "Reads the pattern first (for undo), then writes and checks by reading back"
-msgstr ""
-
-#: fm1companion/ui/pages/compose.py:346
+#: fm1companion/ui/pages/compose.py:350
 msgid "Undo on the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:349 fm1companion/ui/pages/midi.py:470
+#: fm1companion/ui/pages/compose.py:353 fm1companion/ui/pages/midi.py:470
 #: fm1companion/ui/pages/midi.py:648 fm1companion/ui/playback_bar.py:160
 msgid "Target:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:350
+#: fm1companion/ui/pages/compose.py:354
 msgid "Save as MIDI …"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:351
+#: fm1companion/ui/pages/compose.py:355
 msgid "Save the pattern as a Standard MIDI File (for a DAW, MuseScore …)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:413
+#: fm1companion/ui/pages/compose.py:417
 #, python-brace-format
 msgid "Chords {names}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:436
+#: fm1companion/ui/pages/compose.py:440
 msgid "Nothing learned yet"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:436
+#: fm1companion/ui/pages/compose.py:440
 msgid "Please let it learn a MIDI file first (button “Learn MIDI file …”)."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:440
+#: fm1companion/ui/pages/compose.py:444
 msgid "Markov melody"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:447
+#: fm1companion/ui/pages/compose.py:451
 msgid "Random melody"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:449
+#: fm1companion/ui/pages/compose.py:453
 msgid "Check the input"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:464
+#: fm1companion/ui/pages/compose.py:468
 #, python-brace-format
 msgid "<b>edited</b> · {description}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:480
+#: fm1companion/ui/pages/compose.py:484
 msgid "Undo the last edit (Ctrl+Z)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:482
+#: fm1companion/ui/pages/compose.py:486
 msgid "Redo (Ctrl+Shift+Z or Ctrl+Y)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:505
+#: fm1companion/ui/pages/compose.py:509
 msgid "Redone"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:522
+#: fm1companion/ui/pages/compose.py:526
 #, python-brace-format
 msgid "Variation {name}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:528
+#: fm1companion/ui/pages/compose.py:532
 msgid "Learn MIDI file"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:532
+#: fm1companion/ui/pages/compose.py:536
 #, python-brace-format
 msgid "learning {name} …"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:536
+#: fm1companion/ui/pages/compose.py:540
 #, python-brace-format
 msgid "learned: {name} ({n} state)"
 msgid_plural "learned: {name} ({n} states)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/compose.py:538
+#: fm1companion/ui/pages/compose.py:542
 msgid "too few notes in the file"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:541
+#: fm1companion/ui/pages/compose.py:545
 msgid "nothing learned"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:542 fm1companion/ui/workshop_page.py:254
-#: fm1companion/ui/workshop_page.py:274
+#: fm1companion/ui/pages/compose.py:546 fm1companion/ui/workshop_page.py:259
+#: fm1companion/ui/workshop_page.py:279
 msgid "MIDI file not readable"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:579
+#: fm1companion/ui/pages/compose.py:583
 msgid "Save MIDI"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:588
+#: fm1companion/ui/pages/compose.py:592
 msgid "MIDI file not saved"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:590
+#: fm1companion/ui/pages/compose.py:594
 msgid "Save as MIDI"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:592
+#: fm1companion/ui/pages/compose.py:596
 #, python-brace-format
 msgid "Saved: {path} – only as a file, nothing changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:593
+#: fm1companion/ui/pages/compose.py:597
 #, python-brace-format
 msgid "MIDI file saved: {name}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:605
+#: fm1companion/ui/pages/compose.py:613
 msgid "Nothing to write"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:605
+#: fm1companion/ui/pages/compose.py:613
 msgid "The pattern is empty – first “Generate” or set steps in the piano roll."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:619
+#: fm1companion/ui/pages/compose.py:627
 #, python-brace-format
 msgid "<b>Track {track}, pattern {pattern}</b> on the FM-1 is <b>in use</b>: {used} of {length} steps with {notes} notes/hits, and will be overwritten with {n} steps ({description})."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:622
+#: fm1companion/ui/pages/compose.py:630
 #, python-brace-format
 msgid "<b>Track {track}, pattern {pattern}</b> on the FM-1 is <b>empty</b> and will be overwritten with {n} steps ({description})."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:626
+#: fm1companion/ui/pages/compose.py:634
 msgid "Overwrite pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:627
+#: fm1companion/ui/pages/compose.py:635
 msgid "The pattern is selected on the FM-1 in the process."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:628
+#: fm1companion/ui/pages/compose.py:636
 msgid "The old content has been read – “Undo” brings it back. Please stop the FM-1 first. It only becomes permanent with SAVE on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:629 fm1companion/ui/pages/presets.py:776
+#: fm1companion/ui/pages/compose.py:637 fm1companion/ui/pages/presets.py:776
 #: fm1companion/ui/pages/presets.py:779 fm1companion/ui/samples_page.py:678
 #: fm1companion/ui/samples_page.py:1080
 msgid "Overwrite"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:630
+#: fm1companion/ui/pages/compose.py:638
 #, python-brace-format
 msgid "Cancelled – track {track}, pattern {pattern} is unchanged."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:635
+#: fm1companion/ui/pages/compose.py:643
 msgid "Writing and checking …"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:642
+#: fm1companion/ui/pages/compose.py:650
 #, python-brace-format
 msgid "Written and read back: track {track}, pattern {pattern}."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:644
+#: fm1companion/ui/pages/compose.py:652
 msgid "Listen on the FM-1 and store it with SAVE."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:645
+#: fm1companion/ui/pages/compose.py:653
 #, python-brace-format
 msgid "Track {track}, pattern {pattern}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:648
+#: fm1companion/ui/pages/compose.py:656
 msgid "Write pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:649
+#: fm1companion/ui/pages/compose.py:657
 #, python-brace-format
 msgid "Track {track}, pattern {pattern}: {n} steps written and read back. The old content is kept for “Undo”. It only becomes permanent with SAVE on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:652
+#: fm1companion/ui/pages/compose.py:660
 #, python-brace-format
 msgid "Not written: {error}. “Undo” restores the old state of track {track}, pattern {pattern} that was read."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:656
+#: fm1companion/ui/pages/compose.py:664
 #, python-brace-format
 msgid "Not written – “Undo” sets track {track}, pattern {pattern} back to the state that was read."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:659
+#: fm1companion/ui/pages/compose.py:667
 msgid "Read pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:660
+#: fm1companion/ui/pages/compose.py:668
+#: fm1companion/ui/pages/project_view.py:459
+#: fm1companion/ui/projects_page.py:458
 #, python-brace-format
 msgid "Not read: {error}. Nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:666
+#: fm1companion/ui/pages/compose.py:678
 #, python-brace-format
 msgid "Set track {track}, pattern {pattern} back to the state before writing?"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:667 fm1companion/ui/samples_page.py:1143
-#: fm1companion/ui/workshop_page.py:476
+#: fm1companion/ui/pages/compose.py:679 fm1companion/ui/samples_page.py:1143
+#: fm1companion/ui/workshop_page.py:493
 msgctxt "undo"
 msgid "Restore"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:676
+#: fm1companion/ui/pages/compose.py:688
 #, python-brace-format
 msgid "Restored: track {track}, pattern {pattern}."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:678
+#: fm1companion/ui/pages/compose.py:690
 msgid "Restore pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:679
+#: fm1companion/ui/pages/compose.py:691
 #, python-brace-format
 msgid "Track {track}, pattern {pattern} has its old content again."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:695
+#: fm1companion/ui/pages/compose.py:707
 msgid "generate rhythms, chords and melodies and write them to the FM-1"
 msgstr ""
 
@@ -14740,7 +14852,7 @@ msgstr ""
 msgid "click in time (or press T)"
 msgstr ""
 
-#: fm1companion/ui/pages/midi.py:642 fm1companion/ui/workshop_page.py:127
+#: fm1companion/ui/pages/midi.py:642 fm1companion/ui/workshop_page.py:131
 msgid "Swing:"
 msgstr ""
 
@@ -14831,7 +14943,7 @@ msgstr ""
 msgid "{bpm} BPM"
 msgstr ""
 
-#: fm1companion/ui/pages/midi.py:811 fm1companion/ui/pages/project_view.py:65
+#: fm1companion/ui/pages/midi.py:811 fm1companion/ui/pages/project_view.py:66
 msgid "Read from FM-1"
 msgstr ""
 
@@ -15092,7 +15204,7 @@ msgstr ""
 msgid "fetch the marked slots into the library"
 msgstr ""
 
-#: fm1companion/ui/pages/presets.py:115 fm1companion/ui/workshop_page.py:125
+#: fm1companion/ui/pages/presets.py:115 fm1companion/ui/workshop_page.py:129
 msgid "Track:"
 msgstr ""
 
@@ -15104,7 +15216,7 @@ msgstr ""
 #: fm1companion/ui/pages/voices.py:308 fm1companion/ui/recorder_page.py:170
 #: fm1companion/ui/recorder_page.py:750 fm1companion/ui/sample_recorder.py:142
 #: fm1companion/ui/samples_page.py:114 fm1companion/ui/samples_page.py:186
-#: fm1companion/ui/samples_page.py:891 fm1companion/ui/workshop_page.py:161
+#: fm1companion/ui/samples_page.py:891 fm1companion/ui/workshop_page.py:165
 msgid "Listen"
 msgstr ""
 
@@ -15144,7 +15256,8 @@ msgstr ""
 msgid "Move a slot into another slot or swap two slots"
 msgstr ""
 
-#: fm1companion/ui/pages/presets.py:134 fm1companion/ui/projects_page.py:68
+#: fm1companion/ui/pages/presets.py:134 fm1companion/ui/projects_page.py:69
+#: fm1companion/ui/projects_page.py:501
 msgid "Clear slot …"
 msgstr ""
 
@@ -15395,7 +15508,7 @@ msgid "Write into the FM-1"
 msgstr ""
 
 #: fm1companion/ui/pages/presets.py:567 fm1companion/ui/samples_page.py:1391
-#: fm1companion/ui/workshop_page.py:406
+#: fm1companion/ui/workshop_page.py:419
 msgid "Write"
 msgstr ""
 
@@ -15725,7 +15838,7 @@ msgid ""
 "(at most 20 characters; only the file changes, nothing on the FM-1):"
 msgstr ""
 
-#: fm1companion/ui/pages/presets.py:881
+#: fm1companion/ui/pages/presets.py:881 fm1companion/ui/projects_page.py:700
 msgid "Not renamed"
 msgstr ""
 
@@ -15808,12 +15921,12 @@ msgid "hold"
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:45
-#: fm1companion/ui/pages/project_view.py:688
+#: fm1companion/ui/pages/project_view.py:740
 msgid "Project View"
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:45
-msgid "View and listen to Melodee projects (on the FM-1 with its own sounds or on the computer) and export them as a MIDI file for Audacity, LMMS, Ardour or MuseScore."
+msgid "View and listen to Melodee, SLOOP and SLOOP 3 projects (on the FM-1 with its own sounds or on the computer) and export them as a MIDI file for Audacity, LMMS, Ardour or MuseScore."
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:50
@@ -15821,7 +15934,7 @@ msgid "1 · Open project"
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:52
-#: fm1companion/ui/pages/project_view.py:83
+#: fm1companion/ui/pages/project_view.py:84
 msgid "Open backup …"
 msgstr ""
 
@@ -15834,500 +15947,518 @@ msgid "Open project file …"
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:55
-msgid "Open a .fm1proj file from the project library"
+msgid "Open a project file: .fm1proj from the project library, or a SLOOP 3 project (.s3p) or editor backup (.s3b)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:56
+#: fm1companion/ui/pages/project_view.py:57
 msgid "or live from the FM-1:"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:62
+#: fm1companion/ui/pages/project_view.py:63
 msgid "Project "
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:63
+#: fm1companion/ui/pages/project_view.py:64
 msgid "What is read from the active FM-1: the running music or a saved project slot"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:66
+#: fm1companion/ui/pages/project_view.py:67
 msgid "Reads the project from the active FM-1 (at the top of the bar) with the backup commands – read only, nothing is changed on the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:71
+#: fm1companion/ui/pages/project_view.py:72
 msgid "Project in the opened file"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:76
+#: fm1companion/ui/pages/project_view.py:77
 msgid "Live reading and playback go to"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:80
+#: fm1companion/ui/pages/project_view.py:81
 msgid "No project opened yet"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:81
+#: fm1companion/ui/pages/project_view.py:82
 msgid "How it works: open a backup (device backups are in ~/FM-1/Backups), choose a project file from the library or read the running music directly from the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:103
+#: fm1companion/ui/pages/project_view.py:104
 msgid "Vol."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:103
+#: fm1companion/ui/pages/project_view.py:104
 msgid "Mute"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:104
+#: fm1companion/ui/pages/project_view.py:105
 #: fm1companion/ui/pages/voices.py:776
 msgid "MIDI channel"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:109
+#: fm1companion/ui/pages/project_view.py:110
 msgid "Tracks"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:116
+#: fm1companion/ui/pages/project_view.py:117
 msgid "Patterns per track: filled = in use, bold = active. A click shows the notes."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:117
+#: fm1companion/ui/pages/project_view.py:118
 msgid "Pattern overview"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:138
+#: fm1companion/ui/pages/project_view.py:139
 msgid "Width of one step"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:157
+#: fm1companion/ui/pages/project_view.py:158
 msgid "2 · Listen"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:160
+#: fm1companion/ui/pages/project_view.py:161
 msgid "Song (sections one after another)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:161
+#: fm1companion/ui/pages/project_view.py:162
 msgid "active patterns in a loop"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:162
+#: fm1companion/ui/pages/project_view.py:163
 msgid "only the shown pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:164
+#: fm1companion/ui/pages/project_view.py:165
 msgid "What is played and exported"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:168
+#: fm1companion/ui/pages/project_view.py:169
 msgid " passes"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:169
+#: fm1companion/ui/pages/project_view.py:170
 msgid "How often the active patterns run (sequence “active patterns”)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:170
+#: fm1companion/ui/pages/project_view.py:171
 msgid "play muted tracks too"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:172
+#: fm1companion/ui/pages/project_view.py:173
 msgid "Play and export tracks that are muted in the project anyway"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:174
+#: fm1companion/ui/pages/project_view.py:175
 msgid "Selection:"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:179
+#: fm1companion/ui/pages/project_view.py:180
 #: fm1companion/ui/pages/studio.py:422 fm1companion/ui/playback_bar.py:143
 msgid "Play"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:182
+#: fm1companion/ui/pages/project_view.py:183
 msgid "Start the song on the FM-1 itself"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:183
+#: fm1companion/ui/pages/project_view.py:184
 msgid "The FM-1 plays its running music itself (its song, exactly its sound). Only for the running music of the active FM-1 just read; nothing is saved."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:186
-#: fm1companion/ui/pages/project_view.py:265
+#: fm1companion/ui/pages/project_view.py:187
+#: fm1companion/ui/pages/project_view.py:277
 msgid "Stop FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:187
+#: fm1companion/ui/pages/project_view.py:188
 msgid "Stop the transport of the FM-1 (like the STOP button)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:189
+#: fm1companion/ui/pages/project_view.py:190
 msgid "from section "
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:190
+#: fm1companion/ui/pages/project_view.py:191
 msgid "Section of the song the FM-1 starts with (like PLAY at the SONG cursor). From Melodee 1.6.1 with CLK INT, following devices then get Song Position + Continue."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:246
+#: fm1companion/ui/pages/project_view.py:253
 #, python-brace-format
 msgid "“{name}” refused the start (code {code}) – is a song set up? Check SONG on the FM-1 or use “Play”."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:249
+#: fm1companion/ui/pages/project_view.py:256
 #, python-brace-format
 msgid "“{name}” plays its song itself from section {section} ({n} section) – exactly its sound. “Stop FM-1” stops it."
 msgid_plural "“{name}” plays its song itself from section {section} ({n} sections) – exactly its sound. “Stop FM-1” stops it."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/project_view.py:254
+#: fm1companion/ui/pages/project_view.py:261
 #, python-brace-format
 msgid "“{name}” plays its song itself ({n} section) – exactly its sound. “Stop FM-1” stops it."
 msgid_plural "“{name}” plays its song itself ({n} sections) – exactly its sound. “Stop FM-1” stops it."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/project_view.py:258
+#: fm1companion/ui/pages/project_view.py:265
 msgid "Start song"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:259
+#: fm1companion/ui/pages/project_view.py:266
 #, python-brace-format
 msgid "Start not possible: {error}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:266
+#: fm1companion/ui/pages/project_view.py:278
 msgid "FM-1 stopped."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:267
+#: fm1companion/ui/pages/project_view.py:279
 msgid "The FM-1 did not answer."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:268
+#: fm1companion/ui/pages/project_view.py:280
 #, python-brace-format
 msgid "Not stopped: {error}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:277
+#: fm1companion/ui/pages/project_view.py:289
 msgid "3 · Export"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:281
+#: fm1companion/ui/pages/project_view.py:293
 msgid "Drums on the track's channel"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:282
+#: fm1companion/ui/pages/project_view.py:294
 msgid "Drums on channel 10 (GM)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:285
+#: fm1companion/ui/pages/project_view.py:297
 msgid "GM notes of the 8 drum lanes: KICK, SNARE, CLAP, HAT CL, HAT OP, TOM, RIM, BELL"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:286
+#: fm1companion/ui/pages/project_view.py:298
 msgid "Exports the selection from “Listen”."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:288
+#: fm1companion/ui/pages/project_view.py:300
 msgid "Lane notes:"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:291
+#: fm1companion/ui/pages/project_view.py:303
 msgid "MIDI file …"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:292
+#: fm1companion/ui/pages/project_view.py:304
 msgid "Standard MIDI File (type 1): one track per FM-1 track, channel as on the FM-1 (Ctrl+E)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:295
+#: fm1companion/ui/pages/project_view.py:307
 msgid "All notes as a table (spreadsheet)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:297
+#: fm1companion/ui/pages/project_view.py:309
 msgid "The whole project as a readable JSON file"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:298
+#: fm1companion/ui/pages/project_view.py:310
 msgid "Image …"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:299
+#: fm1companion/ui/pages/project_view.py:311
 msgid "The piano roll as a PNG image"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:300
+#: fm1companion/ui/pages/project_view.py:312
 msgid "Open export folder"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:301
+#: fm1companion/ui/pages/project_view.py:313
 msgid "Open the folder ~/FM-1/MIDI-Export in the file manager (drag from there into Audacity or a DAW)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:313
+#: fm1companion/ui/pages/project_view.py:325
 #: fm1companion/ui/pages/studio.py:1079 fm1companion/ui/pages/studio.py:1083
 msgid "Open backup"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:313
+#: fm1companion/ui/pages/project_view.py:325
 msgid "FM-1 backup (*.json)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:320
+#: fm1companion/ui/pages/project_view.py:332
 msgid "Open project file"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:321
-msgid "FM-1 project (*.fm1proj)"
+#: fm1companion/ui/pages/project_view.py:333
+msgid "FM-1 projects (*.fm1proj *.s3p *.s3b)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:330
+#: fm1companion/ui/pages/project_view.py:342
 msgid "File not readable"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:330
+#: fm1companion/ui/pages/project_view.py:342
 #, python-brace-format
 msgid ""
 "{name} could not be opened:\n"
 "{error}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:333
+#: fm1companion/ui/pages/project_view.py:345
 #, python-brace-format
 msgid "There is no project saved in {name}."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:336
+#: fm1companion/ui/pages/project_view.py:348
 #, python-brace-format
 msgid "File {name}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:364
+#: fm1companion/ui/pages/project_view.py:379
 msgid "SLOOP only has 4 slots"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:364
+#: fm1companion/ui/pages/project_view.py:379
 msgid "SLOOP saves projects as sections A–D (slots 1–4). Please choose 0 (running project) or 1–4."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:367
-msgid "SLOOP projects"
-msgstr ""
-
-#: fm1companion/ui/pages/project_view.py:367
-msgid "The project view only knows the Melodee format. SLOOP projects are built differently – to view them use the SLOOP web editor (page “Editor”). Backing up works as usual via backups."
-msgstr ""
-
-#: fm1companion/ui/pages/project_view.py:373
-#: fm1companion/ui/projects_page.py:465 fm1companion/ui/projects_page.py:468
+#: fm1companion/ui/pages/project_view.py:384
+#: fm1companion/ui/projects_page.py:629 fm1companion/ui/projects_page.py:632
 msgid "Other firmware"
-msgstr ""
-
-#: fm1companion/ui/pages/project_view.py:373
-#, python-brace-format
-msgid "{firmware} has no projects the app can read. The project view shows Melodee projects."
-msgstr ""
-
-#: fm1companion/ui/pages/project_view.py:382
-#, python-brace-format
-msgid "Project slot {slot} is empty – nothing to read."
-msgstr ""
-
-#: fm1companion/ui/pages/project_view.py:383
-msgid "No running music found."
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:384
 #, python-brace-format
+msgid "{firmware} has no projects the app can read. The project view shows projects of Melodee, SLOOP 2.6 and later, and SLOOP 3."
+msgstr ""
+
+#: fm1companion/ui/pages/project_view.py:393
+#, python-brace-format
+msgid "Project slot {slot} is empty – nothing to read."
+msgstr ""
+
+#: fm1companion/ui/pages/project_view.py:394
+msgid "No running music found."
+msgstr ""
+
+#: fm1companion/ui/pages/project_view.py:395
+#, python-brace-format
 msgid "Reading {n} bytes …"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:404
+#: fm1companion/ui/pages/project_view.py:415
+#: fm1companion/ui/pages/project_view.py:450
 #, python-brace-format
 msgid "{what} from “{device}”"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:406
+#: fm1companion/ui/pages/project_view.py:417
+#: fm1companion/ui/pages/project_view.py:452
 #, python-brace-format
 msgid "read live from <b>“{device}”</b>"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:407
+#: fm1companion/ui/pages/project_view.py:418
+#: fm1companion/ui/pages/project_view.py:453
 #, python-brace-format
 msgid "at {time} – {what}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:410
+#: fm1companion/ui/pages/project_view.py:421
+#: fm1companion/ui/pages/project_view.py:456
 #, python-brace-format
 msgid "Read project from “{device}”"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:412
+#: fm1companion/ui/pages/project_view.py:423
 #, python-brace-format
 msgid "Cancelled after {done} of {n} bytes – nothing was opened, nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:415
+#: fm1companion/ui/pages/project_view.py:426
+#: fm1companion/ui/pages/project_view.py:457
 #, python-brace-format
 msgid "{what} read from “{device}” ({n} bytes) and opened – only viewed, nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:424
+#: fm1companion/ui/pages/project_view.py:437
+msgid "SLOOP 3 keeps one project"
+msgstr ""
+
+#: fm1companion/ui/pages/project_view.py:437
+msgid "SLOOP 3 keeps one project on the FM-1. Choose “running music” (as it plays now) or project 1 (the one saved on the FM-1)."
+msgstr ""
+
+#: fm1companion/ui/pages/project_view.py:446
+msgid "Reading …"
+msgstr ""
+
+#: fm1companion/ui/pages/project_view.py:466
 msgid "(not readable)"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:445
+#: fm1companion/ui/pages/project_view.py:487
 #, python-brace-format
 msgid "<b>This project could not be read.</b> Format: {format}. {warnings}<br>What works: the project stays in the backup and can be restored as usual – only the view is missing."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:454
+#: fm1companion/ui/pages/project_view.py:496
+#: fm1companion/ui/pages/project_view.py:500
 #, python-brace-format
 msgid "Note: {warnings}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:457
+#: fm1companion/ui/pages/project_view.py:501
 #, python-brace-format
 msgid "{bpm} BPM · Swing {swing} · {n} track · Format {format}"
 msgid_plural "{bpm} BPM · Swing {swing} · {n} tracks · Format {format}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/project_view.py:468
+#: fm1companion/ui/pages/project_view.py:512
 #, python-brace-format
 msgid "(library U{slot:03d})"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:487
+#: fm1companion/ui/pages/project_view.py:531
 #, python-brace-format
 msgid "{track}, pattern {pattern}: {notes} notes/hits, {length} steps, {div}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:490
+#: fm1companion/ui/pages/project_view.py:534
 #, python-brace-format
 msgid "own preset: {name}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:493
+#: fm1companion/ui/pages/project_view.py:537
 msgid "active, empty"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:497
+#: fm1companion/ui/pages/project_view.py:541
 msgid "This track only has 8 patterns"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:504
+#: fm1companion/ui/pages/project_view.py:548
 msgctxt "song"
 msgid "Section"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:504
+#: fm1companion/ui/pages/project_view.py:548
 msgid "Rep."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:516
+#: fm1companion/ui/pages/project_view.py:560
 #, python-brace-format
 msgid "{kind}: {name} ({engine}) – sounds exact only in the studio or on the FM-1; MIDI export and preview use the track's sound."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:518
+#: fm1companion/ui/pages/project_view.py:562
 msgid "Song block preset"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:518
+#: fm1companion/ui/pages/project_view.py:562
 msgid "Pattern preset"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:523
+#: fm1companion/ui/pages/project_view.py:567
 msgid "Timed punch effects of this section (steps START–END, on every repeat) – only work on the FM-1 and in the studio, not in the MIDI export."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:528
+#: fm1companion/ui/pages/project_view.py:572
 msgid "No song set up – the active patterns are exported instead."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:544
+#: fm1companion/ui/pages/project_view.py:589
+#, python-brace-format
+msgid "{n} pattern has a sound of its own ({names}) – shown in the pattern overview; preview and MIDI export use the track's sound."
+msgid_plural "{n} patterns have a sound of their own ({names}) – shown in the pattern overview; preview and MIDI export use the track's sound."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/pages/project_view.py:596
 #, python-brace-format
 msgid "{n} punch effect"
 msgid_plural "{n} punch effects"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/project_view.py:545
+#: fm1companion/ui/pages/project_view.py:597
 #, python-brace-format
 msgid "{n} song/pattern preset ({names})"
 msgid_plural "{n} song/pattern presets ({names})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/project_view.py:548
+#: fm1companion/ui/pages/project_view.py:600
 #, python-brace-format
 msgid "{items} (Melodee 1.6) are in the song table. Preview and MIDI export do not play them – they only sound exact in the studio (or on the FM-1)."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:550
+#: fm1companion/ui/pages/project_view.py:602
 msgid " and "
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:566
+#: fm1companion/ui/pages/project_view.py:618
 #, python-brace-format
 msgid ", {n} recorded note"
 msgid_plural ", {n} recorded notes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/project_view.py:603
+#: fm1companion/ui/pages/project_view.py:655
 msgid "Nothing to export"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:603
+#: fm1companion/ui/pages/project_view.py:655
 msgid "Please open a readable project first."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:610
+#: fm1companion/ui/pages/project_view.py:662
 msgid "Save MIDI file"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:616
+#: fm1companion/ui/pages/project_view.py:668
 msgid "No notes"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:616
+#: fm1companion/ui/pages/project_view.py:668
 msgid "There are no notes in the chosen selection."
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:629
+#: fm1companion/ui/pages/project_view.py:681
+#: fm1companion/ui/projects_page.py:477
 #, python-brace-format
 msgid "“{name}” not saved"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:635
+#: fm1companion/ui/pages/project_view.py:687
 msgid "Save CSV"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:647
+#: fm1companion/ui/pages/project_view.py:699
 msgid "Save JSON"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:657
+#: fm1companion/ui/pages/project_view.py:709
 msgid "Save image"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:661
+#: fm1companion/ui/pages/project_view.py:713
 #, python-brace-format
 msgid "“{name}” could not be written – folder write-protected?"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:669
-#: fm1companion/ui/pages/project_view.py:674
-#: fm1companion/ui/pages/studio.py:1276
+#: fm1companion/ui/pages/project_view.py:721
+#: fm1companion/ui/pages/project_view.py:726
+#: fm1companion/ui/pages/studio.py:1276 fm1companion/ui/projects_page.py:479
 #, python-brace-format
 msgid "Saved: {file}"
 msgstr ""
 
-#: fm1companion/ui/pages/project_view.py:690
-msgid "view Melodee projects and export them as MIDI"
+#: fm1companion/ui/pages/project_view.py:742
+msgid "view Melodee, SLOOP and SLOOP 3 projects and export them as MIDI"
 msgstr ""
 
 #: fm1companion/ui/pages/recovery.py:29
@@ -17795,8 +17926,9 @@ msgstr ""
 msgid "Which backup should the twin load? {firmwares} backups of all devices, newest first – the twin of the backup's firmware starts. Nothing changes on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/studio.py:57 fm1companion/ui/projects_page.py:85
-#: fm1companion/ui/projects_page.py:108 fm1companion/ui/projects_page.py:540
+#: fm1companion/ui/pages/studio.py:57 fm1companion/ui/projects_page.py:86
+#: fm1companion/ui/projects_page.py:110 fm1companion/ui/projects_page.py:719
+#: fm1companion/ui/projects_page.py:726
 msgctxt "library"
 msgid "Note"
 msgstr ""
@@ -17829,8 +17961,8 @@ msgstr ""
 msgid "“{name}” is rendered from the current state of the twin – faster than real time, with exactly the sound of the firmware. 44.1 kHz stereo like the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/studio.py:113 fm1companion/ui/samples_page.py:105
-#: fm1companion/ui/samples_page.py:175
+#: fm1companion/ui/pages/studio.py:113 fm1companion/ui/projects_page.py:87
+#: fm1companion/ui/samples_page.py:105 fm1companion/ui/samples_page.py:175
 msgid "Length"
 msgstr ""
 
@@ -19510,349 +19642,423 @@ msgstr[1] ""
 msgid "bar {bar}/{total}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:27
+#: fm1companion/ui/projects_page.py:28
 msgid "Fetch projects from the active FM-1 to the computer, view and listen to them, name them, collect them and play them back into any slot – also onto another FM-1 with the same firmware."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:30
+#: fm1companion/ui/projects_page.py:31
 msgid "On the left you see the slots of"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:36 fm1companion/ui/samples_page.py:262
+#: fm1companion/ui/projects_page.py:37 fm1companion/ui/samples_page.py:262
 msgid "On the FM-1"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:40 fm1companion/ui/projects_page.py:213
-#: fm1companion/ui/projects_page.py:354
+#: fm1companion/ui/projects_page.py:41 fm1companion/ui/projects_page.py:234
+#: fm1companion/ui/projects_page.py:491
 msgctxt "project slot"
 msgid "Slot"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:40 fm1companion/ui/projects_page.py:213
+#: fm1companion/ui/projects_page.py:41 fm1companion/ui/projects_page.py:234
+#: fm1companion/ui/projects_page.py:393
 msgid "Used"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:43 fm1companion/ui/projects_page.py:97
+#: fm1companion/ui/projects_page.py:44 fm1companion/ui/projects_page.py:99
 msgid "Double-click: view and listen"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:45 fm1companion/ui/projects_page.py:166
+#: fm1companion/ui/projects_page.py:46 fm1companion/ui/projects_page.py:181
 #: fm1companion/ui/samples_page.py:238 fm1companion/ui/samples_page.py:936
 msgid "Not read yet."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:54
+#: fm1companion/ui/projects_page.py:55
 msgid "Re-read"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:55
+#: fm1companion/ui/projects_page.py:56
 msgid "The slots are read automatically when the page opens – here again when needed (F5)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:58 fm1companion/ui/projects_page.py:98
+#: fm1companion/ui/projects_page.py:59 fm1companion/ui/projects_page.py:100
 msgid "View && listen"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:59
+#: fm1companion/ui/projects_page.py:60
 msgid "Read the chosen slot from the FM-1 (read only) and open it in “View & Export” – play it there on the FM-1 with its sounds or export it as MIDI"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:62
+#: fm1companion/ui/projects_page.py:63
 msgid "Fetch to the computer"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:63
+#: fm1companion/ui/projects_page.py:64
 msgid "Copy the chosen slot as a project file into the library (nothing changes on the FM-1)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:65
+#: fm1companion/ui/projects_page.py:66
 msgid "Fetch all"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:66
+#: fm1companion/ui/projects_page.py:67
 msgid "Copy all used slots into the library"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:69
+#: fm1companion/ui/projects_page.py:70
 msgid "Deletes the slot on the FM-1 – the app puts a copy into the library first"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:72 fm1companion/ui/projects_page.py:119
+#: fm1companion/ui/projects_page.py:73 fm1companion/ui/projects_page.py:127
 msgid "View:"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:73
+#: fm1companion/ui/projects_page.py:74
 msgid "Back up:"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:74
+#: fm1companion/ui/projects_page.py:75
 msgid "Changes the FM-1:"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:78
+#: fm1companion/ui/projects_page.py:79
 msgid "Library on the computer"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:81
+#: fm1companion/ui/projects_page.py:82
 msgid "Search (name, note, firmware) …"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:89
-msgid "No projects in the library yet – how it works: choose a used slot on the left and “Fetch to the computer”, or “Fetch all”. Project files (.fm1proj) can also be added with “Add file”."
+#: fm1companion/ui/projects_page.py:87
+msgid "Tempo"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:99
+#: fm1companion/ui/projects_page.py:91
+msgid "No projects in the library yet – how it works: choose a used slot on the left and “Fetch to the computer”, or “Fetch all”. Project files (.fm1proj, SLOOP 3: .s3p) can also be added with “Add file”."
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:101
 msgid "Open the chosen project in “View & Export” – tracks, patterns, song; play on the FM-1 or on the computer; MIDI export"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:102 fm1companion/ui/projects_page.py:139
+#: fm1companion/ui/projects_page.py:104 fm1companion/ui/projects_page.py:147
 msgid "To the FM-1 into the chosen slot …"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:103
+#: fm1companion/ui/projects_page.py:105
 msgid "Write the chosen project into the slot chosen on the left on the active FM-1 (with confirmation; the device checks it first)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:114
+#: fm1companion/ui/projects_page.py:115
+msgid "Add project files (.fm1proj; SLOOP 3: .s3p from its web editor, or the project in an .s3b or SLOOP 3 backup) to the library"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:118 fm1companion/ui/projects_page.py:468
+msgid "Save as file …"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:119
+msgid "Save a copy of the chosen project somewhere else – a SLOOP 3 project as the .s3p file its web editor opens"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:122
 msgid "From backups …"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:115
+#: fm1companion/ui/projects_page.py:123
 msgid "View projects in older backups and fetch them one by one (Backups › Browse & Compare)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:117 fm1companion/ui/recorder_page.py:195
+#: fm1companion/ui/projects_page.py:125 fm1companion/ui/recorder_page.py:195
 #: fm1companion/ui/samplepacks_tab.py:65 fm1companion/ui/samples_page.py:105
 #: fm1companion/ui/samples_page.py:532
 msgid "Folder"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:120
+#: fm1companion/ui/projects_page.py:128
 msgid "Organise:"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:121
+#: fm1companion/ui/projects_page.py:129
 msgid "Add:"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:137
+#: fm1companion/ui/projects_page.py:145
 msgid "On the FM-1 (none connected)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:137
+#: fm1companion/ui/projects_page.py:145
 #, python-brace-format
 msgid "On the FM-1 “{name}”"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:138
+#: fm1companion/ui/projects_page.py:146
 #, python-brace-format
 msgid "To “{name}” into the chosen slot …"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:156
+#: fm1companion/ui/projects_page.py:164
 #, python-brace-format
 msgid "{firmware} has no editor protocol – the app can neither read its projects nor write projects to this FM-1."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:167
+#: fm1companion/ui/projects_page.py:182
 msgid "No device is connected."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:197
+#: fm1companion/ui/projects_page.py:218 fm1companion/ui/projects_page.py:428
 #, python-brace-format
 msgid "Reading the slots failed: {error}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:200
+#: fm1companion/ui/projects_page.py:221
 msgid "Reading the project slots …"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:202 fm1companion/ui/projects_page.py:476
+#: fm1companion/ui/projects_page.py:223 fm1companion/ui/projects_page.py:427
+#: fm1companion/ui/projects_page.py:640
 msgid "Read slots"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:215
+#: fm1companion/ui/projects_page.py:236
 #, python-brace-format
 msgid "{name} (slot {n})"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:223
+#: fm1companion/ui/projects_page.py:244
 msgid "This firmware reports no project slots that can be read one by one. Backups work anyway (page “Backups”)."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:226
+#: fm1companion/ui/projects_page.py:247
 #, python-brace-format
-msgid "{used} of {n} section used, running project {size}. SLOOP projects can be fetched, collected and played back – viewing only works in the SLOOP web editor."
-msgid_plural "{used} of {n} sections used, running project {size}. SLOOP projects can be fetched, collected and played back – viewing only works in the SLOOP web editor."
+msgid "{used} of {n} section used, running project {size}. SLOOP projects can be fetched, collected, viewed (SLOOP 2.6 and later) and played back."
+msgid_plural "{used} of {n} sections used, running project {size}. SLOOP projects can be fetched, collected, viewed (SLOOP 2.6 and later) and played back."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/projects_page.py:233
+#: fm1companion/ui/projects_page.py:254
 #, python-brace-format
 msgid "{used} of {n} slot used, running music {size}. You give names in the library (the protocol provides none)."
 msgid_plural "{used} of {n} slots used, running music {size}. You give names in the library (the protocol provides none)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/projects_page.py:239
+#: fm1companion/ui/projects_page.py:260
 #, python-brace-format
 msgid "Read from “{device}” at {time}."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:242
-msgid "SLOOP projects are shown by the SLOOP web editor (page “Editor”)."
-msgstr ""
-
-#: fm1companion/ui/projects_page.py:243
+#: fm1companion/ui/projects_page.py:265
 msgid "Read the chosen slot from the FM-1 (read only) and open it in “View & Export”"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:249
-msgid "No slot chosen"
+#: fm1companion/ui/projects_page.py:266
+msgid "The project view does not read this firmware's projects."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:249
-msgid "Please choose a used slot on the left."
-msgstr ""
-
-#: fm1companion/ui/projects_page.py:253 fm1companion/ui/projects_page.py:286
+#: fm1companion/ui/projects_page.py:273 fm1companion/ui/projects_page.py:282
+#: fm1companion/ui/projects_page.py:321 fm1companion/ui/projects_page.py:435
 msgid "Empty"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:253
+#: fm1companion/ui/projects_page.py:273 fm1companion/ui/projects_page.py:435
+msgid "No project is saved on the FM-1 yet."
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:278
+msgid "No slot chosen"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:278
+msgid "Please choose a used slot on the left."
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:282
 #, python-brace-format
 msgid "{word} {name} is empty – there is nothing to see."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:261
+#: fm1companion/ui/projects_page.py:290 fm1companion/ui/projects_page.py:312
+#: fm1companion/ui/projects_page.py:465
 msgid "No project chosen"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:261
+#: fm1companion/ui/projects_page.py:290 fm1companion/ui/projects_page.py:465
 msgid "Please choose a project from the library on the right."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:286
+#: fm1companion/ui/projects_page.py:312
+msgid "Please choose on the left which project to fetch."
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:321
 #, python-brace-format
 msgid "{word} {name} is empty – there is nothing to fetch."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:289
+#: fm1companion/ui/projects_page.py:324 fm1companion/ui/projects_page.py:440
 msgid "Fetch project"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:289
+#: fm1companion/ui/projects_page.py:324
 #, python-brace-format
 msgid "Name for the project from {word} {name}:"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:300
+#: fm1companion/ui/projects_page.py:338
 msgid "Nothing to fetch"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:300
+#: fm1companion/ui/projects_page.py:338
 msgid "No project slot is used on the FM-1 – or the slots have not been read yet (“Read again”, F5)."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:329
+#: fm1companion/ui/projects_page.py:367
 #, python-brace-format
 msgid "Cancelled – {done} of {n} project was fetched and is in the library; the one being read was not saved. Nothing was changed on the FM-1."
 msgid_plural "Cancelled – {done} of {n} projects were fetched and are in the library; the one being read was not saved. Nothing was changed on the FM-1."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/projects_page.py:334
+#: fm1companion/ui/projects_page.py:372
 #, python-brace-format
 msgid "Not all projects fetched: {error} – {done} of {n} are in the library, nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:336
+#: fm1companion/ui/projects_page.py:374 fm1companion/ui/projects_page.py:453
 msgid "Fetch projects"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:337
+#: fm1companion/ui/projects_page.py:375 fm1companion/ui/projects_page.py:454
 #, python-brace-format
 msgid "{done} of {n} project fetched into the library ({folder}). Nothing was changed on the FM-1."
 msgid_plural "{done} of {n} projects fetched into the library ({folder}). Nothing was changed on the FM-1."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/projects_page.py:368
+#: fm1companion/ui/projects_page.py:395
+msgid "Project as it plays now (unsaved changes too)"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:405
+#, python-brace-format
+msgid "{firmware} keeps one project on the FM-1. The app reads it the way the backup does (read only): view and listen, or fetch it into the library as a .s3p file its web editor opens. Writing a project to the FM-1 is not in the app yet."
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:410
+msgid "Read the chosen project from the FM-1 (read only) and open it in “View & Export”"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:437
+#, python-brace-format
+msgid "{device} SLOOP 3 project"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:438
+#, python-brace-format
+msgid "{device} SLOOP 3 as it played"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:440
+msgid "Name for the project:"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:467
+msgid "SLOOP 3 project (*.s3p)"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:467
+msgid "FM-1 project (*.fm1proj)"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:501
+msgid "The app changes nothing on an FM-1 with SLOOP 3 here – it only reads its project."
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:509
 msgid "Already empty"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:368
+#: fm1companion/ui/projects_page.py:509
 #, python-brace-format
 msgid "{word} {name} is already empty."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:372
+#: fm1companion/ui/projects_page.py:513
 #, python-brace-format
 msgid "Clear {word}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:373
+#: fm1companion/ui/projects_page.py:514
 #, python-brace-format
 msgid "Clear {word} <b>{name}</b> on <b>{device}</b>{size}?<br><br>First the app puts a copy of the project into the library (“… before clearing”) – so you can play it back at any time. Everything else on the FM-1 stays unchanged."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:386
+#: fm1companion/ui/projects_page.py:527
 msgid "Saving the project into the library …"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:388
+#: fm1companion/ui/projects_page.py:529
 #, python-brace-format
 msgid "{device} {word} {name} (before clearing)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:390
+#: fm1companion/ui/projects_page.py:531
 msgid "Copy the app made before clearing."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:391
+#: fm1companion/ui/projects_page.py:532
 #, python-brace-format
 msgid "Backed up: {name}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:392
+#: fm1companion/ui/projects_page.py:533
 #, python-brace-format
 msgid "Clearing {word} {name} …"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:395
+#: fm1companion/ui/projects_page.py:536
 #, python-brace-format
 msgid "Clear {word} {name}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:396
+#: fm1companion/ui/projects_page.py:537
 #, python-brace-format
 msgid "{word} {name} on {device} is now empty."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:398
+#: fm1companion/ui/projects_page.py:539
 #, python-brace-format
 msgid "The project is in the library as “{name}” – from there you can play it back."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:400
+#: fm1companion/ui/projects_page.py:541
 #, python-brace-format
 msgid "Not cleared: {error}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:401
+#: fm1companion/ui/projects_page.py:542
 #, python-brace-format
 msgid "(The copy “{name}” is in the library anyway.)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:402
+#: fm1companion/ui/projects_page.py:543
 msgid "Clearing is a single step and cannot be cancelled."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:414
+#: fm1companion/ui/projects_page.py:555
 msgid "Project library not readable"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:425
+#: fm1companion/ui/projects_page.py:565
+#, python-brace-format
+msgid ""
+"{path}\n"
+"SLOOP 3 project (.s3p), format {format} – opens in its web editor as it is"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:578
 #, python-brace-format
 msgid ""
 "{path}\n"
@@ -19860,163 +20066,191 @@ msgid ""
 "Format: {format}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:440
+#: fm1companion/ui/projects_page.py:600
 msgid "Project file damaged"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:452
+#: fm1companion/ui/projects_page.py:612
 #, python-brace-format
 msgid "{name} (no profile with this name)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:469
+#: fm1companion/ui/projects_page.py:617
+msgid "Not yet"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:633
 #, python-brace-format
 msgid "<b>{name}</b> comes from <b>{source}</b>, the FM-1 runs <b>{target}</b>. The project formats do not match – nothing is written."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:483
+#: fm1companion/ui/projects_page.py:647
 #, python-brace-format
 msgid "Choose {word}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:484
+#: fm1companion/ui/projects_page.py:648
 #, python-brace-format
 msgid "Into which project slot (1–{n})?"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:488
+#: fm1companion/ui/projects_page.py:652
 msgid "No such slot"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:488
+#: fm1companion/ui/projects_page.py:652
 #, python-brace-format
 msgid "This firmware only has {n} project slot."
 msgid_plural "This firmware only has {n} project slots."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/projects_page.py:496
+#: fm1companion/ui/projects_page.py:660
 #, python-brace-format
 msgid "The project comes from <b>{source}</b>, the FM-1 runs <b>{target}</b> (same firmware, different version – the FM-1 checks whether it reads the format)."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:500
+#: fm1companion/ui/projects_page.py:664
 #, python-brace-format
 msgid "Play <b>{name}</b> into {word} <b>{slot}</b> on <b>{device}</b>?"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:503
+#: fm1companion/ui/projects_page.py:667
 #, python-brace-format
 msgid "Play <b>{name}</b> into {word} <b>{slot}</b> on <b>the FM-1</b>?"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:506
+#: fm1companion/ui/projects_page.py:670
 #, python-brace-format
 msgid "<b>{word} {slot} is in use ({size}) and will be overwritten.</b> Fetch it to the computer first if you want to keep it."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:508
+#: fm1companion/ui/projects_page.py:672
 #, python-brace-format
 msgid "{word} {slot} is empty."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:509
+#: fm1companion/ui/projects_page.py:673
 msgid "The device checks the project first – if it does not fit, nothing is written. Everything else on the FM-1 stays unchanged."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:511 fm1companion/ui/projects_page.py:519
+#: fm1companion/ui/projects_page.py:675 fm1companion/ui/projects_page.py:683
 msgid "Play in project"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:511
+#: fm1companion/ui/projects_page.py:675
 msgid "Play in"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:516
+#: fm1companion/ui/projects_page.py:680
 #, python-brace-format
 msgid "{word} {slot}: {name} written. Load it on the FM-1 under SAVE > PROJECT."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:520
+#: fm1companion/ui/projects_page.py:684
 #, python-brace-format
 msgid "“{name}” is now in {word} {slot}. Load it on the FM-1 under SAVE > PROJECT."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:522
+#: fm1companion/ui/projects_page.py:686
 #, python-brace-format
 msgid "Not played in: {error}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:523
+#: fm1companion/ui/projects_page.py:687
 msgid "nothing was written"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:523
+#: fm1companion/ui/projects_page.py:687
 msgid "the device wrote nothing."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:524
+#: fm1companion/ui/projects_page.py:688
 msgid "A single project is written in one go – please wait a moment."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:534
+#: fm1companion/ui/projects_page.py:700
+#, python-brace-format
+msgid "A file named {name} is already there."
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:704 fm1companion/ui/projects_page.py:714
 msgid "Renamed"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:540
+#: fm1companion/ui/projects_page.py:719
+msgid "A SLOOP 3 project file (.s3p) has no room for a note – it is kept exactly as its web editor saves it. Its name is the file's name."
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:726
 msgid "Note:"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:542
+#: fm1companion/ui/projects_page.py:728
 msgid "Note saved"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:554
+#: fm1companion/ui/projects_page.py:741 fm1companion/ui/projects_page.py:752
 #, python-brace-format
 msgid "Delete <b>{name}</b> from the library? The file {file} is removed for good – nothing changes on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:559
+#: fm1companion/ui/projects_page.py:746 fm1companion/ui/projects_page.py:757
 #, python-brace-format
 msgid "Deleted from the library: {name}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:561
+#: fm1companion/ui/projects_page.py:748 fm1companion/ui/projects_page.py:759
 #, python-brace-format
 msgid "{name} not deleted"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:572
+#: fm1companion/ui/projects_page.py:770
 msgid "Project or backup files"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:573
-msgid "Projects and backups (*.fm1proj *.json)"
+#: fm1companion/ui/projects_page.py:771
+msgid "Projects and backups (*.fm1proj *.s3p *.s3b *.json)"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:587
+#: fm1companion/ui/projects_page.py:780
+msgid "no SLOOP 3 project in it"
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:796
 #, python-brace-format
 msgid "{name} slot {n}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:588
+#: fm1companion/ui/projects_page.py:797
 #, python-brace-format
 msgid "{file}, slot {n}"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:591
+#: fm1companion/ui/projects_page.py:800
 #, python-brace-format
 msgid "{name} not added to the library"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:594
+#: fm1companion/ui/projects_page.py:803
 msgid "File skipped"
 msgstr ""
 
-#: fm1companion/ui/projects_page.py:596
+#: fm1companion/ui/projects_page.py:805
 #, python-brace-format
 msgid "{n} project added to the library."
 msgid_plural "{n} projects added to the library."
+msgstr[0] ""
+msgstr[1] ""
+
+#: fm1companion/ui/projects_page.py:810
+msgid "Not yet: the app does not write projects to an FM-1 with SLOOP 3. Put a .s3p file onto it with the Projects tab of its web editor (page “Editor”)."
+msgstr ""
+
+#: fm1companion/ui/projects_page.py:821
+#, python-brace-format
+msgid "{n} bar"
+msgid_plural "{n} bars"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -20084,7 +20318,7 @@ msgstr ""
 msgid "until stop"
 msgstr ""
 
-#: fm1companion/ui/recorder_page.py:109 fm1companion/ui/workshop_page.py:73
+#: fm1companion/ui/recorder_page.py:109 fm1companion/ui/workshop_page.py:78
 msgid " bars"
 msgstr ""
 
@@ -22011,7 +22245,7 @@ msgstr ""
 msgid "Estimate the tempo from the loop length (whole bars)"
 msgstr ""
 
-#: fm1companion/ui/slicer_dialog.py:93 fm1companion/ui/workshop_page.py:116
+#: fm1companion/ui/slicer_dialog.py:93 fm1companion/ui/workshop_page.py:120
 msgid "Grid:"
 msgstr ""
 
@@ -23296,355 +23530,355 @@ msgstr ""
 msgid "Let's go"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:33
+#: fm1companion/ui/workshop_page.py:19
+msgid "Creates a song on the FM-1 that plays the patterns one after another. The old song chain is read first and can be brought back with “Undo”."
+msgstr ""
+
+#: fm1companion/ui/workshop_page.py:38
 msgid "From MIDI file: MIDI → pattern"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:34
+#: fm1companion/ui/workshop_page.py:39
 msgid "Write melodies, bass lines and beats on the computer (DAW, MuseScore, LMMS …), save them as a MIDI file and play them here into patterns of an FM-1 track. Up to 64 steps per pattern, up to 4 notes per step, held notes become TIE, drums become the drum grid. Longer pieces are spread over several patterns."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:39
+#: fm1companion/ui/workshop_page.py:44
 msgid "Open MIDI file …"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:42
+#: fm1companion/ui/workshop_page.py:47
 msgid "Choose a .mid file – or simply drag it onto this page"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:44 fm1companion/ui/workshop_page.py:273
+#: fm1companion/ui/workshop_page.py:49 fm1companion/ui/workshop_page.py:278
 msgid "No file yet – choose a .mid or drag it here."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:52
+#: fm1companion/ui/workshop_page.py:57
 msgid "Show or hide track choice and transfer – more room for the preview"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:60
+#: fm1companion/ui/workshop_page.py:65
 msgid "Track or channel of the MIDI file that is transferred"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:66
+#: fm1companion/ui/workshop_page.py:71
 msgid "Transfer"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:69
+#: fm1companion/ui/workshop_page.py:74
 msgid "1/16 (default)"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:69
+#: fm1companion/ui/workshop_page.py:74
 msgid "1/8 triplets"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:81
+#: fm1companion/ui/workshop_page.py:86
 msgid " semitones"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:83
+#: fm1companion/ui/workshop_page.py:88
 msgid "Velocity from the file"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:84
+#: fm1companion/ui/workshop_page.py:89
 msgid "fixed velocity (100)"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:89
+#: fm1companion/ui/workshop_page.py:94
 msgid "How strongly notes are pulled to the grid before rounding (100 % = hard)"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:90
+#: fm1companion/ui/workshop_page.py:95
 msgid "as drum grid (GM drums → lanes)"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:91
+#: fm1companion/ui/workshop_page.py:96
 msgid "KICK 35/36, SNARE 38/40, CLAP 39, HAT 42/44/46, TOM 41–50, RIM 37, BELL/cymbals 49–59"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:94 fm1companion/ui/workshop_page.py:364
+#: fm1companion/ui/workshop_page.py:99 fm1companion/ui/workshop_page.py:369
 msgid " pattern"
 msgid_plural " patterns"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:96
+#: fm1companion/ui/workshop_page.py:101
 msgid "Spread longer files over several consecutive patterns"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:97
+#: fm1companion/ui/workshop_page.py:102
 msgid "Create a song chain for it"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:98
-msgid "Creates a song on the FM-1 that plays the patterns one after another. The old song chain is read first and can be brought back with “Undo”."
-msgstr ""
-
-#: fm1companion/ui/workshop_page.py:103
+#: fm1companion/ui/workshop_page.py:107
 msgid "unchanged"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:104
+#: fm1companion/ui/workshop_page.py:108
 msgid "Set the pattern's SWING on the FM-1"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:117
+#: fm1companion/ui/workshop_page.py:121
 msgid "From:"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:119
+#: fm1companion/ui/workshop_page.py:123
 msgid "Split into:"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:120
+#: fm1companion/ui/workshop_page.py:124
 msgid "Transpose:"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:122
+#: fm1companion/ui/workshop_page.py:126
 msgid "Quantise:"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:124
+#: fm1companion/ui/workshop_page.py:128
 msgid "<b>Target on the FM-1</b>"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:126
+#: fm1companion/ui/workshop_page.py:130
 msgid "from pattern:"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:129
+#: fm1companion/ui/workshop_page.py:133
 msgid "Play onto the FM-1"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:154
+#: fm1companion/ui/workshop_page.py:158
 msgid "Preview pattern:"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:163
+#: fm1companion/ui/workshop_page.py:167
 msgid "Listen to the shown pattern – on the FM-1 with the sound of the chosen track, without an FM-1 as an approximation on the computer"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:189
+#: fm1companion/ui/workshop_page.py:193
 msgid "Note: the patterns are overwritten and selected on the FM-1; the app reads them first for “Undo”. Afterwards save on the FM-1 (SAVE)."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:230
+#: fm1companion/ui/workshop_page.py:235
 msgid "No MIDI file yet – how it works: choose “Open MIDI file …” above. Then its tracks are listed here; the chosen track is transferred."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:241
+#: fm1companion/ui/workshop_page.py:246
 msgid "current pattern"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:248
+#: fm1companion/ui/workshop_page.py:253
 msgid "MIDI file"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:254
+#: fm1companion/ui/workshop_page.py:259
 msgid "Not opened"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:257
+#: fm1companion/ui/workshop_page.py:262
 msgid "File too large"
-msgstr ""
-
-#: fm1companion/ui/workshop_page.py:257
-#, python-brace-format
-msgid "{name} is {size} – a MIDI file with notes is rarely larger than a few megabytes. Please choose another one."
 msgstr ""
 
 #: fm1companion/ui/workshop_page.py:262
 #, python-brace-format
+msgid "{name} is {size} – a MIDI file with notes is rarely larger than a few megabytes. Please choose another one."
+msgstr ""
+
+#: fm1companion/ui/workshop_page.py:267
+#, python-brace-format
 msgid "reading {name} …"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:276
+#: fm1companion/ui/workshop_page.py:281
 #, python-brace-format
 msgid "reading {name} … track {n} of {total}"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:287
+#: fm1companion/ui/workshop_page.py:292
 msgid "From MIDI file"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:300
+#: fm1companion/ui/workshop_page.py:305
 #, python-brace-format
 msgid "{name} · {bpm} BPM · {n} track with notes"
 msgid_plural "{name} · {bpm} BPM · {n} tracks with notes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:304
+#: fm1companion/ui/workshop_page.py:309
 #, python-brace-format
 msgid "channel {n}"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:305
+#: fm1companion/ui/workshop_page.py:310
 msgid "drums"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:315
+#: fm1companion/ui/workshop_page.py:320
 msgid "This file contains no notes – how it works: export a track with notes as MIDI in the DAW (not only automation or tempo)."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:350
+#: fm1companion/ui/workshop_page.py:355
 #, python-brace-format
 msgid "<b>What is transferred:</b> {report}"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:373
+#: fm1companion/ui/workshop_page.py:382
 msgid "No MIDI file yet"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:373
+#: fm1companion/ui/workshop_page.py:382
 msgid "No MIDI file is loaded yet – how it works: choose “Open MIDI file …” above, click a track on the left, then play it onto the FM-1 here."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:377
+#: fm1companion/ui/workshop_page.py:386
 msgid "No track chosen"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:377
+#: fm1companion/ui/workshop_page.py:386
 msgid "Choose a track of the MIDI file on the left that contains notes."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:385
+#: fm1companion/ui/workshop_page.py:392 fm1companion/ui/workshop_page.py:418
+msgid "Write patterns"
+msgstr ""
+
+#: fm1companion/ui/workshop_page.py:398
 msgid "Too many patterns"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:385
+#: fm1companion/ui/workshop_page.py:398
 #, python-brace-format
 msgid "From pattern {first} only {n} pattern fits on track {track}. Please choose an earlier pattern or split into fewer."
 msgid_plural "From pattern {first} only {n} patterns fit on track {track}. Please choose an earlier pattern or split into fewer."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:394
+#: fm1companion/ui/workshop_page.py:407
 msgid "the current pattern"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:398
+#: fm1companion/ui/workshop_page.py:411
 #, python-brace-format
 msgid "On the FM-1, <b>track {track}: {what}</b> will be overwritten with {n} steps each and the song chain replaced by a chain of these patterns.<br>First the app reads the patterns and the old song chain (undo possible; if the song chain cannot be read, it stays unchanged). Please stop the FM-1 first."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:403
+#: fm1companion/ui/workshop_page.py:416
 #, python-brace-format
 msgid "On the FM-1, <b>track {track}: {what}</b> will be overwritten with {n} steps each.<br>First the app reads the patterns (undo possible). Please stop the FM-1 first."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:405
-msgid "Write patterns"
-msgstr ""
-
-#: fm1companion/ui/workshop_page.py:415
+#: fm1companion/ui/workshop_page.py:428
 #, python-brace-format
 msgid "Pattern {pattern}: reading …"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:415
+#: fm1companion/ui/workshop_page.py:428
 msgid "(current)"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:429
+#: fm1companion/ui/workshop_page.py:442
 msgid "The old song chain could not be read – so it stays unchanged. The patterns are written."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:435
+#: fm1companion/ui/workshop_page.py:448
 msgid "Song chain created."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:435
+#: fm1companion/ui/workshop_page.py:448
 #, python-brace-format
 msgid "Song chain refused (code {code})."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:439
+#: fm1companion/ui/workshop_page.py:452
 msgid "This firmware does not accept a song chain – the patterns are written anyway."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:440
+#: fm1companion/ui/workshop_page.py:453
 msgid "Done. Listen on the FM-1 and store it with SAVE."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:445
+#: fm1companion/ui/workshop_page.py:458
 #, python-brace-format
 msgid "{n} pattern written to track {track} ({what})"
 msgid_plural "{n} patterns written to track {track} ({what})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:448
+#: fm1companion/ui/workshop_page.py:461
 msgid "; song chain replaced"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:448
+#: fm1companion/ui/workshop_page.py:461
 msgid "; song chain unchanged (not readable)"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:449
+#: fm1companion/ui/workshop_page.py:462
 msgid ". Old state saved (“Undo”). Only permanent with SAVE on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:453
+#: fm1companion/ui/workshop_page.py:466
 #, python-brace-format
 msgid "Cancelled: {error}."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:453
+#: fm1companion/ui/workshop_page.py:466
 #, python-brace-format
 msgid "{n} pattern was read before – “Undo” brings back the old state."
 msgid_plural "{n} patterns were read before – “Undo” brings back the old state."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:456
+#: fm1companion/ui/workshop_page.py:469
 msgid "Nothing has been changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:460
+#: fm1companion/ui/workshop_page.py:473
 #, python-brace-format
 msgid "{n} pattern"
 msgid_plural "{n} patterns"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:461
+#: fm1companion/ui/workshop_page.py:474
 msgid "song chain"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:471
+#: fm1companion/ui/workshop_page.py:488
 #, python-brace-format
 msgid "Set {n} pattern on track {track} and the song chain back to the state before writing?"
 msgid_plural "Set {n} patterns on track {track} and the song chain back to the state before writing?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:474
+#: fm1companion/ui/workshop_page.py:491
 #, python-brace-format
 msgid "Set {n} pattern on track {track} back to the state before writing?"
 msgid_plural "Set {n} patterns on track {track} back to the state before writing?"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:487
+#: fm1companion/ui/workshop_page.py:504
 #, python-brace-format
 msgid "The FM-1 refused the old song chain (code {code})."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:492
+#: fm1companion/ui/workshop_page.py:509
 #, python-brace-format
 msgid "{n} pattern on track {track} and the song chain have the old state again."
 msgid_plural "{n} patterns on track {track} and the song chain have the old state again."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:495
+#: fm1companion/ui/workshop_page.py:512
 #, python-brace-format
 msgid "{n} pattern on track {track} has the old state again."
 msgid_plural "{n} patterns on track {track} have the old state again."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:498
+#: fm1companion/ui/workshop_page.py:515
 #, python-brace-format
 msgid "Not completely brought back: {error}. The rest can still be undone."
 msgstr ""
