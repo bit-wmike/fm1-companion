@@ -1,4 +1,4 @@
-# FM-1 Companion Suite 2.6.1
+# FM-1 Companion Suite 2.6.2
 
 The unofficial desktop suite for the **M-VAVE FM-1** pocket synthesizer: backups, firmware install and recovery,
 a Studio that runs your firmware on the computer, presets, samples and MIDI tools – for Linux, built for the
