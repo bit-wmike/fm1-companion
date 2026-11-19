@@ -140,6 +140,12 @@ def find_param(link, label_options=("LEN", "LENGTH", "STEPS")) -> int | None:
     return None
 
 
+def no_pattern_text(pattern: int, e: Exception) -> str:
+    """the FM-1 did not choose the pattern (no PATTERN command, refused by the gate, no answer): nothing is written"""
+    return _("Pattern {pattern} could not be chosen on the FM-1 ({error}) – nothing was written. Choose “current "
+             "pattern” to write the pattern that is playing.").format(pattern=pattern + 1, error=e)
+
+
 def write_pattern(link, track: int, pattern: int | None, steps: list[Step], length: int,
                   progress=None) -> str:
     """Write steps into a pattern. pattern None = the track's current pattern."""
@@ -153,8 +159,8 @@ def write_pattern(link, track: int, pattern: int | None, steps: list[Step], leng
                 raise ProtocolError(_("The FM-1 is playing – please stop it so the pattern changes right away"))
         except ProtocolError:
             raise
-        except Exception:
-            note = _("This firmware has no pattern banks – the current pattern was written.")
+        except Exception as e:                   # (no silent fallback onto the playing pattern: stop here)
+            raise ProtocolError(no_pattern_text(pattern, e)) from e
     for i, st in enumerate(steps):
         a = link.request(Cmd.TRACK_STEP, [track, i, *st.encode()], timeout=1.0, retries=1)
         if a[0] != track or a[1] != i:
@@ -225,8 +231,8 @@ def _select(link, track: int, pattern: int | None) -> tuple[int | None, str]:
         ps = parse_pattern(link.request(Cmd.PATTERN, [track, 1, pattern], timeout=1.5))
     except ProtocolError:
         raise
-    except Exception:
-        return None, _("This firmware has no pattern banks – the current pattern was used.")
+    except Exception as e:                       # (no silent fallback onto the playing pattern: stop here)
+        raise ProtocolError(no_pattern_text(pattern, e)) from e
     if ps.rc:
         raise ProtocolError(_("Pattern change refused – please stop SONG/playback"))
     if ps.queued != 127:

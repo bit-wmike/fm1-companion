@@ -349,6 +349,22 @@ class DeviceContext(QObject):
         return ""
 
     @property
+    def device_firmware(self) -> str:
+        """the running firmware as the device itself names it (protocol.Info.firmware_name, "sloop3", "" unknown) –
+        what decides which commands the app may send (protocol.supports), never a profile's or the user's choice"""
+        if self.info:
+            from ..protocol import gate_name
+            return gate_name(self.info)
+        return "sloop3" if getattr(self, "sloop3", None) is not None else ""
+
+    def unsupported(self, feature: str) -> str:
+        """"" if the connected firmware does this (or nothing is connected: require() says so), else the tooltip"""
+        from ..protocol import supports, unsupported_text
+        if not self.midi_connected or supports(self.device_firmware, feature):
+            return ""
+        return unsupported_text(feature)
+
+    @property
     def firmware_ambiguous(self) -> bool:
         """generic device whose identifier is used by several firmwares, and no choice by the user"""
         return not self.firmware_key and len(self.firmware_guess) > 1
@@ -556,6 +572,9 @@ class DeviceContext(QObject):
         if link is not None and link is not self.link:
             return                          # outdated: a different device by now (or reconnected)
         self.info = info
+        if self.link is not None:
+            from ..protocol import gate_name
+            self.link.firmware = gate_name(info)        # (what the link may send: transport.Link.request)
         self.identity = (getattr(link, "hs_identity", "") if link is not None else getattr(self, "_hs_identity", "")) \
             or self.identity
         self._assign_profile()
@@ -626,6 +645,7 @@ class DeviceContext(QObject):
         from .. import sloop3 as S3
         self.info = None
         self.sloop3 = s3
+        self.link.firmware = S3.KEY                     # (no Felucca command means anything to it)
         self.identity = ident or ""
         self.firmware_guess = [S3.KEY]
         self._assign_profile()
@@ -655,6 +675,7 @@ class DeviceContext(QObject):
         if s3 is not None:
             self._sloop3(s3, link, ident)
             return
+        self.link.firmware = ""                         # (no editor protocol: none of its commands is sent)
         self.identity = ident or ""
         self._assign_profile()
         p = self.profile

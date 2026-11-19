@@ -730,10 +730,6 @@ msgstr "hacer copias, comparar, restaurar y escuchar los presets de usuario del 
 msgid "Project View"
 msgstr "Vista de proyecto"
 
-#: fm1companion/ui/pages/project_view.py:682
-msgid "view Melodee projects and export them as MIDI"
-msgstr "ver proyectos de Melodee y exportarlos como MIDI"
-
 #: fm1companion/ui/pages/recovery.py:131 fm1companion/ui/pages/recovery.py:723
 #: fm1companion/ui/wizard.py:359
 msgid "Recovery"

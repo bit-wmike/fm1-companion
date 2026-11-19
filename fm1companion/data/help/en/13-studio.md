@@ -120,8 +120,8 @@ old approximation on the computer only remains when there is no twin for the fir
 * SLOOP: “Whole song to the end” plays SLOOP's song order (SAVE layer › SONG MODE; the order is part of the settings)
   – if it names an empty section, the loop plays instead (until the export's limit, as with a song set to LOOP). The
   twin has one core (MENU › 2ND CORE has no effect), no USB audio, no TRS MIDI and no USB rescue. An older SLOOP (e.g.
-  2.8.3) runs on the 2.8.4 twin, with a warning. The project view does not read SLOOP's sections yet (SLOOP's web
-  editor shows them).
+  2.8.3) runs on the 2.8.4 twin, with a warning. The project view reads SLOOP's running project and its sections A–D
+  (SLOOP 2.6 and later), one section at a time: no nudges, ratchets or section order there.
 * CoralFlower: no project slots – its eight patterns and the song play from the twin's panel (SEQ, PLAY) or with Play;
   music is made on the panel (CoralFlower has no editor). The four stems are its parts: chords, bass, layer, drums (a
   stem carries neither the metronome's click nor the power-on sound; the mix has both, as the device plays them).

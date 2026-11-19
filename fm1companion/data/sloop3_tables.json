@@ -1,0 +1,1052 @@
+{
+"source": "isod89/sloop3-fm1 v3.4.0-beta (2228313)",
+"licence": "GPL-3.0-only",
+"engines": [
+"ANALOG",
+"DRUM",
+"DIGITAL",
+"LOFI",
+"PHASE",
+"WHEEL",
+"NOISE",
+"VOICE",
+"TRIO",
+"PHYS",
+"FM6",
+"SAMPLE",
+"GRAIN",
+"SLICE"
+],
+"kinds": [
+"BASS",
+"KEYS",
+"ORGAN",
+"PAD",
+"LEAD",
+"PLUCK",
+"STAB",
+"VOICE",
+"FX",
+"KIT"
+],
+"presets": [
+[
+"808 BOOM",
+0,
+0
+],
+[
+"808 DIRTY",
+0,
+0
+],
+[
+"SUB BASS",
+0,
+0
+],
+[
+"808 SLIDE",
+0,
+0
+],
+[
+"ACID 303",
+0,
+0
+],
+[
+"PLUGG BASS",
+0,
+0
+],
+[
+"REESE",
+0,
+0
+],
+[
+"WOBBLE",
+0,
+0
+],
+[
+"FUNK BASS",
+0,
+0
+],
+[
+"G-FUNK LD",
+0,
+4
+],
+[
+"TRAP PLUCK",
+0,
+5
+],
+[
+"SYN BRASS",
+0,
+6
+],
+[
+"SUPERSAW",
+0,
+4
+],
+[
+"WARM PAD",
+0,
+3
+],
+[
+"DARK STR",
+0,
+3
+],
+[
+"ATMOS PAD",
+0,
+3
+],
+[
+"PAN FLUTE",
+0,
+4
+],
+[
+"FAT LEAD",
+0,
+4
+],
+[
+"MONO BASS",
+0,
+0
+],
+[
+"PWM LEAD",
+0,
+4
+],
+[
+"SAW BASS",
+0,
+0
+],
+[
+"SINE PAD",
+0,
+3
+],
+[
+"RHODES",
+2,
+1
+],
+[
+"DX RHODES",
+2,
+1
+],
+[
+"WURLI",
+2,
+1
+],
+[
+"CLAV",
+2,
+1
+],
+[
+"M1 PIANO",
+2,
+1
+],
+[
+"AFRO KEYS",
+2,
+1
+],
+[
+"TRAP BELL",
+2,
+5
+],
+[
+"MUSIC BOX",
+2,
+5
+],
+[
+"MARIMBA",
+2,
+5
+],
+[
+"KALIMBA",
+2,
+5
+],
+[
+"PLUGG BELL",
+2,
+5
+],
+[
+"GLASS PAD",
+2,
+3
+],
+[
+"FM BASS",
+2,
+0
+],
+[
+"STEEL DRUM",
+2,
+5
+],
+[
+"GLOCKEN",
+2,
+5
+],
+[
+"CELESTA",
+2,
+5
+],
+[
+"XYLOPHONE",
+2,
+5
+],
+[
+"HARP",
+2,
+5
+],
+[
+"BASS GTR",
+2,
+0
+],
+[
+"TUBE BELL",
+2,
+5
+],
+[
+"FM PLUCK",
+2,
+5
+],
+[
+"FM GRAND",
+2,
+1
+],
+[
+"CZ BASS",
+4,
+0
+],
+[
+"SOFT KEYS",
+4,
+1
+],
+[
+"CZ STRING",
+4,
+3
+],
+[
+"RESO PLUCK",
+4,
+5
+],
+[
+"CZ BRASS",
+4,
+6
+],
+[
+"CZ LEAD",
+4,
+4
+],
+[
+"CZ PAD",
+4,
+3
+],
+[
+"CZ RESO",
+4,
+5
+],
+[
+"GAME LEAD",
+3,
+4
+],
+[
+"GB BASS",
+3,
+0
+],
+[
+"8BIT ARP",
+3,
+5
+],
+[
+"NES BASS",
+3,
+0
+],
+[
+"CHIP CHORD",
+3,
+6
+],
+[
+"1BIT BEEP",
+3,
+5
+],
+[
+"WAVE LEAD",
+3,
+4
+],
+[
+"CHIP NOISE",
+3,
+8
+],
+[
+"GRAND PNO",
+11,
+1
+],
+[
+"UP BASS",
+11,
+0
+],
+[
+"VIBES",
+11,
+5
+],
+[
+"HORN STAB",
+11,
+6
+],
+[
+"STRING STB",
+11,
+6
+],
+[
+"LOFI FLUTE",
+11,
+4
+],
+[
+"SCRATCH",
+11,
+8
+],
+[
+"GM KIT",
+11,
+8
+],
+[
+"DUSTY PNO",
+11,
+1
+],
+[
+"LOFI KEYS",
+11,
+1
+],
+[
+"DEEP BASS",
+11,
+0
+],
+[
+"CHOIR AAH",
+7,
+3
+],
+[
+"SOUL OOH",
+7,
+3
+],
+[
+"TALKBOX",
+7,
+4
+],
+[
+"WOW BASS",
+7,
+0
+],
+[
+"HARMONICA",
+7,
+4
+],
+[
+"ROBOT",
+7,
+4
+],
+[
+"VOX PAD",
+7,
+3
+],
+[
+"FAT BASS",
+8,
+0
+],
+[
+"MIN STAB",
+8,
+6
+],
+[
+"MIN7 STAB",
+8,
+6
+],
+[
+"RAVE STAB",
+8,
+6
+],
+[
+"DUB CHORD",
+8,
+6
+],
+[
+"SAW PAD",
+8,
+3
+],
+[
+"SYNC LEAD",
+8,
+4
+],
+[
+"HOOVER",
+8,
+4
+],
+[
+"ACCORDION",
+8,
+2
+],
+[
+"ENSEMBLE",
+8,
+3
+],
+[
+"80S POLY",
+8,
+6
+],
+[
+"SQR LEAD",
+8,
+4
+],
+[
+"POWER STAB",
+8,
+6
+],
+[
+"PULSE PAD",
+8,
+3
+],
+[
+"SOUL ORGAN",
+5,
+2
+],
+[
+"GOSPEL",
+5,
+2
+],
+[
+"JAZZ ORGAN",
+5,
+2
+],
+[
+"DIRTY B3",
+5,
+2
+],
+[
+"HOUSE ORGN",
+5,
+2
+],
+[
+"ROCK ORGAN",
+5,
+2
+],
+[
+"CHAPEL",
+5,
+2
+],
+[
+"REGGAE ORG",
+5,
+2
+],
+[
+"LOFI CLOUD",
+12,
+3
+],
+[
+"VIBE HAZE",
+12,
+3
+],
+[
+"FLUTE DUST",
+12,
+4
+],
+[
+"STR CLOUD",
+12,
+3
+],
+[
+"SHIMMER",
+12,
+3
+],
+[
+"DRONE",
+12,
+3
+],
+[
+"PNO FREEZE",
+12,
+3
+],
+[
+"HORN CLOUD",
+12,
+3
+],
+[
+"TINE EP",
+10,
+1
+],
+[
+"GLASS BELL",
+10,
+5
+],
+[
+"ROUND BASS",
+10,
+0
+],
+[
+"BRASS SECT",
+10,
+6
+],
+[
+"SOFT PAD",
+10,
+3
+],
+[
+"WOOD BARS",
+10,
+5
+],
+[
+"DRAWBARS",
+10,
+2
+],
+[
+"NYLON PICK",
+10,
+5
+],
+[
+"BELL TREE",
+9,
+5
+],
+[
+"MODAL BAR",
+9,
+5
+],
+[
+"STR PLUCK",
+9,
+5
+],
+[
+"BOWED MTL",
+9,
+3
+],
+[
+"THUMB PNO",
+9,
+5
+],
+[
+"HAND DRUM",
+9,
+8
+],
+[
+"MEMB TOMS",
+9,
+8
+],
+[
+"SITAR",
+9,
+5
+],
+[
+"PHYS HARP",
+9,
+5
+],
+[
+"NYLON GTR",
+9,
+5
+],
+[
+"STEEL GTR",
+9,
+5
+],
+[
+"MUTED GTR",
+9,
+5
+],
+[
+"PLUCK BASS",
+9,
+0
+],
+[
+"KOTO",
+9,
+5
+],
+[
+"BANJO",
+9,
+5
+],
+[
+"CELLO BOW",
+9,
+3
+],
+[
+"TANPURA",
+9,
+5
+],
+[
+"CHIMES",
+9,
+5
+],
+[
+"BIG BELL",
+9,
+5
+],
+[
+"VIBRA BAR",
+9,
+5
+],
+[
+"GLASS BOWL",
+9,
+3
+],
+[
+"STEEL PAN",
+9,
+5
+],
+[
+"WOOD BLOCK",
+9,
+5
+],
+[
+"TABLA",
+9,
+8
+],
+[
+"CONGA",
+9,
+8
+],
+[
+"TIMPANI",
+9,
+8
+],
+[
+"WIND",
+6,
+3
+],
+[
+"RAIN",
+6,
+8
+],
+[
+"NZ ARCADE",
+6,
+4
+],
+[
+"NZ METAL",
+6,
+8
+],
+[
+"OCEAN",
+6,
+3
+],
+[
+"VINYL",
+6,
+8
+],
+[
+"HISS",
+6,
+8
+],
+[
+"RISER",
+6,
+8
+],
+[
+"NZ SNARE",
+6,
+8
+],
+[
+"BITCRUSH",
+6,
+8
+],
+[
+"RADIO",
+6,
+8
+],
+[
+"ACOUSTIC",
+1,
+9
+],
+[
+"DEEP",
+1,
+9
+],
+[
+"TIGHT",
+1,
+9
+],
+[
+"BRIGHT",
+1,
+9
+],
+[
+"DUST",
+1,
+9
+],
+[
+"808",
+1,
+9
+],
+[
+"909",
+1,
+9
+],
+[
+"606",
+1,
+9
+],
+[
+"80S",
+1,
+9
+],
+[
+"VINTAGE",
+1,
+9
+],
+[
+"TRAP",
+1,
+9
+],
+[
+"DRILL",
+1,
+9
+],
+[
+"BOOMBAP",
+1,
+9
+],
+[
+"LO-FI",
+1,
+9
+],
+[
+"PHONK",
+1,
+9
+],
+[
+"HOUSE",
+1,
+9
+],
+[
+"D.HOUSE",
+1,
+9
+],
+[
+"TECHNO",
+1,
+9
+],
+[
+"MINIMAL",
+1,
+9
+],
+[
+"ELECTRO",
+1,
+9
+],
+[
+"DISCO",
+1,
+9
+],
+[
+"GARAGE",
+1,
+9
+],
+[
+"JUNGLE",
+1,
+9
+],
+[
+"DUBSTEP",
+1,
+9
+],
+[
+"DEMBOW",
+1,
+9
+],
+[
+"AMAPIANO",
+1,
+9
+],
+[
+"AFRO",
+1,
+9
+],
+[
+"LATIN",
+1,
+9
+],
+[
+"TRIBAL",
+1,
+9
+],
+[
+"SYNTHWV",
+1,
+9
+],
+[
+"CHIP",
+1,
+9
+],
+[
+"ARCADE",
+1,
+9
+],
+[
+"GLITCH",
+1,
+9
+],
+[
+"INDUSTR",
+1,
+9
+],
+[
+"HYPER",
+1,
+9
+],
+[
+"AMBIENT",
+1,
+9
+],
+[
+"JAZZ",
+1,
+9
+],
+[
+"BREAK 16",
+13,
+8
+],
+[
+"CHOP 8",
+13,
+8
+],
+[
+"REVERSE",
+13,
+8
+],
+[
+"USR SLICE",
+13,
+8
+]
+],
+"kits": [
+"ACOUSTIC",
+"DEEP",
+"TIGHT",
+"BRIGHT",
+"DUST",
+"808",
+"909",
+"606",
+"80S",
+"VINTAGE",
+"TRAP",
+"DRILL",
+"BOOMBAP",
+"LO-FI",
+"PHONK",
+"HOUSE",
+"D.HOUSE",
+"TECHNO",
+"MINIMAL",
+"ELECTRO",
+"DISCO",
+"GARAGE",
+"JUNGLE",
+"DUBSTEP",
+"DEMBOW",
+"AMAPIANO",
+"AFRO",
+"LATIN",
+"TRIBAL",
+"SYNTHWV",
+"CHIP",
+"ARCADE",
+"GLITCH",
+"INDUSTR",
+"HYPER",
+"AMBIENT",
+"JAZZ",
+"USR1",
+"USR2",
+"USR3",
+"USR4",
+"USR3+4",
+"SYN1",
+"SYN2",
+"SYN3",
+"SYN4"
+]
+}

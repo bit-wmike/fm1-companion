@@ -22,11 +22,20 @@ import time
 from typing import Callable
 
 from .i18n import _
-from .protocol import frame, unframe, ProtocolError
+from .protocol import Cmd, STEP12_FROM, command_refusal, frame, gate_name, parse_info, unframe, unsupported_text, ProtocolError
 
 
 class LinkError(Exception):
     pass
+
+
+class UnsupportedCommand(LinkError):
+    """the request was not sent: the running firmware gives this command another meaning (protocol.command_refusal).
+    ``feature``: what it would need."""
+
+    def __init__(self, feature: str):
+        super().__init__(unsupported_text(feature))
+        self.feature = feature
 
 
 class Transport:
@@ -154,6 +163,9 @@ class Link:
         self._ex_lock = threading.Lock()
         self.on_exclusive_change: Callable[[bool], None] | None = None   # True = editor must pause
         self.closed = False
+        # the running firmware as the gate knows it (protocol.gate_name; "sloop3"; "" unknown). Set by the device
+        # layer once it knows; None = not asked yet: a request that needs it asks INFO itself (read only)
+        self.firmware: str | None = None
 
     # -------- incoming --------
     def _receive(self, data: list[int]):
@@ -252,10 +264,26 @@ class Link:
             self.on_exclusive_change(False)
 
     # -------- requests --------
+    def firmware_name(self) -> str:
+        """the running firmware as the gate knows it (see ``firmware``); asks INFO once if nobody has said it yet. No
+        answer is kept as "" for this link (fail closed, and not asked again on every step)"""
+        if self.firmware is None:
+            try:
+                self.firmware = gate_name(parse_info(self.request(Cmd.INFO, [], timeout=1.0, retries=1)))
+            except (LinkError, ProtocolError):
+                self.firmware = ""
+        return self.firmware
+
     def request(self, cmd: int, args=(), timeout: float = 1.5, retries: int = 1) -> list[int]:
         if self.closed:
             raise LinkError(_("device not connected"))
         with self._req_lock:
+            if cmd in (Cmd.PATTERN, Cmd.BANK_SONG) or (cmd == Cmd.TRACK_STEP and len(args) - 2 >= STEP12_FROM):
+                # a command another firmware of the family reads differently (SLOOP 2: 73/74 = its drum synth kits,
+                # its own step layout): never sent to a firmware that does not speak Melodee's meaning of it
+                why = command_refusal(self.firmware_name(), cmd, args)
+                if why:
+                    raise UnsupportedCommand(why)
             last = None
             for attempt in range(retries + 1):
                 q: queue.Queue = queue.Queue()

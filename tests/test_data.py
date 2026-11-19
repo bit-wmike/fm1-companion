@@ -508,9 +508,10 @@ def test_object_titles_in_errors_and_written_state():
 
 def test_sloop_project_in_project_view_is_explained():
     from fm1companion import projectfmt as PF
-    prj = PF.decode(b"6NUF" + bytes(2000), "FELUCCA SLOOP 2.8.3")
-    assert not prj.ok and prj.format == "SLOOP-Projekt (FUN6)"
-    assert "SLOOP-Web-Editor" in prj.warnings[0] and "Melodee-Format" in prj.warnings[0]
+    prj = PF.decode(b"6NUF" + bytes(2000), "FELUCCA SLOOP 2.8.3")       # (a damaged FUN6: sloop2proj says why)
+    assert not prj.ok and prj.format == "SLOOP FUN6" and "zu früh" in prj.warnings[0]
+    prj = PF.decode(b"5NUF" + bytes(3836), "FELUCCA SLOOP 2.5")          # an older SLOOP format: named, not shown
+    assert not prj.ok and "FUN5" in prj.format and "FUN6" in prj.warnings[0]
     prj = PF.decode(b"\x00\x01\x02\x03" + bytes(100), "ORBIT 1.0")
     assert not prj.ok and "andere Firmware" in prj.format
 

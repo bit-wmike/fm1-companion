@@ -11,8 +11,10 @@ The knowledge is data: fm1companion/data/hardware.json (one row per firmware, wi
         status  "yes"      this version accepts the newer chip (or: the original V15, which has no such check and is
                            the documented way back – see note)
                 "no"       it does not: on a newer unit it would not save and could not be updated any more
-                "risky"    its code accepts the chip, but it is unproven there or a unit did not start (m-bootloader,
-                           SLOOP 3) – treat as "no" for a newer unit
+                "risky"    its code accepts the chip, but it is unproven there or a unit did not start (m-bootloader
+                           before 2.4-395e6cc, SLOOP 3 before 3.4.0: rows with "below": "risky") – treat as "no" for a
+                           newer unit. (m-bootloader's build 2.4-395e6cc – not a bare "2.4", another build – and 2.5+,
+                           and SLOOP 3 3.4.0 are "yes" by one owner's report, owner_report())
                 "unknown"  nobody knows (not in the table, no version, an own file, the original V16)
         first_version      the first version that accepts the chip ("" = none known)
         note               one English sentence from the table (source), for logs and docs – not translated
@@ -216,7 +218,8 @@ def support(firmware_key: str, version: str = "", flash=(), flash_tag: str = "",
         if not first:                                # a row without its minimum says nothing (never "yes")
             return Support(UNKNOWN, "", note)
         ok = at_least(firmware_key, version, first, row.get("also")) if version else None
-        return Support(UNKNOWN if ok is None else YES if ok else NO, first, note)
+        below = RISKY if row.get("below") == "risky" else NO     # (an owner's report from a version on: the ones
+        return Support(UNKNOWN if ok is None else YES if ok else below, first, note)   # before stay risky, not "no")
     if st == "none":
         return Support(NO, "", note)
     if st == "risky":
@@ -224,6 +227,11 @@ def support(firmware_key: str, version: str = "", flash=(), flash_tag: str = "",
     if st == "documented":
         return Support(YES, "", note)
     return Support(UNKNOWN, "", note)
+
+
+def owner_report(firmware_key: str) -> bool:
+    """the row's "yes" rests on an owner's report of one newer unit, outside this app – not on the firmware's source"""
+    return (_rows().get(canonical(firmware_key)) or {}).get("evidence") == "owner-report"
 
 
 def running_support(firmware_key: str, info_version: str) -> Support | None:
