@@ -50,6 +50,23 @@ What Stage 2 checks before writing – on the backup that was read in the **same
 * A session in ROM boot mode usually lasts for only **one tool run**. After that – also after a refusal – switch the
   FM-1 off and on and bring it into ROM boot mode again.
 
+## The bundled tools: M-Flasher, m-bootloader, SLOOP 3
+
+The app brings **M-Flasher** 0.12.1 (for 64-bit Raspberry Pi OS and x86-64 PCs; there is no build for the 32-bit
+system), **m-bootloader** 2.4 and **SLOOP 3** 3.4.0 with it, so they are there without internet. Recovery ›
+**Tools** shows each one: the bundled version, the version in use, whether its checksum is right (the app checks it
+before every use and never runs a changed file), and when it last looked for a new version.
+
+* **New versions:** by default the app asks GitHub once a day (Settings › General: daily, weekly, only at the start
+  or never; only while the firmware update check is on). A new version is only shown. **Update** downloads it,
+  checks it against GitHub's checksum and keeps your current version as the fallback until the new one has worked
+  once. A new M-Flasher is first used only for reading.
+* **Download mode without a password:** the installer sets up a rule that lets you reach the FM-1 in ROM download
+  mode (USB 4c4a:8057) and loads the Linux driver `sg` at start.
+* **Honestly:** in this version the app only shows, checks and updates the tools and asks M-Flasher which FM-1 it
+  sees. Flash backups, m-bootloader and SLOOP 3 through the app come in later versions; until then use the tools
+  themselves as before.
+
 ## If the FM-1 does not appear as “WL82 UBOOT1.00” at all
 
 The chip only shows the drive once it has dropped into ROM boot mode. In this order (following the

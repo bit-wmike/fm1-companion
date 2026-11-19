@@ -10,7 +10,7 @@
   **Skiff:** <https://github.com/illuminus5/skiff> · **Felucca:** <https://github.com/hugelton/Felucca>
 * **M-VAVE FM1 Open:** <https://github.com/m-vave/fm1_open>
 * **SLOOP 3** (isod89, GPL-3.0, öffentliche Beta): <https://github.com/isod89/sloop3-fm1> – sein Web-Editor ist
-  unverändert in der App enthalten. **m-bootloader** und **M-Flasher** (Julius Vitkauskas, MIT; nicht Teil der App):
+  unverändert in der App enthalten. **m-bootloader** und **M-Flasher** (Julius Vitkauskas, MIT; unverändert mitgeliefert, siehe Rettung › Werkzeuge):
   <https://github.com/jvitkauskas/m-bootloader> · <https://github.com/jvitkauskas/m-flasher>
 
 ## Werkzeuge der Community
@@ -18,7 +18,7 @@
 Gesammelt auf <https://thefirmwarehub.com/tools/>. **Nicht von uns geprüft** – Benutzung auf eigene Gefahr,
 vorher immer ein Backup anlegen.
 
-* **M-Flasher** – Firmware-Dateien aufs FM-1 schreiben (nicht von uns geprüft).
+* **M-Flasher** – liest und schreibt den Flash des FM-1 im ROM-Download-Modus; mit der App mitgeliefert (bisher nutzt sie nur seine lesenden Befehle).
 * **MvaveFM1Unbricker** – holt ein FM-1 aus dem ROM-Bootmodus „WL82 UBOOT1.00“ zurück. Eine unveränderte
   Kopie ist in der App eingebaut und läuft über [Rettung › Stufe 2](app://page/recovery) – mit den
   Sicherheitsregeln des Originals (Doppelsicherung, nie unter 0x4000 schreiben). An einem echten,

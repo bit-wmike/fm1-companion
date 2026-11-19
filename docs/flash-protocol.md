@@ -260,11 +260,64 @@ Melodee OCT−+OCT+ is the calibration!).
   by the read address (the package's boot area) and explains the others in the log.
 * Planner: warning before installations that change the boot area (m-bootloader, Open), and at the V15
   intermediate step.
-* **M-Flasher** (jvitkauskas, MIT, Rust; ARM64 .deb, glibc ≥ 2.35 → Bookworm ok): download-mode tool with a
-  flash map; soft key `F0 22 24 35 7D F7` [V src/midi.rs] sends a running original/Felucca FM-1 into
-  ROM download mode; Felucca/SLOOP: OCT−+OCT+ 5 s; m-bootloader: REC at power-on. Decision: do not
-  embed it (Rust binary, its own UI) – the rescue page detects `m-flasher` in the PATH and starts it,
-  otherwise a link + apt hint. The built-in route remains MvaveFM1Unbricker (Python, testable with a mock).
+* **M-Flasher, m-bootloader and SLOOP 3 – bundled and driven** (decision 2026-11-19, replacing the earlier "do not
+  embed M-Flasher"). The suite does not re-implement these tools; it ships pinned versions, keeps them up to date
+  and runs them in the background, as it does with the Unbricker and the firmware editors.
+  * **Pins** (`fm1companion/tools/manifest.json`; per file: version, release tag and commit, URL, size, SHA-256,
+    licence, and how the hash was checked against upstream):
+    M-Flasher 0.12.1 (jvitkauskas/m-flasher, MIT, tag `v0.12.1` = 8fbece7; release tarballs
+    `m-flasher-0.12.1-linux-{aarch64,x86_64}.tar.gz`, binary `m-flasher/m-flasher`; upstream publishes no
+    SHA256SUMS, the values were measured on the HTTPS download and `tools/update_tool_pins.py --check` compares
+    them with GitHub's per-file digest in the release workflow), m-bootloader 2.4 (jvitkauskas/m-bootloader, MIT,
+    `v2.4` = 395e6cc; `fm1-uboot.boot` 13 760 B, sha256 677ae52a…49e4, checked against the release's
+    `SHA256SUMS` and byte-identical to M-Flasher's built-in `data/bootloader-fm1.boot`), SLOOP 3 3.4.0
+    (isod89/sloop3-fm1, GPL-3.0, `v3.4.0-beta` = 2228313; `sloop3-3.4.0.area` 474 706 B, sha256 12312547…5ce1,
+    byte-identical to the `AREA` inlined in `index.html` at that commit).
+  * **How they reach the user:** m-bootloader's and SLOOP 3's files, all licence and notice files
+    (`fm1companion/tools/bundled/`) are in git. M-Flasher's two binaries are **not** (≈ 7.5 + 8.6 MB per
+    version): `tools/fetch_tools.py` downloads the pinned tarballs at build time, checks size and SHA-256 of the
+    tarball and of the binary, and puts them into `tools-bin/`. The `.deb` stays `Architecture: all` and carries
+    both builds under `/usr/lib/fm1-companion/tools-bin/` (postinst checks them again); the `.run` and
+    `install.sh` copy only the one for `uname -m` after the same check. So the offline rescue works after a
+    normal install. There is **no armhf build** (32-bit Raspberry Pi OS): the app says "not available" and the
+    Unbricker route stays. A source checkout without `tools-bin/` says "not bundled – run tools/fetch_tools.py".
+    The binaries need glibc ≥ 2.35 (both builds; Bookworm 2.36, Trixie 2.41).
+  * **Permissions:** `packaging/udev/70-fm1-companion-download-mode.rules` (`TAG+="uaccess"` for USB `4c4a:8057`,
+    the same lines as M-Flasher's own rule) and `fm1-companion-sg.conf` (load `sg` at boot) – installed by the
+    `.deb` (active, `/usr/lib/udev/rules.d`, `/usr/lib/modules-load.d`), by `install.sh` (asks, default yes) and the
+    graphical installer (checkbox, ticked), removed again by `apt remove` / the uninstaller. `uaccess` covers the
+    user at the local, active seat only (not SSH).
+  * **Running it** (`fm1companion/tools/runner.py`): the binary's SHA-256 is checked before every run; no shell,
+    a fixed argument list, stdin closed, `LANG=C`, a time limit and a cancel button (SIGTERM, then SIGKILL after
+    2 s); commands that talk to a unit take the one-installation-at-a-time lock (`flash/journal.py`); every line
+    goes into a flight log `tool-<time>.txt` with unit ids masked (last four hex digits). **In this version only
+    `find`, `info --device /dev/sgN`, `--version` and `--help` can run**; everything that writes or switches
+    modes (backup, restore, firmware, bootloader, download-mode, restart, run-ram, `--yes`) is refused before
+    the process starts. The parser (`tools/mflasher_parse.py`) reads `find` and the `info` block (model,
+    bootloader, firmware *guess*, app, chip key, flash ID, unit id, loader, evidence); M-Flasher has no
+    machine-readable output and only exit codes 0/1, so the app judges by the text. Recovery › Tools shows the
+    tools and runs `find` ("Which FM-1 does M-Flasher see?").
+  * **Updates** (`tools/updates.py`): the same GitHub release query as for firmwares, by default once a day
+    (Settings: daily / weekly / only at start / never), only while "look for firmware updates … (asks GitHub)" is
+    on, never with `FM1C_NO_NET=1`, never while an installation or tool run holds the lock. A newer version is
+    only announced (version + release text); **Update** downloads it into a staging folder, checks it against
+    GitHub's per-file digest (m-bootloader: also its `SHA256SUMS`; no digest → refused), checks M-Flasher's
+    tarball member, `--version` and the `--help` text (contract `mflasher-0.12`), then stores it under
+    `DATA_DIR/tools/<tool>/<version>/`. The previous version stays the fallback until the new one has once run
+    successfully (a clean `info`); a new version that crashes or prints an unknown format is marked failed and
+    the previous one is used again. **A new M-Flasher is used for read-only commands only; writes stay on a
+    version an app release lists in `write_verified` (owner decision).** An update is vouched for by HTTPS plus
+    GitHub's digest only (trust on first use); a bundled version by the app's own release review.
+  * **Later steps** (not in this version): "Into download mode" (soft key `F0 22 24 35 7D F7`, answered by stock
+    015/016, Felucca/Skiff 2.7, SLOOP 2.8.5 [hw], SLOOP 3 [src] and m-bootloader's MIDI MODE [SPEC]; otherwise a
+    guided card: Felucca/SLOOP OCT−+OCT+ 5 s, m-bootloader REC at power-on or PLAY → DOWNLOAD MODE), full flash
+    backup (two reads compared, stored per device with unit id, flash ID and SHA-256) and restore only after the
+    unit id and flash ID match, install m-bootloader (`bootloader --file`, writes only 0x0000–0x3FFF) and remove it
+    (owner decision: `bootloader --stock` with the public V15 package's boot area), firmware through download
+    mode (`firmware`, from 0x4000 on, boot area untouched), SLOOP 3 over m-bootloader's MIDI MODE from the bundled
+    area (writes 0x4000–0x78000 for 3.4.0) – each with a mandatory full backup first and M-Flasher's
+    "Type "yes" to write" prompt as the last gate (the app never passes `--yes`; it reads unit id, flash ID and
+    the planned ranges of that very session and answers only when they match).
 * Hub rescue `fm1_rescue.py` (GPL-3.0): not fetched/checked (budget) – open as a cross-check.
 
 ## 17. V16 and flash safety (analysis and integration, 31 Oct 2026)

@@ -6,7 +6,7 @@
    "url": "https://github.com/isod89/sloop3-fm1",
    "license": "GPL-3.0",
    "kind": "Firmware",
-   "use": "its web editor (web/editor.html) is bundled unchanged and shown on the Editor page; the firmware itself and its installer page are not bundled"
+   "use": "its web editor (web/editor.html) is bundled unchanged and shown on the Editor page; the application area of 3.4.0 (sloop3-3.4.0.area, from the release, checksum pinned) is bundled for a later offline install; the installer page is not bundled"
   },
   {
    "name": "m-bootloader, M-Flasher",
@@ -14,7 +14,7 @@
    "url": "https://github.com/jvitkauskas/m-bootloader",
    "license": "MIT",
    "kind": "Tool",
-   "use": "not bundled: the app reads an FM-1 in m-bootloader's MIDI MODE as its specification describes, and points to both for installing SLOOP 3 and for flash backups"
+   "use": "both bundled unchanged from their releases (fm1-uboot.boot 2.4; M-Flasher 0.12.1 for aarch64 and x86_64 in the packages), checksums pinned and checked before every use; the app runs M-Flasher's read-only commands and reads an FM-1 in m-bootloader's MIDI MODE as its specification describes (Recovery › Tools)"
   }
  ]
 }

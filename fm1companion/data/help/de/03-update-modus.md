@@ -52,6 +52,25 @@ Was Stufe 2 vor dem Schreiben prüft – an der Sicherung, die im **selben** Lau
 * Eine Sitzung im ROM-Bootmodus hält meist nur **einen Werkzeuglauf**. Danach – auch nach einer Ablehnung – das
   FM-1 aus- und einschalten und neu in den ROM-Bootmodus bringen.
 
+## Die mitgelieferten Werkzeuge: M-Flasher, m-bootloader, SLOOP 3
+
+Die App bringt **M-Flasher** 0.12.1 (für das 64-Bit-Raspberry-Pi-OS und x86-64-PCs; für das 32-Bit-System gibt es
+ihn nicht), **m-bootloader** 2.4 und **SLOOP 3** 3.4.0 mit – sie sind also auch ohne Internet da. Rettung ›
+**Werkzeuge** zeigt jedes davon: die mitgelieferte Version, die benutzte Version, ob die Prüfsumme stimmt (die App
+prüft sie vor jeder Verwendung und startet nie eine veränderte Datei) und wann sie zuletzt nach einer neuen Version
+gesucht hat.
+
+* **Neue Versionen:** Standardmäßig fragt die App einmal am Tag bei GitHub nach (Einstellungen › Allgemein: täglich,
+  wöchentlich, nur beim Start oder nie; nur solange die Suche nach Firmware-Updates eingeschaltet ist). Eine neue
+  Version wird nur angezeigt. **Aktualisieren** lädt sie herunter, prüft sie gegen die Prüfsumme von GitHub und
+  behält deine jetzige Version als Rückfall, bis die neue einmal funktioniert hat. Ein neuer M-Flasher wird zuerst
+  nur zum Lesen benutzt.
+* **Download-Modus ohne Passwort:** Der Installer richtet eine Regel ein, mit der du das FM-1 im ROM-Download-Modus
+  (USB 4c4a:8057) erreichst, und lädt beim Start den Linux-Treiber `sg`.
+* **Ehrlich gesagt:** In dieser Version zeigt, prüft und aktualisiert die App die Werkzeuge nur und fragt M-Flasher,
+  welches FM-1 er sieht. Flash-Sicherungen, m-bootloader und SLOOP 3 über die App kommen in späteren Versionen; bis
+  dahin nutzt du die Werkzeuge selbst wie bisher.
+
 ## Wenn das FM-1 gar nicht als „WL82 UBOOT1.00“ erscheint
 
 Der Chip zeigt das Laufwerk erst, wenn er in den ROM-Bootmodus gefallen ist. Der Reihe nach (nach dem

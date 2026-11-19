@@ -31,6 +31,9 @@ do". That is expected.
 
 * checks that the version number is the same in the app, the README, the man page and the change list;
 * runs all tests on Debian Bookworm and Debian Trixie (the two Raspberry Pi OS versions);
+* fetches the bundled M-Flasher (both builds, aarch64 and x86_64) exactly as pinned in
+  `fm1companion/tools/manifest.json`, checks them against the pins and the pins against GitHub's checksums, and
+  stops if anything differs (see "The bundled tools" below);
 * builds the `.deb` and the `.run` from the clean repository – twice, and compares the results;
 * fetches the exact source code of every bundled firmware build (more than 30 commits from 16 projects) and
   attaches it – the GPL requires this, and every twin's NOTICE file promises it;
@@ -53,6 +56,7 @@ Open the red run under **Actions** and look at which box is red.
 | A yellow note "UI scripts failed" while the job is green | The UI tests failed; this is shown but does not block yet. | Look at the table in the run's summary. A release is still possible; tell the maintainer. |
 | **Build and draft the release** – "is not reproducible" | Two builds of the same commit differ. | Do not publish; report it. |
 | **Build and draft the release** – "could not fetch … at commit …" | A firmware project or one commit of it is no longer on GitHub. | First press **Re-run failed jobs** (it may be a network problem). If it stays red: **do not publish** – without that source code the release would break the GPL. The twin in question has to be rebuilt from an available commit or removed. |
+| **Build and draft the release** – "Fetch the bundled M-Flasher" is red | A pinned M-Flasher file could not be downloaded, or its checksum differs from the pin or from GitHub's. | **Re-run failed jobs** once (network). If it stays red with "differs": **do not publish** and tell the maintainer – the file on GitHub is not the one the app was checked with. |
 | A yellow note "The metainfo dates … on …, today is …" | The date in the change list is not today's. | Harmless. If you care: correct the date in `packaging/fm1-companion.metainfo.xml`, merge, start again. |
 
 Pressing **Re-run failed jobs** (top right of a run) is always safe. So is starting the workflow again.
@@ -74,6 +78,30 @@ In one pull request:
 Tests that need the original M-VAVE firmware files or local firmware checkouts are skipped on GitHub (those files
 cannot be in the repository). Whoever has them runs the full suite locally before a release:
 `FM1_TEST_PKGDIR=… python3 -m pytest tests/test_*.py fm1companion/vendor/unbricker/tests -rs`.
+
+## The bundled tools (M-Flasher, m-bootloader, SLOOP 3)
+
+The app ships pinned versions of three tools from other projects; `fm1companion/tools/manifest.json` names each
+file with its release tag and commit, URL, size, SHA-256 and licence.
+
+* **m-bootloader** (`fm1-uboot.boot`) and the **SLOOP 3** area (`sloop3-3.4.0.area`) are small and are in the
+  repository (`fm1companion/tools/bundled/`, with their licences and notices). SLOOP 3 is GPL-3.0: its source is
+  the tarball of the same commit that the workflow already attaches for the bundled SLOOP 3 editor.
+* **M-Flasher**'s two binaries (about 8 MB each) are **not** in the repository. The workflow runs
+  `python3 tools/fetch_tools.py` (downloads the two pinned release tarballs, checks tarball and binary against the
+  manifest, writes `tools-bin/`) and builds with `--require-tools`. The `.deb` (still `Architecture: all`) carries
+  both builds; the `.run` carries both and installs the one for the computer. A build without `tools-bin/`
+  (a developer's checkout, the test workflow) works, the app then says M-Flasher is not bundled.
+* `python3 tools/update_tool_pins.py --check [--download]` compares every pin with GitHub's per-file digest (and
+  m-bootloader's `SHA256SUMS`). It needs GitHub's API, so it runs in the workflow.
+
+**A new tool version in the app** (not the user's own "Update" button, which never changes the app): in one pull
+request change the tool's entry in `manifest.json` (version, tag, commit, URLs, sizes, SHA-256 – never a value you
+did not measure or read from upstream), replace the files in `fm1companion/tools/bundled/<tool>/` (for M-Flasher:
+the licence files and `THIRD-PARTY.md`, made with `tools/update_tool_pins.py --crates <its Cargo.lock>`), run
+`tools/update_tool_pins.py --check`, and for M-Flasher check that its command line and output still match
+`fm1companion/tools/mflasher_parse.py` (the `--help` hash in the manifest) before adding the version to
+`write_verified`. Only versions listed there are used for writing.
 
 ## Never
 
