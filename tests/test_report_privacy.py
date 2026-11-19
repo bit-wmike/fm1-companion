@@ -74,7 +74,8 @@ def test_report_has_no_personal_details(env):
         {"id": "ab", "name": "Michaels FM-1 (Bühne)", "serial": "20240117000123", "notes": "geliehen von Anna, Tel 0170-1234567",
          "usb_path": "1-1.2", "usb_serial": "3F2A9C0011223344", "identity": "FM-1_91060"},
         {"id": "cd", "name": "Proberaum Keller", "serial": "20240117000999", "SerialNumber": 998877665544},
-        {"id": "ef", "name": "FM-1", "serial": ""}]}
+        {"id": "ef", "name": "FM-1", "serial": "", "unit_id": "13579bdf02468ace",
+         "unit_ids": ["2468ace013579bdf"], "flash_chip": {"unique_id": "1122334455667788", "chip key": "0x980F"}}]}
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
     (config.DATA_DIR / "devices.json").write_text(json.dumps(dev), "utf-8")
     applog.log_dir().mkdir(parents=True, exist_ok=True)
@@ -85,7 +86,9 @@ def test_report_has_no_personal_details(env):
         "usb 1-1.2: SerialNumber: 3F2A9C0011223344", "FM-1 serial 20240117000123",
         "wlan0: associated with 3c:a6:2f:11:22:33 (SSID Bauer-WLAN-5G)",
         "scan /mnt/nas-familie-bauer/FM-1/Backups and /srv/musik-bauer/Samples/kick.wav",
-        f"Authorization: Bearer {TOKEN}", "Linux studio-pi 6.6.31"]) + "\n", "utf-8")
+        f"Authorization: Bearer {TOKEN}", "Linux studio-pi 6.6.31",
+        "M-Flasher info: unit id     13579bdf02468ace, uid=0x2468ACE013579BDF",
+        "image sha256 " + "ab" * 32, "path /x/fm1_13579bdf02468ace.bin"]) + "\n", "utf-8")
     from fm1companion.ui import crash
     p = crash.build_report(home / "report.zip", "Traceback …\n  File \"/home/michael/x.py\"\nOSError: Michaels FM-1 (Bühne)")
     z = zipfile.ZipFile(p)
@@ -93,12 +96,17 @@ def test_report_has_no_personal_details(env):
     body = "\n".join(t for n, t in blob.items() if n != "README.txt")
     for needle in ("michael", "Michael", "studio-pi", "ghp_", "SESSIONSECRET", "20240117000123", "3F2A9C0011223344",
                    "998877665544", "0170", "nas-familie-bauer", "musik-bauer", "hunter2", "3c:a6", "Bauer-WLAN",
-                   "Bühne", "Proberaum", str(home)):
+                   "Bühne", "Proberaum", str(home), "13579bdf02468ace", "2468ace013579bdf", "2468ACE013579BDF",
+                   "1122334455667788"):
         hits = [n for n, t in blob.items() if needle in t]
         assert not hits, (needle, hits)
     devs = json.loads(blob["geraete.json"])["profiles"]
     assert [d["name"] for d in devs] == ["Device 1", "Device 2", "Device 3"]
     assert devs[0]["serial"] == "…0123" and devs[0]["usb_serial"] == "…3344" and devs[1]["SerialNumber"] == "…5544"
+    # unit ids (the flash chip's id: devices.json "unit_id", sidecar-style "unique_id"), in keys and in running text
+    assert devs[2]["unit_id"] == "…8ace" and devs[2]["unit_ids"] == ["…9bdf"]
+    assert devs[2]["flash_chip"]["unique_id"] == "…7788"
+    assert "unit id     …8ace, uid=…9BDF" in body and "fm1_…8ace.bin" in body and "ab" * 32 in body
     # stable mapping: the same device has the same number in the logs; the generic name "FM-1" is left in running text
     assert "connected: Device 1 and Device 2; FM-1 firmware Melodee" in body
     assert "~/FM-1/Backups/Device 1/a.bin" in body and "OSError: Device 1" in blob["fehler.txt"]

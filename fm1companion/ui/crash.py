@@ -47,7 +47,7 @@ Removed or replaced automatically:
   * the names of your FM-1 devices (-> "Device 1", "Device 2" ... the same number everywhere in
     this report)
   * device notes, window positions
-  * serial numbers: only the last four characters stay
+  * serial numbers and unit IDs (the flash chip's ID): only the last four characters stay
   * hardware addresses (MAC/Bluetooth -> <mac>) and Wi-Fi names that follow the word "SSID"
     (-> <netz>)
 
@@ -64,7 +64,8 @@ delete lines or whole files from the ZIP - say so in the issue.
 # ------------------------------------------------------------ Report ---
 def _sanitize(obj, home: str, extra: dict | None = None, names: dict | None = None):
     """sanitized copy: no credentials (token/passw…/secret/api_key, at any depth), no notes,
-    no full serial numbers (every key that contains "serial"), no window geometry, home -> ~, host and user name
+    no full serial numbers or unit ids (redact.is_serial_key: serial…, unit_id/unit id, unique_id, uid, chip key; and
+    every 16-hex unit id in any text), no window geometry, home -> ~, host and user name
     replaced, texts from ``extra`` replaced, device names (key "name", if ``names`` is given) -> "Device N"."""
     from ..redact import HOST_PLACEHOLDER, redact, is_secret_key, is_serial_key, mask_serial
     if isinstance(obj, dict):
@@ -77,6 +78,10 @@ def _sanitize(obj, home: str, extra: dict | None = None, names: dict | None = No
                 continue
             if is_serial_key(k) and isinstance(v, (str, int)) and not isinstance(v, bool):
                 out[k] = mask_serial(str(v))
+                continue
+            if is_serial_key(k) and isinstance(v, (list, tuple)):      # (e.g. "unit_ids": [...])
+                out[k] = [mask_serial(str(x)) if isinstance(x, (str, int)) and not isinstance(x, bool) else
+                          _sanitize(x, home, extra, names) for x in v]
                 continue
             if k in ("notes",) and v:
                 v = "(entfernt)"
