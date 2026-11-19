@@ -290,6 +290,16 @@ def main():
     n_live = len(seen())
     w.go("fm1")
     page = w.fm1
+    if w.editor.loaded_for.startswith("sloop3/"):
+        # SLOOP 3's editor is still loaded (opened above) and asks the FM-1 itself: the status page asks nothing then
+        # (every request keeps SLOOP 3's "editor active" timer fresh, fw/main.c ed_t_last)
+        page._live_tick()
+        wait(300)
+        check("Editor" in page.live_state.text() and not page.live_busy,      # (the hidden editor itself keeps asking)
+              f"FM-1 status: no LIVE requests beside SLOOP 3's loaded editor ({page.live_state.text()[:60]})")
+        w.editor.loaded_for = ""                    # (as when the editor page shows something else)
+        n_live = len(seen())
+        page._live_tick()
     check(until(lambda: "%" in page.cpu.format() and page.meters_box.isVisibleTo(page), 15000),
           f"FM-1 status shows SLOOP 3's CPU load and the track meters ({page.cpu.format()}, "
           f"{page.live_state.text()[:50]})")
