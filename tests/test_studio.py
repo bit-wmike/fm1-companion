@@ -760,6 +760,12 @@ def test_sloop_twin_core_headless():
         a, b = x["takes"]
         assert a["playing"] and a["leds_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
         assert x["fork_identical"] and x["stopped"] and x["song_play"] and x["editor_stop"]
+        # the LIVE state (77 op 0) as the FM-1 page reads it (health.parse_sloop2_live): the firmware's own answer
+        from fm1companion import health
+        live = health.parse_sloop2_live(x["live_state"])
+        assert len(x["live_state"]) == 50 and live["playing"] and 40 <= live["bpm"] <= 240
+        assert 0 <= live["cpu_percent"] <= 127 and len(live["tracks"]) == 4
+        assert any(t["meter"] for t in live["tracks"]) and all(t["steps"] for t in live["tracks"])
         print(f"{v}: {a['realtime']:.1f}x real time (4 tracks)")
         assert a["realtime"] > 3
 
@@ -1616,6 +1622,12 @@ def test_felucca_twin_core_headless():
         a, b = x["takes"]
         assert a["playing"] and a["play_lit"] and a["peak"] > 0.05 and a["nonFinite"] == 0 and a["hash"] == b["hash"]
         assert x["fork_identical"] and x["stopped"] and x["song_play"] and x["editor_stop"]
+        # the LIVE state (77 op 0) as the FM-1 page reads it (health.parse_sloop2_live): the firmware's own answer
+        from fm1companion import health
+        live = health.parse_sloop2_live(x["live_state"])
+        assert len(x["live_state"]) == 50 and live["playing"] and 40 <= live["bpm"] <= 240
+        assert 0 <= live["cpu_percent"] <= 127 and len(live["tracks"]) == 4
+        assert any(t["meter"] for t in live["tracks"]) and all(t["steps"] for t in live["tracks"])
         print(f"{v}: {a['realtime']:.1f}x real time (4 tracks)")
         assert a["realtime"] > 3
 
