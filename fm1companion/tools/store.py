@@ -9,8 +9,10 @@ Two sources per tool:
 
 Rules (owner decisions, 2026-11-19):
 * the previous version stays as the fallback until the new one has run successfully once ("proven");
-* a new M-Flasher is used for read-only commands only; writes stay on a version an app release lists in
-  manifest.json ``write_verified``;
+* a new M-Flasher is used for read-only commands only; writes only ever use a binary whose SHA-256 an app release
+  lists in manifest.json ``write_verified`` (by bytes, not by version number);
+* a new M-Flasher whose command line (``--help``) differs from the one this app knows is not used at all – the
+  bundled one is used instead and the Tools view says so;
 * the SHA-256 of a binary or file is checked before every use (``Candidate.verify``) – a changed file is never run.
 """
 from __future__ import annotations
@@ -42,7 +44,7 @@ class Candidate:
     proven: bool = True              # has run successfully once (bundled: always)
     failed: bool = False             # an update that did not work: the previous version is used again
     write_ok: bool = False           # may be used for writes (manifest.json write_verified)
-    contract_known: bool = True      # its --help matches a command line this app release knows
+    contract_known: bool = True      # its --help matches a command line this app release knows (bundled: by review)
     extra: dict = field(default_factory=dict)
 
     @property
@@ -115,9 +117,11 @@ class Store:
             if not a:
                 return None
             return Candidate(key, ver, "bundled", self.bin_dir / mf.mflasher_relpath(ver, self.arch),
-                             a["binary_sha256"], a["binary_size"], write_ok=mf.write_verified(key, ver, self.data))
+                             a["binary_sha256"], a["binary_size"],
+                             write_ok=mf.write_verified(key, ver, a["binary_sha256"], self.arch, self.data))
         name, e = self._main_file(t)
-        return Candidate(key, ver, "bundled", self.bundled_dir / key / name, e["sha256"], e["size"], write_ok=True)
+        return Candidate(key, ver, "bundled", self.bundled_dir / key / name, e["sha256"], e["size"],
+                         write_ok=mf.write_verified(key, ver, e["sha256"], data=self.data))
 
     @staticmethod
     def _main_file(t: dict) -> tuple[str, dict]:
@@ -139,7 +143,7 @@ class Store:
             except (OSError, ValueError):
                 continue
             ver = str(meta.get("version") or "")
-            if ver != d.name:
+            if ver != d.name or not mf.safe_component(ver):
                 continue
             files = meta.get("files") or {}
             if key == "m-flasher":
@@ -148,13 +152,14 @@ class Store:
             else:
                 rel = str(meta.get("main") or "")
                 e = files.get(rel)
-            if not rel or not isinstance(e, dict) or not e.get("sha256"):
-                continue
+            if not rel or not mf.safe_relpath(rel) or not isinstance(e, dict) or not e.get("sha256"):
+                continue                     # (a path from meta.json must stay inside this version's folder)
             s = st.get(ver, {})
             out.append(Candidate(key, ver, "update", d / rel, str(e["sha256"]), int(e.get("size") or 0),
                                  proven=bool(s.get("proven")), failed=bool(s.get("failed")),
-                                 write_ok=mf.write_verified(key, ver, self.data),
-                                 contract_known=bool(meta.get("contract_known", True)), extra=meta))
+                                 write_ok=mf.write_verified(key, ver, str(e["sha256"]), self.arch, self.data),
+                                 contract_known=(meta.get("contract_known") is True) if key == "m-flasher" else True,
+                                 extra=meta))
         return out
 
     def candidates(self, key: str) -> list[Candidate]:
@@ -177,7 +182,10 @@ class Store:
             if c.failed:
                 problems.append(f"{c.version} ({c.source}): did not work before – skipped")
                 continue
-            if write and not (c.write_ok and c.proven and c.contract_known):
+            if not c.contract_known:
+                problems.append(f"{c.version} ({c.source}): its command line is not the one this app knows – not used")
+                continue
+            if write and not (c.write_ok and c.proven):
                 problems.append(f"{c.version} ({c.source}): not verified for writing by this app version")
                 continue
             ok, why = c.verify()
@@ -186,3 +194,7 @@ class Store:
                 continue
             return c, problems
         return None, problems
+
+    def unknown_contract(self, key: str) -> list[str]:
+        """versions on this computer that are not used because their command line is new to this app"""
+        return [c.version for c in self.updates(key) if not c.contract_known and not c.failed]

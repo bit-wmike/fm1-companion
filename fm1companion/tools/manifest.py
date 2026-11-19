@@ -57,7 +57,29 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def write_verified(key: str, version: str, data: dict | None = None) -> bool:
-    """an app release has checked this version's command line and output for writing (owner rule: a newer M-Flasher
-    that came in through an update is used for read-only commands until an app update lists it here)"""
-    return version in (tool(key, data).get("write_verified") or [])
+def write_verified(key: str, version: str, sha256: str, arch: str = "", data: dict | None = None) -> bool:
+    """may these exact bytes be used for writing? For M-Flasher only a binary whose SHA-256 an app release lists in
+    manifest.json ``write_verified`` {version: {arch: sha256}} (owner rule: a newer M-Flasher that came in through an
+    update is used for reading only, until an app update has reviewed exactly those bytes). For m-bootloader and
+    SLOOP 3: only the bundled file's bytes."""
+    t = tool(key, data)
+    sha256 = (sha256 or "").lower()
+    if not sha256:
+        return False
+    if key == "m-flasher":
+        wv = t.get("write_verified") or {}
+        return isinstance(wv, dict) and str((wv.get(version) or {}).get(arch) or "").lower() == sha256
+    return version == t["version"] and any(str(e.get("sha256") or "").lower() == sha256
+                                           for n, e in (t.get("files") or {}).items() if n != "SHA256SUMS")
+
+
+def safe_component(name: str) -> bool:
+    """one plain path component (no separators, no '..', no hidden or empty name)"""
+    import re
+    return bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._+-]{0,120}", name or "")) and ".." not in name
+
+
+def safe_relpath(rel: str, parts: int = 2) -> bool:
+    """a relative path of at most `parts` safe components ("x86_64/m-flasher", "fm1-uboot.boot")"""
+    bits = (rel or "").split("/")
+    return 0 < len(bits) <= parts and all(safe_component(b) for b in bits)

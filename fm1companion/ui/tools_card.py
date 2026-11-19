@@ -50,7 +50,7 @@ class ToolsCard(Card):
     def __init__(self, ctx, parent=None, store=None):
         super().__init__(_("Tools: M-Flasher, m-bootloader, SLOOP 3"), parent)
         self.setObjectName("toolsCard")
-        self.ctx, self._store, self._busy = ctx, store, False
+        self.ctx, self._store, self._busy, self._updating = ctx, store, False, False
         lay = self.layout()
         intro = QLabel(_("The app brings these tools with it and checks each file's checksum before it uses it. "
                          "In this version it only shows them, keeps them up to date and can ask M-Flasher which "
@@ -131,6 +131,10 @@ class ToolsCard(Card):
                 notes.append(offer_text(s.offer))
             if s.unavailable:
                 notes.append(s.unavailable)
+            for v in s.unknown_cli:
+                notes.append(_("{tool} {version} was downloaded, but its commands differ from the ones this app "
+                               "knows, so the app does not use it and keeps using {active}. An update of this app "
+                               "can take it into use.").format(tool=s.title, version=v, active=s.active or "–"))
             if s.error:
                 notes.append(_("{tool}: the last check did not get an answer ({error}).").format(tool=s.title,
                                                                                                error=s.error))
@@ -162,6 +166,8 @@ class ToolsCard(Card):
         run_job(self, lambda w: updates.check(settings, self.store), on_done=done, on_fail=fail)
 
     def update_tool(self, offer):
+        if self._updating:                       # (a second click while the download runs)
+            return
         notes = (offer.notes or "").strip()
         if len(notes) > 1500:
             notes = notes[:1500] + " …"
@@ -170,19 +176,28 @@ class ToolsCard(Card):
                   "version you have now as the fallback until the new one has worked once. It does not install "
                   "anything on the FM-1."))
         if offer.key == "m-flasher":
-            text += "\n\n" + _("A new M-Flasher is used for reading only (device info, backups) until an update of "
-                               "this app has checked it for writing.")
+            text += "\n\n" + _("To check it, the app starts the new M-Flasher once on this computer (it asks only for "
+                               "its version and its list of commands). Afterwards it runs on this computer for "
+                               "reading (device info); writing stays with the version this app was reviewed with. "
+                               "The new version is trusted as its author published it on GitHub. If its commands "
+                               "differ from the ones this app knows, it is kept but not used.")
         if not confirm(self, _("Update {tool}?").format(tool=dict(updates.titles()).get(offer.key, offer.key)), text,
                        _("Update")):
             return
+        self._updating = True
+        for row in self.rows.values():
+            if row.get("update") is not None:
+                row["update"].setEnabled(False)
 
         def done(c):
+            self._updating = False
             self.refresh()
             self.note.setText(_("{tool} {version} is ready. Until it has worked once, the previous version stays "
                                 "as the fallback.").format(tool=dict(updates.titles()).get(c.key, c.key),
                                                            version=c.version))
 
         def fail(msg, _tb=""):
+            self._updating = False
             self.refresh()
             show_error(self, _("Not updated"), msg)
         run_job(self, lambda w: updates.download_update(offer, self.store), on_done=done, on_fail=fail)

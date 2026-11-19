@@ -18,7 +18,6 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import tarfile
 import time
 from dataclasses import asdict, dataclass, field
@@ -267,12 +266,10 @@ def _sums_line(text: str, name: str) -> str:
 
 
 def _probe(binary: Path, args: list[str]) -> str:
-    try:
-        r = subprocess.run([str(binary), *args], stdin=subprocess.DEVNULL, capture_output=True, timeout=10,
-                           env=dict(os.environ, LANG="C", LC_ALL="C"))
-    except (OSError, subprocess.SubprocessError):
-        return ""
-    return r.stdout.decode("utf-8", "replace") if r.returncode == 0 else ""
+    """--version / --help of the downloaded, digest-checked binary (its own session, staging folder, minimal env)"""
+    from .proc import run_probe
+    rc, out = run_probe([str(binary), *args], cwd=str(binary.parent))
+    return out.decode("utf-8", "replace") if rc == 0 else ""
 
 
 def download_update(offer: Offer, store: Store | None = None, fetch_file=None) -> Candidate:
@@ -287,6 +284,8 @@ def download_update(offer: Offer, store: Store | None = None, fetch_file=None) -
     key, ver = offer.key, offer.version
     if not re.fullmatch(r"[0-9][0-9A-Za-z.+-]{0,40}", ver):
         raise UpdateError(_("The release has an unexpected version number. Nothing was kept."))
+    if not mf.safe_component(offer.asset) or (key == "m-flasher" and not mf.safe_component(store.arch or "")):
+        raise UpdateError(_("The release file has an unexpected name. Nothing was kept."))
     if not offer.digest:
         raise UpdateError(_("GitHub publishes no checksum for {file}, so the app cannot check the download. "
                             "Nothing was kept.").format(file=offer.asset))
@@ -296,6 +295,8 @@ def download_update(offer: Offer, store: Store | None = None, fetch_file=None) -
         raise UpdateError(_("Version {version} is already on this computer.").format(version=ver))
     stage = base / f".staging-{ver}"
     shutil.rmtree(stage, ignore_errors=True)
+    store.updates_dir.mkdir(parents=True, exist_ok=True)
+    os.chmod(store.updates_dir, 0o700)          # (the tools folder is this user's alone)
     stage.mkdir(parents=True)
     try:
         dl = stage / ("download-" + offer.asset)
@@ -358,7 +359,7 @@ def _stage_mflasher(store: Store, offer: Offer, data: bytes, stage: Path, meta: 
     help_sha = _sha(_probe(exe, ["--help"]).encode())
     known = help_sha == mf.tool("m-flasher", store.data).get("help_sha256")
     meta["help_sha256"] = help_sha
-    meta["contract_known"] = known       # a changed command line: used read-only until an app update knows it
+    meta["contract_known"] = known       # a changed command line: kept, but not used at all (store.select)
 
 
 def _stage_boot(offer: Offer, data: bytes, stage: Path, meta: dict, fetch_file):
@@ -404,6 +405,7 @@ class ToolStatus:
     error: str
     problems: list[str] = field(default_factory=list)
     unavailable: str = ""
+    unknown_cli: list[str] = field(default_factory=list)   # downloaded versions not used: command line new to the app
 
 
 def status(store: Store | None = None) -> list[ToolStatus]:
@@ -423,7 +425,7 @@ def status(store: Store | None = None) -> list[ToolStatus]:
         out.append(ToolStatus(key, t["title"], t["license"], t["version"], bool(b and b.present),
                               c.version if c else "", c.source if c else "", c is not None,
                               w.version if w else "", float(e.get("checked") or 0), cached_offer(key, store),
-                              str(e.get("error") or ""), problems, why))
+                              str(e.get("error") or ""), problems, why, store.unknown_contract(key)))
     return out
 
 

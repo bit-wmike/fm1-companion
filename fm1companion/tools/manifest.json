@@ -15,8 +15,15 @@
    "cli_contract": "mflasher-0.12",
    "help_sha256": "06f1d7a8035db6f149c80ba7bf329db0722cc0427cb0e5afe2cd57a755c9e10e",
    "help_source": "sha256 of USAGE + newline in src/cli.rs at the tagged commit (what `m-flasher --help` prints)",
-   "write_verified": ["0.12.1"],
-   "licence_files": ["LICENSE", "NOTICE.md", "copyright", "THIRD-PARTY.md", "OFL-BarlowCondensed.txt",
+   "write_verified": {
+    "0.12.1": {
+     "aarch64": "2341ccc609ab7dcebea86b4a133abeda10c15f96106300ef6544183ff5e7a870",
+     "x86_64": "997ce5e8a3200f3cb893c904f6babf37d8de8ce059aeedbd03adb72febf39e53"
+    }
+   },
+   "write_verified_note": "Writes only ever run a binary whose SHA-256 is listed here for its version and architecture (reviewed in an app release); a downloaded copy of a listed version with other bytes is never used for writing.",
+   "cargo_lock_sha256": "3b171a2e144933388935860530c2bb7dd8fed378b91b0bb94b645be448cd482e",
+   "licence_files": ["LICENSE", "NOTICE.md", "copyright", "THIRD-PARTY-LICENSES.txt", "OFL-BarlowCondensed.txt",
                      "OFL-IBMPlexMono.txt", "OFL-Saira.txt", "OFL-ShareTechMono.txt", "OFL-VT323.txt"],
    "arch": {
     "aarch64": {

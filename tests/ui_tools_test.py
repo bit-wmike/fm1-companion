@@ -126,6 +126,20 @@ def flow():
     check(isinstance(up, QPushButton) and "3.9.0" in card.note.text(), "offer: Update button and notice")
     check(not (Path(os.environ["XDG_DATA_HOME"]) / "fm1-companion/tools/sloop3/3.9.0").exists(),
           "nothing fetched by itself")
+    # a second click on Update while the first download runs starts nothing (review L8)
+    asked, jobs = [], []
+    orig_confirm, orig_job = tools_card.confirm, tools_card.run_job
+    tools_card.confirm = lambda *a, **k: asked.append(a[1]) or True
+    tools_card.run_job = lambda *a, **k: jobs.append(a)
+    try:
+        up.click()
+        up.click()
+        card.update_tool(card.rows["sloop3"]["status"].offer)
+    finally:
+        tools_card.confirm, tools_card.run_job = orig_confirm, orig_job
+    check(len(asked) == 1 and len(jobs) == 1 and not up.isEnabled(), f"Update: double click starts one download "
+                                                                      f"({len(asked)} asked, {len(jobs)} jobs)")
+    card._updating = False
     # Settings
     from fm1companion.ui.settings_dialog import SettingsDialog
     dlg = SettingsDialog(w.ctx, w)
