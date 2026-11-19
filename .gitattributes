@@ -23,3 +23,7 @@
 *.mid  binary
 *.zip  binary
 *.gz   binary
+*.boot binary
+*.area binary
+# upstream files bundled byte for byte (checksums, licence texts)
+fm1companion/tools/bundled/** -text
