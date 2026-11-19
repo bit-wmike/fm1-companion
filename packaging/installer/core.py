@@ -261,9 +261,11 @@ DL_RULE = "70-fm1-companion-download-mode.rules"
 SG_CONF = "fm1-companion-sg.conf"
 MODULES_DIR = Path("/etc/modules-load.d")
 # after copying: load sg now and let udev apply the rule to a unit that is already connected (tests replace these)
-DL_ACTIVATE = ("(modprobe sg || true) && (udevadm control --reload-rules || true) && "
-               "(udevadm trigger --action=add --subsystem-match=scsi_generic || true) && "
-               "(udevadm trigger --action=add --subsystem-match=usb --attr-match=idVendor=4c4a || true)")
+# (only the FM-1 in download mode – USB 4c4a:8057 and its children, e.g. its /dev/sgN – gets a change event)
+TRIGGER_FM1 = ("for d in /sys/bus/usb/devices/*; do "
+               "if [ \"$(cat \"$d/idVendor\" 2>/dev/null)\" = 4c4a ] && [ \"$(cat \"$d/idProduct\" 2>/dev/null)\" = 8057 ]; "
+               "then udevadm trigger --action=change --parent-match=\"$d\" || true; fi; done")
+DL_ACTIVATE = f"(modprobe sg || true) && (udevadm control --reload-rules || true) && {{ {TRIGGER_FM1}; }}"
 DL_RELOAD = "(udevadm control --reload-rules || true)"
 
 
@@ -280,19 +282,26 @@ def download_rule_installed() -> bool:
 
 
 def install_download_rule(rule: Path | None, conf: Path | None, log=print, sudo: list[str] | None = None,
-                          remove: bool = False) -> bool:
+                          remove: bool = False, files: list[str] | None = None) -> bool:
     """owner decision (2026-11-19): the FM-1 in ROM download mode (USB 4c4a:8057) is reachable for the user at the
     computer (udev TAG+="uaccess") and the `sg` driver loads at boot, so the bundled M-Flasher needs no root.
     One root command; remove=True takes both out again."""
     target, mod = UDEV_DIR / DL_RULE, MODULES_DIR / SG_CONF
     q = shlex.quote
     sudo = _sudo() if sudo is None else sudo
-    if remove:
-        script = f"rm -f {q(str(target))} {q(str(mod))} && {DL_RELOAD}"
+    if remove:                              # only the files this installation added (install-info.json)
+        own = [f for f in (files if files is not None else [str(target), str(mod)]) if f in (str(target), str(mod))]
+        if not own:
+            return True
+        target, mod = Path(own[0]), Path(own[-1])
+        script = f"rm -f {' '.join(q(f) for f in own)} && {DL_RELOAD}"
     else:
-        script = (f"install -d {q(str(UDEV_DIR))} {q(str(MODULES_DIR))} && "
-                  f"install -m 0644 {q(str(rule))} {q(str(target))} && "
-                  f"install -m 0644 {q(str(conf))} {q(str(mod))} && {DL_ACTIVATE}")
+        parts = [f"install -d {q(str(UDEV_DIR))} {q(str(MODULES_DIR))}"]
+        if rule is not None:                # (None: that file is already there and is left alone)
+            parts.append(f"install -m 0644 {q(str(rule))} {q(str(target))}")
+        if conf is not None:
+            parts.append(f"install -m 0644 {q(str(conf))} {q(str(mod))}")
+        script = " && ".join(parts + [DL_ACTIVATE])
     try:
         r = subprocess.run([*sudo, "sh", "-c", script], timeout=300)
         ok = getattr(r, "returncode", 1) == 0
@@ -365,6 +374,10 @@ def install_tool_binaries(src: Path, app: Path, log=print, machine: str | None =
     dst.parent.mkdir(parents=True, exist_ok=True)
     dst.write_bytes(b)
     dst.chmod(0o755)
+    for name in ("LICENSE", "NOTICE.md", "THIRD-PARTY-LICENSES.txt"):     # the licences travel with the binary
+        lic = src / "fm1companion" / "tools" / "bundled" / "m-flasher" / name
+        if lic.is_file():
+            shutil.copyfile(lic, app / TOOLS_BIN / "m-flasher" / name)
     log(tr(f"  M-Flasher {t.get('version')} ({arch}) installed, checksum verified",
            f"  M-Flasher {t.get('version')} ({arch}) installiert, Prüfsumme geprüft"))
     return [rel]
@@ -572,15 +585,17 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
                f"{app / 'installer' / 'core.py'} usb-power-rule"))
     # FM-1 in ROM download mode reachable without root (udev uaccess + `sg`): install.sh and the graphical installer
     # ask for it (default yes, owner decision); the .deb installs it always
-    dl_installed = False
+    dl_installed: list[str] = []
     if download_mode_rule:
         if dl_rule is None:
             log(tr("NOTE: the download-mode rule is missing in this package.",
                    "HINWEIS: Die Regel für den Download-Modus fehlt in diesem Paket."))
-        elif download_rule_installed():
-            dl_installed = True
         else:
-            dl_installed = install_download_rule(app / "udev" / DL_RULE, app / "udev" / SG_CONF, log)
+            new = [str(f) for f in (UDEV_DIR / DL_RULE, MODULES_DIR / SG_CONF) if not f.exists()]
+            if new and install_download_rule(app / "udev" / DL_RULE if str(UDEV_DIR / DL_RULE) in new else None,
+                                             app / "udev" / SG_CONF if str(MODULES_DIR / SG_CONF) in new else None,
+                                             log):
+                dl_installed = new          # what this installation added (and only that is removed again)
     # keep remembering files of an earlier installation that were not rewritten this time (e.g. the desktop
     # shortcut) – otherwise uninstalling no longer finds them
     files += [f for f in (old or {}).get("files", []) if f not in files and Path(f).exists()]
@@ -588,8 +603,10 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
             "prefix": str(prefix), "app": str(app), "files": files, "dirs": created,
             "time": time.strftime("%Y-%m-%d %H:%M:%S"),
             "components": {"menu": menu, "desktop": desktop, "demo_data": demo_data}, "tools": tools}
-    if dl_installed or (old or {}).get("download_mode_rule"):
-        info["download_mode_rule"] = True   # uninstall.sh offers to remove it again
+    earlier = (old or {}).get("download_mode_rule")
+    owned = sorted(set((earlier if isinstance(earlier, list) else []) + (dl_installed or [])))
+    if owned:
+        info["download_mode_rule"] = owned  # uninstalling removes exactly these files again
     if fluidsynth_masked:                   # uninstalling takes the mask away again
         info["fluidsynth_masked"] = True
     (app / "install-info.json").write_text(json.dumps(info, indent=2, ensure_ascii=False))
@@ -648,8 +665,10 @@ def uninstall(prefix: Path, system: bool = False, settings: bool = False, data: 
     info = installed_info(prefix, system) or {}
     root = _user_root()
     removed = []
-    if info.get("download_mode_rule") and (download_rule_installed() or (MODULES_DIR / SG_CONF).exists()):
-        install_download_rule(None, None, log, remove=True)     # this installation put it there: take it out
+    owned = info.get("download_mode_rule")
+    owned = [f for f in owned if Path(f).exists()] if isinstance(owned, list) else []
+    if owned:                                                   # only what this installation put there
+        install_download_rule(None, None, log, remove=True, files=owned)
     for f in info.get("files", []) or [str(L["bin"] / APP_ID), str(L["bin"] / f"{APP_ID}-uninstall"),
                                         str(L["apps"] / f"{APP_ID}.desktop"), str(L["apps"] / f"{APP_ID}-uninstall.desktop")]:
         if _safe_rm(Path(f), root, log):

@@ -113,6 +113,13 @@ jobs:
           python3 tools/fetch_tools.py --check
           # the pinned values against GitHub's per-file digests and SHA256SUMS (a mismatch stops the release)
           python3 tools/update_tool_pins.py --check
+          # M-Flasher's third-party licences (every crate's licence text, the embedded fonts) must match its
+          # Cargo.lock at the pinned commit – the release stops without them
+          commit=$(python3 -c "import json; print(json.load(open('fm1companion/tools/manifest.json'))['tools']['m-flasher']['commit'])")
+          want=$(python3 -c "import json; print(json.load(open('fm1companion/tools/manifest.json'))['tools']['m-flasher']['cargo_lock_sha256'])")
+          curl -fsSL -o "$RUNNER_TEMP/Cargo.lock" "https://raw.githubusercontent.com/jvitkauskas/m-flasher/$commit/Cargo.lock"
+          echo "$want  $RUNNER_TEMP/Cargo.lock" | sha256sum -c
+          python3 tools/gen_mflasher_licences.py "$RUNNER_TEMP/Cargo.lock" --cache "$RUNNER_TEMP/crates" --check
 
       - name: Build .deb and .run (twice – the same commit must give the same files)
         run: |

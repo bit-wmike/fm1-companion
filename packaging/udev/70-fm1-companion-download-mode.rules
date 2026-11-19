@@ -3,7 +3,9 @@
 # In ROM download mode the FM-1 is a USB disk "WL82 UBOOT1.00" (USB 4c4a:8057). The bundled M-Flasher talks to it
 # through Linux's SCSI generic driver (/dev/sgN). TAG+="uaccess" gives the user logged in at this computer (the
 # local, active seat – not a login over SSH) access to that device, so no administrator password is needed for
-# every run. The lines are the same as M-Flasher's own linux/70-m-flasher.rules. Nothing else changes.
+# every run. The scsi_generic line is M-Flasher's own (linux/70-m-flasher.rules); the usb line is narrowed to the
+# USB device itself (DEVTYPE usb_device). 4c4a:8057 is JieLi's generic download mode: other JieLi gadgets in that
+# mode match too. Nothing else changes.
 # Installed by the Debian package (/usr/lib/udev/rules.d), by install.sh and the graphical installer
 # (/etc/udev/rules.d, asks for sudo); together with fm1-companion-sg.conf, which loads the `sg` driver at boot.
 # Removed by `sudo apt remove fm1-companion`, or uninstall.sh. By hand:
@@ -11,4 +13,4 @@
 #   sudo udevadm control --reload-rules
 
 SUBSYSTEM=="scsi_generic", ATTRS{idVendor}=="4c4a", ATTRS{idProduct}=="8057", TAG+="uaccess"
-SUBSYSTEM=="usb", ATTR{idVendor}=="4c4a", ATTR{idProduct}=="8057", TAG+="uaccess"
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="4c4a", ATTR{idProduct}=="8057", TAG+="uaccess"

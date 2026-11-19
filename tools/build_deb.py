@@ -54,13 +54,18 @@ if [ "$1" = configure ]; then
     modprobe sg 2>/dev/null || true
     if command -v udevadm >/dev/null 2>&1; then
       udevadm control --reload-rules 2>/dev/null || true
-      udevadm trigger --action=add --subsystem-match=scsi_generic 2>/dev/null || true
-      udevadm trigger --action=add --subsystem-match=usb --attr-match=idVendor=4c4a 2>/dev/null || true
+      # only the FM-1 in download mode (USB 4c4a:8057) and its children, never every disk
+      for d in /sys/bus/usb/devices/*; do
+        if [ "$(cat "$d/idVendor" 2>/dev/null)" = 4c4a ] && [ "$(cat "$d/idProduct" 2>/dev/null)" = 8057 ]; then
+          udevadm trigger --action=change --parent-match="$d" 2>/dev/null || true
+        fi
+      done
     fi
   fi
 fi
 exit 0
 """
+LICENCES_NEXT_TO_BINARY = ("LICENSE", "NOTICE.md", "THIRD-PARTY-LICENSES.txt")
 POSTRM = """#!/bin/sh
 set -e
 if [ "$1" = remove ] || [ "$1" = purge ]; then
@@ -99,6 +104,8 @@ def build(out: Path = DIST, maintainer: str = MAINTAINER, require_tools: bool = 
                 exes.append(dst)
                 sums.append(f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {rel}\n")
             (lib / "tools-bin" / "SHA256SUMS").write_text("".join(sums))
+            for name in LICENCES_NEXT_TO_BINARY:       # the licences travel with the binary
+                shutil.copyfile(ROOT / "fm1companion/tools/bundled/m-flasher" / name, lib / "tools-bin/m-flasher" / name)
         b = root / "usr/bin/fm1-companion"
         b.parent.mkdir(parents=True)
         b.write_text(LAUNCHER)
@@ -152,10 +159,13 @@ def build(out: Path = DIST, maintainer: str = MAINTAINER, require_tools: bool = 
             "exception (FM1 Open); the exact licence of each build is in its folder (LICENSE*, NOTICE)\n "
             "Corresponding source: see NOTICE (written offer, tarballs attached to the GitHub release).\n\n"
             "Files: usr/lib/fm1-companion/tools-bin/m-flasher/* usr/lib/fm1-companion/fm1companion/tools/bundled/m-flasher/*\n"
-            "Copyright: 2026 Julius Vitkauskas (M-Flasher); the authors of the bundled fonts and Rust crates\n"
-            "License: MIT and OFL-1.1\n M-Flasher, bundled unchanged from its GitHub release. See "
-            "/usr/lib/fm1-companion/fm1companion/tools/bundled/m-flasher/ (LICENSE, NOTICE.md, copyright, OFL-*.txt, "
-            "THIRD-PARTY.md)\n\n"
+            "Copyright: 2026 Julius Vitkauskas (M-Flasher); the authors of the Rust crates and fonts compiled into it\n"
+            "License: MIT and OFL-1.1, with the licences of its crates (MIT, Apache-2.0, ISC, Zlib, BSL-1.0, "
+            "Unicode-3.0) and fonts (Ubuntu-font-1.0, Bitstream-Vera with MIT for Hack, OFL-1.1, MIT for the emoji "
+            "icon font)\n M-Flasher, bundled unchanged from its GitHub release. Every licence text, crate by crate: "
+            "/usr/lib/fm1-companion/tools-bin/m-flasher/THIRD-PARTY-LICENSES.txt (also in "
+            "/usr/lib/fm1-companion/fm1companion/tools/bundled/m-flasher/ with LICENSE, NOTICE.md, copyright, "
+            "OFL-*.txt)\n\n"
             "Files: usr/lib/fm1-companion/fm1companion/tools/bundled/m-bootloader/*\n"
             "Copyright: 2026 Julius Vitkauskas\nLicense: MIT\n m-bootloader, bundled unchanged from its GitHub "
             "release. See /usr/lib/fm1-companion/fm1companion/tools/bundled/m-bootloader/LICENSE\n\n"
