@@ -104,7 +104,7 @@ Otras formas de saber qué chip tienes: **M-Flasher** lo muestra en *Device info
 reciente, `0x856014` el anterior), **m-bootloader** lo muestra en su menú, y la recuperación (Etapa 2) lo lee en modo de
 arranque ROM – la app lo guarda entonces por sí sola para el dispositivo.
 
-Sinceramente: **nada de esto se ha ejecutado con esta app en un FM-1 más reciente.** El V15 original es el camino de
+Sinceramente: **con esta app solo se ha probado una cosa en un FM-1 más reciente – Skiff 2.7 se instaló una vez en una unidad y guarda bien en ella.** Nada más se ha probado en una unidad así. El V15 original es el camino de
 vuelta que nombran los autores de Felucca, ChoralRoot, TransitFM1 y de la herramienta de rescate para estas unidades;
 nadie ha dejado escrito si el paquete V16 funciona en ellas. La herramienta de rescate incluida
 (MvaveFM1Unbricker 1.2.1) conoce ambos chips.

@@ -104,7 +104,7 @@ Andere Wege herauszufinden, welchen Baustein du hast: **M-Flasher** zeigt ihn un
 `0xB36014` ist der neuere, `0x856014` der frühere), **m-bootloader** zeigt ihn in seinem Menü, und die Rettung
 (Stufe 2) liest ihn im ROM-Bootmodus – die App merkt ihn sich dann von selbst für das Gerät.
 
-Ehrlich gesagt: **Nichts davon ist mit dieser App auf einem neueren FM-1 gelaufen.** Die Original-V15 ist der Weg
+Ehrlich gesagt: **Mit dieser App lief auf einem neueren FM-1 bisher nur eines – Skiff 2.7 wurde einmal auf einem Gerät installiert und speichert dort.** Alles andere ist auf so einem Gerät noch nicht ausprobiert. Die Original-V15 ist der Weg
 zurück, den die Autoren von Felucca, ChoralRoot, TransitFM1 und des Rettungswerkzeugs für diese Geräte nennen; ob das
 V16-Paket auf ihnen funktioniert, hat niemand aufgeschrieben. Das mitgelieferte Rettungswerkzeug
 (MvaveFM1Unbricker 1.2.1) kennt beide Bausteine.
