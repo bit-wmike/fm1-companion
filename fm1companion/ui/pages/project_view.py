@@ -218,9 +218,10 @@ class ProjectView(QWidget):
                       live_tag=self.live_tag)
 
     def _update_song_row(self):
-        from ..common import device_tag, same_device
+        from ..common import device_tag, same_device, unsupported
         live = bool(self.live_tag and self.live_slot == 0 and self.prj and self.prj.ok and self.prj.song and
-                    getattr(self.ctx, "connected", False) and same_device(self.live_tag, device_tag(self.ctx)))
+                    getattr(self.ctx, "connected", False) and same_device(self.live_tag, device_tag(self.ctx)) and
+                    not unsupported(self.ctx, "song_chain"))     # (BANK_SONG 74: Melodee's; SLOOP 2's DSYN_PUT)
         self.song_row.setVisible(live)
         if live:
             self.song_from.setMaximum(max(1, len(self.prj.song)))
@@ -228,6 +229,11 @@ class ProjectView(QWidget):
     def device_song(self):
         """running music: the FM-1 plays its own song (BANK_SONG start) – no flash access."""
         if not self.ctx.require(self):
+            return
+        from ..common import unsupported
+        why = unsupported(self.ctx, "song_chain")
+        if why:
+            self.player_bar.status.setText(why)
             return
         from ... import playback as P
         self.player_bar.stop(quiet=True)
@@ -260,6 +266,11 @@ class ProjectView(QWidget):
 
     def device_stop(self):
         if not self.ctx.require(self):
+            return
+        from ..common import unsupported
+        why = unsupported(self.ctx, "song_chain")
+        if why:
+            self.player_bar.status.setText(why)
             return
         from ... import playback as P
         self.ctx.job(self, _("Stop FM-1"), lambda w, link: P.transport_stop(link), dialog=False,

@@ -4603,3 +4603,12 @@ msgstr "El gemelo ejecuta {twin}: no pertenece al FM-1 activo “{name}” ({fir
 #, python-brace-format
 msgid "The active FM-1 does not run the twin's firmware ({twin}), so its keys do not play the twin by themselves. Tick the box if you want that anyway – it holds for this device until you quit."
 msgstr "El FM-1 activo no ejecuta el firmware del gemelo ({twin}), por eso sus teclas no tocan el gemelo por sí solas. Marca la casilla si lo quieres de todos modos: vale para este dispositivo hasta que salgas."
+
+msgid "This firmware does not support writing patterns from the app (Melodee, Felucca and Skiff do)."
+msgstr "Este firmware no admite escribir patterns desde la app (Melodee, Felucca y Skiff sí)."
+
+msgid "This firmware does not support choosing a pattern from the app (only Melodee does)."
+msgstr "Este firmware no admite elegir un pattern desde la app (solo Melodee)."
+
+msgid "This firmware does not support the song chain from the app (only Melodee does)."
+msgstr "Este firmware no admite la cadena de canción desde la app (solo Melodee)."
