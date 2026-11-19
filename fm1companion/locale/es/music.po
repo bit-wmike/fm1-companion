@@ -4569,8 +4569,8 @@ msgstr "Este firmware no admite elegir un patrón desde la app (solo Melodee)."
 msgid "This firmware does not support the song chain from the app (only Melodee does)."
 msgstr "Este firmware no admite la cadena de canción desde la app (solo Melodee)."
 
-msgid "View and listen to Melodee and SLOOP 3 projects (on the FM-1 with its own sounds or on the computer) and export them as a MIDI file for Audacity, LMMS, Ardour or MuseScore."
-msgstr "Ver y escuchar proyectos de Melodee y SLOOP 3 (en el FM-1 con sus propios sonidos o en el ordenador) y exportarlos como archivo MIDI para Audacity, LMMS, Ardour o MuseScore."
+msgid "View and listen to Melodee, SLOOP and SLOOP 3 projects (on the FM-1 with its own sounds or on the computer) and export them as a MIDI file for Audacity, LMMS, Ardour or MuseScore."
+msgstr "Ver y escuchar proyectos de Melodee, SLOOP y SLOOP 3 (en el FM-1 con sus propios sonidos o en el ordenador) y exportarlos como archivo MIDI para Audacity, LMMS, Ardour o MuseScore."
 
 msgid "Open a project file: .fm1proj from the project library, or a SLOOP 3 project (.s3p) or editor backup (.s3b)"
 msgstr "Abrir un archivo de proyecto: .fm1proj de la biblioteca de proyectos, o un proyecto SLOOP 3 (.s3p) o copia del editor (.s3b)"
@@ -4578,8 +4578,8 @@ msgstr "Abrir un archivo de proyecto: .fm1proj de la biblioteca de proyectos, o 
 msgid "FM-1 projects (*.fm1proj *.s3p *.s3b)"
 msgstr "Proyectos FM-1 (*.fm1proj *.s3p *.s3b)"
 
-msgid "view Melodee and SLOOP 3 projects and export them as MIDI"
-msgstr "ver proyectos de Melodee y SLOOP 3 y exportarlos como MIDI"
+msgid "view Melodee, SLOOP and SLOOP 3 projects and export them as MIDI"
+msgstr "ver proyectos de Melodee, SLOOP y SLOOP 3 y exportarlos como MIDI"
 
 msgid "Tempo"
 msgstr "Tempo"

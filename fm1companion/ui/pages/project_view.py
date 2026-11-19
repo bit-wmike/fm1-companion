@@ -42,9 +42,9 @@ class ProjectView(QWidget):
         self.source = ""
         self.source_note = ""
         lay = QVBoxLayout(self)
-        lay.addWidget(heading(_("Project View"), _("View and listen to Melodee and SLOOP 3 projects (on the FM-1 with "
-                                                   "its own sounds or on the computer) and export them as a MIDI file "
-                                                   "for Audacity, LMMS, Ardour or MuseScore.")))
+        lay.addWidget(heading(_("Project View"), _("View and listen to Melodee, SLOOP and SLOOP 3 projects (on the FM-1 "
+                                                   "with its own sounds or on the computer) and export them as a MIDI "
+                                                   "file for Audacity, LMMS, Ardour or MuseScore.")))
         self.live_tag = None                       # (profile ID, port, name) when a device's running music is open
         self.live_slot = None
         open_card = Card(_("1 · Open project"))
@@ -739,6 +739,6 @@ def _make(ctx, window):
 
 PAGE = PageSpec(key="project_view", title=_("Project View"), group="musik", factory=_make,
                 icons=("view-media-playlist", "audio-midi", "document-preview"), order=20,
-                description=_("view Melodee and SLOOP 3 projects and export them as MIDI"),
+                description=_("view Melodee, SLOOP and SLOOP 3 projects and export them as MIDI"),
                 keywords=("projekt", "midi", "export", "piano roll", "song", "pattern", "daw", "audacity",
                           "project", "view"))

@@ -15925,7 +15925,7 @@ msgid "Project View"
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:45
-msgid "View and listen to Melodee and SLOOP 3 projects (on the FM-1 with its own sounds or on the computer) and export them as a MIDI file for Audacity, LMMS, Ardour or MuseScore."
+msgid "View and listen to Melodee, SLOOP and SLOOP 3 projects (on the FM-1 with its own sounds or on the computer) and export them as a MIDI file for Audacity, LMMS, Ardour or MuseScore."
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:50
@@ -16457,7 +16457,7 @@ msgid "Saved: {file}"
 msgstr ""
 
 #: fm1companion/ui/pages/project_view.py:742
-msgid "view Melodee and SLOOP 3 projects and export them as MIDI"
+msgid "view Melodee, SLOOP and SLOOP 3 projects and export them as MIDI"
 msgstr ""
 
 #: fm1companion/ui/pages/recovery.py:29
