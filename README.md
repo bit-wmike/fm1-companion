@@ -10,8 +10,11 @@ Raspberry Pi 5.
 > **Unofficial community project – not affiliated with M-VAVE. No warranty (GPL-3.0, sections 15 and 16).**
 > Installing or switching firmware, recovery, cleaning up leftovers, writing back from the Studio and restoring
 > backups, presets or projects to the device change your FM-1 and are done **at your own risk** – make a backup first.
-> Almost all of this has only run against simulations. On real hardware so far: one Melodee update, backups, MIDI
-> and the basics of the Studio, on a single device. The honest list: [docs/UNTESTED.md](docs/UNTESTED.md).
+> Almost all of this has only run against simulations. On real hardware so far – one Raspberry Pi 5 with Bookworm,
+> two units, most of it once: an update within Melodee; a switch KARMA → original V15 → Skiff through two USB hubs;
+> Skiff on a newer FM-1; backups of Melodee, KARMA, Skiff and SLOOP 3; SLOOP 3 and m-bootloader recognised; MIDI and
+> the basics of the Studio. **Not tested:** restoring a backup, writing back from the Studio, writing in recovery,
+> anything else on a newer FM-1. The honest list: [docs/UNTESTED.md](docs/UNTESTED.md).
 
 Languages: English, German, Spanish – [help translate](docs/TRANSLATING.md).
 
@@ -46,16 +49,20 @@ What changed in each version is in the release notes on that page.
 
 * More switches of `install.sh`: `--desktop` (shortcut on the desktop), `--no-fluidsynth-fix`, `--usb-power-rule`;
   `./install.sh --help` lists all of them. An unknown option stops the script before anything happens.
-* **FluidSynth:** if Debian's FluidSynth user service (`fluidsynth.service`) is active, it grabs the first sound card
-  at every login (on the Pi: HDMI). The installer then disables it and says so clearly (FluidSynth stays installed,
-  the app starts it itself); with `--no-fluidsynth-fix` it is left unchanged. The graphical installer asks with a
-  checkbox.
+* **FluidSynth:** if Debian's FluidSynth user service (`fluidsynth.service`) is enabled, it grabs the first sound card
+  at every login (on the Pi: HDMI). A "just for me" installation then switches it off for your user and says so
+  (FluidSynth stays installed, the app starts it itself): it disables the service, or – when it is enabled for all
+  users, where disabling changes nothing – stops and masks it for your user. Uninstalling the app takes that mask
+  away again. With `--no-fluidsynth-fix` it is left unchanged; the graphical installer asks with a checkbox.
 * **USB hubs:** flashing through a USB hub uses a *careful mode* (switched on automatically when the app sees a hub
   between the computer and the FM-1, or always via Settings › General): slower pacing, longer waits for the
   restarts, automatic resume of an interrupted write on the same device, and a flight log for the bug report.
   Linux' USB autosuspend can send the FM-1 or the hub to sleep during the restarts –
   `./install.sh --usb-power-rule` installs a udev rule that keeps them awake (the graphical installer offers it as
-  a checkbox). Not tested on a real FM-1 yet.
+  a checkbox). A firmware switch through two self-powered hubs ran once on a real FM-1 in careful mode, without a
+  dropout – the automatic resume has only run in the simulation.
+* **Recovery tool:** the packages it needs (`python3-crcmod`, `python3-yaml`) are installed by default, so that the
+  recovery is ready before it is needed.
 * **Build the packages yourself** (result in `dist/`; the same commit always gives the same files):
 
   ```bash
@@ -69,6 +76,23 @@ What changed in each version is in the release notes on that page.
 
 </details>
 
+## Newer FM-1 (logo on the front)
+
+FM-1 sold from late 2026 have the M-VAVE logo printed on the front and a different flash chip (UCUN UC25HQ80).
+Firmware versions written before that save nothing on such a unit, and most of them can then no longer be updated.
+What the app does:
+
+* It has a table of the first version of each firmware that knows the chip, each with its source
+  ([`hardware.json`](fm1companion/data/hardware.json)) – for example Melodee 1.6.0, Skiff 2.2, SLOOP 2.8.5,
+  KARMA 3.0.4, JIANT FM V10.6z, Felucca 1.8.2. A firmware it knows nothing about counts as not supported.
+* It asks once per device whether your FM-1 has the logo on the front, or reads the chip itself (in ROM boot mode,
+  and in m-bootloader's MIDI MODE).
+* On a newer unit it never installs a firmware version without support for the chip. The bundled recovery tool knows
+  both chips.
+
+Only one of these firmwares has run on such a unit with this app: Skiff 2.7, installed once on one unit. More:
+[help page "Switching firmware"](fm1companion/data/help/en/02-firmware.md#newer-fm-1-logo-on-the-front).
+
 ## Try it without a device
 
 ```bash
@@ -76,7 +100,8 @@ fm1-companion --demo          # from the source folder: python3 -m fm1companion 
 ```
 
 starts with three simulated FM-1: one with Melodee 1.6.0-rc.7, one with SLOOP 2.8.5 and one with a firmware that
-has no editor protocol. Demo mode uses its own settings; your data stays untouched.
+has no editor protocol (shown as ORBIT). Installing and recovery run against simulated devices there too. Demo mode
+uses its own settings; your data stays untouched.
 More switches: `--check` (are all system packages there?), `--syscheck` (system check in the terminal),
 `--lang LANG`, `--no-splash`, `--debug`, `--version`.
 
@@ -87,14 +112,14 @@ Section names as shown in the app's sidebar.
 | Section | What it does |
 |---|---|
 | **Overview** | the active FM-1 at a glance: backup, firmware and updates, load, memory, projects, presets |
-| **Editor** | the web editor of the installed firmware, embedded and offline |
+| **Editor** | the web editor of the installed firmware, embedded and offline – for SLOOP 3 its own bundled editor |
 | **Devices** | several FM-1 with their own profiles and firmware history; copy from device to device |
 | **Presets**, **Samples & Kits** | all 384 user presets, your own library, FM voices (DX7); samples and kits, also on the FM-1 |
 | **Studio** | the digital twin: your firmware's own code on the computer, with the device state from a backup (see below) |
 | **Projects**, **Compose**, **Recording** | view patterns and songs, export MIDI, play on the FM-1; generate parts; record with Audacity |
-| **Backups** | full backups, look inside, compare, restore the whole or only parts |
+| **Backups** | full backups, look inside, compare, restore the whole or only parts; SLOOP 3 backups of its own kind |
 | **MIDI** | monitor, keyboard, clock, controls, connections, sound module |
-| **Firmware+** | catalog of 250+ community firmwares (search, try in the simulator) and "Install & Versions": install, update, switch, back to the original |
+| **Firmware+** | catalog of 250+ community firmwares (search, try in the simulator) and "Install & Versions": install, update, switch, back to the original; SLOOP 3: the way to install it, and a copy of the whole flash in m-bootloader's MIDI MODE |
 | **Recovery** | update mode, finish an interrupted installation, "Is my FM-1 clean?", ROM boot mode |
 | **Help** | help center (offline), FAQ, diagnostics, system check for USB, power and audio |
 | **Settings › Storage** | what the app keeps (logs, downloads, caches), delete per category, automatic cleanup – never your own data in `~/FM-1` |
@@ -102,9 +127,31 @@ Section names as shown in the app's sidebar.
 Around it: light/dark theme, command search (**Ctrl+K**), notifications with history, a setup assistant, and a small
 computer indicator (CPU, RAM, temperature, free space) that opens the system check.
 
+Several FM-1: the app tells them apart by their unit ID when the firmware shows one (the original firmware,
+m-bootloader's MIDI MODE). Skiff, Melodee, SLOOP and the other Felucca firmwares show none – then the app asks
+"Which FM-1 is this?" at every plug-in, never guesses by USB port, and names the unit before every write so you can
+check it.
+
 Firmware installs: built in are Melodee, Skiff, SLOOP and KARMA; others come from the catalog or your own `.fwsc`
-file. A switch to another firmware always installs the original V15 first; an update within the same firmware goes
-directly.
+file. SLOOP 3 is built in too, but the app does not install it (see below). A switch to another firmware always
+installs the original V15 first; an update within the same firmware goes directly.
+
+### SLOOP 3 and m-bootloader
+
+SLOOP 3 (isod89) is a rewrite of SLOOP and a **public beta**. It installs only through m-bootloader's MIDI MODE, and
+both are installed **outside the app**: Firmware+ explains the steps and opens the author's installer page. What the
+app does:
+
+* It recognises SLOOP 3 and shows its own web editor on the Editor page – bundled unchanged for 3.3.7 and 3.4.0, so
+  it works offline.
+* Backups of the project, sounds, banks and settings, and their restore (samples are not in such a backup).
+* It recognises m-bootloader's MIDI MODE and never takes it for an update mode; there it can copy the whole flash
+  (read only, checked against the chip's own checksum).
+* It installs no other firmware from MIDI MODE or under a running SLOOP 3, and on a newer FM-1 (logo on the front) it
+  does not offer the installer page. The Studio has no SLOOP 3 twin.
+
+On a real FM-1, once and read only: recognition, the bundled editor connected, one backup, MIDI MODE recognised.
+Restore and the flash copy have only run against stand-ins. More: [help page "SLOOP 3"](fm1companion/data/help/en/15-sloop3.md).
 
 ### Studio twins
 
@@ -129,8 +176,8 @@ tracks), take snapshots with undo and write back to the FM-1 with a safety backu
 | M-VAVE FM1 Open | V14 – also the stand-in for the original V15/V16, with a note that they differ |
 
 FoMni and AMB-1 have no backup over USB: their twins play and export, but cannot load from or write back to the
-device. Only the Melodee twin has been used next to a real FM-1 so far; the other twelve have only been checked
-against themselves and the app's own code.
+device. Only the Melodee twin has been used next to a real FM-1, and the Skiff twin once (fetched from a unit with
+Skiff 2.7); the other eleven have only been checked against themselves and the app's own code.
 
 <details>
 <summary>More screenshots</summary>
@@ -147,8 +194,8 @@ Taken in demo mode, English UI.
 | **Backups › Browse & Compare** – projects, presets, settings; restore only parts | **Firmware+** – 250+ community firmwares, install, versions, simulator |
 | ![Presets – the 384 user slots and your own library](docs/screenshots/presets.png) | ![Recovery – step by step back to a working FM-1](docs/screenshots/recovery.png) |
 | **Presets** – all 384 user slots, library, FM voices (DX7) | **Recovery** – update mode and ROM boot mode, with safety checks |
-| ![Settings › Storage – see and delete logs, downloads and caches](docs/screenshots/storage.png) | |
-| **Settings › Storage** – what the app keeps, delete per category, automatic cleanup | |
+| ![Settings › Storage – see and delete logs, downloads and caches](docs/screenshots/storage.png) | ![Editor – SLOOP 3's own web editor, bundled with the app](docs/screenshots/sloop3-editor.png) |
+| **Settings › Storage** – what the app keeps, delete per category, automatic cleanup | **Editor** with SLOOP 3 3.3.7 – its own bundled editor (here against the test stand-in, not a real FM-1) |
 
 </details>
 
@@ -161,7 +208,7 @@ Linux with Python ≥ 3.11 and Qt 6.4 or newer – Raspberry Pi OS / Debian Book
   `python3-pyqt6.qtwebchannel`, `python3-mido`, `python3-rtmidi`, `python3-numpy`, `git`, and
   `qt6-translations-l10n` (Qt's own dialogs in your language – the app also starts without it).
 * Recommended: `python3-pyqt6.qtmultimedia`, `ffmpeg`, `alsa-utils`, `pipewire-bin`, `audacity`, `fluidsynth`,
-  `fluid-soundfont-gm`.
+  `fluid-soundfont-gm`, and `python3-crcmod`, `python3-yaml` for the recovery tool.
 
 The list lives in one place, `fm1companion/data/deps.json`; `fm1-companion --check` shows what is missing.
 The launcher always uses `/usr/bin/python3` – even if a venv is active.

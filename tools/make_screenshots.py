@@ -205,6 +205,7 @@ try:
         for tw in d.findChildren(__import__("PyQt6.QtWidgets", fromlist=["QTabWidget"]).QTabWidget):
             if tw.indexOf(d.storage) >= 0:
                 tw.setCurrentIndex(tw.indexOf(d.storage))
+    until(lambda: d.storage.cats, 60000)        # the sizes are measured in the background
     wait(2500)
     d.grab().save(str(OUT / "11-storage.png"))
     print("saved 11-storage.png")
