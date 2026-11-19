@@ -6,7 +6,10 @@
 * "Check now" with FM1C_NO_NET=1 does not go online and says so;
 * an offer found earlier shows an "Update" button; nothing is installed by itself;
 * Settings: the tool check choice (daily / weekly / only at start / never), saved in config.json, disabled while
-  the firmware check switch is off.
+  the firmware check switch is off;
+* "Back up the whole flash" (Recovery › Tools) and "Write back …" (Backups › Flash backups) with the fake
+  M-Flasher (tests/fake_mflasher.py, synthetic ids): the copy is listed, the write-back asks the danger question,
+  answers M-Flasher's "yes" only on a match, and an image of another unit is refused with nothing written.
 
   QT_QPA_PLATFORM=offscreen python3 tests/ui_tools_test.py
 """
@@ -154,7 +157,100 @@ def flow():
     check(config.load().tools_check == "weekly", "saved in the settings")
     dlg.deleteLater()
     check(updates.auto_check_allowed(config.load())[0] is False, "FM1C_NO_NET: no automatic check")
+    flash_flow(card)
     app.quit()
+
+
+def _job_exec(self):
+    """a job dialog: wait for the job, then close"""
+    loop = QEventLoop()
+    t = QTimer()
+    t.timeout.connect(lambda: loop.quit() if self.ok or self.error else None)
+    t.start(100)
+    QTimer.singleShot(60000, loop.quit)
+    loop.exec()
+    t.stop()
+    wait(200)
+    return 0
+
+
+def fake_store():
+    """a tool store whose bundled, write-verified M-Flasher is tests/fake_mflasher.py"""
+    import copy
+    import hashlib
+    from fm1companion.tools import manifest as mfm, store as st
+    arch = mfm.arch() or "x86_64"
+    data = copy.deepcopy(mfm.load())
+    ver = data["tools"]["m-flasher"]["version"]
+    binp = home / "tools-bin" / mfm.mflasher_relpath(ver, arch)
+    binp.parent.mkdir(parents=True, exist_ok=True)
+    body = f"#!{sys.executable}\n" + (ROOT / "tests" / "fake_mflasher.py").read_text("utf-8").split("\n", 1)[1]
+    binp.write_text(body, "utf-8")
+    binp.chmod(0o755)
+    h = hashlib.sha256(body.encode()).hexdigest()
+    data["tools"]["m-flasher"]["arch"][arch].update(binary_sha256=h, binary_size=len(body.encode()))
+    data["tools"]["m-flasher"]["write_verified"][ver][arch] = h
+    return st.Store(bin_dir=home / "tools-bin", updates_dir=home / "upd", data=data, machine=arch)
+
+
+def flash_flow(card):
+    from fm1companion.ui import common as _common, flash_tools
+    from fm1companion import flashdump
+    uid, other = "13579bdf02468ace", "2468ace013579bdf"           # synthetic
+    state = home / "fake-mflasher.json"
+    os.environ["FAKE_MFLASHER_STATE"] = str(state)
+    state.write_text(json.dumps({"mode": "midi", "unit_id": uid}))
+    card._store = w.ctx.tools_store = fake_store()
+    card.refresh()
+    check(card.b_backup.isEnabled() and card.b_restore.isEnabled(), "flash buttons enabled with an M-Flasher")
+    _common.JobDialog.exec = lambda self: _job_exec(self)
+    asked, errors_shown = [], []
+    flash_tools.confirm = lambda parent, title, text, ok=None, danger=False: asked.append((title, text, danger)) or True
+    flash_tools.show_error = lambda parent, title, msg, details="": errors_shown.append(msg)
+    c = w.ctx
+    prof = c.profile
+    check(prof is not None, f"demo device has a profile ({getattr(prof, 'name', '-')})")
+    card.b_backup.click()
+    folder = c.device_folder(c.settings.backups_dir) / "Flash"
+    bins = sorted(folder.glob("*.bin"))
+    st_ = json.loads(state.read_text())
+    check(len(bins) == 1 and [x[0] for x in st_["calls"]].count("backup") == 2,
+          f"whole flash backed up: read twice, one copy kept ({[b.name for b in bins]})")
+    check(bins and json.loads(bins[0].with_suffix(".json").read_text())["unit id"] == uid and
+          "Flash" in card.note.text(), "its description names the unit; the card says where it is")
+    check(st_["mode"] == "midi" and prof.unit_id == uid, "restarted afterwards; the profile learned the unit id")
+    # Backups › Flash backups lists it
+    w.go("backups")
+    wait(300)
+    bp = w.backups
+    bp.refresh()
+    until(lambda: bp.flash_tree.topLevelItemCount() == 1, 5000)
+    check(bp.flash_tree.topLevelItemCount() == 1 and bp.flash_restore_btn.isEnabled(), "listed on the Backups page")
+    # the flash changes; "Write back …" puts the copy back after the danger question
+    img = bytearray((Path(str(state) + ".flash")).read_bytes())
+    img[0:16] = b"\x5a" * 16
+    Path(str(state) + ".flash").write_bytes(bytes(img))
+    bp.flash_tree.setCurrentItem(bp.flash_tree.topLevelItem(0))
+    asked.clear()
+    bp.flash_restore_btn.click()
+    st_ = json.loads(state.read_text())
+    danger = [a for a in asked if a[2]]
+    check(len(danger) == 1 and prof.name in danger[0][1] and "0x00000" in danger[0][1],
+          "the danger question names the unit and says the boot area is included")
+    check([a.strip() for a in st_.get("answers", [])] == ["yes"] and
+          Path(str(state) + ".flash").read_bytes() == bins[0].read_bytes(), "written back: the flash equals the copy")
+    check(len(flashdump.list_backups(folder)) == 2, "the automatic backup before the write is listed too")
+    # an image of another unit: refused, nothing written
+    state.write_text(json.dumps({"mode": "midi", "unit_id": other}))
+    prof.unit_id = ""
+    img[0:16] = b"\x33" * 16
+    Path(str(state) + ".flash").write_bytes(bytes(img))
+    before = bytes(img)
+    asked.clear()
+    flash_tools.restore_flow(bp, c, bins[0], store=card._store)
+    st_ = json.loads(state.read_text())
+    check(not st_.get("answers") and not st_.get("written") and Path(str(state) + ".flash").read_bytes() == before and
+          not [a for a in asked if a[2]], "another unit's image: no danger question, no yes, nothing written")
 
 
 def run():

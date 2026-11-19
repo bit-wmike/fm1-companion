@@ -67,13 +67,37 @@ FM1OPEN_HARDWARE: dict[str, tuple[bool, str]] = {
     "fm1open_restore": (False, "restoring an FM1 Open backup / writing back from the Studio"),
 }
 
+# The app's own M-Flasher flows (Recovery › Tools, Backups › Flash backups; tools/flashjob.py) on a real FM-1 – none of
+# them yet: they ran against tests/fake_mflasher.py only. docs/UNTESTED.md ("M-Flasher through the app") repeats this
+# table; tests/test_tools_flash.py keeps the two in sync. M-Flasher itself ran by hand (OWNER_REPORTS).
+TOOLS_HARDWARE: dict[str, tuple[bool, str]] = {
+    "mf_download_mode": (False, N_("sending the FM-1 into download mode through M-Flasher")),
+    "mf_backup": (False, N_("the whole-flash backup through M-Flasher (read twice)")),
+    "mf_restore": (False, N_("writing a whole-flash backup back through M-Flasher")),
+    "mf_new_chip": (False, N_("any of these on a newer FM-1 (logo on the front, flash UC25HQ80)")),
+}
+
 # Reports by the owner of what ran OUTSIDE this app (his own tools: M-Flasher, the authors' installer pages) – not runs
 # of this app, so none of it counts as "tested" above. hardware.json cites the same report for its rows.
 OWNER_REPORTS: dict[str, str] = {
     "newer_unit_mboot_sloop3": "2026-11-19, one newer FM-1 (flash 0xB36014): m-bootloader 2.4-395e6cc installed with "
                                "M-Flasher, it boots and its menu shows FLASH B36014; SLOOP 3 v3.4.0 installed with its "
                                "author's installer page; a change saved in SLOOP 3 survived a power cycle",
+    "mflasher_by_hand": "2026-11-18/19, owner, outside the app: M-Flasher 0.12.1 by hand in a terminal on a "
+                        "Raspberry Pi 5 – download-mode, info, backup (twice, same SHA-256) and restore of a whole "
+                        "flash backup onto the same unit (147 and 174 sectors, verified by the chip's CRC32, then "
+                        "--restart), on the earlier unit; backup and m-bootloader install on the newer unit",
 }
+
+
+def tool_note(kind: str) -> str:
+    """the honest line for the M-Flasher dialogs: run on a real FM-1 through this app, or not"""
+    ok, label = TOOLS_HARDWARE.get(kind, (False, ""))
+    if ok:
+        return _("Tested on a real FM-1 through this app: {what}.").format(what=_(label))
+    return _("Not tested on a real FM-1 through this app yet: {what} ran only against a stand-in for M-Flasher. "
+             "M-Flasher itself was used this way by hand (backup and restore of the whole flash, 2026-11-18/19)."
+             ).format(what=_(label))
 
 
 def tested(kind: str) -> bool:

@@ -3,8 +3,8 @@
 one is in use, whether its checksum checks out, when the app last looked for a new version, "Check now",
 "Update" (only when a newer version was found; never automatic) and "Show licence".
 
-In this version the app only bundles, checks and keeps these tools up to date, and runs M-Flasher's read-only
-`find`; the buttons that back up, restore or install through them come in later versions."""
+With M-Flasher the app also backs up the whole flash and writes such a backup back (ui/flash_tools.py,
+tools/flashjob.py); installing m-bootloader, firmware through download mode and SLOOP 3 come in later versions."""
 from __future__ import annotations
 
 import time
@@ -53,8 +53,8 @@ class ToolsCard(Card):
         self.ctx, self._store, self._busy, self._updating = ctx, store, False, False
         lay = self.layout()
         intro = QLabel(_("The app brings these tools with it and checks each file's checksum before it uses it. "
-                         "In this version it only shows them, keeps them up to date and can ask M-Flasher which "
-                         "FM-1 it sees; flash backups, m-bootloader and SLOOP 3 through the app follow in later "
+                         "With M-Flasher it backs up the whole flash of an FM-1 and writes such a backup back onto "
+                         "the same unit; installing m-bootloader and SLOOP 3 through the app follow in later "
                          "versions. A new version is only shown – it is fetched when you click “Update”, checked "
                          "against GitHub's checksum, and the previous version stays as the fallback."))
         intro.setWordWrap(True)
@@ -78,7 +78,18 @@ class ToolsCard(Card):
         self.b_find.setToolTip(_("Runs “m-flasher find”: lists an FM-1 in ROM download mode and a running FM-1 on "
                                  "USB MIDI. Reads only – nothing is sent to the FM-1."))
         self.b_find.clicked.connect(self.find)
-        lay.addWidget(flow_row(self.b_check, self.b_find))
+        self.b_backup = QPushButton(icon("document-save", "drive-harddisk"), _("Back up the whole flash"))
+        self.b_backup.setObjectName("toolsFlashBackup")
+        self.b_backup.setToolTip(_("Puts the FM-1 into USB download mode (by itself while it runs on USB MIDI, "
+                                   "otherwise it tells you how), reads the whole flash twice with M-Flasher, compares "
+                                   "both reads and keeps one copy in this device's backup folder. Reads only."))
+        self.b_backup.clicked.connect(self.flash_backup)
+        self.b_restore = QPushButton(icon("document-revert", "edit-undo"), _("Write flash back …"))
+        self.b_restore.setObjectName("toolsFlashRestore")
+        self.b_restore.setToolTip(_("Writes a whole-flash backup back onto the FM-1 it came from (same unit ID and "
+                                    "flash chip), after a fresh backup of its current state and your confirmation."))
+        self.b_restore.clicked.connect(self.flash_restore)
+        lay.addWidget(flow_row(self.b_check, self.b_find, self.b_backup, self.b_restore))
         self.rows: dict[str, dict] = {}
         self.refresh()
 
@@ -139,7 +150,9 @@ class ToolsCard(Card):
                 notes.append(_("{tool}: the last check did not get an answer ({error}).").format(tool=s.title,
                                                                                                error=s.error))
             self.rows[s.key] = row
-        self.b_find.setEnabled(not rows[0].unavailable if rows else False)
+        usable = not rows[0].unavailable if rows else False
+        for b in (self.b_find, self.b_backup, self.b_restore):
+            b.setEnabled(usable)
         self.note.setText("\n".join(notes))
 
     def show_licence(self, key: str, title: str):
@@ -201,6 +214,16 @@ class ToolsCard(Card):
             self.refresh()
             show_error(self, _("Not updated"), msg)
         run_job(self, lambda w: updates.download_update(offer, self.store), on_done=done, on_fail=fail)
+
+    def flash_backup(self):
+        from .flash_tools import backup_flow
+        p = backup_flow(self, self.ctx, store=self._store)
+        if p is not None:
+            self.note.setText(_("Flash backup kept: {path}").format(path=p))
+
+    def flash_restore(self):
+        from .flash_tools import restore_flow
+        restore_flow(self, self.ctx, store=self._store)
 
     def find(self):
         from ..tools import runner
