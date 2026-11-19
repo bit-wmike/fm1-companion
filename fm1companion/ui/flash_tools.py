@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import datetime as dt
 import html
+import time
 from pathlib import Path
 
 from ..i18n import _
@@ -34,8 +35,8 @@ def softkey_port(ctx) -> str:
             getattr(ctx, "protocol", "") == "update":
         return ""
     kind = FM1_USB_IDS.get((getattr(port, "usb_id", "") or "").lower(), "")
-    if kind in ("fm1-open", "stock-update", "felucca-update"):
-        return ""
+    if kind not in ("stock", "felucca"):      # (only a USB-connected FM-1 with one of these USB IDs – not BLE, a
+        return ""                             #  virtual cable, FM1 Open, an update loader)
     ok = kind == "stock" or getattr(ctx, "protocol", "") == "felucca" or getattr(ctx, "sloop3", None) is not None
     return (getattr(port, "label", "") or getattr(port, "product", "") or "") if ok else ""
 
@@ -79,14 +80,83 @@ def _job(ctx, store, worker, writing: bool = False):
         except Exception:  # noqa: BLE001 – never stops the write
             pass
         _inhibit(int(record.get("pid") or 0))
+    def on_overdue():
+        try:
+            call_in_gui(_offer_leave)
+        except Exception:  # noqa: BLE001
+            pass
+    port = getattr(ctx, "port", None)
+    usb = getattr(port, "usb_path", "") if port is not None and not getattr(ctx, "is_virtual", False) else ""
+    if prof is not None and usb:
+        _SEEN.update(profile=prof.id, usb=usb, at=time.time())
+    elif prof is None and _SEEN.get("at", 0) > time.time() - GUIDE_SECS:
+        # (the FM-1 was put into download mode by hand just now: it left USB MIDI, so no device is active –
+        # the profile and USB port the app saw last are kept; the job uses them only if the unit in download mode
+        # is at that very port)
+        store_ = getattr(ctx, "store", None)
+        prof = getattr(store_, "profiles", {}).get(_SEEN.get("profile")) if store_ is not None else None
+        usb = _SEEN.get("usb", "") if prof is not None else ""
     return FJ.Job(backups_dir=Path(ctx.settings.backups_dir), profiles=getattr(ctx, "store", None), profile=prof,
                   store=store, cancel=_Cancel(worker), say=worker.log.emit, softkey_for=softkey_port(ctx),
-                  on_writing=on_writing if writing else None)
+                  on_writing=on_writing if writing else None, on_overdue=on_overdue if writing else None,
+                  usb_path=usb)
+
+
+_SEEN: dict = {}            # the last real device a flash job was clicked for: {"profile", "usb", "at"}
+GUIDE_SECS = 15 * 60        # how long "the FM-1 I just put into download mode by hand" counts
+
+
+def _offer_leave():
+    """long after "yes" M-Flasher still writes: the dialog's button becomes an honest way out – close the app and
+    let M-Flasher finish on its own (never a kill)"""
+    from PyQt6.QtWidgets import QApplication
+    w = QApplication.activeModalWidget()
+    b = getattr(w, "cancel_button", None)
+    if b is None:
+        return
+    try:
+        b.clicked.disconnect()
+    except TypeError:
+        pass
+    b.setText(_("Close the app, let M-Flasher finish"))
+    b.setToolTip(LEAVE_TEXT())
+    b.setEnabled(True)
+    b.clicked.connect(lambda: leave_while_writing(w))
+
+
+def LEAVE_TEXT() -> str:
+    return _("M-Flasher has been writing for much longer than it ever should. The app can close now: M-Flasher "
+             "keeps running in the background and is not stopped. Keep the FM-1 connected and switched on. At the "
+             "next start the app shows what happened.")
+
+
+def leave_while_writing(parent) -> bool:
+    from PyQt6.QtWidgets import QApplication
+    if not confirm(parent, _("Close the app?"), LEAVE_TEXT(), _("Close the app"), danger=True):
+        return False
+    app = QApplication.instance()
+    if app is not None:
+        app.quit()
+    return True
+
+
+def _sigterm(signum, frame):
+    """SIGTERM during a write-back job: ignored only while M-Flasher writes ("yes" until it ended), otherwise the
+    default action (the app ends) – a Python handler, not SIG_IGN, so no child process inherits an ignore"""
+    import os
+    import signal
+    from ..tools import flashjob as FJ
+    if FJ.WRITING.is_set():
+        import logging
+        logging.getLogger(__name__).warning("SIGTERM ignored: M-Flasher is writing")
+        return
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    os.kill(os.getpid(), signal.SIGTERM)
 
 
 class write_guard:
-    """while a write-back runs: the app ignores SIGTERM (logout, `kill`) and cancels a session-manager logout – once
-    M-Flasher writes, it must not be left alone half-way by the app's own end"""
+    """while a write-back job runs: SIGTERM (logout, `kill`) is ignored from "yes" until M-Flasher has ended, and a
+    session-manager logout is cancelled – once M-Flasher writes, the app's own end must not leave it half-way"""
 
     def __enter__(self):
         import signal
@@ -95,7 +165,7 @@ class write_guard:
         self.old = None
         if threading.current_thread() is threading.main_thread():
             try:
-                self.old = signal.signal(signal.SIGTERM, signal.SIG_IGN)
+                self.old = signal.signal(signal.SIGTERM, _sigterm)
             except (ValueError, OSError):
                 self.old = None
         self.app = QApplication.instance()
@@ -331,6 +401,12 @@ def check_interrupted_write(parent, ctx, root=None, store=None) -> str:
     rec = FJ.unfinished_write(root)
     if rec is None:
         return ""
+    try:                                       # (another window runs a job – maybe this very write: not now)
+        from .. import storage
+        if FJ.WRITING.is_set() or storage.install_running():
+            return "busy"
+    except Exception:  # noqa: BLE001
+        pass
     if rec.get("alive"):
         show_error(parent, _("M-Flasher is still writing"),
                    _("M-Flasher is still writing the flash of “{device}” (started by an earlier run of the app). Do "
@@ -339,12 +415,14 @@ def check_interrupted_write(parent, ctx, root=None, store=None) -> str:
         return "running"
     i = _choice(parent, _("Interrupted flash write-back"), interrupted_text(rec),
                 [_("Write the image back again …"), _("Write the state before back …"), _("Later"), _("Forget this")])
-    if i == 0:
-        restore_flow(parent, ctx, Path(str(rec.get("image"))), store=store)
-        return "image"
-    if i == 1:
-        restore_flow(parent, ctx, Path(str(rec.get("pre_backup"))), store=store)
-        return "before"
+    if i in (0, 1):
+        which = "image" if i == 0 else "before"
+        why = FJ.rerun_problem(rec, which)
+        if why:
+            show_error(parent, _("Not written back"), why)
+            return "changed"
+        restore_flow(parent, ctx, Path(str(rec.get("image" if i == 0 else "pre_backup"))), store=store)
+        return which
     if i == 3 and confirm(parent, _("Forget this"), _("Forget the interrupted write-back? Do this only when the FM-1 "
                                                       "works again or you have written it back yourself."),
                           _("Forget"), danger=True):

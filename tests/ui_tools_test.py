@@ -207,8 +207,8 @@ def flash_flow(card):
     asked, errors_shown = [], []
     flash_tools.confirm = lambda parent, title, text, ok=None, danger=False: asked.append((title, text, danger)) or True
     flash_tools.show_error = lambda parent, title, msg, details="": errors_shown.append(msg)
-    check(flash_tools.softkey_port(w.ctx) == w.ctx.port.label and w.ctx.protocol == "felucca",
-          "the demo Melodee (editor protocol) counts as a Felucca-family FM-1 for the soft key")
+    check(flash_tools.softkey_port(w.ctx) == "" and not getattr(w.ctx.port, "usb_id", ""),
+          "the demo Melodee has no USB ID: no soft key (review N6)")
     flash_tools.softkey_port = lambda ctx: "FM-1 MIDI 1"      # (the fake stands for a recognised FM-1 at this port)
     c = w.ctx
     prof = c.profile
@@ -279,6 +279,18 @@ def flash_flow(card):
         QMessageBox.warning = orig_warn
         FJ.WRITING.clear()
     check(not ev.isAccepted(), "while M-Flasher writes the window does not close")
+    # far past M-Flasher's worst case: an honest way out – the window may close after a warning (no kill)
+    asked_leave = []
+    flash_tools.leave_while_writing = lambda parent: asked_leave.append(1) or False
+    FJ.WRITING.set()
+    FJ.OVERDUE.set()
+    ev = QCloseEvent()
+    try:
+        w.closeEvent(ev)
+    finally:
+        FJ.WRITING.clear()
+        FJ.OVERDUE.clear()
+    check(asked_leave == [1] and not ev.isAccepted(), "overdue: the close asks (declined: stays open)")
 
 
 def run():

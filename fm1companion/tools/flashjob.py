@@ -61,6 +61,7 @@ BOOT_AREA = 0x4000
 FACTORY = (0xFF000, 0x100000)                   # the unit's factory data: chip key record, calibration, Bluetooth MAC
 RECORD = "mflasher-write.json"                  # beside the installation journal: a write-back in progress
 WRITING = threading.Event()                     # set from "yes" until M-Flasher has ended (blocks quitting)
+OVERDUE = threading.Event()                     # … and M-Flasher is far past its own worst case: quitting is allowed
 UNKNOWN_FOLDER = "Unbekanntes Gerät"            # the app's folder for an FM-1 without profile  # i18n: ignore
 
 
@@ -154,6 +155,9 @@ class Job:
     softkey_for: str = ""                      # the app's own connected FM-1 that may get M-Flasher's soft key: its
     #                                            MIDI port name; "" = the app did not recognise one that accepts it
     on_writing: object = None                  # fn(): M-Flasher is about to get "yes" (the UI disables Cancel)
+    on_overdue: object = None                  # fn(): long after "yes" M-Flasher has still not ended
+    usb_path: str = ""                         # the USB port where the app last saw `profile` running (just before)
+    work_dir: Path | None = None               # private local folder for M-Flasher's files (default: private_dir())
     # filled in on the way
     device: str = ""                           # /dev/sgN
     info: mp.Info | None = None                # M-Flasher's info of this session
@@ -191,7 +195,7 @@ def _mf(job: Job, args: list[str], gate=None, out_dir=None) -> runner.RunResult:
     try:
         r = runner.run_mflasher(args, store=job.store, cancel=job.cancel, log_dir=job.log_dir, journal=job.held,
                                 gate=gate, flight=job.flight, out_dir=out_dir,
-                                on_line=lambda kind, ln: job.tell(ln) if kind == "note" else None)
+                                on_line=lambda kind, ln: _note(job, ln) if kind == "note" else None)
     except runner.ToolStuck:
         job.held.handover = True                 # (the reaper releases the lock when it has really ended)
         raise
@@ -205,6 +209,20 @@ def _mf(job: Job, args: list[str], gate=None, out_dir=None) -> runner.RunResult:
         raise Refused(_("M-Flasher did not finish within {s} s and was stopped. Nothing was written to the "
                         "FM-1.").format(s=int(runner.TIMEOUTS.get(args[0], 60))), "timeout")
     return r
+
+
+def _note(job: Job, text: str):
+    """the runner's note that M-Flasher still writes long after "yes" (runner.WRITE_SOFT_LIMIT, far beyond its own
+    worst case): say so, and from now on let the user close the app – M-Flasher keeps running on its own"""
+    job.tell(text)
+    if WRITING.is_set():
+        OVERDUE.set()
+        job.ev("overdue", "M-Flasher still writes past the soft limit: closing the app is allowed now (never a kill)")
+        if job.on_overdue:
+            try:
+                job.on_overdue()
+            except Exception:  # noqa: BLE001
+                pass
 
 
 def _why(r: runner.RunResult) -> str:
@@ -264,6 +282,15 @@ def ensure_download_mode(job: Job) -> str:
     return dev
 
 
+def _usb_path_of(device: str) -> str:
+    """the USB port ("1-1.2") of the unit in ROM download mode at /dev/sgN ("" unknown)"""
+    try:
+        from ..flash import uboot
+        return next((d.usb_path for d in uboot.scan() if d.sg == device), "")
+    except Exception:  # noqa: BLE001 – only a hint
+        return ""
+
+
 def softkey_target_ok(card: str, own_port: str) -> bool:
     """may M-Flasher's soft key go to the unit it sees on USB MIDI (its ALSA card name)? Only when that is the FM-1
     the app itself recognised (`own_port`, its MIDI port name, starts with the card name) and the name is an FM-1
@@ -313,7 +340,14 @@ def identify(job: Job, *, need_profile: bool = False) -> mp.Info:
                    f"bootloader {info.bootloader}")
     store = job.profiles
     hits = store.by_unit_id(uid) if (store is not None and uid) else []
-    prof = job.profile if job.sent_by_app else None     # (a unit found in download mode: only its id names it)
+    by_port = bool(job.usb_path) and _usb_path_of(job.device) == job.usb_path
+    if job.profile is not None and not job.sent_by_app and not by_port:
+        job.ev("profile", "the unit was in download mode already, not at the active profile's port: only its unit "
+                          "id names a profile")
+    # the profile of the click counts when the app sent its unit into download mode in this job, or when the unit
+    # in download mode sits at the very USB port where the app just saw that profile running (the guided path);
+    # otherwise only the unit id M-Flasher reads names a profile
+    prof = job.profile if (job.sent_by_app or by_port) else None
     if prof is not None:
         known = {f for f in profile_unit_ids(prof) if len(f) == 16}
         if uid and known and not (unit_id_forms(uid) & known):
@@ -324,7 +358,7 @@ def identify(job: Job, *, need_profile: bool = False) -> mp.Info:
             raise Refused(_("This FM-1 is “{other}” (by its unit ID {uid}), not “{name}”. Choose the right device "
                             "at the top. Nothing was written.").format(other=other[0].name, uid=mask(uid),
                                                                         name=prof.name), "other-profile")
-        trusted = job.sent_by_app
+        trusted = job.sent_by_app or by_port
     else:
         if len(hits) > 1:
             raise Refused(_("Two of your device profiles have this unit ID ({uid}): merge them on the page "
@@ -333,9 +367,10 @@ def identify(job: Job, *, need_profile: bool = False) -> mp.Info:
         trusted = prof is not None              # (named by its unit id: the strongest evidence there is)
     if prof is None and need_profile:
         raise Refused(_("The app does not know which of your FM-1 this is (unit ID {uid} is in none of your device "
-                        "profiles). A flash backup is written back only onto a unit the app knows: connect it once "
-                        "while it runs, or make a flash backup with it first. Nothing was written.").format(
-                            uid=mask(uid)), "unknown-unit")
+                        "profiles). A flash backup is written back only onto a unit the app knows. To teach it: "
+                        "connect the FM-1 while it runs, choose it at the top, click “Back up the whole flash” – and "
+                        "if the app asks you to put it into download mode by hand, do it at the same USB port. "
+                        "Nothing was written.").format(uid=mask(uid)), "unknown-unit")
     rec = getattr(prof, "flash_id", "") if prof is not None else ""
     if prof is not None and rec and hardware.was_read(prof):
         try:
@@ -408,11 +443,67 @@ def _one_read(job: Job, staging: Path, n: int) -> tuple[bytes, mp.Info]:
     return img, info
 
 
+REMOTE_FS = {"nfs", "nfs4", "cifs", "smb3", "smbfs", "sshfs", "fuse.sshfs", "fuse.rclone", "9p", "afs", "ceph",
+             "glusterfs", "fuse.gvfsd-fuse", "davfs", "fuse.davfs2"}
+
+
+def _fs_type(path: Path) -> str:
+    """the file system type of the mount `path` lives on (/proc/self/mounts); "" unknown"""
+    try:
+        best, kind = "", ""
+        real = str(Path(path).resolve())
+        for line in Path("/proc/self/mounts").read_text().splitlines():
+            parts = line.split()
+            if len(parts) >= 3:
+                mnt = parts[1].replace("\\040", " ")
+                if (real == mnt or real.startswith(mnt.rstrip("/") + "/")) and len(mnt) >= len(best):
+                    best, kind = mnt, parts[2]
+        return kind
+    except OSError:
+        return ""
+
+
+def private_dir() -> Path:
+    """where M-Flasher's own files go (its output, its backups, the image copy it writes from): a private 0700
+    folder on a LOCAL file system – $XDG_RUNTIME_DIR (in RAM), else the app's cache in the home folder. Never the
+    user's backup folder, which may be a USB stick or a network share (a write error there would abort M-Flasher)."""
+    import os as _os
+    from .. import config
+    cands = []
+    rt = _os.environ.get("XDG_RUNTIME_DIR", "")
+    if rt and Path(rt).is_dir():
+        cands.append(Path(rt) / "fm1-companion" / "m-flasher")
+    cands.append(Path(config.CACHE_DIR) / "m-flasher-work")
+    for c in cands:
+        try:
+            c.mkdir(parents=True, exist_ok=True)
+            c.chmod(0o700)
+            if _fs_type(c) in REMOTE_FS or not _os.access(c, _os.W_OK):
+                continue
+            return c
+        except OSError:
+            continue
+    raise OSError(0, "no private local folder for M-Flasher's files")
+
+
 def _staging(job: Job, what: str) -> Path:
-    d = job.folder / f".m-flasher-{what}-{time.strftime('%Y%m%d-%H%M%S')}-{time.monotonic_ns() % 100000}"
-    d.mkdir(parents=True, exist_ok=False)
+    base = job.work_dir if job.work_dir is not None else private_dir()
+    base = Path(base)
+    base.mkdir(parents=True, exist_ok=True)
+    d = base / f"{what}-{time.strftime('%Y%m%d-%H%M%S')}-{os.getpid()}-{time.monotonic_ns() % 1000000}"
+    d.mkdir(parents=False, exist_ok=False)
     d.chmod(0o700)
     return d
+
+
+NEED_FREE = 4 * 1024 * 1024                   # the image copy + M-Flasher's own backup (1 MiB each) + its output
+
+
+def _free_enough(d: Path) -> bool:
+    try:
+        return shutil.disk_usage(d).free >= NEED_FREE
+    except OSError:
+        return False
 
 
 def double_read(job: Job, purpose: str) -> Saved:
@@ -719,16 +810,29 @@ def _restore_locked(job: Job, image: Path, side: dict, data: bytes, confirm) -> 
     cur_f, img_f = saved.image[FACTORY[0]:FACTORY[1]], data[FACTORY[0]:FACTORY[1]]
     factory_blank = all(b == 0xFF for b in cur_f)
     if img_f != cur_f and not factory_blank:
-        # (another unit's image under this unit's id – an edited description): its calibration and Bluetooth
-        # address are never written over this unit's. No override.
-        job.ev("refused", "the image's factory sector 0xFF000-0xFFFFF differs from this unit's")
-        raise Refused(_("This flash backup holds other factory data (calibration, Bluetooth address, 0xFF000–0xFFFFF) "
-                        "than the connected FM-1. A backup of this unit always has the same, so it is not this unit's "
-                        "backup, whatever its description says. Nothing was written."), "factory")
+        # the unit's factory data (chip key record, calibration, Bluetooth address) is never written over: not with
+        # another unit's (an edited description), and not with this unit's own older copy either – the app cannot
+        # tell those apart, and repairing factory data is not its job. No override.
+        partial = all(c == i or c == 0xFF for c, i in zip(cur_f, img_f))
+        job.ev("refused", "the image's factory sector 0xFF000-0xFFFFF differs from the unit's"
+                          + (" (the unit's looks partly erased)" if partial else ""))
+        if partial:
+            raise Refused(_("The FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address) looks partly "
+                            "erased – as after an interrupted write – and the rest equals this backup. The app does "
+                            "not repair factory data. Keep the FM-1 as it is (it may still start), keep this backup "
+                            "and the one made just now, and ask for help (the app's issue tracker or M-Flasher's "
+                            "author) before anything else is written. Nothing was written."), "factory-partial")
+        raise Refused(_("The FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address) differs from the "
+                        "one in this backup, although both name the same unit ID. Either the backup's description "
+                        "was changed (another unit's copy), or the unit's factory data has changed since (an "
+                        "interrupted write, a damaged flash). The app never writes over factory data. Keep both "
+                        "copies and ask for help (the app's issue tracker or M-Flasher's author) before anything "
+                        "else is written. Nothing was written."), "factory")
     runs = diff_runs(data, saved.image)
     if not runs:
         job.tell(_("The FM-1's flash already holds exactly this image: nothing to write."))
         job.ev("plan", "nothing to write: identical")
+        _close_record_if(job, hashlib.sha256(data).hexdigest())
         again = restart(job) if job.sent_by_app else False
         return RestoreResult(False, True, again, pre, log_path=None, note="identical")
     plan = RestorePlan(image=image, side=side, unit_name=job.profile.name, unit_id=info.unit_id,
@@ -750,15 +854,26 @@ def _restore_locked(job: Job, image: Path, side: dict, data: bytes, confirm) -> 
               "factory_blank": plan.factory_blank}
     try:
         staging = _staging(job, "write")
+    except OSError as e:
+        raise Refused(_("The app's private working folder cannot be created: {error}. Nothing was written.").format(
+            error=getattr(e, "strerror", None) or e), "folder") from e
+    if not _free_enough(staging):
+        shutil.rmtree(staging, ignore_errors=True)
+        raise Refused(_("Too little free space for M-Flasher's working files ({need} MiB are needed in {where}). Free "
+                        "some space and try again. Nothing was written.").format(need=NEED_FREE // (1024 * 1024),
+                                                                                 where=staging.parent), "space")
+    try:
         copy = _private_copy(staging, data, info.unit_id)
     except OSError as e:
-        raise Refused(_("The backup folder cannot be created: {error}").format(
+        shutil.rmtree(staging, ignore_errors=True)
+        raise Refused(_("The app's private working folder cannot be created: {error}. Nothing was written.").format(
             error=getattr(e, "strerror", None) or e), "folder") from e
     sha = hashlib.sha256(data).hexdigest()
     rec_path = record_file(job.journal.dir if job.journal is not None else None)
     record = {"state": "writing", "started": time.time(), "pid": 0,
               "profile": getattr(job.profile, "id", ""), "device": job.profile.name, "unit": mask(info.unit_id),
               "flash": f"0x{info.flash_id:06X}", "image": str(image), "image_sha256": sha, "pre_backup": str(pre),
+              "pre_sha256": saved.sha256,
               "staging": str(staging), "runs": [[a, b] for a, b in runs]}
     base_gate = restore_gate(expect)
 
@@ -767,7 +882,9 @@ def _restore_locked(job: Job, image: Path, side: dict, data: bytes, confirm) -> 
         if why:
             return why
         try:                                     # the record is on disk BEFORE "yes" (fsync'd)
-            record.update(pid=job.held.pid if job.held else 0, out=str(staging / "m-flasher.out"),
+            from ..flash import journal as fj
+            pid = job.held.pid if job.held else 0
+            record.update(pid=pid, pid_start=fj._started(pid) if pid else "", out=str(staging / "m-flasher.out"),
                           err=str(staging / "m-flasher.err"))
             _save_record(rec_path, record)
             _save_flight(job, staging / "app-log-so-far.txt")
@@ -790,6 +907,7 @@ def _restore_locked(job: Job, image: Path, side: dict, data: bytes, confirm) -> 
         raise
     finally:
         WRITING.clear()
+        OVERDUE.clear()
     if not r.answered_yes:
         shutil.rmtree(staging, ignore_errors=True)
         if rec_path.exists() and _load_record(rec_path).get("staging") == str(staging):
@@ -812,9 +930,9 @@ def _restore_locked(job: Job, image: Path, side: dict, data: bytes, confirm) -> 
             if not same:                          # (the flash changed in between – should never happen): kept
                 try:
                     auto = job.folder / f"m-flasher-auto-{q.name}"
-                    q.replace(auto)
+                    shutil.move(str(q), str(auto))
                     if q.with_suffix(".json").exists():
-                        q.with_suffix(".json").replace(auto.with_suffix(".json"))
+                        shutil.move(str(q.with_suffix(".json")), str(auto.with_suffix(".json")))
                 except OSError:
                     auto = q
 
@@ -941,7 +1059,9 @@ def unfinished_write(root: Path | None = None) -> dict | None:
         return None
     from ..flash import journal as fj
     pid = int(rec.get("pid") or 0)
-    rec["alive"] = bool(pid) and rec.get("state") == "writing" and fj._alive(pid)
+    # (pid + its start time: a pid the system reused for another program does not count)
+    rec["alive"] = bool(pid) and rec.get("state") == "writing" and bool(rec.get("pid_start")) and \
+        fj._alive(pid, str(rec.get("pid_start")))
     try:
         out = Path(rec.get("out") or "").read_text("utf-8", errors="replace") if rec.get("out") else ""
     except OSError:
@@ -949,6 +1069,34 @@ def unfinished_write(root: Path | None = None) -> dict | None:
     rec["done"] = mp.done_verified(out)
     rec["started_writing"] = bool(mp.written_runs(out))
     return rec
+
+
+def _close_record_if(job: Job, sha: str):
+    """an open record whose image (or state before) is exactly what the unit holds now: settled – it ends"""
+    path = record_file(job.journal.dir if job.journal is not None else None)
+    rec = _load_record(path)
+    if rec.get("state") in ("writing", "failed") and sha in (rec.get("image_sha256"), rec.get("pre_sha256")):
+        rec.update(state="verified", ended=time.time(), note="checked later: the unit holds it")
+        try:
+            _save_record(path, rec)
+            job.ev("record", "the open write-back record is settled: the unit holds that image")
+        except OSError:
+            pass
+
+
+def rerun_problem(rec: dict, which: str) -> str:
+    """before "write back again" from a record: the file must still be the one that was being written (its
+    SHA-256 in the record) -> "" or the reason (translated)"""
+    path = Path(str(rec.get("image" if which == "image" else "pre_backup") or ""))
+    want = str(rec.get("image_sha256" if which == "image" else "pre_sha256") or "")
+    try:
+        got = hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return _("The file {name} is no longer there.").format(name=path.name)
+    if not want or got != want:
+        return _("The file {name} is no longer the one that was being written (its SHA-256 differs). Nothing is "
+                 "written from it.").format(name=path.name)
+    return ""
 
 
 def forget_write(root: Path | None = None):

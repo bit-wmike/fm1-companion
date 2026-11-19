@@ -385,6 +385,17 @@ Melodee OCT−+OCT+ is the calibration!).
       Felucca family by its editor protocol, SLOOP 3) at its own port (`softkey_target_ok`: M-Flasher's card name
       is an FM-1 spelling and starts that port's name; never SMK-37, update loaders or MIDI MODE); a refusal after
       the app's own download-mode restarts the unit. Output is decoded as a stream.
+    * *Re-review fixes (N1–N9):* M-Flasher's working files (its output, its own backups, the image copy) live in a
+      private 0700 folder on a local file system (`flashjob.private_dir`: `$XDG_RUNTIME_DIR/fm1-companion/m-flasher`,
+      else `~/.cache/fm1-companion/m-flasher-work`; never the backup folder, never NFS/SMB/sshfs), with 4 MiB free
+      checked before "yes". Children start with SIGTERM's default action; the app ignores SIGTERM only from "yes"
+      until M-Flasher has ended (a Python handler, not SIG_IGN). The record keeps M-Flasher's pid **and** start
+      time; "nothing to write" on a re-run settles it; a re-run from the record needs the recorded SHA-256. Long
+      past the 10-minute soft limit the dialog and the window offer "close the app, let M-Flasher finish" (never a
+      kill). The soft key also needs a USB ID (4c4a:c755/4155 or 1209:0001). A unit put into download mode by hand
+      at the USB port where the app just saw the active profile running is that profile (it may learn its unit id),
+      so FM1 Open and unknown-firmware units can be backed up and written back. Factory-sector refusals say
+      "differs" or "looks partly erased", never "foreign"; the app does not repair factory data.
     * *Logs:* one flight log per job (`mflasher-backup-…` / `mflasher-restore-…` beside the installation logs, not
       counted as installation logs) with every command, every output line (unit ids masked), the gate's decision and
       each check. The one-installation-at-a-time lock is held for the whole job (M-Flasher's PID beside it).

@@ -88,9 +88,6 @@ msgstr "Este FM-1 es «{other}» (por su ID de unidad {uid}), no «{name}». Eli
 msgid "Two of your device profiles have this unit ID ({uid}): merge them on the page “Devices” first. Nothing was written."
 msgstr "Dos de tus perfiles de dispositivo tienen esta ID de unidad ({uid}): primero únelos en la página «Dispositivos». No se escribió nada."
 
-msgid "The app does not know which of your FM-1 this is (unit ID {uid} is in none of your device profiles). A flash backup is written back only onto a unit the app knows: connect it once while it runs, or make a flash backup with it first. Nothing was written."
-msgstr "La app no sabe cuál de tus FM-1 es este (la ID de unidad {uid} no está en ninguno de tus perfiles). Una copia de la flash solo se vuelve a escribir en una unidad que la app conoce: conéctala una vez mientras funciona, o haz primero una copia de la flash con ella. No se escribió nada."
-
 msgid "The flash chip M-Flasher reads ({chip}) is not the one recorded for “{name}” ({rec}). Is this another FM-1? Nothing was written."
 msgstr "El chip de flash que lee M-Flasher ({chip}) no es el guardado para «{name}» ({rec}). ¿Es otro FM-1? No se escribió nada."
 
@@ -301,9 +298,6 @@ msgstr "Copia de la flash guardada: {path}"
 msgid "The app sends the switch to download mode only to an FM-1 it has recognised itself, with the original firmware, a Felucca-family firmware or SLOOP 3, at the port it is connected to."
 msgstr "La app solo envía el cambio al modo de descarga a un FM-1 que ella misma ha reconocido – con el firmware original, un firmware de la familia Felucca o SLOOP 3, en el puerto al que está conectado."
 
-msgid "This flash backup holds other factory data (calibration, Bluetooth address, 0xFF000–0xFFFFF) than the connected FM-1. A backup of this unit always has the same, so it is not this unit's backup, whatever its description says. Nothing was written."
-msgstr "Esta copia de la flash contiene otros datos de fábrica (calibración, dirección Bluetooth, 0xFF000–0xFFFFF) que el FM-1 conectado. Una copia de esta unidad siempre tiene los mismos, así que no es una copia de esta unidad, diga lo que diga su descripción. No se escribió nada."
-
 msgid "M-Flasher is writing now. This cannot be cancelled – do not unplug the FM-1 or switch it off."
 msgstr "M-Flasher está escribiendo ahora. No se puede cancelar – no desconectes ni apagues el FM-1."
 
@@ -366,3 +360,36 @@ msgstr "M-Flasher está escribiendo"
 
 msgid "M-Flasher is writing the FM-1's flash. The app stays open until it has finished – do not unplug the FM-1 or switch it off."
 msgstr "M-Flasher está escribiendo la flash del FM-1. La app sigue abierta hasta que termine – no desconectes ni apagues el FM-1."
+
+msgid "The app does not know which of your FM-1 this is (unit ID {uid} is in none of your device profiles). A flash backup is written back only onto a unit the app knows. To teach it: connect the FM-1 while it runs, choose it at the top, click “Back up the whole flash” – and if the app asks you to put it into download mode by hand, do it at the same USB port. Nothing was written."
+msgstr "La app no sabe cuál de tus FM-1 es este (la ID de unidad {uid} no está en ninguno de tus perfiles). Una copia de la flash solo se vuelve a escribir en una unidad que la app conoce. Para enseñársela: conecta el FM-1 mientras funciona, elígelo arriba, haz clic en «Copiar toda la flash» – y si la app te pide ponerlo a mano en modo de descarga, hazlo en el mismo puerto USB. No se escribió nada."
+
+msgid "The FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address) looks partly erased – as after an interrupted write – and the rest equals this backup. The app does not repair factory data. Keep the FM-1 as it is (it may still start), keep this backup and the one made just now, and ask for help (the app's issue tracker or M-Flasher's author) before anything else is written. Nothing was written."
+msgstr "Los datos de fábrica del FM-1 (0xFF000–0xFFFFF: calibración, dirección Bluetooth) parecen borrados en parte – como tras una escritura interrumpida – y el resto es igual a esta copia. La app no repara datos de fábrica. Deja el FM-1 como está (puede que aún arranque), conserva esta copia y la hecha ahora, y pide ayuda (el gestor de incidencias de la app o el autor de M-Flasher) antes de escribir nada más. No se escribió nada."
+
+msgid "The FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address) differs from the one in this backup, although both name the same unit ID. Either the backup's description was changed (another unit's copy), or the unit's factory data has changed since (an interrupted write, a damaged flash). The app never writes over factory data. Keep both copies and ask for help (the app's issue tracker or M-Flasher's author) before anything else is written. Nothing was written."
+msgstr "Los datos de fábrica del FM-1 (0xFF000–0xFFFFF: calibración, dirección Bluetooth) difieren de los de esta copia, aunque ambos nombran la misma ID de unidad. O se cambió la descripción de la copia (la copia de otra unidad), o los datos de fábrica de la unidad han cambiado desde entonces (una escritura interrumpida, una flash dañada). La app nunca escribe sobre datos de fábrica. Conserva ambas copias y pide ayuda (el gestor de incidencias de la app o el autor de M-Flasher) antes de escribir nada más. No se escribió nada."
+
+msgid "The app's private working folder cannot be created: {error}. Nothing was written."
+msgstr "No se puede crear la carpeta de trabajo privada de la app: {error}. No se escribió nada."
+
+msgid "Too little free space for M-Flasher's working files ({need} MiB are needed in {where}). Free some space and try again. Nothing was written."
+msgstr "Poco espacio libre para los archivos de trabajo de M-Flasher (se necesitan {need} MiB en {where}). Libera algo de espacio y vuelve a intentarlo. No se escribió nada."
+
+msgid "The file {name} is no longer there."
+msgstr "El archivo {name} ya no está."
+
+msgid "The file {name} is no longer the one that was being written (its SHA-256 differs). Nothing is written from it."
+msgstr "El archivo {name} ya no es el que se estaba escribiendo (su SHA-256 difiere). No se escribe nada a partir de él."
+
+msgid "Close the app, let M-Flasher finish"
+msgstr "Cerrar la app y dejar que M-Flasher termine"
+
+msgid "M-Flasher has been writing for much longer than it ever should. The app can close now: M-Flasher keeps running in the background and is not stopped. Keep the FM-1 connected and switched on. At the next start the app shows what happened."
+msgstr "M-Flasher lleva escribiendo mucho más de lo que debería. La app puede cerrarse ahora: M-Flasher sigue en segundo plano y no se detiene. Deja el FM-1 conectado y encendido. En el siguiente inicio la app muestra qué pasó."
+
+msgid "Close the app?"
+msgstr "¿Cerrar la app?"
+
+msgid "Close the app"
+msgstr "Cerrar la app"

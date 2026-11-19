@@ -39,8 +39,18 @@ def _libc():
     return _LIBC or None
 
 
+def _default_sigterm():
+    """the child starts with SIGTERM's default action: the app may ignore it for a while (a write in progress), and
+    an ignored signal would be inherited across exec"""
+    try:
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    except (ValueError, OSError):
+        pass
+
+
 def _preexec(parent: int):
     def fn():
+        _default_sigterm()
         libc = _libc()
         if libc is not None:
             try:
@@ -57,8 +67,8 @@ def popen(argv: list[str], survive: bool = False, **kw) -> subprocess.Popen:
     survive: no death signal, not stopped at the app's exit (a writing run, see above)"""
     _libc()                                  # (load libc before fork, not in the child)
     kw.setdefault("start_new_session", True)
-    if os.name == "posix" and not survive:
-        kw["preexec_fn"] = _preexec(os.getpid())
+    if os.name == "posix":
+        kw["preexec_fn"] = _preexec(os.getpid()) if not survive else _default_sigterm
     p = subprocess.Popen(argv, **kw)
     if not survive:
         with _LIVE_LOCK:

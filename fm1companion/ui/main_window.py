@@ -1190,7 +1190,12 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, e):
         from ..tools import flashjob
-        if flashjob.WRITING.is_set():          # M-Flasher writes: the app stays until it has ended
+        if flashjob.WRITING.is_set() and flashjob.OVERDUE.is_set():
+            from .flash_tools import leave_while_writing   # (far past its worst case: an honest way out, no kill)
+            if not leave_while_writing(self):
+                e.ignore()
+                return
+        elif flashjob.WRITING.is_set():          # M-Flasher writes: the app stays until it has ended
             QMessageBox.warning(self, _("M-Flasher is writing"),
                                 _("M-Flasher is writing the FM-1's flash. The app stays open until it has finished "
                                   "– do not unplug the FM-1 or switch it off."))
