@@ -770,10 +770,6 @@ msgstr "User-Presets des FM-1 sichern, vergleichen, zurückspielen und anhören"
 msgid "Project View"
 msgstr "Projekt-Ansicht"
 
-#: fm1companion/ui/pages/project_view.py:665
-msgid "view Melodee projects and export them as MIDI"
-msgstr "Melodee-Projekte ansehen und als MIDI exportieren"
-
 #: fm1companion/ui/pages/recovery.py:698
 msgid "Recovery"
 msgstr "Rettung"

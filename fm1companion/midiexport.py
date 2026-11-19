@@ -52,9 +52,9 @@ class Options:
 def step_times(p: F.Pattern, global_swing: int = 0) -> list[tuple[float, float]]:
     """(start, length) of every step 0..LEN-1 in quarters, swung."""
     base = p.step_quarters
-    sw = max(0, min(100, p.swing + global_swing)) * base / 250
+    sw = 0.0 if p.exact else max(0, min(100, p.swing + global_swing)) * base / 250
     out, t = [], 0.0
-    for i in range(max(1, min(64, p.length))):
+    for i in range(max(1, min(max(64, len(p.steps)), p.length))):
         ln = base - sw if i & 1 else base + sw
         out.append((t, ln))
         t += ln
@@ -102,8 +102,9 @@ def pattern_events(p: F.Pattern, track: int, channel: int, start: float = 0.0, g
     for nt in p.recorded:
         if nt.step < n:
             t0, ln = times[nt.step]
+            ch = channel if not nt.drum or o.drum_channel is None else o.drum_channel
             out.append(NoteEvent(track, t0 + nt.onset * ln, max(0.01, nt.duration * p.step_quarters), nt.note,
-                                 nt.vel, channel, p.index, nt.step))
+                                 nt.vel, ch, p.index, nt.step, nt.drum))
     res = []
     for e in out:
         t = e.start - phase
@@ -132,6 +133,8 @@ def _looped(p, track, ch, start, end, gsw, o, phase=0.0):
 
 
 def section_quarters(prj: F.Project, row: F.SongRow) -> float:
+    if row.quarters is not None:
+        return row.quarters
     b0 = row.banks[0] if row.banks else F.CHAIN_REST
     t0 = prj.tracks[0]
     if b0 >= F.NPAT or b0 >= len(t0.patterns):

@@ -1017,10 +1017,6 @@ msgstr "Suchen (Name, Notiz, Firmware) …"
 msgid "Name"
 msgstr "Name"
 
-#: fm1companion/ui/projects_page.py:89
-msgid "No projects in the library yet – how it works: choose a used slot on the left and “Fetch to the computer”, or “Fetch all”. Project files (.fm1proj) can also be added with “Add file”."
-msgstr "Noch keine Projekte in der Bibliothek – so geht's: links einen belegten Platz wählen und „Auf den Rechner holen“, oder „Alle holen“. Projektdateien (.fm1proj) lassen sich auch mit „Datei hinzufügen“ aufnehmen."
-
 #: fm1companion/ui/projects_page.py:98
 msgid "Open the chosen project in “View & Export” – tracks, patterns, song; play on the FM-1 or on the computer; MIDI export"
 msgstr "Das gewählte Projekt in „Ansicht & Export“ öffnen – Spuren, Patterns, Song; abspielen auf dem FM-1 oder im Rechner; MIDI-Export"
@@ -1432,10 +1428,6 @@ msgstr "{name} nicht gelöscht"
 #: fm1companion/ui/projects_page.py:511
 msgid "Project or backup files"
 msgstr "Projekt- oder Backup-Dateien"
-
-#: fm1companion/ui/projects_page.py:512
-msgid "Projects and backups (*.fm1proj *.json)"
-msgstr "Projekte und Backups (*.fm1proj *.json)"
 
 #: fm1companion/ui/projects_page.py:526
 #, python-brace-format
@@ -2107,10 +2099,6 @@ msgstr "halten"
 msgid "Project View"
 msgstr "Projekt-Ansicht"
 
-#: fm1companion/ui/pages/project_view.py:45
-msgid "View and listen to Melodee projects (on the FM-1 with its own sounds or on the computer) and export them as a MIDI file for Audacity, LMMS, Ardour or MuseScore."
-msgstr "Melodee-Projekte ansehen, anhören (auf dem FM-1 mit seinen eigenen Klängen oder im Rechner) und als MIDI-Datei für Audacity, LMMS, Ardour oder MuseScore exportieren."
-
 #: fm1companion/ui/pages/project_view.py:50
 msgid "1 · Open project"
 msgstr "1 · Projekt öffnen"
@@ -2127,10 +2115,6 @@ msgstr "Ein Backup aus ~/FM-1/Backups öffnen (alle Projekte darin) – Strg+O"
 #: fm1companion/ui/pages/project_view.py:54
 msgid "Open project file …"
 msgstr "Projektdatei öffnen …"
-
-#: fm1companion/ui/pages/project_view.py:55
-msgid "Open a .fm1proj file from the project library"
-msgstr "Eine .fm1proj-Datei aus der Projekt-Bibliothek öffnen"
 
 #: fm1companion/ui/pages/project_view.py:56
 msgid "or live from the FM-1:"
@@ -2635,10 +2619,6 @@ msgstr "Bild speichern"
 #, python-brace-format
 msgid "“{name}” could not be written – folder write-protected?"
 msgstr "„{name}“ ließ sich nicht schreiben – Ordner schreibgeschützt?"
-
-#: fm1companion/ui/pages/project_view.py:682
-msgid "view Melodee projects and export them as MIDI"
-msgstr "Melodee-Projekte ansehen und als MIDI exportieren"
 
 #: fm1companion/ui/workshop_page.py:33
 msgid "From MIDI file: MIDI → pattern"
@@ -4798,3 +4778,39 @@ msgstr "Diese Firmware unterstützt die Wahl eines Patterns aus der App nicht (n
 
 msgid "This firmware does not support the song chain from the app (only Melodee does)."
 msgstr "Diese Firmware unterstützt die Song-Kette aus der App nicht (nur Melodee kann es)."
+
+msgid "View and listen to Melodee and SLOOP 3 projects (on the FM-1 with its own sounds or on the computer) and export them as a MIDI file for Audacity, LMMS, Ardour or MuseScore."
+msgstr "Melodee- und SLOOP-3-Projekte ansehen und anhören (am FM-1 mit seinen eigenen Sounds oder am Rechner) und als MIDI-Datei für Audacity, LMMS, Ardour oder MuseScore exportieren."
+
+msgid "Open a project file: .fm1proj from the project library, or a SLOOP 3 project (.s3p) or editor backup (.s3b)"
+msgstr "Eine Projektdatei öffnen: .fm1proj aus der Projektbibliothek oder ein SLOOP-3-Projekt (.s3p) bzw. Editor-Backup (.s3b)"
+
+msgid "FM-1 projects (*.fm1proj *.s3p *.s3b)"
+msgstr "FM-1-Projekte (*.fm1proj *.s3p *.s3b)"
+
+msgid "view Melodee and SLOOP 3 projects and export them as MIDI"
+msgstr "Melodee- und SLOOP-3-Projekte ansehen und als MIDI exportieren"
+
+msgid "Tempo"
+msgstr "Tempo"
+
+msgid "No projects in the library yet – how it works: choose a used slot on the left and “Fetch to the computer”, or “Fetch all”. Project files (.fm1proj, SLOOP 3: .s3p) can also be added with “Add file”."
+msgstr "Noch keine Projekte in der Bibliothek – so geht's: links einen belegten Platz wählen und „Auf den Rechner holen“ oder „Alle holen“. Projektdateien (.fm1proj, SLOOP 3: .s3p) lassen sich auch mit „Datei hinzufügen“ aufnehmen."
+
+msgid "Add project files (.fm1proj; SLOOP 3: .s3p from its web editor, or the project in an .s3b or SLOOP 3 backup) to the library"
+msgstr "Projektdateien in die Bibliothek aufnehmen (.fm1proj; SLOOP 3: .s3p aus seinem Web-Editor oder das Projekt in einem .s3b- bzw. SLOOP-3-Backup)"
+
+msgid "Save as file …"
+msgstr "Als Datei speichern …"
+
+msgid "Save a copy of the chosen project somewhere else – a SLOOP 3 project as the .s3p file its web editor opens"
+msgstr "Eine Kopie des gewählten Projekts woanders speichern – ein SLOOP-3-Projekt als .s3p-Datei, die sein Web-Editor öffnet"
+
+msgid "Projects and backups (*.fm1proj *.s3p *.s3b *.json)"
+msgstr "Projekte und Backups (*.fm1proj *.s3p *.s3b *.json)"
+
+#, python-brace-format
+msgid "{n} bar"
+msgid_plural "{n} bars"
+msgstr[0] "{n} Takt"
+msgstr[1] "{n} Takte"

@@ -252,3 +252,101 @@ def erase_slot(link, slot: int):
 
 def projects_from_backup(arch: backup.Archive) -> list[tuple[int, bytes]]:
     return [(backup.project_slot(o["id"]), o["bytes"]) for o in arch.project_objects()]
+
+
+# ------------------------------------------------------------------------------------------- SLOOP 3 (.s3p) ---
+# SLOOP 3 keeps one project on the FM-1. The library keeps its projects as the web editor does: plain .s3p files (the
+# project's own bytes, app/project.c), so a file goes into the editor's Projects tab and back unchanged. The name is the
+# file's name, the date its time; nothing else is stored beside it.
+S3P_SUFFIX = ".s3p"
+
+
+@dataclass
+class S3pFile:
+    path: Path
+    size: int
+    mtime: float
+    bpm: float | int | None = None
+    bars: float | None = None         # the song's length (or the longest current pattern's) in 4/4 bars
+    version: int | None = None
+    problem: str = ""                 # why it cannot be read ("" = fine)
+
+    @property
+    def name(self) -> str:
+        return self.path.stem
+
+
+def s3p_info(path: Path) -> S3pFile:
+    from . import sloop3proj as S3P
+    path = Path(path)
+    st = path.stat()
+    f = S3pFile(path, st.st_size, st.st_mtime)
+    try:
+        data = path.read_bytes()
+        f.version = S3P.version_of(data)
+        raw = S3P.parse(data)
+    except OSError as e:
+        f.problem = str(e)
+        return f
+    except S3P.S3FormatError as e:
+        f.problem = str(e)
+        return f
+    f.bpm = S3P.summary(raw)["bpm"]
+    f.bars = S3P.length_bars(raw)
+    return f
+
+
+def s3p_library(folder: Path) -> list[S3pFile]:
+    out = []
+    try:
+        paths = sorted(Path(folder).rglob(f"*{S3P_SUFFIX}"))
+    except OSError:
+        return out
+    for p in paths:
+        try:
+            out.append(s3p_info(p))
+        except OSError:
+            continue
+    return out
+
+
+def save_s3p(folder: Path, name: str, data: bytes) -> Path:
+    """a SLOOP 3 project into the library as <name>.s3p (never over another file). The bytes must be a project of a
+    format the app reads (sloop3proj.S3FormatError otherwise): what lands in the library opens in the project view."""
+    from . import sloop3proj as S3P
+    S3P.parse(data)
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{_safe(name)}{S3P_SUFFIX}"
+    n = 2
+    while path.exists():
+        path = folder / f"{_safe(name)} ({n}){S3P_SUFFIX}"
+        n += 1
+    _write_bytes(path, bytes(data))
+    return path
+
+
+def _write_bytes(path: Path, data: bytes):
+    """whole or not at all (a hidden temporary file beside it, then renamed)"""
+    import os
+    import tempfile
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.chmod(tmp, 0o644)
+        Path(tmp).replace(path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def fetch_sloop3(link, kind: int, progress: Callable[[int], None] | None = None) -> bytes:
+    """the project from an FM-1 with SLOOP 3, read only: kind sloop3.KIND_PROJECT (saved) or KIND_NOW (as it plays,
+    unsaved changes too). The same READ the backup uses; Sloop3Error with code 3 if no project is saved."""
+    from . import sloop3 as S3
+    with S3.Client(link) as c:
+        c.info()
+        return c.read_file(kind, 0, progress)
