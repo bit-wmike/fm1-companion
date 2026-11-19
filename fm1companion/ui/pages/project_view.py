@@ -379,14 +379,10 @@ class ProjectView(QWidget):
                 show_error(self, _("SLOOP only has 4 slots"), _("SLOOP saves projects as sections A–D (slots 1–4). "
                                                                 "Please choose 0 (running project) or 1–4."))
                 return
-            show_error(self, _("SLOOP projects"), _("The project view only knows the Melodee format. SLOOP projects are "
-                                                    "built differently – to view them use the SLOOP web editor (page "
-                                                    "“Editor”). Backing up works as usual via backups."))
-            return
-        if key and key not in ("melodee", "skiff", "felucca"):
+        if key and key not in ("melodee", "skiff", "felucca", "sloop"):
             from ..device import firmware_name
             show_error(self, _("Other firmware"), _("{firmware} has no projects the app can read. The project view shows "
-                                                    "Melodee projects.").format(
+                                                    "projects of Melodee, SLOOP 2.6 and later, and SLOOP 3.").format(
                 firmware=firmware_name(key) or _("This firmware")))
             return
 

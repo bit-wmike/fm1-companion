@@ -245,10 +245,10 @@ class ProjectsPage(QWidget):
                                     "work anyway (page “Backups”)."))
         elif sloop:
             self.dev_info.setText(ngettext(
-                "{used} of {n} section used, running project {size}. SLOOP projects can be fetched, collected and "
-                "played back – viewing only works in the SLOOP web editor.",
-                "{used} of {n} sections used, running project {size}. SLOOP projects can be fetched, collected and "
-                "played back – viewing only works in the SLOOP web editor.", len(self.slots)).format(
+                "{used} of {n} section used, running project {size}. SLOOP projects can be fetched, collected, viewed "
+                "(SLOOP 2.6 and later) and played back.",
+                "{used} of {n} sections used, running project {size}. SLOOP projects can be fetched, collected, viewed "
+                "(SLOOP 2.6 and later) and played back.", len(self.slots)).format(
                 used=used, n=len(self.slots), size=fmt_size(live)))
         else:
             self.dev_info.setText(ngettext(
@@ -259,9 +259,11 @@ class ProjectsPage(QWidget):
         if self.slots:
             self.dev_info.setText(self.dev_info.text() + " " + _("Read from “{device}” at {time}.").format(
                 device=device_name(self.ctx) or 'FM-1', time=time.strftime('%H:%M')))
-        self.b_view_slot.setEnabled(not sloop)
-        self.b_view_slot.setToolTip(_("SLOOP projects are shown by the SLOOP web editor (page “Editor”).") if sloop else
-                                    _("Read the chosen slot from the FM-1 (read only) and open it in “View & Export”"))
+        key = (getattr(self.ctx, "firmware_key", "") or "").lower()
+        viewable = not sloop or key == "sloop"            # (SLOOP's forks keep projects of their own kind)
+        self.b_view_slot.setEnabled(viewable)
+        self.b_view_slot.setToolTip(_("Read the chosen slot from the FM-1 (read only) and open it in “View & Export”")
+                                    if viewable else _("The project view does not read this firmware's projects."))
 
     def _view_slot(self):
         """Read a slot and show it in the view (there: play on the FM-1, MIDI export)."""

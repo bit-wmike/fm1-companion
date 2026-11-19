@@ -52,7 +52,7 @@ class Options:
 def step_times(p: F.Pattern, global_swing: int = 0) -> list[tuple[float, float]]:
     """(start, length) of every step 0..LEN-1 in quarters, swung."""
     base = p.step_quarters
-    sw = 0.0 if p.exact else max(0, min(100, p.swing + global_swing)) * base / 250
+    sw = 0.0 if p.exact or not p.swing_den else max(0, min(100, p.swing + global_swing)) * base / p.swing_den
     out, t = [], 0.0
     for i in range(max(1, min(max(64, len(p.steps)), p.length))):
         ln = base - sw if i & 1 else base + sw

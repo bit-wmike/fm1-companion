@@ -196,6 +196,7 @@ class Pattern:
     quarters: float | None = None
     div_label: str = ""
     exact: bool = False
+    swing_den: int = 250   # an odd step starts swing × step / swing_den late (Melodee 250, SLOOP 2 200; 0 = never swung)
 
     @property
     def used(self) -> bool:
@@ -777,13 +778,15 @@ def decode(data: bytes, firmware: str = "") -> Project:
             _decode_legacy(prj, data, LEGACY_MAGICS[magic])
         else:
             head = data[:4]
-            if head[1:4] == b"NUF" and 0x30 <= head[0] <= 0x39:        # "6NUF" = FUN6, SLOOP (project.c)
+            if head[1:4] == b"NUF" and 0x31 <= head[0] <= 0x36:        # "6NUF" = FUN6, SLOOP 2 (project.c)
+                from . import sloop2proj
+                return sloop2proj.decode(data)
+            if head[1:4] == b"NUF" and 0x30 <= head[0] <= 0x39:        # (another SLOOP-like format: a fork's)
                 # Translators: must start with "SLOOP" (the project view checks it)
                 prj.format = _("SLOOP project (FUN{n})").format(n=head[0] - 0x30)
-                raise FormatError(_("This is a SLOOP project. The project view only knows the Melodee format – "
-                                    "SLOOP projects are built differently (sections, own sequencer). To view and "
-                                    "edit it, use the SLOOP web editor (page “Editor”); backing up and restoring "
-                                    "works as usual via backups."))
+                raise FormatError(_("This project format is not one the project view reads (it reads Melodee's, "
+                                    "SLOOP 2.6+'s and SLOOP 3's). Backing up and restoring works as usual via "
+                                    "backups."))
             fw = firmware.lower()
             other = _("other firmware") if fw and "melodee" not in fw else _("unknown format")
             prj.format = other

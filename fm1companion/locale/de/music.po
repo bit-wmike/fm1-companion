@@ -1104,13 +1104,6 @@ msgstr "{name} (Platz {n})"
 msgid "This firmware reports no project slots that can be read one by one. Backups work anyway (page “Backups”)."
 msgstr "Diese Firmware meldet keine einzeln lesbaren Projektplätze. Backups gehen trotzdem (Seite „Backups“)."
 
-#: fm1companion/ui/projects_page.py:206
-#, python-brace-format
-msgid "{used} of {n} section used, running project {size}. SLOOP projects can be fetched, collected and played back – viewing only works in the SLOOP web editor."
-msgid_plural "{used} of {n} sections used, running project {size}. SLOOP projects can be fetched, collected and played back – viewing only works in the SLOOP web editor."
-msgstr[0] "{used} von {n} Section belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln und zurückspielen – ansehen geht nur im SLOOP-Web-Editor."
-msgstr[1] "{used} von {n} Sections belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln und zurückspielen – ansehen geht nur im SLOOP-Web-Editor."
-
 #: fm1companion/ui/projects_page.py:213
 #, python-brace-format
 msgid "{used} of {n} slot used, running music {size}. You give names in the library (the protocol provides none)."
@@ -1122,10 +1115,6 @@ msgstr[1] "{used} von {n} Plätzen belegt, laufende Musik {size}. Namen vergibst
 #, python-brace-format
 msgid "Read from “{device}” at {time}."
 msgstr "Gelesen von „{device}“ um {time}."
-
-#: fm1companion/ui/projects_page.py:222
-msgid "SLOOP projects are shown by the SLOOP web editor (page “Editor”)."
-msgstr "SLOOP-Projekte zeigt der SLOOP-Web-Editor (Seite „Editor“)."
 
 #: fm1companion/ui/projects_page.py:223
 msgid "Read the chosen slot from the FM-1 (read only) and open it in “View & Export”"
@@ -2399,19 +2388,6 @@ msgstr "SLOOP hat nur 4 Plätze"
 #: fm1companion/ui/pages/project_view.py:364
 msgid "SLOOP saves projects as sections A–D (slots 1–4). Please choose 0 (running project) or 1–4."
 msgstr "SLOOP speichert Projekte als Sections A–D (Plätze 1–4). Bitte 0 (laufendes Projekt) oder 1–4 wählen."
-
-#: fm1companion/ui/pages/project_view.py:367
-msgid "SLOOP projects"
-msgstr "SLOOP-Projekte"
-
-#: fm1companion/ui/pages/project_view.py:367
-msgid "The project view only knows the Melodee format. SLOOP projects are built differently – to view them use the SLOOP web editor (page “Editor”). Backing up works as usual via backups."
-msgstr "Die Projekt-Ansicht kennt nur das Melodee-Format. SLOOP-Projekte sind anders aufgebaut – zum Ansehen nimm den SLOOP-Web-Editor (Seite „Editor“). Sichern geht wie gewohnt über Backups."
-
-#: fm1companion/ui/pages/project_view.py:373
-#, python-brace-format
-msgid "{firmware} has no projects the app can read. The project view shows Melodee projects."
-msgstr "{firmware} hat keine Projekte, die die App lesen kann. Die Projekt-Ansicht zeigt Melodee-Projekte."
 
 #: fm1companion/ui/pages/project_view.py:375
 msgid "This firmware"
@@ -3914,10 +3890,6 @@ msgstr "Bank-Container mit falscher Größe"
 msgid "SLOOP project (FUN{n})"
 msgstr "SLOOP-Projekt (FUN{n})"
 
-#: fm1companion/projectfmt.py:766
-msgid "This is a SLOOP project. The project view only knows the Melodee format – SLOOP projects are built differently (sections, own sequencer). To view and edit it, use the SLOOP web editor (page “Editor”); backing up and restoring works as usual via backups."
-msgstr "Das ist ein SLOOP-Projekt. Die Projekt-Ansicht kennt nur das Melodee-Format – SLOOP-Projekte sind anders aufgebaut (Sections, eigener Sequencer). Zum Ansehen und Bearbeiten nimm den SLOOP-Web-Editor (Seite „Editor“); sichern und zurückspielen geht wie gewohnt über Backups."
-
 #: fm1companion/projectfmt.py:771
 msgid "other firmware"
 msgstr "andere Firmware"
@@ -4814,3 +4786,32 @@ msgid "{n} bar"
 msgid_plural "{n} bars"
 msgstr[0] "{n} Takt"
 msgstr[1] "{n} Takte"
+
+msgid "This project format is not one the project view reads (it reads Melodee's, SLOOP 2.6+'s and SLOOP 3's). Backing up and restoring works as usual via backups."
+msgstr "Dieses Projektformat liest die Projektansicht nicht (sie liest das von Melodee, SLOOP 2.6+ und SLOOP 3). Sichern und Zurückspielen geht wie gewohnt über Backups."
+
+#, python-brace-format
+msgid "SLOOP project in the older format {format}: SLOOP converts it when it loads it; the project view reads the format of SLOOP 2.6 and later (FUN6). Load it on the FM-1 and save it again, then read it again."
+msgstr "SLOOP-Projekt im älteren Format {format}: SLOOP wandelt es beim Laden um; die Projektansicht liest das Format von SLOOP 2.6 und neuer (FUN6). Lade es am FM-1, speichere es wieder und lies es dann noch einmal."
+
+msgid "not a SLOOP project"
+msgstr "kein SLOOP-Projekt"
+
+msgid "the checksum does not match – the project is damaged (SLOOP would not load it either)"
+msgstr "die Prüfsumme stimmt nicht – das Projekt ist beschädigt (SLOOP würde es auch nicht laden)"
+
+msgid "a step that cannot be (damaged project)"
+msgstr "ein Schritt, den es so nicht geben kann (beschädigtes Projekt)"
+
+#, python-brace-format
+msgid "{firmware} has no projects the app can read. The project view shows projects of Melodee, SLOOP 2.6 and later, and SLOOP 3."
+msgstr "{firmware} hat keine Projekte, die die App lesen kann. Die Projektansicht zeigt Projekte von Melodee, SLOOP 2.6 und neuer sowie SLOOP 3."
+
+#, python-brace-format
+msgid "{used} of {n} section used, running project {size}. SLOOP projects can be fetched, collected, viewed (SLOOP 2.6 and later) and played back."
+msgid_plural "{used} of {n} sections used, running project {size}. SLOOP projects can be fetched, collected, viewed (SLOOP 2.6 and later) and played back."
+msgstr[0] "{used} von {n} Section belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln, ansehen (SLOOP 2.6 und neuer) und zurückspielen."
+msgstr[1] "{used} von {n} Sections belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln, ansehen (SLOOP 2.6 und neuer) und zurückspielen."
+
+msgid "The project view does not read this firmware's projects."
+msgstr "Die Projektansicht liest die Projekte dieser Firmware nicht."
