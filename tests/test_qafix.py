@@ -91,10 +91,10 @@ def test_firmware_is_shown_under_its_own_name():
         info = type("I", (), {"version": "FELUCCA v2.7"})()
 
         def title(self):
-            return "FM-1 Schwarz/Grün – FELUCCA v2.7"
-    assert device_title(Ctx()) == "FM-1 Schwarz/Grün – Skiff 2.7"
+            return "FM-1 Earlier – FELUCCA v2.7"
+    assert device_title(Ctx()) == "FM-1 Earlier – Skiff 2.7"
     Ctx.firmware_key = ""
-    assert device_title(Ctx()) == "FM-1 Schwarz/Grün – FELUCCA v2.7"
+    assert device_title(Ctx()) == "FM-1 Earlier – FELUCCA v2.7"
     src = (ROOT / "fm1companion/ui/overview.py").read_text("utf-8") + (ROOT / "fm1companion/ui/main_window.py").read_text("utf-8")
     assert "fw_label(c.info.version)" not in src, "overview/main window: the recognised firmware belongs to the label"
 

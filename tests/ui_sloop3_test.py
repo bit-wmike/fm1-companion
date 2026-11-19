@@ -454,7 +454,7 @@ def main():
     w.resize(1280, 720)
     wait(400)
     c.ports = [mport]                              # (the port list as a scan would give it: only this FM-1)
-    c.profile.name = "FM-1 Schwarz/Grün"           # (the owner's name for it: the longer case)
+    c.profile.name = "FM-1 Earlier"           # (the owner's name for it: the longer case)
     w._dev_changed()
     wait(300)
     cb = w.dev_combo

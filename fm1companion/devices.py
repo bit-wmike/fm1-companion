@@ -297,7 +297,7 @@ BOGUS_SERIAL = re.compile(r"^(.)\1*$|^0?123456789(0|abcdef)?$|^0+1?$", re.I)
 CONSTANT_SERIAL_RE = re.compile(r"^(0000FM1DISK1$|TransitFM1\b)", re.I)
 # Which firmwares report a serial number of the unit's own:
 #   original firmware (USB 4c4a:c755 / 4c4a:4155): yes, per unit – measured on two FM-1 on 2026-11-18
-#       (4150354433333610 and 550B515AA1CA0037); its source is not public
+#       (two different numbers); its source is not public
 #   M-VAVE's update loader (4d4a:4155): not known – a number seen there may confirm a profile that already has it,
 #       but is never learned into a profile
 #   Felucca family (1209:0001 and its loader 1209:0002: Felucca, Melodee, Skiff, SLOOP, KARMA, JIANT, ORBIT, X0X,
