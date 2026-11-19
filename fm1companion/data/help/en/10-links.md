@@ -18,7 +18,7 @@
 Collected at <https://thefirmwarehub.com/tools/>. **Not checked by us** – use at your own risk,
 always make a backup first.
 
-* **M-Flasher** – reads and writes the FM-1's flash in ROM download mode; bundled with the app (so far it only runs its read-only commands).
+* **M-Flasher** – reads and writes the FM-1's flash in ROM download mode; bundled with the app (the app backs up the whole flash with it and writes such a backup back onto the same unit; see Help › Update mode & recovery).
 * **MvaveFM1Unbricker** – brings an FM-1 back from the ROM boot mode “WL82 UBOOT1.00”. An unmodified
   copy is built into the app and runs via [Recovery › Stage 2](app://page/recovery) – with the
   safety rules of the original (double backup, never write below 0x4000). We have not yet tried this path on a real,

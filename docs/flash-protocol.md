@@ -296,10 +296,11 @@ Melodee OCT−+OCT+ is the calibration!).
     while that M-Flasher still runs, and a process that does not stop even after SIGKILL keeps the lock until it
     ends ("unplug the FM-1"). Commands that talk to a unit take the one-installation-at-a-time lock
     (`flash/journal.py`); every line goes into a flight log `tool-<time>.txt` with unit ids masked (last four hex
-    digits; also with 0x, as spaced or colon-separated bytes and inside file names). **In this version only
-    `find`, `info --device /dev/sgN`, `--version` and `--help` can run**; everything that writes or switches
-    modes (backup, restore, firmware, bootloader, download-mode, restart, run-ram, `--yes`) is refused before
-    the process starts. The parser (`tools/mflasher_parse.py`) reads `find` and the `info` block (model,
+    digits; also with 0x, as spaced or colon-separated bytes and inside file names). **Exactly these forms can run**
+    (`runner._check_args`): `find`, `download-mode`, `--version`, `--help`, `info --device /dev/sgN`,
+    `restart --device /dev/sgN`, `backup --device /dev/sgN --backup-dir DIR` and – only with a gate, see below –
+    `restore FILE.bin --device /dev/sgN --backup-dir DIR`; `--yes`, `--restart`, `--keep-bootloader`, `--board`,
+    `firmware`, `bootloader` and `run-ram` are refused before the process starts. The parser (`tools/mflasher_parse.py`) reads `find` and the `info` block (model,
     bootloader, firmware *guess*, app, chip key, flash ID, unit id, loader, evidence); M-Flasher has no
     machine-readable output and only exit codes 0/1, so the app judges by the text. Recovery › Tools shows the
     tools and runs `find` ("Which FM-1 does M-Flasher see?").
@@ -325,11 +326,56 @@ Melodee OCT−+OCT+ is the calibration!).
     Bitstream Vera licence, Noto Emoji under the OFL 1.1, the emoji icon font by John Slegers under MIT) and
     M-Flasher's own OFL fonts. Shipped next to the binary in the .deb/.run and shown by "Show licence"; the release
     workflow regenerates it and stops when it differs.
-  * **Later steps** (not in this version): "Into download mode" (soft key `F0 22 24 35 7D F7`, answered by stock
-    015/016, Felucca/Skiff 2.7, SLOOP 2.8.5 [hw], SLOOP 3 [src] and m-bootloader's MIDI MODE [SPEC]; otherwise a
-    guided card: Felucca/SLOOP OCT−+OCT+ 5 s, m-bootloader REC at power-on or PLAY → DOWNLOAD MODE), full flash
-    backup (two reads compared, stored per device with unit id, flash ID and SHA-256) and restore only after the
-    unit id and flash ID match, install m-bootloader (`bootloader --file`, writes only 0x0000–0x3FFF) and remove it
+  * **Step 2: whole-flash backup and write-back** (`fm1companion/tools/flashjob.py`, buttons in
+    `ui/flash_tools.py` on Recovery › Tools and Backups › Flash backups). The first write path of the app.
+    * *Download mode:* `find` first. Exactly one unit in download mode (and none on USB MIDI) is used as it is;
+      exactly one FM-1 on USB MIDI and none in download mode gets `download-mode` (the soft key
+      `F0 22 24 35 7D F7`, answered by stock 015/016, Felucca/Skiff 2.7, SLOOP 2.8.5 [hw], SLOOP 3 [src] and
+      m-bootloader's MIDI MODE [SPEC]); anything else is refused (several units, one running beside one in download
+      mode, `sg` missing) or the user is guided: m-bootloader PLAY at power-on → DOWNLOAD MODE, or REC at power-on
+      (directly). `ensure_download_mode(job)` is the reusable piece for steps 3–5; the separate "Into download mode"
+      button and m-bootloader install/remove are step 3. A unit the app sent into download mode is restarted
+      afterwards (`restart --device`).
+    * *Identity:* `info --device` right before, every time. Its unit id and flash ID go into the profile
+      (`hardware.note_flash_id(…, "rom")`, `Profile.unit_id`) only for the profile whose unit the app itself sent
+      into download mode, and only when no other profile has that id; a profile that knows another unit id, or
+      whose read flash ID differs, stops the job. With no active profile, the unit id alone names one (exactly one
+      match). An image's description never names or changes a profile.
+    * *Backup* (`double_read`): `backup` **twice** into a private staging folder; each run must print "Checked:
+      the chip's CRC32 of the flash matches the read" and the same unit id, flash ID and chip key as `info`; each
+      file must be 1 MiB and match the SHA-256 in M-Flasher's .json; both images must be byte-identical. Only then
+      one image is kept as `Backups/<device>/Flash/<device>_flash_<date>.bin` with the app's description (format
+      `fm1-flash-backup` version 2, `flashdump.write_backup`, now shared with the MIDI MODE copy): M-Flasher's own
+      keys `"sha256"` and `"unit id"` first (its `restore` checks the image against that SHA-256 and recognises its
+      unit by that id), `"flash"`, `"chip key"`, CRC-32, the boot area's SHA-256 (0x00000–0x03FFF), M-Flasher's
+      version, source and binary SHA-256, the firmware the app knew and M-Flasher's guess, `double_read`, the date.
+      The staging files are removed. `backup_before_boot_write(job)` → the image's path or a `Refusal` is the
+      helper every later boot-area write calls first.
+    * *Write-back* (`restore`), all of: a binary in `write_verified` (by bytes); the image matches its description;
+      the description's unit id **and** flash ID equal `info`'s of this session (another unit's or chip's image is
+      refused – no override, although M-Flasher itself would restore it without the factory sector); the unit is
+      one of the user's profiles (by unit id); a fresh double-read backup of the current state; a danger dialog
+      naming the unit, its revision, the image's date and firmware and saying the boot area is included; then
+      `restore FILE --device /dev/sgN --backup-dir <staging>` **without `--yes`**. M-Flasher prints the info block
+      and the plan and waits on `Type "yes" to write: `. The gate (`restore_gate`) parses exactly that output: unit
+      id, flash ID and chip key equal to the ones read before; title "Restore a backup"; "Writes N sectors (K KiB):
+      ranges" equal to the app's own diff of image vs. the backup just made (4 KiB sectors, merged runs, N and K
+      consistent); the note "The whole flash is restored, the bootloader included." (M-Flasher treats it as this
+      unit's backup); no `WARNING:` line. Only then the runner writes `yes\n`; on any difference it closes stdin
+      (EOF → "Nothing written.", exit 0 – the app judges by the text). Cancel works until "yes" (then the process
+      is stopped), never after: from "yes" on there is no cancel and no kill (a soft limit of 600 s only logs "still
+      writing"). After the write: M-Flasher's "Done: everything written is verified …" line is required, its own
+      automatic backup (`Backup saved:` in the staging folder) is compared with the double-read backup (kept only if
+      it differs), a fresh `backup` must equal the image, then `restart`. A failed write leaves the unit in
+      download mode and names the backup made just before.
+    * *Logs:* one flight log per job (`mflasher-backup-…` / `mflasher-restore-…` beside the installation logs, not
+      counted as installation logs) with every command, every output line (unit ids masked), the gate's decision and
+      each check. The one-installation-at-a-time lock is held for the whole job (M-Flasher's PID beside it).
+    * *Not run on hardware through the app* (`tested.TOOLS_HARDWARE`); the owner ran the same M-Flasher commands by
+      hand on 2026-11-18/19 (two backups with equal SHA-256, restore of a whole backup onto the same unit, verified,
+      `--restart`).
+  * **Later steps** (not in this version): the "Into download mode" button with the guided card for other
+    firmwares (Felucca/SLOOP OCT−+OCT+ 5 s), install m-bootloader (`bootloader --file`, writes only 0x0000–0x3FFF) and remove it
     (owner decision: `bootloader --stock` with the public V15 package's boot area), firmware through download
     mode (`firmware`, from 0x4000 on, boot area untouched), SLOOP 3 over m-bootloader's MIDI MODE from the bundled
     area (writes 0x4000–0x78000 for 3.4.0) – each with a mandatory full backup first and M-Flasher's

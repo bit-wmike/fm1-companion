@@ -54,8 +54,8 @@ SLOOP 3 keeps **one project** on the FM-1. The app reads it the way the backup d
   (date, size, chip, and whether the file still matches the checksum taken when it was copied). “Samples to the
   library” takes USR1–USR4 out of one as WAV files (“SLOOP 3 USR1 …”) into Samples › “SLOOP 3 (flash)”; “Samples from
   a file …” does the same with a copy M-Flasher saved. Offline – nothing is sent. SLOOP 2.8 keeps its samples in the
-  same four places and format, so a copy made under SLOOP 2.8 gives SLOOP 2.8's samples. There is no restore button
-  for a flash copy: writing it back is M-Flasher's job.
+  same four places and format, so a copy made under SLOOP 2.8 gives SLOOP 2.8's samples. “Write back …” writes a copy
+  back through M-Flasher, only onto the FM-1 it came from (see Update mode & recovery).
 * **The editor's own backup file (.s3b).** “Add file …” takes an `.s3b` over as a SLOOP 3 backup (the project and
   your sounds – all an `.s3b` holds); “As .s3b …” saves a SLOOP 3 backup for the editor's “Restore”.
 * **Look inside and compare.** [Browse & Compare](app://page/backup_browser) shows a SLOOP 3 backup's project

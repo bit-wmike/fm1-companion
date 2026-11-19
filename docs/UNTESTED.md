@@ -178,7 +178,7 @@ confirmed.
 | `sloop3-backup`: read, restore of sounds, FM6 bank, SYN kits and project, read back and compared | reading: once on the real unit (`sloop3_backup` above). The restore: PC twin only (`tests/test_sloop3.py` with `SLOOP3_TWIN_CMD`: back up, change, restore, back up again); in the repository with the fake. Reading while SLOOP 3 plays on a real FM-1: unknown – stop playback |
 | Samples of SLOOP 3 in a backup | not possible over its protocol (no read command); only in a flash backup |
 | Samples out of a flash copy (Backups › Flash backups › “Samples to the library”, or a file M-Flasher saved): USR1–USR4 at 0xA0000 / 0xB4000 / 0xC8000 / 0xE7000 (SLOOP 3 3.4.0 `fw/main.c` and SLOOP 2.8 `eng_sample.c`: the same places and format) to WAV | synthetic 1 MiB images built with the app's own slot writer (`tests/test_sloop_wave_b.py`, UI test); **no real flash copy and no real M-Flasher file was tried**. That this region of a raw chip copy is not enciphered is read from SLOOP 3's source (`flash_plain_from(0x93000)`), not seen |
-| Flash backups listed on the Backups page (date, size, chip, file against its description) | the app's own files from `mboot.save_backup`; a `.bin` without a description is listed as “not checked”. No restore from the app (M-Flasher's job) |
+| Flash backups listed on the Backups page (date, size, chip, file against its description) | the app's own files from `mboot.save_backup` and from the M-Flasher backup (same description, format 2); a `.bin` without a description is listed as “not checked”. Writing one back: see “M-Flasher through the app” below |
 | FM-1 status for SLOOP 3 (LIVE op 0, read only, every 2 s while the page is open) | the request is the one the bundled editor polls; that editor showed live values on the real unit once (`sloop3_connect`). The app's own polling: the fake (3.4.0 layout) and the twin's recorded 3.3.7 answer only – **not on a real FM-1** |
 | FM-1 status for SLOOP 2.7+ (LIVE 77 op 0) | the SLOOP 2.8.4 / 2.8.5 Studio twins' own answer (`tests/test_studio.py`) and the demo device; not on a real FM-1. Not sent to other firmwares (77 means something else there) or to SLOOP forks |
 | `.s3b` (the SLOOP 3 editor's backup file) in and out on the Backups page | written and read as `web/src/files.js` of 3.4.0 does (round trip, a pre-3.3.5 file with several projects); no `.s3b` saved by the real editor was tried, and the editor's “Restore” of an app-written `.s3b` was not tried |
@@ -188,7 +188,7 @@ confirmed.
 | Flash backup in MIDI MODE (0x23 reads, compared with the chip's CRC-32 from 0x24) | not run on the real unit (`mboot_flash_copy`); m-bootloader's code on the PC: 1 MiB read, identical to the flash file. Speed and reliability over real USB: unknown. m-bootloader versions before the read commands (the installer page mentions some that do not answer reads): the app then reports “does not answer” and saves nothing |
 | 0x12 sent to an update loader that is not m-bootloader | not sent by design: only a port named exactly "FM-1 Update" is asked (Felucca-family loaders are "<Name> Update"). What M-VAVE's or a Felucca loader would do with 0x12 was not tried |
 | Installing SLOOP 3, installing m-bootloader | **not done by the app** (the author's installer page; M-Flasher / M-UPGRADE). The app bundles m-bootloader 2.4 and the SLOOP 3 3.4.0 area (checksums checked) for a later version, but does not write them yet |
-| Bundled M-Flasher 0.12.1 (Recovery › Tools: checksum, version in use, “Which FM-1 does M-Flasher see?” = `m-flasher find`; the parser of `info`) | runner, parser, time limits, lock and checksum refusal: against a fake M-Flasher only (`tests/fake_mflasher.py`, synthetic values). The real binary was **not** run by the app or by its tests, on no computer. M-Flasher itself ran on the owner's Pi by hand (2026-11-18/19). The udev rule and `sg` autoload: package contents and installer logic tested, not on a Pi |
+| Bundled M-Flasher 0.12.1 (Recovery › Tools: checksum, version in use, “Which FM-1 does M-Flasher see?” = `m-flasher find`; the parser of `info`, `backup`, the restore plan and its question) | runner, parser, time limits, lock and checksum refusal: against a fake M-Flasher only (`tests/fake_mflasher.py`, synthetic values). The real binary was **not** run by the app or by its tests, on no computer. M-Flasher itself ran on the owner's Pi by hand (2026-11-18/19). The udev rule and `sg` autoload: package contents and installer logic tested, not on a Pi |
 | Update check and “Update” for M-Flasher, m-bootloader, SLOOP 3 | logic only (unit tests with made-up release lists and downloads; GitHub's API was not reachable from the development machine). The automatic check's schedule (daily / weekly / at start / off) and its switches: unit and UI tests |
 | The blocker for the newer hardware revision (no installer page offered; explicit confirmation when unknown) | page logic only (`tests/ui_sloop3_test.py`) |
 | Installing another firmware from m-bootloader's MIDI MODE with the app's installer | **refused by the app** (it tells MIDI MODE from an update loader by 0x12; “Install on active FM-1” is off there, and the installer and Recovery › “Finish installation” refuse it again); page logic, UI test and unit test only – not pressed on the real unit. m-bootloader's README lists the browser installers it was tested with |
@@ -220,6 +220,39 @@ confirmed.
 | FM1 Open backups (`fm1openbk.py`: its file protocol, the working project, 16 slots read by loading them, 4 DX7 library banks, the sample bank; *Back up now* on the Overview and the Backups page) | only with the twin; on a real FM1 Open only its sample-bank transfer ran (see “FM1 Open” above). That a real FM1 Open answers the identity FM-1_8000014 to the update handshake in normal operation was seen once (2026-11-19) |
 | **The FM1 Open twin as the stand-in for the original V15/V16** (note in the Studio, no fetch / write back) | only the page logic, with a simulated device |
 | **Original V15: restore factory voices** (FM Voices › Original V15: restore factory voices …: all 128 voices in A–D overwritten, commands 33/34 on object 5 as M-VAVE's `sdk/WebUpdate.js` restoreFactory; the current voices cannot be saved first) | only against a simulated V15 built from that code; never on a real FM-1 |
+
+### M-Flasher through the app (whole-flash backup and write-back)
+
+`fm1companion/tools/flashjob.py`, buttons on Recovery › Tools and Backups › Flash backups. **None of it ran on a real
+FM-1 through the app** – only against `tests/fake_mflasher.py` (M-Flasher 0.12.1's line formats, synthetic unit ids,
+a pseudo-random 1 MiB "flash"). `TOOLS_HARDWARE` in `fm1companion/flash/tested.py` repeats this table;
+`tests/test_tools_flash.py` keeps the two in sync.
+
+| Kind | Status |
+|---|---|
+| `mf_download_mode` – sending the FM-1 into download mode through M-Flasher | not run through the app – stand-in only |
+| `mf_backup` – the whole-flash backup through M-Flasher (read twice) | not run through the app – stand-in only |
+| `mf_restore` – writing a whole-flash backup back through M-Flasher | not run through the app – stand-in only |
+| `mf_new_chip` – any of these on a newer FM-1 (logo on the front, flash UC25HQ80) | not run through the app |
+
+**Owner, outside the app (2026-11-18/19, `OWNER_REPORTS["mflasher_by_hand"]`):** M-Flasher 0.12.1 by hand in a
+terminal on a Raspberry Pi 5 – `download-mode`, `info`, `backup` twice with the same SHA-256, and `restore` of a whole
+flash backup onto the same unit (147 and 174 sectors, "Done: everything written is verified (the chip's CRC32
+matches)", then `--restart`) on the earlier unit; on the newer unit two backups and the m-bootloader install. That is
+evidence for the tool and for the line formats the app parses – not for the app's flows: the owner passed `--yes`,
+the app never does (it answers M-Flasher's question itself, after its own checks), and the prompt and the "Nothing
+written." path were not seen on hardware.
+
+What the tests prove against the stand-in: the double read (one image kept, the description's keys, staging removed,
+restart only when the app sent the unit into download mode); every refusal writes nothing – reads that differ, a read
+M-Flasher did not confirm against the chip's CRC-32, several units, a unit beside another one, no unit (guide), `sg`
+missing, another profile's unit, an image of another unit or another chip, a damaged or anonymous image, a unit the
+app does not know, no write-verified binary, no automatic backup, the danger dialog declined, cancel and time-out
+before M-Flasher's question; M-Flasher's question answered "yes" only when unit id, flash ID, chip key and the
+planned sectors equal the app's plan (stdin closed on another unit or chip in that session, an extra range, a
+warning, a plan for another unit's backup); a write that is killed, does not read back or ends without M-Flasher's
+"Done" line is reported with the backup made before, and the unit is left in download mode. Not known: the timing on
+real USB (the fake answers at once), and how M-Flasher behaves when stdin is closed exactly while it prints.
 
 ### Backups, presets, projects, samples
 - Restoring a backup to the device (full and partial).

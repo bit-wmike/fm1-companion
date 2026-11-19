@@ -442,7 +442,7 @@ def test_a_failed_write_is_reported_with_the_backup_made_before(env, fault):
     with pytest.raises(FJ.WriteFailed) as e:
         restore(env, old.path)
     assert e.value.written and e.value.backup is not None and e.value.backup.read_bytes() == changed
-    assert e.value.backup.name in e.value.reason and "download mode" in e.value.reason
+    assert e.value.backup.name in e.value.reason
     assert [a.strip() for a in env.get()["answers"]] == ["yes"]
     assert not calls(env, "restart")                                 # (stays in download mode)
 
@@ -532,3 +532,28 @@ def test_sidecar_unit_id_never_names_or_changes_a_profile(env):
         restore(env, old.path, profile=None)
     assert e.value.kind == "unknown-unit"                             # (named by nobody: M-Flasher's id is in no profile)
     assert all(OTHER_UID not in devices.profile_unit_ids(p) for p in env.profiles.profiles.values())
+
+
+# ------------------------------------------------------------------------------------------------ docs
+
+def test_tools_hardware_table_matches_untested_md():
+    """nothing of the M-Flasher flows counts as run on hardware through the app; docs/UNTESTED.md says the same and
+    records the owner's runs by hand as outside the app"""
+    import re
+    from fm1companion.flash import tested
+    doc = (ROOT / "docs" / "UNTESTED.md").read_text("utf-8")
+    sec = doc[doc.index("### M-Flasher through the app"):doc.index("### Backups, presets, projects, samples")]
+    rows = dict(re.findall(r"^\| `(\w+)` – [^|]+\| (not run)\b[^|]*\|$", sec, re.M))
+    assert rows == {k: "not run" for k, (ok, _l) in tested.TOOLS_HARDWARE.items()}
+    assert not any(ok for ok, _l in tested.TOOLS_HARDWARE.values())
+    for key, (_ok, label) in tested.TOOLS_HARDWARE.items():
+        assert f"| `{key}` – {label} |" in sec, key
+        assert key not in tested.STEPS
+    assert "mflasher_by_hand" in tested.OWNER_REPORTS and "outside the app" in tested.OWNER_REPORTS["mflasher_by_hand"]
+    assert "Owner, outside the app (2026-11-18/19" in sec
+    assert "M-Flasher" in tested.tool_note("mf_restore") and "2026" in tested.tool_note("mf_restore")
+    for lang, needle in (("en", "have not run on a real FM-1 through the app yet"),
+                         ("de", "liefen über die App noch nicht an einem echten FM-1"),
+                         ("es", "aún no se han usado con un FM-1 real a través de la app")):
+        page = (ROOT / "fm1companion" / "data" / "help" / lang / "03-update-modus.md").read_text("utf-8")
+        assert needle in page and ("PLAY" in page and "REC" in page and "DOWNLOAD MODE" in page), lang

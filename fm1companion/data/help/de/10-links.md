@@ -18,7 +18,7 @@
 Gesammelt auf <https://thefirmwarehub.com/tools/>. **Nicht von uns geprüft** – Benutzung auf eigene Gefahr,
 vorher immer ein Backup anlegen.
 
-* **M-Flasher** – liest und schreibt den Flash des FM-1 im ROM-Download-Modus; mit der App mitgeliefert (bisher nutzt sie nur seine lesenden Befehle).
+* **M-Flasher** – liest und schreibt den Flash des FM-1 im ROM-Download-Modus; mit der App mitgeliefert (die App sichert damit den ganzen Flash und schreibt eine solche Sicherung auf dasselbe Gerät zurück; siehe Hilfe › Update-Modus & Rettung).
 * **MvaveFM1Unbricker** – holt ein FM-1 aus dem ROM-Bootmodus „WL82 UBOOT1.00“ zurück. Eine unveränderte
   Kopie ist in der App eingebaut und läuft über [Rettung › Stufe 2](app://page/recovery) – mit den
   Sicherheitsregeln des Originals (Doppelsicherung, nie unter 0x4000 schreiben). An einem echten,
