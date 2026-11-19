@@ -133,8 +133,8 @@ def flow():
     check(not pp.b_imp.isEnabled() and "Editor-Protokoll" in pp.b_imp.toolTip(),
           f"Projects: \"to the FM-1 into the chosen slot\" is off and says why ({pp.b_imp.toolTip()[:60]})")
     check(pp._origin(ctx.profile.name) == ctx.profile.name and pp._origin("") == ""
-          and pp._origin("FM-1 B/G").startswith("FM-1 B/G (") and "kein Profil" in pp._origin("FM-1 B/G"),
-          f"Projects › library: an origin no profile has is marked, not hidden ({pp._origin('FM-1 B/G')})")
+          and pp._origin("FM-1 Gone").startswith("FM-1 Gone (") and "kein Profil" in pp._origin("FM-1 Gone"),
+          f"Projects › library: an origin no profile has is marked, not hidden ({pp._origin('FM-1 Gone')})")
     w.go("overview")
     wait(300)
 

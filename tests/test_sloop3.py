@@ -634,8 +634,8 @@ def test_credits_name_sloop3_and_m_bootloader():
 
 
 def test_sloop3_unit_is_not_mixed_up_with_the_owners_other_fm1(tmp_path, monkeypatch):
-    """Seen on the owner's Pi: "FM-1 Schwarz/Grün" (earlier unit, last Skiff 2.7 at USB 3-1.3.1) got SLOOP 3 outside
-    the app and was plugged into port 1-2, where "FM-1 Orange" (newer unit, Skiff 2.7, no serial number) was last
+    """Seen on the owner's Pi: "FM-1 Earlier" (earlier unit, last Skiff 2.7 at USB 3-1.3.1) got SLOOP 3 outside
+    the app and was plugged into port 1-2, where "FM-1 Newer" (newer unit, Skiff 2.7, no serial number) was last
     seen. The app took it for Orange. SLOOP 3 shows no USB serial number (hal/fm1/usb.c: serial index 0) and no
     identity – the USB port alone is no proof when what the unit shows contradicts the profile: asked, and nothing
     is written to any profile before the answer."""
@@ -646,9 +646,9 @@ def test_sloop3_unit_is_not_mixed_up_with_the_owners_other_fm1(tmp_path, monkeyp
     from fm1companion import devices
     from fm1companion.ui import sloop3_ui as U
     from fm1companion.ui.device import DeviceContext
-    two = [{"id": "o", "name": "FM-1 Orange", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
+    two = [{"id": "o", "name": "FM-1 Newer", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
             "usb_path": "1-2", "hw_revision": "new", "version_string": "FELUCCA v2.7"},
-           {"id": "g", "name": "FM-1 Schwarz/Grün", "firmware": "skiff", "firmware_version": "v2.7",
+           {"id": "g", "name": "FM-1 Earlier", "firmware": "skiff", "firmware_version": "v2.7",
             "identity": "FM-1_900", "usb_path": "3-1.3.1", "hw_revision": "old", "version_string": "FELUCCA v2.7"}]
     s3port = devices.PortInfo("FM-1 SLOOP 3 32:0", "FM-1 SLOOP 3 32:0", "FM-1 SLOOP 3", 32, usb_id="1209:0001",
                               usb_path="1-2", product="FM-1 SLOOP 3", bcd_device="0310")
@@ -677,7 +677,7 @@ def test_sloop3_unit_is_not_mixed_up_with_the_owners_other_fm1(tmp_path, monkeyp
     said = []
     monkeypatch.setattr(U, "show_error", lambda parent, title, text, *a: said.append(text))
     assert U.handles_restore(None, ctx, tmp_path / "x.json") and said
-    # 2. the owner says "Schwarz/Grün": that profile is SLOOP 3 now and remembers this port; Orange is unchanged
+    # 2. the owner says "Earlier": that profile is SLOOP 3 now and remembers this port; Orange is unchanged
     ctx = connect(store, s3port, lambda cands: next(c for c in cands if c.id == "g"))
     o, g = store.profiles["o"], store.profiles["g"]
     assert ctx.profile is g and (g.firmware, g.firmware_version, g.usb_path) == ("sloop3", "v3.4.0", "1-2")
@@ -712,13 +712,13 @@ def test_m_bootloaders_unit_id_names_the_unit(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "d"))
     from test_pi_hardware import fake_ctx, store_with
     from fm1companion.ui.device import DeviceContext
-    store = store_with(tmp_path, [{"id": "o", "name": "FM-1 Orange", "usb_path": "1-2"},
-                                  {"id": "g", "name": "FM-1 Schwarz/Grün", "serial": "4150354433333610"}])
-    for uid in ("4150354433333610", "1036333344355041"):
+    store = store_with(tmp_path, [{"id": "o", "name": "FM-1 Newer", "usb_path": "1-2"},
+                                  {"id": "g", "name": "FM-1 Earlier", "serial": "3141592653589793"}])
+    for uid in ("3141592653589793", "9397585326594131"):
         ctx = fake_ctx(store, None, profile=store.profiles["o"])
         DeviceContext._unit_by_id(ctx, uid)
         assert ctx.profile is store.profiles["g"] and store.profiles["o"].unit_id == ""
-    assert store.profiles["g"].unit_id == "1036333344355041"         # (learnt as read)
+    assert store.profiles["g"].unit_id == "9397585326594131"         # (learnt as read)
     ctx = fake_ctx(store, None, profile=store.profiles["o"])
     DeviceContext._unit_by_id(ctx, "aabbccddeeff0011")                # no profile has it: the assigned one learns it
     assert ctx.profile is store.profiles["o"] and store.profiles["o"].unit_id == "aabbccddeeff0011"
@@ -731,12 +731,12 @@ def test_m_bootloaders_unit_id_names_the_unit(tmp_path, monkeypatch):
 # ---- the owner's Pi, 2026-11-18 (pi findings 28): "Which FM-1 is this?" answered, the other profile lost its firmware
 
 _TWO_UNITS = [
-    {"id": "o", "name": "FM-1 Orange", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
+    {"id": "o", "name": "FM-1 Newer", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
      "usb_path": "1-2", "hw_revision": "new", "hw_revision_source": "user", "version_string": "FELUCCA v2.7",
      "firmware_choice": {"FM-1_900": "skiff"}, "color": "#f67400",
      "firmware_history": [{"time": 1.0, "firmware": "skiff", "name": "Skiff", "version": "v2.7",
                            "identity": "FM-1_900", "via_v15": True}]},
-    {"id": "g", "name": "FM-1 Schwarz/Grün", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
+    {"id": "g", "name": "FM-1 Earlier", "firmware": "skiff", "firmware_version": "v2.7", "identity": "FM-1_900",
      "usb_path": "3-1.3.1", "hw_revision": "old", "hw_revision_source": "user", "version_string": "FELUCCA v2.7",
      "firmware_choice": {"FM-1_900": "skiff"}, "color": "#27ae60",
      "firmware_history": [{"time": 1.0, "firmware": "skiff", "name": "Skiff", "version": "v2.7",
@@ -783,7 +783,7 @@ def _plug_in(tmp_path, monkeypatch, usb: str, drop: int = 0, answer: str = "g"):
 
     def get_item(parent, title, text, names, cur, editable):
         items.append(list(names))
-        return next(n for n in names if n.startswith(dict(o="FM-1 Orange", g="FM-1 Schwarz")[answer])), True
+        return next(n for n in names if n.startswith(dict(o="FM-1 Newer", g="FM-1 Earlier")[answer])), True
     monkeypatch.setattr(QInputDialog, "getItem", staticmethod(get_item))
     lines = []
 
@@ -819,8 +819,8 @@ def _entry(text: str, pid: str) -> str:
 
 @pytest.mark.parametrize("usb,drop", [("3-1.3.1", 0), ("1-2", 0), ("3-1.3.1", 3), ("1-2", 3)])
 def test_answering_which_fm1_changes_only_the_chosen_profile(tmp_path, monkeypatch, usb, drop):
-    """Seen on the Pi: the SLOOP 3 unit ("FM-1 Schwarz/Grün") was asked about and the owner chose it – afterwards the
-    profile of the unit that was NOT plugged in, "FM-1 Orange", had lost its firmware (`firmware: ""`) although its
+    """Seen on the Pi: the SLOOP 3 unit ("FM-1 Earlier") was asked about and the owner chose it – afterwards the
+    profile of the unit that was NOT plugged in, "FM-1 Newer", had lost its firmware (`firmware: ""`) although its
     history says Skiff v2.7. The path: a unit whose first SLOOP 3 INFO answers got lost (drop=3: it has just come
     up) answers nothing at all – the profile was taken by its USB port alone (the product name "FM-1 SLOOP 3" was
     not counted as SLOOP 3), and "answers nothing" wiped that profile's firmware. Now: the product name counts, the
@@ -830,8 +830,8 @@ def test_answering_which_fm1_changes_only_the_chosen_profile(tmp_path, monkeypat
     assert items, "the unit contradicts both profiles (SLOOP 3 vs. Skiff): asked"
     # the question names the firmware by its name and says it is what the unit LAST ran (pi finding 28)
     from fm1companion.i18n import _
-    assert items[0][:2] == ["FM-1 Orange " + _("(last seen: {firmware})").format(firmware="Skiff 2.7"),
-                            "FM-1 Schwarz/Grün " + _("(last seen: {firmware})").format(firmware="Skiff 2.7")]
+    assert items[0][:2] == ["FM-1 Newer " + _("(last seen: {firmware})").format(firmware="Skiff 2.7"),
+                            "FM-1 Earlier " + _("(last seen: {firmware})").format(firmware="Skiff 2.7")]
     assert not any("skiff v2.7" in x for x in items[0])
     g0, g1 = json.loads(_entry(before, "g")), json.loads(_entry(after, "g"))
     assert ctx.profile is not None and ctx.profile.id == "g"

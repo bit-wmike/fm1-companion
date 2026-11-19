@@ -27,6 +27,15 @@
   <url type="homepage">https://github.com/bit-wmike/fm1-companion</url>
   <url type="bugtracker">https://github.com/bit-wmike/fm1-companion/issues</url>
   <releases>
+    <release version="2.6.2" date="2026-11-19">
+      <description>
+        <p>A small maintenance release on top of 2.6.1.</p>
+        <ul>
+          <li>Identifiers of the FM-1 units used for the hardware tests (serial numbers, profile IDs and names) had been left in a code comment and in tests; they are replaced by made-up values, and a test now stops them from coming back.</li>
+          <li>The README describes 2.6.1 as it is, with new screenshots; the help on the newer FM-1 says what has run on such a unit.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.6.1" date="2026-11-18">
       <description>
         <p>Support for the newer FM-1 (logo on the front), SLOOP 3, the fixes from the first test run on real hardware, and a quality pass over the whole app after 2.6.0. Versions 2.5.0 and 2.6.0 were published as source code only; 2.6.1 is the first package since 2.4.0 and contains everything listed under them.</p>

@@ -17,8 +17,8 @@ sys.path.insert(0, str(ROOT))
 
 from fm1companion import devices, hardware                                   # noqa: E402
 
-OLD_SERIAL = "4150354433333610"         # the earlier (black/green) unit under the original V15
-NEW_SERIAL = "550B515AA1CA0037"         # the newer (orange) unit under its factory firmware – both measured 2026-11-18
+OLD_SERIAL = "3141592653589793"         # the earlier (black/green) unit under the original V15
+NEW_SERIAL = "2718281828459045"         # the newer (orange) unit under its factory firmware – both measured 2026-11-18
 
 
 def stock_port(serial, usb_path="3-1.3.1", client=32, usb_id="4c4a:c755"):
@@ -120,11 +120,11 @@ def test_a_constant_serial_stored_by_an_earlier_version_is_dropped_on_load(tmp_p
 
 
 def test_ghost_profile_sequence_of_2026_11_05(home):
-    """devices.json of the owner: one FM-1, profile "FM-1 Schwarz/Grün", made under a Felucca-family firmware (no
+    """devices.json of the owner: one FM-1, profile "FM-1 Earlier", made under a Felucca-family firmware (no
     serial number). The app installs V16 -> the unit re-appears with the original firmware's serial number -> the
     app made a second profile "FM-1 A" for the same unit and booked the next installations there.
     Replayed: it stays one profile, which learns the serial number."""
-    store = store_with(home, [{"id": "b", "name": "FM-1 Schwarz/Grün", "firmware": "melodee",
+    store = store_with(home, [{"id": "b", "name": "FM-1 Earlier", "firmware": "melodee",
                                "identity": "FM-1_91061", "usb_path": "3-1"}])
     b = store.profiles["b"]
     ctx = fake_ctx(store)
@@ -179,13 +179,13 @@ def test_two_real_units_with_different_stock_serials_stay_two_profiles(home):
 
 
 def test_unknown_serial_beside_a_profile_without_one_is_asked_about(home):
-    """the owner's data today: "FM-1 Schwarz/Grün" (earlier unit) has no serial number yet. An FM-1 on the original
+    """the owner's data today: "FM-1 Earlier" (earlier unit) has no serial number yet. An FM-1 on the original
     firmware appears with a serial number no profile has: that unit after a return to V15 – or the new orange
     one? The app asks; until answered nothing is assumed, and nothing weakens "new"."""
     from fm1companion.ui.firmware_page import device_revision
 
     def owner():
-        return store_with(home, [{"id": "b", "name": "FM-1 Schwarz/Grün", "firmware": "skiff", "identity": "FM-1_727",
+        return store_with(home, [{"id": "b", "name": "FM-1 Earlier", "firmware": "skiff", "identity": "FM-1_727",
                                   "usb_path": "3-1.3.1", "hw_revision": "old", "hw_revision_source": "user"}])
     for serial in (NEW_SERIAL, OLD_SERIAL):
         store = owner()
@@ -228,13 +228,13 @@ def test_without_serial_the_app_asks_instead_of_guessing(home):
 
 def test_default_name_avoids_profiles_and_backup_folders(tmp_path):
     store = store_with(tmp_path, [{"id": "x", "name": "FM-1 B"}])
-    assert store.create(folders=["FM-1 A", "fm-1 c", "FM-1 Orange"]).name == "FM-1 D"
+    assert store.create(folders=["FM-1 A", "fm-1 c", "FM-1 Newer"]).name == "FM-1 D"
     assert store.create().name == "FM-1 A"             # (without the folder list: as before)
 
 
 def test_possible_duplicate_is_only_a_hint(tmp_path):
     store = store_with(tmp_path, [
-        {"id": "b", "name": "FM-1 Schwarz/Grün", "usb_path": "3-1"},
+        {"id": "b", "name": "FM-1 Earlier", "usb_path": "3-1"},
         {"id": "a", "name": "FM-1 A", "serial": OLD_SERIAL, "usb_path": "3-1"},
         {"id": "c", "name": "Other", "serial": NEW_SERIAL, "usb_path": "8-8"},
         {"id": "d", "name": "No port"}])
@@ -464,7 +464,7 @@ def test_firmware_found_on_connecting_is_booked_and_the_identity_refreshed(tmp_p
     from fm1companion import firmware
     from fm1companion.protocol import Info
     from fm1companion.ui.device import DeviceContext
-    store = store_with(tmp_path, [{"id": "b", "name": "FM-1 Schwarz/Grün", "firmware": "melodee",
+    store = store_with(tmp_path, [{"id": "b", "name": "FM-1 Earlier", "firmware": "melodee",
                                    "firmware_version": "v1.6.1", "identity": "FM-1_91061", "usb_path": "3-1.3.1",
                                    "firmware_history": [{"time": 1.0, "firmware": "melodee", "name": "Melodee",
                                                          "version": "v1.6.1", "identity": "FM-1_91061",
@@ -718,9 +718,9 @@ def test_the_plan_follows_the_answer_to_which_firmware_runs():
 def two_units(home, new_port="1-2"):
     """devices.json as it was on the Pi: the earlier unit without a serial number, the newer one with its own"""
     return store_with(home, [
-        {"id": "old", "name": "FM-1 Schwarz/Grün", "firmware": "skiff", "firmware_version": "v2.7",
+        {"id": "old", "name": "FM-1 Earlier", "firmware": "skiff", "firmware_version": "v2.7",
          "identity": "FM-1_727", "usb_path": "3-1.3.1", "hw_revision": "old", "hw_revision_source": "user"},
-        {"id": "2039b2a6a5", "name": "FM-1 A", "serial": NEW_SERIAL, "firmware": "stock-v15", "identity": "FM-1_015",
+        {"id": "a1b2c3d4e5", "name": "FM-1 A", "serial": NEW_SERIAL, "firmware": "stock-v15", "identity": "FM-1_015",
          "usb_path": new_port, "hw_revision": "new", "hw_revision_source": "user"}])
 
 
@@ -728,7 +728,7 @@ def test_after_the_install_the_unit_stays_its_own_profile(home):
     """Skiff 2.7 installed on "FM-1 A" (newer chip, stock serial) at port 1-2. Skiff reports no serial number: the
     app took the only profile without one – the OTHER unit's – wrote port 1-2 into it and offered its backup."""
     store = two_units(home)
-    new, old = store.profiles["2039b2a6a5"], store.profiles["old"]
+    new, old = store.profiles["a1b2c3d4e5"], store.profiles["old"]
     ctx = fake_ctx(store, pending_restore_check="skiff", pending_restore_profile=new.id)
     ctx.note_installed(new, "1-2")                     # install_flow, in its finally
     new.firmware, new.identity = "skiff", "FM-1_727"   # install_flow done(): profile updated
@@ -746,7 +746,7 @@ def test_two_profiles_one_identity_without_serial_is_asked_never_the_old_one(hom
     shows a serial number"""
     from fm1companion.ui.firmware_page import device_revision
     store = two_units(home)
-    new, old = store.profiles["2039b2a6a5"], store.profiles["old"]
+    new, old = store.profiles["a1b2c3d4e5"], store.profiles["old"]
     new.firmware, new.identity = "skiff", "FM-1_727"
     for path, guess in (("1-2", new.id), ("3-1.3.1", "old"), ("7-7", None)):
         ctx = fake_ctx(store, pending_restore_check="skiff", pending_restore_profile=new.id)
@@ -779,7 +779,7 @@ def test_felucca_firmware_at_the_new_profiles_port_is_asked_about(home):
     M-Flasher restore): without a unit ID two candidates are always asked about, the port's profile preselected.
     (Until 2.6.1 this was taken silently.)"""
     store = two_units(home)
-    new, old = store.profiles["2039b2a6a5"], store.profiles["old"]
+    new, old = store.profiles["a1b2c3d4e5"], store.profiles["old"]
     old.firmware, old.identity = "karma", "FM-1_926"
     new.firmware, new.identity = "skiff", "FM-1_727"
     prof, asked = assign(store, felucca_port("Felucca", "1-2"), identity="FM-1_727")
@@ -879,24 +879,24 @@ def test_v15_is_not_offered_as_an_update_to_a_unit_that_reports_version_15():
 
 
 # ---------------------------------------------------------------- finding 35: two FM-1 on Skiff, neither shows an ID
-# The owner's Pi, 2026-11-18 19:25: "FM-1 Schwarz/Grün" (earlier unit) was restored with M-Flasher from SLOOP 3 to
-# Skiff 2.7 and plugged into port 1-2, where "FM-1 Orange" (newer unit, Skiff 2.7) was last seen. Skiff reports no
+# The owner's Pi, 2026-11-18 19:25: "FM-1 Earlier" (earlier unit) was restored with M-Flasher from SLOOP 3 to
+# Skiff 2.7 and plugged into port 1-2, where "FM-1 Newer" (newer unit, Skiff 2.7) was last seen. Skiff reports no
 # USB serial number and no flash ID: the app connected it silently as Orange.
 
-ORANGE_ID, SG_ID = "2039b2a6a5", "232469eabe"
+ORANGE_ID, SG_ID = "a1b2c3d4e5", "f6e5d4c3b2"
 
 
 def owner_units(home, sg_firmware="sloop3"):
     """devices.json of the owner just before the restore: Orange learned its unit ID under the factory firmware,
-    Schwarz/Grün under V15 (and from m-bootloader's 0x12 answer); Schwarz/Grün last ran SLOOP 3 (no identity) –
+    Earlier under V15 (and from m-bootloader's 0x12 answer); Earlier last ran SLOOP 3 (no identity) –
     or, in the variant, Skiff like Orange"""
-    sg = {"id": SG_ID, "name": "FM-1 Schwarz/Grün", "serial": OLD_SERIAL, "usb_path": "3-1.3.1",
+    sg = {"id": SG_ID, "name": "FM-1 Earlier", "serial": OLD_SERIAL, "usb_path": "3-1.3.1",
           "hw_revision": "old", "hw_revision_source": "identity", "flash_id": "856014", "color": "#27ae60",
           "firmware": "sloop3", "firmware_version": "v3.4.0", "identity": "", "usb_product": "FM-1 SLOOP 3"}
     if sg_firmware == "skiff":
         sg.update(firmware="skiff", firmware_version="v2.7", identity="FM-1_727", usb_product="Felucca")
     return store_with(home, [
-        {"id": ORANGE_ID, "name": "FM-1 Orange", "serial": NEW_SERIAL, "usb_path": "1-2", "hw_revision": "new",
+        {"id": ORANGE_ID, "name": "FM-1 Newer", "serial": NEW_SERIAL, "usb_path": "1-2", "hw_revision": "new",
          "hw_revision_source": "user", "color": "#f67400", "firmware": "skiff", "firmware_version": "v2.7",
          "identity": "FM-1_727", "version_string": "FELUCCA v2.7", "firmware_choice": {"FM-1_727": "skiff"},
          "firmware_history": [{"time": 1.0, "firmware": "skiff", "name": "Skiff", "version": "v2.7",
@@ -936,7 +936,7 @@ def test_finding_35_a_skiff_unit_without_id_at_oranges_port_is_asked_about(home,
     assert device_revision(ctx) == "new"                                   # strictest: Orange is a newer unit
     assert ctx.pending_restore_check == ""
     assert DeviceContext.unit_check(ctx)[0] == "ask"                       # no write before the answer
-    # the owner answers "Schwarz/Grün": only that profile changes, Orange stays byte for byte
+    # the owner answers "Earlier": only that profile changes, Orange stays byte for byte
     import copy
     orange_before = copy.deepcopy(vars(store.profiles[ORANGE_ID]))
     ctx = skiff_sighting(home, store, "1-2", answer=lambda c: next(x for x in c if x.id == SG_ID))
@@ -948,7 +948,7 @@ def test_finding_35_a_skiff_unit_without_id_at_oranges_port_is_asked_about(home,
     # every write now names the unit and its revision first: the owner checks the front of the unit
     kind, text = DeviceContext.unit_check(ctx)
     from fm1companion.i18n import _                                   # (the tests run in German)
-    assert kind == "confirm" and "FM-1 Schwarz/Grün" in text and _("the earlier FM-1 without the logo on the front") in text
+    assert kind == "confirm" and "FM-1 Earlier" in text and _("the earlier FM-1 without the logo on the front") in text
     assert "<b>" in text and _("The app knows this only from your answer to “Which FM-1 is this?” – the unit reports no unit ID and no flash chip it could check.") in text
     assert DeviceContext.identified_text(ctx) == _("recognised by your answer – not checked by the app")
 
@@ -971,8 +971,8 @@ def test_finding_35_the_writing_plan_carries_the_confirmation(home, monkeypatch)
     assert len(said) == 1 and not planned
     title, text, ok, danger = said[0]
     from fm1companion.i18n import _
-    assert danger and "FM-1 Schwarz/Grün" in text and _("the earlier FM-1 without the logo on the front") in text
-    assert "FM-1 Schwarz/Grün" in ok
+    assert danger and "FM-1 Earlier" in text and _("the earlier FM-1 without the logo on the front") in text
+    assert "FM-1 Earlier" in ok
     # before the answer: refused, nothing planned either
     ctx = skiff_sighting(home, store, "3-1.3.1")
     ctx.sloop3, ctx.mboot = None, None
@@ -983,10 +983,10 @@ def test_finding_35_the_writing_plan_carries_the_confirmation(home, monkeypatch)
 
 
 @pytest.mark.parametrize("orange_last", ["sloop3", "skiff"])
-def test_finding_35_b_orange_where_schwarz_gruen_was_seen_stays_blocked_while_unanswered(home, monkeypatch,
+def test_finding_35_b_newer_unit_where_the_earlier_was_seen_stays_blocked_while_unanswered(home, monkeypatch,
                                                                                          orange_last):
-    """the dangerous direction: Orange (newer chip) plugged in at Schwarz/Grün's port, running Skiff like
-    Schwarz/Grün – Orange last seen with another firmware (the mirror of finding 35) or with Skiff too. A wrong
+    """the dangerous direction: Orange (newer chip) plugged in at Earlier's port, running Skiff like
+    Earlier – Orange last seen with another firmware (the mirror of finding 35) or with Skiff too. A wrong
     answer cannot be detected (no ID at all) – but unanswered, the newer unit's rule applies: a firmware without
     support for its chip is blocked"""
     from fm1companion import firmware
@@ -1092,9 +1092,9 @@ def test_the_v15_step_learns_and_checks_the_unit_id(home, tmp_path):
     ctx = SimpleNamespace(store=store)
     orange, sg = store.profiles[ORANGE_ID], store.profiles[SG_ID]
     assert unit_clash(ctx, orange, NEW_SERIAL) == "" and unit_clash(ctx, orange, "") == ""
-    assert "FM-1 Orange" in unit_clash(ctx, orange, OLD_SERIAL) and "FM-1 Schwarz/Grün" in unit_clash(ctx, orange, OLD_SERIAL)
+    assert "FM-1 Newer" in unit_clash(ctx, orange, OLD_SERIAL) and "FM-1 Earlier" in unit_clash(ctx, orange, OLD_SERIAL)
     sg.serial = ""
-    assert "FM-1 Schwarz/Grün" not in unit_clash(ctx, orange, "A1B2C3D4E5F60718")   # a third, unknown unit
+    assert "FM-1 Earlier" not in unit_clash(ctx, orange, "A1B2C3D4E5F60718")   # a third, unknown unit
     assert unit_clash(ctx, sg, "A1B2C3D4E5F60718") == ""                           # SG learns it at the end
 
 
