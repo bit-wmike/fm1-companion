@@ -337,9 +337,9 @@ msgstr ""
 
 #: fm1companion/backup.py:451 fm1companion/flash/mboot.py:202
 #: fm1companion/flash/mboot.py:213 fm1companion/fm1openbk.py:97
-#: fm1companion/fm1openbk.py:104 fm1companion/sloop3.py:272
-#: fm1companion/sloop3.py:277 fm1companion/sloop3.py:280
-#: fm1companion/sloop3.py:292 fm1companion/sloop3.py:302
+#: fm1companion/fm1openbk.py:104 fm1companion/sloop3.py:274
+#: fm1companion/sloop3.py:279 fm1companion/sloop3.py:282
+#: fm1companion/sloop3.py:294 fm1companion/sloop3.py:304
 #: fm1companion/sloopbk.py:314
 msgid "unexpected answer while reading"
 msgstr ""
@@ -4551,7 +4551,7 @@ msgstr ""
 msgid "invalid flash request"
 msgstr ""
 
-#: fm1companion/fm1open.py:46 fm1companion/sloop3.py:79
+#: fm1companion/fm1open.py:46 fm1companion/sloop3.py:81
 #: fm1companion/sloopbk.py:50
 msgid "flash error"
 msgstr ""
@@ -6769,77 +6769,77 @@ msgstr ""
 msgid "There are no audio files in “{folder}”."
 msgstr ""
 
-#: fm1companion/sloop3.py:78
+#: fm1companion/sloop3.py:80
 msgid "bad request"
 msgstr ""
 
-#: fm1companion/sloop3.py:78
+#: fm1companion/sloop3.py:80
 msgid "busy (a save is under way)"
 msgstr ""
 
-#: fm1companion/sloop3.py:78
+#: fm1companion/sloop3.py:80
 msgid "nothing there"
 msgstr ""
 
-#: fm1companion/sloop3.py:79
+#: fm1companion/sloop3.py:81
 msgid "check failed"
 msgstr ""
 
-#: fm1companion/sloop3.py:79
+#: fm1companion/sloop3.py:81
 msgid "not a SLOOP 3 file"
 msgstr ""
 
-#: fm1companion/sloop3.py:181
+#: fm1companion/sloop3.py:183
 msgid "SLOOP 3's answer is too short"
 msgstr ""
 
-#: fm1companion/sloop3.py:184
+#: fm1companion/sloop3.py:186
 msgid "SLOOP 3's answer names no version"
 msgstr ""
 
-#: fm1companion/sloop3.py:240 fm1companion/transport.py:257
+#: fm1companion/sloop3.py:242 fm1companion/transport.py:257
 #: fm1companion/ui/device.py:1197
 msgid "device not connected"
 msgstr ""
 
-#: fm1companion/sloop3.py:246 fm1companion/sloop3.py:249
-#: fm1companion/sloop3.py:258
+#: fm1companion/sloop3.py:248 fm1companion/sloop3.py:251
+#: fm1companion/sloop3.py:260
 #, python-brace-format
 msgid "SLOOP 3 does not answer (command {cmd})"
 msgstr ""
 
-#: fm1companion/sloop3.py:253
+#: fm1companion/sloop3.py:255
 #, python-brace-format
 msgid "SLOOP 3 refused: {reason}"
 msgstr ""
 
-#: fm1companion/sloop3.py:274 fm1companion/sloop3.py:285
+#: fm1companion/sloop3.py:276 fm1companion/sloop3.py:287
 msgid "The FM-1 changed during the backup. Please try again with playback stopped."
 msgstr ""
 
-#: fm1companion/sloop3.py:361
+#: fm1companion/sloop3.py:363
 msgid "The FM-1 is still saving – wait a moment and check on its screen."
 msgstr ""
 
-#: fm1companion/sloop3.py:372
+#: fm1companion/sloop3.py:374
 msgid "The FM6 bank image is damaged."
 msgstr ""
 
-#: fm1companion/sloop3.py:372
+#: fm1companion/sloop3.py:374
 msgid "The SYN kits image is damaged."
 msgstr ""
 
-#: fm1companion/sloop3.py:441
+#: fm1companion/sloop3.py:443
 msgid "the bundled SLOOP 3 editor is missing"
 msgstr ""
 
-#: fm1companion/sloop3.py:446 fm1companion/studio.py:325
+#: fm1companion/sloop3.py:448 fm1companion/studio.py:325
 #: fm1companion/ui/pages/simulator.py:87
 #, python-brace-format
 msgid "{name} missing"
 msgstr ""
 
-#: fm1companion/sloop3.py:448 fm1companion/studio.py:327
+#: fm1companion/sloop3.py:450 fm1companion/studio.py:327
 #: fm1companion/ui/pages/simulator.py:88
 #, python-brace-format
 msgid "{name} damaged"
@@ -8604,8 +8604,8 @@ msgstr ""
 msgid "Save a SLOOP 3 backup as the SLOOP 3 editor's own file (.s3b: the project and your sounds)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:520 fm1companion/ui/backups_page.py:1259
-#: fm1companion/ui/backups_page.py:1259 fm1companion/ui/pages/midi.py:1141
+#: fm1companion/ui/backups_page.py:520 fm1companion/ui/backups_page.py:1260
+#: fm1companion/ui/backups_page.py:1260 fm1companion/ui/pages/midi.py:1141
 #: fm1companion/ui/pages/presets.py:666 fm1companion/ui/pages/presets.py:669
 #: fm1companion/ui/pages/presets.py:696 fm1companion/ui/pages/presets.py:921
 #: fm1companion/ui/projects_page.py:110 fm1companion/ui/projects_page.py:554
@@ -9148,124 +9148,124 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1117 fm1companion/ui/samples_page.py:124
+#: fm1companion/ui/backups_page.py:1118 fm1companion/ui/samples_page.py:124
 msgid "Show in folder"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1120
+#: fm1companion/ui/backups_page.py:1121
 msgid "Samples to the library"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1121
+#: fm1companion/ui/backups_page.py:1122
 msgid "Take SLOOP 3's samples USR1–USR4 out of the selected flash backup, as WAV files into the sample library. Nothing is sent to an FM-1."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1125
+#: fm1companion/ui/backups_page.py:1126
 msgid "Samples from a file …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1126
+#: fm1companion/ui/backups_page.py:1127
 msgid "The same from a flash copy M-Flasher saved (a .bin of the whole flash)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1137
+#: fm1companion/ui/backups_page.py:1138
 msgid "A flash backup is a copy of the FM-1's whole flash, made in m-bootloader's MIDI MODE (Firmware+ › SLOOP 3). The app does not write it back – there is no restore button here: restoring a flash image is M-Flasher's job, in USB download mode, onto the same FM-1 it came from."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1157
+#: fm1companion/ui/backups_page.py:1158
 #, python-brace-format
 msgid "✓ matches – CRC-32 {crc}, the chip's own when copied"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1159
+#: fm1companion/ui/backups_page.py:1160
 #, python-brace-format
 msgid "✗ {problem}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1161
+#: fm1companion/ui/backups_page.py:1162
 msgid "not checked"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1178
+#: fm1companion/ui/backups_page.py:1179
 #, python-brace-format
 msgid "{n} flash backup"
 msgid_plural "{n} flash backups"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:1179
+#: fm1companion/ui/backups_page.py:1180
 msgid "No flash backups here yet."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1184
+#: fm1companion/ui/backups_page.py:1185
 #: fm1companion/ui/pages/backup_browser.py:519
 #: fm1companion/ui/pages/backup_browser.py:609
 #: fm1companion/ui/pages/devices.py:479
 msgid "Nothing selected"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1184
+#: fm1companion/ui/backups_page.py:1185
 msgid "Please select a flash backup in the list first."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1203
+#: fm1companion/ui/backups_page.py:1204
 msgid "Flash copy (whole flash)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1204
+#: fm1companion/ui/backups_page.py:1205
 msgid "Flash copies (*.bin);;All files (*)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1218 fm1companion/ui/backups_page.py:1221
+#: fm1companion/ui/backups_page.py:1219 fm1companion/ui/backups_page.py:1222
 msgid "No samples taken out"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1221
+#: fm1companion/ui/backups_page.py:1222
 msgid "the WAV files cannot be written"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1232
+#: fm1companion/ui/backups_page.py:1233
 #, python-brace-format
 msgid "{slot} “{name}”: {n} sound"
 msgid_plural "{slot} “{name}”: {n} sounds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:1237
+#: fm1companion/ui/backups_page.py:1238
 #, python-brace-format
 msgid "{n} WAV file is in {folder}:"
 msgid_plural "{n} WAV files are in {folder}:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:1238
+#: fm1companion/ui/backups_page.py:1239
 #, python-brace-format
 msgid "No sample found in {name}."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1239
+#: fm1companion/ui/backups_page.py:1240
 msgid "Samples from the flash copy"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1241
+#: fm1companion/ui/backups_page.py:1242
 msgid "These four places are shared: SLOOP 2.8 keeps its samples at the same addresses and in the same format, so a copy made under SLOOP 2.8 gives SLOOP 2.8's samples. Nothing was sent to an FM-1."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1258
+#: fm1companion/ui/backups_page.py:1259
 msgid "<b>This backup is pinned.</b>"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1259
+#: fm1companion/ui/backups_page.py:1260
 #, python-brace-format
 msgid "Delete {name} permanently?"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1262
+#: fm1companion/ui/backups_page.py:1263
 #, python-brace-format
 msgid "Deleted: {name}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1264 fm1companion/ui/pages/presets.py:927
+#: fm1companion/ui/backups_page.py:1265 fm1companion/ui/pages/presets.py:927
 #: fm1companion/ui/projects_page.py:561 fm1companion/ui/samples_page.py:705
 #: fm1companion/ui/settings_dialog.py:443 fm1companion/ui/storage_tab.py:191
 #: fm1companion/ui/storage_tab.py:247 fm1companion/ui/storage_tab.py:270
@@ -11650,166 +11650,166 @@ msgstr ""
 msgid "no live values"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:481
+#: fm1companion/ui/fm1_page.py:496
 #, python-brace-format
 msgid "peak {n} %"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:488
+#: fm1companion/ui/fm1_page.py:503
 #, python-brace-format
 msgid "{n} playing"
 msgid_plural "{n} playing"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/fm1_page.py:491 fm1companion/ui/recorder_page.py:276
+#: fm1companion/ui/fm1_page.py:506 fm1companion/ui/recorder_page.py:276
 #, python-brace-format
 msgid "bar {bar}.{beat}"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:492
+#: fm1companion/ui/fm1_page.py:507
 msgid "playing"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:492 fm1companion/ui/pages/midi.py:671
+#: fm1companion/ui/fm1_page.py:507 fm1companion/ui/pages/midi.py:671
 #: fm1companion/ui/pages/midi.py:765 fm1companion/ui/pages/studio.py:902
 #: fm1companion/ui/recorder_page.py:277
 msgid "stopped"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:493 fm1companion/ui/pages/midi.py:781
+#: fm1companion/ui/fm1_page.py:508 fm1companion/ui/pages/midi.py:781
 #, python-brace-format
 msgid "{bpm} BPM"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:497
+#: fm1companion/ui/fm1_page.py:513
 #, python-brace-format
 msgid "pattern {n}"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:498
+#: fm1companion/ui/fm1_page.py:514
 msgid "muted"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:498
+#: fm1companion/ui/fm1_page.py:514
 msgid "solo"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:514 fm1companion/ui/fm1_page.py:582
+#: fm1companion/ui/fm1_page.py:530 fm1companion/ui/fm1_page.py:599
 msgid "live"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:514
+#: fm1companion/ui/fm1_page.py:530
 msgid "read"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:515
+#: fm1companion/ui/fm1_page.py:531
 #, python-brace-format
 msgid "{firmware}'s LIVE state (read only)"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:523
+#: fm1companion/ui/fm1_page.py:540
 msgid "no audio values with this firmware"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:532
+#: fm1companion/ui/fm1_page.py:549
 msgid "playback off"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:532
+#: fm1companion/ui/fm1_page.py:549
 #, python-brace-format
 msgid "playback {rate} Hz"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:533
+#: fm1companion/ui/fm1_page.py:550
 msgid "recording off"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:533
+#: fm1companion/ui/fm1_page.py:550
 #, python-brace-format
 msgid "recording {rate} Hz"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:535
+#: fm1companion/ui/fm1_page.py:552
 #, python-brace-format
 msgid "dropouts playback {underruns} / recording {overruns} · faulty packets {bad} · missed USB frames {missed}"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:539
+#: fm1companion/ui/fm1_page.py:556
 #, python-brace-format
 msgid "longest audio block {us} µs · late blocks {late}"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:542
+#: fm1companion/ui/fm1_page.py:559
 #, python-brace-format
 msgid "{active} active, {held} held"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:544
+#: fm1companion/ui/fm1_page.py:561
 #, python-brace-format
 msgid "{shed} voices cut off (CPU), {given} given up to the voice budget"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:551
+#: fm1companion/ui/fm1_page.py:568
 #, python-brace-format
 msgid "track {n}: {shed}/{given}"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:553
+#: fm1companion/ui/fm1_page.py:570
 msgid "(cut off/given up)"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:559 fm1companion/ui/overview.py:265
+#: fm1companion/ui/fm1_page.py:576 fm1companion/ui/overview.py:265
 #: fm1companion/ui/pages/devices.py:224
 #: fm1companion/ui/pages/project_view.py:489
 msgid "active"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:559 fm1companion/ui/pages/soundmodule.py:171
+#: fm1companion/ui/fm1_page.py:576 fm1companion/ui/pages/soundmodule.py:171
 #: fm1companion/ui/pages/soundmodule.py:389
 #: fm1companion/ui/pages/soundmodule.py:406
 msgid "off"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:560
+#: fm1companion/ui/fm1_page.py:577
 #, python-brace-format
 msgid "{jobs} tasks, longest {us} µs, timeouts {timeouts}"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:562
+#: fm1companion/ui/fm1_page.py:579
 #, python-brace-format
 msgid "{n} errors!"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:567
+#: fm1companion/ui/fm1_page.py:584
 #, python-brace-format
 msgid "{used} of {total} (peak {peak})"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:570
+#: fm1companion/ui/fm1_page.py:587
 #, python-brace-format
 msgid "{n} shortages"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:572
+#: fm1companion/ui/fm1_page.py:589
 #, python-brace-format
 msgid "{used} of {total}"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:575
+#: fm1companion/ui/fm1_page.py:592
 msgid "passed at start-up"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:576
+#: fm1companion/ui/fm1_page.py:593
 msgid "not run"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:576
+#: fm1companion/ui/fm1_page.py:593
 #, python-brace-format
 msgid "status {n} – suspicious"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:600 fm1companion/ui/pages/presets.py:417
+#: fm1companion/ui/fm1_page.py:617 fm1companion/ui/pages/presets.py:417
 msgid "(empty)"
 msgstr ""
 

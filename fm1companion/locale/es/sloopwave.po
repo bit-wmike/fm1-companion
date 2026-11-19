@@ -230,96 +230,96 @@ msgstr "Chip de flash"
 msgid "Check"
 msgstr "Comprobación"
 
-#: fm1companion/ui/backups_page.py:1120
+#: fm1companion/ui/backups_page.py:1121
 msgid "Samples to the library"
 msgstr "Muestras a la biblioteca"
 
-#: fm1companion/ui/backups_page.py:1121
+#: fm1companion/ui/backups_page.py:1122
 msgid "Take SLOOP 3's samples USR1–USR4 out of the selected flash backup, as WAV files into the sample library. Nothing is sent to an FM-1."
 msgstr "Sacar las muestras USR1–USR4 de SLOOP 3 de la copia de la flash elegida, como archivos WAV a la biblioteca de muestras. No se envía nada a ningún FM-1."
 
-#: fm1companion/ui/backups_page.py:1125
+#: fm1companion/ui/backups_page.py:1126
 msgid "Samples from a file …"
 msgstr "Muestras de un archivo …"
 
-#: fm1companion/ui/backups_page.py:1126
+#: fm1companion/ui/backups_page.py:1127
 msgid "The same from a flash copy M-Flasher saved (a .bin of the whole flash)"
 msgstr "Lo mismo desde una copia de la flash guardada por M-Flasher (un .bin de toda la flash)"
 
-#: fm1companion/ui/backups_page.py:1137
+#: fm1companion/ui/backups_page.py:1138
 msgid "A flash backup is a copy of the FM-1's whole flash, made in m-bootloader's MIDI MODE (Firmware+ › SLOOP 3). The app does not write it back – there is no restore button here: restoring a flash image is M-Flasher's job, in USB download mode, onto the same FM-1 it came from."
 msgstr "Una copia de la flash es una copia de toda la flash del FM-1, hecha en el MIDI MODE de m-bootloader (Firmware+ › SLOOP 3). La app no la vuelve a escribir – por eso aquí no hay botón para restaurar: restaurar una imagen de la flash es tarea de M-Flasher, en modo de descarga USB, en el mismo FM-1 del que procede."
 
-#: fm1companion/ui/backups_page.py:1157
+#: fm1companion/ui/backups_page.py:1158
 #, python-brace-format
 msgid "✓ matches – CRC-32 {crc}, the chip's own when copied"
 msgstr "✓ coincide – CRC-32 {crc}, la propia del chip al copiar"
 
-#: fm1companion/ui/backups_page.py:1159
+#: fm1companion/ui/backups_page.py:1160
 #, python-brace-format
 msgid "✗ {problem}"
 msgstr "✗ {problem}"
 
-#: fm1companion/ui/backups_page.py:1161
+#: fm1companion/ui/backups_page.py:1162
 msgid "not checked"
 msgstr "no comprobado"
 
-#: fm1companion/ui/backups_page.py:1178
+#: fm1companion/ui/backups_page.py:1179
 #, python-brace-format
 msgid "{n} flash backup"
 msgid_plural "{n} flash backups"
 msgstr[0] "{n} copia de la flash"
 msgstr[1] "{n} copias de la flash"
 
-#: fm1companion/ui/backups_page.py:1179
+#: fm1companion/ui/backups_page.py:1180
 msgid "No flash backups here yet."
 msgstr "Aquí aún no hay copias de la flash."
 
-#: fm1companion/ui/backups_page.py:1184
+#: fm1companion/ui/backups_page.py:1185
 msgid "Please select a flash backup in the list first."
 msgstr "Primero elige una copia de la flash en la lista."
 
-#: fm1companion/ui/backups_page.py:1203
+#: fm1companion/ui/backups_page.py:1204
 msgid "Flash copy (whole flash)"
 msgstr "Copia de la flash (toda la flash)"
 
-#: fm1companion/ui/backups_page.py:1204
+#: fm1companion/ui/backups_page.py:1205
 msgid "Flash copies (*.bin);;All files (*)"
 msgstr "Copias de la flash (*.bin);;Todos los archivos (*)"
 
-#: fm1companion/ui/backups_page.py:1218
-#: fm1companion/ui/backups_page.py:1221
+#: fm1companion/ui/backups_page.py:1219
+#: fm1companion/ui/backups_page.py:1222
 msgid "No samples taken out"
 msgstr "No se sacó ninguna muestra"
 
-#: fm1companion/ui/backups_page.py:1221
+#: fm1companion/ui/backups_page.py:1222
 msgid "the WAV files cannot be written"
 msgstr "no se pueden escribir los archivos WAV"
 
-#: fm1companion/ui/backups_page.py:1232
+#: fm1companion/ui/backups_page.py:1233
 #, python-brace-format
 msgid "{slot} “{name}”: {n} sound"
 msgid_plural "{slot} “{name}”: {n} sounds"
 msgstr[0] "{slot} “{name}”: {n} sonido"
 msgstr[1] "{slot} “{name}”: {n} sonidos"
 
-#: fm1companion/ui/backups_page.py:1237
+#: fm1companion/ui/backups_page.py:1238
 #, python-brace-format
 msgid "{n} WAV file is in {folder}:"
 msgid_plural "{n} WAV files are in {folder}:"
 msgstr[0] "{n} archivo WAV está en {folder}:"
 msgstr[1] "{n} archivos WAV están en {folder}:"
 
-#: fm1companion/ui/backups_page.py:1238
+#: fm1companion/ui/backups_page.py:1239
 #, python-brace-format
 msgid "No sample found in {name}."
 msgstr "No se encontró ninguna muestra en {name}."
 
-#: fm1companion/ui/backups_page.py:1239
+#: fm1companion/ui/backups_page.py:1240
 msgid "Samples from the flash copy"
 msgstr "Muestras de la copia de la flash"
 
-#: fm1companion/ui/backups_page.py:1241
+#: fm1companion/ui/backups_page.py:1242
 msgid "These four places are shared: SLOOP 2.8 keeps its samples at the same addresses and in the same format, so a copy made under SLOOP 2.8 gives SLOOP 2.8's samples. Nothing was sent to an FM-1."
 msgstr "Estos cuatro lugares son compartidos: SLOOP 2.8 guarda sus muestras en las mismas direcciones y con el mismo formato, así que una copia hecha con SLOOP 2.8 da las muestras de SLOOP 2.8. No se envió nada a ningún FM-1."
 
@@ -369,40 +369,40 @@ msgstr "SLOOP 3: tus sonidos se ven y se editan en su propio editor (página “
 msgid "paused – {reason}"
 msgstr "en pausa – {reason}"
 
-#: fm1companion/ui/fm1_page.py:481
+#: fm1companion/ui/fm1_page.py:496
 #, python-brace-format
 msgid "peak {n} %"
 msgstr "pico {n} %"
 
-#: fm1companion/ui/fm1_page.py:488
+#: fm1companion/ui/fm1_page.py:503
 #, python-brace-format
 msgid "{n} playing"
 msgid_plural "{n} playing"
 msgstr[0] "{n} suena"
 msgstr[1] "{n} suenan"
 
-#: fm1companion/ui/fm1_page.py:492
+#: fm1companion/ui/fm1_page.py:507
 msgid "playing"
 msgstr "reproduciendo"
 
-#: fm1companion/ui/fm1_page.py:497
+#: fm1companion/ui/fm1_page.py:513
 #, python-brace-format
 msgid "pattern {n}"
 msgstr "patrón {n}"
 
-#: fm1companion/ui/fm1_page.py:498
+#: fm1companion/ui/fm1_page.py:514
 msgid "muted"
 msgstr "silenciada"
 
-#: fm1companion/ui/fm1_page.py:498
+#: fm1companion/ui/fm1_page.py:514
 msgid "solo"
 msgstr "solo"
 
-#: fm1companion/ui/fm1_page.py:514
+#: fm1companion/ui/fm1_page.py:530
 msgid "read"
 msgstr "leído"
 
-#: fm1companion/ui/fm1_page.py:515
+#: fm1companion/ui/fm1_page.py:531
 #, python-brace-format
 msgid "{firmware}'s LIVE state (read only)"
 msgstr "estado LIVE de {firmware} (solo lectura)"
