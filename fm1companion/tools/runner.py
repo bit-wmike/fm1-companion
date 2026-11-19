@@ -1,14 +1,21 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Runs the bundled M-Flasher as a separate program – read-only commands only in this version.
+"""Runs the bundled M-Flasher as a separate program.
 
 * The binary comes from tools/store.py (bundled or updated) and its SHA-256 is checked right before every run.
-* No shell; a fixed argument list; stdin is closed (a command that would ask "Type "yes" to write" reads EOF and
-  writes nothing); LANG=C so its texts are always English.
-* A time limit per command and a cancel event: the process is asked to stop (SIGTERM), then killed after 2 s.
+* No shell; a fixed argument list (checked command by command below); LANG=C so its texts are always English.
+* Never `--yes`, never `--restart`, `--board`, `--keep-bootloader`, `firmware`, `bootloader` or `run-ram`.
+* Reading commands (find, info, backup) and the two that only change the unit's mode (download-mode, restart) get no
+  stdin: a command that would ask "Type "yes" to write" reads EOF and writes nothing.
+* The one writing command of this version, `restore`, runs only with a *gate*: M-Flasher prints the unit id, the
+  flash ID and the planned sector ranges of this very session and asks; the gate (tools/flashjob.py) compares them
+  with what the app planned and the runner sends "yes" only when the gate says so – otherwise it closes stdin, and
+  M-Flasher writes nothing. Only a binary whose bytes this app release lists in manifest.json write_verified is
+  used for it (Store.select(write=True)).
+* A time limit per command and a cancel event: the process is asked to stop (SIGTERM), then killed after 2 s – but
+  once "yes" was sent there is no cancel and no kill any more (an erase may be running): the runner waits.
 * Commands that talk to a unit take the one-installation-at-a-time lock (flash/journal.py): never while an
   installation, a recovery or another tool run owns the device.
 * Every line goes into a flight log ("tool-<time>.txt" next to the installation logs) with unit ids masked.
-* Write commands (backup, restore, firmware, bootloader, download-mode, restart, run-ram) are refused here.
 """
 from __future__ import annotations
 
@@ -27,8 +34,12 @@ from .store import Candidate, Store
 
 log = logging.getLogger(__name__)
 
-TIMEOUTS = {"find": 10.0, "info": 60.0, "--version": 10.0, "--help": 10.0}
-TALKS_TO_UNIT = ("find", "info")              # take the installation lock
+TIMEOUTS = {"find": 10.0, "info": 60.0, "backup": 60.0, "download-mode": 40.0, "restart": 90.0,
+            "restore": 90.0,                  # until its question (the session reads the whole flash first)
+            "--version": 10.0, "--help": 10.0}
+WRITE_SOFT_LIMIT = 600.0                      # after "yes": past this the log says "still writing" – no kill
+TALKS_TO_UNIT = ("find", "info", "backup", "download-mode", "restart", "restore")   # take the installation lock
+WRITES = ("restore",)
 _DEVICE_RE = re.compile(r"/dev/sg\d{1,3}")
 # a unit id: 16 hex digits, also with 0x, or as 8 bytes separated by spaces, colons or dashes; not inside a longer
 # hex run (SHA-256 values stay readable) – underscores and dots around it do not protect it
@@ -53,6 +64,10 @@ class ToolBusy(ToolError):
     pass
 
 
+class ToolStuck(ToolError):
+    """M-Flasher did not stop even after SIGKILL: the lock stays held until it has ended (released by a reaper)"""
+
+
 @dataclass
 class RunResult:
     version: str
@@ -67,6 +82,10 @@ class RunResult:
     seconds: float = 0.0
     log_path: Path | None = None
     problems: list[str] = field(default_factory=list)
+    prompted: bool = False          # M-Flasher asked 'Type "yes" to write'
+    answered_yes: bool = False      # … and the gate let the runner send "yes"
+    gate_reason: str = ""           # why the gate closed stdin instead (English, for the log)
+    binary_sha256: str = ""
 
     @property
     def ok(self) -> bool:
@@ -90,14 +109,33 @@ def unavailable_reason(store: Store) -> str:
     return ""
 
 
+def _plain_path(v: str) -> bool:
+    """an absolute path without control characters, not an option"""
+    return bool(v) and v.startswith("/") and not any(ord(c) < 32 for c in v) and ".." not in Path(v).parts
+
+
 def _check_args(args: list[str]) -> None:
+    """exactly these forms, nothing else:
+    find · download-mode · --version · --help · info --device /dev/sgN · restart --device /dev/sgN ·
+    backup --device /dev/sgN --backup-dir DIR · restore FILE.bin --device /dev/sgN --backup-dir DIR"""
+    def no():
+        raise ToolError(_("This M-Flasher command is not available in the app."))
     if not args or args[0] not in TIMEOUTS:
-        raise ToolError(_("This M-Flasher command is not available in the app."))
-    if args[0] == "info":
+        no()
+    cmd = args[0]
+    if cmd in ("info", "restart"):
         if len(args) != 3 or args[1] != "--device" or not _DEVICE_RE.fullmatch(args[2]):
-            raise ToolError(_("This M-Flasher command is not available in the app."))
+            no()
+    elif cmd == "backup":
+        if len(args) != 5 or args[1] != "--device" or not _DEVICE_RE.fullmatch(args[2]) or \
+                args[3] != "--backup-dir" or not _plain_path(args[4]):
+            no()
+    elif cmd == "restore":
+        if len(args) != 6 or not _plain_path(args[1]) or not args[1].endswith(".bin") or args[2] != "--device" or \
+                not _DEVICE_RE.fullmatch(args[3]) or args[4] != "--backup-dir" or not _plain_path(args[5]):
+            no()
     elif len(args) != 1:
-        raise ToolError(_("This M-Flasher command is not available in the app."))
+        no()
 
 
 def _flight(folder: Path | None):
@@ -109,14 +147,23 @@ def _flight(folder: Path | None):
 
 def run_mflasher(args: list[str], *, store: Store | None = None, cancel: threading.Event | None = None,
                  timeout: float | None = None, log_dir: Path | None = None, journal=None,
-                 on_line=None) -> RunResult:
-    """run one read-only M-Flasher command; raises ToolError when it cannot run at all"""
+                 on_line=None, gate=None, flight=None) -> RunResult:
+    """run one M-Flasher command; raises ToolError when it cannot run at all.
+    gate (restore only, required there): fn(stdout so far) -> "" to send "yes", or the reason (English) to close
+    stdin instead – called once, when M-Flasher asks.
+    flight: a job's flight log (tools/flashjob.py) to write into instead of this run's own "tool-…" log."""
     _check_args(args)
+    writes = args[0] in WRITES
+    if writes and gate is None:
+        raise ToolError(_("This M-Flasher command is not available in the app."))
     store = store or Store()
     why = unavailable_reason(store)
     if why:
         raise ToolUnavailable(why)
-    cand, problems = store.select("m-flasher")
+    cand, problems = store.select("m-flasher", write=writes)
+    if cand is None and writes:
+        raise ToolUnavailable(_("No M-Flasher on this computer is cleared for writing by this app version (only the "
+                                "exact build this app was reviewed with is). Reinstall the app; reading still works."))
     if cand is None:                             # (unavailable_reason said there is one: changed in between)
         raise ToolUnavailable(_("The bundled M-Flasher did not pass its checksum test, so the app does not run it. "
                                 "Reinstall the app."))
@@ -131,22 +178,28 @@ def run_mflasher(args: list[str], *, store: Store | None = None, cancel: threadi
     if log_dir is None:
         from ..flash import journal as fj
         log_dir = fj.root() / "logs"
-    flight = _flight(log_dir)
+    own_log = flight is None
+    flight = _flight(log_dir) if own_log else flight
     res = None
     try:
-        res = _run(cand, args, timeout if timeout is not None else TIMEOUTS[args[0]], cancel, flight, on_line, lock)
+        res = _run(cand, args, timeout if timeout is not None else TIMEOUTS[args[0]], cancel, flight, on_line, lock,
+                   gate if writes else None)
         res.problems = problems
+        res.binary_sha256 = cand.sha256
     finally:
         if lock is not None and not (res is not None and res.stuck):
             lock.release()
     if res.stuck:
-        raise ToolError(_("M-Flasher does not stop. Unplug the FM-1 (or switch it off); the app starts no other "
+        raise ToolStuck(_("M-Flasher does not stop. Unplug the FM-1 (or switch it off); the app starts no other "
                           "installation or tool until M-Flasher has ended."))
     _judge(store, cand, res)
     outcome = "ok" if res.ok else ("cancelled" if res.cancelled else ("timeout" if res.timed_out else f"exit {res.rc}"))
     header = [f"tool: M-Flasher {cand.version} ({cand.source}), command: {' '.join(args)}",
               *(f"note: {p}" for p in problems)]
-    res.log_path = flight.finish(outcome, header=header) if args[0] in TALKS_TO_UNIT else None
+    if own_log:
+        res.log_path = flight.finish(outcome, header=header) if args[0] in TALKS_TO_UNIT else None
+    else:
+        flight.ev("tool", header[0] + f" – {outcome}")
     log.info("M-Flasher %s (%s) %s: %s in %.1f s", cand.version, cand.source, args[0], outcome, res.seconds)
     return res
 
@@ -195,7 +248,8 @@ def _exec_path(cand: Candidate, flight) -> tuple[Path, str | None]:
     return exe, tmp
 
 
-def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_line, lock=None) -> RunResult:
+def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_line, lock=None,
+         gate=None) -> RunResult:
     import shutil
     from . import proc
     try:
@@ -209,8 +263,8 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
     flight.ev("exec", f"m-flasher {' '.join(args)} (version {cand.version}, {cand.source}, sha256 {cand.sha256[:12]}…)")
     t0 = time.monotonic()
     try:
-        p = proc.popen([str(exe), *args], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE, env=env, cwd=str(Path.home()))
+        p = proc.popen([str(exe), *args], stdin=subprocess.PIPE if gate is not None else subprocess.DEVNULL,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, cwd=str(Path.home()))
     except OSError as e:
         if tmp:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -219,6 +273,41 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
     if lock is not None and hasattr(lock, "set_tool"):
         lock.set_tool(p.pid)
     chunks: dict[str, list[str]] = {"out": [], "err": []}
+    answer = {"asked": False, "yes": False, "why": "", "at": 0.0, "stopping": False}
+    decide = threading.Lock()                  # "yes" and "stop the process" exclude each other
+
+    def ask():
+        """M-Flasher waits for "yes": the gate decides on what this session printed. Only its "" sends "yes"."""
+        answer["asked"] = True
+        so_far = "".join(chunks["out"])
+        try:
+            why = gate(so_far)
+        except Exception as e:  # noqa: BLE001 – a broken check never answers "yes"
+            why = f"the check failed: {type(e).__name__}"
+        why = why if isinstance(why, str) else "the check gave no answer"
+        with decide:
+            if why == "" and (answer["stopping"] or (cancel is not None and cancel.is_set())):
+                why = "cancelled before the write"
+            _answer(why)
+
+    def _answer(why):
+        try:
+            if why == "":
+                p.stdin.write(b"yes\n")
+                p.stdin.flush()
+                answer["yes"], answer["at"] = True, time.monotonic()
+                flight.ev("gate", "checked: unit id, flash ID and planned ranges match – answered yes")
+            else:
+                answer["why"] = why
+                flight.ev("gate", f"refused: {mask_ids(why)} – stdin closed, nothing is written")
+        except OSError as e:
+            answer["yes"] = False
+            answer["why"] = answer["why"] or f"stdin: {e.strerror or e}"
+        finally:
+            try:
+                p.stdin.close()
+            except OSError:
+                pass
 
     def reader(stream, kind):
         buf = ""
@@ -226,6 +315,11 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
             text = raw.decode("utf-8", "replace")
             chunks[kind].append(text)
             buf += text
+            if gate is not None and kind == "out" and not answer["asked"] and buf.endswith(mp.PROMPT):
+                flight.ev(kind, buf)
+                buf = ""
+                ask()
+                continue
             *lines, buf = re.split(r"[\r\n]", buf)
             for ln in lines:
                 if ln.strip():
@@ -242,17 +336,29 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
     for t in threads:
         t.start()
     timed_out = cancelled = False
+    warned = False
     while True:
         try:
             p.wait(0.1)
             break
         except subprocess.TimeoutExpired:
             pass
+        if answer["yes"]:
+            # writing: no cancel, no kill – an interrupted erase is worse than waiting
+            if not warned and time.monotonic() - answer["at"] > WRITE_SOFT_LIMIT:
+                warned = True
+                flight.ev("wait", f"still writing after {WRITE_SOFT_LIMIT:.0f} s – not stopped (do not unplug)")
+            continue
         if cancel is not None and cancel.is_set():
             cancelled = True
         elif time.monotonic() - t0 > timeout:
             timed_out = True
         if cancelled or timed_out:
+            with decide:
+                if answer["yes"]:                  # (the gate answered in this very moment: writing now)
+                    cancelled = timed_out = False
+                    continue
+                answer["stopping"] = True
             flight.ev("stop", "cancelled" if cancelled else f"no answer within {timeout:.0f} s")
             break
     stuck = False
@@ -262,6 +368,11 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
         proc.forget(p)
     for t in threads:
         t.join(2.0)
+    if p.stdin is not None:
+        try:
+            p.stdin.close()
+        except OSError:
+            pass
     seconds = time.monotonic() - t0
     if stuck:
         flight.ev("stuck", "M-Flasher did not stop after SIGKILL – the lock stays held until it ends")
@@ -273,7 +384,8 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
             shutil.rmtree(tmp, ignore_errors=True)
     flight.ev("exit", f"{p.returncode} after {seconds:.1f}s")
     return RunResult(cand.version, cand.source, list(args), p.returncode, "".join(chunks["out"]),
-                     "".join(chunks["err"]), timed_out, cancelled, stuck=stuck, seconds=seconds)
+                     "".join(chunks["err"]), timed_out, cancelled, stuck=stuck, seconds=seconds,
+                     prompted=answer["asked"], answered_yes=answer["yes"], gate_reason=answer["why"])
 
 
 def _reap_later(p, lock, tmp):

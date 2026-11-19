@@ -305,42 +305,20 @@ def backup_name(device: str, when: time.struct_time | None = None) -> str:
     return f"{safe_folder_name(device or 'FM-1')}_flash_{stamp}.bin"
 
 
-def save_backup(folder: Path, device: str, info: Info, image: bytes, note: str = "") -> Path:
-    """write the flash image and a small description beside it (what it is, its SHA-256, the chip) – the .bin first,
-    complete or not at all; it is read back and compared before the description is written."""
-    from ..backup import write_text_atomic
-    folder = Path(folder)
-    folder.mkdir(parents=True, exist_ok=True)
-    first = folder / backup_name(device)
-    path, n = first, 2
-    while path.exists():
-        path = first.with_name(f"{first.stem} ({n}).bin")
-        n += 1
-    tmp = path.with_name("." + path.name + ".tmp")
+def save_backup(folder: Path, device: str, info: Info, image: bytes, note: str = "", profile: str = "",
+                firmware: dict | None = None) -> Path:
+    """write the flash image and its description beside it (flashdump.write_backup: what it is, its SHA-256, the
+    chip, the unit id under M-Flasher's key) – the .bin first, complete or not at all; it is read back and compared
+    before the description is written."""
+    from .. import flashdump
     try:
-        with open(tmp, "wb") as f:
-            f.write(image)
-            f.flush()
-            import os
-            os.fsync(f.fileno())
-        tmp.replace(path)
-    finally:
-        if tmp.exists():
-            tmp.unlink()
-    if path.read_bytes() != image:
-        path.unlink()
-        raise MbootError(_("The file could not be written correctly – nothing was kept."))
-    side = {"format": BACKUP_FORMAT, "version": 1, "file": path.name, "size": len(image),
-            "sha256": hashlib.sha256(image).hexdigest(), "crc32": f"{zlib.crc32(image) & 0xFFFFFFFF:08x}",
-            "created": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "device": device,
-            "read_through": f"m-bootloader {info.version} (MIDI MODE)" + (" – RAM stage" if info.kind == 2 else ""),
-            "flash_chip": {"jedec": f"0x{info.jedec & 0xFFFFFF:06X}", "name": JEDEC_NAMES.get(info.jedec & 0xFFFFFF, ""),
-                           "unique_id": info.uid, "capacity": info.capacity},
-            "restore": "With M-Flasher (https://github.com/jvitkauskas/m-flasher) in USB download mode: write this "
-                       "file back whole. It is this one FM-1's flash: do not write it to another unit.",
-            "note": note, "app": "FM-1 Companion"}
-    write_text_atomic(path.with_suffix(".json"), json.dumps(side, indent=2, ensure_ascii=False))
-    return path
+        return flashdump.write_backup(
+            folder, backup_name(device), image, device=device,
+            read_through=f"m-bootloader {info.version} (MIDI MODE)" + (" – RAM stage" if info.kind == 2 else ""),
+            jedec=info.jedec, unit_id=info.uid, chip_key=info.key, capacity=info.capacity, profile=profile,
+            firmware=firmware, note=note)
+    except flashdump.FlashDumpError as e:
+        raise MbootError(str(e)) from e
 
 
 def check_backup(path: Path) -> dict:

@@ -405,7 +405,9 @@ def test_mboot_flash_backup_verified_against_the_chips_crc(tmp_path):
     side = mboot.check_backup(p)
     assert p.read_bytes() == FLASH and p.suffix == ".bin" and side["sha256"] == hashlib.sha256(FLASH).hexdigest()
     assert side["flash_chip"]["jedec"] == "0x856014" and "M-Flasher" in side["restore"]
-    assert "key" not in json.dumps(side).lower().replace("monkey", "")        # the chip key is not written down
+    # (format 2, shared with the M-Flasher backups: M-Flasher's own keys at the top – "unit id", "flash" and "chip
+    # key", which M-Flasher itself writes into every backup's .json and prints in its info block)
+    assert side["unit id"] == info.uid and side["flash"] == "0x856014" and side["chip key"] == f"0x{info.key:04X}"
     p.write_bytes(FLASH[:-1] + b"\0")
     with pytest.raises(mboot.MbootError):
         mboot.check_backup(p)
