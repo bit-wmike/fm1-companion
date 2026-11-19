@@ -25,10 +25,32 @@ con otro número: la app lo trata como un firmware propio.
   copia de toda la flash o en los archivos desde los que los enviaste.
 * **La app no instala SLOOP 3 ni instala m-bootloader.** Explica el camino y abre la página del instalador del autor
   en tu navegador.
-* **Sin copia automática** para SLOOP 3: con una beta, la app solo lee cuando tú lo pides.
+* **Sin copia automática** para SLOOP 3, salvo que la actives (ver abajo): con una beta, la app solo lee cuando tú lo
+  pides.
 * El Studio no tiene gemelo de SLOOP 3. Las demás páginas del dispositivo (proyectos, presets, samples) hablan el
   protocolo de editor de Felucca, que SLOOP 3 no tiene: usa su editor.
 * Grabar un sample con el micrófono no está disponible en el editor incluido; arrastra un archivo en su lugar.
+
+## Estado, muestras de una copia de la flash, más para las copias
+
+* **Valores en vivo.** [Estado del FM-1](app://page/fm1) muestra la carga de CPU de SLOOP 3 (media y pico), las voces
+  que suenan, tempo y compás, y un nivel por pista, cada 2 s, leído con la misma petición de solo lectura que usa su
+  editor. SLOOP 2.8 muestra igual la carga de CPU, el tempo y sus cuatro niveles. No se pregunta nada mientras una
+  copia, una restauración o una instalación ocupa el FM-1.
+* **Muestras de una copia de la flash.** [Copias de seguridad](app://page/backups) › “Copias de la flash” lista las
+  copias de toda la flash (fecha, tamaño, chip y si el archivo aún coincide con la suma de control tomada al copiar).
+  “Muestras a la biblioteca” saca USR1–USR4 como archivos WAV (“SLOOP 3 USR1 …”) a Muestras › “SLOOP 3 (flash)”;
+  “Muestras de un archivo …” hace lo mismo con una copia guardada por M-Flasher. Sin conexión – no se envía nada.
+  SLOOP 2.8 guarda sus muestras en los mismos cuatro lugares y con el mismo formato, así que una copia hecha con
+  SLOOP 2.8 da sus muestras. Para una copia de la flash no hay botón de restaurar: eso es tarea de M-Flasher.
+* **El archivo de copia del propio editor (.s3b).** “Añadir archivo …” adopta un `.s3b` como copia de SLOOP 3 (el
+  proyecto y tus sonidos – es todo lo que contiene un `.s3b`); “Como .s3b …” guarda una copia de SLOOP 3 para el
+  “Restore” del editor.
+* **Mirar dentro y comparar.** [Explorar y comparar](app://page/backup_browser) muestra de una copia de SLOOP 3 el
+  proyecto (formato, tempo), tus 32 sonidos (S01–S32) con favoritos, las voces del banco FM6 (B01–B27), los kits SYN
+  y los ajustes, y compara dos copias parte por parte y sonido por sonido. Solo se restaura entera (“Restaurar”).
+* **La copia automática** para SLOOP 3 existe pero está **desactivada**: Copias de seguridad › “también para
+  SLOOP 3”. Leer mientras SLOOP 3 suena aún no se ha probado en un FM-1 real.
 
 ## Antes de instalarlo
 

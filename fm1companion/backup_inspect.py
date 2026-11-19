@@ -645,7 +645,8 @@ def _from_sloop3(arch: backup.Archive, path: Path | None) -> Report:
                                                 p["engine"], p["name"] or ("USER" if p["used"] else ""), 0, v.id,
                                                 _digest(p["raw"]), p["raw"], "S", "sloop3"))
                 used = sum(1 for p in snd["places"] if p["used"])
-                v.detail = _("{used} of 32 places used, {fav} favourites").format(used=used, fav=len(fav)) + \
+                v.detail = ngettext("{used} of 32 places used, {n} favourite", "{used} of 32 places used, {n} favourites",
+                                    len(fav)).format(used=used, n=len(fav)) + \
                     (", " + _("your colour theme") if snd["theme"] else "")
         elif data and o["id"] == B.FM6:
             voices = B.decode_fm6(data)

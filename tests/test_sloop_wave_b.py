@@ -33,6 +33,14 @@ FIX = ROOT / "tests" / "fixtures" / "sloop3" / "twin-3.3.7.json"
 _APP = None                                   # (the QApplication, kept alive)
 
 
+@pytest.fixture(autouse=True)
+def english():
+    from fm1companion import i18n
+    i18n.set_language("en")                      # these tests read the English texts
+    yield
+    i18n.set_language(None)
+
+
 def s3link(fake=None):
     fake = fake or F.Fake()
     t = F.InProcess(fake)

@@ -712,8 +712,8 @@ msgid "Add backup files"
 msgstr "Añadir archivos de copia de seguridad"
 
 #: fm1companion/ui/backups_page.py:755
-msgid "Backups (*.json)"
-msgstr "Copias de seguridad (*.json)"
+msgid "Backups (*.json *.s3b)"
+msgstr "Copias de seguridad (*.json *.s3b)"
 
 #: fm1companion/ui/backups_page.py:762
 msgid "Not a valid file"

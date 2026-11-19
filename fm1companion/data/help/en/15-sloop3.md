@@ -23,10 +23,30 @@ do not rely on it on stage yet. It is not SLOOP 2.x with a new number – the ap
   whole flash, or in the files you sent them from.
 * **The app does not install SLOOP 3, and it does not install m-bootloader.** It explains the way and opens the
   author's installer page in your browser.
-* **No automatic backup** for SLOOP 3: on a beta the app reads only when you ask.
+* **No automatic backup** for SLOOP 3 unless you switch it on (see below): on a beta the app reads only when you ask.
 * The Studio has no SLOOP 3 twin. The other device pages (projects, presets, samples) speak the Felucca editor
   protocol, which SLOOP 3 does not have – use its editor.
 * Recording a sample from the microphone inside the bundled editor is not available; drop a file instead.
+
+## Status, samples from a flash copy, more for backups
+
+* **Live values.** [FM-1 Status](app://page/fm1) shows SLOOP 3's CPU load (average and peak), the voices playing,
+  tempo and bar, and a level meter per track, every 2 s, read with the same read-only request its editor uses. SLOOP
+  2.8 shows CPU load, tempo and its four meters the same way. Nothing is asked while a backup, a restore or an
+  installation has the FM-1.
+* **Samples from a flash copy.** [Backups](app://page/backups) › “Flash backups” lists the copies of the whole flash
+  (date, size, chip, and whether the file still matches the checksum taken when it was copied). “Samples to the
+  library” takes USR1–USR4 out of one as WAV files (“SLOOP 3 USR1 …”) into Samples › “SLOOP 3 (flash)”; “Samples from
+  a file …” does the same with a copy M-Flasher saved. Offline – nothing is sent. SLOOP 2.8 keeps its samples in the
+  same four places and format, so a copy made under SLOOP 2.8 gives SLOOP 2.8's samples. There is no restore button
+  for a flash copy: writing it back is M-Flasher's job.
+* **The editor's own backup file (.s3b).** “Add file …” takes an `.s3b` over as a SLOOP 3 backup (the project and
+  your sounds – all an `.s3b` holds); “As .s3b …” saves a SLOOP 3 backup for the editor's “Restore”.
+* **Look inside and compare.** [Browse & Compare](app://page/backup_browser) shows a SLOOP 3 backup's project
+  (format, tempo), your 32 sounds (S01–S32) with favourites, the FM6 bank's voices (B01–B27), the SYN kits and the
+  settings, and compares two backups part by part and sound by sound. It goes back only whole (“Restore”).
+* **Automatic backup** for SLOOP 3 is there but **off**: Backups › “also for SLOOP 3”. Reading while SLOOP 3 plays has
+  not been tried on a real FM-1 yet.
 
 ## Before you install it
 
