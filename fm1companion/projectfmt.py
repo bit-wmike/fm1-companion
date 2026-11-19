@@ -191,6 +191,12 @@ class Pattern:
     swing: int = 0
     gate: int = 64
     recorded: list["TimedNote"] = field(default_factory=list)
+    # another firmware's pattern (SLOOP 3, sloop3proj.py): its step in quarters and its DIV's name; exact = the recorded
+    # notes already carry their swing and timing (midiexport swings nothing more)
+    quarters: float | None = None
+    div_label: str = ""
+    exact: bool = False
+    swing_den: int = 250   # an odd step starts swing × step / swing_den late (Melodee 250, SLOOP 2 200; 0 = never swung)
 
     @property
     def used(self) -> bool:
@@ -198,7 +204,13 @@ class Pattern:
 
     @property
     def step_quarters(self) -> float:
+        if self.quarters is not None:
+            return self.quarters
         return DIV_QUARTERS[self.div] if 0 <= self.div < len(DIV_QUARTERS) else 0.25
+
+    @property
+    def div_name(self) -> str:
+        return self.div_label or enum_name(P_SDIV, self.div)
 
     @property
     def has_drums(self) -> bool:
@@ -217,6 +229,7 @@ class TimedNote:
     duration: float        # in steps
     note: int
     vel: int
+    drum: bool = False      # a drum hit (SLOOP 3's drum track)
 
 
 @dataclass
@@ -307,6 +320,7 @@ class SongRow:
     banks: list[int]          # per track: pattern index, CHAIN_REST or CHAIN_HOLD
     sounds: list[int] = field(default_factory=list)    # per track: song block preset (Project.sounds, 1-based), 0 = none
     punches: list[Punch] = field(default_factory=list)
+    quarters: float | None = None     # the section's length if the firmware says it (SLOOP 3: its bars), else Melodee's rule
 
 
 @dataclass
@@ -329,6 +343,7 @@ class Project:
     size: int = 0
     ok: bool = False
     hash_ok: bool | None = None
+    note: str = ""                    # another firmware's remarks for the project view (plain text)
 
     @property
     def used_tracks(self) -> list[Track]:
@@ -729,6 +744,9 @@ def _decode_legacy(prj: Project, data: bytes, kind: str):
 
 def decode(data: bytes, firmware: str = "") -> Project:
     """Project object (backup/.fm1proj) -> Project. Never raises."""
+    if data and data[:4] == b"GBPJ":                            # SLOOP 3's project (app/project.c)
+        from . import sloop3proj
+        return sloop3proj.decode(data)
     prj = Project(size=len(data))
     try:
         if not data:
@@ -760,13 +778,15 @@ def decode(data: bytes, firmware: str = "") -> Project:
             _decode_legacy(prj, data, LEGACY_MAGICS[magic])
         else:
             head = data[:4]
-            if head[1:4] == b"NUF" and 0x30 <= head[0] <= 0x39:        # "6NUF" = FUN6, SLOOP (project.c)
+            if head[1:4] == b"NUF" and 0x31 <= head[0] <= 0x36:        # "6NUF" = FUN6, SLOOP 2 (project.c)
+                from . import sloop2proj
+                return sloop2proj.decode(data)
+            if head[1:4] == b"NUF" and 0x30 <= head[0] <= 0x39:        # (another SLOOP-like format: a fork's)
                 # Translators: must start with "SLOOP" (the project view checks it)
                 prj.format = _("SLOOP project (FUN{n})").format(n=head[0] - 0x30)
-                raise FormatError(_("This is a SLOOP project. The project view only knows the Melodee format – "
-                                    "SLOOP projects are built differently (sections, own sequencer). To view and "
-                                    "edit it, use the SLOOP web editor (page “Editor”); backing up and restoring "
-                                    "works as usual via backups."))
+                raise FormatError(_("This project format is not one the project view reads (it reads Melodee's, "
+                                    "SLOOP 2.6+'s and SLOOP 3's). Backing up and restoring works as usual via "
+                                    "backups."))
             fw = firmware.lower()
             other = _("other firmware") if fw and "melodee" not in fw else _("unknown format")
             prj.format = other
@@ -788,9 +808,11 @@ def summary_for_backup(data: bytes, firmware: str = "") -> dict | None:
 
 
 def load_any(path: Path) -> list[tuple[str, Project]]:
-    """Backup (.json) or .fm1proj -> [(title, project)]."""
-    from . import backup, projects
+    """Backup (.json) or .fm1proj -> [(title, project)]; SLOOP 3: .s3p, .s3b or a sloop3-backup (sloop3proj)."""
+    from . import backup, projects, sloop3proj
     path = Path(path)
+    if path.suffix.lower() in (sloop3proj.SUFFIX, ".s3b") or sloop3proj.is_sloop3_backup(path):
+        return [(title, sloop3proj.decode(d)) for title, d in sloop3proj.projects_in(path)]
     if path.suffix == projects.SUFFIX:
         pf = projects.load_project(path)
         return [(pf.name, decode(pf.data, pf.meta.get("firmware", "")))]

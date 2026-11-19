@@ -1017,10 +1017,6 @@ msgstr "Suchen (Name, Notiz, Firmware) …"
 msgid "Name"
 msgstr "Name"
 
-#: fm1companion/ui/projects_page.py:89
-msgid "No projects in the library yet – how it works: choose a used slot on the left and “Fetch to the computer”, or “Fetch all”. Project files (.fm1proj) can also be added with “Add file”."
-msgstr "Noch keine Projekte in der Bibliothek – so geht's: links einen belegten Platz wählen und „Auf den Rechner holen“, oder „Alle holen“. Projektdateien (.fm1proj) lassen sich auch mit „Datei hinzufügen“ aufnehmen."
-
 #: fm1companion/ui/projects_page.py:98
 msgid "Open the chosen project in “View & Export” – tracks, patterns, song; play on the FM-1 or on the computer; MIDI export"
 msgstr "Das gewählte Projekt in „Ansicht & Export“ öffnen – Spuren, Patterns, Song; abspielen auf dem FM-1 oder im Rechner; MIDI-Export"
@@ -1108,13 +1104,6 @@ msgstr "{name} (Platz {n})"
 msgid "This firmware reports no project slots that can be read one by one. Backups work anyway (page “Backups”)."
 msgstr "Diese Firmware meldet keine einzeln lesbaren Projektplätze. Backups gehen trotzdem (Seite „Backups“)."
 
-#: fm1companion/ui/projects_page.py:206
-#, python-brace-format
-msgid "{used} of {n} section used, running project {size}. SLOOP projects can be fetched, collected and played back – viewing only works in the SLOOP web editor."
-msgid_plural "{used} of {n} sections used, running project {size}. SLOOP projects can be fetched, collected and played back – viewing only works in the SLOOP web editor."
-msgstr[0] "{used} von {n} Section belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln und zurückspielen – ansehen geht nur im SLOOP-Web-Editor."
-msgstr[1] "{used} von {n} Sections belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln und zurückspielen – ansehen geht nur im SLOOP-Web-Editor."
-
 #: fm1companion/ui/projects_page.py:213
 #, python-brace-format
 msgid "{used} of {n} slot used, running music {size}. You give names in the library (the protocol provides none)."
@@ -1126,10 +1115,6 @@ msgstr[1] "{used} von {n} Plätzen belegt, laufende Musik {size}. Namen vergibst
 #, python-brace-format
 msgid "Read from “{device}” at {time}."
 msgstr "Gelesen von „{device}“ um {time}."
-
-#: fm1companion/ui/projects_page.py:222
-msgid "SLOOP projects are shown by the SLOOP web editor (page “Editor”)."
-msgstr "SLOOP-Projekte zeigt der SLOOP-Web-Editor (Seite „Editor“)."
 
 #: fm1companion/ui/projects_page.py:223
 msgid "Read the chosen slot from the FM-1 (read only) and open it in “View & Export”"
@@ -1432,10 +1417,6 @@ msgstr "{name} nicht gelöscht"
 #: fm1companion/ui/projects_page.py:511
 msgid "Project or backup files"
 msgstr "Projekt- oder Backup-Dateien"
-
-#: fm1companion/ui/projects_page.py:512
-msgid "Projects and backups (*.fm1proj *.json)"
-msgstr "Projekte und Backups (*.fm1proj *.json)"
 
 #: fm1companion/ui/projects_page.py:526
 #, python-brace-format
@@ -2107,10 +2088,6 @@ msgstr "halten"
 msgid "Project View"
 msgstr "Projekt-Ansicht"
 
-#: fm1companion/ui/pages/project_view.py:45
-msgid "View and listen to Melodee projects (on the FM-1 with its own sounds or on the computer) and export them as a MIDI file for Audacity, LMMS, Ardour or MuseScore."
-msgstr "Melodee-Projekte ansehen, anhören (auf dem FM-1 mit seinen eigenen Klängen oder im Rechner) und als MIDI-Datei für Audacity, LMMS, Ardour oder MuseScore exportieren."
-
 #: fm1companion/ui/pages/project_view.py:50
 msgid "1 · Open project"
 msgstr "1 · Projekt öffnen"
@@ -2127,10 +2104,6 @@ msgstr "Ein Backup aus ~/FM-1/Backups öffnen (alle Projekte darin) – Strg+O"
 #: fm1companion/ui/pages/project_view.py:54
 msgid "Open project file …"
 msgstr "Projektdatei öffnen …"
-
-#: fm1companion/ui/pages/project_view.py:55
-msgid "Open a .fm1proj file from the project library"
-msgstr "Eine .fm1proj-Datei aus der Projekt-Bibliothek öffnen"
 
 #: fm1companion/ui/pages/project_view.py:56
 msgid "or live from the FM-1:"
@@ -2416,19 +2389,6 @@ msgstr "SLOOP hat nur 4 Plätze"
 msgid "SLOOP saves projects as sections A–D (slots 1–4). Please choose 0 (running project) or 1–4."
 msgstr "SLOOP speichert Projekte als Sections A–D (Plätze 1–4). Bitte 0 (laufendes Projekt) oder 1–4 wählen."
 
-#: fm1companion/ui/pages/project_view.py:367
-msgid "SLOOP projects"
-msgstr "SLOOP-Projekte"
-
-#: fm1companion/ui/pages/project_view.py:367
-msgid "The project view only knows the Melodee format. SLOOP projects are built differently – to view them use the SLOOP web editor (page “Editor”). Backing up works as usual via backups."
-msgstr "Die Projekt-Ansicht kennt nur das Melodee-Format. SLOOP-Projekte sind anders aufgebaut – zum Ansehen nimm den SLOOP-Web-Editor (Seite „Editor“). Sichern geht wie gewohnt über Backups."
-
-#: fm1companion/ui/pages/project_view.py:373
-#, python-brace-format
-msgid "{firmware} has no projects the app can read. The project view shows Melodee projects."
-msgstr "{firmware} hat keine Projekte, die die App lesen kann. Die Projekt-Ansicht zeigt Melodee-Projekte."
-
 #: fm1companion/ui/pages/project_view.py:375
 msgid "This firmware"
 msgstr "Diese Firmware"
@@ -2635,10 +2595,6 @@ msgstr "Bild speichern"
 #, python-brace-format
 msgid "“{name}” could not be written – folder write-protected?"
 msgstr "„{name}“ ließ sich nicht schreiben – Ordner schreibgeschützt?"
-
-#: fm1companion/ui/pages/project_view.py:682
-msgid "view Melodee projects and export them as MIDI"
-msgstr "Melodee-Projekte ansehen und als MIDI exportieren"
 
 #: fm1companion/ui/workshop_page.py:33
 msgid "From MIDI file: MIDI → pattern"
@@ -3934,10 +3890,6 @@ msgstr "Bank-Container mit falscher Größe"
 msgid "SLOOP project (FUN{n})"
 msgstr "SLOOP-Projekt (FUN{n})"
 
-#: fm1companion/projectfmt.py:766
-msgid "This is a SLOOP project. The project view only knows the Melodee format – SLOOP projects are built differently (sections, own sequencer). To view and edit it, use the SLOOP web editor (page “Editor”); backing up and restoring works as usual via backups."
-msgstr "Das ist ein SLOOP-Projekt. Die Projekt-Ansicht kennt nur das Melodee-Format – SLOOP-Projekte sind anders aufgebaut (Sections, eigener Sequencer). Zum Ansehen und Bearbeiten nimm den SLOOP-Web-Editor (Seite „Editor“); sichern und zurückspielen geht wie gewohnt über Backups."
-
 #: fm1companion/projectfmt.py:771
 msgid "other firmware"
 msgstr "andere Firmware"
@@ -4036,10 +3988,6 @@ msgstr "Pattern-Wechsel abgelehnt – bitte SONG/Wiedergabe stoppen"
 msgid "The FM-1 is playing – please stop it so the pattern changes right away"
 msgstr "Das FM-1 spielt gerade – bitte stoppen, damit das Pattern sofort wechselt"
 
-#: fm1companion/midi_import.py:157
-msgid "This firmware has no pattern banks – the current pattern was written."
-msgstr "Diese Firmware kennt keine Pattern-Bänke – geschrieben wurde in das aktuelle Pattern."
-
 #: fm1companion/midi_import.py:161 fm1companion/midi_import.py:271
 msgid "unexpected answer while writing the steps"
 msgstr "unerwartete Antwort beim Schreiben der Steps"
@@ -4054,10 +4002,6 @@ msgid "This track only has {n} pattern"
 msgid_plural "This track only has {n} patterns"
 msgstr[0] "Diese Spur hat nur {n} Pattern"
 msgstr[1] "Diese Spur hat nur {n} Patterns"
-
-#: fm1companion/midi_import.py:229
-msgid "This firmware has no pattern banks – the current pattern was used."
-msgstr "Diese Firmware kennt keine Pattern-Bänke – benutzt wurde das aktuelle Pattern."
 
 #: fm1companion/midi_import.py:252
 msgid "unexpected answer while reading the steps"
@@ -4789,3 +4733,105 @@ msgstr "Der Zwilling läuft mit {twin} – er gehört nicht zum aktiven FM-1 „
 #, python-brace-format
 msgid "The active FM-1 does not run the twin's firmware ({twin}), so its keys do not play the twin by themselves. Tick the box if you want that anyway – it holds for this device until you quit."
 msgstr "Auf dem aktiven FM-1 läuft nicht die Firmware des Zwillings ({twin}), deshalb spielen seine Tasten den Zwilling nicht von selbst. Setz den Haken, wenn du das trotzdem willst – er gilt für dieses Gerät, bis du die App beendest."
+
+msgid "This firmware does not support choosing a pattern from the app (only Melodee does)."
+msgstr "Diese Firmware unterstützt die Wahl eines Patterns aus der App nicht (nur Melodee kann es)."
+
+msgid "This firmware does not support the song chain from the app (only Melodee does)."
+msgstr "Diese Firmware unterstützt die Song-Kette aus der App nicht (nur Melodee kann es)."
+
+msgid "View and listen to Melodee, SLOOP and SLOOP 3 projects (on the FM-1 with its own sounds or on the computer) and export them as a MIDI file for Audacity, LMMS, Ardour or MuseScore."
+msgstr "Melodee-, SLOOP- und SLOOP-3-Projekte ansehen und anhören (am FM-1 mit seinen eigenen Sounds oder am Rechner) und als MIDI-Datei für Audacity, LMMS, Ardour oder MuseScore exportieren."
+
+msgid "Open a project file: .fm1proj from the project library, or a SLOOP 3 project (.s3p) or editor backup (.s3b)"
+msgstr "Eine Projektdatei öffnen: .fm1proj aus der Projektbibliothek oder ein SLOOP-3-Projekt (.s3p) bzw. Editor-Backup (.s3b)"
+
+msgid "FM-1 projects (*.fm1proj *.s3p *.s3b)"
+msgstr "FM-1-Projekte (*.fm1proj *.s3p *.s3b)"
+
+msgid "view Melodee, SLOOP and SLOOP 3 projects and export them as MIDI"
+msgstr "Melodee-, SLOOP- und SLOOP-3-Projekte ansehen und als MIDI exportieren"
+
+msgid "Tempo"
+msgstr "Tempo"
+
+msgid "No projects in the library yet – how it works: choose a used slot on the left and “Fetch to the computer”, or “Fetch all”. Project files (.fm1proj, SLOOP 3: .s3p) can also be added with “Add file”."
+msgstr "Noch keine Projekte in der Bibliothek – so geht's: links einen belegten Platz wählen und „Auf den Rechner holen“ oder „Alle holen“. Projektdateien (.fm1proj, SLOOP 3: .s3p) lassen sich auch mit „Datei hinzufügen“ aufnehmen."
+
+msgid "Add project files (.fm1proj; SLOOP 3: .s3p from its web editor, or the project in an .s3b or SLOOP 3 backup) to the library"
+msgstr "Projektdateien in die Bibliothek aufnehmen (.fm1proj; SLOOP 3: .s3p aus seinem Web-Editor oder das Projekt in einem .s3b- bzw. SLOOP-3-Backup)"
+
+msgid "Save as file …"
+msgstr "Als Datei speichern …"
+
+msgid "Save a copy of the chosen project somewhere else – a SLOOP 3 project as the .s3p file its web editor opens"
+msgstr "Eine Kopie des gewählten Projekts woanders speichern – ein SLOOP-3-Projekt als .s3p-Datei, die sein Web-Editor öffnet"
+
+msgid "Projects and backups (*.fm1proj *.s3p *.s3b *.json)"
+msgstr "Projekte und Backups (*.fm1proj *.s3p *.s3b *.json)"
+
+#, python-brace-format
+msgid "{n} bar"
+msgid_plural "{n} bars"
+msgstr[0] "{n} Takt"
+msgstr[1] "{n} Takte"
+
+msgid "This project format is not one the project view reads (it reads Melodee's, SLOOP 2.6+'s and SLOOP 3's). Backing up and restoring works as usual via backups."
+msgstr "Dieses Projektformat liest die Projektansicht nicht (sie liest das von Melodee, SLOOP 2.6+ und SLOOP 3). Sichern und Zurückspielen geht wie gewohnt über Backups."
+
+#, python-brace-format
+msgid "SLOOP project in the older format {format}: SLOOP converts it when it loads it; the project view reads the format of SLOOP 2.6 and later (FUN6). Load it on the FM-1 and save it again, then read it again."
+msgstr "SLOOP-Projekt im älteren Format {format}: SLOOP wandelt es beim Laden um; die Projektansicht liest das Format von SLOOP 2.6 und neuer (FUN6). Lade es am FM-1, speichere es wieder und lies es dann noch einmal."
+
+msgid "not a SLOOP project"
+msgstr "kein SLOOP-Projekt"
+
+msgid "the checksum does not match – the project is damaged (SLOOP would not load it either)"
+msgstr "die Prüfsumme stimmt nicht – das Projekt ist beschädigt (SLOOP würde es auch nicht laden)"
+
+msgid "a step that cannot be (damaged project)"
+msgstr "ein Schritt, den es so nicht geben kann (beschädigtes Projekt)"
+
+#, python-brace-format
+msgid "{firmware} has no projects the app can read. The project view shows projects of Melodee, SLOOP 2.6 and later, and SLOOP 3."
+msgstr "{firmware} hat keine Projekte, die die App lesen kann. Die Projektansicht zeigt Projekte von Melodee, SLOOP 2.6 und neuer sowie SLOOP 3."
+
+#, python-brace-format
+msgid "{used} of {n} section used, running project {size}. SLOOP projects can be fetched, collected, viewed (SLOOP 2.6 and later) and played back."
+msgid_plural "{used} of {n} sections used, running project {size}. SLOOP projects can be fetched, collected, viewed (SLOOP 2.6 and later) and played back."
+msgstr[0] "{used} von {n} Section belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln, ansehen (SLOOP 2.6 und neuer) und zurückspielen."
+msgstr[1] "{used} von {n} Sections belegt, laufendes Projekt {size}. SLOOP-Projekte lassen sich holen, sammeln, ansehen (SLOOP 2.6 und neuer) und zurückspielen."
+
+msgid "The project view does not read this firmware's projects."
+msgstr "Die Projektansicht liest die Projekte dieser Firmware nicht."
+
+#, python-brace-format
+msgid "Pattern {pattern} could not be chosen on the FM-1 ({error}) – nothing was written. Choose “current pattern” to write the pattern that is playing."
+msgstr "Pattern {pattern} ließ sich am FM-1 nicht wählen ({error}) – es wurde nichts geschrieben. Wähle „aktuelles Pattern“, um das Pattern zu schreiben, das gerade spielt."
+
+#, python-brace-format
+msgid "too large for a SLOOP 3 project ({size} bytes; at most {max})"
+msgstr "zu groß für ein SLOOP-3-Projekt ({size} Bytes; höchstens {max})"
+
+msgid "This firmware does not support writing patterns from the app (Melodee, Felucca, Skiff and JIANT do)."
+msgstr "Diese Firmware unterstützt das Schreiben von Patterns aus der App nicht (Melodee, Felucca, Skiff und JIANT können es)."
+
+#, python-brace-format
+msgid "The song is longer than {n} bars (the file says {bars}) – only its first {n} bars are shown, played and exported."
+msgstr "Der Song ist länger als {n} Takte (die Datei sagt {bars}) – nur seine ersten {n} Takte werden gezeigt, gespielt und exportiert."
+
+msgid "paused – SLOOP 3's editor is open (page “Editor”) and asks the FM-1 itself"
+msgstr "pausiert – der Editor von SLOOP 3 ist offen (Seite „Editor“) und fragt den FM-1 selbst"
+
+msgid "Only a part saved"
+msgstr "Nur ein Teil gespeichert"
+
+#, python-brace-format
+msgid "The selection has more than {n} notes – only the first {n} are played or saved (from the start, every track up to the same point). Choose fewer passes, or a pattern or part of the song."
+msgstr "Die Auswahl hat mehr als {n} Noten – nur die ersten {n} werden gespielt oder gespeichert (vom Anfang an, jede Spur bis zur selben Stelle). Wähle weniger Durchgänge oder ein Pattern bzw. einen Teil des Songs."
+
+msgid "Preparing the notes …"
+msgstr "Noten werden vorbereitet …"
+
+msgid "This firmware cannot choose a pattern from the app, so only the current pattern can be written – split into 1 pattern or shorten the part."
+msgstr "Diese Firmware kann aus der App kein Pattern wählen, also lässt sich nur das aktuelle Pattern schreiben – auf 1 Pattern aufteilen oder den Teil kürzen."

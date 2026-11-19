@@ -52,9 +52,9 @@ class Options:
 def step_times(p: F.Pattern, global_swing: int = 0) -> list[tuple[float, float]]:
     """(start, length) of every step 0..LEN-1 in quarters, swung."""
     base = p.step_quarters
-    sw = max(0, min(100, p.swing + global_swing)) * base / 250
+    sw = 0.0 if p.exact or not p.swing_den else max(0, min(100, p.swing + global_swing)) * base / p.swing_den
     out, t = [], 0.0
-    for i in range(max(1, min(64, p.length))):
+    for i in range(max(1, min(max(64, len(p.steps)), p.length))):
         ln = base - sw if i & 1 else base + sw
         out.append((t, ln))
         t += ln
@@ -102,8 +102,9 @@ def pattern_events(p: F.Pattern, track: int, channel: int, start: float = 0.0, g
     for nt in p.recorded:
         if nt.step < n:
             t0, ln = times[nt.step]
+            ch = channel if not nt.drum or o.drum_channel is None else o.drum_channel
             out.append(NoteEvent(track, t0 + nt.onset * ln, max(0.01, nt.duration * p.step_quarters), nt.note,
-                                 nt.vel, channel, p.index, nt.step))
+                                 nt.vel, ch, p.index, nt.step, nt.drum))
     res = []
     for e in out:
         t = e.start - phase
@@ -118,8 +119,21 @@ def pattern_events(p: F.Pattern, track: int, channel: int, start: float = 0.0, g
     return res
 
 
-def _looped(p, track, ch, start, end, gsw, o, phase=0.0):
-    """the pattern looped from start to end; phase: quarters already played (HOLD)."""
+MAX_EVENTS = 200_000      # notes one play / export expands to at most (a long song of a dense project: a few 10 000)
+
+
+class Events(list):
+    """the notes of a selection; ``cut``: the selection had more than MAX_EVENTS notes – only the first are here"""
+    cut = False
+
+
+class _Full(Exception):
+    pass
+
+
+def _looped(p, track, ch, start, end, gsw, o, phase=0.0, have: int = 0):
+    """the pattern looped from start to end; phase: quarters already played (HOLD). have: notes already expanded
+    (_Full once they would pass MAX_EVENTS)"""
     ln = pattern_quarters(p, gsw)
     out, n = [], 0
     while ln > 0:
@@ -127,11 +141,15 @@ def _looped(p, track, ch, start, end, gsw, o, phase=0.0):
         if ls >= end - 1e-9:
             break
         out += [e for e in pattern_events(p, track, ch, ls, gsw, o, until=end) if e.start >= start - 1e-9]
+        if have + len(out) > MAX_EVENTS:
+            raise _Full(out)
         n += 1
     return out
 
 
 def section_quarters(prj: F.Project, row: F.SongRow) -> float:
+    if row.quarters is not None:
+        return row.quarters
     b0 = row.banks[0] if row.banks else F.CHAIN_REST
     t0 = prj.tracks[0]
     if b0 >= F.NPAT or b0 >= len(t0.patterns):
@@ -143,16 +161,20 @@ def events(prj: F.Project, o: Options | None = None, pattern: tuple[int, int] | 
     o = o or Options()
     tracks = [t for t in prj.tracks if t.in_use and (o.tracks is None or t.index in o.tracks)
               and (o.include_muted or not t.mute)]
-    out: list[NoteEvent] = []
+    out = Events()
     if pattern is not None:
         k, b = pattern
         t = prj.tracks[k]
-        return pattern_events(t.patterns[b], k, t.midi_channel, 0.0, prj.swing, o)
+        return Events(pattern_events(t.patterns[b], k, t.midi_channel, 0.0, prj.swing, o))
     if o.mode == "song" and prj.song:
         start = 0.0
         phase: dict[int, tuple[int, float]] = {}
+        cut = False
         for row in prj.song:
             end = start + section_quarters(prj, row)
+            dens = _density(prj, row, tracks, phase, o)
+            if dens and len(out) + dens * (end - start) > MAX_EVENTS:     # (the section up to the budget, every track)
+                end, cut = start + max(0.0, MAX_EVENTS - len(out)) / dens, True
             for t in tracks:
                 v = row.banks[t.index] if t.index < len(row.banks) else 0
                 if v == F.CHAIN_REST:
@@ -165,25 +187,67 @@ def events(prj: F.Project, o: Options | None = None, pattern: tuple[int, int] | 
                 if b >= len(t.patterns):
                     continue
                 p = t.patterns[b]
-                out += _looped(p, t.index, t.midi_channel, start, end, prj.swing, o, ph)
+                try:
+                    out += _looped(p, t.index, t.midi_channel, start, end, prj.swing, o, ph, len(out))
+                except _Full as full:
+                    out += full.args[0]
+                    return _cut(out, start)           # (every track complete up to this section)
                 plen = pattern_quarters(p, prj.swing)
                 phase[t.index] = (b, (ph + end - start) % plen if plen else 0.0)
             start = end
+            if cut:
+                out.sort(key=lambda e: (e.start, e.track, e.note))
+                out.cut = True
+                return out
     else:
         if not tracks:
-            return []
+            return Events()
         lens = [pattern_quarters(t.patterns[t.active], prj.swing) for t in tracks if t.active < len(t.patterns)]
         total = (max(lens) if lens else 4.0) * max(1, o.loops)
+        dens = sum(len(pattern_events(t.patterns[t.active], t.index, t.midi_channel, 0.0, prj.swing, o)) /
+                   max(1e-9, pattern_quarters(t.patterns[t.active], prj.swing))
+                   for t in tracks if t.active < len(t.patterns) and t.patterns[t.active].used)
+        cut = dens * total > MAX_EVENTS
+        if cut:                                       # (fewer passes, every track the same length)
+            total = MAX_EVENTS / dens
         for t in tracks:
             if t.active < len(t.patterns) and t.patterns[t.active].used:
-                out += _looped(t.patterns[t.active], t.index, t.midi_channel, 0.0, total, prj.swing, o)
+                try:
+                    out += _looped(t.patterns[t.active], t.index, t.midi_channel, 0.0, total, prj.swing, o, 0, len(out))
+                except _Full as full:
+                    out += full.args[0]
+                    return _cut(out)
+        out.cut = cut
     out.sort(key=lambda e: (e.start, e.track, e.note))
     return out
 
 
-def to_midi(prj: F.Project, o: Options | None = None, pattern: tuple[int, int] | None = None):
+def _density(prj: F.Project, row: F.SongRow, tracks, phase: dict, o: Options) -> float:
+    """notes per quarter the section's patterns play (one loop each, as events expands them)"""
+    d = 0.0
+    for t in tracks:
+        v = row.banks[t.index] if t.index < len(row.banks) else 0
+        if v == F.CHAIN_REST:
+            continue
+        b = phase[t.index][0] if v == F.CHAIN_HOLD and t.index in phase else v
+        if b >= len(t.patterns):
+            continue
+        p = t.patterns[b]
+        d += len(pattern_events(p, t.index, t.midi_channel, 0.0, prj.swing, o)) / max(1e-9, pattern_quarters(p, prj.swing))
+    return d
+
+
+def _cut(out: Events, until: float | None = None) -> Events:
+    """the notes up to `until` (at most MAX_EVENTS, by time): what the selection plays up to there, marked cut"""
+    out.sort(key=lambda e: (e.start, e.track, e.note))
+    res = Events([e for e in out if until is None or e.start < until][:MAX_EVENTS])
+    res.cut = True
+    return res
+
+
+def to_midi(prj: F.Project, o: Options | None = None, pattern: tuple[int, int] | None = None, evs=None):
     import mido
-    evs = events(prj, o, pattern)
+    evs = evs if evs is not None else events(prj, o, pattern)
     mf = mido.MidiFile(type=1, ticks_per_beat=TPQ)
     meta = mido.MidiTrack()
     meta.append(mido.MetaMessage("track_name", name=prj.name or "FM-1 Projekt", time=0))
@@ -217,20 +281,20 @@ def to_midi(prj: F.Project, o: Options | None = None, pattern: tuple[int, int] |
     return mf
 
 
-def save_midi(prj: F.Project, path: Path, o: Options | None = None, pattern=None) -> Path:
+def save_midi(prj: F.Project, path: Path, o: Options | None = None, pattern=None, evs=None) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    to_midi(prj, o, pattern).save(str(path))
+    to_midi(prj, o, pattern, evs).save(str(path))
     return path
 
 
-def to_csv(prj: F.Project, o: Options | None = None, pattern=None) -> str:
+def to_csv(prj: F.Project, o: Options | None = None, pattern=None, evs=None) -> str:
     buf = io.StringIO()
     w = csv.writer(buf, delimiter=";")
     # Translators: column headers of the CSV export
     w.writerow([_("Track"), "Pattern", "Step", _("Start (quarters)"), _("Length (quarters)"), "Note", "Name",
                 _("Velocity"), _("Channel"), "Drum"])
-    for e in events(prj, o, pattern):
+    for e in (evs if evs is not None else events(prj, o, pattern)):
         w.writerow([e.track + 1, e.pattern + 1, e.step + 1, f"{e.start:.4f}", f"{e.length:.4f}", e.note,
                     F.note_name(e.note), e.vel, e.channel + 1, pgettext("csv", "yes") if e.drum else ""])
     return buf.getvalue()

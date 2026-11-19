@@ -545,8 +545,8 @@ msgid "The app does not know yet which of your FM-1 this is. Choose the device a
 msgstr "La app aún no sabe cuál de tus FM-1 es este. Elige primero el dispositivo arriba; no se escribe nada en un FM-1 que la app no puede nombrar. No se escribió nada."
 
 #, python-brace-format
-msgid "Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). <b>On a real FM-1 once, reading only</b> (SLOOP 3 3.4.0, one earlier unit): recognised, its editor connected, a backup read, MIDI MODE recognised. <b>Never on a real FM-1:</b> restoring a backup, the flash backup, anything that writes, a newer unit."
-msgstr "Comprobado con SLOOP 3 {versions} en el gemelo de PC del autor (el código del firmware en un FM-1 simulado). <b>En un FM-1 real una vez, solo leyendo</b> (SLOOP 3 3.4.0, un equipo anterior): reconocido, su editor conectado, una copia de seguridad leída, MIDI MODE reconocido. <b>Nunca en un FM-1 real:</b> restaurar una copia de seguridad, la copia del flash, nada que escriba, un equipo más nuevo."
+msgid "Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). <b>On a real FM-1 once, reading only</b> (SLOOP 3 3.4.0, one earlier unit): recognised, its editor connected, a backup read, MIDI MODE recognised. <b>Never on a real FM-1 by this app:</b> restoring a backup, the flash backup, anything that writes, a newer unit. Outside the app, by its owner's report (2026-11-19): m-bootloader 2.4 and SLOOP 3 3.4.0 ran and saved on one newer unit."
+msgstr "Comprobado con SLOOP 3 {versions} en el gemelo de PC del autor (el código del firmware en un FM-1 simulado). <b>En un FM-1 real una vez, solo leyendo</b> (SLOOP 3 3.4.0, un equipo anterior): reconocido, su editor conectado, una copia de seguridad leída, MIDI MODE reconocido. <b>Nunca en un FM-1 real con esta app:</b> restaurar una copia de seguridad, la copia del flash, nada que escriba, un equipo más nuevo. Fuera de la app, según el informe de su dueño (2026-11-19): m-bootloader 2.4 y SLOOP 3 3.4.0 funcionaron y guardaron en un equipo más nuevo."
 
 msgid "The app has run none of these steps on a real FM-1, nor its flash backup below. The app only reads here; installing is done by the author's page and by M-Flasher."
 msgstr "La app no ha ejecutado ninguno de estos pasos en un FM-1 real, tampoco su copia del flash de abajo. Aquí la app solo lee; la instalación la hacen la página del autor y M-Flasher."
@@ -560,3 +560,122 @@ msgstr "(visto por última vez: {firmware})"
 
 msgid "SLOOP 3: the way onto the FM-1 …"
 msgstr "SLOOP 3: cómo llevarlo al FM-1 …"
+
+#, python-brace-format
+msgid "your sound {n}"
+msgstr "tu sonido {n}"
+
+msgid "the file ends too early (cut off or damaged)"
+msgstr "el archivo termina demasiado pronto (cortado o dañado)"
+
+msgid "damaged note data"
+msgstr "datos de notas dañados"
+
+msgid "a pattern with impossible sizes (damaged file)"
+msgstr "un patrón con tamaños imposibles (archivo dañado)"
+
+msgid "a song with too many entries (damaged file)"
+msgstr "una canción con demasiadas entradas (archivo dañado)"
+
+msgid "not a SLOOP 3 project"
+msgstr "no es un proyecto de SLOOP 3"
+
+#, python-brace-format
+msgid "project format {found} – made by a newer SLOOP 3 than the app knows (up to format {known}, SLOOP 3 3.4.0). The app does not guess at it; the file itself is fine and stays as it is."
+msgstr "Formato de proyecto {found}: hecho por un SLOOP 3 más nuevo de lo que la app conoce (hasta el formato {known}, SLOOP 3 3.4.0). La app no intenta adivinarlo; el archivo en sí está bien y se queda como está."
+
+msgid "Drums"
+msgstr "Batería"
+
+#, python-brace-format
+msgid "{n} parameter lock (listed in the JSON export, not played)"
+msgid_plural "{n} parameter locks (listed in the JSON export, not played)"
+msgstr[0] "{n} bloqueo de parámetro (en la exportación JSON, no se reproduce)"
+msgstr[1] "{n} bloqueos de parámetro (en la exportación JSON, no se reproducen)"
+
+#, python-brace-format
+msgid "tracks {tracks}: the playing pattern has changes that are not saved into the pattern yet – shown as it plays"
+msgstr "pistas {tracks}: el patrón que suena tiene cambios que aún no se han guardado en el patrón; se muestra tal como suena"
+
+#, python-brace-format
+msgid "{n} byte after the end of the project was ignored"
+msgid_plural "{n} bytes after the end of the project were ignored"
+msgstr[0] "se ignoró {n} byte tras el final del proyecto"
+msgstr[1] "se ignoraron {n} bytes tras el final del proyecto"
+
+msgid "not a SLOOP 3 backup file (.s3b)"
+msgstr "no es un archivo de copia de SLOOP 3 (.s3b)"
+
+msgid "Project in the editor backup"
+msgstr "Proyecto en la copia del editor"
+
+msgid "Project as it was at that moment"
+msgstr "Proyecto tal como estaba en ese momento"
+
+msgid "SLOOP 3 keeps one project"
+msgstr "SLOOP 3 guarda un proyecto"
+
+msgid "SLOOP 3 keeps one project on the FM-1. Choose “running music” (as it plays now) or project 1 (the one saved on the FM-1)."
+msgstr "SLOOP 3 guarda un proyecto en el FM-1. Elige “música en curso” (tal como suena ahora) o el proyecto 1 (el guardado en el FM-1)."
+
+msgid "Reading …"
+msgstr "Leyendo …"
+
+#, python-brace-format
+msgid "{n} pattern has a sound of its own ({names}) – shown in the pattern overview; preview and MIDI export use the track's sound."
+msgid_plural "{n} patterns have a sound of their own ({names}) – shown in the pattern overview; preview and MIDI export use the track's sound."
+msgstr[0] "{n} patrón tiene un sonido propio ({names}); se ve en la vista general de patrones; la escucha previa y la exportación MIDI usan el sonido de la pista."
+msgstr[1] "{n} patrones tienen un sonido propio ({names}); se ve en la vista general de patrones; la escucha previa y la exportación MIDI usan el sonido de la pista."
+
+msgid "No project is saved on the FM-1 yet."
+msgstr "Todavía no hay ningún proyecto guardado en el FM-1."
+
+msgid "Please choose on the left which project to fetch."
+msgstr "Elige a la izquierda qué proyecto traer."
+
+msgid "Project as it plays now (unsaved changes too)"
+msgstr "Proyecto tal como suena ahora (también los cambios sin guardar)"
+
+#, python-brace-format
+msgid "{firmware} keeps one project on the FM-1. The app reads it the way the backup does (read only): view and listen, or fetch it into the library as a .s3p file its web editor opens. Writing a project to the FM-1 is not in the app yet."
+msgstr "{firmware} guarda un proyecto en el FM-1. La app lo lee igual que la copia de seguridad (solo lectura): verlo y escucharlo, o traerlo a la biblioteca como archivo .s3p que abre su editor web. Escribir un proyecto en el FM-1 aún no está en la app."
+
+msgid "Read the chosen project from the FM-1 (read only) and open it in “View & Export”"
+msgstr "Leer el proyecto elegido del FM-1 (solo lectura) y abrirlo en “Vista y exportación”"
+
+#, python-brace-format
+msgid "{device} SLOOP 3 project"
+msgstr "{device} proyecto SLOOP 3"
+
+#, python-brace-format
+msgid "{device} SLOOP 3 as it played"
+msgstr "{device} SLOOP 3 tal como sonaba"
+
+msgid "Name for the project:"
+msgstr "Nombre del proyecto:"
+
+msgid "SLOOP 3 project (*.s3p)"
+msgstr "Proyecto SLOOP 3 (*.s3p)"
+
+msgid "The app changes nothing on an FM-1 with SLOOP 3 here – it only reads its project."
+msgstr "Aquí la app no cambia nada en un FM-1 con SLOOP 3: solo lee su proyecto."
+
+#, python-brace-format
+msgid "{path}\nSLOOP 3 project (.s3p), format {format} – opens in its web editor as it is"
+msgstr "{path}\nProyecto SLOOP 3 (.s3p), formato {format}: se abre tal cual en su editor web"
+
+msgid "Not yet"
+msgstr "Todavía no"
+
+#, python-brace-format
+msgid "A file named {name} is already there."
+msgstr "Ya hay un archivo llamado {name}."
+
+msgid "A SLOOP 3 project file (.s3p) has no room for a note – it is kept exactly as its web editor saves it. Its name is the file's name."
+msgstr "Un archivo de proyecto SLOOP 3 (.s3p) no tiene sitio para una nota: se guarda exactamente como lo guarda su editor web. Su nombre es el del archivo."
+
+msgid "no SLOOP 3 project in it"
+msgstr "no contiene ningún proyecto de SLOOP 3"
+
+msgid "Not yet: the app does not write projects to an FM-1 with SLOOP 3. Put a .s3p file onto it with the Projects tab of its web editor (page “Editor”)."
+msgstr "Todavía no: la app no escribe proyectos en un FM-1 con SLOOP 3. Pon un archivo .s3p en él con la pestaña Projects de su editor web (página “Editor”)."

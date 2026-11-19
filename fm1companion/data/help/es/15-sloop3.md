@@ -19,16 +19,55 @@ con otro número: la app lo trata como un firmware propio.
   [Firmware+](app://page/firmware) › SLOOP 3 › «Copiar ahora toda la flash». La app solo lee y compara su copia con
   la suma de comprobación que calcula el propio chip flash.
 
+## Su proyecto en la app
+
+SLOOP 3 guarda **un proyecto** en el FM-1. La app lo lee igual que la copia de seguridad, solo lectura:
+
+* [Vista de proyecto](app://page/project_view) › «Leer del FM-1» lo muestra con «música en curso» (tal como suena
+  ahora, también los cambios sin guardar) o el proyecto 1 (el guardado en el FM-1): pistas, los 8 patrones por pista
+  con sus notas, la canción, el tempo y el swing. Ahí puedes escucharlo y exportarlo como archivo MIDI (la batería en
+  el canal 10), como CSV o como JSON. «Abrir archivo de proyecto …» también abre un `.s3p` del editor de SLOOP 3, una
+  copia `.s3b` del editor o un `sloop3-backup`.
+* [Proyectos](app://page/projects) lo trae a la biblioteca como archivo `.s3p`, el mismo archivo que guarda y abre la
+  pestaña Projects del editor. La biblioteca muestra su tempo y su duración; «Añadir archivo …» admite archivos `.s3p`
+  y `.s3b`, «Guardar como archivo …» deja una copia donde quieras.
+* **Llevar un proyecto al FM-1 aún no está en la app.** Usa para ello la pestaña Projects del editor.
+* No suenan en la escucha previa ni en la exportación MIDI: los fills, el arpegiador, la armonía y el strum, los
+  bloqueos de parámetro (aparecen en el JSON) y los sonidos propios de los patrones. Un proyecto de un SLOOP 3 más
+  nuevo que 3.4.0 no se abre: la app lo dice en vez de adivinar.
+
 ## Qué no hace
 
 * **Tus samples no están en un `sloop3-backup`.** SLOOP 3 no tiene ningún comando para entregarlos. Están en una
   copia de toda la flash o en los archivos desde los que los enviaste.
 * **La app no instala SLOOP 3 ni instala m-bootloader.** Explica el camino y abre la página del instalador del autor
   en tu navegador.
-* **Sin copia automática** para SLOOP 3: con una beta, la app solo lee cuando tú lo pides.
-* El Studio no tiene gemelo de SLOOP 3. Las demás páginas del dispositivo (proyectos, presets, samples) hablan el
+* **Sin copia automática** para SLOOP 3, salvo que la actives (ver abajo): con una beta, la app solo lee cuando tú lo
+  pides.
+* El Studio no tiene gemelo de SLOOP 3. Las demás páginas del dispositivo (presets, samples) hablan el
   protocolo de editor de Felucca, que SLOOP 3 no tiene: usa su editor.
 * Grabar un sample con el micrófono no está disponible en el editor incluido; arrastra un archivo en su lugar.
+
+## Estado, muestras de una copia de la flash, más para las copias
+
+* **Valores en vivo.** [Estado del FM-1](app://page/fm1) muestra la carga de CPU de SLOOP 3 (media y pico), las voces
+  que suenan, tempo y compás, y un nivel por pista, cada 2 s, leído con la misma petición de solo lectura que usa su
+  editor. SLOOP 2.8 muestra igual la carga de CPU, el tempo y sus cuatro niveles. No se pregunta nada mientras una
+  copia, una restauración o una instalación ocupa el FM-1.
+* **Muestras de una copia de la flash.** [Copias de seguridad](app://page/backups) › “Copias de la flash” lista las
+  copias de toda la flash (fecha, tamaño, chip y si el archivo aún coincide con la suma de control tomada al copiar).
+  “Muestras a la biblioteca” saca USR1–USR4 como archivos WAV (“SLOOP 3 USR1 …”) a Muestras › “SLOOP 3 (flash)”;
+  “Muestras de un archivo …” hace lo mismo con una copia guardada por M-Flasher. Sin conexión – no se envía nada.
+  SLOOP 2.8 guarda sus muestras en los mismos cuatro lugares y con el mismo formato, así que una copia hecha con
+  SLOOP 2.8 da sus muestras. Para una copia de la flash no hay botón de restaurar: eso es tarea de M-Flasher.
+* **El archivo de copia del propio editor (.s3b).** “Añadir archivo …” adopta un `.s3b` como copia de SLOOP 3 (el
+  proyecto y tus sonidos – es todo lo que contiene un `.s3b`); “Como .s3b …” guarda una copia de SLOOP 3 para el
+  “Restore” del editor.
+* **Mirar dentro y comparar.** [Explorar y comparar](app://page/backup_browser) muestra de una copia de SLOOP 3 el
+  proyecto (formato, tempo), tus 32 sonidos (S01–S32) con favoritos, las voces del banco FM6 (B01–B27), los kits SYN
+  y los ajustes, y compara dos copias parte por parte y sonido por sonido. Solo se restaura entera (“Restaurar”).
+* **La copia automática** para SLOOP 3 existe pero está **desactivada**: Copias de seguridad › “también para
+  SLOOP 3”. Leer mientras SLOOP 3 suena aún no se ha probado en un FM-1 real.
 
 ## Antes de instalarlo
 
@@ -39,11 +78,14 @@ con otro número: la app lo trata como un firmware propio.
 2. **Copia primero toda la flash.** Es el único camino de vuelta: SLOOP 2.8 o el firmware de M-VAVE vuelven al
    escribir esa copia con M-Flasher. SLOOP 3 lee los proyectos, presets, samples y ajustes de SLOOP 2.8 una vez, en
    su primer arranque, y nunca los escribe.
-3. **FM-1 más nuevos (vendidos desde finales de 2026, logo de M-VAVE en el frontal, chip flash UCUN UC25HQ80): no lo
-   instales por ahora.** SLOOP 3 no se ha probado en esa revisión, m-bootloader está poco probado en ella y su autor
-   informa de un FM-1 así que dejó de arrancar tras instalar m-bootloader. En MIDI MODE la app lee el chip y dice cuál
-   es; para el más nuevo no ofrece la página del instalador. M-Flasher muestra lo mismo en FLASH CHIP: `0x856014` es
-   el chip antiguo, `0xB36014` el nuevo.
+3. **FM-1 más nuevos (vendidos desde finales de 2026, logo de M-VAVE en el frontal, chip flash UCUN UC25HQ80): solo
+   m-bootloader 2.4 y SLOOP 3 3.4.0 o posteriores, bajo tu propio riesgo.** Su dueño informa de un FM-1 así en el que
+   m-bootloader 2.4 y SLOOP 3 3.4.0 funcionan y guardar funciona (2026-11-19) – fuera de esta app, un solo equipo. Las
+   versiones anteriores de m-bootloader son arriesgadas ahí: su autor informa de un FM-1 así que dejó de arrancar tras
+   1.1 o 1.2. En MIDI MODE la app lee el chip y la versión de m-bootloader; para un equipo nuevo ofrece la página del
+   instalador solo con m-bootloader 2.4 en la versión de la que se informó (en MIDI MODE
+   «2.4-395e6cc») o 2.5 y posteriores (la copia de la flash, que solo lee, siempre en MIDI MODE). M-Flasher muestra el chip en FLASH CHIP:
+   `0x856014` es el chip antiguo, `0xB36014` el nuevo.
 4. Una actualización oficial de M-VAVE vuelve a poner el bootloader de M-VAVE. Después hay que instalar m-bootloader
    de nuevo.
 
@@ -58,5 +100,6 @@ con otro número: la app lo trata como un firmware propio.
   SLOOP 3 3.4.0, su editor incluido se conectó, se leyó una copia de seguridad de SLOOP 3 (6 partes, todas las sumas de
   verificación válidas), se reconoció el MIDI MODE de m-bootloader 2.4 (sin confundirlo con un modo de actualización) y
   se rechazó una instalación con SLOOP 3 en marcha sin enviar nada. **No probado en un FM-1 real:** restaurar una copia
-  de seguridad de SLOOP 3, la copia del flash en MIDI MODE, nada que escriba y nada en un FM-1 más nuevo (logo delante).
+  de seguridad de SLOOP 3, la copia del flash en MIDI MODE, nada que escriba y nada en un FM-1 más nuevo (logo delante) – lo que su dueño
+  informa desde fuera de la app está arriba, en el punto 3.
 * Más: [Cambiar de firmware](help:02-firmware) · [Copias de seguridad](help:04-backups) · [Enlaces](help:10-links)

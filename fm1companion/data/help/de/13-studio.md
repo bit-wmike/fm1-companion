@@ -130,7 +130,8 @@ alte Annäherung im Rechner bleibt nur, wenn es für die Firmware keinen Zwillin
   den Einstellungen) – nennt sie eine leere Section, läuft stattdessen die Schleife (bis zur Grenze des Exports, wie
   bei einem Song auf LOOP). Der Zwilling hat einen Kern (MENU › 2ND CORE wirkt nicht), kein USB-Audio, kein TRS-MIDI
   und keine USB-Rettung. Ein älteres SLOOP (z. B. 2.8.3) läuft mit dem 2.8.4-Zwilling, mit Hinweis. Die Projektansicht
-  liest SLOOPs Sections noch nicht (SLOOPs Web-Editor zeigt sie).
+  liest SLOOPs laufendes Projekt und seine Sections A–D (SLOOP 2.6 und neuer), je eine: ohne Nudges, Ratchets und
+  Section-Reihenfolge.
 * CoralFlower: keine Projektplätze – seine acht Patterns und der Song spielen über das Panel des Zwillings (SEQ, PLAY)
   oder mit Abspielen; Musik entsteht am Panel (CoralFlower hat keinen Editor). Die vier Stems sind seine Parts: Akkorde,
   Bass, Layer, Drums (ein Stem enthält weder den Klick des Metronoms noch den Einschaltklang; der Mix hat beides, wie das

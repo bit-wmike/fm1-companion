@@ -97,10 +97,11 @@ class StepRoll(QWidget):
 
     # ------------------------------------------------------------------ Data
     def set_steps(self, steps, length: int, keep_range: bool = False):
+        top = PF.NSTEP if self.editable else max(PF.NSTEP, len(steps))    # (shown only: SLOOP 3's 128 steps)
         self.steps = [PF.Step(list(s.notes), s.time, s.accent, s.slide, s.recorded, s.vel, s.hit, s.acc, s.chance)
-                      for s in steps[:PF.NSTEP]]
-        self.steps += [PF.Step() for _i in range(PF.NSTEP - len(self.steps))]
-        self.length = max(1, min(PF.NSTEP, length))
+                      for s in steps[:top]]
+        self.steps += [PF.Step() for _i in range(top - len(self.steps))]
+        self.length = max(1, min(top, length))
         notes = [n for s in self.steps[:self.length] for n in s.notes if s.time == PF.ST_NOTE]
         if not keep_range:
             if notes:
