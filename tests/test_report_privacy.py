@@ -215,3 +215,21 @@ def test_crash_dialog_texts(env):
     finally:
         i18n.set_language("de")
     del app
+
+
+def test_report_carries_the_m_flasher_job_logs_masked(env):
+    """review L6: the flight logs of the M-Flasher jobs (mflasher-backup/restore-…) go into the report, unit ids
+    masked"""
+    home, config, applog = env
+    pytest.importorskip("PyQt6.QtWidgets")
+    from fm1companion.flash import journal as fj
+    logs = fj.root() / "logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    (logs / "mflasher-restore-20000101-000000.txt").write_text("gate refused: unit id 13579bdf02468ace\n", "utf-8")
+    (logs / "mflasher-backup-20000101-000000.txt").write_text("both reads identical\n", "utf-8")
+    from fm1companion.ui import crash
+    z = zipfile.ZipFile(crash.build_report(home / "r.zip"))
+    names = z.namelist()
+    assert "flash/mflasher-restore-20000101-000000.txt" in names and "flash/mflasher-backup-20000101-000000.txt" in names
+    text = z.read("flash/mflasher-restore-20000101-000000.txt").decode()
+    assert "13579bdf02468ace" not in text and "…8ace" in text
