@@ -95,7 +95,7 @@ def test_no_melodee_command_reaches_another_firmware(name):
     _run_everything(link)
     sent = t.cmds()
     assert not [c for c, a in sent if c in MELODEE_ONLY], sent
-    writes = [a for c, a in sent if c == 30 and len(a) > 2]
+    writes = [a for c, a in sent if c == 30 and len(a) - 2 >= protocol.STEP12_FROM]
     if name == "skiff":
         assert writes                                          # Skiff reads Felucca's 12-byte step (editor.c)
     else:
@@ -114,7 +114,7 @@ def test_refused_before_sending(name):
     with pytest.raises(UnsupportedCommand) as e:
         MI.write_device_pattern(link, 0, None, steps, 16)
     assert e.value.feature == "pattern_write"
-    assert not [c for c, a in t.cmds() if c == 30 and len(a) > 2]
+    assert not [c for c, a in t.cmds() if c == 30 and len(a) - 2 >= protocol.STEP12_FROM]
     with pytest.raises(UnsupportedCommand):
         link.request(protocol.Cmd.BANK_SONG, [2])
     with pytest.raises(UnsupportedCommand):
@@ -143,6 +143,8 @@ def test_felucca_and_skiff_get_steps_but_no_banks():
         assert protocol.command_refusal(fw, 30, [0, 1]) == ""          # (a read is the same everywhere)
     for fw in ("sloop", "karma", "sloop3", "", "orbit", "clipper"):
         assert protocol.command_refusal(fw, 30, [0, 1] + [0] * 12) == "pattern_write"
+        assert protocol.command_refusal(fw, 30, [0, 1] + [0] * 11) == "pattern_write"     # (SLOOP 2: na >= 11)
+        assert protocol.command_refusal(fw, 30, [0, 1, 1, 60, 0, 0, 0, 0, 0, 100, 0, 0]) == ""   # its own 10 bytes
     assert protocol.command_refusal("melodee", 74, [1, 0]) == "" and protocol.command_refusal("melodee", 73, [0, 0]) == ""
 
 
