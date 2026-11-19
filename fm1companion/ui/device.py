@@ -13,8 +13,8 @@ from PyQt6.QtWidgets import (QDialog, QDialogButtonBox, QInputDialog, QLabel, QL
 
 from .. import config, firmware
 from ..i18n import N_, _
-from ..devices import (PortInfo, Profile, ProfileStore, identifying_serial, profile_unit_ids, scan_ports,
-                       serial_learnable, usable_serial)
+from ..devices import (PortInfo, Profile, ProfileStore, firmware_from_port, identifying_serial, profile_unit_ids,
+                       scan_ports, serial_learnable, usable_serial)
 from ..protocol import Cmd, Info, parse_info
 from ..transport import Link, LinkError, MidoTransport, SubprocessTransport
 from .common import JobDialog, run_job, show_error
@@ -256,15 +256,27 @@ class FirmwareChoiceDialog(QDialog):
 
 
 def last_firmware_text(p) -> str:
-    """what a profile last ran, for display: “Skiff 2.7”, “SLOOP 3 3.4.0” – the firmware's name, not its key, and the
-    version without the leading “v”. "" when the profile knows no firmware. (What the unit runs NOW may differ: the
-    texts that use this say “last seen”.)"""
-    import re as _re
+    """what a profile last ran, for display: “Skiff 2.7”, “SLOOP 3 3.4.0”, “FM1 Open V14”, “Original firmware V15” – the
+    firmware's name, not its key, and its version once (see firmware_version_text). "" when the profile knows no
+    firmware. (What the unit runs NOW may differ: the texts that use this say “last seen”.)"""
     key = getattr(p, "firmware", "") or ""
     name = firmware_name(key) or ("" if key == UNKNOWN_CHOICE else key)
     if not name:
         return ""
-    ver = _re.sub(r"^[vV](?=\d)", "", (getattr(p, "firmware_version", "") or "").strip())
+    return firmware_version_text(name, getattr(p, "firmware_version", "") or "")
+
+
+def firmware_version_text(name: str, tag: str) -> str:
+    """a firmware's name with its version tag, the version never twice: a Felucca-style tag without its leading “v”
+    (“v2.7” -> “Skiff 2.7”), an M-VAVE release number as M-VAVE writes it (“V14” -> “FM1 Open V14”), and nothing
+    when the name already carries that version (“Original firmware V15” + “V15”)."""
+    import re as _re
+    ver = (tag or "").strip()
+    m = _re.fullmatch(r"[vV](\d+)", ver)
+    ver = f"V{m.group(1)}" if m else _re.sub(r"^[vV](?=\d)", "", ver)
+    bare = _re.sub(r"^[vV](?=\d)", "", ver)
+    if bare and _re.search(r"(?<![\w.])[vV]?" + _re.escape(bare) + r"(?![\w.])", name):
+        ver = ""
     return f"{name} {ver}".strip()
 
 
@@ -346,7 +358,7 @@ class DeviceContext(QObject):
             return self.info.firmware_name
         if len(self.firmware_guess) == 1 and self.firmware_guess[0] != UNKNOWN_CHOICE:
             return self.firmware_guess[0]
-        return ""
+        return firmware_from_port(self.port)            # (FM1 Open's own USB ID / product name: no guess)
 
     @property
     def device_firmware(self) -> str:
@@ -681,6 +693,8 @@ class DeviceContext(QObject):
         p = self.profile
         choice = p.firmware_choice.get(ident, "") if p and ident else ""
         cands = firmware_candidates(ident) if ident else []
+        if not cands and firmware_from_port(self.port):
+            cands = [firmware_from_port(self.port)]             # (FM1 Open's own USB ID / product name)
         if hortator:                                # (Hortator told its name over its own protocol: no choice needed)
             guess = ["hortator"]
             if p:

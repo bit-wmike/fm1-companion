@@ -53,6 +53,20 @@ SLOOP3_HARDWARE: dict[str, tuple[bool, str]] = {
     "sloop3_new_chip": (False, "SLOOP 3 or m-bootloader on a newer FM-1 (logo on the front)"),
 }
 
+# M-VAVE's FM1 Open on a real FM-1 – not a writing step of the installer either. As of 2026-11-19: ONE earlier unit
+# (FM1 Open V14, installed outside the app), ONE Raspberry Pi 5, and NOT through the app's pages: the owner ran the
+# app's own module fm1companion/fm1open.py from a script, with the app closed. docs/UNTESTED.md ("FM1 Open") repeats
+# this table; tests/test_fm1open_quick.py keeps the two in sync.
+FM1OPEN_HARDWARE: dict[str, tuple[bool, str]] = {
+    "fm1open_probe": (True, "FM1 Open's sample protocol: the probe"),
+    "fm1open_bank_read": (True, "reading the sample bank"),
+    "fm1open_bank_write": (True, "writing a new sample bank and reading it back"),
+    "fm1open_bank_restore": (True, "restoring a saved .fm1s sample bank and reading it back"),
+    "fm1open_samples_page": (False, "the FM1 Open box on the page “Samples & Kits”"),
+    "fm1open_backup": (False, "an FM1 Open backup (projects, DX7 library banks, sample bank)"),
+    "fm1open_restore": (False, "restoring an FM1 Open backup / writing back from the Studio"),
+}
+
 # Reports by the owner of what ran OUTSIDE this app (his own tools: M-Flasher, the authors' installer pages) – not runs
 # of this app, so none of it counts as "tested" above. hardware.json cites the same report for its rows.
 OWNER_REPORTS: dict[str, str] = {

@@ -102,6 +102,13 @@ offenen Engine, und der FM1-Open-Zwilling des Studios ist genau dieser Simulator
   sichern** – selbst gespeicherte Stimmen gehen verloren. Eigene Stimmen in eine V15-Bank zu schreiben, bietet die App
   nicht an (das bräuchte erst einen Test am Gerät).
 
+**So kommst du heute zu FM1 Open:** Die App installiert FM1 Open nicht selbst. Der Weg, der an einem echten FM-1
+geklappt hat (2026-11-19): erst die Original-V15 (die installiert die App, [Firmware+](app://page/firmware)), dann
+M-VAVEs FM1-Open-Workbench im Browser mit **Force flash**. Eine laufende Firmware der Felucca-Familie (Melodee, Skiff,
+SLOOP …) lehnt das Paket der Workbench direkt ab – es wird nichts geschrieben. FM1 Open ändert den Startbereich des
+FM-1 (den Anfang seines Flash-Speichers). Zurück zu einer Firmware der Felucca-Familie geht es über die Original-V15
+oder über das Zurückspielen einer vorher gemachten vollständigen Flash-Sicherung.
+
 ## Der Zwilling als Gerät
 
 **Als Gerät benutzen** (oder oben in der Geräteauswahl „Studio-Zwilling … virtuell“) macht den Zwilling zum

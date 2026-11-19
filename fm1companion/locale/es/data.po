@@ -4414,3 +4414,15 @@ msgstr ", sino «{other}»"
 
 msgid "not said yet"
 msgstr "todavía sin indicar"
+
+msgid "This page does not restore onto an FM-1 with FM1 Open. Open the backup in the Studio and use “Write back to the FM-1 …” there (it makes a safety backup first) – that was never run on a real FM-1."
+msgstr "Esta página no restaura en un FM-1 con FM1 Open. Abre la copia en el Studio y usa allí “Volver a escribir en el FM-1 …” (antes hace una copia de seguridad) – eso nunca se ha probado en un FM-1 real."
+
+msgid "FM1 Open: the backup holds the working project (also unsaved changes), the 16 project slots, the four DX7 library banks and the sample bank – no settings. FM1 Open has no backup command: to read a saved project, the FM-1 loads each one into its working area in turn, and the app puts your working project back at the end (it then shows as changed). Playback stops. Tested on a real FM-1: only the transfer of the sample bank (from a script with the app's own code); the backup as a whole only in the simulation."
+msgstr "FM1 Open: la copia contiene el proyecto de trabajo (también los cambios sin guardar), las 16 ranuras de proyecto, los cuatro bancos de la biblioteca DX7 y el banco de muestras – sin ajustes. FM1 Open no tiene comando de copia: para leer un proyecto guardado, el FM-1 los carga uno tras otro en su área de trabajo, y al final la app vuelve a poner tu proyecto de trabajo (queda marcado como modificado). La reproducción se detiene. Probado en un FM-1 real: solo la transferencia del banco de muestras (desde un script con el código de la propia app); la copia completa solo en la simulación."
+
+msgid "Backup saved: {name} ({size}). The FM-1 shows your working project again (marked as changed when saved projects were read)."
+msgstr "Copia guardada: {name} ({size}). El FM-1 vuelve a mostrar tu proyecto de trabajo (marcado como modificado si se leyeron proyectos guardados)."
+
+msgid "Keep the cable connected until the backup is finished: if it is pulled in between, the working project cannot be put back – unsaved changes would be lost."
+msgstr "Deja el cable conectado hasta que termine la copia: si se desconecta a mitad, el proyecto de trabajo no se puede volver a poner – los cambios sin guardar se perderían."

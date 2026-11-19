@@ -53,12 +53,32 @@ KIND_TEXT = {"manuell": N_("manual"), "auto": N_("automatic"), "vor-Update": N_(
              "sicherheit": N_("safety")}
 
 
+# what an FM1 Open backup is – said beside every “Back up now” that offers one, and before it starts
+FM1OPEN_BACKUP_NOTE = N_(
+    "FM1 Open: the backup holds the working project (also unsaved changes), the 16 project slots, the four DX7 library "
+    "banks and the sample bank – no settings. FM1 Open has no backup command: to read a saved project, the FM-1 loads "
+    "each one into its working area in turn, and the app puts your working project back at the end (it then shows "
+    "as changed). Playback stops. Tested on a real FM-1: only the transfer of the sample bank (from a script with "
+    "the app's own code); the backup as a whole only in the simulation.")
+
+
+def fm1open_target(ctx) -> bool:
+    """the active device runs M-VAVE's FM1 Open and is connected over MIDI: backed up over its own file protocol
+    (fm1openbk.py, picked by the firmware key in backup.capture) – the same way as Studio › “Fetch from FM-1”"""
+    from .. import backup as _bk
+    return (not ctx.connected and getattr(ctx, "midi_connected", False) and ctx.port is not None
+            and not getattr(ctx, "is_virtual", False) and getattr(ctx, "protocol", "") != "update"
+            and ctx.firmware_key == _bk.FM1OPEN_KEY)
+
+
 def no_backup_reason(ctx) -> str:
     """why a backup isn't possible right now ("" = it is possible)"""
     if ctx.connected:
         return ""
     if getattr(ctx, "sloop3", None) is not None and getattr(ctx, "midi_connected", False):
         return ""                                   # (SLOOP 3: its own protocol and file, sloop3bk.py)
+    if fm1open_target(ctx):
+        return ""                                   # (M-VAVE's FM1 Open: its own file protocol, fm1openbk.py)
     if ctx.port is None:
         return _("No FM-1 connected. Please connect an FM-1 via USB.")
     if getattr(ctx, "protocol", "") == "update":
@@ -76,7 +96,8 @@ def no_backup_reason(ctx) -> str:
 def can_back_up(ctx) -> bool:
     """can the active device be backed up from the app right now? The one rule for every “Back up now” (Overview:
     the backup card and the quick access; the page “Backups”; make_backup): a firmware with the Felucca editor
-    protocol, or SLOOP 3 with its own (sloop3bk.py). no_backup_reason says why not."""
+    protocol, SLOOP 3 with its own (sloop3bk.py) or FM1 Open with its file protocol (fm1openbk.py). no_backup_reason
+    says why not."""
     return not no_backup_reason(ctx)
 
 
@@ -85,6 +106,10 @@ def make_backup(ctx, parent, note: str = "", kind: str = "") -> Path | None:
     why = no_backup_reason(ctx)
     if why:
         show_error(parent, _("Backup not possible"), why)
+        return None
+    if fm1open_target(ctx) and kind != "auto" and not confirm(parent, _("Backup"), _(FM1OPEN_BACKUP_NOTE) + "<br><br>" + _(
+            "Keep the cable connected until the backup is finished: if it is pulled in between, the working project "
+            "cannot be put back – unsaved changes would be lost."), ok=_("Back up")):
         return None
     prof = ctx.profile
     try:
@@ -124,9 +149,14 @@ def make_backup(ctx, parent, note: str = "", kind: str = "") -> Path | None:
         _mirror_quiet(ctx, path, w.log.emit)
         return path
 
+    fm1open = fm1open_target(ctx)
+
     def said(path) -> str:
         m = AB.read_meta(path)
         size = fmt_size(Path(path).stat().st_size)
+        if fm1open:                                 # (its saved projects were loaded in turn: not “nothing changed”)
+            return _("Backup saved: {name} ({size}). The FM-1 shows your working project again (marked as changed "
+                     "when saved projects were read).").format(name=Path(path).name, size=size)
         if m:
             return _("Backup saved: {name} ({parts} parts, {projects} projects, {size}). Nothing was changed on "
                      "the FM-1.").format(name=Path(path).name, parts=m.objects, projects=m.projects, size=size)
@@ -752,6 +782,8 @@ class BackupsPage(QWidget):
         n = self.tree.topLevelItemCount()
         bad = sum(1 for m in metas if m.damaged)
         why = no_backup_reason(self.ctx) if self.ctx.port is not None else ""
+        if not why and fm1open_target(self.ctx):
+            why = _(FM1OPEN_BACKUP_NOTE)                # (what it holds, how it is read, what was tested)
         if n:
             self.info.setText(ngettext("{n} backup, {size} in {folder}", "{n} backups, {size} in {folder}", n).format(
                 n=n, size=fmt_size(total), folder=folder) +
@@ -821,6 +853,10 @@ class BackupsPage(QWidget):
             self.refresh()
             return
         why = no_backup_reason(self.ctx)
+        if not why and fm1open_target(self.ctx):        # (backed up from here; restored from here: not offered)
+            why = _("This page does not restore onto an FM-1 with FM1 Open. Open the backup in the Studio and use "
+                    "“Write back to the FM-1 …” there (it makes a safety backup first) – that was never run on a real "
+                    "FM-1.")
         if why:
             show_error(self, _("Restore not possible"), why)
             return

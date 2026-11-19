@@ -94,6 +94,12 @@ browser simulator runs an open engine instead, and the studio's FM1 Open twin is
   before **cannot be saved first** – voices you stored there yourself are lost. Writing your own voices into a V15 bank
   is not offered (it would need a hardware test first).
 
+**Getting to FM1 Open today:** the app does not install FM1 Open itself. The way that worked on one real FM-1
+(2026-11-19): first the original V15 (the app installs it, [Firmware+](app://page/firmware)), then M-VAVE's FM1 Open
+Workbench in the browser with **Force flash**. A running Felucca-family firmware (Melodee, Skiff, SLOOP …) refuses the
+Workbench's package directly – nothing is written. FM1 Open changes the boot area of the FM-1 (the start of its flash
+memory). The way back to a Felucca-family firmware is the original V15 or restoring a full flash backup made before.
+
 ## The twin as a device
 
 **Use as device** (or “Studio twin … virtual” in the device selection at the top) makes the twin the

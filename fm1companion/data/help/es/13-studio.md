@@ -102,6 +102,13 @@ FM1 Open del Studio es exactamente ese código del simulador.
   las voces que guardaste tú se pierden. La app no ofrece escribir voces propias en un banco de la V15 (antes haría falta
   una prueba en el dispositivo).
 
+**Cómo llegar hoy a FM1 Open:** la app no instala FM1 Open por sí misma. El camino que funcionó en un FM-1 real
+(2026-11-19): primero la V15 original (la app la instala, [Firmware+](app://page/firmware)), después el Workbench de
+FM1 Open de M-VAVE en el navegador con **Force flash**. Un firmware de la familia Felucca en marcha (Melodee, Skiff,
+SLOOP …) rechaza directamente el paquete del Workbench – no se escribe nada. FM1 Open cambia la zona de arranque del
+FM-1 (el comienzo de su memoria flash). La vuelta a un firmware de la familia Felucca pasa por la V15 original o por
+restaurar una copia completa de la flash hecha antes.
+
 ## El gemelo como dispositivo
 
 **Usar como dispositivo** (o “Gemelo del Studio … virtual” en la selección de dispositivo de arriba) convierte el gemelo en el
