@@ -916,14 +916,6 @@ msgstr "M-Flasher ist installiert (alternatives Werkzeug, siehe Details)"
 msgid "Details: tool, memory areas, M-Flasher, Felucca 0.9"
 msgstr "Details: Werkzeug, Speicherbereiche, M-Flasher, Felucca 0.9"
 
-#: fm1companion/ui/pages/recovery.py:210
-msgid "M-Flasher: found – button above."
-msgstr "M-Flasher: gefunden – Knopf oben."
-
-#: fm1companion/ui/pages/recovery.py:211
-msgid "M-Flasher: not installed."
-msgstr "M-Flasher: nicht installiert."
-
 #: fm1companion/ui/pages/recovery.py:216
 msgid "Stage 3 – FM-1 Transporter (hardware)"
 msgstr "Stufe 3 – FM-1 Transporter (Hardware)"

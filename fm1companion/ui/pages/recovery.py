@@ -229,10 +229,17 @@ class RecoveryPage(QWidget):
             b_mf.clicked.connect(lambda: subprocess.Popen([mf], start_new_session=True))
             c2.layout().addLayout(_row(b_mf))
         self.details["uboot"] = Disclosure(_("Details: tool, memory areas, M-Flasher, Felucca 0.9"),
-                                           DETAILS_UBOOT + "<br><br>" + (_("M-Flasher: found – button above.") if mf
-                                                                         else _("M-Flasher: not installed.")))
+                                           DETAILS_UBOOT + "<br><br>" + (
+                                               _("A separately installed M-Flasher was found – button above.") if mf
+                                               else _("The app brings its own M-Flasher (see “Tools” below); a "
+                                                      "separately installed one is not needed.")))
         c2.layout().addWidget(self.details["uboot"])
         lay.addWidget(c2)
+
+        # ---- the bundled tools (M-Flasher, m-bootloader, SLOOP 3): versions, checksums, updates, licences
+        from ..tools_card import ToolsCard
+        self.tools = ToolsCard(ctx, self)
+        lay.addWidget(self.tools)
 
         # ---- Level 3
         c3 = Card(_("Stage 3 – FM-1 Transporter (hardware)"))
@@ -271,6 +278,7 @@ class RecoveryPage(QWidget):
     def activate(self):
         self.timer.start(1500)
         self.refresh()
+        self.tools.refresh()
 
     def deactivate(self):
         self.timer.stop()

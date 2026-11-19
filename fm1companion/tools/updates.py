@@ -56,6 +56,11 @@ class Offer:
     page: str = ""                  # the release page
 
 
+def titles() -> list[tuple[str, str]]:
+    """[(key, display name)] of the bundled tools"""
+    return [(k, mf.tool(k)["title"]) for k in mf.KEYS]
+
+
 def cache_file() -> Path:
     from .. import config
     return config.CACHE_DIR / "tools-check.json"

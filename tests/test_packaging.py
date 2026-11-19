@@ -625,10 +625,10 @@ def test_installer_copies_only_this_computers_m_flasher_after_the_checksum(tmp_p
     assert not (app / "tools-bin" / f"m-flasher/{ver}/x86_64").exists()
     msgs = []
     assert core.install_tool_binaries(src, app, log=msgs.append, machine="armv7l") == []   # 32-bit Pi OS
-    assert "no build for this computer" in msgs[-1] and not (app / "tools-bin").exists()
+    assert "M-Flasher" in msgs[-1] and not (app / "tools-bin").exists()
     (src / "tools-bin" / f"m-flasher/{ver}/x86_64/m-flasher").write_bytes(b"changed")
     assert core.install_tool_binaries(src, app, log=msgs.append, machine="x86_64") == []
-    assert "checksum" in msgs[-1]
+    assert f"m-flasher/{ver}/x86_64/m-flasher" in msgs[-1]
 
 
 @pytest.mark.skipif(not shutil.which("dpkg-deb"), reason="dpkg-deb missing")

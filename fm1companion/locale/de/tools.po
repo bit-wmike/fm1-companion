@@ -4183,3 +4183,270 @@ msgstr "Dieser Emulator braucht viel Rechenleistung; die eingebaute Ansicht dies
 #: fm1companion/ui/pages/simulator.py:85
 msgid "X0X has its own keys: white keys on Q–I and A–K, black keys on 1–0 and -, Space is PLAY, Z / X are OCT− / OCT+ (Z S X D C … do not play notes here)."
 msgstr "X0X hat eigene Tasten: weiße Tasten auf Q–I und A–K, schwarze Tasten auf 1–0 und -, die Leertaste ist PLAY, Z / X sind OCT− / OCT+ (Z S X D C … spielen hier keine Noten)."
+
+#: fm1companion/tools/updates.py:329
+msgid "The new version could not be stored."
+msgstr "Die neue Version ließ sich nicht ablegen."
+
+#: fm1companion/tools/updates.py:356
+msgid "The downloaded M-Flasher does not start or reports another version. Nothing was kept."
+msgstr "Der heruntergeladene M-Flasher startet nicht oder meldet eine andere Version. Nichts wurde behalten."
+
+#: fm1companion/tools/runner.py:127
+#, python-brace-format
+msgid "M-Flasher waits: {reason}"
+msgstr "M-Flasher wartet: {reason}"
+
+#: fm1companion/ui/pages/recovery.py:234
+msgid "The app brings its own M-Flasher (see “Tools” below); a separately installed one is not needed."
+msgstr "Die App bringt ihren eigenen M-Flasher mit (siehe „Werkzeuge“ unten); ein separat installierter ist nicht nötig."
+
+#: fm1companion/tools/updates.py:306
+#, python-brace-format
+msgid "The downloaded {file} does not match the checksum GitHub publishes for it. Nothing was kept."
+msgstr "Die heruntergeladene Datei {file} passt nicht zu der Prüfsumme, die GitHub dafür veröffentlicht. Nichts wurde behalten."
+
+#: fm1companion/ui/pages/recovery.py:233
+msgid "A separately installed M-Flasher was found – button above."
+msgstr "Ein separat installierter M-Flasher wurde gefunden – Knopf oben."
+
+#: fm1companion/ui/tools_card.py:169
+msgid "The app downloads it, checks it against the checksum GitHub publishes for the file and keeps the version you have now as the fallback until the new one has worked once. It does not install anything on the FM-1."
+msgstr "Die App lädt sie herunter, prüft sie gegen die Prüfsumme, die GitHub für die Datei veröffentlicht, und behält deine jetzige Version als Rückfall, bis die neue einmal funktioniert hat. Auf dem FM-1 installiert sie nichts."
+
+#: fm1companion/ui/tools_card.py:112
+#, python-brace-format
+msgid "{version} (not in this installation)"
+msgstr "{version} (nicht in dieser Installation)"
+
+#: fm1companion/ui/tools_card.py:173
+msgid "A new M-Flasher is used for reading only (device info, backups) until an update of this app has checked it for writing."
+msgstr "Ein neuer M-Flasher wird nur zum Lesen benutzt (Geräte-Info, Sicherungen), bis ein Update dieser App ihn fürs Schreiben geprüft hat."
+
+#: fm1companion/tools/updates.py:180 fm1companion/tools/updates.py:283
+msgid "The app is not allowed to go online (FM1C_NO_NET is set)."
+msgstr "Die App darf nicht ins Internet (FM1C_NO_NET ist gesetzt)."
+
+#: fm1companion/ui/settings_dialog.py:84
+msgid "never (only when you click)"
+msgstr "nie (nur wenn du klickst)"
+
+#: fm1companion/tools/updates.py:374
+msgid "fm1-uboot.boot does not match the release's SHA256SUMS. Nothing was kept."
+msgstr "fm1-uboot.boot passt nicht zur SHA256SUMS der Veröffentlichung. Nichts wurde behalten."
+
+#: fm1companion/ui/tools_card.py:187
+msgid "Not updated"
+msgstr "Nicht aktualisiert"
+
+#: fm1companion/ui/tools_card.py:98
+msgid "Last check"
+msgstr "Zuletzt geprüft"
+
+#: fm1companion/ui/main_window.py:423
+#, python-brace-format
+msgid "{tool} {version} is available – Recovery › Tools"
+msgstr "{tool} {version} ist verfügbar – Rettung › Werkzeuge"
+
+#: fm1companion/tools/updates.py:371
+msgid "The release's SHA256SUMS does not match the checksum GitHub publishes for it. Nothing was kept."
+msgstr "Die SHA256SUMS der Veröffentlichung passt nicht zu der Prüfsumme, die GitHub dafür veröffentlicht. Nichts wurde behalten."
+
+#: fm1companion/ui/tools_card.py:76
+msgid "Which FM-1 does M-Flasher see?"
+msgstr "Welches FM-1 sieht M-Flasher?"
+
+#: fm1companion/ui/tools_card.py:98
+msgid "Checksum"
+msgstr "Prüfsumme"
+
+#: fm1companion/ui/tools_card.py:204
+#, python-brace-format
+msgid "Running on USB MIDI: {name}"
+msgstr "Läuft über USB-MIDI: {name}"
+
+#: fm1companion/tools/updates.py:285
+msgid "An installation or recovery is running. Tools are not updated meanwhile – try again when it has finished."
+msgstr "Gerade läuft eine Installation oder Rettung. Solange werden keine Werkzeuge aktualisiert – versuch es wieder, wenn sie fertig ist."
+
+#: fm1companion/ui/tools_card.py:115
+msgid "verified"
+msgstr "geprüft"
+
+#: fm1companion/tools/updates.py:345
+msgid "The M-Flasher download is damaged. Nothing was kept."
+msgstr "Der M-Flasher-Download ist beschädigt. Nichts wurde behalten."
+
+#: fm1companion/ui/tools_card.py:98
+msgid "Bundled"
+msgstr "Mitgeliefert"
+
+#: fm1companion/tools/updates.py:291
+#, python-brace-format
+msgid "GitHub publishes no checksum for {file}, so the app cannot check the download. Nothing was kept."
+msgstr "GitHub veröffentlicht keine Prüfsumme für {file}, deshalb kann die App den Download nicht prüfen. Nichts wurde behalten."
+
+#: fm1companion/ui/tools_card.py:203
+#, python-brace-format
+msgid "In ROM download mode: {device}"
+msgstr "Im ROM-Download-Modus: {device}"
+
+#: fm1companion/ui/tools_card.py:35
+#, python-brace-format
+msgid "Licence: {tool}"
+msgstr "Lizenz: {tool}"
+
+#: fm1companion/ui/settings_dialog.py:83
+msgid "once a week"
+msgstr "einmal in der Woche"
+
+#: fm1companion/ui/settings_dialog.py:101
+msgid "Look for new versions of the bundled tools:"
+msgstr "Nach neuen Versionen der mitgelieferten Werkzeuge suchen:"
+
+#: fm1companion/ui/tools_card.py:125 fm1companion/ui/tools_card.py:176
+msgid "Update"
+msgstr "Aktualisieren"
+
+#: fm1companion/tools/updates.py:296
+#, python-brace-format
+msgid "Version {version} is already on this computer."
+msgstr "Version {version} ist schon auf diesem Rechner."
+
+#: fm1companion/tools/updates.py:376
+msgid "fm1-uboot.boot has an unexpected size. Nothing was kept."
+msgstr "fm1-uboot.boot hat eine unerwartete Größe. Nichts wurde behalten."
+
+#: fm1companion/ui/tools_card.py:115
+msgid "not verified"
+msgstr "nicht geprüft"
+
+#: fm1companion/ui/tools_card.py:206
+msgid "An FM-1 is in download mode, but the Linux driver “sg” is not loaded. The app's installer sets it up; by hand: sudo modprobe sg"
+msgstr "Ein FM-1 ist im Download-Modus, aber der Linux-Treiber „sg“ ist nicht geladen. Der Installer der App richtet ihn ein; von Hand: sudo modprobe sg"
+
+#: fm1companion/ui/tools_card.py:51
+msgid "Tools: M-Flasher, m-bootloader, SLOOP 3"
+msgstr "Werkzeuge: M-Flasher, m-bootloader, SLOOP 3"
+
+#: fm1companion/tools/runner.py:92 fm1companion/tools/runner.py:95
+#: fm1companion/tools/runner.py:97
+msgid "This M-Flasher command is not available in the app."
+msgstr "Dieser M-Flasher-Befehl ist in der App nicht verfügbar."
+
+#: fm1companion/ui/tools_card.py:201
+msgid "no answer within the time limit"
+msgstr "keine Antwort innerhalb der Zeitgrenze"
+
+#: fm1companion/ui/tools_card.py:113
+msgid "(update)"
+msgstr "(Aktualisierung)"
+
+#: fm1companion/ui/tools_card.py:118
+msgid "Show licence"
+msgstr "Lizenz anzeigen"
+
+#: fm1companion/tools/runner.py:76
+#, python-brace-format
+msgid "M-Flasher is not available for this computer ({machine}): it is built for 64-bit ARM (Raspberry Pi OS 64-bit) and for x86-64 PCs only. On a Raspberry Pi with the 32-bit system the recovery tools on this page still work."
+msgstr "M-Flasher gibt es für diesen Rechner nicht ({machine}): Er wird nur für 64-Bit-ARM (Raspberry Pi OS 64-Bit) und für x86-64-PCs gebaut. Auf einem Raspberry Pi mit dem 32-Bit-System funktionieren die Rettungswerkzeuge auf dieser Seite trotzdem."
+
+#: fm1companion/ui/tools_card.py:55
+msgid "The app brings these tools with it and checks each file's checksum before it uses it. In this version it only shows them, keeps them up to date and can ask M-Flasher which FM-1 it sees; flash backups, m-bootloader and SLOOP 3 through the app follow in later versions. A new version is only shown – it is fetched when you click “Update”, checked against GitHub's checksum, and the previous version stays as the fallback."
+msgstr "Die App bringt diese Werkzeuge mit und prüft vor jeder Verwendung die Prüfsumme jeder Datei. In dieser Version zeigt sie sie nur an, hält sie aktuell und kann M-Flasher fragen, welches FM-1 er sieht; Flash-Sicherungen, m-bootloader und SLOOP 3 über die App folgen in späteren Versionen. Eine neue Version wird nur angezeigt – geholt wird sie, wenn du auf „Aktualisieren“ klickst, dann gegen die Prüfsumme von GitHub geprüft, und die bisherige Version bleibt als Rückfall."
+
+#: fm1companion/tools/runner.py:85 fm1companion/tools/runner.py:118
+#: fm1companion/tools/runner.py:151
+msgid "The bundled M-Flasher did not pass its checksum test, so the app does not run it. Reinstall the app."
+msgstr "Der mitgelieferte M-Flasher hat die Prüfsummen-Kontrolle nicht bestanden, deshalb startet die App ihn nicht. Installiere die App neu."
+
+#: fm1companion/tools/updates.py:255
+msgid "The release file has no secure (https) address. Nothing was kept."
+msgstr "Die Datei der Veröffentlichung hat keine sichere (https-)Adresse. Nichts wurde behalten."
+
+#: fm1companion/ui/tools_card.py:135
+#, python-brace-format
+msgid "{tool}: the last check did not get an answer ({error})."
+msgstr "{tool}: Die letzte Suche bekam keine Antwort ({error})."
+
+#: fm1companion/tools/updates.py:339
+msgid "The M-Flasher download does not contain the expected program. Nothing was kept."
+msgstr "Der M-Flasher-Download enthält nicht das erwartete Programm. Nichts wurde behalten."
+
+#: fm1companion/tools/updates.py:366
+msgid "The m-bootloader release has no SHA256SUMS file. Nothing was kept."
+msgstr "Die m-bootloader-Veröffentlichung hat keine SHA256SUMS-Datei. Nichts wurde behalten."
+
+#: fm1companion/ui/tools_card.py:105
+#, python-brace-format
+msgid "The tool status could not be read: {error}"
+msgstr "Der Stand der Werkzeuge ließ sich nicht lesen: {error}"
+
+#: fm1companion/tools/updates.py:289
+msgid "The release has an unexpected version number. Nothing was kept."
+msgstr "Die Veröffentlichung hat eine unerwartete Versionsnummer. Nichts wurde behalten."
+
+#: fm1companion/ui/tools_card.py:161
+#, python-brace-format
+msgid "Not checked: {error}"
+msgstr "Nicht geprüft: {error}"
+
+#: fm1companion/ui/settings_dialog.py:83
+msgid "once a day"
+msgstr "einmal am Tag"
+
+#: fm1companion/ui/tools_card.py:98
+msgid "In use"
+msgstr "In Gebrauch"
+
+#: fm1companion/ui/settings_dialog.py:87
+msgid "Asks GitHub whether there are new versions of M-Flasher, m-bootloader and SLOOP 3. Only while the firmware update check above is switched on. A new version is only shown – the app never installs it by itself."
+msgstr "Fragt bei GitHub nach, ob es neue Versionen von M-Flasher, m-bootloader und SLOOP 3 gibt. Nur solange die Firmware-Update-Suche oben eingeschaltet ist. Eine neue Version wird nur angezeigt – die App installiert sie nie von sich aus."
+
+#: fm1companion/ui/tools_card.py:28
+#, python-brace-format
+msgid "{tool} {version} is available ({date})."
+msgstr "{tool} {version} ist verfügbar ({date})."
+
+#: fm1companion/tools/updates.py:385
+msgid "The SLOOP 3 file has an unexpected size. Nothing was kept."
+msgstr "Die SLOOP-3-Datei hat eine unerwartete Größe. Nichts wurde behalten."
+
+#: fm1companion/ui/tools_card.py:181
+#, python-brace-format
+msgid "{tool} {version} is ready. Until it has worked once, the previous version stays as the fallback."
+msgstr "{tool} {version} ist bereit. Bis sie einmal funktioniert hat, bleibt die bisherige Version als Rückfall."
+
+#: fm1companion/tools/runner.py:83
+msgid "M-Flasher is not bundled with this installation (a source checkout?). Run tools/fetch_tools.py once, or install the app from its .deb or .run package."
+msgstr "M-Flasher ist in dieser Installation nicht enthalten (ein Quellcode-Checkout?). Führe einmal tools/fetch_tools.py aus oder installiere die App aus ihrem .deb- oder .run-Paket."
+
+#: fm1companion/ui/tools_card.py:38
+msgid "No licence file found."
+msgstr "Keine Lizenzdatei gefunden."
+
+#: fm1companion/ui/tools_card.py:200
+#, python-brace-format
+msgid "M-Flasher did not answer as expected: {reason}"
+msgstr "M-Flasher hat nicht wie erwartet geantwortet: {reason}"
+
+#: fm1companion/ui/tools_card.py:78
+msgid "Runs “m-flasher find”: lists an FM-1 in ROM download mode and a running FM-1 on USB MIDI. Reads only – nothing is sent to the FM-1."
+msgstr "Führt „m-flasher find“ aus: listet ein FM-1 im ROM-Download-Modus und ein laufendes FM-1 über USB-MIDI. Liest nur – an das FM-1 wird nichts gesendet."
+
+#: fm1companion/ui/settings_dialog.py:84
+msgid "only when the app starts"
+msgstr "nur beim Start der App"
+
+#: fm1companion/ui/tools_card.py:73
+msgid "Asks GitHub now for new versions of the three tools (also when automatic checks are switched off in the settings)."
+msgstr "Fragt jetzt bei GitHub nach neuen Versionen der drei Werkzeuge (auch wenn die automatische Suche in den Einstellungen ausgeschaltet ist)."
+
+#: fm1companion/ui/tools_card.py:208
+msgid "M-Flasher sees no FM-1."
+msgstr "M-Flasher sieht kein FM-1."
+
+#: fm1companion/ui/tools_card.py:175
+#, python-brace-format
+msgid "Update {tool}?"
+msgstr "{tool} aktualisieren?"
