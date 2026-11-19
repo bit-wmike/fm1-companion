@@ -17,6 +17,8 @@ a save under way –, 3 nothing there, 4 check failed, 5 not a SLOOP 3 file, 6 f
 What the app itself sends, and only to a device that answered SLOOP 3's INFO:
 * INFO (1) – read only: protocol, tracks, the version text;
 * READ (5), BANK 0/1 (14), SAMPLE 0 (13), HOME without arguments (19) – read only (backups, sloop3bk.py);
+* LIVE (15) op 0 – read only, the state its editor polls (the FM-1 status page, health.sloop3_live: CPU, voices,
+  transport, meters; ops 1–16 press the panel and are never sent);
 * WBEGIN/WDATA/WEND (6–8) and BANK 2–4 – only when the user restores a backup.
 Everything else is the bundled web editor's business (fm1companion/sims/_editors/sloop3).
 
