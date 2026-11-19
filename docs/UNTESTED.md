@@ -201,7 +201,12 @@ confirmed.
   real Skiff 2.7 ran once, see above.)
 - Writing, renaming, deleting a preset and loading it onto a track on real Melodee; FM6_PUT and DX7 SysEx to the
   original firmware.
-- Writing a pattern/song (Compose, From MIDI File) on a real device.
+- Writing a pattern/song (Compose, From MIDI File) on a real device. After 2.6.2 the app sends Compose's 12-byte step
+  (TRACK_STEP 30) only to Melodee and to Felucca, Skiff and JIANT when their INFO carries Felucca's "motion + chance"
+  tag (a plain "FELUCCA v…" may be a SLOOP fork built with --release), and PATTERN 73 / BANK_SONG 74 only to Melodee:
+  on SLOOP 2 / KARMA those are DSYN_GET / DSYN_PUT, on Felucca and JIANT 73 is MENU_SET (before, Compose's pattern
+  choice changed Felucca's display settings), on Felucca 74 FM6B_BEGIN, on Skiff 74 KIT_GET. Checked in the sources
+  and against the SLOOP 2.8.5 twin, not on real devices.
 - FM1 Open sample protocol: reconstructed from the source code, only tested against our own simulator.
 
 ### Audio, desktop, installation

@@ -178,6 +178,9 @@ def test_library(tmp_path):
     assert lib["My_Song"].bpm == 122.5 and lib["My_Song"].bars == 6.0 and lib["My_Song"].version == 16
     assert lib["My_Song (2)"].bpm == 92 and lib["My_Song (2)"].bars == 4.0
     assert lib["broken"].problem and lib["broken"].bpm is None
+    (tmp_path / "huge.s3p").write_bytes(b"GBPJ\x10" + bytes(projects.S3P_MAX))   # (L5: not read whole)
+    huge = {f.name: f for f in projects.s3p_library(tmp_path)}["huge"]
+    assert huge.problem and huge.bpm is None
 
 
 @pytest.fixture
@@ -276,3 +279,40 @@ def test_project_view_reads_sloop3_live(s3ctx):
     assert "64 Steps" in v.roll_title.text() and "1/16" in v.roll_title.text()
     cmds = {S3.unframe(m)[0] for m in seen() if S3.unframe(m)}
     assert cmds <= {S3.Cmd.INFO, S3.Cmd.READ}
+
+
+def test_a_huge_song_is_capped_and_said(monkeypatch):
+    """M1: a song's bars are 16 bits in the file (any value loads on SLOOP 3): the view expands at most 999 bars, and
+    no selection more than ME.MAX_EVENTS notes – quickly, and it says so"""
+    import time
+    big = bytearray(V16)
+    struct.pack_into("<H", big, 1923, 0xFFFF)                 # (the song's length in bars: 65535)
+    raw = P.parse(bytes(big))
+    assert raw.song_len == 0xFFFF
+    prj = P.decode(bytes(big))
+    assert prj.ok and sum(r.repeat for r in prj.song) == P.MAX_SONG_BARS and "999" in prj.warnings[-1]
+    t0 = time.monotonic()
+    ev = ME.events(prj)
+    assert len(ev) < ME.MAX_EVENTS and time.monotonic() - t0 < 10
+    # a dense pattern looped over the longest song: cut at the budget, every track to the same point
+    st = PF.Step(notes=[60, 64, 67, 71], time=PF.ST_NOTE, vel=100)
+    dense = PF.Project(ok=True, bpm=120)
+    for k in range(2):
+        t = PF.Track(index=k, patterns=[PF.Pattern(index=0, steps=[st] + [PF.Step() for _i in range(63)], length=1,
+                                                   div=3)])
+        dense.tracks.append(t)
+    dense.song = [PF.SongRow(999, [0, 0], quarters=4.0 * 999)]
+    t0 = time.monotonic()
+    ev = ME.events(dense)
+    assert ev.cut and len(ev) <= ME.MAX_EVENTS and time.monotonic() - t0 < 30
+    assert {e.track for e in ev} == {0, 1}
+    act = ME.events(dense, ME.Options(mode="active", loops=64))
+    assert not act.cut
+    for t in dense.tracks:
+        t.patterns[0].length = 64
+        t.patterns[0].steps = [st] * 64
+    monkeypatch.setattr(ME, "MAX_EVENTS", 10_000)                   # (64 passes × 2 tracks × 256 notes: 32 768)
+    act = ME.events(dense, ME.Options(mode="active", loops=64))
+    assert len(act) <= ME.MAX_EVENTS
+    last = {k: max(e.start for e in act if e.track == k) for k in (0, 1)}
+    assert act.cut and abs(last[0] - last[1]) < 1                   # (both tracks to the same point)

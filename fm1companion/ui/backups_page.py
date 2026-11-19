@@ -17,10 +17,24 @@ from PyQt6.QtWidgets import (QCheckBox, QFileDialog, QFormLayout, QGroupBox, QHB
 
 from .. import autobackup as AB, backup, config, projects
 from ..i18n import N_, _, ngettext, pgettext
-from .common import confirm, fmt_date, fmt_size, fw_label, heading, icon, show_error
+from .common import confirm, fmt_date, fmt_size, fw_label, heading, icon, run_job, show_error
 from .responsive import reflow
 
 SORT = Qt.ItemDataRole.UserRole + 7
+
+
+
+def s3b_file_name(f) -> str:
+    """the suggested name for a backup saved as .s3b: device and date from the file – whatever a hand-edited file holds
+    there (a number, a list, "../x"), only letters, digits and "-" get into the name"""
+    comp = f.get("companion") if isinstance(f, dict) else None
+    dev = comp.get("device") if isinstance(comp, dict) else None
+    dev = dev if isinstance(dev, str) and dev.strip() else "FM-1"
+    created = f.get("created") if isinstance(f, dict) else None
+    stamp = created[:10] if isinstance(created, str) else ""
+    stamp = re.sub(r"[^\w-]+", "_", stamp).strip("_") or time.strftime("%Y-%m-%d")
+    dev = re.sub(r"[^\w-]+", "_", dev).strip("_") or "FM-1"      # (outside the f-string: Python 3.11 has no "\" there)
+    return f"{dev}-sloop3-backup-{stamp}.s3b"
 
 
 class _Row(QTreeWidgetItem):
@@ -1084,10 +1098,8 @@ class BackupsPage(QWidget):
             if not ok:
                 return
             project = "saved" if pick == items[0] else "now"
-        dev = (f.get("companion") or {}).get("device") or "FM-1"
-        stamp = (f.get("created") or "")[:10] or time.strftime("%Y-%m-%d")
         dest, _filter = QFileDialog.getSaveFileName(
-            self, _("Save as .s3b"), str(Path.home() / f"{re.sub(r'[^\w-]+', '_', dev)}-sloop3-backup-{stamp}.s3b"),
+            self, _("Save as .s3b"), str(Path.home() / s3b_file_name(f)),
             _("SLOOP 3 editor backup (*.s3b)"))
         if not dest:
             return
@@ -1146,13 +1158,26 @@ class BackupsPage(QWidget):
         return g
 
     def _flash_refresh(self, folder: Path):
+        """the list at once (descriptions only; files checked before and unchanged: their result), the check of the
+        others (SHA-256 + CRC-32 of 1 MiB each) in the background"""
         from .. import flashdump as FD
-        self.flash_tree.setSortingEnabled(False)
-        self.flash_tree.clear()
         try:
-            found = FD.list_backups(folder)
+            found = FD.list_backups(folder, verify=False)
         except OSError:
             found = []
+        self._flash_fill(found)
+        if any(fb.ok is None and not fb.problem for fb in found):
+            self._flash_gen = getattr(self, "_flash_gen", 0) + 1
+            gen = self._flash_gen
+
+            def done(res):
+                if gen == self._flash_gen:
+                    self._flash_fill(res)
+            run_job(self, lambda w: FD.list_backups(folder, verify=True), on_done=done)
+
+    def _flash_fill(self, found):
+        self.flash_tree.setSortingEnabled(False)
+        self.flash_tree.clear()
         for fb in found:
             if fb.ok:
                 check = _("✓ matches – CRC-32 {crc}, the chip's own when copied").format(crc=fb.crc32 or "?")
@@ -1212,14 +1237,21 @@ class BackupsPage(QWidget):
         from .. import flashdump as FD, samples as SM
         from .common import fs_error_text
         dest = self.ctx.settings.samples_dir / "SLOOP 3 (flash)" / path.stem     # i18n: ignore (folder name)
-        try:
-            image = FD.read_image(path)
-            res = FD.extract(image, dest)
-        except FD.FlashDumpError as e:
-            show_error(self, _("No samples taken out"), f"{path.name}: {e}")
-            return None
-        except OSError as e:
-            show_error(self, _("No samples taken out"), fs_error_text(e, _("the WAV files cannot be written")))
+
+        def work(w):                                 # (up to 4 × 16 zones decoded and written: in the background)
+            try:
+                return FD.extract(FD.read_image(path), dest)
+            except FD.FlashDumpError as e:
+                return f"{path.name}: {e}"
+            except OSError as e:
+                return fs_error_text(e, _("the WAV files cannot be written"))
+        from .common import JobDialog
+        d = JobDialog(self, _("Samples from the flash copy"), work, close_on_success=True)
+        d.exec()
+        res = d.result_value
+        if not d.ok or isinstance(res, str):
+            if d.ok:
+                show_error(self, _("No samples taken out"), res)
             return None
         try:
             lib = SM.Library()

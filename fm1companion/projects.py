@@ -259,6 +259,7 @@ def projects_from_backup(arch: backup.Archive) -> list[tuple[int, bytes]]:
 # project's own bytes, app/project.c), so a file goes into the editor's Projects tab and back unchanged. The name is the
 # file's name, the date its time; nothing else is stored beside it.
 S3P_SUFFIX = ".s3p"
+S3P_MAX = 65536                   # (a SLOOP 3 project is at most 52 992 bytes: store.h STORE_PMAX)
 
 
 @dataclass
@@ -281,6 +282,10 @@ def s3p_info(path: Path) -> S3pFile:
     path = Path(path)
     st = path.stat()
     f = S3pFile(path, st.st_size, st.st_mtime)
+    if st.st_size > S3P_MAX:
+        f.problem = _("too large for a SLOOP 3 project ({size} bytes; at most {max})").format(size=st.st_size,
+                                                                                           max=S3P_MAX)
+        return f
     try:
         data = path.read_bytes()
         f.version = S3P.version_of(data)

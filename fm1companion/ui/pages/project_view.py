@@ -202,21 +202,27 @@ class ProjectView(QWidget):
         else:
             self.player_bar.play()
 
-    def play_source(self) -> Source | None:
+    def play_source(self):
+        """the selection to play – worked out in the background (PlaybackBar runs the returned function in a job: a
+        long song must not freeze the window)"""
         if not self.prj or not self.prj.ok:
             return None
         o = self.options()
         pat = self.cur if o.mode == "pattern" else None
-        evs = ME.events(self.prj, o, pat)
-        loop = None
-        if o.mode == "pattern":
-            t = self.prj.tracks[self.cur[0]]
-            loop = ME.pattern_quarters(t.patterns[self.cur[1]], self.prj.swing)
-        elif evs:
-            loop = max(e.start + e.length for e in evs)
-            loop = float(int(loop + 3.999) // 4 * 4) or None   # to whole bars
-        return Source(evs, self.prj.bpm or 120, self.prj.name or self.source, self.prj, loop_quarters=loop,
-                      live_tag=self.live_tag)
+        prj, cur, name, live = self.prj, self.cur, self.prj.name or self.source, self.live_tag
+
+        def make() -> Source:
+            evs = ME.events(prj, o, pat)
+            loop = None
+            if o.mode == "pattern":
+                t = prj.tracks[cur[0]]
+                loop = ME.pattern_quarters(t.patterns[cur[1]], prj.swing)
+            elif evs:
+                loop = max(e.start + e.length for e in evs)
+                loop = float(int(loop + 3.999) // 4 * 4) or None   # to whole bars
+            return Source(evs, prj.bpm or 120, name, prj, loop_quarters=loop, live_tag=live,
+                          note=cut_text() if getattr(evs, "cut", False) else "")
+        return make
 
     def _update_song_row(self):
         from ..common import device_tag, same_device, unsupported
@@ -664,13 +670,43 @@ class ProjectView(QWidget):
             return None
         o = self.options()
         pat = self.cur if o.mode == "pattern" else None
-        if not ME.events(self.prj, o, pat):
+        prj = self.prj
+
+        def work():
+            evs = ME.events(prj, o, pat)
+            if not evs:
+                return None
+            ME.save_midi(prj, path, o, pat, evs)
+            return evs
+        ok, evs = self._background(_("Save MIDI file"), path, work)
+        if not ok:
+            return None
+        if not evs:
             show_error(self, _("No notes"), _("There are no notes in the chosen selection."))
             return None
-        if not self._write(path, lambda: ME.save_midi(self.prj, path, o, pat)):
-            return None
-        self._done(path)
+        self._done(path, getattr(evs, "cut", False))
         return path
+
+    def _background(self, title: str, path: Path, fn) -> tuple[bool, object]:
+        """fn() in a worker thread behind a progress dialog (a long song takes a while) -> (ok, its result); a write
+        error is said as on the page"""
+        from ..common import JobDialog
+        box: dict = {}
+
+        def work(w):
+            try:
+                return fn()
+            except OSError as e:
+                box["os"] = e
+                raise
+        d = JobDialog(self, title, work, close_on_success=True)
+        d.exec()
+        if "os" in box:
+            show_error(self, _("Not saved"), fs_error_text(box["os"], _("“{name}” not saved").format(name=path.name)))
+            return False, None
+        if not d.ok:
+            return False, None
+        return True, d.result_value
 
     def _write(self, path: Path, fn) -> bool:
         """Write the file; errors (e.g. read-only folder) as a readable message instead of a crash."""
@@ -687,10 +723,16 @@ class ProjectView(QWidget):
         path = path or self._target(".csv", _("Save CSV"), "CSV (*.csv)")
         if path:
             o = self.options()
-            if not self._write(path, lambda: path.write_text(ME.to_csv(self.prj, o, self.cur if o.mode == "pattern"
-                                                                         else None), "utf-8")):
+            prj, pat = self.prj, self.cur if o.mode == "pattern" else None
+
+            def work():
+                evs = ME.events(prj, o, pat)
+                path.write_text(ME.to_csv(prj, o, pat, evs), "utf-8")
+                return evs
+            ok, evs = self._background(_("Save CSV"), path, work)
+            if not ok:
                 return None
-            self._done(path)
+            self._done(path, getattr(evs, "cut", False))
         return path
 
     def export_json(self, path: Path | None = None):
@@ -715,7 +757,7 @@ class ProjectView(QWidget):
             self._done(path)
         return path
 
-    def _done(self, path: Path):
+    def _done(self, path: Path, cut: bool = False):
         try:
             from ..common import notify
             notify(_("Saved: {file}").format(file=path.name), "success", (_("Open folder"), self.open_folder))
@@ -723,7 +765,9 @@ class ProjectView(QWidget):
             pass
         msg = getattr(self.ctx, "message", None)
         if msg is not None:
-            msg.emit(_("Saved: {file}").format(file=path))
+            msg.emit(_("Saved: {file}").format(file=path) + (" " + cut_text() if cut else ""))
+        if cut:
+            show_error(self, _("Only a part saved"), cut_text())
 
     def open_folder(self):
         folder, err = safe_folder("MIDI-Export")
@@ -731,6 +775,12 @@ class ProjectView(QWidget):
             show_error(self, _("Open folder"), err)
             return
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
+
+
+def cut_text() -> str:
+    return _("The selection has more than {n} notes – only the first {n} are played or saved (from the start, every "
+             "track up to the same point). Choose fewer passes, or a pattern or part of the song.").format(
+        n=f"{ME.MAX_EVENTS:,}".replace(",", " "))
 
 
 def _make(ctx, window):

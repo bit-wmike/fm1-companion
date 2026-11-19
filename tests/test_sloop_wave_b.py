@@ -291,6 +291,28 @@ def test_flash_backups_listed_with_their_check(tmp_path):
     assert FD.describe(p).ok is False
 
 
+def test_flash_backup_checked_once_until_it_changes(tmp_path, monkeypatch):
+    """L5: a page refresh does not hash every 1 MiB copy again – only a new or changed file is read"""
+    import os
+    from pathlib import Path as _P
+    from fm1companion.flash import mboot
+    info = mboot.Info(version="2.4-395e6cc", kind=1, key=0, capacity=FD.FLASH_SIZE, jedec=0x856014, uid="00112233")
+    img = synthetic_dump({0: ("x", [(_sine(500), 60, None, None)])})
+    p = mboot.save_backup(tmp_path / "Flash", "Dev", info, img)
+    assert FD.describe(p).ok is True
+    reads = []
+    real = _P.read_bytes
+    monkeypatch.setattr(_P, "read_bytes", lambda self: reads.append(self) or real(self))
+    assert FD.describe(p).ok is True and p not in reads                       # (from the check before)
+    assert FD.list_backups(tmp_path, verify=False)[0].ok is True
+    raw = bytearray(img)
+    raw[9] ^= 1
+    p.write_bytes(bytes(raw))
+    os.utime(p, ns=(p.stat().st_atime_ns, p.stat().st_mtime_ns + 1_000_000))
+    assert FD.list_backups(tmp_path, verify=False)[0].ok is None              # (changed: not known until checked)
+    assert FD.describe(p).ok is False and p in reads
+
+
 # ------------------------------------------------------------ B6: backups ---
 
 def _backup(fake=None):
@@ -482,3 +504,37 @@ def test_sloop3_340_on_a_newer_unit_and_337_not():
     assert "owner report 2026-11-19" in H.source("sloop3")["source"]
     assert tested.SLOOP3_HARDWARE["sloop3_new_chip"][0] is False                    # (not run by this app)
     assert "newer_unit_mboot_sloop3" in tested.OWNER_REPORTS
+
+
+def test_fm1_page_sloop3_live_gentler_and_not_beside_its_editor():
+    """L1: every SLOOP 3 request refreshes its "editor active" time (fw/main.c ed_request ed_t_last), which keeps a
+    transfer left halfway alive: the page asks every 5 s, and not at all while SLOOP 3's editor is loaded"""
+    from types import SimpleNamespace
+    fake, link, t = s3link()
+    info = S3.Client(link).__enter__().info()
+    ctx = _Ctx(link, sloop3=info)
+    page = _page(ctx)
+    page.active = True
+    page._hold()
+    ctx.window = SimpleNamespace(editor=SimpleNamespace(loaded_for="sloop3/v3.4.0"))
+    n = len(t.seen)
+    page._live_tick()
+    _wait(lambda: False, 300)
+    assert len(t.seen) == n and "Editor" in page.live_state.text()
+    assert page.timer.interval() == 5000 and "5" in page.cb_live.text()
+    ctx.window.editor.loaded_for = ""                     # (the editor page shows something else / was never opened)
+    page._live_tick()
+    assert _wait(lambda: len(t.seen) > n)
+    page._release()
+
+
+def test_s3b_name_from_odd_fields():
+    """L4: a hand-edited backup's "created" / "companion" of another type, or with "/" in it, gives a plain name"""
+    pytest.importorskip("PyQt6.QtWidgets")
+    from fm1companion.ui.backups_page import s3b_file_name
+    for f in ({"created": 5}, {"companion": []}, {"companion": {"device": 7}}, {"created": None, "companion": None},
+              {"created": "../../etc/x", "companion": {"device": "../a b"}}, [], {}):
+        n = s3b_file_name(f)
+        assert n.endswith(".s3b") and "/" not in n and ".." not in n.replace(".s3b", ""), n
+    assert s3b_file_name({"created": "2026-11-19T10:00:00Z", "companion": {"device": "My FM-1"}}) == \
+        "My_FM-1-sloop3-backup-2026-11-19.s3b"

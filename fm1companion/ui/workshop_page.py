@@ -244,6 +244,16 @@ class WorkshopPage(QWidget):
         cur = self.pattern.currentIndex()
         self.pattern.clear()
         self.pattern.addItem(_("current pattern"), None)
+        why = unsupported(self.ctx, "pattern_banks")
+        self.pattern.setEnabled(not why)               # (Felucca, Skiff, JIANT: no PATTERN – the playing pattern only)
+        self.pattern.setToolTip(why)
+        if hasattr(self, "npat"):
+            self.npat.setEnabled(not why)
+            self.npat.setToolTip(why or _("Spread longer files over several consecutive patterns"))
+            if why:
+                self.npat.setValue(1)
+        if why:
+            return
         for i in range(n):
             self.pattern.addItem(f"Pattern {i + 1}", i)
         self.pattern.setCurrentIndex(max(0, min(cur, n)))
@@ -331,7 +341,7 @@ class WorkshopPage(QWidget):
             self.drums.blockSignals(False)
             need = MI.patterns_needed(self.tracks[i].notes, self._opts())
             self.npat.blockSignals(True)
-            self.npat.setValue(min(16, need))
+            self.npat.setValue(min(16, need) if self.npat.isEnabled() else 1)
             self.npat.blockSignals(False)
             self._npat_suffix(self.npat.value())         # (otherwise “16 Pattern” with blocked signals)
         self._preview()
@@ -369,6 +379,7 @@ class WorkshopPage(QWidget):
         self.npat.setSuffix(ngettext(" pattern", " patterns", v))
 
     def _dev_changed(self):
+        self._fill_patterns()
         # a firmware that reads the step another way (SLOOP 2: TRACK_STEP 30 with its own layout, 73/74 its drum synth
         # kits) gets nothing written; the song chain (BANK_SONG 74) only goes to Melodee
         gate_button(self.song, self.ctx, "song_chain", SONG_TIP)
@@ -402,6 +413,11 @@ class WorkshopPage(QWidget):
                 "into fewer.", npat - first).format(first=first + 1, n=npat - first, track=tr + 1))
             return
         if first is None and len(chunks) > 1:
+            if unsupported(self.ctx, "pattern_banks"):     # (one pattern only: never the playing one several times)
+                show_error(self, _("Too many patterns"), _("This firmware cannot choose a pattern from the app, so only "
+                                                           "the current pattern can be written – split into 1 pattern "
+                                                           "or shorten the part."))
+                return
             first = 0
         targets = [None] if first is None else list(range(first, first + len(chunks)))
         what = _("the current pattern") if first is None else \

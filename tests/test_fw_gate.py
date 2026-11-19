@@ -272,3 +272,42 @@ def test_pages_gate_their_buttons(qapp, name, monkeypatch):
     for p in (c, w, v):
         p.deleteLater()
     ctx.link.close()
+
+
+def test_a_pattern_that_cannot_be_chosen_stops_the_write():
+    """M2: on a firmware without PATTERN (Skiff, Felucca, JIANT) "pattern 2" is never quietly the playing pattern"""
+    for name in ("skiff", "felucca"):
+        t = FAKES[name]()
+        link = Link(t)
+        steps = [PF.Step(notes=[60], time=PF.ST_NOTE, vel=100)] + [PF.Step() for _i in range(63)]
+        for fn in (lambda: MI.write_device_pattern(link, 0, 1, steps, 16, verify=False),
+                   lambda: MI.read_device_pattern(link, 0, 1), lambda: MI.write_pattern(link, 0, 2, steps, 16)):
+            with pytest.raises(MI.ProtocolError) as e:
+                fn()
+            assert "nichts geschrieben" in str(e.value)                      # (German test UI)
+        assert not [a for c, a in t.cmds() if c == 30 and len(a) > 2]
+        assert isinstance(MI.write_device_pattern(link, 0, None, steps, 16, verify=False), str)   # the current one: fine
+
+
+@pytest.mark.parametrize("name", ["skiff", "melodee"])
+def test_pages_offer_only_the_current_pattern_without_banks(qapp, name, monkeypatch):
+    from fm1companion.ui.pages.compose import ComposePage
+    from fm1companion.ui.workshop_page import WorkshopPage
+    t = Recorder(FakeFM1()) if name == "melodee" else FAKES[name]()
+    ctx = _ctx(t, "x")
+    c, w = ComposePage(ctx), WorkshopPage(ctx)
+    if name == "melodee":
+        assert c.pattern.count() == 16 and c.pattern.isEnabled() and w.pattern.count() == 17 and w.npat.isEnabled()
+    else:
+        assert c.pattern.count() == 1 and c.pattern.currentData() is None and not c.pattern.isEnabled()
+        assert "unterstützt" in c.pattern.toolTip() or "does not support" in c.pattern.toolTip()
+        assert w.pattern.count() == 1 and not w.npat.isEnabled() and w.npat.value() == 1
+        shown = []
+        monkeypatch.setattr("fm1companion.ui.workshop_page.show_error", lambda *a: shown.append(a[-1]))
+        ctx.require = lambda parent: True
+        w.chunks = [[PF.Step() for _i in range(64)], [PF.Step() for _i in range(64)]]
+        w._send()
+        assert shown and not [x for x, _a in t.cmds() if x in (30, 73)]
+    for p in (c, w):
+        p.deleteLater()
+    ctx.link.close()

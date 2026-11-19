@@ -83,7 +83,8 @@ SLOOP 3 guarda **un proyecto** en el FM-1. La app lo lee igual que la copia de s
    m-bootloader 2.4 y SLOOP 3 3.4.0 funcionan y guardar funciona (2026-11-19) – fuera de esta app, un solo equipo. Las
    versiones anteriores de m-bootloader son arriesgadas ahí: su autor informa de un FM-1 así que dejó de arrancar tras
    1.1 o 1.2. En MIDI MODE la app lee el chip y la versión de m-bootloader; para un equipo nuevo ofrece la página del
-   instalador solo con m-bootloader 2.4 o posterior (la copia de la flash, que solo lee, siempre en MIDI MODE). M-Flasher muestra el chip en FLASH CHIP:
+   instalador solo con m-bootloader 2.4 en la versión de la que se informó (en MIDI MODE
+   «2.4-395e6cc») o 2.5 y posteriores (la copia de la flash, que solo lee, siempre en MIDI MODE). M-Flasher muestra el chip en FLASH CHIP:
    `0x856014` es el chip antiguo, `0xB36014` el nuevo.
 4. Una actualización oficial de M-VAVE vuelve a poner el bootloader de M-VAVE. Después hay que instalar m-bootloader
    de nuevo.

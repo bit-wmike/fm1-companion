@@ -76,6 +76,7 @@ class ComposePage(QWidget):
         ok = self.undo.matches(self.ctx)
         # a firmware that reads the step another way (SLOOP 2: TRACK_STEP 30 with its own layout) gets nothing written
         why = gate_button(self.b_write, self.ctx, "pattern_write", WRITE_TIP)
+        self._fill_patterns()                         # (no PATTERN command: only the current pattern is offered)
         self.b_undo.setEnabled(bool(self.undo))       # (an undo of another FM-1 says so first: "belongs to …")
         self.b_undo.setToolTip(self.undo.refusal() if self.undo and not ok else
                                why or _("Restore the pattern that was overwritten last"))
@@ -381,6 +382,14 @@ class ComposePage(QWidget):
         n = PF.NPAT if k < PF.NPART else PF.NPAT_MIDI
         cur = self.pattern.currentIndex()
         self.pattern.clear()
+        why = unsupported(self.ctx, "pattern_banks") if hasattr(self, "ctx") else ""
+        if why:                                       # (Felucca, Skiff, JIANT: no PATTERN – the playing pattern only)
+            self.pattern.addItem(_("current pattern"), None)
+            self.pattern.setEnabled(False)
+            self.pattern.setToolTip(why)
+            return
+        self.pattern.setEnabled(True)
+        self.pattern.setToolTip("")
         for b in range(n):
             self.pattern.addItem(f"Pattern {b + 1}", b)
         self.pattern.setCurrentIndex(max(0, min(cur, n - 1)))
@@ -607,6 +616,7 @@ class ComposePage(QWidget):
             show_error(self, _("Write to pattern"), why)
             return
         k, b = self.track.currentData(), self.pattern.currentData()
+        pn = _pattern_label(b)
         n = self.roll.length
         steps = list(self.roll.steps)
         if not any(not st.empty for st in steps[:n]):
@@ -629,14 +639,14 @@ class ComposePage(QWidget):
             else:
                 text = _("<b>Track {track}, pattern {pattern}</b> on the FM-1 is <b>empty</b> and will be overwritten "
                          "with {n} steps ({description}).")
-            text = text.format(track=k + 1, pattern=b + 1, used=len(used), length=snap.length, notes=notes, n=n,
+            text = text.format(track=k + 1, pattern=pn, used=len(used), length=snap.length, notes=notes, n=n,
                                description=G.describe(steps, n))
             if not confirm(self, _("Overwrite pattern"),
                            text + " " + _("The pattern is selected on the FM-1 in the process.") + "<br><br>" +
                            _("The old content has been read – “Undo” brings it back. Please stop the FM-1 first. "
                              "It only becomes permanent with SAVE on the FM-1."), _("Overwrite"), danger=True):
                 self.status.setText(_("Cancelled – track {track}, pattern {pattern} is unchanged.").format(
-                    track=k + 1, pattern=b + 1))
+                    track=k + 1, pattern=pn))
                 return
 
             def work(w, link):
@@ -648,21 +658,21 @@ class ComposePage(QWidget):
             def done(note):
                 state["ok"] = True
                 self.status.setText(_("Written and read back: track {track}, pattern {pattern}.").format(
-                    track=k + 1, pattern=b + 1) + " " + (note or "") + " " +
+                    track=k + 1, pattern=pn) + " " + (note or "") + " " +
                     _("Listen on the FM-1 and store it with SAVE."))
-            self.undo.push(self.ctx, snap, _("Track {track}, pattern {pattern}").format(track=k + 1, pattern=b + 1),
+            self.undo.push(self.ctx, snap, _("Track {track}, pattern {pattern}").format(track=k + 1, pattern=pn),
                            tag)                                                    # before writing: even half
             self._dev_changed()                                                    # written content can be restored
             self.ctx.job(self, _("Write pattern"), work, on_done=done,
                          done_text=_("Track {track}, pattern {pattern}: {n} steps written and read back. The old "
                                      "content is kept for “Undo”. It only becomes permanent with SAVE on the "
-                                     "FM-1.").format(track=k + 1, pattern=b + 1, n=n),
+                                     "FM-1.").format(track=k + 1, pattern=pn, n=n),
                          fail_text=lambda m: _("Not written: {error}. “Undo” restores the old state of track "
                                                "{track}, pattern {pattern} that was read.").format(
-                             error=m, track=k + 1, pattern=b + 1))
+                             error=m, track=k + 1, pattern=pn))
             if not state["ok"]:
                 self.status.setText(_("Not written – “Undo” sets track {track}, pattern {pattern} back to the state "
-                                      "that was read.").format(track=k + 1, pattern=b + 1))
+                                      "that was read.").format(track=k + 1, pattern=pn))
 
         self.ctx.job(self, _("Read pattern"), read, on_done=after_read,
                      fail_text=lambda m: _("Not read: {error}. Nothing was changed on the FM-1.").format(error=m))
@@ -676,7 +686,7 @@ class ComposePage(QWidget):
             return
         snap = self.undo.peek()
         if not confirm(self, _("Undo"), _("Set track {track}, pattern {pattern} back to the state before writing?").format(
-                track=snap.track + 1, pattern=(snap.pattern or 0) + 1), pgettext("undo", "Restore")):
+                track=snap.track + 1, pattern=_pattern_label(snap.pattern)), pgettext("undo", "Restore")):
             return
 
         def work(w, link):
@@ -686,16 +696,21 @@ class ComposePage(QWidget):
             self.undo.pop()
             self._dev_changed()
             self.status.setText(_("Restored: track {track}, pattern {pattern}.").format(
-                track=snap.track + 1, pattern=(snap.pattern or 0) + 1))
+                track=snap.track + 1, pattern=_pattern_label(snap.pattern)))
         self.ctx.job(self, _("Restore pattern"), work, on_done=done,
                      done_text=_("Track {track}, pattern {pattern} has its old content again.").format(
-                         track=snap.track + 1, pattern=(snap.pattern or 0) + 1))
+                         track=snap.track + 1, pattern=_pattern_label(snap.pattern)))
 
     def deactivate(self):
         self.play_bar.stop(quiet=True)              # preview is bound to the page, not to the app
 
     def shutdown(self):
         self.play_bar.shutdown()
+
+
+def _pattern_label(b) -> str:
+    """"5" for pattern 5, "(current)" for the pattern that plays (a firmware without PATTERN)"""
+    return _("(current)") if b is None else str(b + 1)
 
 
 def _make(ctx, window):

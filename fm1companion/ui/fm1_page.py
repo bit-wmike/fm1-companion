@@ -20,6 +20,11 @@ from ..i18n import N_, _, ngettext, pgettext
 from .common import fmt_size, heading, icon, run_job
 
 LIVE_MS = 2000
+# SLOOP 3: every request it gets sets its "editor active" time (fw/main.c ed_request: ed_t_last), which keeps a transfer
+# that was left halfway alive (it is dropped after 10 s without a request, main.c ~4489) and pauses its visualiser after a
+# READ (vis_busy, 2 s). So the app asks less often (5 s: past the visualiser's 2 s), and not at all while SLOOP 3's own
+# editor is loaded (page "Editor"): that one asks the FM-1 itself
+SLOOP3_LIVE_MS = 5000
 # row keys of self.f are identifiers (also used by the tests) -> translated row titles
 DEVICE_ROWS = ("Profil", "Firmware", "Engines", "Spuren", "Seriennummer")                    # i18n: ignore
 CONNECTION_ROWS = ("USB-Gerät", "USB-ID", "Tempo", "Anschluss", "MIDI-Port", "Soundkarte", "USB-Audio")  # i18n: ignore
@@ -437,8 +442,23 @@ class FM1Page(QWidget):
         else:
             self.timer.stop()
 
+    def _live_ms(self) -> int:
+        return SLOOP3_LIVE_MS if self._sloop3() is not None else LIVE_MS
+
+    def _sloop3_editor_open(self) -> bool:
+        """SLOOP 3's own editor is loaded on the page "Editor" (it polls the FM-1 itself, even while hidden)"""
+        win = getattr(self.ctx, "window", None)
+        ed = getattr(win, "editor", None) if win is not None else None
+        return bool(ed is not None and str(getattr(ed, "loaded_for", "") or "").startswith("sloop3/"))
+
     def _live_tick(self):
         if self.live_busy or not self._shown() or not self.active:
+            return
+        if self.timer.interval() != self._live_ms():
+            self.timer.setInterval(self._live_ms())
+            self.cb_live.setText(_("refresh every {n} s").format(n=self._live_ms() // 1000))
+        if self._sloop3() is not None and self._sloop3_editor_open():
+            self.live_state.setText(_("paused – SLOOP 3's editor is open (page “Editor”) and asks the FM-1 itself"))
             return
         why = self._busy_reason()
         if why:                                 # (a backup, restore or installation has the device: wait, ask nothing)

@@ -3988,10 +3988,6 @@ msgstr "Pattern-Wechsel abgelehnt – bitte SONG/Wiedergabe stoppen"
 msgid "The FM-1 is playing – please stop it so the pattern changes right away"
 msgstr "Das FM-1 spielt gerade – bitte stoppen, damit das Pattern sofort wechselt"
 
-#: fm1companion/midi_import.py:157
-msgid "This firmware has no pattern banks – the current pattern was written."
-msgstr "Diese Firmware kennt keine Pattern-Bänke – geschrieben wurde in das aktuelle Pattern."
-
 #: fm1companion/midi_import.py:161 fm1companion/midi_import.py:271
 msgid "unexpected answer while writing the steps"
 msgstr "unerwartete Antwort beim Schreiben der Steps"
@@ -4006,10 +4002,6 @@ msgid "This track only has {n} pattern"
 msgid_plural "This track only has {n} patterns"
 msgstr[0] "Diese Spur hat nur {n} Pattern"
 msgstr[1] "Diese Spur hat nur {n} Patterns"
-
-#: fm1companion/midi_import.py:229
-msgid "This firmware has no pattern banks – the current pattern was used."
-msgstr "Diese Firmware kennt keine Pattern-Bänke – benutzt wurde das aktuelle Pattern."
 
 #: fm1companion/midi_import.py:252
 msgid "unexpected answer while reading the steps"
@@ -4742,9 +4734,6 @@ msgstr "Der Zwilling läuft mit {twin} – er gehört nicht zum aktiven FM-1 „
 msgid "The active FM-1 does not run the twin's firmware ({twin}), so its keys do not play the twin by themselves. Tick the box if you want that anyway – it holds for this device until you quit."
 msgstr "Auf dem aktiven FM-1 läuft nicht die Firmware des Zwillings ({twin}), deshalb spielen seine Tasten den Zwilling nicht von selbst. Setz den Haken, wenn du das trotzdem willst – er gilt für dieses Gerät, bis du die App beendest."
 
-msgid "This firmware does not support writing patterns from the app (Melodee, Felucca and Skiff do)."
-msgstr "Diese Firmware unterstützt das Schreiben von Patterns aus der App nicht (Melodee, Felucca und Skiff können es)."
-
 msgid "This firmware does not support choosing a pattern from the app (only Melodee does)."
 msgstr "Diese Firmware unterstützt die Wahl eines Patterns aus der App nicht (nur Melodee kann es)."
 
@@ -4815,3 +4804,34 @@ msgstr[1] "{used} von {n} Sections belegt, laufendes Projekt {size}. SLOOP-Proje
 
 msgid "The project view does not read this firmware's projects."
 msgstr "Die Projektansicht liest die Projekte dieser Firmware nicht."
+
+#, python-brace-format
+msgid "Pattern {pattern} could not be chosen on the FM-1 ({error}) – nothing was written. Choose “current pattern” to write the pattern that is playing."
+msgstr "Pattern {pattern} ließ sich am FM-1 nicht wählen ({error}) – es wurde nichts geschrieben. Wähle „aktuelles Pattern“, um das Pattern zu schreiben, das gerade spielt."
+
+#, python-brace-format
+msgid "too large for a SLOOP 3 project ({size} bytes; at most {max})"
+msgstr "zu groß für ein SLOOP-3-Projekt ({size} Bytes; höchstens {max})"
+
+msgid "This firmware does not support writing patterns from the app (Melodee, Felucca, Skiff and JIANT do)."
+msgstr "Diese Firmware unterstützt das Schreiben von Patterns aus der App nicht (Melodee, Felucca, Skiff und JIANT können es)."
+
+#, python-brace-format
+msgid "The song is longer than {n} bars (the file says {bars}) – only its first {n} bars are shown, played and exported."
+msgstr "Der Song ist länger als {n} Takte (die Datei sagt {bars}) – nur seine ersten {n} Takte werden gezeigt, gespielt und exportiert."
+
+msgid "paused – SLOOP 3's editor is open (page “Editor”) and asks the FM-1 itself"
+msgstr "pausiert – der Editor von SLOOP 3 ist offen (Seite „Editor“) und fragt den FM-1 selbst"
+
+msgid "Only a part saved"
+msgstr "Nur ein Teil gespeichert"
+
+#, python-brace-format
+msgid "The selection has more than {n} notes – only the first {n} are played or saved (from the start, every track up to the same point). Choose fewer passes, or a pattern or part of the song."
+msgstr "Die Auswahl hat mehr als {n} Noten – nur die ersten {n} werden gespielt oder gespeichert (vom Anfang an, jede Spur bis zur selben Stelle). Wähle weniger Durchgänge oder ein Pattern bzw. einen Teil des Songs."
+
+msgid "Preparing the notes …"
+msgstr "Noten werden vorbereitet …"
+
+msgid "This firmware cannot choose a pattern from the app, so only the current pattern can be written – split into 1 pattern or shorten the part."
+msgstr "Diese Firmware kann aus der App kein Pattern wählen, also lässt sich nur das aktuelle Pattern schreiben – auf 1 Pattern aufteilen oder den Teil kürzen."

@@ -34,8 +34,18 @@ ROWS = {
     "hortator": ("v1.0.1", "drum-v1.0.0", "drum-v1.0.2"),
     "transitfm1": ("v0.1.4", "v0.1.3", "v0.2"),
     "sloop3": ("v3.4.0", "v3.3.7", "v3.4.1-beta"),              # (owner report: before the minimum "risky")
-    "m-bootloader": ("v2.4", "v2.0", "v2.5"),
+    "m-bootloader": ("v2.5", "v2.4", "v3.0"),                   # (2.4 only as the reported build: test below)
 }
+
+
+def test_mbootloader_24_only_as_the_reported_build():
+    """L2: the owner's report is of m-bootloader 2.4-395e6cc; a bare "2.4" (a build outside a git checkout, or an
+    exported / changed source) is another build: not counted"""
+    for v in ("2.4-395e6cc", "v2.4-395e6cc", "2.5", "v3.0"):
+        assert H.support("m-bootloader", v).status == H.YES, v
+    for v in ("2.4", "v2.4", "2.4.0", "2.4-deadbee", "2.4-395e6cc-dirty", "2.4rc1", "2.3.9"):
+        assert H.support("m-bootloader", v).status == H.RISKY, v
+    assert H.support("m-bootloader", "").status == H.UNKNOWN
 
 
 def test_table_is_whole_and_every_row_names_its_source():
@@ -194,7 +204,8 @@ CASES = [   # revision, target, -> blocked?, confirmations it must add
     ("new", lambda: cat_target("sloop3", "v3.4.0-beta"), False, set()),       # (one owner's report, 2026-11-19)
     ("", lambda: cat_target("m-bootloader", "v2.0"), False, {"no_logo"}),
     ("new", lambda: cat_target("m-bootloader", "v2.0"), True, set()),
-    ("", lambda: cat_target("m-bootloader", "v2.4"), False, set()),
+    ("", lambda: cat_target("m-bootloader", "v2.4-395e6cc"), False, set()),
+    ("", lambda: cat_target("m-bootloader", "v2.4"), False, {"no_logo"}),
     ("new", lambda: cat_target(flash=["856014", "B36014"], flash_tag="v1.0"), False, set()),
     ("new", lambda: cat_target(flash=["856014"], flash_tag="v1.0"), True, set()),
     ("new", lambda: target("stock-v15", "V15"), False, set()),

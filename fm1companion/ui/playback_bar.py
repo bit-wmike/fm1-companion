@@ -108,6 +108,7 @@ class Source:
     loop_quarters: float | None = None
     live_tag: tuple | None = None          # the running music of exactly this device (sounds certainly match)
     engines: dict = field(default_factory=dict)
+    note: str = ""                         # said while it plays (e.g. "only the first … notes")
 
 
 class _Status(QLabel):
@@ -236,6 +237,22 @@ class PlaybackBar(QWidget):
         except Exception as e:  # noqa: BLE001
             self.status.setText(_("Cannot be played: {error}").format(error=e))
             return
+        if callable(src) and not isinstance(src, Source):
+            # a source that takes a while to work out (a long song): in the background, the window stays usable
+            self._gen += 1
+            gen = self._gen
+            self.status.setText(_("Preparing the notes …"))
+
+            def ready(s):
+                if gen == self._gen:
+                    self._play_src(s)
+            run_job(self, lambda w: src(), on_done=ready,
+                    on_fail=lambda m, tb: self.status.setText(_("Cannot be played: {error}").format(error=m)))
+            return
+        self._play_src(src)
+
+    def _play_src(self, src):
+        self._src_note = getattr(src, "note", "") if src else ""
         if not src or not src.events:
             self.status.setText(_("Nothing to play – there are no notes in the selection."))
             return
@@ -476,15 +493,19 @@ class PlaybackBar(QWidget):
             loop = _(", pass {n}").format(n=s.loops + 1) if self.loop.isChecked() else ""
             drop = " · " + ngettext("{n} note skipped (FM-1 busy right now)", "{n} notes skipped (FM-1 busy right now)",
                                     s.dropped).format(n=s.dropped) if s.dropped else ""
-            extra = "<br>" + "<br>".join(html.escape(n) for n in self._notes) if getattr(self, "_notes", None) else ""
+            extra = self._extra()
             self.status.setText(self._label + " · " + _("bar {bar}/{total}").format(bar=min(bar, total), total=total)
                                 + f"{loop}{drop}{extra}")
         elif self.mode == COMPUTER:
             if self.player is None or not self.player.playing:
                 self._running(False)
                 return
-            extra = "<br>" + "<br>".join(html.escape(n) for n in self._notes) if getattr(self, "_notes", None) else ""
+            extra = self._extra()
             self.status.setText(self._label + extra)
+
+    def _extra(self) -> str:
+        notes = list(getattr(self, "_notes", None) or []) + ([self._src_note] if getattr(self, "_src_note", "") else [])
+        return "<br>" + "<br>".join(html.escape(n) for n in notes) if notes else ""
 
     def shutdown(self):
         self.stop(quiet=True)

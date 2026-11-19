@@ -46,6 +46,8 @@ SEQ_MAXSTEPS = 128
 SEQ_PATEV = 128
 SEQ_LOCKS = 32
 SEQ_SONG = 96
+MAX_SONG_BARS = 999                # the song the view expands, at most (999 bars: over half an hour at 120 BPM; a song's
+                                   # bars are 16 bits in the file, so a damaged one could ask for 65535)
 SEQ_TPS = 96                       # ticks a step
 GB_NPARAM = 48
 PS_BYTES, PS_BYTES12, PS_DRUM_BYTES = 8 + GB_NPARAM, 7 + GB_NPARAM, 34
@@ -556,9 +558,15 @@ def to_project(raw: Raw) -> PF.Project:
                 prj.pattern_sounds[(pos, i)] = len(prj.sounds)
     prj.tracks_in_use = SEQ_NTRK
     # the song: entry i from its bar to the next one's (the last: to the song's length)
+    total_bars, song_cut = 0, False
     for i, e in enumerate(raw.song):
         nxt = raw.song[i + 1].bar if i + 1 < len(raw.song) else raw.song_len
         bars = max(1, nxt - e.bar)
+        if total_bars + bars > MAX_SONG_BARS:
+            bars, song_cut = MAX_SONG_BARS - total_bars, True
+            if bars <= 0:
+                break
+        total_bars += bars
         changed = i == 0 or any(e.pats[t] != raw.song[i - 1].pats[t] for t in range(SEQ_NTRK))
         banks = []
         for pos, t in enumerate(order):
@@ -569,6 +577,12 @@ def to_project(raw: Raw) -> PF.Project:
             else:
                 banks.append(PF.CHAIN_HOLD)
         prj.song.append(PF.SongRow(repeat=bars, banks=banks, quarters=4.0 * bars))
+        if song_cut:
+            break
+    if song_cut:
+        prj.warnings.append(_("The song is longer than {n} bars (the file says {bars}) – only its first {n} bars are "
+                              "shown, played and exported.").format(n=MAX_SONG_BARS, bars=max(raw.song_len, max(
+                                  (x.bar for x in raw.song), default=0))))
     notes = []
     locks = len(prj.motion)
     if locks:

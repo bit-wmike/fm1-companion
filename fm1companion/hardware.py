@@ -12,8 +12,9 @@ The knowledge is data: fm1companion/data/hardware.json (one row per firmware, wi
                            the documented way back – see note)
                 "no"       it does not: on a newer unit it would not save and could not be updated any more
                 "risky"    its code accepts the chip, but it is unproven there or a unit did not start (m-bootloader
-                           before 2.4, SLOOP 3 before 3.4.0: rows with "below": "risky") – treat as "no" for a newer
-                           unit. (m-bootloader 2.4 and SLOOP 3 3.4.0 are "yes" by one owner's report, owner_report())
+                           before 2.4-395e6cc, SLOOP 3 before 3.4.0: rows with "below": "risky") – treat as "no" for a
+                           newer unit. (m-bootloader's build 2.4-395e6cc – not a bare "2.4", another build – and 2.5+,
+                           and SLOOP 3 3.4.0 are "yes" by one owner's report, owner_report())
                 "unknown"  nobody knows (not in the table, no version, an own file, the original V16)
         first_version      the first version that accepts the chip ("" = none known)
         note               one English sentence from the table (source), for logs and docs – not translated

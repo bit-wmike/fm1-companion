@@ -280,6 +280,13 @@ def describe(path: Path, verify: bool = True) -> FlashBackup:
     fb.created, fb.device = str(side.get("created") or ""), str(side.get("device") or "")
     fb.chip, fb.jedec = str(chip.get("name") or ""), str(chip.get("jedec") or "")
     fb.read_through, fb.crc32 = str(side.get("read_through") or ""), str(side.get("crc32") or "")
+    try:
+        key = (str(p), st.st_size, st.st_mtime_ns, p.with_suffix(".json").stat().st_mtime_ns)
+    except OSError:
+        key = None
+    if key is not None and key in _CHECKED:                # (the same file, unchanged since: not read again)
+        fb.ok, fb.problem = _CHECKED[key]
+        return fb
     if not verify:
         return fb
     try:
@@ -293,7 +300,12 @@ def describe(path: Path, verify: bool = True) -> FlashBackup:
         fb.ok, fb.problem = False, _("the file does not match its description (changed or damaged)")
     else:
         fb.ok = True
+    if key is not None:
+        _CHECKED[key] = (fb.ok, fb.problem)
     return fb
+
+
+_CHECKED: dict = {}          # (path, size, mtime, description's mtime) -> (ok, problem): a verified file is not hashed again
 
 
 def list_backups(folder: Path, verify: bool = True) -> list[FlashBackup]:
