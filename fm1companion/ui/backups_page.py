@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import shutil
 import time
 from pathlib import Path
@@ -188,9 +189,21 @@ class AutoBackupService(QObject):
         self.tick.start(60_000)
         ctx.changed.connect(self._changed)
 
+    def _sloop3_target(self):
+        """SLOOP 3 is connected and its automatic backups are switched on (off by default) -> its Info, else None"""
+        c = self.ctx
+        s3 = getattr(c, "sloop3", None)
+        if s3 is None or c.connected or not getattr(c, "midi_connected", False) or not AB.settings().get("sloop3"):
+            return None
+        return s3
+
+    def _target_ok(self) -> bool:
+        """a device the automatic backup may read: a Felucca-family firmware, or SLOOP 3 when switched on"""
+        return self.ctx.connected or self._sloop3_target() is not None
+
     def _changed(self):
         c = self.ctx
-        key = f"{c.port.key if c.port else ''}|{c.profile.id if c.profile else ''}" if c.connected else ""
+        key = f"{c.port.key if c.port else ''}|{c.profile.id if c.profile else ''}" if self._target_ok() else ""
         if getattr(c, "is_virtual", False):
             key = ""                           # the studio twin: no automatic backups (its state lives in the studio)
         prev, self._seen = self._seen, key
@@ -216,7 +229,7 @@ class AutoBackupService(QObject):
         c = self.ctx
         if self._pending is not None or self.running:
             return False
-        if not c.connected or not c.profile or getattr(c, "is_virtual", False) or self._skipped_today():
+        if not self._target_ok() or not c.profile or getattr(c, "is_virtual", False) or self._skipped_today():
             return False
         why = self.busy_reason()
         if why:
@@ -325,7 +338,7 @@ class AutoBackupService(QObject):
 
     def _periodic(self):
         s = AB.settings()
-        if s["periodic"] and self.ctx.connected and self.ctx.profile:
+        if s["periodic"] and self._target_ok() and self.ctx.profile:
             try:
                 folder = self.ctx.device_folder(self.ctx.settings.backups_dir)
             except OSError as e:
@@ -336,7 +349,7 @@ class AutoBackupService(QObject):
 
     def busy_reason(self) -> str:
         c = self.ctx
-        if not c.connected or not c.profile:
+        if not self._target_ok() or not c.profile:
             return _("no device")
         if getattr(c, "is_virtual", False):
             return _("Studio twin (not a real FM-1)")
@@ -363,7 +376,7 @@ class AutoBackupService(QObject):
     def run(self, reason: str = "", force: bool = False) -> bool:
         reason = reason or _("on connect")
         c = self.ctx
-        if not c.connected or not c.profile or getattr(c, "is_virtual", False):
+        if not self._target_ok() or not c.profile or getattr(c, "is_virtual", False):
             return False
         try:
             folder = c.device_folder(c.settings.backups_dir)
@@ -389,6 +402,10 @@ class AutoBackupService(QObject):
             return False
         self.running = True
         prof, fw, version = c.profile, c.firmware_key, c.info.version if c.info else ""
+        s3 = self._sloop3_target()
+        if s3 is not None:                         # (SLOOP 3: its own key – it decides which commands are sent)
+            from .. import sloop3 as _S3
+            fw, version = _S3.KEY, s3.label
         link = c.link
         keep = c.settings.keep_backups
         root = c.settings.backups_dir
@@ -495,13 +512,18 @@ class BackupsPage(QWidget):
                   btn(("tag", "bookmark-new"), _("Labels"), self._labels, _("e.g. “before firmware change”, “live set October”")),
                   btn(("pin", "window-pin", "emblem-favorite"), _("Pin"), self._pin,
                       _("Pinned backups are never deleted automatically")),
-                  btn(("document-import", "document-open"), _("Add file …"), self._import),
+                  btn(("document-import", "document-open"), _("Add file …"), self._import,
+                      _("A backup file (.json) – or the SLOOP 3 editor's own backup (.s3b), taken over as a SLOOP 3 "
+                        "backup")),
+                  btn(("document-export", "document-save-as"), _("As .s3b …"), self._export_s3b,
+                      _("Save a SLOOP 3 backup as the SLOOP 3 editor's own file (.s3b: the project and your sounds)")),
                   btn(("edit-delete",), _("Delete"), self._delete)):
             row2.addWidget(b)
         row2.addStretch(1)
         row2.addWidget(btn(("folder-open",), _("Open folder"), self._open_folder))
         lay.addLayout(row2)
         reflow(row2)
+        lay.addWidget(self._flash_box())
         lay.addWidget(self._auto_box())
         ctx.changed.connect(self.refresh)
         self.auto.updated.connect(self._auto_status)
@@ -534,6 +556,12 @@ class BackupsPage(QWidget):
         self.a_hours.setValue(int(s["hours"]))
         self.a_hours.setMaximumWidth(130)
         f.addRow(self.a_periodic, self.a_hours)
+        self.a_sloop3 = QCheckBox(_("also for SLOOP 3 (not tested while the FM-1 plays)"))
+        self.a_sloop3.setChecked(bool(s.get("sloop3")))
+        self.a_sloop3.setToolTip(_("Off by default. A SLOOP 3 backup only reads, but reading while SLOOP 3 plays has "
+                                   "not been tried on a real FM-1 yet. Switched on, it works like the others: "
+                                   "announced first, from the next connection. “Back up now” works either way."))
+        f.addRow("", self.a_sloop3)
         self.a_keep = QSpinBox()
         self.a_keep.setRange(1, 500)
         self.a_keep.setValue(int(self.ctx.settings.keep_backups or 20))
@@ -562,7 +590,7 @@ class BackupsPage(QWidget):
         mnote.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         mnote.setStyleSheet("color: palette(mid);")
         f.addRow("", mnote)
-        for wdg in (self.a_connect, self.a_periodic, self.a_monthly, self.a_mprune):
+        for wdg in (self.a_connect, self.a_periodic, self.a_monthly, self.a_mprune, self.a_sloop3):
             wdg.toggled.connect(self._save_auto)
         for wdg in (self.a_days, self.a_hours, self.a_keep):
             wdg.valueChanged.connect(self._save_auto)
@@ -600,7 +628,8 @@ class BackupsPage(QWidget):
         s = AB.settings()
         s.update(on_connect=self.a_connect.isChecked(), days=self.a_days.value(), periodic=self.a_periodic.isChecked(),
                  hours=self.a_hours.value(), keep_monthly=self.a_monthly.isChecked(),
-                 mirror=self.a_mirror.text().strip(), mirror_prune=self.a_mprune.isChecked())
+                 mirror=self.a_mirror.text().strip(), mirror_prune=self.a_mprune.isChecked(),
+                 sloop3=self.a_sloop3.isChecked())
         self.ctx.settings.keep_backups = self.a_keep.value()
         config.save(self.ctx.settings)
 
@@ -659,6 +688,7 @@ class BackupsPage(QWidget):
             self.info.setText(_("<b>Backup folder not reachable.</b> {error}").format(error=e))
             return
         total = 0
+        self._flash_refresh(folder)
         metas = AB.list_backups(folder, include_damaged=True)
         for m in metas:
             if self.chk_pinned.isChecked() and not m.pinned:
@@ -953,9 +983,13 @@ class BackupsPage(QWidget):
 
     def _import(self):
         files, _filter = QFileDialog.getOpenFileNames(self, _("Add backup files"), str(Path.home() / "Downloads"),
-                                                      _("Backups (*.json)"))
+                                                      _("Backups (*.json *.s3b)"))
         from .common import fs_error_text
         for f in files:
+            if Path(f).suffix.lower() == ".s3b":
+                if not self._import_s3b(Path(f)):
+                    break
+                continue
             try:
                 from .. import backup_inspect as BI
                 BI.inspect(Path(f))
@@ -980,6 +1014,241 @@ class BackupsPage(QWidget):
                 show_error(self, _("Not copied"), fs_error_text(e, _("{name} not copied").format(name=Path(f).name)))
                 break
         self.refresh()
+
+    # ------------------------------------------------- SLOOP 3's .s3b
+    def _import_s3b(self, src: Path) -> bool:
+        """the SLOOP 3 editor's backup file -> a SLOOP 3 backup in the device's folder. -> False: stop the import"""
+        from .. import sloop3bk as B
+        from .common import fs_error_text
+        try:
+            raw = src.read_bytes()
+            places = B.s3b_projects(raw)
+        except OSError as e:
+            show_error(self, _("Not copied"), fs_error_text(e, _("{name} not copied").format(name=src.name)))
+            return False
+        except B.Sloop3BackupError as e:
+            show_error(self, _("Not a valid file"), f"{src.name}: {e}")
+            return True
+        place = None
+        if len(places) > 1:                         # (a backup of SLOOP 3 before 3.3.5: 8 places, one goes in)
+            items = [_("project {n}").format(n=k + 1) for k in places]
+            pick, ok = QInputDialog.getItem(
+                self, _("Which project?"),
+                _("{name} holds {n} projects (SLOOP 3 before 3.3.5 had 8 places; now it keeps one). Which one should "
+                  "the backup hold?").format(name=src.name, n=len(places)), items, len(items) - 1, False)
+            if not ok:
+                return True
+            place = places[items.index(pick)]
+        prof = self.ctx.profile
+        try:
+            f = B.from_s3b(raw, place, AB.companion_block(prof, B.S3.KEY, B.NAME_S3B,
+                                                          _("from {name}").format(name=src.name), "manuell"),
+                           name=src.name)
+            folder = self._folder()
+            dest = folder / AB.backup_filename(prof.name if prof else "FM-1", B.S3.KEY)
+            n = 2
+            while dest.exists():
+                dest = dest.with_name(f"{dest.stem} ({n}).json")
+                n += 1
+            backup.write_file(dest, f)
+        except B.Sloop3BackupError as e:
+            show_error(self, _("Not a valid file"), f"{src.name}: {e}")
+            return True
+        except OSError as e:
+            show_error(self, _("Not copied"), fs_error_text(e, _("{name} not copied").format(name=src.name)))
+            return False
+        self.ctx.message.emit(_("SLOOP 3 editor backup taken over: {name} → {dest} (the project and your sounds; an "
+                                ".s3b has no banks or settings)").format(name=src.name, dest=dest.name))
+        return True
+
+    def _export_s3b(self):
+        p = self._sel_ok()
+        if not p:
+            return
+        from .. import sloop3bk as B
+        from .common import fs_error_text
+        try:
+            f = json.loads(p.read_text("utf-8"))
+            m = B.objects(f)
+        except (OSError, ValueError, RecursionError, UnicodeDecodeError, B.Sloop3BackupError) as e:
+            show_error(self, _("Not possible"), _("Only a SLOOP 3 backup can be saved as .s3b ({name}: {error}).").format(
+                name=p.name, error=e))
+            return
+        project = "saved"
+        if m.get(B.PROJECT) and m.get(B.NOW) and m[B.PROJECT] != m[B.NOW]:
+            items = [_("the project saved on the FM-1"), _("the project as it was at that moment (unsaved changes "
+                                                            "too)")]
+            pick, ok = QInputDialog.getItem(self, _("Which project?"),
+                                            _("An .s3b holds one project. This backup has two different ones:"),
+                                            items, 0, False)
+            if not ok:
+                return
+            project = "saved" if pick == items[0] else "now"
+        dev = (f.get("companion") or {}).get("device") or "FM-1"
+        stamp = (f.get("created") or "")[:10] or time.strftime("%Y-%m-%d")
+        dest, _filter = QFileDialog.getSaveFileName(
+            self, _("Save as .s3b"), str(Path.home() / f"{re.sub(r'[^\w-]+', '_', dev)}-sloop3-backup-{stamp}.s3b"),
+            _("SLOOP 3 editor backup (*.s3b)"))
+        if not dest:
+            return
+        try:
+            data = B.to_s3b(f, project)
+            Path(dest).write_bytes(data)
+        except B.Sloop3BackupError as e:
+            show_error(self, _("Not possible"), str(e))
+            return
+        except OSError as e:
+            show_error(self, _("Not saved"), fs_error_text(e, _("{name} cannot be written").format(name=Path(dest).name)))
+            return
+        self.ctx.message.emit(_("Saved for the SLOOP 3 editor: {name} – its “Restore” on the page “Projects” takes it "
+                                "(the project and your sounds).").format(name=Path(dest).name))
+
+    # ------------------------------------------------- flash backups
+    def _flash_box(self) -> QWidget:
+        g = QGroupBox(_("Flash backups (m-bootloader's MIDI MODE)"))
+        v = QVBoxLayout(g)
+        self.flash_tree = QTreeWidget()
+        self.flash_tree.setHeaderLabels([_("Date"), _("Device"), _("Size"), _("Flash chip"), _("Check"), _("File")])
+        self.flash_tree.setRootIsDecorated(False)
+        self.flash_tree.setSortingEnabled(True)
+        self.flash_tree.setMinimumHeight(90)
+        v.addWidget(self.flash_tree)
+        row = QHBoxLayout()
+        b = QPushButton(icon("folder-open"), _("Show in folder"))
+        b.clicked.connect(self._flash_show)
+        row.addWidget(b)
+        b = QPushButton(icon("audio-x-wav", "audio-x-generic"), _("Samples to the library"))
+        b.setToolTip(_("Take SLOOP 3's samples USR1–USR4 out of the selected flash backup, as WAV files into the "
+                       "sample library. Nothing is sent to an FM-1."))
+        b.clicked.connect(self._flash_samples)
+        row.addWidget(b)
+        b = QPushButton(icon("document-open"), _("Samples from a file …"))
+        b.setToolTip(_("The same from a flash copy M-Flasher saved (a .bin of the whole flash)"))
+        b.clicked.connect(self._flash_samples_file)
+        row.addWidget(b)
+        row.addStretch(1)
+        v.addLayout(row)
+        reflow(row)
+        self.flash_info = QLabel()
+        self.flash_info.setWordWrap(True)
+        self.flash_info.setMinimumWidth(0)
+        self.flash_info.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        v.addWidget(self.flash_info)
+        note = QLabel(_("A flash backup is a copy of the FM-1's whole flash, made in m-bootloader's MIDI MODE (Firmware+ "
+                        "› SLOOP 3). The app does not write it back – there is no restore button here: restoring a "
+                        "flash image is M-Flasher's job, in USB download mode, onto the same FM-1 it came from."))
+        note.setWordWrap(True)
+        note.setMinimumWidth(0)
+        note.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        note.setStyleSheet("color: palette(mid);")
+        v.addWidget(note)
+        return g
+
+    def _flash_refresh(self, folder: Path):
+        from .. import flashdump as FD
+        self.flash_tree.setSortingEnabled(False)
+        self.flash_tree.clear()
+        try:
+            found = FD.list_backups(folder)
+        except OSError:
+            found = []
+        for fb in found:
+            if fb.ok:
+                check = _("✓ matches – CRC-32 {crc}, the chip's own when copied").format(crc=fb.crc32 or "?")
+            elif fb.ok is False:
+                check = _("✗ {problem}").format(problem=fb.problem)
+            else:
+                check = fb.problem or _("not checked")
+            chip = " ".join(x for x in (fb.chip, fb.jedec and f"({fb.jedec})") if x) or "–"
+            it = _Row([fb.when.strftime("%d.%m.%Y %H:%M"), fb.device or fb.path.parent.parent.name, fmt_size(fb.size),
+                       chip, check, fb.path.name])
+            it.setData(0, Qt.ItemDataRole.UserRole, str(fb.path))
+            it.setData(0, SORT, fb.when.timestamp())
+            it.setData(2, SORT, float(fb.size))
+            it.setToolTip(0, str(fb.path))
+            it.setToolTip(4, check + ("\n" + fb.read_through if fb.read_through else ""))
+            if fb.ok is False:
+                for c in range(6):
+                    it.setForeground(c, QColor("#da4453"))
+            self.flash_tree.addTopLevelItem(it)
+        self.flash_tree.setSortingEnabled(True)
+        self.flash_tree.sortByColumn(0, Qt.SortOrder.DescendingOrder)
+        for c in range(5):
+            self.flash_tree.resizeColumnToContents(c)
+        self.flash_info.setText(ngettext("{n} flash backup", "{n} flash backups", len(found)).format(n=len(found))
+                                if found else _("No flash backups here yet."))
+
+    def _flash_sel(self) -> Path | None:
+        it = self.flash_tree.currentItem()
+        if it is None:
+            show_error(self, _("Nothing selected"), _("Please select a flash backup in the list first."))
+            return None
+        return Path(it.data(0, Qt.ItemDataRole.UserRole))
+
+    def _flash_show(self):
+        p = self._flash_sel()
+        if p:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(p.parent)))
+
+    def _flash_samples(self):
+        p = self._flash_sel()
+        if p:
+            self.samples_from_flash(p)
+
+    def _flash_samples_file(self):
+        try:
+            start = str(self._folder())
+        except OSError:
+            start = str(Path.home())
+        f, _filter = QFileDialog.getOpenFileName(self, _("Flash copy (whole flash)"), start,
+                                                 _("Flash copies (*.bin);;All files (*)"))
+        if f:
+            self.samples_from_flash(Path(f))
+
+    def samples_from_flash(self, path: Path) -> list[Path] | None:
+        """SLOOP 3's USR1–USR4 from a flash copy as WAV files into Samples › SLOOP 3 (flash) › <file>; offline.
+        -> the files written (None: not possible)"""
+        from .. import flashdump as FD, samples as SM
+        from .common import fs_error_text
+        dest = self.ctx.settings.samples_dir / "SLOOP 3 (flash)" / path.stem     # i18n: ignore (folder name)
+        try:
+            image = FD.read_image(path)
+            res = FD.extract(image, dest)
+        except FD.FlashDumpError as e:
+            show_error(self, _("No samples taken out"), f"{path.name}: {e}")
+            return None
+        except OSError as e:
+            show_error(self, _("No samples taken out"), fs_error_text(e, _("the WAV files cannot be written")))
+            return None
+        try:
+            lib = SM.Library()
+            for f in res.files:
+                lib.add_file(f, root=self.ctx.settings.samples_dir, tags="sloop3")
+        except Exception:  # noqa: BLE001 – the files are there; the library finds them on its next scan
+            pass
+        lines = []
+        for sl in res.slots:
+            if sl.used:
+                lines.append(ngettext("{slot} “{name}”: {n} sound", "{slot} “{name}”: {n} sounds", len(sl.zones)).format(
+                    slot=sl.label, name=sl.name or "?", n=len(sl.zones)))
+            else:
+                lines.append(f"{sl.label}: {sl.problem}")
+        from PyQt6.QtWidgets import QMessageBox
+        head = (ngettext("{n} WAV file is in {folder}:", "{n} WAV files are in {folder}:", len(res.files)).format(
+            n=len(res.files), folder=dest) if res.files else _("No sample found in {name}.").format(name=path.name))
+        QMessageBox(QMessageBox.Icon.Information, _("Samples from the flash copy"),
+                    head + "<br>" + "<br>".join(lines) + "<br><br>" +
+                    _("These four places are shared: SLOOP 2.8 keeps its samples at the same addresses and in the same "
+                      "format, so a copy made under SLOOP 2.8 gives SLOOP 2.8's samples. Nothing was sent to an FM-1."),
+                    parent=self).exec()
+        win = getattr(self.ctx, "window", None)
+        sp = getattr(win, "samples", None) if win is not None else None
+        if sp is not None and hasattr(sp, "scan"):
+            try:
+                sp.scan()
+            except Exception:  # noqa: BLE001
+                pass
+        return res.files
 
     def _delete(self):
         p = self._sel()

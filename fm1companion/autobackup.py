@@ -33,7 +33,10 @@ from . import backup, config
 from .i18n import _, ngettext
 
 DEFAULTS = {"on_connect": True, "days": 1, "periodic": False, "hours": 6, "keep_monthly": True,
-            "mirror": "", "delay_s": 20, "mirror_prune": True}
+            "mirror": "", "delay_s": 20, "mirror_prune": True,
+            # SLOOP 3 too (sloop3bk.py: read-only commands). OFF until it has been tried on a real FM-1 while it plays –
+            # the owner's decision is pending; "Back up now" works either way
+            "sloop3": False}
 AUTO_KINDS = ("auto", "vor-Update", "sicherheit")
 _lock = threading.Lock()
 

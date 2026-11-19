@@ -891,8 +891,8 @@ def diff(a: Report, b: Report) -> Diff:
 
 def _payload(p: PresetSlot) -> bytes:
     r = p.raw
-    if p.fw == "sloop3":                             # (without the name: S3US places' 4..15, a DX7 voice's 118..127)
-        return r[1:4] + r[16:] if p.prefix == "S" else r[:118]
+    if p.fw == "sloop3":                             # (without used/engine/name: S3US places' 0, 1, 4..15; a DX7
+        return r[2:4] + r[16:] if p.prefix == "S" else r[:118]    # voice's name 118..127)
     if p.prefix == "U" and len(r) >= 16:
         return r[1:2] + r[3:4] + r[16:]            # without used/engine/name
     return r
