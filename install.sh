@@ -11,6 +11,10 @@
 #   ./install.sh --usb-power-rule
 #                           also install the optional udev rule that keeps the FM-1 and its USB hubs awake while
 #                           flashing (asks for sudo; without the flag the script asks, --no-usb-power-rule: never)
+#   ./install.sh --download-mode-rule
+#                           let the app reach an FM-1 in ROM download mode without an administrator password (udev
+#                           rule for USB 4c4a:8057 + the `sg` driver at boot; asks for sudo; without the flag the
+#                           script asks – default yes –, --no-download-mode-rule: never)
 #   ./install.sh --help     show this help
 #
 # Graphical: FM-1-Companion-Suite-<version>.run, as a package: fm1-companion_<version>_all.deb
@@ -41,6 +45,10 @@ FM-1 Companion Suite installieren – für den eigenen Benutzer (App selbst brau
   ./install.sh --usb-power-rule
                           zusätzlich die optionale udev-Regel installieren: hält das FM-1 und seine USB-Hubs beim
                           Flashen wach (fragt nach sudo; ohne Schalter fragt das Skript, --no-usb-power-rule: nie)
+  ./install.sh --download-mode-rule
+                          die App ein FM-1 im ROM-Download-Modus ohne Administrator-Passwort erreichen lassen
+                          (udev-Regel für USB 4c4a:8057 + Treiber sg beim Start; fragt nach sudo; ohne Schalter
+                          fragt das Skript – Standard ja –, --no-download-mode-rule: nie)
 
 Wieder entfernen: ./uninstall.sh  (oder Startmenü › „FM-1 Companion deinstallieren“)
 HILFE
@@ -56,19 +64,25 @@ Install the FM-1 Companion Suite – for your own user (the app itself needs no 
   ./install.sh --usb-power-rule
                           also install the optional udev rule: keeps the FM-1 and its USB hubs awake while
                           flashing (asks for sudo; without the flag the script asks, --no-usb-power-rule: never)
+  ./install.sh --download-mode-rule
+                          let the app reach an FM-1 in ROM download mode without an administrator password
+                          (udev rule for USB 4c4a:8057 + the sg driver at boot; asks for sudo; without the flag the
+                          script asks – default yes –, --no-download-mode-rule: never)
 
 Remove again: ./uninstall.sh  (or start menu › "Uninstall FM-1 Companion")
 HELP
   fi
 }
 
-NO_APT=0; EXTRA=(); UDEV=ask
+NO_APT=0; EXTRA=(); UDEV=ask; DLRULE=ask
 for a in "$@"; do
   case "$a" in
     --help|-h) usage; exit 0 ;;
     --no-apt) NO_APT=1 ;;
     --usb-power-rule) UDEV=yes ;;
     --no-usb-power-rule) UDEV=no ;;
+    --download-mode-rule) DLRULE=yes ;;
+    --no-download-mode-rule) DLRULE=no ;;
     --desktop|--demo-data|--no-menu|--no-fluidsynth-fix) EXTRA+=("$a") ;;
     *) printf '%s %s\n' "$(msg "Unknown option:" "Unbekannte Option:")" "$a" >&2
        printf '%s\n' "$(msg "Nothing was changed. See ./install.sh --help" "Nichts wurde verändert. Siehe ./install.sh --help")" >&2
@@ -159,6 +173,20 @@ info "$(msg "Installing the app" "Installiere die App")"
 # (the udev rule is this script's step 3: it installs it, asks, or was told not to – so the core must not print its
 # own "Optional: a udev rule …" hint; only when nobody can be asked (no terminal) the hint is the only mention)
 if [[ "$UDEV" != ask || -t 0 ]]; then EXTRA+=("--no-udev-hint"); fi
+# FM-1 in ROM download mode without root (udev uaccess for 4c4a:8057 + sg): asked here, default yes; without a
+# terminal only with --download-mode-rule (nobody can type the sudo password)
+if [[ "$DLRULE" == ask && -t 0 && ! -f /etc/udev/rules.d/70-fm1-companion-download-mode.rules ]]; then
+  info "$(msg "The app can reach an FM-1 in ROM download mode (for flash backups and recovery with the bundled
+    M-Flasher) without asking for the administrator password every time. For that a udev rule gives the user at
+    this computer access to the FM-1 in download mode (USB 4c4a:8057), and the 'sg' driver is loaded at boot." \
+              "Die App kann ein FM-1 im ROM-Download-Modus (für Flash-Sicherungen und Rettung mit dem mitgelieferten
+    M-Flasher) erreichen, ohne jedes Mal nach dem Administrator-Passwort zu fragen. Dafür gibt eine udev-Regel dem
+    Benutzer an diesem Rechner Zugriff auf das FM-1 im Download-Modus (USB 4c4a:8057), und der Treiber 'sg' wird beim
+    Start geladen.")"
+  read -r -p "$(msg "Install it (needs sudo)? [Y/n] " "Installieren (braucht sudo)? [J/n] ")" ans || ans=""
+  case "$ans" in [nN]*) DLRULE=no ;; *) DLRULE=yes ;; esac
+fi
+[[ "$DLRULE" == yes ]] && EXTRA+=("--download-mode-rule")
 "$PY" "$HERE/packaging/installer/core.py" install --source "$HERE" --python "$PY" ${EXTRA[@]+"${EXTRA[@]}"}
 BIN="$HOME/.local/bin/fm1-companion"
 [[ " ${EXTRA[*]-} " == *" --no-menu "* ]] || ok "$(msg "Start menu entry 'FM-1 Companion' created (Multimedia)" \

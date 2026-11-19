@@ -2,7 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Build the graphical installer: dist/FM-1-Companion-Suite-<version>.run (sh stub + tar.gz).
 
-  python3 tools/build_run.py [--out DIR]
+  python3 tools/build_run.py [--out DIR] [--require-tools]
+
+The payload also carries the bundled M-Flasher for both architectures from tools-bin/ (tools/fetch_tools.py);
+the installer copies only the one for this computer, after checking its SHA-256 (packaging/installer/core.py).
 """
 from __future__ import annotations
 
@@ -15,7 +18,7 @@ import tarfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_common import DIST, EPOCH, ROOT, app_files, tracked_files, version  # noqa: E402
+from build_common import DIST, EPOCH, ROOT, app_files, tool_binaries, tracked_files, version  # noqa: E402
 
 sys.path.insert(0, str(ROOT))
 from fm1companion import diag  # noqa: E402
@@ -24,10 +27,11 @@ EXTRA = ["LICENSE", "README.md", "install.sh", "uninstall.sh", "data", "packagin
          "packaging/fm1-companion.metainfo.xml", "packaging/fm1-companion.1"]
 
 
-def payload() -> bytes:
-    """tar.gz of the app – reproducible: tracked files only, sorted, fixed owner/time/modes, and no build time
-    in the gzip header."""
-    files = sorted(set(app_files()) | set(tracked_files(*EXTRA)), key=lambda f: f.relative_to(ROOT).as_posix())
+def payload(require_tools: bool = False) -> bytes:
+    """tar.gz of the app – reproducible: tracked files only (plus the checked tool binaries), sorted, fixed
+    owner/time/modes, and no build time in the gzip header."""
+    files = sorted(set(app_files()) | set(tracked_files(*EXTRA)) | {f for _rel, f in tool_binaries(require_tools)},
+                   key=lambda f: f.relative_to(ROOT).as_posix())
     raw = io.BytesIO()
     with tarfile.open(fileobj=raw, mode="w", format=tarfile.GNU_FORMAT) as tar:
         for f in files:
@@ -36,7 +40,7 @@ def payload() -> bytes:
             ti.uid = ti.gid = 0
             ti.uname = ti.gname = "root"
             ti.mtime = EPOCH
-            ti.mode = 0o755 if f.suffix in (".sh",) or f.name in ("install.sh", "uninstall.sh") else 0o644
+            ti.mode = 0o755 if f.suffix in (".sh",) or f.name in ("install.sh", "uninstall.sh", "m-flasher") else 0o644
             with open(f, "rb") as fh:
                 tar.addfile(ti, fh)
     buf = io.BytesIO()
@@ -45,9 +49,9 @@ def payload() -> bytes:
     return buf.getvalue()
 
 
-def build(out: Path = DIST) -> Path:
+def build(out: Path = DIST, require_tools: bool = False) -> Path:
     ver = version()
-    data = payload()
+    data = payload(require_tools)
     need = " ".join(p for p in diag.packages("required") if p != "python3")
     stub = (ROOT / "packaging/run-stub.sh").read_text().replace("@VERSION@", ver).replace(
         "@SHA256@", hashlib.sha256(data).hexdigest()).replace("@NEED@", need)
@@ -61,4 +65,6 @@ def build(out: Path = DIST) -> Path:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(DIST))
-    print(build(Path(ap.parse_args().out)))
+    ap.add_argument("--require-tools", action="store_true", help="stop when a bundled M-Flasher binary is missing")
+    a = ap.parse_args()
+    print(build(Path(a.out), a.require_tools))

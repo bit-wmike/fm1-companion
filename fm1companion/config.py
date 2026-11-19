@@ -52,6 +52,9 @@ class Settings:
     # Updates
     channel: str = "stable"                # "stable" (default) or "rc" (release candidates)
     check_on_start: bool = True
+    # new versions of the bundled tools (M-Flasher, m-bootloader, SLOOP 3): "daily", "weekly", "start" (once per
+    # start), "off" – only while check_on_start is on (tools/updates.py); never installs by itself
+    tools_check: str = "daily"
     auto_backup_before_update: bool = True
     keep_backups: int = 20                 # per device, 0 = keep all
     # careful USB mode for flashing (flash/robust.py): "auto" (when the FM-1 is behind a USB hub), "always", "never"

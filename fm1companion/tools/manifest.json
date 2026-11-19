@@ -1,0 +1,102 @@
+{
+ "schema": 1,
+ "_comment": "Pinned versions of the tools the app bundles and drives (M-Flasher, m-bootloader, SLOOP 3). Every file: upstream release tag + commit, URL, size, SHA-256, licence. 'verified' says how the SHA-256 was checked against upstream when the pin was made. M-Flasher's binaries are not in git: tools/fetch_tools.py downloads them at build time and checks them against these values; the m-bootloader and SLOOP 3 files are in fm1companion/tools/bundled. Change only with tools/update_tool_pins.py and a review.",
+ "tools": {
+  "m-flasher": {
+   "title": "M-Flasher",
+   "repo": "jvitkauskas/m-flasher",
+   "license": "MIT",
+   "copyright": "2026 Julius Vitkauskas",
+   "version": "0.12.1",
+   "tag": "v0.12.1",
+   "tag_object": "15890133f582528a9d0c0c772936506cca608dc7",
+   "commit": "8fbece7348d758ac284325eed455781675ac95ff",
+   "date": "2026-11-15",
+   "cli_contract": "mflasher-0.12",
+   "help_sha256": "06f1d7a8035db6f149c80ba7bf329db0722cc0427cb0e5afe2cd57a755c9e10e",
+   "help_source": "sha256 of USAGE + newline in src/cli.rs at the tagged commit (what `m-flasher --help` prints)",
+   "write_verified": {
+    "0.12.1": {
+     "aarch64": "2341ccc609ab7dcebea86b4a133abeda10c15f96106300ef6544183ff5e7a870",
+     "x86_64": "997ce5e8a3200f3cb893c904f6babf37d8de8ce059aeedbd03adb72febf39e53"
+    }
+   },
+   "write_verified_note": "Writes only ever run a binary whose SHA-256 is listed here for its version and architecture (reviewed in an app release); a downloaded copy of a listed version with other bytes is never used for writing.",
+   "cargo_lock_sha256": "3b171a2e144933388935860530c2bb7dd8fed378b91b0bb94b645be448cd482e",
+   "licence_files": ["LICENSE", "NOTICE.md", "copyright", "THIRD-PARTY-LICENSES.txt", "OFL-BarlowCondensed.txt",
+                     "OFL-IBMPlexMono.txt", "OFL-Saira.txt", "OFL-ShareTechMono.txt", "OFL-VT323.txt"],
+   "arch": {
+    "aarch64": {
+     "asset": "m-flasher-0.12.1-linux-aarch64.tar.gz",
+     "url": "https://github.com/jvitkauskas/m-flasher/releases/download/v0.12.1/m-flasher-0.12.1-linux-aarch64.tar.gz",
+     "size": 3654767,
+     "sha256": "dd9fa1577913b8ff63c440473b16cc657fe33f169fdb0a4ae2debd89c7ee01bc",
+     "member": "m-flasher/m-flasher",
+     "binary_size": 7459672,
+     "binary_sha256": "2341ccc609ab7dcebea86b4a133abeda10c15f96106300ef6544183ff5e7a870",
+     "verified": "download"
+    },
+    "x86_64": {
+     "asset": "m-flasher-0.12.1-linux-x86_64.tar.gz",
+     "url": "https://github.com/jvitkauskas/m-flasher/releases/download/v0.12.1/m-flasher-0.12.1-linux-x86_64.tar.gz",
+     "size": 4004154,
+     "sha256": "c0cf009de744244c072af439f298518dfed54e19cdb29db33a6d00f828253136",
+     "member": "m-flasher/m-flasher",
+     "binary_size": 8603984,
+     "binary_sha256": "997ce5e8a3200f3cb893c904f6babf37d8de8ce059aeedbd03adb72febf39e53",
+     "verified": "download"
+    }
+   },
+   "verified_note": "Measured on the files downloaded over HTTPS from the release (no SHA256SUMS upstream; GitHub's per-asset digest could not be read when pinning). The aarch64 binary is byte-identical to the one in the release's m-flasher_0.12.1-1_arm64.deb. tools/update_tool_pins.py --check compares these values with GitHub's digest."
+  },
+  "m-bootloader": {
+   "title": "m-bootloader",
+   "repo": "jvitkauskas/m-bootloader",
+   "license": "MIT",
+   "copyright": "2026 Julius Vitkauskas",
+   "version": "2.4",
+   "tag": "v2.4",
+   "tag_object": "92d82b462bd93d0ff16e57f28e07d8ec094587fb",
+   "commit": "395e6cc469ba1d6eae9922a752d1f416ff07b69a",
+   "date": "2026-11-13",
+   "licence_files": ["LICENSE", "NOTICE.md", "SHA256SUMS"],
+   "files": {
+    "fm1-uboot.boot": {
+     "url": "https://github.com/jvitkauskas/m-bootloader/releases/download/v2.4/fm1-uboot.boot",
+     "size": 13760,
+     "sha256": "677ae52a11721b1811b2688b45f6f0cfae51882810e0a4f4b409da08ce5b49e4",
+     "verified": "SHA256SUMS"
+    },
+    "SHA256SUMS": {
+     "url": "https://github.com/jvitkauskas/m-bootloader/releases/download/v2.4/SHA256SUMS",
+     "size": 1294,
+     "sha256": "bc5fcb08b6c73d8b236271bf1c268d35349b72f1e57d3c20302a934df9eaa139",
+     "verified": "download"
+    }
+   },
+   "verified_note": "fm1-uboot.boot matches its line in the release's SHA256SUMS and is byte-identical to data/bootloader-fm1.boot inside M-Flasher 0.12.1 (tag commit 8fbece7)."
+  },
+  "sloop3": {
+   "title": "SLOOP 3",
+   "repo": "isod89/sloop3-fm1",
+   "license": "GPL-3.0",
+   "copyright": "isod89",
+   "version": "3.4.0",
+   "tag": "v3.4.0-beta",
+   "tag_object": "ffc245f60fbb989fc2ef7ce30006f4859e258056",
+   "commit": "2228313f3abe0ad6c8f28ef0cd9b9d8167c01330",
+   "date": "2026-11-17",
+   "prerelease": true,
+   "licence_files": ["LICENSE", "NOTICE", "CREDITS-SAMPLES.txt", "OFL-Inter.txt", "Terminus-LICENSE.txt"],
+   "files": {
+    "sloop3-3.4.0.area": {
+     "url": "https://github.com/isod89/sloop3-fm1/releases/download/v3.4.0-beta/sloop3-3.4.0.area",
+     "size": 474706,
+     "sha256": "123125471b69acf586923feae57eca3b5c6c466a9ec1ececd56643b90bcd5ce1",
+     "verified": "source-tree"
+    }
+   },
+   "verified_note": "The release file is byte-identical to the AREA inlined in index.html at the tagged commit and in the release's installer-sloop3-3.4.0.html. Corresponding source: the tarball of isod89/sloop3-fm1 at the same commit, already attached to every app release for the bundled SLOOP 3 editor."
+  }
+ }
+}

@@ -52,6 +52,25 @@ Lo que la Etapa 2 comprueba antes de escribir – en la copia de seguridad leíd
 * Una sesión en modo de arranque ROM suele durar solo **una ejecución de la herramienta**. Después – también tras un rechazo – apaga y
   enciende el FM-1 y vuelve a ponerlo en modo de arranque ROM.
 
+## Las herramientas incluidas: M-Flasher, m-bootloader, SLOOP 3
+
+La app trae consigo **M-Flasher** 0.12.1 (para Raspberry Pi OS de 64 bits y PC x86-64; para el sistema de 32 bits
+no existe), **m-bootloader** 2.4 y **SLOOP 3** 3.4.0, así que están disponibles sin internet. Recuperación ›
+**Herramientas** muestra cada una: la versión incluida, la versión en uso, si su suma de verificación es correcta (la
+app la comprueba antes de cada uso y nunca ejecuta un archivo modificado) y cuándo buscó por última vez una versión
+nueva.
+
+* **Versiones nuevas:** por defecto la app pregunta a GitHub una vez al día (Ajustes › General: a diario, cada
+  semana, solo al iniciar o nunca; solo mientras la búsqueda de actualizaciones de firmware esté activada). Una
+  versión nueva solo se muestra. **Actualizar** la descarga, la comprueba con la suma de verificación de GitHub y
+  conserva tu versión actual como respaldo hasta que la nueva haya funcionado una vez. Un M-Flasher nuevo se usa
+  solo para leer; uno con comandos cambiados se conserva pero no se usa.
+* **Modo de descarga sin contraseña:** el instalador configura una regla que te permite acceder al FM-1 en modo de
+  descarga ROM (USB 4c4a:8057) y carga el controlador de Linux `sg` al arrancar.
+* **Con sinceridad:** en esta versión la app solo muestra, comprueba y actualiza las herramientas y pregunta a
+  M-Flasher qué FM-1 ve. Las copias de la flash, m-bootloader y SLOOP 3 a través de la app llegarán en versiones
+  posteriores; hasta entonces usa las herramientas tú mismo como antes.
+
 ## Si el FM-1 no aparece como “WL82 UBOOT1.00”
 
 El chip solo muestra la unidad cuando ha caído en el modo de arranque ROM. En este orden (según la

@@ -398,6 +398,35 @@ class MainWindow(QMainWindow):
         self.missing_deps: list[str] = []
         QTimer.singleShot(2500, self._check_required_deps)
         QTimer.singleShot(60000, self._storage_autoclean)     # old logs, downloads, caches (once a day)
+        # new versions of the bundled tools: looked for 90 s after the start, then every hour whether one is due
+        self._tools_timer = QTimer(self)
+        self._tools_timer.timeout.connect(self._tools_auto_check)
+        self._tools_timer.start(3600 * 1000)
+        QTimer.singleShot(90000, self._tools_auto_check)
+
+    def _tools_auto_check(self):
+        """M-Flasher, m-bootloader, SLOOP 3: ask GitHub for new versions when due (Settings: daily / weekly / at the
+        start / off). Only while the firmware check switch is on, never with FM1C_NO_NET, in demo mode or while an
+        installation or tool run holds the lock (tools/updates.py). Only tells; never installs anything."""
+        from ..tools import updates
+        from .common import run_job
+        s = self.ctx.settings
+        allowed, why = updates.auto_check_allowed(s)
+        if DEMO or not allowed or not updates.due(s):
+            if why:
+                log.debug("tool update check skipped: %s", why)
+            return
+
+        def done(offers):
+            names = dict(updates.titles())
+            for o in updates.new_to_notify(offers or {}):
+                self.notify(_("{tool} {version} is available – Recovery › Tools").format(
+                    tool=names.get(o.key, o.key), version=o.version), "info", (_("View"), lambda: self.go("recovery")))
+            rec = self.page("recovery")
+            if rec is not None and getattr(rec, "tools", None) is not None:
+                rec.tools.refresh()
+        run_job(self, lambda w: updates.check(s, automatic=True), on_done=done,
+                on_fail=lambda m, tb: log.info("tool update check failed: %s", m))
 
     def _storage_autoclean(self):
         from .. import storage

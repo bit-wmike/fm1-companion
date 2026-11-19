@@ -44,6 +44,22 @@ def app_files() -> list[Path]:
     return tracked_files("fm1companion")
 
 
+def tool_binaries(require: bool = False) -> list[tuple[str, Path]]:
+    """the bundled M-Flasher binaries in tools-bin/ (placed by tools/fetch_tools.py), each checked against
+    fm1companion/tools/manifest.json: [(path below tools-bin, file)]. A missing or wrong binary is left out – with
+    require=True (the release workflow) the build stops instead."""
+    from fetch_tools import verify_tree
+    good, problems = verify_tree()
+    lic = ROOT / "fm1companion" / "tools" / "bundled" / "m-flasher" / "THIRD-PARTY-LICENSES.txt"
+    if not lic.is_file() or lic.stat().st_size < 10000:
+        problems.append(f"{lic.relative_to(ROOT)} missing (tools/gen_mflasher_licences.py)")
+        if not require:
+            return []                       # never ship the binaries without their licences
+    if require and problems:
+        raise SystemExit("bundled tools: " + "; ".join(problems) + " – run tools/fetch_tools.py first")
+    return sorted(good.items())
+
+
 def release_date(ver: str | None = None) -> str:
     """'YYYY-MM-DD' of this version from the AppStream metadata (packaging/fm1-companion.metainfo.xml)."""
     ver = ver or version()

@@ -1,0 +1,17 @@
+SLOOP 3 3.4.0 (public beta) – application area for the M-VAVE FM-1
+
+sloop3-3.4.0.area is the file of the same name from the release v3.4.0-beta of SLOOP 3 by isod89,
+https://github.com/isod89/sloop3-fm1 (tag commit 2228313f3abe0ad6c8f28ef0cd9b9d8167c01330), bundled unchanged.
+It is byte-identical to the area the author's installer page carries at that commit.
+
+Licence: GNU General Public License version 3 (LICENSE). The factory sample bank inside the area is made from
+CC0 1.0 recordings (CREDITS-SAMPLES.txt); the fonts are the Inter font (SIL Open Font License 1.1, OFL-Inter.txt)
+and Terminus (Terminus-LICENSE.txt).
+
+Corresponding source: the source tarball of isod89/sloop3-fm1 at commit 2228313f3abe0ad6c8f28ef0cd9b9d8167c01330,
+attached to every release of the FM-1 Companion Suite that contains this file (the same tarball as for the bundled
+SLOOP 3 editor), and at https://github.com/isod89/sloop3-fm1/tree/v3.4.0-beta. Its build needs the pi32v2 LLVM
+toolchain named in that project's README.
+
+The FM-1 Companion Suite does not install this file yet (version 2.7 development: bundled for the offline install
+over m-bootloader's MIDI MODE in a later step).

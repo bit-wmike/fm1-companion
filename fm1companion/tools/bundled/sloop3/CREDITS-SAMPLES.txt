@@ -1,0 +1,13 @@
+The factory sample bank (assets/samples.bin, made by tools/mksamples.py) is built from CC0 1.0 (public domain)
+recordings, the same as SLOOP 2.8.5's built-in sets (its repository: assets/samples-cc0):
+
+PIANO  VCSL (Versilian Community Sample Library), Grand Piano (Steinway B)    https://github.com/sgossner/VCSL
+VIBES  VCSL, Vibraphone (hard mallets)
+BASS   VSCO-2 Community Edition, Solo Contrabass pizzicato                     https://github.com/sgossner/VSCO-2-CE
+HORNS  VSCO-2 CE, Trumpet + Tenor Trombone staccato
+STRGS  VSCO-2 CE, Violin + Viola sections spiccato
+FLUTE  VSCO-2 CE, Flute (susvib)
+SCRCH  Sonic Pi sample set (freesound.org CC0 recordings): vinyl_scratch      https://github.com/sonic-pi-net/sonic-pi
+PERC   VCSL: the acoustic drum kit of the GM map and hand percussion
+
+Thanks to Versilian Studios / Sam Gossner and to the Sonic Pi project.

@@ -2,7 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Build the Debian package: dist/fm1-companion_<version>_all.deb
 
-  python3 tools/build_deb.py [--maintainer "Name <mail>"] [--out DIR]
+  python3 tools/build_deb.py [--maintainer "Name <mail>"] [--out DIR] [--require-tools]
+
+The package stays Architecture: all. It carries the bundled M-Flasher for both builds (aarch64, x86_64) from
+tools-bin/ (tools/fetch_tools.py; --require-tools: stop when one is missing) under
+/usr/lib/fm1-companion/tools-bin; the app picks the one for the computer and checks its SHA-256 before every run.
+It installs the udev rule for the FM-1 in ROM download mode and loads `sg` at boot (owner decision, 2026-11-19).
 
 Layout: /usr/lib/fm1-companion/fm1companion, /usr/bin/fm1-companion (always /usr/bin/python3),
 start menu entry, hicolor icons, AppStream metadata, man page. Dependencies from fm1companion/data/deps.json.
@@ -19,7 +24,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_common import DIST, EPOCH, MAINTAINER, ROOT, app_files, changelog_date, version  # noqa: E402
+from build_common import DIST, EPOCH, MAINTAINER, ROOT, app_files, changelog_date, tool_binaries, version  # noqa: E402
 
 sys.path.insert(0, str(ROOT))
 from fm1companion import diag  # noqa: E402
@@ -35,6 +40,39 @@ set -e
 if [ "$1" = configure ] && [ -x /usr/bin/python3 ]; then
   /usr/bin/python3 -m compileall -q "${DPKG_ROOT:-}/usr/lib/fm1-companion/fm1companion" >/dev/null 2>&1 || true
 fi
+if [ "$1" = configure ]; then
+  # the bundled M-Flasher: check the SHA-256 (the app checks it again before every run and never runs a changed one)
+  d="${DPKG_ROOT:-}/usr/lib/fm1-companion/tools-bin"
+  if [ -f "$d/SHA256SUMS" ] && command -v sha256sum >/dev/null 2>&1; then
+    if ! (cd "$d" && sha256sum --quiet -c SHA256SUMS) >/dev/null 2>&1; then
+      echo "fm1-companion: WARNING: a bundled M-Flasher binary does not match its checksum; the app will not run it. Reinstall the package." >&2
+    fi
+  fi
+  # FM-1 in ROM download mode (USB 4c4a:8057): the sg driver now, the udev rule for a unit already connected
+  # (both take effect by themselves at the next boot or connection, too)
+  if [ -z "${DPKG_ROOT:-}" ]; then
+    modprobe sg 2>/dev/null || true
+    if command -v udevadm >/dev/null 2>&1; then
+      udevadm control --reload-rules 2>/dev/null || true
+      # only the FM-1 in download mode (USB 4c4a:8057) and its children, never every disk
+      for d in /sys/bus/usb/devices/*; do
+        if [ "$(cat "$d/idVendor" 2>/dev/null)" = 4c4a ] && [ "$(cat "$d/idProduct" 2>/dev/null)" = 8057 ]; then
+          udevadm trigger --action=change --parent-match="$d" 2>/dev/null || true
+        fi
+      done
+    fi
+  fi
+fi
+exit 0
+"""
+LICENCES_NEXT_TO_BINARY = ("LICENSE", "NOTICE.md", "THIRD-PARTY-LICENSES.txt")
+POSTRM = """#!/bin/sh
+set -e
+if [ "$1" = remove ] || [ "$1" = purge ]; then
+  if [ -z "${DPKG_ROOT:-}" ] && command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload-rules 2>/dev/null || true
+  fi
+fi
 exit 0
 """
 PRERM = """#!/bin/sh
@@ -44,8 +82,9 @@ exit 0
 """
 
 
-def build(out: Path = DIST, maintainer: str = MAINTAINER) -> Path:
+def build(out: Path = DIST, maintainer: str = MAINTAINER, require_tools: bool = False) -> Path:
     ver = version()
+    tools = tool_binaries(require_tools)
     with tempfile.TemporaryDirectory(prefix="fm1c-deb-") as tmp:
         root = Path(tmp) / "root"
         lib = root / "usr/lib/fm1-companion"
@@ -54,6 +93,19 @@ def build(out: Path = DIST, maintainer: str = MAINTAINER) -> Path:
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, dst)
         (lib / "installed-by-deb").write_text("This directory belongs to the Debian package fm1-companion.\n")
+        exes = []
+        if tools:                           # M-Flasher for both architectures (the app picks; arch: all package)
+            import hashlib
+            sums = []
+            for rel, f in tools:
+                dst = lib / "tools-bin" / rel
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(f, dst)
+                exes.append(dst)
+                sums.append(f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {rel}\n")
+            (lib / "tools-bin" / "SHA256SUMS").write_text("".join(sums))
+            for name in LICENCES_NEXT_TO_BINARY:       # the licences travel with the binary
+                shutil.copyfile(ROOT / "fm1companion/tools/bundled/m-flasher" / name, lib / "tools-bin/m-flasher" / name)
         b = root / "usr/bin/fm1-companion"
         b.parent.mkdir(parents=True)
         b.write_text(LAUNCHER)
@@ -73,6 +125,14 @@ def build(out: Path = DIST, maintainer: str = MAINTAINER) -> Path:
         udev = root / "usr/share/fm1-companion/udev"
         udev.mkdir(parents=True)
         shutil.copy2(ROOT / "packaging/udev/60-fm1-companion.rules", udev)
+        # FM-1 in ROM download mode reachable for the user at the computer (uaccess) and `sg` at boot: ACTIVE,
+        # owner decision 2026-11-19 (the bundled M-Flasher then needs no root)
+        rules = root / "usr/lib/udev/rules.d"
+        rules.mkdir(parents=True)
+        shutil.copy2(ROOT / "packaging/udev/70-fm1-companion-download-mode.rules", rules)
+        mods = root / "usr/lib/modules-load.d"
+        mods.mkdir(parents=True)
+        shutil.copy2(ROOT / "packaging/udev/fm1-companion-sg.conf", mods)
         (root / "usr/share/metainfo").mkdir(parents=True)
         shutil.copy2(ROOT / "packaging/fm1-companion.metainfo.xml", root / "usr/share/metainfo")
         man = root / "usr/share/man/man1"
@@ -97,13 +157,28 @@ def build(out: Path = DIST, maintainer: str = MAINTAINER) -> Path:
             "Files: usr/lib/fm1-companion/fm1companion/sims/*\nCopyright: the authors of each firmware project; see "
             "the NOTICE file in each folder\nLicense: GPL-3.0-only, or GPL-3.0-only WITH FM1 SDK linking "
             "exception (FM1 Open); the exact licence of each build is in its folder (LICENSE*, NOTICE)\n "
-            "Corresponding source: see NOTICE (written offer, tarballs attached to the GitHub release).\n")
+            "Corresponding source: see NOTICE (written offer, tarballs attached to the GitHub release).\n\n"
+            "Files: usr/lib/fm1-companion/tools-bin/m-flasher/* usr/lib/fm1-companion/fm1companion/tools/bundled/m-flasher/*\n"
+            "Copyright: 2026 Julius Vitkauskas (M-Flasher); the authors of the Rust crates and fonts compiled into it\n"
+            "License: MIT and OFL-1.1, with the licences of its crates (MIT, Apache-2.0, ISC, Zlib, BSL-1.0, "
+            "Unicode-3.0) and fonts (Ubuntu-font-1.0, Bitstream-Vera with MIT for Hack, OFL-1.1, MIT for the emoji "
+            "icon font)\n M-Flasher, bundled unchanged from its GitHub release. Every licence text, crate by crate: "
+            "/usr/lib/fm1-companion/tools-bin/m-flasher/THIRD-PARTY-LICENSES.txt (also in "
+            "/usr/lib/fm1-companion/fm1companion/tools/bundled/m-flasher/ with LICENSE, NOTICE.md, copyright, "
+            "OFL-*.txt)\n\n"
+            "Files: usr/lib/fm1-companion/fm1companion/tools/bundled/m-bootloader/*\n"
+            "Copyright: 2026 Julius Vitkauskas\nLicense: MIT\n m-bootloader, bundled unchanged from its GitHub "
+            "release. See /usr/lib/fm1-companion/fm1companion/tools/bundled/m-bootloader/LICENSE\n\n"
+            "Files: usr/lib/fm1-companion/fm1companion/tools/bundled/sloop3/*\n"
+            "Copyright: isod89 (SLOOP 3)\nLicense: GPL-3.0; samples CC0-1.0; fonts OFL-1.1 (Inter) and Terminus\n "
+            "SLOOP 3, bundled unchanged from its GitHub release. Corresponding source: see "
+            "/usr/lib/fm1-companion/fm1companion/tools/bundled/sloop3/NOTICE\n")
         with gzip.GzipFile(doc / "changelog.gz", "wb", mtime=0) as g:
             g.write(f"fm1-companion ({ver}) stable; urgency=low\n\n  * Release {ver}, see "
                     f"https://github.com/bit-wmike/fm1-companion/releases\n\n -- {maintainer}  "
                     f"{changelog_date(ver)}\n".encode())
         for p in root.rglob("*"):
-            p.chmod(0o755 if p.is_dir() or p == b else 0o644)
+            p.chmod(0o755 if p.is_dir() or p == b or p in exes else 0o644)
         for p in [root, *root.rglob("*")]:             # same commit -> same package, whatever the checkout's file times
             os.utime(p, (EPOCH, EPOCH))
         size = sum(p.stat().st_size for p in root.rglob("*") if p.is_file()) // 1024 + 1
@@ -122,7 +197,7 @@ def build(out: Path = DIST, maintainer: str = MAINTAINER) -> Path:
             " .\n"
             " Unofficial community project, not affiliated with M-VAVE. Installing firmware\n"
             " and recovery change the device and are done at your own risk.\n")
-        for name, body in (("postinst", POSTINST), ("prerm", PRERM)):
+        for name, body in (("postinst", POSTINST), ("prerm", PRERM), ("postrm", POSTRM)):
             (deb / name).write_text(body)
             (deb / name).chmod(0o755)
         out.mkdir(parents=True, exist_ok=True)
@@ -139,5 +214,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(DIST))
     ap.add_argument("--maintainer", default=MAINTAINER)
+    ap.add_argument("--require-tools", action="store_true", help="stop when a bundled M-Flasher binary is missing")
     a = ap.parse_args()
-    print(build(Path(a.out), a.maintainer))
+    print(build(Path(a.out), a.maintainer, a.require_tools))
