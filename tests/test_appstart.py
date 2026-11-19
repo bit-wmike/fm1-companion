@@ -192,6 +192,42 @@ def test_config_not_writable(tmp_path):
     assert log.count("[Achtung] Die Einstellungen konnten nicht gespeichert werden") == 1
 
 
+TEARDOWN = """
+import sys
+from PyQt6 import sip
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QVBoxLayout, QWidget
+from fm1companion import app as appmod
+app = QApplication([])
+w = QMainWindow()
+body = QWidget()
+lay = QVBoxLayout(body)
+labels = [QLabel(str(i)) for i in range(300)]          # Python-owned until added, like the pages' widgets
+for lab in labels:
+    lay.addWidget(lab)
+w.setCentralWidget(body)
+w.shutdown = lambda: None
+keep = lambda: app                                       # a closure holding the app (as _auto_close does)
+QTimer.singleShot(0, app.quit)
+app.exec()
+appmod.teardown(app, w)
+print("window", sip.isdeleted(w), "labels", all(sip.isdeleted(x) for x in labels),
+      "app", QApplication.instance() is None)
+"""
+
+
+def test_teardown_deletes_window_and_app(tmp_path):
+    """Regression (signal 11 on quit, ~1 in 5 runs of the tests above): after app.exec() the window must really be
+    deleted and the QApplication gone before main() returns – otherwise PyQt's atexit handler deletes the
+    leftover widgets one by one while walking its wrapper map and crashes in sip_api_get_address()."""
+    pytest.importorskip("PyQt6.QtWidgets")
+    env = _env(tmp_path)
+    res = subprocess.run([sys.executable, "-c", TEARDOWN], cwd=str(ROOT), env=env, capture_output=True, text=True,
+                         timeout=120)
+    assert res.returncode == 0, _clean(res.stderr)[-2000:]
+    assert "window True labels True app True" in res.stdout, (res.stdout, _clean(res.stderr)[-2000:])
+
+
 def test_without_webengine(tmp_path):
     """python3-pyqt6.qtwebengine missing: the app starts anyway, editor/simulator say what is missing."""
     home = tmp_path / "home"
