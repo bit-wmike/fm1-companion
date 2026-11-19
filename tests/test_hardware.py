@@ -33,6 +33,8 @@ ROWS = {
     "loom-8": ("v0.13", "v0.12.1", "v0.16.2"),
     "hortator": ("v1.0.1", "drum-v1.0.0", "drum-v1.0.2"),
     "transitfm1": ("v0.1.4", "v0.1.3", "v0.2"),
+    "sloop3": ("v3.4.0", "v3.3.7", "v3.4.1-beta"),              # (owner report: before the minimum "risky")
+    "m-bootloader": ("v2.4", "v2.0", "v2.5"),
 }
 
 
@@ -55,7 +57,8 @@ def test_minimum_version_per_firmware(key):
     first, before, after = ROWS[key]
     assert H.source(key)["min"] == first
     assert H.support(key, first) == H.Support(H.YES, first, H.source(key)["source"])
-    assert H.support(key, before).status == H.NO and H.support(key, before).first_version == first
+    below = H.RISKY if H.source(key).get("below") == "risky" else H.NO
+    assert H.support(key, before).status == below and H.support(key, before).first_version == first
     assert H.support(key, after).status == H.YES
     assert H.support(key, "").status == H.UNKNOWN            # no version: never a guess
     assert H.support(key, "latest").status == H.UNKNOWN
@@ -88,8 +91,8 @@ def test_version_styles():
 def test_rows_without_a_supporting_version():
     assert H.support("orbit", "v1.0.1B") == H.Support(H.NO, "", H.source("orbit")["source"])
     assert H.support("grimm", "v2.0.2").status == H.NO
-    assert H.support("sloop3", "v3.3.7-beta").status == H.RISKY and H.support("m-bootloader", "2.4").status == H.RISKY
-    assert H.support("mbootloader").status == H.RISKY
+    assert H.support("sloop3", "v3.3.7-beta").status == H.RISKY and H.support("m-bootloader", "2.0").status == H.RISKY
+    assert H.support("mbootloader", "1.2").status == H.RISKY and H.support("mbootloader").status == H.UNKNOWN
     assert H.support("sloop", "v3.3.7").status == H.RISKY        # SLOOP 3 is its own firmware, not a newer SLOOP 2
     assert H.support("stock-v15").status == H.YES and H.documented_only("stock-v15")
     assert H.support("stock-v16").status == H.UNKNOWN and H.support("fm1-open", "V14").status == H.UNKNOWN
@@ -188,7 +191,10 @@ CASES = [   # revision, target, -> blocked?, confirmations it must add
     ("old", lambda: cat_target(), False, set()),
     ("new", lambda: cat_target("orbit", "v1.0.1"), True, set()),
     ("new", lambda: cat_target("sloop3", "v3.3.7-beta"), True, set()),
-    ("", lambda: cat_target("m-bootloader", "v2.4"), False, {"no_logo"}),
+    ("new", lambda: cat_target("sloop3", "v3.4.0-beta"), False, set()),       # (one owner's report, 2026-11-19)
+    ("", lambda: cat_target("m-bootloader", "v2.0"), False, {"no_logo"}),
+    ("new", lambda: cat_target("m-bootloader", "v2.0"), True, set()),
+    ("", lambda: cat_target("m-bootloader", "v2.4"), False, set()),
     ("new", lambda: cat_target(flash=["856014", "B36014"], flash_tag="v1.0"), False, set()),
     ("new", lambda: cat_target(flash=["856014"], flash_tag="v1.0"), True, set()),
     ("new", lambda: target("stock-v15", "V15"), False, set()),

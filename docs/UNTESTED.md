@@ -116,7 +116,15 @@ only**. This table exists a second time in the code (`SLOOP3_HARDWARE` in `fm1co
 | `sloop3_restore` – restoring a SLOOP 3 backup | not run (writes) – stand-in only, see below |
 | `mboot_flash_copy` – the flash backup in MIDI MODE | not run – stand-in only, see below |
 | `sloop3_writing` – anything that writes to a SLOOP 3 or m-bootloader unit | not run |
-| `sloop3_new_chip` – SLOOP 3 or m-bootloader on a newer FM-1 (logo on the front) | not run |
+| `sloop3_new_chip` – SLOOP 3 or m-bootloader on a newer FM-1 (logo on the front) | not run by this app (outside it: one owner report, below) |
+
+**Owner report, outside this app (2026-11-19, `OWNER_REPORTS` in `fm1companion/flash/tested.py`):** on one newer
+FM-1 (flash 0xB36014) m-bootloader 2.4-395e6cc was installed with M-Flasher and boots (its menu shows FLASH B36014),
+SLOOP 3 v3.4.0 was installed with the author's installer page, and a change saved in SLOOP 3 survived a power cycle.
+On that report `data/hardware.json` now counts m-bootloader from 2.4 and SLOOP 3 from 3.4.0 as knowing the newer chip
+(older versions stay risky). So on a known newer unit the app offers the installer page in MIDI MODE only when m-bootloader
+answers 2.4 (or later); its read-only flash copy is offered in MIDI MODE whatever the revision or version.
+None of this was run by the app on that unit.
 
 The run also showed a profile mix-up: after the owner answered "Which FM-1 is this?" for the SLOOP 3 unit, the profile
 of the other FM-1 (not plugged in) had lost its firmware. Fixed afterwards (2.6.1: a unit that answers nothing changes
@@ -145,6 +153,13 @@ confirmed.
 | Recording a sample with the microphone in the bundled editor | not available (the web view grants no microphone); a file can be dropped |
 | `sloop3-backup`: read, restore of sounds, FM6 bank, SYN kits and project, read back and compared | reading: once on the real unit (`sloop3_backup` above). The restore: PC twin only (`tests/test_sloop3.py` with `SLOOP3_TWIN_CMD`: back up, change, restore, back up again); in the repository with the fake. Reading while SLOOP 3 plays on a real FM-1: unknown – stop playback |
 | Samples of SLOOP 3 in a backup | not possible over its protocol (no read command); only in a flash backup |
+| Samples out of a flash copy (Backups › Flash backups › “Samples to the library”, or a file M-Flasher saved): USR1–USR4 at 0xA0000 / 0xB4000 / 0xC8000 / 0xE7000 (SLOOP 3 3.4.0 `fw/main.c` and SLOOP 2.8 `eng_sample.c`: the same places and format) to WAV | synthetic 1 MiB images built with the app's own slot writer (`tests/test_sloop_wave_b.py`, UI test); **no real flash copy and no real M-Flasher file was tried**. That this region of a raw chip copy is not enciphered is read from SLOOP 3's source (`flash_plain_from(0x93000)`), not seen |
+| Flash backups listed on the Backups page (date, size, chip, file against its description) | the app's own files from `mboot.save_backup`; a `.bin` without a description is listed as “not checked”. No restore from the app (M-Flasher's job) |
+| FM-1 status for SLOOP 3 (LIVE op 0, read only, every 2 s while the page is open) | the request is the one the bundled editor polls; that editor showed live values on the real unit once (`sloop3_connect`). The app's own polling: the fake (3.4.0 layout) and the twin's recorded 3.3.7 answer only – **not on a real FM-1** |
+| FM-1 status for SLOOP 2.7+ (LIVE 77 op 0) | the SLOOP 2.8.4 / 2.8.5 Studio twins' own answer (`tests/test_studio.py`) and the demo device; not on a real FM-1. Not sent to other firmwares (77 means something else there) or to SLOOP forks |
+| `.s3b` (the SLOOP 3 editor's backup file) in and out on the Backups page | written and read as `web/src/files.js` of 3.4.0 does (round trip, a pre-3.3.5 file with several projects); no `.s3b` saved by the real editor was tried, and the editor's “Restore” of an app-written `.s3b` was not tried |
+| Automatic backup for SLOOP 3 | **off by default** (owner decision pending: reading while SLOOP 3 plays is untested on hardware); switched on: unit test with the fake only |
+| Browse & Compare for SLOOP 3 backups (project header, your 32 sounds, FM6 voices, SYN kits, settings; compared part by part and sound by sound) | offline, from the layouts in SLOOP 3's source (`app/usersnd.h`, `app/xbank.h`, `fw/main.c` ED_HOME) and the twin's recorded files |
 | Recognising m-bootloader's MIDI MODE (0x12) and the flash chip (JEDEC ID → hardware revision) | the earlier chip (0x856014) once on the real unit (`mboot_recognise` above); the newer chip's ID: m-bootloader's code on the PC only |
 | Flash backup in MIDI MODE (0x23 reads, compared with the chip's CRC-32 from 0x24) | not run on the real unit (`mboot_flash_copy`); m-bootloader's code on the PC: 1 MiB read, identical to the flash file. Speed and reliability over real USB: unknown. m-bootloader versions before the read commands (the installer page mentions some that do not answer reads): the app then reports “does not answer” and saves nothing |
 | 0x12 sent to an update loader that is not m-bootloader | not sent by design: only a port named exactly "FM-1 Update" is asked (Felucca-family loaders are "<Name> Update"). What M-VAVE's or a Felucca loader would do with 0x12 was not tried |

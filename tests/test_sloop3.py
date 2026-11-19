@@ -440,12 +440,18 @@ def test_newer_unit_rule_is_the_hardware_modules():
     P.hw_revision = "new"
     assert S3.revision_of(P()) == "new"
     assert hardware.support("sloop3", "v3.3.7").status == hardware.RISKY
-    assert hardware.support("m-bootloader").status == hardware.RISKY
+    assert hardware.support("m-bootloader", "2.0").status == hardware.RISKY
+    assert hardware.support("m-bootloader").status == hardware.UNKNOWN           # (no version read: never "yes")
     assert hardware.support("sloop", "v3.3.7").status == hardware.RISKY      # (asked as SLOOP: redirected to SLOOP 3)
     t = planner.Target.from_spec(firmware.spec("sloop3"), tag="v3.3.7")
     assert planner.chip_check("new", t).blockers and not planner.chip_check("old", t).blockers
     unknown = planner.chip_check("", t)
     assert not unknown.blockers and "no_logo" in unknown.confirmations
+    # 3.4.0: ran and saved on one newer unit by its owner's report (2026-11-19) – no blocker, said as a report
+    t4 = planner.Target.from_spec(firmware.spec("sloop3"), tag="v3.4.0-beta")
+    p4 = planner.chip_check("new", t4)
+    assert not p4.blockers and any("3.4.0" in w and "UC25HQ80" in w for w in p4.warnings)
+    assert hardware.owner_report("sloop3") and hardware.owner_report("m-bootloader")
 
 
 # ------------------------------------------------- after the review ---
@@ -492,9 +498,10 @@ def test_mboot_range_and_capacity_limits():
 
 
 class _Ctx:
-    def __init__(self, hw="", jedec=None):
+    def __init__(self, hw="", jedec=None, version="2.0"):
+        # (m-bootloader 2.0 by default: not known to run on a newer unit; 2.4 is, by one owner's report)
         self.profile = type("P", (), {"hw_revision": hw, "name": "T"})()
-        self.mboot = None if jedec is None else mboot.Info("2.4", 1, 0x980F, 0x100000, jedec, "00" * 8)
+        self.mboot = None if jedec is None else mboot.Info(version, 1, 0x980F, 0x100000, jedec, "00" * 8)
         self.port = None
 
 
@@ -504,9 +511,11 @@ def test_hardware_verdict_strictest_reading_and_no_installer_link_unless_ok():
              ("", 0x856014, "old", "ok"), ("old", 0xB36014, "new", "bad"), ("", 0xB36014, "new", "bad"),
              ("old", 0xC84014, "unknown", "warn"),     # an unknown chip never loses to the owner's "old"
              ("new", 0x856014, "new", "bad"),          # "new" is sticky
-             ("old", 0x01B36014, "new", "bad"), ("old", 0x01856014, "old", "ok")]       # (the ID is 24 bits)
-    for hw, jedec, rev, level in cases:
-        c = _Ctx(hw, jedec)
+             ("old", 0x01B36014, "new", "bad"), ("old", 0x01856014, "old", "ok"),       # (the ID is 24 bits)
+             ("new", 0xB36014, "new", "ok", "2.4-395e6cc"), ("", 0xB36014, "new", "ok", "2.4-395e6cc"),
+             ("new", 0xB36014, "new", "bad", "2.4-other")]   # (owner report 2026-11-19: that build of 2.4 only)
+    for hw, jedec, rev, level, *ver in cases:
+        c = _Ctx(hw, jedec, *ver)
         assert U.revision(c)[0] == rev, (hw, jedec)
         assert U.revision_text(c)[0] == level, (hw, jedec)
         notes = U.notes_html(c)
@@ -602,7 +611,8 @@ def test_odd_backup_files_are_refused_cleanly(tmp_path):
         assert BK.restore_plan(g) == [BK.SOUNDS, BK.PROJECT]
     g["bank"] = [1, 2]
     assert BK.bank_sources(g) == (0, 0)
-    assert not hasattr(BK, "to_s3b")                  # (had no caller; the editor writes .s3b itself)
+    # (.s3b export now has a caller – the Backups page; its round trip is in tests/test_sloop_wave_b.py)
+    assert BK.s3b_parts(BK.to_s3b(g))[0][0] == 0
 
 
 def test_mirror_takes_a_flash_backup_whole_or_not_at_all(tmp_path):

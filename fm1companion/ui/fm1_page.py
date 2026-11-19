@@ -3,7 +3,9 @@
 
 While the page is open, the app reserves the device (the editor pauses and reconnects by itself
 when you switch back). That way the live queries and the editor don't interfere with each other.
-All queries are read-only.
+All queries are read-only. The live values come from Melodee's / FM1 Open's AUDIO_STATS (72), from SLOOP 3's LIVE
+op 0 or from SLOOP 2.7+'s LIVE 77 op 0 (health.py) – each only to the firmware that has it; never while another
+job (backup, restore, installation) holds the device.
 """
 from __future__ import annotations
 
@@ -21,7 +23,8 @@ LIVE_MS = 2000
 # row keys of self.f are identifiers (also used by the tests) -> translated row titles
 DEVICE_ROWS = ("Profil", "Firmware", "Engines", "Spuren", "Seriennummer")                    # i18n: ignore
 CONNECTION_ROWS = ("USB-Gerät", "USB-ID", "Tempo", "Anschluss", "MIDI-Port", "Soundkarte", "USB-Audio")  # i18n: ignore
-LIVE_ROWS = ("Stimmen", "Überlast", "Pro Spur", "Zweiter Kern", "Rechenzeit", "USB-Audio-Fehler", "Speichertest")  # i18n: ignore
+LIVE_ROWS = ("Stimmen", "Überlast", "Pro Spur", "Zweiter Kern", "Rechenzeit", "USB-Audio-Fehler", "Speichertest",  # i18n: ignore
+             "Transport")  # i18n: ignore
 MEMORY_ROWS = ("Projekte", "User-Presets", "Laufende Musik", "Sample-Slots", "Komplett-Backup")  # i18n: ignore
 ROW_TITLES = {
     "Profil": N_("Profile:"), "Firmware": N_("Firmware:"), "Engines": N_("Engines:"), "Spuren": N_("Tracks:"),  # i18n: ignore
@@ -32,7 +35,7 @@ ROW_TITLES = {
     "Rechenzeit": N_("Processing time:"), "USB-Audio-Fehler": N_("USB audio errors:"),  # i18n: ignore
     "Speichertest": N_("Memory test:"), "Projekte": N_("Projects:"), "User-Presets": N_("User presets:"),  # i18n: ignore
     "Laufende Musik": N_("Running music:"), "Sample-Slots": N_("Sample slots:"),  # i18n: ignore
-    "Komplett-Backup": N_("Full backup:")}  # i18n: ignore
+    "Komplett-Backup": N_("Full backup:"), "Transport": N_("Transport:")}  # i18n: ignore
 
 
 def _bar(fmt: str = "") -> QProgressBar:
@@ -115,7 +118,7 @@ class FM1Page(QWidget):
         self.live_state = QLabel("")
         top.addWidget(self.live_state)
         ll.addLayout(top)
-        lf = QFormLayout()
+        lf = self.live_form = QFormLayout()
         ll.addLayout(lf)
         self.cpu = _bar()
         lf.addRow(_("Audio CPU:"), self.cpu)
@@ -126,6 +129,14 @@ class FM1Page(QWidget):
         for k in LIVE_ROWS:
             self.f["L" + k] = _lab()
             lf.addRow(_(ROW_TITLES[k]), self.f["L" + k])
+        # SLOOP 3 / SLOOP 2: a level meter per track (from their LIVE state)
+        self.meters_box = QWidget()
+        self.meters_lay = QHBoxLayout(self.meters_box)
+        self.meters_lay.setContentsMargins(0, 0, 0, 0)
+        self.meters: list[QProgressBar] = []
+        lf.addRow(_("Track levels:"), self.meters_box)
+        self.meters_title = lf.labelForField(self.meters_box)
+        self._meters_visible(False)
         grid.addWidget(lv, 1, 0, 1, 2)
 
         # --- Memory
@@ -239,8 +250,33 @@ class FM1Page(QWidget):
         return ("<b>" + _("FM-1 connected – without editor protocol") + "</b><table cellspacing=4>" +
                 "".join(f"<tr><td>{k}</td><td>{v}</td></tr>" for k, v in rows) + f"</table><p>{tail}</p>")
 
+    def _sloop3(self):
+        """SLOOP 3 is running (its own INFO answered; no Felucca protocol) -> its sloop3.Info, else None"""
+        c = self.ctx
+        return getattr(c, "sloop3", None) if getattr(c, "midi_connected", False) and not c.connected else None
+
+    def _shown(self) -> bool:
+        return self.ctx.connected or self._sloop3() is not None
+
+    def _busy_reason(self) -> str:
+        """another job holds the device (backup, restore, installation, flash copy): then nothing is asked"""
+        c = self.ctx
+        link = c.link
+        if getattr(c, "hold", False):
+            return _("installation in progress")
+        try:
+            from ..flash import journal
+            if journal.Journal.busy():
+                return _("installation in progress")
+        except Exception:  # noqa: BLE001
+            pass
+        own = 1 if (link is not None and self.held_link is link) else 0
+        if link is not None and getattr(link, "_exclusive_depth", 0) > own:
+            return _("device in use right now")
+        return ""
+
     def _dev_changed(self):
-        ok = self.ctx.connected
+        ok = self._shown()
         self.none.setVisible(not ok)
         self.content.setVisible(ok)
         if not ok:
@@ -271,12 +307,15 @@ class FM1Page(QWidget):
     # ------------------------------------------------------------ fixed
     def _static(self):
         p, info, prof = self.ctx.port, self.ctx.info, self.ctx.profile
+        s3 = self._sloop3()
         self.engines = list(info.engines) if info else []
         self.f["Profil"].setText(prof.name if prof else "–")
-        self.f["Firmware"].setText(info.version if info else "–")
+        self.f["Firmware"].setText(info.version if info else
+                                   _("{firmware} (public beta)").format(firmware=s3.label) if s3 else "–")
         self.f["Engines"].setText(", ".join(self.engines) or "–")
         self.f["Spuren"].setText(_("{tracks} tracks × {steps} steps").format(tracks=info.ntrk, steps=info.nstep)  # i18n: ignore
-                                 if info else "–")
+                                 if info else ngettext("{n} track", "{n} tracks", s3.tracks).format(n=s3.tracks)
+                                 if s3 else "–")
         self.f["Seriennummer"].setText(p.serial or _("none"))  # i18n: ignore
         self.f["USB-Gerät"].setText(  # i18n: ignore
             " ".join(x for x in (p.manufacturer, p.product) if x) or p.label)
@@ -291,6 +330,8 @@ class FM1Page(QWidget):
     # ------------------------------------------------------------ Queries
     def refresh(self):
         if not self.ctx.connected:
+            if self._sloop3() is not None:
+                self._refresh_sloop3()
             return
         self._hold()
         link = self.ctx.link
@@ -304,6 +345,47 @@ class FM1Page(QWidget):
                 rep["preset_list"] = None
             return rep
         run_job(self, work, on_done=self._report, on_fail=lambda msg, tb: self.live_state.setText(_("Error: {error}").format(error=msg)))
+
+    def _refresh_sloop3(self):
+        """SLOOP 3: what its own read-only commands tell (INFO, the sample slots' list); then the live values"""
+        self._hold()
+        link = self.ctx.link
+        self.live_state.setText(_("reading …"))
+
+        def work(w):
+            from .. import sloop3 as S3
+            with S3.Client(link, timeout=1.5) as c:
+                info = c.info()
+                try:
+                    slots = c.samples()
+                except S3.Sloop3Error:
+                    slots = None
+            return info, slots
+
+        def done(r):
+            import time as _t
+            info, slots = r
+            self.live_state.setText(_("read at {time} (only read, nothing changed)").format(time=_t.strftime('%H:%M:%S')))
+            _set_bar(self.pool, 0, 0, _("not known for this firmware"))
+            self.f["SProjekte"].setText(_("one project place: a project is saved") if info.projects_used & 1  # i18n: ignore
+                                        else _("one project place: nothing saved yet"))
+            used = bin(info.sounds_used & 0xFFFFFFFF).count("1")
+            self.f["SUser-Presets"].setText(_("{used} of {total} of your sounds used").format(used=used, total=32))  # i18n: ignore
+            self.f["SLaufende Musik"].setText("–")  # i18n: ignore
+            self.f["SKomplett-Backup"].setText(_("on the page “Backups” (SLOOP 3's own file)"))  # i18n: ignore
+            self.f["SSample-Slots"].setText(  # i18n: ignore
+                "–" if slots is None else ", ".join(
+                    f"USR{i + 1}: " + (f"{s['name'] or '?'} ({s['kib']} KiB)" if s.get("zones") else _("empty"))
+                    for i, s in enumerate(slots)))
+            self.presets = []
+            self._fill_presets()
+            self.preset_note.setText(_("SLOOP 3: your sounds are listed and edited in its own editor (page “Editor”, "
+                                       "tab LIBRARY)."))
+            if self.active and self.cb_live.isChecked():
+                self.timer.start()
+                self._live_tick()
+        run_job(self, work, on_done=done,
+                on_fail=lambda msg, tb: self.live_state.setText(_("Error: {error}").format(error=msg)))
 
     def _report(self, r: dict):
         import time as _t
@@ -344,26 +426,40 @@ class FM1Page(QWidget):
                 (", " + ngettext("{n} favourite", "{n} favourites", fav).format(n=fav) if fav else ""))
             self.preset_note.setText(_("Edit, load and save: in the editor under “Library”."))
         self._fill_presets()
-        if self.active and self.cb_live.isChecked() and r.get("audio_supported", True):
+        if self.active and self.cb_live.isChecked() and (r.get("audio_supported", True) or
+                                                         health.sloop2_live_supported(self.ctx.info)):
             self.timer.start()
 
     def _live_toggled(self, on: bool):
-        if on and self.active and self.ctx.connected:
+        if on and self.active and self._shown():
             self.timer.start()
             self._live_tick()
         else:
             self.timer.stop()
 
     def _live_tick(self):
-        if self.live_busy or not self.ctx.connected or not self.active:
+        if self.live_busy or not self._shown() or not self.active:
+            return
+        why = self._busy_reason()
+        if why:                                 # (a backup, restore or installation has the device: wait, ask nothing)
+            self.live_state.setText(_("paused – {reason}").format(reason=why))
             return
         version = self.ctx.info.version if self.ctx.info else ""
-        if not health.audio_stats_supported(version):
+        link = self.ctx.link
+        info = self.ctx.info
+        if self._sloop3() is not None:
+            ask = health.sloop3_live            # SLOOP 3: LIVE op 0 (only the state)
+        elif health.audio_stats_supported(version):
+            def ask(lk):
+                return health.fm1_live(lk, version)
+        elif health.sloop2_live_supported(info):
+            def ask(lk):
+                return health.sloop2_live(lk, info)     # SLOOP 2.7+: LIVE 77 op 0 (only the state)
+        else:
             self._show_live(None)               # command 72 means something else on other firmwares
             self.timer.stop()
             return
         self.live_busy = True
-        link = self.ctx.link
 
         def done(v):
             self.live_busy = False
@@ -372,9 +468,74 @@ class FM1Page(QWidget):
         def fail(msg, tb):
             self.live_busy = False
             self.live_state.setText(_("no live values"))
-        run_job(self, lambda w: health.fm1_live(link, version), on_done=done, on_fail=fail)
+        run_job(self, lambda w: ask(link), on_done=done, on_fail=fail)
+
+    def _meters_visible(self, on: bool):
+        self.meters_box.setVisible(on)
+        if self.meters_title is not None:
+            self.meters_title.setVisible(on)
+
+    MELODEE_ONLY = ("Überlast", "Zweiter Kern", "Rechenzeit", "USB-Audio-Fehler", "Speichertest")  # i18n: ignore
+
+    def _rows_for(self, sloop: bool, voices: bool = True):
+        """SLOOP's LIVE state has no memory, cache or audio-block values (Melodee's AUDIO_STATS has no transport):
+        rows that cannot be filled are hidden instead of showing “–”"""
+        def show(field, on):
+            field.setVisible(on)
+            lab = self.live_form.labelForField(field)
+            if lab is not None:
+                lab.setVisible(on)
+        for w in (self.ram, self.cache, *(self.f["L" + k] for k in self.MELODEE_ONLY)):
+            show(w, not sloop)
+        show(self.f["LTransport"], sloop)
+        show(self.f["LStimmen"], not sloop or voices)
+
+    def _show_sloop_live(self, a: dict):
+        """SLOOP 3's or SLOOP 2's LIVE state in the same box (what they do not report stays “–”)"""
+        cpu, peak = a.get("cpu_percent") or 0, a.get("cpu_peak")
+        _set_bar(self.cpu, cpu, 100, f"{cpu:.0f} %" + (" · " + _("peak {n} %").format(n=peak) if peak is not None else ""))
+        _set_bar(self.ram, 0, 0, "–")
+        _set_bar(self.cache, 0, 0, "–")
+        for k in LIVE_ROWS:
+            self.f["L" + k].setText("–")
+        self.f["USB-Audio"].setText("–")
+        if a.get("voices") is not None:
+            self.f["LStimmen"].setText(ngettext("{n} playing", "{n} playing", a["voices"]).format(n=a["voices"]))  # i18n: ignore
+        pos = ""
+        if a.get("bar") is not None:
+            pos = " · " + _("bar {bar}.{beat}").format(bar=a["bar"] + 1, beat=(a.get("beat") or 0) + 1)
+        self.f["LTransport"].setText((_("playing") if a.get("playing") else _("stopped")) + " · " +
+                                     _("{bpm} BPM").format(bpm=f"{a.get('bpm', 0):g}") + pos)
+        self._rows_for(True, a.get("voices") is not None)
+        tracks = a.get("tracks") or []
+        self.f["LPro Spur"].setText(" · ".join(  # i18n: ignore
+            f"{t['name']}: " + ", ".join(x for x in (
+                _("pattern {n}").format(n=t["pattern"]) if t.get("pattern") else "",
+                _("muted") if t.get("mute") else "", _("solo") if t.get("solo") else "") if x)
+            for t in tracks if t.get("pattern") or t.get("mute") or t.get("solo")) or "–")
+        while len(self.meters) < len(tracks):
+            b = QProgressBar()
+            b.setRange(0, 127)
+            b.setTextVisible(True)
+            b.setMinimumWidth(40)
+            self.meters_lay.addWidget(b)
+            self.meters.append(b)
+        for i, b in enumerate(self.meters):
+            b.setVisible(i < len(tracks))
+            if i < len(tracks):
+                b.setValue(int(tracks[i].get("meter") or 0))
+                b.setFormat(tracks[i]["name"])
+        self._meters_visible(bool(tracks))
+        name = "SLOOP 3" if a.get("source") == "sloop3" else "SLOOP"
+        self.live_state.setText((_("live") if self.timer.isActive() else _("read")) + " · " +
+                                _("{firmware}'s LIVE state (read only)").format(firmware=name))
 
     def _show_live(self, a: dict | None, empty_text: str = ""):
+        if a and a.get("source") in ("sloop3", "sloop"):
+            self._show_sloop_live(a)
+            return
+        self._meters_visible(False)
+        self._rows_for(False)
         if not a:
             empty_text = empty_text or _("no audio values with this firmware")
             for k in LIVE_ROWS:

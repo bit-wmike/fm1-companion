@@ -130,6 +130,23 @@ def chip_plan(ctx):
     return planner.chip_check(rev if rev in ("new", "old") else "", t)
 
 
+def mboot_support(ctx) -> str:
+    """hardware.support for the m-bootloader on this FM-1: its version comes from MIDI MODE's answer to 0x12 (outside
+    MIDI MODE it is not known: "unknown")"""
+    from .. import hardware
+    mb = getattr(ctx, "mboot", None)
+    return hardware.support("m-bootloader", mb.version if mb is not None else "").status
+
+
+def flash_copy_refusal(ctx) -> str:
+    """why the read-only flash copy is not offered on this device ("" = it is): only in m-bootloader's MIDI MODE
+    (0x12 answered). Never by hardware revision or m-bootloader version: reading is harmless, and a whole copy is what
+    a user needs before any repair – the newer-unit rule only guards the installer page (which writes)."""
+    if getattr(ctx, "mboot", None) is None:
+        return _("Only in m-bootloader's MIDI MODE (step 3): the app must see “m-bootloader – MIDI MODE”.")
+    return ""
+
+
 def revision_text(ctx) -> tuple[str, str]:
     """-> (level "bad" | "warn" | "ok", the sentence about this FM-1's hardware revision and SLOOP 3)"""
     from .. import hardware
@@ -138,7 +155,18 @@ def revision_text(ctx) -> tuple[str, str]:
     how = (_("Its flash chip says so itself ({chip}).").format(chip=mb.chip) if src == "chip" and mb is not None
            else _("That is what the app knows about this device.") if src else "")
     plan = chip_plan(ctx)
-    m_boot = hardware.support("m-bootloader").status
+    m_boot = mboot_support(ctx)
+    if not plan.blockers and rev == "new" and m_boot == hardware.YES:
+        return "ok", _("This FM-1 is a newer unit (flash chip UC25HQ80) with m-bootloader {version}. m-bootloader "
+                       "2.4 and SLOOP 3 3.4.0 ran on one such unit, saving included – by its owner's report "
+                       "(2026-11-19), outside this app; the app itself has not installed anything on one. Older "
+                       "versions of either were not, or not safely, tried on one. {how}").format(
+                           version=mb.version, how=how)
+    if not plan.blockers and rev == "new" and mb is None:
+        return "bad", how + " " + _(
+            "<b>This is a newer FM-1.</b> The app offers the installer page for it only in m-bootloader's MIDI "
+            "MODE, where it can read m-bootloader's version: 2.4 ran on one such unit (owner's report), older "
+            "versions are risky there. The read-only flash copy is offered in MIDI MODE whatever the version.")
     if plan.blockers or (rev == "new" and m_boot != hardware.YES):
         return "bad", " ".join(plan.blockers) + " " + how + " " + _(
             "<b>Do not install m-bootloader or SLOOP 3 on it for now.</b> The app does not offer the installer page "
@@ -185,8 +213,10 @@ def notes_html(ctx) -> str:
         + "</li></ul>"
         "<p>" + _("Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). "
                   "<b>On a real FM-1 once, reading only</b> (SLOOP 3 3.4.0, one earlier unit): recognised, its "
-                  "editor connected, a backup read, MIDI MODE recognised. <b>Never on a real FM-1:</b> restoring a "
-                  "backup, the flash backup, anything that writes, a newer unit.").format(
+                  "editor connected, a backup read, MIDI MODE recognised. <b>Never on a real FM-1 by this app:</b> "
+                  "restoring a backup, the flash backup, anything that writes, a newer unit. Outside the app, by its "
+                  "owner's report (2026-11-19): m-bootloader 2.4 and SLOOP 3 3.4.0 ran and saved on one newer "
+                  "unit.").format(
                       versions=", ".join(S3.CHECKED_VERSIONS))
         + "</p><p>" + " · ".join(
             [a(S3.GUIDE_URL, _("Guide"))] +
@@ -306,11 +336,11 @@ class Sloop3Dialog(QDialog):
             _("Not offered for the newer FM-1 (logo on the front).") if self.level == "bad" else
             _("First confirm above which FM-1 this is."))
         in_midi = getattr(self.ctx, "mboot", None) is not None
-        self.b_backup.setEnabled(in_midi)
+        why = flash_copy_refusal(self.ctx)
+        self.b_backup.setEnabled(not why)
         self.b_backup.setToolTip(
             _("Copies the whole flash (1 MB) into your backup folder and compares it with the checksum the FM-1's "
-              "flash chip computes. Reading only.") if in_midi else
-            _("Only in m-bootloader's MIDI MODE (step 3): the app must see “m-bootloader – MIDI MODE”."))
+              "flash chip computes. Reading only.") if not why else why)
         self.hint.setText("" if in_midi else
                           _("The flash backup becomes available as soon as an FM-1 in MIDI MODE is the active "
                             "device."))

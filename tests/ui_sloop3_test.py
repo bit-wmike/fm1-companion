@@ -285,6 +285,79 @@ def main():
     wait(300)
     if not REAL:
         check(len(seen()) == before, "… without a single command to the FM-1")
+    # ---------------------------------------------------------------- FM-1 status: SLOOP 3's LIVE state
+    from fm1companion.flash import mboot
+    n_live = len(seen())
+    w.go("fm1")
+    page = w.fm1
+    check(until(lambda: "%" in page.cpu.format() and page.meters_box.isVisibleTo(page), 15000),
+          f"FM-1 status shows SLOOP 3's CPU load and the track meters ({page.cpu.format()}, "
+          f"{page.live_state.text()[:50]})")
+    check(len(page.meters) >= 5 and [b.format() for b in page.meters[:5]] == ["1", "2", "3", "4", "DR"],
+          "… a meter per track, in the FM-1's order")
+    w.grab().save(str(home / "sloop3_status.png"))
+    check("Speicher" not in page.f["SProjekte"].text() and page.f["SProjekte"].text() != "–",
+          f"… and what its INFO tells about the one project place ({page.f['SProjekte'].text()})")
+    if not REAL:
+        live = [m for m in seen()[n_live:] if m[:4] == bytes([0xF0, 0x7D, 0x53, 0x33]) and m[4] == S3.Cmd.LIVE]
+        cmds = {m[4] for m in seen()[n_live:] if m[:4] == bytes([0xF0, 0x7D, 0x53, 0x33])}
+        check(live and all(m == bytes(S3.frame(S3.Cmd.LIVE, bytes(4))) for m in live) and
+              cmds <= {S3.Cmd.INFO, S3.Cmd.SAMPLE, S3.Cmd.LIVE} and
+              all(m[:4] == bytes([0xF0, 0x7D, 0x53, 0x33]) for m in seen()[n_live:] if m[0] == 0xF0),
+              f"… asked with LIVE op 0 only ({len(live)} times), besides INFO and the sample list ({sorted(cmds)})")
+    w.go("backups")
+    wait(300)
+    # ---------------------------------------------------------------- flash backups, samples, .s3b
+    bp = w.backups
+    check(not bp.a_sloop3.isChecked(), "automatic backups for SLOOP 3 are off by default")
+    from fm1companion import flashdump as FD
+    from fm1companion.vendor import sampleio as sio
+    import math
+    img = bytearray(b"\xFF" * FD.FLASH_SIZE)
+    hdr, data = sio.user_slot("break", [([int(9000 * math.sin(i / 7)) for i in range(3000)], 36, None, None)])
+    img[FD.SLOT_AT[2]:FD.SLOT_AT[2] + len(hdr)] = hdr
+    img[FD.SLOT_AT[2] + 512:FD.SLOT_AT[2] + 512 + len(data)] = data
+    info = mboot.Info(version="2.4-test", kind=1, key=0, capacity=FD.FLASH_SIZE, jedec=0x856014, uid="0011")
+    fpath = mboot.save_backup(c.device_folder(c.settings.backups_dir) / "Flash", c.profile.name, info, bytes(img))
+    bp.refresh()
+    wait(200)
+    check(bp.flash_tree.topLevelItemCount() == 1 and "✓" in bp.flash_tree.topLevelItem(0).text(4),
+          f"the flash backup is listed with its check ({bp.flash_tree.topLevelItem(0).text(4)[:50] if bp.flash_tree.topLevelItemCount() else '-'})")
+    from PyQt6.QtWidgets import QPushButton
+    fbtns = [b.text() for b in bp.flash_box.findChildren(QPushButton)]
+    check(len(fbtns) == 3 and not any("Zurück" in t for t in fbtns), f"… with no restore button beside it ({fbtns})")
+    bp.flash_tree.setCurrentItem(bp.flash_tree.topLevelItem(0))
+    boxes.clear()
+    n0 = len(seen())
+    bp._flash_samples()
+    wavs = sorted((c.settings.samples_dir / "SLOOP 3 (flash)" / fpath.stem).glob("*.wav"))
+    check([p.name for p in wavs] == ["SLOOP 3 USR3 BREAK.wav"] and any("SLOOP 2.8" in b for b in boxes),
+          f"“Samples to the library” writes USR3 as a WAV and says the places are shared ({[p.name for p in wavs]})")
+    check(len(seen()) == n0, "… without sending anything")
+    w.grab().save(str(home / "sloop3_backups_flash.png"))
+    from PyQt6.QtWidgets import QFileDialog
+    s3b = home / "export.s3b"
+    QFileDialog.getSaveFileName = staticmethod(lambda *a, **k: (str(s3b), ""))
+    QInputDialog.getItem = staticmethod(lambda *a, **k: (a[3][0], True))
+    rows = [bp.tree.topLevelItem(i) for i in range(bp.tree.topLevelItemCount())]
+    s3row = next(r for r in rows if "_sloop3_" in Path(r.data(0, Qt.ItemDataRole.UserRole)).name)
+    bp.tree.setCurrentItem(s3row)
+    boxes.clear()
+    bp._export_s3b()
+    check(s3b.is_file() and s3b.read_bytes()[:4] == b"S3BK", f"“As .s3b …” writes the editor's file ({s3b.stat().st_size if s3b.exists() else 0} B)")
+    before_n = bp.tree.topLevelItemCount()
+    QFileDialog.getOpenFileNames = staticmethod(lambda *a, **k: ([str(s3b)], ""))
+    bp._import()
+    wait(200)
+    check(bp.tree.topLevelItemCount() == before_n + 1, "“Add file …” takes an .s3b over as a SLOOP 3 backup")
+    # Browse & Compare: the SLOOP 3 backup looked into
+    w.go("backup_browser")
+    wait(300)
+    br = w.page("backup_browser")
+    br.open_path(path)
+    wait(200)
+    check(br.rep is not None and br.rep.obj(1).format == "S3US" and br.content.topLevelItemCount() >= 2,
+          f"Browse & Compare looks inside the SLOOP 3 backup ({[o.format for o in br.rep.objects] if br.rep else '-'})")
     # ---------------------------------------------------------------- Firmware+
     w.go("firmware")
     inst = w.firmware
@@ -361,7 +434,8 @@ def main():
     inst._install()
     check(state.get("installer1") is True and state.get("live_level") == "bad" and state.get("live_installer") is False
           and state.get("live_backup") is True and state.get("live_checked") is False and state.get("live_opened") == [],
-          f"the open dialog follows the device: chip 0xB36014 read → installer page off, flash backup on ({state})")
+          f"the open dialog follows the device: chip 0xB36014 read with an m-bootloader not known on it → installer "
+          f"page off, the read-only flash copy on ({state})")
     check(state.get("back_level") == "warn" and state.get("back_checked") is False,
           "… and the confirmation has to be given again afterwards")
     state.clear()
@@ -370,8 +444,15 @@ def main():
     c.mboot = mboot.Info("2.4-test", 1, 0x980F, 0x100000, mboot.JEDEC_NEW, "00" * 8)
     state.clear()
     inst._install()
-    check(state.get("level") == "bad" and state.get("installer0") is False and state.get("installer1") is False,
-          f"newer hardware revision (UCUN chip): the app does not offer the installer page ({state})")
+    check(state.get("level") == "bad" and state.get("installer0") is False and state.get("installer1") is False
+          and state.get("backup") is True,
+          f"newer hardware revision (UCUN chip), m-bootloader not 2.4: no installer page, the flash copy offered ({state})")
+    c.mboot = mboot.Info("2.4-395e6cc", 1, 0x980F, 0x100000, mboot.JEDEC_NEW, "00" * 8)
+    state.clear()
+    inst._install()
+    check(state.get("level") == "ok" and state.get("installer0") is True and state.get("backup") is True,
+          f"newer unit with m-bootloader 2.4 (one owner's report, 2026-11-19): installer page and flash copy offered "
+          f"({state})")
     c.mboot = mboot.Info("2.4-test", 1, 0x980F, 0x100000, mboot.JEDEC_OLD, "00" * 8)
     state.clear()
     inst._install()

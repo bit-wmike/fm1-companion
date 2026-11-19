@@ -6,7 +6,8 @@
 // (TRACK_STEP on the three synth tracks, DRUM_STEP on the drums, PROJECT save into section A), the whole backup GET and
 // PUT into a second twin in the web editor's order (byte-identical back), flash persistence across a "power cycle",
 // section load + PLAY on the panel, audio non-silent and bit-identical across instances, a RAM fork, the screen, LEDs,
-// USB MIDI out, stop (st_transport_set and the editor's LIVE page), the song mode (st_transport_set 2).
+// USB MIDI out, the LIVE state (op 0), stop (st_transport_set and the editor's LIVE page), the song mode
+// (st_transport_set 2).
 //   node tests/studio_twin_sloop.mjs fm1companion/sims/sloop-studio   -> JSON on stdout
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -156,6 +157,8 @@ for (const v of readdirSync(dir).sort()) {
   check(takes[0].leds_lit, "LEDs lit while playing");
   // a fork: the RAM of a playing instance continues identically in another
   const f1 = await TwinCore.create(wasm, { flash: song }); f1.runMs(600); f1.projectLoad(0); f1.press(TwinCore.B.PLAY); f1.render(4410);
+  res.live_state = request(f1, 77, [0, 0]);          // the LIVE page's op 0: only the state (the app's FM-1 status)
+  f1.render(4410);
   const f2 = await TwinCore.create(wasm, { memory: f1.snapshotMemory() });
   const a1 = f1.render(44100), a2 = f2.render(44100);
   res.fork_identical = sha(Buffer.from(a1.l.buffer)) === sha(Buffer.from(a2.l.buffer));
