@@ -115,7 +115,9 @@ def install_running() -> bool:
     if journal.Journal.busy():
         return True
     pid, born = journal._read_lock(_journal().lockfile)      # "PID start-time" (older versions: PID only)
-    return bool(pid) and journal._alive(pid, born)
+    if bool(pid) and journal._alive(pid, born):
+        return True
+    return journal.tool_child_alive(_journal().dir)         # M-Flasher of a window that has died
 
 
 def resume_possible() -> bool:

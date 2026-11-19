@@ -29,13 +29,16 @@ log = logging.getLogger(__name__)
 
 TIMEOUTS = {"find": 10.0, "info": 60.0, "--version": 10.0, "--help": 10.0}
 TALKS_TO_UNIT = ("find", "info")              # take the installation lock
-_DEVICE_RE = re.compile(r"^/dev/sg\d{1,3}$")
-_HEX16_RE = re.compile(r"\b[0-9A-Fa-f]{16}\b")
+_DEVICE_RE = re.compile(r"/dev/sg\d{1,3}")
+# a unit id: 16 hex digits, also with 0x, or as 8 bytes separated by spaces, colons or dashes; not inside a longer
+# hex run (SHA-256 values stay readable) – underscores and dots around it do not protect it
+_ID_RE = re.compile(r"(?<![0-9A-Fa-f])(?:0[xX])?(?:[0-9A-Fa-f]{16}|(?:[0-9A-Fa-f]{2}[ :-]){7}[0-9A-Fa-f]{2})"
+                    r"(?![0-9A-Fa-f])")
 
 
 def mask_ids(text: str) -> str:
-    """unit ids (16 hex digits) shortened to their last four, like USB serial numbers in the flight log"""
-    return _HEX16_RE.sub(lambda m: "…" + m.group(0)[-4:], text)
+    """unit ids shortened to their last four hex digits, like USB serial numbers in the flight log"""
+    return _ID_RE.sub(lambda m: "…" + re.sub(r"[^0-9A-Fa-f]", "", m.group(0)[-5:])[-4:], text)
 
 
 class ToolError(Exception):
@@ -60,6 +63,7 @@ class RunResult:
     err: str = ""
     timed_out: bool = False
     cancelled: bool = False
+    stuck: bool = False             # did not stop even after SIGKILL (hangs in the kernel): the lock stays held
     seconds: float = 0.0
     log_path: Path | None = None
     problems: list[str] = field(default_factory=list)
@@ -90,7 +94,7 @@ def _check_args(args: list[str]) -> None:
     if not args or args[0] not in TIMEOUTS:
         raise ToolError(_("This M-Flasher command is not available in the app."))
     if args[0] == "info":
-        if len(args) != 3 or args[1] != "--device" or not _DEVICE_RE.match(args[2]):
+        if len(args) != 3 or args[1] != "--device" or not _DEVICE_RE.fullmatch(args[2]):
             raise ToolError(_("This M-Flasher command is not available in the app."))
     elif len(args) != 1:
         raise ToolError(_("This M-Flasher command is not available in the app."))
@@ -128,12 +132,16 @@ def run_mflasher(args: list[str], *, store: Store | None = None, cancel: threadi
         from ..flash import journal as fj
         log_dir = fj.root() / "logs"
     flight = _flight(log_dir)
+    res = None
     try:
-        res = _run(cand, args, timeout if timeout is not None else TIMEOUTS[args[0]], cancel, flight, on_line)
+        res = _run(cand, args, timeout if timeout is not None else TIMEOUTS[args[0]], cancel, flight, on_line, lock)
         res.problems = problems
     finally:
-        if lock is not None:
+        if lock is not None and not (res is not None and res.stuck):
             lock.release()
+    if res.stuck:
+        raise ToolError(_("M-Flasher does not stop. Unplug the FM-1 (or switch it off); the app starts no other "
+                          "installation or tool until M-Flasher has ended."))
     _judge(store, cand, res)
     outcome = "ok" if res.ok else ("cancelled" if res.cancelled else ("timeout" if res.timed_out else f"exit {res.rc}"))
     header = [f"tool: M-Flasher {cand.version} ({cand.source}), command: {' '.join(args)}",
@@ -143,22 +151,73 @@ def run_mflasher(args: list[str], *, store: Store | None = None, cancel: threadi
     return res
 
 
-def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_line) -> RunResult:
-    ok, why = cand.verify()                       # right before the start: never run a changed binary
-    if not ok:
+def _protected(path: Path) -> bool:
+    """can nobody but root change the file between our hash and the exec? (not writable for this user, the file and
+    its folder not writable for group or others) – e.g. /usr/lib/fm1-companion/tools-bin of the .deb"""
+    try:
+        for q in (path, path.parent):
+            if os.access(q, os.W_OK) or q.stat().st_mode & 0o022:
+                return False
+    except OSError:
+        return False
+    return True
+
+
+def _exec_path(cand: Candidate, flight) -> tuple[Path, str | None]:
+    """(file to execute, private temp folder to remove afterwards). Hash and exec must see the same bytes: a binary
+    in a folder this user (or anyone) can write is copied once into a private 0700 folder, the COPY is hashed and
+    run; a root-owned one is hashed in place."""
+    import shutil
+    import tempfile
+    def refuse(why):
         flight.ev("refused", f"M-Flasher {cand.version}: {why}")
         raise ToolUnavailable(_("The bundled M-Flasher did not pass its checksum test, so the app does not run it. "
                                 "Reinstall the app."))
+    if _protected(cand.path):
+        ok, why = cand.verify()
+        if not ok:
+            refuse(why)
+        return cand.path, None
+    tmp = tempfile.mkdtemp(prefix="fm1c-tool-")
+    os.chmod(tmp, 0o700)
+    try:
+        data = cand.path.read_bytes()
+        import hashlib
+        if hashlib.sha256(data).hexdigest() != cand.sha256.lower():
+            refuse("SHA-256 differs from the expected value")
+        exe = Path(tmp) / "m-flasher"
+        fd = os.open(exe, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o700)
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+    except BaseException:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
+    return exe, tmp
+
+
+def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_line, lock=None) -> RunResult:
+    import shutil
+    from . import proc
+    try:
+        exe, tmp = _exec_path(cand, flight)            # right before the start: never run a changed binary
+    except OSError as e:
+        flight.ev("refused", f"M-Flasher {cand.version}: {e.strerror or e}")
+        raise ToolUnavailable(_("The bundled M-Flasher did not pass its checksum test, so the app does not run it. "
+                                "Reinstall the app.")) from e
     env = dict(os.environ, LANG="C", LC_ALL="C")
     env.pop("LANGUAGE", None)
     flight.ev("exec", f"m-flasher {' '.join(args)} (version {cand.version}, {cand.source}, sha256 {cand.sha256[:12]}…)")
     t0 = time.monotonic()
     try:
-        p = subprocess.Popen([str(cand.path), *args], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, env=env, start_new_session=True, cwd=str(Path.home()))
+        p = proc.popen([str(exe), *args], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE, env=env, cwd=str(Path.home()))
     except OSError as e:
+        if tmp:
+            shutil.rmtree(tmp, ignore_errors=True)
         flight.ev("error", f"could not start: {e.strerror or e}")
         return RunResult(cand.version, cand.source, list(args), None, err=str(e.strerror or e))
+    if lock is not None and hasattr(lock, "set_tool"):
+        lock.set_tool(p.pid)
     chunks: dict[str, list[str]] = {"out": [], "err": []}
 
     def reader(stream, kind):
@@ -195,19 +254,43 @@ def _run(cand: Candidate, args: list[str], timeout: float, cancel, flight, on_li
             timed_out = True
         if cancelled or timed_out:
             flight.ev("stop", "cancelled" if cancelled else f"no answer within {timeout:.0f} s")
-            p.terminate()
-            try:
-                p.wait(2.0)
-            except subprocess.TimeoutExpired:
-                p.kill()
-                p.wait()
             break
+    stuck = False
+    if cancelled or timed_out:
+        stuck = not proc.stop(p)                   # SIGTERM to its group, SIGKILL after 2 s, wait bounded
+    else:
+        proc.forget(p)
     for t in threads:
         t.join(2.0)
     seconds = time.monotonic() - t0
+    if stuck:
+        flight.ev("stuck", "M-Flasher did not stop after SIGKILL – the lock stays held until it ends")
+        _reap_later(p, lock, tmp)
+    else:
+        if lock is not None and hasattr(lock, "clear_tool"):
+            lock.clear_tool()
+        if tmp:
+            shutil.rmtree(tmp, ignore_errors=True)
     flight.ev("exit", f"{p.returncode} after {seconds:.1f}s")
     return RunResult(cand.version, cand.source, list(args), p.returncode, "".join(chunks["out"]),
-                     "".join(chunks["err"]), timed_out, cancelled, seconds)
+                     "".join(chunks["err"]), timed_out, cancelled, stuck=stuck, seconds=seconds)
+
+
+def _reap_later(p, lock, tmp):
+    """a process that hangs in the kernel: keep the lock (no second job meanwhile) until it has really ended"""
+    import shutil
+
+    def wait():
+        p.wait()
+        from . import proc
+        proc.forget(p)
+        if lock is not None:
+            if hasattr(lock, "clear_tool"):
+                lock.clear_tool()
+            lock.release()
+        if tmp:
+            shutil.rmtree(tmp, ignore_errors=True)
+    threading.Thread(target=wait, daemon=True, name="m-flasher-reaper").start()
 
 
 def _judge(store: Store, cand: Candidate, res: RunResult):

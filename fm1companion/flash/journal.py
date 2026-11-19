@@ -9,6 +9,8 @@ DATA_DIR/flash/journal.json  {"active": {...} | null, "history": [...], "chain":
 DATA_DIR/flash/packages/<sha256>.fwsc  copy of the package currently being installed (for the rescue); removed
   once no active entry names it
 DATA_DIR/flash/install.lock  PID (and start time) of the process currently installing (one installation at a time)
+DATA_DIR/flash/tool.pid  PID (and start time) of a bundled tool (M-Flasher) a lock holder started; while it lives,
+  nobody else gets the lock – even when the window that started it has died
 """
 from __future__ import annotations
 
@@ -44,6 +46,7 @@ class Journal:
         self.dir = Path(folder) if folder else root()
         self.file = self.dir / "journal.json"
         self.lockfile = self.dir / "install.lock"
+        self.toolfile = self.dir / TOOL_PID
         self._held = False
 
     # ------------------------------------------------------------ file
@@ -86,6 +89,9 @@ class Journal:
                 pid, born = _read_lock(self.lockfile)
                 if pid and pid != os.getpid() and _alive(pid, born):
                     raise Busy(_("Another program window is installing a firmware right now."))
+                if tool_child_alive(self.dir):      # its window died, but the tool it started is still running
+                    raise Busy(_("M-Flasher, started by a program window that has closed, is still running. Wait "
+                                 "a minute; if it stays, switch the FM-1 off and on."))
                 self.lockfile.unlink(missing_ok=True)
                 fd = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             os.write(fd, f"{os.getpid()} {_started(os.getpid())}".encode())
@@ -94,6 +100,15 @@ class Journal:
         except BaseException:
             _LOCK.release()
             raise
+
+    # ------------------------------------------------------------ a tool started under the lock (tools/runner.py)
+    def set_tool(self, pid: int):
+        tmp = self.toolfile.with_suffix(".tmp")
+        tmp.write_text(f"{pid} {_started(pid)}")
+        os.replace(tmp, self.toolfile)
+
+    def clear_tool(self):
+        self.toolfile.unlink(missing_ok=True)
 
     def release(self):
         if self._held:
@@ -194,6 +209,23 @@ class Journal:
         self._prune_packages(d)
 
 
+TOOL_PID = "tool.pid"
+
+
+def tool_child_alive(folder: Path | None = None) -> bool:
+    """is a tool (M-Flasher) still running that a lock holder started? (a stale record is removed)"""
+    f = Path(folder or root()) / TOOL_PID
+    pid, born = _read_lock(f)
+    if not pid:
+        return False
+    if pid != os.getpid() and _alive(pid, born) and born:
+        return True
+    if pid == os.getpid():
+        return False
+    f.unlink(missing_ok=True)
+    return False
+
+
 def _sha256(path: Path) -> str:
     h = hashlib.sha256()
     try:
@@ -229,6 +261,11 @@ def _alive(pid: int, born: str = "") -> bool:
     except ProcessLookupError:
         return False
     except PermissionError:
+        pass
+    try:                                    # a zombie (ended, not yet collected by its parent) is not running
+        if Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0] == "Z":
+            return False
+    except (OSError, IndexError):
         pass
     now = _started(pid)
     return not (born and now and born != now)

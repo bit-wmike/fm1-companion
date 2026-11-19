@@ -77,7 +77,7 @@ KERNEL_RE = re.compile(r"\busb\b|xhci|\bhub\b|snd|midi|fm-?1|melodee|felucca|ove
                        r"reset (full|high|low)-speed|disconnect", re.I)
 SERIAL_RE = re.compile(r"(SerialNumber:\s*)(\S+)", re.I)
 # the flash chip's factory unit id as M-Flasher prints it ("unit id     <16 hex>"): identifies one FM-1
-UNIT_ID_RE = re.compile(r"(unit id\s+)([0-9A-Fa-f]{16})\b", re.I)
+UNIT_ID_RE = re.compile(r"(unit[ _-]?id\s*[:=]?\s*(?:0x)?)([0-9A-Fa-f]{16})(?![0-9A-Fa-f])", re.I)
 
 
 def _mask_serial(text: str) -> str:
