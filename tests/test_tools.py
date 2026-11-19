@@ -148,7 +148,7 @@ def test_armhf_gets_a_clear_not_available(tmp_path):
     s = st.Store(bin_dir=tmp_path, updates_dir=tmp_path / "u", machine="armv7l")
     assert s.bundled("m-flasher") is None
     why = runner.unavailable_reason(s)
-    assert "not available" in why and "64-bit" in why
+    assert "armv7l" in why and "64" in why                          # (any language)
     with pytest.raises(runner.ToolUnavailable):
         runner.run_mflasher(["find"], store=s, log_dir=tmp_path)
 

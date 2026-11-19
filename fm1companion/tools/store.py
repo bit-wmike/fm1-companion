@@ -73,6 +73,8 @@ class Store:
         self.bundled_dir = Path(bundled_dir) if bundled_dir else mf.BUNDLED
         self.data = data or mf.load()
         self.arch = mf.arch(machine)
+        import platform
+        self.machine = machine if machine is not None else platform.machine()
 
     # ------------------------------------------------------------ state (proven / failed per update)
     @property

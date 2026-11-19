@@ -72,10 +72,9 @@ class RunResult:
 def unavailable_reason(store: Store) -> str:
     """why there is no M-Flasher to run on this computer ("" when there is one)"""
     if not store.arch:
-        import platform
         return _("M-Flasher is not available for this computer ({machine}): it is built for 64-bit ARM (Raspberry "
                  "Pi OS 64-bit) and for x86-64 PCs only. On a Raspberry Pi with the 32-bit system the recovery tools "
-                 "on this page still work.").format(machine=platform.machine() or "?")
+                 "on this page still work.").format(machine=store.machine or "?")
     c, _problems = store.select("m-flasher")
     if c is None:
         b = store.bundled("m-flasher")
