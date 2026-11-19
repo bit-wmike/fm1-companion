@@ -631,6 +631,9 @@ def restore(job: Job, image: Path, confirm) -> RestoreResult:
                       "not-write-verified")
     side = check_image(image)
     data = image.read_bytes()
+    if hashlib.sha256(data).hexdigest() != side.get("sha256"):     # (changed since the check a moment ago)
+        raise Refused(_("The flash backup does not match its description (changed or damaged).") + " " +
+                      _("Nothing was written."), "image-damaged")
     with _Lock(job, "mflasher-restore"):
         res = _restore_locked(job, image, side, data, confirm)
     res.log_path = job.log_path
