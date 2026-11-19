@@ -31,6 +31,7 @@ So far on **two** FM-1 of one owner – an earlier unit (flash chip 0x856014) an
 | A newer FM-1 (logo on the front) **as delivered**, read-only (2026-11-18) | one unit seen: USB 4c4a:c755, product "FM-1", it answers the update handshake as `FM-1_015`. So a factory build that calls itself version 15 runs on a newer unit. That is **not** a test of the public V15 package on such a unit: that package was never written to one |
 | **First installation on a newer FM-1** (2026-11-18): that unit, from its factory firmware (identity `FM-1_015`) to **Skiff 2.7**, directly at the Pi, careful mode off, no V15 step | done once, worked; flight log: 2348 requests, no repeated request, no send failure, writing 53 s, `FM-1_727` back after 8.5 s. Saving works on the chip: backup → a change on the unit, SAVE, power off and on → the next backup differs in objects 0, 1 and 6, all with a valid CRC32. **Scope: one unit, one firmware (Skiff 2.7), one computer.** Says nothing about any other firmware or version on this chip, about writing the public V15 package to such a unit, about the recovery in ROM boot mode there, or about m-bootloader. In that session the app afterwards took the unit for the owner's other FM-1 (fixed in 2.6.1: profiles) |
 | SLOOP 3 3.4.0 (installed outside the app) and m-bootloader 2.4's MIDI MODE on the earlier unit (2026-11-18), **read only** | seen once: recognition, the bundled editor connected, one SLOOP 3 backup, the installation refused – see “SLOOP 3 and m-bootloader” below. Nothing written |
+| FM1 Open V14 (installed outside the app) on the earlier unit (2026-11-19): its sample protocol, **from a script** with the app's own `fm1open.py`, not through the app's pages | run twice: probe, bank read, a new bank written and read back identical; once: a saved `.fm1s` bank restored – see “FM1 Open” below |
 | System check | detects patterns taken from real Pi 5 logs (USB controller crash at the FM-1's audio start, fluidsynth.service occupies the HDMI sound card) |
 
 That is **two** devices of one owner, **three** installations with logs, **one** computer. **Not** run on hardware:
@@ -99,6 +100,29 @@ that part is still simulation only.
 | An identity answer that carries the flash ID (fm1-base builds of 2026-11-05/06: AMB-1 1.3.1, LOOM-8 0.13 …) is recognised as an FM-1 again and the ID is kept | only with answers built in the tests after felucca-bsp's `ota.c` |
 | Rescue level 3 (Transporter with XIAO RP2040) | instructions only; the Pico-instead-of-XIAO variant is unverified |
 | V16 specifics (first-start formatting, boot head with the original loader) | only in the emulator or open; test plan: help page "V16 – note" and docs/flash-protocol.md §17 |
+
+### FM1 Open
+
+**On a real FM-1, from a script (2026-11-19):** the owner's earlier unit with M-VAVE's FM1 Open V14 (installed
+outside the app: original V15 first, then M-VAVE's Workbench with “Force flash”), at one Raspberry Pi 5. **Not through
+the app's pages:** a script used the app's own module `fm1companion/fm1open.py`, with the app closed. This table exists
+a second time in the code (`FM1OPEN_HARDWARE` in `fm1companion/flash/tested.py`); `tests/test_fm1open_quick.py` fails
+when the two differ.
+
+| What (`tested.py` key) | On a real FM-1 |
+|---|---|
+| `fm1open_probe` – FM1 Open's sample protocol: the probe | run twice: answered with version 4 and a capacity of 446464 bytes |
+| `fm1open_bank_read` – reading the sample bank | run twice: the factory bank, then the bank written before, read and saved as `.fm1s` |
+| `fm1open_bank_write` – writing a new sample bank and reading it back | run twice: a new bank of 7 samples, then one of 8, written and read back identical; the bank's status was “ready” afterwards |
+| `fm1open_bank_restore` – restoring a saved .fm1s sample bank and reading it back | run once: the factory bank saved before as `.fm1s` written back, read back identical, status “ready” afterwards |
+| `fm1open_samples_page` – the FM1 Open box on the page “Samples & Kits” | not run (the same module, but the page itself was not clicked through on the device) |
+| `fm1open_backup` – an FM1 Open backup (projects, DX7 library banks, sample bank) | not run (only with the twin) |
+| `fm1open_restore` – restoring an FM1 Open backup / writing back from the Studio | not run (only with the twin) |
+
+Seen with the app on the same unit, read only: FM1 Open V14 is USB `3654:7756`, product "FM1 Community", manufacturer
+"Jieli Technology", bcdDevice 0.01, with a serial number of the unit's own – the very number the unit reported under
+the original firmware – and it answers the update handshake as `FM-1_8000014`. From the M-VAVE Workbench's force flash
+under a running Skiff 2.7: refused at once, nothing written (the Felucca-family firmware drops the package).
 
 ### SLOOP 3 and m-bootloader
 
@@ -193,7 +217,7 @@ confirmed.
 | **LOOM-8 twin** (0.14, 0.13.1: fm1-base's image `.loom8`, write back whole with SEL) | only against the twin itself; never against a real LOOM-8 FM-1 (no INFO: the device is known by the profile's firmware only) |
 | **FoMni and AMB-1 twins** (no backup over USB: play, export, studio states) | only the twins themselves; never compared with a real device |
 | **FM1 Open twin** (V14, M-VAVE's simulator code: fetch from an FM1 Open FM-1, open an FM1 Open backup, write back) | only against the twin itself and the suite's own code (simulation); never against a real FM-1 with FM1 Open. Its open engine stands in for the device's binary engine (M-VAVE's simulator does the same): sound may differ from the device |
-| FM1 Open backups (`fm1openbk.py`: its file protocol, the working project, 16 slots read by loading them, 4 DX7 library banks, the sample bank) | only with the twin; that a real FM1 Open answers the identity FM-1_8000014 to the update handshake in normal operation is taken from M-VAVE's workbench code (`sdk/WebUpdate.js`), not observed |
+| FM1 Open backups (`fm1openbk.py`: its file protocol, the working project, 16 slots read by loading them, 4 DX7 library banks, the sample bank; *Back up now* on the Overview and the Backups page) | only with the twin; on a real FM1 Open only its sample-bank transfer ran (see “FM1 Open” above). That a real FM1 Open answers the identity FM-1_8000014 to the update handshake in normal operation was seen once (2026-11-19) |
 | **The FM1 Open twin as the stand-in for the original V15/V16** (note in the Studio, no fetch / write back) | only the page logic, with a simulated device |
 | **Original V15: restore factory voices** (FM Voices › Original V15: restore factory voices …: all 128 voices in A–D overwritten, commands 33/34 on object 5 as M-VAVE's `sdk/WebUpdate.js` restoreFactory; the current voices cannot be saved first) | only against a simulated V15 built from that code; never on a real FM-1 |
 
@@ -209,7 +233,8 @@ confirmed.
   on SLOOP 2 / KARMA those are DSYN_GET / DSYN_PUT, on Felucca and JIANT 73 is MENU_SET (before, Compose's pattern
   choice changed Felucca's display settings), on Felucca 74 FM6B_BEGIN, on Skiff 74 KIT_GET. Checked in the sources
   and against the SLOOP 2.8.5 twin, not on real devices.
-- FM1 Open sample protocol: reconstructed from the source code, only tested against our own simulator.
+- FM1 Open sample protocol: reconstructed from the source code; on a real FM-1 only from a script with the app's own
+  code (see “FM1 Open” above), not yet through the page “Samples & Kits”.
 
 ### Audio, desktop, installation
 - Recording via PipeWire/ALSA from the FM-1, clock-accurate recording with a real MIDI clock.

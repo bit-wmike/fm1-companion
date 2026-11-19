@@ -36,7 +36,9 @@ Backups* aus.
 Backups laufen über das Editor-Protokoll der Firmware. Die App spricht drei Backup-Protokolle: das von
 **Felucca** (Felucca, Melodee, Skiff, JIANT FM, CoralFlower, ChoralRoot und die Felucca-Forks, die es behalten),
 das von **SLOOP** (SLOOP, KARMA, ORBIT und SLOOPs Forks: sloopDX, Clipper, Jangada, winampFM, …) und das von
-**X0X** (ab X0X 1.0.9); M-VAVEs FM1 Open hat ein eigenes.
+**X0X** (ab X0X 1.0.9); M-VAVEs FM1 Open hat ein eigenes: *Backup jetzt* nutzt es (was so ein
+Backup enthält, steht unter [Studio](app://page/studio) › FM1 Open); zurück aufs FM-1 geht es über *Aufs FM-1 zurückschreiben …*
+im Studio.
 
 * Eine Firmware, die sich auf Nachfrage mit Namen meldet („FELUCCA CLIPPER 1.3.1“), bekommt ihre eigenen Regeln.
   Eine, die wie Felucca antwortet („FELUCCA v1.0“), wird **gefragt**, welches Backup-Protokoll sie spricht – nur

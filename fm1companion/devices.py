@@ -3,9 +3,10 @@
 
 Each device gets a profile (name, colour, notes, last known firmware).
 A device is recognised by its USB serial number where it has one of its own (identifying_serial): the original
-firmware reports one per unit, the Felucca-family firmwares report none. So the same FM-1 shows a serial number
-under one firmware and none under the next – the profile learns the number (ui/device.py) instead of a second
-profile being made, and where the app cannot tell, the user says once which profile is meant.
+firmware and M-VAVE's FM1 Open report one per unit (the same number), the Felucca-family firmwares report none.
+So the same FM-1 shows a serial number under one firmware and none under the next – the profile learns the number
+(ui/device.py) instead of a second profile being made, and where the app cannot tell, the user says once which
+profile is meant.
 """
 from __future__ import annotations
 
@@ -27,9 +28,12 @@ FM1_NAME_RE = re.compile(r"melodee|felucca|\bfm-?1\b|fm1|sloop|skiff|m-vave|ota-
 GENERIC_NAME_RE = re.compile(r"usb composite device|composite|usb-?midi|sinco", re.I)
 UPDATE_NAME_RE = re.compile(r"\bupdate\b|^ota-", re.I)
 NOT_FM1_RE = re.compile(r"midi through|timidity|fluid|pipewire|virtual|rtmidi|mido|\bseq\b", re.I)
-# known USB IDs (VID:PID): stock firmware, its update loader, Felucca family and their loaders
+# known USB IDs (VID:PID): stock firmware, its update loader, Felucca family and their loaders, M-VAVE's FM1 Open
+# (V14 on a real unit, 2026-11-19: 3654:7756, product "FM1 Community", manufacturer "Jieli Technology", bcdDevice 0.01)
 FM1_USB_IDS = {"4c4a:c755": "stock", "4c4a:4155": "stock", "4d4a:4155": "stock-update",
-               "1209:0001": "felucca", "1209:0002": "felucca-update"}
+               "1209:0001": "felucca", "1209:0002": "felucca-update", "3654:7756": "fm1-open"}
+# the product name FM1 Open reports (app USB descriptor) – it names that firmware even before its update ID is known
+FM1_OPEN_PRODUCT_RE = re.compile(r"^fm1 community\b", re.I)
 UBOOT_USB_ID = "4c4a:8057"     # ROM boot mode (no MIDI)
 CLIENT_RE = re.compile(r"(\d+):(\d+)\s*$")
 PROFILES_FILE = DATA_DIR / "devices.json"
@@ -300,10 +304,26 @@ CONSTANT_SERIAL_RE = re.compile(r"^(0000FM1DISK1$|TransitFM1\b)", re.I)
 #       (two different numbers); its source is not public
 #   M-VAVE's update loader (4d4a:4155): not known – a number seen there may confirm a profile that already has it,
 #       but is never learned into a profile
+#   M-VAVE's FM1 Open (3654:7756, "FM1 Community"): yes, per unit – on one FM-1 (2026-11-19, V14) the very number
+#       that unit's original firmware reported as its serial number (= the unit ID), so a profile made under the
+#       original firmware recognises the unit under FM1 Open too
 #   Felucca family (1209:0001 and its loader 1209:0002: Felucca, Melodee, Skiff, SLOOP, KARMA, JIANT, ORBIT, X0X,
 #       gr!mm, Hortator, ChoralRoot, CoralFlower, fm1-base …): none at all (iSerialNumber 0), or a constant (above) –
 #       a number seen there never identifies a unit
-OWN_SERIAL_KINDS = ("stock", "stock-update")
+OWN_SERIAL_KINDS = ("stock", "stock-update", "fm1-open")
+
+
+def firmware_from_port(port) -> str:
+    """the firmware key a port's own USB data names without asking the device: "fm1-open" for FM1 Open's USB ID or
+    its product name "FM1 Community"; "" otherwise (every other USB ID is shared by several firmwares)"""
+    if port is None:
+        return ""
+    if FM1_USB_IDS.get((getattr(port, "usb_id", "") or "").lower(), "") == "fm1-open":
+        return "fm1-open"
+    for name in (getattr(port, "product", "") or "", getattr(port, "label", "") or ""):
+        if FM1_OPEN_PRODUCT_RE.match(name.strip()):
+            return "fm1-open"
+    return ""
 
 
 def unit_id_forms(value: str) -> set[str]:

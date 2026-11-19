@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import html
-import re
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (QColorDialog, QFormLayout, QGridLayout, QHBoxLayout, QInputDialog, QLabel,
                              QPlainTextEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
-from .. import firmware
 from ..i18n import _, pgettext
 from .common import Card, fmt_date, fmt_size, heading, icon
 
@@ -245,9 +243,10 @@ class OverviewPage(QWidget):
         self.lbl["Unit"].setText(self._unit_text(p))
         for b in (self.b_rename, self.b_color, self.notes):
             b.setEnabled(p is not None)
-        from .backups_page import can_back_up, no_backup_reason   # (the same rule as the page “Backups”: SLOOP 3 too)
-        can_backup = can_back_up(c)
-        why = (_("Make a complete backup of the active FM-1 (Ctrl+B)") if can_backup else
+        from .backups_page import FM1OPEN_BACKUP_NOTE, can_back_up, fm1open_target, no_backup_reason
+        can_backup = can_back_up(c)                 # (the same rule as the page “Backups”: SLOOP 3, FM1 Open too)
+        why = (_(FM1OPEN_BACKUP_NOTE) if can_backup and fm1open_target(c) else
+               _("Make a complete backup of the active FM-1 (Ctrl+B)") if can_backup else
                (no_backup_reason(c) if port else _("Connect an FM-1 first.")))
         for b in (self.b_backup, self.quick_buttons.get("Backup jetzt")):  # i18n: ignore
             if b is not None:
@@ -259,13 +258,12 @@ class OverviewPage(QWidget):
         self._backup_text()
         self._update_text()
         lines = []
+        from .device import last_firmware_text
         connected = {pr.id for pr in (c.profile_for_port(x) for x in c.ports) if pr}
         for prof in sorted(c.store.profiles.values(), key=lambda x: x.name):
-            fw = firmware.spec(prof.firmware) if prof.firmware else None
             state = _("active") if p and prof.id == p.id else (_("plugged in") if prof.id in connected
                                                                else _("not plugged in"))
-            ver = re.sub(r"^[vV](?=\d)", "", prof.firmware_version or "")   # as above: “1.6.0-rc.7”, not “v1.6.0-rc.7”
-            what = f"{fw.name if fw else prof.firmware} {ver}".strip() or _("firmware unknown")
+            what = last_firmware_text(prof) or _("firmware unknown")     # (“FM1 Open V14”, not the key “fm1-open 14”)
             lines.append(f"<b style='color:{prof.color}'>●</b> <b>{html.escape(prof.name)}</b> – "
                          f"{html.escape(what)} · {state}")
         self.others_text.setText("<br>".join(lines) or _("No devices yet. Connect an FM-1."))
@@ -287,10 +285,13 @@ class OverviewPage(QWidget):
         no_usb = ""
         if c.port is not None and not c.connected and getattr(c, "midi_connected", False) \
                 and getattr(c, "protocol", "") != "update":
-            from .backups_page import no_backup_reason
-            no_usb = no_backup_reason(c)
+            from .backups_page import FM1OPEN_BACKUP_NOTE, fm1open_target, no_backup_reason
+            no_usb = no_backup_reason(c) or (_(FM1OPEN_BACKUP_NOTE) if fm1open_target(c) else "")
         if not metas:
-            self.bk_text.setText(html.escape(no_usb) if no_usb
+            from .backups_page import can_back_up
+            self.bk_text.setText(_("No backup of this device yet. <b>Best make one now.</b>") +
+                                 f"<br>{html.escape(no_usb)}" if no_usb and can_back_up(c)
+                                 else html.escape(no_usb) if no_usb
                                  else _("No backup of this device yet. <b>Best make one now.</b>"))
             return
         # date and firmware from the index every backup kind goes through (autobackup.read_meta): the formats

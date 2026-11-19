@@ -34,7 +34,9 @@ no lo quieres nunca, desactiva *al conectar* en [Copias de seguridad](app://page
 Las copias pasan por el protocolo de editor del firmware. La app habla tres protocolos de copia: el de
 **Felucca** (Felucca, Melodee, Skiff, JIANT FM, CoralFlower, ChoralRoot y los forks de Felucca que lo conservan),
 el de **SLOOP** (SLOOP, KARMA, ORBIT y los forks de SLOOP: sloopDX, Clipper, Jangada, winampFM, …) y el de **X0X**
-(desde X0X 1.0.9); FM1 Open de M-VAVE tiene uno propio.
+(desde X0X 1.0.9); FM1 Open de M-VAVE tiene uno propio: *Hacer copia ahora* lo usa (qué
+contiene esa copia está en [Studio](app://page/studio) › FM1 Open); vuelve al FM-1 con *Volver a escribir en el FM-1 …* del
+Studio.
 
 * Un firmware que dice su nombre cuando se le pregunta («FELUCCA CLIPPER 1.3.1») recibe sus propias reglas. A uno
   que responde como Felucca («FELUCCA v1.0») se le **pregunta** qué protocolo de copia habla, solo con peticiones
