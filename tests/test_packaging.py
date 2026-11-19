@@ -55,9 +55,18 @@ def test_deb(dist):
               "./usr/share/applications/fm1-companion.desktop", "./usr/share/metainfo/fm1-companion.metainfo.xml",
               "./usr/share/icons/hicolor/512x512/apps/fm1-companion.png", "./usr/share/icons/hicolor/scalable/apps/fm1-companion.svg",
               "./usr/share/man/man1/fm1-companion.1.gz", "./usr/share/doc/fm1-companion/copyright",
-              "./usr/share/fm1-companion/udev/60-fm1-companion.rules"):
+              "./usr/share/fm1-companion/udev/60-fm1-companion.rules",
+              "./usr/lib/udev/rules.d/70-fm1-companion-download-mode.rules",
+              "./usr/lib/modules-load.d/fm1-companion-sg.conf",
+              "./usr/lib/fm1-companion/fm1companion/tools/manifest.json",
+              "./usr/lib/fm1-companion/fm1companion/tools/bundled/m-bootloader/fm1-uboot.boot",
+              "./usr/lib/fm1-companion/fm1companion/tools/bundled/sloop3/sloop3-3.4.0.area",
+              "./usr/lib/fm1-companion/fm1companion/tools/bundled/m-flasher/LICENSE"):
         assert f in files, f
-    assert "./etc/udev" not in files and "./lib/udev" not in files and "./usr/lib/udev" not in files   # inactive
+    # the power-saving rule stays inactive; only the download-mode rule is active (owner decision 2026-11-19)
+    assert "./etc/udev" not in files and "./lib/udev" not in files
+    assert [ln for ln in files.splitlines() if "/udev/rules.d/" in ln and ln.endswith(".rules")] == \
+        [ln for ln in files.splitlines() if ln.endswith("/usr/lib/udev/rules.d/70-fm1-companion-download-mode.rules")]
     assert "__pycache__" not in files and "root/root" in files
     # the Studio twin: shared host, every bundled version, page, service and help
     lib = "./usr/lib/fm1-companion/fm1companion/"
@@ -508,3 +517,162 @@ def test_release_261_metadata():
     readme = (ROOT / "README.md").read_text("utf-8")
     assert not re.search(r"fm1-companion_\d+\.\d+\.\d+_all\.deb|FM-1-Companion-Suite-\d+\.\d+\.\d+\.run", readme)
     assert "docs/UNTESTED.md" in readme and "three simulated FM-1" in readme and "git clone --depth 1" in readme
+
+
+# ------------------------------------------------------------ bundled tools: download-mode rule, M-Flasher binaries
+
+def test_download_mode_rule_is_uaccess_for_4c4a_8057_only():
+    rule = (ROOT / "packaging/udev/70-fm1-companion-download-mode.rules").read_text("utf-8")
+    lines = [ln for ln in rule.splitlines() if ln.strip() and not ln.startswith("#")]
+    assert lines == ['SUBSYSTEM=="scsi_generic", ATTRS{idVendor}=="4c4a", ATTRS{idProduct}=="8057", TAG+="uaccess"',
+                     'SUBSYSTEM=="usb", ATTR{idVendor}=="4c4a", ATTR{idProduct}=="8057", TAG+="uaccess"']
+    upstream = (ROOT / "fm1companion/tools/bundled/m-flasher/70-m-flasher.rules").read_text("utf-8")
+    assert lines == [ln for ln in upstream.splitlines() if ln.strip() and not ln.startswith("#")]   # same as M-Flasher's
+    assert "MODE=" not in rule and "RUN+=" not in rule and "GROUP=" not in rule
+    # (70 < 73: uaccess is applied by systemd's 73-seat-late.rules)
+    assert [ln.strip() for ln in (ROOT / "packaging/udev/fm1-companion-sg.conf").read_text().splitlines()
+            if ln.strip() and not ln.startswith("#")] == ["sg"]
+    # the power rule keeps its own name and never touches download mode
+    assert "8057" not in (ROOT / "packaging/udev/60-fm1-companion.rules").read_text()
+
+
+def _core(monkeypatch, tmp_path):
+    sys.path.insert(0, str(ROOT / "packaging/installer"))
+    import core
+    monkeypatch.setattr(core, "UDEV_DIR", tmp_path / "etc/udev/rules.d")
+    monkeypatch.setattr(core, "MODULES_DIR", tmp_path / "etc/modules-load.d")
+    monkeypatch.setattr(core, "DL_ACTIVATE", "true")
+    monkeypatch.setattr(core, "DL_RELOAD", "true")
+    monkeypatch.setattr(core, "_sudo", lambda: [])
+    return core
+
+
+def test_install_sh_and_uninstall_install_and_remove_the_download_rule(tmp_path, monkeypatch):
+    core = _core(monkeypatch, tmp_path)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    for k in ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"):
+        monkeypatch.delenv(k, raising=False)
+    msgs = []
+    info = core.install(ROOT, home / ".local", menu=False, download_mode_rule=True, log=msgs.append,
+                        fluidsynth_fix=False)
+    rule = core.UDEV_DIR / core.DL_RULE
+    assert rule.read_text() == (ROOT / "packaging/udev" / core.DL_RULE).read_text()
+    assert (core.MODULES_DIR / core.SG_CONF).read_text().strip().endswith("sg")
+    assert info["download_mode_rule"] is True and any(str(rule) in m for m in msgs)
+    app = Path(info["app"])
+    assert (app / "udev" / core.DL_RULE).exists() and (app / "udev" / core.SG_CONF).exists()
+    # an update without the flag keeps knowing that the rule is ours
+    assert core.install(ROOT, home / ".local", menu=False, log=lambda *_: None,
+                        fluidsynth_fix=False)["download_mode_rule"] is True
+    core.uninstall(home / ".local", log=msgs.append)
+    assert not rule.exists() and not (core.MODULES_DIR / core.SG_CONF).exists()
+
+
+def test_without_the_flag_nothing_is_installed_as_root(tmp_path, monkeypatch):
+    core = _core(monkeypatch, tmp_path)
+    monkeypatch.setenv("HOME", str(tmp_path / "h"))
+    info = core.install(ROOT, tmp_path / "h/.local", menu=False, log=lambda *_: None, fluidsynth_fix=False)
+    assert "download_mode_rule" not in info and not (core.UDEV_DIR / core.DL_RULE).exists()
+    core.uninstall(tmp_path / "h/.local", log=lambda *_: None)          # (and nothing to take out)
+
+
+def test_install_sh_offers_the_download_rule_only_interactively(tmp_path):
+    text = (ROOT / "install.sh").read_text("utf-8")
+    assert "--download-mode-rule" in text and "--no-download-mode-rule" in text
+    home = tmp_path / "home"
+    env = fake_env(home)
+    res = subprocess.run(["bash", str(ROOT / "install.sh"), "--no-apt", "--no-usb-power-rule"], env=env,
+                         capture_output=True, text=True, stdin=subprocess.DEVNULL)
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert "/etc/udev/rules.d/70-fm1-companion-download-mode.rules" not in res.stdout   # no terminal: no sudo
+    info = __import__("json").loads((home / ".local/share/fm1-companion/app/install-info.json").read_text())
+    assert "download_mode_rule" not in info
+
+
+def _tool_tree(tmp_path, binaries: dict[str, bytes], arch="x86_64"):
+    """a source tree with a manifest pinning `binaries` (relpath -> content)"""
+    import copy
+    import hashlib
+    import json
+    src = tmp_path / "src"
+    shutil.copytree(ROOT / "fm1companion" / "tools", src / "fm1companion" / "tools")
+    data = json.loads((src / "fm1companion/tools/manifest.json").read_text())
+    t = data["tools"]["m-flasher"]
+    for a in list(t["arch"]):
+        rel = f"m-flasher/{t['version']}/{a}/m-flasher"
+        b = binaries.get(rel, b"")
+        t["arch"][a] = dict(copy.deepcopy(t["arch"][a]), binary_sha256=hashlib.sha256(b).hexdigest(),
+                            binary_size=len(b))
+    (src / "fm1companion/tools/manifest.json").write_text(json.dumps(data))
+    for rel, b in binaries.items():
+        (src / "tools-bin" / rel).parent.mkdir(parents=True, exist_ok=True)
+        (src / "tools-bin" / rel).write_bytes(b)
+    return src, t["version"]
+
+
+def test_installer_copies_only_this_computers_m_flasher_after_the_checksum(tmp_path, monkeypatch):
+    sys.path.insert(0, str(ROOT / "packaging/installer"))
+    import core
+    ver = __import__("json").loads((ROOT / "fm1companion/tools/manifest.json").read_text())["tools"]["m-flasher"]["version"]
+    bins = {f"m-flasher/{ver}/x86_64/m-flasher": b"x86 binary", f"m-flasher/{ver}/aarch64/m-flasher": b"arm binary"}
+    src, _ = _tool_tree(tmp_path, bins)
+    app = tmp_path / "app"
+    assert core.install_tool_binaries(src, app, log=lambda *_: None, machine="aarch64") == \
+        [f"m-flasher/{ver}/aarch64/m-flasher"]
+    f = app / "tools-bin" / f"m-flasher/{ver}/aarch64/m-flasher"
+    assert f.read_bytes() == b"arm binary" and os.access(f, os.X_OK)
+    assert not (app / "tools-bin" / f"m-flasher/{ver}/x86_64").exists()
+    msgs = []
+    assert core.install_tool_binaries(src, app, log=msgs.append, machine="armv7l") == []   # 32-bit Pi OS
+    assert "no build for this computer" in msgs[-1] and not (app / "tools-bin").exists()
+    (src / "tools-bin" / f"m-flasher/{ver}/x86_64/m-flasher").write_bytes(b"changed")
+    assert core.install_tool_binaries(src, app, log=msgs.append, machine="x86_64") == []
+    assert "checksum" in msgs[-1]
+
+
+@pytest.mark.skipif(not shutil.which("dpkg-deb"), reason="dpkg-deb missing")
+def test_deb_with_bundled_m_flasher_stays_architecture_all(tmp_path, monkeypatch):
+    import hashlib
+    import build_deb
+    ver = __import__("json").loads((ROOT / "fm1companion/tools/manifest.json").read_text())["tools"]["m-flasher"]["version"]
+    fakes = []
+    for a in ("aarch64", "x86_64"):
+        f = tmp_path / a
+        f.write_bytes(f"binary for {a}".encode())
+        fakes.append((f"m-flasher/{ver}/{a}/m-flasher", f))
+    monkeypatch.setattr(build_deb, "tool_binaries", lambda require=False: fakes)
+    deb = build_deb.build(tmp_path / "dist")
+    info = subprocess.run(["dpkg-deb", "-f", str(deb), "Architecture"], capture_output=True, text=True).stdout
+    assert info.strip() == "all"
+    listing = subprocess.run(["dpkg-deb", "-c", str(deb)], capture_output=True, text=True, check=True).stdout
+    for rel, _f in fakes:
+        line = next(ln for ln in listing.splitlines() if ln.endswith("/usr/lib/fm1-companion/tools-bin/" + rel))
+        assert line.startswith("-rwxr-xr-x"), line
+    x = tmp_path / "x"
+    subprocess.run(["dpkg-deb", "-R", str(deb), str(x)], check=True)
+    sums = (x / "usr/lib/fm1-companion/tools-bin/SHA256SUMS").read_text()
+    for rel, f in fakes:
+        assert f"{hashlib.sha256(f.read_bytes()).hexdigest()}  {rel}" in sums
+    post = (x / "DEBIAN/postinst").read_text()
+    assert "sha256sum --quiet -c SHA256SUMS" in post and "modprobe sg" in post and 'DPKG_ROOT' in post
+    assert (x / "DEBIAN/postrm").exists()
+    cr = (x / "usr/share/doc/fm1-companion/copyright").read_text()
+    assert "M-Flasher" in cr and "m-bootloader" in cr and "SLOOP 3" in cr and "OFL-1.1" in cr
+
+
+def test_run_payload_carries_both_binaries(tmp_path, monkeypatch):
+    import io
+    import tarfile
+    import build_run
+    f = ROOT / "tools/fetch_tools.py"                      # any tracked file stands in for a binary
+    monkeypatch.setattr(build_run, "tool_binaries", lambda require=False: [("m-flasher/x/aarch64/m-flasher", f)])
+    with tarfile.open(fileobj=io.BytesIO(build_run.payload()), mode="r:gz") as tar:
+        names = tar.getnames()
+    assert "app/tools/fetch_tools.py" in names and "app/packaging/udev/70-fm1-companion-download-mode.rules" in names
+
+
+def test_release_workflow_fetches_and_requires_the_tools():
+    wf = (ROOT / ".github/workflows/release.yml").read_text("utf-8")
+    assert "python3 tools/fetch_tools.py" in wf and "--require-tools" in wf
+    assert wf.index("tools/fetch_tools.py") < wf.index("tools/build_deb.py")

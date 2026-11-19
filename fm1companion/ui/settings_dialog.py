@@ -78,6 +78,17 @@ class SettingsDialog(QDialog):
         self.check.setToolTip(_("Fetches the version list of the FM-1 firmware from GitHub. When switched off, the "
                                 "app only goes online for this when you click."))
         self.check.setChecked(s.check_on_start)
+        self.tools_check = QComboBox()
+        self.tools_check.setObjectName("toolsCheck")
+        for label, value in ((_("once a day"), "daily"), (_("once a week"), "weekly"),
+                             (_("only when the app starts"), "start"), (_("never (only when you click)"), "off")):
+            self.tools_check.addItem(label, value)
+        self.tools_check.setCurrentIndex(max(0, self.tools_check.findData(getattr(s, "tools_check", "daily"))))
+        self.tools_check.setToolTip(_("Asks GitHub whether there are new versions of M-Flasher, m-bootloader and "
+                                      "SLOOP 3. Only while the firmware update check above is switched on. A new "
+                                      "version is only shown – the app never installs it by itself."))
+        self.check.toggled.connect(self.tools_check.setEnabled)
+        self.tools_check.setEnabled(s.check_on_start)
         self.autobk = QCheckBox(_("back up automatically before every update"))
         self.autobk.setChecked(s.auto_backup_before_update)
         self.keep = QSpinBox()
@@ -87,6 +98,7 @@ class SettingsDialog(QDialog):
         self.keep.setToolTip(_("How many automatic backups are kept per device. Manual backups always stay."))
         f.addRow(_("Update channel:"), self.channel)
         f.addRow("", self.check)
+        f.addRow(_("Look for new versions of the bundled tools:"), self.tools_check)
         f.addRow("", self.autobk)
         f.addRow(_("Keep automatic backups:"), self.keep)
         self.careful = QComboBox()
@@ -263,6 +275,7 @@ class SettingsDialog(QDialog):
         d = config.Settings()
         self.channel.setCurrentIndex(max(0, self.channel.findData(d.channel)))
         self.check.setChecked(d.check_on_start)
+        self.tools_check.setCurrentIndex(max(0, self.tools_check.findData(d.tools_check)))
         self.autobk.setChecked(d.auto_backup_before_update)
         self.keep.setValue(d.keep_backups)
         self.careful.setCurrentIndex(max(0, self.careful.findData(d.careful_usb)))
@@ -449,6 +462,7 @@ class SettingsDialog(QDialog):
         s = self.ctx.settings
         s.channel = self.channel.currentData()
         s.check_on_start = self.check.isChecked()
+        s.tools_check = self.tools_check.currentData() or "daily"
         s.auto_backup_before_update = self.autobk.isChecked()
         s.keep_backups = self.keep.value()
         s.careful_usb = self.careful.currentData() or "auto"

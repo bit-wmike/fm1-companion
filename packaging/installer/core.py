@@ -8,6 +8,9 @@ Used by install.sh/uninstall.sh, by the graphical .run installer and by the unin
   core.py uninstall [--prefix …|--system] [--settings] [--data] [--yes]
   core.py info      [--prefix …|--system]
   core.py usb-power-rule [--remove]   optional udev rule: keep the FM-1 and its USB hubs awake (asks for sudo)
+  core.py download-mode-rule [--remove]
+                                      udev rule (uaccess for USB 4c4a:8057) + `sg` at boot: the bundled M-Flasher
+                                      reaches an FM-1 in ROM download mode without root (asks for sudo)
 
 User installation (default): app in <prefix>/share/fm1-companion/app, launcher <prefix>/bin/fm1-companion.
 System-wide (--system, as root): /usr/local/lib/fm1-companion, /usr/local/bin/fm1-companion.
@@ -20,8 +23,10 @@ the app's translation catalogs.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+import platform
 import shlex
 import shutil
 import subprocess
@@ -252,6 +257,119 @@ def install_udev_rule(rule: Path, log=print, sudo: list[str] | None = None, remo
     return ok
 
 
+DL_RULE = "70-fm1-companion-download-mode.rules"
+SG_CONF = "fm1-companion-sg.conf"
+MODULES_DIR = Path("/etc/modules-load.d")
+# after copying: load sg now and let udev apply the rule to a unit that is already connected (tests replace these)
+DL_ACTIVATE = ("(modprobe sg || true) && (udevadm control --reload-rules || true) && "
+               "(udevadm trigger --action=add --subsystem-match=scsi_generic || true) && "
+               "(udevadm trigger --action=add --subsystem-match=usb --attr-match=idVendor=4c4a || true)")
+DL_RELOAD = "(udevadm control --reload-rules || true)"
+
+
+def download_rule_sources(src: Path) -> tuple[Path, Path] | None:
+    """(udev rule, modules-load file) for ROM download mode in a source tree (packaging/udev) or an installed app"""
+    for d in (Path(src) / "packaging" / "udev", Path(src) / "udev"):
+        if (d / DL_RULE).exists() and (d / SG_CONF).exists():
+            return d / DL_RULE, d / SG_CONF
+    return None
+
+
+def download_rule_installed() -> bool:
+    return (UDEV_DIR / DL_RULE).exists()
+
+
+def install_download_rule(rule: Path | None, conf: Path | None, log=print, sudo: list[str] | None = None,
+                          remove: bool = False) -> bool:
+    """owner decision (2026-11-19): the FM-1 in ROM download mode (USB 4c4a:8057) is reachable for the user at the
+    computer (udev TAG+="uaccess") and the `sg` driver loads at boot, so the bundled M-Flasher needs no root.
+    One root command; remove=True takes both out again."""
+    target, mod = UDEV_DIR / DL_RULE, MODULES_DIR / SG_CONF
+    q = shlex.quote
+    sudo = _sudo() if sudo is None else sudo
+    if remove:
+        script = f"rm -f {q(str(target))} {q(str(mod))} && {DL_RELOAD}"
+    else:
+        script = (f"install -d {q(str(UDEV_DIR))} {q(str(MODULES_DIR))} && "
+                  f"install -m 0644 {q(str(rule))} {q(str(target))} && "
+                  f"install -m 0644 {q(str(conf))} {q(str(mod))} && {DL_ACTIVATE}")
+    try:
+        r = subprocess.run([*sudo, "sh", "-c", script], timeout=300)
+        ok = getattr(r, "returncode", 1) == 0
+    except (OSError, subprocess.SubprocessError):
+        ok = False
+    if ok and not remove:
+        log(tr(f"  Download mode: udev rule {target} and {mod} installed (the app reaches an FM-1 in ROM download "
+               "mode without an administrator password)",
+               f"  Download-Modus: udev-Regel {target} und {mod} installiert (die App erreicht ein FM-1 im "
+               "ROM-Download-Modus ohne Administrator-Passwort)"))
+    elif ok:
+        log(tr(f"  removed: {target}, {mod}", f"  entfernt: {target}, {mod}"))
+    elif remove:
+        log(tr(f"NOTE: could not remove {target} and {mod} (no administrator rights?). By hand: "
+               f"sudo rm {target} {mod} && sudo udevadm control --reload-rules",
+               f"HINWEIS: {target} und {mod} ließen sich nicht entfernen (keine Administratorrechte?). Von Hand: "
+               f"sudo rm {target} {mod} && sudo udevadm control --reload-rules"))
+    else:
+        log(tr("NOTE: the download-mode rule could not be installed (no administrator rights?) – the app then asks "
+               f"for the password when it needs the FM-1 in download mode. By hand: sudo install -m 0644 {rule} "
+               f"{UDEV_DIR}/ && sudo install -m 0644 {conf} {MODULES_DIR}/ && sudo modprobe sg",
+               "HINWEIS: Die Regel für den Download-Modus ließ sich nicht installieren (keine Administratorrechte?) – "
+               "die App fragt dann nach dem Passwort, wenn sie das FM-1 im Download-Modus braucht. Von Hand: "
+               f"sudo install -m 0644 {rule} {UDEV_DIR}/ && sudo install -m 0644 {conf} {MODULES_DIR}/ && "
+               "sudo modprobe sg"))
+    return ok
+
+
+TOOLS_BIN = "tools-bin"
+
+
+def machine_arch(machine: str | None = None) -> str:
+    """'aarch64' / 'x86_64' (the M-Flasher builds), '' for anything else (32-bit Raspberry Pi OS …)"""
+    m = (machine if machine is not None else platform.machine()).strip().lower()
+    return {"aarch64": "aarch64", "arm64": "aarch64", "armv8l": "aarch64", "x86_64": "x86_64",
+            "amd64": "x86_64"}.get(m, "")
+
+
+def install_tool_binaries(src: Path, app: Path, log=print, machine: str | None = None) -> list[str]:
+    """copy the bundled M-Flasher binary for THIS computer (tools-bin/m-flasher/<version>/<arch>/m-flasher) into
+    the app – only when its SHA-256 and size match fm1companion/tools/manifest.json. -> installed relative paths"""
+    src, app = Path(src), Path(app)
+    if (app / TOOLS_BIN).exists():
+        shutil.rmtree(app / TOOLS_BIN)
+    try:
+        t = json.loads((src / "fm1companion" / "tools" / "manifest.json").read_text("utf-8"))["tools"]["m-flasher"]
+    except (OSError, ValueError, KeyError):
+        return []
+    arch = machine_arch(machine)
+    e = t.get("arch", {}).get(arch)
+    rel = f"m-flasher/{t.get('version')}/{arch}/m-flasher"
+    if not e:
+        log(tr("  M-Flasher: no build for this computer (it exists for 64-bit ARM and x86-64) – the other "
+               "recovery tools work as before",
+               "  M-Flasher: keine Version für diesen Rechner (es gibt sie für 64-Bit-ARM und x86-64) – die anderen "
+               "Rettungswerkzeuge funktionieren wie bisher"))
+        return []
+    f = src / TOOLS_BIN / rel
+    if not f.is_file():
+        log(tr("  M-Flasher: not part of this source (run tools/fetch_tools.py once to bundle it)",
+               "  M-Flasher: nicht in dieser Quelle enthalten (einmal tools/fetch_tools.py ausführen, um ihn "
+               "mitzubringen)"))
+        return []
+    b = f.read_bytes()
+    if len(b) != e.get("binary_size") or hashlib.sha256(b).hexdigest() != e.get("binary_sha256"):
+        log(tr(f"WARNING: {rel} does not match its checksum – not installed",
+               f"WARNUNG: {rel} passt nicht zu seiner Prüfsumme – nicht installiert"))
+        return []
+    dst = app / TOOLS_BIN / rel
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_bytes(b)
+    dst.chmod(0o755)
+    log(tr(f"  M-Flasher {t.get('version')} ({arch}) installed, checksum verified",
+           f"  M-Flasher {t.get('version')} ({arch}) installiert, Prüfsumme geprüft"))
+    return [rel]
+
+
 def make_world_readable(app: Path, files=(), dirs=()) -> None:
     """System-wide installation: every folder 0755, every file 0644 (0755 if it is executable for its owner) –
     for the app folder and for everything else the installer wrote. Folders that existed before are not touched.
@@ -277,7 +395,8 @@ def make_world_readable(app: Path, files=(), dirs=()) -> None:
 
 def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, desktop: bool = False,
             demo_data: bool = False, python: str = "/usr/bin/python3", log=print, progress=lambda a, b: None,
-            fluidsynth_fix: bool = True, usb_power_rule: bool = False, udev_hint: bool = True) -> dict:
+            fluidsynth_fix: bool = True, usb_power_rule: bool = False, udev_hint: bool = True,
+            download_mode_rule: bool = False) -> dict:
     # udev_hint=False: the caller (install.sh) asks about the udev rule or installs it itself right afterwards
     src = Path(src).resolve()
     L = layout(prefix, system)
@@ -308,6 +427,12 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
             shutil.rmtree(app / "udev")
         (app / "udev").mkdir()
         shutil.copy2(rule, app / "udev" / UDEV_RULE)
+    dl_rule = download_rule_sources(src)
+    if dl_rule is not None:                 # (the uninstaller needs to know them; installed below when asked)
+        (app / "udev").mkdir(exist_ok=True)
+        for f in dl_rule:
+            shutil.copy2(f, app / "udev" / f.name)
+    tools = install_tool_binaries(src, app, log)
     for f in ("LICENSE", "README.md", "uninstall.sh"):
         if (src / f).exists():
             shutil.copy2(src / f, app / f)
@@ -445,13 +570,26 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
                f"{app / 'installer' / 'core.py'} usb-power-rule",
                "Optional: Eine udev-Regel hält das FM-1 und seinen USB-Hub beim Flashen wach (hilft bei Hubs): "
                f"{app / 'installer' / 'core.py'} usb-power-rule"))
+    # FM-1 in ROM download mode reachable without root (udev uaccess + `sg`): install.sh and the graphical installer
+    # ask for it (default yes, owner decision); the .deb installs it always
+    dl_installed = False
+    if download_mode_rule:
+        if dl_rule is None:
+            log(tr("NOTE: the download-mode rule is missing in this package.",
+                   "HINWEIS: Die Regel für den Download-Modus fehlt in diesem Paket."))
+        elif download_rule_installed():
+            dl_installed = True
+        else:
+            dl_installed = install_download_rule(app / "udev" / DL_RULE, app / "udev" / SG_CONF, log)
     # keep remembering files of an earlier installation that were not rewritten this time (e.g. the desktop
     # shortcut) – otherwise uninstalling no longer finds them
     files += [f for f in (old or {}).get("files", []) if f not in files and Path(f).exists()]
     info = {"version": version, "mode": "system-wide" if system else "just for me", "system": system,
             "prefix": str(prefix), "app": str(app), "files": files, "dirs": created,
             "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "components": {"menu": menu, "desktop": desktop, "demo_data": demo_data}}
+            "components": {"menu": menu, "desktop": desktop, "demo_data": demo_data}, "tools": tools}
+    if dl_installed or (old or {}).get("download_mode_rule"):
+        info["download_mode_rule"] = True   # uninstall.sh offers to remove it again
     if fluidsynth_masked:                   # uninstalling takes the mask away again
         info["fluidsynth_masked"] = True
     (app / "install-info.json").write_text(json.dumps(info, indent=2, ensure_ascii=False))
@@ -510,6 +648,8 @@ def uninstall(prefix: Path, system: bool = False, settings: bool = False, data: 
     info = installed_info(prefix, system) or {}
     root = _user_root()
     removed = []
+    if info.get("download_mode_rule") and (download_rule_installed() or (MODULES_DIR / SG_CONF).exists()):
+        install_download_rule(None, None, log, remove=True)     # this installation put it there: take it out
     for f in info.get("files", []) or [str(L["bin"] / APP_ID), str(L["bin"] / f"{APP_ID}-uninstall"),
                                         str(L["apps"] / f"{APP_ID}.desktop"), str(L["apps"] / f"{APP_ID}-uninstall.desktop")]:
         if _safe_rm(Path(f), root, log):
@@ -565,7 +705,7 @@ def uninstall(prefix: Path, system: bool = False, settings: bool = False, data: 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=tr("Install/remove the FM-1 Companion Suite",
                                                 "FM-1 Companion Suite installieren/entfernen"))
-    ap.add_argument("cmd", choices=["install", "uninstall", "info", "usb-power-rule"])
+    ap.add_argument("cmd", choices=["install", "uninstall", "info", "usb-power-rule", "download-mode-rule"])
     ap.add_argument("--source", default=str(Path(__file__).resolve().parents[2]))
     ap.add_argument("--prefix", default="")
     ap.add_argument("--system", action="store_true")
@@ -587,8 +727,12 @@ def main(argv=None) -> int:
                     help=tr("also install the optional udev rule (keeps the FM-1 and its USB hubs awake; asks for "
                             "sudo)", "auch die optionale udev-Regel installieren (hält das FM-1 und seine USB-Hubs wach; "
                             "fragt nach sudo)"))
-    ap.add_argument("--remove", action="store_true", help=tr("usb-power-rule: remove the rule again",
-                                                            "usb-power-rule: die Regel wieder entfernen"))
+    ap.add_argument("--download-mode-rule", action="store_true",
+                    help=tr("also let the app reach an FM-1 in ROM download mode without root (udev rule + sg; "
+                            "asks for sudo)", "die App ein FM-1 im ROM-Download-Modus ohne root erreichen lassen "
+                            "(udev-Regel + sg; fragt nach sudo)"))
+    ap.add_argument("--remove", action="store_true", help=tr("usb-power-rule, download-mode-rule: remove again",
+                                                            "usb-power-rule, download-mode-rule: wieder entfernen"))
     a = ap.parse_args(argv)
     if a.cmd == "usb-power-rule":
         rule = udev_rule_source(Path(a.source)) or udev_rule_source(Path(__file__).resolve().parents[1])
@@ -596,11 +740,21 @@ def main(argv=None) -> int:
             print(tr("udev rule not found", "udev-Regel nicht gefunden"))
             return 1
         return 0 if install_udev_rule(rule or Path(UDEV_RULE), remove=a.remove) else 1
+    if a.cmd == "download-mode-rule":
+        if a.remove:
+            if not download_rule_installed() and not (MODULES_DIR / SG_CONF).exists():
+                return 0
+            return 0 if install_download_rule(None, None, remove=True) else 1
+        srcs = download_rule_sources(Path(a.source)) or download_rule_sources(Path(__file__).resolve().parents[1])
+        if srcs is None:
+            print(tr("udev rule not found", "udev-Regel nicht gefunden"))
+            return 1
+        return 0 if install_download_rule(*srcs) else 1
     prefix = Path(a.prefix).expanduser() if a.prefix else (SYSTEM_PREFIX if a.system else user_prefix())
     if a.cmd == "install":
         install(Path(a.source), prefix, a.system, not a.no_menu, a.desktop, a.demo_data, a.python,
                 fluidsynth_fix=not a.no_fluidsynth_fix, usb_power_rule=a.usb_power_rule,
-                udev_hint=not a.no_udev_hint)
+                udev_hint=not a.no_udev_hint, download_mode_rule=a.download_mode_rule)
     elif a.cmd == "uninstall":
         uninstall(prefix, a.system, a.settings, a.data)
     else:
