@@ -1268,7 +1268,7 @@ msgstr ""
 msgid "Sampler"
 msgstr ""
 
-#: fm1companion/catalog.py:81 fm1companion/ui/pages/compose.py:114
+#: fm1companion/catalog.py:81 fm1companion/ui/pages/compose.py:111
 msgid "Chords"
 msgstr ""
 
@@ -5272,7 +5272,7 @@ msgstr ""
 
 #: fm1companion/midi_import.py:62 fm1companion/midiexport.py:201
 #: fm1companion/projectfmt.py:253 fm1companion/sloop2proj.py:64
-#: fm1companion/sloop3proj.py:459 fm1companion/ui/pages/compose.py:348
+#: fm1companion/sloop3proj.py:459 fm1companion/ui/pages/compose.py:345
 #: fm1companion/ui/pages/soundmodule.py:60
 #: fm1companion/ui/pages/soundmodule.py:470
 #: fm1companion/ui/workshop_page.py:111
@@ -5396,7 +5396,7 @@ msgstr ""
 msgid "Length (quarters)"
 msgstr ""
 
-#: fm1companion/midiexport.py:235 fm1companion/ui/pages/compose.py:522
+#: fm1companion/midiexport.py:235 fm1companion/ui/pages/compose.py:519
 msgid "Velocity"
 msgstr ""
 
@@ -6354,52 +6354,52 @@ msgstr ""
 msgid "The device rejects the project ({reason}) – nothing was written."
 msgstr ""
 
-#: fm1companion/protocol.py:83
+#: fm1companion/protocol.py:85
 msgid "This firmware does not support writing patterns from the app (Melodee, Felucca and Skiff do)."
 msgstr ""
 
-#: fm1companion/protocol.py:85
+#: fm1companion/protocol.py:87
 msgid "This firmware does not support choosing a pattern from the app (only Melodee does)."
 msgstr ""
 
-#: fm1companion/protocol.py:86
+#: fm1companion/protocol.py:88
 msgid "This firmware does not support the song chain from the app (only Melodee does)."
 msgstr ""
 
-#: fm1companion/protocol.py:94
+#: fm1companion/protocol.py:96
 msgid "SysEx data must be 7-bit"
 msgstr ""
 
-#: fm1companion/protocol.py:115
+#: fm1companion/protocol.py:117
 msgid "invalid number in the data stream"
 msgstr ""
 
-#: fm1companion/protocol.py:145 fm1companion/protocol.py:152
+#: fm1companion/protocol.py:147 fm1companion/protocol.py:154
 msgid "short data block"
 msgstr ""
 
-#: fm1companion/protocol.py:149
+#: fm1companion/protocol.py:151
 msgid "invalid bytes in the data block"
 msgstr ""
 
-#: fm1companion/protocol.py:156
+#: fm1companion/protocol.py:158
 msgid "surplus bytes in the data block"
 msgstr ""
 
-#: fm1companion/protocol.py:176 fm1companion/sloopbk.py:137
+#: fm1companion/protocol.py:178 fm1companion/sloopbk.py:137
 #: fm1companion/sloopbk.py:144
 msgid "answer too short"
 msgstr ""
 
-#: fm1companion/protocol.py:186
+#: fm1companion/protocol.py:188
 msgid "string without end"
 msgstr ""
 
-#: fm1companion/protocol.py:301
+#: fm1companion/protocol.py:303
 msgid "unknown format of the audio statistics"
 msgstr ""
 
-#: fm1companion/protocol.py:339
+#: fm1companion/protocol.py:341
 #, python-brace-format
 msgid "preset list rejected (rc {code})"
 msgstr ""
@@ -11769,7 +11769,7 @@ msgstr ""
 msgid "View & Export"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:55 fm1companion/ui/pages/compose.py:135
+#: fm1companion/ui/main_window.py:55 fm1companion/ui/pages/compose.py:132
 msgid "Generate"
 msgstr ""
 
@@ -12907,7 +12907,7 @@ msgstr ""
 msgid "Reads the pattern first (for undo), then writes and checks by reading back"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:47 fm1companion/ui/pages/compose.py:565
+#: fm1companion/ui/pages/compose.py:47 fm1companion/ui/pages/compose.py:562
 #: fm1companion/ui/pages/compose.py:705 fm1companion/ui/wizard.py:368
 msgid "Compose"
 msgstr ""
@@ -12925,597 +12925,598 @@ msgstr ""
 msgid "To the FM-1 “{name}”"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:83 fm1companion/ui/pages/compose.py:354
+#: fm1companion/ui/pages/compose.py:81 fm1companion/ui/pages/compose.py:351
 msgid "Restore the pattern that was overwritten last"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:91
+#: fm1companion/ui/pages/compose.py:88
 msgid "Basics"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:95
+#: fm1companion/ui/pages/compose.py:92
 msgid "Root note of the key"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:99 fm1companion/ui/pages/compose.py:215
+#: fm1companion/ui/pages/compose.py:96 fm1companion/ui/pages/compose.py:212
 #: fm1companion/ui/workshop_page.py:83
 msgid " steps"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:99
+#: fm1companion/ui/pages/compose.py:96
 msgid "Length of the pattern (LEN on the FM-1)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:100
+#: fm1companion/ui/pages/compose.py:97
 msgid "Tempo for the preview (the FM-1 keeps its own)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:101
+#: fm1companion/ui/pages/compose.py:98
 msgid "Random seed: same value = same result"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:104
+#: fm1companion/ui/pages/compose.py:101
 msgid "Roll dice"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:105
+#: fm1companion/ui/pages/compose.py:102
 msgid "draw a new seed and generate again"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:106
+#: fm1companion/ui/pages/compose.py:103
 msgid "Key:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:107
+#: fm1companion/ui/pages/compose.py:104
 msgid "Scale:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:108 fm1companion/ui/workshop_page.py:122
+#: fm1companion/ui/pages/compose.py:105 fm1companion/ui/workshop_page.py:122
 msgid "Length:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:109 fm1companion/ui/pages/midi.py:636
+#: fm1companion/ui/pages/compose.py:106 fm1companion/ui/pages/midi.py:636
 #: fm1companion/ui/slicer_dialog.py:90
 msgid "Tempo:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:110
+#: fm1companion/ui/pages/compose.py:107
 msgid "Seed:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:113 fm1companion/ui/pages/compose.py:417
+#: fm1companion/ui/pages/compose.py:110 fm1companion/ui/pages/compose.py:414
 msgid "Rhythm"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:115
+#: fm1companion/ui/pages/compose.py:112
 msgid "Bass/Arp"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:116
+#: fm1companion/ui/pages/compose.py:113
 msgid "Melody"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:136
+#: fm1companion/ui/pages/compose.py:133
 msgid "Generate again with the settings of the open tab (Ctrl+G) – changes nothing on the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:173
+#: fm1companion/ui/pages/compose.py:170
 msgid "Hits"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:173
+#: fm1companion/ui/pages/compose.py:170
 msgid "Offset"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:173
+#: fm1companion/ui/pages/compose.py:170
 msgid "Accent"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:181
+#: fm1companion/ui/pages/compose.py:178
 msgid "Cycle length"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:181
+#: fm1companion/ui/pages/compose.py:178
 msgid "Number of hits, evenly spread"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:182
+#: fm1companion/ui/pages/compose.py:179
 msgid "Shift to the right"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:182
+#: fm1companion/ui/pages/compose.py:179
 msgid "every n-th hit accented (0 = none)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:188
+#: fm1companion/ui/pages/compose.py:185
 msgid "Euclidean rhythms spread n hits as evenly as possible – E(3,8) is the tresillo. The result lands in the drum grid (for the DRUM engine or any other track)."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:200
+#: fm1companion/ui/pages/compose.py:197
 msgid "Degrees in Roman numerals: upper case = major, lower case = minor, 7 / maj7 / ° / sus4, b/# in front"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:207
+#: fm1companion/ui/pages/compose.py:204
 msgid "Inversion of the first chord"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:208
+#: fm1companion/ui/pages/compose.py:205
 msgid "Smooth voice leading"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:210
+#: fm1companion/ui/pages/compose.py:207
 msgid "Choose inversions so that the voices move as little as possible"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:211
+#: fm1companion/ui/pages/compose.py:208
 msgid "Octave of the chords"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:215
+#: fm1companion/ui/pages/compose.py:212
 msgid "Duration of one chord"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:216
+#: fm1companion/ui/pages/compose.py:213
 msgid "Preset:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:217
+#: fm1companion/ui/pages/compose.py:214
 msgid "Progression:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:218
+#: fm1companion/ui/pages/compose.py:215
 msgid "Voicing:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:219
+#: fm1companion/ui/pages/compose.py:216
 msgid "Inversion:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:221
+#: fm1companion/ui/pages/compose.py:218
 msgid "Octave:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:222
+#: fm1companion/ui/pages/compose.py:219
 msgid "Rhythm:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:223
+#: fm1companion/ui/pages/compose.py:220
 msgid "per chord:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:224
+#: fm1companion/ui/pages/compose.py:221
 msgid "The FM-1 plays up to 4 notes per step – chords are limited to that."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:232
+#: fm1companion/ui/pages/compose.py:229
 #, python-brace-format
 msgid "Bass: {style}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:234
+#: fm1companion/ui/pages/compose.py:231
 #, python-brace-format
 msgid "Arp: {mode}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:235
+#: fm1companion/ui/pages/compose.py:232
 msgid " octaves"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:235
+#: fm1companion/ui/pages/compose.py:232
 msgid "Range of the arpeggio"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:236 fm1companion/ui/pages/compose.py:259
+#: fm1companion/ui/pages/compose.py:233 fm1companion/ui/pages/compose.py:256
 msgid "Type:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:237
+#: fm1companion/ui/pages/compose.py:234
 msgid "Arp range:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:238
+#: fm1companion/ui/pages/compose.py:235
 msgid "Bass and arpeggio follow the chord progression from the tab “Chords”."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:245
+#: fm1companion/ui/pages/compose.py:242
 msgid "Random melody with rules"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:245
+#: fm1companion/ui/pages/compose.py:242
 msgid "Markov (learned from a MIDI file)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:246 fm1companion/ui/pages/compose.py:451
+#: fm1companion/ui/pages/compose.py:243 fm1companion/ui/pages/compose.py:448
 msgid "Question and answer"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:247
+#: fm1companion/ui/pages/compose.py:244
 msgid "lowest note"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:248
+#: fm1companion/ui/pages/compose.py:245
 msgid "highest note"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:249
+#: fm1companion/ui/pages/compose.py:246
 msgid " degrees"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:249
+#: fm1companion/ui/pages/compose.py:246
 msgid "largest leap in scale degrees"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:250
+#: fm1companion/ui/pages/compose.py:247
 msgid "Probability of a rest"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:251
+#: fm1companion/ui/pages/compose.py:248
 msgid "Probability of repeating the note"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:252
+#: fm1companion/ui/pages/compose.py:249
 msgid "Probability of holding a note"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:253
+#: fm1companion/ui/pages/compose.py:250
 msgid "1 = only the last note, 2 = the last two notes"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:254
+#: fm1companion/ui/pages/compose.py:251
 msgid "nothing learned yet"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:256
+#: fm1companion/ui/pages/compose.py:253
 msgid "Learn MIDI file …"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:257
+#: fm1companion/ui/pages/compose.py:254
 msgid "Learn note sequences and rhythms from a MIDI file"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:260
+#: fm1companion/ui/pages/compose.py:257
 msgid "Range from:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:261
+#: fm1companion/ui/pages/compose.py:258
 msgid "to:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:262
+#: fm1companion/ui/pages/compose.py:259
 msgid "Leaps up to:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:263
+#: fm1companion/ui/pages/compose.py:260
 msgid "Rests:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:264
+#: fm1companion/ui/pages/compose.py:261
 msgid "Repetition:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:265
+#: fm1companion/ui/pages/compose.py:262
 msgid "Hold:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:266
+#: fm1companion/ui/pages/compose.py:263
 msgid "Markov order:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:277
+#: fm1companion/ui/pages/compose.py:274
 msgid "Show or hide the settings – more room for the piano roll"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:288
+#: fm1companion/ui/pages/compose.py:285
 msgid "Undo the last edit (Ctrl+Z) – piano roll, generate, fine-tuning"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:290
+#: fm1companion/ui/pages/compose.py:287
 msgid "Redo the undone edit (Ctrl+Shift+Z or Ctrl+Y)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:292 fm1companion/ui/pages/compose.py:509
-#: fm1companion/ui/pages/compose.py:678 fm1companion/ui/pages/presets.py:135
-#: fm1companion/ui/pages/presets.py:453 fm1companion/ui/pages/presets.py:607
-#: fm1companion/ui/pages/presets.py:619 fm1companion/ui/pages/studio.py:475
-#: fm1companion/ui/pages/voices.py:335 fm1companion/ui/pages/voices.py:764
-#: fm1companion/ui/pages/voices.py:771 fm1companion/ui/samples_page.py:251
-#: fm1companion/ui/samples_page.py:1141 fm1companion/ui/workshop_page.py:135
+#: fm1companion/ui/pages/compose.py:289 fm1companion/ui/pages/compose.py:506
+#: fm1companion/ui/pages/compose.py:675 fm1companion/ui/pages/compose.py:678
+#: fm1companion/ui/pages/presets.py:135 fm1companion/ui/pages/presets.py:453
+#: fm1companion/ui/pages/presets.py:607 fm1companion/ui/pages/presets.py:619
+#: fm1companion/ui/pages/studio.py:475 fm1companion/ui/pages/voices.py:335
+#: fm1companion/ui/pages/voices.py:764 fm1companion/ui/pages/voices.py:771
+#: fm1companion/ui/samples_page.py:251 fm1companion/ui/samples_page.py:1141
+#: fm1companion/ui/workshop_page.py:135 fm1companion/ui/workshop_page.py:482
 #: fm1companion/ui/workshop_page.py:493 fm1companion/ui/workshop_page.py:514
 msgid "Undo"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:292
+#: fm1companion/ui/pages/compose.py:289
 msgid "Redo"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:294 fm1companion/ui/pages/compose.py:515
+#: fm1companion/ui/pages/compose.py:291 fm1companion/ui/pages/compose.py:512
 #: fm1companion/ui/pages/discover.py:1208 fm1companion/ui/pages/midi.py:123
 #: fm1companion/ui/pages/voices.py:402 fm1companion/ui/projects_page.py:517
 #: fm1companion/ui/samples_page.py:1118 fm1companion/ui/storage_tab.py:264
 msgid "Clear"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:294
+#: fm1companion/ui/pages/compose.py:291
 msgid "delete all steps"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:296
+#: fm1companion/ui/pages/compose.py:293
 msgid "Preview"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:297
+#: fm1companion/ui/pages/compose.py:294
 #: fm1companion/ui/pages/project_view.py:181
 msgid "Space"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:303
+#: fm1companion/ui/pages/compose.py:300
 msgid "Piano roll"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:309
+#: fm1companion/ui/pages/compose.py:306
 #: fm1companion/ui/pages/project_view.py:134
 msgid "Zoom:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:327
+#: fm1companion/ui/pages/compose.py:324
 msgid "Strength of the velocity change"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:328
+#: fm1companion/ui/pages/compose.py:325
 msgid "Probability with which steps play (Melodee chance)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:329
+#: fm1companion/ui/pages/compose.py:326
 msgid "only on offbeats"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:331 fm1companion/ui/pages/midi.py:478
+#: fm1companion/ui/pages/compose.py:328 fm1companion/ui/pages/midi.py:478
 #: fm1companion/ui/workshop_page.py:125
 msgid "Velocity:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:334 fm1companion/ui/pages/midi.py:1139
+#: fm1companion/ui/pages/compose.py:331 fm1companion/ui/pages/midi.py:1139
 msgid "Apply"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:335
+#: fm1companion/ui/pages/compose.py:332
 msgid "Chance:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:338
+#: fm1companion/ui/pages/compose.py:335
 msgid "Variations:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:339
+#: fm1companion/ui/pages/compose.py:336
 msgid "Variation B"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:339
+#: fm1companion/ui/pages/compose.py:336
 msgid "ending with other notes"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:340
+#: fm1companion/ui/pages/compose.py:337
 msgid "Variation C"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:340
+#: fm1companion/ui/pages/compose.py:337
 msgid "thinned out, with octave jumps"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:341
+#: fm1companion/ui/pages/compose.py:338
 msgid "Fine-tuning: velocity, chance, variations"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:342
+#: fm1companion/ui/pages/compose.py:339
 msgid "Apply velocity curves, Melodee chance and variations B/C to the generated pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:344
+#: fm1companion/ui/pages/compose.py:341
 msgid "Onto the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:352 fm1companion/ui/pages/compose.py:610
+#: fm1companion/ui/pages/compose.py:349 fm1companion/ui/pages/compose.py:607
 msgid "Write to pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:353
+#: fm1companion/ui/pages/compose.py:350
 msgid "Undo on the FM-1"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:356 fm1companion/ui/pages/midi.py:470
+#: fm1companion/ui/pages/compose.py:353 fm1companion/ui/pages/midi.py:470
 #: fm1companion/ui/pages/midi.py:648 fm1companion/ui/playback_bar.py:160
 msgid "Target:"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:357
+#: fm1companion/ui/pages/compose.py:354
 msgid "Save as MIDI …"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:358
+#: fm1companion/ui/pages/compose.py:355
 msgid "Save the pattern as a Standard MIDI File (for a DAW, MuseScore …)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:420
+#: fm1companion/ui/pages/compose.py:417
 #, python-brace-format
 msgid "Chords {names}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:443
+#: fm1companion/ui/pages/compose.py:440
 msgid "Nothing learned yet"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:443
+#: fm1companion/ui/pages/compose.py:440
 msgid "Please let it learn a MIDI file first (button “Learn MIDI file …”)."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:447
+#: fm1companion/ui/pages/compose.py:444
 msgid "Markov melody"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:454
+#: fm1companion/ui/pages/compose.py:451
 msgid "Random melody"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:456
+#: fm1companion/ui/pages/compose.py:453
 msgid "Check the input"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:471
+#: fm1companion/ui/pages/compose.py:468
 #, python-brace-format
 msgid "<b>edited</b> · {description}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:487
+#: fm1companion/ui/pages/compose.py:484
 msgid "Undo the last edit (Ctrl+Z)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:489
+#: fm1companion/ui/pages/compose.py:486
 msgid "Redo (Ctrl+Shift+Z or Ctrl+Y)"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:512
+#: fm1companion/ui/pages/compose.py:509
 msgid "Redone"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:529
+#: fm1companion/ui/pages/compose.py:526
 #, python-brace-format
 msgid "Variation {name}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:535
+#: fm1companion/ui/pages/compose.py:532
 msgid "Learn MIDI file"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:539
+#: fm1companion/ui/pages/compose.py:536
 #, python-brace-format
 msgid "learning {name} …"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:543
+#: fm1companion/ui/pages/compose.py:540
 #, python-brace-format
 msgid "learned: {name} ({n} state)"
 msgid_plural "learned: {name} ({n} states)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/pages/compose.py:545
+#: fm1companion/ui/pages/compose.py:542
 msgid "too few notes in the file"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:548
+#: fm1companion/ui/pages/compose.py:545
 msgid "nothing learned"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:549 fm1companion/ui/workshop_page.py:259
+#: fm1companion/ui/pages/compose.py:546 fm1companion/ui/workshop_page.py:259
 #: fm1companion/ui/workshop_page.py:279
 msgid "MIDI file not readable"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:586
+#: fm1companion/ui/pages/compose.py:583
 msgid "Save MIDI"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:595
+#: fm1companion/ui/pages/compose.py:592
 msgid "MIDI file not saved"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:597
+#: fm1companion/ui/pages/compose.py:594
 msgid "Save as MIDI"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:599
+#: fm1companion/ui/pages/compose.py:596
 #, python-brace-format
 msgid "Saved: {path} – only as a file, nothing changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:600
+#: fm1companion/ui/pages/compose.py:597
 #, python-brace-format
 msgid "MIDI file saved: {name}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:616
+#: fm1companion/ui/pages/compose.py:613
 msgid "Nothing to write"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:616
+#: fm1companion/ui/pages/compose.py:613
 msgid "The pattern is empty – first “Generate” or set steps in the piano roll."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:630
+#: fm1companion/ui/pages/compose.py:627
 #, python-brace-format
 msgid "<b>Track {track}, pattern {pattern}</b> on the FM-1 is <b>in use</b>: {used} of {length} steps with {notes} notes/hits, and will be overwritten with {n} steps ({description})."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:633
+#: fm1companion/ui/pages/compose.py:630
 #, python-brace-format
 msgid "<b>Track {track}, pattern {pattern}</b> on the FM-1 is <b>empty</b> and will be overwritten with {n} steps ({description})."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:637
+#: fm1companion/ui/pages/compose.py:634
 msgid "Overwrite pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:638
+#: fm1companion/ui/pages/compose.py:635
 msgid "The pattern is selected on the FM-1 in the process."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:639
+#: fm1companion/ui/pages/compose.py:636
 msgid "The old content has been read – “Undo” brings it back. Please stop the FM-1 first. It only becomes permanent with SAVE on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:640 fm1companion/ui/pages/presets.py:776
+#: fm1companion/ui/pages/compose.py:637 fm1companion/ui/pages/presets.py:776
 #: fm1companion/ui/pages/presets.py:779 fm1companion/ui/samples_page.py:678
 #: fm1companion/ui/samples_page.py:1080
 msgid "Overwrite"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:641
+#: fm1companion/ui/pages/compose.py:638
 #, python-brace-format
 msgid "Cancelled – track {track}, pattern {pattern} is unchanged."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:646
+#: fm1companion/ui/pages/compose.py:643
 msgid "Writing and checking …"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:653
+#: fm1companion/ui/pages/compose.py:650
 #, python-brace-format
 msgid "Written and read back: track {track}, pattern {pattern}."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:655
+#: fm1companion/ui/pages/compose.py:652
 msgid "Listen on the FM-1 and store it with SAVE."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:656
+#: fm1companion/ui/pages/compose.py:653
 #, python-brace-format
 msgid "Track {track}, pattern {pattern}"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:659
+#: fm1companion/ui/pages/compose.py:656
 msgid "Write pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:660
+#: fm1companion/ui/pages/compose.py:657
 #, python-brace-format
 msgid "Track {track}, pattern {pattern}: {n} steps written and read back. The old content is kept for “Undo”. It only becomes permanent with SAVE on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:663
+#: fm1companion/ui/pages/compose.py:660
 #, python-brace-format
 msgid "Not written: {error}. “Undo” restores the old state of track {track}, pattern {pattern} that was read."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:667
+#: fm1companion/ui/pages/compose.py:664
 #, python-brace-format
 msgid "Not written – “Undo” sets track {track}, pattern {pattern} back to the state that was read."
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:670
+#: fm1companion/ui/pages/compose.py:667
 msgid "Read pattern"
 msgstr ""
 
-#: fm1companion/ui/pages/compose.py:671
+#: fm1companion/ui/pages/compose.py:668
 #: fm1companion/ui/pages/project_view.py:459
 #: fm1companion/ui/projects_page.py:458
 #, python-brace-format
@@ -15507,7 +15508,7 @@ msgid "Write into the FM-1"
 msgstr ""
 
 #: fm1companion/ui/pages/presets.py:567 fm1companion/ui/samples_page.py:1391
-#: fm1companion/ui/workshop_page.py:422
+#: fm1companion/ui/workshop_page.py:419
 msgid "Write"
 msgstr ""
 
@@ -23723,124 +23724,124 @@ msgstr ""
 msgid "<b>What is transferred:</b> {report}"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:385
+#: fm1companion/ui/workshop_page.py:382
 msgid "No MIDI file yet"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:385
+#: fm1companion/ui/workshop_page.py:382
 msgid "No MIDI file is loaded yet – how it works: choose “Open MIDI file …” above, click a track on the left, then play it onto the FM-1 here."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:389
+#: fm1companion/ui/workshop_page.py:386
 msgid "No track chosen"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:389
+#: fm1companion/ui/workshop_page.py:386
 msgid "Choose a track of the MIDI file on the left that contains notes."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:395 fm1companion/ui/workshop_page.py:421
+#: fm1companion/ui/workshop_page.py:392 fm1companion/ui/workshop_page.py:418
 msgid "Write patterns"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:401
+#: fm1companion/ui/workshop_page.py:398
 msgid "Too many patterns"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:401
+#: fm1companion/ui/workshop_page.py:398
 #, python-brace-format
 msgid "From pattern {first} only {n} pattern fits on track {track}. Please choose an earlier pattern or split into fewer."
 msgid_plural "From pattern {first} only {n} patterns fit on track {track}. Please choose an earlier pattern or split into fewer."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:410
+#: fm1companion/ui/workshop_page.py:407
 msgid "the current pattern"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:414
+#: fm1companion/ui/workshop_page.py:411
 #, python-brace-format
 msgid "On the FM-1, <b>track {track}: {what}</b> will be overwritten with {n} steps each and the song chain replaced by a chain of these patterns.<br>First the app reads the patterns and the old song chain (undo possible; if the song chain cannot be read, it stays unchanged). Please stop the FM-1 first."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:419
+#: fm1companion/ui/workshop_page.py:416
 #, python-brace-format
 msgid "On the FM-1, <b>track {track}: {what}</b> will be overwritten with {n} steps each.<br>First the app reads the patterns (undo possible). Please stop the FM-1 first."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:431
+#: fm1companion/ui/workshop_page.py:428
 #, python-brace-format
 msgid "Pattern {pattern}: reading …"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:431
+#: fm1companion/ui/workshop_page.py:428
 msgid "(current)"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:445
+#: fm1companion/ui/workshop_page.py:442
 msgid "The old song chain could not be read – so it stays unchanged. The patterns are written."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:451
+#: fm1companion/ui/workshop_page.py:448
 msgid "Song chain created."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:451
+#: fm1companion/ui/workshop_page.py:448
 #, python-brace-format
 msgid "Song chain refused (code {code})."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:455
+#: fm1companion/ui/workshop_page.py:452
 msgid "This firmware does not accept a song chain – the patterns are written anyway."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:456
+#: fm1companion/ui/workshop_page.py:453
 msgid "Done. Listen on the FM-1 and store it with SAVE."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:461
+#: fm1companion/ui/workshop_page.py:458
 #, python-brace-format
 msgid "{n} pattern written to track {track} ({what})"
 msgid_plural "{n} patterns written to track {track} ({what})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:464
+#: fm1companion/ui/workshop_page.py:461
 msgid "; song chain replaced"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:464
+#: fm1companion/ui/workshop_page.py:461
 msgid "; song chain unchanged (not readable)"
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:465
+#: fm1companion/ui/workshop_page.py:462
 msgid ". Old state saved (“Undo”). Only permanent with SAVE on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:469
+#: fm1companion/ui/workshop_page.py:466
 #, python-brace-format
 msgid "Cancelled: {error}."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:469
+#: fm1companion/ui/workshop_page.py:466
 #, python-brace-format
 msgid "{n} pattern was read before – “Undo” brings back the old state."
 msgid_plural "{n} patterns were read before – “Undo” brings back the old state."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:472
+#: fm1companion/ui/workshop_page.py:469
 msgid "Nothing has been changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/workshop_page.py:476
+#: fm1companion/ui/workshop_page.py:473
 #, python-brace-format
 msgid "{n} pattern"
 msgid_plural "{n} patterns"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/workshop_page.py:477
+#: fm1companion/ui/workshop_page.py:474
 msgid "song chain"
 msgstr ""
 
