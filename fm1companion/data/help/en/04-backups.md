@@ -32,7 +32,9 @@ this, switch off *on connect* under [Backups](app://page/backups) › *Automatic
 Backups go through the firmware's editor protocol. The app speaks three backup protocols: **Felucca's**
 (Felucca, Melodee, Skiff, JIANT FM, CoralFlower, ChoralRoot and the Felucca forks that keep it), **SLOOP's**
 (SLOOP, KARMA, ORBIT and SLOOP's forks: sloopDX, Clipper, Jangada, winampFM, …) and **X0X's** (from X0X 1.0.9);
-M-VAVE's FM1 Open has its own.
+M-VAVE's FM1 Open has its own: *Back up now* uses it (see
+[Studio](app://page/studio) › FM1 Open for what such a backup holds); it goes back onto the FM-1 through the Studio's
+*Write back to the FM-1 …*.
 
 * A firmware that names itself when asked ("FELUCCA CLIPPER 1.3.1") gets its own rules. One that answers like
   Felucca ("FELUCCA v1.0") is **asked** which backup protocol it speaks – only with requests that change nothing

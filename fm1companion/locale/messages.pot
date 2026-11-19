@@ -1198,7 +1198,7 @@ msgstr ""
 msgid "The running project is loaded immediately."
 msgstr ""
 
-#: fm1companion/backup_inspect.py:1118 fm1companion/ui/device.py:394
+#: fm1companion/backup_inspect.py:1118 fm1companion/ui/device.py:406
 msgid "unknown firmware"
 msgstr ""
 
@@ -1274,7 +1274,7 @@ msgstr ""
 msgid "Same firmware family."
 msgstr ""
 
-#: fm1companion/backup_inspect.py:1287 fm1companion/ui/backups_page.py:496
+#: fm1companion/backup_inspect.py:1287 fm1companion/ui/backups_page.py:526
 #: fm1companion/ui/linkimport_dialog.py:321
 #: fm1companion/ui/pages/discover.py:756
 #: fm1companion/ui/settings_dialog.py:400
@@ -1584,17 +1584,17 @@ msgstr ""
 msgid "Example samples of the FM-1 Companion Suite (generated synthetically, free to use). Can be deleted at any time."
 msgstr ""
 
-#: fm1companion/devices.py:179
+#: fm1companion/devices.py:183
 #, python-brace-format
 msgid "The list of your FM-1 devices (names, colours, notes) was damaged and was put aside as “{name}”. The previous state was loaded."
 msgstr ""
 
-#: fm1companion/devices.py:181
+#: fm1companion/devices.py:185
 #, python-brace-format
 msgid "The list of your FM-1 devices (names, colours, notes) was damaged and was put aside as “{name}”. The devices get new profiles when they are connected; their backups are still in the backup folder, under the old names."
 msgstr ""
 
-#: fm1companion/devices.py:197
+#: fm1companion/devices.py:201
 #, python-brace-format
 msgid "{n} entries in the list of your FM-1 devices were unusable and were left out."
 msgstr ""
@@ -1656,7 +1656,7 @@ msgstr ""
 msgid "recording and previewing (pw-record, pw-play)"
 msgstr ""
 
-#: fm1companion/diag.py:48 fm1companion/syscheck.py:511
+#: fm1companion/diag.py:48 fm1companion/syscheck.py:512
 msgid "editing recordings"
 msgstr ""
 
@@ -2761,7 +2761,7 @@ msgstr ""
 msgid "This is not m-bootloader's MIDI MODE – nothing was read."
 msgstr ""
 
-#: fm1companion/flash/mboot.py:223 fm1companion/ui/backups_page.py:111
+#: fm1companion/flash/mboot.py:223 fm1companion/ui/backups_page.py:136
 msgid "Cancelled – no file was saved, nothing was changed on the FM-1."
 msgstr ""
 
@@ -3514,17 +3514,17 @@ msgstr ""
 msgid "anything else on a newer FM-1 (logo on the front, flash UC25HQ80)"
 msgstr ""
 
-#: fm1companion/flash/tested.py:75
+#: fm1companion/flash/tested.py:89
 #, python-brace-format
 msgid "Tested on a real FM-1: this kind of step ({what}) has been run on a real device with this app."
 msgstr ""
 
-#: fm1companion/flash/tested.py:78
+#: fm1companion/flash/tested.py:92
 #, python-brace-format
 msgid "Tested on a real FM-1 so far: {done}. This step: only in the simulation."
 msgstr ""
 
-#: fm1companion/flash/tested.py:79
+#: fm1companion/flash/tested.py:93
 #, python-brace-format
 msgid "Tested on a real FM-1 so far: {done}. This step ({what}): only in the simulation."
 msgstr ""
@@ -3581,12 +3581,12 @@ msgstr ""
 #: fm1companion/flash/texts.py:76 fm1companion/ui/firmware_page.py:871
 #: fm1companion/ui/firmware_page.py:1171 fm1companion/ui/firmware_page.py:1396
 #: fm1companion/ui/fm1_page.py:234 fm1companion/ui/main_window.py:986
-#: fm1companion/ui/overview.py:215 fm1companion/ui/pages/devices.py:30
+#: fm1companion/ui/overview.py:213 fm1companion/ui/pages/devices.py:30
 #: fm1companion/ui/pages/recovery.py:433 fm1companion/ui/statusbar.py:24
 msgid "unknown"
 msgstr ""
 
-#: fm1companion/flash/texts.py:77 fm1companion/ui/backups_page.py:712
+#: fm1companion/flash/texts.py:77 fm1companion/ui/backups_page.py:742
 msgid "damaged"
 msgstr ""
 
@@ -4979,7 +4979,7 @@ msgstr ""
 msgid "<b>This FM-1 is a newer unit (logo on the front), and {name} in the version that runs on it does not know its flash chip.</b> It cannot save anything, and by what its author writes it usually cannot start an update either – so an installation from here may simply not begin (nothing is written then). {first} The way out: bring the FM-1 into ROM boot mode and write the original V15 back with the recovery (stage 2), then install a version that knows the chip."
 msgstr ""
 
-#: fm1companion/health.py:39 fm1companion/syscheck.py:318
+#: fm1companion/health.py:39 fm1companion/syscheck.py:319
 msgid "under-voltage now"
 msgstr ""
 
@@ -4987,11 +4987,11 @@ msgstr ""
 msgid "clock throttled (ARM) now"
 msgstr ""
 
-#: fm1companion/health.py:39 fm1companion/syscheck.py:318
+#: fm1companion/health.py:39 fm1companion/syscheck.py:319
 msgid "throttled now"
 msgstr ""
 
-#: fm1companion/health.py:40 fm1companion/syscheck.py:319
+#: fm1companion/health.py:40 fm1companion/syscheck.py:320
 msgid "temperature limit now"
 msgstr ""
 
@@ -6853,7 +6853,7 @@ msgid "SLOOP 3's answer names no version"
 msgstr ""
 
 #: fm1companion/sloop3.py:242 fm1companion/transport.py:279
-#: fm1companion/ui/device.py:1218
+#: fm1companion/ui/device.py:1232
 msgid "device not connected"
 msgstr ""
 
@@ -7593,546 +7593,546 @@ msgstr ""
 msgid "Error in the studio"
 msgstr ""
 
-#: fm1companion/syscheck.py:41
+#: fm1companion/syscheck.py:42
 msgid "FAIL"
 msgstr ""
 
-#: fm1companion/syscheck.py:46
+#: fm1companion/syscheck.py:47
 #, python-brace-format
 msgid "Fix: {fix}"
 msgstr ""
 
-#: fm1companion/syscheck.py:74
+#: fm1companion/syscheck.py:75
 #, python-brace-format
 msgid "{program} not found"
 msgstr ""
 
-#: fm1companion/syscheck.py:91
+#: fm1companion/syscheck.py:92
 msgid "no output"
-msgstr ""
-
-#: fm1companion/syscheck.py:172
-#, python-brace-format
-msgid "{name} keeps disconnecting (port {path})"
 msgstr ""
 
 #: fm1companion/syscheck.py:173
 #, python-brace-format
+msgid "{name} keeps disconnecting (port {path})"
+msgstr ""
+
+#: fm1companion/syscheck.py:174
+#, python-brace-format
 msgid "{count} disconnects since boot, {burst} of them within 10 minutes. This is almost always caused by the cable, the power supply or a hub – rarely by the firmware."
 msgstr ""
 
-#: fm1companion/syscheck.py:176
+#: fm1companion/syscheck.py:177
 msgid "Try a different (short) USB cable, plug the FM-1 directly into the Pi instead of a hub, with a hub use one with its own power supply. Also check the Pi's power supply (see under-voltage)."
 msgstr ""
 
-#: fm1companion/syscheck.py:182
+#: fm1companion/syscheck.py:183
 #, python-brace-format
 msgid "{name} was disconnected {count}× (port {path})"
 msgstr ""
 
-#: fm1companion/syscheck.py:184
+#: fm1companion/syscheck.py:185
 msgid "Single disconnects are normal if you unplugged the FM-1, switched it off or installed a firmware."
 msgstr ""
 
-#: fm1companion/syscheck.py:185
+#: fm1companion/syscheck.py:186
 msgid "Only if you did nothing: check the cable and the port."
 msgstr ""
 
-#: fm1companion/syscheck.py:188
+#: fm1companion/syscheck.py:189
 #, python-brace-format
 msgid "{name} stable on USB ({path}, {ids})"
 msgstr ""
 
-#: fm1companion/syscheck.py:199
+#: fm1companion/syscheck.py:200
 #, python-brace-format
 msgid "USB device could not be recognized properly ({ports})"
 msgstr ""
 
-#: fm1companion/syscheck.py:200
+#: fm1companion/syscheck.py:201
 msgid "USB device could not be recognized properly"
 msgstr ""
 
-#: fm1companion/syscheck.py:201
+#: fm1companion/syscheck.py:202
 msgid "The Pi got no clean answer from the device when it was plugged in (error -71/-110). Typical for a bad or too long cable, a charge-only cable without data lines or too little power."
 msgstr ""
 
-#: fm1companion/syscheck.py:204
+#: fm1companion/syscheck.py:205
 msgid "Use a different data cable, plug it directly into the Pi, check the power supply. For the FM-1: switch it off and on once."
 msgstr ""
 
-#: fm1companion/syscheck.py:211
+#: fm1companion/syscheck.py:212
 msgid "Over-current on a USB port"
 msgstr ""
 
-#: fm1companion/syscheck.py:212
+#: fm1companion/syscheck.py:213
 msgid "A device drew more current than the port may deliver – the Pi then switches the port off."
 msgstr ""
 
-#: fm1companion/syscheck.py:213
+#: fm1companion/syscheck.py:214
 msgid "Connect power-hungry devices (hard disks, chargers) to a USB hub with its own power supply; check the Pi's power supply (Pi 5: official 27 W power supply)."
 msgstr ""
 
-#: fm1companion/syscheck.py:218
+#: fm1companion/syscheck.py:219
 msgid "USB device rejected: not enough power on the bus"
 msgstr ""
 
-#: fm1companion/syscheck.py:219
+#: fm1companion/syscheck.py:220
 msgid "The USB port (or hub) cannot power the device."
 msgstr ""
 
-#: fm1companion/syscheck.py:220
+#: fm1companion/syscheck.py:221
 msgid "Plug the device directly into the Pi or into a hub with its own power supply."
 msgstr ""
 
-#: fm1companion/syscheck.py:233
+#: fm1companion/syscheck.py:234
 msgid "USB controller crashed – when the FM-1 audio started"
 msgstr ""
 
-#: fm1companion/syscheck.py:234
+#: fm1companion/syscheck.py:235
 msgid "The computer's USB controller gave up; all USB devices were gone afterwards. At the same time, switching on the FM-1 audio stream failed (usb_set_interface). The FM-1 is also a USB sound card; PipeWire opens it by itself. On the Pi 5, such an audio start of some USB devices can crash the controller – this is a problem of the kernel/controller, not of the FM-1 or the app."
 msgstr ""
 
-#: fm1companion/syscheck.py:239
+#: fm1companion/syscheck.py:240
 msgid "1) Without a reboot: re-register only this controller (echo xhci-hcd.N | sudo tee /sys/bus/platform/drivers/xhci-hcd/unbind, then …/bind; N from the message above) – never the controller with the system disk; otherwise restart the computer. 2) Check whether updates are available (sudo rpi-eeprom-update, apt list --upgradable) and only then update. 3) Plug the FM-1 into the other kind of socket (blue USB 3 / black USB 2) – without a hub. 4) If you don't need the FM-1 sound on the computer (Studio and MIDI don't need it), choose the profile “Off” for the FM-1 in KDE System Settings › Audio; then PipeWire no longer opens the audio stream."
 msgstr ""
 
-#: fm1companion/syscheck.py:249
+#: fm1companion/syscheck.py:250
 msgid "USB controller crashed"
 msgstr ""
 
-#: fm1companion/syscheck.py:250
+#: fm1companion/syscheck.py:251
 msgid "The computer's USB controller gave up; all USB devices were gone afterwards."
 msgstr ""
 
-#: fm1companion/syscheck.py:251
+#: fm1companion/syscheck.py:252
 msgid "Restart the computer. If it happens more often: use a hub with its own power supply; check whether kernel or bootloader updates are available (sudo rpi-eeprom-update, apt list --upgradable), and only then update."
 msgstr ""
 
-#: fm1companion/syscheck.py:256
+#: fm1companion/syscheck.py:257
 #, python-brace-format
 msgid "USB controller reports warnings ({count}×)"
 msgstr ""
 
-#: fm1companion/syscheck.py:257
+#: fm1companion/syscheck.py:258
 msgid "Mostly harmless, but can cause dropouts in USB audio/MIDI."
 msgstr ""
 
-#: fm1companion/syscheck.py:258
+#: fm1companion/syscheck.py:259
 msgid "If the FM-1 stutters: try a different USB port (on the Pi 5 the blue USB 3 sockets and the black USB 2 sockets are on separate controllers)."
 msgstr ""
 
-#: fm1companion/syscheck.py:268
+#: fm1companion/syscheck.py:269
 msgid "USB audio: sample rate could not be set"
 msgstr ""
 
-#: fm1companion/syscheck.py:269
+#: fm1companion/syscheck.py:270
 msgid "An audio device rejected the requested sample rate. The FM-1 works at 48 kHz; if a program requests 44.1 kHz, it may crackle or stay silent."
 msgstr ""
 
-#: fm1companion/syscheck.py:271
+#: fm1companion/syscheck.py:272
 msgid "Start recording at 48000 Hz (the recording page does this automatically). Leave the default rate in PipeWire at 48000."
 msgstr ""
 
-#: fm1companion/syscheck.py:275
+#: fm1companion/syscheck.py:276
 #, python-brace-format
 msgid "USB audio: transfer errors ({count}×)"
 msgstr ""
 
-#: fm1companion/syscheck.py:277
+#: fm1companion/syscheck.py:278
 msgid "Audio packets between the FM-1 and the computer were lost. Result: clicks or dropouts in recordings."
 msgstr ""
 
-#: fm1companion/syscheck.py:279
+#: fm1companion/syscheck.py:280
 msgid "Plug the FM-1 directly into the Pi (no hub), unplug other USB devices on the same port, reduce the CPU load; with many messages replace the cable."
 msgstr ""
 
-#: fm1companion/syscheck.py:284
+#: fm1companion/syscheck.py:285
 #, python-brace-format
 msgid "Audio dropouts (XRuns) in PipeWire ({count}×)"
 msgstr ""
 
-#: fm1companion/syscheck.py:286
+#: fm1companion/syscheck.py:287
 msgid "The audio server could not keep up – audible as clicks."
 msgstr ""
 
-#: fm1companion/syscheck.py:287
+#: fm1companion/syscheck.py:288
 msgid "Close other programs, use larger buffers (PIPEWIRE_QUANTUM=1024/48000), don't record via a USB hub."
 msgstr ""
 
-#: fm1companion/syscheck.py:294
+#: fm1companion/syscheck.py:295
 #, python-brace-format
 msgid "Under-voltage detected ({count}× since boot)"
 msgstr ""
 
-#: fm1companion/syscheck.py:295
+#: fm1companion/syscheck.py:296
 msgid "The power supply delivers too little voltage. Then the Pi throttles, and USB devices like the FM-1 can disconnect or have dropouts."
 msgstr ""
 
-#: fm1companion/syscheck.py:297
+#: fm1companion/syscheck.py:298
 msgid "Use the official Raspberry Pi power supply (Pi 5: 27 W / 5 A), a short thick USB-C cable, no power-hungry devices directly on the Pi."
 msgstr ""
 
-#: fm1companion/syscheck.py:302
+#: fm1companion/syscheck.py:303
 msgid "Overheating in the kernel log"
 msgstr ""
 
-#: fm1companion/syscheck.py:303
+#: fm1companion/syscheck.py:304
 msgid "The processor was slowed down because of heat – audio may then drop out."
 msgstr ""
 
-#: fm1companion/syscheck.py:304
+#: fm1companion/syscheck.py:305
 msgid "Check the cooler/fan (Pi 5: Active Cooler), ventilate the case."
 msgstr ""
 
-#: fm1companion/syscheck.py:310
+#: fm1companion/syscheck.py:311
 msgid "Storage device reports read errors"
 msgstr ""
 
-#: fm1companion/syscheck.py:311
+#: fm1companion/syscheck.py:312
 msgid "The memory card or SSD had errors while reading/writing."
 msgstr ""
 
-#: fm1companion/syscheck.py:312
+#: fm1companion/syscheck.py:313
 msgid "Also save important data (backups in the FM-1 folder) somewhere else; replace the card if necessary."
 msgstr ""
 
-#: fm1companion/syscheck.py:318
+#: fm1companion/syscheck.py:319
 msgid "frequency capped now"
 msgstr ""
 
-#: fm1companion/syscheck.py:319
+#: fm1companion/syscheck.py:320
 msgid "under-voltage since boot"
 msgstr ""
 
-#: fm1companion/syscheck.py:319
+#: fm1companion/syscheck.py:320
 msgid "frequency capped since boot"
 msgstr ""
 
-#: fm1companion/syscheck.py:320
+#: fm1companion/syscheck.py:321
 msgid "throttled since boot"
 msgstr ""
 
-#: fm1companion/syscheck.py:320
+#: fm1companion/syscheck.py:321
 msgid "temperature limit since boot"
 msgstr ""
 
-#: fm1companion/syscheck.py:327
+#: fm1companion/syscheck.py:328
 msgid "all fine"
 msgstr ""
 
-#: fm1companion/syscheck.py:330
+#: fm1companion/syscheck.py:331
 msgid "Under-voltage – right now"
 msgstr ""
 
-#: fm1companion/syscheck.py:331
+#: fm1companion/syscheck.py:332
 msgid "The power supply is dropping right now. USB devices may fail."
 msgstr ""
 
-#: fm1companion/syscheck.py:332
+#: fm1companion/syscheck.py:333
 msgid "Replace the power supply (Pi 5: official 27 W power supply), check the cable."
 msgstr ""
 
-#: fm1companion/syscheck.py:334
+#: fm1companion/syscheck.py:335
 msgid "Under-voltage occurred since boot"
 msgstr ""
 
-#: fm1companion/syscheck.py:335
+#: fm1companion/syscheck.py:336
 msgid "At some point since switching on, the power supply delivered too little."
 msgstr ""
 
-#: fm1companion/syscheck.py:336
+#: fm1companion/syscheck.py:337
 msgid "Check the power supply and cable, especially if the FM-1 sometimes disconnects."
 msgstr ""
 
-#: fm1companion/syscheck.py:339
+#: fm1companion/syscheck.py:340
 msgid "Pi is being throttled because of heat right now"
 msgstr ""
 
-#: fm1companion/syscheck.py:340
+#: fm1companion/syscheck.py:341
 msgid "High temperature slows the processor down; the simulator and recording may stutter."
 msgstr ""
 
-#: fm1companion/syscheck.py:342
+#: fm1companion/syscheck.py:343
 msgid "Provide cooling (fan, open the case)."
 msgstr ""
 
-#: fm1companion/syscheck.py:344
+#: fm1companion/syscheck.py:345
 msgid "Throttled once because of heat since boot"
 msgstr ""
 
-#: fm1companion/syscheck.py:345
+#: fm1companion/syscheck.py:346
 msgid "It was too warm for a short time."
 msgstr ""
 
-#: fm1companion/syscheck.py:345
+#: fm1companion/syscheck.py:346
 msgid "If there are dropouts, check the cooling."
 msgstr ""
 
-#: fm1companion/syscheck.py:347
+#: fm1companion/syscheck.py:348
 msgid "Power supply and temperature fine"
 msgstr ""
 
-#: fm1companion/syscheck.py:374
+#: fm1companion/syscheck.py:375
 msgid "Pi 5 detected over-current on USB"
 msgstr ""
 
-#: fm1companion/syscheck.py:375
+#: fm1companion/syscheck.py:376
 msgid "The firmware detected a USB over-current."
 msgstr ""
 
-#: fm1companion/syscheck.py:376
+#: fm1companion/syscheck.py:377
 msgid "Unplug the devices one by one and check them; power-hungry devices to an active hub."
 msgstr ""
 
-#: fm1companion/syscheck.py:379
+#: fm1companion/syscheck.py:380
 #, python-brace-format
 msgid "USB current limited (power supply reports {amps} A)"
 msgstr ""
 
-#: fm1companion/syscheck.py:381
+#: fm1companion/syscheck.py:382
 msgid "Without a 5 A power supply the Pi 5 delivers only 600 mA on all USB sockets together. The FM-1 alone fits; with a hard disk or more devices it can get tight."
 msgstr ""
 
-#: fm1companion/syscheck.py:384
+#: fm1companion/syscheck.py:385
 msgid "Use the official 27 W power supply or a USB hub with its own power supply. (Advanced: usb_max_current_enable=1 in /boot/firmware/config.txt – only with a good power supply.)"
 msgstr ""
 
-#: fm1companion/syscheck.py:433
+#: fm1companion/syscheck.py:434
 msgid "The FluidSynth service is occupying the sound card"
 msgstr ""
 
-#: fm1companion/syscheck.py:434
+#: fm1companion/syscheck.py:435
 msgid "The FluidSynth service starts at every login"
 msgstr ""
 
-#: fm1companion/syscheck.py:435
+#: fm1companion/syscheck.py:436
 msgid "Debian's package “fluidsynth” comes with a service that starts at login and opens the first sound card (on the Pi: HDMI) directly. PipeWire then doesn't get it – no HDMI sound, only “Dummy Output”. The app's sound generator doesn't need the service."
 msgstr ""
 
-#: fm1companion/syscheck.py:439
+#: fm1companion/syscheck.py:440
 msgid "In the app: notice “Disable service” – or in the terminal: systemctl --user disable --now fluidsynth && systemctl --user restart wireplumber pipewire pipewire-pulse"
 msgstr ""
 
-#: fm1companion/syscheck.py:444
+#: fm1companion/syscheck.py:445
 msgid "Sound card occupied directly by a program"
 msgstr ""
 
-#: fm1companion/syscheck.py:445
+#: fm1companion/syscheck.py:446
 #, python-brace-format
 msgid "{programs}. As long as this is the case, PipeWire cannot use this card (it is then missing as an output)."
 msgstr ""
 
-#: fm1companion/syscheck.py:447
+#: fm1companion/syscheck.py:448
 msgid "Quit the program or switch it from ALSA to PipeWire/PulseAudio in its settings."
 msgstr ""
 
-#: fm1companion/syscheck.py:462
+#: fm1companion/syscheck.py:463
 msgid "No player for previewing (pw-play, paplay, aplay, ffplay)"
 msgstr ""
 
-#: fm1companion/syscheck.py:463
+#: fm1companion/syscheck.py:464
 msgid "Without one, “Listen”/“Preview” stay silent on the computer (playing on the FM-1 still works)."
 msgstr ""
 
-#: fm1companion/syscheck.py:467
+#: fm1companion/syscheck.py:468
 #, python-brace-format
 msgid "{title} – sound goes to “{output}”"
 msgstr ""
 
-#: fm1companion/syscheck.py:470
+#: fm1companion/syscheck.py:471
 msgid "Preview: no real audio output"
 msgstr ""
 
-#: fm1companion/syscheck.py:471
+#: fm1companion/syscheck.py:472
 msgid "PipeWire found no speaker/headphone/HDMI output and plays into the void – “Listen” and the Studio stay silent. Often after a crash of the USB controller (USB speaker/sound card gone) or without a connected HDMI device."
 msgstr ""
 
-#: fm1companion/syscheck.py:474
+#: fm1companion/syscheck.py:475
 msgid "Connect a speaker/sound card or restart the computer; then choose the output in KDE System Settings › Audio."
 msgstr ""
 
-#: fm1companion/syscheck.py:477 fm1companion/syscheck.py:481
+#: fm1companion/syscheck.py:478 fm1companion/syscheck.py:482
 #, python-brace-format
 msgid "Preview: {player}"
 msgstr ""
 
-#: fm1companion/syscheck.py:479
+#: fm1companion/syscheck.py:480
 msgid "KDE System Settings › Audio: choose speakers/HDMI/headphones as default – or switch “Output” in the app when previewing."
 msgstr ""
 
-#: fm1companion/syscheck.py:487
+#: fm1companion/syscheck.py:488
 #, python-brace-format
 msgid "FM-1 sound card found: {card}"
 msgstr ""
 
-#: fm1companion/syscheck.py:488
+#: fm1companion/syscheck.py:489
 msgid "No FM-1 sound card found"
 msgstr ""
 
-#: fm1companion/syscheck.py:489
+#: fm1companion/syscheck.py:490
 msgid "This is normal without a connected FM-1. With an FM-1: it shows up as a USB audio device."
 msgstr ""
 
-#: fm1companion/syscheck.py:491
+#: fm1companion/syscheck.py:492
 msgid "Switch the FM-1 on and connect it with a USB data cable."
 msgstr ""
 
-#: fm1companion/syscheck.py:494
+#: fm1companion/syscheck.py:495
 msgid "MIDI not usable"
 msgstr ""
 
-#: fm1companion/syscheck.py:495
+#: fm1companion/syscheck.py:496
 msgid "Neither python3-rtmidi nor aconnect is available."
 msgstr ""
 
-#: fm1companion/syscheck.py:499
+#: fm1companion/syscheck.py:500
 #, python-brace-format
 msgid "FM-1 MIDI port: {port}"
 msgstr ""
 
-#: fm1companion/syscheck.py:500
+#: fm1companion/syscheck.py:501
 #, python-brace-format
 msgid "No FM-1 MIDI port ({n} other port)"
 msgid_plural "No FM-1 MIDI port ({n} other ports)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/syscheck.py:505
+#: fm1companion/syscheck.py:506
 msgid "PipeWire is running"
 msgstr ""
 
-#: fm1companion/syscheck.py:505
+#: fm1companion/syscheck.py:506
 msgid "PipeWire is not running"
 msgstr ""
 
-#: fm1companion/syscheck.py:506
+#: fm1companion/syscheck.py:507
 msgid "PipeWire status unknown"
 msgstr ""
 
-#: fm1companion/syscheck.py:507
+#: fm1companion/syscheck.py:508
 msgid "Needed for recording via PipeWire (ALSA works without it)."
 msgstr ""
 
-#: fm1companion/syscheck.py:511
+#: fm1companion/syscheck.py:512
 msgid "MP3/FLAC samples"
 msgstr ""
 
-#: fm1companion/syscheck.py:512
+#: fm1companion/syscheck.py:513
 msgid "sound generator for MIDI tracks 5–8"
 msgstr ""
 
-#: fm1companion/syscheck.py:514
+#: fm1companion/syscheck.py:515
 #, python-brace-format
 msgid "{program} available ({purpose})"
 msgstr ""
 
-#: fm1companion/syscheck.py:514
+#: fm1companion/syscheck.py:515
 #, python-brace-format
 msgid "{program} missing ({purpose})"
 msgstr ""
 
-#: fm1companion/syscheck.py:523
+#: fm1companion/syscheck.py:524
 #, python-brace-format
 msgid "Free space in the FM-1 folder: {size} GiB"
 msgstr ""
 
-#: fm1companion/syscheck.py:524
+#: fm1companion/syscheck.py:525
 msgid "Backups, recordings and firmware downloads need space."
 msgstr ""
 
-#: fm1companion/syscheck.py:526
+#: fm1companion/syscheck.py:527
 msgid "Delete old recordings/downloads or move the main folder."
 msgstr ""
 
-#: fm1companion/syscheck.py:549
+#: fm1companion/syscheck.py:550
 msgid "For installing firmware: connect the FM-1 directly to the computer (Raspberry Pi: preferably a black USB 2 port) with a short data cable. If a hub is needed: one with its own power supply. The app switches to careful USB mode automatically when it installs through a hub."
 msgstr ""
 
-#: fm1companion/syscheck.py:553
+#: fm1companion/syscheck.py:554
 msgid "The hub reports that it has no own power supply."
 msgstr ""
 
-#: fm1companion/syscheck.py:555
+#: fm1companion/syscheck.py:556
 #, python-brace-format
 msgid "{name} is connected through {n} USB hub ({path})"
 msgid_plural "{name} is connected through {n} USB hubs ({path})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/syscheck.py:558
+#: fm1companion/syscheck.py:559
 #, python-brace-format
 msgid "FM-1: {speed} Mbit/s. Hubs: {hubs}"
 msgstr ""
 
-#: fm1companion/syscheck.py:560
+#: fm1companion/syscheck.py:561
 #, python-brace-format
 msgid "{name} is connected directly to the computer ({path}, {speed} Mbit/s)"
 msgstr ""
 
-#: fm1companion/syscheck.py:569
+#: fm1companion/syscheck.py:570
 #, python-brace-format
 msgid "USB power saving (autosuspend) is on for the FM-1 or its hub ({devices})"
 msgstr ""
 
-#: fm1companion/syscheck.py:571
+#: fm1companion/syscheck.py:572
 msgid "The kernel may put these devices to sleep while they are idle – for example while the FM-1 restarts during a firmware installation. Waking up through a hub does not always work."
 msgstr ""
 
-#: fm1companion/syscheck.py:573
+#: fm1companion/syscheck.py:574
 #, python-brace-format
 msgid "Install the optional udev rule of the app (keeps the FM-1 and the hubs in front of it awake): {command}"
 msgstr ""
 
-#: fm1companion/syscheck.py:575
+#: fm1companion/syscheck.py:576
 msgid "The udev rule of the app is installed; unplug the FM-1 and plug it in again."
 msgstr ""
 
-#: fm1companion/syscheck.py:586
+#: fm1companion/syscheck.py:587
 msgid "App storage could not be measured"
 msgstr ""
 
-#: fm1companion/syscheck.py:589
+#: fm1companion/syscheck.py:590
 #, python-brace-format
 msgid "App data: {size} (logs, downloads, caches), {free} of it can be deleted"
 msgstr ""
 
-#: fm1companion/syscheck.py:591
+#: fm1companion/syscheck.py:592
 msgid "Your backups, projects, samples and recordings are not included."
 msgstr ""
 
-#: fm1companion/syscheck.py:592
+#: fm1companion/syscheck.py:593
 msgid "Settings › Storage shows every category and deletes what is no longer needed."
 msgstr ""
 
-#: fm1companion/syscheck.py:602
+#: fm1companion/syscheck.py:603
 msgid "Kernel log not readable"
 msgstr ""
 
-#: fm1companion/syscheck.py:603
+#: fm1companion/syscheck.py:604
 #, python-brace-format
 msgid "Without access to the kernel log, USB and power problems cannot be detected ({problem})."
 msgstr ""
 
-#: fm1companion/syscheck.py:605
+#: fm1companion/syscheck.py:606
 msgid "Add your user to the group 'adm': sudo usermod -aG adm $USER – then log out and in again. For once also: sudo dmesg"
 msgstr ""
 
-#: fm1companion/syscheck.py:621
+#: fm1companion/syscheck.py:622
 #, python-brace-format
 msgid "FM-1 Companion {version} – system check {time}"
 msgstr ""
 
-#: fm1companion/syscheck.py:623
+#: fm1companion/syscheck.py:624
 #, python-brace-format
 msgid "Computer: {model}"
 msgstr ""
 
-#: fm1companion/syscheck.py:625 fm1companion/ui/pages/project_view.py:504
+#: fm1companion/syscheck.py:626 fm1companion/ui/pages/project_view.py:504
 #, python-brace-format
 msgid "Source: {source}"
 msgstr ""
 
-#: fm1companion/syscheck.py:625 fm1companion/ui/statusbar.py:214
+#: fm1companion/syscheck.py:626 fm1companion/ui/statusbar.py:214
 msgid "no kernel log"
 msgstr ""
 
@@ -8391,257 +8391,274 @@ msgstr ""
 msgid "safety"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:63
+#: fm1companion/ui/backups_page.py:57
+msgid "FM1 Open: the backup holds the working project (also unsaved changes), the 16 project slots, the four DX7 library banks and the sample bank – no settings. FM1 Open has no backup command: to read a saved project, the FM-1 loads each one into its working area in turn, and the app puts your working project back at the end (it then shows as changed). Playback stops. Tested on a real FM-1: only the transfer of the sample bank (from a script with the app's own code); the backup as a whole only in the simulation."
+msgstr ""
+
+#: fm1companion/ui/backups_page.py:83
 msgid "No FM-1 connected. Please connect an FM-1 via USB."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:65
+#: fm1companion/ui/backups_page.py:85
 msgid "The FM-1 is in update mode – finish the installation first (page “Recovery”), then back up."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:68 fm1companion/ui/projects_page.py:165
+#: fm1companion/ui/backups_page.py:88 fm1companion/ui/projects_page.py:165
 msgid "The running firmware"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:69
+#: fm1companion/ui/backups_page.py:89
 #, python-brace-format
 msgid "{firmware} has no editor protocol – the app cannot make a backup of it. Backups go through the editor protocol of the Felucca family (Felucca's, SLOOP's or X0X's backup commands; docs/firmware-support.md lists every firmware). Please back up important projects with the firmware's own tool."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:73
+#: fm1companion/ui/backups_page.py:93
 msgid "The FM-1 does not respond. Check the cable and reconnect."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:87 fm1companion/ui/backups_page.py:93
+#: fm1companion/ui/backups_page.py:108 fm1companion/ui/backups_page.py:118
 #: fm1companion/ui/firmware_page.py:687
 msgid "Backup not possible"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:94 fm1companion/ui/sloop3_ui.py:384
+#: fm1companion/ui/backups_page.py:110 fm1companion/ui/backups_page.py:166
+#: fm1companion/ui/backups_page.py:818 fm1companion/ui/backups_page.py:845
+msgid "Backup"
+msgstr ""
+
+#: fm1companion/ui/backups_page.py:110
+msgid "Keep the cable connected until the backup is finished: if it is pulled in between, the working project cannot be put back – unsaved changes would be lost."
+msgstr ""
+
+#: fm1companion/ui/backups_page.py:112 fm1companion/ui/pages/recovery.py:782
+msgid "Back up"
+msgstr ""
+
+#: fm1companion/ui/backups_page.py:119 fm1companion/ui/sloop3_ui.py:384
 #, python-brace-format
 msgid "The backup folder cannot be created: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:104
+#: fm1companion/ui/backups_page.py:129
 msgid "Reading the inventory …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:115
+#: fm1companion/ui/backups_page.py:140
 msgid "Technical details: "
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:116
+#: fm1companion/ui/backups_page.py:141
 #, python-brace-format
 msgid "The backup was read but not saved: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:117
+#: fm1companion/ui/backups_page.py:142
 #, python-brace-format
 msgid "Saved: {size} – firmware {firmware} {version}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:119 fm1companion/ui/sloop3_ui.py:405
+#: fm1companion/ui/backups_page.py:144 fm1companion/ui/sloop3_ui.py:405
 #, python-brace-format
 msgid "File: {path}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:123
+#: fm1companion/ui/backups_page.py:148
 #, python-brace-format
 msgid "Old automatic backups could not be deleted: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:131
+#: fm1companion/ui/backups_page.py:158
+#, python-brace-format
+msgid "Backup saved: {name} ({size}). The FM-1 shows your working project again (marked as changed when saved projects were read)."
+msgstr ""
+
+#: fm1companion/ui/backups_page.py:161
 #, python-brace-format
 msgid "Backup saved: {name} ({parts} parts, {projects} projects, {size}). Nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:133
+#: fm1companion/ui/backups_page.py:163
 #, python-brace-format
 msgid "Backup saved: {name} ({size}). Nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:136 fm1companion/ui/backups_page.py:786
-#: fm1companion/ui/backups_page.py:813
-msgid "Backup"
-msgstr ""
-
-#: fm1companion/ui/backups_page.py:148 fm1companion/ui/backups_page.py:439
+#: fm1companion/ui/backups_page.py:178 fm1companion/ui/backups_page.py:469
 #, python-brace-format
 msgid "Mirror up to date ({time})"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:150
+#: fm1companion/ui/backups_page.py:180
 #, python-brace-format
 msgid "Mirrored and verified: {target}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:153 fm1companion/ui/backups_page.py:442
+#: fm1companion/ui/backups_page.py:183 fm1companion/ui/backups_page.py:472
 #, python-brace-format
 msgid "Mirror not possible: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:164
+#: fm1companion/ui/backups_page.py:194
 #, python-brace-format
 msgid "Old automatic backups in the mirror could not be deleted: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:167
+#: fm1companion/ui/backups_page.py:197
 #, python-brace-format
 msgid "{n} old automatic backup deleted in the mirror as well (like here)."
 msgid_plural "{n} old automatic backups deleted in the mirror as well (like here)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:197 fm1companion/ui/backups_page.py:229
-#: fm1companion/ui/backups_page.py:391
+#: fm1companion/ui/backups_page.py:227 fm1companion/ui/backups_page.py:259
+#: fm1companion/ui/backups_page.py:421
 msgid "on connect"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:262 fm1companion/ui/backups_page.py:414
+#: fm1companion/ui/backups_page.py:292 fm1companion/ui/backups_page.py:444
 #, python-brace-format
 msgid "Automatic backup is waiting ({reason})."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:282
+#: fm1companion/ui/backups_page.py:312
 msgid "Skip today"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:283 fm1companion/ui/backups_page.py:514
+#: fm1companion/ui/backups_page.py:313 fm1companion/ui/backups_page.py:544
 #: fm1companion/ui/main_window.py:339 fm1companion/ui/main_window.py:472
-#: fm1companion/ui/overview.py:95 fm1companion/ui/overview.py:131
+#: fm1companion/ui/overview.py:93 fm1companion/ui/overview.py:129
 msgid "Back up now"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:298
+#: fm1companion/ui/backups_page.py:328
 #, python-brace-format
 msgid "Automatic backup of {device} starts in {n} s – playback on the FM-1 stops briefly"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:349
+#: fm1companion/ui/backups_page.py:379
 #, python-brace-format
 msgid "Automatic backup of {device} skipped for today."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:359 fm1companion/ui/backups_page.py:398
-#: fm1companion/ui/backups_page.py:399
+#: fm1companion/ui/backups_page.py:389 fm1companion/ui/backups_page.py:428
+#: fm1companion/ui/backups_page.py:429
 #, python-brace-format
 msgid "Automatic backup not possible: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:362
+#: fm1companion/ui/backups_page.py:392
 msgid "periodic"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:367
+#: fm1companion/ui/backups_page.py:397
 msgid "no device"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:369
+#: fm1companion/ui/backups_page.py:399
 msgid "Studio twin (not a real FM-1)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:371
+#: fm1companion/ui/backups_page.py:401
 msgid "firmware installation in progress"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:373
+#: fm1companion/ui/backups_page.py:403
 msgid "already running"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:375 fm1companion/ui/fm1_page.py:280
+#: fm1companion/ui/backups_page.py:405 fm1companion/ui/fm1_page.py:280
 msgid "device in use right now"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:382
+#: fm1companion/ui/backups_page.py:412
 msgid "editor/recording open"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:385
+#: fm1companion/ui/backups_page.py:415
 msgid "recording in progress"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:404
+#: fm1companion/ui/backups_page.py:434
 #, python-brace-format
 msgid "{device}: the last backup is up to date (younger than {n} day)."
 msgid_plural "{device}: the last backup is up to date (younger than {n} days)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:431
+#: fm1companion/ui/backups_page.py:461
 #, python-brace-format
 msgid "automatic, {reason}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:448
+#: fm1companion/ui/backups_page.py:478
 #, python-brace-format
 msgid "Automatic backup of {device} ({reason}) saved."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:449
+#: fm1companion/ui/backups_page.py:479
 #, python-brace-format
 msgid "Automatic backup of {device} saved."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:454 fm1companion/ui/backups_page.py:455
+#: fm1companion/ui/backups_page.py:484 fm1companion/ui/backups_page.py:485
 #, python-brace-format
 msgid "Automatic backup not made: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:458
+#: fm1companion/ui/backups_page.py:488
 #, python-brace-format
 msgid "Automatic backup of {device} running …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:460
+#: fm1companion/ui/backups_page.py:490
 msgid "Automatic backup"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:482 fm1companion/ui/main_window.py:46
+#: fm1companion/ui/backups_page.py:512 fm1companion/ui/main_window.py:46
 #: fm1companion/ui/pages/devices.py:259
 msgid "Backups"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:482
+#: fm1companion/ui/backups_page.py:512
 msgid "Complete backups (running music, all projects, user presets, settings). Same format as the web editor – files are interchangeable. Look inside, compare and restore parts: in the tab <b>Browse & Compare</b>."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:486
+#: fm1companion/ui/backups_page.py:516
 msgid "Show backups of all devices"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:489
+#: fm1companion/ui/backups_page.py:519
 msgid "pinned only"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:496 fm1companion/ui/backups_page.py:1123
+#: fm1companion/ui/backups_page.py:526 fm1companion/ui/backups_page.py:1159
 #: fm1companion/ui/firmware_page.py:1067 fm1companion/ui/pages/discover.py:422
 #: fm1companion/ui/pages/discover.py:756 fm1companion/ui/pages/studio.py:57
 #: fm1companion/ui/projects_page.py:86
 msgid "Date"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:496 fm1companion/ui/backups_page.py:1123
+#: fm1companion/ui/backups_page.py:526 fm1companion/ui/backups_page.py:1159
 #: fm1companion/ui/fm1_page.py:98 fm1companion/ui/main_window.py:313
-#: fm1companion/ui/overview.py:43 fm1companion/ui/pages/__init__.py:30
+#: fm1companion/ui/overview.py:41 fm1companion/ui/pages/__init__.py:30
 #: fm1companion/ui/pages/presets.py:149 fm1companion/ui/pages/studio.py:57
 #: fm1companion/ui/projects_page.py:86
 msgid "Device"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:496
+#: fm1companion/ui/backups_page.py:526
 #: fm1companion/ui/pages/backup_browser.py:418
 #: fm1companion/ui/pages/presets.py:97 fm1companion/ui/pages/presets.py:149
 msgid "Kind"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:496
+#: fm1companion/ui/backups_page.py:526
 #: fm1companion/ui/pages/backup_browser.py:199
 #: fm1companion/ui/pages/backup_browser.py:203
 #: fm1companion/ui/pages/backup_browser.py:245
 msgid "Content"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:496 fm1companion/ui/backups_page.py:1123
+#: fm1companion/ui/backups_page.py:526 fm1companion/ui/backups_page.py:1159
 #: fm1companion/ui/pages/backup_browser.py:199
 #: fm1companion/ui/pages/discover.py:422 fm1companion/ui/projects_page.py:41
 #: fm1companion/ui/projects_page.py:86 fm1companion/ui/projects_page.py:234
@@ -8650,31 +8667,31 @@ msgstr ""
 msgid "Size"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:497
+#: fm1companion/ui/backups_page.py:527
 msgid "Note / Labels"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:514
+#: fm1companion/ui/backups_page.py:544
 msgid "Ctrl+B"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:515
+#: fm1companion/ui/backups_page.py:545
 msgid "View content …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:516
+#: fm1companion/ui/backups_page.py:546
 msgid "Opens the backup in the tab “Browse & Compare”: view projects, presets, settings, compare with another state, restore single parts (also double-click)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:518
+#: fm1companion/ui/backups_page.py:548
 msgid "Restore everything …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:519
+#: fm1companion/ui/backups_page.py:549
 msgid "Extract projects"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:525 fm1companion/ui/backups_page.py:964
+#: fm1companion/ui/backups_page.py:555 fm1companion/ui/backups_page.py:1000
 #: fm1companion/ui/pages/backup_browser.py:166
 #: fm1companion/ui/pages/backup_browser.py:419
 #: fm1companion/ui/pages/backup_browser.py:642
@@ -8682,7 +8699,7 @@ msgctxt "backup"
 msgid "Note"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:526 fm1companion/ui/backups_page.py:973
+#: fm1companion/ui/backups_page.py:556 fm1companion/ui/backups_page.py:1009
 #: fm1companion/ui/pages/backup_browser.py:167
 #: fm1companion/ui/pages/backup_browser.py:419
 #: fm1companion/ui/pages/backup_browser.py:650
@@ -8692,37 +8709,37 @@ msgstr ""
 msgid "Labels"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:526
+#: fm1companion/ui/backups_page.py:556
 msgid "e.g. “before firmware change”, “live set October”"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:527
+#: fm1companion/ui/backups_page.py:557
 #: fm1companion/ui/pages/backup_browser.py:168
 msgid "Pin"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:528
+#: fm1companion/ui/backups_page.py:558
 msgid "Pinned backups are never deleted automatically"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:529 fm1companion/ui/projects_page.py:114
+#: fm1companion/ui/backups_page.py:559 fm1companion/ui/projects_page.py:114
 msgid "Add file …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:530
+#: fm1companion/ui/backups_page.py:560
 msgid "A backup file (.json) – or the SLOOP 3 editor's own backup (.s3b), taken over as a SLOOP 3 backup"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:532
+#: fm1companion/ui/backups_page.py:562
 msgid "As .s3b …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:533
+#: fm1companion/ui/backups_page.py:563
 msgid "Save a SLOOP 3 backup as the SLOOP 3 editor's own file (.s3b: the project and your sounds)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:534 fm1companion/ui/backups_page.py:1292
-#: fm1companion/ui/backups_page.py:1292 fm1companion/ui/pages/midi.py:1141
+#: fm1companion/ui/backups_page.py:564 fm1companion/ui/backups_page.py:1328
+#: fm1companion/ui/backups_page.py:1328 fm1companion/ui/pages/midi.py:1141
 #: fm1companion/ui/pages/presets.py:666 fm1companion/ui/pages/presets.py:669
 #: fm1companion/ui/pages/presets.py:696 fm1companion/ui/pages/presets.py:921
 #: fm1companion/ui/projects_page.py:112 fm1companion/ui/projects_page.py:741
@@ -8735,7 +8752,7 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:537 fm1companion/ui/feedback.py:76
+#: fm1companion/ui/backups_page.py:567 fm1companion/ui/feedback.py:76
 #: fm1companion/ui/main_window.py:1011 fm1companion/ui/pages/presets.py:168
 #: fm1companion/ui/pages/project_view.py:763
 #: fm1companion/ui/pages/project_view.py:775
@@ -8744,351 +8761,355 @@ msgstr ""
 msgid "Open folder"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:550
+#: fm1companion/ui/backups_page.py:580
 msgid "Automatic backups"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:553
+#: fm1companion/ui/backups_page.py:583
 msgid "on connect, if the last backup is older than"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:555
+#: fm1companion/ui/backups_page.py:585
 msgid "Note: a backup briefly stops playback on the FM-1. The app announces it a few seconds before it starts – with “Skip today” you keep playing."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:559
+#: fm1companion/ui/backups_page.py:589
 msgid " day(s)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:563
+#: fm1companion/ui/backups_page.py:593
 msgid "periodically while connected, every"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:565
+#: fm1companion/ui/backups_page.py:595
 msgid "Note: a backup briefly stops playback on the FM-1. Never runs while the editor or a recording is open."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:569
+#: fm1companion/ui/backups_page.py:599
 msgid " hours"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:573
+#: fm1companion/ui/backups_page.py:603
 msgid "also for SLOOP 3 (not tested while the FM-1 plays)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:575
+#: fm1companion/ui/backups_page.py:605
 msgid "Off by default. A SLOOP 3 backup only reads, but reading while SLOOP 3 plays has not been tried on a real FM-1 yet. Switched on, it works like the others: announced first, from the next connection. “Back up now” works either way."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:582
+#: fm1companion/ui/backups_page.py:612
 msgid "also keep the newest of each month"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:584
+#: fm1companion/ui/backups_page.py:614
 msgid "Keep automatic ones:"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:586
+#: fm1companion/ui/backups_page.py:616
 msgid "optional: e.g. /mnt/nas/FM-1-Backups – every backup is copied and verified"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:589
+#: fm1companion/ui/backups_page.py:619
 msgid "Mirror now"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:591
+#: fm1companion/ui/backups_page.py:621
 msgid "Mirror folder:"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:592
+#: fm1companion/ui/backups_page.py:622
 msgid "delete old automatic backups in the mirror too (like here)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:594
+#: fm1companion/ui/backups_page.py:624
 msgid "Keeps the mirror folder from growing without limit. Only automatic backups the app copied there itself, unchanged since, and that were already deleted here by “Keep automatic ones” are deleted there. Manual and pinned backups and all other files in the mirror folder are never touched."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:599
+#: fm1companion/ui/backups_page.py:629
 msgid "In the mirror the app only deletes automatic backups it copied there itself and already deleted here – never manual or pinned ones, never other files. Off: the mirror keeps everything (and grows)."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:616
+#: fm1companion/ui/backups_page.py:646
 msgid "Status:"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:617
+#: fm1companion/ui/backups_page.py:647
 msgid "A backup briefly stops playback on the FM-1. Automatic backups are therefore announced a few seconds before they start (“Skip today” / “Back up now”) and only run when nothing else is happening with the device – never during an installation, in the editor or during a recording. The app cannot see whether the FM-1 is playing. Before every firmware installation the app backs up by default, labelled with the old firmware (no backup only after explicit confirmation in the installation plan)."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:651
+#: fm1companion/ui/backups_page.py:681
 msgid "Choose mirror folder"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:660
+#: fm1companion/ui/backups_page.py:690
 msgid "No mirror folder"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:660
+#: fm1companion/ui/backups_page.py:690
 msgid "Please enter a mirror folder first (e.g. a NAS drive)."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:670
+#: fm1companion/ui/backups_page.py:700
 #, python-brace-format
 msgid "{ok} backups verified in the mirror, {bad} errors."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:671
+#: fm1companion/ui/backups_page.py:701
 #, python-brace-format
 msgid "Mirror: {ok} verified, {bad} errors ({time})"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:675
+#: fm1companion/ui/backups_page.py:705
 msgid "Mirror backups"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:676
+#: fm1companion/ui/backups_page.py:706
 #, python-brace-format
 msgid "Mirror updated: {ok} backups copied and verified, {bad} ERRORS (see log). Target: {target}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:678
+#: fm1companion/ui/backups_page.py:708
 #, python-brace-format
 msgid "Mirror updated: {ok} backups copied and verified, no errors. Target: {target}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:688
+#: fm1companion/ui/backups_page.py:718
 msgid "nothing yet"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:702 fm1companion/ui/overview.py:283
+#: fm1companion/ui/backups_page.py:732 fm1companion/ui/overview.py:281
 #, python-brace-format
 msgid "<b>Backup folder not reachable.</b> {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:713
+#: fm1companion/ui/backups_page.py:743
 msgid "file not readable"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:720
+#: fm1companion/ui/backups_page.py:750
 #, python-brace-format
 msgid ""
 "{path}\n"
 "Damaged: {problem}. Restoring is not possible – delete it or recover it from the mirror folder."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:734
+#: fm1companion/ui/backups_page.py:764
 msgid "Parts = separately storable building blocks of the backup (running music, settings, every project slot, every preset bank, every sample slot)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:740 fm1companion/ui/backups_page.py:990
+#: fm1companion/ui/backups_page.py:770 fm1companion/ui/backups_page.py:1026
 #: fm1companion/ui/pages/backup_browser.py:665
 msgid "pinned – never deleted automatically"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:742
+#: fm1companion/ui/backups_page.py:772
 msgid "SLOOP 3 backup (the app's own file: project, sounds, banks – not the samples). It goes back only onto an FM-1 that runs SLOOP 3."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:745
+#: fm1companion/ui/backups_page.py:775
 msgid "SLOOP backup (format of the SLOOP web editor) – interchangeable in both directions"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:756
+#: fm1companion/ui/backups_page.py:788
 #, python-brace-format
 msgid "{n} backup, {size} in {folder}"
 msgid_plural "{n} backups, {size} in {folder}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:758
+#: fm1companion/ui/backups_page.py:790
 #, python-brace-format
 msgid "{n} damaged"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:761
+#: fm1companion/ui/backups_page.py:793
 #, python-brace-format
 msgid "<b>No backups of this device yet.</b> {reason}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:763
+#: fm1companion/ui/backups_page.py:795
 msgid "No backups yet – here's how: connect the FM-1 and click “Back up now” (Ctrl+B). Automatic backups are set up below."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:770
+#: fm1companion/ui/backups_page.py:802
 msgid "Folder not reachable"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:780 fm1companion/ui/backups_page.py:807
-#: fm1companion/ui/backups_page.py:832 fm1companion/ui/backups_page.py:841
-#: fm1companion/ui/backups_page.py:926 fm1companion/ui/sloop3_ui.py:472
+#: fm1companion/ui/backups_page.py:812 fm1companion/ui/backups_page.py:839
+#: fm1companion/ui/backups_page.py:868 fm1companion/ui/backups_page.py:877
+#: fm1companion/ui/backups_page.py:962 fm1companion/ui/sloop3_ui.py:472
 msgid "Backup damaged"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:780
+#: fm1companion/ui/backups_page.py:812
 #, python-brace-format
 msgid "{name} cannot be read. Restoring and opening are not possible – deleting is."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:786
+#: fm1companion/ui/backups_page.py:818
 msgid "Note (optional):"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:809 fm1companion/ui/pages/devices.py:227
+#: fm1companion/ui/backups_page.py:841 fm1companion/ui/pages/devices.py:227
 #, python-brace-format
 msgid "Firmware: {firmware}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:810
+#: fm1companion/ui/backups_page.py:842
 #, python-brace-format
 msgid "Created: {date}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:825 fm1companion/ui/backups_page.py:855
+#: fm1companion/ui/backups_page.py:857
+msgid "This page does not restore onto an FM-1 with FM1 Open. Open the backup in the Studio and use “Write back to the FM-1 …” there (it makes a safety backup first) – that was never run on a real FM-1."
+msgstr ""
+
+#: fm1companion/ui/backups_page.py:861 fm1companion/ui/backups_page.py:891
 #: fm1companion/ui/pages/backup_browser.py:78 fm1companion/ui/sloop3_ui.py:447
 #: fm1companion/ui/sloop3_ui.py:452 fm1companion/ui/sloop3_ui.py:457
 #: fm1companion/ui/sloop3_ui.py:475
 msgid "Restore not possible"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:847 fm1companion/ui/pages/devices.py:459
+#: fm1companion/ui/backups_page.py:883 fm1companion/ui/pages/devices.py:459
 msgid "Check target"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:857 fm1companion/ui/pages/devices.py:468
+#: fm1companion/ui/backups_page.py:893 fm1companion/ui/pages/devices.py:468
 msgid "What is possible:"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:862
+#: fm1companion/ui/backups_page.py:898
 #, python-brace-format
 msgid "The backup comes from another device ({device}). That is allowed."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:865
+#: fm1companion/ui/backups_page.py:901
 #, python-brace-format
 msgid "Everything on <b>{device}</b> will be replaced by the state of {date}: running music, all projects, presets and settings."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:869
+#: fm1companion/ui/backups_page.py:905
 #, python-brace-format
 msgid "Everything on <b>the FM-1</b> will be replaced by the state of {date}: running music, all projects, presets and settings."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:871 fm1companion/ui/backups_page.py:911
+#: fm1companion/ui/backups_page.py:907 fm1companion/ui/backups_page.py:947
 #: fm1companion/ui/samples_page.py:1372
 msgid "Restore backup"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:873
+#: fm1companion/ui/backups_page.py:909
 msgid "A safety backup of the current state is made automatically first."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:874
+#: fm1companion/ui/backups_page.py:910
 msgid "Restore only parts? Use the tab “Browse & Compare”."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:875
+#: fm1companion/ui/backups_page.py:911
 msgid "<b>SLOOP:</b> Please stop the song on the FM-1 first (STOP) – otherwise SLOOP refuses the restore."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:877
+#: fm1companion/ui/backups_page.py:913
 #: fm1companion/ui/pages/backup_browser.py:84 fm1companion/ui/sloop3_ui.py:488
 msgid "Restore"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:879 fm1companion/ui/sloop3_ui.py:490
+#: fm1companion/ui/backups_page.py:915 fm1companion/ui/sloop3_ui.py:490
 #, python-brace-format
 msgid "automatic, before restoring {name}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:880
+#: fm1companion/ui/backups_page.py:916
 #: fm1companion/ui/pages/backup_browser.py:64 fm1companion/ui/sloop3_ui.py:491
 msgid "No safety backup"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:881 fm1companion/ui/sloop3_ui.py:492
+#: fm1companion/ui/backups_page.py:917 fm1companion/ui/sloop3_ui.py:492
 msgid "The safety backup failed. Restore anyway?"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:882 fm1companion/ui/sloop3_ui.py:492
+#: fm1companion/ui/backups_page.py:918 fm1companion/ui/sloop3_ui.py:492
 msgid "Restore anyway"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:890
+#: fm1companion/ui/backups_page.py:926
 #: fm1companion/ui/pages/backup_browser.py:92
 msgid "Asking the device whether it takes every part before anything is replaced …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:891
+#: fm1companion/ui/backups_page.py:927
 #: fm1companion/ui/pages/backup_browser.py:93
 msgid "Checking the backup and writing it in SLOOP's order: banks, projects, settings, samples …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:898
+#: fm1companion/ui/backups_page.py:934
 #: fm1companion/ui/pages/backup_browser.py:102
 #, python-brace-format
 msgid "✓ {part} written"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:901
+#: fm1companion/ui/backups_page.py:937
 msgid "Done. The FM-1 now plays the state from the backup."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:904 fm1companion/ui/sloop3_ui.py:496
+#: fm1companion/ui/backups_page.py:940 fm1companion/ui/sloop3_ui.py:496
 #, python-brace-format
 msgid "The previous state is in the safety backup {name}."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:905 fm1companion/ui/sloop3_ui.py:497
+#: fm1companion/ui/backups_page.py:941 fm1companion/ui/sloop3_ui.py:497
 msgid "There is NO safety backup of the previous state."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:910
+#: fm1companion/ui/backups_page.py:946
 #: fm1companion/ui/pages/backup_browser.py:114
 #: fm1companion/ui/sloop3_ui.py:528
 #, python-brace-format
 msgid "Restore failed: {error}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:912
+#: fm1companion/ui/backups_page.py:948
 msgid "A complete restore cannot be cancelled safely – please wait. Single parts are restored in the tab “Browse & Compare”."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:914
+#: fm1companion/ui/backups_page.py:950
 #, python-brace-format
 msgid "Restore complete: {n} parts of the state of {date} written – running music, projects, presets and settings."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:930
+#: fm1companion/ui/backups_page.py:966
 #: fm1companion/ui/pages/project_view.py:351
 msgid "No projects"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:930
+#: fm1companion/ui/backups_page.py:966
 msgid "This backup contains no saved projects."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:934
+#: fm1companion/ui/backups_page.py:970
 msgid "Section"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:934 fm1companion/ui/fm1_page.py:180
+#: fm1companion/ui/backups_page.py:970 fm1companion/ui/fm1_page.py:180
 #: fm1companion/ui/pages/backup_browser.py:218
 #: fm1companion/ui/pages/presets.py:97 fm1companion/ui/pages/presets.py:149
 msgid "Slot"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:937
+#: fm1companion/ui/backups_page.py:973
 #, python-brace-format
 msgid "{device} {what} {slot}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:940
+#: fm1companion/ui/backups_page.py:976
 #, python-brace-format
 msgid "Backup {name}, {what} {slot}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:943 fm1companion/ui/backups_page.py:994
-#: fm1companion/ui/backups_page.py:1113
+#: fm1companion/ui/backups_page.py:979 fm1companion/ui/backups_page.py:1030
+#: fm1companion/ui/backups_page.py:1149
 #: fm1companion/ui/linkimport_dialog.py:318
 #: fm1companion/ui/pages/backup_browser.py:669
 #: fm1companion/ui/pages/midi.py:333 fm1companion/ui/pages/project_view.py:705
@@ -9101,291 +9122,291 @@ msgstr ""
 msgid "Not saved"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:943
+#: fm1companion/ui/backups_page.py:979
 msgid "projects not written to the library"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:946
+#: fm1companion/ui/backups_page.py:982
 msgid "Projects extracted"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:947
+#: fm1companion/ui/backups_page.py:983
 #, python-brace-format
 msgid "{n} project is now in the project library ({folder}). There you can rename and load it. Nothing was changed on the FM-1."
 msgid_plural "{n} projects are now in the project library ({folder}). There you can rename and load them. Nothing was changed on the FM-1."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:964
+#: fm1companion/ui/backups_page.py:1000
 #: fm1companion/ui/pages/backup_browser.py:642
 msgid "Note for the backup:"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:973
+#: fm1companion/ui/backups_page.py:1009
 #: fm1companion/ui/pages/backup_browser.py:650
 msgid ""
 "Labels, separated by commas\n"
 "(e.g. before firmware change, live set October):"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:989
+#: fm1companion/ui/backups_page.py:1025
 #: fm1companion/ui/pages/backup_browser.py:664
 msgid "note saved"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:989
+#: fm1companion/ui/backups_page.py:1025
 #: fm1companion/ui/pages/backup_browser.py:664
 msgid "labels saved"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:990
+#: fm1companion/ui/backups_page.py:1026
 #: fm1companion/ui/pages/backup_browser.py:665
 msgid "no longer pinned"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:994
+#: fm1companion/ui/backups_page.py:1030
 #: fm1companion/ui/pages/backup_browser.py:669
 #: fm1companion/ui/projects_page.py:706 fm1companion/ui/projects_page.py:735
 #, python-brace-format
 msgid "{name} cannot be changed"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:999
+#: fm1companion/ui/backups_page.py:1035
 msgid "Add backup files"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1000
+#: fm1companion/ui/backups_page.py:1036
 msgid "Backups (*.json *.s3b)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1011 fm1companion/ui/backups_page.py:1044
-#: fm1companion/ui/backups_page.py:1069
+#: fm1companion/ui/backups_page.py:1047 fm1companion/ui/backups_page.py:1080
+#: fm1companion/ui/backups_page.py:1105
 msgid "Not a valid file"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1018
+#: fm1companion/ui/backups_page.py:1054
 #, python-brace-format
 msgid "{name} is already in the backup folder (identical) – nothing copied."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1026
+#: fm1companion/ui/backups_page.py:1062
 #, python-brace-format
 msgid "Backup added: {name} (copy, the original stays)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1028 fm1companion/ui/backups_page.py:1041
-#: fm1companion/ui/backups_page.py:1072
+#: fm1companion/ui/backups_page.py:1064 fm1companion/ui/backups_page.py:1077
+#: fm1companion/ui/backups_page.py:1108
 msgid "Not copied"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1028 fm1companion/ui/backups_page.py:1041
-#: fm1companion/ui/backups_page.py:1072
+#: fm1companion/ui/backups_page.py:1064 fm1companion/ui/backups_page.py:1077
+#: fm1companion/ui/backups_page.py:1108
 #, python-brace-format
 msgid "{name} not copied"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1048
+#: fm1companion/ui/backups_page.py:1084
 #, python-brace-format
 msgid "project {n}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1050 fm1companion/ui/backups_page.py:1095
+#: fm1companion/ui/backups_page.py:1086 fm1companion/ui/backups_page.py:1131
 msgid "Which project?"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1051
+#: fm1companion/ui/backups_page.py:1087
 #, python-brace-format
 msgid "{name} holds {n} projects (SLOOP 3 before 3.3.5 had 8 places; now it keeps one). Which one should the backup hold?"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1059
+#: fm1companion/ui/backups_page.py:1095
 #, python-brace-format
 msgid "from {name}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1074
+#: fm1companion/ui/backups_page.py:1110
 #, python-brace-format
 msgid "SLOOP 3 editor backup taken over: {name} → {dest} (the project and your sounds; an .s3b has no banks or settings)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1088 fm1companion/ui/backups_page.py:1110
+#: fm1companion/ui/backups_page.py:1124 fm1companion/ui/backups_page.py:1146
 #: fm1companion/ui/firmware_page.py:376 fm1companion/ui/firmware_page.py:1649
 #: fm1companion/ui/firmware_page.py:1743
 #: fm1companion/ui/pages/backup_browser.py:35
 msgid "Not possible"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1088
+#: fm1companion/ui/backups_page.py:1124
 #, python-brace-format
 msgid "Only a SLOOP 3 backup can be saved as .s3b ({name}: {error})."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1093
+#: fm1companion/ui/backups_page.py:1129
 msgid "the project saved on the FM-1"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1093
+#: fm1companion/ui/backups_page.py:1129
 msgid "the project as it was at that moment (unsaved changes too)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1096
+#: fm1companion/ui/backups_page.py:1132
 msgid "An .s3b holds one project. This backup has two different ones:"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1102
+#: fm1companion/ui/backups_page.py:1138
 msgid "Save as .s3b"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1103
+#: fm1companion/ui/backups_page.py:1139
 msgid "SLOOP 3 editor backup (*.s3b)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1113
+#: fm1companion/ui/backups_page.py:1149
 #, python-brace-format
 msgid "{name} cannot be written"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1115
+#: fm1companion/ui/backups_page.py:1151
 #, python-brace-format
 msgid "Saved for the SLOOP 3 editor: {name} – its “Restore” on the page “Projects” takes it (the project and your sounds)."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1120
+#: fm1companion/ui/backups_page.py:1156
 msgid "Flash backups (m-bootloader's MIDI MODE)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1123
+#: fm1companion/ui/backups_page.py:1159
 msgid "Flash chip"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1123
+#: fm1companion/ui/backups_page.py:1159
 msgid "Check"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1123
+#: fm1companion/ui/backups_page.py:1159
 #: fm1companion/ui/pages/backup_browser.py:415
 #: fm1companion/ui/recorder_page.py:157 fm1companion/ui/samples_page.py:532
 msgid "File"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1130 fm1companion/ui/samples_page.py:124
+#: fm1companion/ui/backups_page.py:1166 fm1companion/ui/samples_page.py:124
 msgid "Show in folder"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1133
+#: fm1companion/ui/backups_page.py:1169
 msgid "Samples to the library"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1134
+#: fm1companion/ui/backups_page.py:1170
 msgid "Take SLOOP 3's samples USR1–USR4 out of the selected flash backup, as WAV files into the sample library. Nothing is sent to an FM-1."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1138
+#: fm1companion/ui/backups_page.py:1174
 msgid "Samples from a file …"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1139
+#: fm1companion/ui/backups_page.py:1175
 msgid "The same from a flash copy M-Flasher saved (a .bin of the whole flash)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1150
+#: fm1companion/ui/backups_page.py:1186
 msgid "A flash backup is a copy of the FM-1's whole flash, made in m-bootloader's MIDI MODE (Firmware+ › SLOOP 3). The app does not write it back – there is no restore button here: restoring a flash image is M-Flasher's job, in USB download mode, onto the same FM-1 it came from."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1183
+#: fm1companion/ui/backups_page.py:1219
 #, python-brace-format
 msgid "✓ matches – CRC-32 {crc}, the chip's own when copied"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1185
+#: fm1companion/ui/backups_page.py:1221
 #, python-brace-format
 msgid "✗ {problem}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1187
+#: fm1companion/ui/backups_page.py:1223
 msgid "not checked"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1204
+#: fm1companion/ui/backups_page.py:1240
 #, python-brace-format
 msgid "{n} flash backup"
 msgid_plural "{n} flash backups"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:1205
+#: fm1companion/ui/backups_page.py:1241
 msgid "No flash backups here yet."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1210
+#: fm1companion/ui/backups_page.py:1246
 #: fm1companion/ui/pages/backup_browser.py:519
 #: fm1companion/ui/pages/backup_browser.py:609
 #: fm1companion/ui/pages/devices.py:479
 msgid "Nothing selected"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1210
+#: fm1companion/ui/backups_page.py:1246
 msgid "Please select a flash backup in the list first."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1229
+#: fm1companion/ui/backups_page.py:1265
 msgid "Flash copy (whole flash)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1230
+#: fm1companion/ui/backups_page.py:1266
 msgid "Flash copies (*.bin);;All files (*)"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1247
+#: fm1companion/ui/backups_page.py:1283
 msgid "the WAV files cannot be written"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1249 fm1companion/ui/backups_page.py:1272
+#: fm1companion/ui/backups_page.py:1285 fm1companion/ui/backups_page.py:1308
 msgid "Samples from the flash copy"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1254
+#: fm1companion/ui/backups_page.py:1290
 msgid "No samples taken out"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1265
+#: fm1companion/ui/backups_page.py:1301
 #, python-brace-format
 msgid "{slot} “{name}”: {n} sound"
 msgid_plural "{slot} “{name}”: {n} sounds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:1270
+#: fm1companion/ui/backups_page.py:1306
 #, python-brace-format
 msgid "{n} WAV file is in {folder}:"
 msgid_plural "{n} WAV files are in {folder}:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/backups_page.py:1271
+#: fm1companion/ui/backups_page.py:1307
 #, python-brace-format
 msgid "No sample found in {name}."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1274
+#: fm1companion/ui/backups_page.py:1310
 msgid "These four places are shared: SLOOP 2.8 keeps its samples at the same addresses and in the same format, so a copy made under SLOOP 2.8 gives SLOOP 2.8's samples. Nothing was sent to an FM-1."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1291
+#: fm1companion/ui/backups_page.py:1327
 msgid "<b>This backup is pinned.</b>"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1292
+#: fm1companion/ui/backups_page.py:1328
 #, python-brace-format
 msgid "Delete {name} permanently?"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1295
+#: fm1companion/ui/backups_page.py:1331
 #, python-brace-format
 msgid "Deleted: {name}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1297 fm1companion/ui/pages/presets.py:927
+#: fm1companion/ui/backups_page.py:1333 fm1companion/ui/pages/presets.py:927
 #: fm1companion/ui/projects_page.py:748 fm1companion/ui/projects_page.py:759
 #: fm1companion/ui/samples_page.py:705 fm1companion/ui/settings_dialog.py:443
 #: fm1companion/ui/storage_tab.py:191 fm1companion/ui/storage_tab.py:247
@@ -10137,214 +10158,214 @@ msgstr ""
 msgid "don't know"
 msgstr ""
 
-#: fm1companion/ui/device.py:378 fm1companion/ui/playback_bar.py:57
+#: fm1companion/ui/device.py:390 fm1companion/ui/playback_bar.py:57
 msgid "No FM-1 connected"
 msgstr ""
 
-#: fm1companion/ui/device.py:381
+#: fm1companion/ui/device.py:393
 #, python-brace-format
 msgid "{device} – virtual"
 msgstr ""
 
-#: fm1companion/ui/device.py:387 fm1companion/ui/overview.py:211
+#: fm1companion/ui/device.py:399 fm1companion/ui/overview.py:209
 msgid "update mode"
 msgstr ""
 
-#: fm1companion/ui/device.py:387
+#: fm1companion/ui/device.py:399
 #, python-brace-format
 msgid "update mode ({id})"
 msgstr ""
 
-#: fm1companion/ui/device.py:389
+#: fm1companion/ui/device.py:401
 #, python-brace-format
 msgid "m-bootloader {version} – MIDI MODE"
 msgstr ""
 
-#: fm1companion/ui/device.py:391 fm1companion/ui/fm1_page.py:319
+#: fm1companion/ui/device.py:403 fm1companion/ui/fm1_page.py:319
 #, python-brace-format
 msgid "{firmware} (public beta)"
 msgstr ""
 
-#: fm1companion/ui/device.py:394 fm1companion/ui/overview.py:213
+#: fm1companion/ui/device.py:406 fm1companion/ui/overview.py:211
 msgid "unknown – please choose"
 msgstr ""
 
-#: fm1companion/ui/device.py:403
+#: fm1companion/ui/device.py:415
 msgid "virtual – the twin in the Studio, not a real FM-1"
 msgstr ""
 
-#: fm1companion/ui/device.py:404
+#: fm1companion/ui/device.py:416
 msgid "virtual – twin is starting …"
 msgstr ""
 
-#: fm1companion/ui/device.py:407
+#: fm1companion/ui/device.py:419
 msgid "in m-bootloader's MIDI MODE – no firmware is running (“Firmware+” › SLOOP 3 explains what is possible from here)"
 msgstr ""
 
-#: fm1companion/ui/device.py:410
+#: fm1companion/ui/device.py:422
 msgid "connected – SLOOP 3: its own editor and backups (pages “Editor” and “Backups”)"
 msgstr ""
 
-#: fm1companion/ui/device.py:411
+#: fm1companion/ui/device.py:423
 msgid "connected – full access"
 msgstr ""
 
-#: fm1companion/ui/device.py:412
+#: fm1companion/ui/device.py:424
 msgid "connected – MIDI only (firmware without editor protocol)"
 msgstr ""
 
-#: fm1companion/ui/device.py:413 fm1companion/ui/main_window.py:942
+#: fm1companion/ui/device.py:425 fm1companion/ui/main_window.py:942
 msgid "not connected"
 msgstr ""
 
-#: fm1companion/ui/device.py:413
+#: fm1companion/ui/device.py:425
 msgid "in update mode – finish the installation (page “Recovery”)"
 msgstr ""
 
-#: fm1companion/ui/device.py:466 fm1companion/ui/main_window.py:970
+#: fm1companion/ui/device.py:478 fm1companion/ui/main_window.py:970
 #: fm1companion/ui/pages/midi.py:1363
 msgid "FM-1 disconnected"
 msgstr ""
 
-#: fm1companion/ui/device.py:474
+#: fm1companion/ui/device.py:486
 msgid "Connection lost"
 msgstr ""
 
-#: fm1companion/ui/device.py:498
+#: fm1companion/ui/device.py:510
 msgid "The FM-1 is in update mode. The page “Recovery” finishes the installation."
 msgstr ""
 
-#: fm1companion/ui/device.py:514
+#: fm1companion/ui/device.py:526
 msgid "Studio not available"
 msgstr ""
 
-#: fm1companion/ui/device.py:531
+#: fm1companion/ui/device.py:543
 #, python-brace-format
 msgid "The MIDI port cannot be opened: {error}"
 msgstr ""
 
-#: fm1companion/ui/device.py:569
+#: fm1companion/ui/device.py:581
 msgid "no answer"
 msgstr ""
 
-#: fm1companion/ui/device.py:662
+#: fm1companion/ui/device.py:674
 #, python-brace-format
 msgid "FM-1 connected – {firmware} (public beta). Its own web editor is on the page “Editor”, backups of its project, sounds and banks on the page “Backups”; the other device pages need the Felucca editor protocol, which SLOOP 3 does not speak."
 msgstr ""
 
-#: fm1companion/ui/device.py:666
+#: fm1companion/ui/device.py:678
 #, python-brace-format
 msgid "FM-1 connected – {firmware} (public beta). The app was checked with SLOOP 3 {versions}, not with this version: the editor and backups may not fit it."
 msgstr ""
 
-#: fm1companion/ui/device.py:712
+#: fm1companion/ui/device.py:726
 #, python-brace-format
 msgid "FM-1 connected ({id}) – FM1 Open: MIDI, presets via SysEx, its sample bank (page “Samples”) and the Studio (fetch, write back) work; the other pages need the editor protocol."
 msgstr ""
 
-#: fm1companion/ui/device.py:716
+#: fm1companion/ui/device.py:730
 #, python-brace-format
 msgid "FM-1 connected ({id}) – this firmware has no editor protocol: MIDI, presets via SysEx and firmware installation work, backups and projects do not."
 msgstr ""
 
-#: fm1companion/ui/device.py:719
+#: fm1companion/ui/device.py:733
 msgid "The device answers neither editor commands nor the update ID. The MIDI connection stays open."
 msgstr ""
 
-#: fm1companion/ui/device.py:793
+#: fm1companion/ui/device.py:807
 #, python-brace-format
 msgid "Remembered: {device} runs {firmware} (ID {id})."
 msgstr ""
 
-#: fm1companion/ui/device.py:796
+#: fm1companion/ui/device.py:810
 #, python-brace-format
 msgid "Remembered: this FM-1 runs {firmware} (ID {id})."
 msgstr ""
 
-#: fm1companion/ui/device.py:801
+#: fm1companion/ui/device.py:815
 msgid "Remembered: firmware unknown – installations count as a firmware change (with V15 intermediate step)."
 msgstr ""
 
-#: fm1companion/ui/device.py:821
+#: fm1companion/ui/device.py:835
 #, python-brace-format
 msgid "This FM-1 is in m-bootloader's MIDI MODE (m-bootloader {version}, flash chip {chip}): no firmware is running. “Firmware+” › SLOOP 3 explains what is possible from here; OCT−, OCT+, PLAY or REC on the FM-1 go back to its menu."
 msgstr ""
 
-#: fm1companion/ui/device.py:1085
+#: fm1companion/ui/device.py:1099
 #, python-brace-format
 msgid "(last seen: {firmware})"
 msgstr ""
 
-#: fm1companion/ui/device.py:1087
+#: fm1companion/ui/device.py:1101
 msgid "A new FM-1 that I have not used with this app before …"
 msgstr ""
 
-#: fm1companion/ui/device.py:1091 fm1companion/ui/device.py:1159
-#: fm1companion/ui/device.py:1161 fm1companion/ui/hw_revision.py:22
-#: fm1companion/ui/hw_revision.py:44 fm1companion/ui/overview.py:203
+#: fm1companion/ui/device.py:1105 fm1companion/ui/device.py:1173
+#: fm1companion/ui/device.py:1175 fm1companion/ui/hw_revision.py:22
+#: fm1companion/ui/hw_revision.py:44 fm1companion/ui/overview.py:201
 #: fm1companion/ui/pages/recovery.py:570 fm1companion/ui/pages/recovery.py:610
 msgid "Which FM-1 is this?"
 msgstr ""
 
-#: fm1companion/ui/device.py:1092
+#: fm1companion/ui/device.py:1106
 msgid "Is this an FM-1 you have used with this app before? The app cannot tell by itself: an FM-1 only reports a serial number while it runs the original firmware. Please choose:"
 msgstr ""
 
-#: fm1companion/ui/device.py:1095
+#: fm1companion/ui/device.py:1109
 msgid "New device"
 msgstr ""
 
-#: fm1companion/ui/device.py:1095
+#: fm1companion/ui/device.py:1109
 msgid "Name for this FM-1:"
 msgstr ""
 
-#: fm1companion/ui/device.py:1135
+#: fm1companion/ui/device.py:1149
 msgid "The app does not know yet which of your FM-1 this is – it reports no unit ID, and more than one of your devices can be this one. Nothing is written before you say which one it is."
 msgstr ""
 
-#: fm1companion/ui/device.py:1144
+#: fm1companion/ui/device.py:1158
 #, python-brace-format
 msgid "The connected FM-1 reports {chip}, but “{name}” is recorded as {revision}. Either this is another FM-1, or the record is wrong. Nothing is written. Say again which FM-1 this is – if it is “{name}”, correct its unit on the page “Devices” first."
 msgstr ""
 
-#: fm1companion/ui/device.py:1160 fm1companion/ui/pages/recovery.py:571
+#: fm1companion/ui/device.py:1174 fm1companion/ui/pages/recovery.py:571
 #, python-brace-format
 msgid "Yes, it is “{name}”"
 msgstr ""
 
-#: fm1companion/ui/device.py:1162
+#: fm1companion/ui/device.py:1176
 msgid "Say which FM-1 it is …"
 msgstr ""
 
-#: fm1companion/ui/device.py:1162
+#: fm1companion/ui/device.py:1176
 msgid "Ask now? (Then start what you wanted to do again.)"
 msgstr ""
 
-#: fm1companion/ui/device.py:1178 fm1companion/ui/pages/midi.py:1200
+#: fm1companion/ui/device.py:1192 fm1companion/ui/pages/midi.py:1200
 msgid "disconnected"
 msgstr ""
 
-#: fm1companion/ui/device.py:1208 fm1companion/ui/firmware_page.py:603
+#: fm1companion/ui/device.py:1222 fm1companion/ui/firmware_page.py:603
 #: fm1companion/ui/pages/recovery.py:805 fm1companion/ui/pages/voices.py:664
 #: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1351
 msgid "No device"
 msgstr ""
 
-#: fm1companion/ui/device.py:1208
+#: fm1companion/ui/device.py:1222
 msgid "Please connect an FM-1 with Melodee, Skiff or SLOOP via USB."
 msgstr ""
 
-#: fm1companion/ui/device.py:1242
+#: fm1companion/ui/device.py:1256
 #, python-brace-format
 msgid "The name “{name}” is already taken (device “{device}”) – otherwise the backups of both devices would end up in the same folder. Please choose another name."
 msgstr ""
 
-#: fm1companion/ui/device.py:1254
+#: fm1companion/ui/device.py:1268
 #, python-brace-format
 msgid "Renamed to “{name}” – backups are now in “{folder}”."
 msgstr ""
 
-#: fm1companion/ui/device.py:1255
+#: fm1companion/ui/device.py:1269
 #, python-brace-format
 msgid "Renamed to “{name}”."
 msgstr ""
@@ -10935,8 +10956,8 @@ msgstr ""
 msgid "optional: resource file, e.g. name-{{ver}}-res.bin"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:947 fm1companion/ui/overview.py:50
-#: fm1companion/ui/overview.py:386 fm1companion/ui/pages/devices.py:290
+#: fm1companion/ui/firmware_page.py:947 fm1companion/ui/overview.py:48
+#: fm1companion/ui/overview.py:387 fm1companion/ui/pages/devices.py:290
 #: fm1companion/ui/projects_page.py:695 fm1companion/ui/projects_page.py:712
 #: fm1companion/ui/recorder_page.py:92 fm1companion/ui/sample_recorder.py:137
 #: fm1companion/ui/samples_page.py:170 fm1companion/ui/settings_dialog.py:389
@@ -11287,7 +11308,7 @@ msgstr ""
 msgid "Target firmware:"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:1501 fm1companion/ui/overview.py:50
+#: fm1companion/ui/firmware_page.py:1501 fm1companion/ui/overview.py:48
 msgid "Version:"
 msgstr ""
 
@@ -11455,7 +11476,7 @@ msgid "Profile:"
 msgstr ""
 
 #: fm1companion/ui/fm1_page.py:35 fm1companion/ui/fm1_page.py:247
-#: fm1companion/ui/overview.py:50 fm1companion/ui/settings_dialog.py:400
+#: fm1companion/ui/overview.py:48 fm1companion/ui/settings_dialog.py:400
 msgid "Firmware:"
 msgstr ""
 
@@ -11468,7 +11489,7 @@ msgid "Tracks:"
 msgstr ""
 
 #: fm1companion/ui/fm1_page.py:36 fm1companion/ui/fm1_page.py:248
-#: fm1companion/ui/overview.py:51
+#: fm1companion/ui/overview.py:49
 msgid "Serial number:"
 msgstr ""
 
@@ -11628,8 +11649,8 @@ msgstr ""
 msgid " (guessed from the ID)"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:239 fm1companion/ui/overview.py:218
-#: fm1companion/ui/overview.py:357
+#: fm1companion/ui/fm1_page.py:239 fm1companion/ui/overview.py:216
+#: fm1companion/ui/overview.py:358
 msgid "change"
 msgstr ""
 
@@ -11657,7 +11678,7 @@ msgstr ""
 msgid "not read yet"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:249 fm1companion/ui/overview.py:52
+#: fm1companion/ui/fm1_page.py:249 fm1companion/ui/overview.py:50
 msgid "USB:"
 msgstr ""
 
@@ -11885,7 +11906,7 @@ msgstr ""
 msgid "(cut off/given up)"
 msgstr ""
 
-#: fm1companion/ui/fm1_page.py:596 fm1companion/ui/overview.py:265
+#: fm1companion/ui/fm1_page.py:596 fm1companion/ui/overview.py:264
 #: fm1companion/ui/pages/devices.py:224
 #: fm1companion/ui/pages/project_view.py:539
 msgid "active"
@@ -12164,7 +12185,7 @@ msgstr ""
 msgid "Remove “{key}” from your firmwares? Downloaded packages are kept."
 msgstr ""
 
-#: fm1companion/ui/main_window.py:36 fm1companion/ui/overview.py:35
+#: fm1companion/ui/main_window.py:36 fm1companion/ui/overview.py:33
 msgid "Overview"
 msgstr ""
 
@@ -12467,7 +12488,7 @@ msgstr ""
 msgid "Loading {page} …"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:813 fm1companion/ui/overview.py:241
+#: fm1companion/ui/main_window.py:813 fm1companion/ui/overview.py:239
 msgid "no FM-1 connected"
 msgstr ""
 
@@ -12620,19 +12641,19 @@ msgstr ""
 msgid "No notifications yet."
 msgstr ""
 
-#: fm1companion/ui/overview.py:35
+#: fm1companion/ui/overview.py:33
 msgid "Your FM-1 at a glance. Several devices? Switch at the top left."
 msgstr ""
 
-#: fm1companion/ui/overview.py:51
+#: fm1companion/ui/overview.py:49
 msgid "Connection:"
 msgstr ""
 
-#: fm1companion/ui/overview.py:52
+#: fm1companion/ui/overview.py:50
 msgid "Unit:"
 msgstr ""
 
-#: fm1companion/ui/overview.py:67 fm1companion/ui/pages/devices.py:254
+#: fm1companion/ui/overview.py:65 fm1companion/ui/pages/devices.py:254
 #: fm1companion/ui/pages/presets.py:643 fm1companion/ui/pages/presets.py:659
 #: fm1companion/ui/pages/presets.py:873 fm1companion/ui/pages/presets.py:881
 #: fm1companion/ui/projects_page.py:108 fm1companion/ui/projects_page.py:695
@@ -12641,207 +12662,207 @@ msgstr ""
 msgid "Rename"
 msgstr ""
 
-#: fm1companion/ui/overview.py:68 fm1companion/ui/pages/devices.py:255
+#: fm1companion/ui/overview.py:66 fm1companion/ui/pages/devices.py:255
 msgid "Colour"
 msgstr ""
 
-#: fm1companion/ui/overview.py:74
+#: fm1companion/ui/overview.py:72
 msgid "Notes on this device (e.g. “the one with the scratch, for live sets”)"
 msgstr ""
 
-#: fm1companion/ui/overview.py:90
+#: fm1companion/ui/overview.py:88
 msgctxt "overview"
 msgid "Backup"
 msgstr ""
 
-#: fm1companion/ui/overview.py:99
+#: fm1companion/ui/overview.py:97
 msgid "All backups"
 msgstr ""
 
-#: fm1companion/ui/overview.py:108
+#: fm1companion/ui/overview.py:106
 msgid "Firmware & Updates"
 msgstr ""
 
-#: fm1companion/ui/overview.py:109 fm1companion/ui/overview.py:331
+#: fm1companion/ui/overview.py:107 fm1companion/ui/overview.py:332
 msgid "Not checked yet."
 msgstr ""
 
-#: fm1companion/ui/overview.py:113
+#: fm1companion/ui/overview.py:111
 msgid "Check now"
 msgstr ""
 
-#: fm1companion/ui/overview.py:115
+#: fm1companion/ui/overview.py:113
 msgid "To the firmwares"
 msgstr ""
 
-#: fm1companion/ui/overview.py:125
+#: fm1companion/ui/overview.py:123
 msgid "Quick access"
 msgstr ""
 
-#: fm1companion/ui/overview.py:132 fm1companion/ui/overview.py:250
+#: fm1companion/ui/overview.py:130 fm1companion/ui/overview.py:249
 msgid "Make a complete backup of the active FM-1 (Ctrl+B)"
 msgstr ""
 
-#: fm1companion/ui/overview.py:133
+#: fm1companion/ui/overview.py:131
 msgid "Open editor"
 msgstr ""
 
-#: fm1companion/ui/overview.py:134
+#: fm1companion/ui/overview.py:132
 msgid "The web editor of the installed firmware"
 msgstr ""
 
-#: fm1companion/ui/overview.py:135
+#: fm1companion/ui/overview.py:133
 msgid "Check firmware"
 msgstr ""
 
-#: fm1companion/ui/overview.py:136
+#: fm1companion/ui/overview.py:134
 msgid "Look for new versions for this device"
 msgstr ""
 
-#: fm1companion/ui/overview.py:137
+#: fm1companion/ui/overview.py:135
 msgid "Back up presets"
 msgstr ""
 
-#: fm1companion/ui/overview.py:138
+#: fm1companion/ui/overview.py:136
 msgid "Read and back up all user presets of the FM-1"
 msgstr ""
 
-#: fm1companion/ui/overview.py:148
+#: fm1companion/ui/overview.py:146
 msgid "Known devices"
 msgstr ""
 
-#: fm1companion/ui/overview.py:172
+#: fm1companion/ui/overview.py:170
 msgid "New in the catalogue"
 msgstr ""
 
-#: fm1companion/ui/overview.py:203
+#: fm1companion/ui/overview.py:201
 msgid "not said yet"
 msgstr ""
 
-#: fm1companion/ui/overview.py:209
+#: fm1companion/ui/overview.py:207
 msgid "m-bootloader – MIDI MODE (no firmware running)"
 msgstr ""
 
-#: fm1companion/ui/overview.py:224
+#: fm1companion/ui/overview.py:222
 #, python-brace-format
 msgid "m-bootloader {version} · flash chip {chip}"
 msgstr ""
 
-#: fm1companion/ui/overview.py:228
+#: fm1companion/ui/overview.py:226
 #, python-brace-format
 msgid "{version} (public beta)"
 msgstr ""
 
-#: fm1companion/ui/overview.py:230
+#: fm1companion/ui/overview.py:228
 #, python-brace-format
 msgid "ID {id}"
 msgstr ""
 
-#: fm1companion/ui/overview.py:239
+#: fm1companion/ui/overview.py:237
 #, python-brace-format
 msgid "via {port}"
 msgstr ""
 
-#: fm1companion/ui/overview.py:243
+#: fm1companion/ui/overview.py:241
 msgid "none (the device is recognised by choosing the profile)"
 msgstr ""
 
-#: fm1companion/ui/overview.py:244
+#: fm1companion/ui/overview.py:242
 #, python-brace-format
 msgid "{id} · port {path}"
 msgstr ""
 
-#: fm1companion/ui/overview.py:251
+#: fm1companion/ui/overview.py:250
 msgid "Connect an FM-1 first."
 msgstr ""
 
-#: fm1companion/ui/overview.py:265 fm1companion/ui/pages/devices.py:224
+#: fm1companion/ui/overview.py:264 fm1companion/ui/pages/devices.py:224
 msgid "plugged in"
 msgstr ""
 
-#: fm1companion/ui/overview.py:266 fm1companion/ui/pages/devices.py:224
+#: fm1companion/ui/overview.py:265 fm1companion/ui/pages/devices.py:224
 msgid "not plugged in"
 msgstr ""
 
-#: fm1companion/ui/overview.py:268 fm1companion/ui/pages/studio.py:748
+#: fm1companion/ui/overview.py:266 fm1companion/ui/pages/studio.py:748
 #: fm1companion/ui/settings_dialog.py:377
 msgid "firmware unknown"
 msgstr ""
 
-#: fm1companion/ui/overview.py:271
+#: fm1companion/ui/overview.py:269
 msgid "No devices yet. Connect an FM-1."
 msgstr ""
 
-#: fm1companion/ui/overview.py:294
+#: fm1companion/ui/overview.py:292 fm1companion/ui/overview.py:295
 msgid "No backup of this device yet. <b>Best make one now.</b>"
 msgstr ""
 
-#: fm1companion/ui/overview.py:299
+#: fm1companion/ui/overview.py:300
 #, python-brace-format
 msgid "Last backup: <b>{date}</b> ({firmware}), {n} in total, {size}."
 msgstr ""
 
-#: fm1companion/ui/overview.py:317
+#: fm1companion/ui/overview.py:318
 msgid "No device connected."
 msgstr ""
 
-#: fm1companion/ui/overview.py:320 fm1companion/ui/projects_page.py:162
+#: fm1companion/ui/overview.py:321 fm1companion/ui/projects_page.py:162
 msgid "The FM-1 is waiting in update mode – finish the installation first (page “Recovery”)."
 msgstr ""
 
-#: fm1companion/ui/overview.py:325
+#: fm1companion/ui/overview.py:326
 msgid "Firmware unknown – please choose it under “Device” (Firmware: “change”) or go “To the firmwares” (Firmware+)."
 msgstr ""
 
-#: fm1companion/ui/overview.py:328
+#: fm1companion/ui/overview.py:329
 msgid "Firmware unknown – a version check is not possible like this."
 msgstr ""
 
-#: fm1companion/ui/overview.py:334
+#: fm1companion/ui/overview.py:335
 #, python-brace-format
 msgid "Check not possible: {error}"
 msgstr ""
 
-#: fm1companion/ui/overview.py:337
+#: fm1companion/ui/overview.py:338
 msgid "incl. release candidates"
 msgstr ""
 
-#: fm1companion/ui/overview.py:337
+#: fm1companion/ui/overview.py:338
 msgid "stable versions only"
 msgstr ""
 
-#: fm1companion/ui/overview.py:339
+#: fm1companion/ui/overview.py:340
 #, python-brace-format
 msgid "<b>New version available: {new}</b><br>Installed: {current} ({channel})"
 msgstr ""
 
-#: fm1companion/ui/overview.py:342
+#: fm1companion/ui/overview.py:343
 #, python-brace-format
 msgid "Newest version: {new} ({channel}). The app does not know which version is installed – it remembers it from the first installation via the app."
 msgstr ""
 
-#: fm1companion/ui/overview.py:346
+#: fm1companion/ui/overview.py:347
 #, python-brace-format
 msgid "Up to date: {current} ({channel})"
 msgstr ""
 
-#: fm1companion/ui/overview.py:348
+#: fm1companion/ui/overview.py:349
 msgid "No versions found – are you online?"
 msgstr ""
 
-#: fm1companion/ui/overview.py:357
+#: fm1companion/ui/overview.py:358
 msgid "logo on the front?"
 msgstr ""
 
-#: fm1companion/ui/overview.py:386 fm1companion/ui/pages/devices.py:290
+#: fm1companion/ui/overview.py:387 fm1companion/ui/pages/devices.py:290
 msgid "Rename device"
 msgstr ""
 
-#: fm1companion/ui/overview.py:392 fm1companion/ui/pages/devices.py:300
+#: fm1companion/ui/overview.py:393 fm1companion/ui/pages/devices.py:300
 msgid "Rename not possible"
 msgstr ""
 
-#: fm1companion/ui/overview.py:396
+#: fm1companion/ui/overview.py:397
 msgid "Colour for this device"
 msgstr ""
 
@@ -17517,10 +17538,6 @@ msgstr ""
 
 #: fm1companion/ui/pages/recovery.py:780
 msgid "For advanced users: an FM-1 with the <b>original firmware</b> is sent into ROM boot mode via softkey, then the whole flash is only read twice and compared. Needs administrator rights. Afterwards switch the FM-1 off and on."
-msgstr ""
-
-#: fm1companion/ui/pages/recovery.py:782
-msgid "Back up"
 msgstr ""
 
 #: fm1companion/ui/pages/recovery.py:787

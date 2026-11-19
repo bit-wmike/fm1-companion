@@ -21,7 +21,8 @@ from .i18n import N_, _, decimal, ngettext
 
 LEVELS = ("ok", "info", "warn", "error", "unknown")
 FM1_RE = re.compile(r"fm-?1|melodee|felucca|sloop|skiff|m-vave|ellic|wl82|uboot", re.I)
-FM1_IDS = {"1209:0001"}                       # Melodee/Felucca (pid.codes) – "Ellic Studio Melodee FM-1"
+FM1_IDS = {"1209:0001",                       # Melodee/Felucca (pid.codes) – "Ellic Studio Melodee FM-1"
+           "3654:7756"}                       # M-VAVE's FM1 Open – "FM1 Community" (devices.FM1_USB_IDS)
 UPDATE_IDS = {"4c4a:8057"}                    # JieLi rescue mode "WL82 UBOOT1.00"
 LINE_RE = re.compile(r"^\s*(?:\[\s*(?P<ts>\d+\.\d+)\])?\s*(?:(?:\S+\s+)?kernel:\s*)?(?P<msg>.*)$")
 USBDEV_RE = re.compile(r"\busb (?P<path>\d+-[\d.]+)(?::[\d.]+)?:\s*(?P<rest>.*)")

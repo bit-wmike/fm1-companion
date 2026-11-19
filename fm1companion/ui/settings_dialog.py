@@ -373,8 +373,8 @@ class SettingsDialog(QDialog):
     def _fill_devs(self):
         self.devs.clear()
         for p in sorted(self.ctx.store.profiles.values(), key=lambda x: x.name):
-            fw = firmware.spec(p.firmware)
-            what = f"{fw.name if fw else p.firmware} {p.firmware_version}".strip() or _("firmware unknown")
+            from .device import last_firmware_text
+            what = last_firmware_text(p) or _("firmware unknown")
             it = QListWidgetItem(f"{p.name} – {what}" + (_("  · Serial no. {serial}").format(serial=p.serial) if p.serial else ""))
             it.setData(Qt.ItemDataRole.UserRole, p.id)
             self.devs.addItem(it)

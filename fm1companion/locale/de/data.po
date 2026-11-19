@@ -4327,3 +4327,15 @@ msgstr ", sondern „{other}“"
 
 msgid "not said yet"
 msgstr "noch nicht gesagt"
+
+msgid "This page does not restore onto an FM-1 with FM1 Open. Open the backup in the Studio and use “Write back to the FM-1 …” there (it makes a safety backup first) – that was never run on a real FM-1."
+msgstr "Diese Seite spielt nichts auf ein FM-1 mit FM1 Open zurück. Öffne das Backup im Studio und nimm dort „Aufs FM-1 zurückschreiben …“ (es macht vorher ein Sicherheits-Backup) – das lief noch nie an einem echten FM-1."
+
+msgid "FM1 Open: the backup holds the working project (also unsaved changes), the 16 project slots, the four DX7 library banks and the sample bank – no settings. FM1 Open has no backup command: to read a saved project, the FM-1 loads each one into its working area in turn, and the app puts your working project back at the end (it then shows as changed). Playback stops. Tested on a real FM-1: only the transfer of the sample bank (from a script with the app's own code); the backup as a whole only in the simulation."
+msgstr "FM1 Open: Das Backup enthält das Arbeitsprojekt (auch ungespeicherte Änderungen), die 16 Projektplätze, die vier Bänke der DX7-Bibliothek und die Sample-Bank – keine Einstellungen. FM1 Open hat keinen Backup-Befehl: Um ein gespeichertes Projekt zu lesen, lädt das FM-1 eins nach dem anderen in seinen Arbeitsbereich, und am Ende legt die App dein Arbeitsprojekt zurück (es gilt dann als geändert). Die Wiedergabe stoppt. An einem echten FM-1 getestet: nur die Übertragung der Sample-Bank (aus einem Skript mit dem Code der App); das Backup als Ganzes nur in der Simulation."
+
+msgid "Backup saved: {name} ({size}). The FM-1 shows your working project again (marked as changed when saved projects were read)."
+msgstr "Backup gespeichert: {name} ({size}). Das FM-1 zeigt wieder dein Arbeitsprojekt (als geändert markiert, wenn gespeicherte Projekte gelesen wurden)."
+
+msgid "Keep the cable connected until the backup is finished: if it is pulled in between, the working project cannot be put back – unsaved changes would be lost."
+msgstr "Lass das Kabel stecken, bis das Backup fertig ist: Wird es zwischendurch gezogen, lässt sich das Arbeitsprojekt nicht zurücklegen – ungespeicherte Änderungen wären weg."
