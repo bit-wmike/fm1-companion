@@ -921,9 +921,8 @@ def _inhibit(job: Job, why: str, pid: int):
         return None
 
 
-def _write(job: Job, image: Path, side: dict, data: bytes, info, saved, pre, plan, runs) -> RestoreResult:
-    expect = {"unit_id": info.unit_id, "flash_id": info.flash_id, "chip_key": info.chip_key, "runs": runs,
-              "factory_blank": plan.factory_blank}
+def _work_folder(job: Job) -> Path:
+    """a fresh private staging folder for one write, with room for M-Flasher's files -> Path; Refused otherwise"""
     try:
         staging = _staging(job, "write")
     except OSError as e:
@@ -934,6 +933,141 @@ def _write(job: Job, image: Path, side: dict, data: bytes, info, saved, pre, pla
         raise Refused(_("Too little free space for M-Flasher's working files ({need} MiB are needed in {where}). Free "
                         "some space and try again. Nothing was written.").format(need=NEED_FREE // (1024 * 1024),
                                                                                  where=staging.parent), "space")
+    return staging
+
+
+class _Write:
+    """one gated M-Flasher write (restore, bootloader): the record on disk before "yes", the inhibitor bound to
+    M-Flasher, WRITING set from "yes" until it ended, no cancel and no kill after "yes"; afterwards its "Done" line
+    is required and its own automatic backup is compared with the one the app made just before"""
+
+    def __init__(self, job: Job, staging: Path, record: dict, saved: Saved, pre: Path):
+        self.job, self.staging, self.saved, self.pre = job, staging, saved, pre
+        self.record = {"state": "writing", "started": time.time(), "pid": 0, "profile": getattr(job.profile, "id", ""),
+                       "device": job.profile.name, "pre_backup": str(pre), "pre_sha256": saved.sha256,
+                       "staging": str(staging), **record}
+        self.rec_path = record_file(job.journal.dir if job.journal is not None else None)
+        self.auto: Path | None = None
+
+    def run(self, args: list[str], base_gate, *, nothing_ok: bool = False):
+        """-> M-Flasher's RunResult once "yes" was sent and it ended with "Done … verified"; None when its plan was
+        "Nothing to write" (only with nothing_ok); Refused / WriteFailed otherwise"""
+        job, record, staging = self.job, self.record, self.staging
+
+        def gate(out: str) -> str:
+            why = base_gate(out)
+            if why:
+                return why
+            try:                                     # the record is on disk BEFORE "yes" (fsync'd)
+                from ..flash import journal as fj
+                pid = job.held.pid if job.held else 0
+                record.update(pid=pid, pid_start=fj._started(pid) if pid else "",
+                              out=str(staging / "m-flasher.out"), err=str(staging / "m-flasher.err"))
+                _save_record(self.rec_path, record)
+                _save_flight(job, staging / "app-log-so-far.txt")
+            except OSError as e:
+                return f"the journal record could not be written ({e.strerror or e})"
+            _inhibit(job, "writing", record["pid"])     # (bound to M-Flasher itself: holds even if the app ends)
+            WRITING.set()
+            job.tell(_("M-Flasher is writing now. This cannot be cancelled – do not unplug the FM-1 or switch it "
+                       "off."))
+            if job.on_writing:
+                try:
+                    job.on_writing(record)
+                except Exception:  # noqa: BLE001 – the UI never stops the write
+                    pass
+            return ""
+        try:
+            r = _mf(job, args, gate=gate, out_dir=staging)
+        except Refused:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise
+        finally:
+            WRITING.clear()
+            OVERDUE.clear()
+        if not r.answered_yes:
+            shutil.rmtree(staging, ignore_errors=True)
+            if self.rec_path.exists() and _load_record(self.rec_path).get("staging") == str(staging):
+                self.rec_path.unlink(missing_ok=True)   # (written before an answer that then failed: nothing written)
+            if nothing_ok and r.ok and not r.prompted:
+                try:
+                    if mp.parse_plan(r.out).nothing:
+                        return None
+                except mp.ParseError:
+                    pass
+            if r.prompted:
+                raise Refused(_("M-Flasher's plan did not match what the app checked ({why}), so the app did not "
+                                "answer “yes”: nothing was written. The backup made just now is kept.").format(
+                                    why=r.gate_reason), "gate")
+            raise Refused(_("M-Flasher did not get to writing: {reason} Nothing was written.").format(
+                reason=_why(r)), "mflasher")
+        job.steps.append((args[0], "yes sent"))
+        job.cancel = None                          # (from here on the job runs to its end: verify, restart)
+        for sp in mp.saved_paths(r.out):
+            q = Path(sp)
+            if q.is_file() and q.parent.resolve() == staging.resolve():
+                same = hashlib.sha256(q.read_bytes()).hexdigest() == self.saved.sha256
+                job.ev("auto-backup", f"M-Flasher's own backup {'equals' if same else 'DIFFERS from'} the one made "
+                                      f"before")
+                if not same:                          # (the flash changed in between – should never happen): kept
+                    try:
+                        self.auto = job.folder / f"m-flasher-auto-{q.name}"
+                        shutil.move(str(q), str(self.auto))
+                        if q.with_suffix(".json").exists():
+                            shutil.move(str(q.with_suffix(".json")), str(self.auto.with_suffix(".json")))
+                    except OSError:
+                        self.auto = q
+        if r.rc != 0 or not mp.done_verified(r.out):
+            why = mp.refusal(r.err) if r.rc not in (0, None) else ""
+            if not mp.written_runs(r.out):
+                # (M-Flasher logs "Writing …" before each erase: without one nothing was erased – its own backup failed)
+                self.rec_path.unlink(missing_ok=True)
+                shutil.rmtree(staging, ignore_errors=True)
+                raise Refused(_("M-Flasher stopped before it erased anything ({reason}). Nothing was written; the FM-1 "
+                                "is unchanged.").format(reason=why or _("M-Flasher was interrupted")), "not-started")
+            why = why or (_("M-Flasher was interrupted") if r.rc is None or r.rc < 0 else
+                          _("M-Flasher did not confirm the write"))
+            raise self.failed(why, "write-failed")
+        return r
+
+    def failed(self, reason: str, kind: str) -> WriteFailed:
+        self.record.update(state="failed", ended=time.time(), reason=reason)
+        try:
+            _save_record(self.rec_path, self.record)
+        except OSError:
+            pass
+        return WriteFailed(_("The write did not end verified ({reason}). Do not switch the FM-1 off: it stays in "
+                             "download mode, and writing the flash back again works from there. The backup made "
+                             "just before is {name} – it is this unit's state before the write.").format(
+                                 reason=reason, name=self.pre.name), kind, self.pre)
+
+    def fresh_read(self) -> tuple[bytes, mp.Info]:
+        """one more read after the write (its own staging folder) -> (image, info); WriteFailed when it fails"""
+        self.job.tell(_("Written; reading the flash once more to compare …"))
+        self.job.ev("verify", "M-Flasher: everything written is verified")
+        vs = _staging(self.job, "verify")
+        try:
+            return _one_read(self.job, vs, 1)
+        except Refused as e:
+            raise self.failed(e.reason, "verify-read") from e
+        finally:
+            shutil.rmtree(vs, ignore_errors=True)
+
+    def verified(self):
+        self.job.steps.append(("verify", "ok"))
+        self.record.update(state="verified", ended=time.time())
+        try:
+            _save_record(self.rec_path, self.record)
+        except OSError:
+            pass
+        if self.auto is None or self.auto.parent != self.staging:
+            shutil.rmtree(self.staging, ignore_errors=True)
+
+
+def _write(job: Job, image: Path, side: dict, data: bytes, info, saved, pre, plan, runs) -> RestoreResult:
+    expect = {"unit_id": info.unit_id, "flash_id": info.flash_id, "chip_key": info.chip_key, "runs": runs,
+              "factory_blank": plan.factory_blank}
+    staging = _work_folder(job)
     try:
         copy = _private_copy(staging, data, info.unit_id)
     except OSError as e:
@@ -941,117 +1075,18 @@ def _write(job: Job, image: Path, side: dict, data: bytes, info, saved, pre, pla
         raise Refused(_("The app's private working folder cannot be created: {error}. Nothing was written.").format(
             error=getattr(e, "strerror", None) or e), "folder") from e
     sha = hashlib.sha256(data).hexdigest()
-    rec_path = record_file(job.journal.dir if job.journal is not None else None)
-    record = {"state": "writing", "started": time.time(), "pid": 0,
-              "profile": getattr(job.profile, "id", ""), "device": job.profile.name, "unit": mask(info.unit_id),
-              "flash": f"0x{info.flash_id:06X}", "image": str(image), "image_sha256": sha, "pre_backup": str(pre),
-              "pre_sha256": saved.sha256,
-              "staging": str(staging), "runs": [[a, b] for a, b in runs]}
-    base_gate = restore_gate(expect)
-
-    def gate(out: str) -> str:
-        why = base_gate(out)
-        if why:
-            return why
-        try:                                     # the record is on disk BEFORE "yes" (fsync'd)
-            from ..flash import journal as fj
-            pid = job.held.pid if job.held else 0
-            record.update(pid=pid, pid_start=fj._started(pid) if pid else "", out=str(staging / "m-flasher.out"),
-                          err=str(staging / "m-flasher.err"))
-            _save_record(rec_path, record)
-            _save_flight(job, staging / "app-log-so-far.txt")
-        except OSError as e:
-            return f"the journal record could not be written ({e.strerror or e})"
-        _inhibit(job, "writing", record["pid"])     # (bound to M-Flasher itself: holds even if the app ends)
-        WRITING.set()
-        job.tell(_("M-Flasher is writing now. This cannot be cancelled – do not unplug the FM-1 or switch it off."))
-        if job.on_writing:
-            try:
-                job.on_writing(record)
-            except Exception:  # noqa: BLE001 – the UI never stops the write
-                pass
-        return ""
+    w = _Write(job, staging, {"op": "restore", "unit": mask(info.unit_id), "flash": f"0x{info.flash_id:06X}",
+                              "image": str(image), "image_sha256": sha, "runs": [[a, b] for a, b in runs]},
+               saved, pre)
     job.tell(_("Writing the flash back (do not unplug the FM-1 or switch it off) …"))
-    try:
-        r = _mf(job, ["restore", str(copy), "--device", job.device, "--backup-dir", str(staging)], gate=gate,
-                out_dir=staging)
-    except Refused:
-        shutil.rmtree(staging, ignore_errors=True)
-        raise
-    finally:
-        WRITING.clear()
-        OVERDUE.clear()
-    if not r.answered_yes:
-        shutil.rmtree(staging, ignore_errors=True)
-        if rec_path.exists() and _load_record(rec_path).get("staging") == str(staging):
-            rec_path.unlink(missing_ok=True)      # (written before an answer that then failed: nothing was written)
-        if r.prompted:
-            raise Refused(_("M-Flasher's plan did not match what the app checked ({why}), so the app did not "
-                            "answer “yes”: nothing was written. The backup made just now is kept.").format(
-                                why=r.gate_reason), "gate")
-        raise Refused(_("M-Flasher did not get to writing: {reason} Nothing was written.").format(
-            reason=_why(r)), "mflasher")
-    job.steps.append(("restore", "yes sent"))
-    job.cancel = None                          # (from here on the job runs to its end: verify, restart)
-    auto = None
-    for sp in mp.saved_paths(r.out):
-        q = Path(sp)
-        if q.is_file() and q.parent.resolve() == staging.resolve():
-            same = hashlib.sha256(q.read_bytes()).hexdigest() == saved.sha256
-            job.ev("auto-backup", f"M-Flasher's own backup {'equals' if same else 'DIFFERS from'} the one made "
-                                  f"before")
-            if not same:                          # (the flash changed in between – should never happen): kept
-                try:
-                    auto = job.folder / f"m-flasher-auto-{q.name}"
-                    shutil.move(str(q), str(auto))
-                    if q.with_suffix(".json").exists():
-                        shutil.move(str(q.with_suffix(".json")), str(auto.with_suffix(".json")))
-                except OSError:
-                    auto = q
-
-    def failed_with(reason: str, kind: str):
-        record.update(state="failed", ended=time.time(), reason=reason)
-        try:
-            _save_record(rec_path, record)
-        except OSError:
-            pass
-        return WriteFailed(_("The write did not end verified ({reason}). Do not switch the FM-1 off: it stays in "
-                             "download mode, and writing the flash back again works from there. The backup made "
-                             "just before is {name} – it is this unit's state before the write.").format(
-                                 reason=reason, name=pre.name), kind, pre)
-    if r.rc != 0 or not mp.done_verified(r.out):
-        why = mp.refusal(r.err) if r.rc not in (0, None) else ""
-        if not mp.written_runs(r.out):
-            # (M-Flasher logs "Writing …" before each erase: without one nothing was erased – its own backup failed)
-            rec_path.unlink(missing_ok=True)
-            shutil.rmtree(staging, ignore_errors=True)
-            raise Refused(_("M-Flasher stopped before it erased anything ({reason}). Nothing was written; the FM-1 is "
-                            "unchanged.").format(reason=why or _("M-Flasher was interrupted")), "not-started")
-        why = why or (_("M-Flasher was interrupted") if r.rc is None or r.rc < 0 else
-                      _("M-Flasher did not confirm the write"))
-        raise failed_with(why, "write-failed")
-    job.tell(_("Written; reading the flash once more to compare …"))
-    job.ev("verify", "M-Flasher: everything written is verified")
-    vs = _staging(job, "verify")
-    try:
-        got, _vi = _one_read(job, vs, 1)
-    except Refused as e:
-        raise failed_with(e.reason, "verify-read") from e
-    finally:
-        shutil.rmtree(vs, ignore_errors=True)
+    w.run(["restore", str(copy), "--device", job.device, "--backup-dir", str(staging)], restore_gate(expect))
+    got, _vi = w.fresh_read()
     if hashlib.sha256(got).hexdigest() != sha:
-        raise failed_with(_("the fresh read differs from the image"), "verify-mismatch")
+        raise w.failed(_("the fresh read differs from the image"), "verify-mismatch")
     job.ev("verify", "fresh read equals the image")
-    job.steps.append(("verify", "ok"))
-    record.update(state="verified", ended=time.time())
-    try:
-        _save_record(rec_path, record)
-    except OSError:
-        pass
-    if auto is None or auto.parent != staging:
-        shutil.rmtree(staging, ignore_errors=True)
+    w.verified()
     again = restart(job)
-    return RestoreResult(True, True, again, pre, auto, plan.sectors, None)
+    return RestoreResult(True, True, again, pre, w.auto, plan.sectors, None)
 
 
 # ------------------------------------------------------------------------------------------------ the write record

@@ -3,10 +3,12 @@
 
 * The binary comes from tools/store.py (bundled or updated) and its SHA-256 is checked right before every run.
 * No shell; a fixed argument list (checked command by command below); LANG=C so its texts are always English.
-* Never `--yes`, never `--restart`, `--board`, `--keep-bootloader`, `firmware`, `bootloader` or `run-ram`.
+* Never `--yes`, never `--restart`, `--board`, `--keep-bootloader`, `firmware`, the bundled-bootloader form of
+  `bootloader` (without --file/--stock) or `run-ram`.
 * Reading commands (find, info, backup) and the two that only change the unit's mode (download-mode, restart) get no
   stdin: a command that would ask "Type "yes" to write" reads EOF and writes nothing.
-* The one writing command of this version, `restore`, runs only with a *gate*: M-Flasher prints the unit id, the
+* The writing commands of this version, `restore` and `bootloader --file X.boot` / `bootloader --stock X.fwsc`, run
+  only with a *gate*: M-Flasher prints the unit id, the
   flash ID and the planned sector ranges of this very session and asks; the gate (tools/flashjob.py) compares them
   with what the app planned and the runner sends "yes" only when the gate says so – otherwise it closes stdin, and
   M-Flasher writes nothing. Only a binary whose bytes this app release lists in manifest.json write_verified is
@@ -36,10 +38,11 @@ log = logging.getLogger(__name__)
 
 TIMEOUTS = {"find": 10.0, "info": 60.0, "backup": 60.0, "download-mode": 40.0, "restart": 90.0,
             "restore": 90.0,                  # until its question (the session reads the whole flash first)
+            "bootloader": 90.0,               # (the same)
             "--version": 10.0, "--help": 10.0}
 WRITE_SOFT_LIMIT = 600.0                      # after "yes": past this the log says "still writing" – no kill
-TALKS_TO_UNIT = ("find", "info", "backup", "download-mode", "restart", "restore")   # take the installation lock
-WRITES = ("restore",)
+TALKS_TO_UNIT = ("find", "info", "backup", "download-mode", "restart", "restore", "bootloader")   # take the lock
+WRITES = ("restore", "bootloader")
 _DEVICE_RE = re.compile(r"/dev/sg\d{1,3}")
 # a unit id: 16 hex digits, also with 0x, or as 8 bytes separated by spaces, colons or dashes; not inside a longer
 # hex run (SHA-256 values stay readable) – underscores and dots around it do not protect it
@@ -118,7 +121,9 @@ def _plain_path(v: str) -> bool:
 def _check_args(args: list[str]) -> None:
     """exactly these forms, nothing else:
     find · download-mode · --version · --help · info --device /dev/sgN · restart --device /dev/sgN ·
-    backup --device /dev/sgN --backup-dir DIR · restore FILE.bin --device /dev/sgN --backup-dir DIR"""
+    backup --device /dev/sgN --backup-dir DIR · restore FILE.bin --device /dev/sgN --backup-dir DIR ·
+    bootloader --file FILE.boot --device /dev/sgN --backup-dir DIR ·
+    bootloader --stock FILE.fwsc --device /dev/sgN --backup-dir DIR"""
     def no():
         raise ToolError(_("This M-Flasher command is not available in the app."))
     if not args or args[0] not in TIMEOUTS:
@@ -135,6 +140,12 @@ def _check_args(args: list[str]) -> None:
         if len(args) != 6 or not _plain_path(args[1]) or not args[1].endswith(".bin") or args[2] != "--device" or \
                 not _DEVICE_RE.fullmatch(args[3]) or args[4] != "--backup-dir" or not _plain_path(args[5]):
             no()
+    elif cmd == "bootloader":
+        ext = {"--file": ".boot", "--stock": ".fwsc"}.get(args[1] if len(args) > 1 else "")
+        if len(args) != 7 or ext is None or not _plain_path(args[2]) or not args[2].endswith(ext) or \
+                args[3] != "--device" or not _DEVICE_RE.fullmatch(args[4]) or args[5] != "--backup-dir" or \
+                not _plain_path(args[6]):
+            no()
     elif len(args) != 1:
         no()
 
@@ -150,10 +161,10 @@ def run_mflasher(args: list[str], *, store: Store | None = None, cancel: threadi
                  timeout: float | None = None, log_dir: Path | None = None, journal=None,
                  on_line=None, gate=None, flight=None, out_dir: Path | None = None) -> RunResult:
     """run one M-Flasher command; raises ToolError when it cannot run at all.
-    gate (restore only, required there): fn(stdout so far) -> "" to send "yes", or the reason (English) to close
+    gate (restore and bootloader only, required there): fn(stdout so far) -> "" to send "yes", or the reason (English) to close
     stdin instead – called once, when M-Flasher asks.
     flight: a job's flight log (tools/flashjob.py) to write into instead of this run's own "tool-…" log.
-    out_dir (restore only, required there): a private folder for M-Flasher's stdout/stderr files – a writing run
+    out_dir (restore and bootloader only, required there): a private folder for M-Flasher's stdout/stderr files – a writing run
     writes into files, not pipes, and outlives the app (tools/proc.py)."""
     _check_args(args)
     writes = args[0] in WRITES

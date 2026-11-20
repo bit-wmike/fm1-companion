@@ -149,6 +149,33 @@ CRC_CHECKED = "Checked: the chip's CRC32 of the flash matches the read"
 # ops.rs plan_restore, same unit, factory bytes differ (the text says "blank"; the code compares bytes)
 FACTORY_WARNING = ("This unit's factory data at 0xFF000-0xFFFFF is blank; the backup's is restored. Use only a "
                    "backup of this unit.")
+# bootloader (ops.rs plan_bootloader): the plan's title and its one note
+#   --file X.boot   "Install the bootloader <version> for the FM-1"; m-bootloader 1.4 and newer do not read the
+#                   unit's configuration: BOOT_SHORT_NOTE (older ones / unknown builds: BOOT_KEEP_NOTE)
+#   --stock P.fwsc  "Put back the stock bootloader (from <package identity>)", BOOT_STOCK_NOTE
+# firmware (plan_firmware): "Install firmware <identity>", "Installs <identity> (0x04000-0x…)."
+BOOT_STOCK_NOTE = "Only the boot area (0x00000-0x03FFF) is written, all of it from the package."
+BOOT_KEEP_NOTE = "Only the boot area (0x00000-0x03FFF) is written; the unit's own configuration in it is kept."
+BOOT_SHORT_NOTE = ("Only the boot area (0x00000-0x03FFF) is written. This bootloader does not read the unit's "
+                   "configuration, so of that only the chip key is kept, with the settings older versions need.")
+
+
+def bootloader_title(version: str, board: str = "FM-1") -> str:
+    return f"Install the bootloader {version} for the {board}"
+
+
+def stock_title(identity: str) -> str:
+    return f"Put back the stock bootloader (from {identity})"
+
+
+def reads_config(version: str) -> bool:
+    """ops.rs reads_config: every bootloader but m-bootloader 1.4 and newer reads the unit's configuration"""
+    major, dot, minor = (version or "").split("-")[0].partition(".")
+    if not dot or not major.isdigit() or not minor.isdigit():
+        return True
+    return (int(major), int(minor)) < (1, 4)
+
+
 _SAVED_RE = re.compile(r"^Backup saved: (.+?)\s*$")
 _WRITES_RE = re.compile(r"^Writes (\d+) sectors \((\d+) KiB\): (.+?)\s*$")
 _RANGE_RE = re.compile(r"^0x([0-9A-Fa-f]{5,8})-0x([0-9A-Fa-f]{5,8})$")
