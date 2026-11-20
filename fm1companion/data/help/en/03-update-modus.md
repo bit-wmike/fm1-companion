@@ -63,7 +63,8 @@ before every use and never runs a changed file), and when it last looked for a n
   once. A new M-Flasher runs on this computer only for reading; one whose commands have changed is kept but not
   used.
 * **Download mode without a password:** the installer sets up a rule that lets you reach the FM-1 in ROM download
-  mode (USB 4c4a:8057) and loads the Linux driver `sg` at start.
+  mode (USB 4c4a:8057) and loads the Linux driver `sg` at start – `./install.sh` does it by default
+  (`--no-download-mode-rule` leaves it out; if it cannot get administrator rights it prints the exact commands).
 * **Back up the whole flash** (Recovery › Tools, or Backups › Flash backups): the app puts the FM-1 into USB download
   mode – by itself while it runs on USB MIDI (original firmware, Felucca family, SLOOP 3, m-bootloader's MIDI MODE),
   otherwise it tells you how: with m-bootloader hold **PLAY** while switching on and choose **DOWNLOAD MODE**, or

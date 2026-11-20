@@ -66,7 +66,8 @@ nueva.
   conserva tu versión actual como respaldo hasta que la nueva haya funcionado una vez. Un M-Flasher nuevo se usa
   solo para leer; uno con comandos cambiados se conserva pero no se usa.
 * **Modo de descarga sin contraseña:** el instalador configura una regla que te permite acceder al FM-1 en modo de
-  descarga ROM (USB 4c4a:8057) y carga el controlador de Linux `sg` al arrancar.
+  descarga ROM (USB 4c4a:8057) y carga el controlador de Linux `sg` al arrancar – `./install.sh` lo hace por defecto
+  (`--no-download-mode-rule` lo omite; si no obtiene permisos de administrador, muestra los comandos exactos).
 * **Copiar toda la flash** (Recuperación › Herramientas, o Copias de seguridad › Copias de la flash): la app pone el FM-1 en modo de
   descarga USB – sola, mientras funciona por USB MIDI (firmware original, familia Felucca, SLOOP 3, MIDI MODE de
   m-bootloader); si no, te dice cómo: con m-bootloader mantén **PLAY** al encenderlo y elige **DOWNLOAD MODE**, o

@@ -579,17 +579,46 @@ def test_without_the_flag_nothing_is_installed_as_root(tmp_path, monkeypatch):
     core.uninstall(tmp_path / "h/.local", log=lambda *_: None)          # (and nothing to take out)
 
 
-def test_install_sh_offers_the_download_rule_only_interactively(tmp_path):
+def test_install_sh_installs_the_download_rule_by_default_with_an_opt_out(tmp_path):
+    """owner decision 2026-11-20 (Pi run: `--usb-power-rule` alone left the rule out): install.sh installs it unless
+    --no-download-mode-rule is given; --download-mode-rule stays accepted"""
+    import re
     text = (ROOT / "install.sh").read_text("utf-8")
-    assert "--download-mode-rule" in text and "--no-download-mode-rule" in text
+    assert re.search(r"^NO_APT=0; EXTRA=\(\); UDEV=ask; DLRULE=yes$", text, re.M)
+    assert "--no-download-mode-rule) DLRULE=no" in text and "--download-mode-rule) DLRULE=yes" in text
+    assert '[[ "$DLRULE" == yes ]] && EXTRA+=("--download-mode-rule")' in text and "read -r -p" not in \
+        text[text.index("FM-1 in ROM download mode without root"):text.index('[[ "$DLRULE" == yes ]]')]
     home = tmp_path / "home"
     env = fake_env(home)
-    res = subprocess.run(["bash", str(ROOT / "install.sh"), "--no-apt", "--no-usb-power-rule"], env=env,
-                         capture_output=True, text=True, stdin=subprocess.DEVNULL)
+    res = subprocess.run(["bash", str(ROOT / "install.sh"), "--no-apt", "--no-usb-power-rule",
+                          "--no-download-mode-rule"], env=env, capture_output=True, text=True, stdin=subprocess.DEVNULL)
     assert res.returncode == 0, res.stdout + res.stderr
-    assert "/etc/udev/rules.d/70-fm1-companion-download-mode.rules" not in res.stdout   # no terminal: no sudo
+    assert "/etc/udev/rules.d/70-fm1-companion-download-mode.rules" not in res.stdout      # (opted out)
     info = __import__("json").loads((home / ".local/share/fm1-companion/app/install-info.json").read_text())
     assert "download_mode_rule" not in info
+
+
+def test_root_is_reached_with_sudo_n_first_and_the_hint_is_honest(tmp_path, monkeypatch):
+    sys.path.insert(0, str(ROOT / "packaging/installer"))
+    import core
+    monkeypatch.setattr(core.os, "geteuid", lambda: 1000)
+    monkeypatch.setattr(core, "_sudo_n_works", lambda: True)
+    assert core._sudo() == ["sudo", "-n"]                       # (Pi OS default user: no password, no pkexec agent)
+    monkeypatch.setattr(core, "_sudo_n_works", lambda: False)
+    monkeypatch.setattr(core.sys, "stdin", None)
+    for k in ("DISPLAY", "WAYLAND_DISPLAY"):
+        monkeypatch.delenv(k, raising=False)
+    assert core._sudo() is None                                  # (no terminal, no desktop: no pkexec either)
+    monkeypatch.setenv("WAYLAND_DISPLAY", "wayland-0")
+    if core.shutil.which("pkexec"):
+        assert core._sudo() == ["pkexec"]
+    msgs = []
+    monkeypatch.setattr(core, "_sudo", lambda: None)
+    monkeypatch.setattr(core, "UDEV_DIR", tmp_path / "u")
+    monkeypatch.setattr(core, "MODULES_DIR", tmp_path / "m")
+    assert core.install_download_rule(Path("/x/r.rules"), Path("/x/s.conf"), log=msgs.append, sudo=None) is False
+    assert "no administrator rights?" not in msgs[-1] and "sudo install -m 0644 /x/r.rules" in msgs[-1]
+    assert "sudo modprobe sg" in msgs[-1] and not (tmp_path / "u").exists()
 
 
 def _tool_tree(tmp_path, binaries: dict[str, bytes], arch="x86_64"):

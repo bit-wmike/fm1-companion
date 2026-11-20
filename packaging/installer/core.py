@@ -220,13 +220,52 @@ def udev_rule_installed() -> bool:
     return (UDEV_DIR / UDEV_RULE).exists()
 
 
-def _sudo() -> list[str]:
-    """how to become root: nothing as root, sudo in a terminal, pkexec in the graphical installer"""
+def _sudo_n_works() -> bool:
+    """does `sudo -n` (no password) work here? (e.g. Raspberry Pi OS's default user)"""
+    if not shutil.which("sudo"):
+        return False
+    try:
+        return subprocess.run(["sudo", "-n", "true"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL, timeout=10).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def _sudo() -> list[str] | None:
+    """how to become root: nothing as root; `sudo -n` where it needs no password; sudo in a terminal; pkexec in a
+    desktop session (it needs a graphical agent – without one it fails with "Error creating textual authentication
+    agent"); None: no way here (the caller prints the commands)"""
     if os.geteuid() == 0:
         return []
+    if _sudo_n_works():
+        return ["sudo", "-n"]
     if sys.stdin is not None and sys.stdin.isatty() and shutil.which("sudo"):
         return ["sudo"]
-    return ["pkexec"] if shutil.which("pkexec") else ["sudo"]
+    if shutil.which("pkexec") and (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+        return ["pkexec"]
+    return None
+
+
+def _as_root(sudo: list[str] | None, script: str) -> bool:
+    if sudo is None:
+        return False
+    try:
+        r = subprocess.run([*sudo, "sh", "-c", script], timeout=300)
+        return getattr(r, "returncode", 1) == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def _why_not(sudo: list[str] | None, de: bool = False) -> str:
+    """why a root command did not happen – honest, not a guess about "no administrator rights" """
+    if sudo is None:
+        return ("hier gibt es keinen Weg zu Administratorrechten ohne Rückfrage (sudo will ein Passwort, es gibt kein "
+                "Terminal und keine Desktop-Sitzung für pkexec)" if de else
+                "there is no way to administrator rights here without a prompt (sudo wants a password, and there is "
+                "no terminal and no desktop session for pkexec)")
+    who = " ".join(sudo) or "root"
+    return (f"der Befehl über „{who}“ ist fehlgeschlagen oder wurde abgebrochen" if de else
+            f"the command through “{who}” failed or was cancelled")
 
 
 def install_udev_rule(rule: Path, log=print, sudo: list[str] | None = None, remove: bool = False) -> bool:
@@ -239,20 +278,16 @@ def install_udev_rule(rule: Path, log=print, sudo: list[str] | None = None, remo
     else:
         script = (f"install -m 0644 {shlex.quote(str(rule))} {shlex.quote(str(target))} && "
                   "udevadm control --reload-rules && udevadm trigger --subsystem-match=usb --action=change")
-    try:
-        r = subprocess.run([*sudo, "sh", "-c", script], timeout=300)
-        ok = getattr(r, "returncode", 1) == 0
-    except (OSError, subprocess.SubprocessError):
-        ok = False
+    ok = _as_root(sudo, script)
     if ok and not remove:
         log(tr(f"  udev rule installed: {target} (the FM-1 and the USB hubs in front of it stay awake)",
                f"  udev-Regel installiert: {target} (das FM-1 und die USB-Hubs davor bleiben wach)"))
     elif ok:
         log(tr(f"  udev rule removed: {target}", f"  udev-Regel entfernt: {target}"))
     else:
-        log(tr("NOTE: the udev rule could not be installed (no administrator rights?). By hand: "
+        log(tr(f"NOTE: the udev rule was not installed – {_why_not(sudo)}. By hand: "
                f"sudo install -m 0644 {rule} {UDEV_DIR}/ && sudo udevadm control --reload-rules",
-               "HINWEIS: Die udev-Regel ließ sich nicht installieren (keine Administratorrechte?). Von Hand: "
+               f"HINWEIS: Die udev-Regel wurde nicht installiert – {_why_not(sudo, de=True)}. Von Hand: "
                f"sudo install -m 0644 {rule} {UDEV_DIR}/ && sudo udevadm control --reload-rules"))
     return ok
 
@@ -302,11 +337,7 @@ def install_download_rule(rule: Path | None, conf: Path | None, log=print, sudo:
         if conf is not None:
             parts.append(f"install -m 0644 {q(str(conf))} {q(str(mod))}")
         script = " && ".join(parts + [DL_ACTIVATE])
-    try:
-        r = subprocess.run([*sudo, "sh", "-c", script], timeout=300)
-        ok = getattr(r, "returncode", 1) == 0
-    except (OSError, subprocess.SubprocessError):
-        ok = False
+    ok = _as_root(sudo, script)
     if ok and not remove:
         log(tr(f"  Download mode: udev rule {target} and {mod} installed (the app reaches an FM-1 in ROM download "
                "mode without an administrator password)",
@@ -315,18 +346,19 @@ def install_download_rule(rule: Path | None, conf: Path | None, log=print, sudo:
     elif ok:
         log(tr(f"  removed: {target}, {mod}", f"  entfernt: {target}, {mod}"))
     elif remove:
-        log(tr(f"NOTE: could not remove {target} and {mod} (no administrator rights?). By hand: "
+        log(tr(f"NOTE: {target} and {mod} were not removed – {_why_not(sudo)}. By hand: "
                f"sudo rm {target} {mod} && sudo udevadm control --reload-rules",
-               f"HINWEIS: {target} und {mod} ließen sich nicht entfernen (keine Administratorrechte?). Von Hand: "
+               f"HINWEIS: {target} und {mod} wurden nicht entfernt – {_why_not(sudo, de=True)}. Von Hand: "
                f"sudo rm {target} {mod} && sudo udevadm control --reload-rules"))
     else:
-        log(tr("NOTE: the download-mode rule could not be installed (no administrator rights?) – the app then asks "
-               f"for the password when it needs the FM-1 in download mode. By hand: sudo install -m 0644 {rule} "
-               f"{UDEV_DIR}/ && sudo install -m 0644 {conf} {MODULES_DIR}/ && sudo modprobe sg",
-               "HINWEIS: Die Regel für den Download-Modus ließ sich nicht installieren (keine Administratorrechte?) – "
-               "die App fragt dann nach dem Passwort, wenn sie das FM-1 im Download-Modus braucht. Von Hand: "
+        log(tr(f"NOTE: the download-mode rule was not installed – {_why_not(sudo)}. Until it is, the app's flash "
+               "backup through M-Flasher cannot reach an FM-1 in download mode. By hand (three commands): "
                f"sudo install -m 0644 {rule} {UDEV_DIR}/ && sudo install -m 0644 {conf} {MODULES_DIR}/ && "
-               "sudo modprobe sg"))
+               "sudo modprobe sg && sudo udevadm control --reload-rules",
+               f"HINWEIS: Die Regel für den Download-Modus wurde nicht installiert – {_why_not(sudo, de=True)}. Bis "
+               "sie da ist, erreicht die Flash-Sicherung der App über M-Flasher kein FM-1 im Download-Modus. Von "
+               f"Hand (drei Befehle): sudo install -m 0644 {rule} {UDEV_DIR}/ && sudo install -m 0644 {conf} "
+               f"{MODULES_DIR}/ && sudo modprobe sg && sudo udevadm control --reload-rules"))
     return ok
 
 
