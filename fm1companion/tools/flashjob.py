@@ -32,6 +32,13 @@ compared with the one made before, and a fresh read (one more ``backup``) must e
 Every step and every line of each M-Flasher run go into one flight log per job (``mflasher-backup-…`` /
 ``mflasher-restore-…`` beside the installation logs, unit ids masked), and the one-installation-at-a-time lock is held for the whole job.
 
+**Step 3** (same rules, same write path `_Write`): "Into download mode" / "Restart the FM-1" on their own
+(`download_mode`, `leave_download_mode`); "Install m-bootloader" (`install_bootloader`: the pinned bundled
+fm1-uboot.boot through ``bootloader --file``) and "Remove m-bootloader (original boot area)" (`remove_bootloader`:
+only ``bootloader --stock`` with M-VAVE's V15 package) – both only after the double-read backup, with a danger
+dialog, a gate that accepts only ranges inside the boot area 0x00000-0x03FFF (`boot_gate`), and a fresh read
+afterwards. What the app learns about the boot area goes into Profile.boot_area (tools/bootarea.py).
+
 The unit id and flash ID M-Flasher reads go into the profile (hardware.note_flash_id, the unit id learned as on
 the MIDI side, ui/device.py `_unit_by_id`): only into the profile whose unit the app itself sent into download mode
 and only when no other profile has that id. An image's description never names or changes a profile by itself.

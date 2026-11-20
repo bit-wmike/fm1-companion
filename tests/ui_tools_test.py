@@ -7,6 +7,8 @@
 * an offer found earlier shows an "Update" button; nothing is installed by itself;
 * Settings: the tool check choice (daily / weekly / only at start / never), saved in config.json, disabled while
   the firmware check switch is off;
+* "Into download mode", "Restart the FM-1", "Install m-bootloader", "Remove m-bootloader (original boot area)"
+  (Recovery › Tools, the first two also in the Device menu) with the fake M-Flasher;
 * "Back up the whole flash" (Recovery › Tools) and "Write back …" (Backups › Flash backups) with the fake
   M-Flasher (tests/fake_mflasher.py, synthetic ids): the copy is listed, the write-back asks the danger question,
   answers M-Flasher's "yes" only on a match, and an image of another unit is refused with nothing written.
@@ -291,6 +293,61 @@ def flash_flow(card):
         FJ.WRITING.clear()
         FJ.OVERDUE.clear()
     check(asked_leave == [1] and not ev.isAccepted(), "overdue: the close asks (declined: stays open)")
+    boot_flow(card, state, uid, asked)
+
+
+def boot_flow(card, state, uid, asked):
+    """Step 3: "Into download mode", "Restart the FM-1", "Install m-bootloader", "Remove m-bootloader (original boot
+    area)" with the fake M-Flasher; a synthetic stand-in for M-VAVE's V15 package with its checksums patched in"""
+    import hashlib
+    import random
+    from fm1companion import firmware
+    from fm1companion.flash import package as pk
+    from fm1companion.tools import bootarea
+    from fm1companion.ui import flash_tools
+    c = w.ctx
+    prof = c.profile
+    state.write_text(json.dumps({"mode": "midi", "unit_id": uid}))
+    prof.unit_id = uid
+    w.go("recovery")
+    card.refresh()
+    check(all(b.isEnabled() for b in (card.b_dl, card.b_leave, card.b_mboot, card.b_unboot)),
+          "the download-mode and m-bootloader buttons are there")
+    names = [a.text().replace("&", "") for m in w.menuBar().findChildren(type(w.menuBar().actions()[0].menu()))
+             for a in m.actions()]
+    check("In den Download-Modus" in names and any(n.startswith("FM-1 neu starten") for n in names),
+          f"Device menu: into download mode and restart ({[n for n in names if 'Download' in n or 'neu' in n]})")
+    card.b_dl.click()
+    st_ = json.loads(state.read_text())
+    check(st_["mode"] == "download" and "/dev/sg1" in card.note.text(), "Into download mode: the unit is there")
+    card.b_leave.click()
+    check(json.loads(state.read_text())["mode"] == "midi", "Restart the FM-1: it runs again")
+    asked.clear()
+    card.b_mboot.click()
+    st_ = json.loads(state.read_text())
+    danger = [a for a in asked if a[2]]
+    boot = (ROOT / "fm1companion/tools/bundled/m-bootloader/fm1-uboot.boot").read_bytes()
+    flash = Path(str(state) + ".flash").read_bytes()
+    check(len(danger) == 1 and prof.name in danger[0][1] and "2.4-395e6cc" in danger[0][1] and
+          "0x00000–0x03FFF" in danger[0][1], "Install m-bootloader: the danger question names unit, version, area")
+    check(bootarea.holds(flash[:0x4000], boot) and st_["mode"] == "midi" and
+          prof.boot_area.get("kind") == bootarea.MBOOT, "m-bootloader written, checked, restarted, in the profile")
+    card.refresh()
+    check("m-bootloader 2.4-395e6cc" in card.boot_label.text(), f"the card says so ({card.boot_label.text()[:60]})")
+    img = bytearray(random.Random("ui-v15").randbytes(0x93000))
+    raw = pk.build_package("FM-1_015", family="stock", app=bytes(img))
+    pkg = home / "FM-1_015.fwsc"
+    pkg.write_bytes(raw)
+    pk.STOCK_V15_SHA256 = hashlib.sha256(raw).hexdigest()
+    bootarea.V15_BOOT_AREA_SHA256 = hashlib.sha256(bytes(img[:0x4000])).hexdigest()
+    firmware.fetch_stock = lambda key="stock-v15", log=print, progress=None: pkg
+    asked.clear()
+    card.b_unboot.click()
+    flash = Path(str(state) + ".flash").read_bytes()
+    danger = [a for a in asked if a[2]]
+    check(len(danger) == 1 and "V15" in danger[0][1] and flash[:0x4000] == bytes(img[:0x4000]) and
+          prof.boot_area.get("kind") == bootarea.ORIGINAL, "Remove m-bootloader: V15's boot area back, in the profile")
+    del flash_tools
 
 
 def run():

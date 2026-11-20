@@ -8,7 +8,6 @@ As in test_tools_flash: every refusal proves via nothing_written() that the fake
 sent and no range was written."""
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import sys

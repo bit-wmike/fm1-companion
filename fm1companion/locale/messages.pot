@@ -2779,7 +2779,7 @@ msgid "The flash backup or its description cannot be read."
 msgstr ""
 
 #: fm1companion/flash/mboot.py:334 fm1companion/flashdump.py:318
-#: fm1companion/tools/flashjob.py:852
+#: fm1companion/tools/flashjob.py:859
 msgid "The flash backup does not match its description (changed or damaged)."
 msgstr ""
 
@@ -7236,8 +7236,8 @@ msgstr ""
 msgid "The song was running during the restore. Already written: {parts}. Not written: {part} and everything after it."
 msgstr ""
 
-#: fm1companion/sloopbk.py:385 fm1companion/tools/flashjob.py:807
-#: fm1companion/tools/flashjob.py:853 fm1companion/tools/flashjob.py:1359
+#: fm1companion/sloopbk.py:385 fm1companion/tools/flashjob.py:814
+#: fm1companion/tools/flashjob.py:860 fm1companion/tools/flashjob.py:1366
 #: fm1companion/ui/pages/studio.py:1320 fm1companion/ui/pages/studio.py:1323
 #: fm1companion/ui/sloop3_ui.py:527 fm1companion/ui/sloop3_ui.py:548
 msgid "Nothing was written."
@@ -8295,7 +8295,7 @@ msgstr ""
 msgid "not known"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:95
+#: fm1companion/tools/flashjob.py:102
 msgid ""
 "Put the FM-1 into USB download mode by hand, then click again:\n"
 "• with m-bootloader: hold PLAY while switching the FM-1 on and choose DOWNLOAD MODE – or hold REC while switching it on, which goes there directly;\n"
@@ -8303,377 +8303,377 @@ msgid ""
 "In download mode the display stays dark or shows M-Flasher's screen; the computer sees “WL82 UBOOT1.00” (as a USB device it calls itself “WL80UBOOT1.00”)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:213 fm1companion/tools/flashjob.py:920
-#: fm1companion/tools/flashjob.py:1404
+#: fm1companion/tools/flashjob.py:220 fm1companion/tools/flashjob.py:927
+#: fm1companion/tools/flashjob.py:1411
 msgid "Cancelled. Nothing was written to the FM-1."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:215
+#: fm1companion/tools/flashjob.py:222
 #, python-brace-format
 msgid "M-Flasher did not finish within {s} s and was stopped. Nothing was written to the FM-1."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:235
+#: fm1companion/tools/flashjob.py:242
 msgid "it did not start"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:235
+#: fm1companion/tools/flashjob.py:242
 #, python-brace-format
 msgid "exit code {rc}"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:246 fm1companion/tools/flashjob.py:1141
+#: fm1companion/tools/flashjob.py:253 fm1companion/tools/flashjob.py:1148
 #, python-brace-format
 msgid "M-Flasher could not look for the FM-1: {reason}"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:248 fm1companion/tools/flashjob.py:1143
+#: fm1companion/tools/flashjob.py:255 fm1companion/tools/flashjob.py:1150
 msgid "An FM-1 is in download mode, but the Linux driver “sg” is not loaded. The app's installer sets it up; by hand: sudo modprobe sg – then try again. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:251
+#: fm1companion/tools/flashjob.py:258
 msgid "More than one device is in download mode. Leave only the FM-1 you mean connected, then try again. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:255
+#: fm1companion/tools/flashjob.py:262
 msgid "One FM-1 is in download mode and another one runs on USB MIDI. So that the app surely works with the right unit, leave only one FM-1 connected. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:263
+#: fm1companion/tools/flashjob.py:270
 msgid "More than one FM-1 is connected. M-Flasher's switch to download mode reaches only a single unit: unplug the others, then try again. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:267
+#: fm1companion/tools/flashjob.py:274
 msgid "No FM-1 found, neither running on USB MIDI nor in download mode."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:273
+#: fm1companion/tools/flashjob.py:280
 msgid "The app sends the switch to download mode only to an FM-1 it has recognised itself, with the original firmware, a Felucca-family firmware or SLOOP 3, at the port it is connected to."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:276
+#: fm1companion/tools/flashjob.py:283
 msgid "Sending the FM-1 into USB download mode (it restarts; nothing is written) …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:280
+#: fm1companion/tools/flashjob.py:287
 #, python-brace-format
 msgid "The FM-1 did not switch to download mode: {reason}"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:288
+#: fm1companion/tools/flashjob.py:295
 msgid "The FM-1 did not show up in download mode."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:359
+#: fm1companion/tools/flashjob.py:366
 #, python-brace-format
 msgid "M-Flasher could not read the FM-1: {reason} Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:364 fm1companion/tools/flashjob.py:451
+#: fm1companion/tools/flashjob.py:371 fm1companion/tools/flashjob.py:458
 #, python-brace-format
 msgid "M-Flasher's answer has a form this app version does not know ({detail}). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:367
+#: fm1companion/tools/flashjob.py:374
 #, python-brace-format
 msgid "M-Flasher sees a {model}, not an FM-1. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:386
+#: fm1companion/tools/flashjob.py:393
 #, python-brace-format
 msgid "This FM-1 (unit ID {uid}) is not “{name}”: that profile belongs to another unit. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:390
+#: fm1companion/tools/flashjob.py:397
 #, python-brace-format
 msgid "This FM-1 is “{other}” (by its unit ID {uid}), not “{name}”. Choose the right device at the top. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:396
+#: fm1companion/tools/flashjob.py:403
 #, python-brace-format
 msgid "Two of your device profiles have this unit ID ({uid}): merge them on the page “Devices” first. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:401
+#: fm1companion/tools/flashjob.py:408
 #, python-brace-format
 msgid "The app does not know which of your FM-1 this is (unit ID {uid} is in none of your device profiles). A flash backup is written back only onto a unit the app knows. To teach it: connect the FM-1 while it runs, choose it at the top, click “Back up the whole flash” – and if the app asks you to put it into download mode by hand, do it at the same USB port. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:410
+#: fm1companion/tools/flashjob.py:417
 #, python-brace-format
 msgid "The flash chip M-Flasher reads ({chip}) is not the one recorded for “{name}” ({rec}). Is this another FM-1? Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:443
+#: fm1companion/tools/flashjob.py:450
 #, python-brace-format
 msgid "Reading the whole flash ({n} of 2; nothing is written) …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:446
+#: fm1companion/tools/flashjob.py:453
 #, python-brace-format
 msgid "M-Flasher could not read the flash: {reason} Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:454
+#: fm1companion/tools/flashjob.py:461
 msgid "The flash read does not match the CRC-32 the chip computed (M-Flasher did not confirm it). The USB connection may be unreliable: try another cable or port, without a hub. Nothing was kept, nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:459
+#: fm1companion/tools/flashjob.py:466
 msgid "M-Flasher did not say where it saved the read. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:462
+#: fm1companion/tools/flashjob.py:469
 msgid "M-Flasher saved the read in an unexpected place. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:468
+#: fm1companion/tools/flashjob.py:475
 #, python-brace-format
 msgid "The read cannot be opened: {error}. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:471
+#: fm1companion/tools/flashjob.py:478
 #, python-brace-format
 msgid "The read has {size} bytes, not the 1 MiB of the whole flash. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:474
+#: fm1companion/tools/flashjob.py:481
 msgid "The read does not match the SHA-256 M-Flasher wrote beside it. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:478
+#: fm1companion/tools/flashjob.py:485
 msgid "Between two reads M-Flasher reported another unit or chip. Leave only one FM-1 connected. Nothing was kept, nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:556 fm1companion/ui/backups_page.py:119
+#: fm1companion/tools/flashjob.py:563 fm1companion/ui/backups_page.py:119
 #: fm1companion/ui/sloop3_ui.py:384
 #, python-brace-format
 msgid "The backup folder cannot be created: {error}"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:564
+#: fm1companion/tools/flashjob.py:571
 #, python-brace-format
 msgid "The two reads of the flash differ (first at 0x{at:05X}). The USB connection is unreliable: try another cable or port, without a hub. Nothing was kept, nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:583
+#: fm1companion/tools/flashjob.py:590
 #, python-brace-format
 msgid "The flash backup could not be saved: {error}. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:626
+#: fm1companion/tools/flashjob.py:633
 msgid "The FM-1 was not identified in download mode first."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:628
+#: fm1companion/tools/flashjob.py:635
 msgid "M-Flasher reports no unit ID for this FM-1, so the backup could not be tied to this unit. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:652 fm1companion/tools/runner.py:191
+#: fm1companion/tools/flashjob.py:659 fm1companion/tools/runner.py:191
 #, python-brace-format
 msgid "M-Flasher waits: {reason}"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:712
+#: fm1companion/tools/flashjob.py:719
 msgid "M-Flasher reports no unit ID for this FM-1: the backup is kept, but the app cannot write it back (it could not prove which unit it belongs to)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:809
+#: fm1companion/tools/flashjob.py:816
 msgid "This file is not a copy of the whole flash (1 MiB). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:811
+#: fm1companion/tools/flashjob.py:818
 msgid "This flash backup does not say which unit it comes from (no unit ID in its description), so the app does not write it back. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:814
+#: fm1companion/tools/flashjob.py:821
 msgid "This flash backup does not say which flash chip it was read from, so the app does not write it back. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:829
+#: fm1companion/tools/flashjob.py:836
 #, python-brace-format
 msgid "This flash backup comes from another FM-1 (unit ID {img}) than “{name}” (unit ID {uid}). A flash image holds its unit's boot area and factory data, so the app writes it only onto the unit it came from. Nothing was done – the FM-1 was not even switched to download mode."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:845 fm1companion/tools/flashjob.py:1211
+#: fm1companion/tools/flashjob.py:852 fm1companion/tools/flashjob.py:1218
 msgid "No M-Flasher on this computer is cleared for writing by this app version (only the exact build this app was reviewed with is). Reinstall the app. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:868
+#: fm1companion/tools/flashjob.py:875
 msgid "M-Flasher reports no unit ID for the connected FM-1, so the app cannot check that the image is this unit's. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:871
+#: fm1companion/tools/flashjob.py:878
 #, python-brace-format
 msgid "This flash backup comes from another FM-1 (unit ID {img}); the connected one is {uid}. A flash image holds its unit's boot area and factory data (calibration, Bluetooth address), so the app writes it only onto the unit it came from. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:876
+#: fm1companion/tools/flashjob.py:883
 #, python-brace-format
 msgid "This flash backup was read from another flash chip ({img}); the connected FM-1 has {chip}. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:893
+#: fm1companion/tools/flashjob.py:900
 msgid "The FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address) looks partly erased – as after an interrupted write – and the rest equals this backup. The app does not repair factory data. Keep the FM-1 as it is (it may still start), keep this backup and the one made just now, and ask for help (the app's issue tracker or M-Flasher's author) before anything else is written. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:898
+#: fm1companion/tools/flashjob.py:905
 msgid "The FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address) differs from the one in this backup, although both name the same unit ID. Either the backup's description was changed (another unit's copy), or the unit's factory data has changed since (an interrupted write, a damaged flash). The app never writes over factory data. Keep both copies and ask for help (the app's issue tracker or M-Flasher's author) before anything else is written. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:906
+#: fm1companion/tools/flashjob.py:913
 msgid "The FM-1's flash already holds exactly this image: nothing to write."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:923
+#: fm1companion/tools/flashjob.py:930
 msgid "Not written back. The FM-1 is unchanged; the backup made just now is kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:953 fm1companion/tools/flashjob.py:1099
-#: fm1companion/tools/flashjob.py:1429
+#: fm1companion/tools/flashjob.py:960 fm1companion/tools/flashjob.py:1106
+#: fm1companion/tools/flashjob.py:1436
 #, python-brace-format
 msgid "The app's private working folder cannot be created: {error}. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:957
+#: fm1companion/tools/flashjob.py:964
 #, python-brace-format
 msgid "Too little free space for M-Flasher's working files ({need} MiB are needed in {where}). Free some space and try again. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:996
+#: fm1companion/tools/flashjob.py:1003
 msgid "M-Flasher is writing now. This cannot be cancelled – do not unplug the FM-1 or switch it off."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1023
+#: fm1companion/tools/flashjob.py:1030
 #, python-brace-format
 msgid "M-Flasher's plan did not match what the app checked ({why}), so the app did not answer “yes”: nothing was written. The backup made just now is kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1026
+#: fm1companion/tools/flashjob.py:1033
 #, python-brace-format
 msgid "M-Flasher did not get to writing: {reason} Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1050
+#: fm1companion/tools/flashjob.py:1057
 #, python-brace-format
 msgid "M-Flasher stopped before it erased anything ({reason}). Nothing was written; the FM-1 is unchanged."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1051 fm1companion/tools/flashjob.py:1052
+#: fm1companion/tools/flashjob.py:1058 fm1companion/tools/flashjob.py:1059
 msgid "M-Flasher was interrupted"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1053
+#: fm1companion/tools/flashjob.py:1060
 msgid "M-Flasher did not confirm the write"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1063
+#: fm1companion/tools/flashjob.py:1070
 #, python-brace-format
 msgid "The write did not end verified ({reason}). Do not switch the FM-1 off: it stays in download mode, and writing the flash back again works from there. The backup made just before is {name} – it is this unit's state before the write."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1070
+#: fm1companion/tools/flashjob.py:1077
 msgid "Written; reading the flash once more to compare …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1105
+#: fm1companion/tools/flashjob.py:1112
 msgid "Writing the flash back (do not unplug the FM-1 or switch it off) …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1109
+#: fm1companion/tools/flashjob.py:1116
 msgid "the fresh read differs from the image"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1147
+#: fm1companion/tools/flashjob.py:1154
 msgid "No FM-1 is in download mode."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1149
+#: fm1companion/tools/flashjob.py:1156
 msgid "More than one FM-1 is connected. So that the right one restarts, leave only that one connected – or switch it off and on."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1153 fm1companion/ui/pages/recovery.py:432
+#: fm1companion/tools/flashjob.py:1160 fm1companion/ui/pages/recovery.py:432
 msgid "The FM-1 did not restart: switch it off and on."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1194
+#: fm1companion/tools/flashjob.py:1201
 msgid "The bundled m-bootloader is missing. Reinstall the app. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1200
+#: fm1companion/tools/flashjob.py:1207
 msgid "The bundled m-bootloader did not pass its checksum test, so the app does not write it. Reinstall the app. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1204
+#: fm1companion/tools/flashjob.py:1211
 msgid "The bundled m-bootloader is not a build for the FM-1. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1307
+#: fm1companion/tools/flashjob.py:1314
 #, python-brace-format
 msgid "This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80). On such a unit the app installs only an m-bootloader build that is known to run there (data/hardware.json), and m-bootloader {version} is not one of them. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1318 fm1companion/tools/flashjob.py:1372
+#: fm1companion/tools/flashjob.py:1325 fm1companion/tools/flashjob.py:1379
 msgid "M-Flasher reports no unit ID for the connected FM-1, so the app cannot tie the write to this unit. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1321 fm1companion/tools/flashjob.py:1375
+#: fm1companion/tools/flashjob.py:1328 fm1companion/tools/flashjob.py:1382
 #, python-brace-format
 msgid "M-Flasher reads a flash chip the app does not know ({chip}). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1331
+#: fm1companion/tools/flashjob.py:1338
 #, python-brace-format
 msgid "m-bootloader {version} is installed on this FM-1 already: nothing to write."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1339
+#: fm1companion/tools/flashjob.py:1346
 #, python-brace-format
 msgid "On a newer unit: m-bootloader {version} ran on one such unit (owner's report, outside this app)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1384
+#: fm1companion/tools/flashjob.py:1391
 msgid "This FM-1 has the original boot area already (the one of M-VAVE's V15 package): nothing to write."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1393
+#: fm1companion/tools/flashjob.py:1400
 msgid "SLOOP 3 is installed only through m-bootloader. Whether it starts with the original bootloader is not known. If the FM-1 does not start afterwards, the way back is the backup made just now, written back from USB download mode (Recovery, stage 2)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1409
+#: fm1companion/tools/flashjob.py:1416
 msgid "Nothing was written. The FM-1 is unchanged; the backup made just now is kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1436
+#: fm1companion/tools/flashjob.py:1443
 msgid "Writing the boot area (do not unplug the FM-1 or switch it off) …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1445
+#: fm1companion/tools/flashjob.py:1452
 msgid "the flash changed outside the boot area"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1448
+#: fm1companion/tools/flashjob.py:1455
 msgid "a sector of the boot area changed that M-Flasher did not announce"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1451
+#: fm1companion/tools/flashjob.py:1458
 msgid "the boot area does not hold this m-bootloader"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1453
+#: fm1companion/tools/flashjob.py:1460
 msgid "the boot area is not the one of the V15 package"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1456
+#: fm1companion/tools/flashjob.py:1463
 #, python-brace-format
 msgid "M-Flasher said there is nothing to write, but the fresh read does not show the expected boot area ({why}). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1593
+#: fm1companion/tools/flashjob.py:1600
 #, python-brace-format
 msgid "The file {name} is no longer there."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1595
+#: fm1companion/tools/flashjob.py:1602
 #, python-brace-format
 msgid "The file {name} is no longer the one that was being written (its SHA-256 differs). Nothing is written from it."
 msgstr ""
