@@ -90,10 +90,13 @@ gesucht hat.
   dann wird das FM-1 neu gestartet. Hat das Schreiben begonnen, lässt es sich nicht mehr abbrechen – dann das FM-1
   nicht abstecken; auch wenn die App geschlossen wird oder abstürzt, schreibt M-Flasher zu Ende, und beim nächsten Start sagt die App, was passiert ist, und fragt, was geschehen soll. Eine Kopie mit anderen Werksdaten (Kalibrierung, Bluetooth-Adresse) als das Gerät wird abgelehnt. Geht etwas schief, bleibt das FM-1 im Download-Modus, und die eben gemachte Sicherung geht auf
   demselben Weg zurück.
-* **Ehrlich gesagt:** Diese beiden Knöpfe liefen über die App noch nicht an einem echten FM-1 – nur gegen einen
-  Stellvertreter für M-Flasher. M-Flasher selbst wurde genau so von Hand benutzt (zweimal sichern, auf dasselbe Gerät
-  zurückschreiben, 18./19.11.2026). m-bootloader, Firmware über den Download-Modus und SLOOP 3 über die App kommen in
-  späteren Versionen.
+* **Ehrlich gesagt – was an echter Hardware lief (20.11.2026, ein Raspberry Pi 5, zwei Geräte):** das Sichern an
+  beiden Geräten (per Umschalten durch die App aus Melodee und aus SLOOP 3, mit REC beim Einschalten, über das Menü
+  von m-bootloader), jede Kopie gleich einer von Hand mit M-Flasher gemachten; das Zurückschreiben nur an einem
+  früheren Gerät und nur kleine Änderungen (ein Sektor, geprüft), die Ablehnung der Kopie eines anderen Geräts und
+  das gesperrte Schließen der App während des Schreibens. Noch nicht gelaufen: Zurückschreiben an einem neueren
+  Gerät (Logo vorne), eine große Änderung oder der Boot-Bereich, ein echtes Abmelden während des Schreibens.
+  m-bootloader, Firmware über den Download-Modus und SLOOP 3 über die App kommen in späteren Versionen.
 
 ## Wenn das FM-1 gar nicht als „WL82 UBOOT1.00“ erscheint
 

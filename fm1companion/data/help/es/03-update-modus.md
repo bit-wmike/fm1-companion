@@ -89,10 +89,13 @@ nueva.
   Después, la comprobación de M-Flasher (el CRC-32 del chip) y una lectura nueva deben ser iguales a la copia; luego
   se reinicia el FM-1. Una vez empezada la escritura no se puede cancelar – no desconectes el FM-1 entonces; aunque la app se cierre o falle, M-Flasher termina la escritura, y en el siguiente inicio la app dice qué pasó y pregunta qué hacer. Una copia con otros datos de fábrica (calibración, dirección Bluetooth) que la unidad se rechaza. Si algo
   sale mal, el FM-1 se queda en modo de descarga y la copia hecha justo antes vuelve por el mismo camino.
-* **Con sinceridad:** estos dos botones aún no se han usado con un FM-1 real a través de la app – solo con un
-  sustituto de M-Flasher. M-Flasher mismo se usó exactamente así a mano (copiar dos veces, volver a escribir en la
-  misma unidad, 18/19-11-2026). m-bootloader, el firmware por el modo de descarga y SLOOP 3 a través de la app
-  llegarán en versiones posteriores.
+* **Con sinceridad – lo que se probó en hardware real (20-11-2026, una Raspberry Pi 5, dos unidades):** la copia en
+  ambas unidades (con el cambio de la propia app desde Melodee y desde SLOOP 3, con REC al encender, por el menú de
+  m-bootloader), cada copia idéntica a una hecha a mano con M-Flasher; volver a escribir solo en una unidad anterior
+  y solo cambios pequeños (un sector, verificado), el rechazo de la copia de otra unidad y el cierre de la app
+  bloqueado mientras escribe. Aún no probado: volver a escribir en una unidad más nueva (logotipo delante), un cambio
+  grande o la zona de arranque, un cierre de sesión real durante la escritura. m-bootloader, el firmware por el modo
+  de descarga y SLOOP 3 a través de la app llegarán en versiones posteriores.
 
 ## Si el FM-1 no aparece como “WL82 UBOOT1.00”
 

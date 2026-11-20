@@ -85,9 +85,12 @@ before every use and never runs a changed file), and when it last looked for a n
   read must equal the copy; then the FM-1 is restarted. Once writing has started it cannot be cancelled – do not
   unplug the FM-1 then; even if the app is closed or crashes, M-Flasher finishes the write, and at the next start the app says what happened and asks what to do. A copy whose factory data (calibration, Bluetooth address) differs from the unit's is refused. If something goes wrong, the FM-1 stays in download mode and the backup made just before
   goes back the same way.
-* **Honestly:** these two buttons have not run on a real FM-1 through the app yet – only against a stand-in for
-  M-Flasher. M-Flasher itself was used exactly this way by hand (backup twice, restore onto the same unit,
-  2026-11-18/19). m-bootloader, firmware through download mode and SLOOP 3 through the app come in later versions.
+* **Honestly – what ran on real hardware (2026-11-20, one Raspberry Pi 5, two units):** the backup on both units (by
+  the app's own switch from Melodee and from SLOOP 3, with REC at power-on, through m-bootloader's menu), each copy
+  identical with one M-Flasher made by hand; writing back only on an earlier unit and only small changes (one
+  sector, verified), the refusal of another unit's copy, and closing the app being blocked while it writes. Not yet
+  run: writing back on a newer unit (logo on the front), a large change or the boot area, a real logout during the
+  write. m-bootloader, firmware through download mode and SLOOP 3 through the app come in later versions.
 
 ## If the FM-1 does not appear as “WL82 UBOOT1.00” at all
 

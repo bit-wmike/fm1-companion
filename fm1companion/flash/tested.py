@@ -67,14 +67,23 @@ FM1OPEN_HARDWARE: dict[str, tuple[bool, str]] = {
     "fm1open_restore": (False, "restoring an FM1 Open backup / writing back from the Studio"),
 }
 
-# The app's own M-Flasher flows (Recovery › Tools, Backups › Flash backups; tools/flashjob.py) on a real FM-1 – none of
-# them yet: they ran against tests/fake_mflasher.py only. docs/UNTESTED.md ("M-Flasher through the app") repeats this
-# table; tests/test_tools_flash.py keeps the two in sync. M-Flasher itself ran by hand (OWNER_REPORTS).
+# The app's own M-Flasher flows (Recovery › Tools, Backups › Flash backups; tools/flashjob.py) on a real FM-1.
+# As of 2026-11-20 (owner's run of PR #27 on ONE Raspberry Pi 5 with TWO units, one after the other at the same USB
+# port): download mode by the app's soft key from Melodee 1.6.1 (earlier unit) and from SLOOP 3 3.4.0 (newer unit,
+# m-bootloader); the whole-flash backup on both units – by soft key, by REC at power-on and by m-bootloader's menu –
+# each byte-identical with a backup M-Flasher made by hand; the write-back ONLY on the earlier unit (0x856014,
+# original boot area, Melodee 1.6.1, an image made by the app): three runs of 1 sector (once "nothing to write"),
+# the foreign-unit refusal, SIGTERM and closing the window blocked while writing. NOT run: a large difference (the
+# boot area, many sectors), a real logout, an image with M-Flasher's own .json, a write-back on the newer unit.
+# docs/UNTESTED.md ("M-Flasher through the app") repeats this table; tests/test_tools_flash.py keeps the two in sync.
 TOOLS_HARDWARE: dict[str, tuple[bool, str]] = {
-    "mf_download_mode": (False, N_("sending the FM-1 into download mode through M-Flasher")),
-    "mf_backup": (False, N_("the whole-flash backup through M-Flasher (read twice)")),
-    "mf_restore": (False, N_("writing a whole-flash backup back through M-Flasher")),
-    "mf_new_chip": (False, N_("any of these on a newer FM-1 (logo on the front, flash UC25HQ80)")),
+    "mf_download_mode": (True, N_("sending the FM-1 into download mode through M-Flasher")),
+    "mf_backup": (True, N_("the whole-flash backup through M-Flasher (read twice)")),
+    "mf_restore": (True, N_("writing a whole-flash backup back through M-Flasher – so far only small changes on an "
+                            "earlier unit (not yet the boot area or a large difference)")),
+    "mf_new_chip_backup": (True, N_("the whole-flash backup on a newer FM-1 (logo on the front, flash UC25HQ80)")),
+    "mf_new_chip_restore": (False, N_("writing a whole-flash backup back on a newer FM-1 (logo on the front, flash "
+                                      "UC25HQ80)")),
 }
 
 # Reports by the owner of what ran OUTSIDE this app (his own tools: M-Flasher, the authors' installer pages) – not runs
@@ -83,6 +92,8 @@ OWNER_REPORTS: dict[str, str] = {
     "newer_unit_mboot_sloop3": "2026-11-19, one newer FM-1 (flash 0xB36014): m-bootloader 2.4-395e6cc installed with "
                                "M-Flasher, it boots and its menu shows FLASH B36014; SLOOP 3 v3.4.0 installed with its "
                                "author's installer page; a change saved in SLOOP 3 survived a power cycle",
+    "app_flows_pi": "2026-11-20, owner: the app's own flash backup and write-back flows on both units, one "
+                    "Raspberry Pi 5 (report 'Werkzeug-Paket Schritt 2') – see TOOLS_HARDWARE",
     "mflasher_by_hand": "2026-11-18/19, owner, outside the app: M-Flasher 0.12.1 by hand in a terminal on a "
                         "Raspberry Pi 5 – download-mode, info, backup (twice, same SHA-256) and restore of a whole "
                         "flash backup onto the same unit (147 and 174 sectors, verified by the chip's CRC32, then "
@@ -90,8 +101,11 @@ OWNER_REPORTS: dict[str, str] = {
 }
 
 
-def tool_note(kind: str) -> str:
-    """the honest line for the M-Flasher dialogs: run on a real FM-1 through this app, or not"""
+def tool_note(kind: str, new_chip: bool = False) -> str:
+    """the honest line for the M-Flasher dialogs: run on a real FM-1 through this app, or not (on a newer unit the
+    write-back has its own key)"""
+    if new_chip and kind == "mf_restore":
+        kind = "mf_new_chip_restore"
     ok, label = TOOLS_HARDWARE.get(kind, (False, ""))
     if ok:
         return _("Tested on a real FM-1 through this app: {what}.").format(what=_(label))

@@ -223,17 +223,19 @@ confirmed.
 
 ### M-Flasher through the app (whole-flash backup and write-back)
 
-`fm1companion/tools/flashjob.py`, buttons on Recovery › Tools and Backups › Flash backups. **None of it ran on a real
-FM-1 through the app** – only against `tests/fake_mflasher.py` (M-Flasher 0.12.1's line formats, synthetic unit ids,
-a pseudo-random 1 MiB "flash"). `TOOLS_HARDWARE` in `fm1companion/flash/tested.py` repeats this table;
-`tests/test_tools_flash.py` keeps the two in sync.
+`fm1companion/tools/flashjob.py`, buttons on Recovery › Tools and Backups › Flash backups. **Run on real hardware
+through the app on 2026-11-20** (the owner, PR #27, ONE Raspberry Pi 5, TWO units one after the other at the same USB
+port; `OWNER_REPORTS["app_flows_pi"]`). Everything else only against `tests/fake_mflasher.py` (M-Flasher 0.12.1's line
+formats, synthetic unit ids, a pseudo-random 1 MiB "flash"). `TOOLS_HARDWARE` in `fm1companion/flash/tested.py`
+repeats this table; `tests/test_tools_flash.py` keeps the two in sync.
 
 | Kind | Status |
 |---|---|
-| `mf_download_mode` – sending the FM-1 into download mode through M-Flasher | not run through the app – stand-in only |
-| `mf_backup` – the whole-flash backup through M-Flasher (read twice) | not run through the app – stand-in only |
-| `mf_restore` – writing a whole-flash backup back through M-Flasher | not run through the app – stand-in only |
-| `mf_new_chip` – any of these on a newer FM-1 (logo on the front, flash UC25HQ80) | not run through the app |
+| `mf_download_mode` – sending the FM-1 into download mode through M-Flasher | run on hardware (2026-11-20): the app's soft key from Melodee 1.6.1 (earlier unit) and from SLOOP 3 3.4.0 (newer unit, m-bootloader) |
+| `mf_backup` – the whole-flash backup through M-Flasher (read twice) | run on hardware (2026-11-20): both units – soft key, REC at power-on, m-bootloader's menu – each byte-identical with a backup M-Flasher made by hand |
+| `mf_restore` – writing a whole-flash backup back through M-Flasher – so far only small changes on an earlier unit (not yet the boot area or a large difference) | run on hardware (2026-11-20), narrow: earlier unit (0x856014, original boot area, Melodee 1.6.1), an image made by the app, three runs of 1 sector (once "nothing to write"), verified; the foreign-unit refusal seen; SIGTERM and closing the window blocked while writing. Not run: a large difference or the boot area, a real logout, an image with M-Flasher's own .json |
+| `mf_new_chip_backup` – the whole-flash backup on a newer FM-1 (logo on the front, flash UC25HQ80) | run on hardware (2026-11-20): one newer unit, three ways (soft key, REC, menu) |
+| `mf_new_chip_restore` – writing a whole-flash backup back on a newer FM-1 (logo on the front, flash UC25HQ80) | not run |
 
 **Owner, outside the app (2026-11-18/19, `OWNER_REPORTS["mflasher_by_hand"]`):** M-Flasher 0.12.1 by hand in a
 terminal on a Raspberry Pi 5 – `download-mode`, `info`, `backup` twice with the same SHA-256, and `restore` of a whole

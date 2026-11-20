@@ -8,7 +8,7 @@ import html
 import time
 from pathlib import Path
 
-from ..i18n import _
+from ..i18n import _, ngettext
 from .common import call_in_gui, confirm, fmt_size, init_gui_caller, show_error
 
 
@@ -51,22 +51,46 @@ def _disable_cancel(text: str):
         b.setToolTip(text)
 
 
-def _inhibit(pid: int):
-    """ask the system not to shut down or suspend while M-Flasher (pid) writes – for exactly as long as that
-    process lives, even if the app itself ends (systemd-inhibit + tail --pid; nothing happens where they are
-    missing)"""
+class _Inhibitor:
+    """`systemd-inhibit … tail --pid=PID -f /dev/null`: shutdown and suspend are held off for exactly as long as
+    process PID lives (also if the app ends); release() ends it earlier"""
+
+    def __init__(self, proc):
+        self.proc = proc
+
+    def release(self):
+        try:
+            self.proc.terminate()
+        except OSError:
+            pass
+
+
+def hold_off(why: str, pid: int, wait: float = 3.0):
+    """start an inhibitor bound to `pid` and wait until the system lists it (so it is active BEFORE the caller goes
+    on – e.g. before M-Flasher gets "yes"); None where systemd-inhibit is missing"""
     import shutil
     import subprocess
     if not pid or not shutil.which("systemd-inhibit") or not shutil.which("tail"):
         return None
     try:
-        return subprocess.Popen(["systemd-inhibit", "--what=shutdown:sleep:idle:handle-power-key:handle-suspend-key",
-                                 "--who=FM-1 Companion", "--why=M-Flasher is writing the FM-1's flash",
+        proc = subprocess.Popen(["systemd-inhibit", "--what=shutdown:sleep:idle:handle-power-key:handle-suspend-key",
+                                 "--who=FM-1 Companion", f"--why=M-Flasher writes the FM-1's flash ({why})",
                                  "--mode=block", "tail", f"--pid={pid}", "-f", "/dev/null"],
                                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 start_new_session=True)
     except OSError:
         return None
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < wait and proc.poll() is None:
+        try:
+            out = subprocess.run(["systemd-inhibit", "--list", "--no-legend"], capture_output=True, text=True,
+                                 timeout=2).stdout
+        except (OSError, subprocess.SubprocessError):
+            break
+        if f"({why})" in out:
+            break
+        time.sleep(0.1)
+    return _Inhibitor(proc)
 
 
 def _job(ctx, store, worker, writing: bool = False):
@@ -79,7 +103,6 @@ def _job(ctx, store, worker, writing: bool = False):
             call_in_gui(lambda: _disable_cancel(text))
         except Exception:  # noqa: BLE001 – never stops the write
             pass
-        _inhibit(int(record.get("pid") or 0))
     def on_overdue():
         try:
             call_in_gui(_offer_leave)
@@ -99,7 +122,7 @@ def _job(ctx, store, worker, writing: bool = False):
     return FJ.Job(backups_dir=Path(ctx.settings.backups_dir), profiles=getattr(ctx, "store", None), profile=prof,
                   store=store, cancel=_Cancel(worker), say=worker.log.emit, softkey_for=softkey_port(ctx),
                   on_writing=on_writing if writing else None, on_overdue=on_overdue if writing else None,
-                  usb_path=usb)
+                  usb_path=usb, inhibit=hold_off if writing else None)
 
 
 _SEEN: dict = {}            # the last real device a flash job was clicked for: {"profile", "usb", "at"}
@@ -152,6 +175,19 @@ def _sigterm(signum, frame):
         return
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
     os.kill(os.getpid(), signal.SIGTERM)
+
+
+def remember_unit(ctx, job):
+    """after a flash job: the unit that comes back at that USB port (after the app's own download mode / restart) is
+    the job's unit – no "Which FM-1 is this?" for it (the rule of the app's own installation at a port; the write
+    confirmation still applies)"""
+    prof = getattr(job, "profile", None)
+    usb = getattr(job, "unit_usb", "") or getattr(job, "usb_path", "")
+    if prof is not None and usb and hasattr(ctx, "note_installed"):
+        try:
+            ctx.note_installed(prof, usb)
+        except Exception:  # noqa: BLE001
+            pass
 
 
 class write_guard:
@@ -234,7 +270,10 @@ def backup_flow(parent, ctx, store=None) -> Path | None:
 
     def work(w):
         job = _job(ctx, store, w)
-        res = FJ.backup(job)
+        try:
+            res = FJ.backup(job)
+        finally:
+            remember_unit(ctx, job)
         result["res"] = res
         return res
 
@@ -277,13 +316,15 @@ def plan_text(plan) -> str:
             fw=html.escape(plan.image_firmware or _("not known"))),
         "<b>" + _("This writes the whole flash back, the boot area (bootloader and its configuration, "
                   "0x00000–0x03FFF) included.") + "</b> " +
-        _("{n} sectors of 4 KiB differ from what the FM-1 holds now{boot}. Everything on the FM-1 since that day – "
-          "firmware, bootloader, projects, sounds, settings – goes back to the state of the image.").format(
-            n=plan.sectors, boot=_(", the boot area among them") if plan.boot_area else ""),
+        ngettext("{n} sector of 4 KiB differs from what the FM-1 holds now{boot}.",
+                 "{n} sectors of 4 KiB differ from what the FM-1 holds now{boot}.", plan.sectors).format(
+            n=plan.sectors, boot=_(", the boot area among them") if plan.boot_area else "") + " " +
+        _("Everything on the FM-1 since that day – firmware, bootloader, projects, sounds, settings – goes back to "
+          "the state of the image."),
         _("The current state was backed up just now (read twice): {name}.").format(name=html.escape(plan.backup.name)),
         _("M-Flasher checks the unit ID, the flash chip and these sectors once more right before it writes; the app "
           "answers its question only when they match. Do not unplug the FM-1 or switch it off while it writes."),
-        html.escape(tested.tool_note("mf_restore")),
+        html.escape(tested.tool_note("mf_restore", new_chip=plan.revision == "new")),
     ]
     return "<br><br>".join(parts)
 
@@ -333,6 +374,8 @@ def restore_flow(parent, ctx, path: Path | None = None, store=None) -> bool:
         except FJ.WriteFailed as e:
             result["failed"] = e
             raise
+        finally:
+            remember_unit(ctx, job)
         result["res"] = res
         return res
 

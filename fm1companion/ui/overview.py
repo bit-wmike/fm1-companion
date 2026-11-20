@@ -13,6 +13,24 @@ from ..i18n import _, pgettext
 from .common import Card, fmt_date, fmt_size, heading, icon
 
 
+def known_firmware_text(prof, live: bool) -> str:
+    """the firmware a profile shows under “Known devices”: for the active device what runs now; for the others what
+    ran at the last contact, said as such and dated – it may have changed since (Pi run 2026-11-20: a unit shown with
+    Skiff ran SLOOP 3)"""
+    import time as _t
+    from .device import last_firmware_text
+    fw = last_firmware_text(prof)
+    if live:
+        return fw or _("firmware unknown")
+    if not fw:
+        return _("firmware unknown")
+    seen = float(getattr(prof, "last_seen", 0) or 0)
+    if seen:
+        return _("last seen: {firmware} ({date})").format(firmware=fw,
+                                                           date=_t.strftime("%d.%m.%Y", _t.localtime(seen)))
+    return _("last seen: {firmware}").format(firmware=fw)
+
+
 class OverviewPage(QWidget):
     navigate = pyqtSignal(str)
     backup_now = pyqtSignal()
@@ -263,7 +281,7 @@ class OverviewPage(QWidget):
         for prof in sorted(c.store.profiles.values(), key=lambda x: x.name):
             state = _("active") if p and prof.id == p.id else (_("plugged in") if prof.id in connected
                                                                else _("not plugged in"))
-            what = last_firmware_text(prof) or _("firmware unknown")     # (“FM1 Open V14”, not the key “fm1-open 14”)
+            what = known_firmware_text(prof, live=bool(p and prof.id == p.id))
             lines.append(f"<b style='color:{prof.color}'>●</b> <b>{html.escape(prof.name)}</b> – "
                          f"{html.escape(what)} · {state}")
         self.others_text.setText("<br>".join(lines) or _("No devices yet. Connect an FM-1."))

@@ -89,6 +89,7 @@ class UbootDevice:
     vendor: str
     model: str
     usb_path: str
+    product: str = ""       # the USB product string as the device reports it ("WL80UBOOT1.00" on the units seen)
 
     @property
     def size_ok(self) -> bool:
@@ -98,7 +99,8 @@ class UbootDevice:
     def describe(self) -> str:
         sz = f"{self.size // 1024} KiB" if self.size else _("size unknown")
         block = self.block or _("no block device")
-        return f"{self.vendor} {self.model} – {self.sg} ({block}, {sz}, USB {self.usb_id})"
+        usb = f"USB {self.usb_id}" + (f" “{self.product}”" if self.product else "")
+        return f"{self.vendor} {self.model} – {self.sg} ({block}, {sz}, {usb})"
 
 
 def _read(p: Path) -> str:
@@ -131,7 +133,9 @@ def usb_present(sysroot: str = "/sys") -> list[str]:
 
 
 def scan(sysroot: str = "/sys", devroot: str = "/dev") -> list[UbootDevice]:
-    """only SCSI generic devices whose USB ancestor is 4c4a:8057 AND that report WL82 / UBOOT1.00"""
+    """only SCSI generic devices whose USB ancestor is 4c4a:8057 AND that report WL82 (or WL80) / UBOOT1.00 – the
+    ROM's SCSI name is "WL82 UBOOT1.00", its USB product string "WL80UBOOT1.00" (both seen on both revisions,
+    2026-11-20); what the device reports is shown as it is"""
     found = []
     base = Path(sysroot) / "class" / "scsi_generic"
     if not base.is_dir():
@@ -141,7 +145,7 @@ def scan(sysroot: str = "/sys", devroot: str = "/dev") -> list[UbootDevice]:
             continue
         dev = e / "device"
         vendor, model = _read(dev / "vendor"), _read(dev / "model")
-        if vendor.upper() != "WL82" or not model.upper().startswith("UBOOT1.00"):
+        if vendor.upper() not in ("WL82", "WL80") or not model.upper().startswith("UBOOT"):
             continue
         usb = _usb_ancestor(dev)
         if usb is None:
@@ -159,7 +163,7 @@ def scan(sysroot: str = "/sys", devroot: str = "/dev") -> list[UbootDevice]:
                 except ValueError:
                     size = 0
         found.append(UbootDevice(sg=str(Path(devroot) / e.name), block=block, size=size, usb_id=uid,
-                                 vendor=vendor, model=model, usb_path=usb.name))
+                                 vendor=vendor, model=model, usb_path=usb.name, product=_read(usb / "product")))
     return found
 
 

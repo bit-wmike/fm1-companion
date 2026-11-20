@@ -198,7 +198,9 @@ def test_firmware_labels_never_show_a_key_or_a_doubled_version():
     assert firmware_version_text("SLOOP 3", "v3.4.0") == "SLOOP 3 3.4.0"         # (“3” in the name is no version)
     src = (ROOT / "fm1companion" / "ui" / "overview.py").read_text("utf-8")
     known = src[src.index("connected = {pr.id"):src.index("self.others_text.setText")]
-    assert "last_firmware_text(prof)" in known and "prof.firmware}" not in known
+    assert "known_firmware_text(prof" in known and "prof.firmware}" not in known
+    fn = src[src.index("def known_firmware_text"):src.index("class OverviewPage")]
+    assert "last_firmware_text(prof)" in fn
 
 
 # ---------------------------------------------------------------- 5: help

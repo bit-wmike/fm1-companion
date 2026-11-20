@@ -556,18 +556,23 @@ def test_tools_hardware_table_matches_untested_md():
     from fm1companion.flash import tested
     doc = (ROOT / "docs" / "UNTESTED.md").read_text("utf-8")
     sec = doc[doc.index("### M-Flasher through the app"):doc.index("### Backups, presets, projects, samples")]
-    rows = dict(re.findall(r"^\| `(\w+)` – [^|]+\| (not run)\b[^|]*\|$", sec, re.M))
-    assert rows == {k: "not run" for k, (ok, _l) in tested.TOOLS_HARDWARE.items()}
-    assert not any(ok for ok, _l in tested.TOOLS_HARDWARE.values())
+    rows = dict(re.findall(r"^\| `(\w+)` – [^|]+\| (run on hardware|not run)\b[^|]*\|$", sec, re.M))
+    assert rows == {k: ("run on hardware" if ok else "not run") for k, (ok, _l) in tested.TOOLS_HARDWARE.items()}
+    assert [k for k, (ok, _l) in tested.TOOLS_HARDWARE.items() if ok] == [
+        "mf_download_mode", "mf_backup", "mf_restore", "mf_new_chip_backup"]           # (Pi run 2026-11-20)
+    assert not tested.TOOLS_HARDWARE["mf_new_chip_restore"][0]
+    assert "2026-11-20" in sec and "ONE Raspberry Pi 5" in sec and "TWO units" in sec and "Not run: a large" in sec
+    assert "app_flows_pi" in tested.OWNER_REPORTS
     for key, (_ok, label) in tested.TOOLS_HARDWARE.items():
         assert f"| `{key}` – {label} |" in sec, key
         assert key not in tested.STEPS
     assert "mflasher_by_hand" in tested.OWNER_REPORTS and "outside the app" in tested.OWNER_REPORTS["mflasher_by_hand"]
     assert "Owner, outside the app (2026-11-18/19" in sec
-    assert "M-Flasher" in tested.tool_note("mf_restore") and "2026" in tested.tool_note("mf_restore")
-    for lang, needle in (("en", "have not run on a real FM-1 through the app yet"),
-                         ("de", "liefen über die App noch nicht an einem echten FM-1"),
-                         ("es", "aún no se han usado con un FM-1 real a través de la app")):
+    assert tested.tool_note("mf_restore") != tested.tool_note("mf_restore", new_chip=True)
+    assert "2026" in tested.tool_note("mf_restore", new_chip=True)
+    for lang, needle in (("en", "what ran on real hardware (2026-11-20"),
+                         ("de", "was an echter Hardware lief (20.11.2026"),
+                         ("es", "lo que se probó en hardware real (20-11-2026")):
         page = (ROOT / "fm1companion" / "data" / "help" / lang / "03-update-modus.md").read_text("utf-8")
         assert needle in page and ("PLAY" in page and "REC" in page and "DOWNLOAD MODE" in page), lang
 
@@ -1034,3 +1039,174 @@ def test_n9_the_units_own_changed_factory_data_is_named_accurately(env):
     with pytest.raises(FJ.Refused) as e:
         restore(env, old.path)
     assert e.value.kind == "factory" and "not this unit's backup" not in e.value.reason
+
+
+# ------------------------------------------------------------------------------------------------ hardware run 2026-11-20
+
+def _mflasher_own_json(path: Path, img: bytes, uid: str, flash: str = "0x856014"):
+    """M-Flasher's own .json, as src/ops.rs save_backup writes it (synthetic values)"""
+    path.with_suffix(".json").write_text(
+        "{\n" + "".join(f'  "{k}": "{v}",\n' for k, v in (
+            ("model", "FM-1"), ("bootloader", "stock (M-VAVE)"), ("firmware", "Felucca"), ("app", "OK"),
+            ("chip key", "0x980F"), ("flash", flash), ("unit id", uid), ("loader", "M-Flasher 1.3, CPU at 96 MHz")))
+        + f'  "sha256": "{sha(img)}",\n  "saved": "20000101-000000",\n  "tool": "m-flasher 0.12.1"\n}}\n')
+
+
+def test_hw4_m_flashers_own_json_is_accepted_under_the_same_gates(env):
+    old = make_backup(env)
+    img = old.path.read_bytes()
+    own = old.path.with_name("fm1-20000101-000000.bin")
+    own.write_bytes(img)
+    _mflasher_own_json(own, img, UID)
+    side = FJ.check_image(own)
+    assert side["unit id"] == UID and flashdump.side_flash_id(side) == 0x856014 and side["format"] == "m-flasher"
+    change_flash(env)
+    env.set(mode="download")
+    res, plans = restore(env, own)
+    assert res.written and res.verified and env.flash() == img and plans[0].image_date.startswith("2000-01-01")
+    # (listed on the Backups page as checked, too)
+    fb = flashdump.describe(own)
+    assert fb.ok and fb.unit_id == UID
+
+
+def test_hw4_an_unknown_sidecar_is_named_as_such_never_damaged(env):
+    old = make_backup(env)
+    old.path.with_suffix(".json").write_text(json.dumps({"something": "else"}))
+    with pytest.raises(FJ.Refused) as e:
+        FJ.check_image(old.path)
+    from fm1companion.i18n import _
+    assert e.value.kind == "image-damaged"
+    assert "M-Flasher" in e.value.reason and "damaged" not in e.value.reason and "beschädigt" not in e.value.reason
+    old.path.with_suffix(".json").unlink()
+    with pytest.raises(FJ.Refused) as e:
+        FJ.check_image(old.path)
+    assert "damaged" not in e.value.reason and "beschädigt" not in e.value.reason
+    del _
+
+
+def test_hw5_a_known_profiles_foreign_image_is_refused_before_download_mode(env):
+    old = make_backup(env)
+    env.prof.unit_id = OTHER_UID                                   # (the active profile knows its own unit id)
+    env.set(mode="midi", calls=[])
+    with pytest.raises(FJ.Refused) as e:
+        restore(env, old.path)
+    assert e.value.kind == "other-unit" and env.get()["calls"] == [] and env.get()["mode"] == "midi"
+
+
+def test_hw6_the_inhibitor_is_active_before_yes_and_released_after_verify(env):
+    old = make_backup(env)
+    change_flash(env)
+    env.set(mode="download")
+    events = []
+
+    class H:
+        def __init__(self, why):
+            self.why = why
+
+        def release(self):
+            events.append(("release", self.why, len(env.get().get("answers", [])),
+                           len([c for c in env.get()["calls"] if c[0] == "backup"])))
+
+    def inhibit(why, pid):
+        events.append(("start", why, len(env.get().get("answers", [])), len(calls(env, "restore"))))
+        return H(why)
+    FJ.restore(env.job(inhibit=inhibit), old.path, lambda plan: True)
+    starts = [e for e in events if e[0] == "start"]
+    assert starts[0][1:] == ("planned", 0, 0)                      # before M-Flasher's restore even starts
+    assert starts[1][1] == "writing" and starts[1][2] == 0          # bound to M-Flasher, still before its answer
+    rel = [e for e in events if e[0] == "release"]
+    assert rel and rel[0][1] == "planned" and rel[0][2] == 1        # released after "yes" …
+    assert rel[0][3] == len(calls(env, "backup"))                   # … and after the verify read
+
+
+def test_hw8_one_sector_is_singular():
+    from types import SimpleNamespace as NS
+    from fm1companion.ui.flash_tools import plan_text
+    from fm1companion.i18n import ngettext
+    plan = NS(revision="old", image_date="", unit_name="Unit 1", unit_id=UID, image=Path("a.bin"), image_firmware="",
+              sectors=1, boot_area=False, backup=Path("b.bin"))
+    one = ngettext("{n} sector of 4 KiB differs from what the FM-1 holds now{boot}.",
+                   "{n} sectors of 4 KiB differ from what the FM-1 holds now{boot}.", 1).format(n=1, boot="")
+    assert one in plan_text(plan)
+    plan.sectors = 3
+    assert ngettext("{n} sector of 4 KiB differs from what the FM-1 holds now{boot}.",
+                    "{n} sectors of 4 KiB differ from what the FM-1 holds now{boot}.", 3).format(n=3, boot="") \
+        in plan_text(plan)
+
+
+def test_hw7_the_job_dialog_has_no_cancel_once_done():
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    pytest.importorskip("PyQt6.QtWidgets")
+    from PyQt6.QtWidgets import QApplication
+    app = QApplication.instance() or QApplication([])
+    from fm1companion.ui.common import JobDialog
+    d = JobDialog(None, "T", lambda w: 1, cancellable=True, actions=[("Open", lambda r: None)])
+    assert d.cancel_button in d.buttons.buttons()
+    d._done(1)
+    app.processEvents()
+    assert d.cancel_button not in d.buttons.buttons() and not d.cancel_button.isEnabled()
+    d.deleteLater()
+
+
+def test_hw2_the_unit_coming_back_after_a_flash_job_is_the_jobs_unit(env, monkeypatch):
+    monkeypatch.setattr(FJ, "_usb_path_of", lambda dev: "3-1.3.1")
+    job = env.job()
+    FJ.backup(job)
+    assert job.unit_usb == "3-1.3.1"
+    from types import SimpleNamespace as NS
+    from fm1companion.ui.flash_tools import remember_unit
+    noted = []
+    remember_unit(NS(note_installed=lambda p, usb: noted.append((p, usb))), job)
+    assert noted == [(env.prof, "3-1.3.1")]                         # (no "Which FM-1 is this?" when it comes back)
+
+
+def test_hw3_the_ambiguous_question_preselects_nothing(monkeypatch):
+    pytest.importorskip("PyQt6.QtWidgets")
+    from types import SimpleNamespace as NS
+    from PyQt6.QtWidgets import QInputDialog
+    from fm1companion.ui.device import DeviceContext
+    a, b = devices.Profile(id="aaaaaaaaaa", name="Unit 1"), devices.Profile(id="bbbbbbbbbb", name="Unit 2")
+    seen = []
+
+    def get_item(parent, title, text, names, cur, editable):
+        seen.append((list(names), cur))
+        return names[cur], True                                    # (the user just presses OK)
+    monkeypatch.setattr(QInputDialog, "getItem", staticmethod(get_item))
+    me = NS(_asking=False, window=None, settings=NS(last_device="bbbbbbbbbb"), _new_profile=lambda n="": None)
+    assert DeviceContext._ask_profile(me, [a, b], b) is None         # OK on the placeholder: nothing assumed
+    names, cur = seen[0]
+    assert cur == 0 and "Unit" not in names[0] and names[1].startswith("Unit 1")
+    monkeypatch.setattr(QInputDialog, "getItem", staticmethod(lambda *x, **k: (x[3][2], True)))
+    assert DeviceContext._ask_profile(me, [a, b], None) is b          # an explicit choice still works
+
+
+def test_hw10_download_mode_on_purpose_is_not_the_emergency(env, monkeypatch):
+    from fm1companion.flash.uboot import UbootDevice
+    from fm1companion.ui.pages import recovery
+    FJ.INTENDED.clear()
+    FJ.GUIDE_SHOWN.clear()
+    dev = UbootDevice(sg="/dev/sg1", block="", size=0, usb_id="4c4a:8057", vendor="WL82", model="UBOOT1.00",
+                      usb_path="3-1.3.1", product="WL80UBOOT1.00")
+    assert recovery.intended_text(dev) == ""                         # (not known: the emergency text applies)
+    monkeypatch.setattr(FJ, "_usb_path_of", lambda d: "3-1.3.1")
+    env.set(mode="midi")
+    FJ.backup(env.job(), restart_after=False)                       # (the app sent it there and left it)
+    assert FJ.intended_download_mode("3-1.3.1") == "sent" and "WL80UBOOT1.00" in recovery.intended_text(dev)
+    FJ.INTENDED.clear()
+    env.set(mode="none")
+    with pytest.raises(FJ.Refused):
+        FJ.backup(env.job())                                       # (guide shown: keys or m-bootloader's menu)
+    assert FJ.intended_download_mode("9-9") == "guide"
+    FJ.INTENDED.clear()
+    FJ.GUIDE_SHOWN.clear()
+
+
+def test_hw11_known_devices_say_last_seen_with_a_date():
+    from types import SimpleNamespace as NS
+    from fm1companion.ui.overview import known_firmware_text
+    from fm1companion.ui.device import last_firmware_text
+    import time as _t
+    p = NS(firmware="skiff", firmware_version="v2.7", last_seen=_t.mktime((2026, 11, 19, 12, 0, 0, 0, 0, -1)))
+    live, other = known_firmware_text(p, live=True), known_firmware_text(p, live=False)
+    assert live == last_firmware_text(p) and other != live and last_firmware_text(p) in other and "19.11.2026" in other

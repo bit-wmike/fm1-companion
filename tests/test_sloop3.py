@@ -842,7 +842,9 @@ def test_answering_which_fm1_changes_only_the_chosen_profile(tmp_path, monkeypat
     assert items, "the unit contradicts both profiles (SLOOP 3 vs. Skiff): asked"
     # the question names the firmware by its name and says it is what the unit LAST ran (pi finding 28)
     from fm1companion.i18n import _
-    assert items[0][:2] == ["FM-1 Newer " + _("(last seen: {firmware})").format(firmware="Skiff 2.7"),
+    # (first entry: the placeholder – nothing is pre-selected when the identity is ambiguous, Pi run 2026-11-20)
+    assert items[0][0] == _("— please choose —")
+    assert items[0][1:3] == ["FM-1 Newer " + _("(last seen: {firmware})").format(firmware="Skiff 2.7"),
                             "FM-1 Earlier " + _("(last seen: {firmware})").format(firmware="Skiff 2.7")]
     assert not any("skiff v2.7" in x for x in items[0])
     g0, g1 = json.loads(_entry(before, "g")), json.loads(_entry(after, "g"))

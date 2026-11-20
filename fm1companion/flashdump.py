@@ -319,6 +319,61 @@ def read_side(path: Path) -> dict:
     return side
 
 
+MFLASHER_FORMAT = "m-flasher"                    # (normalised) M-Flasher's own .json beside its backups (ops.rs)
+
+
+def _mflasher_side(d: dict, raw: bytes) -> dict | None:
+    """M-Flasher's own .json (src/ops.rs save_backup: model, bootloader, firmware, app, chip key, flash, unit id,
+    loader, sha256, saved YYYYmmdd-HHMMSS, tool "m-flasher X.Y.Z") -> the app's keys; None: not that format"""
+    tool = str(d.get("tool") or "")
+    if not tool.lower().startswith("m-flasher") or "sha256" not in d or "saved" not in d:
+        return None
+    created = ""
+    try:
+        created = dt.datetime.strptime(str(d.get("saved")), "%Y%m%d-%H%M%S").astimezone().strftime(
+            "%Y-%m-%dT%H:%M:%S%z")
+    except ValueError:
+        pass
+    uid = str(d.get("unit id") or "").strip().lower()
+    return {"format": MFLASHER_FORMAT, "size": len(raw), "sha256": str(d.get("sha256") or "").lower(),
+            "unit id": uid if re.fullmatch(r"[0-9a-f]{16}", uid) else "", "flash": str(d.get("flash") or ""),
+            "chip key": str(d.get("chip key") or ""), "created": created, "device": "",
+            "read_through": f"{tool} (its own .json)",
+            "firmware": {"app": "", "m_flasher_guess": str(d.get("firmware") or ""),
+                         "bootloader": str(d.get("bootloader") or "")},
+            "flash_chip": {"jedec": str(d.get("flash") or ""), "unique_id": uid}}
+
+
+def read_any_side(path: Path) -> dict:
+    """the description beside a flash image in the app's format OR in M-Flasher's own, checked against the image
+    -> the description (M-Flasher's normalised to the app's keys). FlashDumpError with an exact reason: no
+    description, a format the app does not know, or – only then – changed or damaged."""
+    path = Path(path)
+    jp = path.with_suffix(".json")
+    try:
+        raw = path.read_bytes()
+    except OSError as e:
+        raise FlashDumpError(_("The flash backup cannot be read: {error}").format(error=e.strerror or e))
+    if not jp.exists():
+        raise FlashDumpError(_("There is no description beside this flash backup ({name}), so the app cannot tell "
+                               "which unit it comes from.").format(name=jp.name))
+    try:
+        d = json.loads(jp.read_text("utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError):
+        d = None
+    if isinstance(d, dict) and d.get("format") == SIDE_FORMAT:
+        return read_side(path)
+    side = _mflasher_side(d, raw) if isinstance(d, dict) else None
+    if side is None:
+        raise FlashDumpError(_("The description beside this flash backup ({name}) is not in a format the app knows – "
+                               "neither the app's own nor M-Flasher's .json. The image itself was not judged.").format(
+                                   name=jp.name))
+    if side["sha256"] != hashlib.sha256(raw).hexdigest():
+        raise FlashDumpError(_("The flash backup does not match the SHA-256 in M-Flasher's description beside it "
+                               "(changed or damaged)."))
+    return side
+
+
 def side_unit_id(side: dict) -> str:
     """the unit id a description names (M-Flasher's key, else the chip's unique id of a version-1 MIDI MODE copy)"""
     chip = side.get("flash_chip") if isinstance(side.get("flash_chip"), dict) else {}
@@ -374,7 +429,22 @@ def describe(path: Path, verify: bool = True) -> FlashBackup:
         side = json.loads(p.with_suffix(".json").read_text("utf-8"))
     except (OSError, ValueError, UnicodeDecodeError):
         side = None
-    if not isinstance(side, dict) or side.get("format") != SIDE_FORMAT:
+    if isinstance(side, dict) and side.get("format") != SIDE_FORMAT:
+        try:
+            raw0 = p.read_bytes() if verify else b""
+        except OSError:
+            raw0 = b""
+        side = _mflasher_side(side, raw0) if _mflasher_side(side, b"") is not None else None
+        if side is not None:
+            fb.created, fb.read_through = side["created"], side["read_through"]
+            fb.jedec, fb.unit_id = side["flash"], side["unit id"]
+            if verify:
+                fb.ok = side["sha256"] == hashlib.sha256(raw0).hexdigest()
+                fb.problem = "" if fb.ok else _("the file does not match M-Flasher's description (changed or damaged)")
+            return fb
+        fb.problem = _("description not in a format the app knows – not checked")
+        return fb
+    if not isinstance(side, dict):
         fb.problem = _("no description beside it – not checked")
         return fb
     chip = side.get("flash_chip") if isinstance(side.get("flash_chip"), dict) else {}

@@ -16,20 +16,11 @@ msgstr "das FM-1 über M-Flasher in den Download-Modus schicken"
 msgid "the whole-flash backup through M-Flasher (read twice)"
 msgstr "die Komplettsicherung des Flash über M-Flasher (zweimal gelesen)"
 
-msgid "writing a whole-flash backup back through M-Flasher"
-msgstr "eine Komplettsicherung des Flash über M-Flasher zurückschreiben"
-
-msgid "any of these on a newer FM-1 (logo on the front, flash UC25HQ80)"
-msgstr "all das auf einem neueren FM-1 (Logo vorne, Flash UC25HQ80)"
-
 msgid "Tested on a real FM-1 through this app: {what}."
 msgstr "An einem echten FM-1 über diese App getestet: {what}."
 
 msgid "Not tested on a real FM-1 through this app yet: {what} ran only against a stand-in for M-Flasher. M-Flasher itself was used this way by hand (backup and restore of the whole flash, 2026-11-18/19)."
 msgstr "Über diese App noch nicht an einem echten FM-1 getestet: {what} lief nur gegen einen Stellvertreter für M-Flasher. M-Flasher selbst wurde genau so von Hand benutzt (Sicherung und Zurückschreiben des ganzen Flash, 18./19.11.2026)."
-
-msgid "Put the FM-1 into USB download mode by hand, then click again:\n• with m-bootloader: hold PLAY while switching the FM-1 on and choose DOWNLOAD MODE – or hold REC while switching it on, which goes there directly;\n• with the original firmware or a Felucca-family firmware (Skiff, SLOOP 2, Melodee …), the app sends it there by itself while it runs on USB MIDI.\nIn download mode the display stays dark or shows M-Flasher's screen; the computer sees “WL82 UBOOT1.00”."
-msgstr "Bring das FM-1 von Hand in den USB-Download-Modus und klick dann noch einmal:\n• mit m-bootloader: beim Einschalten PLAY halten und DOWNLOAD MODE wählen – oder beim Einschalten REC halten, das geht direkt dorthin;\n• mit der Original-Firmware oder einer Firmware der Felucca-Familie (Skiff, SLOOP 2, Melodee …) schickt die App es selbst dorthin, solange es über USB-MIDI läuft.\nIm Download-Modus bleibt das Display dunkel oder zeigt den Bildschirm von M-Flasher; der Computer sieht „WL82 UBOOT1.00“."
 
 msgid "Cancelled. Nothing was written to the FM-1."
 msgstr "Abgebrochen. Auf das FM-1 wurde nichts geschrieben."
@@ -235,9 +226,6 @@ msgstr "nicht bekannt"
 msgid "This writes the whole flash back, the boot area (bootloader and its configuration, 0x00000–0x03FFF) included."
 msgstr "Das schreibt den ganzen Flash zurück, den Boot-Bereich (Bootloader und seine Konfiguration, 0x00000–0x03FFF) eingeschlossen."
 
-msgid "{n} sectors of 4 KiB differ from what the FM-1 holds now{boot}. Everything on the FM-1 since that day – firmware, bootloader, projects, sounds, settings – goes back to the state of the image."
-msgstr "{n} Sektoren zu 4 KiB weichen von dem ab, was das FM-1 jetzt enthält{boot}. Alles auf dem FM-1 seit jenem Tag – Firmware, Bootloader, Projekte, Sounds, Einstellungen – geht auf den Stand des Abbilds zurück."
-
 msgid ", the boot area among them"
 msgstr ", darunter der Boot-Bereich"
 
@@ -393,3 +381,74 @@ msgstr "App schließen?"
 
 msgid "Close the app"
 msgstr "App schließen"
+
+msgid "writing a whole-flash backup back through M-Flasher – so far only small changes on an earlier unit (not yet the boot area or a large difference)"
+msgstr "eine Komplettsicherung des Flash über M-Flasher zurückschreiben – bisher nur kleine Änderungen an einem früheren Gerät (noch nicht der Boot-Bereich oder ein großer Unterschied)"
+
+msgid "the whole-flash backup on a newer FM-1 (logo on the front, flash UC25HQ80)"
+msgstr "die Komplettsicherung des Flash an einem neueren FM-1 (Logo vorne, Flash UC25HQ80)"
+
+msgid "writing a whole-flash backup back on a newer FM-1 (logo on the front, flash UC25HQ80)"
+msgstr "eine Komplettsicherung des Flash an einem neueren FM-1 zurückschreiben (Logo vorne, Flash UC25HQ80)"
+
+msgid "The flash backup cannot be read: {error}"
+msgstr "Die Flash-Sicherung lässt sich nicht lesen: {error}"
+
+msgid "There is no description beside this flash backup ({name}), so the app cannot tell which unit it comes from."
+msgstr "Neben dieser Flash-Sicherung liegt keine Beschreibung ({name}), deshalb kann die App nicht sagen, von welchem Gerät sie stammt."
+
+msgid "The description beside this flash backup ({name}) is not in a format the app knows – neither the app's own nor M-Flasher's .json. The image itself was not judged."
+msgstr "Die Beschreibung neben dieser Flash-Sicherung ({name}) hat kein Format, das die App kennt – weder das eigene der App noch die .json von M-Flasher. Das Abbild selbst wurde nicht beurteilt."
+
+msgid "The flash backup does not match the SHA-256 in M-Flasher's description beside it (changed or damaged)."
+msgstr "Die Flash-Sicherung passt nicht zur SHA-256 in der Beschreibung von M-Flasher daneben (verändert oder beschädigt)."
+
+msgid "the file does not match M-Flasher's description (changed or damaged)"
+msgstr "die Datei passt nicht zur Beschreibung von M-Flasher (verändert oder beschädigt)"
+
+msgid "description not in a format the app knows – not checked"
+msgstr "Beschreibung in einem Format, das die App nicht kennt – nicht geprüft"
+
+msgid "Put the FM-1 into USB download mode by hand, then click again:\n• with m-bootloader: hold PLAY while switching the FM-1 on and choose DOWNLOAD MODE – or hold REC while switching it on, which goes there directly;\n• with the original firmware or a Felucca-family firmware (Skiff, SLOOP 2, Melodee …), the app sends it there by itself while it runs on USB MIDI.\nIn download mode the display stays dark or shows M-Flasher's screen; the computer sees “WL82 UBOOT1.00” (as a USB device it calls itself “WL80UBOOT1.00”)."
+msgstr "Bring das FM-1 von Hand in den USB-Download-Modus und klick dann noch einmal:\n• mit m-bootloader: beim Einschalten PLAY halten und DOWNLOAD MODE wählen – oder beim Einschalten REC halten, das geht direkt dorthin;\n• mit der Original-Firmware oder einer Firmware der Felucca-Familie (Skiff, SLOOP 2, Melodee …) schickt die App es selbst dorthin, solange es über USB-MIDI läuft.\nIm Download-Modus bleibt das Display dunkel oder zeigt den Bildschirm von M-Flasher; der Computer sieht „WL82 UBOOT1.00“ (als USB-Gerät nennt es sich „WL80UBOOT1.00“)."
+
+msgid "This flash backup comes from another FM-1 (unit ID {img}) than “{name}” (unit ID {uid}). A flash image holds its unit's boot area and factory data, so the app writes it only onto the unit it came from. Nothing was done – the FM-1 was not even switched to download mode."
+msgstr "Diese Flash-Sicherung stammt von einem anderen FM-1 (Unit-ID {img}) als „{name}“ (Unit-ID {uid}). Ein Flash-Abbild enthält den Boot-Bereich und die Werksdaten seines Geräts, deshalb schreibt die App es nur auf das Gerät, von dem es stammt. Es wurde nichts getan – das FM-1 wurde nicht einmal in den Download-Modus geschaltet."
+
+msgid "— please choose —"
+msgstr "— bitte auswählen —"
+
+msgid "Everything on the FM-1 since that day – firmware, bootloader, projects, sounds, settings – goes back to the state of the image."
+msgstr "Alles auf dem FM-1 seit jenem Tag – Firmware, Bootloader, Projekte, Sounds, Einstellungen – geht auf den Stand des Abbilds zurück."
+
+msgid "last seen: {firmware} ({date})"
+msgstr "zuletzt gesehen: {firmware} ({date})"
+
+msgid "last seen: {firmware}"
+msgstr "zuletzt gesehen: {firmware}"
+
+msgid "the app's flash backup or write-back sent it there"
+msgstr "die Flash-Sicherung oder das Zurückschreiben der App hat es dorthin geschickt"
+
+msgid "a flash backup or write-back of the app worked with it there"
+msgstr "eine Flash-Sicherung oder ein Zurückschreiben der App hat dort mit ihm gearbeitet"
+
+msgid "the app asked you to put it there (with the keys or m-bootloader's menu)"
+msgstr "die App hat dich gebeten, es dorthin zu bringen (mit den Tasten oder dem Menü von m-bootloader)"
+
+msgid "<span style='color:#27ae60'>● In download mode on purpose</span> – {what}: {device}. Nothing is wrong; this is not the emergency described above. To start it again: “Restart the FM-1” or switch it off and on."
+msgstr "<span style='color:#27ae60'>● Absichtlich im Download-Modus</span> – {what}: {device}. Es ist nichts kaputt; das ist nicht der oben beschriebene Notfall. Zum Wiederstarten: „FM-1 neu starten“ oder aus- und einschalten."
+
+msgid "Restart the FM-1"
+msgstr "FM-1 neu starten"
+
+msgid "Leaves download mode: M-Flasher starts the FM-1's firmware again (writes nothing). Switching it off and on does the same."
+msgstr "Verlässt den Download-Modus: M-Flasher startet die Firmware des FM-1 wieder (schreibt nichts). Aus- und Einschalten tut dasselbe."
+
+msgid "The FM-1 did not restart: switch it off and on."
+msgstr "Das FM-1 ist nicht neu gestartet: Schalte es aus und ein."
+
+msgid "{n} sector of 4 KiB differs from what the FM-1 holds now{boot}."
+msgid_plural "{n} sectors of 4 KiB differ from what the FM-1 holds now{boot}."
+msgstr[0] "{n} Sektor zu 4 KiB weicht von dem ab, was das FM-1 jetzt enthält{boot}."
+msgstr[1] "{n} Sektoren zu 4 KiB weichen von dem ab, was das FM-1 jetzt enthält{boot}."
