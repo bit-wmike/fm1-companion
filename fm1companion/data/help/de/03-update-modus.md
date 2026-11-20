@@ -90,13 +90,38 @@ gesucht hat.
   dann wird das FM-1 neu gestartet. Hat das Schreiben begonnen, lässt es sich nicht mehr abbrechen – dann das FM-1
   nicht abstecken; auch wenn die App geschlossen wird oder abstürzt, schreibt M-Flasher zu Ende, und beim nächsten Start sagt die App, was passiert ist, und fragt, was geschehen soll. Eine Kopie mit anderen Werksdaten (Kalibrierung, Bluetooth-Adresse) als das Gerät wird abgelehnt. Geht etwas schief, bleibt das FM-1 im Download-Modus, und die eben gemachte Sicherung geht auf
   demselben Weg zurück.
+* **In den Download-Modus / FM-1 neu starten** (Rettung › Werkzeuge und das Menü Gerät): dasselbe Umschalten für
+  sich allein, ohne etwas zu lesen – von der App nur an ein FM-1, das sie selbst an seinem USB-Anschluss erkannt hat,
+  sonst sagt sie dir, wie. „FM-1 neu starten“ startet die Firmware aus dem Download-Modus wieder. Beides schreibt
+  nichts.
+* **m-bootloader installieren** (Rettung › Werkzeuge): schreibt das mitgebrachte m-bootloader 2.4 (Prüfsumme
+  geprüft) **nur in den Boot-Bereich 0x00000–0x03FFF**. Vorher wird der ganze Flash gesichert (zweimal gelesen, nicht
+  abwählbar), dann fragt die App dich noch einmal und nennt das Gerät und seine Revision. Auf einem neueren Gerät
+  (Logo vorne) gibt es nur eine m-bootloader-Version, die dort bekanntermaßen läuft (2.4-395e6cc, nach dem Bericht
+  eines Besitzers). Direkt vor dem Schreiben beantwortet die App die Frage von M-Flasher nur, wenn jeder geplante
+  Sektor im Boot-Bereich liegt; danach muss ein frisches Lesen genau diesen Bootloader enthalten, und außerhalb des
+  Boot-Bereichs darf sich nichts geändert haben. Die App merkt sich, dass dieses FM-1 m-bootloader hat. Dann: beim
+  Einschalten **PLAY** halten für sein Menü.
+* **m-bootloader entfernen (Original-Boot-Bereich)**: stellt den Boot-Bereich der Original-Firmware V15 von M-VAVE
+  wieder her – die App lädt das V15-Paket einmal herunter, wenn es nicht auf diesem Computer ist, und prüft es. Vorher
+  dieselbe Sicherung, dieselben Prüfungen; geschrieben werden nur die Sektoren, in denen dein Boot-Bereich von dem
+  der V15 abweicht. Das macht auch rückgängig, was FM1 Open im Boot-Bereich geändert hat. Auf einem FM-1, das mit
+  V16 kam, ist es der Boot-Bereich der V15, nicht unbedingt der ursprüngliche. SLOOP 3 wird nur über m-bootloader
+  installiert: Ob es danach startet, ist nicht bekannt – die eben gemachte Sicherung ist der Rückweg.
+* **Warum der Original-Boot-Bereich wichtig ist:** Viele Firmwares der Felucca-Familie lehnen die Original-V15 ab,
+  wenn der Boot-Bereich nicht der der V15 ist („FAILED -5“ auf dem FM-1, CHECK HEAD). Weiß die App, dass dein FM-1
+  m-bootloader oder den Boot-Bereich von FM1 Open hat (aus einer Flash-Sicherung, von M-Flasher, von m-bootloader
+  selbst oder aus dem Firmware-Verlauf), hält eine Installation einer Felucca-Firmware an und bittet dich, zuerst den
+  Original-Boot-Bereich wiederherzustellen.
 * **Ehrlich gesagt – was an echter Hardware lief (20.11.2026, ein Raspberry Pi 5, zwei Geräte):** das Sichern an
   beiden Geräten (per Umschalten durch die App aus Melodee und aus SLOOP 3, mit REC beim Einschalten, über das Menü
   von m-bootloader), jede Kopie gleich einer von Hand mit M-Flasher gemachten; das Zurückschreiben nur an einem
   früheren Gerät und nur kleine Änderungen (ein Sektor, geprüft), die Ablehnung der Kopie eines anderen Geräts und
   das gesperrte Schließen der App während des Schreibens. Noch nicht gelaufen: Zurückschreiben an einem neueren
   Gerät (Logo vorne), eine große Änderung oder der Boot-Bereich, ein echtes Abmelden während des Schreibens.
-  m-bootloader, Firmware über den Download-Modus und SLOOP 3 über die App kommen in späteren Versionen.
+  m-bootloader installieren und entfernen und „In den Download-Modus“ liefen über die App noch nicht an einem echten
+  FM-1 (der Besitzer hat dasselbe von Hand mit M-Flasher gemacht). Firmware über den Download-Modus und SLOOP 3 über
+  die App kommen in späteren Versionen.
 
 ## Wenn das FM-1 gar nicht als „WL82 UBOOT1.00“ erscheint
 

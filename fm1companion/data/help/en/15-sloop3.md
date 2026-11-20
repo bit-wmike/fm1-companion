@@ -37,8 +37,9 @@ SLOOP 3 keeps **one project** on the FM-1. The app reads it the way the backup d
 
 * **Your samples are not in a `sloop3-backup`.** SLOOP 3 has no command to hand them out. They are in a copy of the
   whole flash, or in the files you sent them from.
-* **The app does not install SLOOP 3, and it does not install m-bootloader.** It explains the way and opens the
-  author's installer page in your browser.
+* **The app does not install SLOOP 3.** It explains the way and opens the author's installer page in your browser.
+  m-bootloader, which SLOOP 3 needs, the app installs itself: Recovery › Tools › “Install m-bootloader” (with a
+  whole-flash backup first; see the help page “Update mode & recovery”).
 * **No automatic backup** for SLOOP 3 unless you switch it on (see below): on a beta the app reads only when you ask.
 * The Studio has no SLOOP 3 twin. The other device pages (presets, samples) speak the Felucca editor
   protocol, which SLOOP 3 does not have – use its editor.

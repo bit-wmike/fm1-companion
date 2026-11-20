@@ -259,7 +259,9 @@ Melodee OCT−+OCT+ is the calibration!).
   "success", −15 Felucca 1.6.1 copies: flash.bin ≠ 0x93000 (Open V12 0x6F000 / V14 0x73000). The app detects −5
   by the read address (the package's boot area) and explains the others in the log.
 * Planner: warning before installations that change the boot area (m-bootloader, Open), and at the V15
-  intermediate step.
+  intermediate step. Since step 3 (below) it also **refuses** the trap: when the app knows the unit's boot area is
+  not V15's and the target is a Felucca-family firmware, or the original firmware handed on by a running
+  Felucca-family firmware, the plan stops and asks for the original boot area first.
 * **M-Flasher, m-bootloader and SLOOP 3 – bundled and driven** (decision 2026-11-19, replacing the earlier "do not
   embed M-Flasher"). The suite does not re-implement these tools; it ships pinned versions, keeps them up to date
   and runs them in the background, as it does with the Unbricker and the firmware editors.
@@ -299,8 +301,10 @@ Melodee OCT−+OCT+ is the calibration!).
     digits; also with 0x, as spaced or colon-separated bytes and inside file names). **Exactly these forms can run**
     (`runner._check_args`): `find`, `download-mode`, `--version`, `--help`, `info --device /dev/sgN`,
     `restart --device /dev/sgN`, `backup --device /dev/sgN --backup-dir DIR` and – only with a gate, see below –
-    `restore FILE.bin --device /dev/sgN --backup-dir DIR`; `--yes`, `--restart`, `--keep-bootloader`, `--board`,
-    `firmware`, `bootloader` and `run-ram` are refused before the process starts. The parser (`tools/mflasher_parse.py`) reads `find` and the `info` block (model,
+    `restore FILE.bin --device /dev/sgN --backup-dir DIR`, `bootloader --file FILE.boot` / `bootloader --stock
+    FILE.fwsc --device /dev/sgN --backup-dir DIR` (step 3, also only with a gate); `--yes`, `--restart`,
+    `--keep-bootloader`, `--board`, `firmware`, `bootloader` without `--file`/`--stock` and `run-ram` are refused
+    before the process starts. The parser (`tools/mflasher_parse.py`) reads `find` and the `info` block (model,
     bootloader, firmware *guess*, app, chip key, flash ID, unit id, loader, evidence); M-Flasher has no
     machine-readable output and only exit codes 0/1, so the app judges by the text. Recovery › Tools shows the
     tools and runs `find` ("Which FM-1 does M-Flasher see?").
@@ -402,13 +406,57 @@ Melodee OCT−+OCT+ is the calibration!).
     * *Not run on hardware through the app* (`tested.TOOLS_HARDWARE`); the owner ran the same M-Flasher commands by
       hand on 2026-11-18/19 (two backups with equal SHA-256, restore of a whole backup onto the same unit, verified,
       `--restart`).
-  * **Later steps** (not in this version): the "Into download mode" button with the guided card for other
-    firmwares (Felucca/SLOOP OCT−+OCT+ 5 s), install m-bootloader (`bootloader --file`, writes only 0x0000–0x3FFF) and remove it
-    (owner decision: `bootloader --stock` with the public V15 package's boot area), firmware through download
-    mode (`firmware`, from 0x4000 on, boot area untouched), SLOOP 3 over m-bootloader's MIDI MODE from the bundled
-    area (writes 0x4000–0x78000 for 3.4.0) – each with a mandatory full backup first and M-Flasher's
-    "Type "yes" to write" prompt as the last gate (the app never passes `--yes`; it reads unit id, flash ID and
-    the planned ranges of that very session and answers only when they match).
+  * **Step 3: download mode on its own, m-bootloader install and removal** (`flashjob.download_mode` /
+    `leave_download_mode` / `install_bootloader` / `remove_bootloader`, `tools/bootarea.py`; buttons on Recovery ›
+    Tools, "Into download mode" and "Restart the FM-1" also in the Device menu).
+    * *Into download mode* is `ensure_download_mode` as its own action: the soft key only to the FM-1 the app
+      recognised itself at its USB port (original firmware, Felucca family, SLOOP 3, by USB ID), otherwise the guide;
+      the unit stays there, marked as there on purpose. *Restart the FM-1*: exactly one unit in download mode and
+      none on USB MIDI → `restart --device` (writes nothing).
+    * *Install m-bootloader*: only the pinned bundled `fm1-uboot.boot` (manifest SHA-256 checked on the bytes, its
+      BANKCB container must say board `fm1`, version 2.4-395e6cc) and only with a write-verified M-Flasher. On a
+      newer unit (UC25HQ80, from the profile or from this session's flash ID) only an m-bootloader build that
+      `data/hardware.json` marks "yes" (2.4-395e6cc counts there) – refused before anything else otherwise. Then,
+      as for the write-back: download mode, `info` (unit id + flash ID → profile), the **mandatory** double-read
+      backup (`backup_before_boot_write`, no skip), the danger dialog (unit, revision, version, the boot area now,
+      the backup), a private copy of the file, `bootloader --file <copy> --device /dev/sgN --backup-dir <staging>`
+      without `--yes`. The gate (`boot_gate`) answers "yes" only when M-Flasher's info block shows the same unit
+      id, flash ID and chip key, the title is "Install the bootloader 2.4-395e6cc for the FM-1", the one note is
+      M-Flasher's (for 1.4 and newer: only the chip key of the configuration is kept), there is exactly one plan
+      line, no stray line, no `WARNING:` and **every announced range lies inside the boot area 0x00000–0x03FFF**
+      (nothing outside). The same write record, inhibitor and no-cancel/no-kill after "yes" as the write-back.
+      Verify: M-Flasher's "Done … verified" line, then a fresh read: 0x04000–0xFFFFF equal to the backup just made,
+      every boot-area sector M-Flasher did not announce unchanged, the boot area holds exactly the bundled container
+      (its 16-byte header and payload ENC 0xFFFF at 0xA0) and M-Flasher reads "m-bootloader 2.4-395e6cc". The
+      profile records `boot_area` = m-bootloader (version, "installed").
+    * *Remove m-bootloader (original boot area)*: **only** `bootloader --stock` with M-VAVE's public V15 package
+      (owner decision). M-Flasher takes the boot area from the package's own `flash.bin` (its first 0x4000 bytes,
+      `plan_bootloader` in ops.rs; nothing of it is built into M-Flasher), so the app uses its existing V15 download
+      (`firmware.fetch_stock("stock-v15")`, SHA-256 db1642b2…) and checks the boot area itself: SHA-256
+      `d9f43191777656de01c7bed4f9e9ba2e34e94832c5d2ed02c3fc7ab7a6d9bd67`, measured on the public file. Same backup,
+      danger dialog, record and no-kill rule; the gate requires the title "Put back the stock bootloader (from
+      FM-1_015)", M-Flasher's note "Only the boot area … all of it from the package." and **exactly** the sector runs
+      where the backup's boot area differs from V15's. Verify: the fresh read's boot area equals V15's and nothing
+      else changed; the profile records the original boot area. On an FM-1 sold with V16 this is V15's boot area,
+      not necessarily the factory one; SLOOP 3 needs m-bootloader – the dialog says so.
+    * *What the app knows of a boot area* (`Profile.boot_area`, `bootarea.current`): every whole-flash read compares
+      its first 0x4000 bytes with V15's ("original"), M-Flasher's info line and m-bootloader's MIDI MODE answer
+      name m-bootloader, the app's own install/removal is recorded after its check, SLOOP 3 counts as m-bootloader,
+      and FM1 Open in the firmware history after the last exact reading means "changed by FM1 Open" (M-Flasher says
+      "stock" for it; V14 differs in about 12.6 KB in 0x20–0x3C2A). The planner's table of firmwares that change the
+      boot area is `bootarea.CHANGERS`.
+    * *Planner (CHECK HEAD):* a known non-original boot area plus a Felucca-family target, or the original firmware
+      handed on by a running Felucca-family firmware → blocker with the way out (the removal above, then the plan
+      again) – never into "FAILED -5". From FM1 Open the existing blocker also asks for the original boot area
+      before a Felucca-family firmware. The V15 policy is otherwise unchanged.
+    * *Not run on hardware through the app* (`tested.TOOLS_HARDWARE`: `mf_download_button`,
+      `mf_bootloader_install`, `mf_bootloader_remove`); the owner did install and the way back by hand
+      (`OWNER_REPORTS["mboot_by_hand"]`).
+  * **Later steps** (not in this version): firmware through download mode (`firmware`, from 0x4000 on, boot area
+    untouched – the planner's route for a unit with m-bootloader / SLOOP 3), SLOOP 3 over m-bootloader's MIDI MODE
+    from the bundled area (writes 0x4000–0x78000 for 3.4.0) – each with a mandatory full backup first and
+    M-Flasher's "Type "yes" to write" prompt as the last gate (the app never passes `--yes`; it reads unit id, flash
+    ID and the planned ranges of that very session and answers only when they match).
 * Hub rescue `fm1_rescue.py` (GPL-3.0): not fetched/checked (budget) – open as a cross-check.
 
 ## 17. V16 and flash safety (analysis and integration, 31 Oct 2026)

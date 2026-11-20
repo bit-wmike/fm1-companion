@@ -268,9 +268,6 @@ msgstr "Apaga y enciende el FM-1 para que arranque."
 msgid "Cancels until M-Flasher starts writing; from then on it runs to its end."
 msgstr "Cancela hasta que M-Flasher empieza a escribir; desde entonces sigue hasta el final."
 
-msgid "The app brings these tools with it and checks each file's checksum before it uses it. With M-Flasher it backs up the whole flash of an FM-1 and writes such a backup back onto the same unit; installing m-bootloader and SLOOP 3 through the app follow in later versions. A new version is only shown – it is fetched when you click “Update”, checked against GitHub's checksum, and the previous version stays as the fallback."
-msgstr "La app trae estas herramientas y comprueba la suma de verificación de cada archivo antes de usarlo. Con M-Flasher copia toda la flash de un FM-1 y vuelve a escribir esa copia en la misma unidad; instalar m-bootloader y SLOOP 3 con la app llegará en versiones posteriores. Una versión nueva solo se muestra: se descarga cuando haces clic en «Actualizar», se comprueba con la suma de verificación de GitHub, y la versión anterior se queda como respaldo."
-
 msgid "Puts the FM-1 into USB download mode (by itself while it runs on USB MIDI, otherwise it tells you how), reads the whole flash twice with M-Flasher, compares both reads and keeps one copy in this device's backup folder. Reads only."
 msgstr "Pone el FM-1 en modo de descarga USB (sola mientras funciona por USB MIDI; si no, te dice cómo), lee toda la flash dos veces con M-Flasher, compara ambas lecturas y guarda una copia en la carpeta de copias de este dispositivo. Solo lectura."
 
@@ -452,3 +449,227 @@ msgid "{n} sector of 4 KiB differs from what the FM-1 holds now{boot}."
 msgid_plural "{n} sectors of 4 KiB differ from what the FM-1 holds now{boot}."
 msgstr[0] "{n} sector de 4 KiB difiere de lo que contiene ahora el FM-1{boot}."
 msgstr[1] "{n} sectores de 4 KiB difieren de lo que contiene ahora el FM-1{boot}."
+
+# Step 3: download mode, m-bootloader install and removal, the boot area
+
+msgid "This FM-1's boot area is not the original one ({what}). Felucca-family firmwares (Melodee, SLOOP, Skiff …) with the old check refuse the original V15 on such a unit (“FAILED -5”), so the usual way – V15 first, then the target – would end in that trap, and later returns would too. First put back the original boot area: Recovery › Tools › “Remove m-bootloader (original boot area)” – it backs up the whole flash first and writes only the boot area 0x00000–0x03FFF (from M-VAVE's V15 package). Then open this plan again."
+msgstr "La zona de arranque de este FM-1 no es la original ({what}). Los firmwares de la familia Felucca (Melodee, SLOOP, Skiff …) con la comprobación antigua rechazan el V15 original en una unidad así («FAILED -5»), así que el camino habitual – primero V15, después el destino – acabaría en esa trampa, y las vueltas posteriores también. Primero vuelve a poner la zona de arranque original: Recuperación › Herramientas › «Quitar m-bootloader (zona de arranque original)» – antes copia toda la flash y escribe solo la zona de arranque 0x00000–0x03FFF (del paquete V15 de M-VAVE). Después abre este plan otra vez."
+
+msgid "FM1 Open changes the boot area (measured on V14), and the original firmware does not necessarily put it back: before a Felucca-family firmware, put back the original boot area too (Recovery › Tools › “Remove m-bootloader (original boot area)”, with a whole-flash backup first)."
+msgstr "FM1 Open cambia la zona de arranque (medido en V14), y el firmware original no la restaura necesariamente: antes de un firmware de la familia Felucca, vuelve a poner también la zona de arranque original (Recuperación › Herramientas › «Quitar m-bootloader (zona de arranque original)», con una copia de toda la flash antes)."
+
+msgid "the button “Into download mode” and “Restart the FM-1” on their own"
+msgstr "los botones «Al modo de descarga» y «Reiniciar el FM-1» por sí solos"
+
+msgid "installing m-bootloader through M-Flasher (bootloader --file)"
+msgstr "instalar m-bootloader con M-Flasher (bootloader --file)"
+
+msgid "putting back the original boot area through M-Flasher (bootloader --stock with M-VAVE's V15 package)"
+msgstr "volver a poner la zona de arranque original con M-Flasher (bootloader --stock con el paquete V15 de M-VAVE)"
+
+msgid "Not tested on a real FM-1 through this app yet: {what} ran only against a stand-in for M-Flasher. The owner did the same with M-Flasher by hand, outside the app (2026-11-18/19)."
+msgstr "Aún no probado en un FM-1 real con esta app: {what} solo se ejecutó contra un sustituto de M-Flasher. El propietario hizo lo mismo a mano con M-Flasher, fuera de la app (18/19-11-2026)."
+
+msgid "m-bootloader replaces the bootloader in the boot area (4 sectors, 0x00000–0x03FFF)"
+msgstr "m-bootloader sustituye el bootloader en la zona de arranque (4 sectores, 0x00000–0x03FFF)"
+
+msgid "M-VAVE's FM1 Open (V12, V14) changes the boot area – measured on V14: about 12.6 KB in 0x00020–0x03C2A, although M-Flasher reports “stock”"
+msgstr "FM1 Open de M-VAVE (V12, V14) cambia la zona de arranque – medido en V14: unos 12,6 KB en 0x00020–0x03C2A, aunque M-Flasher indica «stock»"
+
+msgid "from a whole-flash backup"
+msgstr "por una copia de toda la flash"
+
+msgid "reported by M-Flasher"
+msgstr "indicado por M-Flasher"
+
+msgid "reported by m-bootloader's MIDI MODE"
+msgstr "indicado por el MIDI MODE de m-bootloader"
+
+msgid "written and checked by this app"
+msgstr "escrito y comprobado por esta app"
+
+msgid "from the firmware history"
+msgstr "por el historial de firmware"
+
+msgid "SLOOP 3 runs only from m-bootloader"
+msgstr "SLOOP 3 solo funciona sobre m-bootloader"
+
+msgid "the original boot area (as in M-VAVE's V15 package)"
+msgstr "la zona de arranque original (como en el paquete V15 de M-VAVE)"
+
+msgid "m-bootloader"
+msgstr "m-bootloader"
+
+msgid "changed by FM1 Open"
+msgstr "cambiada por FM1 Open"
+
+msgid "not the original boot area"
+msgstr "no es la zona de arranque original"
+
+msgid "This is not a firmware package (.fwsc)."
+msgstr "Esto no es un paquete de firmware (.fwsc)."
+
+msgid "The package has no flash image (flash.bin)."
+msgstr "El paquete no tiene imagen de flash (flash.bin)."
+
+msgid "The package's flash image has an unexpected size."
+msgstr "La imagen de flash del paquete tiene un tamaño inesperado."
+
+msgid "The V15 package's boot area is not the expected one."
+msgstr "La zona de arranque del paquete V15 no es la esperada."
+
+msgid "No FM-1 is in download mode."
+msgstr "Ningún FM-1 está en modo de descarga."
+
+msgid "More than one FM-1 is connected. So that the right one restarts, leave only that one connected – or switch it off and on."
+msgstr "Hay más de un FM-1 conectado. Para que se reinicie el correcto, deja conectado solo ese – o apágalo y enciéndelo."
+
+msgid "The bundled m-bootloader is missing. Reinstall the app. Nothing was written."
+msgstr "Falta el m-bootloader incluido. Reinstala la app. No se escribió nada."
+
+msgid "The bundled m-bootloader did not pass its checksum test, so the app does not write it. Reinstall the app. Nothing was written."
+msgstr "El m-bootloader incluido no superó la comprobación de su suma de verificación, así que la app no lo escribe. Reinstala la app. No se escribió nada."
+
+msgid "The bundled m-bootloader is not a build for the FM-1. Nothing was written."
+msgstr "El m-bootloader incluido no es una versión para el FM-1. No se escribió nada."
+
+msgid "This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80). On such a unit the app installs only an m-bootloader build that is known to run there (data/hardware.json), and m-bootloader {version} is not one of them. Nothing was written."
+msgstr "Este FM-1 es una unidad más nueva (logotipo delante, chip de flash UC25HQ80). En una unidad así la app instala solo una versión de m-bootloader que se sabe que funciona allí (data/hardware.json), y m-bootloader {version} no es una de ellas. No se escribió nada."
+
+msgid "M-Flasher reports no unit ID for the connected FM-1, so the app cannot tie the write to this unit. Nothing was written."
+msgstr "M-Flasher no indica ningún ID de unidad para el FM-1 conectado, así que la app no puede vincular la escritura a esta unidad. No se escribió nada."
+
+msgid "M-Flasher reads a flash chip the app does not know ({chip}). Nothing was written."
+msgstr "M-Flasher lee un chip de flash que la app no conoce ({chip}). No se escribió nada."
+
+msgid "m-bootloader {version} is installed on this FM-1 already: nothing to write."
+msgstr "m-bootloader {version} ya está instalado en este FM-1: nada que escribir."
+
+msgid "On a newer unit: m-bootloader {version} ran on one such unit (owner's report, outside this app)."
+msgstr "En una unidad más nueva: m-bootloader {version} funcionó en una unidad así (informe de un propietario, fuera de esta app)."
+
+msgid "This FM-1 has the original boot area already (the one of M-VAVE's V15 package): nothing to write."
+msgstr "Este FM-1 ya tiene la zona de arranque original (la del paquete V15 de M-VAVE): nada que escribir."
+
+msgid "SLOOP 3 is installed only through m-bootloader. Whether it starts with the original bootloader is not known. If the FM-1 does not start afterwards, the way back is the backup made just now, written back from USB download mode (Recovery, stage 2)."
+msgstr "SLOOP 3 se instala solo a través de m-bootloader. No se sabe si arranca con el bootloader original. Si el FM-1 no arranca después, el camino de vuelta es la copia hecha justo ahora, escrita de nuevo desde el modo de descarga USB (Recuperación, etapa 2)."
+
+msgid "Nothing was written. The FM-1 is unchanged; the backup made just now is kept."
+msgstr "No se escribió nada. El FM-1 no ha cambiado; la copia hecha justo ahora se conserva."
+
+msgid "Writing the boot area (do not unplug the FM-1 or switch it off) …"
+msgstr "Escribiendo la zona de arranque (no desconectes ni apagues el FM-1) …"
+
+msgid "the flash changed outside the boot area"
+msgstr "la flash cambió fuera de la zona de arranque"
+
+msgid "a sector of the boot area changed that M-Flasher did not announce"
+msgstr "cambió un sector de la zona de arranque que M-Flasher no había anunciado"
+
+msgid "the boot area does not hold this m-bootloader"
+msgstr "la zona de arranque no contiene este m-bootloader"
+
+msgid "the boot area is not the one of the V15 package"
+msgstr "la zona de arranque no es la del paquete V15"
+
+msgid "M-Flasher said there is nothing to write, but the fresh read does not show the expected boot area ({why}). Nothing was written."
+msgstr "M-Flasher dijo que no había nada que escribir, pero la lectura nueva no muestra la zona de arranque esperada ({why}). No se escribió nada."
+
+msgid "The FM-1 is in USB download mode now ({device}). Nothing was written. “Restart the FM-1” (or switching it off and on) starts its firmware again."
+msgstr "El FM-1 está ahora en modo de descarga USB ({device}). No se escribió nada. «Reiniciar el FM-1» (o apagarlo y encenderlo) vuelve a arrancar su firmware."
+
+msgid "An FM-1 is in USB download mode already ({device}). Nothing was written."
+msgstr "Un FM-1 ya está en modo de descarga USB ({device}). No se escribió nada."
+
+msgid "Into download mode"
+msgstr "Al modo de descarga"
+
+msgid "The FM-1 was restarted. Nothing was written."
+msgstr "El FM-1 se reinició. No se escribió nada."
+
+msgid "“{unit}” (unit ID {uid}, {revision})"
+msgstr "«{unit}» (ID de unidad {uid}, {revision})"
+
+msgid "Install m-bootloader {version} on {who}?"
+msgstr "¿Instalar m-bootloader {version} en {who}?"
+
+msgid "The app writes the bundled m-bootloader {version} (fm1-uboot.boot, checksum checked) with M-Flasher. <b>Only the boot area 0x00000–0x03FFF is written</b> (four sectors at most); the firmware, projects, sounds and factory data stay as they are. Afterwards the FM-1 starts through m-bootloader: hold PLAY while switching it on for its menu (DOWNLOAD MODE, MIDI MODE), REC for USB download mode directly."
+msgstr "La app escribe el m-bootloader {version} incluido (fm1-uboot.boot, suma de verificación comprobada) con M-Flasher. <b>Solo se escribe la zona de arranque 0x00000–0x03FFF</b> (como mucho cuatro sectores); el firmware, los proyectos, los sonidos y los datos de fábrica quedan como están. Después el FM-1 arranca a través de m-bootloader: mantén PLAY al encenderlo para su menú (DOWNLOAD MODE, MIDI MODE), REC para ir directamente al modo de descarga USB."
+
+msgid "Put back the original boot area on {who}?"
+msgstr "¿Volver a poner la zona de arranque original en {who}?"
+
+msgid "The app writes the boot area of M-VAVE's original firmware V15 (from the V15 package, checksum checked) with M-Flasher – that removes m-bootloader and what FM1 Open changed there. <b>Only the boot area 0x00000–0x03FFF is written</b>; the firmware, projects, sounds and factory data stay as they are. On an FM-1 that came with V16 this is V15's boot area, not necessarily the one it came with."
+msgstr "La app escribe con M-Flasher la zona de arranque del firmware original V15 de M-VAVE (del paquete V15, suma de verificación comprobada) – eso quita m-bootloader y lo que FM1 Open cambió allí. <b>Solo se escribe la zona de arranque 0x00000–0x03FFF</b>; el firmware, los proyectos, los sonidos y los datos de fábrica quedan como están. En un FM-1 que vino con V16 es la zona de arranque de V15, no necesariamente la que traía."
+
+msgid "Boot area now (as M-Flasher reads it): {now}. Firmware (as the app knows it): {fw}."
+msgstr "Zona de arranque ahora (tal como la lee M-Flasher): {now}. Firmware (tal como la conoce la app): {fw}."
+
+msgid "The whole flash was backed up just now (read twice): {name}. That is the way back."
+msgstr "Toda la flash se acaba de copiar (leída dos veces): {name}. Ese es el camino de vuelta."
+
+msgid "M-Flasher checks the unit ID, the flash chip and the sectors once more right before it writes; the app answers its question only when every planned range lies inside the boot area. Do not unplug the FM-1 or switch it off while it writes."
+msgstr "M-Flasher comprueba el ID de unidad, el chip de flash y los sectores otra vez justo antes de escribir; la app responde a su pregunta solo si cada rango previsto está dentro de la zona de arranque. No desconectes ni apagues el FM-1 mientras escribe."
+
+msgid "Install m-bootloader"
+msgstr "Instalar m-bootloader"
+
+msgid "The app first puts the FM-1 into download mode, reads it and backs up the whole flash (read twice). Then it asks you once more before m-bootloader is written into the boot area. Nothing is written without that backup."
+msgstr "La app pone primero el FM-1 en modo de descarga, lo lee y copia toda la flash (leída dos veces). Después te pregunta otra vez antes de escribir m-bootloader en la zona de arranque. Sin esa copia no se escribe nada."
+
+msgid "Remove m-bootloader (original boot area)"
+msgstr "Quitar m-bootloader (zona de arranque original)"
+
+msgid "The app takes the boot area from M-VAVE's original V15 package (downloaded once from M-VAVE's public repository if it is not on this computer yet, checked against its checksum). Then it puts the FM-1 into download mode, backs up the whole flash (read twice) and asks you once more before the boot area is written."
+msgstr "La app toma la zona de arranque del paquete V15 original de M-VAVE (descargado una vez del repositorio público de M-VAVE si aún no está en este ordenador, comprobado con su suma de verificación). Después pone el FM-1 en modo de descarga, copia toda la flash (leída dos veces) y te pregunta otra vez antes de escribir la zona de arranque."
+
+msgid "Write the boot area"
+msgstr "Escribir la zona de arranque"
+
+msgid "Getting M-VAVE's original V15 package …"
+msgstr "Obteniendo el paquete V15 original de M-VAVE …"
+
+msgid "m-bootloader {version} is on this FM-1 already – nothing was written."
+msgstr "m-bootloader {version} ya está en este FM-1 – no se escribió nada."
+
+msgid "This FM-1 has the original boot area already – nothing was written."
+msgstr "Este FM-1 ya tiene la zona de arranque original – no se escribió nada."
+
+msgid "m-bootloader {version} installed and checked: M-Flasher confirmed every sector, a fresh read holds exactly this bootloader, and nothing outside the boot area changed. {started} The state before is kept as {name}."
+msgstr "m-bootloader {version} instalado y comprobado: M-Flasher confirmó cada sector, una lectura nueva contiene exactamente este bootloader y nada cambió fuera de la zona de arranque. {started} El estado anterior se conserva como {name}."
+
+msgid "Original boot area put back and checked: M-Flasher confirmed every sector, a fresh read holds the boot area of the V15 package, and nothing outside it changed. {started} The state before is kept as {name}."
+msgstr "Zona de arranque original restaurada y comprobada: M-Flasher confirmó cada sector, una lectura nueva contiene la zona de arranque del paquete V15 y nada cambió fuera de ella. {started} El estado anterior se conserva como {name}."
+
+msgid "Writing the boot area of “{device}” (unit ID {uid}, m-bootloader) started on {when} did not end verified – the app was closed or ended while M-Flasher wrote, or the write failed."
+msgstr "La escritura de la zona de arranque de «{device}» (ID de unidad {uid}, m-bootloader), iniciada el {when}, no terminó comprobada – la app se cerró o terminó mientras M-Flasher escribía, o la escritura falló."
+
+msgid "The FM-1 may be in download mode now. Nothing is done automatically. Its state before the write: {pre} – writing it back goes through all the usual checks."
+msgstr "Puede que el FM-1 esté ahora en modo de descarga. No se hace nada automáticamente. Su estado antes de la escritura: {pre} – volver a escribirlo pasa por todas las comprobaciones habituales."
+
+msgid "USB download mode through M-Flasher (writes nothing); the app sends the FM-1 there only when it recognised it, otherwise it tells you how"
+msgstr "Modo de descarga USB con M-Flasher (no escribe nada); la app envía el FM-1 allí solo si lo reconoció, si no, te dice cómo"
+
+msgid "Restart the FM-1 (leave download mode)"
+msgstr "Reiniciar el FM-1 (salir del modo de descarga)"
+
+msgid "M-Flasher starts the FM-1's firmware again (writes nothing)"
+msgstr "M-Flasher vuelve a arrancar el firmware del FM-1 (no escribe nada)"
+
+msgid "The app brings these tools with it and checks each file's checksum before it uses it. With M-Flasher it backs up the whole flash of an FM-1 and writes such a backup back onto the same unit, puts it into download mode and installs or removes m-bootloader (each write only after a whole-flash backup); installing firmware through download mode and SLOOP 3 follow in later versions. A new version is only shown – it is fetched when you click “Update”, checked against GitHub's checksum, and the previous version stays as the fallback."
+msgstr "La app trae estas herramientas consigo y comprueba la suma de verificación de cada archivo antes de usarlo. Con M-Flasher copia toda la flash de un FM-1 y vuelve a escribir esa copia en la misma unidad, lo pone en modo de descarga e instala o quita m-bootloader (cada escritura solo después de una copia de toda la flash); instalar firmware por el modo de descarga y SLOOP 3 llegarán en versiones posteriores. Una versión nueva solo se muestra – se descarga cuando pulsas «Actualizar», se comprueba con la suma de verificación de GitHub y la versión anterior queda como respaldo."
+
+msgid "Puts the FM-1 into USB download mode – by itself only when the app recognised the FM-1 (original firmware, Felucca family, SLOOP 3) at its USB port, otherwise it tells you how. Writes nothing."
+msgstr "Pone el FM-1 en modo de descarga USB – por sí sola solo cuando la app reconoció el FM-1 (firmware original, familia Felucca, SLOOP 3) en su puerto USB; si no, te dice cómo. No escribe nada."
+
+msgid "Leaves download mode: M-Flasher starts the FM-1's firmware again (writes nothing)."
+msgstr "Sale del modo de descarga: M-Flasher vuelve a arrancar el firmware del FM-1 (no escribe nada)."
+
+msgid "Writes the bundled m-bootloader into the boot area (0x00000–0x03FFF) with M-Flasher – after a whole-flash backup and your confirmation."
+msgstr "Escribe el m-bootloader incluido en la zona de arranque (0x00000–0x03FFF) con M-Flasher – después de una copia de toda la flash y de tu confirmación."
+
+msgid "Puts back the boot area of M-VAVE's original V15 package (0x00000–0x03FFF) with M-Flasher – removes m-bootloader and what FM1 Open changed there; after a whole-flash backup and your confirmation."
+msgstr "Vuelve a poner con M-Flasher la zona de arranque del paquete V15 original de M-VAVE (0x00000–0x03FFF) – quita m-bootloader y lo que FM1 Open cambió allí; después de una copia de toda la flash y de tu confirmación."
+
+msgid "Boot area of “{device}”: {state}."
+msgstr "Zona de arranque de «{device}»: {state}."
