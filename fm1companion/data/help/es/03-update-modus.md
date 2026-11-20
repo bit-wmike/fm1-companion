@@ -109,8 +109,10 @@ nueva.
 * **Por qué importa la zona de arranque original:** muchos firmwares de la familia Felucca rechazan el V15 original si
   la zona de arranque no es la de V15 («FAILED -5» en el FM-1, CHECK HEAD). Si la app sabe que tu FM-1 tiene
   m-bootloader o la zona de arranque de FM1 Open (por una copia de la flash, por M-Flasher, por el propio m-bootloader
-  o por el historial de firmware), la instalación de un firmware de la familia Felucca se detiene y te pide que antes
-  vuelvas a poner la zona de arranque original.
+  o por el historial de firmware), un plan que caería en esa trampa (primero V15, o el propio V15 desde un firmware de
+  la familia Felucca – y tras FM1 Open cualquier firmware de la familia Felucca) se detiene y te pide que antes vuelvas
+  a poner la zona de arranque original. Una actualización del mismo firmware en un FM-1 con m-bootloader sigue
+  funcionando; el plan avisa de que la vuelta posterior necesita la zona de arranque original.
 * **Con sinceridad – lo que se probó en hardware real (20-11-2026, una Raspberry Pi 5, dos unidades):** la copia en
   ambas unidades (con el cambio de la propia app desde Melodee y desde SLOOP 3, con REC al encender, por el menú de
   m-bootloader), cada copia idéntica a una hecha a mano con M-Flasher; volver a escribir solo en una unidad anterior

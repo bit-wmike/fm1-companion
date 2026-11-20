@@ -673,3 +673,6 @@ msgstr "Stellt mit M-Flasher den Boot-Bereich des Original-V15-Pakets von M-VAVE
 
 msgid "Boot area of “{device}”: {state}."
 msgstr "Boot-Bereich von „{device}“: {state}."
+
+msgid "This FM-1 has m-bootloader. Installing over it keeps it, but a later return to the original V15 from this firmware ends in “FAILED -5” – before that, put back the original boot area (Recovery › Tools › “Remove m-bootloader (original boot area)”)."
+msgstr "Dieses FM-1 hat m-bootloader. Die Installation darüber behält es, aber eine spätere Rückkehr zur Original-V15 aus dieser Firmware endet in „FAILED -5“ – stelle vorher den Original-Boot-Bereich wieder her (Rettung › Werkzeuge › „m-bootloader entfernen (Original-Boot-Bereich)“)."

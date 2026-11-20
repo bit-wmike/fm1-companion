@@ -673,3 +673,6 @@ msgstr "Vuelve a poner con M-Flasher la zona de arranque del paquete V15 origina
 
 msgid "Boot area of “{device}”: {state}."
 msgstr "Zona de arranque de «{device}»: {state}."
+
+msgid "This FM-1 has m-bootloader. Installing over it keeps it, but a later return to the original V15 from this firmware ends in “FAILED -5” – before that, put back the original boot area (Recovery › Tools › “Remove m-bootloader (original boot area)”)."
+msgstr "Este FM-1 tiene m-bootloader. Instalar encima lo conserva, pero una vuelta posterior al V15 original desde este firmware termina en «FAILED -5» – antes, vuelve a poner la zona de arranque original (Recuperación › Herramientas › «Quitar m-bootloader (zona de arranque original)»)."

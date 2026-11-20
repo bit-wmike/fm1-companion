@@ -103,8 +103,10 @@ before every use and never runs a changed file), and when it last looked for a n
   way back.
 * **Why the original boot area matters:** many Felucca-family firmwares refuse the original V15 when the boot area is
   not V15's (“FAILED -5” on the FM-1, CHECK HEAD). When the app knows that your FM-1 has m-bootloader or FM1 Open's
-  boot area (from a flash backup, from M-Flasher, from m-bootloader itself or from the firmware history), an
-  installation of a Felucca-family firmware stops and asks you to put back the original boot area first.
+  boot area (from a flash backup, from M-Flasher, from m-bootloader itself or from the firmware history), a plan that
+  would hit this (V15 first, or V15 itself from a Felucca-family firmware – and after FM1 Open any Felucca-family
+  firmware) stops and asks you to put back the original boot area first. An update of the same firmware on an FM-1
+  with m-bootloader still works; the plan warns that the later way back needs the original boot area.
 * **Honestly – what ran on real hardware (2026-11-20, one Raspberry Pi 5, two units):** the backup on both units (by
   the app's own switch from Melodee and from SLOOP 3, with REC at power-on, through m-bootloader's menu), each copy
   identical with one M-Flasher made by hand; writing back only on an earlier unit and only small changes (one

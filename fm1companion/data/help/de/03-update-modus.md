@@ -111,8 +111,10 @@ gesucht hat.
 * **Warum der Original-Boot-Bereich wichtig ist:** Viele Firmwares der Felucca-Familie lehnen die Original-V15 ab,
   wenn der Boot-Bereich nicht der der V15 ist („FAILED -5“ auf dem FM-1, CHECK HEAD). Weiß die App, dass dein FM-1
   m-bootloader oder den Boot-Bereich von FM1 Open hat (aus einer Flash-Sicherung, von M-Flasher, von m-bootloader
-  selbst oder aus dem Firmware-Verlauf), hält eine Installation einer Felucca-Firmware an und bittet dich, zuerst den
-  Original-Boot-Bereich wiederherzustellen.
+  selbst oder aus dem Firmware-Verlauf), hält ein Plan, der in diese Falle liefe (erst V15, oder V15 selbst aus einer
+  Firmware der Felucca-Familie – und nach FM1 Open jede Felucca-Firmware), an und bittet dich, zuerst den
+  Original-Boot-Bereich wiederherzustellen. Ein Update derselben Firmware auf einem FM-1 mit m-bootloader geht
+  weiterhin; der Plan warnt, dass der spätere Rückweg den Original-Boot-Bereich braucht.
 * **Ehrlich gesagt – was an echter Hardware lief (20.11.2026, ein Raspberry Pi 5, zwei Geräte):** das Sichern an
   beiden Geräten (per Umschalten durch die App aus Melodee und aus SLOOP 3, mit REC beim Einschalten, über das Menü
   von m-bootloader), jede Kopie gleich einer von Hand mit M-Flasher gemachten; das Zurückschreiben nur an einem

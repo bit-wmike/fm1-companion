@@ -23,8 +23,14 @@ sys.path.insert(0, str(ROOT / "tests"))
 from fm1companion import devices, hardware  # noqa: E402
 from fm1companion.flash import journal as fj, package as pk, planner, tested  # noqa: E402
 from fm1companion.tools import bootarea, flashjob as FJ, mflasher_parse as mp, runner  # noqa: E402
+from fm1companion.i18n import _  # noqa: E402
 from test_tools_flash import ARCH, OTHER_UID, UID, calls, env, nothing_written, sha  # noqa: E402,F401
 
+OPEN_TOO = ("FM1 Open changes the boot area (measured on V14), and the original firmware does not necessarily put it "
+            "back: before a Felucca-family firmware, put back the original boot area too (Recovery › Tools › “Remove "
+            "m-bootloader (original boot area)”, with a whole-flash backup first).")
+BY_HAND = ("Not tested on a real FM-1 through this app yet: {what} ran only against a stand-in for M-Flasher. The owner "
+           "did the same with M-Flasher by hand, outside the app (2026-11-18/19).")
 BOOT = (ROOT / "fm1companion" / "tools" / "bundled" / "m-bootloader" / "fm1-uboot.boot").read_bytes()
 VERSION = "2.4-395e6cc"
 
@@ -533,10 +539,21 @@ def _stock():
 def test_check_head_trap_a_felucca_target_on_a_changed_boot_area_is_refused(kind):
     p = planner.plan_install(_state(boot_area=kind, boot_area_text="x"), _target())
     assert not p.ok and p.boot_restore
-    assert any("FAILED -5" in b and "original boot area" in b for b in p.blockers)
+    assert planner.BOOT_TRAP.format(what="x") in p.blockers
     # the way back to the original V15 from a running Felucca-family firmware too
     p = planner.plan_install(_state(boot_area=kind), _stock())
     assert not p.ok and p.boot_restore
+
+
+def test_m_bootloader_with_an_update_of_the_same_firmware_is_no_trap_but_warned():
+    st = _state(identity="FM-1_727", firmware_key="skiff", boot_area=bootarea.MBOOT)
+    p = planner.plan_install(st, _target())
+    assert p.v15_option == "none" and not p.boot_restore
+    assert any("m-bootloader" in w and "FAILED -5" in w for w in p.warnings)            # (both words in de/es too)
+    p = planner.plan_install(_state(identity="FM-1_727", firmware_key="skiff", boot_area=bootarea.OPEN), _target())
+    assert p.boot_restore                                                    # (FM1 Open's boot area: refused)
+    p = planner.plan_install(st, _target(), via_v15=False)                  # (expert: no V15 step, no trap)
+    assert not p.boot_restore
 
 
 @pytest.mark.parametrize("kind", ["", bootarea.ORIGINAL])
@@ -558,7 +575,7 @@ def test_v15_from_the_original_firmware_is_no_trap():
 def test_away_from_fm1_open_needs_the_original_boot_area_first():
     st = _state(identity="FM1_OFFICIAL_OPEN", felucca=False, firmware_key="fm1-open")
     p = planner.plan_install(st, _target())
-    assert any("FM1 Open changes the boot area" in b for b in p.blockers)
+    assert any(_(OPEN_TOO) in b for b in p.blockers)
     # after the Workbench took it back to V15: the profile still remembers FM1 Open – the planner refuses a Felucca
     # target until the original boot area is back
     prof = devices.Profile(id="aaaaaaaaaa", name="Unit 1", firmware="stock-v15",
@@ -586,6 +603,7 @@ def test_new_tool_kinds_are_not_marked_tested_and_the_owner_report_is_outside_th
     for k in ("mf_download_button", "mf_bootloader_install", "mf_bootloader_remove"):
         assert k in tested.TOOLS_HARDWARE and not tested.TOOLS_HARDWARE[k][0]
     assert "outside the app" in tested.OWNER_REPORTS["mboot_by_hand"]
-    assert "by hand" in tested.tool_note("mf_bootloader_install")
+    assert tested.tool_note("mf_bootloader_install") == _(BY_HAND).format(what=_(tested.TOOLS_HARDWARE[
+        "mf_bootloader_install"][1]))
     doc = (ROOT / "docs" / "flash-protocol.md").read_text("utf-8")
     assert "Step 3" in doc and "bootloader --stock" in doc and bootarea.V15_BOOT_AREA_SHA256[:8] in doc

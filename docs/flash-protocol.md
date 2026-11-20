@@ -260,8 +260,8 @@ Melodee OCT−+OCT+ is the calibration!).
   by the read address (the package's boot area) and explains the others in the log.
 * Planner: warning before installations that change the boot area (m-bootloader, Open), and at the V15
   intermediate step. Since step 3 (below) it also **refuses** the trap: when the app knows the unit's boot area is
-  not V15's and the target is a Felucca-family firmware, or the original firmware handed on by a running
-  Felucca-family firmware, the plan stops and asks for the original boot area first.
+  not V15's and the original firmware would be handed on by a running Felucca-family firmware (or the boot area is
+  FM1 Open's and the target is a Felucca-family firmware), the plan stops and asks for the original boot area first.
 * **M-Flasher, m-bootloader and SLOOP 3 – bundled and driven** (decision 2026-11-19, replacing the earlier "do not
   embed M-Flasher"). The suite does not re-implement these tools; it ships pinned versions, keeps them up to date
   and runs them in the background, as it does with the Unbricker and the firmware editors.
@@ -445,10 +445,13 @@ Melodee OCT−+OCT+ is the calibration!).
       and FM1 Open in the firmware history after the last exact reading means "changed by FM1 Open" (M-Flasher says
       "stock" for it; V14 differs in about 12.6 KB in 0x20–0x3C2A). The planner's table of firmwares that change the
       boot area is `bootarea.CHANGERS`.
-    * *Planner (CHECK HEAD):* a known non-original boot area plus a Felucca-family target, or the original firmware
-      handed on by a running Felucca-family firmware → blocker with the way out (the removal above, then the plan
-      again) – never into "FAILED -5". From FM1 Open the existing blocker also asks for the original boot area
-      before a Felucca-family firmware. The V15 policy is otherwise unchanged.
+    * *Planner (CHECK HEAD, `planner.boot_trap`):* a known non-original boot area and the original firmware (the
+      target or the V15 step before it) handed on by a running Felucca-family firmware → blocker with the way out
+      (the removal above, then the plan again) – never into "FAILED -5". FM1 Open's (or another unknown) boot area
+      and any Felucca-family target → the same blocker (owner: away from FM1 Open the original boot area comes back
+      first); from a running FM1 Open the existing blocker says so too. m-bootloader with an update of the same
+      Felucca-family firmware (no V15 step) is not the trap: a warning that the later return needs the removal
+      first. The V15 policy is otherwise unchanged.
     * *Not run on hardware through the app* (`tested.TOOLS_HARDWARE`: `mf_download_button`,
       `mf_bootloader_install`, `mf_bootloader_remove`); the owner did install and the way back by hand
       (`OWNER_REPORTS["mboot_by_hand"]`).

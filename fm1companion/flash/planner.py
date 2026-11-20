@@ -566,6 +566,10 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
     if boot_trap(state, t, fam, p.via_stock):
         p.boot_restore = True
         p.blockers.append(BOOT_TRAP.format(what=state.boot_area_text or state.boot_area))
+    elif state.boot_area == "m-bootloader" and fam == "felucca":
+        p.warnings.append(_("This FM-1 has m-bootloader. Installing over it keeps it, but a later return to the "
+                            "original V15 from this firmware ends in “FAILED -5” – before that, put back the original "
+                            "boot area (Recovery › Tools › “Remove m-bootloader (original boot area)”)."))
     if t.is_v16:
         p.warnings.insert(0, _("<b>V16 (experimental):</b> {warning}").format(warning=V16_WARNING))
         p.confirmations.append("v16")
@@ -630,13 +634,16 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
 
 
 def boot_trap(state: DeviceState, t: Target, fam: str, via_stock: bool) -> bool:
-    """CHECK HEAD (docs/flash-protocol.md §16): the boot area is known to differ from the V15 package's, and the
-    target is a Felucca-family firmware (its own later returns to V15 are trapped too, and the V15 step before it
-    is) or the original firmware handed on by a running Felucca-family firmware"""
+    """CHECK HEAD (docs/flash-protocol.md §16): the boot area is known to differ from the V15 package's, and
+    * the original firmware (the target itself, or the V15 step before it) would be handed on by a running
+      Felucca-family firmware – the trap itself; or
+    * the boot area is FM1 Open's or another unknown one and the target is a Felucca-family firmware (owner's rule:
+      away from FM1 Open, the original boot area comes back first – the target's own later returns would be trapped).
+    m-bootloader with an update of the same Felucca-family firmware (no V15 step) is not the trap: a warning only."""
     from ..tools import bootarea
     if state.boot_area not in bootarea.NOT_ORIGINAL or state.update_mode:
         return False
-    if fam == "felucca":
+    if fam == "felucca" and state.boot_area != bootarea.MBOOT:
         return True
     felucca_runs = state.felucca or (bool(fwfamily.by_key(state.firmware_key or "")) and not state.open_firmware)
     return bool((t.is_stock or via_stock) and felucca_runs)
