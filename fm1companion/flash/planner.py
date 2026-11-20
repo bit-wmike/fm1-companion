@@ -19,7 +19,15 @@ TRAP_TEXT = _("When switching to the original firmware, the running Felucca firm
               "“FAILED -5” (Felucca 1.6.1 copies: -15). Nothing is written, the current firmware keeps running. "
               "Ways out: a Felucca firmware with the new check (felucca-bsp afd83ede) or download mode "
               "(recovery stage 2, M-Flasher).")
-BOOT_CHANGERS = ("m-bootloader", "mbootloader", "open", "fm1open")
+BOOT_CHANGERS = ("m-bootloader", "mbootloader", "open", "fm1open")   # (tools/bootarea.CHANGERS: what each changes)
+# the unit's boot area is known not to be the original one (tools/bootarea.py) and the target goes through a running
+# Felucca-family firmware's check (CHECK HEAD) or is itself a Felucca-family firmware: the plan does not go on
+BOOT_TRAP = _("This FM-1's boot area is not the original one ({what}). Felucca-family firmwares (Melodee, SLOOP, "
+              "Skiff …) with the old check refuse the original V15 on such a unit (“FAILED -5”), so the usual way – "
+              "V15 first, then the target – would end in that trap, and later returns would too. First put back the "
+              "original boot area: Recovery › Tools › “Remove m-bootloader (original boot area)” – it backs up the "
+              "whole flash first and writes only the boot area 0x00000–0x03FFF (from M-VAVE's V15 package). Then "
+              "open this plan again.")
 
 RISK_TEXT = {"keins": _("no risk"), "niedrig": _("low risk"), "mittel": _("medium risk"), "hoch": _("high risk")}
 
@@ -91,6 +99,9 @@ class DeviceState:
     hubs: int = 0                 # external USB hubs between the computer and the FM-1 (devices.usb_link)
     candidates: list = field(default_factory=list)   # firmware keys known for this identity (catalog, experience)
     usb_id: str = ""              # USB ID of the running device, "4c4a:c755" – "" = not known
+    boot_area: str = ""           # what the app knows of the boot area (tools/bootarea.py): "original" |
+    #                               "m-bootloader" | "fm1-open" | "other" | "" not known
+    boot_area_text: str = ""      # … said for the user ("m-bootloader 2.4-395e6cc (reported by M-Flasher)")
 
     @property
     def update_mode(self) -> bool:
@@ -192,6 +203,7 @@ class InstallPlan:
     v15_option: str = "none"      # none | default_on | locked (intermediate step V15; see v15_option())
     v15_reason: str = ""          # why the V15 step is in the plan (shown next to the expert option)
     direct: bool = False          # expert opt-out: a firmware switch without the V15 step
+    boot_restore: bool = False    # the original boot area must be put back first (BOOT_TRAP; Recovery › Tools)
     chain_resume: bool = False    # continues a switch whose V15 step is already done (journal "chain")
 
     @property
@@ -397,7 +409,11 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
         p.blockers.append(_("No FM-1 connected. Please connect it with a USB data cable and switch it on."))
     if state.open_firmware:
         p.blockers.append(_("This FM-1 runs the M-VAVE Open firmware. First return to the original firmware with "
-                            "M-VAVE's own tool (FM1 Workbench), then install here."))
+                            "M-VAVE's own tool (FM1 Workbench), then install here.") + " " +
+                          _("FM1 Open changes the boot area (measured on V14), and the original firmware does not "
+                            "necessarily put it back: before a Felucca-family firmware, put back the original boot "
+                            "area too (Recovery › Tools › “Remove m-bootloader (original boot area)”, with a "
+                            "whole-flash backup first)."))
     if state.identity and not state.update_mode and not state.open_firmware and \
             not state.identity.startswith("FM-1_"):
         p.blockers.append(_("The connected device reports “{identity}” – that is not an FM-1.").format(
@@ -547,6 +563,9 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
             p.warnings.append(TRAP_TEXT)
     if t.is_stock and state.felucca and not p.via_stock:
         p.warnings.append(TRAP_TEXT)
+    if boot_trap(state, t, fam, p.via_stock):
+        p.boot_restore = True
+        p.blockers.append(BOOT_TRAP.format(what=state.boot_area_text or state.boot_area))
     if t.is_v16:
         p.warnings.insert(0, _("<b>V16 (experimental):</b> {warning}").format(warning=V16_WARNING))
         p.confirmations.append("v16")
@@ -608,6 +627,19 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
     _new_chip(p, state, t)
     _confirm_power(p, t, fam)
     return p
+
+
+def boot_trap(state: DeviceState, t: Target, fam: str, via_stock: bool) -> bool:
+    """CHECK HEAD (docs/flash-protocol.md §16): the boot area is known to differ from the V15 package's, and the
+    target is a Felucca-family firmware (its own later returns to V15 are trapped too, and the V15 step before it
+    is) or the original firmware handed on by a running Felucca-family firmware"""
+    from ..tools import bootarea
+    if state.boot_area not in bootarea.NOT_ORIGINAL or state.update_mode:
+        return False
+    if fam == "felucca":
+        return True
+    felucca_runs = state.felucca or (bool(fwfamily.by_key(state.firmware_key or "")) and not state.open_firmware)
+    return bool((t.is_stock or via_stock) and felucca_runs)
 
 
 # ---- the newer FM-1 (logo on the front, flash UC25HQ80 0xB36014): fm1companion/hardware.py, docs/flash-protocol.md §18

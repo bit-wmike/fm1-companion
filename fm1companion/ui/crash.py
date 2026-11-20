@@ -190,7 +190,8 @@ def build_report(path: Path, exc_text: str = "", extra: dict | None = None) -> P
             from ..flash import journal as fj, robust
             for f in robust.latest_logs(fj.root() / "logs", 3):
                 z.writestr(f"flash/{f.name}", _clean(f.read_text("utf-8", errors="replace"), home, lit))
-            for pattern in ("mflasher-backup-*.txt", "mflasher-restore-*.txt"):   # M-Flasher jobs (ids masked twice)
+            for pattern in ("mflasher-backup-*.txt", "mflasher-restore-*.txt", "mflasher-bootloader-*.txt",
+                            "mflasher-download-*.txt"):   # M-Flasher jobs (ids masked twice)
                 for f in sorted((fj.root() / "logs").glob(pattern))[-2:]:
                     z.writestr(f"flash/{f.name}", _clean(f.read_text("utf-8", errors="replace"), home, lit))
             jd = fj.Journal().load()

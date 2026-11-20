@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""The buttons "Back up the whole flash" and "Write flash back" (Recovery › Tools and Backups › Flash backups):
-dialogs around tools/flashjob.py, which drives the bundled M-Flasher in USB download mode."""
+"""The buttons "Back up the whole flash", "Write flash back", "Into download mode", "Restart the FM-1", "Install
+m-bootloader" and "Remove m-bootloader (original boot area)" (Recovery › Tools, Backups › Flash backups, the Device
+menu): dialogs around tools/flashjob.py, which drives the bundled M-Flasher in USB download mode."""
 from __future__ import annotations
 
 import datetime as dt
@@ -404,6 +405,182 @@ def restore_flow(parent, ctx, path: Path | None = None, store=None) -> bool:
     return bool(getattr(d, "ok", False) and res is not None and res.written)
 
 
+# ------------------------------------------------------- download mode, restart, m-bootloader
+
+def download_flow(parent, ctx, store=None) -> str:
+    """"Into download mode": the soft key to the FM-1 the app recognised itself, otherwise the guide -> /dev/sgN or ""
+    """
+    from ..tools import flashjob as FJ
+    from . import feedback
+    store = store or getattr(ctx, "tools_store", None)
+    if _not_here(parent, ctx, store):
+        return ""
+    result: dict = {}
+
+    def work(w):
+        job = _job(ctx, store, w)
+        try:
+            res = FJ.download_mode(job)
+        finally:
+            remember_unit(ctx, job)
+        result["res"] = res
+        return res
+
+    def said(res) -> str:
+        return (_("The FM-1 is in USB download mode now ({device}). Nothing was written. “Restart the FM-1” (or "
+                  "switching it off and on) starts its firmware again.") if res.sent else
+                _("An FM-1 is in USB download mode already ({device}). Nothing was written.")).format(device=res.device)
+    was_hold = getattr(ctx, "hold", False)
+    ctx.hold = True
+    try:
+        feedback.run(parent, _("Into download mode"), work, done=said, cancellable=True)
+    finally:
+        ctx.hold = was_hold
+    res = result.get("res")
+    return res.device if res is not None else ""
+
+
+def leave_flow(parent, ctx, store=None) -> bool:
+    """"Restart the FM-1": the one FM-1 in download mode starts its firmware again (M-Flasher `restart`)"""
+    from ..tools import flashjob as FJ
+    from . import feedback
+    store = store or getattr(ctx, "tools_store", None)
+    if _not_here(parent, ctx, store):
+        return False
+    result: dict = {}
+
+    def work(w):
+        job = _job(ctx, store, w)
+        res = FJ.leave_download_mode(job)
+        result["res"] = res
+        return res
+    feedback.run(parent, _("Restart the FM-1"), work, done=_("The FM-1 was restarted. Nothing was written."),
+                 cancellable=True)
+    return bool(result.get("res"))
+
+
+def boot_plan_text(plan) -> str:
+    """the danger question before m-bootloader is installed or removed: unit, revision, what is written and why it
+    is safe to try, what was tested"""
+    from .. import hardware
+    from ..flash import tested
+    from ..tools import flashjob as FJ
+    rev = _(hardware.LABEL.get(plan.revision, hardware.LABEL[hardware.UNKNOWN]))
+    who = _("“{unit}” (unit ID {uid}, {revision})").format(unit=html.escape(plan.unit_name), uid=FJ.mask(plan.unit_id),
+                                                           revision=html.escape(rev))
+    if plan.op == "install":
+        head = _("Install m-bootloader {version} on {who}?").format(version=html.escape(plan.version), who=who)
+        what = _("The app writes the bundled m-bootloader {version} (fm1-uboot.boot, checksum checked) with "
+                 "M-Flasher. <b>Only the boot area 0x00000–0x03FFF is written</b> (four sectors at most); the "
+                 "firmware, projects, sounds and factory data stay as they are. Afterwards the FM-1 starts through "
+                 "m-bootloader: hold PLAY while switching it on for its menu (DOWNLOAD MODE, MIDI MODE), REC for USB "
+                 "download mode directly.").format(version=html.escape(plan.version))
+        kind = "mf_bootloader_install"
+    else:
+        head = _("Put back the original boot area on {who}?").format(who=who)
+        what = _("The app writes the boot area of M-VAVE's original firmware V15 (from the V15 package, checksum "
+                 "checked) with M-Flasher – that removes m-bootloader and what FM1 Open changed there. <b>Only the "
+                 "boot area 0x00000–0x03FFF is written</b>; the firmware, projects, sounds and factory data stay as "
+                 "they are. On an FM-1 that came with V16 this is V15's boot area, not necessarily the one it "
+                 "came with.")
+        kind = "mf_bootloader_remove"
+    parts = [head,
+             _("Boot area now (as M-Flasher reads it): {now}. Firmware (as the app knows it): {fw}.").format(
+                 now=html.escape(plan.current or "?"), fw=html.escape(plan.firmware or _("not known"))),
+             what,
+             _("The whole flash was backed up just now (read twice): {name}. That is the way back.").format(
+                 name=html.escape(plan.backup.name)),
+             _("M-Flasher checks the unit ID, the flash chip and the sectors once more right before it writes; the app "
+               "answers its question only when every planned range lies inside the boot area. Do not unplug the "
+               "FM-1 or switch it off while it writes."),
+             *[html.escape(n) for n in plan.notes],
+             html.escape(tested.tool_note(kind))]
+    return "<br><br>".join(parts)
+
+
+def _boot_flow(parent, ctx, store, op: str) -> bool:
+    from ..tools import flashjob as FJ
+    from . import feedback
+    store = store or getattr(ctx, "tools_store", None)
+    if _not_here(parent, ctx, store):
+        return False
+    if op == "install":
+        title = _("Install m-bootloader")
+        intro = _("The app first puts the FM-1 into download mode, reads it and backs up the whole flash (read "
+                  "twice). Then it asks you once more before m-bootloader is written into the boot area. Nothing is "
+                  "written without that backup.")
+    else:
+        title = _("Remove m-bootloader (original boot area)")
+        intro = _("The app takes the boot area from M-VAVE's original V15 package (downloaded once from M-VAVE's "
+                  "public repository if it is not on this computer yet, checked against its checksum). Then it puts "
+                  "the FM-1 into download mode, backs up the whole flash (read twice) and asks you once more before "
+                  "the boot area is written.")
+    if not confirm(parent, title, intro, _("Continue")):
+        return False
+    init_gui_caller()
+    result: dict = {}
+
+    def ask(plan) -> bool:
+        return bool(call_in_gui(lambda: confirm(parent, title + "?", boot_plan_text(plan), _("Write the boot area"),
+                                                danger=True)))
+
+    def work(w):
+        package = b""
+        if op == "remove":
+            from .. import firmware
+            w.log.emit(_("Getting M-VAVE's original V15 package …"))
+            package = Path(firmware.fetch_stock("stock-v15", log=w.log.emit)).read_bytes()
+        job = _job(ctx, store, w, writing=True)
+        try:
+            res = FJ.install_bootloader(job, ask) if op == "install" else FJ.remove_bootloader(job, ask, package)
+        except FJ.WriteFailed as e:
+            result["failed"] = e
+            raise
+        finally:
+            remember_unit(ctx, job)
+        result["res"] = res
+        return res
+
+    def said(res) -> str:
+        again = (_("The FM-1 was restarted.") if res.restarted else _("Switch the FM-1 off and on to start it."))
+        if not res.written:
+            text = (_("m-bootloader {version} is on this FM-1 already – nothing was written.").format(
+                version=res.version) if op == "install" else
+                _("This FM-1 has the original boot area already – nothing was written."))
+            return text + " " + again
+        if op == "install":
+            return _("m-bootloader {version} installed and checked: M-Flasher confirmed every sector, a fresh read "
+                     "holds exactly this bootloader, and nothing outside the boot area changed. {started} The state "
+                     "before is kept as {name}.").format(version=res.version, started=again,
+                                                         name=res.backup.name if res.backup else "?")
+        return _("Original boot area put back and checked: M-Flasher confirmed every sector, a fresh read holds the "
+                 "boot area of the V15 package, and nothing outside it changed. {started} The state before is kept "
+                 "as {name}.").format(started=again, name=res.backup.name if res.backup else "?")
+    was_hold = getattr(ctx, "hold", False)
+    ctx.hold = True
+    try:
+        with write_guard():
+            d = feedback.run(parent, title, work, done=said, cancellable=True,
+                             cancel_tip=_("Cancels until M-Flasher starts writing; from then on it runs to its end."))
+    finally:
+        ctx.hold = was_hold
+    if hasattr(ctx, "changed"):
+        try:
+            ctx.changed.emit()
+        except Exception:  # noqa: BLE001
+            pass
+    res = result.get("res")
+    return bool(getattr(d, "ok", False) and res is not None and res.verified)
+
+
+def install_boot_flow(parent, ctx, store=None) -> bool:
+    return _boot_flow(parent, ctx, store, "install")
+
+
+def remove_boot_flow(parent, ctx, store=None) -> bool:
+    return _boot_flow(parent, ctx, store, "remove")
+
+
 # ------------------------------------------------------- an interrupted write-back (the app ended while writing)
 
 def _choice(parent, title: str, text: str, buttons: list[str]) -> int:
@@ -424,6 +601,16 @@ def interrupted_text(rec: dict) -> str:
             if rec.get("started_writing") else _("It is not known how far M-Flasher got."))
     if rec.get("state") == "failed":
         what = _("The write did not end verified: {reason}").format(reason=html.escape(str(rec.get("reason") or "?")))
+    if str(rec.get("op") or "").startswith("bootloader"):
+        return "<br><br>".join([
+            _("Writing the boot area of “{device}” (unit ID {uid}, m-bootloader) started on {when} did not end "
+              "verified – the app was closed or ended while M-Flasher wrote, or the write failed.").format(
+                device=html.escape(str(rec.get("device") or "?")), uid=html.escape(str(rec.get("unit") or "–")),
+                when=when),
+            what,
+            _("The FM-1 may be in download mode now. Nothing is done automatically. Its state before the write: "
+              "{pre} – writing it back goes through all the usual checks.").format(
+                pre=html.escape(Path(str(rec.get("pre_backup") or "?")).name))])
     return "<br><br>".join([
         _("A flash write-back onto “{device}” (unit ID {uid}) started on {when} did not end verified – the app was "
           "closed or ended while M-Flasher wrote, or the write failed.").format(
@@ -456,8 +643,13 @@ def check_interrupted_write(parent, ctx, root=None, store=None) -> str:
                      "not unplug the FM-1 or switch it off. Look again on Recovery › Tools once it has ended.").format(
                          device=html.escape(str(rec.get("device") or "?"))))
         return "running"
-    i = _choice(parent, _("Interrupted flash write-back"), interrupted_text(rec),
-                [_("Write the image back again …"), _("Write the state before back …"), _("Later"), _("Forget this")])
+    boot = str(rec.get("op") or "").startswith("bootloader")
+    buttons = [_("Write the image back again …"), _("Write the state before back …"), _("Later"), _("Forget this")]
+    if boot:                                   # (an m-bootloader write: there is no image, only the state before)
+        buttons[0] = ""
+    i = _choice(parent, _("Interrupted flash write-back"), interrupted_text(rec), [b for b in buttons if b])
+    if boot and i >= 0:
+        i += 1
     if i in (0, 1):
         which = "image" if i == 0 else "before"
         why = FJ.rerun_problem(rec, which)

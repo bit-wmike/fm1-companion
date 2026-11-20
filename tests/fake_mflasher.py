@@ -7,7 +7,10 @@ fm1companion/tools/mflasher_parse.py) with SYNTHETIC values only – no unit id,
 "flash" is a pseudo-random 1 MiB image made from a fixed seed. The usage text is M-Flasher's own (MIT, (c) 2026
 Julius Vitkauskas), so that the --help contract can be tested.
 
-Commands: find, info, backup, restore (with the "Type "yes" to write: " prompt on stdin), download-mode, restart.
+Commands: find, info, backup, restore, bootloader --file X.boot / --stock P.fwsc, firmware P.fwsc (each writing one
+with the "Type "yes" to write: " prompt on stdin), download-mode, restart. The bootloader and firmware plans follow
+ops.rs plan_bootloader / plan_firmware: their titles, their one note, the boot area [0, 0x4000) only (bootloader) or
+[0x4000, end of the package's flash.bin) (firmware).
 
 State: the JSON file named by FAKE_MFLASHER_STATE (all keys optional):
   mode      "download" (one unit in ROM download mode, default) | "midi" (running on USB MIDI) | "none" |
@@ -29,6 +32,12 @@ State: the JSON file named by FAKE_MFLASHER_STATE (all keys optional):
                      since the app's backup: same plan, but M-Flasher's own backup differs) | "slow-write" (0.7 s per
                      run) | "backup-fails" (its own backup before the first erase fails: exit 1, nothing erased)
             the same-unit plan carries M-Flasher's factory WARNING whenever the image's 0xFF000-0xFFFFF differs
+            bootloader / firmware: "other-unit" | "other-chip" | "plan-outside" (one more range 0x04000-0x04FFF in the
+                     plan of a bootloader, 0x03000-0x03FFF in a firmware's) | "plan-extra" (a second plan line) |
+                     "warning" (M-Flasher's flash-chip WARNING) | "note" (another note) | "killed-in-write" |
+                     "write-fail" | "no-done" | "backup-fails" | "refuse-key" (the package does not match the chip
+                     key: Refused before the plan) | "wrong-area" (writes a slightly different boot area than it
+                     announced – the app's fresh read must catch it) | "stray" (one unknown line before the title)
   midi_name the ALSA card name `find` prints for a running unit (default "FM-1")
             download-mode: "never" (the unit does not come back within 20 s)
             info:    "split-utf8" (no unit id; the "–" is written in two pieces)
@@ -165,7 +174,7 @@ def session(st: dict, cmd: str, dev: str, fault: str):
         print(f"{dev}: No such file or directory (os error 2)", file=sys.stderr)
         return 1
     flash = int(st.get("flash", 0x856014))
-    if cmd == "restore" and fault == "other-chip":
+    if cmd in ("restore", "bootloader", "firmware") and fault == "other-chip":
         flash = 0xB36014 if flash == 0x856014 else 0x856014
     img = load_image(st)
     if cmd == "restore" and fault == "drift":         # the flash changed since the app's backup, inside sector 0
@@ -198,9 +207,9 @@ def session(st: dict, cmd: str, dev: str, fault: str):
     uid = st.get("unit_id", "0123456789abcdef")
     if fault == "split-utf8":
         uid = ""
-    if cmd in ("backup", "restore") and "session_unit_id" in st:
+    if cmd in ("backup", "restore", "bootloader", "firmware") and "session_unit_id" in st:
         uid = st["session_unit_id"]
-    if cmd == "restore" and fault == "other-unit":
+    if cmd in ("restore", "bootloader", "firmware") and fault == "other-unit":
         uid = "fedcba9876543210"
     rows = [("model", "FM-1"), ("bootloader", st.get("bootloader", "stock (M-VAVE)")),
             ("firmware", st.get("firmware", "Felucca")), ("app", "OK"),
@@ -316,6 +325,12 @@ def restore(st: dict, args, fault: str) -> int:
     if answer.strip() != "yes":
         print("Nothing written.")
         return 0
+    return apply(st, args, current, data, runs, fault, uid, rows)
+
+
+def apply(st, args, current: bytes, target: bytes, runs, fault: str, uid: str, rows, after=None) -> int:
+    """after "yes": M-Flasher's own backup, then each run erased and written ("Writing …"), then "Done" – with the
+    faults of the write phase. after(st): what the unit reports afterwards (e.g. its bootloader)"""
     folder = opt(args, "--backup-dir") or os.path.expanduser("~/Documents/M-Flasher/backups")
     if fault == "backup-fails":
         print(f"cannot write {folder}/fm1-x.bin: No space left on device (os error 28)", file=sys.stderr)
@@ -334,7 +349,7 @@ def restore(st: dict, args, fault: str) -> int:
             img[a:a + SECTOR] = b"\xff" * SECTOR            # erased, not yet programmed
             store_image(st, bytes(img))
             os.kill(os.getpid(), signal.SIGKILL)
-        img[a:b] = data[a:b]
+        img[a:b] = target[a:b]
         if fault == "write-fail" and i == 0:
             img[a] ^= 0xFF
             store_image(st, bytes(img))
@@ -342,10 +357,211 @@ def restore(st: dict, args, fault: str) -> int:
             return refuse(f"0x{a:05X}-0x{b - 1:05X} does not read back as written. Do not switch the unit off: try "
                           "again, with another cable or port. Your backup: (see above)")
         sys.stderr.write("\r  100%\n")
+    if fault == "wrong-area":
+        img[0x100] ^= 0x01
     store_image(st, bytes(img))
+    if after is not None:
+        st = state()
+        after(st)
+        save(st)
     if fault != "no-done":
         print("Done: everything written is verified (the chip's CRC32 matches)")
     return 0
+
+
+# ---- packages and bootloader containers (formats.rs: Package::parse, bankcb_check, bootloader_identity)
+
+def crc16(data: bytes) -> int:
+    crc = 0
+    for b in data:
+        crc ^= b << 8
+        for _i in range(8):
+            crc = ((crc << 1) ^ 0x1021) & 0xFFFF if crc & 0x8000 else (crc << 1) & 0xFFFF
+    return crc
+
+
+def enc(data: bytes, key: int = 0xFFFF) -> bytes:
+    out = bytearray(data)
+    for i in range(len(out)):
+        out[i] ^= key & 0xFF
+        key = ((key << 1) ^ (0x1021 if key & 0x8000 else 0)) & 0xFFFF
+    return bytes(out)
+
+
+def parse_package(raw: bytes):
+    """(identity, flash.bin) or a refusal text"""
+    if len(raw) < 0x1000:
+        return "not a firmware package (.fwsc)"
+    n, ident = 20, ""
+    for i in range(n):
+        m = raw[i * 48 + 47]
+        if m == 0x7D:
+            break
+        ident += chr((m - i - 1) & 0xFF)
+    image = b"".join(raw[i * 48:i * 48 + 47] for i in range(n)) + raw[n * 48:]
+    head = enc(image[:0x40])
+    if crc16(head[2:]) != int.from_bytes(head[0:2], "little"):
+        return "not a firmware package, or a damaged one (header CRC)"
+    count = int.from_bytes(head[8:10], "little")
+    lst = image[0x40:0x40 + 0x50 * count]
+    if crc16(lst) != int.from_bytes(head[2:4], "little"):
+        return "damaged firmware package (file list CRC)"
+    for i in range(count):
+        e = enc(lst[i * 0x50:(i + 1) * 0x50])
+        typ, off, size = int.from_bytes(e[0:2], "little"), int.from_bytes(e[8:12], "little"), \
+            int.from_bytes(e[12:16], "little")
+        name = e[0x40:].split(b"\0")[0].decode("latin-1")
+        if name == "flash.bin" and typ == 0:
+            flash = image[off:off + size]
+            if len(flash) <= 0x4000 or len(flash) % SECTOR:
+                return f"unexpected flash image size {len(flash)}"
+            return ident, flash
+    return "the package has no flash image (flash.bin)"
+
+
+def boot_identity(boot: bytes):
+    if len(boot) < 16:
+        return None
+    bank, size = int.from_bytes(boot[0:2], "little"), int.from_bytes(boot[2:4], "little")
+    off, pcrc, hcrc = int.from_bytes(boot[8:12], "little"), int.from_bytes(boot[12:14], "little"), \
+        int.from_bytes(boot[14:16], "little")
+    if bank != 1 or crc16(boot[:14]) != hcrc or off + size > len(boot) or crc16(boot[off:off + size]) != pcrc:
+        return False
+    p = boot[off:off + size]
+    if len(p) < 0x70 or p[0x40:0x48] != b"AC79BLID":
+        return None
+    return p[0x48:0x50].split(b"\0")[0].decode(), p[0x50:0x70].split(b"\0")[0].decode()
+
+
+def show_plan(title: str, runs, notes, warnings, fault: str, extra=None):
+    shown = list(runs) + ([extra] if fault == "plan-outside" and extra else [])
+    n = sum((b - a) // SECTOR for a, b in shown)
+    print()
+    if fault == "stray":
+        print("Something M-Flasher never says")
+    print(title)
+    if not shown:
+        print("Nothing to write: the flash already holds this.")
+    else:
+        print(f"Writes {n} sectors ({n * 4} KiB): {ranges_text(shown)}")
+        if fault == "plan-extra":
+            print("Writes 1 sectors (4 KiB): 0xF0000-0xF0FFF")
+    for x in notes + (["This note is new."] if fault == "note" else []):
+        print(x)
+    for w in warnings + (["This unit's flash chip (0x123456) is not one m-bootloader is known to run on. Install it "
+                          "at your own risk."] if fault == "warning" else []):
+        print(f"WARNING: {w}")
+
+
+def ask(st) -> bool:
+    sys.stdout.write(PROMPT)
+    sys.stdout.flush()
+    answer = sys.stdin.readline()
+    st = state()
+    st.setdefault("answers", []).append(answer)
+    save(st)
+    if answer.strip() != "yes":
+        print("Nothing written.")
+        return False
+    return True
+
+
+def bootloader(st: dict, args, fault: str) -> int:
+    stock, file = opt(args, "--stock"), opt(args, "--file")
+    if not stock and not file:
+        return refuse("the app never installs M-Flasher's own bundled bootloader (fake)")
+    try:
+        with open(stock or file, "rb") as fh:
+            raw = fh.read()
+    except OSError as e:
+        print(f"cannot read {stock or file}: {e.strerror}", file=sys.stderr)
+        return 1
+    r = session(st, "bootloader", opt(args, "--device"), fault)
+    if isinstance(r, int):
+        return r
+    current, uid, rows = r
+    if stock:
+        pkg = parse_package(raw)
+        if isinstance(pkg, str):
+            return refuse(pkg)
+        ident, flash = pkg
+        if ident.rsplit("_", 1)[0] not in ("FM-1", "MiniFM"):
+            return refuse(f"this package is for the {ident.rsplit('_', 1)[0]}, the connected unit is a FM-1")
+        if fault == "refuse-key":
+            return refuse("the package does not match this unit's chip key (0x980F): its boot area would not start "
+                          "the unit's firmware")
+        area, title = flash[:0x4000], f"Put back the stock bootloader (from {ident})"
+        note = "Only the boot area (0x00000-0x03FFF) is written, all of it from the package."
+        shown_after = "stock (M-VAVE)"
+    else:
+        ident = boot_identity(raw)
+        if ident is False:
+            return refuse("not a valid bootloader container (BANKCB)")
+        if ident is not None and ident[0] != "fm1":
+            return refuse(f'this bootloader is built for "{ident[0]}", the unit is a FM-1')
+        version = ident[1] if ident else "unknown"
+        stored = enc(raw[:16]) + enc(raw[16:])
+        area = bytearray(b"\xff" * 0x4000)
+        area[:0xA0] = current[:0xA0]
+        area[0xA0:0xA0 + len(stored)] = stored
+        area[0x3FA0:] = current[0x3FA0:0x4000]
+        title = f"Install the bootloader {version} for the FM-1"
+        major, _d, minor = version.split("-")[0].partition(".")
+        short = major.isdigit() and minor.isdigit() and (int(major), int(minor)) >= (1, 4)
+        note = ("Only the boot area (0x00000-0x03FFF) is written. This bootloader does not read the unit's "
+                "configuration, so of that only the chip key is kept, with the settings older versions need."
+                if short else
+                "Only the boot area (0x00000-0x03FFF) is written; the unit's own configuration in it is kept.")
+        shown_after = f"m-bootloader {version} (fm1)" if ident else "unknown"
+    target = bytes(area) + current[0x4000:]
+    sectors = [a for a in range(0, 0x4000, SECTOR) if target[a:a + SECTOR] != current[a:a + SECTOR]]
+    runs = runs_of(sectors)
+    show_plan(title, runs, [note], [], fault, extra=(0x4000, 0x5000))
+    if not runs:
+        return 0
+    if not ask(st):
+        return 0
+    return apply(state(), args, current, target, runs, fault, uid, rows,
+                 after=lambda s: s.update(bootloader=shown_after))
+
+
+def firmware(st: dict, args, fault: str) -> int:
+    pos = [a for i, a in enumerate(args[1:], 1) if not a.startswith("--") and not args[i - 1].startswith("--")]
+    if not pos:
+        return refuse(USAGE)
+    try:
+        with open(pos[0], "rb") as fh:
+            raw = fh.read()
+    except OSError as e:
+        print(f"cannot read {pos[0]}: {e.strerror}", file=sys.stderr)
+        return 1
+    r = session(st, "firmware", opt(args, "--device"), fault)
+    if isinstance(r, int):
+        return r
+    current, uid, rows = r
+    pkg = parse_package(raw)
+    if isinstance(pkg, str):
+        return refuse(pkg)
+    ident, flash = pkg
+    if ident.rsplit("_", 1)[0] not in ("FM-1", "MiniFM"):
+        return refuse(f"this package is for the {ident.rsplit('_', 1)[0]}, the connected unit is a FM-1")
+    if len(flash) > FLASH_SIZE:
+        return refuse("the package is larger than the flash")
+    if fault == "refuse-key":
+        return refuse("the package's firmware does not decrypt with this unit's chip key (0x980F): writing it would "
+                      "not start")
+    target = bytearray(current)
+    target[0x4000:len(flash)] = flash[0x4000:]
+    sectors = [a for a in range(0, FLASH_SIZE, SECTOR) if target[a:a + SECTOR] != current[a:a + SECTOR]]
+    runs = runs_of(sectors)
+    show_plan(f"Install firmware {ident}", runs, [f"Installs {ident} (0x04000-0x{len(flash) - 1:05X})."], [],
+              fault, extra=(0x3000, 0x4000))
+    if not runs:
+        return 0
+    if not ask(st):
+        return 0
+    return apply(state(), args, current, bytes(target), runs, fault, uid, rows,
+                 after=lambda s: s.update(firmware=ident))
 
 
 def main(args) -> int:
@@ -365,7 +581,7 @@ def main(args) -> int:
         save(st)
     if fault == "crash":
         os.kill(os.getpid(), signal.SIGSEGV)
-    if fault == "hang" and cmd != "restore":
+    if fault == "hang" and cmd not in ("restore", "bootloader", "firmware"):
         time.sleep(60)
     if fault == "refuse":
         return refuse("the unit did not answer")
@@ -429,6 +645,10 @@ def main(args) -> int:
         return 0
     if cmd == "restore":
         return restore(st, args, fault)
+    if cmd == "bootloader":
+        return bootloader(st, args, fault)
+    if cmd == "firmware":
+        return firmware(st, args, fault)
     return refuse(USAGE)
 
 

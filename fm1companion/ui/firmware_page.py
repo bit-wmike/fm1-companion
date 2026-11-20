@@ -110,7 +110,18 @@ def device_state(ctx) -> "planner.DeviceState":
                                pinned=target_pin(ctx) is not None, usb_notes=usb_notes(ctx),
                                revision=device_revision(ctx), hubs=usb_hubs(ctx),
                                candidates=_identity_candidates(ctx),
-                               usb_id=(getattr(ctx.port, "usb_id", "") or "") if ctx.port else "")
+                               usb_id=(getattr(ctx.port, "usb_id", "") or "") if ctx.port else "",
+                               **_boot_area(ctx))
+
+
+def _boot_area(ctx) -> dict:
+    """what the app knows of the boot area of the active FM-1 (tools/bootarea.py) – for the CHECK HEAD trap"""
+    try:
+        from ..tools import bootarea
+        cur = bootarea.current(None if getattr(ctx, "is_virtual", False) else getattr(ctx, "profile", None))
+        return {"boot_area": cur["kind"], "boot_area_text": bootarea.describe(cur) if cur["kind"] else ""}
+    except Exception:  # noqa: BLE001 – never stops the plan
+        return {}
 
 
 def _identity_candidates(ctx) -> list[str]:

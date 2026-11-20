@@ -84,7 +84,13 @@ TOOLS_HARDWARE: dict[str, tuple[bool, str]] = {
     "mf_new_chip_backup": (True, N_("the whole-flash backup on a newer FM-1 (logo on the front, flash UC25HQ80)")),
     "mf_new_chip_restore": (False, N_("writing a whole-flash backup back on a newer FM-1 (logo on the front, flash "
                                       "UC25HQ80)")),
+    "mf_download_button": (False, N_("the button “Into download mode” and “Restart the FM-1” on their own")),
+    "mf_bootloader_install": (False, N_("installing m-bootloader through M-Flasher (bootloader --file)")),
+    "mf_bootloader_remove": (False, N_("putting back the original boot area through M-Flasher (bootloader --stock "
+                                       "with M-VAVE's V15 package)")),
 }
+# the boot-area kinds above: what the owner did with M-Flasher by hand (OWNER_REPORTS["mboot_by_hand"])
+TOOLS_BY_HAND = {"mf_bootloader_install", "mf_bootloader_remove"}
 
 # Reports by the owner of what ran OUTSIDE this app (his own tools: M-Flasher, the authors' installer pages) – not runs
 # of this app, so none of it counts as "tested" above. hardware.json cites the same report for its rows.
@@ -94,6 +100,10 @@ OWNER_REPORTS: dict[str, str] = {
                                "author's installer page; a change saved in SLOOP 3 survived a power cycle",
     "app_flows_pi": "2026-11-20, owner: the app's own flash backup and write-back flows on both units, one "
                     "Raspberry Pi 5 (report 'Werkzeug-Paket Schritt 2') – see TOOLS_HARDWARE",
+    "mboot_by_hand": "2026-11-18/19, owner, outside the app: `m-flasher bootloader --file fm1-uboot.boot` "
+                     "(m-bootloader 2.4-395e6cc, 4 sectors 0x00000-0x03FFF, verified) on both units, and the way "
+                     "back to the original boot area by hand with M-Flasher (`bootloader --stock` with the V15 "
+                     "package, and whole-flash restores)",
     "mflasher_by_hand": "2026-11-18/19, owner, outside the app: M-Flasher 0.12.1 by hand in a terminal on a "
                         "Raspberry Pi 5 – download-mode, info, backup (twice, same SHA-256) and restore of a whole "
                         "flash backup onto the same unit (147 and 174 sectors, verified by the chip's CRC32, then "
@@ -109,6 +119,10 @@ def tool_note(kind: str, new_chip: bool = False) -> str:
     ok, label = TOOLS_HARDWARE.get(kind, (False, ""))
     if ok:
         return _("Tested on a real FM-1 through this app: {what}.").format(what=_(label))
+    if kind in TOOLS_BY_HAND:
+        return _("Not tested on a real FM-1 through this app yet: {what} ran only against a stand-in for M-Flasher. "
+                 "The owner did the same with M-Flasher by hand, outside the app (2026-11-18/19).").format(
+                     what=_(label))
     return _("Not tested on a real FM-1 through this app yet: {what} ran only against a stand-in for M-Flasher. "
              "M-Flasher itself was used this way by hand (backup and restore of the whole flash, 2026-11-18/19)."
              ).format(what=_(label))

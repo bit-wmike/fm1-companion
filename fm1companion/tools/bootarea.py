@@ -156,12 +156,19 @@ def classify(area: bytes, mf_bootloader: str = "") -> str:
 
 # ------------------------------------------------------------------------------------------------ the profile
 
+def mboot_name(text: str) -> str:
+    """"m-bootloader 2.4-395e6cc (fm1)" (M-Flasher) / "m-bootloader 2.4-395e6cc" (MIDI MODE) -> the latter"""
+    import re
+    return re.sub(r"\s*\([^()]*\)\s*$", "", (text or "").strip())
+
+
 def note(profile, kind: str, how: str, bootloader: str = "", sha256: str = "", when: float | None = None) -> bool:
     """remember what the app now knows of this unit's boot area -> True when the profile changed (save it)"""
     if profile is None or kind not in (ORIGINAL, MBOOT, OPEN, OTHER):
         return False
     rec = dict(getattr(profile, "boot_area", None) or {})
-    new = {"kind": kind, "how": how, "bootloader": bootloader or "", "sha256": sha256 or "",
+    new = {"kind": kind, "how": how, "bootloader": mboot_name(bootloader) if kind == MBOOT else "",
+           "sha256": sha256 or "",
            "time": float(when if when is not None else time.time())}
     if {k: rec.get(k) for k in ("kind", "how", "bootloader", "sha256")} == {k: new[k] for k in
                                                                            ("kind", "how", "bootloader", "sha256")}:
