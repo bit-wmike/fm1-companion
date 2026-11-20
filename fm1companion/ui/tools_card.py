@@ -184,6 +184,14 @@ class ToolsCard(Card):
             b.setEnabled(usable)
         self.note.setText("\n".join(notes))
         self.boot_label.setText(self.boot_text())
+        try:                                       # (a write that did not end verified: the unit stays in download
+            from ..tools import flashjob as FJ    #  mode – no Restart button until it is settled)
+            if FJ.unfinished_write() is not None:
+                self.b_leave.setEnabled(False)
+                self.b_leave.setToolTip(_("A write did not end verified: the FM-1 stays in download mode until it "
+                                          "is settled (the question at the next start, or “Write flash back …”)."))
+        except Exception:  # noqa: BLE001
+            pass
 
     def boot_text(self) -> str:
         """what the app knows of the active FM-1's boot area (tools/bootarea.py)"""

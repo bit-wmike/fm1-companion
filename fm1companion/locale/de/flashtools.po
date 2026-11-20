@@ -452,12 +452,6 @@ msgstr[1] "{n} Sektoren zu 4 KiB weichen von dem ab, was das FM-1 jetzt enthält
 
 # Step 3: download mode, m-bootloader install and removal, the boot area
 
-msgid "This FM-1's boot area is not the original one ({what}). Felucca-family firmwares (Melodee, SLOOP, Skiff …) with the old check refuse the original V15 on such a unit (“FAILED -5”), so the usual way – V15 first, then the target – would end in that trap, and later returns would too. First put back the original boot area: Recovery › Tools › “Remove m-bootloader (original boot area)” – it backs up the whole flash first and writes only the boot area 0x00000–0x03FFF (from M-VAVE's V15 package). Then open this plan again."
-msgstr "Der Boot-Bereich dieses FM-1 ist nicht der ursprüngliche ({what}). Firmwares der Felucca-Familie (Melodee, SLOOP, Skiff …) mit der alten Prüfung lehnen auf so einem Gerät die Original-V15 ab („FAILED -5“) – der übliche Weg, erst V15, dann das Ziel, endete in dieser Falle, und spätere Rückwege auch. Stelle zuerst den Original-Boot-Bereich wieder her: Rettung › Werkzeuge › „m-bootloader entfernen (Original-Boot-Bereich)“ – das sichert vorher den ganzen Flash und schreibt nur den Boot-Bereich 0x00000–0x03FFF (aus dem V15-Paket von M-VAVE). Öffne diesen Plan dann noch einmal."
-
-msgid "FM1 Open changes the boot area (measured on V14), and the original firmware does not necessarily put it back: before a Felucca-family firmware, put back the original boot area too (Recovery › Tools › “Remove m-bootloader (original boot area)”, with a whole-flash backup first)."
-msgstr "FM1 Open verändert den Boot-Bereich (gemessen an V14), und die Original-Firmware stellt ihn nicht unbedingt wieder her: Stelle vor einer Firmware der Felucca-Familie auch den Original-Boot-Bereich wieder her (Rettung › Werkzeuge › „m-bootloader entfernen (Original-Boot-Bereich)“, vorher eine Sicherung des ganzen Flashs)."
-
 msgid "the button “Into download mode” and “Restart the FM-1” on their own"
 msgstr "die Knöpfe „In den Download-Modus“ und „FM-1 neu starten“ für sich"
 
@@ -674,5 +668,73 @@ msgstr "Stellt mit M-Flasher den Boot-Bereich des Original-V15-Pakets von M-VAVE
 msgid "Boot area of “{device}”: {state}."
 msgstr "Boot-Bereich von „{device}“: {state}."
 
-msgid "This FM-1 has m-bootloader. Installing over it keeps it, but a later return to the original V15 from this firmware ends in “FAILED -5” – before that, put back the original boot area (Recovery › Tools › “Remove m-bootloader (original boot area)”)."
-msgstr "Dieses FM-1 hat m-bootloader. Die Installation darüber behält es, aber eine spätere Rückkehr zur Original-V15 aus dieser Firmware endet in „FAILED -5“ – stelle vorher den Original-Boot-Bereich wieder her (Rettung › Werkzeuge › „m-bootloader entfernen (Original-Boot-Bereich)“)."
+# Review fixes of step 3
+
+msgid "This FM-1's boot area is not the original one ({what}). Felucca-family firmwares (Melodee, SLOOP, Skiff …) with the old check refuse the original V15 on such a unit (“FAILED -5”), so the usual way – V15 first, then the target – would end in that trap, and later returns would too."
+msgstr "Der Boot-Bereich dieses FM-1 ist nicht der ursprüngliche ({what}). Firmwares der Felucca-Familie (Melodee, SLOOP, Skiff …) mit der alten Prüfung lehnen auf so einem Gerät die Original-V15 ab („FAILED -5“) – der übliche Weg, erst V15, dann das Ziel, endete in dieser Falle, und spätere Rückwege auch."
+
+msgid "First put back the original boot area: Recovery › Tools › “Remove m-bootloader (original boot area)” – it backs up the whole flash first and writes only the boot area 0x00000–0x03FFF (from M-VAVE's V15 package) – or write back a whole-flash backup of this unit made before (Recovery › Tools › “Write flash back …”). Then open this plan again."
+msgstr "Stelle zuerst den Original-Boot-Bereich wieder her: Rettung › Werkzeuge › „m-bootloader entfernen (Original-Boot-Bereich)“ – das sichert vorher den ganzen Flash und schreibt nur den Boot-Bereich 0x00000–0x03FFF (aus dem V15-Paket von M-VAVE) – oder schreibe eine früher gemachte Sicherung des ganzen Flashs dieses Geräts zurück (Rettung › Werkzeuge › „Flash zurückschreiben …“). Öffne diesen Plan dann noch einmal."
+
+msgid "On a newer unit (logo on the front) the app does not write V15's boot area: it has never been written onto such a unit. The way back is a whole-flash restore of a backup of this unit made before m-bootloader or FM1 Open (Recovery › Tools › “Write flash back …”). Without such a backup the app has no way back for this unit."
+msgstr "Auf einem neueren Gerät (Logo vorne) schreibt die App den Boot-Bereich der V15 nicht: Er wurde noch nie auf ein solches Gerät geschrieben. Der Rückweg ist das Zurückschreiben einer Sicherung des ganzen Flashs dieses Geräts von vor m-bootloader oder FM1 Open (Rettung › Werkzeuge › „Flash zurückschreiben …“). Ohne eine solche Sicherung hat die App für dieses Gerät keinen Rückweg."
+
+msgid "The way out depends on the unit. An earlier FM-1 (no logo on the front): Recovery › Tools › “Remove m-bootloader (original boot area)” (it reads the flash chip first and refuses a newer unit), or a whole-flash restore of a backup made before. A newer FM-1 (logo on the front): only that whole-flash restore (Recovery › Tools › “Write flash back …”). Then open this plan again."
+msgstr "Der Ausweg hängt vom Gerät ab. Ein früheres FM-1 (ohne Logo vorne): Rettung › Werkzeuge › „m-bootloader entfernen (Original-Boot-Bereich)“ (es liest zuerst den Flash-Chip und lehnt ein neueres Gerät ab) oder das Zurückschreiben einer früheren Sicherung des ganzen Flashs. Ein neueres FM-1 (Logo vorne): nur dieses Zurückschreiben (Rettung › Werkzeuge › „Flash zurückschreiben …“). Öffne diesen Plan dann noch einmal."
+
+msgid "FM1 Open changes the boot area (measured on V14), and the original firmware does not necessarily put it back: before a Felucca-family firmware, the original boot area must come back too."
+msgstr "FM1 Open verändert den Boot-Bereich (gemessen an V14), und die Original-Firmware stellt ihn nicht unbedingt wieder her: Vor einer Firmware der Felucca-Familie muss auch der Original-Boot-Bereich zurück."
+
+msgid "This FM-1 has m-bootloader. Installing over it keeps it, but a later return to the original V15 from this firmware ends in “FAILED -5” – the original boot area must come back before that."
+msgstr "Dieses FM-1 hat m-bootloader. Die Installation darüber behält es, aber eine spätere Rückkehr zur Original-V15 aus dieser Firmware endet in „FAILED -5“ – vorher muss der Original-Boot-Bereich zurück."
+
+msgid "FM1 Open is in this FM-1's firmware history without a usable date, so the app does not know whether its boot area is still FM1 Open's. A whole-flash backup (Recovery › Tools › “Back up the whole flash”) reads it – then open this plan again."
+msgstr "FM1 Open steht ohne brauchbares Datum im Firmware-Verlauf dieses FM-1, deshalb weiß die App nicht, ob sein Boot-Bereich noch der von FM1 Open ist. Eine Sicherung des ganzen Flashs (Rettung › Werkzeuge › „Flash komplett sichern“) liest ihn – öffne diesen Plan dann noch einmal."
+
+msgid "FM1 Open is in the firmware history without a usable date"
+msgstr "FM1 Open steht ohne brauchbares Datum im Firmware-Verlauf"
+
+msgid "Not restarted: a write onto “{device}” did not end verified (or the app has not checked it yet). Keep the FM-1 in download mode – from there the backup made before the write can be written back. Open the question about it (it comes at the next start of the app) or write the backup back on Recovery › Tools; once it is settled, restart the FM-1."
+msgstr "Nicht neu gestartet: Ein Schreiben auf „{device}“ endete nicht geprüft (oder die App hat es noch nicht geprüft). Lass das FM-1 im Download-Modus – von dort lässt sich die vor dem Schreiben gemachte Sicherung zurückschreiben. Öffne die Frage dazu (sie kommt beim nächsten Start der App) oder schreibe die Sicherung unter Rettung › Werkzeuge zurück; ist das erledigt, starte das FM-1 neu."
+
+msgid "The FM-1 in download mode (unit ID {uid}) is not “{name}”. Nothing was done – choose that device at the top, or switch the FM-1 off and on."
+msgstr "Das FM-1 im Download-Modus (Unit-ID {uid}) ist nicht „{name}“. Es wurde nichts getan – wähle oben dieses Gerät oder schalte das FM-1 aus und ein."
+
+msgid "an FM-1 the app does not know"
+msgstr "ein FM-1, das die App nicht kennt"
+
+msgid "Restart the FM-1 in download mode ({device}, unit ID {uid}: {who})? Restarting writes nothing."
+msgstr "Das FM-1 im Download-Modus neu starten ({device}, Unit-ID {uid}: {who})? Der Neustart schreibt nichts."
+
+msgid "Not restarted: the app could not tell which FM-1 this is, and nobody confirmed it. Nothing was done."
+msgstr "Nicht neu gestartet: Die App konnte nicht feststellen, welches FM-1 das ist, und niemand hat es bestätigt. Es wurde nichts getan."
+
+msgid "The app cannot work out the boot area M-Flasher would write onto this FM-1 (its boot area has no intact file table or chip-key record, or the bootloader is older than 1.4). Nothing was written; the backup made just now is kept."
+msgstr "Die App kann nicht ermitteln, welchen Boot-Bereich M-Flasher auf dieses FM-1 schreiben würde (sein Boot-Bereich hat keine intakte Dateitabelle oder keinen intakten Chip-Schlüssel-Eintrag, oder der Bootloader ist älter als 1.4). Es wurde nichts geschrieben; die eben gemachte Sicherung bleibt."
+
+msgid "FM1 Open is the firmware on this FM-1. Its app area expects FM1 Open's own boot area: after this, an FM1 Open app sits on V15's boot area, and whether it starts is not known. Recommended order: first go back to the original V15 with M-VAVE's FM1 Workbench (“Restore original V15”), then put back the original boot area here, then install the next firmware."
+msgstr "FM1 Open ist die Firmware auf diesem FM-1. Sein App-Bereich erwartet den eigenen Boot-Bereich von FM1 Open: Danach sitzt eine FM1-Open-App auf dem Boot-Bereich der V15, und ob sie startet, ist nicht bekannt. Empfohlene Reihenfolge: erst mit der FM1 Workbench von M-VAVE zurück zur Original-V15 („Restore original V15“), dann hier den Original-Boot-Bereich wiederherstellen, dann die nächste Firmware installieren."
+
+msgid "None of this unit's flash backups shows a boot area equal to V15's, so the app does not know whether this FM-1's own original boot area was V15's (units sold with V16, for example, may have come with another one). The exact way back to this unit's own state is a whole-flash restore of an earlier backup{own}."
+msgstr "Keine Flash-Sicherung dieses Geräts zeigt einen Boot-Bereich gleich dem der V15, deshalb weiß die App nicht, ob der ursprüngliche Boot-Bereich dieses FM-1 der der V15 war (Geräte, die zum Beispiel mit V16 verkauft wurden, kamen vielleicht mit einem anderen). Der genaue Rückweg zum eigenen Stand dieses Geräts ist das Zurückschreiben einer früheren Sicherung des ganzen Flashs{own}."
+
+msgid " – e.g. {name}"
+msgstr " – z. B. {name}"
+
+msgid "This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80), or the app cannot rule that out. M-VAVE's V15 boot area has never been written onto such a unit, so the app does not put it there. The way back is a whole-flash restore of a backup of this unit made before m-bootloader (Recovery › Tools › “Write flash back …”)."
+msgstr "Dieses FM-1 ist ein neueres Gerät (Logo vorne, Flash-Chip UC25HQ80), oder die App kann das nicht ausschließen. Der Boot-Bereich der V15 von M-VAVE wurde noch nie auf ein solches Gerät geschrieben, deshalb schreibt die App ihn dort nicht. Der Rückweg ist das Zurückschreiben einer Sicherung des ganzen Flashs dieses Geräts von vor m-bootloader (Rettung › Werkzeuge › „Flash zurückschreiben …“)."
+
+msgid "This unit has one: {name}."
+msgstr "Dieses Gerät hat eine: {name}."
+
+msgid "The app has no such backup of this unit, so there is no way back from the app."
+msgstr "Die App hat keine solche Sicherung dieses Geräts, deshalb gibt es aus der App keinen Rückweg."
+
+msgid "Restart"
+msgstr "Neu starten"
+
+msgid "This unit has a whole-flash backup made before m-bootloader: {name}. Write it back? (The app checks it and asks once more before anything is written.)"
+msgstr "Dieses Gerät hat eine Sicherung des ganzen Flashs von vor m-bootloader: {name}. Zurückschreiben? (Die App prüft sie und fragt noch einmal, bevor etwas geschrieben wird.)"
+
+msgid "A write did not end verified: the FM-1 stays in download mode until it is settled (the question at the next start, or “Write flash back …”)."
+msgstr "Ein Schreiben endete nicht geprüft: Das FM-1 bleibt im Download-Modus, bis das erledigt ist (die Frage beim nächsten Start oder „Flash zurückschreiben …“)."

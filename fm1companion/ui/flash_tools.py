@@ -449,9 +449,14 @@ def leave_flow(parent, ctx, store=None) -> bool:
         return False
     result: dict = {}
 
+    init_gui_caller()
+
+    def ask(text) -> bool:
+        return bool(call_in_gui(lambda: confirm(parent, _("Restart the FM-1"), html.escape(text), _("Restart"))))
+
     def work(w):
         job = _job(ctx, store, w)
-        res = FJ.leave_download_mode(job)
+        res = FJ.leave_download_mode(job, ask)
         result["res"] = res
         return res
     feedback.run(parent, _("Restart the FM-1"), work, done=_("The FM-1 was restarted. Nothing was written."),
@@ -536,6 +541,9 @@ def _boot_flow(parent, ctx, store, op: str) -> bool:
         except FJ.WriteFailed as e:
             result["failed"] = e
             raise
+        except FJ.Refused as e:
+            result["offer"] = getattr(e, "offer", None)
+            raise
         finally:
             remember_unit(ctx, job)
         result["res"] = res
@@ -569,6 +577,12 @@ def _boot_flow(parent, ctx, store, op: str) -> bool:
             ctx.changed.emit()
         except Exception:  # noqa: BLE001
             pass
+    offer = result.get("offer")
+    if offer is not None and confirm(parent, _("Write flash back"),
+                                     _("This unit has a whole-flash backup made before m-bootloader: {name}. Write "
+                                       "it back? (The app checks it and asks once more before anything is "
+                                       "written.)").format(name=html.escape(offer.name)), _("Continue")):
+        return restore_flow(parent, ctx, offer, store=store)
     res = result.get("res")
     return bool(getattr(d, "ok", False) and res is not None and res.verified)
 

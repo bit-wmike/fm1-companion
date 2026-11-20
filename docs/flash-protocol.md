@@ -412,7 +412,9 @@ Melodee OCT−+OCT+ is the calibration!).
     * *Into download mode* is `ensure_download_mode` as its own action: the soft key only to the FM-1 the app
       recognised itself at its USB port (original firmware, Felucca family, SLOOP 3, by USB ID), otherwise the guide;
       the unit stays there, marked as there on purpose. *Restart the FM-1*: exactly one unit in download mode and
-      none on USB MIDI → `restart --device` (writes nothing).
+      none on USB MIDI → `restart --device` (writes nothing) – refused while a write record is open or failed (that
+      unit stays in download mode, where its backup can be written back), and only to the profile's own unit by the
+      unit id `info` reads (another unit: refused; no id known: the user is asked).
     * *Install m-bootloader*: only the pinned bundled `fm1-uboot.boot` (manifest SHA-256 checked on the bytes, its
       BANKCB container must say board `fm1`, version 2.4-395e6cc) and only with a write-verified M-Flasher. On a
       newer unit (UC25HQ80, from the profile or from this session's flash ID) only an m-bootloader build that
@@ -452,6 +454,38 @@ Melodee OCT−+OCT+ is the calibration!).
       first); from a running FM1 Open the existing blocker says so too. m-bootloader with an update of the same
       Felucca-family firmware (no V15 step) is not the trap: a warning that the later return needs the removal
       first. The V15 policy is otherwise unchanged.
+    * *Review fixes (step 3):*
+      * **No V15 boot area on a newer unit.** The removal (`bootloader --stock`) is refused on a newer unit (the
+        profile's revision before download mode, the flash ID read in the session), since V15's boot area was never
+        written to one. The refusal names the way back: a whole-flash restore of a backup of this unit made before
+        m-bootloader (`flashjob.unit_backups`: this unit's backups, each with the kind of its boot area). If one
+        exists, the app offers it. On an earlier unit, the dialog warns when none of the unit's backups shows V15's
+        boot area: its own original may differ (units sold with V16).
+      * **Exact boot area for the install.** The app composes the boot area M-Flasher writes for an m-bootloader
+        ≥ 1.4 (`bootarea.compose_short`, after formats.rs `build_short_boot_area` at v0.12.1):
+        * header and file table kept;
+        * entry 0 with the container's CRC and length;
+        * entry 1 moved to 0x3FA0 with the unit's 34-byte chip-key record and the fixed settings;
+        * the container at 0xA0;
+        * everything else 0xFF.
+
+        On M-VAVE's V15 boot area it differs in 15 096 bytes, 0x00020–0x03FFF – the same count the owner measured
+        after his m-bootloader install by hand.
+
+        The gate requires exactly the sectors where this composed area differs from the fresh pre-backup. The fresh
+        read after the write must equal it over the **whole** 0x00000–0x03FFF, so a stale sector fails. A unit whose
+        table or chip-key record is not intact is refused before anything is written.
+      * **m-bootloader on newer units: only listed builds.** hardware.json status `exact` with
+        `"builds": ["v2.4-395e6cc"]`; a later number does not count until the table lists it. A test fails if the
+        bundled build is not in the table.
+      * **Records and evidence.**
+        * "Already installed" / "already original" settle an open record of the same boot write.
+        * Boot-area evidence: the newest wins (record time vs. the first sighting of FM1 Open / SLOOP 3 in the
+          history; a tie goes to the measurement). An undated FM1 Open entry counts as older than any record; with
+          no record the area is "not known" and the plan suggests a whole-flash backup instead of blocking.
+        * The planner names the way out per revision (earlier: removal or restore; newer: only a restore of an
+          earlier backup – never the refused removal; unknown: both, explained).
+        * Removal while FM1 Open runs carries a note on the recommended order.
     * *Not run on hardware through the app* (`tested.TOOLS_HARDWARE`: `mf_download_button`,
       `mf_bootloader_install`, `mf_bootloader_remove`); the owner did install and the way back by hand
       (`OWNER_REPORTS["mboot_by_hand"]`).

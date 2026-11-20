@@ -259,7 +259,11 @@ stdin closed, nothing written); a newer unit gets only an m-bootloader build mar
 (2.4-395e6cc); no whole-flash backup, two units or a declined dialog → nothing written; the app killed after "yes"
 → M-Flasher writes the boot area to its end, the record says so; the planner refuses Felucca-family targets on a
 changed boot area (CHECK HEAD) and asks for the original boot area after FM1 Open. Not tried: any of it on a real
-FM-1, the V15 boot area on a unit sold with V16, SLOOP 3 starting from the original bootloader.
+FM-1, the V15 boot area on a unit sold with V16, SLOOP 3 starting from the original bootloader. After the review (2026-11-20, stand-in only): the removal is refused on a newer unit and names (and offers) a
+pre-m-bootloader backup; Restart is refused while a write record is open and checks the unit id; the install's boot
+area is composed as M-Flasher does (gate: exactly the differing sectors; verify: the whole 0x00000–0x03FFF – a stale
+sector fails); m-bootloader on a newer unit only as the listed build 2.4-395e6cc. The composed boot area on V15's
+equals the owner's measured change (15 096 bytes, 0x00020–0x03FFF) – a calculation, not a run.
 
 Added after the review (2026-11-19), against the stand-in only: the app is killed (SIGKILL) right after "yes" and the fake still writes to its end; the write record is on disk before "yes" and the next start asks; the foreign factory sector is refused; an image swapped during the dialog is not what is written; no soft key to an SMK-37, an update loader or a unit the app did not recognise. Not tried: logout, `systemd-inhibit` and SIGTERM during a real write.
 

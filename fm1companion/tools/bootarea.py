@@ -46,7 +46,8 @@ CHANGERS = {
 }
 CHANGER_ALIASES = {"mbootloader": "m-bootloader", "fm1open": "fm1-open", "open": "fm1-open"}
 
-HOW = {"backup": N_("from a whole-flash backup"), "m-flasher": N_("reported by M-Flasher"),
+HOW = {"unsure": N_("FM1 Open is in the firmware history without a usable date"),
+       "backup": N_("from a whole-flash backup"), "m-flasher": N_("reported by M-Flasher"),
        "midi-mode": N_("reported by m-bootloader's MIDI MODE"), "installed": N_("written and checked by this app"),
        "history": N_("from the firmware history"), "sloop3": N_("SLOOP 3 runs only from m-bootloader")}
 LABEL = {ORIGINAL: N_("the original boot area (as in M-VAVE's V15 package)"), MBOOT: N_("m-bootloader"),
@@ -107,6 +108,97 @@ def holds(area: bytes, boot: bytes) -> bool:
     """does this boot area carry exactly this bootloader container at 0xA0?"""
     s = stored_form(boot)
     return len(area) >= BOOT_AT + len(s) and area[BOOT_AT:BOOT_AT + len(s)] == s
+
+
+# ---- the boot area M-Flasher composes for m-bootloader 1.4+ (formats.rs build_short_boot_area at v0.12.1): the flash
+# header and file table of the unit's own boot area are kept, entry 0 (uboot.boot) gets the container's CRC-16 and
+# length, entry 1 (isd_config.ini) moves to CONFIG_AT with the unit's 34-byte chip-key record followed by the
+# settings older bootloaders need; the container is stored at 0xA0, everything else is erased (0xFF).
+CONFIG_AT, CONFIG_KEY = 0x3FA0, 34
+CONFIG_SIZE = BOOT_AREA - CONFIG_AT
+CONFIG_SETTINGS = (b"\x04OSC\0OSC0" b"\x04OSC_FREQ\0\x00\x36\x6E\x01" b"\x04SYS_CLK\0\x00\x2A\x75\x15"
+                   b"\x04HSB_DIV\0\x01\0\0\0" b"\x04LSB_DIV\0\x02\0\0\0")
+assert len(CONFIG_SETTINGS) == CONFIG_SIZE - CONFIG_KEY
+
+
+def _u16(b, at: int) -> int:
+    return b[at] | b[at + 1] << 8
+
+
+def boot_table(area: bytes) -> list[tuple[bytes, int, int, str]]:
+    """the boot area's file table: [(decoded 32-byte entry, address, length, name)]; [] when the header is damaged"""
+    if len(area) < BOOT_AREA:
+        return []
+    h = _enc(area[:32])
+    if _crc16(h[2:]) != _u16(h, 0):
+        return []
+    out = []
+    for a in range(0x20, BOOT_AT, 0x20):
+        e = _enc(area[a:a + 32])
+        if _crc16(e[2:]) != _u16(e, 0):
+            break
+        out.append((e, int.from_bytes(e[4:8], "little"), int.from_bytes(e[8:12], "little"),
+                    e[16:32].split(b"\0", 1)[0].decode("latin-1")))
+    return out
+
+
+def _entry(raw: bytes, crc: int, addr: int | None, length: int) -> bytes:
+    e = bytearray(raw)
+    e[2:4] = crc.to_bytes(2, "little")
+    if addr is not None:
+        e[4:8] = addr.to_bytes(4, "little")
+    e[8:12] = length.to_bytes(4, "little")
+    e[0:2] = _crc16(bytes(e[2:])).to_bytes(2, "little")
+    return _enc(bytes(e))
+
+
+def compose_short(area: bytes, boot: bytes) -> bytes | None:
+    """the boot area M-Flasher writes for `bootloader --file` with an m-bootloader 1.4+ container onto a unit whose
+    boot area is `area` – None where M-Flasher itself refuses (no valid file table, a damaged chip-key record, a
+    container that does not fit)"""
+    if boot_identity(boot) is None or len(area) < BOOT_AREA or len(boot) > CONFIG_AT - BOOT_AT:
+        return None
+    t = boot_table(area)
+    if len(t) < 3 or t[0][3] != "uboot.boot" or t[0][1] != BOOT_AT:
+        return None
+    isd_at, isd_len = t[1][1], t[1][2]
+    if t[1][3] != "isd_config.ini" or isd_at < 0x38D0 or isd_at > BOOT_AREA or isd_len < CONFIG_KEY or \
+            isd_len > BOOT_AREA - isd_at:
+        return None
+    if any(e[1] < BOOT_AREA for e in t[2:]):
+        return None
+    key = bytes(area[isd_at:isd_at + CONFIG_KEY])
+    if _crc16(key[:32]) != _u16(key, 32):
+        return None
+    blob = key + CONFIG_SETTINGS
+    out = bytearray(b"\xff" * BOOT_AREA)
+    out[:BOOT_AT] = area[:BOOT_AT]
+    out[0x20:0x40] = _entry(t[0][0], _crc16(boot), None, len(boot))
+    out[0x40:0x60] = _entry(t[1][0], _crc16(blob), CONFIG_AT, CONFIG_SIZE)
+    s = stored_form(boot)
+    out[BOOT_AT:BOOT_AT + len(s)] = s
+    out[CONFIG_AT:] = blob
+    return bytes(out)
+
+
+def stored_mbootloader(area: bytes) -> tuple[str, str] | None:
+    """the m-bootloader container a boot area stores (file-table entry 0 at 0xA0, decoded) -> its identity, or None
+    (the stock bootloader, or no readable one)"""
+    t = boot_table(area)
+    if not t or t[0][3] != "uboot.boot" or t[0][1] != BOOT_AT or BOOT_AT + t[0][2] > BOOT_AREA or t[0][2] < 16:
+        return None
+    s = bytes(area[BOOT_AT:BOOT_AT + t[0][2]])
+    return boot_identity(_enc(s[:16]) + _enc(s[16:]))
+
+
+def chip_key_record(area: bytes) -> bytes:
+    """the unit's 34-byte chip-key record (start of isd_config.ini), b"" when the table or its CRC is not intact"""
+    t = boot_table(area)
+    isd = next((e for e in t if e[3] == "isd_config.ini"), None)
+    if isd is None or isd[1] + CONFIG_KEY > BOOT_AREA:
+        return b""
+    key = bytes(area[isd[1]:isd[1] + CONFIG_KEY])
+    return key if _crc16(key[:32]) == _u16(key, 32) else b""
 
 
 def package_flash(raw: bytes) -> tuple[str, bytes]:
@@ -170,43 +262,58 @@ def note(profile, kind: str, how: str, bootloader: str = "", sha256: str = "", w
     new = {"kind": kind, "how": how, "bootloader": mboot_name(bootloader) if kind == MBOOT else "",
            "sha256": sha256 or "",
            "time": float(when if when is not None else time.time())}
-    if {k: rec.get(k) for k in ("kind", "how", "bootloader", "sha256")} == {k: new[k] for k in
-                                                                           ("kind", "how", "bootloader", "sha256")}:
-        return False
+    if {k: rec.get(k) for k in ("kind", "how", "bootloader", "sha256", "time")} == new:
+        return False                              # (the same evidence again keeps it newest: its time is renewed)
     profile.boot_area = new
     return True
 
 
-def _history_open_after(profile, since: float) -> bool:
-    """FM1 Open in the firmware history at or after `since` (it changes the boot area; M-Flasher calls it "stock")"""
-    for h in getattr(profile, "firmware_history", None) or []:
-        if not isinstance(h, dict):
-            continue
-        if changer(str(h.get("firmware") or "")) is CHANGERS["fm1-open"]:
-            try:
-                if float(h.get("time") or 0) >= since:
-                    return True
-            except (TypeError, ValueError):
-                return True
-    return False
+def _time(v) -> float | None:
+    try:
+        t = float(v)
+    except (TypeError, ValueError):
+        return None
+    return t if t == t else None                   # (NaN: not a time)
 
 
 def current(profile) -> dict:
-    """what the app knows of the unit's boot area now: {"kind", "how", "bootloader", "time"}; kind "" = not known"""
+    """what the app knows of the unit's boot area now: {"kind", "how", "bootloader", "time"}; kind "" = not known.
+    The newest evidence wins: the record (a backup, M-Flasher, MIDI MODE, the app's own write) against FM1 Open and
+    SLOOP 3 in the firmware history (their first sighting; SLOOP 3 as the current firmware without a history entry
+    only when nothing else is known). On a tie the record (a
+    measurement) wins. A history entry without a usable time counts as older than any record; with no record at all it
+    makes the boot area "not known" with how "unsure" (the plan then suggests a whole-flash backup, which reads it)."""
+    empty = {"kind": "", "how": "", "bootloader": "", "time": 0.0}
     if profile is None:
-        return {"kind": "", "how": "", "bootloader": "", "time": 0.0}
+        return empty
     rec = dict(getattr(profile, "boot_area", None) or {})
-    try:
-        since = float(rec.get("time") or 0)
-    except (TypeError, ValueError):
-        since = 0.0
-    if rec.get("kind") != OPEN and _history_open_after(profile, since if rec.get("kind") else 0.0):
-        return {"kind": OPEN, "how": "history", "bootloader": "", "time": since}
-    if not rec.get("kind") and (getattr(profile, "firmware", "") or "").lower() in ("sloop3", "sloop-3"):
-        return {"kind": MBOOT, "how": "sloop3", "bootloader": "", "time": 0.0}
     kind = str(rec.get("kind") or "")
-    return {"kind": kind if kind in (ORIGINAL, MBOOT, OPEN, OTHER) else "", "how": str(rec.get("how") or ""),
-            "bootloader": str(rec.get("bootloader") or ""), "time": since}
+    kind = kind if kind in (ORIGINAL, MBOOT, OPEN, OTHER) else ""
+    since = _time(rec.get("time")) or 0.0
+    best = ({"kind": kind, "how": str(rec.get("how") or ""), "bootloader": str(rec.get("bootloader") or ""),
+             "time": since}, since, 1) if kind else (None, -1.0, 0)
+    unsure = False
+    hist = [h for h in getattr(profile, "firmware_history", None) or [] if isinstance(h, dict)]
+    seen = []
+    for h in hist:
+        fw = str(h.get("firmware") or "").lower()
+        k = OPEN if changer(fw) is CHANGERS["fm1-open"] else MBOOT if fw in ("sloop3", "sloop-3") else ""
+        if not k:
+            continue
+        t = _time(h.get("time"))
+        if t is None:
+            unsure = unsure or k == OPEN
+            continue
+        seen.append((t, k, "history" if k == OPEN else "sloop3"))
+    if (getattr(profile, "firmware", "") or "").lower() in ("sloop3", "sloop-3") and \
+            not any(k == MBOOT for _t, k, _h in seen):
+        seen.append((0.0, MBOOT, "sloop3"))     # (no date of its first sighting: only when nothing else is known)
+    for t, k, how in seen:
+        if (t, 0) > (best[1], best[2]):
+            best = ({"kind": k, "how": how, "bootloader": "", "time": t}, t, 0)
+    if best[0] is None:
+        return dict(empty, how="unsure") if unsure else empty
+    return best[0]
 
 
 def describe(state: dict) -> str:

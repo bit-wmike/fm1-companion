@@ -105,7 +105,11 @@ nueva.
   las mismas comprobaciones; solo se escriben los sectores en los que tu zona de arranque difiere de la de V15. Esto
   también deshace lo que FM1 Open cambió en la zona de arranque. En un FM-1 que vino con V16 es la zona de arranque de
   V15, no necesariamente la que traía. SLOOP 3 se instala solo a través de m-bootloader: no se sabe si arranca después
-  – la copia hecha justo antes es el camino de vuelta.
+  – la copia hecha justo antes es el camino de vuelta. **Solo en una unidad anterior** (sin logotipo delante): la zona
+  de arranque de V15 nunca se ha escrito en una más nueva, así que allí la app lo rechaza y nombra el camino de vuelta
+  – volver a escribir una copia de toda la flash de esta unidad hecha antes de m-bootloader (la ofrece si existe).
+  «Reiniciar el FM-1» se rechaza mientras una escritura no terminó comprobada (el FM-1 se queda entonces en modo de
+  descarga, donde se puede volver a escribir su copia).
 * **Por qué importa la zona de arranque original:** muchos firmwares de la familia Felucca rechazan el V15 original si
   la zona de arranque no es la de V15 («FAILED -5» en el FM-1, CHECK HEAD). Si la app sabe que tu FM-1 tiene
   m-bootloader o la zona de arranque de FM1 Open (por una copia de la flash, por M-Flasher, por el propio m-bootloader

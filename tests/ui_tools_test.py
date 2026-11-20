@@ -308,6 +308,9 @@ def boot_flow(card, state, uid, asked):
     c = w.ctx
     prof = c.profile
     state.write_text(json.dumps({"mode": "midi", "unit_id": uid}))
+    sys.path.insert(0, str(ROOT / "tests"))
+    import fake_mflasher                                   # (a unit with an intact stock-layout boot area again)
+    Path(str(state) + ".flash").write_bytes(fake_mflasher.synthetic_image())
     prof.unit_id = uid
     w.go("recovery")
     card.refresh()
@@ -335,6 +338,7 @@ def boot_flow(card, state, uid, asked):
     card.refresh()
     check("m-bootloader 2.4-395e6cc" in card.boot_label.text(), f"the card says so ({card.boot_label.text()[:60]})")
     img = bytearray(random.Random("ui-v15").randbytes(0x93000))
+    img[:0x4000] = fake_mflasher.synthetic_image("ui-v15")[:0x4000]
     raw = pk.build_package("FM-1_015", family="stock", app=bytes(img))
     pkg = home / "FM-1_015.fwsc"
     pkg.write_bytes(raw)

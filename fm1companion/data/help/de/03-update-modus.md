@@ -107,7 +107,12 @@ gesucht hat.
   dieselbe Sicherung, dieselben Prüfungen; geschrieben werden nur die Sektoren, in denen dein Boot-Bereich von dem
   der V15 abweicht. Das macht auch rückgängig, was FM1 Open im Boot-Bereich geändert hat. Auf einem FM-1, das mit
   V16 kam, ist es der Boot-Bereich der V15, nicht unbedingt der ursprüngliche. SLOOP 3 wird nur über m-bootloader
-  installiert: Ob es danach startet, ist nicht bekannt – die eben gemachte Sicherung ist der Rückweg.
+  installiert: Ob es danach startet, ist nicht bekannt – die eben gemachte Sicherung ist der Rückweg. **Nur auf einem
+  früheren Gerät** (ohne Logo vorne): Der Boot-Bereich der V15 wurde noch nie auf ein neueres geschrieben, deshalb
+  lehnt die App dort ab und nennt stattdessen den Rückweg – das Zurückschreiben einer Sicherung des ganzen Flashs
+  dieses Geräts von vor m-bootloader (sie bietet sie an, wenn es eine gibt). „FM-1 neu starten“ wird abgelehnt,
+  solange ein Schreiben nicht geprüft endete (das FM-1 bleibt dann im Download-Modus, wo sich seine Sicherung
+  zurückschreiben lässt).
 * **Warum der Original-Boot-Bereich wichtig ist:** Viele Firmwares der Felucca-Familie lehnen die Original-V15 ab,
   wenn der Boot-Bereich nicht der der V15 ist („FAILED -5“ auf dem FM-1, CHECK HEAD). Weiß die App, dass dein FM-1
   m-bootloader oder den Boot-Bereich von FM1 Open hat (aus einer Flash-Sicherung, von M-Flasher, von m-bootloader

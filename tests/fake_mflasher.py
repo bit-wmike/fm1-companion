@@ -37,7 +37,9 @@ State: the JSON file named by FAKE_MFLASHER_STATE (all keys optional):
                      "warning" (M-Flasher's flash-chip WARNING) | "note" (another note) | "killed-in-write" |
                      "write-fail" | "no-done" | "backup-fails" | "refuse-key" (the package does not match the chip
                      key: Refused before the plan) | "wrong-area" (writes a slightly different boot area than it
-                     announced – the app's fresh read must catch it) | "stray" (one unknown line before the title)
+                     announced – the app's fresh read must catch it) | "stray" (one unknown line before the title) |
+                     "skip-sector" (the last announced run is reported written and verified, but not written) |
+                     "plan-partial" (the plan and the write leave out the first sector that must change)
   midi_name the ALSA card name `find` prints for a running unit (default "FM-1")
             download-mode: "never" (the unit does not come back within 20 s)
             info:    "split-utf8" (no unit id; the "–" is written in two pieces)
@@ -108,11 +110,94 @@ def image_path(st: dict) -> str:
     return st.get("image") or ((state_path() or "/nonexistent/fake") + ".flash")
 
 
+def _crc16(data: bytes) -> int:
+    crc = 0
+    for x in data:
+        crc ^= x << 8
+        for _i in range(8):
+            crc = ((crc << 1) ^ 0x1021) & 0xFFFF if crc & 0x8000 else (crc << 1) & 0xFFFF
+    return crc
+
+
+def _enc(data: bytes, key: int = 0xFFFF) -> bytes:
+    out = bytearray(data)
+    for i in range(len(out)):
+        out[i] ^= key & 0xFF
+        key = ((key << 1) ^ (0x1021 if key & 0x8000 else 0)) & 0xFFFF
+    return bytes(out)
+
+
+def _table_entry(name: str, addr: int, length: int, data_crc: int = 0) -> bytes:
+    e = bytearray(32)
+    e[2:4] = data_crc.to_bytes(2, "little")
+    e[4:8] = addr.to_bytes(4, "little")
+    e[8:12] = length.to_bytes(4, "little")
+    e[16:16 + len(name)] = name.encode()
+    e[0:2] = _crc16(bytes(e[2:])).to_bytes(2, "little")
+    return _enc(bytes(e))
+
+
 def synthetic_image(seed: str = "fm1c-fake-flash") -> bytes:
-    """1 MiB of pseudo-random bytes from a fixed seed, with a little structure at the start"""
-    b = bytearray(random.Random(seed).randbytes(FLASH_SIZE))
-    b[0:16] = b"FAKE-FM1-FLASH\x00\x01"
+    """1 MiB of pseudo-random bytes from a fixed seed, with a synthetic boot area of the stock layout: a valid flash
+    header and file table (uboot.boot at 0xA0, isd_config.ini at 0x38D0 with an intact chip-key record, app_dir_head,
+    key_mac) – the structure M-Flasher's bootloader planning needs; the contents are random"""
+    r = random.Random(seed)
+    b = bytearray(r.randbytes(FLASH_SIZE))
+    h = bytearray(r.randbytes(32))
+    h[0:2] = _crc16(bytes(h[2:])).to_bytes(2, "little")
+    b[0:32] = _enc(bytes(h))
+    b[0x20:0x40] = _table_entry("uboot.boot", 0xA0, 0x3830)
+    b[0x40:0x60] = _table_entry("isd_config.ini", 0x38D0, 0x2BB)
+    b[0x60:0x80] = _table_entry("app_dir_head", 0x4000, 0xFFFFFFFF)
+    b[0x80:0xA0] = _table_entry("key_mac", 0xFF000, 0x1000)
+    key = bytearray(r.randbytes(34))
+    key[32:34] = _crc16(bytes(key[:32])).to_bytes(2, "little")
+    b[0x38D0:0x38D0 + 34] = key
     return bytes(b)
+
+
+CONFIG_AT, CONFIG_SETTINGS = 0x3FA0, (b"\x04OSC\0OSC0\x04OSC_FREQ\0\x00\x36\x6E\x01\x04SYS_CLK\0\x00\x2A\x75\x15"
+                                       b"\x04HSB_DIV\0\x01\0\0\0\x04LSB_DIV\0\x02\0\0\0")
+
+
+def short_boot_area(flash: bytes, boot: bytes):
+    """formats.rs build_short_boot_area (M-Flasher 0.12.1), written again for the stand-in: the area or a refusal"""
+    h = _enc(flash[:32])
+    if _crc16(h[2:]) != int.from_bytes(h[0:2], "little"):
+        return "the boot area has no valid file table"
+    t = []
+    for a in range(0x20, 0xA0, 0x20):
+        e = _enc(flash[a:a + 32])
+        if _crc16(e[2:]) != int.from_bytes(e[0:2], "little"):
+            break
+        t.append((e, int.from_bytes(e[4:8], "little"), int.from_bytes(e[8:12], "little"),
+                  e[16:32].split(b"\0")[0].decode("latin-1")))
+    if len(t) < 3 or t[0][3] != "uboot.boot" or t[0][1] != 0xA0:
+        return "the boot area has no valid file table"
+    isd_at, isd_len = t[1][1], t[1][2]
+    if t[1][3] != "isd_config.ini" or not 0x38D0 <= isd_at <= 0x4000 or isd_len < 34 or isd_len > 0x4000 - isd_at:
+        return "isd_config is not safely contained in the boot area"
+    key = flash[isd_at:isd_at + 34]
+    if _crc16(key[:32]) != int.from_bytes(key[32:34], "little"):
+        return "the unit's chip-key record is damaged"
+    blob = key + CONFIG_SETTINGS
+
+    def entry(raw, crc, addr, length):
+        e = bytearray(raw)
+        e[2:4] = crc.to_bytes(2, "little")
+        if addr is not None:
+            e[4:8] = addr.to_bytes(4, "little")
+        e[8:12] = length.to_bytes(4, "little")
+        e[0:2] = _crc16(bytes(e[2:])).to_bytes(2, "little")
+        return _enc(bytes(e))
+    area = bytearray(b"\xff" * 0x4000)
+    area[:0xA0] = flash[:0xA0]
+    area[0x20:0x40] = entry(t[0][0], _crc16(boot), None, len(boot))
+    area[0x40:0x60] = entry(t[1][0], _crc16(blob), CONFIG_AT, 0x4000 - CONFIG_AT)
+    stored = _enc(boot[:16]) + _enc(boot[16:])
+    area[0xA0:0xA0 + len(stored)] = stored
+    area[CONFIG_AT:] = blob
+    return bytes(area)
 
 
 def load_image(st: dict) -> bytearray:
@@ -349,7 +434,8 @@ def apply(st, args, current: bytes, target: bytes, runs, fault: str, uid: str, r
             img[a:a + SECTOR] = b"\xff" * SECTOR            # erased, not yet programmed
             store_image(st, bytes(img))
             os.kill(os.getpid(), signal.SIGKILL)
-        img[a:b] = target[a:b]
+        if not (fault == "skip-sector" and i == len(runs) - 1):     # (announced, "verified", never written)
+            img[a:b] = target[a:b]
         if fault == "write-fail" and i == 0:
             img[a] ^= 0xFF
             store_image(st, bytes(img))
@@ -500,14 +586,15 @@ def bootloader(st: dict, args, fault: str) -> int:
         if ident is not None and ident[0] != "fm1":
             return refuse(f'this bootloader is built for "{ident[0]}", the unit is a FM-1')
         version = ident[1] if ident else "unknown"
-        stored = enc(raw[:16]) + enc(raw[16:])
-        area = bytearray(b"\xff" * 0x4000)
-        area[:0xA0] = current[:0xA0]
-        area[0xA0:0xA0 + len(stored)] = stored
-        area[0x3FA0:] = current[0x3FA0:0x4000]
         title = f"Install the bootloader {version} for the FM-1"
         major, _d, minor = version.split("-")[0].partition(".")
         short = major.isdigit() and minor.isdigit() and (int(major), int(minor)) >= (1, 4)
+        if not short:
+            return refuse("the stand-in composes only m-bootloader 1.4 and newer")
+        area = short_boot_area(current, raw)
+        if isinstance(area, str):
+            return refuse(area + "; put back the stock bootloader from an official package instead (STOCK (FROM "
+                          ".FWSC), or `bootloader --stock PACKAGE.fwsc`)")
         note = ("Only the boot area (0x00000-0x03FFF) is written. This bootloader does not read the unit's "
                 "configuration, so of that only the chip key is kept, with the settings older versions need."
                 if short else
@@ -515,6 +602,8 @@ def bootloader(st: dict, args, fault: str) -> int:
         shown_after = f"m-bootloader {version} (fm1)" if ident else "unknown"
     target = bytes(area) + current[0x4000:]
     sectors = [a for a in range(0, 0x4000, SECTOR) if target[a:a + SECTOR] != current[a:a + SECTOR]]
+    if fault == "plan-partial":                      # (a plan that leaves out a sector that must change)
+        sectors = sectors[1:]
     runs = runs_of(sectors)
     show_plan(title, runs, [note], [], fault, extra=(0x4000, 0x5000))
     if not runs:

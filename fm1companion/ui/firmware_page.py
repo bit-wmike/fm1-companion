@@ -119,7 +119,8 @@ def _boot_area(ctx) -> dict:
     try:
         from ..tools import bootarea
         cur = bootarea.current(None if getattr(ctx, "is_virtual", False) else getattr(ctx, "profile", None))
-        return {"boot_area": cur["kind"], "boot_area_text": bootarea.describe(cur) if cur["kind"] else ""}
+        return {"boot_area": cur["kind"], "boot_area_text": bootarea.describe(cur) if cur["kind"] else "",
+                "boot_area_unsure": cur["how"] == "unsure"}
     except Exception:  # noqa: BLE001 – never stops the plan
         return {}
 

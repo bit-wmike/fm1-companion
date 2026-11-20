@@ -24,10 +24,32 @@ BOOT_CHANGERS = ("m-bootloader", "mbootloader", "open", "fm1open")   # (tools/bo
 # Felucca-family firmware's check (CHECK HEAD) or is itself a Felucca-family firmware: the plan does not go on
 BOOT_TRAP = _("This FM-1's boot area is not the original one ({what}). Felucca-family firmwares (Melodee, SLOOP, "
               "Skiff …) with the old check refuse the original V15 on such a unit (“FAILED -5”), so the usual way – "
-              "V15 first, then the target – would end in that trap, and later returns would too. First put back the "
-              "original boot area: Recovery › Tools › “Remove m-bootloader (original boot area)” – it backs up the "
-              "whole flash first and writes only the boot area 0x00000–0x03FFF (from M-VAVE's V15 package). Then "
-              "open this plan again.")
+              "V15 first, then the target – would end in that trap, and later returns would too.")
+# the way out, per unit (never an action the app would refuse there: V15's boot area only onto an earlier unit)
+BOOT_WAY = {
+    "old": _("First put back the original boot area: Recovery › Tools › “Remove m-bootloader (original boot area)” – "
+             "it backs up the whole flash first and writes only the boot area 0x00000–0x03FFF (from M-VAVE's V15 "
+             "package) – or write back a whole-flash backup of this unit made before (Recovery › Tools › “Write "
+             "flash back …”). Then open this plan again."),
+    "new": _("On a newer unit (logo on the front) the app does not write V15's boot area: it has never been written "
+             "onto such a unit. The way back is a whole-flash restore of a backup of this unit made before "
+             "m-bootloader or FM1 Open (Recovery › Tools › “Write flash back …”). Without such a backup the app has "
+             "no way back for this unit."),
+    "": _("The way out depends on the unit. An earlier FM-1 (no logo on the front): Recovery › Tools › “Remove "
+          "m-bootloader (original boot area)” (it reads the flash chip first and refuses a newer unit), or a "
+          "whole-flash restore of a backup made before. A newer FM-1 (logo on the front): only that whole-flash "
+          "restore (Recovery › Tools › “Write flash back …”). Then open this plan again."),
+}
+
+
+def boot_way(state) -> str:
+    rev = getattr(state, "revision", "") or ""
+    return BOOT_WAY.get(rev if rev in ("old", "new") else "", BOOT_WAY[""])
+
+
+def boot_trap_text(state) -> str:
+    return BOOT_TRAP.format(what=state.boot_area_text or state.boot_area) + " " + boot_way(state)
+
 
 RISK_TEXT = {"keins": _("no risk"), "niedrig": _("low risk"), "mittel": _("medium risk"), "hoch": _("high risk")}
 
@@ -102,6 +124,7 @@ class DeviceState:
     boot_area: str = ""           # what the app knows of the boot area (tools/bootarea.py): "original" |
     #                               "m-bootloader" | "fm1-open" | "other" | "" not known
     boot_area_text: str = ""      # … said for the user ("m-bootloader 2.4-395e6cc (reported by M-Flasher)")
+    boot_area_unsure: bool = False  # FM1 Open in the history without a usable date and nothing measured since
 
     @property
     def update_mode(self) -> bool:
@@ -411,9 +434,8 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
         p.blockers.append(_("This FM-1 runs the M-VAVE Open firmware. First return to the original firmware with "
                             "M-VAVE's own tool (FM1 Workbench), then install here.") + " " +
                           _("FM1 Open changes the boot area (measured on V14), and the original firmware does not "
-                            "necessarily put it back: before a Felucca-family firmware, put back the original boot "
-                            "area too (Recovery › Tools › “Remove m-bootloader (original boot area)”, with a "
-                            "whole-flash backup first)."))
+                            "necessarily put it back: before a Felucca-family firmware, the original boot area must "
+                            "come back too.") + " " + boot_way(state))
     if state.identity and not state.update_mode and not state.open_firmware and \
             not state.identity.startswith("FM-1_"):
         p.blockers.append(_("The connected device reports “{identity}” – that is not an FM-1.").format(
@@ -565,11 +587,15 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
         p.warnings.append(TRAP_TEXT)
     if boot_trap(state, t, fam, p.via_stock):
         p.boot_restore = True
-        p.blockers.append(BOOT_TRAP.format(what=state.boot_area_text or state.boot_area))
+        p.blockers.append(boot_trap_text(state))
     elif state.boot_area == "m-bootloader" and fam == "felucca":
         p.warnings.append(_("This FM-1 has m-bootloader. Installing over it keeps it, but a later return to the "
-                            "original V15 from this firmware ends in “FAILED -5” – before that, put back the original "
-                            "boot area (Recovery › Tools › “Remove m-bootloader (original boot area)”)."))
+                            "original V15 from this firmware ends in “FAILED -5” – the original boot area must come "
+                            "back before that.") + " " + boot_way(state))
+    if state.boot_area_unsure and fam == "felucca":
+        p.warnings.append(_("FM1 Open is in this FM-1's firmware history without a usable date, so the app does not "
+                            "know whether its boot area is still FM1 Open's. A whole-flash backup (Recovery › Tools › "
+                            "“Back up the whole flash”) reads it – then open this plan again."))
     if t.is_v16:
         p.warnings.insert(0, _("<b>V16 (experimental):</b> {warning}").format(warning=V16_WARNING))
         p.confirmations.append("v16")

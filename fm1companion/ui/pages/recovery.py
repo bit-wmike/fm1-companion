@@ -422,16 +422,9 @@ class RecoveryPage(QWidget):
         d = self._dl_intended
         if d is None:
             return
-        from ...tools import runner
-
-        def work(w):
-            return runner.run_mflasher(["restart", "--device", d.sg])
-
-        def done(r):
-            self.ctx.message.emit(_("The FM-1 was restarted.") if r.ok else
-                                  _("The FM-1 did not restart: switch it off and on."))
-            self.refresh()
-        run_job(self, work, on_done=done, on_fail=lambda m, tb: show_error(self, _("Restart the FM-1"), m))
+        from ..flash_tools import leave_flow             # (the same checks as everywhere: no open write record,
+        leave_flow(self, self.ctx)                       #  the unit's identity)
+        self.refresh()
 
     # ------------------------------------------------------------ Level 1
     def forget_active(self):

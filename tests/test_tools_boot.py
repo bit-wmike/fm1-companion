@@ -27,8 +27,7 @@ from fm1companion.i18n import _  # noqa: E402
 from test_tools_flash import ARCH, OTHER_UID, UID, calls, env, nothing_written, sha  # noqa: E402,F401
 
 OPEN_TOO = ("FM1 Open changes the boot area (measured on V14), and the original firmware does not necessarily put it "
-            "back: before a Felucca-family firmware, put back the original boot area too (Recovery › Tools › “Remove "
-            "m-bootloader (original boot area)”, with a whole-flash backup first).")
+            "back: before a Felucca-family firmware, the original boot area must come back too.")
 BY_HAND = ("Not tested on a real FM-1 through this app yet: {what} ran only against a stand-in for M-Flasher. The owner "
            "did the same with M-Flasher by hand, outside the app (2026-11-18/19).")
 BOOT = (ROOT / "fm1companion" / "tools" / "bundled" / "m-bootloader" / "fm1-uboot.boot").read_bytes()
@@ -40,8 +39,9 @@ def v15(monkeypatch):
     """a synthetic stand-in for M-VAVE's V15 package (structurally valid, identity FM-1_015) with its checksums
     patched in as the pinned ones"""
     import random
+    import fake_mflasher
     flash = bytearray(random.Random("synthetic-v15").randbytes(0x93000))
-    flash[0:16] = b"SYNTHETIC-V15-BA"
+    flash[:0x4000] = fake_mflasher.synthetic_image("synthetic-v15")[:0x4000]     # (a structured boot area)
     raw = pk.build_package("FM-1_015", family="stock", app=bytes(flash))
     monkeypatch.setattr(pk, "STOCK_V15_SHA256", sha(raw))
     monkeypatch.setattr(bootarea, "V15_BOOT_AREA_SHA256", sha(bytes(flash[:0x4000])))
@@ -117,7 +117,7 @@ def test_current_boot_area_from_record_history_and_sloop3():
     assert bootarea.current(p)["kind"] == bootarea.MBOOT                               # (SLOOP 3 needs m-bootloader)
     p.firmware = "skiff"
     assert bootarea.note(p, bootarea.ORIGINAL, "backup", when=100.0)
-    assert not bootarea.note(p, bootarea.ORIGINAL, "backup", when=200.0)               # (nothing new)
+    assert not bootarea.note(p, bootarea.ORIGINAL, "backup", when=100.0)               # (nothing new)
     assert bootarea.current(p)["kind"] == bootarea.ORIGINAL
     p.firmware_history = [{"time": 50.0, "firmware": "fm1-open"}]                      # (before the exact reading)
     assert bootarea.current(p)["kind"] == bootarea.ORIGINAL
@@ -176,6 +176,7 @@ def test_into_download_mode_and_restart_as_their_own_actions(env):
     assert env.get()["mode"] == "download"
     res = FJ.download_mode(env.job())
     assert not res.sent                                                                # (it is there already)
+    env.prof.unit_id = UID                                                             # (the profile knows its unit)
     assert FJ.leave_download_mode(env.job()) == "/dev/sg1"
     assert env.get()["mode"] == "midi" and calls(env, "restart") == [["restart", "--device", "/dev/sg1"]]
     with pytest.raises(FJ.Refused) as e:
@@ -539,7 +540,7 @@ def _stock():
 def test_check_head_trap_a_felucca_target_on_a_changed_boot_area_is_refused(kind):
     p = planner.plan_install(_state(boot_area=kind, boot_area_text="x"), _target())
     assert not p.ok and p.boot_restore
-    assert planner.BOOT_TRAP.format(what="x") in p.blockers
+    assert planner.boot_trap_text(_state(boot_area=kind, boot_area_text="x")) in p.blockers
     # the way back to the original V15 from a running Felucca-family firmware too
     p = planner.plan_install(_state(boot_area=kind), _stock())
     assert not p.ok and p.boot_restore
@@ -607,3 +608,215 @@ def test_new_tool_kinds_are_not_marked_tested_and_the_owner_report_is_outside_th
         "mf_bootloader_install"][1]))
     doc = (ROOT / "docs" / "flash-protocol.md").read_text("utf-8")
     assert "Step 3" in doc and "bootloader --stock" in doc and bootarea.V15_BOOT_AREA_SHA256[:8] in doc
+
+
+# ------------------------------------------------------------------------------------------------ review fixes
+
+def _install_with_v15_area(env, area):
+    """the fake unit's boot area is V15's (synthetic stand-in) – as on an earlier unit with the original boot area"""
+    img = bytearray(env.flash())
+    img[:0x4000] = area
+    Path(str(env.state) + ".flash").write_bytes(bytes(img))
+
+
+def test_h_removal_on_a_newer_unit_is_refused_and_names_the_way_back(env, v15):
+    raw, _area = v15
+    env.set(mode="midi", flash=0xB36014)
+    old = FJ.backup(env.job())                                         # (a backup made before m-bootloader)
+    env.prof.unit_id = UID
+    install(env)
+    before = env.flash()
+    nb = len(boot_calls(env))
+    with pytest.raises(FJ.Refused) as e:
+        remove(env, raw)
+    offer = e.value.offer
+    assert e.value.kind == "newer-chip-stock" and offer is not None and offer.name in e.value.reason
+    assert offer.parent == old.path.parent and dict(FJ.unit_backups(offer.parent, UID))[offer] != bootarea.MBOOT
+    assert env.flash() == before and len(boot_calls(env)) == nb
+    # the profile now knows it is a newer unit: refused before the FM-1 is even sent into download mode
+    n = len(env.get()["calls"])
+    with pytest.raises(FJ.Refused) as e:
+        remove(env, raw)
+    assert e.value.kind == "newer-chip-stock" and len(env.get()["calls"]) == n
+
+
+def test_h_removal_on_a_newer_unit_without_a_backup_says_there_is_no_way(env, v15):
+    raw, _area = v15
+    before = env.flash()
+    env.set(mode="midi", flash=0xB36014)
+    with pytest.raises(FJ.Refused) as e:
+        remove(env, raw)
+    assert e.value.kind == "newer-chip-stock" and e.value.offer is None
+    nothing_written(env, before)
+    assert not boot_calls(env) and not calls(env, "backup")
+
+
+def test_h_earlier_unit_without_an_original_backup_is_warned(env, v15):
+    raw, area = v15
+    install(env)
+    plans = []
+    remove(env, raw, plans)
+    assert any("V16" in n for n in plans[0].notes)                     # (no backup showed V15's boot area)
+    # a unit whose backup once showed V15's boot area: no such note
+    _install_with_v15_area(env, area)
+    FJ.backup(env.job())
+    install(env)
+    plans = []
+    remove(env, raw, plans)
+    assert not any("V16" in n for n in plans[0].notes)
+
+
+@pytest.mark.parametrize("rev,removal", [("old", True), ("new", False), ("", True)])
+def test_h_the_planner_names_the_right_way_out_per_unit(rev, removal):
+    st = _state(boot_area=bootarea.OTHER, boot_area_text="x", revision=rev)
+    p = planner.plan_install(st, _target())
+    text = next(b for b in p.blockers if planner.BOOT_TRAP.format(what="x") in b)
+    assert planner.boot_way(st) in text
+    assert (_("Remove m-bootloader (original boot area)") in text) is removal
+    if rev == "new":
+        assert planner.BOOT_WAY["new"] in text
+    op = planner.plan_install(_state(identity="FM1_OFFICIAL_OPEN", felucca=False, firmware_key="fm1-open",
+                                     revision=rev), _target())
+    assert any(planner.boot_way(st) in b for b in op.blockers)
+    mb = planner.plan_install(_state(identity="FM-1_727", firmware_key="skiff", boot_area=bootarea.MBOOT,
+                                     revision=rev), _target())
+    assert any(planner.boot_way(st) in w for w in mb.warnings)
+
+
+def test_m1_restart_refused_while_a_write_record_is_open(env):
+    env.set(mode="midi", fault_bootloader="write-fail")
+    with pytest.raises(FJ.WriteFailed):
+        install(env)
+    assert env.get()["mode"] == "download"
+    env.prof.unit_id = UID
+    n = len(calls(env, "restart"))
+    with pytest.raises(FJ.Refused) as e:
+        FJ.leave_download_mode(env.job())
+    assert e.value.kind == "open-record" and len(calls(env, "restart")) == n and env.get()["mode"] == "download"
+    FJ.forget_write(env.journal.dir)
+    assert FJ.leave_download_mode(env.job()) == "/dev/sg1"
+
+
+def test_l5_restart_checks_which_unit_it_is(env):
+    env.set(mode="download")
+    env.prof.unit_id = OTHER_UID                                        # (the active profile is another unit)
+    with pytest.raises(FJ.Refused) as e:
+        FJ.leave_download_mode(env.job())
+    assert e.value.kind == "other-unit" and not calls(env, "restart")
+    env.prof.unit_id = ""                                               # (nothing tells: ask)
+    asked = []
+    with pytest.raises(FJ.Refused) as e:
+        FJ.leave_download_mode(env.job(), lambda text: asked.append(text) or False)
+    assert e.value.kind == "not-confirmed" and asked and "…" + UID[-4:] in asked[0] and not calls(env, "restart")
+    assert FJ.leave_download_mode(env.job(), lambda text: True) == "/dev/sg1"
+    env.set(mode="download")
+    env.prof.unit_id = UID                                              # (its own unit: no question)
+    assert FJ.leave_download_mode(env.job(), lambda text: pytest.fail("asked")) == "/dev/sg1"
+
+
+def test_m2_only_the_listed_build_counts_on_a_newer_unit(env, monkeypatch):
+    # the bundled build is the one hardware.json lists – a pin bump without a table entry makes this fail
+    assert hardware.support("m-bootloader", bootarea.boot_identity(BOOT)[1]).status == hardware.YES
+    for v in ("2.5", "2.5-abcdef0", "3.0", "2.10"):
+        assert hardware.support("m-bootloader", v).status != hardware.YES, v
+    env.set(mode="midi", flash=0xB36014)
+    before = env.flash()
+    monkeypatch.setattr(FJ, "bundled_bootloader", lambda store: (BOOT, "2.5-abcdef0"))
+    with pytest.raises(FJ.Refused) as e:
+        install(env)
+    assert e.value.kind == "newer-chip"
+    nothing_written(env, before)
+
+
+def test_l1_the_composed_boot_area_matches_m_flashers_and_keeps_the_chip_key():
+    import fake_mflasher
+    img = fake_mflasher.synthetic_image()
+    area = bootarea.compose_short(img[:0x4000], BOOT)
+    assert area is not None and area == fake_mflasher.short_boot_area(img, BOOT)      # (two independent writings)
+    assert bootarea.holds(area, BOOT) and bootarea.stored_mbootloader(area) == ("fm1", VERSION)
+    assert bootarea.chip_key_record(area) == bootarea.chip_key_record(img[:0x4000]) != b""
+    names = [(n, a) for _e, a, _l, n in bootarea.boot_table(area)]
+    assert names[:2] == [("uboot.boot", 0xA0), ("isd_config.ini", 0x3FA0)]
+    broken = bytearray(img[:0x4000])
+    broken[0x38D0] ^= 1                                                 # (a damaged chip-key record)
+    assert bootarea.compose_short(bytes(broken), BOOT) is None
+
+
+def test_l1_a_stale_sector_fails_the_verification(env):
+    """the unit has m-bootloader already, but its configuration sector (0x3000-0x3FFF: config and chip-key record) is
+    stale: only that sector must be written; M-Flasher announces it, says Done and leaves it – the fresh read of the
+    WHOLE boot area against the composed one catches it"""
+    install(env)
+    img = bytearray(env.flash())
+    img[0x3FD0:0x3FE0] = b"\x00" * 16                                  # (stale settings behind the chip-key record)
+    Path(str(env.state) + ".flash").write_bytes(bytes(img))
+    env.set(mode="midi", fault_bootloader="skip-sector")
+    with pytest.raises(FJ.WriteFailed) as e:
+        install(env)
+    assert e.value.kind == "verify-mismatch" and env.get()["written"][-1] == [0x3000, 0x4000]
+
+
+def test_l1_a_plan_that_leaves_out_a_sector_is_refused_before_yes(env):
+    before = env.flash()
+    env.set(mode="midi", fault_bootloader="plan-partial")
+    with pytest.raises(FJ.Refused) as e:
+        install(env)
+    assert e.value.kind == "gate"
+    nothing_written(env, before)
+
+
+def test_l1_the_gate_wants_exactly_the_sectors_that_differ():
+    title, note = mp.bootloader_title(VERSION), mp.BOOT_SHORT_NOTE
+    expect = {"unit_id": UID, "flash_id": 0x856014, "chip_key": 0x980F, "title": title, "note": note,
+              "runs": [(0, 0x4000)]}
+    gate = FJ.boot_gate(expect)
+    assert gate(_out(title, [(0, 0x4000)], note)) == ""
+    assert gate(_out(title, [(0x3000, 0x4000)], note)) != ""                # (sectors 0-2 must change too)
+
+
+def test_l2_already_installed_settles_an_open_record(env):
+    install(env)
+    rec_path = FJ.record_file(env.journal.dir)
+    rec = json.loads(rec_path.read_text())
+    rec["state"] = "writing"                                            # (the app died after "yes")
+    FJ._save_record(rec_path, rec)
+    assert FJ.unfinished_write(env.journal.dir) is not None
+    assert install(env).note == "already"
+    assert FJ.unfinished_write(env.journal.dir) is None
+
+
+def test_l2_already_original_settles_an_open_record(env, v15):
+    raw, area = v15
+    install(env)
+    remove(env, raw)
+    rec_path = FJ.record_file(env.journal.dir)
+    rec = json.loads(rec_path.read_text())
+    rec["state"] = "failed"
+    FJ._save_record(rec_path, rec)
+    assert remove(env, raw).note == "already" and FJ.unfinished_write(env.journal.dir) is None
+
+
+def test_l3_the_newest_evidence_wins_and_a_bad_time_does_not_block_forever():
+    p = devices.Profile(id="aaaaaaaaaa", name="Unit 1")
+    p.firmware_history = [{"time": "not a time", "firmware": "fm1-open"}]
+    cur = bootarea.current(p)
+    assert cur["kind"] == "" and cur["how"] == "unsure"                 # (not known – the plan suggests a backup)
+    st = _state(boot_area=cur["kind"], boot_area_unsure=True)
+    pl = planner.plan_install(st, _target())
+    assert not pl.boot_restore and any("Back up the whole flash" in w or "FM1 Open" in w for w in pl.warnings)
+    bootarea.note(p, bootarea.ORIGINAL, "installed", when=100.0)
+    assert bootarea.current(p)["kind"] == bootarea.ORIGINAL             # (a measurement beats an undated entry)
+    p.firmware_history.append({"time": 200.0, "firmware": "sloop3"})    # (SLOOP 3 seen after the measurement)
+    assert bootarea.current(p)["kind"] == bootarea.MBOOT
+    bootarea.note(p, bootarea.ORIGINAL, "installed", when=300.0)
+    assert bootarea.current(p)["kind"] == bootarea.ORIGINAL
+    p.firmware_history.append({"time": 300.0, "firmware": "fm1-open"})  # (a tie: the measurement wins)
+    assert bootarea.current(p)["kind"] == bootarea.ORIGINAL
+
+
+def test_l4_removal_while_fm1_open_runs_says_what_that_means(env, v15):
+    raw, _area = v15
+    env.prof.firmware = "fm1-open"
+    plans = []
+    remove(env, raw, plans)
+    assert any("Workbench" in n for n in plans[0].notes)

@@ -100,7 +100,10 @@ before every use and never runs a changed file), and when it last looked for a n
   only the sectors where your boot area differs from V15's are written. This also undoes what FM1 Open changed in the
   boot area. On an FM-1 that came with V16 it is V15's boot area, not necessarily the one it came with. SLOOP 3 is
   installed only through m-bootloader: whether it starts afterwards is not known – the backup made just before is the
-  way back.
+  way back. **Only on an earlier unit** (no logo on the front): V15's boot area has never been written onto a newer
+  one, so there the app refuses and names the way back instead – writing back a whole-flash backup of this unit made
+  before m-bootloader (it offers it when there is one). “Restart the FM-1” is refused while a write did not end
+  verified (the FM-1 then stays in download mode, where its backup can be written back).
 * **Why the original boot area matters:** many Felucca-family firmwares refuse the original V15 when the boot area is
   not V15's (“FAILED -5” on the FM-1, CHECK HEAD). When the app knows that your FM-1 has m-bootloader or FM1 Open's
   boot area (from a flash backup, from M-Flasher, from m-bootloader itself or from the firmware history), a plan that

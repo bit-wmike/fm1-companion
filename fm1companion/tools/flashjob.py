@@ -1138,10 +1138,23 @@ def download_mode(job: Job) -> ModeResult:
     return ModeResult(dev, job.sent_by_app, job.log_path)
 
 
-def leave_download_mode(job: Job) -> str:
+def leave_download_mode(job: Job, confirm=None) -> str:
     """"Restart the FM-1": exactly one unit in download mode and none running beside it -> M-Flasher `restart`
-    (writes nothing) -> its /dev/sgN; Refused otherwise"""
+    (writes nothing) -> its /dev/sgN; Refused otherwise.
+    * Never while a write record is open or failed: such a unit must stay in download mode, where the way back (the
+      backup made before the write) still works – the app says so instead.
+    * Which unit: M-Flasher's `info` reads its unit id. It must be the job's profile's unit (when that profile knows
+      its id) – another one is refused; when the id names no profile or cannot be read, confirm(text) -> bool asks."""
+    from ..devices import profile_unit_ids, unit_id_forms
     with _Lock(job, "mflasher-download"):
+        rec = unfinished_write(job.journal.dir if job.journal is not None else None)
+        if rec is not None:
+            job.ev("refused", f"restart: a write record is open ({rec.get('state')}, {rec.get('op', 'restore')})")
+            raise Refused(_("Not restarted: a write onto “{device}” did not end verified (or the app has not checked "
+                            "it yet). Keep the FM-1 in download mode – from there the backup made before the write "
+                            "can be written back. Open the question about it (it comes at the next start of the app) "
+                            "or write the backup back on Recovery › Tools; once it is settled, restart the FM-1.").format(
+                                device=str(rec.get("device") or "?")), "open-record")
         r = _mf(job, ["find"])
         found = mp.parse_find(r.out, r.err) if r.ok else None
         if found is None:
@@ -1156,9 +1169,39 @@ def leave_download_mode(job: Job) -> str:
             raise Refused(_("More than one FM-1 is connected. So that the right one restarts, leave only that one "
                             "connected – or switch it off and on."), "several")
         job.device = found.download[0].device
+        _check_restart_target(job, confirm, profile_unit_ids, unit_id_forms)
         if not restart(job):
             raise Refused(_("The FM-1 did not restart: switch it off and on."), "restart")
     return job.device
+
+
+def _check_restart_target(job: Job, confirm, profile_unit_ids, unit_id_forms):
+    """the unit in download mode is the one meant (its unit id against the job's profile), else ask or refuse"""
+    r = _mf(job, ["info", "--device", job.device])
+    uid = ""
+    if r.ok:
+        try:
+            uid = mp.parse_info(r.out).unit_id
+        except mp.ParseError:
+            uid = ""
+    uid = uid if unit_id_forms(uid) else ""
+    prof = job.profile
+    known = {f for f in profile_unit_ids(prof) if len(f) == 16} if prof is not None else set()
+    hits = job.profiles.by_unit_id(uid) if (job.profiles is not None and uid) else []
+    if uid and known:
+        if unit_id_forms(uid) & known:
+            return
+        raise Refused(_("The FM-1 in download mode (unit ID {uid}) is not “{name}”. Nothing was done – choose "
+                        "that device at the top, or switch the FM-1 off and on.").format(uid=mask(uid),
+                                                                                      name=prof.name), "other-unit")
+    if uid and len(hits) == 1 and prof is None:
+        return                                      # (named by its own unit id)
+    who = hits[0].name if len(hits) == 1 else _("an FM-1 the app does not know")
+    text = _("Restart the FM-1 in download mode ({device}, unit ID {uid}: {who})? Restarting writes nothing.").format(
+        device=job.device, uid=mask(uid), who=who)
+    if confirm is None or not confirm(text):
+        raise Refused(_("Not restarted: the app could not tell which FM-1 this is, and nobody confirmed it. Nothing "
+                        "was done."), "not-confirmed")
 
 
 # ------------------------------------------------------------------------------------------------ m-bootloader
@@ -1334,10 +1377,17 @@ def _install_locked(job: Job, boot: bytes, version: str, sup, confirm) -> BootRe
     if isinstance(pre, Refusal):
         raise Refused(pre.reason, pre.kind or "no-backup")
     saved = job.pre
-    if bootarea.holds(saved.image[:BOOT_AREA], boot) and info.m_bootloader and version in info.bootloader:
+    expected = bootarea.compose_short(saved.image[:BOOT_AREA], boot) if not mp.reads_config(version) else None
+    if expected is None:
+        raise Refused(_("The app cannot work out the boot area M-Flasher would write onto this FM-1 (its boot area "
+                        "has no intact file table or chip-key record, or the bootloader is older than 1.4). Nothing "
+                        "was written; the backup made just now is kept."), "compose")
+    runs = diff_runs(expected, saved.image[:BOOT_AREA])
+    if not runs:
         job.tell(_("m-bootloader {version} is installed on this FM-1 already: nothing to write.").format(
             version=version))
         job.ev("plan", "nothing to write: this m-bootloader is there already")
+        _settle_boot_record(job, "install")
         again = restart(job) if job.sent_by_app else False
         return BootResult(False, True, again, pre, version, note="already")
     plan = BootPlan("install", job.profile.name, info.unit_id, info.flash_id, rev, version, info.bootloader,
@@ -1347,8 +1397,7 @@ def _install_locked(job: Job, boot: bytes, version: str, sup, confirm) -> BootRe
                             "this app).").format(version=version))
     return _confirm_and_write(job, plan, info, saved, pre, confirm, "fm1-uboot.boot", boot, {
         "flag": "--file", "title": mp.bootloader_title(version),
-        "note": mp.BOOT_KEEP_NOTE if mp.reads_config(version) else mp.BOOT_SHORT_NOTE, "runs": None,
-        "boot": boot, "version": version})
+        "note": mp.BOOT_SHORT_NOTE, "runs": runs, "expected": expected, "version": version})
 
 
 def remove_bootloader(job: Job, confirm, package: bytes) -> BootResult:
@@ -1364,6 +1413,9 @@ def remove_bootloader(job: Job, confirm, package: bytes) -> BootResult:
         area = bootarea.v15_area(package)
     except bootarea.BootAreaError as e:
         raise Refused(str(e) + " " + _("Nothing was written."), "package") from e
+    from .. import hardware
+    if hardware.revision(job.profile) == hardware.NEW:
+        raise _newer_unit_stock_refusal(job, None)          # (before the unit is sent anywhere)
     with _Lock(job, "mflasher-bootloader"), _back_on_refusal(job):
         res = _remove_locked(job, package, area, confirm)
     res.log_path = job.log_path
@@ -1382,6 +1434,8 @@ def _remove_locked(job: Job, package: bytes, area: bytes, confirm) -> BootResult
         raise Refused(_("M-Flasher reads a flash chip the app does not know ({chip}). Nothing was written.").format(
             chip=chip_name(info.flash_id)), "unknown-chip")
     rev = _session_revision(job, info)
+    if rev != hardware.OLD:
+        raise _newer_unit_stock_refusal(job, info.unit_id)
     pre = backup_before_boot_write(job)
     if isinstance(pre, Refusal):
         raise Refused(pre.reason, pre.kind or "no-backup")
@@ -1391,6 +1445,7 @@ def _remove_locked(job: Job, package: bytes, area: bytes, confirm) -> BootResult
         job.tell(_("This FM-1 has the original boot area already (the one of M-VAVE's V15 package): nothing to "
                    "write."))
         job.ev("plan", "nothing to write: the boot area equals V15's")
+        _settle_boot_record(job, "remove")
         again = restart(job) if job.sent_by_app else False
         return BootResult(False, True, again, pre, note="already")
     plan = BootPlan("remove", job.profile.name, info.unit_id, info.flash_id, rev, "", info.bootloader,
@@ -1400,6 +1455,20 @@ def _remove_locked(job: Job, package: bytes, area: bytes, confirm) -> BootResult
         plan.notes.append(_("SLOOP 3 is installed only through m-bootloader. Whether it starts with the original "
                             "bootloader is not known. If the FM-1 does not start afterwards, the way back is the "
                             "backup made just now, written back from USB download mode (Recovery, stage 2)."))
+    if bootarea.changer(fw) is bootarea.CHANGERS["fm1-open"]:
+        plan.notes.append(_("FM1 Open is the firmware on this FM-1. Its app area expects FM1 Open's own boot area: "
+                            "after this, an FM1 Open app sits on V15's boot area, and whether it starts is not "
+                            "known. Recommended order: first go back to the original V15 with M-VAVE's FM1 "
+                            "Workbench (“Restore original V15”), then put back the original boot area here, then "
+                            "install the next firmware."))
+    backups = unit_backups(job.folder, info.unit_id)
+    if not any(k == bootarea.ORIGINAL for _p, k in backups):
+        own = next((p for p, k in backups if k not in (bootarea.MBOOT, bootarea.ORIGINAL)), None)
+        plan.notes.append(_("None of this unit's flash backups shows a boot area equal to V15's, so the app does not "
+                            "know whether this FM-1's own original boot area was V15's (units sold with V16, for "
+                            "example, may have come with another one). The exact way back to this unit's own state is a "
+                            "whole-flash restore of an earlier backup{own}.").format(
+                                own=_(" – e.g. {name}").format(name=own.name) if own is not None else ""))
     return _confirm_and_write(job, plan, info, saved, pre, confirm, "FM-1_015.fwsc", package, {
         "flag": "--stock", "title": mp.stock_title("FM-1_015"), "note": mp.BOOT_STOCK_NOTE, "runs": runs,
         "area": area})
@@ -1453,7 +1522,7 @@ def _boot_write(job: Job, plan: BootPlan, info, saved, pre, name: str, data: byt
     elif any(got[a:a + SECTOR] != saved.image[a:a + SECTOR] for a in range(0, BOOT_AREA, SECTOR)
              if not any(s <= a < e for s, e in announced)):
         problem = _("a sector of the boot area changed that M-Flasher did not announce")
-    elif plan.op == "install" and not (bootarea.holds(got[:BOOT_AREA], how["boot"]) and
+    elif plan.op == "install" and not (got[:BOOT_AREA] == how["expected"] and
                                        vi.bootloader.startswith(f"m-bootloader {how['version']}")):
         problem = _("the boot area does not hold this m-bootloader")
     elif plan.op == "remove" and not (got[:BOOT_AREA] == how["area"] and not vi.m_bootloader):
@@ -1476,6 +1545,68 @@ def _boot_write(job: Job, plan: BootPlan, info, saved, pre, name: str, data: byt
     again = restart(job)
     return BootResult(r is not None, True, again, pre, plan.version, w.auto,
                       sum((b - a) // SECTOR for a, b in announced), None, "" if r is not None else "nothing")
+
+
+def _settle_boot_record(job: Job, op: str):
+    """an open record of the same boot write whose result is on the unit now (checked by the fresh backup just made):
+    settled – it ends verified"""
+    path = record_file(job.journal.dir if job.journal is not None else None)
+    rec = _load_record(path)
+    if rec.get("state") in ("writing", "failed") and rec.get("op") == f"bootloader-{op}":
+        rec.update(state="verified", ended=time.time(), note="checked later: the unit holds the expected boot area")
+        try:
+            _save_record(path, rec)
+            job.ev("record", "the open boot-area record is settled: the unit holds the expected boot area")
+        except OSError:
+            pass
+
+
+def unit_backups(folder: Path, unit_id: str) -> list[tuple[Path, str]]:
+    """this unit's whole-flash backups in its Flash folder, newest first, each with the kind of its boot area
+    (bootarea.classify, plus: a stored m-bootloader container counts as MBOOT)"""
+    from .. import flashdump
+    from . import bootarea
+    from ..devices import unit_id_forms
+    out = []
+    want = unit_id_forms(unit_id) if unit_id else set()
+    try:
+        files = sorted(Path(folder).glob("*.bin"), key=lambda p: p.stat().st_mtime, reverse=True)
+    except OSError:
+        return []
+    for p in files:
+        try:
+            side = flashdump.read_any_side(p)
+            if not want or not (unit_id_forms(flashdump.side_unit_id(side)) & want):
+                continue
+            with open(p, "rb") as f:
+                area = f.read(BOOT_AREA)
+        except (OSError, flashdump.FlashDumpError):
+            continue
+        kind = bootarea.classify(area)
+        if kind != bootarea.ORIGINAL and bootarea.stored_mbootloader(area):
+            kind = bootarea.MBOOT
+        out.append((p, kind))
+    return out
+
+
+def _newer_unit_stock_refusal(job: Job, unit_id: str | None) -> Refused:
+    """V15's boot area has never been written to a newer unit: refused; the way back there is a whole-flash restore
+    of a backup made before m-bootloader – named (and offered) when one of this unit exists"""
+    from ..devices import profile_unit_ids
+    from . import bootarea
+    uid = unit_id or ""
+    if not uid and job.profile is not None:
+        uid = next((f for f in profile_unit_ids(job.profile) if len(f) == 16), "")
+    offer = next((p for p, k in unit_backups(job.folder, uid) if k != bootarea.MBOOT), None) if uid else None
+    text = _("This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80), or the app cannot rule that out. "
+             "M-VAVE's V15 boot area has never been written onto such a unit, so the app does not put it there. The "
+             "way back is a whole-flash restore of a backup of this unit made before m-bootloader (Recovery › Tools "
+             "› “Write flash back …”).")
+    text += " " + (_("This unit has one: {name}.").format(name=offer.name) if offer is not None else
+                   _("The app has no such backup of this unit, so there is no way back from the app."))
+    e = Refused(text + " " + _("Nothing was written."), "newer-chip-stock")
+    e.offer = offer
+    return e
 
 
 def _fresh_read_only(job: Job) -> tuple[bytes, mp.Info]:
