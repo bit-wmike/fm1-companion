@@ -101,8 +101,9 @@ def make_backup(e) -> FJ.BackupResult:
     return FJ.backup(e.job())
 
 
-def change_flash(e, at=(0x0000, 0x5000, 0x93000)):
-    """the unit's flash changes after the backup (another firmware, m-bootloader …)"""
+def change_flash(e, at=(0x0080, 0x5000, 0x93000)):
+    """the unit's flash changes after the backup (another firmware, m-bootloader …) – the boot area's first sector
+    changes at its last file-table entry, so it stays an intact boot area"""
     img = bytearray(e.flash())
     for a in at:
         img[a:a + 16] = b"\x5a" * 16
@@ -958,7 +959,8 @@ def test_n3_a_reused_pid_is_not_still_writing(env):
 
 def test_n4_a_nothing_to_write_rerun_closes_the_record(env):
     old = make_backup(env)
-    FJ._save_record(FJ.record_file(env.journal.dir), {"state": "writing", "pid": 0,
+    FJ._save_record(FJ.record_file(env.journal.dir), {"state": "writing", "pid": 0, "profile": env.prof.id,
+                                                      "unit_sha256": sha(UID.encode()),
                                                       "image_sha256": sha(old.path.read_bytes())})
     env.set(mode="download")
     res, _s = restore(env, old.path)

@@ -738,3 +738,9 @@ msgstr "Esta unidad tiene una copia de toda la flash hecha antes de m-bootloader
 
 msgid "A write did not end verified: the FM-1 stays in download mode until it is settled (the question at the next start, or “Write flash back …”)."
 msgstr "Una escritura no terminó comprobada: el FM-1 se queda en modo de descarga hasta que se resuelva (la pregunta en el próximo inicio, o «Volver a escribir la flash …»)."
+
+msgid "The boot area in this flash backup is not intact (its file table, its bootloader's checksum or its chip-key record is damaged or erased – as after an interrupted write). Written back, the FM-1 could not start, so the app does not write it back. Nothing was written."
+msgstr "La zona de arranque de esta copia de la flash no está intacta (su tabla de archivos, la suma de verificación de su bootloader o su registro de clave del chip están dañados o borrados – como tras una escritura interrumpida). Si se escribiera de nuevo, el FM-1 no podría arrancar, así que la app no la escribe. No se escribió nada."
+
+msgid "This flash backup was saved while a write onto the FM-1 had not ended verified, so it may hold a half-written state. The app does not write it back. Use the backup made before that write. Nothing was written."
+msgstr "Esta copia de la flash se guardó mientras una escritura en el FM-1 no había terminado comprobada, así que puede contener un estado a medio escribir. La app no la vuelve a escribir. Usa la copia hecha antes de esa escritura. No se escribió nada."

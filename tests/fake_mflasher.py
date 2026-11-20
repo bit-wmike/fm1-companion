@@ -153,6 +153,8 @@ def synthetic_image(seed: str = "fm1c-fake-flash") -> bytes:
     key = bytearray(r.randbytes(34))
     key[32:34] = _crc16(bytes(key[:32])).to_bytes(2, "little")
     b[0x38D0:0x38D0 + 34] = key
+    s = bytes(b[0xA0:0x38D0])                          # (the stored bootloader matches its entry's CRC-16)
+    b[0x20:0x40] = _table_entry("uboot.boot", 0xA0, 0x3830, _crc16(_enc(s[:16]) + _enc(s[16:])))
     return bytes(b)
 
 

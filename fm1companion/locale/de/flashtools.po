@@ -738,3 +738,9 @@ msgstr "Dieses Gerät hat eine Sicherung des ganzen Flashs von vor m-bootloader:
 
 msgid "A write did not end verified: the FM-1 stays in download mode until it is settled (the question at the next start, or “Write flash back …”)."
 msgstr "Ein Schreiben endete nicht geprüft: Das FM-1 bleibt im Download-Modus, bis das erledigt ist (die Frage beim nächsten Start oder „Flash zurückschreiben …“)."
+
+msgid "The boot area in this flash backup is not intact (its file table, its bootloader's checksum or its chip-key record is damaged or erased – as after an interrupted write). Written back, the FM-1 could not start, so the app does not write it back. Nothing was written."
+msgstr "Der Boot-Bereich in dieser Flash-Sicherung ist nicht intakt (seine Dateitabelle, die Prüfsumme seines Bootloaders oder sein Chip-Schlüssel-Eintrag ist beschädigt oder gelöscht – wie nach einem abgebrochenen Schreiben). Zurückgeschrieben könnte das FM-1 nicht starten, deshalb schreibt die App sie nicht zurück. Es wurde nichts geschrieben."
+
+msgid "This flash backup was saved while a write onto the FM-1 had not ended verified, so it may hold a half-written state. The app does not write it back. Use the backup made before that write. Nothing was written."
+msgstr "Diese Flash-Sicherung wurde gemacht, während ein Schreiben auf das FM-1 nicht geprüft beendet war; sie kann also einen halb geschriebenen Stand enthalten. Die App schreibt sie nicht zurück. Nimm die Sicherung von vor diesem Schreiben. Es wurde nichts geschrieben."

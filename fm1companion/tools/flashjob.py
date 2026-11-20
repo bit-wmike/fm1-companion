@@ -584,7 +584,7 @@ def double_read(job: Job, purpose: str) -> Saved:
                 read_through=f"M-Flasher {tool['version']} (USB download mode), read twice and compared",
                 jedec=info.flash_id, unit_id=info.unit_id, chip_key=info.chip_key, capacity=FLASH_SIZE,
                 profile=getattr(prof, "id", "") if prof is not None else "", firmware=fw, tool=tool,
-                double_read=True, note=purpose)
+                double_read=True, note=purpose, during_open_write=_open_record_for(job, info))
             flashdump.read_side(path)
         except (OSError, flashdump.FlashDumpError) as e:
             raise Refused(_("The flash backup could not be saved: {error}. Nothing was written.").format(
@@ -858,6 +858,16 @@ def restore(job: Job, image: Path, confirm) -> RestoreResult:
     if hashlib.sha256(data).hexdigest() != side.get("sha256"):     # (changed since the check a moment ago)
         raise Refused(_("The flash backup does not match its description (changed or damaged).") + " " +
                       _("Nothing was written."), "image-damaged")
+    from . import bootarea
+    if side.get("taken_during_open_write"):
+        raise Refused(_("This flash backup was saved while a write onto the FM-1 had not ended verified, so it may "
+                        "hold a half-written state. The app does not write it back. Use the backup made before that "
+                        "write. Nothing was written."), "image-during-write")
+    if not bootarea.intact(data[:BOOT_AREA]):
+        raise Refused(_("The boot area in this flash backup is not intact (its file table, its bootloader's checksum "
+                        "or its chip-key record is damaged or erased – as after an interrupted write). Written back, "
+                        "the FM-1 could not start, so the app does not write it back. Nothing was written."),
+                      "image-boot-broken")
     with _Lock(job, "mflasher-restore"), _back_on_refusal(job):
         res = _restore_locked(job, image, side, data, confirm)
     res.log_path = job.log_path
@@ -974,7 +984,9 @@ class _Write:
 
     def __init__(self, job: Job, staging: Path, record: dict, saved: Saved, pre: Path):
         self.job, self.staging, self.saved, self.pre = job, staging, saved, pre
+        uid = job.info.unit_id if job.info is not None else ""
         self.record = {"state": "writing", "started": time.time(), "pid": 0, "profile": getattr(job.profile, "id", ""),
+                       "unit_sha256": hashlib.sha256(uid.encode()).hexdigest() if uid else "",
                        "device": job.profile.name, "pre_backup": str(pre), "pre_sha256": saved.sha256,
                        "staging": str(staging), **record}
         self.rec_path = record_file(job.journal.dir if job.journal is not None else None)
@@ -1547,12 +1559,32 @@ def _boot_write(job: Job, plan: BootPlan, info, saved, pre, name: str, data: byt
                       sum((b - a) // SECTOR for a, b in announced), None, "" if r is not None else "nothing")
 
 
+def _record_is_this_unit(job: Job, rec: dict) -> bool:
+    """does an open write record belong to the unit of this job (its profile AND its unit id)? A record without
+    the unit's SHA-256 (written by an older version) is never closed by another job – only by its own question"""
+    uid = job.info.unit_id if job.info is not None else ""
+    want = hashlib.sha256(uid.encode()).hexdigest() if uid else ""
+    return bool(want) and job.profile is not None and rec.get("profile") == getattr(job.profile, "id", None) and \
+        rec.get("unit_sha256") == want
+
+
+def _open_record_for(job: Job, info) -> bool:
+    rec = unfinished_write(job.journal.dir if job.journal is not None else None)
+    if rec is None:
+        return False
+    if not rec.get("unit_sha256"):
+        return True                                # (an older record: it may be this unit's – the safe side)
+    uid = info.unit_id if info is not None else ""
+    return bool(uid) and rec.get("unit_sha256") == hashlib.sha256(uid.encode()).hexdigest()
+
+
 def _settle_boot_record(job: Job, op: str):
     """an open record of the same boot write whose result is on the unit now (checked by the fresh backup just made):
     settled – it ends verified"""
     path = record_file(job.journal.dir if job.journal is not None else None)
     rec = _load_record(path)
-    if rec.get("state") in ("writing", "failed") and rec.get("op") == f"bootloader-{op}":
+    if rec.get("state") in ("writing", "failed") and rec.get("op") == f"bootloader-{op}" and _record_is_this_unit(
+            job, rec):
         rec.update(state="verified", ended=time.time(), note="checked later: the unit holds the expected boot area")
         try:
             _save_record(path, rec)
@@ -1573,20 +1605,28 @@ def unit_backups(folder: Path, unit_id: str) -> list[tuple[Path, str]]:
         files = sorted(Path(folder).glob("*.bin"), key=lambda p: p.stat().st_mtime, reverse=True)
     except OSError:
         return []
+    earliest = None
     for p in files:
         try:
             side = flashdump.read_any_side(p)
             if not want or not (unit_id_forms(flashdump.side_unit_id(side)) & want):
                 continue
+            if side.get("taken_during_open_write"):
+                continue                           # (saved while a write onto it had not ended verified)
             with open(p, "rb") as f:
                 area = f.read(BOOT_AREA)
         except (OSError, flashdump.FlashDumpError):
             continue
+        if not bootarea.intact(area):
+            continue                               # (half-written or erased boot area: never a way back)
         kind = bootarea.classify(area)
         if kind != bootarea.ORIGINAL and bootarea.stored_mbootloader(area):
             kind = bootarea.MBOOT
-        out.append((p, kind))
-    return out
+        out.append((p, kind, hashlib.sha256(area).hexdigest()))
+        earliest = out[-1][2]                      # (files are newest first: the last one is the earliest)
+    # preferred: V15's boot area, then the unit's own earliest seen one, then the rest (newest first)
+    out.sort(key=lambda x: (x[1] != bootarea.ORIGINAL, x[2] != earliest))
+    return [(p, k) for p, k, _s in out]
 
 
 def _newer_unit_stock_refusal(job: Job, unit_id: str | None) -> Refused:
@@ -1711,7 +1751,8 @@ def _close_record_if(job: Job, sha: str):
     """an open record whose image (or state before) is exactly what the unit holds now: settled – it ends"""
     path = record_file(job.journal.dir if job.journal is not None else None)
     rec = _load_record(path)
-    if rec.get("state") in ("writing", "failed") and sha in (rec.get("image_sha256"), rec.get("pre_sha256")):
+    if rec.get("state") in ("writing", "failed") and sha in (rec.get("image_sha256"), rec.get("pre_sha256")) and \
+            _record_is_this_unit(job, rec):
         rec.update(state="verified", ended=time.time(), note="checked later: the unit holds it")
         try:
             _save_record(path, rec)

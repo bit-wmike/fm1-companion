@@ -820,3 +820,108 @@ def test_l4_removal_while_fm1_open_runs_says_what_that_means(env, v15):
     plans = []
     remove(env, raw, plans)
     assert any("Workbench" in n for n in plans[0].notes)
+
+
+# ------------------------------------------------------------------------------------------------ re-review fixes
+
+def _broken_backup(env):
+    """a backup whose boot area is half-written (sector 3 erased: no chip-key record), the newest one of the unit"""
+    import fake_mflasher
+    good = FJ.backup(env.job())
+    img = bytearray(env.flash())
+    img[0x3000:0x4000] = b"\xff" * 0x1000
+    Path(str(env.state) + ".flash").write_bytes(bytes(img))
+    time.sleep(1.1)
+    broken = FJ.backup(env.job())
+    Path(str(env.state) + ".flash").write_bytes(fake_mflasher.synthetic_image())     # (the unit put right again)
+    return good, broken
+
+
+def test_n1_a_half_written_backup_is_never_offered(env, v15):
+    raw, _area = v15
+    env.set(mode="midi", flash=0xB36014)
+    good, broken = _broken_backup(env)
+    assert not bootarea.intact(broken.path.read_bytes()[:0x4000]) and bootarea.intact(good.path.read_bytes()[:0x4000])
+    env.prof.unit_id = UID
+    with pytest.raises(FJ.Refused) as e:
+        remove(env, raw)
+    assert e.value.kind == "newer-chip-stock" and e.value.offer is not None
+    assert e.value.offer != broken.path and bootarea.intact(e.value.offer.read_bytes()[:0x4000])
+    assert broken.path not in [p for p, _k in FJ.unit_backups(broken.path.parent, UID)]
+
+
+def test_n1_a_backup_with_a_broken_boot_area_is_not_written_back(env):
+    _good, broken = _broken_backup(env)
+    before = env.flash()
+    env.set(mode="midi")
+    with pytest.raises(FJ.Refused) as e:
+        FJ.restore(env.job(), broken.path, lambda plan: True)
+    assert e.value.kind == "image-boot-broken"
+    nothing_written(env, before)
+    assert not calls(env, "restore")
+
+
+def test_n1_backups_taken_during_an_open_write_are_marked_and_refused(env):
+    env.set(mode="midi", fault_bootloader="write-fail")
+    with pytest.raises(FJ.WriteFailed):
+        install(env)
+    env.set(mode="download")
+    during = FJ.backup(env.job())                                       # (taken while the record is open)
+    side = json.loads(during.path.with_suffix(".json").read_text())
+    assert side.get("taken_during_open_write") is True
+    assert during.path not in [p for p, _k in FJ.unit_backups(during.path.parent, UID)]
+    with pytest.raises(FJ.Refused) as e:
+        FJ.restore(env.job(), during.path, lambda plan: True)
+    assert e.value.kind == "image-during-write"
+
+
+def test_n1_the_original_is_preferred_over_newer_backups(env, monkeypatch):
+    first = FJ.backup(env.job())
+    install(env)
+    time.sleep(1.1)
+    img = bytearray(env.flash())
+    img[:0x4000] = first.path.read_bytes()[:0x4000]
+    img[0x80:0xA0] = fake_table_entry()                                 # (another intact, non-m-bootloader state)
+    Path(str(env.state) + ".flash").write_bytes(bytes(img))
+    newest = FJ.backup(env.job())
+    monkeypatch.setattr(bootarea, "V15_BOOT_AREA_SHA256", sha(first.path.read_bytes()[:0x4000]))
+    order = FJ.unit_backups(first.path.parent, UID)
+    kinds = dict(order)
+    assert order[0][1] == bootarea.ORIGINAL and kinds[newest.path] == bootarea.OTHER
+    assert [p for p, _k in order].index(newest.path) > [p for p, _k in order].index(first.path)
+
+
+def fake_table_entry():
+    import fake_mflasher
+    return fake_mflasher._table_entry("key_mac", 0xFF000, 0x1000, 1)
+
+
+def test_n2_already_installed_on_unit_b_does_not_settle_unit_as_record(env):
+    install(env)
+    rec_path = FJ.record_file(env.journal.dir)
+    rec = json.loads(rec_path.read_text())
+    rec.update(state="writing", profile="bbbbbbbbbb", unit_sha256=sha(OTHER_UID.encode()))     # (unit A's record)
+    FJ._save_record(rec_path, rec)
+    assert install(env).note == "already"                                                    # (unit B)
+    assert FJ.unfinished_write(env.journal.dir) is not None
+    rec.update(profile=env.prof.id, unit_sha256=sha(UID.encode()))                          # (its own record)
+    FJ._save_record(rec_path, rec)
+    assert install(env).note == "already" and FJ.unfinished_write(env.journal.dir) is None
+
+
+def test_n2_restores_nothing_to_write_does_not_settle_another_units_record(env):
+    old = FJ.backup(env.job())
+    FJ._save_record(FJ.record_file(env.journal.dir), {"state": "writing", "pid": 0, "profile": "bbbbbbbbbb",
+                                                      "unit_sha256": sha(OTHER_UID.encode()),
+                                                      "image_sha256": sha(old.path.read_bytes())})
+    env.set(mode="download")
+    res = FJ.restore(env.job(), old.path, lambda plan: True)
+    assert res.note == "identical" and FJ.unfinished_write(env.journal.dir) is not None
+
+
+def test_low_a_future_dated_fm1_open_entry_does_not_block_for_ever():
+    p = devices.Profile(id="aaaaaaaaaa", name="Unit 1")
+    p.firmware_history = [{"time": time.time() + 10 * 365 * 86400, "firmware": "fm1-open"}]
+    assert bootarea.current(p)["how"] == "unsure"
+    bootarea.note(p, bootarea.ORIGINAL, "installed")
+    assert bootarea.current(p)["kind"] == bootarea.ORIGINAL

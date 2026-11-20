@@ -486,6 +486,18 @@ Melodee OCT−+OCT+ is the calibration!).
         * The planner names the way out per revision (earlier: removal or restore; newer: only a restore of an
           earlier backup – never the refused removal; unknown: both, explained).
         * Removal while FM1 Open runs carries a note on the recommended order.
+      * **Re-review (N1–N3):**
+        * A backup is a way back only with an **intact boot area** (`bootarea.intact`): a valid header and file
+          table, the stored bootloader matching its entry's CRC-16 (formats.rs `stored_bootloader`) and an intact
+          chip-key record.
+        * Backups taken while a write record of that unit was open are marked `taken_during_open_write` in the
+          sidecar.
+        * Neither kind is offered (`unit_backups`: V15's boot area first, then the unit's earliest seen one), and
+          neither is ever written back (`image-boot-broken` / `image-during-write`; no override – no legitimate
+          case writes an unbootable boot area).
+        * A write record keeps the unit id's SHA-256. "Already" / "nothing to write" settle a record only when its
+          profile and unit id are this job's (step 2's restore record too).
+        * A future-dated history entry counts as undated.
     * *Not run on hardware through the app* (`tested.TOOLS_HARDWARE`: `mf_download_button`,
       `mf_bootloader_install`, `mf_bootloader_remove`); the owner did install and the way back by hand
       (`OWNER_REPORTS["mboot_by_hand"]`).

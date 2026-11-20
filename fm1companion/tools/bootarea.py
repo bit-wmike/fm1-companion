@@ -191,6 +191,22 @@ def stored_mbootloader(area: bytes) -> tuple[str, str] | None:
     return boot_identity(_enc(s[:16]) + _enc(s[16:]))
 
 
+def stored_container_ok(area: bytes) -> bool:
+    """formats.rs stored_bootloader: file-table entry 0 is uboot.boot at 0xA0 and the stored container (header and
+    payload decoded on their own) matches the entry's CRC-16 – for the stock bootloader and m-bootloader alike"""
+    t = boot_table(area)
+    if not t or t[0][3] != "uboot.boot" or t[0][1] != BOOT_AT or t[0][2] < 16 or BOOT_AT + t[0][2] > len(area):
+        return False
+    s = bytes(area[BOOT_AT:BOOT_AT + t[0][2]])
+    return _crc16(_enc(s[:16]) + _enc(s[16:])) == _u16(t[0][0], 2)
+
+
+def intact(area: bytes) -> bool:
+    """an intact boot area: a valid header and file table, the stored bootloader matching its CRC and an intact
+    chip-key record (what a half-written or erased boot area lacks). Only such an image is a way back."""
+    return len(area) >= BOOT_AREA and stored_container_ok(area) and bool(chip_key_record(area))
+
+
 def chip_key_record(area: bytes) -> bytes:
     """the unit's 34-byte chip-key record (start of isd_config.ini), b"" when the table or its CRC is not intact"""
     t = boot_table(area)
@@ -269,11 +285,14 @@ def note(profile, kind: str, how: str, bootloader: str = "", sha256: str = "", w
 
 
 def _time(v) -> float | None:
+    """a usable time – None for an unreadable one and for one in the future (a wrong clock): both count as undated"""
     try:
         t = float(v)
     except (TypeError, ValueError):
         return None
-    return t if t == t else None                   # (NaN: not a time)
+    if t != t or t > time.time() + 60:             # (NaN, or later than now)
+        return None
+    return t
 
 
 def current(profile) -> dict:
