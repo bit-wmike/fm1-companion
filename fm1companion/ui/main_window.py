@@ -403,6 +403,7 @@ class MainWindow(QMainWindow):
         self._tools_timer.timeout.connect(self._tools_auto_check)
         self._tools_timer.start(3600 * 1000)
         QTimer.singleShot(90000, self._tools_auto_check)
+        QTimer.singleShot(3000, self.check_interrupted_write)  # a flash write-back the app did not see to its end
 
     def _tools_auto_check(self):
         """M-Flasher, m-bootloader, SLOOP 3: ask GitHub for new versions when due (Settings: daily / weekly / at the
@@ -1179,7 +1180,27 @@ class MainWindow(QMainWindow):
                                                   self.width(), self.height()):
                 self.setWindowState(Qt.WindowState.WindowMaximized)
 
+    def check_interrupted_write(self):
+        try:
+            from .flash_tools import check_interrupted_write
+            return check_interrupted_write(self, self.ctx)
+        except Exception:  # noqa: BLE001 – a check on top, never in the way of the start
+            log.exception("interrupted write-back check")
+            return ""
+
     def closeEvent(self, e):
+        from ..tools import flashjob
+        if flashjob.WRITING.is_set() and flashjob.OVERDUE.is_set():
+            from .flash_tools import leave_while_writing   # (far past its worst case: an honest way out, no kill)
+            if not leave_while_writing(self):
+                e.ignore()
+                return
+        elif flashjob.WRITING.is_set():          # M-Flasher writes: the app stays until it has ended
+            QMessageBox.warning(self, _("M-Flasher is writing"),
+                                _("M-Flasher is writing the FM-1's flash. The app stays open until it has finished "
+                                  "– do not unplug the FM-1 or switch it off."))
+            e.ignore()
+            return
         rec = self.recorder.rec
         if rec and rec.running:
             if QMessageBox.question(self, _("Recording in progress"), _("A recording is running. Stop and save it?")) \

@@ -8,6 +8,7 @@ Background and sources: docs/flash-protocol.md.
 """
 from __future__ import annotations
 
+import html
 import os
 import shutil
 import subprocess
@@ -22,7 +23,7 @@ from PyQt6.QtWidgets import (QCheckBox, QFileDialog, QHBoxLayout, QInputDialog, 
 from . import PageSpec
 from ... import firmware
 from ...flash import engine as fe, journal as fj, package as fpk, tested, texts as rescue_texts, uboot
-from ..common import Card, Disclosure, confirm, heading, icon, show_error
+from ..common import Card, Disclosure, confirm, heading, icon, run_job, show_error
 from ...i18n import _, pgettext
 
 DEMO = os.environ.get("FM1C_DEMO") == "1"
@@ -128,6 +129,22 @@ PHASE_TEXT = {"prepared": _("before anything was sent"), "step1": _("while the F
               "reboot": _("at the restart after writing"), "resources": _("while writing the resources")}
 
 
+def intended_text(dev) -> str:
+    """the status line for a unit in ROM download mode that is there ON PURPOSE (tools/flashjob.py knows: a flash job
+    sent it or worked with it, or the app just asked the user to put it there – keys or m-bootloader's menu); "" when
+    the app does not know that – then the emergency text of this stage applies"""
+    from ...tools import flashjob
+    why = flashjob.intended_download_mode(getattr(dev, "usb_path", ""))
+    if not why:
+        return ""
+    what = {"sent": _("the app's flash backup or write-back sent it there"),
+            "used": _("a flash backup or write-back of the app worked with it there"),
+            "guide": _("the app asked you to put it there (with the keys or m-bootloader's menu)")}[why]
+    return _("<span style='color:#27ae60'>● In download mode on purpose</span> – {what}: {device}. Nothing is "
+             "wrong; this is not the emergency described above. To start it again: “Restart the FM-1” or switch "
+             "it off and on.").format(what=what, device=html.escape(dev.describe()))
+
+
 class RecoveryPage(QWidget):
     flash_seen = pyqtSignal(int)           # the rescue tool read the flash ID in ROM boot mode (from its thread)
 
@@ -192,6 +209,14 @@ class RecoveryPage(QWidget):
               "“WL82 UBOOT1.00”. <b>Do not format it!</b>") + STEPS_UBOOT))
         self.uboot_status = self._label("")
         c2.layout().addWidget(self.uboot_status)
+        self._dl_intended = None
+        self.b_restart_dl = QPushButton(icon("view-refresh", "system-reboot"), _("Restart the FM-1"))
+        self.b_restart_dl.setObjectName("restartFromDownloadMode")
+        self.b_restart_dl.setToolTip(_("Leaves download mode: M-Flasher starts the FM-1's firmware again (writes "
+                                       "nothing). Switching it off and on does the same."))
+        self.b_restart_dl.clicked.connect(self.restart_from_download_mode)
+        self.b_restart_dl.hide()
+        c2.layout().addLayout(_row(self.b_restart_dl))
         self.chk_sim = QCheckBox(_("Simulation – practice run with the tool's mock FM-1, nothing is written"))
         self.chk_sim.setChecked(DEMO)
         self.chk_sim.toggled.connect(lambda _on: self.refresh())
@@ -341,7 +366,10 @@ class RecoveryPage(QWidget):
                                if port else wait_hint)
         devs = uboot.scan() if not DEMO else []
         usb = self.ctx.uboot if hasattr(self.ctx, "uboot") else []
-        if devs:
+        intended = [d for d in devs if intended_text(d)]
+        if devs and len(intended) == len(devs):
+            txt = "<br>".join(intended_text(d) for d in devs)
+        elif devs:
             txt = _("<span style='color:#f67400'>● Detected live:</span> {devices}").format(
                 devices="; ".join(d.describe() for d in devs))
         elif usb:
@@ -357,6 +385,8 @@ class RecoveryPage(QWidget):
         txt += "<br>" + (_("Tool jl-uboot-tool: present (checked before every start).") if ready else
                          _("Tool jl-uboot-tool: not fetched yet – first “Fetch tool”."))
         self.uboot_status.setText(txt)
+        self._dl_intended = intended[0] if len(devs) == 1 and intended else None
+        self.b_restart_dl.setVisible(self._dl_intended is not None)
         # level 2 buttons: simulation always works (practice); real only with the tool and exactly one device
         sim = self.chk_sim.isChecked()
         self.b_setup.setToolTip(_("Fetches kagaimiq's jl-uboot-tool once at the checked state – nothing is changed on "
@@ -386,6 +416,22 @@ class RecoveryPage(QWidget):
             self.b_dump.setToolTip(self._dump_needs)
         elif self.b_dump.toolTip() == self._dump_needs:
             self.b_dump.setToolTip(self._dump_tip)
+
+    def restart_from_download_mode(self):
+        """the FM-1 is in download mode on purpose: start its firmware again (M-Flasher `restart`)"""
+        d = self._dl_intended
+        if d is None:
+            return
+        from ...tools import runner
+
+        def work(w):
+            return runner.run_mflasher(["restart", "--device", d.sg])
+
+        def done(r):
+            self.ctx.message.emit(_("The FM-1 was restarted.") if r.ok else
+                                  _("The FM-1 did not restart: switch it off and on."))
+            self.refresh()
+        run_job(self, work, on_done=done, on_fail=lambda m, tb: show_error(self, _("Restart the FM-1"), m))
 
     # ------------------------------------------------------------ Level 1
     def forget_active(self):

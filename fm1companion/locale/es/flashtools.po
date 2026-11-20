@@ -1,0 +1,454 @@
+# Translation of FM-1 Companion into Español (es) – flash backup and write-back through M-Flasher
+# SPDX-License-Identifier: GPL-3.0-only
+msgid ""
+msgstr ""
+"Project-Id-Version: FM-1 Companion\n"
+"Language: es\n"
+"X-Language-Name: Español\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "sending the FM-1 into download mode through M-Flasher"
+msgstr "poner el FM-1 en modo de descarga mediante M-Flasher"
+
+msgid "the whole-flash backup through M-Flasher (read twice)"
+msgstr "la copia de toda la flash mediante M-Flasher (leída dos veces)"
+
+msgid "Tested on a real FM-1 through this app: {what}."
+msgstr "Probado en un FM-1 real con esta app: {what}."
+
+msgid "Not tested on a real FM-1 through this app yet: {what} ran only against a stand-in for M-Flasher. M-Flasher itself was used this way by hand (backup and restore of the whole flash, 2026-11-18/19)."
+msgstr "Aún no probado en un FM-1 real con esta app: {what} solo se ejecutó con un sustituto de M-Flasher. M-Flasher mismo se usó así a mano (copia y escritura de toda la flash, 18/19-11-2026)."
+
+msgid "Cancelled. Nothing was written to the FM-1."
+msgstr "Cancelado. No se escribió nada en el FM-1."
+
+msgid "M-Flasher did not finish within {s} s and was stopped. Nothing was written to the FM-1."
+msgstr "M-Flasher no terminó en {s} s y se detuvo. No se escribió nada en el FM-1."
+
+msgid "it did not start"
+msgstr "no se inició"
+
+msgid "exit code {rc}"
+msgstr "código de salida {rc}"
+
+msgid "M-Flasher could not look for the FM-1: {reason}"
+msgstr "M-Flasher no pudo buscar el FM-1: {reason}"
+
+msgid "An FM-1 is in download mode, but the Linux driver “sg” is not loaded. The app's installer sets it up; by hand: sudo modprobe sg – then try again. Nothing was written."
+msgstr "Hay un FM-1 en modo de descarga, pero el controlador de Linux «sg» no está cargado. El instalador de la app lo configura; a mano: sudo modprobe sg – y vuelve a intentarlo. No se escribió nada."
+
+msgid "More than one device is in download mode. Leave only the FM-1 you mean connected, then try again. Nothing was written."
+msgstr "Hay más de un dispositivo en modo de descarga. Deja conectado solo el FM-1 que quieres y vuelve a intentarlo. No se escribió nada."
+
+msgid "One FM-1 is in download mode and another one runs on USB MIDI. So that the app surely works with the right unit, leave only one FM-1 connected. Nothing was written."
+msgstr "Un FM-1 está en modo de descarga y otro funciona por USB MIDI. Para que la app trabaje con seguridad con la unidad correcta, deja conectado solo un FM-1. No se escribió nada."
+
+msgid "More than one FM-1 is connected. M-Flasher's switch to download mode reaches only a single unit: unplug the others, then try again. Nothing was written."
+msgstr "Hay más de un FM-1 conectado. El cambio al modo de descarga de M-Flasher solo llega a una unidad: desconecta las demás y vuelve a intentarlo. No se escribió nada."
+
+msgid "No FM-1 found, neither running on USB MIDI nor in download mode."
+msgstr "No se encontró ningún FM-1, ni funcionando por USB MIDI ni en modo de descarga."
+
+msgid "Sending the FM-1 into USB download mode (it restarts; nothing is written) …"
+msgstr "Poniendo el FM-1 en modo de descarga USB (se reinicia; no se escribe nada) …"
+
+msgid "The FM-1 did not switch to download mode: {reason}"
+msgstr "El FM-1 no pasó al modo de descarga: {reason}"
+
+msgid "The FM-1 did not show up in download mode."
+msgstr "El FM-1 no apareció en modo de descarga."
+
+msgid "M-Flasher could not read the FM-1: {reason} Nothing was written."
+msgstr "M-Flasher no pudo leer el FM-1: {reason} No se escribió nada."
+
+msgid "M-Flasher's answer has a form this app version does not know ({detail}). Nothing was written."
+msgstr "La respuesta de M-Flasher tiene una forma que esta versión de la app no conoce ({detail}). No se escribió nada."
+
+msgid "M-Flasher sees a {model}, not an FM-1. Nothing was written."
+msgstr "M-Flasher ve un {model}, no un FM-1. No se escribió nada."
+
+msgid "This FM-1 (unit ID {uid}) is not “{name}”: that profile belongs to another unit. Nothing was written."
+msgstr "Este FM-1 (ID de unidad {uid}) no es «{name}»: ese perfil pertenece a otra unidad. No se escribió nada."
+
+msgid "This FM-1 is “{other}” (by its unit ID {uid}), not “{name}”. Choose the right device at the top. Nothing was written."
+msgstr "Este FM-1 es «{other}» (por su ID de unidad {uid}), no «{name}». Elige arriba el dispositivo correcto. No se escribió nada."
+
+msgid "Two of your device profiles have this unit ID ({uid}): merge them on the page “Devices” first. Nothing was written."
+msgstr "Dos de tus perfiles de dispositivo tienen esta ID de unidad ({uid}): primero únelos en la página «Dispositivos». No se escribió nada."
+
+msgid "The flash chip M-Flasher reads ({chip}) is not the one recorded for “{name}” ({rec}). Is this another FM-1? Nothing was written."
+msgstr "El chip de flash que lee M-Flasher ({chip}) no es el guardado para «{name}» ({rec}). ¿Es otro FM-1? No se escribió nada."
+
+msgid "Reading the whole flash ({n} of 2; nothing is written) …"
+msgstr "Leyendo toda la flash ({n} de 2; no se escribe nada) …"
+
+msgid "M-Flasher could not read the flash: {reason} Nothing was written."
+msgstr "M-Flasher no pudo leer la flash: {reason} No se escribió nada."
+
+msgid "The flash read does not match the CRC-32 the chip computed (M-Flasher did not confirm it). The USB connection may be unreliable: try another cable or port, without a hub. Nothing was kept, nothing was written."
+msgstr "La lectura no coincide con el CRC-32 que calculó el chip (M-Flasher no lo confirmó). La conexión USB puede no ser fiable: prueba otro cable u otro puerto, sin hub. No se guardó nada ni se escribió nada."
+
+msgid "M-Flasher did not say where it saved the read. Nothing was kept."
+msgstr "M-Flasher no dijo dónde guardó la lectura. No se guardó nada."
+
+msgid "M-Flasher saved the read in an unexpected place. Nothing was kept."
+msgstr "M-Flasher guardó la lectura en un lugar inesperado. No se guardó nada."
+
+msgid "The read cannot be opened: {error}. Nothing was kept."
+msgstr "La lectura no se puede abrir: {error}. No se guardó nada."
+
+msgid "The read has {size} bytes, not the 1 MiB of the whole flash. Nothing was kept."
+msgstr "La lectura tiene {size} bytes, no el 1 MiB de toda la flash. No se guardó nada."
+
+msgid "The read does not match the SHA-256 M-Flasher wrote beside it. Nothing was kept."
+msgstr "La lectura no coincide con el SHA-256 que M-Flasher escribió al lado. No se guardó nada."
+
+msgid "Between two reads M-Flasher reported another unit or chip. Leave only one FM-1 connected. Nothing was kept, nothing was written."
+msgstr "Entre dos lecturas M-Flasher informó otra unidad u otro chip. Deja conectado solo un FM-1. No se guardó nada ni se escribió nada."
+
+msgid "The two reads of the flash differ (first at 0x{at:05X}). The USB connection is unreliable: try another cable or port, without a hub. Nothing was kept, nothing was written."
+msgstr "Las dos lecturas de la flash son distintas (la primera diferencia en 0x{at:05X}). La conexión USB no es fiable: prueba otro cable u otro puerto, sin hub. No se guardó nada ni se escribió nada."
+
+msgid "The flash backup could not be saved: {error}. Nothing was written."
+msgstr "No se pudo guardar la copia de la flash: {error}. No se escribió nada."
+
+msgid "The FM-1 was not identified in download mode first."
+msgstr "Antes no se identificó el FM-1 en modo de descarga."
+
+msgid "M-Flasher reports no unit ID for this FM-1, so the backup could not be tied to this unit. Nothing was written."
+msgstr "M-Flasher no informa ninguna ID de unidad para este FM-1, así que la copia no se pudo asignar a esta unidad. No se escribió nada."
+
+msgid "M-Flasher reports no unit ID for this FM-1: the backup is kept, but the app cannot write it back (it could not prove which unit it belongs to)."
+msgstr "M-Flasher no informa ninguna ID de unidad para este FM-1: la copia se guarda, pero la app no puede volver a escribirla (no podría demostrar a qué unidad pertenece)."
+
+msgid "This file is not a copy of the whole flash (1 MiB). Nothing was written."
+msgstr "Este archivo no es una copia de toda la flash (1 MiB). No se escribió nada."
+
+msgid "This flash backup does not say which unit it comes from (no unit ID in its description), so the app does not write it back. Nothing was written."
+msgstr "Esta copia de la flash no dice de qué unidad viene (sin ID de unidad en su descripción), así que la app no la vuelve a escribir. No se escribió nada."
+
+msgid "This flash backup does not say which flash chip it was read from, so the app does not write it back. Nothing was written."
+msgstr "Esta copia de la flash no dice de qué chip de flash se leyó, así que la app no la vuelve a escribir. No se escribió nada."
+
+msgid "No M-Flasher on this computer is cleared for writing by this app version (only the exact build this app was reviewed with is). Reinstall the app. Nothing was written."
+msgstr "Ningún M-Flasher de este ordenador está autorizado para escribir por esta versión de la app (solo la compilación exacta con la que se revisó esta app). Vuelve a instalar la app. No se escribió nada."
+
+msgid "M-Flasher reports no unit ID for the connected FM-1, so the app cannot check that the image is this unit's. Nothing was written."
+msgstr "M-Flasher no informa ninguna ID de unidad para el FM-1 conectado, así que la app no puede comprobar que la imagen sea de esta unidad. No se escribió nada."
+
+msgid "This flash backup comes from another FM-1 (unit ID {img}); the connected one is {uid}. A flash image holds its unit's boot area and factory data (calibration, Bluetooth address), so the app writes it only onto the unit it came from. Nothing was written."
+msgstr "Esta copia de la flash viene de otro FM-1 (ID de unidad {img}); el conectado es {uid}. Una imagen de la flash contiene la zona de arranque y los datos de fábrica de su unidad (calibración, dirección Bluetooth), así que la app solo la escribe en la unidad de la que viene. No se escribió nada."
+
+msgid "This flash backup was read from another flash chip ({img}); the connected FM-1 has {chip}. Nothing was written."
+msgstr "Esta copia de la flash se leyó de otro chip de flash ({img}); el FM-1 conectado tiene {chip}. No se escribió nada."
+
+msgid "The FM-1's flash already holds exactly this image: nothing to write."
+msgstr "La flash del FM-1 ya contiene exactamente esta imagen: no hay nada que escribir."
+
+msgid "Not written back. The FM-1 is unchanged; the backup made just now is kept."
+msgstr "No se volvió a escribir. El FM-1 no ha cambiado; la copia hecha ahora se conserva."
+
+msgid "Writing the flash back (do not unplug the FM-1 or switch it off) …"
+msgstr "Volviendo a escribir la flash (no desconectes ni apagues el FM-1) …"
+
+msgid "M-Flasher's plan did not match what the app checked ({why}), so the app did not answer “yes”: nothing was written. The backup made just now is kept."
+msgstr "El plan de M-Flasher no coincidió con lo que comprobó la app ({why}), así que la app no respondió «yes»: no se escribió nada. La copia hecha ahora se conserva."
+
+msgid "M-Flasher did not get to writing: {reason} Nothing was written."
+msgstr "M-Flasher no llegó a escribir: {reason} No se escribió nada."
+
+msgid "The write did not end verified ({reason}). Do not switch the FM-1 off: it stays in download mode, and writing the flash back again works from there. The backup made just before is {name} – it is this unit's state before the write."
+msgstr "La escritura no terminó verificada ({reason}). No apagues el FM-1: se queda en modo de descarga y desde ahí se puede volver a escribir la flash. La copia hecha justo antes es {name}: es el estado de esta unidad antes de escribir."
+
+msgid "M-Flasher was interrupted"
+msgstr "M-Flasher se interrumpió"
+
+msgid "M-Flasher did not confirm the write"
+msgstr "M-Flasher no confirmó la escritura"
+
+msgid "Written; reading the flash once more to compare …"
+msgstr "Escrito; leyendo la flash otra vez para comparar …"
+
+msgid "the fresh read differs from the image"
+msgstr "la lectura nueva difiere de la imagen"
+
+msgid "No M-Flasher on this computer is cleared for writing by this app version (only the exact build this app was reviewed with is). Reinstall the app; reading still works."
+msgstr "Ningún M-Flasher de este ordenador está autorizado para escribir por esta versión de la app (solo la compilación exacta con la que se revisó esta app). Vuelve a instalar la app; leer sigue funcionando."
+
+msgid "Flash backups (the whole flash)"
+msgstr "Copias de la flash (toda la flash)"
+
+msgid "Back up the whole flash"
+msgstr "Copiar toda la flash"
+
+msgid "With M-Flasher in USB download mode: reads the whole flash twice, compares both reads and keeps one copy here. Reads only."
+msgstr "Con M-Flasher en modo de descarga USB: lee toda la flash dos veces, compara ambas lecturas y guarda aquí una copia. Solo lectura."
+
+msgid "Write back …"
+msgstr "Volver a escribir …"
+
+msgid "Writes the selected flash backup back with M-Flasher – only onto the FM-1 it came from (same unit ID and flash chip), after a fresh backup of its current state and your confirmation."
+msgstr "Vuelve a escribir la copia de la flash seleccionada con M-Flasher – solo en el FM-1 del que viene (misma ID de unidad y mismo chip de flash), tras una copia nueva de su estado actual y tu confirmación."
+
+msgid "A flash backup is a copy of the FM-1's whole flash (1 MiB): made here or on Recovery › Tools with M-Flasher in USB download mode, or in m-bootloader's MIDI MODE (Firmware+ › SLOOP 3). It holds this unit's boot area and factory data, so “Write back …” writes it only onto the FM-1 it came from – same unit ID and flash chip, checked by M-Flasher right before it writes – and only after a fresh backup of the current state."
+msgstr "Una copia de la flash es una copia de toda la flash del FM-1 (1 MiB): hecha aquí o en Recuperación › Herramientas con M-Flasher en modo de descarga USB, o en el MIDI MODE de m-bootloader (Firmware+ › SLOOP 3). Contiene la zona de arranque y los datos de fábrica de esta unidad, así que «Volver a escribir …» solo la escribe en el FM-1 del que viene – misma ID de unidad y mismo chip de flash, comprobados por M-Flasher justo antes de escribir – y solo tras una copia nueva del estado actual."
+
+msgid "The Studio twin is not a real FM-1. Choose a real FM-1 at the top, or disconnect it and put the FM-1 into download mode."
+msgstr "El gemelo del Studio no es un FM-1 real. Elige arriba un FM-1 real, o desconéctalo y pon el FM-1 en modo de descarga."
+
+msgid "M-Flasher is not available"
+msgstr "M-Flasher no está disponible"
+
+msgid "Whole flash backed up: read twice, both reads identical and checked against the chip's CRC-32 – {name} ({size}). Nothing was written to the FM-1."
+msgstr "Toda la flash copiada: leída dos veces, ambas lecturas idénticas y comprobadas con el CRC-32 del chip – {name} ({size}). No se escribió nada en el FM-1."
+
+msgid "M-Flasher reported no unit ID, so this copy cannot be written back by the app."
+msgstr "M-Flasher no informó ninguna ID de unidad, así que la app no puede volver a escribir esta copia."
+
+msgid "The FM-1 was restarted."
+msgstr "El FM-1 se reinició."
+
+msgid "The FM-1 is still in download mode: switch it off and on to start it again."
+msgstr "El FM-1 sigue en modo de descarga: apágalo y enciéndelo para que vuelva a arrancar."
+
+msgid "Write the flash backup of {date} back onto “{unit}” (unit ID {uid}, {revision})?"
+msgstr "¿Volver a escribir la copia de la flash del {date} en «{unit}» (ID de unidad {uid}, {revision})?"
+
+msgid "The image: {name}, made {date}; firmware then (as the app knew it): {fw}."
+msgstr "La imagen: {name}, hecha el {date}; firmware entonces (según lo que sabía la app): {fw}."
+
+msgid "not known"
+msgstr "desconocido"
+
+msgid "This writes the whole flash back, the boot area (bootloader and its configuration, 0x00000–0x03FFF) included."
+msgstr "Esto vuelve a escribir toda la flash, incluida la zona de arranque (bootloader y su configuración, 0x00000–0x03FFF)."
+
+msgid ", the boot area among them"
+msgstr ", entre ellos la zona de arranque"
+
+msgid "The current state was backed up just now (read twice): {name}."
+msgstr "El estado actual se acaba de copiar (leído dos veces): {name}."
+
+msgid "M-Flasher checks the unit ID, the flash chip and these sectors once more right before it writes; the app answers its question only when they match. Do not unplug the FM-1 or switch it off while it writes."
+msgstr "M-Flasher comprueba otra vez la ID de unidad, el chip de flash y estos sectores justo antes de escribir; la app solo responde a su pregunta si coinciden. No desconectes ni apagues el FM-1 mientras escribe."
+
+msgid "Flash backup to write back"
+msgstr "Copia de la flash para volver a escribir"
+
+msgid "Flash backups (*.bin)"
+msgstr "Copias de la flash (*.bin)"
+
+msgid "Not written back"
+msgstr "No se volvió a escribir"
+
+msgid "Write flash back"
+msgstr "Volver a escribir la flash"
+
+msgid "The app first puts the FM-1 into download mode, reads it and backs up its current state, and checks that {name} comes from this very unit (unit ID {uid}). Only then it asks you once more before anything is written."
+msgstr "Primero la app pone el FM-1 en modo de descarga, lo lee, copia su estado actual y comprueba que {name} viene de esta misma unidad (ID de unidad {uid}). Solo entonces te pregunta otra vez antes de escribir nada."
+
+msgid "Write the whole flash back?"
+msgstr "¿Volver a escribir toda la flash?"
+
+msgid "Write back"
+msgstr "Volver a escribir"
+
+msgid "The FM-1's flash already holds exactly this image – nothing was written."
+msgstr "La flash del FM-1 ya contiene exactamente esta imagen: no se escribió nada."
+
+msgid "Written back and verified: M-Flasher confirmed every sector, and a fresh read equals the image. {started} The state before is kept as {name}."
+msgstr "Vuelta a escribir y verificada: M-Flasher confirmó cada sector y una lectura nueva es igual a la imagen. {started} El estado anterior se conserva como {name}."
+
+msgid "Switch the FM-1 off and on to start it."
+msgstr "Apaga y enciende el FM-1 para que arranque."
+
+msgid "Cancels until M-Flasher starts writing; from then on it runs to its end."
+msgstr "Cancela hasta que M-Flasher empieza a escribir; desde entonces sigue hasta el final."
+
+msgid "The app brings these tools with it and checks each file's checksum before it uses it. With M-Flasher it backs up the whole flash of an FM-1 and writes such a backup back onto the same unit; installing m-bootloader and SLOOP 3 through the app follow in later versions. A new version is only shown – it is fetched when you click “Update”, checked against GitHub's checksum, and the previous version stays as the fallback."
+msgstr "La app trae estas herramientas y comprueba la suma de verificación de cada archivo antes de usarlo. Con M-Flasher copia toda la flash de un FM-1 y vuelve a escribir esa copia en la misma unidad; instalar m-bootloader y SLOOP 3 con la app llegará en versiones posteriores. Una versión nueva solo se muestra: se descarga cuando haces clic en «Actualizar», se comprueba con la suma de verificación de GitHub, y la versión anterior se queda como respaldo."
+
+msgid "Puts the FM-1 into USB download mode (by itself while it runs on USB MIDI, otherwise it tells you how), reads the whole flash twice with M-Flasher, compares both reads and keeps one copy in this device's backup folder. Reads only."
+msgstr "Pone el FM-1 en modo de descarga USB (sola mientras funciona por USB MIDI; si no, te dice cómo), lee toda la flash dos veces con M-Flasher, compara ambas lecturas y guarda una copia en la carpeta de copias de este dispositivo. Solo lectura."
+
+msgid "Write flash back …"
+msgstr "Volver a escribir la flash …"
+
+msgid "Writes a whole-flash backup back onto the FM-1 it came from (same unit ID and flash chip), after a fresh backup of its current state and your confirmation."
+msgstr "Vuelve a escribir una copia de toda la flash en el FM-1 del que viene (misma ID de unidad y mismo chip de flash), tras una copia nueva de su estado actual y tu confirmación."
+
+msgid "Flash backup kept: {path}"
+msgstr "Copia de la flash guardada: {path}"
+
+msgid "The app sends the switch to download mode only to an FM-1 it has recognised itself, with the original firmware, a Felucca-family firmware or SLOOP 3, at the port it is connected to."
+msgstr "La app solo envía el cambio al modo de descarga a un FM-1 que ella misma ha reconocido – con el firmware original, un firmware de la familia Felucca o SLOOP 3, en el puerto al que está conectado."
+
+msgid "M-Flasher is writing now. This cannot be cancelled – do not unplug the FM-1 or switch it off."
+msgstr "M-Flasher está escribiendo ahora. No se puede cancelar – no desconectes ni apagues el FM-1."
+
+msgid "M-Flasher stopped before it erased anything ({reason}). Nothing was written; the FM-1 is unchanged."
+msgstr "M-Flasher se detuvo antes de borrar nada ({reason}). No se escribió nada; el FM-1 no ha cambiado."
+
+msgid "M-Flasher is still writing after {s} minutes. It is not stopped – do not unplug the FM-1 or switch it off."
+msgstr "M-Flasher sigue escribiendo después de {s} minutos. No se detiene – no desconectes ni apagues el FM-1."
+
+msgid "M-Flasher is writing: this cannot be cancelled."
+msgstr "M-Flasher está escribiendo: no se puede cancelar."
+
+msgid "M-Flasher's own output ends with “everything written is verified”, but the app did not check it afterwards."
+msgstr "La salida de M-Flasher termina con «everything written is verified», pero la app no lo comprobó después."
+
+msgid "M-Flasher had started erasing and writing; its output does not say it finished."
+msgstr "M-Flasher había empezado a borrar y escribir; su salida no dice que terminara."
+
+msgid "It is not known how far M-Flasher got."
+msgstr "No se sabe hasta dónde llegó M-Flasher."
+
+msgid "The write did not end verified: {reason}"
+msgstr "La escritura no terminó verificada: {reason}"
+
+msgid "A flash write-back onto “{device}” (unit ID {uid}) started on {when} did not end verified – the app was closed or ended while M-Flasher wrote, or the write failed."
+msgstr "Una escritura de la flash en «{device}» (ID de unidad {uid}) iniciada el {when} no terminó verificada – la app se cerró o terminó mientras M-Flasher escribía, o la escritura falló."
+
+msgid "The FM-1 may be in download mode now. Nothing is done automatically. Writing back again goes through all the usual checks (M-Flasher reads the unit first, unit ID and flash chip must match)."
+msgstr "Puede que el FM-1 esté ahora en modo de descarga. No se hace nada automáticamente. Volver a escribir pasa por todas las comprobaciones habituales (M-Flasher lee primero la unidad; la ID de unidad y el chip de flash deben coincidir)."
+
+msgid "The image: {image}<br>Its state before the write: {pre}"
+msgstr "La imagen: {image}<br>Su estado antes de escribir: {pre}"
+
+msgid "M-Flasher is still writing"
+msgstr "M-Flasher sigue escribiendo"
+
+msgid "M-Flasher is still writing the flash of “{device}” (started by an earlier run of the app). Do not unplug the FM-1 or switch it off. Look again on Recovery › Tools once it has ended."
+msgstr "M-Flasher sigue escribiendo la flash de «{device}» (iniciado por una ejecución anterior de la app). No desconectes ni apagues el FM-1. Vuelve a mirar en Recuperación › Herramientas cuando haya terminado."
+
+msgid "Interrupted flash write-back"
+msgstr "Escritura de la flash interrumpida"
+
+msgid "Write the image back again …"
+msgstr "Volver a escribir la imagen …"
+
+msgid "Write the state before back …"
+msgstr "Volver a escribir el estado anterior …"
+
+msgid "Later"
+msgstr "Más tarde"
+
+msgid "Forget this"
+msgstr "Olvidar"
+
+msgid "Forget the interrupted write-back? Do this only when the FM-1 works again or you have written it back yourself."
+msgstr "¿Olvidar la escritura interrumpida? Hazlo solo si el FM-1 vuelve a funcionar o si la has vuelto a escribir tú mismo."
+
+msgid "M-Flasher is writing"
+msgstr "M-Flasher está escribiendo"
+
+msgid "M-Flasher is writing the FM-1's flash. The app stays open until it has finished – do not unplug the FM-1 or switch it off."
+msgstr "M-Flasher está escribiendo la flash del FM-1. La app sigue abierta hasta que termine – no desconectes ni apagues el FM-1."
+
+msgid "The app does not know which of your FM-1 this is (unit ID {uid} is in none of your device profiles). A flash backup is written back only onto a unit the app knows. To teach it: connect the FM-1 while it runs, choose it at the top, click “Back up the whole flash” – and if the app asks you to put it into download mode by hand, do it at the same USB port. Nothing was written."
+msgstr "La app no sabe cuál de tus FM-1 es este (la ID de unidad {uid} no está en ninguno de tus perfiles). Una copia de la flash solo se vuelve a escribir en una unidad que la app conoce. Para enseñársela: conecta el FM-1 mientras funciona, elígelo arriba, haz clic en «Copiar toda la flash» – y si la app te pide ponerlo a mano en modo de descarga, hazlo en el mismo puerto USB. No se escribió nada."
+
+msgid "The FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address) looks partly erased – as after an interrupted write – and the rest equals this backup. The app does not repair factory data. Keep the FM-1 as it is (it may still start), keep this backup and the one made just now, and ask for help (the app's issue tracker or M-Flasher's author) before anything else is written. Nothing was written."
+msgstr "Los datos de fábrica del FM-1 (0xFF000–0xFFFFF: calibración, dirección Bluetooth) parecen borrados en parte – como tras una escritura interrumpida – y el resto es igual a esta copia. La app no repara datos de fábrica. Deja el FM-1 como está (puede que aún arranque), conserva esta copia y la hecha ahora, y pide ayuda (el gestor de incidencias de la app o el autor de M-Flasher) antes de escribir nada más. No se escribió nada."
+
+msgid "The FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address) differs from the one in this backup, although both name the same unit ID. Either the backup's description was changed (another unit's copy), or the unit's factory data has changed since (an interrupted write, a damaged flash). The app never writes over factory data. Keep both copies and ask for help (the app's issue tracker or M-Flasher's author) before anything else is written. Nothing was written."
+msgstr "Los datos de fábrica del FM-1 (0xFF000–0xFFFFF: calibración, dirección Bluetooth) difieren de los de esta copia, aunque ambos nombran la misma ID de unidad. O se cambió la descripción de la copia (la copia de otra unidad), o los datos de fábrica de la unidad han cambiado desde entonces (una escritura interrumpida, una flash dañada). La app nunca escribe sobre datos de fábrica. Conserva ambas copias y pide ayuda (el gestor de incidencias de la app o el autor de M-Flasher) antes de escribir nada más. No se escribió nada."
+
+msgid "The app's private working folder cannot be created: {error}. Nothing was written."
+msgstr "No se puede crear la carpeta de trabajo privada de la app: {error}. No se escribió nada."
+
+msgid "Too little free space for M-Flasher's working files ({need} MiB are needed in {where}). Free some space and try again. Nothing was written."
+msgstr "Poco espacio libre para los archivos de trabajo de M-Flasher (se necesitan {need} MiB en {where}). Libera algo de espacio y vuelve a intentarlo. No se escribió nada."
+
+msgid "The file {name} is no longer there."
+msgstr "El archivo {name} ya no está."
+
+msgid "The file {name} is no longer the one that was being written (its SHA-256 differs). Nothing is written from it."
+msgstr "El archivo {name} ya no es el que se estaba escribiendo (su SHA-256 difiere). No se escribe nada a partir de él."
+
+msgid "Close the app, let M-Flasher finish"
+msgstr "Cerrar la app y dejar que M-Flasher termine"
+
+msgid "M-Flasher has been writing for much longer than it ever should. The app can close now: M-Flasher keeps running in the background and is not stopped. Keep the FM-1 connected and switched on. At the next start the app shows what happened."
+msgstr "M-Flasher lleva escribiendo mucho más de lo que debería. La app puede cerrarse ahora: M-Flasher sigue en segundo plano y no se detiene. Deja el FM-1 conectado y encendido. En el siguiente inicio la app muestra qué pasó."
+
+msgid "Close the app?"
+msgstr "¿Cerrar la app?"
+
+msgid "Close the app"
+msgstr "Cerrar la app"
+
+msgid "writing a whole-flash backup back through M-Flasher – so far only small changes on an earlier unit (not yet the boot area or a large difference)"
+msgstr "volver a escribir una copia de toda la flash mediante M-Flasher – hasta ahora solo cambios pequeños en una unidad anterior (aún no la zona de arranque ni una diferencia grande)"
+
+msgid "the whole-flash backup on a newer FM-1 (logo on the front, flash UC25HQ80)"
+msgstr "la copia de toda la flash en un FM-1 más nuevo (logotipo delante, flash UC25HQ80)"
+
+msgid "writing a whole-flash backup back on a newer FM-1 (logo on the front, flash UC25HQ80)"
+msgstr "volver a escribir una copia de toda la flash en un FM-1 más nuevo (logotipo delante, flash UC25HQ80)"
+
+msgid "The flash backup cannot be read: {error}"
+msgstr "No se puede leer la copia de la flash: {error}"
+
+msgid "There is no description beside this flash backup ({name}), so the app cannot tell which unit it comes from."
+msgstr "No hay ninguna descripción junto a esta copia de la flash ({name}), así que la app no puede saber de qué unidad viene."
+
+msgid "The description beside this flash backup ({name}) is not in a format the app knows – neither the app's own nor M-Flasher's .json. The image itself was not judged."
+msgstr "La descripción junto a esta copia de la flash ({name}) no tiene un formato que la app conozca – ni el propio de la app ni el .json de M-Flasher. La imagen en sí no se juzgó."
+
+msgid "The flash backup does not match the SHA-256 in M-Flasher's description beside it (changed or damaged)."
+msgstr "La copia de la flash no coincide con el SHA-256 de la descripción de M-Flasher que tiene al lado (cambiada o dañada)."
+
+msgid "the file does not match M-Flasher's description (changed or damaged)"
+msgstr "el archivo no coincide con la descripción de M-Flasher (cambiado o dañado)"
+
+msgid "description not in a format the app knows – not checked"
+msgstr "descripción en un formato que la app no conoce – no comprobado"
+
+msgid "Put the FM-1 into USB download mode by hand, then click again:\n• with m-bootloader: hold PLAY while switching the FM-1 on and choose DOWNLOAD MODE – or hold REC while switching it on, which goes there directly;\n• with the original firmware or a Felucca-family firmware (Skiff, SLOOP 2, Melodee …), the app sends it there by itself while it runs on USB MIDI.\nIn download mode the display stays dark or shows M-Flasher's screen; the computer sees “WL82 UBOOT1.00” (as a USB device it calls itself “WL80UBOOT1.00”)."
+msgstr "Pon el FM-1 a mano en modo de descarga USB y vuelve a hacer clic:\n• con m-bootloader: mantén PLAY al encender el FM-1 y elige DOWNLOAD MODE – o mantén REC al encenderlo, que va directamente;\n• con el firmware original o un firmware de la familia Felucca (Skiff, SLOOP 2, Melodee …), la app lo pone ahí sola mientras funciona por USB MIDI.\nEn modo de descarga la pantalla se queda oscura o muestra la pantalla de M-Flasher; el ordenador ve «WL82 UBOOT1.00» (como dispositivo USB se llama «WL80UBOOT1.00»)."
+
+msgid "This flash backup comes from another FM-1 (unit ID {img}) than “{name}” (unit ID {uid}). A flash image holds its unit's boot area and factory data, so the app writes it only onto the unit it came from. Nothing was done – the FM-1 was not even switched to download mode."
+msgstr "Esta copia de la flash viene de otro FM-1 (ID de unidad {img}) distinto de «{name}» (ID de unidad {uid}). Una imagen de la flash contiene la zona de arranque y los datos de fábrica de su unidad, así que la app solo la escribe en la unidad de la que viene. No se hizo nada – el FM-1 ni siquiera se puso en modo de descarga."
+
+msgid "— please choose —"
+msgstr "— elige, por favor —"
+
+msgid "Everything on the FM-1 since that day – firmware, bootloader, projects, sounds, settings – goes back to the state of the image."
+msgstr "Todo lo del FM-1 desde aquel día – firmware, bootloader, proyectos, sonidos, ajustes – vuelve al estado de la imagen."
+
+msgid "last seen: {firmware} ({date})"
+msgstr "visto por última vez: {firmware} ({date})"
+
+msgid "last seen: {firmware}"
+msgstr "visto por última vez: {firmware}"
+
+msgid "the app's flash backup or write-back sent it there"
+msgstr "la copia o la escritura de la flash de la app lo puso ahí"
+
+msgid "a flash backup or write-back of the app worked with it there"
+msgstr "una copia o una escritura de la flash de la app trabajó con él ahí"
+
+msgid "the app asked you to put it there (with the keys or m-bootloader's menu)"
+msgstr "la app te pidió ponerlo ahí (con las teclas o el menú de m-bootloader)"
+
+msgid "<span style='color:#27ae60'>● In download mode on purpose</span> – {what}: {device}. Nothing is wrong; this is not the emergency described above. To start it again: “Restart the FM-1” or switch it off and on."
+msgstr "<span style='color:#27ae60'>● En modo de descarga a propósito</span> – {what}: {device}. No pasa nada malo; no es la emergencia descrita arriba. Para volver a arrancarlo: «Reiniciar el FM-1» o apágalo y enciéndelo."
+
+msgid "Restart the FM-1"
+msgstr "Reiniciar el FM-1"
+
+msgid "Leaves download mode: M-Flasher starts the FM-1's firmware again (writes nothing). Switching it off and on does the same."
+msgstr "Sale del modo de descarga: M-Flasher vuelve a arrancar el firmware del FM-1 (no escribe nada). Apagarlo y encenderlo hace lo mismo."
+
+msgid "The FM-1 did not restart: switch it off and on."
+msgstr "El FM-1 no se reinició: apágalo y enciéndelo."
+
+msgid "{n} sector of 4 KiB differs from what the FM-1 holds now{boot}."
+msgid_plural "{n} sectors of 4 KiB differ from what the FM-1 holds now{boot}."
+msgstr[0] "{n} sector de 4 KiB difiere de lo que contiene ahora el FM-1{boot}."
+msgstr[1] "{n} sectores de 4 KiB difieren de lo que contiene ahora el FM-1{boot}."

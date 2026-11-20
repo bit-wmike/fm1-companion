@@ -59,7 +59,7 @@ SLOOP 3 guarda **un proyecto** en el FM-1. La app lo lee igual que la copia de s
   “Muestras a la biblioteca” saca USR1–USR4 como archivos WAV (“SLOOP 3 USR1 …”) a Muestras › “SLOOP 3 (flash)”;
   “Muestras de un archivo …” hace lo mismo con una copia guardada por M-Flasher. Sin conexión – no se envía nada.
   SLOOP 2.8 guarda sus muestras en los mismos cuatro lugares y con el mismo formato, así que una copia hecha con
-  SLOOP 2.8 da sus muestras. Para una copia de la flash no hay botón de restaurar: eso es tarea de M-Flasher.
+  SLOOP 2.8 da sus muestras. «Volver a escribir …» vuelve a escribir una copia mediante M-Flasher, solo en el FM-1 del que viene (ver Modo de actualización y rescate).
 * **El archivo de copia del propio editor (.s3b).** “Añadir archivo …” adopta un `.s3b` como copia de SLOOP 3 (el
   proyecto y tus sonidos – es todo lo que contiene un `.s3b`); “Como .s3b …” guarda una copia de SLOOP 3 para el
   “Restore” del editor.

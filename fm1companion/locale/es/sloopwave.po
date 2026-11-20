@@ -223,10 +223,6 @@ msgstr "No se puede escribir {name}"
 msgid "Saved for the SLOOP 3 editor: {name} – its “Restore” on the page “Projects” takes it (the project and your sounds)."
 msgstr "Guardado para el editor de SLOOP 3: {name} – su “Restore” en la página “Projects” lo acepta (el proyecto y tus sonidos)."
 
-#: fm1companion/ui/backups_page.py:1108
-msgid "Flash backups (m-bootloader's MIDI MODE)"
-msgstr "Copias de la flash (MIDI MODE de m-bootloader)"
-
 #: fm1companion/ui/backups_page.py:1111
 msgid "Flash chip"
 msgstr "Chip de flash"
@@ -250,10 +246,6 @@ msgstr "Muestras de un archivo …"
 #: fm1companion/ui/backups_page.py:1127
 msgid "The same from a flash copy M-Flasher saved (a .bin of the whole flash)"
 msgstr "Lo mismo desde una copia de la flash guardada por M-Flasher (un .bin de toda la flash)"
-
-#: fm1companion/ui/backups_page.py:1138
-msgid "A flash backup is a copy of the FM-1's whole flash, made in m-bootloader's MIDI MODE (Firmware+ › SLOOP 3). The app does not write it back – there is no restore button here: restoring a flash image is M-Flasher's job, in USB download mode, onto the same FM-1 it came from."
-msgstr "Una copia de la flash es una copia de toda la flash del FM-1, hecha en el MIDI MODE de m-bootloader (Firmware+ › SLOOP 3). La app no la vuelve a escribir – por eso aquí no hay botón para restaurar: restaurar una imagen de la flash es tarea de M-Flasher, en modo de descarga USB, en el mismo FM-1 del que procede."
 
 #: fm1companion/ui/backups_page.py:1158
 #, python-brace-format

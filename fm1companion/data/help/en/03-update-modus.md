@@ -63,10 +63,34 @@ before every use and never runs a changed file), and when it last looked for a n
   once. A new M-Flasher runs on this computer only for reading; one whose commands have changed is kept but not
   used.
 * **Download mode without a password:** the installer sets up a rule that lets you reach the FM-1 in ROM download
-  mode (USB 4c4a:8057) and loads the Linux driver `sg` at start.
-* **Honestly:** in this version the app only shows, checks and updates the tools and asks M-Flasher which FM-1 it
-  sees. Flash backups, m-bootloader and SLOOP 3 through the app come in later versions; until then use the tools
-  themselves as before.
+  mode (USB 4c4a:8057) and loads the Linux driver `sg` at start – `./install.sh` does it by default
+  (`--no-download-mode-rule` leaves it out; if it cannot get administrator rights it prints the exact commands).
+* **Back up the whole flash** (Recovery › Tools, or Backups › Flash backups): the app puts the FM-1 into USB download
+  mode – by itself while it runs on USB MIDI (original firmware, Felucca family, SLOOP 3, m-bootloader's MIDI MODE),
+  otherwise it tells you how: with m-bootloader hold **PLAY** while switching on and choose **DOWNLOAD MODE**, or
+  hold **REC** while switching on (goes there directly). Then M-Flasher reads the whole flash (1 MiB) **twice**;
+  each read is checked against the CRC-32 the flash chip computes, and only when both reads are identical one copy
+  is kept in `Backups/<device>/Flash/`, with a description: the unit ID, the flash chip, the SHA-256, the M-Flasher
+  version, the firmware the app knew and the date. Nothing is written to the FM-1. When the app sent the FM-1 into
+  download mode, it restarts it afterwards. The unit ID and flash chip M-Flasher reads are kept with the device
+  profile (only for the unit the app itself sent into download mode, and only if no other profile has that ID).
+* **Write flash back** (“Write flash back …” on Recovery › Tools, “Write back …” on Backups › Flash backups): only
+  onto the FM-1 the copy came from. The app reads the connected unit first: its **unit ID and flash chip must equal
+  the copy's** – a copy of another unit or chip is refused, there is no way around it. Then it backs up the current
+  state (read twice, as above; without that backup nothing is written) and asks you once more, naming the unit, its
+  revision, the copy's date and firmware: **the whole flash goes back, the boot area (bootloader) included**, and
+  with it the firmware, projects, sounds and settings of that day. Right before writing, M-Flasher shows the unit
+  ID, the flash chip and the sectors it will write and waits for “yes”; the app answers only when all of it matches
+  its own check, otherwise M-Flasher writes nothing. Afterwards M-Flasher's own check (the chip's CRC-32) and a fresh
+  read must equal the copy; then the FM-1 is restarted. Once writing has started it cannot be cancelled – do not
+  unplug the FM-1 then; even if the app is closed or crashes, M-Flasher finishes the write, and at the next start the app says what happened and asks what to do. A copy whose factory data (calibration, Bluetooth address) differs from the unit's is refused. If something goes wrong, the FM-1 stays in download mode and the backup made just before
+  goes back the same way.
+* **Honestly – what ran on real hardware (2026-11-20, one Raspberry Pi 5, two units):** the backup on both units (by
+  the app's own switch from Melodee and from SLOOP 3, with REC at power-on, through m-bootloader's menu), each copy
+  identical with one M-Flasher made by hand; writing back only on an earlier unit and only small changes (one
+  sector, verified), the refusal of another unit's copy, and closing the app being blocked while it writes. Not yet
+  run: writing back on a newer unit (logo on the front), a large change or the boot area, a real logout during the
+  write. m-bootloader, firmware through download mode and SLOOP 3 through the app come in later versions.
 
 ## If the FM-1 does not appear as “WL82 UBOOT1.00” at all
 

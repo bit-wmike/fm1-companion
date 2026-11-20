@@ -1153,7 +1153,7 @@ class BackupsPage(QWidget):
 
     # ------------------------------------------------- flash backups
     def _flash_box(self) -> QWidget:
-        g = self.flash_box = QGroupBox(_("Flash backups (m-bootloader's MIDI MODE)"))
+        g = self.flash_box = QGroupBox(_("Flash backups (the whole flash)"))
         v = QVBoxLayout(g)
         self.flash_tree = QTreeWidget()
         self.flash_tree.setHeaderLabels([_("Date"), _("Device"), _("Size"), _("Flash chip"), _("Check"), _("File")])
@@ -1163,6 +1163,18 @@ class BackupsPage(QWidget):
         self.flash_tree.setMaximumHeight(170)            # (a few rows; the data backups above keep the room)
         v.addWidget(self.flash_tree)
         row = QHBoxLayout()
+        b = self.flash_backup_btn = QPushButton(icon("document-save", "drive-harddisk"), _("Back up the whole flash"))
+        b.setObjectName("flashBackupBtn")
+        b.setToolTip(_("With M-Flasher in USB download mode: reads the whole flash twice, compares both reads and "
+                       "keeps one copy here. Reads only."))
+        b.clicked.connect(self._flash_backup)
+        row.addWidget(b)
+        b = self.flash_restore_btn = QPushButton(icon("document-revert", "edit-undo"), _("Write back …"))
+        b.setObjectName("flashRestoreBtn")
+        b.setToolTip(_("Writes the selected flash backup back with M-Flasher – only onto the FM-1 it came from (same "
+                       "unit ID and flash chip), after a fresh backup of its current state and your confirmation."))
+        b.clicked.connect(self._flash_restore)
+        row.addWidget(b)
         b = QPushButton(icon("folder-open"), _("Show in folder"))
         b.clicked.connect(self._flash_show)
         row.addWidget(b)
@@ -1183,9 +1195,11 @@ class BackupsPage(QWidget):
         self.flash_info.setMinimumWidth(0)
         self.flash_info.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         v.addWidget(self.flash_info)
-        note = QLabel(_("A flash backup is a copy of the FM-1's whole flash, made in m-bootloader's MIDI MODE (Firmware+ "
-                        "› SLOOP 3). The app does not write it back – there is no restore button here: restoring a "
-                        "flash image is M-Flasher's job, in USB download mode, onto the same FM-1 it came from."))
+        note = QLabel(_("A flash backup is a copy of the FM-1's whole flash (1 MiB): made here or on Recovery › Tools with "
+                        "M-Flasher in USB download mode, or in m-bootloader's MIDI MODE (Firmware+ › SLOOP 3). It "
+                        "holds this unit's boot area and factory data, so “Write back …” writes it only onto the FM-1 "
+                        "it came from – same unit ID and flash chip, checked by M-Flasher right before it writes – and "
+                        "only after a fresh backup of the current state."))
         note.setWordWrap(True)
         note.setMinimumWidth(0)
         note.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
@@ -1246,6 +1260,19 @@ class BackupsPage(QWidget):
             show_error(self, _("Nothing selected"), _("Please select a flash backup in the list first."))
             return None
         return Path(it.data(0, Qt.ItemDataRole.UserRole))
+
+    def _flash_backup(self):
+        from .flash_tools import backup_flow
+        if backup_flow(self, self.ctx) is not None:
+            self.refresh()
+
+    def _flash_restore(self):
+        p = self._flash_sel()
+        if p is None:
+            return
+        from .flash_tools import restore_flow
+        restore_flow(self, self.ctx, p)
+        self.refresh()
 
     def _flash_show(self):
         p = self._flash_sel()

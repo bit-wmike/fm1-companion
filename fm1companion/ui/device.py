@@ -1099,16 +1099,20 @@ class DeviceContext(QObject):
             names = [c.name + (" " + _("(last seen: {firmware})").format(firmware=last_firmware_text(c))
                                if last_firmware_text(c) else "") for c in cands]
             names.append(_("A new FM-1 that I have not used with this app before …"))
-            last = cands.index(guess) if guess in cands else \
-                next((i for i, c in enumerate(cands) if c.id == self.settings.last_device), 0)
+            # (the question comes because the identity is ambiguous: nothing is pre-selected – an explicit choice
+            # is needed. Pi run 2026-11-20: two units swapped at one USB port, the pre-selected one was wrong)
+            placeholder = _("— please choose —")
             item, ok = QInputDialog.getItem(
                 self.window, _("Which FM-1 is this?"),
                 _("Is this an FM-1 you have used with this app before? The app cannot tell by itself: an FM-1 only "
-                  "reports a serial number while it runs the original firmware. Please choose:"), names, last, False)
-            if ok and item == names[-1]:
+                  "reports a serial number while it runs the original firmware. Please choose:"),
+                [placeholder] + names, 0, False)
+            if not ok or item == placeholder:
+                return None                    # (not answered: nothing is assumed)
+            if item == names[-1]:
                 name, ok2 = QInputDialog.getText(self.window, _("New device"), _("Name for this FM-1:"))
                 return self._new_profile(name if ok2 else "")
-            return cands[names.index(item)] if ok and item in names[:-1] else None
+            return cands[names.index(item)] if item in names[:-1] else None
         finally:
             self._asking = False
 

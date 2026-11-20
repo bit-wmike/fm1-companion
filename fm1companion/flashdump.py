@@ -8,8 +8,12 @@ the copy it compared it with the CRC-32 the flash chip itself computed of the wh
 mismatch is never saved), and the description keeps that CRC-32. ``check`` compares the file with its description
 again.
 
-A flash image is not restored by the app: writing it back is M-Flasher's job, in USB download mode, onto the same
-FM-1 it came from.
+Two ways make such a copy, and both write the same description (``write_backup`` below, format version 2):
+m-bootloader's MIDI MODE (flash/mboot.py) and M-Flasher in USB download mode (tools/flashjob.py: read twice,
+compared byte for byte and each read checked against the chip's CRC-32). The description also carries M-Flasher's
+own two keys, ``"unit id"`` and ``"sha256"``, at the top: M-Flasher's ``restore`` checks the image against that
+SHA-256 and recognises its unit by that unit id. Writing an image back is done only through M-Flasher, only onto the
+very unit (unit id and flash ID) it came from (tools/flashjob.py ``restore``).
 
 The user sample slots USR1–USR4 (SLOOP 3 3.4.0: fw/main.c ``SLOT_AT``, engine/sample.h): 80 KiB each at flash
 0xA0000, 0xB4000, 0xC8000 and 0xE7000, an "FSMP" header (version 1, up to 16 zones of 28 bytes, a name of 8 letters,
@@ -42,6 +46,8 @@ MAX_ZONES = 16
 FLASH_SIZE = 0x100000                               # both FM-1 flash chips hold 1 MiB (Puya P25Q80H, UC25HQ80)
 RATE_BASE = 44100                                   # a zone's rate is its step at 44.1 kHz, 16.16 (files.js rate16)
 SIDE_FORMAT = "fm1-flash-backup"
+SIDE_VERSION = 2                                    # 2: + "unit id", "flash", "chip key", boot area hash, tool
+BOOT_AREA = 0x4000                                  # the boot area 0x00000-0x03FFF (bootloader and its configuration)
 IMA_STEP = (7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88,
             97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658,
             724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327, 3660,
@@ -238,6 +244,153 @@ def read_image(path: Path) -> bytes:
     return raw
 
 
+# --------------------------------------------------------- writing one ---
+
+def write_backup(folder: Path, name: str, image: bytes, *, device: str, read_through: str, jedec: int | None,
+                 unit_id: str = "", chip_key: int | None = None, capacity: int = 0, profile: str = "",
+                 firmware: dict | None = None, tool: dict | None = None, double_read: bool = False,
+                 note: str = "") -> Path:
+    """write a flash image and its description beside it (`name`: the wanted file name, made unique) – the .bin
+    first, complete or not at all, read back and compared before the description is written. -> the .bin"""
+    import os
+    from .backup import write_text_atomic
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    first = folder / name
+    path, n = first, 2
+    while path.exists() or path.with_suffix(".json").exists():
+        path = first.with_name(f"{first.stem} ({n}).bin")
+        n += 1
+    tmp = path.with_name("." + path.name + ".tmp")
+    try:
+        with open(tmp, "wb") as f:
+            f.write(image)
+            f.flush()
+            os.fsync(f.fileno())
+        tmp.replace(path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+    if path.read_bytes() != image:
+        path.unlink()
+        raise FlashDumpError(_("The file could not be written correctly – nothing was kept."))
+    names = {0x856014: "Puya P25Q80H", 0xB36014: "UCUN UC25HQ80"}
+    jid = (jedec or 0) & 0xFFFFFF
+    side = {"format": SIDE_FORMAT, "version": SIDE_VERSION, "file": path.name, "size": len(image),
+            # M-Flasher's own keys (its restore reads them, ops.rs check_backup_file / backup_unit_id)
+            "sha256": hashlib.sha256(image).hexdigest(), "unit id": (unit_id or "").lower(),
+            "flash": f"0x{jid:06X}" if jid else "", "chip key": f"0x{chip_key:04X}" if chip_key is not None else "",
+            "crc32": f"{zlib.crc32(image) & 0xFFFFFFFF:08x}",
+            "boot_area_sha256": hashlib.sha256(image[:BOOT_AREA]).hexdigest(),
+            "created": dt.datetime.now().astimezone().strftime("%Y-%m-%dT%H:%M:%S%z"), "device": device,
+            "profile": profile, "read_through": read_through, "double_read": bool(double_read),
+            "flash_chip": {"jedec": f"0x{jid:06X}" if jid else "", "name": names.get(jid, ""),
+                           "unique_id": (unit_id or "").lower(), "capacity": capacity or len(image)},
+            "firmware": dict(firmware or {}), "tool": dict(tool or {}),
+            "restore": "Written back only with M-Flasher (https://github.com/jvitkauskas/m-flasher) in USB download "
+                       "mode, onto this one FM-1 (the unit id and flash above): it holds this unit's boot area and "
+                       "factory data. Do not write it to another unit.",
+            "note": note, "app": "FM-1 Companion"}
+    write_text_atomic(path.with_suffix(".json"), json.dumps(side, indent=2, ensure_ascii=False))
+    try:                                         # the two new names are on the disk too, not only the contents
+        fd = os.open(folder, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    except OSError:
+        pass
+    return path
+
+
+def read_side(path: Path) -> dict:
+    """a flash backup's description checked against the image -> the description. FlashDumpError: missing,
+    unreadable or not matching (changed or damaged)."""
+    path = Path(path)
+    try:
+        side = json.loads(path.with_suffix(".json").read_text("utf-8"))
+        raw = path.read_bytes()
+    except (OSError, ValueError, UnicodeDecodeError):
+        raise FlashDumpError(_("The flash backup or its description cannot be read."))
+    if not isinstance(side, dict) or side.get("format") != SIDE_FORMAT or side.get("size") != len(raw) or \
+            side.get("sha256") != hashlib.sha256(raw).hexdigest() or \
+            (side.get("crc32") and str(side["crc32"]).lower() != f"{zlib.crc32(raw) & 0xFFFFFFFF:08x}"):
+        raise FlashDumpError(_("The flash backup does not match its description (changed or damaged)."))
+    return side
+
+
+MFLASHER_FORMAT = "m-flasher"                    # (normalised) M-Flasher's own .json beside its backups (ops.rs)
+
+
+def _mflasher_side(d: dict, raw: bytes) -> dict | None:
+    """M-Flasher's own .json (src/ops.rs save_backup: model, bootloader, firmware, app, chip key, flash, unit id,
+    loader, sha256, saved YYYYmmdd-HHMMSS, tool "m-flasher X.Y.Z") -> the app's keys; None: not that format"""
+    tool = str(d.get("tool") or "")
+    if not tool.lower().startswith("m-flasher") or "sha256" not in d or "saved" not in d:
+        return None
+    created = ""
+    try:
+        created = dt.datetime.strptime(str(d.get("saved")), "%Y%m%d-%H%M%S").astimezone().strftime(
+            "%Y-%m-%dT%H:%M:%S%z")
+    except ValueError:
+        pass
+    uid = str(d.get("unit id") or "").strip().lower()
+    return {"format": MFLASHER_FORMAT, "size": len(raw), "sha256": str(d.get("sha256") or "").lower(),
+            "unit id": uid if re.fullmatch(r"[0-9a-f]{16}", uid) else "", "flash": str(d.get("flash") or ""),
+            "chip key": str(d.get("chip key") or ""), "created": created, "device": "",
+            "read_through": f"{tool} (its own .json)",
+            "firmware": {"app": "", "m_flasher_guess": str(d.get("firmware") or ""),
+                         "bootloader": str(d.get("bootloader") or "")},
+            "flash_chip": {"jedec": str(d.get("flash") or ""), "unique_id": uid}}
+
+
+def read_any_side(path: Path) -> dict:
+    """the description beside a flash image in the app's format OR in M-Flasher's own, checked against the image
+    -> the description (M-Flasher's normalised to the app's keys). FlashDumpError with an exact reason: no
+    description, a format the app does not know, or – only then – changed or damaged."""
+    path = Path(path)
+    jp = path.with_suffix(".json")
+    try:
+        raw = path.read_bytes()
+    except OSError as e:
+        raise FlashDumpError(_("The flash backup cannot be read: {error}").format(error=e.strerror or e))
+    if not jp.exists():
+        raise FlashDumpError(_("There is no description beside this flash backup ({name}), so the app cannot tell "
+                               "which unit it comes from.").format(name=jp.name))
+    try:
+        d = json.loads(jp.read_text("utf-8"))
+    except (OSError, ValueError, UnicodeDecodeError):
+        d = None
+    if isinstance(d, dict) and d.get("format") == SIDE_FORMAT:
+        return read_side(path)
+    side = _mflasher_side(d, raw) if isinstance(d, dict) else None
+    if side is None:
+        raise FlashDumpError(_("The description beside this flash backup ({name}) is not in a format the app knows – "
+                               "neither the app's own nor M-Flasher's .json. The image itself was not judged.").format(
+                                   name=jp.name))
+    if side["sha256"] != hashlib.sha256(raw).hexdigest():
+        raise FlashDumpError(_("The flash backup does not match the SHA-256 in M-Flasher's description beside it "
+                               "(changed or damaged)."))
+    return side
+
+
+def side_unit_id(side: dict) -> str:
+    """the unit id a description names (M-Flasher's key, else the chip's unique id of a version-1 MIDI MODE copy)"""
+    chip = side.get("flash_chip") if isinstance(side.get("flash_chip"), dict) else {}
+    uid = str(side.get("unit id") or chip.get("unique_id") or "").strip().lower()
+    return uid if re.fullmatch(r"[0-9a-f]{16}", uid) else ""
+
+
+def side_flash_id(side: dict) -> int:
+    chip = side.get("flash_chip") if isinstance(side.get("flash_chip"), dict) else {}
+    for v in (side.get("flash"), chip.get("jedec")):
+        try:
+            return int(str(v), 16) & 0xFFFFFF if v else 0
+        except ValueError:
+            continue
+    return 0
+
+
 # --------------------------------------------------------- the listing ---
 
 @dataclass
@@ -251,6 +404,9 @@ class FlashBackup:
     jedec: str = ""
     read_through: str = ""
     crc32: str = ""
+    unit_id: str = ""         # the unit id the description names ("" none)
+    firmware: str = ""        # what ran when the copy was made, as the app knew it
+    double_read: bool = False
     ok: bool | None = None    # True: the file matches its description (and the chip's CRC-32 kept there);
     #                           False: it does not; None: not checked (no description)
     problem: str = ""
@@ -273,13 +429,31 @@ def describe(path: Path, verify: bool = True) -> FlashBackup:
         side = json.loads(p.with_suffix(".json").read_text("utf-8"))
     except (OSError, ValueError, UnicodeDecodeError):
         side = None
-    if not isinstance(side, dict) or side.get("format") != SIDE_FORMAT:
+    if isinstance(side, dict) and side.get("format") != SIDE_FORMAT:
+        try:
+            raw0 = p.read_bytes() if verify else b""
+        except OSError:
+            raw0 = b""
+        side = _mflasher_side(side, raw0) if _mflasher_side(side, b"") is not None else None
+        if side is not None:
+            fb.created, fb.read_through = side["created"], side["read_through"]
+            fb.jedec, fb.unit_id = side["flash"], side["unit id"]
+            if verify:
+                fb.ok = side["sha256"] == hashlib.sha256(raw0).hexdigest()
+                fb.problem = "" if fb.ok else _("the file does not match M-Flasher's description (changed or damaged)")
+            return fb
+        fb.problem = _("description not in a format the app knows – not checked")
+        return fb
+    if not isinstance(side, dict):
         fb.problem = _("no description beside it – not checked")
         return fb
     chip = side.get("flash_chip") if isinstance(side.get("flash_chip"), dict) else {}
     fb.created, fb.device = str(side.get("created") or ""), str(side.get("device") or "")
     fb.chip, fb.jedec = str(chip.get("name") or ""), str(chip.get("jedec") or "")
     fb.read_through, fb.crc32 = str(side.get("read_through") or ""), str(side.get("crc32") or "")
+    fb.unit_id, fb.double_read = side_unit_id(side), bool(side.get("double_read"))
+    fw = side.get("firmware") if isinstance(side.get("firmware"), dict) else {}
+    fb.firmware = str(fw.get("app") or "")
     try:
         key = (str(p), st.st_size, st.st_mtime_ns, p.with_suffix(".json").stat().st_mtime_ns)
     except OSError:

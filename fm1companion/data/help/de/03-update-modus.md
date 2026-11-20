@@ -66,10 +66,37 @@ gesucht hat.
   behält deine jetzige Version als Rückfall, bis die neue einmal funktioniert hat. Ein neuer M-Flasher wird zuerst
   nur zum Lesen benutzt; einer mit geänderten Befehlen wird behalten, aber nicht benutzt.
 * **Download-Modus ohne Passwort:** Der Installer richtet eine Regel ein, mit der du das FM-1 im ROM-Download-Modus
-  (USB 4c4a:8057) erreichst, und lädt beim Start den Linux-Treiber `sg`.
-* **Ehrlich gesagt:** In dieser Version zeigt, prüft und aktualisiert die App die Werkzeuge nur und fragt M-Flasher,
-  welches FM-1 er sieht. Flash-Sicherungen, m-bootloader und SLOOP 3 über die App kommen in späteren Versionen; bis
-  dahin nutzt du die Werkzeuge selbst wie bisher.
+  (USB 4c4a:8057) erreichst, und lädt beim Start den Linux-Treiber `sg` – `./install.sh` tut das standardmäßig
+  (`--no-download-mode-rule` lässt es weg; bekommt es keine Administratorrechte, gibt es die genauen Befehle aus).
+* **Flash komplett sichern** (Rettung › Werkzeuge oder Backups › Flash-Backups): Die App bringt das FM-1 in den
+  USB-Download-Modus – selbst, solange es über USB-MIDI läuft (Original-Firmware, Felucca-Familie, SLOOP 3, MIDI MODE
+  von m-bootloader), sonst sagt sie dir, wie: mit m-bootloader beim Einschalten **PLAY** halten und **DOWNLOAD MODE**
+  wählen, oder beim Einschalten **REC** halten (geht direkt dorthin). Dann liest M-Flasher den ganzen Flash (1 MiB)
+  **zweimal**; jeder Lesevorgang wird mit der CRC-32 verglichen, die der Flash-Chip selbst berechnet, und nur wenn
+  beide gleich sind, wird eine Kopie in `Backups/<Gerät>/Flash/` abgelegt, mit Beschreibung: Unit-ID, Flash-Chip,
+  SHA-256, M-Flasher-Version, die Firmware, die die App kannte, und das Datum. Auf das FM-1 wird nichts geschrieben.
+  Hat die App das FM-1 in den Download-Modus geschickt, startet sie es danach wieder. Unit ID und Flash-Chip, die
+  M-Flasher liest, merkt sich das Geräteprofil (nur für das Gerät, das die App selbst in den Download-Modus geschickt
+  hat, und nur, wenn kein anderes Profil diese ID hat).
+* **Flash zurückschreiben** („Flash zurückschreiben …“ unter Rettung › Werkzeuge, „Zurückschreiben …“ unter Backups ›
+  Flash-Backups): nur auf das FM-1, von dem die Kopie stammt. Die App liest zuerst das angeschlossene Gerät:
+  **Unit-ID und Flash-Chip müssen die der Kopie sein** – eine Kopie eines anderen Geräts oder Chips wird abgelehnt,
+  ohne Ausweg. Dann sichert sie den jetzigen Stand (zweimal gelesen, wie oben; ohne diese Sicherung wird nichts
+  geschrieben) und fragt dich noch einmal, mit Gerät, Revision, Datum und Firmware der Kopie: **Der ganze Flash geht
+  zurück, der Boot-Bereich (Bootloader) eingeschlossen**, und damit Firmware, Projekte, Sounds und Einstellungen von
+  damals. Direkt vor dem Schreiben zeigt M-Flasher Unit-ID, Flash-Chip und die Sektoren, die er schreiben wird, und
+  wartet auf „yes“; die App antwortet nur, wenn alles zu ihrer eigenen Prüfung passt, sonst schreibt M-Flasher
+  nichts. Danach müssen M-Flashers eigene Prüfung (die CRC-32 des Chips) und ein frisches Lesen der Kopie gleichen;
+  dann wird das FM-1 neu gestartet. Hat das Schreiben begonnen, lässt es sich nicht mehr abbrechen – dann das FM-1
+  nicht abstecken; auch wenn die App geschlossen wird oder abstürzt, schreibt M-Flasher zu Ende, und beim nächsten Start sagt die App, was passiert ist, und fragt, was geschehen soll. Eine Kopie mit anderen Werksdaten (Kalibrierung, Bluetooth-Adresse) als das Gerät wird abgelehnt. Geht etwas schief, bleibt das FM-1 im Download-Modus, und die eben gemachte Sicherung geht auf
+  demselben Weg zurück.
+* **Ehrlich gesagt – was an echter Hardware lief (20.11.2026, ein Raspberry Pi 5, zwei Geräte):** das Sichern an
+  beiden Geräten (per Umschalten durch die App aus Melodee und aus SLOOP 3, mit REC beim Einschalten, über das Menü
+  von m-bootloader), jede Kopie gleich einer von Hand mit M-Flasher gemachten; das Zurückschreiben nur an einem
+  früheren Gerät und nur kleine Änderungen (ein Sektor, geprüft), die Ablehnung der Kopie eines anderen Geräts und
+  das gesperrte Schließen der App während des Schreibens. Noch nicht gelaufen: Zurückschreiben an einem neueren
+  Gerät (Logo vorne), eine große Änderung oder der Boot-Bereich, ein echtes Abmelden während des Schreibens.
+  m-bootloader, Firmware über den Download-Modus und SLOOP 3 über die App kommen in späteren Versionen.
 
 ## Wenn das FM-1 gar nicht als „WL82 UBOOT1.00“ erscheint
 

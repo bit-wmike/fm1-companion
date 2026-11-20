@@ -405,7 +405,9 @@ def test_mboot_flash_backup_verified_against_the_chips_crc(tmp_path):
     side = mboot.check_backup(p)
     assert p.read_bytes() == FLASH and p.suffix == ".bin" and side["sha256"] == hashlib.sha256(FLASH).hexdigest()
     assert side["flash_chip"]["jedec"] == "0x856014" and "M-Flasher" in side["restore"]
-    assert "key" not in json.dumps(side).lower().replace("monkey", "")        # the chip key is not written down
+    # (format 2, shared with the M-Flasher backups: M-Flasher's own keys at the top – "unit id", "flash" and "chip
+    # key", which M-Flasher itself writes into every backup's .json and prints in its info block)
+    assert side["unit id"] == info.uid and side["flash"] == "0x856014" and side["chip key"] == f"0x{info.key:04X}"
     p.write_bytes(FLASH[:-1] + b"\0")
     with pytest.raises(mboot.MbootError):
         mboot.check_backup(p)
@@ -840,7 +842,9 @@ def test_answering_which_fm1_changes_only_the_chosen_profile(tmp_path, monkeypat
     assert items, "the unit contradicts both profiles (SLOOP 3 vs. Skiff): asked"
     # the question names the firmware by its name and says it is what the unit LAST ran (pi finding 28)
     from fm1companion.i18n import _
-    assert items[0][:2] == ["FM-1 Newer " + _("(last seen: {firmware})").format(firmware="Skiff 2.7"),
+    # (first entry: the placeholder – nothing is pre-selected when the identity is ambiguous, Pi run 2026-11-20)
+    assert items[0][0] == _("— please choose —")
+    assert items[0][1:3] == ["FM-1 Newer " + _("(last seen: {firmware})").format(firmware="Skiff 2.7"),
                             "FM-1 Earlier " + _("(last seen: {firmware})").format(firmware="Skiff 2.7")]
     assert not any("skiff v2.7" in x for x in items[0])
     g0, g1 = json.loads(_entry(before, "g")), json.loads(_entry(after, "g"))

@@ -47,8 +47,13 @@ What changed in each version is in the release notes on that page.
 <details>
 <summary>More about installing: switches, FluidSynth, USB hubs, building the packages yourself</summary>
 
-* More switches of `install.sh`: `--desktop` (shortcut on the desktop), `--no-fluidsynth-fix`, `--usb-power-rule`;
-  `./install.sh --help` lists all of them. An unknown option stops the script before anything happens.
+* More switches of `install.sh`: `--desktop` (shortcut on the desktop), `--no-fluidsynth-fix`, `--usb-power-rule`,
+  `--no-download-mode-rule`; `./install.sh --help` lists all of them. An unknown option stops the script before
+  anything happens.
+* **Download mode without a password:** `install.sh` installs by default a udev rule for the FM-1 in ROM download mode
+  (USB 4c4a:8057) and loads the `sg` driver at boot, so the app's flash backup through M-Flasher needs no
+  administrator password. It uses `sudo -n` where that works without a password, else sudo in a terminal, else
+  pkexec in a desktop session; otherwise it prints the exact commands. `--no-download-mode-rule` leaves it out.
 * **FluidSynth:** if Debian's FluidSynth user service (`fluidsynth.service`) is enabled, it grabs the first sound card
   at every login (on the Pi: HDMI). A "just for me" installation then switches it off for your user and says so
   (FluidSynth stays installed, the app starts it itself): it disables the service, or – when it is enabled for all

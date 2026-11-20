@@ -66,10 +66,36 @@ nueva.
   conserva tu versión actual como respaldo hasta que la nueva haya funcionado una vez. Un M-Flasher nuevo se usa
   solo para leer; uno con comandos cambiados se conserva pero no se usa.
 * **Modo de descarga sin contraseña:** el instalador configura una regla que te permite acceder al FM-1 en modo de
-  descarga ROM (USB 4c4a:8057) y carga el controlador de Linux `sg` al arrancar.
-* **Con sinceridad:** en esta versión la app solo muestra, comprueba y actualiza las herramientas y pregunta a
-  M-Flasher qué FM-1 ve. Las copias de la flash, m-bootloader y SLOOP 3 a través de la app llegarán en versiones
-  posteriores; hasta entonces usa las herramientas tú mismo como antes.
+  descarga ROM (USB 4c4a:8057) y carga el controlador de Linux `sg` al arrancar – `./install.sh` lo hace por defecto
+  (`--no-download-mode-rule` lo omite; si no obtiene permisos de administrador, muestra los comandos exactos).
+* **Copiar toda la flash** (Recuperación › Herramientas, o Copias de seguridad › Copias de la flash): la app pone el FM-1 en modo de
+  descarga USB – sola, mientras funciona por USB MIDI (firmware original, familia Felucca, SLOOP 3, MIDI MODE de
+  m-bootloader); si no, te dice cómo: con m-bootloader mantén **PLAY** al encenderlo y elige **DOWNLOAD MODE**, o
+  mantén **REC** al encenderlo (va directamente). Luego M-Flasher lee toda la flash (1 MiB) **dos veces**; cada
+  lectura se compara con el CRC-32 que calcula el propio chip, y solo si las dos lecturas son idénticas se guarda una
+  copia en `Backups/<dispositivo>/Flash/`, con una descripción: la ID de unidad, el chip de flash, el SHA-256, la versión
+  de M-Flasher, el firmware que la app conocía y la fecha. No se escribe nada en el FM-1. Si la app puso el FM-1 en
+  modo de descarga, lo reinicia después. La ID de unidad y el chip que lee M-Flasher se guardan en el perfil del
+  dispositivo (solo para la unidad que la app misma puso en modo de descarga, y solo si ningún otro perfil tiene ese
+  ID).
+* **Volver a escribir la flash** («Volver a escribir la flash …» en Recuperación › Herramientas, «Volver a escribir …»
+  en Copias de seguridad › Copias de la flash): solo en el FM-1 del que viene la copia. La app lee primero la unidad conectada: **su
+  ID de unidad y su chip de flash deben ser los de la copia** – una copia de otra unidad u otro chip se rechaza, sin
+  excepción. Después copia el estado actual (leído dos veces, como arriba; sin esa copia no se escribe nada) y te
+  pregunta otra vez, nombrando la unidad, su revisión, la fecha y el firmware de la copia: **vuelve toda la flash,
+  incluida la zona de arranque (bootloader)**, y con ella el firmware, los proyectos, los sonidos y los ajustes de
+  aquel día. Justo antes de escribir, M-Flasher muestra la ID de unidad, el chip y los sectores que va a escribir y espera
+  un «yes»; la app solo responde si todo coincide con su propia comprobación; si no, M-Flasher no escribe nada.
+  Después, la comprobación de M-Flasher (el CRC-32 del chip) y una lectura nueva deben ser iguales a la copia; luego
+  se reinicia el FM-1. Una vez empezada la escritura no se puede cancelar – no desconectes el FM-1 entonces; aunque la app se cierre o falle, M-Flasher termina la escritura, y en el siguiente inicio la app dice qué pasó y pregunta qué hacer. Una copia con otros datos de fábrica (calibración, dirección Bluetooth) que la unidad se rechaza. Si algo
+  sale mal, el FM-1 se queda en modo de descarga y la copia hecha justo antes vuelve por el mismo camino.
+* **Con sinceridad – lo que se probó en hardware real (20-11-2026, una Raspberry Pi 5, dos unidades):** la copia en
+  ambas unidades (con el cambio de la propia app desde Melodee y desde SLOOP 3, con REC al encender, por el menú de
+  m-bootloader), cada copia idéntica a una hecha a mano con M-Flasher; volver a escribir solo en una unidad anterior
+  y solo cambios pequeños (un sector, verificado), el rechazo de la copia de otra unidad y el cierre de la app
+  bloqueado mientras escribe. Aún no probado: volver a escribir en una unidad más nueva (logotipo delante), un cambio
+  grande o la zona de arranque, un cierre de sesión real durante la escritura. m-bootloader, el firmware por el modo
+  de descarga y SLOOP 3 a través de la app llegarán en versiones posteriores.
 
 ## Si el FM-1 no aparece como “WL82 UBOOT1.00”
 

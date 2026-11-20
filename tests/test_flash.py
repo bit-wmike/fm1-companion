@@ -636,7 +636,7 @@ def test_fixed_download_hash(env, monkeypatch):
 
 # ---------------------------------------------------------------- rescue level 2 (WL82 UBOOT)
 
-def fake_sysfs(root: Path, vendor="WL82", model="UBOOT1.00", usb="4c4a:8057", sg="sg2"):
+def fake_sysfs(root: Path, vendor="WL82", model="UBOOT1.00", usb="4c4a:8057", sg="sg2", product=""):
     usbdev = root / "devices" / "usb1" / "1-1"
     scsi = usbdev / "1-1:1.0" / "host0" / "target0:0:0" / "0:0:0:0"
     (scsi / "block" / "sdb").mkdir(parents=True)
@@ -646,6 +646,8 @@ def fake_sysfs(root: Path, vendor="WL82", model="UBOOT1.00", usb="4c4a:8057", sg
     v, p = usb.split(":")
     (usbdev / "idVendor").write_text(v)
     (usbdev / "idProduct").write_text(p)
+    if product:
+        (usbdev / "product").write_text(product + "\n")
     (root / "class" / "scsi_generic" / sg).mkdir(parents=True)
     os.symlink(scsi, root / "class" / "scsi_generic" / sg / "device")
     (root / "bus" / "usb" / "devices").mkdir(parents=True)
@@ -682,6 +684,12 @@ def test_uboot_scan_strict(tmp_path):
     named = tmp_path / "named"
     fake_sysfs(named, model="SanDisk")                   # right ID, wrong model: never
     assert uboot.scan(str(named)) == []
+    # (Pi run 2026-11-20: the ROM's USB product string is "WL80UBOOT1.00"; both names are recognised and what the
+    # device reports is shown)
+    wl80 = tmp_path / "wl80"
+    fake_sysfs(wl80, vendor="WL80", product="WL80UBOOT1.00")
+    d = uboot.scan(str(wl80))
+    assert len(d) == 1 and "WL80UBOOT1.00" in d[0].describe() and d[0].describe().startswith("WL80 UBOOT1.00")
 
 
 @need_v15

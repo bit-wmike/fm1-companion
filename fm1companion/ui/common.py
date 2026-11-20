@@ -495,7 +495,14 @@ class JobDialog(QDialog):
         self.result_label.setText(text)
         self.result_label.setVisible(bool(text))
         self.summary = text
+        # (finished: Cancel goes – taken out of the button box, not only hidden: some Qt versions show a hidden
+        # button again when the box lays out the action buttons added next; seen on the Pi, Qt 6.4)
+        self.cancel_button.setEnabled(False)
         self.cancel_button.hide()
+        try:
+            self.buttons.removeButton(self.cancel_button)
+        except RuntimeError:
+            pass
         self.bar.hide()
         self.details_btn.show()
         self.details_btn.setChecked(False)

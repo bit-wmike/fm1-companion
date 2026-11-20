@@ -210,7 +210,7 @@ def test_flight_log_masks_the_unit_id(env):
 
 
 @pytest.mark.parametrize("args", [["backup"], ["restore", "x.bin"], ["firmware", "p.fwsc"], ["bootloader"],
-                                  ["download-mode"], ["restart"], ["run-ram", "x"], ["info", "--yes"],
+                                  ["download-mode", "--yes"], ["restart"], ["run-ram", "x"], ["info", "--yes"],
                                   ["info", "--device", "/dev/sda"], ["info", "--device", "/dev/sg1", "--yes"],
                                   ["find", "--yes"], []])
 def test_write_and_unknown_commands_are_refused(env, args):

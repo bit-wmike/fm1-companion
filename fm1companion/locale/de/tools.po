@@ -4347,10 +4347,6 @@ msgstr "Lizenz anzeigen"
 msgid "M-Flasher is not available for this computer ({machine}): it is built for 64-bit ARM (Raspberry Pi OS 64-bit) and for x86-64 PCs only. On a Raspberry Pi with the 32-bit system the recovery tools on this page still work."
 msgstr "M-Flasher gibt es für diesen Rechner nicht ({machine}): Er wird nur für 64-Bit-ARM (Raspberry Pi OS 64-Bit) und für x86-64-PCs gebaut. Auf einem Raspberry Pi mit dem 32-Bit-System funktionieren die Rettungswerkzeuge auf dieser Seite trotzdem."
 
-#: fm1companion/ui/tools_card.py:55
-msgid "The app brings these tools with it and checks each file's checksum before it uses it. In this version it only shows them, keeps them up to date and can ask M-Flasher which FM-1 it sees; flash backups, m-bootloader and SLOOP 3 through the app follow in later versions. A new version is only shown – it is fetched when you click “Update”, checked against GitHub's checksum, and the previous version stays as the fallback."
-msgstr "Die App bringt diese Werkzeuge mit und prüft vor jeder Verwendung die Prüfsumme jeder Datei. In dieser Version zeigt sie sie nur an, hält sie aktuell und kann M-Flasher fragen, welches FM-1 er sieht; Flash-Sicherungen, m-bootloader und SLOOP 3 über die App folgen in späteren Versionen. Eine neue Version wird nur angezeigt – geholt wird sie, wenn du auf „Aktualisieren“ klickst, dann gegen die Prüfsumme von GitHub geprüft, und die bisherige Version bleibt als Rückfall."
-
 #: fm1companion/tools/runner.py:85 fm1companion/tools/runner.py:118
 #: fm1companion/tools/runner.py:151
 msgid "The bundled M-Flasher did not pass its checksum test, so the app does not run it. Reinstall the app."
