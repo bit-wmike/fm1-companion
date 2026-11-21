@@ -141,22 +141,49 @@ Firmware installs: built in are Melodee, Skiff, SLOOP and KARMA; others come fro
 file. SLOOP 3 is built in too, but the app does not install it (see below). A switch to another firmware always
 installs the original V15 first; an update within the same firmware goes directly.
 
+### M-Flasher, m-bootloader and SLOOP 3 – bundled and driven
+
+The suite brings three tools along, pinned and checked by SHA-256, and drives them with its own buttons (Recovery ›
+Tools, the Device menu, Backups › Flash backups): **M-Flasher** 0.12.1 (Julius Vitkauskas, MIT; 64-bit ARM and
+x86-64), **m-bootloader** 2.4 and the **SLOOP 3** 3.4.0 application area (isod89, GPL-3.0). It does not replace them:
+M-Flasher does every write in USB download mode, m-bootloader every write in its MIDI MODE; the app checks before and
+after.
+
+* **Back up the whole flash** (read twice, checked against the chip's CRC-32), **write it back** (only onto the unit
+  it came from, by unit ID and flash chip), **import** M-Flasher's own dumps, **into download mode / restart**.
+* **Install / remove m-bootloader** (only the boot area 0x00000–0x03FFF; removal puts back M-VAVE's V15 boot area, on
+  an earlier unit only).
+* **Firmware through download mode:** on an FM-1 with m-bootloader – also from a running SLOOP 3 – a Felucca-family
+  firmware goes on with M-Flasher from 0x04000 to the package's end; the boot area stays, so there is no CHECK HEAD
+  trap and no V15 step. The installation plan offers this route by itself.
+* **Install SLOOP 3** over m-bootloader's MIDI MODE, offline, with the package built byte for byte as the author's
+  installer page builds it; without m-bootloader its first step is installing it.
+* **Back to …:** one button for the way back – the last whole-flash backup, SLOOP 3, a Felucca-family firmware or
+  the original V15 – that only starts the steps above, each with its own question.
+
+Every write: a whole-flash backup first (never skipped), a danger question naming the unit, its unit ID and revision,
+the app's own check of exactly the sectors that will be written right before M-Flasher's "yes" (the app never passes
+`--yes`), a record on disk and no quitting while it writes, a fresh read afterwards. What of this ran on real hardware
+through the app – the backups, small write-backs, m-bootloader install and removal on an earlier unit – and what only
+against stand-ins (firmware through download mode, the SLOOP 3 install, "Back to …") is listed in
+[docs/UNTESTED.md](docs/UNTESTED.md). Details: [docs/flash-protocol.md §16](docs/flash-protocol.md).
+
 ### SLOOP 3 and m-bootloader
 
-SLOOP 3 (isod89) is a rewrite of SLOOP and a **public beta**. It installs only through m-bootloader's MIDI MODE, and
-both are installed **outside the app**: Firmware+ explains the steps and opens the author's installer page. What the
-app does:
+SLOOP 3 (isod89) is a rewrite of SLOOP and a **public beta**. It installs only through m-bootloader's MIDI MODE: the
+app does that itself (see above), or the author's installer page does. What else the app does:
 
 * It recognises SLOOP 3 and shows its own web editor on the Editor page – bundled unchanged for 3.3.7 and 3.4.0, so
   it works offline.
 * Backups of the project, sounds, banks and settings, and their restore (samples are not in such a backup).
 * It recognises m-bootloader's MIDI MODE and never takes it for an update mode; there it can copy the whole flash
   (read only, checked against the chip's own checksum).
-* It installs no other firmware from MIDI MODE or under a running SLOOP 3, and on a newer FM-1 (logo on the front) it
-  does not offer the installer page. The Studio has no SLOOP 3 twin.
+* From a running SLOOP 3 it installs a Felucca-family firmware through download mode (above); on a newer FM-1 (logo
+  on the front) SLOOP 3 only with the builds the hardware table lets through. The Studio has no SLOOP 3 twin.
 
 On a real FM-1, once and read only: recognition, the bundled editor connected, one backup, MIDI MODE recognised.
-Restore and the flash copy have only run against stand-ins. More: [help page "SLOOP 3"](fm1companion/data/help/en/15-sloop3.md).
+Restore, the flash copy and the app's own SLOOP 3 install have only run against stand-ins (the install also against
+m-bootloader's own MIDI MODE code on a PC). More: [help page "SLOOP 3"](fm1companion/data/help/en/15-sloop3.md).
 
 ### Studio twins
 

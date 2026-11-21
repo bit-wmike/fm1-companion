@@ -520,11 +520,67 @@ Melodee OCT−+OCT+ is the calibration!).
     * *Not run on hardware through the app* (`tested.TOOLS_HARDWARE`: `mf_download_button`,
       `mf_bootloader_install`, `mf_bootloader_remove`); the owner did install and the way back by hand
       (`OWNER_REPORTS["mboot_by_hand"]`).
-  * **Later steps** (not in this version): firmware through download mode (`firmware`, from 0x4000 on, boot area
-    untouched – the planner's route for a unit with m-bootloader / SLOOP 3), SLOOP 3 over m-bootloader's MIDI MODE
-    from the bundled area (writes 0x4000–0x78000 for 3.4.0) – each with a mandatory full backup first and
-    M-Flasher's "Type "yes" to write" prompt as the last gate (the app never passes `--yes`; it reads unit id, flash
-    ID and the planned ranges of that very session and answers only when they match).
+  * **Step 4 – firmware through download mode, SLOOP 3 over MIDI MODE, "Back to …"** (stand-ins only so far:
+    `tested.TOOLS_HARDWARE` `mf_firmware`, `mf_new_chip_firmware`, `mboot_sloop3_install`, `way_back` – not run):
+    * **Firmware through download mode** (`flashjob.install_firmware`, `m-flasher firmware PACKAGE.fwsc`). M-Flasher
+      0.12.1 `plan_firmware` (ops.rs) writes only `[0x4000, len(flash.bin))` of the package – the boot area, and
+      with it m-bootloader, is never written there (read in its source). So the CHECK HEAD trap cannot arise.
+      * The planner (`planner.download_route`) offers this route **instead of the BOOT_TRAP block** when the unit
+        has m-bootloader and the target is a Felucca-family firmware (not V15/V16) and the usual way would not do: a
+        switch (it would need the V15 step) or a running SLOOP 3 (no update mode). Steps: the device backup (where
+        the firmware has an editor protocol), the whole-flash backup (read twice), load & check, install; no V15
+        step. It keeps blocking where it cannot apply: the original V15 (boot area first), FM1 Open's or another
+        boot area, an update of the same firmware (the usual way stays), Melodee with resources. The newer-unit rule
+        (`_new_chip`, hardware.json) applies unchanged. "Not from the running SLOOP 3" is gone: under SLOOP 3 the plan
+        offers this route, or says why there is none (`SLOOP3_NO_ROUTE`).
+      * Gates – the step 2/3 write path (`_Write`: record before "yes", inhibitor bound to M-Flasher, no cancel or
+        kill after "yes", the Done line, the auto-backup compared): a write-verified binary; an FM-1 package whose
+        flash.bin fits; the unit in download mode identified by unit id + flash ID against its profile; M-Flasher
+        reads m-bootloader **and** the fresh double-read backup holds an intact stored m-bootloader; the danger
+        dialog; `firmware_gate`: unit id, flash ID, chip key, the title `Install firmware <identity>`, exactly one
+        plan line, its one note `Installs <identity> (0x04000-0x…).`, **every range ≥ 0x4000 and < the package's
+        end, and exactly the app's own diff** of `firmware_target(pre, flash.bin)` against the backup; no WARNING.
+      * M-Flasher's **data-places warning** ("The installed firmware (…) keeps its data in other places than …; what
+        it leaves behind can confuse the new firmware …", ops.rs: the app tables' 0x12/0x92 entries differ) needs a
+        second, specific confirmation: the gate notes it and closes stdin (nothing written), the app asks once more
+        naming what may be lost (that firmware's projects, sounds, presets and settings; the way back = the backup
+        just made), and only a **second session** whose warning is that very text gets "yes". Any other WARNING
+        (another model, a flash chip) closes stdin.
+      * Verify: a fresh read must equal the computed flash exactly – boot area unchanged, the package from 0x4000,
+        everything after the package unchanged. The interrupted-record question offers "the state before".
+    * **SLOOP 3 over MIDI MODE** (`tools/mbinstall.py`, owner decision: the app drives MIDI MODE itself).
+      * The package: a port of the installer page's `web/fwpkg.js` at v3.4.0-beta (2228313) – the plain area
+        encrypted per 32-byte line with `key ^ (offset/4)`, at 0x4000 in a flash.bin of `0x4000 + ceil(len/4096)·4096`
+        bytes, one entry at 0x400. **Equivalence:** byte for byte what node builds with the page's own fwpkg.js
+        (recorded SHA-256 for the bundled 3.4.0 area and four chip keys; with `FM1C_SLOOP3_SRC` the JS runs again on
+        random areas, with and without ota) and `checkPackage`'s results; installed through **m-bootloader's own
+        `src/midi_update.c` + `core.c` (v2.4) compiled for the PC** (`tests/mbsim.c`, with `FM1C_MBOOT_SRC`): the
+        flash afterwards equals the expected one and the area decrypts to the author's.
+      * The host side of SPEC §11.6: the start key `F0 22 24 35 7F F7`, the 0x30 requests answered with their 8
+        bytes plus the data (FF past the end), FINISH (0xF0000000) answered with zeros. m-bootloader reads and
+        checks the whole package before it erases anything; a refusal frame (command 0) or a unit that stops asking
+        (15 s; it asks each part 5 × 2 s) **before** that point = nothing written; after it = `WriteFailed` with the
+        backup (the boot area is never written, the menu and MIDI MODE still work). flash/mboot.py stays read-only.
+      * Gates: 0x12 answered `MBOOT` kind 1 (not the RAM stage); its unit id must be the job's profile's (no
+        learning here) and its JEDEC the recorded chip; on a newer unit only with an m-bootloader build marked yes
+        and SLOOP 3's hardware row (`sloop3_ui.chip_plan`); the whole flash **read twice in MIDI MODE**, each read
+        checked against the chip's CRC-32 (0x24), both identical, kept with the app's description – no skip (see
+        the note below); the backup's boot area must hold an intact m-bootloader; the package checked as the page
+        checks it; the danger dialog; a write record (op `sloop3-install`) and WRITING (the app does not quit,
+        SIGTERM ignored, an inhibitor bound to the app) while m-bootloader writes – here the app *is* the writer.
+      * Verify: m-bootloader reads every sector back; afterwards the app offers its own check – SLOOP 3 running,
+        the soft key, one M-Flasher read in download mode compared with the expected flash in 0x00000 to the
+        package's end (beyond it SLOOP 3 may write its own data on its first start), then restart.
+      * The backup is made in MIDI MODE, not by a detour through download mode: the same session, no power cycle
+        between the backup and the install, and the reads are the ones SLOOP 3's page made on real units (plus the
+        chip's CRC-32 each time). The owner asked for a guided download-mode backup; that is not built.
+      * Without m-bootloader: "Install SLOOP 3" offers "Install m-bootloader first" (step 3, its own backup and
+        confirmation) as step 1 of the chain, then MIDI MODE.
+    * **"Back to …"** (Recovery › Tools, the Device menu; `flash_tools.way_back_options`): per unit the last intact
+      whole-flash backup (step 2 restore), SLOOP 3 (MIDI MODE, m-bootloader first if missing), a Felucca-family
+      firmware (Firmware+: the plan picks the download route with m-bootloader), the original V15 with the original
+      boot area (step 3 removal, then V15 the usual way – refused on a newer unit, which names the backup instead).
+      It only starts the existing gated actions in order; each asks on its own; none skips a backup.
 * Hub rescue `fm1_rescue.py` (GPL-3.0): not fetched/checked (budget) – open as a cross-check.
 
 ## 17. V16 and flash safety (analysis and integration, 31 Oct 2026)
