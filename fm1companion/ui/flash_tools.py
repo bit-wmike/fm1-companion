@@ -180,15 +180,46 @@ def _sigterm(signum, frame):
     os.kill(os.getpid(), signal.SIGTERM)
 
 
-def remember_unit(ctx, job):
+def same_expectation(prof) -> dict:
+    """what a unit shows when it comes back running the firmware it ran before (a backup, download mode and back,
+    m-bootloader written or removed): SLOOP 3 or not, its identity, its USB name – as far as the profile knows them"""
+    if prof is None:
+        return {}
+    fw = getattr(prof, "firmware", "") or ""
+    out: dict = {}
+    if fw and fw != "?":
+        out["sloop3"] = fw == "sloop3"
+    ident = getattr(prof, "identity", "") or ""
+    if ident and not ident.lower().startswith("ota-") and fw != "sloop3":
+        out["identity"] = ident
+    if getattr(prof, "usb_product", ""):
+        out["product"] = prof.usb_product
+    return out
+
+
+def remember_unit(ctx, job, expect: dict | None = None):
     """after a flash job: the unit that comes back at that USB port (after the app's own download mode / restart) is
     the job's unit – no "Which FM-1 is this?" for it (the rule of the app's own installation at a port; the write
-    confirmation still applies)"""
+    confirmation still applies) – but only when it comes back as the job left it: `expect` (or the job's own
+    `job.expect`, set once a write started), else the firmware it ran before. Another FM-1 plugged in there is asked
+    about. A unit that was in download mode is connected anew afterwards (DeviceContext.mark_restarted)."""
     prof = getattr(job, "profile", None)
     usb = getattr(job, "unit_usb", "") or getattr(job, "usb_path", "")
+    if expect is None:
+        expect = getattr(job, "expect", None)
+    if expect is None:
+        expect = same_expectation(prof)
+    info = getattr(job, "info", None)
+    if getattr(info, "unit_id", ""):
+        expect = dict(expect, unit_id=info.unit_id)
     if prof is not None and usb and hasattr(ctx, "note_installed"):
         try:
-            ctx.note_installed(prof, usb)
+            ctx.note_installed(prof, usb, expect)
+        except Exception:  # noqa: BLE001
+            pass
+    if usb and (getattr(job, "device", "") or getattr(job, "sent_by_app", False)) and hasattr(ctx, "mark_restarted"):
+        try:
+            ctx.mark_restarted(usb)
         except Exception:  # noqa: BLE001
             pass
 
@@ -827,35 +858,98 @@ def firmware_flow(parent, ctx, spec, rel=None, local_pkg=None, tag: str = "", pl
 
 # ------------------------------------------------------- "Back to …": the way back with one button
 
+def _backup_when(p: Path, side: dict) -> str:
+    try:
+        created = dt.datetime.strptime(str(side.get("created") or ""), "%Y-%m-%dT%H:%M:%S%z")
+        return created.strftime("%d.%m.%Y %H:%M")
+    except ValueError:
+        pass
+    try:
+        return dt.datetime.fromtimestamp(p.stat().st_mtime).strftime("%d.%m.%Y %H:%M")
+    except OSError:
+        return "?"
+
+
+def unit_flash_backups(folder: Path | None, uid: str) -> list[dict]:
+    """this unit's intact whole-flash backups, newest first: [{"path", "kind" (its boot area, read from the image:
+    tools/bootarea.py), "pre_mboot" (not m-bootloader in its boot area – from before m-bootloader), "when", "firmware"
+    (what its description says ran then)}]"""
+    from .. import flashdump
+    from ..tools import bootarea, flashjob as FJ
+    if folder is None or not uid:
+        return []
+    out = []
+    for p, kind in FJ.unit_backups(folder, uid):
+        try:
+            side = flashdump.read_any_side(p)
+            mtime = p.stat().st_mtime
+        except (OSError, flashdump.FlashDumpError):
+            continue
+        fw = side.get("firmware") if isinstance(side.get("firmware"), dict) else {}
+        out.append({"path": p, "kind": kind, "pre_mboot": kind != bootarea.MBOOT, "when": _backup_when(p, side),
+                    "firmware": str(fw.get("app") or fw.get("m_flasher_guess") or ""), "mtime": mtime})
+    out.sort(key=lambda b: b["mtime"], reverse=True)
+    return out
+
+
+def recommended_backup(backups: list[dict]) -> dict | None:
+    """the backup "Back to …" pre-selects: the newest one with the original boot area (V15's), else the newest one from
+    before m-bootloader that FM1 Open did not change either (a newer unit's own factory boot area is not V15's), else
+    none – the newest backup is not recommended just for being the newest"""
+    from ..tools import bootarea
+    return (next((b for b in backups if b["kind"] == bootarea.ORIGINAL), None) or
+            next((b for b in backups if b["pre_mboot"] and b["kind"] != bootarea.OPEN), None))
+
+
+def backup_label(b: dict) -> str:
+    """one line per backup in the "Back to …" list"""
+    from ..tools import bootarea
+    parts = [b["when"]]
+    if b.get("firmware"):
+        parts.append(b["firmware"])
+    parts.append(_(bootarea.LABEL.get(b["kind"], bootarea.LABEL[bootarea.OTHER])))
+    parts.append(_("from before m-bootloader") if b["pre_mboot"] else _("with m-bootloader"))
+    return " – ".join(parts)
+
+
+def pre_mboot_way(backups: list[dict]) -> str:
+    """the sentence that names the way back to the state before m-bootloader – honest about whether the app has one"""
+    rec = recommended_backup(backups)
+    if rec is not None:
+        return _("or write back the whole-flash backup of {date} from before m-bootloader (pre-selected in the list "
+                 "above).").format(date=rec["when"])
+    return _("The app has no whole-flash backup of this unit from before m-bootloader. If you made one earlier with "
+             "M-Flasher, take it in with “Import a flash backup …” (Recovery › Tools) – then it is offered here.")
+
+
 def way_back_options(ctx) -> list[dict]:
     """the targets "Back to …" offers for the active unit, each with its route (the existing gated actions, in their
     order) – [{"key", "title", "route", "ok", "why", "path"}]; "ok" False: shown with the reason, not started.
-    a) the last intact whole-flash backup of this unit (write it back); b) SLOOP 3 over MIDI MODE (m-bootloader first
-    where it is missing); c) a Felucca-family firmware (Firmware+: through download mode with m-bootloader, else the
-    usual way); d) the original V15 with the original boot area (removing m-bootloader – an earlier unit only – then
-    the original V15 the usual way)."""
+    a) a whole-flash backup of this unit – each of them ("backups", newest first, marked from before m-bootloader or
+    not; "path" = the recommended one: the newest from before m-bootloader, else the newest); b) SLOOP 3 over MIDI
+    MODE (m-bootloader first where it is missing); c) a Felucca-family firmware (Firmware+: through download mode with
+    m-bootloader, else the usual way); d) the original V15 with the original boot area (removing m-bootloader – an
+    earlier unit only – then the original V15 the usual way)."""
     from .. import hardware
     from ..devices import profile_unit_ids
-    from ..tools import bootarea, flashjob as FJ
+    from ..tools import bootarea
+    from .device import firmware_name
     prof = None if getattr(ctx, "is_virtual", False) else getattr(ctx, "profile", None)
     out: list[dict] = []
     uid = next((f for f in profile_unit_ids(prof) if len(f) == 16), "") if prof is not None else ""
     folder = Path(ctx.settings.backups_dir) / prof.folder_name / "Flash" if prof is not None else None
-    last = FJ.latest_backup(folder, uid) if (folder is not None and uid) else None
-    when = ""
-    if last is not None:
-        try:
-            when = dt.datetime.fromtimestamp(last.stat().st_mtime).strftime("%d.%m.%Y %H:%M")
-        except OSError:
-            when = "?"
-    out.append({"key": "backup", "path": last, "ok": last is not None,
-                "title": _("Back to the whole-flash backup of {date}").format(date=when) if last is not None else
-                _("Back to a whole-flash backup"),
+    backups = unit_flash_backups(folder, uid)
+    rec = recommended_backup(backups)
+    last = (rec or backups[0])["path"] if backups else None
+    out.append({"key": "backup", "path": last, "ok": last is not None, "backups": backups,
+                "recommended": rec["path"] if rec is not None else None,
+                "title": _("Back to a whole-flash backup of this unit"),
                 "route": _("Write flash back: download mode, a fresh backup of the state now (read twice), your "
-                           "confirmation, M-Flasher writes the differing sectors, a fresh read checks them – "
-                           "{name}.").format(name=last.name) if last is not None else "",
+                           "confirmation, M-Flasher writes the differing sectors, a fresh read checks them. Choose the "
+                           "backup below – the ones from before m-bootloader are marked.") if last is not None else "",
                 "why": "" if last is not None else
-                (_("The app has no intact whole-flash backup of this unit (by its unit ID).") if uid else
+                (_("The app has no intact whole-flash backup of this unit (by its unit ID). A backup made earlier with "
+                   "M-Flasher can be taken in with “Import a flash backup …” (Recovery › Tools).") if uid else
                  _("The app does not know this unit's ID yet: a whole-flash backup (Recovery › Tools) teaches it."))})
     cur = bootarea.current(prof) if prof is not None else {}
     mboot = cur.get("kind") == bootarea.MBOOT or getattr(ctx, "mboot", None) is not None
@@ -876,13 +970,17 @@ def way_back_options(ctx) -> list[dict]:
     from .. import fwfamily
     runs_usual = fw.startswith("stock") or (bool(fwfamily.by_key(fw)) and fw not in ("sloop3", "sloop-3") and
                                             bootarea.changer(fw) is None)
-    if getattr(ctx, "sloop3", None) is not None:
+    s3_runs = getattr(ctx, "sloop3", None) is not None or fw in ("sloop3", "sloop-3")
+    if s3_runs:
         runs_usual = False
+    fw_text = "SLOOP 3" if s3_runs else (firmware_name(fw) or fw or _("not known"))
     v15_why = ("" if not v15_ok or runs_usual or not (cur.get("kind") in bootarea.NOT_ORIGINAL or mboot) else
-               _("From the firmware on this FM-1 ({fw}) the original V15 cannot be installed the usual way after the "
-                 "boot area was put back (SLOOP 3, for one, has no update mode). First go to a Felucca-family firmware "
-                 "(the choice above), then come back here – or write back a whole-flash backup of this unit made "
-                 "before m-bootloader (the first choice).").format(fw=fw or _("not known")))
+               (_("From the firmware on this FM-1 ({fw}) the original V15 cannot be installed the usual way after the "
+                  "boot area was put back: SLOOP 3 has no update mode.") if s3_runs else
+                _("From the firmware on this FM-1 ({fw}) the app cannot install the original V15 the usual way after "
+                  "the boot area was put back.")).format(fw=fw_text) + " " +
+               _("First go to a Felucca-family firmware (the choice above), then come back here –") + " " +
+               pre_mboot_way(backups))
     v15_ok = v15_ok and not v15_why
     out.append({"key": "v15", "path": None, "ok": v15_ok and prof is not None,
                 "title": _("Back to the original V15 with the original boot area"),
@@ -891,32 +989,27 @@ def way_back_options(ctx) -> list[dict]:
                              "usual way on Firmware+.") if cur.get("kind") in bootarea.NOT_ORIGINAL or mboot else
                            _("The original V15 the usual way on Firmware+ (the boot area is the original one or not "
                              "known; the plan checks it)."))),
-                "why": "" if v15_ok else v15_why or _("A newer unit (logo on the front): the app never writes V15's "
-                                                      "boot area there. The way back to the factory state is a "
-                                                      "whole-flash backup of this unit made before m-bootloader (the "
-                                                      "first choice).")})
+                "why": "" if v15_ok else v15_why or (
+                    _("A newer unit (logo on the front): the app never writes V15's boot area there. The way back to "
+                      "the factory state is a whole-flash backup of this unit from before m-bootloader.") + " " +
+                    (_("The app has one: {date} (pre-selected in the list above).").format(date=rec["when"])
+                     if rec is not None else pre_mboot_way(backups)))})
     return out
 
 
 def way_back_flow(parent, ctx, store=None) -> str:
-    """"Back to …": one question with the reachable targets and their routes; the chosen one runs the existing gated
-    actions in their order, each with its own confirmation (never a skipped backup). -> the key chosen, "" none"""
+    """"Back to …": one dialog with the targets and their routes – for a whole-flash backup, the list of this unit's
+    backups (the newest from before m-bootloader pre-selected); the chosen one runs the existing gated actions in their
+    order, each with its own confirmation (never a skipped backup). -> the key chosen, "" none"""
     opts = way_back_options(ctx)
-    lines = []
-    for o in opts:
-        lines.append("<b>" + html.escape(o["title"]) + "</b> – " + html.escape(o["route"] if o["ok"] else o["why"] or
-                                                                               o["route"]))
-    usable = [o for o in opts if o["ok"]]
-    from ..flash import tested
-    text = (_("Where should this FM-1 go back to? Each way runs the app's own steps one after the other, each with "
-              "its own question; none skips a backup.") + "<br><br>" + "<br><br>".join(lines) + "<br><br>" +
-            html.escape(tested.tool_note("way_back")))
-    i = _choice(parent, _("Back to …"), text, [o["title"] for o in usable] + [_("Cancel")])
-    if i < 0 or i >= len(usable):
+    dlg = way_back_dialog(parent, opts)
+    if not dlg.exec():
         return ""
-    o = usable[i]
+    o, path = dlg.choice()
+    if o is None:
+        return ""
     if o["key"] == "backup":
-        restore_flow(parent, ctx, o["path"], store=store)
+        restore_flow(parent, ctx, path, store=store)
     elif o["key"] == "sloop3":
         from . import sloop3_ui
         sloop3_ui.install_flow(parent, ctx, store=store)
@@ -933,6 +1026,95 @@ def way_back_flow(parent, ctx, store=None) -> str:
                                             "checks the boot area once more."))
         _go_firmware(parent)
     return o["key"]
+
+
+def way_back_dialog(parent, opts: list[dict]):
+    """the "Back to …" question: a radio button per reachable target (its route below it, wrapped – no cut-off
+    button labels), the list of this unit's whole-flash backups, and the targets that are not reachable with the
+    reason. .choice() -> (option, backup path) after exec()"""
+    from PyQt6.QtWidgets import (QButtonGroup, QDialog, QDialogButtonBox, QLabel, QListWidget, QListWidgetItem,
+                                 QRadioButton, QScrollArea, QVBoxLayout, QWidget)
+    from PyQt6.QtCore import Qt
+    from ..flash import tested
+
+    class Dlg(QDialog):
+        def __init__(self):
+            super().__init__(parent)
+            self.setWindowTitle(_("Back to …"))
+            self.setMinimumWidth(560)
+            outer = QVBoxLayout(self)
+            intro = QLabel(_("Where should this FM-1 go back to? Each way runs the app's own steps one after the "
+                             "other, each with its own question; none skips a backup."))
+            intro.setWordWrap(True)
+            outer.addWidget(intro)
+            scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
+            body = QWidget()
+            lay = QVBoxLayout(body)
+            scroll.setWidget(body)
+            outer.addWidget(scroll, 1)
+            self.group = QButtonGroup(self)
+            self.radios: list[tuple[QRadioButton, dict]] = []
+            self.backups: QListWidget | None = None
+            for o in opts:
+                if o["ok"]:
+                    rb = QRadioButton(o["title"])
+                    rb.setObjectName(f"wayBack-{o['key']}")
+                    self.group.addButton(rb)
+                    self.radios.append((rb, o))
+                    lay.addWidget(rb)
+                    text = o["route"]
+                else:
+                    head = QLabel("<b>" + html.escape(o["title"]) + "</b>")
+                    head.setWordWrap(True)
+                    lay.addWidget(head)
+                    text = o["why"] or o["route"]
+                lab = QLabel(html.escape(text))
+                lab.setWordWrap(True)
+                lab.setContentsMargins(24, 0, 0, 6)
+                lab.setObjectName(f"wayBackText-{o['key']}")
+                lay.addWidget(lab)
+                if o["key"] == "backup" and o["ok"]:
+                    lst = QListWidget()
+                    lst.setObjectName("wayBackBackups")
+                    lst.setWordWrap(True)
+                    for b in o.get("backups") or []:
+                        label = backup_label(b)
+                        if o.get("recommended") == b["path"]:
+                            label += " – " + _("recommended")
+                        it = QListWidgetItem(label)
+                        it.setData(Qt.ItemDataRole.UserRole, str(b["path"]))
+                        it.setToolTip(b["path"].name)
+                        lst.addItem(it)
+                        if b["path"] == o["path"]:
+                            lst.setCurrentItem(it)
+                    lst.setMaximumHeight(140)
+                    lst.itemSelectionChanged.connect(lambda r=rb: r.setChecked(True))
+                    lay.addWidget(lst)
+                    self.backups = lst
+            note = QLabel("<small>" + html.escape(tested.tool_note("way_back")) + "</small>")
+            note.setWordWrap(True)
+            lay.addWidget(note)
+            lay.addStretch(1)
+            bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
+            self.ok = bb.addButton(_("Continue"), QDialogButtonBox.ButtonRole.AcceptRole)
+            self.ok.setEnabled(False)
+            bb.accepted.connect(self.accept)
+            bb.rejected.connect(self.reject)
+            outer.addWidget(bb)
+            self.group.buttonToggled.connect(lambda *_a: self.ok.setEnabled(self.group.checkedButton() is not None))
+            self.resize(640, 560)
+
+        def choice(self):
+            rb = self.group.checkedButton()
+            o = next((o for r, o in self.radios if r is rb), None)
+            if o is None:
+                return None, None
+            path = o.get("path")
+            if o["key"] == "backup" and self.backups is not None and self.backups.currentItem() is not None:
+                path = Path(self.backups.currentItem().data(Qt.ItemDataRole.UserRole))
+            return o, path
+    return Dlg()
 
 
 def _go_firmware(parent):

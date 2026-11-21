@@ -562,10 +562,13 @@ def test_tools_hardware_table_matches_untested_md():
     assert [k for k, (ok, _l) in tested.TOOLS_HARDWARE.items() if ok] == [
         "mf_download_mode", "mf_backup", "mf_restore", "mf_new_chip_backup",           # (Pi run 2026-11-20)
         "mf_download_button", "mf_bootloader_install", "mf_bootloader_remove",       # (Pi run 2026-11-21)
-        "mf_newer_removal_refused", "plan_boot_block"]
+        "mf_newer_removal_refused", "plan_boot_block",
+        "mf_firmware", "mboot_sloop3_install"]                                       # (Pi run 2026-11-21, step 4)
+    assert not tested.TOOLS_HARDWARE["mf_new_chip_firmware"][0] and not tested.TOOLS_HARDWARE["way_back"][0]
+    assert "app_step4_pi" in tested.OWNER_REPORTS
     assert not tested.TOOLS_HARDWARE["mf_new_chip_bootloader"][0]
     assert not tested.TOOLS_HARDWARE["mf_new_chip_restore"][0]
-    assert "2026-11-20" in sec and "ONE Raspberry Pi 5" in sec and "TWO units" in sec and "Not run: a large" in sec
+    assert "2026-11-20" in sec and "ONE Raspberry Pi 5" in sec and "TWO units" in sec and "149 sectors" in sec
     assert "app_flows_pi" in tested.OWNER_REPORTS
     for key, (_ok, label) in tested.TOOLS_HARDWARE.items():
         assert f"| `{key}` – {label} |" in sec, key
@@ -1162,8 +1165,9 @@ def test_hw2_the_unit_coming_back_after_a_flash_job_is_the_jobs_unit(env, monkey
     from types import SimpleNamespace as NS
     from fm1companion.ui.flash_tools import remember_unit
     noted = []
-    remember_unit(NS(note_installed=lambda p, usb: noted.append((p, usb))), job)
-    assert noted == [(env.prof, "3-1.3.1")]                         # (no "Which FM-1 is this?" when it comes back)
+    remember_unit(NS(note_installed=lambda p, usb, expect=None: noted.append((p, usb, expect))), job)
+    assert [n[:2] for n in noted] == [(env.prof, "3-1.3.1")]        # (no "Which FM-1 is this?" when it comes back)
+    assert noted[0][2]["unit_id"] == job.info.unit_id               # (… as long as it is this unit)
 
 
 def test_hw3_the_ambiguous_question_preselects_nothing(monkeypatch):

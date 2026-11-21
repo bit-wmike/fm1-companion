@@ -485,8 +485,8 @@ def test_way_back_offers_each_target_with_its_route(env, monkeypatch):
     assert opts["sloop3"]["ok"] and "MIDI MODE" in opts["sloop3"]["route"]
     FJ.backup(env.job())                                              # (a whole-flash backup of this unit)
     opts = {o["key"]: o for o in flash_tools.way_back_options(_ctx(env))}
-    assert opts["backup"]["ok"] and opts["backup"]["path"].is_file() and opts["backup"]["path"].name in \
-        opts["backup"]["route"]
+    assert opts["backup"]["ok"] and opts["backup"]["path"].is_file() and \
+        [b["path"] for b in opts["backup"]["backups"]] == [opts["backup"]["path"]]
     assert "m-bootloader" in opts["v15"]["route"] and opts["v15"]["ok"]    # (the backup showed m-bootloader)
     assert "download mode" in opts["felucca"]["route"]
     hardware.note_flash_id(env.prof, 0xB36014, "rom")                 # (a newer unit: no V15 boot area there)

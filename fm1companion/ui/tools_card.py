@@ -124,6 +124,11 @@ class ToolsCard(Card):
                                    "backup read twice and your confirmation; without m-bootloader its first step is "
                                    "installing it."))
         self.b_sloop3.clicked.connect(self.install_sloop3)
+        self.b_s3check = QPushButton(icon("view-refresh", "document-preview"), _("Check SLOOP 3 in the flash …"))
+        self.b_s3check.setObjectName("toolsCheckSloop3")
+        self.b_s3check.setToolTip(_("Compares the flash with what the app's last SLOOP 3 install on this FM-1 wrote: "
+                                    "one read in download mode once SLOOP 3 runs – nothing is written."))
+        self.b_s3check.clicked.connect(self.check_sloop3)
         self.b_back = QPushButton(icon("edit-undo", "go-previous"), _("Back to …"))
         self.b_back.setObjectName("toolsWayBack")
         self.b_back.setToolTip(_("The way back with one button: to the last whole-flash backup, to SLOOP 3, to a "
@@ -131,7 +136,7 @@ class ToolsCard(Card):
                                  "questions."))
         self.b_back.clicked.connect(self.way_back)
         lay.addWidget(flow_row(self.b_dl, self.b_leave, self.b_mboot, self.b_unboot, self.b_import))
-        lay.addWidget(flow_row(self.b_sloop3, self.b_back))
+        lay.addWidget(flow_row(self.b_sloop3, self.b_s3check, self.b_back))
         self.boot_label = QLabel("")
         self.boot_label.setObjectName("toolsBootArea")
         self.boot_label.setWordWrap(True)
@@ -318,6 +323,10 @@ class ToolsCard(Card):
         from .sloop3_ui import install_flow
         install_flow(self, self.ctx, store=self._store)
         self.refresh()
+
+    def check_sloop3(self):
+        from .sloop3_ui import verify_flow
+        verify_flow(self, self.ctx, None, store=self._store)
 
     def way_back(self):
         from .flash_tools import way_back_flow

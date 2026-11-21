@@ -503,6 +503,10 @@ class MainWindow(QMainWindow):
         from .sloop3_ui import install_flow
         install_flow(self, self.ctx)
 
+    def _check_sloop3(self):
+        from .sloop3_ui import verify_flow
+        verify_flow(self, self.ctx, None)
+
     def _way_back(self):
         from .flash_tools import way_back_flow
         way_back_flow(self, self.ctx)
@@ -527,6 +531,10 @@ class MainWindow(QMainWindow):
         self._act(g, _("Reconnect"), self._reconnect, "F5", ("view-refresh",))
         self._act(g, _("Rename device …"), lambda: self.overview._rename() if self.ctx.profile else None, None,
                   ("edit-rename",))
+        self._act(g, _("Which FM-1 is this? …"), lambda: getattr(self.ctx, "ask_which", lambda: None)(), None,
+                  ("dialog-question", "help-about"),
+                  _("Asks again which of your FM-1 is connected – when the app took it for another one (e.g. after "
+                    "swapping units at the same USB port)"))
         self._act(g, _("FM-1 status"), lambda: self.go("fm1"), None, ("audio-card",))
         g.addSeparator()
         self._act(g, _("Into download mode"), self._download_mode, None, ("go-down",),
@@ -543,6 +551,9 @@ class MainWindow(QMainWindow):
         self._act(g, _("Install SLOOP 3 (MIDI MODE) …"), self._install_sloop3, None, ("system-software-install",),
                   _("Writes the bundled SLOOP 3 through m-bootloader's MIDI MODE – after a whole-flash backup and "
                     "your confirmation (the same as on Recovery › Tools)"))
+        self._act(g, _("Check SLOOP 3 in the flash …"), self._check_sloop3, None, ("view-refresh",),
+                  _("Compares the flash with what the app's last SLOOP 3 install on this FM-1 wrote – nothing is "
+                    "written (the same as on Recovery › Tools)"))
         self._act(g, _("Back to …"), self._way_back, None, ("edit-undo",),
                   _("The way back with one button: a whole-flash backup, SLOOP 3, a Felucca-family firmware or the "
                     "original V15 – each with its route and its own questions"))
@@ -965,7 +976,12 @@ class MainWindow(QMainWindow):
         port = self.ctx.port
         if port:
             self.statusBar().showMessage(_("Reconnecting to “{port}” …").format(port=port.label), 6000)
-            self.ctx.connect_port(port)
+            # (the port list afresh: the FM-1 at that USB port may run another firmware since – never the old port)
+            reconnect = getattr(self.ctx, "reconnect", None)
+            if callable(reconnect):
+                reconnect()
+            else:
+                self.ctx.connect_port(port)
         else:
             self.ctx.scan()
             self.statusBar().showMessage(_("Searched again: {result}").format(

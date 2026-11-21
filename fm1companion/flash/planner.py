@@ -675,7 +675,9 @@ SLOOP3_NO_ROUTE = _("This FM-1 runs SLOOP 3, which cannot be switched to an upda
                     "original firmware: first the original boot area (Recovery › Tools › “Remove m-bootloader”, an "
                     "earlier unit only) or a whole-flash backup of this unit written back (“Back to …” on Recovery › "
                     "Tools).")
-DOWNLOAD_ROUTE_TEXT = _("This FM-1 has m-bootloader ({what}). The app installs this firmware through USB download "
+# ({what}: what the app knows of the boot area – bootarea.describe, which names m-bootloader itself: "m-bootloader
+# 2.4-395e6cc (reported by M-Flasher)", "m-bootloader (SLOOP 3 runs only from m-bootloader)")
+DOWNLOAD_ROUTE_TEXT = _("This FM-1 has {what}. The app installs this firmware through USB download "
                         "mode with M-Flasher: it writes only from 0x04000 to the end of the package; the boot area – "
                         "m-bootloader – stays as it is. So the running firmware's check of the boot area (“FAILED "
                         "-5”) does not come into it, and there is no V15 step. Before anything is written the app "

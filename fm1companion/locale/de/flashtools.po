@@ -379,9 +379,6 @@ msgstr "App schließen?"
 msgid "Close the app"
 msgstr "App schließen"
 
-msgid "writing a whole-flash backup back through M-Flasher – so far only small changes on an earlier unit (not yet the boot area or a large difference)"
-msgstr "eine Komplettsicherung des Flash über M-Flasher zurückschreiben – bisher nur kleine Änderungen an einem früheren Gerät (noch nicht der Boot-Bereich oder ein großer Unterschied)"
-
 msgid "the whole-flash backup on a newer FM-1 (logo on the front, flash UC25HQ80)"
 msgstr "die Komplettsicherung des Flash an einem neueren FM-1 (Logo vorne, Flash UC25HQ80)"
 
@@ -720,9 +717,6 @@ msgstr "Diese Flash-Sicherung wurde gemacht, während ein Schreiben auf das FM-1
 msgid "the button “Into download mode” and “Restart the FM-1” on their own (both units)"
 msgstr "die Knöpfe „In den Download-Modus“ und „FM-1 neu starten“ für sich (beide Geräte)"
 
-msgid "installing m-bootloader through M-Flasher (bootloader --file) – so far once, on an earlier unit with the original boot area"
-msgstr "m-bootloader über M-Flasher installieren (bootloader --file) – bisher einmal, an einem früheren Gerät mit Original-Boot-Bereich"
-
 msgid "putting back the original boot area through M-Flasher (bootloader --stock with M-VAVE's V15 package) – so far once, on an earlier unit; the whole flash was byte-identical with the state before the install afterwards"
 msgstr "den Original-Boot-Bereich über M-Flasher wiederherstellen (bootloader --stock mit dem V15-Paket von M-VAVE) – bisher einmal, an einem früheren Gerät; danach war der ganze Flash byte-gleich mit dem Stand vor der Installation"
 
@@ -846,9 +840,6 @@ msgstr "SLOOP 3 ist eine öffentliche Beta. Es kommt nur über den MIDI MODE von
 msgid "This FM-1 runs SLOOP 3, which cannot be switched to an update mode over USB, so the usual way does not work from it. A Felucca-family firmware (Melodee, SLOOP 2, Skiff …) can be installed from it through USB download mode – this plan offers that for such a target. Back to the original firmware: first the original boot area (Recovery › Tools › “Remove m-bootloader”, an earlier unit only) or a whole-flash backup of this unit written back (“Back to …” on Recovery › Tools)."
 msgstr "Dieses FM-1 läuft mit SLOOP 3, das sich über USB nicht in einen Update-Modus schalten lässt; der übliche Weg geht von dort also nicht. Eine Firmware der Felucca-Familie (Melodee, SLOOP 2, Skiff …) lässt sich von dort über den USB-Download-Modus installieren – dieser Plan bietet das für so ein Ziel an. Zurück zur Original-Firmware: zuerst der Original-Boot-Bereich (Rettung › Werkzeuge › „m-bootloader entfernen“, nur bei einem früheren Gerät) oder eine Komplettsicherung des Flash dieses Geräts zurückgeschrieben („Zurück zu …“ unter Rettung › Werkzeuge)."
 
-msgid "This FM-1 has m-bootloader ({what}). The app installs this firmware through USB download mode with M-Flasher: it writes only from 0x04000 to the end of the package; the boot area – m-bootloader – stays as it is. So the running firmware's check of the boot area (“FAILED -5”) does not come into it, and there is no V15 step. Before anything is written the app backs up the whole flash (read twice) – the way back to the state of now."
-msgstr "Dieses FM-1 hat m-bootloader ({what}). Die App installiert diese Firmware über den USB-Download-Modus mit M-Flasher: Er schreibt nur von 0x04000 bis zum Ende des Pakets; der Boot-Bereich – m-bootloader – bleibt, wie er ist. Die Prüfung des Boot-Bereichs durch die laufende Firmware („FAILED -5“) spielt so keine Rolle, und es gibt keinen V15-Zwischenschritt. Bevor etwas geschrieben wird, sichert die App den ganzen Flash (zweimal gelesen) – der Rückweg zum jetzigen Stand."
-
 msgid "Whatever lies between 0x04000 and the end of the package is replaced. If the current firmware keeps data in other places than the new one, M-Flasher warns, and the app asks you once more and names what may be lost."
 msgstr "Was zwischen 0x04000 und dem Ende des Pakets liegt, wird ersetzt. Legt die jetzige Firmware Daten an anderen Stellen ab als die neue, warnt M-Flasher, und die App fragt dich noch einmal und nennt, was verloren gehen kann."
 
@@ -870,14 +861,8 @@ msgstr "{name} braucht nach der Firmware auch seine Ressourcen, und die kann nur
 msgid "Projects, sounds and settings of the current firmware can no longer be used afterwards (the whole-flash backup keeps them)."
 msgstr "Projekte, Klänge und Einstellungen der jetzigen Firmware sind danach nicht mehr nutzbar (die Komplettsicherung des Flash bewahrt sie)."
 
-msgid "installing a firmware through download mode (M-Flasher firmware, the boot area kept) on an FM-1 with m-bootloader"
-msgstr "eine Firmware über den Download-Modus installieren (M-Flasher firmware, der Boot-Bereich bleibt) auf einem FM-1 mit m-bootloader"
-
 msgid "installing a firmware through download mode on a newer FM-1 (logo on the front, flash UC25HQ80)"
 msgstr "eine Firmware über den Download-Modus auf einem neueren FM-1 installieren (Logo auf der Vorderseite, Flash UC25HQ80)"
-
-msgid "installing SLOOP 3 over m-bootloader's MIDI MODE through this app (the whole flash read twice in MIDI MODE first)"
-msgstr "SLOOP 3 über den MIDI MODE von m-bootloader mit dieser App installieren (vorher der ganze Flash zweimal im MIDI MODE gelesen)"
 
 msgid "the “Back to …” choice (it only starts the actions above, one after the other)"
 msgstr "die Auswahl „Zurück zu …“ (sie startet nur die Aktionen oben, eine nach der anderen)"
@@ -1040,18 +1025,6 @@ msgstr "Der Flash des FM-1 enthält schon genau diese Firmware – es wurde nich
 msgid "{label} installed through download mode and checked: M-Flasher confirmed every sector, a fresh read holds exactly the package from 0x04000 on, and the boot area (m-bootloader) is unchanged. {started} The state before is kept as {name}."
 msgstr "{label} über den Download-Modus installiert und geprüft: M-Flasher hat jeden Sektor bestätigt, ein frisches Lesen enthält ab 0x04000 genau das Paket, und der Boot-Bereich (m-bootloader) ist unverändert. {started} Der Stand davor bleibt als {name}."
 
-msgid "Back to the whole-flash backup of {date}"
-msgstr "Zurück zur Komplettsicherung vom {date}"
-
-msgid "Back to a whole-flash backup"
-msgstr "Zurück zu einer Komplettsicherung des Flash"
-
-msgid "Write flash back: download mode, a fresh backup of the state now (read twice), your confirmation, M-Flasher writes the differing sectors, a fresh read checks them – {name}."
-msgstr "Flash zurückschreiben: Download-Modus, eine frische Sicherung des jetzigen Stands (zweimal gelesen), deine Bestätigung, M-Flasher schreibt die abweichenden Sektoren, ein frisches Lesen prüft sie – {name}."
-
-msgid "The app has no intact whole-flash backup of this unit (by its unit ID)."
-msgstr "Die App hat keine intakte Komplettsicherung des Flash dieses Geräts (nach seiner Unit-ID)."
-
 msgid "The app does not know this unit's ID yet: a whole-flash backup (Recovery › Tools) teaches it."
 msgstr "Die App kennt die Unit-ID dieses Geräts noch nicht: Eine Komplettsicherung des Flash (Rettung › Werkzeuge) bringt sie ihr bei."
 
@@ -1084,9 +1057,6 @@ msgstr "Zuerst „m-bootloader entfernen (Original-Boot-Bereich)“ – Download
 
 msgid "The original V15 the usual way on Firmware+ (the boot area is the original one or not known; the plan checks it)."
 msgstr "Die Original-V15 auf dem üblichen Weg unter Firmware+ (der Boot-Bereich ist der ursprüngliche oder nicht bekannt; der Plan prüft ihn)."
-
-msgid "A newer unit (logo on the front): the app never writes V15's boot area there. The way back to the factory state is a whole-flash backup of this unit made before m-bootloader (the first choice)."
-msgstr "Ein neueres Gerät (Logo auf der Vorderseite): Die App schreibt dort nie den Boot-Bereich der V15. Der Rückweg zum Werksstand ist eine Komplettsicherung dieses Geräts von vor m-bootloader (die erste Wahl)."
 
 msgid "Where should this FM-1 go back to? Each way runs the app's own steps one after the other, each with its own question; none skips a backup."
 msgstr "Wohin soll dieses FM-1 zurück? Jeder Weg führt die eigenen Schritte der App nacheinander aus, jeder mit seiner eigenen Frage; keiner überspringt eine Sicherung."
@@ -1151,9 +1121,6 @@ msgstr "SLOOP 3 {version} (öffentliche Beta) auf „{unit}“ installieren (Uni
 msgid "m-bootloader {mb} answers in MIDI MODE. Firmware now (as the app knows it): {fw}."
 msgstr "m-bootloader {mb} antwortet im MIDI MODE. Firmware jetzt (wie die App sie kennt): {fw}."
 
-msgid "m-bootloader writes only from 0x04000 to 0x{end:05X}; the boot area 0x00000–0x03FFF – m-bootloader itself – and everything after it stay as they are."
-msgstr "m-bootloader schreibt nur von 0x04000 bis 0x{end:05X}; der Boot-Bereich 0x00000–0x03FFF – m-bootloader selbst – und alles danach bleiben, wie sie sind."
-
 msgid "The current firmware and what it keeps in that range are replaced."
 msgstr "Die jetzige Firmware und was sie in diesem Bereich hat, werden ersetzt."
 
@@ -1196,9 +1163,6 @@ msgstr "SLOOP 3 installieren"
 msgid "SLOOP 3 {version} is on this FM-1 already – nothing was written. Switch it off and on (or choose BOOT APP in m-bootloader's menu)."
 msgstr "SLOOP 3 {version} ist schon auf diesem FM-1 – es wurde nichts geschrieben. Schalt es aus und ein (oder wähl BOOT APP im Menü von m-bootloader)."
 
-msgid "SLOOP 3 {version} installed: m-bootloader read the whole package, checked it, wrote it and read every sector back. The FM-1 starts SLOOP 3 now. The state before is kept as {name}."
-msgstr "SLOOP 3 {version} installiert: m-bootloader hat das ganze Paket gelesen, geprüft, geschrieben und jeden Sektor zurückgelesen. Das FM-1 startet jetzt SLOOP 3. Der Stand davor bleibt als {name}."
-
 msgid "Cancels until m-bootloader starts reading SLOOP 3; from then on it runs to its end."
 msgstr "Bricht ab, bis m-bootloader anfängt, SLOOP 3 zu lesen; ab dann läuft es bis zum Ende."
 
@@ -1207,9 +1171,6 @@ msgstr "Mein FM-1 hat kein M-VAVE-Logo auf der Vorderseite (ein früheres Gerät
 
 msgid "Check SLOOP 3 in the flash"
 msgstr "SLOOP 3 im Flash prüfen"
-
-msgid "m-bootloader wrote SLOOP 3 and read every sector back. The app can check it once more itself: once SLOOP 3 runs and the app shows it at the top, it sends the FM-1 into download mode and reads the whole flash with M-Flasher – writing nothing – and compares 0x00000–0x{end:05X} (the boot area and SLOOP 3) with what was meant to be written; then it restarts the FM-1. Check now?"
-msgstr "m-bootloader hat SLOOP 3 geschrieben und jeden Sektor zurückgelesen. Die App kann es selbst noch einmal prüfen: Sobald SLOOP 3 läuft und die App es oben zeigt, schickt sie das FM-1 in den Download-Modus, liest den ganzen Flash mit M-Flasher – ohne etwas zu schreiben – und vergleicht 0x00000–0x{end:05X} (den Boot-Bereich und SLOOP 3) mit dem, was geschrieben werden sollte; dann startet sie das FM-1 neu. Jetzt prüfen?"
 
 msgid "Checked: a fresh read of the whole flash holds exactly the boot area and SLOOP 3 as written. Nothing was written."
 msgstr "Geprüft: Ein frisches Lesen des ganzen Flash enthält genau den Boot-Bereich und SLOOP 3 wie geschrieben. Es wurde nichts geschrieben."
@@ -1247,9 +1208,6 @@ msgstr "Die Verbindung zum FM-1 ist abgebrochen, während m-bootloader SLOOP 3 i
 msgid "m-bootloader is writing: this cannot be cancelled."
 msgstr "m-bootloader schreibt: Das lässt sich nicht abbrechen."
 
-msgid "From the firmware on this FM-1 ({fw}) the original V15 cannot be installed the usual way after the boot area was put back (SLOOP 3, for one, has no update mode). First go to a Felucca-family firmware (the choice above), then come back here – or write back a whole-flash backup of this unit made before m-bootloader (the first choice)."
-msgstr "Aus der Firmware auf diesem FM-1 ({fw}) lässt sich die Original-V15 nach dem Zurückholen des Boot-Bereichs nicht auf dem üblichen Weg installieren (SLOOP 3 zum Beispiel hat keinen Update-Modus). Geh zuerst zu einer Firmware der Felucca-Familie (die Wahl darüber) und komm dann hierher zurück – oder schreib eine Komplettsicherung dieses Geräts von vor m-bootloader zurück (die erste Wahl)."
-
 msgid "m-bootloader is writing"
 msgstr "m-bootloader schreibt"
 
@@ -1264,3 +1222,129 @@ msgstr "keine Firmware, die M-Flasher kennt"
 
 msgid "The FM-1 stopped asking for SLOOP 3 once it may have started erasing. The firmware area may be incomplete (if m-bootloader had started erasing, it is); the boot area (m-bootloader) was not written, so its menu still opens (hold PLAY while switching on) and MIDI MODE can install again, or the backup made before can be written back."
 msgstr "Das FM-1 hat aufgehört, nach SLOOP 3 zu fragen, als es womöglich schon mit dem Löschen begonnen hatte. Der Firmware-Bereich kann unvollständig sein (wenn m-bootloader mit dem Löschen begonnen hatte, ist er es); der Boot-Bereich (m-bootloader) wurde nicht geschrieben, sein Menü öffnet sich also noch (beim Einschalten PLAY halten), und der MIDI MODE kann noch einmal installieren, oder die vorher gemachte Sicherung lässt sich zurückschreiben."
+
+msgid "This FM-1 has {what}. The app installs this firmware through USB download mode with M-Flasher: it writes only from 0x04000 to the end of the package; the boot area – m-bootloader – stays as it is. So the running firmware's check of the boot area (“FAILED -5”) does not come into it, and there is no V15 step. Before anything is written the app backs up the whole flash (read twice) – the way back to the state of now."
+msgstr "Dieses FM-1 hat {what}. Die App installiert diese Firmware über den USB-Download-Modus mit M-Flasher: Er schreibt nur von 0x04000 bis zum Ende des Pakets; der Boot-Bereich – m-bootloader – bleibt, wie er ist. Die Prüfung des Boot-Bereichs durch die laufende Firmware („FAILED -5“) spielt so keine Rolle, und es gibt keinen V15-Zwischenschritt. Bevor etwas geschrieben wird, sichert die App den ganzen Flash (zweimal gelesen) – der Rückweg zum jetzigen Stand."
+
+msgid "writing a whole-flash backup back through M-Flasher – so far on an earlier unit only: small changes, and once the boot area with a large difference (149 sectors), byte-identical afterwards"
+msgstr "eine Komplettsicherung über M-Flasher zurückschreiben – bisher nur an einem früheren Gerät: kleine Änderungen, und einmal mit dem Boot-Bereich und großem Unterschied (149 Sektoren), danach byte-gleich"
+
+msgid "installing m-bootloader through M-Flasher (bootloader --file) – so far twice, on an earlier unit with the original boot area"
+msgstr "m-bootloader über M-Flasher installieren (bootloader --file) – bisher zweimal, an einem früheren Gerät mit dem Original-Boot-Bereich"
+
+msgid "installing a firmware through download mode (M-Flasher firmware, the boot area kept) on an FM-1 with m-bootloader – so far once, on an earlier unit (SLOOP 3 to Skiff 2.7); M-Flasher's warning that the installed firmware keeps its data in other places, and the app's second question about it, have not appeared on a real FM-1 yet"
+msgstr "eine Firmware über den Download-Modus installieren (M-Flasher firmware, der Boot-Bereich bleibt) auf einem FM-1 mit m-bootloader – bisher einmal, an einem früheren Gerät (SLOOP 3 zu Skiff 2.7); M-Flashers Warnung, dass die installierte Firmware ihre Daten an anderen Stellen ablegt, und die zweite Frage der App dazu kamen an einem echten FM-1 noch nicht vor"
+
+msgid "installing SLOOP 3 over m-bootloader's MIDI MODE through this app (the whole flash read twice in MIDI MODE first) – so far once, on an earlier unit, from Melodee 1.6.1; the app's own check afterwards (“Check SLOOP 3 in the flash”) has not run on a real FM-1 yet"
+msgstr "SLOOP 3 über den MIDI MODE von m-bootloader mit dieser App installieren (vorher der ganze Flash zweimal im MIDI MODE gelesen) – bisher einmal, an einem früheren Gerät, von Melodee 1.6.1 aus; die eigene Prüfung der App danach („SLOOP 3 im Flash prüfen“) lief an einem echten FM-1 noch nicht"
+
+msgid "The app asks this before every write while it knows the unit only this way: an answer holds only as long as the FM-1 stays connected, because after that another FM-1 can be at the same USB port."
+msgstr "Die App fragt das vor jedem Schreiben, solange sie das Gerät nur so kennt: Eine Antwort gilt nur, solange das FM-1 angeschlossen bleibt – danach kann ein anderes FM-1 am selben USB-Port hängen."
+
+msgid "Backup: this plan does not back up SLOOP 3's project, sounds and banks as a step of its own – the app does that on the page “Backups” (“Back up now”), before you start here."
+msgstr "Backup: Dieser Plan sichert Projekt, Sounds und Bänke von SLOOP 3 nicht als eigenen Schritt – das macht die App auf der Seite „Backups“ („Backup jetzt“), bevor du hier startest."
+
+msgid "The whole-flash backup in the plan keeps everything, SLOOP 3's data included."
+msgstr "Die Komplettsicherung im Plan behält alles, auch die Daten von SLOOP 3."
+
+msgid "The whole-flash backup in the plan keeps everything."
+msgstr "Die Komplettsicherung im Plan behält alles."
+
+msgid "from before m-bootloader"
+msgstr "von vor m-bootloader"
+
+msgid "with m-bootloader"
+msgstr "mit m-bootloader"
+
+msgid "or write back the whole-flash backup of {date} from before m-bootloader (pre-selected in the list above)."
+msgstr "oder schreib die Komplettsicherung vom {date} von vor m-bootloader zurück (oben in der Liste vorgewählt)."
+
+msgid "The app has no whole-flash backup of this unit from before m-bootloader. If you made one earlier with M-Flasher, take it in with “Import a flash backup …” (Recovery › Tools) – then it is offered here."
+msgstr "Die App hat keine Komplettsicherung dieses Geräts von vor m-bootloader. Hast du früher eine mit M-Flasher gemacht, übernimm sie mit „Flash-Sicherung importieren …“ (Rettung › Werkzeuge) – dann wird sie hier angeboten."
+
+msgid "Back to a whole-flash backup of this unit"
+msgstr "Zurück zu einer Komplettsicherung dieses Geräts"
+
+msgid "Write flash back: download mode, a fresh backup of the state now (read twice), your confirmation, M-Flasher writes the differing sectors, a fresh read checks them. Choose the backup below – the ones from before m-bootloader are marked."
+msgstr "Flash zurückschreiben: Download-Modus, eine frische Sicherung des jetzigen Stands (zweimal gelesen), deine Bestätigung, M-Flasher schreibt die abweichenden Sektoren, ein frisches Lesen prüft sie. Wähle die Sicherung unten – die von vor m-bootloader sind markiert."
+
+msgid "The app has no intact whole-flash backup of this unit (by its unit ID). A backup made earlier with M-Flasher can be taken in with “Import a flash backup …” (Recovery › Tools)."
+msgstr "Die App hat keine intakte Komplettsicherung dieses Geräts (nach seiner Unit-ID). Eine früher mit M-Flasher gemachte Sicherung lässt sich mit „Flash-Sicherung importieren …“ übernehmen (Rettung › Werkzeuge)."
+
+msgid "From the firmware on this FM-1 ({fw}) the original V15 cannot be installed the usual way after the boot area was put back: SLOOP 3 has no update mode."
+msgstr "Aus der Firmware auf diesem FM-1 ({fw}) lässt sich die Original-V15 nach dem Zurückholen des Boot-Bereichs nicht auf dem üblichen Weg installieren: SLOOP 3 hat keinen Update-Modus."
+
+msgid "From the firmware on this FM-1 ({fw}) the app cannot install the original V15 the usual way after the boot area was put back."
+msgstr "Aus der Firmware auf diesem FM-1 ({fw}) kann die App die Original-V15 nach dem Zurückholen des Boot-Bereichs nicht auf dem üblichen Weg installieren."
+
+msgid "First go to a Felucca-family firmware (the choice above), then come back here –"
+msgstr "Geh zuerst zu einer Firmware der Felucca-Familie (die Wahl oben) und komm dann hierher zurück –"
+
+msgid "A newer unit (logo on the front): the app never writes V15's boot area there. The way back to the factory state is a whole-flash backup of this unit from before m-bootloader."
+msgstr "Ein neueres Gerät (Logo auf der Vorderseite): Die App schreibt dort nie den Boot-Bereich der V15. Der Rückweg zum Werksstand ist eine Komplettsicherung dieses Geräts von vor m-bootloader."
+
+msgid "The app has one: {date} (pre-selected in the list above)."
+msgstr "Die App hat eine: {date} (oben in der Liste vorgewählt)."
+
+msgid "recommended"
+msgstr "empfohlen"
+
+msgid "Which FM-1 is this? …"
+msgstr "Welches FM-1 ist das? …"
+
+msgid "Asks again which of your FM-1 is connected – when the app took it for another one (e.g. after swapping units at the same USB port)"
+msgstr "Fragt noch einmal, welches deiner FM-1 angeschlossen ist – wenn die App es für ein anderes gehalten hat (z. B. nach dem Tausch zweier Geräte am selben USB-Port)"
+
+msgid "Check SLOOP 3 in the flash …"
+msgstr "SLOOP 3 im Flash prüfen …"
+
+msgid "Compares the flash with what the app's last SLOOP 3 install on this FM-1 wrote – nothing is written (the same as on Recovery › Tools)"
+msgstr "Vergleicht den Flash mit dem, was die letzte SLOOP-3-Installation der App auf diesem FM-1 geschrieben hat – es wird nichts geschrieben (dasselbe wie unter Rettung › Werkzeuge)"
+
+msgid "another FM-1?"
+msgstr "ein anderes FM-1?"
+
+msgid "SLOOP 3 sets up its own storage on its first start, in the data area after the firmware: the data the current firmware ({fw}) keeps there – its presets, projects and sounds – are gone afterwards. Only the whole-flash backup made before the write keeps them (written back, the old firmware comes back with them). Want them in the app as well? Back them up with the app (page “Backups”) while the old firmware runs – before you go to MIDI MODE."
+msgstr "SLOOP 3 legt beim ersten Start seinen eigenen Speicher an, im Datenbereich hinter der Firmware: Die Daten, die die jetzige Firmware ({fw}) dort ablegt – ihre Presets, Projekte und Sounds –, sind danach weg. Nur die Komplettsicherung von vor dem Schreiben behält sie (zurückgeschrieben kommt die alte Firmware mit ihnen wieder). Willst du sie auch in der App haben? Sichere sie mit der App (Seite „Backups“), solange die alte Firmware läuft – bevor du in den MIDI MODE gehst."
+
+msgid "the current firmware"
+msgstr "die jetzige Firmware"
+
+msgid "SLOOP 3 sets up its own storage on its first start: the presets, projects and sounds of {fw} on the FM-1 are gone afterwards (the whole-flash backups keep them)."
+msgstr "SLOOP 3 legt beim ersten Start seinen eigenen Speicher an: Presets, Projekte und Sounds von {fw} auf dem FM-1 sind danach weg (die Komplettsicherungen behalten sie)."
+
+msgid "Back them up with the app first – page “Backups” › “Back up now” – while {fw} still runs."
+msgstr "Sichere sie vorher mit der App – Seite „Backups“ › „Backup jetzt“ –, solange {fw} noch läuft."
+
+msgid "If they matter, back them up first with that firmware's own tool."
+msgstr "Wenn sie dir wichtig sind, sichere sie vorher mit dem eigenen Werkzeug dieser Firmware."
+
+msgid "m-bootloader writes only from 0x04000 to 0x{end:05X}; the boot area 0x00000–0x03FFF – m-bootloader itself – and everything after it are not written."
+msgstr "m-bootloader schreibt nur von 0x04000 bis 0x{end:05X}; der Boot-Bereich 0x00000–0x03FFF – m-bootloader selbst – und alles danach werden nicht geschrieben."
+
+msgid "SLOOP 3 {version} installed: m-bootloader read the whole package, checked it, wrote it and read every sector back. The FM-1 starts SLOOP 3 now. On that first start SLOOP 3 sets up its own storage: the old firmware's presets, projects and sounds in the data area are gone then. The state before – the old firmware with its data – is kept as {name}."
+msgstr "SLOOP 3 {version} installiert: m-bootloader hat das ganze Paket gelesen, geprüft, geschrieben und jeden Sektor zurückgelesen. Das FM-1 startet jetzt SLOOP 3. Bei diesem ersten Start legt SLOOP 3 seinen eigenen Speicher an: Presets, Projekte und Sounds der alten Firmware im Datenbereich sind dann weg. Der Stand vorher – die alte Firmware mit ihren Daten – liegt als {name}."
+
+msgid "Waiting until SLOOP 3 runs on “{unit}” and the app shows it at the top … (After the install the FM-1 starts SLOOP 3 by itself; if it does not, switch it off and on.) Nothing is sent to the FM-1 before that."
+msgstr "Warte, bis SLOOP 3 auf „{unit}“ läuft und die App es oben zeigt … (Nach der Installation startet das FM-1 SLOOP 3 von selbst; wenn nicht, aus- und wieder einschalten.) Vorher wird nichts an das FM-1 geschickt."
+
+msgid "The app knows no SLOOP 3 install of its own on this FM-1 to check (it keeps what its last install wrote, per unit). Choose the FM-1 SLOOP 3 was installed on at the top."
+msgstr "Die App kennt auf diesem FM-1 keine eigene SLOOP-3-Installation, die sie prüfen könnte (sie behält pro Gerät, was ihre letzte Installation geschrieben hat). Wähle oben das FM-1, auf dem SLOOP 3 installiert wurde."
+
+msgid "Choose the FM-1 at the top first (the app checks the SLOOP 3 it installed on that unit)."
+msgstr "Wähle zuerst oben das FM-1 (die App prüft das SLOOP 3, das sie auf diesem Gerät installiert hat)."
+
+msgid "m-bootloader wrote SLOOP 3 and read every sector back."
+msgstr "m-bootloader hat SLOOP 3 geschrieben und jeden Sektor zurückgelesen."
+
+msgid "The app's last SLOOP 3 install on “{unit}”: SLOOP 3 {version}."
+msgstr "Die letzte SLOOP-3-Installation der App auf „{unit}“: SLOOP 3 {version}."
+
+msgid "The app can check it once more itself: once SLOOP 3 runs and the app shows it at the top – it waits for that – it sends the FM-1 into download mode and reads the whole flash with M-Flasher – writing nothing – and compares 0x00000–0x{end:05X} (the boot area and SLOOP 3) with what was meant to be written; then it restarts the FM-1. Check now? (Later: Recovery › Tools › “Check SLOOP 3 in the flash …”.)"
+msgstr "Die App kann es selbst noch einmal prüfen: Sobald SLOOP 3 läuft und die App es oben zeigt – darauf wartet sie –, schickt sie das FM-1 in den Download-Modus, liest den ganzen Flash mit M-Flasher – ohne etwas zu schreiben – und vergleicht 0x00000–0x{end:05X} (Boot-Bereich und SLOOP 3) mit dem, was geschrieben werden sollte; dann startet sie das FM-1 neu. Jetzt prüfen? (Später: Rettung › Werkzeuge › „SLOOP 3 im Flash prüfen …“.)"
+
+msgid "Not checked – nothing was sent to the FM-1. The check can be started later on Recovery › Tools › “Check SLOOP 3 in the flash …”, once SLOOP 3 runs."
+msgstr "Nicht geprüft – an das FM-1 wurde nichts geschickt. Die Prüfung lässt sich später unter Rettung › Werkzeuge › „SLOOP 3 im Flash prüfen …“ starten, sobald SLOOP 3 läuft."
+
+msgid "Compares the flash with what the app's last SLOOP 3 install on this FM-1 wrote: one read in download mode once SLOOP 3 runs – nothing is written."
+msgstr "Vergleicht den Flash mit dem, was die letzte SLOOP-3-Installation der App auf diesem FM-1 geschrieben hat: ein Lesen im Download-Modus, sobald SLOOP 3 läuft – es wird nichts geschrieben."

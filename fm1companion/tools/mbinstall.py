@@ -547,6 +547,7 @@ def _write(job, transport, pkg: Package, plan: InstallPlan, info, pre: Path, ima
         except Exception:  # noqa: BLE001
             pass
     job.cancel = None
+    job.expect = {"sloop3": True}                    # (what comes back at this USB port: SLOOP 3, or it is asked)
     st = Served()
     try:
         serve(transport, pkg, progress=getattr(job, "progress", None), st=st)

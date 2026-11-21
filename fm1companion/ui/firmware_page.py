@@ -373,11 +373,20 @@ class PlanDialog(QDialog):
                                 if self.planner.layout_change(p.state, p.target) else
                                 _("Make a backup first (recommended)"))
         self.backup_note.setVisible(not p.resume)
+        sloop3_runs = self.planner.fw_identity(getattr(p.state, "firmware_key", "") or "") == "sloop3"
+        whole = getattr(p, "route", "") == "download-mode"
         self.backup_note.setText(
             ("" if self.chk_backup.isChecked() else
              _("Without backup: you have to confirm this explicitly below.")) if can_backup else
+            # (SLOOP 3 has its own backup in the app – page “Backups” – just not as a step of this plan; Pi run
+            # 2026-11-21: the note said no backup was possible while the SLOOP 3 backup had just worked)
+            (_("Backup: this plan does not back up SLOOP 3's project, sounds and banks as a step of its own – the app "
+               "does that on the page “Backups” (“Back up now”), before you start here.") + " " +
+             (_("The whole-flash backup in the plan keeps everything, SLOOP 3's data included.") if whole else ""))
+            if sloop3_runs else
             _("Backup: the app cannot make a backup of the running firmware (no editor protocol). "
-              "Back up important projects first with the firmware's own tool."))
+              "Back up important projects first with the firmware's own tool.") +
+            (" " + _("The whole-flash backup in the plan keeps everything.") if whole else ""))
         writes = " · " + _("writes")
         rows = "".join(
             f"<tr><td><b>{n}.</b></td><td><b>{st.title}</b><br><small>{st.text}</small></td>"
@@ -390,7 +399,7 @@ class PlanDialog(QDialog):
         if p.warnings:
             html += "<h4>" + _("Notes") + "</h4><ul>" + "".join(f"<li>{w}</li>" for w in p.warnings) + "</ul>"
         from ..flash import tested
-        self.tested_note = tested.note(tested.plan_kinds(p))      # what has been run on a real FM-1, per step
+        self.tested_note = tested.plan_note(p)          # what has been run on a real FM-1, per step and route
         html += f"<p><b>{self.tested_note}</b></p>"
         html += ("<p><small>" + _("While writing, do not unplug the USB cable and do not switch the FM-1 off.")
                  + "</small></p>")
@@ -920,6 +929,7 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
     def done(res):
         if res.get("dry"):
             return
+        came_back["identity"] = res.get("ident") or ""
         if profile:
             if seen_uid and not profile.serial and not ctx.store.by_unit_id(seen_uid[0]):
                 profile.serial = seen_uid[0]   # (the V15 step showed it: from now on the unit is told by it)
@@ -937,6 +947,7 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         ctx.pending_restore_profile = profile.id if profile else ""
 
     from . import feedback
+    came_back: dict = {}                 # what the FM-1 reported after the installation's own restart
     try:
         title = (_("{label} check (dry run)") if do_dry else _("{label} install")).format(label=label)
         d = feedback.run(parent, title, german_errors(work),
@@ -945,7 +956,12 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         if not do_dry and hasattr(ctx, "note_installed"):
             # whatever the FM-1 reports when it re-appears at this USB port (another identity, the original
             # firmware's serial number): it is this unit, never a new profile
-            ctx.note_installed(profile, getattr(planned_port, "usb_path", "") or "")
+            # (… as long as it shows what this installation left: not SLOOP 3 – the usual way never installs it –
+            # and the identity it reported after its restart; another FM-1 plugged in there is asked about)
+            expect = {"sloop3": spec.key == "sloop3"}
+            if came_back.get("identity") and not came_back["identity"].lower().startswith("ota-"):
+                expect["identity"] = came_back["identity"]
+            ctx.note_installed(profile, getattr(planned_port, "usb_path", "") or "", expect)
         ctx.disconnect(None)
         ctx.reconnect_soon(2500)      # also releases ctx.hold
     return d.ok

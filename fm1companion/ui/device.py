@@ -210,7 +210,12 @@ def unit_confirm_text(profile, how: str = "answer") -> str:
     return (_("This is “{name}” – {revision}.").format(name=html_escape(profile.name), revision=revision_words(profile))
             + "<br><br>" + why + " " +
             _("<b>Check the front of the FM-1 you have connected.</b> If it is another one, cancel: nothing is written, "
-              "and you can say which FM-1 it is on the Overview."))
+              "and you can say which FM-1 it is on the Overview.") +
+            # (Pi run 2026-11-21: asked again a day after the owner had answered – by design, the answer is not
+            # kept beyond the plug-in; say so instead of leaving it to look like a forgotten answer)
+            "<br><br><small>" + _("The app asks this before every write while it knows the unit only this way: an "
+                                  "answer holds only as long as the FM-1 stays connected, because after that another "
+                                  "FM-1 can be at the same USB port.") + "</small>")
 
 
 def html_escape(text: str) -> str:
@@ -280,6 +285,12 @@ def firmware_version_text(name: str, tag: str) -> str:
     return f"{name} {ver}".strip()
 
 
+def port_signature(p: PortInfo) -> tuple:
+    """what tells two sightings of a USB port apart beyond its key (USB path and serial number): the MIDI port names
+    (they carry the firmware's USB name and the ALSA client), update mode and the client number"""
+    return (p.key, p.in_name, p.out_name, bool(p.update_mode), p.client)
+
+
 class DeviceContext(QObject):
     changed = pyqtSignal()                 # device/profile/connection changed
     ports_changed = pyqtSignal()
@@ -297,7 +308,8 @@ class DeviceContext(QObject):
         self.link: Link | None = None
         self.info: Info | None = None
         self.profile: Profile | None = None
-        self.hold = False                  # during an update: don't connect automatically
+        self._hold = False                 # during an update: don't connect automatically (see `hold`)
+        self._restarted: set[str] = set()  # USB paths whose unit an app job restarted while the scan was on hold
         self.identity = ""                 # handshake identifier (e.g. "FM-1_015", "ota-FM-1_900")
         self.firmware_guess: list[str] = []  # possible firmware keys for the identifier
         self.uboot: list[str] = []         # USB paths of FM-1s in ROM boot mode (rescue level 2)
@@ -323,6 +335,27 @@ class DeviceContext(QObject):
         QTimer.singleShot(200, self.scan)
 
     # ------------------------------------------------------------ Status
+    @property
+    def hold(self) -> bool:
+        """a job has the FM-1 (an installation, M-Flasher, MIDI MODE): no device search, no automatic connection"""
+        return self._hold
+
+    @hold.setter
+    def hold(self, on: bool):
+        was = getattr(self, "_hold", False)
+        self._hold = bool(on)
+        if was and not self._hold:
+            # while the scan was on hold the FM-1 may have left USB and come back – restarted by the job into another
+            # firmware (MIDI MODE -> SLOOP 3, download mode -> Skiff, a written-back image), at the same USB port and
+            # often under the same port key: look at once instead of keeping what was connected before the job
+            QTimer.singleShot(300, self.scan)
+
+    def mark_restarted(self, usb_path: str):
+        """an app job (flash_tools.remember_unit) took the unit at this USB port out of USB MIDI (download mode, a
+        restart): whatever MIDI port is there after the job is a new connection, even under the same names"""
+        if usb_path:
+            self._restarted.add(usb_path)
+
     @property
     def connected(self) -> bool:
         return self.link is not None and not self.link.closed and self.info is not None
@@ -435,9 +468,8 @@ class DeviceContext(QObject):
         return d
 
     # ------------------------------------------------------------ Search
-    def scan(self):
-        if self.hold:
-            return
+    def _read_ports(self) -> list[PortInfo]:
+        """the FM-1 ports there are right now (and the units in ROM boot mode, self.uboot)"""
         if DEMO:
             ports = [PortInfo("demo-in", "demo-out", "Melodee (Demo)", None, serial="DEMO-1", usb_path="demo-usb-1"),
                      PortInfo("demo2-in", "demo2-out", "SLOOP (Demo)", None, serial="DEMO-2", usb_path="demo-usb-2"),
@@ -450,6 +482,12 @@ class DeviceContext(QObject):
                 self.uboot = uboot_present()
             except Exception:  # noqa: BLE001
                 self.uboot = []
+        return ports
+
+    def scan(self):
+        if self.hold:
+            return
+        ports = DeviceContext._read_ports(self)
         vports = []
         if self.virtual_ports is not None:
             try:
@@ -460,10 +498,26 @@ class DeviceContext(QObject):
         vkeys = [p.key for p in vports]
         for k in [k for k in self.port_answers if k not in keys]:
             del self.port_answers[k]     # the port was away: what the owner said about it no longer holds
-        if keys != [p.key for p in self.ports] or vkeys != [p.key for p in self.vports]:
+        if [port_signature(p) for p in ports] != [port_signature(p) for p in self.ports] or \
+                vkeys != [p.key for p in self.vports]:
             self.ports = ports           # real devices only (firmware, rescue, counting several FM-1s …)
             self.vports = vports         # virtual devices are kept separately (device selection at the top only)
             self.ports_changed.emit()
+        cur = self.port
+        if cur is not None and not getattr(cur, "virtual", False):
+            # The port key is the USB path and serial number: a unit that went away and came back with another
+            # firmware (SLOOP 3 after MIDI MODE, Skiff after download mode – no serial number either way) has the same
+            # key. When that happened while the scan was on hold, or the app's own job restarted it, the connection,
+            # the firmware and the profile shown are the ones from before: connect anew to what is there now.
+            fresh = next((p for p in ports if p.key == cur.key), None)
+            restarted = getattr(self, "_restarted", set())
+            if fresh is not None and (port_signature(fresh) != port_signature(cur) or
+                                      (cur.usb_path and cur.usb_path in restarted)):
+                log.info("FM-1 at USB %s came back as %r (before: %r): connecting anew", cur.usb_path or "-",
+                         fresh.label, cur.label)
+                self._gone_since = None
+                self.connect_port(fresh)
+                return
         if self.port and not self._port_present(ports + vports):
             # One scan without the port is not a disconnect yet: on a Raspberry Pi the port list was seen to miss the
             # FM-1 for a moment without any USB event. The warning comes when the port stays away (or the link is
@@ -505,6 +559,7 @@ class DeviceContext(QObject):
 
     def connect_port(self, port: PortInfo):
         self.disconnect(None)
+        getattr(self, "_restarted", set()).discard(getattr(port, "usb_path", "") or "")
         self.port = port
         if port.update_mode:
             self.message.emit(_("The FM-1 is in update mode. The page “Recovery” finishes the installation."))
@@ -929,11 +984,37 @@ class DeviceContext(QObject):
 
     SESSION_UNIT_SECS = 600.0       # how long "the app has just installed on the unit at this USB port" holds
 
-    def note_installed(self, profile, usb_path: str):
-        """the app has just written a firmware to `profile`'s unit at this USB port: when it re-appears there (other
-        identity, other serial number, other name), it is still this unit – never a new profile"""
+    def note_installed(self, profile, usb_path: str, expect: dict | None = None):
+        """the app has just written a firmware to `profile`'s unit at this USB port (or restarted it there): when it
+        re-appears there (other identity, other serial number, other name), it is still this unit – never a new
+        profile. `expect`: what the app expects that unit to show when it comes back – {"sloop3": True/False (SLOOP 3
+        or not), "identity", "product" (USB name), "unit_id"}, each optional; None/{} = nothing known. A sighting
+        that contradicts it is another FM-1 plugged in at the same port: the usual question then (_continues)."""
         if profile is not None and usb_path:
-            self.session_units[usb_path] = (profile.id, time.time())
+            self.session_units[usb_path] = (profile.id, time.time(), dict(expect or {}))
+
+    def _continues(self, port: PortInfo, expect: dict, profile, flash_rev: str, own: str) -> bool:
+        """is the unit at `port` the continuation the app expects after its own job there (note_installed)? Only
+        what the sighting itself shows counts against it: SLOOP 3 or not, the identity, the USB name, the unit ID the
+        original firmware shows, the flash chip read. Nothing shown, nothing contradicted: it continues."""
+        from .. import hardware
+        from .. import sloop3 as S3
+        from ..devices import unit_id_forms
+        if port.update_mode or not expect:
+            return True          # (an update loader or MIDI MODE in between: nothing to compare – nothing is asked there)
+        product = port.product or port.label or ""
+        seen_s3 = getattr(self, "sloop3", None) is not None or bool(product and S3.PORT_RE.search(product))
+        if expect.get("sloop3") is True and not seen_s3 or expect.get("sloop3") is False and seen_s3:
+            return False
+        ident = self.identity or ""
+        if expect.get("identity") and ident and not ident.lower().startswith("ota-") and ident != expect["identity"]:
+            return False
+        if expect.get("product") and product and product != expect["product"]:
+            return False
+        uid = str(expect.get("unit_id") or "")
+        if uid and own and not (unit_id_forms(own) & unit_id_forms(uid)):
+            return False
+        return not (flash_rev != hardware.UNKNOWN and hardware.revision(profile) not in (hardware.UNKNOWN, flash_rev))
 
     def _new_profile(self, name: str = "") -> Profile:
         """a new profile whose default name is neither a profile's nor a folder's in the backup folder (the backups
@@ -992,13 +1073,22 @@ class DeviceContext(QObject):
                 return True
             return False
         cands = hits if hits else [c for c in store.profiles.values() if not excluded(c)]
-        pid = None
+        pid, expect = None, {}
         if usb and usb in self.session_units:
-            pid, when = self.session_units[usb]
+            entry = self.session_units[usb]
+            pid, when = entry[0], entry[1]
+            expect = entry[2] if len(entry) > 2 else {}
             if time.time() - when > self.SESSION_UNIT_SECS:
                 pid = None
             if pid is None or not port.update_mode:
                 del self.session_units[usb]    # holds for the first appearance after the installation only
+            if pid is not None and pid in store.profiles and \
+                    not DeviceContext._continues(self, port, expect, store.profiles[pid], flash_rev, own):
+                # another FM-1 at the same USB port (unplugged and swapped within minutes – Pi run 2026-11-21): not
+                # the unit the app just worked on, so the port memory does not name it
+                log.info("the FM-1 at USB %s is not what the app's own job there left (%s): asked", usb,
+                         ", ".join(f"{k} {v}" for k, v in sorted(expect.items()) if k != "unit_id") or "-")
+                pid = None
         if pid is None and usb and not getattr(port, "virtual", False):
             try:
                 from ..flash import journal as fj
@@ -1196,7 +1286,7 @@ class DeviceContext(QObject):
             return
         self.port_answers.pop(port.key, None)
         self._ask_next = port.key
-        self.connect_port(port)
+        DeviceContext.reconnect(self)      # (to what is at that USB port now – the same port key)
 
     def disconnect(self, reason: str | None = ""):
         if reason == "":
@@ -1224,8 +1314,32 @@ class DeviceContext(QObject):
             self.changed.emit()
 
     def reconnect_soon(self, ms: int = 1500):
-        self.hold = False
+        self._hold = False                 # (not the setter: the caller's delay lets the FM-1 restart first)
         QTimer.singleShot(ms, self.scan)
+
+    def reconnect(self):
+        """“Reconnect” (F5): the port list is read afresh – the connection is made to what is at the active FM-1's
+        USB port NOW, never to the port as it was seen before (it may have restarted into another firmware since)"""
+        port = self.port
+        if port is None or getattr(port, "virtual", False) or self.hold:
+            if port is not None:
+                self.connect_port(port)
+            else:
+                self.scan()
+            return
+        ports = DeviceContext._read_ports(self)
+        fresh = (next((p for p in ports if p.key == port.key), None) or
+                 next((p for p in ports if port.usb_path and p.usb_path == port.usb_path), None))
+        if [port_signature(p) for p in ports] != [port_signature(p) for p in self.ports]:
+            self.ports = ports
+            self.ports_changed.emit()
+        if fresh is None:
+            self.disconnect(_("FM-1 disconnected"))
+            self.scan()
+            return
+        if getattr(self, "_ask_next", "") == port.key:
+            self._ask_next = fresh.key        # (ask_which: the question goes with the unit at that USB port)
+        self.connect_port(fresh)
 
     # ------------------------------------------------------- Access
     def require(self, parent) -> bool:

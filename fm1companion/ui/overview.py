@@ -215,6 +215,11 @@ class OverviewPage(QWidget):
         if p:
             name = f"<b style='color:{p.color}'>●</b> {html.escape(p.name)}" + (
                 f" <small>· {html.escape(how)}</small>" if how else "")
+            if port is not None and not port.update_mode and not getattr(c, "is_virtual", False) and \
+                    getattr(c, "identified_by", "") != "unit_id":
+                # (not told by a unit ID: it may be another FM-1 – e.g. swapped at the same USB port; the owner says
+                # so here and is asked "Which FM-1 is this?" again, without restarting the app)
+                name += " · <a href='#which'>" + _("another FM-1?") + "</a>"
         elif port and getattr(c, "unit_candidates", None) and not port.update_mode:
             name = _("not said yet") + " · <a href='#which'>" + _("Which FM-1 is this?") + "</a>"
         else:

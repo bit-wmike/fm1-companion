@@ -183,6 +183,8 @@ class Job:
     held: _Held | None = None
     steps: list = field(default_factory=list)  # (step, outcome) for the report
     pre: Saved | None = None                   # the automatic backup made before a write
+    expect: dict | None = None                 # once a write started: what the unit shows when it comes back
+    #                                            (ui/device.DeviceContext.note_installed); None = what it ran before
     log_path: Path | None = None               # this job's flight log
 
     def tell(self, text: str):
@@ -1138,6 +1140,7 @@ def _write(job: Job, image: Path, side: dict, data: bytes, info, saved, pre, pla
                               "image": str(image), "image_sha256": sha, "runs": [[a, b] for a, b in runs]},
                saved, pre)
     job.tell(_("Writing the flash back (do not unplug the FM-1 or switch it off) …"))
+    job.expect = {"sloop3": app_area_is_sloop3(data, info.chip_key)}     # (what the image starts, as far as it shows)
     w.run(["restore", str(copy), "--device", job.device, "--backup-dir", str(staging)], restore_gate(expect))
     got, _vi = w.fresh_read()
     if hashlib.sha256(got).hexdigest() != sha:
@@ -1946,6 +1949,7 @@ def _firmware_write(job: Job, plan: FirmwarePlan, info, saved, pre, package: byt
                                   "file_sha256": hashlib.sha256(package).hexdigest(),
                                   "runs": [[a, b] for a, b in runs]}, saved, pre)
         job.tell(_("Writing the firmware (do not unplug the FM-1 or switch it off) …"))
+        job.expect = {"sloop3": False, "identity": ident}
         try:
             w.run(["firmware", str(copy), "--device", job.device, "--backup-dir", str(staging)],
                   firmware_gate(expect))

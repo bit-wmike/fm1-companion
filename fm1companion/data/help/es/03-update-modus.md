@@ -130,7 +130,11 @@ nueva.
   bloqueado mientras escribe. Aún no probado: volver a escribir en una unidad más nueva (logotipo delante), un cambio
   grande o la zona de arranque, un cierre de sesión real durante la escritura. Instalar y quitar m-bootloader y «Al
   modo de descarga» aún no se probaron con la app en un FM-1 real (el propietario hizo lo mismo a mano con
-  M-Flasher). El firmware por el modo de descarga y SLOOP 3 a través de la app se describen abajo; aún no se probaron en un FM-1 real.
+  M-Flasher). El 21-11-2026 (solo en la unidad anterior): instalar y quitar m-bootloader, SLOOP 3 con la app por el
+  MIDI MODE (desde Melodee 1.6.1) y luego Skiff 2.7 por el modo de descarga (desde SLOOP 3), una vez cada uno; una
+  escritura de vuelta con la zona de arranque y una gran diferencia (149 sectores), idéntica byte a byte después. Aún
+  no visto en hardware: el aviso de M-Flasher sobre datos en otros lugares, la comprobación propia de la app tras la
+  instalación de SLOOP 3, nada de esto en una unidad más reciente.
 * **Firmware por el modo de descarga** (un FM-1 con m-bootloader, también uno con SLOOP 3 en marcha): si la app sabe
   que la unidad tiene m-bootloader y eliges en Firmware+ un firmware de la familia Felucca (Melodee, SLOOP 2, Skiff …)
   – un cambio, o cualquiera desde un SLOOP 3 en marcha –, el plan dice **«a través del modo de descarga (M-Flasher)»**
@@ -148,10 +152,17 @@ nueva.
   lo construye la página del instalador del autor. Solo si m-bootloader responde en MIDI MODE con la ID de esta
   unidad; primero se lee allí toda la flash dos veces (cada lectura comprobada con la propia suma del chip), luego la
   pregunta de peligro. m-bootloader comprueba todo el paquete antes de borrar nada y escribe solo de 0x04000 al final
-  del paquete. Después la app puede comprobarlo otra vez con una lectura nueva en modo de descarga. Sin m-bootloader,
+  del paquete. **En su primer arranque SLOOP 3 crea su propio almacenamiento en la zona de datos: los presets,
+  proyectos y sonidos del firmware anterior desaparecen entonces** (visto el 21-11-2026 con Melodee) – solo la copia
+  de toda la flash los conserva, así que cópialos con la app (página “Copias de seguridad”) mientras el firmware
+  anterior siga funcionando. Después la app puede comprobar SLOOP 3 otra vez con una lectura nueva en modo de
+  descarga: espera hasta mostrar SLOOP 3 arriba, y la comprobación también se puede iniciar más tarde (Recuperación ›
+  Herramientas › «Comprobar SLOOP 3 en la flash …»). Sin m-bootloader,
   el primer paso es «Instalar m-bootloader», cada paso con su propia pregunta.
-* **Volver a …** (Recuperación › Herramientas, menú Dispositivo): un botón para el camino de vuelta – a la última copia
-  de toda la flash de esta unidad, a SLOOP 3, a un firmware de la familia Felucca o a la V15 original con la zona de
+* **Volver a …** (Recuperación › Herramientas, menú Dispositivo): un botón para el camino de vuelta – a una copia de
+  toda la flash de esta unidad (tú eliges cuál; las de antes de m-bootloader están marcadas y la más reciente de ellas
+  está preseleccionada; si la app no tiene ninguna, un volcado anterior de M-Flasher se puede incorporar con
+  «Importar una copia de la flash …»), a SLOOP 3, a un firmware de la familia Felucca o a la V15 original con la zona de
   arranque original (no en una unidad más reciente). Muestra el camino de cada uno y luego solo inicia los pasos
   propios de la app, cada uno con su propia pregunta.
 

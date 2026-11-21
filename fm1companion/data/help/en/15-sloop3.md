@@ -96,6 +96,7 @@ SLOOP 3 keeps **one project** on the FM-1. The app reads it the way the backup d
   3.4.0, its bundled editor connected, a SLOOP 3 backup was read (6 parts, all checksums valid), m-bootloader 2.4's
   MIDI MODE was recognised (not mistaken for an update mode), and an installation under the running SLOOP 3 was
   refused with nothing sent. **Not tried on a real FM-1:** restoring a SLOOP 3 backup, the flash backup in MIDI MODE,
-  anything that writes, and anything on a newer FM-1 (logo on the front) – see 3. above for what its owner
-  reports from outside the app.
+  anything else that writes, and anything on a newer FM-1 (logo on the front) – see 3. above for what its owner
+  reports from outside the app. **Installing SLOOP 3 through the app** (MIDI MODE, from Melodee 1.6.1) ran once on
+  that earlier unit on 2026-11-21 – see [Update mode & recovery](help:03-update-modus).
 * More: [Switching firmware](help:02-firmware) · [Backups](help:04-backups) · [Links](help:10-links)
