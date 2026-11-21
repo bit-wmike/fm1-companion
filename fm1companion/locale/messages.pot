@@ -7040,7 +7040,7 @@ msgid "SLOOP 3's answer names no version"
 msgstr ""
 
 #: fm1companion/sloop3.py:242 fm1companion/transport.py:279
-#: fm1companion/ui/device.py:1355
+#: fm1companion/ui/device.py:1357
 msgid "device not connected"
 msgstr ""
 
@@ -11420,27 +11420,27 @@ msgstr ""
 msgid "disconnected"
 msgstr ""
 
-#: fm1companion/ui/device.py:1345 fm1companion/ui/firmware_page.py:624
+#: fm1companion/ui/device.py:1347 fm1companion/ui/firmware_page.py:624
 #: fm1companion/ui/pages/recovery.py:884 fm1companion/ui/pages/voices.py:664
 #: fm1companion/ui/samples_page.py:1279 fm1companion/ui/samples_page.py:1351
 msgid "No device"
 msgstr ""
 
-#: fm1companion/ui/device.py:1345
+#: fm1companion/ui/device.py:1347
 msgid "Please connect an FM-1 with Melodee, Skiff or SLOOP via USB."
 msgstr ""
 
-#: fm1companion/ui/device.py:1379
+#: fm1companion/ui/device.py:1381
 #, python-brace-format
 msgid "The name “{name}” is already taken (device “{device}”) – otherwise the backups of both devices would end up in the same folder. Please choose another name."
 msgstr ""
 
-#: fm1companion/ui/device.py:1391
+#: fm1companion/ui/device.py:1393
 #, python-brace-format
 msgid "Renamed to “{name}” – backups are now in “{folder}”."
 msgstr ""
 
-#: fm1companion/ui/device.py:1392
+#: fm1companion/ui/device.py:1394
 #, python-brace-format
 msgid "Renamed to “{name}”."
 msgstr ""
