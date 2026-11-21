@@ -563,8 +563,9 @@ def test_tools_hardware_table_matches_untested_md():
         "mf_download_mode", "mf_backup", "mf_restore", "mf_new_chip_backup",           # (Pi run 2026-11-20)
         "mf_download_button", "mf_bootloader_install", "mf_bootloader_remove",       # (Pi run 2026-11-21)
         "mf_newer_removal_refused", "plan_boot_block",
-        "mf_firmware", "mboot_sloop3_install"]                                       # (Pi run 2026-11-21, step 4)
-    assert not tested.TOOLS_HARDWARE["mf_new_chip_firmware"][0] and not tested.TOOLS_HARDWARE["way_back"][0]
+        "mf_firmware", "mboot_sloop3_install",                                       # (Pi run 2026-11-21, step 4)
+        "way_back"]                                                                  # (retest 2026-11-22)
+    assert not tested.TOOLS_HARDWARE["mf_new_chip_firmware"][0] and "app_step4_retest_pi" in tested.OWNER_REPORTS
     assert "app_step4_pi" in tested.OWNER_REPORTS
     assert not tested.TOOLS_HARDWARE["mf_new_chip_bootloader"][0]
     assert not tested.TOOLS_HARDWARE["mf_new_chip_restore"][0]

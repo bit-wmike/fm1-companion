@@ -864,8 +864,8 @@ msgstr "Los proyectos, sonidos y ajustes del firmware actual ya no se podrán us
 msgid "installing a firmware through download mode on a newer FM-1 (logo on the front, flash UC25HQ80)"
 msgstr "instalar un firmware a través del modo de descarga en un FM-1 más reciente (logo en el frontal, flash UC25HQ80)"
 
-msgid "the “Back to …” choice (it only starts the actions above, one after the other)"
-msgstr "la elección «Volver a …» (solo inicia las acciones de arriba, una tras otra)"
+msgid "the “Back to …” choice (it only starts the actions above, one after the other) – so far once, on an earlier unit: back to its whole-flash backup from before m-bootloader"
+msgstr "la elección «Volver a …» (solo inicia las acciones de arriba, una tras otra) – hasta ahora una vez, en una unidad anterior: de vuelta a su copia completa del flash de antes de m-bootloader"
 
 msgid "Not tested on a real FM-1 through this app yet: {what} ran against a stand-in for m-bootloader and against m-bootloader's own MIDI MODE code built for a PC (the package byte for byte the one SLOOP 3's installer page builds). The owner installed SLOOP 3 with that page, outside the app (2026-11-18/19)."
 msgstr "Aún no probado en un FM-1 real con esta app: {what} se ejecutó con un sustituto de m-bootloader y con el propio código MIDI MODE de m-bootloader compilado para un PC (el paquete, byte a byte el que construye la página del instalador de SLOOP 3). El propietario instaló SLOOP 3 con esa página, fuera de la app (18/19-11-2026)."
@@ -1226,8 +1226,8 @@ msgstr "El FM-1 dejó de pedir SLOOP 3 cuando quizá ya había empezado a borrar
 msgid "This FM-1 has {what}. The app installs this firmware through USB download mode with M-Flasher: it writes only from 0x04000 to the end of the package; the boot area – m-bootloader – stays as it is. So the running firmware's check of the boot area (“FAILED -5”) does not come into it, and there is no V15 step. Before anything is written the app backs up the whole flash (read twice) – the way back to the state of now."
 msgstr "Este FM-1 tiene {what}. La app instala este firmware a través del modo de descarga USB con M-Flasher: escribe solo desde 0x04000 hasta el final del paquete; la zona de arranque – m-bootloader – queda como está. Así la comprobación de la zona de arranque del firmware en marcha («FAILED -5») no interviene, y no hay paso intermedio por V15. Antes de escribir nada la app copia toda la flash (leída dos veces) – el camino de vuelta al estado de ahora."
 
-msgid "writing a whole-flash backup back through M-Flasher – so far on an earlier unit only: small changes, and once the boot area with a large difference (149 sectors), byte-identical afterwards"
-msgstr "escribir de vuelta una copia de toda la flash con M-Flasher – hasta ahora solo en un equipo anterior: cambios pequeños, y una vez con la zona de arranque y una gran diferencia (149 sectores), idéntica byte a byte después"
+msgid "writing a whole-flash backup back through M-Flasher – so far on an earlier unit only: small changes, and twice the boot area with a large difference (149 and 146 sectors), byte-identical afterwards"
+msgstr "escribir de vuelta una copia completa del flash con M-Flasher – hasta ahora solo en una unidad anterior: cambios pequeños, y dos veces con el área de arranque y una gran diferencia (149 y 146 sectores), idéntica byte a byte después"
 
 msgid "installing m-bootloader through M-Flasher (bootloader --file) – so far twice, on an earlier unit with the original boot area"
 msgstr "instalar m-bootloader con M-Flasher (bootloader --file) – hasta ahora dos veces, en un equipo anterior con la zona de arranque original"
@@ -1235,8 +1235,8 @@ msgstr "instalar m-bootloader con M-Flasher (bootloader --file) – hasta ahora 
 msgid "installing a firmware through download mode (M-Flasher firmware, the boot area kept) on an FM-1 with m-bootloader – so far once, on an earlier unit (SLOOP 3 to Skiff 2.7); M-Flasher's warning that the installed firmware keeps its data in other places, and the app's second question about it, have not appeared on a real FM-1 yet"
 msgstr "instalar un firmware a través del modo de descarga (M-Flasher firmware, la zona de arranque se mantiene) en un FM-1 con m-bootloader – hasta ahora una vez, en un equipo anterior (de SLOOP 3 a Skiff 2.7); el aviso de M-Flasher de que el firmware instalado guarda sus datos en otros lugares, y la segunda pregunta de la app sobre ello, aún no han aparecido en un FM-1 real"
 
-msgid "installing SLOOP 3 over m-bootloader's MIDI MODE through this app (the whole flash read twice in MIDI MODE first) – so far once, on an earlier unit, from Melodee 1.6.1; the app's own check afterwards (“Check SLOOP 3 in the flash”) has not run on a real FM-1 yet"
-msgstr "instalar SLOOP 3 a través del MIDI MODE de m-bootloader con esta app (antes, toda la flash leída dos veces en MIDI MODE) – hasta ahora una vez, en un equipo anterior, desde Melodee 1.6.1; la comprobación propia de la app después («Comprobar SLOOP 3 en la flash») aún no se ha hecho en un FM-1 real"
+msgid "installing SLOOP 3 over m-bootloader's MIDI MODE through this app (the whole flash read twice in MIDI MODE first) – so far twice, on an earlier unit, from Melodee 1.6.1, with the app's own check afterwards (“Check SLOOP 3 in the flash”)"
+msgstr "instalar SLOOP 3 a través del MIDI MODE de m-bootloader con esta app (antes, toda la flash leída dos veces en MIDI MODE) – hasta ahora dos veces, en un equipo anterior, desde Melodee 1.6.1, con la comprobación propia de la app después («Comprobar SLOOP 3 en la flash»)"
 
 msgid "The app asks this before every write while it knows the unit only this way: an answer holds only as long as the FM-1 stays connected, because after that another FM-1 can be at the same USB port."
 msgstr "La app lo pregunta antes de cada escritura mientras solo conozca el equipo así: una respuesta vale solo mientras el FM-1 siga conectado, porque después puede haber otro FM-1 en el mismo puerto USB."

@@ -84,8 +84,8 @@ TOOLS_HARDWARE: dict[str, tuple[bool, str]] = {
     "mf_download_mode": (True, N_("sending the FM-1 into download mode through M-Flasher")),
     "mf_backup": (True, N_("the whole-flash backup through M-Flasher (read twice)")),
     "mf_restore": (True, N_("writing a whole-flash backup back through M-Flasher – so far on an earlier unit only: "
-                            "small changes, and once the boot area with a large difference (149 sectors), "
-                            "byte-identical afterwards")),
+                            "small changes, and twice the boot area with a large difference (149 and 146 "
+                            "sectors), byte-identical afterwards")),
     "mf_new_chip_backup": (True, N_("the whole-flash backup on a newer FM-1 (logo on the front, flash UC25HQ80)")),
     "mf_new_chip_restore": (False, N_("writing a whole-flash backup back on a newer FM-1 (logo on the front, flash "
                                       "UC25HQ80)")),
@@ -112,10 +112,12 @@ TOOLS_HARDWARE: dict[str, tuple[bool, str]] = {
     "mf_new_chip_firmware": (False, N_("installing a firmware through download mode on a newer FM-1 (logo on the "
                                        "front, flash UC25HQ80)")),
     "mboot_sloop3_install": (True, N_("installing SLOOP 3 over m-bootloader's MIDI MODE through this app (the whole "
-                                      "flash read twice in MIDI MODE first) – so far once, on an earlier unit, from "
-                                      "Melodee 1.6.1; the app's own check afterwards (“Check SLOOP 3 in the flash”) "
-                                      "has not run on a real FM-1 yet")),
-    "way_back": (False, N_("the “Back to …” choice (it only starts the actions above, one after the other)")),
+                                      "flash read twice in MIDI MODE first) – so far twice, on an earlier unit, from "
+                                      "Melodee 1.6.1, with the app's own check afterwards (“Check SLOOP 3 in the "
+                                      "flash”)")),
+    # (retest of PR #29 on 2026-11-22, same Pi, earlier unit – OWNER_REPORTS["app_step4_retest_pi"])
+    "way_back": (True, N_("the “Back to …” choice (it only starts the actions above, one after the other) – so far "
+                          "once, on an earlier unit: back to its whole-flash backup from before m-bootloader")),
 }
 # … and what of these ran against m-bootloader's own MIDI MODE code (src/midi_update.c built for a PC), not only
 # against the app's stand-in
@@ -134,6 +136,12 @@ OWNER_REPORTS: dict[str, str] = {
                     "the same unit, a whole-flash write-back with the boot area (149 sectors, byte-identical "
                     "afterwards), 'Back to …' only looked at on both units, one Raspberry Pi 5 (report "
                     "'Werkzeug-Paket Schritt 4') – see TOOLS_HARDWARE",
+    "app_step4_retest_pi": "2026-11-22, owner: retest of PR #29 on the earlier unit – SLOOP 3 over MIDI MODE again "
+                           "with the app's check read afterwards (twice), 'Back to …' to the backup from before "
+                           "m-bootloader (146 sectors with the boot area, byte-identical afterwards), the identity "
+                           "question after swapping units at the same port; on the newer unit an M-Flasher dump "
+                           "imported, nothing written, one Raspberry Pi 5 (report 'Werkzeug-Paket Schritt 4 – "
+                           "Nachtest') – see TOOLS_HARDWARE",
     "app_step3_pi": "2026-11-21, owner: the app's download mode, restart (both units), m-bootloader install and "
                     "removal on the earlier unit, the plan block and the newer-unit refusal, one Raspberry Pi 5 "
                     "(report 'Werkzeug-Paket Schritt 3') – see TOOLS_HARDWARE",

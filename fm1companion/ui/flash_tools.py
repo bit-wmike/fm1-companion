@@ -1069,7 +1069,8 @@ def way_back_dialog(parent, opts: list[dict]):
                     head.setWordWrap(True)
                     lay.addWidget(head)
                     text = o["why"] or o["route"]
-                lab = QLabel(html.escape(text))
+                lab = QLabel(text)
+                lab.setTextFormat(Qt.TextFormat.PlainText)   # (plain: "&" must show as "&", not as "&amp;")
                 lab.setWordWrap(True)
                 lab.setContentsMargins(24, 0, 0, 6)
                 lab.setObjectName(f"wayBackText-{o['key']}")

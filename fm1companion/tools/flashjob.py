@@ -2124,8 +2124,13 @@ def import_backup(source: Path, backups_dir: Path, profiles, choose=None) -> Imp
         key = int(str(side.get("chip key") or ""), 16)
     except ValueError:
         key = None
-    path = flashdump.write_backup(
-        folder, mboot.backup_name(prof.name), raw, device=prof.name, read_through=f"imported from {origin} "
+    import datetime as _dt
+    try:                                           # (the name carries the date the copy was made, not today's)
+        made = _dt.datetime.strptime(when, "%Y-%m-%dT%H:%M:%S%z").astimezone().timetuple()
+    except ValueError:
+        made = None
+    path = flashdump.write_backup(                 # (it never overwrites: an existing name gets a suffix)
+        folder, mboot.backup_name(prof.name, made), raw, device=prof.name, read_through=f"imported from {origin} "
         f"({side.get('read_through') or ''})".replace(" ()", ""), jedec=fid, unit_id=uid, chip_key=key,
         capacity=FLASH_SIZE, profile=getattr(prof, "id", ""), firmware=side.get("firmware") or {},
         note=f"imported from {origin}, {when}",

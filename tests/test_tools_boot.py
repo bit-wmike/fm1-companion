@@ -130,6 +130,22 @@ def test_current_boot_area_from_record_history_and_sloop3():
     assert "FM1 Open" in bootarea.describe(bootarea.current(q))
 
 
+def test_a_later_felucca_sighting_cancels_the_sloop3_hint_for_m_bootloader():
+    # hardware retest: a SLOOP 3 entry (from a wrong assignment) newer than the app's own reading made the chain skip
+    # "install m-bootloader first" although M-Flasher read the original boot area
+    p = devices.Profile(id="aaaaaaaaaa", name="Unit 1", firmware="melodee")
+    assert bootarea.note(p, bootarea.ORIGINAL, "m-flasher", when=100.0)
+    p.firmware_history = [{"time": 150.0, "firmware": "sloop3", "how": "found"}]
+    assert bootarea.current(p)["kind"] == bootarea.MBOOT                               # (alone it still counts)
+    p.firmware_history.append({"time": 200.0, "firmware": "melodee", "how": "found"})
+    assert bootarea.current(p)["kind"] == bootarea.ORIGINAL                            # (back to the measurement)
+    q = devices.Profile(id="bbbbbbbbbb", name="Unit 2", firmware="skiff",
+                        firmware_history=[{"time": 10.0, "firmware": "sloop3"}, {"time": 20.0, "firmware": "skiff"}])
+    assert bootarea.current(q)["kind"] == ""                                           # (not known: read it)
+    q.firmware_history.append({"time": 30.0, "firmware": "sloop3"})                    # (SLOOP 3 again, newest)
+    assert bootarea.current(q)["kind"] == bootarea.MBOOT
+
+
 def test_the_profile_keeps_its_boot_area_across_saves(tmp_path):
     store = devices.ProfileStore(tmp_path / "devices.json")
     p = devices.Profile(id="aaaaaaaaaa", name="Unit 1")
@@ -986,6 +1002,7 @@ def test_hw1_an_m_flasher_dump_is_imported_to_the_unit_it_names(env):
     side = json.loads(res.path.with_suffix(".json").read_text())
     assert side["imported"]["from"] == "M-Flasher" and side["unit id"] == UID and side["flash"] == "0xB36014"
     assert side["created"].startswith("2000-01-01") and "imported from M-Flasher" in side["note"]
+    assert "_flash_2000-01-0" in res.path.name or "_flash_1999-12-31" in res.path.name   # (its own date, any zone)
     assert FJ.import_backup(src, env.backups, env.profiles).already                     # (twice: nothing new)
     assert (res.path, bootarea.OTHER) in FJ.unit_backups(res.path.parent, UID)
 

@@ -500,4 +500,8 @@ def test_e_the_dialog_lists_the_backups_and_preselects_the_recommended_one(env, 
     radios = {r.objectName(): r for r in dlg.findChildren(QRadioButton)}
     assert radios["wayBack-felucca"].text().startswith("Back to a Felucca-family firmware")
     assert all(lab.wordWrap() for lab in dlg.findChildren(QLabel) if lab.objectName().startswith("wayBackText-"))
+    # (retest: "Install &amp; Versions" was shown literally – the route texts are plain text)
+    from PyQt6.QtCore import Qt
+    assert all(lab.textFormat() == Qt.TextFormat.PlainText and "&amp;" not in lab.text()
+               for lab in dlg.findChildren(QLabel) if lab.objectName().startswith("wayBackText-"))
     dlg.deleteLater()
