@@ -236,9 +236,10 @@ class Served:
         return self.flash_bytes > pkg.size + 32
 
 
-def serve(transport, pkg: Package, *, progress=None, timeout: float = REQUEST_TIMEOUT, on_started=None) -> Served:
+def serve(transport, pkg: Package, *, progress=None, timeout: float | None = None, on_started=None) -> Served:
     """send the start key and answer m-bootloader's 0x30 requests until it asks for FINISH. InstallError on a
     refusal frame (command 0) or when it stops asking (`erased` says whether it may have started erasing)"""
+    timeout = REQUEST_TIMEOUT if timeout is None else timeout
     q: queue.Queue = queue.Queue()
 
     def rx(data):
@@ -450,7 +451,7 @@ def _install_locked(job, transport, confirm, area: bytes, version: str, new_chip
     if job.cancelled():
         raise FJ.Refused(_("Cancelled. Nothing was written to the FM-1."), "cancelled")
     pre, image = _double_read(host, job, info, say)
-    if bytes(image[:FIRST]) and not _is_mboot_area(image[:FIRST]):
+    if not _is_mboot_area(image[:FIRST]):
         raise FJ.Refused(_("The backup made just now shows no intact m-bootloader in the boot area, although "
                            "m-bootloader answered. Nothing was written; the backup is kept."), "not-mboot")
     runs = runs_to_write(pkg, image)

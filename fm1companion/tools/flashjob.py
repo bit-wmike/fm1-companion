@@ -172,6 +172,7 @@ class Job:
     work_dir: Path | None = None               # private local folder for M-Flasher's files (default: private_dir())
     unit_usb: str = ""                         # the USB port of the unit in download mode (where it comes back)
     purpose: str = ""                          # why it is in download mode: button | backup | restore | bootloader
+    progress: object = None                    # fn(done, total, checking) – SLOOP 3's install over MIDI MODE
     # filled in on the way
     device: str = ""                           # /dev/sgN
     info: mp.Info | None = None                # M-Flasher's info of this session
