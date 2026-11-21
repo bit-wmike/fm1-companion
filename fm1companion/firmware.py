@@ -256,8 +256,9 @@ def fetch_releases(s: FirmwareSpec, use_cache_secs: int = 600) -> list[Release]:
     if s.key == "sloop3":                    # no package the app installs: the versions the app was checked with
         from . import sloop3
         return [Release(tag="v" + v, prerelease=True, date=sloop3.VERSION_DATES.get(v, ""), notes=_(
-            "SLOOP 3 is a public beta. The app does not install it: it goes onto the FM-1 from its author's "
-            "installer page, through m-bootloader.")) for v in reversed(sloop3.CHECKED_VERSIONS)]
+            "SLOOP 3 is a public beta. It goes onto the FM-1 only through m-bootloader's MIDI MODE: the app "
+            "installs the SLOOP 3 it brings along itself (Firmware+ › SLOOP 3 › “Install SLOOP 3 with this app”), "
+            "or its author's installer page does.")) for v in reversed(sloop3.CHECKED_VERSIONS)]
     if s.download_url:                       # fixed address: exactly one version, no network needed
         name = s.asset.format(ver=s.release_tag.lstrip("vV")) if "{ver}" in s.asset else s.asset
         return [Release(tag=s.release_tag or "fest", prerelease="beta" in (s.notes or []),

@@ -804,6 +804,113 @@ def firmware_flow(parent, ctx, spec, rel=None, local_pkg=None, tag: str = "", pl
     return ok
 
 
+# ------------------------------------------------------- "Back to …": the way back with one button
+
+def way_back_options(ctx) -> list[dict]:
+    """the targets "Back to …" offers for the active unit, each with its route (the existing gated actions, in their
+    order) – [{"key", "title", "route", "ok", "why", "path"}]; "ok" False: shown with the reason, not started.
+    a) the last intact whole-flash backup of this unit (write it back); b) SLOOP 3 over MIDI MODE (m-bootloader first
+    where it is missing); c) a Felucca-family firmware (Firmware+: through download mode with m-bootloader, else the
+    usual way); d) the original V15 with the original boot area (removing m-bootloader – an earlier unit only – then
+    the original V15 the usual way)."""
+    from .. import hardware
+    from ..devices import profile_unit_ids
+    from ..tools import bootarea, flashjob as FJ
+    prof = None if getattr(ctx, "is_virtual", False) else getattr(ctx, "profile", None)
+    out: list[dict] = []
+    uid = next((f for f in profile_unit_ids(prof) if len(f) == 16), "") if prof is not None else ""
+    folder = Path(ctx.settings.backups_dir) / prof.folder_name / "Flash" if prof is not None else None
+    last = FJ.latest_backup(folder, uid) if (folder is not None and uid) else None
+    when = ""
+    if last is not None:
+        try:
+            when = dt.datetime.fromtimestamp(last.stat().st_mtime).strftime("%d.%m.%Y %H:%M")
+        except OSError:
+            when = "?"
+    out.append({"key": "backup", "path": last, "ok": last is not None,
+                "title": _("Back to the whole-flash backup of {date}").format(date=when) if last is not None else
+                _("Back to a whole-flash backup"),
+                "route": _("Write flash back: download mode, a fresh backup of the state now (read twice), your "
+                           "confirmation, M-Flasher writes the differing sectors, a fresh read checks them – "
+                           "{name}.").format(name=last.name) if last is not None else "",
+                "why": "" if last is not None else
+                (_("The app has no intact whole-flash backup of this unit (by its unit ID).") if uid else
+                 _("The app does not know this unit's ID yet: a whole-flash backup (Recovery › Tools) teaches it."))})
+    cur = bootarea.current(prof) if prof is not None else {}
+    mboot = cur.get("kind") == bootarea.MBOOT or getattr(ctx, "mboot", None) is not None
+    rev = hardware.revision(prof) if prof is not None else hardware.UNKNOWN
+    out.append({"key": "sloop3", "path": None, "ok": prof is not None, "title": _("Back to SLOOP 3"),
+                "route": (_("m-bootloader's MIDI MODE (hold PLAY while switching on → MIDI MODE): the app reads the "
+                            "whole flash twice there, asks, and writes the bundled SLOOP 3.") if mboot else
+                          _("First m-bootloader (download mode, a whole-flash backup, your confirmation), then "
+                            "m-bootloader's MIDI MODE: the flash read twice once more, your confirmation, SLOOP 3.")),
+                "why": "" if prof is not None else _("Choose the device at the top first.")})
+    out.append({"key": "felucca", "path": None, "ok": True,
+                "title": _("Back to a Felucca-family firmware (Melodee, SLOOP 2, Skiff …)"),
+                "route": (_("Firmware+ › Install & Versions: the plan installs it through download mode with "
+                            "M-Flasher and keeps m-bootloader (a whole-flash backup first).") if mboot else
+                          _("Firmware+ › Install & Versions: the usual way, the plan says which steps."))})
+    v15_ok = rev != hardware.NEW
+    out.append({"key": "v15", "path": None, "ok": v15_ok and prof is not None,
+                "title": _("Back to the original V15 with the original boot area"),
+                "route": ((_("First “Remove m-bootloader (original boot area)” – download mode, a whole-flash "
+                             "backup, your confirmation, only the boot area is written – then the original V15 the "
+                             "usual way on Firmware+.") if cur.get("kind") in bootarea.NOT_ORIGINAL or mboot else
+                           _("The original V15 the usual way on Firmware+ (the boot area is the original one or not "
+                             "known; the plan checks it)."))),
+                "why": "" if v15_ok else _("A newer unit (logo on the front): the app never writes V15's boot area "
+                                           "there. The way back to the factory state is a whole-flash backup of this "
+                                           "unit made before m-bootloader (the first choice).")})
+    return out
+
+
+def way_back_flow(parent, ctx, store=None) -> str:
+    """"Back to …": one question with the reachable targets and their routes; the chosen one runs the existing gated
+    actions in their order, each with its own confirmation (never a skipped backup). -> the key chosen, "" none"""
+    opts = way_back_options(ctx)
+    lines = []
+    for o in opts:
+        lines.append("<b>" + html.escape(o["title"]) + "</b> – " + html.escape(o["route"] if o["ok"] else o["why"] or
+                                                                               o["route"]))
+    usable = [o for o in opts if o["ok"]]
+    from ..flash import tested
+    text = (_("Where should this FM-1 go back to? Each way runs the app's own steps one after the other, each with "
+              "its own question; none skips a backup.") + "<br><br>" + "<br><br>".join(lines) + "<br><br>" +
+            html.escape(tested.tool_note("way_back")))
+    i = _choice(parent, _("Back to …"), text, [o["title"] for o in usable] + [_("Cancel")])
+    if i < 0 or i >= len(usable):
+        return ""
+    o = usable[i]
+    if o["key"] == "backup":
+        restore_flow(parent, ctx, o["path"], store=store)
+    elif o["key"] == "sloop3":
+        from . import sloop3_ui
+        sloop3_ui.install_flow(parent, ctx, store=store)
+    elif o["key"] == "felucca":
+        _go_firmware(parent)
+    elif o["key"] == "v15":
+        from ..tools import bootarea
+        cur = bootarea.current(getattr(ctx, "profile", None))
+        if cur.get("kind") in bootarea.NOT_ORIGINAL or getattr(ctx, "mboot", None) is not None:
+            if not remove_boot_flow(parent, ctx, store=store):
+                return o["key"]
+        from .common import show_done
+        show_done(parent, _("Back to …"), _("Next: Firmware+ › Install & Versions › the original V15 – the plan "
+                                            "checks the boot area once more."))
+        _go_firmware(parent)
+    return o["key"]
+
+
+def _go_firmware(parent):
+    w = parent.window() if hasattr(parent, "window") else None
+    go = getattr(w, "go", None)
+    if callable(go):
+        try:
+            go("firmware")
+        except Exception:  # noqa: BLE001
+            pass
+
+
 # ------------------------------------------------------- an interrupted write-back (the app ended while writing)
 
 def _choice(parent, title: str, text: str, buttons: list[str]) -> int:

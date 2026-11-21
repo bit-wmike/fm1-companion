@@ -449,3 +449,42 @@ def test_the_route_keeps_the_newer_unit_rule():
                                                                      key="skiff", tag="v2.1", flash=["856014"],
                                                                      flash_tag="v2.1"))
     assert p.route == "download-mode" and not p.ok and any("UC25HQ80" in b for b in p.blockers)
+
+
+# ------------------------------------------------------------------------------------------------ verify read, "Back to …"
+
+def test_verify_install_compares_a_fresh_read_and_writes_nothing(env):
+    before = env.flash()
+    v = FJ.verify_install(env.job(), before, 0x78000, "SLOOP 3")
+    assert v.same and v.first_difference == -1 and v.restarted
+    assert [c[0] for c in env.get()["calls"]] == ["find", "download-mode", "info", "backup", "restart"]
+    wrong = bytearray(before)
+    wrong[0x5001] ^= 1
+    wrong[0x90000] ^= 1                                              # (beyond the end: not compared)
+    v = FJ.verify_install(env.job(), bytes(wrong), 0x78000, "SLOOP 3")
+    assert not v.same and v.first_difference == 0x5001
+    nothing_written(env, before)
+
+
+def _ctx(env, **kw):
+    from types import SimpleNamespace
+    return SimpleNamespace(settings=SimpleNamespace(backups_dir=str(env.backups)), profile=env.prof, mboot=None,
+                           is_virtual=False, **kw)
+
+
+def test_way_back_offers_each_target_with_its_route(env):
+    from fm1companion.ui import flash_tools
+    env.prof.unit_id = UID
+    opts = {o["key"]: o for o in flash_tools.way_back_options(_ctx(env))}
+    assert list(opts) == ["backup", "sloop3", "felucca", "v15"]
+    assert not opts["backup"]["ok"] and opts["backup"]["why"]          # (no backup of this unit yet)
+    assert opts["sloop3"]["ok"] and "MIDI MODE" in opts["sloop3"]["route"]
+    FJ.backup(env.job())                                              # (a whole-flash backup of this unit)
+    opts = {o["key"]: o for o in flash_tools.way_back_options(_ctx(env))}
+    assert opts["backup"]["ok"] and opts["backup"]["path"].is_file() and opts["backup"]["path"].name in \
+        opts["backup"]["route"]
+    assert "m-bootloader" in opts["v15"]["route"] and opts["v15"]["ok"]    # (the backup showed m-bootloader)
+    assert "download mode" in opts["felucca"]["route"]
+    hardware.note_flash_id(env.prof, 0xB36014, "rom")                 # (a newer unit: no V15 boot area there)
+    opts = {o["key"]: o for o in flash_tools.way_back_options(_ctx(env))}
+    assert not opts["v15"]["ok"] and "newer unit" in opts["v15"]["why"]

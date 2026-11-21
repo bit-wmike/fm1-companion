@@ -1961,6 +1961,47 @@ def _settle_op_record(job: Job, op: str):
             pass
 
 
+# ------------------------------------------------------------------------------------------------ checking a write later
+
+@dataclass
+class VerifyResult:
+    same: bool
+    first_difference: int              # -1 when the same
+    restarted: bool
+    log_path: Path | None = None
+
+
+def verify_install(job: Job, expected: bytes, end: int, what: str) -> VerifyResult:
+    """after a write the app did not make through M-Flasher (SLOOP 3 over MIDI MODE): a fresh whole-flash read in
+    download mode (one `backup`, checked against the chip's CRC-32; nothing is written) compared with what the flash
+    should hold from 0x00000 to `end` – the boot area and the written firmware. Beyond `end` the new firmware may
+    already have written its own data on its first start, so that is not compared. Then the unit is restarted."""
+    job.purpose = job.purpose or "backup"
+    with _Lock(job, "mflasher-verify"), _back_on_refusal(job):
+        ensure_download_mode(job)
+        identify(job, need_profile=True)
+        job.tell(_("Reading the whole flash to check {what} (nothing is written) …").format(what=what))
+        got, _vi = _fresh_read_only(job)
+        diff = next((i for i in range(min(end, len(got), len(expected))) if got[i] != expected[i]), -1)
+        job.ev("verify", f"fresh read against {what}: " + ("the same in 0x00000-0x" + f"{end - 1:05X}" if diff < 0
+                                                           else f"differs first at 0x{diff:05X}"))
+        again = restart(job)
+    return VerifyResult(diff < 0, diff, again, job.log_path)
+
+
+def latest_backup(folder: Path, unit_id: str) -> Path | None:
+    """the newest intact whole-flash backup of this unit in its Flash folder (not one taken while a write onto it had
+    not ended verified) – "Back to the last backup" """
+    best = None
+    for p, _k in unit_backups(folder, unit_id):
+        try:
+            if best is None or p.stat().st_mtime > best.stat().st_mtime:
+                best = p
+        except OSError:
+            continue
+    return best
+
+
 # ------------------------------------------------------------------------------------------------ importing a backup
 
 @dataclass
