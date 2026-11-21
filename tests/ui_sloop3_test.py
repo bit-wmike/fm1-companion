@@ -335,8 +335,9 @@ def main():
           f"the flash backup is listed with its check ({bp.flash_tree.topLevelItem(0).text(4)[:50] if bp.flash_tree.topLevelItemCount() else '-'})")
     from PyQt6.QtWidgets import QPushButton
     fbtns = [b.text() for b in bp.flash_box.findChildren(QPushButton)]
-    check(len(fbtns) == 5 and "Zurückschreiben …" in fbtns and "Flash komplett sichern" in fbtns,
-          f"… with “Back up the whole flash” and “Write back …” (through M-Flasher) beside it ({fbtns})")
+    check(len(fbtns) == 6 and "Zurückschreiben …" in fbtns and "Flash komplett sichern" in fbtns and
+          "Flash-Sicherung importieren …" in fbtns,
+          f"… with “Back up the whole flash”, “Write back …” and “Import …” (through M-Flasher) beside it ({fbtns})")
     bp.flash_tree.setCurrentItem(bp.flash_tree.topLevelItem(0))
     boxes.clear()
     n0 = len(seen())
