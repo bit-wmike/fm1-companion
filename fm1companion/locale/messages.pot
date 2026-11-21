@@ -2762,7 +2762,7 @@ msgstr ""
 msgid "The FM-1 refused the request."
 msgstr ""
 
-#: fm1companion/flash/mboot.py:192 fm1companion/ui/sloop3_ui.py:588
+#: fm1companion/flash/mboot.py:192 fm1companion/ui/sloop3_ui.py:600
 msgid "This is not m-bootloader's MIDI MODE – nothing was read."
 msgstr ""
 
@@ -2779,7 +2779,7 @@ msgid "The flash backup or its description cannot be read."
 msgstr ""
 
 #: fm1companion/flash/mboot.py:334 fm1companion/flashdump.py:321
-#: fm1companion/tools/flashjob.py:872
+#: fm1companion/tools/flashjob.py:874
 msgid "The flash backup does not match its description (changed or damaged)."
 msgstr ""
 
@@ -4657,7 +4657,7 @@ msgstr ""
 msgid "This file is not a copy of the FM-1's whole flash: it has {size} bytes, a copy has exactly {want}."
 msgstr ""
 
-#: fm1companion/flashdump.py:242 fm1companion/tools/flashjob.py:2031
+#: fm1companion/flashdump.py:242 fm1companion/tools/flashjob.py:2039
 #, python-brace-format
 msgid "The file cannot be read: {error}"
 msgstr ""
@@ -7334,12 +7334,12 @@ msgstr ""
 msgid "The song was running during the restore. Already written: {parts}. Not written: {part} and everything after it."
 msgstr ""
 
-#: fm1companion/sloopbk.py:385 fm1companion/tools/flashjob.py:827
-#: fm1companion/tools/flashjob.py:873 fm1companion/tools/flashjob.py:1443
-#: fm1companion/tools/flashjob.py:1678 fm1companion/tools/flashjob.py:1740
-#: fm1companion/tools/mbinstall.py:348 fm1companion/ui/pages/studio.py:1320
-#: fm1companion/ui/pages/studio.py:1323 fm1companion/ui/sloop3_ui.py:719
-#: fm1companion/ui/sloop3_ui.py:740
+#: fm1companion/sloopbk.py:385 fm1companion/tools/flashjob.py:829
+#: fm1companion/tools/flashjob.py:875 fm1companion/tools/flashjob.py:1445
+#: fm1companion/tools/flashjob.py:1680 fm1companion/tools/flashjob.py:1742
+#: fm1companion/tools/mbinstall.py:352 fm1companion/tools/mbinstall.py:507
+#: fm1companion/ui/pages/studio.py:1320 fm1companion/ui/pages/studio.py:1323
+#: fm1companion/ui/sloop3_ui.py:731 fm1companion/ui/sloop3_ui.py:752
 msgid "Nothing was written."
 msgstr ""
 
@@ -8394,13 +8394,13 @@ msgstr ""
 msgid "The V15 package's boot area is not the expected one."
 msgstr ""
 
-#: fm1companion/tools/bootarea.py:341 fm1companion/ui/flash_tools.py:318
-#: fm1companion/ui/flash_tools.py:546 fm1companion/ui/flash_tools.py:678
-#: fm1companion/ui/sloop3_ui.py:389
+#: fm1companion/tools/bootarea.py:341 fm1companion/ui/flash_tools.py:319
+#: fm1companion/ui/flash_tools.py:547 fm1companion/ui/flash_tools.py:679
+#: fm1companion/ui/flash_tools.py:884 fm1companion/ui/sloop3_ui.py:401
 msgid "not known"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:102
+#: fm1companion/tools/flashjob.py:104
 msgid ""
 "Put the FM-1 into USB download mode by hand, then click again:\n"
 "• with m-bootloader: hold PLAY while switching the FM-1 on and choose DOWNLOAD MODE – or hold REC while switching it on, which goes there directly;\n"
@@ -8408,536 +8408,540 @@ msgid ""
 "In download mode the display stays dark or shows M-Flasher's screen; the computer lists a USB device “WL80UBOOT1.00” (USB 4c4a:8057 – earlier and newer units alike; M-Flasher writes it “WL82 UBOOT1.00”)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:222 fm1companion/tools/flashjob.py:951
-#: fm1companion/tools/flashjob.py:1515 fm1companion/tools/flashjob.py:1881
-#: fm1companion/tools/flashjob.py:1926 fm1companion/tools/mbinstall.py:452
-#: fm1companion/tools/mbinstall.py:471
+#: fm1companion/tools/flashjob.py:224 fm1companion/tools/flashjob.py:953
+#: fm1companion/tools/flashjob.py:1517 fm1companion/tools/flashjob.py:1889
+#: fm1companion/tools/flashjob.py:1934 fm1companion/tools/mbinstall.py:463
+#: fm1companion/tools/mbinstall.py:482
 msgid "Cancelled. Nothing was written to the FM-1."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:224
+#: fm1companion/tools/flashjob.py:226
 #, python-brace-format
 msgid "M-Flasher did not finish within {s} s and was stopped. Nothing was written to the FM-1."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:244
+#: fm1companion/tools/flashjob.py:246
 msgid "it did not start"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:244
+#: fm1companion/tools/flashjob.py:246
 #, python-brace-format
 msgid "exit code {rc}"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:255 fm1companion/tools/flashjob.py:1188
+#: fm1companion/tools/flashjob.py:257 fm1companion/tools/flashjob.py:1190
 #, python-brace-format
 msgid "M-Flasher could not look for the FM-1: {reason}"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:257 fm1companion/tools/flashjob.py:1190
+#: fm1companion/tools/flashjob.py:259 fm1companion/tools/flashjob.py:1192
 msgid "An FM-1 is in download mode, but the Linux driver “sg” is not loaded. The app's installer sets it up; by hand: sudo modprobe sg – then try again. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:260
+#: fm1companion/tools/flashjob.py:262
 msgid "More than one device is in download mode. Leave only the FM-1 you mean connected, then try again. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:264
+#: fm1companion/tools/flashjob.py:266
 msgid "One FM-1 is in download mode and another one runs on USB MIDI. So that the app surely works with the right unit, leave only one FM-1 connected. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:272
+#: fm1companion/tools/flashjob.py:274
 msgid "More than one FM-1 is connected. M-Flasher's switch to download mode reaches only a single unit: unplug the others, then try again. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:276
+#: fm1companion/tools/flashjob.py:278
 msgid "No FM-1 found, neither running on USB MIDI nor in download mode."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:282
+#: fm1companion/tools/flashjob.py:284
 msgid "The app sends the switch to download mode only to an FM-1 it has recognised itself, with the original firmware, a Felucca-family firmware or SLOOP 3, at the port it is connected to."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:285
+#: fm1companion/tools/flashjob.py:287
 msgid "Sending the FM-1 into USB download mode (it restarts; nothing is written) …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:289
+#: fm1companion/tools/flashjob.py:291
 #, python-brace-format
 msgid "The FM-1 did not switch to download mode: {reason}"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:297
+#: fm1companion/tools/flashjob.py:299
 msgid "The FM-1 did not show up in download mode."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:378
+#: fm1companion/tools/flashjob.py:380
 #, python-brace-format
 msgid "M-Flasher could not read the FM-1: {reason} Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:383 fm1companion/tools/flashjob.py:470
+#: fm1companion/tools/flashjob.py:385 fm1companion/tools/flashjob.py:472
 #, python-brace-format
 msgid "M-Flasher's answer has a form this app version does not know ({detail}). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:386
+#: fm1companion/tools/flashjob.py:388
 #, python-brace-format
 msgid "M-Flasher sees a {model}, not an FM-1. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:405
+#: fm1companion/tools/flashjob.py:407
 #, python-brace-format
 msgid "This FM-1 (unit ID {uid}) is not “{name}”: that profile belongs to another unit. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:409
+#: fm1companion/tools/flashjob.py:411
 #, python-brace-format
 msgid "This FM-1 is “{other}” (by its unit ID {uid}), not “{name}”. Choose the right device at the top. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:415
+#: fm1companion/tools/flashjob.py:417
 #, python-brace-format
 msgid "Two of your device profiles have this unit ID ({uid}): merge them on the page “Devices” first. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:420
+#: fm1companion/tools/flashjob.py:422
 #, python-brace-format
 msgid "The app does not know which of your FM-1 this is (unit ID {uid} is in none of your device profiles). A flash backup is written back only onto a unit the app knows. To teach it: connect the FM-1 while it runs, choose it at the top, click “Back up the whole flash” – and if the app asks you to put it into download mode by hand, do it at the same USB port. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:429
+#: fm1companion/tools/flashjob.py:431
 #, python-brace-format
 msgid "The flash chip M-Flasher reads ({chip}) is not the one recorded for “{name}” ({rec}). Is this another FM-1? Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:462 fm1companion/tools/mbinstall.py:344
+#: fm1companion/tools/flashjob.py:464 fm1companion/tools/mbinstall.py:348
 #, python-brace-format
 msgid "Reading the whole flash ({n} of 2; nothing is written) …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:465
+#: fm1companion/tools/flashjob.py:467
 #, python-brace-format
 msgid "M-Flasher could not read the flash: {reason} Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:473
+#: fm1companion/tools/flashjob.py:475
 msgid "The flash read does not match the CRC-32 the chip computed (M-Flasher did not confirm it). The USB connection may be unreliable: try another cable or port, without a hub. Nothing was kept, nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:478
+#: fm1companion/tools/flashjob.py:480
 msgid "M-Flasher did not say where it saved the read. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:481
+#: fm1companion/tools/flashjob.py:483
 msgid "M-Flasher saved the read in an unexpected place. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:487
+#: fm1companion/tools/flashjob.py:489
 #, python-brace-format
 msgid "The read cannot be opened: {error}. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:490
+#: fm1companion/tools/flashjob.py:492
 #, python-brace-format
 msgid "The read has {size} bytes, not the 1 MiB of the whole flash. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:493
+#: fm1companion/tools/flashjob.py:495
 msgid "The read does not match the SHA-256 M-Flasher wrote beside it. Nothing was kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:497
+#: fm1companion/tools/flashjob.py:499
 msgid "Between two reads M-Flasher reported another unit or chip. Leave only one FM-1 connected. Nothing was kept, nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:575 fm1companion/ui/backups_page.py:119
-#: fm1companion/ui/sloop3_ui.py:576
+#: fm1companion/tools/flashjob.py:577 fm1companion/ui/backups_page.py:119
+#: fm1companion/ui/sloop3_ui.py:588
 #, python-brace-format
 msgid "The backup folder cannot be created: {error}"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:583 fm1companion/tools/mbinstall.py:352
+#: fm1companion/tools/flashjob.py:585 fm1companion/tools/mbinstall.py:356
 #, python-brace-format
 msgid "The two reads of the flash differ (first at 0x{at:05X}). The USB connection is unreliable: try another cable or port, without a hub. Nothing was kept, nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:602 fm1companion/tools/mbinstall.py:368
+#: fm1companion/tools/flashjob.py:604 fm1companion/tools/mbinstall.py:372
 #, python-brace-format
 msgid "The flash backup could not be saved: {error}. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:645
+#: fm1companion/tools/flashjob.py:647
 msgid "The FM-1 was not identified in download mode first."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:647
+#: fm1companion/tools/flashjob.py:649
 msgid "M-Flasher reports no unit ID for this FM-1, so the backup could not be tied to this unit. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:671 fm1companion/tools/runner.py:199
+#: fm1companion/tools/flashjob.py:673 fm1companion/tools/runner.py:199
 #, python-brace-format
 msgid "M-Flasher waits: {reason}"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:732
+#: fm1companion/tools/flashjob.py:734
 msgid "M-Flasher reports no unit ID for this FM-1: the backup is kept, but the app cannot write it back (it could not prove which unit it belongs to)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:829
+#: fm1companion/tools/flashjob.py:831
 msgid "This file is not a copy of the whole flash (1 MiB). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:831
+#: fm1companion/tools/flashjob.py:833
 msgid "This flash backup does not say which unit it comes from (no unit ID in its description), so the app does not write it back. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:834
+#: fm1companion/tools/flashjob.py:836
 msgid "This flash backup does not say which flash chip it was read from, so the app does not write it back. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:849
+#: fm1companion/tools/flashjob.py:851
 #, python-brace-format
 msgid "This flash backup comes from another FM-1 (unit ID {img}) than “{name}” (unit ID {uid}). A flash image holds its unit's boot area and factory data, so the app writes it only onto the unit it came from. Nothing was done – the FM-1 was not even switched to download mode."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:865 fm1companion/tools/flashjob.py:1288
+#: fm1companion/tools/flashjob.py:867 fm1companion/tools/flashjob.py:1290
 msgid "No M-Flasher on this computer is cleared for writing by this app version (only the exact build this app was reviewed with is). Reinstall the app. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:876
+#: fm1companion/tools/flashjob.py:878
 msgid "This flash backup was saved while a write onto the FM-1 had not ended verified, so it may hold a half-written state. The app does not write it back. Use the backup made before that write. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:880
+#: fm1companion/tools/flashjob.py:882
 msgid "The boot area in this flash backup is not intact (its file table, its bootloader's checksum or its chip-key record is damaged or erased – as after an interrupted write). Written back, the FM-1 could not start, so the app does not write it back. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:899
+#: fm1companion/tools/flashjob.py:901
 msgid "M-Flasher reports no unit ID for the connected FM-1, so the app cannot check that the image is this unit's. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:902
+#: fm1companion/tools/flashjob.py:904
 #, python-brace-format
 msgid "This flash backup comes from another FM-1 (unit ID {img}); the connected one is {uid}. A flash image holds its unit's boot area and factory data (calibration, Bluetooth address), so the app writes it only onto the unit it came from. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:907
+#: fm1companion/tools/flashjob.py:909
 #, python-brace-format
 msgid "This flash backup was read from another flash chip ({img}); the connected FM-1 has {chip}. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:924
+#: fm1companion/tools/flashjob.py:926
 msgid "The FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address) looks partly erased – as after an interrupted write – and the rest equals this backup. The app does not repair factory data. Keep the FM-1 as it is (it may still start), keep this backup and the one made just now, and ask for help (the app's issue tracker or M-Flasher's author) before anything else is written. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:929
+#: fm1companion/tools/flashjob.py:931
 msgid "The FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address) differs from the one in this backup, although both name the same unit ID. Either the backup's description was changed (another unit's copy), or the unit's factory data has changed since (an interrupted write, a damaged flash). The app never writes over factory data. Keep both copies and ask for help (the app's issue tracker or M-Flasher's author) before anything else is written. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:937
+#: fm1companion/tools/flashjob.py:939
 msgid "The FM-1's flash already holds exactly this image: nothing to write."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:954
+#: fm1companion/tools/flashjob.py:956
 msgid "Not written back. The FM-1 is unchanged; the backup made just now is kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:984 fm1companion/tools/flashjob.py:1132
-#: fm1companion/tools/flashjob.py:1540 fm1companion/tools/flashjob.py:1908
+#: fm1companion/tools/flashjob.py:986 fm1companion/tools/flashjob.py:1134
+#: fm1companion/tools/flashjob.py:1542 fm1companion/tools/flashjob.py:1916
 #, python-brace-format
 msgid "The app's private working folder cannot be created: {error}. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:988
+#: fm1companion/tools/flashjob.py:990
 #, python-brace-format
 msgid "Too little free space for M-Flasher's working files ({need} MiB are needed in {where}). Free some space and try again. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1029
+#: fm1companion/tools/flashjob.py:1031
 msgid "M-Flasher is writing now. This cannot be cancelled – do not unplug the FM-1 or switch it off."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1056
+#: fm1companion/tools/flashjob.py:1058
 #, python-brace-format
 msgid "M-Flasher's plan did not match what the app checked ({why}), so the app did not answer “yes”: nothing was written. The backup made just now is kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1059
+#: fm1companion/tools/flashjob.py:1061
 #, python-brace-format
 msgid "M-Flasher did not get to writing: {reason} Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1083
+#: fm1companion/tools/flashjob.py:1085
 #, python-brace-format
 msgid "M-Flasher stopped before it erased anything ({reason}). Nothing was written; the FM-1 is unchanged."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1084 fm1companion/tools/flashjob.py:1085
+#: fm1companion/tools/flashjob.py:1086 fm1companion/tools/flashjob.py:1087
 msgid "M-Flasher was interrupted"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1086
+#: fm1companion/tools/flashjob.py:1088
 msgid "M-Flasher did not confirm the write"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1096
+#: fm1companion/tools/flashjob.py:1098
 #, python-brace-format
 msgid "The write did not end verified ({reason}). Do not switch the FM-1 off: it stays in download mode, and writing the flash back again works from there. The backup made just before is {name} – it is this unit's state before the write."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1103
+#: fm1companion/tools/flashjob.py:1105
 msgid "Written; reading the flash once more to compare …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1138
+#: fm1companion/tools/flashjob.py:1140
 msgid "Writing the flash back (do not unplug the FM-1 or switch it off) …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1142
+#: fm1companion/tools/flashjob.py:1144
 msgid "the fresh read differs from the image"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1180
+#: fm1companion/tools/flashjob.py:1182
 #, python-brace-format
 msgid "Not restarted: a write onto “{device}” did not end verified (or the app has not checked it yet). Keep the FM-1 in download mode – from there the backup made before the write can be written back. Open the question about it (it comes at the next start of the app) or write the backup back on Recovery › Tools; once it is settled, restart the FM-1."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1194
+#: fm1companion/tools/flashjob.py:1196
 msgid "No FM-1 is in download mode."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1196
+#: fm1companion/tools/flashjob.py:1198
 msgid "More than one FM-1 is connected. So that the right one restarts, leave only that one connected – or switch it off and on."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1201
+#: fm1companion/tools/flashjob.py:1203
 msgid "The FM-1 did not restart: switch it off and on."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1221
+#: fm1companion/tools/flashjob.py:1223
 #, python-brace-format
 msgid "The FM-1 in download mode (unit ID {uid}) is not “{name}”. Nothing was done – choose that device at the top, or switch the FM-1 off and on."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1226
+#: fm1companion/tools/flashjob.py:1228
 msgid "an FM-1 the app does not know"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1227
+#: fm1companion/tools/flashjob.py:1229
 #, python-brace-format
 msgid "Restart the FM-1 in download mode ({device}, unit ID {uid}: {who})? Restarting writes nothing."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1230
+#: fm1companion/tools/flashjob.py:1232
 msgid "Not restarted: the app could not tell which FM-1 this is, and nobody confirmed it. Nothing was done."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1271
+#: fm1companion/tools/flashjob.py:1273
 msgid "The bundled m-bootloader is missing. Reinstall the app. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1277
+#: fm1companion/tools/flashjob.py:1279
 msgid "The bundled m-bootloader did not pass its checksum test, so the app does not write it. Reinstall the app. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1281
+#: fm1companion/tools/flashjob.py:1283
 msgid "The bundled m-bootloader is not a build for the FM-1. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1385
+#: fm1companion/tools/flashjob.py:1387
 #, python-brace-format
 msgid "This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80). On such a unit the app installs only an m-bootloader build that is known to run there (data/hardware.json), and m-bootloader {version} is not one of them. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1396 fm1companion/tools/flashjob.py:1460
-#: fm1companion/tools/flashjob.py:1843
+#: fm1companion/tools/flashjob.py:1398 fm1companion/tools/flashjob.py:1462
+#: fm1companion/tools/flashjob.py:1851
 msgid "M-Flasher reports no unit ID for the connected FM-1, so the app cannot tie the write to this unit. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1399 fm1companion/tools/flashjob.py:1463
-#: fm1companion/tools/flashjob.py:1846
+#: fm1companion/tools/flashjob.py:1401 fm1companion/tools/flashjob.py:1465
+#: fm1companion/tools/flashjob.py:1854
 #, python-brace-format
 msgid "M-Flasher reads a flash chip the app does not know ({chip}). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1410
+#: fm1companion/tools/flashjob.py:1412
 msgid "The app cannot work out the boot area M-Flasher would write onto this FM-1 (its boot area has no intact file table or chip-key record, or the bootloader is older than 1.4). Nothing was written; the backup made just now is kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1415
+#: fm1companion/tools/flashjob.py:1417
 #, python-brace-format
 msgid "m-bootloader {version} is installed on this FM-1 already: nothing to write."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1424
+#: fm1companion/tools/flashjob.py:1426
 #, python-brace-format
 msgid "On a newer unit: m-bootloader {version} ran on one such unit (owner's report, outside this app)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1474
+#: fm1companion/tools/flashjob.py:1476
 msgid "This FM-1 has the original boot area already (the one of M-VAVE's V15 package): nothing to write."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1484
+#: fm1companion/tools/flashjob.py:1486
 msgid "SLOOP 3 is installed only through m-bootloader. Whether it starts with the original bootloader is not known. If the FM-1 does not start afterwards, the way back is the backup made just now, written back from USB download mode (Recovery, stage 2)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1488
+#: fm1companion/tools/flashjob.py:1490
 msgid "FM1 Open is the firmware on this FM-1. Its app area expects FM1 Open's own boot area: after this, an FM1 Open app sits on V15's boot area, and whether it starts is not known. Recommended order: first go back to the original V15 with M-VAVE's FM1 Workbench (“Restore original V15”), then put back the original boot area here, then install the next firmware."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1497
+#: fm1companion/tools/flashjob.py:1499
 #, python-brace-format
 msgid "An earlier backup of this unit ({name}) shows exactly V15's boot area: the removal puts back this unit's own original boot area."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1500
+#: fm1companion/tools/flashjob.py:1502
 #, python-brace-format
 msgid "An earlier backup of this unit ({name}) shows a boot area that differs from V15's: the removal writes V15's, not this unit's own. The exact way back to that state is writing {name} back (Recovery › Tools › “Write flash back …”)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1504
+#: fm1companion/tools/flashjob.py:1506
 msgid "The app has no earlier backup of this unit that shows its boot area before m-bootloader, so it cannot tell whether this FM-1's own original boot area was V15's (units sold with V16, for example, may have come with another one)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1520 fm1companion/tools/flashjob.py:1884
-#: fm1companion/tools/flashjob.py:1929 fm1companion/tools/mbinstall.py:474
+#: fm1companion/tools/flashjob.py:1522 fm1companion/tools/flashjob.py:1892
+#: fm1companion/tools/flashjob.py:1937 fm1companion/tools/mbinstall.py:485
 msgid "Nothing was written. The FM-1 is unchanged; the backup made just now is kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1547
+#: fm1companion/tools/flashjob.py:1549
 msgid "Writing the boot area (do not unplug the FM-1 or switch it off) …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1556
+#: fm1companion/tools/flashjob.py:1558
 msgid "the flash changed outside the boot area"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1559
+#: fm1companion/tools/flashjob.py:1561
 msgid "a sector of the boot area changed that M-Flasher did not announce"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1562
+#: fm1companion/tools/flashjob.py:1564
 msgid "the boot area does not hold this m-bootloader"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1564
+#: fm1companion/tools/flashjob.py:1566
 msgid "the boot area is not the one of the V15 package"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1567
+#: fm1companion/tools/flashjob.py:1569
 #, python-brace-format
 msgid "M-Flasher said there is nothing to write, but the fresh read does not show the expected boot area ({why}). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1670
+#: fm1companion/tools/flashjob.py:1672
 msgid "This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80), or the app cannot rule that out. M-VAVE's V15 boot area has never been written onto such a unit, so the app does not put it there. The way back is a whole-flash restore of a backup of this unit made before m-bootloader (Recovery › Tools › “Write flash back …”)."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1674
+#: fm1companion/tools/flashjob.py:1676
 #, python-brace-format
 msgid "This unit has one: {name}."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1675
+#: fm1companion/tools/flashjob.py:1677
 msgid "The app has no such backup of this unit. If M-Flasher itself made one (its .bin with its .json), import it first – “Import a flash backup …” on Backups › Flash backups or Recovery › Tools – then the app offers it here. Without one there is no way back from the app."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1743
+#: fm1companion/tools/flashjob.py:1745
 #, python-brace-format
 msgid "This package is for the {model}, not for the FM-1. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1746
-msgid "The package's flash image is larger than the FM-1's flash. Nothing was written."
+#: fm1companion/tools/flashjob.py:1750
+msgid "The package's flash image reaches into the FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address), which the app never writes. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1809
+#: fm1companion/tools/flashjob.py:1814
 #, python-brace-format
 msgid "This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80), and {name} is not known to run on such a unit (data/hardware.json). A firmware that does not know this chip saves nothing there and cannot be updated any more. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1852
+#: fm1companion/tools/flashjob.py:1832
+msgid "The package is no longer the file that was checked (its SHA-256 differs). Nothing was written."
+msgstr ""
+
+#: fm1companion/tools/flashjob.py:1860
 #, python-brace-format
 msgid "This way – installing through download mode, the boot area kept – is for an FM-1 with m-bootloader. M-Flasher reads another bootloader on this one ({bootloader}): install the firmware the usual way from the running firmware. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1861
+#: fm1companion/tools/flashjob.py:1869
 msgid "The backup made just now shows no intact m-bootloader in the boot area, so the app does not install a firmware this way. Nothing was written; the backup is kept."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1866
+#: fm1companion/tools/flashjob.py:1874
 msgid "The FM-1's flash already holds exactly this firmware: nothing to write."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1876
+#: fm1companion/tools/flashjob.py:1884
 #, python-brace-format
 msgid "On a newer unit: the hardware rule (data/hardware.json) lets {name} through; installing through download mode has not been run on such a unit by this app."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1914
+#: fm1companion/tools/flashjob.py:1922
 msgid "Writing the firmware (do not unplug the FM-1 or switch it off) …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1936
+#: fm1companion/tools/flashjob.py:1944
 msgid "the boot area changed"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1938
+#: fm1companion/tools/flashjob.py:1946
 msgid "the flash changed after the package's end"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1940
+#: fm1companion/tools/flashjob.py:1948
 msgid "the firmware area does not hold the package"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:1983
+#: fm1companion/tools/flashjob.py:1991
 #, python-brace-format
 msgid "Reading the whole flash to check {what} (nothing is written) …"
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:2033
+#: fm1companion/tools/flashjob.py:2041
 msgid "This file is not a copy of the whole flash (1 MiB) – nothing was imported."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:2035
+#: fm1companion/tools/flashjob.py:2043
 msgid "There is no .json beside this file. M-Flasher writes the unit ID and the flash chip into the .json beside its backup – the image itself does not contain them – so without it the app cannot tell which FM-1 the copy belongs to. Nothing was imported."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:2041
+#: fm1companion/tools/flashjob.py:2049
 msgid "Nothing was imported."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:2044
+#: fm1companion/tools/flashjob.py:2052
 msgid "The .json beside this file names no unit ID or no flash chip, so the app cannot tell which FM-1 the copy belongs to. Nothing was imported."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:2047
+#: fm1companion/tools/flashjob.py:2055
 msgid "The boot area in this copy is not intact (as after an interrupted write), so it can never be a way back. Nothing was imported."
-msgstr ""
-
-#: fm1companion/tools/flashjob.py:2051
-#, python-brace-format
-msgid "Two of your device profiles have this unit ID ({uid}): merge them on the page “Devices” first. Nothing was imported."
 msgstr ""
 
 #: fm1companion/tools/flashjob.py:2059
 #, python-brace-format
-msgid "This copy belongs to an FM-1 with unit ID {uid}, and none of your device profiles is known to be that unit. Connect it once (or choose its profile when the app asks), then import again. Nothing was imported."
+msgid "Two of your device profiles have this unit ID ({uid}): merge them on the page “Devices” first. Nothing was imported."
 msgstr ""
 
 #: fm1companion/tools/flashjob.py:2067
 #, python-brace-format
+msgid "This copy belongs to an FM-1 with unit ID {uid}, and none of your device profiles is known to be that unit. Connect it once (or choose its profile when the app asks), then import again. Nothing was imported."
+msgstr ""
+
+#: fm1companion/tools/flashjob.py:2075
+#, python-brace-format
 msgid "This copy was read from another flash chip ({chip}) than the one recorded for “{name}”. Nothing was imported."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:2223
+#: fm1companion/tools/flashjob.py:2231
 #, python-brace-format
 msgid "The file {name} is no longer there."
 msgstr ""
 
-#: fm1companion/tools/flashjob.py:2225
+#: fm1companion/tools/flashjob.py:2233
 #, python-brace-format
 msgid "The file {name} is no longer the one that was being written (its SHA-256 differs). Nothing is written from it."
 msgstr ""
@@ -8955,97 +8959,115 @@ msgstr ""
 msgid "The bundled SLOOP 3 is not an application area the app knows ({why}). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:262
+#: fm1companion/tools/mbinstall.py:266
 msgid "The FM-1 stopped asking for SLOOP 3 while it was writing. The firmware area is incomplete; the boot area (m-bootloader) was not written, so its menu still opens (hold PLAY while switching on) and MIDI MODE can install again, or the backup made before can be written back."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:265
+#: fm1companion/tools/mbinstall.py:269
 msgid "The FM-1 stopped asking for SLOOP 3 before it erased anything – m-bootloader checks the whole package first and refuses one that does not match (checksum, chip key). Nothing was written; the FM-1 still has its firmware."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:276
+#: fm1companion/tools/mbinstall.py:280
 #, python-brace-format
 msgid "m-bootloader refused the package (code {code})."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:277
+#: fm1companion/tools/mbinstall.py:281
 msgid "It had read it all and may have started writing: the firmware area may be incomplete. Its menu still opens (hold PLAY while switching on); install again from MIDI MODE, or write the backup made before back."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:280
+#: fm1companion/tools/mbinstall.py:284
 msgid "Nothing was erased; the FM-1 still has its firmware."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:387
+#: fm1companion/tools/mbinstall.py:391
 msgid "This is not a SLOOP 3 application area the app knows. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:400 fm1companion/ui/sloop3_ui.py:582
+#: fm1companion/tools/mbinstall.py:404 fm1companion/ui/sloop3_ui.py:594
 msgid "Asking who answers …"
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:404
+#: fm1companion/tools/mbinstall.py:408
 msgid "This is not m-bootloader's MIDI MODE (no answer to its question 0x12). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:410
+#: fm1companion/tools/mbinstall.py:414
 msgid "This is m-bootloader's RAM stage, not m-bootloader installed in the boot area. The app installs SLOOP 3 only on an FM-1 with m-bootloader itself. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:417
+#: fm1companion/tools/mbinstall.py:421
 #, python-brace-format
 msgid "The app does not know this FM-1 as “{name}” by its unit ID ({uid}), so it does not write to it. Choose the right device at the top; a whole-flash backup in download mode (Recovery › Tools) teaches the app a unit's ID. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:425
+#: fm1companion/tools/mbinstall.py:429
 #, python-brace-format
 msgid "The flash chip m-bootloader reads ({chip}) is not the one recorded for “{name}”. Is this another FM-1? Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:431
+#: fm1companion/tools/mbinstall.py:435
 #, python-brace-format
 msgid "m-bootloader reads a flash chip the app does not know ({chip}). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:437
+#: fm1companion/tools/mbinstall.py:441
+#, python-brace-format
+msgid "This FM-1 has m-bootloader {version}. The app installs SLOOP 3 only through an m-bootloader build it has reviewed and marked in data/hardware.json (the one it brings along). Update m-bootloader first (Recovery › Tools › “Install m-bootloader”). Nothing was written."
+msgstr ""
+
+#: fm1companion/tools/mbinstall.py:448
 #, python-brace-format
 msgid "This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80). The app installs SLOOP 3 there only with an m-bootloader build and a SLOOP 3 version known to run on such a unit (data/hardware.json); m-bootloader {version} or this SLOOP 3 is not one of them. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:449
+#: fm1companion/tools/mbinstall.py:460
 #, python-brace-format
 msgid "The SLOOP 3 package built for this FM-1 does not pass the checks m-bootloader makes ({why}). Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:455
+#: fm1companion/tools/mbinstall.py:466
 msgid "The backup made just now shows no intact m-bootloader in the boot area, although m-bootloader answered. Nothing was written; the backup is kept."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:459
+#: fm1companion/tools/mbinstall.py:470
 #, python-brace-format
 msgid "SLOOP 3 {version} is on this FM-1 already: nothing to write."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:466
+#: fm1companion/tools/mbinstall.py:477
 msgid "On a newer unit: m-bootloader 2.4 and SLOOP 3 3.4.0 ran on one such unit by its owner's report (outside this app); this app has not installed SLOOP 3 on one."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:499
+#: fm1companion/tools/mbinstall.py:501
+msgid "Right before writing, the FM-1 on this port answers differently than at the start (another unit, or not in MIDI MODE any more). Nothing was written; the backup made just now is kept."
+msgstr ""
+
+#: fm1companion/tools/mbinstall.py:510
+msgid "Right before writing, the FM-1's flash is no longer the one just backed up (the chip's checksum differs) – another unit on the port, or the flash changed. Nothing was written; the backup made just now is kept."
+msgstr ""
+
+#: fm1companion/tools/mbinstall.py:536
 #, python-brace-format
 msgid "The app's journal record could not be written ({error}), so it does not start writing. Nothing was written."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:503
-msgid "m-bootloader is reading SLOOP 3 now and then writes it. This cannot be cancelled – do not unplug the FM-1 or switch it off."
+#: fm1companion/tools/mbinstall.py:541
+msgid "m-bootloader is writing SLOOP 3 now, and the app hands it the data – this cannot be cancelled. Keep the app open; do not unplug the FM-1 or switch it off."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:517
+#: fm1companion/tools/mbinstall.py:556
 msgid "The backup made just now is kept."
 msgstr ""
 
-#: fm1companion/tools/mbinstall.py:523
+#: fm1companion/tools/mbinstall.py:562
 #, python-brace-format
 msgid "The backup made just before is {name} – it is this unit's state before the install."
+msgstr ""
+
+#: fm1companion/tools/mbinstall.py:572
+#, python-brace-format
+msgid "The connection to the FM-1 failed while m-bootloader was installing SLOOP 3 ({error}). The firmware area may be incomplete; the boot area (m-bootloader) was not written, so its menu still opens (hold PLAY while switching on) and MIDI MODE can install again. The backup made just before is {name} – it is this unit's state before the install."
 msgstr ""
 
 #: fm1companion/tools/runner.py:105
@@ -9201,7 +9223,7 @@ msgstr ""
 #: fm1companion/ui/about.py:74 fm1companion/ui/pages/project_view.py:365
 #: fm1companion/ui/pages/project_view.py:366
 #: fm1companion/ui/pages/project_view.py:368
-#: fm1companion/ui/projects_page.py:393 fm1companion/ui/sloop3_ui.py:220
+#: fm1companion/ui/projects_page.py:393 fm1companion/ui/sloop3_ui.py:232
 msgid "Project"
 msgstr ""
 
@@ -9431,7 +9453,7 @@ msgid "The FM-1 does not respond. Check the cable and reconnect."
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:108 fm1companion/ui/backups_page.py:118
-#: fm1companion/ui/firmware_page.py:708
+#: fm1companion/ui/firmware_page.py:708 fm1companion/ui/flash_tools.py:739
 msgid "Backup not possible"
 msgstr ""
 
@@ -9466,7 +9488,7 @@ msgstr ""
 msgid "Saved: {size} – firmware {firmware} {version}"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:144 fm1companion/ui/sloop3_ui.py:597
+#: fm1companion/ui/backups_page.py:144 fm1companion/ui/sloop3_ui.py:609
 #, python-brace-format
 msgid "File: {path}"
 msgstr ""
@@ -9946,7 +9968,7 @@ msgstr ""
 
 #: fm1companion/ui/backups_page.py:812 fm1companion/ui/backups_page.py:839
 #: fm1companion/ui/backups_page.py:868 fm1companion/ui/backups_page.py:877
-#: fm1companion/ui/backups_page.py:962 fm1companion/ui/sloop3_ui.py:664
+#: fm1companion/ui/backups_page.py:962 fm1companion/ui/sloop3_ui.py:676
 msgid "Backup damaged"
 msgstr ""
 
@@ -9974,9 +9996,9 @@ msgid "This page does not restore onto an FM-1 with FM1 Open. Open the backup in
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:861 fm1companion/ui/backups_page.py:891
-#: fm1companion/ui/pages/backup_browser.py:78 fm1companion/ui/sloop3_ui.py:639
-#: fm1companion/ui/sloop3_ui.py:644 fm1companion/ui/sloop3_ui.py:649
-#: fm1companion/ui/sloop3_ui.py:667
+#: fm1companion/ui/pages/backup_browser.py:78 fm1companion/ui/sloop3_ui.py:651
+#: fm1companion/ui/sloop3_ui.py:656 fm1companion/ui/sloop3_ui.py:661
+#: fm1companion/ui/sloop3_ui.py:679
 msgid "Restore not possible"
 msgstr ""
 
@@ -10021,25 +10043,25 @@ msgid "<b>SLOOP:</b> Please stop the song on the FM-1 first (STOP) – otherwise
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:913
-#: fm1companion/ui/pages/backup_browser.py:84 fm1companion/ui/sloop3_ui.py:680
+#: fm1companion/ui/pages/backup_browser.py:84 fm1companion/ui/sloop3_ui.py:692
 msgid "Restore"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:915 fm1companion/ui/sloop3_ui.py:682
+#: fm1companion/ui/backups_page.py:915 fm1companion/ui/sloop3_ui.py:694
 #, python-brace-format
 msgid "automatic, before restoring {name}"
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:916
-#: fm1companion/ui/pages/backup_browser.py:64 fm1companion/ui/sloop3_ui.py:683
+#: fm1companion/ui/pages/backup_browser.py:64 fm1companion/ui/sloop3_ui.py:695
 msgid "No safety backup"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:917 fm1companion/ui/sloop3_ui.py:684
+#: fm1companion/ui/backups_page.py:917 fm1companion/ui/sloop3_ui.py:696
 msgid "The safety backup failed. Restore anyway?"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:918 fm1companion/ui/sloop3_ui.py:684
+#: fm1companion/ui/backups_page.py:918 fm1companion/ui/sloop3_ui.py:696
 msgid "Restore anyway"
 msgstr ""
 
@@ -10063,18 +10085,18 @@ msgstr ""
 msgid "Done. The FM-1 now plays the state from the backup."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:940 fm1companion/ui/sloop3_ui.py:688
+#: fm1companion/ui/backups_page.py:940 fm1companion/ui/sloop3_ui.py:700
 #, python-brace-format
 msgid "The previous state is in the safety backup {name}."
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:941 fm1companion/ui/sloop3_ui.py:689
+#: fm1companion/ui/backups_page.py:941 fm1companion/ui/sloop3_ui.py:701
 msgid "There is NO safety backup of the previous state."
 msgstr ""
 
 #: fm1companion/ui/backups_page.py:946
 #: fm1companion/ui/pages/backup_browser.py:114
-#: fm1companion/ui/sloop3_ui.py:720
+#: fm1companion/ui/sloop3_ui.py:732
 #, python-brace-format
 msgid "Restore failed: {error}"
 msgstr ""
@@ -10288,7 +10310,7 @@ msgstr ""
 msgid "Flash chip"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1159 fm1companion/ui/sloop3_ui.py:528
+#: fm1companion/ui/backups_page.py:1159 fm1companion/ui/sloop3_ui.py:540
 msgid "Check"
 msgstr ""
 
@@ -10298,7 +10320,7 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-#: fm1companion/ui/backups_page.py:1166 fm1companion/ui/flash_tools.py:294
+#: fm1companion/ui/backups_page.py:1166 fm1companion/ui/flash_tools.py:295
 #: fm1companion/ui/tools_card.py:83
 msgid "Back up the whole flash"
 msgstr ""
@@ -10812,11 +10834,11 @@ msgid "<b>Untested on a real device.</b> Do not unplug anything while erasing. A
 msgstr ""
 
 #: fm1companion/ui/clean_check.py:498 fm1companion/ui/crash.py:358
-#: fm1companion/ui/flash_tools.py:363 fm1companion/ui/flash_tools.py:572
-#: fm1companion/ui/flash_tools.py:586 fm1companion/ui/flash_tools.py:645
+#: fm1companion/ui/flash_tools.py:364 fm1companion/ui/flash_tools.py:573
+#: fm1companion/ui/flash_tools.py:587 fm1companion/ui/flash_tools.py:646
 #: fm1companion/ui/pages/midi.py:309 fm1companion/ui/pages/midi.py:662
 #: fm1companion/ui/pages/recovery.py:777 fm1companion/ui/risk_dialog.py:28
-#: fm1companion/ui/sloop3_ui.py:447
+#: fm1companion/ui/sloop3_ui.py:459
 msgid "Continue"
 msgstr ""
 
@@ -10888,7 +10910,7 @@ msgstr ""
 
 #: fm1companion/ui/common.py:370 fm1companion/ui/common.py:447
 #: fm1companion/ui/firmware_page.py:325 fm1companion/ui/firmware_page.py:1528
-#: fm1companion/ui/flash_tools.py:880 fm1companion/ui/linkimport_dialog.py:153
+#: fm1companion/ui/flash_tools.py:913 fm1companion/ui/linkimport_dialog.py:153
 #: fm1companion/ui/linkimport_dialog.py:368
 #: fm1companion/ui/pages/presets.py:55 fm1companion/ui/pages/studio.py:79
 #: fm1companion/ui/pages/studio.py:178 fm1companion/ui/pages/studio.py:322
@@ -11333,12 +11355,12 @@ msgstr ""
 msgid "A new FM-1 that I have not used with this app before …"
 msgstr ""
 
-#: fm1companion/ui/device.py:1111 fm1companion/ui/flash_tools.py:421
+#: fm1companion/ui/device.py:1111 fm1companion/ui/flash_tools.py:422
 msgid "— please choose —"
 msgstr ""
 
 #: fm1companion/ui/device.py:1113 fm1companion/ui/device.py:1184
-#: fm1companion/ui/device.py:1186 fm1companion/ui/flash_tools.py:422
+#: fm1companion/ui/device.py:1186 fm1companion/ui/flash_tools.py:423
 #: fm1companion/ui/hw_revision.py:22 fm1companion/ui/hw_revision.py:44
 #: fm1companion/ui/overview.py:219 fm1companion/ui/pages/recovery.py:649
 #: fm1companion/ui/pages/recovery.py:689
@@ -11626,7 +11648,7 @@ msgid "Dry run only: check everything, write nothing"
 msgstr ""
 
 #: fm1companion/ui/firmware_page.py:323 fm1companion/ui/firmware_page.py:341
-#: fm1companion/ui/flash_tools.py:730 fm1companion/ui/pages/discover.py:502
+#: fm1companion/ui/flash_tools.py:746 fm1companion/ui/pages/discover.py:502
 #: fm1companion/ui/pages/discover.py:1144
 msgid "Install"
 msgstr ""
@@ -11777,8 +11799,8 @@ msgid "{label} is not installed: {problems}"
 msgstr ""
 
 #: fm1companion/ui/firmware_page.py:611 fm1companion/ui/firmware_page.py:1666
-#: fm1companion/ui/flash_tools.py:242 fm1companion/ui/pages/recovery.py:866
-#: fm1companion/ui/sloop3_ui.py:418
+#: fm1companion/ui/flash_tools.py:243 fm1companion/ui/pages/recovery.py:866
+#: fm1companion/ui/sloop3_ui.py:430
 msgid "Not a real FM-1"
 msgstr ""
 
@@ -11836,7 +11858,7 @@ msgstr ""
 msgid "Installing through download mode has no dry run: M-Flasher checks the package and the unit itself and shows its plan before it writes – the app asks you then. Untick the dry run to go on. Nothing was written."
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:709
+#: fm1companion/ui/firmware_page.py:709 fm1companion/ui/flash_tools.py:716
 msgid "The plan includes a backup, but the connection to the FM-1 is gone in the meantime. Nothing was written. Please reconnect and open the plan again."
 msgstr ""
 
@@ -11874,20 +11896,20 @@ msgstr ""
 msgid "All packages checked."
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:799 fm1companion/ui/flash_tools.py:749
+#: fm1companion/ui/firmware_page.py:799 fm1companion/ui/flash_tools.py:768
 msgid "Step: backup of the device …"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:801
+#: fm1companion/ui/firmware_page.py:801 fm1companion/ui/flash_tools.py:765
 msgid "Backup not possible: the connection to the FM-1 is gone. Installation aborted – nothing was changed on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:808 fm1companion/ui/flash_tools.py:754
+#: fm1companion/ui/firmware_page.py:808 fm1companion/ui/flash_tools.py:773
 #, python-brace-format
 msgid "automatically before installing {label}"
 msgstr ""
 
-#: fm1companion/ui/firmware_page.py:810 fm1companion/ui/flash_tools.py:756
+#: fm1companion/ui/firmware_page.py:810 fm1companion/ui/flash_tools.py:775
 #: fm1companion/ui/main_window.py:1082
 #, python-brace-format
 msgid "Backup saved: {name}"
@@ -12520,528 +12542,537 @@ msgid "“{name}” removed from the list. Downloaded packages stay in the firmw
 msgstr ""
 
 #: fm1companion/ui/flash_tools.py:103
+msgid "m-bootloader is writing: this cannot be cancelled."
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:104
 msgid "M-Flasher is writing: this cannot be cancelled."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:146
+#: fm1companion/ui/flash_tools.py:147
 msgid "Close the app, let M-Flasher finish"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:153
+#: fm1companion/ui/flash_tools.py:154
 msgid "M-Flasher has been writing for much longer than it ever should. The app can close now: M-Flasher keeps running in the background and is not stopped. Keep the FM-1 connected and switched on. At the next start the app shows what happened."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:160
+#: fm1companion/ui/flash_tools.py:161
 msgid "Close the app?"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:160
+#: fm1companion/ui/flash_tools.py:161
 msgid "Close the app"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:242
+#: fm1companion/ui/flash_tools.py:243
 msgid "The Studio twin is not a real FM-1. Choose a real FM-1 at the top, or disconnect it and put the FM-1 into download mode."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:251
+#: fm1companion/ui/flash_tools.py:252
 msgid "M-Flasher is not available"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:283
+#: fm1companion/ui/flash_tools.py:284
 #, python-brace-format
 msgid "Whole flash backed up: read twice, both reads identical and checked against the chip's CRC-32 – {name} ({size}). Nothing was written to the FM-1."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:287
+#: fm1companion/ui/flash_tools.py:288
 msgid "M-Flasher reported no unit ID, so this copy cannot be written back by the app."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:288 fm1companion/ui/flash_tools.py:389
-#: fm1companion/ui/flash_tools.py:616 fm1companion/ui/flash_tools.py:769
-#: fm1companion/ui/sloop3_ui.py:547
+#: fm1companion/ui/flash_tools.py:289 fm1companion/ui/flash_tools.py:390
+#: fm1companion/ui/flash_tools.py:617 fm1companion/ui/flash_tools.py:789
+#: fm1companion/ui/sloop3_ui.py:559
 msgid "The FM-1 was restarted."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:289
+#: fm1companion/ui/flash_tools.py:290
 msgid "The FM-1 is still in download mode: switch it off and on to start it again."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:313
+#: fm1companion/ui/flash_tools.py:314
 #, python-brace-format
 msgid "Write the flash backup of {date} back onto “{unit}” (unit ID {uid}, {revision})?"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:316
+#: fm1companion/ui/flash_tools.py:317
 #, python-brace-format
 msgid "The image: {name}, made {date}; firmware then (as the app knew it): {fw}."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:319
+#: fm1companion/ui/flash_tools.py:320
 msgid "This writes the whole flash back, the boot area (bootloader and its configuration, 0x00000–0x03FFF) included."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:321
+#: fm1companion/ui/flash_tools.py:322
 #, python-brace-format
 msgid "{n} sector of 4 KiB differs from what the FM-1 holds now{boot}."
 msgid_plural "{n} sectors of 4 KiB differ from what the FM-1 holds now{boot}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/flash_tools.py:323
+#: fm1companion/ui/flash_tools.py:324
 msgid ", the boot area among them"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:324
+#: fm1companion/ui/flash_tools.py:325
 msgid "Everything on the FM-1 since that day – firmware, bootloader, projects, sounds, settings – goes back to the state of the image."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:326
+#: fm1companion/ui/flash_tools.py:327
 #, python-brace-format
 msgid "The current state was backed up just now (read twice): {name}."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:327
+#: fm1companion/ui/flash_tools.py:328
 msgid "M-Flasher checks the unit ID, the flash chip and these sectors once more right before it writes; the app answers its question only when they match. Do not unplug the FM-1 or switch it off while it writes."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:345
+#: fm1companion/ui/flash_tools.py:346
 msgid "Flash backup to write back"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:346 fm1companion/ui/flash_tools.py:437
+#: fm1companion/ui/flash_tools.py:347 fm1companion/ui/flash_tools.py:438
 msgid "Flash backups (*.bin)"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:356 fm1companion/ui/flash_tools.py:1001
+#: fm1companion/ui/flash_tools.py:357 fm1companion/ui/flash_tools.py:1034
 msgid "Not written back"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:358 fm1companion/ui/flash_tools.py:395
-#: fm1companion/ui/flash_tools.py:571 fm1companion/ui/flash_tools.py:644
+#: fm1companion/ui/flash_tools.py:359 fm1companion/ui/flash_tools.py:396
+#: fm1companion/ui/flash_tools.py:572 fm1companion/ui/flash_tools.py:645
 msgid "Write flash back"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:359
+#: fm1companion/ui/flash_tools.py:360
 #, python-brace-format
 msgid "The app first puts the FM-1 into download mode, reads it and backs up its current state, and checks that {name} comes from this very unit (unit ID {uid}). Only then it asks you once more before anything is written."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:369
+#: fm1companion/ui/flash_tools.py:370
 msgid "Write the whole flash back?"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:370
+#: fm1companion/ui/flash_tools.py:371
 msgid "Write back"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:386
+#: fm1companion/ui/flash_tools.py:387
 msgid "The FM-1's flash already holds exactly this image – nothing was written."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:387
+#: fm1companion/ui/flash_tools.py:388
 #, python-brace-format
 msgid "Written back and verified: M-Flasher confirmed every sector, and a fresh read equals the image. {started} The state before is kept as {name}."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:390 fm1companion/ui/flash_tools.py:616
-#: fm1companion/ui/flash_tools.py:769 fm1companion/ui/sloop3_ui.py:548
+#: fm1companion/ui/flash_tools.py:391 fm1companion/ui/flash_tools.py:617
+#: fm1companion/ui/flash_tools.py:789 fm1companion/ui/sloop3_ui.py:560
 msgid "Switch the FM-1 off and on to start it."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:397 fm1companion/ui/flash_tools.py:635
-#: fm1companion/ui/flash_tools.py:781
+#: fm1companion/ui/flash_tools.py:398 fm1companion/ui/flash_tools.py:636
+#: fm1companion/ui/flash_tools.py:801
 msgid "Cancels until M-Flasher starts writing; from then on it runs to its end."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:412
+#: fm1companion/ui/flash_tools.py:413
 msgid "Takes a whole-flash copy made elsewhere – by M-Flasher itself (its .bin with its .json) – into this app's backups: checked against its .json, filed under the device whose unit ID it names (if none is known, you choose one). Nothing is sent to an FM-1."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:423
+#: fm1companion/ui/flash_tools.py:424
 #, python-brace-format
 msgid "This copy names the unit ID {uid}. None of your device profiles is known to be that unit yet. Which one is it? (It then keeps this unit ID.)"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:436 fm1companion/ui/flash_tools.py:452
+#: fm1companion/ui/flash_tools.py:437 fm1companion/ui/flash_tools.py:453
 msgid "Import a flash backup"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:445
+#: fm1companion/ui/flash_tools.py:446
 msgid "Not imported"
-msgstr ""
-
-#: fm1companion/ui/flash_tools.py:448
-#, python-brace-format
-msgid "This copy is already among the backups of “{device}”: {name}."
 msgstr ""
 
 #: fm1companion/ui/flash_tools.py:449
 #, python-brace-format
+msgid "This copy is already among the backups of “{device}”: {name}."
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:450
+#, python-brace-format
 msgid "Imported as a flash backup of “{device}”: {name} (made {date}). It can be written back like the app's own backups – only onto that unit."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:483
+#: fm1companion/ui/flash_tools.py:484
 #, python-brace-format
 msgid "The FM-1 is in USB download mode now ({device}). Nothing was written. “Restart the FM-1” (or switching it off and on) starts its firmware again."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:485
+#: fm1companion/ui/flash_tools.py:486
 #, python-brace-format
 msgid "An FM-1 is in USB download mode already ({device}). Nothing was written."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:489 fm1companion/ui/main_window.py:532
+#: fm1companion/ui/flash_tools.py:490 fm1companion/ui/main_window.py:532
 #: fm1companion/ui/tools_card.py:95
 msgid "Into download mode"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:508 fm1companion/ui/flash_tools.py:515
+#: fm1companion/ui/flash_tools.py:509 fm1companion/ui/flash_tools.py:516
 #: fm1companion/ui/pages/recovery.py:242 fm1companion/ui/tools_card.py:101
 msgid "Restart the FM-1"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:508
+#: fm1companion/ui/flash_tools.py:509
 msgid "Restart"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:515
+#: fm1companion/ui/flash_tools.py:516
 msgid "The FM-1 was restarted. Nothing was written."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:527 fm1companion/ui/flash_tools.py:672
+#: fm1companion/ui/flash_tools.py:528 fm1companion/ui/flash_tools.py:673
 #, python-brace-format
 msgid "“{unit}” (unit ID {uid}, {revision})"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:530
+#: fm1companion/ui/flash_tools.py:531
 #, python-brace-format
 msgid "Install m-bootloader {version} on {who}?"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:531
+#: fm1companion/ui/flash_tools.py:532
 #, python-brace-format
 msgid "The app writes the bundled m-bootloader {version} (fm1-uboot.boot, checksum checked) with M-Flasher. <b>Only the boot area 0x00000–0x03FFF is written</b> (four sectors at most); the firmware, projects, sounds and factory data stay as they are. Afterwards the FM-1 starts through m-bootloader: hold PLAY while switching it on for its menu (DOWNLOAD MODE, MIDI MODE), REC for USB download mode directly."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:538
+#: fm1companion/ui/flash_tools.py:539
 #, python-brace-format
 msgid "Put back the original boot area on {who}?"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:539
+#: fm1companion/ui/flash_tools.py:540
 msgid "The app writes the boot area of M-VAVE's original firmware V15 (from the V15 package, checksum checked) with M-Flasher – that removes m-bootloader and what FM1 Open changed there. <b>Only the boot area 0x00000–0x03FFF is written</b>; the firmware, projects, sounds and factory data stay as they are."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:545 fm1companion/ui/flash_tools.py:677
+#: fm1companion/ui/flash_tools.py:546 fm1companion/ui/flash_tools.py:678
 #, python-brace-format
 msgid "Boot area now (as M-Flasher reads it): {now}. Firmware (as the app knows it): {fw}."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:548 fm1companion/ui/flash_tools.py:685
+#: fm1companion/ui/flash_tools.py:549 fm1companion/ui/flash_tools.py:686
 #, python-brace-format
 msgid "The whole flash was backed up just now (read twice): {name}. That is the way back."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:550
+#: fm1companion/ui/flash_tools.py:551
 msgid "M-Flasher checks the unit ID, the flash chip and the sectors once more right before it writes; the app answers its question only when every planned range lies inside the boot area. Do not unplug the FM-1 or switch it off while it writes."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:569 fm1companion/ui/flash_tools.py:581
+#: fm1companion/ui/flash_tools.py:570 fm1companion/ui/flash_tools.py:582
 #: fm1companion/ui/tools_card.py:110
 msgid "Remove m-bootloader (original boot area)"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:576 fm1companion/ui/tools_card.py:105
+#: fm1companion/ui/flash_tools.py:577 fm1companion/ui/tools_card.py:105
 msgid "Install m-bootloader"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:577
+#: fm1companion/ui/flash_tools.py:578
 msgid "The app first puts the FM-1 into download mode, reads it and backs up the whole flash (read twice). Then it asks you once more before m-bootloader is written into the boot area. Nothing is written without that backup."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:582
+#: fm1companion/ui/flash_tools.py:583
 msgid "The app takes the boot area from M-VAVE's original V15 package (downloaded once from M-VAVE's public repository if it is not on this computer yet, checked against its checksum). Then it puts the FM-1 into download mode, backs up the whole flash (read twice) and asks you once more before the boot area is written."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:592
+#: fm1companion/ui/flash_tools.py:593
 msgid "Write the boot area"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:599
+#: fm1companion/ui/flash_tools.py:600
 msgid "Getting M-VAVE's original V15 package …"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:618
+#: fm1companion/ui/flash_tools.py:619
 #, python-brace-format
 msgid "m-bootloader {version} is on this FM-1 already – nothing was written."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:620
+#: fm1companion/ui/flash_tools.py:621
 msgid "This FM-1 has the original boot area already – nothing was written."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:623
+#: fm1companion/ui/flash_tools.py:624
 #, python-brace-format
 msgid "m-bootloader {version} installed and checked: M-Flasher confirmed every sector, a fresh read holds exactly this bootloader, and nothing outside the boot area changed. {started} The state before is kept as {name}."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:627
+#: fm1companion/ui/flash_tools.py:628
 #, python-brace-format
 msgid "Original boot area put back and checked: M-Flasher confirmed every sector, a fresh read holds the boot area of the V15 package, and nothing outside it changed. {started} The state before is kept as {name}."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:652
+#: fm1companion/ui/flash_tools.py:653
 #, python-brace-format
 msgid "This unit has a whole-flash backup made before m-bootloader: {name}. Write it back? (The app checks it and asks once more before anything is written.)"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:675
+#: fm1companion/ui/flash_tools.py:676
 #, python-brace-format
 msgid "Install {name} ({identity}) on {who} through download mode?"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:679
+#: fm1companion/ui/flash_tools.py:680
 #, python-brace-format
 msgid "M-Flasher writes only from 0x04000 to the end of the package (0x{end:05X}); the boot area 0x00000–0x03FFF – m-bootloader – is not written."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:681 fm1companion/ui/sloop3_ui.py:392
+#: fm1companion/ui/flash_tools.py:682 fm1companion/ui/sloop3_ui.py:404
 #, python-brace-format
 msgid "{n} sector of 4 KiB differs from what the FM-1 holds now."
 msgid_plural "{n} sectors of 4 KiB differ from what the FM-1 holds now."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/flash_tools.py:683
+#: fm1companion/ui/flash_tools.py:684
 msgid "What the current firmware keeps in that range (its program, and its projects, sounds and settings where it stores them there) is replaced; the factory data is not touched."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:687
+#: fm1companion/ui/flash_tools.py:688
 msgid "M-Flasher checks the unit ID, the flash chip and the sectors once more right before it writes; the app answers its question only when they are exactly the ones it computed. Do not unplug the FM-1 or switch it off while it writes."
-msgstr ""
-
-#: fm1companion/ui/flash_tools.py:698
-#, python-brace-format
-msgid "M-Flasher warns: “{warning}”"
 msgstr ""
 
 #: fm1companion/ui/flash_tools.py:699
 #, python-brace-format
+msgid "M-Flasher warns: “{warning}”"
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:700
+#, python-brace-format
 msgid "What may be lost: the projects, sounds, presets and settings that {installed} saved on “{unit}”. {name} cannot use them, and what is left of them in the flash can confuse it – wrong presets, no sound – until it has written its own. Nothing of the factory data and nothing in the boot area is touched."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:702
+#: fm1companion/ui/flash_tools.py:703
 msgid "the installed firmware"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:704
+#: fm1companion/ui/flash_tools.py:705
 #, python-brace-format
 msgid "The way back to exactly the state of now, data included, is the whole-flash backup made just now: {name}."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:706
+#: fm1companion/ui/flash_tools.py:707
 msgid "Nothing has been written yet. Install anyway?"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:722
+#: fm1companion/ui/flash_tools.py:734
 #, python-brace-format
 msgid "Install {label} through download mode"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:734
+#: fm1companion/ui/flash_tools.py:750
 msgid "The current firmware's data"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:735
+#: fm1companion/ui/flash_tools.py:751
 msgid "Install anyway"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:739
+#: fm1companion/ui/flash_tools.py:755
 msgid "Step: load & check the package (before any writing) …"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:771
+#: fm1companion/ui/flash_tools.py:791
 msgid "The FM-1's flash already holds exactly this firmware – nothing was written."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:772
+#: fm1companion/ui/flash_tools.py:792
 #, python-brace-format
 msgid "{label} installed through download mode and checked: M-Flasher confirmed every sector, a fresh read holds exactly the package from 0x04000 on, and the boot area (m-bootloader) is unchanged. {started} The state before is kept as {name}."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:831
+#: fm1companion/ui/flash_tools.py:851
 #, python-brace-format
 msgid "Back to the whole-flash backup of {date}"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:832
+#: fm1companion/ui/flash_tools.py:852
 msgid "Back to a whole-flash backup"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:833
+#: fm1companion/ui/flash_tools.py:853
 #, python-brace-format
 msgid "Write flash back: download mode, a fresh backup of the state now (read twice), your confirmation, M-Flasher writes the differing sectors, a fresh read checks them – {name}."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:837
+#: fm1companion/ui/flash_tools.py:857
 msgid "The app has no intact whole-flash backup of this unit (by its unit ID)."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:838
+#: fm1companion/ui/flash_tools.py:858
 msgid "The app does not know this unit's ID yet: a whole-flash backup (Recovery › Tools) teaches it."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:842
+#: fm1companion/ui/flash_tools.py:862
 msgid "Back to SLOOP 3"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:843
+#: fm1companion/ui/flash_tools.py:863
 msgid "m-bootloader's MIDI MODE (hold PLAY while switching on → MIDI MODE): the app reads the whole flash twice there, asks, and writes the bundled SLOOP 3."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:845
+#: fm1companion/ui/flash_tools.py:865
 msgid "First m-bootloader (download mode, a whole-flash backup, your confirmation), then m-bootloader's MIDI MODE: the flash read twice once more, your confirmation, SLOOP 3."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:847
+#: fm1companion/ui/flash_tools.py:867
 msgid "Choose the device at the top first."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:849
+#: fm1companion/ui/flash_tools.py:869
 msgid "Back to a Felucca-family firmware (Melodee, SLOOP 2, Skiff …)"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:850
+#: fm1companion/ui/flash_tools.py:870
 msgid "Firmware+ › Install & Versions: the plan installs it through download mode with M-Flasher and keeps m-bootloader (a whole-flash backup first)."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:852
+#: fm1companion/ui/flash_tools.py:872
 msgid "Firmware+ › Install & Versions: the usual way, the plan says which steps."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:855
+#: fm1companion/ui/flash_tools.py:881
+#, python-brace-format
+msgid "From the firmware on this FM-1 ({fw}) the original V15 cannot be installed the usual way after the boot area was put back (SLOOP 3, for one, has no update mode). First go to a Felucca-family firmware (the choice above), then come back here – or write back a whole-flash backup of this unit made before m-bootloader (the first choice)."
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:887
 msgid "Back to the original V15 with the original boot area"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:856
+#: fm1companion/ui/flash_tools.py:888
 msgid "First “Remove m-bootloader (original boot area)” – download mode, a whole-flash backup, your confirmation, only the boot area is written – then the original V15 the usual way on Firmware+."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:859
+#: fm1companion/ui/flash_tools.py:891
 msgid "The original V15 the usual way on Firmware+ (the boot area is the original one or not known; the plan checks it)."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:861
+#: fm1companion/ui/flash_tools.py:893
 msgid "A newer unit (logo on the front): the app never writes V15's boot area there. The way back to the factory state is a whole-flash backup of this unit made before m-bootloader (the first choice)."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:877
+#: fm1companion/ui/flash_tools.py:910
 msgid "Where should this FM-1 go back to? Each way runs the app's own steps one after the other, each with its own question; none skips a backup."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:880 fm1companion/ui/flash_tools.py:898
+#: fm1companion/ui/flash_tools.py:913 fm1companion/ui/flash_tools.py:931
 #: fm1companion/ui/main_window.py:546 fm1companion/ui/tools_card.py:127
 msgid "Back to …"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:898
+#: fm1companion/ui/flash_tools.py:931
 msgid "Next: Firmware+ › Install & Versions › the original V15 – the plan checks the boot area once more."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:928
+#: fm1companion/ui/flash_tools.py:961
 msgid "M-Flasher's own output ends with “everything written is verified”, but the app did not check it afterwards."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:930
+#: fm1companion/ui/flash_tools.py:963
 msgid "M-Flasher had started erasing and writing; its output does not say it finished."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:931
-msgid "It is not known how far M-Flasher got."
-msgstr ""
-
-#: fm1companion/ui/flash_tools.py:933
-#, python-brace-format
-msgid "The write did not end verified: {reason}"
-msgstr ""
-
-#: fm1companion/ui/flash_tools.py:935
-#, python-brace-format
-msgid "Installing {identity} through download mode"
-msgstr ""
-
-#: fm1companion/ui/flash_tools.py:937
-msgid "Installing SLOOP 3 over m-bootloader's MIDI MODE"
-msgstr ""
-
-#: fm1companion/ui/flash_tools.py:939
-#, python-brace-format
-msgid "{what} onto “{device}” (unit ID {uid}) started on {when} did not end verified – the app was closed or ended while it wrote, or the write failed."
-msgstr ""
-
-#: fm1companion/ui/flash_tools.py:944
-#, python-brace-format
-msgid "The boot area (m-bootloader) was not written, so the FM-1 still reaches its menu (hold PLAY while switching it on) and download mode. Nothing is done automatically. Its state before the write: {pre} – writing it back goes through all the usual checks; installing again works as well."
-msgstr ""
-
-#: fm1companion/ui/flash_tools.py:950
-#, python-brace-format
-msgid "Writing the boot area of “{device}” (unit ID {uid}, m-bootloader) started on {when} did not end verified – the app was closed or ended while M-Flasher wrote, or the write failed."
-msgstr ""
-
-#: fm1companion/ui/flash_tools.py:955
-#, python-brace-format
-msgid "The FM-1 may be in download mode now. Nothing is done automatically. Its state before the write: {pre} – writing it back goes through all the usual checks."
-msgstr ""
-
-#: fm1companion/ui/flash_tools.py:959
-#, python-brace-format
-msgid "A flash write-back onto “{device}” (unit ID {uid}) started on {when} did not end verified – the app was closed or ended while M-Flasher wrote, or the write failed."
-msgstr ""
-
 #: fm1companion/ui/flash_tools.py:964
-msgid "The FM-1 may be in download mode now. Nothing is done automatically. Writing back again goes through all the usual checks (M-Flasher reads the unit first, unit ID and flash chip must match)."
+msgid "It is not known how far M-Flasher got."
 msgstr ""
 
 #: fm1companion/ui/flash_tools.py:966
 #, python-brace-format
+msgid "The write did not end verified: {reason}"
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:968
+#, python-brace-format
+msgid "Installing {identity} through download mode"
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:970
+msgid "Installing SLOOP 3 over m-bootloader's MIDI MODE"
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:972
+#, python-brace-format
+msgid "{what} onto “{device}” (unit ID {uid}) started on {when} did not end verified – the app was closed or ended while it wrote, or the write failed."
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:977
+#, python-brace-format
+msgid "The boot area (m-bootloader) was not written, so the FM-1 still reaches its menu (hold PLAY while switching it on) and download mode. Nothing is done automatically. Its state before the write: {pre} – writing it back goes through all the usual checks; installing again works as well."
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:983
+#, python-brace-format
+msgid "Writing the boot area of “{device}” (unit ID {uid}, m-bootloader) started on {when} did not end verified – the app was closed or ended while M-Flasher wrote, or the write failed."
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:988
+#, python-brace-format
+msgid "The FM-1 may be in download mode now. Nothing is done automatically. Its state before the write: {pre} – writing it back goes through all the usual checks."
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:992
+#, python-brace-format
+msgid "A flash write-back onto “{device}” (unit ID {uid}) started on {when} did not end verified – the app was closed or ended while M-Flasher wrote, or the write failed."
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:997
+msgid "The FM-1 may be in download mode now. Nothing is done automatically. Writing back again goes through all the usual checks (M-Flasher reads the unit first, unit ID and flash chip must match)."
+msgstr ""
+
+#: fm1companion/ui/flash_tools.py:999
+#, python-brace-format
 msgid "The image: {image}<br>Its state before the write: {pre}"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:985
+#: fm1companion/ui/flash_tools.py:1018
 msgid "M-Flasher is still writing"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:986
+#: fm1companion/ui/flash_tools.py:1019
 #, python-brace-format
 msgid "M-Flasher is still writing the flash of “{device}” (started by an earlier run of the app). Do not unplug the FM-1 or switch it off. Look again on Recovery › Tools once it has ended."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:991
+#: fm1companion/ui/flash_tools.py:1024
 msgid "Write the image back again …"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:991
+#: fm1companion/ui/flash_tools.py:1024
 msgid "Write the state before back …"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:991
+#: fm1companion/ui/flash_tools.py:1024
 msgid "Later"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:991 fm1companion/ui/flash_tools.py:1005
+#: fm1companion/ui/flash_tools.py:1024 fm1companion/ui/flash_tools.py:1038
 msgid "Forget this"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:994
+#: fm1companion/ui/flash_tools.py:1027
 msgid "Interrupted flash write-back"
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:1005
+#: fm1companion/ui/flash_tools.py:1038
 msgid "Forget the interrupted write-back? Do this only when the FM-1 works again or you have written it back yourself."
 msgstr ""
 
-#: fm1companion/ui/flash_tools.py:1007 fm1companion/ui/pages/devices.py:262
+#: fm1companion/ui/flash_tools.py:1040 fm1companion/ui/pages/devices.py:262
 #: fm1companion/ui/pages/devices.py:346 fm1companion/ui/settings_dialog.py:244
 #: fm1companion/ui/settings_dialog.py:444
 msgid "Forget"
@@ -14221,18 +14252,26 @@ msgid "Notifications ({n} new)"
 msgstr ""
 
 #: fm1companion/ui/main_window.py:1241
-msgid "M-Flasher is writing"
+msgid "m-bootloader is writing"
 msgstr ""
 
 #: fm1companion/ui/main_window.py:1242
+msgid "m-bootloader is writing SLOOP 3 into the FM-1's flash, and this app hands it the data. The app stays open until it has finished – do not unplug the FM-1 or switch it off."
+msgstr ""
+
+#: fm1companion/ui/main_window.py:1248
+msgid "M-Flasher is writing"
+msgstr ""
+
+#: fm1companion/ui/main_window.py:1249
 msgid "M-Flasher is writing the FM-1's flash. The app stays open until it has finished – do not unplug the FM-1 or switch it off."
 msgstr ""
 
-#: fm1companion/ui/main_window.py:1248
+#: fm1companion/ui/main_window.py:1255
 msgid "Recording in progress"
 msgstr ""
 
-#: fm1companion/ui/main_window.py:1248
+#: fm1companion/ui/main_window.py:1255
 msgid "A recording is running. Stop and save it?"
 msgstr ""
 
@@ -24529,393 +24568,393 @@ msgstr ""
 msgid "This FM-1 waits in m-bootloader's MIDI MODE. That is not the update mode of an FM-1 firmware: m-bootloader answers the same way, but it writes a package differently, and the app has never been tried with it. The app sends it no firmware. Nothing was written.<br><br>From MIDI MODE, firmware is installed with the installer page of that firmware's author; the whole flash goes back with M-Flasher. OCT−, OCT+, PLAY or REC on the FM-1 leave MIDI MODE. “Firmware+” › SLOOP 3 explains more."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:140
+#: fm1companion/ui/sloop3_ui.py:152
 msgid "Only in m-bootloader's MIDI MODE (step 3): the app must see “m-bootloader – MIDI MODE”."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:149
+#: fm1companion/ui/sloop3_ui.py:161
 #, python-brace-format
 msgid "Its flash chip says so itself ({chip})."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:150
+#: fm1companion/ui/sloop3_ui.py:162
 msgid "That is what the app knows about this device."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:154
+#: fm1companion/ui/sloop3_ui.py:166
 #, python-brace-format
 msgid "This FM-1 is a newer unit (flash chip UC25HQ80) with m-bootloader {version}. m-bootloader 2.4 and SLOOP 3 3.4.0 ran on one such unit, saving included – by its owner's report (2026-11-19), outside this app; the app itself has not installed anything on one. Older versions of either were not, or not safely, tried on one. {how}"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:160
+#: fm1companion/ui/sloop3_ui.py:172
 msgid "<b>This is a newer FM-1.</b> The app offers the installer page for it only in m-bootloader's MIDI MODE, where it can read m-bootloader's version: 2.4 ran on one such unit (owner's report), older versions are risky there. The read-only flash copy is offered in MIDI MODE whatever the version."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:165
+#: fm1companion/ui/sloop3_ui.py:177
 msgid "<b>Do not install m-bootloader or SLOOP 3 on it for now.</b> The app does not offer the installer page for this device."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:169
+#: fm1companion/ui/sloop3_ui.py:181
 msgid "Sure sign: M-Flasher shows the FLASH CHIP – <code>0x856014</code> is the earlier one, <code>0xB36014</code> the newer."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:172
+#: fm1companion/ui/sloop3_ui.py:184
 #, python-brace-format
 msgid "This FM-1 is an earlier unit (flash chip Puya P25Q80H), the one m-bootloader and SLOOP 3 were tried on by their authors. {how}"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:184
+#: fm1companion/ui/sloop3_ui.py:196
 msgid "SLOOP 3 – public beta"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:185
+#: fm1companion/ui/sloop3_ui.py:197
 msgid "A rewrite of SLOOP from scratch by isod89: five tracks (four synths and the drums), 13 engines, 8 patterns per track, a song, samples and slices, its own web editor. Its author calls it a beta: expect bugs, keep backups, do not rely on it on stage yet."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:189
+#: fm1companion/ui/sloop3_ui.py:201
 msgid "What it needs"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:190
+#: fm1companion/ui/sloop3_ui.py:202
 msgid "<b>m-bootloader</b> on the FM-1 (an open-source bootloader by Julius Vitkauskas). SLOOP 3 installs only through its MIDI MODE. Installing m-bootloader replaces the FM-1's boot area – the app never does that; it is done once with M-Flasher (USB download mode) or, from M-VAVE's firmware, with M-VAVE's M-UPGRADE and the file fm1-uboot.fwsc."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:194
+#: fm1companion/ui/sloop3_ui.py:206
 msgid "<b>A backup of the whole flash first</b> (1 MB), made with M-Flasher or in MIDI MODE. It is the only way back: SLOOP 2.8 or M-VAVE's firmware return by writing that backup back with M-Flasher."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:197
+#: fm1companion/ui/sloop3_ui.py:209
 msgid "An official M-VAVE update puts M-VAVE's own bootloader back; m-bootloader then has to be installed again."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:199
+#: fm1companion/ui/sloop3_ui.py:211
 msgid "What the app does – and what it does not"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:200
+#: fm1companion/ui/sloop3_ui.py:212
 msgid "It recognises an FM-1 that runs SLOOP 3 and one that waits in m-bootloader's MIDI MODE."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:201
+#: fm1companion/ui/sloop3_ui.py:213
 msgid "It shows SLOOP 3's own web editor on the page “Editor” and makes backups of its project, sounds and banks on the page “Backups” (not of its samples: SLOOP 3 cannot hand them out)."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:203
+#: fm1companion/ui/sloop3_ui.py:215
 msgid "In MIDI MODE it can copy the whole flash into your backup folder – reading only."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:204
+#: fm1companion/ui/sloop3_ui.py:216
 msgid "<b>It installs SLOOP 3 itself</b> over m-bootloader's MIDI MODE, offline from the SLOOP 3 it brings along, after a whole-flash backup read twice – and m-bootloader first where it is missing (USB download mode, M-Flasher). Only for an FM-1 the rule above lets through. The author's installer page in your browser (Chromium or Chrome) stays the other way."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:209
+#: fm1companion/ui/sloop3_ui.py:221
 #, python-brace-format
 msgid "Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). <b>On a real FM-1 once, reading only</b> (SLOOP 3 3.4.0, one earlier unit): recognised, its editor connected, a backup read, MIDI MODE recognised. <b>Never on a real FM-1 by this app:</b> restoring a backup, the flash backup, anything that writes, a newer unit. Outside the app, by its owner's report (2026-11-19): m-bootloader 2.4 and SLOOP 3 3.4.0 ran and saved on one newer unit."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:217 fm1companion/ui/sloop3_ui.py:284
+#: fm1companion/ui/sloop3_ui.py:229 fm1companion/ui/sloop3_ui.py:296
 msgid "Guide"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:219
+#: fm1companion/ui/sloop3_ui.py:231
 msgid "Installer page"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:220
+#: fm1companion/ui/sloop3_ui.py:232
 msgid "Editor online"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:230
+#: fm1companion/ui/sloop3_ui.py:242
 msgid "SLOOP 3 (public beta) – the way onto the FM-1"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:241
+#: fm1companion/ui/sloop3_ui.py:253
 msgid "<b>Check for m-bootloader:</b> switch the FM-1 off, hold PLAY and switch it on. A menu with BOOT APP, DOWNLOAD MODE and MIDI MODE? Then it is there."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:243
+#: fm1companion/ui/sloop3_ui.py:255
 msgid "<b>If not: install m-bootloader.</b> “Install SLOOP 3 with this app” does it as its first step (USB download mode, M-Flasher, a whole-flash backup first), or Recovery › Tools › “Install m-bootloader”. Keep the power on while the boot area is written."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:247
+#: fm1companion/ui/sloop3_ui.py:259
 msgid "<b>MIDI MODE:</b> hold PLAY at power-on, choose MIDI MODE with OCT−/OCT+, press PLAY, plug in the USB cable. The app then shows “m-bootloader – MIDI MODE”."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:249
+#: fm1companion/ui/sloop3_ui.py:261
 msgid "<b>Back up the whole flash:</b> the app's own install does it by itself (read twice); before the author's page, with the button below or with M-Flasher."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:251
+#: fm1companion/ui/sloop3_ui.py:263
 msgid "<b>Install SLOOP 3:</b> with this app (button below), or with the author's installer page in Chromium or Chrome (about a minute; close this app's connection first – only one program can talk to the FM-1 in MIDI MODE at a time)."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:254
+#: fm1companion/ui/sloop3_ui.py:266
 msgid "<b>Back to SLOOP 2.8 or M-VAVE's firmware:</b> “Back to …” on Recovery › Tools – a whole-flash backup written back, or a Felucca-family firmware through download mode. Save your SLOOP 3 projects as files first."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:261
+#: fm1companion/ui/sloop3_ui.py:273
 msgid "The app's own SLOOP 3 install has not run on a real FM-1 yet – only against a stand-in and against m-bootloader's own MIDI MODE code on a PC; nor has its flash backup below."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:266
+#: fm1companion/ui/sloop3_ui.py:278
 msgid "My FM-1 has no M-VAVE logo on the front (an earlier unit)"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:271
+#: fm1companion/ui/sloop3_ui.py:283
 msgid "Open the installer page in the browser"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:275
+#: fm1companion/ui/sloop3_ui.py:287
 msgid "Install SLOOP 3 with this app (MIDI MODE) …"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:277
+#: fm1companion/ui/sloop3_ui.py:289
 msgid "Offline from the bundled SLOOP 3: in MIDI MODE the app backs up the whole flash (read twice) and writes SLOOP 3 through m-bootloader, after your confirmation. Without m-bootloader the first step is installing it."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:281
+#: fm1companion/ui/sloop3_ui.py:293
 msgid "Back up the whole flash now (MIDI MODE) …"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:286
+#: fm1companion/ui/sloop3_ui.py:298
 msgid "m-bootloader (download)"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:316
+#: fm1companion/ui/sloop3_ui.py:328
 msgid "The app could not work out this FM-1's hardware revision. The installer page is not offered."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:339
+#: fm1companion/ui/sloop3_ui.py:351
 #, python-brace-format
 msgid "Opens {url} in your browser. The app itself installs nothing."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:340
+#: fm1companion/ui/sloop3_ui.py:352
 msgid "Not offered for the newer FM-1 (logo on the front)."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:341
+#: fm1companion/ui/sloop3_ui.py:353
 msgid "First confirm above which FM-1 this is."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:346
+#: fm1companion/ui/sloop3_ui.py:358
 msgid "Copies the whole flash (1 MB) into your backup folder and compares it with the checksum the FM-1's flash chip computes. Reading only."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:349
+#: fm1companion/ui/sloop3_ui.py:361
 msgid "The flash backup becomes available as soon as an FM-1 in MIDI MODE is the active device."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:373
+#: fm1companion/ui/sloop3_ui.py:385
 msgid "Put the FM-1 into m-bootloader's MIDI MODE: switch it off, hold PLAY and switch it on, choose MIDI MODE with OCT−/OCT+ and press PLAY, then plug in the USB cable. When the app shows “m-bootloader – MIDI MODE” at the top, click again."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:385
+#: fm1companion/ui/sloop3_ui.py:397
 #, python-brace-format
 msgid "Install SLOOP 3 {version} (public beta) on “{unit}” (unit ID {uid}, {revision})?"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:388
+#: fm1companion/ui/sloop3_ui.py:400
 #, python-brace-format
 msgid "m-bootloader {mb} answers in MIDI MODE. Firmware now (as the app knows it): {fw}."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:390
+#: fm1companion/ui/sloop3_ui.py:402
 #, python-brace-format
 msgid "m-bootloader writes only from 0x04000 to 0x{end:05X}; the boot area 0x00000–0x03FFF – m-bootloader itself – and everything after it stay as they are."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:394
+#: fm1companion/ui/sloop3_ui.py:406
 msgid "The current firmware and what it keeps in that range are replaced."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:395
+#: fm1companion/ui/sloop3_ui.py:407
 #, python-brace-format
 msgid "m-bootloader reads the whole package and checks it (checksums, this FM-1's chip key) before it erases anything, writes the first sector last and reads every sector back. The app's package is byte for byte the one the author's installer page builds (bundled SLOOP 3 {version}, SHA-256 {sha}…)."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:399
+#: fm1companion/ui/sloop3_ui.py:411
 #, python-brace-format
 msgid "The whole flash was backed up just now (read twice in MIDI MODE, both checked against the chip's CRC-32): {name}. That is the way back."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:401
+#: fm1companion/ui/sloop3_ui.py:413
 msgid "Do not unplug the FM-1 or switch it off while it writes (about a minute). Close no other program in between that talks to the FM-1."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:416
+#: fm1companion/ui/sloop3_ui.py:428
 msgid "Install SLOOP 3 (MIDI MODE)"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:418
+#: fm1companion/ui/sloop3_ui.py:430
 msgid "The Studio twin is not a real FM-1. Choose a real FM-1 at the top."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:425
+#: fm1companion/ui/sloop3_ui.py:437
 msgid "SLOOP 3 installs only through m-bootloader's MIDI MODE, and the app does not know m-bootloader on this FM-1. Step 1 of 2: install m-bootloader – the app puts the FM-1 into download mode, backs up the whole flash and asks once more before it writes the boot area. Step 2: MIDI MODE, then this button again (the app backs up the whole flash once more there and asks before SLOOP 3 is written). Start step 1?"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:430
+#: fm1companion/ui/sloop3_ui.py:442
 msgid "Install m-bootloader first"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:432
+#: fm1companion/ui/sloop3_ui.py:444
 msgid "Step 1 done: m-bootloader is on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:434
+#: fm1companion/ui/sloop3_ui.py:446
 msgid "Step 2: the FM-1 must be in MIDI MODE."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:440
+#: fm1companion/ui/sloop3_ui.py:452
 msgid "It is an earlier unit"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:445
+#: fm1companion/ui/sloop3_ui.py:457
 msgid "The app reads the whole flash twice in MIDI MODE (the backup, checked against the chip's CRC-32), builds SLOOP 3 for this FM-1 and checks it as m-bootloader will. Then it asks you once more before anything is written. Nothing is written without that backup."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:453
+#: fm1companion/ui/sloop3_ui.py:465
 msgid "Install SLOOP 3"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:476
+#: fm1companion/ui/sloop3_ui.py:488
 #, python-brace-format
 msgid "SLOOP 3 {version} is on this FM-1 already – nothing was written. Switch it off and on (or choose BOOT APP in m-bootloader's menu)."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:478
+#: fm1companion/ui/sloop3_ui.py:490
 #, python-brace-format
 msgid "SLOOP 3 {version} installed: m-bootloader read the whole package, checked it, wrote it and read every sector back. The FM-1 starts SLOOP 3 now. The state before is kept as {name}."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:486
+#: fm1companion/ui/sloop3_ui.py:498
 msgid "Cancels until m-bootloader starts reading SLOOP 3; from then on it runs to its end."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:514
+#: fm1companion/ui/sloop3_ui.py:526
 msgid "My FM-1 has no M-VAVE logo on the front (an earlier unit)."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:522
+#: fm1companion/ui/sloop3_ui.py:534
 msgid "Check SLOOP 3 in the flash"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:524
+#: fm1companion/ui/sloop3_ui.py:536
 #, python-brace-format
 msgid "m-bootloader wrote SLOOP 3 and read every sector back. The app can check it once more itself: once SLOOP 3 runs and the app shows it at the top, it sends the FM-1 into download mode and reads the whole flash with M-Flasher – writing nothing – and compares 0x00000–0x{end:05X} (the boot area and SLOOP 3) with what was meant to be written; then it restarts the FM-1. Check now?"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:543
+#: fm1companion/ui/sloop3_ui.py:555
 msgid "Checked: a fresh read of the whole flash holds exactly the boot area and SLOOP 3 as written. Nothing was written."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:545
+#: fm1companion/ui/sloop3_ui.py:557
 #, python-brace-format
 msgid "The fresh read differs from what was written (first at 0x{at:05X}). Nothing was written now. Keep the backup made before the install, and write it back if SLOOP 3 does not work."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:567 fm1companion/ui/sloop3_ui.py:575
+#: fm1companion/ui/sloop3_ui.py:579 fm1companion/ui/sloop3_ui.py:587
 msgid "Flash backup not possible"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:568
+#: fm1companion/ui/sloop3_ui.py:580
 msgid "This works only while the FM-1 is in m-bootloader's MIDI MODE: hold PLAY at power-on, choose MIDI MODE, plug in the USB cable."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:589
+#: fm1companion/ui/sloop3_ui.py:601
 #, python-brace-format
 msgid "m-bootloader {version}, flash chip {chip}, {size}"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:591
+#: fm1companion/ui/sloop3_ui.py:603
 msgid "Reading the whole flash (nothing is written) …"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:594
+#: fm1companion/ui/sloop3_ui.py:606
 msgid "The copy matches the checksum the flash chip computed."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:607
+#: fm1companion/ui/sloop3_ui.py:619
 #, python-brace-format
 msgid "Flash backup saved and checked: {name} ({size}). Nothing was changed on the FM-1. It is the flash of this one FM-1 – M-Flasher writes it back; keep a copy somewhere else too."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:613
+#: fm1companion/ui/sloop3_ui.py:625
 msgid "Flash backup (MIDI MODE)"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:640
+#: fm1companion/ui/sloop3_ui.py:652
 msgid "The app does not know yet which of your FM-1 this is. Choose the device at the top first; nothing is written to an FM-1 the app cannot name. Nothing was written."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:645
+#: fm1companion/ui/sloop3_ui.py:657
 msgid "This is a SLOOP 3 backup. It goes back only onto an FM-1 that runs SLOOP 3 and is connected. Nothing was written."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:667
+#: fm1companion/ui/sloop3_ui.py:679
 msgid "This backup holds nothing the app can write back."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:672 fm1companion/ui/sloop3_ui.py:721
+#: fm1companion/ui/sloop3_ui.py:684 fm1companion/ui/sloop3_ui.py:733
 msgid "Restore SLOOP 3 backup"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:673
+#: fm1companion/ui/sloop3_ui.py:685
 #, python-brace-format
 msgid "These parts on <b>{device}</b> are replaced by the state of {date}:"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:675
+#: fm1companion/ui/sloop3_ui.py:687
 #, python-brace-format
 msgid "Not written (the FM-1 had none of its own then): {parts}."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:677
+#: fm1companion/ui/sloop3_ui.py:689
 msgid "Your samples are not in the backup and stay as they are on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:678
+#: fm1companion/ui/sloop3_ui.py:690
 msgid "<b>Stop playback on the FM-1 first.</b> A safety backup of the current state is made automatically. SLOOP 3 is a beta, and this restore was checked on its PC twin, never on a real FM-1 by this app."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:700 fm1companion/ui/sloop3_ui.py:732
+#: fm1companion/ui/sloop3_ui.py:712 fm1companion/ui/sloop3_ui.py:744
 #, python-brace-format
 msgid "✓ {part}: written, but not compared (SLOOP 3 keeps it in its own layout)"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:702 fm1companion/ui/sloop3_ui.py:733
+#: fm1companion/ui/sloop3_ui.py:714 fm1companion/ui/sloop3_ui.py:745
 #, python-brace-format
 msgid "✓ {part}: written, read back and identical"
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:708
+#: fm1companion/ui/sloop3_ui.py:720
 #, python-brace-format
 msgid "Restore complete: {n} part written."
 msgid_plural "Restore complete: {n} parts written."
 msgstr[0] ""
 msgstr[1] ""
 
-#: fm1companion/ui/sloop3_ui.py:711
+#: fm1companion/ui/sloop3_ui.py:723
 #, python-brace-format
 msgid "Read back and identical: {parts}."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:713
+#: fm1companion/ui/sloop3_ui.py:725
 #, python-brace-format
 msgid "Written and accepted by the FM-1, but not compared: {parts}."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:715
+#: fm1companion/ui/sloop3_ui.py:727
 msgid "Check the project on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:735
+#: fm1companion/ui/sloop3_ui.py:747
 #, python-brace-format
 msgid "? {part}: this is where it stopped. It may be as before, as in the backup, or incomplete – check it on the FM-1."
 msgstr ""
 
-#: fm1companion/ui/sloop3_ui.py:738
+#: fm1companion/ui/sloop3_ui.py:750
 #, python-brace-format
 msgid "– {part}: not reached, nothing was sent for it."
 msgstr ""

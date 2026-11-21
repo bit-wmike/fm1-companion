@@ -891,9 +891,6 @@ msgstr "Über diese App noch nicht an einem echten FM-1 getestet: {what}."
 msgid "This package is for the {model}, not for the FM-1. Nothing was written."
 msgstr "Dieses Paket ist für das {model}, nicht für das FM-1. Es wurde nichts geschrieben."
 
-msgid "The package's flash image is larger than the FM-1's flash. Nothing was written."
-msgstr "Das Flash-Abbild des Pakets ist größer als der Flash des FM-1. Es wurde nichts geschrieben."
-
 msgid "This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80), and {name} is not known to run on such a unit (data/hardware.json). A firmware that does not know this chip saves nothing there and cannot be updated any more. Nothing was written."
 msgstr "Dieses FM-1 ist ein neueres Gerät (Logo auf der Vorderseite, Flash-Baustein UC25HQ80), und von {name} ist nicht bekannt, dass es auf so einem Gerät läuft (data/hardware.json). Eine Firmware, die diesen Chip nicht kennt, speichert dort nichts und lässt sich nicht mehr aktualisieren. Es wurde nichts geschrieben."
 
@@ -983,9 +980,6 @@ msgstr "Auf einem neueren Gerät: m-bootloader 2.4 und SLOOP 3 3.4.0 liefen laut
 
 msgid "The app's journal record could not be written ({error}), so it does not start writing. Nothing was written."
 msgstr "Der Journal-Eintrag der App ließ sich nicht schreiben ({error}), deshalb fängt sie nicht an zu schreiben. Es wurde nichts geschrieben."
-
-msgid "m-bootloader is reading SLOOP 3 now and then writes it. This cannot be cancelled – do not unplug the FM-1 or switch it off."
-msgstr "m-bootloader liest jetzt SLOOP 3 und schreibt es dann. Das lässt sich nicht abbrechen – das FM-1 nicht abstecken und nicht ausschalten."
 
 msgid "The backup made just now is kept."
 msgstr "Die eben gemachte Sicherung bleibt."
@@ -1231,3 +1225,36 @@ msgstr "Schreibt das mitgelieferte SLOOP 3 über den MIDI MODE von m-bootloader 
 
 msgid "The way back with one button: to the last whole-flash backup, to SLOOP 3, to a Felucca-family firmware or to the original V15 – each with its route and its own questions."
 msgstr "Der Rückweg mit einem Knopf: zur letzten Komplettsicherung des Flash, zu SLOOP 3, zu einer Firmware der Felucca-Familie oder zur Original-V15 – jeweils mit seinem Weg und seinen eigenen Fragen."
+
+msgid "The package's flash image reaches into the FM-1's factory data (0xFF000–0xFFFFF: calibration, Bluetooth address), which the app never writes. Nothing was written."
+msgstr "Das Flash-Abbild des Pakets reicht bis in die Werksdaten des FM-1 (0xFF000–0xFFFFF: Kalibrierung, Bluetooth-Adresse), die die App nie schreibt. Es wurde nichts geschrieben."
+
+msgid "The package is no longer the file that was checked (its SHA-256 differs). Nothing was written."
+msgstr "Das Paket ist nicht mehr die Datei, die geprüft wurde (seine SHA-256 weicht ab). Es wurde nichts geschrieben."
+
+msgid "This FM-1 has m-bootloader {version}. The app installs SLOOP 3 only through an m-bootloader build it has reviewed and marked in data/hardware.json (the one it brings along). Update m-bootloader first (Recovery › Tools › “Install m-bootloader”). Nothing was written."
+msgstr "Dieses FM-1 hat m-bootloader {version}. Die App installiert SLOOP 3 nur über einen m-bootloader-Build, den sie geprüft und in data/hardware.json markiert hat (den mitgebrachten). Aktualisier zuerst m-bootloader (Rettung › Werkzeuge › „m-bootloader installieren“). Es wurde nichts geschrieben."
+
+msgid "Right before writing, the FM-1 on this port answers differently than at the start (another unit, or not in MIDI MODE any more). Nothing was written; the backup made just now is kept."
+msgstr "Direkt vor dem Schreiben antwortet das FM-1 an diesem Anschluss anders als zu Beginn (ein anderes Gerät, oder nicht mehr im MIDI MODE). Es wurde nichts geschrieben; die eben gemachte Sicherung bleibt."
+
+msgid "Right before writing, the FM-1's flash is no longer the one just backed up (the chip's checksum differs) – another unit on the port, or the flash changed. Nothing was written; the backup made just now is kept."
+msgstr "Direkt vor dem Schreiben ist der Flash des FM-1 nicht mehr der eben gesicherte (die Prüfsumme des Chips weicht ab) – ein anderes Gerät am Anschluss, oder der Flash hat sich geändert. Es wurde nichts geschrieben; die eben gemachte Sicherung bleibt."
+
+msgid "m-bootloader is writing SLOOP 3 now, and the app hands it the data – this cannot be cancelled. Keep the app open; do not unplug the FM-1 or switch it off."
+msgstr "m-bootloader schreibt jetzt SLOOP 3, und die App reicht ihm die Daten – das lässt sich nicht abbrechen. Lass die App offen; das FM-1 nicht abstecken und nicht ausschalten."
+
+msgid "The connection to the FM-1 failed while m-bootloader was installing SLOOP 3 ({error}). The firmware area may be incomplete; the boot area (m-bootloader) was not written, so its menu still opens (hold PLAY while switching on) and MIDI MODE can install again. The backup made just before is {name} – it is this unit's state before the install."
+msgstr "Die Verbindung zum FM-1 ist abgebrochen, während m-bootloader SLOOP 3 installierte ({error}). Der Firmware-Bereich kann unvollständig sein; der Boot-Bereich (m-bootloader) wurde nicht geschrieben, sein Menü öffnet sich also noch (beim Einschalten PLAY halten), und der MIDI MODE kann noch einmal installieren. Die direkt davor gemachte Sicherung ist {name} – der Stand dieses Geräts vor der Installation."
+
+msgid "m-bootloader is writing: this cannot be cancelled."
+msgstr "m-bootloader schreibt: Das lässt sich nicht abbrechen."
+
+msgid "From the firmware on this FM-1 ({fw}) the original V15 cannot be installed the usual way after the boot area was put back (SLOOP 3, for one, has no update mode). First go to a Felucca-family firmware (the choice above), then come back here – or write back a whole-flash backup of this unit made before m-bootloader (the first choice)."
+msgstr "Aus der Firmware auf diesem FM-1 ({fw}) lässt sich die Original-V15 nach dem Zurückholen des Boot-Bereichs nicht auf dem üblichen Weg installieren (SLOOP 3 zum Beispiel hat keinen Update-Modus). Geh zuerst zu einer Firmware der Felucca-Familie (die Wahl darüber) und komm dann hierher zurück – oder schreib eine Komplettsicherung dieses Geräts von vor m-bootloader zurück (die erste Wahl)."
+
+msgid "m-bootloader is writing"
+msgstr "m-bootloader schreibt"
+
+msgid "m-bootloader is writing SLOOP 3 into the FM-1's flash, and this app hands it the data. The app stays open until it has finished – do not unplug the FM-1 or switch it off."
+msgstr "m-bootloader schreibt SLOOP 3 in den Flash des FM-1, und diese App reicht ihm die Daten. Die App bleibt offen, bis es fertig ist – das FM-1 nicht abstecken und nicht ausschalten."

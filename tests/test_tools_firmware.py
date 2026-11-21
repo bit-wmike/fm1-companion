@@ -478,6 +478,7 @@ def test_way_back_offers_each_target_with_its_route(env, monkeypatch):
     monkeypatch.setattr(i18n, "gettext", lambda m: m)          # (English, whatever an earlier test set)
     monkeypatch.setattr(flash_tools, "_", lambda m: m)
     env.prof.unit_id = UID
+    env.prof.firmware = "skiff"
     opts = {o["key"]: o for o in flash_tools.way_back_options(_ctx(env))}
     assert list(opts) == ["backup", "sloop3", "felucca", "v15"]
     assert not opts["backup"]["ok"] and opts["backup"]["why"]          # (no backup of this unit yet)
@@ -491,3 +492,65 @@ def test_way_back_offers_each_target_with_its_route(env, monkeypatch):
     hardware.note_flash_id(env.prof, 0xB36014, "rom")                 # (a newer unit: no V15 boot area there)
     opts = {o["key"]: o for o in flash_tools.way_back_options(_ctx(env))}
     assert not opts["v15"]["ok"] and "newer unit" in opts["v15"]["why"]
+
+
+# ------------------------------------------------------------------------------------------------ review fixes
+
+def test_m3_a_package_reaching_the_factory_data_is_refused(env):
+    before = env.flash()
+    with pytest.raises(FJ.Refused) as e:
+        run(env, package(end=0x100000))
+    assert e.value.kind == "package-size" and not env.get().get("calls")
+    nothing_written(env, before)
+    runs = [(0x4000, 0x8000), (0xFF000, 0x100000)]
+    exp = {"unit_id": UID, "flash_id": 0x856014, "chip_key": 0x980F, "identity": "FM-1_727", "end": 0x100000,
+           "runs": runs}
+    assert FJ.firmware_gate(exp)(_out(runs, end=0x100000)) != ""
+
+
+def test_m2_the_package_must_be_the_file_that_was_checked(env):
+    before = env.flash()
+    raw = package()
+    with pytest.raises(FJ.Refused) as e:
+        FJ.install_firmware(env.job(), raw, lambda p: True, lambda p, t: True, expected_sha256="0" * 64)
+    assert e.value.kind == "package-changed" and not env.get().get("calls")
+    nothing_written(env, before)
+    assert FJ.install_firmware(env.job(), raw, lambda p: True, lambda p, t: True, expected_sha256=sha(raw)).written
+
+
+def test_m4_back_to_v15_from_sloop3_is_refused_up_front_with_the_way(env, monkeypatch):
+    from fm1companion import i18n
+    from fm1companion.ui import flash_tools
+    monkeypatch.setattr(flash_tools, "_", lambda m: m)
+    env.prof.unit_id = UID
+    bootarea.note(env.prof, bootarea.MBOOT, "midi-mode", bootloader="m-bootloader 2.4-395e6cc")
+    env.prof.firmware = "sloop3"
+    v = {o["key"]: o for o in flash_tools.way_back_options(_ctx(env))}["v15"]
+    assert not v["ok"] and "Felucca-family" in v["why"]
+    env.prof.firmware = "skiff"
+    assert {o["key"]: o for o in flash_tools.way_back_options(_ctx(env))}["v15"]["ok"]
+    env.prof.firmware = "skiff"
+    assert not {o["key"]: o for o in flash_tools.way_back_options(_ctx(env, sloop3=object()))}["v15"]["ok"]
+    del i18n
+
+
+def test_l1_the_device_backup_is_never_skipped_in_silence():
+    from types import SimpleNamespace
+    from fm1companion.ui import flash_tools
+    plan = planner.plan_install(_state(), _target())
+    assert "backup" in plan.kinds()
+    gone = SimpleNamespace(connected=False, link=None)
+    assert flash_tools.firmware_backup_problem(plan, gone)
+    ok = SimpleNamespace(connected=True, link=SimpleNamespace(closed=False))
+    assert flash_tools.firmware_backup_problem(plan, ok) == ""
+
+
+def test_l5_back_to_offers_no_backup_taken_during_an_open_record(env):
+    env.prof.unit_id = UID
+    first = FJ.backup(env.job()).path
+    FJ._save_record(FJ.record_file(env.journal.dir), {"state": "failed", "op": "firmware", "profile": env.prof.id,
+                                                       "unit_sha256": sha(UID.encode())})
+    time.sleep(1.1)
+    second = FJ.backup(env.job()).path
+    assert json.loads(second.with_suffix(".json").read_text()).get("taken_during_open_write")
+    assert FJ.latest_backup(env.backups / env.prof.folder_name / "Flash", UID) == first

@@ -139,7 +139,7 @@ def unit(env):
     """the fake MIDI MODE unit (m-bootloader in its boot area), the env's profile knows its unit id and chip"""
     env.prof.unit_id = MB_UID
     hardware.note_flash_id(env.prof, 0x856014, "identity")
-    env.fake = FakeMboot(mboot_flash(), install=True)
+    env.fake = FakeMboot(mboot_flash(), install=True, version="2.4-395e6cc")
     return env
 
 
@@ -197,8 +197,7 @@ def test_install_of_the_bundled_340_area(unit):
     assert M.enc_area(bytes(area), 0x980F) == AREA_FILE.read_bytes()      # (decrypts to the author's area)
 
 
-@pytest.mark.parametrize("fail,kind", [("crc", "stopped"), ("wrong-key", "stopped"), ("silent", "stopped"),
-                                       ("refuse", "refused")])
+@pytest.mark.parametrize("fail,kind", [("wrong-key", "stopped"), ("silent", "stopped")])
 def test_a_refusal_or_silence_before_erasing_writes_nothing(unit, monkeypatch, fail, kind):
     env = unit
     monkeypatch.setattr(M, "REQUEST_TIMEOUT", 0.5)
@@ -212,7 +211,9 @@ def test_a_refusal_or_silence_before_erasing_writes_nothing(unit, monkeypatch, f
     assert not FJ.WRITING.is_set()
 
 
-@pytest.mark.parametrize("fail,kind", [("refuse-writing", "refused"), ("stop-writing", "stopped-writing")])
+@pytest.mark.parametrize("fail,kind", [("crc", "stopped-writing"),        # (it stops right at the erase boundary:
+                                       ("erase-fail", "stopped-writing"),  #  the app cannot rule an erase out)
+                                       ("stop-writing", "stopped-writing")])
 def test_a_refusal_or_silence_while_writing_is_reported_with_the_backup(unit, monkeypatch, fail, kind):
     env = unit
     monkeypatch.setattr(M, "REQUEST_TIMEOUT", 0.5)
@@ -266,9 +267,10 @@ def test_a_newer_unit_needs_the_hardware_rule_for_both(unit):
     res = go(env, new_chip_ok=True)                                     # (SLOOP 3's row lets it through too)
     assert res.written and env.fake.finished == 1
     env.fake = FakeMboot(mboot_flash(), install=True, jedec=0xB36014, version="2.3-abcdef0")
+    env.prof.flash_id = ""
     with pytest.raises(FJ.Refused) as e:
         go(env, new_chip_ok=True)
-    assert e.value.kind == "newer-chip" and env.fake.installs == 0
+    assert e.value.kind in ("newer-chip", "mboot-build") and env.fake.installs == 0
 
 
 def test_a_bad_read_keeps_nothing_and_sends_no_start_key(unit):
@@ -292,7 +294,7 @@ def test_declined_writes_nothing_and_keeps_the_backup(unit):
 def test_no_m_bootloader_in_the_backup_is_refused(unit):
     import fake_mflasher
     env = unit
-    env.fake = FakeMboot(fake_mflasher.synthetic_image(), install=True)           # (stock boot area)
+    env.fake = FakeMboot(fake_mflasher.synthetic_image(), install=True, version="2.4-395e6cc")   # (stock boot area)
     with pytest.raises(FJ.Refused) as e:
         go(env)
     assert e.value.kind == "not-mboot" and env.fake.installs == 0
@@ -351,3 +353,155 @@ def test_install_through_m_bootloaders_own_midi_mode_code(env, tmp_path):
     assert res.written and res.finished
     assert out == M.expected_flash(pkg, before)
     assert M.enc_area(out[0x4000:0x4000 + len(area)], 0x980F) == area
+
+
+# ------------------------------------------------------------------------------------------------ review fixes
+
+def test_h1_the_erase_boundary_is_the_last_answer_of_the_check_pass():
+    p = M.build_package(small_area(), 0x980F)
+    assert not M.Served(flash_bytes=p.size + 31).erasing_possible(p)
+    assert M.Served(flash_bytes=p.size + 32).erasing_possible(p)            # (midi_update.c erases right then)
+
+
+def test_h1_a_failed_first_erase_is_a_failed_write_and_the_record_stays(unit, monkeypatch):
+    env = unit
+    monkeypatch.setattr(M, "REQUEST_TIMEOUT", 0.5)
+    env.fake.fail = "erase-fail"
+    before = env.fake.flash
+    with pytest.raises(FJ.WriteFailed) as e:
+        go(env)
+    assert env.fake.erased == [0x4000] and env.fake.flash != before
+    assert e.value.backup.read_bytes() == before and e.value.backup.name in e.value.reason
+    rec = FJ.unfinished_write(env.journal.dir)
+    assert rec is not None and rec["state"] == "failed" and not rec["alive"]
+
+
+class _PortGone(FakeMboot):
+    """the cable is pulled after a number of answers: the transport raises"""
+    def __init__(self, *a, after=40, **kw):
+        super().__init__(*a, **kw)
+        self.after, self.n = after, 0
+
+    def send(self, data):
+        if self._gen is not None:
+            self.n += 1
+            if self.n > self.after:
+                from fm1companion.transport import LinkError
+                raise LinkError("the port is gone")
+        return super().send(data)
+
+
+@pytest.mark.parametrize("after", [3, 130])
+def test_m1_the_port_lost_during_the_write_is_a_failed_write_with_the_backup(unit, after):
+    env = unit
+    env.fake = _PortGone(mboot_flash(), install=True, version="2.4-395e6cc", after=after)
+    with pytest.raises(FJ.WriteFailed) as e:
+        go(env)
+    assert e.value.kind == "connection" and e.value.backup.name in e.value.reason
+    rec = FJ.unfinished_write(env.journal.dir)
+    assert rec["state"] == "failed" and rec["op"] == "sloop3-install" and not rec["alive"]
+    assert not FJ.WRITING.is_set()
+
+
+@pytest.mark.parametrize("swap", ["flash", "unit", "version"])
+def test_m2_a_unit_swapped_while_the_dialog_was_open_is_not_written(unit, swap):
+    env = unit
+    before = env.fake.flash
+
+    def confirm(plan):
+        if swap == "flash":
+            b = bytearray(env.fake.flash)
+            b[0x50000] ^= 1
+            env.fake.flash = bytes(b)
+        elif swap == "unit":
+            env.fake.uid_bytes = bytes(range(0xB0, 0xB8))
+        else:
+            env.fake.version = "2.4-395e6cd"
+        return True
+    with pytest.raises(FJ.Refused) as e:
+        M.install(env.job(), env.fake, confirm, area=small_area(), version="3.4.0")
+    assert e.value.kind in ("flash-changed", "unit-changed") and not e.value.written
+    assert env.fake.installs == 0 and not env.fake.erased and not FJ.record_file(env.journal.dir).exists()
+    if swap != "flash":
+        assert env.fake.flash == before
+
+
+def test_l2_the_writer_is_named_m_bootloader_while_it_writes(unit):
+    env = unit
+    seen = []
+    job = env.job(on_writing=lambda rec: seen.append(FJ.WRITER["who"]))
+    M.install(job, env.fake, lambda plan: True, area=small_area(), version="3.4.0")
+    assert seen == ["m-bootloader"] and FJ.WRITER["who"] == "M-Flasher"
+
+
+CHILD = r'''
+import json, os, signal, sys
+sys.path.insert(0, sys.argv[1]); sys.path.insert(0, sys.argv[1] + "/tests")
+from pathlib import Path
+from fm1companion import devices
+from fm1companion.flash import journal as fj
+from fm1companion.tools import flashjob as FJ, mbinstall as M
+from fake_mboot import FakeMboot
+from test_sloop3_install import mboot_flash, small_area
+a = json.loads(Path(sys.argv[2]).read_text())
+profiles = devices.ProfileStore(Path(a["profiles"]))
+job = FJ.Job(backups_dir=Path(a["backups"]), profiles=profiles, profile=profiles.profiles[a["prof"]],
+             log_dir=Path(a["logs"]), journal=fj.Journal(Path(a["journal"])))
+job.progress = lambda d, t, checking: os.kill(os.getpid(), signal.SIGKILL) if not checking else None
+M.install(job, FakeMboot(mboot_flash(), install=True, version="2.4-395e6cc"), lambda p: True, area=small_area(),
+          version="3.4.0")
+'''
+
+
+def test_l4_the_app_killed_during_the_midi_mode_write_leaves_the_record_for_the_next_start(unit):
+    import subprocess
+    env = unit
+    env.profiles.save()
+    args = env.tmp / "child.json"
+    args.write_text(json.dumps({"profiles": str(env.tmp / "devices.json"), "prof": env.prof.id,
+                                "backups": str(env.backups), "logs": str(env.logs), "journal": str(env.journal.dir)}))
+    r = subprocess.run([sys.executable, "-c", CHILD, str(ROOT), str(args)], timeout=120, cwd=str(ROOT / "tests"))
+    assert r.returncode == -9
+    rec = FJ.unfinished_write(env.journal.dir)
+    assert rec is not None and rec["op"] == "sloop3-install" and rec["state"] == "writing" and not rec["alive"]
+    from fm1companion.ui import flash_tools
+    assert Path(rec["pre_backup"]).name in flash_tools.interrupted_text(rec)
+
+
+def test_l6_only_a_reviewed_m_bootloader_build_also_on_an_earlier_unit(unit):
+    env = unit
+    env.fake.version = "2.3-abcdef0"
+    with pytest.raises(FJ.Refused) as e:
+        go(env)
+    assert e.value.kind == "mboot-build" and env.fake.installs == 0 and 0x23 not in env.fake.commands
+
+
+def test_l8_the_hardware_rule_is_judged_for_the_bundled_version():
+    from fm1companion import sloop3 as S3
+    from fm1companion.ui import sloop3_ui
+    assert sloop3_ui.bundled_version() == M.bundled_area()[1] == S3.CHECKED_VERSIONS[-1] == "3.4.0"
+
+
+@pytest.mark.skipif(not (os.environ.get("FM1C_MBOOT_SRC") and shutil.which("cc")),
+                    reason="needs FM1C_MBOOT_SRC (a checkout of jvitkauskas/m-bootloader v2.4) and a C compiler")
+def test_h1_m_bootloaders_own_code_failing_its_first_erase(env, tmp_path, monkeypatch):
+    from fm1companion.transport import SubprocessTransport
+    src = Path(os.environ["FM1C_MBOOT_SRC"])
+    exe = tmp_path / "mbsim"
+    cc = subprocess.run(["cc", "-O1", "-std=c11", "-D_DEFAULT_SOURCE", f"-I{src / 'include'}", "-o", str(exe),
+                         str(ROOT / "tests" / "mbsim.c"), str(src / "src" / "midi_update.c"),
+                         str(src / "src" / "core.c")], capture_output=True, text=True, timeout=120)
+    assert cc.returncode == 0, cc.stderr
+    monkeypatch.setattr(M, "REQUEST_TIMEOUT", 2.0)
+    monkeypatch.setenv("MBSIM_FAIL_ERASE", "1")
+    (tmp_path / "in.bin").write_bytes(mboot_flash())
+    env.prof.unit_id = MB_UID
+    t = SubprocessTransport([str(exe), str(tmp_path / "in.bin"), str(tmp_path / "out.bin"), "980f", "856014",
+                             "2.4-395e6cc"])
+    assert t.wait_started(10)
+    try:
+        with pytest.raises(FJ.WriteFailed):
+            M.install(env.job(), t, lambda plan: True, area=small_area(), version="3.4.0")
+    finally:
+        t.close()
+    assert FJ.unfinished_write(env.journal.dir)["state"] == "failed"

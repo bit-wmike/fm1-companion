@@ -581,6 +581,16 @@ Melodee OCT−+OCT+ is the calibration!).
       firmware (Firmware+: the plan picks the download route with m-bootloader), the original V15 with the original
       boot area (step 3 removal, then V15 the usual way – refused on a newer unit, which names the backup instead).
       It only starts the existing gated actions in order; each asks on its own; none skips a backup.
+    * **Review fixes (step 4):** the erase boundary is the last answer of the check pass (midi_update.c erases 0x4000
+      right then): from that answer on, silence or a failure is a failed write with the backup named and the record
+      kept; any other error during the MIDI MODE write (the port gone) is a failed write too, never an open record
+      with the app's pid. Right before the start key the unit answers 0x12 exactly as at the start and the chip's
+      CRC-32 of the whole flash equals the backup's – otherwise nothing is written. The SLOOP 3 install takes only an
+      m-bootloader build marked yes in hardware.json (also on earlier units). The firmware route refuses any package
+      reaching 0xFF000 (factory data) and a package file whose SHA-256 is not the validated one; the device backup is
+      never skipped in silence. "Back to the original V15" is not offered from SLOOP 3 or an unknown firmware (first a
+      Felucca-family firmware, or the pre-m-bootloader backup). While m-bootloader writes, the app names it and stays
+      open (it hands it the data).
 * Hub rescue `fm1_rescue.py` (GPL-3.0): not fetched/checked (budget) – open as a cross-check.
 
 ## 17. V16 and flash safety (analysis and integration, 31 Oct 2026)

@@ -1237,6 +1237,13 @@ class MainWindow(QMainWindow):
             if not leave_while_writing(self):
                 e.ignore()
                 return
+        elif flashjob.WRITING.is_set() and flashjob.WRITER.get("who") == "m-bootloader":
+            QMessageBox.warning(self, _("m-bootloader is writing"),       # (the app hands it the data: it must stay)
+                                _("m-bootloader is writing SLOOP 3 into the FM-1's flash, and this app hands it the "
+                                  "data. The app stays open until it has finished – do not unplug the FM-1 or switch "
+                                  "it off."))
+            e.ignore()
+            return
         elif flashjob.WRITING.is_set():          # M-Flasher writes: the app stays until it has ended
             QMessageBox.warning(self, _("M-Flasher is writing"),
                                 _("M-Flasher is writing the FM-1's flash. The app stays open until it has finished "

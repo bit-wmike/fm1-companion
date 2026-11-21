@@ -100,7 +100,8 @@ def _job(ctx, store, worker, writing: bool = False):
     prof = None if getattr(ctx, "is_virtual", False) else getattr(ctx, "profile", None)
 
     def on_writing(record):
-        text = _("M-Flasher is writing: this cannot be cancelled.")
+        text = (_("m-bootloader is writing: this cannot be cancelled.") if FJ.WRITER.get("who") == "m-bootloader"
+                else _("M-Flasher is writing: this cannot be cancelled."))
         try:
             call_in_gui(lambda: _disable_cancel(text))
         except Exception:  # noqa: BLE001 – never stops the write
@@ -173,7 +174,7 @@ def _sigterm(signum, frame):
     from ..tools import flashjob as FJ
     if FJ.WRITING.is_set():
         import logging
-        logging.getLogger(__name__).warning("SIGTERM ignored: M-Flasher is writing")
+        logging.getLogger(__name__).warning("SIGTERM ignored: %s is writing", FJ.WRITER.get("who"))
         return
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
     os.kill(os.getpid(), signal.SIGTERM)
@@ -706,6 +707,17 @@ def firmware_data_text(plan, warning: str) -> str:
         _("Nothing has been written yet. Install anyway?")])
 
 
+def firmware_backup_problem(plan, ctx) -> str:
+    """the plan includes the device backup, but the connection to the FM-1 is gone: never skipped in silence"""
+    if plan is None or "backup" not in plan.kinds():
+        return ""
+    link = getattr(ctx, "link", None)
+    if not getattr(ctx, "connected", False) or link is None or getattr(link, "closed", True):
+        return _("The plan includes a backup, but the connection to the FM-1 is gone in the meantime. Nothing was "
+                 "written. Please reconnect and open the plan again.")
+    return ""
+
+
 def firmware_flow(parent, ctx, spec, rel=None, local_pkg=None, tag: str = "", plan=None, *, known: bool = True,
                   local_sha: str = "", new_chip_ok: bool = False, store=None) -> bool:
     """"Install through download mode" (an installation plan with route "download-mode"): the package checked as for
@@ -722,7 +734,11 @@ def firmware_flow(parent, ctx, spec, rel=None, local_pkg=None, tag: str = "", pl
     title = _("Install {label} through download mode").format(label=label)
     init_gui_caller()
     result: dict = {}
-    do_backup = plan is not None and "backup" in plan.kinds() and bool(getattr(ctx, "connected", False))
+    why = firmware_backup_problem(plan, ctx)
+    if why:
+        show_error(parent, _("Backup not possible"), why)
+        return False
+    do_backup = plan is not None and "backup" in plan.kinds()
     link = getattr(ctx, "link", None)
     profile = getattr(ctx, "profile", None)
 
@@ -742,9 +758,12 @@ def firmware_flow(parent, ctx, spec, rel=None, local_pkg=None, tag: str = "", pl
             path = Path(pkg.fwsc)
         else:
             path = Path(local_pkg)
-        validate_package(path, spec, known, label, expect_sha=local_sha, log=w.log.emit)
-        raw = path.read_bytes()
-        if do_backup and link is not None and not getattr(link, "closed", True):
+        pi = validate_package(path, spec, known, label, expect_sha=local_sha, log=w.log.emit)
+        raw = path.read_bytes()                  # (compared with the checked file's SHA-256 by the job)
+        if do_backup:
+            if link is None or getattr(link, "closed", True):
+                raise RuntimeError(_("Backup not possible: the connection to the FM-1 is gone. Installation aborted – "
+                                     "nothing was changed on the FM-1."))
             from .. import autobackup
             w.log.emit(_("Step: backup of the device …"))
             with link.exclusive():
@@ -756,7 +775,8 @@ def firmware_flow(parent, ctx, spec, rel=None, local_pkg=None, tag: str = "", pl
             w.log.emit(_("Backup saved: {name}").format(name=bpath.name))
         job = _job(ctx, store, w, writing=True)
         try:
-            res = FJ.install_firmware(job, raw, ask, ask_data, name=label, new_chip_ok=new_chip_ok)
+            res = FJ.install_firmware(job, raw, ask, ask_data, name=label, new_chip_ok=new_chip_ok,
+                                      expected_sha256=pi.sha256)
         except FJ.WriteFailed as e:
             result["failed"] = e
             raise
@@ -851,6 +871,18 @@ def way_back_options(ctx) -> list[dict]:
                             "M-Flasher and keeps m-bootloader (a whole-flash backup first).") if mboot else
                           _("Firmware+ › Install & Versions: the usual way, the plan says which steps."))})
     v15_ok = rev != hardware.NEW
+    fw = (getattr(prof, "firmware", "") or "").lower() if prof is not None else ""
+    from .. import fwfamily
+    runs_usual = fw.startswith("stock") or (bool(fwfamily.by_key(fw)) and fw not in ("sloop3", "sloop-3") and
+                                            bootarea.changer(fw) is None)
+    if getattr(ctx, "sloop3", None) is not None:
+        runs_usual = False
+    v15_why = ("" if not v15_ok or runs_usual or not (cur.get("kind") in bootarea.NOT_ORIGINAL or mboot) else
+               _("From the firmware on this FM-1 ({fw}) the original V15 cannot be installed the usual way after the "
+                 "boot area was put back (SLOOP 3, for one, has no update mode). First go to a Felucca-family firmware "
+                 "(the choice above), then come back here – or write back a whole-flash backup of this unit made "
+                 "before m-bootloader (the first choice).").format(fw=fw or _("not known")))
+    v15_ok = v15_ok and not v15_why
     out.append({"key": "v15", "path": None, "ok": v15_ok and prof is not None,
                 "title": _("Back to the original V15 with the original boot area"),
                 "route": ((_("First “Remove m-bootloader (original boot area)” – download mode, a whole-flash "
@@ -858,9 +890,10 @@ def way_back_options(ctx) -> list[dict]:
                              "usual way on Firmware+.") if cur.get("kind") in bootarea.NOT_ORIGINAL or mboot else
                            _("The original V15 the usual way on Firmware+ (the boot area is the original one or not "
                              "known; the plan checks it)."))),
-                "why": "" if v15_ok else _("A newer unit (logo on the front): the app never writes V15's boot area "
-                                           "there. The way back to the factory state is a whole-flash backup of this "
-                                           "unit made before m-bootloader (the first choice).")})
+                "why": "" if v15_ok else v15_why or _("A newer unit (logo on the front): the app never writes V15's "
+                                                      "boot area there. The way back to the factory state is a "
+                                                      "whole-flash backup of this unit made before m-bootloader (the "
+                                                      "first choice).")})
     return out
 
 

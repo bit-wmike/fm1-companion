@@ -12,10 +12,12 @@ With ``install=True`` the start key F0 22 24 35 7F F7 starts an install as SPEC 
 m-bootloader's src/midi_update.c does it – written again here, none of its code): it asks the host for the package
 with 0x30 requests (≤ 512 bytes), checks the header, the entry, the chip key and flash.bin's CRC-16 after reading it
 all once, and only then erases 0x4000 and writes [0x5000, size), the first sector last, each sector only where it
-differs, and asks for FINISH (0xF0000000). Its faults (``fail``): "crc" (a byte of the package arrives changed:
-flash.bin's CRC does not match – it stops asking, nothing erased), "wrong-key" (it checks with another chip key – it
-stops asking), "silent" (never asks), "refuse" (a refusal frame before anything is erased), "refuse-writing" and
-"stop-writing" (a refusal / no more requests after two sectors were written). ``erased`` lists what it erased.
+differs, and asks for FINISH (0xF0000000). As midi_update.c it erases 0x4000 right after the last answer of the
+check pass, before any further request, and it never sends a refusal frame during an install – it simply stops
+asking. Its faults (``fail``): "crc" (a byte of the package arrives changed: flash.bin's CRC does not match – it stops
+asking, nothing erased), "wrong-key" (it checks with another chip key – it stops asking), "silent" (never asks),
+"erase-fail" (the first erase of 0x4000 happens, then it stops: MU_FLASH_ERROR), "stop-writing" (no more requests
+after two sectors were written). ``erased`` lists what it erased.
 
 The app's module was also run against m-bootloader's own MIDI mode code (src/midi_update.c of 2.4, compiled for the
 PC with a flash file behind it): see docs/UNTESTED.md, "SLOOP 3".
@@ -74,6 +76,7 @@ class FakeMboot:
                  answer_0x12: bool = True, corrupt_at: int = -1, install: bool = False, fail: str = "",
                  key: int = KEY):
         self.key = key
+        self.uid_bytes = bytes(range(0xA0, 0xA8))
         self.install_ok, self.fail = install, fail
         self.erased: list[int] = []
         self.finished = 0
@@ -118,7 +121,7 @@ class FakeMboot:
             self._answer(0x11, b"ota-FM-1_900".ljust(27, b"\0"))
         elif cmd == 0x12 and not body and self.answer_0x12:
             info = b"MBOOT" + bytes([1, self.kind, 1]) + KEY.to_bytes(2, "little") + \
-                len(self.flash).to_bytes(4, "little") + self.jedec.to_bytes(4, "little") + bytes(range(0xA0, 0xA8)) + \
+                len(self.flash).to_bytes(4, "little") + self.jedec.to_bytes(4, "little") + self.uid_bytes + \
                 b"\0\0" + self.version.encode() + b"\0"
             self._answer(0x12, info)
         elif cmd in (0x23, 0x24) and self.answer_0x12:
@@ -156,8 +159,6 @@ class FakeMboot:
     def _install(self):
         if self.fail == "silent":
             yield None
-        if self.fail == "refuse":
-            yield "refuse"
         head = b""
         for at in range(0, 0x400, 512):
             head += yield (at, 512)
@@ -188,6 +189,8 @@ class FakeMboot:
         img[0x4000:0x5000] = b"\xff" * 0x1000
         self.erased.append(0x4000)
         self.flash = bytes(img)
+        if self.fail == "erase-fail":
+            yield None
         written = 0
         for at in list(range(0x5000, size, 0x1000)) + [0x4000]:
             sec = b""
@@ -201,8 +204,8 @@ class FakeMboot:
                     self.erased.append(at)
                 self.flash = bytes(img)
                 written += 1
-            if written == 2 and self.fail in ("refuse-writing", "stop-writing"):
-                yield "refuse" if self.fail == "refuse-writing" else None
+            if written == 2 and self.fail == "stop-writing":
+                yield None
         yield (0xF0000000, 8)
         self.finished += 1
 

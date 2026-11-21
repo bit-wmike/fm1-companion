@@ -30,7 +30,11 @@ void mu_idle(void) {
 }
 bool mu_cancel(void) { return false; }
 bool mu_read(uint32_t a, void *o, uint32_t n) { if (a > FLASH || n > FLASH - a) return false; memcpy(o, flash + a, n); return true; }
-bool mu_erase(uint32_t a) { if (a % MU_SECTOR || a >= FLASH) return false; memset(flash + a, 0xff, MU_SECTOR); erases++; return true; }
+bool mu_erase(uint32_t a) {
+    if (a % MU_SECTOR || a >= FLASH) return false;
+    memset(flash + a, 0xff, MU_SECTOR); erases++;
+    return !(getenv("MBSIM_FAIL_ERASE") && erases == 1);    /* the first erase happens, then reports an error */
+}
 bool mu_program(uint32_t a, const void *d, uint32_t n) { if (a > FLASH || n > FLASH - a) return false; const uint8_t *s = d; for (uint32_t i = 0; i < n; i++) flash[a + i] &= s[i]; programs++; return true; }
 void mu_progress(bool w, unsigned p) { (void)w; (void)p; }
 void mu_unit_info(struct mu_unit *u) { u->jedec = jedec; u->capacity = FLASH; for (int i = 0; i < 8; i++) u->uid[i] = (uint8_t)(0xA0 + i); u->kind = MU_BOOTLOADER; u->version = version; }

@@ -232,13 +232,17 @@ class Served:
     log: list[str] = field(default_factory=list)
 
     def erasing_possible(self, pkg: Package) -> bool:
-        """m-bootloader reads all of flash.bin (and 32 bytes for the key check) before it erases anything"""
-        return self.flash_bytes > pkg.size + 32
+        """m-bootloader reads all of flash.bin (and 32 bytes for the key check) before it erases anything – and erases
+        0x4000 right after the last of those answers (midi_update.c install: mu_erase(MU_FIRST) before any further
+        request). So from the moment that answer was sent, an erase may have happened."""
+        return self.flash_bytes >= pkg.size + 32
 
 
-def serve(transport, pkg: Package, *, progress=None, timeout: float | None = None, on_started=None) -> Served:
+def serve(transport, pkg: Package, *, progress=None, timeout: float | None = None, on_started=None,
+          st: Served | None = None) -> Served:
     """send the start key and answer m-bootloader's 0x30 requests until it asks for FINISH. InstallError on a
-    refusal frame (command 0) or when it stops asking (`erased` says whether it may have started erasing)"""
+    refusal frame (command 0) or when it stops asking (`erased` says whether it may have started erasing). `st`
+    collects how far it got – also when the transport fails (the caller decides what that means)"""
     timeout = REQUEST_TIMEOUT if timeout is None else timeout
     q: queue.Queue = queue.Queue()
 
@@ -246,7 +250,7 @@ def serve(transport, pkg: Package, *, progress=None, timeout: float | None = Non
         if data and data[0] == 0xF0:
             q.put(list(data))
     transport.receiver = rx
-    st = Served()
+    st = st if st is not None else Served()
     t0 = time.monotonic()
     transport.send(list(START))
     if on_started:
@@ -431,9 +435,16 @@ def _install_locked(job, transport, confirm, area: bytes, version: str, new_chip
         raise FJ.Refused(_("m-bootloader reads a flash chip the app does not know ({chip}). Nothing was "
                            "written.").format(chip=FJ.chip_name(jedec)), "unknown-chip")
     rev = hardware.revision_of_id(jedec)
+    if hardware.support("m-bootloader", info.version).status != hardware.YES:
+        # (the inference "nothing is erased before the whole package was checked" rests on the reviewed
+        # midi_update.c of the build the app bundles: only builds data/hardware.json marks yes – as for its install)
+        raise FJ.Refused(_("This FM-1 has m-bootloader {version}. The app installs SLOOP 3 only through an m-bootloader "
+                           "build it has reviewed and marked in data/hardware.json (the one it brings along). Update "
+                           "m-bootloader first (Recovery › Tools › “Install m-bootloader”). Nothing was "
+                           "written.").format(version=info.version), "mboot-build")
     if hardware.NEW in (rev, hardware.revision(prof)):
         rev = hardware.NEW
-        if hardware.support("m-bootloader", info.version).status != hardware.YES or not new_chip_ok:
+        if not new_chip_ok:
             raise FJ.Refused(_("This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80). The app installs "
                                "SLOOP 3 there only with an m-bootloader build and a SLOOP 3 version known to run on "
                                "such a unit (data/hardware.json); m-bootloader {version} or this SLOOP 3 is not one "
@@ -473,7 +484,33 @@ def _install_locked(job, transport, confirm, area: bytes, version: str, new_chip
         job.ev("confirm", "declined")
         raise FJ.Refused(_("Nothing was written. The FM-1 is unchanged; the backup made just now is kept."), "declined")
     job.ev("confirm", "confirmed by the user")
+    _same_unit_still(host, info, image, job)
     return _write(job, transport, pkg, plan, info, pre, image, version)
+
+
+def _same_unit_still(host, info, image: bytes, job):
+    """right before the start key (the dialog may have been open for long): the unit answers 0x12 exactly as before
+    (unit id, chip, chip key, kind, m-bootloader build, size) and the chip's own CRC-32 of the whole flash equals the
+    backup just made – otherwise another unit is on the port, or the flash changed: refused, nothing written"""
+    import zlib
+    from . import flashjob as FJ
+    again = host.identify()
+    fields = lambda i: (i.uid, i.jedec, i.key, i.kind, i.version, i.capacity)    # noqa: E731
+    if again is None or fields(again) != fields(info):
+        job.ev("refused", "before the start key: 0x12 answers differently than at the start")
+        raise FJ.Refused(_("Right before writing, the FM-1 on this port answers differently than at the start (another "
+                           "unit, or not in MIDI MODE any more). Nothing was written; the backup made just now is "
+                           "kept."), "unit-changed")
+    try:
+        crc = host.crc(0, info.capacity)
+    except mboot.MbootError as e:
+        raise FJ.Refused(str(e) + " " + _("Nothing was written."), "crc") from e
+    if crc != zlib.crc32(bytes(image)) & 0xFFFFFFFF:
+        job.ev("refused", "before the start key: the chip's CRC-32 differs from the backup's")
+        raise FJ.Refused(_("Right before writing, the FM-1's flash is no longer the one just backed up (the chip's "
+                           "checksum differs) – another unit on the port, or the flash changed. Nothing was written; "
+                           "the backup made just now is kept."), "flash-changed")
+    job.ev("check", "before the start key: the same unit (0x12) and the flash equals the backup (chip CRC-32)")
 
 
 def _is_mboot_area(area: bytes) -> bool:
@@ -499,17 +536,19 @@ def _write(job, transport, pkg: Package, plan: InstallPlan, info, pre: Path, ima
         raise FJ.Refused(_("The app's journal record could not be written ({error}), so it does not start writing. "
                            "Nothing was written.").format(error=e.strerror or e), "record") from e
     held = FJ._inhibit(job, "writing", pid)
+    FJ.WRITER["who"] = "m-bootloader"
     FJ.WRITING.set()
-    job.tell(_("m-bootloader is reading SLOOP 3 now and then writes it. This cannot be cancelled – do not unplug the "
-               "FM-1 or switch it off."))
+    job.tell(_("m-bootloader is writing SLOOP 3 now, and the app hands it the data – this cannot be cancelled. Keep "
+               "the app open; do not unplug the FM-1 or switch it off."))
     if job.on_writing:
         try:
             job.on_writing(record)
         except Exception:  # noqa: BLE001
             pass
     job.cancel = None
+    st = Served()
     try:
-        st = serve(transport, pkg, progress=getattr(job, "progress", None))
+        serve(transport, pkg, progress=getattr(job, "progress", None), st=st)
     except InstallError as e:
         job.ev("install", f"{e.kind}: {e.reason}")
         if not e.erased:
@@ -522,8 +561,22 @@ def _write(job, transport, pkg: Package, plan: InstallPlan, info, pre: Path, ima
             pass
         raise FJ.WriteFailed(e.reason + " " + _("The backup made just before is {name} – it is this unit's state "
                                                 "before the install.").format(name=pre.name), e.kind, pre) from e
+    except Exception as e:  # noqa: BLE001 – the port gone, a USB error: after the start key it may have erased
+        job.ev("install", f"the connection failed during the install ({type(e).__name__}) after {st.requests} "
+                          f"requests")
+        record.update(state="failed", ended=time.time(), reason="connection")
+        try:
+            FJ._save_record(rec_path, record)
+        except OSError:
+            pass
+        raise FJ.WriteFailed(_("The connection to the FM-1 failed while m-bootloader was installing SLOOP 3 ({error}). "
+                               "The firmware area may be incomplete; the boot area (m-bootloader) was not written, so "
+                               "its menu still opens (hold PLAY while switching on) and MIDI MODE can install again. "
+                               "The backup made just before is {name} – it is this unit's state before the "
+                               "install.").format(error=type(e).__name__, name=pre.name), "connection", pre) from e
     finally:
         FJ.WRITING.clear()
+        FJ.WRITER["who"] = "M-Flasher"
         if held is not None:
             try:
                 held.release()

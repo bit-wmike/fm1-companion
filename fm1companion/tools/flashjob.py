@@ -68,6 +68,8 @@ BOOT_AREA = 0x4000
 FACTORY = (0xFF000, 0x100000)                   # the unit's factory data: chip key record, calibration, Bluetooth MAC
 RECORD = "mflasher-write.json"                  # beside the installation journal: a write-back in progress
 WRITING = threading.Event()                     # set from "yes" until M-Flasher has ended (blocks quitting)
+WRITER = {"who": "M-Flasher"}                   # who writes while WRITING is set ("m-bootloader": SLOOP 3 over MIDI
+#                                                 MODE – then the app itself hands it the data and must stay open)
 INTENDED: dict = {}                             # USB port -> (why, time): a unit in download mode on purpose
 GUIDE_SHOWN: dict = {}                          # {"at": time} – the app asked the user to put an FM-1 there by hand
 INTENDED_SECS = 30 * 60
@@ -1742,8 +1744,11 @@ def firmware_package(raw: bytes) -> tuple[str, bytes]:
     if model != "FM-1":
         raise Refused(_("This package is for the {model}, not for the FM-1. Nothing was written.").format(
             model=model or "?"), "package-model")
-    if len(flash) > FLASH_SIZE:
-        raise Refused(_("The package's flash image is larger than the FM-1's flash. Nothing was written."),
+    if len(flash) > FACTORY[0]:
+        # (M-Flasher's plan_firmware writes up to the package's end with no factory warning; the app never lets it
+        # reach the factory data at 0xFF000-0xFFFFF – no real FM-1 package does, they end at 0x93000 at most)
+        raise Refused(_("The package's flash image reaches into the FM-1's factory data (0xFF000–0xFFFFF: "
+                        "calibration, Bluetooth address), which the app never writes. Nothing was written."),
                       "package-size")
     return ident, flash
 
@@ -1784,7 +1789,7 @@ def firmware_gate(expect: dict):
             return f"an unknown line before the plan: {plan.stray[0][:60]!r}"
         if plan.nothing or not plan.runs:
             return "the plan writes nothing"
-        end = expect["end"]
+        end = min(expect["end"], FACTORY[0])            # (never the factory data, whatever the package says)
         if any(a < BOOT_AREA or b > end or a >= b or a % SECTOR or b % SECTOR for a, b in plan.runs):
             return f"a planned range lies outside 0x04000-0x{end - 1:05X} (the boot area is never written here)"
         n = sum((b - a) // SECTOR for a, b in plan.runs)
@@ -1792,7 +1797,7 @@ def firmware_gate(expect: dict):
             return "the plan's sector count does not match its ranges"
         if plan.runs != expect["runs"]:
             return "the planned sector ranges are not the ones the app computed"
-        if plan.notes != [mp.firmware_note(expect["identity"], end)]:
+        if plan.notes != [mp.firmware_note(expect["identity"], expect["end"])]:
             return "an unexpected note in the plan: " + ((plan.notes or ["(none)"])[0])[:80]
         if plan.warnings:
             warn = mp.data_places_warning(info.firmware, expect["identity"])
@@ -1812,7 +1817,7 @@ def _newer_firmware_refusal(name: str) -> str:
 
 
 def install_firmware(job: Job, package: bytes, confirm, confirm_data, *, name: str = "",
-                     new_chip_ok: bool = False) -> FirmwareResult:
+                     new_chip_ok: bool = False, expected_sha256: str = "") -> FirmwareResult:
     """"Install through download mode": `package` (an FM-1 .fwsc the caller checked – catalog, checksum) through
     `m-flasher firmware` onto a unit with m-bootloader, only with a write-verified M-Flasher; on a newer unit only
     when the hardware rule lets the target through (`new_chip_ok`: planner.chip_support says yes); a whole-flash
@@ -1823,6 +1828,9 @@ def install_firmware(job: Job, package: bytes, confirm, confirm_data, *, name: s
     from .. import hardware
     store = _store_of(job)
     _write_verified(store)
+    if expected_sha256 and hashlib.sha256(package).hexdigest() != expected_sha256.lower():
+        raise Refused(_("The package is no longer the file that was checked (its SHA-256 differs). Nothing was "
+                        "written."), "package-changed")
     ident, flash = firmware_package(package)
     if hardware.revision(job.profile) == hardware.NEW and not new_chip_ok:
         raise Refused(_newer_firmware_refusal(name or ident), "newer-chip")     # (before the unit is sent anywhere)

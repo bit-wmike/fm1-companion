@@ -113,6 +113,18 @@ def refuse_in_midi_mode(parent, ctx, port=None) -> bool:
     return True
 
 
+def bundled_version() -> str:
+    """the SLOOP 3 version the app installs (the bundled area's, manifest.json) – the hardware rule is judged for it"""
+    try:
+        from ..tools.store import Store
+        c = Store().bundled(S3.KEY)
+        if c is not None and c.version:
+            return c.version
+    except Exception:  # noqa: BLE001
+        pass
+    return S3.CHECKED_VERSIONS[-1]
+
+
 def chip_plan(ctx):
     """the newer-FM-1 part of an installation plan for SLOOP 3 on this device – the app's one rule for it
     (flash/planner.chip_check with hardware.json's rows; blockers for a newer unit, the confirmation "no_logo" when
@@ -120,7 +132,7 @@ def chip_plan(ctx):
     from .. import firmware
     from ..flash import planner
     rev, _src = revision(ctx)
-    t = planner.Target.from_spec(firmware.spec(S3.KEY), tag="v" + S3.CHECKED_VERSIONS[-1])
+    t = planner.Target.from_spec(firmware.spec(S3.KEY), tag="v" + bundled_version())
     return planner.chip_check(rev if rev in ("new", "old") else "", t)
 
 
