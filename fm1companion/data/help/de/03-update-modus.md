@@ -113,6 +113,12 @@ gesucht hat.
   dieses Geräts von vor m-bootloader (sie bietet sie an, wenn es eine gibt). „FM-1 neu starten“ wird abgelehnt,
   solange ein Schreiben nicht geprüft endete (das FM-1 bleibt dann im Download-Modus, wo sich seine Sicherung
   zurückschreiben lässt).
+* **Flash-Sicherung importieren …** (Backups › Flash-Backups, Rettung › Werkzeuge): übernimmt eine Kopie des ganzen
+  Flashs, die M-Flasher selbst gemacht hat (seine `.bin` mit ihrer `.json`, anderswo abgelegt), in die Sicherungen
+  der App – gegen ihre `.json` geprüft, abgelegt beim Gerät, dessen Unit-ID die `.json` nennt (das Abbild selbst
+  enthält sie nicht; ist kein Profil als dieses Gerät bekannt, wählst du eines, geraten wird nichts). Eine
+  importierte Kopie mit intaktem Boot-Bereich von vor m-bootloader ist der Rückweg, den die App auf einem neueren Gerät
+  anbietet. m-bootloader installieren und entfernen stehen auch im Menü **Gerät**.
 * **Warum der Original-Boot-Bereich wichtig ist:** Viele Firmwares der Felucca-Familie lehnen die Original-V15 ab,
   wenn der Boot-Bereich nicht der der V15 ist („FAILED -5“ auf dem FM-1, CHECK HEAD). Weiß die App, dass dein FM-1
   m-bootloader oder den Boot-Bereich von FM1 Open hat (aus einer Flash-Sicherung, von M-Flasher, von m-bootloader

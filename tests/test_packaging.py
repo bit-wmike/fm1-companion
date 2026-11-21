@@ -564,6 +564,10 @@ def test_install_sh_and_uninstall_install_and_remove_the_download_rule(tmp_path,
     assert any(str(rule) in m for m in msgs)
     app = Path(info["app"])
     assert (app / "udev" / core.DL_RULE).exists() and (app / "udev" / core.SG_CONF).exists()
+    # (hardware run 2026-11-21) a second install with the rule already there says so
+    again = []
+    core.install(ROOT, home / ".local", menu=False, download_mode_rule=True, log=again.append, fluidsynth_fix=False)
+    assert any("already present" in m or "schon vorhanden" in m for m in again)
     # an update without the flag keeps knowing that the rule is ours
     assert core.install(ROOT, home / ".local", menu=False, log=lambda *_: None,
                         fluidsynth_fix=False)["download_mode_rule"] == info["download_mode_rule"]

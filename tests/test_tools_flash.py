@@ -560,7 +560,10 @@ def test_tools_hardware_table_matches_untested_md():
     rows = dict(re.findall(r"^\| `(\w+)` – [^|]+\| (run on hardware|not run)\b[^|]*\|$", sec, re.M))
     assert rows == {k: ("run on hardware" if ok else "not run") for k, (ok, _l) in tested.TOOLS_HARDWARE.items()}
     assert [k for k, (ok, _l) in tested.TOOLS_HARDWARE.items() if ok] == [
-        "mf_download_mode", "mf_backup", "mf_restore", "mf_new_chip_backup"]           # (Pi run 2026-11-20)
+        "mf_download_mode", "mf_backup", "mf_restore", "mf_new_chip_backup",           # (Pi run 2026-11-20)
+        "mf_download_button", "mf_bootloader_install", "mf_bootloader_remove",       # (Pi run 2026-11-21)
+        "mf_newer_removal_refused", "plan_boot_block"]
+    assert not tested.TOOLS_HARDWARE["mf_new_chip_bootloader"][0]
     assert not tested.TOOLS_HARDWARE["mf_new_chip_restore"][0]
     assert "2026-11-20" in sec and "ONE Raspberry Pi 5" in sec and "TWO units" in sec and "Not run: a large" in sec
     assert "app_flows_pi" in tested.OWNER_REPORTS

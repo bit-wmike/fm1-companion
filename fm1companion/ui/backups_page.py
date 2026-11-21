@@ -1175,6 +1175,12 @@ class BackupsPage(QWidget):
                        "unit ID and flash chip), after a fresh backup of its current state and your confirmation."))
         b.clicked.connect(self._flash_restore)
         row.addWidget(b)
+        b = self.flash_import_btn = QPushButton(icon("document-import", "document-open"), _("Import a flash backup …"))
+        b.setObjectName("flashImportBtn")
+        from .flash_tools import import_tip
+        b.setToolTip(import_tip())
+        b.clicked.connect(self._flash_import)
+        row.addWidget(b)
         b = QPushButton(icon("folder-open"), _("Show in folder"))
         b.clicked.connect(self._flash_show)
         row.addWidget(b)
@@ -1273,6 +1279,11 @@ class BackupsPage(QWidget):
         from .flash_tools import restore_flow
         restore_flow(self, self.ctx, p)
         self.refresh()
+
+    def _flash_import(self):
+        from .flash_tools import import_flow
+        if import_flow(self, self.ctx) is not None:
+            self.refresh()
 
     def _flash_show(self):
         p = self._flash_sel()

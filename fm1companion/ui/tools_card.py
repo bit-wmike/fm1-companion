@@ -113,7 +113,12 @@ class ToolsCard(Card):
                                    "M-Flasher – removes m-bootloader and what FM1 Open changed there; after a "
                                    "whole-flash backup and your confirmation."))
         self.b_unboot.clicked.connect(self.remove_mboot)
-        lay.addWidget(flow_row(self.b_dl, self.b_leave, self.b_mboot, self.b_unboot))
+        self.b_import = QPushButton(icon("document-import", "document-open"), _("Import a flash backup …"))
+        self.b_import.setObjectName("toolsFlashImport")
+        from .flash_tools import import_tip
+        self.b_import.setToolTip(import_tip())
+        self.b_import.clicked.connect(self.flash_import)
+        lay.addWidget(flow_row(self.b_dl, self.b_leave, self.b_mboot, self.b_unboot, self.b_import))
         self.boot_label = QLabel("")
         self.boot_label.setObjectName("toolsBootArea")
         self.boot_label.setWordWrap(True)
@@ -274,6 +279,12 @@ class ToolsCard(Card):
     def flash_restore(self):
         from .flash_tools import restore_flow
         restore_flow(self, self.ctx, store=self._store)
+
+    def flash_import(self):
+        from .flash_tools import import_flow
+        res = import_flow(self, self.ctx)
+        if res is not None:
+            self.note.setText(_("Flash backup kept: {path}").format(path=res.path))
 
     def download_mode(self):
         from .flash_tools import download_flow

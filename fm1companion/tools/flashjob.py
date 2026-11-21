@@ -104,8 +104,8 @@ def guide_text() -> str:
              "while switching it on, which goes there directly;\n"
              "• with the original firmware or a Felucca-family firmware (Skiff, SLOOP 2, Melodee …), the app sends "
              "it there by itself while it runs on USB MIDI.\n"
-             "In download mode the display stays dark or shows M-Flasher's screen; the computer sees "
-             "“WL82 UBOOT1.00” (as a USB device it calls itself “WL80UBOOT1.00”).")
+             "In download mode the display stays dark or shows M-Flasher's screen; the computer lists a USB device "
+             "“WL80UBOOT1.00” (USB 4c4a:8057 – earlier and newer units alike; M-Flasher writes it “WL82 UBOOT1.00”).")
 
 
 def mask(uid: str) -> str:
@@ -171,6 +171,7 @@ class Job:
     usb_path: str = ""                         # the USB port where the app last saw `profile` running (just before)
     work_dir: Path | None = None               # private local folder for M-Flasher's files (default: private_dir())
     unit_usb: str = ""                         # the USB port of the unit in download mode (where it comes back)
+    purpose: str = ""                          # why it is in download mode: button | backup | restore | bootloader
     # filled in on the way
     device: str = ""                           # /dev/sgN
     info: mp.Info | None = None                # M-Flasher's info of this session
@@ -314,7 +315,7 @@ def _intended(device: str, why: str, job: Job | None = None):
     if job is not None and usb:
         job.unit_usb = usb
     if usb:
-        INTENDED[usb] = (why, time.time())
+        INTENDED[usb] = (why, time.time(), getattr(job, "purpose", "") if job is not None else "")
 
 
 def intended_download_mode(usb_path: str) -> str:
@@ -322,12 +323,22 @@ def intended_download_mode(usb_path: str) -> str:
     "used" (a flash job worked with it there), "guide" (the app just asked the user to put an FM-1 there by hand –
     with the keys or m-bootloader's menu); "" not known – then it may be the emergency"""
     now = time.time()
-    why, at = INTENDED.get(usb_path or "", ("", 0.0))
+    why, at = INTENDED.get(usb_path or "", ("", 0.0, ""))[:2]
     if why and now - at < INTENDED_SECS:
         return why
     if GUIDE_SHOWN.get("at", 0) > now - INTENDED_SECS:
         return "guide"
     return ""
+
+
+def intended_reason(usb_path: str) -> str:
+    """what put the unit there on purpose: "button" ("Into download mode"), "backup", "restore", "bootloader"
+    (installing / removing m-bootloader), "guide" (the user, with the keys or m-bootloader's menu), "" not known"""
+    why = intended_download_mode(usb_path)
+    if why == "guide":
+        return "guide"
+    entry = INTENDED.get(usb_path or "", ("", 0.0, ""))
+    return (entry[2] if len(entry) > 2 else "") if why else ""
 
 
 def softkey_target_ok(card: str, own_port: str) -> bool:
@@ -712,6 +723,7 @@ class BackupResult:
 def backup(job: Job, restart_after: bool | None = None) -> BackupResult:
     """"Back up the whole flash": download mode (soft key or guide), identify, double read, keep one image; then
     the unit is restarted when the app itself had sent it into download mode (or `restart_after`)."""
+    job.purpose = job.purpose or "backup"
     with _Lock(job, "mflasher-backup"), _back_on_refusal(job):
         ensure_download_mode(job)
         info = identify(job)
@@ -868,6 +880,7 @@ def restore(job: Job, image: Path, confirm) -> RestoreResult:
                         "or its chip-key record is damaged or erased – as after an interrupted write). Written back, "
                         "the FM-1 could not start, so the app does not write it back. Nothing was written."),
                       "image-boot-broken")
+    job.purpose = "restore"
     with _Lock(job, "mflasher-restore"), _back_on_refusal(job):
         res = _restore_locked(job, image, side, data, confirm)
     res.log_path = job.log_path
@@ -1145,6 +1158,7 @@ class ModeResult:
 def download_mode(job: Job) -> ModeResult:
     """"Into download mode": ensure_download_mode as its own action (the soft key only to the FM-1 the app recognised
     itself, otherwise the guide – Refused kind "guide"). The unit stays in download mode, marked as there on purpose."""
+    job.purpose = "button"
     with _Lock(job, "mflasher-download"):
         dev = ensure_download_mode(job)
     return ModeResult(dev, job.sent_by_app, job.log_path)
@@ -1359,6 +1373,7 @@ def install_bootloader(job: Job, confirm) -> BootResult:
     sup = hardware.support("m-bootloader", version)
     if hardware.revision(job.profile) == hardware.NEW and sup.status != hardware.YES:
         raise Refused(_newer_unit_refusal(version), "newer-chip")      # (before the unit is sent anywhere)
+    job.purpose = "bootloader"
     with _Lock(job, "mflasher-bootloader"), _back_on_refusal(job):
         res = _install_locked(job, boot, version, sup, confirm)
     res.log_path = job.log_path
@@ -1425,9 +1440,10 @@ def remove_bootloader(job: Job, confirm, package: bytes) -> BootResult:
         area = bootarea.v15_area(package)
     except bootarea.BootAreaError as e:
         raise Refused(str(e) + " " + _("Nothing was written."), "package") from e
-    from .. import hardware
-    if hardware.revision(job.profile) == hardware.NEW:
-        raise _newer_unit_stock_refusal(job, None)          # (before the unit is sent anywhere)
+    early = removal_refused_early(job)
+    if early is not None:
+        raise early                                        # (before the unit is sent anywhere)
+    job.purpose = "bootloader"
     with _Lock(job, "mflasher-bootloader"), _back_on_refusal(job):
         res = _remove_locked(job, package, area, confirm)
     res.log_path = job.log_path
@@ -1473,14 +1489,20 @@ def _remove_locked(job: Job, package: bytes, area: bytes, confirm) -> BootResult
                             "known. Recommended order: first go back to the original V15 with M-VAVE's FM1 "
                             "Workbench (“Restore original V15”), then put back the original boot area here, then "
                             "install the next firmware."))
-    backups = unit_backups(job.folder, info.unit_id)
-    if not any(k == bootarea.ORIGINAL for _p, k in backups):
-        own = next((p for p, k in backups if k not in (bootarea.MBOOT, bootarea.ORIGINAL)), None)
-        plan.notes.append(_("None of this unit's flash backups shows a boot area equal to V15's, so the app does not "
-                            "know whether this FM-1's own original boot area was V15's (units sold with V16, for "
-                            "example, may have come with another one). The exact way back to this unit's own state is a "
-                            "whole-flash restore of an earlier backup{own}.").format(
-                                own=_(" – e.g. {name}").format(name=own.name) if own is not None else ""))
+    backups = [(p, k) for p, k in unit_backups(job.folder, info.unit_id) if p != pre]
+    orig = next((p for p, k in backups if k == bootarea.ORIGINAL), None)
+    own = next((p for p, k in backups if k not in (bootarea.MBOOT, bootarea.ORIGINAL)), None)
+    if orig is not None:
+        plan.notes.append(_("An earlier backup of this unit ({name}) shows exactly V15's boot area: the removal puts "
+                            "back this unit's own original boot area.").format(name=orig.name))
+    elif own is not None:
+        plan.notes.append(_("An earlier backup of this unit ({name}) shows a boot area that differs from V15's: the "
+                            "removal writes V15's, not this unit's own. The exact way back to that state is writing "
+                            "{name} back (Recovery › Tools › “Write flash back …”).").format(name=own.name))
+    else:
+        plan.notes.append(_("The app has no earlier backup of this unit that shows its boot area before m-bootloader, "
+                            "so it cannot tell whether this FM-1's own original boot area was V15's (units sold with "
+                            "V16, for example, may have come with another one)."))
     return _confirm_and_write(job, plan, info, saved, pre, confirm, "FM-1_015.fwsc", package, {
         "flag": "--stock", "title": mp.stock_title("FM-1_015"), "note": mp.BOOT_STOCK_NOTE, "runs": runs,
         "area": area})
@@ -1629,6 +1651,12 @@ def unit_backups(folder: Path, unit_id: str) -> list[tuple[Path, str]]:
     return [(p, k) for p, k, _s in out]
 
 
+def removal_refused_early(job: Job) -> Refused | None:
+    """"Remove m-bootloader" on a unit the profile already knows as newer: refused before anything is asked or sent"""
+    from .. import hardware
+    return _newer_unit_stock_refusal(job, None) if hardware.revision(job.profile) == hardware.NEW else None
+
+
 def _newer_unit_stock_refusal(job: Job, unit_id: str | None) -> Refused:
     """V15's boot area has never been written to a newer unit: refused; the way back there is a whole-flash restore
     of a backup made before m-bootloader – named (and offered) when one of this unit exists"""
@@ -1643,7 +1671,9 @@ def _newer_unit_stock_refusal(job: Job, unit_id: str | None) -> Refused:
              "way back is a whole-flash restore of a backup of this unit made before m-bootloader (Recovery › Tools "
              "› “Write flash back …”).")
     text += " " + (_("This unit has one: {name}.").format(name=offer.name) if offer is not None else
-                   _("The app has no such backup of this unit, so there is no way back from the app."))
+                   _("The app has no such backup of this unit. If M-Flasher itself made one (its .bin with its .json), "
+                     "import it first – “Import a flash backup …” on Backups › Flash backups or Recovery › Tools – "
+                     "then the app offers it here. Without one there is no way back from the app."))
     e = Refused(text + " " + _("Nothing was written."), "newer-chip-stock")
     e.offer = offer
     return e
@@ -1655,6 +1685,112 @@ def _fresh_read_only(job: Job) -> tuple[bytes, mp.Info]:
         return _one_read(job, vs, 1)
     finally:
         shutil.rmtree(vs, ignore_errors=True)
+
+
+# ------------------------------------------------------------------------------------------------ importing a backup
+
+@dataclass
+class ImportResult:
+    path: Path
+    profile: object
+    unit_id: str
+    file_date: str
+    already: bool = False
+
+
+def import_backup(source: Path, backups_dir: Path, profiles, choose=None) -> ImportResult:
+    """"Import a flash backup …": a whole-flash image made by M-Flasher itself (its .bin and its own .json) or by the
+    app, kept elsewhere, becomes a backup of the app – only when it is the whole flash (1 MiB), matches the SHA-256 in
+    its .json, names its unit id and flash chip there (the image itself does not carry them: the unit id is the flash
+    chip's own number, read by command) and has an intact boot area. It goes to the profile whose unit id it names;
+    with no such profile, choose(unit_id, candidates) -> profile asks (only profiles that know no unit id yet are
+    offered, and the chosen one learns this id) – never a guess. The copy keeps its own date."""
+    from .. import flashdump
+    from ..devices import profile_unit_ids, unit_id_forms
+    from ..flash import mboot
+    from . import bootarea
+    source = Path(source)
+    try:
+        raw = source.read_bytes()
+    except OSError as e:
+        raise Refused(_("The file cannot be read: {error}").format(error=e.strerror or e), "import-read") from e
+    if len(raw) != FLASH_SIZE:
+        raise Refused(_("This file is not a copy of the whole flash (1 MiB) – nothing was imported."), "import-size")
+    if not source.with_suffix(".json").exists():
+        raise Refused(_("There is no .json beside this file. M-Flasher writes the unit ID and the flash chip into the "
+                        ".json beside its backup – the image itself does not contain them – so without it the app "
+                        "cannot tell which FM-1 the copy belongs to. Nothing was imported."), "import-no-json")
+    try:
+        side = flashdump.read_any_side(source)
+    except flashdump.FlashDumpError as e:
+        raise Refused(str(e) + " " + _("Nothing was imported."), "import-damaged") from e
+    uid, fid = flashdump.side_unit_id(side), flashdump.side_flash_id(side)
+    if not uid or not fid:
+        raise Refused(_("The .json beside this file names no unit ID or no flash chip, so the app cannot tell which "
+                        "FM-1 the copy belongs to. Nothing was imported."), "import-no-unit-id")
+    if not bootarea.intact(raw[:BOOT_AREA]):
+        raise Refused(_("The boot area in this copy is not intact (as after an interrupted write), so it can never "
+                        "be a way back. Nothing was imported."), "import-boot-broken")
+    hits = profiles.by_unit_id(uid) if profiles is not None else []
+    if len(hits) > 1:
+        raise Refused(_("Two of your device profiles have this unit ID ({uid}): merge them on the page “Devices” "
+                        "first. Nothing was imported.").format(uid=mask(uid)), "two-profiles")
+    prof = hits[0] if hits else None
+    if prof is None:
+        cands = [p for p in (profiles.profiles.values() if profiles is not None else [])
+                 if not {f for f in profile_unit_ids(p) if len(f) == 16}]
+        prof = choose(uid, cands) if (choose is not None and cands) else None
+        if prof is None or prof not in cands:
+            raise Refused(_("This copy belongs to an FM-1 with unit ID {uid}, and none of your device profiles is "
+                            "known to be that unit. Connect it once (or choose its profile when the app asks), then "
+                            "import again. Nothing was imported.").format(uid=mask(uid)), "import-unassigned")
+    from .. import hardware
+    rec = getattr(prof, "flash_id", "") or ""
+    if rec and hardware.was_read(prof):
+        try:
+            if int(rec, 16) != fid:
+                raise Refused(_("This copy was read from another flash chip ({chip}) than the one recorded for "
+                                "“{name}”. Nothing was imported.").format(chip=chip_name(fid), name=prof.name),
+                              "import-other-chip")
+        except ValueError:
+            pass
+    sha = hashlib.sha256(raw).hexdigest()
+    folder = Path(backups_dir) / prof.folder_name / "Flash"
+    for p in folder.glob("*.bin") if folder.is_dir() else []:
+        try:
+            if hashlib.sha256(p.read_bytes()).hexdigest() == sha:
+                return ImportResult(p, prof, uid, str(side.get("created") or ""), already=True)
+        except OSError:
+            continue
+    when = str(side.get("created") or "")
+    if not when:
+        import datetime as _dt
+        when = _dt.datetime.fromtimestamp(source.stat().st_mtime).astimezone().strftime("%Y-%m-%dT%H:%M:%S%z")
+    origin = "M-Flasher" if side.get("format") == flashdump.MFLASHER_FORMAT else "FM-1 Companion"
+    try:
+        key = int(str(side.get("chip key") or ""), 16)
+    except ValueError:
+        key = None
+    path = flashdump.write_backup(
+        folder, mboot.backup_name(prof.name), raw, device=prof.name, read_through=f"imported from {origin} "
+        f"({side.get('read_through') or ''})".replace(" ()", ""), jedec=fid, unit_id=uid, chip_key=key,
+        capacity=FLASH_SIZE, profile=getattr(prof, "id", ""), firmware=side.get("firmware") or {},
+        note=f"imported from {origin}, {when}",
+        extra={"created": when, "imported": {"from": origin, "file_date": when, "file": source.name}})
+    try:
+        import datetime as _dt
+        t = _dt.datetime.strptime(when, "%Y-%m-%dT%H:%M:%S%z").timestamp()
+        os.utime(path, (t, t))                     # (its place among the unit's backups is its own date)
+    except (ValueError, OSError):
+        pass
+    if not {f for f in profile_unit_ids(prof) if len(f) == 16} and unit_id_forms(uid):
+        prof.unit_id = uid                         # (the user said which unit it is)
+    try:
+        if profiles is not None:
+            profiles.save()
+    except OSError as e:
+        log.warning("profile not saved: %s", e)
+    return ImportResult(path, prof, uid, when)
 
 
 # ------------------------------------------------------------------------------------------------ the write record

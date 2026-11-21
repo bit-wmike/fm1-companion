@@ -249,7 +249,7 @@ def read_image(path: Path) -> bytes:
 def write_backup(folder: Path, name: str, image: bytes, *, device: str, read_through: str, jedec: int | None,
                  unit_id: str = "", chip_key: int | None = None, capacity: int = 0, profile: str = "",
                  firmware: dict | None = None, tool: dict | None = None, double_read: bool = False,
-                 note: str = "", during_open_write: bool = False) -> Path:
+                 note: str = "", during_open_write: bool = False, extra: dict | None = None) -> Path:
     """write a flash image and its description beside it (`name`: the wanted file name, made unique) – the .bin
     first, complete or not at all, read back and compared before the description is written. -> the .bin"""
     import os
@@ -293,6 +293,7 @@ def write_backup(folder: Path, name: str, image: bytes, *, device: str, read_thr
             "note": note, "app": "FM-1 Companion"}
     if during_open_write:          # (taken while a write onto this unit had not ended verified: never a way back)
         side["taken_during_open_write"] = True
+    side.update(extra or {})       # (an imported copy: its origin and its own date)
     write_text_atomic(path.with_suffix(".json"), json.dumps(side, indent=2, ensure_ascii=False))
     try:                                         # the two new names are on the disk too, not only the contents
         fd = os.open(folder, os.O_RDONLY)

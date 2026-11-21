@@ -110,6 +110,12 @@ nueva.
   – volver a escribir una copia de toda la flash de esta unidad hecha antes de m-bootloader (la ofrece si existe).
   «Reiniciar el FM-1» se rechaza mientras una escritura no terminó comprobada (el FM-1 se queda entonces en modo de
   descarga, donde se puede volver a escribir su copia).
+* **Importar una copia de la flash …** (Copias de seguridad › Copias de la flash, Recuperación › Herramientas): toma en
+  las copias de la app una copia de toda la flash hecha por el propio M-Flasher (su `.bin` con su `.json`, guardada en
+  otro sitio) – comprobada con su `.json`, guardada en el dispositivo cuyo ID de unidad indica el `.json` (la imagen
+  misma no lo contiene; si ningún perfil se sabe que sea esa unidad, eliges uno, no se adivina nada). Una copia
+  importada con la zona de arranque intacta de antes de m-bootloader es el camino de vuelta que la app ofrece en una
+  unidad más nueva. Instalar y quitar m-bootloader también están en el menú **Dispositivo**.
 * **Por qué importa la zona de arranque original:** muchos firmwares de la familia Felucca rechazan el V15 original si
   la zona de arranque no es la de V15 («FAILED -5» en el FM-1, CHECK HEAD). Si la app sabe que tu FM-1 tiene
   m-bootloader o la zona de arranque de FM1 Open (por una copia de la flash, por M-Flasher, por el propio m-bootloader

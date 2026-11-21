@@ -225,7 +225,9 @@ confirmed.
 
 `fm1companion/tools/flashjob.py`, buttons on Recovery › Tools and Backups › Flash backups. **Run on real hardware
 through the app on 2026-11-20** (the owner, PR #27, ONE Raspberry Pi 5, TWO units one after the other at the same USB
-port; `OWNER_REPORTS["app_flows_pi"]`). Everything else only against `tests/fake_mflasher.py` (M-Flasher 0.12.1's line
+port; `OWNER_REPORTS["app_flows_pi"]`), and step 3 on **2026-11-21** (PR #28, the same Pi 5 and units:
+download mode, restart, m-bootloader install and removal on the earlier unit, the plan block, the newer-unit
+refusal; `OWNER_REPORTS["app_step3_pi"]`; nothing writing on the newer unit). Everything else only against `tests/fake_mflasher.py` (M-Flasher 0.12.1's line
 formats, synthetic unit ids, a pseudo-random 1 MiB "flash"). `TOOLS_HARDWARE` in `fm1companion/flash/tested.py`
 repeats this table; `tests/test_tools_flash.py` keeps the two in sync.
 
@@ -236,9 +238,12 @@ repeats this table; `tests/test_tools_flash.py` keeps the two in sync.
 | `mf_restore` – writing a whole-flash backup back through M-Flasher – so far only small changes on an earlier unit (not yet the boot area or a large difference) | run on hardware (2026-11-20), narrow: earlier unit (0x856014, original boot area, Melodee 1.6.1), an image made by the app, three runs of 1 sector (once "nothing to write"), verified; the foreign-unit refusal seen; SIGTERM and closing the window blocked while writing. Not run: a large difference or the boot area, a real logout, an image with M-Flasher's own .json |
 | `mf_new_chip_backup` – the whole-flash backup on a newer FM-1 (logo on the front, flash UC25HQ80) | run on hardware (2026-11-20): one newer unit, three ways (soft key, REC, menu) |
 | `mf_new_chip_restore` – writing a whole-flash backup back on a newer FM-1 (logo on the front, flash UC25HQ80) | not run |
-| `mf_download_button` – the button “Into download mode” and “Restart the FM-1” on their own | not run (the same `download-mode` / `restart` ran inside the backup and write-back flows, see above) |
-| `mf_bootloader_install` – installing m-bootloader through M-Flasher (bootloader --file) | not run through the app: the pinned `fm1-uboot.boot` 2.4-395e6cc, the gate (boot area 0x00000–0x03FFF only), the fresh read and the profile entry only against the stand-in |
-| `mf_bootloader_remove` – putting back the original boot area through M-Flasher (bootloader --stock with M-VAVE's V15 package) | not run through the app: the V15 package's boot area (SHA-256 d9f43191…, measured on the public file), the gate (exactly the app's own diff), the fresh read only against the stand-in |
+| `mf_download_button` – the button “Into download mode” and “Restart the FM-1” on their own (both units) | run on hardware (2026-11-21, one Pi 5): “Into download mode” from Melodee 1.6.1 (earlier unit) and from SLOOP 3 3.4.0 (newer unit, m-bootloader), “Restart the FM-1” on both; no “Which FM-1 is this?” afterwards |
+| `mf_bootloader_install` – installing m-bootloader through M-Flasher (bootloader --file) – so far once, on an earlier unit with the original boot area | run on hardware (2026-11-21), narrow: earlier unit 0x856014, original boot area, Melodee 1.6.1, m-bootloader 2.4-395e6cc, once; 4 sectors, gate answered, fresh read as expected; the PLAY menu afterwards was not checked by hand |
+| `mf_bootloader_remove` – putting back the original boot area through M-Flasher (bootloader --stock with M-VAVE's V15 package) – so far once, on an earlier unit; the whole flash was byte-identical with the state before the install afterwards | run on hardware (2026-11-21), narrow: the same earlier unit, once; afterwards an M-Flasher backup by hand was byte-identical with the state before the install (so its original boot area is V15's) |
+| `mf_newer_removal_refused` – refusing the removal on a newer FM-1 (no M-Flasher call) | run on hardware (2026-11-21): seen on the newer unit, no M-Flasher call; offering a backup was not seen (none was in the app then) |
+| `plan_boot_block` – the installation plan blocked by the boot-area rule (m-bootloader, CHECK HEAD) | run on hardware (2026-11-21): Skiff on the earlier unit with m-bootloader – blocked with the way out, nothing written |
+| `mf_new_chip_bootloader` – installing or removing m-bootloader on a newer FM-1 (logo on the front, flash UC25HQ80) through this app | not run (the removal is refused there by design; the install through the app was not tried) |
 
 **Owner, outside the app (2026-11-18/19, `OWNER_REPORTS["mflasher_by_hand"]`):** M-Flasher 0.12.1 by hand in a
 terminal on a Raspberry Pi 5 – `download-mode`, `info`, `backup` twice with the same SHA-256, and `restore` of a whole

@@ -318,6 +318,10 @@ def boot_flow(card, state, uid, asked):
           "the download-mode and m-bootloader buttons are there")
     names = [a.text().replace("&", "") for m in w.menuBar().findChildren(type(w.menuBar().actions()[0].menu()))
              for a in m.actions()]
+    check("m-bootloader installieren …" in names and "m-bootloader entfernen …" in names,
+          "Device menu: install and remove m-bootloader (hardware run 2026-11-21)")
+    check(hasattr(card, "b_import") and hasattr(w.backups, "flash_import_btn"),
+          "Import a flash backup: on the Tools card and on Backups › Flash backups")
     check("In den Download-Modus" in names and any(n.startswith("FM-1 neu starten") for n in names),
           f"Device menu: into download mode and restart ({[n for n in names if 'Download' in n or 'neu' in n]})")
     card.b_dl.click()

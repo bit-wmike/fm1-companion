@@ -600,12 +600,15 @@ def test_the_v15_policy_is_otherwise_unchanged():
 
 # ------------------------------------------------------------------------------------------------ docs
 
-def test_new_tool_kinds_are_not_marked_tested_and_the_owner_report_is_outside_the_app():
-    for k in ("mf_download_button", "mf_bootloader_install", "mf_bootloader_remove"):
-        assert k in tested.TOOLS_HARDWARE and not tested.TOOLS_HARDWARE[k][0]
+def test_new_tool_kinds_are_marked_per_the_hardware_run_and_the_newer_unit_stays_open():
+    for k in ("mf_download_button", "mf_bootloader_install", "mf_bootloader_remove", "mf_newer_removal_refused",
+              "plan_boot_block"):
+        assert tested.TOOLS_HARDWARE[k][0], k                            # (owner's run 2026-11-21)
+    assert not tested.TOOLS_HARDWARE["mf_new_chip_bootloader"][0] and "app_step3_pi" in tested.OWNER_REPORTS
     assert "outside the app" in tested.OWNER_REPORTS["mboot_by_hand"]
-    assert tested.tool_note("mf_bootloader_install") == _(BY_HAND).format(what=_(tested.TOOLS_HARDWARE[
-        "mf_bootloader_install"][1]))
+    assert tested.tool_note("mf_bootloader_install", new_chip=True) == _(BY_HAND).format(what=_(tested.TOOLS_HARDWARE[
+        "mf_new_chip_bootloader"][1]))
+    assert tested.tool_note("mf_bootloader_install") != tested.tool_note("mf_bootloader_install", new_chip=True)
     doc = (ROOT / "docs" / "flash-protocol.md").read_text("utf-8")
     assert "Step 3" in doc and "bootloader --stock" in doc and bootarea.V15_BOOT_AREA_SHA256[:8] in doc
 
@@ -651,19 +654,42 @@ def test_h_removal_on_a_newer_unit_without_a_backup_says_there_is_no_way(env, v1
     assert not boot_calls(env) and not calls(env, "backup")
 
 
-def test_h_earlier_unit_without_an_original_backup_is_warned(env, v15):
+def test_hw2_removal_says_whether_this_units_own_boot_area_was_v15s(env, v15):
+    """(hardware run 2026-11-21) the removal compares the unit's own earlier backups with V15's boot area"""
     raw, area = v15
+    same = _("An earlier backup of this unit ({name}) shows exactly V15's boot area: the removal puts back this "
+             "unit's own original boot area.")
+    differs = _("An earlier backup of this unit ({name}) shows a boot area that differs from V15's: the removal "
+                "writes V15's, not this unit's own. The exact way back to that state is writing {name} back "
+                "(Recovery › Tools › “Write flash back …”).")
+    none = _("The app has no earlier backup of this unit that shows its boot area before m-bootloader, so it cannot "
+             "tell whether this FM-1's own original boot area was V15's (units sold with V16, for example, may have "
+             "come with another one).")
+    # (a) only m-bootloader states known (m-bootloader put on outside the app): the generic sentence
+    import fake_mflasher
+    img = bytearray(fake_mflasher.synthetic_image())
+    img[:0x4000] = bootarea.compose_short(bytes(img[:0x4000]), BOOT)
+    Path(str(env.state) + ".flash").write_bytes(bytes(img))
+    env.set(mode="midi", bootloader="m-bootloader 2.4-395e6cc (fm1)")
+    plans = []
+    remove(env, raw, plans)
+    assert none in plans[0].notes
+    # (b) an earlier backup with another boot area than V15's (the fake's own): "differs", naming it
+    Path(str(env.state) + ".flash").write_bytes(fake_mflasher.synthetic_image())
+    env.set(mode="midi")
+    other = FJ.backup(env.job())
     install(env)
     plans = []
     remove(env, raw, plans)
-    assert any("V16" in n for n in plans[0].notes)                     # (no backup showed V15's boot area)
-    # a unit whose backup once showed V15's boot area: no such note
+    assert any(n.startswith(differs.split("{name}")[0]) for n in plans[0].notes)
+    assert none not in plans[0].notes and other.path.exists()
+    # (c) an earlier backup with V15's boot area: "exactly its original"
     _install_with_v15_area(env, area)
     FJ.backup(env.job())
     install(env)
     plans = []
     remove(env, raw, plans)
-    assert not any("V16" in n for n in plans[0].notes)
+    assert any(n.startswith(same.split("{name}")[0]) for n in plans[0].notes) and none not in plans[0].notes
 
 
 @pytest.mark.parametrize("rev,removal", [("old", True), ("new", False), ("", True)])
@@ -925,3 +951,145 @@ def test_low_a_future_dated_fm1_open_entry_does_not_block_for_ever():
     assert bootarea.current(p)["how"] == "unsure"
     bootarea.note(p, bootarea.ORIGINAL, "installed")
     assert bootarea.current(p)["kind"] == bootarea.ORIGINAL
+
+
+
+# ------------------------------------------------------------------------------------------------ hardware run fixes
+
+IMPORT_HINT = ("The app has no such backup of this unit. If M-Flasher itself made one (its .bin with its .json), import "
+               "it first – “Import a flash backup …” on Backups › Flash backups or Recovery › Tools – then the app "
+               "offers it here. Without one there is no way back from the app.")
+
+
+def _mflasher_dump(folder: Path, image: bytes, uid=UID, flash="0xB36014", saved="20000101-000000", json_ok=True):
+    """a dump the way M-Flasher's own `backup` saves it (ops.rs save_backup: .bin + .json), synthetic values"""
+    folder.mkdir(parents=True, exist_ok=True)
+    p = folder / f"fm1-{saved}.bin"
+    p.write_bytes(image)
+    rows = {"model": "FM-1", "bootloader": "stock (M-VAVE)", "firmware": "Felucca", "app": "OK", "chip key": "0x980F",
+            "flash": flash, "unit id": uid, "loader": "M-Flasher 1.3, CPU at 96 MHz",
+            "sha256": sha(image) if json_ok else "0" * 64, "saved": saved, "tool": "m-flasher 0.12.1"}
+    p.with_suffix(".json").write_text(json.dumps(rows, indent=2))
+    return p
+
+
+def test_hw1_an_m_flasher_dump_is_imported_to_the_unit_it_names(env):
+    import fake_mflasher
+    img = fake_mflasher.synthetic_image("dump-before-mboot")
+    src = _mflasher_dump(env.tmp / "elsewhere", img)
+    env.prof.unit_id = UID
+    res = FJ.import_backup(src, env.backups, env.profiles)
+    assert res.profile is env.prof and res.path.parent == env.backups / "Unit 1" / "Flash" and not res.already
+    assert res.path.read_bytes() == img
+    side = json.loads(res.path.with_suffix(".json").read_text())
+    assert side["imported"]["from"] == "M-Flasher" and side["unit id"] == UID and side["flash"] == "0xB36014"
+    assert side["created"].startswith("2000-01-01") and "imported from M-Flasher" in side["note"]
+    assert FJ.import_backup(src, env.backups, env.profiles).already                     # (twice: nothing new)
+    assert (res.path, bootarea.OTHER) in FJ.unit_backups(res.path.parent, UID)
+
+
+def test_hw1_import_asks_for_the_profile_and_never_guesses(env):
+    import fake_mflasher
+    src = _mflasher_dump(env.tmp / "elsewhere", fake_mflasher.synthetic_image("x"))
+    asked = []
+    with pytest.raises(FJ.Refused) as e:
+        FJ.import_backup(src, env.backups, env.profiles, choose=lambda uid, c: asked.append((uid, c)) or None)
+    assert e.value.kind == "import-unassigned" and asked and asked[0][1] == [env.prof]
+    with pytest.raises(FJ.Refused):
+        FJ.import_backup(src, env.backups, env.profiles)                               # (no one to ask: refused)
+    res = FJ.import_backup(src, env.backups, env.profiles, choose=lambda uid, c: c[0])
+    assert res.profile is env.prof and env.prof.unit_id == UID                       # (the chosen one learns the id)
+    other = devices.Profile(id="bbbbbbbbbb", name="Unit 2", unit_id=OTHER_UID)
+    env.profiles.profiles[other.id] = other
+    src2 = _mflasher_dump(env.tmp / "elsewhere2", fake_mflasher.synthetic_image("y"), uid="0f1e2d3c4b5a6978")
+    with pytest.raises(FJ.Refused) as e:                                              # (only profiles without an id)
+        FJ.import_backup(src2, env.backups, env.profiles, choose=lambda uid, c: other)
+    assert e.value.kind == "import-unassigned"
+
+
+@pytest.mark.parametrize("case,kind", [("no-json", "import-no-json"), ("size", "import-size"),
+                                       ("sha", "import-damaged"), ("broken", "import-boot-broken"),
+                                       ("no-uid", "import-no-unit-id")])
+def test_hw1_import_refuses_what_could_never_be_a_way_back(env, case, kind):
+    import fake_mflasher
+    img = bytearray(fake_mflasher.synthetic_image("z"))
+    if case == "broken":
+        img[0x3000:0x4000] = b"\xff" * 0x1000
+    if case == "size":
+        img = img[:-1]
+    src = _mflasher_dump(env.tmp / "elsewhere", bytes(img), uid="" if case == "no-uid" else UID,
+                         json_ok=case != "sha")
+    if case == "no-json":
+        src.with_suffix(".json").unlink()
+    env.prof.unit_id = UID
+    with pytest.raises(FJ.Refused) as e:
+        FJ.import_backup(src, env.backups, env.profiles)
+    assert e.value.kind == kind and not list((env.backups).rglob("*.bin"))
+
+
+def test_hw1_the_newer_unit_refusal_offers_the_imported_dump(env, v15):
+    import fake_mflasher
+    raw, _area = v15
+    env.set(mode="midi", flash=0xB36014)
+    env.prof.unit_id = UID
+    with pytest.raises(FJ.Refused) as e:
+        remove(env, raw)
+    assert e.value.offer is None and _(IMPORT_HINT) in e.value.reason
+    res = FJ.import_backup(_mflasher_dump(env.tmp / "elsewhere", fake_mflasher.synthetic_image("pre")), env.backups,
+                           env.profiles)
+    with pytest.raises(FJ.Refused) as e:
+        remove(env, raw)
+    assert e.value.offer == res.path
+
+
+def test_hw3_a_known_newer_unit_is_refused_before_any_question(env, monkeypatch):
+    from types import SimpleNamespace as NS
+    from fm1companion.ui import flash_tools
+    hardware.set_revision(env.prof, hardware.NEW, "rom", hardware.NEW_ID)
+    assert FJ.removal_refused_early(env.job()) is not None
+    asked, shown = [], []
+    monkeypatch.setattr(flash_tools, "confirm", lambda *a, **k: asked.append(a) or False)
+    monkeypatch.setattr(flash_tools, "show_error", lambda p, t, m, d="": shown.append(m))
+    ctx = NS(settings=NS(backups_dir=str(env.backups)), store=env.profiles, profile=env.prof, is_virtual=False,
+             tools_store=env.store)
+    assert flash_tools.remove_boot_flow(None, ctx, store=env.store) is False
+    assert shown and not asked and not env.get().get("calls")                        # (no flow promised, nothing run)
+    p2 = devices.Profile(id="cccccccccc", name="Unit 3")
+    assert FJ.removal_refused_early(env.job(profile=p2)) is None
+
+
+def test_hw5_download_mode_names_its_real_reason_and_the_rescue_write_is_off(env, monkeypatch):
+    from fm1companion.flash.uboot import UbootDevice
+    from fm1companion.ui.pages import recovery
+    FJ.INTENDED.clear()
+    FJ.GUIDE_SHOWN.clear()
+    monkeypatch.setattr(FJ, "_usb_path_of", lambda d: "1-1")
+    dev = UbootDevice(sg="/dev/sg1", block="", size=0, usb_id="4c4a:8057", vendor="WL82", model="UBOOT1.00",
+                      usb_path="1-1", product="WL80UBOOT1.00")
+    FJ.download_mode(env.job())
+    assert FJ.intended_reason("1-1") == "button"
+    text = recovery.intended_text(dev)
+    assert _(recovery.REASONS[("button", "")]) in text
+    assert recovery.rescue_write_blocked(dev) and recovery.rescue_write_blocked(None) == ""
+    env.set(mode="midi")
+    FJ.backup(env.job(), restart_after=False)
+    assert FJ.intended_reason("1-1") == "backup" and _(recovery.REASONS[("backup", "sent")]) in recovery.intended_text(dev)
+    FJ.INTENDED.clear()
+
+
+def test_hw6_the_usb_name_is_shown_and_no_chip_difference_implied():
+    from fm1companion.flash.uboot import UbootDevice
+    from fm1companion.ui.pages import recovery
+    dev = UbootDevice(sg="/dev/sg1", block="", size=0, usb_id="4c4a:8057", vendor="WL82", model="UBOOT1.00",
+                      usb_path="1-1", product="WL80UBOOT1.00")
+    name = recovery.usb_name(dev)
+    assert "WL80UBOOT1.00" in name and "WL82" not in name
+    assert "WL80UBOOT1.00" in FJ.guide_text()
+
+
+def test_hw7_a_blocked_plan_has_no_second_check_head_hint():
+    st = _state(boot_area=bootarea.MBOOT, boot_area_text="x", revision="old")
+    p = planner.plan_install(st, _target())
+    assert p.boot_restore and planner.TRAP_TEXT not in p.warnings
+    q = planner.plan_install(_state(), _target())                                     # (not blocked: the hint stays)
+    assert planner.TRAP_TEXT in q.warnings

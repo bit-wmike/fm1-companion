@@ -405,6 +405,58 @@ def restore_flow(parent, ctx, path: Path | None = None, store=None) -> bool:
     return bool(getattr(d, "ok", False) and res is not None and res.written)
 
 
+# ------------------------------------------------------- importing a flash backup made elsewhere (M-Flasher)
+
+def import_tip() -> str:
+    return _("Takes a whole-flash copy made elsewhere – by M-Flasher itself (its .bin with its .json) – into this "
+             "app's backups: checked against its .json, filed under the device whose unit ID it names (if none is "
+             "known, you choose one). Nothing is sent to an FM-1.")
+
+
+def choose_profile(parent, uid: str, candidates):
+    """which of these profiles (none knows a unit id yet) is the unit with this id? -> the profile or None"""
+    from PyQt6.QtWidgets import QInputDialog
+    from ..tools import flashjob as FJ
+    names = [_("— please choose —")] + [p.name for p in candidates]
+    item, ok = QInputDialog.getItem(parent, _("Which FM-1 is this?"),
+                                    _("This copy names the unit ID {uid}. None of your device profiles is known to be "
+                                      "that unit yet. Which one is it? (It then keeps this unit ID.)").format(
+                                          uid=FJ.mask(uid)), names, 0, False)
+    if not ok or item == names[0]:
+        return None
+    return next((p for p in candidates if p.name == item), None)
+
+
+def import_flow(parent, ctx, path: Path | None = None):
+    """"Import a flash backup …" -> the ImportResult, None when nothing was imported"""
+    from ..tools import flashjob as FJ
+    if path is None:
+        from PyQt6.QtWidgets import QFileDialog
+        f, _filter = QFileDialog.getOpenFileName(parent, _("Import a flash backup"), str(Path.home()),
+                                                 _("Flash backups (*.bin)"))
+        if not f:
+            return None
+        path = Path(f)
+    try:
+        res = FJ.import_backup(path, Path(ctx.settings.backups_dir), getattr(ctx, "store", None),
+                               choose=lambda uid, cands: choose_profile(parent, uid, cands))
+    except FJ.Refused as e:
+        show_error(parent, _("Not imported"), e.reason)
+        return None
+    from .common import show_done
+    text = (_("This copy is already among the backups of “{device}”: {name}.") if res.already else
+            _("Imported as a flash backup of “{device}”: {name} (made {date}). It can be written back like the "
+              "app's own backups – only onto that unit.")).format(device=res.profile.name, name=res.path.name,
+                                                                  date=_date(res.file_date))
+    show_done(parent, _("Import a flash backup"), text)
+    if hasattr(ctx, "changed"):
+        try:
+            ctx.changed.emit()
+        except Exception:  # noqa: BLE001
+            pass
+    return res
+
+
 # ------------------------------------------------------- download mode, restart, m-bootloader
 
 def download_flow(parent, ctx, store=None) -> str:
@@ -486,8 +538,7 @@ def boot_plan_text(plan) -> str:
         what = _("The app writes the boot area of M-VAVE's original firmware V15 (from the V15 package, checksum "
                  "checked) with M-Flasher – that removes m-bootloader and what FM1 Open changed there. <b>Only the "
                  "boot area 0x00000–0x03FFF is written</b>; the firmware, projects, sounds and factory data stay as "
-                 "they are. On an FM-1 that came with V16 this is V15's boot area, not necessarily the one it "
-                 "came with.")
+                 "they are.")
         kind = "mf_bootloader_remove"
     parts = [head,
              _("Boot area now (as M-Flasher reads it): {now}. Firmware (as the app knows it): {fw}.").format(
@@ -499,7 +550,7 @@ def boot_plan_text(plan) -> str:
                "answers its question only when every planned range lies inside the boot area. Do not unplug the "
                "FM-1 or switch it off while it writes."),
              *[html.escape(n) for n in plan.notes],
-             html.escape(tested.tool_note(kind))]
+             html.escape(tested.tool_note(kind, new_chip=plan.revision == "new"))]
     return "<br><br>".join(parts)
 
 
@@ -509,6 +560,17 @@ def _boot_flow(parent, ctx, store, op: str) -> bool:
     store = store or getattr(ctx, "tools_store", None)
     if _not_here(parent, ctx, store):
         return False
+    if op == "remove":                          # (a unit the profile knows as newer: refused before any question)
+        prof = None if getattr(ctx, "is_virtual", False) else getattr(ctx, "profile", None)
+        early = FJ.removal_refused_early(FJ.Job(backups_dir=Path(ctx.settings.backups_dir),
+                                                profiles=getattr(ctx, "store", None), profile=prof))
+        if early is not None:
+            show_error(parent, _("Remove m-bootloader (original boot area)"), early.reason)
+            offer = getattr(early, "offer", None)
+            if offer is not None and confirm(parent, _("Write flash back"), OFFER_TEXT().format(
+                    name=html.escape(offer.name)), _("Continue")):
+                return restore_flow(parent, ctx, offer, store=store)
+            return False
     if op == "install":
         title = _("Install m-bootloader")
         intro = _("The app first puts the FM-1 into download mode, reads it and backs up the whole flash (read "
@@ -578,13 +640,16 @@ def _boot_flow(parent, ctx, store, op: str) -> bool:
         except Exception:  # noqa: BLE001
             pass
     offer = result.get("offer")
-    if offer is not None and confirm(parent, _("Write flash back"),
-                                     _("This unit has a whole-flash backup made before m-bootloader: {name}. Write "
-                                       "it back? (The app checks it and asks once more before anything is "
-                                       "written.)").format(name=html.escape(offer.name)), _("Continue")):
+    if offer is not None and confirm(parent, _("Write flash back"), OFFER_TEXT().format(name=html.escape(offer.name)),
+                                     _("Continue")):
         return restore_flow(parent, ctx, offer, store=store)
     res = result.get("res")
     return bool(getattr(d, "ok", False) and res is not None and res.verified)
+
+
+def OFFER_TEXT() -> str:
+    return _("This unit has a whole-flash backup made before m-bootloader: {name}. Write it back? (The app checks it "
+             "and asks once more before anything is written.)")
 
 
 def install_boot_flow(parent, ctx, store=None) -> bool:

@@ -498,6 +498,25 @@ Melodee OCT−+OCT+ is the calibration!).
         * A write record keeps the unit id's SHA-256. "Already" / "nothing to write" settle a record only when its
           profile and unit id are this job's (step 2's restore record too).
         * A future-dated history entry counts as undated.
+      * **Hardware run (2026-11-21) fixes:**
+        * *Import a flash backup …* (Backups › Flash backups, Recovery › Tools; `flashjob.import_backup`) takes
+          M-Flasher's own dumps (`.bin` + its `.json`).
+          * Checks: 1 MiB, SHA-256 against the `.json`, unit id and flash ID from the `.json` (the image does not
+            carry them: the unit id is the chip's own number), an intact boot area.
+          * The copy goes to the profile with that unit id. If there is none, the user chooses among profiles
+            without an id – never a guess.
+          * It is kept with an app sidecar `imported` {from, file_date} and keeps its own date.
+          * The newer-unit refusal offers such a copy. When none exists, it says to import one.
+        * The removal dialog compares this unit's earlier backups with V15's boot area: "exactly its original" or
+          "differs, the exact way back is …". The V16 sentence comes only when no such backup exists.
+        * On a unit the profile knows as newer, the removal is refused before the first question.
+        * Install / remove are in the Device menu too.
+        * Recovery stage 2 names the actual reason: "Into download mode", a backup, a write-back, m-bootloader, or
+          the user by hand. It shows the USB name "WL80UBOOT1.00" (both chips alike; M-Flasher's spelling is
+          "WL82 UBOOT1.00").
+        * "Write back original V15 …" (jl-uboot-tool) is off while the unit is in download mode on purpose.
+        * A plan blocked by the boot-area rule no longer repeats the general CHECK-HEAD hint.
+        * install.sh says when the download-mode rule is already present.
     * *Not run on hardware through the app* (`tested.TOOLS_HARDWARE`: `mf_download_button`,
       `mf_bootloader_install`, `mf_bootloader_remove`); the owner did install and the way back by hand
       (`OWNER_REPORTS["mboot_by_hand"]`).

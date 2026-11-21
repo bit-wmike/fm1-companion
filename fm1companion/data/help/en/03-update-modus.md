@@ -104,6 +104,12 @@ before every use and never runs a changed file), and when it last looked for a n
   one, so there the app refuses and names the way back instead – writing back a whole-flash backup of this unit made
   before m-bootloader (it offers it when there is one). “Restart the FM-1” is refused while a write did not end
   verified (the FM-1 then stays in download mode, where its backup can be written back).
+* **Import a flash backup …** (Backups › Flash backups, Recovery › Tools): takes a whole-flash copy that M-Flasher
+  made itself (its `.bin` with its `.json`, kept elsewhere) into the app's backups – checked against its `.json`,
+  filed under the device whose unit ID the `.json` names (the image itself does not carry it; if no profile is known
+  as that unit you choose one, nothing is guessed). An imported copy with an intact boot area from before
+  m-bootloader is the way back the app offers on a newer unit. Install and remove m-bootloader are also in the
+  **Device** menu.
 * **Why the original boot area matters:** many Felucca-family firmwares refuse the original V15 when the boot area is
   not V15's (“FAILED -5” on the FM-1, CHECK HEAD). When the app knows that your FM-1 has m-bootloader or FM1 Open's
   boot area (from a flash backup, from M-Flasher, from m-bootloader itself or from the firmware history), a plan that

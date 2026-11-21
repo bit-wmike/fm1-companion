@@ -588,6 +588,7 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
     if boot_trap(state, t, fam, p.via_stock):
         p.boot_restore = True
         p.blockers.append(boot_trap_text(state))
+        p.warnings = [w for w in p.warnings if w != TRAP_TEXT]   # (the specific way out above; not a second one)
     elif state.boot_area == "m-bootloader" and fam == "felucca":
         p.warnings.append(_("This FM-1 has m-bootloader. Installing over it keeps it, but a later return to the "
                             "original V15 from this firmware ends in “FAILED -5” – the original boot area must come "

@@ -84,13 +84,22 @@ TOOLS_HARDWARE: dict[str, tuple[bool, str]] = {
     "mf_new_chip_backup": (True, N_("the whole-flash backup on a newer FM-1 (logo on the front, flash UC25HQ80)")),
     "mf_new_chip_restore": (False, N_("writing a whole-flash backup back on a newer FM-1 (logo on the front, flash "
                                       "UC25HQ80)")),
-    "mf_download_button": (False, N_("the button “Into download mode” and “Restart the FM-1” on their own")),
-    "mf_bootloader_install": (False, N_("installing m-bootloader through M-Flasher (bootloader --file)")),
-    "mf_bootloader_remove": (False, N_("putting back the original boot area through M-Flasher (bootloader --stock "
-                                       "with M-VAVE's V15 package)")),
+    # (owner's run of PR #28 on 2026-11-21, ONE Raspberry Pi 5, both units at the same port – report "Werkzeug-Paket
+    # Schritt 3": OWNER_REPORTS["app_step3_pi"])
+    "mf_download_button": (True, N_("the button “Into download mode” and “Restart the FM-1” on their own (both "
+                                    "units)")),
+    "mf_bootloader_install": (True, N_("installing m-bootloader through M-Flasher (bootloader --file) – so far once, "
+                                       "on an earlier unit with the original boot area")),
+    "mf_bootloader_remove": (True, N_("putting back the original boot area through M-Flasher (bootloader --stock "
+                                      "with M-VAVE's V15 package) – so far once, on an earlier unit; the whole flash "
+                                      "was byte-identical with the state before the install afterwards")),
+    "mf_newer_removal_refused": (True, N_("refusing the removal on a newer FM-1 (no M-Flasher call)")),
+    "plan_boot_block": (True, N_("the installation plan blocked by the boot-area rule (m-bootloader, CHECK HEAD)")),
+    "mf_new_chip_bootloader": (False, N_("installing or removing m-bootloader on a newer FM-1 (logo on the front, flash "
+                                         "UC25HQ80) through this app")),
 }
 # the boot-area kinds above: what the owner did with M-Flasher by hand (OWNER_REPORTS["mboot_by_hand"])
-TOOLS_BY_HAND = {"mf_bootloader_install", "mf_bootloader_remove"}
+TOOLS_BY_HAND = {"mf_new_chip_bootloader"}
 
 # Reports by the owner of what ran OUTSIDE this app (his own tools: M-Flasher, the authors' installer pages) – not runs
 # of this app, so none of it counts as "tested" above. hardware.json cites the same report for its rows.
@@ -98,6 +107,9 @@ OWNER_REPORTS: dict[str, str] = {
     "newer_unit_mboot_sloop3": "2026-11-19, one newer FM-1 (flash 0xB36014): m-bootloader 2.4-395e6cc installed with "
                                "M-Flasher, it boots and its menu shows FLASH B36014; SLOOP 3 v3.4.0 installed with its "
                                "author's installer page; a change saved in SLOOP 3 survived a power cycle",
+    "app_step3_pi": "2026-11-21, owner: the app's download mode, restart (both units), m-bootloader install and "
+                    "removal on the earlier unit, the plan block and the newer-unit refusal, one Raspberry Pi 5 "
+                    "(report 'Werkzeug-Paket Schritt 3') – see TOOLS_HARDWARE",
     "app_flows_pi": "2026-11-20, owner: the app's own flash backup and write-back flows on both units, one "
                     "Raspberry Pi 5 (report 'Werkzeug-Paket Schritt 2') – see TOOLS_HARDWARE",
     "mboot_by_hand": "2026-11-18/19, owner, outside the app: `m-flasher bootloader --file fm1-uboot.boot` "
@@ -116,6 +128,8 @@ def tool_note(kind: str, new_chip: bool = False) -> str:
     write-back has its own key)"""
     if new_chip and kind == "mf_restore":
         kind = "mf_new_chip_restore"
+    if new_chip and kind in ("mf_bootloader_install", "mf_bootloader_remove"):
+        kind = "mf_new_chip_bootloader"
     ok, label = TOOLS_HARDWARE.get(kind, (False, ""))
     if ok:
         return _("Tested on a real FM-1 through this app: {what}.").format(what=_(label))
