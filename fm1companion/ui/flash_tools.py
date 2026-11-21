@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """The buttons "Back up the whole flash", "Write flash back", "Into download mode", "Restart the FM-1", "Install
 m-bootloader" and "Remove m-bootloader (original boot area)" (Recovery › Tools, Backups › Flash backups, the Device
-menu): dialogs around tools/flashjob.py, which drives the bundled M-Flasher in USB download mode."""
+menu), the installation of a firmware through download mode (an installation plan's route "download-mode"), SLOOP 3
+over MIDI MODE and "Back to …": dialogs around tools/flashjob.py, which drives the bundled M-Flasher in USB download mode."""
 from __future__ import annotations
 
 import datetime as dt
@@ -660,6 +661,149 @@ def remove_boot_flow(parent, ctx, store=None) -> bool:
     return _boot_flow(parent, ctx, store, "remove")
 
 
+# ------------------------------------------------------- a firmware through download mode (m-bootloader units)
+
+def firmware_plan_text(plan) -> str:
+    """the danger question before a firmware is installed through download mode"""
+    from .. import hardware
+    from ..flash import tested
+    from ..tools import flashjob as FJ
+    rev = _(hardware.LABEL.get(plan.revision, hardware.LABEL[hardware.UNKNOWN]))
+    who = _("“{unit}” (unit ID {uid}, {revision})").format(unit=html.escape(plan.unit_name), uid=FJ.mask(plan.unit_id),
+                                                           revision=html.escape(rev))
+    parts = [
+        _("Install {name} ({identity}) on {who} through download mode?").format(
+            name=html.escape(plan.name), identity=html.escape(plan.identity), who=who),
+        _("Boot area now (as M-Flasher reads it): {now}. Firmware (as the app knows it): {fw}.").format(
+            now=html.escape(plan.current or "?"), fw=html.escape(plan.firmware or _("not known"))),
+        "<b>" + _("M-Flasher writes only from 0x04000 to the end of the package (0x{end:05X}); the boot area "
+                  "0x00000–0x03FFF – m-bootloader – is not written.").format(end=plan.end - 1) + "</b> " +
+        ngettext("{n} sector of 4 KiB differs from what the FM-1 holds now.",
+                 "{n} sectors of 4 KiB differ from what the FM-1 holds now.", plan.sectors).format(n=plan.sectors) +
+        " " + _("What the current firmware keeps in that range (its program, and its projects, sounds and settings "
+                "where it stores them there) is replaced; the factory data is not touched."),
+        _("The whole flash was backed up just now (read twice): {name}. That is the way back.").format(
+            name=html.escape(plan.backup.name)),
+        _("M-Flasher checks the unit ID, the flash chip and the sectors once more right before it writes; the app "
+          "answers its question only when they are exactly the ones it computed. Do not unplug the FM-1 or switch "
+          "it off while it writes."),
+        *[html.escape(n) for n in plan.notes],
+        html.escape(tested.tool_note("mf_firmware", new_chip=plan.revision == "new"))]
+    return "<br><br>".join(parts)
+
+
+def firmware_data_text(plan, warning: str) -> str:
+    """the second, specific question: M-Flasher's warning that the installed firmware keeps its data elsewhere"""
+    return "<br><br>".join([
+        _("M-Flasher warns: “{warning}”").format(warning=html.escape(warning)),
+        _("What may be lost: the projects, sounds, presets and settings that {installed} saved on “{unit}”. {name} "
+          "cannot use them, and what is left of them in the flash can confuse it – wrong presets, no sound – until "
+          "it has written its own. Nothing of the factory data and nothing in the boot area is touched.").format(
+            installed=html.escape(plan.mflasher_firmware or plan.firmware or _("the installed firmware")),
+            unit=html.escape(plan.unit_name), name=html.escape(plan.name)),
+        _("The way back to exactly the state of now, data included, is the whole-flash backup made just now: "
+          "{name}.").format(name=html.escape(plan.backup.name)),
+        _("Nothing has been written yet. Install anyway?")])
+
+
+def firmware_flow(parent, ctx, spec, rel=None, local_pkg=None, tag: str = "", plan=None, *, known: bool = True,
+                  local_sha: str = "", new_chip_ok: bool = False, store=None) -> bool:
+    """"Install through download mode" (an installation plan with route "download-mode"): the package checked as for
+    the usual way, a backup of the device's projects first where its firmware has an editor protocol, then
+    tools/flashjob.install_firmware -> True when written and verified"""
+    from .. import firmware
+    from ..tools import flashjob as FJ
+    from . import feedback
+    from .firmware_page import validate_package
+    store = store or getattr(ctx, "tools_store", None)
+    if _not_here(parent, ctx, store):
+        return False
+    label = firmware.display_label(spec, rel.tag if rel else tag)
+    title = _("Install {label} through download mode").format(label=label)
+    init_gui_caller()
+    result: dict = {}
+    do_backup = plan is not None and "backup" in plan.kinds() and bool(getattr(ctx, "connected", False))
+    link = getattr(ctx, "link", None)
+    profile = getattr(ctx, "profile", None)
+
+    def ask(fplan) -> bool:
+        return bool(call_in_gui(lambda: confirm(parent, title + "?", firmware_plan_text(fplan), _("Install"),
+                                                danger=True)))
+
+    def ask_data(fplan, warning) -> bool:
+        return bool(call_in_gui(lambda: confirm(parent, _("The current firmware's data"),
+                                                firmware_data_text(fplan, warning), _("Install anyway"),
+                                                danger=True)))
+
+    def work(w):
+        w.log.emit(_("Step: load & check the package (before any writing) …"))
+        if rel is not None:
+            pkg = firmware.download(spec, rel, log=w.log.emit, progress=lambda a, b: w.progress.emit(a, b))
+            path = Path(pkg.fwsc)
+        else:
+            path = Path(local_pkg)
+        validate_package(path, spec, known, label, expect_sha=local_sha, log=w.log.emit)
+        raw = path.read_bytes()
+        if do_backup and link is not None and not getattr(link, "closed", True):
+            from .. import autobackup
+            w.log.emit(_("Step: backup of the device …"))
+            with link.exclusive():
+                bpath = autobackup.capture_to_file(
+                    link, ctx.device_folder(ctx.settings.backups_dir), profile, getattr(ctx, "firmware_key", ""),
+                    ctx.info.version if getattr(ctx, "info", None) else "",
+                    note=_("automatically before installing {label}").format(label=label), kind="vor-Update",
+                    progress=lambda a, b: w.progress.emit(a, b))
+            w.log.emit(_("Backup saved: {name}").format(name=bpath.name))
+        job = _job(ctx, store, w, writing=True)
+        try:
+            res = FJ.install_firmware(job, raw, ask, ask_data, name=label, new_chip_ok=new_chip_ok)
+        except FJ.WriteFailed as e:
+            result["failed"] = e
+            raise
+        finally:
+            remember_unit(ctx, job)
+        result["res"] = res
+        return res
+
+    def said(res) -> str:
+        again = (_("The FM-1 was restarted.") if res.restarted else _("Switch the FM-1 off and on to start it."))
+        if not res.written:
+            return _("The FM-1's flash already holds exactly this firmware – nothing was written.") + " " + again
+        return _("{label} installed through download mode and checked: M-Flasher confirmed every sector, a fresh "
+                 "read holds exactly the package from 0x04000 on, and the boot area (m-bootloader) is unchanged. "
+                 "{started} The state before is kept as {name}.").format(
+                     label=label, started=again, name=res.backup.name if res.backup else "?")
+    was_hold = getattr(ctx, "hold", False)
+    ctx.hold = True
+    try:
+        with write_guard():
+            d = feedback.run(parent, title, work, done=said, cancellable=True,
+                             cancel_tip=_("Cancels until M-Flasher starts writing; from then on it runs to its end."))
+    finally:
+        ctx.hold = was_hold
+    res = result.get("res")
+    ok = bool(getattr(d, "ok", False) and res is not None and res.verified)
+    if ok and res.written and profile is not None:
+        import time as _t
+        profile.firmware = spec.key
+        profile.firmware_version = rel.tag if rel else (tag or "")
+        hist = getattr(profile, "firmware_history", None)
+        if isinstance(hist, list):
+            hist.append({"time": _t.time(), "firmware": spec.key, "name": spec.name,
+                         "version": rel.tag if rel else (tag or ""), "identity": res.identity, "via_v15": False,
+                         "route": "download-mode"})
+        try:
+            ctx.store.save()
+        except Exception:  # noqa: BLE001
+            pass
+    if hasattr(ctx, "changed"):
+        try:
+            ctx.changed.emit()
+        except Exception:  # noqa: BLE001
+            pass
+    return ok
+
+
 # ------------------------------------------------------- an interrupted write-back (the app ended while writing)
 
 def _choice(parent, title: str, text: str, buttons: list[str]) -> int:
@@ -680,6 +824,20 @@ def interrupted_text(rec: dict) -> str:
             if rec.get("started_writing") else _("It is not known how far M-Flasher got."))
     if rec.get("state") == "failed":
         what = _("The write did not end verified: {reason}").format(reason=html.escape(str(rec.get("reason") or "?")))
+    if str(rec.get("op") or "") in ("firmware", "sloop3-install"):
+        what_op = (_("Installing {identity} through download mode").format(
+            identity=html.escape(str(rec.get("identity") or "?"))) if rec.get("op") == "firmware" else
+            _("Installing SLOOP 3 over m-bootloader's MIDI MODE"))
+        return "<br><br>".join([
+            _("{what} onto “{device}” (unit ID {uid}) started on {when} did not end verified – the app was closed or "
+              "ended while it wrote, or the write failed.").format(
+                what=what_op, device=html.escape(str(rec.get("device") or "?")),
+                uid=html.escape(str(rec.get("unit") or "–")), when=when),
+            what,
+            _("The boot area (m-bootloader) was not written, so the FM-1 still reaches its menu (hold PLAY while "
+              "switching it on) and download mode. Nothing is done automatically. Its state before the write: {pre} "
+              "– writing it back goes through all the usual checks; installing again works as well.").format(
+                pre=html.escape(Path(str(rec.get("pre_backup") or "?")).name))])
     if str(rec.get("op") or "").startswith("bootloader"):
         return "<br><br>".join([
             _("Writing the boot area of “{device}” (unit ID {uid}, m-bootloader) started on {when} did not end "
@@ -722,7 +880,7 @@ def check_interrupted_write(parent, ctx, root=None, store=None) -> str:
                      "not unplug the FM-1 or switch it off. Look again on Recovery › Tools once it has ended.").format(
                          device=html.escape(str(rec.get("device") or "?"))))
         return "running"
-    boot = str(rec.get("op") or "").startswith("bootloader")
+    boot = str(rec.get("op") or "").startswith("bootloader") or rec.get("op") in ("firmware", "sloop3-install")
     buttons = [_("Write the image back again …"), _("Write the state before back …"), _("Later"), _("Forget this")]
     if boot:                                   # (an m-bootloader write: there is no image, only the state before)
         buttons[0] = ""

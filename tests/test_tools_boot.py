@@ -160,8 +160,7 @@ def test_bootloader_forms_are_known_but_only_with_a_gate(env, args):
     ["bootloader", "--file", "/x/a.boot", "--device", "/dev/sg1", "--backup-dir", "/x", "--restart"],
     ["bootloader", "--file", "x.boot", "--device", "/dev/sg1", "--backup-dir", "/x"],
     ["bootloader", "--file", "/x/../a.boot", "--device", "/dev/sg1", "--backup-dir", "/x"],
-    ["bootloader", "--file", "/x/a.boot", "--device", "/dev/sda", "--backup-dir", "/x"],
-    ["firmware", "/x/p.fwsc", "--device", "/dev/sg1", "--backup-dir", "/x"]])
+    ["bootloader", "--file", "/x/a.boot", "--device", "/dev/sda", "--backup-dir", "/x"]])
 def test_other_bootloader_forms_are_refused(args):
     with pytest.raises(runner.ToolError):
         runner._check_args(args)
@@ -539,8 +538,11 @@ def _stock():
 @pytest.mark.parametrize("kind", [bootarea.MBOOT, bootarea.OPEN, bootarea.OTHER])
 def test_check_head_trap_a_felucca_target_on_a_changed_boot_area_is_refused(kind):
     p = planner.plan_install(_state(boot_area=kind, boot_area_text="x"), _target())
-    assert not p.ok and p.boot_restore
-    assert planner.boot_trap_text(_state(boot_area=kind, boot_area_text="x")) in p.blockers
+    if kind == bootarea.MBOOT:                 # (step 4: offered through download mode instead – test_tools_firmware)
+        assert p.ok and p.route == "download-mode" and not p.boot_restore
+    else:
+        assert not p.ok and p.boot_restore
+        assert planner.boot_trap_text(_state(boot_area=kind, boot_area_text="x")) in p.blockers
     # the way back to the original V15 from a running Felucca-family firmware too
     p = planner.plan_install(_state(boot_area=kind), _stock())
     assert not p.ok and p.boot_restore
@@ -1088,8 +1090,10 @@ def test_hw6_the_usb_name_is_shown_and_no_chip_difference_implied():
 
 
 def test_hw7_a_blocked_plan_has_no_second_check_head_hint():
-    st = _state(boot_area=bootarea.MBOOT, boot_area_text="x", revision="old")
+    st = _state(boot_area=bootarea.OPEN, boot_area_text="x", revision="old")    # (m-bootloader: step 4's route)
     p = planner.plan_install(st, _target())
     assert p.boot_restore and planner.TRAP_TEXT not in p.warnings
+    p = planner.plan_install(_state(boot_area=bootarea.MBOOT, revision="old"), _target())
+    assert p.route == "download-mode" and planner.TRAP_TEXT not in p.warnings
     q = planner.plan_install(_state(), _target())                                     # (not blocked: the hint stays)
     assert planner.TRAP_TEXT in q.warnings

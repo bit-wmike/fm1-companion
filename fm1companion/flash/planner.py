@@ -228,6 +228,8 @@ class InstallPlan:
     direct: bool = False          # expert opt-out: a firmware switch without the V15 step
     boot_restore: bool = False    # the original boot area must be put back first (BOOT_TRAP; Recovery › Tools)
     chain_resume: bool = False    # continues a switch whose V15 step is already done (journal "chain")
+    route: str = ""               # "" the usual way (the running firmware hands the package to an update loader) |
+    #                               "download-mode": M-Flasher in USB download mode, the boot area kept (download_route)
 
     @property
     def ok(self) -> bool:
@@ -453,6 +455,10 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
         p.warnings.append(_("Several FM-1 are connected. The app pins the target device by its USB port – "
                             "please do not move any cable during the installation."))
     p.warnings += [n for n in state.usb_notes or [] if n]     # USB hub, careful mode, autosuspend
+    if download_route(state, t, fam):
+        return _download_plan(p, state, t, fam, backup)
+    if fw_identity(state.firmware_key) == "sloop3" and not state.update_mode:
+        p.blockers.append(SLOOP3_NO_ROUTE)
 
     # ---- update mode: only continue if the waiting loader matches the package
     if state.update_mode:
@@ -652,6 +658,91 @@ def plan_install(state: DeviceState, target: Target, journal_active: dict | None
                             "check whether the file is unmodified."))
         p.confirmations.append("no_checksum")
     if not t.known:
+        p.warnings.append(_("Own file: identity {identity}, SHA-256 {sha256} – in no catalog.").format(
+            identity=info.product if info else '?', sha256=info.sha256 if info else '?'))
+        p.confirmations.append("unknown_file")
+    _new_chip(p, state, t)
+    _confirm_power(p, t, fam)
+    return p
+
+
+# ---- the way through USB download mode (M-Flasher `firmware`, tools/flashjob.install_firmware): on a unit with
+# m-bootloader a Felucca-family firmware is written from 0x4000 to its package's end, the boot area kept – so the
+# CHECK HEAD trap does not arise and no V15 step is needed; it is also the only way from a running SLOOP 3
+SLOOP3_NO_ROUTE = _("This FM-1 runs SLOOP 3, which cannot be switched to an update mode over USB, so the usual way "
+                    "does not work from it. A Felucca-family firmware (Melodee, SLOOP 2, Skiff …) can be installed "
+                    "from it through USB download mode – this plan offers that for such a target. Back to the "
+                    "original firmware: first the original boot area (Recovery › Tools › “Remove m-bootloader”, an "
+                    "earlier unit only) or a whole-flash backup of this unit written back (“Back to …” on Recovery › "
+                    "Tools).")
+DOWNLOAD_ROUTE_TEXT = _("This FM-1 has m-bootloader ({what}). The app installs this firmware through USB download "
+                        "mode with M-Flasher: it writes only from 0x04000 to the end of the package; the boot area – "
+                        "m-bootloader – stays as it is. So the running firmware's check of the boot area (“FAILED "
+                        "-5”) does not come into it, and there is no V15 step. Before anything is written the app "
+                        "backs up the whole flash (read twice) – the way back to the state of now.")
+DOWNLOAD_ROUTE_DATA = _("Whatever lies between 0x04000 and the end of the package is replaced. If the current "
+                        "firmware keeps data in other places than the new one, M-Flasher warns, and the app asks you "
+                        "once more and names what may be lost.")
+
+
+def download_route(state: DeviceState, t: Target, fam: str) -> bool:
+    """is this plan the way through USB download mode? The unit has m-bootloader (tools/bootarea.py), the target is
+    a Felucca-family firmware (not the original V15/V16) and the usual way would not do: a switch (it would need the
+    V15 step – the CHECK HEAD trap) or the running SLOOP 3 (no update mode). An update of the same Felucca firmware
+    stays on the usual way. Never in update mode, under FM1 Open or on another boot area."""
+    from ..tools import bootarea
+    if state.update_mode or state.open_firmware or state.boot_area != bootarea.MBOOT:
+        return False
+    if fam != "felucca" or t.is_stock or t.is_v16:
+        return False
+    return fw_identity(state.firmware_key) == "sloop3" or v15_option(state, t) != "none"
+
+
+def _download_plan(p: InstallPlan, state: DeviceState, t: Target, fam: str, backup) -> InstallPlan:
+    p.route = "download-mode"
+    if state.felucca and backup is not False:
+        p.steps.append(Step("backup", _("Backup of the device"), "keins",
+                            _("All projects, sounds and settings are backed up first (read only). "
+                              "If the backup fails, the installation is aborted.")))
+    elif state.felucca:
+        p.warnings.append(_("Without backup: projects, sounds and settings on the device are NOT backed up "
+                            "first."))
+        p.confirmations.append("no_backup")
+    p.steps.append(Step("flashbackup", _("Back up the whole flash (read twice)"), "keins",
+                        _("In USB download mode M-Flasher reads the whole flash twice; both reads must be identical "
+                          "and match the chip's CRC-32. Without this backup nothing is written. It is the way back to "
+                          "the state of now – boot area, firmware and data.")))
+    p.steps.append(Step("fetch", _("Load package & check checksum"), "keins",
+                        _("Download the package (or take the existing file) and check it against the checksum.")
+                        + (" " + CHECKSUM_SOURCE[t.checksum_source] if t.checksum_source in CHECKSUM_SOURCE and
+                           t.checksum else "")))
+    p.steps.append(Step("install", _("Install {name} through download mode (M-Flasher)").format(name=t.name), "mittel",
+                        _("The app sends the FM-1 into USB download mode (or guides you there), and M-Flasher writes "
+                          "the package's firmware from 0x04000 to the package's end – never the boot area. The app "
+                          "answers M-Flasher's question only when the unit, its flash chip and the planned sectors "
+                          "are the ones it computed; afterwards a fresh read must hold exactly the package. Do not "
+                          "unplug, do not switch off."), writes=True))
+    p.warnings.append(DOWNLOAD_ROUTE_TEXT.format(what=state.boot_area_text or "m-bootloader"))
+    p.warnings.append(DOWNLOAD_ROUTE_DATA)
+    if t.resources:
+        p.blockers.append(_("{name} also needs its resources written after the firmware, which only the usual way "
+                            "can do. It is not installed through download mode.").format(name=t.name))
+    if fw_identity(state.firmware_key) != fw_identity(t.key) or not t.key:
+        p.lost.append(_("Projects, sounds and settings of the current firmware can no longer be used afterwards "
+                        "(the whole-flash backup keeps them).") if state.firmware_key or state.identity else
+                      _("Which firmware is running right now is unknown – if it is a different one than the new one, "
+                        "its projects, sounds and settings can no longer be used afterwards."))
+    if "beta" in t.notes or t.prerelease:
+        p.warnings.append(_("Test version (beta / release candidate): projects may not load in older "
+                            "versions."))
+        p.confirmations.append("beta")
+    if not t.checksum and t.known:
+        p.warnings.append(_("Checksum not available: this release has no SHA256SUMS file, GitHub gives no digest "
+                            "for the release file, and the catalog does not know the checksum. The app cannot "
+                            "check whether the file is unmodified."))
+        p.confirmations.append("no_checksum")
+    if not t.known:
+        info = t.package
         p.warnings.append(_("Own file: identity {identity}, SHA-256 {sha256} – in no catalog.").format(
             identity=info.product if info else '?', sha256=info.sha256 if info else '?'))
         p.confirmations.append("unknown_file")

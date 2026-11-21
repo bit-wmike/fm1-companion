@@ -244,6 +244,10 @@ repeats this table; `tests/test_tools_flash.py` keeps the two in sync.
 | `mf_newer_removal_refused` – refusing the removal on a newer FM-1 (no M-Flasher call) | run on hardware (2026-11-21): seen on the newer unit, no M-Flasher call; offering a backup was not seen (none was in the app then) |
 | `plan_boot_block` – the installation plan blocked by the boot-area rule (m-bootloader, CHECK HEAD) | run on hardware (2026-11-21): Skiff on the earlier unit with m-bootloader – blocked with the way out, nothing written |
 | `mf_new_chip_bootloader` – installing or removing m-bootloader on a newer FM-1 (logo on the front, flash UC25HQ80) through this app | not run (the removal is refused there by design; the install through the app was not tried) |
+| `mf_firmware` – installing a firmware through download mode (M-Flasher firmware, the boot area kept) on an FM-1 with m-bootloader | not run (step 4: against the stand-in only) |
+| `mf_new_chip_firmware` – installing a firmware through download mode on a newer FM-1 (logo on the front, flash UC25HQ80) | not run |
+| `mboot_sloop3_install` – installing SLOOP 3 over m-bootloader's MIDI MODE through this app (the whole flash read twice in MIDI MODE first) | not run (step 4: against the app's stand-in and against m-bootloader's own MIDI MODE code built for a PC) |
+| `way_back` – the “Back to …” choice (it only starts the actions above, one after the other) | not run |
 
 **Owner, outside the app (2026-11-18/19, `OWNER_REPORTS["mflasher_by_hand"]`):** M-Flasher 0.12.1 by hand in a
 terminal on a Raspberry Pi 5 – `download-mode`, `info`, `backup` twice with the same SHA-256, and `restore` of a whole
