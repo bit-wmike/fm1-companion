@@ -34,16 +34,16 @@ ROWS = {
     "hortator": ("v1.0.1", "drum-v1.0.0", "drum-v1.0.2"),
     "transitfm1": ("v0.1.4", "v0.1.3", "v0.2"),
     "sloop3": ("v3.4.0", "v3.3.7", "v3.4.1-beta"),              # (owner report: before the minimum "risky")
-    "m-bootloader": ("v2.5", "v2.4", "v3.0"),                   # (2.4 only as the reported build: test below)
 }
 
 
 def test_mbootloader_24_only_as_the_reported_build():
     """L2: the owner's report is of m-bootloader 2.4-395e6cc; a bare "2.4" (a build outside a git checkout, or an
     exported / changed source) is another build: not counted"""
-    for v in ("2.4-395e6cc", "v2.4-395e6cc", "2.5", "v3.0"):
+    for v in ("2.4-395e6cc", "v2.4-395e6cc"):
         assert H.support("m-bootloader", v).status == H.YES, v
-    for v in ("2.4", "v2.4", "2.4.0", "2.4-deadbee", "2.4-395e6cc-dirty", "2.4rc1", "2.3.9"):
+    # (review M2: only the listed build – a later number is no evidence for the newer chip)
+    for v in ("2.4", "v2.4", "2.4.0", "2.4-deadbee", "2.4-395e6cc-dirty", "2.4rc1", "2.3.9", "2.5", "v3.0", "2.10"):
         assert H.support("m-bootloader", v).status == H.RISKY, v
     assert H.support("m-bootloader", "").status == H.UNKNOWN
 
@@ -52,10 +52,11 @@ def test_table_is_whole_and_every_row_names_its_source():
     t = H.table()
     assert t["chips"]["B36014"]["revision"] == "new" and t["chips"]["856014"]["revision"] == "old"
     for key, row in t["firmwares"].items():
-        assert row["status"] in ("min", "none", "risky", "documented", "unverified"), key
+        assert row["status"] in ("min", "exact", "none", "risky", "documented", "unverified"), key
+        assert (row["status"] == "exact") == bool(row.get("builds")), key
         assert row["source"].strip(), key
-        assert (row["status"] == "min") == bool(row["min"]), key
-        if row["status"] in ("min", "none", "risky"):
+        assert (row["status"] == "min") == bool(row.get("min")), key
+        if row["status"] in ("min", "exact", "none", "risky"):
             assert row["repo"].count("/") == 1 and len(row["commit"]) >= 7, key
     assert set(ROWS) == {k for k, r in t["firmwares"].items() if r["status"] == "min"}
     for alias, key in t["aliases"].items():

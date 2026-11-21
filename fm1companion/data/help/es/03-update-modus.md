@@ -89,13 +89,48 @@ nueva.
   Después, la comprobación de M-Flasher (el CRC-32 del chip) y una lectura nueva deben ser iguales a la copia; luego
   se reinicia el FM-1. Una vez empezada la escritura no se puede cancelar – no desconectes el FM-1 entonces; aunque la app se cierre o falle, M-Flasher termina la escritura, y en el siguiente inicio la app dice qué pasó y pregunta qué hacer. Una copia con otros datos de fábrica (calibración, dirección Bluetooth) que la unidad se rechaza. Si algo
   sale mal, el FM-1 se queda en modo de descarga y la copia hecha justo antes vuelve por el mismo camino.
+* **Al modo de descarga / Reiniciar el FM-1** (Recuperación › Herramientas y el menú Dispositivo): el mismo cambio
+  por sí solo, sin leer nada – la app lo hace solo con un FM-1 que reconoció ella misma en su puerto USB; si no, te
+  dice cómo. «Reiniciar el FM-1» vuelve a arrancar el firmware desde el modo de descarga. Ninguno escribe nada.
+* **Instalar m-bootloader** (Recuperación › Herramientas): escribe el m-bootloader 2.4 que trae la app (con la suma
+  de verificación comprobada) **solo en la zona de arranque 0x00000–0x03FFF**. Antes se copia toda la flash (leída dos
+  veces, no se puede omitir) y la app te pregunta otra vez, nombrando la unidad y su revisión. En una unidad más nueva
+  (logotipo delante) solo se ofrece una versión de m-bootloader que se sabe que funciona allí (2.4-395e6cc, según el
+  informe de un propietario). Justo antes de escribir, la app responde a la pregunta de M-Flasher solo si cada sector
+  previsto está dentro de la zona de arranque; después, una lectura nueva debe contener exactamente este bootloader y
+  nada fuera de la zona de arranque puede haber cambiado. La app recuerda que este FM-1 tiene m-bootloader. Luego:
+  mantén **PLAY** al encenderlo para ver su menú.
+* **Quitar m-bootloader (zona de arranque original)**: vuelve a poner la zona de arranque del firmware original V15 de
+  M-VAVE – la app descarga el paquete V15 una vez si no está en este ordenador y lo comprueba. La misma copia antes,
+  las mismas comprobaciones; solo se escriben los sectores en los que tu zona de arranque difiere de la de V15. Esto
+  también deshace lo que FM1 Open cambió en la zona de arranque. En un FM-1 que vino con V16 es la zona de arranque de
+  V15, no necesariamente la que traía. SLOOP 3 se instala solo a través de m-bootloader: no se sabe si arranca después
+  – la copia hecha justo antes es el camino de vuelta. **Solo en una unidad anterior** (sin logotipo delante): la zona
+  de arranque de V15 nunca se ha escrito en una más nueva, así que allí la app lo rechaza y nombra el camino de vuelta
+  – volver a escribir una copia de toda la flash de esta unidad hecha antes de m-bootloader (la ofrece si existe).
+  «Reiniciar el FM-1» se rechaza mientras una escritura no terminó comprobada (el FM-1 se queda entonces en modo de
+  descarga, donde se puede volver a escribir su copia).
+* **Importar una copia de la flash …** (Copias de seguridad › Copias de la flash, Recuperación › Herramientas): toma en
+  las copias de la app una copia de toda la flash hecha por el propio M-Flasher (su `.bin` con su `.json`, guardada en
+  otro sitio) – comprobada con su `.json`, guardada en el dispositivo cuyo ID de unidad indica el `.json` (la imagen
+  misma no lo contiene; si ningún perfil se sabe que sea esa unidad, eliges uno, no se adivina nada). Una copia
+  importada con la zona de arranque intacta de antes de m-bootloader es el camino de vuelta que la app ofrece en una
+  unidad más nueva. Instalar y quitar m-bootloader también están en el menú **Dispositivo**.
+* **Por qué importa la zona de arranque original:** muchos firmwares de la familia Felucca rechazan el V15 original si
+  la zona de arranque no es la de V15 («FAILED -5» en el FM-1, CHECK HEAD). Si la app sabe que tu FM-1 tiene
+  m-bootloader o la zona de arranque de FM1 Open (por una copia de la flash, por M-Flasher, por el propio m-bootloader
+  o por el historial de firmware), un plan que caería en esa trampa (primero V15, o el propio V15 desde un firmware de
+  la familia Felucca – y tras FM1 Open cualquier firmware de la familia Felucca) se detiene y te pide que antes vuelvas
+  a poner la zona de arranque original. Una actualización del mismo firmware en un FM-1 con m-bootloader sigue
+  funcionando; el plan avisa de que la vuelta posterior necesita la zona de arranque original.
 * **Con sinceridad – lo que se probó en hardware real (20-11-2026, una Raspberry Pi 5, dos unidades):** la copia en
   ambas unidades (con el cambio de la propia app desde Melodee y desde SLOOP 3, con REC al encender, por el menú de
   m-bootloader), cada copia idéntica a una hecha a mano con M-Flasher; volver a escribir solo en una unidad anterior
   y solo cambios pequeños (un sector, verificado), el rechazo de la copia de otra unidad y el cierre de la app
   bloqueado mientras escribe. Aún no probado: volver a escribir en una unidad más nueva (logotipo delante), un cambio
-  grande o la zona de arranque, un cierre de sesión real durante la escritura. m-bootloader, el firmware por el modo
-  de descarga y SLOOP 3 a través de la app llegarán en versiones posteriores.
+  grande o la zona de arranque, un cierre de sesión real durante la escritura. Instalar y quitar m-bootloader y «Al
+  modo de descarga» aún no se probaron con la app en un FM-1 real (el propietario hizo lo mismo a mano con
+  M-Flasher). El firmware por el modo de descarga y SLOOP 3 a través de la app llegarán en versiones posteriores.
 
 ## Si el FM-1 no aparece como “WL82 UBOOT1.00”
 

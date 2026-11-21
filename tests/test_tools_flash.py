@@ -101,8 +101,9 @@ def make_backup(e) -> FJ.BackupResult:
     return FJ.backup(e.job())
 
 
-def change_flash(e, at=(0x0000, 0x5000, 0x93000)):
-    """the unit's flash changes after the backup (another firmware, m-bootloader …)"""
+def change_flash(e, at=(0x0080, 0x5000, 0x93000)):
+    """the unit's flash changes after the backup (another firmware, m-bootloader …) – the boot area's first sector
+    changes at its last file-table entry, so it stays an intact boot area"""
     img = bytearray(e.flash())
     for a in at:
         img[a:a + 16] = b"\x5a" * 16
@@ -559,7 +560,10 @@ def test_tools_hardware_table_matches_untested_md():
     rows = dict(re.findall(r"^\| `(\w+)` – [^|]+\| (run on hardware|not run)\b[^|]*\|$", sec, re.M))
     assert rows == {k: ("run on hardware" if ok else "not run") for k, (ok, _l) in tested.TOOLS_HARDWARE.items()}
     assert [k for k, (ok, _l) in tested.TOOLS_HARDWARE.items() if ok] == [
-        "mf_download_mode", "mf_backup", "mf_restore", "mf_new_chip_backup"]           # (Pi run 2026-11-20)
+        "mf_download_mode", "mf_backup", "mf_restore", "mf_new_chip_backup",           # (Pi run 2026-11-20)
+        "mf_download_button", "mf_bootloader_install", "mf_bootloader_remove",       # (Pi run 2026-11-21)
+        "mf_newer_removal_refused", "plan_boot_block"]
+    assert not tested.TOOLS_HARDWARE["mf_new_chip_bootloader"][0]
     assert not tested.TOOLS_HARDWARE["mf_new_chip_restore"][0]
     assert "2026-11-20" in sec and "ONE Raspberry Pi 5" in sec and "TWO units" in sec and "Not run: a large" in sec
     assert "app_flows_pi" in tested.OWNER_REPORTS
@@ -958,7 +962,8 @@ def test_n3_a_reused_pid_is_not_still_writing(env):
 
 def test_n4_a_nothing_to_write_rerun_closes_the_record(env):
     old = make_backup(env)
-    FJ._save_record(FJ.record_file(env.journal.dir), {"state": "writing", "pid": 0,
+    FJ._save_record(FJ.record_file(env.journal.dir), {"state": "writing", "pid": 0, "profile": env.prof.id,
+                                                      "unit_sha256": sha(UID.encode()),
                                                       "image_sha256": sha(old.path.read_bytes())})
     env.set(mode="download")
     res, _s = restore(env, old.path)

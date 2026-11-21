@@ -624,6 +624,11 @@ def install(src: Path, prefix: Path, system: bool = False, menu: bool = True, de
                    "HINWEIS: Die Regel für den Download-Modus fehlt in diesem Paket."))
         else:
             new = [str(f) for f in (UDEV_DIR / DL_RULE, MODULES_DIR / SG_CONF) if not f.exists()]
+            if not new:
+                log(tr(f"  Download mode: udev rule {UDEV_DIR / DL_RULE} and {MODULES_DIR / SG_CONF} already present "
+                       "(the app reaches an FM-1 in ROM download mode without an administrator password)",
+                       f"  Download-Modus: udev-Regel {UDEV_DIR / DL_RULE} und {MODULES_DIR / SG_CONF} schon "
+                       "vorhanden (die App erreicht ein FM-1 im ROM-Download-Modus ohne Administrator-Passwort)"))
             if new and install_download_rule(app / "udev" / DL_RULE if str(UDEV_DIR / DL_RULE) in new else None,
                                              app / "udev" / SG_CONF if str(MODULES_DIR / SG_CONF) in new else None,
                                              log):

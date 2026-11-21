@@ -3,8 +3,9 @@
 one is in use, whether its checksum checks out, when the app last looked for a new version, "Check now",
 "Update" (only when a newer version was found; never automatic) and "Show licence".
 
-With M-Flasher the app also backs up the whole flash and writes such a backup back (ui/flash_tools.py,
-tools/flashjob.py); installing m-bootloader, firmware through download mode and SLOOP 3 come in later versions."""
+With M-Flasher the app also backs up the whole flash and writes such a backup back, puts the FM-1 into download
+mode and restarts it, and installs or removes m-bootloader (ui/flash_tools.py, tools/flashjob.py); firmware through
+download mode and SLOOP 3 come in later versions."""
 from __future__ import annotations
 
 import time
@@ -54,8 +55,9 @@ class ToolsCard(Card):
         lay = self.layout()
         intro = QLabel(_("The app brings these tools with it and checks each file's checksum before it uses it. "
                          "With M-Flasher it backs up the whole flash of an FM-1 and writes such a backup back onto "
-                         "the same unit; installing m-bootloader and SLOOP 3 through the app follow in later "
-                         "versions. A new version is only shown – it is fetched when you click “Update”, checked "
+                         "the same unit, puts it into download mode and installs or removes m-bootloader (each write "
+                         "only after a whole-flash backup); installing firmware through download mode and SLOOP 3 "
+                         "follow in later versions. A new version is only shown – it is fetched when you click “Update”, checked "
                          "against GitHub's checksum, and the previous version stays as the fallback."))
         intro.setWordWrap(True)
         lay.addWidget(intro)
@@ -90,6 +92,38 @@ class ToolsCard(Card):
                                     "flash chip), after a fresh backup of its current state and your confirmation."))
         self.b_restore.clicked.connect(self.flash_restore)
         lay.addWidget(flow_row(self.b_check, self.b_find, self.b_backup, self.b_restore))
+        self.b_dl = QPushButton(icon("go-down", "system-run"), _("Into download mode"))
+        self.b_dl.setObjectName("toolsDownloadMode")
+        self.b_dl.setToolTip(_("Puts the FM-1 into USB download mode – by itself only when the app recognised the FM-1 "
+                               "(original firmware, Felucca family, SLOOP 3) at its USB port, otherwise it tells you "
+                               "how. Writes nothing."))
+        self.b_dl.clicked.connect(self.download_mode)
+        self.b_leave = QPushButton(icon("view-refresh", "system-reboot"), _("Restart the FM-1"))
+        self.b_leave.setObjectName("toolsRestart")
+        self.b_leave.setToolTip(_("Leaves download mode: M-Flasher starts the FM-1's firmware again (writes nothing)."))
+        self.b_leave.clicked.connect(self.restart_unit)
+        self.b_mboot = QPushButton(icon("system-software-install", "document-import"), _("Install m-bootloader"))
+        self.b_mboot.setObjectName("toolsInstallMboot")
+        self.b_mboot.setToolTip(_("Writes the bundled m-bootloader into the boot area (0x00000–0x03FFF) with "
+                                  "M-Flasher – after a whole-flash backup and your confirmation."))
+        self.b_mboot.clicked.connect(self.install_mboot)
+        self.b_unboot = QPushButton(icon("edit-undo", "document-revert"), _("Remove m-bootloader (original boot area)"))
+        self.b_unboot.setObjectName("toolsRemoveMboot")
+        self.b_unboot.setToolTip(_("Puts back the boot area of M-VAVE's original V15 package (0x00000–0x03FFF) with "
+                                   "M-Flasher – removes m-bootloader and what FM1 Open changed there; after a "
+                                   "whole-flash backup and your confirmation."))
+        self.b_unboot.clicked.connect(self.remove_mboot)
+        self.b_import = QPushButton(icon("document-import", "document-open"), _("Import a flash backup …"))
+        self.b_import.setObjectName("toolsFlashImport")
+        from .flash_tools import import_tip
+        self.b_import.setToolTip(import_tip())
+        self.b_import.clicked.connect(self.flash_import)
+        lay.addWidget(flow_row(self.b_dl, self.b_leave, self.b_mboot, self.b_unboot, self.b_import))
+        self.boot_label = QLabel("")
+        self.boot_label.setObjectName("toolsBootArea")
+        self.boot_label.setWordWrap(True)
+        self.boot_label.setTextFormat(Qt.TextFormat.PlainText)
+        lay.addWidget(self.boot_label)
         self.rows: dict[str, dict] = {}
         self.refresh()
 
@@ -151,9 +185,30 @@ class ToolsCard(Card):
                                                                                                error=s.error))
             self.rows[s.key] = row
         usable = not rows[0].unavailable if rows else False
-        for b in (self.b_find, self.b_backup, self.b_restore):
+        for b in (self.b_find, self.b_backup, self.b_restore, self.b_dl, self.b_leave, self.b_mboot, self.b_unboot):
             b.setEnabled(usable)
         self.note.setText("\n".join(notes))
+        self.boot_label.setText(self.boot_text())
+        try:                                       # (a write that did not end verified: the unit stays in download
+            from ..tools import flashjob as FJ    #  mode – no Restart button until it is settled)
+            if FJ.unfinished_write() is not None:
+                self.b_leave.setEnabled(False)
+                self.b_leave.setToolTip(_("A write did not end verified: the FM-1 stays in download mode until it "
+                                          "is settled (the question at the next start, or “Write flash back …”)."))
+        except Exception:  # noqa: BLE001
+            pass
+
+    def boot_text(self) -> str:
+        """what the app knows of the active FM-1's boot area (tools/bootarea.py)"""
+        try:
+            from ..tools import bootarea
+            prof = None if getattr(self.ctx, "is_virtual", False) else getattr(self.ctx, "profile", None)
+            if prof is None:
+                return ""
+            return _("Boot area of “{device}”: {state}.").format(device=prof.name,
+                                                                  state=bootarea.describe(bootarea.current(prof)))
+        except Exception:  # noqa: BLE001 – only a hint
+            return ""
 
     def show_licence(self, key: str, title: str):
         LicenceDialog(title, updates.licence_text(key, self.store), self).exec()
@@ -224,6 +279,32 @@ class ToolsCard(Card):
     def flash_restore(self):
         from .flash_tools import restore_flow
         restore_flow(self, self.ctx, store=self._store)
+
+    def flash_import(self):
+        from .flash_tools import import_flow
+        res = import_flow(self, self.ctx)
+        if res is not None:
+            self.note.setText(_("Flash backup kept: {path}").format(path=res.path))
+
+    def download_mode(self):
+        from .flash_tools import download_flow
+        d = download_flow(self, self.ctx, store=self._store)
+        if d:
+            self.note.setText(_("In ROM download mode: {device}").format(device=d))
+
+    def restart_unit(self):
+        from .flash_tools import leave_flow
+        leave_flow(self, self.ctx, store=self._store)
+
+    def install_mboot(self):
+        from .flash_tools import install_boot_flow
+        install_boot_flow(self, self.ctx, store=self._store)
+        self.refresh()
+
+    def remove_mboot(self):
+        from .flash_tools import remove_boot_flow
+        remove_boot_flow(self, self.ctx, store=self._store)
+        self.refresh()
 
     def find(self):
         from ..tools import runner

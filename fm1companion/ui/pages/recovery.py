@@ -23,8 +23,8 @@ from PyQt6.QtWidgets import (QCheckBox, QFileDialog, QHBoxLayout, QInputDialog, 
 from . import PageSpec
 from ... import firmware
 from ...flash import engine as fe, journal as fj, package as fpk, tested, texts as rescue_texts, uboot
-from ..common import Card, Disclosure, confirm, heading, icon, run_job, show_error
-from ...i18n import _, pgettext
+from ..common import Card, Disclosure, confirm, heading, icon, show_error
+from ...i18n import N_, _, pgettext
 
 DEMO = os.environ.get("FM1C_DEMO") == "1"
 ONE_UBOOT = _("Exactly one device “WL82 UBOOT1.00” (USB 4c4a:8057) must be connected. The app never chooses a drive "
@@ -134,15 +134,44 @@ def intended_text(dev) -> str:
     sent it or worked with it, or the app just asked the user to put it there – keys or m-bootloader's menu); "" when
     the app does not know that – then the emergency text of this stage applies"""
     from ...tools import flashjob
-    why = flashjob.intended_download_mode(getattr(dev, "usb_path", ""))
+    usb = getattr(dev, "usb_path", "")
+    why = flashjob.intended_download_mode(usb)
     if not why:
         return ""
-    what = {"sent": _("the app's flash backup or write-back sent it there"),
-            "used": _("a flash backup or write-back of the app worked with it there"),
-            "guide": _("the app asked you to put it there (with the keys or m-bootloader's menu)")}[why]
+    what = REASONS.get((flashjob.intended_reason(usb), why)) or REASONS.get((flashjob.intended_reason(usb), "")) or \
+        REASONS[("", why if why in ("sent", "used") else "used")]
     return _("<span style='color:#27ae60'>● In download mode on purpose</span> – {what}: {device}. Nothing is "
              "wrong; this is not the emergency described above. To start it again: “Restart the FM-1” or switch "
-             "it off and on.").format(what=what, device=html.escape(dev.describe()))
+             "it off and on.").format(what=_(what), device=html.escape(usb_name(dev)))
+
+
+# why the unit is in download mode on purpose (flashjob.intended_reason × intended_download_mode)
+REASONS = {("button", ""): N_("the app's “Into download mode” sent it there"),
+           ("backup", "sent"): N_("the app's whole-flash backup sent it there"),
+           ("backup", "used"): N_("a whole-flash backup of the app worked with it there"),
+           ("restore", "sent"): N_("the app's flash write-back sent it there"),
+           ("restore", "used"): N_("a flash write-back of the app worked with it there"),
+           ("bootloader", ""): N_("installing or removing m-bootloader through the app took it there"),
+           ("guide", ""): N_("the app asked you to put it there (with the keys or m-bootloader's menu)"),
+           ("", "sent"): N_("a flash job of the app sent it there"),
+           ("", "used"): N_("a flash job of the app worked with it there")}
+
+
+def usb_name(dev) -> str:
+    """the unit in ROM download mode as the computer's USB lists it ("WL80UBOOT1.00", both chips alike) – M-Flasher
+    and the SCSI layer spell the same device "WL82 UBOOT1.00"; that is no difference between units"""
+    name = getattr(dev, "product", "") or f"{getattr(dev, 'vendor', '')} {getattr(dev, 'model', '')}".strip()
+    return _("“{name}” – {sg} (USB {usb})").format(name=name, sg=getattr(dev, "sg", ""),
+                                                   usb=getattr(dev, "usb_id", "") or "4c4a:8057")
+
+
+def rescue_write_blocked(intended) -> str:
+    """the ROM rescue writes (jl-uboot-tool: “Write back original V15 …”) are for the emergency: while the unit is in
+    download mode on purpose they are off, with this reason ("" = not blocked)"""
+    if intended is None:
+        return ""
+    return _("The FM-1 is in download mode on purpose, not in the emergency this stage is for. Start it again with "
+             "“Restart the FM-1”; the rescue tool is not needed.")
 
 
 class RecoveryPage(QWidget):
@@ -407,6 +436,9 @@ class RecoveryPage(QWidget):
                 b.setEnabled(False)
                 b.setToolTip(_("Only possible once exactly one device “WL82 UBOOT1.00” is detected (see status above).")
                              if not devs else _("Several devices in ROM boot mode – please connect only one."))
+            elif b is self.b_restore and rescue_write_blocked(self._dl_intended):
+                b.setEnabled(False)
+                b.setToolTip(rescue_write_blocked(self._dl_intended))
             else:
                 b.setEnabled(True)
                 b.setToolTip(what)
@@ -422,16 +454,9 @@ class RecoveryPage(QWidget):
         d = self._dl_intended
         if d is None:
             return
-        from ...tools import runner
-
-        def work(w):
-            return runner.run_mflasher(["restart", "--device", d.sg])
-
-        def done(r):
-            self.ctx.message.emit(_("The FM-1 was restarted.") if r.ok else
-                                  _("The FM-1 did not restart: switch it off and on."))
-            self.refresh()
-        run_job(self, work, on_done=done, on_fail=lambda m, tb: show_error(self, _("Restart the FM-1"), m))
+        from ..flash_tools import leave_flow             # (the same checks as everywhere: no open write record,
+        leave_flow(self, self.ctx)                       #  the unit's identity)
+        self.refresh()
 
     # ------------------------------------------------------------ Level 1
     def forget_active(self):

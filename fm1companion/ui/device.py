@@ -825,6 +825,13 @@ class DeviceContext(QObject):
             self.mboot = mb
             if mb is not None:
                 self._unit_by_id(mb.uid)
+                if self.profile is not None and mb.kind == 1 and getattr(self, "identified_by", "") == "unit_id":
+                    from ..tools import bootarea          # (m-bootloader itself answered: its version, this unit)
+                    if bootarea.current(self.profile) != bootarea.current(self.profile) | {
+                            "kind": bootarea.MBOOT, "bootloader": f"m-bootloader {mb.version}"} and \
+                            bootarea.note(self.profile, bootarea.MBOOT, "midi-mode",
+                                          bootloader=f"m-bootloader {mb.version}"):
+                        self.store.save()
                 from .. import hardware             # the flash chip m-bootloader read: kept with the device
                 seen, rec = mb.revision, hardware.revision(self.profile)
                 if self.profile is not None and (getattr(self, "identified_by", "") not in UNCHECKED or hardware.UNKNOWN in (seen, rec)

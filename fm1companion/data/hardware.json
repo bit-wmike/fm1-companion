@@ -97,7 +97,7 @@
       "before": "Not tried on a newer unit."
     },
     "m-bootloader": {
-      "status": "min", "min": "v2.5", "also": ["v2.4-395e6cc"], "below": "risky", "evidence": "owner-report",
+      "status": "exact", "builds": ["v2.4-395e6cc"], "below": "risky", "evidence": "owner-report",
       "repo": "jvitkauskas/m-bootloader", "commit": "3ac7651",
       "source": "owner report 2026-11-19, outside this app: m-bootloader 2.4-395e6cc ran on one newer unit (its menu showed FLASH B36014). README.md \"Little tested on the FM-1's newer flash chip\": one such unit did not start after 1.1 or 1.2 was installed, cause not known; another runs 1.3 and 2.0 on one owner's report (M-Flasher #13); \"install it at your own risk\"",
       "before": "1.1 and 1.2 left one newer unit unable to start (README)."

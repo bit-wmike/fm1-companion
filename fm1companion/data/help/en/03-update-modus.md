@@ -85,12 +85,45 @@ before every use and never runs a changed file), and when it last looked for a n
   read must equal the copy; then the FM-1 is restarted. Once writing has started it cannot be cancelled – do not
   unplug the FM-1 then; even if the app is closed or crashes, M-Flasher finishes the write, and at the next start the app says what happened and asks what to do. A copy whose factory data (calibration, Bluetooth address) differs from the unit's is refused. If something goes wrong, the FM-1 stays in download mode and the backup made just before
   goes back the same way.
+* **Into download mode / Restart the FM-1** (Recovery › Tools, and the Device menu): the same switch on its own,
+  without reading anything – by the app only to an FM-1 it recognised itself at its USB port, otherwise it tells you
+  how. “Restart the FM-1” starts the firmware again from download mode. Neither writes anything.
+* **Install m-bootloader** (Recovery › Tools): writes the m-bootloader 2.4 the app brings (its checksum checked) into
+  the **boot area 0x00000–0x03FFF only**. First the whole flash is backed up (read twice, no way to skip it), then the
+  app asks you once more, naming the unit and its revision. On a newer unit (logo on the front) only an m-bootloader
+  version that is known to run there is offered (2.4-395e6cc, from one owner's report). Right before writing, the app
+  answers M-Flasher's question only when every sector it plans lies inside the boot area; afterwards a fresh read must
+  hold exactly this bootloader and nothing outside the boot area may have changed. The app remembers that this FM-1
+  has m-bootloader. Then: hold **PLAY** while switching on for its menu.
+* **Remove m-bootloader (original boot area)**: puts back the boot area of M-VAVE's original firmware V15 – the app
+  downloads the V15 package once if it is not on this computer and checks it. The same backup first, the same checks;
+  only the sectors where your boot area differs from V15's are written. This also undoes what FM1 Open changed in the
+  boot area. On an FM-1 that came with V16 it is V15's boot area, not necessarily the one it came with. SLOOP 3 is
+  installed only through m-bootloader: whether it starts afterwards is not known – the backup made just before is the
+  way back. **Only on an earlier unit** (no logo on the front): V15's boot area has never been written onto a newer
+  one, so there the app refuses and names the way back instead – writing back a whole-flash backup of this unit made
+  before m-bootloader (it offers it when there is one). “Restart the FM-1” is refused while a write did not end
+  verified (the FM-1 then stays in download mode, where its backup can be written back).
+* **Import a flash backup …** (Backups › Flash backups, Recovery › Tools): takes a whole-flash copy that M-Flasher
+  made itself (its `.bin` with its `.json`, kept elsewhere) into the app's backups – checked against its `.json`,
+  filed under the device whose unit ID the `.json` names (the image itself does not carry it; if no profile is known
+  as that unit you choose one, nothing is guessed). An imported copy with an intact boot area from before
+  m-bootloader is the way back the app offers on a newer unit. Install and remove m-bootloader are also in the
+  **Device** menu.
+* **Why the original boot area matters:** many Felucca-family firmwares refuse the original V15 when the boot area is
+  not V15's (“FAILED -5” on the FM-1, CHECK HEAD). When the app knows that your FM-1 has m-bootloader or FM1 Open's
+  boot area (from a flash backup, from M-Flasher, from m-bootloader itself or from the firmware history), a plan that
+  would hit this (V15 first, or V15 itself from a Felucca-family firmware – and after FM1 Open any Felucca-family
+  firmware) stops and asks you to put back the original boot area first. An update of the same firmware on an FM-1
+  with m-bootloader still works; the plan warns that the later way back needs the original boot area.
 * **Honestly – what ran on real hardware (2026-11-20, one Raspberry Pi 5, two units):** the backup on both units (by
   the app's own switch from Melodee and from SLOOP 3, with REC at power-on, through m-bootloader's menu), each copy
   identical with one M-Flasher made by hand; writing back only on an earlier unit and only small changes (one
   sector, verified), the refusal of another unit's copy, and closing the app being blocked while it writes. Not yet
   run: writing back on a newer unit (logo on the front), a large change or the boot area, a real logout during the
-  write. m-bootloader, firmware through download mode and SLOOP 3 through the app come in later versions.
+  write. Installing and removing m-bootloader and “Into download mode” have not been run through the app on a real
+  FM-1 yet (the owner did the same with M-Flasher by hand). Firmware through download mode and SLOOP 3 through the
+  app come in later versions.
 
 ## If the FM-1 does not appear as “WL82 UBOOT1.00” at all
 

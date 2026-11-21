@@ -41,8 +41,9 @@ SLOOP 3 hat **ein Projekt** auf dem FM-1. Die App liest es so wie das Backup –
 
 * **Deine Samples sind nicht in einem `sloop3-backup`.** SLOOP 3 hat keinen Befehl, der sie herausgibt. Sie stecken
   in einer Kopie des ganzen Flash-Speichers oder in den Dateien, aus denen du sie gesendet hast.
-* **Die App installiert SLOOP 3 nicht, und sie installiert m-bootloader nicht.** Sie erklärt den Weg und öffnet die
-  Installer-Seite des Autors in deinem Browser.
+* **Die App installiert SLOOP 3 nicht.** Sie erklärt den Weg und öffnet die Installer-Seite des Autors in deinem
+  Browser. m-bootloader, das SLOOP 3 braucht, installiert die App selbst: Rettung › Werkzeuge › „m-bootloader
+  installieren“ (mit einer Sicherung des ganzen Flashs vorher; siehe die Hilfeseite „Update-Modus & Rettung“).
 * **Kein automatisches Backup** für SLOOP 3, außer du schaltest es ein (siehe unten): Bei einer Beta liest die App nur,
   wenn du es willst.
 * Das Studio hat keinen SLOOP-3-Zwilling. Die anderen Geräteseiten (Presets, Samples) sprechen das

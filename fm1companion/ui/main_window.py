@@ -487,6 +487,22 @@ class MainWindow(QMainWindow):
         menu.addAction(a)
         return a
 
+    def _download_mode(self):
+        from .flash_tools import download_flow
+        download_flow(self, self.ctx)
+
+    def _install_mboot(self):
+        from .flash_tools import install_boot_flow
+        install_boot_flow(self, self.ctx)
+
+    def _remove_mboot(self):
+        from .flash_tools import remove_boot_flow
+        remove_boot_flow(self, self.ctx)
+
+    def _leave_download_mode(self):
+        from .flash_tools import leave_flow
+        leave_flow(self, self.ctx)
+
     def _menus(self):
         mb = self.menuBar()
         m = mb.addMenu(_("&File"))
@@ -504,6 +520,18 @@ class MainWindow(QMainWindow):
         self._act(g, _("Rename device …"), lambda: self.overview._rename() if self.ctx.profile else None, None,
                   ("edit-rename",))
         self._act(g, _("FM-1 status"), lambda: self.go("fm1"), None, ("audio-card",))
+        g.addSeparator()
+        self._act(g, _("Into download mode"), self._download_mode, None, ("go-down",),
+                  _("USB download mode through M-Flasher (writes nothing); the app sends the FM-1 there only when it "
+                    "recognised it, otherwise it tells you how"))
+        self._act(g, _("Restart the FM-1 (leave download mode)"), self._leave_download_mode, None,
+                  ("view-refresh", "system-reboot"), _("M-Flasher starts the FM-1's firmware again (writes nothing)"))
+        self._act(g, _("Install m-bootloader …"), self._install_mboot, None, ("system-software-install",),
+                  _("Writes the bundled m-bootloader into the boot area – after a whole-flash backup and your "
+                    "confirmation (the same as on Recovery › Tools)"))
+        self._act(g, _("Remove m-bootloader …"), self._remove_mboot, None, ("edit-undo",),
+                  _("Puts back V15's boot area on an earlier unit – after a whole-flash backup and your confirmation "
+                    "(the same as on Recovery › Tools)"))
 
         v = mb.addMenu(_("&View"))
         self.a_sidebar = self._act(v, _("Sidebar"), self.toggle_sidebar, "F9", ("view-sidebar",), checkable=True)

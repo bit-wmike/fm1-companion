@@ -187,7 +187,7 @@ confirmed.
 | Recognising m-bootloader's MIDI MODE (0x12) and the flash chip (JEDEC ID → hardware revision) | the earlier chip (0x856014) once on the real unit (`mboot_recognise` above); the newer chip's ID: m-bootloader's code on the PC only |
 | Flash backup in MIDI MODE (0x23 reads, compared with the chip's CRC-32 from 0x24) | not run on the real unit (`mboot_flash_copy`); m-bootloader's code on the PC: 1 MiB read, identical to the flash file. Speed and reliability over real USB: unknown. m-bootloader versions before the read commands (the installer page mentions some that do not answer reads): the app then reports “does not answer” and saves nothing |
 | 0x12 sent to an update loader that is not m-bootloader | not sent by design: only a port named exactly "FM-1 Update" is asked (Felucca-family loaders are "<Name> Update"). What M-VAVE's or a Felucca loader would do with 0x12 was not tried |
-| Installing SLOOP 3, installing m-bootloader | **not done by the app** (the author's installer page; M-Flasher / M-UPGRADE). The app bundles m-bootloader 2.4 and the SLOOP 3 3.4.0 area (checksums checked) for a later version, but does not write them yet |
+| Installing SLOOP 3 | **not done by the app** (the author's installer page). The app bundles the SLOOP 3 3.4.0 area (checksum checked) for a later version, but does not write it yet. m-bootloader: see “M-Flasher through the app” below (Recovery › Tools, step 3) |
 | Bundled M-Flasher 0.12.1 (Recovery › Tools: checksum, version in use, “Which FM-1 does M-Flasher see?” = `m-flasher find`; the parser of `info`, `backup`, the restore plan and its question) | runner, parser, time limits, lock and checksum refusal: against a fake M-Flasher only (`tests/fake_mflasher.py`, synthetic values). The real binary was **not** run by the app or by its tests, on no computer. M-Flasher itself ran on the owner's Pi by hand (2026-11-18/19). The udev rule and `sg` autoload: package contents and installer logic tested, not on a Pi |
 | Update check and “Update” for M-Flasher, m-bootloader, SLOOP 3 | logic only (unit tests with made-up release lists and downloads; GitHub's API was not reachable from the development machine). The automatic check's schedule (daily / weekly / at start / off) and its switches: unit and UI tests |
 | The blocker for the newer hardware revision (no installer page offered; explicit confirmation when unknown) | page logic only (`tests/ui_sloop3_test.py`) |
@@ -225,7 +225,9 @@ confirmed.
 
 `fm1companion/tools/flashjob.py`, buttons on Recovery › Tools and Backups › Flash backups. **Run on real hardware
 through the app on 2026-11-20** (the owner, PR #27, ONE Raspberry Pi 5, TWO units one after the other at the same USB
-port; `OWNER_REPORTS["app_flows_pi"]`). Everything else only against `tests/fake_mflasher.py` (M-Flasher 0.12.1's line
+port; `OWNER_REPORTS["app_flows_pi"]`), and step 3 on **2026-11-21** (PR #28, the same Pi 5 and units:
+download mode, restart, m-bootloader install and removal on the earlier unit, the plan block, the newer-unit
+refusal; `OWNER_REPORTS["app_step3_pi"]`; nothing writing on the newer unit). Everything else only against `tests/fake_mflasher.py` (M-Flasher 0.12.1's line
 formats, synthetic unit ids, a pseudo-random 1 MiB "flash"). `TOOLS_HARDWARE` in `fm1companion/flash/tested.py`
 repeats this table; `tests/test_tools_flash.py` keeps the two in sync.
 
@@ -236,6 +238,12 @@ repeats this table; `tests/test_tools_flash.py` keeps the two in sync.
 | `mf_restore` – writing a whole-flash backup back through M-Flasher – so far only small changes on an earlier unit (not yet the boot area or a large difference) | run on hardware (2026-11-20), narrow: earlier unit (0x856014, original boot area, Melodee 1.6.1), an image made by the app, three runs of 1 sector (once "nothing to write"), verified; the foreign-unit refusal seen; SIGTERM and closing the window blocked while writing. Not run: a large difference or the boot area, a real logout, an image with M-Flasher's own .json |
 | `mf_new_chip_backup` – the whole-flash backup on a newer FM-1 (logo on the front, flash UC25HQ80) | run on hardware (2026-11-20): one newer unit, three ways (soft key, REC, menu) |
 | `mf_new_chip_restore` – writing a whole-flash backup back on a newer FM-1 (logo on the front, flash UC25HQ80) | not run |
+| `mf_download_button` – the button “Into download mode” and “Restart the FM-1” on their own (both units) | run on hardware (2026-11-21, one Pi 5): “Into download mode” from Melodee 1.6.1 (earlier unit) and from SLOOP 3 3.4.0 (newer unit, m-bootloader), “Restart the FM-1” on both; no “Which FM-1 is this?” afterwards |
+| `mf_bootloader_install` – installing m-bootloader through M-Flasher (bootloader --file) – so far once, on an earlier unit with the original boot area | run on hardware (2026-11-21), narrow: earlier unit 0x856014, original boot area, Melodee 1.6.1, m-bootloader 2.4-395e6cc, once; 4 sectors, gate answered, fresh read as expected; the PLAY menu afterwards was not checked by hand |
+| `mf_bootloader_remove` – putting back the original boot area through M-Flasher (bootloader --stock with M-VAVE's V15 package) – so far once, on an earlier unit; the whole flash was byte-identical with the state before the install afterwards | run on hardware (2026-11-21), narrow: the same earlier unit, once; afterwards an M-Flasher backup by hand was byte-identical with the state before the install (so its original boot area is V15's) |
+| `mf_newer_removal_refused` – refusing the removal on a newer FM-1 (no M-Flasher call) | run on hardware (2026-11-21): seen on the newer unit, no M-Flasher call; offering a backup was not seen (none was in the app then) |
+| `plan_boot_block` – the installation plan blocked by the boot-area rule (m-bootloader, CHECK HEAD) | run on hardware (2026-11-21): Skiff on the earlier unit with m-bootloader – blocked with the way out, nothing written |
+| `mf_new_chip_bootloader` – installing or removing m-bootloader on a newer FM-1 (logo on the front, flash UC25HQ80) through this app | not run (the removal is refused there by design; the install through the app was not tried) |
 
 **Owner, outside the app (2026-11-18/19, `OWNER_REPORTS["mflasher_by_hand"]`):** M-Flasher 0.12.1 by hand in a
 terminal on a Raspberry Pi 5 – `download-mode`, `info`, `backup` twice with the same SHA-256, and `restore` of a whole
@@ -244,6 +252,23 @@ matches)", then `--restart`) on the earlier unit; on the newer unit two backups 
 evidence for the tool and for the line formats the app parses – not for the app's flows: the owner passed `--yes`,
 the app never does (it answers M-Flasher's question itself, after its own checks), and the prompt and the "Nothing
 written." path were not seen on hardware.
+
+**Owner, outside the app (2026-11-18/19, `OWNER_REPORTS["mboot_by_hand"]`):** `m-flasher bootloader --file
+fm1-uboot.boot` (m-bootloader 2.4-395e6cc, 4 sectors 0x00000–0x03FFF, verified) on both units, and the way back to the
+original boot area by hand (`bootloader --stock` with the V15 package, and whole-flash restores). Evidence for the
+tool and its line formats – not for the app's install/removal flows (step 3), which never ran on a real FM-1.
+
+Step 3 against the stand-in only (`tests/test_tools_boot.py`): the install and the removal write only the boot area
+(any announced range outside 0x00000–0x03FFF, another note, a WARNING, a second plan line, another unit or chip →
+stdin closed, nothing written); a newer unit gets only an m-bootloader build marked "yes" in `data/hardware.json`
+(2.4-395e6cc); no whole-flash backup, two units or a declined dialog → nothing written; the app killed after "yes"
+→ M-Flasher writes the boot area to its end, the record says so; the planner refuses Felucca-family targets on a
+changed boot area (CHECK HEAD) and asks for the original boot area after FM1 Open. Not tried: any of it on a real
+FM-1, the V15 boot area on a unit sold with V16, SLOOP 3 starting from the original bootloader. After the review (2026-11-20, stand-in only): the removal is refused on a newer unit and names (and offers) a
+pre-m-bootloader backup; Restart is refused while a write record is open and checks the unit id; the install's boot
+area is composed as M-Flasher does (gate: exactly the differing sectors; verify: the whole 0x00000–0x03FFF – a stale
+sector fails); m-bootloader on a newer unit only as the listed build 2.4-395e6cc. The composed boot area on V15's
+equals the owner's measured change (15 096 bytes, 0x00020–0x03FFF) – a calculation, not a run.
 
 Added after the review (2026-11-19), against the stand-in only: the app is killed (SIGKILL) right after "yes" and the fake still writes to its end; the write record is on disk before "yes" and the next start asks; the foreign factory sector is refused; an image swapped during the dialog is not what is written; no soft key to an SMK-37, an update loader or a unit the app did not recognise. Not tried: logout, `systemd-inhibit` and SIGTERM during a real write.
 
