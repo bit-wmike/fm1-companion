@@ -1898,7 +1898,7 @@ def _firmware_write(job: Job, plan: FirmwarePlan, info, saved, pre, package: byt
                     runs, confirm_data) -> FirmwareResult:
     expect = {"unit_id": info.unit_id, "flash_id": info.flash_id, "chip_key": info.chip_key, "identity": ident,
               "end": plan.end, "runs": runs}
-    w = r = None
+    w = None
     for attempt in (1, 2):
         staging = _work_folder(job)
         try:
@@ -1913,8 +1913,8 @@ def _firmware_write(job: Job, plan: FirmwarePlan, info, saved, pre, package: byt
                                   "runs": [[a, b] for a, b in runs]}, saved, pre)
         job.tell(_("Writing the firmware (do not unplug the FM-1 or switch it off) …"))
         try:
-            r = w.run(["firmware", str(copy), "--device", job.device, "--backup-dir", str(staging)],
-                      firmware_gate(expect))
+            w.run(["firmware", str(copy), "--device", job.device, "--backup-dir", str(staging)],
+                  firmware_gate(expect))
             break
         except Refused as e:
             seen = expect.get("seen_warning")
