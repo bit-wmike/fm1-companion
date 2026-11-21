@@ -263,7 +263,8 @@ def serve(transport, pkg: Package, *, progress=None, timeout: float | None = Non
             st.seconds = time.monotonic() - t0
             erased = st.erasing_possible(pkg)
             raise InstallError(
-                _("The FM-1 stopped asking for SLOOP 3 while it was writing. The firmware area is incomplete; the "
+                _("The FM-1 stopped asking for SLOOP 3 once it may have started erasing. The firmware area may be "
+                  "incomplete (if m-bootloader had started erasing, it is); the "
                   "boot area (m-bootloader) was not written, so its menu still opens (hold PLAY while switching on) "
                   "and MIDI MODE can install again, or the backup made before can be written back.") if erased else
                 _("The FM-1 stopped asking for SLOOP 3 before it erased anything – m-bootloader checks the whole "

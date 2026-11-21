@@ -556,7 +556,7 @@ def boot_plan_text(plan) -> str:
     return "<br><br>".join(parts)
 
 
-def _boot_flow(parent, ctx, store, op: str) -> bool:
+def _boot_flow(parent, ctx, store, op: str, then_v15: bool = False) -> bool:
     from ..tools import flashjob as FJ
     from . import feedback
     store = store or getattr(ctx, "tools_store", None)
@@ -601,7 +601,8 @@ def _boot_flow(parent, ctx, store, op: str) -> bool:
             package = Path(firmware.fetch_stock("stock-v15", log=w.log.emit)).read_bytes()
         job = _job(ctx, store, w, writing=True)
         try:
-            res = FJ.install_bootloader(job, ask) if op == "install" else FJ.remove_bootloader(job, ask, package)
+            res = FJ.install_bootloader(job, ask) if op == "install" else FJ.remove_bootloader(job, ask, package,
+                                                                                               then_v15=then_v15)
         except FJ.WriteFailed as e:
             result["failed"] = e
             raise
@@ -658,8 +659,8 @@ def install_boot_flow(parent, ctx, store=None) -> bool:
     return _boot_flow(parent, ctx, store, "install")
 
 
-def remove_boot_flow(parent, ctx, store=None) -> bool:
-    return _boot_flow(parent, ctx, store, "remove")
+def remove_boot_flow(parent, ctx, store=None, then_v15: bool = False) -> bool:
+    return _boot_flow(parent, ctx, store, "remove", then_v15)
 
 
 # ------------------------------------------------------- a firmware through download mode (m-bootloader units)
@@ -925,7 +926,7 @@ def way_back_flow(parent, ctx, store=None) -> str:
         from ..tools import bootarea
         cur = bootarea.current(getattr(ctx, "profile", None))
         if cur.get("kind") in bootarea.NOT_ORIGINAL or getattr(ctx, "mboot", None) is not None:
-            if not remove_boot_flow(parent, ctx, store=store):
+            if not remove_boot_flow(parent, ctx, store=store, then_v15=True):
                 return o["key"]
         from .common import show_done
         show_done(parent, _("Back to …"), _("Next: Firmware+ › Install & Versions › the original V15 – the plan "

@@ -31,7 +31,7 @@ from fm1companion import hardware  # noqa: E402
 from fm1companion.flash import mboot  # noqa: E402
 from fm1companion.tools import bootarea, flashjob as FJ, mbinstall as M  # noqa: E402
 from fake_mboot import FakeMboot  # noqa: E402
-from test_tools_flash import env  # noqa: E402,F401
+from test_tools_flash import env, sha  # noqa: E402,F401
 
 AREA_FILE = ROOT / "fm1companion" / "tools" / "bundled" / "sloop3" / "sloop3-3.4.0.area"
 BOOT = (ROOT / "fm1companion" / "tools" / "bundled" / "m-bootloader" / "fm1-uboot.boot").read_bytes()
@@ -505,3 +505,50 @@ def test_h1_m_bootloaders_own_code_failing_its_first_erase(env, tmp_path, monkey
     finally:
         t.close()
     assert FJ.unfinished_write(env.journal.dir)["state"] == "failed"
+
+
+def test_n1_a_stop_at_the_erase_boundary_says_may_be_incomplete(unit, monkeypatch):
+    env = unit
+    monkeypatch.setattr(M, "REQUEST_TIMEOUT", 0.5)
+    env.fake.fail = "crc"                                   # (stops right at the boundary: the flash is unchanged)
+    monkeypatch.setattr(M, "_", lambda m: m)               # (English, whatever an earlier test set)
+    monkeypatch.setattr(FJ, "_", lambda m: m)
+    with pytest.raises(FJ.WriteFailed) as e:
+        go(env)
+    assert "may be incomplete" in e.value.reason and "is incomplete" not in e.value.reason
+    assert e.value.backup.name in e.value.reason
+
+
+def _sloop3_unit_with_a_stale_profile(env):
+    """the unit got SLOOP 3 outside the app; the profile still says Skiff"""
+    import fake_mflasher
+    img = bytearray(mboot_flash())
+    area = AREA_FILE.read_bytes()
+    img[0x4000:0x4000 + 0x2000] = M.enc_area(area[:0x2000], 0x980F)
+    Path(str(env.state) + ".flash").write_bytes(bytes(img))
+    env.set(mode="midi", bootloader="m-bootloader 2.4-395e6cc (fm1)", firmware="SLOOP 2.8")
+    env.prof.firmware = "skiff"
+    del fake_mflasher
+    return bytes(img)
+
+
+def test_n2_back_to_v15_refuses_the_removal_on_a_unit_that_runs_sloop3_by_its_flash(env, monkeypatch):
+    import random
+    from fm1companion.flash import package as pk
+    import fake_mflasher
+    flash = bytearray(random.Random("synthetic-v15").randbytes(0x93000))
+    flash[:0x4000] = fake_mflasher.synthetic_image("synthetic-v15")[:0x4000]
+    raw = pk.build_package("FM-1_015", family="stock", app=bytes(flash))
+    monkeypatch.setattr(pk, "STOCK_V15_SHA256", sha(raw))
+    monkeypatch.setattr(bootarea, "V15_BOOT_AREA_SHA256", sha(bytes(flash[:0x4000])))
+    before = _sloop3_unit_with_a_stale_profile(env)
+    assert FJ.app_area_is_sloop3(before, 0x980F)
+    assert not FJ.app_area_is_sloop3(mboot_flash(), 0x980F)
+    with pytest.raises(FJ.Refused) as e:
+        FJ.remove_bootloader(env.job(), lambda plan: True, raw, then_v15=True)
+    assert e.value.kind == "v15-unreachable" and not [c for c in env.get()["calls"] if c[0] == "bootloader"]
+    assert Path(str(env.state) + ".flash").read_bytes() == before
+    # the removal on its own (not as the way to V15) still goes, with the SLOOP 3 note
+    plans = []
+    res = FJ.remove_bootloader(env.job(), lambda plan: plans.append(plan) or True, raw)
+    assert res.written and any("SLOOP 3" in n for n in plans[0].notes)

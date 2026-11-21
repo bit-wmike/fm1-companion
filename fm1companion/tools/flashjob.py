@@ -1430,7 +1430,20 @@ def _install_locked(job: Job, boot: bytes, version: str, sup, confirm) -> BootRe
         "note": mp.BOOT_SHORT_NOTE, "runs": runs, "expected": expected, "version": version})
 
 
-def remove_bootloader(job: Job, confirm, package: bytes) -> BootResult:
+def app_area_is_sloop3(image: bytes, chip_key: int) -> bool:
+    """does the firmware area at 0x4000 hold SLOOP 3? Its tools/mkfw.py layout, decrypted with the unit's chip key
+    (each 32-byte line from key ^ offset/4): the record "app_area_head" (attribute 0x83) at +0, "app.bin" (0x82, at
+    0x120) at +0x20, nothing (FF) from +0x40 – read from the flash itself, not from what the profile remembers"""
+    from .mbinstall import enc_area
+    if chip_key is None or len(image) < BOOT_AREA + 0x120:
+        return False
+    head = enc_area(bytes(image[BOOT_AREA:BOOT_AREA + 0x120]), chip_key)
+    return (head[12] == 0x83 and head[16:30] == b"app_area_head\0" and head[0x20 + 12] == 0x82 and
+            head[0x30:0x38] == b"app.bin\0" and int.from_bytes(head[0x24:0x28], "little") == 0x120 and
+            head[0x40:0x120] == b"\xff" * 0xE0)
+
+
+def remove_bootloader(job: Job, confirm, package: bytes, then_v15: bool = False) -> BootResult:
     """"Remove m-bootloader (original boot area)": ONLY `m-flasher bootloader --stock` with the boot area of M-VAVE's
     public V15 package (owner decision) – `package` is that file, checked here by its pinned SHA-256 and by the
     measured SHA-256 of its boot area. The same gates as the install; the gate requires exactly the sectors where
@@ -1448,12 +1461,12 @@ def remove_bootloader(job: Job, confirm, package: bytes) -> BootResult:
         raise early                                        # (before the unit is sent anywhere)
     job.purpose = "bootloader"
     with _Lock(job, "mflasher-bootloader"), _back_on_refusal(job):
-        res = _remove_locked(job, package, area, confirm)
+        res = _remove_locked(job, package, area, confirm, then_v15)
     res.log_path = job.log_path
     return res
 
 
-def _remove_locked(job: Job, package: bytes, area: bytes, confirm) -> BootResult:
+def _remove_locked(job: Job, package: bytes, area: bytes, confirm, then_v15: bool = False) -> BootResult:
     from .. import hardware
     from . import bootarea
     ensure_download_mode(job)
@@ -1471,6 +1484,19 @@ def _remove_locked(job: Job, package: bytes, area: bytes, confirm) -> BootResult
     if isinstance(pre, Refusal):
         raise Refused(pre.reason, pre.kind or "no-backup")
     saved = job.pre
+    sloop3_here = app_area_is_sloop3(saved.image, info.chip_key)
+    guess = (info.firmware or "").strip().lower()
+    if then_v15 and (sloop3_here or guess in ("", "none", "unknown")):
+        # ("Back to the original V15": after the removal the original V15 must come the usual way, from the running
+        # firmware – SLOOP 3 has no update mode, an unknown firmware may have none: the plan would be blocked)
+        job.ev("refused", "back to V15: the flash shows " + ("SLOOP 3" if sloop3_here else f"no known firmware "
+                                                             f"({guess or '-'})"))
+        raise Refused(_("The flash of this FM-1 shows {what} – not a firmware from which the original V15 can be "
+                        "installed the usual way once the boot area is back (SLOOP 3, for one, has no update mode). "
+                        "So the boot area is not written. First go to a Felucca-family firmware (“Back to …”), then "
+                        "come back – or write back a whole-flash backup of this unit made before m-bootloader. Nothing "
+                        "was written; the backup made just now is kept.").format(
+                            what="SLOOP 3" if sloop3_here else _("no firmware M-Flasher knows")), "v15-unreachable")
     runs = diff_runs(area, saved.image[:BOOT_AREA])
     if not runs:
         job.tell(_("This FM-1 has the original boot area already (the one of M-VAVE's V15 package): nothing to "
@@ -1482,7 +1508,7 @@ def _remove_locked(job: Job, package: bytes, area: bytes, confirm) -> BootResult
     plan = BootPlan("remove", job.profile.name, info.unit_id, info.flash_id, rev, "", info.bootloader,
                     _firmware_text(job.profile), pre, source="FM-1_015")
     fw = (getattr(job.profile, "firmware", "") or "").lower()
-    if fw in ("sloop3", "sloop-3") or bootarea.current(job.profile).get("how") == "sloop3":
+    if fw in ("sloop3", "sloop-3") or bootarea.current(job.profile).get("how") == "sloop3" or sloop3_here:
         plan.notes.append(_("SLOOP 3 is installed only through m-bootloader. Whether it starts with the original "
                             "bootloader is not known. If the FM-1 does not start afterwards, the way back is the "
                             "backup made just now, written back from USB download mode (Recovery, stage 2)."))

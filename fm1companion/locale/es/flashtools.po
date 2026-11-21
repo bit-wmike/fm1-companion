@@ -930,9 +930,6 @@ msgstr "El SLOOP 3 incluido no pasó la comprobación de su suma de verificació
 msgid "The bundled SLOOP 3 is not an application area the app knows ({why}). Nothing was written."
 msgstr "El SLOOP 3 incluido no es una zona de aplicación que la app conozca ({why}). No se escribió nada."
 
-msgid "The FM-1 stopped asking for SLOOP 3 while it was writing. The firmware area is incomplete; the boot area (m-bootloader) was not written, so its menu still opens (hold PLAY while switching on) and MIDI MODE can install again, or the backup made before can be written back."
-msgstr "El FM-1 dejó de pedir SLOOP 3 mientras escribía. La zona de firmware está incompleta; la zona de arranque (m-bootloader) no se escribió, así que su menú sigue abriéndose (mantén PLAY al encender) y el MIDI MODE puede instalar de nuevo, o se puede volver a escribir la copia hecha antes."
-
 msgid "The FM-1 stopped asking for SLOOP 3 before it erased anything – m-bootloader checks the whole package first and refuses one that does not match (checksum, chip key). Nothing was written; the FM-1 still has its firmware."
 msgstr "El FM-1 dejó de pedir SLOOP 3 antes de borrar nada – m-bootloader comprueba primero todo el paquete y rechaza uno que no coincide (suma de verificación, clave del chip). No se escribió nada; el FM-1 sigue teniendo su firmware."
 
@@ -1258,3 +1255,12 @@ msgstr "m-bootloader está escribiendo"
 
 msgid "m-bootloader is writing SLOOP 3 into the FM-1's flash, and this app hands it the data. The app stays open until it has finished – do not unplug the FM-1 or switch it off."
 msgstr "m-bootloader está escribiendo SLOOP 3 en la flash del FM-1, y esta app le entrega los datos. La app sigue abierta hasta que termine – no desconectes ni apagues el FM-1."
+
+msgid "The flash of this FM-1 shows {what} – not a firmware from which the original V15 can be installed the usual way once the boot area is back (SLOOP 3, for one, has no update mode). So the boot area is not written. First go to a Felucca-family firmware (“Back to …”), then come back – or write back a whole-flash backup of this unit made before m-bootloader. Nothing was written; the backup made just now is kept."
+msgstr "La flash de este FM-1 muestra {what} – no es un firmware desde el que se pueda instalar la V15 original por el camino habitual una vez recuperada la zona de arranque (SLOOP 3, por ejemplo, no tiene modo de actualización). Por eso no se escribe la zona de arranque. Ve primero a un firmware de la familia Felucca («Volver a …») y vuelve luego – o vuelve a escribir una copia de toda la flash de esta unidad de antes de m-bootloader. No se escribió nada; la copia que se acaba de hacer se conserva."
+
+msgid "no firmware M-Flasher knows"
+msgstr "ningún firmware que M-Flasher conozca"
+
+msgid "The FM-1 stopped asking for SLOOP 3 once it may have started erasing. The firmware area may be incomplete (if m-bootloader had started erasing, it is); the boot area (m-bootloader) was not written, so its menu still opens (hold PLAY while switching on) and MIDI MODE can install again, or the backup made before can be written back."
+msgstr "El FM-1 dejó de pedir SLOOP 3 cuando quizá ya había empezado a borrar. La zona de firmware puede estar incompleta (si m-bootloader había empezado a borrar, lo está); la zona de arranque (m-bootloader) no se escribió, así que su menú sigue abriéndose (mantén PLAY al encender) y el MIDI MODE puede instalar de nuevo, o se puede volver a escribir la copia hecha antes."
