@@ -472,8 +472,11 @@ def _ctx(env, **kw):
                            is_virtual=False, **kw)
 
 
-def test_way_back_offers_each_target_with_its_route(env):
+def test_way_back_offers_each_target_with_its_route(env, monkeypatch):
+    from fm1companion import i18n
     from fm1companion.ui import flash_tools
+    monkeypatch.setattr(i18n, "gettext", lambda m: m)          # (English, whatever an earlier test set)
+    monkeypatch.setattr(flash_tools, "_", lambda m: m)
     env.prof.unit_id = UID
     opts = {o["key"]: o for o in flash_tools.way_back_options(_ctx(env))}
     assert list(opts) == ["backup", "sloop3", "felucca", "v15"]
