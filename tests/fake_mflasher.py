@@ -40,6 +40,9 @@ State: the JSON file named by FAKE_MFLASHER_STATE (all keys optional):
                      announced – the app's fresh read must catch it) | "stray" (one unknown line before the title) |
                      "skip-sector" (the last announced run is reported written and verified, but not written) |
                      "plan-partial" (the plan and the write leave out the first sector that must change)
+  data_warning  firmware: M-Flasher's "keeps its data in other places" WARNING (ops.rs plan_firmware) in every plan
+            firmware faults also: "model-warning" (the other-model WARNING) | "data-warning-changed" (the second
+            session's warning names another installed firmware)
   midi_name the ALSA card name `find` prints for a running unit (default "FM-1")
             download-mode: "never" (the unit does not come back within 20 s)
             info:    "split-utf8" (no unit id; the "–" is written in two pieces)
@@ -645,7 +648,18 @@ def firmware(st: dict, args, fault: str) -> int:
     target[0x4000:len(flash)] = flash[0x4000:]
     sectors = [a for a in range(0, FLASH_SIZE, SECTOR) if target[a:a + SECTOR] != current[a:a + SECTOR]]
     runs = runs_of(sectors)
-    show_plan(f"Install firmware {ident}", runs, [f"Installs {ident} (0x04000-0x{len(flash) - 1:05X})."], [],
+    warnings = []
+    if st.get("data_warning"):                    # (ops.rs: the installed firmware's data tables differ from the package's)
+        warnings.append(f"The installed firmware ({dict(rows)['firmware']}) keeps its data in other places than {ident}; "
+                        "what it leaves behind can confuse the new firmware (wrong presets, no sound). To go back to a "
+                        "firmware cleanly, restore a backup made while it was installed.")
+    if fault == "model-warning":
+        warnings.append(f"The unit runs MiniFM firmware; this package is for the FM-1. The unit will then report itself "
+                        "as that model, and M-UPGRADE will only take that model's packages.")
+    if fault == "data-warning-changed":           # (the second session shows another installed firmware)
+        if st.get("answers"):
+            warnings = [w.replace("(", "(Other ", 1) for w in warnings]
+    show_plan(f"Install firmware {ident}", runs, [f"Installs {ident} (0x04000-0x{len(flash) - 1:05X})."], warnings,
               fault, extra=(0x3000, 0x4000))
     if not runs:
         return 0

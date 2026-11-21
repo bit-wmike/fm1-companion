@@ -393,15 +393,13 @@ def main():
         inst._fill()
         return _fw.spec(key), inst.releases[key][0]
     spec_o, rel_o = other_target()
-    check(not inst.b_install.isEnabled() and "SLOOP 3" in inst.b_install.toolTip()
-          and "Nicht aus dem laufenden SLOOP 3" in inst.b_install.toolTip()
-          and inst.b_install.text() == "Auf aktives FM-1 installieren",
-          f"under a running SLOOP 3 “Install on active FM-1” is off, the tooltip says why (pi finding 32: "
-          f"{inst.b_install.toolTip()[:70]})")
-    n0, boxes_before = len(seen()), len(boxes)
-    from fm1companion.ui import firmware_page as _fp
-    check(_fp.install_flow(w, c, spec_o, rel_o) is False and any("SLOOP 3" in b for b in boxes[boxes_before:])
-          and len(seen()) == n0, "… and the installer itself still refuses it, without sending anything")
+    from fm1companion.ui import firmware_page as _fp, sloop3_ui as _s3
+    from fm1companion.flash import planner as _pl
+    _plan = _pl.plan_install(_fp.device_state(c), _pl.Target.from_spec(spec_o, tag="v2.7"))
+    check(_s3.install_blocker(c) is None and inst.b_install.text() == "Auf aktives FM-1 installieren"
+          and _plan.route == "download-mode" and "stock" not in _plan.kinds(),
+          f"under a running SLOOP 3 the plan offers the way through download mode (step 4) instead of the old "
+          f"refusal ({_plan.route}, {_plan.kinds()})")
     inst.cat.setCurrentRow(keys.index("sloop3"))
     wait(400)
     state = {}

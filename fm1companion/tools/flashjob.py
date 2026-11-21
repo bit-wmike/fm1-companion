@@ -68,6 +68,8 @@ BOOT_AREA = 0x4000
 FACTORY = (0xFF000, 0x100000)                   # the unit's factory data: chip key record, calibration, Bluetooth MAC
 RECORD = "mflasher-write.json"                  # beside the installation journal: a write-back in progress
 WRITING = threading.Event()                     # set from "yes" until M-Flasher has ended (blocks quitting)
+WRITER = {"who": "M-Flasher"}                   # who writes while WRITING is set ("m-bootloader": SLOOP 3 over MIDI
+#                                                 MODE – then the app itself hands it the data and must stay open)
 INTENDED: dict = {}                             # USB port -> (why, time): a unit in download mode on purpose
 GUIDE_SHOWN: dict = {}                          # {"at": time} – the app asked the user to put an FM-1 there by hand
 INTENDED_SECS = 30 * 60
@@ -172,6 +174,7 @@ class Job:
     work_dir: Path | None = None               # private local folder for M-Flasher's files (default: private_dir())
     unit_usb: str = ""                         # the USB port of the unit in download mode (where it comes back)
     purpose: str = ""                          # why it is in download mode: button | backup | restore | bootloader
+    progress: object = None                    # fn(done, total, checking) – SLOOP 3's install over MIDI MODE
     # filled in on the way
     device: str = ""                           # /dev/sgN
     info: mp.Info | None = None                # M-Flasher's info of this session
@@ -1427,7 +1430,20 @@ def _install_locked(job: Job, boot: bytes, version: str, sup, confirm) -> BootRe
         "note": mp.BOOT_SHORT_NOTE, "runs": runs, "expected": expected, "version": version})
 
 
-def remove_bootloader(job: Job, confirm, package: bytes) -> BootResult:
+def app_area_is_sloop3(image: bytes, chip_key: int) -> bool:
+    """does the firmware area at 0x4000 hold SLOOP 3? Its tools/mkfw.py layout, decrypted with the unit's chip key
+    (each 32-byte line from key ^ offset/4): the record "app_area_head" (attribute 0x83) at +0, "app.bin" (0x82, at
+    0x120) at +0x20, nothing (FF) from +0x40 – read from the flash itself, not from what the profile remembers"""
+    from .mbinstall import enc_area
+    if chip_key is None or len(image) < BOOT_AREA + 0x120:
+        return False
+    head = enc_area(bytes(image[BOOT_AREA:BOOT_AREA + 0x120]), chip_key)
+    return (head[12] == 0x83 and head[16:30] == b"app_area_head\0" and head[0x20 + 12] == 0x82 and
+            head[0x30:0x38] == b"app.bin\0" and int.from_bytes(head[0x24:0x28], "little") == 0x120 and
+            head[0x40:0x120] == b"\xff" * 0xE0)
+
+
+def remove_bootloader(job: Job, confirm, package: bytes, then_v15: bool = False) -> BootResult:
     """"Remove m-bootloader (original boot area)": ONLY `m-flasher bootloader --stock` with the boot area of M-VAVE's
     public V15 package (owner decision) – `package` is that file, checked here by its pinned SHA-256 and by the
     measured SHA-256 of its boot area. The same gates as the install; the gate requires exactly the sectors where
@@ -1445,12 +1461,12 @@ def remove_bootloader(job: Job, confirm, package: bytes) -> BootResult:
         raise early                                        # (before the unit is sent anywhere)
     job.purpose = "bootloader"
     with _Lock(job, "mflasher-bootloader"), _back_on_refusal(job):
-        res = _remove_locked(job, package, area, confirm)
+        res = _remove_locked(job, package, area, confirm, then_v15)
     res.log_path = job.log_path
     return res
 
 
-def _remove_locked(job: Job, package: bytes, area: bytes, confirm) -> BootResult:
+def _remove_locked(job: Job, package: bytes, area: bytes, confirm, then_v15: bool = False) -> BootResult:
     from .. import hardware
     from . import bootarea
     ensure_download_mode(job)
@@ -1468,6 +1484,19 @@ def _remove_locked(job: Job, package: bytes, area: bytes, confirm) -> BootResult
     if isinstance(pre, Refusal):
         raise Refused(pre.reason, pre.kind or "no-backup")
     saved = job.pre
+    sloop3_here = app_area_is_sloop3(saved.image, info.chip_key)
+    guess = (info.firmware or "").strip().lower()
+    if then_v15 and (sloop3_here or guess in ("", "none", "unknown")):
+        # ("Back to the original V15": after the removal the original V15 must come the usual way, from the running
+        # firmware – SLOOP 3 has no update mode, an unknown firmware may have none: the plan would be blocked)
+        job.ev("refused", "back to V15: the flash shows " + ("SLOOP 3" if sloop3_here else f"no known firmware "
+                                                             f"({guess or '-'})"))
+        raise Refused(_("The flash of this FM-1 shows {what} – not a firmware from which the original V15 can be "
+                        "installed the usual way once the boot area is back (SLOOP 3, for one, has no update mode). "
+                        "So the boot area is not written. First go to a Felucca-family firmware (“Back to …”), then "
+                        "come back – or write back a whole-flash backup of this unit made before m-bootloader. Nothing "
+                        "was written; the backup made just now is kept.").format(
+                            what="SLOOP 3" if sloop3_here else _("no firmware M-Flasher knows")), "v15-unreachable")
     runs = diff_runs(area, saved.image[:BOOT_AREA])
     if not runs:
         job.tell(_("This FM-1 has the original boot area already (the one of M-VAVE's V15 package): nothing to "
@@ -1479,7 +1508,7 @@ def _remove_locked(job: Job, package: bytes, area: bytes, confirm) -> BootResult
     plan = BootPlan("remove", job.profile.name, info.unit_id, info.flash_id, rev, "", info.bootloader,
                     _firmware_text(job.profile), pre, source="FM-1_015")
     fw = (getattr(job.profile, "firmware", "") or "").lower()
-    if fw in ("sloop3", "sloop-3") or bootarea.current(job.profile).get("how") == "sloop3":
+    if fw in ("sloop3", "sloop-3") or bootarea.current(job.profile).get("how") == "sloop3" or sloop3_here:
         plan.notes.append(_("SLOOP 3 is installed only through m-bootloader. Whether it starts with the original "
                             "bootloader is not known. If the FM-1 does not start afterwards, the way back is the "
                             "backup made just now, written back from USB download mode (Recovery, stage 2)."))
@@ -1685,6 +1714,326 @@ def _fresh_read_only(job: Job) -> tuple[bytes, mp.Info]:
         return _one_read(job, vs, 1)
     finally:
         shutil.rmtree(vs, ignore_errors=True)
+
+
+# ------------------------------------------------------------------------------------------------ firmware (step 4)
+# "Install through download mode": a Felucca-family firmware onto a unit with m-bootloader (also one that runs
+# SLOOP 3, which needs m-bootloader) with `m-flasher firmware PACKAGE.fwsc`. M-Flasher 0.12.1 (ops.rs plan_firmware)
+# writes only [0x4000, end of the package's flash.bin) – the boot area, and with it m-bootloader, stays as it is, so
+# the CHECK HEAD trap (a running Felucca firmware handing on the original V15) does not arise on this route.
+
+DATA_WARNING = "the data-places warning needs its own confirmation"     # (the gate's reason for the second question)
+
+
+@dataclass
+class FirmwarePlan:
+    """what the danger dialog of "Install through download mode" shows before anything is written"""
+    unit_name: str
+    unit_id: str
+    flash_id: int
+    revision: str                      # hardware revision as this session read it ("new" / "old")
+    identity: str                      # the package's identity ("FM-1_727")
+    name: str                          # what the user chose ("Skiff 2.7"), "" = the identity
+    end: int                           # the end of the package's flash.bin: at most [0x4000, end) is written
+    runs: list[tuple[int, int]]
+    sectors: int
+    current: str                       # M-Flasher's "bootloader" line for the unit now
+    firmware: str                      # the firmware the app knows on the unit ("" not known)
+    mflasher_firmware: str             # M-Flasher's guess of the installed firmware (its info block)
+    backup: Path                       # the automatic backup just made
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass
+class FirmwareResult:
+    written: bool
+    verified: bool
+    restarted: bool
+    backup: Path | None
+    identity: str = ""
+    mflasher_backup: Path | None = None
+    sectors: int = 0
+    log_path: Path | None = None
+    note: str = ""
+    data_warning: str = ""             # M-Flasher's data-places warning the user confirmed ("" none)
+
+
+def firmware_package(raw: bytes) -> tuple[str, bytes]:
+    """(identity, flash.bin) of the package M-Flasher is to install – an FM-1 package whose flash image fits the
+    flash; Refused otherwise (nothing written)"""
+    from . import bootarea
+    try:
+        ident, flash = bootarea.package_flash(raw)
+    except bootarea.BootAreaError as e:
+        raise Refused(str(e) + " " + _("Nothing was written."), "package") from e
+    model = ident.rsplit("_", 1)[0] if "_" in ident else ident
+    if model != "FM-1":
+        raise Refused(_("This package is for the {model}, not for the FM-1. Nothing was written.").format(
+            model=model or "?"), "package-model")
+    if len(flash) > FACTORY[0]:
+        # (M-Flasher's plan_firmware writes up to the package's end with no factory warning; the app never lets it
+        # reach the factory data at 0xFF000-0xFFFFF – no real FM-1 package does, they end at 0x93000 at most)
+        raise Refused(_("The package's flash image reaches into the FM-1's factory data (0xFF000–0xFFFFF: "
+                        "calibration, Bluetooth address), which the app never writes. Nothing was written."),
+                      "package-size")
+    return ident, flash
+
+
+def firmware_target(pre: bytes, flash: bytes) -> bytes:
+    """the flash M-Flasher makes of `pre` with this package (ops.rs plan_firmware): the package's flash image from
+    0x4000 to its end, the boot area and everything after the package as they are"""
+    return bytes(pre[:BOOT_AREA]) + bytes(flash[BOOT_AREA:]) + bytes(pre[len(flash):])
+
+
+def firmware_gate(expect: dict):
+    """the check right before "yes" for `firmware P.fwsc`: unit id, flash ID and chip key as read before; the title
+    "Install firmware <identity>" and its one note "Installs <identity> (0x04000-0x…)."; exactly one plan line; every
+    announced range at or after 0x04000 and before the package's end, and exactly the runs the app computed; no
+    WARNING – except M-Flasher's data-places warning, which needs the user's own second confirmation: the first time
+    it is seen the gate notes it (expect["seen_warning"]) and closes stdin; with expect["accept"] equal to that very
+    text it lets it through."""
+    def gate(out: str) -> str:
+        try:
+            info = mp.parse_info(out)
+        except mp.ParseError as e:
+            return f"its info block is not readable ({e})"
+        if not info.unit_id or info.unit_id != expect["unit_id"]:
+            return f"unit id {mask(info.unit_id)} is not the planned {mask(expect['unit_id'])}"
+        if info.flash_id != expect["flash_id"]:
+            return f"flash 0x{info.flash_id or 0:06X} is not the planned 0x{expect['flash_id']:06X}"
+        if info.chip_key != expect["chip_key"]:
+            return "the chip key differs from the one read before"
+        try:
+            plan = mp.parse_plan(out)
+        except mp.ParseError as e:
+            return f"no plan readable ({e})"
+        if plan.title != mp.firmware_title(expect["identity"]):
+            return f"unexpected plan {plan.title[:60]!r}"
+        if plan.plan_lines != 1:
+            return "more than one plan line"
+        if plan.stray:
+            return f"an unknown line before the plan: {plan.stray[0][:60]!r}"
+        if plan.nothing or not plan.runs:
+            return "the plan writes nothing"
+        end = min(expect["end"], FACTORY[0])            # (never the factory data, whatever the package says)
+        if any(a < BOOT_AREA or b > end or a >= b or a % SECTOR or b % SECTOR for a, b in plan.runs):
+            return f"a planned range lies outside 0x04000-0x{end - 1:05X} (the boot area is never written here)"
+        n = sum((b - a) // SECTOR for a, b in plan.runs)
+        if plan.sectors != n or plan.kib != 4 * n:
+            return "the plan's sector count does not match its ranges"
+        if plan.runs != expect["runs"]:
+            return "the planned sector ranges are not the ones the app computed"
+        if plan.notes != [mp.firmware_note(expect["identity"], expect["end"])]:
+            return "an unexpected note in the plan: " + ((plan.notes or ["(none)"])[0])[:80]
+        if plan.warnings:
+            warn = mp.data_places_warning(info.firmware, expect["identity"])
+            if plan.warnings != [warn]:
+                return "M-Flasher warns: " + plan.warnings[0][:120]
+            if expect.get("accept") != warn:
+                expect["seen_warning"] = warn
+                return DATA_WARNING
+        return ""
+    return gate
+
+
+def _newer_firmware_refusal(name: str) -> str:
+    return _("This FM-1 is a newer unit (logo on the front, flash chip UC25HQ80), and {name} is not known to run on "
+             "such a unit (data/hardware.json). A firmware that does not know this chip saves nothing there and "
+             "cannot be updated any more. Nothing was written.").format(name=name)
+
+
+def install_firmware(job: Job, package: bytes, confirm, confirm_data, *, name: str = "",
+                     new_chip_ok: bool = False, expected_sha256: str = "") -> FirmwareResult:
+    """"Install through download mode": `package` (an FM-1 .fwsc the caller checked – catalog, checksum) through
+    `m-flasher firmware` onto a unit with m-bootloader, only with a write-verified M-Flasher; on a newer unit only
+    when the hardware rule lets the target through (`new_chip_ok`: planner.chip_support says yes); a whole-flash
+    backup first (no skip); the danger dialog (confirm(FirmwarePlan) -> bool); the gate (firmware_gate: only
+    [0x4000, package end), exactly the app's own diff); M-Flasher's data-places warning only after
+    confirm_data(FirmwarePlan, warning) -> bool; afterwards a fresh read must equal the computed flash exactly – the
+    boot area (m-bootloader) unchanged."""
+    from .. import hardware
+    store = _store_of(job)
+    _write_verified(store)
+    if expected_sha256 and hashlib.sha256(package).hexdigest() != expected_sha256.lower():
+        raise Refused(_("The package is no longer the file that was checked (its SHA-256 differs). Nothing was "
+                        "written."), "package-changed")
+    ident, flash = firmware_package(package)
+    if hardware.revision(job.profile) == hardware.NEW and not new_chip_ok:
+        raise Refused(_newer_firmware_refusal(name or ident), "newer-chip")     # (before the unit is sent anywhere)
+    job.purpose = "firmware"
+    with _Lock(job, "mflasher-firmware"), _back_on_refusal(job):
+        res = _firmware_locked(job, package, ident, flash, name or ident, new_chip_ok, confirm, confirm_data)
+    res.log_path = job.log_path
+    return res
+
+
+def _firmware_locked(job: Job, package: bytes, ident: str, flash: bytes, name: str, new_chip_ok: bool, confirm,
+                     confirm_data) -> FirmwareResult:
+    from .. import hardware
+    from . import bootarea
+    ensure_download_mode(job)
+    info = identify(job, need_profile=True)
+    if not info.unit_id:
+        raise Refused(_("M-Flasher reports no unit ID for the connected FM-1, so the app cannot tie the write to this "
+                        "unit. Nothing was written."), "no-unit-id")
+    if info.flash_id not in (hardware.OLD_ID, hardware.NEW_ID):
+        raise Refused(_("M-Flasher reads a flash chip the app does not know ({chip}). Nothing was written.").format(
+            chip=chip_name(info.flash_id)), "unknown-chip")
+    rev = _session_revision(job, info)
+    if rev == hardware.NEW and not new_chip_ok:
+        raise Refused(_newer_firmware_refusal(name), "newer-chip")
+    if not info.m_bootloader:
+        raise Refused(_("This way – installing through download mode, the boot area kept – is for an FM-1 with "
+                        "m-bootloader. M-Flasher reads another bootloader on this one ({bootloader}): install the "
+                        "firmware the usual way from the running firmware. Nothing was written.").format(
+                            bootloader=info.bootloader or "?"), "not-mboot")
+    pre = backup_before_boot_write(job)
+    if isinstance(pre, Refusal):
+        raise Refused(pre.reason, pre.kind or "no-backup")
+    saved = job.pre
+    if not bootarea.intact(saved.image[:BOOT_AREA]) or not bootarea.stored_mbootloader(saved.image[:BOOT_AREA]):
+        raise Refused(_("The backup made just now shows no intact m-bootloader in the boot area, so the app does not "
+                        "install a firmware this way. Nothing was written; the backup is kept."), "not-mboot")
+    target = firmware_target(saved.image, flash)
+    runs = diff_runs(target, saved.image)
+    if not runs:
+        job.tell(_("The FM-1's flash already holds exactly this firmware: nothing to write."))
+        job.ev("plan", "nothing to write: the firmware is there already")
+        _settle_op_record(job, "firmware")
+        again = restart(job) if job.sent_by_app else False
+        return FirmwareResult(False, True, again, pre, ident, note="already")
+    end = len(flash)
+    plan = FirmwarePlan(job.profile.name, info.unit_id, info.flash_id, rev, ident, name, end, runs,
+                        sum((b - a) // SECTOR for a, b in runs), info.bootloader, _firmware_text(job.profile),
+                        info.firmware, pre)
+    if rev == hardware.NEW:
+        plan.notes.append(_("On a newer unit: the hardware rule (data/hardware.json) lets {name} through; installing "
+                            "through download mode has not been run on such a unit by this app.").format(name=name))
+    job.ev("plan", f"install firmware {ident} through download mode: {plan.sectors} sectors in 0x04000-0x{end - 1:05X}"
+                   f" ({', '.join(f'0x{a:05X}-0x{b - 1:05X}' for a, b in runs)}); the boot area stays")
+    if job.cancelled():
+        raise Refused(_("Cancelled. Nothing was written to the FM-1."), "cancelled")
+    if not confirm(plan):
+        job.ev("confirm", "declined")
+        raise Refused(_("Nothing was written. The FM-1 is unchanged; the backup made just now is kept."), "declined")
+    job.ev("confirm", "confirmed by the user")
+    planned = _inhibit(job, "planned", os.getpid())  # (active before "yes" – released after the verify read)
+    try:
+        return _firmware_write(job, plan, info, saved, pre, package, ident, target, runs, confirm_data)
+    finally:
+        if planned is not None:
+            try:
+                planned.release()
+            except Exception:  # noqa: BLE001
+                pass
+
+
+def _firmware_write(job: Job, plan: FirmwarePlan, info, saved, pre, package: bytes, ident: str, target: bytes,
+                    runs, confirm_data) -> FirmwareResult:
+    expect = {"unit_id": info.unit_id, "flash_id": info.flash_id, "chip_key": info.chip_key, "identity": ident,
+              "end": plan.end, "runs": runs}
+    w = None
+    for attempt in (1, 2):
+        staging = _work_folder(job)
+        try:
+            copy = _private_file(staging, "package.fwsc", package)
+        except OSError as e:
+            shutil.rmtree(staging, ignore_errors=True)
+            raise Refused(_("The app's private working folder cannot be created: {error}. Nothing was written.").format(
+                error=getattr(e, "strerror", None) or e), "folder") from e
+        w = _Write(job, staging, {"op": "firmware", "unit": mask(info.unit_id), "flash": f"0x{info.flash_id:06X}",
+                                  "image": "", "image_sha256": "", "file": "package.fwsc", "identity": ident,
+                                  "file_sha256": hashlib.sha256(package).hexdigest(),
+                                  "runs": [[a, b] for a, b in runs]}, saved, pre)
+        job.tell(_("Writing the firmware (do not unplug the FM-1 or switch it off) …"))
+        try:
+            w.run(["firmware", str(copy), "--device", job.device, "--backup-dir", str(staging)],
+                  firmware_gate(expect))
+            break
+        except Refused as e:
+            seen = expect.get("seen_warning")
+            if e.kind != "gate" or attempt != 1 or not seen or expect.get("accept"):
+                raise
+            job.ev("plan", "M-Flasher warns that the installed firmware keeps its data in other places: stdin closed, "
+                           "nothing written; the user is asked")
+            if job.cancelled():
+                raise Refused(_("Cancelled. Nothing was written to the FM-1."), "cancelled") from e
+            if not confirm_data(plan, seen):
+                job.ev("confirm", "the data-places warning was declined")
+                raise Refused(_("Nothing was written. The FM-1 is unchanged; the backup made just now is kept."),
+                              "declined-data") from e
+            job.ev("confirm", "the data-places warning confirmed by the user")
+            expect["accept"] = seen
+    got, vi = w.fresh_read()
+    problem = ""
+    if got[:BOOT_AREA] != saved.image[:BOOT_AREA]:
+        problem = _("the boot area changed")
+    elif got[plan.end:] != saved.image[plan.end:]:
+        problem = _("the flash changed after the package's end")
+    elif got != target:
+        problem = _("the firmware area does not hold the package")
+    if problem:
+        raise w.failed(problem, "verify-mismatch")
+    job.ev("verify", "fresh read: the package from 0x04000 to its end, the boot area and the rest unchanged")
+    w.verified()
+    _note_boot_area(job, got, vi, "backup")
+    again = restart(job)
+    return FirmwareResult(True, True, again, pre, ident, w.auto, plan.sectors, None,
+                          data_warning=expect.get("accept", ""))
+
+
+def _settle_op_record(job: Job, op: str):
+    """an open record of this very write (op) on this unit, whose result is on the unit now: settled"""
+    path = record_file(job.journal.dir if job.journal is not None else None)
+    rec = _load_record(path)
+    if rec.get("state") in ("writing", "failed") and rec.get("op") == op and _record_is_this_unit(job, rec):
+        rec.update(state="verified", ended=time.time(), note="checked later: the unit holds the expected state")
+        try:
+            _save_record(path, rec)
+            job.ev("record", f"the open {op} record is settled")
+        except OSError:
+            pass
+
+
+# ------------------------------------------------------------------------------------------------ checking a write later
+
+@dataclass
+class VerifyResult:
+    same: bool
+    first_difference: int              # -1 when the same
+    restarted: bool
+    log_path: Path | None = None
+
+
+def verify_install(job: Job, expected: bytes, end: int, what: str) -> VerifyResult:
+    """after a write the app did not make through M-Flasher (SLOOP 3 over MIDI MODE): a fresh whole-flash read in
+    download mode (one `backup`, checked against the chip's CRC-32; nothing is written) compared with what the flash
+    should hold from 0x00000 to `end` – the boot area and the written firmware. Beyond `end` the new firmware may
+    already have written its own data on its first start, so that is not compared. Then the unit is restarted."""
+    job.purpose = job.purpose or "backup"
+    with _Lock(job, "mflasher-verify"), _back_on_refusal(job):
+        ensure_download_mode(job)
+        identify(job, need_profile=True)
+        job.tell(_("Reading the whole flash to check {what} (nothing is written) …").format(what=what))
+        got, _vi = _fresh_read_only(job)
+        diff = next((i for i in range(min(end, len(got), len(expected))) if got[i] != expected[i]), -1)
+        job.ev("verify", f"fresh read against {what}: " + ("the same in 0x00000-0x" + f"{end - 1:05X}" if diff < 0
+                                                           else f"differs first at 0x{diff:05X}"))
+        again = restart(job)
+    return VerifyResult(diff < 0, diff, again, job.log_path)
+
+
+def latest_backup(folder: Path, unit_id: str) -> Path | None:
+    """the newest intact whole-flash backup of this unit in its Flash folder (not one taken while a write onto it had
+    not ended verified) – "Back to the last backup" """
+    best = None
+    for p, _k in unit_backups(folder, unit_id):
+        try:
+            if best is None or p.stat().st_mtime > best.stat().st_mtime:
+                best = p
+        except OSError:
+            continue
+    return best
 
 
 # ------------------------------------------------------------------------------------------------ importing a backup

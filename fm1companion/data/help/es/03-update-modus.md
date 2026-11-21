@@ -130,7 +130,30 @@ nueva.
   bloqueado mientras escribe. Aún no probado: volver a escribir en una unidad más nueva (logotipo delante), un cambio
   grande o la zona de arranque, un cierre de sesión real durante la escritura. Instalar y quitar m-bootloader y «Al
   modo de descarga» aún no se probaron con la app en un FM-1 real (el propietario hizo lo mismo a mano con
-  M-Flasher). El firmware por el modo de descarga y SLOOP 3 a través de la app llegarán en versiones posteriores.
+  M-Flasher). El firmware por el modo de descarga y SLOOP 3 a través de la app se describen abajo; aún no se probaron en un FM-1 real.
+* **Firmware por el modo de descarga** (un FM-1 con m-bootloader, también uno con SLOOP 3 en marcha): si la app sabe
+  que la unidad tiene m-bootloader y eliges en Firmware+ un firmware de la familia Felucca (Melodee, SLOOP 2, Skiff …)
+  – un cambio, o cualquiera desde un SLOOP 3 en marcha –, el plan dice **«a través del modo de descarga (M-Flasher)»**
+  en lugar de detenerse. M-Flasher escribe entonces solo desde 0x04000 hasta el final del paquete: la zona de
+  arranque – m-bootloader – se queda, así que CHECK HEAD no interviene y no hay paso intermedio por V15. Primero la
+  copia del dispositivo (donde el firmware la tenga) y toda la flash copiada (leída dos veces); luego la pregunta de
+  peligro; la app responde a M-Flasher solo si los sectores previstos son exactamente los calculados y todos están en
+  0x04000 o después; después una lectura nueva debe contener exactamente el paquete. Si M-Flasher avisa de que el
+  firmware instalado «guarda sus datos en otros lugares», la app te pregunta otra vez y nombra lo que se puede perder
+  (proyectos, sonidos y ajustes de ese firmware; el camino de vuelta es la copia recién hecha). La V15 original, la
+  zona de arranque de FM1 Open y una actualización del mismo firmware siguen con sus reglas habituales; en una unidad
+  más reciente el destino debe ser uno que la regla de hardware deje pasar.
+* **Instalar SLOOP 3 (MIDI MODE)** (Recuperación › Herramientas, menú Dispositivo, Firmware+ › SLOOP 3): la app escribe
+  el SLOOP 3 3.4.0 que trae a través del MIDI MODE de m-bootloader – sin conexión, con el paquete construido igual que
+  lo construye la página del instalador del autor. Solo si m-bootloader responde en MIDI MODE con la ID de esta
+  unidad; primero se lee allí toda la flash dos veces (cada lectura comprobada con la propia suma del chip), luego la
+  pregunta de peligro. m-bootloader comprueba todo el paquete antes de borrar nada y escribe solo de 0x04000 al final
+  del paquete. Después la app puede comprobarlo otra vez con una lectura nueva en modo de descarga. Sin m-bootloader,
+  el primer paso es «Instalar m-bootloader», cada paso con su propia pregunta.
+* **Volver a …** (Recuperación › Herramientas, menú Dispositivo): un botón para el camino de vuelta – a la última copia
+  de toda la flash de esta unidad, a SLOOP 3, a un firmware de la familia Felucca o a la V15 original con la zona de
+  arranque original (no en una unidad más reciente). Muestra el camino de cada uno y luego solo inicia los pasos
+  propios de la app, cada uno con su propia pregunta.
 
 ## Si el FM-1 no aparece como “WL82 UBOOT1.00”
 

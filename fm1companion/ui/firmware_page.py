@@ -619,10 +619,8 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
         sloop3_ui.open_dialog(parent, ctx)
         return False
     from . import sloop3_ui as _s3ui
-    if getattr(ctx, "sloop3", None) is not None and not ctx.port.update_mode:
-        # SLOOP 3 has no update mode a host can ask for (it ignores the update key): say so instead of failing later
-        show_error(parent, *_s3ui.running_sloop3_refusal())
-        return False
+    # (a running SLOOP 3 has no update mode a host can ask for: the plan offers the way through USB download mode –
+    # planner.download_route – or says why there is none for this target)
     # (m-bootloader's MIDI MODE answers like an update loader: never sent)
     if _s3ui.refuse_in_midi_mode(parent, ctx):
         return False
@@ -695,6 +693,17 @@ def install_flow(parent, ctx, spec: firmware.FirmwareSpec, rel: firmware.Release
                    _("While the plan was open, the FM-1 was disconnected or another device became active. Nothing was "
                      "written. Please connect the desired FM-1 or select it at the top left, and open the plan again."))
         return False
+    if plan.route == "download-mode":            # (M-Flasher in USB download mode, the boot area kept)
+        if do_dry:
+            show_error(parent, _("No dry run for this way"),
+                       _("Installing through download mode has no dry run: M-Flasher checks the package and the "
+                         "unit itself and shows its plan before it writes – the app asks you then. Untick the dry run "
+                         "to go on. Nothing was written."))
+            return False
+        from . import flash_tools
+        return flash_tools.firmware_flow(parent, ctx, spec, rel, local_pkg, tag, plan,
+                                         known=tgt.known, local_sha=info.sha256 if info is not None else "",
+                                         new_chip_ok=planner.chip_support(tgt).status == hardware.YES)
     if "backup" in plan.kinds() and not do_dry and not ctx.connected:
         show_error(parent, _("Backup not possible"),
                    _("The plan includes a backup, but the connection to the FM-1 is gone in the meantime. Nothing was "

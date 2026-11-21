@@ -244,6 +244,10 @@ repeats this table; `tests/test_tools_flash.py` keeps the two in sync.
 | `mf_newer_removal_refused` – refusing the removal on a newer FM-1 (no M-Flasher call) | run on hardware (2026-11-21): seen on the newer unit, no M-Flasher call; offering a backup was not seen (none was in the app then) |
 | `plan_boot_block` – the installation plan blocked by the boot-area rule (m-bootloader, CHECK HEAD) | run on hardware (2026-11-21): Skiff on the earlier unit with m-bootloader – blocked with the way out, nothing written |
 | `mf_new_chip_bootloader` – installing or removing m-bootloader on a newer FM-1 (logo on the front, flash UC25HQ80) through this app | not run (the removal is refused there by design; the install through the app was not tried) |
+| `mf_firmware` – installing a firmware through download mode (M-Flasher firmware, the boot area kept) on an FM-1 with m-bootloader | not run (step 4: against the stand-in only) |
+| `mf_new_chip_firmware` – installing a firmware through download mode on a newer FM-1 (logo on the front, flash UC25HQ80) | not run |
+| `mboot_sloop3_install` – installing SLOOP 3 over m-bootloader's MIDI MODE through this app (the whole flash read twice in MIDI MODE first) | not run (step 4: against the app's stand-in and against m-bootloader's own MIDI MODE code built for a PC) |
+| `way_back` – the “Back to …” choice (it only starts the actions above, one after the other) | not run |
 
 **Owner, outside the app (2026-11-18/19, `OWNER_REPORTS["mflasher_by_hand"]`):** M-Flasher 0.12.1 by hand in a
 terminal on a Raspberry Pi 5 – `download-mode`, `info`, `backup` twice with the same SHA-256, and `restore` of a whole
@@ -269,6 +273,23 @@ pre-m-bootloader backup; Restart is refused while a write record is open and che
 area is composed as M-Flasher does (gate: exactly the differing sectors; verify: the whole 0x00000–0x03FFF – a stale
 sector fails); m-bootloader on a newer unit only as the listed build 2.4-395e6cc. The composed boot area on V15's
 equals the owner's measured change (15 096 bytes, 0x00020–0x03FFF) – a calculation, not a run.
+
+Step 4 against stand-ins only (`tests/test_tools_firmware.py`, `tests/test_sloop3_install.py`; `mf_firmware`,
+`mf_new_chip_firmware`, `mboot_sloop3_install`, `way_back` above): **firmware through download mode** – M-Flasher's
+`firmware` writes only from 0x04000 to the package's end (the fake does what ops.rs `plan_firmware` does); any range
+below 0x04000 or not the app's own diff, another note or title, a second plan line, a WARNING other than the
+data-places one, another unit or chip → stdin closed, nothing written; the data-places warning written only after
+its own second confirmation and in a second session showing that very text; no m-bootloader in M-Flasher's reading
+or in the backup → refused; a newer unit only with the hardware rule; the app killed after "yes" → M-Flasher writes
+to its end, the record says so; the planner offers the route instead of the CHECK HEAD block (m-bootloader + a
+Felucca-family switch, or a running SLOOP 3) and keeps blocking elsewhere. **SLOOP 3 over MIDI MODE** – the package
+byte for byte the one the installer page's own fwpkg.js builds (node), installed through m-bootloader's own
+`midi_update.c` compiled for a PC and through `tests/fake_mboot.py` with its failure modes (CRC mismatch, wrong key,
+silence, refusal before and while writing; wrong chip, RAM stage, unknown unit refused before anything is read);
+the whole flash read twice in MIDI MODE before. **"Back to …"** – the targets and routes per unit. Not tried: any of
+it on a real FM-1, the MIDI MODE double read's timing on real USB, the verify read after the SLOOP 3 install on a
+real unit, SLOOP 3's first start writing its own data beyond the package (the verify read compares only up to the
+package's end).
 
 Added after the review (2026-11-19), against the stand-in only: the app is killed (SIGKILL) right after "yes" and the fake still writes to its end; the write record is on disk before "yes" and the next start asks; the foreign factory sector is refused; an image swapped during the dialog is not what is written; no soft key to an SMK-37, an update loader or a unit the app did not recognise. Not tried: logout, `systemd-inhibit` and SIGTERM during a real write.
 

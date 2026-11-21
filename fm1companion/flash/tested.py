@@ -97,7 +97,18 @@ TOOLS_HARDWARE: dict[str, tuple[bool, str]] = {
     "plan_boot_block": (True, N_("the installation plan blocked by the boot-area rule (m-bootloader, CHECK HEAD)")),
     "mf_new_chip_bootloader": (False, N_("installing or removing m-bootloader on a newer FM-1 (logo on the front, flash "
                                          "UC25HQ80) through this app")),
+    # step 4 (stand-ins only so far): a firmware through download mode, SLOOP 3 over MIDI MODE, "Back to …"
+    "mf_firmware": (False, N_("installing a firmware through download mode (M-Flasher firmware, the boot area kept) "
+                              "on an FM-1 with m-bootloader")),
+    "mf_new_chip_firmware": (False, N_("installing a firmware through download mode on a newer FM-1 (logo on the "
+                                       "front, flash UC25HQ80)")),
+    "mboot_sloop3_install": (False, N_("installing SLOOP 3 over m-bootloader's MIDI MODE through this app (the whole "
+                                       "flash read twice in MIDI MODE first)")),
+    "way_back": (False, N_("the “Back to …” choice (it only starts the actions above, one after the other)")),
 }
+# … and what of these ran against m-bootloader's own MIDI MODE code (src/midi_update.c built for a PC), not only
+# against the app's stand-in
+TOOLS_MBOOT_PC = {"mboot_sloop3_install"}
 # the boot-area kinds above: what the owner did with M-Flasher by hand (OWNER_REPORTS["mboot_by_hand"])
 TOOLS_BY_HAND = {"mf_new_chip_bootloader"}
 
@@ -130,9 +141,18 @@ def tool_note(kind: str, new_chip: bool = False) -> str:
         kind = "mf_new_chip_restore"
     if new_chip and kind in ("mf_bootloader_install", "mf_bootloader_remove"):
         kind = "mf_new_chip_bootloader"
+    if new_chip and kind == "mf_firmware":
+        kind = "mf_new_chip_firmware"
     ok, label = TOOLS_HARDWARE.get(kind, (False, ""))
     if ok:
         return _("Tested on a real FM-1 through this app: {what}.").format(what=_(label))
+    if kind in TOOLS_MBOOT_PC:
+        return _("Not tested on a real FM-1 through this app yet: {what} ran against a stand-in for m-bootloader and "
+                 "against m-bootloader's own MIDI MODE code built for a PC (the package byte for byte the one SLOOP "
+                 "3's installer page builds). The owner installed SLOOP 3 with that page, outside the app "
+                 "(2026-11-18/19).").format(what=_(label))
+    if kind == "way_back":
+        return _("Not tested on a real FM-1 through this app yet: {what}.").format(what=_(label))
     if kind in TOOLS_BY_HAND:
         return _("Not tested on a real FM-1 through this app yet: {what} ran only against a stand-in for M-Flasher. "
                  "The owner did the same with M-Flasher by hand, outside the app (2026-11-18/19).").format(

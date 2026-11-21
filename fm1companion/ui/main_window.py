@@ -499,6 +499,14 @@ class MainWindow(QMainWindow):
         from .flash_tools import remove_boot_flow
         remove_boot_flow(self, self.ctx)
 
+    def _install_sloop3(self):
+        from .sloop3_ui import install_flow
+        install_flow(self, self.ctx)
+
+    def _way_back(self):
+        from .flash_tools import way_back_flow
+        way_back_flow(self, self.ctx)
+
     def _leave_download_mode(self):
         from .flash_tools import leave_flow
         leave_flow(self, self.ctx)
@@ -532,6 +540,12 @@ class MainWindow(QMainWindow):
         self._act(g, _("Remove m-bootloader …"), self._remove_mboot, None, ("edit-undo",),
                   _("Puts back V15's boot area on an earlier unit – after a whole-flash backup and your confirmation "
                     "(the same as on Recovery › Tools)"))
+        self._act(g, _("Install SLOOP 3 (MIDI MODE) …"), self._install_sloop3, None, ("system-software-install",),
+                  _("Writes the bundled SLOOP 3 through m-bootloader's MIDI MODE – after a whole-flash backup and "
+                    "your confirmation (the same as on Recovery › Tools)"))
+        self._act(g, _("Back to …"), self._way_back, None, ("edit-undo",),
+                  _("The way back with one button: a whole-flash backup, SLOOP 3, a Felucca-family firmware or the "
+                    "original V15 – each with its route and its own questions"))
 
         v = mb.addMenu(_("&View"))
         self.a_sidebar = self._act(v, _("Sidebar"), self.toggle_sidebar, "F9", ("view-sidebar",), checkable=True)
@@ -1223,6 +1237,13 @@ class MainWindow(QMainWindow):
             if not leave_while_writing(self):
                 e.ignore()
                 return
+        elif flashjob.WRITING.is_set() and flashjob.WRITER.get("who") == "m-bootloader":
+            QMessageBox.warning(self, _("m-bootloader is writing"),       # (the app hands it the data: it must stay)
+                                _("m-bootloader is writing SLOOP 3 into the FM-1's flash, and this app hands it the "
+                                  "data. The app stays open until it has finished – do not unplug the FM-1 or switch "
+                                  "it off."))
+            e.ignore()
+            return
         elif flashjob.WRITING.is_set():          # M-Flasher writes: the app stays until it has ended
             QMessageBox.warning(self, _("M-Flasher is writing"),
                                 _("M-Flasher is writing the FM-1's flash. The app stays open until it has finished "
