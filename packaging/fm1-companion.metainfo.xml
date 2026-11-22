@@ -27,6 +27,25 @@
   <url type="homepage">https://github.com/bit-wmike/fm1-companion</url>
   <url type="bugtracker">https://github.com/bit-wmike/fm1-companion/issues</url>
   <releases>
+    <release version="2.7.0" date="2026-11-22">
+      <description>
+        <p>The suite now brings M-Flasher, m-bootloader and SLOOP 3 along and drives them itself: whole-flash backups and write-backs, m-bootloader, SLOOP 3 and firmware through download mode – all from the one app, each write behind a whole-flash backup. Most of it ran on a real earlier FM-1; what did not is listed in docs/UNTESTED.md.</p>
+        <ul>
+          <li>Bundled tools: M-Flasher 0.12.1 (64-bit ARM and x86-64), m-bootloader 2.4 and the SLOOP 3 3.4.0 application area, pinned by SHA-256; a daily check for new versions (a new M-Flasher whose output changed is used read-only until an app update). The installer adds a udev rule for USB download mode (4c4a:8057) and loads the sg driver.</li>
+          <li>Whole-flash backup (read twice, checked against the chip's CRC-32) and write-back – only onto the unit it came from, by unit ID and flash chip, never over the factory sector. M-Flasher's own dumps can be imported. “Into download mode” and “Restart the FM-1” as buttons of their own.</li>
+          <li>m-bootloader: install and remove (only the boot area; removal puts back the boot area of M-VAVE's V15 package, on earlier units only). The installation plan knows the boot area and no longer runs into the CHECK HEAD trap (“FAILED -5”).</li>
+          <li>Firmware through download mode: on an FM-1 with m-bootloader – also from a running SLOOP 3 – a Felucca-family firmware goes on with M-Flasher from 0x04000 to the package's end; the boot area stays and there is no V15 step.</li>
+          <li>SLOOP 3 from the app, offline, over m-bootloader's MIDI MODE: the package byte for byte as the author's installer page builds it, a mandatory backup in MIDI MODE first, a check read afterwards. Without m-bootloader the app installs it first. The app says that SLOOP 3's first start sets up its own storage, so the old firmware's presets and projects on the FM-1 are gone – make a backup first.</li>
+          <li>“Back to …”: one dialog for the way back – any whole-flash backup of this unit (those from before m-bootloader marked and pre-selected), SLOOP 3, a Felucca-family firmware or the original V15 (never on a newer unit).</li>
+          <li>Every write: a whole-flash backup first that cannot be skipped, a danger question naming the unit, the app's own check of exactly the sectors M-Flasher announces before it answers “yes”, a write record on disk, no quitting or sleeping while it writes, and a fresh read afterwards.</li>
+          <li>Device recognition: after swapping FM-1 units at the same USB port the app asks again which one it is (new: “Which FM-1 is this? …” in the Device menu and “another FM-1?” in the Overview); after the app's own firmware changes it shows the new firmware without a restart.</li>
+          <li>SLOOP and SLOOP 3: the app's support matches the authors' web editors more closely; firmware commands are only sent to firmwares that know them.</li>
+          <li>FM1 Open: recognised by its own USB ID, with a backup offer and clear labels.</li>
+          <li>Unit IDs are masked in logs, reports and feedback.</li>
+          <li>Notices no longer vanish when several come at once; a rare crash when quitting the app is fixed.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.6.2" date="2026-11-19">
       <description>
         <p>A small maintenance release on top of 2.6.1.</p>
