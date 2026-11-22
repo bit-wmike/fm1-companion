@@ -314,16 +314,23 @@ def current(profile) -> dict:
     unsure = False
     hist = [h for h in getattr(profile, "firmware_history", None) or [] if isinstance(h, dict)]
     seen = []
+    other = -1.0          # the newest dated sighting of a firmware that runs on any boot area (Melodee, Skiff …)
     for h in hist:
         fw = str(h.get("firmware") or "").lower()
         k = OPEN if changer(fw) is CHANGERS["fm1-open"] else MBOOT if fw in ("sloop3", "sloop-3") else ""
-        if not k:
-            continue
         t = _time(h.get("time"))
+        if not k:
+            if t is not None and fw and not any(w in fw for w in ("mboot", "m-bootloader", "update")):
+                other = max(other, t)
+            continue
         if t is None:
             unsure = unsure or k == OPEN
             continue
         seen.append((t, k, "history" if k == OPEN else "sloop3"))
+    # SLOOP 3 proves m-bootloader only while it runs: a later sighting of a firmware that runs on any boot area
+    # (the unit was rewritten since, perhaps with its whole boot area – or the SLOOP 3 entry came from a wrong
+    # assignment) leaves only a measurement as evidence; without one the boot area is "not known" again.
+    seen = [(t, k, how) for t, k, how in seen if not (k == MBOOT and t < other)]
     if (getattr(profile, "firmware", "") or "").lower() in ("sloop3", "sloop-3") and \
             not any(k == MBOOT for _t, k, _h in seen):
         seen.append((0.0, MBOOT, "sloop3"))     # (no date of its first sighting: only when nothing else is known)

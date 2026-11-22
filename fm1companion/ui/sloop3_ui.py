@@ -1,16 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """SLOOP 3 in the app's pages: the Firmware+ entry (what it needs, the way onto the FM-1, a backup of the whole
-flash in m-bootloader's MIDI MODE) and restoring a SLOOP 3 backup.
+flash in m-bootloader's MIDI MODE), installing SLOOP 3 over MIDI MODE and restoring a SLOOP 3 backup.
 
-The app does NOT install SLOOP 3 and does NOT install m-bootloader: SLOOP 3 goes onto the FM-1 from its author's
-installer page (in the system's browser), through m-bootloader's MIDI MODE; m-bootloader itself with M-Flasher or
-M-VAVE's M-UPGRADE. What the app does here only reads (flash/mboot.py) – except restoring a SLOOP 3 backup, which
-writes what SLOOP 3's own editor writes (sloop3bk.py).
+The app installs SLOOP 3 itself (install_flow): over m-bootloader's MIDI MODE, offline from the bundled pinned
+application area, with the package logic of the author's installer page ported (tools/mbinstall.py) – only on an FM-1
+with m-bootloader, after a whole-flash backup read twice in MIDI MODE; without m-bootloader the first step of the
+chain is "Install m-bootloader" (download mode, M-Flasher; ui/flash_tools.py). The author's installer page stays
+linked as the other way. Restoring a SLOOP 3 backup writes what SLOOP 3's own editor writes (sloop3bk.py).
 """
 from __future__ import annotations
 
 import html
 import json
+import re
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
@@ -79,27 +81,19 @@ def _midi_mode_refusal(st: str) -> tuple[str, str]:
               "explains more."))
 
 
-def running_sloop3_refusal() -> tuple[str, str]:
-    """(title, text): the app's installer cannot start from a running SLOOP 3"""
-    # SLOOP 3 has no update mode a host can ask for (it ignores the update key): said instead of failing later
-    return (_("Not from the running SLOOP 3"),
-            _("This FM-1 runs SLOOP 3, which cannot be switched to an update mode over USB – the installation "
-              "would stop at its first step, with nothing written. The app cannot install firmware on this "
-              "FM-1. Going back to SLOOP 2.8 or M-VAVE's firmware means writing your flash backup back with "
-              "M-Flasher. “Firmware+” › SLOOP 3 explains the way."))
-
-
 def install_blocker(ctx) -> tuple[str, str] | None:
-    """(title, text) when the app's installer cannot install anything on the active device – it runs SLOOP 3, or it
-    waits in m-bootloader's MIDI MODE (or cannot be told apart from it) –, else None. For the state of “Install on
-    active FM-1”: sends nothing and asks nothing (what was read when it connected). install_flow refuses the same
-    cases again (running_sloop3_refusal, refuse_in_midi_mode) – the button is the first line, not the only one."""
+    """(title, text) when the app's installer cannot install anything on the active device – it waits in
+    m-bootloader's MIDI MODE (or cannot be told apart from it) –, else None. For the state of “Install on active
+    FM-1”: sends nothing and asks nothing (what was read when it connected). install_flow refuses the same cases
+    again (refuse_in_midi_mode) – the button is the first line, not the only one. A running SLOOP 3 is no blocker
+    any more: the plan offers the way through USB download mode for a Felucca-family target (planner.download_route)
+    and says why there is none for another one."""
     from ..flash import mboot
     port = getattr(ctx, "port", None)
     if port is None:
         return None
     if not getattr(port, "update_mode", False):
-        return running_sloop3_refusal() if getattr(ctx, "sloop3", None) is not None else None
+        return None
     if getattr(ctx, "mboot", None) is not None:
         return _midi_mode_refusal("yes")
     if mboot.port_candidate(port, getattr(ctx, "identity", "")):
@@ -119,6 +113,18 @@ def refuse_in_midi_mode(parent, ctx, port=None) -> bool:
     return True
 
 
+def bundled_version() -> str:
+    """the SLOOP 3 version the app installs (the bundled area's, manifest.json) – the hardware rule is judged for it"""
+    try:
+        from ..tools.store import Store
+        c = Store().bundled(S3.KEY)
+        if c is not None and c.version:
+            return c.version
+    except Exception:  # noqa: BLE001
+        pass
+    return S3.CHECKED_VERSIONS[-1]
+
+
 def chip_plan(ctx):
     """the newer-FM-1 part of an installation plan for SLOOP 3 on this device – the app's one rule for it
     (flash/planner.chip_check with hardware.json's rows; blockers for a newer unit, the confirmation "no_logo" when
@@ -126,7 +132,7 @@ def chip_plan(ctx):
     from .. import firmware
     from ..flash import planner
     rev, _src = revision(ctx)
-    t = planner.Target.from_spec(firmware.spec(S3.KEY), tag="v" + S3.CHECKED_VERSIONS[-1])
+    t = planner.Target.from_spec(firmware.spec(S3.KEY), tag="v" + bundled_version())
     return planner.chip_check(rev if rev in ("new", "old") else "", t)
 
 
@@ -207,9 +213,10 @@ def notes_html(ctx) -> str:
         "<li>" + _("It shows SLOOP 3's own web editor on the page “Editor” and makes backups of its project, sounds "
                    "and banks on the page “Backups” (not of its samples: SLOOP 3 cannot hand them out).") + "</li>"
         "<li>" + _("In MIDI MODE it can copy the whole flash into your backup folder – reading only.") + "</li>"
-        "<li>" + _("<b>It does not install SLOOP 3 and it does not install m-bootloader.</b> The button below shows "
-                   "the way; for an FM-1 the rule above lets through, it opens the author's installer page in your "
-                   "browser (Chromium or Chrome).")
+        "<li>" + _("<b>It installs SLOOP 3 itself</b> over m-bootloader's MIDI MODE, offline from the SLOOP 3 it "
+                   "brings along, after a whole-flash backup read twice – and m-bootloader first where it is missing "
+                   "(USB download mode, M-Flasher). Only for an FM-1 the rule above lets through. The author's "
+                   "installer page in your browser (Chromium or Chrome) stays the other way.")
         + "</li></ul>"
         "<p>" + _("Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). "
                   "<b>On a real FM-1 once, reading only</b> (SLOOP 3 3.4.0, one earlier unit): recognised, its "
@@ -245,25 +252,26 @@ class Sloop3Dialog(QDialog):
             "<ol>"
             "<li>" + _("<b>Check for m-bootloader:</b> switch the FM-1 off, hold PLAY and switch it on. A menu with "
                        "BOOT APP, DOWNLOAD MODE and MIDI MODE? Then it is there.") + "</li>"
-            "<li>" + _("<b>If not: install m-bootloader – outside this app.</b> With M-Flasher: USB download mode, "
-                       "<b>back up the whole flash</b>, then install fm1-uboot.boot. Or, on M-VAVE's firmware, "
-                       "fm1-uboot.fwsc with M-VAVE's M-UPGRADE. Keep the power on while the boot area is written.")
+            "<li>" + _("<b>If not: install m-bootloader.</b> “Install SLOOP 3 with this app” does it as its first "
+                       "step (USB download mode, M-Flasher, a whole-flash backup first), or Recovery › Tools › "
+                       "“Install m-bootloader”. Keep the power on while the boot area is written.")
             + "</li>"
             "<li>" + _("<b>MIDI MODE:</b> hold PLAY at power-on, choose MIDI MODE with OCT−/OCT+, press PLAY, plug in "
                        "the USB cable. The app then shows “m-bootloader – MIDI MODE”.") + "</li>"
-            "<li>" + _("<b>Back up the whole flash</b> (button below, or with M-Flasher) – unless you already have "
-                       "such a backup of exactly this FM-1.") + "</li>"
-            "<li>" + _("<b>Install SLOOP 3 with the author's installer page</b> in Chromium or Chrome (about a "
-                       "minute). Close this app's connection first: quit the app or unplug and replug – only one "
-                       "program can talk to the FM-1 in MIDI MODE at a time.") + "</li>"
-            "<li>" + _("<b>Back to SLOOP 2.8 or M-VAVE's firmware:</b> write the flash backup back with M-Flasher "
-                       "(hold REC at power-on for download mode). Save your SLOOP 3 projects as files first.")
+            "<li>" + _("<b>Back up the whole flash:</b> the app's own install does it by itself (read twice); before "
+                       "the author's page, with the button below or with M-Flasher.") + "</li>"
+            "<li>" + _("<b>Install SLOOP 3:</b> with this app (button below), or with the author's installer page in "
+                       "Chromium or Chrome (about a minute; close this app's connection first – only one program can "
+                       "talk to the FM-1 in MIDI MODE at a time).") + "</li>"
+            "<li>" + _("<b>Back to SLOOP 2.8 or M-VAVE's firmware:</b> “Back to …” on Recovery › Tools – a "
+                       "whole-flash backup written back, or a Felucca-family firmware through download mode. Save "
+                       "your SLOOP 3 projects as files first.")
             + "</li></ol>")
         steps.setWordWrap(True)
         steps.setTextFormat(Qt.TextFormat.RichText)
         lay.addWidget(steps)
-        honest = QLabel(_("The app has run none of these steps on a real FM-1, nor its flash backup below. The app "
-                          "only reads here; installing is done by the author's page and by M-Flasher."))
+        honest = QLabel(_("The app's own SLOOP 3 install has not run on a real FM-1 yet – only against a stand-in and "
+                          "against m-bootloader's own MIDI MODE code on a PC; nor has its flash backup below."))
         honest.setWordWrap(True)
         honest.setProperty("role", "muted")
         lay.addWidget(honest)
@@ -275,6 +283,13 @@ class Sloop3Dialog(QDialog):
                                        _("Open the installer page in the browser"))
         self.b_installer.setObjectName("sloop3_open_installer")
         self.b_installer.clicked.connect(lambda: self._open(S3.INSTALLER_URL))
+        self.b_install = QPushButton(icon("system-software-install", "document-import"),
+                                     _("Install SLOOP 3 with this app (MIDI MODE) …"))
+        self.b_install.setObjectName("sloop3_install_app")
+        self.b_install.setToolTip(_("Offline from the bundled SLOOP 3: in MIDI MODE the app backs up the whole flash "
+                                    "(read twice) and writes SLOOP 3 through m-bootloader, after your confirmation. "
+                                    "Without m-bootloader the first step is installing it."))
+        self.b_install.clicked.connect(lambda: install_flow(self, self.ctx))
         self.b_backup = QPushButton(icon("document-save"), _("Back up the whole flash now (MIDI MODE) …"))
         self.b_backup.setObjectName("sloop3_flash_backup")
         self.b_backup.clicked.connect(lambda: self._backup())
@@ -284,7 +299,7 @@ class Sloop3Dialog(QDialog):
         b_mboot.clicked.connect(lambda: self._open(MBOOT_RELEASES))
         b_mflasher = QPushButton("M-Flasher")
         b_mflasher.clicked.connect(lambda: self._open(S3.MFLASHER_URL))
-        lay.addWidget(flow_row(self.b_installer, self.b_backup, b_guide, b_mboot, b_mflasher))
+        lay.addWidget(flow_row(self.b_install, self.b_installer, self.b_backup, b_guide, b_mboot, b_mflasher))
         self.hint = QLabel("")
         self.hint.setWordWrap(True)
         self.hint.setProperty("role", "muted")
@@ -331,6 +346,7 @@ class Sloop3Dialog(QDialog):
     def _update(self):
         ok = self.installer_allowed()
         self.b_installer.setEnabled(ok)
+        self.b_install.setEnabled(ok)
         self.b_installer.setToolTip(
             _("Opens {url} in your browser. The app itself installs nothing.").format(url=S3.INSTALLER_URL) if ok else
             _("Not offered for the newer FM-1 (logo on the front).") if self.level == "bad" else
@@ -361,6 +377,370 @@ def open_dialog(parent, ctx):
     d = Sloop3Dialog(parent, ctx)
     d.exec()
     return d
+
+
+# ------------------------------------------------- installing SLOOP 3 (MIDI MODE) ---
+
+def midi_mode_guide() -> str:
+    return _("Put the FM-1 into m-bootloader's MIDI MODE: switch it off, hold PLAY and switch it on, choose MIDI MODE "
+             "with OCT−/OCT+ and press PLAY, then plug in the USB cable. When the app shows “m-bootloader – MIDI "
+             "MODE” at the top, click again.")
+
+
+def data_loss_text(firmware: str) -> str:
+    """what happens to the old firmware's data – said before the write and after it (Pi run 2026-11-21: SLOOP 3's
+    first start set up its storage anew in the data area behind the firmware, and Melodee's presets were gone)"""
+    return _("SLOOP 3 sets up its own storage on its first start, in the data area after the firmware: the data the "
+             "current firmware ({fw}) keeps there – its presets, projects and sounds – are gone afterwards. Only the "
+             "whole-flash backup made before the write keeps them (written back, the old firmware comes back with "
+             "them). Want them in the app as well? Back them up with the app (page “Backups”) while the old firmware "
+             "runs – before you go to MIDI MODE.").format(fw=firmware or _("not known"))
+
+
+def backup_hint(ctx) -> str:
+    """before the chain starts: the old firmware's data is lost on SLOOP 3's first start – the app's own backup of it
+    (page “Backups”) is possible only while that firmware runs, so it is recommended now"""
+    from .device import firmware_name
+    fw = firmware_name(getattr(ctx, "firmware_key", "") or "") or _("the current firmware")
+    can = bool(getattr(ctx, "connected", False))           # (a firmware with the editor protocol: the app backs it up)
+    return (_("SLOOP 3 sets up its own storage on its first start: the presets, projects and sounds of {fw} on the "
+              "FM-1 are gone afterwards (the whole-flash backups keep them).").format(fw=html.escape(fw)) + " " +
+            (_("Back them up with the app first – page “Backups” › “Back up now” – while {fw} still runs.").format(
+                fw=html.escape(fw)) if can else
+             _("If they matter, back them up first with that firmware's own tool.")))
+
+
+def install_plan_text(plan) -> str:
+    """the danger question before SLOOP 3 is written over MIDI MODE"""
+    from .. import hardware
+    from ..flash import tested
+    from ..tools import flashjob as FJ
+    rev = _(hardware.LABEL.get(plan.revision, hardware.LABEL[hardware.UNKNOWN]))
+    return "<br><br>".join([
+        _("Install SLOOP 3 {version} (public beta) on “{unit}” (unit ID {uid}, {revision})?").format(
+            version=html.escape(plan.version), unit=html.escape(plan.unit_name), uid=FJ.mask(plan.unit_id),
+            revision=html.escape(rev)),
+        _("m-bootloader {mb} answers in MIDI MODE. Firmware now (as the app knows it): {fw}.").format(
+            mb=html.escape(plan.mboot_version), fw=html.escape(plan.firmware or _("not known"))),
+        "<b>" + _("m-bootloader writes only from 0x04000 to 0x{end:05X}; the boot area 0x00000–0x03FFF – m-bootloader "
+                  "itself – and everything after it are not written.").format(end=plan.size - 1) + "</b> " +
+        ngettext("{n} sector of 4 KiB differs from what the FM-1 holds now.",
+                 "{n} sectors of 4 KiB differ from what the FM-1 holds now.", plan.sectors).format(n=plan.sectors) +
+        " " + _("The current firmware and what it keeps in that range are replaced."),
+        "<b>" + data_loss_text(plan.firmware) + "</b>",
+        _("m-bootloader reads the whole package and checks it (checksums, this FM-1's chip key) before it erases "
+          "anything, writes the first sector last and reads every sector back. The app's package is byte for byte "
+          "the one the author's installer page builds (bundled SLOOP 3 {version}, SHA-256 {sha}…).").format(
+              version=html.escape(plan.version), sha=plan.area_sha256[:12]),
+        _("The whole flash was backed up just now (read twice in MIDI MODE, both checked against the chip's CRC-32): "
+          "{name}. That is the way back.").format(name=html.escape(plan.backup.name)),
+        _("Do not unplug the FM-1 or switch it off while it writes (about a minute). Close no other program in "
+          "between that talks to the FM-1."),
+        *[html.escape(n) for n in plan.notes],
+        html.escape(tested.tool_note("mboot_sloop3_install"))])
+
+
+def install_flow(parent, ctx, store=None) -> bool:
+    """"Install SLOOP 3 (MIDI MODE) …": in MIDI MODE the install (tools/mbinstall.py); not in MIDI MODE the guided
+    chain – m-bootloader first where the app does not know it on this FM-1 (its own backup and confirmation), then
+    MIDI MODE. -> True when SLOOP 3 was written (m-bootloader finished)"""
+    from .. import hardware
+    from ..flash import mboot
+    from ..tools import bootarea, flashjob as FJ, mbinstall as M
+    from . import feedback, flash_tools as ft
+    from .common import call_in_gui, init_gui_caller, show_done
+    title = _("Install SLOOP 3 (MIDI MODE)")
+    if getattr(ctx, "is_virtual", False):
+        show_error(parent, _("Not a real FM-1"), _("The Studio twin is not a real FM-1. Choose a real FM-1 at the top."))
+        return False
+    prof = getattr(ctx, "profile", None)
+    if getattr(ctx, "mboot", None) is None or getattr(ctx, "port", None) is None:
+        cur = bootarea.current(prof) if prof is not None else {}
+        if cur.get("kind") != bootarea.MBOOT:
+            if confirm(parent, title,
+                       _("SLOOP 3 installs only through m-bootloader's MIDI MODE, and the app does not know "
+                         "m-bootloader on this FM-1. Step 1 of 2: install m-bootloader – the app puts the FM-1 into "
+                         "download mode, backs up the whole flash and asks once more before it writes the boot area. "
+                         "Step 2: MIDI MODE, then this button again (the app backs up the whole flash once more there "
+                         "and asks before SLOOP 3 is written). Start step 1?") + "<br><br>" +
+                       backup_hint(ctx),
+                       _("Install m-bootloader first")):
+                if ft.install_boot_flow(parent, ctx, store=store):
+                    show_done(parent, title, _("Step 1 done: m-bootloader is on the FM-1.") + " " + midi_mode_guide())
+            return False
+        show_error(parent, title, _("Step 2: the FM-1 must be in MIDI MODE.") + " " + midi_mode_guide())
+        return False
+    level, text = revision_text(ctx)
+    if level == "bad":
+        show_error(parent, title, re.sub("<[^>]+>", "", text))
+        return False
+    if level == "warn" and not confirm(parent, title, CONFIRM_OLD(), _("It is an earlier unit")):
+        return False
+    plan = chip_plan(ctx)
+    new_chip_ok = not plan.blockers and mboot_support(ctx) == hardware.YES
+    if not confirm(parent, title,
+                   _("The app reads the whole flash twice in MIDI MODE (the backup, checked against the chip's "
+                     "CRC-32), builds SLOOP 3 for this FM-1 and checks it as m-bootloader will. Then it asks you once "
+                     "more before anything is written. Nothing is written without that backup."), _("Continue")):
+        return False
+    init_gui_caller()
+    result: dict = {}
+
+    def ask(p) -> bool:
+        return bool(call_in_gui(lambda: confirm(parent, title + "?", install_plan_text(p), _("Install SLOOP 3"),
+                                                danger=True)))
+
+    def work(w):
+        t = mboot.open_port(ctx.port)
+        try:
+            job = ft._job(ctx, store, w, writing=True)
+            job.progress = lambda a, b, checking: w.progress.emit(a, b)
+            try:
+                res = M.install(job, t, ask, new_chip_ok=new_chip_ok)
+            except FJ.WriteFailed as e:
+                result["failed"] = e
+                raise
+            finally:
+                # what comes back at this USB port is this unit only when it shows what the job left (job.expect:
+                # SLOOP 3 once m-bootloader started writing); another FM-1 plugged in there is asked about
+                ft.remember_unit(ctx, job)
+        finally:
+            try:
+                t.close()
+            except Exception:  # noqa: BLE001
+                pass
+        result["res"] = res
+        return res
+
+    def said(res) -> str:
+        if not res.written:
+            return _("SLOOP 3 {version} is on this FM-1 already – nothing was written. Switch it off and on (or "
+                     "choose BOOT APP in m-bootloader's menu).").format(version=res.version)
+        return _("SLOOP 3 {version} installed: m-bootloader read the whole package, checked it, wrote it and read "
+                 "every sector back. The FM-1 starts SLOOP 3 now. On that first start SLOOP 3 sets up its own "
+                 "storage: the old firmware's presets, projects and sounds in the data area are gone then. The state "
+                 "before – the old firmware with its data – is kept as {name}.").format(
+                     version=res.version, name=res.backup.name if res.backup else "?")
+    was_hold = getattr(ctx, "hold", False)
+    ctx.hold = True                                  # (no device search while the port is in use)
+    try:
+        with ft.write_guard():
+            d = feedback.run(parent, title, work, done=said, cancellable=True,
+                             cancel_tip=_("Cancels until m-bootloader starts reading SLOOP 3; from then on it runs to "
+                                          "its end."))
+    finally:
+        ctx.hold = was_hold
+    res = result.get("res")
+    ok = bool(getattr(d, "ok", False) and res is not None and res.written)
+    if ok and prof is not None:
+        import time as _t
+        prof.firmware = S3.KEY
+        prof.firmware_version = "v" + res.version
+        hist = getattr(prof, "firmware_history", None)
+        if isinstance(hist, list):
+            hist.append({"time": _t.time(), "firmware": S3.KEY, "name": "SLOOP 3", "version": "v" + res.version,
+                         "identity": "", "via_v15": False, "route": "midi-mode"})
+        try:
+            ctx.store.save()
+        except Exception:  # noqa: BLE001
+            pass
+        result["verify"] = verify_flow(parent, ctx, res, store=store)
+    if hasattr(ctx, "changed"):
+        try:
+            ctx.changed.emit()
+        except Exception:  # noqa: BLE001
+            pass
+    return ok
+
+
+def CONFIRM_OLD() -> str:
+    return _("My FM-1 has no M-VAVE logo on the front (an earlier unit).")
+
+
+CHECK_DIR = "sloop3-check"          # in the unit's Flash folder: what the app's last SLOOP 3 install meant to write
+
+
+def _check_dir(ctx, prof) -> Path | None:
+    if prof is None or getattr(ctx, "settings", None) is None:
+        return None
+    return Path(ctx.settings.backups_dir) / prof.folder_name / "Flash" / CHECK_DIR
+
+
+def save_check(ctx, prof, res) -> Path | None:
+    """after SLOOP 3 was written: what the flash should hold from 0x00000 to the package's end (boot area and
+    SLOOP 3) is kept with the unit, so "Check SLOOP 3 in the flash" can run later too – not only right after the
+    install (Pi run 2026-11-21: offered before the app had recognised SLOOP 3, failed, and could not be started
+    again). Private files (0600), replaced by the next install. -> the folder, None when it could not be saved"""
+    import hashlib
+    import os
+    import time as _t
+    d = _check_dir(ctx, prof)
+    end = len(getattr(res, "package_flash", b"") or b"")
+    expected = bytes(getattr(res, "expected", b"") or b"")[:end]
+    if d is None or not end or len(expected) != end:
+        return None
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+        os.chmod(d, 0o700)
+        for name, data in (("expected.bin", expected),
+                           ("check.json", json.dumps({
+                               "version": getattr(res, "version", ""), "end": end,
+                               "sha256": hashlib.sha256(expected).hexdigest(), "profile": prof.id,
+                               "written": _t.time(), "backup": getattr(getattr(res, "backup", None), "name", "") or "",
+                               "checked": None}, indent=1).encode("utf-8"))):
+            tmp = d / (name + ".part")
+            tmp.unlink(missing_ok=True)
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
+            with os.fdopen(fd, "wb") as f:
+                f.write(data)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp, d / name)
+    except OSError:
+        return None
+    return d
+
+
+def load_check(ctx, prof) -> dict | None:
+    """the kept check of this unit's last SLOOP 3 install by the app: {"version", "end", "expected", …}, None when
+    there is none (or it does not read back as saved)"""
+    import hashlib
+    d = _check_dir(ctx, prof)
+    if d is None:
+        return None
+    try:
+        meta = json.loads((d / "check.json").read_text("utf-8"))
+        expected = (d / "expected.bin").read_bytes()
+    except (OSError, ValueError):
+        return None
+    if not isinstance(meta, dict) or meta.get("profile") != prof.id or len(expected) != meta.get("end") or \
+            hashlib.sha256(expected).hexdigest() != meta.get("sha256"):
+        return None
+    meta["expected"] = expected
+    return meta
+
+
+def _note_checked(ctx, prof, v):
+    import time as _t
+    d = _check_dir(ctx, prof)
+    try:
+        meta = json.loads((d / "check.json").read_text("utf-8"))
+        meta["checked"] = {"time": _t.time(), "same": bool(v.same), "first_difference": v.first_difference}
+        (d / "check.json").write_text(json.dumps(meta, indent=1), "utf-8")
+    except (OSError, ValueError, TypeError):
+        pass
+
+
+def sloop3_recognised(ctx, prof) -> bool:
+    """the app shows SLOOP 3 running on this very unit (its profile) – what the check's soft key needs"""
+    port = getattr(ctx, "port", None)
+    return bool(getattr(ctx, "sloop3", None) is not None and port is not None and not port.update_mode and
+                prof is not None and getattr(getattr(ctx, "profile", None), "id", None) == prof.id)
+
+
+def wait_for_sloop3(parent, ctx, prof, title: str) -> bool:
+    """wait – with a clear message and Cancel – until the app has recognised SLOOP 3 on this unit (after its restart,
+    or after it was switched on by hand). -> True when recognised, False when cancelled"""
+    if sloop3_recognised(ctx, prof):
+        return True
+    from PyQt6.QtCore import QTimer
+    from PyQt6.QtWidgets import QProgressDialog
+    dlg = QProgressDialog(_("Waiting until SLOOP 3 runs on “{unit}” and the app shows it at the top … (After the "
+                            "install the FM-1 starts SLOOP 3 by itself; if it does not, switch it off and on.) "
+                            "Nothing is sent to the FM-1 before that.").format(unit=prof.name),
+                          _("Cancel"), 0, 0, parent)
+    dlg.setWindowTitle(title)
+    dlg.setMinimumDuration(0)
+    dlg.setAutoClose(False)
+    dlg.setAutoReset(False)
+    lab = dlg.findChild(QLabel)
+    if lab is not None:
+        lab.setWordWrap(True)
+
+    def look():
+        if sloop3_recognised(ctx, prof):
+            dlg.done(1)
+    poll = QTimer(dlg, interval=400)
+    poll.timeout.connect(look)
+    poll.start()
+    changed = getattr(ctx, "changed", None)
+    if changed is not None:
+        changed.connect(look)
+    try:
+        dlg.exec()
+    finally:
+        poll.stop()
+        if changed is not None:
+            try:
+                changed.disconnect(look)
+            except TypeError:
+                pass
+    return sloop3_recognised(ctx, prof) and not dlg.wasCanceled()
+
+
+def verify_flow(parent, ctx, res=None, store=None):
+    """the app's own check of SLOOP 3 in the flash – right after an install (`res`, kept with the unit) or later
+    (Recovery › Tools, Device menu: the kept check of this unit's last SLOOP 3 install by the app). A fresh
+    whole-flash read in download mode (M-Flasher; the soft key to the running SLOOP 3), compared with what was meant to
+    be written; nothing is written. It waits until the app has recognised SLOOP 3 on this unit. -> VerifyResult or
+    None"""
+    from ..tools import flashjob as FJ
+    from . import feedback, flash_tools as ft
+    title = _("Check SLOOP 3 in the flash")
+    prof = None if getattr(ctx, "is_virtual", False) else getattr(ctx, "profile", None)
+    if res is not None and prof is not None:
+        save_check(ctx, prof, res)
+    check = load_check(ctx, prof) if prof is not None else None
+    if check is None:
+        show_error(parent, title, _("The app knows no SLOOP 3 install of its own on this FM-1 to check (it keeps what "
+                                    "its last install wrote, per unit). Choose the FM-1 SLOOP 3 was installed on at "
+                                    "the top.") if prof is not None else
+                   _("Choose the FM-1 at the top first (the app checks the SLOOP 3 it installed on that unit)."))
+        return None
+    end = int(check["end"])
+    intro = (_("m-bootloader wrote SLOOP 3 and read every sector back.") + " " if res is not None else
+             _("The app's last SLOOP 3 install on “{unit}”: SLOOP 3 {version}.").format(
+                 unit=html.escape(prof.name), version=html.escape(str(check.get("version") or "?"))) + " ")
+    if not confirm(parent, title,
+                   intro + _("The app can check it once more itself: once SLOOP 3 runs and the app shows it at the "
+                             "top – it waits for that – it sends the FM-1 into download mode and reads the whole flash "
+                             "with M-Flasher – writing nothing – and compares 0x00000–0x{end:05X} (the boot area and "
+                             "SLOOP 3) with what was meant to be written; then it restarts the FM-1. Check now? "
+                             "(Later: Recovery › Tools › “Check SLOOP 3 in the flash …”.)").format(end=end - 1),
+                   _("Check")):
+        return None
+    if not wait_for_sloop3(parent, ctx, prof, title):
+        show_error(parent, title, _("Not checked – nothing was sent to the FM-1. The check can be started later on "
+                                    "Recovery › Tools › “Check SLOOP 3 in the flash …”, once SLOOP 3 runs."))
+        return None
+    if ft._not_here(parent, ctx, store or getattr(ctx, "tools_store", None)):
+        return None
+    out: dict = {}
+
+    def work(w):
+        job = ft._job(ctx, store, w)
+        try:
+            out["v"] = FJ.verify_install(job, check["expected"], end, "SLOOP 3")
+        finally:
+            ft.remember_unit(ctx, job)
+        return out["v"]
+
+    def said(v) -> str:
+        return (_("Checked: a fresh read of the whole flash holds exactly the boot area and SLOOP 3 as written. "
+                  "Nothing was written.") if v.same else
+                _("The fresh read differs from what was written (first at 0x{at:05X}). Nothing was written now. Keep "
+                  "the backup made before the install, and write it back if SLOOP 3 does not work.").format(
+                      at=v.first_difference)) + " " + (_("The FM-1 was restarted.") if v.restarted else
+                                                       _("Switch the FM-1 off and on to start it."))
+    was_hold = getattr(ctx, "hold", False)
+    ctx.hold = True
+    try:
+        feedback.run(parent, title, work, done=said, cancellable=True)
+    finally:
+        ctx.hold = was_hold
+    if out.get("v") is not None:
+        _note_checked(ctx, prof, out["v"])
+    return out.get("v")
 
 
 # ------------------------------------------------- flash backup (MIDI MODE) ---

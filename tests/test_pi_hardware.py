@@ -52,7 +52,7 @@ def fake_ctx(store, port=None, identity="", **kw):
     ctx._ask_profile = _ask
     ctx._match_profile = lambda p: DeviceContext._match_profile(ctx, p)
     ctx._new_profile = lambda name="": DeviceContext._new_profile(ctx, name)
-    ctx.note_installed = lambda prof, usb: DeviceContext.note_installed(ctx, prof, usb)
+    ctx.note_installed = lambda prof, usb, expect=None: DeviceContext.note_installed(ctx, prof, usb, expect)
     ctx._note_found = DeviceContext._note_found
     ctx.firmware_key, ctx.protocol = "", ""
     ctx._log_connected = lambda: DeviceContext._log_connected(ctx)

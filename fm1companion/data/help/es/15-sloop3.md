@@ -40,9 +40,11 @@ SLOOP 3 guarda **un proyecto** en el FM-1. La app lo lee igual que la copia de s
 
 * **Tus samples no están en un `sloop3-backup`.** SLOOP 3 no tiene ningún comando para entregarlos. Están en una
   copia de toda la flash o en los archivos desde los que los enviaste.
-* **La app no instala SLOOP 3.** Explica el camino y abre la página del instalador del autor en tu navegador.
-  m-bootloader, que SLOOP 3 necesita, lo instala la propia app: Recuperación › Herramientas › «Instalar m-bootloader»
-  (con una copia de toda la flash antes; ver la página de ayuda «Modo de actualización y rescate»).
+* **La app instala SLOOP 3 solo a través del MIDI MODE de m-bootloader** – «Instalar SLOOP 3 con esta app (MIDI
+  MODE)», sin conexión desde el SLOOP 3 3.4.0 que trae, tras una copia de toda la flash leída dos veces en MIDI MODE
+  (aún no probado en un FM-1 real; ver la página de ayuda «Modo de actualización y rescate»). m-bootloader, que SLOOP 3
+  necesita, también lo instala la app: como primer paso del mismo botón o en Recuperación › Herramientas › «Instalar
+  m-bootloader». La página del instalador del autor sigue siendo el otro camino.
 * **Sin copia automática** para SLOOP 3, salvo que la actives (ver abajo): con una beta, la app solo lee cuando tú lo
   pides.
 * El Studio no tiene gemelo de SLOOP 3. Las demás páginas del dispositivo (presets, samples) hablan el
@@ -74,8 +76,8 @@ SLOOP 3 guarda **un proyecto** en el FM-1. La app lo lee igual que la copia de s
 
 1. **Hace falta m-bootloader.** SLOOP 3 solo se instala mediante el MIDI MODE de m-bootloader. m-bootloader es un
    bootloader de código abierto de Julius Vitkauskas; instalarlo sustituye la zona de arranque del FM-1. Eso se hace
-   una vez, fuera de esta app: con M-Flasher en modo de descarga USB o, con el firmware de M-VAVE, con M-UPGRADE de
-   M-VAVE y `fm1-uboot.fwsc`.
+   una vez: con esta app (Recuperación › Herramientas, o el primer paso de «Instalar SLOOP 3», con M-Flasher en modo
+   de descarga USB) o, con el firmware de M-VAVE, con M-UPGRADE de M-VAVE y `fm1-uboot.fwsc`.
 2. **Copia primero toda la flash.** Es el único camino de vuelta: SLOOP 2.8 o el firmware de M-VAVE vuelven al
    escribir esa copia con M-Flasher. SLOOP 3 lee los proyectos, presets, samples y ajustes de SLOOP 2.8 una vez, en
    su primer arranque, y nunca los escribe.
@@ -101,6 +103,7 @@ SLOOP 3 guarda **un proyecto** en el FM-1. La app lo lee igual que la copia de s
   SLOOP 3 3.4.0, su editor incluido se conectó, se leyó una copia de seguridad de SLOOP 3 (6 partes, todas las sumas de
   verificación válidas), se reconoció el MIDI MODE de m-bootloader 2.4 (sin confundirlo con un modo de actualización) y
   se rechazó una instalación con SLOOP 3 en marcha sin enviar nada. **No probado en un FM-1 real:** restaurar una copia
-  de seguridad de SLOOP 3, la copia del flash en MIDI MODE, nada que escriba y nada en un FM-1 más nuevo (logo delante) – lo que su dueño
-  informa desde fuera de la app está arriba, en el punto 3.
+  de seguridad de SLOOP 3, la copia del flash en MIDI MODE, nada más que escriba y nada en un FM-1 más nuevo (logo delante) – lo que su dueño
+  informa desde fuera de la app está arriba, en el punto 3. **Instalar SLOOP 3 con la app** (MIDI MODE, desde Melodee
+  1.6.1) se hizo una vez en ese equipo anterior el 21-11-2026 – ver [Modo de actualización y recuperación](help:03-update-modus).
 * Más: [Cambiar de firmware](help:02-firmware) · [Copias de seguridad](help:04-backups) · [Enlaces](help:10-links)

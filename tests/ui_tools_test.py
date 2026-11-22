@@ -355,7 +355,48 @@ def boot_flow(card, state, uid, asked):
     danger = [a for a in asked if a[2]]
     check(len(danger) == 1 and "V15" in danger[0][1] and flash[:0x4000] == bytes(img[:0x4000]) and
           prof.boot_area.get("kind") == bootarea.ORIGINAL, "Remove m-bootloader: V15's boot area back, in the profile")
+    step4_flow(card, state, uid, asked)
     del flash_tools
+
+
+def step4_flow(card, state, uid, asked):
+    """Step 4: a Felucca-family firmware through download mode on the unit with m-bootloader (the fake M-Flasher),
+    the SLOOP 3 and "Back to …" buttons and what "Back to …" offers"""
+    import random
+    from fm1companion import firmware
+    from fm1companion.flash import package as pk, planner
+    from fm1companion.tools import bootarea, flashjob as FJ
+    from fm1companion.ui import flash_tools
+    c = w.ctx
+    prof = c.profile
+    names = [a.text().replace("&", "") for m in w.menuBar().findChildren(type(w.menuBar().actions()[0].menu()))
+             for a in m.actions()]
+    check(card.b_sloop3.isEnabled() and card.b_back.isEnabled() and "Zurück zu …" in names and
+          "SLOOP 3 installieren (MIDI MODE) …" in names, "Tools card and Device menu: Install SLOOP 3, Back to …")
+    asked.clear()
+    card.b_mboot.click()                                       # (m-bootloader again)
+    check(prof.boot_area.get("kind") == bootarea.MBOOT, "m-bootloader is on the unit again")
+    before = Path(str(state) + ".flash").read_bytes()
+    raw = pk.build_package("FM-1_727", family="felucca", app=random.Random("ui-skiff").randbytes(0x60000))
+    path = home / "skiff-ui.fwsc"
+    path.write_bytes(raw)
+    spec = firmware.spec("skiff")
+    st = planner.DeviceState(identity="FM-1_91061", felucca=False, firmware_key="melodee", boot_area=bootarea.MBOOT,
+                             revision="old")
+    plan = planner.plan_install(st, planner.Target.from_spec(spec, tag="v2.7"))
+    check(plan.route == "download-mode", f"the plan's route is download mode ({plan.kinds()})")
+    asked.clear()
+    ok = flash_tools.firmware_flow(w, c, spec, None, path, "v2.7", plan, known=False)
+    after = Path(str(state) + ".flash").read_bytes()
+    danger = [a for a in asked if a[2]]
+    target = FJ.firmware_target(before, bootarea.package_flash(raw)[1])
+    check(ok and after == target and after[:0x4000] == before[:0x4000] and len(danger) == 1 and
+          "0x04000" in danger[0][1] and prof.name in danger[0][1],
+          "Install through download mode: the danger question names the range; written, m-bootloader kept")
+    opts = {o["key"]: o for o in flash_tools.way_back_options(c)}
+    check(set(opts) == {"backup", "sloop3", "felucca", "v15"} and opts["backup"]["ok"] and opts["v15"]["ok"] and
+          "MIDI MODE" in opts["sloop3"]["route"] and "Download-Modus" in opts["felucca"]["route"],
+          f"Back to …: four targets with their routes ({[(k, o['ok']) for k, o in opts.items()]})")
 
 
 def run():

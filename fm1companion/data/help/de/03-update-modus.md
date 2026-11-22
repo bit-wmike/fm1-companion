@@ -133,8 +133,39 @@ gesucht hat.
   das gesperrte Schließen der App während des Schreibens. Noch nicht gelaufen: Zurückschreiben an einem neueren
   Gerät (Logo vorne), eine große Änderung oder der Boot-Bereich, ein echtes Abmelden während des Schreibens.
   m-bootloader installieren und entfernen und „In den Download-Modus“ liefen über die App noch nicht an einem echten
-  FM-1 (der Besitzer hat dasselbe von Hand mit M-Flasher gemacht). Firmware über den Download-Modus und SLOOP 3 über
-  die App kommen in späteren Versionen.
+  FM-1 (der Besitzer hat dasselbe von Hand mit M-Flasher gemacht). Am 21.11.2026 (nur am früheren Gerät):
+  m-bootloader installieren und entfernen, SLOOP 3 über die App im MIDI MODE (von Melodee 1.6.1 aus) und danach Skiff
+  2.7 über den Download-Modus (von SLOOP 3 aus), je einmal; ein Zurückschreiben mit Boot-Bereich und großem
+  Unterschied (149 Sektoren), danach byte-gleich. An der Hardware noch nicht gesehen: M-Flashers Warnung zu Daten an
+  anderen Stellen, die eigene Prüfung der App nach der SLOOP-3-Installation, nichts davon an einem neueren Gerät.
+* **Firmware über den Download-Modus** (ein FM-1 mit m-bootloader, auch eines mit laufendem SLOOP 3): Weiß die App,
+  dass das Gerät m-bootloader hat, und wählst du unter Firmware+ eine Firmware der Felucca-Familie (Melodee, SLOOP 2,
+  Skiff …) – ein Wechsel oder alles aus einem laufenden SLOOP 3 –, sagt der Plan **„über den Download-Modus
+  (M-Flasher)“**, statt anzuhalten. M-Flasher schreibt dann nur von 0x04000 bis zum Ende des Pakets: Der Boot-Bereich –
+  m-bootloader – bleibt, CHECK HEAD spielt also keine Rolle, und es gibt keinen V15-Zwischenschritt. Zuerst das
+  Geräte-Backup (wo die Firmware eines hat) und der ganze Flash gesichert (zweimal gelesen); dann die Gefahrenfrage;
+  die App antwortet M-Flasher nur, wenn die geplanten Sektoren genau die berechneten sind und alle ab 0x04000 liegen;
+  danach muss ein frisches Lesen genau das Paket enthalten. Warnt M-Flasher, dass die installierte Firmware „ihre
+  Daten an anderen Stellen ablegt“, fragt dich die App noch einmal und nennt, was verloren gehen kann (Projekte,
+  Klänge und Einstellungen dieser Firmware; der Rückweg ist die eben gemachte Sicherung). Für die Original-V15, den
+  Boot-Bereich von FM1 Open und ein Update derselben Firmware gelten die üblichen Regeln; auf einem neueren Gerät muss
+  das Ziel eines sein, das die Hardware-Regel durchlässt.
+* **SLOOP 3 installieren (MIDI MODE)** (Rettung › Werkzeuge, Menü Gerät, Firmware+ › SLOOP 3): Die App schreibt das
+  mitgebrachte SLOOP 3 3.4.0 über den MIDI MODE von m-bootloader – offline, das Paket genau so gebaut, wie es die
+  Installer-Seite des Autors baut. Nur wenn m-bootloader im MIDI MODE mit der Unit-ID dieses Geräts antwortet; zuerst
+  wird dort der ganze Flash zweimal gelesen (jedes Lesen mit der eigenen Prüfsumme des Chips geprüft), dann die
+  Gefahrenfrage. m-bootloader prüft das ganze Paket, bevor es etwas löscht, und schreibt nur 0x04000 bis zum Ende des
+  Pakets. **Beim ersten Start legt SLOOP 3 seinen eigenen Speicher im Datenbereich an: Presets, Projekte und Sounds
+  der alten Firmware sind dann weg** (am 21.11.2026 mit Melodee gesehen) – nur die Komplettsicherung behält sie, also
+  sichere sie mit der App (Seite „Backups“), solange die alte Firmware noch läuft. Danach kann die App SLOOP 3 mit
+  einem frischen Lesen im Download-Modus noch einmal prüfen: Sie wartet, bis sie oben SLOOP 3 zeigt, und die Prüfung
+  lässt sich auch später starten (Rettung › Werkzeuge › „SLOOP 3 im Flash prüfen …“). Ohne m-bootloader ist
+  der erste Schritt „m-bootloader installieren“, jeder Schritt mit seiner eigenen Frage.
+* **Zurück zu …** (Rettung › Werkzeuge, Menü Gerät): ein Knopf für den Rückweg – zu einer Komplettsicherung dieses
+  Geräts (du wählst welche; die von vor m-bootloader sind markiert, die neueste davon ist vorgewählt; hat die App
+  keine, lässt sich ein früherer M-Flasher-Dump mit „Flash-Sicherung importieren …“ übernehmen), zu SLOOP 3, zu einer Firmware der Felucca-Familie oder zur Original-V15 mit dem
+  Original-Boot-Bereich (nicht auf einem neueren Gerät). Er zeigt den Weg jedes Ziels und startet dann nur die eigenen
+  Schritte der App, jeden mit seiner eigenen Frage.
 
 ## Wenn das FM-1 gar nicht als „WL82 UBOOT1.00“ erscheint
 

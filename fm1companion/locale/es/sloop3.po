@@ -35,10 +35,6 @@ msgstr "Beta pública: una groovebox reescrita desde cero, con 4 pistas de sinte
 msgid "4 sample slots (USR1–4), slices and your own kits"
 msgstr "4 ranuras de samples (USR1–4), slices y tus propios kits"
 
-#: fm1companion/firmware.py:251
-msgid "SLOOP 3 is a public beta. The app does not install it: it goes onto the FM-1 from its author's installer page, through m-bootloader."
-msgstr "SLOOP 3 es una beta pública. La app no lo instala: llega al FM-1 desde la página del instalador de su autor, mediante m-bootloader."
-
 #: fm1companion/flash/mboot.py:165
 msgid "The FM-1 does not answer. Is it still in MIDI MODE and connected?"
 msgstr "El FM-1 no responde. ¿Sigue en MIDI MODE y conectado?"
@@ -219,10 +215,6 @@ msgstr "Editor: {name} (beta pública) · el editor del autor, incluido · MIDI 
 msgid "this is the editor of SLOOP 3 {versions} – it may not fit your version"
 msgstr "este es el editor de SLOOP 3 {versions}; puede que no encaje con tu versión"
 
-#: fm1companion/ui/firmware_page.py:528
-msgid "Not from the running SLOOP 3"
-msgstr "No desde el SLOOP 3 en marcha"
-
 #: fm1companion/ui/firmware_page.py:1141
 msgid "public beta"
 msgstr "beta pública"
@@ -321,25 +313,9 @@ msgstr "SLOOP 3 (beta pública) – el camino hasta el FM-1"
 msgid "<b>Check for m-bootloader:</b> switch the FM-1 off, hold PLAY and switch it on. A menu with BOOT APP, DOWNLOAD MODE and MIDI MODE? Then it is there."
 msgstr "<b>Comprueba si está m-bootloader:</b> apaga el FM-1, mantén PLAY y enciéndelo. ¿Un menú con BOOT APP, DOWNLOAD MODE y MIDI MODE? Entonces está."
 
-#: fm1companion/ui/sloop3_ui.py:124
-msgid "<b>If not: install m-bootloader – outside this app.</b> With M-Flasher: USB download mode, <b>back up the whole flash</b>, then install fm1-uboot.boot. Or, on M-VAVE's firmware, fm1-uboot.fwsc with M-VAVE's M-UPGRADE. Keep the power on while the boot area is written."
-msgstr "<b>Si no: instala m-bootloader, fuera de esta app.</b> Con M-Flasher: modo de descarga USB, <b>copia toda la flash</b> y luego instala fm1-uboot.boot. O, con el firmware de M-VAVE, fm1-uboot.fwsc con M-UPGRADE de M-VAVE. No cortes la alimentación mientras se escribe la zona de arranque."
-
 #: fm1companion/ui/sloop3_ui.py:128
 msgid "<b>MIDI MODE:</b> hold PLAY at power-on, choose MIDI MODE with OCT−/OCT+, press PLAY, plug in the USB cable. The app then shows “m-bootloader – MIDI MODE”."
 msgstr "<b>MIDI MODE:</b> mantén PLAY al encender, elige MIDI MODE con OCT−/OCT+, pulsa PLAY y conecta el cable USB. La app muestra entonces «m-bootloader – MIDI MODE»."
-
-#: fm1companion/ui/sloop3_ui.py:130
-msgid "<b>Back up the whole flash</b> (button below, or with M-Flasher) – unless you already have such a backup of exactly this FM-1."
-msgstr "<b>Copia toda la flash</b> (botón de abajo, o con M-Flasher), salvo que ya tengas una copia así de este mismo FM-1."
-
-#: fm1companion/ui/sloop3_ui.py:132
-msgid "<b>Install SLOOP 3 with the author's installer page</b> in Chromium or Chrome (about a minute). Close this app's connection first: quit the app or unplug and replug – only one program can talk to the FM-1 in MIDI MODE at a time."
-msgstr "<b>Instala SLOOP 3 con la página del instalador del autor</b> en Chromium o Chrome (alrededor de un minuto). Cierra antes la conexión de esta app: sal de la app o desconecta y vuelve a conectar; en MIDI MODE solo un programa puede hablar con el FM-1 a la vez."
-
-#: fm1companion/ui/sloop3_ui.py:135
-msgid "<b>Back to SLOOP 2.8 or M-VAVE's firmware:</b> write the flash backup back with M-Flasher (hold REC at power-on for download mode). Save your SLOOP 3 projects as files first."
-msgstr "<b>Volver a SLOOP 2.8 o al firmware de M-VAVE:</b> escribe de nuevo la copia de la flash con M-Flasher (mantén REC al encender para el modo de descarga). Guarda antes tus proyectos de SLOOP 3 como archivos."
 
 #: fm1companion/ui/sloop3_ui.py:152
 msgid "Open the installer page in the browser"
@@ -469,10 +445,6 @@ msgstr "Copia de seguridad de SLOOP 3 (archivo propio de la app: proyecto, sonid
 msgid "The editor page sent something that is not SLOOP 3's editor protocol and not a note or controller – held back, the FM-1 did not get it."
 msgstr "La página del editor envió algo que no es el protocolo de editor de SLOOP 3 ni una nota o un controlador: se retuvo y el FM-1 no lo recibió."
 
-#: fm1companion/ui/firmware_page.py:541
-msgid "This FM-1 runs SLOOP 3, which cannot be switched to an update mode over USB – the installation would stop at its first step, with nothing written. The app cannot install firmware on this FM-1. Going back to SLOOP 2.8 or M-VAVE's firmware means writing your flash backup back with M-Flasher. “Firmware+” › SLOOP 3 explains the way."
-msgstr "Este FM-1 tiene SLOOP 3, que no se puede pasar a un modo de actualización por USB: la instalación se detendría en su primer paso, sin escribir nada. La app no puede instalar firmware en este FM-1. Volver a SLOOP 2.8 o al firmware de M-VAVE significa escribir de nuevo tu copia de la flash con M-Flasher. «Firmware+» › SLOOP 3 explica el camino."
-
 #: fm1companion/ui/sloop3_ui.py:61
 msgid "m-bootloader's MIDI MODE, not an update mode"
 msgstr "MIDI MODE de m-bootloader, no un modo de actualización"
@@ -480,10 +452,6 @@ msgstr "MIDI MODE de m-bootloader, no un modo de actualización"
 #: fm1companion/ui/sloop3_ui.py:62
 msgid "This FM-1 waits in m-bootloader's MIDI MODE. That is not the update mode of an FM-1 firmware: m-bootloader answers the same way, but it writes a package differently, and the app has never been tried with it. The app sends it no firmware. Nothing was written.<br><br>From MIDI MODE, firmware is installed with the installer page of that firmware's author; the whole flash goes back with M-Flasher. OCT−, OCT+, PLAY or REC on the FM-1 leave MIDI MODE. “Firmware+” › SLOOP 3 explains more."
 msgstr "Este FM-1 espera en el MIDI MODE de m-bootloader. Eso no es el modo de actualización de un firmware del FM-1: m-bootloader responde igual, pero escribe un paquete de otra manera, y la app nunca se ha probado con él. La app no le envía ningún firmware. No se escribió nada.<br><br>Desde MIDI MODE, el firmware se instala con la página del instalador de su autor; toda la flash vuelve con M-Flasher. OCT−, OCT+, PLAY o REC en el FM-1 salen de MIDI MODE. «Firmware+» › SLOOP 3 explica más."
-
-#: fm1companion/ui/sloop3_ui.py:131
-msgid "<b>It does not install SLOOP 3 and it does not install m-bootloader.</b> The button below shows the way; for an FM-1 the rule above lets through, it opens the author's installer page in your browser (Chromium or Chrome)."
-msgstr "<b>No instala SLOOP 3 ni instala m-bootloader.</b> El botón de abajo muestra el camino; para un FM-1 que la regla de arriba deja pasar, abre la página del instalador del autor en tu navegador (Chromium o Chrome)."
 
 #: fm1companion/ui/sloop3_ui.py:229
 msgid "The app could not work out this FM-1's hardware revision. The installer page is not offered."
@@ -547,9 +515,6 @@ msgstr "La app aún no sabe cuál de tus FM-1 es este. Elige primero el disposit
 #, python-brace-format
 msgid "Checked with SLOOP 3 {versions} on the author's PC twin (the firmware's code on a simulated FM-1). <b>On a real FM-1 once, reading only</b> (SLOOP 3 3.4.0, one earlier unit): recognised, its editor connected, a backup read, MIDI MODE recognised. <b>Never on a real FM-1 by this app:</b> restoring a backup, the flash backup, anything that writes, a newer unit. Outside the app, by its owner's report (2026-11-19): m-bootloader 2.4 and SLOOP 3 3.4.0 ran and saved on one newer unit."
 msgstr "Comprobado con SLOOP 3 {versions} en el gemelo de PC del autor (el código del firmware en un FM-1 simulado). <b>En un FM-1 real una vez, solo leyendo</b> (SLOOP 3 3.4.0, un equipo anterior): reconocido, su editor conectado, una copia de seguridad leída, MIDI MODE reconocido. <b>Nunca en un FM-1 real con esta app:</b> restaurar una copia de seguridad, la copia del flash, nada que escriba, un equipo más nuevo. Fuera de la app, según el informe de su dueño (2026-11-19): m-bootloader 2.4 y SLOOP 3 3.4.0 funcionaron y guardaron en un equipo más nuevo."
-
-msgid "The app has run none of these steps on a real FM-1, nor its flash backup below. The app only reads here; installing is done by the author's page and by M-Flasher."
-msgstr "La app no ha ejecutado ninguno de estos pasos en un FM-1 real, tampoco su copia del flash de abajo. Aquí la app solo lee; la instalación la hacen la página del autor y M-Flasher."
 
 msgid "m-bootloader MIDI MODE"
 msgstr "MIDI MODE de m-bootloader"

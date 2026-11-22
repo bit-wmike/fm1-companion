@@ -168,6 +168,24 @@ def stock_title(identity: str) -> str:
     return f"Put back the stock bootloader (from {identity})"
 
 
+def firmware_title(identity: str) -> str:
+    """ops.rs plan_firmware: the plan's title"""
+    return f"Install firmware {identity}"
+
+
+def firmware_note(identity: str, end: int) -> str:
+    """ops.rs plan_firmware: its one note – the allowed range [0x4000, end of the package's flash.bin)"""
+    return f"Installs {identity} (0x04000-0x{end - 1:05X})."
+
+
+def data_places_warning(installed: str, identity: str) -> str:
+    """ops.rs plan_firmware: the WARNING when the installed firmware's data tables (app table entries 0x12/0x92)
+    differ from the package's – `installed` is the "firmware" line of M-Flasher's info block"""
+    return (f"The installed firmware ({installed}) keeps its data in other places than {identity}; what it leaves "
+            "behind can confuse the new firmware (wrong presets, no sound). To go back to a firmware cleanly, restore "
+            "a backup made while it was installed.")
+
+
 def reads_config(version: str) -> bool:
     """ops.rs reads_config: every bootloader but m-bootloader 1.4 and newer reads the unit's configuration"""
     major, dot, minor = (version or "").split("-")[0].partition(".")

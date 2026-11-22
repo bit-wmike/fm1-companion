@@ -122,8 +122,37 @@ before every use and never runs a changed file), and when it last looked for a n
   sector, verified), the refusal of another unit's copy, and closing the app being blocked while it writes. Not yet
   run: writing back on a newer unit (logo on the front), a large change or the boot area, a real logout during the
   write. Installing and removing m-bootloader and “Into download mode” have not been run through the app on a real
-  FM-1 yet (the owner did the same with M-Flasher by hand). Firmware through download mode and SLOOP 3 through the
-  app come in later versions.
+  FM-1 yet (the owner did the same with M-Flasher by hand). On 2026-11-21 (the earlier unit only): installing and
+  removing m-bootloader, SLOOP 3 through the app over MIDI MODE (from Melodee 1.6.1) and then Skiff 2.7 through
+  download mode (from SLOOP 3), each once; a write-back with the boot area and a large difference (149 sectors),
+  byte-identical afterwards. Not yet seen on hardware: M-Flasher's warning about data in other places, the app's own
+  check after the SLOOP 3 install, anything of this on a newer unit.
+* **Firmware through download mode** (an FM-1 with m-bootloader, also one running SLOOP 3): when the app knows the
+  unit has m-bootloader and you choose a Felucca-family firmware (Melodee, SLOOP 2, Skiff …) on Firmware+ – a switch,
+  or anything from a running SLOOP 3 –, the plan says **“through download mode (M-Flasher)”** instead of stopping.
+  M-Flasher then writes only from 0x04000 to the end of the package: the boot area – m-bootloader – stays, so CHECK
+  HEAD does not come into it and there is no V15 step. First the device backup (where the firmware has one) and the
+  whole flash backed up (read twice); then the danger question; the app answers M-Flasher only when the planned sectors
+  are exactly the ones it computed and all lie at or after 0x04000; afterwards a fresh read must hold exactly the
+  package. If M-Flasher warns that the installed firmware “keeps its data in other places”, the app asks you once more
+  and names what may be lost (that firmware's projects, sounds and settings; the way back is the backup just made).
+  The original V15, FM1 Open's boot area and an update of the same firmware keep their usual rules; on a newer unit
+  the target must be one the hardware rule lets through.
+* **Install SLOOP 3 (MIDI MODE)** (Recovery › Tools, the Device menu, Firmware+ › SLOOP 3): the app writes the SLOOP 3
+  3.4.0 it brings along through m-bootloader's MIDI MODE – offline, with the package built exactly as the author's
+  installer page builds it. Only when m-bootloader answers in MIDI MODE with this unit's ID; first the whole flash is
+  read twice there (each read checked against the chip's own checksum), then the danger question. m-bootloader checks
+  the whole package before it erases anything and writes only 0x04000 to the package's end. **On its first start
+  SLOOP 3 sets up its own storage in the data area: the old firmware's presets, projects and sounds are gone then**
+  (seen on 2026-11-21 with Melodee) – only the whole-flash backup keeps them, so back them up with the app (page
+  “Backups”) while the old firmware still runs. Afterwards the app can check SLOOP 3 once more with a fresh read in
+  download mode: it waits until it shows SLOOP 3 at the top, and the check can be started later too (Recovery › Tools
+  › “Check SLOOP 3 in the flash …”). Without m-bootloader the first step is “Install
+  m-bootloader”, each step with its own question.
+* **Back to …** (Recovery › Tools, the Device menu): one button for the way back – to a whole-flash backup of this unit
+  (you choose which; the ones from before m-bootloader are marked and the newest of them is pre-selected; if the app
+  has none, an M-Flasher dump from earlier can be taken in with “Import a flash backup …”), to SLOOP 3, to a Felucca-family firmware or to the original V15 with the original boot area (not on a
+  newer unit). It shows the route of each and then only starts the app's own steps, each with its own question.
 
 ## If the FM-1 does not appear as “WL82 UBOOT1.00” at all
 
