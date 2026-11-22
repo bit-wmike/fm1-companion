@@ -55,9 +55,9 @@ class ToolsCard(Card):
         lay = self.layout()
         intro = QLabel(_("The app brings these tools with it and checks each file's checksum before it uses it. "
                          "With M-Flasher it backs up the whole flash of an FM-1 and writes such a backup back onto "
-                         "the same unit, puts it into download mode and installs or removes m-bootloader (each write "
-                         "only after a whole-flash backup); installing firmware through download mode and SLOOP 3 "
-                         "follow in later versions. A new version is only shown – it is fetched when you click “Update”, checked "
+                         "the same unit, puts it into download mode, installs or removes m-bootloader and installs "
+                         "firmware through download mode; over m-bootloader's MIDI MODE it installs SLOOP 3 (each "
+                         "write only after a whole-flash backup). A new version is only shown – it is fetched when you click “Update”, checked "
                          "against GitHub's checksum, and the previous version stays as the fallback."))
         intro.setWordWrap(True)
         lay.addWidget(intro)

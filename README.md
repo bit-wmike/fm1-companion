@@ -6,6 +6,8 @@ Raspberry Pi 5.
 
 ![Studio – the digital twin of the FM-1 running Melodee's real firmware code](docs/screenshots/studio.png)
 
+See more: [a quick tour in pictures](#a-quick-tour) below, or [all 40 screenshots with explanations](docs/TOUR.md).
+
 > [!WARNING]
 > **Unofficial community project – not affiliated with M-VAVE. No warranty (GPL-3.0, sections 15 and 16).**
 > Installing or switching firmware, recovery, cleaning up leftovers, writing back from the Studio and restoring
@@ -110,6 +112,63 @@ has no editor protocol (shown as ORBIT). Installing and recovery run against sim
 uses its own settings; your data stays untouched.
 More switches: `--check` (are all system packages there?), `--syscheck` (system check in the terminal),
 `--lang LANG`, `--no-splash`, `--debug`, `--version`.
+
+## A quick tour
+
+Nine pictures of what the app looks like; the [full tour](docs/TOUR.md) has forty, grouped by topic. All of them were
+taken in **demo mode** (English interface) with the simulated FM-1 – no real device, no real device data. The two
+dialogs of the bundled tools were opened for the picture with a made-up unit ("FM-1 Earlier"); nothing was written.
+
+**Overview** – the first page: which FM-1 is connected, its firmware, whether there is a backup, and the most used
+actions as buttons. The list on the left is the whole app.
+
+![Overview page: the connected FM-1 with name, firmware and version, a backup card, firmware updates and quick-access buttons](docs/screenshots/overview.png)
+
+**Backups** – every backup of your FM-1 with date and content; look inside, compare, restore the whole or only
+parts. Below them the flash backups: copies of the whole memory chip, made with M-Flasher (the three in the picture
+are a test image).
+
+![Backups page: a list of three backups with date, firmware and content, buttons for restore and export, and below it the list of whole-flash backups](docs/screenshots/backups.png)
+
+**Firmware+** – a catalog of 250+ community firmwares with search and filters; one click shows what a firmware is
+and what the app can do with it.
+
+![Firmware+ catalog: cards of community firmwares with name, author, short description and labels, with search and filters above](docs/screenshots/firmware-catalog.png)
+
+**The installation plan** – before anything is installed you see every step with its risk, what will be gone
+afterwards and, in bold, whether this kind of installation has ever run on a real FM-1. Nothing starts before you
+tick the confirmation.
+
+![Installation plan for Skiff on a unit with m-bootloader: three numbered steps with their risk, notes, a line about what was tested on a real FM-1, and a confirmation checkbox](docs/screenshots/install-plan.png)
+
+**The Device menu** – a backup, reconnecting, and the bundled tools: download mode, m-bootloader, SLOOP 3 and
+"Back to …" (the same buttons are on Recovery › Tools).
+
+![The opened Device menu: back up now, reconnect, rename, download mode, install or remove m-bootloader, install SLOOP 3, Back to](docs/screenshots/device-menu.png)
+
+**"Back to …"** – one button for the way back. The app lists this unit's whole-flash backups, marks which are from
+before m-bootloader and which are with it, and pre-selects the newest one from before; the other ways are offered
+with their steps or with the reason why one is not possible right now.
+
+![The Back to dialog: back to a whole-flash backup with a list of three backups, the one from before m-bootloader marked as recommended, back to SLOOP 3, back to a Felucca-family firmware, back to the original V15](docs/screenshots/dlg-back-to.png)
+
+**Studio twins** – the Studio runs the firmware's own code on the computer. Six of the thirteen twins side by side,
+each with its firmware's display (next to a real FM-1 only the Melodee twin has been used, and the Skiff twin once).
+
+![Six Studio twins side by side with their different displays: Melodee, SLOOP, Skiff, KARMA, JIANT FM and X0X](docs/screenshots/studio-twins.png)
+
+**Samples & Kits** – your sample library with a waveform preview and the kit builder: put sounds on keys and upload
+the kit to an FM-1 whose firmware has sample slots. (The sounds here were generated for the picture.)
+
+![Samples and Kits page: a list of drum and tone samples with a waveform, and the kit builder with drum sounds mapped to keys](docs/screenshots/samples.png)
+
+**Editor with SLOOP 3** – when the app recognises SLOOP 3, the Editor page shows SLOOP 3's own editor, bundled
+unchanged (here SLOOP 3 3.3.7 against the test stand-in, not a real FM-1).
+
+![Editor page with SLOOP 3's dark web editor: transport, scenes and master controls](docs/screenshots/sloop3-editor.png)
+
+More: [the full tour](docs/TOUR.md) – presets, projects, Compose, recording, the simulator, the questions before
+every write, MIDI, recovery, settings and help.
 
 ## What's inside
 
@@ -216,25 +275,7 @@ FoMni and AMB-1 have no backup over USB: their twins play and export, but cannot
 device. Only the Melodee twin has been used next to a real FM-1, and the Skiff twin once (fetched from a unit with
 Skiff 2.7); the other eleven have only been checked against themselves and the app's own code.
 
-<details>
-<summary>More screenshots</summary>
-
-Taken in demo mode, English UI.
-
-| | |
-|---|---|
-| ![Studio with the SLOOP twin](docs/screenshots/studio-sloop.png) | ![Overview – the active FM-1 at a glance](docs/screenshots/overview.png) |
-| **Studio** with another firmware – here SLOOP 2.8.5 | **Overview** – device, backup, firmware & updates, quick access |
-| ![Projects – view patterns and songs, play them on the FM-1, export MIDI](docs/screenshots/project-view.png) | ![Compose – generate rhythms, chords, bass and melodies](docs/screenshots/compose.png) |
-| **Projects › View & Export** – patterns, songs, MIDI export, play on the FM-1 | **Compose** – generate parts, preview with the FM-1's own sounds, undo |
-| ![Backups – look inside every backup and restore parts](docs/screenshots/backups-browse.png) | ![Firmware+ – catalog of community firmwares](docs/screenshots/firmware-catalog.png) |
-| **Backups › Browse & Compare** – projects, presets, settings; restore only parts | **Firmware+** – 250+ community firmwares, install, versions, simulator |
-| ![Presets – the 384 user slots and your own library](docs/screenshots/presets.png) | ![Recovery – step by step back to a working FM-1](docs/screenshots/recovery.png) |
-| **Presets** – all 384 user slots, library, FM voices (DX7) | **Recovery** – update mode and ROM boot mode, with safety checks |
-| ![Settings › Storage – see and delete logs, downloads and caches](docs/screenshots/storage.png) | ![Editor – SLOOP 3's own web editor, bundled with the app](docs/screenshots/sloop3-editor.png) |
-| **Settings › Storage** – what the app keeps, delete per category, automatic cleanup | **Editor** with SLOOP 3 3.3.7 – its own bundled editor (here against the test stand-in, not a real FM-1) |
-
-</details>
+More pictures of the Studio and of everything else: [docs/TOUR.md](docs/TOUR.md).
 
 ## Requirements
 
