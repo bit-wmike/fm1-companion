@@ -1,4 +1,4 @@
-# What is tested and what is not – an honest list (as of 2.6.1)
+# What is tested and what is not – an honest list (as of 2.7.0)
 
 The suite was mostly built and tested in a development environment **without an FM-1**: against simulated
 FM-1 (Melodee, SLOOP, generic), against the test devices from the Melodee and SLOOP editors, against self-built
@@ -12,7 +12,7 @@ documented.
 UI names in this list are the English labels of the app (the German UI uses the translations from
 `fm1companion/locale/de/`).
 
-## Used on real hardware (as of 2.6.1)
+## Used on real hardware (as of 2.7.0)
 
 So far on **two** FM-1 of one owner – an earlier unit (flash chip 0x856014) and, for one installation, a newer one
 (logo on the front, UC25HQ80 0xB36014) – on **one** Raspberry Pi 5 (Raspberry Pi OS Bookworm):
@@ -32,10 +32,11 @@ So far on **two** FM-1 of one owner – an earlier unit (flash chip 0x856014) an
 | **First installation on a newer FM-1** (2026-11-18): that unit, from its factory firmware (identity `FM-1_015`) to **Skiff 2.7**, directly at the Pi, careful mode off, no V15 step | done once, worked; flight log: 2348 requests, no repeated request, no send failure, writing 53 s, `FM-1_727` back after 8.5 s. Saving works on the chip: backup → a change on the unit, SAVE, power off and on → the next backup differs in objects 0, 1 and 6, all with a valid CRC32. **Scope: one unit, one firmware (Skiff 2.7), one computer.** Says nothing about any other firmware or version on this chip, about writing the public V15 package to such a unit, about the recovery in ROM boot mode there, or about m-bootloader. In that session the app afterwards took the unit for the owner's other FM-1 (fixed in 2.6.1: profiles) |
 | SLOOP 3 3.4.0 (installed outside the app) and m-bootloader 2.4's MIDI MODE on the earlier unit (2026-11-18), **read only** | seen once: recognition, the bundled editor connected, one SLOOP 3 backup, the installation refused – see “SLOOP 3 and m-bootloader” below. Nothing written |
 | FM1 Open V14 (installed outside the app) on the earlier unit (2026-11-19): its sample protocol, **from a script** with the app's own `fm1open.py`, not through the app's pages | run twice: probe, bank read, a new bank written and read back identical; once: a saved `.fm1s` bank restored – see “FM1 Open” below |
+| **The bundled tools through the app** (M-Flasher, m-bootloader, SLOOP 3; 2026-11-20 to 2026-11-22) | earlier unit: whole-flash backups and write-backs (also of the whole boot area, byte-identical afterwards), m-bootloader install and removal, SLOOP 3 over MIDI MODE (twice, with the check read), Skiff 2.7 through download mode from SLOOP 3, "Back to …" a backup from before m-bootloader; newer unit: whole-flash backups and an imported M-Flasher dump, nothing written. Details: "M-Flasher through the app" below |
 | System check | detects patterns taken from real Pi 5 logs (USB controller crash at the FM-1's audio start, fluidsynth.service occupies the HDMI sound card) |
 
 That is **two** devices of one owner, **three** installations with logs, **one** computer. **Not** run on hardware:
-writing back from the Studio, restoring a backup, and on a newer FM-1 anything but that one Skiff installation. Everything else in this list counts as
+writing back from the Studio, restoring a backup, and on a newer FM-1 anything but that one Skiff installation. (Here "a backup" is one made through the editor protocol; whole-flash write-backs through M-Flasher did run, see the row above, and so did reading a newer unit's flash.) Everything else in this list counts as
 untested, even if it runs cleanly in the simulation.
 
 ### Per step – what the app shows before the click
