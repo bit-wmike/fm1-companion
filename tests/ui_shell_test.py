@@ -137,7 +137,7 @@ def flow():
     check(until(lambda: ctx.connected), "demo device connected")
     check(w.page("help") is not None, "help page registered")
     from fm1companion import __version__
-    check(__version__ == "2.6.2", "Version 2.6.2")
+    check(__version__ == "2.7.0", "Version 2.7.0")
 
     # ---- command search
     pal = w.open_palette()

@@ -1,4 +1,4 @@
-# FM-1 Companion Suite 2.6.2
+# FM-1 Companion Suite 2.7.0
 
 The unofficial desktop suite for the **M-VAVE FM-1** pocket synthesizer: backups, firmware install and recovery,
 a Studio that runs your firmware on the computer, presets, samples and MIDI tools – for Linux, built for the
@@ -13,7 +13,8 @@ Raspberry Pi 5.
 > Almost all of this has only run against simulations. On real hardware so far – one Raspberry Pi 5 with Bookworm,
 > two units, most of it once: an update within Melodee; a switch KARMA → original V15 → Skiff through two USB hubs;
 > Skiff on a newer FM-1; backups of Melodee, KARMA, Skiff and SLOOP 3; SLOOP 3 and m-bootloader recognised; MIDI and
-> the basics of the Studio. **Not tested:** restoring a backup, writing back from the Studio, writing in recovery,
+> the basics of the Studio; through the bundled tools on an earlier unit: whole-flash backups and write-backs,
+> m-bootloader installed and removed, SLOOP 3 installed, Skiff through download mode, "Back to …" a backup. **Not tested:** restoring a backup, writing back from the Studio, writing in recovery,
 > anything else on a newer FM-1. The honest list: [docs/UNTESTED.md](docs/UNTESTED.md).
 
 Languages: English, German, Spanish – [help translate](docs/TRANSLATING.md).
@@ -138,8 +139,9 @@ m-bootloader's MIDI MODE). Skiff, Melodee, SLOOP and the other Felucca firmwares
 check it.
 
 Firmware installs: built in are Melodee, Skiff, SLOOP and KARMA; others come from the catalog or your own `.fwsc`
-file. SLOOP 3 is built in too, but the app does not install it (see below). A switch to another firmware always
-installs the original V15 first; an update within the same firmware goes directly.
+file. SLOOP 3 is built in too and goes on over m-bootloader (see below). A switch to another firmware installs the
+original V15 first – except on an FM-1 with m-bootloader, where it goes through download mode (below); an update
+within the same firmware goes directly.
 
 ### M-Flasher, m-bootloader and SLOOP 3 – bundled and driven
 
@@ -158,15 +160,17 @@ after.
   trap and no V15 step. The installation plan offers this route by itself.
 * **Install SLOOP 3** over m-bootloader's MIDI MODE, offline, with the package built byte for byte as the author's
   installer page builds it; without m-bootloader its first step is installing it.
-* **Back to …:** one button for the way back – the last whole-flash backup, SLOOP 3, a Felucca-family firmware or
-  the original V15 – that only starts the steps above, each with its own question.
+* **Back to …:** one button for the way back – a whole-flash backup of this unit (those from before m-bootloader
+  marked, the newest of them pre-selected), SLOOP 3, a Felucca-family firmware or the original V15 – that only starts
+  the steps above, each with its own question.
 
 Every write: a whole-flash backup first (never skipped), a danger question naming the unit, its unit ID and revision,
 the app's own check of exactly the sectors that will be written right before M-Flasher's "yes" (the app never passes
-`--yes`), a record on disk and no quitting while it writes, a fresh read afterwards. What of this ran on real hardware
-through the app – the backups, small write-backs, m-bootloader install and removal on an earlier unit – and what only
-against stand-ins (firmware through download mode, the SLOOP 3 install, "Back to …") is listed in
-[docs/UNTESTED.md](docs/UNTESTED.md). Details: [docs/flash-protocol.md §16](docs/flash-protocol.md).
+`--yes`), a record on disk and no quitting while it writes, a fresh read afterwards. On real hardware through the
+app, on an earlier unit, mostly once or twice: backups, write-backs (also of the whole boot area), m-bootloader
+install and removal, the SLOOP 3 install with its check, Skiff through download mode from SLOOP 3, "Back to …" a
+backup from before m-bootloader – each byte-identical where it was compared. On a newer unit only backups and an
+import; nothing written there yet. The full list: [docs/UNTESTED.md](docs/UNTESTED.md). Details: [docs/flash-protocol.md §16](docs/flash-protocol.md).
 
 ### SLOOP 3 and m-bootloader
 
@@ -181,9 +185,10 @@ app does that itself (see above), or the author's installer page does. What else
 * From a running SLOOP 3 it installs a Felucca-family firmware through download mode (above); on a newer FM-1 (logo
   on the front) SLOOP 3 only with the builds the hardware table lets through. The Studio has no SLOOP 3 twin.
 
-On a real FM-1, once and read only: recognition, the bundled editor connected, one backup, MIDI MODE recognised.
-Restore, the flash copy and the app's own SLOOP 3 install have only run against stand-ins (the install also against
-m-bootloader's own MIDI MODE code on a PC). More: [help page "SLOOP 3"](fm1companion/data/help/en/15-sloop3.md).
+On a real FM-1: recognition, the bundled editor connected, backups, MIDI MODE recognised, and – on an earlier unit,
+twice – the app's own SLOOP 3 install with its check read. SLOOP 3's first start sets up its own storage: the old
+firmware's presets and projects on the FM-1 are gone afterwards (the app says so and offers a backup first). Restore
+of a SLOOP 3 backup has only run against stand-ins. More: [help page "SLOOP 3"](fm1companion/data/help/en/15-sloop3.md).
 
 ### Studio twins
 
