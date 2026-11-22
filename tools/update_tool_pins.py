@@ -17,8 +17,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -29,7 +31,13 @@ MANIFEST = ROOT / "fm1companion" / "tools" / "manifest.json"
 def _get(url: str, accept: str = "application/octet-stream") -> bytes:
     if not url.startswith("https://"):
         raise SystemExit(f"refusing a non-https URL: {url}")
-    req = urllib.request.Request(url, headers={"User-Agent": "fm1-companion-pins", "Accept": accept})
+    headers = {"User-Agent": "fm1-companion-pins", "Accept": accept}
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN") or ""
+    if token and urllib.parse.urlsplit(url).hostname == "api.github.com":
+        # (unauthenticated, GitHub's API allows 60 requests an hour per address – a shared CI runner can run out:
+        # the release run of 2026-11-22 stopped on "rate limit exceeded". Only to the API host, never to downloads.)
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=120) as r:
         return r.read(64 * 1024 * 1024)
 

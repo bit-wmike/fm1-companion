@@ -728,3 +728,33 @@ def test_licence_tool_reads_every_licence_and_font_file(tmp_path, monkeypatch):
     monkeypatch.setattr(g.urllib.request, "urlopen", lambda *a, **k: (_ for _ in ()).throw(OSError("offline")))
     with pytest.raises((SystemExit, OSError)):
         g.fetch_crate("x", "1.0", "0" * 64, tmp_path)
+
+
+def test_the_pin_check_authenticates_only_to_the_github_api(monkeypatch):
+    # release run 2026-11-22: unauthenticated API calls hit "rate limit exceeded" on a shared runner
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("utp", ROOT / "tools" / "update_tool_pins.py")
+    utp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(utp)
+    seen = []
+
+    class R:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self, n):
+            return b"{}"
+
+    monkeypatch.setattr(utp.urllib.request, "urlopen", lambda req, timeout: seen.append(req) or R())
+    monkeypatch.setenv("GH_TOKEN", "t0ken")
+    utp._get("https://api.github.com/repos/o/r/releases/tags/v1", "application/json")
+    utp._get("https://github.com/o/r/releases/download/v1/x.tar.gz")
+    assert seen[0].get_header("Authorization") == "Bearer t0ken"
+    assert seen[1].get_header("Authorization") is None
+    monkeypatch.delenv("GH_TOKEN")
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    utp._get("https://api.github.com/repos/o/r/releases/tags/v1", "application/json")
+    assert seen[2].get_header("Authorization") is None
