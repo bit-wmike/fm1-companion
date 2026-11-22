@@ -206,8 +206,7 @@ with a made-up unit; the last paragraph of each is the app's own statement of wh
 
 The home of the three tools: which version is bundled and in use, whether its checksum is correct, and every action
 as a button – back up the whole flash, write it back, download mode, install or remove m-bootloader, install SLOOP 3,
-"Back to …". (The card's introduction still says that firmware through download mode and SLOOP 3 "follow in later
-versions" – in 2.7.0 both are there: the buttons below it.)
+"Back to …".
 
 ### Installing m-bootloader
 
